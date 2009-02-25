@@ -39,8 +39,18 @@
 #define MAX_THREAD 128
 #define MAX_EVENT  1
 #define MAX_PROP   256
+#define MAX_MEDIA_CACHE   53248  /*52k for local media read*/
+
+
+#define MEDIA_BITS  2            /*2^2=4 media types*/
+#define MEDIA_PACK  ((8/MEDIA_BITS)>>1)            /*one byte packs 2^MEDIA_PACK voxel*/
+#define MEDIA_MOD   ((1<<MEDIA_PACK)-1)    /*one byte packs 2^MEDIA_PACK voxel*/
+#define MEDIA_MASK  ((1<<(MEDIA_BITS))-1)
 
 #define MINUS_SAME_VOXEL -9999.f
+
+#define GPUDIV(a,b)  __fdividef((a),(b))
+
 
 typedef unsigned char uchar;
 
@@ -54,6 +64,8 @@ typedef struct PhotonData {
 ******************************/
 
 __constant__ float2 gproperty[MAX_PROP];
+__constant__ uint   gmediacache[MAX_MEDIA_CACHE>>2];
+
 
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
      float lmax, float gg, float gg2,float ggx2, float4 p0,float4 c0,float3 maxidx,
@@ -85,23 +97,23 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	       ran=mt19937s(); /*random number [0,MAX_MT_RAND)*/
 
 #ifndef FAST_MATH
-   	       nlen.x=-logf((float)ran/MAX_MT_RAND); /*probability of the next jump*/
+   	       nlen.x=-logf(GPUDIV((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
 #else
-               nlen.x=-__logf(__fdividef((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
+               nlen.x=-__logf(GPUDIV((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
 #endif
 
 	       if(npos.w<1.f){ /*weight*/
                        ran=mt19937s();
-		       phi=TWO_PI*ran/MAX_MT_RAND;
+		       phi=GPUDIV(TWO_PI*ran,MAX_MT_RAND);
 #ifndef FAST_MATH
                        sincosf(phi,&sphi,&cphi);
 #else
                        __sincosf(phi,&sphi,&cphi);
 #endif
 		       ran=mt19937s();
-		       foo = (1.f - gg2)/(1.f - gg + ggx2*ran/MAX_MT_RAND);
+		       foo = (1.f - gg2)/(1.f - gg + GPUDIV(ggx2*ran,MAX_MT_RAND));
 		       foo = foo * foo;
-		       foo = (1.f + gg2 - foo)/ggx2;
+		       foo = GPUDIV((1.f + gg2 - foo),ggx2);
 		       theta=acosf(foo);
 #ifndef FAST_MATH
 		       stheta=sinf(theta);
@@ -132,7 +144,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	  len=minstep*prop.y;
 
 	  if(len>nlen.x){  /*scattering ends in this voxel*/
-               step=nlen.x/prop.y;
+               step=GPUDIV(nlen.x,prop.y);
    	       npos=float4(npos.x+ndir.x*step,npos.y+ndir.y*step,npos.z+ndir.z*step,npos.w*expf(-prop.x * step ));
 	       nlen.x=MINUS_SAME_VOXEL;
 	       nlen.y+=step;
@@ -179,8 +191,9 @@ int main (int argc, char *argv[]) {
 
      int i,j,k;
      int total=MAX_EVENT;
-     int photoncount=0;
+     int photoncount=0, count;
      int tic;
+     int3 cp0=int3(0,0,0),cp1=int3(20,20,40);
 
      dim3 ThreadDim(1);
      dim3 GridDim(MAX_N/MAX_THREAD);
@@ -188,6 +201,7 @@ int main (int argc, char *argv[]) {
 
      uchar  media[DIMXYZ];
      float  field[DIMXYZ];
+     uint   mediacache[MAX_MEDIA_CACHE>>2];
 
      float4 Ppos[MAX_N];
      float4 Pdir[MAX_N];
@@ -212,7 +226,6 @@ int main (int argc, char *argv[]) {
      uint   *gPseed;
      cudaMalloc((void **) &gPseed, sizeof(uint)*(MAX_N));
 
-
      for (i=0; i<DIMX; i++)
       for (j=0; j<DIMY; j++)
        for (k=0; k<DIMZ; k++) {
@@ -220,6 +233,19 @@ int main (int argc, char *argv[]) {
 	   field[INDXYZ(i,j,k)]=0.f;
        }
 
+     count=0;
+     memset(mediacache,0,MAX_MEDIA_CACHE);
+     for (i=cp0.x; i<cp1.x; i++)
+      for (j=cp0.y; j<cp1.y; j++)
+       for (k=cp0.z; k<cp1.z; k++) {
+//         printf("[%d %d %d]: %d %d %d %d (%d)\n",i,j,k,count,MEDIA_MASK,count>>MEDIA_PACK,(count & MEDIA_MOD)*MEDIA_BITS,
+//                (media[INDXYZ(i,j,k)] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS) );
+           mediacache[count>>MEDIA_PACK] |=  (media[INDXYZ(i,j,k)] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS );
+           count++;
+       }
+     for (i=0; i<5; i++) {
+	printf("XX %d\n",mediacache[i]);
+     }
      srand(time(0));
      for (i=0; i<MAX_N; i++) {
 	   Ppos[i]=p0;  /* initial position */
@@ -237,6 +263,7 @@ int main (int argc, char *argv[]) {
      cudaMemcpy(gfield, field, sizeof(float)*DIMXYZ, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar)*DIMXYZ,cudaMemcpyHostToDevice);
      cudaMemcpyToSymbol(gproperty, property, MAX_PROP*sizeof(float2), 0, cudaMemcpyHostToDevice);
+     cudaMemcpyToSymbol(gmediacache, mediacache, MAX_MEDIA_CACHE, 0, cudaMemcpyHostToDevice);
 
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
 
@@ -268,6 +295,7 @@ int main (int argc, char *argv[]) {
      savedata(field,DIMX*DIMY*DIMZ,"field.dat");
 
      cudaFree(gmedia);
+     cudaFree(gmediacache);
      cudaFree(gfield);
      cudaFree(gPpos);
      cudaFree(gPdir);
