@@ -1,3 +1,5 @@
+/////////////////////////////////////////////////////////////////////
+//
 //  MC Extreme  - GPU accelerated Monte-Carlo Simulation
 //  
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
@@ -9,6 +11,8 @@
 //    2009/02/24 MT rand now working fine
 //
 // License: unpublished version, use by author's permission only
+//
+/////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include "br2cu.h"
@@ -31,12 +35,14 @@
 // #define FAST_MATH   /*define this to use the __sincos versions*/
 
 
-#define MAXN 1024
-#define MAXTHREAD 128
-#define MAX_EVENT 1
+#define MAX_N      1024
+#define MAX_THREAD 128
+#define MAX_EVENT  1
+#define MAX_PROP   256
 
 #define MINUS_SAME_VOXEL -9999.f
 
+typedef unsigned char uchar;
 
 /******************************
 typedef struct PhotonData {
@@ -47,10 +53,11 @@ typedef struct PhotonData {
 } Photon;
 ******************************/
 
+__constant__ float2 gproperty[MAX_PROP];
 
-kernel void mc_loop(int totalmove,float2 media[],float field[],float3 vsize,float minstep, float lmax,
-     float gg, float gg2,float ggx2, float4 p0,float4 c0,float3 maxidx,uint n_seed[],
-     float4 n_pos[],float4 n_dir[],float3 n_len[]){
+kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
+     float lmax, float gg, float gg2,float ggx2, float4 p0,float4 c0,float3 maxidx,
+     uint n_seed[],float4 n_pos[],float4 n_dir[],float3 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -59,7 +66,7 @@ kernel void mc_loop(int totalmove,float2 media[],float field[],float3 vsize,floa
      float3 nlen=n_len[idx];
      float4 ndir0;
 
-     int    i, idx1d, idxorig;
+     int    i, idx1d, idxorig, mediaid;
      uint   ran;
      float2 prop;
 
@@ -120,8 +127,8 @@ kernel void mc_loop(int totalmove,float2 media[],float field[],float3 vsize,floa
                        ndir.w++;
 	       }
 	  }
-
-	  prop=media[idx1d];
+          mediaid=media[idx1d];
+	  prop=gproperty[mediaid];
 	  len=minstep*prop.y;
 
 	  if(len>nlen.x){  /*scattering ends in this voxel*/
@@ -145,9 +152,7 @@ kernel void mc_loop(int totalmove,float2 media[],float field[],float3 vsize,floa
 	      field[idx1d]+=(nlen.x>0)?npos.w:0.f;
 	  }
      }
-
      n_seed[idx]=(ran&0xffffffffu);
-
      n_pos[idx]=npos;
      n_dir[idx]=ndir;
      n_len[idx]=nlen;
@@ -169,6 +174,8 @@ int main (int argc, char *argv[]) {
      float4 p0=float4(10,10,0,1.f);
      float4 c0=float4(0.f,0.f,1.f,0.f);
      float3 maxidx=float3(DIMX-1,DIMY-1,DIMZ-1);
+     float2 property[MAX_PROP]={float2(0.f,0.f),float2(0.009f,0.75f),  // 1st is air
+                                float2(0.006f,0.75f),float2(0.009f,0.95f)};
 
      int i,j,k;
      int total=MAX_EVENT;
@@ -176,45 +183,45 @@ int main (int argc, char *argv[]) {
      int tic;
 
      dim3 ThreadDim(1);
-     dim3 GridDim(MAXN/MAXTHREAD);
-     dim3 BlockDim(MAXTHREAD);
+     dim3 GridDim(MAX_N/MAX_THREAD);
+     dim3 BlockDim(MAX_THREAD);
 
-     float2 media[DIMXYZ];
+     uchar  media[DIMXYZ];
      float  field[DIMXYZ];
 
-     float4 Ppos[MAXN];
-     float4 Pdir[MAXN];
-     float3 Plen[MAXN];
-     uint   Pseed[MAXN];
+     float4 Ppos[MAX_N];
+     float4 Pdir[MAX_N];
+     float3 Plen[MAX_N];
+     uint   Pseed[MAX_N];
 
      if(argc>1){
 	   total=atoi(argv[1]);
      }
 
-     float2 *gmedia;
-     cudaMalloc((void **) &gmedia, sizeof(float2)*(DIMXYZ));
+     uchar *gmedia;
+     cudaMalloc((void **) &gmedia, sizeof(uchar)*(DIMXYZ));
      float *gfield;
      cudaMalloc((void **) &gfield, sizeof(float)*(DIMXYZ));
 
      float4 *gPpos;
-     cudaMalloc((void **) &gPpos, sizeof(float4)*(MAXN));
+     cudaMalloc((void **) &gPpos, sizeof(float4)*(MAX_N));
      float4 *gPdir;
-     cudaMalloc((void **) &gPdir, sizeof(float4)*(MAXN));
+     cudaMalloc((void **) &gPdir, sizeof(float4)*(MAX_N));
      float3 *gPlen;
-     cudaMalloc((void **) &gPlen, sizeof(float3)*(MAXN));
+     cudaMalloc((void **) &gPlen, sizeof(float3)*(MAX_N));
      uint   *gPseed;
-     cudaMalloc((void **) &gPseed, sizeof(uint)*(MAXN));
+     cudaMalloc((void **) &gPseed, sizeof(uint)*(MAX_N));
+
 
      for (i=0; i<DIMX; i++)
       for (j=0; j<DIMY; j++)
        for (k=0; k<DIMZ; k++) {
-           /*absorption and scattering*/ 
-           media[INDXYZ(i,j,k)]=float2(0.009f,0.75f); 
+           media[INDXYZ(i,j,k)]=1; 
 	   field[INDXYZ(i,j,k)]=0.f;
        }
 
      srand(time(0));
-     for (i=0; i<MAXN; i++) {
+     for (i=0; i<MAX_N; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
            Plen[i]=float3(0.f,0.f,0.f);
@@ -223,32 +230,33 @@ int main (int argc, char *argv[]) {
 
      tic=GetTimeMillis();
 
-     cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*MAXN,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*MAXN,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPlen,  Plen,  sizeof(float3)*MAXN,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPseed, Pseed, sizeof(uint)*MAXN,     cudaMemcpyHostToDevice);
+     cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*MAX_N,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*MAX_N,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPlen,  Plen,  sizeof(float3)*MAX_N,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPseed, Pseed, sizeof(uint)*MAX_N,     cudaMemcpyHostToDevice);
      cudaMemcpy(gfield, field, sizeof(float)*DIMXYZ, cudaMemcpyHostToDevice);
-     cudaMemcpy(gmedia, media, sizeof(float2)*DIMXYZ,cudaMemcpyHostToDevice);
+     cudaMemcpy(gmedia, media, sizeof(uchar)*DIMXYZ,cudaMemcpyHostToDevice);
+     cudaMemcpyToSymbol(gproperty, property, MAX_PROP*sizeof(float2), 0, cudaMemcpyHostToDevice);
 
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
 
-     mc_loop<<<GridDim,BlockDim>>>(total,gmedia,gfield,vsize,minstep,lmax,gg,gg*gg,2.f*gg,\
+     mcx_main_loop<<<GridDim,BlockDim>>>(total,gmedia,gfield,vsize,minstep,lmax,gg,gg*gg,2.f*gg,\
         	 p0,c0,maxidx,gPseed,gPpos,gPdir,gPlen);
 
      printf("complete launching kernels : %d ms\n",GetTimeMillis()-tic);
 
-     cudaMemcpy(Ppos,  gPpos, sizeof(float4)*MAXN, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Ppos,  gPpos, sizeof(float4)*MAX_N, cudaMemcpyDeviceToHost);
 
      printf("complete retrieving pos : %d ms\n",GetTimeMillis()-tic);
 
-     cudaMemcpy(Pdir,  gPdir, sizeof(float4)*MAXN, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Plen,  gPlen, sizeof(float3)*MAXN, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Pseed, gPseed,sizeof(uint)*MAXN,    cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pdir,  gPdir, sizeof(float4)*MAX_N, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Plen,  gPlen, sizeof(float3)*MAX_N, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pseed, gPseed,sizeof(uint)*MAX_N,   cudaMemcpyDeviceToHost);
      cudaMemcpy(field, gfield,sizeof(float)*DIMXYZ,cudaMemcpyDeviceToHost);
 
      printf("complete retrieving all : %d ms\n",GetTimeMillis()-tic);
 
-     for (i=0; i<MAXN; i++) {
+     for (i=0; i<MAX_N; i++) {
 	  photoncount+=(int)Plen[i].z;
      }
      for (i=0; i<16; i++) {
