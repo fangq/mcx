@@ -1,0 +1,10 @@
+Change Log
+
+== MCX 0.2 (aurora) development branch, FangQ <fangq nmr mgh harvard edu> ==
+
+2009/02/14 initial version written in BrookGPU
+2009/02/15 translated to CUDA
+2009/02/20 translated to Brook+
+2009/02/21 added MT random number generator initial version
+2009/02/24 MT rand now working fine
+
