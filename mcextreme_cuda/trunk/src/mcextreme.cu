@@ -36,7 +36,6 @@
 #define MAX_MT_RAND 4294967296
 #define TWO_PI 6.28318530717959f
 
-// #define FAST_MATH   /*define this to use the __sincos versions*/
 
 #define MAX_N      1024
 #define MAX_THREAD 128
@@ -55,7 +54,17 @@
 
 #define MINUS_SAME_VOXEL -9999.f
 
-#define GPUDIV(a,b)  __fdividef((a),(b))
+#define GPUDIV(a,b)     __fdividef((a),(b))
+
+#ifdef  FAST_MATH      /*define this to use the fast math functions*/
+#define	GPULOG(x)       __logf(x)
+#define GPUSIN(x)       __sinf(x)
+#define	GPUSINCOS       __sincosf
+#else
+#define GPULOG(x)       logf(x)
+#define GPUSIN(x)       sinf(x)
+#define GPUSINCOS       sincosf
+#endif
 
 
 typedef unsigned char uchar;
@@ -124,30 +133,18 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
 	       ran=mt19937s(); /*random number [0,MAX_MT_RAND)*/
 
-#ifndef FAST_MATH
-   	       nlen.x=-logf(GPUDIV((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
-#else
-               nlen.x=-__logf(GPUDIV((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
-#endif
+   	       nlen.x=-GPULOG(GPUDIV((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
 
 	       if(npos.w<1.f){ /*weight*/
                        ran=mt19937s();
 		       phi=GPUDIV(TWO_PI*ran,MAX_MT_RAND);
-#ifndef FAST_MATH
-                       sincosf(phi,&sphi,&cphi);
-#else
-                       __sincosf(phi,&sphi,&cphi);
-#endif
+                       GPUSINCOS(phi,&sphi,&cphi);
 		       ran=mt19937s();
 		       foo = (1.f - gg2)/(1.f - gg + GPUDIV(ggx2*ran,MAX_MT_RAND));
 		       foo = foo * foo;
 		       foo = GPUDIV((1.f + gg2 - foo),ggx2);
 		       theta=acosf(foo);
-#ifndef FAST_MATH
-		       stheta=sinf(theta);
-#else
-                       stheta=__sinf(theta);
-#endif
+		       stheta=GPUSIN(theta);
 		       ctheta=foo;
 		       if( ndir.z>-1.f && ndir.z<1.f ) {
 		           tmp0=1.f-ndir.z*ndir.z;
