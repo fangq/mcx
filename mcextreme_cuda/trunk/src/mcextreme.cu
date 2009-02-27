@@ -59,11 +59,11 @@
 #ifdef  FAST_MATH      /*define this to use the fast math functions*/
 #define	GPULOG(x)       __logf(x)
 #define GPUSIN(x)       __sinf(x)
-#define	GPUSINCOS       __sincosf
+#define	GPUSINCOS(x,a,b)       __sincosf(x,a,b)
 #else
 #define GPULOG(x)       logf(x)
 #define GPUSIN(x)       sinf(x)
-#define GPUSINCOS       sincosf
+#define GPUSINCOS(x,a,b)      sincosf(x,a,b)
 #endif
 
 
