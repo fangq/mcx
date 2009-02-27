@@ -95,7 +95,7 @@ __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
      float lmax, float gg, float gg2,float ggx2, float one_add_gg2, float one_sub_gg2, float one_sub_gg,
-     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,
+     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,
      uint n_seed[],float4 n_pos[],float4 n_dir[],float3 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
@@ -153,15 +153,20 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
                        GPUSINCOS(tmp0,&sphi,&cphi);
 
-                       /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics", Chap3,p234*/
-                       /*also see Boas2003*/
+                       /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234*/
+                       /*see Boas2003*/
 		       ran=mt19937s();
-		       tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
-		       tmp0*=tmp0;
-		       tmp0=GPUDIV((one_add_gg2-tmp0),ggx2);
-		       theta=acosf(tmp0);
-		       stheta=GPUSIN(theta);
-		       ctheta=tmp0;
+                       if(gg>1e-10){
+		           tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
+		           tmp0*=tmp0;
+		           tmp0=GPUDIV((one_add_gg2-tmp0),ggx2);
+		           theta=acosf(tmp0);
+		           stheta=GPUSIN(theta);
+		           ctheta=tmp0;
+                       }else{
+			   theta=TWO_PI*ran*R_MAX_MT_RAND;
+                           GPUSINCOS(theta,&stheta,&ctheta);
+                       }
 		       if( ndir.z>-1.f && ndir.z<1.f ) {
 		           tmp0=1.f-ndir.z*ndir.z;   /*reuse tmp to minimize registers*/
 		           tmp1=rsqrtf(tmp0);
@@ -234,29 +239,33 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
               printf("--> ID%d J%d C%d len %f flip %f %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
                   (int)nlen.z,nlen.y, flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
 #endif
-              if(nlen.y<lmax && flipdir>0.f && n1!=prop.z){
+
+              /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of old ones*/
+
+              if(doreflect&&nlen.y<lmax && flipdir>0.f && n1!=prop.z){
                   tmp0=n1*n1;
                   tmp1=prop.z*prop.z;
-                  if(flipdir>=3.f) {
-                     cphi=ndir.z;
-                     sphi=ndir.x*ndir.x+ndir.y*ndir.y; /*square of sin phi*/
-                     ndir.z*=-1;
-                  }else if(flipdir>=2.f){
-                     cphi=ndir.y;
-       	       	     sphi=ndir.x*ndir.x+ndir.z*ndir.z; /*square of sin phi*/
-                     ndir.y*=-1;
-                  }else if(flipdir>=1.f){
-                     cphi=ndir.x;
-                     sphi=ndir.y*ndir.y+ndir.z*ndir.z; /*square of sin phi*/
-                     ndir.x*=-1;
+                  if(flipdir>=3.f) { /*flip in z axis*/
+                     cphi=fabs(ndir.z);
+                     sphi=ndir.x*ndir.x+ndir.y*ndir.y;
+                     ndir.z=-ndir.z;
+                  }else if(flipdir>=2.f){ /*flip in y axis*/
+                     cphi=fabs(ndir.y);
+       	       	     sphi=ndir.x*ndir.x+ndir.z*ndir.z;
+                     ndir.y=-ndir.y;
+                  }else if(flipdir>=1.f){ /*flip in x axis*/
+                     cphi=fabs(ndir.x);               /*cos(si)*/
+                     sphi=ndir.y*ndir.y+ndir.z*ndir.z; /*sin(si)^2*/
+                     ndir.x=-ndir.x;
                   }
-                  npos=npos0;
-                  Rtotal=GPUDIV(n1,prop.z)*sphi;
-                  if(Rtotal<1.f) { /*total internal reflection*/
-                     ctheta=tmp0+tmp1-tmp0*sphi-tmp1*Rtotal;
-                     stheta=2.f*n1*prop.z*sqrtf(1.f-Rtotal);
+                  npos=npos0;   /*move back*/
+                  idx1d=idx1dold;
+                  len=1.f-GPUDIV(tmp0,tmp1)*sphi;   /*1-[n1/n2*sin(si)]^2*/
+                  if(len>0.f) {
+                     ctheta=tmp0*cphi*cphi+tmp1*len;
+                     stheta=2.f*n1*prop.z*cphi*sqrtf(len);
                      Rtotal=GPUDIV(ctheta-stheta,ctheta+stheta);
-       	       	     ctheta=tmp0+tmp1-tmp1*sphi-tmp0*Rtotal;
+       	       	     ctheta=tmp1*cphi*cphi+tmp0*len;
        	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
 #ifdef __DEVICE_EMULATION__
 printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
@@ -264,8 +273,10 @@ printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %
             flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
                      npos.w*=Rtotal;
-                  }
-//                ran=mt19937s();
+                  } /* else, total internal reflection, no loss*/
+                  mediaid=media[idx1d];
+                  prop=gproperty[mediaid];
+                  n1=prop.z;
               }else{
 	          npos=p0;
 	          ndir=c0;
@@ -297,7 +308,7 @@ int main (int argc, char *argv[]) {
 
      float3 vsize=float3(1.f,1.f,1.f);
      float  minstep=1.f;
-     float  lmax=100.f;
+     float  lmax=1000.f;
      float  gg=0.98f;
      float4 p0=float4(DIMX/2,DIMY/2,DIMZ/4,1.f);
      float4 c0=float4(0.f,0.f,1.f,0.f);
@@ -405,7 +416,7 @@ int main (int argc, char *argv[]) {
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
 
      mcx_main_loop<<<GridDim,BlockDim>>>(total,gmedia,gfield,vsize,minstep,lmax,gg,gg*gg,2.f*gg,\
-        	 1.f+gg*gg,1.f-gg*gg,1.f-gg,p0,c0,maxidx,cp0,cp1,cachebox,gPseed,gPpos,gPdir,gPlen);
+        	 1.f+gg*gg,1.f-gg*gg,1.f-gg,p0,c0,maxidx,cp0,cp1,cachebox,0,gPseed,gPpos,gPdir,gPlen);
 
      printf("complete launching kernels : %d ms\n",GetTimeMillis()-tic);
 
