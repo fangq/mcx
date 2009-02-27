@@ -34,6 +34,7 @@
 #define DIMXYZ (DIMX*DIMY*DIMZ)
 #define INDXYZ(ii,jj,kk)  ((ii)*DIMYZ+(jj)*DIMZ+(kk))
 #define MAX_MT_RAND 4294967296
+#define R_MAX_MT_RAND 2.32830643653870e-10
 #define TWO_PI 6.28318530717959f
 
 
@@ -84,10 +85,11 @@ __constant__ float3 gproperty[MAX_PROP];
 __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 #endif
 
+// pass as many pre-computed values as possible to utilize the constant memory 
 
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
-     float lmax, float gg, float gg2,float ggx2, float4 p0,float4 c0,float3 maxidx,
-     uint3 cp0,uint3 cp1,uint2 cachebox,
+     float lmax, float gg, float gg2,float ggx2, float one_add_gg2, float one_sub_gg2, float one_sub_gg,
+     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,
      uint n_seed[],float4 n_pos[],float4 n_dir[],float3 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
@@ -103,7 +105,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      uint   ran;
      float3 prop;
 
-     float step,len,phi,cphi,sphi,foo,theta,stheta,ctheta,tmp0,tmp1,tmp2;
+     float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
 
      mt19937si(n_seed[idx]);
      __syncthreads();
@@ -133,28 +135,28 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
 	       ran=mt19937s(); /*random number [0,MAX_MT_RAND)*/
 
-   	       nlen.x=-GPULOG(GPUDIV((float)ran,MAX_MT_RAND)); /*probability of the next jump*/
+   	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
 
 	       if(npos.w<1.f){ /*weight*/
                        ran=mt19937s();
-		       phi=GPUDIV(TWO_PI*ran,MAX_MT_RAND);
-                       GPUSINCOS(phi,&sphi,&cphi);
+		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
+                       GPUSINCOS(tmp0,&sphi,&cphi);
 		       ran=mt19937s();
-		       foo = (1.f - gg2)/(1.f - gg + GPUDIV(ggx2*ran,MAX_MT_RAND));
-		       foo = foo * foo;
-		       foo = GPUDIV((1.f + gg2 - foo),ggx2);
-		       theta=acosf(foo);
+		       tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
+		       tmp0*=tmp0;
+		       tmp0=GPUDIV((one_add_gg2-tmp0),ggx2);
+		       theta=acosf(tmp0);
 		       stheta=GPUSIN(theta);
-		       ctheta=foo;
+		       ctheta=tmp0;
 		       if( ndir.z>-1.f && ndir.z<1.f ) {
-		           tmp0=1.f-ndir.z*ndir.z;
+		           tmp0=1.f-ndir.z*ndir.z;   /*reuse tmp to minimize registers*/
 		           tmp1=rsqrtf(tmp0);
-		           tmp2=stheta*tmp1;
+		           tmp1=stheta*tmp1;
 			   if(stheta>1e-20) {  /*strange: if stheta=0, I will get nan :(  FQ */
 			     ndir=float4(
-				tmp2*(ndir.x*ndir.z*cphi - ndir.y*sphi) + ndir.x*ctheta,
-				tmp2*(ndir.y*ndir.z*cphi + ndir.x*sphi) + ndir.y*ctheta,
-				-tmp2*tmp0*cphi                         + ndir.z*ctheta,
+				tmp1*(ndir.x*ndir.z*cphi - ndir.y*sphi) + ndir.x*ctheta,
+				tmp1*(ndir.y*ndir.z*cphi + ndir.x*sphi) + ndir.y*ctheta,
+				-tmp1*tmp0*cphi                         + ndir.z*ctheta,
 				ndir.w
 				);
                              }
@@ -169,10 +171,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	  len=minstep*prop.y;
 
 	  if(len>nlen.x){  /*scattering ends in this voxel*/
-               step=GPUDIV(nlen.x,prop.y);
-   	       npos=float4(npos.x+ndir.x*step,npos.y+ndir.y*step,npos.z+ndir.z*step,npos.w*expf(-prop.x * step ));
+               tmp0=GPUDIV(nlen.x,prop.y);
+   	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,npos.w*expf(-prop.x * tmp0 ));
 	       nlen.x=MINUS_SAME_VOXEL;
-	       nlen.y+=step;
+	       nlen.y+=tmp0;
 	  }else{                      /*otherwise, move minstep*/
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
 	       nlen.x-=len;     /*remaining probability*/
@@ -338,7 +340,7 @@ int main (int argc, char *argv[]) {
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
 
      mcx_main_loop<<<GridDim,BlockDim>>>(total,gmedia,gfield,vsize,minstep,lmax,gg,gg*gg,2.f*gg,\
-        	 p0,c0,maxidx,cp0,cp1,cachebox,gPseed,gPpos,gPdir,gPlen);
+        	 1.f+gg*gg,1.f-gg*gg,1.f-gg,p0,c0,maxidx,cp0,cp1,cachebox,gPseed,gPpos,gPdir,gPlen);
 
      printf("complete launching kernels : %d ms\n",GetTimeMillis()-tic);
 
