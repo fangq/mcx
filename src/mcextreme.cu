@@ -10,6 +10,7 @@
 //    2009/02/21 added MT random number generator initial version
 //    2009/02/24 MT rand now works fine, added FAST_MATH
 //    2009/02/25 added CACHE_MEDIA read
+//    2009/02/27 early support of boundary reflection
 //
 // License: unpublished version, use by author's permission only
 //
@@ -38,8 +39,13 @@
 #define TWO_PI 6.28318530717959f
 
 
+#ifdef __DEVICE_EMULATION__
+#define MAX_N      1
+#define MAX_THREAD 1
+#else
 #define MAX_N      1024
 #define MAX_THREAD 128
+#endif
 #define MAX_EVENT  1
 #define MAX_PROP   256
 
@@ -97,8 +103,11 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      float4 npos=n_pos[idx];
      float4 ndir=n_dir[idx];
      float3 nlen=n_len[idx];
+     float4 npos0;
+     float3 htime;
 
-     int i, idx1d, idxorig, mediaid;
+     int i, idx1d, idx1dold,idxorig, mediaid;
+     float flipdir,n1,Rtotal;
 #ifdef CACHE_MEDIA
      int incache=0,incache0=0,cachebyte=-1,cachebyte0=-1;
 #endif
@@ -106,6 +115,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      float3 prop;
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
+
 
      mt19937si(n_seed[idx]);
      __syncthreads();
@@ -138,9 +148,13 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
 
 	       if(npos.w<1.f){ /*weight*/
+                       /*random arimuthal angle*/
                        ran=mt19937s();
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
                        GPUSINCOS(tmp0,&sphi,&cphi);
+
+                       /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics", Chap3,p234*/
+                       /*also see Boas2003*/
 		       ran=mt19937s();
 		       tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
 		       tmp0*=tmp0;
@@ -167,9 +181,12 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	       }
 	  }
 
+
+          n1=prop.z;
 	  prop=gproperty[mediaid];
 	  len=minstep*prop.y;
 
+          npos0=npos;
 	  if(len>nlen.x){  /*scattering ends in this voxel*/
                tmp0=GPUDIV(nlen.x,prop.y);
    	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,npos.w*expf(-prop.x * tmp0 ));
@@ -179,6 +196,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
 	       nlen.x-=len;     /*remaining probability*/
 	       nlen.y+=minstep; /*total moved length along the current jump*/
+               idx1dold=idx1d;
                idx1d=int(floorf(npos.x)*DIMYZ+floorf(npos.y)*DIMZ+floorf(npos.z));
 #ifdef CACHE_MEDIA     
                if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
@@ -203,14 +221,61 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
 	  if(mediaid==0||nlen.y>lmax||npos.x<0||npos.y<0||npos.z<0||npos.x>maxidx.x||npos.y>maxidx.y||npos.z>maxidx.z){
 	      /*if hit the boundary or exit the domain, launch a new one*/
-	      npos=p0;
-	      ndir=c0;
-	      nlen=float3(0.f,0.f,nlen.z+1);
-              idx1d=idxorig;
-#ifdef CACHE_MEDIA
-	      cachebyte=cachebyte0;
-	      incache=incache0;
+
+              /*time to hit the wall in each direction*/
+              htime.x=(ndir.x>1e-10||ndir.x<-1e-10)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
+              htime.y=(ndir.y>1e-10||ndir.y<-1e-10)?(floorf(npos.y)+(ndir.y>0.f)-npos.y)/ndir.y:1e10;
+              htime.z=(ndir.z>1e-10||ndir.z<-1e-10)?(floorf(npos.z)+(ndir.z>0.f)-npos.z)/ndir.z:1e10;
+              tmp0=fminf(fminf(htime.x,htime.y),htime.z);
+              flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
+              prop=gproperty[mediaid];
+
+#ifdef __DEVICE_EMULATION__
+              printf("--> ID%d J%d C%d len %f flip %f %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
+                  (int)nlen.z,nlen.y, flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
 #endif
+              if(nlen.y<lmax && flipdir>0.f && n1!=prop.z){
+                  tmp0=n1*n1;
+                  tmp1=prop.z*prop.z;
+                  if(flipdir>=3.f) {
+                     cphi=ndir.z;
+                     sphi=ndir.x*ndir.x+ndir.y*ndir.y; /*square of sin phi*/
+                     ndir.z*=-1;
+                  }else if(flipdir>=2.f){
+                     cphi=ndir.y;
+       	       	     sphi=ndir.x*ndir.x+ndir.z*ndir.z; /*square of sin phi*/
+                     ndir.y*=-1;
+                  }else if(flipdir>=1.f){
+                     cphi=ndir.x;
+                     sphi=ndir.y*ndir.y+ndir.z*ndir.z; /*square of sin phi*/
+                     ndir.x*=-1;
+                  }
+                  npos=npos0;
+                  Rtotal=GPUDIV(n1,prop.z)*sphi;
+                  if(Rtotal<1.f) { /*total internal reflection*/
+                     ctheta=tmp0+tmp1-tmp0*sphi-tmp1*Rtotal;
+                     stheta=2.f*n1*prop.z*sqrtf(1.f-Rtotal);
+                     Rtotal=GPUDIV(ctheta-stheta,ctheta+stheta);
+       	       	     ctheta=tmp0+tmp1-tmp1*sphi-tmp0*Rtotal;
+       	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
+#ifdef __DEVICE_EMULATION__
+printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
+printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.z,
+            flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
+#endif
+                     npos.w*=Rtotal;
+                  }
+//                ran=mt19937s();
+              }else{
+	          npos=p0;
+	          ndir=c0;
+	          nlen=float3(0.f,0.f,nlen.z+1);
+                  idx1d=idxorig;
+#ifdef CACHE_MEDIA
+	          cachebyte=cachebyte0;
+	          incache=incache0;
+#endif
+              }
 	  }else if(nlen.x>0){
               field[idx1d]+=npos.w;
 	  }
@@ -316,7 +381,7 @@ int main (int argc, char *argv[]) {
        }
 #endif
 
-//     srand(time(0));
+     srand(time(0));
      for (i=0; i<MAX_N; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
@@ -358,7 +423,8 @@ int main (int argc, char *argv[]) {
      for (i=0; i<MAX_N; i++) {
 	  photoncount+=(int)Plen[i].z;
      }
-     for (i=0; i<16; i++) {
+     total=MAX_N<16?MAX_N:16;
+     for (i=0; i<total; i++) {
            printf("% 4d[A% f % f % f]C%3d J%3d% 8f(P% 6.3f % 6.3f % 6.3f)T% 5.3f L% 5.3f %f %f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].z,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
