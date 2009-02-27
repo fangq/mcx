@@ -12,3 +12,5 @@ fastcache:
 	$(CUDACC) $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DFAST_MATH -DCACHE_MEDIA
 debug:
 	$(CUDACC) -deviceemu $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DCACHE_MEDIA
+aaa:
+	$(CUDACC) $(SOURCE)_svn.cu -o $(OUTPUT_DIR)/$(SOURCE) -DFAST_MATH
