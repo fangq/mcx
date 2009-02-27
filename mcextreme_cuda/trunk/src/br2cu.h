@@ -17,6 +17,8 @@ cudaMemcpyHostToDevice);}
 cudaMemcpyDeviceToHost);}
 #define int2(a,b) make_int2(a,b)
 #define int3(a,b,c) make_int3(a,b,c)
+#define uint2(a,b) make_uint2(a,b)
+#define uint3(a,b,c) make_uint3(a,b,c)
 #define float1(a) make_float1(a)
 #define float2(a,b) make_float2(a,b)
 #define float3(a,b,c) make_float3(a,b,c)
