@@ -40,10 +40,8 @@
 #define EPS    (1e-10)
 
 #ifdef __DEVICE_EMULATION__
-#define MAX_N      1
 #define MAX_THREAD 1
 #else
-#define MAX_N      1024
 #define MAX_THREAD 128
 #endif
 #define MAX_EVENT  1
@@ -309,7 +307,15 @@ void savedata(float *dat,int len,char *name){
      fclose(fp);
 }
 
+void mcx_error(int id,char *msg){
+     printf("MCX ERROR(%d):%s\n",id,msg);
+     exit(id);
+}
+
 int main (int argc, char *argv[]) {
+
+     int    nthread=1024;   /*the default total thread number*/
+     uint3  griddim;        /*the grid size*/
 
      float3 vsize=float3(1.f,1.f,1.f);
      float  minstep=1.f;
@@ -322,15 +328,15 @@ int main (int argc, char *argv[]) {
                                 float3(0.006f,0.75f,1.37f),float3(0.009f,0.95f,1.37f)};
 
      int i,j,k;
-     int total=MAX_EVENT;
+     int totalmove=MAX_EVENT;
      int photoncount=0;
      int tic;
 //     uint3 cp0=uint3(DIMX/2-30,DIMY/2-30,DIMZ/4),cp1=uint3(DIMX/2+30,DIMY/2+30,DIMZ/4+60);
      uint3 cp0=uint3(DIMX/2-10,DIMY/2-10,DIMZ/4),cp1=uint3(DIMX/2+10,DIMY/2+10,DIMZ/4+20);
      uint2 cachebox;
 
-     dim3 GridDim(MAX_N/MAX_THREAD);
-     dim3 BlockDim(MAX_THREAD);
+     dim3 GridDim;
+     dim3 BlockDim;
 
      uchar  media[DIMXYZ];
      float  field[DIMXYZ];
@@ -339,14 +345,27 @@ int main (int argc, char *argv[]) {
      uchar  mediacache[MAX_MEDIA_CACHE];
 #endif
 
-     float4 Ppos[MAX_N];
-     float4 Pdir[MAX_N];
-     float3 Plen[MAX_N];
-     uint   Pseed[MAX_N];
+     float4 *Ppos;
+     float4 *Pdir;
+     float3 *Plen;
+     uint   *Pseed;
 
      if(argc>1){
-	   total=atoi(argv[1]); //number of the total move per thread, this is not the photon number
+	   totalmove=atoi(argv[1]); //number of the total move per thread, this is not the photon number
+           if(argc>2){
+               nthread=atoi(argv[2]);
+           }
      }
+     if(nthread<=0) {
+           mcx_error(1,"total thread number must be positive (recommended to be multiple of 32, say 1024)");
+     }
+     GridDim.x=nthread/MAX_THREAD;
+     BlockDim.x=MAX_THREAD;
+
+     Ppos=(float4*)malloc(sizeof(float4)*nthread);
+     Pdir=(float4*)malloc(sizeof(float4)*nthread);
+     Plen=(float3*)malloc(sizeof(float3)*nthread);
+     Pseed=(uint*)malloc(sizeof(uint)*nthread);
 
 #ifdef CACHE_MEDIA
      printf("requested constant memory cache: %d (max allowed %d)\n",
@@ -363,13 +382,13 @@ int main (int argc, char *argv[]) {
      cudaMalloc((void **) &gfield, sizeof(float)*(DIMXYZ));
 
      float4 *gPpos;
-     cudaMalloc((void **) &gPpos, sizeof(float4)*(MAX_N));
+     cudaMalloc((void **) &gPpos, sizeof(float4)*nthread);
      float4 *gPdir;
-     cudaMalloc((void **) &gPdir, sizeof(float4)*(MAX_N));
+     cudaMalloc((void **) &gPdir, sizeof(float4)*nthread);
      float3 *gPlen;
-     cudaMalloc((void **) &gPlen, sizeof(float3)*(MAX_N));
+     cudaMalloc((void **) &gPlen, sizeof(float3)*nthread);
      uint   *gPseed;
-     cudaMalloc((void **) &gPseed, sizeof(uint)*(MAX_N));
+     cudaMalloc((void **) &gPseed, sizeof(uint)*nthread);
 
 
      memset(field,0,sizeof(float)*DIMXYZ);
@@ -398,7 +417,7 @@ int main (int argc, char *argv[]) {
 #endif
 
      srand(time(0));
-     for (i=0; i<MAX_N; i++) {
+     for (i=0; i<nthread; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
            Plen[i]=float3(0.f,0.f,0.f);
@@ -407,10 +426,10 @@ int main (int argc, char *argv[]) {
 
      tic=GetTimeMillis();
 
-     cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*MAX_N,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*MAX_N,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPlen,  Plen,  sizeof(float3)*MAX_N,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPseed, Pseed, sizeof(uint)*MAX_N,     cudaMemcpyHostToDevice);
+     cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*nthread,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*nthread,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPlen,  Plen,  sizeof(float3)*nthread,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPseed, Pseed, sizeof(uint)*nthread,     cudaMemcpyHostToDevice);
      cudaMemcpy(gfield, field, sizeof(float)*DIMXYZ, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar)*DIMXYZ,cudaMemcpyHostToDevice);
      cudaMemcpyToSymbol(gproperty, property, MAX_PROP*sizeof(float3), 0, cudaMemcpyHostToDevice);
@@ -420,27 +439,27 @@ int main (int argc, char *argv[]) {
 
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
 
-     mcx_main_loop<<<GridDim,BlockDim>>>(total,gmedia,gfield,vsize,minstep,lmax,gg,gg*gg,2.f*gg,\
+     mcx_main_loop<<<GridDim,BlockDim>>>(totalmove,gmedia,gfield,vsize,minstep,lmax,gg,gg*gg,2.f*gg,\
         	 1.f+gg*gg,1.f-gg*gg,1.f-gg,p0,c0,maxidx,cp0,cp1,cachebox,0,gPseed,gPpos,gPdir,gPlen);
 
      printf("complete launching kernels : %d ms\n",GetTimeMillis()-tic);
 
-     cudaMemcpy(Ppos,  gPpos, sizeof(float4)*MAX_N, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Ppos,  gPpos, sizeof(float4)*nthread, cudaMemcpyDeviceToHost);
 
      printf("complete retrieving pos : %d ms\n",GetTimeMillis()-tic);
 
-     cudaMemcpy(Pdir,  gPdir, sizeof(float4)*MAX_N, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Plen,  gPlen, sizeof(float3)*MAX_N, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Pseed, gPseed,sizeof(uint)*MAX_N,   cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pdir,  gPdir, sizeof(float4)*nthread, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Plen,  gPlen, sizeof(float3)*nthread, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pseed, gPseed,sizeof(uint)*nthread,   cudaMemcpyDeviceToHost);
      cudaMemcpy(field, gfield,sizeof(float)*DIMXYZ,cudaMemcpyDeviceToHost);
 
      printf("complete retrieving all : %d ms\n",GetTimeMillis()-tic);
 
-     for (i=0; i<MAX_N; i++) {
+     for (i=0; i<nthread; i++) {
 	  photoncount+=(int)Plen[i].z;
      }
-     total=MAX_N<16?MAX_N:16;
-     for (i=0; i<total; i++) {
+     totalmove=nthread<16?nthread:16;
+     for (i=0; i<totalmove; i++) {
            printf("% 4d[A% f % f % f]C%3d J%3d% 8f(P% 6.3f % 6.3f % 6.3f)T% 5.3f L% 5.3f %f %f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].z,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
