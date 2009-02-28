@@ -37,7 +37,7 @@
 #define MAX_MT_RAND 4294967296
 #define R_MAX_MT_RAND 2.32830643653870e-10
 #define TWO_PI 6.28318530717959f
-
+#define EPS    (1e-10)
 
 #ifdef __DEVICE_EMULATION__
 #define MAX_N      1
@@ -139,6 +139,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      if(mediaid==0) {
           return; /* the initial position is not within the medium*/
      }
+     // using while(nlen.z<totalmove) will make this 4 times slower with the same amount of photons
 
      for(i=0;i<totalmove;i++){
 	  if(nlen.x<=0.f) {  /* if this photon finished the current jump */
@@ -156,7 +157,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                        /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234*/
                        /*see Boas2003*/
 		       ran=mt19937s();
-                       if(gg>1e-10){
+                       if(gg>EPS){
 		           tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
 		           tmp0*=tmp0;
 		           tmp0=GPUDIV((one_add_gg2-tmp0),ggx2);
@@ -228,16 +229,16 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	      /*if hit the boundary or exit the domain, launch a new one*/
 
               /*time to hit the wall in each direction*/
-              htime.x=(ndir.x>1e-10||ndir.x<-1e-10)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
-              htime.y=(ndir.y>1e-10||ndir.y<-1e-10)?(floorf(npos.y)+(ndir.y>0.f)-npos.y)/ndir.y:1e10;
-              htime.z=(ndir.z>1e-10||ndir.z<-1e-10)?(floorf(npos.z)+(ndir.z>0.f)-npos.z)/ndir.z:1e10;
+              htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
+              htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y>0.f)-npos.y)/ndir.y:1e10;
+              htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z>0.f)-npos.z)/ndir.z:1e10;
               tmp0=fminf(fminf(htime.x,htime.y),htime.z);
               flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
               prop=gproperty[mediaid];
 
 #ifdef __DEVICE_EMULATION__
-              printf("--> ID%d J%d C%d len %f flip %f %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
-                  (int)nlen.z,nlen.y, flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
+              printf("--> ID%d J%d C%d len %f flip %d %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
+                  (int)nlen.z,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
 #endif
 
               /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of old ones*/
@@ -288,6 +289,10 @@ printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %
 #endif
               }
 	  }else if(nlen.x>0){
+#ifdef __DEVICE_EMULATION__
+    printf("field add to %d->%f(%d)\n",idx1d,npos.w,(int)nlen.z);
+#endif
+
               field[idx1d]+=npos.w;
 	  }
      }
@@ -340,7 +345,7 @@ int main (int argc, char *argv[]) {
      uint   Pseed[MAX_N];
 
      if(argc>1){
-	   total=atoi(argv[1]);
+	   total=atoi(argv[1]); //number of the total move per thread, this is not the photon number
      }
 
 #ifdef CACHE_MEDIA
@@ -440,7 +445,7 @@ int main (int argc, char *argv[]) {
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].z,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
      }
-     printf("simulating total photon %d\n",photoncount);
+     printf("simulated %d photons\n",photoncount);
      savedata(field,DIMX*DIMY*DIMZ,"field.dat");
 
      cudaFree(gmedia);
