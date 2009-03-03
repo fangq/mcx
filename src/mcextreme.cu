@@ -56,7 +56,7 @@
 #ifdef CACHE_MEDIA
 #define MAX_MEDIA_CACHE   61440  /*52k for local media read*/
 #define MAX_WRITE_CACHE   (MAX_MEDIA_CACHE>>4)
-#define MEDIA_BITS  2            /*2^2=4 media types*/
+#define MEDIA_BITS  8            /*theoretically one can use smaller bits to pack more media*/
 #define MEDIA_PACK  ((8/MEDIA_BITS)>>1)            /*one byte packs 2^MEDIA_PACK voxel*/
 #define MEDIA_MOD   ((1<<MEDIA_PACK)-1)    /*one byte packs 2^MEDIA_PACK voxel*/
 #define MEDIA_MASK  ((1<<(MEDIA_BITS))-1)
@@ -144,8 +144,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
           incache0=1;
           cachebyte=int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z));
           cachebyte0=cachebyte;
-          mediaid=(int)gmediacache[cachebyte>>MEDIA_PACK];
-          mediaid=(mediaid >> (cachebyte & MEDIA_MOD)*MEDIA_BITS) & MEDIA_MASK;
+          mediaid=gmediacache[cachebyte];
      }
 #endif
 
@@ -168,7 +167,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
 #ifdef __DEVICE_EMULATION__
                if(isinf(nlen.x))
-printf("%d %d %20.18e\n%20.18e\n%20.18e\n",idx,i,t[0],t[1],t[2]);
+                  printf("%d %d %20.18e\n%20.18e\n%20.18e\n",idx,i,t[0],t[1],t[2]);
 #endif
 
 #endif
@@ -250,7 +249,7 @@ printf("%d %d %20.18e\n%20.18e\n%20.18e\n",idx,i,t[0],t[1],t[2]);
 	       nlen.y+=minstep; /*total moved length along the current jump*/
                idx1dold=idx1d;
                idx1d=int(floorf(npos.x)*DIMYZ+floorf(npos.y)*DIMZ+floorf(npos.z));
-#ifdef CACHE_MEDIA     
+#ifdef CACHE_MEDIA  
                if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
                     incache=1;
                     cachebyte=int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z));
@@ -261,14 +260,9 @@ printf("%d %d %20.18e\n%20.18e\n%20.18e\n",idx,i,t[0],t[1],t[2]);
 	  }
 
 #ifdef CACHE_MEDIA
-          if(incache){
-		mediaid=(int)gmediacache[cachebyte>>MEDIA_PACK];
-                mediaid=(mediaid >> (cachebyte & MEDIA_MOD)*MEDIA_BITS) & MEDIA_MASK;
-          }else{
-#endif
-                mediaid=media[idx1d];
-#ifdef CACHE_MEDIA
-          }
+          mediaid=incache?gmediacache[cachebyte]:media[idx1d];
+#else
+          mediaid=media[idx1d];
 #endif
 
 	  if(mediaid==0||nlen.y>lmax||npos.x<0||npos.y<0||npos.z<0||npos.x>maxidx.x||npos.y>maxidx.y||npos.z>maxidx.z){
@@ -382,8 +376,8 @@ int main (int argc, char *argv[]) {
      int totalmove=MAX_EVENT;
      int photoncount=0;
      int tic;
-//     uint3 cp0=uint3(DIMX/2-30,DIMY/2-30,DIMZ/4),cp1=uint3(DIMX/2+30,DIMY/2+30,DIMZ/4+60);
      uint3 cp0=uint3(DIMX/2-10,DIMY/2-10,DIMZ/4),cp1=uint3(DIMX/2+10,DIMY/2+10,DIMZ/4+20);
+//     uint3 cp0=uint3(DIMX/2-35,DIMY/2-35,DIMZ/4-1),cp1=uint3(DIMX/2+35,DIMY/2+35,DIMZ/4+65);
      uint2 cachebox;
 
      dim3 GridDim;
@@ -445,9 +439,9 @@ int main (int argc, char *argv[]) {
      memset(field,0,sizeof(float)*DIMXYZ);
      memset(media,0,sizeof(uchar)*DIMXYZ);
 
-     for (i=DIMX/4; i<3*DIMX/4; i++)
-      for (j=DIMY/4; j<3*DIMY/4; j++)
-       for (k=DIMZ/4; k<3*DIMZ/4; k++) {
+     for (i=DIMX/2-25; i<DIMX/2+25; i++)
+      for (j=DIMX/2-25; j<DIMX/2+25; j++)
+       for (k=DIMZ/4; k<DIMZ/4+50; k++) {
            media[INDXYZ(i,j,k)]=1; 
        }
 
@@ -457,6 +451,9 @@ int main (int argc, char *argv[]) {
 #ifdef CACHE_MEDIA
      count=0;
      memset(mediacache,0,MAX_MEDIA_CACHE);
+
+     /*only use 1byte to store media info, unpacking bits on-the-fly turned out to be expensive in gpu*/
+
      for (i=cp0.x; i<=cp1.x; i++)
       for (j=cp0.y; j<=cp1.y; j++)
        for (k=cp0.z; k<=cp1.z; k++) {
