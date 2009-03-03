@@ -73,6 +73,7 @@ typedef unsigned int uint;
 #define TEMPER1         0x9d2c5680
 #define TEMPER2         0xefc60000
 
+#define RAND_BUF_LEN 1
 
 /*************************************************************************************
  * This is a shared memory implementation that keeps the full 626 words of state

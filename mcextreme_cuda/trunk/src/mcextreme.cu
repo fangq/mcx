@@ -18,8 +18,13 @@
 
 #include <stdio.h>
 #include "br2cu.h"
-#include "mt_rand_s.cu"
 #include "tictoc.h"
+
+#ifdef USE_MT_RAND
+#include "mt_rand_s.cu"
+#else
+#include "logistic_rand.cu"
+#endif
 
 // dimension of the target domain
 #define DIMX 128
@@ -105,18 +110,28 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      float3 htime;
 
      int i, idx1d, idx1dold,idxorig, mediaid;
+
      float flipdir,n1,Rtotal;
 #ifdef CACHE_MEDIA
      int incache=0,incache0=0,cachebyte=-1,cachebyte0=-1;
 #endif
+
+#ifdef USE_MT_RAND
      uint   ran;
+#else
+     RandType ran;
+     RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
+     logistic_init(t,tnew,n_seed,idx);
+#endif
+
      float3 prop;
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
 
-
+#ifdef USE_MT_RAND
      mt19937si(n_seed[idx]);
      __syncthreads();
+#endif
 
      // assuming the initial positions are within the domain
      idx1d=int(floorf(npos.x)*DIMYZ+floorf(npos.y)*DIMZ+floorf(npos.z));
@@ -142,42 +157,75 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      for(i=0;i<totalmove;i++){
 	  if(nlen.x<=0.f) {  /* if this photon finished the current jump */
 
+#ifdef USE_MT_RAND
 	       ran=mt19937s(); /*random number [0,MAX_MT_RAND)*/
-
    	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
+#else
+               logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
+               ran=t[0];
+
+               nlen.x=(ran<MIN_INVERSE_LIMIT)?-GPULOG(ran):-GPULOG(logistic_uniform(ran));
+
+#ifdef __DEVICE_EMULATION__
+               if(isinf(nlen.x))
+printf("%d %d %20.18e\n%20.18e\n%20.18e\n",idx,i,t[0],t[1],t[2]);
+#endif
+
+#endif
 
 	       if(npos.w<1.f){ /*weight*/
                        /*random arimuthal angle*/
+#ifdef USE_MT_RAND
                        ran=mt19937s();
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
+#else
+                       ran=t[1]; /*random number [0,MAX_MT_RAND)*/
+                       tmp0=TWO_PI*logistic_uniform(ran); /*will be reused to minimize register*/
+#endif
                        GPUSINCOS(tmp0,&sphi,&cphi);
 
                        /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234*/
                        /*see Boas2003*/
+
+#ifdef USE_MT_RAND
 		       ran=mt19937s();
+#else
+                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
+#endif
+
                        if(gg>EPS){
+#ifdef USE_MT_RAND
 		           tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
+#else
+                           tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*logistic_uniform(ran) ));
+#endif
+
 		           tmp0*=tmp0;
 		           tmp0=GPUDIV((one_add_gg2-tmp0),ggx2);
 		           theta=acosf(tmp0);
 		           stheta=GPUSIN(theta);
 		           ctheta=tmp0;
                        }else{
+#ifdef USE_MT_RAND
 			   theta=TWO_PI*ran*R_MAX_MT_RAND;
+#else
+                           theta=TWO_PI*logistic_uniform(ran);
+#endif
+
                            GPUSINCOS(theta,&stheta,&ctheta);
                        }
-		       if( ndir.z>-1.f && ndir.z<1.f ) {
+		       if( ndir.z>-1.f+EPS && ndir.z<1.f-EPS ) {
 		           tmp0=1.f-ndir.z*ndir.z;   /*reuse tmp to minimize registers*/
 		           tmp1=rsqrtf(tmp0);
 		           tmp1=stheta*tmp1;
-			   if(stheta>1e-20) {  /*strange: if stheta=0, I will get nan :(  FQ */
+//			   if(stheta>1e-20) {  /*strange: if stheta=0, I will get nan :(  FQ */
 			     ndir=float4(
 				tmp1*(ndir.x*ndir.z*cphi - ndir.y*sphi) + ndir.x*ctheta,
 				tmp1*(ndir.y*ndir.z*cphi + ndir.x*sphi) + ndir.y*ctheta,
 				-tmp1*tmp0*cphi                         + ndir.z*ctheta,
 				ndir.w
 				);
-                             }
+//                             }
 		       }else{
 			   ndir=float4(stheta*cphi,stheta*sphi,ctheta,ndir.w);
  		       }
@@ -235,8 +283,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
               prop=gproperty[mediaid];
 
 #ifdef __DEVICE_EMULATION__
-              printf("--> ID%d J%d C%d len %f flip %d %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
-                  (int)nlen.z,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
+//              printf("--> ID%d J%d C%d len %f flip %d %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
+//                  (int)nlen.z,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
 #endif
 
               /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of old ones*/
@@ -267,9 +315,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
        	       	     ctheta=tmp1*cphi*cphi+tmp0*len;
        	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
 #ifdef __DEVICE_EMULATION__
-printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
-printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.z,
-            flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
+//printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
+//printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.z,
+//            flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
                      npos.w*=Rtotal;
                   } /* else, total internal reflection, no loss*/
@@ -288,13 +336,16 @@ printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %
               }
 	  }else if(nlen.x>0){
 #ifdef __DEVICE_EMULATION__
-    printf("field add to %d->%f(%d)\n",idx1d,npos.w,(int)nlen.z);
+//    printf("field add to %d->%f(%d)\n",idx1d,npos.w,(int)nlen.z);
 #endif
-
               field[idx1d]+=npos.w;
 	  }
      }
+#ifdef USE_MT_RAND
      n_seed[idx]=(ran&0xffffffffu);
+#else
+     n_seed[idx]=ran*0xffffffffu;
+#endif
      n_pos[idx]=npos;
      n_dir[idx]=ndir;
      n_len[idx]=nlen;
@@ -365,7 +416,7 @@ int main (int argc, char *argv[]) {
      Ppos=(float4*)malloc(sizeof(float4)*nthread);
      Pdir=(float4*)malloc(sizeof(float4)*nthread);
      Plen=(float3*)malloc(sizeof(float3)*nthread);
-     Pseed=(uint*)malloc(sizeof(uint)*nthread);
+     Pseed=(uint*)malloc(sizeof(uint)*nthread*RAND_BUF_LEN);
 
 #ifdef CACHE_MEDIA
      printf("requested constant memory cache: %d (max allowed %d)\n",
@@ -388,7 +439,7 @@ int main (int argc, char *argv[]) {
      float3 *gPlen;
      cudaMalloc((void **) &gPlen, sizeof(float3)*nthread);
      uint   *gPseed;
-     cudaMalloc((void **) &gPseed, sizeof(uint)*nthread);
+     cudaMalloc((void **) &gPseed, sizeof(uint)*nthread*RAND_BUF_LEN);
 
 
      memset(field,0,sizeof(float)*DIMXYZ);
@@ -416,20 +467,21 @@ int main (int argc, char *argv[]) {
        }
 #endif
 
-     srand(time(0));
+//     srand(time(0));
      for (i=0; i<nthread; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
            Plen[i]=float3(0.f,0.f,0.f);
+     }
+     for (i=0; i<nthread*RAND_BUF_LEN; i++) {
 	   Pseed[i]=rand();
      }
-
      tic=GetTimeMillis();
 
      cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPlen,  Plen,  sizeof(float3)*nthread,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPseed, Pseed, sizeof(uint)*nthread,     cudaMemcpyHostToDevice);
+     cudaMemcpy(gPseed, Pseed, sizeof(uint)*nthread*RAND_BUF_LEN,  cudaMemcpyHostToDevice);
      cudaMemcpy(gfield, field, sizeof(float)*DIMXYZ, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar)*DIMXYZ,cudaMemcpyHostToDevice);
      cudaMemcpyToSymbol(gproperty, property, MAX_PROP*sizeof(float3), 0, cudaMemcpyHostToDevice);
@@ -450,7 +502,7 @@ int main (int argc, char *argv[]) {
 
      cudaMemcpy(Pdir,  gPdir, sizeof(float4)*nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Plen,  gPlen, sizeof(float3)*nthread, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Pseed, gPseed,sizeof(uint)*nthread,   cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pseed, gPseed,sizeof(uint)*nthread*RAND_BUF_LEN,   cudaMemcpyDeviceToHost);
      cudaMemcpy(field, gfield,sizeof(float)*DIMXYZ,cudaMemcpyDeviceToHost);
 
      printf("complete retrieving all : %d ms\n",GetTimeMillis()-tic);
