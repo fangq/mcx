@@ -18,26 +18,27 @@
 #include <math.h>
 
 #define RAND_BUF_LEN 3     /*use 5 or 7 will be better*/
-#define R_PI 0.318309886183791
+#define R_PI 0.318309886183791f
 #define INIT_LOGISTIC 100
 #define R_MAX_C_RAND (1./RAND_MAX)
 
-#define FUN(x)               (4.0*(x)*(1.0-(x)))
-#define RING_FUN(x,y,z)      (NU2*(x)+NU*((y)+(z)))
-
 #ifndef DOUBLE_PREC_LOGISTIC
   typedef float RandType;
-  #define NU 1e-8
-  #define MIN_INVERSE_LIMIT 1e-7
-  #define logistic_uniform(v)  (acosf(1.0-2.0*(v))*R_PI)
+  #define FUN(x)               (4.f*(x)*(1.f-(x)))
+  #define NU 1e-8f
+  #define NU2 (1.f-2.f*NU)
+  #define MIN_INVERSE_LIMIT 1e-7f
+  #define logistic_uniform(v)  (acosf(1.f-2.f*(v))*R_PI)
 #else
   typedef double RandType;
+  #define FUN(x)               (4.0*(x)*(1.0-(x)))
   #define NU 1e-14
+  #define NU2 (1.0-2.0*NU)
   #define MIN_INVERSE_LIMIT 1e-12
   #define logistic_uniform(v)  (acos(1.0-2.0*(v))*R_PI)
 #endif
 
-#define NU2 (1.0-2.0*NU)
+#define RING_FUN(x,y,z)      (NU2*(x)+NU*((y)+(z)))
 
 
 __device__ void logistic_step(RandType *t, RandType *tnew, int len_1){
@@ -74,4 +75,5 @@ __device__ void logistic_init(RandType *t,RandType *tnew,uint seed[],uint idx){
      for(i=0;i<INIT_LOGISTIC;i++)  /*initial randomization*/
            logistic_rand(t,tnew,RAND_BUF_LEN-1);
 }
+
 #endif
