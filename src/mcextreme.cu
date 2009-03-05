@@ -11,6 +11,7 @@
 //    2009/02/24 MT rand now works fine, added FAST_MATH
 //    2009/02/25 added CACHE_MEDIA read
 //    2009/02/27 early support of boundary reflection
+//    2009/03/02 added logistic-map based random number generator
 //
 // License: unpublished version, use by author's permission only
 //
@@ -119,9 +120,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef USE_MT_RAND
      uint   ran;
 #else
-     RandType ran;
-     RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
-     logistic_init(t,tnew,n_seed,idx);
+     RandType ran, t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
 #endif
 
      float3 prop;
@@ -131,6 +130,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef USE_MT_RAND
      mt19937si(n_seed[idx]);
      __syncthreads();
+#else
+     logistic_init(t,tnew,n_seed,idx);
 #endif
 
      // assuming the initial positions are within the domain
@@ -151,26 +152,25 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      if(mediaid==0) {
           return; /* the initial position is not within the medium*/
      }
-     // using while(nlen.z<totalmove) will make this 4 times slower with the same amount of photons
+
+     // using "while(nlen.z<totalmove)" loop will make this 4 times slower with the same amount of photons
 
      for(i=0;i<totalmove;i++){
-	  if(nlen.x<=0.f) {  /* if this photon finished the current jump */
+	  if(nlen.x<=0.f) {  /* if this photon has finished the current jump */
 
 #ifdef USE_MT_RAND
 	       ran=mt19937s(); /*random number [0,MAX_MT_RAND)*/
    	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
 #else
                logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
-               ran=t[0];
-
-               nlen.x=(ran<MIN_INVERSE_LIMIT)?-GPULOG(ran):-GPULOG(logistic_uniform(ran));
+               ran=logistic_uniform(t[2]);                             /*order 2,0,1, small shuffle, not really help*/
+               nlen.x= ((ran==0.f)?(-GPULOG(t[2])):(-GPULOG(ran)));
+#endif
 
 #ifdef __DEVICE_EMULATION__
-               if(isinf(nlen.x))
-                  printf("%d %d %20.18e\n%20.18e\n%20.18e\n",idx,i,t[0],t[1],t[2]);
+               printf("1 %20.16e \n",nlen.x);
 #endif
 
-#endif
 
 	       if(npos.w<1.f){ /*weight*/
                        /*random arimuthal angle*/
@@ -178,18 +178,22 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                        ran=mt19937s();
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
 #else
-                       ran=t[1]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[0]; /*random number [0,MAX_MT_RAND)*/
                        tmp0=TWO_PI*logistic_uniform(ran); /*will be reused to minimize register*/
+#endif
+
+#ifdef __DEVICE_EMULATION__
+               printf("2 %20.16e\n",tmp0);
 #endif
                        GPUSINCOS(tmp0,&sphi,&cphi);
 
                        /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234*/
-                       /*see Boas2003*/
+                       /*see Boas2002*/
 
 #ifdef USE_MT_RAND
 		       ran=mt19937s();
 #else
-                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[1]; /*random number [0,MAX_MT_RAND)*/
 #endif
 
                        if(gg>EPS){
@@ -197,6 +201,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 		           tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*ran*R_MAX_MT_RAND));
 #else
                            tmp0=GPUDIV(one_sub_gg2,(one_sub_gg+ggx2*logistic_uniform(ran) ));
+#endif
+
+#ifdef __DEVICE_EMULATION__
+               printf("3 %20.16e\n",tmp0);
 #endif
 
 		           tmp0*=tmp0;
@@ -415,6 +423,7 @@ int main (int argc, char *argv[]) {
 #ifdef CACHE_MEDIA
      printf("requested constant memory cache: %d (max allowed %d)\n",
          (cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1),(MAX_MEDIA_CACHE<<MEDIA_PACK));
+
      if((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1)> (MAX_MEDIA_CACHE<<MEDIA_PACK)){
 	printf("the requested cache size is too big\n");
 	exit(1);
@@ -452,7 +461,7 @@ int main (int argc, char *argv[]) {
      count=0;
      memset(mediacache,0,MAX_MEDIA_CACHE);
 
-     /*only use 1byte to store media info, unpacking bits on-the-fly turned out to be expensive in gpu*/
+     /*only use 1-byte to store media info, unpacking bits on-the-fly turned out to be expensive in gpu*/
 
      for (i=cp0.x; i<=cp1.x; i++)
       for (j=cp0.y; j<=cp1.y; j++)
