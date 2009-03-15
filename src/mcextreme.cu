@@ -43,19 +43,21 @@
 #define MAX_MT_RAND 4294967296
 #define R_MAX_MT_RAND 2.32830643653870e-10
 #define TWO_PI 6.28318530717959f
-#define EPS    (1e-10)
+#define EPS    (1e-10f)
 
 #ifdef __DEVICE_EMULATION__
 #define MAX_THREAD 1
 #else
 #define MAX_THREAD 128
+//#define MAX_THREAD 256
 #endif
 #define MAX_EVENT  1
 #define MAX_PROP   256
 
 
 #ifdef CACHE_MEDIA
-#define MAX_MEDIA_CACHE   61440  /*52k for local media read*/
+//#define MAX_MEDIA_CACHE   61440  /*52k for local media read*/
+#define MAX_MEDIA_CACHE   40000  /*52k for local media read*/
 #define MAX_WRITE_CACHE   (MAX_MEDIA_CACHE>>4)
 #define MEDIA_BITS  8            /*theoretically one can use smaller bits to pack more media*/
 #define MEDIA_PACK  ((8/MEDIA_BITS)>>1)            /*one byte packs 2^MEDIA_PACK voxel*/
@@ -120,6 +122,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef USE_MT_RAND
      uint   ran;
 #else
+     uint  randid=0;
      RandType ran, t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
 #endif
 
@@ -163,8 +166,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
 #else
                logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
-               ran=logistic_uniform(t[2]);                             /*order 2,0,1, small shuffle, not really help*/
-               nlen.x= ((ran==0.f)?(-GPULOG(t[2])):(-GPULOG(ran)));
+               randid=0;
+
+               ran=logistic_uniform(t[0]);                             /*order 2,0,1, small shuffle, not really help*/
+               nlen.x= ((ran==0.f)?(-GPULOG(t[0])):(-GPULOG(ran)));
 #endif
 
 #ifdef __DEVICE_EMULATION__
@@ -178,7 +183,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                        ran=mt19937s();
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
 #else
-                       ran=t[0]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
                        tmp0=TWO_PI*logistic_uniform(ran); /*will be reused to minimize register*/
 #endif
 
@@ -193,7 +198,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef USE_MT_RAND
 		       ran=mt19937s();
 #else
-                       ran=t[1]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[4]; /*random number [0,MAX_MT_RAND)*/
 #endif
 
                        if(gg>EPS){
@@ -278,8 +283,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
               /*time to hit the wall in each direction*/
               htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
-              htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y>0.f)-npos.y)/ndir.y:1e10;
-              htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z>0.f)-npos.z)/ndir.z:1e10;
+              htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y>0.f)-npos.y)/ndir.y:1e10f;
+              htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z>0.f)-npos.z)/ndir.z:1e10f;
               tmp0=fminf(fminf(htime.x,htime.y),htime.z);
               flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
               prop=gproperty[mediaid];
@@ -384,7 +389,7 @@ int main (int argc, char *argv[]) {
      int totalmove=MAX_EVENT;
      int photoncount=0;
      int tic;
-     uint3 cp0=uint3(DIMX/2-10,DIMY/2-10,DIMZ/4),cp1=uint3(DIMX/2+10,DIMY/2+10,DIMZ/4+20);
+     uint3 cp0=uint3(DIMX/2-3,DIMY/2-3,DIMZ/4),cp1=uint3(DIMX/2+4,DIMY/2+4,DIMZ/4+5);
 //     uint3 cp0=uint3(DIMX/2-35,DIMY/2-35,DIMZ/4-1),cp1=uint3(DIMX/2+35,DIMY/2+35,DIMZ/4+65);
      uint2 cachebox;
 
@@ -473,7 +478,7 @@ int main (int argc, char *argv[]) {
        }
 #endif
 
-//     srand(time(0));
+     srand(time(0));
      for (i=0; i<nthread; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
@@ -534,6 +539,10 @@ int main (int argc, char *argv[]) {
      cudaFree(gPdir);
      cudaFree(gPlen);
      cudaFree(gPseed);
+     free(Ppos);
+     free(Pdir);
+     free(Plen);
+     free(Pseed);
 
      return 0;
 }
