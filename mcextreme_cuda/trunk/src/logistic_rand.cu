@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define RAND_BUF_LEN 3     /*use 5 or 7 will be better*/
+#define RAND_BUF_LEN 5     /*use 5 or 7 will be better*/
 #define R_PI 0.318309886183791f
 #define INIT_LOGISTIC 100
 #define R_MAX_C_RAND (1./RAND_MAX)
@@ -42,22 +42,34 @@
 
 
 __device__ void logistic_step(RandType *t, RandType *tnew, int len_1){
-
-//    int i;
-//    for(i=0;i<=len_1;i++)
-//       t[i]=FUN(t[i]);
-//    tnew[0]=RING_FUN(t[0],t[1],t[len_1]);
-//    for(i=1;i<len_1;i++)
-//       tnew[i]=RING_FUN(t[i],t[i-1],t[i+1]);
-//    tnew[len_1]=RING_FUN(t[len_1],t[0],t[len_1-1]);
-
+/*
+    int i;
+    for(i=0;i<=len_1;i++)
+       t[i]=FUN(t[i]);
+    tnew[0]=RING_FUN(t[0],t[1],t[len_1]);
+    for(i=1;i<len_1;i++)
+       tnew[i]=RING_FUN(t[i],t[i-1],t[i+1]);
+    tnew[len_1]=RING_FUN(t[len_1],t[0],t[len_1-1]);
+*/
+    RandType tmp;
     t[0]=FUN(t[0]);
     t[1]=FUN(t[1]);
     t[2]=FUN(t[2]);
-    tnew[0]=RING_FUN(t[0],t[2],t[1]);
-    tnew[1]=RING_FUN(t[1],t[0],t[2]);
-    tnew[2]=RING_FUN(t[2],t[1],t[0]);
+    t[3]=FUN(t[3]);
+    t[4]=FUN(t[4]);
+    tnew[3]=RING_FUN(t[0],t[4],t[1]);   /* shuffle the results by separation of 2*/
+    tnew[4]=RING_FUN(t[1],t[0],t[2]);
+    tnew[0]=RING_FUN(t[2],t[1],t[3]);
+    tnew[1]=RING_FUN(t[3],t[2],t[4]);
+    tnew[2]=RING_FUN(t[4],t[3],t[0]);
+    tmp =t[0];
+    t[0]=t[2];
+    t[2]=t[4];
+    t[4]=t[1];
+    t[1]=t[3];
+    t[3]=tmp;
 }
+
 __device__ void logistic_rand(RandType *t,RandType *tnew,int len_1){
     logistic_step(t,tnew,len_1);
     logistic_step(tnew,t,len_1);
