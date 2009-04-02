@@ -3,8 +3,10 @@
 #include <string.h>
 #include "mcx_utils.h"
 
-void mcx_savedata(float *dat,int len,char *name){
+void mcx_savedata(float *dat,int len,Config *cfg){
      FILE *fp;
+     char name[MAX_PATH_LENGTH];
+     sprintf(name,"%s.mc2",cfg->session);
      fp=fopen(name,"wb");
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
@@ -43,6 +45,9 @@ void mcx_initcfg(Config *cfg){
      cfg->dim.x=0;
      cfg->dim.y=0;
      cfg->dim.z=0;
+     cfg->totalmove=0;
+     cfg->nthread=0;
+     cfg->seed=0;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -63,46 +68,119 @@ void mcx_clearcfg(Config *cfg){
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      int i;
-     char filename[MAX_PATH_LENGTH]={0};
+     char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH];
      
-     if(in==stdin) fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
+     if(in==stdin) 
+     	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
      fscanf(in,"%d", &(cfg->nphoton) ); 
-     if(in==stdin) fprintf(stdout,"Please specify random number generator seed: [1234567]\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+     if(in==stdin) 
+     	fprintf(stdout,"%d\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
      fscanf(in,"%d", &(cfg->seed) );
-     if(in==stdin) fprintf(stdout,"Please specify the position of the source: [10 10 5]\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+     if(in==stdin) 
+     	fprintf(stdout,"%d\nPlease specify the position of the source: [10 10 5]\n\t",cfg->seed);
      fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) );
-     if(in==stdin) fprintf(stdout,"Please specify the normal direction of the source fiber: [0 0 1]\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+     if(in==stdin) 
+     	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
+                                   cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
      fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) );
-     if(in==stdin) fprintf(stdout,"Please specify the time gates in seconds (start end and step) [0.0 1e-9 1e-10]\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+     if(in==stdin) 
+     	fprintf(stdout,"%f %f %f\nPlease specify the time gates in seconds (start end and step) [0.0 1e-9 1e-10]\n\t",
+                                   cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z);
      fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) );
+     fgets(comment,MAX_PATH_LENGTH,in);
 
-     if(in==stdin) fprintf(stdout,"Please specify the path to the volume binary file:\n\t");
+     if(in==stdin) 
+     	fprintf(stdout,"%f %f %f\nPlease specify the path to the volume binary file:\n\t",
+                                   cfg->tstart,cfg->tend,cfg->tstep);
      fscanf(in,"%s", filename);
-     
-     if(in==stdin) fprintf(stdout,"Please specify the x voxel size (in mm), x dimension, min and max x-index [1.0 100 0 100]:\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(in==stdin) 
+     	fprintf(stdout,"%s\nPlease specify the x voxel size (in mm), x dimension, min and max x-index [1.0 100 1 100]:\n\t",filename);
      fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x));
-     if(in==stdin) fprintf(stdout,"Please specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 0 100]:\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(in==stdin) 
+     	fprintf(stdout,"%f %d %d %d\nPlease specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 1 100]:\n\t",
+                                  cfg->steps.x,cfg->dim.x,cfg->crop0.x,cfg->crop1.x);
      fscanf(in,"%f %d %d %d", &(cfg->steps.y),&(cfg->dim.y),&(cfg->crop0.y),&(cfg->crop1.y));
-     if(in==stdin) fprintf(stdout,"Please specify the z voxel size (in mm), z dimension, min and max z-index [1.0 100 0 100]:\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(in==stdin) 
+     	fprintf(stdout,"%f %d %d %d\nPlease specify the z voxel size (in mm), z dimension, min and max z-index [1.0 100 1 100]:\n\t",
+                                  cfg->steps.y,cfg->dim.y,cfg->crop0.y,cfg->crop1.y);
      fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z));
-     if(in==stdin) fprintf(stdout,"Please specify the total types of media:\n\t");
+     fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(in==stdin) 
+     	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
+                                  cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
      fscanf(in,"%d", &(cfg->medianum));
+     cfg->medianum++;
+     fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(in==stdin) 
+     	fprintf(stdout,"%d\n",cfg->medianum);
      cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
-     for(i=0;i<cfg->medianum;i++){
-        if(in==stdin) fprintf(stdout,"Please define medium #%d: mus(1/mm), anisotropy, mua(1/mm) and refraction index: [1.01 0.01 0.04 1.37]\n\t",i);
+     cfg->prop[0].mua=0.f; // air
+     cfg->prop[0].mus=0.f;
+     cfg->prop[0].g=1.f;
+     cfg->prop[0].n=1.f;
+     for(i=1;i<cfg->medianum;i++){
+        if(in==stdin) 
+		fprintf(stdout,"Please define medium #%d: mus(1/mm), anisotropy, mua(1/mm) and refraction index: [1.01 0.01 0.04 1.37]\n\t",i);
      	fscanf(in, "%f %f %f %f", &(cfg->prop[i].mus),&(cfg->prop[i].g),&(cfg->prop[i].mua),&(cfg->prop[i].n));
+        fgets(comment,MAX_PATH_LENGTH,in);
+        if(in==stdin) 
+		fprintf(stdout,"%f %f %f %f\n",cfg->prop[i].mus,cfg->prop[i].g,cfg->prop[i].mua,cfg->prop[i].n);
      }
-     if(in==stdin) fprintf(stdout,"Please specify the total number of detectors:\n\t");
-     fscanf(in,"%d", &(cfg->detnum));
-     cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->detnum);
+     if(in==stdin) 
+     	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in mm):\n\t");
+     fscanf(in,"%d %f", &(cfg->detnum), &(cfg->detradius));
+     fgets(comment,MAX_PATH_LENGTH,in);
+     if(in==stdin) 
+     	fprintf(stdout,"%d %f\n",cfg->detnum,cfg->detradius);
+     cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
      for(i=0;i<cfg->detnum;i++){
-        if(in==stdin) fprintf(stdout,"Please define detector #%d: x,y,z (in mm) and fiber diameters (in mm): [5 5 5 1]\n\t",i);
-     	fscanf(in, "%f %f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z),&(cfg->detpos[i].w));
+        if(in==stdin) 
+		fprintf(stdout,"Please define detector #%d: x,y,z (in mm): [5 5 5 1]\n\t",i);
+     	fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z));
+        fgets(comment,MAX_PATH_LENGTH,in);
+        if(in==stdin) 
+		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
      if(filename[0]){
+        if(cfg->session[0]=='\0'){
+		strcpy(cfg->session,filename);
+	}
         mcx_loadvolume(filename,cfg);
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation");
+     }
+}
+
+void mcx_saveconfig(FILE *out, Config *cfg){
+     int i;
+
+     fprintf(out,"%d\n", (cfg->nphoton) ); 
+     fprintf(out,"%d\n", (cfg->seed) );
+     fprintf(out,"%f %f %f\n", (cfg->srcpos.x),(cfg->srcpos.y),(cfg->srcpos.z) );
+     fprintf(out,"%f %f %f\n", (cfg->srcdir.x),(cfg->srcdir.y),(cfg->srcdir.z) );
+     fprintf(out,"%f %f %f\n", (cfg->tstart),(cfg->tend),(cfg->tstep) );
+     fprintf(out,"%f %d %d %d\n", (cfg->steps.x),(cfg->dim.x),(cfg->crop0.x),(cfg->crop1.x));
+     fprintf(out,"%f %d %d %d\n", (cfg->steps.y),(cfg->dim.y),(cfg->crop0.y),(cfg->crop1.y));
+     fprintf(out,"%f %d %d %d\n", (cfg->steps.z),(cfg->dim.z),(cfg->crop0.z),(cfg->crop1.z));
+     fprintf(out,"%d", (cfg->medianum));
+     for(i=0;i<cfg->medianum;i++){
+     	fprintf(out, "%f %f %f %f\n", (cfg->prop[i].mus),(cfg->prop[i].g),(cfg->prop[i].mua),(cfg->prop[i].n));
+     }
+     fprintf(out,"%d", (cfg->detnum));
+     for(i=0;i<cfg->detnum;i++){
+     	fprintf(out, "%f %f %f %f\n", (cfg->detpos[i].x),(cfg->detpos[i].y),(cfg->detpos[i].z),(cfg->detpos[i].w));
      }
 }
 
@@ -122,26 +200,6 @@ void mcx_loadvolume(char *filename,Config *cfg){
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions");
-     }
-}
-void mcx_saveconfig(FILE *out, Config *cfg){
-     int i;
-
-     fprintf(out,"%d\n", (cfg->nphoton) ); 
-     fprintf(out,"%d\n", (cfg->seed) );
-     fprintf(out,"%f %f %f\n", (cfg->srcpos.x),(cfg->srcpos.y),(cfg->srcpos.z) );
-     fprintf(out,"%f %f %f\n", (cfg->srcdir.x),(cfg->srcdir.y),(cfg->srcdir.z) );
-     fprintf(out,"%f %f %f\n", (cfg->tstart),(cfg->tend),(cfg->tstep) );
-     fprintf(out,"%f %d %d %d\n", (cfg->steps.x),(cfg->dim.x),(cfg->crop0.x),(cfg->crop1.x));
-     fprintf(out,"%f %d %d %d\n", (cfg->steps.y),(cfg->dim.y),(cfg->crop0.y),(cfg->crop1.y));
-     fprintf(out,"%f %d %d %d\n", (cfg->steps.z),(cfg->dim.z),(cfg->crop0.z),(cfg->crop1.z));
-     fprintf(out,"%d", (cfg->medianum));
-     for(i=0;i<cfg->medianum;i++){
-     	fprintf(out, "%f %f %f %f\n", (cfg->prop[i].mus),(cfg->prop[i].g),(cfg->prop[i].mua),(cfg->prop[i].n));
-     }
-     fprintf(out,"%d", (cfg->detnum));
-     for(i=0;i<cfg->detnum;i++){
-     	fprintf(out, "%f %f %f %f\n", (cfg->detpos[i].x),(cfg->detpos[i].y),(cfg->detpos[i].z),(cfg->detpos[i].w));
      }
 }
 
@@ -200,9 +258,11 @@ void mcx_usage(){
 #######################################################################################\n\
 #                     Monte-Carlo Extreme (MCX) -- CUDA                               #\n\
 #             Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>                    #\n\
+#                                                                                     #\n\
+#      Martinos Center for Biomedical Imaging, Massachusetts General Hospital         #\n\
 #######################################################################################\n\
-usage: mcextreme <options>\n\
-where possible options include\n\
+usage: mcextreme <param1> <param2> ...\n\
+where possible parameters include\n\
      -i 	   interactive mode\n\
      -f config     read config from a file\n\
      -m n_move	   total move per thread\n\

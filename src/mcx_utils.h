@@ -4,16 +4,16 @@
 #include <stdio.h>
 #include <vector_types.h>
 
-#define MAX_PROP        256
-#define MAX_DETECTORS   256
-#define MAX_PATH_LENGTH 1024
-#define MAX_SESSION_LENGTH 256
+#define MAX_PROP            256
+#define MAX_DETECTORS       256
+#define MAX_PATH_LENGTH     1024
+#define MAX_SESSION_LENGTH  256
 
 typedef struct MCXMedium{
 	float mua;
 	float mus;
-	float g;
 	float n;
+	float g;
 } Medium;
 
 typedef struct MCXConfig{
@@ -33,12 +33,13 @@ typedef struct MCXConfig{
 	int medianum;
 	int detnum;
 	Medium *prop;
+	float detradius;
 	float4 *detpos;
 	unsigned char *vol;
 	char session[MAX_SESSION_LENGTH];
 } Config;
 
-void mcx_savedata(float *dat,int len,char *name);
+void mcx_savedata(float *dat,int len,Config *cfg);
 void mcx_error(int id,char *msg);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
@@ -47,7 +48,7 @@ void mcx_writeconfig(char *fname, Config *cfg);
 void mcx_initcfg(Config *cfg);
 void mcx_clearcfg(Config *cfg);
 void mcx_parsecmd(int argc, char* argv[], Config *cfg);
-void mcx_usage();
+void mcx_usage(void);
 void mcx_loadvolume(char *filename,Config *cfg);
 
 #endif

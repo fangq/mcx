@@ -45,7 +45,7 @@
 #endif
 #define MAX_EVENT  1
 #define MAX_PROP   256
-#define C0   299792458.f
+#define C0   299792458000.f  /*in mm*/
 
 
 #define MIN(a,b)  ((a)<(b)?(a):(b))
@@ -374,8 +374,7 @@ void mcx_run_simulation(Config *cfg){
          (cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1),(MAX_MEDIA_CACHE<<MEDIA_PACK));
 
      if((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1)> (MAX_MEDIA_CACHE<<MEDIA_PACK)){
-	printf("the requested cache size is too big\n");
-	exit(1);
+	mcx_error(-9,"the requested cache size is too big\n");
      }
 #endif
 
@@ -415,8 +414,11 @@ void mcx_run_simulation(Config *cfg){
            count++;
        }
 #endif
-
-     srand(time(0));
+     if(cfg->seed>0)
+     	srand(cfg->seed);
+     else
+        srand(time(0));
+	
      for (i=0; i<cfg->nthread; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
@@ -439,7 +441,7 @@ void mcx_run_simulation(Config *cfg){
 #endif
 
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
-
+printf("totalmove=%d steps=%f %f %f minsteps=%f lmax=%f dimlen=%d %d\n",cfg->totalmove,cfg->steps.x,cfg->steps.y,cfg->steps.z,minstep,lmax,dimlen.x,dimlen.y);
      mcx_main_loop<<<GridDim,BlockDim>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,lmax,dimlen,\
                                       p0,c0,maxidx,cp0,cp1,cachebox,0,gPseed,gPpos,gPdir,gPlen);
 
@@ -466,7 +468,7 @@ void mcx_run_simulation(Config *cfg){
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
      }
      printf("simulated %d photons\n",photoncount);
-     mcx_savedata(field,dimxyz,"field.dat");
+     mcx_savedata(field,dimxyz,cfg);
 
      cudaFree(gmedia);
 #ifdef CACHE_MEDIA
