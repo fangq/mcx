@@ -71,7 +71,7 @@ __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 // pass as many pre-computed values as possible to utilize the constant memory 
 
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
-     float lmax, uint2 dimlen, 
+     float lmax, uint2 dimlen, uchar isrowmajor,
      float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,
      uint n_seed[],float4 n_pos[],float4 n_dir[],float3 n_len[]){
 
@@ -109,7 +109,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #endif
 
      // assuming the initial positions are within the domain
-     idx1d=int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z));
+     idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
+            int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
      idxorig=idx1d;
      mediaid=media[idx1d];
 	  
@@ -117,7 +118,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
 	  incache=1;
           incache0=1;
-          cachebyte=int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z));
+          cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z))\
+	                       int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
           cachebyte0=cachebyte;
           mediaid=gmediacache[cachebyte];
      }
@@ -233,11 +235,13 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	       nlen.x-=len;     /*remaining probability*/
 	       nlen.y+=minstep; /*total moved length along the current jump*/
                idx1dold=idx1d;
-               idx1d=int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z));
+               idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
+                                int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
 #ifdef CACHE_MEDIA  
                if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
                     incache=1;
-                    cachebyte=int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z));
+                    cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z))\
+	                      int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
                }else{
 		    incache=0;
                }
@@ -393,11 +397,18 @@ void mcx_run_simulation(Config *cfg){
      cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN);
 
      memset(field,0,sizeof(float)*dimxyz);
-     
-     cachebox.x=(cp1.z-cp0.z+1);
-     cachebox.y=(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1);
-     dimlen.x=cfg->dim.z;
-     dimlen.y=cfg->dim.y*cfg->dim.z;
+
+     if(cfg->isrowmajor){ // if the volume is stored in C array order
+	     cachebox.x=(cp1.z-cp0.z+1);
+	     cachebox.y=(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1);
+	     dimlen.x=cfg->dim.z;
+	     dimlen.y=cfg->dim.y*cfg->dim.z;
+     }else{               // if the volume is stored in matlab/fortran array order
+	     cachebox.x=(cp1.x-cp0.x+1);
+	     cachebox.y=(cp1.y-cp0.y+1)*(cp1.x-cp0.x+1);
+	     dimlen.x=cfg->dim.x;
+	     dimlen.y=cfg->dim.y*cfg->dim.x;
+     }
 
 #ifdef CACHE_MEDIA
      count=0;
@@ -442,7 +453,7 @@ void mcx_run_simulation(Config *cfg){
 
      printf("complete cudaMemcpy : %d ms\n",GetTimeMillis()-tic);
 printf("totalmove=%d steps=%f %f %f minsteps=%f lmax=%f dimlen=%d %d\n",cfg->totalmove,cfg->steps.x,cfg->steps.y,cfg->steps.z,minstep,lmax,dimlen.x,dimlen.y);
-     mcx_main_loop<<<GridDim,BlockDim>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,lmax,dimlen,\
+     mcx_main_loop<<<GridDim,BlockDim>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,lmax,dimlen,cfg->isrowmajor,\
                                       p0,c0,maxidx,cp0,cp1,cachebox,0,gPseed,gPpos,gPdir,gPlen);
 
      printf("complete launching kernels : %d ms\n",GetTimeMillis()-tic);

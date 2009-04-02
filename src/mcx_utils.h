@@ -37,6 +37,7 @@ typedef struct MCXConfig{
 	float4 *detpos;
 	unsigned char *vol;
 	char session[MAX_SESSION_LENGTH];
+	unsigned isrowmajor;
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);
