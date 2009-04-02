@@ -1,20 +1,29 @@
+#################################################################
+#  Makefile for Monte-Carlo Extreme (MCX)
+#  Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+#  2009/04/02
+#################################################################
+
 CUDACC=nvcc
+CCC=g++
 SOURCE=mcextreme
+SOURCE_UTILS=mcx_utils
 OUTPUT_DIR=../bin
 OPT=-DUSE_MT_RAND
+LINKOPT=-L/usr/local/cuda/lib -lcudart 
+CPPOPT=-I/usr/local/cuda/include
 
-all:
-	$(CUDACC) $(OPT) $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE)
-fast:
-	$(CUDACC) $(OPT) $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DFAST_MATH
-logistic:
-	$(CUDACC) $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DFAST_MATH
-cache:
-	$(CUDACC) $(OPT) $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DCACHE_MEDIA -DFAST_MATH
-fastcache:
-	$(CUDACC) $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DFAST_MATH -DCACHE_MEDIA
-debug:
-	$(CUDACC) $(OPT) -deviceemu $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DCACHE_MEDIA
-debuglog:
-	$(CUDACC) -deviceemu $(SOURCE).cu -o $(OUTPUT_DIR)/$(SOURCE) -DCACHE_MEDIA
+all:        OPT=-DUSE_MT_RAND
+fast:       OPT=-DUSE_MT_RAND -DFAST_MATH
+logistic:   OPT=-DFAST_MATH
+cache:      OPT=-DUSE_MT_RAND -DCACHE_MEDIA
+fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -DFAST_MATH
+debug:      OPT=-deviceemu -DUSE_MT_RAND -DCACHE_MEDIA
+debuglog:   OPT=-deviceemu -DCACHE_MEDIA 
 
+all fast logistic cache fastcache debug debuglog: 
+	$(CUDACC) -c $(OPT) $(SOURCE).cu
+	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
+	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
+clean:
+	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(SOURCE)
