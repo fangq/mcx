@@ -47,6 +47,7 @@ void mcx_initcfg(Config *cfg){
      cfg->prop=NULL;
      cfg->detpos=NULL;
      cfg->vol=NULL;
+     cfg->session[0]='\0';
 }
 
 void mcx_clearcfg(Config *cfg){

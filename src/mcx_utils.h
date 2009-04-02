@@ -7,6 +7,7 @@
 #define MAX_PROP        256
 #define MAX_DETECTORS   256
 #define MAX_PATH_LENGTH 1024
+#define MAX_SESSION_LENGTH 256
 
 typedef struct MCXMedium{
 	float mua;
@@ -34,7 +35,7 @@ typedef struct MCXConfig{
 	Medium *prop;
 	float4 *detpos;
 	unsigned char *vol;
-	char *session;
+	char session[MAX_SESSION_LENGTH];
 } Config;
 
 void mcx_savedata(float *dat,int len,char *name);
