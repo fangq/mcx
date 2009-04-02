@@ -48,6 +48,7 @@ void mcx_initcfg(Config *cfg){
      cfg->totalmove=0;
      cfg->nthread=0;
      cfg->seed=0;
+     cfg->isrowmajor=1; // default is C array
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -242,6 +243,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+		     case 'd':
+		     	        if(i<argc-1)
+		     		    cfg->isrowmajor=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
 		}
 	    }
 	    i++;
@@ -267,5 +274,8 @@ where possible parameters include\n\
      -f config     read config from a file\n\
      -m n_move	   total move per thread\n\
      -t n_thread   total thread number\n\
-     -s sessionid  a string to identify this specific simulation\n");
+     -d order      order=1 for C array, order=0 for Matlab array\n\
+     -s sessionid  a string to identify this specific simulation\n\n\
+example:\n\
+       mcextreme -t 1024 -m 100000 -f input.inp -s test -d 0\n");
 }
