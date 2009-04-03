@@ -48,7 +48,6 @@
 #define C0   299792458000.f  /*in mm/s*/
 #define R_C0 3.335640951981520e-12f /*1/C0 in s/mm*/
 
-
 #define MIN(a,b)  ((a)<(b)?(a):(b))
 
 
@@ -57,8 +56,8 @@ typedef unsigned char uchar;
 /******************************
 typedef struct PhotonData {
   float4 pos;  // x,y,z,weight
-  float4 dir;  // ix,iy,iz,dummy
-  float3 len; // resid,tot,count
+  float4 dir;  // ix,iy,iz,scat_event
+  float3 len; // resid,tot,photon_count
   uint   seed; // random seed
 } Photon;
 ******************************/
@@ -119,7 +118,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
 	  incache=1;
           incache0=1;
-          cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z))\
+          cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z)):\
 	                       int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
           cachebyte0=cachebyte;
           mediaid=gmediacache[cachebyte];
@@ -134,6 +133,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      // using "while(nlen.z<totalmove)" loop will make this 4 times slower with the same amount of photons
 
      for(i=0;i<totalmove;i++){
+
+#ifdef __DEVICE_EMULATION__
+          printf("*i=%d (%f) w=%f a=%f\n",i,nlen.z,nlen.x,ndir.w);
+#endif
 	  if(nlen.x<=0.f) {  /* if this photon has finished the current jump */
 
 #ifdef USE_MT_RAND
@@ -146,10 +149,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #endif
 
 #ifdef __DEVICE_EMULATION__
-               printf("1 %20.16e \n",nlen.x);
+               printf("next scat len=%20.16e \n",nlen.x);
 #endif
-
-
 	       if(npos.w<1.f){ /*weight*/
                        /*random arimuthal angle*/
 #ifdef USE_MT_RAND
@@ -159,11 +160,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                        ran=t[2]; /*random number [0,MAX_MT_RAND)*/
                        tmp0=TWO_PI*logistic_uniform(ran); /*will be reused to minimize register*/
 #endif
-
-#ifdef __DEVICE_EMULATION__
-               printf("2 %20.16e\n",tmp0);
-#endif
                        GPUSINCOS(tmp0,&sphi,&cphi);
+#ifdef __DEVICE_EMULATION__
+                       printf("next angle phi %20.16e\n",tmp0);
+#endif
 
                        /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234*/
                        /*see Boas2002*/
@@ -180,11 +180,6 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #else
                            tmp0=GPUDIV(1.f-prop.w*prop.w,(1.f-prop.w+2.f*prop.w*logistic_uniform(ran) ));
 #endif
-
-#ifdef __DEVICE_EMULATION__
-               printf("3 %20.16e\n",tmp0);
-#endif
-
 		           tmp0*=tmp0;
 		           tmp0=GPUDIV((1+prop.w*prop.w-tmp0),2.f*prop.w);
 		           theta=acosf(tmp0);
@@ -199,6 +194,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
                            GPUSINCOS(theta,&stheta,&ctheta);
                        }
+#ifdef __DEVICE_EMULATION__
+                       printf("next scat angle theta %20.16e\n",theta);
+#endif
+
 		       if( ndir.z>-1.f+EPS && ndir.z<1.f-EPS ) {
 		           tmp0=1.f-ndir.z*ndir.z;   /*reuse tmp to minimize registers*/
 		           tmp1=rsqrtf(tmp0);
@@ -211,8 +210,15 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 				ndir.w
 				);
 //                             }
+#ifdef __DEVICE_EMULATION__
+                               printf("new dir: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
+#endif
+
 		       }else{
 			   ndir=float4(stheta*cphi,stheta*sphi,ctheta,ndir.w);
+#ifdef __DEVICE_EMULATION__
+                           printf("new dir-z: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
+#endif
  		       }
                        ndir.w++;
 	       }
@@ -229,19 +235,28 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,npos.w*expf(-prop.x * tmp0 ));
 	       nlen.x=MINUS_SAME_VOXEL;
 	       nlen.y+=tmp0*prop.z*R_C0;  // accumulative time
+#ifdef __DEVICE_EMULATION__
+               printf(">>ends in voxel %f<%f %f [%d]\n",nlen.x,len,prop.y,idx1d);
+#endif
 	  }else{                      /*otherwise, move minstep*/
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
 	       nlen.x-=len;     /*remaining probability*/
 	       nlen.y+=minstep*prop.z*R_C0; /*total time*/
+#ifdef __DEVICE_EMULATION__
+               printf(">>keep going %f<%f %f [%d]\n",nlen.x,len,prop.y,idx1d);
+#endif
 	  }
 
           idx1dold=idx1d;
           idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
                            int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
+#ifdef __DEVICE_EMULATION__
+                           printf("old and new voxel: %d<->%d\n",idx1dold,idx1d);
+#endif
 #ifdef CACHE_MEDIA  
           if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
                incache=1;
-               cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z))\
+               cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z)):\
 	                 int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
           }else{
 	       incache=0;
@@ -266,8 +281,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
               prop=gproperty[mediaid];
 
 #ifdef __DEVICE_EMULATION__
-//              printf("--> ID%d J%d C%d len %f flip %d %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
-//                  (int)nlen.z,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
+              printf("->ID%d J%d C%d len %f flip %d %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
+                  (int)nlen.z,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
 #endif
 
               /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of old ones*/
@@ -298,9 +313,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
        	       	     ctheta=tmp1*cphi*cphi+tmp0*len;
        	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
 #ifdef __DEVICE_EMULATION__
-//printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
-//printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.z,
-//            flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
+	          printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
+	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.z,
+	                 flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
                      npos.w*=Rtotal;
                   } /* else, total internal reflection, no loss*/
@@ -319,7 +334,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
               }
 	  }else if(nlen.x>0){
 #ifdef __DEVICE_EMULATION__
-//    printf("field add to %d->%f(%d)\n",idx1d,npos.w,(int)nlen.z);
+    printf("field add to %d->%f(%d)\n",idx1d,npos.w,(int)nlen.z);
 #endif
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
              if(nlen.y>=twin0 & nlen.y<twin1)
@@ -427,14 +442,23 @@ void mcx_run_simulation(Config *cfg){
 
      /*only use 1-byte to store media info, unpacking bits on-the-fly turned out to be expensive in gpu*/
 
-     for (i=cp0.x; i<=cp1.x; i++)
-      for (j=cp0.y; j<=cp1.y; j++)
-       for (k=cp0.z; k<=cp1.z; k++) {
-//         printf("[%d %d %d]: %d %d %d %d (%d)\n",i,j,k,count,MEDIA_MASK,count>>MEDIA_PACK,(count & MEDIA_MOD)*MEDIA_BITS,
-//                (media[INDXYZ(i,j,k)] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS) );
-           mediacache[count>>MEDIA_PACK] |=  (media[INDXYZ(i,j,k)] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS );
-           count++;
-       }
+     if(cfg->isrowmajor) {
+       for (i=cp0.x; i<=cp1.x; i++)
+	for (j=cp0.y; j<=cp1.y; j++)
+	 for (k=cp0.z; k<=cp1.z; k++) {
+  //         printf("[%d %d %d]: %d %d %d %d (%d)\n",i,j,k,count,MEDIA_MASK,count>>MEDIA_PACK,(count & MEDIA_MOD)*MEDIA_BITS,
+  //                (media[INDXYZ(i,j,k)] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS) );
+             mediacache[count>>MEDIA_PACK] |=  (media[i*dimlen.y+j*dimlen.x+k] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS );
+             count++;
+	 }
+     }else{
+       for (i=cp0.x; i<=cp1.x; i++)
+	for (j=cp0.y; j<=cp1.y; j++)
+	 for (k=cp0.z; k<=cp1.z; k++) {
+             mediacache[count>>MEDIA_PACK] |=  (media[k*dimlen.y+j*dimlen.x+i] & MEDIA_MASK )<<((count & MEDIA_MOD)*MEDIA_BITS );
+             count++;
+	 }
+     }
 #endif
      if(cfg->seed>0)
      	srand(cfg->seed);
