@@ -49,6 +49,7 @@ void mcx_initcfg(Config *cfg){
      cfg->nthread=0;
      cfg->seed=0;
      cfg->isrowmajor=1; // default is C array
+     cfg->maxgate=1;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -249,6 +250,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+		     case 'g':
+		     	        if(i<argc-1)
+		     		    cfg->maxgate=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
 		}
 	    }
 	    i++;
@@ -275,6 +282,7 @@ where possible parameters include\n\
      -m n_move	   total move per thread\n\
      -t n_thread   total thread number\n\
      -d order      order=1 for C array, order=0 for Matlab array\n\
+     -g gate       number of time gates per run\n\
      -s sessionid  a string to identify this specific simulation\n\n\
 example:\n\
        mcextreme -t 1024 -m 100000 -f input.inp -s test -d 0\n");
