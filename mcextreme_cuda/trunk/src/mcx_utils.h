@@ -38,6 +38,7 @@ typedef struct MCXConfig{
 	unsigned char *vol;
 	char session[MAX_SESSION_LENGTH];
 	unsigned isrowmajor;
+	int maxgate;
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);
