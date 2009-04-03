@@ -14,31 +14,31 @@ typedef struct MCXMedium{
 	float mus;
 	float n;
 	float g;
-} Medium;
+} Medium;  /*this order shall match prop.{xyzw} in mcx_main_loop*/
 
 typedef struct MCXConfig{
-	int nphoton; // this is not used
-	int totalmove;
-	int nthread;
-	int seed;
-	float3 srcpos;
-	float3 srcdir;
-	float tstart;
-	float tstep;
-	float tend;
-	float3 steps;
-	uint3 dim;
-	uint3 crop0;
-	uint3 crop1;
-	int medianum;
-	int detnum;
-	Medium *prop;
-	float detradius;
-	float4 *detpos;
-	unsigned char *vol;
-	char session[MAX_SESSION_LENGTH];
-	unsigned isrowmajor;
-	int maxgate;
+	int nphoton;      /*reserved for future*/
+	int totalmove;    /*total move per photon*/
+	int nthread;      /*num of total threads, multiple of 128*/
+	int seed;         /*random number generator seed*/
+	float3 srcpos;    /*src position in mm*/
+	float3 srcdir;    /*src normal direction*/
+	float tstart;     /*start time in second*/
+	float tstep;      /*time step in second*/
+	float tend;       /*end time in second*/
+	float3 steps;     /*voxel sizes along x/y/z in mm*/
+	uint3 dim;        /*domain size*/
+	uint3 crop0;      /*sub-volume for cache*/
+	uint3 crop1;      /*the other end of the caching box*/
+	int medianum;     /*total types of media*/
+	int detnum;       /*total detector numbers*/
+	Medium *prop;     /*optical property mapping table*/
+	float detradius;  /*detector radius*/
+	float4 *detpos;   /*detector positions and radius, overwrite detradius*/
+	unsigned char *vol; /*pointer to the volume*/
+	char session[MAX_SESSION_LENGTH]; /*session id, a string*/
+	unsigned isrowmajor;/*1 for C-styled array in vol, 0 for matlab-styled array*/
+	int maxgate;        /*simultaneous recording gates*/
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);
