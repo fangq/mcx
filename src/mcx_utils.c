@@ -18,13 +18,20 @@ void mcx_error(int id,char *msg){
 }
 
 void mcx_readconfig(char *fname, Config *cfg){
-     if(fname[0]==0)
+     if(fname[0]==0){
      	mcx_loadconfig(stdin,cfg);
+        if(cfg->session[0]=='\0'){
+		strcpy(cfg->session,"default");
+	}
+     }
      else{
      	FILE *fp=fopen(fname,"rt");
 	if(fp==NULL) mcx_error(-2,"can not load specified config file");
 	mcx_loadconfig(fp,cfg); 
-	fclose(fp);   
+	fclose(fp);
+        if(cfg->session[0]=='\0'){
+		strcpy(cfg->session,fname);
+	}
      }
 }
 
@@ -48,7 +55,7 @@ void mcx_initcfg(Config *cfg){
      cfg->totalmove=0;
      cfg->nthread=0;
      cfg->seed=0;
-     cfg->isrowmajor=1; // default is C array
+     cfg->isrowmajor=1; /* default is C array*/
      cfg->maxgate=1;
 
      cfg->prop=NULL;
@@ -87,6 +94,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin) 
      	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
                                    cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
+     cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index*/
      fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) );
      fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin) 
@@ -128,7 +136,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin) 
      	fprintf(stdout,"%d\n",cfg->medianum);
      cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
-     cfg->prop[0].mua=0.f; // air
+     cfg->prop[0].mua=0.f; /*property 0 is already air*/
      cfg->prop[0].mus=0.f;
      cfg->prop[0].g=1.f;
      cfg->prop[0].n=1.f;
@@ -151,14 +159,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin) 
 		fprintf(stdout,"Please define detector #%d: x,y,z (in mm): [5 5 5 1]\n\t",i);
      	fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z));
+        cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
         fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin) 
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
      if(filename[0]){
-        if(cfg->session[0]=='\0'){
-		strcpy(cfg->session,filename);
-	}
         mcx_loadvolume(filename,cfg);
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation");

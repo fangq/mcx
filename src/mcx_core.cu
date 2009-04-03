@@ -95,7 +95,6 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef USE_MT_RAND
      uint   ran;
 #else
-     uint  randid=0;
      RandType ran, t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
 #endif
 
@@ -142,8 +141,6 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
 #else
                logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
-               randid=0;
-
                ran=logistic_uniform(t[0]);                             /*order 2,0,1, small shuffle, not really help*/
                nlen.x= ((ran==0.f)?(-GPULOG(t[0])):(-GPULOG(ran)));
 #endif
@@ -236,19 +233,20 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
 	       nlen.x-=len;     /*remaining probability*/
 	       nlen.y+=minstep*prop.z*R_C0; /*total time*/
-               idx1dold=idx1d;
-               idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
-                                int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
-#ifdef CACHE_MEDIA  
-               if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
-                    incache=1;
-                    cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z))\
-	                      int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
-               }else{
-		    incache=0;
-               }
-#endif
 	  }
+
+          idx1dold=idx1d;
+          idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
+                           int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
+#ifdef CACHE_MEDIA  
+          if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
+               incache=1;
+               cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z))\
+	                 int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
+          }else{
+	       incache=0;
+          }
+#endif
 
 #ifdef CACHE_MEDIA
           mediaid=incache?gmediacache[cachebyte]:media[idx1d];
@@ -256,7 +254,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
           mediaid=media[idx1d];
 #endif
 
-	  if(mediaid==0||nlen.y>tmax||npos.x<0||npos.y<0||npos.z<0||npos.x>maxidx.x||npos.y>maxidx.y||npos.z>maxidx.z){
+	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1||npos.x<0||npos.y<0||npos.z<0||npos.x>maxidx.x||npos.y>maxidx.y||npos.z>maxidx.z){
 	      /*if hit the boundary or exit the domain, launch a new one*/
 
               /*time to hit the wall in each direction*/
@@ -274,7 +272,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
               /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of old ones*/
 
-              if(doreflect&&nlen.y<tmax && flipdir>0.f && n1!=prop.z){
+              if(doreflect&&nlen.y<tmax&&nlen.y<twin1&& flipdir>0.f && n1!=prop.z){
                   tmp0=n1*n1;
                   tmp1=prop.z*prop.z;
                   if(flipdir>=3.f) { /*flip in z axis*/
@@ -471,25 +469,24 @@ void mcx_run_simulation(Config *cfg){
 	 twindow1=t+cfg->tstep*cfg->maxgate;
          mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,\
 	                              twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,\
-                                      1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,0,gPseed,gPpos,gPdir,gPlen);
-         printf("complete mcx_main_loop for window [%.2fs %.2fs]: %d ms\n",twindow0*1e9,twindow1*1e9,GetTimeMillis()-tic);
-
+                                      1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,1,gPseed,gPpos,gPdir,gPlen);
+         printf("lauched mcx_main_loop for time window [%.1fns %.1fns]: %d ms\n",twindow0*1e9,twindow1*1e9,GetTimeMillis()-tic);
+         cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
+         printf("complete simulation for time window [%.1fns %.1fns]: %d ms\n",twindow0*1e9,twindow1*1e9,GetTimeMillis()-tic);
          cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
+         printf("complete retrieving field: %d ms\n",GetTimeMillis()-tic);
+
 	 mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
-	 cudaMemset(gfield,0,sizeof(float)*dimxyz*cfg->maxgate);
-         printf("complete mcx_clear_field : %d ms\n",GetTimeMillis()-tic);   
+         printf("complete saving field : %d ms\n",GetTimeMillis()-tic);   
+
+	 if(twindow1<=cfg->tend) 
+	 	cudaMemset(gfield,0,sizeof(float)*dimxyz*cfg->maxgate); /* about 1 ms cost */
      }
 
      cudaMemcpy(Ppos,  gPpos, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
-
-     printf("complete retrieving pos : %d ms\n",GetTimeMillis()-tic);
-
      cudaMemcpy(Pdir,  gPdir, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Plen,  gPlen, sizeof(float3)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Pseed, gPseed,sizeof(uint)  *cfg->nthread*RAND_BUF_LEN,   cudaMemcpyDeviceToHost);
-     cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-
-     printf("complete retrieving all : %d ms\n",GetTimeMillis()-tic);
 
      for (i=0; i<cfg->nthread; i++) {
 	  photoncount+=(int)Plen[i].z;
