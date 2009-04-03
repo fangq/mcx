@@ -18,11 +18,16 @@ fast:       OPT=-DUSE_MT_RAND -DFAST_MATH
 logistic:   OPT=-DFAST_MATH
 cache:      OPT=-DUSE_MT_RAND -DCACHE_MEDIA
 fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -DFAST_MATH
-debug:      OPT=-deviceemu -DUSE_MT_RAND -DCACHE_MEDIA
-debuglog:   OPT=-deviceemu -DCACHE_MEDIA 
+debug:      OPT=-DUSE_MT_RAND
+debuglog:   OPT=
 
-all fast logistic cache fastcache debug debuglog: 
+all fast logistic cache fastcache: 
 	$(CUDACC) -c $(OPT) $(SOURCE).cu
+	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
+	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
+	
+debug debuglog: 
+	$(CUDACC) -deviceemu -c $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
 clean:
