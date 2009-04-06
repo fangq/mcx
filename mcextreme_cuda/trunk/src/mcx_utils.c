@@ -57,6 +57,7 @@ void mcx_initcfg(Config *cfg){
      cfg->seed=0;
      cfg->isrowmajor=1; /* default is C array*/
      cfg->maxgate=1;
+     cfg->isreflect=1;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -262,6 +263,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+		     case 'b':
+		     	        if(i<argc-1)
+		     		    cfg->isreflect=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
 		}
 	    }
 	    i++;
@@ -286,9 +293,10 @@ where possible parameters include\n\
      -i 	   interactive mode\n\
      -f config     read config from a file\n\
      -m n_move	   total move per thread\n\
-     -t n_thread   total thread number\n\
-     -d order      order=1 for C array, order=0 for Matlab array\n\
-     -g gate       number of time gates per run\n\
+     -t [1|int]    total thread number\n\
+     -d [1|0]      1 for C array, 0 for Matlab array\n\
+     -g [1|int]    number of time gates per run\n\
+     -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
      -s sessionid  a string to identify this specific simulation\n\n\
 example:\n\
        mcextreme -t 1024 -m 100000 -f input.inp -s test -d 0\n");
