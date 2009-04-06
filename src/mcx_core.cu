@@ -13,8 +13,8 @@
 #define MAX_MEDIA_CACHE   40000  /*52k for local media read*/
 #define MAX_WRITE_CACHE   (MAX_MEDIA_CACHE>>4)
 #define MEDIA_BITS  8            /*theoretically one can use smaller bits to pack more media*/
-#define MEDIA_PACK  ((8/MEDIA_BITS)>>1)            /*one byte packs 2^MEDIA_PACK voxel*/
-#define MEDIA_MOD   ((1<<MEDIA_PACK)-1)    /*one byte packs 2^MEDIA_PACK voxel*/
+#define MEDIA_PACK  ((8/MEDIA_BITS)>>1)      /*one byte packs 2^MEDIA_PACK voxel*/
+#define MEDIA_MOD   ((1<<MEDIA_PACK)-1)      /*one byte packs 2^MEDIA_PACK voxel*/
 #define MEDIA_MASK  ((1<<(MEDIA_BITS))-1)
 #endif
 
@@ -57,7 +57,7 @@ typedef unsigned char uchar;
 typedef struct PhotonData {
   float4 pos;  // x,y,z,weight
   float4 dir;  // ix,iy,iz,scat_event
-  float3 len; // resid,tot,photon_count
+  float4 len; // resid,tot,photon_count
   uint   seed; // random seed
 } Photon;
 ******************************/
@@ -74,15 +74,16 @@ __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
      float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, float Rtstep,
      float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,
-     uint n_seed[],float4 n_pos[],float4 n_dir[],float3 n_len[]){
+     uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
      float4 npos=n_pos[idx];
      float4 ndir=n_dir[idx];
-     float3 nlen=n_len[idx];
+     float4 nlen=n_len[idx];
      float4 npos0;
      float3 htime;
+     float  minaccumtime=minstep*R_C0;
 
      int i, idx1d, idx1dold,idxorig, mediaid;
 
@@ -130,12 +131,12 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      }
      prop=gproperty[mediaid];
 
-     // using "while(nlen.z<totalmove)" loop will make this 4 times slower with the same amount of photons
+     // using "while(nlen.w<totalmove)" loop will make this 4 times slower with the same amount of photons
 
      for(i=0;i<totalmove;i++){
 
 #ifdef __DEVICE_EMULATION__
-          printf("*i=%d (%f) w=%f a=%f\n",i,nlen.z,nlen.x,ndir.w);
+          printf("*i=%d (%d) L=%f w=%f a=%f\n",i,(int)nlen.w,nlen.x,npos.w,ndir.w);
 #endif
 	  if(nlen.x<=0.f) {  /* if this photon has finished the current jump */
 
@@ -174,7 +175,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                        ran=t[4]; /*random number [0,MAX_MT_RAND)*/
 #endif
 
-                       if(prop.w>EPS){
+                       if(prop.w>EPS){  /*if prop.w is too small, the distribution of theta is bad*/
 #ifdef USE_MT_RAND
 		           tmp0=GPUDIV(1.f-prop.w*prop.w,(1.f-prop.w+2.f*prop.w*ran*R_MAX_MT_RAND));
 #else
@@ -224,7 +225,6 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	       }
 	  }
 
-
           n1=prop.z;
 	  prop=gproperty[mediaid];
 	  len=minstep*prop.y;
@@ -241,9 +241,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	  }else{                      /*otherwise, move minstep*/
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
 	       nlen.x-=len;     /*remaining probability*/
-	       nlen.y+=minstep*prop.z*R_C0; /*total time*/
+	       nlen.y+=minaccumtime*prop.z; /*total time*/
 #ifdef __DEVICE_EMULATION__
-               printf(">>keep going %f<%f %f [%d]\n",nlen.x,len,prop.y,idx1d);
+               printf(">>keep going %f<%f %f [%d] %e %e\n",nlen.x,len,prop.y,idx1d,nlen.y,nlen.z);
 #endif
 	  }
 
@@ -270,7 +270,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #endif
 
 	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1||npos.x<0||npos.y<0||npos.z<0||npos.x>maxidx.x||npos.y>maxidx.y||npos.z>maxidx.z){
-	      /*if hit the boundary or exit the domain, launch a new one*/
+	      /*if hit the boundary or exit the domain, rebound or launch a new one*/
 
               /*time to hit the wall in each direction*/
               htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
@@ -281,11 +281,11 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
               prop=gproperty[mediaid];
 
 #ifdef __DEVICE_EMULATION__
-              printf("->ID%d J%d C%d len %f flip %d %f!=%f dir=%f %f %f \n",idx,(int)ndir.w,
-                  (int)nlen.z,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z);
+              printf("->ID%d J%d C%d tlen %e flip %d %f!=%f dir=%f %f %f pos=%f %f %f\n",idx,(int)ndir.w,
+                  (int)nlen.w,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z,npos.x,npos.y,npos.z);
 #endif
 
-              /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of old ones*/
+              /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of the old ones*/
 
               if(doreflect&&nlen.y<tmax&&nlen.y<twin1&& flipdir>0.f && n1!=prop.z){
                   tmp0=n1*n1;
@@ -314,7 +314,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
        	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
 #ifdef __DEVICE_EMULATION__
 	          printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
-	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.z,
+	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.w,
 	                 flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
                      npos.w*=Rtotal;
@@ -325,20 +325,22 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
               }else{
 	          npos=p0;
 	          ndir=c0;
-	          nlen=float3(0.f,0.f,nlen.z+1);
+	          nlen=float4(0.f,0.f,minaccumtime,nlen.w+1);
                   idx1d=idxorig;
 #ifdef CACHE_MEDIA
 	          cachebyte=cachebyte0;
 	          incache=incache0;
 #endif
               }
-	  }else if(nlen.x>0){
+	  }else if(nlen.y>=nlen.z){
 #ifdef __DEVICE_EMULATION__
-    printf("field add to %d->%f(%d)\n",idx1d,npos.w,(int)nlen.z);
+    printf("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,npos.w,(int)nlen.w,nlen.y,nlen.z);
 #endif
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
-             if(nlen.y>=twin0 & nlen.y<twin1)
+             if(nlen.y>=twin0 & nlen.y<twin1){
                   field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+	     }
+             nlen.z+=minaccumtime; // fluence is a temporal-integration
 	  }
      }
 #ifdef USE_MT_RAND
@@ -381,7 +383,7 @@ void mcx_run_simulation(Config *cfg){
 
      float4 *Ppos;
      float4 *Pdir;
-     float3 *Plen;
+     float4 *Plen;
      uint   *Pseed;
 
      if(cfg->nthread%MAX_THREAD)
@@ -395,7 +397,7 @@ void mcx_run_simulation(Config *cfg){
 	
      Ppos=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
-     Plen=(float3*)malloc(sizeof(float3)*cfg->nthread);
+     Plen=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pseed=(uint*)malloc(sizeof(uint)*cfg->nthread*RAND_BUF_LEN);
 
 #ifdef CACHE_MEDIA
@@ -416,8 +418,8 @@ void mcx_run_simulation(Config *cfg){
      cudaMalloc((void **) &gPpos, sizeof(float4)*cfg->nthread);
      float4 *gPdir;
      cudaMalloc((void **) &gPdir, sizeof(float4)*cfg->nthread);
-     float3 *gPlen;
-     cudaMalloc((void **) &gPlen, sizeof(float3)*cfg->nthread);
+     float4 *gPlen;
+     cudaMalloc((void **) &gPlen, sizeof(float4)*cfg->nthread);
      uint   *gPseed;
      cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN);
 
@@ -468,16 +470,18 @@ void mcx_run_simulation(Config *cfg){
      for (i=0; i<cfg->nthread; i++) {
 	   Ppos[i]=p0;  /* initial position */
            Pdir[i]=c0;
-           Plen[i]=float3(0.f,0.f,0.f);
+           Plen[i]=float4(0.f,0.f,minstep*R_C0,0.f);
      }
      for (i=0; i<cfg->nthread*RAND_BUF_LEN; i++) {
 	   Pseed[i]=rand();
      }
      tic=GetTimeMillis();
 
+     printf("initializing streams ...\t");
+
      cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPlen,  Plen,  sizeof(float3)*cfg->nthread,  cudaMemcpyHostToDevice);
+     cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPseed, Pseed, sizeof(uint)  *cfg->nthread*RAND_BUF_LEN,  cudaMemcpyHostToDevice);
      cudaMemcpy(gfield, field, sizeof(float) *dimxyz*cfg->maxgate, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice);
@@ -486,22 +490,23 @@ void mcx_run_simulation(Config *cfg){
      cudaMemcpyToSymbol(gmediacache, mediacache, MAX_MEDIA_CACHE, 0, cudaMemcpyHostToDevice);
 #endif
 
-     printf("complete initialization : %d ms\n",GetTimeMillis()-tic);
+     printf("init complete : %d ms\n",GetTimeMillis()-tic);
 
      for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){
          twindow0=t;
 	 twindow1=t+cfg->tstep*cfg->maxgate;
+
+         printf("lauching mcx_main_loop for time window [%.1fns %.1fns] ...\t",twindow0*1e9,twindow1*1e9);
          mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,\
 	                              twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,\
-                                      1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,1,gPseed,gPpos,gPdir,gPlen);
-         printf("lauched mcx_main_loop for time window [%.1fns %.1fns]: %d ms\n",twindow0*1e9,twindow1*1e9,GetTimeMillis()-tic);
+                                      1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
          cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
-         printf("complete simulation for time window [%.1fns %.1fns]: %d ms\n",twindow0*1e9,twindow1*1e9,GetTimeMillis()-tic);
+         printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
          cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-         printf("complete retrieving field: %d ms\n",GetTimeMillis()-tic);
+         printf("transfer complete: %d ms\nsaving data to file ...\t",GetTimeMillis()-tic);
 
 	 mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
-         printf("complete saving field : %d ms\n",GetTimeMillis()-tic);   
+         printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
 
 	 if(twindow1<=cfg->tend) 
 	 	cudaMemset(gfield,0,sizeof(float)*dimxyz*cfg->maxgate); /* about 1 ms cost */
@@ -509,16 +514,16 @@ void mcx_run_simulation(Config *cfg){
 
      cudaMemcpy(Ppos,  gPpos, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Pdir,  gPdir, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Plen,  gPlen, sizeof(float3)*cfg->nthread, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Plen,  gPlen, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Pseed, gPseed,sizeof(uint)  *cfg->nthread*RAND_BUF_LEN,   cudaMemcpyDeviceToHost);
 
      for (i=0; i<cfg->nthread; i++) {
-	  photoncount+=(int)Plen[i].z;
+	  photoncount+=(int)Plen[i].w;
      }
      printnum=cfg->nthread<16?cfg->nthread:16;
      for (i=0; i<printnum; i++) {
            printf("% 4d[A% f % f % f]C%3d J%3d% 8f(P% 6.3f % 6.3f % 6.3f)T% 5.3f L% 5.3f %f %f\n", i,
-            Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].z,(int)Pdir[i].w,Ppos[i].w, 
+            Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
      }
      printf("simulated %d photons\n",photoncount);

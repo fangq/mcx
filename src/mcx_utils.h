@@ -39,6 +39,7 @@ typedef struct MCXConfig{
 	char session[MAX_SESSION_LENGTH]; /*session id, a string*/
 	unsigned isrowmajor;/*1 for C-styled array in vol, 0 for matlab-styled array*/
 	int maxgate;        /*simultaneous recording gates*/
+	char isreflect;     /*1 for reflecting photons at boundary,0 for exiting*/
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);
