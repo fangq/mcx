@@ -12,8 +12,9 @@
 //    2009/02/25 added CACHE_MEDIA read
 //    2009/02/27 early support of boundary reflection
 //    2009/03/02 added logistic-map based random number generator
-//    2009/04/01 split the main function to units, read/write config
+//    2009/04/01 split the main function to units, add utils. and config file
 //    2009/04/03 time gating support
+//    2009/04/07 energy conservation for normalization of the solution
 //
 // License: unpublished version, use by author's permission only
 //
