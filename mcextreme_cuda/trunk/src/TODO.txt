@@ -1,0 +1,4 @@
+TODO list:
+
+1. results does not repeat with identical random number seed, need to check [2009/04/07, FangQ]
+2. normalizing the solution with -U option. [2009/04/07, FangQ]
