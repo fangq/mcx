@@ -57,7 +57,7 @@ typedef unsigned char uchar;
 typedef struct PhotonData {
   float4 pos;  // x,y,z,weight
   float4 dir;  // ix,iy,iz,scat_event
-  float4 len; // resid,tot,photon_count
+  float4 len;  // resid,tot,next_int,photon_count
   uint   seed; // random seed
 } Photon;
 ******************************/
@@ -84,6 +84,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      float4 npos0;
      float3 htime;
      float  minaccumtime=minstep*R_C0;
+     float  energyloss=0.f;
+     float  energyabsorbed=0.f;
 
      int i, idx1d, idx1dold,idxorig, mediaid;
 
@@ -145,7 +147,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
    	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
 #else
                logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
-               ran=logistic_uniform(t[0]);                             /*order 2,0,1, small shuffle, not really help*/
+               ran=logistic_uniform(t[0]);           /*shuffled values*/
                nlen.x= ((ran==0.f)?(-GPULOG(t[0])):(-GPULOG(ran)));
 #endif
 
@@ -214,7 +216,6 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef __DEVICE_EMULATION__
                                printf("new dir: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
 #endif
-
 		       }else{
 			   ndir=float4(stheta*cphi,stheta*sphi,ctheta,ndir.w);
 #ifdef __DEVICE_EMULATION__
@@ -232,14 +233,18 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
           npos0=npos;
 	  if(len>nlen.x){  /*scattering ends in this voxel*/
                tmp0=GPUDIV(nlen.x,prop.y);
+	       energyabsorbed+=npos.w;
    	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,npos.w*expf(-prop.x * tmp0 ));
+	       energyabsorbed-=npos.w;
 	       nlen.x=MINUS_SAME_VOXEL;
 	       nlen.y+=tmp0*prop.z*R_C0;  // accumulative time
 #ifdef __DEVICE_EMULATION__
                printf(">>ends in voxel %f<%f %f [%d]\n",nlen.x,len,prop.y,idx1d);
 #endif
 	  }else{                      /*otherwise, move minstep*/
+	       energyabsorbed+=npos.w;
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
+	       energyabsorbed-=npos.w;
 	       nlen.x-=len;     /*remaining probability*/
 	       nlen.y+=minaccumtime*prop.z; /*total time*/
 #ifdef __DEVICE_EMULATION__
@@ -303,6 +308,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                      sphi=ndir.y*ndir.y+ndir.z*ndir.z; /*sin(si)^2*/
                      ndir.x=-ndir.x;
                   }
+		  energyabsorbed+=npos.w-npos0.w;
                   npos=npos0;   /*move back*/
                   idx1d=idx1dold;
                   len=1.f-GPUDIV(tmp0,tmp1)*sphi;   /*1-[n1/n2*sin(si)]^2*/
@@ -317,12 +323,14 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.w,
 	                 flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
+		     energyloss+=(1.f-Rtotal)*npos.w; /*energy loss due to reflection*/
                      npos.w*=Rtotal;
                   } /* else, total internal reflection, no loss*/
                   mediaid=media[idx1d];
                   prop=gproperty[mediaid];
                   n1=prop.z;
               }else{
+                  energyloss+=npos.w;  // sum all the remaining energy
 	          npos=p0;
 	          ndir=c0;
 	          nlen=float4(0.f,0.f,minaccumtime,nlen.w+1);
@@ -343,6 +351,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
              nlen.z+=minaccumtime; // fluence is a temporal-integration
 	  }
      }
+     energyloss+=(npos.w<1.f)?npos.w:0.f;  /*if the last photon has not been terminated, sum energy*/
+
+     nlen.z=energyloss; /*reuse the time integration grid for total energy loss*/
+     nlen.y=energyabsorbed;
 #ifdef USE_MT_RAND
      n_seed[idx]=(ran&0xffffffffu);
 #else
@@ -362,6 +374,7 @@ void mcx_run_simulation(Config *cfg){
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
      float3 maxidx=float3(cfg->dim.x-1,cfg->dim.y-1,cfg->dim.z-1);
      float t,twindow0,twindow1;
+     float energyloss=0.f,energyabsorbed=0.f;
 
      int photoncount=0,printnum;
      int tic;
@@ -492,6 +505,19 @@ void mcx_run_simulation(Config *cfg){
 
      printf("init complete : %d ms\n",GetTimeMillis()-tic);
 
+     /*
+         if one has to simulate a lot of time gates, using the GPU global memory
+	 requires extra caution. If the total global memory is bigger than the total
+	 memory to save all the snapshots, i.e. size(field)*(tend-tstart)/tstep, one
+	 simply sets cfg->maxgate to the total gate number; this will run GPU kernel
+	 once. If the required memory is bigger than the video memory, set cfg->maxgate
+	 to a number which fits, and the snapshot will be saved with an increment of 
+	 cfg->maxgate snapshots. In this case, the later simulations will restart from
+	 photon launching and exhibit redundancies.
+	 
+	 The calculation of the energy conservation will only reflect the last simulation.
+     */
+     
      for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){
          twindow0=t;
 	 twindow1=t+cfg->tstep*cfg->maxgate;
@@ -508,8 +534,12 @@ void mcx_run_simulation(Config *cfg){
 	 mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
          printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
 
-	 if(twindow1<=cfg->tend) 
-	 	cudaMemset(gfield,0,sizeof(float)*dimxyz*cfg->maxgate); /* about 1 ms cost */
+	 if(twindow1<cfg->tend) {
+	 	cudaMemset(gfield,0,sizeof(float)*dimxyz*cfg->maxgate); /* cost about 1 ms */
+ 		cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); /*following 3 cost about 50 ms*/
+		cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+		cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+	 }
      }
 
      cudaMemcpy(Ppos,  gPpos, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
@@ -519,6 +549,8 @@ void mcx_run_simulation(Config *cfg){
 
      for (i=0; i<cfg->nthread; i++) {
 	  photoncount+=(int)Plen[i].w;
+	  energyloss+=Plen[i].z;
+	  energyabsorbed+=Plen[i].y;
      }
      printnum=cfg->nthread<16?cfg->nthread:16;
      for (i=0; i<printnum; i++) {
@@ -526,7 +558,7 @@ void mcx_run_simulation(Config *cfg){
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
      }
-     printf("simulated %d photons\n",photoncount);
+     printf("simulated %d photons, exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",photoncount,energyloss,energyabsorbed,energyloss+energyabsorbed);
 
      cudaFree(gmedia);
 #ifdef CACHE_MEDIA

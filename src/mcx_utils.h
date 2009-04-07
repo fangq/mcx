@@ -40,6 +40,7 @@ typedef struct MCXConfig{
 	unsigned isrowmajor;/*1 for C-styled array in vol, 0 for matlab-styled array*/
 	int maxgate;        /*simultaneous recording gates*/
 	char isreflect;     /*1 for reflecting photons at boundary,0 for exiting*/
+	char isnormalized;  /*1 to normalize the fluence, 0 for raw fluence*/
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);

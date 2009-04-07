@@ -58,6 +58,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isrowmajor=1; /* default is C array*/
      cfg->maxgate=1;
      cfg->isreflect=1;
+     cfg->isnormalized=0;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -269,6 +270,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+		     case 'U':
+ 	                        cfg->isnormalized=1;
+		     	        break;
 		}
 	    }
 	    i++;
@@ -298,6 +302,7 @@ where possible parameters include\n\
      -g [1|int]    number of time gates per run\n\
      -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
      -s sessionid  a string to identify this specific simulation\n\n\
+     -U            normailze the fluence to unitary\n\
 example:\n\
        mcextreme -t 1024 -m 100000 -f input.inp -s test -d 0\n");
 }
