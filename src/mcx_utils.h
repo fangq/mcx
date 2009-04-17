@@ -41,6 +41,7 @@ typedef struct MCXConfig{
 	int maxgate;        /*simultaneous recording gates*/
 	char isreflect;     /*1 for reflecting photons at boundary,0 for exiting*/
 	char isnormalized;  /*1 to normalize the fluence, 0 for raw fluence*/
+	char issavedet;     /*1 to count all photons hits the detectors*/
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);

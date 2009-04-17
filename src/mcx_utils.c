@@ -59,6 +59,7 @@ void mcx_initcfg(Config *cfg){
      cfg->maxgate=1;
      cfg->isreflect=1;
      cfg->isnormalized=0;
+     cfg->issavedet=1;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -157,6 +158,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%d %f\n",cfg->detnum,cfg->detradius);
      cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
+     cfg->issavedet=(cfg->detpos>0);
      for(i=0;i<cfg->detnum;i++){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in mm): [5 5 5 1]\n\t",i);
@@ -252,7 +254,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
-		     case 'd':
+		     case 'a':
 		     	        if(i<argc-1)
 		     		    cfg->isrowmajor=atoi(argv[++i]);
 				else
@@ -267,6 +269,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'b':
 		     	        if(i<argc-1)
 		     		    cfg->isreflect=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
+		     case 'd':
+		     	        if(i<argc-1)
+		     		    cfg->issavedet=atoi(argv[++i]);
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
@@ -298,7 +306,8 @@ where possible parameters include\n\
      -f config     read config from a file\n\
      -m n_move	   total move per thread\n\
      -t [1|int]    total thread number\n\
-     -d [1|0]      1 for C array, 0 for Matlab array\n\
+     -a [1|0]      1 for C array, 0 for Matlab array\n\
+     -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -g [1|int]    number of time gates per run\n\
      -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
      -s sessionid  a string to identify this specific simulation\n\n\

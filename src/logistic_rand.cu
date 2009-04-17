@@ -5,7 +5,7 @@
 *                                                                    *
 *  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>              *
 *                                                                    *
-*  History: 2009/03/02  CUDA version based on Neal Wagner1 1993      *
+*  History: 2009/03/02  CUDA version based on Neal Wagner 1993       *
 *         http://www.cs.utsa.edu/~wagner/pubs/logistic/logistic.pdf  *
 *                                                                    *
 *********************************************************************/
