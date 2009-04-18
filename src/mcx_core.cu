@@ -113,7 +113,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
      // assuming the initial positions are within the domain
      idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
-            int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
+                      int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
      idxorig=idx1d;
      mediaid=media[idx1d];
 	  
@@ -262,19 +262,21 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
           if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
                incache=1;
                cachebyte=isrowmajor?int(floorf(npos.x-cp0.x)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.z-cp0.z)):\
-	                 int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
+                                    int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
           }else{
 	       incache=0;
           }
 #endif
-
+          if(npos.x<0||npos.y<0||npos.z<0||npos.x>=maxidx.x||npos.y>=maxidx.y||npos.z>=maxidx.z){
+	      mediaid=0;
+	  }else{
 #ifdef CACHE_MEDIA
-          mediaid=incache?gmediacache[cachebyte]:media[idx1d];
+              mediaid=incache?gmediacache[cachebyte]:media[idx1d];
 #else
-          mediaid=media[idx1d];
+              mediaid=media[idx1d];
 #endif
-
-	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1||npos.x<0||npos.y<0||npos.z<0||npos.x>maxidx.x||npos.y>maxidx.y||npos.z>maxidx.z){
+          }
+	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1){
 	      /*if hit the boundary or exit the domain, rebound or launch a new one*/
 
               /*time to hit the wall in each direction*/
@@ -372,7 +374,7 @@ void mcx_run_simulation(Config *cfg){
      float  minstep=MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
-     float3 maxidx=float3(cfg->dim.x-1,cfg->dim.y-1,cfg->dim.z-1);
+     float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
      float t,twindow0,twindow1;
      float energyloss=0.f,energyabsorbed=0.f;
 
@@ -553,6 +555,7 @@ void mcx_run_simulation(Config *cfg){
 	  energyabsorbed+=Plen[i].y;
      }
      printnum=cfg->nthread<16?cfg->nthread:16;
+//     printnum=cfg->nthread;
      for (i=0; i<printnum; i++) {
            printf("% 4d[A% f % f % f]C%3d J%3d% 8f(P% 6.3f % 6.3f % 6.3f)T% 5.3f L% 5.3f %f %f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
