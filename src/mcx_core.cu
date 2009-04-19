@@ -185,6 +185,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #endif
 		           tmp0*=tmp0;
 		           tmp0=GPUDIV((1+prop.w*prop.w-tmp0),2.f*prop.w);
+
+                           /* when ran=1, CUDA will give me 1.000002 for tmp0 which produces nan later*/
+                           if(tmp0>1.f) tmp0=1.f;
+
 		           theta=acosf(tmp0);
 		           stheta=GPUSIN(theta);
 		           ctheta=tmp0;
@@ -322,7 +326,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
        	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
 #ifdef __DEVICE_EMULATION__
 	          printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
-	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",idx,(int)ndir.w,(int)nlen.w,
+	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",
+                         idx,(int)ndir.w,(int)nlen.w,
 	                 flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
 		     energyloss+=(1.f-Rtotal)*npos.w; /*energy loss due to reflection*/
@@ -526,8 +531,8 @@ void mcx_run_simulation(Config *cfg){
 
          printf("lauching mcx_main_loop for time window [%.1fns %.1fns] ...\t",twindow0*1e9,twindow1*1e9);
          mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,\
-	                              twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,\
-                                      1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
+	               twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,\
+                       1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
          cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
          printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
          cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
@@ -559,9 +564,12 @@ void mcx_run_simulation(Config *cfg){
      for (i=0; i<printnum; i++) {
            printf("% 4d[A% f % f % f]C%3d J%3d% 8f(P% 6.3f % 6.3f % 6.3f)T% 5.3f L% 5.3f %f %f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
-            Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
+            Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], 
+            Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
      }
-     printf("simulated %d photons, exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",photoncount,energyloss,energyabsorbed,energyloss+energyabsorbed);
+     // total energy here equals total simulated photons+unfinished photons for all threads
+     printf("simulated %d photons, exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
+            photoncount,energyloss,energyabsorbed,energyloss+energyabsorbed);
 
      cudaFree(gmedia);
 #ifdef CACHE_MEDIA
