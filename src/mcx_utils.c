@@ -60,6 +60,8 @@ void mcx_initcfg(Config *cfg){
      cfg->isreflect=1;
      cfg->isnormalized=0;
      cfg->issavedet=1;
+     cfg->respin=1;
+     cfg->issave2pt=1;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -79,7 +81,7 @@ void mcx_clearcfg(Config *cfg){
 }
 
 void mcx_loadconfig(FILE *in, Config *cfg){
-     int i;
+     int i,gates;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH];
      
      if(in==stdin)
@@ -109,6 +111,13 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the path to the volume binary file:\n\t",
                                    cfg->tstart,cfg->tend,cfg->tstep);
+     if(cfg->tstart>cfg->tend || cfg->tstep==0.f){
+         mcx_error(-9,"incorrect time gate settings");
+     }
+     gates=int((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
+     if(cfg->maxgate>gates)
+	 cfg->maxgate=gates;
+
      fscanf(in,"%s", filename);
      fgets(comment,MAX_PATH_LENGTH,in);
 
@@ -220,7 +229,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      char filename[MAX_PATH_LENGTH]={0};
      
      if(argc<=1){
-     	mcx_usage();
+     	mcx_usage(argv[0]);
      	exit(0);
      }
      while(i<argc){
@@ -278,6 +287,18 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+		     case 'r':
+		     	        if(i<argc-1)
+		     		    cfg->respin=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
+		     case 'S':
+		     	        if(i<argc-1)
+		     		    cfg->issave2pt=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
 		     case 'U':
  	                        cfg->isnormalized=1;
 		     	        break;
@@ -292,7 +313,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      }
 }
 
-void mcx_usage(){
+void mcx_usage(char *exename){
      printf("\
 #######################################################################################\n\
 #                     Monte-Carlo Extreme (MCX) -- CUDA                               #\n\
@@ -300,12 +321,13 @@ void mcx_usage(){
 #                                                                                     #\n\
 #      Martinos Center for Biomedical Imaging, Massachusetts General Hospital         #\n\
 #######################################################################################\n\
-usage: mcextreme <param1> <param2> ...\n\
+usage: %s <param1> <param2> ...\n\
 where possible parameters include\n\
      -i 	   interactive mode\n\
      -f config     read config from a file\n\
-     -m n_move	   total move per thread\n\
+     -m n_move	   total move (integration intervals) per thread\n\
      -t [1|int]    total thread number\n\
+     -r [1|int]    number of re-spins (repeations)\n\
      -a [1|0]      1 for C array, 0 for Matlab array\n\
      -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -g [1|int]    number of time gates per run\n\
@@ -313,5 +335,5 @@ where possible parameters include\n\
      -s sessionid  a string to identify this specific simulation\n\n\
      -U            normailze the fluence to unitary\n\
 example:\n\
-       mcextreme -t 1024 -m 100000 -f input.inp -s test -d 0\n");
+       %s -t 1024 -m 100000 -f input.inp -s test -d 0\n",exename,exename);
 }

@@ -71,8 +71,8 @@ __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 
 // pass as many pre-computed values as possible to utilize the constant memory 
 
-kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize,float minstep, 
-     float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, float Rtstep,
+kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
+     float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, uchar save2pt, float Rtstep,
      float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,
      uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
 
@@ -84,8 +84,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      float4 npos0;
      float3 htime;
      float  minaccumtime=minstep*R_C0;
-     float  energyloss=0.f;
-     float  energyabsorbed=0.f;
+     float  energyloss=genergy[idx<<1];
+     float  energyabsorbed=genergy[(idx<<1)+1];
 
      int i, idx1d, idx1dold,idxorig, mediaid;
 
@@ -148,7 +148,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #else
                logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
                ran=logistic_uniform(t[0]);           /*shuffled values*/
-               nlen.x= ((ran==0.f)?(-GPULOG(t[0])):(-GPULOG(ran)));
+               nlen.x= ((ran==0.f)?(-GPULOG((2.f*R_PI)*sqrtf(t[0]))):(-GPULOG(ran)));
 #endif
 
 #ifdef __DEVICE_EMULATION__
@@ -160,7 +160,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
                        ran=mt19937s();
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
 #else
-                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[1]; /*random number [0,MAX_MT_RAND)*/
                        tmp0=TWO_PI*logistic_uniform(ran); /*will be reused to minimize register*/
 #endif
                        GPUSINCOS(tmp0,&sphi,&cphi);
@@ -174,7 +174,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 #ifdef USE_MT_RAND
 		       ran=mt19937s();
 #else
-                       ran=t[4]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
 #endif
 
                        if(prop.w>EPS){  /*if prop.w is too small, the distribution of theta is bad*/
@@ -352,7 +352,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
     printf("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,npos.w,(int)nlen.w,nlen.y,nlen.z);
 #endif
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
-             if(nlen.y>=twin0 & nlen.y<twin1){
+             if(save2pt&&nlen.y>=twin0 & nlen.y<twin1){
                   field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
 	     }
              nlen.z+=minaccumtime; // fluence is a temporal-integration
@@ -360,8 +360,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
      }
      energyloss+=(npos.w<1.f)?npos.w:0.f;  /*if the last photon has not been terminated, sum energy*/
 
-     nlen.z=energyloss; /*reuse the time integration grid for total energy loss*/
-     nlen.y=energyabsorbed;
+     genergy[idx<<1]=energyloss;
+     genergy[(idx<<1)+1]=energyabsorbed;
 #ifdef USE_MT_RAND
      n_seed[idx]=(ran&0xffffffffu);
 #else
@@ -375,16 +375,17 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float3 vsize
 
 void mcx_run_simulation(Config *cfg){
 
-     int i;
+     int i,iter;
      float  minstep=MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
      float t,twindow0,twindow1;
      float energyloss=0.f,energyabsorbed=0.f;
+     float *energy;
 
      int photoncount=0,printnum;
-     int tic;
+     int tic,fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
@@ -395,7 +396,16 @@ void mcx_run_simulation(Config *cfg){
      int dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
      
      uchar  *media=(uchar *)(cfg->vol);
-     float  *field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate);
+     float  *field;
+     if(cfg->respin>1){
+         field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate*2);
+         memset(field,0,sizeof(float)*dimxyz*cfg->maxgate*2);
+     }
+     else{
+         field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate); /*the second half will be used to accumulate*/
+         memset(field,0,sizeof(float)*dimxyz*cfg->maxgate);
+     }
+	 
 #ifdef CACHE_MEDIA
      int count,j,k;
      uchar  mediacache[MAX_MEDIA_CACHE];
@@ -419,6 +429,7 @@ void mcx_run_simulation(Config *cfg){
      Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Plen=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pseed=(uint*)malloc(sizeof(uint)*cfg->nthread*RAND_BUF_LEN);
+     energy=(float*)malloc(sizeof(float)*cfg->nthread*2);
 
 #ifdef CACHE_MEDIA
      printf("requested constant memory cache: %d (max allowed %d)\n",
@@ -443,8 +454,9 @@ void mcx_run_simulation(Config *cfg){
      uint   *gPseed;
      cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN);
 
-     memset(field,0,sizeof(float)*dimxyz);
-
+     float *genergy;
+     cudaMalloc((void **) &genergy, sizeof(float)*cfg->nthread*2);
+     
      if(cfg->isrowmajor){ // if the volume is stored in C array order
 	     cachebox.x=(cp1.z-cp0.z+1);
 	     cachebox.y=(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1);
@@ -498,13 +510,16 @@ void mcx_run_simulation(Config *cfg){
      tic=GetTimeMillis();
 
      printf("initializing streams ...\t");
+     fieldlen=dimxyz*cfg->maxgate;
 
      cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
      cudaMemcpy(gPseed, Pseed, sizeof(uint)  *cfg->nthread*RAND_BUF_LEN,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gfield, field, sizeof(float) *dimxyz*cfg->maxgate, cudaMemcpyHostToDevice);
+     cudaMemcpy(gfield, field, sizeof(float) *fieldlen, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice);
+     cudaMemcpy(genergy,energy,sizeof(float) *cfg->nthread*2, cudaMemcpyHostToDevice);
+
      cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice);
 #ifdef CACHE_MEDIA
      cudaMemcpyToSymbol(gmediacache, mediacache, MAX_MEDIA_CACHE, 0, cudaMemcpyHostToDevice);
@@ -525,44 +540,71 @@ void mcx_run_simulation(Config *cfg){
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
      
+     /*simulate for all time-gates in maxgate groups per run*/
      for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){
-         twindow0=t;
-	 twindow1=t+cfg->tstep*cfg->maxgate;
+       twindow0=t;
+       twindow1=t+cfg->tstep*cfg->maxgate;
 
-         printf("lauching mcx_main_loop for time window [%.1fns %.1fns] ...\t",twindow0*1e9,twindow1*1e9);
-         mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,cfg->steps,minstep,\
-	               twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,\
-                       1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
-         cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
-         printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
-         cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-         printf("transfer complete: %d ms\nsaving data to file ...\t",GetTimeMillis()-tic);
+       /*total number of repetition for the simulations, results will be accumulated to field*/
+       for(iter=0;iter<cfg->respin;iter++){
+       
+           printf("lauching mcx_main_loop for time window [%.1fns %.1fns] ...\t",twindow0*1e9,twindow1*1e9);
+	   
+           mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
+	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
+                	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
 
-	 mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
-         printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
+	   /*handling the 2pt distributions*/
+           cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
+           printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
+           cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
+           printf("transfer complete: %d ms\nsaving data to file ...\t",GetTimeMillis()-tic);
 
-	 if(twindow1<cfg->tend) {
-	 	cudaMemset(gfield,0,sizeof(float)*dimxyz*cfg->maxgate); /* cost about 1 ms */
- 		cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); /*following 3 cost about 50 ms*/
-		cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-		cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-	 }
+	   if(cfg->respin>1){
+	       for(i=0;i<fieldlen;i++)  /*accumulate field, can be done in the GPU*/
+	          field[fieldlen+i]+=field[i];
+	   }
+	   if(iter+1==cfg->respin){ /*save data to disk at the last iteration*/
+	       if(cfg->respin>1)  /*copy the accumulated fields back*/
+	           memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
+               if(cfg->issave2pt)
+                   mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
+               printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
+	   }
+	   /*initialize the next simulation*/
+	   if(twindow1<cfg->tend && iter+1<cfg->respin){
+	 	  cudaMemset(gfield,0,sizeof(float)*fieldlen); /* cost about 1 ms */
+
+ 		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); /*following 3 cost about 50 ms*/
+		  cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+		  cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+	   }
+/*	   if(cfg->respin>1){
+               for (i=0; i<cfg->nthread*RAND_BUF_LEN; i++)
+		   Pseed[i]=rand();
+	       cudaMemcpy(gPseed, Pseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN,  cudaMemcpyHostToDevice);
+	   }*/
+       }
+       if(twindow1<cfg->tend){
+            cudaMemset(genergy,0,sizeof(float)*cfg->nthread*2);
+       }
      }
 
      cudaMemcpy(Ppos,  gPpos, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Pdir,  gPdir, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Plen,  gPlen, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Pseed, gPseed,sizeof(uint)  *cfg->nthread*RAND_BUF_LEN,   cudaMemcpyDeviceToHost);
+     cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*2,cudaMemcpyDeviceToHost);
 
      for (i=0; i<cfg->nthread; i++) {
 	  photoncount+=(int)Plen[i].w;
-	  energyloss+=Plen[i].z;
-	  energyabsorbed+=Plen[i].y;
+          energyloss+=energy[i<<1];
+          energyabsorbed+=energy[(i<<1)+1];
      }
      printnum=cfg->nthread<16?cfg->nthread:16;
 //     printnum=cfg->nthread;
      for (i=0; i<printnum; i++) {
-           printf("% 4d[A% f % f % f]C%3d J%3d% 8f(P% 6.3f % 6.3f % 6.3f)T% 5.3f L% 5.3f %f %f\n", i,
+           printf("% 4d[A% f % f % f]C%3d J%5d% 8f(P%6.3f %6.3f %6.3f)T% 5.3f L% 5.3f %f %f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], 
             Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
@@ -580,6 +622,8 @@ void mcx_run_simulation(Config *cfg){
      cudaFree(gPdir);
      cudaFree(gPlen);
      cudaFree(gPseed);
+     cudaFree(genergy);
+
      free(Ppos);
      free(Pdir);
      free(Plen);
