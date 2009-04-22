@@ -281,7 +281,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 #endif
           }
 	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1){
-	      /*if hit the boundary or exit the domain, rebound or launch a new one*/
+	      /*if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one*/
 
               /*time to hit the wall in each direction*/
               htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
@@ -296,7 +296,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                   (int)nlen.w,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z,npos.x,npos.y,npos.z);
 #endif
 
-              /*I don't have the luxury to declare more vars in a kernel, so, I recycled some of the old ones*/
+              /*recycled some old register variables to save memory*/
+
+	      /*if hit boundary within the time window and is n-mismatched, rebound*/
 
               if(doreflect&&nlen.y<tmax&&nlen.y<twin1&& flipdir>0.f && n1!=prop.z){
                   tmp0=n1*n1;
@@ -310,7 +312,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
        	       	     sphi=ndir.x*ndir.x+ndir.z*ndir.z;
                      ndir.y=-ndir.y;
                   }else if(flipdir>=1.f){ /*flip in x axis*/
-                     cphi=fabs(ndir.x);               /*cos(si)*/
+                     cphi=fabs(ndir.x);                /*cos(si)*/
                      sphi=ndir.y*ndir.y+ndir.z*ndir.z; /*sin(si)^2*/
                      ndir.x=-ndir.x;
                   }
@@ -422,8 +424,8 @@ void mcx_run_simulation(Config *cfg){
      mcblock.x=MAX_THREAD;
      
      clgrid.x=cfg->dim.x;
-     clblock.x=cfg->dim.y;
-     clblock.y=cfg->dim.z;
+     clgrid.y=cfg->dim.y;
+     clblock.x=cfg->dim.z;
 	
      Ppos=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
@@ -545,11 +547,12 @@ void mcx_run_simulation(Config *cfg){
        twindow0=t;
        twindow1=t+cfg->tstep*cfg->maxgate;
 
+       printf("lauching mcx_main_loop for time window [%.1fns %.1fns] ...\n",twindow0*1e9,twindow1*1e9);
+
        /*total number of repetition for the simulations, results will be accumulated to field*/
        for(iter=0;iter<cfg->respin;iter++){
-       
-           printf("lauching mcx_main_loop for time window [%.1fns %.1fns] ...\t",twindow0*1e9,twindow1*1e9);
-	   
+
+           printf("simulation run#%d ...\t",iter);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);

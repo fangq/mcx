@@ -322,7 +322,7 @@ void mcx_usage(char *exename){
 #      Martinos Center for Biomedical Imaging, Massachusetts General Hospital         #\n\
 #######################################################################################\n\
 usage: %s <param1> <param2> ...\n\
-where possible parameters include\n\
+where possible parameters include (the first item in [] is the default value)\n\
      -i 	   interactive mode\n\
      -f config     read config from a file\n\
      -m n_move	   total move (integration intervals) per thread\n\
@@ -332,7 +332,8 @@ where possible parameters include\n\
      -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -g [1|int]    number of time gates per run\n\
      -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
-     -s sessionid  a string to identify this specific simulation\n\n\
+     -s sessionid  a string to identify this specific simulation\n\
+     -S [1|0]      1 to save the fluence field, 0 do not save\n\
      -U            normailze the fluence to unitary\n\
 example:\n\
        %s -t 1024 -m 100000 -f input.inp -s test -d 0\n",exename,exename);
