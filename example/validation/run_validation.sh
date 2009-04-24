@@ -1,0 +1,3 @@
+#!/bin/sh
+time ../../bin/mcextreme -t 1024 -g 50 -m 1000000 -f validation.inp -s semi_infinite -r 18 -a 0 -b 0 -U
+time ../../bin/mcextreme -t 1024 -g 50 -m 1000000 -f validation_dark.inp -s semi_infinite_dark -r 18 -a 0 -b 0 -U
