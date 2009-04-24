@@ -68,7 +68,6 @@ __constant__ float4 gproperty[MAX_PROP];
 __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 #endif
 
-
 // pass as many pre-computed values as possible to utilize the constant memory 
 
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
@@ -377,10 +376,20 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      n_len[idx]=nlen;
 }
 
+kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], int maxgate,uint3 dimlen){
+     int i;
+     float phi=0.f;
+     int idx= blockIdx.x*dimlen.y+blockIdx.y*dimlen.x+ threadIdx.x;
+
+     for(i=0;i<maxgate;i++){
+        phi+=field[i*dimlen.z+idx];
+     }
+     energy[2]+=phi*gproperty[media[idx]].x;
+}
 
 void mcx_run_simulation(Config *cfg){
 
-     int i,iter;
+     int i,j,iter;
      float  minstep=MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
@@ -394,6 +403,8 @@ void mcx_run_simulation(Config *cfg){
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
+     //uint3 threaddim;
+     float Vvox,scale,absorp,eabsorp;
 
      dim3 mcgrid, mcblock;
      dim3 clgrid, clblock;
@@ -474,7 +485,13 @@ void mcx_run_simulation(Config *cfg){
 	     dimlen.y=cfg->dim.y*cfg->dim.x;
      }
      dimlen.z=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-     
+     /*
+      threaddim.x=cfg->dim.z;
+      threaddim.y=cfg->dim.y*cfg->dim.z;
+      threaddim.z=dimlen.z;
+     */
+     Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z;
+
 #ifdef CACHE_MEDIA
      count=0;
      memset(mediacache,0,MAX_MEDIA_CACHE);
@@ -555,43 +572,69 @@ void mcx_run_simulation(Config *cfg){
        /*total number of repetition for the simulations, results will be accumulated to field*/
        for(iter=0;iter<cfg->respin;iter++){
 
-           printf("simulation run#%d ...\t",iter+1);
+           printf("simulation run #%d ... \t",iter+1);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
 
 	   /*handling the 2pt distributions*/
-           cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
-           printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
-           cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-           printf("transfer complete: %d ms\n",GetTimeMillis()-tic);
+           if(cfg->issave2pt){
+               cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
+               printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
+               cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
+               printf("transfer complete: %d ms\n",GetTimeMillis()-tic);
 
-	   if(cfg->respin>1){
-	       for(i=0;i<fieldlen;i++)  /*accumulate field, can be done in the GPU*/
-	          field[fieldlen+i]+=field[i];
-	   }
-	   if(iter+1==cfg->respin){ /*save data to disk at the last iteration*/
-	       if(cfg->respin>1)  /*copy the accumulated fields back*/
-	           memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
-               if(cfg->issave2pt){
+               if(cfg->respin>1){
+                   for(i=0;i<fieldlen;i++)  /*accumulate field, can be done in the GPU*/
+                      field[fieldlen+i]+=field[i];
+               }
+               if(iter+1==cfg->respin){ 
+                   if(cfg->respin>1)  /*copy the accumulated fields back*/
+                       memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
+
+                   if(cfg->isnormalized){
+                       /*normalize field if it is the last iteration, temporarily do it in CPU*/
+                       //mcx_sum_trueabsorption<<<clgrid,clblock>>>(genergy,gmedia,gfield,
+                       //  	cfg->maxgate,threaddim);
+
+                       printf("normizing raw data ...\t");
+
+                       cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*2,cudaMemcpyDeviceToHost);
+                       for(i=1;i<cfg->nthread;i++){
+                           energy[0]+=energy[i<<1];
+       	       	       	   energy[1]+=energy[(i<<1)+1];
+                       }
+                       eabsorp=0.f;
+       	       	       for(i=0;i<dimxyz;i++){
+                           absorp=0.f;
+                           for(j=0;j<cfg->maxgate;j++)
+                              absorp+=field[j*dimxyz+i];
+                           eabsorp+=absorp*cfg->prop[media[i]].mua;
+       	       	       }
+                       scale=energy[1]/(energy[0]+energy[1])/Vvox/cfg->tstep/eabsorp;
+                       printf("normalization factor alpha=%f\n",scale);
+                       mcx_normalize(field,scale,fieldlen);
+                   }
+                   printf("data normalization complete : %d ms\n",GetTimeMillis()-tic);
+
                    printf("saving data to file ...\t");
-                   mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
+                   mcx_savedata(field,fieldlen,cfg);
                    printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
-	       }
-	   }
+               }
+           }
 	   /*initialize the next simulation*/
 	   if(twindow1<cfg->tend && iter+1<cfg->respin){
-	 	  cudaMemset(gfield,0,sizeof(float)*fieldlen); /* cost about 1 ms */
+                  cudaMemset(gfield,0,sizeof(float)*fieldlen); /* cost about 1 ms */
 
  		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); /*following 3 cost about 50 ms*/
 		  cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
 		  cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
 	   }
-/*	   if(cfg->respin>1){
+	   if(cfg->respin>1 && RAND_BUF_LEN>1){
                for (i=0; i<cfg->nthread*RAND_BUF_LEN; i++)
 		   Pseed[i]=rand();
 	       cudaMemcpy(gPseed, Pseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN,  cudaMemcpyHostToDevice);
-	   }*/
+	   }
        }
        if(twindow1<cfg->tend){
             cudaMemset(genergy,0,sizeof(float)*cfg->nthread*2);
@@ -609,6 +652,7 @@ void mcx_run_simulation(Config *cfg){
           energyloss+=energy[i<<1];
           energyabsorbed+=energy[(i<<1)+1];
      }
+
      printnum=cfg->nthread<16?cfg->nthread:16;
 //     printnum=cfg->nthread;
      for (i=0; i<printnum; i++) {

@@ -62,5 +62,6 @@ void mcx_clearcfg(Config *cfg);
 void mcx_parsecmd(int argc, char* argv[], Config *cfg);
 void mcx_usage(char *exename);
 void mcx_loadvolume(char *filename,Config *cfg);
+void mcx_normalize(float field[], float scale, int fieldlen);
 
 #endif
