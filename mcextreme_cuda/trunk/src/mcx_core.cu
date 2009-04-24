@@ -574,7 +574,7 @@ void mcx_run_simulation(Config *cfg){
 	       if(cfg->respin>1)  /*copy the accumulated fields back*/
 	           memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
                if(cfg->issave2pt){
-                   printf("saving data to file ...\t);
+                   printf("saving data to file ...\t");
                    mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
                    printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
 	       }
