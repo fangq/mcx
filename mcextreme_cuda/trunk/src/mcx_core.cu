@@ -87,7 +87,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     int i, idx1d, idx1dold,idxorig, mediaid;
+     int i, idx1d, idx1dold,idxorig, mediaid, mediaidorig;
 
      float flipdir,n1,Rtotal;
 #ifdef CACHE_MEDIA
@@ -116,6 +116,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                       int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
      idxorig=idx1d;
      mediaid=media[idx1d];
+     mediaidorig=mediaid;
 	  
 #ifdef CACHE_MEDIA
      if(npos.x>=cp0.x && npos.x<=cp1.x && npos.y>=cp0.y && npos.y<=cp1.y && npos.z>=cp0.z && npos.z<=cp1.z){
@@ -125,6 +126,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	                       int(floorf(npos.z-cp0.z)*cachebox.y+floorf(npos.y-cp0.y)*cachebox.x+floorf(npos.x-cp0.x));
           cachebyte0=cachebyte;
           mediaid=gmediacache[cachebyte];
+          mediaidorig=mediaid;
      }
 #endif
 
@@ -192,7 +194,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 		           theta=acosf(tmp0);
 		           stheta=GPUSIN(theta);
 		           ctheta=tmp0;
-                       }else{
+                       }else{  /*Wang1995 has acos(2*ran-1), rather than 2*pi*ran, need to check*/
 #ifdef USE_MT_RAND
 			   theta=TWO_PI*ran*R_MAX_MT_RAND;
 #else
@@ -221,7 +223,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                                printf("new dir: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
 #endif
 		       }else{
-			   ndir=float4(stheta*cphi,stheta*sphi,ctheta,ndir.w);
+			   ndir=float4(stheta*cphi,stheta*sphi,ctheta*ndir.z,ndir.w);
 #ifdef __DEVICE_EMULATION__
                            printf("new dir-z: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
 #endif
@@ -232,10 +234,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 
           n1=prop.z;
 	  prop=gproperty[mediaid];
-	  len=minstep*prop.y;
+	  len=minstep*prop.y; /*Wang1995: minstep*(prop.x+prop.y)*/
 
           npos0=npos;
-	  if(len>nlen.x){  /*scattering ends in this voxel*/
+	  if(len>nlen.x){  /*scattering ends in this voxel: mus*minstep > s */
                tmp0=GPUDIV(nlen.x,prop.y);
 	       energyabsorbed+=npos.w;
    	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,npos.w*expf(-prop.x * tmp0 ));
@@ -249,7 +251,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	       energyabsorbed+=npos.w;
    	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
 	       energyabsorbed-=npos.w;
-	       nlen.x-=len;     /*remaining probability*/
+	       nlen.x-=len;     /*remaining probability: sum(s_i*mus_i)*/
 	       nlen.y+=minaccumtime*prop.z; /*total time*/
 #ifdef __DEVICE_EMULATION__
                printf(">>keep going %f<%f %f [%d] %e %e\n",nlen.x,len,prop.y,idx1d,nlen.y,nlen.z);
@@ -344,6 +346,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	          ndir=c0;
 	          nlen=float4(0.f,0.f,minaccumtime,nlen.w+1);
                   idx1d=idxorig;
+		  mediaid=mediaidorig;
 #ifdef CACHE_MEDIA
 	          cachebyte=cachebyte0;
 	          incache=incache0;
@@ -552,7 +555,7 @@ void mcx_run_simulation(Config *cfg){
        /*total number of repetition for the simulations, results will be accumulated to field*/
        for(iter=0;iter<cfg->respin;iter++){
 
-           printf("simulation run#%d ...\t",iter);
+           printf("simulation run#%d ...\t",iter+1);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
@@ -561,7 +564,7 @@ void mcx_run_simulation(Config *cfg){
            cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
            printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
            cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-           printf("transfer complete: %d ms\nsaving data to file ...\t",GetTimeMillis()-tic);
+           printf("transfer complete: %d ms\n",GetTimeMillis()-tic);
 
 	   if(cfg->respin>1){
 	       for(i=0;i<fieldlen;i++)  /*accumulate field, can be done in the GPU*/
@@ -570,9 +573,11 @@ void mcx_run_simulation(Config *cfg){
 	   if(iter+1==cfg->respin){ /*save data to disk at the last iteration*/
 	       if(cfg->respin>1)  /*copy the accumulated fields back*/
 	           memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
-               if(cfg->issave2pt)
+               if(cfg->issave2pt){
+                   printf("saving data to file ...\t);
                    mcx_savedata(field,dimxyz*cfg->maxgate,cfg);
-               printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
+                   printf("saving data complete : %d ms\n",GetTimeMillis()-tic);
+	       }
 	   }
 	   /*initialize the next simulation*/
 	   if(twindow1<cfg->tend && iter+1<cfg->respin){
