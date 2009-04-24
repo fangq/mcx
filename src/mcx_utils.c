@@ -12,6 +12,13 @@ void mcx_savedata(float *dat,int len,Config *cfg){
      fclose(fp);
 }
 
+void mcx_normalize(float field[], float scale, int fieldlen){
+     int i;
+     for(i=0;i<fieldlen;i++){
+         field[i]*=scale;
+     }
+}
+
 void mcx_error(int id,char *msg){
      fprintf(stderr,"MCX ERROR(%d):%s\n",id,msg);
      exit(id);
