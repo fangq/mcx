@@ -35,7 +35,9 @@
 #define MAX_MT_RAND 4294967296
 #define R_MAX_MT_RAND 2.32830643653870e-10
 #define TWO_PI 6.28318530717959f
+#define ONE_PI 3.1415926535897932f
 #define EPS    (1e-10f)
+#define JUST_ABOVE_ONE 1.0001f
 
 #ifdef __DEVICE_EMULATION__
 #define MAX_THREAD 1
@@ -86,7 +88,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     int i, idx1d, idx1dold,idxorig, mediaid, mediaidorig;
+     int i, idx1d, idx1dold,idxorig;
+     uchar  mediaid, mediaidorig;
+     char   medid=-1;
+     float  atten;
 
      float flipdir,n1,Rtotal;
 #ifdef CACHE_MEDIA
@@ -195,11 +200,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 		           ctheta=tmp0;
                        }else{  /*Wang1995 has acos(2*ran-1), rather than 2*pi*ran, need to check*/
 #ifdef USE_MT_RAND
-			   theta=TWO_PI*ran*R_MAX_MT_RAND;
+			   theta=ONE_PI*ran*R_MAX_MT_RAND;
 #else
-                           theta=TWO_PI*logistic_uniform(ran);
+                           theta=ONE_PI*logistic_uniform(ran);
 #endif
-
                            GPUSINCOS(theta,&stheta,&ctheta);
                        }
 #ifdef __DEVICE_EMULATION__
@@ -210,14 +214,12 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 		           tmp0=1.f-ndir.z*ndir.z;   /*reuse tmp to minimize registers*/
 		           tmp1=rsqrtf(tmp0);
 		           tmp1=stheta*tmp1;
-//			   if(stheta>1e-20) {  /*strange: if stheta=0, I will get nan :(  FQ */
-			     ndir=float4(
+		           ndir=float4(
 				tmp1*(ndir.x*ndir.z*cphi - ndir.y*sphi) + ndir.x*ctheta,
 				tmp1*(ndir.y*ndir.z*cphi + ndir.x*sphi) + ndir.y*ctheta,
 				-tmp1*tmp0*cphi                         + ndir.z*ctheta,
 				ndir.w
-				);
-//                             }
+			   );
 #ifdef __DEVICE_EMULATION__
                                printf("new dir: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
 #endif
@@ -239,7 +241,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	  if(len>nlen.x){  /*scattering ends in this voxel: mus*minstep > s */
                tmp0=GPUDIV(nlen.x,prop.y);
 	       energyabsorbed+=npos.w;
-   	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,npos.w*expf(-prop.x * tmp0 ));
+   	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,
+                           npos.w*expf(-prop.x*tmp0));
 	       energyabsorbed-=npos.w;
 	       nlen.x=MINUS_SAME_VOXEL;
 	       nlen.y+=tmp0*prop.z*R_C0;  // accumulative time
@@ -248,7 +251,11 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 #endif
 	  }else{                      /*otherwise, move minstep*/
 	       energyabsorbed+=npos.w;
-   	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*expf(-prop.x * minstep ));
+               if(mediaid!=medid){
+                  atten=expf(-prop.x*minstep);
+               }
+   	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*atten);
+               medid=mediaid;
 	       energyabsorbed-=npos.w;
 	       nlen.x-=len;     /*remaining probability: sum(s_i*mus_i)*/
 	       nlen.y+=minaccumtime*prop.z; /*total time*/
@@ -284,19 +291,21 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1){
 	      /*if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one*/
 
-              /*time to hit the wall in each direction*/
-              htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos0.x)+(ndir.x>0.f)-npos0.x)/ndir.x:1e10;
-              htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos0.y)+(ndir.y>0.f)-npos0.y)/ndir.y:1e10f;
-              htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos0.z)+(ndir.z>0.f)-npos0.z)/ndir.z:1e10f;
-              tmp0=fminf(fminf(htime.x,htime.y),htime.z);
-              flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
+              flipdir=0.f;
+              if(doreflect) {
+                /*time to hit the wall in each direction*/
+                htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos0.x)+(ndir.x>0.f)-npos0.x)/ndir.x:1e10f;
+                htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos0.y)+(ndir.y>0.f)-npos0.y)/ndir.y:1e10f;
+                htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos0.z)+(ndir.z>0.f)-npos0.z)/ndir.z:1e10f;
+                tmp0=fminf(fminf(htime.x,htime.y),htime.z);
+                flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
 
-              htime.x=floorf(npos0.x+tmp0*1.0001*ndir.x); /*move to the 1st intersection pt*/
-       	      htime.y=floorf(npos0.y+tmp0*1.0001*ndir.y);
-       	      htime.z=floorf(npos0.z+tmp0*1.0001*ndir.z);
+                htime.x=floorf(npos0.x+tmp0*JUST_ABOVE_ONE*ndir.x); /*move to the 1st intersection pt*/
+       	        htime.y=floorf(npos0.y+tmp0*JUST_ABOVE_ONE*ndir.y);
+       	        htime.z=floorf(npos0.z+tmp0*JUST_ABOVE_ONE*ndir.z);
 
-              if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
-                  if( media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
+                if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
+                    if( media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
                            int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)]){ /*hit again*/
 
 #ifdef __DEVICE_EMULATION__
@@ -304,20 +313,21 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                            media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
                            int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)], maxidx.x, maxidx.y,maxidx.z);
 #endif
-                     htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x<0.f)-npos.x)/(-ndir.x):1e10;
+                     htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x<0.f)-npos.x)/(-ndir.x):1e10f;
                      htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y<0.f)-npos.y)/(-ndir.y):1e10f;
                      htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z<0.f)-npos.z)/(-ndir.z):1e10f;
                      tmp0=fminf(fminf(htime.x,htime.y),htime.z);
                      flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
+                  }
                 }
               }
+
               prop=gproperty[mediaid];
 
 #ifdef __DEVICE_EMULATION__
               printf("->ID%d J%d C%d tlen %e flip %d %.1f!=%.1f dir=%f %f %f pos=%f %f %f\n",idx,(int)ndir.w,
                   (int)nlen.w,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z,npos.x,npos.y,npos.z);
 #endif
-
               /*recycled some old register variables to save memory*/
 
 	      /*if hit boundary within the time window and is n-mismatched, rebound*/
@@ -554,6 +564,10 @@ void mcx_run_simulation(Config *cfg){
      for (i=0; i<cfg->nthread*RAND_BUF_LEN; i++) {
 	   Pseed[i]=rand();
      }
+     printf("\
+################################################################################\n\
+#                  Monte-Carlo Extreme (MCX) -- CUDA                           #\n\
+################################################################################\n");
      tic=GetTimeMillis();
 
      printf("initializing streams ...\t");
@@ -571,7 +585,6 @@ void mcx_run_simulation(Config *cfg){
 #ifdef CACHE_MEDIA
      cudaMemcpyToSymbol(gmediacache, mediacache, MAX_MEDIA_CACHE, 0, cudaMemcpyHostToDevice);
 #endif
-
      printf("init complete : %d ms\n",GetTimeMillis()-tic);
 
      /*
@@ -597,7 +610,7 @@ void mcx_run_simulation(Config *cfg){
        /*total number of repetition for the simulations, results will be accumulated to field*/
        for(iter=0;iter<cfg->respin;iter++){
 
-           printf("simulation run #%d ... \t",iter+1);
+           printf("simulation run#%2d ... \t",iter+1);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
@@ -605,9 +618,9 @@ void mcx_run_simulation(Config *cfg){
 	   /*handling the 2pt distributions*/
            if(cfg->issave2pt){
                cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
-               printf("kernel complete: %d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
+               printf("kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-               printf("transfer complete: %d ms\n",GetTimeMillis()-tic);
+               printf("transfer complete:\t%d ms\n",GetTimeMillis()-tic);
 
                if(cfg->respin>1){
                    for(i=0;i<fieldlen;i++)  /*accumulate field, can be done in the GPU*/
@@ -678,13 +691,11 @@ void mcx_run_simulation(Config *cfg){
           energyabsorbed+=energy[(i<<1)+1];
      }
 
-     printnum=cfg->nthread<16?cfg->nthread:16;
-//     printnum=cfg->nthread;
+     printnum=cfg->nthread<cfg->printnum?cfg->nthread:cfg->printnum;
      for (i=0; i<printnum; i++) {
-           printf("% 4d[A% f % f % f]C%3d J%5d% 8f(P%6.3f %6.3f %6.3f)T% 5.3f L% 5.3f %f %f\n", i,
+           printf("% 4d[A% f % f % f]C%3d J%5d W% 8f(P%6.3f %6.3f %6.3f)T% 5.3e L% 5.3f %.0f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
-            Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i], 
-            Pdir[i].x*Pdir[i].x+Pdir[i].y*Pdir[i].y+Pdir[i].z*Pdir[i].z);
+            Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
      printf("simulated %d photons, exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",

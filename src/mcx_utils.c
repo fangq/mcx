@@ -74,6 +74,7 @@ void mcx_initcfg(Config *cfg){
      cfg->detpos=NULL;
      cfg->vol=NULL;
      cfg->session[0]='\0';
+     cfg->printnum=16;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -106,7 +107,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
                                    cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-     cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index*/
+     cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
      fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) );
      fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
@@ -306,6 +307,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+		     case 'p':
+		     	        if(i<argc-1)
+		     		    cfg->printnum=atoi(argv[++i]);
+				else
+				    mcx_error(-1,"incomplete input");
+		     	        break;
 		     case 'U':
  	                        cfg->isnormalized=1;
 		     	        break;
@@ -341,6 +348,7 @@ where possible parameters include (the first item in [] is the default value)\n\
      -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
      -s sessionid  a string to identify this specific simulation\n\
      -S [1|0]      1 to save the fluence field, 0 do not save\n\
+     -p [16|int]   number of threads to print (debug)\n\
      -U            normailze the fluence to unitary\n\
 example:\n\
        %s -t 1024 -m 100000 -f input.inp -s test -d 0\n",exename,exename);
