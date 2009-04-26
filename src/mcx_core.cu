@@ -139,7 +139,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      for(i=0;i<totalmove;i++){
 
 #ifdef __DEVICE_EMULATION__
-          printf("*i=%d (%d) L=%f w=%f a=%f\n",i,(int)nlen.w,nlen.x,npos.w,ndir.w);
+          printf("*i=%d (%d) L=%f w=%e a=%f\n",i,(int)nlen.w,nlen.x,npos.w,nlen.y);
 #endif
 	  if(nlen.x<=0.f) {  /* if this photon has finished the current jump */
 
@@ -285,15 +285,36 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	      /*if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one*/
 
               /*time to hit the wall in each direction*/
-              htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x>0.f)-npos.x)/ndir.x:1e10; /*this approximates*/
-              htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y>0.f)-npos.y)/ndir.y:1e10f;
-              htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z>0.f)-npos.z)/ndir.z:1e10f;
+              htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos0.x)+(ndir.x>0.f)-npos0.x)/ndir.x:1e10;
+              htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos0.y)+(ndir.y>0.f)-npos0.y)/ndir.y:1e10f;
+              htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos0.z)+(ndir.z>0.f)-npos0.z)/ndir.z:1e10f;
               tmp0=fminf(fminf(htime.x,htime.y),htime.z);
               flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
+
+              htime.x=floorf(npos0.x+tmp0*1.0001*ndir.x); /*move to the 1st intersection pt*/
+       	      htime.y=floorf(npos0.y+tmp0*1.0001*ndir.y);
+       	      htime.z=floorf(npos0.z+tmp0*1.0001*ndir.z);
+
+              if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
+                  if( media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
+                           int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)]){ /*hit again*/
+
+#ifdef __DEVICE_EMULATION__
+                     printf(" first try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
+                           media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
+                           int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)], maxidx.x, maxidx.y,maxidx.z);
+#endif
+                     htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x<0.f)-npos.x)/(-ndir.x):1e10;
+                     htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y<0.f)-npos.y)/(-ndir.y):1e10f;
+                     htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z<0.f)-npos.z)/(-ndir.z):1e10f;
+                     tmp0=fminf(fminf(htime.x,htime.y),htime.z);
+                     flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
+                }
+              }
               prop=gproperty[mediaid];
 
 #ifdef __DEVICE_EMULATION__
-              printf("->ID%d J%d C%d tlen %e flip %d %f!=%f dir=%f %f %f pos=%f %f %f\n",idx,(int)ndir.w,
+              printf("->ID%d J%d C%d tlen %e flip %d %.1f!=%.1f dir=%f %f %f pos=%f %f %f\n",idx,(int)ndir.w,
                   (int)nlen.w,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z,npos.x,npos.y,npos.z);
 #endif
 
@@ -321,6 +342,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                   npos=npos0;   /*move back*/
                   idx1d=idx1dold;
                   len=1.f-GPUDIV(tmp0,tmp1)*sphi;   /*1-[n1/n2*sin(si)]^2*/
+#ifdef __DEVICE_EMULATION__
+	          printf(" ref len=%f %f+%f=%f w=%f\n",len,cphi,sphi,cphi*cphi+sphi,npos.w);
+#endif
                   if(len>0.f) {
                      ctheta=tmp0*cphi*cphi+tmp1*len;
                      stheta=2.f*n1*prop.z*cphi*sqrtf(len);
@@ -339,6 +363,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                   mediaid=media[idx1d];
                   prop=gproperty[mediaid];
                   n1=prop.z;
+                  ndir.w++;
               }else{
                   energyloss+=npos.w;  // sum all the remaining energy
 	          npos=p0;
