@@ -41,6 +41,7 @@ typedef struct MCXConfig{
 
 	int maxgate;        /*simultaneous recording gates*/
 	int respin;         /*number of repeatitions*/
+	int printnum;       /*number of printed threads (for debugging)*/
 
 	unsigned char *vol; /*pointer to the volume*/
 	char session[MAX_SESSION_LENGTH]; /*session id, a string*/
