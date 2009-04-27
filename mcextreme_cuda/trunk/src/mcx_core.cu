@@ -34,6 +34,7 @@
 
 #define MAX_MT_RAND 4294967296
 #define R_MAX_MT_RAND 2.32830643653870e-10
+#define LOG_MT_MAX  (22.1807097779182f)
 #define TWO_PI 6.28318530717959f
 #define ONE_PI 3.1415926535897932f
 #define EPS    (1e-10f)
@@ -150,13 +151,14 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 
 #ifdef USE_MT_RAND
 	       ran=mt19937s(); /*random number [0,MAX_MT_RAND)*/
-   	       nlen.x=-GPULOG(ran*R_MAX_MT_RAND); /*probability of the next jump*/
+   	       nlen.x=-GPULOG((float)ran)+LOG_MT_MAX; /*probability of the next jump*/
+//               nlen.x= ((ran<=1)?(22.1807097779182f):(-GPULOG(ran*R_MAX_MT_RAND)));
 #else
                logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
                ran=logistic_uniform(t[0]);           /*shuffled values*/
-               nlen.x= ((ran==0.f)?(-GPULOG((2.f*R_PI)*sqrtf(t[0]))):(-GPULOG(ran)));
+//               nlen.x= ((ran==0.f)?(-GPULOG((2.f*R_PI)*sqrtf(t[0]))):(-GPULOG(ran)));
+               nlen.x= ((ran==0.f)?LOG_MT_MAX:(-GPULOG(ran)));
 #endif
-
 #ifdef __DEVICE_EMULATION__
                printf("next scat len=%20.16e \n",nlen.x);
 #endif
@@ -166,28 +168,27 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                        ran=mt19937s();
 		       tmp0=TWO_PI*ran*R_MAX_MT_RAND; /*will be reused to minimize register*/
 #else
-                       ran=t[1]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
                        tmp0=TWO_PI*logistic_uniform(ran); /*will be reused to minimize register*/
 #endif
                        GPUSINCOS(tmp0,&sphi,&cphi);
 #ifdef __DEVICE_EMULATION__
                        printf("next angle phi %20.16e\n",tmp0);
 #endif
-
                        /*Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234*/
                        /*see Boas2002*/
 
 #ifdef USE_MT_RAND
 		       ran=mt19937s();
 #else
-                       ran=t[2]; /*random number [0,MAX_MT_RAND)*/
+                       ran=t[4]; /*random number [0,MAX_MT_RAND)*/
 #endif
 
                        if(prop.w>EPS){  /*if prop.w is too small, the distribution of theta is bad*/
 #ifdef USE_MT_RAND
 		           tmp0=GPUDIV(1.f-prop.w*prop.w,(1.f-prop.w+2.f*prop.w*ran*R_MAX_MT_RAND));
 #else
-                           tmp0=GPUDIV(1.f-prop.w*prop.w,(1.f-prop.w+2.f*prop.w*logistic_uniform(ran) ));
+                           tmp0=GPUDIV(1.f-prop.w*prop.w,(1.f-prop.w+2.f*prop.w*logistic_uniform(ran)));
 #endif
 		           tmp0*=tmp0;
 		           tmp0=GPUDIV((1+prop.w*prop.w-tmp0),2.f*prop.w);
