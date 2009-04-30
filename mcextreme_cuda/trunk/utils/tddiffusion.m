@@ -17,5 +17,4 @@ r2=getdistance([srcpos(:,1:2) srcpos(:,3)-z0-2*zb],detpos);
 s=4*D*v*t;
 
 % unit of phi:  1/(mm^2*s)
-
-Phi =v./((s*pi).^(3/2)).*exp(-mua*v*t).*(exp(-(r^2)./s) - exp(-(r2^2)./s));
+Phi =v./((s*pi).^(3/2)).*exp(-mua*v*t).*(exp(-(r.^2)./s) - exp(-(r2.^2)./s));

@@ -75,6 +75,7 @@ void mcx_initcfg(Config *cfg){
      cfg->vol=NULL;
      cfg->session[0]='\0';
      cfg->printnum=16;
+     cfg->minenergy=0.f;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -313,6 +314,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				else
 				    mcx_error(-1,"incomplete input");
 		     	        break;
+                     case 'e':
+                              	if(i<argc-1)
+                                    cfg->minenergy=(float)atof(argv[++i]);
+                                else
+                                    mcx_error(-1,"incomplete input");
+                                break;
 		     case 'U':
  	                        cfg->isnormalized=1;
 		     	        break;
@@ -347,6 +354,7 @@ where possible parameters include (the first item in [] is the default value)\n\
      -g [1|int]    number of time gates per run\n\
      -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
      -s sessionid  a string to identify this specific simulation\n\
+     -e [0.|float] minimum energy level to propagate a photon\n\
      -S [1|0]      1 to save the fluence field, 0 do not save\n\
      -p [16|int]   number of threads to print (debug)\n\
      -U            normailze the fluence to unitary\n\
