@@ -75,7 +75,7 @@ __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 
 kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
      float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, uchar save2pt, float Rtstep,
-     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,
+     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,float minenergy,
      uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
@@ -295,15 +295,16 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
               flipdir=0.f;
               if(doreflect) {
                 /*time to hit the wall in each direction*/
-                htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos0.x)+(ndir.x>0.f)-npos0.x)/ndir.x:1e10f;
-                htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos0.y)+(ndir.y>0.f)-npos0.y)/ndir.y:1e10f;
-                htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos0.z)+(ndir.z>0.f)-npos0.z)/ndir.z:1e10f;
+                htime.x=(ndir.x>EPS||ndir.x<-EPS)?GPUDIV((floorf(npos0.x)+(ndir.x>0.f)-npos0.x),ndir.x):1e10f;
+                htime.y=(ndir.y>EPS||ndir.y<-EPS)?GPUDIV((floorf(npos0.y)+(ndir.y>0.f)-npos0.y),ndir.y):1e10f;
+                htime.z=(ndir.z>EPS||ndir.z<-EPS)?GPUDIV((floorf(npos0.z)+(ndir.z>0.f)-npos0.z),ndir.z):1e10f;
                 tmp0=fminf(fminf(htime.x,htime.y),htime.z);
                 flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
 
-                htime.x=floorf(npos0.x+tmp0*JUST_ABOVE_ONE*ndir.x); /*move to the 1st intersection pt*/
-       	        htime.y=floorf(npos0.y+tmp0*JUST_ABOVE_ONE*ndir.y);
-       	        htime.z=floorf(npos0.z+tmp0*JUST_ABOVE_ONE*ndir.z);
+                tmp0*=JUST_ABOVE_ONE;
+                htime.x=floorf(npos0.x+tmp0*ndir.x); /*move to the 1st intersection pt*/
+       	        htime.y=floorf(npos0.y+tmp0*ndir.y);
+       	        htime.z=floorf(npos0.z+tmp0*ndir.z);
 
                 if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
                     if( media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
@@ -314,9 +315,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                            media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
                            int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)], maxidx.x, maxidx.y,maxidx.z);
 #endif
-                     htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x<0.f)-npos.x)/(-ndir.x):1e10f;
-                     htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y<0.f)-npos.y)/(-ndir.y):1e10f;
-                     htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z<0.f)-npos.z)/(-ndir.z):1e10f;
+                     htime.x=(ndir.x>EPS||ndir.x<-EPS)?GPUDIV((floorf(npos.x)+(ndir.x<0.f)-npos.x),(-ndir.x)):1e10f;
+                     htime.y=(ndir.y>EPS||ndir.y<-EPS)?GPUDIV((floorf(npos.y)+(ndir.y<0.f)-npos.y),(-ndir.y)):1e10f;
+                     htime.z=(ndir.z>EPS||ndir.z<-EPS)?GPUDIV((floorf(npos.z)+(ndir.z<0.f)-npos.z),(-ndir.z)):1e10f;
                      tmp0=fminf(fminf(htime.x,htime.y),htime.z);
                      flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
                   }
@@ -333,7 +334,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 
 	      /*if hit boundary within the time window and is n-mismatched, rebound*/
 
-              if(doreflect&&nlen.y<tmax&&nlen.y<twin1&& flipdir>0.f && n1!=prop.z){
+              if(doreflect&&nlen.y<tmax&&nlen.y<twin1&& flipdir>0.f && n1!=prop.z&&npos.w>minenergy){
                   tmp0=n1*n1;
                   tmp1=prop.z*prop.z;
                   if(flipdir>=3.f) { /*flip in z axis*/
@@ -363,8 +364,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
        	       	     ctheta=tmp1*cphi*cphi+tmp0*len;
        	       	     Rtotal=(Rtotal+GPUDIV(ctheta-stheta,ctheta+stheta))/2.f;
 #ifdef __DEVICE_EMULATION__
-	          printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
-	          printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",
+	             printf("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal);
+	             printf("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",
                          idx,(int)ndir.w,(int)nlen.w,
 	                 flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z);
 #endif
@@ -374,7 +375,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                   mediaid=media[idx1d];
                   prop=gproperty[mediaid];
                   n1=prop.z;
-                  ndir.w++;
+                  //ndir.w++;
               }else{
                   energyloss+=npos.w;  // sum all the remaining energy
 	          npos=p0;
@@ -399,7 +400,6 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 	  }
      }
      energyloss+=(npos.w<1.f)?npos.w:0.f;  /*if the last photon has not been terminated, sum energy*/
-
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energyabsorbed;
 #ifdef USE_MT_RAND
@@ -459,7 +459,7 @@ void mcx_run_simulation(Config *cfg){
      }
 	 
 #ifdef CACHE_MEDIA
-     int count,j,k;
+     int count,k;
      uchar  mediacache[MAX_MEDIA_CACHE];
 #endif
 
@@ -614,7 +614,8 @@ void mcx_run_simulation(Config *cfg){
            printf("simulation run#%2d ... \t",iter+1);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
-                	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,gPseed,gPpos,gPdir,gPlen);
+                	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->minenergy,\
+                         gPseed,gPpos,gPdir,gPlen);
 
 	   /*handling the 2pt distributions*/
            if(cfg->issave2pt){
@@ -699,8 +700,10 @@ void mcx_run_simulation(Config *cfg){
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
-     printf("simulated %d photons, exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
-            photoncount,energyloss,energyabsorbed,energyloss+energyabsorbed);
+     printf("simulated %d photons with %d threads and %d moves per threads (repeat x%d)\n",
+             photoncount, cfg->nthread,cfg->totalmove,cfg->respin);
+     printf("exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
+             energyloss,energyabsorbed,energyloss+energyabsorbed);
 
      cudaFree(gmedia);
 #ifdef CACHE_MEDIA
