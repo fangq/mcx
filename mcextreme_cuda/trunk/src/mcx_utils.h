@@ -65,5 +65,6 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg);
 void mcx_usage(char *exename);
 void mcx_loadvolume(char *filename,Config *cfg);
 void mcx_normalize(float field[], float scale, int fieldlen);
+void mcx_readarg(int argc, char *argv[], int id, void *output,char *type);
 
 #endif
