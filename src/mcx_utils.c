@@ -65,7 +65,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isrowmajor=1; /* default is C array*/
      cfg->maxgate=1;
      cfg->isreflect=1;
-     cfg->isnormalized=0;
+     cfg->isnormalized=1;
      cfg->issavedet=1;
      cfg->respin=1;
      cfg->issave2pt=1;
@@ -233,6 +233,22 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
 }
 
+void mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
+     if(id<argc-1){
+         if(strcmp(type,"char")==0)
+             *((char*)output)=atoi(argv[id+1]);
+	 else if(strcmp(type,"int")==0)
+             *((int*)output)=atoi(argv[id+1]);
+	 else if(strcmp(type,"float")==0)
+             *((float*)output)=atof(argv[id+1]);
+	 else if(strcmp(type,"string")==0)
+	     strcpy((char *)output,argv[id+1]);
+     } 
+     else{
+     	 mcx_error(-1,"incomplete input");
+     }
+}
+
 void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      int i=1,isinteractive=1;
      char filename[MAX_PATH_LENGTH]={0};
@@ -244,84 +260,51 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      while(i<argc){
      	    if(argv[i][0]=='-'){
 	        switch(argv[i][1]){
+		     case 'h': 
+		                mcx_usage(argv[0]);
+				exit(0);
 		     case 'i':
 		     		isinteractive=1;
 				break;
 		     case 'f': 
 		     		isinteractive=0;
-		     	        if(i<argc-1)
-				    strcpy(filename,argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,filename,"string");
 				break;
 		     case 'm':
-		     	        if(i<argc-1)
-		     		    cfg->totalmove=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->totalmove),"int");
 		     	        break;
 		     case 't':
-		     	        if(i<argc-1)
-		     		    cfg->nthread=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->nthread),"int");
 		     	        break;
 		     case 's':
-		     	        if(i<argc-1)
-		     		    strcpy(cfg->session,argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,cfg->session,"string");
 		     	        break;
 		     case 'a':
-		     	        if(i<argc-1)
-		     		    cfg->isrowmajor=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->isrowmajor),"char");
 		     	        break;
 		     case 'g':
-		     	        if(i<argc-1)
-		     		    cfg->maxgate=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->maxgate),"int");
 		     	        break;
 		     case 'b':
-		     	        if(i<argc-1)
-		     		    cfg->isreflect=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->isreflect),"char");
 		     	        break;
 		     case 'd':
-		     	        if(i<argc-1)
-		     		    cfg->issavedet=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->issavedet),"char");
 		     	        break;
 		     case 'r':
-		     	        if(i<argc-1)
-		     		    cfg->respin=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->respin),"int");
 		     	        break;
 		     case 'S':
-		     	        if(i<argc-1)
-		     		    cfg->issave2pt=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->issave2pt),"char");
 		     	        break;
 		     case 'p':
-		     	        if(i<argc-1)
-		     		    cfg->printnum=atoi(argv[++i]);
-				else
-				    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->printnum),"int");
 		     	        break;
                      case 'e':
-                              	if(i<argc-1)
-                                    cfg->minenergy=(float)atof(argv[++i]);
-                                else
-                                    mcx_error(-1,"incomplete input");
+		     	        mcx_readarg(argc,argv,i++,&(cfg->minenergy),"float");
                                 break;
 		     case 'U':
- 	                        cfg->isnormalized=1;
+		     	        mcx_readarg(argc,argv,i++,&(cfg->isnormalized),"char");
 		     	        break;
 		}
 	    }
@@ -346,18 +329,19 @@ usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
      -i 	   interactive mode\n\
      -f config     read config from a file\n\
+     -t [1024|int] total thread number\n\
      -m n_move	   total move (integration intervals) per thread\n\
-     -t [1|int]    total thread number\n\
      -r [1|int]    number of re-spins (repeations)\n\
      -a [1|0]      1 for C array, 0 for Matlab array\n\
-     -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -g [1|int]    number of time gates per run\n\
-     -b [1|0]      1 to bounce the photons at the boundary, 0 to exit\n\
-     -s sessionid  a string to identify this specific simulation\n\
+     -b [1|0]      1 to reflect the photons at the boundary, 0 to exit\n\
      -e [0.|float] minimum energy level to propagate a photon\n\
+     -U [1|0]      1 normailze the fluence to unitary, 0 save raw fluence\n\
+     -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -S [1|0]      1 to save the fluence field, 0 do not save\n\
+     -s sessionid  a string to identify this specific simulation (and output files)\n\
      -p [16|int]   number of threads to print (debug)\n\
-     -U            normailze the fluence to unitary\n\
+     -h            print this message\n\
 example:\n\
-       %s -t 1024 -m 100000 -f input.inp -s test -d 0\n",exename,exename);
+       %s -t 1024 -m 100000 -f input.inp -s test -r 2 -a 0 -g 10 -U\n",exename,exename);
 }

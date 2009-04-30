@@ -13,10 +13,10 @@ OPT=-DUSE_MT_RAND
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
 CPPOPT=-I/usr/local/cuda/include
 
-all mt:     OPT=-DUSE_MT_RAND
+all logfast:OPT=-DFAST_MATH
+mt:         OPT=-DUSE_MT_RAND
 fast:       OPT=-DUSE_MT_RAND -DFAST_MATH
 log:        OPT=
-logfast:    OPT=-DFAST_MATH
 logcache:   OPT=-DCACHE_MEDIA -DFAST_MATH
 cache:      OPT=-DUSE_MT_RAND -DCACHE_MEDIA
 fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -DFAST_MATH
