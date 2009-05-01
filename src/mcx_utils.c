@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "mcx_utils.h"
 
 void mcx_savedata(float *dat,int len,Config *cfg){
@@ -90,7 +91,7 @@ void mcx_clearcfg(Config *cfg){
 }
 
 void mcx_loadconfig(FILE *in, Config *cfg){
-     int i,gates;
+     int i,gates,idx1d;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH];
      
      if(in==stdin)
@@ -188,6 +189,23 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }
      if(filename[0]){
         mcx_loadvolume(filename,cfg);
+	idx1d=cfg->isrowmajor?(int)(floor(cfg->srcpos.x)*cfg->dim.y*cfg->dim.z+floor(cfg->srcpos.y)*cfg->dim.z+floor(cfg->srcpos.z)):\
+                      (int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+	
+        /* if the specified source position is outside the domain, move the source
+	   along the initial vector until it hit the domain */
+	if(cfg->vol && cfg->vol[idx1d]==0){
+                printf("source (%f %f %f) is located outside the domain, vol[%d]=%d\n",
+		      cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,idx1d,cfg->vol[idx1d]);
+		while(cfg->vol[idx1d]==0){
+			cfg->srcpos.x+=cfg->srcdir.x;
+			cfg->srcpos.y+=cfg->srcdir.y;
+			cfg->srcpos.z+=cfg->srcdir.z;
+			printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
+			idx1d=cfg->isrowmajor?(int)(floor(cfg->srcpos.x)*cfg->dim.y*cfg->dim.z+floor(cfg->srcpos.y)*cfg->dim.z+floor(cfg->srcpos.z)):\
+                		      (int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+		}
+	}
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation");
      }
