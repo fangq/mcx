@@ -225,7 +225,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                                printf("new dir: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
 #endif
 		       }else{
-			   ndir=float4(stheta*cphi,stheta*sphi,ctheta*ndir.z,ndir.w);
+			   ndir=float4(stheta*cphi,stheta*sphi,(ndir.z>0.f)?ctheta:-ctheta,ndir.w);
 #ifdef __DEVICE_EMULATION__
                            printf("new dir-z: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z);
 #endif
