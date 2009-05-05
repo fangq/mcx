@@ -2,6 +2,7 @@ Change Log
 
 == MCX 0.2 (aurora) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
+2009/05/05 added options to print to a log file
 2009/04/30 code clean up and paper submission, tag 0.1.9 (Aurora alpha)
 2009/04/26 new and more robust boundary reflection code
 2009/04/24 build-in fluence normalization (unitary solution)
