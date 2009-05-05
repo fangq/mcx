@@ -13,6 +13,12 @@ void mcx_savedata(float *dat,int len,Config *cfg){
      fclose(fp);
 }
 
+void mcx_printlog(Config *cfg, char *str){
+     if(cfg->flog>0){ /*stdout is 1*/
+         fprintf(cfg->flog,"%s\n",str);
+     }
+}
+
 void mcx_normalize(float field[], float scale, int fieldlen){
      int i;
      for(i=0;i<fieldlen;i++){
@@ -77,6 +83,7 @@ void mcx_initcfg(Config *cfg){
      cfg->session[0]='\0';
      cfg->printnum=16;
      cfg->minenergy=0.f;
+     cfg->flog=stdout;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -268,9 +275,10 @@ void mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
 }
 
 void mcx_parsecmd(int argc, char* argv[], Config *cfg){
-     int i=1,isinteractive=1;
+     int i=1,isinteractive=1,issavelog=0;
      char filename[MAX_PATH_LENGTH]={0};
-     
+     char logfile[MAX_PATH_LENGTH]={0};
+
      if(argc<=1){
      	mcx_usage(argv[0]);
      	exit(0);
@@ -324,9 +332,20 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'U':
 		     	        mcx_readarg(argc,argv,i++,&(cfg->isnormalized),"char");
 		     	        break;
+                     case 'l':
+                                issavelog=1;
+                                break;
 		}
 	    }
 	    i++;
+     }
+     if(issavelog && cfg->session){
+          sprintf(logfile,"%s.log",cfg->session);
+          cfg->flog=fopen(logfile,"wt");
+          if(cfg->flog==NULL){
+		cfg->flog=stdout;
+		fprintf(cfg->flog,"unable to save to log file, will print from stdout\n");
+          }
      }
      if(isinteractive){
           mcx_readconfig("",cfg);
@@ -360,6 +379,7 @@ where possible parameters include (the first item in [] is the default value)\n\
      -s sessionid  a string to identify this specific simulation (and output files)\n\
      -p [16|int]   number of threads to print (debug)\n\
      -h            print this message\n\
+     -l            print messages to a log file instead\n\
 example:\n\
        %s -t 1024 -m 100000 -f input.inp -s test -r 2 -a 0 -g 10 -U\n",exename,exename);
 }

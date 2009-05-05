@@ -51,6 +51,7 @@ typedef struct MCXConfig{
 	char issavedet;     /*1 to count all photons hits the detectors*/
 	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/
         float minenergy;    /*minimum energy to propagate photon*/
+        FILE *flog;         /*stream handle to print log information*/
 } Config;
 
 void mcx_savedata(float *dat,int len,Config *cfg);
@@ -66,5 +67,6 @@ void mcx_usage(char *exename);
 void mcx_loadvolume(char *filename,Config *cfg);
 void mcx_normalize(float field[], float scale, int fieldlen);
 void mcx_readarg(int argc, char *argv[], int id, void *output,char *type);
+void mcx_printlog(Config *cfg, char *str);
 
 #endif
