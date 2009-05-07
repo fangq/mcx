@@ -50,6 +50,7 @@ typedef struct MCXConfig{
 	char isnormalized;  /*1 to normalize the fluence, 0 for raw fluence*/
 	char issavedet;     /*1 to count all photons hits the detectors*/
 	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/
+	char isgpuinfo;     /*1 to print gpu info when attach, 0 do not print*/
         float minenergy;    /*minimum energy to propagate photon*/
         FILE *flog;         /*stream handle to print log information*/
 } Config;

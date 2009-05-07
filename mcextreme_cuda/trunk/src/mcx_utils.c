@@ -76,6 +76,7 @@ void mcx_initcfg(Config *cfg){
      cfg->issavedet=1;
      cfg->respin=1;
      cfg->issave2pt=1;
+     cfg->isgpuinfo=0;
 
      cfg->prop=NULL;
      cfg->detpos=NULL;
@@ -335,6 +336,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'l':
                                 issavelog=1;
                                 break;
+		     case 'L':  cfg->isgpuinfo=2;
+		                break;
+		     case 'I':  cfg->isgpuinfo=1;
+		                break;
 		}
 	    }
 	    i++;
@@ -347,10 +352,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		fprintf(cfg->flog,"unable to save to log file, will print from stdout\n");
           }
      }
-     if(isinteractive){
+     if(cfg->isgpuinfo!=2){ /*print gpu info only*/
+       if(isinteractive){
           mcx_readconfig("",cfg);
-     }else{
+       }else{
      	  mcx_readconfig(filename,cfg);
+       }
      }
 }
 
@@ -380,6 +387,8 @@ where possible parameters include (the first item in [] is the default value)\n\
      -p [16|int]   number of threads to print (debug)\n\
      -h            print this message\n\
      -l            print messages to a log file instead\n\
+     -L            print GPU information only\n\
+     -I            print GPU information and run program\n\
 example:\n\
        %s -t 1024 -m 100000 -f input.inp -s test -r 2 -a 0 -g 10 -U\n",exename,exename);
 }
