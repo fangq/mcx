@@ -32,6 +32,11 @@ int main (int argc, char *argv[]) {
      // parse command line options to initialize the configurations
      mcx_parsecmd(argc,argv,&mcxconfig);
      
+     // identify gpu number and set one gpu active
+     if(!mcx_set_gpu(mcxconfig.isgpuinfo)){
+         mcx_error(-1,"no GPU devices found\n");
+     }
+          
      // this launches the MC simulation
      mcx_run_simulation(&mcxconfig);
      

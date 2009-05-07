@@ -423,6 +423,49 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
      energy[2]+=phi*gproperty[media[idx]].x;
 }
 
+bool mcx_set_gpu(int printinfo)
+{
+    int dev;
+    int deviceCount;
+
+#if __DEVICE_EMULATION__
+    return true;
+#else
+    cudaGetDeviceCount(&deviceCount);
+    if (deviceCount == 0){
+        return false;
+    }
+    for (dev = 0; dev < deviceCount; ++dev) {
+        cudaDeviceProp dp;
+        cudaGetDeviceProperties(&dp, dev);
+        if (strncmp(dp.name, "Device Emulation", 16)) {
+	  if(printinfo){
+	    printf("=============================   GPU Infomation  ================================\n");
+	    printf("Device %d of %d:\t\t%s\n",dev+1,deviceCount,dp.name);
+	    printf("Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
+Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
+               dp.totalGlobalMem,dp.totalConstMem,
+               dp.sharedMemPerBlock,dp.regsPerBlock,dp.clockRate*1e-6f);
+	  #if CUDART_VERSION >= 2000
+	       printf("Number of MPs:\t\t%u\nNumber of cores:\t%u\n",
+	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
+	  #endif
+	      if(printinfo==2){ /*list GPU info only*/
+	          exit(0);
+	      }
+	  }
+            break;
+	}
+    }
+    if (dev == deviceCount)
+        return false;
+    else {
+        cudaSetDevice(dev);
+        return true;
+    }
+#endif
+}
+
 void mcx_run_simulation(Config *cfg){
 
      int i,j,iter;
