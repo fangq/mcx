@@ -34,7 +34,7 @@ int main (int argc, char *argv[]) {
      
      // identify gpu number and set one gpu active
      if(!mcx_set_gpu(mcxconfig.isgpuinfo)){
-         mcx_error(-1,"no GPU devices found\n");
+         mcx_error(-1,"no GPU device found\n");
      }
           
      // this launches the MC simulation
