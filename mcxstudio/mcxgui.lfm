@@ -1,0 +1,441 @@
+object fmMCX: TfmMCX
+  Left = 425
+  Height = 516
+  Top = 127
+  Width = 572
+  ActiveControl = lvJobs
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsDialog
+  Caption = 'MCX Studio'
+  ClientHeight = 493
+  ClientWidth = 572
+  Menu = MainMenu1
+  Position = poDesktopCenter
+  LCLVersion = '0.9.26.2'
+  object ToolBar1: TToolBar
+    Height = 42
+    Width = 572
+    Caption = 'ToolBar1'
+    TabOrder = 2
+    object ToolButton1: TToolButton
+      Left = 1
+      Top = 2
+      Caption = 'ToolButton1'
+    end
+    object ToolButton2: TToolButton
+      Left = 24
+      Top = 2
+      Caption = 'ToolButton2'
+    end
+    object ToolButton3: TToolButton
+      Left = 47
+      Top = 2
+      Caption = 'ToolButton3'
+    end
+    object ToolButton4: TToolButton
+      Left = 70
+      Top = 2
+      Caption = 'ToolButton4'
+    end
+    object ToolButton5: TToolButton
+      Left = 93
+      Top = 2
+      Width = 23
+      Caption = 'ToolButton5'
+      Style = tbsSeparator
+    end
+  end
+  object sbInfo: TStatusBar
+    Height = 19
+    Top = 474
+    Width = 572
+    Panels = <    
+      item
+        Width = 50
+      end    
+      item
+        Width = 50
+      end    
+      item
+        Width = 50
+      end>
+    SimplePanel = False
+  end
+  object lvJobs: TListView
+    Height = 318
+    Top = 42
+    Width = 176
+    Align = alLeft
+    Columns = <>
+    Items.LazData = {
+      2400000001000000FFFFFFFFFFFFFFFFFFFFFFFF0000000008000000416C6C20
+      6A6F6273
+    }
+    RowSelect = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 0
+  end
+  object Splitter1: TSplitter
+    Left = 176
+    Height = 318
+    Top = 42
+    Width = 8
+  end
+  object plSetting: TPanel
+    Left = 184
+    Height = 318
+    Top = 42
+    Width = 388
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 318
+    ClientWidth = 388
+    TabOrder = 5
+    object Label1: TLabel
+      Left = 7
+      Height = 17
+      Top = 72
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Thread number'
+      ParentColor = False
+    end
+    object Label3: TLabel
+      Left = 7
+      Height = 17
+      Top = 102
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Move per thread'
+      ParentColor = False
+    end
+    object Label4: TLabel
+      Left = 7
+      Height = 17
+      Top = 12
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Session ID'
+      ParentColor = False
+    end
+    object Label5: TLabel
+      Left = 7
+      Height = 17
+      Top = 132
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Number of respins'
+      ParentColor = False
+    end
+    object Label6: TLabel
+      Left = 7
+      Height = 17
+      Top = 162
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Dimension order'
+      ParentColor = False
+    end
+    object Label2: TLabel
+      Left = 7
+      Height = 17
+      Top = 192
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Time gates'
+      ParentColor = False
+    end
+    object Label7: TLabel
+      Left = 7
+      Height = 17
+      Top = 222
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Gate number'
+      ParentColor = False
+    end
+    object Label8: TLabel
+      Left = 231
+      Height = 17
+      Top = 193
+      Width = 27
+      Alignment = taRightJustify
+      Caption = 's ->'
+      ParentColor = False
+    end
+    object Label9: TLabel
+      Left = 351
+      Height = 17
+      Top = 193
+      Width = 8
+      Alignment = taRightJustify
+      Caption = 's'
+      ParentColor = False
+    end
+    object Label10: TLabel
+      Left = 7
+      Height = 17
+      Top = 42
+      Width = 128
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Input file'
+      ParentColor = False
+    end
+    object edThread: TComboBox
+      Left = 143
+      Height = 27
+      Top = 67
+      Width = 192
+      ItemIndex = 3
+      Items.Strings = (
+        '128'
+        '256'
+        '512'
+        '1024'
+        '1280'
+        '1408'
+        '1536'
+        '1664'
+        '1792'
+        '1920'
+        '2048'
+      )
+      TabOrder = 2
+      Text = '1024'
+    end
+    object edMove: TEdit
+      Left = 143
+      Height = 23
+      Top = 100
+      Width = 80
+      TabOrder = 3
+      Text = '1000000'
+    end
+    object edSession: TEdit
+      Left = 143
+      Height = 23
+      Top = 9
+      Width = 192
+      TabOrder = 0
+      Text = 'default'
+    end
+    object edRespin: TSpinEdit
+      Left = 143
+      Height = 23
+      Top = 129
+      Width = 93
+      MaxValue = 100000
+      MinValue = 1
+      TabOrder = 4
+      Value = 1
+    end
+    object grArray: TRadioGroup
+      Left = 143
+      Height = 40
+      Top = 146
+      Width = 208
+      AutoFill = True
+      ChildSizing.LeftRightSpacing = 6
+      ChildSizing.TopBottomSpacing = 6
+      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+      ChildSizing.EnlargeVertical = crsHomogenousChildResize
+      ChildSizing.ShrinkHorizontal = crsScaleChilds
+      ChildSizing.ShrinkVertical = crsScaleChilds
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 2
+      ClientHeight = 23
+      ClientWidth = 204
+      Columns = 2
+      ItemIndex = 0
+      Items.Strings = (
+        'Matlab array'
+        'C array'
+      )
+      TabOrder = 5
+    end
+    object edT0: TEdit
+      Left = 143
+      Height = 23
+      Top = 187
+      Width = 80
+      TabOrder = 6
+      Text = '0'
+    end
+    object edT1: TEdit
+      Left = 263
+      Height = 23
+      Top = 187
+      Width = 80
+      TabOrder = 7
+      Text = '1e-9'
+    end
+    object edGate: TSpinEdit
+      Left = 143
+      Height = 23
+      Top = 216
+      Width = 93
+      MaxValue = 100000
+      MinValue = 1
+      TabOrder = 8
+      Value = 1
+    end
+    object ckReflect: TCheckBox
+      Left = 10
+      Height = 22
+      Top = 254
+      Width = 95
+      Caption = 'Do Reflection'
+      Checked = True
+      State = cbChecked
+      TabOrder = 9
+    end
+    object ckSaveData: TCheckBox
+      Left = 119
+      Height = 22
+      Top = 254
+      Width = 92
+      Caption = 'Save Fluence'
+      Checked = True
+      State = cbChecked
+      TabOrder = 10
+    end
+    object ckNormalize: TCheckBox
+      Left = 231
+      Height = 22
+      Top = 254
+      Width = 116
+      Caption = 'Do normalization'
+      Checked = True
+      State = cbChecked
+      TabOrder = 11
+    end
+    object edConfigFile: TFileNameEdit
+      Left = 143
+      Height = 23
+      Top = 38
+      Width = 168
+      ButtonWidth = 23
+      TabOrder = 1
+    end
+    object btRun: TBitBtn
+      Left = 40
+      Height = 30
+      Top = 278
+      Width = 75
+      Caption = 'Run'
+      NumGlyphs = 0
+      TabOrder = 12
+    end
+    object btQuit: TBitBtn
+      Left = 272
+      Height = 30
+      Top = 278
+      Width = 75
+      Caption = 'Quit'
+      NumGlyphs = 0
+      TabOrder = 14
+    end
+    object btStop: TBitBtn
+      Left = 160
+      Height = 30
+      Top = 278
+      Width = 75
+      Caption = 'Stop'
+      NumGlyphs = 0
+      TabOrder = 13
+    end
+  end
+  object mmOutput: TMemo
+    Height = 106
+    Top = 368
+    Width = 572
+    Align = alBottom
+    Constraints.MinHeight = 100
+    Lines.Strings = (
+      'Output:'
+    )
+    ScrollBars = ssAutoBoth
+    TabOrder = 1
+  end
+  object Splitter2: TSplitter
+    Cursor = crVSplit
+    Height = 8
+    Top = 360
+    Width = 572
+    Align = alBottom
+    ResizeAnchor = akBottom
+  end
+  object IniPropStorage1: TIniPropStorage
+    StoredValues = <>
+    left = 456
+    top = 8
+  end
+  object MainMenu1: TMainMenu
+    left = 424
+    top = 8
+    object MenuItem1: TMenuItem
+      Caption = 'File'
+      object MenuItem5: TMenuItem
+        Caption = 'Open ...'
+        ShortCut = 16463
+      end
+      object MenuItem6: TMenuItem
+        Caption = 'Save ...'
+        ShortCut = 16467
+      end
+      object MenuItem7: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem8: TMenuItem
+        Caption = 'Exit'
+        OnClick = MenuItem8Click
+      end
+    end
+    object MenuItem2: TMenuItem
+      Caption = 'Run'
+      object MenuItem13: TMenuItem
+        Caption = 'Run MCX'
+        OnClick = MenuItem13Click
+      end
+      object MenuItem14: TMenuItem
+        Caption = 'Stop MCX'
+      end
+      object MenuItem15: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem16: TMenuItem
+        Caption = 'Print GPU Info'
+      end
+    end
+    object MenuItem3: TMenuItem
+      Caption = 'Tools'
+      object MenuItem9: TMenuItem
+        Caption = 'Solution Veiwer'
+      end
+      object MenuItem10: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem11: TMenuItem
+        Caption = 'Preferences ...'
+      end
+    end
+    object MenuItem4: TMenuItem
+      Caption = 'Help'
+      object MenuItem12: TMenuItem
+        Caption = 'About ...'
+      end
+    end
+  end
+  object ImageList1: TImageList
+    left = 488
+    top = 8
+  end
+end
