@@ -1,0 +1,15 @@
+{ This is an automatically generated lazarus resource file }
+
+
+LazarusResources.Add('TfmAbout','FORMDATA',[
+  'TPF0'#8'TfmAbout'#7'fmAbout'#4'Left'#3#150#6#6'Height'#3#227#0#3'Top'#3#246#0
+  +#5'Width'#3#239#1#11'BorderIcons'#11#12'biSystemMenu'#0#11'BorderStyle'#7#8
+  +'bsDialog'#7'Caption'#6#25'About Monte-Carlo eXtreme'#12'ClientHeight'#3#227
+  +#0#11'ClientWidth'#3#239#1#8'Position'#7#15'poDesktopCenter'#10'LCLVersion'#6
+  +#8'0.9.26.2'#0#6'TLabel'#6'Label1'#4'Left'#2'i'#6'Height'#3#179#0#3'Top'#2#24
+  +#5'Width'#3'q'#1#7'Caption'#6#232'Monte-Carlo eXtreme (MCX)'#10#10'Version 0'
+  +'.2 (Aurora)'#10#10'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.e'
+  +'du>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts Genera'
+  +'l Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'#11
+  +'ParentColor'#8#0#0#0
+]);
