@@ -12,9 +12,9 @@ object fmAbout: TfmAbout
   LCLVersion = '0.9.26.2'
   object Label1: TLabel
     Left = 105
-    Height = 179
+    Height = 178
     Top = 24
-    Width = 369
+    Width = 272
     Caption = 'Monte-Carlo eXtreme (MCX)'#10#10'Version 0.2 (Aurora)'#10#10'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
     ParentColor = False
   end
