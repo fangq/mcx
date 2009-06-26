@@ -90,6 +90,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      float  energyabsorbed=genergy[(idx<<1)+1];
 
      int i, idx1d, idx1dold,idxorig;
+#ifdef TEST_RACING
+     int cc=0;
+#endif
      uchar  mediaid, mediaidorig;
      char   medid=-1;
      float  atten;
@@ -394,7 +397,15 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
 #endif
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
              if(save2pt&&nlen.y>=twin0 & nlen.y<twin1){
+#ifdef TEST_RACING
+                  /*enable TEST_RACING to determine how many missed accumulations due to write-conflict*/
+                  if( (npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>9.f ) {
+                      field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=1.f;
+		      cc++;
+                  }
+#else
                   field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+#endif
 	     }
              nlen.z+=minaccumtime; // fluence is a temporal-integration
 	  }
@@ -406,6 +417,10 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      n_seed[idx]=(ran&0xffffffffu);
 #else
      n_seed[idx]=ran*0xffffffffu;
+#endif
+
+#ifdef TEST_RACING
+     n_seed[idx]=cc;
 #endif
      n_pos[idx]=npos;
      n_dir[idx]=ndir;
@@ -735,6 +750,19 @@ void mcx_run_simulation(Config *cfg){
           energyloss+=energy[i<<1];
           energyabsorbed+=energy[(i<<1)+1];
      }
+
+#ifdef TEST_RACING
+     {
+       float totalcount=0.f,hitcount=0.f;
+       for (i=0; i<fieldlen; i++)
+          hitcount+=field[i];
+       for (i=0; i<cfg->nthread; i++)
+	  totalcount+=Pseed[i];
+     
+       printf("expected total recording number: %f, got %f, missed %f\n",
+          totalcount,hitcount,(totalcount-hitcount)/totalcount);
+     }
+#endif
 
      printnum=cfg->nthread<cfg->printnum?cfg->nthread:cfg->printnum;
      for (i=0; i<printnum; i++) {
