@@ -22,8 +22,9 @@ cache:      OPT=-DUSE_MT_RAND -DCACHE_MEDIA
 fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -DFAST_MATH
 debug:      OPT=-DUSE_MT_RAND
 debuglog:   OPT=
+racing:     OPT=-DTEST_RACING
 
-all mt fast log logfast cache fastcache logcache: 
+all mt fast log logfast cache fastcache logcache racing: 
 	$(CUDACC) -c $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
