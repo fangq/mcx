@@ -66,12 +66,14 @@ void mcx_initcfg(Config *cfg){
      cfg->dim.x=0;
      cfg->dim.y=0;
      cfg->dim.z=0;
-     cfg->totalmove=0;
+     cfg->nblocksize=128;
+     cfg->nphoton=0;
      cfg->nthread=0;
      cfg->seed=0;
      cfg->isrowmajor=1; /* default is C array*/
      cfg->maxgate=1;
      cfg->isreflect=1;
+     cfg->isref3=0;
      cfg->isnormalized=1;
      cfg->issavedet=1;
      cfg->respin=1;
@@ -82,7 +84,7 @@ void mcx_initcfg(Config *cfg){
      cfg->detpos=NULL;
      cfg->vol=NULL;
      cfg->session[0]='\0';
-     cfg->printnum=16;
+     cfg->printnum=0;
      cfg->minenergy=0.f;
      cfg->flog=stdout;
 }
@@ -104,7 +106,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
-     fscanf(in,"%d", &(cfg->nphoton) ); 
+     fscanf(in,"%d", &(i) ); 
+     if(cfg->nphoton==0) cfg->nphoton=i;
      fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
@@ -297,12 +300,15 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     		isinteractive=0;
 		     	        mcx_readarg(argc,argv,i++,filename,"string");
 				break;
-		     case 'm':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->totalmove),"int");
+		     case 'n':
+		     	        mcx_readarg(argc,argv,i++,&(cfg->nphoton),"int");
 		     	        break;
 		     case 't':
 		     	        mcx_readarg(argc,argv,i++,&(cfg->nthread),"int");
 		     	        break;
+                     case 'T':
+                               	mcx_readarg(argc,argv,i++,&(cfg->nblocksize),"int");
+                               	break;
 		     case 's':
 		     	        mcx_readarg(argc,argv,i++,cfg->session,"string");
 		     	        break;
@@ -315,6 +321,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'b':
 		     	        mcx_readarg(argc,argv,i++,&(cfg->isreflect),"char");
 		     	        break;
+                     case 'B':
+                                mcx_readarg(argc,argv,i++,&(cfg->isref3),"char");
+                               	break;
 		     case 'd':
 		     	        mcx_readarg(argc,argv,i++,&(cfg->issavedet),"char");
 		     	        break;
@@ -374,21 +383,23 @@ where possible parameters include (the first item in [] is the default value)\n\
      -i 	   interactive mode\n\
      -f config     read config from a file\n\
      -t [1024|int] total thread number\n\
-     -m n_move	   total move (integration intervals) per thread\n\
+     -T [128|int]  thread number per block\n\
+     -n [0|int]    total photon number\n\
      -r [1|int]    number of re-spins (repeations)\n\
      -a [1|0]      1 for C array, 0 for Matlab array\n\
      -g [1|int]    number of time gates per run\n\
      -b [1|0]      1 to reflect the photons at the boundary, 0 to exit\n\
+     -B [0|1]      1 to consider maximum 3 reflections, 0 consider only 2\n\
      -e [0.|float] minimum energy level to propagate a photon\n\
-     -U [1|0]      1 normailze the fluence to unitary, 0 save raw fluence\n\
+     -U [1|0]      1 to normailze the fluence to unitary, 0 to save raw fluence\n\
      -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -S [1|0]      1 to save the fluence field, 0 do not save\n\
      -s sessionid  a string to identify this specific simulation (and output files)\n\
-     -p [16|int]   number of threads to print (debug)\n\
+     -p [0|int]    number of threads to print (debug)\n\
      -h            print this message\n\
      -l            print messages to a log file instead\n\
      -L            print GPU information only\n\
      -I            print GPU information and run program\n\
 example:\n\
-       %s -t 1024 -m 100000 -f input.inp -s test -r 2 -a 0 -g 10 -U\n",exename,exename);
+       %s -t 1024 -T 256 -n 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0\n",exename,exename);
 }
