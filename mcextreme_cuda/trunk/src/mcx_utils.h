@@ -17,8 +17,9 @@ typedef struct MCXMedium{
 } Medium;  /*this order shall match prop.{xyzw} in mcx_main_loop*/
 
 typedef struct MCXConfig{
-	int nphoton;      /*reserved for future*/
-	int totalmove;    /*total move per photon*/
+	int nphoton;      /*total simulated photon number*/
+	//int totalmove;   /* [depreciated] total move per photon*/
+        int nblocksize;   /*thread block size*/
 	int nthread;      /*num of total threads, multiple of 128*/
 	int seed;         /*random number generator seed*/
 	
@@ -47,6 +48,7 @@ typedef struct MCXConfig{
 	char session[MAX_SESSION_LENGTH]; /*session id, a string*/
 	char isrowmajor;    /*1 for C-styled array in vol, 0 for matlab-styled array*/
 	char isreflect;     /*1 for reflecting photons at boundary,0 for exiting*/
+        char isref3;        /*1 considering maximum 3 ref. interfaces; 0 max 2 ref*/
 	char isnormalized;  /*1 to normalize the fluence, 0 for raw fluence*/
 	char issavedet;     /*1 to count all photons hits the detectors*/
 	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/

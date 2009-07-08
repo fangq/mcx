@@ -40,13 +40,6 @@
 #define EPS    (1e-10f)
 #define JUST_ABOVE_ONE 1.0001f
 
-#ifdef __DEVICE_EMULATION__
-#define MAX_THREAD 1
-#else
-#define MAX_THREAD 128
-//#define MAX_THREAD 256
-#endif
-#define MAX_EVENT  1
 #define MAX_PROP   256
 #define C0   299792458000.f  /*in mm/s*/
 #define R_C0 3.335640951981520e-12f /*1/C0 in s/mm*/
@@ -73,10 +66,10 @@ __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 
 // pass as many pre-computed values as possible to utilize the constant memory 
 
-kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
+kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
      float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, uchar save2pt, float Rtstep,
-     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,float minenergy,
-     uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
+     float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,uchar doreflect3, 
+     float minenergy, uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -89,7 +82,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     int i, idx1d, idx1dold,idxorig;
+     int idx1d, idx1dold,idxorig;
+     int np=nphoton+((idx==blockDim.x*gridDim.x-1) ? ophoton: 0);
+
 #ifdef TEST_RACING
      int cc=0;
 #endif
@@ -143,9 +138,8 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
      }
      prop=gproperty[mediaid];
 
-     // using "while(nlen.w<totalmove)" loop will make this 4 times slower with the same amount of photons
 
-     for(i=0;i<totalmove;i++){
+     while(nlen.w<np) {
 
 #ifdef __DEVICE_EMULATION__
           printf("*i=%d (%d) L=%f w=%e a=%f\n",i,(int)nlen.w,nlen.x,npos.w,nlen.y);
@@ -322,7 +316,34 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
                      htime.y=(ndir.y>EPS||ndir.y<-EPS)?GPUDIV((floorf(npos.y)+(ndir.y<0.f)-npos.y),(-ndir.y)):1e10f;
                      htime.z=(ndir.z>EPS||ndir.z<-EPS)?GPUDIV((floorf(npos.z)+(ndir.z<0.f)-npos.z),(-ndir.z)):1e10f;
                      tmp0=fminf(fminf(htime.x,htime.y),htime.z);
+                     tmp1=flipdir;   /*save the previous ref. interface id*/
                      flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
+
+                     if(doreflect3){
+                       tmp0*=JUST_ABOVE_ONE;
+                       htime.x=floorf(npos.x-tmp0*ndir.x); /*move to the last intersection pt*/
+                       htime.y=floorf(npos.y-tmp0*ndir.y);
+                       htime.z=floorf(npos.z-tmp0*ndir.z);
+
+                       if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
+                           if(! media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
+                                  int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)]){ /*this is an air voxel*/
+#ifdef __DEVICE_EMULATION__
+                     printf(" second try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
+                           media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
+                           int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)], maxidx.x, maxidx.y,maxidx.z);
+#endif
+                               /*to compute the remaining interface, we used the following fact to accelerate: 
+                                 if there exist 3 intersections, photon must pass x/y/z interface exactly once,
+                                 we solve the coeff of the following equation to find the last interface:
+                                    a*1+b*2+c=3
+       	       	       	       	    a*1+b*3+c=2 -> [a b c]=[-1 -1 6], this will give the remaining interface id
+       	       	       	       	    a*2+b*3+c=1
+                               */
+                               flipdir=-tmp1-flipdir+6.f;
+                           }
+                       }
+                     }
                   }
                 }
               }
@@ -398,7 +419,7 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
              if(save2pt&&nlen.y>=twin0 & nlen.y<twin1){
 #ifdef TEST_RACING
-                  /*enable TEST_RACING to determine how many missed accumulations due to write-conflict*/
+                  /*enable TEST_RACING to determine how many missing accumulations due to race*/
                   if( (npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>9.f ) {
                       field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=1.f;
 		      cc++;
@@ -410,9 +431,9 @@ kernel void mcx_main_loop(int totalmove,uchar media[],float field[],float generg
              nlen.z+=minaccumtime; // fluence is a temporal-integration
 	  }
      }
-     energyloss+=(npos.w<1.f)?npos.w:0.f;  /*if the last photon has not been terminated, sum energy*/
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energyabsorbed;
+
 #ifdef USE_MT_RAND
      n_seed[idx]=(ran&0xffffffffu);
 #else
@@ -481,6 +502,12 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 #endif
 }
 
+void mcx_cu_assess(cudaError_t cuerr){
+     if(cuerr!=cudaSuccess){
+         mcx_error(-66,(char *)cudaGetErrorString(cuerr));
+     }
+}
+
 void mcx_run_simulation(Config *cfg){
 
      int i,j,iter;
@@ -491,6 +518,7 @@ void mcx_run_simulation(Config *cfg){
      float t,twindow0,twindow1;
      float energyloss=0.f,energyabsorbed=0.f;
      float *energy;
+     int threadphoton, oddphotons;
 
      int photoncount=0,printnum;
      int tic,fieldlen;
@@ -510,12 +538,14 @@ void mcx_run_simulation(Config *cfg){
      if(cfg->respin>1){
          field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate*2);
          memset(field,0,sizeof(float)*dimxyz*cfg->maxgate*2);
-     }
-     else{
+     }else{
          field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate); /*the second half will be used to accumulate*/
          memset(field,0,sizeof(float)*dimxyz*cfg->maxgate);
      }
-	 
+     threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
+     oddphotons=cfg->nphoton-threadphoton*cfg->nthread*cfg->respin;
+printf("threadph=%d oddphotons=%d np=%d nthread=%d respin=%d\n",threadphoton,oddphotons,
+           cfg->nphoton,cfg->nthread,cfg->respin);
 #ifdef CACHE_MEDIA
      int count,k;
      uchar  mediacache[MAX_MEDIA_CACHE];
@@ -526,10 +556,10 @@ void mcx_run_simulation(Config *cfg){
      float4 *Plen;
      uint   *Pseed;
 
-     if(cfg->nthread%MAX_THREAD)
-     	cfg->nthread=(cfg->nthread/MAX_THREAD)*MAX_THREAD;
-     mcgrid.x=cfg->nthread/MAX_THREAD;
-     mcblock.x=MAX_THREAD;
+     if(cfg->nthread%cfg->nblocksize)
+     	cfg->nthread=(cfg->nthread/cfg->nblocksize)*cfg->nblocksize;
+     mcgrid.x=cfg->nthread/cfg->nblocksize;
+     mcblock.x=cfg->nblocksize;
      
      clgrid.x=cfg->dim.x;
      clgrid.y=cfg->dim.y;
@@ -549,20 +579,19 @@ void mcx_run_simulation(Config *cfg){
 	mcx_error(-9,"the requested cache size is too big\n");
      }
 #endif
-
      uchar *gmedia;
-     cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz));
+     mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)));
      float *gfield;
-     cudaMalloc((void **) &gfield, sizeof(float)*(dimxyz)*cfg->maxgate);
+     mcx_cu_assess(cudaMalloc((void **) &gfield, sizeof(float)*(dimxyz)*cfg->maxgate));
 
      float4 *gPpos;
-     cudaMalloc((void **) &gPpos, sizeof(float4)*cfg->nthread);
+     mcx_cu_assess(cudaMalloc((void **) &gPpos, sizeof(float4)*cfg->nthread));
      float4 *gPdir;
-     cudaMalloc((void **) &gPdir, sizeof(float4)*cfg->nthread);
+     mcx_cu_assess(cudaMalloc((void **) &gPdir, sizeof(float4)*cfg->nthread));
      float4 *gPlen;
-     cudaMalloc((void **) &gPlen, sizeof(float4)*cfg->nthread);
+     mcx_cu_assess(cudaMalloc((void **) &gPlen, sizeof(float4)*cfg->nthread));
      uint   *gPseed;
-     cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN);
+     mcx_cu_assess(cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_BUF_LEN));
 
      float *genergy;
      cudaMalloc((void **) &genergy, sizeof(float)*cfg->nthread*2);
@@ -670,10 +699,12 @@ void mcx_run_simulation(Config *cfg){
        for(iter=0;iter<cfg->respin;iter++){
 
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1);
-           mcx_main_loop<<<mcgrid,mcblock>>>(cfg->totalmove,gmedia,gfield,genergy,cfg->steps,minstep,\
+           mcx_main_loop<<<mcgrid,mcblock>>>(threadphoton,iter==0?oddphotons:0,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
-                	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->minenergy,\
+                	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->isref3,cfg->minenergy,\
                          gPseed,gPpos,gPdir,gPlen);
+
+           mcx_cu_assess(cudaGetLastError());
 
 	   /*handling the 2pt distributions*/
            if(cfg->issave2pt){
@@ -771,8 +802,8 @@ void mcx_run_simulation(Config *cfg){
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
-     fprintf(cfg->flog,"simulated %d photons with %d threads and %d moves per threads (repeat x%d)\n",
-             photoncount, cfg->nthread,cfg->totalmove,cfg->respin);
+     fprintf(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\n",
+             photoncount,cfg->nphoton,cfg->nthread,cfg->respin);
      fprintf(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
              energyloss,energyabsorbed,energyloss+energyabsorbed);
 
