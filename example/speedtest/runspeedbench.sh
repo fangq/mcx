@@ -21,20 +21,22 @@ do
   make $opt
   cd $RT
 
-  echo 'run MCX with various threads and move numbers'
+  echo 'run MCX with various threads and photon numbers'
 
-  nthread="128 256 512 1024 1280 1536 1792"
-  nmove="10000 100000 1000000"
+#  nthread="128 256 512 1024 1280 1536 1792"
+  nthread="512 640 1024 1280 1536 1792"
+#  nphoton="1000000 10000000 100000000"
+  nphoton="1000000"
   mcxbin="../../bin/mcextreme"
 
   for th in $nthread
   do 
-    for move in $nmove
+    for np in $nphoton
     do
-         echo "<mcx_session thread='$th' move='$move'>"
-         echo "<cmd>$mcxbin -t $th -m $move -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1</cmd>"
+         echo "<mcx_session thread='$th' photon='$np'>"
+         echo "<cmd>$mcxbin -t $th -n $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1</cmd>"
          echo "<output>"
-         $mcxbin -t $th -m $move -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1
+         $mcxbin -t $th -n $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1
          echo "</output>"
          echo "</mcx_session>"
     done

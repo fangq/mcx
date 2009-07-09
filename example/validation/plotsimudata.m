@@ -15,19 +15,20 @@ figure;
 hold on;
 
 mcx=loadmc2('semi_infinite.mc2',[60 60 60 50]);
-plot((1:50)/10,log10(tddiffusion(0.005, 1, c0, 0, srcpos, detpos,twin)),'r');
-plot((1:50)/10,log10(squeeze(mcx(30,14,9,:))),'o');
+semilogy((1:50)/10,tddiffusion(0.005, 1, c0, 0, srcpos, detpos,twin),'r');
+semilogy((1:50)/10,squeeze(mcx(30,14,9,:)),'o');
 
 mcxb=loadmc2('semi_infinite_b.mc2',[60 60 60 50]);
-plot((1:50)/10,log10(tddiffusion(0.005, 1, c0/1.37, 0.493, srcpos, detpos,twin)),'r--');
-plot((1:50)/10,log10(squeeze(mcxb(30,14,9,:))),'+');
+semilogy((1:50)/10,tddiffusion(0.005, 1, c0/1.37, 0.493, srcpos, detpos,twin),'r--');
+semilogy((1:50)/10,squeeze(mcxb(30,14,9,:)),'+');
 
-set(gca,'ylim',[0 8.5]);
+set(gca,'ylim',[1 1e8.5]);
 
 legend('Diffusion (no reflection)','MCX (no reflection)','Diffusion (with reflection)','MCX (with reflection)');
 legend boxoff;
 set(gca,'fontsize',18);
 xlabel('time (ns)')
+ylabel('Fluence in 1/(m^2s)')
 box on;
 saveas(gcf,'td_validate.fig')
 print -depsc2 td_validate.eps
@@ -41,14 +42,14 @@ hold on;
 
 cwmcx=sum(mcx,4); 
 srcpos=[0 0 0];
-detpos=[(0:29)', 0*ones(30,1),zeros(30,1)];
+detpos=[0.5+(0:29)', 0.5*ones(30,1),0.5*ones(30,1)];
 phicw=cwdiffusion(0.005, 1, 0, srcpos, detpos);
-phimcx=(cwmcx(:,30,1));
+phimcx=cwmcx(30,:,1);
 
 cwmcxb=sum(mcxb,4);
 phicwb=cwdiffusion(0.005, 1, 0.493, srcpos, detpos);
-phimcxb=(cwmcxb(:,30,1));
-h=semilogy(1:30, phicw, 'r-', 1:30, phimcx(30:59)*1e-10, 'o', 1:30, phicwb, 'r--', 1:30, phimcxb(30:59)*1e-10, '+');
+phimcxb=(cwmcxb(30,:,1));
+h=semilogy(1:30, phicw, 'r-', 1:30, phimcx(30:59)*1e-10, 'o', 1:30, phicwb, 'r--', 1:30, phimcxb(30:59)*1e-10, 'b+');
 box on;
 set(gca,'yscale','log')
 
@@ -56,7 +57,7 @@ legend('Diffusion (no reflection)','MCX (no reflection)','Diffusion (with reflec
 legend boxoff;
 set(gca,'fontsize',18);
 xlabel('x (mm)')
-ylabel('Fluence')
+ylabel('Fluence in 1/(m^2s)')
 saveas(gcf,'td_validate_cw.fig')
 print -depsc2 td_validate_cw.eps
 
