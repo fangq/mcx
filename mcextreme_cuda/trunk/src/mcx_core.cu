@@ -138,11 +138,13 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      }
      prop=gproperty[mediaid];
 
+     // using while-loop to terminate by np will cause MT RNG to be 3.5x slower
+     // LL5 RNG will only be slightly slower than for-loop with photon-move criterion
 
      while(nlen.w<np) {
 
 #ifdef __DEVICE_EMULATION__
-          printf("*i=%d (%d) L=%f w=%e a=%f\n",i,(int)nlen.w,nlen.x,npos.w,nlen.y);
+          printf("*i= (%d) L=%f w=%e a=%f\n",(int)nlen.w,nlen.x,npos.w,nlen.y);
 #endif
 	  if(nlen.x<=0.f) {  /* if this photon has finished the current jump */
 
@@ -704,14 +706,14 @@ printf("threadph=%d oddphotons=%d np=%d nthread=%d respin=%d\n",threadphoton,odd
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->isref3,cfg->minenergy,\
                          gPseed,gPpos,gPdir,gPlen);
 
-           mcx_cu_assess(cudaGetLastError());
-
 	   /*handling the 2pt distributions*/
            if(cfg->issave2pt){
                cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
                fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
                fprintf(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);
+
+               mcx_cu_assess(cudaGetLastError());
 
                if(cfg->respin>1){
                    for(i=0;i<fieldlen;i++)  /*accumulate field, can be done in the GPU*/
