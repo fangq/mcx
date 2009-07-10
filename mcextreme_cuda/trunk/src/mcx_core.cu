@@ -82,8 +82,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     int idx1d, idx1dold,idxorig;
-     int np=nphoton+((idx==blockDim.x*gridDim.x-1) ? ophoton: 0);
+     int i,idx1d, idx1dold,idxorig;
+     //int np=nphoton+((idx==blockDim.x*gridDim.x-1) ? ophoton: 0);
 
 #ifdef TEST_RACING
      int cc=0;
@@ -141,7 +141,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      // using while-loop to terminate by np will cause MT RNG to be 3.5x slower
      // LL5 RNG will only be slightly slower than for-loop with photon-move criterion
 
-     while(nlen.w<np) {
+     //while(nlen.w<np) {
+
+     for(i=0;i<nphoton;i++){ // here nphoton actually mean photon moves
 
 #ifdef __DEVICE_EMULATION__
           printf("*i= (%d) L=%f w=%e a=%f\n",(int)nlen.w,nlen.x,npos.w,nlen.y);
@@ -427,7 +429,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 		      cc++;
                   }
 #else
+
+#ifndef USE_ATOMIC
                   field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+#else
+                  // ifdef CUDA_NO_SM_11_ATOMIC_INTRINSICS
+                  atomicAdd(&field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z],npos.w);
+#endif
+
 #endif
 	     }
              nlen.z+=minaccumtime; // fluence is a temporal-integration
@@ -546,7 +555,7 @@ void mcx_run_simulation(Config *cfg){
      }
      threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
      oddphotons=cfg->nphoton-threadphoton*cfg->nthread*cfg->respin;
-printf("threadph=%d oddphotons=%d np=%d nthread=%d respin=%d\n",threadphoton,oddphotons,
+     printf("threadph=%d oddphotons=%d np=%d nthread=%d respin=%d\n",threadphoton,oddphotons,
            cfg->nphoton,cfg->nthread,cfg->respin);
 #ifdef CACHE_MEDIA
      int count,k;
@@ -701,7 +710,8 @@ printf("threadph=%d oddphotons=%d np=%d nthread=%d respin=%d\n",threadphoton,odd
        for(iter=0;iter<cfg->respin;iter++){
 
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1);
-           mcx_main_loop<<<mcgrid,mcblock>>>(threadphoton,iter==0?oddphotons:0,gmedia,gfield,genergy,cfg->steps,minstep,\
+           //mcx_main_loop<<<mcgrid,mcblock>>>(threadphoton,iter==0?oddphotons:0,gmedia,gfield,genergy,cfg->steps,minstep,
+             mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->isref3,cfg->minenergy,\
                          gPseed,gPpos,gPdir,gPlen);

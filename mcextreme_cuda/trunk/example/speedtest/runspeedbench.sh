@@ -23,10 +23,10 @@ do
 
   echo 'run MCX with various threads and photon numbers'
 
-#  nthread="128 256 512 1024 1280 1536 1792"
-  nthread="512 640 1024 1280 1536 1792"
-#  nphoton="1000000 10000000 100000000"
-  nphoton="1000000"
+  nthread="128 256 512 1024 1280 1536 1792"
+#  nthread="512 640 1024 1280 1536 1792"
+  nphoton="10000 100000 1000000"
+#  nphoton="1000000"
   mcxbin="../../bin/mcextreme"
 
   for th in $nthread
