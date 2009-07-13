@@ -17,7 +17,9 @@ typedef struct MCXMedium{
 } Medium;  /*this order shall match prop.{xyzw} in mcx_main_loop*/
 
 typedef struct MCXConfig{
-	int nphoton;      /*total simulated photon number*/
+	int nphoton;      /*(total simulated photon number) we now use this to 
+	                     temporarily alias totalmove, as to specify photon
+			     number is causing some troubles*/
 	//int totalmove;   /* [depreciated] total move per photon*/
         int nblocksize;   /*thread block size*/
 	int nthread;      /*num of total threads, multiple of 128*/
