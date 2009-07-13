@@ -22,10 +22,11 @@ mcxb=loadmc2('semi_infinite_b.mc2',[60 60 60 50]);
 semilogy((1:50)/10,tddiffusion(0.005, 1, c0/1.37, 0.493, srcpos, detpos,twin),'r--');
 semilogy((1:50)/10,squeeze(mcxb(30,14,9,:)),'+');
 
-set(gca,'ylim',[1 1e8.5]);
+set(gca,'ylim',[1 10^8.5]);
 
 legend('Diffusion (no reflection)','MCX (no reflection)','Diffusion (with reflection)','MCX (with reflection)');
 legend boxoff;
+set(gca,'yscale','log');
 set(gca,'fontsize',18);
 xlabel('time (ns)')
 ylabel('Fluence in 1/(m^2s)')
@@ -69,10 +70,10 @@ figure
 hold on;
 
 clines = -1.5:-0.5:-4;
-srcpos=[29.5 29.5 0];
+srcpos=[29.5 29.5 0.5];
 [xi,yi]=meshgrid(0.5:59.5,0.5:59.5);
-detpos=[xi(:) 29.5*ones(size(xi(:))) yi(:)];
-phicw=reshape(cwdiffusion(0.005, 1, 0, srcpos, detpos),size(xi));
+detpos=[xi(:) 30*ones(size(xi(:))) yi(:)];
+phicw=reshape(cwdiffusion(0.005, 1.0, 0, srcpos, detpos),size(xi));
 
 [c h2]=contour(xi,yi, log10(max(squeeze(phicw),1e-8)), clines, 'k-' );
 [c h1]=contour(log10(max(squeeze(cwmcx(:,30,:)*1e-10)',1e-8)), clines, 'k:' );
