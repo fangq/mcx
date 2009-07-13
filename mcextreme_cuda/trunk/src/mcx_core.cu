@@ -74,15 +74,15 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
      float4 npos=n_pos[idx];
-     float4 ndir=n_dir[idx];
-     float4 nlen=n_len[idx];
-     float4 npos0;
-     float3 htime;
-     float  minaccumtime=minstep*R_C0;
+     float4 ndir=n_dir[idx];  /*ndir.w can be dropped to save register*/
+     float4 nlen=n_len[idx];  /*nlen.w can be dropped to save register*/
+     float4 npos0;            /*reflection var*/
+     float3 htime;            /*reflection var*/
+     float  minaccumtime=minstep*R_C0;   /*can be moved to constant memory*/
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     int i,idx1d, idx1dold,idxorig;
+     int i,idx1d, idx1dold,idxorig;   /*idx1dold is related to reflection*/
      //int np=nphoton+((idx==blockDim.x*gridDim.x-1) ? ophoton: 0);
 
 #ifdef TEST_RACING
@@ -90,9 +90,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 #endif
      uchar  mediaid, mediaidorig;
      char   medid=-1;
-     float  atten;
+     float  atten;         /*can be take out to minimize register*/
 
-     float flipdir,n1,Rtotal;
+     float flipdir,n1,Rtotal;   /*reflection var*/
 #ifdef CACHE_MEDIA
      int incache=0,incache0=0,cachebyte=-1,cachebyte0=-1;
 #endif
@@ -103,7 +103,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      RandType ran, t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
 #endif
 
-     float4 prop;
+     float4 prop;    /*can become float2 if no reflection*/
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
 
@@ -472,12 +472,12 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
 
 bool mcx_set_gpu(int printinfo)
 {
-    int dev;
-    int deviceCount;
 
 #if __DEVICE_EMULATION__
     return true;
 #else
+    int dev;
+    int deviceCount;
     cudaGetDeviceCount(&deviceCount);
     if (deviceCount == 0){
         return false;

@@ -300,7 +300,18 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     		isinteractive=0;
 		     	        mcx_readarg(argc,argv,i++,filename,"string");
 				break;
+                     /* 
+		        ideally we may support -n option to specify photon numbers,
+		        however, we found using while-loop for -n will cause some 
+			troubles for MT RNG, and timed-out error for some other cases.
+			right now, -n is only an alias for -m and both are specifying
+			the photon moves per thread. Here, variable cfg->nphoton is 
+			indeed the photon moves per thread.
+		     */
 		     case 'n':
+		     	        mcx_readarg(argc,argv,i++,&(cfg->nphoton),"int");
+		     	        break;
+		     case 'm':
 		     	        mcx_readarg(argc,argv,i++,&(cfg->nphoton),"int");
 		     	        break;
 		     case 't':
@@ -384,7 +395,8 @@ where possible parameters include (the first item in [] is the default value)\n\
      -f config     read config from a file\n\
      -t [1024|int] total thread number\n\
      -T [128|int]  thread number per block\n\
-     -n [0|int]    total photon number\n\
+     -m [0|int]    total photon moves\n\
+     -n [0|int]    total photon number (not supported yet, use -m only)\n\
      -r [1|int]    number of re-spins (repeations)\n\
      -a [1|0]      1 for C array, 0 for Matlab array\n\
      -g [1|int]    number of time gates per run\n\
