@@ -58,13 +58,27 @@ typedef struct PhotonData {
 } Photon;
 ******************************/
 
+struct  __align__(16) KernelParams {
+  float3 vsize;
+  float  minstep;
+  float  twin0,twin1,tmax;
+  uchar  isrowmajor,save2pt,doreflect,doreflect3;
+  float  Rstep;
+  float4 p0,c0;
+  float3 maxidx;
+  uint3  dimlen,cp0,cp1;
+  uint2  cachebox;
+  float  minenergy;
+};
+
 __constant__ float4 gproperty[MAX_PROP];
+__constant__ KernelParams gparam;
 
 #ifdef CACHE_MEDIA
 __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 #endif
 
-// pass as many pre-computed values as possible to utilize the constant memory 
+// need to move these arguments to the constant memory, as they consumes shared memory 
 
 kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
      float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, uchar save2pt, float Rtstep,
@@ -430,12 +444,16 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                   }
 #else
 
-#ifndef USE_ATOMIC
-                  field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
-#else
-                  // ifdef CUDA_NO_SM_11_ATOMIC_INTRINSICS
-                  atomicAdd(&field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z],npos.w);
-#endif
+//#ifndef USE_ATOMIC
+//                  field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+//#else
+                  // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
+		  // there is no atomicAdd for float, we use __float_as_int to cast the results and save
+		  
+		  tmp0=field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+npos.w;
+                  atomicExch((int *)&field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z],
+		     __float_as_int(tmp0));
+//#endif
 
 #endif
 	     }
@@ -718,6 +736,7 @@ void mcx_run_simulation(Config *cfg){
 
 	   /*handling the 2pt distributions*/
            if(cfg->issave2pt){
+               cudaThreadSynchronize();
                cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
                fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
