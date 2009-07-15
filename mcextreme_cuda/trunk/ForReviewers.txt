@@ -42,9 +42,11 @@ Other tips:
 1. see example/quicktest/listgpu.sh and run it to list your GPU info.
 2. if CUDA SDK is not installed, please download and install it 
    from nVidia's website
-3. if you set photon moves to a bigger number and cause the run-time
+3. if you set photon moves to a bigger number and make the run-time
    per kernel more than 5~10 sec, you may likely to get a "timed-out" 
-   error, read following to get around the problem.
+   error; to avoid this, you need to reduce the photon moves/thread to
+   1e5~1e6 and set -r (respin) to a bigger number. You can 
+   also read the following to change the timed-out limit.
 
 When running the code with large number of photon moves or threads,
 the completion time of the kernel may exceed the OS display watchdog
@@ -55,3 +57,4 @@ display (disable X-server if running Linux, or run it on a second
 Graphics card), please see:
 
 http://forums.nvidia.com/index.php?showtopic=100487
+
