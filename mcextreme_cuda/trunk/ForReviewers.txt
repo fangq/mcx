@@ -1,0 +1,57 @@
+Please compile and run this code only on a system with 
+CUDA-capable hardware (nVidia 8800 or above). Currently,
+we prepared Makefile for unix-like systems, and we've 
+tested on Linux and Mac OS X. It should be straightforward
+to create a project file and get MCX compiled on windows
+(although we have never tested). If your CUDA library/headers
+are not installed at the default location, please update
+LINKOPT and CPPOPT in the Makefile under the src directory.
+
+The examples and validation cases can be found under 
+the example subfolder, which include
+
+- quicktest:   a simple test to assess the status of the code and GPL info.
+- validation:  comparison with diffusion model (with and without reflection) (Fig. 5)
+- benchrng:    RNG test case (Fig. 3)
+- miscount:    non-atomic global memory write test (Fig. 4)
+- speedtest:   input files and scripts to produce the speed validation (Fig.7)
+
+To run these examples, you need to run the shell scripts, normally
+named as "[scriptname].sh". These scripts currently only support 
+Linux and Mac OS X. If one have to run this under Windows, please 
+look into the .sh file and find the command line option for 
+mcextreme and run it separately from Windows shell.
+
+As we described in the revised manuscript, to set total photon 
+number using a while-loop control will cause troubles for MT RNG.
+As a result, we only allow users to set photon moves/thread via the
+-m option. We will enable the "-n" option to specify total photon
+numbers once we figure out the cause of the problem in the future.
+Users can always find the actual completed photon numbers from the 
+program output information.
+
+The authors would like to stress that the current code is by no
+means perfect and is expected to be continuously improved in the
+following development phase. Bug reports or suggestions on any 
+of the implementation details are certainly welcome, however,
+for the review, we would like the reviewers to give more weights 
+to the main points of the manuscript rather than the 
+implementation.
+
+Other tips:
+1. see example/quicktest/listgpu.sh and run it to list your GPU info.
+2. if CUDA SDK is not installed, please download and install it 
+   from nVidia's website
+3. if you set photon moves to a bigger number and cause the run-time
+   per kernel more than 5~10 sec, you may likely to get a "timed-out" 
+   error, read following to get around the problem.
+
+When running the code with large number of photon moves or threads,
+the completion time of the kernel may exceed the OS display watchdog
+timer's limit, you may see "the launch timed out and was terminated"
+error message. To get around this problem, you have to either disable
+the watchdog limit, or make the graphics card detached for your
+display (disable X-server if running Linux, or run it on a second
+Graphics card), please see:
+
+http://forums.nvidia.com/index.php?showtopic=100487
