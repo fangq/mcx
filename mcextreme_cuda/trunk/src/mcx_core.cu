@@ -78,6 +78,22 @@ __constant__ KernelParams gparam;
 __constant__ uchar  gmediacache[MAX_MEDIA_CACHE];
 #endif
 
+
+#ifdef USE_ATOMIC
+// float atomic add get from:
+// http://forums.nvidia.com/index.php?showtopic=67691&st=0&p=380935&#entry380935
+// this is 2.6x slower for MT, and 4.6x slower for LL, comparing with non-atomic write
+__device__ inline void atomicFloatAdd(float *address, float val)
+{
+      int i_val = __float_as_int(val);
+      int tmp0 = 0,tmp1;
+      while( (tmp1 = atomicCAS((int *)address, tmp0, i_val)) != tmp0){
+              tmp0 = tmp1;
+              i_val = __float_as_int(val + __int_as_float(tmp1));
+      }
+}
+#endif
+
 // need to move these arguments to the constant memory, as they consumes shared memory 
 
 kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
@@ -444,16 +460,13 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                   }
 #else
 
-//#ifndef USE_ATOMIC
-//                  field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
-//#else
+#ifndef USE_ATOMIC
+                  field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+#else
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  // there is no atomicAdd for float, we use __float_as_int to cast the results and save
-		  
-		  tmp0=field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+npos.w;
-                  atomicExch((int *)&field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z],
-		     __float_as_int(tmp0));
-//#endif
+		  atomicFloatAdd(& field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z], npos.w);
+#endif
 
 #endif
 	     }

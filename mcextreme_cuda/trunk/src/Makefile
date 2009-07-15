@@ -24,9 +24,10 @@ fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -DFAST_MATH
 debugmt:    OPT=-DUSE_MT_RAND
 debuglog:   OPT=
 racing:     OPT=-DTEST_RACING
-mtatomic:   OPT=-DUSE_MT_RAND -DFAST_MATH -DUSE_ATOMIC
-	    CUOPT+= --gpu-name compute_11
+mtatomic:   OPT=-DUSE_MT_RAND -DFAST_MATH -DUSE_ATOMIC 
+mtatomic:   CUOPT+= --gpu-name compute_11
 logatomic:  OPT=-DFAST_MATH -DUSE_ATOMIC
+logatomic:  CUOPT+= --gpu-name compute_11
 
 all mt fast log logfast cache fastcache logcache racing mtatomic logatomic: 
 	$(CUDACC) -c $(CUOPT) $(OPT) $(SOURCE).cu
