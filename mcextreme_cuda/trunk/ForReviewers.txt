@@ -42,7 +42,9 @@ Other tips:
 1. see example/quicktest/listgpu.sh and run it to list your GPU info.
 2. if CUDA SDK is not installed, please download and install it 
    from nVidia's website
-3. if you set photon moves to a bigger number and make the run-time
+3. by default, the output fluence is atomatically normalized, therefore,
+   you can compare it directly to the analytical solution (Green's function)
+4. if you set photon moves to a bigger number and make the run-time
    per kernel more than 5~10 sec, you may likely to get a "timed-out" 
    error; to avoid this, you need to reduce the photon moves/thread to
    1e5~1e6 and set -r (respin) to a bigger number. You can 
@@ -54,7 +56,7 @@ timer's limit, you may see "the launch timed out and was terminated"
 error message. To get around this problem, you have to either disable
 the watchdog limit, or make the graphics card detached for your
 display (disable X-server if running Linux, or run it on a second
-Graphics card), please see:
+graphics card), please see:
 
 http://forums.nvidia.com/index.php?showtopic=100487
 
