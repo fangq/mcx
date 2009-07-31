@@ -528,12 +528,12 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 	       printf("Number of MPs:\t\t%u\nNumber of cores:\t%u\n",
 	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
 	  #endif
-	      if(printinfo==2){ /*list GPU info only*/
-	          exit(0);
-	      }
 	  }
-            break;
+          if(printinfo!=2) break;
 	}
+    }
+    if(printinfo==2){ /*list GPU info only*/
+          exit(0);
     }
     if (dev == deviceCount)
         return false;
