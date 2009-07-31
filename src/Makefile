@@ -14,6 +14,13 @@ OPT=-DUSE_MT_RAND
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
 CPPOPT=-I/usr/local/cuda/include
 
+ARCH = $(shell uname -m)
+ifeq ($(findstring x86_64,$(ARCH)), x86_64)
+   ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
+      LINKOPT=-L/usr/local/cuda/lib64 -lcudart 
+   endif
+endif
+
 all logfast:OPT=-DFAST_MATH
 mt:         OPT=-DUSE_MT_RAND
 fast:       OPT=-DUSE_MT_RAND -DFAST_MATH
