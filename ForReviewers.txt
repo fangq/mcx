@@ -10,7 +10,7 @@ LINKOPT and CPPOPT in the Makefile under the src directory.
 The examples and validation cases can be found under 
 the example subfolder, which include
 
-- quicktest:   a simple test to assess the status of the code and GPL info.
+- quicktest:   a simple test to assess the status of the code and GPU info.
 - validation:  comparison with diffusion model (with and without reflection) (Fig. 5)
 - benchrng:    RNG test case (Fig. 3)
 - miscount:    non-atomic global memory write test (Fig. 4)
