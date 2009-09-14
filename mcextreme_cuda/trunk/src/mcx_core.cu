@@ -99,7 +99,7 @@ __device__ inline void atomicFloatAdd(float *address, float val)
 kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],float genergy[],float3 vsize,float minstep, 
      float twin0,float twin1, float tmax, uint3 dimlen, uchar isrowmajor, uchar save2pt, float Rtstep,
      float4 p0,float4 c0,float3 maxidx,uint3 cp0,uint3 cp1,uint2 cachebox,uchar doreflect,uchar doreflect3, 
-     float minenergy, uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
+     float minenergy, float sradius2, uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -136,6 +136,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      float4 prop;    /*can become float2 if no reflection*/
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
+     float accumweight=0.f;
 
 #ifdef USE_MT_RAND
      mt19937si(n_seed[idx]);
@@ -434,13 +435,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                   prop=gproperty[mediaid];
                   n1=prop.z;
                   //ndir.w++;
-              }else{
+              }else{  // launch a new photon
                   energyloss+=npos.w;  // sum all the remaining energy
 	          npos=p0;
 	          ndir=c0;
 	          nlen=float4(0.f,0.f,minaccumtime,nlen.w+1);
                   idx1d=idxorig;
 		  mediaid=mediaidorig;
+                  accumweight=0.f;
 #ifdef CACHE_MEDIA
 	          cachebyte=cachebyte0;
 	          incache=incache0;
@@ -453,7 +455,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
              if(save2pt&&nlen.y>=twin0 & nlen.y<twin1){
 #ifdef TEST_RACING
-                  /*enable TEST_RACING to determine how many missing accumulations due to race*/
+                  // enable TEST_RACING to determine how many missing accumulations due to race
                   if( (npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>9.f ) {
                       field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=1.f;
 		      cc++;
@@ -461,7 +463,17 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 #else
 
 #ifndef USE_ATOMIC
-                  field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+                  // set sradius2 to only start depositing energy when dist^2>sradius2 
+                  if(sradius2>EPS){
+                      if((npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>sradius2){
+                          field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=accumweight+npos.w;
+                          accumweight=0.f;
+                      }else{
+                          accumweight+=npos.w;
+                      }
+                  }else{
+                      field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+                  }
 #else
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  // there is no atomicAdd for float, we use __float_as_int to cast the results and save
@@ -745,7 +757,7 @@ void mcx_run_simulation(Config *cfg){
              mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->isref3,cfg->minenergy,\
-                         gPseed,gPpos,gPdir,gPlen);
+                         cfg->sradius*cfg->sradius,gPseed,gPpos,gPdir,gPlen);
 
 	   /*handling the 2pt distributions*/
            if(cfg->issave2pt){

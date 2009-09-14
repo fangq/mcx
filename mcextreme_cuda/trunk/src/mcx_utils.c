@@ -87,6 +87,7 @@ void mcx_initcfg(Config *cfg){
      cfg->printnum=0;
      cfg->minenergy=0.f;
      cfg->flog=stdout;
+     cfg->sradius=0.f;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -353,6 +354,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'U':
 		     	        mcx_readarg(argc,argv,i++,&(cfg->isnormalized),"char");
 		     	        break;
+                     case 'R':
+                                mcx_readarg(argc,argv,i++,&(cfg->sradius),"int");
+                                break;
                      case 'l':
                                 issavelog=1;
                                 break;
@@ -403,6 +407,7 @@ where possible parameters include (the first item in [] is the default value)\n\
      -b [1|0]      1 to reflect the photons at the boundary, 0 to exit\n\
      -B [0|1]      1 to consider maximum 3 reflections, 0 consider only 2\n\
      -e [0.|float] minimum energy level to propagate a photon\n\
+     -R [0.|float] minimum distance to source to start accumulation\n\
      -U [1|0]      1 to normailze the fluence to unitary, 0 to save raw fluence\n\
      -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
      -S [1|0]      1 to save the fluence field, 0 do not save\n\

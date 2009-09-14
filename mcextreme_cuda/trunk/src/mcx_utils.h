@@ -38,6 +38,9 @@ typedef struct MCXConfig{
 	int medianum;     /*total types of media*/
 	int detnum;       /*total detector numbers*/
 	float detradius;  /*detector radius*/
+        float sradius;    /*source region radius: if set to non-zero, accumulation 
+                            will not perform for dist<sradius; this can reduce
+                            normalization error when using non-atomic write*/
 
 	Medium *prop;     /*optical property mapping table*/
 	float4 *detpos;   /*detector positions and radius, overwrite detradius*/
