@@ -62,6 +62,8 @@
 typedef unsigned int uint;
 #endif
 
+typedef char RandType;
+
 
 #define N               624
 #define M               397
@@ -73,7 +75,11 @@ typedef unsigned int uint;
 #define TEMPER1         0x9d2c5680
 #define TEMPER2         0xefc60000
 
-#define RAND_BUF_LEN 1
+#define RAND_BUF_LEN       0                    //zero-length array buffer
+#define RAND_SEED_LEN      5                    //how many 32bit seeds
+#define MAX_MT_RAND        4294967296           //2^32
+#define R_MAX_MT_RAND      2.3283064365387e-10f //1/2^32
+#define LOG_MT_MAX         22.1807097779182f    //log(2^32)
 
 /*************************************************************************************
  * This is a shared memory implementation that keeps the full 626 words of state
@@ -84,17 +90,19 @@ __shared__ uint s_seeds[N + 1];
 __constant__ uint mag01[2] = {0, MATRIX_A};     /* 2 way bus conflict for each read */
 
 /* Init by single seed - single threaded as only used once */
-__device__ void
-mt19937si(uint seed)
+__device__ void 
+mt19937si(uint *n_seed,int idx)
 {
     int         i;
-
+    uint     seed;
     if (threadIdx.x == 0)
     {
         mtNexts = 0;
-        s_seeds[0] = seed;
-        for (i = 1; i < N; i++)
-        {
+        for (i = 0; i < RAND_SEED_LEN; i++){
+	    s_seeds[i] = n_seed[i];
+        }
+        seed=s_seeds[RAND_SEED_LEN-1];
+        for (i = RAND_SEED_LEN; i < N; i++){
             seed = (INIT_MULT * (seed ^ (seed >> 30)) + i);
             s_seeds[i] = seed;
         }
@@ -136,14 +144,42 @@ mt19937s(void)
 
 // Return calculated values
 __global__ void
-mt19937sc(int loops, unsigned int* result, int* seeds)
+mt19937sc(int loops, uint* result, uint* seeds)
 {
-    mt19937si(seeds[blockIdx.x]);
-    for (int i = 0; i < loops; ++i)
-    {
+    mt19937si(seeds,blockIdx.x);
+    for (int i = 0; i < loops; ++i){
         result[(blockIdx.x * loops + i) * blockDim.x + threadIdx.x] = mt19937s();
     }
 }
 
+// generic interfaces for MC simulations
+
+// t[] and tnew[] are zero-length arrays and are not used,
+// the only purpose to keep them is to share the same format
+// as in logistic RNG
+
+__device__ void gpu_rng_init(char t[RAND_BUF_LEN], char tnew[RAND_BUF_LEN],uint *n_seed,int idx){
+    mt19937si(n_seed+idx*RAND_SEED_LEN,idx);
+}
+// transform into [0,1] random number
+__device__ float rand_uniform01(uint ran){
+    return (ran*R_MAX_MT_RAND);
+}
+// generate [0,1] random number for the next scattering length
+__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
+    return -logf((float)mt19937s())+LOG_MT_MAX;
+}
+// generate [0,1] random number for the next arimuthal angle
+__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(mt19937s());
+}
+// generate random number for the next zenith angle
+__device__ float rand_next_zangle(RandType t[RAND_BUF_LEN]){ 
+    return rand_uniform01(mt19937s());
+}
+// generate random number for the next zenith angle
+__device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){
+    // do nothing
+}
 
 #endif

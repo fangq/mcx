@@ -17,10 +17,12 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define RAND_BUF_LEN 5     /*use 5 or 7 will be better*/
-#define R_PI 0.318309886183791f
-#define INIT_LOGISTIC 100
-#define R_MAX_C_RAND (1./RAND_MAX)
+#define RAND_BUF_LEN       5        //register arrays
+#define RAND_SEED_LEN      5        //32bit seed length (32*5=160bits)
+#define R_PI               0.318309886183791f
+#define INIT_LOGISTIC      100
+#define R_MAX_C_RAND       (1./RAND_MAX)
+#define LOG_MT_MAX         22.1807097779182f
 
 #ifndef DOUBLE_PREC_LOGISTIC
   typedef float RandType;
@@ -69,15 +71,11 @@ __device__ void logistic_step(RandType *t, RandType *tnew, int len_1){
     t[1]=t[3];
     t[3]=tmp;
 }
-
-__device__ void logistic_rand(RandType *t,RandType *tnew,int len_1){
-    logistic_step(t,tnew,len_1);
-    logistic_step(tnew,t,len_1);
+// generate random number for the next zenith angle
+__device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){
+    logistic_step(t,tbuf,RAND_BUF_LEN-1);
+    logistic_step(tbuf,t,RAND_BUF_LEN-1);
 }
-
-//__device__ RandType logistic_uniform(RandType v){
-//    return acosf(1.0-2.0*v)*R_PI;
-//}
 
 __device__ void logistic_init(RandType *t,RandType *tnew,uint seed[],uint idx){
      int i;
@@ -85,7 +83,26 @@ __device__ void logistic_init(RandType *t,RandType *tnew,uint seed[],uint idx){
            t[i]=(RandType)seed[idx*RAND_BUF_LEN+i]*R_MAX_C_RAND;
 
      for(i=0;i<INIT_LOGISTIC;i++)  /*initial randomization*/
-           logistic_rand(t,tnew,RAND_BUF_LEN-1);
+           rand_need_more(t,tnew);
 }
-
+// transform into [0,1] random number
+__device__ RandType rand_uniform01(RandType v){
+    return logistic_uniform(v);
+}
+__device__ void gpu_rng_init(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LEN],uint *n_seed,int idx){
+    logistic_init(t,tnew,n_seed,idx);
+}
+// generate [0,1] random number for the next scattering length
+__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
+    RandType ran=rand_uniform01(t[0]);
+    return ((ran==0.f)?LOG_MT_MAX:(-logf(ran)));
+}
+// generate [0,1] random number for the next arimuthal angle
+__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(t[2]);
+}
+// generate random number for the next zenith angle
+__device__ float rand_next_zangle(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(t[4]);
+}
 #endif
