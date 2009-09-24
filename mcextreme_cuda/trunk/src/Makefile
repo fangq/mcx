@@ -1,5 +1,5 @@
 #################################################################
-#  Makefile for Monte-Carlo Extreme (MCX)
+#  Makefile for Monte Carlo Extreme (MCX)
 #  Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 #  2009/04/02
 #################################################################
@@ -43,7 +43,7 @@ all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox
 	$(CUDACC) -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
-	
+
 debugmt debuglog: 
 	$(CUDACC) -deviceemu -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
