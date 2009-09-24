@@ -21,22 +21,25 @@ ifeq ($(findstring x86_64,$(ARCH)), x86_64)
    endif
 endif
 
-all logfast:OPT=-DFAST_MATH
+all logfast:OPT=-use_fast_math
 mt:         OPT=-DUSE_MT_RAND
-fast:       OPT=-DUSE_MT_RAND -DFAST_MATH
+fast:       OPT=-DUSE_MT_RAND -use_fast_math
 log:        OPT=
-logcache:   OPT=-DCACHE_MEDIA -DFAST_MATH
+logcache:   OPT=-DCACHE_MEDIA -use_fast_math
 cache:      OPT=-DUSE_MT_RAND -DCACHE_MEDIA
-fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -DFAST_MATH
+fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -use_fast_math
 debugmt:    OPT=-DUSE_MT_RAND
 debuglog:   OPT=
 racing:     OPT=-DTEST_RACING
-mtatomic:   OPT=-DUSE_MT_RAND -DFAST_MATH -DUSE_ATOMIC 
-mtatomic:   CUOPT+= --gpu-name compute_11
-logatomic:  OPT=-DFAST_MATH -DUSE_ATOMIC
-logatomic:  CUOPT+= --gpu-name compute_11
+mtatomic:   OPT=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math
+mtatomic:   CUOPT+= -arch compute_11
+logatomic:  OPT=-DUSE_ATOMIC -use_fast_math
+logatomic:  CUOPT+= -arch compute_11
+mtbox:      OPT+= -DCACHE_NON_ATOMIC
+logbox:	    OPT+= -DCACHE_NON_ATOMIC
 
-all mt fast log logfast cache fastcache logcache racing mtatomic logatomic: 
+
+all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox: 
 	$(CUDACC) -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
