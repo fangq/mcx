@@ -7,6 +7,7 @@
 CUDACC=nvcc
 CCC=g++
 SOURCE=mcextreme
+BINARY=mcx
 SOURCE_UTILS=mcx_utils
 OUTPUT_DIR=../bin
 CUOPT= -g  #-maxrregcount=40 
@@ -42,11 +43,11 @@ logbox:	    OPT+= -DCACHE_NON_ATOMIC
 all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox: 
 	$(CUDACC) -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
-	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
+	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
 
 debugmt debuglog: 
 	$(CUDACC) -deviceemu -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
-	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(SOURCE)
+	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
 clean:
 	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(SOURCE)

@@ -1,2 +1,2 @@
 #!/bin/sh
-../../bin/mcextreme -L
+../../bin/mcx -L
