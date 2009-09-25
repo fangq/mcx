@@ -9,10 +9,10 @@ CCC=g++
 SOURCE=mcextreme
 SOURCE_UTILS=mcx_utils
 OUTPUT_DIR=../bin
-CUOPT=   #-maxrregcount=40
+CUOPT= -g  #-maxrregcount=40 
 OPT=-DUSE_MT_RAND
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
-CPPOPT=-I/usr/local/cuda/include
+CPPOPT=-I/usr/local/cuda/include -g
 
 ARCH = $(shell uname -m)
 ifeq ($(findstring x86_64,$(ARCH)), x86_64)
