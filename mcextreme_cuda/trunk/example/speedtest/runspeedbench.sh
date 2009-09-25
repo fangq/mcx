@@ -27,7 +27,7 @@ do
 #  nthread="512 640 1024 1280 1536 1792"
   nphoton="10000 100000 1000000"
 #  nphoton="1000000"
-  mcxbin="../../bin/mcextreme"
+  mcxbin="../../bin/mcx"
 
   for th in $nthread
   do 
