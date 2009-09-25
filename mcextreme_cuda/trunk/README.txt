@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------
-                      Monte-Carlo eXtreme  (MCX)
-                           CUDA version
+                      Monte Carlo eXtreme  (MCX)
+                             CUDA Edition
 ---------------------------------------------------------------------
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
@@ -228,9 +228,9 @@ The above thread info is for debugging purposes.
 
 V. Reference
 
-[1] Qianqian Fang and David A. Boas, "Monte-Carlo Simulation of Photon \
+[1] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
-Optical Express, submitted.
+Optical Express, (in press).
 
 
 

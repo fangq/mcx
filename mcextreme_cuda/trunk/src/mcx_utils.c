@@ -4,6 +4,15 @@
 #include <math.h>
 #include "mcx_utils.h"
 
+char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B',
+                 'd','r','S','p','e','U','R','l','L','I','\0'};
+char *fullopt[]={"--help","--interactive","--input","--photon","--move",
+                 "--thread","--blocksize","--session","--array",
+                 "--gategroup","--reflect","--reflect3","--savedet",
+                 "--repeat","--save2pt","--printlen","--minenergy",
+                 "--normalize","--skipradius","--log","--listgpu",
+                 "--printgpu",""};
+
 void mcx_savedata(float *dat,int len,Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
@@ -248,7 +257,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
      int datalen,res;
      FILE *fp=fopen(filename,"rb");
      if(fp==NULL){
-     	     mcx_error(-5,"specified binary volume file does not exist");
+     	     mcx_error(-5,"the specified binary volume file does not exist");
      }
      if(cfg->vol){
      	     free(cfg->vol);
@@ -263,7 +272,15 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
 }
 
-void mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
+int mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
+     /*
+         when a binary option is given without a following number (0~1), 
+         we assume it is 1
+     */
+     if(strcmp(type,"char")==0 && (id>=argc-1||(argv[id+1][0]<'0'||argv[id+1][0]>'9'))){
+	*((char*)output)=1;
+	return id;
+     }
      if(id<argc-1){
          if(strcmp(type,"char")==0)
              *((char*)output)=atoi(argv[id+1]);
@@ -273,12 +290,23 @@ void mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
              *((float*)output)=atof(argv[id+1]);
 	 else if(strcmp(type,"string")==0)
 	     strcpy((char *)output,argv[id+1]);
-     } 
-     else{
+     }else{
      	 mcx_error(-1,"incomplete input");
      }
+     return id+1;
 }
-
+int mcx_remap(char *opt){
+    int i=0;
+    while(shortopt[i]!='\0'){
+	if(strcmp(opt,fullopt[i])==0){
+		opt[1]=shortopt[i];
+		opt[2]='\0';
+		return 0;
+	}
+	i++;
+    }
+    return 1;
+}
 void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      int i=1,isinteractive=1,issavelog=0;
      char filename[MAX_PATH_LENGTH]={0};
@@ -290,6 +318,11 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      }
      while(i<argc){
      	    if(argv[i][0]=='-'){
+		if(argv[i][1]=='-'){
+			if(mcx_remap(argv[i])){
+				mcx_error(-2,"unknown verbose option");
+			}
+		}
 	        switch(argv[i][1]){
 		     case 'h': 
 		                mcx_usage(argv[0]);
@@ -299,7 +332,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				break;
 		     case 'f': 
 		     		isinteractive=0;
-		     	        mcx_readarg(argc,argv,i++,filename,"string");
+		     	        i=mcx_readarg(argc,argv,i,filename,"string");
 				break;
                      /* 
 		        ideally we may support -n option to specify photon numbers,
@@ -310,52 +343,52 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 			indeed the photon moves per thread.
 		     */
 		     case 'n':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->nphoton),"int");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
 		     	        break;
 		     case 'm':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->nphoton),"int");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
 		     	        break;
 		     case 't':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->nthread),"int");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->nthread),"int");
 		     	        break;
                      case 'T':
-                               	mcx_readarg(argc,argv,i++,&(cfg->nblocksize),"int");
+                               	i=mcx_readarg(argc,argv,i,&(cfg->nblocksize),"int");
                                	break;
 		     case 's':
-		     	        mcx_readarg(argc,argv,i++,cfg->session,"string");
+		     	        i=mcx_readarg(argc,argv,i,cfg->session,"string");
 		     	        break;
 		     case 'a':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->isrowmajor),"char");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->isrowmajor),"char");
 		     	        break;
 		     case 'g':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->maxgate),"int");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxgate),"int");
 		     	        break;
 		     case 'b':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->isreflect),"char");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->isreflect),"char");
 		     	        break;
                      case 'B':
-                                mcx_readarg(argc,argv,i++,&(cfg->isref3),"char");
+                                i=mcx_readarg(argc,argv,i,&(cfg->isref3),"char");
                                	break;
 		     case 'd':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->issavedet),"char");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->issavedet),"char");
 		     	        break;
 		     case 'r':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->respin),"int");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->respin),"int");
 		     	        break;
 		     case 'S':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->issave2pt),"char");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->issave2pt),"char");
 		     	        break;
 		     case 'p':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->printnum),"int");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->printnum),"int");
 		     	        break;
                      case 'e':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->minenergy),"float");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->minenergy),"float");
                                 break;
 		     case 'U':
-		     	        mcx_readarg(argc,argv,i++,&(cfg->isnormalized),"char");
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->isnormalized),"char");
 		     	        break;
                      case 'R':
-                                mcx_readarg(argc,argv,i++,&(cfg->sradius),"int");
+                                i=mcx_readarg(argc,argv,i,&(cfg->sradius),"int");
                                 break;
                      case 'l':
                                 issavelog=1;
@@ -388,35 +421,35 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 void mcx_usage(char *exename){
      printf("\
 #######################################################################################\n\
-#                     Monte-Carlo Extreme (MCX) -- CUDA                               #\n\
+#                     Monte Carlo eXtreme (MCX) -- CUDA                               #\n\
 #             Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>                    #\n\
 #                                                                                     #\n\
 #      Martinos Center for Biomedical Imaging, Massachusetts General Hospital         #\n\
 #######################################################################################\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
-     -i 	   interactive mode\n\
-     -f config     read config from a file\n\
-     -t [1024|int] total thread number\n\
-     -T [128|int]  thread number per block\n\
-     -m [0|int]    total photon moves\n\
-     -n [0|int]    total photon number (not supported yet, use -m only)\n\
-     -r [1|int]    number of re-spins (repeations)\n\
-     -a [1|0]      1 for C array, 0 for Matlab array\n\
-     -g [1|int]    number of time gates per run\n\
-     -b [1|0]      1 to reflect the photons at the boundary, 0 to exit\n\
-     -B [0|1]      1 to consider maximum 3 reflections, 0 consider only 2\n\
-     -e [0.|float] minimum energy level to propagate a photon\n\
-     -R [0.|float] minimum distance to source to start accumulation\n\
-     -U [1|0]      1 to normailze the fluence to unitary, 0 to save raw fluence\n\
-     -d [1|0]      1 to save photon info at detectors, 0 not to save\n\
-     -S [1|0]      1 to save the fluence field, 0 do not save\n\
-     -s sessionid  a string to identify this specific simulation (and output files)\n\
-     -p [0|int]    number of threads to print (debug)\n\
-     -h            print this message\n\
-     -l            print messages to a log file instead\n\
-     -L            print GPU information only\n\
-     -I            print GPU information and run program\n\
+ -i 	       (--interactive) interactive mode\n\
+ -f config     (--input)       read config from a file\n\
+ -t [1024|int] (--thread)      total thread number\n\
+ -T [128|int]  (--blocksize)   thread number per block\n\
+ -m [0|int]    (--move)        total photon moves\n\
+ -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)\n\
+ -r [1|int]    (--repeat)      number of re-spins (repeations)\n\
+ -a [1|0]      (--array)       1 for C array, 0 for Matlab array\n\
+ -g [1|int]    (--gategroup)   number of time gates per run\n\
+ -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit\n\
+ -B [0|1]      (--reflect3)    1 to consider maximum 3 reflections, 0 consider only 2\n\
+ -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
+ -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
+ -U [1|0]      (--normalize)   1 to normailze the fluence to unitary, 0 to save raw fluence\n\
+ -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not to save\n\
+ -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
+ -s sessionid  (--session)     a string to identify this specific simulation (and output files)\n\
+ -p [0|int]    (--printlen)    number of threads to print (debug)\n\
+ -h            (--help)        print this message\n\
+ -l            (--log)         print messages to a log file instead\n\
+ -L            (--listgpu)     print GPU information only\n\
+ -I            (--printgpu)    print GPU information and run program\n\
 example:\n\
        %s -t 1024 -T 256 -n 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0\n",exename,exename);
 }
