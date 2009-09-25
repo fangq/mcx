@@ -497,11 +497,9 @@ void mcx_run_simulation(Config *cfg){
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
      if(cfg->respin>1){
-         field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate*2);
-         memset(field,0,sizeof(float)*dimxyz*cfg->maxgate*2);
+         field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
      }else{
-         field=(float *)malloc(sizeof(float)*dimxyz*cfg->maxgate); //the second half will be used to accumulate
-         memset(field,0,sizeof(float)*dimxyz*cfg->maxgate);
+         field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate); //the second half will be used to accumulate
      }
      threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
      oddphotons=cfg->nphoton-threadphoton*cfg->nthread*cfg->respin;
@@ -526,7 +524,7 @@ void mcx_run_simulation(Config *cfg){
      Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Plen=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pseed=(uint*)malloc(sizeof(uint)*cfg->nthread*RAND_SEED_LEN);
-     energy=(float*)malloc(sizeof(float)*cfg->nthread*2);
+     energy=(float*)calloc(sizeof(float),cfg->nthread*2);
 
      uchar *gmedia;
      mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)));
@@ -743,4 +741,6 @@ void mcx_run_simulation(Config *cfg){
      free(Pdir);
      free(Plen);
      free(Pseed);
+     free(energy);
+     free(field);
 }
