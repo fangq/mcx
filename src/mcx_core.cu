@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo simulation software
+//  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon migration
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 //
 //  Reference (Fang2009):
@@ -16,9 +16,9 @@
 #include "mcx_utils.h"
 
 #ifdef USE_MT_RAND
-#include "mt_rand_s.cu"
+#include "mt_rand_s.cu"     // use Mersenne Twister RNG (MT)
 #else
-#include "logistic_rand.cu"
+#include "logistic_rand.cu" // use Logistic Lattice ring 5 RNG (LL5)
 #endif
 
 #define ONE_PI             3.1415926535897932f     //pi
@@ -419,8 +419,10 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
      energy[2]+=phi*gproperty[media[idx]].x;
 }
 
-bool mcx_set_gpu(int printinfo)
-{
+/*
+  query GPU info and set active GPU
+*/
+bool mcx_set_gpu(int printinfo){
 
 #if __DEVICE_EMULATION__
     return true;
@@ -463,12 +465,18 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 #endif
 }
 
+/*
+   assert cuda memory allocation result
+*/
 void mcx_cu_assess(cudaError_t cuerr){
      if(cuerr!=cudaSuccess){
          mcx_error(-66,(char *)cudaGetErrorString(cuerr));
      }
 }
 
+/*
+   master driver code to run MC simulations
+*/
 void mcx_run_simulation(Config *cfg){
 
      int i,j,iter;

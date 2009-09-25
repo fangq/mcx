@@ -2,9 +2,10 @@ TODO list:
 
 [done] *. results does not repeat with identical random number seed, need to check [2009/04/07, FangQ]
 [done] *. normalizing the solution with -U option. [2009/04/07, FangQ]
+[done] *. hardware/driver check and inform users for actions [2009/04/30, FangQ]
+[done] *. code cleaning [2009/09/24, FangQ]
 *. save photon history info at detector sites [2009/04/30, FangQ]
 *. support NIFTI input & output [2009/04/30, FangQ]
 *. support ini based input file format (or perl script format) [2009/04/30, FangQ]
 *. study the round-off errors for the two RNGs [2009/04/30, FangQ]
 *. use namespace and incorporate more RNG options [2009/04/30, FangQ]
-*. hardware/driver check and inform users for actions [2009/04/30, FangQ]
