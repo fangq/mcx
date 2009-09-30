@@ -49,7 +49,7 @@ void mcx_readconfig(char *fname, Config *cfg){
      }
      else{
      	FILE *fp=fopen(fname,"rt");
-	if(fp==NULL) mcx_error(-2,"can not load specified config file");
+	if(fp==NULL) mcx_error(-2,"can not load the specified config file");
 	mcx_loadconfig(fp,cfg); 
 	fclose(fp);
         if(cfg->session[0]=='\0'){
@@ -63,7 +63,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
      	mcx_saveconfig(stdout,cfg);
      else{
      	FILE *fp=fopen(fname,"wt");
-	if(fp==NULL) mcx_error(-2,"can not load specified config file");
+	if(fp==NULL) mcx_error(-2,"can not write to the specified config file");
 	mcx_saveconfig(fp,cfg);     
 	fclose(fp);
      }
@@ -145,7 +145,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(cfg->tstart>cfg->tend || cfg->tstep==0.f){
          mcx_error(-9,"incorrect time gate settings");
      }
-     gates=int((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
+     gates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
      if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
@@ -451,5 +451,5 @@ where possible parameters include (the first item in [] is the default value)\n\
  -L            (--listgpu)     print GPU information only\n\
  -I            (--printgpu)    print GPU information and run program\n\
 example:\n\
-       %s -t 1024 -T 256 -n 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0\n",exename,exename);
+       %s -t 1024 -T 256 -m 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0\n",exename,exename);
 }

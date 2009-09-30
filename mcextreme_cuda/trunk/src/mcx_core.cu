@@ -6,7 +6,7 @@
 //  Reference (Fang2009):
 //       Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon 
 //       Migration in 3D Turbid Media Accelerated by Graphics Processing 
-//       Units," Optical Express, Vol. 17, No. 20 (2009)
+//       Units," Optical Express, in press (2009)
 //
 //  mcx_core.cu: GPU kernels and GPU-related CPU functions
 //
@@ -31,7 +31,7 @@
 #define VERY_BIG           1e10f                   //a big number
 #define JUST_ABOVE_ONE     1.0001f                 //test for boundary
 #define SAME_VOXEL         -9999.f                 //scatter within a voxel
-#define MAX_PROP           256                     //maximum properties number
+#define MAX_PROP           256                     //maximum property number
 
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 
@@ -246,9 +246,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 	  }else{
               mediaid=media[idx1d];
           }
-	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1){
-	      //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
 
+          //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
+	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1){
               flipdir=0.f;
               if(doreflect) {
                 //time-of-flight to hit the wall in each direction
@@ -433,7 +433,7 @@ bool mcx_set_gpu(int printinfo){
     if (deviceCount == 0){
         return false;
     }
-//    for (dev = 0; dev < deviceCount; ++dev) {
+    // scan from the last device, hopefully it is more dedicated
     for (dev = deviceCount-1; dev>=0; dev--) {
         cudaDeviceProp dp;
         cudaGetDeviceProperties(&dp, dev);
@@ -446,7 +446,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
                dp.totalGlobalMem,dp.totalConstMem,
                dp.sharedMemPerBlock,dp.regsPerBlock,dp.clockRate*1e-6f);
 	  #if CUDART_VERSION >= 2000
-	       printf("Number of MPs:\t\t%u\nNumber of cores:\t%u\n",
+	       printf("Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
 	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
 	  #endif
 	  }
@@ -470,7 +470,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 */
 void mcx_cu_assess(cudaError_t cuerr){
      if(cuerr!=cudaSuccess){
-         mcx_error(-66,(char *)cudaGetErrorString(cuerr));
+         mcx_error(-(int)cuerr,(char *)cudaGetErrorString(cuerr));
      }
 }
 
@@ -588,7 +588,7 @@ void mcx_run_simulation(Config *cfg){
 #                  Monte-Carlo Extreme (MCX) -- CUDA                           #\n\
 ################################################################################\n");
      tic=GetTimeMillis();
-
+     fprintf(cfg->flog,"compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
      fprintf(cfg->flog,"initializing streams ...\t");
      fieldlen=dimxyz*cfg->maxgate;
 
@@ -627,8 +627,7 @@ void mcx_run_simulation(Config *cfg){
        for(iter=0;iter<cfg->respin;iter++){
 
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1);
-           //mcx_main_loop<<<mcgrid,mcblock>>>(threadphoton,iter==0?oddphotons:0,gmedia,gfield,genergy,cfg->steps,minstep,
-             mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,cfg->steps,minstep,\
+           mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->isref3,cfg->minenergy,\
                          cfg->sradius*cfg->sradius,gPseed,gPpos,gPdir,gPlen);

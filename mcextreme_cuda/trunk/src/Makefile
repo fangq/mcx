@@ -40,14 +40,18 @@ mtbox:      OPT+= -DCACHE_NON_ATOMIC
 logbox:	    OPT+= -DCACHE_NON_ATOMIC
 
 
-all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox: 
+all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox: cudasdk
 	$(CUDACC) -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
 
-debugmt debuglog: 
+debugmt debuglog: cudasdk
 	$(CUDACC) -deviceemu -c $(CUOPT) $(OPT) $(SOURCE).cu
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
 clean:
 	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(BINARY)
+cudasdk:
+	@if [ -z `which ${CUDACC}` ]; then \
+	   echo "Please first install CUDA SDK or add path to nvcc to your PATH environment variable."; exit 1;\
+	fi
