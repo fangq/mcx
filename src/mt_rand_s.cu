@@ -64,6 +64,7 @@ typedef unsigned int uint;
 
 typedef char RandType;
 
+#define MCX_RNG_NAME    "MT19937 (shared memory)"
 
 #define N               624
 #define M               397

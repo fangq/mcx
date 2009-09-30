@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------
-                      Monte Carlo eXtreme  (MCX)
-                             CUDA Edition
+                   Monte Carlo eXtreme  (MCX)
+                          CUDA Edition
 ---------------------------------------------------------------------
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
@@ -16,98 +16,117 @@ II. Requirement and Installation
 III.Running Simulations
 IV. Interpret the Outputs
 V.  Reference
-VI. Appendix
 
 ---------------------------------------------------------------------
 
 I.  Introduction
 
 Monte-Carlo eXtreme (MCX) is a simulation software for modeling photon
-propagations in 3D turbid media. By taking advantage of the massively
+propagation in 3D turbid media. By taking advantage of the massively
 parallel threads and extremely low memory latency, this program is able
-to perform Monte-Carlo (MC) simulations on a low-cost graphics card 
-at a blazing speed, typically 100 to 300 times faster than a fully 
+to perform Monte Carlo (MC) simulations on a low-cost graphics card 
+at blazing speed, typically 100 to 300 times faster than a fully 
 optimized CPU-based MC code.
 
 The algorithm details of this software can be found in the Reference
 section. A short summary of the main features includes:
-  1. 3D arbitrary media
-  2. boundary reflection support
-  3. time-resolved photon migration
-  4. optimized random number generators
-  5. build-in fluence normalization
-  6. fine-tuned performance for improved computational efficiency
+*. 3D arbitrary media
+*. boundary reflection support
+*. time-resolved photon migration
+*. optimized random number generators
+*. build-in fluence normalization
+*. fine-tuned performance for high computational efficiency
 
-The softwrae can be used on Windows, Linux and Mac OS. Two variants 
-were provided, one for nVidia(TM) graphics hardware written in CUDA, 
-and one for ATI(TM) written in Brook+.
+The software can be used on Windows, Linux and Mac OS. Two variants 
+will be provided, one for nVidia(TM) graphics hardware written in CUDA, 
+and one for ATI(TM) written in Brook+ (the ATI version is currently
+work-in-progress).
 
 
 
 II. Requirement and Installation
 
 For MCX-CUDA, the requirement for using this software include
-  1. a CUDA capable nVidia graphics card
-  2. pre-installed CUDA driver [2] and nVidia graphics driver
+*. a CUDA capable nVidia graphics card
+*. pre-installed CUDA driver [2] and nVidia graphics driver
 
 If your hardware does not support CUDA, the installation of CUDA toolkit 
 will not proceed. A list of CUDA capable cards can be found at [2].
 Generally speaking, GeForce 8XXX series or newer are required.
 For simulations with large domain, sufficient video memory is
-also required to run MCX. The minimumly required graphics memory is 
-about Nx*Ny*Nz*(4+1)/1024/1024 MB where Nx/Ny/Nz is the dimension of 
-the problem domain, 4 for a floating-point number to save the output
-fluence, 1 for input media index. If your simulation envolves multiple
-time-gates, you need to specify a maximum time-gate number (Ng) for one
-single run (if your total time-gates is greater than Ng, it will be 
-splitted into multiple groups), and the total required memory need 
-to be multiplied Ng.
+also required to perform the simulation. The minimally required 
+graphics memory is roughly Nx*Ny*Nz*(4+1)/1024/1024 MB where 
+Nx/Ny/Nz is the dimension of the problem domain, 4 for a floating-point 
+number to save the output fluence, 1 for input media index. If your 
+simulation involves multiple time-gates, you need to specify a maximum 
+time-gate number (Ng) for one single run (if your total time-gates 
+is greater than Ng, it will be split into multiple groups), and the 
+total required memory need to be multiplied by Ng.
 
-This software dose not use double-precision computation in the GPU, 
-therefore, a hardware supporting double-precision is not required.
+Single-precision computation appears to be sufficient for most research
+needs and is well supported by the stock graphics hardware. So, MCX
+by default does not require double-precision support in your hardware.
 
 To install the software, you simply need to extract the package and
 run the executable under the <mcextreme root>/bin directory. For Linux
 and Mac OS users, you might need to add the following settings to your
-shell initialization file. For csh/tcsh, add the following line to 
+shell initialization file. For csh/tcsh, add the following lines to 
 your ~/.cshrc file
-  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib"
+  if ("`uname -p`" =~ "*_64" ) then
+	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+  else
+	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib:$LD_LIBRARY_PATH"
+  endif
+  setenv PATH "/usr/local/cuda/bin:$PATH"
 and for bash/sh users, add 
-  export LD_LIBRARY_PATH=/usr/local/cuda/lib
+  if [[ "`uname -p`" =~ .*_64 ]]; then
+	  export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+  else
+	  export LD_LIBRARY_PATH="/usr/local/cuda/lib:$LD_LIBRARY_PATH"
+  fi
+  export PATH="/usr/local/cuda/bin:$PATH"
 to your ~/.bash_profile.
 
-Make sure the path "/usr/local/cuda/lib" exists on your system,
-if your CUDA library was not installed under this directory, 
+Make sure the path "/usr/local/cuda/lib*" exists on your system.
+If your CUDA library is not installed under this directory, 
 please replace it to the actual path where you can find libcudart.*
 
 
 III.Running Simulations
 
-To run a simulation, the minimumly required input is an input file,
+To run a simulation, the minimally required input is an input file,
 and a volume (a binary file with each byte for a media type). If you
 do not know the format to supply these input info to MCX, simply
 type the name of the executable without any parameters, it will
 print out a list of supported parameters, such as the following:
 
-usage: ./mcextreme <param1> <param2> ...
-where possible parameters include (the first item in [] is the default value)
-     -i            interactive mode
-     -f config     read config from a file
-     -t [1024|int] total thread number
-     -m n_move     total move (integration intervals) per thread
-     -r [1|int]    number of re-spins (repeations)
-     -a [1|0]      1 for C array, 0 for Matlab array
-     -g [1|int]    number of time gates per run
-     -b [1|0]      1 to reflect the photons at the boundary, 0 to exit
-     -e [0.|float] minimum energy level to propagate a photon
-     -U [1|0]      1 normailze the fluence to unitary, 0 save raw fluence
-     -d [1|0]      1 to save photon info at detectors, 0 not to save
-     -S [1|0]      1 to save the fluence field, 0 do not save
-     -s sessionid  a string to identify this specific simulation (and output files)
-     -p [16|int]   number of threads to print (debug)
-     -h            print this message
-example:
-       ./mcextreme -t 1024 -m 100000 -f input.inp -s test -r 2 -a 0 -g 10 -U
+ usage: ./mcx <param1> <param2> ...
+ where possible parameters include (the first item in [] is the default value)
+ -i            (--interactive) interactive mode
+ -f config     (--input)       read config from a file
+ -t [1024|int] (--thread)      total thread number
+ -T [128|int]  (--blocksize)   thread number per block
+ -m [0|int]    (--move)        total photon moves
+ -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)
+ -r [1|int]    (--repeat)      number of re-spins (repetitions)
+ -a [1|0]      (--array)       1 for C array, 0 for Matlab array
+ -g [1|int]    (--gategroup)   number of time gates per run
+ -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit
+ -B [0|1]      (--reflect3)    1 to consider maximum 3 reflections, 0 consider only 2
+ -e [0.|float] (--minenergy)   minimum energy level to propagate a photon
+ -R [0.|float] (--skipradius)  minimum distance to source to start accumulation
+ -U [1|0]      (--normalize)   1 to normalize the fluence to unitary, 0 to save raw fluence
+ -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not to save
+ -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save
+ -s sessionid  (--session)     a string to identify this specific simulation (and output files)
+ -p [0|int]    (--printlen)    number of threads to print (debug)
+ -h            (--help)        print this message
+ -l            (--log)         print messages to a log file instead
+ -L            (--listgpu)     print GPU information only
+ -I            (--printgpu)    print GPU information and run program
+ example:
+       ./mcx -t 1024 -T 256 -m 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0
+
 
 Multiple input file formats are supported by MCX. If one had used tMCimg,
 another 3D MC simulation code for CPU, he can use the same input file 
@@ -117,7 +136,7 @@ directly for MCX. A typical tMCimg input file looks like
 29012392             # RNG seed, negative to generate
 30.0 30.0 1.0        # source position (mm)
 0 0 1                # initial directional vector
-0.e+00 1.e-09 1.e-10  # time-gates(s): start, end, step
+0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' format)
 1 60 1 60            # x: voxel size, dim, start/end indices
 1 60 1 60            # y: voxel size, dim, start/end indices 
@@ -142,7 +161,7 @@ The time-gate settings are specified by three numbers,
 the start, end and step (in seconds). In the above case,
 the simulation specify a window of [0 1] ns, with 0.1 ns
 resolution. That means the total time gates is 10. Based 
-on the memory requirement in Section II, if one want to
+on the memory requirement in Section II, if one wants to
 simulate all 10 time gates in a single call, you have to 
 make sure the video memory is sufficient, in this case,
 the needed memory is 60*60*60*10*5=10M, which is quite small.
@@ -160,17 +179,17 @@ print on-screen.
 
 4.1 Output files
 
-A *.mc2 file is a binary file to save the fluence distributions
+An mc2 file is a binary file to save the fluence distributions
 within the problem domain. By default, this fluence is a normalized
 solution (rather than the raw probability), therefore, one can
-compare this directly to the analytical solutions (Green's 
-functions). The storing order in the mc2 files are the same as
+compare this directly to the analytical solutions (i.e. Green's 
+function). The storing order in the mc2 files are the same as
 the input: if the input is row-major, the output is row-major,
 and so on. The dimension of the file is [Nx Ny Nz Ng] where Ng
 is the total number of time gates.
 
 One can load a mc2 output file into Matlab or Octave using the
-loadmc2 function in <mcx root>/utils. If one want to get a 
+loadmc2 function in <mcx root>/utils. If one wants to get a 
 continuous-wave solution, he should run simulation with sufficiently
 long time window, and sum the fluence along the time dimension, 
 for example
@@ -178,14 +197,14 @@ for example
    cw_mcx=sum(mcx,4);
 
 Note that for time-resolved simulations, the corresponding solution
-in the results indeed approximates the fluence at the center point
+in the results approximates the fluence at the center point
 of each time window. For example, if the simulation time window setting
 is [t0,t0+dt,t0+2dt,t0+3dt...,t1], the time points for the 
 snapshots stored in the solution file is located at 
 [t0+dt/2, t0+3*dt/2, t0+5*dt/2, ... ,t1-dt/2]
 
 
-4.3 On-screen messages
+4.2 On-screen messages
 
 The timing information is printed on the screen (stdout). The clock
 starts (T0) right before copying the initialization data from CPU to GPU.
@@ -209,7 +228,7 @@ information, something like:
    simulated 9996602 photons with 1024 threads and 795590 moves per threads (repeat x1)
    exit energy:  8.34534150e+06 + absorbed energy:  1.65226412e+06 = total:   9.99760600e+06
 
-This output reflect the final states for each simulation thread (for each
+This output reflects the final states for each simulation thread (for each
 thread, there is only one active photon). The fields can be interpreted as follow
 
 0: thread id
@@ -217,12 +236,14 @@ thread, there is only one active photon). The fields can be interpreted as follo
 C9586: completed photons for this thread
 J   15: number of jumps (scattering events)
 W 0.943725: current photon packet weight
-(P25.869 30.965  1.877): current photon pisition
+(P25.869 30.965  1.877): current photon position
 T 3.864e-11: accumulative propagation time
 L 1.265: remaining scattering length for the current jump
 3035790080: the random number state
 
-The above thread info is for debugging purposes.
+The above thread info is for debugging purposes. The total 
+number of threads to be printed can be specified using the
+"-p" option. 
 
 
 
@@ -232,7 +253,10 @@ V. Reference
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
 Optical Express, (in press).
 
+If you used MCX in your research, the authors of this software would like
+you to cite the above paper in your related publications.
 
+Links: 
 
 [1] http://www.nvidia.com/object/cuda_get.html
 [2] http://www.nvidia.com/object/cuda_learn_products.html
