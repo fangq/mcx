@@ -50,4 +50,4 @@ debugmt debuglog:
 	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
 	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
 clean:
-	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(SOURCE)
+	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(BINARY)
