@@ -1,23 +1,24 @@
 object fmMCX: TfmMCX
-  Left = 412
+  Left = 448
   Height = 535
-  Top = 176
-  Width = 644
+  Top = 197
+  Width = 650
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsDialog
   Caption = 'MCX Studio'
-  ClientHeight = 508
-  ClientWidth = 644
+  ClientHeight = 510
+  ClientWidth = 650
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  ParentFont = False
   Position = poDesktopCenter
-  LCLVersion = '0.9.26'
+  LCLVersion = '0.9.27'
   object ToolBar1: TToolBar
+    Left = 0
     Height = 54
-    Width = 644
+    Top = 0
+    Width = 650
     ButtonHeight = 50
     ButtonWidth = 40
     Caption = 'ToolBar1'
@@ -35,7 +36,7 @@ object fmMCX: TfmMCX
     object ToolButton2: TToolButton
       Left = 41
       Top = 1
-      Action = mcxdoClose
+      Action = mcxdoSave
     end
     object ToolButton3: TToolButton
       Left = 82
@@ -55,56 +56,56 @@ object fmMCX: TfmMCX
       Style = tbsDivider
     end
     object ToolButton6: TToolButton
-      Left = 224
+      Left = 273
       Top = 1
       Action = mcxdoDeleteItem
     end
     object tbtVerify: TToolButton
-      Left = 280
+      Left = 329
       Top = 1
       Action = mcxdoVerify
     end
     object tbtRun: TToolButton
-      Left = 321
+      Left = 369
       Top = 1
       Action = mcxdoRun
     end
     object tbtStop: TToolButton
-      Left = 361
+      Left = 409
       Top = 1
       Action = mcxdoStop
     end
     object tbtRunAll: TToolButton
-      Left = 401
+      Left = 449
       Top = 1
       Action = mcxdoRunAll
     end
     object ToolButton11: TToolButton
-      Left = 460
+      Left = 506
       Top = 1
       Action = mcxdoHelp
     end
     object ToolButton12: TToolButton
-      Left = 269
+      Left = 318
       Top = 1
       Width = 11
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 449
+      Left = 495
       Top = 1
       Width = 11
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 500
+      Left = 546
       Top = 1
       Action = mcxdoAbout
     end
     object ToolButton14: TToolButton
-      Left = 542
+      Left = 589
       Top = 1
       Action = mcxdoWeb
     end
@@ -120,11 +121,17 @@ object fmMCX: TfmMCX
       Caption = 'ToolButton17'
       Style = tbsDivider
     end
+    object ToolButton7: TToolButton
+      Left = 224
+      Top = 1
+      Action = mcxdoDefault
+    end
   end
   object sbInfo: TStatusBar
-    Height = 23
-    Top = 485
-    Width = 644
+    Left = 0
+    Height = 21
+    Top = 489
+    Width = 650
     Panels = <    
       item
         Width = 50
@@ -138,7 +145,8 @@ object fmMCX: TfmMCX
     SimplePanel = False
   end
   object lvJobs: TListView
-    Height = 317
+    Left = 0
+    Height = 321
     Top = 54
     Width = 176
     Align = alLeft
@@ -179,33 +187,30 @@ object fmMCX: TfmMCX
       end    
       item
         Caption = 'DoNormalize'
-        Width = 76
+        Width = 1
       end>
-    Items.LazData = {
-      2400000001000000FFFFFFFFFFFFFFFFFFFFFFFF0000000008000000416C6C20
-      6A6F6273
-    }
     RowSelect = True
     ScrollBars = ssAutoBoth
     TabOrder = 0
-    OnChange = lvJobsChange
+    ViewStyle = vsReport
     OnSelectItem = lvJobsSelectItem
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 317
+    Height = 321
     Top = 54
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 317
+    Height = 321
     Top = 54
-    Width = 460
+    Width = 466
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 317
-    ClientWidth = 460
+    ClientHeight = 321
+    ClientWidth = 466
+    Enabled = False
     TabOrder = 5
     object Label1: TLabel
       Left = 7
@@ -279,16 +284,16 @@ object fmMCX: TfmMCX
     end
     object Label8: TLabel
       Left = 224
-      Height = 14
+      Height = 18
       Top = 192
-      Width = 27
+      Width = 26
       Alignment = taRightJustify
       Caption = 's  to'
       ParentColor = False
     end
     object Label9: TLabel
       Left = 346
-      Height = 14
+      Height = 18
       Top = 192
       Width = 8
       Alignment = taRightJustify
@@ -307,9 +312,11 @@ object fmMCX: TfmMCX
     end
     object edThread: TComboBox
       Left = 143
-      Height = 29
+      Height = 27
+      Hint = 'ThreadNum'
       Top = 67
       Width = 192
+      ItemHeight = 0
       ItemIndex = 3
       Items.Strings = (
         '128'
@@ -325,37 +332,45 @@ object fmMCX: TfmMCX
         '2048'
       )
       MaxLength = 65535
+      OnChange = edRespinChange
       TabOrder = 2
       Text = '1024'
     end
     object edMove: TEdit
       Left = 143
-      Height = 23
+      Height = 27
+      Hint = 'MoveNum'
       Top = 100
       Width = 80
+      OnChange = edRespinChange
       TabOrder = 3
       Text = '1000000'
     end
     object edSession: TEdit
       Left = 143
-      Height = 23
+      Height = 27
+      Hint = 'Session'
       Top = 9
       Width = 192
+      OnChange = edRespinChange
       TabOrder = 0
     end
     object edRespin: TSpinEdit
       Left = 143
-      Height = 23
+      Height = 27
+      Hint = 'RespinNum'
       Top = 129
       Width = 93
       MaxValue = 100000
       MinValue = 1
+      OnChange = edRespinChange
       TabOrder = 4
       Value = 1
     end
     object grArray: TRadioGroup
       Left = 143
       Height = 40
+      Hint = 'ArrayOrder'
       Top = 146
       Width = 208
       AutoFill = True
@@ -375,108 +390,97 @@ object fmMCX: TfmMCX
         'Matlab array'
         'C array'
       )
+      OnClick = edRespinChange
       TabOrder = 5
     end
     object edT0: TEdit
       Left = 143
-      Height = 23
+      Height = 27
+      Hint = 'TStart'
       Top = 187
       Width = 80
+      OnChange = edRespinChange
       TabOrder = 6
       Text = '0'
     end
     object edT1: TEdit
       Left = 263
-      Height = 23
+      Height = 27
+      Hint = 'TEnd'
       Top = 187
       Width = 80
+      OnChange = edRespinChange
       TabOrder = 7
       Text = '1e-9'
     end
     object edGate: TSpinEdit
       Left = 144
-      Height = 23
+      Height = 27
+      Hint = 'GateNum'
       Top = 216
       Width = 93
       MaxValue = 100000
       MinValue = 1
+      OnChange = edRespinChange
       TabOrder = 8
       Value = 1
     end
     object ckReflect: TCheckBox
       Left = 10
-      Height = 23
+      Height = 22
+      Hint = 'DoReflect'
       Top = 254
-      Width = 101
+      Width = 100
       Caption = 'Do Reflection'
       Checked = True
+      OnChange = edRespinChange
       State = cbChecked
       TabOrder = 9
     end
     object ckSaveData: TCheckBox
       Left = 119
-      Height = 23
+      Height = 22
+      Hint = 'DoSave'
       Top = 254
-      Width = 102
+      Width = 97
       Caption = 'Save Fluence'
       Checked = True
+      OnChange = edRespinChange
       State = cbChecked
       TabOrder = 10
     end
     object ckNormalize: TCheckBox
-      Left = 231
-      Height = 23
+      Left = 232
+      Height = 22
+      Hint = 'DoNormalize'
       Top = 254
-      Width = 121
+      Width = 124
       Caption = 'Do normalization'
       Checked = True
+      OnChange = edRespinChange
       State = cbChecked
       TabOrder = 11
     end
     object edConfigFile: TFileNameEdit
       Left = 143
-      Height = 23
+      Height = 27
+      Hint = 'InputFile'
       Top = 38
       Width = 168
+      DialogOptions = []
+      FilterIndex = 0
+      HideDirectories = False
       ButtonWidth = 23
-      ParentColor = False
+      NumGlyphs = 0
       TabOrder = 1
-      OnChange = edConfigFileChange
-    end
-    object btRun: TBitBtn
-      Left = 40
-      Height = 30
-      Top = 278
-      Width = 75
-      Caption = 'Run'
-      Enabled = False
-      NumGlyphs = 0
-      TabOrder = 12
-    end
-    object btQuit: TBitBtn
-      Left = 272
-      Height = 30
-      Top = 278
-      Width = 75
-      Caption = 'Quit'
-      NumGlyphs = 0
-      TabOrder = 14
-    end
-    object btStop: TBitBtn
-      Left = 160
-      Height = 30
-      Top = 278
-      Width = 75
-      Caption = 'Stop'
-      Enabled = False
-      NumGlyphs = 0
-      TabOrder = 13
+      OnChange = edRespinChange
     end
   end
   object mmOutput: TMemo
+    Left = 0
     Height = 106
-    Top = 379
-    Width = 644
+    Top = 383
+    Width = 650
     Align = alBottom
     Constraints.MinHeight = 100
     Lines.Strings = (
@@ -487,19 +491,20 @@ object fmMCX: TfmMCX
   end
   object Splitter2: TSplitter
     Cursor = crVSplit
+    Left = 0
     Height = 8
-    Top = 371
-    Width = 644
+    Top = 375
+    Width = 650
     Align = alBottom
     ResizeAnchor = akBottom
   end
   object IniPropStorage1: TIniPropStorage
     StoredValues = <>
-    left = 560
+    left = 576
     top = 64
   end
   object MainMenu1: TMainMenu
-    left = 528
+    left = 544
     top = 64
     object MenuItem1: TMenuItem
       Caption = 'File'
@@ -507,7 +512,7 @@ object fmMCX: TfmMCX
         Action = mcxdoOpen
       end
       object MenuItem6: TMenuItem
-        Action = mcxdoClose
+        Action = mcxdoSave
       end
       object MenuItem7: TMenuItem
         Caption = '-'
@@ -563,10 +568,10 @@ object fmMCX: TfmMCX
   object ImageList1: TImageList
     Height = 24
     Width = 24
-    left = 592
-    top = 64
+    left = 608
+    top = 72
     Bitmap = {
-      4C690D0000001800000018000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      4C690E0000001800000018000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
@@ -1502,100 +1507,180 @@ object fmMCX: TfmMCX
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF005AB5FFFF5AB5FFFF4AAD
+      FFFF39A5FFFF31A5FFFF31A5FFFF299CFFFF299CFFFF299CFFFF31A5FFFF219C
+      FFFF1094FFFF1894FFFF1894FFFF0084EFFF0084EFFF0084EFFF52ADFFFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF005AB5FFFF84C6FFFF8CCE
+      FFFF73C6FFFF63B5FFFF52ADFFFF52ADFFFF4AADFFFF4AADFFFF4AADFFFF4AAD
+      FFFF42ADFFFF39A5FFFF31A5FFFF299CFFFF1894FFFF0084F7FF0073D6FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF004AADFFFF8CCEFFFF8CCE
+      FFFF73C6FFFF63B5FFFF63B5FFFFADDEFFFFADDEFFFFADDEFFFFADDEFFFFADDE
+      FFFF42ADFFFFADDEFFFF31A5FFFF31A5FFFF219CFFFF088CFFFF0063BDFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0042ADFFFF7BC6FFFF73C6
+      FFFF63B5FFFF5AB5FFFFADDEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+      FFFFADDEFFFFFFFFFFFF219CFFFF219CFFFF1894FFFF008CFFFF006BC6FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0039A5FFFF6BBDFFFF63B5
+      FFFF5AB5FFFFADDEFFFFFFFFFFFFFFFFFFFF31A5FFFF299CFFFF219CFFFFFFFF
+      FFFFFFFFFFFFFFFFFFFF088CFFFF088CFFFF1094FFFF088CFFFF006BCEFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0031A5FFFF5AB5FFFF63B5
+      FFFF52ADFFFFADDEFFFFFFFFFFFF31A5FFFF39A5FFFF299CFFFF219CFFFFADDE
+      FFFFFFFFFFFFFFFFFFFF1094FFFF1894FFFF1094FFFF008CFFFF006BC6FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0031A5FFFF52ADFFFF4AAD
+      FFFF4AADFFFFFFFFFFFFADDEFFFF31A5FFFF31A5FFFF299CFFFFADDEFFFFFFFF
+      FFFFFFFFFFFFFFFFFFFF088CFFFF088CFFFF1094FFFF088CFFFF0063BDFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00299CFFFF4AADFFFF42AD
+      FFFF31A5FFFF31A5FFFF31A5FFFF31A5FFFF31A5FFFFADDEFFFFFFFFFFFFFFFF
+      FFFFFFFFFFFFFFFFFFFF088CFFFF0084F7FF088CFFFF008CFFFF006BC6FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0031A5FFFF39A5FFFF42AD
+      FFFF42ADFFFF42ADFFFF31A5FFFF31A5FFFF31A5FFFF219CFFFF1894FFFF1894
+      FFFF1894FFFF1094FFFF1094FFFF088CFFFF088CFFFF008CFFFF006BC6FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF001894FFFF42ADFFFF39A5
+      FFFF42ADFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFADDEFFFF1894FFFF1094
+      FFFF1094FFFF088CFFFF31A5FFFF088CFFFF1094FFFF0084F7FF0063BDFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF001894FFFF39A5FFFF39A5
+      FFFF39A5FFFFFFFFFFFFFFFFFFFFFFFFFFFFADDEFFFF219CFFFF219CFFFF1894
+      FFFFADDEFFFFFFFFFFFF008CFFFF0084F7FF088CFFFF0084F7FF006BC6FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF001894FFFF299CFFFF39A5
+      FFFF39A5FFFFFFFFFFFFFFFFFFFFADDEFFFF31A5FFFF219CFFFF1894FFFF1894
+      FFFFFFFFFFFFADDEFFFF008CFFFF008CFFFF008CFFFF0084EFFF0063BDFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000084EFFF219CFFFF31A5
+      FFFF31A5FFFFFFFFFFFFFFFFFFFFFFFFFFFFADDEFFFF219CFFFF1894FFFFFFFF
+      FFFFFFFFFFFFADDEFFFF008CFFFF0084F7FF008CFFFF007BE7FF0063BDFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000084EFFF1094FFFF219C
+      FFFF31A5FFFFFFFFFFFFADDEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+      FFFFADDEFFFF088CFFFF088CFFFF008CFFFF0084F7FF007BE7FF005AADFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000084EFFF088CFFFF1094
+      FFFF299CFFFFADDEFFFF31A5FFFFADDEFFFFADDEFFFFADDEFFFFADDEFFFFADDE
+      FFFF088CFFFF088CFFFF008CFFFF0084EFFF0084F7FF007BDEFF005AADFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00007BDEFF008CFFFF1094
+      FFFF1894FFFF1894FFFF1894FFFF1894FFFF1894FFFF088CFFFF1094FFFF1094
+      FFFF088CFFFF008CFFFF008CFFFF0084F7FF007BE7FF007BDEFF005AADFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00007BE7FF007BE7FF0084
+      EFFF0084F7FF0084F7FF0084F7FF0084F7FF0084F7FF0084F7FF0084EFFF0084
+      F7FF0084EFFF0084EFFF007BE7FF007BDEFF0073D6FF006BC6FF0063BDFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0052ADFFFF006BCEFF005A
+      ADFF0063BDFF0063BDFF0063BDFF0063BDFF0063BDFF0063BDFF0063B5FF0063
+      B5FF0063BDFF0063B5FF0063BDFF0063B5FF005AADFF0063B5FF52ADFFFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00
     }
   end
-  object ActionList1: TActionList
-    left = 529
-    top = 100
+  object acMCX: TActionList
+    left = 544
+    top = 136
     object mcxdoOpen: TAction
       Category = 'Files'
       Caption = 'Open'
-      DisableIfNoHandler = True
       ImageIndex = 0
     end
-    object mcxdoClose: TAction
+    object mcxdoSave: TAction
       Category = 'Files'
-      Caption = 'Close'
-      DisableIfNoHandler = True
+      Caption = 'Save'
       ImageIndex = 1
     end
     object mcxdoExit: TAction
       Category = 'Files'
       Caption = 'Exit'
-      DisableIfNoHandler = True
       ImageIndex = 2
       OnExecute = mcxdoExitExecute
     end
     object mcxdoQuery: TAction
-      Category = 'Info'
+      Category = 'Work'
       Caption = 'GPU'
-      DisableIfNoHandler = True
+      Enabled = False
       ImageIndex = 12
     end
     object mcxdoAddItem: TAction
       Category = 'Jobs'
-      Caption = 'Add'
-      DisableIfNoHandler = True
+      Caption = 'New'
       ImageIndex = 3
       OnExecute = mcxdoAddItemExecute
     end
     object mcxdoDeleteItem: TAction
       Category = 'Jobs'
       Caption = 'Delete'
-      DisableIfNoHandler = True
       ImageIndex = 4
       OnExecute = mcxdoDeleteItemExecute
     end
     object mcxdoVerify: TAction
       Category = 'Preproc'
       Caption = 'Verify'
-      DisableIfNoHandler = True
       ImageIndex = 5
       OnExecute = mcxdoVerifyExecute
     end
     object mcxdoRun: TAction
       Category = 'Work'
       Caption = 'Run'
-      DisableIfNoHandler = True
+      Enabled = False
       ImageIndex = 6
       OnExecute = mcxdoRunExecute
     end
     object mcxdoStop: TAction
       Category = 'Work'
       Caption = 'Stop'
-      DisableIfNoHandler = True
+      Enabled = False
       ImageIndex = 7
       OnExecute = mcxdoStopExecute
     end
     object mcxdoRunAll: TAction
       Category = 'Work'
       Caption = 'Run All'
-      DisableIfNoHandler = True
+      Enabled = False
       ImageIndex = 8
     end
     object mcxdoHelp: TAction
       Category = 'Info'
       Caption = 'Help'
-      DisableIfNoHandler = True
       ImageIndex = 11
     end
     object mcxdoAbout: TAction
       Caption = 'About'
-      DisableIfNoHandler = True
       ImageIndex = 9
       OnExecute = mcxdoAboutExecute
     end
     object mcxdoWeb: TAction
       Category = 'Info'
       Caption = 'Web'
-      DisableIfNoHandler = True
       ImageIndex = 10
+    end
+    object mcxdoDefault: TAction
+      Category = 'Jobs'
+      Caption = 'Default'
+      ImageIndex = 13
+      OnExecute = mcxdoDefaultExecute
     end
   end
   object pMCX: TProcess
+    Active = False
+    Options = []
     Priority = ppNormal
-    left = 560
-    top = 100
+    StartupOptions = []
+    ShowWindow = swoNone
+    WindowColumns = 0
+    WindowHeight = 0
+    WindowLeft = 0
+    WindowRows = 0
+    WindowTop = 0
+    WindowWidth = 0
+    FillAttribute = 0
+    left = 584
+    top = 120
   end
 end

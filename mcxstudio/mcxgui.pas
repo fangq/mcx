@@ -7,31 +7,31 @@ interface
 uses
   Classes, SysUtils, process, FileUtil, LResources, Forms, Controls, Graphics,
   Dialogs, StdCtrls, IniPropStorage, Menus, ComCtrls, ExtCtrls, Spin, EditBtn,
-  Buttons, ActnList, lcltype;
+  Buttons, ActnList, lcltype, mcxabout;
 
 type
 
   { TfmMCX }
 
   TfmMCX = class(TForm)
-    doClearLog: TAction;
-    doListGPU: TAction;
-    doWeb: TAction;
-    doAbout: TAction;
-    doHelp: TAction;
-    doRunAll: TAction;
-    doStop: TAction;
-    doRun: TAction;
-    doVerify: TAction;
-    doDeleteItem: TAction;
-    doAddItem: TAction;
-    doOpen: TAction;
-    doSave: TAction;
-    doInitEnv: TAction;
-    ActionList1: TActionList;
-    btRun: TBitBtn;
-    btQuit: TBitBtn;
-    btStop: TBitBtn;
+    mcxdoDefault: TAction;
+    mcxdoClearLog: TAction;
+    mcxdoSave: TAction;
+    mcxdoExit: TAction;
+    mcxdoListGPU: TAction;
+    mcxdoQuery: TAction;
+    mcxdoWeb: TAction;
+    mcxdoAbout: TAction;
+    mcxdoHelp: TAction;
+    mcxdoRunAll: TAction;
+    mcxdoStop: TAction;
+    mcxdoRun: TAction;
+    mcxdoVerify: TAction;
+    mcxdoDeleteItem: TAction;
+    mcxdoAddItem: TAction;
+    mcxdoOpen: TAction;
+    mcxdoInitEnv: TAction;
+    acMCX: TActionList;
     ckReflect: TCheckBox;
     ckSaveData: TCheckBox;
     ckNormalize: TCheckBox;
@@ -40,6 +40,7 @@ type
     edSession: TEdit;
     edT0: TEdit;
     edT1: TEdit;
+    pMCX: TProcess;
     edConfigFile: TFileNameEdit;
     ImageList1: TImageList;
     IniPropStorage1: TIniPropStorage;
@@ -74,7 +75,7 @@ type
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
     MenuItem9: TMenuItem;
-    plSettings: TPanel;
+    plSetting: TPanel;
     grArray: TRadioGroup;
     edRespin: TSpinEdit;
     edGate: TSpinEdit;
@@ -82,6 +83,10 @@ type
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     sbInfo: TStatusBar;
+    tbtRun: TToolButton;
+    tbtRunAll: TToolButton;
+    tbtStop: TToolButton;
+    tbtVerify: TToolButton;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
@@ -102,12 +107,17 @@ type
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
-    procedure doAddItemExecute(Sender: TObject);
-    procedure doDeleteItemExecute(Sender: TObject);
-    procedure doExitExecute(Sender: TObject);
-    procedure doOpenExecute(Sender: TObject);
-    procedure doVerifyExecute(Sender: TObject);
+    procedure mcxdoAboutExecute(Sender: TObject);
+    procedure mcxdoAddItemExecute(Sender: TObject);
+    procedure mcxdoDefaultExecute(Sender: TObject);
+    procedure mcxdoDeleteItemExecute(Sender: TObject);
+    procedure mcxdoExitExecute(Sender: TObject);
+    procedure mcxdoOpenExecute(Sender: TObject);
+    procedure mcxdoRunExecute(Sender: TObject);
+    procedure mcxdoStopExecute(Sender: TObject);
+    procedure mcxdoVerifyExecute(Sender: TObject);
     procedure edConfigFileChange(Sender: TObject);
+    procedure edRespinChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -123,6 +133,7 @@ type
     procedure AddLog(str:string);
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
+    procedure UpdateActions(actlst: TActionList; ontag,offtag: string);
   end;
 
 var
@@ -143,30 +154,116 @@ begin
        edSession.Text:=ExtractFileName(edConfigFile.FileName);
 end;
 
-procedure TfmMCX.doExitExecute(Sender: TObject);
+procedure TfmMCX.edRespinChange(Sender: TObject);
+var
+    ed: TEdit;
+    cb: TComboBox;
+    ck: TCheckBox;
+    se: TSpinEdit;
+    gr: TRadioGroup;
+    fed:TFileNameEdit;
+    idx: integer;
+    node: TListItem;
 begin
-  ShowMessage('here you go');
+    if(Sender=nil) or (lvJobs.Selected=nil) then exit;
+    try
+    node:=lvJobs.Selected;
+    if(Sender is TSpinEdit) then begin
+       se:=Sender as TSpinEdit;
+       AddLog(se.Hint);
+       idx:=MapList.IndexOf(se.Hint);
+       if(idx>=0) then
+                  node.SubItems.Strings[idx]:=IntToStr(se.Value);
+    end else if(Sender is TEdit) then begin
+       ed:=Sender as TEdit;
+       idx:=MapList.IndexOf(ed.Hint);
+       if(idx=0) then  node.Caption:=ed.Text;
+       if(idx>0) then
+                  node.SubItems.Strings[idx-1]:=ed.Text;
+    end else if(Sender is TRadioGroup) then begin
+       gr:=Sender as TRadioGroup;
+       idx:=MapList.IndexOf(gr.Hint);
+       if(idx>0) then
+                  node.SubItems.Strings[idx-1]:=IntToStr(gr.ItemIndex);
+    end else if(Sender is TComboBox) then begin
+       cb:=Sender as TComboBox;
+       idx:=MapList.IndexOf(cb.Hint);
+       if(idx>0) then
+                  node.SubItems.Strings[idx-1]:=cb.Text;
+    end else if(Sender is TCheckBox) then begin
+       ck:=Sender as TCheckBox;
+       idx:=MapList.IndexOf(ck.Hint);
+       if(idx>0) then
+                  node.SubItems.Strings[idx-1]:=IntToStr(Integer(ck.Checked));
+    end else if(Sender is TFileNameEdit) then begin
+       fed:=Sender as TFileNameEdit;
+       idx:=MapList.IndexOf(fed.Hint);
+       if(idx>0) then
+                  node.SubItems.Strings[idx-1]:=fed.FileName;
+    end;
+    UpdateActions(acMCX,'','Work');
+    except
+    end;
+end;
+
+procedure TfmMCX.mcxdoExitExecute(Sender: TObject);
+begin
   Close;
 end;
 
-procedure TfmMCX.doAddItemExecute(Sender: TObject);
+procedure TfmMCX.mcxdoAddItemExecute(Sender: TObject);
 var
    node: TListItem;
    i:integer;
+   sessionid: string;
 begin
-   if(Trim(edSession.Caption)='') then
-   begin
-        AddLog('You have to supply a unique session name');
-        edSession.SetFocus;
-        exit;
-   end;
+   sessionid:=InputBox('Set Session Name','Please supply a string that uniquely identifies this session','');
+   if(length(sessionid)=0) then exit;
    node:=lvJobs.Items.Add;
-   for i:=0 to MapList.Count-1 do node.SubItems.Add('');
-   node.Caption:=edSession.Caption;
+   for i:=0 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
+   node.Caption:=sessionid;
+   plSetting.Enabled:=true;
    lvJobs.Selected:=node;
+   edSession.Text:=sessionid;
+   mcxdoDefaultExecute(nil);
 end;
 
-procedure TfmMCX.doDeleteItemExecute(Sender: TObject);
+procedure TfmMCX.mcxdoDefaultExecute(Sender: TObject);
+begin
+      edSession.Text:='';
+      edConfigFile.FileName:='';
+      edThread.Text:='1796';
+      edMove.Text:='1000000';
+      edT0.Text:='1e-9';
+      edT1.Text:='1e-10';
+      edGate.Value:=1;
+      edRespin.Value:=1;
+      grArray.ItemIndex:=0;
+end;
+
+procedure TfmMCX.UpdateActions(actlst: TActionList; ontag,offtag: string);
+var
+   i: integer;
+begin
+   for i:=0 to actlst.ActionCount-1 do begin
+       if (Length(ontag)>0) and (actlst.Actions[i].Category=ontag) then begin
+             (actlst.Actions[i] as TAction).Enabled:=true;
+       end else if (Length(offtag)>0) and (actlst.Actions[i].Category=offtag) then
+             (actlst.Actions[i] as TAction).Enabled:=false;
+   end;
+end;
+
+
+procedure TfmMCX.mcxdoAboutExecute(Sender: TObject);
+var
+    fmAbout:TfmAbout;
+begin
+     fmAbout:=TfmAbout.Create(Application);
+     fmAbout.ShowModal;
+     fmAbout.Free;
+end;
+
+procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
 begin
   if not (lvJobs.Selected = nil) then
   begin
@@ -177,31 +274,49 @@ begin
   end;
 end;
 
-procedure TfmMCX.doOpenExecute(Sender: TObject);
+procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
 begin
 
 end;
 
-procedure TfmMCX.doVerifyExecute(Sender: TObject);
+procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
+begin
+    if(not pMCX.Running) then begin
+          pMCX.CommandLine:=CreateCmd;
+          pMCX.Options := [poUsePipes];
+          AddLog('-- Executing MCX --');
+          pMCX.Execute;
+
+          mcxdoStop.Enabled:=true;
+          mcxdoRun.Enabled:=false;
+    end;
+end;
+
+procedure TfmMCX.mcxdoStopExecute(Sender: TObject);
+begin
+     if(pMCX.Running) then pMCX.Terminate(0);
+     Sleep(1000);
+     if(not pMCX.Running) then begin
+          mcxdoStop.Enabled:=false;
+          mcxdoRun.Enabled:=true;
+          AddLog('-- Stopped MCX --');
+     end
+end;
+
+procedure TfmMCX.mcxdoVerifyExecute(Sender: TObject);
 begin
     VarifyInput;
 end;
 
 procedure TfmMCX.FormCreate(Sender: TObject);
+var
+   i: integer;
 begin
     MapList:=TStringList.Create();
-    MapList.Add('Session');
-    MapList.Add('InputFile');
-    MapList.Add('ThreadNum');
-    MapList.Add('MoveNum');
-    MapList.Add('RespinNum');
-    MapList.Add('ArrayOrder');
-    MapList.Add('TStart');
-    MapList.Add('TEnd');
-    MapList.Add('GateNum');
-    MapList.Add('DoReflect');
-    MapList.Add('DoSave');
-    MapList.Add('DoNormalize');
+    MapList.Clear;
+    for i:=0 to lvJobs.Columns.Count-1 do begin
+        MapList.Add(lvJobs.Columns.Items[i].Caption);
+    end;
     ProfileChanged:=false;
 end;
 
@@ -214,10 +329,11 @@ procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 begin
      if(not Selected) then begin
-          PanelToList2(Item);
-          ListToPanel2(lvJobs.Selected);
+          if not (lvJobs.Selected=nil) then
+              plSetting.Enabled:=true;
      end
 end;
+
 
 procedure TfmMCX.ToolButton18Click(Sender: TObject);
 begin
@@ -229,9 +345,6 @@ var
     nthread, nmove: integer;
     t0,t1: extended;
 begin
-
-    btRun.Enabled:=false;
-
     if(Length(edConfigFile.FileName)=0) then
         raise Exception.Create('Config file must be specified');
     if(not FileExists(edConfigFile.FileName)) then
@@ -253,7 +366,7 @@ begin
     if(t1<=t0) then
        raise Exception.Create('End time comes before the start time!');
 
-    btRun.Enabled:=true;
+    UpdateActions(acMCX,'Work','');
 end;
 
 function TfmMCX.CreateCmd:string;
@@ -292,50 +405,49 @@ var
     ck: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
-    iname: string;
     i,idx: integer;
 begin
     if(node=nil) then exit;
-    for i:=0 to plSettings.ControlCount-1 do
+    for i:=0 to plSetting.ControlCount-1 do
     begin
         try
-        if(plSettings.Controls[i] is TSpinEdit) then begin
-           se:=plSettings.Controls[i] as TSpinEdit;
+        if(plSetting.Controls[i] is TSpinEdit) then begin
+           se:=plSetting.Controls[i] as TSpinEdit;
            AddLog(se.Hint);
            idx:=MapList.IndexOf(se.Hint);
            if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(se.Value);
            continue;
         end;
-        if(plSettings.Controls[i] is TEdit) then begin
-           ed:=plSettings.Controls[i] as TEdit;
+        if(plSetting.Controls[i] is TEdit) then begin
+           ed:=plSetting.Controls[i] as TEdit;
            AddLog(ed.Hint);
            idx:=MapList.IndexOf(ed.Hint);
            if(idx>=0) then node.SubItems.Strings[idx]:=ed.Text;
            continue;
         end;
-        if(plSettings.Controls[i] is TRadioGroup) then begin
-           gr:=plSettings.Controls[i] as TRadioGroup;
+        if(plSetting.Controls[i] is TRadioGroup) then begin
+           gr:=plSetting.Controls[i] as TRadioGroup;
            AddLog(gr.Hint);
            idx:=MapList.IndexOf(gr.Hint);
            if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(gr.ItemIndex);
            continue;
         end;
-        if(plSettings.Controls[i] is TComboBox) then begin
-           cb:=plSettings.Controls[i] as TComboBox;
+        if(plSetting.Controls[i] is TComboBox) then begin
+           cb:=plSetting.Controls[i] as TComboBox;
            AddLog(cb.Hint);
            idx:=MapList.IndexOf(cb.Hint);
            if(idx>=0) then node.SubItems.Strings[idx]:=cb.Text;
            continue;
         end;
-        if(plSettings.Controls[i] is TCheckBox) then begin
-           ck:=plSettings.Controls[i] as TCheckBox;
+        if(plSetting.Controls[i] is TCheckBox) then begin
+           ck:=plSetting.Controls[i] as TCheckBox;
            AddLog(ck.Hint);
            idx:=MapList.IndexOf(ck.Hint);
            if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
            continue;
         end;
 
-        finally
+        except
         end;
     end;
 end;
@@ -347,48 +459,53 @@ var
     ck: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
-    iname: string;
     i,idx: integer;
 begin
     if(node=nil) then exit;
-    for i:=0 to plSettings.ControlCount-1 do
+    for i:=0 to plSetting.ControlCount-1 do
     begin
-        try
-
-        if(plSettings.Controls[i] is TSpinEdit) then begin
-           se:=plSettings.Controls[i] as TSpinEdit;
+        if(plSetting.Controls[i] is TSpinEdit) then begin
+           se:=plSetting.Controls[i] as TSpinEdit;
            idx:=MapList.IndexOf(se.Hint);
-           if(idx>=0) then se.Value:=StrToInt(node.SubItems.Strings[idx]);
+           if(idx>=0) then begin
+                try
+                      se.Value:=StrToInt(node.SubItems.Strings[idx]);
+                except
+                end;
+           end;
            continue;
         end;
-        if(plSettings.Controls[i] is TEdit) then begin
-           ed:=plSettings.Controls[i] as TEdit;
+        if(plSetting.Controls[i] is TEdit) then begin
+           ed:=plSetting.Controls[i] as TEdit;
            idx:=MapList.IndexOf(ed.Hint);
            if(idx>=0) then ed.Text:=node.SubItems.Strings[idx];
            continue;
         end;
-        if(plSettings.Controls[i] is TRadioGroup) then begin
-           gr:=plSettings.Controls[i] as TRadioGroup;
+        if(plSetting.Controls[i] is TRadioGroup) then begin
+           gr:=plSetting.Controls[i] as TRadioGroup;
            AddLog(gr.Hint);
            idx:=MapList.IndexOf(gr.Hint);
-           if(idx>=0) then gr.ItemIndex:=StrToInt(node.SubItems.Strings[idx]);
+           if(idx>=0) then begin
+                try
+                      gr.ItemIndex:=StrToInt(node.SubItems.Strings[idx]);
+                except
+                end;
+           end;
            continue;
         end;
-        if(plSettings.Controls[i] is TComboBox) then begin
-           cb:=plSettings.Controls[i] as TComboBox;
+        if(plSetting.Controls[i] is TComboBox) then begin
+           cb:=plSetting.Controls[i] as TComboBox;
            AddLog(cb.Hint);
            idx:=MapList.IndexOf(cb.Hint);
            if(idx>=0) then cb.Text:=node.SubItems.Strings[idx];
            continue;
         end;
-        if(plSettings.Controls[i] is TCheckBox) then begin
-           ck:=plSettings.Controls[i] as TCheckBox;
+        if(plSetting.Controls[i] is TCheckBox) then begin
+           ck:=plSetting.Controls[i] as TCheckBox;
            AddLog(ck.Hint);
            idx:=MapList.IndexOf(ck.Hint);
-           if(idx>=0) then ck.Checked:=(node.SubItems.Strings[i]='1');
+           if(idx>=0) then ck.Checked:=(node.SubItems.Strings[idx]='1');
            continue;
-        end;
-        finally
         end;
     end;
 end;
