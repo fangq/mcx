@@ -8,7 +8,7 @@
 *. save photon history info at detector sites [2009/04/30, FangQ]
 *. support NIFTI input & output [2009/04/30, FangQ]
 *. support ini based input file format (or perl script format) [2009/04/30, FangQ]
-*. use namespace and incorporate more RNG options [2009/04/30, FangQ]
+*. multiple-GPU support [2009/09/30, FangQ]
 
 
 == Long term projects ==
