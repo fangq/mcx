@@ -16,10 +16,16 @@ LINKOPT=-L/usr/local/cuda/lib -lcudart
 CPPOPT=-I/usr/local/cuda/include -g
 
 ARCH = $(shell uname -m)
-ifeq ($(findstring x86_64,$(ARCH)), x86_64)
-   ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
-      LINKOPT=-L/usr/local/cuda/lib64 -lcudart 
-   endif
+PLATFORM = $(shell uname -o)
+ifeq ($(findstring Msys,$(PLATFORM)), Msys)
+  LINKOPT=-L/c/CUDA/lib -lcudart
+  CPPOPT =-I/c/CUDA/include -g
+else
+  ifeq ($(findstring x86_64,$(ARCH)), x86_64)
+     ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
+        LINKOPT=-L/usr/local/cuda/lib64 -lcudart 
+     endif
+  endif
 endif
 
 all logfast:OPT=-use_fast_math

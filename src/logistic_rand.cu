@@ -23,8 +23,6 @@
 #define RAND_SEED_LEN      5        //32bit seed length (32*5=160bits)
 #define R_PI               0.318309886183791f
 #define INIT_LOGISTIC      100
-#define R_MAX_C_RAND       (1./RAND_MAX)
-#define LOG_MT_MAX         22.1807097779182f
 
 #ifndef DOUBLE_PREC_LOGISTIC
   typedef float RandType;
@@ -33,6 +31,8 @@
   #define NU2 (1.f-2.f*NU)
   #define MIN_INVERSE_LIMIT 1e-7f
   #define logistic_uniform(v)  (acosf(1.f-2.f*(v))*R_PI)
+  #define R_MAX_C_RAND       (1.f/RAND_MAX)
+  #define LOG_MT_MAX         22.1807097779182f
 #else
   typedef double RandType;
   #define FUN(x)               (4.0*(x)*(1.0-(x)))
@@ -40,6 +40,8 @@
   #define NU2 (1.0-2.0*NU)
   #define MIN_INVERSE_LIMIT 1e-12
   #define logistic_uniform(v)  (acos(1.0-2.0*(v))*R_PI)
+  #define R_MAX_C_RAND       (1./RAND_MAX)
+  #define LOG_MT_MAX         22.1807097779182
 #endif
 
 #define RING_FUN(x,y,z)      (NU2*(x)+NU*((y)+(z)))
