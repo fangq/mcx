@@ -2,6 +2,18 @@ Change Log
 
 == MCX 0.2 (aurora) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
+2009/10/20 set license to GPLv3, prepare for public release (v0.2 beta)
+2009/10/19 fixed double-precision warning for CUDA 2.3
+2009/10/06 more GUI developments
+2009/09/25 fixed memory leackage, supported verbose options
+2009/09/24 major code clean-up, added GPUDEBUG macro
+2009/07/31 tested on GTX295 with CUDA 2.3
+2009/07/15 used atomicFloatAdd for atomic memory write
+2009/07/13 fixed half-grid shift bug in the validation script
+2009/07/08 reflection for a maximum of 3 interfaces
+2009/06/26 tested non-atomic write racing condition
+2009/05/19 added mcx studio: a GUI for mcx
+2009/05/07 query GPU info
 2009/05/05 added options to print to a log file
 2009/04/30 code clean up and paper submission, tag 0.1.9 (Aurora alpha)
 2009/04/26 new and more robust boundary reflection code

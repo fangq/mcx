@@ -4,7 +4,7 @@
 ---------------------------------------------------------------------
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
-License: Unpublished version, use by author's permission only
+License: GNU General Public License version 3 (GPLv3)
 Version: 0.2 (Aurora)
 
 ---------------------------------------------------------------------

@@ -1,5 +1,12 @@
 unit mcxgui;
-
+{==============================================================================
+    Monte Carlo eXtreme (MCX) Studio
+-------------------------------------------------------------------------------
+    Author: Qianqian Fang
+    Email : fangq at nmr.mgh.harvard.edu
+    Web   : http://mcx.sourceforge.net
+    License: GNU General Public License version 3 (GPLv3)
+===============================================================================}
 {$mode objfpc}{$H+}
 
 interface
