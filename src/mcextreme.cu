@@ -1,24 +1,18 @@
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
 //  Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 //  
-//  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
-//  History: 
-//    2009/02/14 initial version written in BrookGPU
-//    2009/02/15 translated to CUDA
-//    2009/02/20 translated to Brook+
-//    2009/02/21 added MT random number generator initial version
-//    2009/02/24 MT rand now works fine, added FAST_MATH
-//    2009/02/25 added CACHE_MEDIA read
-//    2009/02/27 early support of boundary reflection
-//    2009/03/02 added logistic-map based random number generator
-//    2009/04/01 split the main function to units, add utils. and config file
-//    2009/04/03 time gating support
-//    2009/04/07 energy conservation for normalization of the solution
+//  Author   : Qianqian Fang
+//  Email    : <fangq at nmr.mgh.harvard.edu>
+//  Institute: Massachusetts General Hospital / Harvard Medical School
+//  Address  : Bldg. 149, 13th Street, Charlestown, MA 02148, USA
+//  Homepage : http://nmr.mgh.harvard.edu/~fangq/
 //
-// License: unpublished version, use by author's permission only
+//  MCX Web  : http://mcx.sourceforge.net
 //
-//////////////////////////////////////////////////////////////////////
+//  License  : GNU General Public License version 3 (GPLv3), see LICENSE.txt
+//
+////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include "tictoc.h"
