@@ -2,6 +2,10 @@
 %  matlab script to produce the validation plots (Fig. 4)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if(exist('loadmc2')~=2)
+	error('you need to first add path to ''<mcx>/utils'' in order to run this script');
+end
+
 c0=299792458000;
 srcpos=[30 30 1];
 detpos=[30 15 10];
