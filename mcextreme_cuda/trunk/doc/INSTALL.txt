@@ -1,0 +1,81 @@
+
+   #[1]Monte Carlo eXtreme: photon migration on graphics cards
+
+Installation Instructions for MCX
+
+System Requirements
+
+   In the long run, MCX will support most modern GPUs. However, at this point,
+   MCX only has a CUDA version that is supported by nVidia graphics cards. In
+   order to run MCX-CUDA, you have to make sure you have the right hardware and
+   software support, this includes:
+
+     * a CUDA enabled graphics card made by nVidia, a full list of supported
+       cards can be found [2][here]
+     * a computer running GNU/Linux or Mac OS (windows support will be added
+       later)
+     * pre-installed  CUDA driver and video driver, you can download from
+       [3][here]
+
+   If you plan to purchase a graphics card that can run mcx, you can consult
+   the following search links:
+     * [4][8800GT series] ~ $100
+     * [5][9800GT series] ~ $100
+     * [6][GTX 280 series] ~ $250
+     * [7][GTX 285 series] ~ $300 - $400
+     * [8][GTX 295 series] ~ $400 - $500
+
+   MCX  performs  nicely on a low-cost 8800GT card (for a given number of
+   threads, MCX's speed on 8800GT is a few percent faster than the higher
+   models; however, higher models allow to run more threads).
+
+Running MCX
+
+   Once you are convinced that your hardware and software support are both
+   in-place, you need to setup the system environment variable in order to let
+   MCX find the needed CUDA run-time library. For Linux and Mac OS users, you
+   might need to add the following settings to your shell initialization file.
+   Use "echo $SHELL" command to identify your shell type. For c-shell, i.e.
+   csh/tcsh, add the following lines to your ~/.cshrc file
+  if ("`uname -p`" =~ "*_64" ) then
+          setenv LD_LIBRARY_PATH "/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+  else
+          setenv LD_LIBRARY_PATH "/usr/local/cuda/lib:$LD_LIBRARY_PATH"
+  endif
+  setenv PATH "/usr/local/cuda/bin:$PATH"
+
+   and for "bash" or "sh" users, add
+  if [[ "`uname -p`" =~ .*_64 ]]; then
+          export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+  else
+          export LD_LIBRARY_PATH="/usr/local/cuda/lib:$LD_LIBRARY_PATH"
+  fi
+  export PATH="/usr/local/cuda/bin:$PATH"
+
+   to  your  ~/.bash_profile.  If the libcudart.so file is installed in a
+   non-standard folder, please replace the paths in the above scripts to your
+   installation path where libcudart.so resides.
+
+   Then,  you  can  simply start mcx by running the executable located at
+   <mcx>/bin/mcx.
+
+   To list all supported options, you just type mcx without any parameters, it
+   will print the help information.
+
+How to compile MCX from source code
+
+   If you want to compile a copy of executable from the source code, you should
+   first download the source code from [9]Download page, and then navigate into
+   the <mcx>/src folder, and type "make".
+
+References
+
+   1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
+   2. http://www.nvidia.com/object/cuda_learn_products.html
+   3. http://www.nvidia.com/object/cuda_get.html
+   4. http://www.google.com/products?aq=f&q=8800GT
+   5. http://www.google.com/products?aq=f&q=9800GT
+   6. http://www.google.com/products?aq=f&q=GTX280
+   7. http://www.google.com/products?aq=f&q=GTX285
+   8. http://www.google.com/products?aq=f&q=GTX295
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download

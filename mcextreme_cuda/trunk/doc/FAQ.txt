@@ -1,0 +1,37 @@
+
+   #[1]Monte Carlo eXtreme: photon migration on graphics cards
+
+Frequently Asked Questions about MCX
+
+          1. [2]I am getting a "kernel launch timed-out" error, what is that? 
+
+1. I am getting a "kernel launch timed-out" error, what is that?
+
+   Answer: This error happens only when you are using a non-dedicated GPU. A
+   non-dedicated GPU refers to a graphics card that is used both for display
+   and GPU computation. Because you connect your display to the card and the
+   nvidia graphics driver imposes a time-limit to the response time of a kernel
+   (a function running on a GPU). This time-limit is referred as the "driver
+   watch-dog time limit". For Linux, this limit is usually about 10 seconds;
+   for Windows, this limit is about 5 seconds. When a kernel is running on a
+   GPU for longer than this limit, the driver will kill this kernel for safety
+   purposes.
+
+   If  you have only one graphics card to use and you have to use it in a
+   non-dedicated way (i.e. connect to your monitor and for MCX simulations),
+   MCX  allows  you to slice the entire simulations into chunks, with the
+   run-time for each chunk smaller than the watch-dog time limit. This is done
+   by setting "-r" (repetition) parameters and setting "-m" for each run with a
+   smaller number of moves (total moves/repetition count).
+
+   If you have a high-end dual-GPU graphics card, such as GTX295 series, you
+   can simply run MCX without worrying about this limit. Because MCX will use
+   the second GPU to perform the simulation and it is usually not connected to
+   a monitor. Alternatively, if you can install a second graphics card (PCI
+   type) to your machine and connect your display to the second card, this will
+   make your CUDA-enabled nVidia card a dedicated device.
+
+References
+
+   1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
+   2. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_error_what_is_that
