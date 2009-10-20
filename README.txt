@@ -46,12 +46,13 @@ work-in-progress).
 
 II. Requirement and Installation
 
-For MCX-CUDA, the requirement for using this software include
+For MCX-CUDA, the requirements for using this software include
+
 *. a CUDA capable nVidia graphics card
-*. pre-installed CUDA driver [2] and nVidia graphics driver
+*. pre-installed CUDA driver [1] and nVidia graphics driver
 
 If your hardware does not support CUDA, the installation of CUDA toolkit 
-will not proceed. A list of CUDA capable cards can be found at [2].
+will fail. A list of CUDA capable cards can be found at [2].
 Generally speaking, GeForce 8XXX series or newer are required.
 For simulations with large domain, sufficient video memory is
 also required to perform the simulation. The minimally required 
@@ -63,15 +64,17 @@ time-gate number (Ng) for one single run (if your total time-gates
 is greater than Ng, it will be split into multiple groups), and the 
 total required memory need to be multiplied by Ng.
 
-Single-precision computation appears to be sufficient for most research
-needs and is well supported by the stock graphics hardware. So, MCX
-by default does not require double-precision support in your hardware.
+Single-precision computation appears to be sufficient for this 
+application and is well supported by the stock graphics hardware. 
+So, MCX by default does not require double-precision support in 
+your hardware.
 
-To install the software, you simply need to extract the package and
-run the executable under the <mcextreme root>/bin directory. For Linux
+To install the software, you simply download the binary corresponding
+to your computer architecture (32bit or 64bit), extract the package and
+run the executable under the <mcx root>/bin directory. For Linux
 and Mac OS users, you might need to add the following settings to your
-shell initialization file. For csh/tcsh, add the following lines to 
-your ~/.cshrc file
+shell initialization file. Use "echo $SHELL" command to identify your 
+shell type. For csh/tcsh, add the following lines to your ~/.cshrc file:
   if ("`uname -p`" =~ "*_64" ) then
 	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
   else
