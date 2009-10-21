@@ -23,6 +23,6 @@ cudaMemcpyDeviceToHost);}
 #define float2(a,b) make_float2(a,b)
 #define float3(a,b,c) make_float3(a,b,c)
 #define float4(a,b,c,d) make_float4(a,b,c,d)
-
+typedef unsigned int uint;
 
 #endif

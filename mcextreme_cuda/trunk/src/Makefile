@@ -10,16 +10,22 @@ SOURCE=mcextreme
 BINARY=mcx
 SOURCE_UTILS=mcx_utils
 OUTPUT_DIR=../bin
-CUOPT= -g  #-maxrregcount=40 
-OPT=-DUSE_MT_RAND
+CUCCOPT=-DUSE_MT_RAND  #-maxrregcount=40 
+INCLUDEDIRS=-I/usr/local/cuda/include
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
-CPPOPT=-I/usr/local/cuda/include -g
+CPPOPT=-g
+OBJSUFFIX=.o
+
+FILES=mcextreme mcx_utils tictoc
 
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -o)
 ifeq ($(findstring Msys,$(PLATFORM)), Msys)
-  LINKOPT=-L/c/CUDA/lib -lcudart
-  CPPOPT =-I/c/CUDA/include -g
+  CCC=nvcc
+  LINKOPT=-L/c/CUDA/lib  -L"C:\Program Files\Microsoft Visual Studio 8\PlatformSDK\Lib" -lcudart --link  -lwinmm
+  INCLUDEDIRS +=-I/c/CUDA/include
+  CPPOPT =-c --foreign
+  OBJSUFFIX=.obj
 else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
@@ -27,36 +33,39 @@ else
      endif
   endif
 endif
+  
+all logfast:CUCCOPT=-use_fast_math
+mt:         CUCCOPT=-DUSE_MT_RAND
+fast:       CUCCOPT=-DUSE_MT_RAND -use_fast_math
+log:        CUCCOPT=
+logcache:   CUCCOPT=-DCACHE_MEDIA -use_fast_math
+cache:      CUCCOPT=-DUSE_MT_RAND -DCACHE_MEDIA
+fastcache:  CUCCOPT=-DUSE_MT_RAND -DCACHE_MEDIA -use_fast_math
+debugmt:    CUCCOPT=-DUSE_MT_RAND
+debuglog:   CUCCOPT=
+racing:     CUCCOPT=-DTEST_RACING
+mtatomic:   CUCCOPT=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math
+mtatomic:   CUCCOPT+= -arch compute_11
+logatomic:  CUCCOPT=-DUSE_ATOMIC -use_fast_math -arch compute_11
+mtbox:      CUCCOPT+=-DCACHE_NON_ATOMIC
+logbox:	    CUCCOPT+=-DCACHE_NON_ATOMIC
+debugmt debuglog:CUCCOPT+=-deviceemu
 
-all logfast:OPT=-use_fast_math
-mt:         OPT=-DUSE_MT_RAND
-fast:       OPT=-DUSE_MT_RAND -use_fast_math
-log:        OPT=
-logcache:   OPT=-DCACHE_MEDIA -use_fast_math
-cache:      OPT=-DUSE_MT_RAND -DCACHE_MEDIA
-fastcache:  OPT=-DUSE_MT_RAND -DCACHE_MEDIA -use_fast_math
-debugmt:    OPT=-DUSE_MT_RAND
-debuglog:   OPT=
-racing:     OPT=-DTEST_RACING
-mtatomic:   OPT=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math
-mtatomic:   CUOPT+= -arch compute_11
-logatomic:  OPT=-DUSE_ATOMIC -use_fast_math
-logatomic:  CUOPT+= -arch compute_11
-mtbox:      OPT+= -DCACHE_NON_ATOMIC
-logbox:	    OPT+= -DCACHE_NON_ATOMIC
+OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
+all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox debugmt debuglog: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
-all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox: cudasdk
-	$(CUDACC) -c $(CUOPT) $(OPT) $(SOURCE).cu
-	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
-	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
+$(OUTPUT_DIR)/$(BINARY): $(OBJS)
+	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
 
-debugmt debuglog: cudasdk
-	$(CUDACC) -deviceemu -c $(CUOPT) $(OPT) $(SOURCE).cu
-	$(CCC) $(CPPOPT) -c $(OPT) $(SOURCE_UTILS).c
-	$(CCC) $(LINKOPT) $(SOURCE).o $(SOURCE_UTILS).o -o $(OUTPUT_DIR)/$(BINARY)
+%$(OBJSUFFIX): %.c
+	$(CCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+
+%$(OBJSUFFIX): %.cu
+	$(CUDACC) -c $(CUCCOPT) -o $@  $<
+
 clean:
-	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(BINARY)
+	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)
 cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
 	   echo "Please first install CUDA SDK or add path to nvcc to your PATH environment variable."; exit 1;\
