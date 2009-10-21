@@ -62,6 +62,9 @@ typedef struct MCXConfig{
         FILE *flog;         /*stream handle to print log information*/
 } Config;
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
 void mcx_savedata(float *dat,int len,Config *cfg);
 void mcx_error(int id,char *msg);
 void mcx_loadconfig(FILE *in, Config *cfg);
@@ -77,5 +80,8 @@ void mcx_normalize(float field[], float scale, int fieldlen);
 int  mcx_readarg(int argc, char *argv[], int id, void *output,char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
