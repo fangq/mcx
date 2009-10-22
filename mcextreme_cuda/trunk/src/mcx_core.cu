@@ -431,6 +431,7 @@ bool mcx_set_gpu(int printinfo){
     int deviceCount;
     cudaGetDeviceCount(&deviceCount);
     if (deviceCount == 0){
+        printf("No CUDA-capable GPU device found\n");
         return false;
     }
     // scan from the last device, hopefully it is more dedicated
@@ -511,8 +512,6 @@ void mcx_run_simulation(Config *cfg){
      }
      threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
      oddphotons=cfg->nphoton-threadphoton*cfg->nthread*cfg->respin;
-     printf("threadph=%d oddphotons=%d np=%d nthread=%d respin=%d\n",threadphoton,oddphotons,
-           cfg->nphoton,cfg->nthread,cfg->respin);
 
      float4 *Ppos;
      float4 *Pdir;
@@ -589,6 +588,8 @@ void mcx_run_simulation(Config *cfg){
 ################################################################################\n");
      tic=GetTimeMillis();
      fprintf(cfg->flog,"compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
+     fprintf(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",threadphoton,oddphotons,
+           cfg->nphoton,cfg->nthread,cfg->respin);
      fprintf(cfg->flog,"initializing streams ...\t");
      fieldlen=dimxyz*cfg->maxgate;
 
