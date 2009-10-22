@@ -3,7 +3,21 @@
 
 Installation Instructions for MCX
 
-System Requirements
+          1. [2]System Requirements
+
+          2. [3]Running MCX
+
+          3. [4]Compiling MCX from source code
+
+                3.1. [5]Download the source code
+
+                3.2. [6]Install the compilers
+
+                3.3. [7]Setup paths
+
+                3.4. [8]make your binary
+
+1. System Requirements
 
    In the long run, MCX will support most modern GPUs. However, at this point,
    MCX only has a CUDA version that is supported by nVidia graphics cards. In
@@ -11,25 +25,24 @@ System Requirements
    software support, this includes:
 
      * a CUDA enabled graphics card made by nVidia, a full list of supported
-       cards can be found [2][here]
-     * a computer running GNU/Linux or Mac OS (windows support will be added
-       later)
+       cards can be found [9][here]
+     * a computer running GNU/Linux, Windows or Mac OS
      * pre-installed  CUDA driver and video driver, you can download from
-       [3][here]
+       [10][here]
 
    If you plan to purchase a graphics card that can run mcx, you can consult
    the following search links:
-     * [4][8800GT series] ~ $100
-     * [5][9800GT series] ~ $100
-     * [6][GTX 280 series] ~ $250
-     * [7][GTX 285 series] ~ $300 - $400
-     * [8][GTX 295 series] ~ $400 - $500
+     * [11][8800GT series] ~ $100
+     * [12][9800GT series] ~ $100
+     * [13][GTX 280 series] ~ $250
+     * [14][GTX 285 series] ~ $300 - $400
+     * [15][GTX 295 series] ~ $400 - $500
 
    MCX  performs  nicely on a low-cost 8800GT card (for a given number of
    threads, MCX's speed on 8800GT is a few percent faster than the higher
    models; however, higher models allow to run more threads).
 
-Running MCX
+2. Running MCX
 
    Once you are convinced that your hardware and software support are both
    in-place, you need to setup the system environment variable in order to let
@@ -62,20 +75,95 @@ Running MCX
    To list all supported options, you just type mcx without any parameters, it
    will print the help information.
 
-How to compile MCX from source code
+3. Compiling MCX from source code
 
-   If you want to compile a copy of executable from the source code, you should
-   first download the source code from [9]Download page, and then navigate into
-   the <mcx>/src folder, and type "make".
+   If you want to compile an executable on your machine from the source code,
+   you should follow the steps described below:
+
+3.1. Download the source code
+
+   You need to first download the source code from the [16]Download page.
+
+3.2. Install the compilers
+
+   You need install the CUDA and C compilers on your system, this includes
+     * 1. CUDA compiler and run-time libraries: this will be installed when you
+       download and install the CUDA driver/sdk/tools from [17][this link]
+     * 2. GNU toolchain: you need to have g++ and make commands on your system.
+       Usually
+          + for Debian-based Linux users, you can get these basic compiling
+            tools by a single command:
+
+ sudo apt-get install build-essential
+
+     * for Redhat-based systems:
+
+ sudo yum groupinstall "Development Tools"
+
+     * for Windows users, you need to install [18][MinGW], a minimum Unix
+       system on Windows, the [19][automatic-installer] can be downloaded from
+       [20][here].
+     * for Mac OS users, the GNU compilers can be installed from the Xcode
+       tools from [21][this link]
+
+     3. For Windows, you also need to install [22][Microsoft Visual C++ 200x
+   Express Edition] (or the full version; the Express edition is free. MCX was
+   tested with VC++2005).
+
+  3.3. Setup paths
+
+   For  Linux/Mac  OS  users, you need to make sure you have followed the
+   instructions to setup the paths described in the "Running MCX" section.
+
+   For Windows, one need to add the path to nvcc (by default, C:\CUDA\bin),
+   path  to  cl.exe (by default, C:\Program Files\Microsoft Visual Studio
+   8\VC\bin) and path to g++/make (by default, C:\MinGW\bin) to your Path
+   environment  variable.  You can follow the screenshots as in [23][this
+   tutorial], and paste the following string at the beginning of the variable
+   value field.
+ C:\Program Files\Microsoft Visual Studio 8\VC\bin;C:\MinGW\bin;C:\CUDA\bin;
+
+   If you have installed VC2008, you need to replace "Microsoft Visual Studio
+   8" to "Microsoft Visual Studio 9".
+
+   If you have installed CUDA, MSVC or MinGW at a non-standard location, please
+   open  the  Makefile  under <mcx>/src to update all the library/include
+   directories to the actual path.
+
+  3.4. make your binary
+
+   For Linux/Mac OS, you need to open an terminal, "cd" to <mcx>/src, and type
+   "make". This will compile MCX with the default option, i.e. non-atomic
+   memory write, LL5 RNG and fast-math library. You can "cat Makefile" and see
+   other options. If everything is working ok, you should see a binary file
+   generated under <mcx>/bin.
+
+   For Windows, you need to double click on a shortcut named "MSYS", a terminal
+   will pop up. Then type "cd /path/to/your/mcx/src", then type "make". The
+   binary will be generated as <mcx>/bin/mcx.exe.
 
 References
 
    1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
-   2. http://www.nvidia.com/object/cuda_learn_products.html
-   3. http://www.nvidia.com/object/cuda_get.html
-   4. http://www.google.com/products?aq=f&q=8800GT
-   5. http://www.google.com/products?aq=f&q=9800GT
-   6. http://www.google.com/products?aq=f&q=GTX280
-   7. http://www.google.com/products?aq=f&q=GTX285
-   8. http://www.google.com/products?aq=f&q=GTX295
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download
+   2. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#System_Requirements
+   3. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#Running_MCX
+   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#Compiling_MCX_from_source_code
+   5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#Download_the_source_code
+   6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#Install_the_compilers
+   7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#Setup_paths
+   8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation#make_your_binary
+   9. http://www.nvidia.com/object/cuda_learn_products.html
+  10. http://www.nvidia.com/object/cuda_get.html
+  11. http://www.google.com/products?aq=f&q=8800GT
+  12. http://www.google.com/products?aq=f&q=9800GT
+  13. http://www.google.com/products?aq=f&q=GTX280
+  14. http://www.google.com/products?aq=f&q=GTX285
+  15. http://www.google.com/products?aq=f&q=GTX295
+  16. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download
+  17. http://www.nvidia.com/object/cuda_get.html
+  18. http://www.mingw.org/
+  19. http://sourceforge.net/projects/mingw/files/
+  20. http://sourceforge.net/projects/mingw/files/Automated%20MinGW%20Installer/
+  21. http://developer.apple.com/technology/xcode.html
+  22. http://www.microsoft.com/Express/VC/
+  23. http://technet.microsoft.com/en-us/library/aa997841%28EXCHG.65%29.aspx

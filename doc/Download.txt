@@ -39,8 +39,7 @@ MCX 0.2 (beta), codename Aurora
    by
  sudo yum install subversion
 
-   If your operation system is Windows, we recommend you to install [10][TortoiseSVN] (MCX v0.2
-   beta currently does not support Windows, however, we anticipate to add this support very soon.)
+   If your operation system is Windows, we recommend you to install [10][TortoiseSVN].
 
 2.1. Anonymous SVN Access
 
@@ -74,7 +73,8 @@ cuda/trunk/ mcx
    related publications by citing the following paper:
 
      * Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon Migration in 3D Turbid
-       Media Accelerated by Graphics Processing Units," Optical Express, (in press).
+       Media  Accelerated by Graphics Processing Units," Opt. Express, vol. 17, issue 22, pp.
+       20178-20190 (2009)
 
    You can also find more algorithm and implementation details about MCX in this paper.
 

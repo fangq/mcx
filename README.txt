@@ -254,7 +254,7 @@ V. Reference
 
 [1] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
-Optical Express, (in press).
+Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009).
 
 If you used MCX in your research, the authors of this software would like
 you to cite the above paper in your related publications.
