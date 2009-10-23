@@ -13,7 +13,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "br2cu.h"
-#include "mcx_utils.h"
+#include "mcx_core.h"
+#include "tictoc.h"
 
 #ifdef USE_MT_RAND
 #include "mt_rand_s.cu"     // use Mersenne Twister RNG (MT)
@@ -422,17 +423,17 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
 /*
   query GPU info and set active GPU
 */
-bool mcx_set_gpu(int printinfo){
+int mcx_set_gpu(int printinfo){
 
 #if __DEVICE_EMULATION__
-    return true;
+    return 1;
 #else
     int dev;
     int deviceCount;
     cudaGetDeviceCount(&deviceCount);
     if (deviceCount == 0){
         printf("No CUDA-capable GPU device found\n");
-        return false;
+        return 0;
     }
     // scan from the last device, hopefully it is more dedicated
     for (dev = deviceCount-1; dev>=0; dev--) {
@@ -458,10 +459,10 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
           exit(0);
     }
     if (dev == deviceCount)
-        return false;
+        return 0;
     else {
         cudaSetDevice(dev);
-        return true;
+        return 1;
     }
 #endif
 }

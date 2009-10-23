@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include "tictoc.h"
 #include "mcx_utils.h"
-#include "mcx_core.cu"
+#include "mcx_core.h"
 
 int main (int argc, char *argv[]) {
      Config mcxconfig;
