@@ -1,5 +1,5 @@
 #################################################################
-#  Makefile for Monte Carlo Extreme (MCX)
+#  Makefile for Monte Carlo eXtreme (MCX)
 #  Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 #  2009/04/02
 #################################################################
@@ -13,10 +13,10 @@ OUTPUT_DIR=../bin
 CUCCOPT=-DUSE_MT_RAND  #-maxrregcount=40 
 INCLUDEDIRS=-I/usr/local/cuda/include
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
-CPPOPT=-g
+CPPOPT=-g -Wall
 OBJSUFFIX=.o
 
-FILES=mcextreme mcx_utils tictoc
+FILES=mcx_core mcx_utils tictoc mcextreme
 
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -o)
@@ -38,14 +38,10 @@ all logfast:CUCCOPT=-use_fast_math
 mt:         CUCCOPT=-DUSE_MT_RAND
 fast:       CUCCOPT=-DUSE_MT_RAND -use_fast_math
 log:        CUCCOPT=
-logcache:   CUCCOPT=-DCACHE_MEDIA -use_fast_math
-cache:      CUCCOPT=-DUSE_MT_RAND -DCACHE_MEDIA
-fastcache:  CUCCOPT=-DUSE_MT_RAND -DCACHE_MEDIA -use_fast_math
 debugmt:    CUCCOPT=-DUSE_MT_RAND
 debuglog:   CUCCOPT=
 racing:     CUCCOPT=-DTEST_RACING
-mtatomic:   CUCCOPT=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math
-mtatomic:   CUCCOPT+= -arch compute_11
+mtatomic:   CUCCOPT=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11
 logatomic:  CUCCOPT=-DUSE_ATOMIC -use_fast_math -arch compute_11
 mtbox:      CUCCOPT+=-DCACHE_NON_ATOMIC
 logbox:	    CUCCOPT+=-DCACHE_NON_ATOMIC
@@ -53,7 +49,7 @@ debugmt debuglog:CUCCOPT+=-deviceemu
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all mt fast log logfast cache fastcache logcache racing mtatomic logatomic mtbox logbox debugmt debuglog: cudasdk $(OUTPUT_DIR)/$(BINARY)
+all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
