@@ -22,7 +22,7 @@ ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -o)
 ifeq ($(findstring Msys,$(PLATFORM)), Msys)
   CCC=nvcc
-  LINKOPT=-L/c/CUDA/lib  -L"C:\Program Files\Microsoft Visual Studio 8\PlatformSDK\Lib" -lcudart --link  -lwinmm
+  LINKOPT=-L/c/CUDA/lib -lcudart --link
   INCLUDEDIRS +=-I/c/CUDA/include
   CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE
   OBJSUFFIX=.obj
