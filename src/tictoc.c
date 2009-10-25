@@ -1,5 +1,30 @@
 #include "tictoc.h"
 
+#ifndef USE_OS_TIMER
+#include <cuda.h>
+#include <driver_types.h>
+#include <cuda_runtime_api.h>
+/* use CUDA timer */
+static cudaEvent_t timerStart, timerStop;
+
+unsigned int GetTimeMillis () {
+  float elapsedTime;
+  cudaEventRecord(timerStop,0);
+  cudaEventSynchronize(timerStop);
+  cudaEventElapsedTime(&elapsedTime, timerStart, timerStop);
+  return (unsigned int)(elapsedTime);
+}
+
+unsigned int StartTimer () {
+  cudaEventCreate(&timerStart);
+  cudaEventCreate(&timerStop);
+
+  cudaEventRecord(timerStart,0);
+  return 0;
+}
+
+#else
+
 static unsigned int timerRes;
 #ifndef _WIN32
 #include <unistd.h>
@@ -17,6 +42,9 @@ int GetTime (void) {
 }
 unsigned int GetTimeMillis () {
   return (unsigned int)(GetTime ()/1000);
+}
+unsigned int StartTimer () {
+   return GetTimeMillis();
 }
 
 #else
@@ -70,18 +98,21 @@ void SetupMillisTimer(void) {
 
   if (timeBeginPeriod(timeCaps.wPeriodMin) == TIMERR_NOCANDO) {
     fprintf(stderr,"WARNING: Cannot set timer precision.  Not sure what precision we're getting!\n");
-  }
-  else {
+  }else {
     timerRes = timeCaps.wPeriodMin;
     fprintf(stderr,"(* Set timer resolution to %d ms. *)\n",timeCaps.wPeriodMin);
   }
-
 }
-
+unsigned int StartTimer () {
+   SetupMillisTimer();
+   return 0;
+}
 void CleanupMillisTimer(void) {
   if (timeEndPeriod(timerRes) == TIMERR_NOCANDO) {
     fprintf(stderr,"WARNING: bad return value of call to timeEndPeriod.\n");
   }
 }
+
+#endif
 
 #endif
