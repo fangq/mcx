@@ -5,15 +5,15 @@
 #################################################################
 
 CUDACC=nvcc
-CCC=g++
-SOURCE=mcextreme
+CCC=gcc
 BINARY=mcx
-SOURCE_UTILS=mcx_utils
 OUTPUT_DIR=../bin
-CUCCOPT=-DUSE_MT_RAND  #-maxrregcount=40 
 INCLUDEDIRS=-I/usr/local/cuda/include
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
+
+CUCCOPT=
 CPPOPT=-g -Wall
+
 OBJSUFFIX=.o
 
 FILES=mcx_core mcx_utils tictoc mcextreme
@@ -24,7 +24,7 @@ ifeq ($(findstring Msys,$(PLATFORM)), Msys)
   CCC=nvcc
   LINKOPT=-L/c/CUDA/lib  -L"C:\Program Files\Microsoft Visual Studio 8\PlatformSDK\Lib" -lcudart --link  -lwinmm
   INCLUDEDIRS +=-I/c/CUDA/include
-  CPPOPT =-c --foreign
+  CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE
   OBJSUFFIX=.obj
 else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
@@ -34,15 +34,15 @@ else
   endif
 endif
   
-all logfast:CUCCOPT=-use_fast_math
-mt:         CUCCOPT=-DUSE_MT_RAND
-fast:       CUCCOPT=-DUSE_MT_RAND -use_fast_math
-log:        CUCCOPT=
-debugmt:    CUCCOPT=-DUSE_MT_RAND
-debuglog:   CUCCOPT=
-racing:     CUCCOPT=-DTEST_RACING
-mtatomic:   CUCCOPT=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11
-logatomic:  CUCCOPT=-DUSE_ATOMIC -use_fast_math -arch compute_11
+all logfast:CUCCOPT+=-use_fast_math
+mt:         CUCCOPT+=-DUSE_MT_RAND
+fast:       CUCCOPT+=-DUSE_MT_RAND -use_fast_math
+log:        CUCCOPT+=
+debugmt:    CUCCOPT+=-DUSE_MT_RAND
+debuglog:   CUCCOPT+=
+racing:     CUCCOPT+=-DTEST_RACING
+mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11
+logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch compute_11
 mtbox:      CUCCOPT+=-DCACHE_NON_ATOMIC
 logbox:	    CUCCOPT+=-DCACHE_NON_ATOMIC
 debugmt debuglog:CUCCOPT+=-deviceemu

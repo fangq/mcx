@@ -587,7 +587,7 @@ void mcx_run_simulation(Config *cfg){
 ################################################################################\n\
 #                  Monte-Carlo Extreme (MCX) -- CUDA                           #\n\
 ################################################################################\n");
-     tic=GetTimeMillis();
+     tic=StartTimer();
      fprintf(cfg->flog,"compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
      fprintf(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",threadphoton,oddphotons,
            cfg->nphoton,cfg->nthread,cfg->respin);

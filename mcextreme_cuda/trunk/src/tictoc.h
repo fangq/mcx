@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+unsigned int StartTimer ();
 unsigned int GetTimeMillis ();
 
 #ifdef	__cplusplus

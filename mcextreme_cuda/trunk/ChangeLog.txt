@@ -2,6 +2,7 @@ Change Log
 
 == MCX 0.2 (aurora) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
+2009/10/24 use cuda event timer, use VC compiler for Windows
 2009/10/21 paper published online, added windows support
 2009/10/20 set license to GPLv3, first public release (v0.2 beta)
 2009/10/19 fixed double-precision warning for CUDA 2.3
