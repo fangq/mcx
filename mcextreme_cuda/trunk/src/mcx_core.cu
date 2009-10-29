@@ -80,6 +80,10 @@ __constant__ float4 gproperty[MAX_PROP];
 // kernel parameters
 __constant__ KernelParams gparam;
 
+// tested with texture memory for media, only improved 1% speed
+// to keep code portable, use global memory for now
+// also need also change all media[idx1d] to tex1Dfetch() below
+//texture<uchar, 1, cudaReadModeElementType> texmedia;
 
 #ifdef USE_ATOMIC
 /*
@@ -538,6 +542,8 @@ void mcx_run_simulation(Config *cfg){
      mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)));
      float *gfield;
      mcx_cu_assess(cudaMalloc((void **) &gfield, sizeof(float)*(dimxyz)*cfg->maxgate));
+
+     //cudaBindTexture(0, texmedia, gmedia);
 
      float4 *gPpos;
      mcx_cu_assess(cudaMalloc((void **) &gPpos, sizeof(float4)*cfg->nthread));
