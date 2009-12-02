@@ -404,7 +404,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isnormalized),"char");
 		     	        break;
                      case 'R':
-                                i=mcx_readarg(argc,argv,i,&(cfg->sradius),"int");
+                                i=mcx_readarg(argc,argv,i,&(cfg->sradius),"float");
                                 break;
                      case 'l':
                                 issavelog=1;
