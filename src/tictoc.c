@@ -1,3 +1,19 @@
+/*******************************************************************************
+**
+**  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon migration
+**  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+**
+**  Reference (Fang2009):
+**        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
+**        Migration in 3D Turbid Media Accelerated by Graphics Processing 
+**        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
+**
+**  tictoc.c: timing functions
+**
+**  License: GNU General Public License v3, see LICENSE.txt for details
+**
+*******************************************************************************/
+
 #include "tictoc.h"
 
 #ifndef USE_OS_TIMER
@@ -80,17 +96,18 @@ int GetTime(void)
    return ((int) (((double) counter.QuadPart) * cycles_per_usec));
 }
 
-// Tim is evil...
 #pragma comment(lib,"winmm.lib")
 
 unsigned int GetTimeMillis(void) {
   return (unsigned int)timeGetTime();
 }
 
-//  By default in 2000/XP, the timeGetTime call is set to some resolution
-// between 10-15 ms query for the range of value periods and then set timer
-// to the lowest possible.  Note: MUST make call to corresponding
-// CleanupMillisTimer
+/*
+  By default in 2000/XP, the timeGetTime call is set to some resolution
+  between 10-15 ms query for the range of value periods and then set timer
+  to the lowest possible.  Note: MUST make call to corresponding
+  CleanupMillisTimer
+*/
 void SetupMillisTimer(void) {
 
   TIMECAPS timeCaps;

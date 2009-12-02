@@ -1,18 +1,18 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-//  Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
-//  
-//  Author   : Qianqian Fang
-//  Email    : <fangq at nmr.mgh.harvard.edu>
-//  Institute: Massachusetts General Hospital / Harvard Medical School
-//  Address  : Bldg. 149, 13th Street, Charlestown, MA 02148, USA
-//  Homepage : http://nmr.mgh.harvard.edu/~fangq/
-//
-//  MCX Web  : http://mcx.sourceforge.net
-//
-//  License  : GNU General Public License version 3 (GPLv3), see LICENSE.txt
-//
-////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+**
+**  Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
+**  
+**  Author     : Qianqian Fang
+**  Email      : <fangq at nmr.mgh.harvard.edu>
+**  Institution: Massachusetts General Hospital / Harvard Medical School
+**  Address    : Bldg. 149, 13th Street, Charlestown, MA 02148, USA
+**  Homepage   : http://nmr.mgh.harvard.edu/~fangq/
+**
+**  MCX Web    : http://mcx.sourceforge.net
+**
+**  License    : GNU General Public License version 3 (GPLv3), see LICENSE.txt
+**
+*******************************************************************************/
 
 #include <stdio.h>
 #include "tictoc.h"

@@ -4,11 +4,13 @@
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 //
 //  Reference (Fang2009):
-//       Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon 
-//       Migration in 3D Turbid Media Accelerated by Graphics Processing 
-//       Units," Optical Express, in press (2009)
+//        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
+//        Migration in 3D Turbid Media Accelerated by Graphics Processing 
+//        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
 //
-//  mcx_core.cu: GPU kernels and GPU-related CPU functions
+//  mcx_core.cu: GPU kernels and CUDA host code
+//
+//  License: GNU General Public License v3, see LICENSE.txt for details
 //
 ////////////////////////////////////////////////////////////////////////////////
 
