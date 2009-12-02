@@ -359,7 +359,6 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 	          nlen=float4(0.f,0.f,minaccumtime,nlen.w+1);
                   idx1d=idxorig;
 		  mediaid=mediaidorig;
-                  accumweight=0.f;
               }
 	  }else if(nlen.y>=nlen.z){
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,npos.w,(int)nlen.w,nlen.y,nlen.z));
@@ -376,10 +375,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                   // set sradius2 to only start depositing energy when dist^2>sradius2 
                   if(sradius2>EPS){
                       if((npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>sradius2){
-                          field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=accumweight+npos.w;
-                          accumweight=0.f;
+                          field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
                       }else{
-                          accumweight+=npos.w;
+                          accumweight+=npos.w*prop.x; // weight*absorption
                       }
                   }else{
                       field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
@@ -393,6 +391,13 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
              nlen.z+=minaccumtime; // fluence is a temporal-integration
 	  }
      }
+     // accumweight saves the total absorbed energy in the sphere r<sradius.
+     // in non-atomic mode, accumweight is more accurate than saving to the grid
+     // as it is not influenced by race conditions.
+     // now I borrow nlen.z to pass this value back
+
+     nlen.z=accumweight;
+
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energyabsorbed;
 
@@ -657,11 +662,13 @@ void mcx_run_simulation(Config *cfg){
                        fprintf(cfg->flog,"normizing raw data ...\t");
 
                        cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*2,cudaMemcpyDeviceToHost);
+		       cudaMemcpy(Plen,  gPlen,  sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
+                       eabsorp=0.f;
                        for(i=1;i<cfg->nthread;i++){
                            energy[0]+=energy[i<<1];
        	       	       	   energy[1]+=energy[(i<<1)+1];
+                           eabsorp+=Plen[i].z;  // the accumulative absorpted energy near the source
                        }
-                       eabsorp=0.f;
        	       	       for(i=0;i<dimxyz;i++){
                            absorp=0.f;
                            for(j=0;j<cfg->maxgate;j++)
