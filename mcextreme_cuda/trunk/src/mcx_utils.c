@@ -1,3 +1,19 @@
+/*******************************************************************************
+**
+**  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon migration
+**  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+**
+**  Reference (Fang2009):
+**        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
+**        Migration in 3D Turbid Media Accelerated by Graphics Processing 
+**        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
+**
+**  mcx_utils.c: configuration and command line option processing unit
+**
+**  License: GNU General Public License v3, see LICENSE.txt for details
+**
+*******************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
