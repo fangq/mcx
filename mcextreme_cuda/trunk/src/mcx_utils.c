@@ -344,6 +344,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		                mcx_usage(argv[0]);
 				exit(0);
 		     case 'i':
+				if(filename[0]){
+					mcx_error(-2,"you can not specify both interactive mode and config file");
+				}
 		     		isinteractive=1;
 				break;
 		     case 'f': 
@@ -359,6 +362,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 			indeed the photon moves per thread.
 		     */
 		     case 'n':
+				mcx_error(-2,"specifying photon number is not supported, please use -m");
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
 		     	        break;
 		     case 'm':
@@ -450,7 +454,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -T [128|int]  (--blocksize)   thread number per block\n\
  -m [0|int]    (--move)        total photon moves\n\
  -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)\n\
- -r [1|int]    (--repeat)      number of re-spins (repeations)\n\
+ -r [1|int]    (--repeat)      number of repeations\n\
  -a [1|0]      (--array)       1 for C array, 0 for Matlab array\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit\n\
