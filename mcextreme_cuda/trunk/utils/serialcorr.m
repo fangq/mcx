@@ -1,4 +1,21 @@
 function report=serialcorr(randomseq,maxshift)
+%  report=serialcorr(randomseq,maxshift)
+%
+%  serial correlation function in a random sequence at a range of separations
+%
+%    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
+%
+%    input:
+%        randomseq: a random sequence (1D array)
+%        maxshift:  the maximum separation to test with
+%
+%    output:
+%        report: the corr. coeff for the sequence between randomseq 
+%            and randomseq(i:end) where i<=maxshift
+%
+%    this file is part of Monte Carlo eXtreme (MCX)
+%    License: GPLv3, see http://mcx.sf.net for details
+%    see Boas2002, Heskell1996
 
 report=zeros(maxshift,2);
 for i=1:maxshift
