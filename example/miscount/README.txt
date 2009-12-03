@@ -17,8 +17,9 @@ The detailed report can be found in the paper Fang2009
 Section 3.2 and Fig. 4.
 
 To run this example, you need to compile the mcx binary 
-first, and then run the "runmiscount.sh > miscnt.log"
-command. This will test the missing event ratios for a 
+first with "make racing", and then run the 
+"runmiscount.sh > miscnt.log" command. This 
+will test the missing event ratios for a 
 range of scattering coefficients at different thread 
 numbers (note, the absorption coefficient will not have 
 influences to the race condition). If you redirect the 

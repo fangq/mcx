@@ -22,10 +22,10 @@ do
   for sc in $nscat
   do
        echo "<mcx_session thread='$th' scat='$sc'>"
-       echo "<cmd>$mcxbin -t $th -n 1000000 -g 10 -f benchmiscnt.inp -s speed -a 0 -b 0 -p 1</cmd>"
+       echo "<cmd>$mcxbin -t $th -T 128 -m 1000000 -g 10 -f benchmiscnt.inp -s speed -a 0 -b 0 -p 1 -U 0</cmd>"
        echo "<output>"
        cat miscnt.template | sed -e "s/%SCA%/$sc/g" > benchmiscnt.inp
-       $mcxbin -t $th -n 1000000 -g 10 -f benchmiscnt.inp -s miscnt -a 0 -b 0 -p 1 -U 0
+       $mcxbin -t $th -T 128 -m 1000000 -g 10 -f benchmiscnt.inp -s miscnt -a 0 -b 0 -p 1 -U 0
        echo "</output>"
        echo "</mcx_session>"
   done
