@@ -21,15 +21,16 @@ V.  Reference
 
 I.  Introduction
 
-Monte-Carlo eXtreme (MCX) is a simulation software for modeling photon
+Monte Carlo eXtreme (MCX) is a simulation software for modeling photon
 propagation in 3D turbid media. By taking advantage of the massively
 parallel threads and extremely low memory latency, this program is able
-to perform Monte Carlo (MC) simulations on a low-cost graphics card 
-at blazing speed, typically 100 to 300 times faster than a fully 
+to perform Monte Carlo (MC) simulations at a blazing speed on a 
+low-cost graphics card, typically 100 to 300 times faster than a fully 
 optimized CPU-based MC code.
 
-The algorithm details of this software can be found in the Reference
-section. A short summary of the main features includes:
+The algorithm details of this software can be found in the Reference [1]. 
+A short summary of the main features includes:
+
 *. 3D arbitrary media
 *. boundary reflection support
 *. time-resolved photon migration
@@ -64,30 +65,34 @@ time-gate number (Ng) for one single run (if your total time-gates
 is greater than Ng, it will be split into multiple groups), and the 
 total required memory need to be multiplied by Ng.
 
-Single-precision computation appears to be sufficient for this 
+The single-precision computation appears to be sufficient for this 
 application and is well supported by the stock graphics hardware. 
-So, MCX by default does not require double-precision support in 
-your hardware.
+So, MCX does not require double-precision support in your hardware.
 
-To install the software, you simply download the binary corresponding
-to your computer architecture (32bit or 64bit), extract the package and
+To install MCX, you simply download the binary corresponding to your 
+computer architecture (32 or 64bit) and platform, extract the package and
 run the executable under the <mcx root>/bin directory. For Linux
-and Mac OS users, you might need to add the following settings to your
-shell initialization file. Use "echo $SHELL" command to identify your 
-shell type. For csh/tcsh, add the following lines to your ~/.cshrc file:
+and Mac OS users, you need to add the following lines to your
+shell initialization scripts. First, use "echo $SHELL" command to 
+identify your shell type. For csh/tcsh, add the following lines 
+to your ~/.cshrc file:
+
   if ("`uname -p`" =~ "*_64" ) then
 	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
   else
 	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib:$LD_LIBRARY_PATH"
   endif
   setenv PATH "/usr/local/cuda/bin:$PATH"
+
 and for bash/sh users, add 
+
   if [[ "`uname -p`" =~ .*_64 ]]; then
 	  export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
   else
 	  export LD_LIBRARY_PATH="/usr/local/cuda/lib:$LD_LIBRARY_PATH"
   fi
   export PATH="/usr/local/cuda/bin:$PATH"
+
 to your ~/.bash_profile.
 
 Make sure the path "/usr/local/cuda/lib*" exists on your system.
@@ -98,10 +103,11 @@ please replace it to the actual path where you can find libcudart.*
 III.Running Simulations
 
 To run a simulation, the minimally required input is an input file,
-and a volume (a binary file with each byte for a media type). If you
-do not know the format to supply these input info to MCX, simply
-type the name of the executable without any parameters, it will
-print out a list of supported parameters, such as the following:
+and a volume (a binary file with each byte representing a medium 
+index). If you do not know the format to supply command line 
+options to MCX, simply type the name of the executable without 
+any parameters, it will print a list of supported parameters, 
+such as the following:
 
  usage: ./mcx <param1> <param2> ...
  where possible parameters include (the first item in [] is the default value)
@@ -111,7 +117,7 @@ print out a list of supported parameters, such as the following:
  -T [128|int]  (--blocksize)   thread number per block
  -m [0|int]    (--move)        total photon moves
  -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)
- -r [1|int]    (--repeat)      number of re-spins (repetitions)
+ -r [1|int]    (--repeat)      number of repetitions
  -a [1|0]      (--array)       1 for C array, 0 for Matlab array
  -g [1|int]    (--gategroup)   number of time gates per run
  -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit
@@ -131,11 +137,10 @@ print out a list of supported parameters, such as the following:
        ./mcx -t 1024 -T 256 -m 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0
 
 
-Multiple input file formats are supported by MCX. If one had used tMCimg,
-another 3D MC simulation code for CPU, he can use the same input file 
-directly for MCX. A typical tMCimg input file looks like
+Currently, MCX supports an extended input file format for tMCimg,
+A typical MCX input file looks like
 
-1000000              # total photon (not used)
+1000000              # total photon (not used), use -m to specify photon moves
 29012392             # RNG seed, negative to generate
 30.0 30.0 1.0        # source position (mm)
 0 0 1                # initial directional vector
@@ -157,8 +162,8 @@ For the volume file, semi60x60x60.bin in the above example,
 if you save the data using matlab/fortran, the byte order
 is column-major[3], i.e. data traversing column direction 
 first. You have to use "-a 0" in MCX's command line to 
-identify this order. If you save your data with fwrite in C, 
-the order is row-major, and you can use "-a 1" or omit.
+specify this order. If you save your data with fwrite() in C, 
+the order is row-major, and you should use "-a 1" or omit.
 
 The time-gate settings are specified by three numbers,
 the start, end and step (in seconds). In the above case,
@@ -175,18 +180,19 @@ simulation 10 times for all the time-gates. If you specify
 a time-gate number more than needed, for example, "-g 20",
 MCX will stop when the 10 needed time-gates are complete.
 
+
 IV. Interpret the Outputs
 
-MCX's outputs include two parts, the saved files and messages
-print on-screen.
+MCX's outputs include two parts, the fluence volume 
+file and messages printed on the screen.
 
 4.1 Output files
 
-An mc2 file is a binary file to save the fluence distributions
-within the problem domain. By default, this fluence is a normalized
-solution (rather than the raw probability), therefore, one can
+An mc2 file is a binary file to save the fluence distribution
+of the problem domain. By default, this fluence is a normalized
+solution (oppose to the raw probability), therefore, one can
 compare this directly to the analytical solutions (i.e. Green's 
-function). The storing order in the mc2 files are the same as
+function). The storing order in the mc2 files is the same as
 the input: if the input is row-major, the output is row-major,
 and so on. The dimension of the file is [Nx Ny Nz Ng] where Ng
 is the total number of time gates.
@@ -196,6 +202,7 @@ loadmc2 function in <mcx root>/utils. If one wants to get a
 continuous-wave solution, he should run simulation with sufficiently
 long time window, and sum the fluence along the time dimension, 
 for example
+
    mcx=loadmc2('output.mc2',[60 60 60 10],'float');
    cw_mcx=sum(mcx,4);
 
@@ -209,17 +216,17 @@ snapshots stored in the solution file is located at
 
 4.2 On-screen messages
 
-The timing information is printed on the screen (stdout). The clock
-starts (T0) right before copying the initialization data from CPU to GPU.
-For each simulation run, the elapse time from T0
+The timing information is printed on the screen (stdout). The 
+clock starts (T0) right before copying the initialization data 
+from CPU to GPU. For each simulation, the elapse time from T0
 is printed (in ms). If there is a memory transaction from GPU to CPU,
 the accumulated elapse time is also printed. Depending on domain 
-size, typically the data transfer took about 50 ms per run.
+size, typically the data transfer takes about 50 ms per run.
 
-By default, MCX calculates the unitary solution for fluence; the computed
-normalization factor, see Reference [1], will be printed on the screen, 
-just for your reference. At the end of the simulation, the data
-will be saved to files; this may take a long time depending on 
+By default, MCX calculates the unitary solution for fluence; 
+the computed normalization factor, see Reference [1], will be 
+printed on the screen. At the end of the simulation, the data
+will be saved to a file; this may take a long time depending on 
 the domain size.
 
 At the end of the screen output, one can find a list of photon
