@@ -440,12 +440,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 
 void mcx_usage(char *exename){
      printf("\
-#######################################################################################\n\
-#                     Monte Carlo eXtreme (MCX) -- CUDA                               #\n\
-#             Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>                    #\n\
-#                                                                                     #\n\
-#      Martinos Center for Biomedical Imaging, Massachusetts General Hospital         #\n\
-#######################################################################################\n\
+######################################################################################\n\
+#                     Monte Carlo eXtreme (MCX) -- CUDA                              #\n\
+#             Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>                   #\n\
+#                                                                                    #\n\
+#      Martinos Center for Biomedical Imaging, Massachusetts General Hospital        #\n\
+######################################################################################\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
  -i 	       (--interactive) interactive mode\n\
