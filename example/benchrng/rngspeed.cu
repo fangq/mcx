@@ -11,8 +11,10 @@
 
 #include <stdio.h>
 #include "br2cu.h"
+
+#define USE_OS_TIMER  /* use MT19937 RNG */
+
 #include "tictoc.h"
-#define R_MAX_MT_RAND 2.32830643653870e-10
 
 #ifdef USE_MT_RAND  /* use MT19937 RNG */
 
@@ -29,7 +31,7 @@ kernel void bench_rng(uint seed[],float output[],int loop){
      float res;
      int i;
 
-     mt19937si(seed[idx]);
+     mt19937si(seed,idx);
      for(i=0;i<loop;i++){
           ran=mt19937s();
 	  res=ran*R_MAX_MT_RAND;
@@ -65,7 +67,7 @@ kernel void bench_rng(uint seed[],float output[],int loop){
      logistic_init(t,tnew,seed,idx);
 
      for(i=0;i<loop;i+=5){
-          logistic_rand(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
+          logistic_step(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
 	  ran[0]=logistic_uniform(t[0]);
 	  ran[1]=logistic_uniform(t[1]);
 	  ran[2]=logistic_uniform(t[2]);
