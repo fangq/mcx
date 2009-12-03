@@ -7,9 +7,39 @@
 CUDACC=nvcc
 CCC=g++
 SOURCE=rngspeed
+BINARY=rngspeed
 OUTPUT_DIR=../../bin
 OPT=-DUSE_MT_RAND
 CPPOPT=-I/usr/local/cuda/include -I../../src
+INCLUDEDIRS=-I/usr/local/cuda/include  -I../../src
+LINKOPT=-L/usr/local/cuda/lib -lcudart 
+
+CUCCOPT=-I../../src
+CPPOPT=-g -Wall
+
+OBJSUFFIX=.o
+EXESUFFIX=
+
+FILES=../../src/tictoc rngspeed
+
+ARCH = $(shell uname -m)
+PLATFORM = $(shell uname -o)
+ifeq ($(findstring Msys,$(PLATFORM)), Msys)
+  CCC=nvcc
+  LINKOPT=-L/c/CUDA/lib -lcudart --link
+  INCLUDEDIRS +=-I/c/CUDA/include
+  CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE
+  OBJSUFFIX=.obj
+  EXESUFFIX=.exe
+else
+  ifeq ($(findstring x86_64,$(ARCH)), x86_64)
+     ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
+        LINKOPT=-L/usr/local/cuda/lib64 -lcudart 
+     endif
+  endif
+endif
+
+OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
 all mt:     OPT=-DUSE_MT_RAND
 logistic:   OPT=
@@ -18,11 +48,21 @@ logisticw:  OPT=-DGLOBAL_WRITE
 debug:      OPT=-DUSE_MT_RAND -DGLOBAL_WRITE
 debuglog:   OPT=-DGLOBAL_WRITE
 
-all mt mtw logistic logisticw: 
-	$(CUDACC) $(OPT) $(SOURCE).cu $(CPPOPT) -o $(OUTPUT_DIR)/$(SOURCE)
-	
-debug debuglog: 
-	$(CUDACC) -deviceemu $(OPT) $(SOURCE).cu $(CPPOPT) -o $(OUTPUT_DIR)/$(SOURCE)
+
+all mt mtw logistic logisticw: cudasdk $(OUTPUT_DIR)/$(BINARY)
+
+$(OUTPUT_DIR)/$(BINARY): $(OBJS)
+	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
+
+%$(OBJSUFFIX): %.c
+	$(CCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+
+%$(OBJSUFFIX): %.cu
+	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 clean:
-	-rm -f $(SOURCE).o $(SOURCE_UTILS).o $(OUTPUT_DIR)/$(SOURCE)
+	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX)
+cudasdk:
+	@if [ -z `which ${CUDACC}` ]; then \
+	   echo "Please first install CUDA SDK or add path to nvcc to your PATH environment variable."; exit 1;\
+	fi
