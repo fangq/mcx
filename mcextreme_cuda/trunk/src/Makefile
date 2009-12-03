@@ -15,6 +15,7 @@ CUCCOPT=
 CPPOPT=-g -Wall
 
 OBJSUFFIX=.o
+EXESUFFIX=
 
 FILES=mcx_core mcx_utils tictoc mcextreme
 
@@ -26,6 +27,7 @@ ifeq ($(findstring Msys,$(PLATFORM)), Msys)
   INCLUDEDIRS +=-I/c/CUDA/include
   CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE
   OBJSUFFIX=.obj
+  EXESUFFIX=.exe
 else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
@@ -43,9 +45,9 @@ debuglog:   CUCCOPT+=
 racing:     CUCCOPT+=-DTEST_RACING
 mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch compute_11
-mtbox:      CUCCOPT+=-DCACHE_NON_ATOMIC
-logbox:	    CUCCOPT+=-DCACHE_NON_ATOMIC
-debugmt debuglog:CUCCOPT+=-deviceemu
+mtbox logbox:		CUCCOPT+=-DCACHE_NON_ATOMIC
+debugmt debuglog:	CUCCOPT+=-deviceemu
+mtatomic logatomic:	BINARY:=$(BINARY)_atomic
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
@@ -61,7 +63,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 clean:
-	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)
+	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX)
 cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
 	   echo "Please first install CUDA SDK or add path to nvcc to your PATH environment variable."; exit 1;\
