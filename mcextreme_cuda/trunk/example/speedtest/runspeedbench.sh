@@ -34,9 +34,9 @@ do
     for np in $nphoton
     do
          echo "<mcx_session thread='$th' photon='$np'>"
-         echo "<cmd>$mcxbin -t $th -n $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1</cmd>"
+         echo "<cmd>$mcxbin -t $th -m $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1</cmd>"
          echo "<output>"
-         $mcxbin -t $th -n $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1
+         $mcxbin -t $th -m $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1
          echo "</output>"
          echo "</mcx_session>"
     done
