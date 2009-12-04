@@ -8,25 +8,23 @@ object fmAbout: TfmAbout
   Caption = 'About Monte-Carlo eXtreme'
   ClientHeight = 258
   ClientWidth = 434
-  ParentFont = False
   Position = poDesktopCenter
-  LCLVersion = '0.9.26'
+  LCLVersion = '0.9.28.2'
   object Label1: TLabel
-    Left = 105
-    Height = 158
-    Top = 24
-    Width = 284
+    Left = 64
+    Height = 197
+    Top = 8
+    Width = 274
     Caption = 'Monte-Carlo eXtreme (MCX)'#10#10'Version 0.2 (Aurora)'#10#10'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
     ParentColor = False
   end
-  object BitBtn1: TBitBtn
+  object Button1: TButton
     Left = 184
-    Height = 30
-    Top = 208
+    Height = 25
+    Top = 216
     Width = 75
     Caption = 'OK'
     ModalResult = 1
-    NumGlyphs = 0
     TabOrder = 0
   end
 end

@@ -6,13 +6,14 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, Graphics, Dialogs,
-  StdCtrls;
+  StdCtrls, Buttons;
 
 type
 
   { TfmAbout }
 
   TfmAbout = class(TForm)
+    Button1: TButton;
     Label1: TLabel;
   private
     { private declarations }
