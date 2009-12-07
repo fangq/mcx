@@ -3,6 +3,7 @@ object fmAbout: TfmAbout
   Height = 258
   Top = 247
   Width = 434
+  ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte-Carlo eXtreme'
@@ -14,8 +15,8 @@ object fmAbout: TfmAbout
     Left = 64
     Height = 197
     Top = 8
-    Width = 274
-    Caption = 'Monte-Carlo eXtreme (MCX)'#10#10'Version 0.2 (Aurora)'#10#10'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
+    Width = 264
+    Caption = 'Monte Carlo eXtreme (MCX)'#10#10'Version 0.2 (Aurora)'#10#10'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
     ParentColor = False
   end
   object Button1: TButton

@@ -13,7 +13,7 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
-      <CurrentBuildNr Value="236"/>
+      <CurrentBuildNr Value="249"/>
       <ProjectVersion Value="0.0.0.1"/>
       <FileDescription Value="GUI for Monte Carlo eXtreme"/>
       <LegalCopyright Value="2009 Qianqian Fang"/>
@@ -39,14 +39,14 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="26">
+    <Units Count="27">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="mcxstudio"/>
         <CursorPos X="11" Y="15"/>
         <TopLine Value="1"/>
-        <UsageCount Value="41"/>
+        <UsageCount Value="44"/>
       </Unit0>
       <Unit1>
         <Filename Value="mcxgui.pas"/>
@@ -54,10 +54,10 @@
         <ComponentName Value="fmMCX"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mcxgui"/>
-        <CursorPos X="19" Y="309"/>
-        <TopLine Value="292"/>
+        <CursorPos X="1" Y="527"/>
+        <TopLine Value="506"/>
         <EditorIndex Value="0"/>
-        <UsageCount Value="41"/>
+        <UsageCount Value="44"/>
         <Loaded Value="True"/>
       </Unit1>
       <Unit2>
@@ -66,10 +66,10 @@
         <ComponentName Value="fmAbout"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mcxabout"/>
-        <CursorPos X="41" Y="6"/>
+        <CursorPos X="36" Y="8"/>
         <TopLine Value="1"/>
-        <EditorIndex Value="1"/>
-        <UsageCount Value="40"/>
+        <EditorIndex Value="2"/>
+        <UsageCount Value="43"/>
         <Loaded Value="True"/>
       </Unit2>
       <Unit3>
@@ -219,92 +219,136 @@
         <TopLine Value="81"/>
         <UsageCount Value="10"/>
       </Unit25>
+      <Unit26>
+        <Filename Value="../../../../../../../../../usr/lib/lazarus/0.9.28.2/lcl/include/customform.inc"/>
+        <CursorPos X="45" Y="2316"/>
+        <TopLine Value="2297"/>
+        <EditorIndex Value="1"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit26>
     </Units>
-    <JumpHistory Count="21" HistoryIndex="20">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="314" Column="1" TopLine="293"/>
+        <Caret Line="477" Column="74" TopLine="457"/>
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="315" Column="1" TopLine="294"/>
+        <Caret Line="513" Column="21" TopLine="491"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="407" Column="36" TopLine="393"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position3>
       <Position4>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="53" Column="13" TopLine="32"/>
       </Position4>
       <Position5>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="155" Column="27" TopLine="134"/>
+        <Caret Line="257" Column="23" TopLine="236"/>
       </Position5>
       <Position6>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="317" Column="86" TopLine="290"/>
+        <Caret Line="465" Column="36" TopLine="444"/>
       </Position6>
       <Position7>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="407" Column="3" TopLine="405"/>
+        <Caret Line="513" Column="42" TopLine="492"/>
       </Position7>
       <Position8>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="413" Column="29" TopLine="390"/>
+        <Caret Line="413" Column="88" TopLine="391"/>
       </Position8>
       <Position9>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="411" Column="50" TopLine="392"/>
+        <Caret Line="526" Column="48" TopLine="499"/>
       </Position9>
       <Position10>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="419" Column="28" TopLine="392"/>
+        <Filename Value="../../../../../../../../../usr/lib/lazarus/0.9.28.2/lcl/include/customform.inc"/>
+        <Caret Line="2313" Column="30" TopLine="2297"/>
       </Position10>
       <Position11>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="416" Column="33" TopLine="390"/>
+        <Filename Value="../../../../../../../../../usr/lib/lazarus/0.9.28.2/lcl/include/customform.inc"/>
+        <Caret Line="2316" Column="45" TopLine="2297"/>
       </Position11>
       <Position12>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="413" Column="1" TopLine="392"/>
+        <Caret Line="521" Column="1" TopLine="500"/>
       </Position12>
       <Position13>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="414" Column="1" TopLine="393"/>
+        <Caret Line="522" Column="1" TopLine="501"/>
       </Position13>
       <Position14>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="419" Column="35" TopLine="394"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position14>
       <Position15>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="407" Column="1" TopLine="386"/>
+        <Caret Line="216" Column="63" TopLine="195"/>
       </Position15>
       <Position16>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="387" Column="1" TopLine="366"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position16>
       <Position17>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="388" Column="1" TopLine="367"/>
+        <Caret Line="216" Column="74" TopLine="195"/>
       </Position17>
       <Position18>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="401" Column="6" TopLine="369"/>
+        <Caret Line="261" Column="24" TopLine="240"/>
       </Position18>
       <Position19>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="391" Column="16" TopLine="384"/>
+        <Caret Line="262" Column="25" TopLine="240"/>
       </Position19>
       <Position20>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="410" Column="84" TopLine="387"/>
+        <Caret Line="263" Column="26" TopLine="240"/>
       </Position20>
       <Position21>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="264" Column="23" TopLine="240"/>
       </Position21>
+      <Position22>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="299" Column="22" TopLine="278"/>
+      </Position22>
+      <Position23>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="495" Column="24" TopLine="474"/>
+      </Position23>
+      <Position24>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="509" Column="28" TopLine="501"/>
+      </Position24>
+      <Position25>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="520" Column="1" TopLine="499"/>
+      </Position25>
+      <Position26>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="521" Column="1" TopLine="500"/>
+      </Position26>
+      <Position27>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="522" Column="1" TopLine="501"/>
+      </Position27>
+      <Position28>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="523" Column="1" TopLine="502"/>
+      </Position28>
+      <Position29>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="525" Column="1" TopLine="504"/>
+      </Position29>
+      <Position30>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="526" Column="1" TopLine="505"/>
+      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
@@ -318,7 +362,15 @@
         <CStyleOperator Value="False"/>
       </SyntaxOptions>
     </Parsing>
+    <CodeGeneration>
+      <SmartLinkUnit Value="True"/>
+    </CodeGeneration>
     <Linking>
+      <Debugging>
+        <UseLineInfoUnit Value="False"/>
+        <StripSymbols Value="True"/>
+      </Debugging>
+      <LinkSmart Value="True"/>
       <Options>
         <Win32>
           <GraphicApplication Value="True"/>
@@ -330,6 +382,12 @@
     </Other>
   </CompilerOptions>
   <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Source Value="mcxgui.pas"/>
+        <Line Value="520"/>
+      </Item1>
+    </BreakPoints>
     <Watches Count="2">
       <Item1>
         <Expression Value="cb"/>
