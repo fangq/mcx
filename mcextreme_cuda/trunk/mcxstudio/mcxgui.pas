@@ -22,6 +22,8 @@ type
 
   TfmMCX = class(TForm)
     ckAtomic: TCheckBox;
+    edBlockSize: TComboBox;
+    Label11: TLabel;
     mcxSetCurrent: TAction;
     acInteract: TActionList;
     mcxdoDefault: TAction;
@@ -48,8 +50,7 @@ type
     edThread: TComboBox;
     edMove: TEdit;
     edSession: TEdit;
-    edT0: TEdit;
-    edT1: TEdit;
+    edBubble: TEdit;
     pMCX: TProcess;
     edConfigFile: TFileNameEdit;
     ImageList1: TImageList;
@@ -62,8 +63,6 @@ type
     Label5: TLabel;
     Label6: TLabel;
     Label7: TLabel;
-    Label8: TLabel;
-    Label9: TLabel;
     lvJobs: TListView;
     MainMenu1: TMainMenu;
     MenuItem17: TMenuItem;
@@ -118,6 +117,7 @@ type
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
+    procedure ckAtomicClick(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
     procedure mcxdoAboutExecute(Sender: TObject);
@@ -253,11 +253,15 @@ begin
       edConfigFile.FileName:='';
       edThread.Text:='1796';
       edMove.Text:='1000000';
-      edT0.Text:='0.0';
-      edT1.Text:='1.0';
+      edBlockSize.Text:='128';
+      edBubble.Text:='0';
       edGate.Value:=1;
       edRespin.Value:=1;
       grArray.ItemIndex:=0;
+      ckReflect.Checked:=true;
+      ckSaveData.Checked:=true;
+      ckNormalize.Checked:=true;
+      ckAtomic.Checked:=false;
       if not (lvJobs.Selected = nil) then
          PanelToList2(lvJobs.Selected);
 end;
@@ -290,6 +294,13 @@ begin
   mcxdoSave.Enabled:=true;
 end;
 
+procedure TfmMCX.ckAtomicClick(Sender: TObject);
+begin
+  if(ckAtomic.Checked) then begin
+        ShowMessage('You selected to use atomic operations. We suggest you only using this mode when the accuracy near the source is critically important. Atomic mode is about 5 times slower than non-atomic one, and you should use a thread number between 500~1000.');
+  end;
+end;
+
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
 begin
   if not (lvJobs.Selected = nil) then
@@ -309,8 +320,8 @@ end;
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
-  //        pMCX.CommandLine:=CreateCmd;
-          pMCX.CommandLine:='du /usr/ --max-depth=1';
+          pMCX.CommandLine:=CreateCmd;
+          //pMCX.CommandLine:='du /usr/ --max-depth=1';
           pMCX.Options := [poUsePipes];
           AddLog('-- Executing MCX --');
           pMCX.Execute;
@@ -326,6 +337,7 @@ begin
     tmMCXMain.Enabled:=true;
     mcxdoStop.Enabled:=true;
     mcxdoRun.Enabled:=false;
+    sbInfo.Panels[0].Text := 'Status: busy';
 end;
 
 
@@ -414,6 +426,7 @@ begin
        mcxdoStop.Enabled:=false;
        mcxdoRun.Enabled:=true;
        tmMCXMain.Enabled:=false;
+       sbInfo.Panels[0].Text := 'Status: idle';
        AddLog('wait time-out or task complete');
   end;
 
@@ -440,8 +453,8 @@ end;
 
 procedure TfmMCX.VarifyInput;
 var
-    nthread, nmove: integer;
-    t0,t1: extended;
+    nthread, nmove, nblock: integer;
+    radius,t1: extended;
 begin
   try
     if(Length(edConfigFile.FileName)=0) then
@@ -451,8 +464,8 @@ begin
     try
         nthread:=StrToInt(edThread.Text);
         nmove:=StrToInt(edMove.Text);
-        t0:=StrToFloat(edT0.Text);
-        t1:=StrToFloat(edT1.Text);
+        radius:=StrToFloat(edBubble.Text);
+        nblock:=StrToInt(edBlockSize.Text);
     except
         raise Exception.Create('Invalid numbers: check the values for thread, move and time gate values');
     end;
@@ -462,8 +475,11 @@ begin
        AddLog('Warning: you may need a high-end graphics card to use more threads');
     if(nmove>1e7) then
        AddLog('Warning: you can increase respin number to get more photons');
-    if(t1<=t0) then
-       raise Exception.Create('End time comes before the start time!');
+    if(nblock<0) then
+       raise Exception.Create('Thread block number can not be negative');
+    if(radius<0) then
+       raise Exception.Create('Bubble radius can not be negative');
+
     UpdateMCXActions(acMCX,'Work','');
   except
     On E : Exception do
@@ -482,27 +498,29 @@ end;
 
 function TfmMCX.CreateCmd:string;
 var
-    nthread, nmove: integer;
-    t0,t1: extended;
+    nthread, nmove, nblock: integer;
+    bubbleradius: extended;
     cmd: string;
 begin
 //    cmd:='"'+Config.MCXExe+'" ';
     cmd:=CreateCmdOnly;
     if(Length(edSession.Text)>0) then
-       cmd:=cmd+' -s "'+Trim(edSession.Text)+'" ';
+       cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
     if(Length(edConfigFile.FileName)>0) then
-       cmd:=cmd+' -f "'+Trim(edConfigFile.FileName)+'" ';
+       cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)+'" ';
     try
         nthread:=StrToInt(edThread.Text);
         nmove:=StrToInt(edMove.Text);
-        t0:=StrToFloat(edT0.Text);
-        t1:=StrToFloat(edT1.Text);
+        nblock:=StrToInt(edBlockSize.Text);
+        bubbleradius:=StrToFloat(edBubble.Text);
     except
         raise Exception.Create('Invalid numbers: check the values for thread, move and time gate values');
     end;
 
-    cmd:=cmd+Format(' -t %d -m %d -r %d -a %d ',[nthread,nmove,edRespin.Value,grArray.ItemIndex]);
-//    cmd:=cmd+Format(' -U %d -S %d -b %d ',[ckNormalize.Checked,ckSaveData.Checked,ckReflect.Checked]);
+    cmd:=cmd+Format(' --thread %d --move %d --repeat %d --array %d --blocksize %d --skipradius %f ',
+      [nthread,nmove,edRespin.Value,grArray.ItemIndex,nblock,bubbleradius]);
+    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d ',
+      [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked)]);
 
     Result:=cmd;
     AddLog('Command:');
