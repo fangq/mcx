@@ -1,19 +1,19 @@
 object fmMCX: TfmMCX
-  Left = 312
+  Left = 1558
   Height = 535
-  Top = 173
+  Top = 153
   Width = 668
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsDialog
   Caption = 'MCX Studio'
-  ClientHeight = 513
+  ClientHeight = 510
   ClientWidth = 668
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   Position = poDesktopCenter
-  LCLVersion = '0.9.28.2'
+  LCLVersion = '0.9.29'
   object ToolBar1: TToolBar
     Left = 0
     Height = 54
@@ -37,7 +37,7 @@ object fmMCX: TfmMCX
       Action = mcxdoSave
     end
     object ToolButton3: TToolButton
-      Left = 591
+      Left = 600
       Top = 2
       Action = mcxdoExit
     end
@@ -54,56 +54,56 @@ object fmMCX: TfmMCX
       Style = tbsDivider
     end
     object ToolButton6: TToolButton
-      Left = 230
+      Left = 232
       Top = 2
       Action = mcxdoDeleteItem
     end
     object tbtVerify: TToolButton
-      Left = 282
+      Left = 288
       Top = 2
       Action = mcxdoVerify
     end
     object tbtRun: TToolButton
-      Left = 322
+      Left = 328
       Top = 2
       Action = mcxdoRun
     end
     object tbtStop: TToolButton
-      Left = 362
+      Left = 368
       Top = 2
       Action = mcxdoStop
     end
     object tbtRunAll: TToolButton
-      Left = 402
+      Left = 408
       Top = 2
       Action = mcxdoRunAll
     end
     object ToolButton11: TToolButton
-      Left = 458
+      Left = 465
       Top = 2
       Action = mcxdoHelp
     end
     object ToolButton12: TToolButton
-      Left = 271
+      Left = 277
       Top = 2
       Width = 11
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 447
+      Left = 454
       Top = 2
       Width = 11
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 498
+      Left = 505
       Top = 2
       Action = mcxdoAbout
     end
     object ToolButton14: TToolButton
-      Left = 539
+      Left = 548
       Top = 2
       Action = mcxdoWeb
     end
@@ -125,7 +125,7 @@ object fmMCX: TfmMCX
       Action = mcxdoDefault
     end
     object ToolButton8: TToolButton
-      Left = 579
+      Left = 588
       Top = 2
       Width = 12
       Caption = 'ToolButton8'
@@ -134,8 +134,8 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 20
-    Top = 493
+    Height = 21
+    Top = 489
     Width = 668
     Panels = <    
       item
@@ -151,7 +151,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 325
+    Height = 321
     Top = 54
     Width = 176
     Align = alLeft
@@ -196,6 +196,7 @@ object fmMCX: TfmMCX
       item
         Caption = 'DoAtomic'
       end>
+    ItemIndex = -1
     RowSelect = True
     ScrollBars = ssAutoBoth
     TabOrder = 0
@@ -206,18 +207,18 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 325
+    Height = 321
     Top = 54
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 325
+    Height = 321
     Top = 54
     Width = 484
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 325
+    ClientHeight = 321
     ClientWidth = 484
     Enabled = False
     TabOrder = 5
@@ -293,18 +294,18 @@ object fmMCX: TfmMCX
     end
     object Label8: TLabel
       Left = 224
-      Height = 17
+      Height = 18
       Top = 208
-      Width = 32
+      Width = 33
       Alignment = taRightJustify
       Caption = 'ns  to'
       ParentColor = False
     end
     object Label9: TLabel
       Left = 350
-      Height = 17
+      Height = 18
       Top = 208
-      Width = 14
+      Width = 15
       Alignment = taRightJustify
       Caption = 'ns'
       ParentColor = False
@@ -321,7 +322,7 @@ object fmMCX: TfmMCX
     end
     object edThread: TComboBox
       Left = 144
-      Height = 28
+      Height = 27
       Hint = 'ThreadNum'
       Top = 67
       Width = 192
@@ -347,7 +348,7 @@ object fmMCX: TfmMCX
     end
     object edMove: TEdit
       Left = 143
-      Height = 26
+      Height = 27
       Hint = 'MoveNum'
       Top = 100
       Width = 80
@@ -357,7 +358,7 @@ object fmMCX: TfmMCX
     end
     object edSession: TEdit
       Left = 143
-      Height = 26
+      Height = 27
       Hint = 'Session'
       Top = 9
       Width = 192
@@ -366,7 +367,7 @@ object fmMCX: TfmMCX
     end
     object edRespin: TSpinEdit
       Left = 143
-      Height = 26
+      Height = 27
       Hint = 'RespinNum'
       Top = 129
       Width = 93
@@ -404,7 +405,7 @@ object fmMCX: TfmMCX
     end
     object edT0: TEdit
       Left = 143
-      Height = 26
+      Height = 27
       Hint = 'TStart'
       Top = 203
       Width = 80
@@ -414,7 +415,7 @@ object fmMCX: TfmMCX
     end
     object edT1: TEdit
       Left = 267
-      Height = 26
+      Height = 27
       Hint = 'TEnd'
       Top = 203
       Width = 80
@@ -424,7 +425,7 @@ object fmMCX: TfmMCX
     end
     object edGate: TSpinEdit
       Left = 144
-      Height = 26
+      Height = 27
       Hint = 'GateNum'
       Top = 232
       Width = 93
@@ -439,7 +440,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoReflect'
       Top = 270
-      Width = 97
+      Width = 100
       Caption = 'Do Reflection'
       Checked = True
       OnChange = edRespinChange
@@ -451,7 +452,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoSave'
       Top = 270
-      Width = 94
+      Width = 97
       Caption = 'Save Fluence'
       Checked = True
       OnChange = edRespinChange
@@ -463,7 +464,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoNormalize'
       Top = 270
-      Width = 123
+      Width = 126
       Caption = 'Do Normalization'
       Checked = True
       OnChange = edRespinChange
@@ -472,7 +473,7 @@ object fmMCX: TfmMCX
     end
     object edConfigFile: TFileNameEdit
       Left = 143
-      Height = 26
+      Height = 27
       Hint = 'InputFile'
       Top = 38
       Width = 168
@@ -481,6 +482,7 @@ object fmMCX: TfmMCX
       HideDirectories = False
       ButtonWidth = 23
       NumGlyphs = 0
+      MaxLength = 0
       TabOrder = 1
       OnChange = edRespinChange
     end
@@ -489,7 +491,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoAtomic'
       Top = 270
-      Width = 86
+      Width = 90
       Caption = 'Use Atomic'
       Checked = True
       OnChange = edRespinChange
@@ -500,7 +502,7 @@ object fmMCX: TfmMCX
   object mmOutput: TMemo
     Left = 0
     Height = 106
-    Top = 387
+    Top = 383
     Width = 668
     Align = alBottom
     Constraints.MinHeight = 100
@@ -514,7 +516,7 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 8
-    Top = 379
+    Top = 375
     Width = 668
     Align = alBottom
     ResizeAnchor = akBottom
