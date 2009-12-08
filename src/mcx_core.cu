@@ -587,7 +587,7 @@ void mcx_run_simulation(Config *cfg){
      }
      fprintf(cfg->flog,"\
 ###############################################################################\n\
-#                  Monte-Carlo Extreme (MCX) -- CUDA                          #\n\
+#                  Monte Carlo Extreme (MCX) -- CUDA                          #\n\
 ###############################################################################\n");
      tic=StartTimer();
      fprintf(cfg->flog,"compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);

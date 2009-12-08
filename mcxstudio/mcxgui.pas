@@ -12,15 +12,17 @@ unit mcxgui;
 interface
 
 uses
-  Classes, SysUtils, process, FileUtil, LResources, Forms, Controls, Graphics,
-  Dialogs, StdCtrls, IniPropStorage, Menus, ComCtrls, ExtCtrls, Spin, EditBtn,
-  Buttons, ActnList, lcltype, mcxabout;
+  Classes, SysUtils, process, FileUtil, LResources, Forms, Controls,
+  Graphics, Dialogs, StdCtrls, Menus, ComCtrls, ExtCtrls, Spin,
+  EditBtn, Buttons, ActnList, lcltype, AsyncProcess,
+  inifiles, mcxabout;
 
 type
 
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    pMCX: TAsyncProcess;
     ckAtomic: TCheckBox;
     edBlockSize: TComboBox;
     Label11: TLabel;
@@ -51,10 +53,8 @@ type
     edMove: TEdit;
     edSession: TEdit;
     edBubble: TEdit;
-    pMCX: TProcess;
     edConfigFile: TFileNameEdit;
     ImageList1: TImageList;
-    IniPropStorage1: TIniPropStorage;
     Label1: TLabel;
     Label10: TLabel;
     Label2: TLabel;
@@ -118,6 +118,8 @@ type
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
     procedure ckAtomicClick(Sender: TObject);
+    procedure edConfigFileEnter(Sender: TObject);
+    procedure edConfigFileExit(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
     procedure mcxdoAboutExecute(Sender: TObject);
@@ -126,7 +128,9 @@ type
     procedure mcxdoDeleteItemExecute(Sender: TObject);
     procedure mcxdoExitExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
+    procedure mcxdoQueryExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
+    procedure mcxdoSaveExecute(Sender: TObject);
     procedure mcxdoStopExecute(Sender: TObject);
     procedure mcxdoVerifyExecute(Sender: TObject);
     procedure edConfigFileChange(Sender: TObject);
@@ -136,9 +140,8 @@ type
     procedure lvJobsSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
     procedure mcxSetCurrentExecute(Sender: TObject);
-    procedure tmMCXMainTimer(Sender: TObject);
-    procedure ToolButton15Click(Sender: TObject);
-    procedure ToolButton18Click(Sender: TObject);
+    procedure pMCXReadData(Sender: TObject);
+    procedure pMCXTerminate(Sender: TObject);
   private
     { private declarations }
   public
@@ -151,14 +154,16 @@ type
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
     procedure UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
-    procedure WaitMCXRunning(maxtime: integer);
     function  GetMCXOutput (outputstr: string) : string;
+    procedure SaveTasksToIni(fname: string);
+    procedure LoadTasksFromIni(fname: string);
   end;
 
 var
   fmMCX: TfmMCX;
   ProfileChanged: Boolean;
   MaxWait: integer;
+  TaskFile: string;
 
 implementation
 
@@ -245,11 +250,14 @@ begin
    lvJobs.Selected:=node;
    mcxdoDefaultExecute(nil);
    edSession.Text:=sessionid;
+   UpdateMCXActions(acMCX,'','Work');
+   UpdateMCXActions(acMCX,'Preproc','');
+   UpdateMCXActions(acMCX,'SelectedJob','');
 end;
 
 procedure TfmMCX.mcxdoDefaultExecute(Sender: TObject);
 begin
-      edSession.Text:='';
+      //edSession.Text:='';
       edConfigFile.FileName:='';
       edThread.Text:='1796';
       edMove.Text:='1000000';
@@ -301,6 +309,16 @@ begin
   end;
 end;
 
+procedure TfmMCX.edConfigFileEnter(Sender: TObject);
+begin
+  lvJobs.Enabled:=false;
+end;
+
+procedure TfmMCX.edConfigFileExit(Sender: TObject);
+begin
+  lvJobs.Enabled:=true;
+end;
+
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
 begin
   if not (lvJobs.Selected = nil) then
@@ -309,12 +327,36 @@ begin
           'Confirm', MB_YESNOCANCEL)=IDYES) then
             exit;
         lvJobs.Items.Delete(lvJobs.Selected.Index);
+        if not (lvJobs.Selected = nil) then
+            ListToPanel2(lvJobs.Selected);
   end;
 end;
 
 procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
 begin
+  TaskFile:='test.ini';
+  if(FileExists(TaskFile)) then begin
+        if(mcxdoSave.Enabled) then begin
+          if(Application.MessageBox('The current session has not been saved, do you want to discard?',
+            'Confirm', MB_YESNOCANCEL)=IDYES) then
+               LoadTasksFromIni(TaskFile);
+        end else begin
+               LoadTasksFromIni(TaskFile);
+        end;
+  end;
+end;
 
+procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
+begin
+    if(not pMCX.Running) then begin
+          pMCX.CommandLine:=CreateCmdOnly+' -L';
+          pMCX.Options := [poUsePipes];
+          AddLog('-- Executing MCX --');
+          pMCX.Execute;
+
+          mcxdoStop.Enabled:=true;
+          mcxdoRun.Enabled:=false;
+    end;
 end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
@@ -325,22 +367,22 @@ begin
           pMCX.Options := [poUsePipes];
           AddLog('-- Executing MCX --');
           pMCX.Execute;
-
-          WaitMCXRunning(100000);
+          tmMCXMain.Tag:=0;
+          tmMCXMain.Enabled:=true;
+          mcxdoStop.Enabled:=true;
+          mcxdoRun.Enabled:=false;
+          sbInfo.Panels[0].Text := 'Status: busy';
     end;
 end;
 
-procedure TfmMCX.WaitMCXRunning(maxtime: integer);
+procedure TfmMCX.mcxdoSaveExecute(Sender: TObject);
 begin
-    MaxWait:=maxtime;
-    tmMCXMain.Tag:=0;
-    tmMCXMain.Enabled:=true;
-    mcxdoStop.Enabled:=true;
-    mcxdoRun.Enabled:=false;
-    sbInfo.Panels[0].Text := 'Status: busy';
+  TaskFile:='test.ini';
+  if(length(TaskFile) >0) then begin
+        SaveTasksToIni(TaskFile);
+        mcxdoSave.Enabled:=false;
+  end;
 end;
-
-
 
 procedure TfmMCX.mcxdoStopExecute(Sender: TObject);
 begin
@@ -379,16 +421,32 @@ procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 begin
      if(not Selected) then begin
-          if not (lvJobs.Selected=nil) then
-              plSetting.Enabled:=true;
+          if not (lvJobs.Selected=nil) then begin
+          end
      end
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
 begin
      if not (lvJobs.Selected = nil) then begin
-       ListToPanel2(lvJobs.Selected);
+         ListToPanel2(lvJobs.Selected);
+         plSetting.Enabled:=true;
+         mcxdoVerify.Enabled:=true;
      end;
+end;
+
+procedure TfmMCX.pMCXReadData(Sender: TObject);
+begin
+     mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
+end;
+
+procedure TfmMCX.pMCXTerminate(Sender: TObject);
+begin
+     mcxdoStop.Enabled:=false;
+     mcxdoRun.Enabled:=true;
+     tmMCXMain.Enabled:=false;
+     sbInfo.Panels[0].Text := 'Status: idle';
+     AddLog('Task complete');
 end;
 
 function TfmMCX.GetMCXOutput (outputstr: string) : string;
@@ -414,41 +472,47 @@ begin
     end;
 end;
 
-
-procedure TfmMCX.tmMCXMainTimer(Sender: TObject);
+procedure TfmMCX.SaveTasksToIni(fname: string);
+var
+   inifile: TIniFile;
+   i,j: integer;
 begin
-  mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
-  tmMCXMain.Tag:=tmMCXMain.Tag+1;
-  if(tmMCXMain.Tag=1) then exit;
-
-  if (tmMCXMain.Tag>MaxWait) or (not pMCX.Running) then
-  begin
-       mcxdoStop.Enabled:=false;
-       mcxdoRun.Enabled:=true;
-       tmMCXMain.Enabled:=false;
-       sbInfo.Panels[0].Text := 'Status: idle';
-       AddLog('wait time-out or task complete');
-  end;
-
+     inifile:=TIniFile.Create(fname);
+     for i:=0 to lvJobs.Items.Count-1 do begin
+          for j:=0 to lvJobs.Columns.Count-1 do begin
+              inifile.WriteString(lvJobs.Items.Item[i].Caption,
+                                  lvJobs.Columns.Items[j].Caption,
+                                  lvJobs.Items.Item[i].SubItems.Strings[j]);
+          end;
+     end;
+     inifile.UpdateFile;
+     inifile.Free;
 end;
 
-procedure TfmMCX.ToolButton15Click(Sender: TObject);
+procedure TfmMCX.LoadTasksFromIni(fname: string);
+var
+   sessions,vals:TStringList;
+   inifile: TIniFile;
+   i,j: integer;
+   node: TListItem;
 begin
-    if(not pMCX.Running) then begin
-          pMCX.CommandLine:=CreateCmdOnly+' -L';
-          pMCX.Options := [poUsePipes];
-          AddLog('-- Executing MCX --');
-          pMCX.Execute;
-
-          mcxdoStop.Enabled:=true;
-          mcxdoRun.Enabled:=false;
-    end;
-end;
-
-
-procedure TfmMCX.ToolButton18Click(Sender: TObject);
-begin
-
+     sessions:=TStringList.Create;
+     vals:=TStringList.Create;
+     inifile:=TIniFile.Create(fname);
+     inifile.ReadSections(sessions);
+     for i:=0 to sessions.Count-1 do begin
+         node:=lvJobs.Items.Add;
+         node.Caption:=sessions.Strings[i];
+         inifile.ReadSectionValues(node.Caption,vals);
+         for j:=0 to lvJobs.Columns.Count-1 do
+             node.SubItems.Add('');
+         for j:=0 to lvJobs.Columns.Count-1 do begin
+             node.SubItems.Strings[j]:=vals.Values[lvJobs.Columns.Items[j].Caption];
+         end
+     end;
+     inifile.Free;
+     vals.Free;
+     sessions.Free;
 end;
 
 procedure TfmMCX.VarifyInput;
@@ -583,6 +647,7 @@ var
     ck: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
+    fed:TFileNameEdit;
     i,idx: integer;
 begin
     if(node=nil) then exit;
@@ -605,6 +670,12 @@ begin
            ed:=plSetting.Controls[i] as TEdit;
            idx:=MapList.IndexOf(ed.Hint);
            if(idx>=0) then ed.Text:=node.SubItems.Strings[idx];
+           continue;
+        end;
+        if(plSetting.Controls[i] is TFileNameEdit) then begin
+           fed:=plSetting.Controls[i] as TFileNameEdit;
+           idx:=MapList.IndexOf(fed.Hint);
+           if(idx>=0) then fed.Text:=node.SubItems.Strings[idx];
            continue;
         end;
         if(plSetting.Controls[i] is TRadioGroup) then begin
