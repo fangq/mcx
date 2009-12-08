@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, Buttons;
+  StdCtrls, Buttons, ExtCtrls;
 
 type
 
@@ -14,7 +14,9 @@ type
 
   TfmAbout = class(TForm)
     Button1: TButton;
+    Image1: TImage;
     Label1: TLabel;
+    procedure Image1Click(Sender: TObject);
   private
     { private declarations }
   public
@@ -25,6 +27,13 @@ var
   fmAbout: TfmAbout;
 
 implementation
+
+{ TfmAbout }
+
+procedure TfmAbout.Image1Click(Sender: TObject);
+begin
+
+end;
 
 initialization
   {$I mcxabout.lrs}
