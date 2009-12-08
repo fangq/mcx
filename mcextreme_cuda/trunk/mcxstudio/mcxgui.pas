@@ -15,13 +15,14 @@ uses
   Classes, SysUtils, process, FileUtil, LResources, Forms, Controls,
   Graphics, Dialogs, StdCtrls, Menus, ComCtrls, ExtCtrls, Spin,
   EditBtn, Buttons, ActnList, lcltype, AsyncProcess,
-  inifiles, mcxabout;
+  inifiles, mcxabout, unix;
 
 type
 
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    OpenProject: TOpenDialog;
     pMCX: TAsyncProcess;
     ckAtomic: TCheckBox;
     edBlockSize: TComboBox;
@@ -89,6 +90,7 @@ type
     edRespin: TSpinEdit;
     edGate: TSpinEdit;
     Process1: TProcess;
+    SaveProject: TSaveDialog;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     sbInfo: TStatusBar;
@@ -96,7 +98,6 @@ type
     tbtRunAll: TToolButton;
     tbtStop: TToolButton;
     tbtVerify: TToolButton;
-    tmMCXMain: TTimer;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
@@ -122,11 +123,13 @@ type
     procedure edConfigFileExit(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
+    procedure lvJobsDeletion(Sender: TObject; Item: TListItem);
     procedure mcxdoAboutExecute(Sender: TObject);
     procedure mcxdoAddItemExecute(Sender: TObject);
     procedure mcxdoDefaultExecute(Sender: TObject);
     procedure mcxdoDeleteItemExecute(Sender: TObject);
     procedure mcxdoExitExecute(Sender: TObject);
+    procedure mcxdoHelpExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
@@ -139,9 +142,11 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure lvJobsSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
+    procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
+    procedure ToolButton14Click(Sender: TObject);
   private
     { private declarations }
   public
@@ -157,6 +162,8 @@ type
     function  GetMCXOutput (outputstr: string) : string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
+    function  GetBrowserPath : string;
+    function  SearchForExe(const fname : string) : string;
   end;
 
 var
@@ -232,7 +239,17 @@ end;
 
 procedure TfmMCX.mcxdoExitExecute(Sender: TObject);
 begin
-  Close;
+    if(mcxdoSave.Enabled) then begin
+       if not (Application.MessageBox('The current session has not been saved, do you want to discard?',
+         'Confirm', MB_YESNOCANCEL)=IDYES) then
+            exit;
+    end;
+    Close;
+end;
+
+procedure TfmMCX.mcxdoHelpExecute(Sender: TObject);
+begin
+   Shell(GetBrowserPath + ' http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
 end;
 
 procedure TfmMCX.mcxdoAddItemExecute(Sender: TObject);
@@ -243,6 +260,10 @@ var
 begin
    sessionid:=InputBox('Set Session Name','Please type in a unique session name','');
    if(length(sessionid)=0) then exit;
+   for i:=0 to lvJobs.Items.Count-1 do begin
+        if(lvJobs.Items.Item[i].Caption = sessionid) then
+           raise Exception.Create('Session name already used!');
+   end;
    node:=lvJobs.Items.Add;
    for i:=0 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
    node.Caption:=sessionid;
@@ -302,6 +323,11 @@ begin
   mcxdoSave.Enabled:=true;
 end;
 
+procedure TfmMCX.lvJobsDeletion(Sender: TObject; Item: TListItem);
+begin
+
+end;
+
 procedure TfmMCX.ckAtomicClick(Sender: TObject);
 begin
   if(ckAtomic.Checked) then begin
@@ -323,7 +349,7 @@ procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
 begin
   if not (lvJobs.Selected = nil) then
   begin
-        if(Application.MessageBox('The selected configuration will be deleted, are you sure?',
+        if not (Application.MessageBox('The selected configuration will be deleted, are you sure?',
           'Confirm', MB_YESNOCANCEL)=IDYES) then
             exit;
         lvJobs.Items.Delete(lvJobs.Selected.Index);
@@ -334,16 +360,16 @@ end;
 
 procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
 begin
-  TaskFile:='test.ini';
-  if(FileExists(TaskFile)) then begin
-        if(mcxdoSave.Enabled) then begin
-          if(Application.MessageBox('The current session has not been saved, do you want to discard?',
-            'Confirm', MB_YESNOCANCEL)=IDYES) then
-               LoadTasksFromIni(TaskFile);
-        end else begin
-               LoadTasksFromIni(TaskFile);
-        end;
-  end;
+  if(OpenProject.Execute) then begin
+    TaskFile:=OpenProject.FileName;
+    if(mcxdoSave.Enabled) then begin
+       if(Application.MessageBox('The current session has not been saved, do you want to discard?',
+         'Confirm', MB_YESNOCANCEL)=IDYES) then
+            LoadTasksFromIni(TaskFile);
+    end else begin
+            LoadTasksFromIni(TaskFile);
+    end;
+  end
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
@@ -367,8 +393,6 @@ begin
           pMCX.Options := [poUsePipes];
           AddLog('-- Executing MCX --');
           pMCX.Execute;
-          tmMCXMain.Tag:=0;
-          tmMCXMain.Enabled:=true;
           mcxdoStop.Enabled:=true;
           mcxdoRun.Enabled:=false;
           sbInfo.Panels[0].Text := 'Status: busy';
@@ -377,10 +401,12 @@ end;
 
 procedure TfmMCX.mcxdoSaveExecute(Sender: TObject);
 begin
-  TaskFile:='test.ini';
-  if(length(TaskFile) >0) then begin
+  if(SaveProject.Execute) then begin
+    TaskFile:=SaveProject.FileName;
+    if(length(TaskFile) >0) then begin
         SaveTasksToIni(TaskFile);
         mcxdoSave.Enabled:=false;
+    end;
   end;
 end;
 
@@ -421,9 +447,36 @@ procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 begin
      if(not Selected) then begin
-          if not (lvJobs.Selected=nil) then begin
+          if (lvJobs.Selected=nil) then begin
           end
      end
+end;
+
+
+function TfmMCX.SearchForExe(const fname : string) : string;
+begin
+   Result :=
+    SearchFileInPath(fname, '', GetEnvironmentVariable('PATH'),
+                     PathSeparator, [sffDontSearchInBasePath]);
+end;
+
+function TfmMCX.GetBrowserPath : string;
+  {Return path to first browser found.}
+begin
+   Result := SearchForExe('firefox');
+   if Result = '' then
+     Result := SearchForExe('konqueror');  {KDE browser}
+   if Result = '' then
+     Result := SearchForExe('epiphany');  {GNOME browser}
+   if Result = '' then
+     Result := SearchForExe('mozilla');
+   if Result = '' then
+     Result := SearchForExe('opera');
+end;
+
+procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
+begin
+  Shell(GetBrowserPath + ' http://mcx.sourceforge.net');
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
@@ -444,9 +497,13 @@ procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      mcxdoStop.Enabled:=false;
      mcxdoRun.Enabled:=true;
-     tmMCXMain.Enabled:=false;
      sbInfo.Panels[0].Text := 'Status: idle';
      AddLog('Task complete');
+end;
+
+procedure TfmMCX.ToolButton14Click(Sender: TObject);
+begin
+
 end;
 
 function TfmMCX.GetMCXOutput (outputstr: string) : string;
@@ -515,10 +572,12 @@ begin
      sessions.Free;
 end;
 
+
 procedure TfmMCX.VarifyInput;
 var
     nthread, nmove, nblock: integer;
     radius,t1: extended;
+    exepath: string;
 begin
   try
     if(Length(edConfigFile.FileName)=0) then
@@ -543,6 +602,11 @@ begin
        raise Exception.Create('Thread block number can not be negative');
     if(radius<0) then
        raise Exception.Create('Bubble radius can not be negative');
+
+    exepath:=SearchForExe(CreateCmdOnly);
+    if(exepath='') then
+       raise Exception.Create('Can not find mcx in the search path');
+
 
     UpdateMCXActions(acMCX,'Work','');
   except

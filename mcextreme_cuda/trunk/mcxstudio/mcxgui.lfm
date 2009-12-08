@@ -1,19 +1,19 @@
 object fmMCX: TfmMCX
-  Left = 282
+  Left = 436
   Height = 535
-  Top = 116
+  Top = 207
   Width = 668
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsDialog
   Caption = 'MCX Studio'
-  ClientHeight = 510
+  ClientHeight = 513
   ClientWidth = 668
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   Position = poDesktopCenter
-  LCLVersion = '0.9.29'
+  LCLVersion = '0.9.28.2'
   object ToolBar1: TToolBar
     Left = 0
     Height = 54
@@ -30,21 +30,29 @@ object fmMCX: TfmMCX
       Left = 1
       Top = 2
       Action = mcxdoOpen
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton2: TToolButton
       Left = 41
       Top = 2
       Action = mcxdoSave
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 600
+      Left = 589
       Top = 2
       Action = mcxdoExit
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton4: TToolButton
       Left = 143
       Top = 2
       Action = mcxdoAddItem
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton5: TToolButton
       Left = 132
@@ -54,63 +62,81 @@ object fmMCX: TfmMCX
       Style = tbsDivider
     end
     object ToolButton6: TToolButton
-      Left = 232
+      Left = 229
       Top = 2
       Action = mcxdoDeleteItem
+      ParentShowHint = False
+      ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 288
+      Left = 281
       Top = 2
       Action = mcxdoVerify
+      ParentShowHint = False
+      ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 328
+      Left = 321
       Top = 2
       Action = mcxdoRun
+      ParentShowHint = False
+      ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 368
+      Left = 361
       Top = 2
       Action = mcxdoStop
+      ParentShowHint = False
+      ShowHint = True
     end
     object tbtRunAll: TToolButton
-      Left = 408
+      Left = 401
       Top = 2
       Action = mcxdoRunAll
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 465
+      Left = 457
       Top = 2
       Action = mcxdoHelp
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 277
+      Left = 270
       Top = 2
       Width = 11
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 454
+      Left = 446
       Top = 2
       Width = 11
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 505
+      Left = 497
       Top = 2
       Action = mcxdoAbout
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 548
+      Left = 537
       Top = 2
       Action = mcxdoWeb
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton15: TToolButton
       Left = 92
       Top = 2
       Action = mcxdoQuery
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton17: TToolButton
       Left = 81
@@ -123,9 +149,11 @@ object fmMCX: TfmMCX
       Left = 183
       Top = 2
       Action = mcxdoDefault
+      ParentShowHint = False
+      ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 588
+      Left = 577
       Top = 2
       Width = 12
       Caption = 'ToolButton8'
@@ -134,8 +162,8 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 21
-    Top = 489
+    Height = 20
+    Top = 493
     Width = 668
     Panels = <    
       item
@@ -152,7 +180,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 327
+    Height = 331
     Top = 54
     Width = 176
     Align = alLeft
@@ -197,7 +225,6 @@ object fmMCX: TfmMCX
       item
         Caption = 'DoAtomic'
       end>
-    ItemIndex = -1
     RowSelect = True
     ScrollBars = ssAutoBoth
     TabOrder = 0
@@ -208,25 +235,25 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 327
+    Height = 331
     Top = 54
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 327
+    Height = 331
     Top = 54
     Width = 484
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 327
+    ClientHeight = 331
     ClientWidth = 484
     Enabled = False
     TabOrder = 5
     object Label1: TLabel
       Left = 9
       Height = 17
-      Top = 103
+      Top = 73
       Width = 128
       Alignment = taRightJustify
       AutoSize = False
@@ -276,7 +303,7 @@ object fmMCX: TfmMCX
     object Label2: TLabel
       Left = 7
       Height = 17
-      Top = 72
+      Top = 106
       Width = 128
       Alignment = taRightJustify
       AutoSize = False
@@ -315,9 +342,9 @@ object fmMCX: TfmMCX
     end
     object edThread: TComboBox
       Left = 143
-      Height = 27
+      Height = 28
       Hint = 'ThreadNum'
-      Top = 98
+      Top = 68
       Width = 192
       ItemHeight = 0
       ItemIndex = 3
@@ -341,7 +368,7 @@ object fmMCX: TfmMCX
     end
     object edMove: TEdit
       Left = 144
-      Height = 27
+      Height = 26
       Hint = 'MoveNum'
       Top = 131
       Width = 80
@@ -351,7 +378,7 @@ object fmMCX: TfmMCX
     end
     object edSession: TEdit
       Left = 143
-      Height = 27
+      Height = 26
       Hint = 'Session'
       Top = 9
       Width = 192
@@ -360,7 +387,7 @@ object fmMCX: TfmMCX
     end
     object edRespin: TSpinEdit
       Left = 143
-      Height = 27
+      Height = 26
       Hint = 'RespinNum'
       Top = 160
       Width = 84
@@ -398,7 +425,7 @@ object fmMCX: TfmMCX
     end
     object edBubble: TEdit
       Left = 144
-      Height = 27
+      Height = 26
       Hint = 'BubbleSize'
       Top = 234
       Width = 80
@@ -408,7 +435,7 @@ object fmMCX: TfmMCX
     end
     object edGate: TSpinEdit
       Left = 144
-      Height = 27
+      Height = 26
       Hint = 'GateNum'
       Top = 266
       Width = 93
@@ -423,7 +450,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoReflect'
       Top = 298
-      Width = 100
+      Width = 95
       Caption = 'Do Reflection'
       Checked = True
       OnChange = edRespinChange
@@ -435,7 +462,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoSave'
       Top = 298
-      Width = 97
+      Width = 92
       Caption = 'Save Fluence'
       Checked = True
       OnChange = edRespinChange
@@ -447,7 +474,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoNormalize'
       Top = 298
-      Width = 126
+      Width = 118
       Caption = 'Do Normalization'
       Checked = True
       OnChange = edRespinChange
@@ -456,7 +483,7 @@ object fmMCX: TfmMCX
     end
     object edConfigFile: TFileNameEdit
       Left = 144
-      Height = 27
+      Height = 26
       Hint = 'InputFile'
       Top = 38
       Width = 168
@@ -465,7 +492,6 @@ object fmMCX: TfmMCX
       HideDirectories = False
       ButtonWidth = 23
       NumGlyphs = 0
-      MaxLength = 0
       TabOrder = 1
       OnEditingDone = edRespinChange
       OnEnter = edConfigFileEnter
@@ -476,7 +502,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoAtomic'
       Top = 298
-      Width = 90
+      Width = 84
       Caption = 'Use Atomic'
       OnChange = edRespinChange
       OnClick = ckAtomicClick
@@ -484,9 +510,9 @@ object fmMCX: TfmMCX
     end
     object edBlockSize: TComboBox
       Left = 143
-      Height = 27
+      Height = 28
       Hint = 'ThreadBlock'
-      Top = 66
+      Top = 100
       Width = 80
       ItemHeight = 0
       ItemIndex = 0
@@ -503,7 +529,7 @@ object fmMCX: TfmMCX
   object mmOutput: TMemo
     Left = 0
     Height = 100
-    Top = 389
+    Top = 393
     Width = 668
     Align = alBottom
     Constraints.MinHeight = 100
@@ -520,7 +546,7 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 8
-    Top = 381
+    Top = 385
     Width = 668
     Align = alBottom
     ResizeAnchor = akBottom
@@ -1278,7 +1304,7 @@ object fmMCX: TfmMCX
   object ImageList1: TImageList
     Height = 24
     Width = 24
-    left = 616
+    left = 544
     top = 184
     Bitmap = {
       4C690E0000001800000018000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
@@ -2293,11 +2319,12 @@ object fmMCX: TfmMCX
     }
   end
   object acMCX: TActionList
-    left = 528
-    top = 168
+    left = 544
+    top = 120
     object mcxdoOpen: TAction
       Category = 'Files'
       Caption = 'Open'
+      Hint = 'Open an project file'
       ImageIndex = 0
       OnExecute = mcxdoOpenExecute
     end
@@ -2305,12 +2332,14 @@ object fmMCX: TfmMCX
       Category = 'Files'
       Caption = 'Save'
       Enabled = False
+      Hint = 'Save tasks to a project file'
       ImageIndex = 1
       OnExecute = mcxdoSaveExecute
     end
     object mcxdoExit: TAction
       Category = 'Files'
       Caption = 'Exit'
+      Hint = 'Exit MCX Studio'
       ImageIndex = 2
       OnExecute = mcxdoExitExecute
     end
@@ -2318,18 +2347,22 @@ object fmMCX: TfmMCX
       Category = 'Work'
       Caption = 'GPU'
       Enabled = False
+      Hint = 'List GPU Info'
       ImageIndex = 12
       OnExecute = mcxdoQueryExecute
     end
     object mcxdoAddItem: TAction
       Category = 'Jobs'
       Caption = 'New'
+      Hint = 'Add a new task'
       ImageIndex = 3
       OnExecute = mcxdoAddItemExecute
     end
     object mcxdoDeleteItem: TAction
       Category = 'SelectedJob'
       Caption = 'Delete'
+      Enabled = False
+      Hint = 'Delete selected task'
       ImageIndex = 4
       OnExecute = mcxdoDeleteItemExecute
     end
@@ -2337,6 +2370,7 @@ object fmMCX: TfmMCX
       Category = 'Preproc'
       Caption = 'Verify'
       Enabled = False
+      Hint = 'Verify parameters'
       ImageIndex = 5
       OnExecute = mcxdoVerifyExecute
     end
@@ -2344,6 +2378,7 @@ object fmMCX: TfmMCX
       Category = 'Work'
       Caption = 'Run'
       Enabled = False
+      Hint = 'Run selected task'
       ImageIndex = 6
       OnExecute = mcxdoRunExecute
     end
@@ -2351,6 +2386,7 @@ object fmMCX: TfmMCX
       Category = 'Work'
       Caption = 'Stop'
       Enabled = False
+      Hint = 'Terminate current task'
       ImageIndex = 7
       OnExecute = mcxdoStopExecute
     end
@@ -2358,44 +2394,46 @@ object fmMCX: TfmMCX
       Category = 'Work'
       Caption = 'Run All'
       Enabled = False
+      Hint = 'Run all tasks'
       ImageIndex = 8
     end
     object mcxdoHelp: TAction
       Category = 'Info'
       Caption = 'Help'
+      Hint = 'Browse help information'
       ImageIndex = 11
+      OnExecute = mcxdoHelpExecute
     end
     object mcxdoAbout: TAction
       Category = 'Info'
       Caption = 'About'
+      Hint = 'About the author'
       ImageIndex = 9
       OnExecute = mcxdoAboutExecute
     end
     object mcxdoWeb: TAction
       Category = 'Info'
       Caption = 'Web'
+      Hint = 'MCX homepage'
       ImageIndex = 10
+      OnExecute = mcxdoWebExecute
     end
     object mcxdoDefault: TAction
       Category = 'SelectedJob'
       Caption = 'Default'
+      Enabled = False
+      Hint = 'Set default values'
       ImageIndex = 13
       OnExecute = mcxdoDefaultExecute
     end
   end
   object acInteract: TActionList
-    left = 528
-    top = 224
+    left = 600
+    top = 120
     object mcxSetCurrent: TAction
       Caption = 'mcxSetCurrent'
       OnExecute = mcxSetCurrentExecute
     end
-  end
-  object tmMCXMain: TTimer
-    Enabled = False
-    Interval = 100
-    left = 608
-    top = 248
   end
   object pMCX: TAsyncProcess
     Active = False
@@ -2414,5 +2452,18 @@ object fmMCX: TfmMCX
     OnTerminate = pMCXTerminate
     left = 600
     top = 64
+  end
+  object OpenProject: TOpenDialog
+    Title = 'Open existing project'
+    Filter = 'MCX Projects|*.mcxp|All (*.*)|*.*'
+    left = 544
+    top = 248
+  end
+  object SaveProject: TSaveDialog
+    Title = 'Save project as'
+    DefaultExt = '.mcxp'
+    Filter = 'MCX Projects|*.mcxp|All (*.*)|*.*'
+    left = 600
+    top = 248
   end
 end
