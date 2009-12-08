@@ -240,9 +240,9 @@ end;
 procedure TfmMCX.mcxdoExitExecute(Sender: TObject);
 begin
     if(mcxdoSave.Enabled) then begin
-       if not (Application.MessageBox('The current session has not been saved, do you want to discard?',
+       if (Application.MessageBox('The current session has not been saved, do you want to save before exit?',
          'Confirm', MB_YESNOCANCEL)=IDYES) then
-            exit;
+            mcxdoSaveExecute(Sender);
     end;
     Close;
 end;
@@ -491,6 +491,8 @@ end;
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
      mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
+     if not (pMCX.Running) then
+         pMCXTerminate(Sender);
 end;
 
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
