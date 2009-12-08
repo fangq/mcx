@@ -1,16 +1,16 @@
 { This is an automatically generated lazarus resource file }
 
 LazarusResources.Add('TfmAbout','FORMDATA',[
-  'TPF0'#8'TfmAbout'#7'fmAbout'#4'Left'#3'-'#2#6'Height'#3#2#1#3'Top'#3#247#0#5
+  'TPF0'#8'TfmAbout'#7'fmAbout'#4'Left'#3#159#1#6'Height'#3#2#1#3'Top'#3#235#0#5
   +'Width'#3#178#1#13'ActiveControl'#7#7'Button1'#11'BorderIcons'#11#12'biSyste'
-  +'mMenu'#0#11'BorderStyle'#7#8'bsDialog'#7'Caption'#6#25'About Monte-Carlo eX'
-  +'treme'#12'ClientHeight'#3#2#1#11'ClientWidth'#3#178#1#8'Position'#7#15'poDe'
-  +'sktopCenter'#10'LCLVersion'#6#8'0.9.28.2'#0#6'TLabel'#6'Label1'#4'Left'#2'@'
-  +#6'Height'#3#197#0#3'Top'#2#8#5'Width'#3#8#1#7'Caption'#6#232'Monte Carlo eX'
-  +'treme (MCX)'#10#10'Version 0.2 (Aurora)'#10#10'Author: '#10'  Qianqian Fang'
-  +' <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imagin'
-  +'g'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  C'
-  +'harlestown, MA 02129, USA'#11'ParentColor'#8#0#0#7'TButton'#7'Button1'#4'Le'
-  +'ft'#3#184#0#6'Height'#2#25#3'Top'#3#216#0#5'Width'#2'K'#7'Caption'#6#2'OK'
+  +'mMenu'#0#11'BorderStyle'#7#8'bsDialog'#7'Caption'#6' About Monte Carlo eXtr'
+  +'eme Studio'#12'ClientHeight'#3#2#1#11'ClientWidth'#3#178#1#8'Position'#7#15
+  +'poDesktopCenter'#10'LCLVersion'#6#6'0.9.29'#0#6'TLabel'#6'Label1'#4'Left'#2
+  +'@'#6'Height'#3#207#0#3'Top'#2#8#5'Width'#3#23#1#7'Caption'#6#232'Monte Carl'
+  +'o eXtreme (MCX)'#10#10'Version 0.2 (Aurora)'#10#10'Author: '#10'  Qianqian '
+  +'Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Im'
+  +'aging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10
+  +'  Charlestown, MA 02129, USA'#11'ParentColor'#8#0#0#7'TButton'#7'Button1'#4
+  +'Left'#3#184#0#6'Height'#2#25#3'Top'#3#216#0#5'Width'#2'K'#7'Caption'#6#2'OK'
   +#11'ModalResult'#2#1#8'TabOrder'#2#0#0#0#0
 ]);
