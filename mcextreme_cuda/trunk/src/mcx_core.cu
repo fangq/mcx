@@ -594,6 +594,7 @@ void mcx_run_simulation(Config *cfg){
      fprintf(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",threadphoton,oddphotons,
            cfg->nphoton,cfg->nthread,cfg->respin);
      fprintf(cfg->flog,"initializing streams ...\t");
+     fflush(cfg->flog);
      fieldlen=dimxyz*cfg->maxgate;
 
      cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
@@ -625,12 +626,13 @@ void mcx_run_simulation(Config *cfg){
        twindow0=t;
        twindow1=t+cfg->tstep*cfg->maxgate;
 
-       fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.1fns %.1fns] ...\n",twindow0*1e9,twindow1*1e9);
+       fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.1fns %.1fns] ...\n"
+           ,twindow0*1e9,twindow1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
        for(iter=0;iter<cfg->respin;iter++){
 
-           fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1);
+           fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,cfg->steps,minstep,\
 	        	 twindow0,twindow1,cfg->tend,dimlen,cfg->isrowmajor,cfg->issave2pt,\
                 	 1.f/cfg->tstep,p0,c0,maxidx,cp0,cp1,cachebox,cfg->isreflect,cfg->isref3,cfg->minenergy,\
@@ -642,7 +644,7 @@ void mcx_run_simulation(Config *cfg){
                cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
                fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
-               fprintf(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);
+               fprintf(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
 
                mcx_cu_assess(cudaGetLastError());
 
@@ -676,7 +678,7 @@ void mcx_run_simulation(Config *cfg){
                            eabsorp+=absorp*cfg->prop[media[i]].mua;
        	       	       }
                        scale=energy[1]/(energy[0]+energy[1])/Vvox/cfg->tstep/eabsorp;
-                       fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);
+                       fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
                        mcx_normalize(field,scale,fieldlen);
                    }
                    fprintf(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
@@ -684,6 +686,7 @@ void mcx_run_simulation(Config *cfg){
                    fprintf(cfg->flog,"saving data to file ...\t");
                    mcx_savedata(field,fieldlen,cfg);
                    fprintf(cfg->flog,"saving data complete : %d ms\n",GetTimeMillis()-tic);
+                   fflush(cfg->flog);
                }
            }
 	   //initialize the next simulation
@@ -738,9 +741,10 @@ void mcx_run_simulation(Config *cfg){
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
      fprintf(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\n",
-             photoncount,cfg->nphoton,cfg->nthread,cfg->respin);
+             photoncount,cfg->nphoton,cfg->nthread,cfg->respin); fflush(cfg->flog);
      fprintf(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
-             energyloss,energyabsorbed,energyloss+energyabsorbed);
+             energyloss,energyabsorbed,energyloss+energyabsorbed);fflush(cfg->flog);
+     fflush(cfg->flog);
 
      cudaFree(gmedia);
      cudaFree(gfield);
