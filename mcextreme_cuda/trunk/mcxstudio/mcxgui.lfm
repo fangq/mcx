@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 436
+  Left = 431
   Height = 535
-  Top = 207
+  Top = 208
   Width = 668
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
@@ -1219,6 +1219,7 @@ object fmMCX: TfmMCX
           D6FFEFDED6FFEFDED6FFEFDED6FFEFDED6FFEFDED6FFEFDED6FFF7EFE7FFFF00
           FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
         }
+        OnClick = mcxdoHelpExecute
       end
       object MenuItem18: TMenuItem
         Action = mcxdoWeb
@@ -1298,6 +1299,7 @@ object fmMCX: TfmMCX
           FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
           FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
         }
+        OnClick = mcxdoWebExecute
       end
     end
   end
