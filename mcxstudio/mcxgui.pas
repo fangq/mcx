@@ -119,6 +119,8 @@ type
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
     procedure ckAtomicClick(Sender: TObject);
+    procedure FormDockOver(Sender: TObject; Source: TDragDockObject; X,
+      Y: Integer; State: TDragState; var Accept: Boolean);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
     procedure lvJobsDeletion(Sender: TObject; Item: TListItem);
@@ -143,8 +145,10 @@ type
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure plSettingDockDrop(Sender: TObject; Source: TDragDockObject; X,
-      Y: Integer);
+    procedure mmOutputDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure mmOutputMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
@@ -167,7 +171,7 @@ type
     procedure LoadTasksFromIni(fname: string);
     procedure RunExternalCmd(cmd: string);
     function  GetBrowserPath : string;
-    function  SearchForExe(const fname : string) : string;
+    function  SearchForExe(fname : string) : string;
   end;
 
 var
@@ -242,11 +246,16 @@ begin
 end;
 
 procedure TfmMCX.mcxdoExitExecute(Sender: TObject);
+var
+   ret:integer;
 begin
     if(mcxdoSave.Enabled) then begin
-       if (Application.MessageBox('The current session has not been saved, do you want to save before exit?',
-         'Confirm', MB_YESNOCANCEL)=IDYES) then
+       ret:=Application.MessageBox('The current session has not been saved, do you want to save before exit?',
+         'Confirm', MB_YESNOCANCEL);
+       if (ret=IDYES) then
             mcxdoSaveExecute(Sender);
+       if (ret=IDCANCEL) then
+            exit;
     end;
     Close;
 end;
@@ -337,6 +346,22 @@ begin
   if(ckAtomic.Checked) then begin
         ShowMessage('You selected to use atomic operations. We suggest you only using this mode when the accuracy near the source is critically important. Atomic mode is about 5 times slower than non-atomic one, and you should use a thread number between 500~1000.');
   end;
+end;
+
+procedure TfmMCX.FormDockOver(Sender: TObject; Source: TDragDockObject; X,
+  Y: Integer; State: TDragState; var Accept: Boolean);
+var
+   pos:TRect;
+   mm: TMemo;
+begin
+     Accept:=false;
+     if (Sender is TMemo) then
+        Accept:=true;
+     if(Accept) then begin
+          mm:=(Sender as TMemo);
+          pos:=Rect(0,Height-mm.Height, Width, Height);
+          mm.Dock(Self,pos);
+     end;
 end;
 
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
@@ -453,17 +478,21 @@ begin
   Proc := TProcess.Create(nil);
   try
     Proc.CommandLine := cmd;
-    PRoc.Options := Proc.Options + [poWaitOnExit];
+    //PRoc.Options := Proc.Options + [poWaitOnExit];
     PRoc.Execute;
   finally
     Proc.free;
   end;
 end;
 
-function TfmMCX.SearchForExe(const fname : string) : string;
+function TfmMCX.SearchForExe(fname : string) : string;
 begin
+   {$IFDEF WINDOWS}
+   if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
+           fname:=fname+'.exe';
+   {$ENDIF}
    Result :=
-    SearchFileInPath(fname, '', GetEnvironmentVariable('PATH'),
+    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
 end;
 
@@ -482,7 +511,7 @@ begin
    if Result = '' then
      Result := SearchForExe('open'); // mac os
    if Result = '' then
-     Result :='start'; // windows
+     Result :='cmd /c start'; // windows
 end;
 
 procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
@@ -504,26 +533,23 @@ begin
 
 end;
 
-procedure TfmMCX.plSettingDockDrop(Sender: TObject; Source: TDragDockObject; X,
-  Y: Integer);
+procedure TfmMCX.mmOutputDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
 begin
+         mmOutput.DragMode:=dmManual;
+end;
 
+procedure TfmMCX.mmOutputMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+    if(ssCtrl in Shift) then begin
+         mmOutput.DragMode:=dmAutomatic;
+    end;
 end;
 
 procedure TfmMCX.plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
-var
-   pos:TRect;
-   mm: TMemo;
 begin
-     Accept:=false;
-     if (Sender is TMemo) then
-        Accept:=true;
-     if(Accept) then begin
-          mm:=(Sender as TMemo);
-          pos:=Rect(0,Height-mm.Height, Width, Height);
-          mm.Dock(Self,pos);
-     end;
 end;
 
 procedure TfmMCX.pMCXReadData(Sender: TObject);
