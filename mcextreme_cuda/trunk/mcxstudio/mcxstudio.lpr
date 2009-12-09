@@ -15,6 +15,7 @@ uses
 begin
   Application.Title:='MCX Studio';
   {$I mcxstudio.lrs}
+  Application.Initialize;
   Application.CreateForm(TfmMCX, fmMCX);
   Application.Run;
 end.
