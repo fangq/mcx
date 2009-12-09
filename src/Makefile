@@ -25,7 +25,7 @@ ifeq ($(findstring Msys,$(PLATFORM)), Msys)
   CCC=nvcc
   LINKOPT=-L/c/CUDA/lib -lcudart --link
   INCLUDEDIRS +=-I/c/CUDA/include
-  CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE
+  CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
 else
