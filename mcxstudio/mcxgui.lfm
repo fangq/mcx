@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 431
+  Left = 286
   Height = 535
-  Top = 208
+  Top = 175
   Width = 668
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
@@ -9,6 +9,7 @@ object fmMCX: TfmMCX
   Caption = 'MCX Studio'
   ClientHeight = 513
   ClientWidth = 668
+  DockSite = True
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -250,6 +251,8 @@ object fmMCX: TfmMCX
     ClientWidth = 484
     Enabled = False
     TabOrder = 5
+    OnDockDrop = plSettingDockDrop
+    OnDockOver = plSettingDockOver
     object Label1: TLabel
       Left = 9
       Height = 17
@@ -438,7 +441,7 @@ object fmMCX: TfmMCX
       Height = 26
       Hint = 'GateNum'
       Top = 266
-      Width = 93
+      Width = 83
       MaxValue = 100000
       MinValue = 1
       OnChange = edRespinChange
@@ -493,9 +496,7 @@ object fmMCX: TfmMCX
       ButtonWidth = 23
       NumGlyphs = 0
       TabOrder = 1
-      OnEditingDone = edRespinChange
-      OnEnter = edConfigFileEnter
-      OnExit = edConfigFileExit
+      OnChange = edRespinChange
     end
     object ckAtomic: TCheckBox
       Left = 341
@@ -533,11 +534,14 @@ object fmMCX: TfmMCX
     Width = 668
     Align = alBottom
     Constraints.MinHeight = 100
+    DragKind = dkDock
+    DragMode = dmAutomatic
     Font.Height = -11
     Font.Name = 'Monospace'
     Lines.Strings = (
       'Output:'
     )
+    OnDragDrop = mmOutputDragDrop
     ParentFont = False
     ScrollBars = ssAutoBoth
     TabOrder = 1
@@ -2467,5 +2471,21 @@ object fmMCX: TfmMCX
     Filter = 'MCX Projects|*.mcxp|All (*.*)|*.*'
     left = 600
     top = 248
+  end
+  object pExternal: TProcess
+    Active = False
+    Options = []
+    Priority = ppNormal
+    StartupOptions = []
+    ShowWindow = swoNone
+    WindowColumns = 0
+    WindowHeight = 0
+    WindowLeft = 0
+    WindowRows = 0
+    WindowTop = 0
+    WindowWidth = 0
+    FillAttribute = 0
+    left = 600
+    top = 184
   end
 end
