@@ -457,6 +457,8 @@ begin
         MapList.Add(lvJobs.Columns.Items[i].Caption);
     end;
     ProfileChanged:=false;
+    if not (SearchForExe(CreateCmdOnly) = '') then
+        mcxdoQuery.Enabled:=true;
 end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
