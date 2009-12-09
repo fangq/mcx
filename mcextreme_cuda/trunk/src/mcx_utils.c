@@ -21,13 +21,13 @@
 #include "mcx_utils.h"
 
 char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B',
-                 'd','r','S','p','e','U','R','l','L','I','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflect3","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu",""};
+                 "--printgpu","--root",""};
 
 void mcx_savedata(float *dat,int len,Config *cfg){
      FILE *fp;
@@ -52,7 +52,7 @@ void mcx_normalize(float field[], float scale, int fieldlen){
 }
 
 void mcx_error(int id,char *msg){
-     fprintf(stderr,"MCX ERROR(%d):%s\n",id,msg);
+     fprintf(stdout,"MCX ERROR(%d):%s\n",id,msg);
      exit(id);
 }
 
@@ -113,6 +113,7 @@ void mcx_initcfg(Config *cfg){
      cfg->minenergy=0.f;
      cfg->flog=stdout;
      cfg->sradius=0.f;
+     cfg->rootpath[0]='\0';
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -166,6 +167,14 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 	 cfg->maxgate=gates;
 
      fscanf(in,"%s", filename);
+     if(cfg->rootpath[0]){
+#ifndef LINUX
+         sprintf(comment,"%s\\%s",cfg->rootpath,filename);
+#else
+         sprintf(comment,"%s/%s",cfg->rootpath,filename);
+#endif
+         strncpy(filename,comment,MAX_PATH_LENGTH);
+     }
      fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
@@ -273,7 +282,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
      int datalen,res;
      FILE *fp=fopen(filename,"rb");
      if(fp==NULL){
-     	     mcx_error(-5,"the specified binary volume file does not exist");
+     	     mcx_error(-5,filename);
      }
      if(cfg->vol){
      	     free(cfg->vol);
@@ -417,6 +426,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		                break;
 		     case 'I':  cfg->isgpuinfo=1;
 		                break;
+		     case 'o':
+		     	        i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
+		     	        break;
 		}
 	    }
 	    i++;

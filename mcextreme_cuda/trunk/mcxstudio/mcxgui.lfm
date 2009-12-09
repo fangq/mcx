@@ -112,7 +112,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 449
+      Left = 489
       Top = 2
       Action = mcxdoHelp
       ParentShowHint = False
@@ -133,7 +133,7 @@ object fmMCX: TfmMCX
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 489
+      Left = 449
       Top = 2
       Action = mcxdoAbout
       ParentShowHint = False
@@ -2458,10 +2458,10 @@ object fmMCX: TfmMCX
   end
   object pMCX: TAsyncProcess
     Active = False
-    Options = [poUsePipes]
+    Options = [poUsePipes, poStderrToOutPut]
     Priority = ppNormal
     StartupOptions = []
-    ShowWindow = swoNone
+    ShowWindow = swoHIDE
     WindowColumns = 0
     WindowHeight = 0
     WindowLeft = 0

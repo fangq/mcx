@@ -60,6 +60,7 @@ typedef struct MCXConfig{
 	char isgpuinfo;     /*1 to print gpu info when attach, 0 do not print*/
         float minenergy;    /*minimum energy to propagate photon*/
         FILE *flog;         /*stream handle to print log information*/
+  char rootpath[MAX_PATH_LENGTH];
 } Config;
 
 #ifdef	__cplusplus
