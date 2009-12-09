@@ -47,7 +47,7 @@
         <UnitName Value="mcxstudio"/>
         <CursorPos X="26" Y="18"/>
         <TopLine Value="1"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="2"/>
         <UsageCount Value="60"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -57,7 +57,7 @@
         <ComponentName Value="fmMCX"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mcxgui"/>
-        <CursorPos X="1" Y="491"/>
+        <CursorPos X="20" Y="478"/>
         <TopLine Value="474"/>
         <EditorIndex Value="0"/>
         <UsageCount Value="60"/>
@@ -245,27 +245,21 @@
         <Filename Value="../../../../../../../Application/lazarus/lcl/include/fileutil.inc"/>
         <CursorPos X="21" Y="1486"/>
         <TopLine Value="1445"/>
-        <EditorIndex Value="4"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
       </Unit29>
       <Unit30>
         <Filename Value="../../../../../../../Application/lazarus/fpc/2.2.4/source/rtl/win32/system.pp"/>
         <UnitName Value="System"/>
         <CursorPos X="2" Y="40"/>
         <TopLine Value="283"/>
-        <EditorIndex Value="3"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
       </Unit30>
       <Unit31>
         <Filename Value="../../../../../../../Application/lazarus/lcl/forms.pp"/>
         <UnitName Value="Forms"/>
         <CursorPos X="71" Y="1225"/>
         <TopLine Value="1208"/>
-        <EditorIndex Value="2"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit31>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">

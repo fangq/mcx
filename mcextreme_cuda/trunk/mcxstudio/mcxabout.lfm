@@ -11,13 +11,13 @@ object fmAbout: TfmAbout
   ClientWidth = 434
   Color = clBlack
   Position = poMainFormCenter
-  LCLVersion = '0.9.28.2'
+  LCLVersion = '0.9.29'
   object Label1: TLabel
     Left = 40
-    Height = 105
-    Top = 128
-    Width = 245
-    Caption = #10#10'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
+    Height = 123
+    Top = 135
+    Width = 279
+    Caption = 'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
     Font.Color = 11645361
     ParentColor = False
     ParentFont = False
