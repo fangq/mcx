@@ -15,7 +15,7 @@ uses
   Classes, SysUtils, process, FileUtil, LResources, Forms, Controls,
   Graphics, Dialogs, StdCtrls, Menus, ComCtrls, ExtCtrls, Spin,
   EditBtn, Buttons, ActnList, lcltype, AsyncProcess,
-  inifiles, mcxabout, unix;
+  inifiles, mcxabout;
 
 type
 
@@ -89,7 +89,7 @@ type
     grArray: TRadioGroup;
     edRespin: TSpinEdit;
     edGate: TSpinEdit;
-    Process1: TProcess;
+    pExternal: TProcess;
     SaveProject: TSaveDialog;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
@@ -119,8 +119,6 @@ type
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
     procedure ckAtomicClick(Sender: TObject);
-    procedure edConfigFileEnter(Sender: TObject);
-    procedure edConfigFileExit(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
     procedure lvJobsDeletion(Sender: TObject; Item: TListItem);
@@ -144,6 +142,11 @@ type
       Selected: Boolean);
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
+    procedure mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure plSettingDockDrop(Sender: TObject; Source: TDragDockObject; X,
+      Y: Integer);
+    procedure plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
+      Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
     procedure ToolButton14Click(Sender: TObject);
@@ -162,6 +165,7 @@ type
     function  GetMCXOutput (outputstr: string) : string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
+    procedure RunExternalCmd(cmd: string);
     function  GetBrowserPath : string;
     function  SearchForExe(const fname : string) : string;
   end;
@@ -230,7 +234,7 @@ begin
        fed:=Sender as TFileNameEdit;
        idx:=MapList.IndexOf(fed.Hint);
        if(idx>=0) then
-                  node.SubItems.Strings[idx]:=fed.FileName;
+                  node.SubItems.Strings[idx]:=fed.Text;
     end;
     UpdateMCXActions(acMCX,'','Work');
     except
@@ -249,7 +253,7 @@ end;
 
 procedure TfmMCX.mcxdoHelpExecute(Sender: TObject);
 begin
-   Shell(GetBrowserPath + ' http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
+   RunExternalCmd(GetBrowserPath + ' http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
 end;
 
 procedure TfmMCX.mcxdoAddItemExecute(Sender: TObject);
@@ -333,16 +337,6 @@ begin
   if(ckAtomic.Checked) then begin
         ShowMessage('You selected to use atomic operations. We suggest you only using this mode when the accuracy near the source is critically important. Atomic mode is about 5 times slower than non-atomic one, and you should use a thread number between 500~1000.');
   end;
-end;
-
-procedure TfmMCX.edConfigFileEnter(Sender: TObject);
-begin
-  lvJobs.Enabled:=false;
-end;
-
-procedure TfmMCX.edConfigFileExit(Sender: TObject);
-begin
-  lvJobs.Enabled:=true;
 end;
 
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
@@ -452,6 +446,19 @@ begin
      end
 end;
 
+procedure TfmMCX.RunExternalCmd(cmd: string);
+var
+  Proc : TProcess;
+begin
+  Proc := TProcess.Create(nil);
+  try
+    Proc.CommandLine := cmd;
+    PRoc.Options := Proc.Options + [poWaitOnExit];
+    PRoc.Execute;
+  finally
+    Proc.free;
+  end;
+end;
 
 function TfmMCX.SearchForExe(const fname : string) : string;
 begin
@@ -472,11 +479,15 @@ begin
      Result := SearchForExe('mozilla');
    if Result = '' then
      Result := SearchForExe('opera');
+   if Result = '' then
+     Result := SearchForExe('open'); // mac os
+   if Result = '' then
+     Result :='start'; // windows
 end;
 
 procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
 begin
-  Shell(GetBrowserPath + ' http://mcx.sourceforge.net');
+  RunExternalCmd(GetBrowserPath + ' http://mcx.sourceforge.net');
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
@@ -485,6 +496,33 @@ begin
          ListToPanel2(lvJobs.Selected);
          plSetting.Enabled:=true;
          mcxdoVerify.Enabled:=true;
+     end;
+end;
+
+procedure TfmMCX.mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
+begin
+
+end;
+
+procedure TfmMCX.plSettingDockDrop(Sender: TObject; Source: TDragDockObject; X,
+  Y: Integer);
+begin
+
+end;
+
+procedure TfmMCX.plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
+  Y: Integer; State: TDragState; var Accept: Boolean);
+var
+   pos:TRect;
+   mm: TMemo;
+begin
+     Accept:=false;
+     if (Sender is TMemo) then
+        Accept:=true;
+     if(Accept) then begin
+          mm:=(Sender as TMemo);
+          pos:=Rect(0,Height-mm.Height, Width, Height);
+          mm.Dock(Self,pos);
      end;
 end;
 
