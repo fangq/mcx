@@ -409,12 +409,14 @@ begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmd;
           //pMCX.CommandLine:='du /usr/ --max-depth=1';
-          pMCX.Options := [poUsePipes];
+          pMCX.Options := pMCX.Options+[poUsePipes];
           AddLog('-- Executing MCX --');
           pMCX.Execute;
           mcxdoStop.Enabled:=true;
           mcxdoRun.Enabled:=false;
           sbInfo.Panels[0].Text := 'Status: busy';
+          sbInfo.Color := clRed;
+          Application.ProcessMessages;
     end;
 end;
 
@@ -564,6 +566,7 @@ begin
      mcxdoStop.Enabled:=false;
      mcxdoRun.Enabled:=true;
      sbInfo.Panels[0].Text := 'Status: idle';
+     sbInfo.Color := clBtnFace;
      AddLog('Task complete');
 end;
 
@@ -701,7 +704,8 @@ begin
     if(Length(edSession.Text)>0) then
        cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
     if(Length(edConfigFile.FileName)>0) then
-       cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)+'" ';
+       cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)
+         +'" --root "'+ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName))+'" ';
     try
         nthread:=StrToInt(edThread.Text);
         nmove:=StrToInt(edMove.Text);
