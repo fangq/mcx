@@ -168,7 +168,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 
      fscanf(in,"%s", filename);
      if(cfg->rootpath[0]){
-#ifndef LINUX
+#ifdef WIN32
          sprintf(comment,"%s\\%s",cfg->rootpath,filename);
 #else
          sprintf(comment,"%s/%s",cfg->rootpath,filename);
