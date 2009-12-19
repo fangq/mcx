@@ -282,7 +282,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
      int datalen,res;
      FILE *fp=fopen(filename,"rb");
      if(fp==NULL){
-     	     mcx_error(-5,filename);
+     	     mcx_error(-5,"the specified binary volume file does not exist");
      }
      if(cfg->vol){
      	     free(cfg->vol);

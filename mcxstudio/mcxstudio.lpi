@@ -8,13 +8,13 @@
       <Title Value="MCX Studio"/>
       <Icon Value="0"/>
       <UseXPManifest Value="True"/>
-      <ActiveEditorIndexAtStart Value="0"/>
+      <ActiveEditorIndexAtStart Value="2"/>
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <CurrentMajorRevNr Value="5"/>
-      <CurrentBuildNr Value="392"/>
+      <CurrentBuildNr Value="393"/>
       <ProjectVersion Value="0.0.0.1"/>
       <FileDescription Value="GUI for Monte Carlo eXtreme"/>
       <LegalCopyright Value="2009 Qianqian Fang"/>
@@ -40,14 +40,14 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="33">
+    <Units Count="34">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="mcxstudio"/>
         <CursorPos X="26" Y="18"/>
         <TopLine Value="1"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <UsageCount Value="63"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -57,7 +57,7 @@
         <ComponentName Value="fmMCX"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mcxgui"/>
-        <CursorPos X="79" Y="470"/>
+        <CursorPos X="4" Y="445"/>
         <TopLine Value="443"/>
         <EditorIndex Value="0"/>
         <UsageCount Value="63"/>
@@ -69,7 +69,7 @@
         <ComponentName Value="fmAbout"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mcxabout"/>
-        <CursorPos X="27" Y="7"/>
+        <CursorPos X="59" Y="17"/>
         <TopLine Value="1"/>
         <EditorIndex Value="1"/>
         <UsageCount Value="62"/>
@@ -267,8 +267,17 @@
         <TopLine Value="8"/>
         <UsageCount Value="10"/>
       </Unit32>
+      <Unit33>
+        <Filename Value="../../../../../../../../../usr/lib/lazarus/lcl/interfaces/gtk2/gtk2themes.pas"/>
+        <UnitName Value="Gtk2Themes"/>
+        <CursorPos X="1" Y="198"/>
+        <TopLine Value="182"/>
+        <EditorIndex Value="2"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit33>
     </Units>
-    <JumpHistory Count="29" HistoryIndex="28">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxgui.pas"/>
         <Caret Line="491" Column="1" TopLine="474"/>
@@ -385,6 +394,10 @@
         <Filename Value="mcxgui.pas"/>
         <Caret Line="460" Column="14" TopLine="443"/>
       </Position29>
+      <Position30>
+        <Filename Value="mcxabout.pas"/>
+        <Caret Line="17" Column="59" TopLine="1"/>
+      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
