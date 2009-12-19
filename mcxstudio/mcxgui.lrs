@@ -3,7 +3,7 @@
 LazarusResources.Add('TfmMCX','FORMDATA',[
   'TPF0'#6'TfmMCX'#5'fmMCX'#4'Left'#3't'#1#6'Height'#3'4'#2#3'Top'#3#164#0#5'Wi'
   +'dth'#3#167#2#13'ActiveControl'#7#6'lvJobs'#11'BorderIcons'#11#12'biSystemMe'
-  +'nu'#10'biMinimize'#0#11'BorderStyle'#7#8'bsDialog'#7'Caption'#6#10'MCX Stud'
+  +'nu'#10'biMinimize'#0#11'BorderStyle'#7#8'bsSingle'#7'Caption'#6#10'MCX Stud'
   +'io'#12'ClientHeight'#3#30#2#11'ClientWidth'#3#167#2#9'Icon.Data'#10'B'#1#0#0
   +'>'#1#0#0#0#0#1#0#1#0#16#16#16#0#0#0#0#0'('#1#0#0#22#0#0#0'('#0#0#0#16#0#0#0
   +' '#0#0#0#1#0#4#0#0#0#0#0#192#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0
@@ -2542,8 +2542,8 @@ LazarusResources.Add('TfmMCX','FORMDATA',[
   +#4'Hint'#6#17'Verify parameters'#10'ImageIndex'#2#5#9'OnExecute'#7#18'mcxdoV'
   +'erifyExecute'#0#0#7'TAction'#8'mcxdoRun'#8'Category'#6#4'Work'#7'Caption'#6
   +#3'Run'#7'Enabled'#8#4'Hint'#6#17'Run selected task'#10'ImageIndex'#2#6#9'On'
-  +'Execute'#7#15'mcxdoRunExecute'#0#0#7'TAction'#9'mcxdoStop'#8'Category'#6#4
-  +'Work'#7'Caption'#6#4'Stop'#7'Enabled'#8#4'Hint'#6#22'Terminate current task'
+  +'Execute'#7#15'mcxdoRunExecute'#0#0#7'TAction'#9'mcxdoStop'#8'Category'#6#3
+  +'Run'#7'Caption'#6#4'Stop'#7'Enabled'#8#4'Hint'#6#22'Terminate current task'
   +#10'ImageIndex'#2#7#9'OnExecute'#7#16'mcxdoStopExecute'#0#0#7'TAction'#11'mc'
   +'xdoRunAll'#8'Category'#6#4'Work'#7'Caption'#6#7'Run All'#7'Enabled'#8#4'Hin'
   +'t'#6#13'Run all tasks'#10'ImageIndex'#2#8#0#0#7'TAction'#9'mcxdoHelp'#8'Cat'
