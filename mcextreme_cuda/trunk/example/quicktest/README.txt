@@ -16,7 +16,7 @@ listgpu.sh
 run_qtest.sh
     This will run MCX for a simple homogeneous medium as 
     the example used in the Fang2009 paper. It will launch 
-    only ~1 million photons and take roughly half a second. 
+    only 0.3 million photons and take roughly half a second. 
 
 run_qtest_silent.sh
     This script does the same thing as run_qtest.sh, 

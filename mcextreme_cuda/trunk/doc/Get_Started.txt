@@ -1,17 +1,16 @@
 
-   #[1]Monte Carlo eXtreme: photon migration on graphics cards
+==   #[1]Monte Carlo eXtreme: photon migration on graphics cards  ==
 
 Getting Started with MCX
 
                 1.1. [2]example/quicktest
-
                 1.2. [3]example/validation
 
-   To get started with MCX, please check out the examples under <mcx>/example
-   directory. These examples are meant to run out-of-box (given that your
-   system are properly configured, see [4]Doc/Installation). For each example,
-   you can find one or more shell scripts (usually ended with ".sh"). Try to
-   run  them one by one and get a feel with MCX simulations. You are also
+   To  get  started  with  MCX,  please  check  out the [4]examples under
+   <mcx>/example directory. These examples are meant to run out-of-box (given
+   that your system is properly configured, see [5]Doc/Installation). For each
+   example, you can find one or more shell scripts (usually ended with ".sh").
+   Try to run them one by one and get a feel with MCX simulations. You are also
    encouraged to open these scripts or input files (*.inp) with a text editor
    to learn the command formats of these files.
 
@@ -22,13 +21,13 @@ Getting Started with MCX
    under this folder, you can find three scripts:
 
    listgpu.sh
-          A script to call mcx to print the GPU information only. Run this
-          script and find out how many GPUs you have in your graphics card and
-          the related parameters (memory, cores etc)
+          A script to call mcx to print the GPU information. Run this script
+          and find out how many GPUs you have in your graphics card and the
+          related parameters (memory, cores etc)
 
    run_qtest.sh
           This will run MCX for a simple homogeneous media as the example used
-          in [5]the paper. It will launch only ~1 million photons and take
+          in [6]the paper. It will launch only ~1 million photons and take
           roughly half a second.
 
    run_qtest_silent.sh
@@ -40,7 +39,7 @@ Getting Started with MCX
 
    run_validation.sh
           This script will reproduce the homogeneous simulation case discussed
-          in section 3 of [6]the paper. No boundary reflection is considered in
+          in section 3 of [7]the paper. No boundary reflection is considered in
           this simulation. A total of 100 million photons will be simulated and
           the output data will be saved as semi_infinite.mc2.
 
@@ -54,7 +53,7 @@ Getting Started with MCX
    plotsimudata.m
           after running the previous two simulations, you can now reproduce
           Fig. 5 in the paper to validate the output solutions. You need to run
-          Matlab or [7][GNU octave], and add path to <mcx>/utils, and run
+          Matlab or [8][GNU octave], and add path to <mcx>/utils, and run
           "plotsimudata". Four figures will be plotted comparing the analytical
           solution and MCX output.
 
@@ -63,7 +62,8 @@ References
    1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
    2. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Basics#example_quicktest
    3. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Basics#example_validation
-   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
-   5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Examples
+   5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
-   7. http://www.gnu.org/software/octave/
+   7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+   8. http://www.gnu.org/software/octave/
