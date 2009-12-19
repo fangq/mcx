@@ -66,5 +66,5 @@ clean:
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX)
 cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
-	   echo "Please first install CUDA SDK or add path to nvcc to your PATH environment variable."; exit 1;\
+	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
 	fi
