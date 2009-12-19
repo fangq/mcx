@@ -246,6 +246,7 @@ begin
                   node.SubItems.Strings[idx]:=fed.Text;
     end;
     UpdateMCXActions(acMCX,'','Work');
+    UpdateMCXActions(acMCX,'','Run');
     except
     end;
 end;
@@ -290,6 +291,7 @@ begin
    mcxdoDefaultExecute(nil);
    edSession.Text:=sessionid;
    UpdateMCXActions(acMCX,'','Work');
+   UpdateMCXActions(acMCX,'','Run');
    UpdateMCXActions(acMCX,'Preproc','');
    UpdateMCXActions(acMCX,'SelectedJob','');
 end;
@@ -393,8 +395,7 @@ begin
           AddLog('-- Executing MCX --');
           pMCX.Execute;
 
-          mcxdoStop.Enabled:=true;
-          mcxdoRun.Enabled:=false;
+          UpdateMCXActions(acMCX,'Run','');
     end;
 end;
 
@@ -410,6 +411,7 @@ begin
           mcxdoRun.Enabled:=false;
           sbInfo.Panels[0].Text := 'Status: busy';
           sbInfo.Color := clRed;
+          UpdateMCXActions(acMCX,'Run','');
           Application.ProcessMessages;
     end;
 end;
@@ -431,7 +433,8 @@ begin
      Sleep(1000);
      if(not pMCX.Running) then begin
           mcxdoStop.Enabled:=false;
-          mcxdoRun.Enabled:=true;
+          if(mcxdoVerify.Enabled) then
+             mcxdoRun.Enabled:=true;
           AddLog('-- Stopped MCX --');
      end
 end;
@@ -581,10 +584,12 @@ end;
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      mcxdoStop.Enabled:=false;
-     mcxdoRun.Enabled:=true;
+     if(mcxdoVerify.Enabled) then
+         mcxdoRun.Enabled:=true;
      sbInfo.Panels[0].Text := 'Status: idle';
      sbInfo.Color := clBtnFace;
      AddLog('Task complete');
+     UpdateMCXActions(acMCX,'','Run');
 end;
 
 procedure TfmMCX.ToolButton14Click(Sender: TObject);
@@ -692,7 +697,6 @@ begin
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
        raise Exception.Create('Can not find mcx in the search path');
-
 
     UpdateMCXActions(acMCX,'Work','');
   except

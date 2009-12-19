@@ -5,7 +5,7 @@ object fmMCX: TfmMCX
   Width = 679
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
-  BorderStyle = bsDialog
+  BorderStyle = bsSingle
   Caption = 'MCX Studio'
   ClientHeight = 542
   ClientWidth = 679
@@ -2423,7 +2423,7 @@ object fmMCX: TfmMCX
       OnExecute = mcxdoRunExecute
     end
     object mcxdoStop: TAction
-      Category = 'Work'
+      Category = 'Run'
       Caption = 'Stop'
       Enabled = False
       Hint = 'Terminate current task'
