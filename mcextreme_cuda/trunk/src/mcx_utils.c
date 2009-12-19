@@ -460,6 +460,7 @@ void mcx_usage(char *exename){
 ######################################################################################\n\
 $MCX $Rev::     $, Last Commit: $Date::                         $ by $Author::       $\n\
 ######################################################################################\n\
+\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
  -i 	       (--interactive) interactive mode\n\
