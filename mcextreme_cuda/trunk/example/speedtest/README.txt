@@ -11,7 +11,7 @@ To run this example, you need to first compile the mcx
 binary, and then run "runspeedbench.sh > speed.log" 
 command. This may take up to 10 minutes to run all the 
 tests. To make sure nothing goes wrong, it is probably
-a better idea to run runspeedbench.sh without the 
+a good idea to run runspeedbench.sh without the 
 redirection first, and make sure everything compiles
 and runs properly.
 
@@ -23,7 +23,9 @@ Fig. 7 in Fang2009.
 For some simulations with more threads, you may 
 experience the "kernel launch timed-out" error.
 Please read the doc/FAQ.txt to find out why.
-
+If you have configured a dedicated GPU, you can
+edit the runspeedbench.sh script and uncommend
+the test settings for the dedicated cases.
 
 [Fang2009]   Qianqian Fang and David A. Boas, "Monte Carlo 
    Simulation of Photon Migration in 3D Turbid Media Accelerated 
