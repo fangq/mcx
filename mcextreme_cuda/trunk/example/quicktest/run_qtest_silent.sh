@@ -4,4 +4,4 @@ if [ ! -e semi60x60x60.bin ]; then
   perl -pi -e 's/\x0/\x1/g' semi60x60x60.bin
 fi
 
-time ../../bin/mcx -t 1792 -g 10 -m 100000 -f qtest.inp -s qtest -r 1 -a 0 -b 0 -p 18 -l
+../../bin/mcx -t 1792 -g 10 -m 100000 -f qtest.inp -s qtest -r 1 -a 0 -b 0 -p 18 -l

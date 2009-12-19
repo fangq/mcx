@@ -20,7 +20,7 @@ CPPOPT=-g -Wall
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=../../src/tictoc rngspeed
+FILES=rngspeed
 
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -o)
@@ -55,10 +55,10 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
 
 %$(OBJSUFFIX): %.c
-	$(CCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+	$(CCC) $(INCLUDEDIRS) $(CPPOPT) $(OPT) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cu
-	$(CUDACC) -c $(CUCCOPT) -o $@  $<
+	$(CUDACC) -c $(CUCCOPT) $(OPT) -o $@  $<
 
 clean:
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX)
