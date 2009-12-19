@@ -455,10 +455,10 @@ void mcx_usage(char *exename){
 ######################################################################################\n\
 #                       Monte Carlo eXtreme (MCX) -- CUDA                            #\n\
 #              Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>                  #\n\
-#                            MCX Reversion: $Rev$                                   #\n\
+#                                                                                    #\n\
 #      Martinos Center for Biomedical Imaging, Massachusetts General Hospital        #\n\
 ######################################################################################\n\
-:: MCX Reversion: $Rev::   $, Last Commit Date: $Date::                   $ by $Author::        $
+:: MCX $Rev::   $, Last Commit: $Date::                           $ by $Author::      $\n\
 ######################################################################################\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
