@@ -24,9 +24,12 @@ do
   echo 'run MCX with various threads and photon numbers'
 
   nthread="128 256 512 1024 1280 1536 1792"
-#  nthread="512 640 1024 1280 1536 1792"
   nphoton="10000 100000 1000000"
-#  nphoton="1000000"
+
+### use the following setting for dedicated GPU
+#  nthread="1024 1792 2048 4096 5120 6144 7168 8192"
+#  nphoton="100000"
+
   mcxbin="../../bin/mcx"
 
   for th in $nthread
