@@ -1,15 +1,14 @@
 object fmMCX: TfmMCX
-  Left = 501
-  Height = 535
-  Top = 168
-  Width = 668
+  Left = 372
+  Height = 564
+  Top = 164
+  Width = 679
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsDialog
   Caption = 'MCX Studio'
-  ClientHeight = 535
-  ClientWidth = 668
-  DockSite = True
+  ClientHeight = 542
+  ClientWidth = 679
   Icon.Data = {
     3E01000000000100010010101000000000002801000016000000280000001000
     0000200000000100040000000000C00000000000000000000000000000000000
@@ -33,14 +32,14 @@ object fmMCX: TfmMCX
     Left = 0
     Height = 54
     Top = 0
-    Width = 668
+    Width = 679
     ButtonHeight = 50
     ButtonWidth = 40
     Caption = 'ToolBar1'
     EdgeBorders = [ebTop, ebBottom]
     Images = ImageList1
     ShowCaptions = True
-    TabOrder = 2
+    TabOrder = 1
     object ToolButton1: TToolButton
       Left = 1
       Top = 2
@@ -56,7 +55,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 622
+      Left = 589
       Top = 2
       Action = mcxdoExit
       ParentShowHint = False
@@ -77,70 +76,70 @@ object fmMCX: TfmMCX
       Style = tbsDivider
     end
     object ToolButton6: TToolButton
-      Left = 236
+      Left = 229
       Top = 2
       Action = mcxdoDeleteItem
       ParentShowHint = False
       ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 295
+      Left = 281
       Top = 2
       Action = mcxdoVerify
       ParentShowHint = False
       ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 341
+      Left = 321
       Top = 2
       Action = mcxdoRun
       ParentShowHint = False
       ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 381
+      Left = 361
       Top = 2
       Action = mcxdoStop
       ParentShowHint = False
       ShowHint = True
     end
     object tbtRunAll: TToolButton
-      Left = 421
+      Left = 401
       Top = 2
       Action = mcxdoRunAll
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 530
+      Left = 497
       Top = 2
       Action = mcxdoHelp
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 284
+      Left = 270
       Top = 2
       Width = 11
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 472
+      Left = 446
       Top = 2
       Width = 11
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 483
+      Left = 457
       Top = 2
       Action = mcxdoAbout
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 570
+      Left = 537
       Top = 2
       Action = mcxdoWeb
       ParentShowHint = False
@@ -168,7 +167,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 610
+      Left = 577
       Top = 2
       Width = 12
       Caption = 'ToolButton8'
@@ -177,9 +176,9 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 22
-    Top = 513
-    Width = 668
+    Height = 20
+    Top = 522
+    Width = 679
     Panels = <    
       item
         Text = 'Status: idle'
@@ -195,7 +194,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 330
+    Height = 322
     Top = 54
     Width = 176
     Align = alLeft
@@ -251,26 +250,26 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 330
+    Height = 322
     Top = 54
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 330
+    Height = 322
     Top = 54
-    Width = 484
+    Width = 495
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 330
-    ClientWidth = 484
+    ClientHeight = 322
+    ClientWidth = 495
     Enabled = False
-    TabOrder = 5
+    TabOrder = 4
     OnDockOver = plSettingDockOver
     object Label1: TLabel
       Left = 8
       Height = 17
-      Top = 73
+      Top = 76
       Width = 149
       Alignment = taRightJustify
       AutoSize = False
@@ -280,7 +279,7 @@ object fmMCX: TfmMCX
     object Label3: TLabel
       Left = 8
       Height = 17
-      Top = 133
+      Top = 136
       Width = 149
       Alignment = taRightJustify
       AutoSize = False
@@ -290,7 +289,7 @@ object fmMCX: TfmMCX
     object Label4: TLabel
       Left = 7
       Height = 17
-      Top = 12
+      Top = 16
       Width = 149
       Alignment = taRightJustify
       AutoSize = False
@@ -300,7 +299,7 @@ object fmMCX: TfmMCX
     object Label5: TLabel
       Left = 8
       Height = 17
-      Top = 163
+      Top = 166
       Width = 149
       Alignment = taRightJustify
       AutoSize = False
@@ -340,7 +339,7 @@ object fmMCX: TfmMCX
     object Label10: TLabel
       Left = 7
       Height = 17
-      Top = 42
+      Top = 46
       Width = 149
       Alignment = taRightJustify
       AutoSize = False
@@ -359,12 +358,12 @@ object fmMCX: TfmMCX
     end
     object edThread: TComboBox
       Left = 176
-      Height = 21
+      Height = 28
       Hint = 'ThreadNum'
       Top = 68
       Width = 192
       ItemHeight = 0
-      ItemIndex = 3
+      ItemIndex = 8
       Items.Strings = (
         '128'
         '256'
@@ -377,25 +376,31 @@ object fmMCX: TfmMCX
         '1792'
         '1920'
         '2048'
+        '3072'
+        '4096'
+        '5120'
+        '6144'
+        '7168'
+        '8192'
       )
       MaxLength = 65535
       OnChange = edRespinChange
       TabOrder = 2
-      Text = '1024'
+      Text = '1792'
     end
     object edMove: TEdit
-      Left = 177
-      Height = 22
+      Left = 176
+      Height = 26
       Hint = 'MoveNum'
       Top = 131
       Width = 80
       OnChange = edRespinChange
-      TabOrder = 3
+      TabOrder = 4
       Text = '1000000'
     end
     object edSession: TEdit
       Left = 176
-      Height = 22
+      Height = 26
       Hint = 'Session'
       Top = 9
       Width = 192
@@ -403,22 +408,22 @@ object fmMCX: TfmMCX
       TabOrder = 0
     end
     object edRespin: TSpinEdit
-      Left = 179
-      Height = 16
+      Left = 176
+      Height = 26
       Hint = 'RespinNum'
-      Top = 163
+      Top = 161
       Width = 84
       MaxValue = 100000
       MinValue = 1
       OnChange = edRespinChange
-      TabOrder = 4
+      TabOrder = 5
       Value = 1
     end
     object grArray: TRadioGroup
-      Left = 177
+      Left = 176
       Height = 40
       Hint = 'ArrayOrder'
-      Top = 190
+      Top = 191
       Width = 208
       AutoFill = True
       ChildSizing.LeftRightSpacing = 6
@@ -429,8 +434,8 @@ object fmMCX: TfmMCX
       ChildSizing.ShrinkVertical = crsScaleChilds
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 2
-      ClientHeight = 33
-      ClientWidth = 200
+      ClientHeight = 36
+      ClientWidth = 204
       Columns = 2
       ItemIndex = 0
       Items.Strings = (
@@ -438,69 +443,69 @@ object fmMCX: TfmMCX
         'C array'
       )
       OnClick = edRespinChange
-      TabOrder = 5
+      TabOrder = 6
     end
     object edBubble: TEdit
-      Left = 180
-      Height = 22
+      Left = 176
+      Height = 26
       Hint = 'BubbleSize'
       Top = 234
       Width = 80
       OnChange = edRespinChange
-      TabOrder = 6
+      TabOrder = 7
       Text = '0'
     end
     object edGate: TSpinEdit
-      Left = 180
-      Height = 16
+      Left = 176
+      Height = 26
       Hint = 'GateNum'
       Top = 266
       Width = 83
       MaxValue = 100000
       MinValue = 1
       OnChange = edRespinChange
-      TabOrder = 7
+      TabOrder = 8
       Value = 1
     end
     object ckReflect: TCheckBox
       Left = 7
-      Height = 16
+      Height = 22
       Hint = 'DoReflect'
       Top = 298
-      Width = 91
+      Width = 95
       Caption = 'Do Reflection'
-      Checked = True
-      OnChange = edRespinChange
-      State = cbChecked
-      TabOrder = 8
-    end
-    object ckSaveData: TCheckBox
-      Left = 116
-      Height = 16
-      Hint = 'DoSave'
-      Top = 298
-      Width = 87
-      Caption = 'Save Fluence'
       Checked = True
       OnChange = edRespinChange
       State = cbChecked
       TabOrder = 9
     end
-    object ckNormalize: TCheckBox
-      Left = 213
-      Height = 16
-      Hint = 'DoNormalize'
+    object ckSaveData: TCheckBox
+      Left = 116
+      Height = 22
+      Hint = 'DoSave'
       Top = 298
-      Width = 113
-      Caption = 'Do Normalization'
+      Width = 92
+      Caption = 'Save Fluence'
       Checked = True
       OnChange = edRespinChange
       State = cbChecked
       TabOrder = 10
     end
-    object edConfigFile: TFileNameEdit
-      Left = 177
+    object ckNormalize: TCheckBox
+      Left = 213
       Height = 22
+      Hint = 'DoNormalize'
+      Top = 298
+      Width = 118
+      Caption = 'Do Normalization'
+      Checked = True
+      OnChange = edRespinChange
+      State = cbChecked
+      TabOrder = 11
+    end
+    object edConfigFile: TFileNameEdit
+      Left = 176
+      Height = 26
       Hint = 'InputFile'
       Top = 38
       Width = 168
@@ -514,18 +519,18 @@ object fmMCX: TfmMCX
     end
     object ckAtomic: TCheckBox
       Left = 341
-      Height = 16
+      Height = 22
       Hint = 'DoAtomic'
       Top = 298
-      Width = 80
+      Width = 84
       Caption = 'Use Atomic'
       OnChange = edRespinChange
       OnClick = ckAtomicClick
-      TabOrder = 11
+      TabOrder = 12
     end
     object edBlockSize: TComboBox
       Left = 176
-      Height = 21
+      Height = 28
       Hint = 'ThreadBlock'
       Top = 100
       Width = 80
@@ -537,38 +542,52 @@ object fmMCX: TfmMCX
       )
       MaxLength = 65535
       OnChange = edRespinChange
-      TabOrder = 12
+      TabOrder = 3
       Text = '128'
     end
-  end
-  object mmOutput: TMemo
-    Left = 0
-    Height = 121
-    Top = 392
-    Width = 668
-    Align = alBottom
-    Constraints.MinHeight = 100
-    DragKind = dkDock
-    Font.Height = -11
-    Font.Name = 'Monospace'
-    Lines.Strings = (
-      'Output:'
-    )
-    OnDragDrop = mmOutputDragDrop
-    OnDragOver = mmOutputDragOver
-    OnMouseDown = mmOutputMouseDown
-    ParentFont = False
-    ScrollBars = ssAutoBoth
-    TabOrder = 1
   end
   object Splitter2: TSplitter
     Cursor = crVSplit
     Left = 0
     Height = 8
-    Top = 384
-    Width = 668
+    Top = 376
+    Width = 679
     Align = alBottom
     ResizeAnchor = akBottom
+  end
+  object plOutput: TPanel
+    Left = 0
+    Height = 138
+    Top = 384
+    Width = 679
+    Align = alBottom
+    ClientHeight = 138
+    ClientWidth = 679
+    DockSite = True
+    TabOrder = 6
+    OnDockOver = plOutputDockOver
+    object mmOutput: TMemo
+      Left = 1
+      Height = 136
+      Top = 1
+      Width = 677
+      Align = alClient
+      Constraints.MinHeight = 100
+      DragKind = dkDock
+      Font.Height = -11
+      Font.Name = 'Courier 10 Pitch'
+      Lines.Strings = (
+        'Output:'
+      )
+      OnDragDrop = mmOutputDragDrop
+      OnDragOver = mmOutputDragOver
+      OnMouseDown = mmOutputMouseDown
+      ParentFont = False
+      PopupMenu = PopupMenu1
+      ScrollBars = ssAutoBoth
+      TabOrder = 0
+      WordWrap = False
+    end
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -2502,5 +2521,13 @@ object fmMCX: TfmMCX
     FillAttribute = 0
     left = 600
     top = 184
+  end
+  object PopupMenu1: TPopupMenu
+    left = 360
+    top = 448
+    object MenuItem19: TMenuItem
+      Caption = 'Clear Log'
+      OnClick = MenuItem19Click
+    end
   end
 end

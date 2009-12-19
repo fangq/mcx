@@ -22,7 +22,10 @@ type
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    MenuItem19: TMenuItem;
+    mmOutput: TMemo;
     OpenProject: TOpenDialog;
+    plOutput: TPanel;
     pMCX: TAsyncProcess;
     ckAtomic: TCheckBox;
     edBlockSize: TComboBox;
@@ -68,7 +71,6 @@ type
     MainMenu1: TMainMenu;
     MenuItem17: TMenuItem;
     MenuItem18: TMenuItem;
-    mmOutput: TMemo;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
@@ -90,6 +92,7 @@ type
     edRespin: TSpinEdit;
     edGate: TSpinEdit;
     pExternal: TProcess;
+    PopupMenu1: TPopupMenu;
     SaveProject: TSaveDialog;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
@@ -117,7 +120,6 @@ type
     ToolButton6: TToolButton;
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
-    ToolButton9: TToolButton;
     procedure ckAtomicClick(Sender: TObject);
     procedure FormDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
@@ -144,11 +146,14 @@ type
       Selected: Boolean);
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
+    procedure MenuItem19Click(Sender: TObject);
     procedure mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure mmOutputDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
     procedure mmOutputMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
+      Y: Integer; State: TDragState; var Accept: Boolean);
     procedure plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
@@ -161,7 +166,7 @@ type
     MapList: TStringList;
     function CreateCmd:string;
     function CreateCmdOnly:string;
-    procedure VarifyInput;
+    procedure VerifyInput;
     procedure AddLog(str:string);
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
@@ -350,18 +355,7 @@ end;
 
 procedure TfmMCX.FormDockOver(Sender: TObject; Source: TDragDockObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
-var
-   pos:TRect;
-   mm: TMemo;
 begin
-     Accept:=false;
-     if (Sender is TMemo) then
-        Accept:=true;
-     if(Accept) then begin
-          mm:=(Sender as TMemo);
-          pos:=Rect(0,Height-mm.Height, Width, Height);
-          mm.Dock(Self,pos);
-     end;
 end;
 
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
@@ -444,7 +438,7 @@ end;
 
 procedure TfmMCX.mcxdoVerifyExecute(Sender: TObject);
 begin
-    VarifyInput;
+    VerifyInput;
 end;
 
 procedure TfmMCX.FormCreate(Sender: TObject);
@@ -532,6 +526,11 @@ begin
      end;
 end;
 
+procedure TfmMCX.MenuItem19Click(Sender: TObject);
+begin
+    mmOutput.Lines.Clear;
+end;
+
 procedure TfmMCX.mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
 begin
 
@@ -549,6 +548,22 @@ begin
     if(ssCtrl in Shift) then begin
          mmOutput.DragMode:=dmAutomatic;
     end;
+end;
+
+procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
+  Y: Integer; State: TDragState; var Accept: Boolean);
+var
+   pos:TRect;
+   mm: TMemo;
+begin
+     Accept:=false;
+     if (Sender is TMemo) then
+        Accept:=true;
+     if(Accept) then begin
+          mm:=(Sender as TMemo);
+          pos:=Rect(0,Height-mm.Height, Width, Height);
+          mm.Dock(Self,pos);
+     end;
 end;
 
 procedure TfmMCX.plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
@@ -644,7 +659,7 @@ begin
 end;
 
 
-procedure TfmMCX.VarifyInput;
+procedure TfmMCX.VerifyInput;
 var
     nthread, nmove, nblock: integer;
     radius,t1: extended;

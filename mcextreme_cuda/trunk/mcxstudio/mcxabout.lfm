@@ -1,22 +1,22 @@
 object fmAbout: TfmAbout
-  Left = 1280
-  Height = 258
+  Left = 523
+  Height = 276
   Top = 237
   Width = 434
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
-  ClientHeight = 258
+  ClientHeight = 276
   ClientWidth = 434
   Color = clBlack
   Position = poMainFormCenter
-  LCLVersion = '0.9.29'
+  LCLVersion = '0.9.28.2'
   object Label1: TLabel
     Left = 40
-    Height = 123
+    Height = 117
     Top = 135
-    Width = 279
+    Width = 264
     Caption = 'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
     Font.Color = 11645361
     ParentColor = False
@@ -981,9 +981,9 @@ object fmAbout: TfmAbout
     }
   end
   object Button1: TButton
-    Left = 320
+    Left = 328
     Height = 25
-    Top = 216
+    Top = 227
     Width = 75
     Caption = 'OK'
     ModalResult = 1
