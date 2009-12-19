@@ -11,12 +11,12 @@ How to get MCX
 
 1. Download the Latest Release
 
-MCX 0.2, codename Aurora
+MCX 0.2 (final), codename Aurora
 
    Before downloading the software, please read the [7]System Requirements for
    MCX and make sure you have both the hardware and software supports.
 
-   Please    download   the   latest   v0.2   (beta)   release   at   our
+   Please    download   the   latest   v0.2   final   release   at   our
    [8]registration/download page. We are greatly appreciated if you can tell us
    a little bit about you and your related research by [9][registering your
    copy of mcx]. Binary executable (for 32bit and 64bit machines) and source
