@@ -1,9 +1,10 @@
 
-   #[1]Monte Carlo eXtreme: photon migration on graphics cards
+==   #[1]Monte Carlo eXtreme: photon migration on graphics cards  ==
 
 Frequently Asked Questions about MCX
 
           1. [2]I am getting a "kernel launch timed-out" error, what is that? 
+          2. [3]When should I use the atomic version of MCX ? 
 
 1. I am getting a "kernel launch timed-out" error, what is that?
 
@@ -31,7 +32,47 @@ Frequently Asked Questions about MCX
    type) to your machine and connect your display to the second card, this will
    make your CUDA-enabled nVidia card a dedicated device.
 
+2. When should I use the atomic version of MCX ?
+
+   Answer: In an MCX Monte Carlo simulation, we need to save photon weights to
+   the global memory from many parallel threads. This may cause problems when
+   multiple threads write to the same global memory address at the same time,
+   which we referred to as the race condition. To avoid race conditions, CUDA
+   provides a set of "atomic" operations, where read-compute-write process in a
+   thread can not be interrupted by other threads. Unfortunately, there is a
+   great speed penalty for using these functions. As we have shown in Fig. 7 in
+   our  [4]paper,  the  atomic  version of MCX can only achieve about 75x
+   acceleration at an optimal thread number around 500~1000, compared with 300x
+   acceleration with the non-atomic versions. More importantly, the performance
+   of atomic MCX can not be scaled with better graphics hardware.
+
+   Fortunately, in our algorithm, the photon propagation for each thread is
+   maximally asynchronized, together with the exponential decay of the fluence,
+   the overall impact of the race condition is negligible (as shown in Fig. 4
+   of   [5]Fang2009).   For  a  range  of  scattering  coefficients,  the
+   accumulation-miss due to race condition is around 1% for over 1000 threads.
+   Using the non-atomic version can give quite accurate solutions as long as it
+   is a few voxels away from the source.
+
+   To further reduce the influences of race conditions, we also implemented a
+   method to skip the global-memory-write within a small distance from the
+   source (called the "bubble" method). In this method, we save the absorbed
+   energy in a register variable for each thread. Because register values are
+   free of distortions from the race conditions, using these values in the
+   final normalization will give a more accurate fluence.
+
+   If you simulate scattering medium with small anisotropy (g), the non-atomic
+   version is highly suggested. If you simulate a medium of low scattering
+   (almost clear) or large g value, you can test with both methods and see if
+   the non-atomic version can give you reasonable estimation. If you don't care
+   about the solutions near the source, but want to gain more accuracy with the
+   non-atomic MCX, you can use the -R options to set a bubble radius. Please
+   read example/bubble example for more details on this method.
+
 References
 
    1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
    2. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_error_what_is_that
+   3. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#When_should_I_use_the_atomic_version_of_MCX
+   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+   5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
