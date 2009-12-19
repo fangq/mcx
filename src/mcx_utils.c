@@ -458,7 +458,7 @@ void mcx_usage(char *exename){
 #                                                                                    #\n\
 #      Martinos Center for Biomedical Imaging, Massachusetts General Hospital        #\n\
 ######################################################################################\n\
-::MCX $Rev::      $, Last Commit:$Date::                      $ by $Author::         $\n\
+::MCX $Rev::     $, Last Commit:$Date::                       $ by $Author::         $\n\
 ######################################################################################\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
