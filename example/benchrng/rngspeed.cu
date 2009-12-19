@@ -13,8 +13,9 @@
 #include "br2cu.h"
 
 #define USE_OS_TIMER  /* use MT19937 RNG */
+#include "tictoc.c"
 
-#include "tictoc.h"
+#define RAND_TEST_LEN 5
 
 #ifdef USE_MT_RAND  /* use MT19937 RNG */
 
@@ -62,12 +63,12 @@ kernel void bench_rng(uint seed[],float output[],int loop){
      int i;
      float c=0.f;
      
-     RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
-     RandType ran[RAND_BUF_LEN];
+     RandType t[RAND_TEST_LEN],tnew[RAND_TEST_LEN];
+     RandType ran[RAND_TEST_LEN];
      logistic_init(t,tnew,seed,idx);
 
      for(i=0;i<loop;i+=5){
-          logistic_step(t,tnew,RAND_BUF_LEN-1); /*create 3 random numbers*/
+          logistic_step(t,tnew,RAND_TEST_LEN-1); /*create 3 random numbers*/
 	  ran[0]=logistic_uniform(t[0]);
 	  ran[1]=logistic_uniform(t[1]);
 	  ran[2]=logistic_uniform(t[2]);
@@ -132,36 +133,37 @@ int main(int argc, char *argv[]){
     if(argc>=4) count=atoi(argv[3]);
     if(argc>=5) repeat=atoi(argv[4]);
     
-    count=(count/RAND_BUF_LEN)*RAND_BUF_LEN; // make count modulo of 5
+    if(RAND_TEST_LEN>0)
+        count=(count/RAND_TEST_LEN)*RAND_TEST_LEN; // make count modulo of 5
 
     threadnum=griddim.x*blockdim.x;
 
     // allocate CPU and GPU arrays
     
-    Pseed=(uint*)malloc(sizeof(uint)*threadnum*RAND_BUF_LEN);
-    cudaMalloc((void **) &gPseed, sizeof(uint)*threadnum*RAND_BUF_LEN);
+    Pseed=(uint*)malloc(sizeof(uint)*threadnum*RAND_TEST_LEN);
+    cudaMalloc((void **) &gPseed, sizeof(uint)*threadnum*RAND_TEST_LEN);
     Poutput=(float*)malloc(sizeof(float)*threadnum*count);
     cudaMalloc((void **) &gPoutput, sizeof(float)*threadnum*count);
 
     // initialize seeds
         
     srand(time(0));
-    for (i=0; i<threadnum*RAND_BUF_LEN; i++){
+    for (i=0; i<threadnum*RAND_TEST_LEN; i++){
 	   Pseed[i]=rand();
     }
 
     // copy CPU data to GPU
     
-    tic=GetTimeMillis();
+    tic=StartTimer();
     totalrand=(double)threadnum*count*repeat;
     printf("total thread=%d, total rand num=%f\n",threadnum,totalrand);
-    cudaMemcpy(gPseed, Pseed, sizeof(uint)*threadnum*RAND_BUF_LEN,cudaMemcpyHostToDevice);
+    cudaMemcpy(gPseed, Pseed, sizeof(uint)*threadnum*RAND_TEST_LEN,cudaMemcpyHostToDevice);
 
     printf("init complete : %d ms\n",GetTimeMillis()-tic);
 
     // begin benchmark
     
-    tic2=GetTimeMillis();
+    tic2=StartTimer();
     for(i=0;i<repeat;i++)
         bench_rng<<<griddim,blockdim>>>(gPseed,gPoutput,count);
 
@@ -173,8 +175,8 @@ int main(int argc, char *argv[]){
     // take results back to CPU
         
     printf("kernel complete: %d ms\nspeed: %f random numbers per second\n",\
-        (1000./toc)*totalrand,toc);
-//    cudaMemcpy(Pseed, gPseed,sizeof(uint)*threadnum*RAND_BUF_LEN,cudaMemcpyDeviceToHost);
+        toc, (1000./toc)*totalrand);
+//    cudaMemcpy(Pseed, gPseed,sizeof(uint)*threadnum*RAND_TEST_LEN,cudaMemcpyDeviceToHost);
 #ifdef GLOBAL_WRITE
     cudaMemcpy(Poutput,gPoutput, sizeof(float)*threadnum*count,cudaMemcpyDeviceToHost);
 #endif

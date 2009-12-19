@@ -18,7 +18,11 @@ and runs properly.
 When you finish the simulation, run "genreport.sh speed.log"
 to get a tabulated report for all conditions.
 From this, you can reproduce the data used for
-Fig. 7 in Fang2009.
+Fig. 7 in Fang2009. To interpret the output, the first
+column is the executation time (in ms), the 2nd column
+is the total photon number simulated, the 3rd column
+is the specified photon moves per thread, the last
+column is the thread number.
 
 For some simulations with more threads, you may 
 experience the "kernel launch timed-out" error.
