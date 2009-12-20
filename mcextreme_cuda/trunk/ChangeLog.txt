@@ -2,6 +2,8 @@ Change Log
 
 == MCX 0.2 (aurora) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
+2009/12/19 polish documentation, add svn keywords and tagged 0.2 final
+2009/12/10 MCX Studio GUI is tested on Linux, Windows, Mac OS X
 2009/12/03 add README.txt file for each example folder
 2009/12/02 complete "bubble" mode to reduce impact from non-atomic write
 2009/10/24 use cuda event timer, use VC compiler for Windows
