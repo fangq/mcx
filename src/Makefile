@@ -20,8 +20,8 @@ EXESUFFIX=
 FILES=mcx_core mcx_utils tictoc mcextreme
 
 ARCH = $(shell uname -m)
-PLATFORM = $(shell uname -o)
-ifeq ($(findstring Msys,$(PLATFORM)), Msys)
+PLATFORM = $(shell uname -s)
+ifeq ($(findstring MINGW32,$(PLATFORM)), MINGW32)
   CCC=nvcc
   LINKOPT=-L/c/CUDA/lib -lcudart --link
   INCLUDEDIRS +=-I/c/CUDA/include

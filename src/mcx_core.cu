@@ -447,8 +447,8 @@ int mcx_set_gpu(int printinfo){
 	    printf("Device %d of %d:\t\t%s\n",dev+1,deviceCount,dp.name);
 	    printf("Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
 Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
-               dp.totalGlobalMem,dp.totalConstMem,
-               dp.sharedMemPerBlock,dp.regsPerBlock,dp.clockRate*1e-6f);
+               (unsigned int)dp.totalGlobalMem,(unsigned int)dp.totalConstMem,
+               (unsigned int)dp.sharedMemPerBlock,(unsigned int)dp.regsPerBlock,dp.clockRate*1e-6f);
 	  #if CUDART_VERSION >= 2000
 	       printf("Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
 	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
