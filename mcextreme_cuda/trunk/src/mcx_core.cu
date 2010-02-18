@@ -176,9 +176,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 		           tmp0=(1.f+prop.w*prop.w-tmp0)/(2.f*prop.w);
 
                            // when ran=1, CUDA will give me 1.000002 for tmp0 which produces nan later
-                           if(tmp0>1.f) tmp0=1.f;
                            // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
-                           if(tmp0<-1.f) tmp0=-1.f;
+                           tmp0=max(-1.f, min(1.f, tmp0));
 
 		           theta=acosf(tmp0);
 		           stheta=sinf(theta);
