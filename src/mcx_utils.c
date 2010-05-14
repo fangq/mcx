@@ -21,13 +21,13 @@
 #include "mcx_utils.h"
 
 char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B',
-                 'd','r','S','p','e','U','R','l','L','I','o','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflect3","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu","--root",""};
+                 "--printgpu","--root","--gpu",""};
 
 void mcx_savedata(float *dat,int len,Config *cfg){
      FILE *fp;
@@ -114,6 +114,7 @@ void mcx_initcfg(Config *cfg){
      cfg->flog=stdout;
      cfg->sradius=0.f;
      cfg->rootpath[0]='\0';
+     cfg->gpuid=0;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -429,6 +430,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'o':
 		     	        i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
 		     	        break;
+                     case 'G':
+                                i=mcx_readarg(argc,argv,i,&(cfg->gpuid),"int");
+                                break;
 		}
 	    }
 	    i++;
@@ -481,6 +485,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
  -s sessionid  (--session)     a string to identify this specific simulation (and output files)\n\
  -p [0|int]    (--printlen)    number of threads to print (debug)\n\
+ -G            (--gpu)         specify which GPU to use, starting from 1, use -L to list, 0 for auto\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\

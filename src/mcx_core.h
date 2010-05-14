@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 void mcx_run_simulation(Config *cfg);
-int  mcx_set_gpu(int printinfo);
+int  mcx_set_gpu(Config *cfg);
 
 #ifdef  __cplusplus
 }

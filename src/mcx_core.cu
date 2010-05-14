@@ -421,10 +421,21 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
      energy[2]+=phi*gproperty[media[idx]].x;
 }
 
+
+/*
+   assert cuda memory allocation result
+*/
+void mcx_cu_assess(cudaError_t cuerr){
+     if(cuerr!=cudaSuccess){
+         mcx_error(-(int)cuerr,(char *)cudaGetErrorString(cuerr));
+     }
+}
+
+
 /*
   query GPU info and set active GPU
 */
-int mcx_set_gpu(int printinfo){
+int mcx_set_gpu(Config *cfg){
 
 #if __DEVICE_EMULATION__
     return 1;
@@ -436,12 +447,16 @@ int mcx_set_gpu(int printinfo){
         printf("No CUDA-capable GPU device found\n");
         return 0;
     }
+    if (cfg->gpuid && cfg->gpuid > deviceCount){
+        printf("Specified GPU ID is out of range\n");
+        return 0;
+    }
     // scan from the last device, hopefully it is more dedicated
-    for (dev = deviceCount-1; dev>=0; dev--) {
+    for (dev = 0; dev<deviceCount; dev++) {
         cudaDeviceProp dp;
         cudaGetDeviceProperties(&dp, dev);
         if (strncmp(dp.name, "Device Emulation", 16)) {
-	  if(printinfo){
+	  if(cfg->isgpuinfo){
 	    printf("=============================   GPU Infomation  ================================\n");
 	    printf("Device %d of %d:\t\t%s\n",dev+1,deviceCount,dp.name);
 	    printf("Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
@@ -453,29 +468,21 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
 	  #endif
 	  }
-          if(printinfo!=2) break;
+          if(cfg->isgpuinfo!=2) break;
 	}
     }
-    if(printinfo==2){ //list GPU info only
+    if(cfg->isgpuinfo==2){ //list GPU info only
           exit(0);
     }
-    if (dev == deviceCount)
-        return 0;
-    else {
-        cudaSetDevice(dev);
-        return 1;
-    }
+    if (cfg->gpuid==0)
+        mcx_cu_assess(cudaSetDevice(deviceCount-1));
+    else
+        mcx_cu_assess(cudaSetDevice(cfg->gpuid-1));
+
+    return 1;
 #endif
 }
 
-/*
-   assert cuda memory allocation result
-*/
-void mcx_cu_assess(cudaError_t cuerr){
-     if(cuerr!=cudaSuccess){
-         mcx_error(-(int)cuerr,(char *)cudaGetErrorString(cuerr));
-     }
-}
 
 /*
    master driver code to run MC simulations
