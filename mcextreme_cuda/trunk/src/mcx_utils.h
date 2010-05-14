@@ -48,6 +48,7 @@ typedef struct MCXConfig{
 	int maxgate;        /*simultaneous recording gates*/
 	int respin;         /*number of repeatitions*/
 	int printnum;       /*number of printed threads (for debugging)*/
+	int gpuid;          /*the ID of the GPU to use, starting from 1, 0 for auto*/
 
 	unsigned char *vol; /*pointer to the volume*/
 	char session[MAX_SESSION_LENGTH]; /*session id, a string*/
