@@ -35,21 +35,6 @@
 
 typedef unsigned char uchar;
 
-/*
-the following is the definition for a photon state:
-
-typedef struct PhotonData {
-  float4 pos;  //{x,y,z}: x,y,z coordinates,{w}:packet weight
-  float4 dir;  //{x,y,z}: ix,iy,iz unitary direction vector,{w}:total scat event
-  float4 len;  //{x}:remaining probability
-               //{y}:accumulative time (on-photon timer)
-               //{z}:next accum. time (accum. happens at a fixed time interval)
-               //{w}:total completed photons
-  uint   seed; // random seed, length may different for different RNGs
-} Photon;
-
-*/
-
 struct  __align__(16) KernelParams {
   float3 vsize;
   float  minstep;
@@ -105,11 +90,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
-     float4 npos=n_pos[idx];  //{x,y,z}: x,y,z coordinates,{w}:packet weight
-     float4 ndir=n_dir[idx];  //{x,y,z}: ix,iy,iz unitary direction vector, {w}:total scat event
-                              //ndir.w can be dropped to save register
-     float4 nlen=n_len[idx];  //nlen.w can be dropped to save register
-     float4 npos0;            //reflection var, to save pre-reflection npos state
+     MCXpos  P,P0;
+     MCXdir  V;
+     MCXtime T;
+
      float3 htime;            //reflection var
      float  minaccumtime=minstep*R_C0;   //can be moved to constant memory
      float  energyloss=genergy[idx<<1];
@@ -128,16 +112,21 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 
      //for MT RNG, these will be zero-length arrays and be optimized out
      RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
-     float4 prop;    //can become float2 if no reflection
+     Medium prop;    //can become float2 if no reflection
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
      float accumweight=0.f;
 
+     *((float4*)(&P))=n_pos[idx];  //{x,y,z}: x,y,z coordinates,{w}:packet weight
+     *((float4*)(&V))=n_dir[idx];  //{x,y,z}: ix,iy,iz unitary direction vector, {w}:total scat event
+     *((float4*)(&T))=n_len[idx];  //T.w can be dropped to save register
+                           //V.nscat can be dropped to save register
+
      gpu_rng_init(t,tnew,n_seed,idx);
 
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
-     idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
-                      int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
+     idx1d=isrowmajor?int(floorf(P.x)*dimlen.y+floorf(P.y)*dimlen.x+floorf(P.z)):\
+                      int(floorf(P.z)*dimlen.y+floorf(P.y)*dimlen.x+floorf(P.x));
      idxorig=idx1d;
      mediaid=media[idx1d];
      mediaidorig=mediaid;
@@ -145,23 +134,23 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
      if(mediaid==0) {
           return; // the initial position is not within the medium
      }
-     prop=gproperty[mediaid];
+     *((float4*)(&prop))=gproperty[mediaid];
 
      /*
       using a while-loop to terminate a thread by np will cause MT RNG to be 3.5x slower
       LL5 RNG will only be slightly slower than for-loop with photon-move criterion
      */
-     //while(nlen.w<np) {
+     //while(T.ndone<np) {
 
      for(i=0;i<nphoton;i++){ // here nphoton actually means photon moves
 
-          GPUDEBUG(("*i= (%d) L=%f w=%e a=%f\n",(int)nlen.w,nlen.x,npos.w,nlen.y));
-	  if(nlen.x<=0.f) {  // if this photon has finished the current jump
+          GPUDEBUG(("*i= (%d) L=%f w=%e a=%f\n",(int)T.ndone,T.tscat,P.w,T.t));
+	  if(T.tscat<=0.f) {  // if this photon has finished the current jump
                rand_need_more(t,tnew);
-   	       nlen.x=rand_next_scatlen(t);
+   	       T.tscat=rand_next_scatlen(t);
 
-               GPUDEBUG(("next scat len=%20.16e \n",nlen.x));
-	       if(npos.w<1.f){ //weight
+               GPUDEBUG(("next scat len=%20.16e \n",T.tscat));
+	       if(P.w<1.f){ //weight
                        //random arimuthal angle
                        tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
                        sincosf(tmp0,&sphi,&cphi);
@@ -170,10 +159,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                        //Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234
                        //see Boas2002
 
-                       if(prop.w>EPS){  //if prop.w is too small, the distribution of theta is bad
-		           tmp0=(1.f-prop.w*prop.w)/(1.f-prop.w+2.f*prop.w*rand_next_zangle(t));
+                       if(prop.g>EPS){  //if prop.g is too small, the distribution of theta is bad
+		           tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
 		           tmp0*=tmp0;
-		           tmp0=(1.f+prop.w*prop.w-tmp0)/(2.f*prop.w);
+		           tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
 
                            // when ran=1, CUDA will give me 1.000002 for tmp0 which produces nan later
                            // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
@@ -188,79 +177,79 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                        }
                        GPUDEBUG(("next scat angle theta %20.16e\n",theta));
 
-		       if( ndir.z>-1.f+EPS && ndir.z<1.f-EPS ) {
-		           tmp0=1.f-ndir.z*ndir.z;   //reuse tmp to minimize registers
+		       if( V.z>-1.f+EPS && V.z<1.f-EPS ) {
+		           tmp0=1.f-V.z*V.z;   //reuse tmp to minimize registers
 		           tmp1=rsqrtf(tmp0);
 		           tmp1=stheta*tmp1;
-		           ndir=float4(
-				tmp1*(ndir.x*ndir.z*cphi - ndir.y*sphi) + ndir.x*ctheta,
-				tmp1*(ndir.y*ndir.z*cphi + ndir.x*sphi) + ndir.y*ctheta,
-				-tmp1*tmp0*cphi                         + ndir.z*ctheta,
-				ndir.w
+		           *((float4*)(&V))=float4(
+				tmp1*(V.x*V.z*cphi - V.y*sphi) + V.x*ctheta,
+				tmp1*(V.y*V.z*cphi + V.x*sphi) + V.y*ctheta,
+				-tmp1*tmp0*cphi                + V.z*ctheta,
+				V.nscat
 			   );
-                           GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z));
+                           GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",V.x,V.y,V.z));
 		       }else{
-			   ndir=float4(stheta*cphi,stheta*sphi,(ndir.z>0.f)?ctheta:-ctheta,ndir.w);
-                           GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n",ndir.x,ndir.y,ndir.z));
+			   *((float4*)(&V))=float4(stheta*cphi,stheta*sphi,(V.z>0.f)?ctheta:-ctheta,V.nscat);
+                           GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n",V.x,V.y,V.z));
  		       }
-                       ndir.w++;
+                       V.nscat++;
 	       }
 	  }
 
-          n1=prop.z;
-	  prop=gproperty[mediaid];
-	  len=minstep*prop.y; //Wang1995: minstep*(prop.x+prop.y)
+          n1=prop.n;
+	  *((float4*)(&prop))=gproperty[mediaid];
+	  len=minstep*prop.mus; //Wang1995: minstep*(prop.mua+prop.mus)
 
-          npos0=npos;
-	  if(len>nlen.x){  //scattering ends in this voxel: mus*minstep > s 
-               tmp0=nlen.x/prop.y;
-	       energyabsorbed+=npos.w;
-   	       npos=float4(npos.x+ndir.x*tmp0,npos.y+ndir.y*tmp0,npos.z+ndir.z*tmp0,
-                           npos.w*expf(-prop.x*tmp0));
-	       energyabsorbed-=npos.w;
-	       nlen.x=SAME_VOXEL;
-	       nlen.y+=tmp0*prop.z*R_C0;  // accumulative time
-               GPUDEBUG((">>ends in voxel %f<%f %f [%d]\n",nlen.x,len,prop.y,idx1d));
+          P0=P;
+	  if(len>T.tscat){  //scattering ends in this voxel: mus*minstep > s 
+               tmp0=T.tscat/prop.mus;
+	       energyabsorbed+=P.w;
+   	       *((float4*)(&P))=float4(P.x+V.x*tmp0,P.y+V.y*tmp0,P.z+V.z*tmp0,
+                           P.w*expf(-prop.mua*tmp0));
+	       energyabsorbed-=P.w;
+	       T.tscat=SAME_VOXEL;
+	       T.t+=tmp0*prop.n*R_C0;  // accumulative time
+               GPUDEBUG((">>ends in voxel %f<%f %f [%d]\n",T.tscat,len,prop.mus,idx1d));
 	  }else{                      //otherwise, move minstep
-	       energyabsorbed+=npos.w;
+	       energyabsorbed+=P.w;
                if(mediaid!=medid){
-                  atten=expf(-prop.x*minstep);
+                  atten=expf(-prop.mua*minstep);
                }
-   	       npos=float4(npos.x+ndir.x,npos.y+ndir.y,npos.z+ndir.z,npos.w*atten);
+   	       *((float4*)(&P))=float4(P.x+V.x,P.y+V.y,P.z+V.z,P.w*atten);
                medid=mediaid;
-	       energyabsorbed-=npos.w;
-	       nlen.x-=len;     //remaining probability: sum(s_i*mus_i)
-	       nlen.y+=minaccumtime*prop.z; //total time
-               GPUDEBUG((">>keep going %f<%f %f [%d] %e %e\n",nlen.x,len,prop.y,idx1d,nlen.y,nlen.z));
+	       energyabsorbed-=P.w;
+	       T.tscat-=len;     //remaining probability: sum(s_i*mus_i)
+	       T.t+=minaccumtime*prop.n; //total time
+               GPUDEBUG((">>keep going %f<%f %f [%d] %e %e\n",T.tscat,len,prop.mus,idx1d,T.t,T.tnext));
 	  }
 
           idx1dold=idx1d;
-          idx1d=isrowmajor?int(floorf(npos.x)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.z)):\
-                           int(floorf(npos.z)*dimlen.y+floorf(npos.y)*dimlen.x+floorf(npos.x));
+          idx1d=isrowmajor?int(floorf(P.x)*dimlen.y+floorf(P.y)*dimlen.x+floorf(P.z)):\
+                           int(floorf(P.z)*dimlen.y+floorf(P.y)*dimlen.x+floorf(P.x));
           GPUDEBUG(("old and new voxel: %d<->%d\n",idx1dold,idx1d));
-          if(npos.x<0||npos.y<0||npos.z<0||npos.x>=maxidx.x||npos.y>=maxidx.y||npos.z>=maxidx.z){
+          if(P.x<0||P.y<0||P.z<0||P.x>=maxidx.x||P.y>=maxidx.y||P.z>=maxidx.z){
 	      mediaid=0;
 	  }else{
               mediaid=media[idx1d];
           }
 
           //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
-	  if(mediaid==0||nlen.y>tmax||nlen.y>twin1){
+	  if(mediaid==0||T.t>tmax||T.t>twin1){
               flipdir=0.f;
               if(doreflect) {
                 //time-of-flight to hit the wall in each direction
-                htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos0.x)+(ndir.x>0.f)-npos0.x)/ndir.x:VERY_BIG;
-                htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos0.y)+(ndir.y>0.f)-npos0.y)/ndir.y:VERY_BIG;
-                htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos0.z)+(ndir.z>0.f)-npos0.z)/ndir.z:VERY_BIG;
+                htime.x=(V.x>EPS||V.x<-EPS)?(floorf(P0.x)+(V.x>0.f)-P0.x)/V.x:VERY_BIG;
+                htime.y=(V.y>EPS||V.y<-EPS)?(floorf(P0.y)+(V.y>0.f)-P0.y)/V.y:VERY_BIG;
+                htime.z=(V.z>EPS||V.z<-EPS)?(floorf(P0.z)+(V.z>0.f)-P0.z)/V.z:VERY_BIG;
                 //get the direction with the smallest time-of-flight
                 tmp0=fminf(fminf(htime.x,htime.y),htime.z);
                 flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
 
                 //move to the 1st intersection pt
                 tmp0*=JUST_ABOVE_ONE;
-                htime.x=floorf(npos0.x+tmp0*ndir.x);
-       	        htime.y=floorf(npos0.y+tmp0*ndir.y);
-       	        htime.z=floorf(npos0.z+tmp0*ndir.z);
+                htime.x=floorf(P0.x+tmp0*V.x);
+       	        htime.y=floorf(P0.y+tmp0*V.y);
+       	        htime.z=floorf(P0.z+tmp0*V.z);
 
                 if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
                     if( media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
@@ -270,18 +259,18 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                            media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
                            int(htime.z*dimlen.y+htime.y*dimlen.x+htime.x)], maxidx.x, maxidx.y,maxidx.z));
 
-                     htime.x=(ndir.x>EPS||ndir.x<-EPS)?(floorf(npos.x)+(ndir.x<0.f)-npos.x)/(-ndir.x):VERY_BIG;
-                     htime.y=(ndir.y>EPS||ndir.y<-EPS)?(floorf(npos.y)+(ndir.y<0.f)-npos.y)/(-ndir.y):VERY_BIG;
-                     htime.z=(ndir.z>EPS||ndir.z<-EPS)?(floorf(npos.z)+(ndir.z<0.f)-npos.z)/(-ndir.z):VERY_BIG;
+                     htime.x=(V.x>EPS||V.x<-EPS)?(floorf(P.x)+(V.x<0.f)-P.x)/(-V.x):VERY_BIG;
+                     htime.y=(V.y>EPS||V.y<-EPS)?(floorf(P.y)+(V.y<0.f)-P.y)/(-V.y):VERY_BIG;
+                     htime.z=(V.z>EPS||V.z<-EPS)?(floorf(P.z)+(V.z<0.f)-P.z)/(-V.z):VERY_BIG;
                      tmp0=fminf(fminf(htime.x,htime.y),htime.z);
                      tmp1=flipdir;   //save the previous ref. interface id
                      flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
 
                      if(doreflect3){
                        tmp0*=JUST_ABOVE_ONE;
-                       htime.x=floorf(npos.x-tmp0*ndir.x); //move to the last intersection pt
-                       htime.y=floorf(npos.y-tmp0*ndir.y);
-                       htime.z=floorf(npos.z-tmp0*ndir.z);
+                       htime.x=floorf(P.x-tmp0*V.x); //move to the last intersection pt
+                       htime.y=floorf(P.y-tmp0*V.y);
+                       htime.z=floorf(P.z-tmp0*V.z);
 
                        if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<maxidx.x&&htime.y<maxidx.y&&htime.z<maxidx.z){
                            if(! media[isrowmajor?int(htime.x*dimlen.y+htime.y*dimlen.x+htime.z):\
@@ -306,98 +295,98 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
                 }
               }
 
-              prop=gproperty[mediaid];
+              *((float4*)(&prop))=gproperty[mediaid];
 
-              GPUDEBUG(("->ID%d J%d C%d tlen %e flip %d %.1f!=%.1f dir=%f %f %f pos=%f %f %f\n",idx,(int)ndir.w,
-                  (int)nlen.w,nlen.y, (int)flipdir, n1,prop.z,ndir.x,ndir.y,ndir.z,npos.x,npos.y,npos.z));
+              GPUDEBUG(("->ID%d J%d C%d tlen %e flip %d %.1f!=%.1f dir=%f %f %f pos=%f %f %f\n",idx,(int)V.nscat,
+                  (int)T.ndone,T.t, (int)flipdir, n1,prop.n,V.x,V.y,V.z,P.x,P.y,P.z));
 
               //recycled some old register variables to save memory
 	      //if hit boundary within the time window and is n-mismatched, rebound
 
-              if(doreflect&&nlen.y<tmax&&nlen.y<twin1&& flipdir>0.f && n1!=prop.z&&npos.w>minenergy){
+              if(doreflect&&T.t<tmax&&T.t<twin1&& flipdir>0.f && n1!=prop.n&&P.w>minenergy){
                   tmp0=n1*n1;
-                  tmp1=prop.z*prop.z;
+                  tmp1=prop.n*prop.n;
                   if(flipdir>=3.f) { //flip in z axis
-                     cphi=fabs(ndir.z);
-                     sphi=ndir.x*ndir.x+ndir.y*ndir.y;
-                     ndir.z=-ndir.z;
+                     cphi=fabs(V.z);
+                     sphi=V.x*V.x+V.y*V.y;
+                     V.z=-V.z;
                   }else if(flipdir>=2.f){ //flip in y axis
-                     cphi=fabs(ndir.y);
-       	       	     sphi=ndir.x*ndir.x+ndir.z*ndir.z;
-                     ndir.y=-ndir.y;
+                     cphi=fabs(V.y);
+       	       	     sphi=V.x*V.x+V.z*V.z;
+                     V.y=-V.y;
                   }else if(flipdir>=1.f){ //flip in x axis
-                     cphi=fabs(ndir.x);                //cos(si)
-                     sphi=ndir.y*ndir.y+ndir.z*ndir.z; //sin(si)^2
-                     ndir.x=-ndir.x;
+                     cphi=fabs(V.x);                //cos(si)
+                     sphi=V.y*V.y+V.z*V.z; //sin(si)^2
+                     V.x=-V.x;
                   }
-		  energyabsorbed+=npos.w-npos0.w;
-                  npos=npos0;   //move back
+		  energyabsorbed+=P.w-P0.w;
+                  P=P0;   //move back
                   idx1d=idx1dold;
                   len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2
-	          GPUDEBUG((" ref len=%f %f+%f=%f w=%f\n",len,cphi,sphi,cphi*cphi+sphi,npos.w));
+	          GPUDEBUG((" ref len=%f %f+%f=%f w=%f\n",len,cphi,sphi,cphi*cphi+sphi,P.w));
 
                   if(len>0.f) {
                      ctheta=tmp0*cphi*cphi+tmp1*len;
-                     stheta=2.f*n1*prop.z*cphi*sqrtf(len);
+                     stheta=2.f*n1*prop.n*cphi*sqrtf(len);
                      Rtotal=(ctheta-stheta)/(ctheta+stheta);
        	       	     ctheta=tmp1*cphi*cphi+tmp0*len;
        	       	     Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
-	             GPUDEBUG(("  dir=%f %f %f htime=%f %f %f Rs=%f\n",ndir.x,ndir.y,ndir.z,htime.x,htime.y,htime.z,Rtotal));
-	             GPUDEBUG(("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f npos=%f %f %f npos0=%f %f %f\n",
-                         idx,(int)ndir.w,(int)nlen.w,
-	                 flipdir,idx1dold,idx1d,cphi,sphi,npos.x,npos.y,npos.z,npos0.x,npos0.y,npos0.z));
-		     energyloss+=(1.f-Rtotal)*npos.w; //energy loss due to reflection
-                     npos.w*=Rtotal;
+	             GPUDEBUG(("  dir=%f %f %f htime=%f %f %f Rs=%f\n",V.x,V.y,V.z,htime.x,htime.y,htime.z,Rtotal));
+	             GPUDEBUG(("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f P=%f %f %f P0=%f %f %f\n",
+                         idx,(int)V.nscat,(int)T.tnext,
+	                 flipdir,idx1dold,idx1d,cphi,sphi,P.x,P.y,P.z,P0.x,P0.y,P0.z));
+		     energyloss+=(1.f-Rtotal)*P.w; //energy loss due to reflection
+                     P.w*=Rtotal;
                   } // else, total internal reflection, no loss
                   mediaid=media[idx1d];
-                  prop=gproperty[mediaid];
-                  n1=prop.z;
-                  //ndir.w++;
+                  *((float4*)(&prop))=gproperty[mediaid];
+                  n1=prop.n;
+                  //V.nscat++;
               }else{  // launch a new photon
-                  energyloss+=npos.w;  // sum all the remaining energy
-	          npos=p0;
-	          ndir=c0;
-	          nlen=float4(0.f,0.f,minaccumtime,nlen.w+1);
+                  energyloss+=P.w;  // sum all the remaining energy
+	          *((float4*)(&P))=p0;
+	          *((float4*)(&V))=c0;
+	          *((float4*)(&T))=float4(0.f,0.f,minaccumtime,T.ndone+1);
                   idx1d=idxorig;
 		  mediaid=mediaidorig;
               }
-	  }else if(nlen.y>=nlen.z){
-             GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,npos.w,(int)nlen.w,nlen.y,nlen.z));
+	  }else if(T.t>=T.tnext){
+             GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,P.w,(int)T.ndone,T.t,T.tnext));
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
-             if(save2pt&&nlen.y>=twin0 & nlen.y<twin1){
+             if(save2pt&&T.t>=twin0 & T.t<twin1){
 #ifdef TEST_RACING
                   // enable TEST_RACING to determine how many missing accumulations due to race
-                  if( (npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>sradius2) {
-                      field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=1.f;
+                  if( (P.x-p0.x)*(P.x-p0.x)+(P.y-p0.y)*(P.y-p0.y)+(P.z-p0.z)*(P.z-p0.z)>sradius2) {
+                      field[idx1d+(int)(floorf((T.t-twin0)*Rtstep))*dimlen.z]+=1.f;
 		      cc++;
                   }
 #else
   #ifndef USE_ATOMIC
                   // set sradius2 to only start depositing energy when dist^2>sradius2 
                   if(sradius2>EPS){
-                      if((npos.x-p0.x)*(npos.x-p0.x)+(npos.y-p0.y)*(npos.y-p0.y)+(npos.z-p0.z)*(npos.z-p0.z)>sradius2){
-                          field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+                      if((P.x-p0.x)*(P.x-p0.x)+(P.y-p0.y)*(P.y-p0.y)+(P.z-p0.z)*(P.z-p0.z)>sradius2){
+                          field[idx1d+(int)(floorf((T.t-twin0)*Rtstep))*dimlen.z]+=P.w;
                       }else{
-                          accumweight+=npos.w*prop.x; // weight*absorption
+                          accumweight+=P.w*prop.mua; // weight*absorption
                       }
                   }else{
-                      field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z]+=npos.w;
+                      field[idx1d+(int)(floorf((T.t-twin0)*Rtstep))*dimlen.z]+=P.w;
                   }
   #else
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
-		  atomicFloatAdd(& field[idx1d+(int)(floorf((nlen.y-twin0)*Rtstep))*dimlen.z], npos.w);
+		  atomicFloatAdd(& field[idx1d+(int)(floorf((T.t-twin0)*Rtstep))*dimlen.z], P.w);
   #endif
 #endif
 	     }
-             nlen.z+=minaccumtime; // fluence is a temporal-integration
+             T.tnext+=minaccumtime; // fluence is a temporal-integration
 	  }
      }
      // accumweight saves the total absorbed energy in the sphere r<sradius.
      // in non-atomic mode, accumweight is more accurate than saving to the grid
      // as it is not influenced by race conditions.
-     // now I borrow nlen.z to pass this value back
+     // now I borrow T.tnext to pass this value back
 
-     nlen.z=accumweight;
+     T.tnext=accumweight;
 
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energyabsorbed;
@@ -405,9 +394,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],fl
 #ifdef TEST_RACING
      n_seed[idx]=cc;
 #endif
-     n_pos[idx]=npos;
-     n_dir[idx]=ndir;
-     n_len[idx]=nlen;
+     n_pos[idx]=*((float4*)(&P));
+     n_dir[idx]=*((float4*)(&V));
+     n_len[idx]=*((float4*)(&T));
 }
 
 kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], int maxgate,uint3 dimlen){
@@ -514,6 +503,9 @@ void mcx_run_simulation(Config *cfg){
      
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
+     
+
+     
      if(cfg->respin>1){
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
      }else{
@@ -688,7 +680,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
                               absorp+=field[j*dimxyz+i];
                            eabsorp+=absorp*cfg->prop[media[i]].mua;
        	       	       }
-                       scale=energy[1]/(energy[0]+energy[1])/Vvox/cfg->tstep/eabsorp;
+                       scale=energy[1]/((energy[0]+energy[1])*Vvox*cfg->tstep*eabsorp);
                        fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
                        mcx_normalize(field,scale,fieldlen);
                    }
