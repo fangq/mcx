@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <vector_types.h>
 
-#define MAX_PROP            256
 #define MAX_DETECTORS       256
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  256
@@ -68,7 +67,7 @@ typedef struct MCXConfig{
 extern "C" {
 #endif
 void mcx_savedata(float *dat,int len,Config *cfg);
-void mcx_error(int id,char *msg);
+void mcx_error(int id,char *msg,const char *file,const int linenum);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
 void mcx_readconfig(char *fname, Config *cfg);
