@@ -178,9 +178,16 @@ __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
 __device__ float rand_next_zangle(RandType t[RAND_BUF_LEN]){ 
     return rand_uniform01(mt19937s());
 }
+// generate random number for reflection test
+__device__ float rand_next_reflect(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(mt19937s());
+}
+// generate random number for the next zenith angle
+__device__ float rand_do_roulette(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(mt19937s());
+}
 // generate random number for the next zenith angle
 __device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){
     // do nothing
 }
-
 #endif
