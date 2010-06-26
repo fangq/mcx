@@ -51,8 +51,8 @@ void mcx_normalize(float field[], float scale, int fieldlen){
      }
 }
 
-void mcx_error(int id,char *msg){
-     fprintf(stdout,"MCX ERROR(%d):%s\n",id,msg);
+void mcx_error(int id,char *msg,const char *file,const int linenum){
+     fprintf(stdout,"MCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
      exit(id);
 }
 
@@ -65,7 +65,7 @@ void mcx_readconfig(char *fname, Config *cfg){
      }
      else{
      	FILE *fp=fopen(fname,"rt");
-	if(fp==NULL) mcx_error(-2,"can not load the specified config file");
+	if(fp==NULL) mcx_error(-2,"can not load the specified config file",__FILE__,__LINE__);
 	mcx_loadconfig(fp,cfg); 
 	fclose(fp);
         if(cfg->session[0]=='\0'){
@@ -79,7 +79,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
      	mcx_saveconfig(stdout,cfg);
      else{
      	FILE *fp=fopen(fname,"wt");
-	if(fp==NULL) mcx_error(-2,"can not write to the specified config file");
+	if(fp==NULL) mcx_error(-2,"can not write to the specified config file",__FILE__,__LINE__);
 	mcx_saveconfig(fp,cfg);     
 	fclose(fp);
      }
@@ -161,7 +161,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	fprintf(stdout,"%f %f %f\nPlease specify the path to the volume binary file:\n\t",
                                    cfg->tstart,cfg->tend,cfg->tstep);
      if(cfg->tstart>cfg->tend || cfg->tstep==0.f){
-         mcx_error(-9,"incorrect time gate settings");
+         mcx_error(-9,"incorrect time gate settings",__FILE__,__LINE__);
      }
      gates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
      if(cfg->maxgate>gates)
@@ -254,7 +254,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 		}
 	}
      }else{
-     	mcx_error(-4,"one must specify a binary volume file in order to run the simulation");
+     	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
      }
 }
 
@@ -283,7 +283,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
      int datalen,res;
      FILE *fp=fopen(filename,"rb");
      if(fp==NULL){
-     	     mcx_error(-5,"the specified binary volume file does not exist");
+     	     mcx_error(-5,"the specified binary volume file does not exist",__FILE__,__LINE__);
      }
      if(cfg->vol){
      	     free(cfg->vol);
@@ -294,7 +294,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
      res=fread(cfg->vol,sizeof(unsigned char),datalen,fp);
      fclose(fp);
      if(res!=datalen){
-     	 mcx_error(-6,"file size does not match specified dimensions");
+     	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
      }
 }
 
@@ -317,7 +317,7 @@ int mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
 	 else if(strcmp(type,"string")==0)
 	     strcpy((char *)output,argv[id+1]);
      }else{
-     	 mcx_error(-1,"incomplete input");
+     	 mcx_error(-1,"incomplete input",__FILE__,__LINE__);
      }
      return id+1;
 }
@@ -346,7 +346,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      	    if(argv[i][0]=='-'){
 		if(argv[i][1]=='-'){
 			if(mcx_remap(argv[i])){
-				mcx_error(-2,"unknown verbose option");
+				mcx_error(-2,"unknown verbose option",__FILE__,__LINE__);
 			}
 		}
 	        switch(argv[i][1]){
@@ -355,7 +355,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				exit(0);
 		     case 'i':
 				if(filename[0]){
-					mcx_error(-2,"you can not specify both interactive mode and config file");
+					mcx_error(-2,"you can not specify both interactive mode and config file",__FILE__,__LINE__);
 				}
 		     		isinteractive=1;
 				break;
@@ -372,7 +372,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 			indeed the photon moves per thread.
 		     */
 		     case 'n':
-				mcx_error(-2,"specifying photon number is not supported, please use -m");
+				mcx_error(-2,"specifying photon number is not supported, please use -m",__FILE__,__LINE__);
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
 		     	        break;
 		     case 'm':

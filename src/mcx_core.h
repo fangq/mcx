@@ -54,19 +54,20 @@ typedef union GProperty{
 
 typedef unsigned char uchar;
 
-struct  __align__(16) KernelParams {
+typedef struct  __align__(16) KernelParams {
   float3 vsize;
   float  minstep;
   float  twin0,twin1,tmax;
   uchar  isrowmajor,save2pt,doreflect,doreflect3;
-  float  Rstep;
-  float4 p0,c0;
+  float  Rtstep;
+  float4 ps,c0;
   float3 maxidx;
   uint3  dimlen,cp0,cp1;
   uint2  cachebox;
   float  minenergy;
+  float  skipradius2;
   float  minaccumtime;
-};
+}MCXParam;
 
 void mcx_run_simulation(Config *cfg);
 int  mcx_set_gpu(Config *cfg);
