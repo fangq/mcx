@@ -99,6 +99,7 @@ __device__ void gpu_rng_init(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LE
 // generate [0,1] random number for the next scattering length
 __device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
     RandType ran=rand_uniform01(t[0]);
+    if(ran==0.f) ran=rand_uniform01(t[1]);
     return ((ran==0.f)?LOG_MT_MAX:(-logf(ran)));
 }
 // generate [0,1] random number for the next arimuthal angle
@@ -108,5 +109,14 @@ __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
 // generate random number for the next zenith angle
 __device__ float rand_next_zangle(RandType t[RAND_BUF_LEN]){
     return rand_uniform01(t[4]);
+}
+
+// generate random number for the next zenith angle
+__device__ float rand_next_reflect(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(t[3]);
+}
+// generate random number for the next zenith angle
+__device__ float rand_do_roulette(RandType t[RAND_BUF_LEN]){
+    return rand_uniform01(t[1]);
 }
 #endif
