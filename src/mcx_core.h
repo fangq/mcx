@@ -7,25 +7,29 @@
 extern "C" {
 #endif
 
-typedef struct MCXPhoton{
-	float x;
-	float y;
-	float z;
-	float w;
-}MCXpos;
+
+#define MIN(a,b)           ((a)<(b)?(a):(b))
+
+#ifdef __DEVICE_EMULATION__
+#define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
+#else
+#define GPUDEBUG(x)
+#endif
+
+typedef float4 MCXpos;
 
 typedef struct MCXDir{
-        float x;
+        float x; /*directional vector of the photon*/
 	float y;
 	float z;
-        float nscat;
+        float nscat; /*total number of scattering events*/
 }MCXdir;
 
 typedef struct MCXTimer{
-        float tscat;
-        float t;
-	float tnext;
-	float ndone;
+        float tscat; /*remaining scattering time*/
+        float t;     /*photon elapse time*/
+	float tnext; /*time for the next accumulation*/
+	float ndone; /*number of completed photons*/
 }MCXtime;
 
 typedef union GPosition{
@@ -47,6 +51,22 @@ typedef union GProperty{
         Medium d; /*defined in mcx_utils.h*/
         float4 v;
 }Gprop;
+
+typedef unsigned char uchar;
+
+struct  __align__(16) KernelParams {
+  float3 vsize;
+  float  minstep;
+  float  twin0,twin1,tmax;
+  uchar  isrowmajor,save2pt,doreflect,doreflect3;
+  float  Rstep;
+  float4 p0,c0;
+  float3 maxidx;
+  uint3  dimlen,cp0,cp1;
+  uint2  cachebox;
+  float  minenergy;
+  float  minaccumtime;
+};
 
 void mcx_run_simulation(Config *cfg);
 int  mcx_set_gpu(Config *cfg);
