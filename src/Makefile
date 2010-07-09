@@ -11,7 +11,7 @@ OUTPUT_DIR=../bin
 INCLUDEDIRS=-I/usr/local/cuda/include
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
 
-CUCCOPT=#--maxrregcount 32
+CUCCOPT=-arch compute_11 #--maxrregcount 32
 CPPOPT=-g -Wall
 
 OBJSUFFIX=.o

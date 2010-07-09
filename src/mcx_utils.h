@@ -66,7 +66,7 @@ typedef struct MCXConfig{
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void mcx_savedata(float *dat,int len,Config *cfg);
+void mcx_savedata(float *dat, int len, int doappend, Config *cfg);
 void mcx_error(int id,char *msg,const char *file,const int linenum);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
