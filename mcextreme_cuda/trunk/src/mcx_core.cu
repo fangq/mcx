@@ -664,7 +664,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
                    fprintf(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
 
                    fprintf(cfg->flog,"saving data to file ...\t");
-                   mcx_savedata(field,fieldlen,cfg);
+                   mcx_savedata(field,fieldlen,t>cfg->tstart,cfg);
                    fprintf(cfg->flog,"saving data complete : %d ms\n",GetTimeMillis()-tic);
                    fflush(cfg->flog);
                }

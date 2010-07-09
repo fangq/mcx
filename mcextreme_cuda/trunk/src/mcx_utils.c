@@ -29,11 +29,18 @@ char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu",""};
 
-void mcx_savedata(float *dat,int len,Config *cfg){
+void mcx_savedata(float *dat, int len, int doappend, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
      sprintf(name,"%s.mc2",cfg->session);
-     fp=fopen(name,"wb");
+     if(doappend){
+        fp=fopen(name,"ab");
+     }else{
+        fp=fopen(name,"wb");
+     }
+     if(fp==NULL){
+	mcx_error(-2,"can not save data to disk",__FILE__,__LINE__);
+     }
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
 }
