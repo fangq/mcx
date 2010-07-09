@@ -58,6 +58,7 @@ typedef struct MCXConfig{
 	char issavedet;     /*1 to count all photons hits the detectors*/
 	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/
 	char isgpuinfo;     /*1 to print gpu info when attach, 0 do not print*/
+        char issrcfrom0;    /*1 do not subtract 1 from src/det positions, 0 subtract 1*/
         float minenergy;    /*minimum energy to propagate photon*/
         FILE *flog;         /*stream handle to print log information*/
   char rootpath[MAX_PATH_LENGTH];

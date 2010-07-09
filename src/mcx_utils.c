@@ -20,11 +20,11 @@
 #include <math.h>
 #include "mcx_utils.h"
 
-char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B',
+char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z',
                  'd','r','S','p','e','U','R','l','L','I','o','G','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
-                 "--gategroup","--reflect","--reflect3","--savedet",
+                 "--gategroup","--reflect","--reflect3","--srcfrom0","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu",""};
@@ -122,6 +122,7 @@ void mcx_initcfg(Config *cfg){
      cfg->sradius=0.f;
      cfg->rootpath[0]='\0';
      cfg->gpuid=0;
+     cfg->issrcfrom0=0;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -155,7 +156,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
                                    cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-     cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
+     if(!cfg->issrcfrom0){
+        cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
+     }
      fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) );
      fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
@@ -236,13 +239,18 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in mm): [5 5 5 1]\n\t",i);
      	fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z));
-        cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
+        if(!cfg->issrcfrom0){
+		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
+	}
         fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin)
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
      if(filename[0]){
         mcx_loadvolume(filename,cfg);
+	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
+	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
+		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
 	idx1d=cfg->isrowmajor?(int)(floor(cfg->srcpos.x)*cfg->dim.y*cfg->dim.z+floor(cfg->srcpos.y)*cfg->dim.z+floor(cfg->srcpos.z)):\
                       (int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
 	
@@ -430,15 +438,20 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'l':
                                 issavelog=1;
                                 break;
-		     case 'L':  cfg->isgpuinfo=2;
+		     case 'L':
+                                cfg->isgpuinfo=2;
 		                break;
-		     case 'I':  cfg->isgpuinfo=1;
+		     case 'I':
+                                cfg->isgpuinfo=1;
 		                break;
 		     case 'o':
 		     	        i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
 		     	        break;
                      case 'G':
                                 i=mcx_readarg(argc,argv,i,&(cfg->gpuid),"int");
+                                break;
+                     case 'z':
+                                i=mcx_readarg(argc,argv,i,&(cfg->issrcfrom0),"char");
                                 break;
 		}
 	    }
@@ -482,6 +495,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)\n\
  -r [1|int]    (--repeat)      number of repeations\n\
  -a [1|0]      (--array)       1 for C array, 0 for Matlab array\n\
+ -z [0|1]      (--srcfrom0)    src/detector coordinates start from 0, otherwise from 1\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit\n\
  -B [0|1]      (--reflect3)    1 to consider maximum 3 reflections, 0 consider only 2\n\
