@@ -618,15 +618,15 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
            mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen);
 
+           cudaThreadSynchronize();
+           cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
+           fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
+           mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
+
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
-               cudaThreadSynchronize();
-               cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
-               fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
                fprintf(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
-
-               mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
                if(cfg->respin>1){
                    for(i=0;i<fieldlen;i++)  //accumulate field, can be done in the GPU
@@ -670,7 +670,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
                }
            }
 	   //initialize the next simulation
-	   if(param.twin1<cfg->tend && iter+1<cfg->respin){
+	   if(param.twin1<cfg->tend && iter<cfg->respin){
                   cudaMemset(gfield,0,sizeof(float)*fieldlen); // cost about 1 ms
 
  		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); //following 3 cost about 50 ms
