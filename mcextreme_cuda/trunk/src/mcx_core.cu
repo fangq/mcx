@@ -658,6 +658,8 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
                            eabsorp+=absorp*cfg->prop[media[i]].mua;
        	       	       }
                        scale=energy[1]/((energy[0]+energy[1])*Vvox*cfg->tstep*eabsorp);
+		       if(cfg->unitinmm!=1.f) 
+		          scale*=(cfg->unitinmm*cfg->unitinmm);
                        fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
                        mcx_normalize(field,scale,fieldlen);
                    }

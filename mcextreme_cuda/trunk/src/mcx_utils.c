@@ -20,15 +20,60 @@
 #include <math.h>
 #include "mcx_utils.h"
 
-char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z',
+char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u',
                  'd','r','S','p','e','U','R','l','L','I','o','G','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
-                 "--gategroup","--reflect","--reflect3","--srcfrom0","--savedet",
+                 "--gategroup","--reflect","--reflect3","--srcfrom0",
+                 "--unitinmm","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu",""};
 
+void mcx_initcfg(Config *cfg){
+     cfg->medianum=0;
+     cfg->detnum=0;
+     cfg->dim.x=0;
+     cfg->dim.y=0;
+     cfg->dim.z=0;
+     cfg->nblocksize=128;
+     cfg->nphoton=0;
+     cfg->nthread=0;
+     cfg->seed=0;
+     cfg->isrowmajor=1; /* default is C array*/
+     cfg->maxgate=1;
+     cfg->isreflect=1;
+     cfg->isref3=0;
+     cfg->isnormalized=1;
+     cfg->issavedet=1;
+     cfg->respin=1;
+     cfg->issave2pt=1;
+     cfg->isgpuinfo=0;
+
+     cfg->prop=NULL;
+     cfg->detpos=NULL;
+     cfg->vol=NULL;
+     cfg->session[0]='\0';
+     cfg->printnum=0;
+     cfg->minenergy=0.f;
+     cfg->flog=stdout;
+     cfg->sradius=0.f;
+     cfg->rootpath[0]='\0';
+     cfg->gpuid=0;
+     cfg->issrcfrom0=0;
+     cfg->unitinmm=1.f;
+}
+
+void mcx_clearcfg(Config *cfg){
+     if(cfg->medianum)
+     	free(cfg->prop);
+     if(cfg->detnum)
+     	free(cfg->detpos);
+     if(cfg->dim.x && cfg->dim.y && cfg->dim.z)
+        free(cfg->vol);
+
+     mcx_initcfg(cfg);
+}
 void mcx_savedata(float *dat, int len, int doappend, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
@@ -92,49 +137,6 @@ void mcx_writeconfig(char *fname, Config *cfg){
      }
 }
 
-void mcx_initcfg(Config *cfg){
-     cfg->medianum=0;
-     cfg->detnum=0;
-     cfg->dim.x=0;
-     cfg->dim.y=0;
-     cfg->dim.z=0;
-     cfg->nblocksize=128;
-     cfg->nphoton=0;
-     cfg->nthread=0;
-     cfg->seed=0;
-     cfg->isrowmajor=1; /* default is C array*/
-     cfg->maxgate=1;
-     cfg->isreflect=1;
-     cfg->isref3=0;
-     cfg->isnormalized=1;
-     cfg->issavedet=1;
-     cfg->respin=1;
-     cfg->issave2pt=1;
-     cfg->isgpuinfo=0;
-
-     cfg->prop=NULL;
-     cfg->detpos=NULL;
-     cfg->vol=NULL;
-     cfg->session[0]='\0';
-     cfg->printnum=0;
-     cfg->minenergy=0.f;
-     cfg->flog=stdout;
-     cfg->sradius=0.f;
-     cfg->rootpath[0]='\0';
-     cfg->gpuid=0;
-     cfg->issrcfrom0=0;
-}
-
-void mcx_clearcfg(Config *cfg){
-     if(cfg->medianum)
-     	free(cfg->prop);
-     if(cfg->detnum)
-     	free(cfg->detpos);
-     if(cfg->dim.x && cfg->dim.y && cfg->dim.z)
-        free(cfg->vol);
-
-     mcx_initcfg(cfg);
-}
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      int i,gates,idx1d;
@@ -226,6 +228,10 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin)
 		fprintf(stdout,"%f %f %f %f\n",cfg->prop[i].mus,cfg->prop[i].g,cfg->prop[i].mua,cfg->prop[i].n);
+	if(cfg->unitinmm!=1.f){
+		cfg->prop[i].mus*=cfg->unitinmm;
+		cfg->prop[i].mua*=cfg->unitinmm;
+	}
      }
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in mm):\n\t");
@@ -435,6 +441,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'R':
                                 i=mcx_readarg(argc,argv,i,&(cfg->sradius),"float");
                                 break;
+                     case 'u':
+                                i=mcx_readarg(argc,argv,i,&(cfg->unitinmm),"float");
+                                break;
                      case 'l':
                                 issavelog=1;
                                 break;
@@ -501,6 +510,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -B [0|1]      (--reflect3)    1 to consider maximum 3 reflections, 0 consider only 2\n\
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
  -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
+ -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normailze the fluence to unitary, 0 to save raw fluence\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not to save\n\
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\

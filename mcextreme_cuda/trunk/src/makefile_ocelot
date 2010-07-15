@@ -14,7 +14,7 @@ INCLUDEDIRS=-I/usr/local/cuda/include
 LINKOPT=-L/usr/local/lib -locelot  #-L/usr/local/cuda/lib -lcudart 
 
 CUCCOPT=
-CPPOPT=-g -Wall
+CPPOPT=-g -Wall -O3
 
 OBJSUFFIX=.o
 EXESUFFIX=
@@ -62,7 +62,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cu
-	$(CUDACC) -cuda -o $@.cpp $<
+	$(CUDACC) $(CUCCOPT) -cuda -o $@.cpp $<
 	$(LLVM) $(INCLUDEDIRS) $(CPPOPT) `llvm-config --libs core jit asmparser native` -c -o $@  $@.cpp
 	-rm -rf $@.cpp
 clean:
