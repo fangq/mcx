@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <vector_types.h>
 
-#define MAX_DETECTORS       256
 #define MAX_PATH_LENGTH     1024
-#define MAX_SESSION_LENGTH  256
+#define MAX_SESSION_LENGTH  255
 
 typedef struct MCXMedium{
 	float mua;
@@ -14,6 +13,19 @@ typedef struct MCXMedium{
 	float n;
 	float g;
 } Medium;  /*this order shall match prop.{xyzw} in mcx_main_loop*/
+
+typedef struct MCXHistoryHeader{
+  char magic[4];
+  unsigned int  version;
+  unsigned int  maxmedia;
+  unsigned int  detnum;
+  unsigned int  colcount;
+  unsigned int  totalphoton;
+  unsigned int  detected;
+  unsigned int  savedphoton;
+  float unitinmm;
+  int reserved[7];
+} History;
 
 typedef struct MCXConfig{
 	int nphoton;      /*(total simulated photon number) we now use this to 
@@ -34,8 +46,9 @@ typedef struct MCXConfig{
 	uint3 dim;        /*domain size*/
 	uint3 crop0;      /*sub-volume for cache*/
 	uint3 crop1;      /*the other end of the caching box*/
-	int medianum;     /*total types of media*/
-	int detnum;       /*total detector numbers*/
+	unsigned int medianum;     /*total types of media*/
+	unsigned int detnum;       /*total detector numbers*/
+	unsigned int maxdetphoton; /*anticipated maximum detected photons*/
 	float detradius;  /*detector radius*/
         float sradius;    /*source region radius: if set to non-zero, accumulation 
                             will not perform for dist<sradius; this can reduce
@@ -59,16 +72,18 @@ typedef struct MCXConfig{
 	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/
 	char isgpuinfo;     /*1 to print gpu info when attach, 0 do not print*/
         char issrcfrom0;    /*1 do not subtract 1 from src/det positions, 0 subtract 1*/
+        char isdumpmask;    /*1 dump detector mask; 0 not*/
         float minenergy;    /*minimum energy to propagate photon*/
 	float unitinmm;     /*defines the length unit in mm for grid*/
         FILE *flog;         /*stream handle to print log information*/
-  char rootpath[MAX_PATH_LENGTH];
+        History his;        /*header info of the history file*/
+        char rootpath[MAX_PATH_LENGTH];
 } Config;
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void mcx_savedata(float *dat, int len, int doappend, Config *cfg);
+void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg);
 void mcx_error(int id,char *msg,const char *file,const int linenum);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
@@ -83,6 +98,7 @@ void mcx_normalize(float field[], float scale, int fieldlen);
 int  mcx_readarg(int argc, char *argv[], int id, void *output,char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
+void mcx_maskdet(Config *cfg);
 #ifdef	__cplusplus
 }
 #endif

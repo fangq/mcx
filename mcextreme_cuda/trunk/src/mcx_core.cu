@@ -30,6 +30,8 @@
 // {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refraction index (n)
 __constant__ float4 gproperty[MAX_PROP];
 
+__constant__ float4 gdetpos[MAX_DETECTORS];
+
 // kernel constant parameters
 __constant__ MCXParam gcfg[1];
 
@@ -55,11 +57,29 @@ __device__ inline void atomicFloatAdd(float *address, float val){
 }
 #endif
 
+__device__ inline void clearpath(float *p,int maxmediatype){
+      int i;
+      for(i=0;i<maxmediatype;i++)
+      	   p[i]=0.f;
+}
+
+__device__ inline uint finddet(MCXpos *p0){
+      uint i;
+      for(i=0;i<gcfg->detnum;i++){
+      	if((gdetpos[i].x-p0->x)*(gdetpos[i].x-p0->x)+
+	   (gdetpos[i].y-p0->y)*(gdetpos[i].y-p0->y)+
+	   (gdetpos[i].z-p0->z)*(gdetpos[i].z-p0->z) < gdetpos[i].w){
+	        return i+1;
+	   }
+      }
+      return 0;
+}
 /*
    this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
 */
 kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
-     float genergy[],uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[]){
+     float genergy[],uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[],
+     float n_det[], uint *detectedphoton){
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -67,7 +87,6 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      MCXdir  v;   //{x,y,z}: unitary direction vector, nscat:total scat event
      MCXtime f;   //tscat: remaining scattering time,t: photon elapse time, 
                   //tnext: next accumulation time, ndone: completed photons
-     float3 htime;            //reflection var
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
@@ -78,9 +97,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      int cc=0;
 #endif
      uchar  mediaid, mediaidorig;
-     char   medid=-1;
+     char   medid=-1,isdet=0;
      float  atten;         //can be taken out to minimize registers
-     float  flipdir,n1,Rtotal;   //reflection var
+     float  n1;   //reflection var
 
      //for MT RNG, these will be zero-length arrays and be optimized out
      RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
@@ -88,18 +107,22 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
      float accumweight=0.f;
+     extern __shared__ float pathlen[]; //max 64 tissue types when block size=64
+
+     float *ppath=pathlen+threadIdx.x*gcfg->maxmedia;
 
      *((float4*)(&p))=n_pos[idx];
      *((float4*)(&v))=n_dir[idx];
      *((float4*)(&f))=n_len[idx];
 
      gpu_rng_init(t,tnew,n_seed,idx);
+     if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
 
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
      idx1d=gcfg->isrowmajor?(int(floorf(p.x))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.z))):\
                       (int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
      idxorig=idx1d;
-     mediaid=media[idx1d];
+     mediaid=(media[idx1d] & MED_MASK);
      mediaidorig=mediaid;
 	  
      if(mediaid==0) {
@@ -111,7 +134,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
       using a while-loop to terminate a thread by np will cause MT RNG to be 3.5x slower
       LL5 RNG will only be slightly slower than for-loop with photon-move criterion
      */
-     //while(f.ndone<np) {
+     //while(f.ndone<nphoton) {
 
      for(np=0;np<nphoton;np++){ // here nphoton actually means photon moves
 
@@ -136,7 +159,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 		           tmp0*=tmp0;
 		           tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
 
-                           // when ran=1, CUDA will give me 1.000002 for tmp0 which produces nan later
+                           // when ran=1, CUDA gives me 1.000002 for tmp0 which produces nan later
                            // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
                            tmp0=max(-1.f, min(1.f, tmp0));
 
@@ -181,6 +204,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	       energyabsorbed-=p.w;
 	       f.tscat=SAME_VOXEL;
 	       f.t+=tmp0*prop.n*R_C0;  // accumulative time
+               if(gcfg->savedet) ppath[mediaid-1]+=tmp0;
                GPUDEBUG((">>ends in voxel %f<%f %f [%d]\n",f.tscat,len,prop.mus,idx1d));
 	  }else{                      //otherwise, move gcfg->minstep
 	       energyabsorbed+=p.w;
@@ -192,9 +216,11 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	       energyabsorbed-=p.w;
 	       f.tscat-=len;     //remaining probability: sum(s_i*mus_i)
 	       f.t+=gcfg->minaccumtime*prop.n; //total time
+               if(gcfg->savedet) ppath[mediaid-1]+=gcfg->minstep;
                GPUDEBUG((">>keep going %f<%f %f [%d] %e %e\n",f.tscat,len,prop.mus,idx1d,f.t,f.tnext));
 	  }
 
+          isdet=(media[idx1d] & DET_MASK);
           idx1dold=idx1d;
           idx1d=gcfg->isrowmajor?(int(floorf(p.x))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.z))):\
                           (int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
@@ -202,12 +228,30 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
 	      mediaid=0;
 	  }else{
-              mediaid=media[idx1d];
+	      mediaid=(media[idx1d] & MED_MASK);
           }
 
           //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
 	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1){
-              flipdir=0.f;
+	      float flipdir=0.f,Rtotal;
+              float3 htime;            //reflection var
+
+	      // let's handle detectors here
+	      if(gcfg->savedet && mediaid==0 && isdet){
+                  uint j,baseaddr=0;
+		  j=finddet(&p);
+		  if(j){
+		     baseaddr=atomicAdd(detectedphoton,1);
+		     if(baseaddr<gcfg->maxdetphoton){
+			baseaddr*=gcfg->maxmedia+2;
+			n_det[baseaddr++]=j;
+			n_det[baseaddr++]=v.nscat;
+			for(j=0;j<gcfg->maxmedia;j++){
+			    n_det[baseaddr+j]=ppath[j]; // save partial pathlength to the memory
+			}
+		     }
+		  }
+	      }
               if(gcfg->doreflect) {
                 //time-of-flight to hit the wall in each direction
                 htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p0.x)+(v.x>0.f)-p0.x)/v.x:VERY_BIG;
@@ -310,7 +354,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 		     energyloss+=(1.f-Rtotal)*p.w; //energy loss due to reflection
                      p.w*=Rtotal;
                   } // else, total internal reflection, no loss
-                  mediaid=media[idx1d];
+	          mediaid=(media[idx1d] & MED_MASK);
                   *((float4*)(&prop))=gproperty[mediaid];
                   n1=prop.n;
                   //v.nscat++;
@@ -321,6 +365,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	          *((float4*)(&f))=float4(0.f,0.f,gcfg->minaccumtime,f.ndone+1);
                   idx1d=idxorig;
 		  mediaid=mediaidorig;
+		  if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
               }
 	  }else if(f.t>=f.tnext){
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
@@ -476,9 +521,10 @@ void mcx_run_simulation(Config *cfg){
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,cfg->isrowmajor,
-                     cfg->issave2pt,cfg->isreflect,cfg->isref3,1.f/cfg->tstep,
+                     cfg->issave2pt,cfg->isreflect,cfg->isref3,cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
-                     cfg->sradius*cfg->sradius,minstep*R_C0};
+                     cfg->sradius*cfg->sradius,minstep*R_C0,cfg->maxdetphoton,
+		     cfg->medianum-1,cfg->detnum};
 
      if(cfg->respin>1){
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
@@ -492,6 +538,8 @@ void mcx_run_simulation(Config *cfg){
      float4 *Pdir;
      float4 *Plen;
      uint   *Pseed;
+     float  *Pdet;
+     uint    detected=0,sharedbuf=0;
 
      if(cfg->nthread%cfg->nblocksize)
      	cfg->nthread=(cfg->nthread/cfg->nblocksize)*cfg->nblocksize;
@@ -506,7 +554,8 @@ void mcx_run_simulation(Config *cfg){
      Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Plen=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pseed=(uint*)malloc(sizeof(uint)*cfg->nthread*RAND_SEED_LEN);
-     energy=(float*)calloc(sizeof(float),cfg->nthread*2);
+     energy=(float*)calloc(cfg->nthread*2,sizeof(float));
+     Pdet=(float*)calloc(cfg->maxdetphoton,sizeof(float)*(cfg->medianum+1));
 
      uchar *gmedia;
      mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)),__FILE__,__LINE__);
@@ -523,6 +572,10 @@ void mcx_run_simulation(Config *cfg){
      mcx_cu_assess(cudaMalloc((void **) &gPlen, sizeof(float4)*cfg->nthread),__FILE__,__LINE__);
      uint   *gPseed;
      mcx_cu_assess(cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_SEED_LEN),__FILE__,__LINE__);
+     float  *gPdet;
+     mcx_cu_assess(cudaMalloc((void **) &gPdet, sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)),__FILE__,__LINE__);
+     uint   *gdetected;
+     mcx_cu_assess(cudaMalloc((void **) &gdetected, sizeof(uint)),__FILE__,__LINE__);
 
      float *genergy;
      cudaMalloc((void **) &genergy, sizeof(float)*cfg->nthread*2);
@@ -584,8 +637,11 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
      cudaMemcpy(gfield, field, sizeof(float) *fieldlen, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice);
      cudaMemcpy(genergy,energy,sizeof(float) *cfg->nthread*2, cudaMemcpyHostToDevice);
+     cudaMemcpy(gPdet,  Pdet,  sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1), cudaMemcpyHostToDevice);
+     cudaMemcpy(gdetected,&detected,  sizeof(uint), cudaMemcpyHostToDevice);
 
      cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice);
+     cudaMemcpyToSymbol(gdetpos, cfg->detpos,  cfg->detnum*sizeof(float4), 0, cudaMemcpyHostToDevice);
 
      fprintf(cfg->flog,"init complete : %d ms\n",GetTimeMillis()-tic);
 
@@ -601,7 +657,10 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 	 
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
-     
+
+     if(cfg->issavedet)
+        sharedbuf=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
+
      //simulate for all time-gates in maxgate groups per run
      for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){
 
@@ -616,12 +675,30 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
        for(iter=0;iter<cfg->respin;iter++){
 
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
-           mcx_main_loop<<<mcgrid,mcblock>>>(cfg->nphoton,0,gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen);
+           mcx_main_loop<<<mcgrid,mcblock,sharedbuf>>>(cfg->nphoton,0,gmedia,gfield,genergy,
+	                                               gPseed,gPpos,gPdir,gPlen,gPdet,gdetected);
 
            cudaThreadSynchronize();
-           cudaMemcpy(field, gfield,sizeof(float),cudaMemcpyDeviceToHost);
+	   cudaMemcpy(&detected, gdetected,sizeof(uint),cudaMemcpyDeviceToHost);
            fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
+
+           if(cfg->issavedet){
+           	cudaMemcpy(Pdet, gPdet,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1),cudaMemcpyDeviceToHost);
+	        mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
+		if(detected>cfg->maxdetphoton){
+			fprintf(cfg->flog,"WARNING: the detected photon (%d) \
+is more than what your have specified (%d), please use the -H option to specify a greater number\t"
+                           ,detected,cfg->maxdetphoton);
+		}else{
+			fprintf(cfg->flog,"detected %d photons\t",detected);
+		}
+		//cfg->his.totalphoton=
+		cfg->his.unitinmm=cfg->unitinmm;
+		cfg->his.detected=detected;
+		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
+		mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),t>cfg->tstart,"mch",cfg);
+	   }
 
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
@@ -666,7 +743,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
                    fprintf(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
 
                    fprintf(cfg->flog,"saving data to file ...\t");
-                   mcx_savedata(field,fieldlen,t>cfg->tstart,cfg);
+                   mcx_savedata(field,fieldlen,t>cfg->tstart,"mc2",cfg);
                    fprintf(cfg->flog,"saving data complete : %d ms\n",GetTimeMillis()-tic);
                    fflush(cfg->flog);
                }
@@ -674,6 +751,8 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 	   //initialize the next simulation
 	   if(param.twin1<cfg->tend && iter<cfg->respin){
                   cudaMemset(gfield,0,sizeof(float)*fieldlen); // cost about 1 ms
+                  cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1));
+                  cudaMemset(gdetected,0,sizeof(float));
 
  		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); //following 3 cost about 50 ms
 		  cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
@@ -735,11 +814,14 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
      cudaFree(gPlen);
      cudaFree(gPseed);
      cudaFree(genergy);
+     cudaFree(gPdet);
+     cudaFree(gdetected);
 
      free(Ppos);
      free(Pdir);
      free(Plen);
      free(Pseed);
+     free(Pdet);
      free(energy);
      free(field);
 }
