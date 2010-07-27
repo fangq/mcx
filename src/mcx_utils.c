@@ -20,15 +20,15 @@
 #include <math.h>
 #include "mcx_utils.h"
 
-char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','\0'};
+char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflect3","--srcfrom0",
-                 "--unitinmm","--savedet",
+                 "--unitinmm","--maxdetphoton","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu","--root","--gpu",""};
+                 "--printgpu","--root","--gpu","--dumpmask",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
@@ -40,16 +40,15 @@ void mcx_initcfg(Config *cfg){
      cfg->nphoton=0;
      cfg->nthread=0;
      cfg->seed=0;
-     cfg->isrowmajor=1; /* default is C array*/
+     cfg->isrowmajor=0; /* default is Matlab array*/
      cfg->maxgate=1;
      cfg->isreflect=1;
      cfg->isref3=0;
      cfg->isnormalized=1;
-     cfg->issavedet=1;
+     cfg->issavedet=0;
      cfg->respin=1;
      cfg->issave2pt=1;
      cfg->isgpuinfo=0;
-
      cfg->prop=NULL;
      cfg->detpos=NULL;
      cfg->vol=NULL;
@@ -62,6 +61,9 @@ void mcx_initcfg(Config *cfg){
      cfg->gpuid=0;
      cfg->issrcfrom0=0;
      cfg->unitinmm=1.f;
+     cfg->isdumpmask=0;
+     cfg->maxdetphoton=1000000;
+     cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -74,10 +76,10 @@ void mcx_clearcfg(Config *cfg){
 
      mcx_initcfg(cfg);
 }
-void mcx_savedata(float *dat, int len, int doappend, Config *cfg){
+void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
-     sprintf(name,"%s.mc2",cfg->session);
+     sprintf(name,"%s.%s",cfg->session,suffix);
      if(doappend){
         fp=fopen(name,"ab");
      }else{
@@ -85,6 +87,9 @@ void mcx_savedata(float *dat, int len, int doappend, Config *cfg){
      }
      if(fp==NULL){
 	mcx_error(-2,"can not save data to disk",__FILE__,__LINE__);
+     }
+     if(strcmp(suffix,"mch")==0){
+	fwrite(&(cfg->his),sizeof(History),1,fp);
      }
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
@@ -240,11 +245,13 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%d %f\n",cfg->detnum,cfg->detradius);
      cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
-     cfg->issavedet=(cfg->detpos>0);
+     if(cfg->issavedet && cfg->detnum==0) 
+      	cfg->issavedet=0;
      for(i=0;i<cfg->detnum;i++){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in mm): [5 5 5 1]\n\t",i);
      	fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z));
+	cfg->detpos[i].w=cfg->detradius*cfg->detradius;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
@@ -254,6 +261,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }
      if(filename[0]){
         mcx_loadvolume(filename,cfg);
+	if(cfg->issavedet)
+		mcx_maskdet(cfg);
 	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
 	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
 		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
@@ -277,6 +286,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
      }
+     cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
+     cfg->his.detnum=cfg->detnum;
+     cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
 }
 
 void mcx_saveconfig(FILE *out, Config *cfg){
@@ -317,6 +329,99 @@ void mcx_loadvolume(char *filename,Config *cfg){
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
      }
+}
+
+void  mcx_maskdet(Config *cfg){
+     int x,y,z,d,dx,dy,dz,idx1d;
+     float ix,iy,iz;
+     unsigned char *padvol;
+     
+     dx=cfg->dim.x+2;
+     dy=cfg->dim.y+2;
+     dz=cfg->dim.z+2;
+
+     /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
+       then I don't need to worry about boundaries any more*/
+
+     padvol=(unsigned char*)calloc(dx*dy,dz);
+
+     if(cfg->isrowmajor){
+       for(x=1;x<=cfg->dim.x;x++)
+          for(y=1;y<=cfg->dim.y;y++)
+	          memcpy(padvol+x*dy*dz+y*dz+1,cfg->vol+(x-1)*cfg->dim.y*cfg->dim.z+(y-1)*cfg->dim.z,cfg->dim.z);
+
+       for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
+          for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
+             iz=z+cfg->detpos[d].z; /*1.5=1+0.5, 1 comes from the padding layer, 0.5 move to voxel center*/
+             for(y=-cfg->detpos[d].w;y<=cfg->detpos[d].w;y++){
+        	iy=y+cfg->detpos[d].y;
+        	for(x=-cfg->detpos[d].w;x<=cfg->detpos[d].w;x++){
+	           ix=x+cfg->detpos[d].x;
+
+		   if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
+		      x*x+y*y+z*z > cfg->detpos[d].w*cfg->detpos[d].w)
+		      continue;
+
+		   idx1d=(int)((ix+1.f)*dy*dz+(iy+1.f)*dz+(iz+1.f));
+
+		   if(padvol[idx1d])
+                    if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dz]&&padvol[idx1d-dz]&&padvol[idx1d+dy*dz]&&padvol[idx1d-dy*dz]&&
+		       padvol[idx1d+dz+1]&&padvol[idx1d+dz-1]&&padvol[idx1d-dz+1]&&padvol[idx1d-dz-1]&&
+		       padvol[idx1d+dy*dz+1]&&padvol[idx1d+dy*dz-1]&&padvol[idx1d-dy*dz+1]&&padvol[idx1d-dy*dz-1]&&
+		       padvol[idx1d+dy*dz+dz]&&padvol[idx1d+dy*dz-dz]&&padvol[idx1d-dy*dz+dz]&&padvol[idx1d-dy*dz-dz]&&
+		       padvol[idx1d+dy*dz+dz+1]&&padvol[idx1d+dy*dz+dz-1]&&padvol[idx1d+dy*dz-dz+1]&&padvol[idx1d+dy*dz-dz-1]&&
+		       padvol[idx1d-dy*dz+dz+1]&&padvol[idx1d-dy*dz+dz-1]&&padvol[idx1d-dy*dz-dz+1]&&padvol[idx1d-dy*dz-dz-1])){
+		            cfg->vol[(int)(ix*cfg->dim.y*cfg->dim.z+iy*cfg->dim.z+iz)]|=(1<<7);//set the highest bit to 1
+	            }
+		}
+	    }
+       }
+     }else{
+       for(z=1;z<=cfg->dim.z;z++)
+          for(y=1;y<=cfg->dim.y;y++)
+	          memcpy(padvol+z*dy*dx+y*dx+1,cfg->vol+(z-1)*cfg->dim.y*cfg->dim.x+(y-1)*cfg->dim.x,cfg->dim.x);
+
+       for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
+          for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
+             iz=z+cfg->detpos[d].z; /*1.5=1+0.5, 1 comes from the padding layer, 0.5 move to voxel center*/
+             for(y=-cfg->detpos[d].w;y<=cfg->detpos[d].w;y++){
+        	iy=y+cfg->detpos[d].y;
+        	for(x=-cfg->detpos[d].w;x<=cfg->detpos[d].w;x++){
+	           ix=x+cfg->detpos[d].x;
+
+		   if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
+		      x*x+y*y+z*z > cfg->detpos[d].w*cfg->detpos[d].w)
+		      continue;
+
+		   idx1d=(int)((iz+1.f)*dy*dx+(iy+1.f)*dx+(ix+1.f));
+
+		   if(padvol[idx1d])
+                    if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
+		       padvol[idx1d+dx+1]&&padvol[idx1d+dx-1]&&padvol[idx1d-dx+1]&&padvol[idx1d-dx-1]&&
+		       padvol[idx1d+dy*dx+1]&&padvol[idx1d+dy*dx-1]&&padvol[idx1d-dy*dx+1]&&padvol[idx1d-dy*dx-1]&&
+		       padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
+		       padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
+		       padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
+		            cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=(1<<7);//set the highest bit to 1
+	            }
+		}
+	    }
+       }
+     }
+     if(cfg->isdumpmask){
+     	 char fname[MAX_PATH_LENGTH];
+	 FILE *fp;
+	 sprintf(fname,"%s.mask",cfg->session);
+	 if((fp=fopen(fname,"wb"))==NULL){
+	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
+	 }
+	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y,cfg->dim.z,fp)!=cfg->dim.z){
+	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
+	 }
+	 fclose(fp);
+	 exit(0);
+     }
+     free(padvol);
 }
 
 int mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
@@ -462,6 +567,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'z':
                                 i=mcx_readarg(argc,argv,i,&(cfg->issrcfrom0),"char");
                                 break;
+		     case 'M':
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->isdumpmask),"char");
+		     	        break;
+		     case 'H':
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
+		     	        break;
 		}
 	    }
 	    i++;
@@ -513,6 +624,8 @@ where possible parameters include (the first item in [] is the default value)\n\
  -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normailze the fluence to unitary, 0 to save raw fluence\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not to save\n\
+ -M [0|1]      (--dumpmask)    1 to save detector number masked volume, 0 not to save\n\
+ -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
  -s sessionid  (--session)     a string to identify this specific simulation (and output files)\n\
  -p [0|int]    (--printlen)    number of threads to print (debug)\n\
