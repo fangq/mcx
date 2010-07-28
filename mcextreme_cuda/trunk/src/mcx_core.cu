@@ -90,6 +90,26 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float we
 	 }
       }
 }
+
+__device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,uint *idx1d,
+           uchar *mediaid,uchar isdet, float ppath[],float energyloss[],float n_det[],uint *dpnum){
+
+      *energyloss+=p->w;  // sum all the remaining energy
+#ifdef SAVE_DETECTORS
+      // let's handle detectors here
+      if(gcfg->savedet){
+         if(*mediaid==0 && isdet)
+	      savedetphoton(n_det,dpnum,v->nscat,ppath,p);
+	 clearpath(ppath,gcfg->maxmedia);
+      }
+#endif
+      *((float4*)p)=gcfg->ps;
+      *((float4*)v)=gcfg->c0;
+      *((float4*)f)=float4(0.f,0.f,gcfg->minaccumtime,f->ndone+1);
+      *idx1d=gcfg->idx1dorig;
+      *mediaid=gcfg->mediaidorig;
+}
+
 /*
    this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
 */
@@ -106,14 +126,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     int np,idx1d, idx1dold,idxorig;   //idx1dold is related to reflection
+     uint np,idx1d, idx1dold;   //idx1dold is related to reflection
      //np=nphoton+((idx==blockDim.x*gridDim.x-1) ? ophoton: 0);
 
 #ifdef TEST_RACING
      int cc=0;
 #endif
-     uchar  mediaid, mediaidorig;
-     char   medid=-1,isdet=0;
+     uchar  mediaid,isdet=0;
+     char   medid=-1;
      float  atten;         //can be taken out to minimize registers
      float  n1;   //reflection var
 
@@ -135,10 +155,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
 
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
-     idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
-     idxorig=idx1d;
-     mediaid=(media[idx1d] & MED_MASK);
-     mediaidorig=mediaid;
+     idx1d=gcfg->idx1dorig;
+     mediaid=gcfg->mediaidorig;
 	  
      if(mediaid==0) {
           return; // the initial position is not within the medium
@@ -247,7 +265,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
           //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
 	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1){
-	      float flipdir=0.f,Rtotal;
+	      float flipdir=0.f;
               float3 htime;            //reflection var
 
               if(gcfg->doreflect) {
@@ -314,6 +332,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	      //if hit boundary within the time window and is n-mismatched, rebound
 
               if(gcfg->doreflect&&f.t<gcfg->tmax&&f.t<gcfg->twin1&& flipdir>0.f && n1!=prop.n&&p.w>gcfg->minenergy){
+	          float Rtotal=1.f;
+
                   tmp0=n1*n1;
                   tmp1=prop.n*prop.n;
                   if(flipdir>=3.f) { //flip in z axis
@@ -335,7 +355,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2
 	          GPUDEBUG((" ref len=%f %f+%f=%f w=%f\n",len,cphi,sphi,cphi*cphi+sphi,p.w));
 
-                  if(len>0.f) {
+                  if(len>0.f) { // if not total internal reflection
                      ctheta=tmp0*cphi*cphi+tmp1*len;
                      stheta=2.f*n1*prop.n*cphi*sqrtf(len);
                      Rtotal=(ctheta-stheta)/(ctheta+stheta);
@@ -345,26 +365,17 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	             GPUDEBUG(("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f p=%f %f %f p0=%f %f %f\n",
                          idx,(int)v.nscat,(int)f.tnext,
 	                 flipdir,idx1dold,idx1d,cphi,sphi,p.x,p.y,p.z,p0.x,p0.y,p0.z));
-		     energyloss+=(1.f-Rtotal)*p.w; //energy loss due to reflection
-                     p.w*=Rtotal;
                   } // else, total internal reflection, no loss
-	          mediaid=(media[idx1d] & MED_MASK);
-                  *((float4*)(&prop))=gproperty[mediaid];
-                  n1=prop.n;
-                  //v.nscat++;
+	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){
+		    	launchnewphoton(&p,&v,&f,&idx1d,&mediaid,isdet,ppath,&energyloss,n_det,detectedphoton);
+		  }else{
+		        mediaid=(media[idx1d] & MED_MASK);
+        	        *((float4*)(&prop))=gproperty[mediaid];
+                	n1=prop.n;
+	                //v.nscat++;
+		  }
               }else{  // launch a new photon
-                  energyloss+=p.w;  // sum all the remaining energy
-		  // let's handle detectors here
-		  if(gcfg->savedet){
-        	     if(mediaid==0 && isdet)
-	      	          savedetphoton(n_det,detectedphoton,1.f,ppath,&p);
-		     clearpath(ppath,gcfg->maxmedia);
-		  }		  
-	          *((float4*)(&p))=gcfg->ps;
-	          *((float4*)(&v))=gcfg->c0;
-	          *((float4*)(&f))=float4(0.f,0.f,gcfg->minaccumtime,f.ndone+1);
-                  idx1d=idxorig;
-		  mediaid=mediaidorig;
+		  launchnewphoton(&p,&v,&f,&idx1d,&mediaid,isdet,ppath,&energyloss,n_det,detectedphoton);
               }
 	  }else if(f.t>=f.tnext){
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
@@ -520,10 +531,10 @@ void mcx_run_simulation(Config *cfg){
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,cfg->isrowmajor,
-                     cfg->issave2pt,cfg->isreflect,cfg->isref3,cfg->issavedet,1.f/cfg->tstep,
+                     cfg->issave2pt,cfg->isreflect,cfg->isref3,cfg->issavedet,0,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum};
+		     cfg->medianum-1,cfg->detnum,0};
 
      if(cfg->respin>1){
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
@@ -588,6 +599,9 @@ void mcx_run_simulation(Config *cfg){
      dimlen.z=cfg->dim.x*cfg->dim.y*cfg->dim.z;
      param.dimlen=dimlen;
      param.cachebox=cachebox;
+     param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
+     param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
+
      /*
       threaddim.x=cfg->dim.z;
       threaddim.y=cfg->dim.y*cfg->dim.z;
@@ -618,6 +632,11 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 
      tic=StartTimer();
      fprintf(cfg->flog,"compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
+#ifdef SAVE_DETECTORS
+     fprintf(cfg->flog,"this version can save photons at the detectors\n");
+#else
+     fprintf(cfg->flog,"this version CAN NOT save photons at the detectors\n");
+#endif
      fprintf(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",threadphoton,oddphotons,
            cfg->nphoton,cfg->nthread,cfg->respin);
      fprintf(cfg->flog,"initializing streams ...\t");
@@ -651,7 +670,6 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 	 
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
-
      if(cfg->issavedet)
         sharedbuf=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
 
@@ -677,6 +695,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
            fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
+#ifdef SAVE_DETECTORS
            if(cfg->issavedet){
            	cudaMemcpy(Pdet, gPdet,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1),cudaMemcpyDeviceToHost);
 	        mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
@@ -693,7 +712,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
 		mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),t>cfg->tstart,"mch",cfg);
 	   }
-
+#endif
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
