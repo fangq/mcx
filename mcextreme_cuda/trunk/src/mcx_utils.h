@@ -99,6 +99,7 @@ int  mcx_readarg(int argc, char *argv[], int id, void *output,char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
 void mcx_maskdet(Config *cfg);
+void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
 #ifdef	__cplusplus
 }
 #endif

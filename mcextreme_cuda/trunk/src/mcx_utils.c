@@ -45,7 +45,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isreflect=1;
      cfg->isref3=0;
      cfg->isnormalized=1;
-     cfg->issavedet=0;
+     cfg->issavedet=1;
      cfg->respin=1;
      cfg->issave2pt=1;
      cfg->isgpuinfo=0;
@@ -261,13 +261,17 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }
      if(filename[0]){
         mcx_loadvolume(filename,cfg);
+	if(cfg->isrowmajor){
+		/*from here on, the array is always col-major*/
+		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
+		cfg->isrowmajor=0;
+	}
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
 	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
 	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
 		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
-	idx1d=cfg->isrowmajor?(int)(floor(cfg->srcpos.x)*cfg->dim.y*cfg->dim.z+floor(cfg->srcpos.y)*cfg->dim.z+floor(cfg->srcpos.z)):\
-                      (int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+	idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
 	
         /* if the specified source position is outside the domain, move the source
 	   along the initial vector until it hit the domain */
@@ -279,8 +283,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 			cfg->srcpos.y+=cfg->srcdir.y;
 			cfg->srcpos.z+=cfg->srcdir.z;
 			printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-			idx1d=cfg->isrowmajor?(int)(floor(cfg->srcpos.x)*cfg->dim.y*cfg->dim.z+floor(cfg->srcpos.y)*cfg->dim.z+floor(cfg->srcpos.z)):\
-                		      (int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+			idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
 		}
 	}
      }else{
@@ -331,6 +334,26 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
 }
 
+void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
+     int x,y,z;
+     uint dimxy,dimyz;
+     unsigned char *newvol=NULL;
+     
+     if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
+     	return;
+     }     
+     newvol=(unsigned char*)malloc(sizeof(unsigned char)*dim->x*dim->y*dim->z);
+     dimxy=dim->x*dim->y;
+     dimyz=dim->y*dim->z;
+     for(x=0;x<dim->x;x++)
+      for(y=0;y<dim->y;y++)
+       for(z=0;z<dim->z;z++){
+       		newvol[z*dimxy+y*dim->x+x]=*vol[x*dimyz+y*dim->z+z];
+       }
+     free(*vol);
+     *vol=newvol;
+}
+
 void  mcx_maskdet(Config *cfg){
      int x,y,z,d,dx,dy,dz,idx1d;
      float ix,iy,iz;
@@ -345,69 +368,37 @@ void  mcx_maskdet(Config *cfg){
 
      padvol=(unsigned char*)calloc(dx*dy,dz);
 
-     if(cfg->isrowmajor){
-       for(x=1;x<=cfg->dim.x;x++)
-          for(y=1;y<=cfg->dim.y;y++)
-	          memcpy(padvol+x*dy*dz+y*dz+1,cfg->vol+(x-1)*cfg->dim.y*cfg->dim.z+(y-1)*cfg->dim.z,cfg->dim.z);
+     for(z=1;z<=cfg->dim.z;z++)
+        for(y=1;y<=cfg->dim.y;y++)
+	        memcpy(padvol+z*dy*dx+y*dx+1,cfg->vol+(z-1)*cfg->dim.y*cfg->dim.x+(y-1)*cfg->dim.x,cfg->dim.x);
 
-       for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
-          for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
-             iz=z+cfg->detpos[d].z; /*1.5=1+0.5, 1 comes from the padding layer, 0.5 move to voxel center*/
-             for(y=-cfg->detpos[d].w;y<=cfg->detpos[d].w;y++){
-        	iy=y+cfg->detpos[d].y;
-        	for(x=-cfg->detpos[d].w;x<=cfg->detpos[d].w;x++){
-	           ix=x+cfg->detpos[d].x;
+     for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
+        for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
+           iz=z+cfg->detpos[d].z; /*1.5=1+0.5, 1 comes from the padding layer, 0.5 move to voxel center*/
+           for(y=-cfg->detpos[d].w;y<=cfg->detpos[d].w;y++){
+              iy=y+cfg->detpos[d].y;
+              for(x=-cfg->detpos[d].w;x<=cfg->detpos[d].w;x++){
+	         ix=x+cfg->detpos[d].x;
 
-		   if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
-		      x*x+y*y+z*z > cfg->detpos[d].w*cfg->detpos[d].w)
-		      continue;
+		 if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
+		    x*x+y*y+z*z > cfg->detpos[d].w*cfg->detpos[d].w)
+		    continue;
 
-		   idx1d=(int)((ix+1.f)*dy*dz+(iy+1.f)*dz+(iz+1.f));
+		 idx1d=(int)((iz+1.f)*dy*dx+(iy+1.f)*dx+(ix+1.f));
 
-		   if(padvol[idx1d])
-                    if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dz]&&padvol[idx1d-dz]&&padvol[idx1d+dy*dz]&&padvol[idx1d-dy*dz]&&
-		       padvol[idx1d+dz+1]&&padvol[idx1d+dz-1]&&padvol[idx1d-dz+1]&&padvol[idx1d-dz-1]&&
-		       padvol[idx1d+dy*dz+1]&&padvol[idx1d+dy*dz-1]&&padvol[idx1d-dy*dz+1]&&padvol[idx1d-dy*dz-1]&&
-		       padvol[idx1d+dy*dz+dz]&&padvol[idx1d+dy*dz-dz]&&padvol[idx1d-dy*dz+dz]&&padvol[idx1d-dy*dz-dz]&&
-		       padvol[idx1d+dy*dz+dz+1]&&padvol[idx1d+dy*dz+dz-1]&&padvol[idx1d+dy*dz-dz+1]&&padvol[idx1d+dy*dz-dz-1]&&
-		       padvol[idx1d-dy*dz+dz+1]&&padvol[idx1d-dy*dz+dz-1]&&padvol[idx1d-dy*dz-dz+1]&&padvol[idx1d-dy*dz-dz-1])){
-		            cfg->vol[(int)(ix*cfg->dim.y*cfg->dim.z+iy*cfg->dim.z+iz)]|=(1<<7);//set the highest bit to 1
-	            }
-		}
-	    }
-       }
-     }else{
-       for(z=1;z<=cfg->dim.z;z++)
-          for(y=1;y<=cfg->dim.y;y++)
-	          memcpy(padvol+z*dy*dx+y*dx+1,cfg->vol+(z-1)*cfg->dim.y*cfg->dim.x+(y-1)*cfg->dim.x,cfg->dim.x);
-
-       for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
-          for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
-             iz=z+cfg->detpos[d].z; /*1.5=1+0.5, 1 comes from the padding layer, 0.5 move to voxel center*/
-             for(y=-cfg->detpos[d].w;y<=cfg->detpos[d].w;y++){
-        	iy=y+cfg->detpos[d].y;
-        	for(x=-cfg->detpos[d].w;x<=cfg->detpos[d].w;x++){
-	           ix=x+cfg->detpos[d].x;
-
-		   if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
-		      x*x+y*y+z*z > cfg->detpos[d].w*cfg->detpos[d].w)
-		      continue;
-
-		   idx1d=(int)((iz+1.f)*dy*dx+(iy+1.f)*dx+(ix+1.f));
-
-		   if(padvol[idx1d])
-                    if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
-		       padvol[idx1d+dx+1]&&padvol[idx1d+dx-1]&&padvol[idx1d-dx+1]&&padvol[idx1d-dx-1]&&
-		       padvol[idx1d+dy*dx+1]&&padvol[idx1d+dy*dx-1]&&padvol[idx1d-dy*dx+1]&&padvol[idx1d-dy*dx-1]&&
-		       padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
-		       padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
-		       padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
-		            cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=(1<<7);//set the highest bit to 1
-	            }
-		}
-	    }
-       }
+		 if(padvol[idx1d])
+                  if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
+		     padvol[idx1d+dx+1]&&padvol[idx1d+dx-1]&&padvol[idx1d-dx+1]&&padvol[idx1d-dx-1]&&
+		     padvol[idx1d+dy*dx+1]&&padvol[idx1d+dy*dx-1]&&padvol[idx1d-dy*dx+1]&&padvol[idx1d-dy*dx-1]&&
+		     padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
+		     padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
+		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
+		          cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=(1<<7);//set the highest bit to 1
+	          }
+	      }
+	  }
      }
+
      if(cfg->isdumpmask){
      	 char fname[MAX_PATH_LENGTH];
 	 FILE *fp;
@@ -614,7 +605,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -m [0|int]    (--move)        total photon moves\n\
  -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)\n\
  -r [1|int]    (--repeat)      number of repeations\n\
- -a [1|0]      (--array)       1 for C array, 0 for Matlab array\n\
+ -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
  -z [0|1]      (--srcfrom0)    src/detector coordinates start from 0, otherwise from 1\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit\n\
