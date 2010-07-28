@@ -119,8 +119,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
 
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
-     idx1d=gcfg->isrowmajor?(int(floorf(p.x))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.z))):\
-                      (int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
+     idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
      idxorig=idx1d;
      mediaid=(media[idx1d] & MED_MASK);
      mediaidorig=mediaid;
@@ -222,8 +221,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
           isdet=(media[idx1d] & DET_MASK);
           idx1dold=idx1d;
-          idx1d=gcfg->isrowmajor?(int(floorf(p.x))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.z))):\
-                          (int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
+          idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
           GPUDEBUG(("old and new voxel: %d<->%d\n",idx1dold,idx1d));
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
 	      mediaid=0;
@@ -238,7 +236,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
 	      // let's handle detectors here
 	      if(gcfg->savedet && mediaid==0 && isdet){
-                  uint j,baseaddr=0;
+/*                  uint j,baseaddr=0;
 		  j=finddet(&p);
 		  if(j){
 		     baseaddr=atomicAdd(detectedphoton,1);
@@ -251,6 +249,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 			}
 		     }
 		  }
+*/
 	      }
               if(gcfg->doreflect) {
                 //time-of-flight to hit the wall in each direction
@@ -268,12 +267,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
        	        htime.z=floorf(p0.z+tmp0*v.z);
 
                 if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
-                    if( media[gcfg->isrowmajor?int(htime.x*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.z):\
-                           int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]){ //hit again
+                    if( media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]){ //hit again
 
                      GPUDEBUG((" first try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
-                           media[gcfg->isrowmajor?int(htime.x*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.z):\
-                           int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
+                           media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
 
                      htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p.x)+(v.x<0.f)-p.x)/(-v.x):VERY_BIG;
                      htime.y=(v.y>EPS||v.y<-EPS)?(floorf(p.y)+(v.y<0.f)-p.y)/(-v.y):VERY_BIG;
@@ -289,12 +286,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                        htime.z=floorf(p.z-tmp0*v.z);
 
                        if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
-                           if(! media[gcfg->isrowmajor?int(htime.x*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.z):\
-                                  int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]){ //this is an air voxel
+                           if(! media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]){ //this is an air voxel
 
                                GPUDEBUG((" second try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
-                                   media[gcfg->isrowmajor?int(htime.x*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.z):\
-                                   int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
+                                   media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
 
                                /*to compute the remaining interface, we used the following fact to accelerate: 
                                  if there exist 3 intersections, photon must pass x/y/z interface exactly once,
@@ -580,17 +575,12 @@ void mcx_run_simulation(Config *cfg){
      float *genergy;
      cudaMalloc((void **) &genergy, sizeof(float)*cfg->nthread*2);
      
-     if(cfg->isrowmajor){ // if the volume is stored in C array order
-	     cachebox.x=(cp1.z-cp0.z+1);
-	     cachebox.y=(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1);
-	     dimlen.x=cfg->dim.z;
-	     dimlen.y=cfg->dim.y*cfg->dim.z;
-     }else{               // if the volume is stored in matlab/fortran array order
-	     cachebox.x=(cp1.x-cp0.x+1);
-	     cachebox.y=(cp1.y-cp0.y+1)*(cp1.x-cp0.x+1);
-	     dimlen.x=cfg->dim.x;
-	     dimlen.y=cfg->dim.y*cfg->dim.x;
-     }
+     /*volume is assumbed to be col-major*/
+     cachebox.x=(cp1.x-cp0.x+1);
+     cachebox.y=(cp1.y-cp0.y+1)*(cp1.x-cp0.x+1);
+     dimlen.x=cfg->dim.x;
+     dimlen.y=cfg->dim.y*cfg->dim.x;
+
      dimlen.z=cfg->dim.x*cfg->dim.y*cfg->dim.z;
      param.dimlen=dimlen;
      param.cachebox=cachebox;

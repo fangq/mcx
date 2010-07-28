@@ -22,14 +22,31 @@ if(nargin==1)
 end
 
 fid=fopen(fname,'rb');
-magicheader=fread(fid,4,'char')
-hd=fread(fid,7,'uint')
-unitmm=fread(fid,1,'float32')
-junk=fread(fid,7,'uint')
 
-dat=fread(fid,hd(7)*hd(4),format);
+data=[];
+header=[];
+while(~feof(fid))
+	magicheader=fread(fid,4,'char')
+	if(strcmp(char(magicheader(:))','MCXH')~=1)
+		fclose(fid);
+		error('can not find a MCX history data block');
+	end
+	hd=fread(fid,7,'uint')
+	unitmm=fread(fid,1,'float32')
+	junk=fread(fid,7,'uint')
+	
+	dat=fread(fid,hd(7)*hd(4),format);
+	dat=reshape(dat,[hd(4),hd(7)])';
+	data=[data;dat];
+	if(isempty(header))
+		header=[hd;unitmm]';
+	else
+		if(any(header(1:6)~=hd(1:6))
+			error('loadmch can only load data generated from a single session');
+		else
+			header(7)=size(data,1);
+		end
+	end
+end
+
 fclose(fid);
-
-dat=reshape(dat,[hd(4),hd(7)])';
-
-header=[hd;unitmm]';
