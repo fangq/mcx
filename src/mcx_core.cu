@@ -74,6 +74,22 @@ __device__ inline uint finddet(MCXpos *p0){
       }
       return 0;
 }
+
+__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float weight,float *ppath,MCXpos *p0){
+      uint j,baseaddr=0;
+      j=finddet(p0);
+      if(j){
+	 baseaddr=atomicAdd(detectedphoton,1);
+	 if(baseaddr<gcfg->maxdetphoton){
+	    baseaddr*=gcfg->maxmedia+2;
+	    n_det[baseaddr++]=j;
+	    n_det[baseaddr++]=weight;
+	    for(j=0;j<gcfg->maxmedia;j++){
+		n_det[baseaddr+j]=ppath[j]; // save partial pathlength to the memory
+	    }
+	 }
+      }
+}
 /*
    this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
 */
@@ -234,23 +250,6 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	      float flipdir=0.f,Rtotal;
               float3 htime;            //reflection var
 
-	      // let's handle detectors here
-	      if(gcfg->savedet && mediaid==0 && isdet){
-/*                  uint j,baseaddr=0;
-		  j=finddet(&p);
-		  if(j){
-		     baseaddr=atomicAdd(detectedphoton,1);
-		     if(baseaddr<gcfg->maxdetphoton){
-			baseaddr*=gcfg->maxmedia+2;
-			n_det[baseaddr++]=j;
-			n_det[baseaddr++]=v.nscat;
-			for(j=0;j<gcfg->maxmedia;j++){
-			    n_det[baseaddr+j]=ppath[j]; // save partial pathlength to the memory
-			}
-		     }
-		  }
-*/
-	      }
               if(gcfg->doreflect) {
                 //time-of-flight to hit the wall in each direction
                 htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p0.x)+(v.x>0.f)-p0.x)/v.x:VERY_BIG;
@@ -355,12 +354,17 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   //v.nscat++;
               }else{  // launch a new photon
                   energyloss+=p.w;  // sum all the remaining energy
+		  // let's handle detectors here
+		  if(gcfg->savedet){
+        	     if(mediaid==0 && isdet)
+	      	          savedetphoton(n_det,detectedphoton,1.f,ppath,&p);
+		     clearpath(ppath,gcfg->maxmedia);
+		  }		  
 	          *((float4*)(&p))=gcfg->ps;
 	          *((float4*)(&v))=gcfg->c0;
 	          *((float4*)(&f))=float4(0.f,0.f,gcfg->minaccumtime,f.ndone+1);
                   idx1d=idxorig;
 		  mediaid=mediaidorig;
-		  if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
               }
 	  }else if(f.t>=f.tnext){
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
@@ -658,7 +662,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
        param.twin1=t+cfg->tstep*cfg->maxgate;
        cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice);
 
-       fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.1fns %.1fns] ...\n"
+       fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.2ens %.2ens] ...\n"
            ,param.twin0*1e9,param.twin1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
