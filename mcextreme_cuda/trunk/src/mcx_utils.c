@@ -62,8 +62,12 @@ void mcx_initcfg(Config *cfg){
      cfg->issrcfrom0=0;
      cfg->unitinmm=1.f;
      cfg->isdumpmask=0;
-     cfg->maxdetphoton=1000000;
-     cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};
+     cfg->maxdetphoton=1000000; 
+     /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
+     memset(&cfg->his,0,sizeof(History));
+     memcpy(cfg->his.magic,"MCXH",4);     
+     cfg->his.version=1;
+     cfg->his.unitinmm=1.f;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -221,8 +225,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	cfg->crop1.y=MIN((int)(cfg->srcpos.y+cfg->sradius),cfg->dim.y-1);
      	cfg->crop1.z=MIN((int)(cfg->srcpos.z+cfg->sradius),cfg->dim.z-1);
      }else{
-     	cfg->crop0=(uint3){0,0,0};
-     	cfg->crop1=(uint3){0,0,0};
+     	memset(&(cfg->crop0),0,sizeof(uint3));
+     	memset(&(cfg->crop1),0,sizeof(uint3));
      }     
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
@@ -348,7 +352,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
 
 void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
      int x,y,z;
-     uint dimxy,dimyz;
+     unsigned int dimxy,dimyz;
      unsigned char *newvol=NULL;
      
      if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
@@ -600,14 +604,14 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 
 void mcx_usage(char *exename){
      printf("\
-######################################################################################\n\
-#                       Monte Carlo eXtreme (MCX) -- CUDA                            #\n\
-#              Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>                  #\n\
-#                                                                                    #\n\
-#      Martinos Center for Biomedical Imaging, Massachusetts General Hospital        #\n\
-######################################################################################\n\
-$MCX $Rev::     $, Last Commit: $Date::                         $ by $Author::       $\n\
-######################################################################################\n\
+###############################################################################\n\
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
+#             Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>            #\n\
+#                                                                             #\n\
+#     Martinos Center for Biomedical Imaging, Massachusetts General Hospital  #\n\
+###############################################################################\n\
+$MCX $Rev::     $, Modified: $Date::                     $ by $Author::       $\n\
+###############################################################################\n\
 \n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
@@ -616,24 +620,24 @@ where possible parameters include (the first item in [] is the default value)\n\
  -t [1024|int] (--thread)      total thread number\n\
  -T [128|int]  (--blocksize)   thread number per block\n\
  -m [0|int]    (--move)        total photon moves\n\
- -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)\n\
+ -n [0|int]    (--photon)      total photon number (not supported, use -m only)\n\
  -r [1|int]    (--repeat)      number of repeations\n\
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
- -z [0|1]      (--srcfrom0)    src/detector coordinates start from 0, otherwise from 1\n\
+ -z [0|1]      (--srcfrom0)    1 src/detector coord start from 0, 0 - from 1\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
- -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit\n\
- -B [0|1]      (--reflect3)    1 to consider maximum 3 reflections, 0 consider only 2\n\
+ -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit\n\
+ -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2\n\
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
  -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
  -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normailze the fluence to unitary, 0 to save raw fluence\n\
- -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not to save\n\
- -M [0|1]      (--dumpmask)    1 to save detector number masked volume, 0 not to save\n\
+ -U [1|0]      (--normalize)   1 to normailze fluence to unitary, 0 save raw\n\
+ -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
+ -M [0|1]      (--dumpmask)    1 to save detector number masks, 0 not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
- -s sessionid  (--session)     a string to identify this specific simulation (and output files)\n\
+ -s sessionid  (--session)     a string to label all output file names\n\
  -p [0|int]    (--printlen)    number of threads to print (debug)\n\
- -G            (--gpu)         specify which GPU to use, starting from 1, use -L to list, 0 for auto\n\
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\
