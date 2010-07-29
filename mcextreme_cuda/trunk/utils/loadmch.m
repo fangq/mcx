@@ -9,8 +9,8 @@ function [data, headerstruct]=loadmch(fname,format)
 %               the .mch file; if omitted, it is set to 'float'
 %
 %    output:
-%        data:  the output MCX detected photon data array
-%        hd:    file header info, a structure has the following fields
+%        data:   the output MCX detected photon data array
+%        header: file header info, a structure has the following fields
 % [version,medianum,detnum,recordnum,totalphoton,detectedphoton,savedphoton,lengthunit]
 %        (note: totalphoton is currently not available)
 %
