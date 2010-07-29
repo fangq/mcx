@@ -7,6 +7,9 @@
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  255
 
+#define MIN(a,b)           ((a)<(b)?(a):(b))
+#define MAX(a,b)           ((a)>(b)?(a):(b))
+
 typedef struct MCXMedium{
 	float mua;
 	float mus;

@@ -212,6 +212,17 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z));
      fgets(comment,MAX_PATH_LENGTH,in);
 
+     if(cfg->sradius>0.f){
+     	cfg->crop0.x=MAX((int)(cfg->srcpos.x-cfg->sradius),0);
+     	cfg->crop0.y=MAX((int)(cfg->srcpos.y-cfg->sradius),0);
+     	cfg->crop0.z=MAX((int)(cfg->srcpos.z-cfg->sradius),0);
+     	cfg->crop1.x=MIN((int)(cfg->srcpos.x+cfg->sradius),cfg->dim.x-1);
+     	cfg->crop1.y=MIN((int)(cfg->srcpos.y+cfg->sradius),cfg->dim.y-1);
+     	cfg->crop1.z=MIN((int)(cfg->srcpos.z+cfg->sradius),cfg->dim.z-1);
+     }else{
+     	cfg->crop0=(uint3){0,0,0};
+     	cfg->crop1=(uint3){0,0,0};
+     }     
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
