@@ -1,4 +1,4 @@
-function [data, header]=loadmch(fname,format)
+function [data, headerstruct]=loadmch(fname,format)
 %    [data, header]=loadmch(fname,format)
 %
 %    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
@@ -10,8 +10,9 @@ function [data, header]=loadmch(fname,format)
 %
 %    output:
 %        data:  the output MCX detected photon data array
-%        hd:    file header info, a row vector containing:
+%        hd:    file header info, a structure has the following fields
 % [version,medianum,detnum,recordnum,totalphoton,detectedphoton,savedphoton,lengthunit]
+%        (note: totalphoton is currently not available)
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see http://mcx.sf.net for details
@@ -35,11 +36,12 @@ while(~feof(fid))
 		break;
 	end
 	hd=fread(fid,7,'uint');
+	if(hd(1)~=1) error('version higher than 1 is not supported'); end
 	unitmm=fread(fid,1,'float32');
 	junk=fread(fid,7,'uint');
 	
 	dat=fread(fid,hd(7)*hd(4),format);
-	dat=reshape(dat,[hd(4),hd(7)])';
+	dat=unitmm*reshape(dat,[hd(4),hd(7)])';
 	data=[data;dat];
 	if(isempty(header))
 		header=[hd;unitmm]';
@@ -54,3 +56,9 @@ while(~feof(fid))
 end
 
 fclose(fid);
+
+if(nargout>=2)
+   headerstruct=struct('version',header(1),'medianum',header(2),'detnum',header(3),...
+                       'recordnum',header(4),'totalphoton',header(5),...
+                       'detectedphoton',header(6),'savedphoton',header(7),'lengthunit',header(8));
+end

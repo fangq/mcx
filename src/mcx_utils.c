@@ -76,6 +76,7 @@ void mcx_clearcfg(Config *cfg){
 
      mcx_initcfg(cfg);
 }
+
 void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
@@ -421,6 +422,7 @@ void  mcx_maskdet(Config *cfg){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
 	 fclose(fp);
+         free(padvol);
 	 exit(0);
      }
      free(padvol);

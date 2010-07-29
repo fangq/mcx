@@ -43,13 +43,13 @@ log:        CUCCOPT+=
 debugmt:    CUCCOPT+=-DUSE_MT_RAND
 debuglog:   CUCCOPT+=
 racing:     CUCCOPT+=-DTEST_RACING
-mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11 -DMCX_TARGET_NAME="MT Atomic MCX"
-logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch compute_11 -DMCX_TARGET_NAME="LL5 Atomic MCX"
-mtbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME="Cachebox MCX"
+mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"MT Atomic MCX"'
+logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
+mtbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cachebox MCX"'
 debugmt debuglog:	CUCCOPT+=-deviceemu
 mtatomic logatomic:	BINARY:=$(BINARY)_atomic
-det:        CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch compute_11 -DMCX_TARGET_NAME="Detective MCX"
-detbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME="Cached Detective MCX"
+det:        CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"Detective MCX"'
+detbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cached Detective MCX"'
 det detbox: BINARY:=$(BINARY)_det
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
