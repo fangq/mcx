@@ -27,7 +27,7 @@
 
 
 // optical properties saved in the constant memory
-// {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refraction index (n)
+// {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n)
 __constant__ float4 gproperty[MAX_PROP];
 
 __constant__ float4 gdetpos[MAX_DETECTORS];
@@ -35,35 +35,64 @@ __constant__ float4 gdetpos[MAX_DETECTORS];
 // kernel constant parameters
 __constant__ MCXParam gcfg[1];
 
+extern __shared__ float sharedmem[]; //max 64 tissue types when block size=64
+
 // tested with texture memory for media, only improved 1% speed
 // to keep code portable, use global memory for now
 // also need to change all media[idx1d] to tex1Dfetch() below
 //texture<uchar, 1, cudaReadModeElementType> texmedia;
 
-#ifdef USE_ATOMIC
-/*
- float-atomic-add from:
- http://forums.nvidia.com/index.php?showtopic=67691&st=0&p=380935&#entry380935
- this makes the program non-scalable and about 5 times slower compared 
- with non-atomic write, see Fig. 4 and 7 in Fang2009
-*/
-__device__ inline void atomicFloatAdd(float *address, float val){
-      int i_val = __float_as_int(val);
-      int tmp0 = 0,tmp1;
-      while( (tmp1 = atomicCAS((int *)address, tmp0, i_val)) != tmp0){
-              tmp0 = tmp1;
-              i_val = __float_as_int(val + __int_as_float(tmp1));
-      }
+
+#if __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
+
+#define atomicadd atomicAdd
+
+#elif __CUDA_ARCH__ >= 110
+
+// float-atomic-add from 
+// http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561
+__device__ inline void atomicadd(float* address, float value){
+  float old = value;  
+  while ((old = atomicExch(address, atomicExch(address, 0.0f)+old))!=0.0f);
 }
+
+#else // atomic is not supported
+
+__device__ inline void atomicadd(float* address, float value){
+  *address=value;
+}
+
 #endif
 
 __device__ inline void clearpath(float *p,int maxmediatype){
-      int i;
+      uint i;
       for(i=0;i<maxmediatype;i++)
       	   p[i]=0.f;
 }
 
-__device__ inline uint finddet(MCXpos *p0){
+__device__ inline void clearcache(float *p,int len){
+      uint i;
+      if(threadIdx.x==0)
+        for(i=0;i<len;i++)
+      	   p[i]=0.f;
+}
+
+#ifdef  USE_CACHEBOX
+__device__ inline void savecache(float *data,float *cache){
+      uint x,y,z;
+      if(threadIdx.x==0){
+        for(z=gcfg->cp0.z;z<=gcfg->cp1.z;z++)
+           for(y=gcfg->cp0.y;y<=gcfg->cp1.y;y++)
+              for(x=gcfg->cp0.x;x<=gcfg->cp1.x;x++){
+                 atomicadd(data+z*gcfg->dimlen.y+y*gcfg->dimlen.x+x,
+		    cache[(z-gcfg->cp0.z)*gcfg->cachebox.y+(y-gcfg->cp0.y)*gcfg->cachebox.x+(x-gcfg->cp0.x)]);
+	      }
+      }
+}
+#endif
+
+#ifdef SAVE_DETECTORS
+__device__ inline uint finddetector(MCXpos *p0){
       uint i;
       for(i=0;i<gcfg->detnum;i++){
       	if((gdetpos[i].x-p0->x)*(gdetpos[i].x-p0->x)+
@@ -77,7 +106,7 @@ __device__ inline uint finddet(MCXpos *p0){
 
 __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float weight,float *ppath,MCXpos *p0){
       uint j,baseaddr=0;
-      j=finddet(p0);
+      j=finddetector(p0);
       if(j){
 	 baseaddr=atomicAdd(detectedphoton,1);
 	 if(baseaddr<gcfg->maxdetphoton){
@@ -90,6 +119,7 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float we
 	 }
       }
 }
+#endif
 
 __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,uint *idx1d,
            uchar *mediaid,uchar isdet, float ppath[],float energyloss[],float n_det[],uint *dpnum){
@@ -142,10 +172,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      Medium prop;    //can become float2 if no reflection
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
-     float accumweight=0.f;
-     extern __shared__ float pathlen[]; //max 64 tissue types when block size=64
 
-     float *ppath=pathlen+threadIdx.x*gcfg->maxmedia;
+     float *ppath   =sharedmem+threadIdx.x*gcfg->maxmedia;
+#ifdef  USE_CACHEBOX
+     float *cachebox=sharedmem+blockDim.x*gcfg->maxmedia;
+     if(gcfg->skipradius2>EPS) clearcache(cachebox,gcfg->cachebox.x*gcfg->cachebox.y);
+#else
+     float accumweight=0.f;
+#endif
 
      *((float4*)(&p))=n_pos[idx];
      *((float4*)(&v))=n_dir[idx];
@@ -391,29 +425,43 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
   #ifndef USE_ATOMIC
                   // set gcfg->skipradius2 to only start depositing energy when dist^2>gcfg->skipradius2 
                   if(gcfg->skipradius2>EPS){
-                      if((p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)>gcfg->skipradius2){
-                          field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z]+=p.w;
-                      }else{
+  #ifdef  USE_CACHEBOX
+                      if(p.x<gcfg->cp1.x+1.f && p.x>=gcfg->cp0.x &&
+		         p.y<gcfg->cp1.y+1.f && p.y>=gcfg->cp0.y &&
+			 p.z<gcfg->cp1.z+1.f && p.z>=gcfg->cp0.z){
+                         atomicadd(cachebox+(int(p.z-gcfg->cp0.z)*gcfg->cachebox.y
+			      +int(p.y-gcfg->cp0.y)*gcfg->cachebox.x+int(p.x-gcfg->cp0.x)),p.w);
+  #else
+                      if((p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)<=gcfg->skipradius2){
                           accumweight+=p.w*prop.mua; // weight*absorption
+  #endif
+                      }else{
+                          field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z]+=p.w;
                       }
                   }else{
                       field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z]+=p.w;
                   }
   #else
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
-		  atomicFloatAdd(& field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z], p.w);
+		  atomicadd(& field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z], p.w);
   #endif
 #endif
 	     }
              f.tnext+=gcfg->minaccumtime; // fluence is a temporal-integration
 	  }
      }
-     // accumweight saves the total absorbed energy in the sphere r<sradius.
-     // in non-atomic mode, accumweight is more accurate than saving to the grid
+     // cachebox saves the total absorbed energy of all time in the sphere r<sradius.
+     // in non-atomic mode, cachebox is more accurate than saving to the grid
      // as it is not influenced by race conditions.
      // now I borrow f.tnext to pass this value back
-
+#ifdef  USE_CACHEBOX
+     if(gcfg->skipradius2>EPS){
+     	f.tnext=0.f;
+        savecache(field,cachebox);
+     }
+#else
      f.tnext=accumweight;
+#endif
 
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energyabsorbed;
@@ -467,7 +515,7 @@ int mcx_set_gpu(Config *cfg){
         printf("Specified GPU ID is out of range\n");
         return 0;
     }
-    // scan from the last device, hopefully it is more dedicated
+    // scan from the first device
     for (dev = 0; dev<deviceCount; dev++) {
         cudaDeviceProp dp;
         cudaGetDeviceProperties(&dp, dev);
@@ -475,6 +523,7 @@ int mcx_set_gpu(Config *cfg){
 	  if(cfg->isgpuinfo){
 	    printf("=============================   GPU Infomation  ================================\n");
 	    printf("Device %d of %d:\t\t%s\n",dev+1,deviceCount,dp.name);
+	    printf("Compute Capacity:\t%u.%u\n",dp.major,dp.minor);
 	    printf("Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
 Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
                (unsigned int)dp.totalGlobalMem,(unsigned int)dp.totalConstMem,
@@ -631,11 +680,18 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 ###############################################################################\n");
 
      tic=StartTimer();
-     fprintf(cfg->flog,"compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
-#ifdef SAVE_DETECTORS
-     fprintf(cfg->flog,"this version can save photons at the detectors\n");
+#ifdef MCX_TARGET_NAME
+     fprintf(cfg->flog,"- variant name: [%s] compiled with CUDA [%d]\n",
+          "MCX_TARGET_NAME",CUDART_VERSION);
 #else
-     fprintf(cfg->flog,"this version CAN NOT save photons at the detectors\n");
+     fprintf(cfg->flog,"- code name: [Plain MCX] compiled with CUDA [%d]\n",
+          CUDART_VERSION);
+#endif
+     fprintf(cfg->flog,"- compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
+#ifdef SAVE_DETECTORS
+     fprintf(cfg->flog,"- this version can save photons at the detectors\n");
+#else
+     fprintf(cfg->flog,"- this version CAN NOT save photons at the detectors\n");
 #endif
      fprintf(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",threadphoton,oddphotons,
            cfg->nphoton,cfg->nthread,cfg->respin);
@@ -670,8 +726,14 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 	 
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
+#ifdef  USE_CACHEBOX
+     if(cfg->sradius>EPS)
+        sharedbuf+=sizeof(float)*(cachebox.x*cachebox.y);
+#endif
      if(cfg->issavedet)
-        sharedbuf=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
+        sharedbuf+=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
+
+     fprintf(cfg->flog,"request %d bytes shared memory\n",sharedbuf);
 
      //simulate for all time-gates in maxgate groups per run
      for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){

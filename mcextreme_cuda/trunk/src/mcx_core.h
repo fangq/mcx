@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 
-#define MIN(a,b)           ((a)<(b)?(a):(b))
+#define ABS(a)  ((a)<0?-(a):(a))
 #define DETINC	32
 
 #ifdef __DEVICE_EMULATION__
