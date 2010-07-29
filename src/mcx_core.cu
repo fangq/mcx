@@ -25,18 +25,6 @@
 #include "logistic_rand.cu" // use Logistic Lattice ring 5 RNG (LL5)
 #endif
 
-#if __CUDA_ARCH__ >= 200
-  #define MCX_CUDA_ARCH     200
-#elif __CUDA_ARCH__ >= 130
-  #define MCX_CUDA_ARCH     130
-#elif __CUDA_ARCH__ >= 120
-  #define MCX_CUDA_ARCH     120
-#elif __CUDA_ARCH__ >= 110
-  #define MCX_CUDA_ARCH     110
-#else
-  #define MCX_CUDA_ARCH     100
-#endif
-
 // optical properties saved in the constant memory
 // {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n)
 __constant__ float4 gproperty[MAX_PROP];
@@ -53,27 +41,22 @@ extern __shared__ float sharedmem[]; //max 64 tissue types when block size=64
 // also need to change all media[idx1d] to tex1Dfetch() below
 //texture<uchar, 1, cudaReadModeElementType> texmedia;
 
+__device__ inline void atomicadd(float* address, float value){
 
 #if __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
 
-#define atomicadd atomicAdd
+  atomicAdd(address,value);
 
 #elif __CUDA_ARCH__ >= 110
 
 // float-atomic-add from 
 // http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561
-__device__ inline void atomicadd(float* address, float value){
   float old = value;  
   while ((old = atomicExch(address, atomicExch(address, 0.0f)+old))!=0.0f);
-}
-
-#else // atomic is not supported
-
-__device__ inline void atomicadd(float* address, float value){
-  *address=value;
-}
 
 #endif
+
+}
 
 __device__ inline void clearpath(float *p,int maxmediatype){
       uint i;
@@ -693,7 +676,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
      tic=StartTimer();
 #ifdef MCX_TARGET_NAME
      fprintf(cfg->flog,"- variant name: [%s] compiled for GPU Capacity [%d] with CUDA [%d]\n",
-             MCX_TARGET_NAME,MCX_CUDA_ARCH,CUDART_VERSION);
+             100,MCX_CUDA_ARCH,CUDART_VERSION);
 #else
      fprintf(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
              MCX_CUDA_ARCH,CUDART_VERSION);
