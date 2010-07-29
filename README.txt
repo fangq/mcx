@@ -23,20 +23,22 @@ VI. Reference
 I.  Introduction
 
 Monte Carlo eXtreme (MCX) is simulation software for modeling photon
-propagation in 3D turbid media. By taking advantage of the multi-core
-processors and extremely low memory latency of a low-cost 
-graphics card, this program is able to perform Monte Carlo (MC) 
-simulations at a blazing speed, typically over 300 times faster than 
-fully optimized CPU-based MC code.
+propagation in 3D heterogeneous turbid media. By taking advantage of 
+the multi-core processors and extremely low memory latency of a 
+low-cost graphics card, this program is able to perform Monte Carlo 
+(MC) simulations at a blazing speed, typically over 300 times faster 
+than fully optimized CPU-based MC code.
 
 The algorithm details of this software can be found in the Reference [1]. 
 A short summary of the main features includes:
 
-*. 3D arbitrary media
+*. 3D heterogeneous media represented by voxelated array
 *. boundary reflection support
 *. time-resolved photon migration
+*. saving photon partial lengths at detectors
 *. optimized random number generators
 *. build-in fluence normalization
+*. improved accuracy near the source with atomic operations
 *. cross-platform graphics user interface
 
 The software can be used on Windows, Linux and Mac OS. Two variants 
@@ -105,25 +107,30 @@ will print the help information and a list of supported parameters,
 such as the following:
 
  usage: ./mcx <param1> <param2> ...
- where possible parameters include (the first item in [] is the default value)
- -i            (--interactive) interactive mode
+where possible parameters include (the first item in [] is the default value)
+ -i 	       (--interactive) interactive mode
  -f config     (--input)       read config from a file
  -t [1024|int] (--thread)      total thread number
  -T [128|int]  (--blocksize)   thread number per block
  -m [0|int]    (--move)        total photon moves
- -n [0|int]    (--photon)      total photon number (not supported yet, use -m only)
+ -n [0|int]    (--photon)      total photon number (not supported, use -m only)
  -r [1|int]    (--repeat)      number of repetitions
- -a [1|0]      (--array)       1 for C array, 0 for Matlab array
+ -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array
+ -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 - from 1
  -g [1|int]    (--gategroup)   number of time gates per run
- -b [1|0]      (--reflect)     1 to reflect the photons at the boundary, 0 to exit
- -B [0|1]      (--reflect3)    1 to consider maximum 3 reflections, 0 consider only 2
+ -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit
+ -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon
  -R [0.|float] (--skipradius)  minimum distance to source to start accumulation
- -U [1|0]      (--normalize)   1 to normalize the fluence to unitary, 0 to save raw fluence
- -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not to save
+ -u [0.|float] (--unitinmm)    defines the length unit for the grid edge
+ -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw
+ -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save
+ -M [0|1]      (--dumpmask)    1 to save detector number masks, 0 not save
+ -H [1000000]  (--maxdetphoton)max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save
- -s sessionid  (--session)     a string to identify this specific simulation (and output files)
+ -s sessionid  (--session)     a string to label all output file names
  -p [0|int]    (--printlen)    number of threads to print (debug)
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
  -L            (--listgpu)     print GPU information only
@@ -139,7 +146,7 @@ such as the following:
  run 10 concurrent time gates (-g).
 
 Currently, MCX supports a modified version of the input file format used 
-for tMCimg. (The difference is that MCX allows comments)
+for tMCimg. (The difference is that MCX allows for comments)
 A typical MCX input file looks like this:
 
 1000000              # total photon (not used), use -m to specify photon moves

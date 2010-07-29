@@ -5,6 +5,8 @@
 *. support NIFTI input & output [2009/04/30, FangQ]
 *. support ini based input file format (or perl script format) [2009/04/30, FangQ]
 *. multiple-GPU support [2009/09/30, FangQ]
+*. support object description file to produce volume at run-time [2010/07/29, FangQ]
+*. extend the reflection model to support mis-match at internal boundaries [2010/07/29, FangQ]
 
 == Long term projects ==
 
