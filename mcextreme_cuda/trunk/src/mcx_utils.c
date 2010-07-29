@@ -621,16 +621,16 @@ where possible parameters include (the first item in [] is the default value)\n\
  -T [128|int]  (--blocksize)   thread number per block\n\
  -m [0|int]    (--move)        total photon moves\n\
  -n [0|int]    (--photon)      total photon number (not supported, use -m only)\n\
- -r [1|int]    (--repeat)      number of repeations\n\
+ -r [1|int]    (--repeat)      number of repetitions\n\
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
- -z [0|1]      (--srcfrom0)    1 src/detector coord start from 0, 0 - from 1\n\
+ -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 - from 1\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit\n\
  -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2\n\
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
  -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
  -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normailze fluence to unitary, 0 save raw\n\
+ -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to save detector number masks, 0 not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
