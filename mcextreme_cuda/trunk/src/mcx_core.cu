@@ -25,6 +25,17 @@
 #include "logistic_rand.cu" // use Logistic Lattice ring 5 RNG (LL5)
 #endif
 
+#if __CUDA_ARCH__ >= 200
+  #define MCX_CUDA_ARCH     200
+#elif __CUDA_ARCH__ >= 130
+  #define MCX_CUDA_ARCH     130
+#elif __CUDA_ARCH__ >= 120
+  #define MCX_CUDA_ARCH     120
+#elif __CUDA_ARCH__ >= 110
+  #define MCX_CUDA_ARCH     110
+#else
+  #define MCX_CUDA_ARCH     100
+#endif
 
 // optical properties saved in the constant memory
 // {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n)
@@ -508,11 +519,11 @@ int mcx_set_gpu(Config *cfg){
     int deviceCount;
     cudaGetDeviceCount(&deviceCount);
     if (deviceCount == 0){
-        printf("No CUDA-capable GPU device found\n");
+        fprintf(stderr,"No CUDA-capable GPU device found\n");
         return 0;
     }
     if (cfg->gpuid && cfg->gpuid > deviceCount){
-        printf("Specified GPU ID is out of range\n");
+        fprintf(stderr,"Specified GPU ID is out of range\n");
         return 0;
     }
     // scan from the first device
@@ -681,17 +692,17 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 
      tic=StartTimer();
 #ifdef MCX_TARGET_NAME
-     fprintf(cfg->flog,"- variant name: [%s] compiled with CUDA [%d]\n",
-          "MCX_TARGET_NAME",CUDART_VERSION);
+     fprintf(cfg->flog,"- variant name: [%s] compiled for GPU Capacity [%d] with CUDA [%d]\n",
+             MCX_TARGET_NAME,MCX_CUDA_ARCH,CUDART_VERSION);
 #else
-     fprintf(cfg->flog,"- code name: [Plain MCX] compiled with CUDA [%d]\n",
-          CUDART_VERSION);
+     fprintf(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
+             MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
-     fprintf(cfg->flog,"- compiled with: [RNG] %s [Seed Length] %d\n",MCX_RNG_NAME,RAND_SEED_LEN);
+     fprintf(cfg->flog,"- compiled with: RNG [%s] Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
 #ifdef SAVE_DETECTORS
-     fprintf(cfg->flog,"- this version can save photons at the detectors\n");
+     fprintf(cfg->flog,"- this version can save photons at the detectors\n\n");
 #else
-     fprintf(cfg->flog,"- this version CAN NOT save photons at the detectors\n");
+     fprintf(cfg->flog,"- this version CAN NOT save photons at the detectors\n\n");
 #endif
      fprintf(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",threadphoton,oddphotons,
            cfg->nphoton,cfg->nthread,cfg->respin);
@@ -733,7 +744,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
      if(cfg->issavedet)
         sharedbuf+=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
 
-     fprintf(cfg->flog,"request %d bytes shared memory\n",sharedbuf);
+     fprintf(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
      //simulate for all time-gates in maxgate groups per run
      for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){
@@ -819,7 +830,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 
                    fprintf(cfg->flog,"saving data to file ...\t");
                    mcx_savedata(field,fieldlen,t>cfg->tstart,"mc2",cfg);
-                   fprintf(cfg->flog,"saving data complete : %d ms\n",GetTimeMillis()-tic);
+                   fprintf(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
                    fflush(cfg->flog);
                }
            }
