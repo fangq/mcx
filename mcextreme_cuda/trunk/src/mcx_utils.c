@@ -332,7 +332,7 @@ void mcx_saveconfig(FILE *out, Config *cfg){
 }
 
 void mcx_loadvolume(char *filename,Config *cfg){
-     int datalen,res;
+     unsigned int i,datalen,res;
      FILE *fp=fopen(filename,"rb");
      if(fp==NULL){
      	     mcx_error(-5,"the specified binary volume file does not exist",__FILE__,__LINE__);
@@ -347,6 +347,10 @@ void mcx_loadvolume(char *filename,Config *cfg){
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
+     }
+     for(i=0;i<datalen;i++){
+         if(cfg->vol[i]>=cfg->medianum)
+            mcx_error(-6,"medium index exceeds the specified medium types",__FILE__,__LINE__);
      }
 }
 
