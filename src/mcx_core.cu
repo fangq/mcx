@@ -558,8 +558,8 @@ void mcx_run_simulation(Config *cfg){
      float *energy;
      int threadphoton, oddphotons;
 
-     int photoncount=0,printnum;
-     int tic,fieldlen;
+     unsigned int photoncount=0,printnum;
+     unsigned int tic,tic0,toc=0,fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
@@ -683,7 +683,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 #endif
      fprintf(cfg->flog,"- compiled with: RNG [%s] Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
 #ifdef SAVE_DETECTORS
-     fprintf(cfg->flog,"- this version can save photons at the detectors\n\n");
+     fprintf(cfg->flog,"- this version CAN save photons at the detectors\n\n");
 #else
      fprintf(cfg->flog,"- this version CAN NOT save photons at the detectors\n\n");
 #endif
@@ -741,14 +741,15 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 
        //total number of repetition for the simulations, results will be accumulated to field
        for(iter=0;iter<cfg->respin;iter++){
-
+           tic0=GetTimeMillis();
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
            mcx_main_loop<<<mcgrid,mcblock,sharedbuf>>>(cfg->nphoton,0,gmedia,gfield,genergy,
 	                                               gPseed,gPpos,gPdir,gPlen,gPdet,gdetected);
 
            cudaThreadSynchronize();
 	   cudaMemcpy(&detected, gdetected,sizeof(uint),cudaMemcpyDeviceToHost);
-           fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",GetTimeMillis()-tic);
+           toc+=GetTimeMillis()-tic0;
+           fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",toc+tic0-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
 #ifdef SAVE_DETECTORS
@@ -870,8 +871,8 @@ is more than what your have specified (%d), please use the -H option to specify 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
-     fprintf(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\n",
-             photoncount,cfg->nphoton,cfg->nthread,cfg->respin); fflush(cfg->flog);
+     fprintf(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
+             photoncount,cfg->nphoton,cfg->nthread,cfg->respin,(double)photoncount/toc); fflush(cfg->flog);
      fprintf(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
              energyloss,energyabsorbed,energyloss+energyabsorbed);fflush(cfg->flog);
      fflush(cfg->flog);
