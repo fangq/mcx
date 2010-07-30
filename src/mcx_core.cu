@@ -476,7 +476,7 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
      for(i=0;i<maxgate;i++){
         phi+=field[i*dimlen.z+idx];
      }
-     energy[2]+=phi*gproperty[media[idx]].x;
+     energy[2]+=phi*gproperty[media[idx] & MED_MASK ].x;
 }
 
 
@@ -801,7 +801,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                            absorp=0.f;
                            for(j=0;j<cfg->maxgate;j++)
                               absorp+=field[j*dimxyz+i];
-                           eabsorp+=absorp*cfg->prop[media[i]].mua;
+                           eabsorp+=absorp*cfg->prop[media[i] & MED_MASK].mua;
        	       	       }
                        scale=energy[1]/((energy[0]+energy[1])*Vvox*cfg->tstep*eabsorp);
 		       if(cfg->unitinmm!=1.f) 
