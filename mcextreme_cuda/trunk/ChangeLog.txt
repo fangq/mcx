@@ -1,6 +1,6 @@
 = Change Log =
 
-== MCX 0.5 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.4.9 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
  2010-07-29 use atomic with shared memory cache to improve accuracy near the source
  2010-07-28 add example for validation of MCX in heterogeneous media

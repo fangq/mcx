@@ -114,7 +114,7 @@ void mcx_normalize(float field[], float scale, int fieldlen){
 }
 
 void mcx_error(int id,char *msg,const char *file,const int linenum){
-     fprintf(stdout,"MCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
+     fprintf(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
      exit(id);
 }
 
