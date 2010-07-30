@@ -823,7 +823,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                   cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1));
                   cudaMemset(gdetected,0,sizeof(float));
 
- 		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice); //following 3 cost about 50 ms
+ 		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
 		  cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
 		  cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
 	   }
