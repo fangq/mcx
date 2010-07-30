@@ -676,10 +676,10 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
      tic=StartTimer();
 #ifdef MCX_TARGET_NAME
      fprintf(cfg->flog,"- variant name: [%s] compiled for GPU Capacity [%d] with CUDA [%d]\n",
-             100,MCX_CUDA_ARCH,CUDART_VERSION);
+             MCX_TARGET_NAME,MCX_CUDA_ARCH,CUDART_VERSION);
 #else
      fprintf(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
-             10,CUDART_VERSION);
+             MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
      fprintf(cfg->flog,"- compiled with: RNG [%s] Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
 #ifdef SAVE_DETECTORS

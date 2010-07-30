@@ -66,8 +66,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 clean:
-	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) \
-               $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX)
+	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX)
 cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
