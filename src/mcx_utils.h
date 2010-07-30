@@ -6,6 +6,7 @@
 
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  255
+#define MCX_CUDA_ARCH       100
 
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 #define MAX(a,b)           ((a)>(b)?(a):(b))
