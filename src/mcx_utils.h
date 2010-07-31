@@ -77,6 +77,7 @@ typedef struct MCXConfig{
 	char isgpuinfo;     /*1 to print gpu info when attach, 0 do not print*/
         char issrcfrom0;    /*1 do not subtract 1 from src/det positions, 0 subtract 1*/
         char isdumpmask;    /*1 dump detector mask; 0 not*/
+	char autopilot;     /*1 optimal setting for dedicated card, 2, for non dedicated card*/
         float minenergy;    /*minimum energy to propagate photon*/
 	float unitinmm;     /*defines the length unit in mm for grid*/
         FILE *flog;         /*stream handle to print log information*/

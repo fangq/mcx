@@ -150,8 +150,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
-     uint np,idx1d, idx1dold;   //idx1dold is related to reflection
-     //np=nphoton+((idx==blockDim.x*gridDim.x-1) ? ophoton: 0);
+     uint idx1d, idx1dold;   //idx1dold is related to reflection
 
 #ifdef TEST_RACING
      int cc=0;
@@ -195,9 +194,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
       using a while-loop to terminate a thread by np will cause MT RNG to be 3.5x slower
       LL5 RNG will only be slightly slower than for-loop with photon-move criterion
      */
-     //while(f.ndone<nphoton) {
+     while(f.ndone<(idx<ophoton?nphoton+1:nphoton)) {
 
-     for(np=0;np<nphoton;np++){ // here nphoton actually means photon moves
+     //for(np=0;np<nphoton;np++){ // here nphoton actually means photon moves
 
           GPUDEBUG(("*i= (%d) L=%f w=%e a=%f\n",(int)f.ndone,f.tscat,p.w,f.t));
 
@@ -513,6 +512,20 @@ int mcx_set_gpu(Config *cfg){
     for (dev = 0; dev<deviceCount; dev++) {
         cudaDeviceProp dp;
         cudaGetDeviceProperties(&dp, dev);
+	if(cfg->autopilot && ((cfg->gpuid && dev==cfg->gpuid-1)
+	 ||(cfg->gpuid==0 && dev==deviceCount-1) )){
+		if(cfg->autopilot==1){
+			cfg->nblocksize=64;
+			cfg->nthread=256*dp.multiProcessorCount*dp.multiProcessorCount;
+			cfg->respin=1;
+			fprintf(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
+		}else if(cfg->autopilot==2){
+			cfg->nblocksize=64;
+			cfg->nthread=dp.multiProcessorCount*128;
+			cfg->respin=1;
+                        fprintf(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
+		}
+	}
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
 	    printf("=============================   GPU Infomation  ================================\n");
@@ -527,7 +540,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
 	  #endif
 	  }
-          if(cfg->isgpuinfo!=2) break;
+          //if(cfg->isgpuinfo!=2) break;
 	}
     }
     if(cfg->isgpuinfo==2){ //list GPU info only
@@ -559,7 +572,7 @@ void mcx_run_simulation(Config *cfg){
      int threadphoton, oddphotons;
 
      unsigned int photoncount=0,printnum;
-     unsigned int tic,tic0,toc=0,fieldlen;
+     unsigned int tic,tic0,tic1,toc=0,fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
@@ -584,18 +597,19 @@ void mcx_run_simulation(Config *cfg){
      }else{
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate); //the second half will be used to accumulate
      }
-     threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
-     oddphotons=cfg->nphoton-threadphoton*cfg->nthread*cfg->respin;
 
      float4 *Ppos;
      float4 *Pdir;
-     float4 *Plen;
+     float4 *Plen,*Plen0;
      uint   *Pseed;
      float  *Pdet;
      uint    detected=0,sharedbuf=0;
 
      if(cfg->nthread%cfg->nblocksize)
      	cfg->nthread=(cfg->nthread/cfg->nblocksize)*cfg->nblocksize;
+     threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
+     oddphotons=cfg->nphoton/cfg->respin-threadphoton*cfg->nthread;
+
      mcgrid.x=cfg->nthread/cfg->nblocksize;
      mcblock.x=cfg->nblocksize;
 
@@ -606,6 +620,7 @@ void mcx_run_simulation(Config *cfg){
      Ppos=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Plen=(float4*)malloc(sizeof(float4)*cfg->nthread);
+     Plen0=(float4*)malloc(sizeof(float4)*cfg->nthread);
      Pseed=(uint*)malloc(sizeof(uint)*cfg->nthread*RAND_SEED_LEN);
      energy=(float*)calloc(cfg->nthread*2,sizeof(float));
      Pdet=(float*)calloc(cfg->maxdetphoton,sizeof(float)*(cfg->medianum+1));
@@ -645,11 +660,6 @@ void mcx_run_simulation(Config *cfg){
      param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
      param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
 
-     /*
-      threaddim.x=cfg->dim.z;
-      threaddim.y=cfg->dim.y*cfg->dim.z;
-      threaddim.z=dimlen.z;
-     */
      Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z;
 
      if(cfg->seed>0)
@@ -693,15 +703,8 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
      fflush(cfg->flog);
      fieldlen=dimxyz*cfg->maxgate;
 
-     cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gPseed, Pseed, sizeof(uint)  *cfg->nthread*RAND_SEED_LEN,  cudaMemcpyHostToDevice);
-     cudaMemcpy(gfield, field, sizeof(float) *fieldlen, cudaMemcpyHostToDevice);
      cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice);
      cudaMemcpy(genergy,energy,sizeof(float) *cfg->nthread*2, cudaMemcpyHostToDevice);
-     cudaMemcpy(gPdet,  Pdet,  sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1), cudaMemcpyHostToDevice);
-     cudaMemcpy(gdetected,&detected,  sizeof(uint), cudaMemcpyHostToDevice);
 
      cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice);
      cudaMemcpyToSymbol(gdetpos, cfg->detpos,  cfg->detnum*sizeof(float4), 0, cudaMemcpyHostToDevice);
@@ -741,15 +744,27 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 
        //total number of repetition for the simulations, results will be accumulated to field
        for(iter=0;iter<cfg->respin;iter++){
+           cudaMemset(gfield,0,sizeof(float)*fieldlen); // cost about 1 ms
+           cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1));
+           cudaMemset(gdetected,0,sizeof(float));
+
+ 	   cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+	   cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+	   cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
+           for (i=0; i<cfg->nthread*RAND_SEED_LEN; i++)
+		Pseed[i]=rand();
+	   cudaMemcpy(gPseed, Pseed, sizeof(uint)*cfg->nthread*RAND_SEED_LEN,  cudaMemcpyHostToDevice);
+
            tic0=GetTimeMillis();
            fprintf(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
-           mcx_main_loop<<<mcgrid,mcblock,sharedbuf>>>(cfg->nphoton,0,gmedia,gfield,genergy,
+           mcx_main_loop<<<mcgrid,mcblock,sharedbuf>>>(threadphoton,oddphotons,gmedia,gfield,genergy,
 	                                               gPseed,gPpos,gPdir,gPlen,gPdet,gdetected);
 
            cudaThreadSynchronize();
 	   cudaMemcpy(&detected, gdetected,sizeof(uint),cudaMemcpyDeviceToHost);
-           toc+=GetTimeMillis()-tic0;
-           fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",toc+tic0-tic);
+           tic1=GetTimeMillis();
+	   toc+=tic1-tic0;
+           fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",tic1-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
 #ifdef SAVE_DETECTORS
@@ -767,9 +782,14 @@ is more than what your have specified (%d), please use the -H option to specify 
 		cfg->his.unitinmm=cfg->unitinmm;
 		cfg->his.detected=detected;
 		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
-		mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),t>cfg->tstart,"mch",cfg);
+		mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),
+		             (t>cfg->tstart && iter),"mch",cfg);
 	   }
 #endif
+           cudaMemcpy(Plen0,  gPlen,  sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
+           for(i=0;i<cfg->nthread;i++)
+	      photoncount+=int(Plen0[i].w+0.5f);
+
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
                cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
@@ -779,7 +799,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                    for(i=0;i<fieldlen;i++)  //accumulate field, can be done in the GPU
                       field[fieldlen+i]+=field[i];
                }
-               if(iter+1==cfg->respin){ 
+               if(iter+1==cfg->respin){
                    if(cfg->respin>1)  //copy the accumulated fields back
                        memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
 
@@ -791,13 +811,13 @@ is more than what your have specified (%d), please use the -H option to specify 
                        fprintf(cfg->flog,"normizing raw data ...\t");
 
                        cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*2,cudaMemcpyDeviceToHost);
-		       cudaMemcpy(Plen,  gPlen,  sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
                        eabsorp=0.f;
                        for(i=1;i<cfg->nthread;i++){
                            energy[0]+=energy[i<<1];
        	       	       	   energy[1]+=energy[(i<<1)+1];
-                           eabsorp+=Plen[i].z;  // the accumulative absorpted energy near the source
                        }
+		       for(i=0;i<cfg->nthread;i++)
+                           eabsorp+=Plen0[i].z;  // the accumulative absorpted energy near the source
        	       	       for(i=0;i<dimxyz;i++){
                            absorp=0.f;
                            for(j=0;j<cfg->maxgate;j++)
@@ -818,21 +838,6 @@ is more than what your have specified (%d), please use the -H option to specify 
                    fflush(cfg->flog);
                }
            }
-	   //initialize the next simulation
-	   if(param.twin1<cfg->tend && iter<cfg->respin){
-                  cudaMemset(gfield,0,sizeof(float)*fieldlen); // cost about 1 ms
-                  cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1));
-                  cudaMemset(gdetected,0,sizeof(float));
-
- 		  cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-		  cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-		  cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice);
-	   }
-	   if(cfg->respin>1 && RAND_SEED_LEN>1){
-               for (i=0; i<cfg->nthread*RAND_SEED_LEN; i++)
-		   Pseed[i]=rand();
-	       cudaMemcpy(gPseed, Pseed, sizeof(uint)*cfg->nthread*RAND_SEED_LEN,  cudaMemcpyHostToDevice);
-	   }
        }
        if(param.twin1<cfg->tend){
             cudaMemset(genergy,0,sizeof(float)*cfg->nthread*2);
@@ -846,7 +851,6 @@ is more than what your have specified (%d), please use the -H option to specify 
      cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*2,cudaMemcpyDeviceToHost);
 
      for (i=0; i<cfg->nthread; i++) {
-	  photoncount+=(int)Plen[i].w;
           energyloss+=energy[i<<1];
           energyabsorbed+=energy[(i<<1)+1];
      }
@@ -890,6 +894,7 @@ is more than what your have specified (%d), please use the -H option to specify 
      free(Ppos);
      free(Pdir);
      free(Plen);
+     free(Plen0);
      free(Pseed);
      free(Pdet);
      free(energy);
