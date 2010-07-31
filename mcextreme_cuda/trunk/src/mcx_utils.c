@@ -21,14 +21,14 @@
 #include "mcx_utils.h"
 
 char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflect3","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu","--root","--gpu","--dumpmask",""};
+                 "--printgpu","--root","--gpu","--dumpmask","--autopilot",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
@@ -38,7 +38,7 @@ void mcx_initcfg(Config *cfg){
      cfg->dim.z=0;
      cfg->nblocksize=128;
      cfg->nphoton=0;
-     cfg->nthread=0;
+     cfg->nthread=2048;
      cfg->seed=0;
      cfg->isrowmajor=0; /* default is Matlab array*/
      cfg->maxgate=1;
@@ -63,6 +63,7 @@ void mcx_initcfg(Config *cfg){
      cfg->unitinmm=1.f;
      cfg->isdumpmask=0;
      cfg->maxdetphoton=1000000; 
+     cfg->autopilot=0;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);     
@@ -475,6 +476,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      int i=1,isinteractive=1,issavelog=0;
      char filename[MAX_PATH_LENGTH]={0};
      char logfile[MAX_PATH_LENGTH]={0};
+     float np=0.f;
 
      if(argc<=1){
      	mcx_usage(argv[0]);
@@ -509,12 +511,13 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 			the photon moves per thread. Here, variable cfg->nphoton is 
 			indeed the photon moves per thread.
 		     */
-		     case 'n':
-				mcx_error(-2,"specifying photon number is not supported, please use -m",__FILE__,__LINE__);
+		     case 'm':
+				mcx_error(-2,"specifying photon move is not supported any more, please use -n",__FILE__,__LINE__);
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
 		     	        break;
-		     case 'm':
-		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
+		     case 'n':
+		     	        i=mcx_readarg(argc,argv,i,&(np),"float");
+				cfg->nphoton=np;
 		     	        break;
 		     case 't':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nthread),"int");
@@ -585,6 +588,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'H':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
 		     	        break;
+                     case 'A':
+                                i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
+                                break;
 		}
 	    }
 	    i++;
@@ -621,10 +627,11 @@ usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
  -i 	       (--interactive) interactive mode\n\
  -f config     (--input)       read config from a file\n\
+ -n [0|int]    (--photon)      total photon number\n\
+ -m [0|int]    (--move)        total photon moves (not supported, use -n only)\n\
  -t [1024|int] (--thread)      total thread number\n\
  -T [128|int]  (--blocksize)   thread number per block\n\
- -m [0|int]    (--move)        total photon moves\n\
- -n [0|int]    (--photon)      total photon number (not supported, use -m only)\n\
+ -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.\n\
  -r [1|int]    (--repeat)      number of repetitions\n\
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
  -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 - from 1\n\
