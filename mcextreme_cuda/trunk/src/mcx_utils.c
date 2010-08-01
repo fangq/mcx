@@ -620,21 +620,23 @@ void mcx_usage(char *exename){
 #                                                                             #\n\
 #     Martinos Center for Biomedical Imaging, Massachusetts General Hospital  #\n\
 ###############################################################################\n\
-$MCX $Rev::     $, Modified: $Date::                     $ by $Author::       $\n\
+$MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\n\
 ###############################################################################\n\
 \n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
  -i 	       (--interactive) interactive mode\n\
+ -s sessionid  (--session)     a string to label all output file names\n\
  -f config     (--input)       read config from a file\n\
- -n [0|int]    (--photon)      total photon number\n\
+ -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
  -m [0|int]    (--move)        total photon moves (not supported, use -n only)\n\
  -t [1024|int] (--thread)      total thread number\n\
  -T [128|int]  (--blocksize)   thread number per block\n\
  -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.\n\
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto\n\
  -r [1|int]    (--repeat)      number of repetitions\n\
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
- -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 - from 1\n\
+ -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit\n\
  -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2\n\
@@ -643,16 +645,14 @@ where possible parameters include (the first item in [] is the default value)\n\
  -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
- -M [0|1]      (--dumpmask)    1 to save detector number masks, 0 not save\n\
+ -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
- -s sessionid  (--session)     a string to label all output file names\n\
  -p [0|int]    (--printlen)    number of threads to print (debug)\n\
- -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\
  -I            (--printgpu)    print GPU information and run program\n\
 example:\n\
-       %s -t 1024 -T 256 -m 1000000 -f input.inp -s test -r 2 -a 0 -g 10 -U 0\n",exename,exename);
+       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1\n",exename,exename);
 }

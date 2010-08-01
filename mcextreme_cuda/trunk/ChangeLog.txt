@@ -2,18 +2,22 @@
 
 == MCX 0.4.9 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
+ 2010-08-01 update documentation and release v0.5 beta (aka 0.4.9)
+ 2010-08-01 fix a critical bug for pre-Fermi cards,validated MCX on CC11,13,20
+ 2010-07-31 enable -n for photon number, disable -m, report simulation speed
+ 2010-07-30 fix a bug when reading medium index with detector mask
  2010-07-29 use atomic with shared memory cache to improve accuracy near the source
  2010-07-28 add example for validation of MCX in heterogeneous media
- 2010-07-28 use RNG for transmission/reflection test, saving dector for reflection
+ 2010-07-28 use RNG for transmission/reflection test
  2010-07-28 use column major as the internal array format
  2010-07-27 support saving detected photons, but got 25% slower
  2010-07-15 users can use -u to specify voxel edge length in mm
  2010-07-12 fix a bug for indexing error in large volumes
- 2010-07-09 fix bug when appending data for multiple time gate groups
+ 2010-07-09 fix a bug when appending data for multiple time gate groups
  2010-06-26 use constant memory to pass kernel param, more error info
  2010-06-26 use meaningful struct in the kernel to improve readability
  2010-05-14 allow to select which GPU to use with the -G option
- 2010-02-04 fixing a minor NaN bug detected by GPU Ocelot
+ 2010-02-04 fix a minor NaN bug detected by GPU Ocelot
  2010-01-26 add GPU Ocelot makefile for multicore CPU
 
 == MCX 0.2 (Aurora), FangQ <fangq nmr mgh harvard edu> ==
