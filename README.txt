@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.2 (Aurora)
+Version: 0.4.9 (Black-hole beta)
 
 ---------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ A short summary of the main features includes:
 *. 3D heterogeneous media represented by voxelated array
 *. boundary reflection support
 *. time-resolved photon migration
-*. saving photon partial lengths at detectors
+*. saving photon partial path lengths at detectors
 *. optimized random number generators
 *. build-in fluence normalization
 *. improved accuracy near the source with atomic operations
@@ -43,9 +43,7 @@ A short summary of the main features includes:
 
 The software can be used on Windows, Linux and Mac OS. Two variants 
 will be provided, one for nVidia(TM) graphics hardware written in CUDA, 
-and one for ATI(TM) written in Brook+ (the ATI version is currently a
-work-in-progress).
-
+and one for ATI(TM) written in OpenCL (coming soon!).
 
 
 II. Requirement and Installation
