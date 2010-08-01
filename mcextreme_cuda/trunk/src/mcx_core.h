@@ -59,7 +59,7 @@ typedef struct  __align__(16) KernelParams {
   float3 vsize;
   float  minstep;
   float  twin0,twin1,tmax;
-  uchar  isrowmajor,save2pt,doreflect,doreflect3,savedet,mediaidorig;
+  unsigned int isrowmajor,save2pt,doreflect,doreflect3,savedet;
   float  Rtstep;
   float4 ps,c0;
   float3 maxidx;
@@ -68,10 +68,11 @@ typedef struct  __align__(16) KernelParams {
   float  minenergy;
   float  skipradius2;
   float  minaccumtime;
-  unsigned int   maxdetphoton;
-  unsigned int   maxmedia;
-  unsigned int   detnum;
-  unsigned int   idx1dorig;
+  unsigned int maxdetphoton;
+  unsigned int maxmedia;
+  unsigned int detnum;
+  unsigned int idx1dorig;
+  unsigned int mediaidorig;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg);

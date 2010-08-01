@@ -184,7 +184,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
      idx1d=gcfg->idx1dorig;
      mediaid=gcfg->mediaidorig;
-	  
+
      if(mediaid==0) {
           return; // the initial position is not within the medium
      }
@@ -530,7 +530,7 @@ int mcx_set_gpu(Config *cfg){
 	  if(cfg->isgpuinfo){
 	    printf("=============================   GPU Infomation  ================================\n");
 	    printf("Device %d of %d:\t\t%s\n",dev+1,deviceCount,dp.name);
-	    printf("Compute Capacity:\t%u.%u\n",dp.major,dp.minor);
+	    printf("Compute Capability:\t%u.%u\n",dp.major,dp.minor);
 	    printf("Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
 Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
                (unsigned int)dp.totalGlobalMem,(unsigned int)dp.totalConstMem,
@@ -587,10 +587,10 @@ void mcx_run_simulation(Config *cfg){
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,cfg->isrowmajor,
-                     cfg->issave2pt,cfg->isreflect,cfg->isref3,cfg->issavedet,0,1.f/cfg->tstep,
+                     cfg->issave2pt,cfg->isreflect,cfg->isref3,cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,0};
+		     cfg->medianum-1,cfg->detnum,0,0};
 
      if(cfg->respin>1){
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);

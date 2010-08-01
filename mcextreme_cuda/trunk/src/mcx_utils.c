@@ -402,12 +402,12 @@ void  mcx_maskdet(Config *cfg){
 	         ix=x+cfg->detpos[d].x;
 
 		 if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
-		    x*x+y*y+z*z > cfg->detpos[d].w*cfg->detpos[d].w)
+		    x*x+y*y+z*z > (cfg->detpos[d].w+1.f)*(cfg->detpos[d].w+1.f))
 		    continue;
 
 		 idx1d=(int)((iz+1.f)*dy*dx+(iy+1.f)*dx+(ix+1.f));
 
-		 if(padvol[idx1d])
+		 if(padvol[idx1d])  /*looking for a voxel on the interface or bounding box*/
                   if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
 		     padvol[idx1d+dx+1]&&padvol[idx1d+dx-1]&&padvol[idx1d-dx+1]&&padvol[idx1d-dx-1]&&
 		     padvol[idx1d+dy*dx+1]&&padvol[idx1d+dy*dx-1]&&padvol[idx1d-dy*dx+1]&&padvol[idx1d-dy*dx-1]&&
