@@ -22,12 +22,23 @@ type
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    mcxdoHelpOptions: TAction;
+    Bevel1: TBevel;
+    Bevel2: TBevel;
+    ckSaveDetector: TCheckBox;
+    ckAutopilot: TCheckBox;
+    edGPUID: TComboBox;
+    edDetectedNum: TEdit;
+    edUnitInMM: TEdit;
+    grVariant: TRadioGroup;
+    Label12: TLabel;
+    Label8: TLabel;
+    Label9: TLabel;
     MenuItem19: TMenuItem;
     mmOutput: TMemo;
     OpenProject: TOpenDialog;
     plOutput: TPanel;
     pMCX: TAsyncProcess;
-    ckAtomic: TCheckBox;
     edBlockSize: TComboBox;
     Label11: TLabel;
     mcxSetCurrent: TAction;
@@ -54,7 +65,7 @@ type
     ckSaveData: TCheckBox;
     ckNormalize: TCheckBox;
     edThread: TComboBox;
-    edMove: TEdit;
+    edPhoton: TEdit;
     edSession: TEdit;
     edBubble: TEdit;
     edConfigFile: TFileNameEdit;
@@ -120,6 +131,7 @@ type
     ToolButton6: TToolButton;
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
+    ToolButton9: TToolButton;
     procedure ckAtomicClick(Sender: TObject);
     procedure FormDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
@@ -132,6 +144,7 @@ type
     procedure mcxdoDeleteItemExecute(Sender: TObject);
     procedure mcxdoExitExecute(Sender: TObject);
     procedure mcxdoHelpExecute(Sender: TObject);
+    procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
@@ -224,6 +237,15 @@ begin
        if(ed.Hint = 'Session') then  node.Caption:=ed.Text;
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=ed.Text;
+       if(ed.Hint = 'BubbleSize') then begin
+            if StrToFloat(ed.Text)>0 then begin
+              if(ckSaveDetector.Checked) then begin
+                grVariant.ItemIndex:=3;
+              end else begin
+                grVariant.ItemIndex:=2;
+              end;
+            end;
+       end;
     end else if(Sender is TRadioGroup) then begin
        gr:=Sender as TRadioGroup;
        idx:=MapList.IndexOf(gr.Hint);
@@ -239,6 +261,26 @@ begin
        idx:=MapList.IndexOf(ck.Hint);
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
+       if(ck.Hint='Autopilot') then begin
+           edThread.Enabled:=not ck.Checked;
+           edBlockSize.Enabled:=not ck.Checked;
+       end;
+       if(ck.Hint='SaveDetector') then begin
+           if(ck.Checked) then begin
+             if(grVariant.ItemIndex=2) then begin
+                grVariant.ItemIndex:=3;
+             end else begin
+                grVariant.ItemIndex:=1;
+             end;
+           end else begin
+             if(grVariant.ItemIndex=3) then begin
+                grVariant.ItemIndex:=2;
+             end else begin
+                grVariant.ItemIndex:=0;
+             end;
+           end;
+           edDetectedNum.Enabled:=ck.Checked;
+       end;
     end else if(Sender is TFileNameEdit) then begin
        fed:=Sender as TFileNameEdit;
        idx:=MapList.IndexOf(fed.Hint);
@@ -271,6 +313,16 @@ begin
    RunExternalCmd(GetBrowserPath + ' http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
 end;
 
+procedure TfmMCX.mcxdoHelpOptionsExecute(Sender: TObject);
+begin
+    if(not pMCX.Running) then begin
+          pMCX.CommandLine:=CreateCmdOnly;
+          pMCX.Options := [poUsePipes];
+          AddLog('-- Executing MCX --');
+          pMCX.Execute;
+    end;
+end;
+
 procedure TfmMCX.mcxdoAddItemExecute(Sender: TObject);
 var
    node: TListItem;
@@ -301,8 +353,8 @@ begin
       //edSession.Text:='';
       edConfigFile.FileName:='';
       edThread.Text:='1796';
-      edMove.Text:='1000000';
-      edBlockSize.Text:='128';
+      edPhoton.Text:='1e7';
+      edBlockSize.Text:='64';
       edBubble.Text:='0';
       edGate.Value:=1;
       edRespin.Value:=1;
@@ -310,7 +362,12 @@ begin
       ckReflect.Checked:=true;
       ckSaveData.Checked:=true;
       ckNormalize.Checked:=true;
-      ckAtomic.Checked:=false;
+      ckAutopilot.Checked:=false;
+      ckSaveDetector.Checked:=false;
+      grVariant.ItemIndex:=0;
+      edUnitInMM.Text:='1';
+      edGPUID.ItemIndex:=0;
+      edDetectedNum.Text:='1000000';
       if not (lvJobs.Selected = nil) then
          PanelToList2(lvJobs.Selected);
 end;
@@ -350,9 +407,6 @@ end;
 
 procedure TfmMCX.ckAtomicClick(Sender: TObject);
 begin
-  if(ckAtomic.Checked) then begin
-        ShowMessage('You selected to use atomic operations. We suggest you only using this mode when the accuracy near the source is critically important. Atomic mode is about 5 times slower than non-atomic one, and you should use a thread number between 500~1000.');
-  end;
 end;
 
 procedure TfmMCX.FormDockOver(Sender: TObject; Source: TDragDockObject; X,
@@ -454,8 +508,10 @@ begin
         MapList.Add(lvJobs.Columns.Items[i].Caption);
     end;
     ProfileChanged:=false;
-    if not (SearchForExe(CreateCmdOnly) = '') then
+    if not (SearchForExe(CreateCmdOnly) = '') then begin
         mcxdoQuery.Enabled:=true;
+        mcxdoHelpOptions.Enabled:=true;
+    end;
 end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
@@ -666,8 +722,8 @@ end;
 
 procedure TfmMCX.VerifyInput;
 var
-    nthread, nmove, nblock: integer;
-    radius,t1: extended;
+    nthread, nblock: integer;
+    radius,t1,nphoton: extended;
     exepath: string;
 begin
   try
@@ -677,17 +733,17 @@ begin
         raise Exception.Create('Config file does not exist, please check the path');
     try
         nthread:=StrToInt(edThread.Text);
-        nmove:=StrToInt(edMove.Text);
+        nphoton:=StrToFloat(edPhoton.Text);
         radius:=StrToFloat(edBubble.Text);
         nblock:=StrToInt(edBlockSize.Text);
     except
-        raise Exception.Create('Invalid numbers: check the values for thread, move and time gate values');
+        raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gates');
     end;
     if(nthread<512) then
-       AddLog('Warning: increase thread numbers to 1024 or above may boost the speed significantly');
-    if(nthread>2048) then
-       AddLog('Warning: you may need a high-end graphics card to use more threads');
-    if(nmove>1e7) then
+       AddLog('Warning: usign over 20000 threads can usually give you the best speed');
+    if(nthread>10000) then
+       AddLog('Warning: you can try Cached MCX to improve accuracy near the source');
+    if(nphoton>1e9) then
        AddLog('Warning: you can increase respin number to get more photons');
     if(nblock<0) then
        raise Exception.Create('Thread block number can not be negative');
@@ -710,14 +766,24 @@ var
     cmd: string;
 begin
     cmd:='mcx';
-    if(ckAtomic.Checked) then cmd:='mcx_atomic';
+    if(grVariant.ItemIndex=0) then begin
+       cmd:='mcx';
+    end else if(grVariant.ItemIndex=1) then begin
+       cmd:='mcx_det';
+    end else if(grVariant.ItemIndex=2) then begin
+       cmd:='mcx_cached';
+    end else if(grVariant.ItemIndex=3) then begin
+       cmd:='mcx_det_cached';
+    end else if(grVariant.ItemIndex=4) then begin
+       cmd:='mcx_atomic';
+    end;
     Result:=cmd;
 end;
 
 function TfmMCX.CreateCmd:string;
 var
-    nthread, nmove, nblock: integer;
-    bubbleradius: extended;
+    nthread, nblock,gpuid,hitmax: integer;
+    bubbleradius,unitinmm,nphoton: extended;
     cmd: string;
 begin
 //    cmd:='"'+Config.MCXExe+'" ';
@@ -729,17 +795,26 @@ begin
          +'" --root "'+ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName))+'" ';
     try
         nthread:=StrToInt(edThread.Text);
-        nmove:=StrToInt(edMove.Text);
+        nphoton:=StrToFloat(edPhoton.Text);
         nblock:=StrToInt(edBlockSize.Text);
         bubbleradius:=StrToFloat(edBubble.Text);
+        gpuid:=StrToInt(edGPUID.Text);
+        unitinmm:=StrToFloat(edUnitInMM.Text);
+        hitmax:=StrToInt(edDetectedNum.Text);
     except
-        raise Exception.Create('Invalid numbers: check the values for thread, move and time gate values');
+        raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
     end;
 
-    cmd:=cmd+Format(' --thread %d --move %d --repeat %d --array %d --blocksize %d --skipradius %f ',
-      [nthread,nmove,edRespin.Value,grArray.ItemIndex,nblock,bubbleradius]);
-    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d ',
-      [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked)]);
+    if(ckAutopilot.Checked) then begin
+      cmd:=cmd+Format(' --gpu %d --autopilot 1 --photon %.0f --repeat %d --array %d --skipradius %f ',
+        [gpuid,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
+    end else begin
+      cmd:=cmd+Format(' --thread %d --blocksize %d --photon %.0f --repeat %d --array %d --skipradius %f ',
+        [nthread,nblock,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
+    end;
+    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d ',
+      [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
+      Integer(ckSaveDetector.Checked),hitmax]);
 
     Result:=cmd;
     AddLog('Command:');
