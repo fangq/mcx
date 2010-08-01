@@ -672,10 +672,7 @@ void mcx_run_simulation(Config *cfg){
            Pdir[i]=c0;
            Plen[i]=float4(0.f,0.f,minstep*R_C0,0.f);
      }
-     for (i=0; i<cfg->nthread*RAND_SEED_LEN; i++) {
-	   Pseed[i]=rand();
-     }    
-     
+
      fprintf(cfg->flog,"\
 ###############################################################################\n\
 #                  Monte Carlo Extreme (MCX) -- CUDA                          #\n\
@@ -685,7 +682,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
 
      tic=StartTimer();
 #ifdef MCX_TARGET_NAME
-     fprintf(cfg->flog,"- variant name: [%s] compiled for GPU Capacity [%d] with CUDA [%d]\n",
+     fprintf(cfg->flog,"- variant name: [%s] compiled for GPU Capability [%d] with CUDA [%d]\n",
              MCX_TARGET_NAME,MCX_CUDA_ARCH,CUDART_VERSION);
 #else
      fprintf(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",

@@ -106,17 +106,20 @@ index). Typing the name of the executable without any parameters,
 will print the help information and a list of supported parameters, 
 such as the following:
 
- usage: ./mcx <param1> <param2> ...
+usage: mcx <param1> <param2> ...
 where possible parameters include (the first item in [] is the default value)
  -i 	       (--interactive) interactive mode
+ -s sessionid  (--session)     a string to label all output file names
  -f config     (--input)       read config from a file
+ -n [0|int]    (--photon)      total photon number (exponential form accepted)
+ -m [0|int]    (--move)        total photon moves (not supported, use -n only)
  -t [1024|int] (--thread)      total thread number
  -T [128|int]  (--blocksize)   thread number per block
- -m [0|int]    (--move)        total photon moves
- -n [0|int]    (--photon)      total photon number (not supported, use -m only)
+ -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto
  -r [1|int]    (--repeat)      number of repetitions
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array
- -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 - from 1
+ -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1
  -g [1|int]    (--gategroup)   number of time gates per run
  -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit
  -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2
@@ -125,25 +128,24 @@ where possible parameters include (the first item in [] is the default value)
  -u [0.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save
- -M [0|1]      (--dumpmask)    1 to save detector number masks, 0 not save
+ -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save
  -H [1000000]  (--maxdetphoton)max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save
- -s sessionid  (--session)     a string to label all output file names
  -p [0|int]    (--printlen)    number of threads to print (debug)
- -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
  -L            (--listgpu)     print GPU information only
  -I            (--printgpu)    print GPU information and run program
- example:
-       ./mcx -t 1024 -T 256 -m 1000000 -f input.inp -s test -r 2 -a 0 -g 10
+example:
+       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -a 0 -g 10 -U 1 -d 1 -G 1
 
- the above command will launch 1024 GPU threads (-t) with every 256 threads
- a block (-T); for each thread, it will simulate 1e6 photon moves (-m) and
- repeat twice (-r); the media/source configuration will be read from 
- input.inp (-f) and the output will be labeled with the session id "test"; 
- input media index array is in column-major format (-a); the simulation will
- run 10 concurrent time gates (-g).
+ the above command will launch 2048 GPU threads (-t) with every 64 threads
+ a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G) 
+ with two equally divided runs (-r); the media/source configuration will be 
+ read from input.inp (-f) and the output will be labeled with the session 
+ id "test" (-s); input media index array is in column-major format (-a); the 
+ simulation will run 10 concurrent time gates (-g). Photons passing through
+ the defined detector positions will be saved for later rescaling (-d).
 
 Currently, MCX supports a modified version of the input file format used 
 for tMCimg. (The difference is that MCX allows for comments)
@@ -172,9 +174,9 @@ The volume file (semi60x60x60.bin in the above example),
 can be read in two ways by MCX: row-major[3] or column-major
 depending on the value of the user parameter "-a". If the volume file
 was saved using matlab or fortran, the byte order is column-major,
-and you should use "-a 0". If it was saved using the fwrite() in C, 
-the order is row-major, and you can either use "-a 1" or leave it 
-out of the command line.
+and you should use "-a 0" or leave it out of the command line. 
+If it was saved using the fwrite() in C, the order is row-major, 
+and you can either use "-a 1".
 
 The time gate parameter is specified by three numbers:
 start time, end time and time step size (in seconds). In 
@@ -320,7 +322,7 @@ VI. Reference
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
 Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009).
 
-If you used MCX in your research, the authors of this software would like
+If you use MCX in your research, the author of this software would like
 you to cite the above paper in your related publications.
 
 Links: 
