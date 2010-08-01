@@ -1,7 +1,7 @@
 object fmAbout: TfmAbout
-  Left = 523
+  Left = 538
   Height = 276
-  Top = 237
+  Top = 264
   Width = 434
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
@@ -14,9 +14,9 @@ object fmAbout: TfmAbout
   LCLVersion = '0.9.28.2'
   object Label1: TLabel
     Left = 40
-    Height = 117
+    Height = 123
     Top = 135
-    Width = 264
+    Width = 288
     Caption = 'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'
     Font.Color = 11645361
     ParentColor = False

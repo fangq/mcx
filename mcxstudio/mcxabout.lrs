@@ -1,12 +1,12 @@
 { This is an automatically generated lazarus resource file }
 
 LazarusResources.Add('TfmAbout','FORMDATA',[
-  'TPF0'#8'TfmAbout'#7'fmAbout'#4'Left'#3#11#2#6'Height'#3#20#1#3'Top'#3#237#0#5
+  'TPF0'#8'TfmAbout'#7'fmAbout'#4'Left'#3#26#2#6'Height'#3#20#1#3'Top'#3#8#1#5
   +'Width'#3#178#1#13'ActiveControl'#7#7'Button1'#11'BorderIcons'#11#12'biSyste'
   +'mMenu'#0#11'BorderStyle'#7#8'bsDialog'#7'Caption'#6' About Monte Carlo eXtr'
   +'eme Studio'#12'ClientHeight'#3#20#1#11'ClientWidth'#3#178#1#5'Color'#7#7'cl'
   +'Black'#8'Position'#7#16'poMainFormCenter'#10'LCLVersion'#6#8'0.9.28.2'#0#6
-  +'TLabel'#6'Label1'#4'Left'#2'('#6'Height'#2'u'#3'Top'#3#135#0#5'Width'#3#8#1
+  +'TLabel'#6'Label1'#4'Left'#2'('#6'Height'#2'{'#3'Top'#3#135#0#5'Width'#3' '#1
   +#7'Caption'#6#183'Author: '#10'  Qianqian Fang <fangq at nmr.mgh.harvard.edu'
   +'>'#10'  Martinos Center for Biomedical Imaging'#10'  Massachusetts General '
   +'Hospital'#10'  Harvard Medical School'#10'  Charlestown, MA 02129, USA'#10
