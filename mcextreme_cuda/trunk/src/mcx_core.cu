@@ -764,6 +764,12 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
            fprintf(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",tic1-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
+           cudaMemcpy(Plen0,  gPlen,  sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
+           cfg->his.totalphoton=0;
+           for(i=0;i<cfg->nthread;i++)
+	      cfg->his.totalphoton+=int(Plen0[i].w+0.5f);
+           photoncount+=cfg->his.totalphoton;
+
 #ifdef SAVE_DETECTORS
            if(cfg->issavedet){
            	cudaMemcpy(Pdet, gPdet,sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1),cudaMemcpyDeviceToHost);
@@ -775,17 +781,13 @@ is more than what your have specified (%d), please use the -H option to specify 
 		}else{
 			fprintf(cfg->flog,"detected %d photons\t",detected);
 		}
-		//cfg->his.totalphoton=
 		cfg->his.unitinmm=cfg->unitinmm;
 		cfg->his.detected=detected;
 		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
 		mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),
-		             (t>cfg->tstart && iter),"mch",cfg);
+		             photoncount>cfg->his.totalphoton,"mch",cfg);
 	   }
 #endif
-           cudaMemcpy(Plen0,  gPlen,  sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
-           for(i=0;i<cfg->nthread;i++)
-	      photoncount+=int(Plen0[i].w+0.5f);
 
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
