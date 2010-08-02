@@ -470,6 +470,7 @@ int mcx_remap(char *opt){
 	}
 	i++;
     }
+printf("bad option %s\n",opt);
     return 1;
 }
 void mcx_parsecmd(int argc, char* argv[], Config *cfg){

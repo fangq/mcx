@@ -251,6 +251,10 @@ begin
        idx:=MapList.IndexOf(gr.Hint);
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=IntToStr(gr.ItemIndex);
+       if(gr.Hint = 'VariantName') then begin
+           ckSaveDetector.Enabled:=(gr.ItemIndex=1) or (gr.ItemIndex=3);
+           edDetectedNum.Enabled:=ckSaveDetector.Enabled;
+       end;
     end else if(Sender is TComboBox) then begin
        cb:=Sender as TComboBox;
        idx:=MapList.IndexOf(cb.Hint);
@@ -749,6 +753,8 @@ begin
        raise Exception.Create('Thread block number can not be negative');
     if(radius<0) then
        raise Exception.Create('Bubble radius can not be negative');
+    if(radius<3) or (radius>7) then
+       AddLog('Warning: a cache radius between 3mm to 5mm is optimal');
 
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
