@@ -514,15 +514,17 @@ int mcx_set_gpu(Config *cfg){
         cudaGetDeviceProperties(&dp, dev);
 	if(cfg->autopilot && ((cfg->gpuid && dev==cfg->gpuid-1)
 	 ||(cfg->gpuid==0 && dev==deviceCount-1) )){
+                unsigned int needmem=cfg->dim.x*cfg->dim.y*cfg->dim.z; /*for mediam*/
 		if(cfg->autopilot==1){
 			cfg->nblocksize=64;
 			cfg->nthread=256*dp.multiProcessorCount*dp.multiProcessorCount;
-			cfg->respin=1;
-			fprintf(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
+			needmem+=cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)+10*1024*1024; /*keep 10M for other things*/
+			cfg->maxgate=((unsigned int)dp.totalGlobalMem-needmem)/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
+			cfg->maxgate=MIN((int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5),cfg->maxgate);
+			fprintf(cfg->flog,"autopilot mode: setting thread number to %d, block size to %d and time gates to %d\n",cfg->nthread,cfg->nblocksize,cfg->maxgate);
 		}else if(cfg->autopilot==2){
 			cfg->nblocksize=64;
 			cfg->nthread=dp.multiProcessorCount*128;
-			cfg->respin=1;
                         fprintf(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
 		}
 	}
