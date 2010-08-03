@@ -293,6 +293,7 @@ begin
     end;
     UpdateMCXActions(acMCX,'','Work');
     UpdateMCXActions(acMCX,'','Run');
+    mcxdoSave.Enabled:=true;
     except
     end;
 end;
@@ -427,7 +428,9 @@ begin
             exit;
         lvJobs.Items.Delete(lvJobs.Selected.Index);
         if not (lvJobs.Selected = nil) then
-            ListToPanel2(lvJobs.Selected);
+            ListToPanel2(lvJobs.Selected)
+        else
+            mcxdoDeleteItem.Enabled:=false;
   end;
 end;
 
@@ -526,9 +529,11 @@ end;
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 begin
-     if(not Selected) then begin
+     if(Selected) then begin
           if (lvJobs.Selected=nil) then begin
-          end
+          end else begin
+              mcxdoDeleteItem.Enabled:=true;
+          end;
      end
 end;
 
@@ -586,6 +591,7 @@ begin
          ListToPanel2(lvJobs.Selected);
          plSetting.Enabled:=true;
          mcxdoVerify.Enabled:=true;
+         mcxdoDefault.Enabled:=true;
      end;
 end;
 
@@ -685,6 +691,7 @@ var
    inifile: TIniFile;
    i,j: integer;
 begin
+     DeleteFile(fname);
      inifile:=TIniFile.Create(fname);
      for i:=0 to lvJobs.Items.Count-1 do begin
           for j:=0 to lvJobs.Columns.Count-1 do begin
@@ -754,7 +761,7 @@ begin
     if(radius<0) then
        raise Exception.Create('Bubble radius can not be negative');
     if(radius<3) or (radius>7) then
-       AddLog('Warning: a cache radius between 3mm to 5mm is optimal');
+       AddLog('Warning: a cache radius between 3mm to 5mm is recommended');
 
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
