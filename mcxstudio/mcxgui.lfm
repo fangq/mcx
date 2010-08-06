@@ -7,7 +7,7 @@ object fmMCX: TfmMCX
   BorderIcons = [biSystemMenu, biMinimize, biHelp]
   BorderStyle = bsSingle
   Caption = 'MCX Studio'
-  ClientHeight = 564
+  ClientHeight = 567
   ClientWidth = 787
   Icon.Data = {
     3E01000000000100010010101000000000002801000016000000280000001000
@@ -50,133 +50,133 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton2: TToolButton
-      Left = 42
+      Left = 41
       Top = 2
       Action = mcxdoSave
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 661
+      Left = 644
       Top = 2
       Action = mcxdoExit
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton4: TToolButton
-      Left = 144
+      Left = 143
       Top = 2
       Action = mcxdoAddItem
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton5: TToolButton
-      Left = 133
+      Left = 132
       Top = 2
       Width = 11
       Caption = 'ToolButton5'
       Style = tbsDivider
     end
     object ToolButton6: TToolButton
-      Left = 234
+      Left = 230
       Top = 2
       Action = mcxdoDeleteItem
       ParentShowHint = False
       ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 290
+      Left = 285
       Top = 2
       Action = mcxdoVerify
       ParentShowHint = False
       ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 330
+      Left = 325
       Top = 2
       Action = mcxdoRun
       ParentShowHint = False
       ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 370
+      Left = 365
       Top = 2
       Action = mcxdoStop
       ParentShowHint = False
       ShowHint = True
     end
     object tbtRunAll: TToolButton
-      Left = 410
+      Left = 405
       Top = 2
       Action = mcxdoRunAll
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 569
+      Left = 552
       Top = 2
       Action = mcxdoHelp
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 279
+      Left = 274
       Top = 2
       Width = 11
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 459
+      Left = 450
       Top = 2
       Width = 11
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 470
+      Left = 461
       Top = 2
       Action = mcxdoAbout
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 609
+      Left = 592
       Top = 2
       Action = mcxdoWeb
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton15: TToolButton
-      Left = 93
+      Left = 92
       Top = 2
       Action = mcxdoQuery
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton17: TToolButton
-      Left = 82
+      Left = 81
       Top = 2
       Width = 11
       Caption = 'ToolButton17'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
-      Left = 184
+      Left = 183
       Top = 2
       Action = mcxdoDefault
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 649
+      Left = 632
       Top = 2
       Width = 12
       Caption = 'ToolButton8'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 514
+      Left = 501
       Top = 2
       Action = mcxdoHelpOptions
       ParentShowHint = False
@@ -185,8 +185,8 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 21
-    Top = 543
+    Height = 18
+    Top = 549
     Width = 787
     Panels = <    
       item
@@ -203,7 +203,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 343
+    Height = 349
     Top = 54
     Width = 176
     Align = alLeft
@@ -274,18 +274,18 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 343
+    Height = 349
     Top = 54
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 343
+    Height = 349
     Top = 54
     Width = 603
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 343
+    ClientHeight = 349
     ClientWidth = 603
     Enabled = False
     TabOrder = 4
@@ -460,7 +460,7 @@ object fmMCX: TfmMCX
     end
     object edThread: TComboBox
       Left = 176
-      Height = 29
+      Height = 27
       Hint = 'ThreadNum'
       Top = 111
       Width = 80
@@ -495,7 +495,7 @@ object fmMCX: TfmMCX
     end
     object edPhoton: TEdit
       Left = 176
-      Height = 27
+      Height = 24
       Hint = 'PhotonNum'
       Top = 182
       Width = 80
@@ -505,7 +505,7 @@ object fmMCX: TfmMCX
     end
     object edSession: TEdit
       Left = 176
-      Height = 27
+      Height = 24
       Hint = 'Session'
       Top = 67
       Width = 136
@@ -514,7 +514,7 @@ object fmMCX: TfmMCX
     end
     object edRespin: TSpinEdit
       Left = 176
-      Height = 27
+      Height = 24
       Hint = 'RespinNum'
       Top = 212
       Width = 84
@@ -552,7 +552,7 @@ object fmMCX: TfmMCX
     end
     object edBubble: TEdit
       Left = 176
-      Height = 27
+      Height = 24
       Hint = 'BubbleSize'
       Top = 288
       Width = 80
@@ -562,7 +562,7 @@ object fmMCX: TfmMCX
     end
     object edGate: TSpinEdit
       Left = 425
-      Height = 27
+      Height = 24
       Hint = 'GateNum'
       Top = 255
       Width = 83
@@ -577,7 +577,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoReflect'
       Top = 322
-      Width = 125
+      Width = 118
       Caption = 'Do Reflection (-b)'
       Checked = True
       OnChange = edRespinChange
@@ -589,7 +589,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoSave'
       Top = 322
-      Width = 121
+      Width = 118
       Caption = 'Save Fluence (-S)'
       Checked = True
       OnChange = edRespinChange
@@ -601,7 +601,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'DoNormalize'
       Top = 322
-      Width = 150
+      Width = 143
       Caption = 'Do Normalization (-U)'
       Checked = True
       OnChange = edRespinChange
@@ -610,7 +610,7 @@ object fmMCX: TfmMCX
     end
     object edConfigFile: TFileNameEdit
       Left = 425
-      Height = 27
+      Height = 24
       Hint = 'InputFile'
       Top = 67
       Width = 136
@@ -624,7 +624,7 @@ object fmMCX: TfmMCX
     end
     object edBlockSize: TComboBox
       Left = 177
-      Height = 29
+      Height = 27
       Hint = 'ThreadBlock'
       Top = 143
       Width = 80
@@ -646,7 +646,7 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'SaveDetector'
       Top = 182
-      Width = 181
+      Width = 172
       Caption = 'Save detected photons (-d)'
       Enabled = False
       OnChange = edRespinChange
@@ -668,7 +668,7 @@ object fmMCX: TfmMCX
       ChildSizing.ShrinkVertical = crsScaleChilds
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 5
-      ClientHeight = 38
+      ClientHeight = 41
       ClientWidth = 580
       Color = clBtnFace
       Columns = 5
@@ -686,7 +686,7 @@ object fmMCX: TfmMCX
     end
     object edGPUID: TComboBox
       Left = 425
-      Height = 29
+      Height = 27
       Hint = 'GPUID'
       Top = 143
       Width = 78
@@ -709,7 +709,7 @@ object fmMCX: TfmMCX
     end
     object edDetectedNum: TEdit
       Left = 425
-      Height = 27
+      Height = 24
       Hint = 'DetectedNum'
       Top = 212
       Width = 80
@@ -723,14 +723,14 @@ object fmMCX: TfmMCX
       Height = 22
       Hint = 'Autopilot'
       Top = 114
-      Width = 237
+      Width = 228
       Caption = 'Let MCX decide thread/block size (-A)'
       OnChange = edRespinChange
       TabOrder = 16
     end
     object edUnitInMM: TEdit
       Left = 425
-      Height = 27
+      Height = 24
       Hint = 'UnitInMM'
       Top = 288
       Width = 80
@@ -743,7 +743,7 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 8
-    Top = 397
+    Top = 403
     Width = 787
     Align = alBottom
     ResizeAnchor = akBottom
@@ -751,7 +751,7 @@ object fmMCX: TfmMCX
   object plOutput: TPanel
     Left = 0
     Height = 138
-    Top = 405
+    Top = 411
     Width = 787
     Align = alBottom
     ClientHeight = 138

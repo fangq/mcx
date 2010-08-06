@@ -728,6 +728,7 @@ begin
      inifile.Free;
      vals.Free;
      sessions.Free;
+     AddLog(Format('Successfully loaded project %s. Please double click on session list to edit.',[fname]));
 end;
 
 
@@ -748,24 +749,24 @@ begin
         radius:=StrToFloat(edBubble.Text);
         nblock:=StrToInt(edBlockSize.Text);
     except
-        raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gates');
+        raise Exception.Create('Invalid numbers: check the values for thread (-t), block (-T), photon (-n) and cache radius (-R)');
     end;
     if(nthread<512) then
-       AddLog('Warning: usign over 20000 threads can usually give you the best speed');
+       AddLog('Warning: using over 20000 threads (-t) can usually give you the best speed');
     if(nthread>10000) then
        AddLog('Warning: you can try Cached MCX to improve accuracy near the source');
     if(nphoton>1e9) then
-       AddLog('Warning: you can increase respin number to get more photons');
+       AddLog('Warning: you can increase respin number (-r) to get more photons');
     if(nblock<0) then
-       raise Exception.Create('Thread block number can not be negative');
+       raise Exception.Create('Thread block number (-T) can not be negative');
     if(radius<0) then
-       raise Exception.Create('Bubble radius can not be negative');
-    if(radius<3) or (radius>7) then
-       AddLog('Warning: a cache radius between 3mm to 5mm is recommended');
+       raise Exception.Create('Cache radius (-R) can not be negative');
+    if (grVariant.ItemIndex =2) or (grVariant.ItemIndex =3) and (radius<3) or (radius>7) then
+       AddLog('Warning: a cache radius (-R) between 3mm to 5mm is recommended');
 
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
-       raise Exception.Create('Can not find mcx in the search path');
+       raise Exception.Create('Can not find mcx executable in the search path');
 
     UpdateMCXActions(acMCX,'Work','');
   except
