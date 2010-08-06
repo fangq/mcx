@@ -115,7 +115,7 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float we
 }
 #endif
 
-__device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,uint *idx1d,
+__device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *prop,uint *idx1d,
            uchar *mediaid,uchar isdet, float ppath[],float energyloss[],float n_det[],uint *dpnum){
 
       *energyloss+=p->w;  // sum all the remaining energy
@@ -132,6 +132,7 @@ __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,uint *idx1
       *((float4*)f)=float4(0.f,0.f,gcfg->minaccumtime,f->ndone+1);
       *idx1d=gcfg->idx1dorig;
       *mediaid=gcfg->mediaidorig;
+      *((float4*)(prop))=gproperty[*mediaid]; //always use mediaid to read gproperty[]
 }
 
 /*
@@ -155,7 +156,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 #ifdef TEST_RACING
      int cc=0;
 #endif
-     uchar  mediaid,isdet=0;
+     uchar  mediaid,mediaidold;
      char   medid=-1;
      float  atten;         //can be taken out to minimize registers
      float  n1;   //reflection var
@@ -188,12 +189,16 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      if(mediaid==0) {
           return; // the initial position is not within the medium
      }
-     *((float4*)(&prop))=gproperty[mediaid];
+     *((float4*)(&prop))=gproperty[mediaid]; //always use mediaid to read gproperty[]
 
      /*
       using a while-loop to terminate a thread by np will cause MT RNG to be 3.5x slower
       LL5 RNG will only be slightly slower than for-loop with photon-move criterion
+
+      we have switched to while-loop since v0.4.9, as LL5 was only minimally effected
+      and we do not use MT as the default RNG.
      */
+
      while(f.ndone<(idx<ophoton?nphoton+1:nphoton)) {
 
      //for(np=0;np<nphoton;np++){ // here nphoton actually means photon moves
@@ -280,7 +285,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                GPUDEBUG((">>keep going %f<%f %f [%d] %e %e\n",f.tscat,len,prop.mus,idx1d,f.t,f.tnext));
 	  }
 
-          isdet=(media[idx1d] & DET_MASK);
+          mediaidold=media[idx1d];
           idx1dold=idx1d;
           idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
           GPUDEBUG(("old and new voxel: %d<->%d\n",idx1dold,idx1d));
@@ -290,8 +295,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	      mediaid=(media[idx1d] & MED_MASK);
           }
 
+          *((float4*)(&prop))=gproperty[mediaid]; // optical property across the interface
+
           //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
-	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1){
+	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||n1!=prop.n){
 	      float flipdir=0.f;
               float3 htime;            //reflection var
 
@@ -311,7 +318,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
        	        htime.z=floorf(p0.z+tmp0*v.z);
 
                 if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
-                    if( media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]){ //hit again
+                    if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]==mediaidold){ //if the first vox is not air
 
                      GPUDEBUG((" first try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
                            media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
@@ -330,7 +337,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                        htime.z=floorf(p.z-tmp0*v.z);
 
                        if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
-                           if(! media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]){ //this is an air voxel
+                           if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]!=mediaidold){ //this is an air voxel
 
                                GPUDEBUG((" second try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
                                    media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
@@ -349,8 +356,6 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   }
                 }
               }
-
-              *((float4*)(&prop))=gproperty[mediaid];
 
               GPUDEBUG(("->ID%d J%d C%d tlen %e flip %d %.1f!=%.1f dir=%f %f %f pos=%f %f %f\n",idx,(int)v.nscat,
                   (int)f.ndone,f.t, (int)flipdir, n1,prop.n,v.x,v.y,v.z,p.x,p.y,p.z));
@@ -376,9 +381,11 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                      sphi=v.y*v.y+v.z*v.z; //sin(si)^2
                      v.x=-v.x;
                   }
-		  energyabsorbed+=p.w-p0.w;
-                  p=p0;   //move back
-                  idx1d=idx1dold;
+                  if(mediaid==0) { // moving back only happens when photon move to medium type 0
+		     energyabsorbed+=p.w-p0.w;
+                     p=p0;   //move back
+                     idx1d=idx1dold;
+                  }
                   len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2
 	          GPUDEBUG((" ref len=%f %f+%f=%f w=%f\n",len,cphi,sphi,cphi*cphi+sphi,p.w));
 
@@ -394,7 +401,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	                 flipdir,idx1dold,idx1d,cphi,sphi,p.x,p.y,p.z,p0.x,p0.y,p0.z));
                   } // else, total internal reflection, no loss
 	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){
-		    	launchnewphoton(&p,&v,&f,&idx1d,&mediaid,isdet,ppath,&energyloss,n_det,detectedphoton);
+                        if(mediaid==0) // else transmission at internal boundary
+		    	    launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,&energyloss,n_det,detectedphoton);
 		  }else{
 		        mediaid=(media[idx1d] & MED_MASK);
         	        *((float4*)(&prop))=gproperty[mediaid];
@@ -402,7 +410,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	                //v.nscat++;
 		  }
               }else{  // launch a new photon
-		  launchnewphoton(&p,&v,&f,&idx1d,&mediaid,isdet,ppath,&energyloss,n_det,detectedphoton);
+		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,&energyloss,n_det,detectedphoton);
               }
 	  }else if(f.t>=f.tnext){
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
@@ -559,7 +567,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 
 
 /*
-   master driver code to run MC simulations
+   host code for MCX kernels
 */
 void mcx_run_simulation(Config *cfg){
 

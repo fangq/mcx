@@ -470,7 +470,6 @@ int mcx_remap(char *opt){
 	}
 	i++;
     }
-printf("bad option %s\n",opt);
     return 1;
 }
 void mcx_parsecmd(int argc, char* argv[], Config *cfg){
@@ -504,15 +503,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     		isinteractive=0;
 		     	        i=mcx_readarg(argc,argv,i,filename,"string");
 				break;
-                     /* 
-		        ideally we may support -n option to specify photon numbers,
-		        however, we found using while-loop for -n will cause some 
-			troubles for MT RNG, and timed-out error for some other cases.
-			right now, -n is only an alias for -m and both are specifying
-			the photon moves per thread. Here, variable cfg->nphoton is 
-			indeed the photon moves per thread.
-		     */
 		     case 'm':
+                                /*from rev 191, we have enabled -n and disabled -m*/
 				mcx_error(-2,"specifying photon move is not supported any more, please use -n",__FILE__,__LINE__);
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
 		     	        break;
@@ -630,7 +622,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -s sessionid  (--session)     a string to label all output file names\n\
  -f config     (--input)       read config from a file\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
- -m [0|int]    (--move)        total photon moves (not supported, use -n only)\n\
+ -m [0|int]    (--move)        photon moves/thread(not supported, use -n only)\n\
  -t [1024|int] (--thread)      total thread number\n\
  -T [128|int]  (--blocksize)   thread number per block\n\
  -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.\n\
@@ -649,7 +641,6 @@ where possible parameters include (the first item in [] is the default value)\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
- -p [0|int]    (--printlen)    number of threads to print (debug)\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\

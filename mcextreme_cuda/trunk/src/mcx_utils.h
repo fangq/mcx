@@ -6,7 +6,10 @@
 
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  255
-#define MCX_CUDA_ARCH       100
+
+#ifndef MCX_CUDA_ARCH
+  #define MCX_CUDA_ARCH       100
+#endif
 
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 #define MAX(a,b)           ((a)>(b)?(a):(b))
@@ -16,25 +19,23 @@ typedef struct MCXMedium{
 	float mus;
 	float n;
 	float g;
-} Medium;  /*this order shall match prop.{xyzw} in mcx_main_loop*/
+} Medium;
 
 typedef struct MCXHistoryHeader{
-  char magic[4];
-  unsigned int  version;
-  unsigned int  maxmedia;
-  unsigned int  detnum;
-  unsigned int  colcount;
-  unsigned int  totalphoton;
-  unsigned int  detected;
-  unsigned int  savedphoton;
-  float unitinmm;
-  int reserved[7];
+	char magic[4];
+	unsigned int  version;
+	unsigned int  maxmedia;
+	unsigned int  detnum;
+	unsigned int  colcount;
+	unsigned int  totalphoton;
+	unsigned int  detected;
+	unsigned int  savedphoton;
+	float unitinmm;
+	int reserved[7];
 } History;
 
 typedef struct MCXConfig{
-	int nphoton;      /*(total simulated photon number) we now use this to 
-	                     temporarily alias totalmove, as to specify photon
-			     number is causing some troubles*/
+	int nphoton;      /*total simulated photon number*/
 	//int totalmove;   /* [depreciated] total move per photon*/
         int nblocksize;   /*thread block size*/
 	int nthread;      /*num of total threads, multiple of 128*/
