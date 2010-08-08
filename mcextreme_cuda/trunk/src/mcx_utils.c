@@ -24,7 +24,7 @@ char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','\0'};
 char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
-                 "--gategroup","--reflect","--reflect3","--srcfrom0",
+                 "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
@@ -43,7 +43,8 @@ void mcx_initcfg(Config *cfg){
      cfg->isrowmajor=0; /* default is Matlab array*/
      cfg->maxgate=1;
      cfg->isreflect=1;
-     cfg->isref3=0;
+     cfg->isref3=1;
+     cfg->isreflectin=0;
      cfg->isnormalized=1;
      cfg->issavedet=1;
      cfg->respin=1;
@@ -529,9 +530,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        break;
 		     case 'b':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isreflect),"char");
+				cfg->isref3=cfg->isreflect;
 		     	        break;
                      case 'B':
-                                i=mcx_readarg(argc,argv,i,&(cfg->isref3),"char");
+                                i=mcx_readarg(argc,argv,i,&(cfg->isreflectin),"char");
                                	break;
 		     case 'd':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->issavedet),"char");
@@ -631,8 +633,8 @@ where possible parameters include (the first item in [] is the default value)\n\
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
  -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
- -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit\n\
- -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2\n\
+ -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit\n\
+ -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
  -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
  -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
