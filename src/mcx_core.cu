@@ -295,10 +295,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	      mediaid=(media[idx1d] & MED_MASK);
           }
 
-          *((float4*)(&prop))=gproperty[mediaid]; // optical property across the interface
-
           //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
-	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->doreflectin && n1!=prop.n) ){
+	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->doreflectin && n1!=gproperty[mediaid].z) ){
 	      float flipdir=0.f;
               float3 htime;            //reflection var
 
@@ -356,6 +354,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   }
                 }
               }
+
+              *((float4*)(&prop))=gproperty[mediaid]; // optical property across the interface
 
               GPUDEBUG(("->ID%d J%d C%d tlen %e flip %d %.1f!=%.1f dir=%f %f %f pos=%f %f %f\n",idx,(int)v.nscat,
                   (int)f.ndone,f.t, (int)flipdir, n1,prop.n,v.x,v.y,v.z,p.x,p.y,p.z));
