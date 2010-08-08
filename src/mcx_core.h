@@ -59,7 +59,7 @@ typedef struct  __align__(16) KernelParams {
   float3 vsize;
   float  minstep;
   float  twin0,twin1,tmax;
-  unsigned int isrowmajor,save2pt,doreflect,doreflect3,savedet;
+  unsigned int isrowmajor,save2pt,doreflect,doreflectin,savedet;
   float  Rtstep;
   float4 ps,c0;
   float3 maxidx;

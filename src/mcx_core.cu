@@ -298,7 +298,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
           *((float4*)(&prop))=gproperty[mediaid]; // optical property across the interface
 
           //if hit the boundary, exceed the max time window or exit the domain, rebound or launch a new one
-	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||n1!=prop.n){
+	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->doreflectin && n1!=prop.n) ){
 	      float flipdir=0.f;
               float3 htime;            //reflection var
 
@@ -330,7 +330,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                      tmp1=flipdir;   //save the previous ref. interface id
                      flipdir=(tmp0==htime.x?1.f:(tmp0==htime.y?2.f:(tmp0==htime.z&&idx1d!=idx1dold)?3.f:0.f));
 
-                     if(gcfg->doreflect3){
+                     //if(gcfg->doreflect3){
                        tmp0*=JUST_ABOVE_ONE;
                        htime.x=floorf(p.x-tmp0*v.x); //move to the last intersection pt
                        htime.y=floorf(p.y-tmp0*v.y);
@@ -352,7 +352,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                                flipdir=-tmp1-flipdir+6.f;
                            }
                        }
-                     }
+                     //}
                   }
                 }
               }
@@ -597,7 +597,7 @@ void mcx_run_simulation(Config *cfg){
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,cfg->isrowmajor,
-                     cfg->issave2pt,cfg->isreflect,cfg->isref3,cfg->issavedet,1.f/cfg->tstep,
+                     cfg->issave2pt,cfg->isreflect,cfg->isreflectin,cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,0,0};
