@@ -735,7 +735,7 @@ end;
 procedure TfmMCX.VerifyInput;
 var
     nthread, nblock: integer;
-    radius,t1,nphoton: extended;
+    radius,nphoton: extended;
     exepath: string;
 begin
   try
@@ -826,9 +826,9 @@ begin
       cmd:=cmd+Format(' --thread %d --blocksize %d --photon %.0f --repeat %d --array %d --skipradius %f ',
         [nthread,nblock,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
     end;
-    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d ',
+    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d --unitinmm %f',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
-      Integer(ckSaveDetector.Checked),hitmax]);
+      Integer(ckSaveDetector.Checked),hitmax,unitinmm]);
 
     Result:=cmd;
     AddLog('Command:');
