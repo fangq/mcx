@@ -137,6 +137,8 @@ __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pr
 
 /*
    this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
+   everything in the GPU kernels is in grid-unit. To convert back to length, use
+   cfg->unitinmm (scattering/absorption coeff, T, speed etc)
 */
 kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      float genergy[],uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[],
@@ -163,7 +165,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
      //for MT RNG, these will be zero-length arrays and be optimized out
      RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
-     Medium prop;    //can become float2 if no reflection
+     Medium prop;    //can become float2 if no reflection (mua/musp is in 1/grid unit)
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
 
@@ -747,7 +749,7 @@ $MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\
        cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice);
 
        fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.2ens %.2ens] ...\n"
-           ,param.twin0*1e9,param.twin1*1e9);
+           ,param.twin0/cfg->unitinmm*1e9,param.twin1/cfg->unitinmm*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
        for(iter=0;iter<cfg->respin;iter++){
@@ -835,7 +837,7 @@ is more than what your have specified (%d), please use the -H option to specify 
        	       	       }
                        scale=energy[1]/((energy[0]+energy[1])*Vvox*cfg->tstep*eabsorp);
 		       if(cfg->unitinmm!=1.f) 
-		          scale*=(cfg->unitinmm*cfg->unitinmm);
+		          scale/=cfg->unitinmm; /* Vvox*(U*U*U) * (Tstep/U) * (Eabsorp/U) */
                        fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
                        mcx_normalize(field,scale,fieldlen);
                    }

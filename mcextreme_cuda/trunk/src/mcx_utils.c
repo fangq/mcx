@@ -254,6 +254,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 	if(cfg->unitinmm!=1.f){
 		cfg->prop[i].mus*=cfg->unitinmm;
 		cfg->prop[i].mua*=cfg->unitinmm;
+		cfg->tstart*=cfg->unitinmm;
+		cfg->tend*=cfg->unitinmm;
+		cfg->tstep*=cfg->unitinmm;
 	}
      }
      if(in==stdin)
@@ -637,7 +640,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
  -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
- -u [0.|float] (--unitinmm)    defines the length unit for the grid edge\n\
+ -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save\n\
