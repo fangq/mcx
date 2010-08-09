@@ -36,7 +36,7 @@ void mcx_initcfg(Config *cfg){
      cfg->dim.x=0;
      cfg->dim.y=0;
      cfg->dim.z=0;
-     cfg->nblocksize=128;
+     cfg->nblocksize=64;
      cfg->nphoton=0;
      cfg->nthread=2048;
      cfg->seed=0;
@@ -422,7 +422,7 @@ void  mcx_maskdet(Config *cfg){
 		     padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
 		     padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
 		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
-		          cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=(1<<7);//set the highest bit to 1
+		          cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=(1<<7);/*set the highest bit to 1*/
 	          }
 	      }
 	  }
@@ -632,8 +632,8 @@ where possible parameters include (the first item in [] is the default value)\n\
  -f config     (--input)       read config from a file\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
  -m [0|int]    (--move)        photon moves/thread(not supported, use -n only)\n\
- -t [1024|int] (--thread)      total thread number\n\
- -T [128|int]  (--blocksize)   thread number per block\n\
+ -t [2048|int] (--thread)      total thread number\n\
+ -T [64|int]   (--blocksize)   thread number per block\n\
  -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto\n\
  -r [1|int]    (--repeat)      number of repetitions\n\
@@ -642,7 +642,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit\n\
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not\n\
- -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
+ -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
  -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw\n\
