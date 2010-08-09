@@ -120,6 +120,10 @@ void mcx_error(int id,char *msg,const char *file,const int linenum){
      exit(id);
 }
 
+void mcx_assert(int ret){
+     if(!ret) mcx_error(ret,"assert error",__FILE__,__LINE__);
+}
+
 void mcx_readconfig(char *fname, Config *cfg){
      if(fname[0]==0){
      	mcx_loadconfig(stdin,cfg);
@@ -152,34 +156,34 @@ void mcx_writeconfig(char *fname, Config *cfg){
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      int i,gates,idx1d;
-     char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH];
+     char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
-     fscanf(in,"%d", &(i) ); 
+     mcx_assert(fscanf(in,"%d", &(i) )==1); 
      if(cfg->nphoton==0) cfg->nphoton=i;
-     fgets(comment,MAX_PATH_LENGTH,in);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
-     fscanf(in,"%d", &(cfg->seed) );
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%d", &(cfg->seed) )==1);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the position of the source: [10 10 5]\n\t",cfg->seed);
-     fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) );
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) )==3);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
                                    cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
      }
-     fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) );
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) )==3);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the time gates in seconds (start end and step) [0.0 1e-9 1e-10]\n\t",
                                    cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z);
-     fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) );
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) )==3);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the path to the volume binary file:\n\t",
@@ -191,7 +195,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
-     fscanf(in,"%s", filename);
+     mcx_assert(fscanf(in,"%s", filename)==1);
      if(cfg->rootpath[0]){
 #ifdef WIN32
          sprintf(comment,"%s\\%s",cfg->rootpath,filename);
@@ -200,24 +204,24 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 #endif
          strncpy(filename,comment,MAX_PATH_LENGTH);
      }
-     fgets(comment,MAX_PATH_LENGTH,in);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%s\nPlease specify the x voxel size (in mm), x dimension, min and max x-index [1.0 100 1 100]:\n\t",filename);
-     fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x));
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x))==4);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 1 100]:\n\t",
                                   cfg->steps.x,cfg->dim.x,cfg->crop0.x,cfg->crop1.x);
-     fscanf(in,"%f %d %d %d", &(cfg->steps.y),&(cfg->dim.y),&(cfg->crop0.y),&(cfg->crop1.y));
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.y),&(cfg->dim.y),&(cfg->crop0.y),&(cfg->crop1.y))==4);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the z voxel size (in mm), z dimension, min and max z-index [1.0 100 1 100]:\n\t",
                                   cfg->steps.y,cfg->dim.y,cfg->crop0.y,cfg->crop1.y);
-     fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z));
-     fgets(comment,MAX_PATH_LENGTH,in);
+     mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z))==4);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(cfg->sradius>0.f){
      	cfg->crop0.x=MAX((int)(cfg->srcpos.x-cfg->sradius),0);
@@ -233,9 +237,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
-     fscanf(in,"%d", &(cfg->medianum));
+     mcx_assert(fscanf(in,"%d", &(cfg->medianum))==1);
      cfg->medianum++;
-     fgets(comment,MAX_PATH_LENGTH,in);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%d\n",cfg->medianum);
@@ -247,8 +251,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      for(i=1;i<cfg->medianum;i++){
         if(in==stdin)
 		fprintf(stdout,"Please define medium #%d: mus(1/mm), anisotropy, mua(1/mm) and refractive index: [1.01 0.01 0.04 1.37]\n\t",i);
-     	fscanf(in, "%f %f %f %f", &(cfg->prop[i].mus),&(cfg->prop[i].g),&(cfg->prop[i].mua),&(cfg->prop[i].n));
-        fgets(comment,MAX_PATH_LENGTH,in);
+     	mcx_assert(fscanf(in, "%f %f %f %f", &(cfg->prop[i].mus),&(cfg->prop[i].g),&(cfg->prop[i].mua),&(cfg->prop[i].n))==4);
+        comm=fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin)
 		fprintf(stdout,"%f %f %f %f\n",cfg->prop[i].mus,cfg->prop[i].g,cfg->prop[i].mua,cfg->prop[i].n);
 	if(cfg->unitinmm!=1.f){
@@ -260,9 +264,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 	}
      }
      if(in==stdin)
-     	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in mm):\n\t");
-     fscanf(in,"%d %f", &(cfg->detnum), &(cfg->detradius));
-     fgets(comment,MAX_PATH_LENGTH,in);
+     	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in grid unit):\n\t");
+     mcx_assert(fscanf(in,"%d %f", &(cfg->detnum), &(cfg->detradius))==2);
+     comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d %f\n",cfg->detnum,cfg->detradius);
      cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
@@ -270,13 +274,13 @@ void mcx_loadconfig(FILE *in, Config *cfg){
       	cfg->issavedet=0;
      for(i=0;i<cfg->detnum;i++){
         if(in==stdin)
-		fprintf(stdout,"Please define detector #%d: x,y,z (in mm): [5 5 5 1]\n\t",i);
-     	fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z));
+		fprintf(stdout,"Please define detector #%d: x,y,z (in grid unit): [5 5 5 1]\n\t",i);
+     	mcx_assert(fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z))==3);
 	cfg->detpos[i].w=cfg->detradius*cfg->detradius;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
-        fgets(comment,MAX_PATH_LENGTH,in);
+        comm=fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin)
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
@@ -293,7 +297,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
 		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
 	idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
-	
+
         /* if the specified source position is outside the domain, move the source
 	   along the initial vector until it hit the domain */
 	if(cfg->vol && cfg->vol[idx1d]==0){
@@ -613,12 +617,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 void mcx_usage(char *exename){
      printf("\
 ###############################################################################\n\
-#                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#             Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>            #\n\
+#                     Monte Carlo eXtreme (MCX) -- CUDA                       #\n\
+#    Copyright (c) 2009,2010 Qianqian Fang <fangq at nmr.mgh.harvard.edu>     #\n\
 #                                                                             #\n\
 #     Martinos Center for Biomedical Imaging, Massachusetts General Hospital  #\n\
 ###############################################################################\n\
-$MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\n\
+$MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
 ###############################################################################\n\
 \n\
 usage: %s <param1> <param2> ...\n\
@@ -639,7 +643,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit\n\
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to propagate a photon\n\
- -R [0.|float] (--skipradius)  minimum distance to source to start accumulation\n\
+ -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\

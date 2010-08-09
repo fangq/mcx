@@ -12,7 +12,7 @@ INCLUDEDIRS=-I/usr/local/cuda/include
 LINKOPT=-L/usr/local/cuda/lib -lcudart 
 
 CUCCOPT=#-arch compute_11 #--maxrregcount 32
-CPPOPT=-g -Wall
+CPPOPT=-g -Wall -O3
 
 OBJSUFFIX=.o
 EXESUFFIX=
