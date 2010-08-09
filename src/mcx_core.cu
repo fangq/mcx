@@ -687,9 +687,12 @@ void mcx_run_simulation(Config *cfg){
 
      fprintf(cfg->flog,"\
 ###############################################################################\n\
-#                  Monte Carlo Extreme (MCX) -- CUDA                          #\n\
+#                    Monte Carlo Extreme (MCX) -- CUDA                        #\n\
+#    Copyright (c) 2009,2010 Qianqian Fang <fangq at nmr.mgh.harvard.edu>     #\n\
+#                                                                             #\n\
+#     Martinos Center for Biomedical Imaging, Massachusetts General Hospital  #\n\
 ###############################################################################\n\
-$MCX $Rev::     $ Last Commit:$Date::                     $ by $Author:: fangq$\n\
+$MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
 ###############################################################################\n");
 
      tic=StartTimer();
