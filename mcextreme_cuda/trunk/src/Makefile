@@ -51,10 +51,12 @@ mtatomic logatomic:	BINARY:=$(BINARY)_atomic
 det:        CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"Detective MCX"'
 detbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cached Detective MCX"'
 det detbox: BINARY:=$(BINARY)_det
+mex:        CUCCOPT+=--compiler-options -fPIC
+mex:        CPPOPT+=-fPIC
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox: cudasdk $(OUTPUT_DIR)/$(BINARY)
+all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox mex: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
