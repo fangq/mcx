@@ -56,7 +56,8 @@ mex:        CPPOPT+=-fPIC
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox mex: cudasdk $(OUTPUT_DIR)/$(BINARY)
+all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox: cudasdk $(OUTPUT_DIR)/$(BINARY)
+mex: $(OBJS)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
