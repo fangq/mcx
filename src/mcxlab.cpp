@@ -5,7 +5,7 @@
 #include "mcx_utils.h"
 #include "mcx_core.h"
 
-#define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("%s is set to %g\n",#y,(float)(x->y));}
+#define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
 #define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];}
 
@@ -13,21 +13,19 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 void mcx_validate_config(Config *cfg);
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
-
   Config cfg;
   mxArray    *tmp, *fout;
-  int        ifield, jstruct, *classIDflags;
-  int        NStructElems, nfields, ndim;
+  int        ifield, jstruct;
+  int        ncfg, nfields, ndim;
 
-  if (nrhs != 1)
+  if (nrhs!=1)
      mexErrMsgTxt("One input is required.");
   if (!mxIsStruct(prhs[0]))
      mexErrMsgTxt("Input must be a structure.");
 
   nfields = mxGetNumberOfFields(prhs[0]);
-  NStructElems = mxGetNumberOfElements(prhs[0]);
-
-  for (jstruct = 0; jstruct < NStructElems; jstruct++) {
+  ncfg = mxGetNumberOfElements(prhs[0]);
+  for (jstruct = 0; jstruct < ncfg; jstruct++) {
     mcx_initcfg(&cfg);
 
     for (ifield = 0; ifield < nfields; ifield++) { /* how many configs */
@@ -91,6 +89,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	if(cfg->vol) free(cfg->vol);
 	cfg->vol=(unsigned char *)malloc(cfg->dim.x*cfg->dim.y*cfg->dim.z);
 	memcpy(cfg->vol,mxGetData(item),cfg->dim.x*cfg->dim.y*cfg->dim.z);
+        printf("mcx.dim=[%d %d %d];\n",cfg->dim.x,cfg->dim.y,cfg->dim.z);
     }else if(strcmp(name,"detpos")==0){
         arraydim=mxGetDimensions(item);
 	if(arraydim[0]>0 && arraydim[1]!=4)
@@ -102,6 +101,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         for(j=0;j<4;j++)
           for(i=0;i<cfg->detnum;i++)
              ((float *)(&cfg->detpos[i]))[j]=val[j*cfg->detnum+i];
+        printf("mcx.detnum=%d;\n",cfg->detnum);
     }else if(strcmp(name,"prop")==0){
         arraydim=mxGetDimensions(item);
         if(arraydim[0]>0 && arraydim[1]!=4)
@@ -113,6 +113,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         for(j=0;j<4;j++)
           for(i=0;i<cfg->medianum;i++)
              ((float *)(&cfg->prop[i]))[j]=val[j*cfg->medianum+i];
+        printf("mcx.medianum=%d;\n",cfg->medianum);
     }else if(strcmp(name,"session")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
@@ -123,7 +124,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if (status != 0)
              mexWarnMsgTxt("not enough space. string is truncated.");
 
-	printf("session name is %s %d\n",cfg->session,len);
+	printf("mcx.session='%s';\n",cfg->session);
     }
 }
 
@@ -136,6 +137,12 @@ void mcx_validate_config(Config *cfg){
      if(cfg->tstart>cfg->tend || cfg->tstep==0.f){
          mexErrMsgTxt("incorrect time gate settings");
      }
+     if(ABS(cfg->srcdir.x*cfg->srcdir.x+cfg->srcdir.y*cfg->srcdir.y+cfg->srcdir.z*cfg->srcdir.z - 1.f)>1e-5)
+         mexErrMsgTxt("field 'srcdir' must be a unitary vector");
+     if(cfg->steps.x==0.f || cfg->steps.y==0.f || cfg->steps.z==0.f)
+         mexErrMsgTxt("field 'steps' can not be have zero elements");
+     if(cfg->tend<=cfg->tstart)
+         mexErrMsgTxt("field 'tend' must be greater than field 'tstart'");
      gates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
      if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;

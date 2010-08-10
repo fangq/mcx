@@ -36,6 +36,9 @@ void mcx_initcfg(Config *cfg){
      cfg->dim.x=0;
      cfg->dim.y=0;
      cfg->dim.z=0;
+     cfg->steps.x=1.f;
+     cfg->steps.y=1.f;
+     cfg->steps.z=1.f;
      cfg->nblocksize=64;
      cfg->nphoton=0;
      cfg->nthread=2048;
@@ -65,6 +68,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isdumpmask=0;
      cfg->maxdetphoton=1000000; 
      cfg->autopilot=0;
+     cfg->seed=123456789;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);     

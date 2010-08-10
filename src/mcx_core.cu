@@ -822,7 +822,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                        //mcx_sum_trueabsorption<<<clgrid,clblock>>>(genergy,gmedia,gfield,
                        //  	cfg->maxgate,threaddim);
 
-                       fprintf(cfg->flog,"normizing raw data ...\t");
+                       fprintf(cfg->flog,"normalizing raw data ...\t");
 
                        cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*2,cudaMemcpyDeviceToHost);
                        eabsorp=0.f;
@@ -904,6 +904,8 @@ is more than what your have specified (%d), please use the -H option to specify 
      cudaFree(genergy);
      cudaFree(gPdet);
      cudaFree(gdetected);
+
+     cudaThreadExit();
 
      free(Ppos);
      free(Pdir);
