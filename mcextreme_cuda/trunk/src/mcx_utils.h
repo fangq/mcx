@@ -37,9 +37,9 @@ typedef struct MCXHistoryHeader{
 typedef struct MCXConfig{
 	int nphoton;      /*total simulated photon number*/
 	//int totalmove;   /* [depreciated] total move per photon*/
-        int nblocksize;   /*thread block size*/
-	int nthread;      /*num of total threads, multiple of 128*/
-	int seed;         /*random number generator seed*/
+        unsigned int nblocksize;   /*thread block size*/
+	unsigned int nthread;      /*num of total threads, multiple of 128*/
+	unsigned int seed;         /*random number generator seed*/
 
 	float3 srcpos;    /*src position in mm*/
 	float3 srcdir;    /*src normal direction*/
@@ -62,9 +62,9 @@ typedef struct MCXConfig{
 	Medium *prop;     /*optical property mapping table*/
 	float4 *detpos;   /*detector positions and radius, overwrite detradius*/
 
-	int maxgate;        /*simultaneous recording gates*/
-	int respin;         /*number of repeatitions*/
-	int printnum;       /*number of printed threads (for debugging)*/
+	unsigned int maxgate;        /*simultaneous recording gates*/
+	unsigned int respin;         /*number of repeatitions*/
+	unsigned int printnum;       /*number of printed threads (for debugging)*/
 	int gpuid;          /*the ID of the GPU to use, starting from 1, 0 for auto*/
 
 	unsigned char *vol; /*pointer to the volume*/
@@ -91,7 +91,7 @@ typedef struct MCXConfig{
 extern "C" {
 #endif
 void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg);
-void mcx_error(int id,char *msg,const char *file,const int linenum);
+void mcx_error(const int id,const char *msg,const char *file,const int linenum);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
 void mcx_readconfig(char *fname, Config *cfg);
@@ -102,7 +102,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg);
 void mcx_usage(char *exename);
 void mcx_loadvolume(char *filename,Config *cfg);
 void mcx_normalize(float field[], float scale, int fieldlen);
-int  mcx_readarg(int argc, char *argv[], int id, void *output,char *type);
+int  mcx_readarg(int argc, char *argv[], int id, void *output,const char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
 void mcx_maskdet(Config *cfg);
