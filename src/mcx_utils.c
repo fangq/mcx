@@ -20,9 +20,9 @@
 #include <math.h>
 #include "mcx_utils.h"
 
-char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
+const char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','\0'};
-char *fullopt[]={"--help","--interactive","--input","--photon","--move",
+const char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--savedet",
@@ -119,7 +119,7 @@ void mcx_normalize(float field[], float scale, int fieldlen){
      }
 }
 
-void mcx_error(int id,char *msg,const char *file,const int linenum){
+void mcx_error(const int id,const char *msg,const char *file,const int linenum){
      fprintf(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
      exit(id);
 }
@@ -159,7 +159,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
 
 
 void mcx_loadconfig(FILE *in, Config *cfg){
-     int i,gates,idx1d;
+     uint i,gates,idx1d;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
      
      if(in==stdin)
@@ -195,7 +195,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(cfg->tstart>cfg->tend || cfg->tstep==0.f){
          mcx_error(-9,"incorrect time gate settings",__FILE__,__LINE__);
      }
-     gates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
+     gates=(uint)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
      if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
@@ -228,12 +228,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(cfg->sradius>0.f){
-     	cfg->crop0.x=MAX((int)(cfg->srcpos.x-cfg->sradius),0);
-     	cfg->crop0.y=MAX((int)(cfg->srcpos.y-cfg->sradius),0);
-     	cfg->crop0.z=MAX((int)(cfg->srcpos.z-cfg->sradius),0);
-     	cfg->crop1.x=MIN((int)(cfg->srcpos.x+cfg->sradius),cfg->dim.x-1);
-     	cfg->crop1.y=MIN((int)(cfg->srcpos.y+cfg->sradius),cfg->dim.y-1);
-     	cfg->crop1.z=MIN((int)(cfg->srcpos.z+cfg->sradius),cfg->dim.z-1);
+     	cfg->crop0.x=MAX((uint)(cfg->srcpos.x-cfg->sradius),0);
+     	cfg->crop0.y=MAX((uint)(cfg->srcpos.y-cfg->sradius),0);
+     	cfg->crop0.z=MAX((uint)(cfg->srcpos.z-cfg->sradius),0);
+     	cfg->crop1.x=MIN((uint)(cfg->srcpos.x+cfg->sradius),cfg->dim.x-1);
+     	cfg->crop1.y=MIN((uint)(cfg->srcpos.y+cfg->sradius),cfg->dim.y-1);
+     	cfg->crop1.z=MIN((uint)(cfg->srcpos.z+cfg->sradius),cfg->dim.z-1);
      }else{
      	memset(&(cfg->crop0),0,sizeof(uint3));
      	memset(&(cfg->crop1),0,sizeof(uint3));
@@ -324,7 +324,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 }
 
 void mcx_saveconfig(FILE *out, Config *cfg){
-     int i;
+     uint i;
 
      fprintf(out,"%d\n", (cfg->nphoton) ); 
      fprintf(out,"%d\n", (cfg->seed) );
@@ -368,7 +368,7 @@ void mcx_loadvolume(char *filename,Config *cfg){
 }
 
 void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
-     int x,y,z;
+     uint x,y,z;
      unsigned int dimxy,dimyz;
      unsigned char *newvol=NULL;
      
@@ -388,7 +388,7 @@ void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
 }
 
 void  mcx_maskdet(Config *cfg){
-     int x,y,z,d,dx,dy,dz,idx1d;
+     uint x,y,z,d,dx,dy,dz,idx1d;
      float ix,iy,iz;
      unsigned char *padvol;
      
@@ -449,7 +449,7 @@ void  mcx_maskdet(Config *cfg){
      free(padvol);
 }
 
-int mcx_readarg(int argc, char *argv[], int id, void *output,char *type){
+int mcx_readarg(int argc, char *argv[], int id, void *output,const char *type){
      /*
          when a binary option is given without a following number (0~1), 
          we assume it is 1
@@ -611,7 +611,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      }
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
        if(isinteractive){
-          mcx_readconfig("",cfg);
+          mcx_readconfig((char*)"",cfg);
        }else{
      	  mcx_readconfig(filename,cfg);
        }
