@@ -58,7 +58,7 @@ mex:        OUTPUT_DIR=../utils
 mex:        BINARY=mcxlab
 mex:        CUCCOPT+=--compiler-options -fPIC
 mex:        CPPOPT+=-fPIC
-mex:        LINKOPT+=-cxx -outdir $(OUTPUT_DIR)
+mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
