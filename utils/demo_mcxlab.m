@@ -11,4 +11,8 @@ cfg.tstep=5e-10;
 
 cfg.session='testmcx';
 
-mcxlab(cfg);
+cfgs(1)=cfg;
+cfgs(2)=cfg;
+cfgs(2).session='testmcx2';
+
+mcxlab(cfgs);

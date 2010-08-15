@@ -388,8 +388,8 @@ void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
 }
 
 void  mcx_maskdet(Config *cfg){
-     uint x,y,z,d,dx,dy,dz,idx1d;
-     float ix,iy,iz;
+     uint d,dx,dy,dz,idx1d,zi,yi;
+     float x,y,z,ix,iy,iz;
      unsigned char *padvol;
      
      dx=cfg->dim.x+2;
@@ -401,9 +401,9 @@ void  mcx_maskdet(Config *cfg){
 
      padvol=(unsigned char*)calloc(dx*dy,dz);
 
-     for(z=1;z<=cfg->dim.z;z++)
-        for(y=1;y<=cfg->dim.y;y++)
-	        memcpy(padvol+z*dy*dx+y*dx+1,cfg->vol+(z-1)*cfg->dim.y*cfg->dim.x+(y-1)*cfg->dim.x,cfg->dim.x);
+     for(zi=1;zi<=cfg->dim.z;zi++)
+        for(yi=1;yi<=cfg->dim.y;yi++)
+	        memcpy(padvol+zi*dy*dx+yi*dx+1,cfg->vol+(zi-1)*cfg->dim.y*cfg->dim.x+(yi-1)*cfg->dim.x,cfg->dim.x);
 
      for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
         for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
@@ -522,7 +522,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        break;
 		     case 'n':
 		     	        i=mcx_readarg(argc,argv,i,&(np),"float");
-				cfg->nphoton=np;
+				cfg->nphoton=(int)np;
 		     	        break;
 		     case 't':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nthread),"int");
@@ -621,10 +621,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 void mcx_usage(char *exename){
      printf("\
 ###############################################################################\n\
-#                     Monte Carlo eXtreme (MCX) -- CUDA                       #\n\
-#    Copyright (c) 2009,2010 Qianqian Fang <fangq at nmr.mgh.harvard.edu>     #\n\
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
+#     Copyright (c) 2009,2010 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
-#     Martinos Center for Biomedical Imaging, Massachusetts General Hospital  #\n\
+#    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\
 $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
 ###############################################################################\n\
