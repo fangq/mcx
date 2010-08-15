@@ -6,6 +6,8 @@
 
 CUDACC=nvcc
 CCC=gcc
+AR=gcc
+
 BINARY=mcx
 OUTPUT_DIR=../bin
 INCLUDEDIRS=-I/usr/local/cuda/include
@@ -51,16 +53,19 @@ mtatomic logatomic:	BINARY:=$(BINARY)_atomic
 det:        CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"Detective MCX"'
 detbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cached Detective MCX"'
 det detbox: BINARY:=$(BINARY)_det
+mex:        AR=mex
+mex:        OUTPUT_DIR=../utils
+mex:        BINARY=mcxlab
 mex:        CUCCOPT+=--compiler-options -fPIC
 mex:        CPPOPT+=-fPIC
+mex:        LINKOPT+=-cxx -outdir $(OUTPUT_DIR)
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox: cudasdk $(OUTPUT_DIR)/$(BINARY)
-mex: $(OBJS)
+all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox mex: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
-	$(CCC) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
+	$(AR) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
 
 %$(OBJSUFFIX): %.c
 	$(CCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
