@@ -234,10 +234,15 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	cfg->crop1.x=MIN((uint)(cfg->srcpos.x+cfg->sradius),cfg->dim.x-1);
      	cfg->crop1.y=MIN((uint)(cfg->srcpos.y+cfg->sradius),cfg->dim.y-1);
      	cfg->crop1.z=MIN((uint)(cfg->srcpos.z+cfg->sradius),cfg->dim.z-1);
-     }else{
+     }else if(cfg->sradius==0.f){
      	memset(&(cfg->crop0),0,sizeof(uint3));
      	memset(&(cfg->crop1),0,sizeof(uint3));
-     }     
+     }else{
+        /*
+           if I define -R with a negative radius, I will use crop0/crop1 to set the cachebox
+           nothing need to change here.
+        */
+     }
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);

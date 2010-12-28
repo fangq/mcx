@@ -736,7 +736,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
 #ifdef  USE_CACHEBOX
-     if(cfg->sradius>EPS)
+     if(cfg->sradius>EPS || cfg->sradius<0.f)
         sharedbuf+=sizeof(float)*(cachebox.x*cachebox.y);
 #endif
      if(cfg->issavedet)
