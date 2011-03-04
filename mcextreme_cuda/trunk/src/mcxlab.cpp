@@ -34,8 +34,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        ifield, jstruct;
   int        ncfg, nfields, ndim;
 
-  if (nrhs!=1)
-     mexErrMsgTxt("One input is required.");
+  if (nrhs==0){
+     mcx_usage("mcxlab");
+     return;
+  }
   if (!mxIsStruct(prhs[0]))
      mexErrMsgTxt("Input must be a structure.");
 
@@ -68,7 +70,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg){
     const char *name=mxGetFieldNameByNumber(root,idx);
-    const mwSize *arraydim;
+    const int *arraydim;
     int i,j;
 
     GET_1ST_FIELD(cfg,nphoton)
@@ -101,7 +103,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if(!mxIsUint8(item) || mxGetNumberOfDimensions(item)!=3 )
              mexErrMsgTxt("the 'vol' field must be a 3D uint8 array");
         arraydim=mxGetDimensions(item);
-	for(i=0;i<3;i++) ((uint *)(&cfg->dim))[i]=arraydim[i];
+	for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i];
 	if(cfg->vol) free(cfg->vol);
 	cfg->vol=(unsigned char *)malloc(cfg->dim.x*cfg->dim.y*cfg->dim.z);
 	memcpy(cfg->vol,mxGetData(item),cfg->dim.x*cfg->dim.y*cfg->dim.z);

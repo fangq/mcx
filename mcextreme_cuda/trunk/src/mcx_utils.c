@@ -21,14 +21,14 @@
 #include "mcx_utils.h"
 
 const char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon","--move",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu","--root","--gpu","--dumpmask","--autopilot",""};
+                 "--printgpu","--root","--gpu","--dumpmask","--autopilot","--seed",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
@@ -42,7 +42,6 @@ void mcx_initcfg(Config *cfg){
      cfg->nblocksize=64;
      cfg->nphoton=0;
      cfg->nthread=2048;
-     cfg->seed=0;
      cfg->isrowmajor=0; /* default is Matlab array*/
      cfg->maxgate=1;
      cfg->isreflect=1;
@@ -68,7 +67,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isdumpmask=0;
      cfg->maxdetphoton=1000000; 
      cfg->autopilot=0;
-     cfg->seed=123456789;
+     cfg->seed=0;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);     
@@ -159,7 +158,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
 
 
 void mcx_loadconfig(FILE *in, Config *cfg){
-     uint i,gates,idx1d;
+     uint i,gates,idx1d,itmp;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
      
      if(in==stdin)
@@ -169,7 +168,10 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
-     mcx_assert(fscanf(in,"%d", &(cfg->seed) )==1);
+     if(cfg->seed==0)
+        mcx_assert(fscanf(in,"%d", &(cfg->seed) )==1);
+     else
+        mcx_assert(fscanf(in,"%d", &itmp )==1);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the position of the source: [10 10 5]\n\t",cfg->seed);
@@ -602,6 +604,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'A':
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
+                     case 'E':
+                                i=mcx_readarg(argc,argv,i,&(cfg->seed),"int");
+                                break;
 		}
 	    }
 	    i++;
@@ -654,11 +659,12 @@ where possible parameters include (the first item in [] is the default value)\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
  -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw\n\
+ -U [1|0]      (--normalize)   1 to normalize flux to unitary, 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
- -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save\n\
+ -S [1|0]      (--save2pt)     1 to save the flux field, 0 do not save\n\
+ -E [0|int]    (--seed)        set random-number-generator seed\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\
