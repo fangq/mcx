@@ -27,15 +27,18 @@
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
+void mcxlab_usage();
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   Config cfg;
   mxArray    *tmp, *fout;
   int        ifield, jstruct;
   int        ncfg, nfields, ndim;
+  mwSize     fielddim[4];
+  const char       *outputtag[]={"data"};
 
   if (nrhs==0){
-     mcx_usage("mcxlab");
+     mcxlab_usage();
      return;
   }
   if (!mxIsStruct(prhs[0]))
@@ -43,6 +46,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
   nfields = mxGetNumberOfFields(prhs[0]);
   ncfg = mxGetNumberOfElements(prhs[0]);
+
+  if(nlhs>=1)
+      plhs[0] = mxCreateStructMatrix(ncfg,1,1,outputtag);
+  if(nlhs>=2)
+      plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
+
   for (jstruct = 0; jstruct < ncfg; jstruct++) {
     mcx_initcfg(&cfg);
 
@@ -58,6 +67,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
     }
     if(!mcx_set_gpu(&cfg)){
         mexErrMsgTxt("No GPU device found");
+    }
+    if(nlhs>=1){
+        fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
+	fielddim[2]=cfg.dim.z; fielddim[3]=cfg.maxgate; 
+	mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+	cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
+    }
+    if(nlhs>=2){
+        fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
+	fielddim[2]=0; fielddim[3]=0;
+	if(cfg.his.savedphoton>0){
+		mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
+		cfg.exportdetected = (float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0));
+	}
     }
     mcx_validate_config(&cfg);
     //mcx_writeconfig((const char*)"test.txt",&cfg);
@@ -158,7 +181,7 @@ void mcx_validate_config(Config *cfg){
      if(ABS(cfg->srcdir.x*cfg->srcdir.x+cfg->srcdir.y*cfg->srcdir.y+cfg->srcdir.z*cfg->srcdir.z - 1.f)>1e-5)
          mexErrMsgTxt("field 'srcdir' must be a unitary vector");
      if(cfg->steps.x==0.f || cfg->steps.y==0.f || cfg->steps.z==0.f)
-         mexErrMsgTxt("field 'steps' can not be have zero elements");
+         mexErrMsgTxt("field 'steps' can not have zero elements");
      if(cfg->tend<=cfg->tstart)
          mexErrMsgTxt("field 'tend' must be greater than field 'tstart'");
      gates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
@@ -174,7 +197,12 @@ void mcx_validate_config(Config *cfg){
      }else{
      	memset(&(cfg->crop0),0,sizeof(uint3));
      	memset(&(cfg->crop1),0,sizeof(uint3));
-     }     
+     }
+     if(cfg->medianum==0)
+        mexErrMsgTxt("you must define the 'prop' field in the input structure");
+     if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
+        mexErrMsgTxt("the 'vol' field in the input structure can not be empty");
+
      for(i=1;i<cfg->medianum;i++){
 	if(cfg->unitinmm!=1.f){
 		cfg->prop[i].mus*=cfg->unitinmm;
@@ -187,7 +215,7 @@ void mcx_validate_config(Config *cfg){
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;
      for(i=0;i<cfg->detnum;i++){
-	cfg->detpos[i].w=cfg->detradius*cfg->detradius;
+	cfg->detpos[i].w=cfg->detpos[i].w*cfg->detpos[i].w;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
@@ -223,4 +251,94 @@ void mcx_validate_config(Config *cfg){
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+}
+
+void mcxlab_usage(){
+     printf("====================================================================\n\
+           MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB\n\
+--------------------------------------------------------------------\n\
+Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
+                      URL: http://mcx.sf.net\n\
+====================================================================\n\
+\n\
+Format:\n\
+    [flux,detphoton]=mcxlab(cfg);\n\
+\n\
+Input:\n\
+    cfg: a struct, or struct array. Each element of cfg defines \n\
+         the parameters associated with a simulation. \n\
+\n\
+    It may contain the following fields:\n\
+     *cfg.nphoton:    the total number of photons to be simulated (integer)\n\
+     *cfg.vol:        a 3D array specifying the media index in the domain\n\
+     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, n, g] in order.\n\
+                      the first row corresponds to medium type 0 which is \n\
+                      typically [0 0 1 1]. The second row is type 1, and so on.\n\
+     *cfg.tstart:     starting time of the simulation (in seconds)\n\
+     *cfg.tstep:      time-gate width of the simulation (in seconds)\n\
+     *cfg.tend:       ending time of the simulation (in second)\n\
+     *cfg.srcpos:     a 1 by 3 vector, specifying the position of the source\n\
+     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector\n\
+      cfg.nblocksize: how many CUDA thread blocks to be used [64]\n\
+      cfg.nthread:    the total CUDA thread number [2048]\n\
+      cfg.session:    a string for output file names (used when no return variables)\n\
+      cfg.seed:       seed for the random number generator (integer) [0]\n\
+      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]\n\
+      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]\n\
+      cfg.detradius:  radius of the detector (in mm) [1.0]\n\
+      cfg.sradius:    radius within which we use atomic operations (in mm) [0.0]\n\
+      cfg.respin:     repeat simulation for the given time (integer) [1]\n\
+      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]\n\
+      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index\n\
+      cfg.isref3:     [1]-consider maximum 3 reflection interface; 0-only 2\n\
+      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection\n\
+      cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save\n\
+      cfg.issave2pt:  [1]-to save flux distribution, 0-do not save\n\
+      cfg.isgpuinfo:  1-print GPU info, [0]-do not print\n\
+      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize\n\
+      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]\n\
+      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]\n\
+\n\
+      fields with * are required; options in [] are the default values\n\
+\n\
+Output:\n\
+      flux: a struct array, with a length equals to that of cfg.\n\
+            For each element of flux, flux(i).data is a 4D array with\n\
+            dimensions specified by [size(vol) total-time-gates]. \n\
+            The content of the array is the normalized flux at \n\
+            each voxel of each time-gate.\n\
+      detphoton: a struct array, with a length equals to that of cfg.\n\
+            For each element of detphoton, detphoton(i).data is a 2D array with\n\
+            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row\n\
+            is the ID(>0) of the detector that captures the photon; the second\n\
+	    row is the weight of the photon when it is detected; the rest rows\n\
+	    are the partial path lengths (in mm) traveling in medium 1 up to the last.\n\
+\n\
+      if detphoton is ignored, the detected photon will be saved in an .mch file \n\
+      if cfg.issavedeet=1; if no output is given, the flux will be saved to an \n\
+      .mc2 file if cfg.issave2pt=1 (which is true by default).\n\
+\n\
+Example:\n\
+      cfg.nphoton=1e7;\n\
+      cfg.vol=uint8(ones(60,60,60));\n\
+      cfg.srcpos=[30 30 1];\n\
+      cfg.srcdir=[0 0 1];\n\
+      cfg.gpuid=1;\n\
+      cfg.autopilot=1;\n\
+      cfg.prop=[0 0 1 1;0.005 1 1.37 0];\n\
+      cfg.tstart=0;\n\
+      cfg.tend=5e-9;\n\
+      cfg.tstep=5e-10;\n\
+      flux=mcxlab(cfg);\n\
+      \n\
+      cfgs(1)=cfg;\n\
+      cfgs(2)=cfg;\n\
+      cfgs(1).isreflect=0;\n\
+      cfgs(2).isreflect=1;\n\
+      cfgs(2).issavedet=1;\n\
+      cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];\n\
+      [fluxs,detps]=mcxlab(cfgs);\n\
+      \n\
+      imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));\n\
+");
 }

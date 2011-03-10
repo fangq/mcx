@@ -84,6 +84,8 @@ typedef struct MCXConfig{
 	float unitinmm;     /*defines the length unit in mm for grid*/
         FILE *flog;         /*stream handle to print log information*/
         History his;        /*header info of the history file*/
+	float *exportfield;     /*memory buffer when returning the flux to external programs such as matlab*/
+	float *exportdetected;  /*memory buffer when returning the partial length info to external programs such as matlab*/
         char rootpath[MAX_PATH_LENGTH];
 } Config;
 
