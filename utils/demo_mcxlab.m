@@ -1,18 +1,19 @@
-cfg.nphoton=1e7;   
+cfg.nphoton=1e7;
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcpos=[30 30 1];
 cfg.srcdir=[0 0 1];
 cfg.gpuid=1;
 cfg.autopilot=1;
-cfg.prop=[0 0 1 1;0.005 1 1 0];
+cfg.prop=[0 0 1 1;0.005 1 1.37 0];
 cfg.tstart=0;
 cfg.tend=5e-9;
 cfg.tstep=5e-10;
-
-cfg.session='testmcx';
+flux=mcxlab(cfg);
 
 cfgs(1)=cfg;
 cfgs(2)=cfg;
-cfgs(2).session='testmcx2';
-
-mcxlab(cfgs);
+cfgs(1).isreflect=0;
+cfgs(2).isreflect=1;
+cfgs(2).issavedet=1;
+cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
+[fluxs,detps]=mcxlab(cfgs);

@@ -799,7 +799,10 @@ is more than what your have specified (%d), please use the -H option to specify 
 		cfg->his.unitinmm=cfg->unitinmm;
 		cfg->his.detected=detected;
 		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
-		mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),
+		if(cfg->exportdetected) //you must allocate the buffer long enough
+	                memcpy(cfg->exportdetected,Pdet,cfg->his.savedphoton*(cfg->medianum+1)*sizeof(float));
+		else
+			mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),
 		             photoncount>cfg->his.totalphoton,"mch",cfg);
 	   }
 #endif
@@ -847,7 +850,10 @@ is more than what your have specified (%d), please use the -H option to specify 
                    fprintf(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
 
                    fprintf(cfg->flog,"saving data to file ...\t");
-                   mcx_savedata(field,fieldlen,t>cfg->tstart,"mc2",cfg);
+		   if(cfg->exportfield) //you must allocate the buffer long enough
+	                   memcpy(cfg->exportfield,field,fieldlen*sizeof(float));
+		   else
+	                   mcx_savedata(field,fieldlen,t>cfg->tstart,"mc2",cfg);
                    fprintf(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
                    fflush(cfg->flog);
                }
