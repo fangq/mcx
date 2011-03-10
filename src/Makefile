@@ -64,7 +64,7 @@ mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 oct:        AR=mkoctfile
 oct:        CUCCOPT+=--compiler-options -fPIC
 oct:        BINARY=mcxlab.mex
-oct:        LINKOPT+=mcxlab.cpp $(INCLUDEDIRS)
+oct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
