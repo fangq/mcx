@@ -1,6 +1,18 @@
 = Change Log =
 
-== MCX 0.4.9 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.5.0 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
+
+ 2011-03-09 MCXLAB now returns flux and detected photon in Matlab and Octave
+ 2011-03-03 add -E to seed RNG from command line
+ 2010-12-28 use negative -R to enable cachebox defined in the input file, fix time wraping
+ 2010-08-08 debug make mex option for Linux
+ 2010-08-09 first import of MCXLAB - MCX for Matlab and Octave
+ 2010-08-08 debug and test --unitinmm flag
+ 2010-08-05 initial support for reflection at internal boundaries
+ 2010-08-05 estimate maxgate when using the autopilot mode
+ 2010-08-02 fix a bug when saving multiple blocks of mch
+
+== MCX 0.4.9 (Black Hole-beta), FangQ <fangq nmr mgh harvard edu> ==
 
  2010-08-01 update documentation and release v0.5 beta (aka 0.4.9)
  2010-08-01 fix a critical bug for pre-Fermi cards,validated MCX on CC11,13,20

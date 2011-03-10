@@ -55,7 +55,7 @@ detbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch comput
 det detbox: BINARY:=$(BINARY)_det
 
 mex:        AR=mex
-mex oct:    OUTPUT_DIR=../utils
+mex oct:    OUTPUT_DIR=../mcxlab
 mex:        BINARY=mcxlab
 mex:        CUCCOPT+=--compiler-options -fPIC
 mex oct:    CPPOPT+=-fPIC
