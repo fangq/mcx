@@ -264,10 +264,10 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
                       URL: http://mcx.sf.net\n\
 ====================================================================\n\
 \n\
-Format:\n\
+ Format:\n\
     [flux,detphoton]=mcxlab(cfg);\n\
 \n\
-Input:\n\
+ Input:\n\
     cfg: a struct, or struct array. Each element of cfg defines \n\
          the parameters associated with a simulation. \n\
 \n\
@@ -304,7 +304,7 @@ Input:\n\
 \n\
       fields with * are required; options in [] are the default values\n\
 \n\
-Output:\n\
+ Output:\n\
       flux: a struct array, with a length equals to that of cfg.\n\
             For each element of flux, flux(i).data is a 4D array with\n\
             dimensions specified by [size(vol) total-time-gates]. \n\
@@ -321,7 +321,7 @@ Output:\n\
       if cfg.issavedeet=1; if no output is given, the flux will be saved to an \n\
       .mc2 file if cfg.issave2pt=1 (which is true by default).\n\
 \n\
-Example:\n\
+ Example:\n\
       cfg.nphoton=1e7;\n\
       cfg.vol=uint8(ones(60,60,60));\n\
       cfg.srcpos=[30 30 1];\n\
@@ -332,16 +332,22 @@ Example:\n\
       cfg.tstart=0;\n\
       cfg.tend=5e-9;\n\
       cfg.tstep=5e-10;\n\
+      % calculate the flux distribution with the given config\n\
       flux=mcxlab(cfg);\n\
-      \n\
+\n\
       cfgs(1)=cfg;\n\
       cfgs(2)=cfg;\n\
       cfgs(1).isreflect=0;\n\
       cfgs(2).isreflect=1;\n\
       cfgs(2).issavedet=1;\n\
       cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];\n\
+      % calculate the flux and partial path lengths for the two configurations\n\
       [fluxs,detps]=mcxlab(cfgs);\n\
-      \n\
+\n\
       imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));\n\
+\n\n\
+ This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.sf.net\n\
+\n\
+ License: GNU General Public License version 3, please read LICENSE.txt for details\n\
 ");
 }
