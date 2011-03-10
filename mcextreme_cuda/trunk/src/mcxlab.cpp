@@ -74,17 +74,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
 	cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
     }
+    if(nlhs>=2)
+       cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
+    mcx_validate_config(&cfg);
+    mcx_run_simulation(&cfg);
     if(nlhs>=2){
         fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
 	fielddim[2]=0; fielddim[3]=0;
 	if(cfg.his.savedphoton>0){
 		mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
-		cfg.exportdetected = (float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0));
+		memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
+		     fielddim[0]*fielddim[1]*sizeof(float));
 	}
+        free(cfg.exportdetected);
     }
-    mcx_validate_config(&cfg);
-    //mcx_writeconfig((const char*)"test.txt",&cfg);
-    mcx_run_simulation(&cfg);
     mcx_clearcfg(&cfg);
   }
   return;
