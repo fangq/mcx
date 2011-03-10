@@ -8,7 +8,7 @@
 //        Migration in 3D Turbid Media Accelerated by Graphics Processing 
 //        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
 //
-//  mcxlab.cpp: Matlab mex wrapper for MCX
+//  mcxlab.cpp: MCX for Matlab and Octave
 //
 //  License: GNU General Public License v3, see LICENSE.txt for details
 //
@@ -255,7 +255,7 @@ void mcx_validate_config(Config *cfg){
 
 void mcxlab_usage(){
      printf("====================================================================\n\
-           MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB\n\
+      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave\n\
 --------------------------------------------------------------------\n\
 Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
                       URL: http://mcx.sf.net\n\
