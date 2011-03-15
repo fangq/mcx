@@ -206,14 +206,11 @@ void mcx_validate_config(Config *cfg){
      if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
         mexErrMsgTxt("the 'vol' field in the input structure can not be empty");
 
-     for(i=1;i<cfg->medianum;i++){
-	if(cfg->unitinmm!=1.f){
+     if(cfg->unitinmm!=1.f){
+        for(i=1;i<cfg->medianum;i++){
 		cfg->prop[i].mus*=cfg->unitinmm;
 		cfg->prop[i].mua*=cfg->unitinmm;
-		cfg->tstart*=cfg->unitinmm;
-		cfg->tend*=cfg->unitinmm;
-		cfg->tstep*=cfg->unitinmm;
-	}
+        }
      }
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;

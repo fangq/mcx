@@ -20,16 +20,16 @@ extern "C" {
 typedef float4 MCXpos;
 
 typedef struct MCXDir{
-        float x; /*directional vector of the photon*/
+        float x; /*directional vector of the photon, unit-less*/
 	float y;
 	float z;
         float nscat; /*total number of scattering events*/
 }MCXdir;
 
 typedef struct MCXTimer{
-        float tscat; /*remaining scattering time*/
-        float t;     /*photon elapse time*/
-	float tnext; /*time for the next accumulation*/
+        float pscat; /*remaining scattering probability, unit-less*/
+        float t;     /*photon elapse time, unit=s*/
+	float tnext; /*time for the next accumulation,unit=s*/
 	float ndone; /*number of completed photons*/
 }MCXtime;
 
@@ -59,6 +59,7 @@ typedef struct  __align__(16) KernelParams {
   float3 vsize;
   float  minstep;
   float  twin0,twin1,tmax;
+  float  oneoverc0;
   unsigned int isrowmajor,save2pt,doreflect,doreflectin,savedet;
   float  Rtstep;
   float4 ps,c0;

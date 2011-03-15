@@ -4,9 +4,9 @@
 
 ROOTURL="http://mcx.sourceforge.net/cgi-bin/index.cgi?embed=1&keywords"
 
-lynx -dump "$ROOTURL=Download" > Download.txt
-lynx -dump "$ROOTURL=Doc/Installation" > INSTALL.txt
-lynx -dump "$ROOTURL=Doc/Basics" > Get_Started.txt
-lynx -dump "$ROOTURL=Doc/FAQ" > FAQ.txt
+lynx -dont_wrap_pre -dump "$ROOTURL=Download" > Download.txt
+lynx -dont_wrap_pre -dump "$ROOTURL=Doc/Installation" > INSTALL.txt
+lynx -dont_wrap_pre -dump "$ROOTURL=Doc/Basics" > Get_Started.txt
+lynx -dont_wrap_pre -dump "$ROOTURL=Doc/FAQ" > FAQ.txt
 
 wget http://mcx.sourceforge.net/upload/mcx_diagram_paper.png -Omcx_workflow.png
