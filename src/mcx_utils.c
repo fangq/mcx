@@ -20,9 +20,9 @@
 #include <math.h>
 #include "mcx_utils.h"
 
-const char shortopt[]={'h','i','f','n','m','t','T','s','a','g','b','B','z','u','H',
+const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','\0'};
-const char *fullopt[]={"--help","--interactive","--input","--photon","--move",
+const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--savedet",
@@ -259,7 +259,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
      cfg->prop[0].mua=0.f; /*property 0 is already air*/
      cfg->prop[0].mus=0.f;
-     cfg->prop[0].g=0.f;
+     cfg->prop[0].g=1.f;
      cfg->prop[0].n=1.f;
      for(i=1;i<cfg->medianum;i++){
         if(in==stdin)
@@ -268,13 +268,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         comm=fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin)
 		fprintf(stdout,"%f %f %f %f\n",cfg->prop[i].mus,cfg->prop[i].g,cfg->prop[i].mua,cfg->prop[i].n);
-	if(cfg->unitinmm!=1.f){
+     }
+     if(cfg->unitinmm!=1.f){
+         for(i=1;i<cfg->medianum;i++){
 		cfg->prop[i].mus*=cfg->unitinmm;
 		cfg->prop[i].mua*=cfg->unitinmm;
-		cfg->tstart*=cfg->unitinmm;
-		cfg->tend*=cfg->unitinmm;
-		cfg->tstep*=cfg->unitinmm;
-	}
+         }
      }
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in grid unit):\n\t");
