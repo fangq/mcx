@@ -17,8 +17,8 @@
 typedef struct MCXMedium{
 	float mua;
 	float mus;
-	float n;
 	float g;
+	float n;
 } Medium;
 
 typedef struct MCXHistoryHeader{
@@ -72,7 +72,7 @@ typedef struct MCXConfig{
 	char isrowmajor;    /*1 for C-styled array in vol, 0 for matlab-styled array*/
 	char isreflect;     /*1 for reflecting photons at boundary,0 for exiting*/
         char isref3;        /*1 considering maximum 3 ref. interfaces; 0 max 2 ref*/
-        char isreflectin;   /*1 to consider reflections at internal boundaries; 0 do not*/
+        char isrefint;   /*1 to consider reflections at internal boundaries; 0 do not*/
 	char isnormalized;  /*1 to normalize the fluence, 0 for raw fluence*/
 	char issavedet;     /*1 to count all photons hits the detectors*/
 	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/

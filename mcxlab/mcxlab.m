@@ -16,7 +16,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %    It may contain the following fields:
 %     *cfg.nphoton:    the total number of photons to be simulated (integer)
 %     *cfg.vol:        a 3D array specifying the media index in the domain
-%     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, n, g] in order.
+%     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
 %                      the first row corresponds to medium type 0 which is 
 %                      typically [0 0 1 1]. The second row is type 1, and so on.
 %     *cfg.tstart:     starting time of the simulation (in seconds)
@@ -36,6 +36,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
 %      cfg.isref3:     [1]-consider maximum 3 reflection interface; 0-only 2
+%      cfg.isrefint:   [1]-ref. index mismatch at inner boundaries, 0-matched index
 %      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
 %      cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save
 %      cfg.issave2pt:  [1]-to save flux distribution, 0-do not save

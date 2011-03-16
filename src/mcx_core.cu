@@ -293,7 +293,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
           }
 
           //if it hits the boundary, exceeds the max time window or exits the domain, rebound or launch a new one
-	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->doreflectin && n1!=gproperty[mediaid].z) ){
+	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->dorefint && fabs(n1-gproperty[mediaid].w)>1e-5f) ){
 	      float flipdir=0.f;
               float3 htime;            //reflection var
 
@@ -360,7 +360,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
               //recycled some old register variables to save memory
 	      //if hit boundary within the time window and is n-mismatched, rebound
 
-              if(gcfg->doreflect&&f.t<gcfg->tmax&&f.t<gcfg->twin1&& flipdir>0.f && n1!=prop.n&&p.w>gcfg->minenergy){
+              if(gcfg->doreflect&&f.t<gcfg->tmax&&f.t<gcfg->twin1&& flipdir>0.f && fabs(n1-prop.n)>1e-5f &&p.w>gcfg->minenergy){
 	          float Rtotal=1.f;
 
                   tmp0=n1*n1;
@@ -368,21 +368,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   if(flipdir>=3.f) { //flip in z axis
                      cphi=fabs(v.z);
                      sphi=v.x*v.x+v.y*v.y;
-                     v.z=-v.z;
                   }else if(flipdir>=2.f){ //flip in y axis
                      cphi=fabs(v.y);
        	       	     sphi=v.x*v.x+v.z*v.z;
-                     v.y=-v.y;
                   }else if(flipdir>=1.f){ //flip in x axis
                      cphi=fabs(v.x);                //cos(si)
                      sphi=v.y*v.y+v.z*v.z; //sin(si)^2
-                     v.x=-v.x;
                   }
-                  if(mediaid==0) { // moving back only happens when photon move to medium type 0
-                     p=p0;   //move back
-                     idx1d=idx1dold;
-                  }
-                  len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2
+                  len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2 = cos(ti)^2
 	          GPUDEBUG((" ref len=%f %f+%f=%f w=%f\n",len,cphi,sphi,cphi*cphi+sphi,p.w));
 
                   if(len>0.f) { // if not total internal reflection
@@ -395,18 +388,41 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	             GPUDEBUG(("  ID%d J%d C%d flip=%3f (%d %d) cphi=%f sphi=%f p=%f %f %f p0=%f %f %f\n",
                          idx,(int)v.nscat,(int)f.tnext,
 	                 flipdir,idx1dold,idx1d,cphi,sphi,p.x,p.y,p.z,p0.x,p0.y,p0.z));
-                  } // else, total internal reflection, no loss
-	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){
-                        if(mediaid==0){ // else transmission at internal boundary
+                  } // else, total internal reflection
+	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
+                        if(mediaid==0){ // transmission to external boundary
 		    	    launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),
 			        ppath,&energyloss,&energyabsorbed,n_det,detectedphoton);
 			    continue;
 			}
-		  }else{
-		        mediaid=(media[idx1d] & MED_MASK);
-        	        *((float4*)(&prop))=gproperty[mediaid];
-                	n1=prop.n;
-	                //v.nscat++;
+			tmp0=n1/prop.n;
+                	if(flipdir>=3.f) { //transmit through z plane
+                	   v.x=tmp0*v.x;
+                	   v.y=tmp0*v.y;
+                	}else if(flipdir>=2.f){ //transmit through y plane
+                	   v.x=tmp0*v.x;
+                	   v.z=tmp0*v.z;
+                	}else if(flipdir>=1.f){ //transmit through x plane
+                	   v.y=tmp0*v.y;
+                	   v.z=tmp0*v.z;
+                	}
+			tmp0=rsqrtf(v.x*v.x+v.y*v.y+v.z*v.z);
+			v.x=v.x*tmp0;
+			v.y=v.y*tmp0;
+			v.z=v.z*tmp0;
+		  }else{ //do reflection
+                	if(flipdir>=3.f) { //flip in z axis
+                	   v.z=-v.z;
+                	}else if(flipdir>=2.f){ //flip in y axis
+                	   v.y=-v.y;
+                	}else if(flipdir>=1.f){ //flip in x axis
+                	   v.x=-v.x;
+                	}
+                        p=p0;   //move back
+                	idx1d=idx1dold;
+		 	mediaid=(media[idx1d] & MED_MASK);
+        	  	*((float4*)(&prop))=gproperty[mediaid];
+                  	n1=prop.n;
 		  }
               }else{  // launch a new photon
 		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,
@@ -597,7 +613,7 @@ void mcx_run_simulation(Config *cfg){
      uchar  *media=(uchar *)(cfg->vol);
      float  *field;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,cfg->isrowmajor,
-                     cfg->issave2pt,cfg->isreflect,cfg->isreflectin,cfg->issavedet,1.f/cfg->tstep,
+                     cfg->issave2pt,cfg->isreflect,cfg->isrefint,cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,0,0};
@@ -686,7 +702,7 @@ void mcx_run_simulation(Config *cfg){
      fprintf(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009,2010 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\
@@ -847,13 +863,14 @@ is more than what your have specified (%d), please use the -H option to specify 
                    }
                    fprintf(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
 
-                   fprintf(cfg->flog,"saving data to file ...\t");
 		   if(cfg->exportfield) //you must allocate the buffer long enough
 	                   memcpy(cfg->exportfield,field,fieldlen*sizeof(float));
-		   else
+		   else{
+                           fprintf(cfg->flog,"saving data to file ...\t");
 	                   mcx_savedata(field,fieldlen,t>cfg->tstart,"mc2",cfg);
-                   fprintf(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
-                   fflush(cfg->flog);
+                           fprintf(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
+                           fflush(cfg->flog);
+                   }
                }
            }
        }
