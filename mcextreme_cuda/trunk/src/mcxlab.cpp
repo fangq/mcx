@@ -41,6 +41,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
      mcxlab_usage();
      return;
   }
+  printf("Launching MCXLAB - Monte Carlo eXtreme for MATLAB & GNU Octave ...\n");
   if (!mxIsStruct(prhs[0]))
      mexErrMsgTxt("Input must be a structure.");
 
@@ -52,16 +53,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   if(nlhs>=2)
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
 
-  for (jstruct = 0; jstruct < ncfg; jstruct++) {
+  for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
+    printf("Running simulations for configuration #%d ...\n", jstruct+1);
+
     mcx_initcfg(&cfg);
 
-    for (ifield = 0; ifield < nfields; ifield++) { /* how many configs */
+    for (ifield = 0; ifield < nfields; ifield++) { /* how many input struct fields */
         tmp = mxGetFieldByNumber(prhs[0], jstruct, ifield);
 	if (tmp == NULL) {
 		continue;
 	}
 	mcx_set_field(prhs[0],tmp,ifield,&cfg);
     }
+    mexEvalString("pause(.001);");
     if(cfg.vol==NULL || cfg.medianum==0){
 	mexErrMsgTxt("You must define 'vol' and 'prop' field.");
     }
@@ -99,6 +103,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     const int *arraydim;
     int i,j;
 
+    cfg->flog=stderr;
     GET_1ST_FIELD(cfg,nphoton)
     GET_ONE_FIELD(cfg,nblocksize)
     GET_ONE_FIELD(cfg,nthread)
@@ -114,7 +119,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,gpuid)
     GET_ONE_FIELD(cfg,isreflect)
     GET_ONE_FIELD(cfg,isref3)
-    GET_ONE_FIELD(cfg,isreflectin)
+    GET_ONE_FIELD(cfg,isrefint)
     GET_ONE_FIELD(cfg,isnormalized)
     GET_ONE_FIELD(cfg,issavedet)
     GET_ONE_FIELD(cfg,issave2pt)
@@ -149,7 +154,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     }else if(strcmp(name,"prop")==0){
         arraydim=mxGetDimensions(item);
         if(arraydim[0]>0 && arraydim[1]!=4)
-            mexErrMsgTxt("the 'prop' field must have 4 columns (mua,mus,n,g)");
+            mexErrMsgTxt("the 'prop' field must have 4 columns (mua,mus,g,n)");
         double *val=mxGetPr(item);
         cfg->medianum=arraydim[0];
         if(cfg->prop) free(cfg->prop);
@@ -169,6 +174,9 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
              mexWarnMsgTxt("not enough space. string is truncated.");
 
 	printf("mcx.session='%s';\n",cfg->session);
+    }else{
+        printf("Error: can not recognize field '%s'\n",name);
+        mexErrMsgTxt("input structure contains unrecognized fields");
     }
 }
 
@@ -290,7 +298,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
       cfg.respin:     repeat simulation for the given time (integer) [1]\n\
       cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]\n\
       cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index\n\
-      cfg.isref3:     [1]-consider maximum 3 reflection interface; 0-only 2\n\
+      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index\n\
       cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection\n\
       cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save\n\
       cfg.issave2pt:  [1]-to save flux distribution, 0-do not save\n\
@@ -329,7 +337,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
       cfg.tstart=0;\n\
       cfg.tend=5e-9;\n\
       cfg.tstep=5e-10;\n\
-      % calculate the flux distribution with the given config\n\
+      %% calculate the flux distribution with the given config\n\
       flux=mcxlab(cfg);\n\
 \n\
       cfgs(1)=cfg;\n\
@@ -338,7 +346,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
       cfgs(2).isreflect=1;\n\
       cfgs(2).issavedet=1;\n\
       cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];\n\
-      % calculate the flux and partial path lengths for the two configurations\n\
+      %% calculate the flux and partial path lengths for the two configurations\n\
       [fluxs,detps]=mcxlab(cfgs);\n\
 \n\
       imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));\n\

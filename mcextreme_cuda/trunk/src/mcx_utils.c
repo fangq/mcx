@@ -46,7 +46,7 @@ void mcx_initcfg(Config *cfg){
      cfg->maxgate=1;
      cfg->isreflect=1;
      cfg->isref3=1;
-     cfg->isreflectin=0;
+     cfg->isrefint=0;
      cfg->isnormalized=1;
      cfg->issavedet=1;
      cfg->respin=1;
@@ -552,7 +552,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				cfg->isref3=cfg->isreflect;
 		     	        break;
                      case 'B':
-                                i=mcx_readarg(argc,argv,i,&(cfg->isreflectin),"char");
+                                i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
                                	break;
 		     case 'd':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->issavedet),"char");
@@ -633,7 +633,7 @@ void mcx_usage(char *exename){
      printf("\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009,2010 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\

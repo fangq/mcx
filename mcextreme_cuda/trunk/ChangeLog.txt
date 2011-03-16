@@ -2,6 +2,8 @@
 
 == MCX 0.5.0 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
 
+ 2011-03-16 MCXLAB example scripts
+ 2011-03-15 extensive debugging with the --unitinmm flag
  2011-03-09 MCXLAB now returns flux and detected photon in Matlab and Octave
  2011-03-03 add -E to seed RNG from command line
  2010-12-28 use negative -R to enable cachebox defined in the input file, fix time wraping

@@ -8,6 +8,7 @@ cfg.prop=[0 0 1 1;0.005 1 1.37 0];
 cfg.tstart=0;
 cfg.tend=5e-9;
 cfg.tstep=5e-10;
+% calculate the flux distribution with the given config
 flux=mcxlab(cfg);
 
 cfgs(1)=cfg;
@@ -16,4 +17,7 @@ cfgs(1).isreflect=0;
 cfgs(2).isreflect=1;
 cfgs(2).issavedet=1;
 cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
+% calculate the flux and partial path lengths for the two configurations
 [fluxs,detps]=mcxlab(cfgs);
+
+imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));
