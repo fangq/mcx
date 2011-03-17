@@ -150,7 +150,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      MCXpos  p,p0;//{x,y,z}: coordinates in grid unit, w:packet weight
      MCXdir  v;   //{x,y,z}: unitary direction vector in grid unit, nscat:total scat event
      MCXtime f;   //pscat: remaining scattering probability,t: photon elapse time, 
-                  //pscat: next accumulation time, ndone: completed photons
+                  //tnext: next accumulation time, ndone: completed photons
      float  energyloss=genergy[idx<<1];
      float  energyabsorbed=genergy[(idx<<1)+1];
 
@@ -206,12 +206,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
           GPUDEBUG(("*i= (%d) L=%f w=%e a=%f\n",(int)f.ndone,f.pscat,p.w,f.t));
 
-	  if(f.pscat<=0.f) {  // if this photon has finished the current jump
+          // dealing with scattering
+
+	  if(f.pscat<=0.f) {  // if this photon has finished his current jump, get next scat length & angles
                rand_need_more(t,tnew);
-   	       f.pscat=rand_next_scatlen(t); // unit-less
+   	       f.pscat=rand_next_scatlen(t); // random scattering probability, unit-less
 
                GPUDEBUG(("next scat len=%20.16e \n",f.pscat));
-	       if(p.w<1.f){ //weight
+	       if(p.w<1.f){ // if this is not my first jump
                        //random arimuthal angle
                        tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
                        sincosf(tmp0,&sphi,&cphi);
@@ -261,6 +263,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	  *((float4*)(&prop))=gproperty[mediaid];
 	  len=gcfg->minstep*prop.mus; //unitless (minstep=grid, mus=1/grid)
 
+          // dealing with absorption
+
           p0=p;
 	  if(len>f.pscat){  //scattering ends in this voxel: mus*gcfg->minstep > s 
                tmp0=f.pscat/prop.mus; // unit=grid
@@ -271,9 +275,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                if(gcfg->savedet) ppath[mediaid-1]+=tmp0; //(unit=grid)
                GPUDEBUG((">>ends in voxel %f<%f %f [%d]\n",f.pscat,len,prop.mus,idx1d));
 	  }else{                      //otherwise, move gcfg->minstep
-               if(mediaid!=medid){
+               if(mediaid!=medid)
                   atten=expf(-prop.mua*gcfg->minstep);
-               }
+
    	       *((float4*)(&p))=float4(p.x+v.x,p.y+v.y,p.z+v.z,p.w*atten);
                medid=mediaid;
 	       f.pscat-=len;     //remaining probability: sum(s_i*mus_i), unit-less
@@ -292,8 +296,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	      mediaid=(media[idx1d] & MED_MASK);
           }
 
+          // dealing with boundaries
+
           //if it hits the boundary, exceeds the max time window or exits the domain, rebound or launch a new one
-	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->dorefint && fabs(n1-gproperty[mediaid].w)>1e-5f) ){
+	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->dorefint && n1!=gproperty[mediaid].w) ){
 	      float flipdir=0.f;
               float3 htime;            //reflection var
 
@@ -360,7 +366,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
               //recycled some old register variables to save memory
 	      //if hit boundary within the time window and is n-mismatched, rebound
 
-              if(gcfg->doreflect&&f.t<gcfg->tmax&&f.t<gcfg->twin1&& flipdir>0.f && fabs(n1-prop.n)>1e-5f &&p.w>gcfg->minenergy){
+              if(gcfg->doreflect&&f.t<gcfg->tmax&&f.t<gcfg->twin1&& flipdir>0.f && n1!=prop.n &&p.w>gcfg->minenergy){
 	          float Rtotal=1.f;
 
                   tmp0=n1*n1;
@@ -430,6 +436,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 		  continue;
               }
 	  }
+
+          // saving fluence to the memory
+
 	  if(f.t>=f.tnext){
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide

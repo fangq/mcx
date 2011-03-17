@@ -5,8 +5,7 @@
 #################################################################
 
 CUDACC=nvcc
-CCC=gcc
-AR=gcc
+AR=$(CC)
 
 BINARY=mcx
 OUTPUT_DIR=../bin
@@ -24,7 +23,7 @@ FILES=mcx_core mcx_utils tictoc mcextreme
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
 ifeq ($(findstring MINGW32,$(PLATFORM)), MINGW32)
-  CCC=nvcc
+  CC=nvcc
   LINKOPT=-L/c/CUDA/lib -lcudart --link
   INCLUDEDIRS +=-I/c/CUDA/include
   CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE -DWIN32
@@ -74,7 +73,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(AR) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
 
 %$(OBJSUFFIX): %.c
-	$(CCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<

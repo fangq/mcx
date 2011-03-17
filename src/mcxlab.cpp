@@ -175,8 +175,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 
 	printf("mcx.session='%s';\n",cfg->session);
     }else{
-        printf("Error: can not recognize field '%s'\n",name);
-        mexErrMsgTxt("input structure contains unrecognized fields");
+        printf("WARNING: redundant field '%s'\n",name);
     }
 }
 
@@ -256,7 +255,7 @@ void mcx_validate_config(Config *cfg){
 		}
 	}
      }
-     cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
+     cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
 }
@@ -289,6 +288,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
      *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector\n\
       cfg.nblocksize: how many CUDA thread blocks to be used [64]\n\
       cfg.nthread:    the total CUDA thread number [2048]\n\
+      cfg.maxgate:    the num of time-gates per simulation\n\
       cfg.session:    a string for output file names (used when no return variables)\n\
       cfg.seed:       seed for the random number generator (integer) [0]\n\
       cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]\n\
