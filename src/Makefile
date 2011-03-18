@@ -56,12 +56,11 @@ det detbox: BINARY:=$(BINARY)_det
 mex:        AR=mex
 mex oct:    OUTPUT_DIR=../mcxlab
 mex:        BINARY=mcxlab
-mex:        CUCCOPT+=--compiler-options -fPIC
-mex oct:    CPPOPT+=-fPIC
+mex oct:    CUCCOPT+=--compiler-options -fPIC -DMCX_CONTAINER
+mex oct:    CPPOPT+=-fPIC -DMCX_CONTAINER
 mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 oct:        AR=mkoctfile
-oct:        CUCCOPT+=--compiler-options -fPIC
 oct:        BINARY=mcxlab.mex
 oct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 

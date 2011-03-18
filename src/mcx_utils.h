@@ -109,6 +109,14 @@ void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
 void mcx_maskdet(Config *cfg);
 void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
+
+#ifdef MCX_CONTAINER
+#ifdef __cplusplus
+extern "C"
+#endif
+ int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum);
+#endif
+
 #ifdef	__cplusplus
 }
 #endif

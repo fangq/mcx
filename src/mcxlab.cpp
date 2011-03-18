@@ -260,6 +260,11 @@ void mcx_validate_config(Config *cfg){
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
 }
 
+extern "C" int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum){
+     printf("MCXLAB ERROR %d in unit %s:%d\n",id,filename,linenum);
+     mexErrMsgTxt(msg);
+}
+
 void mcxlab_usage(){
      printf("====================================================================\n\
       MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave\n\
