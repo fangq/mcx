@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.4.9 (Black-hole beta)
+Version: 0.5.0 (Black-hole)
 
 ---------------------------------------------------------------------
 
@@ -14,22 +14,23 @@ Table of Content:
 I.  Introduction
 II. Requirement and Installation
 III.Running Simulations
-IV. Using MCX Studio GUI
-V.  Interpreting the Outputs
-VI. Reference
+IV. Using MCXLAB in MATLAB/Octave
+V.  Using MCX Studio GUI
+VI. Interpreting the Outputs
+VII.Reference
 
 ---------------------------------------------------------------------
 
 I.  Introduction
 
-Monte Carlo eXtreme (MCX) is simulation software for modeling photon
-propagation in 3D heterogeneous turbid media. By taking advantage of 
-the multi-core processors and extremely low memory latency of a 
-low-cost graphics card, this program is able to perform Monte Carlo 
-(MC) simulations at a blazing speed, typically over 300 times faster 
-than fully optimized CPU-based MC code.
+Monte Carlo eXtreme (MCX) is a fast photon transport simulation 
+software for 3D heterogeneous turbid media. By taking advantage of 
+massively parallel computing and extremely low memory latency in a 
+modern graphics processor (GPU), this program is able to perform Monte 
+Carlo (MC) simulations at a blazing speed, typically hundreds times 
+faster than a fully optimized CPU-based MC implementation.
 
-The algorithm details of this software can be found in the Reference [1]. 
+The algorithm of this software is detailed in the Reference [1]. 
 A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
@@ -37,9 +38,10 @@ A short summary of the main features includes:
 *. time-resolved photon migration
 *. saving photon partial path lengths at detectors
 *. optimized random number generators
-*. build-in fluence normalization
+*. build-in flux/fluence normalization to output Green's functions
 *. improved accuracy near the source with atomic operations
 *. cross-platform graphics user interface
+*. native Matlab/Octave support for high usability
 
 The software can be used on Windows, Linux and Mac OS. Two variants 
 will be provided, one for nVidia(TM) graphics hardware written in CUDA, 
@@ -60,7 +62,7 @@ For simulations on large volumes, sufficient video memory is
 also required to perform the simulation. The minimum amount of 
 graphics memory required for a MC simulation is Nx*Ny*Nz*Ng
 bytes for the input tissue data plus Nx*Ny*Nz*Ng*4 bytes for 
-the output fluence data - where Nx,Ny,Nz are the dimensions of the 
+the output flux/fluence data - where Nx,Ny,Nz are the dimensions of the 
 tissue volume, Ng is the number of concurrent time gates, 4 is 
 the size of a single-precision floating-point number.
 MCX does not require double-precision support in your hardware.
@@ -104,46 +106,48 @@ index). Typing the name of the executable without any parameters,
 will print the help information and a list of supported parameters, 
 such as the following:
 
+<pre>
 usage: mcx <param1> <param2> ...
 where possible parameters include (the first item in [] is the default value)
  -i 	       (--interactive) interactive mode
  -s sessionid  (--session)     a string to label all output file names
  -f config     (--input)       read config from a file
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
- -m [0|int]    (--move)        total photon moves (not supported, use -n only)
- -t [1024|int] (--thread)      total thread number
- -T [128|int]  (--blocksize)   thread number per block
+ -m [0|int]    (--move)        photon moves/thread(not supported, use -n only)
+ -t [2048|int] (--thread)      total thread number
+ -T [64|int]   (--blocksize)   thread number per block
  -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto
  -r [1|int]    (--repeat)      number of repetitions
  -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array
  -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1
  -g [1|int]    (--gategroup)   number of time gates per run
- -b [1|0]      (--reflect)     1 to reflect photons at the boundary, 0 to exit
- -B [0|1]      (--reflect3)    1 to consider max 3 reflections, 0 max 2
- -e [0.|float] (--minenergy)   minimum energy level to propagate a photon
- -R [0.|float] (--skipradius)  minimum distance to source to start accumulation
- -u [0.|float] (--unitinmm)    defines the length unit for the grid edge
- -U [1|0]      (--normalize)   1 to normalize fluence to unitary, 0 save raw
+ -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit
+ -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not
+ -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
+ -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy
+ -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
+ -U [1|0]      (--normalize)   1 to normalize flux to unitary, 0 save raw
  -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save
  -H [1000000]  (--maxdetphoton)max number of detected photons
- -S [1|0]      (--save2pt)     1 to save the fluence field, 0 do not save
- -p [0|int]    (--printlen)    number of threads to print (debug)
+ -S [1|0]      (--save2pt)     1 to save the flux field, 0 do not save
+ -E [0|int]    (--seed)        set random-number-generator seed
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
  -L            (--listgpu)     print GPU information only
  -I            (--printgpu)    print GPU information and run program
 example:
-       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -a 0 -g 10 -U 1 -d 1 -G 1
+       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1
+</pre>
 
- the above command will launch 2048 GPU threads (-t) with every 64 threads
- a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G) 
- with two equally divided runs (-r); the media/source configuration will be 
- read from input.inp (-f) and the output will be labeled with the session 
- id "test" (-s); input media index array is in column-major format (-a); the 
- simulation will run 10 concurrent time gates (-g). Photons passing through
- the defined detector positions will be saved for later rescaling (-d).
+the above command will launch 2048 GPU threads (-t) with every 64 threads
+a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G) 
+with two equally divided runs (-r); the media/source configuration will be 
+read from input.inp (-f) and the output will be labeled with the session 
+id "test" (-s); input media index array is in column-major format (-a); the 
+simulation will run 10 concurrent time gates (-g). Photons passing through
+the defined detector positions will be saved for later rescaling (-d).
 
 Currently, MCX supports a modified version of the input file format used 
 for tMCimg. (The difference is that MCX allows for comments)
@@ -160,8 +164,8 @@ semi60x60x60.bin     # volume ('unsigned char' format)
 1 60 1 60            # z: voxel size, dim, start/end indices
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
-4       1            # detector number and radius (mm)
-30.0    20.0    1.0  # detector 1 position (mm)
+4       1            # detector number and radius (grid)
+30.0    20.0    1.0  # detector 1 position (grid)
 30.0    40.0    1.0  # ...
 20.0    30.0    1.0
 40.0    30.0    1.0
@@ -182,11 +186,11 @@ the above example, the configuration specifies a total time
 window of [0 1] ns, with a 0.1 ns resolution. That means the 
 total number of time gates is 10. 
 
-MCX provides the user with an advanced option, -g, to increase 
-performance by specifying how many time gates to simulate 
-concurrently. If GPU memory is limited then the user may want to limit 
-that number to less than the total number specified in the input file - and 
-by default it runs one gate at a time in a single simulation. But if there's 
+MCX provides an advanced option, -g, to run simulations when 
+the GPU memory is limited. It specifies how many time gates to simulate 
+concurrently. Users may want to limit that number to less than 
+the total number specified in the input file - and by default 
+it runs one gate at a time in a single simulation. But if there's 
 enough memory based on the memory requirement in Section II, you can 
 simulate all 10 time gates (from the above example) concurrently by using 
 "-g 10" in which case you have to make sure the video card has at least  
@@ -194,10 +198,25 @@ simulate all 10 time gates (from the above example) concurrently by using
 MCX will assume you want to simulate just 1 time gate at a time.. 
 If you specify a time-gate number greater than the total number in the 
 input file, (e.g, "-g 20") MCX will stop when the 10 time-gates are 
-completed.
+completed. If you use the autopilot mode (-A), then the time-gates
+are automatically estimated for you.
 
 
-IV. Using MCX Studio GUI
+IV. Using MCXLAB in MATLAB and Octave
+
+MCXLAB is the native MEX version of MCX for Matlab and GNU Octave. It compiles
+the entire MCX code into a MEX function which can be called directly inside
+Matlab or Octave. The input and output files in MCX are replaced by convenient
+in-memory struct variables in MCXLAB, thus, making it much easier to use
+and interact. Matlab/Octave also provides convenient plotting and data
+analysis functions. With MCXLAB, your analysis can be streamlined and speed-
+up without involving disk files.
+
+Please read the mcxlab/README.txt file for more details on how to
+install and use MCXLAB.
+
+
+V. Using MCX Studio GUI
 
 MCX Studio is a graphics user interface (GUI) for MCX. It gives users
 a straightforward way to set the command line options and simulation
@@ -239,15 +258,15 @@ be saved as a project file (with .mcxp extension) by clicking the
 to MCX Studio by clicking the "Load" button.
 
 
-V. Interpreting Output
+VI. Interpreting Output
 
-MCX output consists of two parts, the fluence volume 
+MCX output consists of two parts, the flux volume 
 file and messages printed on the screen.
 
-5.1 Output files
+6.1 Output files
 
-An mc2 file contains the fluence distribution from the simulation in 
-the given medium. By default, this fluence is a normalized solution 
+An mc2 file contains the flux distribution from the simulation in 
+the given medium. By default, this flux is a normalized solution 
 (as opposed to the raw probability) therefore, one can compare this directly 
 to the analytical solutions (i.e. Green's function). The order of storage in the 
 mc2 files is the same as the input file: i.e., if the input is row-major, the 
@@ -258,21 +277,24 @@ One can load a mc2 output file into Matlab or Octave using the
 loadmc2 function in <mcx root>/utils. 
 
 To get a continuous-wave solution, run a simulation with a sufficiently 
-long time window, and sum the fluence along the time dimension, for 
+long time window, and sum the flux along the time dimension, for 
 example
 
    mcx=loadmc2('output.mc2',[60 60 60 10],'float');
    cw_mcx=sum(mcx,4);
 
 Note that for time-resolved simulations, the corresponding solution
-in the results approximates the fluence at the center point
+in the results approximates the flux at the center point
 of each time window. For example, if the simulation time window 
 setting is [t0,t0+dt,t0+2dt,t0+3dt...,t1], the time points for the 
 snapshots stored in the solution file is located at 
 [t0+dt/2, t0+3*dt/2, t0+5*dt/2, ... ,t1-dt/2]
 
+A more detailed interpretation of the output data can be found at 
+http://mcx.sf.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
 
-5.2 Console Print messages
+
+6.2 Console Print messages
 
 Timing information is printed on the screen (stdout). The 
 clock starts (at time T0) right before the initialization data is copied 
@@ -281,10 +303,10 @@ is printed (in ms). Also the accumulated elapsed time is printed for
 all memory transaction from GPU to CPU. Depending on the domain 
 size, typically the data transfer takes about 50 ms per run.
 
-By default, MCX calculates the unitary-source solution for fluence; 
+By default, MCX calculates the unitary-source solution for flux; 
 the normalization factor (see Reference [1]) used to produce this 
 solution is printed on the screen at the end of the simulation, and 
-the fluence distribution saved to a file.
+the flux distribution saved to a file.
 
 At the end of the screen output, statistical  information about the 
 photons is displayed. Here's sample output:
@@ -314,7 +336,7 @@ number of threads to be printed can be specified using the
 
 
 
-VI. Reference
+VII. Reference
 
 [1] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"

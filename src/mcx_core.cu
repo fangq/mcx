@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon migration
+//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation                                                                                                
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 //
 //  Reference (Fang2009):
@@ -579,7 +579,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 	  }
 	}
     }
-    if(cfg->isgpuinfo==2){ //list GPU info only
+    if(cfg->isgpuinfo==2 && cfg->exportfield==NULL){ //list GPU info only
           exit(0);
     }
     if (cfg->gpuid==0)

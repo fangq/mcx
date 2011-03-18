@@ -1,4 +1,4 @@
-   #[1]Monte Carlo eXtreme: photon migration on graphics cards
+   #[1]Monte Carlo eXtreme: GPU-based Monte Carlo Simulations
 
 Installation Instructions for MCX
 

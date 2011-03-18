@@ -1,6 +1,6 @@
 /*******************************************************************************
 **
-**  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon migration
+**  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
 **  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 **
 **  Reference (Fang2009):
@@ -21,14 +21,14 @@
 #include "mcx_utils.h"
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu","--root","--gpu","--dumpmask","--autopilot","--seed",""};
+                 "--printgpu","--root","--gpu","--dumpmask","--autopilot","--seed","--version",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
@@ -612,6 +612,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'E':
                                 i=mcx_readarg(argc,argv,i,&(cfg->seed),"int");
                                 break;
+                     case 'v':
+                                mcx_version(cfg);
+				break;
 		}
 	    }
 	    i++;
@@ -631,6 +634,14 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      	  mcx_readconfig(filename,cfg);
        }
      }
+}
+
+void mcx_version(Config *cfg){
+    const char ver[]="$Rev::      $";
+    int v=0;
+    sscanf(ver,"$Rev::%d",&v);
+    fprintf(cfg->flog, "MCX Revision %d\n",v);
+    exit(0);
 }
 
 void mcx_usage(char *exename){
@@ -674,6 +685,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\
  -I            (--printgpu)    print GPU information and run program\n\
+ -v            (--version)     print MCX revision number\n\
 example:\n\
        %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1\n",exename,exename);
 }

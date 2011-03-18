@@ -1,4 +1,5 @@
 function Phi = cwdiffusion(mua, musp, Reff, srcpos,detpos)
+%
 %  Phi = cwdiffusion(mua, musp, Reff, srcpos,detpos)
 %
 %  semi-infinite medium analytical solution to diffusion model
@@ -18,7 +19,7 @@ function Phi = cwdiffusion(mua, musp, Reff, srcpos,detpos)
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see http://mcx.sf.net for details
 %    see Boas2002, Heskell1996
-
+%
 
 D = 1/(3*(mua+musp));
 zb = (1+Reff)/(1-Reff)*2*D;

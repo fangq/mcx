@@ -1,4 +1,5 @@
 function [flux,detphoton]=mcxlab(cfg)
+%
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
@@ -14,6 +15,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %         the parameters associated with a simulation. 
 %
 %    It may contain the following fields:
+%
 %     *cfg.nphoton:    the total number of photons to be simulated (integer)
 %     *cfg.vol:        a 3D array specifying the media index in the domain
 %     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
@@ -26,20 +28,21 @@ function [flux,detphoton]=mcxlab(cfg)
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
 %      cfg.nthread:    the total CUDA thread number [2048]
+%      cfg.maxgate:    the num of time-gates per simulation
 %      cfg.session:    a string for output file names (used when no return variables)
 %      cfg.seed:       seed for the random number generator (integer) [0]
 %      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
 %      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
-%      cfg.detradius:  radius of the detector (in mm) [1.0]
-%      cfg.sradius:    radius within which we use atomic operations (in mm) [0.0]
+%      cfg.detradius:  radius of the detector (in grid unit) [1.0]
+%      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
 %      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-%      cfg.isref3:     [1]-consider maximum 3 reflection interface; 0-only 2
-%      cfg.isrefint:   [1]-ref. index mismatch at inner boundaries, 0-matched index
+%      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
 %      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
 %      cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save
 %      cfg.issave2pt:  [1]-to save flux distribution, 0-do not save
+%      cfg.issrcfrom0: 1-first voxel is [1 1 1], [0]- first voxel is [0 0 0]
 %      cfg.isgpuinfo:  1-print GPU info, [0]-do not print
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
 %      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
@@ -57,11 +60,13 @@ function [flux,detphoton]=mcxlab(cfg)
 %            For each element of detphoton, detphoton(i).data is a 2D array with
 %            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
 %            is the ID(>0) of the detector that captures the photon; the second
-%	    row is the weight of the photon when it is detected; the rest rows
-%	    are the partial path lengths (in mm) traveling in medium 1 up to the last.
+%	     row is the weight of the photon when it is detected; the rest rows
+%	     are the partial path lengths (in grid unit) traveling in medium 1 up 
+%            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
+%            to convert them to mm unit.
 %
-%      if detphoton is ignored, the detected photon will be saved in an .mch file 
-%      if cfg.issavedeet=1; if no output is given, the flux will be saved to an 
+%      if detphoton is ignored, the detected photon will be saved in a .mch file 
+%      if cfg.issavedeet=1; if no output is given, the flux will be saved to a 
 %      .mc2 file if cfg.issave2pt=1 (which is true by default).
 %
 % Example:
@@ -71,7 +76,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.srcdir=[0 0 1];
 %      cfg.gpuid=1;
 %      cfg.autopilot=1;
-%      cfg.prop=[0 0 1 1;0.005 1 1.37 0];
+%      cfg.prop=[0 0 1 1;0.005 1 0 1.37];
 %      cfg.tstart=0;
 %      cfg.tend=5e-9;
 %      cfg.tstep=5e-10;
