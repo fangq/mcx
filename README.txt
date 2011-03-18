@@ -25,7 +25,7 @@ I.  Introduction
 
 Monte Carlo eXtreme (MCX) is a fast photon transport simulation 
 software for 3D heterogeneous turbid media. By taking advantage of 
-massively parallel computing and extremely low memory latency in a 
+the massively parallel threads and extremely low memory latency in a 
 modern graphics processor (GPU), this program is able to perform Monte 
 Carlo (MC) simulations at a blazing speed, typically hundreds times 
 faster than a fully optimized CPU-based MC implementation.
@@ -35,8 +35,8 @@ A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
 *. boundary reflection support
-*. time-resolved photon migration
-*. saving photon partial path lengths at detectors
+*. time-resolved photon transport simulation
+*. saving photon partial path lengths at the detectors
 *. optimized random number generators
 *. build-in flux/fluence normalization to output Green's functions
 *. improved accuracy near the source with atomic operations
@@ -137,12 +137,13 @@ where possible parameters include (the first item in [] is the default value)
  -l            (--log)         print messages to a log file instead
  -L            (--listgpu)     print GPU information only
  -I            (--printgpu)    print GPU information and run program
+ -v            (--version)     print MCX revision number
 example:
        mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1
 </pre>
 
 the above command will launch 2048 GPU threads (-t) with every 64 threads
-a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G) 
+a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G 1) 
 with two equally divided runs (-r); the media/source configuration will be 
 read from input.inp (-f) and the output will be labeled with the session 
 id "test" (-s); input media index array is in column-major format (-a); the 

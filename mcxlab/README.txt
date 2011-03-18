@@ -28,7 +28,7 @@ system is capable to run MCXLAB). Of course, you need to have either Matlab
 or Octave installed.
 
 MCXLAB needs libcudart.so.3 (for Unix-like systems) or cudart.dll 
-(for Windows). For Linux/Mac, you need to set your LD_LIBARARY_PATH
+(for Windows). For Linux/Mac, you need to set your LD_LIBRARY_PATH
 environment variable to contain the path to this library file. 
 
 To simplify the installation, we highly recommend you to link the libraries
@@ -47,7 +47,8 @@ command, or edit your startup.m (~/.octaverc for Octave).
 
 If everything works ok, typing "mcxlab" in Matlab/Octave will print the
 help information. If you see any error, perticularly any missing libraries,
-please make sure you have downloaded the matching version.
+please make sure you have downloaded the matching version built for your
+platform.
 
 
 == # How to use MCXLAB in MATLAB/Octave ==
