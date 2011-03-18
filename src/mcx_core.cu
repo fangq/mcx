@@ -475,7 +475,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
   #endif
 #endif
 	     }
-             f.tnext+=gcfg->minaccumtime; // fluence is a temporal-integration, unit=s
+             f.tnext+=gcfg->minaccumtime*prop.n; // fluence is a temporal-integration, unit=s
 	  }
      }
      // cachebox saves the total absorbed energy of all time in the sphere r<sradius.
