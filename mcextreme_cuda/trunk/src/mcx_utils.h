@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <vector_types.h>
+#include "br2cu.h"
 
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  255

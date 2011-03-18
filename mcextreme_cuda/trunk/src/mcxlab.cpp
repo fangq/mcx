@@ -31,10 +31,10 @@ void mcxlab_usage();
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   Config cfg;
-  mxArray    *tmp, *fout;
+  mxArray    *tmp;
   int        ifield, jstruct;
-  int        ncfg, nfields, ndim;
-  mwSize     fielddim[4];
+  int        ncfg, nfields;
+  int        fielddim[4];
   const char       *outputtag[]={"data"};
 
   if (nrhs==0){
@@ -263,6 +263,7 @@ void mcx_validate_config(Config *cfg){
 extern "C" int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum){
      printf("MCXLAB ERROR %d in unit %s:%d\n",id,filename,linenum);
      mexErrMsgTxt(msg);
+     return id;
 }
 
 void mcxlab_usage(){
