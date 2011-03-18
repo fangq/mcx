@@ -1,4 +1,5 @@
 function data=loadmc2(fname,dim,format)
+%
 %    data=loadmc2(fname,dim,format)
 %
 %    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
@@ -16,7 +17,7 @@ function data=loadmc2(fname,dim,format)
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see http://mcx.sf.net for details
-
+%
 
 if(nargin==2)
    format='float';

@@ -4,6 +4,8 @@
 % In this example, we demonstrate how to use sub-pixel resolution 
 % to represent the problem domain. The domain is consisted of a 
 % 6x6x6 cm box with a 2cm diameter sphere embedded at the center.
+%
+% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg;

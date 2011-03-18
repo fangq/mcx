@@ -1,3 +1,11 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MCXLAB - Monte Carlo eXtreme for MATLAB/Octave by Qianqina Fang
+%
+% In this example, we show the most basic usage of MCXLAB.
+%
+% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 cfg.nphoton=1e7;
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcpos=[30 30 1];

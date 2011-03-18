@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon transport
+//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation                                                                                                
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 //
 //  Reference (Fang2009):
@@ -281,9 +281,10 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
          the parameters associated with a simulation. \n\
 \n\
     It may contain the following fields:\n\
+\n\
      *cfg.nphoton:    the total number of photons to be simulated (integer)\n\
      *cfg.vol:        a 3D array specifying the media index in the domain\n\
-     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, n, g] in order.\n\
+     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.\n\
                       the first row corresponds to medium type 0 which is \n\
                       typically [0 0 1 1]. The second row is type 1, and so on.\n\
      *cfg.tstart:     starting time of the simulation (in seconds)\n\
@@ -298,8 +299,8 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
       cfg.seed:       seed for the random number generator (integer) [0]\n\
       cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]\n\
       cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]\n\
-      cfg.detradius:  radius of the detector (in mm) [1.0]\n\
-      cfg.sradius:    radius within which we use atomic operations (in mm) [0.0]\n\
+      cfg.detradius:  radius of the detector (in grid unit) [1.0]\n\
+      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]\n\
       cfg.respin:     repeat simulation for the given time (integer) [1]\n\
       cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]\n\
       cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index\n\
@@ -307,6 +308,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
       cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection\n\
       cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save\n\
       cfg.issave2pt:  [1]-to save flux distribution, 0-do not save\n\
+      cfg.issrcfrom0: 1-first voxel is [1 1 1], [0]- first voxel is [0 0 0]\n\
       cfg.isgpuinfo:  1-print GPU info, [0]-do not print\n\
       cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize\n\
       cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]\n\
@@ -324,11 +326,13 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
             For each element of detphoton, detphoton(i).data is a 2D array with\n\
             dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row\n\
             is the ID(>0) of the detector that captures the photon; the second\n\
-	    row is the weight of the photon when it is detected; the rest rows\n\
-	    are the partial path lengths (in mm) traveling in medium 1 up to the last.\n\
+            row is the weight of the photon when it is detected; the rest rows\n\
+            are the partial path lengths (in grid unit) traveling in medium 1 up \n\
+            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths\n\
+            to convert them to mm unit.\n\
 \n\
-      if detphoton is ignored, the detected photon will be saved in an .mch file \n\
-      if cfg.issavedeet=1; if no output is given, the flux will be saved to an \n\
+      if detphoton is ignored, the detected photon will be saved in a .mch file \n\
+      if cfg.issavedeet=1; if no output is given, the flux will be saved to a \n\
       .mc2 file if cfg.issave2pt=1 (which is true by default).\n\
 \n\
  Example:\n\
@@ -338,7 +342,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>\n\
       cfg.srcdir=[0 0 1];\n\
       cfg.gpuid=1;\n\
       cfg.autopilot=1;\n\
-      cfg.prop=[0 0 1 1;0.005 1 1.37 0];\n\
+      cfg.prop=[0 0 1 1;0.005 1 0 1.37];\n\
       cfg.tstart=0;\n\
       cfg.tend=5e-9;\n\
       cfg.tstep=5e-10;\n\
