@@ -5,9 +5,12 @@
 % We will investigate the differences between the solutions with and 
 % witout boundary reflections (both external and internal) and show
 % you how to display and analyze the resulting data.
+%
+% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clear cfg;
 
+%% preparing the input data
 % set seed to make the simulation repeatible
 cfg.seed=hex2dec('623F9A9E'); 
 
@@ -36,40 +39,42 @@ cfg.prop=[0 0 1 1            % medium 0: the environment
 
 % time-domain simulation parameters
 cfg.tstart=0;
-cfg.tend=2e-9;
-cfg.tstep=2e-10;
+cfg.tend=5e-9;
+cfg.tstep=5e-10;
 
 % GPU thread configuration
 cfg.autopilot=1;
 cfg.gpuid=1;
 
+%% running simulation without boundary reflection
 fprintf('running simulation ... this takes about 35 seconds on a GTX 470\n');
 cfg.isreflect=0; % disable reflection at exterior boundary
+tic;
 f1=mcxlab(cfg);
+toc;
 
+%% running simulation with boundary reflection enabled
 fprintf('running simulation ... this takes about 50 seconds on a GTX 470\n');
 cfg.isreflect=1; % enable reflection at exterior boundary
 cfg.isrefint=1;  % enable reflection at interior boundary too
 cfg.issavedet=1; % enable recording partial pathlength of detected photons
 cfg.detpos=[31 51 1 2];
+tic;
 [f2,det2]=mcxlab(cfg);
+toc;
 
-% plot the results
+%% plot the results
 figure
 subplot(221);
-if(exist('OCTAVE_VERSION')~=0)
-    imagesc(log10(squeeze(sum(f1.data(:,51,:,:),4))'));
-else
-    contourf(log10(squeeze(sum(f1.data(:,51,:,:),4))'),1:0.5:8);
-end
+contourf(log10(squeeze(sum(f1.data(:,51,:,:),4))'),1:0.5:8);
+hold on
+plot([0 100],[21 21],'--',[0 100],[26 26],'--',[0 100],[36 36],'--');
 title('flux with no reflection');
 
 subplot(222);
-if(exist('OCTAVE_VERSION')~=0)
-    imagesc(log10(squeeze(sum(f2.data(:,51,:,:),4))'));
-else
-    contourf(log10(squeeze(sum(f2.data(:,51,:,:),4))'),1:0.5:8);
-end
+contourf(log10(squeeze(sum(f2.data(:,51,:,:),4))'),1:0.5:8);
+hold on
+plot([0 100],[21 21],'--',[0 100],[26 26],'--',[0 100],[36 36],'--');
 title('flux with reflection at boundaries');
 
 subplot(223);

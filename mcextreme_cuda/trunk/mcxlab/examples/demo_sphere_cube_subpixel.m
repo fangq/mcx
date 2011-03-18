@@ -1,3 +1,4 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MCXLAB - Monte Carlo eXtreme for MATLAB/Octave by Qianqina Fang
 %
 % In this example, we demonstrate how to use sub-pixel resolution 
@@ -24,13 +25,10 @@ cfg.vol=uint8(cfg.vol);
 cfg.srcpos=[30,30,0]+1;
 cfg.srcdir=[0 0 1];
 
-% use the brain optical properties defined at
-% http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/CollinsAtlasMesh
 % format: [mua(1/mm) mus(1/mm) g n]
-
 cfg.prop=[0 0 1 1          % medium 0: the environment
    0.002 1.0 0.01 1.37     % medium 1: cube
-   0.050 5.0 0.90 1.37];   % medium 2: spherical inclusion
+   0.050 0.5 0.01 1.37];   % medium 2: spherical inclusion
 
 % time-domain simulation parameters
 cfg.tstart=0;
@@ -45,7 +43,9 @@ cfg.isreflect=1; % enable reflection at exterior boundary
 cfg.isrefint=1;  % enable reflection at interior boundary too
 
 fprintf('running simulation ... this takes about 3 seconds on a GTX 470\n');
+tic;
 f1=mcxlab(cfg);
+toc;
 
 % define a 1cm radius sphere within a 6x6x6 cm box with a 0.5mm resolution
 dim=120;
@@ -60,7 +60,9 @@ cfg.unitinmm=0.5; % define the pixel size in terms of mm
 cfg.nphoton=8e7;  % you need to simulate 8x photons to get the same noise
 
 fprintf('running simulation ... this takes about 40 seconds on a GTX 470\n');
+tic;
 [f2,det2]=mcxlab(cfg);
+toc;
 
 % plot the results
 figure
@@ -71,7 +73,7 @@ else
     contourf(log10(squeeze(sum(f1.data(:,30,:,:),4))'),1:0.5:8);
 end
 axis equal;
-colorbar('NorthOutside');
+colorbar('SouthOutside');
 title('simulation with 1x1x1 mm resolution');
 
 subplot(122);
@@ -81,5 +83,5 @@ else
     contourf(log10(squeeze(sum(f2.data(:,60,:,:),4))'),1:0.5:8);
 end
 axis equal;
-colorbar('NorthOutside');
+colorbar('SouthOutside');
 title('simulation with 0.5x0.5x0.5 mm resolution');
