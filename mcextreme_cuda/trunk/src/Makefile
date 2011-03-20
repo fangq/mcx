@@ -50,15 +50,16 @@ mtbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TAR
 debugmt debuglog:	CUCCOPT+=-deviceemu
 mtatomic logatomic:	BINARY:=$(BINARY)_atomic
 det mex oct:    CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"Detective MCX"'
-detbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cached Detective MCX"'
+detbox mexbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cached Detective MCX"'
 det detbox: BINARY:=$(BINARY)_det
 
-mex:        AR=mex
-mex oct:    OUTPUT_DIR=../mcxlab
-mex:        BINARY=mcxlab
-mex oct:    CUCCOPT+=--compiler-options -fPIC -DMCX_CONTAINER
-mex oct:    CPPOPT+=-fPIC -DMCX_CONTAINER
-mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
+mexbox mex:        AR=mex
+mexbox mex oct:    OUTPUT_DIR=../mcxlab
+mex:               BINARY=mcxlab
+mexbox:            BINARY=mcxlab_atom
+mexbox mex oct:    CUCCOPT+=--compiler-options -fPIC -DMCX_CONTAINER
+mexbox mex oct:    CPPOPT+=-fPIC -DMCX_CONTAINER
+mexbox mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 oct:        AR=mkoctfile
 oct:        BINARY=mcxlab.mex
@@ -66,7 +67,7 @@ oct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox mex oct: cudasdk $(OUTPUT_DIR)/$(BINARY)
+all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog det detbox mex oct mexbox: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(AR) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
