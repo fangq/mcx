@@ -1,5 +1,9 @@
 = MCXLAB: MCX for MATLAB and GNU Octave =
 
+Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+License: GNU General Public License version 3 (GPLv3)
+Version: this package is part of Monte Carlo eXtreme (MCX) 0.5.0
+
 <toc>
 
 
