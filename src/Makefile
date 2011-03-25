@@ -7,7 +7,7 @@
 BACKEND ?= cuda
 
 ifeq ($(BACKEND),ocelot)
-  CC=g++
+  CC?=g++
 endif
 
 CUDACC=nvcc
@@ -20,12 +20,13 @@ INCLUDEDIRS=-I/usr/local/cuda/include
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l`
+  CUCCOPT=-arch compute_20 #--maxrregcount 32
 else
   LINKOPT=-L/usr/local/cuda/lib -lcudart
+  CUCCOPT=#-arch compute_11 #--maxrregcount 32
 endif
 
-CUCCOPT=#-arch compute_11 #--maxrregcount 32
-CPPOPT=-g -Wall -O3
+CPPOPT=-g -Wall -O3 #-std=c99
 
 OBJSUFFIX=.o
 EXESUFFIX=
