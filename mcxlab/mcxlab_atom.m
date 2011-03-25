@@ -1,4 +1,4 @@
-function [flux,detphoton]=mcxlab(cfg)
+function [flux,detphoton]=mcxlab_atom(cfg)
 %
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
@@ -8,7 +8,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %
 % Format:
-%    [flux,detphoton]=mcxlab(cfg);
+%    [flux,detphoton]=mcxlab_atom(cfg);
 %
 % Input:
 %    cfg: a struct, or struct array. Each element of cfg defines 
@@ -26,6 +26,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %     *cfg.tend:       ending time of the simulation (in second)
 %     *cfg.srcpos:     a 1 by 3 vector, specifying the position of the source
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
+%     *cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
 %      cfg.nthread:    the total CUDA thread number [2048]
 %      cfg.maxgate:    the num of time-gates per simulation
@@ -80,7 +81,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.tend=5e-9;
 %      cfg.tstep=5e-10;
 %      % calculate the flux distribution with the given config
-%      flux=mcxlab(cfg);
+%      flux=mcxlab_atom(cfg);
 %
 %      cfgs(1)=cfg;
 %      cfgs(2)=cfg;
@@ -89,7 +90,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfgs(2).issavedet=1;
 %      cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
 %      % calculate the flux and partial path lengths for the two configurations
-%      [fluxs,detps]=mcxlab(cfgs);
+%      [fluxs,detps]=mcxlab_atom(cfgs);
 %
 %      imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));
 %
