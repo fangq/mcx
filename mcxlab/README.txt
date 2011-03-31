@@ -112,7 +112,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
       cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
       cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save
       cfg.issave2pt:  [1]-to save flux distribution, 0-do not save
-      cfg.issrcfrom0: 1-first voxel is [1 1 1], [0]- first voxel is [0 0 0]
+      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
       cfg.isgpuinfo:  1-print GPU info, [0]-do not print
       cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
       cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
