@@ -170,14 +170,21 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
      float len,cphi,sphi,theta,stheta,ctheta,tmp0,tmp1;
 
-     float *ppath   =sharedmem+threadIdx.x*gcfg->maxmedia;
+     float *ppath=sharedmem;
 #ifdef  USE_CACHEBOX
-     float *cachebox=sharedmem+blockDim.x*gcfg->maxmedia;
-     if(gcfg->skipradius2>EPS) clearcache(cachebox,gcfg->cachebox.x*gcfg->cachebox.y);
+  #ifdef  SAVE_DETECTORS
+     float *cachebox=sharedmem+(gcfg->savedet ? blockDim.x*gcfg->maxmedia: 0);
+  #else
+     float *cachebox=sharedmem;
+  #endif
+     if(gcfg->skipradius2>EPS) clearcache(cachebox,(gcfg->cp1.x-gcfg->cp0.x+1)*(gcfg->cp1.y-gcfg->cp0.y+1)*(gcfg->cp1.z-gcfg->cp0.z+1));
 #else
      float accumweight=0.f;
 #endif
 
+#ifdef  SAVE_DETECTORS
+     ppath=sharedmem+threadIdx.x*gcfg->maxmedia;
+#endif
      *((float4*)(&p))=n_pos[idx];
      *((float4*)(&v))=n_dir[idx];
      *((float4*)(&f))=n_len[idx];
@@ -760,7 +767,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
      */
 #ifdef  USE_CACHEBOX
      if(cfg->sradius>EPS || cfg->sradius<0.f)
-        sharedbuf+=sizeof(float)*(cachebox.x*cachebox.y);
+        sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
 #endif
      if(cfg->issavedet)
         sharedbuf+=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);

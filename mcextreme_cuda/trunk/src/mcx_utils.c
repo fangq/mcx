@@ -19,6 +19,7 @@
 #include <string.h>
 #include <math.h>
 #include "mcx_utils.h"
+#include "mcx_const.h"
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','\0'};
@@ -256,6 +257,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
      mcx_assert(fscanf(in,"%d", &(cfg->medianum))==1);
      cfg->medianum++;
+     if(cfg->medianum>MAX_PROP)
+         mcx_error(-4,"input media types exceed the maximum (255)",__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
@@ -323,9 +326,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 			cfg->srcpos.x+=cfg->srcdir.x;
 			cfg->srcpos.y+=cfg->srcdir.y;
 			cfg->srcpos.z+=cfg->srcdir.z;
-			printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
 			idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
 		}
+		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
 	}
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
