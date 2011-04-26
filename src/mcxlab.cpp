@@ -23,7 +23,8 @@
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
-#define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];printf("mcx.%s=[%g %g %g];\n",#v,val[0],val[1],val[2]);}
+#define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];\
+                                 printf("mcx.%s=[%g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z));}
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
@@ -210,7 +211,6 @@ void mcx_validate_config(Config *cfg){
      	memset(&(cfg->crop0),0,sizeof(uint3));
      	memset(&(cfg->crop1),0,sizeof(uint3));
      }
-printf("sradius %f crop [%f %f %f] [%f %f %f]\n",cfg->sradius,cfg->crop0.x,cfg->crop0.y,cfg->crop0.z,cfg->crop1.x,cfg->crop1.y,cfg->crop1.z);
      if(cfg->medianum==0)
         mexErrMsgTxt("you must define the 'prop' field in the input structure");
      if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
@@ -253,9 +253,9 @@ printf("sradius %f crop [%f %f %f] [%f %f %f]\n",cfg->sradius,cfg->crop0.x,cfg->
 			cfg->srcpos.x+=cfg->srcdir.x;
 			cfg->srcpos.y+=cfg->srcdir.y;
 			cfg->srcpos.z+=cfg->srcdir.z;
-			printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
 			idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
 		}
+		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
 	}
      }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
