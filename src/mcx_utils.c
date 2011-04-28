@@ -637,6 +637,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      	  mcx_readconfig(filename,cfg);
        }
      }
+     if(cfg->issavedet==0)
+       cfg->maxdetphoton=0;
 }
 
 void mcx_version(Config *cfg){
