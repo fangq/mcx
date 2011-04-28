@@ -258,7 +258,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      mcx_assert(fscanf(in,"%d", &(cfg->medianum))==1);
      cfg->medianum++;
      if(cfg->medianum>MAX_PROP)
-         mcx_error(-4,"input media types exceed the maximum (255)",__FILE__,__LINE__);
+         mcx_error(-4,"input media types exceed the maximum (MAX_PROP=3712)",__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)

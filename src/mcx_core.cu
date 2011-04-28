@@ -707,7 +707,7 @@ void mcx_run_simulation(Config *cfg){
      param.cachebox=cachebox;
      param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
      param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
-printf("init %d\n",param.mediaidorig);
+
      Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z;
 
      if(cfg->seed>0)
