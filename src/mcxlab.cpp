@@ -139,8 +139,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         arraydim=mxGetDimensions(item);
 	for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i];
 	if(cfg->vol) free(cfg->vol);
-	cfg->vol=(unsigned char *)malloc(cfg->dim.x*cfg->dim.y*cfg->dim.z);
-	memcpy(cfg->vol,mxGetData(item),cfg->dim.x*cfg->dim.y*cfg->dim.z);
+	cfg->vol=(unsigned short *)malloc(cfg->dim.x*cfg->dim.y*cfg->dim.z*sizeof(unsigned short));
+	memcpy(cfg->vol,mxGetData(item),cfg->dim.x*cfg->dim.y*cfg->dim.z*sizeof(unsigned short));
         printf("mcx.dim=[%d %d %d];\n",cfg->dim.x,cfg->dim.y,cfg->dim.z);
     }else if(strcmp(name,"detpos")==0){
         arraydim=mxGetDimensions(item);

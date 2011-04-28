@@ -15,8 +15,8 @@
 #define MAX_PROP           128                     //maximum property number
 #define MAX_DETECTORS      256
 
-#define DET_MASK           0x80
-#define MED_MASK           0x7F
+#define DET_MASK           0x8000
+#define MED_MASK           0x7FFF
 
 
 #endif

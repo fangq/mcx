@@ -370,8 +370,8 @@ void mcx_loadvolume(char *filename,Config *cfg){
      	     cfg->vol=NULL;
      }
      datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-     cfg->vol=(unsigned char*)malloc(sizeof(unsigned char)*datalen);
-     res=fread(cfg->vol,sizeof(unsigned char),datalen,fp);
+     cfg->vol=(unsigned short*)malloc(sizeof(unsigned short)*datalen);
+     res=fread(cfg->vol,sizeof(unsigned short),datalen,fp);
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
@@ -382,15 +382,15 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
 }
 
-void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
+void  mcx_convertrow2col(unsigned short **vol, uint3 *dim){
      uint x,y,z;
      unsigned int dimxy,dimyz;
-     unsigned char *newvol=NULL;
+     unsigned short *newvol=NULL;
      
      if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
      	return;
      }     
-     newvol=(unsigned char*)malloc(sizeof(unsigned char)*dim->x*dim->y*dim->z);
+     newvol=(unsigned short*)malloc(sizeof(unsigned short)*dim->x*dim->y*dim->z);
      dimxy=dim->x*dim->y;
      dimyz=dim->y*dim->z;
      for(x=0;x<dim->x;x++)
@@ -405,7 +405,7 @@ void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
 void  mcx_maskdet(Config *cfg){
      uint d,dx,dy,dz,idx1d,zi,yi;
      float x,y,z,ix,iy,iz;
-     unsigned char *padvol;
+     unsigned short *padvol;
      
      dx=cfg->dim.x+2;
      dy=cfg->dim.y+2;
@@ -414,11 +414,11 @@ void  mcx_maskdet(Config *cfg){
      /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
        then I don't need to worry about boundaries any more*/
 
-     padvol=(unsigned char*)calloc(dx*dy,dz);
+     padvol=(unsigned short*)calloc(dx*dy,dz*sizeof(unsigned short));
 
      for(zi=1;zi<=cfg->dim.z;zi++)
         for(yi=1;yi<=cfg->dim.y;yi++)
-	        memcpy(padvol+zi*dy*dx+yi*dx+1,cfg->vol+(zi-1)*cfg->dim.y*cfg->dim.x+(yi-1)*cfg->dim.x,cfg->dim.x);
+	        memcpy(padvol+zi*dy*dx+yi*dx+1,cfg->vol+(zi-1)*cfg->dim.y*cfg->dim.x+(yi-1)*cfg->dim.x,cfg->dim.x*sizeof(*padvol));
 
      for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
         for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
@@ -441,7 +441,7 @@ void  mcx_maskdet(Config *cfg){
 		     padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
 		     padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
 		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
-		          cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=(1<<7);/*set the highest bit to 1*/
+		          cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=DET_MASK; /*set the highest bit to 1*/
 	          }
 	      }
 	  }
@@ -454,7 +454,7 @@ void  mcx_maskdet(Config *cfg){
 	 if((fp=fopen(fname,"wb"))==NULL){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
-	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y,cfg->dim.z,fp)!=cfg->dim.z){
+	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y,cfg->dim.z*sizeof(cfg->vol[0]),fp)!=cfg->dim.z){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
 	 fclose(fp);

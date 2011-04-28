@@ -116,7 +116,7 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float we
 #endif
 
 __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *prop,uint *idx1d,
-           uchar *mediaid,uchar isdet, float ppath[],float energyloss[],float energyabsorbed[],float n_det[],uint *dpnum){
+           ushort *mediaid,ushort isdet, float ppath[],float energyloss[],float energyabsorbed[],float n_det[],uint *dpnum){
 
       *energyloss+=p->w;  // sum all the remaining energy
       *energyabsorbed+=1.f-p->w;
@@ -141,7 +141,7 @@ __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pr
    everything in the GPU kernels is in grid-unit. To convert back to length, use
    cfg->unitinmm (scattering/absorption coeff, T, speed etc)
 */
-kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
+kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
      float genergy[],uint n_seed[],float4 n_pos[],float4 n_dir[],float4 n_len[],
      float n_det[], uint *detectedphoton){
 
@@ -159,8 +159,8 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 #ifdef TEST_RACING
      int cc=0;
 #endif
-     uchar  mediaid,mediaidold;
-     char   medid=-1;
+     ushort  mediaid,mediaidold;
+     short   medid=-1;
      float  atten;         //can be taken out to minimize registers
      float  n1;   //reflection var
 
@@ -190,7 +190,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      *((float4*)(&f))=n_len[idx];
 
      gpu_rng_init(t,tnew,n_seed,idx);
+#ifdef  SAVE_DETECTORS
      if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
+#endif
 
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
      idx1d=gcfg->idx1dorig;
@@ -279,7 +281,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                            p.w*expf(-prop.mua*tmp0)); //mua=1/grid, tmp0=grid
 	       f.pscat=SAME_VOXEL;
 	       f.t+=tmp0*prop.n*gcfg->oneoverc0;  //propagation time (unit=s)
+#ifdef  SAVE_DETECTORS
                if(gcfg->savedet) ppath[mediaid-1]+=tmp0; //(unit=grid)
+#endif
                GPUDEBUG((">>ends in voxel %f<%f %f [%d]\n",f.pscat,len,prop.mus,idx1d));
 	  }else{                      //otherwise, move gcfg->minstep
                if(mediaid!=medid)
@@ -289,7 +293,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                medid=mediaid;
 	       f.pscat-=len;     //remaining probability: sum(s_i*mus_i), unit-less
 	       f.t+=gcfg->minaccumtime*prop.n; //propagation time  (unit=s)
+#ifdef  SAVE_DETECTORS
                if(gcfg->savedet) ppath[mediaid-1]+=gcfg->minstep; //(unit=grid)
+#endif
                GPUDEBUG((">>keep going %f<%f %f [%d] %e %e\n",f.pscat,len,prop.mus,idx1d,f.t,f.tnext));
 	  }
 
@@ -509,7 +515,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      n_len[idx]=*((float4*)(&f));
 }
 
-kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], int maxgate,uint3 dimlen){
+kernel void mcx_sum_trueabsorption(float energy[],ushort media[], float field[], int maxgate,uint3 dimlen){
      int i;
      float phi=0.f;
      int idx= blockIdx.x*dimlen.y+blockIdx.y*dimlen.x+ threadIdx.x;
@@ -626,7 +632,7 @@ void mcx_run_simulation(Config *cfg){
      
      int dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
      
-     uchar  *media=(uchar *)(cfg->vol);
+     ushort  *media=(ushort *)(cfg->vol);
      float  *field;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,cfg->isrowmajor,
                      cfg->issave2pt,cfg->isreflect,cfg->isrefint,cfg->issavedet,1.f/cfg->tstep,
@@ -667,8 +673,8 @@ void mcx_run_simulation(Config *cfg){
      energy=(float*)calloc(cfg->nthread*2,sizeof(float));
      Pdet=(float*)calloc(cfg->maxdetphoton,sizeof(float)*(cfg->medianum+1));
 
-     uchar *gmedia;
-     mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)),__FILE__,__LINE__);
+     ushort *gmedia;
+     mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(ushort)*(dimxyz)),__FILE__,__LINE__);
      float *gfield;
      mcx_cu_assess(cudaMalloc((void **) &gfield, sizeof(float)*(dimxyz)*cfg->maxgate),__FILE__,__LINE__);
 
@@ -701,7 +707,7 @@ void mcx_run_simulation(Config *cfg){
      param.cachebox=cachebox;
      param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
      param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
-
+printf("init %d\n",param.mediaidorig);
      Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z;
 
      if(cfg->seed>0)
@@ -745,11 +751,13 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
      fflush(cfg->flog);
      fieldlen=dimxyz*cfg->maxgate;
 
-     cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice);
+     cudaMemcpy(gmedia, media, sizeof(ushort) *dimxyz, cudaMemcpyHostToDevice);
      cudaMemcpy(genergy,energy,sizeof(float) *cfg->nthread*2, cudaMemcpyHostToDevice);
 
      cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice);
      cudaMemcpyToSymbol(gdetpos, cfg->detpos,  cfg->detnum*sizeof(float4), 0, cudaMemcpyHostToDevice);
+
+     mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
      fprintf(cfg->flog,"init complete : %d ms\n",GetTimeMillis()-tic);
 

@@ -54,6 +54,7 @@ typedef union GProperty{
 }Gprop;
 
 typedef unsigned char uchar;
+typedef unsigned short ushort;
 
 typedef struct  __align__(16) KernelParams {
   float3 vsize;
