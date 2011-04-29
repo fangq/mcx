@@ -257,8 +257,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
      mcx_assert(fscanf(in,"%d", &(cfg->medianum))==1);
      cfg->medianum++;
-     if(cfg->medianum>MAX_PROP)
-         mcx_error(-4,"input media types exceed the maximum (MAX_PROP=3712)",__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
@@ -333,6 +331,32 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
      }
+     if(cfg->issavedet==0){ /*if no need to save det, we can compress the media index to save constant memory*/
+        int mediacount=0,j,k,len=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+        for(i=1;i<cfg->medianum;i++){
+           for(j=0;j<=mediacount;j++){
+               if(cfg->prop[j].mua==cfg->prop[i].mua && cfg->prop[j].mus==cfg->prop[i].mus &&
+                  cfg->prop[j].n  ==cfg->prop[i].n   && cfg->prop[j].g==cfg->prop[i].g){
+		  for(k=0;k<len;k++) /*replacing all index i by j, as their properties are the same*/
+                      if(cfg->vol[k]==i) 
+			 cfg->vol[k]=j;
+                  break;
+               }
+           }
+           if(j==mediacount+1){
+               mediacount++;
+               if(mediacount!=i)
+                   memcpy(cfg->prop+mediacount,cfg->prop+i,sizeof(Medium));
+           }
+        }
+	if(mediacount+1!=cfg->medianum){
+		fprintf(cfg->flog,"compressing media from %d to %d types\n",cfg->medianum,mediacount+1);
+		cfg->medianum=mediacount+1;
+	}
+        mcx_maskdet(cfg);
+     }
+     if(cfg->medianum>MAX_PROP)
+         mcx_error(-4,"input media types exceed the maximum (MAX_PROP=3712)",__FILE__,__LINE__);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
@@ -454,7 +478,7 @@ void  mcx_maskdet(Config *cfg){
 	 if((fp=fopen(fname,"wb"))==NULL){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
-	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y,cfg->dim.z*sizeof(cfg->vol[0]),fp)!=cfg->dim.z){
+	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y*sizeof(cfg->vol[0]),cfg->dim.z,fp)!=cfg->dim.z){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
 	 fclose(fp);
