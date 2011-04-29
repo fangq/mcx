@@ -308,8 +308,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
 		cfg->isrowmajor=0;
 	}
-	if(cfg->issavedet)
-		mcx_maskdet(cfg);
 	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
 	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
 		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
@@ -356,6 +354,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }
      if(cfg->medianum>MAX_PROP)
          mcx_error(-4,"input media types exceed the maximum (MAX_PROP=3712)",__FILE__,__LINE__);
+     if(cfg->issavedet)
+         mcx_maskdet(cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
