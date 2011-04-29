@@ -353,7 +353,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 		fprintf(cfg->flog,"compressing media from %d to %d types\n",cfg->medianum,mediacount+1);
 		cfg->medianum=mediacount+1;
 	}
-        mcx_maskdet(cfg);
      }
      if(cfg->medianum>MAX_PROP)
          mcx_error(-4,"input media types exceed the maximum (MAX_PROP=3712)",__FILE__,__LINE__);
