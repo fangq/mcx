@@ -116,10 +116,9 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float we
 #endif
 
 __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *prop,uint *idx1d,
-           uchar *mediaid,uchar isdet, float ppath[],float energyloss[],float energyabsorbed[],float n_det[],uint *dpnum){
+           uchar *mediaid,uchar isdet, float ppath[],float energyloss[],float n_det[],uint *dpnum){
 
       *energyloss+=p->w;  // sum all the remaining energy
-      *energyabsorbed+=1.f-p->w;
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
       if(gcfg->savedet){
@@ -405,7 +404,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
 		    	    launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),
-			        ppath,&energyloss,&energyabsorbed,n_det,detectedphoton);
+			        ppath,&energyloss,n_det,detectedphoton);
 			    continue;
 			}
 			tmp0=n1/prop.n;
@@ -439,7 +438,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 		  }
               }else{  // launch a new photon
 		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,
-		      &energyloss,&energyabsorbed,n_det,detectedphoton);
+		      &energyloss,n_det,detectedphoton);
 		  continue;
               }
 	  }
@@ -450,6 +449,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
+                  energyabsorbed+=p.w*prop.mua;
 #ifdef TEST_RACING
                   // enable TEST_RACING to determine how many missing accumulations due to race
                   if( (p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)>gcfg->skipradius2) {
@@ -604,7 +604,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 */
 void mcx_run_simulation(Config *cfg){
 
-     int i,j,iter;
+     int i,iter;
      float  minstep=MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
@@ -619,7 +619,7 @@ void mcx_run_simulation(Config *cfg){
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
-     float Vvox,scale,absorp,eabsorp;
+     float Vvox,scale,eabsorp;
 
      dim3 mcgrid, mcblock;
      dim3 clgrid, clblock;
@@ -865,13 +865,8 @@ is more than what your have specified (%d), please use the -H option to specify 
                        }
 		       for(i=0;i<cfg->nthread;i++)
                            eabsorp+=Plen0[i].z;  // the accumulative absorpted energy near the source
-       	       	       for(i=0;i<dimxyz;i++){
-                           absorp=0.f;
-                           for(j=0;j<cfg->maxgate;j++)
-                              absorp+=field[j*dimxyz+i];
-                           eabsorp+=absorp*cfg->prop[media[i] & MED_MASK].mua;
-       	       	       }
-                       scale=energy[1]/((energy[0]+energy[1])*Vvox*cfg->tstep*eabsorp);
+                       eabsorp+=energy[1];
+                       scale=(cfg->nphoton-energy[0])/(cfg->nphoton*Vvox*cfg->tstep*eabsorp);
 		       if(cfg->unitinmm!=1.f) 
 		          scale/=(cfg->unitinmm*cfg->unitinmm); /* Vvox*(U*U*U) * (Tstep) * (Eabsorp/U) */
                        fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
@@ -929,7 +924,7 @@ is more than what your have specified (%d), please use the -H option to specify 
      fprintf(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
              photoncount,cfg->nphoton,cfg->nthread,cfg->respin,(double)photoncount/toc); fflush(cfg->flog);
      fprintf(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
-             energyloss,energyabsorbed,energyloss+energyabsorbed);fflush(cfg->flog);
+             energyloss,cfg->nphoton-energyloss,(float)cfg->nphoton);fflush(cfg->flog);
      fflush(cfg->flog);
 
      cudaFree(gmedia);
