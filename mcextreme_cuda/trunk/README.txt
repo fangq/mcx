@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.5.0 (Black-hole)
+Version: 0.5.1 (Black-hole update 1)
 
 ---------------------------------------------------------------------
 
@@ -26,9 +26,10 @@ I.  Introduction
 Monte Carlo eXtreme (MCX) is a fast photon transport simulation 
 software for 3D heterogeneous turbid media. By taking advantage of 
 the massively parallel threads and extremely low memory latency in a 
-modern graphics processor (GPU), this program is able to perform Monte 
-Carlo (MC) simulations at a blazing speed, typically hundreds times 
-faster than a fully optimized CPU-based MC implementation.
+modern graphics processing unit (GPU), this program is able to perform Monte 
+Carlo (MC) simulations at a blazing speed, typically hundreds to
+a thousand times faster than a fully optimized CPU-based MC 
+implementation.
 
 The algorithm of this software is detailed in the Reference [1]. 
 A short summary of the main features includes:
@@ -39,27 +40,33 @@ A short summary of the main features includes:
 *. saving photon partial path lengths at the detectors
 *. optimized random number generators
 *. build-in flux/fluence normalization to output Green's functions
+*. user adjustable voxel resolution
 *. improved accuracy near the source with atomic operations
 *. cross-platform graphics user interface
 *. native Matlab/Octave support for high usability
 
-The software can be used on Windows, Linux and Mac OS. Two variants 
-will be provided, one for nVidia(TM) graphics hardware written in CUDA, 
-and one for ATI(TM) written in OpenCL (coming soon!).
+This software can be used on Windows, Linux and Mac OS. 
+MCX is written in CUDA and can be used with NVIDIA hardware
+with the native NVIDIA drivers, or used with GPU ocelot open-source
+libraries for CPUs and AMD GPUs. An OpenCL implementation of
+MCX, i.e. MCX-CL, will be announced soon and can support 
+NVIDIA/AMD/Intel hardware out-of-box.
 
 
 II. Requirement and Installation
 
 For MCX-CUDA, the requirements for using this software are
 
-*. a CUDA capable nVidia graphics card
-*. pre-installed CUDA driver [1] and nVidia graphics driver
+*. a CUDA capable NVIDIA graphics card
+*. pre-installed CUDA driver [1] and NVIDIA graphics driver
 
 If your hardware does not support CUDA, the installation of the CUDA 
 toolkit will fail. A list of CUDA capable cards can be found at [2].
 Generally speaking, GeForce 8XXX series or newer are required.
-For simulations on large volumes, sufficient video memory is
-also required to perform the simulation. The minimum amount of 
+Using the latest NVIDIA card is expected to generate the best
+speed (GTX 4xx is twice faster than 2xx, which is twice faster than 
+8800/9800). For simulations with large volumes, sufficient video memory 
+is also required to perform the simulation. The minimum amount of 
 graphics memory required for a MC simulation is Nx*Ny*Nz*Ng
 bytes for the input tissue data plus Nx*Ny*Nz*Ng*4 bytes for 
 the output flux/fluence data - where Nx,Ny,Nz are the dimensions of the 
@@ -101,7 +108,7 @@ substitute the actual path under which libcudart.* exists.
 III.Running Simulations
 
 To run a simulation, the minimum input is a configuration (text) file,
-and a volume (a binary file with each byte representing a medium 
+and a volume file (a binary file with each byte representing a medium 
 index). Typing the name of the executable without any parameters, 
 will print the help information and a list of supported parameters, 
 such as the following:
@@ -139,7 +146,9 @@ where possible parameters include (the first item in [] is the default value)
  -I            (--printgpu)    print GPU information and run program
  -v            (--version)     print MCX revision number
 example:
-       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1
+       mcx -A -n 1e7 -f input.inp -G 1 
+or
+       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1
 </pre>
 
 the above command will launch 2048 GPU threads (-t) with every 64 threads
@@ -151,10 +160,10 @@ simulation will run 10 concurrent time gates (-g). Photons passing through
 the defined detector positions will be saved for later rescaling (-d).
 
 Currently, MCX supports a modified version of the input file format used 
-for tMCimg. (The difference is that MCX allows for comments)
+by tMCimg. (The difference is that MCX allows comments in the input file)
 A typical MCX input file looks like this:
 
-1000000              # total photon (not used), use -m to specify photon moves
+1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
 30.0 30.0 1.0        # source position (mm)
 0 0 1                # initial directional vector
@@ -165,8 +174,8 @@ semi60x60x60.bin     # volume ('unsigned char' format)
 1 60 1 60            # z: voxel size, dim, start/end indices
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
-4       1            # detector number and radius (grid)
-30.0    20.0    1.0  # detector 1 position (grid)
+4       1            # detector number and radius (in grid unit)
+30.0    20.0    1.0  # detector 1 position (real numbers in grid unit)
 30.0    40.0    1.0  # ...
 20.0    30.0    1.0
 40.0    30.0    1.0
@@ -240,7 +249,7 @@ to run MCX simulations. If you get error messages or not able
 to see any usable GPU, please check the following:
 
 * are you running MCX Studio/MCX on a computer with a supported card?
-* have you installed the CUDA/nVidia drivers correctly?
+* have you installed the CUDA/NVIDIA drivers correctly?
 * did you put mcx in the same folder as mcxstudio or add its path to PATH?
 
 If your system is properly configured, you can now add new simulations 
@@ -304,38 +313,46 @@ is printed (in ms). Also the accumulated elapsed time is printed for
 all memory transaction from GPU to CPU. Depending on the domain 
 size, typically the data transfer takes about 50 ms per run.
 
-By default, MCX calculates the unitary-source solution for flux; 
-the normalization factor (see Reference [1]) used to produce this 
-solution is printed on the screen at the end of the simulation, and 
-the flux distribution saved to a file.
+By default, MCX produces the '''Green's function''' of the 
+'''fluence rate''' (or '''flux''') for the given domain and 
+source. Sometime it is also known as the time-domain "two-point" 
+function. If you run MCX with the following command
 
-At the end of the screen output, statistical  information about the 
-photons is displayed. Here's sample output:
+  mcx -f input.inp -s output ....
 
-   0[A-0.320966  0.693810 -0.644674]C9586 J   15 W 0.943725(P25.869 30.965  1.877)T 3.864e-11 L 1.265 3035790080
-   1[A-0.121211 -0.151523  0.980989]C9682 J  184 W 0.408108(P13.841 33.778 25.937)T 5.979e-10 L-9999.000 172048448
-   ......
-   simulated 9996602 photons with 1024 threads and 795590 moves per threads (repeat x1)
-   exit energy:  8.34534150e+06 + absorbed energy:  1.65226412e+06 = total:   9.99760600e+06
+the flux data will be saved in a file named "output.dat" under
+the current folder. If you run MCX without "-s output", the
+output file will be named as "input.inp.dat".
 
-This output reflects the final states for each simulation thread (for each
-thread, there is only one active photon). The fields can be interpreted as follow
+To understand this further, you need to know that a '''flux''' is
+measured by number of particles passing through an infinitesimal 
+spherical surface per <em>unit time</em> at <em>a given location</em>.
+The unit of MCX output flux is "1/(mm<sup>2</sup>s)", if the flux is interpreted as the 
+"particle flux" [4], or "J/(mm<sup>2</sup>s)", if it is interpreted as the 
+"energy flux" [4].
 
-0: thread id
-[A-0.320966  0.693810 -0.644674]: direction vector
-C9586: completed photons for this thread
-J   15: number of jumps (scattering events)
-W 0.943725: current photon packet weight
-(P25.869 30.965  1.877): current photon position
-T 3.864e-11: accumulative propagation time
-L 1.265: remaining scattering length for the current jump
-3035790080: the random number state
+The Green's function of the flux simply means that the flux is produced
+by a '''unitary source'''. In simple terms, this represents the 
+fraction of particles/energy that arrives a location per second 
+under <em>the radiation of 1 unit (packet or J) of particle or energy 
+at time t=0</em>. The Green's function is calculated by a process referred
+to as the "normalization" in the MCX code and is detailed in the 
+MCX paper [5] (MCX and MMC outputs share the same meanings).
 
-The above thread info is for debugging purposes. The total 
-number of threads to be printed can be specified using the
-"-p" option. 
-
-
+Please be aware that the output flux is calculated at each time-window 
+defined in the input file. For example, if you type 
+ 0.e+00 5.e-09 1e-10  # time-gates(s): start, end, step
+in the 5th row in the input file, MCX will produce 50 flux
+distributions, corresponding to the time-windows at [0 0.1] ns, 
+[0.1 0.2]ns ... and [4.9,5.0] ns. To convert the flux distributions
+to the fluence distributions for each time-window, you just need to
+multiply each solution by the width of the window, 0.1 ns in this case. To convert the time-domain flux
+to the continuous-wave (CW) fluence, you need to integrate the
+flux in t=[0,inf]. Assuming the flux after 5 ns is negligible, then the CW
+fluence is simply sum(flux_i*0.1 ns, i=1,50). You can read 
+<tt>mcx/examples/validation/plotsimudata.m</tt>
+and <tt>mcx/examples/sphbox/plotresults.m</tt> for examples 
+to compare an MCX output with the analytical flux/fluence solutions.
 
 VII. Reference
 
@@ -348,6 +365,8 @@ you to cite the above paper in your related publications.
 
 Links: 
 
-[1] http://www.nvidia.com/object/cuda_get.html
-[2] http://www.nvidia.com/object/cuda_learn_products.html
+[1] http://developer.nvidia.com/cuda-downloads
+[2] http://www.nvidia.com/object/cuda_gpus.html
 [3] http://en.wikipedia.org/wiki/Row-major_order
+[4] http://science.jrank.org/pages/60024/particle-fluence.html
+[5] http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-22-20178

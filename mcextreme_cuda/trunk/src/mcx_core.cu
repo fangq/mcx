@@ -733,7 +733,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
      fprintf(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
              MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
-     fprintf(cfg->flog,"- compiled with: RNG [%s] Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
+     fprintf(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
 #ifdef SAVE_DETECTORS
      fprintf(cfg->flog,"- this version CAN save photons at the detectors\n\n");
 #else
@@ -781,7 +781,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
        param.twin1=t+cfg->tstep*cfg->maxgate;
        cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice);
 
-       fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.2ens %.2ens] ...\n"
+       fprintf(cfg->flog,"lauching MCX simulation for time window [%.2ens %.2ens] ...\n"
            ,param.twin0*1e9,param.twin1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field

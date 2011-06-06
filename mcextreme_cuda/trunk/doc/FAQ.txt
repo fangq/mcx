@@ -13,6 +13,11 @@ Frequently Asked Questions about MCX
 
           5. [6]Will you consider porting MCX to MPI to run on my cluster?
 
+          6. [7]What is the maximum number of media types that MCX can
+          handle?
+
+          7. [8]What is the maximum number of detectors in MCX?
+
 1. I am getting a "kernel launch timed-out" error, what is that?
 
    Answer: This error happens only when you are using a non-dedicated GPU.
@@ -50,7 +55,7 @@ Frequently Asked Questions about MCX
    race conditions, CUDA provides a set of "atomic" operations, where
    read-compute-write process in a thread can not be interrupted by other
    threads. Unfortunately, there is a great speed penalty for using these
-   functions. As we have shown in Fig. 7 in our [7]paper, the atomic
+   functions. As we have shown in Fig. 7 in our [9]paper, the atomic
    version of MCX can only achieve about 75x acceleration at an optimal
    thread number around 500~1000, compared with 300x acceleration with the
    non-atomic versions. More importantly, the performance of atomic MCX
@@ -59,7 +64,7 @@ Frequently Asked Questions about MCX
    Fortunately, in our algorithm, the photon propagation for each thread
    is maximally asynchronized, together with the exponential decay of the
    fluence, the overall impact of the race condition is negligible (as
-   shown in Fig. 4 of [8]Fang2009). For a range of scattering
+   shown in Fig. 4 of [10]Fang2009). For a range of scattering
    coefficients, the accumulation-miss due to race condition is around 1%
    for over 1000 threads. Using the non-atomic version can give quite
    accurate solutions as long as it is a few voxels away from the source.
@@ -70,11 +75,11 @@ Frequently Asked Questions about MCX
    source, and is only 20% slower than the non-atomic version (i.e. the
    Vanilla MCX). If the accuracy near the source is important for your
    application, please use this binary for your simulation. More details
-   can be found in [9]this document.
+   can be found in [11]this document.
 
 3. How do I interpret MCX's output data?
 
-   Please read the [10]output interpretation of MMC (Mesh-based Monte
+   Please read the [12]output interpretation of MMC (Mesh-based Monte
    Carlo). The meanings of the outputs from both software are almost
    identical. The only difference is that MCX saves the output on a
    voxelated grid, and MMC saves on a mesh.
@@ -85,8 +90,8 @@ Frequently Asked Questions about MCX
    have simultaneously. You must use the "-G" option to specify a
    different GPU ID for each job, and seed them independently by using
    different input files (change the second row of each input file). All
-   of these can be done automatically using [11]GNU Parallel. You can find
-   examples of running parallel jobs using this tool at [12]this page.
+   of these can be done automatically using [13]GNU Parallel. You can find
+   examples of running parallel jobs using this tool at [14]this page.
    This approach also supports running MCX over a distributed system such
    as a cluster.
 
@@ -97,10 +102,28 @@ Frequently Asked Questions about MCX
 5. Will you consider porting MCX to MPI to run on my cluster?
 
    Answer: There are simple alternatives, and you can find my arguments on
-   this at [13]this link]. The support for distributed systems is similar
+   this at [15]this link]. The support for distributed systems is similar
    to the support for multiple GPUs in the same box. You are recommended
-   to use [14]GNU Parallel to manage parallel jobs. Examples can be found
-   [15]here.
+   to use [16]GNU Parallel to manage parallel jobs. Examples can be found
+   [17]here.
+
+6. What is the maximum number of media types that MCX can handle?
+
+   Answer: In MCX v0.5, the maximum number of media types is 128. If you
+   need more than 128 media, you can check out a special branch of mcx by
+   the following command:
+
+  svn checkout --username anonymous_user [18]https://orbit.nmr.mgh.harvard.edu/svn/mcextreme/mcextreme_cuda/branches/media16 mcx
+
+   In this branch, we use an "unsigned short" instead of "unsigned char"
+   to represent a medium index. For CUDA devices with 64k constant memory,
+   this branch can use a maximum of 3712 tissue types. You do need to
+   create your volume input (*.bin) in "unsigned short" per voxel.
+
+7. What is the maximum number of detectors in MCX?
+
+   Answer: The build-in maximum detector number in MCX is 256. You can
+   modify this number in the mcx_const.h unit.
 
 References
 
@@ -110,12 +133,15 @@ References
    4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#How_do_I_interpret_MCX_s_output_data
    5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#Does_MCX_support_multiple_GPUs_in_a_single_computer
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#Will_you_consider_porting_MCX_to_MPI_to_run_on_my_cluster
-   7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
-   8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.4.9
-  10. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
-  11. http://www.gnu.org/software/parallel/
-  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
-  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
-  14. http://www.gnu.org/software/parallel/
-  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
+   7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_media_types_that_MCX_can_handle
+   8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_detectors_in_MCX
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+  10. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.4.9
+  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
+  13. http://www.gnu.org/software/parallel/
+  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
+  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
+  16. http://www.gnu.org/software/parallel/
+  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
+  18. https://orbit.nmr.mgh.harvard.edu/svn/mcextreme/mcextreme_cuda/branches/media16

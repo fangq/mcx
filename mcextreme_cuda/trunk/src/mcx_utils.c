@@ -690,5 +690,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -I            (--printgpu)    print GPU information and run program\n\
  -v            (--version)     print MCX revision number\n\
 example:\n\
-       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1\n",exename,exename);
+       %s -A -n 1e7 -f input.inp -G 1 \n\
+or\n\
+       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1\n",exename,exename,exename);
 }
