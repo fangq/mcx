@@ -270,5 +270,9 @@ extern "C" int mcx_throw_exception(const int id, const char *msg, const char *fi
 }
 
 void mcxlab_usage(){
-     printf("Usage:\n    [flux,detphoton]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.");
+#ifdef USE_CACHEBOX
+     printf("Usage:\n    [flux,detphoton]=mcxlab_atom(cfg);\n\nPlease run 'help mcxlab_atom' for more details.\n");
+#else
+     printf("Usage:\n    [flux,detphoton]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+#endif
 }
