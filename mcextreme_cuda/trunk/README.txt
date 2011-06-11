@@ -283,36 +283,6 @@ mc2 files is the same as the input file: i.e., if the input is row-major, the
 output is row-major, and so on. The dimensions of the file are Nx, Ny, Nz, and Ng
 where Ng is the total number of time gates.
 
-One can load a mc2 output file into Matlab or Octave using the
-loadmc2 function in <mcx root>/utils. 
-
-To get a continuous-wave solution, run a simulation with a sufficiently 
-long time window, and sum the flux along the time dimension, for 
-example
-
-   mcx=loadmc2('output.mc2',[60 60 60 10],'float');
-   cw_mcx=sum(mcx,4);
-
-Note that for time-resolved simulations, the corresponding solution
-in the results approximates the flux at the center point
-of each time window. For example, if the simulation time window 
-setting is [t0,t0+dt,t0+2dt,t0+3dt...,t1], the time points for the 
-snapshots stored in the solution file is located at 
-[t0+dt/2, t0+3*dt/2, t0+5*dt/2, ... ,t1-dt/2]
-
-A more detailed interpretation of the output data can be found at 
-http://mcx.sf.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
-
-
-6.2 Console Print messages
-
-Timing information is printed on the screen (stdout). The 
-clock starts (at time T0) right before the initialization data is copied 
-from CPU to GPU. For each simulation, the elapsed time from T0
-is printed (in ms). Also the accumulated elapsed time is printed for 
-all memory transaction from GPU to CPU. Depending on the domain 
-size, typically the data transfer takes about 50 ms per run.
-
 By default, MCX produces the '''Green's function''' of the 
 '''fluence rate''' (or '''flux''') for the given domain and 
 source. Sometime it is also known as the time-domain "two-point" 
@@ -341,7 +311,9 @@ MCX paper [5] (MCX and MMC outputs share the same meanings).
 
 Please be aware that the output flux is calculated at each time-window 
 defined in the input file. For example, if you type 
+
  0.e+00 5.e-09 1e-10  # time-gates(s): start, end, step
+
 in the 5th row in the input file, MCX will produce 50 flux
 distributions, corresponding to the time-windows at [0 0.1] ns, 
 [0.1 0.2]ns ... and [4.9,5.0] ns. To convert the flux distributions
@@ -353,6 +325,36 @@ fluence is simply sum(flux_i*0.1 ns, i=1,50). You can read
 <tt>mcx/examples/validation/plotsimudata.m</tt>
 and <tt>mcx/examples/sphbox/plotresults.m</tt> for examples 
 to compare an MCX output with the analytical flux/fluence solutions.
+
+One can load a mc2 output file into Matlab or Octave using the
+loadmc2 function in the <mcx root>/utils folder. 
+
+To get a continuous-wave solution, run a simulation with a sufficiently 
+long time window, and sum the flux along the time dimension, for 
+example
+
+   mcx=loadmc2('output.mc2',[60 60 60 10],'float');
+   cw_mcx=sum(mcx,4);
+
+Note that for time-resolved simulations, the corresponding solution
+in the results approximates the flux at the center point
+of each time window. For example, if the simulation time window 
+setting is [t0,t0+dt,t0+2dt,t0+3dt...,t1], the time points for the 
+snapshots stored in the solution file is located at 
+[t0+dt/2, t0+3*dt/2, t0+5*dt/2, ... ,t1-dt/2]
+
+A more detailed interpretation of the output data can be found at 
+http://mcx.sf.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
+
+
+6.2 Console print messages
+
+Timing information is printed on the screen (stdout). The 
+clock starts (at time T0) right before the initialization data is copied 
+from CPU to GPU. For each simulation, the elapsed time from T0
+is printed (in ms). Also the accumulated elapsed time is printed for 
+all memory transaction from GPU to CPU.
+
 
 VII. Reference
 

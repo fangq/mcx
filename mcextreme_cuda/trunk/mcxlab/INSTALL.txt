@@ -19,8 +19,8 @@ then create the following links:
 
 === For 64bit Windows 7 users: ===
 
-The MATLAB mex file was compiled with CUDA toolkit 3.2. You must
-install CUDA 3.2 or above to run the mex file. All others were 
-compiled against CUDA toolkit 2.3, and are compatible with CUDA 
-version equal or newer than 2.3.
+The MATLAB mex file was compiled with CUDA toolkit 4.0. You must
+install CUDA 4.0 or above to run the mex file. All others were 
+compiled against CUDA toolkit 4.0, and are compatible with CUDA 
+version equal or newer than 4.0.
 

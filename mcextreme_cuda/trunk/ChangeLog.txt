@@ -2,10 +2,10 @@
 
 == MCX 0.5.1 (Black Hole - update 1), FangQ <fangq nmr mgh harvard edu> ==
 
-2011-05-03 use the expected absorption for normalization to reduce non-atomic impact
-2011-04-26 fix a serious shared-mem buffer length bug (can cause crash)
-2011-04-26 MCXLAB now accepts crop0/crop1 fields to specify shared-mem region
-2011-03-25 new GPU-ocelot compilation flag
+ 2011-05-03 use the expected absorption for normalization to reduce non-atomic impact
+ 2011-04-26 fix a serious shared-mem buffer length bug (can cause crash)
+ 2011-04-26 MCXLAB now accepts crop0/crop1 fields to specify shared-mem region
+ 2011-03-25 new GPU-ocelot compilation flag
 
 == MCX 0.5.0 (Black Hole), FangQ <fangq nmr mgh harvard edu> ==
 
