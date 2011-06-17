@@ -253,6 +253,9 @@ void mcx_validate_config(Config *cfg){
 			cfg->srcpos.x+=cfg->srcdir.x;
 			cfg->srcpos.y+=cfg->srcdir.y;
 			cfg->srcpos.z+=cfg->srcdir.z;
+                        if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f ||
+                               cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
+                               mcx_error(-4,"searching non-zero voxel failed along the incident vector",__FILE__,__LINE__);
 			idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
 		}
 		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
