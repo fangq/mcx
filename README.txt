@@ -165,13 +165,13 @@ A typical MCX input file looks like this:
 
 1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
-30.0 30.0 1.0        # source position (mm)
+30.0 30.0 1.0        # source position (in grid unit)
 0 0 1                # initial directional vector
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' format)
-1 60 1 60            # x: voxel size, dim, start/end indices
-1 60 1 60            # y: voxel size, dim, start/end indices 
-1 60 1 60            # z: voxel size, dim, start/end indices
+1 60 1 60            # x voxel size in mm (isotropic only), dim, start/end indices
+1 60 1 60            # y voxel size, must be same as x, dim, start/end indices 
+1 60 1 60            # y voxel size, must be same as x, dim, start/end indices
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
 4       1            # detector number and radius (in grid unit)

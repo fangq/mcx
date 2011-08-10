@@ -24,7 +24,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %     *cfg.tstart:     starting time of the simulation (in seconds)
 %     *cfg.tstep:      time-gate width of the simulation (in seconds)
 %     *cfg.tend:       ending time of the simulation (in second)
-%     *cfg.srcpos:     a 1 by 3 vector, specifying the position of the source
+%     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
 %     *cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
