@@ -1,10 +1,10 @@
-1000000              # total photon
+1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
 30.0 30.0 1.0        # source position (in grid unit)
 0 0 1                # initial directional vector
 0.e+00 5.e-09 5.e-9  # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('uchar' format)
-1 60 1 60            # x: voxel size, dim, start/end indices
+1 60 1 60            # x: voxel size (isotropic only), dim, start/end indices
 1 60 1 60            # y: voxel size, dim, start/end indices 
 1 60 1 60            # z: voxel size, dim, start/end indices
 1                    # num of media
