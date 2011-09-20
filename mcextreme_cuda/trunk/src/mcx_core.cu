@@ -135,7 +135,7 @@ __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pr
       *((float4*)(prop))=gproperty[*mediaid]; //always use mediaid to read gproperty[]
 }
 
-/*
+/**
    this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
    everything in the GPU kernels is in grid-unit. To convert back to length, use
    cfg->unitinmm (scattering/absorption coeff, T, speed etc)
@@ -521,7 +521,7 @@ kernel void mcx_sum_trueabsorption(float energy[],uchar media[], float field[], 
 }
 
 
-/*
+/**
    assert cuda memory allocation result
 */
 void mcx_cu_assess(cudaError_t cuerr,const char *file, const int linenum){
@@ -531,7 +531,7 @@ void mcx_cu_assess(cudaError_t cuerr,const char *file, const int linenum){
 }
 
 
-/*
+/**
   query GPU info and set active GPU
 */
 int mcx_set_gpu(Config *cfg){
@@ -599,7 +599,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 }
 
 
-/*
+/**
    host code for MCX kernels
 */
 void mcx_run_simulation(Config *cfg){

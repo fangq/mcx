@@ -491,7 +491,7 @@ void  mcx_maskdet(Config *cfg){
 	   }
         }
         if(cfg->issavedet && count==0)
-              fprintf(stderr,"WARNING: detector %d is not located on the interface, please check coordinates.\n",d+1);
+              fprintf(stderr,"MCX WARNING: detector %d is not located on an interface, please check coordinates.\n",d+1);
      }
      /**
          To test the results, you should use -M to dump the det-mask, load 
@@ -717,25 +717,24 @@ where possible parameters include (the first item in [] is the default value)\n\
  -s sessionid  (--session)     a string to label all output file names\n\
  -f config     (--input)       read config from a file\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
- -m [0|int]    (--move)        photon moves/thread(not supported, use -n only)\n\
  -t [2048|int] (--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
- -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.\n\
- -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto\n\
+ -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedic.\n\
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
  -r [1|int]    (--repeat)      number of repetitions\n\
- -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
- -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1\n\
+ -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
+ -z [0|1]      (--srcfrom0)    1 volume coord. origin [0 0 0]; 0 use [1 1 1]\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
- -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit\n\
- -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not\n\
+ -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
+ -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy\n\
+ -R [0.|float] (--skipradius)  cached zone radius from source to use atomics\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normalize flux to unitary, 0 save raw\n\
- -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
- -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save\n\
+ -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
+ -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
+ -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
- -S [1|0]      (--save2pt)     1 to save the flux field, 0 do not save\n\
+ -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
  -E [0|int]    (--seed)        set random-number-generator seed\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
