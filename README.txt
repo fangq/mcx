@@ -120,25 +120,24 @@ where possible parameters include (the first item in [] is the default value)
  -s sessionid  (--session)     a string to label all output file names
  -f config     (--input)       read config from a file
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
- -m [0|int]    (--move)        photon moves/thread(not supported, use -n only)
  -t [2048|int] (--thread)      total thread number
  -T [64|int]   (--blocksize)   thread number per block
- -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.
- -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto
+ -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto
  -r [1|int]    (--repeat)      number of repetitions
- -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array
- -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1
+ -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
+ -z [0|1]      (--srcfrom0)    1 volume coord. origin [0 0 0]; 0 use [1 1 1]
  -g [1|int]    (--gategroup)   number of time gates per run
- -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit
- -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not
+ -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
+ -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
- -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy
+ -R [0.|float] (--skipradius)  cached zone radius from source to use atomics
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
- -U [1|0]      (--normalize)   1 to normalize flux to unitary, 0 save raw
- -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save
- -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save
+ -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
+ -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save
+ -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
  -H [1000000]  (--maxdetphoton)max number of detected photons
- -S [1|0]      (--save2pt)     1 to save the flux field, 0 do not save
+ -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
  -E [0|int]    (--seed)        set random-number-generator seed
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
@@ -165,7 +164,7 @@ A typical MCX input file looks like this:
 
 1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
-30.0 30.0 1.0        # source position (in grid unit)
+30.0 30.0 0.0 1      # source position (in grid unit), the last num sets srcfrom0 (-z)
 0 0 1                # initial directional vector
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' format)
@@ -175,10 +174,10 @@ semi60x60x60.bin     # volume ('unsigned char' format)
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
 4       1            # detector number and radius (in grid unit)
-30.0    20.0    1.0  # detector 1 position (real numbers in grid unit)
-30.0    40.0    1.0  # ...
-20.0    30.0    1.0
-40.0    30.0    1.0
+30.0    20.0    0.0  # detector 1 position (real numbers in grid unit)
+30.0    40.0    0.0  # ...
+20.0    30.0    0.0
+40.0    30.0    0.0
 
 Note that the scattering coefficient mus=musp/(1-g).
 
