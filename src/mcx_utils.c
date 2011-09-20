@@ -123,6 +123,11 @@ void mcx_normalize(float field[], float scale, int fieldlen){
 
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
      fprintf(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
+     if(id==-cudaErrorLaunchTimeout){
+         fprintf(stdout,"This error often happens when you are using a non-dedicated GPU.\n\
+Please checkout FAQ #1 for more details:\n\
+URL: http://mcx.sf.net/cgi-bin/index.cgi?Doc/FAQ\n");
+     }
 #ifdef MCX_CONTAINER
      mcx_throw_exception(id,msg,file,linenum);
 #else
@@ -184,6 +189,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	fprintf(stdout,"%d\nPlease specify the position of the source (in grid unit): [10 10 5]\n\t",cfg->seed);
      mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
+     if(cfg->issrcfrom0==0 && sscanf(comm,"%d",&itmp)==1)
+         cfg->issrcfrom0=itmp;
+
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
                                    cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
@@ -416,7 +424,7 @@ void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
 }
 
 void  mcx_maskdet(Config *cfg){
-     uint d,dx,dy,dz,idx1d,zi,yi,c;
+     uint d,dx,dy,dz,idx1d,zi,yi,c,count;
      float x,y,z,ix,iy,iz,rx,ry,rz,d2,mind2,d2max;
      unsigned char *padvol;
      const float corners[8][3]={{0.f,0.f,0.f},{1.f,0.f,0.f},{0.f,1.f,0.f},{0.f,0.f,1.f},
@@ -442,7 +450,8 @@ void  mcx_maskdet(Config *cfg){
 	of R=cfg->detradius,c0=cfg->detpos[d] and the object 
 	surface (or bounding box) is fully covered.
      */
-     for(d=0;d<cfg->detnum;d++)                             /*loop over each detector*/
+     for(d=0;d<cfg->detnum;d++){                             /*loop over each detector*/
+        count=0;
         for(z=-cfg->detradius-1;z<=cfg->detradius+1;z+=0.5f){   /*search in a cube with edge length 2*R+3*/
            iz=z+cfg->detpos[d].z;
            for(y=-cfg->detradius-1;y<=cfg->detradius+1;y+=0.5f){
@@ -476,9 +485,13 @@ void  mcx_maskdet(Config *cfg){
 		     padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
 		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
 		          cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)]|=(1<<7);/*set the highest bit to 1*/
+                          count++;
 	          }
-	      }
-	  }
+	       }
+	   }
+        }
+        if(cfg->issavedet && count==0)
+              fprintf(stderr,"WARNING: detector %d is not located on the interface, please check coordinates.\n",d+1);
      }
      /**
          To test the results, you should use -M to dump the det-mask, load 
