@@ -147,10 +147,11 @@ void mcx_readconfig(char *fname, Config *cfg){
      	mcx_loadconfig(stdin,cfg);
      }
      else{
+        FILE *fp;
         if(cfg->session[0]=='\0'){
 		strcpy(cfg->session,fname);
 	}
-     	FILE *fp=fopen(fname,"rt");
+     	fp=fopen(fname,"rt");
 	if(fp==NULL) mcx_error(-2,"can not load the specified config file",__FILE__,__LINE__);
 	mcx_loadconfig(fp,cfg); 
 	fclose(fp);
