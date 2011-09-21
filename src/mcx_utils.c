@@ -172,6 +172,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,idx1d,itmp;
+     float dtmp;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
      
      if(in==stdin)
@@ -190,7 +191,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	fprintf(stdout,"%d\nPlease specify the position of the source (in grid unit): [10 10 5]\n\t",cfg->seed);
      mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
-     if(cfg->issrcfrom0==0 && sscanf(comm,"%d",&itmp)==1)
+     if(cfg->issrcfrom0==0 && comm!=NULL && sscanf(comm,"%d",&itmp)==1)
          cfg->issrcfrom0=itmp;
 
      if(in==stdin)
@@ -314,11 +315,14 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in grid unit): [5 5 5 1]\n\t",i);
      	mcx_assert(fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z))==3);
-	cfg->detpos[i].w=cfg->detradius*cfg->detradius;
+	cfg->detpos[i].w=cfg->detradius;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
         comm=fgets(comment,MAX_PATH_LENGTH,in);
+        if(comm!=NULL && sscanf(comm,"%f",&dtmp)==1)
+            cfg->detpos[i].w=dtmp;
+
         if(in==stdin)
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
@@ -434,7 +438,6 @@ void  mcx_maskdet(Config *cfg){
      dx=cfg->dim.x+2;
      dy=cfg->dim.y+2;
      dz=cfg->dim.z+2;
-     d2max=(cfg->detradius+1.7321f)*(cfg->detradius+1.7321f);
      
      /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
        then I don't need to worry about boundaries any more*/
@@ -453,15 +456,16 @@ void  mcx_maskdet(Config *cfg){
      */
      for(d=0;d<cfg->detnum;d++){                             /*loop over each detector*/
         count=0;
-        for(z=-cfg->detradius-1;z<=cfg->detradius+1;z+=0.5f){   /*search in a cube with edge length 2*R+3*/
+        d2max=(cfg->detpos[d].w+1.7321f)*(cfg->detpos[d].w+1.7321f);
+        for(z=-cfg->detpos[d].w-1.f;z<=cfg->detpos[d].w+1.f;z+=0.5f){   /*search in a cube with edge length 2*R+3*/
            iz=z+cfg->detpos[d].z;
-           for(y=-cfg->detradius-1;y<=cfg->detradius+1;y+=0.5f){
+           for(y=-cfg->detpos[d].w-1.f;y<=cfg->detpos[d].w+1.f;y+=0.5f){
               iy=y+cfg->detpos[d].y;
-              for(x=-cfg->detradius-1;x<=cfg->detradius+1;x+=0.5f){
+              for(x=-cfg->detpos[d].w-1.f;x<=cfg->detpos[d].w+1.f;x+=0.5f){
 	         ix=x+cfg->detpos[d].x;
 
 		 if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
-		    x*x+y*y+z*z > (cfg->detradius+1.f)*(cfg->detradius+1.f))
+		    x*x+y*y+z*z > (cfg->detpos[d].w+1.f)*(cfg->detpos[d].w+1.f))
 		     continue;
 		 mind2=VERY_BIG;
                  for(c=0;c<8;c++){ /*test each corner of a voxel*/
@@ -475,7 +479,7 @@ void  mcx_maskdet(Config *cfg){
 			}
 			if(d2<mind2) mind2=d2;
 		 }
-		 if(mind2==VERY_BIG || mind2>=cfg->detradius*cfg->detradius) continue;
+		 if(mind2==VERY_BIG || mind2>=cfg->detpos[d].w*cfg->detpos[d].w) continue;
 		 idx1d=((int)(iz+1.f)*dy*dx+(int)(iy+1.f)*dx+(int)(ix+1.f)); /*1.f comes from the padded layer*/
 
 		 if(padvol[idx1d])  /*looking for a voxel on the interface or bounding box*/

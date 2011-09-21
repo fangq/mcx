@@ -91,7 +91,7 @@ __device__ inline uint finddetector(MCXpos *p0){
       for(i=0;i<gcfg->detnum;i++){
       	if((gdetpos[i].x-p0->x)*(gdetpos[i].x-p0->x)+
 	   (gdetpos[i].y-p0->y)*(gdetpos[i].y-p0->y)+
-	   (gdetpos[i].z-p0->z)*(gdetpos[i].z-p0->z) < gdetpos[i].w){
+	   (gdetpos[i].z-p0->z)*(gdetpos[i].z-p0->z) < gdetpos[i].w*gdetpos[i].w){
 	        return i+1;
 	   }
       }
@@ -320,9 +320,12 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
                 //move to the 1st intersection pt
                 tmp0*=JUST_ABOVE_ONE;
-                htime.x=floorf(p0.x+tmp0*v.x);
-       	        htime.y=floorf(p0.y+tmp0*v.y);
-       	        htime.z=floorf(p0.z+tmp0*v.z);
+                p0.x+=tmp0*v.x;
+                p0.y+=tmp0*v.y;
+                p0.z+=tmp0*v.z;
+                htime.x=floorf(p0.x);
+       	        htime.y=floorf(p0.y);
+       	        htime.z=floorf(p0.z);
 
                 if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
                     if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]==mediaidold){ //if the first vox is not air
@@ -339,9 +342,12 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
                      //if(gcfg->doreflect3){
                        tmp0*=JUST_ABOVE_ONE;
-                       htime.x=floorf(p.x-tmp0*v.x); //move to the last intersection pt
-                       htime.y=floorf(p.y-tmp0*v.y);
-                       htime.z=floorf(p.z-tmp0*v.z);
+                       p0.x=p.x-tmp0*v.x;
+                       p0.y=p.y-tmp0*v.y;
+                       p0.z=p.z-tmp0*v.z;
+                       htime.x=floorf(p0.x);
+                       htime.y=floorf(p0.y);
+                       htime.z=floorf(p0.z);
 
                        if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
                            if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]!=mediaidold){ //this is an air voxel
@@ -357,6 +363,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
        	       	       	       	    a*2+b*3+c=1
                                */
                                flipdir=-tmp1-flipdir+6.f;
+
+                               htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p0.x)+(v.x<0.f)-p0.x)/(-v.x):VERY_BIG;
+                               htime.y=(v.y>EPS||v.y<-EPS)?(floorf(p0.y)+(v.y<0.f)-p0.y)/(-v.y):VERY_BIG;
+                               htime.z=(v.z>EPS||v.z<-EPS)?(floorf(p0.z)+(v.z<0.f)-p0.z)/(-v.z):VERY_BIG;
+                               tmp0=fminf(fminf(htime.x,htime.y),htime.z);
+                               p0.x=p0.x-tmp0*v.x; // calculate the exact exit position
+                               p0.y=p0.y-tmp0*v.y;
+                               p0.z=p0.z-tmp0*v.z;
                            }
                        }
                      //}
@@ -403,6 +417,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   } // else, total internal reflection
 	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
+                            p=p0;
 		    	    launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),
 			        ppath,&energyloss,n_det,detectedphoton);
 			    continue;
@@ -430,13 +445,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                 	}else if(flipdir>=1.f){ //flip in x axis
                 	   v.x=-v.x;
                 	}
-                        p=p0;   //move back
+                        p=p0;   //move to the reflection point
                 	idx1d=idx1dold;
 		 	mediaid=(media[idx1d] & MED_MASK);
         	  	*((float4*)(&prop))=gproperty[mediaid];
                   	n1=prop.n;
 		  }
               }else{  // launch a new photon
+                  p=p0;
 		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,
 		      &energyloss,n_det,detectedphoton);
 		  continue;
