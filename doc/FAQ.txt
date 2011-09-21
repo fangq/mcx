@@ -18,6 +18,8 @@ Frequently Asked Questions about MCX
 
           7. [8]What is the maximum number of detectors in MCX?
 
+          8. [9]My simulation created an empty history file, why is that?
+
 1. I am getting a "kernel launch timed-out" error, what is that?
 
    Answer: This error happens only when you are using a non-dedicated GPU.
@@ -55,7 +57,7 @@ Frequently Asked Questions about MCX
    race conditions, CUDA provides a set of "atomic" operations, where
    read-compute-write process in a thread can not be interrupted by other
    threads. Unfortunately, there is a great speed penalty for using these
-   functions. As we have shown in Fig. 7 in our [9]paper, the atomic
+   functions. As we have shown in Fig. 7 in our [10]paper, the atomic
    version of MCX can only achieve about 75x acceleration at an optimal
    thread number around 500~1000, compared with 300x acceleration with the
    non-atomic versions. More importantly, the performance of atomic MCX
@@ -64,7 +66,7 @@ Frequently Asked Questions about MCX
    Fortunately, in our algorithm, the photon propagation for each thread
    is maximally asynchronized, together with the exponential decay of the
    fluence, the overall impact of the race condition is negligible (as
-   shown in Fig. 4 of [10]Fang2009). For a range of scattering
+   shown in Fig. 4 of [11]Fang2009). For a range of scattering
    coefficients, the accumulation-miss due to race condition is around 1%
    for over 1000 threads. Using the non-atomic version can give quite
    accurate solutions as long as it is a few voxels away from the source.
@@ -75,11 +77,11 @@ Frequently Asked Questions about MCX
    source, and is only 20% slower than the non-atomic version (i.e. the
    Vanilla MCX). If the accuracy near the source is important for your
    application, please use this binary for your simulation. More details
-   can be found in [11]this document.
+   can be found in [12]this document.
 
 3. How do I interpret MCX's output data?
 
-   Please read the [12]output interpretation of MMC (Mesh-based Monte
+   Please read the [13]output interpretation of MMC (Mesh-based Monte
    Carlo). The meanings of the outputs from both software are almost
    identical. The only difference is that MCX saves the output on a
    voxelated grid, and MMC saves on a mesh.
@@ -90,8 +92,8 @@ Frequently Asked Questions about MCX
    have simultaneously. You must use the "-G" option to specify a
    different GPU ID for each job, and seed them independently by using
    different input files (change the second row of each input file). All
-   of these can be done automatically using [13]GNU Parallel. You can find
-   examples of running parallel jobs using this tool at [14]this page.
+   of these can be done automatically using [14]GNU Parallel. You can find
+   examples of running parallel jobs using this tool at [15]this page.
    This approach also supports running MCX over a distributed system such
    as a cluster.
 
@@ -102,10 +104,10 @@ Frequently Asked Questions about MCX
 5. Will you consider porting MCX to MPI to run on my cluster?
 
    Answer: There are simple alternatives, and you can find my arguments on
-   this at [15]this link]. The support for distributed systems is similar
+   this at [16]this link]. The support for distributed systems is similar
    to the support for multiple GPUs in the same box. You are recommended
-   to use [16]GNU Parallel to manage parallel jobs. Examples can be found
-   [17]here.
+   to use [17]GNU Parallel to manage parallel jobs. Examples can be found
+   [18]here.
 
 6. What is the maximum number of media types that MCX can handle?
 
@@ -113,7 +115,7 @@ Frequently Asked Questions about MCX
    need more than 128 media, you can check out a special branch of mcx by
    the following command:
 
-  svn checkout --username anonymous_user [18]https://orbit.nmr.mgh.harvard.edu/svn/mcextreme/mcextreme_cuda/branches/media16 mcx
+  svn checkout --username anonymous_user [19]https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/branches/media16 mcx
 
    In this branch, we use an "unsigned short" instead of "unsigned char"
    to represent a medium index. For CUDA devices with 64k constant memory,
@@ -125,6 +127,56 @@ Frequently Asked Questions about MCX
    Answer: The build-in maximum detector number in MCX is 256. You can
    modify this number in the mcx_const.h unit.
 
+8. My simulation created an empty history file, why is that?
+
+   Answer: This is typically caused by the detector position offset due to
+   the incorrectly assumed coordinate system origin.
+
+   In MCX, the default coordinate system is the MATLAB volume index (in
+   {x,y,z} float triplet, all starting from 1.0). As a result, the origin
+   of the volume (the corner of the diagonal direction of the first voxel)
+   is (1,1,1) instead of (0,0,0). If you want to use (0,0,0) as the
+   origin, you can do so by adding "--srcfrom0 1" in the command line. The
+   following two figures (the bottom face of an 8x8x8 volume) show the
+   differences between these two options:
+
+       default or --srcfrom0 0                       --srcfrom0 1
+  [20]upload:detmask_coordinates.png
+                                     [21]upload:detmask_coordinates_srcfrom0.png
+
+   You can find more discussions here:
+
+   [22]http://groups.google.com/group/mcx-users/browse_thread/thread/e5e01
+   40d7e73e4bf?hl=en
+
+   A photon detection event only happens when a photon escapes from the
+   target to the exterior space. This includes two situations:
+
+    1. a photon moving from a non-zero voxel to a 0-voxel
+    2. a photon moving beyond the bounding box of the volume
+
+   Thus, in order for a detector to capture an escaped photon, it MUST be
+   located on the interface between the zero/non-zero voxels, or on the
+   bounding box (within the detector radius). This makes it very sensitive
+   to the coordinate origin issue above when the detector radius is 1mm or
+   less, because if you mistakenly offset your detector by 1mm, the
+   detector will capture nothing, thus giving you an empty history file.
+
+   To help better use of this feature, starting from MCX 0.5.2, we allow
+   users to specify coordinate origin types in the input file. The 3rd row
+   of an input file now accommodates a 4th input, specifying the srcfrom0
+   flag. For example
+  30.0 30.0 0.0 1
+
+   sets the srcfrom0 flag to 1 (the last integer). As a result, the volume
+   origin is set to (0,0,0). This is equivalent to
+  31.0 31.0 1.0 0
+
+   or
+  31.0 31.0 1.0
+
+   This setting will be effective for both source and detector positions.
+
 References
 
    1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
@@ -135,13 +187,17 @@ References
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#Will_you_consider_porting_MCX_to_MPI_to_run_on_my_cluster
    7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_media_types_that_MCX_can_handle
    8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_detectors_in_MCX
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/FAQ#My_simulation_created_an_empty_history_file_why_is_that
   10. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
-  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.4.9
-  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
-  13. http://www.gnu.org/software/parallel/
-  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
-  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
-  16. http://www.gnu.org/software/parallel/
-  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
-  18. https://orbit.nmr.mgh.harvard.edu/svn/mcextreme/mcextreme_cuda/branches/media16
+  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
+  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.4.9
+  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
+  14. http://www.gnu.org/software/parallel/
+  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
+  16. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
+  17. http://www.gnu.org/software/parallel/
+  18. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
+  19. https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/branches/media16
+  20. http://mcx.sf.net/upload/detmask_coordinates.png
+  21. http://mcx.sf.net/upload/detmask_coordinates_srcfrom0.png
+  22. http://groups.google.com/group/mcx-users/browse_thread/thread/e5e0140d7e73e4bf?hl=en
