@@ -67,13 +67,14 @@ mtatomic logatomic:	BINARY:=$(BINARY)_atomic
 det mex oct:    CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"Detective MCX"'
 detbox mexbox octbox:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cached Detective MCX"'
 det detbox: BINARY:=$(BINARY)_det
+logbox detbox:          BINARY:=$(BINARY)_cached
 
 mexbox mex:        AR=mex
-mexbox mex oct:    OUTPUT_DIR=../mcxlab
+mexbox mex oct octbox:    OUTPUT_DIR=../mcxlab
 mex:               BINARY=mcxlab
 mexbox:            BINARY=mcxlab_atom
-mexbox mex oct:    CUCCOPT+=--compiler-options -fPIC -DMCX_CONTAINER
-mexbox mex oct:    CPPOPT+=-fPIC -DMCX_CONTAINER
+mexbox mex oct octbox:    CUCCOPT+=--compiler-options -fPIC -DMCX_CONTAINER
+mexbox mex oct octbox:    CPPOPT+=-fPIC -DMCX_CONTAINER
 mexbox mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 octbox oct:        AR=mkoctfile

@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.5.1 (Black-hole update 1)
+Version: 0.5.2 (Black-hole update 2)
 
 ---------------------------------------------------------------------
 
@@ -173,11 +173,11 @@ semi60x60x60.bin     # volume ('unsigned char' format)
 1 60 1 60            # y voxel size, must be same as x, dim, start/end indices
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
-4       1            # detector number and radius (in grid unit)
-30.0    20.0    0.0  # detector 1 position (real numbers in grid unit)
-30.0    40.0    0.0  # ...
-20.0    30.0    0.0
-40.0    30.0    0.0
+4       1.0          # detector number and default radius (in grid unit)
+30.0  20.0  0.0  2.0 # detector 1 position (real numbers in grid unit) and radius if different
+30.0  40.0  0.0      # ..., if radius is ignored, MCX will use the default radius
+20.0  30.0  0.0      #
+40.0  30.0  0.0      # 
 
 Note that the scattering coefficient mus=musp/(1-g).
 
