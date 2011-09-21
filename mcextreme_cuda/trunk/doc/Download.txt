@@ -18,7 +18,7 @@ Current Stable Release: [7]MCX and [8]MCXLAB 0.5.1, released on Jun. 06, 2011
 
    Please read the [9]Release notes here. Before downloading the software,
    please read the [10]System Requirements for MCX and make sure you have
-   both the hardware and software supports.
+   both the hardware and software supported.
 
    Please download MCX and MCXLAB v0.5.1 (Black Hole - Update 1) at our
    [11]registration/download page. We are greatly appreciated if you can
@@ -30,7 +30,7 @@ Current Stable Release: [7]MCX and [8]MCXLAB 0.5.1, released on Jun. 06, 2011
 
   [os-icons3.png]
 
-Previous Beta Release: MCX 0.5.0, released on Mar. 20, 2011
+Previous Stable Release: MCX 0.5.0, released on Mar. 20, 2011
 
    Please read the [13]Release notes here.
 
@@ -61,28 +61,26 @@ Previous Beta Release: MCX 0.4.9, released on Aug. 01, 2010
 
 2.1. Anonymous SVN Access
 
-   The latest code snapshot can be checked out from project's SVN
+   The latest code snapshot can be checked out from project's [16]SVN
    repository. This can be done anonymously by the following command.
 
- svn checkout --username anonymous_user https://orbit.nmr.mgh.harvard.edu/svn/mcextreme/mcextreme_cuda/trunk/ mcx
+ svn co https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/trunk/ mcx
 
    The password is the same as the username. After you checking out the
-   code, you can [16]compile and run the software.
+   code, you can [17]compile and run the software.
 
 2.2. Developer SVN Access
 
-   If you are one of the developers who have SVN write permission, you can
-   checkout the latest code with the following command:
+   If you are one of the developers who have SVN write-permission, you can
+   checkout the latest code with the same command above.
 
- svn checkout --username youraccount https://orbit.nmr.mgh.harvard.edu/svn/mcextreme/mcextreme_cuda/trunk/ mcx
+   You will have to [18]register an account and ask the [19]project
+   maintainer to grant you SVN permission).
 
-   where youraccount is your registered account in [17]orbit (of course,
-   you have to [18]register first and ask the [19]project maintainer to
-   grant you svn write permission).
-
-   You can simply make changes or debug your changes in your local copy.
-   If your local changes have passed review by other co-developers, you
-   can then commit your changes back to the svn repository by
+   Once checkout, you can simply make changes or debug your changes in
+   your local copy. If your local changes have passed review by other
+   co-developers, you can then commit your changes back to the svn
+   repository by
 
  cd /path/to/mcx/local/copy
  svn commit -m "a short summary of your changes"
@@ -110,14 +108,14 @@ References
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#References
    7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README
    8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/MCXLAB
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&id=Doc/ReleaseNotes/0.5.1
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.1
   10. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
   11. http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx
   12. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&editmode=prepend&id=register/mcx
   13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.0
   14. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.4.9
   15. http://tortoisesvn.net/downloads
-  16. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
-  17. https://orbit.nmr.mgh.harvard.edu/
-  18. https://orbit.nmr.mgh.harvard.edu/account/register.php
-  19. https://orbit.nmr.mgh.harvard.edu/users/fangq/
+  16. http://mcx.svn.sourceforge.net/viewvc/mcx/mcextreme_cuda/trunk/
+  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
+  18. https://sourceforge.net/user/registration
+  19. http://sourceforge.net/users/fangq
