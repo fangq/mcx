@@ -1,6 +1,20 @@
 = Change Log =
 
-== MCX 0.5.0 (Black Hole) development branch, FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.5.2 (Black Hole - update 2), FangQ <fangq nmr mgh harvard edu> ==
+
+ 2011-09-21 fix a regression in MCXLAB related to detectors, use exact exit position for radius test
+ 2011-09-20 add verbose warnings for launch-time-out error and non-surface detectors
+ 2011-09-19 users can specify srcfrom0 (origin setting) from the input file
+ 2011-09-19 fix a bug in detector-to-volume mapping, effects all non-integer inputs
+
+== MCX 0.5.1 (Black Hole - update 1), FangQ <fangq nmr mgh harvard edu> ==
+
+ 2011-05-03 use the expected absorption for normalization to reduce non-atomic impact
+ 2011-04-26 fix a serious shared-mem buffer length bug (can cause crash)
+ 2011-04-26 MCXLAB now accepts crop0/crop1 fields to specify shared-mem region
+ 2011-03-25 new GPU-ocelot compilation flag
+
+== MCX 0.5.0 (Black Hole), FangQ <fangq nmr mgh harvard edu> ==
 
  2011-03-18 update documents, get ready to release 0.5.0
  2011-03-18 gracefully handle exceptions in MCXLAB

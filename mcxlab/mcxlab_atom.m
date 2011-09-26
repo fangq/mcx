@@ -24,7 +24,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %     *cfg.tstart:     starting time of the simulation (in seconds)
 %     *cfg.tstep:      time-gate width of the simulation (in seconds)
 %     *cfg.tend:       ending time of the simulation (in second)
-%     *cfg.srcpos:     a 1 by 3 vector, specifying the position of the source
+%     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
 %     *cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
@@ -34,7 +34,6 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %      cfg.seed:       seed for the random number generator (integer) [0]
 %      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
 %      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
-%      cfg.detradius:  radius of the detector (in grid unit) [1.0]
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
 %      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index

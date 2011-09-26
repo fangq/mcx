@@ -1,11 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation                                                                                                
+//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 //
 //  Reference (Fang2009):
-//        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
-//        Migration in 3D Turbid Media Accelerated by Graphics Processing 
+//        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon
+//        Migration in 3D Turbid Media Accelerated by Graphics Processing
 //        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
 //
 //  mcxlab.cpp: MCX for Matlab and Octave
@@ -113,7 +113,6 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,tstep)
     GET_ONE_FIELD(cfg,tend)
     GET_ONE_FIELD(cfg,maxdetphoton)
-    GET_ONE_FIELD(cfg,detradius)
     GET_ONE_FIELD(cfg,sradius)
     GET_ONE_FIELD(cfg,maxgate)
     GET_ONE_FIELD(cfg,respin)
@@ -125,6 +124,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,issavedet)
     GET_ONE_FIELD(cfg,issave2pt)
     GET_ONE_FIELD(cfg,isgpuinfo)
+    GET_ONE_FIELD(cfg,issrcfrom0)
     GET_ONE_FIELD(cfg,autopilot)
     GET_ONE_FIELD(cfg,minenergy)
     GET_ONE_FIELD(cfg,unitinmm)
@@ -184,7 +184,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 
 void mcx_validate_config(Config *cfg){
      int i,gates,idx1d;
-     
+
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
      }
@@ -225,7 +225,6 @@ void mcx_validate_config(Config *cfg){
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;
      for(i=0;i<cfg->detnum;i++){
-	cfg->detpos[i].w=cfg->detpos[i].w*cfg->detpos[i].w;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
@@ -253,6 +252,9 @@ void mcx_validate_config(Config *cfg){
 			cfg->srcpos.x+=cfg->srcdir.x;
 			cfg->srcpos.y+=cfg->srcdir.y;
 			cfg->srcpos.z+=cfg->srcdir.z;
+                        if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f ||
+                               cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
+                               mcx_error(-4,"searching non-zero voxel failed along the incident vector",__FILE__,__LINE__);
 			idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
 		}
 		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
@@ -270,5 +272,9 @@ extern "C" int mcx_throw_exception(const int id, const char *msg, const char *fi
 }
 
 void mcxlab_usage(){
-     printf("Usage:\n    [flux,detphoton]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.");
+#ifdef USE_CACHEBOX
+     printf("Usage:\n    [flux,detphoton]=mcxlab_atom(cfg);\n\nPlease run 'help mcxlab_atom' for more details.\n");
+#else
+     printf("Usage:\n    [flux,detphoton]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+#endif
 }

@@ -123,6 +123,11 @@ void mcx_normalize(float field[], float scale, int fieldlen){
 
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
      fprintf(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
+     if(id==-cudaErrorLaunchTimeout){
+         fprintf(stdout,"This error often happens when you are using a non-dedicated GPU.\n\
+Please checkout FAQ #1 for more details:\n\
+URL: http://mcx.sf.net/cgi-bin/index.cgi?Doc/FAQ\n");
+     }
 #ifdef MCX_CONTAINER
      mcx_throw_exception(id,msg,file,linenum);
 #else
@@ -136,19 +141,20 @@ void mcx_assert(int ret){
 
 void mcx_readconfig(char *fname, Config *cfg){
      if(fname[0]==0){
-     	mcx_loadconfig(stdin,cfg);
         if(cfg->session[0]=='\0'){
 		strcpy(cfg->session,"default");
 	}
+     	mcx_loadconfig(stdin,cfg);
      }
      else{
-     	FILE *fp=fopen(fname,"rt");
-	if(fp==NULL) mcx_error(-2,"can not load the specified config file",__FILE__,__LINE__);
-	mcx_loadconfig(fp,cfg); 
-	fclose(fp);
+        FILE *fp;
         if(cfg->session[0]=='\0'){
 		strcpy(cfg->session,fname);
 	}
+     	fp=fopen(fname,"rt");
+	if(fp==NULL) mcx_error(-2,"can not load the specified config file",__FILE__,__LINE__);
+	mcx_loadconfig(fp,cfg); 
+	fclose(fp);
      }
 }
 
@@ -166,6 +172,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,idx1d,itmp;
+     float dtmp;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
      
      if(in==stdin)
@@ -181,9 +188,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         mcx_assert(fscanf(in,"%d", &itmp )==1);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
-     	fprintf(stdout,"%d\nPlease specify the position of the source: [10 10 5]\n\t",cfg->seed);
+     	fprintf(stdout,"%d\nPlease specify the position of the source (in grid unit): [10 10 5]\n\t",cfg->seed);
      mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
+     if(cfg->issrcfrom0==0 && comm!=NULL && sscanf(comm,"%d",&itmp)==1)
+         cfg->issrcfrom0=itmp;
+
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the normal direction of the source fiber: [0 0 1]\n\t",
                                    cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
@@ -193,7 +203,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
-     	fprintf(stdout,"%f %f %f\nPlease specify the time gates in seconds (start end and step) [0.0 1e-9 1e-10]\n\t",
+     	fprintf(stdout,"%f %f %f\nPlease specify the time gates (format: start end step) in seconds [0.0 1e-9 1e-10]\n\t",
                                    cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z);
      mcx_assert(fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
@@ -223,6 +233,16 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	fprintf(stdout,"%s\nPlease specify the x voxel size (in mm), x dimension, min and max x-index [1.0 100 1 100]:\n\t",filename);
      mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x))==4);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(cfg->steps.x!=cfg->steps.y || cfg->steps.y!=cfg->steps.z)
+        mcx_error(-9,"MCX currently does not support anisotropic voxels",__FILE__,__LINE__);
+
+     if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
+        cfg->unitinmm=cfg->steps.x;
+
+     if(cfg->unitinmm!=1.f){
+        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
+     }
 
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 1 100]:\n\t",
@@ -293,11 +313,14 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in grid unit): [5 5 5 1]\n\t",i);
      	mcx_assert(fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z))==3);
-	cfg->detpos[i].w=cfg->detradius*cfg->detradius;
+	cfg->detpos[i].w=cfg->detradius;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
         comm=fgets(comment,MAX_PATH_LENGTH,in);
+        if(comm!=NULL && sscanf(comm,"%f",&dtmp)==1)
+            cfg->detpos[i].w=dtmp;
+
         if(in==stdin)
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
@@ -322,6 +345,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 			cfg->srcpos.x+=cfg->srcdir.x;
 			cfg->srcpos.y+=cfg->srcdir.y;
 			cfg->srcpos.z+=cfg->srcdir.z;
+                        if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f ||
+                               cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
+                               mcx_error(-4,"searching non-zero voxel failed along the incident vector",__FILE__,__LINE__);
 			idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
 		}
 		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
@@ -426,14 +452,16 @@ void  mcx_convertrow2col(unsigned short **vol, uint3 *dim){
 }
 
 void  mcx_maskdet(Config *cfg){
-     uint d,dx,dy,dz,idx1d,zi,yi;
-     float x,y,z,ix,iy,iz;
+     uint d,dx,dy,dz,idx1d,zi,yi,c,count;
+     float x,y,z,ix,iy,iz,rx,ry,rz,d2,mind2,d2max;
      unsigned short *padvol;
+     const float corners[8][3]={{0.f,0.f,0.f},{1.f,0.f,0.f},{0.f,1.f,0.f},{0.f,0.f,1.f},
+                                {1.f,1.f,0.f},{1.f,0.f,1.f},{0.f,1.f,1.f},{1.f,1.f,1.f}};
      
      dx=cfg->dim.x+2;
      dy=cfg->dim.y+2;
      dz=cfg->dim.z+2;
-
+     
      /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
        then I don't need to worry about boundaries any more*/
 
@@ -443,19 +471,39 @@ void  mcx_maskdet(Config *cfg){
         for(yi=1;yi<=cfg->dim.y;yi++)
 	        memcpy(padvol+zi*dy*dx+yi*dx+1,cfg->vol+(zi-1)*cfg->dim.y*cfg->dim.x+(yi-1)*cfg->dim.x,cfg->dim.x*sizeof(*padvol));
 
-     for(d=0;d<cfg->detnum;d++)                              /*loop over each detector*/
-        for(z=-cfg->detpos[d].w;z<=cfg->detpos[d].w;z++){   /*search in a sphere*/
-           iz=z+cfg->detpos[d].z; /*1.5=1+0.5, 1 comes from the padding layer, 0.5 move to voxel center*/
-           for(y=-cfg->detpos[d].w;y<=cfg->detpos[d].w;y++){
+     /**
+        The goal here is to find a set of voxels for each 
+	detector so that the intersection between a sphere
+	of R=cfg->detradius,c0=cfg->detpos[d] and the object 
+	surface (or bounding box) is fully covered.
+     */
+     for(d=0;d<cfg->detnum;d++){                             /*loop over each detector*/
+        count=0;
+        d2max=(cfg->detpos[d].w+1.7321f)*(cfg->detpos[d].w+1.7321f);
+        for(z=-cfg->detpos[d].w-1.f;z<=cfg->detpos[d].w+1.f;z+=0.5f){   /*search in a cube with edge length 2*R+3*/
+           iz=z+cfg->detpos[d].z;
+           for(y=-cfg->detpos[d].w-1.f;y<=cfg->detpos[d].w+1.f;y+=0.5f){
               iy=y+cfg->detpos[d].y;
-              for(x=-cfg->detpos[d].w;x<=cfg->detpos[d].w;x++){
+              for(x=-cfg->detpos[d].w-1.f;x<=cfg->detpos[d].w+1.f;x+=0.5f){
 	         ix=x+cfg->detpos[d].x;
 
 		 if(iz<0||ix<0||iy<0||ix>=cfg->dim.x||iy>=cfg->dim.y||iz>=cfg->dim.z||
 		    x*x+y*y+z*z > (cfg->detpos[d].w+1.f)*(cfg->detpos[d].w+1.f))
-		    continue;
-
-		 idx1d=(int)((iz+1.f)*dy*dx+(iy+1.f)*dx+(ix+1.f));
+		     continue;
+		 mind2=VERY_BIG;
+                 for(c=0;c<8;c++){ /*test each corner of a voxel*/
+			rx=(int)ix-cfg->detpos[d].x+corners[c][0];
+			ry=(int)iy-cfg->detpos[d].y+corners[c][1];
+			rz=(int)iz-cfg->detpos[d].z+corners[c][2];
+			d2=rx*rx+ry*ry+rz*rz;
+		 	if(d2>d2max){ /*R+sqrt(3) to make sure the circle is fully corvered*/
+				mind2=VERY_BIG;
+		     		break;
+			}
+			if(d2<mind2) mind2=d2;
+		 }
+		 if(mind2==VERY_BIG || mind2>=cfg->detpos[d].w*cfg->detpos[d].w) continue;
+		 idx1d=((int)(iz+1.f)*dy*dx+(int)(iy+1.f)*dx+(int)(ix+1.f)); /*1.f comes from the padded layer*/
 
 		 if(padvol[idx1d])  /*looking for a voxel on the interface or bounding box*/
                   if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
@@ -466,10 +514,19 @@ void  mcx_maskdet(Config *cfg){
 		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
 		          cfg->vol[(int)(iz*cfg->dim.y*cfg->dim.x+iy*cfg->dim.x+ix)]|=DET_MASK; /*set the highest bit to 1*/
 	          }
-	      }
-	  }
+	       }
+	   }
+        }
+        if(cfg->issavedet && count==0)
+              fprintf(stderr,"MCX WARNING: detector %d is not located on an interface, please check coordinates.\n",d+1);
      }
-
+     /**
+         To test the results, you should use -M to dump the det-mask, load 
+	 it in matlab, and plot the interface containing the detector with
+	 pcolor() (has the matching index), and then draw a circle with the
+	 radius and center set in the input file. the pixels should completely
+	 cover the circle.
+     */
      if(cfg->isdumpmask){
      	 char fname[MAX_PATH_LENGTH];
 	 FILE *fp;
@@ -689,25 +746,24 @@ where possible parameters include (the first item in [] is the default value)\n\
  -s sessionid  (--session)     a string to label all output file names\n\
  -f config     (--input)       read config from a file\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
- -m [0|int]    (--move)        photon moves/thread(not supported, use -n only)\n\
  -t [2048|int] (--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
- -A [0|int]    (--autopilot)   auto thread config:1-dedicated GPU,2-non-dedic.\n\
- -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L, 0 auto\n\
+ -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedic.\n\
+ -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
  -r [1|int]    (--repeat)      number of repetitions\n\
- -a [0|1]      (--array)       1 for C array (row-major), 0 for Matlab array\n\
- -z [0|1]      (--srcfrom0)    1 src/detector coord. start from 0, 0 go from 1\n\
+ -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
+ -z [0|1]      (--srcfrom0)    1 volume coord. origin [0 0 0]; 0 use [1 1 1]\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
- -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary,0 to exit\n\
- -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary, 0 do not\n\
+ -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
+ -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -R [0.|float] (--skipradius)  zone half-edge from source for improved accuracy\n\
+ -R [0.|float] (--skipradius)  cached zone radius from source to use atomics\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normalize flux to unitary, 0 save raw\n\
- -d [1|0]      (--savedet)     1 to save photon info at detectors, 0 not save\n\
- -M [0|1]      (--dumpmask)    1 to dump detector volume masks, 0 do not save\n\
+ -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
+ -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
+ -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
- -S [1|0]      (--save2pt)     1 to save the flux field, 0 do not save\n\
+ -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
  -E [0|int]    (--seed)        set random-number-generator seed\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
@@ -715,5 +771,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -I            (--printgpu)    print GPU information and run program\n\
  -v            (--version)     print MCX revision number\n\
 example:\n\
-       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -d 1 -G 1\n",exename,exename);
+       %s -A -n 1e7 -f input.inp -G 1 \n\
+or\n\
+       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1\n",exename,exename,exename);
 }

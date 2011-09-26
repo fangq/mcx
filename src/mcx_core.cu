@@ -91,7 +91,7 @@ __device__ inline uint finddetector(MCXpos *p0){
       for(i=0;i<gcfg->detnum;i++){
       	if((gdetpos[i].x-p0->x)*(gdetpos[i].x-p0->x)+
 	   (gdetpos[i].y-p0->y)*(gdetpos[i].y-p0->y)+
-	   (gdetpos[i].z-p0->z)*(gdetpos[i].z-p0->z) < gdetpos[i].w){
+	   (gdetpos[i].z-p0->z)*(gdetpos[i].z-p0->z) < gdetpos[i].w*gdetpos[i].w){
 	        return i+1;
 	   }
       }
@@ -119,7 +119,6 @@ __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pr
            ushort *mediaid,ushort isdet, float ppath[],float energyloss[],float energyabsorbed[],float n_det[],uint *dpnum){
 
       *energyloss+=p->w;  // sum all the remaining energy
-      *energyabsorbed+=1.f-p->w;
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
       if(gcfg->savedet){
@@ -136,7 +135,7 @@ __device__ inline void launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pr
       *((float4*)(prop))=gproperty[*mediaid]; //always use mediaid to read gproperty[]
 }
 
-/*
+/**
    this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
    everything in the GPU kernels is in grid-unit. To convert back to length, use
    cfg->unitinmm (scattering/absorption coeff, T, speed etc)
@@ -327,9 +326,12 @@ kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
 
                 //move to the 1st intersection pt
                 tmp0*=JUST_ABOVE_ONE;
-                htime.x=floorf(p0.x+tmp0*v.x);
-       	        htime.y=floorf(p0.y+tmp0*v.y);
-       	        htime.z=floorf(p0.z+tmp0*v.z);
+                p0.x+=tmp0*v.x;
+                p0.y+=tmp0*v.y;
+                p0.z+=tmp0*v.z;
+                htime.x=floorf(p0.x);
+       	        htime.y=floorf(p0.y);
+       	        htime.z=floorf(p0.z);
 
                 if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
                     if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]==mediaidold){ //if the first vox is not air
@@ -346,9 +348,12 @@ kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
 
                      //if(gcfg->doreflect3){
                        tmp0*=JUST_ABOVE_ONE;
-                       htime.x=floorf(p.x-tmp0*v.x); //move to the last intersection pt
-                       htime.y=floorf(p.y-tmp0*v.y);
-                       htime.z=floorf(p.z-tmp0*v.z);
+                       p0.x=p.x-tmp0*v.x;
+                       p0.y=p.y-tmp0*v.y;
+                       p0.z=p.z-tmp0*v.z;
+                       htime.x=floorf(p0.x);
+                       htime.y=floorf(p0.y);
+                       htime.z=floorf(p0.z);
 
                        if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
                            if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]!=mediaidold){ //this is an air voxel
@@ -364,6 +369,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
        	       	       	       	    a*2+b*3+c=1
                                */
                                flipdir=-tmp1-flipdir+6.f;
+
+                               htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p0.x)+(v.x<0.f)-p0.x)/(-v.x):VERY_BIG;
+                               htime.y=(v.y>EPS||v.y<-EPS)?(floorf(p0.y)+(v.y<0.f)-p0.y)/(-v.y):VERY_BIG;
+                               htime.z=(v.z>EPS||v.z<-EPS)?(floorf(p0.z)+(v.z<0.f)-p0.z)/(-v.z):VERY_BIG;
+                               tmp0=fminf(fminf(htime.x,htime.y),htime.z);
+                               p0.x=p0.x-tmp0*v.x; // calculate the exact exit position
+                               p0.y=p0.y-tmp0*v.y;
+                               p0.z=p0.z-tmp0*v.z;
                            }
                        }
                      //}
@@ -410,6 +423,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
                   } // else, total internal reflection
 	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
+                            p=p0;
 		    	    launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),
 			        ppath,&energyloss,&energyabsorbed,n_det,detectedphoton);
 			    continue;
@@ -437,13 +451,14 @@ kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
                 	}else if(flipdir>=1.f){ //flip in x axis
                 	   v.x=-v.x;
                 	}
-                        p=p0;   //move back
+                        p=p0;   //move to the reflection point
                 	idx1d=idx1dold;
 		 	mediaid=(media[idx1d] & MED_MASK);
         	  	*((float4*)(&prop))=gproperty[mediaid];
                   	n1=prop.n;
 		  }
               }else{  // launch a new photon
+                  p=p0;
 		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,
 		      &energyloss,&energyabsorbed,n_det,detectedphoton);
 		  continue;
@@ -456,6 +471,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,ushort media[],float field[],
              GPUDEBUG(("field add to %d->%f(%d)  t(%e)>t0(%e)\n",idx1d,p.w,(int)f.ndone,f.t,f.tnext));
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep wide
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
+                  energyabsorbed+=p.w*prop.mua;
 #ifdef TEST_RACING
                   // enable TEST_RACING to determine how many missing accumulations due to race
                   if( (p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)>gcfg->skipradius2) {
@@ -527,7 +543,7 @@ kernel void mcx_sum_trueabsorption(float energy[],ushort media[], float field[],
 }
 
 
-/*
+/**
    assert cuda memory allocation result
 */
 void mcx_cu_assess(cudaError_t cuerr,const char *file, const int linenum){
@@ -537,7 +553,7 @@ void mcx_cu_assess(cudaError_t cuerr,const char *file, const int linenum){
 }
 
 
-/*
+/**
   query GPU info and set active GPU
 */
 int mcx_set_gpu(Config *cfg){
@@ -605,12 +621,12 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 }
 
 
-/*
+/**
    host code for MCX kernels
 */
 void mcx_run_simulation(Config *cfg){
 
-     int i,j,iter;
+     int i,iter;
      float  minstep=MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
@@ -625,7 +641,7 @@ void mcx_run_simulation(Config *cfg){
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
-     float Vvox,scale,absorp,eabsorp;
+     float Vvox,scale,eabsorp;
 
      dim3 mcgrid, mcblock;
      dim3 clgrid, clblock;
@@ -739,7 +755,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
      fprintf(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
              MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
-     fprintf(cfg->flog,"- compiled with: RNG [%s] Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
+     fprintf(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
 #ifdef SAVE_DETECTORS
      fprintf(cfg->flog,"- this version CAN save photons at the detectors\n\n");
 #else
@@ -789,7 +805,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
        param.twin1=t+cfg->tstep*cfg->maxgate;
        cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice);
 
-       fprintf(cfg->flog,"lauching mcx_main_loop for time window [%.2ens %.2ens] ...\n"
+       fprintf(cfg->flog,"lauching MCX simulation for time window [%.2ens %.2ens] ...\n"
            ,param.twin0*1e9,param.twin1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
@@ -873,13 +889,8 @@ is more than what your have specified (%d), please use the -H option to specify 
                        }
 		       for(i=0;i<cfg->nthread;i++)
                            eabsorp+=Plen0[i].z;  // the accumulative absorpted energy near the source
-       	       	       for(i=0;i<dimxyz;i++){
-                           absorp=0.f;
-                           for(j=0;j<cfg->maxgate;j++)
-                              absorp+=field[j*dimxyz+i];
-                           eabsorp+=absorp*cfg->prop[media[i] & MED_MASK].mua;
-       	       	       }
-                       scale=energy[1]/((energy[0]+energy[1])*Vvox*cfg->tstep*eabsorp);
+                       eabsorp+=energy[1];
+                       scale=(cfg->nphoton-energy[0])/(cfg->nphoton*Vvox*cfg->tstep*eabsorp);
 		       if(cfg->unitinmm!=1.f) 
 		          scale/=(cfg->unitinmm*cfg->unitinmm); /* Vvox*(U*U*U) * (Tstep) * (Eabsorp/U) */
                        fprintf(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
@@ -937,7 +948,7 @@ is more than what your have specified (%d), please use the -H option to specify 
      fprintf(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
              photoncount,cfg->nphoton,cfg->nthread,cfg->respin,(double)photoncount/toc); fflush(cfg->flog);
      fprintf(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
-             energyloss,energyabsorbed,energyloss+energyabsorbed);fflush(cfg->flog);
+             energyloss,cfg->nphoton-energyloss,(float)cfg->nphoton);fflush(cfg->flog);
      fflush(cfg->flog);
 
      cudaFree(gmedia);
