@@ -134,8 +134,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_VEC3_FIELD(cfg,crop0)
     GET_VEC3_FIELD(cfg,crop1)
     else if(strcmp(name,"vol")==0){
-        if(!mxIsUint8(item) || mxGetNumberOfDimensions(item)!=3 )
-             mexErrMsgTxt("the 'vol' field must be a 3D uint8 array");
+        if(!mxIsUint16(item) || mxGetNumberOfDimensions(item)!=3 )
+             mexErrMsgTxt("the 'vol' field must be a 3D uint16 array");
         arraydim=mxGetDimensions(item);
 	for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i];
 	if(cfg->vol) free(cfg->vol);
