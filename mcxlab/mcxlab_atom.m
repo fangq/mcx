@@ -70,7 +70,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %
 % Example:
 %      cfg.nphoton=1e7;
-%      cfg.vol=uint8(ones(60,60,60));
+%      cfg.vol=uint16(ones(60,60,60));
 %      cfg.srcpos=[30 30 1];
 %      cfg.srcdir=[0 0 1];
 %      cfg.gpuid=1;

@@ -21,7 +21,7 @@ cfg.vol=ones(100,100,50);
 cfg.vol(:,:,21:25)=2;
 cfg.vol(:,:,26:35)=3;
 cfg.vol(:,:,36:end)=4;
-cfg.vol=uint8(cfg.vol);
+cfg.vol=uint16(cfg.vol);
 
 % define the source position
 cfg.srcpos=[50,50,0]+1;

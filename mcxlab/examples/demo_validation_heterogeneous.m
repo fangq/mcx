@@ -46,7 +46,7 @@ dim=60;
 dist=(xi-30.5).^2+(yi-30.5).^2+(zi-30.5).^2;
 cfg.vol=ones(size(xi));
 cfg.vol(dist<ana.a*ana.a)=2;
-cfg.vol=uint8(cfg.vol);
+cfg.vol=uint16(cfg.vol);
 
 % define the source position
 cfg.srcpos=[30,30,0]+1;
@@ -82,7 +82,7 @@ dist=(xi-60).^2+(yi-60).^2+(zi-60).^2;
 cfg2x.vol=ones(size(xi));
 cfg2x.vol(dist<400)=2;
 cfg2x.srcpos=[60,60,0]+1;
-cfg2x.vol=uint8(cfg2x.vol);
+cfg2x.vol=uint16(cfg2x.vol);
 
 cfg2x.unitinmm=0.5;  %this statement specifies that each grid-edge is 0.5mm
 cfg2x.nphoton=8*cfg.nphoton; % it needs 8x photons to get the same noise

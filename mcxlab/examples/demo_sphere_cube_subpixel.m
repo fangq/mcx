@@ -21,7 +21,7 @@ dim=60;
 dist=(xi-30).^2+(yi-30).^2+(zi-30).^2;
 cfg.vol=ones(size(xi));
 cfg.vol(dist<100)=2;
-cfg.vol=uint8(cfg.vol);
+cfg.vol=uint16(cfg.vol);
 
 % define the source position
 cfg.srcpos=[30,30,0]+1;
@@ -56,7 +56,7 @@ dist=(xi-60).^2+(yi-60).^2+(zi-60).^2;
 cfg.vol=ones(size(xi));
 cfg.vol(dist<400)=2;
 cfg.srcpos=[60,60,0]+1;
-cfg.vol=uint8(cfg.vol);
+cfg.vol=uint16(cfg.vol);
 
 cfg.unitinmm=0.5; % define the pixel size in terms of mm
 cfg.nphoton=8e7;  % you need to simulate 8x photons to get the same noise

@@ -29,7 +29,7 @@ cfg.nphoton=3e7;
 % define a 1cm radius sphere within a 6x6x6 cm box
 dim=60;
 cfg.vol=ones(dim,dim,dim);
-cfg.vol=uint8(cfg.vol);
+cfg.vol=uint16(cfg.vol);
 
 % define the source position
 cfg.srcpos=[dim/2,dim/2,1];
