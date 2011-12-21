@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.5.2 (Black-hole update 2)
+Version: 0.5.3 (Black-hole update 3)
 
 ---------------------------------------------------------------------
 
