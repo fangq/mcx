@@ -241,7 +241,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 		           stheta=sinf(theta);
 		           ctheta=tmp0;
                        }else{
-			   theta=ONE_PI*rand_next_zangle(t);
+			   theta=TWO_PI*rand_next_zangle(t);
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("next scat angle theta %20.16e\n",theta));
