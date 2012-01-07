@@ -21,6 +21,16 @@
 #include "mcx_utils.h"
 #include "mcx_const.h"
 
+#define FIND_JSON_KEY(id,idfull,parent,fallback,val) \
+                    ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
+                                ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? fallback : tmp->val) \
+                     : tmp->val)
+
+#define FIND_JSON_OBJ(id,idfull,parent) \
+                    ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
+                                ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? NULL : tmp) \
+                     : tmp)
+
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
@@ -141,20 +151,49 @@ void mcx_assert(int ret){
 
 void mcx_readconfig(char *fname, Config *cfg){
      if(fname[0]==0){
-        if(cfg->session[0]=='\0'){
-		strcpy(cfg->session,"default");
-	}
      	mcx_loadconfig(stdin,cfg);
-     }
-     else{
-        FILE *fp;
-        if(cfg->session[0]=='\0'){
-		strcpy(cfg->session,fname);
+     }else{
+        FILE *fp=fopen(fname,"rt");
+        if(fp==NULL) mcx_error(-2,"can not load the specified config file",__FILE__,__LINE__);
+        if(strstr(fname,".json")!=NULL){
+            char *jbuf;
+            int len;
+            cJSON *jroot;
+
+            fseek (fp, 0, SEEK_END);
+            len=ftell(fp)+1;
+            jbuf=(char *)malloc(len);
+            rewind(fp);
+            if(fread(jbuf,len-1,1,fp)!=1)
+                mcx_error(-2,"reading input file is terminated",__FILE__,__LINE__);
+            jbuf[len-1]='\0';
+            jroot = cJSON_Parse(jbuf);
+            if(jroot){
+                mcx_loadjson(jroot,cfg);
+                cJSON_Delete(jroot);
+            }else{
+                char *ptrold, *ptr=(char*)cJSON_GetErrorPtr();
+                if(ptr) ptrold=strstr(jbuf,ptr);
+                fclose(fp);
+                if(ptr && ptrold){
+                   char *offs=(ptrold-jbuf>=50) ? ptrold-50 : jbuf;
+                   while(offs<ptrold){
+                      fprintf(stderr,"%c",*offs);
+                      offs++;
+                   }
+                   fprintf(stderr,"<error>%.50s\n",ptrold);
+                }
+                free(jbuf);
+                mcx_error(-9,"invalid JSON input file",__FILE__,__LINE__);
+            }
+            free(jbuf);
+        }else{
+	    mcx_loadconfig(fp,cfg); 
+        }
+        fclose(fp);
+	if(cfg->session[0]=='\0'){
+	    strncpy(cfg->session,fname,MAX_SESSION_LENGTH);
 	}
-     	fp=fopen(fname,"rt");
-	if(fp==NULL) mcx_error(-2,"can not load the specified config file",__FILE__,__LINE__);
-	mcx_loadconfig(fp,cfg); 
-	fclose(fp);
      }
 }
 
@@ -169,9 +208,46 @@ void mcx_writeconfig(char *fname, Config *cfg){
      }
 }
 
+void mcx_prepdomain(char *filename, Config *cfg){
+     int idx1d;
+     if(filename[0]){
+        mcx_loadvolume(filename,cfg);
+	if(cfg->isrowmajor){
+		/*from here on, the array is always col-major*/
+		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
+		cfg->isrowmajor=0;
+	}
+	if(cfg->issavedet)
+		mcx_maskdet(cfg);
+	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
+	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
+		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
+	idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+
+        /* if the specified source position is outside the domain, move the source
+	   along the initial vector until it hit the domain */
+	if(cfg->vol && cfg->vol[idx1d]==0){
+                printf("source (%f %f %f) is located outside the domain, vol[%d]=%d\n",
+		      cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,idx1d,cfg->vol[idx1d]);
+		while(cfg->vol[idx1d]==0){
+			cfg->srcpos.x+=cfg->srcdir.x;
+			cfg->srcpos.y+=cfg->srcdir.y;
+			cfg->srcpos.z+=cfg->srcdir.z;
+                        if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f ||
+                               cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
+                               mcx_error(-4,"searching non-zero voxel failed along the incident vector",__FILE__,__LINE__);
+			idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+		}
+		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
+	}
+     }else{
+     	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
+     }
+}
+
 
 void mcx_loadconfig(FILE *in, Config *cfg){
-     uint i,gates,idx1d,itmp;
+     uint i,gates,itmp;
      float dtmp;
      char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
      
@@ -326,42 +402,218 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin)
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
-     if(filename[0]){
-        mcx_loadvolume(filename,cfg);
-	if(cfg->isrowmajor){
-		/*from here on, the array is always col-major*/
-		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
-		cfg->isrowmajor=0;
-	}
-	if(cfg->issavedet)
-		mcx_maskdet(cfg);
-	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
-	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
-		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
-	idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
-
-        /* if the specified source position is outside the domain, move the source
-	   along the initial vector until it hit the domain */
-	if(cfg->vol && cfg->vol[idx1d]==0){
-                printf("source (%f %f %f) is located outside the domain, vol[%d]=%d\n",
-		      cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,idx1d,cfg->vol[idx1d]);
-		while(cfg->vol[idx1d]==0){
-			cfg->srcpos.x+=cfg->srcdir.x;
-			cfg->srcpos.y+=cfg->srcdir.y;
-			cfg->srcpos.z+=cfg->srcdir.z;
-                        if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f ||
-                               cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
-                               mcx_error(-4,"searching non-zero voxel failed along the incident vector",__FILE__,__LINE__);
-			idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
-		}
-		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-	}
-     }else{
-     	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
-     }
+     printf("%d\n", cfg->nblocksize);
+     FILE *fp=fopen("tt.bin","wb");
+     fwrite(cfg,sizeof(*cfg),1,fp);
+     fclose(fp);
+     mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+}
+
+int mcx_loadjson(cJSON *root, Config *cfg){
+     int i;
+     cJSON *Domain, *Optode, *Forward, *Session, *tmp, *subitem;
+     char filename[MAX_PATH_LENGTH]={'\0'};
+     Domain  = cJSON_GetObjectItem(root,"Domain");
+     Optode  = cJSON_GetObjectItem(root,"Optode");
+     Session = cJSON_GetObjectItem(root,"Session");
+     Forward = cJSON_GetObjectItem(root,"Forward");
+
+     if(Domain){
+        char volfile[MAX_PATH_LENGTH];
+	cJSON *meds,*val;
+        strncpy(volfile, FIND_JSON_KEY("VolumeFile","Domain.VolumeFile",Domain,(MCX_ERROR(-1,"You must specify a volume file"),""),valuestring), MAX_PATH_LENGTH);
+        if(cfg->rootpath[0]){
+#ifdef WIN32
+           sprintf(filename,"%s\\%s",cfg->rootpath,volfile);
+#else
+           sprintf(filename,"%s/%s",cfg->rootpath,volfile);
+#endif
+        }else{
+	   strncpy(filename,volfile,MAX_PATH_LENGTH);
+	}
+        if(cfg->unitinmm==1.f)
+	    cfg->unitinmm=FIND_JSON_KEY("LengthUnit","Domain.LengthUnit",Domain,1.f,valuedouble);
+        meds=FIND_JSON_OBJ("Media","Domain.Media",Domain);
+        if(meds){
+           cJSON *med=meds->child;
+           if(med){
+             cfg->medianum=cJSON_GetArraySize(meds);
+             if(cfg->medianum>MAX_PROP)
+                 MCX_ERROR(-4,"input media types exceed the maximum (255)");
+             cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
+             for(i=0;i<cfg->medianum;i++){
+               cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
+               if(val) cfg->prop[i].mua=val->valuedouble;
+	       val=FIND_JSON_OBJ("mus",(MCX_ERROR(-1,"You must specify scattering coeff, default in 1/mm"),""),med);
+               if(val) cfg->prop[i].mus=val->valuedouble;
+	       val=FIND_JSON_OBJ("g",(MCX_ERROR(-1,"You must specify anisotropy [0-1]"),""),med);
+               if(val) cfg->prop[i].g=val->valuedouble;
+	       val=FIND_JSON_OBJ("n",(MCX_ERROR(-1,"You must specify refractive index"),""),med);
+	       if(val) cfg->prop[i].n=val->valuedouble;
+
+               med=med->next;
+               if(med==NULL) break;
+             }
+	     if(cfg->unitinmm!=1.f){
+        	 for(i=0;i<cfg->medianum;i++){
+			cfg->prop[i].mus*=cfg->unitinmm;
+			cfg->prop[i].mua*=cfg->unitinmm;
+        	 }
+	     }
+           }
+        }
+	val=FIND_JSON_OBJ("Dim","Domain.Dim",Domain);
+	if(val && cJSON_GetArraySize(val)>=3){
+	   cfg->dim.x=val->child->valueint;
+           cfg->dim.y=val->child->next->valueint;
+           cfg->dim.z=val->child->next->next->valueint;
+	}else{
+	   MCX_ERROR(-1,"You must specify the dimension of the volume");
+	}
+	val=FIND_JSON_OBJ("Step","Domain.Step",Domain);
+	if(val){
+	   if(cJSON_GetArraySize(val)>=3){
+	       cfg->steps.x=val->child->valuedouble;
+               cfg->steps.y=val->child->next->valuedouble;
+               cfg->steps.z=val->child->next->next->valuedouble;
+           }else{
+	       MCX_ERROR(-1,"Domain::Step has incorrect element numbers");
+           }
+	}
+	if(cfg->steps.x!=cfg->steps.y || cfg->steps.y!=cfg->steps.z)
+           mcx_error(-9,"MCX currently does not support anisotropic voxels",__FILE__,__LINE__);
+
+	if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
+           cfg->unitinmm=cfg->steps.x;
+
+	if(cfg->unitinmm!=1.f){
+           cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
+	}
+	val=FIND_JSON_OBJ("CacheBoxP0","Domain.CacheBoxP0",Domain);
+	if(val){
+	   if(cJSON_GetArraySize(val)>=3){
+	       cfg->crop0.x=val->child->valueint;
+               cfg->crop0.y=val->child->next->valueint;
+               cfg->crop0.z=val->child->next->next->valueint;
+           }else{
+	       MCX_ERROR(-1,"Domain::CacheBoxP0 has incorrect element numbers");
+           }
+	}
+	val=FIND_JSON_OBJ("CacheBoxP1","Domain.CacheBoxP1",Domain);
+	if(val){
+	   if(cJSON_GetArraySize(val)>=3){
+	       cfg->crop1.x=val->child->valueint;
+               cfg->crop1.y=val->child->next->valueint;
+               cfg->crop1.z=val->child->next->next->valueint;
+           }else{
+	       MCX_ERROR(-1,"Domain::CacheBoxP1 has incorrect element numbers");
+           }
+	}
+	val=FIND_JSON_OBJ("OriginType","Domain.OriginType",Domain);
+	if(val && cfg->issrcfrom0==0) cfg->issrcfrom0=val->valueint;
+
+	if(cfg->sradius>0.f){
+     	   cfg->crop0.x=MAX((uint)(cfg->srcpos.x-cfg->sradius),0);
+     	   cfg->crop0.y=MAX((uint)(cfg->srcpos.y-cfg->sradius),0);
+     	   cfg->crop0.z=MAX((uint)(cfg->srcpos.z-cfg->sradius),0);
+     	   cfg->crop1.x=MIN((uint)(cfg->srcpos.x+cfg->sradius),cfg->dim.x-1);
+     	   cfg->crop1.y=MIN((uint)(cfg->srcpos.y+cfg->sradius),cfg->dim.y-1);
+     	   cfg->crop1.z=MIN((uint)(cfg->srcpos.z+cfg->sradius),cfg->dim.z-1);
+	}else if(cfg->sradius==0.f){
+     	   memset(&(cfg->crop0),0,sizeof(uint3));
+     	   memset(&(cfg->crop1),0,sizeof(uint3));
+	}else{
+           /*
+              if I define -R with a negative radius, I will use crop0/crop1 to set the cachebox
+              nothing need to change here.
+           */
+	}
+     }
+     if(Optode){
+        cJSON *dets, *src=FIND_JSON_OBJ("Source","Optode.Source",Optode);
+        if(src){
+           subitem=FIND_JSON_OBJ("Pos","Optode.Source.Pos",src);
+           if(subitem){
+              cfg->srcpos.x=subitem->child->valuedouble;
+              cfg->srcpos.y=subitem->child->next->valuedouble;
+              cfg->srcpos.z=subitem->child->next->next->valuedouble;
+           }
+           subitem=FIND_JSON_OBJ("Dir","Optode.Source.Dir",src);
+           if(subitem){
+              cfg->srcdir.x=subitem->child->valuedouble;
+              cfg->srcdir.y=subitem->child->next->valuedouble;
+              cfg->srcdir.z=subitem->child->next->next->valuedouble;
+           }
+	   if(!cfg->issrcfrom0){
+              cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
+	   }
+        }
+        dets=FIND_JSON_OBJ("Detector","Optode.Detector",Optode);
+        if(dets){
+           cJSON *det=dets->child;
+           if(det){
+             cfg->detnum=cJSON_GetArraySize(dets);
+             cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
+	     if(cfg->issavedet && cfg->detnum==0) 
+      		cfg->issavedet=0;
+             for(i=0;i<cfg->detnum;i++){
+               cJSON *pos=dets, *rad=NULL;
+               rad=FIND_JSON_OBJ("R","Optode.Detector.R",det);
+               if(cJSON_GetArraySize(det)==2){
+                   pos=FIND_JSON_OBJ("Pos","Optode.Detector.Pos",det);
+               }
+               if(pos){
+	           cfg->detpos[i].x=pos->child->valuedouble;
+                   cfg->detpos[i].y=pos->child->next->valuedouble;
+	           cfg->detpos[i].z=pos->child->next->next->valuedouble;
+               }
+               if(rad){
+                   cfg->detpos[i].w=rad->valuedouble;
+               }
+               if(!cfg->issrcfrom0){
+		   cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
+	       }
+               det=det->next;
+               if(det==NULL) break;
+             }
+           }
+        }
+     }
+     if(Session){
+        if(cfg->seed==0)      cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
+        if(cfg->nphoton==0)   cfg->nphoton=FIND_JSON_KEY("Photons","Session.Photons",Session,0,valuedouble);
+        if(cfg->session[0]=='\0')  strncpy(cfg->session, FIND_JSON_KEY("ID","Session.ID",Session,"default",valuestring), MAX_SESSION_LENGTH);
+        if(cfg->rootpath[0]=='\0') strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath","Session.RootPath",Session,"",valuestring), MAX_PATH_LENGTH);
+
+        if(!cfg->isreflect)   cfg->isreflect=FIND_JSON_KEY("DoMismatch","Session.DoMismatch",Session,cfg->isreflect,valueint);
+        if(cfg->issave2pt)    cfg->issave2pt=FIND_JSON_KEY("DoSaveVolume","Session.DoSaveVolume",Session,cfg->issave2pt,valueint);
+        if(cfg->isnormalized) cfg->isnormalized=FIND_JSON_KEY("DoNormalize","Session.DoNormalize",Session,cfg->isnormalized,valueint);
+        if(!cfg->issavedet)   cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
+     }
+     if(Forward){
+        uint gates;
+        cfg->tstart=FIND_JSON_KEY("T0","Forward.T0",Forward,0.0,valuedouble);
+        cfg->tend  =FIND_JSON_KEY("T1","Forward.T1",Forward,0.0,valuedouble);
+        cfg->tstep =FIND_JSON_KEY("Dt","Forward.Dt",Forward,0.0,valuedouble);
+	if(cfg->tstart>cfg->tend || cfg->tstep==0.f)
+            mcx_error(-9,"incorrect time gate settings",__FILE__,__LINE__);
+
+        gates=(uint)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
+        if(cfg->maxgate>gates)
+	    cfg->maxgate=gates;
+     }
+     printf("%d\n", cfg->nblocksize);
+     FILE *fp=fopen("tt2.bin","wb");
+     fwrite(cfg,sizeof(*cfg),1,fp);
+     fclose(fp);
+     mcx_prepdomain(filename,cfg);
+     cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
+     cfg->his.detnum=cfg->detnum;
+     cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+     return 0;
 }
 
 void mcx_saveconfig(FILE *out, Config *cfg){

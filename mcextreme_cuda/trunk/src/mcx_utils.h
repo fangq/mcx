@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <vector_types.h>
 #include "br2cu.h"
+#include "cjson/cJSON.h"
 
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  255
@@ -12,6 +13,7 @@
   #define MCX_CUDA_ARCH       100
 #endif
 
+#define MCX_ERROR(id,msg)   mcx_error(id,msg,__FILE__,__LINE__)
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 #define MAX(a,b)           ((a)>(b)?(a):(b))
 
@@ -111,6 +113,7 @@ int  mcx_remap(char *opt);
 void mcx_maskdet(Config *cfg);
 void mcx_version(Config *cfg);
 void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
+int  mcx_loadjson(cJSON *root, Config *cfg);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus
