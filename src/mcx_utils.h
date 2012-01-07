@@ -42,7 +42,7 @@ typedef struct MCXConfig{
 	//int totalmove;   /* [depreciated] total move per photon*/
         unsigned int nblocksize;   /*thread block size*/
 	unsigned int nthread;      /*num of total threads, multiple of 128*/
-	unsigned int seed;         /*random number generator seed*/
+	int seed;         /*random number generator seed*/
 
 	float3 srcpos;    /*src position in mm*/
 	float3 srcdir;    /*src normal direction*/
