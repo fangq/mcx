@@ -734,7 +734,7 @@ void mcx_run_simulation(Config *cfg){
      fprintf(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009-2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2012 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\

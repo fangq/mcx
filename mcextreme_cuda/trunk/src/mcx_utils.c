@@ -961,7 +961,7 @@ void mcx_usage(char *exename){
      printf("\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009-2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2012 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\
@@ -992,7 +992,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
- -E [0|int]    (--seed)        set random-number-generator seed\n\
+ -E [0|int]    (--seed)        set random-number-generator seed, -1 to generate\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\
