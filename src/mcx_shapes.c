@@ -33,12 +33,15 @@ rasterize the 3D objects and subsequently add to a voxelated volume.
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 #define MAX(a,b)           ((a)>(b)?(a):(b))
 
-const char *ShapeTags[]={"Name","Origin","Grid","Subgrid","Sphere","Box","XLayers","YLayers","ZLayers",
-                         "Cylinder","UpperSpace",NULL};
+const char *ShapeTags[]={"Name","Origin","Grid","Subgrid","Sphere","Box","XSlabs",
+                         "YSlabs","ZSlabs","XLayers","YLayers","ZLayers",
+			 "Cylinder","UpperSpace",NULL};
 int (*Rasterizers[])(cJSON *obj, Grid3D *g)={NULL,mcx_raster_origin,mcx_raster_grid,mcx_raster_subgrid,
-                          mcx_raster_sphere,mcx_raster_box,mcx_raster_layers,mcx_raster_layers,
+                          mcx_raster_sphere,mcx_raster_box,mcx_raster_slabs,mcx_raster_slabs,
+			  mcx_raster_slabs, mcx_raster_layers,mcx_raster_layers,
 			  mcx_raster_layers,mcx_raster_cylinder,mcx_raster_upperspace,NULL};
 char ErrorMsg[MAX_SHAPE_ERR]={'\0'};
+
 
 /*******************************************************************************/
 /*! \fn int mcx_load_jsonshapes(Grid3D *g, char *fname)
@@ -60,8 +63,7 @@ int mcx_load_jsonshapes(Grid3D *g, char *fname){
     }
     if(strstr(fname,".json")!=NULL){
     	char *jbuf;
-    	int len;
-    	cJSON *jroot;
+    	int len,err;
 
     	fseek (fp, 0, SEEK_END);
     	len=ftell(fp)+1;
@@ -72,7 +74,27 @@ int mcx_load_jsonshapes(Grid3D *g, char *fname){
     	    return -1;
 	}
     	jbuf[len-1]='\0';
-    	jroot = cJSON_Parse(jbuf);
+        fclose(fp);
+    	if((err=mcx_parse_shapestring(g,jbuf))){ /*error msg is generated inside*/
+	   free(jbuf);
+	   return err;
+	}
+    	free(jbuf);
+    }
+    return 0;
+}
+
+/*******************************************************************************/
+/*! \fn int mcx_parse_shapestring(Grid3D *g, char *shapedata)
+
+    \brief Load JSON-formatted shape definitions from a string
+    \param g A structure pointing to the volume and dimension data
+    \param shapedata A string containg the JSON shape data
+*/
+
+int mcx_parse_shapestring(Grid3D *g, char *shapedata){
+    if(g && shapedata){
+    	cJSON *jroot = cJSON_Parse(shapedata);
     	if(jroot){
 	    int err;
 	    if(g && g->vol && *(g->vol))
@@ -85,21 +107,19 @@ int mcx_load_jsonshapes(Grid3D *g, char *fname){
     	    cJSON_Delete(jroot);
     	}else{
     	    char *ptrold, *ptr=(char*)cJSON_GetErrorPtr();
-    	    if(ptr) ptrold=strstr(jbuf,ptr);
-    	    fclose(fp);
+    	    if(ptr) ptrold=strstr(shapedata,ptr);
+
     	    if(ptr && ptrold){
-    	       char *offs=(ptrold-jbuf>=50) ? ptrold-50 : jbuf;
+    	       char *offs=(ptrold-shapedata>=50) ? ptrold-50 : shapedata;
     	       while(offs<ptrold){
     		  fprintf(stderr,"%c",*offs);
     		  offs++;
     	       }
     	       fprintf(stderr,"<error>%.50s\n",ptrold);
     	    }
-    	    free(jbuf);
             sprintf(ErrorMsg,"Invalid JSON file");
     	    return -2;
     	}
-    	free(jbuf);
     }
     return 0;
 }
@@ -395,21 +415,21 @@ int mcx_raster_cylinder(cJSON *obj, Grid3D *g){
 }
 
 /*******************************************************************************/
-/*! \fn int mcx_raster_layers(cJSON *obj, Grid3D *g)
+/*! \fn int mcx_raster_slabs(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D layer structure and add to the volume
-    \param obj A cJSON pointer points to the layer structure block
+    \brief Rasterize a 3D layered-slab structure and add to the volume
+    \param obj A cJSON pointer points to the layered-slab structure block
     \param g  A structure pointing to the volume and dimension data
 */
 
-int mcx_raster_layers(cJSON *obj, Grid3D *g){
+int mcx_raster_slabs(cJSON *obj, Grid3D *g){
     float *bd=NULL;
     int i,j,k,dimxy,dimyz,tag=0,num=0,num2,dir=-1,p;
     cJSON *item, *val;
 
-    if(strcmp(obj->string,"XLayers")==0)      dir=0;
-    else if(strcmp(obj->string,"YLayers")==0) dir=1;
-    else if(strcmp(obj->string,"ZLayers")==0) dir=2;
+    if(strcmp(obj->string,"XSlabs")==0)      dir=0;
+    else if(strcmp(obj->string,"YSlabs")==0) dir=1;
+    else if(strcmp(obj->string,"ZSlabs")==0) dir=2;
     else{
         sprintf(ErrorMsg,"Unsupported layer command");
         return 1;
@@ -418,8 +438,14 @@ int mcx_raster_layers(cJSON *obj, Grid3D *g){
     if(val){
        num=cJSON_GetArraySize(val);
        if(num==0) return 0;
-       bd=(float *)malloc(cJSON_GetArraySize(val)*2*sizeof(float));
-       item=val->child;
+       if(num==2 && obj->child->type!=cJSON_Array){
+          item=obj;
+	  bd=(float *)malloc(cJSON_GetArraySize(obj)*sizeof(float));
+	  num=1;
+       }else{
+          item=obj->child;
+          bd=(float *)malloc(cJSON_GetArraySize(obj)*2*sizeof(float));
+       }
        for(i=0;i<num;i++){
            if(cJSON_GetArraySize(item)!=2){
               sprintf(ErrorMsg,"The Bound field must contain number pairs");
@@ -468,6 +494,86 @@ int mcx_raster_layers(cJSON *obj, Grid3D *g){
 	    for(j=0;j<g->dim->y;j++)
 	       for(i=0;i<g->dim->x;i++)
                   (*(g->vol))[g->rowmajor? i*dimyz+j*g->dim->z+k : k*dimxy+j*g->dim->x+i]=tag;
+    }
+    if(bd) free(bd);
+    return 0;
+}
+
+/*******************************************************************************/
+/*! \fn int mcx_raster_layers(cJSON *obj, Grid3D *g)
+
+    \brief Rasterize a 3D layer structure and add to the volume
+    \param obj A cJSON pointer points to the layer structure block
+    \param g  A structure pointing to the volume and dimension data
+*/
+
+int mcx_raster_layers(cJSON *obj, Grid3D *g){
+    int *bd=NULL;
+    int i,j,k,dimxy,dimyz,num=0,num3,dir=-1,p;
+    cJSON *item;
+
+    if(strcmp(obj->string,"XLayers")==0)      dir=0;
+    else if(strcmp(obj->string,"YLayers")==0) dir=1;
+    else if(strcmp(obj->string,"ZLayers")==0) dir=2;
+    else{
+        sprintf(ErrorMsg,"Unsupported command %s",obj->string);
+        return 1;
+    }
+    if(obj && obj->type==cJSON_Array){
+       num=cJSON_GetArraySize(obj);
+       if(num==0) return 0;
+       if(num==3 && obj->child->type!=cJSON_Array){
+          item=obj;
+	  bd=(int *)malloc(cJSON_GetArraySize(obj)*sizeof(int));
+	  num=1;
+       }else{
+          item=obj->child;
+          bd=(int *)malloc(cJSON_GetArraySize(obj)*3*sizeof(int));
+       }
+       for(i=0;i<num;i++){
+           if(cJSON_GetArraySize(item)!=3){
+              sprintf(ErrorMsg,"The %s must contain integer triplets",obj->string);
+	      return 2;
+	   }
+	   bd[i*3]  =MAX(item->child->valueint,1)-1; /*inclusive of both ends*/
+	   bd[i*3+1]=MIN(item->child->next->valueint,(&(g->dim->x))[dir]);
+	   bd[i*3+2]=item->child->next->next->valueint;
+	   if(bd[i*3+1] < bd[i*3]){
+	      float tmp=bd[i*3+1];
+	      bd[i*3+1]=bd[i*3];
+	      bd[i*3]=tmp;
+	   }
+           item=item->next;
+       }
+    }else{
+       sprintf(ErrorMsg,"A %s object must be an array",obj->string);
+       return 1;
+    }
+
+    if(num==0) return 0;
+    num3=num*3;
+
+    dimxy=g->dim->x*g->dim->y;
+    dimyz=g->dim->y*g->dim->z;
+
+    if(dir==0){
+        for(p=0;p<num3;p+=3)
+	  for(k=0;k<g->dim->z;k++)
+	    for(j=0;j<g->dim->y;j++)
+	       for(i=bd[p];i<bd[p+1];i++)
+                  (*(g->vol))[g->rowmajor? i*dimyz+j*g->dim->z+k : k*dimxy+j*g->dim->x+i]=bd[p+2];
+    }else if(dir==1){
+        for(p=0;p<num3;p+=3)
+	  for(k=0;k<g->dim->z;k++)
+	    for(j=bd[p];j<bd[p+1];j++)
+	       for(i=0;i<g->dim->x;i++)
+                  (*(g->vol))[g->rowmajor? i*dimyz+j*g->dim->z+k : k*dimxy+j*g->dim->x+i]=bd[p+2];
+    }else if(dir==2){
+        for(p=0;p<num3;p+=3)
+	  for(k=bd[p];k<bd[p+1];k++)
+	    for(j=0;j<g->dim->y;j++)
+	       for(i=0;i<g->dim->x;i++)
+                  (*(g->vol))[g->rowmajor? i*dimyz+j*g->dim->z+k : k*dimxy+j*g->dim->x+i]=bd[p+2];
     }
     if(bd) free(bd);
     return 0;

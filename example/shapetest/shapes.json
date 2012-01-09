@@ -12,8 +12,10 @@
      "Shapes::Sphere": "A 3D sphere, centered at C0 with radius R, both have FP values",
      "Shapes::Box": "A 3D box, with lower corner O and edge length Size, both have FP values",
      "Shapes::SubGrid": "A sub-section of the grid, integer O- and Size-triplet, inclusive of both ends",
-     "Shapes::XLayers/YLayers/ZLayers": "Layered structures, consisted of a list of FP pairs [start,end]
-          both ends are inclusive in MATLAB array indices, all XLayers are perpendicular to x-axis, and so on",
+     "Shapes::XLayers/YLayers/ZLayers": "Layered structures, defined by an array of integer triples:
+          [start,end,tag]. Ends are inclusive in MATLAB array indices. XLayers are perpendicular to x-axis, and so on",
+     "Shapes::XSlabs/YSlabs/ZSlabs": "Slab structures, consisted of a list of FP pairs [start,end]
+          both ends are inclusive in MATLAB array indices, all XSlabs are perpendicular to x-axis, and so on",
      "Shapes::Cylinder": "A finite cylinder, defined by the two ends, C0 and C1, along the axis and a radius R",
      "Shapes::UpperSpace": "A semi-space defined by inequality A*x+B*y+C*z>D, Coef is required, but not Equ"
   },
@@ -25,7 +27,7 @@
      {"Box":      {"Tag":0, "O":[10,10,10],"Size":[10,10,10]}},
      {"Subgrid":  {"Tag":1, "O":[13,13,13],"Size":[5,5,5]}},
      {"UpperSpace":{"Tag":3,"Coef":[1,-1,0,0],"Equ":"A*x+B*y+C*z>D"}},
-     {"XLayers":  {"Tag":4, "Bound":[[5,15],[35,40]]}},
+     {"XSlabs":   {"Tag":4, "Bound":[[5,15],[35,40]]}},
      {"Cylinder": {"Tag":2, "C0": [0.0,0.0,0.0], "C1": [15.0,8.0,10.0], "R": 4.0}}
   ]
 }
