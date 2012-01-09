@@ -14,11 +14,13 @@ typedef struct GridSpace{
 
 int mcx_load_jsonshapes(Grid3D *g, char *fname);
 int mcx_parse_jsonshapes(cJSON *root, Grid3D *g);
+int mcx_parse_shapestring(Grid3D *g, char *shapedata);
 int mcx_raster_origin(cJSON *obj, Grid3D *g);
 int mcx_raster_sphere(cJSON *obj, Grid3D *g);
 int mcx_raster_subgrid(cJSON *obj, Grid3D *g);
 int mcx_raster_box(cJSON *obj, Grid3D *g);
 int mcx_raster_cylinder(cJSON *obj, Grid3D *g);
+int mcx_raster_slabs(cJSON *obj, Grid3D *g);
 int mcx_raster_layers(cJSON *obj, Grid3D *g);
 int mcx_raster_upperspace(cJSON *obj, Grid3D *g);
 int mcx_raster_grid(cJSON *obj, Grid3D *g);

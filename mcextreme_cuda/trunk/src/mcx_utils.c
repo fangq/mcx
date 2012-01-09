@@ -32,12 +32,12 @@
                                 ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? NULL : tmp) \
                      : tmp)
 
-const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H',
+const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
-                 "--unitinmm","--maxdetphoton","--savedet",
+                 "--unitinmm","--maxdetphoton","--shapes","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot","--seed","--version",""};
@@ -87,6 +87,7 @@ void mcx_initcfg(Config *cfg){
      memcpy(cfg->his.magic,"MCXH",4);
      cfg->his.version=1;
      cfg->his.unitinmm=1.f;
+     cfg->shapedata=NULL;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -212,7 +213,17 @@ void mcx_writeconfig(char *fname, Config *cfg){
 void mcx_prepdomain(char *filename, Config *cfg){
      int idx1d;
      if(filename[0] || cfg->vol){
-        if(cfg->vol==NULL) mcx_loadvolume(filename,cfg);
+        if(cfg->vol==NULL){
+	     mcx_loadvolume(filename,cfg);
+	     if(cfg->shapedata && strstr(cfg->shapedata,":")!=NULL){
+     		  Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
+        	  if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
+		  int status=mcx_parse_shapestring(&grid,cfg->shapedata);
+		  if(status){
+		      MCX_ERROR(status,mcx_last_shapeerror());
+		  }
+	     }
+	}
 	if(cfg->isrowmajor){
 		/*from here on, the array is always col-major*/
 		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
@@ -609,6 +620,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      if(filename[0]=='\0'){
          if(Shapes){
              Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
+             if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
 	     int status=mcx_parse_jsonshapes(root, &grid);
 	     if(status){
 	         MCX_ERROR(status,mcx_last_shapeerror());
@@ -616,6 +628,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	 }else{
 	     MCX_ERROR(-1,"You must either define Domain.VolumeFile, or define a Shapes section");
 	 }
+     }else if(Shapes){
+         MCX_ERROR(-1,"You can not specify both Domain.VolumeFile and Shapes sections");
      }
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
@@ -938,6 +952,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'H':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
 		     	        break;
+                     case 'P':
+                                cfg->shapedata=argv[++i];
+                                break;
                      case 'A':
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
@@ -960,11 +977,11 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
           }
      }
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
-       if(isinteractive){
-          mcx_readconfig((char*)"",cfg);
-       }else{
-     	  mcx_readconfig(filename,cfg);
-       }
+	  if(isinteractive){
+             mcx_readconfig((char*)"",cfg);
+	  }else{
+     	     mcx_readconfig(filename,cfg);
+	  }
      }
 }
 
@@ -1016,9 +1033,13 @@ where possible parameters include (the first item in [] is the default value)\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\
  -I            (--printgpu)    print GPU information and run program\n\
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -v            (--version)     print MCX revision number\n\
 example:\n\
        %s -A -n 1e7 -f input.inp -G 1 \n\
 or\n\
-       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1\n",exename,exename,exename);
+       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1\n\
+or\n\
+       %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n",
+              exename,exename,exename,exename);
 }

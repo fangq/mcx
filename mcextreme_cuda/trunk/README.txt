@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.5.3 (Black-hole update 3)
+Version: 0.7.9 (Charm Quarks - beta)
 
 ---------------------------------------------------------------------
 
@@ -44,6 +44,7 @@ A short summary of the main features includes:
 *. improved accuracy near the source with atomic operations
 *. cross-platform graphics user interface
 *. native Matlab/Octave support for high usability
+*. flexible JSON interface for future extensions
 
 This software can be used on Windows, Linux and Mac OS. 
 MCX is written in CUDA and can be used with NVIDIA hardware
