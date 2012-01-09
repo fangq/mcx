@@ -31,7 +31,7 @@ CPPOPT=-g -Wall -O3 #-std=c99
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils tictoc mcextreme cjson/cJSON
+FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
