@@ -1,7 +1,13 @@
 = Change Log =
 
+== MCX 0.7.9 (Charm Quarks - dev branch), FangQ <fangq nmr mgh harvard edu> ==
+
+ 2012-01-08 support 3D shape input and and run-time rasterization
+ 2012-01-07 port JSON-formatted input file support from MMC to MCX
+
 == MCX 0.5.3 (Black Hole - update 3), FangQ <fangq nmr mgh harvard edu> ==
 
+ 2012-01-07 fix a minor bug which fails using -1 with -E
  2011-12-21 fix an issue causing forward scattering bias (reported by David Giraud)
 
 == MCX 0.5.2 (Black Hole - update 2), FangQ <fangq nmr mgh harvard edu> ==

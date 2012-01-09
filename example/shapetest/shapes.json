@@ -1,0 +1,31 @@
+{
+  "MCX_Shape_Command_Help":{
+     "Shapes::Common Rules": "Shapes is an array object. The Tag field sets the voxel value for each 
+         region; if Tag is missing, use 0. Tag must be smaller than the maximum media number in the 
+	 input file.Most parameters are in floating-point (FP). If a parameter is a coordinate, it 
+	 assumes the origin is defined at the lowest corner of the first voxel, unless user overwrite
+	 with an Origin object. The default origin of all shapes is initialized by user's --srcfrom0 
+	 setting: if srcfrom0=1, the lowest corner of the 1st voxel is [0,0,0]; otherwise, it is [1,1,1]",
+     "Shapes::Name": "Just for documentation purposes, not parsed in MCX",
+     "Shapes::Origin": "A floating-point (FP) triplet, set coordinate origin for the subsequent objects",
+     "Shapes::Grid": "Recreate the background grid with the given dimension (Size) and fill-value (Tag)",
+     "Shapes::Sphere": "A 3D sphere, centered at C0 with radius R, both have FP values",
+     "Shapes::Box": "A 3D box, with lower corner O and edge length Size, both have FP values",
+     "Shapes::SubGrid": "A sub-section of the grid, integer O- and Size-triplet, inclusive of both ends",
+     "Shapes::XLayers/YLayers/ZLayers": "Layered structures, consisted of a list of FP pairs [start,end]
+          both ends are inclusive in MATLAB array indices, all XLayers are perpendicular to x-axis, and so on",
+     "Shapes::Cylinder": "A finite cylinder, defined by the two ends, C0 and C1, along the axis and a radius R",
+     "Shapes::UpperSpace": "A semi-space defined by inequality A*x+B*y+C*z>D, Coef is required, but not Equ"
+  },
+  "Shapes": [
+     {"Name":     "Test"},
+     {"Origin":   [0,0,0]},
+     {"Grid":     {"Tag":1, "Size":[40,60,50]}},
+     {"Sphere":   {"Tag":2, "O":[30,30,30],"R":20}},
+     {"Box":      {"Tag":0, "O":[10,10,10],"Size":[10,10,10]}},
+     {"Subgrid":  {"Tag":1, "O":[13,13,13],"Size":[5,5,5]}},
+     {"UpperSpace":{"Tag":3,"Coef":[1,-1,0,0],"Equ":"A*x+B*y+C*z>D"}},
+     {"XLayers":  {"Tag":4, "Bound":[[5,15],[35,40]]}},
+     {"Cylinder": {"Tag":2, "C0": [0.0,0.0,0.0], "C1": [15.0,8.0,10.0], "R": 4.0}}
+  ]
+}

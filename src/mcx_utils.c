@@ -20,6 +20,7 @@
 #include <math.h>
 #include "mcx_utils.h"
 #include "mcx_const.h"
+#include "mcx_shapes.h"
 
 #define FIND_JSON_KEY(id,idfull,parent,fallback,val) \
                     ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
@@ -210,8 +211,8 @@ void mcx_writeconfig(char *fname, Config *cfg){
 
 void mcx_prepdomain(char *filename, Config *cfg){
      int idx1d;
-     if(filename[0]){
-        mcx_loadvolume(filename,cfg);
+     if(filename[0] || cfg->vol){
+        if(cfg->vol==NULL) mcx_loadvolume(filename,cfg);
 	if(cfg->isrowmajor){
 		/*from here on, the array is always col-major*/
 		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
@@ -402,10 +403,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin)
 		fprintf(stdout,"%f %f %f\n",cfg->detpos[i].x,cfg->detpos[i].y,cfg->detpos[i].z);
      }
-     printf("%d\n", cfg->nblocksize);
-     FILE *fp=fopen("tt.bin","wb");
-     fwrite(cfg,sizeof(*cfg),1,fp);
-     fclose(fp);
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
@@ -414,25 +411,29 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 
 int mcx_loadjson(cJSON *root, Config *cfg){
      int i;
-     cJSON *Domain, *Optode, *Forward, *Session, *tmp, *subitem;
+     cJSON *Domain, *Optode, *Forward, *Session, *Shapes, *tmp, *subitem;
      char filename[MAX_PATH_LENGTH]={'\0'};
      Domain  = cJSON_GetObjectItem(root,"Domain");
      Optode  = cJSON_GetObjectItem(root,"Optode");
      Session = cJSON_GetObjectItem(root,"Session");
      Forward = cJSON_GetObjectItem(root,"Forward");
+     Shapes  = cJSON_GetObjectItem(root,"Shapes");
 
      if(Domain){
         char volfile[MAX_PATH_LENGTH];
 	cJSON *meds,*val;
-        strncpy(volfile, FIND_JSON_KEY("VolumeFile","Domain.VolumeFile",Domain,(MCX_ERROR(-1,"You must specify a volume file"),""),valuestring), MAX_PATH_LENGTH);
-        if(cfg->rootpath[0]){
+	val=FIND_JSON_OBJ("VolumeFile","Domain.VolumeFile",Domain);
+	if(val){
+          strncpy(volfile, val->valuestring, MAX_PATH_LENGTH);
+          if(cfg->rootpath[0]){
 #ifdef WIN32
            sprintf(filename,"%s\\%s",cfg->rootpath,volfile);
 #else
            sprintf(filename,"%s/%s",cfg->rootpath,volfile);
 #endif
-        }else{
-	   strncpy(filename,volfile,MAX_PATH_LENGTH);
+          }else{
+	     strncpy(filename,volfile,MAX_PATH_LENGTH);
+	  }
 	}
         if(cfg->unitinmm==1.f)
 	    cfg->unitinmm=FIND_JSON_KEY("LengthUnit","Domain.LengthUnit",Domain,1.f,valuedouble);
@@ -605,10 +606,17 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(cfg->maxgate>gates)
 	    cfg->maxgate=gates;
      }
-     printf("%d\n", cfg->nblocksize);
-     FILE *fp=fopen("tt2.bin","wb");
-     fwrite(cfg,sizeof(*cfg),1,fp);
-     fclose(fp);
+     if(filename[0]=='\0'){
+         if(Shapes){
+             Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
+	     int status=mcx_parse_jsonshapes(root, &grid);
+	     if(status){
+	         MCX_ERROR(status,mcx_last_shapeerror());
+	     }
+	 }else{
+	     MCX_ERROR(-1,"You must either define Domain.VolumeFile, or define a Shapes section");
+	 }
+     }
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
@@ -619,7 +627,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 void mcx_saveconfig(FILE *out, Config *cfg){
      uint i;
 
-     fprintf(out,"%d\n", (cfg->nphoton) ); 
+     fprintf(out,"%d\n", (cfg->nphoton) );
      fprintf(out,"%d\n", (cfg->seed) );
      fprintf(out,"%f %f %f\n", (cfg->srcpos.x),(cfg->srcpos.y),(cfg->srcpos.z) );
      fprintf(out,"%f %f %f\n", (cfg->srcdir.x),(cfg->srcdir.y),(cfg->srcdir.z) );
@@ -639,7 +647,18 @@ void mcx_saveconfig(FILE *out, Config *cfg){
 
 void mcx_loadvolume(char *filename,Config *cfg){
      unsigned int i,datalen,res;
-     FILE *fp=fopen(filename,"rb");
+     FILE *fp;
+     
+     if(strstr(filename,".json")!=NULL){
+         Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
+	 if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
+         int status=mcx_load_jsonshapes(&grid,filename);
+	 if(status){
+	     MCX_ERROR(status,mcx_last_shapeerror());
+	 }
+	 return;
+     }
+     fp=fopen(filename,"rb");
      if(fp==NULL){
      	     mcx_error(-5,"the specified binary volume file does not exist",__FILE__,__LINE__);
      }
