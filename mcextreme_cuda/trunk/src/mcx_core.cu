@@ -154,6 +154,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
      float  energyabsorbed=genergy[(idx<<1)+1];
 
      uint idx1d, idx1dold;   //idx1dold is related to reflection
+     float3 htime;            //reflection var
 
 #ifdef TEST_RACING
      int cc=0;
@@ -307,7 +308,6 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
           //if it hits the boundary, exceeds the max time window or exits the domain, rebound or launch a new one
 	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->dorefint && n1!=gproperty[mediaid].w) ){
 	      float flipdir=0.f;
-              float3 htime;            //reflection var
 
               if(gcfg->doreflect) {
                 //time-of-flight to hit the wall in each direction
@@ -320,18 +320,15 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
                 //move to the 1st intersection pt
                 tmp0*=JUST_ABOVE_ONE;
-                p0.x+=tmp0*v.x;
-                p0.y+=tmp0*v.y;
-                p0.z+=tmp0*v.z;
-                htime.x=floorf(p0.x);
-       	        htime.y=floorf(p0.y);
-       	        htime.z=floorf(p0.z);
+                htime.x=floorf(p0.x+tmp0*v.x);
+       	        htime.y=floorf(p0.y+tmp0*v.y);
+       	        htime.z=floorf(p0.z+tmp0*v.z);
 
-                if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
-                    if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]==mediaidold){ //if the first vox is not air
+                GPUDEBUG((" trial 1: [%.1f %.1f,%.1f] %d %f\n",htime.x,htime.y,htime.z,flipdir,
+                      media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]));
 
-                     GPUDEBUG((" first try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
-                           media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
+                if(htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z
+		     &&media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]==mediaidold){ //if the first vox is not air
 
                      htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p.x)+(v.x<0.f)-p.x)/(-v.x):VERY_BIG;
                      htime.y=(v.y>EPS||v.y<-EPS)?(floorf(p.y)+(v.y<0.f)-p.y)/(-v.y):VERY_BIG;
@@ -342,18 +339,20 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
                      //if(gcfg->doreflect3){
                        tmp0*=JUST_ABOVE_ONE;
-                       p0.x=p.x-tmp0*v.x;
-                       p0.y=p.y-tmp0*v.y;
-                       p0.z=p.z-tmp0*v.z;
-                       htime.x=floorf(p0.x);
-                       htime.y=floorf(p0.y);
-                       htime.z=floorf(p0.z);
+                       htime.x=p.x-tmp0*v.x; //move to the last intersection pt
+                       htime.y=p.y-tmp0*v.y;
+                       htime.z=p.z-tmp0*v.z;
 
-                       if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&htime.x<gcfg->maxidx.x&&htime.y<gcfg->maxidx.y&&htime.z<gcfg->maxidx.z){
-                           if(media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]!=mediaidold){ //this is an air voxel
+                       GPUDEBUG((" trial 2: [%.1f %.1f,%.1f] %d %f\n",htime.x,htime.y,htime.z,flipdir,
+                            media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)]));
 
-                               GPUDEBUG((" second try failed: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
-                                   media[int(htime.z*gcfg->dimlen.y+htime.y*gcfg->dimlen.x+htime.x)], gcfg->maxidx.x, gcfg->maxidx.y,gcfg->maxidx.z));
+                       if(tmp1!=flipdir&&htime.x>=0&&htime.y>=0&&htime.z>=0&&
+		            floorf(htime.x)<gcfg->maxidx.x&&floorf(htime.y)<gcfg->maxidx.y&&floorf(htime.z)<gcfg->maxidx.z){
+                           if(media[int(floorf(htime.z)*gcfg->dimlen.y+floorf(htime.y)*gcfg->dimlen.x+floorf(htime.x))]!=mediaidold){ //this is an air voxel
+
+                               GPUDEBUG((" trial 3: [%.1f %.1f,%.1f] %d (%.1f %.1f %.1f)\n",htime.x,htime.y,htime.z,
+                                   media[int(floorf(htime.z)*gcfg->dimlen.y+floorf(htime.y)*gcfg->dimlen.x+floorf(htime.x))], 
+				   p.x,p.y,p.z));
 
                                /*to compute the remaining interface, we used the following fact to accelerate: 
                                  if there exist 3 intersections, photon must pass x/y/z interface exactly once,
@@ -364,17 +363,20 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                                */
                                flipdir=-tmp1-flipdir+6.f;
 
-                               htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p0.x)+(v.x<0.f)-p0.x)/(-v.x):VERY_BIG;
-                               htime.y=(v.y>EPS||v.y<-EPS)?(floorf(p0.y)+(v.y<0.f)-p0.y)/(-v.y):VERY_BIG;
-                               htime.z=(v.z>EPS||v.z<-EPS)?(floorf(p0.z)+(v.z<0.f)-p0.z)/(-v.z):VERY_BIG;
-                               tmp0=fminf(fminf(htime.x,htime.y),htime.z);
-                               p0.x=p0.x-tmp0*v.x; // calculate the exact exit position
-                               p0.y=p0.y-tmp0*v.y;
-                               p0.z=p0.z-tmp0*v.z;
+                               htime.x=(v.x>EPS||v.x<-EPS)?(floorf(htime.x)+(v.x<0.f)-htime.x)/(-v.x):VERY_BIG;
+                               htime.y=(v.y>EPS||v.y<-EPS)?(floorf(htime.y)+(v.y<0.f)-htime.y)/(-v.y):VERY_BIG;
+                               htime.z=(v.z>EPS||v.z<-EPS)?(floorf(htime.z)+(v.z<0.f)-htime.z)/(-v.z):VERY_BIG;
+                               tmp1=fminf(fminf(htime.x,htime.y),htime.z);
+                               htime.x=p.x-(tmp0+tmp1)*v.x; /*htime is now the exact exit position*/
+                               htime.y=p.y-(tmp0+tmp1)*v.y;
+                               htime.z=p.z-(tmp0+tmp1)*v.z;
                            }
                        }
                      //}
-                  }
+                }else{
+                  htime.x=p0.x+tmp0*v.x; /*htime is now the exact exit position*/
+                  htime.y=p0.y+tmp0*v.y;
+                  htime.z=p0.z+tmp0*v.z;
                 }
               }
 
@@ -417,7 +419,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   } // else, total internal reflection
 	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
-                            p=p0;
+                            p.x=htime.x;p.y=htime.y;p.z=htime.z;p.w=p0.w;
 		    	    launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),
 			        ppath,&energyloss,n_det,detectedphoton);
 			    continue;
@@ -452,7 +454,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   	n1=prop.n;
 		  }
               }else{  // launch a new photon
-                  p=p0;
+                  p.x=htime.x;p.y=htime.y;p.z=htime.z;p.w=p0.w;
 		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,
 		      &energyloss,n_det,detectedphoton);
 		  continue;
