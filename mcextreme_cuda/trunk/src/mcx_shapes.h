@@ -3,6 +3,10 @@
 
 #include <vector_types.h>
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #define MAX_SHAPE_ERR 256
 
 typedef struct GridSpace{
@@ -26,5 +30,9 @@ int mcx_raster_upperspace(cJSON *obj, Grid3D *g);
 int mcx_raster_grid(cJSON *obj, Grid3D *g);
 int mcx_find_shapeid(char *shapename);
 char *mcx_last_shapeerror();
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

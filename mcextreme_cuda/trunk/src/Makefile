@@ -26,7 +26,7 @@ else
   CUCCOPT=#-arch compute_11 #--maxrregcount 32
 endif
 
-CPPOPT=-g -Wall -O3 #-std=c99
+CPPOPT=-g -Wall -O3 -std=c99
 
 OBJSUFFIX=.o
 EXESUFFIX=

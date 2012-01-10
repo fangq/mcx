@@ -3,12 +3,12 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+%Copyright (c) 2010-2012 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 %                      URL: http://mcx.sf.net
 %====================================================================
 %
 % Format:
-%    [flux,detphoton]=mcxlab_atom(cfg);
+%    [flux,detphoton,vol]=mcxlab_atom(cfg);
 %
 % Input:
 %    cfg: a struct, or struct array. Each element of cfg defines 
@@ -46,16 +46,17 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
 %      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
 %      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
+%      cfg.shapes:     a JSON string for additional shapes in the grid
 %
 %      fields with * are required; options in [] are the default values
 %
 % Output:
-%      flux: a struct array, with a length equals to that of cfg.
+%      flux: (optional) a struct array, with a length equals to that of cfg.
 %            For each element of flux, flux(i).data is a 4D array with
 %            dimensions specified by [size(vol) total-time-gates]. 
 %            The content of the array is the normalized flux at 
 %            each voxel of each time-gate.
-%      detphoton: a struct array, with a length equals to that of cfg.
+%      detphoton: (optional) a struct array, with a length equals to that of cfg.
 %            For each element of detphoton, detphoton(i).data is a 2D array with
 %            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
 %            is the ID(>0) of the detector that captures the photon; the second row
@@ -63,6 +64,8 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %	     are the partial path lengths (in grid unit) traveling in medium 1 up 
 %            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
 %            to convert them to mm unit.
+%     vol: (optional) a struct array, each element is a preprocessed volume
+%            corresponding to each instance of cfg. Each volume is a 3D uint8 array.
 %
 %      if detphoton is ignored, the detected photon will be saved in a .mch file 
 %      if cfg.issavedeet=1; if no output is given, the flux will be saved to a 
