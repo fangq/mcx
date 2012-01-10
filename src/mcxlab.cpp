@@ -20,6 +20,7 @@
 #include "mex.h"
 #include "mcx_utils.h"
 #include "mcx_core.h"
+#include "mcx_shapes.h"
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
@@ -53,6 +54,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       plhs[0] = mxCreateStructMatrix(ncfg,1,1,outputtag);
   if(nlhs>=2)
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
+  if(nlhs>=3)
+      plhs[2] = mxCreateStructMatrix(ncfg,1,1,outputtag);
 
   for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
     printf("Running simulations for configuration #%d ...\n", jstruct+1);
@@ -93,6 +96,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	}
         free(cfg.exportdetected);
     }
+    if(nlhs>=3){
+        fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
+        fielddim[2]=cfg.dim.z; fielddim[3]=0;
+        if(cfg.vol){
+                mxSetFieldByNumber(plhs[2],jstruct,0, mxCreateNumericArray(3,fielddim,mxUINT8_CLASS,mxREAL));
+                memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[2],jstruct,0)),cfg.vol,
+                     fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned char));
+        }
+    }
     mcx_clearcfg(&cfg);
   }
   return;
@@ -102,6 +114,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg){
     const char *name=mxGetFieldNameByNumber(root,idx);
     const int *arraydim;
+    char *jsonshapes=NULL;
     int i,j;
 
     cfg->flog=stderr;
@@ -177,8 +190,21 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
              mexWarnMsgTxt("not enough space. string is truncated.");
 
 	printf("mcx.session='%s';\n",cfg->session);
+    }else if(strcmp(name,"shapes")==0){
+        int len=mxGetNumberOfElements(item);
+        jsonshapes=new char[len];
+        mxGetString(item, jsonshapes, len);
     }else{
         printf("WARNING: redundant field '%s'\n",name);
+    }
+    if(jsonshapes){
+        Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},0};
+        if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
+        int status=mcx_parse_shapestring(&grid,jsonshapes);
+        delete [] jsonshapes;
+        if(status){
+              mexErrMsgTxt(mcx_last_shapeerror());
+        }
     }
 }
 
