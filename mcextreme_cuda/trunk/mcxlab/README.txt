@@ -117,6 +117,7 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
       cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
       cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
       cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
+      cfg.shapes:     a JSON string for additional shapes in the grid
 
       fields with * are required; options in [] are the default values
 
