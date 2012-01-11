@@ -70,12 +70,14 @@ contourf(log10(squeeze(sum(f1.data(:,51,:,:),4))'),1:0.5:8);
 hold on
 plot([0 100],[21 21],'--',[0 100],[26 26],'--',[0 100],[36 36],'--');
 title('flux with no reflection');
+set(gca,'clim',[1 8]);
 
 subplot(222);
 contourf(log10(squeeze(sum(f2.data(:,51,:,:),4))'),1:0.5:8);
 hold on
 plot([0 100],[21 21],'--',[0 100],[26 26],'--',[0 100],[36 36],'--');
 title('flux with reflection at boundaries');
+set(gca,'clim',[1 8]);
 
 subplot(223);
 hold on;

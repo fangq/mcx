@@ -192,8 +192,12 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.session='%s';\n",cfg->session);
     }else if(strcmp(name,"shapes")==0){
         int len=mxGetNumberOfElements(item);
-        jsonshapes=new char[len];
-        mxGetString(item, jsonshapes, len);
+        if(!mxIsChar(item) || len==0)
+             mexErrMsgTxt("the 'shapes' field must be a non-empty string");
+
+        jsonshapes=new char[len+1];
+        mxGetString(item, jsonshapes, len+1);
+        jsonshapes[len]='\0';
     }else{
         printf("WARNING: redundant field '%s'\n",name);
     }
