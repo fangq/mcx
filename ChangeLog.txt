@@ -1,30 +1,31 @@
 = Change Log =
 
-== MCX 0.7.9 (Charm Quarks - dev branch), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.7.9 (Charm Quarks - dev branch), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
+ 2012-01-10 fix a regression introduced in 0.5.3 for accurate exit positions
  2012-01-08 support 3D shape input and and run-time rasterization
  2012-01-07 port JSON-formatted input file support from MMC to MCX
 
-== MCX 0.5.3 (Black Hole - update 3), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.5.3 (Black Hole - update 3), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2012-01-07 fix a minor bug which fails using -1 with -E
  2011-12-21 fix an issue causing forward scattering bias (reported by David Giraud)
 
-== MCX 0.5.2 (Black Hole - update 2), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.5.2 (Black Hole - update 2), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2011-09-21 fix a regression in MCXLAB related to detectors, use exact exit position for radius test
  2011-09-20 add verbose warnings for launch-time-out error and non-surface detectors
  2011-09-19 users can specify srcfrom0 (origin setting) from the input file
  2011-09-19 fix a bug in detector-to-volume mapping, effects all non-integer inputs
 
-== MCX 0.5.1 (Black Hole - update 1), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.5.1 (Black Hole - update 1), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2011-05-03 use the expected absorption for normalization to reduce non-atomic impact
  2011-04-26 fix a serious shared-mem buffer length bug (can cause crash)
  2011-04-26 MCXLAB now accepts crop0/crop1 fields to specify shared-mem region
  2011-03-25 new GPU-ocelot compilation flag
 
-== MCX 0.5.0 (Black Hole), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.5.0 (Black Hole), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2011-03-18 update documents, get ready to release 0.5.0
  2011-03-18 gracefully handle exceptions in MCXLAB
@@ -41,7 +42,7 @@
  2010-08-05 estimate maxgate when using the autopilot mode
  2010-08-02 fix a bug when saving multiple blocks of mch
 
-== MCX 0.4.9 (Black Hole-beta), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.4.9 (Black Hole-beta), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2010-08-01 update documentation and release v0.5 beta (aka 0.4.9)
  2010-08-01 fix a critical bug for pre-Fermi cards,validated MCX on CC11,13,20
@@ -61,7 +62,7 @@
  2010-02-04 fix a minor NaN bug detected by GPU Ocelot
  2010-01-26 add GPU Ocelot makefile for multicore CPU
 
-== MCX 0.2 (Aurora), FangQ <fangq nmr mgh harvard edu> ==
+== MCX 0.2 (Aurora), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2009-12-19 polish documentation, add svn keywords and tagged 0.2 final
  2009-12-10 MCX Studio GUI is tested on Linux, Windows, Mac OS X

@@ -98,8 +98,9 @@ int mcx_parse_shapestring(Grid3D *g, char *shapedata){
     	if(jroot){
 	    int err;
 	    if(g && g->vol && *(g->vol))
-	        free(*(g->vol));
-	    *(g->vol)=(unsigned char*)calloc(g->dim->x*g->dim->y,g->dim->z);
+	        *(g->vol)=(unsigned char*)realloc((void *)*(g->vol),g->dim->x*g->dim->y*g->dim->z);
+	    else
+	        *(g->vol)=(unsigned char*)calloc(g->dim->x*g->dim->y,g->dim->z);
 
     	    if((err=mcx_parse_jsonshapes(jroot,g))) /*error msg is generated inside*/
 	       return err;
