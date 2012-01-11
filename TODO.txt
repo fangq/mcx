@@ -2,6 +2,7 @@
 
 == Short term projects ==
 
+*. precise ray-tracing in a grid space [2012/01/11, FangQ]
 [reopen] *. multiple-GPU support [2009/09/30, FangQ]
 
 == Long term projects ==
