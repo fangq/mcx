@@ -135,7 +135,7 @@ void mcx_normalize(float field[], float scale, int fieldlen){
 
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
      fprintf(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
-     if(id==-cudaErrorLaunchTimeout){
+     if(id==-CUDA_ERROR_LAUNCH_TIMEOUT){
          fprintf(stdout,"This error often happens when you are using a non-dedicated GPU.\n\
 Please checkout FAQ #1 for more details:\n\
 URL: http://mcx.sf.net/cgi-bin/index.cgi?Doc/FAQ\n");
