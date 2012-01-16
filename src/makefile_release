@@ -1,0 +1,26 @@
+all:
+	rm -rf bin
+	mkdir bin
+	make clean
+	make
+	mv ../bin/mcx bin
+	make clean
+	make det
+	mv ../bin/mcx_det bin
+	make clean
+	make detbox
+	mv ../bin/mcx_det_cached bin
+	make clean
+	make logbox
+	mv ../bin/mcx_cached bin
+	make clean
+	make logatomic
+	mv ../bin/mcx_atomic bin
+	make clean
+	make mex
+	make clean
+	make mexbox
+	make clean
+	make oct
+	make clean
+	make octbox
