@@ -216,9 +216,10 @@ void mcx_prepdomain(char *filename, Config *cfg){
         if(cfg->vol==NULL){
 	     mcx_loadvolume(filename,cfg);
 	     if(cfg->shapedata && strstr(cfg->shapedata,":")!=NULL){
+	          int status;
      		  Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
         	  if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
-		  int status=mcx_parse_shapestring(&grid,cfg->shapedata);
+		  status=mcx_parse_shapestring(&grid,cfg->shapedata);
 		  if(status){
 		      MCX_ERROR(status,mcx_last_shapeerror());
 		  }
@@ -619,9 +620,10 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      }
      if(filename[0]=='\0'){
          if(Shapes){
+             int status;
              Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
              if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
-	     int status=mcx_parse_jsonshapes(root, &grid);
+	     status=mcx_parse_jsonshapes(root, &grid);
 	     if(status){
 	         MCX_ERROR(status,mcx_last_shapeerror());
 	     }
@@ -664,9 +666,10 @@ void mcx_loadvolume(char *filename,Config *cfg){
      FILE *fp;
      
      if(strstr(filename,".json")!=NULL){
+         int status;
          Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
 	 if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
-         int status=mcx_load_jsonshapes(&grid,filename);
+         status=mcx_load_jsonshapes(&grid,filename);
 	 if(status){
 	     MCX_ERROR(status,mcx_last_shapeerror());
 	 }

@@ -26,6 +26,8 @@ else
   CUCCOPT=#-arch compute_11 #--maxrregcount 32
 endif
 
+DLLFLAG=-fPIC
+
 CPPOPT=-g -Wall -O3 -std=c99
 
 OBJSUFFIX=.o
@@ -42,6 +44,7 @@ ifeq ($(findstring MINGW32,$(PLATFORM)), MINGW32)
   CPPOPT =-c  -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
+  DLLFLAG=
 else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
@@ -73,8 +76,8 @@ mexbox mex:        AR=mex
 mexbox mex oct octbox:    OUTPUT_DIR=../mcxlab
 mex:               BINARY=mcxlab
 mexbox:            BINARY=mcxlab_atom
-mexbox mex oct octbox:    CUCCOPT+=--compiler-options -fPIC -DMCX_CONTAINER
-mexbox mex oct octbox:    CPPOPT+=-fPIC -DMCX_CONTAINER
+mexbox mex oct octbox:    CUCCOPT+=--compiler-options $(DLLFLAG) -DMCX_CONTAINER
+mexbox mex oct octbox:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
 mexbox mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 octbox oct:        AR=mkoctfile
