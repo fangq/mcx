@@ -162,6 +162,8 @@ void mcx_readconfig(char *fname, Config *cfg){
             int len;
             cJSON *jroot;
 
+            fclose(fp);
+            fp=fopen(fname,"rb");
             fseek (fp, 0, SEEK_END);
             len=ftell(fp)+1;
             jbuf=(char *)malloc(len);
