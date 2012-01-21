@@ -52,7 +52,7 @@ char ErrorMsg[MAX_SHAPE_ERR]={'\0'};
 */
 
 int mcx_load_jsonshapes(Grid3D *g, char *fname){
-    FILE *fp=fopen(fname,"rt");
+    FILE *fp=fopen(fname,"rb");
     if(fp==NULL){
         sprintf(ErrorMsg,"Can not read the JSON file");
         return -2;
