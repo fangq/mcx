@@ -18,7 +18,8 @@ do
   echo "compile MCX with $opt"
 
   cd "$RT/../../src/"
-  make $opt
+  rm -rf "$RT/../../bin/*"
+  make clean $opt
   cd $RT
 
   echo 'run MCX with various threads and photon numbers'
@@ -28,18 +29,18 @@ do
 
 ### use the following setting for dedicated GPU
 #  nthread="1024 1792 2048 4096 5120 6144 7168 8192"
-#  nphoton="100000"
+#  nphoton="1000000"
 
-  mcxbin="../../bin/mcx"
+  mcxbin=`ls ../../bin/mcx*`
 
   for th in $nthread
   do 
     for np in $nphoton
     do
          echo "<mcx_session thread='$th' photon='$np'>"
-         echo "<cmd>$mcxbin -t $th -m $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1</cmd>"
+         echo "<cmd>$mcxbin -t $th -n $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1</cmd>"
          echo "<output>"
-         $mcxbin -t $th -m $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1
+         $mcxbin -t $th -n $np -g 10 -f benchcpeed.inp -s speed -a 0 -b 0 -p 1
          echo "</output>"
          echo "</mcx_session>"
     done
