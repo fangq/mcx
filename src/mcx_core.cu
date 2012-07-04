@@ -548,6 +548,18 @@ void mcx_cu_assess(cudaError_t cuerr,const char *file, const int linenum){
      }
 }
 
+/**
+  obtain GPU core number per MP, this replaces 
+  ConvertSMVer2Cores() in libcudautils to avoid 
+  extra dependency.
+*/
+
+int mcx_corecount(int v1, int v2){
+     int v=v1*10+v2;
+     if(v<20)      return 8;
+     else if(v<21) return 32;
+     else          return 48;
+}
 
 /**
   query GPU info and set active GPU
@@ -599,7 +611,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
                (unsigned int)dp.sharedMemPerBlock,(unsigned int)dp.regsPerBlock,dp.clockRate*1e-6f);
 	  #if CUDART_VERSION >= 2000
 	       printf("Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
-	          dp.multiProcessorCount,dp.multiProcessorCount<<3);
+	          dp.multiProcessorCount,dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
 	  #endif
 	  }
 	}
