@@ -611,7 +611,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
                (unsigned int)dp.sharedMemPerBlock,(unsigned int)dp.regsPerBlock,dp.clockRate*1e-6f);
 	  #if CUDART_VERSION >= 2000
 	       printf("Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
-	          dp.multiProcessorCount,dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
+	          dp.multiProcessorCount,dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor));
 	  #endif
 	  }
 	}
