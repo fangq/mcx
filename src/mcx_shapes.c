@@ -70,7 +70,7 @@ int mcx_load_jsonshapes(Grid3D *g, char *fname){
     	jbuf=(char *)malloc(len);
     	rewind(fp);
     	if(fread(jbuf,len-1,1,fp)!=1){
-            sprintf(ErrorMsg,"Failed reading the JSON file");
+            sprintf(ErrorMsg,"Failed when reading a JSON file from %s",fname);
     	    return -1;
 	}
     	jbuf[len-1]='\0';
