@@ -20,10 +20,17 @@ up without involving disk files.
 Because MCXLAB contains the exact computational codes for the GPU calculations
 as in the MCX binaries, MCXLAB is expected to have identical performance when
 running simulations. By default, we compile MCXLAB with the support of recording
-detected photon partial path-lengths (i.e. the "make det" option). 
+detected photon partial path-lengths (i.e. the "make det" option). In addition,
+we also provide "mcxlab_atom": an atomic version of mcxlab compiled similarly
+as "make detbox" for MCX. It supports atomic operations using shared memory
+enabled by setting "cfg.sradius" input parameter to a positive number.
 
 
 == # Installation ==
+
+To download MCXLAB, please visit [http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Download_the_Latest_Release this link]. 
+If you choose to [http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx register], 
+you will have an option to be notified for any future updates.
 
 The system requirements for MCXLAB are the same as MCX: you have to make
 sure that you have a CUDA-capable graphics card with properly configured 
@@ -31,7 +38,7 @@ CUDA driver (you can run the standard MCX binary first to test if your
 system is capable to run MCXLAB). Of course, you need to have either Matlab
 or Octave installed.
 
-MCXLAB needs libcudart.so.3 (for Unix-like systems) or cudart.dll 
+MCXLAB needs libcudart.so.4 (for Unix-like systems) or cudart.dll 
 (for Windows). For Linux/Mac, you need to set your LD_LIBRARY_PATH
 environment variable to contain the path to this library file. 
 
@@ -39,7 +46,7 @@ To simplify the installation, we highly recommend you to link the libraries
 to your /usr/lib directory. For 64bit Linux, you can use the following 
 command:
 
-  sudo ln -s /usr/local/cuda/lib64/libcudart.so.3 /usr/lib64
+  sudo ln -s /usr/local/cuda/lib64/libcudart.so.4 /usr/lib64
 
 For windows, you simply copy the cudart.dll file to Windows\System32 folder.
 This file is typically stored under the C:\CUDA\bin directory.
@@ -49,8 +56,8 @@ directory to your Matlab/Octave search path using the addpath command.
 If you want to add this path permanently, please use the "pathtool" 
 command, or edit your startup.m (~/.octaverc for Octave).
 
-If everything works ok, typing "mcxlab" in Matlab/Octave will print the
-help information. If you see any error, perticularly any missing libraries,
+If everything works ok, typing "help mcxlab" in Matlab/Octave will print the
+help information. If you see any error, particularly any missing libraries,
 please make sure you have downloaded the matching version built for your
 platform.
 
@@ -182,7 +189,6 @@ following command:
 The debug info will be printed in the console window. Alternatively, you 
 can just start the matlab GUI from a console window by typing "matlab",
 and the debug information will be printed in the console window instead.
-
 
 == # Examples ==
 
