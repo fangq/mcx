@@ -309,7 +309,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 	  if(mediaid==0||f.t>gcfg->tmax||f.t>gcfg->twin1||(gcfg->dorefint && n1!=gproperty[mediaid].w) ){
 	      float flipdir=0.f;
 
-              if(gcfg->doreflect) {
+              if(gcfg->doreflect || (gcfg->savedet && (mediaidold & DET_MASK)) ) {
                 //time-of-flight to hit the wall in each direction
                 htime.x=(v.x>EPS||v.x<-EPS)?(floorf(p0.x)+(v.x>0.f)-p0.x)/v.x:VERY_BIG;
                 htime.y=(v.y>EPS||v.y<-EPS)?(floorf(p0.y)+(v.y>0.f)-p0.y)/v.y:VERY_BIG;
@@ -454,7 +454,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   	n1=prop.n;
 		  }
               }else{  // launch a new photon
-                  p.x=htime.x;p.y=htime.y;p.z=htime.z;p.w=p0.w;
+                  p.x=htime.x;p.y=htime.y;p.z=htime.z;p.w=p0.w; // this is only used when savedet is true
 		  launchnewphoton(&p,&v,&f,&prop,&idx1d,&mediaid,(mediaidold & DET_MASK),ppath,
 		      &energyloss,n_det,detectedphoton);
 		  continue;
