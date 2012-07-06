@@ -59,7 +59,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %            For each element of detphoton, detphoton(i).data is a 2D array with
 %            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
 %            is the ID(>0) of the detector that captures the photon; the second row
-%	     is the number of scattering events of the exitting photon; the rest rows
+%	     saves the number of scattering events of each exiting photon; the rest rows
 %	     are the partial path lengths (in grid unit) traveling in medium 1 up 
 %            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
 %            to convert them to mm unit.
