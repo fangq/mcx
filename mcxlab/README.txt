@@ -82,19 +82,19 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 
  Input:
     cfg: a struct, or struct array. Each element of cfg defines 
-	 the parameters associated with a simulation. 
+         the parameters associated with a simulation. 
 
     It may contain the following fields:
 
      *cfg.nphoton:    the total number of photons to be simulated (integer)
      *cfg.vol:        a 3D array specifying the media index in the domain
      *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
-		      the first row corresponds to medium type 0 which is 
-		      typically [0 0 1 1]. The second row is type 1, and so on.
+                      the first row corresponds to medium type 0 which is 
+                      typically [0 0 1 1]. The second row is type 1, and so on.
      *cfg.tstart:     starting time of the simulation (in seconds)
      *cfg.tstep:      time-gate width of the simulation (in seconds)
      *cfg.tend:       ending time of the simulation (in second)
-     *cfg.srcpos:     a 1 by 3 vector, specifying the position of the source
+     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
      *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
       cfg.nblocksize: how many CUDA thread blocks to be used [64]
       cfg.nthread:    the total CUDA thread number [2048]
@@ -103,8 +103,6 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
       cfg.seed:       seed for the random number generator (integer) [0]
       cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
       cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
-      cfg.detradius:  radius of the detector (in grid unit) [1.0]
-      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
       cfg.respin:     repeat simulation for the given time (integer) [1]
       cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
       cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
@@ -123,18 +121,20 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 
  Output:
       flux: a struct array, with a length equals to that of cfg.
-	    For each element of flux, flux(i).data is a 4D array with
-	    dimensions specified by [size(vol) total-time-gates]. 
-	    The content of the array is the normalized flux at 
-	    each voxel of each time-gate.
+            For each element of flux, flux(i).data is a 4D array with
+            dimensions specified by [size(vol) total-time-gates]. 
+            The content of the array is the normalized flux at 
+            each voxel of each time-gate.
       detphoton: a struct array, with a length equals to that of cfg.
-	    For each element of detphoton, detphoton(i).data is a 2D array with
-	    dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
-	    is the ID(>0) of the detector that captures the photon; the second
-	    row is the weight of the photon when it is detected; the rest rows
-	    are the partial path lengths (in grid unit) traveling in medium 1 up 
-	    to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
-	    to convert them to mm unit.
+            For each element of detphoton, detphoton(i).data is a 2D array with
+            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
+            is the ID(>0) of the detector that captures the photon; the second row
+ 	    saves the number of scattering events of each exiting photon; the rest rows
+ 	    are the partial path lengths (in grid unit) traveling in medium 1 up 
+            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
+            to convert them to mm unit.
+     vol: (optional) a struct array, each element is a preprocessed volume
+            corresponding to each instance of cfg. Each volume is a 3D uint8 array.
 
       if detphoton is ignored, the detected photon will be saved in a .mch file 
       if cfg.issavedeet=1; if no output is given, the flux will be saved to a 
