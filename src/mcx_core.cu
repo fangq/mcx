@@ -588,15 +588,23 @@ int mcx_set_gpu(Config *cfg){
 	 ||(cfg->gpuid==0 && dev==deviceCount-1) )){
                 unsigned int needmem=cfg->dim.x*cfg->dim.y*cfg->dim.z; /*for mediam*/
 		if(cfg->autopilot==1){
+#ifdef USE_MT_RAND
+                        cfg->nblocksize=1;
+#else
 			cfg->nblocksize=64;
-			cfg->nthread=256*dp.multiProcessorCount*dp.multiProcessorCount;
+#endif
+			cfg->nthread=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor)*32;
 			needmem+=cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)+10*1024*1024; /*keep 10M for other things*/
 			cfg->maxgate=((unsigned int)dp.totalGlobalMem-needmem)/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
 			cfg->maxgate=MIN((int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5),cfg->maxgate);
 			fprintf(cfg->flog,"autopilot mode: setting thread number to %d, block size to %d and time gates to %d\n",cfg->nthread,cfg->nblocksize,cfg->maxgate);
 		}else if(cfg->autopilot==2){
-			cfg->nblocksize=64;
-			cfg->nthread=dp.multiProcessorCount*128;
+#ifdef USE_MT_RAND
+                        cfg->nblocksize=1;
+#else
+                        cfg->nblocksize=64;
+#endif
+			cfg->nthread=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor)*16;
                         fprintf(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
 		}
 	}
