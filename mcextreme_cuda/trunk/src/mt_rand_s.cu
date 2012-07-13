@@ -82,6 +82,13 @@ typedef char RandType;
 #define R_MAX_MT_RAND      2.3283064365387e-10f //1/2^32
 #define LOG_MT_MAX         22.1807097779182f    //log(2^32)
 
+// structure for fast int->float convert
+
+union ifconvert{
+     uint i;
+     float f;
+};
+
 /*************************************************************************************
  * This is a shared memory implementation that keeps the full 626 words of state
  * in shared memory. Faster for heavy random work where you can afford shared mem. */
@@ -163,12 +170,16 @@ __device__ void gpu_rng_init(char t[RAND_BUF_LEN], char tnew[RAND_BUF_LEN],uint 
     mt19937si(n_seed+idx*RAND_SEED_LEN,idx);
 }
 // transform into [0,1] random number
+// use a trick found from 
+// http://xor0110.wordpress.com/2010/09/24/how-to-generate-floating-point-random-numbers-efficiently/
 __device__ float rand_uniform01(uint ran){
-    return (ran*R_MAX_MT_RAND);
+    ifconvert myran;
+    myran.i = ran & 0x007fffff | 0x40000000;
+    return myran.f*0.5f-1.0f;
 }
 // generate [0,1] random number for the next scattering length
 __device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
-    return -logf((float)mt19937s())+LOG_MT_MAX;
+    return -logf(rand_uniform01(mt19937s()));
 }
 // generate [0,1] random number for the next arimuthal angle
 __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
