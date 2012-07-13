@@ -359,9 +359,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      	memset(&(cfg->crop1),0,sizeof(uint3));
      }else{
         /*
-           if I define -R with a negative radius, I will use crop0/crop1 to set the cachebox
-           nothing need to change here.
+           if -R is followed by a negative radius, mcx uses crop0/crop1 to set the cachebox
         */
+        if(!cfg->issrcfrom0){
+            cfg->crop0.x--;cfg->crop0.y--;cfg->crop0.z--;  /*convert to C index*/
+            cfg->crop1.x--;cfg->crop1.y--;cfg->crop1.z--;
+        }
      }
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
@@ -542,9 +545,12 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      	   memset(&(cfg->crop1),0,sizeof(uint3));
 	}else{
            /*
-              if I define -R with a negative radius, I will use crop0/crop1 to set the cachebox
-              nothing need to change here.
+              if -R is followed by a negative radius, mcx uses crop0/crop1 to set the cachebox
            */
+           if(!cfg->issrcfrom0){
+               cfg->crop0.x--;cfg->crop0.y--;cfg->crop0.z--;  /*convert to C index*/
+               cfg->crop1.x--;cfg->crop1.y--;cfg->crop1.z--;
+           }
 	}
      }
      if(Optode){
