@@ -624,6 +624,12 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
     else
         mcx_cu_assess(cudaSetDevice(cfg->gpuid-1),__FILE__,__LINE__);
 
+#ifdef USE_MT_RAND
+    if(cfg->nblocksize>N-M){
+        mcx_error(-1,"block size can not be larger than 227 when using MT19937 RNG",__FILE__,__LINE__);
+    }
+#endif
+
     return 1;
 #endif
 }
@@ -801,6 +807,9 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
 #endif
      if(cfg->issavedet)
         sharedbuf+=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
+#ifdef USE_MT_RAND
+     sharedbuf+=(N+2)*sizeof(uint); // MT RNG uses N+2 uint in the shared memory
+#endif
 
      fprintf(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
