@@ -13,7 +13,7 @@
 #define JUST_ABOVE_ONE     1.0001f                 //test for boundary
 #define SAME_VOXEL         -9999.f                 //scatter within a voxel
 #define MAX_PROP           128                     //maximum property number
-#define MAX_DETECTORS      256
+#define MAX_DETECTORS      1024
 
 #define DET_MASK           0x80
 #define MED_MASK           0x7F
