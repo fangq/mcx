@@ -184,13 +184,13 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
 #ifdef  SAVE_DETECTORS
      ppath=sharedmem+threadIdx.x*gcfg->maxmedia;
+     if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
 #endif
      *((float4*)(&p))=n_pos[idx];
      *((float4*)(&v))=n_dir[idx];
      *((float4*)(&f))=n_len[idx];
 
      gpu_rng_init(t,tnew,n_seed,idx);
-     if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
 
      // assuming the initial position is within the domain (mcx_config is supposed to ensure)
      idx1d=gcfg->idx1dorig;
@@ -279,7 +279,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                            p.w*expf(-prop.mua*tmp0)); //mua=1/grid, tmp0=grid
 	       f.pscat=SAME_VOXEL;
 	       f.t+=tmp0*prop.n*gcfg->oneoverc0;  //propagation time (unit=s)
+#ifdef SAVE_DETECTORS
                if(gcfg->savedet) ppath[mediaid-1]+=tmp0; //(unit=grid)
+#endif
                GPUDEBUG((">>ends in voxel %f<%f %f [%d]\n",f.pscat,len,prop.mus,idx1d));
 	  }else{                      //otherwise, move gcfg->minstep
                if(mediaid!=medid)
@@ -289,7 +291,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                medid=mediaid;
 	       f.pscat-=len;     //remaining probability: sum(s_i*mus_i), unit-less
 	       f.t+=gcfg->minaccumtime*prop.n; //propagation time  (unit=s)
+#ifdef SAVE_DETECTORS
                if(gcfg->savedet) ppath[mediaid-1]+=gcfg->minstep; //(unit=grid)
+#endif
                GPUDEBUG((">>keep going %f<%f %f [%d] %e %e\n",f.pscat,len,prop.mus,idx1d,f.t,f.tnext));
 	  }
 
@@ -733,6 +737,13 @@ void mcx_run_simulation(Config *cfg){
 
      float *genergy;
      cudaMalloc((void **) &genergy, sizeof(float)*cfg->nthread*2);
+
+#ifndef SAVE_DETECTORS
+     if(cfg->issavedet){
+           fprintf(stderr,"WARNING: this MCX binary can not save partial path, please use mcx_det or mcx_det_cached\n");
+           cfg->issavedet=0;
+     }
+#endif
      
      /*volume is assumbed to be col-major*/
      cachebox.x=(cp1.x-cp0.x+1);
