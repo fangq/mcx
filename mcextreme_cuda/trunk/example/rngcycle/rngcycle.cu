@@ -17,7 +17,7 @@
 
 #define ABS(a) ((a>0)?(a):(-a))
 
-#define RAND_TEST_LEN 7
+#define RAND_TEST_LEN 5
 
 #ifdef USE_MT_RAND  /* use MT19937 RNG */
 
@@ -26,29 +26,6 @@
 //===================================================================
 
 #include "mt_rand_s.cu"
-
-kernel void bench_rng(uint seed[],float output[],int loop){
-     int idx= blockDim.x * blockIdx.x + threadIdx.x;
-     int base=idx*loop;
-     uint ran;
-     float res;
-     int i;
-
-     mt19937si(seed,idx);
-     for(i=0;i<loop;i++){
-          ran=mt19937s();
-	  res=ran*R_MAX_MT_RAND;
-#ifdef GLOBAL_WRITE
-	  output[base+i]=res;
-    #ifdef __DEVICE_EMULATION__
-          printf("%d = %d %f\n",i,base+i,output[base+i]);
-    #endif
-#endif
-     }
-#ifndef GLOBAL_WRITE  /*to prevent the compiler from optimizing the rand*/
-     output[base]=  res;
-#endif     
-}
 
 #else   /* use Logistic-map lattice RNG */
 
@@ -59,18 +36,20 @@ kernel void bench_rng(uint seed[],float output[],int loop){
 
 #include "logistic_rand.cu"
 
+#endif
+
 kernel void bench_rng(uint seed[],int output[],RandType last[], int loop){
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
      int i,j,flag=1;
      
      RandType t[RAND_TEST_LEN],tnew[RAND_TEST_LEN],t0[RAND_TEST_LEN];
-     logistic_init(t,tnew,seed,idx);
+     gpu_rng_init(t,tnew,seed,idx);
 
      for(i=0;i<RAND_TEST_LEN;i++)
           t0[i]=t[i];
      for(i=0;i<loop;i++){
           int isbad=1;
-          logistic_step(t,tnew,RAND_TEST_LEN-1); /*create 3 random numbers*/
+          rand_need_more(t,tnew);
 
           for(j=0;j<RAND_TEST_LEN;j++)
                isbad &= (t[j]==t0[j]);
@@ -86,10 +65,12 @@ kernel void bench_rng(uint seed[],int output[],RandType last[], int loop){
      }
      output[idx]= flag*i;
      for(i=0;i<RAND_TEST_LEN;i++)
+#ifdef USE_MT_RAND  /* use MT19937 RNG */
+          last[idx*RAND_TEST_LEN+i]=rand_uniform01(mt19937s());
+#else
           last[idx*RAND_TEST_LEN+i]=rand_uniform01(t[i]);
-}
-
 #endif
+}
 
 //===================================================================
 // utility functions
