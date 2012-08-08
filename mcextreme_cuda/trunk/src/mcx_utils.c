@@ -122,7 +122,7 @@ void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg){
 
 void mcx_printlog(Config *cfg, char *str){
      if(cfg->flog>0){ /*stdout is 1*/
-         fprintf(cfg->flog,"%s\n",str);
+         MCX_FPRINTF(cfg->flog,"%s\n",str);
      }
 }
 
@@ -134,15 +134,15 @@ void mcx_normalize(float field[], float scale, int fieldlen){
 }
 
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
-     fprintf(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
+#ifdef MCX_CONTAINER
+     mcx_throw_exception(id,msg,file,linenum);
+#else
+     MCX_FPRINTF(stdout,"\nMCX ERROR(%d):%s in unit %s:%d\n",id,msg,file,linenum);
      if(id==-CUDA_ERROR_LAUNCH_TIMEOUT){
          fprintf(stdout,"This error often happens when you are using a non-dedicated GPU.\n\
 Please checkout FAQ #1 for more details:\n\
 URL: http://mcx.sf.net/cgi-bin/index.cgi?Doc/FAQ\n");
      }
-#ifdef MCX_CONTAINER
-     mcx_throw_exception(id,msg,file,linenum);
-#else
      exit(id);
 #endif
 }
@@ -182,10 +182,10 @@ void mcx_readconfig(char *fname, Config *cfg){
                 if(ptr && ptrold){
                    char *offs=(ptrold-jbuf>=50) ? ptrold-50 : jbuf;
                    while(offs<ptrold){
-                      fprintf(stderr,"%c",*offs);
+                      MCX_FPRINTF(stderr,"%c",*offs);
                       offs++;
                    }
-                   fprintf(stderr,"<error>%.50s\n",ptrold);
+                   MCX_FPRINTF(stderr,"<error>%.50s\n",ptrold);
                 }
                 free(jbuf);
                 mcx_error(-9,"invalid JSON input file",__FILE__,__LINE__);
@@ -792,7 +792,7 @@ void  mcx_maskdet(Config *cfg){
 	   }
         }
         if(cfg->issavedet && count==0)
-              fprintf(stderr,"MCX WARNING: detector %d is not located on an interface, please check coordinates.\n",d+1);
+              MCX_FPRINTF(stderr,"MCX WARNING: detector %d is not located on an interface, please check coordinates.\n",d+1);
      }
      /**
          To test the results, you should use -M to dump the det-mask, load 
@@ -984,7 +984,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
           cfg->flog=fopen(logfile,"wt");
           if(cfg->flog==NULL){
 		cfg->flog=stdout;
-		fprintf(cfg->flog,"unable to save to log file, will print from stdout\n");
+		MCX_FPRINTF(cfg->flog,"unable to save to log file, will print from stdout\n");
           }
      }
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
@@ -1000,7 +1000,7 @@ void mcx_version(Config *cfg){
     const char ver[]="$Rev::      $";
     int v=0;
     sscanf(ver,"$Rev::%d",&v);
-    fprintf(cfg->flog, "MCX Revision %d\n",v);
+    MCX_FPRINTF(cfg->flog, "MCX Revision %d\n",v);
     exit(0);
 }
 
