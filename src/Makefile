@@ -73,6 +73,7 @@ det detbox: BINARY:=$(BINARY)_det
 logbox detbox:          BINARY:=$(BINARY)_cached
 
 mexbox mex:        AR=mex
+mexbox mex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUSE_CACHEBOX'
 mexbox mex oct octbox:    OUTPUT_DIR=../mcxlab
 mex:               BINARY=mcxlab
 mexbox:            BINARY=mcxlab_atom
@@ -80,7 +81,7 @@ mexbox mex oct octbox:    CUCCOPT+=--compiler-options $(DLLFLAG) -DMCX_CONTAINER
 mexbox mex oct octbox:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
 mexbox mex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-octbox oct:        AR=mkoctfile
+octbox oct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX' mkoctfile
 oct:               BINARY=mcxlab.mex
 octbox:            BINARY=mcxlab_atom.mex
 octbox oct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)

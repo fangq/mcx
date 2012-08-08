@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <exception>
 
 #include "mex.h"
 #include "mcx_utils.h"
@@ -58,52 +59,64 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       plhs[2] = mxCreateStructMatrix(ncfg,1,1,outputtag);
 
   for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
-    printf("Running simulations for configuration #%d ...\n", jstruct+1);
+    try{
+	printf("Running simulations for configuration #%d ...\n", jstruct+1);
 
-    mcx_initcfg(&cfg);
+	mcx_initcfg(&cfg);
 
-    for (ifield = 0; ifield < nfields; ifield++) { /* how many input struct fields */
-        tmp = mxGetFieldByNumber(prhs[0], jstruct, ifield);
-	if (tmp == NULL) {
-		continue;
+	for (ifield = 0; ifield < nfields; ifield++) { /* how many input struct fields */
+            tmp = mxGetFieldByNumber(prhs[0], jstruct, ifield);
+	    if (tmp == NULL) {
+		    continue;
+	    }
+	    mcx_set_field(prhs[0],tmp,ifield,&cfg);
 	}
-	mcx_set_field(prhs[0],tmp,ifield,&cfg);
-    }
-    mexEvalString("pause(.001);");
-    if(cfg.vol==NULL || cfg.medianum==0){
-	mexErrMsgTxt("You must define 'vol' and 'prop' field.");
-    }
-    if(!mcx_set_gpu(&cfg)){
-        mexErrMsgTxt("No GPU device found");
-    }
-    if(nlhs>=1){
-        fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
-	fielddim[2]=cfg.dim.z; fielddim[3]=cfg.maxgate; 
-	mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
-	cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
-    }
-    if(nlhs>=2)
-       cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
-    mcx_validate_config(&cfg);
-    mcx_run_simulation(&cfg);
-    if(nlhs>=2){
-        fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
-	fielddim[2]=0; fielddim[3]=0;
-	if(cfg.his.savedphoton>0){
-		mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
-		memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
-		     fielddim[0]*fielddim[1]*sizeof(float));
+#ifndef MATLAB_MEX_FILE
+        mexEvalString("fflush(stdout);");
+#else
+	mexEvalString("drawnow;");
+#endif
+	if(cfg.vol==NULL || cfg.medianum==0){
+	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
 	}
-        free(cfg.exportdetected);
-    }
-    if(nlhs>=3){
-        fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
-        fielddim[2]=cfg.dim.z; fielddim[3]=0;
-        if(cfg.vol){
-                mxSetFieldByNumber(plhs[2],jstruct,0, mxCreateNumericArray(3,fielddim,mxUINT8_CLASS,mxREAL));
-                memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[2],jstruct,0)),cfg.vol,
-                     fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned char));
-        }
+	if(!mcx_set_gpu(&cfg)){
+            mexErrMsgTxt("No GPU device found");
+	}
+	if(nlhs>=1){
+            fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
+	    fielddim[2]=cfg.dim.z; fielddim[3]=cfg.maxgate; 
+	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+	    cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
+	}
+	if(nlhs>=2)
+	   cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
+	mcx_validate_config(&cfg);
+	mcx_run_simulation(&cfg);
+	if(nlhs>=2){
+            fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
+	    fielddim[2]=0; fielddim[3]=0;
+	    if(cfg.his.savedphoton>0){
+		    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
+		    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
+			 fielddim[0]*fielddim[1]*sizeof(float));
+	    }
+            free(cfg.exportdetected);
+	}
+	if(nlhs>=3){
+            fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
+            fielddim[2]=cfg.dim.z; fielddim[3]=0;
+            if(cfg.vol){
+                    mxSetFieldByNumber(plhs[2],jstruct,0, mxCreateNumericArray(3,fielddim,mxUINT8_CLASS,mxREAL));
+                    memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[2],jstruct,0)),cfg.vol,
+                	 fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned char));
+            }
+	}
+    }catch(const char *err){
+      mexPrintf("Error: %s\n",err);
+    }catch(const std::exception &err){
+      mexPrintf("C++ Error: %s\n",err.what());
+    }catch(...){
+      mexPrintf("Unknown Exception");
     }
     mcx_clearcfg(&cfg);
   }
@@ -305,7 +318,7 @@ void mcx_validate_config(Config *cfg){
 
 extern "C" int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum){
      printf("MCXLAB ERROR %d in unit %s:%d\n",id,filename,linenum);
-     mexErrMsgTxt(msg);
+     throw msg;
      return id;
 }
 
