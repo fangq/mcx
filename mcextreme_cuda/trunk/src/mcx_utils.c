@@ -32,12 +32,12 @@
                                 ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? NULL : tmp) \
                      : tmp)
 
-const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P',
+const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
-                 "--unitinmm","--maxdetphoton","--shapes","--savedet",
+                 "--unitinmm","--maxdetphoton","--shapes","--reseed","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot","--seed","--version",""};
@@ -88,6 +88,7 @@ void mcx_initcfg(Config *cfg){
      cfg->his.version=1;
      cfg->his.unitinmm=1.f;
      cfg->shapedata=NULL;
+     cfg->reseedlimit=100000000;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -963,6 +964,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'H':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
 		     	        break;
+		     case 'N':
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->reseedlimit),"int");
+		     	        break;
                      case 'P':
                                 cfg->shapedata=argv[++i];
                                 break;
@@ -1045,6 +1049,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -L            (--listgpu)     print GPU information only\n\
  -I            (--printgpu)    print GPU information and run program\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
+ -N [10^8|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -v            (--version)     print MCX revision number\n\
 example:\n\
        %s -A -n 1e7 -f input.inp -G 1 \n\

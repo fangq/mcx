@@ -74,6 +74,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int detnum;
   unsigned int idx1dorig;
   unsigned int mediaidorig;
+  unsigned int reseedlimit;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg);
