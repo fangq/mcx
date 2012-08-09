@@ -148,6 +148,7 @@ where possible parameters include (the first item in [] is the default value)
  -L            (--listgpu)     print GPU information only
  -I            (--printgpu)    print GPU information and run program
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
+ -N [10^8|int] (--reseed)      number of scattering events before reseeding RNG
  -v            (--version)     print MCX revision number
 example:
        mcx -A -n 1e7 -f input.inp -G 1 

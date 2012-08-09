@@ -46,6 +46,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
 %      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
 %      cfg.shapes:     a JSON string for additional shapes in the grid
+%      cfg.reseedlimit:number of scattering events before reseeding RNG
 %
 %      fields with * are required; options in [] are the default values
 %
