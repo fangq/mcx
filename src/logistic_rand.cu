@@ -23,6 +23,7 @@
 #define RAND_SEED_LEN      5        //32bit seed length (32*5=160bits)
 #define R_PI               0.318309886183791f
 #define INIT_LOGISTIC      100
+#define INIT_MULT          1812433253      /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
 
 #ifndef DOUBLE_PREC_LOGISTIC
   typedef float RandType;
@@ -95,6 +96,17 @@ __device__ RandType rand_uniform01(RandType v){
 }
 __device__ void gpu_rng_init(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LEN],uint *n_seed,int idx){
     logistic_init(t,tnew,n_seed,idx);
+}
+__device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LEN],uint cpuseed[],uint idx,float reseed){
+    uint *newt=(uint *)(&tnew[0]), seed,i;
+    seed=*((uint *)&reseed);
+    for (i = 0; i<RAND_BUF_LEN; i++){
+        seed = (INIT_MULT * (seed ^ (seed >> 30)) + i) ^ cpuseed[idx*RAND_BUF_LEN+i];
+        newt[i] = seed % RAND_MAX;
+        t[i]=(RandType)(newt[i]*R_MAX_C_RAND);
+    }
+    for(i=0;i<INIT_LOGISTIC;i++)  /*initial randomization*/
+        rand_need_more(t,tnew);
 }
 // generate [0,1] random number for the next scattering length
 __device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){

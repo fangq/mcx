@@ -169,6 +169,8 @@ mt19937sc(int loops, uint* result, uint* seeds)
 __device__ void gpu_rng_init(char t[RAND_BUF_LEN], char tnew[RAND_BUF_LEN],uint *n_seed,int idx){
     mt19937si(n_seed+idx*RAND_SEED_LEN,idx);
 }
+__device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LEN],uint cpuseed[],uint idx,float reseed){
+}
 // transform into [0,1] random number
 // use a trick found from 
 // http://xor0110.wordpress.com/2010/09/24/how-to-generate-floating-point-random-numbers-efficiently/

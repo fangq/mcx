@@ -155,6 +155,7 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 
      uint idx1d, idx1dold;   //idx1dold is related to reflection
      float3 htime;            //reflection var
+     uint moves=0;
 
 #ifdef TEST_RACING
      int cc=0;
@@ -216,6 +217,10 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
           // dealing with scattering
 
 	  if(f.pscat<=0.f) {  // if this photon has finished his current jump, get next scat length & angles
+               if(moves++>gcfg->reseedlimit){
+                  moves=0;
+                  gpu_rng_reseed(t,tnew,n_seed,idx,(p.x+p.y+p.z+p.w)+f.ndone*(v.x+v.y+v.z));
+               }
                rand_need_more(t,tnew);
    	       f.pscat=rand_next_scatlen(t); // random scattering probability, unit-less
 
@@ -680,7 +685,7 @@ void mcx_run_simulation(Config *cfg){
                      cfg->issave2pt,cfg->isreflect,cfg->isrefint,cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,0,0};
+		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit};
 
      if(cfg->respin>1){
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
