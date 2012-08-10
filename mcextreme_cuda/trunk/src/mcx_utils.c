@@ -88,7 +88,7 @@ void mcx_initcfg(Config *cfg){
      cfg->his.version=1;
      cfg->his.unitinmm=1.f;
      cfg->shapedata=NULL;
-     cfg->reseedlimit=100000000;
+     cfg->reseedlimit=10000000;
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -1050,7 +1050,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -L            (--listgpu)     print GPU information only\n\
  -I            (--printgpu)    print GPU information and run program\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
- -N [10^8|int] (--reseed)      number of scattering events before reseeding RNG\n\
+ -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -v            (--version)     print MCX revision number\n\
 example:\n\
        %s -A -n 1e7 -f input.inp -G 1 \n\
