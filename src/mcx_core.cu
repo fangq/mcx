@@ -667,7 +667,7 @@ void mcx_run_simulation(Config *cfg){
      float *energy;
      int threadphoton, oddphotons;
 
-     unsigned int photoncount=0,printnum;
+     unsigned int photoncount=0,printnum,exportedcount=0;
      unsigned int tic,tic0,tic1,toc=0,fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
@@ -892,11 +892,16 @@ is more than what your have specified (%d), please use the -H option to specify 
 		cfg->his.unitinmm=cfg->unitinmm;
 		cfg->his.detected=detected;
 		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
-		if(cfg->exportdetected) //you must allocate the buffer long enough
-	                memcpy(cfg->exportdetected,Pdet,cfg->his.savedphoton*(cfg->medianum+1)*sizeof(float));
-		else
+		if(cfg->exportdetected){
+                        detected=exportedcount+cfg->his.savedphoton;
+                        if(detected>cfg->maxdetphoton)
+                            cfg->exportdetected=(float*)realloc(cfg->exportdetected,detected*(cfg->medianum+1)*sizeof(float));
+	                memcpy(cfg->exportdetected+exportedcount*(cfg->medianum+1),Pdet,cfg->his.savedphoton*(cfg->medianum+1)*sizeof(float));
+                        exportedcount+=cfg->his.savedphoton;
+		}else{
 			mcx_savedata(Pdet,cfg->his.savedphoton*(cfg->medianum+1),
 		             photoncount>cfg->his.totalphoton,"mch",cfg);
+                }
 	   }
 #endif
 
@@ -952,6 +957,8 @@ is more than what your have specified (%d), please use the -H option to specify 
             cudaMemset(genergy,0,sizeof(float)*cfg->nthread*2);
        }
      }
+     if(cfg->exportdetected)
+         cfg->his.savedphoton=exportedcount;
 
      cudaMemcpy(Ppos,  gPpos, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
      cudaMemcpy(Pdir,  gPdir, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
