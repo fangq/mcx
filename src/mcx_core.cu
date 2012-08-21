@@ -662,10 +662,9 @@ void mcx_run_simulation(Config *cfg){
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
-     float t;
      float energyloss=0.f,energyabsorbed=0.f;
      float *energy;
-     int threadphoton, oddphotons;
+     int threadphoton, oddphotons, timegate=0, totalgates;
 
      unsigned int photoncount=0,printnum,exportedcount=0;
      unsigned int tic,tic0,tic1,toc=0,fieldlen;
@@ -704,7 +703,11 @@ void mcx_run_simulation(Config *cfg){
      	cfg->nthread=(cfg->nthread/cfg->nblocksize)*cfg->nblocksize;
      threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
      oddphotons=cfg->nphoton/cfg->respin-threadphoton*cfg->nthread;
-
+     totalgates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
+     if(totalgates>cfg->maxgate && cfg->isnormalized){
+         MCX_FPRINTF(stderr,"WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n");
+         cfg->isnormalized=0;
+     }
      mcgrid.x=cfg->nthread/cfg->nblocksize;
      mcblock.x=cfg->nblocksize;
 
@@ -838,10 +841,10 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
      MCX_FPRINTF(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
      //simulate for all time-gates in maxgate groups per run
-     for(t=cfg->tstart;t<cfg->tend;t+=cfg->tstep*cfg->maxgate){
+     for(timegate=0;timegate<totalgates;timegate+=cfg->maxgate){
 
-       param.twin0=t;
-       param.twin1=t+cfg->tstep*cfg->maxgate;
+       param.twin0=cfg->tstart+cfg->tstep*timegate;
+       param.twin1=param.twin0+cfg->tstep*cfg->maxgate;
        cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice);
 
        MCX_FPRINTF(cfg->flog,"lauching MCX simulation for time window [%.2ens %.2ens] ...\n"
@@ -942,11 +945,11 @@ is more than what your have specified (%d), please use the -H option to specify 
                    }
                    MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
 
-		   if(cfg->exportfield) //you must allocate the buffer long enough
-	                   memcpy(cfg->exportfield,field,fieldlen*sizeof(float));
+		   if(cfg->exportfield)
+	                   memcpy(cfg->exportfield+fieldlen*(timegate/cfg->maxgate),field,fieldlen*sizeof(float));
 		   else{
                            MCX_FPRINTF(cfg->flog,"saving data to file ...\t");
-	                   mcx_savedata(field,fieldlen,t>cfg->tstart,"mc2",cfg);
+	                   mcx_savedata(field,fieldlen,timegate>0,"mc2",cfg);
                            MCX_FPRINTF(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
                            fflush(cfg->flog);
                    }
