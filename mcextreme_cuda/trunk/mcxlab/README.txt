@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) 0.7.9
+Version: this package is part of Monte Carlo eXtreme (MCX) 0.8.0
 
 <toc>
 
@@ -68,11 +68,7 @@ To learn the basic usage of MCXLAB, you can type
 
   help mcxlab
 
-or simply
-
-  mcxlab
-
-and enter in Matlab/Octave to see the help information regarding how to use this 
+in Matlab/Octave to see the help information regarding how to use this 
 function. The help information is listed below. You can find the input/output 
 formats and examples. The input cfg structure has very similar field names as
 the verbose command line options in MCX.
@@ -178,18 +174,6 @@ Copyright (c) 2010,2011 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 
  License: GNU General Public License version 3, please read LICENSE.txt for details
 </pre>
-
-Because MCXLAB outputs the verbose simulation information, such as 
-intermediate timing information, to the stderr descriptor, you will not 
-be able to see this information if you launch Matlab in the GUI mode.
-If you want to access to this information, please launch Matlab with the
-following command:
-
-    matlab -nojvm -nodesktop
-
-The debug info will be printed in the console window. Alternatively, you 
-can just start the matlab GUI from a console window by typing "matlab",
-and the debug information will be printed in the console window instead.
 
 == # Examples ==
 

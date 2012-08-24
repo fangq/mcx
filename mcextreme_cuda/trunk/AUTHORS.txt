@@ -1,6 +1,6 @@
-Monte Carlo eXtreme (MCX) was written by Qianqian Fang, PhD.
-Dr. Fang is currently an Instructor at Massachusetts General Hospital,
-Harvard Medical School.
+Monte Carlo eXtreme (MCX) was written by Qianqian Fang.
+Qianqian is currently an Assistant Professor at Massachusetts 
+General Hospital, Harvard Medical School.
 
 Address: Martinos Center for Biomedical Imaging,
          Massachusetts General Hospital,

@@ -1,6 +1,19 @@
 = Change Log =
 
-== MCX 0.7.9 (Charm Quarks - dev branch), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+== MCX 0.8.0 (Charm Quarks - final), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2012-08-24 [r297] merge all variants into a single binary for Fermi cards (make fermi)
+ 2012-08-21 [r296] fix Bug/0005, incorrect returned field and normalization for multiple gate groups (reported by Vivian Pera)
+ 2012-08-21 [r295] fix Bug/0004. incorrect detected photon buffer pointer in MCXLAB with respin>1 (Vivian Pera)
+ 2012-08-08 [r291-294] fix Bug/0001, forward scattering bias with automatic reseeding of the RNG (Matt Adams,Okito Yamashita)
+ 2012-08-08 [r290] backport features from MMCLAB: exception handling and print inside matlab
+ 2012-07-25 [r287] fix Bug/0002-2, conflict between savedet and share memory cache (Okito Yamashita)
+ 2012-07-21 [r286] change default MAX_DETECTORS from 256 t0 1024
+ 2012-07-13 [r282] fix Bug/0002. use srcfrom0 flag to set crop0 and crop1 in mcx_cached (Okito Yamashita)
+ 2012-07-06 [r280] calculate exact exit point when savedet is true (suggested by Audrey Steever)
+ 2012-07-04 [r276] fix MP core count bug (patch by Suresh Paidi)
+
+== MCX 0.7.9 (Charm Quarks - beta), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2012-01-10 fix a regression introduced in 0.5.3 for accurate exit positions
  2012-01-08 support 3D shape input and and run-time rasterization

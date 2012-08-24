@@ -1037,7 +1037,10 @@ where possible parameters include (the first item in [] is the default value)\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -R [0.|float] (--skipradius)  cached zone radius from source to use atomics\n\
+ -R [0.|float] (--skipradius)  0: vanilla MCX, no atomic operations\n\
+                               >0: radius in which use shared-memory atomics\n\
+                               -1: use crop0/crop1 to determine atomic zone\n\
+                               -2: use atomics for the entire domain\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
