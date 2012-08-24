@@ -235,6 +235,9 @@ The command <tt>mkoctfile</tt> must be accessible from your command line
 and it is provided in a package named "octave3.x-headers" in Ubuntu (3.x
 can be 3.2 or 3.4 etc).
 
+If your graphics card is a Fermi-class or newer, you can compile MCXLAB
+with make fermimex or fermioct. The output mex file can determine the
+level of atomic operations using the cfg.sradius settings.
 
 == # Screenshots ==
 
