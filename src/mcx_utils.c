@@ -1052,11 +1052,12 @@ where possible parameters include (the first item in [] is the default value)\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -v            (--version)     print MCX revision number\n\
-example:\n\
+\n\
+example: (autopilot mode)\n\
        %s -A -n 1e7 -f input.inp -G 1 \n\
-or\n\
-       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1\n\
-or\n\
+or (manual mode)\n\
+       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n\
+or (use inline domain definition)\n\
        %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n",
               exename,exename,exename,exename);
 }
