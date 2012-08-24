@@ -26,6 +26,10 @@ function [flux,detphoton]=mcxlab(cfg)
 %     *cfg.tend:       ending time of the simulation (in second)
 %     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
+%      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
+%                      sradius=0 to disable atomic operations; if sradius=-1,
+%                      use cfg.crop0 and crop1 to define a cubic atomic zone; if
+%                      sradius=-2, perform atomic operations in the entire domain 
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
 %      cfg.nthread:    the total CUDA thread number [2048]
 %      cfg.maxgate:    the num of time-gates per simulation
