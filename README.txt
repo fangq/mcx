@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.7.9 (Charm Quarks - beta)
+Version: 0.8.0 (Charm Quarks)
 
 ---------------------------------------------------------------------
 
@@ -50,11 +50,13 @@ A short summary of the main features includes:
 
 This software can be used on Windows, Linux and Mac OS. 
 MCX is written in CUDA and can be used with NVIDIA hardware
-with the native NVIDIA drivers, or used with GPU ocelot open-source
-libraries for CPUs and AMD GPUs. An OpenCL implementation of
-MCX, i.e. MCX-CL, will be announced soon and can support 
-NVIDIA/AMD/Intel hardware out-of-box.
+with the native NVIDIA drivers, or used with the open-source
+GPU Ocelot libraries for CPUs and AMD GPUs. An OpenCL implementation 
+of MCX, i.e. MCX-CL, was announced on July, 2012, and supports
+NVIDIA/AMD/Intel hardware out-of-box. If your hardware does
+not support CUDA, please download MCXCL from the below URL:
 
+  https://github.com/fangq/mcxcl
 
 ---------------------------------------------------------------------------
 II. Requirement and Installation
@@ -78,7 +80,7 @@ tissue volume, Ng is the number of concurrent time gates, 4 is
 the size of a single-precision floating-point number.
 MCX does not require double-precision support in your hardware.
 
-To install MCX, you simply download the binary executable corresponding to your 
+To install MCX, you need to download the binary executable compiled for your 
 computer architecture (32 or 64bit) and platform, extract the package 
 and run the executable under the <mcx root>/bin directory. For Linux
 and MacOS users, you need to add the following lines to your
@@ -135,7 +137,10 @@ where possible parameters include (the first item in [] is the default value)
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
- -R [0.|float] (--skipradius)  cached zone radius from source to use atomics
+ -R [0.|float] (--skipradius)  0: vanilla MCX, no atomic operations
+                               >0: radius in which use shared-memory atomics
+                               -1: use crop0/crop1 to determine atomic zone
+                               -2: use atomics for the entire domain
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save
@@ -148,31 +153,33 @@ where possible parameters include (the first item in [] is the default value)
  -L            (--listgpu)     print GPU information only
  -I            (--printgpu)    print GPU information and run program
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
- -N [10^8|int] (--reseed)      number of scattering events before reseeding RNG
+ -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG
  -v            (--version)     print MCX revision number
-example:
+
+example (in autopilot mode):
        mcx -A -n 1e7 -f input.inp -G 1 
-or
-       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -U 0 -b 1 -G 1
-or
+or (in manual mode):
+       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
+or (use inline domain definition)
        mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
 </pre>
 
-the above command will launch 2048 GPU threads (-t) with every 64 threads
+the 2nd command above will launch 2048 GPU threads (-t) with every 64 threads
 a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G 1) 
 with two equally divided runs (-r); the media/source configuration will be 
 read from input.inp (-f) and the output will be labeled with the session 
-id "test" (-s); input media index array is in column-major format (-a); the 
-simulation will run 10 concurrent time gates (-g). Photons passing through
-the defined detector positions will be saved for later rescaling (-d).
+id "test" (-s); the simulation will run 10 concurrent time gates (-g). 
+Photons passing through the defined detector positions will be saved for 
+later rescaling (-d); refractive index mismatch is considered at media 
+boundaries (-b).
 
-Currently, MCX supports a modified version of the input file format used 
-by tMCimg. (The difference is that MCX allows comments in the input file)
+Historically, MCX supports a modified version of the input file format used 
+by tMCimg. The difference is that MCX allows comments in the input file.
 A typical MCX input file looks like this:
 
 1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
-30.0 30.0 0.0 1      # source position (in grid unit), the last num sets srcfrom0 (-z)
+30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets srcfrom0 (-z)
 0 0 1                # initial directional vector
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' format)
@@ -182,8 +189,8 @@ semi60x60x60.bin     # volume ('unsigned char' format)
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
 4       1.0          # detector number and default radius (in grid unit)
-30.0  20.0  0.0  2.0 # detector 1 position (real numbers in grid unit) and radius if different
-30.0  40.0  0.0      # ..., if radius is ignored, MCX will use the default radius
+30.0  20.0  0.0  2.0 # detector 1 position (real numbers in grid unit) and individual radius (optional)
+30.0  40.0  0.0      # ..., if individual radius is ignored, MCX will use the default radius
 20.0  30.0  0.0      #
 40.0  30.0  0.0      # 
 
@@ -441,8 +448,8 @@ the JSONlab toolbox [4] to load and process in MATLAB.
 ---------------------------------------------------------------------------
 VI. Using MCXLAB in MATLAB and Octave
 
-MCXLAB is the native MEX version of MCX for Matlab and GNU Octave. It compiles
-the entire MCX code into a MEX function which can be called directly inside
+MCXLAB is the native MEX version of MCX for Matlab and GNU Octave. It includes
+the entire MCX code in a MEX function which can be called directly inside
 Matlab or Octave. The input and output files in MCX are replaced by convenient
 in-memory struct variables in MCXLAB, thus, making it much easier to use
 and interact. Matlab/Octave also provides convenient plotting and data
@@ -467,7 +474,7 @@ To use MCX Studio, it is suggested to put the mcxstudio binary
 in the same directory as the mcx command; alternatively, you can
 also add the path to mcx command to your PATH environment variable.
 
-When launching MCX Studio, it will automatically check if mcx
+Once launched, MCX Studio will automatically check if mcx
 binary is in the search path, if so, the "GPU" button in the 
 toolbar will be enabled. It is suggested to click on this button
 once, and see if you can see a list of GPUs and their parameters 
@@ -480,17 +487,17 @@ to see any usable GPU, please check the following:
 * have you installed the CUDA/NVIDIA drivers correctly?
 * did you put mcx in the same folder as mcxstudio or add its path to PATH?
 
-If your system is properly configured, you can now add new simulations 
+If your system has been properly configured, you can now add new simulations 
 by clicking the "New" button. MCX Studio will ask you to give a session
-id string for this task. Then you should be able to adjust the parameters
+ID string for this new simulation. Then you are allowed to adjust the parameters
 based on your needs. Once you finish the adjustment, you should click the 
-"Verify" button to see if there are obvious mistakes. If everything is
+"Verify" button to see if there are missing settings. If everything looks
 fine, the "Run" button will be activated. Click on it once will start your
 simulation. If you want to abort the current simulation, you can click
 the "Stop" button.
 
 You can create multiple tasks with MCX Studio by hitting the "New"
-button multiple times. The information for all of the sessions can
+button again. The information for all session configurations can
 be saved as a project file (with .mcxp extension) by clicking the
 "Save" button. You can load a previously saved project file back
 to MCX Studio by clicking the "Load" button.
