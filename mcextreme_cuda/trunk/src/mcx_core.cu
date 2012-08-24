@@ -484,7 +484,9 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
 		      cc++;
                   }
 #else
-  #ifndef USE_ATOMIC
+  #ifdef USE_ATOMIC
+                if(!gcfg->isatomic){
+  #endif
                   // set gcfg->skipradius2 to only start depositing energy when dist^2>gcfg->skipradius2 
                   if(gcfg->skipradius2>EPS){
   #ifdef  USE_CACHEBOX
@@ -503,9 +505,11 @@ kernel void mcx_main_loop(int nphoton,int ophoton,uchar media[],float field[],
                   }else{
                       field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z]+=p.w;
                   }
-  #else
+  #ifdef USE_ATOMIC
+               }else{
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  atomicadd(& field[idx1d+(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep))*gcfg->dimlen.z], p.w);
+               }
   #endif
 #endif
 	     }
@@ -684,7 +688,10 @@ void mcx_run_simulation(Config *cfg){
                      cfg->issave2pt,cfg->isreflect,cfg->isrefint,cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit};
+		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<1e-5 /*isatomic*/};
+
+     if(param.isatomic)
+         param.skipradius2=0.f;
 
      if(cfg->respin>1){
          field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
@@ -829,7 +836,7 @@ $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
 #ifdef  USE_CACHEBOX
-     if(cfg->sradius>EPS || cfg->sradius<0.f)
+     if(cfg->sradius>EPS || ABS(cfg->sradius+1.f)<1e-5f)
         sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
 #endif
      if(cfg->issavedet)
