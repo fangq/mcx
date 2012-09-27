@@ -662,7 +662,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 void mcx_run_simulation(Config *cfg){
 
      int i,iter;
-     float  minstep=MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
+     float  minstep=1.f; //MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
