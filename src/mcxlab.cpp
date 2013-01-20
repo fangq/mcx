@@ -268,7 +268,11 @@ void mcx_validate_config(Config *cfg){
      if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
         mexErrMsgTxt("the 'vol' field in the input structure can not be empty");
 
+     if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
+        cfg->unitinmm=cfg->steps.x;
+
      if(cfg->unitinmm!=1.f){
+        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
         for(i=1;i<cfg->medianum;i++){
 		cfg->prop[i].mus*=cfg->unitinmm;
 		cfg->prop[i].mua*=cfg->unitinmm;
