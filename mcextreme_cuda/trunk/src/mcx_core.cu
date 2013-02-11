@@ -772,7 +772,7 @@ void mcx_run_simulation(Config *cfg){
      param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
      param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
 
-     Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z;
+     Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z; /*Vvox: voxel volume in mm^3*/
 
      if(cfg->seed>0)
      	srand(cfg->seed);
@@ -946,7 +946,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                        eabsorp+=energy[1];
                        scale=(cfg->nphoton-energy[0])/(cfg->nphoton*Vvox*cfg->tstep*eabsorp);
 		       if(cfg->unitinmm!=1.f) 
-		          scale/=(cfg->unitinmm*cfg->unitinmm); /* Vvox*(U*U*U) * (Tstep) * (Eabsorp/U) */
+		          scale*=cfg->unitinmm; /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
                        MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
                        mcx_normalize(field,scale,fieldlen);
                    }
