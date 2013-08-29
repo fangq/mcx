@@ -95,7 +95,7 @@ all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog 
  det detbox fermi mex oct mexbox octbox fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
-	$(AR) $(LINKOPT) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY)
+	$(AR) $(LINKOPT) $(OBJS) -o $@ $(LINKOPT)
 
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
