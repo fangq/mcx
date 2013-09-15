@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #include "mcx_utils.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
@@ -33,14 +34,18 @@
                      : tmp)
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D','k','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--shapes","--reseed","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
-                 "--printgpu","--root","--gpu","--dumpmask","--autopilot","--seed","--version",""};
+                 "--printgpu","--root","--gpu","--dumpmask","--autopilot",
+		 "--seed","--version","--debug","--voidtime",""};
+
+const char debugflag[]={'R','\0'};
+const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar","pattern","fourier","arcsine","disk",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
@@ -77,6 +82,7 @@ void mcx_initcfg(Config *cfg){
      cfg->issrcfrom0=0;
      cfg->unitinmm=1.f;
      cfg->isdumpmask=0;
+     cfg->srctype=0;
      cfg->maxdetphoton=1000000;
      cfg->autopilot=0;
      cfg->seed=0;
@@ -89,6 +95,12 @@ void mcx_initcfg(Config *cfg){
      cfg->his.unitinmm=1.f;
      cfg->shapedata=NULL;
      cfg->reseedlimit=10000000;
+     cfg->maxvoidstep=1000;
+     cfg->voidtime=1;
+     cfg->srcpattern=NULL;
+     cfg->debuglevel=0;
+     memset(&(cfg->srcparam1),0,sizeof(float4));
+     memset(&(cfg->srcparam2),0,sizeof(float4));
 }
 
 void mcx_clearcfg(Config *cfg){
@@ -98,6 +110,8 @@ void mcx_clearcfg(Config *cfg){
      	free(cfg->detpos);
      if(cfg->dim.x && cfg->dim.y && cfg->dim.z)
         free(cfg->vol);
+     if(cfg->srcpattern)
+     	free(cfg->srcpattern);
 
      mcx_initcfg(cfg);
 }
@@ -214,7 +228,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
 }
 
 void mcx_prepdomain(char *filename, Config *cfg){
-     int idx1d;
+     //int idx1d;
      if(filename[0] || cfg->vol){
         if(cfg->vol==NULL){
 	     mcx_loadvolume(filename,cfg);
@@ -235,14 +249,15 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	}
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
-	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
+/*	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
 	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
 		mcx_error(-4,"source position is outside of the volume",__FILE__,__LINE__);
 	idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
+*/
 
         /* if the specified source position is outside the domain, move the source
 	   along the initial vector until it hit the domain */
-	if(cfg->vol && cfg->vol[idx1d]==0){
+	/*if(cfg->vol && cfg->vol[idx1d]==0){
                 printf("source (%f %f %f) is located outside the domain, vol[%d]=%d\n",
 		      cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,idx1d,cfg->vol[idx1d]);
 		while(cfg->vol[idx1d]==0){
@@ -255,7 +270,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
 			idx1d=(int)(floor(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+floor(cfg->srcpos.y)*cfg->dim.x+floor(cfg->srcpos.x));
 		}
 		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-	}
+	}*/
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
      }
@@ -265,7 +280,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
 void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,itmp;
      float dtmp;
-     char filename[MAX_PATH_LENGTH]={0}, comment[MAX_PATH_LENGTH],*comm;
+     char filename[MAX_PATH_LENGTH]={'\0'}, comment[MAX_PATH_LENGTH],strtypestr[MAX_SESSION_LENGTH]={'\0'},*comm;
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
@@ -425,6 +440,40 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+
+     if(in==stdin)
+     	fprintf(stdout,"Please specify the source type[pencil|cone|gaussian]:\n\t");
+     if(fscanf(in,"%s", strtypestr)==1 && strtypestr[0]){
+        int srctype=mcx_keylookup(strtypestr,srctypeid);
+	if(srctype==-1)
+	   MCX_ERROR(-6,"the specified source type is not supported");
+        if(srctype>=0){
+           comm=fgets(comment,MAX_PATH_LENGTH,in);
+	   cfg->srctype=srctype;
+	   if(in==stdin)
+     	      fprintf(stdout,"Please specify the source parameters set 1 (4 floating-points):\n\t");
+           mcx_assert(fscanf(in, "%f %f %f %f", &(cfg->srcparam1.x),
+	          &(cfg->srcparam1.y),&(cfg->srcparam1.z),&(cfg->srcparam1.w))==4);
+	   if(in==stdin)
+     	      fprintf(stdout,"Please specify the source parameters set 2 (4 floating-points):\n\t");
+           mcx_assert(fscanf(in, "%f %f %f %f", &(cfg->srcparam2.x),
+	          &(cfg->srcparam2.y),&(cfg->srcparam2.z),&(cfg->srcparam2.w))==4);
+           if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcparam1.w*cfg->srcparam2.w>0){
+               char patternfile[MAX_PATH_LENGTH];
+               FILE *fp;
+               if(cfg->srcpattern) free(cfg->srcpattern);
+               cfg->srcpattern=(float*)malloc((cfg->srcparam1.w*cfg->srcparam2.w)*sizeof(float));
+               mcx_assert(fscanf(in, "%s", patternfile)==1);
+               fp=fopen(patternfile,"rb");
+               if(fp==NULL)
+                     MCX_ERROR(-6,"pattern file can not be opened");
+               mcx_assert(fread(cfg->srcpattern,cfg->srcparam1.w*cfg->srcparam2.w,sizeof(float),fp)==sizeof(float));
+               fclose(fp);
+           }
+	}else
+	   return;
+     }else
+        return;
 }
 
 int mcx_loadjson(cJSON *root, Config *cfg){
@@ -977,9 +1026,18 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'E':
                                 i=mcx_readarg(argc,argv,i,&(cfg->seed),"int");
                                 break;
+                     case 'k':
+                                i=mcx_readarg(argc,argv,i,&(cfg->voidtime),"int");
+                                break;
                      case 'v':
                                 mcx_version(cfg);
 				break;
+                     case 'D':
+                                if(i+1<argc && isalpha(argv[i+1][0]) )
+                                        cfg->debuglevel=mcx_parsedebugopt(argv[++i],debugflag);
+                                else
+                                        i=mcx_readarg(argc,argv,i,&(cfg->debuglevel),"int");
+                                break;
 		}
 	    }
 	    i++;
@@ -999,6 +1057,35 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      	     mcx_readconfig(filename,cfg);
 	  }
      }
+}
+
+int mcx_parsedebugopt(char *debugopt,const char *debugflag){
+    char *c=debugopt,*p;
+    int debuglevel=0;
+
+    while(*c){
+       p=strchr(debugflag, ((*c<='z' && *c>='a') ? *c-'a'+'A' : *c) );
+       if(p!=NULL)
+          debuglevel |= (1 << (p-debugflag));
+       c++;
+    }
+    return debuglevel;
+}
+
+int mcx_keylookup(char *key, const char *table[]){
+    int i=0;
+    while(key[i]){
+        key[i]=tolower(key[i]);
+	i++;
+    }
+    i=0;
+    while(table[i]!='\0'){
+	if(strcmp(key,table[i])==0){
+		return i;
+	}
+	i++;
+    }
+    return -1;
 }
 
 void mcx_version(Config *cfg){
@@ -1048,6 +1135,7 @@ where possible parameters include (the first item in [] is the default value)\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
  -E [0|int]    (--seed)        set random-number-generator seed, -1 to generate\n\
+ -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
  -L            (--listgpu)     print GPU information only\n\

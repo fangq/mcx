@@ -84,6 +84,7 @@ typedef struct MCXConfig{
         char issrcfrom0;    /*1 do not subtract 1 from src/det positions, 0 subtract 1*/
         char isdumpmask;    /*1 dump detector mask; 0 not*/
 	char autopilot;     /*1 optimal setting for dedicated card, 2, for non dedicated card*/
+	char srctype;
         float minenergy;    /*minimum energy to propagate photon*/
 	float unitinmm;     /*defines the length unit in mm for grid*/
         FILE *flog;         /*stream handle to print log information*/
@@ -92,6 +93,12 @@ typedef struct MCXConfig{
 	float *exportdetected;  /*memory buffer when returning the partial length info to external programs such as matlab*/
         char rootpath[MAX_PATH_LENGTH]; /*sets the input and output root folder*/
         char *shapedata;    /*a pointer points to a string defining the JSON-formatted shape data*/
+	int maxvoidstep;
+	int voidtime;
+	float4 srcparam1;
+	float4 srcparam2;
+        float* srcpattern;
+        unsigned int debuglevel; /**<a flag to control the printing of the debug information*/
 } Config;
 
 #ifdef	__cplusplus
@@ -116,6 +123,8 @@ void mcx_maskdet(Config *cfg);
 void mcx_version(Config *cfg);
 void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
 int  mcx_loadjson(cJSON *root, Config *cfg);
+int  mcx_keylookup(char *key, const char *table[]);
+int  mcx_parsedebugopt(char *debugopt,const char *debugflag);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

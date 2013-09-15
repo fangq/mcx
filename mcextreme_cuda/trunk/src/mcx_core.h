@@ -10,6 +10,7 @@ extern "C" {
 
 #define ABS(a)  ((a)<0?-(a):(a))
 #define DETINC	32
+#define MCX_DEBUG_RNG 1
 
 #ifdef __DEVICE_EMULATION__
 #define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
@@ -60,7 +61,7 @@ typedef struct  __align__(16) KernelParams {
   float  minstep;
   float  twin0,twin1,tmax;
   float  oneoverc0;
-  unsigned int isrowmajor,save2pt,doreflect,dorefint,savedet;
+  unsigned int save2pt,doreflect,dorefint,savedet;
   float  Rtstep;
   float4 ps,c0;
   float3 maxidx;
@@ -69,6 +70,10 @@ typedef struct  __align__(16) KernelParams {
   float  minenergy;
   float  skipradius2;
   float  minaccumtime;
+  int    srctype;
+  float4 srcparam1;
+  float4 srcparam2;
+  int voidtime;
   unsigned int maxdetphoton;
   unsigned int maxmedia;
   unsigned int detnum;
@@ -76,6 +81,10 @@ typedef struct  __align__(16) KernelParams {
   unsigned int mediaidorig;
   unsigned int reseedlimit;
   unsigned int isatomic;
+  unsigned int maxvoidstep;
+  int threadphoton;
+  int oddphotons;
+  unsigned int debug;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg);
