@@ -51,6 +51,20 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
 %      cfg.shapes:     a JSON string for additional shapes in the grid
 %      cfg.reseedlimit:number of scattering events before reseeding RNG
+%      cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
+%                      'pencil' - default, pencil beam, no param needed
+%                      'isotropic' - isotropic source, no param needed
+%                      'cone' - uniform cone beam, srcparam1[0] is the half-angle in radian
+%                      'gaussian' - gaussian beam, srcparam1[0] and [1] specify the variance in angle
+%                      'planar' - a 3D quadrilateral uniform planar source, with three corners specified 
+%                                by cfg.srcpos and srcparam1(1:3)/srcparam2(1:3)
+%                      'pattern' - a 3D quadrilateral pattern illumination, same as above, except
+%                                srcparam1(4) and srcparam2(4) specify the pattern pixel dimensions,
+%                                and srcpattern is a pattern array, valued between [0-1]. 
+%      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
+%      cfg.srcpattern: see cfg.srctype for details
+%      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
+%                      the first non-zero voxel
 %
 %      fields with * are required; options in [] are the default values
 %

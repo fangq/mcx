@@ -28,7 +28,7 @@
 #ifndef DOUBLE_PREC_LOGISTIC
   typedef float RandType;
   #define FUN(x)               (4.f*(x)*(1.f-(x)))
-  #define NU 1e-8f
+  #define NU 1e-7f
   #define NU2 (1.f-2.f*NU)
   #define MIN_INVERSE_LIMIT 1e-7f
   #define logistic_uniform(v)  (acosf(1.f-2.f*(v))*R_PI)
@@ -48,7 +48,7 @@
 #define RING_FUN(x,y,z)      (NU2*(x)+NU*((y)+(z)))
 
 
-__device__ void logistic_step(RandType *t, RandType *tnew, int len_1){
+__device__ void logistic_step(RandType *t, RandType *tnew){
 /*
     int i;
     for(i=0;i<=len_1;i++)
@@ -58,28 +58,21 @@ __device__ void logistic_step(RandType *t, RandType *tnew, int len_1){
        tnew[i]=RING_FUN(t[i],t[i-1],t[i+1]);
     tnew[len_1]=RING_FUN(t[len_1],t[0],t[len_1-1]);
 */
-    RandType tmp;
     t[0]=FUN(t[0]);
     t[1]=FUN(t[1]);
     t[2]=FUN(t[2]);
     t[3]=FUN(t[3]);
     t[4]=FUN(t[4]);
-    tnew[3]=RING_FUN(t[0],t[4],t[1]);   /* shuffle the results by separation of 2*/
-    tnew[4]=RING_FUN(t[1],t[0],t[2]);
-    tnew[0]=RING_FUN(t[2],t[1],t[3]);
-    tnew[1]=RING_FUN(t[3],t[2],t[4]);
-    tnew[2]=RING_FUN(t[4],t[3],t[0]);
-    tmp =t[0];
-    t[0]=t[2];
-    t[2]=t[4];
-    t[4]=t[1];
-    t[1]=t[3];
-    t[3]=tmp;
+    tnew[4]=RING_FUN(t[0],t[4],t[1]);   /* shuffle the results by separation of 1*/
+    tnew[0]=RING_FUN(t[1],t[0],t[2]);
+    tnew[1]=RING_FUN(t[2],t[1],t[3]);
+    tnew[2]=RING_FUN(t[3],t[2],t[4]);
+    tnew[3]=RING_FUN(t[4],t[3],t[0]);
 }
 // generate random number for the next zenith angle
 __device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){
-    logistic_step(t,tbuf,RAND_BUF_LEN-1);
-    logistic_step(tbuf,t,RAND_BUF_LEN-1);
+    logistic_step(t,tbuf);
+    logistic_step(tbuf,t);
 }
 
 __device__ void logistic_init(RandType *t,RandType *tnew,uint seed[],uint idx){
@@ -109,26 +102,20 @@ __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_
         rand_need_more(t,tnew);
 }
 // generate [0,1] random number for the next scattering length
-__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
+__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
+    rand_need_more(t,tnew);
     RandType ran=rand_uniform01(t[0]);
     if(ran==0.f) ran=rand_uniform01(t[1]);
     return ((ran==0.f)?LOG_MT_MAX:(-logf(ran)));
 }
 // generate [0,1] random number for the next arimuthal angle
-__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
+__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
+    rand_need_more(t,tnew);
     return rand_uniform01(t[2]);
 }
-// generate random number for the next zenith angle
-__device__ float rand_next_zangle(RandType t[RAND_BUF_LEN]){
-    return rand_uniform01(t[4]);
-}
 
-// generate random number for the next zenith angle
-__device__ float rand_next_reflect(RandType t[RAND_BUF_LEN]){
-    return rand_uniform01(t[3]);
-}
-// generate random number for the next zenith angle
-__device__ float rand_do_roulette(RandType t[RAND_BUF_LEN]){
-    return rand_uniform01(t[1]);
-}
+#define rand_next_zangle(t1,t2)  rand_next_aangle(t1,t2)
+#define rand_next_reflect(t1,t2) rand_next_aangle(t1,t2)
+#define rand_do_roulette(t1,t2)  rand_next_aangle(t1,t2)
+
 #endif

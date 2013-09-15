@@ -19,6 +19,7 @@
 #include <exception>
 
 #include "mex.h"
+#include "mcx_const.h"
 #include "mcx_utils.h"
 #include "mcx_core.h"
 #include "mcx_shapes.h"
@@ -27,6 +28,8 @@
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
 #define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];\
                                  printf("mcx.%s=[%g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z));}
+#define GET_VEC4_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];u->v.w=val[3];\
+                                 printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
@@ -155,11 +158,15 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,minenergy)
     GET_ONE_FIELD(cfg,unitinmm)
     GET_ONE_FIELD(cfg,reseedlimit)
+    GET_ONE_FIELD(cfg,printnum)
+    GET_ONE_FIELD(cfg,voidtime)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC3_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
     GET_VEC3_FIELD(cfg,crop0)
     GET_VEC3_FIELD(cfg,crop1)
+    GET_VEC4_FIELD(cfg,srcparam1)
+    GET_VEC4_FIELD(cfg,srcparam2)
     else if(strcmp(name,"vol")==0){
         if(!mxIsUint8(item) || mxGetNumberOfDimensions(item)!=3 )
              mexErrMsgTxt("the 'vol' field must be a 3D uint8 array");
@@ -204,6 +211,46 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
              mexWarnMsgTxt("not enough space. string is truncated.");
 
 	printf("mcx.session='%s';\n",cfg->session);
+    }else if(strcmp(name,"srctype")==0){
+        int len=mxGetNumberOfElements(item);
+        const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar","pattern","fourier","arcsine","disk",""};
+        char strtypestr[MAX_SESSION_LENGTH]={'\0'};
+
+        if(!mxIsChar(item) || len==0)
+             mexErrMsgTxt("the 'srctype' field must be a non-empty string");
+	if(len>MAX_SESSION_LENGTH)
+	     mexErrMsgTxt("the 'srctype' field is too long");
+        int status = mxGetString(item, strtypestr, MAX_SESSION_LENGTH);
+        if (status != 0)
+             mexWarnMsgTxt("not enough space. string is truncated.");
+        cfg->srctype=mcx_keylookup(strtypestr,srctypeid);
+        if(cfg->srctype==-1)
+             mexErrMsgTxt("the specified source type is not supported");
+	printf("mcx.srctype='%s';\n",strtypestr);
+    }else if(strcmp(name,"debuglevel")==0){
+        int len=mxGetNumberOfElements(item);
+        const char debugflag[]={'R','\0'};
+        char debuglevel[MAX_SESSION_LENGTH]={'\0'};
+
+        if(!mxIsChar(item) || len==0)
+             mexErrMsgTxt("the 'debuglevel' field must be a non-empty string");
+	if(len>MAX_SESSION_LENGTH)
+	     mexErrMsgTxt("the 'debuglevel' field is too long");
+        int status = mxGetString(item, debuglevel, MAX_SESSION_LENGTH);
+        if (status != 0)
+             mexWarnMsgTxt("not enough space. string is truncated.");
+        cfg->debuglevel=mcx_parsedebugopt(debuglevel,debugflag);
+        if(cfg->debuglevel==0)
+             mexWarnMsgTxt("the specified debuglevel is not supported");
+	printf("mcx.debuglevel='%d';\n",cfg->debuglevel);
+    }else if(strcmp(name,"srcpattern")==0){
+        arraydim=mxGetDimensions(item);
+        double *val=mxGetPr(item);
+	if(cfg->srcpattern) free(cfg->srcpattern);
+        cfg->srcpattern=(float*)malloc(arraydim[0]*arraydim[1]*sizeof(float4));
+        for(i=0;i<arraydim[0]*arraydim[1];i++)
+             cfg->srcpattern[i]=val[i];
+        printf("mcx.srcpattern=[%d %d];\n",arraydim[0],arraydim[1]);
     }else if(strcmp(name,"shapes")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
@@ -267,7 +314,8 @@ void mcx_validate_config(Config *cfg){
         mexErrMsgTxt("you must define the 'prop' field in the input structure");
      if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
         mexErrMsgTxt("the 'vol' field in the input structure can not be empty");
-
+     if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcpattern==NULL)
+        mexErrMsgTxt("the 'srcpattern' field can not be empty when your 'srctype' is 'pattern'");
      if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
         cfg->unitinmm=cfg->steps.x;
 
@@ -294,14 +342,14 @@ void mcx_validate_config(Config *cfg){
 	}
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
-	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
+/*	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
 	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
 		mexErrMsgTxt("source position is outside of the volume");
 	idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
-
+*/
         /* if the specified source position is outside the domain, move the source
 	   along the initial vector until it hit the domain */
-	if(cfg->vol && cfg->vol[idx1d]==0){
+/*	if(cfg->vol && cfg->vol[idx1d]==0){
                 printf("source (%f %f %f) is located outside the domain, vol[%d]=%d\n",
 		      cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,idx1d,cfg->vol[idx1d]);
 		while(cfg->vol[idx1d]==0){
@@ -314,7 +362,7 @@ void mcx_validate_config(Config *cfg){
 			idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
 		}
 		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-	}
+	}*/
      }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;

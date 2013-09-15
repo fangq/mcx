@@ -80,7 +80,7 @@ mexbox mex fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUS
 mexbox mex oct octbox fermimex:    OUTPUT_DIR=../mcxlab
 mex:               BINARY=mcxlab
 mexbox:            BINARY=mcxlab_atom
-mexbox mex oct octbox fermimex fermioct:    CUCCOPT+=--compiler-options $(DLLFLAG) -DMCX_CONTAINER
+mexbox mex oct octbox fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG) -Wall" -DMCX_CONTAINER
 mexbox mex oct octbox fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
 mexbox mex fermimex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
@@ -95,7 +95,7 @@ all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog 
  det detbox fermi mex oct mexbox octbox fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
-	$(AR) $(LINKOPT) $(OBJS) -o $@ $(LINKOPT)
+	$(AR) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY) $(LINKOPT)
 
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
