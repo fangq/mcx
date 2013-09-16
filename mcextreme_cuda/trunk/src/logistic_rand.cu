@@ -111,7 +111,7 @@ __device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN],RandType tnew[RAND_B
 // generate [0,1] random number for the next arimuthal angle
 __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
     rand_need_more(t,tnew);
-    return rand_uniform01(t[2]);
+    return rand_uniform01(t[t[2]+t[3]>=1.f]);
 }
 
 #define rand_next_zangle(t1,t2)  rand_next_aangle(t1,t2)
