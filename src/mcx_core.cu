@@ -199,7 +199,7 @@ __device__ inline void getentrypoint(MCXpos *p0, MCXpos *p, MCXdir *v, float3 *h
 /* if the source location is outside of the volume or 
 in an void voxel, mcx advances the photon in v.{xyz} direction
 until it hits an non-zero voxel */
-__device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,int maxstep,uchar media[]){
+__device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
       int count=1,idx1d,idx1dold;
       while(1){
           if(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x 
@@ -217,10 +217,14 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,int maxstep,uchar 
 	      return idx1d;
 	    }
           }
+	  if( (p->x<0.f) && (v->x<=0.f) || (p->x > gcfg->maxidx.x-1.f) && (v->x>=0.f)
+	   || (p->y<0.f) && (v->y<=0.f) || (p->y > gcfg->maxidx.y-1.f) && (v->y>=0.f)
+	   || (p->z<0.f) && (v->z<=0.f) || (p->z > gcfg->maxidx.z-1.f) && (v->z>=0.f))
+	      return -1;
 	  *((float4*)(p))=float4(p->x+v->x,p->y+v->y,p->z+v->z,p->w);
 	  idx1dold=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
           if(gcfg->voidtime) f->t+=gcfg->minaccumtime;
-	  if(count++>maxstep) /*failed after moving maxstep, need terminate*/
+	  if(count++>gcfg->maxvoidstep)
 	      return -1;
       }
 }
@@ -256,7 +260,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	 clearpath(ppath,gcfg->maxmedia);
       }
 #endif
-      if(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons))-1)
+      if(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons)))
           return 1; // all photos complete
       do{
 	  *((float4*)p)=gcfg->ps;
@@ -268,9 +272,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
                
 	  if(gcfg->srctype==MCX_SRC_PLANAR || gcfg->srctype==MCX_SRC_PATTERN|| gcfg->srctype==MCX_SRC_FOURIER){ /*a rectangular grid over a plane*/
 	      rand_need_more(t,tnew);
-	      RandType rx=rand_uniform01(t[2]);
+	      RandType rx=rand_uniform01(t[0]);
 	      rand_need_more(t,tnew);
-	      RandType ry=rand_uniform01(t[2]);
+	      RandType ry=rand_uniform01(t[0]);
 	      *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
 	                	   p->y+rx*gcfg->srcparam1.y+ry*gcfg->srcparam2.y,
 				   p->z+rx*gcfg->srcparam1.z+ry*gcfg->srcparam2.z,
@@ -291,10 +295,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	      // http://mathworld.wolfram.com/DiskPointPicking.html
 	      float sphi, cphi;
 	      rand_need_more(t,tnew);
-	      RandType phi=TWO_PI*rand_uniform01(t[2]);
+	      RandType phi=TWO_PI*rand_uniform01(t[0]);
               sincosf(phi,&sphi,&cphi);
 	      rand_need_more(t,tnew);
-	      RandType r=sqrtf(rand_uniform01(t[2]))*gcfg->srcparam1.x;
+	      RandType r=sqrtf(rand_uniform01(t[0]))*gcfg->srcparam1.x;
 	      if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
    		  float tmp0=1.f-v->z*v->z;
    		  float tmp1=r*rsqrtf(tmp0);
@@ -321,33 +325,34 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	      // http://mathworld.wolfram.com/SpherePointPicking.html
               float ang,stheta,ctheta,sphi,cphi;
 	      rand_need_more(t,tnew);
-              ang=TWO_PI*rand_uniform01(t[2]); //next arimuth angle
+              ang=TWO_PI*rand_uniform01(t[0]); //next arimuth angle
               sincosf(ang,&sphi,&cphi);
 	      if(gcfg->srctype==MCX_SRC_CONE){  // a solid-angle section of a uniform sphere
         	  do{
 		      rand_need_more(t,tnew);
-		      ang=(gcfg->srcparam1.y>0) ? TWO_PI*rand_uniform01(t[2]) : acosf(2.f*rand_uniform01(t[2])-1.f); //sine distribution
+		      ang=(gcfg->srcparam1.y>0) ? TWO_PI*rand_uniform01(t[0]) : acosf(2.f*rand_uniform01(t[0])-1.f); //sine distribution
 		  }while(ang>gcfg->srcparam1.x);
 	      }else{
 		  rand_need_more(t,tnew);
 	          if(gcfg->srctype==MCX_SRC_ISOTROPIC) // uniform sphere
-		      ang=acosf(2.f*rand_uniform01(t[2])-1.f); //sine distribution
+		      ang=acosf(2.f*rand_uniform01(t[0])-1.f); //sine distribution
 		  else
-		      ang=TWO_PI*rand_uniform01(t[2]); //uniform distribution in zenith angle, arcsine
+		      ang=ONE_PI*rand_uniform01(t[0]); //uniform distribution in zenith angle, arcsine
 	      }
               sincosf(ang,&stheta,&ctheta);
               rotatevector(v,stheta,ctheta,sphi,cphi);
 	  }else if(gcfg->srctype==MCX_SRC_GAUSSIAN){
               float ang,stheta,ctheta,sphi,cphi;
-	      ang=TWO_PI*rand_next_aangle(t,tnew); //next arimuth angle
+              rand_need_more(t,tnew);
+	      ang=TWO_PI*rand_uniform01(t[0]); //next arimuth angle
 	      sincosf(ang,&sphi,&cphi);
               rand_need_more(t,tnew);
-              ang=sqrt(-2.f*log(rand_uniform01(t[2])))*(1.f-2.f*t[0])*gcfg->srcparam1.x;
+              ang=sqrtf(-2.f*logf(rand_uniform01(t[0])))*(1.f-2.f*t[1])*gcfg->srcparam1.x;
 	      sincosf(ang,&stheta,&ctheta);
 	      rotatevector(v,stheta,ctheta,sphi,cphi);
 	  }
 	  if(*mediaid==0){
-             int idx=skipvoid(p, v, f, gcfg->maxvoidstep,media);
+             int idx=skipvoid(p, v, f, media);
              if(idx>=0){
 		 *idx1d=idx;
 		 *mediaid=media[*idx1d];
@@ -1150,7 +1155,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 
      printnum=cfg->nthread<cfg->printnum?cfg->nthread:cfg->printnum;
      for (i=0; i<(int)printnum; i++) {
-           MCX_FPRINTF(cfg->flog,"% 4d[A% f % f % f]C%3d J%5d W% 8f(P%.13f %.13f %.13f)T% 5.3e L% 5.3f %.0f\n", i,
+            MCX_FPRINTF(cfg->flog,"% 4d[A% f % f % f]C%3d J%5d W% 8f(P%.13f %.13f %.13f)T% 5.3e L% 5.3f %.0f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }

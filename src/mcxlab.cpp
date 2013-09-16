@@ -247,7 +247,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         arraydim=mxGetDimensions(item);
         double *val=mxGetPr(item);
 	if(cfg->srcpattern) free(cfg->srcpattern);
-        cfg->srcpattern=(float*)malloc(arraydim[0]*arraydim[1]*sizeof(float4));
+        cfg->srcpattern=(float*)malloc(arraydim[0]*arraydim[1]*sizeof(float));
         for(i=0;i<arraydim[0]*arraydim[1];i++)
              cfg->srcpattern[i]=val[i];
         printf("mcx.srcpattern=[%d %d];\n",arraydim[0],arraydim[1]);
