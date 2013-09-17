@@ -196,6 +196,43 @@ __device__ inline void getentrypoint(MCXpos *p0, MCXpos *p, MCXdir *v, float3 *h
       }
 }
 
+__device__ inline void transmit(MCXdir *v, float n1, float n2,float flipdir){
+      float tmp0=n1/n2;
+      if(flipdir>=3.f) { //transmit through z plane
+         v->x=tmp0*v->x;
+         v->y=tmp0*v->y;
+      }else if(flipdir>=2.f){ //transmit through y plane
+         v->x=tmp0*v->x;
+         v->z=tmp0*v->z;
+      }else if(flipdir>=1.f){ //transmit through x plane
+         v->y=tmp0*v->y;
+         v->z=tmp0*v->z;
+      }
+      tmp0=rsqrtf(v->x*v->x+v->y*v->y+v->z*v->z);
+      v->x=v->x*tmp0;
+      v->y=v->y*tmp0;
+      v->z=v->z*tmp0;
+}
+
+__device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, float flipdir){
+      float Icos=((float*)v)[__float2int_rn(flipdir)-1];
+      float tmp0=n1*n1;
+      float tmp1=n2*n2;
+      float tmp2=1.f-tmp0/tmp1*(1.f-Icos*Icos); /*1-[n1/n2*sin(si)]^2 = cos(ti)^2*/
+      if(tmp2>0.f){ // partial reflection
+          float Re,Im,Rtotal;
+	  Re=tmp0*Icos*Icos+tmp1*tmp2;
+	  tmp2=sqrtf(tmp2); /*to save one sqrt*/
+	  Im=2.f*n1*n2*Icos*tmp2;
+	  Rtotal=(Re-Im)/(Re+Im);     /*Rp*/
+	  Re=tmp1*Icos*Icos+tmp0*tmp2*tmp2;
+	  Rtotal=(Rtotal+(Re-Im)/(Re+Im))*0.5f; /*(Rp+Rs)/2*/
+	  return Rtotal;
+      }else{ // total reflection
+          return 1.f;
+      }
+}
+
 /* if the source location is outside of the volume or 
 in an void voxel, mcx advances the photon in v.{xyz} direction
 until it hits an non-zero voxel */
@@ -214,6 +251,10 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
 	      if(gcfg->voidtime) f->t-=gcfg->minaccumtime*backmove;
 	      *((float4*)(p))=float4(htime.x,htime.y,htime.z,p->w);
 	      idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+	      if(gproperty[media[idx1d]].w!=gproperty[0].w){
+	          p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+	          transmit(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+	      }
 	      return idx1d;
 	    }
           }
@@ -221,8 +262,8 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
 	   || (p->y<0.f) && (v->y<=0.f) || (p->y > gcfg->maxidx.y-1.f) && (v->y>=0.f)
 	   || (p->z<0.f) && (v->z<=0.f) || (p->z > gcfg->maxidx.z-1.f) && (v->z>=0.f))
 	      return -1;
-	  *((float4*)(p))=float4(p->x+v->x,p->y+v->y,p->z+v->z,p->w);
 	  idx1dold=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+	  *((float4*)(p))=float4(p->x+v->x,p->y+v->y,p->z+v->z,p->w);
           if(gcfg->voidtime) f->t+=gcfg->minaccumtime;
 	  if(count++>gcfg->maxvoidstep)
 	      return -1;
@@ -282,7 +323,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
               if(gcfg->srctype==MCX_SRC_PATTERN) // need to prevent rx/ry=1 here
         	  p->w=srcpattern[(int)(ry*gcfg->srcparam1.w)*(int)(gcfg->srcparam1.w)+(int)(rx*gcfg->srcparam1.w)];
 	      else if(gcfg->srctype==MCX_SRC_FOURIER){
-		  p->w=(sinf(gcfg->srcparam1.w*rx*TWO_PI)*sinf(gcfg->srcparam2.w*ry*TWO_PI)+1.f)*0.5f; //between 0 and 1
+		  p->w=(sinf((floorf(gcfg->srcparam1.w)*rx+(gcfg->srcparam1.w-floorf(gcfg->srcparam1.w)))*TWO_PI)
+		       *sinf((floorf(gcfg->srcparam2.w)*ry+(gcfg->srcparam2.w-floorf(gcfg->srcparam2.w)))*TWO_PI)+1.f)*0.5f; //between 0 and 1
               }
               *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
               if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
@@ -290,6 +332,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
               }else{
         	  *mediaid=media[*idx1d];
               }
+	      rand_need_more(t,tnew);
 	  }else if(gcfg->srctype==MCX_SRC_DISK){ // uniform disk distribution
 	      // Uniform disk point picking
 	      // http://mathworld.wolfram.com/DiskPointPicking.html
@@ -595,21 +638,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                                 break;
 			    continue;
 			}
-			tmp0=n1/prop.n;
-                	if(flipdir>=3.f) { //transmit through z plane
-                	   v.x=tmp0*v.x;
-                	   v.y=tmp0*v.y;
-                	}else if(flipdir>=2.f){ //transmit through y plane
-                	   v.x=tmp0*v.x;
-                	   v.z=tmp0*v.z;
-                	}else if(flipdir>=1.f){ //transmit through x plane
-                	   v.y=tmp0*v.y;
-                	   v.z=tmp0*v.z;
-                	}
-			tmp0=rsqrtf(v.x*v.x+v.y*v.y+v.z*v.z);
-			v.x=v.x*tmp0;
-			v.y=v.y*tmp0;
-			v.z=v.z*tmp0;
+			transmit(&v,n1,prop.n,flipdir);
 		  }else{ //do reflection
                 	if(flipdir>=3.f) { //flip in z axis
                 	   v.z=-v.z;
@@ -945,7 +974,6 @@ void mcx_run_simulation(Config *cfg){
            Pdir[i]=c0;
            Plen[i]=float4(0.f,0.f,param.minaccumtime,0.f);
      }
-MCX_FPRINTF(stderr,"srctype=%d %d %d\n",param.srctype,param.idx1dorig,param.mediaidorig);
 
      MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
