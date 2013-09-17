@@ -220,3 +220,4 @@ uniformrng=acos(2*rng-1)/pi;
 subplot(212);
 hist(uniformrng,1000);
 title('converted to uniform 0-1 distribution');
+cfg=rmfield(cfg,'debuglevel');
