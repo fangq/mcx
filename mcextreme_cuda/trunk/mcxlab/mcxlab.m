@@ -3,7 +3,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010-2012 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+%Copyright (c) 2010-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 %                      URL: http://mcx.sf.net
 %====================================================================
 %
@@ -54,13 +54,21 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
 %                      'pencil' - default, pencil beam, no param needed
 %                      'isotropic' - isotropic source, no param needed
-%                      'cone' - uniform cone beam, srcparam1[0] is the half-angle in radian
-%                      'gaussian' - gaussian beam, srcparam1[0] and [1] specify the variance in angle
+%                      'cone' - uniform cone beam, srcparam1(0) is the half-angle in radian
+%                      'gaussian' - gaussian beam, srcparam1(0) specifies the variance in the zenith angle
 %                      'planar' - a 3D quadrilateral uniform planar source, with three corners specified 
-%                                by cfg.srcpos and srcparam1(1:3)/srcparam2(1:3)
+%                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
 %                      'pattern' - a 3D quadrilateral pattern illumination, same as above, except
 %                                srcparam1(4) and srcparam2(4) specify the pattern pixel dimensions,
 %                                and srcpattern is a pattern array, valued between [0-1]. 
+%                      'fourier' - spatial frequency domain source, similar to 'planar', except
+%                                the integer parts of srcparam1(4) and srcparam2(4) represent
+%                                the x/y k-numbers; the fraction part of srcparam1(4) multiplies
+%                                2*pi represents the phase shift.
+%                      'arcsine' - similar to isotropic, except the zenith angle is uniform
+%                                distribution, rather than a sine distribution.
+%                      'disk' - a uniform disk source pointing along srcdir; the radius is 
+%                               set by srcparam1(1) (in grid unit)
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 

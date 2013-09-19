@@ -911,7 +911,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      float np=0.f;
 
      if(argc<=1){
-     	mcx_usage(argv[0]);
+     	mcx_usage(cfg,argv[0]);
      	exit(0);
      }
      while(i<argc){
@@ -923,7 +923,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		}
 	        switch(argv[i][1]){
 		     case 'h': 
-		                mcx_usage(argv[0]);
+		                mcx_usage(cfg,argv[0]);
 				exit(0);
 		     case 'i':
 				if(filename[0]){
@@ -1096,17 +1096,21 @@ void mcx_version(Config *cfg){
     exit(0);
 }
 
-void mcx_usage(char *exename){
-     printf("\
+void mcx_printheader(Config *cfg){
+    MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009-2012 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\
 $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
-###############################################################################\n\
-\n\
+###############################################################################\n");
+}
+
+void mcx_usage(Config *cfg,char *exename){
+     mcx_printheader(cfg);
+     printf("\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first item in [] is the default value)\n\
  -i 	       (--interactive) interactive mode\n\
