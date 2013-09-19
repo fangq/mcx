@@ -65,7 +65,7 @@ title('isotrpoic source at [30 30 -10]');
 
 clear cfg;
 figure;
-cfg.nphoton=1e7;
+cfg.nphoton=1e8;
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcdir=[0 0 1];
 cfg.gpuid=1;
@@ -76,9 +76,9 @@ cfg.seed=99999;
 
 % a uniform planar source outside the volume
 cfg.srctype='planar';
-cfg.srcpos=[30 30 -1];
-cfg.srcparam1=[20 0 0 0];
-cfg.srcparam2=[0 20 0 0];
+cfg.srcpos=[10 10 -1];
+cfg.srcparam1=[40 0 0 0];
+cfg.srcparam2=[0 40 0 0];
 cfg.tend=0.4e-11;
 cfg.tstep=0.4e-11;
 flux=mcxlab(cfg);
@@ -89,8 +89,8 @@ axis equal; colorbar
 title('a uniform planar source');
 
 cfg.srctype='fourier';
-cfg.srcparam1=[20 0 0 1];
-cfg.srcparam2=[0 20 0 1];
+cfg.srcparam1=[40 0 0 1];
+cfg.srcparam2=[0 40 0 1];
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(222);
@@ -99,8 +99,8 @@ axis equal; colorbar
 title('a spatial frequency domain source (1,1)');
 
 cfg.srctype='fourier';
-cfg.srcparam1=[20 10 0 2];
-cfg.srcparam2=[0 20 0 2];
+cfg.srcparam1=[40 10 0 2];
+cfg.srcparam2=[0 40 0 2];
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(223);
@@ -128,6 +128,7 @@ mcximg=[0 0 0 0 0 0 0 0 0 0 0
 0 1 1 1 1 1 1 1 1 1 0
 0 0 0 0 0 0 0 0 0 0 0];
 
+cfg.nphoton=1e7;
 cfg.srctype='pattern';
 cfg.srcpattern=mcximg;
 cfg.srcpos=[-10*sqrt(2) 0 40];
