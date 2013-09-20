@@ -140,12 +140,7 @@ extern "C"
   #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__)
 #endif
 
-#ifdef MATLAB_MEX_FILE
 int mexPrintf(const char * format, ... );
-#else
-void mexPrintf(const char * format, ... );
-#endif
-
 int mexEvalString(const char *command);
 
 #ifdef	__cplusplus

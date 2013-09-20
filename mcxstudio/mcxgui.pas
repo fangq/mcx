@@ -22,6 +22,12 @@ type
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    ckSkipVoid: TCheckBox;
+    ckReflect1: TCheckBox;
+    edSeed: TEdit;
+    edReseed: TEdit;
+    Label13: TLabel;
+    Label14: TLabel;
     mcxdoHelpOptions: TAction;
     Bevel1: TBevel;
     Bevel2: TBevel;
@@ -240,9 +246,9 @@ begin
        if(ed.Hint = 'BubbleSize') then begin
             if StrToFloat(ed.Text)>0 then begin
               if(ckSaveDetector.Checked) then begin
-                grVariant.ItemIndex:=3;
+                grVariant.ItemIndex:=4;
               end else begin
-                grVariant.ItemIndex:=2;
+                grVariant.ItemIndex:=3;
               end;
             end;
        end;
@@ -252,7 +258,7 @@ begin
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=IntToStr(gr.ItemIndex);
        if(gr.Hint = 'VariantName') then begin
-           ckSaveDetector.Enabled:=(gr.ItemIndex=1) or (gr.ItemIndex=3);
+           ckSaveDetector.Enabled:=(gr.ItemIndex=0) or (gr.ItemIndex=2) or (gr.ItemIndex=4);
            edDetectedNum.Enabled:=ckSaveDetector.Enabled;
        end;
     end else if(Sender is TComboBox) then begin
@@ -271,16 +277,16 @@ begin
        end;
        if(ck.Hint='SaveDetector') then begin
            if(ck.Checked) then begin
-             if(grVariant.ItemIndex=2) then begin
+             if(grVariant.ItemIndex=3) then begin
+                grVariant.ItemIndex:=4;
+             end else begin
+                grVariant.ItemIndex:=2;
+             end;
+           end else begin
+             if(grVariant.ItemIndex=4) then begin
                 grVariant.ItemIndex:=3;
              end else begin
                 grVariant.ItemIndex:=1;
-             end;
-           end else begin
-             if(grVariant.ItemIndex=3) then begin
-                grVariant.ItemIndex:=2;
-             end else begin
-                grVariant.ItemIndex:=0;
              end;
            end;
            edDetectedNum.Enabled:=ck.Checked;
@@ -357,7 +363,7 @@ procedure TfmMCX.mcxdoDefaultExecute(Sender: TObject);
 begin
       //edSession.Text:='';
       edConfigFile.FileName:='';
-      edThread.Text:='1796';
+      edThread.Text:='4096';
       edPhoton.Text:='1e7';
       edBlockSize.Text:='64';
       edBubble.Text:='0';
@@ -372,7 +378,10 @@ begin
       grVariant.ItemIndex:=0;
       edUnitInMM.Text:='1';
       edGPUID.ItemIndex:=0;
-      edDetectedNum.Text:='1000000';
+      edDetectedNum.Text:='10000000';
+      ckSkipVoid.Checked:=false;
+      edSeed.Text:='0';
+      edReseed.Text:='10000000';
       if not (lvJobs.Selected = nil) then
          PanelToList2(lvJobs.Selected);
 end;
@@ -761,7 +770,7 @@ begin
        raise Exception.Create('Thread block number (-T) can not be negative');
     if(radius<0) then
        raise Exception.Create('Cache radius (-R) can not be negative');
-    if (grVariant.ItemIndex =2) or (grVariant.ItemIndex =3) and (radius<3) or (radius>7) then
+    if (grVariant.ItemIndex =3) or (grVariant.ItemIndex =4) and (radius<3) or (radius>7) then
        AddLog('Warning: a cache radius (-R) between 3mm to 5mm is recommended');
 
     exepath:=SearchForExe(CreateCmdOnly);
@@ -780,15 +789,15 @@ var
     cmd: string;
 begin
     cmd:='mcx';
-    if(grVariant.ItemIndex=0) then begin
+    if(grVariant.ItemIndex<=1) then begin
        cmd:='mcx';
-    end else if(grVariant.ItemIndex=1) then begin
-       cmd:='mcx_det';
     end else if(grVariant.ItemIndex=2) then begin
-       cmd:='mcx_cached';
+       cmd:='mcx_det';
     end else if(grVariant.ItemIndex=3) then begin
-       cmd:='mcx_det_cached';
+       cmd:='mcx_cached';
     end else if(grVariant.ItemIndex=4) then begin
+       cmd:='mcx_det_cached';
+    end else if(grVariant.ItemIndex=5) then begin
        cmd:='mcx_atomic';
     end;
     Result:=cmd;
@@ -796,7 +805,7 @@ end;
 
 function TfmMCX.CreateCmd:string;
 var
-    nthread, nblock,gpuid,hitmax: integer;
+    nthread, nblock,gpuid,hitmax,seed,reseed: integer;
     bubbleradius,unitinmm,nphoton: extended;
     cmd: string;
 begin
@@ -815,6 +824,8 @@ begin
         gpuid:=StrToInt(edGPUID.Text);
         unitinmm:=StrToFloat(edUnitInMM.Text);
         hitmax:=StrToInt(edDetectedNum.Text);
+        seed:=StrToInt(edSeed.Text);
+        reseed:=StrToInt(edReseed.Text);
     except
         raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
     end;
@@ -829,6 +840,12 @@ begin
     cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d --unitinmm %f',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
       Integer(ckSaveDetector.Checked),hitmax,unitinmm]);
+    if(seed>0) then
+      cmd:=cmd+Format(' --seed %d',[seed]);
+    if(reseed <> 10000000) then
+      cmd:=cmd+Format(' --reseed %d',[reseed]);
+    if(ckSkipVoid.Checked) then
+      cmd:=cmd+' --skipvoid 1';
 
     Result:=cmd;
     AddLog('Command:');
