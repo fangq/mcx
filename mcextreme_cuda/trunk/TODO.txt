@@ -7,7 +7,6 @@
 
 == Long term projects ==
 
-*. support more complicated source forms [2009/09/30, FangQ]
 *. fluorescent material support [2009/09/30, FangQ]
 *. study the round-off errors for the two RNGs [2009/04/30, FangQ]
 
@@ -28,3 +27,4 @@
 [dropped] *. Brook+ variant of MCX [2009/10/21, FangQ]
 [dropped] *. support ini based input file format (or perl script format) [2009/04/30, FangQ]
 [dropped] *. support NIFTI input & output [2009/04/30, FangQ]
+[done] *. support more complicated source forms [2009/09/30, FangQ], [2013/09/18, FangQ]

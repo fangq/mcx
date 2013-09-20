@@ -1,5 +1,13 @@
 = Change Log =
 
+== MCX 0.9.7 (Dark Matter - alpha), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2013-09-15*[r305-308] wide-field source support, including 9 source types
+ 2013-09-11 [r305] random number generator performance optimization
+ 2013-09-16 [r306] MCXLAB srctype demo script
+ 2013-08-29 [r304] loadmch supports the seed data from the latest MMC simulations
+ 2013-02-11 [r300-302] fix double correction for unitinmm
+
 == MCX 0.8.0 (Charm Quarks - final), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2012-08-24 [r297] merge all variants into a single binary for Fermi cards (make fermi)

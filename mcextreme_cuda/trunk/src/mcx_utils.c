@@ -462,7 +462,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                char patternfile[MAX_PATH_LENGTH];
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
-               cfg->srcpattern=(float*)malloc((cfg->srcparam1.w*cfg->srcparam2.w)*sizeof(float));
+               cfg->srcpattern=(float*)calloc((cfg->srcparam1.w*cfg->srcparam2.w),sizeof(float));
                mcx_assert(fscanf(in, "%s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
@@ -621,6 +621,41 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	   if(!cfg->issrcfrom0){
               cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
 	   }
+           cfg->srctype=mcx_keylookup(FIND_JSON_KEY("Type","Optode.Source.Type",src,"pencil",valuestring),srctypeid);
+           subitem=FIND_JSON_OBJ("Param1","Optode.Source.Param1",src);
+           if(subitem){
+              cfg->srcparam1.x=subitem->child->valuedouble;
+              cfg->srcparam1.y=subitem->child->next->valuedouble;
+              cfg->srcparam1.z=subitem->child->next->next->valuedouble;
+              cfg->srcparam1.w=subitem->child->next->next->next->valuedouble;
+           }
+           subitem=FIND_JSON_OBJ("Param2","Optode.Source.Param2",src);
+           if(subitem){
+              cfg->srcparam2.x=subitem->child->valuedouble;
+              cfg->srcparam2.y=subitem->child->next->valuedouble;
+              cfg->srcparam2.z=subitem->child->next->next->valuedouble;
+              cfg->srcparam2.w=subitem->child->next->next->next->valuedouble;
+           }
+           subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
+           if(subitem){
+              int nx=FIND_JSON_KEY("Nx","Optode.Source.Pattern.Nx",subitem,0,valueint);
+              int ny=FIND_JSON_KEY("Ny","Optode.Source.Pattern.Ny",subitem,0,valueint);
+              if(nx>0 || ny>0){
+                 cJSON *pat=FIND_JSON_OBJ("Data","Optode.Source.Pattern.Data",subitem);
+                 if(pat && pat->child){
+                     int i;
+                     pat=pat->child;
+                     if(cfg->srcpattern) free(cfg->srcpattern);
+                     cfg->srcpattern=(float*)calloc(nx*ny,sizeof(float));
+                     for(i=0;i<nx*ny;i++){
+                         cfg->srcpattern[i]=pat->valuedouble;
+                         if((pat=pat->next)==NULL){
+                             MCX_ERROR(-1,"Incomplete pattern data");
+                         }
+                     }
+                 }
+              }
+           }
         }
         dets=FIND_JSON_OBJ("Detector","Optode.Detector",Optode);
         if(dets){

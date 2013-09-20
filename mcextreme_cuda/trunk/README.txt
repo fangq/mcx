@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.8.0 (Charm Quarks)
+Version: 0.9.7 (Dark Matter)
 
 ---------------------------------------------------------------------
 
@@ -37,13 +37,14 @@ The algorithm of this software is detailed in the Reference [1].
 A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
+*. a variety of source forms, including wide-field and pattern illumination
 *. boundary reflection support
 *. time-resolved photon transport simulation
 *. saving photon partial path lengths at the detectors
 *. optimized random number generators
 *. build-in flux/fluence normalization to output Green's functions
 *. user adjustable voxel resolution
-*. improved accuracy near the source with atomic operations
+*. improved accuracy with atomic operations
 *. cross-platform graphics user interface
 *. native Matlab/Octave support for high usability
 *. flexible JSON interface for future extensions
@@ -120,6 +121,15 @@ will print the help information and a list of supported parameters,
 such as the following:
 
 <pre>
+###############################################################################
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #
+#     Copyright (c) 2009-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #
+#                                                                             #
+#    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #
+###############################################################################
+$MCX $Rev:: 308 $ Last Commit $Date:: 2013-09-19 00:25:32#$ by $Author:: fangq$
+###############################################################################
+
 usage: mcx <param1> <param2> ...
 where possible parameters include (the first item in [] is the default value)
  -i 	       (--interactive) interactive mode
@@ -128,7 +138,7 @@ where possible parameters include (the first item in [] is the default value)
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
  -t [2048|int] (--thread)      total thread number
  -T [64|int]   (--blocksize)   thread number per block
- -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.
+ -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedic.
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto
  -r [1|int]    (--repeat)      number of repetitions
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
@@ -147,7 +157,8 @@ where possible parameters include (the first item in [] is the default value)
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
  -H [1000000]  (--maxdetphoton)max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
- -E [0|int]    (--seed)        set random-number-generator seed
+ -E [0|int]    (--seed)        set random-number-generator seed, -1 to generate
+ -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
  -L            (--listgpu)     print GPU information only
@@ -156,9 +167,9 @@ where possible parameters include (the first item in [] is the default value)
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG
  -v            (--version)     print MCX revision number
 
-example (in autopilot mode):
+example: (autopilot mode)
        mcx -A -n 1e7 -f input.inp -G 1 
-or (in manual mode):
+or (manual mode)
        mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
 or (use inline domain definition)
        mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
@@ -173,8 +184,8 @@ Photons passing through the defined detector positions will be saved for
 later rescaling (-d); refractive index mismatch is considered at media 
 boundaries (-b).
 
-Historically, MCX supports a modified version of the input file format used 
-by tMCimg. The difference is that MCX allows comments in the input file.
+Historically, MCX supports an extended version of the input file format 
+used by tMCimg. The difference is that MCX allows comments in the input file.
 A typical MCX input file looks like this:
 
 1000000              # total photon, use -n to overwrite in the command line
@@ -193,6 +204,9 @@ semi60x60x60.bin     # volume ('unsigned char' format)
 30.0  40.0  0.0      # ..., if individual radius is ignored, MCX will use the default radius
 20.0  30.0  0.0      #
 40.0  30.0  0.0      # 
+pencil               # source type (optional)
+0 0 0 0              # parameters (4 floats) for the selected source
+0 0 0 0              # additional source parameters
 
 Note that the scattering coefficient mus=musp/(1-g).
 
@@ -258,7 +272,12 @@ folder. The same file, qtest.json, is also shown below:
         "Forward::T1": "the end time of the simulation, in seconds",
         "Forward::Dt": "the width of each time window, in seconds",
         "Optode::Source::Pos": "the grid position of the source, can be non-integers, in grid unit",
-        "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit"
+        "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit",
+        "Optode::Source::Dir": "the unitary directional vector of the photon at launch",
+        "Optode::Source::Type": "source types, must be one of the following: 
+                   pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk",
+        "Optode::Source::Param1": "source parameters, 4 floating-point numbers",
+        "Optode::Source::Param2": "additional source parameters, 4 floating-point numbers"
       }
     },
     "Domain": {
@@ -286,7 +305,10 @@ folder. The same file, qtest.json, is also shown below:
     "Optode": {
 	"Source": {
 	    "Pos": [29.0, 29.0, 0.0],
-	    "Dir": [0.0, 0.0, 1.0]
+	    "Dir": [0.0, 0.0, 1.0],
+	    "Type": "pencil",
+	    "Param1": [0.0, 0.0, 0.0, 0.0],
+	    "Param2": [0.0, 0.0, 0.0, 0.0]
 	},
 	"Detector": [
 	    {
@@ -532,7 +554,7 @@ output file will be named as "input.inp.dat".
 
 To understand this further, you need to know that a '''flux''' is
 measured by number of particles passing through an infinitesimal 
-spherical surface per <em>unit time</em> at <em>a given location</em>.
+spherical surface per '''unit time''' at '''a given location'''.
 The unit of MCX output flux is "1/(mm<sup>2</sup>s)", if the flux is interpreted as the 
 "particle flux" [6], or "J/(mm<sup>2</sup>s)", if it is interpreted as the 
 "energy flux" [6].
@@ -540,8 +562,8 @@ The unit of MCX output flux is "1/(mm<sup>2</sup>s)", if the flux is interpreted
 The Green's function of the flux simply means that the flux is produced
 by a '''unitary source'''. In simple terms, this represents the 
 fraction of particles/energy that arrives a location per second 
-under <em>the radiation of 1 unit (packet or J) of particle or energy 
-at time t=0</em>. The Green's function is calculated by a process referred
+under '''the radiation of 1 unit (packet or J) of particle or energy 
+at time t=0'''. The Green's function is calculated by a process referred
 to as the "normalization" in the MCX code and is detailed in the 
 MCX paper [6] (MCX and MMC outputs share the same meanings).
 
