@@ -89,24 +89,29 @@ axis equal; colorbar
 title('a uniform planar source');
 
 cfg.srctype='fourier';
-cfg.srcparam1=[40 0 0 1];
-cfg.srcparam2=[0 40 0 1];
+cfg.srcparam1=[40 10 0 2];
+cfg.srcparam2=[0 40 0 2];
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(222);
 imagesc(log10(abs(squeeze(fcw(:,:,1)))))
 axis equal; colorbar
-title('a spatial frequency domain source (1,1)');
+title('an SFDI source (2,2) in a quadrilateral');
 
 cfg.srctype='fourier';
-cfg.srcparam1=[40 10 0 2];
-cfg.srcparam2=[0 40 0 2];
+cfg.srcpos=[0 0 70];
+cfg.srcdir=[0 0 -1];
+cfg.srcparam1=[60 0 0 2];
+cfg.srcparam2=[0 60 0 1];
+cfg.tend=1e-9;
+cfg.tstep=1e-9;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(223);
-imagesc(log10(abs(squeeze(fcw(:,:,1)))))
-axis equal; colorbar
-title('an SFDI source (2,2) in a quadrilateral');
+hs=slice(log10(abs(double(fcw))),1,1,60);
+set(hs,'linestyle','none');
+axis equal; colorbar;box on;
+title('a spatial frequency domain source (1,1)');
 
 mcximg=[0 0 0 0 0 0 0 0 0 0 0
 0 1 1 0 0 0 0 0 1 1 0
@@ -134,13 +139,14 @@ cfg.srcpattern=mcximg;
 cfg.srcpos=[-10*sqrt(2) 0 40];
 cfg.srcdir=[1 1 0]/sqrt(2);
 cfg.srcparam1=[20/sqrt(2) -20/sqrt(2) 0 size(mcximg,1)];
-cfg.srcparam2=[0 0 -20 size(mcximg,2)];
+cfg.srcparam2=[0 0 -15 size(mcximg,2)];
 cfg.tend=2e-10;
 cfg.tstep=2e-10;
+cfg.voidtime=0;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(224);
-hs=slice(log10(abs(double(fcw))),1,1,[]);
+hs=slice(log10(abs(double(fcw))),1,1,60);
 set(hs,'linestyle','none');
 axis equal; colorbar
 title('an arbitrary pattern source from an angle');

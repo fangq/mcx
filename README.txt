@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9.7 (Dark Matter)
+Version: 0.9.7 (Dark Matter - Alpha)
 
 ---------------------------------------------------------------------
 
@@ -19,7 +19,8 @@ V.    Using JSON-formatted shape description files
 VI.   Using MCXLAB in MATLAB and Octave
 VII.  Using MCX Studio GUI
 VIII. Interpreting the Outputs
-IX.   Reference
+IX.   Best practices guide
+X.    Reference
 
 ---------------------------------------------------------------------
 
@@ -37,9 +38,9 @@ The algorithm of this software is detailed in the Reference [1].
 A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
-*. a variety of source forms, including wide-field and pattern illumination
+*. a variety of source forms, including wide-field and pattern illuminations
 *. boundary reflection support
-*. time-resolved photon transport simulation
+*. time-resolved photon transport simulations
 *. saving photon partial path lengths at the detectors
 *. optimized random number generators
 *. build-in flux/fluence normalization to output Green's functions
@@ -53,7 +54,7 @@ This software can be used on Windows, Linux and Mac OS.
 MCX is written in CUDA and can be used with NVIDIA hardware
 with the native NVIDIA drivers, or used with the open-source
 GPU Ocelot libraries for CPUs and AMD GPUs. An OpenCL implementation 
-of MCX, i.e. MCX-CL, was announced on July, 2012, and supports
+of MCX, i.e. MCX-CL, was announced on July, 2012. It supports
 NVIDIA/AMD/Intel hardware out-of-box. If your hardware does
 not support CUDA, please download MCXCL from the below URL:
 
@@ -62,17 +63,27 @@ not support CUDA, please download MCXCL from the below URL:
 ---------------------------------------------------------------------------
 II. Requirement and Installation
 
-For MCX-CUDA, the requirements for using this software are
+Please read this section carefully. The majority of failures 
+using MCX were found related to incorrect installation of CUDA 
+library and NVIDIA driver.
+
+For MCX-CUDA, the requirements for using this software include
 
 *. a CUDA capable NVIDIA graphics card
-*. pre-installed CUDA driver [1] and NVIDIA graphics driver
+*. pre-installed CUDA toolkit [1]
+*. pre-installed NVIDIA graphics driver
 
-If your hardware does not support CUDA, the installation of the CUDA 
-toolkit will fail. A list of CUDA capable cards can be found at [2].
-Generally speaking, GeForce 8XXX series or newer are required.
-Using the latest NVIDIA card is expected to generate the best
+You must use a CUDA capable NVIDIA graphics card in order to use
+MCX. A list of CUDA capable cards can be found at [2]. The oldest 
+graphics card that MCX supports is GeForce 8XXX series (circa 2006).
+Using the latest NVIDIA card is expected to produce the best
 speed (GTX 4xx is twice faster than 2xx, which is twice faster than 
-8800/9800). For simulations with large volumes, sufficient video memory 
+8800/9800). To use the "fermi" version of MCX, you must have a 
+fermi (GTX 4xx) or newer (5xx/6xx/7xx series) graphics card.
+The fermi version of MCX supports atomic operations and photon
+detection within a single binary.
+
+For simulations with large volumes, sufficient graphics memory 
 is also required to perform the simulation. The minimum amount of 
 graphics memory required for a MC simulation is Nx*Ny*Nz*Ng
 bytes for the input tissue data plus Nx*Ny*Nz*Ng*4 bytes for 
@@ -80,6 +91,18 @@ the output flux/fluence data - where Nx,Ny,Nz are the dimensions of the
 tissue volume, Ng is the number of concurrent time gates, 4 is 
 the size of a single-precision floating-point number.
 MCX does not require double-precision support in your hardware.
+
+In addition to the hardware support, it is critical to install
+your CUDA library and NVIDIA driver correctly before running MCX.
+You should always install the matching CUDA version to the binary
+package you have downloaded. For example, if you have downloaded 
+the "cuda4" version of MCX, you should install CUDA 4.x on your 
+computer; if your MCX package has "cuda5.5" in the file name, you
+should install CUDA 5.5. Always download and install the matching
+NVIDIA driver linked from the CUDA download page. Once installed,
+follow the below URL to verify the installation is correct:
+
+http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows/index.html#verify-installation
 
 To install MCX, you need to download the binary executable compiled for your 
 computer architecture (32 or 64bit) and platform, extract the package 
@@ -105,11 +128,11 @@ and for bash/sh users, add
   fi
   export PATH="/usr/local/cuda/bin:$PATH"
 
-to your ~/.bash_profile.
+to your ~/.bash_profile (for Ubuntu users, this file is ~/.bashrc).
 
 If the path "/usr/local/cuda/lib*" does not exist on your system or
-the CUDA library is not installed under this directory, then 
-substitute the actual path under which libcudart.* exists.
+the CUDA library is not installed under this directory, you should
+substitute the actual path under which libcudart.* presents.
 
 
 III.Running Simulations
@@ -120,8 +143,7 @@ index). Typing the name of the executable without any parameters,
 will print the help information and a list of supported parameters, 
 such as the following:
 
-<pre>
-###############################################################################
+<pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
 #     Copyright (c) 2009-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #
 #                                                                             #
@@ -614,7 +636,49 @@ is printed (in ms). Also the accumulated elapsed time is printed for
 all memory transaction from GPU to CPU.
 
 ---------------------------------------------------------------------------
-IX. Reference
+IX. Best practices guide
+
+To maximize MCX's performance on your hardware, you should follow the
+best practices guide listed below:
+
+=== Use dedicated GPUs ===
+A dedicated GPU is a GPU that is not connected to a monitor. If you use
+a non-dedicated GPU, any kernel (GPU function) can not run more than a
+few seconds. This greatly limits the efficiency of MCX. To set up a 
+dedicated GPU, it is suggested to install two graphics cards on your 
+computer, one is set up for displays, the other one is used for GPU 
+computation only. If you have a dual-GPU card, you can also connect 
+one GPU to a single monitor, and use the other GPU for computation
+(selected by -G in mcx). If you have to use a non-dedicated GPU, you
+can either use the pure command-line mode (for Linux, you need to 
+stop X server), or use the "-r" flag to divide the total simulation 
+into a set of simulations with less photons, so that each simulation 
+only lasts a few seconds.
+
+=== Launch as many threads as possible ===
+It has been shown that MCX's speed is related to the thread number (-t).
+Generally, the more threads, the better speed, until all GPU resources
+are fully occupied. For higher-end GPUs, a thread number over 10,000 
+is recommended. Please use the autopilot mode, "-A", to let MCX determine
+the "optimal" thread number when you are not sure what to use.
+
+=== Use atomic operations when extra accuracy is needed ===
+As described in Ref. [Fang2009], MCX uses non-atomic operations by
+default. This causes reduced fluence/flux near a point/pencil beam
+source due to data-racing. However, as characterized in [Fang2009],
+this error is fairly small when a photon is a few voxels (~5) away
+from the source. If the region-of-interest is very close to the source,
+we suggest you to use the atomic/cached version of MCX. If you use the
+fermi version of MCX, you can use "-R -2" in the command to enable
+full atomic operations. The simulation speed for the full atomic code
+will be about 50% of the non-atomic version on a Fermi card. Alternatively,
+you can use the "-R radius" flag to enable atomic operations within the 
+specified radius from the source. For wide-field sources, we believe 
+the data-racing is minimal, thus, the non-atomic simulation should 
+be sufficiently accurate.
+
+---------------------------------------------------------------------------
+X. Reference
 
 [1] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"

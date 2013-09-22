@@ -59,12 +59,14 @@ function [flux,detphoton]=mcxlab(cfg)
 %                      'planar' - a 3D quadrilateral uniform planar source, with three corners specified 
 %                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
 %                      'pattern' - a 3D quadrilateral pattern illumination, same as above, except
-%                                srcparam1(4) and srcparam2(4) specify the pattern pixel dimensions,
+%                                srcparam1(4) and srcparam2(4) specify the pattern array x/y dimensions,
 %                                and srcpattern is a pattern array, valued between [0-1]. 
 %                      'fourier' - spatial frequency domain source, similar to 'planar', except
 %                                the integer parts of srcparam1(4) and srcparam2(4) represent
-%                                the x/y k-numbers; the fraction part of srcparam1(4) multiplies
-%                                2*pi represents the phase shift.
+%                                the x/y frequencies; the fraction part of srcparam1(4) multiplies
+%                                2*pi represents the phase shift (phi0); 1.0 minus the fraction part of
+%                                srcparam2(4) is the modulation depth (M). Put in equations:
+%                                    S=0.5*[1+M*cos(2*pi*(fx*x+fy*y)+phi0)], (0<=x,y,M<=1)
 %                      'arcsine' - similar to isotropic, except the zenith angle is uniform
 %                                distribution, rather than a sine distribution.
 %                      'disk' - a uniform disk source pointing along srcdir; the radius is 
