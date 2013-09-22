@@ -321,10 +321,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 				   p->z+rx*gcfg->srcparam1.z+ry*gcfg->srcparam2.z,
 				   p->w);
               if(gcfg->srctype==MCX_SRC_PATTERN) // need to prevent rx/ry=1 here
-        	  p->w=srcpattern[(int)(ry*gcfg->srcparam1.w)*(int)(gcfg->srcparam1.w)+(int)(rx*gcfg->srcparam1.w)];
+        	  p->w=srcpattern[(int)(ry*JUST_BELOW_ONE*gcfg->srcparam2.w)*(int)(gcfg->srcparam1.w)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.w)];
 	      else if(gcfg->srctype==MCX_SRC_FOURIER){
-		  p->w=(sinf((floorf(gcfg->srcparam1.w)*rx+floorf(gcfg->srcparam2.w)*ry
-		          +gcfg->srcparam1.w-floorf(gcfg->srcparam1.w))*TWO_PI)+1.f)*0.5f; //between 0 and 1
+		  p->w=(cosf((floorf(gcfg->srcparam1.w)*rx+floorf(gcfg->srcparam2.w)*ry
+		          +gcfg->srcparam1.w-floorf(gcfg->srcparam1.w))*TWO_PI)*(1.f-gcfg->srcparam2.w+floorf(gcfg->srcparam2.w))+1.f)*0.5f; //between 0 and 1
               }
               *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
               if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
