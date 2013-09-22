@@ -78,8 +78,8 @@ logbox detbox:          BINARY:=$(BINARY)_cached
 mexbox mex fermimex:        AR=mex
 mexbox mex fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUSE_CACHEBOX'
 mexbox mex oct octbox fermimex:    OUTPUT_DIR=../mcxlab
-mex:               BINARY=mcxlab
-mexbox:            BINARY=mcxlab_atom
+mex fermimex fermioct:      BINARY=mcxlab
+mexbox:                     BINARY=mcxlab_atom
 mexbox mex oct octbox fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG) -Wall" -DMCX_CONTAINER
 mexbox mex oct octbox fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
 mexbox mex fermimex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
