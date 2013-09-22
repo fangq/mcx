@@ -40,13 +40,14 @@ Frequently Asked Questions about MCX
    setting "-m" for each run with a smaller number of moves (total
    moves/repetition count).
 
-   If you have a high-end dual-GPU graphics card, such as GTX295 series,
-   you can simply run MCX without worrying about this limit. Because MCX
-   will use the second GPU to perform the simulation and it is usually not
-   connected to a monitor. Alternatively, if you can install a second
-   graphics card (PCI type) to your machine and connect your display to
-   the second card, this will make your CUDA-enabled nVidia card a
-   dedicated device.
+   If you have a high-end dual-GPU graphics card, you can simply run MCX
+   without worrying about this limit. Because MCX automatically selects
+   the second GPU to perform the simulation, which it is often not
+   connected to a monitor (if this guess is wrong, one can use -G to
+   manually select the dedicated GPU). Alternatively, if you can install a
+   second graphics card to your machine and connect your display to one of
+   the cards (the weaker one), this will make the other card a dedicated
+   CUDA device.
 
 2. When should I use the atomic version of MCX ?
 
