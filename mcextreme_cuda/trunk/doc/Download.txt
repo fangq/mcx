@@ -14,29 +14,33 @@ How to get MCX
 
 1. Download the Latest Release
 
-Current Stable Release: [7]MCX and [8]MCXLAB 0.5.2, released on Sep. 20, 2011
+Current Beta Release: [7]MCX and [8]MCXLAB 0.7.9, released on Jan. 16, 2012
 
-   Please read the [9]Release notes here. Before downloading the software,
-   please read the [10]System Requirements for MCX and make sure you have
-   both the hardware and software supported.
+   Please read the [9]Release notes here.
 
-   Please download MCX and MCXLAB v0.5.2 (Black Hole - Update 1) at our
-   [11]registration/download page. We are greatly appreciated if you can
+Current Stable Release: [10]MCX and [11]MCXLAB 0.5.3, released on Jan. 16, 2012
+
+   Please read the [12]Release notes here. Before downloading the
+   software, please read the [13]System Requirements for MCX and make sure
+   you have both the hardware and software supported.
+
+   Please download MCX and MCXLAB v0.5.3 and v0.7.9 at our
+   [14]registration/download page. We are greatly appreciated if you can
    tell us a little bit about you and your related research by
-   [12]registering your copy of MCX. Binary executable (for 32bit and
+   [15]registering your copy of MCX. Binary executable (for 32bit and
    64bit machines) and source code packages are both provided. For MCXLAB,
    a single package containing the pre-compiled Matlab/Octave MEX files
    for 32/64bit Linux and 32/64bit Windows is provided.
 
   [os-icons3.png]
 
+Previous Stable Release: MCX 0.5.2, released on Sep. 20, 2011
+
+   Please read the [16]Release notes here.
+
 Previous Stable Release: MCX 0.5.1, released on Jun. 06, 2011
 
-   Please read the [13]Release notes here.
-
-Previous Stable Release: MCX 0.5.0, released on Mar. 20, 2011
-
-   Please read the [14]Release notes here.
+   Please read the [17]Release notes here.
 
 2. Download Development Snapshot from SVN (not fully tested)
 
@@ -57,24 +61,24 @@ Previous Stable Release: MCX 0.5.0, released on Mar. 20, 2011
  su -c 'yum install subversion'
 
    If your operating system is Windows, we recommend you installing
-   [15]TortoiseSVN.
+   [18]TortoiseSVN.
 
 2.1. Anonymous SVN Access
 
-   The latest code snapshot can be checked out from project's [16]SVN
+   The latest code snapshot can be checked out from project's [19]SVN
    repository. This can be done anonymously by the following command.
 
- svn co https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/trunk/ mcx
+ svn co https://svn.code.sf.net/p/mcx/svn/mcextreme_cuda/trunk mcx
 
    The password is the same as the username. After you checking out the
-   code, you can [17]compile and run the software.
+   code, you can [20]compile and run the software.
 
 2.2. Developer SVN Access
 
    If you are one of the developers who have SVN write-permission, you can
    checkout the latest code with the same command above.
 
-   You will have to [18]register an account and ask the [19]project
+   You will have to [21]register an account and ask the [22]project
    maintainer to grant you SVN permission).
 
    Once checkout, you can simply make changes or debug your changes in
@@ -91,9 +95,10 @@ Previous Stable Release: MCX 0.5.0, released on Mar. 20, 2011
    this software in your related publications by citing the following
    paper:
 
-     * Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon
-       Migration in 3D Turbid Media Accelerated by Graphics Processing
-       Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190 (2009)
+     * Qianqian Fang and David A. Boas, "[23]Monte Carlo Simulation of
+       Photon Migration in 3D Turbid Media Accelerated by Graphics
+       Processing Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190
+       (2009)
 
    You can also find more algorithm and implementation details about MCX
    in this paper.
@@ -108,14 +113,18 @@ References
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#References
    7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README
    8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/MCXLAB
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.2
-  10. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
-  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx
-  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&editmode=prepend&id=register/mcx
-  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.1
-  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.0
-  15. http://tortoisesvn.net/downloads
-  16. http://mcx.svn.sourceforge.net/viewvc/mcx/mcextreme_cuda/trunk/
-  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
-  18. https://sourceforge.net/user/registration
-  19. http://sourceforge.net/users/fangq
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.7.9
+  10. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README
+  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/MCXLAB
+  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.3
+  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
+  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx
+  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&editmode=prepend&id=register/mcx
+  16. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.2
+  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.1
+  18. http://tortoisesvn.net/downloads
+  19. http://mcx.svn.sourceforge.net/viewvc/mcx/mcextreme_cuda/trunk/
+  20. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
+  21. https://sourceforge.net/user/registration
+  22. http://sourceforge.net/users/fangq
+  23. http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-22-20178
