@@ -3,7 +3,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010-2012 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+%Copyright (c) 2010-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 %                      URL: http://mcx.sf.net
 %====================================================================
 %
@@ -26,10 +26,10 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %     *cfg.tend:       ending time of the simulation (in second)
 %     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
-%     *cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
-%                      sradius=0.0 to disable atomic operations; if sradius=-1,
+%      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
+%                      sradius=0 to disable atomic operations; if sradius=-1,
 %                      use cfg.crop0 and crop1 to define a cubic atomic zone; if
-%                      sradius=-2, perform atomic operations in the entire domain
+%                      sradius=-2, perform atomic operations in the entire domain 
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
 %      cfg.nthread:    the total CUDA thread number [2048]
 %      cfg.maxgate:    the num of time-gates per simulation
@@ -51,16 +51,40 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
 %      cfg.shapes:     a JSON string for additional shapes in the grid
 %      cfg.reseedlimit:number of scattering events before reseeding RNG
+%      cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
+%                      'pencil' - default, pencil beam, no param needed
+%                      'isotropic' - isotropic source, no param needed
+%                      'cone' - uniform cone beam, srcparam1(0) is the half-angle in radian
+%                      'gaussian' - gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+%                      'planar' - a 3D quadrilateral uniform planar source, with three corners specified 
+%                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
+%                      'pattern' - a 3D quadrilateral pattern illumination, same as above, except
+%                                srcparam1(4) and srcparam2(4) specify the pattern array x/y dimensions,
+%                                and srcpattern is a pattern array, valued between [0-1]. 
+%                      'fourier' - spatial frequency domain source, similar to 'planar', except
+%                                the integer parts of srcparam1(4) and srcparam2(4) represent
+%                                the x/y frequencies; the fraction part of srcparam1(4) multiplies
+%                                2*pi represents the phase shift (phi0); 1.0 minus the fraction part of
+%                                srcparam2(4) is the modulation depth (M). Put in equations:
+%                                    S=0.5*[1+M*cos(2*pi*(fx*x+fy*y)+phi0)], (0<=x,y,M<=1)
+%                      'arcsine' - similar to isotropic, except the zenith angle is uniform
+%                                distribution, rather than a sine distribution.
+%                      'disk' - a uniform disk source pointing along srcdir; the radius is 
+%                               set by srcparam1(1) (in grid unit)
+%      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
+%      cfg.srcpattern: see cfg.srctype for details
+%      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
+%                      the first non-zero voxel
 %
 %      fields with * are required; options in [] are the default values
 %
 % Output:
-%      flux: (optional) a struct array, with a length equals to that of cfg.
+%      flux: a struct array, with a length equals to that of cfg.
 %            For each element of flux, flux(i).data is a 4D array with
 %            dimensions specified by [size(vol) total-time-gates]. 
 %            The content of the array is the normalized flux at 
 %            each voxel of each time-gate.
-%      detphoton: (optional) a struct array, with a length equals to that of cfg.
+%      detphoton: a struct array, with a length equals to that of cfg.
 %            For each element of detphoton, detphoton(i).data is a 2D array with
 %            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
 %            is the ID(>0) of the detector that captures the photon; the second row
@@ -68,7 +92,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %	     are the partial path lengths (in grid unit) traveling in medium 1 up 
 %            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
 %            to convert them to mm unit.
-%     vol: (optional) a struct array, each element is a preprocessed volume
+%      vol: (optional) a struct array, each element is a preprocessed volume
 %            corresponding to each instance of cfg. Each volume is a 3D uint8 array.
 %
 %      if detphoton is ignored, the detected photon will be saved in a .mch file 
