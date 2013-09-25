@@ -167,8 +167,8 @@ cfg.seed=99999;
 % a uniform planar source outside the volume
 cfg.srctype='fourierx';
 cfg.srcpos=[10 10 -1];
-cfg.srcparam1=[40 0 0 2.0];
-cfg.srcparam2=[40 0 0 1.5];
+cfg.srcparam1=[40 0 0 40];
+cfg.srcparam2=[2 1.5 0 0];
 cfg.tend=0.4e-11;
 cfg.tstep=0.4e-11;
 flux=mcxlab(cfg);
@@ -181,8 +181,8 @@ title('a general fourier source (2,1.5)');
 % a uniform planar source outside the volume
 cfg.srctype='fourierx2d';
 cfg.srcpos=[10 10 -1];
-cfg.srcparam1=[40 0 0 1.5];
-cfg.srcparam2=[40 pi/2 pi/4 3];
+cfg.srcparam1=[40 0 0 40];
+cfg.srcparam2=[1.5 3 1/2 1/4];
 cfg.tend=0.4e-11;
 cfg.tstep=0.4e-11;
 flux=mcxlab(cfg);

@@ -333,25 +333,25 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
         	  *mediaid=media[*idx1d];
               }
 	      rand_need_more(t,tnew);
-	  }else if(gcfg->srctype==MCX_SRC_FOURIERX||gcfg->srctype==MCX_SRC_FOURIERX2D){ // [v1x][v1y][v1z][kx]; [|v2|][phi0][M][ky], unit(v0) x unit(v1)=unit(v2)
+	  }else if(gcfg->srctype==MCX_SRC_FOURIERX||gcfg->srctype==MCX_SRC_FOURIERX2D){ // [v1x][v1y][v1z][|v2|]; [kx][ky][phi0][M], unit(v0) x unit(v1)=unit(v2)
 	      rand_need_more(t,tnew);
 	      RandType rx=rand_uniform01(t[0]);
 	      rand_need_more(t,tnew);
 	      RandType ry=rand_uniform01(t[0]);
-	      float4 v2=gcfg->srcparam2;
+	      float4 v2=gcfg->srcparam1;
 	      // calculate v2 based on v2=|v2| * unit(v0) x unit(v1)
-	      v2.x*=rsqrt(gcfg->srcparam1.x*gcfg->srcparam1.x+gcfg->srcparam1.y*gcfg->srcparam1.y+gcfg->srcparam1.z*gcfg->srcparam1.z);
-	      v2.z=v2.x*(gcfg->c0.x*gcfg->srcparam1.y - gcfg->c0.y*gcfg->srcparam1.x);
-	      v2.y=v2.x*(gcfg->c0.z*gcfg->srcparam1.x - gcfg->c0.x*gcfg->srcparam1.z); 
-              v2.x=v2.x*(gcfg->c0.y*gcfg->srcparam1.z - gcfg->c0.z*gcfg->srcparam1.y);
+	      v2.w*=rsqrt(gcfg->srcparam1.x*gcfg->srcparam1.x+gcfg->srcparam1.y*gcfg->srcparam1.y+gcfg->srcparam1.z*gcfg->srcparam1.z);
+              v2.x=v2.w*(gcfg->c0.y*gcfg->srcparam1.z - gcfg->c0.z*gcfg->srcparam1.y);
+	      v2.y=v2.w*(gcfg->c0.z*gcfg->srcparam1.x - gcfg->c0.x*gcfg->srcparam1.z); 
+	      v2.z=v2.w*(gcfg->c0.x*gcfg->srcparam1.y - gcfg->c0.y*gcfg->srcparam1.x);
 	      *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*v2.x,
 	                	   p->y+rx*gcfg->srcparam1.y+ry*v2.y,
 				   p->z+rx*gcfg->srcparam1.z+ry*v2.z,
 				   p->w);
               if(gcfg->srctype==MCX_SRC_FOURIERX2D)
-	         p->w=(sinf((gcfg->srcparam1.w*rx+gcfg->srcparam2.y)*TWO_PI)*sinf((gcfg->srcparam2.w*ry+gcfg->srcparam2.z)*TWO_PI)+1.f)*0.5f; //between 0 and 1
+	         p->w=(sinf((gcfg->srcparam2.x*rx+gcfg->srcparam2.z)*TWO_PI)*sinf((gcfg->srcparam2.y*ry+gcfg->srcparam2.w)*TWO_PI)+1.f)*0.5f; //between 0 and 1
 	      else
-	   	 p->w=(cosf((floorf(gcfg->srcparam1.w)*rx+floorf(gcfg->srcparam2.w)*ry+gcfg->srcparam2.y)*TWO_PI)*(1.f-gcfg->srcparam2.z)+1.f)*0.5f; //between 0 and 1
+	   	 p->w=(cosf((gcfg->srcparam2.x*rx+gcfg->srcparam2.y*ry+gcfg->srcparam2.z)*TWO_PI)*(1.f-gcfg->srcparam2.w)+1.f)*0.5f; //between 0 and 1
    
               *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
               if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
