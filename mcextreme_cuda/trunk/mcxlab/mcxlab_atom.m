@@ -72,10 +72,12 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %                      'disk' - a uniform disk source pointing along srcdir; the radius is 
 %                               set by srcparam1(1) (in grid unit)
 %                      'fourierx' - a general Fourier source, the parameters are 
-%                               srcparam1: [v1x,v1y,v1z,kx], srcparam2: [|v2|,phi0,M,ky]
+%                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phi0,M]
 %                               normalized vectors satisfy: srcdir cross v1=v2
+%                               the phase shift is phi0*2*pi
 %                      'fourierx2d' - a general 2D Fourier basis, parameters
-%                               srcparam1: [v1x,v1y,v1z,kx], srcparam2: [|v2|,phix,phiy,ky]
+%                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
+%                               the phase shift is phi{x,y}*2*pi
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
