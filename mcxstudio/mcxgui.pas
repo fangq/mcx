@@ -840,7 +840,7 @@ begin
     cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d --unitinmm %f',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
       Integer(ckSaveDetector.Checked),hitmax,unitinmm]);
-    if(seed>0) then
+    if(seed<>0) then
       cmd:=cmd+Format(' --seed %d',[seed]);
     if(reseed <> 10000000) then
       cmd:=cmd+Format(' --reseed %d',[reseed]);
