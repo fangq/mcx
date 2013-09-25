@@ -30,5 +30,7 @@
 #define MCX_SRC_FOURIER    6  // same as above, srcparam1.w and 2.w defines the spatial freq in x/y
 #define MCX_SRC_ARCSINE    7  // same as isotropic, but more photons near the pole dir
 #define MCX_SRC_DISK       8  // uniform 2D disk along v
+#define MCX_SRC_FOURIERX   9  // same as Fourier, except the v1/v2 and v are orthogonal
+#define MCX_SRC_FOURIERX2D 10 // 2D (sin(kx*x+phix)*sin(ky*y+phiy)+1)/2
 
 #endif

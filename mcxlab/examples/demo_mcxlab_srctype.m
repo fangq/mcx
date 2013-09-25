@@ -111,7 +111,7 @@ subplot(223);
 hs=slice(log10(abs(double(fcw))),1,1,60);
 set(hs,'linestyle','none');
 axis equal; colorbar;box on;
-title('a spatial frequency domain source (1,1)');
+title('a spatial frequency domain source (2,1)');
 
 mcximg=[0 0 0 0 0 0 0 0 0 0 0
 0 1 1 0 0 0 0 0 1 1 0
@@ -152,6 +152,46 @@ axis equal; colorbar
 title('an arbitrary pattern source from an angle');
 
 %% test group 3
+
+clear cfg;
+figure;
+cfg.nphoton=1e8;
+cfg.vol=uint8(ones(60,60,60));
+cfg.srcdir=[0 0 1];
+cfg.gpuid=1;
+cfg.autopilot=1;
+cfg.prop=[0 0 1 1;0.005 1 0.8 1.37];
+cfg.tstart=0;
+cfg.seed=99999;
+
+% a uniform planar source outside the volume
+cfg.srctype='fourierx';
+cfg.srcpos=[10 10 -1];
+cfg.srcparam1=[40 0 0 2.0];
+cfg.srcparam2=[40 0 0 1.5];
+cfg.tend=0.4e-11;
+cfg.tstep=0.4e-11;
+flux=mcxlab(cfg);
+fcw=flux.data*cfg.tstep;
+subplot(221);
+imagesc(log10(abs(squeeze(fcw(:,:,1)))))
+axis equal; colorbar
+title('a general fourier source (2,1.5)');
+
+% a uniform planar source outside the volume
+cfg.srctype='fourierx2d';
+cfg.srcpos=[10 10 -1];
+cfg.srcparam1=[40 0 0 1.5];
+cfg.srcparam2=[40 pi/2 pi/4 3];
+cfg.tend=0.4e-11;
+cfg.tstep=0.4e-11;
+flux=mcxlab(cfg);
+fcw=flux.data*cfg.tstep;
+subplot(222);
+imagesc(log10(abs(squeeze(fcw(:,:,1)))))
+axis equal; colorbar
+title('a general 2d Fourier pattern (1.5,3)');
+%% test group 4
 
 clear cfg;
 figure;
@@ -211,7 +251,7 @@ imagesc(log10(abs(squeeze(fcw(:,:,1)))))
 axis equal; colorbar
 title('a gaussian beam source');
 
-%% test group 4
+%% test group 5
 
 %debug flag to retrieve/test build-in RNG
 cfg.vol=uint8(ones(100,100,100));

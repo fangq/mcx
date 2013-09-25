@@ -71,6 +71,11 @@ function [flux,detphoton]=mcxlab(cfg)
 %                                distribution, rather than a sine distribution.
 %                      'disk' - a uniform disk source pointing along srcdir; the radius is 
 %                               set by srcparam1(1) (in grid unit)
+%                      'fourierx' - a general Fourier source, the parameters are 
+%                               srcparam1: [v1x,v1y,v1z,kx], srcparam2: [|v2|,phi0,M,ky]
+%                               normalized vectors satisfy: srcdir cross v1=v2
+%                      'fourierx2d' - a general 2D Fourier basis, parameters
+%                               srcparam1: [v1x,v1y,v1z,kx], srcparam2: [|v2|,phix,phiy,ky]
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
