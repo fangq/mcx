@@ -47,6 +47,8 @@ ifeq ($(findstring MINGW32,$(PLATFORM)), MINGW32)
   DLLFLAG=
 else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
+     CPPOPT += -m64
+     CUCCOPT += -m64
      ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
         ifeq ($(BACKEND),cuda)
            LINKOPT=-L/usr/local/cuda/lib64 -lcudart

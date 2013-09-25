@@ -92,7 +92,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %	     are the partial path lengths (in grid unit) traveling in medium 1 up 
 %            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
 %            to convert them to mm unit.
-%     vol: (optional) a struct array, each element is a preprocessed volume
+%      vol: (optional) a struct array, each element is a preprocessed volume
 %            corresponding to each instance of cfg. Each volume is a 3D uint8 array.
 %
 %      if detphoton is ignored, the detected photon will be saved in a .mch file 
