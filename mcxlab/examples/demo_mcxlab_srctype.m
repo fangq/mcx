@@ -176,7 +176,7 @@ fcw=flux.data*cfg.tstep;
 subplot(221);
 imagesc(log10(abs(squeeze(fcw(:,:,1)))))
 axis equal; colorbar
-title('a general fourier source (2,1.5)');
+title('a general Fourier source (2,1.5)');
 
 % a uniform planar source outside the volume
 cfg.srctype='fourierx2d';
@@ -191,6 +191,78 @@ subplot(222);
 imagesc(log10(abs(squeeze(fcw(:,:,1)))))
 axis equal; colorbar
 title('a general 2d Fourier pattern (1.5,3)');
+
+
+cfg.nphoton=1e7;
+cfg.vol=uint8(ones(60,60,60));
+cfg.vol(25:35,25:35,25:35)=2;
+cfg.prop=[0 0 1 1;0.005 0.01 0.8 1.37;0.01 1,0.8,1.37];
+cfg.srctype='pattern';
+cfg.srcpattern=mcximg(1:6,:);
+cfg.srcpos=[-13 13 13];
+cfg.srcdir=[1 0 0];
+cfg.srcparam1=[0 30 0 size(cfg.srcpattern,1)];
+cfg.srcparam2=[0 0 30 size(cfg.srcpattern,2)];
+cfg.tend=0.3e-9;
+cfg.tstep=0.1e-10;
+cfg.voidtime=0;
+flux=mcxlab(cfg);
+fcw1=flux.data*cfg.tstep;
+
+cfg.srcpattern=rot90(mcximg(7:12,:),3);
+cfg.srcpos=[17 17 60+1];
+cfg.srcdir=[0 0 -1];
+cfg.srcparam1=[30 0 0 size(cfg.srcpattern,1)];
+cfg.srcparam2=[0 30 0 size(cfg.srcpattern,2)];
+flux=mcxlab(cfg);
+fcw2=flux.data*cfg.tstep;
+
+cfg.srcpattern=mcximg(13:end,:);
+cfg.srcpos=[60-15 -1 60-15];
+cfg.srcdir=[0 1 0];
+cfg.srcparam1=[-30 0 0 size(cfg.srcpattern,1)];
+cfg.srcparam2=[0 0 -30 size(cfg.srcpattern,2)];
+flux=mcxlab(cfg);
+fcw3=flux.data*cfg.tstep;
+
+% fcw=fcw1+fcw2+fcw3;
+%
+% axis tight;
+% set(gca,'nextplot','replacechildren','visible','off');
+% set(gcf,'color','w');
+% dd=log10(abs(double(squeeze(fcw(:,:,:,1)))));
+% dd(isinf(dd))=-8;
+% hs=slice(dd,1,1,60);
+% set(hs,'linestyle','none');
+% axis equal; set(gca,'clim',[-6.5 -3])
+% box on;
+% set(gca,'xtick',[]);set(gca,'ytick',[]);set(gca,'ztick',[]);
+% drawnow;
+% fm = getframe;
+% [mcxframe,map] = rgb2ind(fm.cdata,256,'nodither');
+% mcxframe(1,1,1,size(fcw1,4)) = 0;
+% for i=1:size(fcw1,4)
+%     dd=log10(abs(double(squeeze(fcw(:,:,:,i)))));
+%     dd(isinf(dd))=-8;
+%     hs=slice(dd,1,1,60);
+%     set(hs,'linestyle','none');
+%     axis equal; set(gca,'clim',[-6.5 -3])
+%     set(gca,'xtick',[]);set(gca,'ytick',[]);set(gca,'ztick',[]);
+%     axis on;box on;
+%     drawnow;
+%     fm = getframe;
+%     mcxframe(:,:,1,i) = rgb2ind(fm.cdata,map,'nodither');
+% end
+% % movie(mcxframe,3,2);
+% imwrite(mcxframe,map,'mcx_dice.gif','DelayTime',0.5,'LoopCount',inf);
+
+fcw=sum(fcw1+fcw2+fcw3,4);
+subplot(224);
+hs=slice(log10(abs(double(fcw))),1,1,60);
+set(hs,'linestyle','none');
+axis equal; colorbar
+box on;
+title('an arbitrary pattern source from an angle');
 %% test group 4
 
 clear cfg;
