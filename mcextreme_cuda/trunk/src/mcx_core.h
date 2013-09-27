@@ -84,7 +84,6 @@ typedef struct  __align__(16) KernelParams {
   unsigned int maxvoidstep;
   int threadphoton;
   int oddphotons;
-  unsigned int debug;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg);
