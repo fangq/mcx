@@ -563,7 +563,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 		           stheta=sinf(theta);
 		           ctheta=tmp0;
                        }else{
-			   theta=TWO_PI*rand_next_zangle(t,tnew);
+			   theta=acosf(2.f*rand_next_zangle(t,tnew)-1.f);
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("next scat angle theta %20.16e\n",theta));
