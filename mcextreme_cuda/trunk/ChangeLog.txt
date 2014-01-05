@@ -1,5 +1,9 @@
 = Change Log =
 
+== MCX 0.9.7-1 (Dark Matter - alpha update 1), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2013-10-22 [r320] fix isotropic scattering bug at g=0, a critical bug fix
+
 == MCX 0.9.7 (Dark Matter - alpha), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2013-09-16 [r306] MCXLAB srctype demo script
