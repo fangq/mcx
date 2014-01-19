@@ -32,9 +32,14 @@
                     ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
                                 ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? NULL : tmp) \
                      : tmp)
+#ifdef WIN32
+         char pathsep='\\';
+#else
+         char pathsep='/';
+#endif
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D','k','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D','k','q','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -42,7 +47,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
-		 "--seed","--version","--debug","--voidtime",""};
+		 "--seed","--version","--debug","--voidtime","--saveseed",""};
 
 const char debugflag[]={'R','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
@@ -100,6 +105,7 @@ void mcx_initcfg(Config *cfg){
      cfg->voidtime=1;
      cfg->srcpattern=NULL;
      cfg->debuglevel=0;
+     cfg->issaveseed=0;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
 }
@@ -135,7 +141,27 @@ void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg){
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
 }
-
+void mcx_savedetphoton(float *ppath, void *seeds, int count, int doappend, Config *cfg){
+	FILE *fp;
+	char fhistory[MAX_PATH_LENGTH];
+        if(cfg->rootpath[0])
+                sprintf(fhistory,"%s%c%s.mch",cfg->rootpath,pathsep,cfg->session);
+        else
+                sprintf(fhistory,"%s.mch",cfg->session);
+	if(doappend){
+           fp=fopen(fhistory,"ab");
+	}else{
+           fp=fopen(fhistory,"wb");
+	}
+	if(fp==NULL){
+	   mcx_error(-2,"can not save data to disk",__FILE__,__LINE__);
+        }
+	fwrite(&(cfg->his),sizeof(History),1,fp);
+	fwrite(ppath,sizeof(float),count*cfg->his.colcount,fp);
+	if(cfg->issaveseed && seeds!=NULL)
+           fwrite(seeds,cfg->his.seedbyte,count,fp);
+	fclose(fp);
+}
 void mcx_printlog(Config *cfg, char *str){
      if(cfg->flog>0){ /*stdout is 1*/
          MCX_FPRINTF(cfg->flog,"%s\n",str);
@@ -699,6 +725,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(cfg->issave2pt)    cfg->issave2pt=FIND_JSON_KEY("DoSaveVolume","Session.DoSaveVolume",Session,cfg->issave2pt,valueint);
         if(cfg->isnormalized) cfg->isnormalized=FIND_JSON_KEY("DoNormalize","Session.DoNormalize",Session,cfg->isnormalized,valueint);
         if(!cfg->issavedet)   cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
+        if(!cfg->issaveseed)  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
         cfg->seed=FIND_JSON_KEY("ReseedLimit","Session.ReseedLimit",Session,cfg->reseedlimit,valueint);
      }
      if(Forward){
@@ -991,6 +1018,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        break;
 		     case 'a':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isrowmajor),"char");
+		     	        break;
+		     case 'q':
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->issaveseed),"char");
 		     	        break;
 		     case 'g':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxgate),"int");

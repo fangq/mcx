@@ -82,6 +82,8 @@ typedef struct  __align__(16) KernelParams {
   unsigned int reseedlimit;
   unsigned int isatomic;
   unsigned int maxvoidstep;
+  unsigned int issaveseed;
+  unsigned int seedoffset;
   int threadphoton;
   int oddphotons;
 }MCXParam;
