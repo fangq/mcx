@@ -92,18 +92,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
 	}
 	if(nlhs>=2)
-	   cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
+	   cfg.exportdetected=(float*)malloc((cfg.medianum+1+(cfg.issaveseed>0)*RAND_BUF_LEN)*cfg.maxdetphoton*sizeof(float));
 	mcx_validate_config(&cfg);
 	mcx_run_simulation(&cfg);
-	if(nlhs>=2){
-            fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
+        if(nlhs>=4){
+            fielddim[0]=(cfg.issaveseed>0)*RAND_BUF_LEN; fielddim[1]=cfg.his.savedphoton; 
 	    fielddim[2]=0; fielddim[3]=0;
-	    if(cfg.his.savedphoton>0){
-		    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
-		    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
+	    if(cfg.his.savedphoton>0 && cfg.issaveseed>0){
+		    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+		    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[3],jstruct,0)),cfg.exportdetected+(cfg.medianum+1)*cfg.his.savedphoton,
 			 fielddim[0]*fielddim[1]*sizeof(float));
 	    }
-            free(cfg.exportdetected);
 	}
 	if(nlhs>=3){
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
@@ -113,6 +112,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
                     memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[2],jstruct,0)),cfg.vol,
                 	 fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned char));
             }
+	}
+	if(nlhs>=2){
+            fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
+	    fielddim[2]=0; fielddim[3]=0;
+	    if(cfg.his.savedphoton>0){
+		    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
+		    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
+			 fielddim[0]*fielddim[1]*sizeof(float));
+	    }
+            free(cfg.exportdetected);
 	}
     }catch(const char *err){
       mexPrintf("Error: %s\n",err);
@@ -160,6 +169,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,reseedlimit)
     GET_ONE_FIELD(cfg,printnum)
     GET_ONE_FIELD(cfg,voidtime)
+    GET_ONE_FIELD(cfg,issaveseed)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC3_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)

@@ -34,7 +34,8 @@ typedef struct MCXHistoryHeader{
 	unsigned int  detected;
 	unsigned int  savedphoton;
 	float unitinmm;
-	int reserved[7];
+	unsigned int  seedbyte;
+	int reserved[6];
 } History;
 
 typedef struct MCXConfig{
@@ -84,6 +85,7 @@ typedef struct MCXConfig{
         char issrcfrom0;    /*1 do not subtract 1 from src/det positions, 0 subtract 1*/
         char isdumpmask;    /*1 dump detector mask; 0 not*/
 	char autopilot;     /*1 optimal setting for dedicated card, 2, for non dedicated card*/
+	char issaveseed;    /**<1 save the seed for a detected photon, 0 do not save*/
 	char srctype;
         float minenergy;    /*minimum energy to propagate photon*/
 	float unitinmm;     /*defines the length unit in mm for grid*/
@@ -126,6 +128,7 @@ void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
 int  mcx_loadjson(cJSON *root, Config *cfg);
 int  mcx_keylookup(char *key, const char *table[]);
 int  mcx_parsedebugopt(char *debugopt,const char *debugflag);
+void mcx_savedetphoton(float *ppath, void *seeds, int count, int seedbyte, Config *cfg);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus
