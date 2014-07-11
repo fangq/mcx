@@ -364,7 +364,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
         	  *mediaid=media[*idx1d];
               }
 	      rand_need_more(t,tnew);
-	  }else if(gcfg->srctype==MCX_SRC_DISK){ // uniform disk distribution
+	  }else if(gcfg->srctype==MCX_SRC_DISK ||gcfg->srctype==MCX_SRC_GAUSSIAN){ // uniform disk distribution or Gaussian-beam
 	      // Uniform disk point picking
 	      // http://mathworld.wolfram.com/DiskPointPicking.html
 	      float sphi, cphi;
@@ -372,7 +372,12 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	      RandType phi=TWO_PI*rand_uniform01(t[0]);
               sincosf(phi,&sphi,&cphi);
 	      rand_need_more(t,tnew);
-	      RandType r=sqrtf(rand_uniform01(t[0]))*gcfg->srcparam1.x;
+	      RandType r;
+	      if(gcfg->srctype==MCX_SRC_DISK)
+	          r=sqrtf(rand_uniform01(t[0]))*gcfg->srcparam1.x;
+	      else
+	          r=sqrtf(-logf(rand_uniform01(t[0])))*gcfg->srcparam1.x;
+
 	      if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
    		  float tmp0=1.f-v->z*v->z;
    		  float tmp1=r*rsqrtf(tmp0);
@@ -415,7 +420,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	      }
               sincosf(ang,&stheta,&ctheta);
               rotatevector(v,stheta,ctheta,sphi,cphi);
-	  }else if(gcfg->srctype==MCX_SRC_GAUSSIAN){
+          }else if(gcfg->srctype==MCX_SRC_ZGAUSSIAN){
               float ang,stheta,ctheta,sphi,cphi;
               rand_need_more(t,tnew);
 	      ang=TWO_PI*rand_uniform01(t[0]); //next arimuth angle
