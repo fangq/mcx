@@ -204,17 +204,16 @@ __device__ inline void transmit(MCXdir *v, float n1, float n2,float flipdir){
       if(flipdir>=3.f) { //transmit through z plane
          v->x=tmp0*v->x;
          v->y=tmp0*v->y;
+         v->z=sqrtf(1.f - v->y*v->y - v->x*v->x);
       }else if(flipdir>=2.f){ //transmit through y plane
          v->x=tmp0*v->x;
          v->z=tmp0*v->z;
+         v->y=sqrtf(1.f - v->z*v->z - v->x*v->x);
       }else if(flipdir>=1.f){ //transmit through x plane
          v->y=tmp0*v->y;
          v->z=tmp0*v->z;
+         v->x=sqrtf(1.f - v->z*v->z - v->y*v->y);
       }
-      tmp0=rsqrtf(v->x*v->x+v->y*v->y+v->z*v->z);
-      v->x=v->x*tmp0;
-      v->y=v->y*tmp0;
-      v->z=v->z*tmp0;
 }
 
 __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, float flipdir){
@@ -305,7 +304,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	 clearpath(ppath,gcfg->maxmedia);
       }
 #endif
-      if(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons)))
+      if(f->ndone>=(gcfg->threadphoton+(threadid<=gcfg->oddphotons)))
           return 1; // all photos complete
       do{
 	  *((float4*)p)=gcfg->ps;
@@ -531,7 +530,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
       and we do not use MT as the default RNG.
      */
 
-     while(f.ndone<(gcfg->threadphoton+(idx<gcfg->oddphotons))) {
+     while(f.ndone<=(gcfg->threadphoton+(idx<=gcfg->oddphotons))) {
 
           GPUDEBUG(("*i= (%d) L=%f w=%e a=%f\n",(int)f.ndone,f.pscat,p.w,f.t));
 

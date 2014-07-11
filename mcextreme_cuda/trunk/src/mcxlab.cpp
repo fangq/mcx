@@ -31,6 +31,13 @@
 #define GET_VEC4_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
+#ifdef USE_MT_RAND
+    #define RAND_BUF_LEN 0
+#else
+    #define RAND_BUF_LEN 5
+#endif
+
+
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
 void mcxlab_usage();
