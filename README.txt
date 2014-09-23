@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9.7-1 (Dark Matter - Alpha update 1)
+Version: 0.9.7-2 (Dark Matter - Alpha update 2)
 
 ---------------------------------------------------------------------
 
