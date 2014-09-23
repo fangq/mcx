@@ -304,7 +304,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	 clearpath(ppath,gcfg->maxmedia);
       }
 #endif
-      if(f->ndone>=(gcfg->threadphoton+(threadid<=gcfg->oddphotons)))
+      if(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons)))
           return 1; // all photos complete
       do{
 	  *((float4*)p)=gcfg->ps;
@@ -535,7 +535,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
       and we do not use MT as the default RNG.
      */
 
-     while(f.ndone<=(gcfg->threadphoton+(idx<=gcfg->oddphotons))) {
+     while(f.ndone<=(gcfg->threadphoton+(idx<gcfg->oddphotons))) {
 
           GPUDEBUG(("*i= (%d) L=%f w=%e a=%f\n",(int)f.ndone,f.pscat,p.w,f.t));
 
