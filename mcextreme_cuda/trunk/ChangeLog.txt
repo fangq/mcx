@@ -1,5 +1,12 @@
 = Change Log =
 
+== MCX 0.9.7-2 (Dark Matter - alpha update 2), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2014-09-23 [r325] fix submillimeter voxel scaling bug in the binary mode; fix total simulated photon count
+ 2014-07-11 [r324] a patch submitted by David Gasperino for rigirously modeling a collimated Gaussian beam
+ 2014-07-11 [r323] high priority bug fixes submitted by Kim Shultz: transmission angle and oddphoton handling
+ 2014-01-19 [r322] saving detected photon seed for fast replay and pMC analysis
+
 == MCX 0.9.7-1 (Dark Matter - alpha update 1), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2013-10-22 [r320] fix isotropic scattering bug at g=0, a critical bug fix
