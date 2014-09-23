@@ -368,16 +368,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x))==4);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
-     if(cfg->steps.x!=cfg->steps.y || cfg->steps.y!=cfg->steps.z)
-        mcx_error(-9,"MCX currently does not support anisotropic voxels",__FILE__,__LINE__);
-
-     if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
-        cfg->unitinmm=cfg->steps.x;
-
-     if(cfg->unitinmm!=1.f){
-        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
-     }
-
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 1 100]:\n\t",
                                   cfg->steps.x,cfg->dim.x,cfg->crop0.x,cfg->crop1.x);
@@ -389,6 +379,16 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                                   cfg->steps.y,cfg->dim.y,cfg->crop0.y,cfg->crop1.y);
      mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z))==4);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
+
+     if(cfg->steps.x!=cfg->steps.y || cfg->steps.y!=cfg->steps.z)
+        mcx_error(-9,"MCX currently does not support anisotropic voxels",__FILE__,__LINE__);
+
+     if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
+        cfg->unitinmm=cfg->steps.x;
+
+     if(cfg->unitinmm!=1.f){
+        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
+     }
 
      if(cfg->sradius>0.f){
      	cfg->crop0.x=MAX((uint)(cfg->srcpos.x-cfg->sradius),0);
