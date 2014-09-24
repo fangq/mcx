@@ -145,11 +145,11 @@ such as the following:
 
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#     Copyright (c) 2009-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #
+#     Copyright (c) 2009-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #
 #                                                                             #
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #
 ###############################################################################
-$MCX $Rev:: 308 $ Last Commit $Date:: 2013-09-19 00:25:32#$ by $Author:: fangq$
+$MCX $Rev:: 325 $ Last Commit $Date:: 2014-09-23 13:34:57#$ by $Author:: fangq$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...

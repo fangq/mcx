@@ -3,7 +3,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+%Copyright (c) 2010-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 %                      URL: http://mcx.sf.net
 %====================================================================
 %
@@ -54,8 +54,8 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %      cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
 %                      'pencil' - default, pencil beam, no param needed
 %                      'isotropic' - isotropic source, no param needed
-%                      'cone' - uniform cone beam, srcparam1(0) is the half-angle in radian
-%                      'gaussian' - gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+%                      'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
+%                      'gaussian' - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
 %                      'planar' - a 3D quadrilateral uniform planar source, with three corners specified 
 %                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
 %                      'pattern' - a 3D quadrilateral pattern illumination, same as above, except
@@ -78,6 +78,7 @@ function [flux,detphoton]=mcxlab_atom(cfg)
 %                      'fourierx2d' - a general 2D Fourier basis, parameters
 %                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
 %                               the phase shift is phi{x,y}*2*pi
+%                      'zgaussian' - an angular gaussian beam, srcparam1(0) specifies the variance in the zenith angle
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 

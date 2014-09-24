@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) 0.8.0
+Version: this package is part of Monte Carlo eXtreme (MCX) 0.9.7-2
 
 <toc>
 
@@ -76,7 +76,7 @@ the verbose command line options in MCX.
 <pre>====================================================================
        MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2010-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+ Copyright (c) 2010-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
                        URL: http://mcx.sf.net
  ====================================================================
  
