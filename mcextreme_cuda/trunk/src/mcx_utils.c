@@ -1166,7 +1166,7 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\

@@ -3,7 +3,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010-2013 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+%Copyright (c) 2010-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 %                      URL: http://mcx.sf.net
 %====================================================================
 %
