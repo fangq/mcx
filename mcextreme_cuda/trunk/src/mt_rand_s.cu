@@ -180,25 +180,18 @@ __device__ float rand_uniform01(uint ran){
     return myran.f*0.5f-1.0f;
 }
 // generate [0,1] random number for the next scattering length
-__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
+__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
     return -logf(rand_uniform01(mt19937s()));
 }
 // generate [0,1] random number for the next arimuthal angle
-__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
+__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
     return rand_uniform01(mt19937s());
 }
-// generate random number for the next zenith angle
-__device__ float rand_next_zangle(RandType t[RAND_BUF_LEN]){ 
-    return rand_uniform01(mt19937s());
-}
-// generate random number for reflection test
-__device__ float rand_next_reflect(RandType t[RAND_BUF_LEN]){
-    return rand_uniform01(mt19937s());
-}
-// generate random number for the next zenith angle
-__device__ float rand_do_roulette(RandType t[RAND_BUF_LEN]){
-    return rand_uniform01(mt19937s());
-}
+
+#define rand_next_zangle(t1,t2)  rand_next_aangle(t1,t2)
+#define rand_next_reflect(t1,t2) rand_next_aangle(t1,t2)
+#define rand_do_roulette(t1,t2)  rand_next_aangle(t1,t2)
+
 // generate random number for the next zenith angle
 __device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){
     // do nothing
