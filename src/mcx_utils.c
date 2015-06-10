@@ -140,7 +140,7 @@ void mcx_clearcfg(Config *cfg){
      mcx_initcfg(cfg);
 }
 
-void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg){
+void mcx_savedata(float *dat, int len, int doappend, const char *suffix, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
      sprintf(name,"%s.%s",cfg->session,suffix);

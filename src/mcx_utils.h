@@ -120,7 +120,7 @@ typedef struct MCXConfig{
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void mcx_savedata(float *dat, int len, int doappend, char *suffix, Config *cfg);
+void mcx_savedata(float *dat, int len, int doappend, const char *suffix, Config *cfg);
 void mcx_error(const int id,const char *msg,const char *file,const int linenum);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
