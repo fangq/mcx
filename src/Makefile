@@ -67,6 +67,7 @@ racing:     CUCCOPT+=-DTEST_RACING
 mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"MT Atomic MCX"'
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch compute_11 -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
+fermimex:   CUCCOPT+=-DUSE_MT_RAND -use_fast_math
 mtbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math -arch compute_12 -DMCX_TARGET_NAME='"Cachebox MCX"'
 debugmt debuglog:	CUCCOPT+=-deviceemu
 mtatomic logatomic:	BINARY:=$(BINARY)_atomic

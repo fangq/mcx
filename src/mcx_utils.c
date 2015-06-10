@@ -39,7 +39,8 @@
 #endif
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D','k','q','\0'};
+                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
+		 'k','q','Y','O','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -47,8 +48,10 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
-		 "--seed","--version","--debug","--voidtime","--saveseed",""};
+		 "--seed","--version","--debug","--voidtime","--saveseed",
+		 "--replaydet","--outputtype",""};
 
+const char outputtype[]={'x','f','e','j','t','\0'};
 const char debugflag[]={'R','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",""};
@@ -91,7 +94,7 @@ void mcx_initcfg(Config *cfg){
      cfg->srctype=0;
      cfg->maxdetphoton=1000000;
      cfg->autopilot=0;
-     cfg->seed=0;
+     cfg->seed=0x623F9A9E;
      cfg->exportfield=NULL;
      cfg->exportdetected=NULL;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
@@ -100,12 +103,20 @@ void mcx_initcfg(Config *cfg){
      cfg->his.version=1;
      cfg->his.unitinmm=1.f;
      cfg->shapedata=NULL;
+     cfg->seeddata=NULL;
      cfg->reseedlimit=10000000;
      cfg->maxvoidstep=1000;
      cfg->voidtime=1;
      cfg->srcpattern=NULL;
      cfg->debuglevel=0;
      cfg->issaveseed=0;
+     cfg->replay.seed=NULL;
+     cfg->replay.weight=NULL;
+     cfg->replay.tof=NULL;
+     cfg->replaydet=0;
+     cfg->seedfile[0]='\0';
+     cfg->outputtype=otFlux;
+     cfg->detectedcount=0;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
 }
@@ -119,6 +130,12 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->vol);
      if(cfg->srcpattern)
      	free(cfg->srcpattern);
+     if(cfg->replay.weight)
+        free(cfg->replay.weight);
+     if(cfg->replay.seed)
+        free(cfg->replay.seed);
+     if(cfg->replay.tof)
+        free(cfg->replay.tof);
 
      mcx_initcfg(cfg);
 }
@@ -300,6 +317,13 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	}*/
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
+     }
+     if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
+        if(cfg->respin>1){
+	   cfg->respin=1;
+	   fprintf(stderr,"Warning: respin is disabled in the replay mode\n");
+	}
+        mcx_loadseedfile(cfg);
      }
 }
 
@@ -716,7 +740,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         }
      }
      if(Session){
-        if(cfg->seed==0)      cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
+        char val[1];
+	if(cfg->seed==0)      cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
         if(cfg->nphoton==0)   cfg->nphoton=FIND_JSON_KEY("Photons","Session.Photons",Session,0,valuedouble);
         if(cfg->session[0]=='\0')  strncpy(cfg->session, FIND_JSON_KEY("ID","Session.ID",Session,"default",valuestring), MAX_SESSION_LENGTH);
         if(cfg->rootpath[0]=='\0') strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath","Session.RootPath",Session,"",valuestring), MAX_PATH_LENGTH);
@@ -727,6 +752,11 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(!cfg->issavedet)   cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
         if(!cfg->issaveseed)  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
         cfg->seed=FIND_JSON_KEY("ReseedLimit","Session.ReseedLimit",Session,cfg->reseedlimit,valueint);
+        strncpy(val,FIND_JSON_KEY("OutputType","Session.OutputType",Session,outputtype+cfg->outputtype,valuestring),1);
+        if(mcx_lookupindex(val, outputtype)){
+                mcx_error(-2,"the specified output data type is not recognized",__FILE__,__LINE__);
+        }
+	cfg->outputtype=val[0];
      }
      if(Forward){
         uint gates;
@@ -818,6 +848,59 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
 }
 
+void mcx_loadseedfile(Config *cfg){
+    History his;
+    FILE *fp=fopen(cfg->seedfile,"rb");
+    if(fp==NULL)
+        mcx_error(-7,"can not open the specified history file",__FILE__,__LINE__);
+    if(fread(&his,sizeof(History),1,fp)!=1)
+        mcx_error(-7,"error when reading the history file",__FILE__,__LINE__);
+    if(his.savedphoton==0 || his.seedbyte==0){
+	mcx_error(-7,"history file does not contain seed data, please re-run your simulation with '-q 1'",__FILE__,__LINE__);
+    }
+    if(his.maxmedia!=cfg->medianum-1)
+        mcx_error(-7,"the history file was generated with a different media setting",__FILE__,__LINE__);
+    if(fseek(fp,his.savedphoton*his.colcount*sizeof(float),SEEK_CUR))
+        mcx_error(-7,"illegal history file",__FILE__,__LINE__);
+    cfg->replay.seed=malloc(his.savedphoton*his.seedbyte);
+    if(cfg->replay.seed==NULL)
+        mcx_error(-7,"can not allocate memory",__FILE__,__LINE__);
+    if(fread(cfg->replay.seed,his.seedbyte,his.savedphoton,fp)!=his.savedphoton)
+        mcx_error(-7,"error when reading the seed data",__FILE__,__LINE__);
+    cfg->seed=SEED_FROM_FILE;
+    cfg->nphoton=his.savedphoton;
+
+    if(cfg->outputtype==otJacobian || cfg->outputtype==otTaylor){ //cfg->replaydet>0
+       int i,j;
+       float *ppath=(float*)malloc(his.savedphoton*his.colcount*sizeof(float));
+       cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
+       cfg->replay.tof=(float*)calloc(his.savedphoton,sizeof(float));
+       fseek(fp,sizeof(his),SEEK_SET);
+       if(fread(ppath,his.colcount*sizeof(float),his.savedphoton,fp)!=his.savedphoton)
+           mcx_error(-7,"error when reading the seed data",__FILE__,__LINE__);
+
+       cfg->nphoton=0;
+       for(i=0;i<his.savedphoton;i++)
+           if(cfg->replaydet==0 || cfg->replaydet==(int)(ppath[i*his.colcount])){
+               if(i!=cfg->nphoton)
+                   memcpy((char *)(cfg->replay.seed)+cfg->nphoton*his.seedbyte, (char *)(cfg->replay.seed)+i*his.seedbyte, his.seedbyte);
+               cfg->replay.weight[cfg->nphoton]=1.f;
+               for(j=2;j<his.maxmedia+2;j++){
+                   cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-1].mua*ppath[i*his.colcount+j]*his.unitinmm);
+                   cfg->replay.tof[cfg->nphoton]+=ppath[i*his.colcount+j]*his.unitinmm*R_C0*cfg->prop[j-1].n;
+               }
+               if(cfg->replay.tof[cfg->nphoton]<cfg->tstart || cfg->replay.tof[cfg->nphoton]>cfg->tend) /*need to consider -g*/
+                   continue;
+               cfg->nphoton++;
+           }
+	free(ppath);
+        cfg->replay.seed=realloc(cfg->replay.seed, cfg->nphoton*his.seedbyte);
+        cfg->replay.weight=(float*)realloc(cfg->replay.weight, cfg->nphoton*sizeof(float));
+        cfg->replay.tof=(float*)realloc(cfg->replay.tof, cfg->nphoton*sizeof(float));
+	cfg->minenergy=0.f;
+    }
+    fclose(fp);
+}
 void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
      uint x,y,z;
      unsigned int dimxy,dimyz;
@@ -1077,6 +1160,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'M':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isdumpmask),"char");
 		     	        break;
+                     case 'Y':
+                                i=mcx_readarg(argc,argv,i,&(cfg->replaydet),"int");
+                                break;
 		     case 'H':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
 		     	        break;
@@ -1090,7 +1176,21 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
                      case 'E':
-                                i=mcx_readarg(argc,argv,i,&(cfg->seed),"int");
+				if(i+1<argc && strstr(argv[i+1],".mch")!=NULL){ /*give an mch file to initialize the seed*/
+#if defined(MMC_LOGISTIC) || defined(MMC_SFMT)
+					mcx_error(-1,"seeding file is not supported in this binary",__FILE__,__LINE__);
+#else
+                                        i=mcx_readarg(argc,argv,i,cfg->seedfile,"string");
+					cfg->seed=SEED_FROM_FILE;
+#endif
+		     	        }else
+					i=mcx_readarg(argc,argv,i,&(cfg->seed),"int");
+		     	        break;
+                     case 'O':
+                                i=mcx_readarg(argc,argv,i,&(cfg->outputtype),"string");
+				if(mcx_lookupindex(&(cfg->outputtype), outputtype)){
+                                        mcx_error(-2,"the specified output data type is not recognized",__FILE__,__LINE__);
+                                }
                                 break;
                      case 'k':
                                 i=mcx_readarg(argc,argv,i,&(cfg->voidtime),"int");
@@ -1116,6 +1216,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		MCX_FPRINTF(cfg->flog,"unable to save to log file, will print from stdout\n");
           }
      }
+     if(cfg->outputtype==otJacobian && cfg->seed!=SEED_FROM_FILE)
+         MCX_ERROR(-1,"Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.");
+
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
 	  if(isinteractive){
              mcx_readconfig((char*)"",cfg);
@@ -1152,6 +1255,18 @@ int mcx_keylookup(char *key, const char *table[]){
 	i++;
     }
     return -1;
+}
+
+int mcx_lookupindex(char *key, const char *index){
+    int i=0;
+    while(index[i]!='\0'){
+        if(tolower(*key)==index[i]){
+                *key=i;
+                return 0;
+        }
+        i++;
+    }
+    return 1;
 }
 
 void mcx_version(Config *cfg){
@@ -1204,7 +1319,12 @@ where possible parameters include (the first item in [] is the default value)\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000]  (--maxdetphoton)max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
- -E [0|int]    (--seed)        set random-number-generator seed, -1 to generate\n\
+ -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
+                               if an mch file is followed, MMC will \"replay\" \n\
+                               the detected photon; the replay mode can be used\n\
+ -O [X|XFEJT]  (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
+                               J - Jacobian (replay mode),   T - approximated\n\
+                               Jacobian (replay mode only)\n\
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
@@ -1212,6 +1332,8 @@ where possible parameters include (the first item in [] is the default value)\n\
  -I            (--printgpu)    print GPU information and run program\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
+ -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
+                               detector (det ID starts from 1), used with -E \n\
  -v            (--version)     print MCX revision number\n\
 \n\
 example: (autopilot mode)\n\

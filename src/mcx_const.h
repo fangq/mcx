@@ -17,6 +17,7 @@
 #define NO_LAUNCH          9999                    //when fail to launch, for debug
 #define MAX_PROP           128                     //maximum property number
 #define MAX_DETECTORS      1024
+#define SEED_FROM_FILE      -999
 
 #define DET_MASK           0x80
 #define MED_MASK           0x7F

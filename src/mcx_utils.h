@@ -17,6 +17,8 @@
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 #define MAX(a,b)           ((a)>(b)?(a):(b))
 
+enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otTaylor};
+
 typedef struct MCXMedium{
 	float mua;
 	float mus;
@@ -38,68 +40,80 @@ typedef struct MCXHistoryHeader{
 	int reserved[6];
 } History;
 
+typedef struct PhotonReplay{
+	void  *seed;
+	float *weight;
+	float *tof;
+} Replay;
+
 typedef struct MCXConfig{
-	int nphoton;      /*total simulated photon number*/
-	//int totalmove;   /* [depreciated] total move per photon*/
-        unsigned int nblocksize;   /*thread block size*/
-	unsigned int nthread;      /*num of total threads, multiple of 128*/
-	int seed;         /*random number generator seed*/
+	int nphoton;      /**<total simulated photon number*/
+	//int totalmove;   /**< [depreciated] total move per photon*/
+        unsigned int nblocksize;   /**<thread block size*/
+	unsigned int nthread;      /**<num of total threads, multiple of 128*/
+	int seed;         /**<random number generator seed*/
 
-	float3 srcpos;    /*src position in mm*/
-	float3 srcdir;    /*src normal direction*/
-	float tstart;     /*start time in second*/
-	float tstep;      /*time step in second*/
-	float tend;       /*end time in second*/
-	float3 steps;     /*voxel sizes along x/y/z in mm*/
+	float3 srcpos;    /**<src position in mm*/
+	float3 srcdir;    /**<src normal direction*/
+	float tstart;     /**<start time in second*/
+	float tstep;      /**<time step in second*/
+	float tend;       /**<end time in second*/
+	float3 steps;     /**<voxel sizes along x/y/z in mm*/
 
-	uint3 dim;        /*domain size*/
-	uint3 crop0;      /*sub-volume for cache*/
-	uint3 crop1;      /*the other end of the caching box*/
-	unsigned int medianum;     /*total types of media*/
-	unsigned int detnum;       /*total detector numbers*/
-	unsigned int maxdetphoton; /*anticipated maximum detected photons*/
-	float detradius;  /*detector radius*/
-        float sradius;    /*source region radius: if set to non-zero, accumulation 
+	uint3 dim;        /**<domain size*/
+	uint3 crop0;      /**<sub-volume for cache*/
+	uint3 crop1;      /**<the other end of the caching box*/
+	unsigned int medianum;     /**<total types of media*/
+	unsigned int detnum;       /**<total detector numbers*/
+	unsigned int maxdetphoton; /**<anticipated maximum detected photons*/
+	float detradius;  /**<detector radius*/
+        float sradius;    /**<source region radius: if set to non-zero, accumulation 
                             will not perform for dist<sradius; this can reduce
                             normalization error when using non-atomic write*/
 
-	Medium *prop;     /*optical property mapping table*/
-	float4 *detpos;   /*detector positions and radius, overwrite detradius*/
+	Medium *prop;     /**<optical property mapping table*/
+	float4 *detpos;   /**<detector positions and radius, overwrite detradius*/
 
-	unsigned int maxgate;        /*simultaneous recording gates*/
-	unsigned int respin;         /*number of repeatitions*/
-	unsigned int printnum;       /*number of printed threads (for debugging)*/
-	unsigned int reseedlimit;    /*number of scattering events per thread before the RNG is reseeded*/
-	int gpuid;          /*the ID of the GPU to use, starting from 1, 0 for auto*/
+	unsigned int maxgate;        /**<simultaneous recording gates*/
+	unsigned int respin;         /**<number of repeatitions*/
+	unsigned int printnum;       /**<number of printed threads (for debugging)*/
+	unsigned int reseedlimit;    /**<number of scattering events per thread before the RNG is reseeded*/
+	int gpuid;          /**<the ID of the GPU to use, starting from 1, 0 for auto*/
 
-	unsigned char *vol; /*pointer to the volume*/
-	char session[MAX_SESSION_LENGTH]; /*session id, a string*/
-	char isrowmajor;    /*1 for C-styled array in vol, 0 for matlab-styled array*/
-	char isreflect;     /*1 for reflecting photons at boundary,0 for exiting*/
-        char isref3;        /*1 considering maximum 3 ref. interfaces; 0 max 2 ref*/
-        char isrefint;   /*1 to consider reflections at internal boundaries; 0 do not*/
-	char isnormalized;  /*1 to normalize the fluence, 0 for raw fluence*/
-	char issavedet;     /*1 to count all photons hits the detectors*/
-	char issave2pt;     /*1 to save the 2-point distribution, 0 do not save*/
-	char isgpuinfo;     /*1 to print gpu info when attach, 0 do not print*/
-        char issrcfrom0;    /*1 do not subtract 1 from src/det positions, 0 subtract 1*/
-        char isdumpmask;    /*1 dump detector mask; 0 not*/
-	char autopilot;     /*1 optimal setting for dedicated card, 2, for non dedicated card*/
+	unsigned char *vol; /**<pointer to the volume*/
+	char session[MAX_SESSION_LENGTH]; /**<session id, a string*/
+	char isrowmajor;    /**<1 for C-styled array in vol, 0 for matlab-styled array*/
+	char isreflect;     /**<1 for reflecting photons at boundary,0 for exiting*/
+        char isref3;        /**<1 considering maximum 3 ref. interfaces; 0 max 2 ref*/
+        char isrefint;   /**<1 to consider reflections at internal boundaries; 0 do not*/
+	char isnormalized;  /**<1 to normalize the fluence, 0 for raw fluence*/
+	char issavedet;     /**<1 to count all photons hits the detectors*/
+	char issave2pt;     /**<1 to save the 2-point distribution, 0 do not save*/
+	char isgpuinfo;     /**<1 to print gpu info when attach, 0 do not print*/
+        char issrcfrom0;    /**<1 do not subtract 1 from src/det positions, 0 subtract 1*/
+        char isdumpmask;    /**<1 dump detector mask; 0 not*/
+	char autopilot;     /**<1 optimal setting for dedicated card, 2, for non dedicated card*/
 	char issaveseed;    /**<1 save the seed for a detected photon, 0 do not save*/
 	char srctype;
-        float minenergy;    /*minimum energy to propagate photon*/
-	float unitinmm;     /*defines the length unit in mm for grid*/
-        FILE *flog;         /*stream handle to print log information*/
-        History his;        /*header info of the history file*/
-	float *exportfield;     /*memory buffer when returning the flux to external programs such as matlab*/
-	float *exportdetected;  /*memory buffer when returning the partial length info to external programs such as matlab*/
-        char rootpath[MAX_PATH_LENGTH]; /*sets the input and output root folder*/
-        char *shapedata;    /*a pointer points to a string defining the JSON-formatted shape data*/
+        char outputtype;    /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
+        float minenergy;    /**<minimum energy to propagate photon*/
+	float unitinmm;     /**<defines the length unit in mm for grid*/
+        FILE *flog;         /**<stream handle to print log information*/
+        History his;        /**<header info of the history file*/
+	float *exportfield;     /**<memory buffer when returning the flux to external programs such as matlab*/
+	float *exportdetected;  /**<memory buffer when returning the partial length info to external programs such as matlab*/
+	unsigned int detectedcount; /**<total number of detected photons*/
+        char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
+        char *shapedata;    /**<a pointer points to a string defining the JSON-formatted shape data*/
 	int maxvoidstep;
 	int voidtime;
 	float4 srcparam1;
 	float4 srcparam2;
         float* srcpattern;
+	Replay replay;
+	void *seeddata;
+        int replaydet;      /**<the detector id for which to replay the detected photons, start from 1*/
+        char seedfile[MAX_PATH_LENGTH];
         unsigned int debuglevel; /**<a flag to control the printing of the debug information*/
 } Config;
 
@@ -127,8 +141,10 @@ void mcx_version(Config *cfg);
 void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
 int  mcx_loadjson(cJSON *root, Config *cfg);
 int  mcx_keylookup(char *key, const char *table[]);
+int  mcx_lookupindex(char *key, const char *index);
 int  mcx_parsedebugopt(char *debugopt,const char *debugflag);
 void mcx_savedetphoton(float *ppath, void *seeds, int count, int seedbyte, Config *cfg);
+void mcx_loadseedfile(Config *cfg);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

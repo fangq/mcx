@@ -8,7 +8,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %
 % Format:
-%    [flux,detphoton]=mcxlab(cfg);
+%    [flux,detphoton,vol,seed]=mcxlab(cfg);
 %
 % Input:
 %    cfg: a struct, or struct array. Each element of cfg defines 
@@ -35,6 +35,8 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.maxgate:    the num of time-gates per simulation
 %      cfg.session:    a string for output file names (used when no return variables)
 %      cfg.seed:       seed for the random number generator (integer) [0]
+%                      if set to a uint8 array, the binary data in each column is used 
+%                      to seed a photon (i.e. the "replay" mode)
 %      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
 %      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
@@ -42,8 +44,6 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
 %      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
 %      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
-%      cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save
-%      cfg.issave2pt:  [1]-to save flux distribution, 0-do not save
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.isgpuinfo:  1-print GPU info, [0]-do not print
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -83,6 +83,8 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
 %                      the first non-zero voxel
+%      cfg.outputtype:  [X] - output flux, F - fluence, E - energy deposit
+%                       J - Jacobian (replay)
 %
 %      fields with * are required; options in [] are the default values
 %
@@ -102,6 +104,9 @@ function [flux,detphoton]=mcxlab(cfg)
 %            to convert them to mm unit.
 %      vol: (optional) a struct array, each element is a preprocessed volume
 %            corresponding to each instance of cfg. Each volume is a 3D uint8 array.
+%      seeds: (optional), if give, mcxlab returns the seeds, in the form of
+%            a byte array (uint8) for each detected photon. The column number
+%            of seed equals that of detphoton.
 %
 %      if detphoton is ignored, the detected photon will be saved in a .mch file 
 %      if cfg.issavedeet=1; if no output is given, the flux will be saved to a 

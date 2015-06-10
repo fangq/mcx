@@ -17,12 +17,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <exception>
+#include <time.h>
+#include <math.h>
 
 #include "mex.h"
 #include "mcx_const.h"
 #include "mcx_utils.h"
 #include "mcx_core.h"
 #include "mcx_shapes.h"
+
+#define RAND_BUF_LEN 5
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
@@ -41,6 +45,10 @@
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
 void mcxlab_usage();
+
+float *detps=NULL;
+int    dimdetps[2]={0,0};
+int    seedbyte=0;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   Config cfg;
@@ -67,6 +75,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
   if(nlhs>=3)
       plhs[2] = mxCreateStructMatrix(ncfg,1,1,outputtag);
+  if(nlhs>=4)
+      plhs[3] = mxCreateStructMatrix(ncfg,1,1,outputtag);
 
   for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
     try{
@@ -86,6 +96,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 #else
 	mexEvalString("drawnow;");
 #endif
+	cfg.issave2pt=(nlhs>=1);
+	cfg.issavedet=(nlhs>=2);
+	cfg.issaveseed=(nlhs>=4);
+#if defined(USE_MT_RAND)
+        cfg.issaveseed=0;
+#endif
 	if(cfg.vol==NULL || cfg.medianum==0){
 	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
 	}
@@ -98,18 +114,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
 	    cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
 	}
-	if(nlhs>=2)
-	   cfg.exportdetected=(float*)malloc((cfg.medianum+1+(cfg.issaveseed>0)*RAND_BUF_LEN)*cfg.maxdetphoton*sizeof(float));
-	mcx_validate_config(&cfg);
-	mcx_run_simulation(&cfg);
+	if(nlhs>=2){
+	    cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
+        }
         if(nlhs>=4){
-            fielddim[0]=(cfg.issaveseed>0)*RAND_BUF_LEN; fielddim[1]=cfg.his.savedphoton; 
-	    fielddim[2]=0; fielddim[3]=0;
-	    if(cfg.his.savedphoton>0 && cfg.issaveseed>0){
-		    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
-		    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[3],jstruct,0)),cfg.exportdetected+(cfg.medianum+1)*cfg.his.savedphoton,
-			 fielddim[0]*fielddim[1]*sizeof(float));
-	    }
+	    cfg.seeddata=malloc(cfg.maxdetphoton*sizeof(float)*RAND_BUF_LEN);
+	}
+    mcx_validate_config(&cfg);
+    mcx_run_simulation(&cfg);
+    if(nlhs>=4){
+            fielddim[0]=(cfg.issaveseed>0)*RAND_BUF_LEN*sizeof(float); fielddim[1]=cfg.detectedcount; // his.savedphoton is for one repetition, should correct
+    	    fielddim[2]=0; fielddim[3]=0;
+		    mxSetFieldByNumber(plhs[3],jstruct,0, mxCreateNumericArray(2,fielddim,mxUINT8_CLASS,mxREAL));
+		    memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[3],jstruct,0)),cfg.seeddata,fielddim[0]*fielddim[1]);
+	    free(cfg.seeddata);
 	}
 	if(nlhs>=3){
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
@@ -121,14 +139,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             }
 	}
 	if(nlhs>=2){
-            fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.his.savedphoton; 
-	    fielddim[2]=0; fielddim[3]=0;
-	    if(cfg.his.savedphoton>0){
-		    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
-		    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
-			 fielddim[0]*fielddim[1]*sizeof(float));
-	    }
-            free(cfg.exportdetected);
+             fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.detectedcount; 
+            fielddim[2]=0; fielddim[3]=0;
+            if(cfg.his.savedphoton>0){
+                    mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
+                    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
+                         fielddim[0]*fielddim[1]*sizeof(float));
+            }
+             free(cfg.exportdetected);
 	}
     }catch(const char *err){
       mexPrintf("Error: %s\n",err);
@@ -137,6 +155,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
     }catch(...){
       mexPrintf("Unknown Exception");
     }
+    if(detps)
+       free(detps);
     mcx_clearcfg(&cfg);
   }
   return;
@@ -149,11 +169,13 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     char *jsonshapes=NULL;
     int i,j;
 
+    if(strcmp(name,"nphoton")==0 && cfg->replay.seed!=NULL)
+	return;
+
     cfg->flog=stderr;
     GET_1ST_FIELD(cfg,nphoton)
     GET_ONE_FIELD(cfg,nblocksize)
     GET_ONE_FIELD(cfg,nthread)
-    GET_ONE_FIELD(cfg,seed)
     GET_ONE_FIELD(cfg,tstart)
     GET_ONE_FIELD(cfg,tstep)
     GET_ONE_FIELD(cfg,tend)
@@ -166,8 +188,6 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,isref3)
     GET_ONE_FIELD(cfg,isrefint)
     GET_ONE_FIELD(cfg,isnormalized)
-    GET_ONE_FIELD(cfg,issavedet)
-    GET_ONE_FIELD(cfg,issave2pt)
     GET_ONE_FIELD(cfg,isgpuinfo)
     GET_ONE_FIELD(cfg,issrcfrom0)
     GET_ONE_FIELD(cfg,autopilot)
@@ -177,6 +197,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,printnum)
     GET_ONE_FIELD(cfg,voidtime)
     GET_ONE_FIELD(cfg,issaveseed)
+    GET_ONE_FIELD(cfg,replaydet)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC3_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
@@ -244,6 +265,22 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if(cfg->srctype==-1)
              mexErrMsgTxt("the specified source type is not supported");
 	printf("mcx.srctype='%s';\n",strtypestr);
+    }else if(strcmp(name,"outputtype")==0){
+        int len=mxGetNumberOfElements(item);
+        const char *outputtype[]={"flux","fluence","energy","jacobian",""};
+        char outputstr[MAX_SESSION_LENGTH]={'\0'};
+
+        if(!mxIsChar(item) || len==0)
+             mexErrMsgTxt("the 'outputtype' field must be a non-empty string");
+	if(len>MAX_SESSION_LENGTH)
+	     mexErrMsgTxt("the 'outputtype' field is too long");
+        int status = mxGetString(item, outputstr, MAX_SESSION_LENGTH);
+        if (status != 0)
+             mexWarnMsgTxt("not enough space. string is truncated.");
+        cfg->outputtype=mcx_keylookup(outputstr,outputtype);
+        if(cfg->outputtype==-1)
+             mexErrMsgTxt("the specified output type is not supported");
+	printf("mcx.outputtype='%s';\n",outputstr);
     }else if(strcmp(name,"debuglevel")==0){
         int len=mxGetNumberOfElements(item);
         const char debugflag[]={'R','\0'};
@@ -276,6 +313,31 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         jsonshapes=new char[len+1];
         mxGetString(item, jsonshapes, len+1);
         jsonshapes[len]='\0';
+    }else if(strcmp(name,"detphotons")==0){
+        arraydim=mxGetDimensions(item);
+	dimdetps[0]=arraydim[0];
+	dimdetps[1]=arraydim[1];
+        detps=(float *)malloc(arraydim[0]*arraydim[1]*sizeof(float));
+        memcpy(detps,mxGetData(item),arraydim[0]*arraydim[1]*sizeof(float));
+        printf("mcx.detphotons=[%d %d];\n",arraydim[0],arraydim[1]);
+    }else if(strcmp(name,"seed")==0){
+        arraydim=mxGetDimensions(item);
+        if(MAX(arraydim[0],arraydim[1])==0)
+            mexErrMsgTxt("the 'seed' field can not be empty");
+        if(!mxIsUint8(item)){
+            double *val=mxGetPr(item);
+            cfg->seed=val[0];
+            printf("mcx.seed=%d;\n",cfg->seed);
+        }else{
+	    seedbyte=arraydim[0];
+            cfg->replay.seed=malloc(arraydim[0]*arraydim[1]);
+            if(arraydim[0]!=sizeof(float)*RAND_BUF_LEN)
+                mexErrMsgTxt("the row number of cfg.seed does not match RNG seed byte-length");
+            memcpy(cfg->replay.seed,mxGetData(item),arraydim[0]*arraydim[1]);
+            cfg->seed=SEED_FROM_FILE;
+            cfg->nphoton=arraydim[1];
+            printf("mcx.nphoton=%d;\n",cfg->nphoton);
+        }
     }else{
         printf("WARNING: redundant field '%s'\n",name);
     }
@@ -288,6 +350,34 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
               mexErrMsgTxt(mcx_last_shapeerror());
         }
     }
+}
+
+void mcx_replay_prep(Config *cfg){
+    int i,j;
+    if(detps==NULL || cfg->seed!=SEED_FROM_FILE)
+        return;
+    if(cfg->nphoton!=dimdetps[1])
+        mexErrMsgTxt("the column numbers of detphotons and seed do not match");
+    if(seedbyte==0)
+        mexErrMsgTxt("the seed input is empty");
+
+    cfg->replay.weight=(float*)malloc(cfg->nphoton*sizeof(float));
+    cfg->replay.tof=(float*)calloc(cfg->nphoton,sizeof(float));
+
+    cfg->nphoton=0;
+    for(i=0;i<dimdetps[1];i++)
+        if(cfg->replaydet==0 || cfg->replaydet==(int)(detps[i*dimdetps[0]])){
+            if(i!=cfg->nphoton)
+                memcpy((char *)(cfg->replay.seed)+cfg->nphoton*seedbyte, (char *)(cfg->replay.seed)+i*seedbyte, seedbyte);
+            cfg->replay.weight[cfg->nphoton]=1.f;
+            for(j=2;j<cfg->medianum+1;j++){
+                cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-1].mua*detps[i*dimdetps[0]+j]*cfg->unitinmm);
+                cfg->replay.tof[cfg->nphoton]+=detps[i*dimdetps[0]+j]*cfg->unitinmm*R_C0*cfg->prop[j-1].n;
+            }
+            if(cfg->replay.tof[cfg->nphoton]<cfg->tstart || cfg->replay.tof[cfg->nphoton]>cfg->tend) /*need to consider -g*/
+                continue;
+            cfg->nphoton++;
+        }
 }
 
 void mcx_validate_config(Config *cfg){
@@ -345,6 +435,9 @@ void mcx_validate_config(Config *cfg){
      }
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;
+     if(cfg->seed<0 && cfg->seed!=SEED_FROM_FILE) cfg->seed=time(NULL);
+     if(cfg->outputtype==otJacobian && cfg->seed!=SEED_FROM_FILE)
+         mexErrMsgTxt("Jacobian output is only valid in the reply mode. Please define cfg.seed");     
      for(i=0;i<cfg->detnum;i++){
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
@@ -359,31 +452,17 @@ void mcx_validate_config(Config *cfg){
 	}
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
-/*	if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f || 
-	   cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
-		mexErrMsgTxt("source position is outside of the volume");
-	idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
-*/
-        /* if the specified source position is outside the domain, move the source
-	   along the initial vector until it hit the domain */
-/*	if(cfg->vol && cfg->vol[idx1d]==0){
-                printf("source (%f %f %f) is located outside the domain, vol[%d]=%d\n",
-		      cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,idx1d,cfg->vol[idx1d]);
-		while(cfg->vol[idx1d]==0){
-			cfg->srcpos.x+=cfg->srcdir.x;
-			cfg->srcpos.y+=cfg->srcdir.y;
-			cfg->srcpos.z+=cfg->srcdir.z;
-                        if(cfg->srcpos.x<0.f || cfg->srcpos.y<0.f || cfg->srcpos.z<0.f ||
-                               cfg->srcpos.x>=cfg->dim.x || cfg->srcpos.y>=cfg->dim.y || cfg->srcpos.z>=cfg->dim.z)
-                               mcx_error(-4,"searching non-zero voxel failed along the incident vector",__FILE__,__LINE__);
-			idx1d=(int)(int(cfg->srcpos.z)*cfg->dim.y*cfg->dim.x+int(cfg->srcpos.y)*cfg->dim.x+int(cfg->srcpos.x));
-		}
-		printf("fixing source position to (%f %f %f)\n",cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z);
-	}*/
+        if(cfg->seed==SEED_FROM_FILE){
+            if(cfg->respin>1){
+	       cfg->respin=1;
+	       fprintf(stderr,"Warning: respin is disabled in the replay mode\n");
+	    }
+        }
      }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+     mcx_replay_prep(cfg);
 }
 
 extern "C" int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum){
@@ -393,9 +472,5 @@ extern "C" int mcx_throw_exception(const int id, const char *msg, const char *fi
 }
 
 void mcxlab_usage(){
-#ifdef USE_CACHEBOX
-     printf("Usage:\n    [flux,detphoton]=mcxlab_atom(cfg);\n\nPlease run 'help mcxlab_atom' for more details.\n");
-#else
-     printf("Usage:\n    [flux,detphoton]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
-#endif
+     printf("Usage:\n    [flux,detphoton,vol,seeds]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
 }
