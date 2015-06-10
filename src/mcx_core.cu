@@ -809,7 +809,9 @@ int mcx_corecount(int v1, int v2){
      int v=v1*10+v2;
      if(v<20)      return 8;
      else if(v<21) return 32;
-     else          return 48;
+     else if(v<30) return 48;
+     else if(v<50) return 192;
+     else          return 128;
 }
 
 /**
