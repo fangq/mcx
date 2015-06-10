@@ -69,7 +69,7 @@ void mcx_initcfg(Config *cfg){
      cfg->nphoton=0;
      cfg->nthread=2048;
      cfg->isrowmajor=0; /* default is Matlab array*/
-     cfg->maxgate=1;
+     cfg->maxgate=0;
      cfg->isreflect=1;
      cfg->isref3=1;
      cfg->isrefint=0;
@@ -373,7 +373,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
          mcx_error(-9,"incorrect time gate settings",__FILE__,__LINE__);
      }
      gates=(uint)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
-     if(cfg->maxgate>gates)
+     if(cfg->maxgate==0)
+	 cfg->maxgate=gates;
+     else if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
      mcx_assert(fscanf(in,"%s", filename)==1);
@@ -767,8 +769,10 @@ int mcx_loadjson(cJSON *root, Config *cfg){
             mcx_error(-9,"incorrect time gate settings",__FILE__,__LINE__);
 
         gates=(uint)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
-        if(cfg->maxgate>gates)
-	    cfg->maxgate=gates;
+        if(cfg->maxgate==0)
+            cfg->maxgate=gates;
+        else if(cfg->maxgate>gates)
+            cfg->maxgate=gates;
      }
      if(filename[0]=='\0'){
          if(Shapes){
