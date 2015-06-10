@@ -112,3 +112,6 @@ cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
 	fi
+
+.DEFAULT_GOAL := fermi
+
