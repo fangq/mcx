@@ -20,21 +20,24 @@
 #include "mcx_core.h"
 
 int main (int argc, char *argv[]) {
-     Config mcxconfig;
+     Config  mcxconfig;
+     GPUInfo *gpuinfo=NULL;
+
      mcx_initcfg(&mcxconfig);
-     
+
      // parse command line options to initialize the configurations
      mcx_parsecmd(argc,argv,&mcxconfig);
-     
+
      // identify gpu number and set one gpu active
-     if(!mcx_set_gpu(&mcxconfig)){
+     if(!mcx_set_gpu(&mcxconfig,&gpuinfo)){
          mcx_error(-1,"No GPU device found\n",__FILE__,__LINE__);
      }
-          
+
      // this launches the MC simulation
      mcx_run_simulation(&mcxconfig);
-     
-     // clean up the allocated memory in the config
+
+     // clean up the allocated memory in config and gpuinfo
+     mcx_cleargpuinfo(&gpuinfo);
      mcx_clearcfg(&mcxconfig);
      return 0;
 }

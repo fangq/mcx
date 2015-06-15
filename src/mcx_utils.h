@@ -46,6 +46,16 @@ typedef struct PhotonReplay{
 	float *tof;
 } Replay;
 
+typedef struct MCXGPUInfo {
+	int id;
+	int devcount;
+	int major, minor;
+	size_t globalmem, constmem, sharedmem;
+	int regcount;
+	int clock;
+	int sm, core;
+} GPUInfo;
+
 typedef struct MCXConfig{
 	int nphoton;      /**<total simulated photon number*/
 	//int totalmove;   /**< [depreciated] total move per photon*/
@@ -145,6 +155,7 @@ int  mcx_lookupindex(char *key, const char *index);
 int  mcx_parsedebugopt(char *debugopt,const char *debugflag);
 void mcx_savedetphoton(float *ppath, void *seeds, int count, int seedbyte, Config *cfg);
 void mcx_loadseedfile(Config *cfg);
+void mcx_cleargpuinfo(GPUInfo **gpuinfo);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

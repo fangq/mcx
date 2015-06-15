@@ -121,6 +121,16 @@ void mcx_initcfg(Config *cfg){
      memset(&(cfg->srcparam2),0,sizeof(float4));
 }
 
+void mcx_cleargpuinfo(GPUInfo **gpuinfo){
+    int i;
+    if(gpuinfo && gpuinfo[0]){
+	for(i=gpuinfo[0]->devcount-1;i>=0;i--)
+		free(gpuinfo[i]);
+	free(gpuinfo);
+	gpuinfo=NULL;
+    }
+}
+
 void mcx_clearcfg(Config *cfg){
      if(cfg->medianum)
      	free(cfg->prop);

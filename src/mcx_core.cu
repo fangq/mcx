@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation                                                                                                
+//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
 //  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 //
 //  Reference (Fang2009):
@@ -817,7 +817,7 @@ int mcx_corecount(int v1, int v2){
 /**
   query GPU info and set active GPU
 */
-int mcx_set_gpu(Config *cfg){
+int mcx_set_gpu(Config *cfg, GPUInfo **info){
 
 #if __DEVICE_EMULATION__
     return 1;
@@ -829,6 +829,7 @@ int mcx_set_gpu(Config *cfg){
         MCX_FPRINTF(stderr,"No CUDA-capable GPU device found\n");
         return 0;
     }
+    info=(GPUInfo **)calloc(deviceCount,sizeof(GPUInfo *));
     if (cfg->gpuid && cfg->gpuid > deviceCount){
         MCX_FPRINTF(stderr,"Specified GPU ID is out of range\n");
         return 0;
@@ -861,18 +862,30 @@ int mcx_set_gpu(Config *cfg){
                         MCX_FPRINTF(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
 		}
 	}
+        info[dev]=(GPUInfo *)calloc(1,sizeof(GPUInfo));
+        info[dev]->id=dev+1;
+	info[dev]->devcount=deviceCount;
+	info[dev]->major=dp.major;
+	info[dev]->minor=dp.minor;
+	info[dev]->globalmem=dp.totalGlobalMem;
+	info[dev]->constmem=dp.totalConstMem;
+	info[dev]->sharedmem=dp.sharedMemPerBlock;
+	info[dev]->regcount=dp.regsPerBlock;
+	info[dev]->clock=dp.clockRate;
+	info[dev]->sm=dp.multiProcessorCount;
+	info[dev]->core=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
 	    MCX_FPRINTF(stdout,"=============================   GPU Infomation  ================================\n");
-	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",dev+1,deviceCount,dp.name);
-	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",dp.major,dp.minor);
+	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",info[dev]->id,info[dev]->devcount,dp.name);
+	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",info[dev]->major,info[dev]->minor);
 	    MCX_FPRINTF(stdout,"Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
 Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
-               (unsigned int)dp.totalGlobalMem,(unsigned int)dp.totalConstMem,
-               (unsigned int)dp.sharedMemPerBlock,(unsigned int)dp.regsPerBlock,dp.clockRate*1e-6f);
+               (unsigned int)info[dev]->globalmem,(unsigned int)info[dev]->constmem,
+               (unsigned int)info[dev]->sharedmem,(unsigned int)info[dev]->regcount,info[dev]->clock*1e-6f);
 	  #if CUDART_VERSION >= 2000
 	       MCX_FPRINTF(stdout,"Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
-	          dp.multiProcessorCount,dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor));
+	          info[dev]->sm,info[dev]->core);
 	  #endif
 	  }
 	}
@@ -891,7 +904,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
     }
 #endif
 
-    return 1;
+    return deviceCount;
 #endif
 }
 

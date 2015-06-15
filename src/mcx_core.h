@@ -91,10 +91,11 @@ typedef struct  __align__(16) KernelParams {
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg);
-int  mcx_set_gpu(Config *cfg);
+int  mcx_set_gpu(Config *cfg, GPUInfo **info);
 
 #ifdef  __cplusplus
 }
 #endif
 
 #endif
+
