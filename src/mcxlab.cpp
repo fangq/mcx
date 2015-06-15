@@ -35,6 +35,8 @@
 #define GET_VEC4_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
+#define SET_GPU_INFO(output,id,v)  mxSetField(output,id,#v,mxCreateDoubleScalar(gpuinfo[i].v));
+
 #ifdef USE_MT_RAND
     #define RAND_BUF_LEN 0
 #else
@@ -52,15 +54,51 @@ int    seedbyte=0;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   Config cfg;
+  GPUInfo *gpuinfo=NULL;
   mxArray    *tmp;
   int        ifield, jstruct;
   int        ncfg, nfields;
   int        fielddim[4];
   const char       *outputtag[]={"data"};
+  const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
+                                  "constmem","sharedmem","regcount","clock","sm","core",
+                                  "autoblock","autothread"};
 
   if (nrhs==0){
      mcxlab_usage();
      return;
+  }
+  if(nrhs==1 && mxIsChar(prhs[0])){
+        char shortcmd[MAX_SESSION_LENGTH];
+        mxGetString(prhs[0], shortcmd, MAX_SESSION_LENGTH);
+        shortcmd[MAX_SESSION_LENGTH-1]='\0';
+        if(strcmp(shortcmd,"gpuinfo")==0){
+            mcx_initcfg(&cfg);
+            cfg.isgpuinfo=3;
+            if(!mcx_set_gpu(&cfg,&gpuinfo)){
+                mexWarnMsgTxt("no usable GPU found");
+            }
+            plhs[0] = mxCreateStructMatrix(gpuinfo[0].devcount,1,14,gpuinfotag);
+            for(int i=0;i<gpuinfo[0].devcount;i++){
+		mxSetField(plhs[0],i,"name",mxCreateString(gpuinfo[i].name));
+		SET_GPU_INFO(plhs[0],i,id);
+		SET_GPU_INFO(plhs[0],i,devcount);
+		SET_GPU_INFO(plhs[0],i,major);
+		SET_GPU_INFO(plhs[0],i,minor);
+		SET_GPU_INFO(plhs[0],i,globalmem);
+		SET_GPU_INFO(plhs[0],i,constmem);
+		SET_GPU_INFO(plhs[0],i,sharedmem);
+		SET_GPU_INFO(plhs[0],i,regcount);
+		SET_GPU_INFO(plhs[0],i,clock);
+		SET_GPU_INFO(plhs[0],i,sm);
+		SET_GPU_INFO(plhs[0],i,core);
+		SET_GPU_INFO(plhs[0],i,autoblock);
+		SET_GPU_INFO(plhs[0],i,autothread);
+            }
+            mcx_cleargpuinfo(&gpuinfo);
+            mcx_clearcfg(&cfg);
+	}
+	return;
   }
   printf("Launching MCXLAB - Monte Carlo eXtreme for MATLAB & GNU Octave ...\n");
   if (!mxIsStruct(prhs[0]))
@@ -105,7 +143,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	if(cfg.vol==NULL || cfg.medianum==0){
 	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
 	}
-	if(!mcx_set_gpu(&cfg)){
+	if(!mcx_set_gpu(&cfg,&gpuinfo)){
             mexErrMsgTxt("No GPU device found");
 	}
 	if(nlhs>=1){
@@ -157,6 +195,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
     }
     if(detps)
        free(detps);
+    mcx_cleargpuinfo(&gpuinfo);
     mcx_clearcfg(&cfg);
   }
   return;

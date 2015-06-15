@@ -829,7 +829,7 @@ int mcx_set_gpu(Config *cfg, GPUInfo **info){
         MCX_FPRINTF(stderr,"No CUDA-capable GPU device found\n");
         return 0;
     }
-    info=(GPUInfo **)calloc(deviceCount,sizeof(GPUInfo *));
+    *info=(GPUInfo *)calloc(deviceCount,sizeof(GPUInfo));
     if (cfg->gpuid && cfg->gpuid > deviceCount){
         MCX_FPRINTF(stderr,"Specified GPU ID is out of range\n");
         return 0;
@@ -862,30 +862,37 @@ int mcx_set_gpu(Config *cfg, GPUInfo **info){
                         MCX_FPRINTF(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
 		}
 	}
-        info[dev]=(GPUInfo *)calloc(1,sizeof(GPUInfo));
-        info[dev]->id=dev+1;
-	info[dev]->devcount=deviceCount;
-	info[dev]->major=dp.major;
-	info[dev]->minor=dp.minor;
-	info[dev]->globalmem=dp.totalGlobalMem;
-	info[dev]->constmem=dp.totalConstMem;
-	info[dev]->sharedmem=dp.sharedMemPerBlock;
-	info[dev]->regcount=dp.regsPerBlock;
-	info[dev]->clock=dp.clockRate;
-	info[dev]->sm=dp.multiProcessorCount;
-	info[dev]->core=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
+        strncpy((*info)[dev].name,dp.name,MAX_SESSION_LENGTH);
+        (*info)[dev].id=dev+1;
+	(*info)[dev].devcount=deviceCount;
+	(*info)[dev].major=dp.major;
+	(*info)[dev].minor=dp.minor;
+	(*info)[dev].globalmem=dp.totalGlobalMem;
+	(*info)[dev].constmem=dp.totalConstMem;
+	(*info)[dev].sharedmem=dp.sharedMemPerBlock;
+	(*info)[dev].regcount=dp.regsPerBlock;
+	(*info)[dev].clock=dp.clockRate;
+	(*info)[dev].sm=dp.multiProcessorCount;
+	(*info)[dev].core=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
+#ifdef USE_MT_RAND
+        (*info)[dev].autoblock=1;
+#else
+        (*info)[dev].autoblock=64;
+#endif
+        (*info)[dev].autothread=(*info)[dev].core*32;
+
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
 	    MCX_FPRINTF(stdout,"=============================   GPU Infomation  ================================\n");
-	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",info[dev]->id,info[dev]->devcount,dp.name);
-	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",info[dev]->major,info[dev]->minor);
+	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",(*info)[dev].id,(*info)[dev].devcount,(*info)[dev].name);
+	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",(*info)[dev].major,(*info)[dev].minor);
 	    MCX_FPRINTF(stdout,"Global Memory:\t\t%u B\nConstant Memory:\t%u B\n\
 Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
-               (unsigned int)info[dev]->globalmem,(unsigned int)info[dev]->constmem,
-               (unsigned int)info[dev]->sharedmem,(unsigned int)info[dev]->regcount,info[dev]->clock*1e-6f);
+               (unsigned int)(*info)[dev].globalmem,(unsigned int)(*info)[dev].constmem,
+               (unsigned int)(*info)[dev].sharedmem,(unsigned int)(*info)[dev].regcount,(*info)[dev].clock*1e-6f);
 	  #if CUDART_VERSION >= 2000
 	       MCX_FPRINTF(stdout,"Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
-	          info[dev]->sm,info[dev]->core);
+	          (*info)[dev].sm,(*info)[dev].core);
 	  #endif
 	  }
 	}
@@ -893,10 +900,12 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
     if(cfg->isgpuinfo==2 && cfg->exportfield==NULL){ //list GPU info only
           exit(0);
     }
-    if (cfg->gpuid==0)
-        mcx_cu_assess(cudaSetDevice(deviceCount-1),__FILE__,__LINE__);
-    else
-        mcx_cu_assess(cudaSetDevice(cfg->gpuid-1),__FILE__,__LINE__);
+    if(cfg->isgpuinfo!=3){
+        if (cfg->gpuid==0)
+            mcx_cu_assess(cudaSetDevice(deviceCount-1),__FILE__,__LINE__);
+        else
+            mcx_cu_assess(cudaSetDevice(cfg->gpuid-1),__FILE__,__LINE__);
+    }
 
 #ifdef USE_MT_RAND
     if(cfg->nblocksize>N-M){

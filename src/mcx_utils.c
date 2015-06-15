@@ -122,12 +122,9 @@ void mcx_initcfg(Config *cfg){
 }
 
 void mcx_cleargpuinfo(GPUInfo **gpuinfo){
-    int i;
-    if(gpuinfo && gpuinfo[0]){
-	for(i=gpuinfo[0]->devcount-1;i>=0;i--)
-		free(gpuinfo[i]);
-	free(gpuinfo);
-	gpuinfo=NULL;
+    if(*gpuinfo){
+	free(*gpuinfo);
+	*gpuinfo=NULL;
     }
 }
 

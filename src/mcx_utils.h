@@ -7,7 +7,7 @@
 #include "cjson/cJSON.h"
 
 #define MAX_PATH_LENGTH     1024
-#define MAX_SESSION_LENGTH  255
+#define MAX_SESSION_LENGTH  256
 
 #ifndef MCX_CUDA_ARCH
   #define MCX_CUDA_ARCH       100
@@ -47,6 +47,7 @@ typedef struct PhotonReplay{
 } Replay;
 
 typedef struct MCXGPUInfo {
+        char name[MAX_SESSION_LENGTH];
 	int id;
 	int devcount;
 	int major, minor;
@@ -54,6 +55,7 @@ typedef struct MCXGPUInfo {
 	int regcount;
 	int clock;
 	int sm, core;
+	int autoblock, autothread;
 } GPUInfo;
 
 typedef struct MCXConfig{
