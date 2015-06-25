@@ -85,7 +85,7 @@ void mcx_initcfg(Config *cfg){
      cfg->printnum=0;
      cfg->minenergy=0.f;
      cfg->flog=stdout;
-     cfg->sradius=0.f;
+     cfg->sradius=-2.f;
      cfg->rootpath[0]='\0';
      cfg->gpuid=0;
      cfg->issrcfrom0=0;
@@ -97,6 +97,9 @@ void mcx_initcfg(Config *cfg){
      cfg->seed=0x623F9A9E;
      cfg->exportfield=NULL;
      cfg->exportdetected=NULL;
+     cfg->energytot=0.f;
+     cfg->energyabs=0.f;
+     cfg->energyesc=0.f;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);
@@ -117,8 +120,17 @@ void mcx_initcfg(Config *cfg){
      cfg->seedfile[0]='\0';
      cfg->outputtype=otFlux;
      cfg->detectedcount=0;
+     cfg->runtime=0;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
+     memset(cfg->deviceid,0,MAX_DEVICE);
+     memset(cfg->workload,0,MAX_DEVICE*sizeof(float));
+     cfg->deviceid[0]='1'; /*use the first GPU device by default*/
+#ifdef MCX_CONTAINER
+     cfg->parentid=mpMATLAB;
+#else
+     cfg->parentid=mpStandalone;
+#endif
 }
 
 void mcx_cleargpuinfo(GPUInfo **gpuinfo){
@@ -143,6 +155,13 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->replay.seed);
      if(cfg->replay.tof)
         free(cfg->replay.tof);
+     
+     if(cfg->exportfield)
+        free(cfg->exportfield);
+     if(cfg->exportdetected)
+        free(cfg->exportdetected);
+     if(cfg->seeddata)
+        free(cfg->seeddata);
 
      mcx_initcfg(cfg);
 }
@@ -1044,6 +1063,30 @@ int mcx_readarg(int argc, char *argv[], int id, void *output,const char *type){
              *((float*)output)=atof(argv[id+1]);
 	 else if(strcmp(type,"string")==0)
 	     strcpy((char *)output,argv[id+1]);
+         else if(strcmp(type,"bytenumlist")==0){
+             char *nexttok,*numlist=(char *)output;
+             int len=0,i;
+             nexttok=strtok(argv[id+1]," ,;");
+             while(nexttok){
+                 numlist[len++]=(char)(atoi(nexttok)); /*device id<256*/
+                 for(i=0;i<len-1;i++) /* remove duplicaetd ids */
+                    if(numlist[i]==numlist[len-1]){
+                       numlist[--len]='\0';
+                       break;
+                    }
+                 nexttok=strtok(NULL," ,;");
+                 /*if(len>=MAX_DEVICE) break;*/
+             }
+         }else if(strcmp(type,"floatlist")==0){
+             char *nexttok;
+             float *numlist=(float *)output;
+             int len=0;   
+             nexttok=strtok(argv[id+1]," ,;");
+             while(nexttok){
+                 numlist[len++]=atof(nexttok); /*device id<256*/
+                 nexttok=strtok(NULL," ,;");
+             }
+	 }
      }else{
      	 mcx_error(-1,"incomplete input",__FILE__,__LINE__);
      }
@@ -1163,7 +1206,19 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
 		     	        break;
                      case 'G':
-                                i=mcx_readarg(argc,argv,i,&(cfg->gpuid),"int");
+                                if(mcx_isbinstr(argv[i+1])){
+                                    i=mcx_readarg(argc,argv,i,cfg->deviceid,"string");
+                                    break;
+                                }else{
+                                    i=mcx_readarg(argc,argv,i,&(cfg->gpuid),"int");
+                                    if(cfg->gpuid<MAX_DEVICE)
+                                         cfg->deviceid[cfg->gpuid-1]='1';
+                                    else
+                                         mcx_error(-2,"GPU id can not be more than 256",__FILE__,__LINE__);
+                                    break;
+                                }
+                     case 'W':
+                                i=mcx_readarg(argc,argv,i,cfg->workload,"floatlist");
                                 break;
                      case 'z':
                                 i=mcx_readarg(argc,argv,i,&(cfg->issrcfrom0),"char");
@@ -1288,11 +1343,21 @@ void mcx_version(Config *cfg){
     exit(0);
 }
 
+int mcx_isbinstr(const char * str){
+    int len=strlen(str);
+    if(len==0)
+        return 0;
+    for(int i=0;i<len;i++)
+        if(str[i]!='0' && str[i]!='1')
+	   return 0;
+    return 1;
+}
+
 void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#     Copyright (c) 2009-2015 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
 #                                                                             #\n\
 #    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
 ###############################################################################\n\
@@ -1304,15 +1369,17 @@ void mcx_usage(Config *cfg,char *exename){
      mcx_printheader(cfg);
      printf("\n\
 usage: %s <param1> <param2> ...\n\
-where possible parameters include (the first item in [] is the default value)\n\
+where possible parameters include (the first value in [*|*] is the default)\n\
  -i 	       (--interactive) interactive mode\n\
  -s sessionid  (--session)     a string to label all output file names\n\
  -f config     (--input)       read config from a file\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
  -t [2048|int] (--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
- -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedic.\n\
+ -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
+      or\n\
+ -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
  -r [1|int]    (--repeat)      number of repetitions\n\
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
  -z [0|1]      (--srcfrom0)    1 volume coord. origin [0 0 0]; 0 use [1 1 1]\n\
@@ -1320,15 +1387,15 @@ where possible parameters include (the first item in [] is the default value)\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -R [0.|float] (--skipradius)  0: vanilla MCX, no atomic operations\n\
+ -R [-2|float] (--skipradius)  0: vanilla MCX, no atomic operations\n\
                                >0: radius in which use shared-memory atomics\n\
                                -1: use crop0/crop1 to determine atomic zone\n\
-                               -2: use atomics for the entire domain\n\
+                               -2: use atomics for the entire domain (default)\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
- -H [1000000]  (--maxdetphoton)max number of detected photons\n\
+ -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
                                if an mch file is followed, MMC will \"replay\" \n\
@@ -1345,13 +1412,16 @@ where possible parameters include (the first item in [] is the default value)\n\
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
+ -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
  -v            (--version)     print MCX revision number\n\
 \n\
 example: (autopilot mode)\n\
        %s -A -n 1e7 -f input.inp -G 1 \n\
 or (manual mode)\n\
        %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n\
+or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n\
+       %s -A -n 1e7 -f input.inp -G 1101 -W 10,10,10\n\
 or (use inline domain definition)\n\
        %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n",
-              exename,exename,exename,exename);
+              exename,exename,exename,exename,exename);
 }

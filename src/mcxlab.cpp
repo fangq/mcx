@@ -26,6 +26,10 @@
 #include "mcx_core.h"
 #include "mcx_shapes.h"
 
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
 #define RAND_BUF_LEN 5
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
@@ -59,10 +63,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        ifield, jstruct;
   int        ncfg, nfields;
   int        fielddim[4];
+  int        activedev=0;
   const char       *outputtag[]={"data"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
-                                  "autoblock","autothread"};
+                                  "autoblock","autothread","maxgate"};
 
   if (nrhs==0){
      mcxlab_usage();
@@ -75,10 +80,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         if(strcmp(shortcmd,"gpuinfo")==0){
             mcx_initcfg(&cfg);
             cfg.isgpuinfo=3;
-            if(!mcx_set_gpu(&cfg,&gpuinfo)){
-                mexWarnMsgTxt("no usable GPU found");
+            if(!(activedev=mcx_list_gpu(&cfg,&gpuinfo))){
+                mexWarnMsgTxt("no active GPU device found");
             }
-            plhs[0] = mxCreateStructMatrix(gpuinfo[0].devcount,1,14,gpuinfotag);
+            plhs[0] = mxCreateStructMatrix(gpuinfo[0].devcount,1,15,gpuinfotag);
             for(int i=0;i<gpuinfo[0].devcount;i++){
 		mxSetField(plhs[0],i,"name",mxCreateString(gpuinfo[i].name));
 		SET_GPU_INFO(plhs[0],i,id);
@@ -94,6 +99,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		SET_GPU_INFO(plhs[0],i,core);
 		SET_GPU_INFO(plhs[0],i,autoblock);
 		SET_GPU_INFO(plhs[0],i,autothread);
+		SET_GPU_INFO(plhs[0],i,maxgate);
             }
             mcx_cleargpuinfo(&gpuinfo);
             mcx_clearcfg(&cfg);
@@ -143,14 +149,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	if(cfg.vol==NULL || cfg.medianum==0){
 	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
 	}
-	if(!mcx_set_gpu(&cfg,&gpuinfo)){
-            mexErrMsgTxt("No GPU device found");
+	if(!(activedev=mcx_list_gpu(&cfg,&gpuinfo))){
+            mexErrMsgTxt("No active GPU device found");
 	}
 	if(nlhs>=1){
-            fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
-	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
-	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
-	    cfg.exportfield = (float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0));
+            int fieldlen=cfg.dim.x*cfg.dim.y*cfg.dim.z*(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
+	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
 	}
 	if(nlhs>=2){
 	    cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
@@ -158,14 +162,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         if(nlhs>=4){
 	    cfg.seeddata=malloc(cfg.maxdetphoton*sizeof(float)*RAND_BUF_LEN);
 	}
-    mcx_validate_config(&cfg);
-    mcx_run_simulation(&cfg);
-    if(nlhs>=4){
+        mcx_validate_config(&cfg);
+
+#ifdef _OPENMP
+        omp_set_num_threads(activedev);
+#pragma omp parallel
+{
+#endif
+
+        mcx_run_simulation(&cfg,gpuinfo);
+
+#ifdef _OPENMP
+}
+#endif
+
+        if(nlhs>=4){
             fielddim[0]=(cfg.issaveseed>0)*RAND_BUF_LEN*sizeof(float); fielddim[1]=cfg.detectedcount; // his.savedphoton is for one repetition, should correct
     	    fielddim[2]=0; fielddim[3]=0;
 		    mxSetFieldByNumber(plhs[3],jstruct,0, mxCreateNumericArray(2,fielddim,mxUINT8_CLASS,mxREAL));
 		    memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[3],jstruct,0)),cfg.seeddata,fielddim[0]*fielddim[1]);
 	    free(cfg.seeddata);
+            cfg.seeddata=NULL;
 	}
 	if(nlhs>=3){
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
@@ -177,15 +194,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             }
 	}
 	if(nlhs>=2){
-             fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.detectedcount; 
+            fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.detectedcount; 
             fielddim[2]=0; fielddim[3]=0;
             if(cfg.his.savedphoton>0){
                     mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
                     memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
                          fielddim[0]*fielddim[1]*sizeof(float));
             }
-             free(cfg.exportdetected);
+            free(cfg.exportdetected);
+            cfg.exportdetected=NULL;
 	}
+        if(nlhs>=1){
+            fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
+	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
+	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+            memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
+                         fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*sizeof(float));
+            free(cfg.exportfield);
+            cfg.exportfield=NULL;
+        }
     }catch(const char *err){
       mexPrintf("Error: %s\n",err);
     }catch(const std::exception &err){
@@ -222,7 +249,6 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,sradius)
     GET_ONE_FIELD(cfg,maxgate)
     GET_ONE_FIELD(cfg,respin)
-    GET_ONE_FIELD(cfg,gpuid)
     GET_ONE_FIELD(cfg,isreflect)
     GET_ONE_FIELD(cfg,isref3)
     GET_ONE_FIELD(cfg,isrefint)
@@ -377,6 +403,36 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
             cfg->nphoton=arraydim[1];
             printf("mcx.nphoton=%d;\n",cfg->nphoton);
         }
+    }else if(strcmp(name,"gpuid")==0){
+        int len=mxGetNumberOfElements(item);
+
+        if(mxIsChar(item)){
+	   if(len==0)
+             mexErrMsgTxt("the 'gpuid' field must be an integer or non-empty string");
+	   if(len>MAX_DEVICE)
+		mexErrMsgTxt("the 'gpuid' field is too long");
+           int status = mxGetString(item, cfg->deviceid, MAX_DEVICE);
+           if (status != 0)
+        	mexWarnMsgTxt("not enough space. string is truncated.");
+
+           printf("mcx.gpuid='%s';\n",cfg->deviceid);
+	}else{
+           double *val=mxGetPr(item);
+	   cfg->gpuid=val[0];
+           if(cfg->gpuid<MAX_DEVICE)
+           	cfg->deviceid[cfg->gpuid-1]='1';
+           else
+           	mexErrMsgTxt("GPU id can not be more than 256");
+           printf("mcx.gpuid=%d;\n",cfg->gpuid);
+	}
+    }else if(strcmp(name,"workload")==0){
+        double *val=mxGetPr(item);
+	arraydim=mxGetDimensions(item);
+	if(arraydim[0]*arraydim[1]>MAX_DEVICE)
+	     mexErrMsgTxt("the workload list can not be longer than 256");
+	for(i=0;i<arraydim[0]*arraydim[1];i++)
+	     cfg->workload[i]=val[i];
+        printf("mcx.workload=<<%d>>;\n",arraydim[0]*arraydim[1]);
     }else{
         printf("WARNING: redundant field '%s'\n",name);
     }

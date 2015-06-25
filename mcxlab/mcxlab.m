@@ -3,7 +3,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+%Copyright (c) 2010-2015 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 %                      URL: http://mcx.sf.net
 %====================================================================
 %
@@ -41,6 +41,15 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
 %      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
+%                      if set to an integer, gpuid specifies the index (starts at 1)
+%                      of the GPU for the simulation; if set to a binary string made
+%                      of 1s and 0s, it enables multiple GPUs. For example, '1101'
+%                      allows to use the 1st, 2nd and 4th GPUs together.
+%      cfg.workload    an array denoting the relative loads of each selected GPU. 
+%                      for example, [50,20,30] allocates 50%, 20% and 30% photons to the
+%                      3 selected GPUs, respectively; [10,10] evenly divides the load 
+%                      between 2 active GPUs. A simple load balancing strategy is to 
+%                      use the GPU core counts as the weight.
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
 %      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
 %      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
@@ -108,9 +117,6 @@ function [flux,detphoton]=mcxlab(cfg)
 %            a byte array (uint8) for each detected photon. The column number
 %            of seed equals that of detphoton.
 %
-%      if detphoton is ignored, the detected photon will be saved in a .mch file 
-%      if cfg.issavedeet=1; if no output is given, the flux will be saved to a 
-%      .mc2 file if cfg.issave2pt=1 (which is true by default).
 %
 % Example:
 %      cfg.nphoton=1e7;

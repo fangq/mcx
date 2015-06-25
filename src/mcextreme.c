@@ -18,10 +18,14 @@
 #include "tictoc.h"
 #include "mcx_utils.h"
 #include "mcx_core.h"
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 
 int main (int argc, char *argv[]) {
      Config  mcxconfig;
      GPUInfo *gpuinfo=NULL;
+     unsigned int activedev=0;
 
      mcx_initcfg(&mcxconfig);
 
@@ -29,12 +33,22 @@ int main (int argc, char *argv[]) {
      mcx_parsecmd(argc,argv,&mcxconfig);
 
      // identify gpu number and set one gpu active
-     if(!mcx_set_gpu(&mcxconfig,&gpuinfo)){
+     if(!(activedev=mcx_list_gpu(&mcxconfig,&gpuinfo))){
          mcx_error(-1,"No GPU device found\n",__FILE__,__LINE__);
      }
 
+#ifdef _OPENMP
+     omp_set_num_threads(activedev);
+     #pragma omp parallel
+     {
+#endif
+
      // this launches the MC simulation
-     mcx_run_simulation(&mcxconfig);
+     mcx_run_simulation(&mcxconfig,gpuinfo);
+
+#ifdef _OPENMP
+     }
+#endif
 
      // clean up the allocated memory in config and gpuinfo
      mcx_cleargpuinfo(&gpuinfo);

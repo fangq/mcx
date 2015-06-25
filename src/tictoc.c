@@ -20,22 +20,27 @@
 #include <cuda.h>
 #include <driver_types.h>
 #include <cuda_runtime_api.h>
+#define MAX_DEVICE 256
 /* use CUDA timer */
-static cudaEvent_t timerStart, timerStop;
+static cudaEvent_t timerStart[MAX_DEVICE], timerStop[MAX_DEVICE];
 
 unsigned int GetTimeMillis () {
   float elapsedTime;
-  cudaEventRecord(timerStop,0);
-  cudaEventSynchronize(timerStop);
-  cudaEventElapsedTime(&elapsedTime, timerStart, timerStop);
+  int devid;
+  cudaGetDevice(&devid);
+  cudaEventRecord(timerStop[devid],0);
+  cudaEventSynchronize(timerStop[devid]);
+  cudaEventElapsedTime(&elapsedTime, timerStart[devid], timerStop[devid]);
   return (unsigned int)(elapsedTime);
 }
 
 unsigned int StartTimer () {
-  cudaEventCreate(&timerStart);
-  cudaEventCreate(&timerStop);
+  int devid;
+  cudaGetDevice(&devid);
+  cudaEventCreate(timerStart+devid);
+  cudaEventCreate(timerStop+devid);
 
-  cudaEventRecord(timerStart,0);
+  cudaEventRecord(timerStart[devid],0);
   return 0;
 }
 

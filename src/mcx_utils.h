@@ -8,6 +8,7 @@
 
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  256
+#define MAX_DEVICE          256
 
 #ifndef MCX_CUDA_ARCH
   #define MCX_CUDA_ARCH       100
@@ -18,6 +19,7 @@
 #define MAX(a,b)           ((a)>(b)?(a):(b))
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otTaylor};
+enum TMCXParent  {mpStandalone, mpMATLAB};
 
 typedef struct MCXMedium{
 	float mua;
@@ -56,11 +58,11 @@ typedef struct MCXGPUInfo {
 	int clock;
 	int sm, core;
 	int autoblock, autothread;
+	int maxgate;
 } GPUInfo;
 
 typedef struct MCXConfig{
 	int nphoton;      /**<total simulated photon number*/
-	//int totalmove;   /**< [depreciated] total move per photon*/
         unsigned int nblocksize;   /**<thread block size*/
 	unsigned int nthread;      /**<num of total threads, multiple of 128*/
 	int seed;         /**<random number generator seed*/
@@ -97,7 +99,7 @@ typedef struct MCXConfig{
 	char isrowmajor;    /**<1 for C-styled array in vol, 0 for matlab-styled array*/
 	char isreflect;     /**<1 for reflecting photons at boundary,0 for exiting*/
         char isref3;        /**<1 considering maximum 3 ref. interfaces; 0 max 2 ref*/
-        char isrefint;   /**<1 to consider reflections at internal boundaries; 0 do not*/
+        char isrefint;      /**<1 to consider reflections at internal boundaries; 0 do not*/
 	char isnormalized;  /**<1 to normalize the fluence, 0 for raw fluence*/
 	char issavedet;     /**<1 to count all photons hits the detectors*/
 	char issave2pt;     /**<1 to save the 2-point distribution, 0 do not save*/
@@ -106,7 +108,8 @@ typedef struct MCXConfig{
         char isdumpmask;    /**<1 dump detector mask; 0 not*/
 	char autopilot;     /**<1 optimal setting for dedicated card, 2, for non dedicated card*/
 	char issaveseed;    /**<1 save the seed for a detected photon, 0 do not save*/
-	char srctype;
+	char srctype;       /**<0:pencil,1:isotropic,2:cone,3:gaussian,4:planar,5:pattern,\
+                                6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian*/
         char outputtype;    /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
         float minenergy;    /**<minimum energy to propagate photon*/
 	float unitinmm;     /**<defines the length unit in mm for grid*/
@@ -115,18 +118,25 @@ typedef struct MCXConfig{
 	float *exportfield;     /**<memory buffer when returning the flux to external programs such as matlab*/
 	float *exportdetected;  /**<memory buffer when returning the partial length info to external programs such as matlab*/
 	unsigned int detectedcount; /**<total number of detected photons*/
+	float energytot, energyabs, energyesc;
         char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
         char *shapedata;    /**<a pointer points to a string defining the JSON-formatted shape data*/
 	int maxvoidstep;
 	int voidtime;
-	float4 srcparam1;
-	float4 srcparam2;
-        float* srcpattern;
+	float4 srcparam1;   /**<a quadruplet {x,y,z,w} for additional source parameters*/
+	float4 srcparam2;   /**<a quadruplet {x,y,z,w} for additional source parameters*/
+        float* srcpattern;  /**<a string for the source form, options include "pencil","isotropic",\
+	                        "cone","gaussian","planar", "pattern","fourier","arcsine","disk",\
+				"fourierx","fourierx2d","zgaussian"*/
 	Replay replay;
 	void *seeddata;
         int replaydet;      /**<the detector id for which to replay the detected photons, start from 1*/
         char seedfile[MAX_PATH_LENGTH];
         unsigned int debuglevel; /**<a flag to control the printing of the debug information*/
+        char deviceid[MAX_DEVICE];
+        float workload[MAX_DEVICE];
+        int parentid;
+	unsigned int runtime;
 } Config;
 
 #ifdef	__cplusplus
@@ -158,6 +168,7 @@ int  mcx_parsedebugopt(char *debugopt,const char *debugflag);
 void mcx_savedetphoton(float *ppath, void *seeds, int count, int seedbyte, Config *cfg);
 void mcx_loadseedfile(Config *cfg);
 void mcx_cleargpuinfo(GPUInfo **gpuinfo);
+int  mcx_isbinstr(const char * str);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus
@@ -167,15 +178,15 @@ extern "C"
 #endif
 
 #ifdef MCX_CONTAINER
-  #define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__);mexEvalString("drawnow;")
+  #define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__)
 #else
   #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__)
 #endif
 
-#ifdef MATLAB_MEX_FILE
- int mexPrintf(const char * format, ... );
+#if defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER)
+    int mexPrintf(const char * format, ... );
 #else
- void mexPrintf(const char * format, ... );
+    void mexPrintf(const char * format, ... );
 #endif
 int mexEvalString(const char *command);
 

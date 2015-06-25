@@ -25,6 +25,10 @@
 #include "logistic_rand.cu" // use Logistic Lattice ring 5 RNG (LL5)
 #endif
 
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
 // optical properties saved in the constant memory
 // {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n)
 __constant__ float4 gproperty[MAX_PROP];
@@ -304,8 +308,11 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	 clearpath(ppath,gcfg->maxmedia);
       }
 #endif
-      if(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons)))
+
+      if((int)(f->ndone)>=(gcfg->threadphoton+(threadid<gcfg->oddphotons))){
+//printf("[%g] %d %d %d %d\n",f->ndone,(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons)) )? 1: 2,gcfg->threadphoton,threadid,gcfg->oddphotons); 
           return 1; // all photos complete
+      }
       if(gcfg->seed==SEED_FROM_FILE){
           int seedoffset=(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+(int)f->ndone)*RAND_BUF_LEN;
           for(int i=0;i<RAND_BUF_LEN;i++)
@@ -817,13 +824,14 @@ int mcx_corecount(int v1, int v2){
 /**
   query GPU info and set active GPU
 */
-int mcx_set_gpu(Config *cfg, GPUInfo **info){
+int mcx_list_gpu(Config *cfg, GPUInfo **info){
 
 #if __DEVICE_EMULATION__
     return 1;
 #else
     int dev;
-    int deviceCount;
+    int deviceCount,activedev=0;
+
     cudaGetDeviceCount(&deviceCount);
     if (deviceCount == 0){
         MCX_FPRINTF(stderr,"No CUDA-capable GPU device found\n");
@@ -838,30 +846,14 @@ int mcx_set_gpu(Config *cfg, GPUInfo **info){
     for (dev = 0; dev<deviceCount; dev++) {
         cudaDeviceProp dp;
         cudaGetDeviceProperties(&dp, dev);
-	if(cfg->autopilot && ((cfg->gpuid && dev==cfg->gpuid-1)
-	 ||(cfg->gpuid==0 && dev==deviceCount-1) )){
-                unsigned int needmem=cfg->dim.x*cfg->dim.y*cfg->dim.z; /*for mediam*/
-		if(cfg->autopilot==1){
-#ifdef USE_MT_RAND
-                        cfg->nblocksize=1;
-#else
-			cfg->nblocksize=64;
-#endif
-			cfg->nthread=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor)*32;
-			needmem+=cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)+10*1024*1024; /*keep 10M for other things*/
-			cfg->maxgate=((unsigned int)dp.totalGlobalMem-needmem)/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
-			cfg->maxgate=MIN((int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5),cfg->maxgate);
-			MCX_FPRINTF(cfg->flog,"autopilot mode: setting thread number to %d, block size to %d and time gates to %d\n",cfg->nthread,cfg->nblocksize,cfg->maxgate);
-		}else if(cfg->autopilot==2){
-#ifdef USE_MT_RAND
-                        cfg->nblocksize=1;
-#else
-                        cfg->nblocksize=64;
-#endif
-			cfg->nthread=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor)*16;
-                        MCX_FPRINTF(cfg->flog,"autopilot mode: setting thread number to %d and block size to %d\n",cfg->nthread,cfg->nblocksize);
-		}
-	}
+
+	if(cfg->isgpuinfo==3)
+	   activedev++;
+        else if(cfg->deviceid[dev]=='1'){
+           cfg->deviceid[dev]='\0';
+           cfg->deviceid[activedev]=dev+1;
+           activedev++;
+        }
         strncpy((*info)[dev].name,dp.name,MAX_SESSION_LENGTH);
         (*info)[dev].id=dev+1;
 	(*info)[dev].devcount=deviceCount;
@@ -880,6 +872,7 @@ int mcx_set_gpu(Config *cfg, GPUInfo **info){
         (*info)[dev].autoblock=64;
 #endif
         (*info)[dev].autothread=(*info)[dev].core*32;
+        (*info)[dev].maxgate=cfg->maxgate;
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
@@ -897,23 +890,16 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 	  }
 	}
     }
-    if(cfg->isgpuinfo==2 && cfg->exportfield==NULL){ //list GPU info only
+    if(cfg->isgpuinfo==2 && cfg->parentid==mpStandalone){ //list GPU info only
           exit(0);
     }
-    if(cfg->isgpuinfo!=3){
-        if (cfg->gpuid==0)
-            mcx_cu_assess(cudaSetDevice(deviceCount-1),__FILE__,__LINE__);
-        else
-            mcx_cu_assess(cudaSetDevice(cfg->gpuid-1),__FILE__,__LINE__);
-    }
-
 #ifdef USE_MT_RAND
     if(cfg->nblocksize>N-M){
         mcx_error(-1,"block size can not be larger than 227 when using MT19937 RNG",__FILE__,__LINE__);
     }
 #endif
 
-    return deviceCount;
+    return activedev;
 #endif
 }
 
@@ -921,23 +907,22 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 /**
    host code for MCX kernels
 */
-void mcx_run_simulation(Config *cfg){
+void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      int i,iter;
      float  minstep=1.f; //MIN(MIN(cfg->steps.x,cfg->steps.y),cfg->steps.z);
      float4 p0=float4(cfg->srcpos.x,cfg->srcpos.y,cfg->srcpos.z,1.f);
      float4 c0=float4(cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,0.f);
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
-     float energyloss=0.f,energyabsorbed=0.f,energylaunched=0.f;
      float *energy;
-     int timegate=0, totalgates;
+     int timegate=0, totalgates, gpuid, gpuphoton=0,threadid=0;
 
      unsigned int photoncount=0,printnum;
      unsigned int tic,tic0,tic1,toc=0,fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
-     float Vvox,eabsorp;
+     float Vvox,fullload=0.f;
 
      dim3 mcgrid, mcblock;
      dim3 clgrid, clblock;
@@ -968,32 +953,91 @@ void mcx_run_simulation(Config *cfg){
      if(param.isatomic)
          param.skipradius2=0.f;
 
+#ifdef _OPENMP
+     threadid=omp_get_thread_num();
+#endif
+     if(threadid<MAX_DEVICE && cfg->deviceid[threadid]=='\0')
+           return;
+
+     gpuid=cfg->deviceid[threadid]-1;
+     mcx_cu_assess(cudaSetDevice(gpuid),__FILE__,__LINE__);
+
+     if(gpu[gpuid].maxgate==0 && dimxyz>0){
+         int needmem=dimxyz+cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)+10*1024*1024; /*keep 10M for other things*/
+         gpu[gpuid].maxgate=(gpu[gpuid].globalmem-needmem)/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
+         gpu[gpuid].maxgate=MIN((unsigned int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5),gpu[gpuid].maxgate);     
+     }
+     /*only allow the master thread to modify cfg, others are read-only*/
+#pragma omp master
+{
+     if(cfg->exportfield==NULL)
+         cfg->exportfield=(float *)calloc(sizeof(float)*cfg->dim.x*cfg->dim.y*cfg->dim.z,gpu[gpuid].maxgate*2);
+     if(cfg->exportdetected==NULL)
+         cfg->exportdetected=(float*)malloc((cfg->medianum+1)*cfg->maxdetphoton*sizeof(float));
+     if(cfg->issaveseed && cfg->seeddata==NULL)
+         cfg->seeddata=malloc(cfg->maxdetphoton*sizeof(float)*RAND_BUF_LEN);
+     cfg->detectedcount=0;
+     cfg->his.detected=0;
+     cfg->energytot=0.f;
+     cfg->energyabs=0.f;
+     cfg->energyesc=0.f;
+     cfg->runtime=0;
+}
+#pragma omp barrier
+
+     if(!cfg->autopilot){
+	gpu[gpuid].autothread=cfg->nthread;
+	gpu[gpuid].autoblock=cfg->nblocksize;
+	gpu[gpuid].maxgate=cfg->maxgate;
+     }
+     if(gpu[gpuid].autothread%gpu[gpuid].autoblock)
+     	gpu[gpuid].autothread=(gpu[gpuid].autothread/gpu[gpuid].autoblock)*gpu[gpuid].autoblock;
+
+     MCX_FPRINTF(cfg->flog,"autopilot mode: setting thread number to %d, block size to %d and time gates to %d\n",gpu[gpuid].autothread,gpu[gpuid].autoblock,gpu[gpuid].maxgate);
+
      if(cfg->respin>1){
-         field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate*2);
+         field=(float *)calloc(sizeof(float)*dimxyz,gpu[gpuid].maxgate*2);
      }else{
-         field=(float *)calloc(sizeof(float)*dimxyz,cfg->maxgate); //the second half will be used to accumulate
+         field=(float *)calloc(sizeof(float)*dimxyz,gpu[gpuid].maxgate); //the second half will be used to accumulate
      }
 
-     if(cfg->nthread%cfg->nblocksize)
-     	cfg->nthread=(cfg->nthread/cfg->nblocksize)*cfg->nblocksize;
-     param.threadphoton=cfg->nphoton/cfg->nthread/cfg->respin;
-     param.oddphotons=cfg->nphoton/cfg->respin-param.threadphoton*cfg->nthread;
+     fullload=0.f;
+     for(i=0;cfg->deviceid[i];i++)
+        fullload+=cfg->workload[i];
+
+     if(fullload<EPS){
+        fullload=0.f;
+        for(i=0;cfg->deviceid[i];i++){
+            cfg->workload[i]=gpu[i].core;
+            fullload+=gpu[i].core;
+        }
+     }
+     gpuphoton=cfg->nphoton*cfg->workload[threadid]/fullload;
+     if(gpuphoton==0)
+        return;
+
+     param.threadphoton=gpuphoton/gpu[gpuid].autothread/cfg->respin;
+     param.oddphotons=gpuphoton/cfg->respin-param.threadphoton*gpu[gpuid].autothread;
      totalgates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
-     if(totalgates>cfg->maxgate && cfg->isnormalized){
+#pragma omp master
+     if(totalgates>gpu[gpuid].maxgate && cfg->isnormalized){
          MCX_FPRINTF(stderr,"WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n");
          cfg->isnormalized=0;
      }
-     fieldlen=dimxyz*cfg->maxgate;
-     cfg->detectedcount=0;
+#pragma omp barrier
 
-     mcgrid.x=cfg->nthread/cfg->nblocksize;
-     mcblock.x=cfg->nblocksize;
+     fieldlen=dimxyz*gpu[gpuid].maxgate;
+
+     mcgrid.x=gpu[gpuid].autothread/gpu[gpuid].autoblock;
+     mcblock.x=gpu[gpuid].autoblock;
 
      clgrid.x=cfg->dim.x;
      clgrid.y=cfg->dim.y;
      clblock.x=cfg->dim.z;
 
      if(cfg->debuglevel & MCX_DEBUG_RNG){
+#pragma omp master
+{
            param.twin0=cfg->tstart;
            param.twin1=cfg->tend;
            Pseed=(uint*)malloc(sizeof(uint)*RAND_SEED_LEN);
@@ -1012,11 +1056,11 @@ void mcx_run_simulation(Config *cfg){
            MCX_FPRINTF(cfg->flog,"kernel complete:  \t%d ms\nretrieving random numbers ... \t",tic1-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
-           cudaMemcpy(field, gfield,sizeof(float)*dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost);
+           cudaMemcpy(field, gfield,sizeof(float)*dimxyz*gpu[gpuid].maxgate,cudaMemcpyDeviceToHost);
            MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
 	   if(cfg->exportfield)
 	       memcpy(cfg->exportfield,field,fieldlen*sizeof(float));
-	   else{
+	   if(cfg->issave2pt && cfg->parentid==mpStandalone){
                MCX_FPRINTF(cfg->flog,"saving data to file ...\t");
 	       mcx_savedata(field,fieldlen,timegate>0,"mc2",cfg);
                MCX_FPRINTF(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
@@ -1028,26 +1072,29 @@ void mcx_run_simulation(Config *cfg){
 	   free(Pseed);
 
 	   cudaThreadExit();
+}
+#pragma omp barrier
+
 	   return;
      }
-     
-     Ppos=(float4*)malloc(sizeof(float4)*cfg->nthread);
-     Pdir=(float4*)malloc(sizeof(float4)*cfg->nthread);
-     Plen=(float4*)malloc(sizeof(float4)*cfg->nthread);
-     Plen0=(float4*)malloc(sizeof(float4)*cfg->nthread);
-     energy=(float*)calloc(cfg->nthread*3,sizeof(float));
+
+     Ppos=(float4*)malloc(sizeof(float4)*gpu[gpuid].autothread);
+     Pdir=(float4*)malloc(sizeof(float4)*gpu[gpuid].autothread);
+     Plen=(float4*)malloc(sizeof(float4)*gpu[gpuid].autothread);
+     Plen0=(float4*)malloc(sizeof(float4)*gpu[gpuid].autothread);
+     energy=(float*)calloc(gpu[gpuid].autothread*3,sizeof(float));
      Pdet=(float*)calloc(cfg->maxdetphoton,sizeof(float)*(detreclen));
-     Pseed=(uint*)malloc(sizeof(uint)*cfg->nthread*RAND_SEED_LEN);
+     Pseed=(uint*)malloc(sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN);
 
      mcx_cu_assess(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)),__FILE__,__LINE__);
      //cudaBindTexture(0, texmedia, gmedia);
      mcx_cu_assess(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen),__FILE__,__LINE__);
-     mcx_cu_assess(cudaMalloc((void **) &gPpos, sizeof(float4)*cfg->nthread),__FILE__,__LINE__);
-     mcx_cu_assess(cudaMalloc((void **) &gPdir, sizeof(float4)*cfg->nthread),__FILE__,__LINE__);
-     mcx_cu_assess(cudaMalloc((void **) &gPlen, sizeof(float4)*cfg->nthread),__FILE__,__LINE__);
+     mcx_cu_assess(cudaMalloc((void **) &gPpos, sizeof(float4)*gpu[gpuid].autothread),__FILE__,__LINE__);
+     mcx_cu_assess(cudaMalloc((void **) &gPdir, sizeof(float4)*gpu[gpuid].autothread),__FILE__,__LINE__);
+     mcx_cu_assess(cudaMalloc((void **) &gPlen, sizeof(float4)*gpu[gpuid].autothread),__FILE__,__LINE__);
      mcx_cu_assess(cudaMalloc((void **) &gPdet, sizeof(float)*cfg->maxdetphoton*(detreclen)),__FILE__,__LINE__);
      mcx_cu_assess(cudaMalloc((void **) &gdetected, sizeof(uint)),__FILE__,__LINE__);
-     mcx_cu_assess(cudaMalloc((void **) &genergy, sizeof(float)*cfg->nthread*3),__FILE__,__LINE__);
+     mcx_cu_assess(cudaMalloc((void **) &genergy, sizeof(float)*gpu[gpuid].autothread*3),__FILE__,__LINE__);
      if(cfg->issaveseed){
          seeddata=(RandType*)malloc(sizeof(RandType)*cfg->maxdetphoton*RAND_SEED_LEN);
 	 mcx_cu_assess(cudaMalloc((void **) &gseeddata, sizeof(RandType)*cfg->maxdetphoton*RAND_SEED_LEN),__FILE__,__LINE__);
@@ -1064,18 +1111,20 @@ void mcx_run_simulation(Config *cfg){
 	     mcx_cu_assess(cudaMemcpy(greplaytof,cfg->replay.tof,sizeof(float)*cfg->nphoton, cudaMemcpyHostToDevice),__FILE__,__LINE__);
 	 }
      }else
-         mcx_cu_assess(cudaMalloc((void **) &gPseed, sizeof(uint)*cfg->nthread*RAND_SEED_LEN),__FILE__,__LINE__);
-     
+         mcx_cu_assess(cudaMalloc((void **) &gPseed, sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN),__FILE__,__LINE__);
+
      if(cfg->srctype==MCX_SRC_PATTERN)
          mcx_cu_assess(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w)),__FILE__,__LINE__);
 
 #ifndef SAVE_DETECTORS
+#pragma omp master
      if(cfg->issavedet){
            MCX_FPRINTF(stderr,"WARNING: this MCX binary can not save partial path, please use mcx_det or mcx_det_cached\n");
            cfg->issavedet=0;
      }
+#pragma omp barrier
 #endif
-     
+
      /*volume is assumbed to be col-major*/
      cachebox.x=(cp1.x-cp0.x+1);
      cachebox.y=(cp1.y-cp0.y+1)*(cp1.x-cp0.x+1);
@@ -1097,24 +1146,26 @@ void mcx_run_simulation(Config *cfg){
      Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z; /*Vvox: voxel volume in mm^3*/
 
      if(cfg->seed>0)
-     	srand(cfg->seed);
+     	srand(cfg->seed+threadid);
      else
         srand(time(0));
-	
-     for (i=0; i<cfg->nthread; i++) {
+
+     for (i=0; i<gpu[gpuid].autothread; i++) {
 	   Ppos[i]=p0;  // initial position
            Pdir[i]=c0;
            Plen[i]=float4(0.f,0.f,param.minaccumtime,0.f);
      }
+     tic=StartTimer();
+#pragma omp master
+{
      mcx_printheader(cfg);
 
-     tic=StartTimer();
 #ifdef MCX_TARGET_NAME
      MCX_FPRINTF(cfg->flog,"- variant name: [%s] compiled for GPU Capability [%d] with CUDA [%d]\n",
-             "Fermi",MCX_CUDA_ARCH,CUDART_VERSION);
+         "Fermi",MCX_CUDA_ARCH,CUDART_VERSION);
 #else
      MCX_FPRINTF(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
-             MCX_CUDA_ARCH,CUDART_VERSION);
+         MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
      MCX_FPRINTF(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
 #ifdef SAVE_DETECTORS
@@ -1122,13 +1173,15 @@ void mcx_run_simulation(Config *cfg){
 #else
      MCX_FPRINTF(cfg->flog,"- this version CAN NOT save photons at the detectors\n\n");
 #endif
-     MCX_FPRINTF(cfg->flog,"threadph=%d oddphotons=%d np=%d nthread=%d repetition=%d\n",param.threadphoton,param.oddphotons,
-           cfg->nphoton,cfg->nthread,cfg->respin);
+     fflush(cfg->flog);
+}
+     MCX_FPRINTF(cfg->flog,"\nGPU=%d threadph=%d oddphotons=%d np=%d nthread=%d maxgate=%d repetition=%d\n",gpuid+1,param.threadphoton,param.oddphotons,
+           gpuphoton,gpu[gpuid].autothread,gpu[gpuid].maxgate,cfg->respin);
      MCX_FPRINTF(cfg->flog,"initializing streams ...\t");
      fflush(cfg->flog);
 
      cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice);
-     cudaMemcpy(genergy,energy,sizeof(float) *cfg->nthread*3, cudaMemcpyHostToDevice);
+     cudaMemcpy(genergy,energy,sizeof(float) *gpu[gpuid].autothread*3, cudaMemcpyHostToDevice);
      if(cfg->srcpattern)
          cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w), cudaMemcpyHostToDevice);
 
@@ -1141,12 +1194,12 @@ void mcx_run_simulation(Config *cfg){
          if one has to simulate a lot of time gates, using the GPU global memory
 	 requires extra caution. If the total global memory is bigger than the total
 	 memory to save all the snapshots, i.e. size(field)*(tend-tstart)/tstep, one
-	 simply sets cfg->maxgate to the total gate number; this will run GPU kernel
-	 once. If the required memory is bigger than the video memory, set cfg->maxgate
+	 simply sets gpu[gpuid].maxgate to the total gate number; this will run GPU kernel
+	 once. If the required memory is bigger than the video memory, set gpu[gpuid].maxgate
 	 to a number which fits, and the snapshot will be saved with an increment of 
-	 cfg->maxgate snapshots. In this case, the later simulations will restart from
+	 gpu[gpuid].maxgate snapshots. In this case, the later simulations will restart from
 	 photon launching and exhibit redundancies.
-	 
+
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
 #ifdef  USE_CACHEBOX
@@ -1154,7 +1207,7 @@ void mcx_run_simulation(Config *cfg){
         sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
 #endif
      if(cfg->issavedet)
-        sharedbuf+=cfg->nblocksize*sizeof(float)*(cfg->medianum-1);
+        sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
 #ifdef USE_MT_RAND
      sharedbuf+=(N+2)*sizeof(uint); // MT RNG uses N+2 uint in the shared memory
 #endif
@@ -1162,10 +1215,10 @@ void mcx_run_simulation(Config *cfg){
      MCX_FPRINTF(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
      //simulate for all time-gates in maxgate groups per run
-     for(timegate=0;timegate<totalgates;timegate+=cfg->maxgate){
+     for(timegate=0;timegate<totalgates;timegate+=gpu[gpuid].maxgate){
 
        param.twin0=cfg->tstart+cfg->tstep*timegate;
-       param.twin1=param.twin0+cfg->tstep*cfg->maxgate;
+       param.twin1=param.twin0+cfg->tstep*gpu[gpuid].maxgate;
        cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice);
 
        MCX_FPRINTF(cfg->flog,"lauching MCX simulation for time window [%.2ens %.2ens] ...\n"
@@ -1179,13 +1232,13 @@ void mcx_run_simulation(Config *cfg){
 	       mcx_cu_assess(cudaMemset(gseeddata,0,sizeof(RandType)*cfg->maxdetphoton*RAND_BUF_LEN),__FILE__,__LINE__);
            mcx_cu_assess(cudaMemset(gdetected,0,sizeof(float)),__FILE__,__LINE__);
 
- 	   mcx_cu_assess(cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
-	   mcx_cu_assess(cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
-	   mcx_cu_assess(cudaMemcpy(gPlen,  Plen,  sizeof(float4)*cfg->nthread,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
+ 	   mcx_cu_assess(cudaMemcpy(gPpos,  Ppos,  sizeof(float4)*gpu[gpuid].autothread,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
+	   mcx_cu_assess(cudaMemcpy(gPdir,  Pdir,  sizeof(float4)*gpu[gpuid].autothread,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
+	   mcx_cu_assess(cudaMemcpy(gPlen,  Plen,  sizeof(float4)*gpu[gpuid].autothread,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
            if(cfg->seed!=SEED_FROM_FILE){
-             for (i=0; i<cfg->nthread*RAND_SEED_LEN; i++)
+             for (i=0; i<gpu[gpuid].autothread*RAND_SEED_LEN; i++)
                Pseed[i]=rand();
-	     mcx_cu_assess(cudaMemcpy(gPseed, Pseed, sizeof(uint)*cfg->nthread*RAND_SEED_LEN,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
+	     mcx_cu_assess(cudaMemcpy(gPseed, Pseed, sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN,  cudaMemcpyHostToDevice),__FILE__,__LINE__);
            }
            tic0=GetTimeMillis();
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
@@ -1198,11 +1251,9 @@ void mcx_run_simulation(Config *cfg){
            MCX_FPRINTF(cfg->flog,"kernel complete:  \t%d ms\nretrieving fields ... \t",tic1-tic);
            mcx_cu_assess(cudaGetLastError(),__FILE__,__LINE__);
 
-           mcx_cu_assess(cudaMemcpy(Plen0,  gPlen,  sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost),__FILE__,__LINE__);
-           cfg->his.totalphoton=0;
-           for(i=0;i<cfg->nthread;i++)
-	      cfg->his.totalphoton+=int(Plen0[i].w+0.5f);
-           photoncount+=cfg->his.totalphoton;
+           mcx_cu_assess(cudaMemcpy(Plen0,  gPlen,  sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost),__FILE__,__LINE__);
+           for(i=0;i<gpu[gpuid].autothread;i++)
+	      photoncount+=int(Plen0[i].w+0.5f);
 
 #ifdef SAVE_DETECTORS
            if(cfg->issavedet){
@@ -1215,111 +1266,130 @@ void mcx_run_simulation(Config *cfg){
 is more than what your have specified (%d), please use the -H option to specify a greater number\t"
                            ,detected,cfg->maxdetphoton);
 		}else{
-			MCX_FPRINTF(cfg->flog,"detected %d photons, total: %d\t",detected,cfg->detectedcount);
+			MCX_FPRINTF(cfg->flog,"detected %d photons, total: %d\t",detected,cfg->detectedcount+detected);
 		}
-		cfg->his.unitinmm=cfg->unitinmm;
-		cfg->his.detected=detected;
-		cfg->his.savedphoton=MIN(detected,cfg->maxdetphoton);
-		if(cfg->issaveseed)
-		    cfg->his.seedbyte=sizeof(RandType)*RAND_BUF_LEN;
+#pragma omp atomic
+                cfg->his.detected+=detected;
+                detected=MIN(detected,cfg->maxdetphoton);
 		if(cfg->exportdetected){
-                        cfg->exportdetected=(float*)realloc(cfg->exportdetected,(cfg->detectedcount+cfg->his.savedphoton)*detreclen*sizeof(float));
-			if(cfg->seeddata)
-			    cfg->seeddata=(RandType*)realloc(cfg->seeddata,(cfg->detectedcount+cfg->his.savedphoton)*sizeof(RandType)*RAND_BUF_LEN);
-	                memcpy(cfg->exportdetected+cfg->detectedcount*(detreclen),Pdet,cfg->his.savedphoton*(detreclen)*sizeof(float));
-			if(cfg->seeddata)
-			    memcpy(((RandType*)cfg->seeddata)+cfg->detectedcount*RAND_BUF_LEN,seeddata,cfg->his.savedphoton*sizeof(RandType)*RAND_BUF_LEN);
-                        cfg->detectedcount+=cfg->his.savedphoton;
-		}else{
-			mcx_savedetphoton(Pdet,seeddata,cfg->his.savedphoton,timegate>0,cfg);
-                }
+#pragma omp critical
+{
+                        cfg->exportdetected=(float*)realloc(cfg->exportdetected,(cfg->detectedcount+detected)*detreclen*sizeof(float));
+			if(cfg->issaveseed && cfg->seeddata)
+			    cfg->seeddata=(RandType*)realloc(cfg->seeddata,(cfg->detectedcount+detected)*sizeof(RandType)*RAND_BUF_LEN);
+	                memcpy(cfg->exportdetected+cfg->detectedcount*(detreclen),Pdet,detected*(detreclen)*sizeof(float));
+			if(cfg->issaveseed && cfg->seeddata)
+			    memcpy(((RandType*)cfg->seeddata)+cfg->detectedcount*RAND_BUF_LEN,seeddata,detected*sizeof(RandType)*RAND_BUF_LEN);
+                        cfg->detectedcount+=detected;
+}
+		}
 	   }
 #endif
 
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
-               mcx_cu_assess(cudaMemcpy(field, gfield,sizeof(float) *dimxyz*cfg->maxgate,cudaMemcpyDeviceToHost),__FILE__,__LINE__);
+               mcx_cu_assess(cudaMemcpy(field, gfield,sizeof(float) *dimxyz*gpu[gpuid].maxgate,cudaMemcpyDeviceToHost),__FILE__,__LINE__);
                MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
 
                if(cfg->respin>1){
                    for(i=0;i<(int)fieldlen;i++)  //accumulate field, can be done in the GPU
                       field[fieldlen+i]+=field[i];
                }
-               if(iter+1==cfg->respin){
-                   if(cfg->respin>1)  //copy the accumulated fields back
-                       memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
-
-                   if(cfg->isnormalized){
-		       float scale;
-                       MCX_FPRINTF(cfg->flog,"normalizing raw data ...\t");
-                       cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*3,cudaMemcpyDeviceToHost);
-                       eabsorp=0.f;
-                       for(i=1;i<cfg->nthread;i++){
-                           energy[0]+=energy[3*i];
-       	       	       	   energy[1]+=energy[3*i+1];
-       	       	       	   energy[2]+=energy[3*i+2];
-                       }
-		       for(i=0;i<cfg->nthread;i++)
-                           eabsorp+=Plen0[i].z;  // the accumulative absorpted energy near the source
-                       eabsorp+=energy[1];
-
-                       if(cfg->outputtype==otFlux || cfg->outputtype==otFluence){
-                           scale=(energy[2]-energy[0])/(energy[2]*Vvox*cfg->tstep*eabsorp);
-		           if(cfg->unitinmm!=1.f) 
-		               scale*=cfg->unitinmm; /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
-
-                           if(cfg->outputtype==otFluence)
-		               scale*=cfg->tstep;
-		       }else if(cfg->outputtype==otEnergy || cfg->outputtype==otJacobian)
-		           scale=1.f/energy[2];
-
-		     MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
-                     mcx_normalize(field,scale,fieldlen);
-                   }
-                   MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
-
-		   if(cfg->exportfield)
-	                   memcpy(cfg->exportfield+fieldlen*(timegate/cfg->maxgate),field,fieldlen*sizeof(float));
-		   else{
-                           MCX_FPRINTF(cfg->flog,"saving data to file ...\t");
-	                   mcx_savedata(field,fieldlen,timegate>0,"mc2",cfg);
-                           MCX_FPRINTF(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
-                           fflush(cfg->flog);
-                   }
-               }
            }
+       } /*end of respin loop*/
+
+#pragma omp critical
+       if(cfg->runtime<toc)
+           cfg->runtime=toc;
+
+       if(cfg->respin>1)  //copy the accumulated fields back
+           memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
+
+       if(cfg->isnormalized){
+           cudaMemcpy(energy,genergy,sizeof(float)*gpu[gpuid].autothread*3,cudaMemcpyDeviceToHost);
+#pragma omp critical
+           for(i=1;i<gpu[gpuid].autothread;i++){
+               cfg->energyesc+=energy[3*i];
+       	       cfg->energyabs+=energy[3*i+1];
+       	       cfg->energytot+=energy[3*i+2];
+           }
+	   for(i=0;i<gpu[gpuid].autothread;i++)
+               cfg->energyabs+=Plen0[i].z;  // the accumulative absorpted energy near the source
        }
+       MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
+
+       if(cfg->exportfield){
+	       for(i=0;i<fieldlen;i++)
+#pragma omp atomic
+                  cfg->exportfield[i]+=field[i];
+       }
+
        if(param.twin1<cfg->tend){
-            cudaMemset(genergy,0,sizeof(float)*cfg->nthread*3);
+            cudaMemset(genergy,0,sizeof(float)*gpu[gpuid].autothread*3);
        }
-     }
+     } /*end of time-gate group loop*/
+#pragma omp barrier
 
-     cudaMemcpy(Ppos,  gPpos, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Pdir,  gPdir, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Plen,  gPlen, sizeof(float4)*cfg->nthread, cudaMemcpyDeviceToHost);
-     cudaMemcpy(Pseed, gPseed,sizeof(uint)  *cfg->nthread*RAND_SEED_LEN,   cudaMemcpyDeviceToHost);
-     cudaMemcpy(energy,genergy,sizeof(float)*cfg->nthread*3,cudaMemcpyDeviceToHost);
+     /*let the master thread to deal with the normalization and file IO*/
+#pragma omp master
+{
+     if(cfg->isnormalized){
+	   float scale;
+           MCX_FPRINTF(cfg->flog,"normalizing raw data ...\t");
 
-     for (i=0; i<cfg->nthread; i++) {
-          energyloss+=energy[3*i];
-          energyabsorbed+=energy[3*i+1];
-          energylaunched+=energy[3*i+2];
+           if(cfg->outputtype==otFlux || cfg->outputtype==otFluence){
+               scale=(cfg->energytot-cfg->energyesc)/(cfg->energytot*Vvox*cfg->tstep*cfg->energyabs);
+	       if(cfg->unitinmm!=1.f)
+		   scale*=cfg->unitinmm; /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
+
+               if(cfg->outputtype==otFluence)
+		   scale*=cfg->tstep;
+	   }else if(cfg->outputtype==otEnergy || cfg->outputtype==otJacobian)
+	       scale=1.f/cfg->energytot;
+
+	 MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
+         mcx_normalize(cfg->exportfield,scale,fieldlen);
      }
+     if(cfg->issave2pt && cfg->parentid==mpStandalone){
+         MCX_FPRINTF(cfg->flog,"saving data to file ... %d %d\t",fieldlen,gpu[gpuid].maxgate);
+         mcx_savedata(cfg->exportfield,fieldlen,0,"mc2",cfg);
+         MCX_FPRINTF(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
+         fflush(cfg->flog);
+     }
+     if(cfg->issavedet && cfg->parentid==mpStandalone && cfg->exportdetected){
+         cfg->his.unitinmm=cfg->unitinmm;
+         cfg->his.savedphoton=cfg->detectedcount;
+         if(cfg->issaveseed)
+             cfg->his.seedbyte=sizeof(RandType)*RAND_BUF_LEN;
+
+         cfg->his.detected=cfg->detectedcount;
+         mcx_savedetphoton(cfg->exportdetected,cfg->seeddata,cfg->detectedcount,0,cfg);
+     }
+}
+#pragma omp barrier
+
+     cudaMemcpy(Ppos,  gPpos, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pdir,  gPdir, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Plen,  gPlen, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost);
+     cudaMemcpy(Pseed, gPseed,sizeof(uint)  *gpu[gpuid].autothread*RAND_SEED_LEN,   cudaMemcpyDeviceToHost);
+     cudaMemcpy(energy,genergy,sizeof(float)*gpu[gpuid].autothread*3,cudaMemcpyDeviceToHost);
 
 #ifdef TEST_RACING
      {
        float totalcount=0.f,hitcount=0.f;
        for (i=0; i<fieldlen; i++)
           hitcount+=field[i];
-       for (i=0; i<cfg->nthread; i++)
+       for (i=0; i<gpu[gpuid].autothread; i++)
 	  totalcount+=Pseed[i];
-     
+
        MCX_FPRINTF(cfg->flog,"expected total recording number: %f, got %f, missed %f\n",
           totalcount,hitcount,(totalcount-hitcount)/totalcount);
      }
 #endif
 
-     printnum=cfg->nthread<cfg->printnum?cfg->nthread:cfg->printnum;
+#pragma omp master
+{
+     printnum=gpu[gpuid].autothread<cfg->printnum?gpu[gpuid].autothread:cfg->printnum;
      for (i=0; i<(int)printnum; i++) {
             MCX_FPRINTF(cfg->flog,"% 4d[A% f % f % f]C%3d J%5d W% 8f(P%.13f %.13f %.13f)T% 5.3e L% 5.3f %.0f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
@@ -1327,10 +1397,12 @@ is more than what your have specified (%d), please use the -H option to specify 
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
      MCX_FPRINTF(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
-             photoncount,cfg->nphoton,cfg->nthread,cfg->respin,(double)photoncount/toc); fflush(cfg->flog);
+             cfg->nphoton,cfg->nphoton,gpu[gpuid].autothread,cfg->respin,(double)cfg->nphoton/cfg->runtime); fflush(cfg->flog);
      MCX_FPRINTF(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
-             energyloss,energylaunched-energyloss,energylaunched);fflush(cfg->flog);
+             cfg->energyesc,cfg->energytot-cfg->energyesc,cfg->energytot);fflush(cfg->flog);
      fflush(cfg->flog);
+}
+#pragma omp barrier
 
      cudaFree(gmedia);
      cudaFree(gfield);
@@ -1349,6 +1421,7 @@ is more than what your have specified (%d), please use the -H option to specify 
          cudaFree(greplayw);
          cudaFree(greplaytof);
      }
+
      cudaThreadExit();
 
      free(Ppos);
