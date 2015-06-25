@@ -20,36 +20,36 @@ extern "C" {
 
 typedef float4 MCXpos;
 
-typedef struct MCXDir{
+typedef struct  __align__(16) MCXDir{
         float x; /*directional vector of the photon, unit-less*/
 	float y;
 	float z;
         float nscat; /*total number of scattering events*/
 }MCXdir;
 
-typedef struct MCXTimer{
+typedef struct  __align__(16) MCXTimer{
         float pscat; /*remaining scattering probability, unit-less*/
         float t;     /*photon elapse time, unit=s*/
 	float tnext; /*time for the next accumulation,unit=s*/
 	float ndone; /*number of completed photons*/
 }MCXtime;
 
-typedef union GPosition{
+typedef union  __align__(16) GPosition{
 	MCXpos d;
 	float4 v;
 }Gpos;
 
-typedef union GDirection{
+typedef union  __align__(16) GDirection{
         MCXdir d;
         float4 v;
 }Gdir;
 
-typedef union GLength{
+typedef union  __align__(16) GLength{
         MCXtime d;
         float4 v;
 }Glen;
 
-typedef union GProperty{
+typedef union  __align__(16) GProperty{
         Medium d; /*defined in mcx_utils.h*/
         float4 v;
 }Gprop;
@@ -90,8 +90,8 @@ typedef struct  __align__(16) KernelParams {
   int oddphotons;
 }MCXParam;
 
-void mcx_run_simulation(Config *cfg);
-int  mcx_set_gpu(Config *cfg, GPUInfo **info);
+void mcx_run_simulation(Config *cfg,GPUInfo *gpu);
+int  mcx_list_gpu(Config *cfg, GPUInfo **info);
 
 #ifdef  __cplusplus
 }
