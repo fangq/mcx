@@ -1211,6 +1211,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                     break;
                                 }else{
                                     i=mcx_readarg(argc,argv,i,&(cfg->gpuid),"int");
+                                    memset(cfg->deviceid,0,MAX_DEVICE);
                                     if(cfg->gpuid<MAX_DEVICE)
                                          cfg->deviceid[cfg->gpuid-1]='1';
                                     else
@@ -1344,10 +1345,10 @@ void mcx_version(Config *cfg){
 }
 
 int mcx_isbinstr(const char * str){
-    int len=strlen(str);
+    int i, len=strlen(str);
     if(len==0)
         return 0;
-    for(int i=0;i<len;i++)
+    for(i=0;i<len;i++)
         if(str[i]!='0' && str[i]!='1')
 	   return 0;
     return 1;
