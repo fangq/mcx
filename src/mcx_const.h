@@ -5,7 +5,7 @@
 #define ONE_PI             3.1415926535897932f     //pi
 #define TWO_PI             6.28318530717959f       //2*pi
 #define R_PI               0.318309886183791f      // 1/pi
-#define EPS                1e-10f                  //round-off limit
+#define EPS                1e-6f                   //round-off limit
 
 #define C0                 299792458000.f          //speed of light in mm/s
 #define R_C0               3.335640951981520e-12f  //1/C0 in s/mm

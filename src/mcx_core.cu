@@ -947,7 +947,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<1e-5 /*isatomic*/,
+		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     cfg->maxvoidstep,cfg->issaveseed>0,cfg->maxdetphoton*(cfg->medianum+1),cfg->seed,cfg->outputtype,0,0};
      int detreclen=cfg->medianum+1;
      if(param.isatomic)
@@ -1203,7 +1203,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
 #ifdef  USE_CACHEBOX
-     if(cfg->sradius>EPS || ABS(cfg->sradius+1.f)<1e-5f)
+     if(cfg->sradius>EPS || ABS(cfg->sradius+1.f)<EPS)
         sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
 #endif
      if(cfg->issavedet)
