@@ -3,7 +3,7 @@
                           CUDA Edition
 ---------------------------------------------------------------------
 
-Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
 Version: 0.9.7-2 (Dark Matter - Alpha update 2)
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
 **
 **  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
-**  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+**  Author: Qianqian Fang <q.fang at neu.edu>
 **
 **  Reference (Fang2009):
 **        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
@@ -1362,9 +1362,10 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#     Copyright (c) 2009-2015 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #\n\
+#          Copyright (c) 2009-2015 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                                                                             #\n\
-#    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #\n\
+#                    Computational Imaging Laboratory (CIL)                   #\n\
+#            Department of Bioengineering, Northeastern University            #\n\
 ###############################################################################\n\
 $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
 ###############################################################################\n");

@@ -3,9 +3,9 @@
 **  Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **  
 **  Author     : Qianqian Fang
-**  Email      : <fangq at nmr.mgh.harvard.edu>
-**  Institution: Massachusetts General Hospital / Harvard Medical School
-**  Address    : Bldg. 149, 13th Street, Charlestown, MA 02148, USA
+**  Email      : <q.fang at neu.edu>
+**  Institution: Department of Bioengineering, Northeastern University
+**  Address    : 360 Huntington Ave, Boston, MA 02115
 **  Homepage   : http://nmr.mgh.harvard.edu/~fangq/
 **
 **  MCX Web    : http://mcx.sourceforge.net

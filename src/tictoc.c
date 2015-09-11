@@ -1,7 +1,7 @@
 /*******************************************************************************
 **
 **  Monte Carlo eXtreme (MCX)  - GPU accelerated Monte Carlo 3D photon migration
-**  Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
+**  Author: Qianqian Fang <q.fang at neu.edu>
 **
 **  Reference (Fang2009):
 **        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
