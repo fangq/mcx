@@ -196,7 +196,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	if(nlhs>=2){
             fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.detectedcount; 
             fielddim[2]=0; fielddim[3]=0;
-            if(cfg.his.savedphoton>0){
+            if(cfg.detectedcount>0){
                     mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
                     memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[1],jstruct,0)),cfg.exportdetected,
                          fielddim[0]*fielddim[1]*sizeof(float));
@@ -263,6 +263,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,voidtime)
     GET_ONE_FIELD(cfg,issaveseed)
     GET_ONE_FIELD(cfg,replaydet)
+    GET_ONE_FIELD(cfg,faststep)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC3_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)

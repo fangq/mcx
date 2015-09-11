@@ -5,6 +5,10 @@
 #include <vector_types.h>
 #include "br2cu.h"
 #include "cjson/cJSON.h"
+#include "float.h"
+
+#define EPS                FLT_EPSILON                   //round-off limit
+#define VERY_BIG           (1.f/FLT_EPSILON)             //a big number
 
 #define MAX_PATH_LENGTH     1024
 #define MAX_SESSION_LENGTH  256
@@ -111,6 +115,7 @@ typedef struct MCXConfig{
 	char srctype;       /**<0:pencil,1:isotropic,2:cone,3:gaussian,4:planar,5:pattern,\
                                 6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian*/
         char outputtype;    /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
+	char faststep;
         float minenergy;    /**<minimum energy to propagate photon*/
 	float unitinmm;     /**<defines the length unit in mm for grid*/
         FILE *flog;         /**<stream handle to print log information*/

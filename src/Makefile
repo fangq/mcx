@@ -23,7 +23,7 @@ ifeq ($(BACKEND),ocelot)
   CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
 else
   LINKOPT=-L/usr/local/cuda/lib -lcudart -lm
-  CUCCOPT=-Xptxas -v,-abi=no -g #-arch=sm_20 #--maxrregcount 32
+  CUCCOPT=-lineinfo #-g #-arch compute_20 #--maxrregcount 32
 endif
 
 DLLFLAG=-fPIC
@@ -64,7 +64,7 @@ all logfast:CUCCOPT+=-use_fast_math
 mt:         CUCCOPT+=-DUSE_MT_RAND
 fast:       CUCCOPT+=-DUSE_MT_RAND -use_fast_math
 log:        CUCCOPT+=
-debugmt:    CUCCOPT+=-DUSE_MT_RAND
+debugmt:    mt
 debuglog:   CUCCOPT+=
 racing:     CUCCOPT+=-DTEST_RACING
 mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"MT Atomic MCX"'
@@ -72,7 +72,7 @@ logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
 #fermimex:   CUCCOPT+=-DUSE_MT_RAND -use_fast_math
 mtbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"Cachebox MCX"'
-debugmt debuglog:	CUCCOPT+=-deviceemu
+debugmt debuglog:	CUCCOPT+=-DMCX_DEBUG
 mtatomic logatomic:	BINARY:=$(BINARY)_atomic
 det mex oct:    CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"Detective MCX"'
 detbox mexbox octbox fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch=sm_20
@@ -97,6 +97,9 @@ octbox oct fermioct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX -fopen
 oct:               BINARY=mcxlab.mex
 octbox:            BINARY=mcxlab_atom.mex
 octbox oct fermioct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
+
+debug: CUCCOPT+=-DMCX_DEBUG
+debug: fermi
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 

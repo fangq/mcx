@@ -12,7 +12,7 @@ extern "C" {
 #define DETINC	32
 #define MCX_DEBUG_RNG 1
 
-#ifdef __DEVICE_EMULATION__
+#ifdef  MCX_DEBUG
 #define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
 #else
 #define GPUDEBUG(x)
@@ -37,21 +37,25 @@ typedef struct  __align__(16) MCXTimer{
 typedef union  __align__(16) GPosition{
 	MCXpos d;
 	float4 v;
+	float  f[4];
 }Gpos;
 
 typedef union  __align__(16) GDirection{
         MCXdir d;
         float4 v;
+	float  f[4];
 }Gdir;
 
 typedef union  __align__(16) GLength{
         MCXtime d;
         float4 v;
+	float  f[4];
 }Glen;
 
 typedef union  __align__(16) GProperty{
         Medium d; /*defined in mcx_utils.h*/
         float4 v;
+	float  f[4];
 }Gprop;
 
 typedef unsigned char uchar;
@@ -88,6 +92,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int outputtype;
   int threadphoton;
   int oddphotons;
+  int faststep;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu);

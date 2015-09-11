@@ -5,12 +5,10 @@
 #define ONE_PI             3.1415926535897932f     //pi
 #define TWO_PI             6.28318530717959f       //2*pi
 #define R_PI               0.318309886183791f      // 1/pi
-#define EPS                1e-6f                   //round-off limit
 
 #define C0                 299792458000.f          //speed of light in mm/s
 #define R_C0               3.335640951981520e-12f  //1/C0 in s/mm
 
-#define VERY_BIG           1e10f                   //a big number
 #define JUST_ABOVE_ONE     1.0001f                 //test for boundary
 #define JUST_BELOW_ONE     0.9998f                 //test for boundary
 #define SAME_VOXEL         -9999.f                 //scatter within a voxel

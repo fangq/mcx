@@ -40,7 +40,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','\0'};
+		 'k','q','Y','O','F','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -49,7 +49,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
-		 "--replaydet","--outputtype",""};
+		 "--replaydet","--outputtype","--faststep",""};
 
 const char outputtype[]={'x','f','e','j','t','\0'};
 const char debugflag[]={'R','\0'};
@@ -121,6 +121,7 @@ void mcx_initcfg(Config *cfg){
      cfg->outputtype=otFlux;
      cfg->detectedcount=0;
      cfg->runtime=0;
+     cfg->faststep=0;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -1271,6 +1272,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 else
                                         i=mcx_readarg(argc,argv,i,&(cfg->debuglevel),"int");
                                 break;
+		     case 'F':
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
+		     	        break;
 		}
 	    }
 	    i++;
@@ -1414,6 +1418,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
+ -F [1|0]      (--faststep)    1-use fast 1-mm stepping, 0-do exact ray-tracing\n\
  -v            (--version)     print MCX revision number\n\
 \n\
 example: (autopilot mode)\n\
