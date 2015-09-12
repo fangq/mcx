@@ -1419,7 +1419,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
- -F [1|0]      (--faststep)    1-use fast 1-mm stepping, 0-do exact ray-tracing\n\
+ -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing\n\
  -v            (--version)     print MCX revision number\n\
 \n\
 example: (autopilot mode)\n\

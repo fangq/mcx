@@ -94,6 +94,10 @@ function [flux,detphoton]=mcxlab(cfg)
 %                      the first non-zero voxel
 %      cfg.outputtype:  [X] - output flux, F - fluence, E - energy deposit
 %                       J - Jacobian (replay)
+%      cfg.faststep: when set to 1, this option enables the legacy 1mm fix-step photon
+%                    advancing strategy; although this method is fast, the results were
+%                    found inaccurate, and therefore is not recommended. Setting to 0
+%                    enables precise ray-tracing between voxels; this is the default.
 %
 %      fields with * are required; options in [] are the default values
 %
