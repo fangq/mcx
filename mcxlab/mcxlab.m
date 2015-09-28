@@ -88,6 +88,12 @@ function [flux,detphoton]=mcxlab(cfg)
 %                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
 %                               the phase shift is phi{x,y}*2*pi
 %                      'zgaussian' - an angular gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+%                      'line' - a line source, emitting from the line segment between 
+%                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating 
+%                               uniformly in the perpendicular direction
+%                      'slit' - a colimated slit beam emitting from the line segment between 
+%                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial  
+%                               dir specified by cfg.srcdir
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 

@@ -32,5 +32,7 @@
 #define MCX_SRC_FOURIERX   9  // same as Fourier, except the v1/v2 and v are orthogonal
 #define MCX_SRC_FOURIERX2D 10 // 2D (sin(kx*x+phix)*sin(ky*y+phiy)+1)/2
 #define MCX_SRC_ZGAUSSIAN  11 // Gaussian zenith anglular distribution
+#define MCX_SRC_LINE       12 // a non-directional line source
+#define MCX_SRC_SLIT       13 // a collimated line source
 
 #endif

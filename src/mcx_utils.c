@@ -54,7 +54,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 const char outputtype[]={'x','f','e','j','t','\0'};
 const char debugflag[]={'R','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
-    "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",""};
+    "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian","line","slit",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;

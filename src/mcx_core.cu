@@ -389,6 +389,23 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
               ang=sqrtf(-2.f*logf(rand_uniform01(t[0])))*(1.f-2.f*t[1])*gcfg->srcparam1.x;
 	      sincosf(ang,&stheta,&ctheta);
 	      rotatevector(v,stheta,ctheta,sphi,cphi);
+	  }else if(gcfg->srctype==MCX_SRC_LINE || gcfg->srctype==MCX_SRC_SLIT){
+	      rand_need_more(t,tnew);
+	      RandType r=rand_uniform01(t[0]);
+	      *((float4*)p)=float4(p->x+r*gcfg->srcparam1.x,
+	                	   p->y+r*gcfg->srcparam1.y,
+				   p->z+r*gcfg->srcparam1.z,
+				   p->w);
+              if(gcfg->srctype==MCX_SRC_LINE){
+	              float s,p;
+        	      rand_need_more(t,tnew);
+		      r=1.f-2.f*rand_uniform01(t[0]);
+        	      rand_need_more(t,tnew);
+		      s=1.f-2.f*rand_uniform01(t[0]);
+        	      rand_need_more(t,tnew);
+		      p=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t[0])>0.5f ? 1.f : -1.f);
+		      *((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
+	      }
 	  }
 	  if(*mediaid==0){
              int idx=skipvoid(p, v, f, media);
