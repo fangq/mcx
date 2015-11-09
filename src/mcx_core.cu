@@ -122,13 +122,13 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
 }
 #endif
 
-__device__ inline float hitgrid(float3 *p0, float3 *v, float3 *htime,int *id){
+__device__ inline float hitgrid(float3 *p0, float3 *v, float3 *Rv, float3 *htime,int *id){
       float dist;
 
       //time-of-flight to hit the wall in each direction
-      htime->x=(fabs(v->x)>EPS)?__fdividef(floorf(p0->x)+(v->x>0.f)-p0->x,v->x):VERY_BIG;
-      htime->y=(fabs(v->y)>EPS)?__fdividef(floorf(p0->y)+(v->y>0.f)-p0->y,v->y):VERY_BIG;
-      htime->z=(fabs(v->z)>EPS)?__fdividef(floorf(p0->z)+(v->z>0.f)-p0->z,v->z):VERY_BIG;
+      htime->x=(floorf(p0->x)+(v->x>0.f)-p0->x)*Rv->x;
+      htime->y=(floorf(p0->y)+(v->y>0.f)-p0->y)*Rv->y;
+      htime->z=(floorf(p0->z)+(v->z>0.f)-p0->z)*Rv->z;
 
       //get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime->x,htime->y),htime->z);
@@ -190,7 +190,9 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
                && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z){
 	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
 	    if(media[idx1d]){ // if inside
-	        float3 htime;
+	        float3 htime=float3((v->x==0.f? VERY_BIG : 1.f/v->x),
+                                    (v->y==0.f? VERY_BIG : 1.f/v->y),
+                                    (v->z==0.f? VERY_BIG : 1.f/v->z));
                 int flipdir;
                 p->x-=v->x;
                 p->y-=v->y;
@@ -200,7 +202,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
 		
 		while(!(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
                   && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z) || !media[idx1d]){ // at most 3 times
-	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,&htime,&flipdir);
+	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,&htime,&htime,&flipdir);
                     *((float4*)(p))=float4(htime.x,htime.y,htime.z,p->w);
                     idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
 		}
@@ -472,7 +474,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
      uchar  mediaid=gcfg->mediaidorig;
      uchar  mediaidold=0;
      float  n1;   //reflection var
-     float3 htime;            //reflection var
+     float3 htime, Rv;            //reflection var
 
      //for MT RNG, these will be zero-length arrays and be optimized out
      RandType *t=(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*RAND_BUF_LEN);
@@ -512,7 +514,12 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	 n_len[idx]=*((float4*)(&f));
          return;
      }
-
+     
+     // reciprocal of the velocity vector
+     
+     Rv=float3((v->x==0.f? VERY_BIG : __fdividef(1.f,v->x)),
+               (v->y==0.f? VERY_BIG : __fdividef(1.f,v->y)),
+               (v->z==0.f? VERY_BIG : __fdividef(1.f,v->z)));
      /*
       using a while-loop to terminate a thread by np.will cause MT RNG to be 3.5x slower
       LL5 RNG will only be slightly slower than for-loop.with photon-move criterion
@@ -563,6 +570,11 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                        }
                        GPUDEBUG(("scat theta=%f\n",theta));
                        rotatevector(v,stheta,ctheta,sphi,cphi);
+
+                       // update the reciprocals of the velocity vector
+		       Rv=float3((v->x==0.f? VERY_BIG : __fdividef(1.f,v->x)), 
+        			 (v->y==0.f? VERY_BIG : __fdividef(1.f,v->y)),
+				 (v->z==0.f? VERY_BIG : __fdividef(1.f,v->z)));
                        v->nscat++;
 	       }
 	  }
@@ -570,7 +582,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
           n1=prop.n;
 	  *((float4*)(&prop))=gproperty[mediaid];
 	  
-	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)v,&htime,&flipdir); // propagate the photon to the first intersection to the grid
+	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)v,&Rv,&htime,&flipdir); // propagate the photon to the first intersection to the grid
 	  slen=len*prop.mus; //unitless (minstep=grid, mus=1/grid)
 
           GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%f %f %f] flip=%d\n",p.x,p.y,p.z,v->x,v->y,v->z,len,htime.x,htime.y,htime.z,flipdir));
