@@ -63,6 +63,7 @@ typedef struct MCXGPUInfo {
 	int sm, core;
 	int autoblock, autothread;
 	int maxgate;
+	int maxmpthread;  /**< maximum thread number per multi-processor */
 } GPUInfo;
 
 typedef struct MCXConfig{

@@ -471,7 +471,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
      float3 htime;            //reflection var
 
      //for MT RNG, these will be zero-length arrays and be optimized out
-     RandType *t=(RandType*)sharedmem+(blockDim.x<<2)+threadIdx.x*(RAND_BUF_LEN*3);
+     RandType *t=(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*(RAND_BUF_LEN*3));
      RandType *tnew=t+RAND_BUF_LEN;
      RandType *photonseed=tnew+RAND_BUF_LEN;
      Medium prop;    //can become float2 if no reflection (mua/musp is in 1/grid unit)
@@ -769,6 +769,19 @@ int mcx_corecount(int v1, int v2){
 }
 
 /**
+  obtain GPU core number per MP, this replaces 
+  ConvertSMVer2Cores() in libcudautils to avoid 
+  extra dependency.
+*/
+
+int mcx_smxblock(int v1, int v2){
+     int v=v1*10+v2;
+     if(v<30)      return 8;
+     else if(v<50) return 16;
+     else          return 32;
+}
+
+/**
   query GPU info and set active GPU
 */
 int mcx_list_gpu(Config *cfg, GPUInfo **info){
@@ -813,13 +826,10 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 	(*info)[dev].clock=dp.clockRate;
 	(*info)[dev].sm=dp.multiProcessorCount;
 	(*info)[dev].core=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
-#ifdef USE_MT_RAND
-        (*info)[dev].autoblock=1;
-#else
-        (*info)[dev].autoblock=32;
-#endif
-        (*info)[dev].autothread=(*info)[dev].core*32;
+	(*info)[dev].maxmpthread=dp.maxThreadsPerMultiProcessor;
         (*info)[dev].maxgate=cfg->maxgate;
+        (*info)[dev].autoblock=(*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor);
+        (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm;
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
@@ -834,6 +844,7 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 	       MCX_FPRINTF(stdout,"Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
 	          (*info)[dev].sm,(*info)[dev].core);
 	  #endif
+            MCX_FPRINTF(stdout,"SMX count:\t\t%u\n", (*info)[dev].sm);
 	  }
 	}
     }
