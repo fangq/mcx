@@ -49,15 +49,6 @@
 
 
 __device__ void logistic_step(RandType *t, RandType *tnew){
-/*
-    int i;
-    for(i=0;i<=len_1;i++)
-       t[i]=FUN(t[i]);
-    tnew[0]=RING_FUN(t[0],t[1],t[len_1]);
-    for(i=1;i<len_1;i++)
-       tnew[i]=RING_FUN(t[i],t[i-1],t[i+1]);
-    tnew[len_1]=RING_FUN(t[len_1],t[0],t[len_1-1]);
-*/
     t[0]=FUN(t[0]);
     t[1]=FUN(t[1]);
     t[2]=FUN(t[2]);
@@ -68,6 +59,13 @@ __device__ void logistic_step(RandType *t, RandType *tnew){
     tnew[1]=RING_FUN(t[2],t[1],t[3]);
     tnew[2]=RING_FUN(t[3],t[2],t[4]);
     tnew[3]=RING_FUN(t[4],t[3],t[0]);
+}
+__device__ void copystate(RandType *t, RandType *tnew){
+    tnew[0]=t[0];
+    tnew[1]=t[1];
+    tnew[2]=t[2];
+    tnew[3]=t[3];
+    tnew[4]=t[4];
 }
 // generate random number for the next zenith angle
 __device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){

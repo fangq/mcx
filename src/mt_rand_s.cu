@@ -171,6 +171,8 @@ __device__ void gpu_rng_init(char t[RAND_BUF_LEN], char tnew[RAND_BUF_LEN],uint 
 }
 __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LEN],uint cpuseed[],uint idx,float reseed){
 }
+__device__ void copystate(RandType *t, RandType *tnew){
+}
 // transform into [0,1] random number
 // use a trick found from 
 // http://xor0110.wordpress.com/2010/09/24/how-to-generate-floating-point-random-numbers-efficiently/
@@ -187,7 +189,6 @@ __device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN],RandType tnew[RAND_B
 __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
     return rand_uniform01(mt19937s());
 }
-
 #define rand_next_zangle(t1,t2)  rand_next_aangle(t1,t2)
 #define rand_next_reflect(t1,t2) rand_next_aangle(t1,t2)
 #define rand_do_roulette(t1,t2)  rand_next_aangle(t1,t2)

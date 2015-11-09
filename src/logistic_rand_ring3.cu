@@ -56,7 +56,11 @@ __device__ void logistic_step(RandType *t, RandType *tnew){
     tnew[1]=RING_FUN(t[1],t[0],t[2]);
     tnew[2]=RING_FUN(t[2],t[1],t[0]);
 }
-
+__device__ void copystate(RandType *t, RandType *tnew){
+    tnew[0]=t[0];
+    tnew[1]=t[1];
+    tnew[2]=t[2];
+}
 __device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
     for(int i=0;i<10;i++){
       logistic_step(t,tnew);
