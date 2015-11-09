@@ -23,7 +23,7 @@ ifeq ($(BACKEND),ocelot)
   CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
 else
   LINKOPT=-L/usr/local/cuda/lib -lcudart -lm
-  CUCCOPT=-Xptxas -v,-abi=no -g #-lineinfo #-g #-arch compute_20 #--maxrregcount 32
+  CUCCOPT=-lineinfo #-g #-arch compute_20 #--maxrregcount 32
 endif
 
 DLLFLAG=-fPIC

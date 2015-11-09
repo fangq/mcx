@@ -247,18 +247,20 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	   RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uchar media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[]){
       int launchattempt=1;
-      *energyloss+=p->w;  // sum all the remaining energy
+      
+      if(p->w>=0.f){
+          *energyloss+=p->w;  // sum all the remaining energy
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
-      if(gcfg->savedet){
-         if(*mediaid==0 && isdet)
-	      savedetphoton(n_det,dpnum,v->nscat,ppath,p,photonseed,seeddata);
-	 clearpath(ppath,gcfg->maxmedia);
-      }
+          if(gcfg->savedet){
+             if(isdet && *mediaid==0)
+	          savedetphoton(n_det,dpnum,v->nscat,ppath,p,photonseed,seeddata);
+             clearpath(ppath,gcfg->maxmedia);
+          }
 #endif
+      }
 
       if((int)(f->ndone)>=(gcfg->threadphoton+(threadid<gcfg->oddphotons))){
-//printf("[%g] %d %d %d %d\n",f->ndone,(f->ndone>=(gcfg->threadphoton+(threadid<gcfg->oddphotons)) )? 1: 2,gcfg->threadphoton,threadid,gcfg->oddphotons); 
           return 1; // all photos complete
       }
       if(gcfg->seed==SEED_FROM_FILE){
@@ -275,8 +277,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
 
-	  //if(gcfg->srctype==MCX_SRC_PENCIL){ /*source can be outside*/
-	  if(gcfg->srctype==MCX_SRC_PLANAR || gcfg->srctype==MCX_SRC_PATTERN|| gcfg->srctype==MCX_SRC_FOURIER){ /*a rectangular grid over a plane*/
+	  if(gcfg->srctype==MCX_SRC_PENCIL){ /*source can be outside*/
+	      // do nothing
+	  }else if(gcfg->srctype==MCX_SRC_PLANAR || gcfg->srctype==MCX_SRC_PATTERN|| gcfg->srctype==MCX_SRC_FOURIER){ /*a rectangular grid over a plane*/
 	      rand_need_more(t,tnew);
 	      RandType rx=rand_uniform01(t[0]);
 	      rand_need_more(t,tnew);
@@ -452,7 +455,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
-     MCXpos  p={0.f,0.f,0.f,0.f};//{x,y,z}: coordinates in grid unit, w:packet weight
+     MCXpos  p={0.f,0.f,0.f,-1.f};//{x,y,z}: coordinates in grid unit, w:packet weight
      MCXdir *v=(MCXdir*)(sharedmem+(threadIdx.x<<2));   //{x,y,z}: unitary direction vector in grid unit, nscat:total scat event
      MCXtime f;   //pscat: remaining scattering probability,t: photon elapse time, 
                   //tnext: next accumulation time, ndone: completed photons
@@ -466,7 +469,8 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 #ifdef TEST_RACING
      int cc=0;
 #endif
-     uchar  mediaid,mediaidold;
+     uchar  mediaid=gcfg->mediaidorig;
+     uchar  mediaidold=0;
      float  n1;   //reflection var
      float3 htime;            //reflection var
 
@@ -1268,7 +1272,7 @@ is more than what your have specified (%d), please use the -H option to specify 
        if(cfg->isnormalized){
            cudaMemcpy(energy,genergy,sizeof(float)*gpu[gpuid].autothread*3,cudaMemcpyDeviceToHost);
 #pragma omp critical
-           for(i=1;i<gpu[gpuid].autothread;i++){
+           for(i=0;i<gpu[gpuid].autothread;i++){
                cfg->energyesc+=energy[3*i];
        	       cfg->energyabs+=energy[3*i+1];
        	       cfg->energytot+=energy[3*i+2];
