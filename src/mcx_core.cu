@@ -157,7 +157,7 @@ __device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
       (flipdir==0) ?
           (v->x=sqrtf(1.f - v->y*v->y - v->z*v->z)*((v->x>0.f)-(v->x<0.f))):
 	  ((flipdir==1) ? 
-	      (v->y=sqrtf(1.f - v->x*v->x - v->z*v->z)*((v->y>0.f)-(v->y<0.f))) :
+	      (v->y=sqrtf(1.f - v->x*v->x - v->z*v->z)*((v->y>0.f)-(v->y<0.f))):
 	      (v->z=sqrtf(1.f - v->x*v->x - v->y*v->y)*((v->z>0.f)-(v->z<0.f))));
 }
 
@@ -208,7 +208,8 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
 
 		if(gproperty[media[idx1d]].w!=gproperty[0].w){
 	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
-	            transmit(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+	            if(p->w>EPS)
+		        transmit(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
 		}
 		return idx1d;
 	    }
