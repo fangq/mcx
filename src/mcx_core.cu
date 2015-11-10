@@ -29,6 +29,8 @@
   #include <omp.h>
 #endif
 
+#define MCX_FLOAT_INF __int_as_float(0x7f800000)
+
 // optical properties saved in the constant memory
 // {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n)
 __constant__ float4 gproperty[MAX_PROP];
@@ -129,6 +131,7 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float3 *Rv, float3 *htime
       htime->x=(floorf(p0->x)+(v->x>0.f)-p0->x)*Rv->x;
       htime->y=(floorf(p0->y)+(v->y>0.f)-p0->y)*Rv->y;
       htime->z=(floorf(p0->z)+(v->z>0.f)-p0->z)*Rv->z;
+      GPUDEBUG(("htime=[%f %f %f],p=[%f %f %f] Rv=[%f %f %f]\n",htime->x,htime->y,htime->z,p0->x,p0->y,p0->z,Rv->x,Rv->y,Rv->z));
 
       //get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime->x,htime->y),htime->z);
@@ -149,7 +152,7 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float3 *Rv, float3 *htime
       return fabs(dist);
 }
 
-__device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
+__device__ inline void transmit(MCXdir *v, float3 *Rv,float n1, float n2,int flipdir){
       float tmp0=n1/n2;
       v->x*=tmp0;
       v->y*=tmp0;
@@ -159,6 +162,9 @@ __device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
 	  ((flipdir==1) ? 
 	      (v->y=sqrtf(1.f - v->x*v->x - v->z*v->z)*((v->y>0.f)-(v->y<0.f))):
 	      (v->z=sqrtf(1.f - v->x*v->x - v->y*v->y)*((v->z>0.f)-(v->z<0.f))));
+      *Rv=float3((v->x==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->x)),
+                 (v->y==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->y)),
+                 (v->z==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->z)));
 }
 
 __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir){
@@ -183,35 +189,44 @@ __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir)
 /* if the source location is outside of the volume or 
 in an void voxel, mcx advances the photon in v.{xyz} direction
 until it hits an non-zero voxel */
-__device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
+__device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3 *Rv,uchar media[]){
       int count=1,idx1d;
       while(1){
           if(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
                && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z){
 	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
 	    if(media[idx1d]){ // if inside
-	        float3 htime=float3((v->x==0.f? VERY_BIG : 1.f/v->x),
-                                    (v->y==0.f? VERY_BIG : 1.f/v->y),
-                                    (v->z==0.f? VERY_BIG : 1.f/v->z));
+                GPUDEBUG(("inside volume [%f %f %f] Rv=<%f %f %f>\n",p->x,p->y,p->z,Rv->x,Rv->y,Rv->z));
+	        float3 htime;
                 int flipdir;
                 p->x-=v->x;
                 p->y-=v->y;
                 p->z-=v->z;
                 f->t-=gcfg->minaccumtime;
                 idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
-		
+
+                GPUDEBUG(("look for entry p0=[%f %f %f]\n",p->x,p->y,p->z));
+		count=0;
 		while(!(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
                   && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z) || !media[idx1d]){ // at most 3 times
-	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,&htime,&htime,&flipdir);
+	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,Rv,&htime,&flipdir);
                     *((float4*)(p))=float4(htime.x,htime.y,htime.z,p->w);
                     idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+                    GPUDEBUG(("entry p=[%f %f %f]\n",p->x,p->y,p->z));
+		    if(count++>3){
+                       GPUDEBUG(("fail to find entry point after 3 iterations, something is wrong, abort!!"));
+		       break;
+		    }
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
 
 		if(gproperty[media[idx1d]].w!=gproperty[0].w){
 	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
-	            if(p->w>EPS)
-		        transmit(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+                    GPUDEBUG(("transmitted intensity w=%e\n",p->w));
+	            if(p->w>EPS){
+		        transmit(v, Rv, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+                        GPUDEBUG(("transmit into volume v=<%f %f %f>\n",v->x,v->y,v->z));
+		    }
 		}
 		return idx1d;
 	    }
@@ -221,14 +236,15 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
 	   || (p->z<0.f) && (v->z<=0.f) || (p->z >= gcfg->maxidx.z) && (v->z>=0.f))
 	      return -1;
 	  *((float4*)(p))=float4(p->x+v->x,p->y+v->y,p->z+v->z,p->w);
+          GPUDEBUG(("inside void [%f %f %f]\n",p->x,p->y,p->z));
           f->t+=gcfg->minaccumtime;
-	  if(count++>gcfg->maxvoidstep)
+	  if(count++>10)
 	      return -1;
       }
 }
 
 
-__device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float sphi, float cphi){
+__device__ inline void rotatevector(MCXdir *v, float3*Rv,float stheta, float ctheta, float sphi, float cphi){
       if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
    	  float tmp0=1.f-v->z*v->z;
    	  float tmp1=stheta*rsqrtf(tmp0);
@@ -241,10 +257,13 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
       }else{
    	  *((float4*)v)=float4(stheta*cphi,stheta*sphi,(v->z>0.f)?ctheta:-ctheta,v->nscat);
       }
+      *Rv=float3((v->x==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->x)),
+                 (v->y==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->y)),
+                 (v->z==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->z)));
       GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 }
 
-__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *prop,uint *idx1d,
+__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3 *Rv,Medium *prop,uint *idx1d,
            uchar *mediaid,float *w0,float *Lmove,uchar isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uchar media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[]){
@@ -276,6 +295,12 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	  *((float4*)f)=float4(0.f,0.f,gcfg->minaccumtime,f->ndone);
           *idx1d=gcfg->idx1dorig;
           *mediaid=gcfg->mediaidorig;
+          // reciprocal of the velocity vector
+
+          *Rv=float3((v->x==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->x)),
+                     (v->y==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->y)),
+                     (v->z==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->z)));
+
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
 
@@ -385,7 +410,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 		      ang=ONE_PI*rand_uniform01(t[0]); //uniform distribution in zenith angle, arcsine
 	      }
               sincosf(ang,&stheta,&ctheta);
-              rotatevector(v,stheta,ctheta,sphi,cphi);
+              rotatevector(v,Rv,stheta,ctheta,sphi,cphi);
 	  }else if(gcfg->srctype==MCX_SRC_ZGAUSSIAN){
               float ang,stheta,ctheta,sphi,cphi;
               rand_need_more(t,tnew);
@@ -394,7 +419,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
               rand_need_more(t,tnew);
               ang=sqrtf(-2.f*logf(rand_uniform01(t[0])))*(1.f-2.f*t[1])*gcfg->srcparam1.x;
 	      sincosf(ang,&stheta,&ctheta);
-	      rotatevector(v,stheta,ctheta,sphi,cphi);
+	      rotatevector(v,Rv,stheta,ctheta,sphi,cphi);
 	  }else if(gcfg->srctype==MCX_SRC_LINE || gcfg->srctype==MCX_SRC_SLIT){
 	      rand_need_more(t,tnew);
 	      RandType r=rand_uniform01(t[0]);
@@ -411,20 +436,29 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
         	      rand_need_more(t,tnew);
 		      p=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t[0])>0.5f ? 1.f : -1.f);
 		      *((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
+                      *Rv=float3((v->x==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->x)),
+                                 (v->y==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->y)),
+                                 (v->z==0.f? MCX_FLOAT_INF : __fdividef(1.f,v->z)));
 	      }
 	  }
 	  if(*mediaid==0){
-             int idx=skipvoid(p, v, f, media);
+             int idx=skipvoid(p, v, f, Rv, media); /*specular reflection of the bbx is taken care of here*/
              if(idx>=0){
 		 *idx1d=idx;
 		 *mediaid=media[*idx1d];
 	     }
 	  }
-	  if(launchattempt++>gcfg->maxvoidstep)
+	  if(launchattempt++>2)
 	     return -1;  // launch failed
       }while(*mediaid==0 || p->w<=gcfg->minenergy);
       f->ndone++; // launch successfully
       *((float4*)(prop))=gproperty[*mediaid]; //always use mediaid to read gproperty[]
+      
+      /*total energy enters the volume. for diverging/converting 
+      beams, this is less than nphoton due to specular reflection 
+      loss. This is different from the wide-field MMC, where the 
+      total launched energy includes the specular reflection loss*/
+      
       *energylaunched+=p->w;
       *w0=p->w;
       *Lmove=0.f;
@@ -505,7 +539,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
      gpu_rng_init(t,tnew,n_seed,idx);
 
-     if(launchnewphoton(&p,v,&f,&prop,&idx1d,&mediaid,&w0,&Lmove,0,ppath,&energyloss,
+     if(launchnewphoton(&p,v,&f,&Rv,&prop,&idx1d,&mediaid,&w0,&Lmove,0,ppath,&energyloss,
        &energylaunched,n_det,detectedphoton,t,tnew,photonseed,media,srcpattern,
        idx,(RandType*)n_seed,seeddata)){
          n_seed[idx]=NO_LAUNCH;
@@ -515,11 +549,6 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
          return;
      }
      
-     // reciprocal of the velocity vector
-     
-     Rv=float3((v->x==0.f? VERY_BIG : __fdividef(1.f,v->x)),
-               (v->y==0.f? VERY_BIG : __fdividef(1.f,v->y)),
-               (v->z==0.f? VERY_BIG : __fdividef(1.f,v->z)));
      /*
       using a while-loop to terminate a thread by np.will cause MT RNG to be 3.5x slower
       LL5 RNG will only be slightly slower than for-loop.with photon-move criterion
@@ -569,12 +598,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("scat theta=%f\n",theta));
-                       rotatevector(v,stheta,ctheta,sphi,cphi);
-
-                       // update the reciprocals of the velocity vector
-		       Rv=float3((v->x==0.f? VERY_BIG : __fdividef(1.f,v->x)), 
-        			 (v->y==0.f? VERY_BIG : __fdividef(1.f,v->y)),
-				 (v->z==0.f? VERY_BIG : __fdividef(1.f,v->z)));
+                       rotatevector(v,&Rv,stheta,ctheta,sphi,cphi);
                        v->nscat++;
 	       }
 	  }
@@ -678,7 +702,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
           if((mediaid==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w))) || f.t>gcfg->twin1){
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-	      if(launchnewphoton(&p,v,&f,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
+	      if(launchnewphoton(&p,v,&f,&Rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
 	          &energyloss,&energylaunched,n_det,detectedphoton,t,tnew,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata))
                    break;
 	      continue;
@@ -711,17 +735,18 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	          if(Rtotal<1.f && rand_next_reflect(t,tnew)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton(&p,v,&f,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
+		    	    if(launchnewphoton(&p,v,&f,&Rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
 			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,tnew,photonseed,
 				media,srcpattern,idx,(RandType*)n_seed,seeddata))
                                 break;
 			    continue;
 			}
 	                GPUDEBUG(("do transmission\n"));
-			transmit(v,n1,prop.n,flipdir);
+			transmit(v,&Rv,n1,prop.n,flipdir);
 		  }else{ //do reflection
 	                GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v->x,v->y,v->z));
 			(flipdir==0) ? (v->x=-v->x) : ((flipdir==1) ? (v->y=-v->y) : (v->z=-v->z)) ;
+			(flipdir==0) ? (Rv.x=-Rv.x) : ((flipdir==1) ? (Rv.y=-Rv.y) : (Rv.z=-Rv.z));
 			(flipdir==0) ?
         		    (p.x=nextafterf(__float2int_rn(p.x), p.x+(v->x > 0.f)-0.5f)) :
 			    ((flipdir==1) ? 
@@ -1374,8 +1399,8 @@ is more than what your have specified (%d), please use the -H option to specify 
      // total energy here equals total simulated photons+unfinished photons for all threads
      MCX_FPRINTF(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
              cfg->nphoton,cfg->nphoton,gpu[gpuid].autothread,cfg->respin,(double)cfg->nphoton/cfg->runtime); fflush(cfg->flog);
-     MCX_FPRINTF(cfg->flog,"exit energy:%16.8e + absorbed energy:%16.8e = total: %16.8e\n",
-             cfg->energyesc,cfg->energytot-cfg->energyesc,cfg->energytot);fflush(cfg->flog);
+     MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
+             cfg->energytot,(cfg->energytot-cfg->energyesc)/cfg->energytot*100.f);fflush(cfg->flog);
      fflush(cfg->flog);
 }
 #pragma omp barrier
