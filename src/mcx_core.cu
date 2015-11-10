@@ -126,9 +126,9 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float3 *htime,int *id){
       float dist;
 
       //time-of-flight to hit the wall in each direction
-      htime->x=(fabs(v->x)>EPS)?__fdividef(floorf(p0->x)+(v->x>0.f)-p0->x,v->x):VERY_BIG;
-      htime->y=(fabs(v->y)>EPS)?__fdividef(floorf(p0->y)+(v->y>0.f)-p0->y,v->y):VERY_BIG;
-      htime->z=(fabs(v->z)>EPS)?__fdividef(floorf(p0->z)+(v->z>0.f)-p0->z,v->z):VERY_BIG;
+      htime->x=__fdividef(floorf(p0->x)+(v->x>0.f)-p0->x,v->x);
+      htime->y=__fdividef(floorf(p0->y)+(v->y>0.f)-p0->y,v->y);
+      htime->z=__fdividef(floorf(p0->z)+(v->z>0.f)-p0->z,v->z);
 
       //get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime->x,htime->y),htime->z);
