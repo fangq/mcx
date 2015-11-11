@@ -126,9 +126,9 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float3 *htime,int *id){
       float dist;
 
       //time-of-flight to hit the wall in each direction
-      htime->x=__fdividef(floorf(p0->x)+(v->x>0.f)-p0->x,v->x);
-      htime->y=__fdividef(floorf(p0->y)+(v->y>0.f)-p0->y,v->y);
-      htime->z=__fdividef(floorf(p0->z)+(v->z>0.f)-p0->z,v->z);
+      htime->x=fabs(__fdividef(floorf(p0->x)+(v->x>0.f)-p0->x,v->x));
+      htime->y=fabs(__fdividef(floorf(p0->y)+(v->y>0.f)-p0->y,v->y));
+      htime->z=fabs(__fdividef(floorf(p0->z)+(v->z>0.f)-p0->z,v->z));
 
       //get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime->x,htime->y),htime->z);
@@ -190,6 +190,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
                && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z){
 	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
 	    if(media[idx1d]){ // if inside
+                GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n",p->x,p->y,p->z,v->x,v->y,v->z));
 	        float3 htime;
                 int flipdir;
                 p->x-=v->x;
@@ -197,19 +198,30 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
                 p->z-=v->z;
                 f->t-=gcfg->minaccumtime;
                 idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
-		
+
+                GPUDEBUG(("look for entry p0=[%f %f %f]\n",p->x,p->y,p->z));
+		count=0;
 		while(!(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
                   && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z) || !media[idx1d]){ // at most 3 times
 	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,&htime,&flipdir);
                     *((float4*)(p))=float4(htime.x,htime.y,htime.z,p->w);
                     idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+                    GPUDEBUG(("entry p=[%f %f %f]\n",p->x,p->y,p->z));
+
+		    if(count++>3){
+		       GPUDEBUG(("fail to find entry point after 3 iterations, something is wrong, abort!!"));
+		       break;
+		    }
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
 
 		if(gproperty[media[idx1d]].w!=gproperty[0].w){
 	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
-	            if(p->w>EPS)
+                    GPUDEBUG(("transmitted intensity w=%e\n",p->w));
+	            if(p->w>EPS){
 		        transmit(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+                        GPUDEBUG(("transmit into volume v=<%f %f %f>\n",v->x,v->y,v->z));
+                    }
 		}
 		return idx1d;
 	    }
@@ -219,6 +231,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,uchar media[]){
 	   || (p->z<0.f) && (v->z<=0.f) || (p->z >= gcfg->maxidx.z) && (v->z>=0.f))
 	      return -1;
 	  *((float4*)(p))=float4(p->x+v->x,p->y+v->y,p->z+v->z,p->w);
+          GPUDEBUG(("inside void [%f %f %f]\n",p->x,p->y,p->z));
           f->t+=gcfg->minaccumtime;
 	  if(count++>gcfg->maxvoidstep)
 	      return -1;
@@ -411,7 +424,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 		      *((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
 	      }
 	  }
-	  if(*mediaid==0){
+	  if((*mediaid & MED_MASK)==0){
              int idx=skipvoid(p, v, f, media); /*specular reflection of the bbx is taken care of here*/
              if(idx>=0){
 		 *idx1d=idx;
@@ -420,9 +433,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,Medium *pro
 	  }
 	  if(launchattempt++>gcfg->maxvoidstep)
 	     return -1;  // launch failed
-      }while(*mediaid==0 || p->w<=gcfg->minenergy);
+      }while((*mediaid & MED_MASK)==0 || p->w<=gcfg->minenergy);
       f->ndone++; // launch successfully
-      *((float4*)(prop))=gproperty[*mediaid]; //always use mediaid to read gproperty[]
+      *((float4*)(prop))=gproperty[*mediaid & MED_MASK]; //always use mediaid to read gproperty[]
       
       /*total energy enters the volume. for diverging/converting 
       beams, this is less than nphoton due to specular reflection 
@@ -574,7 +587,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	  }
 
           n1=prop.n;
-	  *((float4*)(&prop))=gproperty[mediaid];
+	  *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
 	  
 	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)v,&htime,&flipdir); // propagate the photon to the first intersection to the grid
 	  slen=len*prop.mus; //unitless (minstep=grid, mus=1/grid)
@@ -594,7 +607,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
 #ifdef SAVE_DETECTORS
           if(gcfg->savedet)
-	      ppath[mediaid-1]+=len; //(unit=grid)
+	      ppath[(mediaid & MED_MASK)-1]+=len; //(unit=grid)
 #endif
 
           mediaidold=media[idx1d];
