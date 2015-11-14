@@ -106,8 +106,11 @@ OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog \
  det detbox fermi mex oct mexbox octbox fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
+
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
+	mkdir -p $(OUTPUT_DIR)
 	$(AR) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY) $(LINKOPT)
+
 
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
