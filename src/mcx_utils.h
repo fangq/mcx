@@ -143,6 +143,7 @@ typedef struct MCXConfig{
         float workload[MAX_DEVICE];
         int parentid;
 	unsigned int runtime;
+	int wkpartition; /** apply workload partitioning scheme*/
 } Config;
 
 #ifdef	__cplusplus
