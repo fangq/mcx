@@ -10,6 +10,8 @@ ifeq ($(BACKEND),ocelot)
   CC?=g++
 endif
 
+MKDIR      := mkdir
+
 CUDACC=nvcc
 AR=$(CC)
 
@@ -106,7 +108,10 @@ OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog \
  det detbox fermi mex oct mexbox octbox fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
-$(OUTPUT_DIR)/$(BINARY): $(OBJS)
+makedirs:
+	@if test ! -d $(OUTPUT_DIR); then $(MKDIR) $(OUTPUT_DIR); fi
+
+$(OUTPUT_DIR)/$(BINARY): makedirs $(OBJS)
 	$(AR) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY) $(LINKOPT)
 
 %$(OBJSUFFIX): %.c
