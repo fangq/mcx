@@ -38,6 +38,8 @@
          char pathsep='/';
 #endif
 
+#define MCX_ASSERT(a,b,c)  (!(a) && (mcx_error((a),"assert error",(b),(c)),1) );
+
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
 		 'k','q','Y','O','F','\0'};
@@ -362,19 +364,20 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
-     mcx_assert(fscanf(in,"%d", &(i) )==1); 
+     MCX_ASSERT(fscanf(in,"%d", &(i) )==1,__FILE__,__LINE__);
      if(cfg->nphoton==0) cfg->nphoton=i;
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
-     if(cfg->seed==0)
-        mcx_assert(fscanf(in,"%d", &(cfg->seed) )==1);
-     else
-        mcx_assert(fscanf(in,"%d", &itmp )==1);
+     if(cfg->seed==0){
+        MCX_ASSERT(fscanf(in,"%d", &(cfg->seed) )==1,__FILE__,__LINE__);
+     }else{
+        MCX_ASSERT(fscanf(in,"%d", &itmp )==1,__FILE__,__LINE__);
+     }
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d\nPlease specify the position of the source (in grid unit): [10 10 5]\n\t",cfg->seed);
-     mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) )==3);
+     MCX_ASSERT(fscanf(in,"%f %f %f", &(cfg->srcpos.x),&(cfg->srcpos.y),&(cfg->srcpos.z) )==3,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(cfg->issrcfrom0==0 && comm!=NULL && sscanf(comm,"%d",&itmp)==1)
          cfg->issrcfrom0=itmp;
@@ -385,12 +388,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
      }
-     mcx_assert(fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) )==3);
+     MCX_ASSERT(fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) )==3,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%f %f %f\nPlease specify the time gates (format: start end step) in seconds [0.0 1e-9 1e-10]\n\t",
                                    cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z);
-     mcx_assert(fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) )==3);
+     MCX_ASSERT(fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) )==3,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
@@ -405,7 +408,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      else if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
-     mcx_assert(fscanf(in,"%s", filename)==1);
+     MCX_ASSERT(fscanf(in,"%s", filename)==1,__FILE__,__LINE__);
      if(cfg->rootpath[0]){
 #ifdef WIN32
          sprintf(comment,"%s\\%s",cfg->rootpath,filename);
@@ -418,19 +421,19 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 
      if(in==stdin)
      	fprintf(stdout,"%s\nPlease specify the x voxel size (in mm), x dimension, min and max x-index [1.0 100 1 100]:\n\t",filename);
-     mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x))==4);
+     MCX_ASSERT(fscanf(in,"%f %d %d %d", &(cfg->steps.x),&(cfg->dim.x),&(cfg->crop0.x),&(cfg->crop1.x))==4,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 1 100]:\n\t",
                                   cfg->steps.x,cfg->dim.x,cfg->crop0.x,cfg->crop1.x);
-     mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.y),&(cfg->dim.y),&(cfg->crop0.y),&(cfg->crop1.y))==4);
+     MCX_ASSERT(fscanf(in,"%f %d %d %d", &(cfg->steps.y),&(cfg->dim.y),&(cfg->crop0.y),&(cfg->crop1.y))==4,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the z voxel size (in mm), z dimension, min and max z-index [1.0 100 1 100]:\n\t",
                                   cfg->steps.y,cfg->dim.y,cfg->crop0.y,cfg->crop1.y);
-     mcx_assert(fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z))==4);
+     MCX_ASSERT(fscanf(in,"%f %d %d %d", &(cfg->steps.z),&(cfg->dim.z),&(cfg->crop0.z),&(cfg->crop1.z))==4,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(cfg->steps.x!=cfg->steps.y || cfg->steps.y!=cfg->steps.z)
@@ -465,7 +468,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(in==stdin)
      	fprintf(stdout,"%f %d %d %d\nPlease specify the total types of media:\n\t",
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
-     mcx_assert(fscanf(in,"%d", &(cfg->medianum))==1);
+     MCX_ASSERT(fscanf(in,"%d", &(cfg->medianum))==1,__FILE__,__LINE__);
      cfg->medianum++;
      if(cfg->medianum>MAX_PROP)
          mcx_error(-4,"input media types exceed the maximum (255)",__FILE__,__LINE__);
@@ -481,7 +484,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      for(i=1;i<cfg->medianum;i++){
         if(in==stdin)
 		fprintf(stdout,"Please define medium #%d: mus(1/mm), anisotropy, mua(1/mm) and refractive index: [1.01 0.01 0.04 1.37]\n\t",i);
-     	mcx_assert(fscanf(in, "%f %f %f %f", &(cfg->prop[i].mus),&(cfg->prop[i].g),&(cfg->prop[i].mua),&(cfg->prop[i].n))==4);
+     	MCX_ASSERT(fscanf(in, "%f %f %f %f", &(cfg->prop[i].mus),&(cfg->prop[i].g),&(cfg->prop[i].mua),&(cfg->prop[i].n))==4,__FILE__,__LINE__);
         comm=fgets(comment,MAX_PATH_LENGTH,in);
         if(in==stdin)
 		fprintf(stdout,"%f %f %f %f\n",cfg->prop[i].mus,cfg->prop[i].g,cfg->prop[i].mua,cfg->prop[i].n);
@@ -494,7 +497,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in grid unit):\n\t");
-     mcx_assert(fscanf(in,"%d %f", &(cfg->detnum), &(cfg->detradius))==2);
+     MCX_ASSERT(fscanf(in,"%d %f", &(cfg->detnum), &(cfg->detradius))==2,__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d %f\n",cfg->detnum,cfg->detradius);
@@ -504,7 +507,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      for(i=0;i<cfg->detnum;i++){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in grid unit): [5 5 5 1]\n\t",i);
-     	mcx_assert(fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z))==3);
+     	MCX_ASSERT(fscanf(in, "%f %f %f", &(cfg->detpos[i].x),&(cfg->detpos[i].y),&(cfg->detpos[i].z))==3,__FILE__,__LINE__);
 	cfg->detpos[i].w=cfg->detradius;
         if(!cfg->issrcfrom0){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
@@ -543,11 +546,11 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
                cfg->srcpattern=(float*)calloc((cfg->srcparam1.w*cfg->srcparam2.w),sizeof(float));
-               mcx_assert(fscanf(in, "%s", patternfile)==1);
+               MCX_ASSERT(fscanf(in, "%s", patternfile)==1,__FILE__,__LINE__);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
-               mcx_assert(fread(cfg->srcpattern,cfg->srcparam1.w*cfg->srcparam2.w,sizeof(float),fp)==sizeof(float));
+               MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.w*cfg->srcparam2.w,sizeof(float),fp)==sizeof(float),__FILE__,__LINE__);
                fclose(fp);
            }
 	}else
