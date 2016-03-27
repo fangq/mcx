@@ -25,7 +25,7 @@ ifeq ($(BACKEND),ocelot)
   CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
 else
   LINKOPT=-L/usr/local/cuda/lib -lcudart -lm
-  CUCCOPT=-lineinfo #-g #-arch compute_20 #--maxrregcount 32
+  CUCCOPT=-lineinfo -Xcompiler -Wall #-g #-arch compute_20 #--maxrregcount 32
 endif
 
 DLLFLAG=-fPIC
@@ -62,27 +62,33 @@ endif
 CUCCOPT+=-Xcompiler -fopenmp
 CPPOPT+=-fopenmp
 
+GENCODE=-arch=sm_20
+
 all logfast:CUCCOPT+=-use_fast_math
-mt:         CUCCOPT+=-DUSE_MT_RAND
-fast:       CUCCOPT+=-DUSE_MT_RAND -use_fast_math
+xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 log:        CUCCOPT+=
-debugmt:    mt
+debugxor:   xor
 debuglog:   CUCCOPT+=
 racing:     CUCCOPT+=-DTEST_RACING
-mtatomic:   CUCCOPT+=-DUSE_MT_RAND -DUSE_ATOMIC -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"MT Atomic MCX"'
-logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
+xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(GENCODE) MCX_TARGET_NAME='"Xorshift128+ Atomic MCX"'
+logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(GENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
-#fermimex:   CUCCOPT+=-DUSE_MT_RAND -use_fast_math
-mtbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"Cachebox MCX"'
-debugmt debuglog:	CUCCOPT+=-DMCX_DEBUG
-mtatomic logatomic:	BINARY:=$(BINARY)_atomic
-det mex oct:    CUCCOPT+=-DSAVE_DETECTORS -use_fast_math -arch=sm_20 -DMCX_TARGET_NAME='"Detective MCX"'
-detbox mexbox octbox fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch=sm_20
+#fermimex:   CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
+xorbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math $(GENCODE) -DMCX_TARGET_NAME='"Cachebox MCX"'
+debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
+xoratomic logatomic:	BINARY:=$(BINARY)_atomic
+det mex oct:    CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(GENCODE) -DMCX_TARGET_NAME='"Detective MCX"'
+detbox mexbox octbox fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math $(GENCODE)
 detbox mexbox octbox: CUCCOPT+=-DMCX_TARGET_NAME='"Cached Detective MCX"'
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Fermi MCX"'
 det detbox: BINARY:=$(BINARY)_det
 logbox detbox:          BINARY:=$(BINARY)_cached
-all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog \
+maxwell:    fermi
+maxwell:    GENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
+xormax:     maxwell
+xormax:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+all xor fast log logfast racing xoratomic logatomic xorbox logbox debugxor debuglog \
  det detbox fermi:      LINKOPT+=-fopenmp
 
 mexbox mex fermimex:        AR=mex
@@ -105,13 +111,14 @@ debug: fermi
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all mt fast log logfast racing mtatomic logatomic mtbox logbox debugmt debuglog \
+all xor fast log logfast racing xoratomic logatomic xorbox logbox debugxor debuglog \
  det detbox fermi mex oct mexbox octbox fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 makedirs:
 	@if test ! -d $(OUTPUT_DIR); then $(MKDIR) $(OUTPUT_DIR); fi
 
 $(OUTPUT_DIR)/$(BINARY): makedirs $(OBJS)
+$(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(AR) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY) $(LINKOPT)
 
 %$(OBJSUFFIX): %.c

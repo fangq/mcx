@@ -76,8 +76,8 @@ typedef char RandType;
 #define TEMPER1         0x9d2c5680
 #define TEMPER2         0xefc60000
 
-#define RAND_BUF_LEN       0                    //zero-length array buffer
-#define RAND_SEED_LEN      5                    //how many 32bit seeds
+#define RAND_BUF_LEN       1                    //zero-length array buffer
+#define RAND_SEED_LEN      1                    //how many 32bit seeds
 #define MAX_MT_RAND        4294967296           //2^32
 #define R_MAX_MT_RAND      2.3283064365387e-10f //1/2^32
 #define LOG_MT_MAX         22.1807097779182f    //log(2^32)
@@ -166,12 +166,12 @@ mt19937sc(int loops, uint* result, uint* seeds)
 // the only purpose to keep them is to share the same format
 // as in logistic RNG
 
-__device__ void gpu_rng_init(char t[RAND_BUF_LEN], char tnew[RAND_BUF_LEN],uint *n_seed,int idx){
+__device__ void gpu_rng_init(char t[RAND_BUF_LEN], uint *n_seed,int idx){
     mt19937si(n_seed+idx*RAND_SEED_LEN,idx);
 }
-__device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], RandType tnew[RAND_BUF_LEN],uint cpuseed[],uint idx,float reseed){
+__device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], uint cpuseed[],uint idx,float reseed){
 }
-__device__ void copystate(RandType *t, RandType *tnew){
+__device__ void copystate(RandType *t,RandType *tnew){
 }
 // transform into [0,1] random number
 // use a trick found from 
@@ -182,19 +182,19 @@ __device__ float rand_uniform01(uint ran){
     return myran.f*0.5f-1.0f;
 }
 // generate [0,1] random number for the next scattering length
-__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
+__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
     return -logf(rand_uniform01(mt19937s()));
 }
 // generate [0,1] random number for the next arimuthal angle
-__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN]){
+__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
     return rand_uniform01(mt19937s());
 }
-#define rand_next_zangle(t1,t2)  rand_next_aangle(t1,t2)
-#define rand_next_reflect(t1,t2) rand_next_aangle(t1,t2)
-#define rand_do_roulette(t1,t2)  rand_next_aangle(t1,t2)
+#define rand_next_zangle(t)  rand_next_aangle(t)
+#define rand_next_reflect(t) rand_next_aangle(t)
+#define rand_do_roulette(t)  rand_next_aangle(t)
 
 // generate random number for the next zenith angle
-__device__ void rand_need_more(RandType t[RAND_BUF_LEN],RandType tbuf[RAND_BUF_LEN]){
+__device__ void rand_need_more(RandType t[RAND_BUF_LEN]){
     // do nothing
 }
 #endif

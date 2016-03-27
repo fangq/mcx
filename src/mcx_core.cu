@@ -19,14 +19,18 @@
 #include "tictoc.h"
 #include "mcx_const.h"
 
-#ifdef USE_MT_RAND
-#include "mt_rand_s.cu"     // use Mersenne Twister RNG (MT)
+#if defined(USE_XORSHIFT128P_RAND)
+    #include "xorshift128p_rand.cu" // use xorshift128+ RNG (XORSHIFT128P)
+#elif defined(USE_POSIX_RAND)
+    #include "posix_rand.cu"        // use POSIX erand48 RNG (POSIX)
+#elif defined(USE_MT_RAND)
+    #include "mt_rand_s.cu"         // use Mersenne Twister RNG (MT), depreciated
 #else
-#include "logistic_rand.cu" // use Logistic Lattice ring 5 RNG (LL5)
+    #include "logistic_rand.cu"     // use Logistic Lattice ring 5 RNG (LL5)
 #endif
 
 #ifdef _OPENMP
-  #include <omp.h>
+    #include <omp.h>
 #endif
 
 // optical properties saved in the constant memory
@@ -266,7 +270,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
 
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
            uchar *mediaid,float *w0,float *Lmove,uchar isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
-	   RandType t[RAND_BUF_LEN],RandType tnew[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
+	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uchar media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[]){
       int launchattempt=1;
       
@@ -302,10 +306,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  if(gcfg->srctype==MCX_SRC_PENCIL){ /*source can be outside*/
 	      // do nothing
 	  }else if(gcfg->srctype==MCX_SRC_PLANAR || gcfg->srctype==MCX_SRC_PATTERN|| gcfg->srctype==MCX_SRC_FOURIER){ /*a rectangular grid over a plane*/
-	      rand_need_more(t,tnew);
-	      RandType rx=rand_uniform01(t[0]);
-	      rand_need_more(t,tnew);
-	      RandType ry=rand_uniform01(t[0]);
+	      float rx=rand_uniform01(t);
+	      float ry=rand_uniform01(t);
 	      *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
 	                	   p->y+rx*gcfg->srcparam1.y+ry*gcfg->srcparam2.y,
 				   p->z+rx*gcfg->srcparam1.z+ry*gcfg->srcparam2.z,
@@ -322,12 +324,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
               }else{
         	  *mediaid=media[*idx1d];
               }
-	      rand_need_more(t,tnew);
 	  }else if(gcfg->srctype==MCX_SRC_FOURIERX||gcfg->srctype==MCX_SRC_FOURIERX2D){ // [v1x][v1y][v1z][|v2|]; [kx][ky][phi0][M], unit(v0) x unit(v1)=unit(v2)
-	      rand_need_more(t,tnew);
-	      RandType rx=rand_uniform01(t[0]);
-	      rand_need_more(t,tnew);
-	      RandType ry=rand_uniform01(t[0]);
+	      float rx=rand_uniform01(t);
+	      float ry=rand_uniform01(t);
 	      float4 v2=gcfg->srcparam1;
 	      // calculate v2 based on v2=|v2| * unit(v0) x unit(v1)
 	      v2.w*=rsqrt(gcfg->srcparam1.x*gcfg->srcparam1.x+gcfg->srcparam1.y*gcfg->srcparam1.y+gcfg->srcparam1.z*gcfg->srcparam1.z);
@@ -349,20 +348,17 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
               }else{
         	  *mediaid=media[*idx1d];
               }
-	      rand_need_more(t,tnew);
 	  }else if(gcfg->srctype==MCX_SRC_DISK ||gcfg->srctype==MCX_SRC_GAUSSIAN){ // uniform disk distribution or Gaussian-beam
 	      // Uniform disk point picking
 	      // http://mathworld.wolfram.com/DiskPointPicking.html
 	      float sphi, cphi;
-	      rand_need_more(t,tnew);
-	      RandType phi=TWO_PI*rand_uniform01(t[0]);
+	      float phi=TWO_PI*rand_uniform01(t);
               sincosf(phi,&sphi,&cphi);
-	      rand_need_more(t,tnew);
-	     RandType r;
+	     float r;
 	     if(gcfg->srctype==MCX_SRC_DISK)
-		 r=sqrtf(rand_uniform01(t[0]))*gcfg->srcparam1.x;
+		 r=sqrtf(rand_uniform01(t))*gcfg->srcparam1.x;
 	     else
-		 r=sqrtf(-logf(rand_uniform01(t[0])))*gcfg->srcparam1.x;
+		 r=sqrtf(-logf(rand_uniform01(t)))*gcfg->srcparam1.x;
 
 	      if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
    		  float tmp0=1.f-v->z*v->z;
@@ -389,47 +385,38 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	      // Uniform point picking on a sphere 
 	      // http://mathworld.wolfram.com/SpherePointPicking.html
               float ang,stheta,ctheta,sphi,cphi;
-	      rand_need_more(t,tnew);
-              ang=TWO_PI*rand_uniform01(t[0]); //next arimuth angle
+              ang=TWO_PI*rand_uniform01(t); //next arimuth angle
               sincosf(ang,&sphi,&cphi);
 	      if(gcfg->srctype==MCX_SRC_CONE){  // a solid-angle section of a uniform sphere
         	  do{
-		      rand_need_more(t,tnew);
-		      ang=(gcfg->srcparam1.y>0) ? TWO_PI*rand_uniform01(t[0]) : acosf(2.f*rand_uniform01(t[0])-1.f); //sine distribution
+		      ang=(gcfg->srcparam1.y>0) ? TWO_PI*rand_uniform01(t) : acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
 		  }while(ang>gcfg->srcparam1.x);
 	      }else{
-		  rand_need_more(t,tnew);
 	          if(gcfg->srctype==MCX_SRC_ISOTROPIC) // uniform sphere
-		      ang=acosf(2.f*rand_uniform01(t[0])-1.f); //sine distribution
+		      ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
 		  else
-		      ang=ONE_PI*rand_uniform01(t[0]); //uniform distribution in zenith angle, arcsine
+		      ang=ONE_PI*rand_uniform01(t); //uniform distribution in zenith angle, arcsine
 	      }
               sincosf(ang,&stheta,&ctheta);
               rotatevector(v,stheta,ctheta,sphi,cphi);
 	  }else if(gcfg->srctype==MCX_SRC_ZGAUSSIAN){
               float ang,stheta,ctheta,sphi,cphi;
-              rand_need_more(t,tnew);
-	      ang=TWO_PI*rand_uniform01(t[0]); //next arimuth angle
+	      ang=TWO_PI*rand_uniform01(t); //next arimuth angle
 	      sincosf(ang,&sphi,&cphi);
-              rand_need_more(t,tnew);
-              ang=sqrtf(-2.f*logf(rand_uniform01(t[0])))*(1.f-2.f*t[1])*gcfg->srcparam1.x;
+              ang=sqrtf(-2.f*logf(rand_uniform01(t)))*(1.f-2.f*rand_uniform01(t))*gcfg->srcparam1.x;
 	      sincosf(ang,&stheta,&ctheta);
 	      rotatevector(v,stheta,ctheta,sphi,cphi);
 	  }else if(gcfg->srctype==MCX_SRC_LINE || gcfg->srctype==MCX_SRC_SLIT){
-	      rand_need_more(t,tnew);
-	      RandType r=rand_uniform01(t[0]);
+	      float r=rand_uniform01(t);
 	      *((float4*)p)=float4(p->x+r*gcfg->srcparam1.x,
 	                	   p->y+r*gcfg->srcparam1.y,
 				   p->z+r*gcfg->srcparam1.z,
 				   p->w);
               if(gcfg->srctype==MCX_SRC_LINE){
 	              float s,p;
-        	      rand_need_more(t,tnew);
-		      r=1.f-2.f*rand_uniform01(t[0]);
-        	      rand_need_more(t,tnew);
-		      s=1.f-2.f*rand_uniform01(t[0]);
-        	      rand_need_more(t,tnew);
-		      p=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t[0])>0.5f ? 1.f : -1.f);
+		      r=1.f-2.f*rand_uniform01(t);
+		      s=1.f-2.f*rand_uniform01(t);
+		      p=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t)>0.5f ? 1.f : -1.f);
 		      *((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
 	      }
 	  }
@@ -460,16 +447,14 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 
 kernel void mcx_test_rng(float field[],uint n_seed[]){
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
-     int i,j;
+     int i;
      int len=gcfg->maxidx.x*gcfg->maxidx.y*gcfg->maxidx.z*(int)((gcfg->twin1-gcfg->twin0)*gcfg->Rtstep+0.5f);
-     RandType t[RAND_BUF_LEN],tnew[RAND_BUF_LEN];
+     RandType t[RAND_BUF_LEN];
 
-     gpu_rng_init(t,tnew,n_seed,idx);
+     gpu_rng_init(t,n_seed,idx);
 
-     for(i=0;i<len;i+=RAND_BUF_LEN){
-       rand_need_more(t,tnew);
-       for(j=0;j<min(RAND_BUF_LEN,len-i);j++)
-	   field[i+j]=t[j];
+     for(i=0;i<len;i++){
+	   field[i]=rand_uniform01(t);
      }
 }
 
@@ -504,8 +489,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
      float3 rv;               //reciprocal velocity
 
      //for MT RNG, these will be zero-length arrays and be optimized out
-     RandType *t=(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*RAND_BUF_LEN);
-     RandType tnew[RAND_BUF_LEN]; // ok withou initialization, will be assigned before use
+     RandType t[RAND_BUF_LEN];
      RandType photonseed[RAND_BUF_LEN];
      Medium prop;    //can become float2 if no reflection (mua/musp is in 1/grid unit)
 
@@ -513,7 +497,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
      float w0,Lmove;
      int   flipdir=-1;
  
-     float *ppath=sharedmem+blockDim.x*(RAND_BUF_LEN+4);
+     float *ppath=sharedmem+(blockDim.x<<2); // first blockDim.x<<2 stores v for all threads
 #ifdef  USE_CACHEBOX
   #ifdef  SAVE_DETECTORS
      float *cachebox=ppath+(gcfg->savedet ? blockDim.x*gcfg->maxmedia: 0);
@@ -526,14 +510,14 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 #endif
 
 #ifdef  SAVE_DETECTORS
-     ppath+=threadIdx.x*gcfg->maxmedia;
+     ppath+=threadIdx.x*gcfg->maxmedia; // block#2: maxmedia*thread number to store the partial
      if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
 #endif
 
-     gpu_rng_init(t,tnew,n_seed,idx);
+     gpu_rng_init(t,n_seed,idx);
 
      if(launchnewphoton(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,0,ppath,&energyloss,
-       &energylaunched,n_det,detectedphoton,t,tnew,photonseed,media,srcpattern,
+       &energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,
        idx,(RandType*)n_seed,seeddata)){
          n_seed[idx]=NO_LAUNCH;
 	 n_pos[idx]=*((float4*)(&p));
@@ -560,15 +544,15 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	  if(f.pscat<=0.f) {  // if this photon has finished his current jump, get next scat length & angles
                if(moves++>gcfg->reseedlimit){
                   moves=0;
-                  gpu_rng_reseed(t,tnew,n_seed,idx,(p.x+p.y+p.z+p.w)+f.ndone*(v->x+v->y+v->z));
+                  gpu_rng_reseed(t,n_seed,idx,(p.x+p.y+p.z+p.w)+f.ndone*(v->x+v->y+v->z));
                }
-   	       f.pscat=rand_next_scatlen(t,tnew); // random scattering probability, unit-less
+   	       f.pscat=rand_next_scatlen(t); // random scattering probability, unit-less
 
-               GPUDEBUG(("scat L=%f RNG=[%e %e %e] \n",f.pscat,t[0],t[1],t[2]));
+               GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
 	       if(p.w<1.f){ // if this is not my first jump
                        //random arimuthal angle
 	               float cphi,sphi,theta,stheta,ctheta;
-                       float tmp0=TWO_PI*rand_next_aangle(t,tnew); //next arimuth angle
+                       float tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
                        sincosf(tmp0,&sphi,&cphi);
                        GPUDEBUG(("scat phi=%f\n",tmp0));
 
@@ -576,7 +560,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                        //Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002
 
                        if(prop.g>EPS){  //if prop.g is too small, the distribution of theta is bad
-		           tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t,tnew));
+		           tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
 		           tmp0*=tmp0;
 		           tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
 
@@ -588,7 +572,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 		           stheta=sinf(theta);
 		           ctheta=tmp0;
                        }else{
-			   theta=acosf(2.f*rand_next_zangle(t,tnew)-1.f);
+			   theta=acosf(2.f*rand_next_zangle(t)-1.f);
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("scat theta=%f\n",theta));
@@ -697,7 +681,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
           if((mediaid==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w))) || f.t>gcfg->twin1){
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
 	      if(launchnewphoton(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
-	          &energyloss,&energylaunched,n_det,detectedphoton,t,tnew,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata))
+	          &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata))
                    break;
 	      continue;
 	  }
@@ -726,11 +710,11 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } // else, total internal reflection
-	          if(Rtotal<1.f && rand_next_reflect(t,tnew)>Rtotal){ // do transmission
+	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
 		    	    if(launchnewphoton(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
-			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,tnew,photonseed,
+			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,
 				media,srcpattern,idx,(RandType*)n_seed,seeddata))
                                 break;
 			    continue;
@@ -936,13 +920,13 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw,*greplaytof;
      RandType *gseeddata=NULL;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
-                     cfg->issave2pt,cfg->isreflect,cfg->isrefint,cfg->issavedet,1.f/cfg->tstep,
+                     (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
-		     cfg->maxvoidstep,cfg->issaveseed>0,cfg->maxdetphoton*(cfg->medianum+1),cfg->seed,
-		     cfg->outputtype,0,0,cfg->faststep};
+		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->maxdetphoton*(cfg->medianum+1),cfg->seed,
+		     (uint)cfg->outputtype,0,0,cfg->faststep};
      int detreclen=cfg->medianum+1;
      if(param.isatomic)
          param.skipradius2=0.f;
@@ -959,7 +943,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      if(gpu[gpuid].maxgate==0 && dimxyz>0){
          int needmem=dimxyz+cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)+10*1024*1024; /*keep 10M for other things*/
          gpu[gpuid].maxgate=(gpu[gpuid].globalmem-needmem)/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
-         gpu[gpuid].maxgate=MIN((unsigned int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5),gpu[gpuid].maxgate);     
+         gpu[gpuid].maxgate=MIN(((cfg->tend-cfg->tstart)/cfg->tstep+0.5),gpu[gpuid].maxgate);     
      }
      /*only allow the master thread to modify cfg, others are read-only*/
 #pragma omp master
@@ -1220,7 +1204,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            ,param.twin0*1e9,param.twin1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
-       for(iter=0;iter<cfg->respin;iter++){
+       for(iter=0;iter<(int)cfg->respin;iter++){
            mcx_cu_assess(cudaMemset(gfield,0,sizeof(float)*fieldlen),__FILE__,__LINE__); // cost about 1 ms
            mcx_cu_assess(cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(detreclen)),__FILE__,__LINE__);
            if(cfg->issaveseed)
@@ -1313,7 +1297,7 @@ is more than what your have specified (%d), please use the -H option to specify 
        MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
 
        if(cfg->exportfield){
-	       for(i=0;i<fieldlen;i++)
+	       for(i=0;i<(int)fieldlen;i++)
 #pragma omp atomic
                   cfg->exportfield[i]+=field[i];
        }
@@ -1383,7 +1367,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 
 #pragma omp master
 {
-     printnum=gpu[gpuid].autothread<cfg->printnum?gpu[gpuid].autothread:cfg->printnum;
+     printnum=(gpu[gpuid].autothread<(int)cfg->printnum) ? gpu[gpuid].autothread : cfg->printnum;
      for (i=0; i<(int)printnum; i++) {
             MCX_FPRINTF(cfg->flog,"% 4d[A% f % f % f]C%3d J%5d W% 8f(P%.13f %.13f %.13f)T% 5.3e L% 5.3f %.0f\n", i,
             Pdir[i].x,Pdir[i].y,Pdir[i].z,(int)Plen[i].w,(int)Pdir[i].w,Ppos[i].w, 
