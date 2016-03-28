@@ -606,7 +606,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	      ppath[(mediaid & MED_MASK)-1]+=len; //(unit=grid)
 #endif
 
-          mediaidold=media[idx1d];
+          mediaidold=mediaid;
           idx1dold=idx1d;
           idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
           GPUDEBUG(("idx1d [%d]->[%d]\n",idx1dold,idx1d));
