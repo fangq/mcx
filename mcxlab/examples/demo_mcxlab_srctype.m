@@ -332,11 +332,6 @@ cfg.isnormalized=0;
 flux=mcxlab(cfg);
 rng=flux.data(:);
 figure
-subplot(211);
 hist(rng,1000);
 title('raw RNG distribution');
-uniformrng=acos(2*rng-1)/pi;
-subplot(212);
-hist(uniformrng,1000);
-title('converted to uniform 0-1 distribution');
 cfg=rmfield(cfg,'debuglevel');

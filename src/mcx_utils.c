@@ -1365,10 +1365,12 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2015 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                                                                             #\n\
 #                    Computational Imaging Laboratory (CIL)                   #\n\
 #            Department of Bioengineering, Northeastern University            #\n\
+###############################################################################\n\
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
 $MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
 ###############################################################################\n");
