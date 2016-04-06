@@ -17,25 +17,28 @@
         "Forward::T1": "the end time of the simulation, in seconds",
         "Forward::Dt": "the width of each time window, in seconds",
         "Optode::Source::Pos": "the grid position of the source, can be non-integers, in grid unit",
-        "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit"
+        "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit",
+        "Optode::Source::Dir": "the unitary directional vector of the photon at launch",
+        "Optode::Source::Type": "source types, must be one of the following: 
+                   pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk",
+        "Optode::Source::Param1": "source parameters, 4 floating-point numbers",
+        "Optode::Source::Param2": "additional source parameters, 4 floating-point numbers"
       }
     },
     "Domain": {
 	"VolumeFile": "cubic60.json",
         "Dim":    [60,60,60],
         "OriginType": 1,
-        "Step":   [1.0,1.0,1.0],
-        "CacheBoxP0": [24,24,1],
-        "CacheBoxP1": [34,34,10],
         "Media": [
              {"mua": 0.00, "mus": 0.0, "g": 1.00, "n": 1.0},
-             {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.0}
+             {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.37},
+             {"mua": 0.002,"mus": 5.0, "g": 0.90, "n": 1.0}
         ]
     },
     "Session": {
-	"Photons":  1000000,
+	"Photons":  1e8,
 	"RNGSeed":  29012392,
-	"ID":       "qtest"
+	"ID":       "benchmark1"
     },
     "Forward": {
 	"T0": 0.0e+00,
@@ -44,6 +47,7 @@
     },
     "Optode": {
 	"Source": {
+	    "Type":"pencil",
 	    "Pos": [29.0, 29.0, 0.0],
 	    "Dir": [0.0, 0.0, 1.0]
 	},
