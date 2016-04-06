@@ -76,11 +76,11 @@ cfg.seed=99999;
 
 % a uniform planar source outside the volume
 cfg.srctype='planar';
-cfg.srcpos=[10 10 -1];
+cfg.srcpos=[10 10 0];
 cfg.srcparam1=[40 0 0 0];
 cfg.srcparam2=[0 40 0 0];
-cfg.tend=0.4e-11;
-cfg.tstep=0.4e-11;
+cfg.tend=0.4e-10;
+cfg.tstep=0.4e-10;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(221);
@@ -169,8 +169,8 @@ cfg.srctype='fourierx';
 cfg.srcpos=[10 10 -1];
 cfg.srcparam1=[40 0 0 40];
 cfg.srcparam2=[2 1.5 0 0];
-cfg.tend=0.4e-11;
-cfg.tstep=0.4e-11;
+cfg.tend=0.4e-10;
+cfg.tstep=0.4e-10;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(221);
@@ -183,8 +183,8 @@ cfg.srctype='fourierx2d';
 cfg.srcpos=[10 10 -1];
 cfg.srcparam1=[40 0 0 40];
 cfg.srcparam2=[1.5 3 1/2 1/4];
-cfg.tend=0.4e-11;
-cfg.tstep=0.4e-11;
+cfg.tend=0.4e-10;
+cfg.tstep=0.4e-10;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(222);
@@ -192,6 +192,22 @@ imagesc(log10(abs(squeeze(fcw(:,:,1)))))
 axis equal; colorbar
 title('a general 2d Fourier pattern (1.5,3)');
 
+% a uniform planar source outside the volume
+cfg.srctype='slit';
+cfg.srcpos=[10 30 0];
+cfg.srcdir=[0 1 1]/sqrt(2);
+cfg.srcparam1=[40 0 0 0];
+cfg.srcparam2=[0 0 0 0];
+cfg.prop=[0 0 1 1;0.005 0.1 0.9 1.37];
+cfg.tend=5e-9;
+cfg.tstep=5e-9;
+flux=mcxlab(cfg);
+fcw=flux.data*cfg.tstep;
+subplot(223);
+hs=slice(log10(abs(double(fcw))),[],[15 45],[1]);
+set(hs,'linestyle','none');
+axis equal; colorbar
+title('a slit source');
 
 cfg.nphoton=1e7;
 cfg.vol=uint8(ones(60,60,60));
