@@ -69,7 +69,7 @@ void mcx_initcfg(Config *cfg){
      cfg->steps.z=1.f;
      cfg->nblocksize=64;
      cfg->nphoton=0;
-     cfg->nthread=2048;
+     cfg->nthread=(1<<14);
      cfg->isrowmajor=0; /* default is Matlab array*/
      cfg->maxgate=0;
      cfg->isreflect=1;
@@ -1315,8 +1315,10 @@ int mcx_parsedebugopt(char *debugopt,const char *debugflag){
     return debuglevel;
 }
 
-int mcx_keylookup(char *key, const char *table[]){
+int mcx_keylookup(char *origkey, const char *table[]){
     int i=0;
+    char *key=malloc(strlen(origkey)+1);
+    memcpy(key,origkey,strlen(origkey)+1);
     while(key[i]){
         key[i]=tolower(key[i]);
 	i++;
@@ -1328,6 +1330,7 @@ int mcx_keylookup(char *key, const char *table[]){
 	}
 	i++;
     }
+    free(key);
     return -1;
 }
 
@@ -1385,7 +1388,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -s sessionid  (--session)     a string to label all output file names\n\
  -f config     (--input)       read config from a file\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
- -t [2048|int] (--thread)      total thread number\n\
+ -t [16384|int](--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
  -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
@@ -1430,7 +1433,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 example: (autopilot mode)\n\
        %s -A -n 1e7 -f input.inp -G 1 \n\
 or (manual mode)\n\
-       %s -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n\
+       %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n\
        %s -A -n 1e7 -f input.inp -G 1101 -W 10,10,10\n\
 or (use inline domain definition)\n\

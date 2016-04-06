@@ -124,7 +124,7 @@ typedef struct MCXConfig{
 	float *exportfield;     /**<memory buffer when returning the flux to external programs such as matlab*/
 	float *exportdetected;  /**<memory buffer when returning the partial length info to external programs such as matlab*/
 	unsigned int detectedcount; /**<total number of detected photons*/
-	float energytot, energyabs, energyesc;
+	double energytot, energyabs, energyesc;
         char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
         char *shapedata;    /**<a pointer points to a string defining the JSON-formatted shape data*/
 	int maxvoidstep;
@@ -192,7 +192,7 @@ extern "C"
 #if defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER)
     int mexPrintf(const char * format, ... );
 #else
-    void mexPrintf(const char * format, ... );
+    int mexPrintf(const char * format, ... );
 #endif
 int mexEvalString(const char *command);
 
