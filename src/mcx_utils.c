@@ -1369,13 +1369,14 @@ void mcx_printheader(Config *cfg){
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
 #          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #\n\
+#                             http://mcx.space/                               #\n\
 #                                                                             #\n\
-#                    Computational Imaging Laboratory (CIL)                   #\n\
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #\n\
 #            Department of Bioengineering, Northeastern University            #\n\
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$MCX $Rev::     $ Last Commit $Date::                     $ by $Author:: fangq$\n\
+$Rev::       $ Last $Date::                       $ by $Author::              $\n\
 ###############################################################################\n");
 }
 
