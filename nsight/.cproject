@@ -31,7 +31,8 @@
 									<listOptionValue builtIn="false" value="USE_ATOMIC"/>
 									<listOptionValue builtIn="false" value="SAVE_DETECTORS"/>
 									<listOptionValue builtIn="false" value="USE_CACHEBOX"/>
-									<listOptionValue builtIn="false" value="&quot;MCX_TARGET_NAME=Fermi MCX&quot;"/>
+									<listOptionValue builtIn="false" value="MCX_TARGET_NAME=&quot;Fermi MCX&quot;"/>
+									<listOptionValue builtIn="false" value="USE_XORSHIFT128P_RAND"/>
 								</option>
 								<option id="nvcc.compiler.compileroptions.197283701" name="Preprocessor options (-Xcompiler)" superClass="nvcc.compiler.compileroptions" valueType="stringList">
 									<listOptionValue builtIn="false" value="-fopenmp"/>
@@ -44,7 +45,7 @@
 								<option id="nvcc.linker.option.libs.1741709378" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="gomp"/>
 								</option>
-								<option id="nvcc.linker.option.other.1249447379" name="Other options (-Xlinker [option])" superClass="nvcc.linker.option.other" valueType="stringList"/>
+								<option id="nvcc.linker.option.other.1249447379" name="Other options (-Xlinker [option])" superClass="nvcc.linker.option.other"/>
 								<inputType id="nvcc.linker.input.628238572" superClass="nvcc.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -96,20 +97,24 @@
 						<toolChain id="com.nvidia.cuda.ide.toolchain.exe.release.1470070320" name="CUDA Toolkit 7.0" resourceTypeBasedDiscovery="true" superClass="com.nvidia.cuda.ide.toolchain.exe.release">
 							<targetPlatform archList="all" binaryParser="com.nvidia.cuda.ide.elf;com.nvidia.cuda.ide.macho;com.nvidia.cuda.ide.cubin" id="com.nvidia.cuda.ide.targetPlatform.1249086146" isAbstract="false" name="Debug Platform" osList="linux,macosx" superClass="com.nvidia.cuda.ide.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/mcx}/Release" id="com.nvidia.cuda.ide.builder.2060793962" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CUDA Toolkit 7.0 Builder" superClass="com.nvidia.cuda.ide.builder"/>
-							<tool id="nvcc.compiler.base.2083914878" name="NVCC Compiler" superClass="nvcc.compiler.base">
+							<tool command="nvcc" id="nvcc.compiler.base.2083914878" name="NVCC Compiler" superClass="nvcc.compiler.base">
 								<option id="nvcc.compiler.deviceDebug.1062426329" name="Generate device debug information (-G)" superClass="nvcc.compiler.deviceDebug"/>
 								<option id="nvcc.compiler.option.level.320242070" name="Generate host debug information (-g)" superClass="nvcc.compiler.option.level"/>
 								<option defaultValue="nvcc.compiler.optimization.level.most" id="nvcc.compiler.optimization.level.112026402" name="Optimization Level" superClass="nvcc.compiler.optimization.level" valueType="enumerated"/>
 								<option id="nvcc.compiler.pic.856648376" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.compileroptions.1254665288" name="Preprocessor options (-Xcompiler)" superClass="nvcc.compiler.compileroptions" valueType="stringList">
 									<listOptionValue builtIn="false" value="-fopenmp"/>
+									<listOptionValue builtIn="false" value="-Wall"/>
 								</option>
 								<option id="nvcc.compiler.def.symbols.1915897687" name="Defined symbols (-D)" superClass="nvcc.compiler.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="USE_ATOMIC"/>
-									<listOptionValue builtIn="false" value="&quot;MCX_TARGET_NAME=Fermi MCX&quot;"/>
+									<listOptionValue builtIn="false" value="MCX_TARGET_NAME=&quot;Fermi MCX&quot;"/>
 									<listOptionValue builtIn="false" value="USE_CACHEBOX"/>
 									<listOptionValue builtIn="false" value="SAVE_DETECTORS"/>
+									<listOptionValue builtIn="false" value="USE_XORSHIFT128P_RAND"/>
 								</option>
+								<option id="nvcc.compiler.option.lineinfo.787303324" name="Generate line-number information for device code (-lineinfo)" superClass="nvcc.compiler.option.lineinfo" value="true" valueType="boolean"/>
+								<option id="nvcc.compiler.usefastmath.1897065878" name="Make use of fast math library (-use_fast_math)" superClass="nvcc.compiler.usefastmath" value="true" valueType="boolean"/>
 								<inputType id="nvcc.compiler.input.cu.647224970" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.1223897469" superClass="nvcc.compiler.input.cpp"/>
 								<inputType id="nvcc.compiler.input.c.546169381" superClass="nvcc.compiler.input.c"/>
@@ -118,7 +123,7 @@
 								<option id="nvcc.linker.option.libs.1531659718" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="gomp"/>
 								</option>
-								<option id="nvcc.linker.option.other.1703492422" name="Other options (-Xlinker [option])" superClass="nvcc.linker.option.other" valueType="stringList"/>
+								<option id="nvcc.linker.option.other.1703492422" name="Other options (-Xlinker [option])" superClass="nvcc.linker.option.other"/>
 								<inputType id="nvcc.linker.input.213482673" superClass="nvcc.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -134,9 +139,16 @@
 			</storageModule>
 			<storageModule moduleId="com.nvidia.cuda.ide.build.project.ICudaProjectConfiguration">
 				<executable devicelink="false">
-					<sass major="2" minor="0"/>
-					<sass major="3" minor="5"/>
+					<sass major="5" minor="0"/>
 					<ptx major="2" minor="0"/>
+					<sass major="2" minor="0"/>
+					<sass major="2" minor="1"/>
+					<sass major="3" minor="0"/>
+					<sass major="3" minor="2"/>
+					<sass major="3" minor="5"/>
+					<sass major="3" minor="7"/>
+					<sass major="5" minor="2"/>
+					<sass major="5" minor="3"/>
 				</executable>
 				<editor-arch major="2" minor="0"/>
 			</storageModule>
