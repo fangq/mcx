@@ -3,7 +3,7 @@ function report=serialcorr(randomseq,maxshift)
 %
 %  serial correlation function in a random sequence at a range of separations
 %
-%    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
+%    author: Qianqian Fang (q.fang <at> neu.edu)
 %
 %    input:
 %        randomseq: a random sequence (1D array)

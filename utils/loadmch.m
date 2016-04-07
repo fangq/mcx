@@ -2,7 +2,7 @@ function [data, headerstruct, photonseed]=loadmch(fname,format,endian)
 %
 %    [data, header]=loadmch(fname,format,endian)
 %
-%    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
+%    author: Qianqian Fang (q.fang <at> neu.edu)
 %
 %    input:
 %        fname: the file name to the output .mch file

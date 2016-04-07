@@ -1,12 +1,7 @@
 /*********************************************************************
-*A Random Number Generator based on coupled chaotic Logistic lattice *
+*   A Random Number Generator based on the POSIX erand48 48bit RNG   *
 *                                                                    *
-*  (both double and single precision random numbers are supported)   *
-*                                                                    *
-*  Author: Qianqian Fang <q.fang at neu.edu>              *
-*                                                                    *
-*  History: 2009/03/02  CUDA version based on Neal Wagner 1993       *
-*         http://www.cs.utsa.edu/~wagner/pubs/logistic/logistic.pdf  *
+*   Author: Qianqian Fang <q.fang at neu.edu>                         *
 *                                                                    *
 *********************************************************************/
 

@@ -3,7 +3,7 @@ function separation=getdistance(srcpos,detpos)
 %
 %  compute the source/detector separation from the positions
 %
-%    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
+%    author: Qianqian Fang (q.fang <at> neu.edu)
 %
 %    input:
 %        srcpos:array for the source positions (x,y,z)

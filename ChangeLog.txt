@@ -1,5 +1,26 @@
 = Change Log =
 
+== MCX 2016.4 (Dark Matter - 1.0-beta), FangQ <q.fang (a) neu.edu> ==
+
+ 2016-04-06 [c52b470] fix photon detection bug, fix json file crash, fix workload distribution bug, fix hitgrid inf handeling, fix energytot bug
+ 2016-04-05 [e94087f] add benchmark folder, use shape json
+ 2016-03-28 [76f9c5a] reduce memory dependency, yielded a 42% increase in mcx speed for the quicktest benchmark
+ 2016-03-26*[b14ccf1] simplify RNG interface, two new RNGs: POSIX erand48 and xorshift128+, retiring MT RNG
+ 2016-02-28 [29ea426] speed up ray tracer with customized nextafterf function and reciprocal of c
+ 2015-11-09 [1491f4e] Determining block size in autopilot mode using max block per SMX, by Fanny Nina Paravecino
+ 2015-11-08 [48dfb33] fix refractive index mismatch transmission bug
+ 2015-09-28*[73dd850] add uniform line source and slit source, suggested by Yu Chen
+ 2015-09-12 [9da817e] fix bug for wide field sources
+ 2015-09-11*[c7f9625] make precise ray-tracing default to improve accuracy
+ 2015-09-11 [a1e781a] update affiliation, Qianqian now moved to Northeastern
+ 2015-07-12 [3898b14] add nsight project files
+ 2015-07-27 [cd8f134] use proper epsilon for float roundoff tests
+ 2015-06-25 [6815577] fix address alignment error for CUDA 6 or higher
+ 2015-06-25*[60238c4] multiple GPU support! set fermi as default, set atomic as default, better mex compilation
+ 2015-06-15 [97cd3e9] return gpu info for better interfacing with matlab
+ 2015-06-10*[7487e4d] support saving photon seeds and replay
+ 2015-06-10 [3c8a116] accept endianness input
+
 == MCX 0.9.7-2 (Dark Matter - alpha update 2), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 
  2014-09-23 [r325] fix submillimeter voxel scaling bug in the binary mode; fix total simulated photon count

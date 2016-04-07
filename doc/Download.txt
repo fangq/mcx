@@ -14,25 +14,35 @@ How to get MCX
 
 1. Download the Latest Release
 
-Current Beta Release: [7]MCX and [8]MCXLAB 0.7.9, released on Jan. 16, 2012
+Current Release: [7]MCX and [8]MCXLAB v1.0 alpha-2 (0.9.7-2), released on Sep. 23, 2014
 
    Please read the [9]Release notes here.
 
-Current Stable Release: [10]MCX and [11]MCXLAB 0.5.3, released on Jan. 16, 2012
-
-   Please read the [12]Release notes here. Before downloading the
-   software, please read the [13]System Requirements for MCX and make sure
-   you have both the hardware and software supported.
-
-   Please download MCX and MCXLAB v0.5.3 and v0.7.9 at our
-   [14]registration/download page. We are greatly appreciated if you can
+   Please download MCX and MCXLAB v0.9.7-2 at our
+   [10]registration/download page. We are greatly appreciated if you can
    tell us a little bit about you and your related research by
-   [15]registering your copy of MCX. Binary executable (for 32bit and
+   [11]registering your copy of MCX. Binary executable (for 32bit and
    64bit machines) and source code packages are both provided. For MCXLAB,
    a single package containing the pre-compiled Matlab/Octave MEX files
    for 32/64bit Linux and 32/64bit Windows is provided.
 
   [os-icons3.png]
+
+Previous Alpha Release: MCX 0.9.7-1, released on Jan. 05, 2014
+
+   Please read the [12]Release notes here.
+
+Previous Stable Release: MCX 0.8.0, released on Sep. 22, 2013
+
+   Please read the [13]Release notes here.
+
+Previous Beta Release: MCX 0.7.9, released on Jan. 16, 2012
+
+   Please read the [14]Release notes here.
+
+Previous Stable Release: MCX 0.5.3, released on Jan. 16, 2012
+
+   Please read the [15]Release notes here.
 
 Previous Stable Release: MCX 0.5.2, released on Sep. 20, 2011
 
@@ -113,13 +123,13 @@ References
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#References
    7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README
    8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/MCXLAB
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.7.9
-  10. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README
-  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/MCXLAB
-  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.3
-  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
-  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx
-  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&editmode=prepend&id=register/mcx
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.9.7-2
+  10. http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx
+  11. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&editmode=prepend&id=register/mcx
+  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.9.7-1
+  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.8.0
+  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.7.9
+  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.3
   16. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.2
   17. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.1
   18. http://tortoisesvn.net/downloads

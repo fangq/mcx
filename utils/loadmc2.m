@@ -2,7 +2,7 @@ function data=loadmc2(fname,dim,format)
 %
 %    data=loadmc2(fname,dim,format)
 %
-%    author: Qianqian Fang (fangq <at> nmr.mgh.harvard.edu)
+%    author: Qianqian Fang (q.fang <at> neu.edu)
 %
 %    input:
 %        fname: the file name to the output .mc2 file

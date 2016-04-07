@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9.7-2 (Dark Matter - Alpha update 2)
+Version: 1.0-beta (v2016.4, Dark Matter - Beta)
 
 ---------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ A short summary of the main features includes:
 *. build-in flux/fluence normalization to output Green's functions
 *. user adjustable voxel resolution
 *. improved accuracy with atomic operations
-*. cross-platform graphics user interface
+*. cross-platform graphical user interface
 *. native Matlab/Octave support for high usability
 *. flexible JSON interface for future extensions
 
@@ -145,11 +145,15 @@ such as the following:
 
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#     Copyright (c) 2009-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>    #
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#                             http://mcx.space/                               #
 #                                                                             #
-#    Martinos Center for Biomedical Imaging, Massachusetts General Hospital   #
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
+#            Department of Bioengineering, Northeastern University            #
 ###############################################################################
-$MCX $Rev:: 325 $ Last Commit $Date:: 2014-09-23 13:34:57#$ by $Author:: fangq$
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
+###############################################################################
+$Rev::c52b47 $ Last $Date::2016-04-06 01:50:15 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -158,10 +162,12 @@ where possible parameters include (the first item in [] is the default value)
  -s sessionid  (--session)     a string to label all output file names
  -f config     (--input)       read config from a file
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
- -t [2048|int] (--thread)      total thread number
+ -t [16384|int](--thread)      total thread number
  -T [64|int]   (--blocksize)   thread number per block
- -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedic.
+ -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto
+      or
+ -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)
  -r [1|int]    (--repeat)      number of repetitions
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
  -z [0|1]      (--srcfrom0)    1 volume coord. origin [0 0 0]; 0 use [1 1 1]
@@ -169,17 +175,22 @@ where possible parameters include (the first item in [] is the default value)
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
- -R [0.|float] (--skipradius)  0: vanilla MCX, no atomic operations
+ -R [-2|float] (--skipradius)  0: vanilla MCX, no atomic operations
                                >0: radius in which use shared-memory atomics
                                -1: use crop0/crop1 to determine atomic zone
-                               -2: use atomics for the entire domain
+                               -2: use atomics for the entire domain (default)
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
- -H [1000000]  (--maxdetphoton)max number of detected photons
+ -H [1000000] (--maxdetphoton) max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
- -E [0|int]    (--seed)        set random-number-generator seed, -1 to generate
+ -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate
+                               if an mch file is followed, MMC will "replay" 
+                               the detected photon; the replay mode can be used
+ -O [X|XFEJT]  (--outputtype)  X - output flux, F - fluence, E - energy deposit
+                               J - Jacobian (replay mode),   T - approximated
+                               Jacobian (replay mode only)
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
@@ -187,12 +198,18 @@ where possible parameters include (the first item in [] is the default value)
  -I            (--printgpu)    print GPU information and run program
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG
+ -Y [0|int]    (--replaydet)   replay only the detected photons from a given 
+                               detector (det ID starts from 1), used with -E 
+ -W '50,30,20' (--workload)    workload for active devices; normalized by sum
+ -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing
  -v            (--version)     print MCX revision number
 
 example: (autopilot mode)
        mcx -A -n 1e7 -f input.inp -G 1 
 or (manual mode)
-       mcx -t 2048 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
+       mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
+or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)
+       mcx -A -n 1e7 -f input.inp -G 1101 -W 10,10,10
 or (use inline domain definition)
        mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
 </pre>
@@ -661,21 +678,6 @@ Generally, the more threads, the better speed, until all GPU resources
 are fully occupied. For higher-end GPUs, a thread number over 10,000 
 is recommended. Please use the autopilot mode, "-A", to let MCX determine
 the "optimal" thread number when you are not sure what to use.
-
-=== Use atomic operations when extra accuracy is needed ===
-As described in Ref. [Fang2009], MCX uses non-atomic operations by
-default. This causes reduced fluence/flux near a point/pencil beam
-source due to data-racing. However, as characterized in [Fang2009],
-this error is fairly small when a photon is a few voxels (~5) away
-from the source. If the region-of-interest is very close to the source,
-we suggest you to use the atomic/cached version of MCX. If you use the
-fermi version of MCX, you can use "-R -2" in the command to enable
-full atomic operations. The simulation speed for the full atomic code
-will be about 50% of the non-atomic version on a Fermi card. Alternatively,
-you can use the "-R radius" flag to enable atomic operations within the 
-specified radius from the source. For wide-field sources, we believe 
-the data-racing is minimal, thus, the non-atomic simulation should 
-be sufficiently accurate.
 
 ---------------------------------------------------------------------------
 X. Reference

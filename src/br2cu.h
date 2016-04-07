@@ -4,7 +4,7 @@
 /***********************************************************
 Translation unit for BrookGPU to CUDA
 
-Qianqian Fang <fangq nmr.mgh.harvard.edu>
+Qianqian Fang <q.fang at neu.edu>
 
 ************************************************************/
 

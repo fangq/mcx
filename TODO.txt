@@ -2,8 +2,6 @@
 
 == Short term projects ==
 
-*. precise ray-tracing in a grid space [2012/01/11, FangQ]
-[reopen] *. multiple-GPU support [2009/09/30, FangQ]
 
 == Long term projects ==
 
@@ -28,3 +26,5 @@
 [dropped] *. support ini based input file format (or perl script format) [2009/04/30, FangQ]
 [dropped] *. support NIFTI input & output [2009/04/30, FangQ]
 [done] *. support more complicated source forms [2009/09/30, FangQ], [2013/09/18, FangQ]
+[done] *. precise ray-tracing in a grid space [2012/01/11, FangQ]
+[done] *. multiple-GPU support [2009/09/30, FangQ]

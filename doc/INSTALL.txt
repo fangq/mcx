@@ -166,7 +166,7 @@ References
   15. http://www.nvidia.com/object/cuda_get.html
   16. http://www.mingw.org/
   17. http://sourceforge.net/projects/mingw/files/
-  18. http://sourceforge.net/projects/mingw/files/Automated%20MinGW%20Installer/
+  18. http://sourceforge.net/projects/mingw/files/Automated MinGW Installer/
   19. http://developer.apple.com/technology/xcode.html
   20. http://www.microsoft.com/Express/VC/
-  21. http://technet.microsoft.com/en-us/library/aa997841%28EXCHG.65%29.aspx
+  21. http://technet.microsoft.com/en-us/library/aa997841(EXCHG.65).aspx
