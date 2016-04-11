@@ -34,5 +34,6 @@
 #define MCX_SRC_ZGAUSSIAN  11 // Gaussian zenith anglular distribution
 #define MCX_SRC_LINE       12 // a non-directional line source
 #define MCX_SRC_SLIT       13 // a collimated line source
+#define MCX_SRC_RECTANGULAR       14 // a rectangular source
 
 #endif

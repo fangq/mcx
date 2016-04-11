@@ -114,7 +114,7 @@ typedef struct MCXConfig{
 	char autopilot;     /**<1 optimal setting for dedicated card, 2, for non dedicated card*/
 	char issaveseed;    /**<1 save the seed for a detected photon, 0 do not save*/
 	char srctype;       /**<0:pencil,1:isotropic,2:cone,3:gaussian,4:planar,5:pattern,\
-                                6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian,12:line,13:slit*/
+							6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian,12:line,13:slit, 14: rectangular*/
         char outputtype;    /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
 	char faststep;
         float minenergy;    /**<minimum energy to propagate photon*/
@@ -133,7 +133,7 @@ typedef struct MCXConfig{
 	float4 srcparam2;   /**<a quadruplet {x,y,z,w} for additional source parameters*/
         float* srcpattern;  /**<a string for the source form, options include "pencil","isotropic",\
 	                        "cone","gaussian","planar", "pattern","fourier","arcsine","disk",\
-				"fourierx","fourierx2d","zgaussian","line","slit"*/
+				"fourierx","fourierx2d","zgaussian","line","slit", "rectangular"*/
 	Replay replay;
 	void *seeddata;
         int replaydet;      /**<the detector id for which to replay the detected photons, start from 1*/

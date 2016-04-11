@@ -323,7 +323,20 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
               }else{
         	  *mediaid=media[*idx1d];
               }
-	  }else if(gcfg->srctype==MCX_SRC_FOURIERX||gcfg->srctype==MCX_SRC_FOURIERX2D){ // [v1x][v1y][v1z][|v2|]; [kx][ky][phi0][M], unit(v0) x unit(v1)=unit(v2)
+        } else if(gcfg->srctype==MCX_SRC_RECTANGULAR) {
+            // new rectangular type
+            *((float4*)p)=float4(p->x + gcfg->srcparam1.x + rand_uniform01(t) * gcfg->srcparam2.x, 
+                    p->y + gcfg->srcparam1.y + rand_uniform01(t) * gcfg->srcparam2.y,
+                    p->z + gcfg->srcparam1.z + rand_uniform01(t) * gcfg->srcparam2.z,
+                    p->w);
+            *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+            if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
+                *mediaid=0;
+            }else{
+                *mediaid=media[*idx1d];
+            }
+            // rand_need_more(t);
+        }else if(gcfg->srctype==MCX_SRC_FOURIERX||gcfg->srctype==MCX_SRC_FOURIERX2D){ // [v1x][v1y][v1z][|v2|]; [kx][ky][phi0][M], unit(v0) x unit(v1)=unit(v2)
 	      float rx=rand_uniform01(t);
 	      float ry=rand_uniform01(t);
 	      float4 v2=gcfg->srcparam1;
@@ -363,15 +376,15 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
    		  float tmp0=1.f-v->z*v->z;
    		  float tmp1=r*rsqrtf(tmp0);
    		  *((float4*)p)=float4(
-   		       p->x+tmp1*(v->x*v->z*cphi - v->y*sphi),
-   		       p->y+tmp1*(v->y*v->z*cphi + v->x*sphi),
+   		       p->x+tmp1*(v->x*v->z*cphi - v->y*sphi) + gcfg->srcparam2.x,
+   		       p->y+tmp1*(v->y*v->z*cphi + v->x*sphi) + gcfg->srcparam2.y,
    		       p->z-tmp1*tmp0*cphi                   ,
    		       p->w
    		  );
    		  GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 	      }else{
-   		  p->x+=r*cphi;
-		  p->y+=r*sphi;
+   		  p->x+=r*cphi + gcfg->srcparam2.x;
+		  p->y+=r*sphi + gcfg->srcparam2.y;
    		  GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 	      }
               *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
@@ -1199,6 +1212,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      MCX_FPRINTF(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
+    // MCX_FPRINTF(cfg->flog, "DEBUG mcx source type %d\n", cfg->srctype);
      //simulate for all time-gates in maxgate groups per run
      for(timegate=0;timegate<totalgates;timegate+=gpu[gpuid].maxgate){
 
