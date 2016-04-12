@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <fangq at nmr.mgh.harvard.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) 0.9.7-2
+Version: this package is part of Monte Carlo eXtreme (MCX) v2016.4
 
 <toc>
 
@@ -38,21 +38,8 @@ CUDA driver (you can run the standard MCX binary first to test if your
 system is capable to run MCXLAB). Of course, you need to have either Matlab
 or Octave installed.
 
-MCXLAB needs libcudart.so.4 (for Unix-like systems) or cudart.dll 
-(for Windows). For Linux/Mac, you need to set your LD_LIBRARY_PATH
-environment variable to contain the path to this library file. 
-
-To simplify the installation, we highly recommend you to link the libraries
-to your /usr/lib directory. For 64bit Linux, you can use the following 
-command:
-
-  sudo ln -s /usr/local/cuda/lib64/libcudart.so.4 /usr/lib64
-
-For windows, you simply copy the cudart.dll file to Windows\System32 folder.
-This file is typically stored under the C:\CUDA\bin directory.
-
-Once you set up the CUDA library path, you can then add the "mcxlab"
-directory to your Matlab/Octave search path using the addpath command.
+Once you set up the CUDA toolkit and NVIDIA driver, you can then add the 
+"mcxlab" directory to your Matlab/Octave search path using the addpath command.
 If you want to add this path permanently, please use the "pathtool" 
 command, or edit your startup.m (~/.octaverc for Octave).
 
@@ -73,15 +60,15 @@ function. The help information is listed below. You can find the input/output
 formats and examples. The input cfg structure has very similar field names as
 the verbose command line options in MCX.
 
-<pre>====================================================================
+<pre> ====================================================================
        MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2010-2014 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
-                       URL: http://mcx.sf.net
+ Copyright (c) 2011-2016 Qianqian Fang <q.fang at neu.edu>
+                       URL: http://mcx.space
  ====================================================================
  
   Format:
-     [flux,detphoton]=mcxlab(cfg);
+     [flux,detphoton,vol,seed]=mcxlab(cfg);
  
   Input:
      cfg: a struct, or struct array. Each element of cfg defines 
@@ -102,21 +89,31 @@ the verbose command line options in MCX.
        cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
                        sradius=0 to disable atomic operations; if sradius=-1,
                        use cfg.crop0 and crop1 to define a cubic atomic zone; if
-                       sradius=-2, perform atomic operations in the entire domain 
+                       sradius=-2, perform atomic operations in the entire domain;
+                       by default, srandius=-2 (atomic operations is used).
        cfg.nblocksize: how many CUDA thread blocks to be used [64]
        cfg.nthread:    the total CUDA thread number [2048]
        cfg.maxgate:    the num of time-gates per simulation
        cfg.session:    a string for output file names (used when no return variables)
        cfg.seed:       seed for the random number generator (integer) [0]
+                       if set to a uint8 array, the binary data in each column is used 
+                       to seed a photon (i.e. the "replay" mode)
        cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
        cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
        cfg.respin:     repeat simulation for the given time (integer) [1]
        cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
+                       if set to an integer, gpuid specifies the index (starts at 1)
+                       of the GPU for the simulation; if set to a binary string made
+                       of 1s and 0s, it enables multiple GPUs. For example, '1101'
+                       allows to use the 1st, 2nd and 4th GPUs together.
+       cfg.workload    an array denoting the relative loads of each selected GPU. 
+                       for example, [50,20,30] allocates 50%, 20% and 30% photons to the
+                       3 selected GPUs, respectively; [10,10] evenly divides the load 
+                       between 2 active GPUs. A simple load balancing strategy is to 
+                       use the GPU core counts as the weight.
        cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
        cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
        cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
-       cfg.issavedet:  1-to save detected photon partial path length, [0]-do not save
-       cfg.issave2pt:  [1]-to save flux distribution, 0-do not save
        cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
        cfg.isgpuinfo:  1-print GPU info, [0]-do not print
        cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -127,25 +124,47 @@ the verbose command line options in MCX.
        cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
                        'pencil' - default, pencil beam, no param needed
                        'isotropic' - isotropic source, no param needed
-                       'cone' - uniform cone beam, srcparam1(0) is the half-angle in radian
-                       'gaussian' - gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+                       'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
+                       'gaussian' - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
                        'planar' - a 3D quadrilateral uniform planar source, with three corners specified 
                                  by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
                        'pattern' - a 3D quadrilateral pattern illumination, same as above, except
-                                 srcparam1(4) and srcparam2(4) specify the pattern pixel dimensions,
+                                 srcparam1(4) and srcparam2(4) specify the pattern array x/y dimensions,
                                  and srcpattern is a pattern array, valued between [0-1]. 
                        'fourier' - spatial frequency domain source, similar to 'planar', except
                                  the integer parts of srcparam1(4) and srcparam2(4) represent
-                                 the x/y k-numbers; the fraction part of srcparam1(4) multiplies
-                                 2*pi represents the phase shift.
+                                 the x/y frequencies; the fraction part of srcparam1(4) multiplies
+                                 2*pi represents the phase shift (phi0); 1.0 minus the fraction part of
+                                 srcparam2(4) is the modulation depth (M). Put in equations:
+                                     S=0.5*[1+M*cos(2*pi*(fx*x+fy*y)+phi0)], (0<=x,y,M<=1)
                        'arcsine' - similar to isotropic, except the zenith angle is uniform
                                  distribution, rather than a sine distribution.
                        'disk' - a uniform disk source pointing along srcdir; the radius is 
                                 set by srcparam1(1) (in grid unit)
+                       'fourierx' - a general Fourier source, the parameters are 
+                                srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phi0,M]
+                                normalized vectors satisfy: srcdir cross v1=v2
+                                the phase shift is phi0*2*pi
+                       'fourierx2d' - a general 2D Fourier basis, parameters
+                                srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
+                                the phase shift is phi{x,y}*2*pi
+                       'zgaussian' - an angular gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+                       'line' - a line source, emitting from the line segment between 
+                                cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating 
+                                uniformly in the perpendicular direction
+                       'slit' - a colimated slit beam emitting from the line segment between 
+                                cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial  
+                                dir specified by cfg.srcdir
        cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
        cfg.srcpattern: see cfg.srctype for details
-       cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
+       cfg.voidtime:   for wide-field sources, [1]-start timer at launch, or 0-when entering 
                        the first non-zero voxel
+       cfg.outputtype:  [X] - output flux, F - fluence, E - energy deposit
+                        J - Jacobian (replay)
+       cfg.faststep: when set to 1, this option enables the legacy 1mm fix-step photon
+                     advancing strategy; although this method is fast, the results were
+                     found inaccurate, and therefore is not recommended. Setting to 0
+                     enables precise ray-tracing between voxels; this is the default.
  
        fields with * are required; options in [] are the default values
  
@@ -163,12 +182,12 @@ the verbose command line options in MCX.
  	     are the partial path lengths (in grid unit) traveling in medium 1 up 
              to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
              to convert them to mm unit.
-      vol: (optional) a struct array, each element is a preprocessed volume
+       vol: (optional) a struct array, each element is a preprocessed volume
              corresponding to each instance of cfg. Each volume is a 3D uint8 array.
+       seeds: (optional), if give, mcxlab returns the seeds, in the form of
+             a byte array (uint8) for each detected photon. The column number
+             of seed equals that of detphoton.
  
-       if detphoton is ignored, the detected photon will be saved in a .mch file 
-       if cfg.issavedeet=1; if no output is given, the flux will be saved to a 
-       .mc2 file if cfg.issave2pt=1 (which is true by default).
  
   Example:
        cfg.nphoton=1e7;
@@ -196,7 +215,7 @@ the verbose command line options in MCX.
        imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));
  
  
-  This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.sf.net
+  This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
  
   License: GNU General Public License version 3, please read LICENSE.txt for details
 </pre>

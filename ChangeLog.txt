@@ -1,7 +1,8 @@
 = Change Log =
 
-== MCX 2016.4 (Dark Matter - 1.0-beta), FangQ <q.fang (a) neu.edu> ==
+== MCX v2016.4 (Dark Matter - 1.0-beta), FangQ <q.fang (a) neu.edu> ==
 
+ 2016-04-09 [release] finalize and release v2016.04
  2016-04-06 [c52b470] fix photon detection bug, fix json file crash, fix workload distribution bug, fix hitgrid inf handeling, fix energytot bug
  2016-04-05 [e94087f] add benchmark folder, use shape json
  2016-03-28 [76f9c5a] reduce memory dependency, yielded a 42% increase in mcx speed for the quicktest benchmark
@@ -16,10 +17,12 @@
  2015-07-12 [3898b14] add nsight project files
  2015-07-27 [cd8f134] use proper epsilon for float roundoff tests
  2015-06-25 [6815577] fix address alignment error for CUDA 6 or higher
- 2015-06-25*[60238c4] multiple GPU support! set fermi as default, set atomic as default, better mex compilation
+ 2015-06-25*[60238c4] multiple GPU support!
+ 2015-06-25*[60238c4] set atomic as default, single binary now contains all features
  2015-06-15 [97cd3e9] return gpu info for better interfacing with matlab
  2015-06-10*[7487e4d] support saving photon seeds and replay
  2015-06-10 [3c8a116] accept endianness input
+ 2015-05-01 [funding] NIH/NIGMS R01 funding support starts
 
 == MCX 0.9.7-2 (Dark Matter - alpha update 2), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
 

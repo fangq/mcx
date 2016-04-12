@@ -3,8 +3,8 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2010-2015 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
-%                      URL: http://mcx.sf.net
+%Copyright (c) 2011-2016 Qianqian Fang <q.fang at neu.edu>
+%                      URL: http://mcx.space
 %====================================================================
 %
 % Format:
@@ -29,7 +29,8 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
 %                      sradius=0 to disable atomic operations; if sradius=-1,
 %                      use cfg.crop0 and crop1 to define a cubic atomic zone; if
-%                      sradius=-2, perform atomic operations in the entire domain 
+%                      sradius=-2, perform atomic operations in the entire domain;
+%                      by default, srandius=-2 (atomic operations is used).
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
 %      cfg.nthread:    the total CUDA thread number [2048]
 %      cfg.maxgate:    the num of time-gates per simulation
@@ -96,7 +97,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %                               dir specified by cfg.srcdir
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
-%      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, 0-when entering 
+%      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, or 0-when entering 
 %                      the first non-zero voxel
 %      cfg.outputtype:  [X] - output flux, F - fluence, E - energy deposit
 %                       J - Jacobian (replay)
@@ -154,7 +155,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %      imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));
 %
 %
-% This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.sf.net
+% This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
 %
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
