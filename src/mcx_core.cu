@@ -201,7 +201,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uchar m
           if(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
                && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z){
 	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
-	    if(media[idx1d]){ // if inside
+	    if(media[idx1d] & MED_MASK){ // if inside
                 GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n",p->x,p->y,p->z,v->x,v->y,v->z));
 	        float3 htime;
                 int flipdir;
@@ -214,7 +214,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uchar m
                 GPUDEBUG(("look for entry p0=[%f %f %f] rv=[%f %f %f]\n",p->x,p->y,p->z,rv->x,rv->y,rv->z));
 		count=0;
 		while(!(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
-                  && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z) || !media[idx1d]){ // at most 3 times
+                  && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z) || !(media[idx1d] & MED_MASK)){ // at most 3 times
 	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,&htime.x,&rv->x,&flipdir);
                     *((float4*)(p))=float4(htime.x,htime.y,htime.z,p->w);
                     idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
@@ -227,11 +227,11 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uchar m
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
 
-		if(gproperty[media[idx1d]].w!=gproperty[0].w){
-	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+		if(gproperty[media[idx1d] & MED_MASK].w!=gproperty[0].w){
+	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d] & MED_MASK].w,flipdir);
                     GPUDEBUG(("transmitted intensity w=%e\n",p->w));
 	            if(p->w>EPS){
-		        transmit(v, gproperty[0].w,gproperty[media[idx1d]].w,flipdir);
+		        transmit(v, gproperty[0].w,gproperty[media[idx1d] & MED_MASK].w,flipdir);
                         GPUDEBUG(("transmit into volume v=<%f %f %f>\n",v->x,v->y,v->z));
                     }
 		}
@@ -268,7 +268,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
 }
 
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
-           uint *mediaid,float *w0,float *Lmove,uchar isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
+           uint *mediaid,float *w0,float *Lmove,uint isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uchar media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[]){
       int launchattempt=1;
@@ -525,6 +525,8 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
          return;
      }
      rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
+     isdet=mediaid & DET_MASK;
+     mediaid &= MED_MASK; // keep isdet to 0 to avoid launching photon ina 
 
      /*
       using a while-loop to terminate a thread by np.will cause MT RNG to be 3.5x slower
@@ -684,6 +686,8 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	      if(launchnewphoton(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
 	          &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata))
                    break;
+              isdet=mediaid & DET_MASK;
+              mediaid &= MED_MASK;
 	      continue;
 	  }
           
@@ -718,6 +722,8 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,
 				media,srcpattern,idx,(RandType*)n_seed,seeddata))
                                 break;
+                            isdet=mediaid & DET_MASK;
+                            mediaid &= MED_MASK;
 			    continue;
 			}
 	                GPUDEBUG(("do transmission\n"));

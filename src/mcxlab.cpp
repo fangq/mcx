@@ -420,6 +420,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	}else{
            double *val=mxGetPr(item);
 	   cfg->gpuid=val[0];
+	   memset(cfg->deviceid,'0',MAX_DEVICE);
            if(cfg->gpuid<MAX_DEVICE)
            	cfg->deviceid[cfg->gpuid-1]='1';
            else

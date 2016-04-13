@@ -78,6 +78,7 @@ fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
 fermimex fermioct:   OMP:=
 maxwellmex: fermimex
 maxwelloct: fermioct
+maxwellmex maxwelloct: CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 maxwelloct maxwellmex: CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
 
 xorbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"Cachebox MCX"'
