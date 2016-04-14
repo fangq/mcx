@@ -65,6 +65,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        fielddim[4];
   int        activedev=0;
   const char       *outputtag[]={"data"};
+  const char       *datastruct[]={"data","stat"};
+  const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
                                   "autoblock","autothread","maxgate"};
@@ -114,7 +116,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   ncfg = mxGetNumberOfElements(prhs[0]);
 
   if(nlhs>=1)
-      plhs[0] = mxCreateStructMatrix(ncfg,1,1,outputtag);
+      plhs[0] = mxCreateStructMatrix(ncfg,1,2,datastruct);
   if(nlhs>=2)
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
   if(nlhs>=3)
@@ -212,6 +214,29 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
                          fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*sizeof(float));
             free(cfg.exportfield);
             cfg.exportfield=NULL;
+
+            mxArray *stat=mxCreateStructMatrix(1,1,5,statstruct);
+            mxArray *val = mxCreateDoubleMatrix(1,1,mxREAL);
+            *mxGetPr(val) = cfg.runtime;
+            mxSetFieldByNumber(stat,0,0, val);
+
+            val = mxCreateDoubleMatrix(1,1,mxREAL);
+            *mxGetPr(val) = cfg.nphoton;
+            mxSetFieldByNumber(stat,0,1, val);
+
+            val = mxCreateDoubleMatrix(1,1,mxREAL);
+            *mxGetPr(val) = cfg.energytot;
+            mxSetFieldByNumber(stat,0,2, val);
+
+            val = mxCreateDoubleMatrix(1,1,mxREAL);
+            *mxGetPr(val) = cfg.energyabs;
+            mxSetFieldByNumber(stat,0,3, val);
+
+            val = mxCreateDoubleMatrix(1,1,mxREAL);
+            *mxGetPr(val) = cfg.normalizer;
+            mxSetFieldByNumber(stat,0,4, val);
+
+	    mxSetFieldByNumber(plhs[0],jstruct,1, stat);
         }
     }catch(const char *err){
       mexPrintf("Error: %s\n",err);

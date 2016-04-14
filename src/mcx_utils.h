@@ -124,7 +124,6 @@ typedef struct MCXConfig{
 	float *exportfield;     /**<memory buffer when returning the flux to external programs such as matlab*/
 	float *exportdetected;  /**<memory buffer when returning the partial length info to external programs such as matlab*/
 	unsigned int detectedcount; /**<total number of detected photons*/
-	double energytot, energyabs, energyesc;
         char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
         char *shapedata;    /**<a pointer points to a string defining the JSON-formatted shape data*/
 	int maxvoidstep;
@@ -143,6 +142,9 @@ typedef struct MCXConfig{
         float workload[MAX_DEVICE];
         int parentid;
 	unsigned int runtime;
+
+	double energytot, energyabs, energyesc;
+	float normalizer;
 } Config;
 
 #ifdef	__cplusplus

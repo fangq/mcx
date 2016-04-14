@@ -1339,6 +1339,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	   }else if(cfg->outputtype==otEnergy || cfg->outputtype==otJacobian)
 	       scale=1.f/cfg->energytot;
 
+         cfg->normalizer=scale;
 	 MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
          mcx_normalize(cfg->exportfield,scale,fieldlen);
      }
@@ -1393,6 +1394,8 @@ is more than what your have specified (%d), please use the -H option to specify 
      MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
              cfg->energytot,(cfg->energytot-cfg->energyesc)/cfg->energytot*100.f);fflush(cfg->flog);
      fflush(cfg->flog);
+     
+     cfg->energyabs=cfg->energytot-cfg->energyesc;
 }
 #pragma omp barrier
 
