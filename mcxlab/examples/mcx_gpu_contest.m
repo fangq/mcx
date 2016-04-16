@@ -61,17 +61,22 @@ mcxbenchmark.userinfo=struct('name',mcxuser{1},'email',mcxuser{2},'nickname',mcx
 
 savejson(mcxbenchmark)
 
-choice = questdlg('Your benchmark results are printed. Press OK to submit','Submission Confirmation','Yes','No','Yes');
+choice = questdlg(sprintf('Your benchmark score is %.0f. Press Yes to submit; No to cancel',mcxbenchmark.speedsum),...
+  'Submission Confirmation','Yes','No','Yes');
 if(isempty(choice) || strcmp(choice,'No'))
     return;
 end
 
 %% submit the benchmark report to the web portal
 
+gpustr=sprintf('%s/' ,mcxbenchmark.gpu(:).name);
+gpustr=regexprep(gpustr,'GeForce\s*','');
+machinestr=sprintf('%s:/%s',mcxbenchmark.userinfo.machine,gpustr);
+
 submitstr={'name',urlencode(mcxbenchmark.userinfo.nickname), 'time',sprintf('%ld',round(8.64e4 * (now - datenum('1970', 'yyyy')))),...
    'ver',urlencode(mcxbenchmark.mcxversion(8:end-1)), 'b1', sprintf('%.2f',speed(1)), 'b2', sprintf('%.2f',speed(2)), ...
    'b3', sprintf('%.2f',speed(3)), 'score', sprintf('%.2f',mcxbenchmark.speedsum), ...
-   'machine',urlencode(mcxbenchmark.userinfo.machine), 'report',urlencode(savejson(mcxbenchmark))};
+   'computer',urlencode(machinestr), 'report',urlencode(savejson(mcxbenchmark))};
 
 [s, status]=urlread('http://mcx.space/gpubench/gpucontest.cgi','POST',submitstr);
 pause(2);
@@ -79,6 +84,6 @@ pause(2);
 if(isempty(s))
     error('submission failed');
 elseif(strcmp(s,sprintf('SUCCESS\n')))
-    hs=msgbox(sprintf('Submission is successful. \n\nPlease browse http://mcx.space/gpubench/ to see results.'),'Success','modal');
+    hs=msgbox({'Submission is successful.','Please browse http://mcx.space/gpubench/ to see results.'},'Success','modal');
     uiwait(hs);
 end

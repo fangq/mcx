@@ -32,6 +32,13 @@ end
 dates=datestr(now,'yyyy-mm-dd HH:MM:SS');
 mcxbenchmark=struct('date',dates,'gpu',gpuinfo(gpuid==1));
 
+try
+    hbar=waitbar(0,'Running benchmarks #1');
+catch
+    hbar=0;
+end
+count=0;
+
 cfg.nphoton=1e8;
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcpos=[29 29 0];
@@ -56,9 +63,13 @@ for i=1:size(speed,1)
         flux.stat
         error('output absorption fraction is incorrect');
     end
+    count=count+1;
+    hbar && waitbar(count/9,hbar,'Running benchmarks #1');
     speed(i,1)=flux.stat.nphoton/flux.stat.runtime;
 end
 mcxbenchmark.benchmark1.stat=flux.stat;
+
+hbar && waitbar(count/9,hbar,'Running benchmarks #2');
 
 cfg.shapes='{"Shapes":[{"Sphere":{"Tag":2, "O":[30,30,30],"R":15}}]}';
 cfg.isreflect=1;
@@ -70,9 +81,13 @@ for i=1:size(speed,1)
         flux.stat
         error('output absorption fraction is incorrect');
     end
+    count=count+1;
+    hbar && waitbar(count/9,hbar,'Running benchmarks #2');
     speed(i,2)=flux.stat.nphoton/flux.stat.runtime;
 end
 mcxbenchmark.benchmark2.stat=flux.stat;
+
+hbar && waitbar(count/9,hbar,'Running benchmarks #3');
 
 cfg=rmfield(cfg,'shapes');
 cfg.srctype='planar';
@@ -87,6 +102,8 @@ for i=1:size(speed,1)
         flux.stat
         error('output absorption fraction is incorrect');
     end
+    count=count+1;
+    hbar && waitbar(count/9,hbar,'Running benchmarks #3');
     speed(i,3)=flux.stat.nphoton/flux.stat.runtime;
 end
 mcxbenchmark.benchmark3.stat=flux.stat;
@@ -98,3 +115,7 @@ for i=1:length(speed)
 end
 
 mcxbenchmark.speedsum=sum(speed);
+
+if(hbar)
+    delete(hbar);
+end
