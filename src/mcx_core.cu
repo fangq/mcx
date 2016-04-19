@@ -1417,8 +1417,6 @@ is more than what your have specified (%d), please use the -H option to specify 
          cudaFree(greplaytof);
      }
 
-     cudaThreadExit();
-
      free(Ppos);
      free(Pdir);
      free(Plen);
