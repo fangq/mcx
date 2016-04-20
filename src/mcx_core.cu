@@ -1326,7 +1326,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 #pragma omp master
 {
      if(cfg->isnormalized){
-	   float scale;
+	   float scale=1.f;
            MCX_FPRINTF(cfg->flog,"normalizing raw data ...\t");
            cfg->energyabs+=cfg->energytot-cfg->energyesc;
            if(cfg->outputtype==otFlux || cfg->outputtype==otFluence){
