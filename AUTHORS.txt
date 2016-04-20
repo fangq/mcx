@@ -1,6 +1,6 @@
 Monte Carlo eXtreme (MCX) is written by Qianqian Fang.
-Qianqian is currently an Assistant Professor at the 
-Department of Bioengineering of Northeastern University.
+Qianqian is currently an Assistant Professor in the 
+Department of Bioengineering at Northeastern University.
 
 Address: Dept. of Bioengineering
          Northeastern University

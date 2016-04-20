@@ -38,7 +38,7 @@ The algorithm of this software is detailed in the Reference [1].
 A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
-*. a variety of source forms, including wide-field and pattern illuminations
+*. support over a dozen source forms, including wide-field and pattern illuminations
 *. boundary reflection support
 *. time-resolved photon transport simulations
 *. saving photon partial path lengths at the detectors
@@ -65,7 +65,10 @@ II. Requirement and Installation
 
 Please read this section carefully. The majority of failures 
 using MCX were found related to incorrect installation of CUDA 
-library and NVIDIA driver.
+library and NVIDIA driver. 
+
+Please browse http://mcx.space/#documentation for step-by-step
+instructions.
 
 For MCX-CUDA, the requirements for using this software include
 
