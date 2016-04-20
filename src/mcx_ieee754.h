@@ -1,7 +1,11 @@
 #ifndef MCX_IEEE754_H
 #define MCX_IEEE754_H
 
-#include <machine/endian.h>
+#ifdef __OSX__
+  #include <machine/endian.h>
+#else
+  #include <endian.h>
+#endif
 
 union ieee754_double
   {

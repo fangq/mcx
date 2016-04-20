@@ -14,10 +14,10 @@
 #include <float.h>
 #include <stdint.h>
 
-#ifndef __GNUC__
-  #include <ieee754.h>
-#else
+#if defined(__clang__) || defined(_MSC_VER)
   #include "mcx_ieee754.h"
+#else
+  #include <ieee754.h>
 #endif
 
 #define MCX_RNG_NAME       "xorshift128+"
