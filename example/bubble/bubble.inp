@@ -3,7 +3,7 @@
 30.0 30.0 1.0        # source position (in grid unit)
 0 0 1                # initial directional vector
 0.e+00 1.e-09 1.e-9  # time-gates(s): start, end, step
-semi60x60x60.bin     # volume ('uchar' format)
+cubic60.json         # volume ('uchar' format)
 1 60 10 50           # x: voxel size (isotropic only), dim, start/end indices
 1 60 10 50           # y: voxel size, dim, start/end indices 
 1 60 1  20           # z: voxel size, dim, start/end indices
