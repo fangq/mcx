@@ -1,12 +1,6 @@
 #ifndef MCX_IEEE754_H
 #define MCX_IEEE754_H
 
-#ifdef __OSX__
-  #include <machine/endian.h>
-#else
-  #include <endian.h>
-#endif
-
 union ieee754_double
   {
     double d;
@@ -33,7 +27,7 @@ union ieee754_double
     /* This format makes it easier to see if a NaN is a signalling NaN.  */
     struct
       {
-#if	BYTE_ORDER == __BIG_ENDIAN
+#if	BYTE_ORDER == BIG_ENDIAN
 	unsigned int negative:1;
 	unsigned int exponent:11;
 	unsigned int quiet_nan:1;
