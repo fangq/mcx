@@ -2,7 +2,8 @@
 
 == MCX v2016.4 (Dark Matter - 1.0-beta), FangQ <q.fang (a) neu.edu> ==
 
- 2016-04-19 [release] finalize and release v2016.04
+ 2016-04-21 [release] finalize and release v2016.04
+ 2016-04-21*[2b1f22a] add Visual Studio 2013 Nsight project for easy compilation on windows
  2016-04-19 [3b69a1a] fix thread hanging bug when running on multiple GPUs
  2016-04-15*[e71f4c7] kick-off "MCX GPU Contest" for user-contributed hardware benchmarking
  2016-04-06 [c52b470] fix photon detection bug, fix json file crash, fix workload distribution bug, fix hitgrid inf handeling, fix energytot bug
