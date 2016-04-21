@@ -97,7 +97,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
@@ -112,6 +112,10 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_20,sm_20;compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;%(CodeGeneration)</CodeGeneration>
+      <AdditionalCompilerOptions>/openmp</AdditionalCompilerOptions>
+      <Defines>USE_XORSHIFT128P_RAND;USE_ATOMIC;SAVE_DETECTORS;USE_CACHEBOX;%(Defines)</Defines>
+      <FastMath>true</FastMath>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -140,7 +144,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Defines>USE_XORSHIFT128P_RAND;USE_ATOMIC;SAVE_DETECTORS;USE_CACHEBOX;%(Defines)</Defines>
       <FastMath>true</FastMath>
       <AdditionalCompilerOptions>/openmp</AdditionalCompilerOptions>
-      <CudaRuntime>Shared</CudaRuntime>
+      <CudaRuntime>Static</CudaRuntime>
+      <Runtime>MT</Runtime>
+      <Warning>W0</Warning>
     </CudaCompile>
     <CudaLink />
     <CudaLink>
@@ -149,7 +155,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -161,6 +167,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>MSVCRT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
@@ -168,7 +175,16 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_20,sm_20;compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;%(CodeGeneration)</CodeGeneration>
+      <AdditionalCompilerOptions>/openmp</AdditionalCompilerOptions>
+      <Defines>USE_XORSHIFT128P_RAND;USE_ATOMIC;SAVE_DETECTORS;USE_CACHEBOX;%(Defines)</Defines>
+      <FastMath>true</FastMath>
+      <Runtime>MT</Runtime>
+      <Warning>W0</Warning>
     </CudaCompile>
+    <CudaLink>
+      <AdditionalOptions>--cudart static -Xcompiler /openmp -Xcompiler /MT %(AdditionalOptions)</AdditionalOptions>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\..\src\mcx_core.cu" />
