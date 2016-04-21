@@ -1,10 +1,10 @@
 #ifndef MCX_IEEE754_H
 #define MCX_IEEE754_H
 
-#define LITTLE_ENDIAN 0x41424344UL 
-#define BIG_ENDIAN    0x44434241UL
-#define PDP_ENDIAN    0x42414443UL
-#define BYTE_ORDER    ('ABCD') 
+#define MCX_LITTLE_ENDIAN 0x41424344UL 
+#define MCX_BIG_ENDIAN    0x44434241UL
+#define MCX_PDP_ENDIAN    0x42414443UL
+#define MCX_BYTE_ORDER    ('ABCD') 
 
 union ieee754_double
   {
@@ -13,7 +13,7 @@ union ieee754_double
     /* This is the IEEE 754 double-precision format.  */
     struct
       {
-#if	BYTE_ORDER == BIG_ENDIAN
+#if	MCX_BYTE_ORDER == MCX_BIG_ENDIAN
 	unsigned int negative:1;
 	unsigned int exponent:11;
 	/* Together these comprise the mantissa.  */
@@ -31,7 +31,7 @@ union ieee754_double
     /* This format makes it easier to see if a NaN is a signalling NaN.  */
     struct
       {
-#if	BYTE_ORDER == BIG_ENDIAN
+#if	MCX_BYTE_ORDER == MCX_BIG_ENDIAN
 	unsigned int negative:1;
 	unsigned int exponent:11;
 	unsigned int quiet_nan:1;
