@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+//#include <float.h>
 
 #define MCX_RNG_NAME       "Logistic-Lattice"
 
@@ -47,6 +48,7 @@
 
 #define RING_FUN(x,y,z)        (NU2*(x)+NU*((y)+(z)))
 
+//typedef unsigned int uint;
 
 __device__ void logistic_step(RandType *t, RandType *tnew){
     t[0]=FUN(t[0]);
@@ -103,7 +105,7 @@ __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN],uint cpuseed[],uint idx,
 }
 // generate [0,1] random number for the next scattering length
 __device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
-    return -logf(rand_uniform01(t)+EPS);
+	return -logf(rand_uniform01(t) + EPS);
 }
 // generate [0,1] random number for the next arimuthal angle
 __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){

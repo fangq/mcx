@@ -1,6 +1,11 @@
 #ifndef MCX_IEEE754_H
 #define MCX_IEEE754_H
 
+#define LITTLE_ENDIAN 0x41424344UL 
+#define BIG_ENDIAN    0x44434241UL
+#define PDP_ENDIAN    0x42414443UL
+#define BYTE_ORDER    ('ABCD') 
+
 union ieee754_double
   {
     double d;
@@ -14,8 +19,7 @@ union ieee754_double
 	/* Together these comprise the mantissa.  */
 	unsigned int mantissa0:20;
 	unsigned int mantissa1:32;
-#endif				/* Big endian.  */
-#if	BYTE_ORDER == LITTLE_ENDIAN
+#else
 	/* Together these comprise the mantissa.  */
 	unsigned int mantissa1:32;
 	unsigned int mantissa0:20;
