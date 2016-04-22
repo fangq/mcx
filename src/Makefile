@@ -59,7 +59,7 @@ else
      CUCCOPT +=-m64
      ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
         ifeq ($(BACKEND),cuda)
-           LINKOPT=-L/usr/local/cuda/lib64 -lcudart -lm -lstdc++ $(OMP)
+           LINKOPT=-L/usr/local/cuda/lib64 -lcudart -lm -lstdc++
         endif
      endif
   endif
@@ -78,7 +78,7 @@ racing:     CUCCOPT+=-DTEST_RACING
 xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(CUGENCODE) MCX_TARGET_NAME='"Xorshift128+ Atomic MCX"'
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
-fermimex fermioct:   OMP:=
+fermi:      LINKOPT+=$(OMP)
 maxwellmex: fermimex
 maxwelloct: fermioct
 maxwellmex maxwelloct: CUCCOPT+=-DUSE_XORSHIFT128P_RAND

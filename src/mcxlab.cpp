@@ -66,7 +66,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        activedev=0;
   const char       *outputtag[]={"data"};
   const char       *datastruct[]={"data","stat"};
-  const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer"};
+  const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","workload"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
                                   "autoblock","autothread","maxgate"};
@@ -215,7 +215,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             free(cfg.exportfield);
             cfg.exportfield=NULL;
 
-            mxArray *stat=mxCreateStructMatrix(1,1,5,statstruct);
+            mxArray *stat=mxCreateStructMatrix(1,1,6,statstruct);
             mxArray *val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.runtime;
             mxSetFieldByNumber(stat,0,0, val);
@@ -235,6 +235,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.normalizer;
             mxSetFieldByNumber(stat,0,4, val);
+
+            val = mxCreateDoubleMatrix(1,activedev,mxREAL);
+	    for(int i=0;i<activedev;i++)
+                *(mxGetPr(val)+i) = cfg.workload[i];
+            mxSetFieldByNumber(stat,0,5, val);
 
 	    mxSetFieldByNumber(plhs[0],jstruct,1, stat);
         }

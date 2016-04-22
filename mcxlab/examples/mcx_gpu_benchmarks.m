@@ -14,6 +14,9 @@ cfg.gpuid=1;  % gpuid can be an integer 1-N to specify the n-th GPU
               % or it can be a string containing only '0's and '1's. 
 	      % exp: if gpuid='1010', it means the 1st and 3rd GPU are both used.
 
+%cfg.gpuid='111';          % on wazu, GPU#1,2,3 are 980Ti, 590 Core1 and Core 2
+%cfg.workload=[90,10,10];  % workload distribution between the 3 GPUs
+
 gpuid=cfg.gpuid;
 
 if(ischar(gpuid) && regexp(gpuid,'^[01]+$'))
