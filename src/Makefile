@@ -30,7 +30,7 @@ endif
 
 DLLFLAG=-fPIC
 OMP=-fopenmp
-CUDA_STATIC=-L/usr/local/cuda/lib64 -lcudadevrt -lcudart_static -static-libgcc -static-libstdc++ /usr/lib/gcc/x86_64-linux-gnu/4.8/libgomp.a /usr/lib/x86_64-linux-gnu/libm.a -ldl /usr/lib/x86_64-linux-gnu/librt.a -lpthread
+CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
 CPPOPT=-g -Wall -O3 -std=c99 # -DUSE_OS_TIMER
 
@@ -52,6 +52,8 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   OMP=-Xcompiler /openmp
   CUCCOPT+=-Xcompiler "/openmp /W0"
   CUDA_STATIC=--cudart static $(OMP) -Xcompiler /MT
+else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
+  CUDA_STATIC=--cudart static
 else
   CUCCOPT+=-Xcompiler $(OMP)
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
@@ -64,9 +66,10 @@ else
      endif
   endif
 endif
-CPPOPT+=$(OMP)
 
+CPPOPT+=$(OMP)
 CUGENCODE=-arch=sm_20
+CUOMPLINK=
 
 all logfast:CUCCOPT+=-use_fast_math
 xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
@@ -78,7 +81,7 @@ racing:     CUCCOPT+=-DTEST_RACING
 xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(CUGENCODE) MCX_TARGET_NAME='"Xorshift128+ Atomic MCX"'
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
-fermi:      LINKOPT+=$(OMP)
+fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
 maxwellmex: fermimex
 maxwelloct: fermioct
 maxwellmex maxwelloct: CUCCOPT+=-DUSE_XORSHIFT128P_RAND
@@ -99,7 +102,8 @@ xormax:     maxwell
 xormax:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
 static:     xormax
-static:     AR=g++
+static:     AR=nvcc
+static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
 mexbox fermimex:        AR=mex
