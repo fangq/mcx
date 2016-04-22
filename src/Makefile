@@ -30,7 +30,7 @@ endif
 
 DLLFLAG=-fPIC
 OMP=-fopenmp
-CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++ -fopenmp"
+CUDA_STATIC=-L/usr/local/cuda/lib64 -lcudadevrt -lcudart_static -static-libgcc -static-libstdc++ /usr/lib/gcc/x86_64-linux-gnu/4.8/libgomp.a /usr/lib/x86_64-linux-gnu/libm.a -ldl /usr/lib/x86_64-linux-gnu/librt.a -lpthread
 
 CPPOPT=-g -Wall -O3 -std=c99 # -DUSE_OS_TIMER
 
@@ -99,7 +99,7 @@ xormax:     maxwell
 xormax:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
 static:     xormax
-static:     AR=nvcc
+static:     AR=g++
 static:     LINKOPT=$(CUDA_STATIC)
 
 mexbox fermimex:        AR=mex

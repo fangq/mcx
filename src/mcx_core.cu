@@ -1006,7 +1006,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
         else
             mcx_error(-1,"workload was unspecified for an active device",__FILE__,__LINE__);
 
-     gpuphoton=cfg->nphoton*cfg->workload[threadid]/fullload;
+     gpuphoton=(double)cfg->nphoton*cfg->workload[threadid]/fullload;
+
      if(gpuphoton==0)
         return;
 
@@ -1169,6 +1170,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #endif
      fflush(cfg->flog);
 }
+#pragma omp barrier
 
      MCX_FPRINTF(cfg->flog,"\nGPU=%d (%s) threadph=%d extra=%d np=%d nthread=%d maxgate=%d repetition=%d\n",gpuid+1,gpu[gpuid].name,param.threadphoton,param.oddphotons,
            gpuphoton,gpu[gpuid].autothread,gpu[gpuid].maxgate,cfg->respin);
