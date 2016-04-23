@@ -67,12 +67,12 @@ for i=1:size(speed,1)
         error('output absorption fraction is incorrect');
     end
     count=count+1;
-    hbar && waitbar(count/9,hbar,'Running benchmarks #1');
+    hbar>0 && waitbar(count/9,hbar,'Running benchmarks #1');
     speed(i,1)=flux.stat.nphoton/flux.stat.runtime;
 end
 mcxbenchmark.benchmark1.stat=flux.stat;
 
-hbar && waitbar(count/9,hbar,'Running benchmarks #2');
+hbar>0 && waitbar(count/9,hbar,'Running benchmarks #2');
 
 cfg.shapes='{"Shapes":[{"Sphere":{"Tag":2, "O":[30,30,30],"R":15}}]}';
 cfg.isreflect=1;
@@ -85,12 +85,12 @@ for i=1:size(speed,1)
         error('output absorption fraction is incorrect');
     end
     count=count+1;
-    hbar && waitbar(count/9,hbar,'Running benchmarks #2');
+    hbar>0 && waitbar(count/9,hbar,'Running benchmarks #2');
     speed(i,2)=flux.stat.nphoton/flux.stat.runtime;
 end
 mcxbenchmark.benchmark2.stat=flux.stat;
 
-hbar && waitbar(count/9,hbar,'Running benchmarks #3');
+hbar>0 && waitbar(count/9,hbar,'Running benchmarks #3');
 
 cfg=rmfield(cfg,'shapes');
 cfg.srctype='planar';
@@ -100,13 +100,12 @@ cfg.srcpos=[10 10 -10];
 
 for i=1:size(speed,1)
     [flux, detps]=mcxlab(cfg);
-    if(abs(flux.stat.energyabs/flux.stat.energytot-0.1866)>0.005|| ...
-       abs(flux.stat.energytot-flux.stat.nphoton*0.97560903)>100)
+    if(abs(flux.stat.energyabs/flux.stat.energytot-0.1866)>0.005)
         flux.stat
         error('output absorption fraction is incorrect');
     end
     count=count+1;
-    hbar && waitbar(count/9,hbar,'Running benchmarks #3');
+    hbar>0 && waitbar(count/9,hbar,'Running benchmarks #3');
     speed(i,3)=flux.stat.nphoton/flux.stat.runtime;
 end
 mcxbenchmark.benchmark3.stat=flux.stat;
@@ -119,6 +118,6 @@ end
 
 mcxbenchmark.speedsum=sum(speed);
 
-if(hbar)
+if(hbar>0)
     delete(hbar);
 end
