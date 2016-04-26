@@ -217,7 +217,7 @@ or (use inline domain definition)
        mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
 </pre>
 
-the 2nd command above will launch 2048 GPU threads (-t) with every 64 threads
+the 2nd command above will launch 16384 GPU threads (-t) with every 64 threads
 a block (-T); a total of 1e7 photons will be simulated by the first GPU (-G 1) 
 with two equally divided runs (-r); the media/source configuration will be 
 read from input.inp (-f) and the output will be labeled with the session 
