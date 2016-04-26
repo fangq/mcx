@@ -458,6 +458,9 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
            	mexErrMsgTxt("GPU id can not be more than 256");
            printf("mcx.gpuid=%d;\n",cfg->gpuid);
 	}
+        for(int i=0;i<MAX_DEVICE;i++)
+           if(cfg->deviceid[i]=='0')
+              cfg->deviceid[i]='\0';
     }else if(strcmp(name,"workload")==0){
         double *val=mxGetPr(item);
 	arraydim=mxGetDimensions(item);
