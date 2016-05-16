@@ -145,6 +145,9 @@ typedef struct MCXConfig{
 
 	double energytot, energyabs, energyesc;
 	float normalizer;
+	unsigned int maxjumpdebug; /**< num of  photon scattering events to save when saving photon trajectory is enabled*/
+	unsigned int debugdatalen;
+	float *exportdebugdata;
 } Config;
 
 #ifdef	__cplusplus

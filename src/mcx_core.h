@@ -10,7 +10,8 @@ extern "C" {
 
 #define ABS(a)  ((a)<0?-(a):(a))
 #define DETINC	32
-#define MCX_DEBUG_RNG 1
+#define MCX_DEBUG_RNG   1
+#define MCX_DEBUG_MOVE  2
 
 #ifdef  MCX_DEBUG
 #define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
@@ -93,6 +94,8 @@ typedef struct  __align__(16) KernelParams {
   int threadphoton;
   int oddphotons;
   int faststep;
+  unsigned int debuglevel;
+  unsigned int maxjumpdebug;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu);

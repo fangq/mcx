@@ -42,7 +42,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','F','\0'};
+		 'k','q','Y','O','F','-','-','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -51,10 +51,11 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--normalize","--skipradius","--log","--listgpu",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
-		 "--replaydet","--outputtype","--faststep",""};
+		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
+                 "--maxvoidstep",""};
 
 const char outputtype[]={'x','f','e','j','t','\0'};
-const char debugflag[]={'R','\0'};
+const char debugflag[]={'R','M','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian","line","slit",""};
 
@@ -95,6 +96,9 @@ void mcx_initcfg(Config *cfg){
      cfg->isdumpmask=0;
      cfg->srctype=0;
      cfg->maxdetphoton=1000000;
+     cfg->maxjumpdebug=1000000;
+     cfg->exportdebugdata=NULL;
+     cfg->debugdatalen=0;
      cfg->autopilot=0;
      cfg->seed=0x623F9A9E;
      cfg->exportfield=NULL;
@@ -1257,6 +1261,14 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 break;
 		     case 'F':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
+		     	        break;
+		     case '-':  /*additional verbose parameters*/
+                                if(strcmp(argv[i]+2,"maxvoidstep"))
+                                     i=mcx_readarg(argc,argv,i,&(cfg->maxvoidstep),"int");
+                                else if(strcmp(argv[i]+2,"maxjumpdebug"))
+                                     i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
+                                else
+                                     MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;
 		}
 	    }

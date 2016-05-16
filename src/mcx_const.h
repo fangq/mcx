@@ -20,6 +20,8 @@
 #define DET_MASK           0x80
 #define MED_MASK           0x7F
 
+#define MCX_DEBUG_REC_LEN  6
+
 #define MCX_SRC_PENCIL     0  // default-Pencil beam src, no param
 #define MCX_SRC_ISOTROPIC  1  // isotropic source, no param
 #define MCX_SRC_CONE       2  // uniform cone, srcparam1.x=max zenith angle in rad
