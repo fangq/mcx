@@ -78,7 +78,7 @@ submitstr={'name',urlencode(mcxbenchmark.userinfo.nickname), 'time',sprintf('%ld
    'b3', sprintf('%.2f',speed(3)), 'score', sprintf('%.2f',mcxbenchmark.speedsum), ...
    'computer',urlencode(machinestr), 'report',urlencode(savejson(mcxbenchmark))};
 
-[s, status]=urlread('http://mcx.space/gpubench/gpucontest.cgi','POST',submitstr);
+[s, status]=urlread('http://mcx.space/gpubench/gpucontest.cgi','post',submitstr);
 pause(2);
 
 if(isempty(s))
