@@ -30,7 +30,15 @@
   #include <omp.h>
 #endif
 
-#define RAND_BUF_LEN 5
+#if defined(USE_XORSHIFT128P_RAND)
+    #define RAND_BUF_LEN 4
+#elif defined(USE_POSIX_RAND)
+    #define RAND_BUF_LEN 5
+#elif defined(USE_MT_RAND)
+    #define RAND_BUF_LEN 0
+#else
+    #define RAND_BUF_LEN 4
+#endif
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
@@ -40,13 +48,6 @@
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
 #define SET_GPU_INFO(output,id,v)  mxSetField(output,id,#v,mxCreateDoubleScalar(gpuinfo[i].v));
-
-#ifdef USE_MT_RAND
-    #define RAND_BUF_LEN 0
-#else
-    #define RAND_BUF_LEN 5
-#endif
-
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
