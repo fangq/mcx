@@ -33,11 +33,11 @@
 #if defined(USE_XORSHIFT128P_RAND)
     #define RAND_BUF_LEN 4
 #elif defined(USE_POSIX_RAND)
-    #define RAND_BUF_LEN 5
+    #define RAND_BUF_LEN 4
 #elif defined(USE_MT_RAND)
     #define RAND_BUF_LEN 0
 #else
-    #define RAND_BUF_LEN 4
+    #define RAND_BUF_LEN 5
 #endif
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
