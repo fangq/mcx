@@ -22,11 +22,18 @@ INCLUDEDIRS=-I/usr/local/cuda/include
 
 CUDART=-lcudart
 
+ARCH = $(shell uname -m)
+PLATFORM = $(shell uname -s)
+
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l`
   CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
 else ifeq ($(BACKEND),cudastatic)
-  CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
+  ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
+      CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
+  else
+      CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
+  endif
   LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
   CUCCOPT=-lineinfo -Xcompiler -Wall#-g #-arch compute_20 #--maxrregcount 32
 else
@@ -45,8 +52,6 @@ EXESUFFIX=
 
 FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
-ARCH = $(shell uname -m)
-PLATFORM = $(shell uname -s)
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
   LINKOPT=-L/c/CUDA/lib $(CUDART) --link 
