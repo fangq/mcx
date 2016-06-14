@@ -281,6 +281,236 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
       }
       GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 }
+//============================================================================================================================
+// injection functions start
+
+// PENCIL SRC
+__device__ int srcPencil(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcPencil ************************\n");
+	// do nothing
+	
+	return NULL;
+}
+
+// PLANAR || PATTERN || FOURIER SRC
+__device__ int srcPlanarPatternFourier(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcPlanarPatternFourier ************************\n");
+
+	float rx=rand_uniform01(t);
+	float ry=rand_uniform01(t);
+	*((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
+	p->y+rx*gcfg->srcparam1.y+ry*gcfg->srcparam2.y,
+	p->z+rx*gcfg->srcparam1.z+ry*gcfg->srcparam2.z,
+	p->w);
+	if(gcfg->srctype==MCX_SRC_PATTERN) // need to prevent rx/ry=1 here
+		p->w=srcpattern[(int)(ry*JUST_BELOW_ONE*gcfg->srcparam2.w)*(int)(gcfg->srcparam1.w)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.w)];
+	else if(gcfg->srctype==MCX_SRC_FOURIER)
+	{
+		p->w=(cosf((floorf(gcfg->srcparam1.w)*rx+floorf(gcfg->srcparam2.w)*ry + gcfg->srcparam1.w-floorf(gcfg->srcparam1.w))*TWO_PI)*(1.f-gcfg->srcparam2.w+floorf(gcfg->srcparam2.w))+1.f)*0.5f; //between 0 and 1
+	}
+	*idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+	if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z)
+	{
+		*mediaid=0;
+	}
+	else
+	{
+		*mediaid=media[*idx1d];
+	}
+
+	return NULL;
+}
+
+// FOURIERX || FOURIERX2D
+__device__ int srcFourierxFourierx2d(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcFourierxFourierx2d ************************\n");
+
+	// [v1x][v1y][v1z][|v2|]; [kx][ky][phi0][M], unit(v0) x unit(v1)=unit(v2)
+	float rx=rand_uniform01(t);
+	float ry=rand_uniform01(t);
+	float4 v2=gcfg->srcparam1;
+	// calculate v2 based on v2=|v2| * unit(v0) x unit(v1)
+	v2.w*=rsqrt(gcfg->srcparam1.x*gcfg->srcparam1.x+gcfg->srcparam1.y*gcfg->srcparam1.y+gcfg->srcparam1.z*gcfg->srcparam1.z);
+	v2.x=v2.w*(gcfg->c0.y*gcfg->srcparam1.z - gcfg->c0.z*gcfg->srcparam1.y);
+	v2.y=v2.w*(gcfg->c0.z*gcfg->srcparam1.x - gcfg->c0.x*gcfg->srcparam1.z); 
+	v2.z=v2.w*(gcfg->c0.x*gcfg->srcparam1.y - gcfg->c0.y*gcfg->srcparam1.x);
+	*((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*v2.x,
+	p->y+rx*gcfg->srcparam1.y+ry*v2.y,
+	p->z+rx*gcfg->srcparam1.z+ry*v2.z,
+	p->w);
+	if(gcfg->srctype==MCX_SRC_FOURIERX2D)
+	p->w=(sinf((gcfg->srcparam2.x*rx+gcfg->srcparam2.z)*TWO_PI)*sinf((gcfg->srcparam2.y*ry+gcfg->srcparam2.w)*TWO_PI)+1.f)*0.5f; //between 0 and 1
+	else
+	p->w=(cosf((gcfg->srcparam2.x*rx+gcfg->srcparam2.y*ry+gcfg->srcparam2.z)*TWO_PI)*(1.f-gcfg->srcparam2.w)+1.f)*0.5f; //between 0 and 1
+
+	*idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+	if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
+	*mediaid=0;
+	}else{
+	*mediaid=media[*idx1d];
+	}
+
+	return NULL;
+}
+
+// DISK || GAUSSIAN
+__device__ int srcDiskGaussian(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcDiskGaussian ************************\n");
+
+	// uniform disk distribution or Gaussian-beam
+	// Uniform disk point picking
+	// http://mathworld.wolfram.com/DiskPointPicking.html
+	float sphi, cphi;
+	float phi=TWO_PI*rand_uniform01(t);
+	sincosf(phi,&sphi,&cphi);
+	float r;
+	if(gcfg->srctype==MCX_SRC_DISK)
+	r=sqrtf(rand_uniform01(t))*gcfg->srcparam1.x;
+	else
+	r=sqrtf(-logf(rand_uniform01(t)))*gcfg->srcparam1.x;
+
+	if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
+	float tmp0=1.f-v->z*v->z;
+	float tmp1=r*rsqrtf(tmp0);
+	*((float4*)p)=float4(
+	p->x+tmp1*(v->x*v->z*cphi - v->y*sphi),
+	p->y+tmp1*(v->y*v->z*cphi + v->x*sphi),
+	p->z-tmp1*tmp0*cphi                   ,
+	p->w
+	);
+	GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
+	}else{
+	p->x+=r*cphi;
+	p->y+=r*sphi;
+	GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
+	}
+	*idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+	if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
+	*mediaid=0;
+	}else{
+	*mediaid=media[*idx1d];
+	}
+
+	return NULL;
+}
+
+// CONE || ISOTROPIC || ARCSINE
+__device__ int srcConeIsotropicArcsine(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcConeIsotropicArcsine ************************\n");
+
+	// Uniform point picking on a sphere 
+	// http://mathworld.wolfram.com/SpherePointPicking.html
+	float ang,stheta,ctheta,sphi,cphi;
+	ang=TWO_PI*rand_uniform01(t); //next arimuth angle
+	sincosf(ang,&sphi,&cphi);
+	if(gcfg->srctype==MCX_SRC_CONE){  // a solid-angle section of a uniform sphere
+	do{
+	ang=(gcfg->srcparam1.y>0) ? TWO_PI*rand_uniform01(t) : acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
+	}while(ang>gcfg->srcparam1.x);
+	}else{
+	if(gcfg->srctype==MCX_SRC_ISOTROPIC) // uniform sphere
+	ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
+	else
+	ang=ONE_PI*rand_uniform01(t); //uniform distribution in zenith angle, arcsine
+	}
+	sincosf(ang,&stheta,&ctheta);
+	rotatevector(v,stheta,ctheta,sphi,cphi);
+
+	return NULL;
+}
+
+// ZGAUSSIAN
+__device__ int srcZgaussian(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcZgaussian ************************\n");
+
+	float ang,stheta,ctheta,sphi,cphi;
+	ang=TWO_PI*rand_uniform01(t); //next arimuth angle
+	sincosf(ang,&sphi,&cphi);
+	ang=sqrtf(-2.f*logf(rand_uniform01(t)))*(1.f-2.f*rand_uniform01(t))*gcfg->srcparam1.x;
+	sincosf(ang,&stheta,&ctheta);
+	rotatevector(v,stheta,ctheta,sphi,cphi);
+
+	return NULL;
+}
+
+// LINE || SLIT
+__device__ int srcLineSlit(MCXpos *p, RandType t[RAND_BUF_LEN], float srcpattern[], MCXdir *v, uint *idx1d, uint *mediaid, uchar media[])
+{
+	//printf("inside srcLineSlit ************************\n");
+
+	float r=rand_uniform01(t);
+	*((float4*)p)=float4(p->x+r*gcfg->srcparam1.x,
+	p->y+r*gcfg->srcparam1.y,
+	p->z+r*gcfg->srcparam1.z,
+	p->w);
+	if(gcfg->srctype==MCX_SRC_LINE){
+	float s,p;
+	r=1.f-2.f*rand_uniform01(t);
+	s=1.f-2.f*rand_uniform01(t);
+	p=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t)>0.5f ? 1.f : -1.f);
+	*((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
+	}
+
+	return NULL;
+}
+
+typedef int (*functionPointer)(MCXpos*, RandType*, float*, MCXdir*, uint*, uint*, uchar*);
+
+// funcP elements order:
+/*
+	MCX_SRC_PENCIL     0  // default-Pencil beam src, no param
+	MCX_SRC_ISOTROPIC  1  // isotropic source, no param
+	MCX_SRC_CONE       2  // uniform cone, srcparam1.x=max zenith angle in rad
+	MCX_SRC_GAUSSIAN   3  // Gaussian beam, srcparam1.x=sigma
+	MCX_SRC_PLANAR     4  // quadrilateral src, vectors spanned by srcparam{1}.{x,y,z}
+	MCX_SRC_PATTERN    5  // same as above, load srcpattern as intensity
+	MCX_SRC_FOURIER    6  // same as above, srcparam1.w and 2.w defines the spatial freq in x/y
+	MCX_SRC_ARCSINE    7  // same as isotropic, but more photons near the pole dir
+	MCX_SRC_DISK       8  // uniform 2D disk along v
+	MCX_SRC_FOURIERX   9  // same as Fourier, except the v1/v2 and v are orthogonal
+	MCX_SRC_FOURIERX2D 10 // 2D (sin(kx*x+phix)*sin(ky*y+phiy)+1)/2
+	MCX_SRC_ZGAUSSIAN  11 // Gaussian zenith anglular distribution
+	MCX_SRC_LINE       12 // a non-directional line source
+	MCX_SRC_SLIT       13 // a collimated line source
+*/
+
+// element groups
+/*
+	PENCIL									> 0
+	PLANAR		|| PATTERN		|| FOURIER	> 4 5 6
+	FOURIERX	|| FOURIERX2D				> 9 10
+	DISK		|| GAUSSIAN					> 8 3
+	CONE		|| ISOTROPIC	|| ARCSINE	> 2 1 7
+	ZGAUSSIAN								> 11
+	LINE		|| SLIT						> 12 13
+	
+*/
+
+__device__ functionPointer funcP[14] = {
+	srcPencil,
+	srcConeIsotropicArcsine,
+	srcConeIsotropicArcsine,
+	srcDiskGaussian,
+	srcPlanarPatternFourier,
+	srcPlanarPatternFourier,
+	srcPlanarPatternFourier,
+	srcConeIsotropicArcsine,
+	srcDiskGaussian,
+	srcFourierxFourierx2d,
+	srcFourierxFourierx2d,
+	srcZgaussian,
+	srcLineSlit,
+	srcLineSlit
+	};
+
+// injection functions end
+//============================================================================================================================
 
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
            uint *mediaid,float *w0,float *Lmove,uint isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
@@ -317,9 +547,14 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
 
-	  if(gcfg->srctype==MCX_SRC_PENCIL){ /*source can be outside*/
+	funcP[gcfg->srctype](p, t, srcpattern, v, idx1d, mediaid, media);
+	
+/*
+	  if(gcfg->srctype==MCX_SRC_PENCIL){ //source can be outside
 	      // do nothing
-	  }else if(gcfg->srctype==MCX_SRC_PLANAR || gcfg->srctype==MCX_SRC_PATTERN|| gcfg->srctype==MCX_SRC_FOURIER){ /*a rectangular grid over a plane*/
+	  }else if(gcfg->srctype==MCX_SRC_PLANAR || gcfg->srctype==MCX_SRC_PATTERN|| gcfg->srctype==MCX_SRC_FOURIER){ //a rectangular grid over a plane
+	  //srcPlanarPatternFourier(p, t, srcpattern, v, idx1d, mediaid, media);
+
 	      float rx=rand_uniform01(t);
 	      float ry=rand_uniform01(t);
 	      *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
@@ -338,6 +573,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
               }else{
         	  *mediaid=media[*idx1d];
               }
+
 	  }else if(gcfg->srctype==MCX_SRC_FOURIERX||gcfg->srctype==MCX_SRC_FOURIERX2D){ // [v1x][v1y][v1z][|v2|]; [kx][ky][phi0][M], unit(v0) x unit(v1)=unit(v2)
 	      float rx=rand_uniform01(t);
 	      float ry=rand_uniform01(t);
@@ -434,14 +670,16 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      *((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
 	      }
 	  }
-          *rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
+*/
+	    *rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
 	  if((*mediaid & MED_MASK)==0){
-             int idx=skipvoid(p, v, f, rv, media); /*specular reflection of the bbx is taken care of here*/
+             int idx=skipvoid(p, v, f, rv, media); //specular reflection of the bbx is taken care of here
              if(idx>=0){
 		 *idx1d=idx;
 		 *mediaid=media[*idx1d];
 	     }
 	  }
+	  
 	  if(launchattempt++>gcfg->maxvoidstep)
 	     return -1;  // launch failed
       }while((*mediaid & MED_MASK)==0 || p->w<=gcfg->minenergy);
@@ -1474,3 +1712,4 @@ is more than what your have specified (%d), please use the -H option to specify 
      free(energy);
      free(field);
 }
+
