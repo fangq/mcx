@@ -1,0 +1,155 @@
+###############################################################################
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#                             http://mcx.space/                               #
+#                                                                             #
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
+#            Department of Bioengineering, Northeastern University            #
+###############################################################################
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
+###############################################################################
+$Rev::       $ Last $Date::                       $ by $Author::              $
+###############################################################################
+- variant name: [Fermi] compiled for GPU Capability [100] with CUDA [7000]
+- compiled with: RNG [xorshift128+] with Seed Length [4]
+- this version CAN save photons at the detectors
+
+
+GPU=1 (Tesla K40c) threadph=32 extra=16960 np=1000000 nthread=30720 maxgate=1 repetition=1
+initializing streams ...	init complete : 0 ms
+requesting 7168 bytes of shared memory
+lauching MCX simulation for time window [0.00e+00ns 5.00e+00ns] ...
+simulation run# 1 ... 	kernel complete:  	284 ms
+retrieving fields ... 	detected 2988 photons, total: 2988	transfer complete:	291 ms
+data normalization complete : 292 ms
+normalizing raw data ...	normalization factor alpha=200.000000
+saving data to file ... 216000 1	saving data complete : 295 ms
+
+simulated 1000000 photons (1000000) with 30720 threads (repeat x1)
+MCX simulation speed: 3571.43 photon/ms
+total simulated energy: 1000000.00	absorbed: 17.70515%
+(loss due to initial specular reflection is excluded in the total)
+###############################################################################
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#                             http://mcx.space/                               #
+#                                                                             #
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
+#            Department of Bioengineering, Northeastern University            #
+###############################################################################
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
+###############################################################################
+$Rev::       $ Last $Date::                       $ by $Author::              $
+###############################################################################
+- variant name: [Fermi] compiled for GPU Capability [100] with CUDA [7000]
+- compiled with: RNG [xorshift128+] with Seed Length [4]
+- this version CAN save photons at the detectors
+
+
+GPU=1 (Tesla K40c) threadph=32 extra=16960 np=1000000 nthread=30720 maxgate=1 repetition=1
+initializing streams ...	init complete : 0 ms
+requesting 7168 bytes of shared memory
+lauching MCX simulation for time window [0.00e+00ns 5.00e+00ns] ...
+simulation run# 1 ... 	kernel complete:  	208 ms
+retrieving fields ... 	detected 1834 photons, total: 1834	transfer complete:	215 ms
+data normalization complete : 215 ms
+normalizing raw data ...	normalization factor alpha=205.073532
+saving data to file ... 216000 1	saving data complete : 218 ms
+
+simulated 1000000 photons (1000000) with 30720 threads (repeat x1)
+MCX simulation speed: 4878.05 photon/ms
+total simulated energy: 975259.94	absorbed: 6.47868%
+(loss due to initial specular reflection is excluded in the total)
+###############################################################################
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#                             http://mcx.space/                               #
+#                                                                             #
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
+#            Department of Bioengineering, Northeastern University            #
+###############################################################################
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
+###############################################################################
+$Rev::       $ Last $Date::                       $ by $Author::              $
+###############################################################################
+- variant name: [Fermi] compiled for GPU Capability [100] with CUDA [7000]
+- compiled with: RNG [xorshift128+] with Seed Length [4]
+- this version CAN save photons at the detectors
+
+
+GPU=1 (Tesla K40c) threadph=32 extra=16960 np=1000000 nthread=30720 maxgate=1 repetition=1
+initializing streams ...	init complete : 0 ms
+requesting 7168 bytes of shared memory
+lauching MCX simulation for time window [0.00e+00ns 5.00e+00ns] ...
+simulation run# 1 ... 	kernel complete:  	170 ms
+retrieving fields ... 	detected 14102 photons, total: 14102	transfer complete:	176 ms
+data normalization complete : 176 ms
+normalizing raw data ...	normalization factor alpha=204.996292
+saving data to file ... 216000 1	saving data complete : 179 ms
+
+simulated 1000000 photons (1000000) with 30720 threads (repeat x1)
+MCX simulation speed: 5988.02 photon/ms
+total simulated energy: 975627.43	absorbed: 6.36116%
+(loss due to initial specular reflection is excluded in the total)
+###############################################################################
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#                             http://mcx.space/                               #
+#                                                                             #
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
+#            Department of Bioengineering, Northeastern University            #
+###############################################################################
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
+###############################################################################
+$Rev::       $ Last $Date::                       $ by $Author::              $
+###############################################################################
+- variant name: [Fermi] compiled for GPU Capability [100] with CUDA [7000]
+- compiled with: RNG [xorshift128+] with Seed Length [4]
+- this version CAN save photons at the detectors
+
+
+GPU=1 (Tesla K40c) threadph=32 extra=16960 np=1000000 nthread=30720 maxgate=1 repetition=1
+initializing streams ...	init complete : 0 ms
+requesting 7168 bytes of shared memory
+lauching MCX simulation for time window [0.00e+00ns 5.00e+00ns] ...
+simulation run# 1 ... 	kernel complete:  	166 ms
+retrieving fields ... 	detected 7583 photons, total: 7583	transfer complete:	172 ms
+data normalization complete : 173 ms
+normalizing raw data ...	normalization factor alpha=204.996292
+saving data to file ... 216000 1	saving data complete : 175 ms
+
+simulated 1000000 photons (1000000) with 30720 threads (repeat x1)
+MCX simulation speed: 6134.97 photon/ms
+total simulated energy: 975627.43	absorbed: 6.07729%
+(loss due to initial specular reflection is excluded in the total)
+###############################################################################
+#                      Monte Carlo eXtreme (MCX) -- CUDA                      #
+#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#                             http://mcx.space/                               #
+#                                                                             #
+#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
+#            Department of Bioengineering, Northeastern University            #
+###############################################################################
+#    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
+###############################################################################
+$Rev::       $ Last $Date::                       $ by $Author::              $
+###############################################################################
+- variant name: [Fermi] compiled for GPU Capability [100] with CUDA [7000]
+- compiled with: RNG [xorshift128+] with Seed Length [4]
+- this version CAN save photons at the detectors
+
+
+GPU=1 (Tesla K40c) threadph=32 extra=16960 np=1000000 nthread=30720 maxgate=1 repetition=1
+initializing streams ...	init complete : 0 ms
+requesting 7168 bytes of shared memory
+lauching MCX simulation for time window [0.00e+00ns 5.00e+00ns] ...
+simulation run# 1 ... 	kernel complete:  	136 ms
+retrieving fields ... 	detected 813 photons, total: 813	transfer complete:	142 ms
+data normalization complete : 142 ms
+normalizing raw data ...	normalization factor alpha=204.996292
+saving data to file ... 216000 1	saving data complete : 145 ms
+
+simulated 1000000 photons (1000000) with 30720 threads (repeat x1)
+MCX simulation speed: 7518.80 photon/ms
+total simulated energy: 975627.43	absorbed: 4.68371%
+(loss due to initial specular reflection is excluded in the total)

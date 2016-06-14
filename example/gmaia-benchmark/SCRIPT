@@ -1,0 +1,43 @@
+#!/bin/bash
+# My first script
+
+echo "Script running"
+
+outputFile="outputs/scriptOutput"
+outputFileClean="outputs/scriptOutputClean"
+
+rm outputs/scriptOutput
+
+# run without -s and 1e6 photons
+../../bin/mcx -A -f 0benchmark-pencil.json -b 0 "$@"	-n 1e6| tee -a $outputFile
+../../bin/mcx -A -f 2benchmark-cone.json -b 0 "$@"		-n 1e6| tee -a $outputFile
+../../bin/mcx -A -f 3benchmark-gaussian.json -b 0 "$@"	-n 1e6| tee -a $outputFile
+../../bin/mcx -A -f 4benchmark-planar.json -b 0 "$@"	-n 1e6| tee -a $outputFile
+../../bin/mcx -A -f 8benchmark-disk.json -b 0 "$@"		-n 1e6| tee -a $outputFile
+
+# run without -s
+#../../bin/mcx -A -f 0benchmark-pencil.json -b 0 "$@"	| tee -a $outputFile
+#../../bin/mcx -A -f 2benchmark-cone.json -b 0 "$@"		| tee -a $outputFile
+#../../bin/mcx -A -f 3benchmark-gaussian.json -b 0 "$@"	| tee -a $outputFile
+#../../bin/mcx -A -f 4benchmark-planar.json -b 0 "$@"	| tee -a $outputFile
+#../../bin/mcx -A -f 8benchmark-disk.json -b 0 "$@"		| tee -a $outputFile
+
+# run with 1e6 photons
+#./run_0benchmark-pencil.sh -n 1e6	| tee -a $outputFile
+#./run_2benchmark-cone.sh -n 1e6		| tee -a $outputFile
+#./run_3benchmark-gaussian.sh -n 1e6	| tee -a $outputFile
+#./run_4benchmark-planar.sh -n 1e6	| tee -a $outputFile
+#./run_8benchmark-disk.sh -n 1e6		| tee -a $outputFile
+
+# normal run code
+#./run_0benchmark-pencil.sh	| tee -a $outputFile
+#./run_2benchmark-cone.sh	| tee -a $outputFile
+#./run_3benchmark-gaussian.s	| tee -a $outputFile
+#./run_4benchmark-planar.sh	| tee -a $outputFile
+#./run_8benchmark-disk.sh	| tee -a $outputFile
+
+
+egrep "Injetction|MCX simulation speed|MCX ERROR" $outputFile >>  $outputFileClean
+echo "-" >> $outputFileClean
+
+echo "Script finished"
