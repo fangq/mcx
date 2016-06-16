@@ -6,6 +6,68 @@ echo "Script running"
 outputFile="outputs/scriptOutput"
 outputFileClean="outputs/scriptOutputClean"
 
+<<<<<<< HEAD
+rm $outputFile
+
+../../bin/mcx -A -f 0benchmark-pencil.json 		-b 0 "$@" -n 1e6 -G 2 >> $outputFile
+../../bin/mcx -A -f 2benchmark-cone.json 		-b 0 "$@" -n 1e6 -G 2 >> $outputFile
+../../bin/mcx -A -f 3benchmark-gaussian.json 	-b 0 "$@" -n 1e6 -G 2 >> $outputFile
+../../bin/mcx -A -f 4benchmark-planar.json	 	-b 0 "$@" -n 1e6 -G 2 >> $outputFile
+../../bin/mcx -A -f 8benchmark-disk.json 		-b 0 "$@" -n 1e6 -G 2 >> $outputFile
+
+
+# DON'T SAVEFILE AND 1E6 PHOTONS
+: <<'b3'
+../../bin/mcx -A -f 0benchmark-pencil.json 		-b 0 "$@" -n 1e6 -G 1 | tee -a $outputFile
+../../bin/mcx -A -f 2benchmark-cone.json 		-b 0 "$@" -n 1e6 -G 1 | tee -a $outputFile
+../../bin/mcx -A -f 3benchmark-gaussian.json 	-b 0 "$@" -n 1e6 -G 1 | tee -a $outputFile
+../../bin/mcx -A -f 4benchmark-planar.json	 	-b 0 "$@" -n 1e6 -G 1 | tee -a $outputFile
+../../bin/mcx -A -f 8benchmark-disk.json 		-b 0 "$@" -n 1e6 -G 1 | tee -a $outputFile
+b3
+
+# DON'T SAVEFILE AND 1E8 PHOTONS
+: <<'b2'
+../../bin/mcx -A -f 0benchmark-pencil.json -b 0 "$@"	| tee $outputFile
+../../bin/mcx -A -f 2benchmark-cone.json -b 0 "$@"		| tee $outputFile
+../../bin/mcx -A -f 3benchmark-gaussian.json -b 0 "$@"	| tee $outputFile
+../../bin/mcx -A -f 4benchmark-planar.json -b 0 "$@"	| tee $outputFile
+../../bin/mcx -A -f 8benchmark-disk.json -b 0 "$@"		| tee $outputFile
+b2
+
+# SAVEFILE AND 1E6 PHOTONS
+: <<'b1'
+../../bin/mcx -A -f 0benchmark-pencil.json 		-b 0 "$@" -n 1e6 -s 0benchmark-pencil	| tee $outputFile
+../../bin/mcx -A -f 2benchmark-cone.json 		-b 0 "$@" -n 1e6 -s 2benchmark-cone		| tee $outputFile
+../../bin/mcx -A -f 3benchmark-gaussian.json 	-b 0 "$@" -n 1e6 -s 3benchmark-gaussian	| tee $outputFile
+../../bin/mcx -A -f 4benchmark-planar.json 		-b 0 "$@" -n 1e6 -s 4benchmark-planar	| tee $outputFile
+../../bin/mcx -A -f 8benchmark-disk.json 		-b 0 "$@" -n 1e6 -s 8benchmark-disk		| tee $outputFile
+b1
+
+# SAVEFILE AND 1E8 PHOTONS
+: <<'b0'
+../../bin/mcx -A -f 0benchmark-pencil.json 		-b 0 "$@" -s 0benchmark-pencil		-G 4 | tee -a $outputFile
+../../bin/mcx -A -f 2benchmark-cone.json 		-b 0 "$@" -s 2benchmark-cone		-G 4 | tee -a $outputFile
+../../bin/mcx -A -f 3benchmark-gaussian.json 	-b 0 "$@" -s 3benchmark-gaussian	-G 4 | tee -a $outputFile
+../../bin/mcx -A -f 4benchmark-planar.json 		-b 0 "$@" -s 4benchmark-planar		-G 4 | tee -a $outputFile
+../../bin/mcx -A -f 8benchmark-disk.json 		-b 0 "$@" -s 8benchmark-disk		-G 4 | tee -a $outputFile
+b0
+
+# SAVEFILE AND 1E8 PHOTONS
+: <<'b0'
+cuda-memcheck ../../bin/mcx -A -f 0benchmark-pencil.json 	-b 0 "$@" -s 0benchmark-pencil		-G 1 | tee -a $outputFile
+cuda-memcheck ../../bin/mcx -A -f 2benchmark-cone.json 		-b 0 "$@" -s 2benchmark-cone		-G 1 | tee -a $outputFile
+cuda-memcheck ../../bin/mcx -A -f 3benchmark-gaussian.json 	-b 0 "$@" -s 3benchmark-gaussian	-G 1 | tee -a $outputFile
+cuda-memcheck ../../bin/mcx -A -f 4benchmark-planar.json 	-b 0 "$@" -s 4benchmark-planar		-G 1 | tee -a $outputFile
+cuda-memcheck ../../bin/mcx -A -f 8benchmark-disk.json 		-b 0 "$@" -s 8benchmark-disk		-G 1 | tee -a $outputFile
+b0
+
+egrep "MCX simulation speed|MCX ERROR" $outputFile > $outputFileClean
+
+echo "=============================================="
+echo "Results [pencil | cone | gaussian | planar | disk]"
+cat $outputFileClean
+echo "=============================================="
+=======
 rm outputs/scriptOutput
 
 # run without -s and 1e6 photons
@@ -39,5 +101,6 @@ rm outputs/scriptOutput
 
 egrep "Injetction|MCX simulation speed|MCX ERROR" $outputFile >>  $outputFileClean
 echo "-" >> $outputFileClean
+>>>>>>> f610599bd84e5a5ed70cd0165cd3e36f357db5a7
 
 echo "Script finished"

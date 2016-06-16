@@ -547,7 +547,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
 
-	funcP[gcfg->srctype](p, t, srcpattern, v, idx1d, mediaid, media);
+	if[gcfg->srctype != MCX_SRC_PENCIL]
+		funcP[gcfg->srctype](p, t, srcpattern, v, idx1d, mediaid, media);
 	
 /*
 	  if(gcfg->srctype==MCX_SRC_PENCIL){ //source can be outside
