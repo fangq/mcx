@@ -19,6 +19,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <sys/ioctl.h>
 #include "mcx_utils.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
@@ -1033,7 +1034,7 @@ void  mcx_maskdet(Config *cfg){
      free(padvol);
 }
 
-void mcx_progressbar(unsigned int n, Config *cfg){
+void mcx_progressbar(float percent, Config *cfg){
     unsigned int percentage, j,colwidth=79;
     static unsigned int oldmarker=0xFFFFFFFF;
 
@@ -1043,7 +1044,7 @@ void mcx_progressbar(unsigned int n, Config *cfg){
     colwidth=ttys.ws_col;
 #endif
     
-    percentage=(float)n*(colwidth-18)*ONE_OVER_REPORTER;
+    percentage=percent*(colwidth-18);
 
     if(percentage != oldmarker){
         oldmarker=percentage;

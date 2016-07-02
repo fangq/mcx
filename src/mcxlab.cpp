@@ -397,7 +397,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.outputtype='%s';\n",outputstr);
     }else if(strcmp(name,"debuglevel")==0){
         int len=mxGetNumberOfElements(item);
-        const char debugflag[]={'R','M','\0'};
+        const char debugflag[]={'R','M','P','\0'};
         char debuglevel[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)

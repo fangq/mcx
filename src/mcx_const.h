@@ -17,9 +17,6 @@
 #define MAX_DETECTORS      1024
 #define SEED_FROM_FILE      -999
 
-#define REPORTER_SIZE      128
-#define ONE_OVER_REPORTER  0.0078125f
-
 #define DET_MASK           0x80
 #define MED_MASK           0x7F
 

@@ -458,8 +458,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       *energylaunched+=p->w;
       *w0=p->w;
       *Lmove=0.f;
-      if((gcfg->debuglevel & MCX_DEBUG_PROGRESS) && threadid<REPORTER_SIZE)
-        if( f->ndone >= (threadid*ONE_OVER_REPORTER*gcfg->threadphoton) && f->ndone < (threadid*ONE_OVER_REPORTER*gcfg->threadphoton)+1.f)
+      if((gcfg->debuglevel & MCX_DEBUG_PROGRESS) && ((int)(f->ndone) & 1) && (threadid==0 || threadid==blockDim.x * gridDim.x - 1 
+          || threadid==((blockDim.x * gridDim.x)>>1))) // use the 1st, middle and last thread for progress report
           gprogress[0]++;
       return 0;
 }
@@ -1275,19 +1275,23 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            tic0=GetTimeMillis();
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
            mcx_main_loop<<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress);
-           if((param.debuglevel & MCX_DEBUG_PROGRESS) && threadid==0){
+#pragma omp master
+{
+           if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0;
 	     do{
 	       int ndone = *progress;
 	       if (ndone > p0){
-		  mcx_progressbar(ndone,cfg);
+		  mcx_progressbar(ndone/(param.threadphoton*1.5f),cfg);
 		  p0 = ndone;
 	       }
                sleep_ms(100);
-	     }while (p0 < REPORTER_SIZE-2);
-             mcx_progressbar(REPORTER_SIZE,cfg);
+	     }while (p0 < (param.threadphoton*1.5f));
+             mcx_progressbar(1.0f,cfg);
              MCX_FPRINTF(cfg->flog,"\n");
+             *progress=0;
            }
+}
            CUDA_ASSERT(cudaThreadSynchronize());
 	   CUDA_ASSERT(cudaMemcpy(&detected, gdetected,sizeof(uint),cudaMemcpyDeviceToHost));
            tic1=GetTimeMillis();
