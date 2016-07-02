@@ -55,7 +55,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--maxvoidstep",""};
 
 const char outputtype[]={'x','f','e','j','t','\0'};
-const char debugflag[]={'R','M','\0'};
+const char debugflag[]={'R','M','P','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian","line","slit",""};
 
@@ -1031,6 +1031,30 @@ void  mcx_maskdet(Config *cfg){
 	 exit(0);
      }
      free(padvol);
+}
+
+void mcx_progressbar(unsigned int n, Config *cfg){
+    unsigned int percentage, j,colwidth=79;
+    static unsigned int oldmarker=0xFFFFFFFF;
+
+#ifdef TIOCGWINSZ 
+    struct winsize ttys;
+    ioctl(0, TIOCGWINSZ, &ttys);
+    colwidth=ttys.ws_col;
+#endif
+    
+    percentage=(float)n*(colwidth-18)*ONE_OVER_REPORTER;
+
+    if(percentage != oldmarker){
+        oldmarker=percentage;
+        for(j=0;j<colwidth;j++)     MCX_FPRINTF(stdout,"\b");
+        MCX_FPRINTF(stdout,"Progress: [");
+        for(j=0;j<percentage;j++)      MCX_FPRINTF(stdout,"=");
+        MCX_FPRINTF(stdout,(percentage<colwidth-18) ? ">" : "=");
+        for(j=percentage;j<colwidth-18;j++) MCX_FPRINTF(stdout," ");
+        MCX_FPRINTF(stdout,"] %3d%%",percentage*100/(colwidth-18));
+            fflush(stdout);
+    }
 }
 
 int mcx_readarg(int argc, char *argv[], int id, void *output,const char *type){
