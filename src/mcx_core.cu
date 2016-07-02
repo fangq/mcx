@@ -905,6 +905,9 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
     }
 #endif
 
+    if(activedev<MAX_DEVICE)
+        cfg->deviceid[activedev]='\0';
+
     return activedev;
 #endif
 }
