@@ -4,7 +4,7 @@
 #  2009/04/02
 #################################################################
 
-BACKEND ?= cuda
+BACKEND ?= cuda-7.0
 
 ifeq ($(BACKEND),ocelot)
   CC?=g++
@@ -18,26 +18,19 @@ AR=$(CC)
 BINARY=mcx
 OUTPUT_DIR=../bin
 
-INCLUDEDIRS=-I/usr/local/cuda/include
+INCLUDEDIRS=-I/usr/local/cuda-7.0/include
 
 CUDART=-lcudart
-
-ARCH = $(shell uname -m)
-PLATFORM = $(shell uname -s)
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l`
   CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
 else ifeq ($(BACKEND),cudastatic)
-  ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
-      CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
-  else
-      CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
-  endif
-  LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
+  CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
+  LINKOPT=-L/usr/local/cuda-7.0/lib -lm $(CUDART)
   CUCCOPT=-lineinfo -Xcompiler -Wall#-g #-arch compute_20 #--maxrregcount 32
 else
-  LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
+  LINKOPT=-L/usr/local/cuda-7.0/lib -lm $(CUDART)
   CUCCOPT=-lineinfo -Xcompiler -Wall#-g #-arch compute_20 #--maxrregcount 32
 endif
 
@@ -52,10 +45,12 @@ EXESUFFIX=
 
 FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
+ARCH = $(shell uname -m)
+PLATFORM = $(shell uname -s)
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
-  LINKOPT=-L/c/CUDA/lib $(CUDART) --link 
-  INCLUDEDIRS +=-I/c/CUDA/include
+  LINKOPT=-L/c/CUDA-7.5/lib $(CUDART) --link 
+  INCLUDEDIRS +=-I/c/CUDA-7.5/include
   CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
@@ -70,11 +65,11 @@ else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      CPPOPT +=-m64
      CUCCOPT +=-m64
-     ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
-        ifeq ($(BACKEND),cuda)
-           LINKOPT=-L/usr/local/cuda/lib64 $(CUDART) -lm -lstdc++
+     ifeq "$(wildcard /usr/local/cuda-7.0/lib64)" "/usr/local/cuda-7.0/lib64"
+        ifeq ($(BACKEND),cuda-7.0)
+           LINKOPT=-L/usr/local/cuda-7.0/lib64 $(CUDART) -lm -lstdc++
         else ifeq ($(BACKEND),cudastatic)
-           LINKOPT=-L/usr/local/cuda/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
+           LINKOPT=-L/usr/local/cuda-7.0/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
         endif
      endif
   endif
@@ -177,7 +172,6 @@ sassi_branch:
 	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcextreme.o  mcextreme.c
 	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o cjson/cJSON.o  cjson/cJSON.c
 	/usr/local/sassi7/bin/nvcc mcx_core.o mcx_utils.o mcx_shapes.o tictoc.o mcextreme.o cjson/cJSON.o -o ../bin/mcx -L/usr/local/cuda-7.0/lib64 -lcudart -lm -lstdc++ -gencode arch=compute_35,code=sm_35 -Xlinker "--wrap=main" -Xlinker "--wrap=exit" -lcudadevrt -Xlinker -rpath,/usr/local/sassi7/extras/CUPTI/lib64 -L../SASSI/instlibs/lib -lbranch -L/usr/local/sassi7/extras/CUPTI/lib64 -lcupti -lboost_regex -lcrypto
-
 
 clean:
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX)
