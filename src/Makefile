@@ -22,11 +22,18 @@ INCLUDEDIRS=-I/usr/local/cuda/include
 
 CUDART=-lcudart
 
+ARCH = $(shell uname -m)
+PLATFORM = $(shell uname -s)
+
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l`
   CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
 else ifeq ($(BACKEND),cudastatic)
-  CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
+  ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
+      CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
+  else
+      CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
+  endif
   LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
   CUCCOPT=-lineinfo -Xcompiler -Wall#-g #-arch compute_20 #--maxrregcount 32
 else
@@ -45,8 +52,6 @@ EXESUFFIX=
 
 FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
-ARCH = $(shell uname -m)
-PLATFORM = $(shell uname -s)
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
   LINKOPT=-L/c/CUDA/lib $(CUDART) --link 
@@ -154,6 +159,25 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
+
+sassi_cfg:
+	/usr/local/sassi7/bin/nvcc -c -lineinfo -Xcompiler -fopenmp -m64 -DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math -DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -Xptxas --sassi-function-entry -Xptxas --sassi-bb-entry -g -O3 -dc -DMCX_TARGET_NAME='"Fermi MCX"' -o mcx_core.o  mcx_core.cu
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcx_utils.o  mcx_utils.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcx_shapes.o  mcx_shapes.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o tictoc.o  tictoc.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcextreme.o  mcextreme.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o cjson/cJSON.o  cjson/cJSON.c
+	/usr/local/sassi7/bin/nvcc mcx_core.o mcx_utils.o mcx_shapes.o tictoc.o mcextreme.o cjson/cJSON.o -o ../bin/mcx -L/usr/local/cuda-7.0/lib64 -lcudart -lm -lstdc++ -gencode arch=compute_35,code=sm_35 -lcudadevrt -Xlinker -rpath,/usr/local/sassi7/extras/CUPTI/lib64 -L../SASSI/instlibs/lib -lcfg -L/usr/local/sassi7/extras/CUPTI/lib64 -lcupti
+
+sassi_branch:
+	/usr/local/sassi7/bin/nvcc -c -lineinfo -Xcompiler -fopenmp -m64 -DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math -DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math -arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -Xptxas --sassi-inst-before="cond-branches" -Xptxas --sassi-before-args="cond-branch-info" -g -O3 -dc -DMCX_TARGET_NAME='"Fermi MCX"' -o mcx_core.o  mcx_core.cu
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcx_utils.o  mcx_utils.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcx_shapes.o  mcx_shapes.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o tictoc.o  tictoc.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o mcextreme.o  mcextreme.c
+	/usr/local/sassi7/bin/nvcc -I/usr/local/cuda/include -g -O3 -m64 -c -o cjson/cJSON.o  cjson/cJSON.c
+	/usr/local/sassi7/bin/nvcc mcx_core.o mcx_utils.o mcx_shapes.o tictoc.o mcextreme.o cjson/cJSON.o -o ../bin/mcx -L/usr/local/cuda-7.0/lib64 -lcudart -lm -lstdc++ -gencode arch=compute_35,code=sm_35 -Xlinker "--wrap=main" -Xlinker "--wrap=exit" -lcudadevrt -Xlinker -rpath,/usr/local/sassi7/extras/CUPTI/lib64 -L../SASSI/instlibs/lib -lbranch -L/usr/local/sassi7/extras/CUPTI/lib64 -lcupti -lboost_regex -lcrypto
+
 
 clean:
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX)
