@@ -114,6 +114,11 @@ maxwell:    fermi
 maxwell:    CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
 xormax:     maxwell
 xormax:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+pascal:     fermi
+pascal:     CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
+xorpas:     pascal
+xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+
 
 static:     xormax
 static:     AR=nvcc
