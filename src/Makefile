@@ -95,11 +95,12 @@ xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(CUGEN
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
 fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
-maxwellmex: fermimex
-maxwelloct: fermioct
-maxwellmex maxwelloct: CUCCOPT+=-DUSE_XORSHIFT128P_RAND
-maxwellmex maxwelloct: MEXCCOPT+=-DUSE_XORSHIFT128P_RAND
+maxwellmex pascalmex: fermimex
+maxwelloct pascaloct: fermioct
+maxwellmex maxwelloct pascalmex pascaloct: CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+maxwellmex maxwelloct pascalmex pascaloct: MEXCCOPT+=-DUSE_XORSHIFT128P_RAND
 maxwelloct maxwellmex: CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
+pascaloct  pascalmex:  CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
 
 xorbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"Cachebox MCX"'
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
@@ -110,14 +111,12 @@ detbox mexbox octbox: CUCCOPT+=-DMCX_TARGET_NAME='"Cached Detective MCX"'
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Fermi MCX"'
 det detbox: BINARY:=$(BINARY)_det
 logbox detbox:          BINARY:=$(BINARY)_cached
-maxwell:    fermi
+maxwell pascal:    fermi
 maxwell:    CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
-xormax:     maxwell
-xormax:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
-pascal:     fermi
 pascal:     CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
+xormax:     maxwell
 xorpas:     pascal
-xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+xormax xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
 
 static:     xormax
