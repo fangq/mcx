@@ -14,6 +14,8 @@ extern "C" {
 #define MCX_DEBUG_MOVE      2
 #define MCX_DEBUG_PROGRESS  4
 
+#define ROULETTE_SIZE       10.f
+
 #ifdef  MCX_DEBUG
 #define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
 #else

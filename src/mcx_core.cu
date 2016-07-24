@@ -712,7 +712,23 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
               mediaid &= MED_MASK;
 	      continue;
 	  }
-          
+
+          /*Russian Roulette*/
+
+          if(p.w < gcfg->minenergy){
+                if(rand_do_roulette(t)*ROULETTE_SIZE<=1.f)
+                   p.w*=ROULETTE_SIZE;
+                else{
+                   GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
+                   if(launchnewphoton(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
+	                &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
+                        break;
+                   isdet=mediaid & DET_MASK;
+                   mediaid &= MED_MASK;
+                   continue;
+               }
+          }
+
           // do boundary reflection/transmission
 
 	  if(gcfg->doreflect && n1!=gproperty[mediaid].w){
