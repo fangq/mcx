@@ -158,6 +158,10 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
       htime[1]=fabs((floorf(p0->y)+(v->y>0.f)-p0->y)*rv[1]);
       htime[2]=fabs((floorf(p0->z)+(v->z>0.f)-p0->z)*rv[2]);
 
+      htime[0]=htime[0]<1e-7f ? 1.f: htime[0];
+      htime[1]=htime[1]<1e-7f ? 1.f: htime[1];
+      htime[2]=htime[2]<1e-7f ? 1.f: htime[2];
+
       //get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime[0],htime[1]),htime[2]);
       (*id)=(dist==htime[0]?0:(dist==htime[1]?1:2));
@@ -490,7 +494,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
      MCXpos  p={0.f,0.f,0.f,-1.f};//{x,y,z}: coordinates in grid unit, w:packet weight
      MCXdir *v=(MCXdir*)(sharedmem+(threadIdx.x<<2));   //{x,y,z}: unitary direction vector in grid unit, nscat:total scat event
-     MCXtime f;   //pscat: remaining scattering probability,t: photon elapse time, 
+     MCXtime f={0.f,0.f,0.f,0.f}; //pscat: remaining scattering probability,t: photon elapse time, 
                   //tnext: next accumulation time, ndone: completed photons
      float  energyloss=genergy[idx<<1];
      float  energylaunched=genergy[(idx<<1)+1];
