@@ -26,8 +26,8 @@ ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
 
 ifeq ($(BACKEND),ocelot)
-  LINKOPT=-L/usr/local/lib `OcelotConfig -l`
-  CUCCOPT=-g -arch=sm_20 #--maxrregcount 32
+  LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo
+  CUCCOPT=-D__STRICT_ANSI__ -g #--maxrregcount 32
 else ifeq ($(BACKEND),cudastatic)
   ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
       CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
