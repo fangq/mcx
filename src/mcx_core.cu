@@ -158,9 +158,9 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
       htime[1]=fabs((floorf(p0->y)+(v->y>0.f)-p0->y)*rv[1]);
       htime[2]=fabs((floorf(p0->z)+(v->z>0.f)-p0->z)*rv[2]);
 
-      htime[0]=htime[0]<1e-7f ? 1.f: htime[0];
-      htime[1]=htime[1]<1e-7f ? 1.f: htime[1];
-      htime[2]=htime[2]<1e-7f ? 1.f: htime[2];
+      htime[0]=htime[0]<1e-7f ? rv[0]: htime[0];
+      htime[1]=htime[1]<1e-7f ? rv[1]: htime[1];
+      htime[2]=htime[2]<1e-7f ? rv[2]: htime[2];
 
       //get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime[0],htime[1]),htime[2]);
