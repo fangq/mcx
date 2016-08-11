@@ -83,8 +83,9 @@ endif
 CPPOPT+=$(OMP)
 CUGENCODE=-arch=sm_20
 CUOMPLINK=
+OUTPUTFLAG:=-o
 
-all logfast:CUCCOPT+=-use_fast_math
+logfast:    CUCCOPT+=-use_fast_math
 xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 log:        CUCCOPT+=
@@ -94,6 +95,9 @@ racing:     CUCCOPT+=-DTEST_RACING
 xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(CUGENCODE) MCX_TARGET_NAME='"Xorshift128+ Atomic MCX"'
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
+fermi fermimex fermioct:      xor
+fermimex fermioct: OUTPUTFLAG:=-output
+
 fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
 maxwellmex pascalmex: fermimex
 maxwelloct pascaloct: fermioct
@@ -111,7 +115,7 @@ detbox mexbox octbox: CUCCOPT+=-DMCX_TARGET_NAME='"Cached Detective MCX"'
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Fermi MCX"'
 det detbox: BINARY:=$(BINARY)_det
 logbox detbox:          BINARY:=$(BINARY)_cached
-maxwell pascal:    fermi
+all maxwell pascal:    fermi
 maxwell:    CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
 pascal:     CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
 xormax:     maxwell
@@ -142,9 +146,10 @@ octbox fermioct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 fermidebug: CUCCOPT+=-DMCX_DEBUG
 fermidebug: fermi
 
+all: fermi
 debug: debugxor
-mex: maxwellmex
-oct: maxwelloct
+mex: fermimex
+oct: fermioct
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
@@ -156,7 +161,7 @@ makedirs:
 
 $(OUTPUT_DIR)/$(BINARY): makedirs $(OBJS)
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
-	$(AR) $(OBJS) -o $(OUTPUT_DIR)/$(BINARY) $(LINKOPT) $(USERLINKOPT)
+	$(AR) $(OBJS) $(OUTPUTFLAG) $(OUTPUT_DIR)/$(BINARY) $(LINKOPT) $(USERLINKOPT)
 
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
@@ -171,5 +176,5 @@ cudasdk:
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
 	fi
 
-.DEFAULT_GOAL := xormax
+.DEFAULT_GOAL := all
 
