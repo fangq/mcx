@@ -65,6 +65,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        ncfg, nfields;
   int        fielddim[4];
   int        activedev=0;
+  int        errorflag=0;
+  int        threadid=0;
   const char       *outputtag[]={"data"};
   const char       *datastruct[]={"data","stat"};
   const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","workload"};
@@ -173,15 +175,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         mcx_validate_config(&cfg);
 #ifdef _OPENMP
         omp_set_num_threads(activedev);
-#pragma omp parallel
+#pragma omp parallel shared(errorflag)
 {
+        threadid=omp_get_thread_num();
 #endif
+        try{
 
-        mcx_run_simulation(&cfg,gpuinfo);
+            mcx_run_simulation(&cfg,gpuinfo);
 
+        }catch(const char *err){
+	    mexPrintf("Error from thread (%d): %s\n",threadid,err);
+	    errorflag++;
+	}catch(const std::exception &err){
+	    mexPrintf("C++ Error from thread (%d): %s\n",threadid,err.what());
+	    errorflag++;
+	}catch(...){
+	    mexPrintf("Unknown Exception from thread (%d)",threadid);
+	    errorflag++;
+	}
 #ifdef _OPENMP
 }
 #endif
+
+        if(errorflag)
+            mexErrMsgTxt("MCXLAB Terminated due to an exception!");
 
         if(nlhs>=5){
             fielddim[0]=MCX_DEBUG_REC_LEN; fielddim[1]=cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
@@ -397,7 +414,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.outputtype='%s';\n",outputstr);
     }else if(strcmp(name,"debuglevel")==0){
         int len=mxGetNumberOfElements(item);
-        const char debugflag[]={'R','M','\0'};
+        const char debugflag[]={'R','M','P','\0'};
         char debuglevel[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)

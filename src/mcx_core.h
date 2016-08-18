@@ -10,8 +10,11 @@ extern "C" {
 
 #define ABS(a)  ((a)<0?-(a):(a))
 #define DETINC	32
-#define MCX_DEBUG_RNG   1
-#define MCX_DEBUG_MOVE  2
+#define MCX_DEBUG_RNG       1
+#define MCX_DEBUG_MOVE      2
+#define MCX_DEBUG_PROGRESS  4
+
+#define ROULETTE_SIZE       10.f
 
 #ifdef  MCX_DEBUG
 #define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
