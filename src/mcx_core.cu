@@ -730,7 +730,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
           if((mediaid==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w))) || f.t>gcfg->twin1){
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
 	      if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
-	          &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata))
+	          &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                    break;
               isdet=mediaid & DET_MASK;
               mediaid &= MED_MASK;
@@ -744,7 +744,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                    p.w*=ROULETTE_SIZE;
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-                   if(launchnewphoton(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
+                   if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
 	                &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                         break;
                    isdet=mediaid & DET_MASK;
