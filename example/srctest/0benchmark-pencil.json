@@ -1,0 +1,73 @@
+{
+    "Help": {
+      "[en]": {
+        "Domain::VolumeFile": "file full path to the volume file, file mst be in the uchar binary format",
+        "Domain::Dim": "dimension of the data array stored in the volume file",
+        "Domain::OriginType": "similar to --srcfrom0, 1 if the origin is [0 0 0], 0 if it is [1.0,1.0,1.0]",
+        "Domain::Step": "do not change this, should be always be 1",
+        "Domain::CacheBoxP0": "for cachebox mcx with -R negative_num, this specifies a 3D index for 
+                               a corner of the cache region, in grid unit",
+        "Domain::CacheBoxP1": "the other corner, the starting value of the indices is 1",
+        "Domain::Media": "the first medium is always assigned to voxels with a value of 0 or outside of
+                         the volume, the second row is for medium type 1, and so on. mua and mus must 
+                         be in 1/mm unit",
+        "Session::Photons": "if -n is not specified in the command line, this defines the total photon number",
+        "Session::ID": "if -s is not specified in the command line, this defines the output file name stub",
+        "Forward::T0": "the start time of the simulation, in seconds",
+        "Forward::T1": "the end time of the simulation, in seconds",
+        "Forward::Dt": "the width of each time window, in seconds",
+        "Optode::Source::Pos": "the grid position of the source, can be non-integers, in grid unit",
+        "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit",
+        "Optode::Source::Dir": "the unitary directional vector of the photon at launch",
+        "Optode::Source::Type": "source types, must be one of the following: 
+                   pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk",
+        "Optode::Source::Param1": "source parameters, 4 floating-point numbers",
+        "Optode::Source::Param2": "additional source parameters, 4 floating-point numbers"
+      }
+    },
+    "Domain": {
+	"VolumeFile": "cubic60.json",
+        "Dim":    [60,60,60],
+        "OriginType": 1,
+        "Media": [
+             {"mua": 0.00, "mus": 0.0, "g": 1.00, "n": 1.0},
+             {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.37},
+             {"mua": 0.002,"mus": 5.0, "g": 0.90, "n": 1.0}
+        ]
+    },
+    "Session": {
+	"Photons":  1e8,
+	"RNGSeed":  29012392,
+	"ID":       "benchmark1"
+    },
+    "Forward": {
+	"T0": 0.0e+00,
+	"T1": 5.0e-09,
+	"Dt": 5.0e-09
+    },
+    "Optode": {
+	"Source": {
+	    "Type":"pencil",
+	    "Pos": [29.0, 29.0, 0.0],
+	    "Dir": [0.0, 0.0, 1.0]
+	},
+	"Detector": [
+	    {
+		"Pos": [29.0,  19.0,  0.0],
+		"R": 1.0
+	    },
+            {
+                "Pos": [29.0,  39.0,  0.0],
+                "R": 1.0
+            },
+            {
+                "Pos": [19.0,  29.0,  0.0],
+                "R": 1.0
+            },
+            {
+                "Pos": [39.0,  29.0,  0.0],
+                "R": 1.0
+            }
+	]
+    }
+}
