@@ -4,7 +4,7 @@
 #  2009/04/02
 #################################################################
 
-BACKEND ?= cuda-7.0
+BACKEND ?= cuda
 
 ifeq ($(BACKEND),ocelot)
   CC?=g++
@@ -18,7 +18,7 @@ AR=$(CC)
 BINARY=mcx
 OUTPUT_DIR=../bin
 
-INCLUDEDIRS=-I/usr/local/cuda-7.0/include
+INCLUDEDIRS=-I/usr/local/cuda/include
 
 CUDART=-lcudart
 
@@ -37,7 +37,7 @@ else ifeq ($(BACKEND),cudastatic)
   LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
   CUCCOPT=-lineinfo -Xcompiler -Wall#-g #-arch compute_20 #--maxrregcount 32
 else
-  LINKOPT=-L/usr/local/cuda-7.0/lib -lm $(CUDART)
+  LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
   CUCCOPT=-lineinfo -Xcompiler -Wall#-g #-arch compute_20 #--maxrregcount 32
 endif
 
@@ -54,8 +54,8 @@ FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
-  LINKOPT=-L/c/CUDA-7.5/lib $(CUDART) --link 
-  INCLUDEDIRS +=-I/c/CUDA-7.5/include
+  LINKOPT=-L/c/CUDA/lib $(CUDART) --link 
+  INCLUDEDIRS +=-I/c/CUDA/include
   CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
@@ -70,11 +70,11 @@ else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      CPPOPT +=-m64
      CUCCOPT +=-m64
-     ifeq "$(wildcard /usr/local/cuda-7.0/lib64)" "/usr/local/cuda-7.0/lib64"
-        ifeq ($(BACKEND),cuda-7.0)
-           LINKOPT=-L/usr/local/cuda-7.0/lib64 $(CUDART) -lm -lstdc++
+     ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
+        ifeq ($(BACKEND),cuda)
+           LINKOPT=-L/usr/local/cuda/lib64 $(CUDART) -lm -lstdc++
         else ifeq ($(BACKEND),cudastatic)
-           LINKOPT=-L/usr/local/cuda-7.0/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
+           LINKOPT=-L/usr/local/cuda/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
         endif
      endif
   endif
