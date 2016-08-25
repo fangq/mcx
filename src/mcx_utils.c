@@ -19,7 +19,9 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include <sys/ioctl.h>
+#ifndef WIN32
+  #include <sys/ioctl.h>
+#endif
 #include "mcx_utils.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
