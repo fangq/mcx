@@ -22,7 +22,7 @@
 #define MIN(a,b)           ((a)<(b)?(a):(b))
 #define MAX(a,b)           ((a)>(b)?(a):(b))
 
-enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otTaylor};
+enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP};
 enum TMCXParent  {mpStandalone, mpMATLAB};
 
 typedef struct MCXMedium{

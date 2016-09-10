@@ -57,7 +57,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
                  "--maxvoidstep",""};
 
-const char outputtype[]={'x','f','e','j','t','\0'};
+const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian","line","slit",""};
@@ -891,7 +891,7 @@ void mcx_loadseedfile(Config *cfg){
     cfg->seed=SEED_FROM_FILE;
     cfg->nphoton=his.savedphoton;
 
-    if(cfg->outputtype==otJacobian || cfg->outputtype==otTaylor){ //cfg->replaydet>0
+    if(cfg->outputtype==otJacobian || cfg->outputtype==otWP){ //cfg->replaydet>0
        int i,j;
        float *ppath=(float*)malloc(his.savedphoton*his.colcount*sizeof(float));
        cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
@@ -1309,7 +1309,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		MCX_FPRINTF(cfg->flog,"unable to save to log file, will print from stdout\n");
           }
      }
-     if(cfg->outputtype==otJacobian && cfg->seed!=SEED_FROM_FILE)
+     if((cfg->outputtype==otJacobian ||cfg->outputtype==otWP) && cfg->seed!=SEED_FROM_FILE)
          MCX_ERROR(-1,"Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.");
 
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
@@ -1434,9 +1434,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
                                if an mch file is followed, MMC will \"replay\" \n\
                                the detected photon; the replay mode can be used\n\
- -O [X|XFEJT]  (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
-                               J - Jacobian (replay mode),   T - approximated\n\
-                               Jacobian (replay mode only)\n\
+ -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
+                               J - Jacobian (replay mode),   P - scattering \n\
+                               event counts at each voxel (replay mode only)\n\
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -h            (--help)        print this message\n\
  -l            (--log)         print messages to a log file instead\n\
