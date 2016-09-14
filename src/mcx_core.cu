@@ -624,6 +624,20 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                        rotatevector(v,stheta,ctheta,sphi,cphi);
                        v->nscat++;
                        rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
+		       if(gcfg->outputtype==otWP){
+			    // photontof[] and replayweight[] should be cached using local mem to avoid global read
+			    int tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
+#ifdef USE_ATOMIC
+			    if(!gcfg->isatomic){
+#endif
+				field[idx1d+tshift*gcfg->dimlen.z]+=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)];
+#ifdef USE_ATOMIC
+			    }else{
+				atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
+				GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,weight,p.w));
+			    }
+#endif
+		       }
                        if(gcfg->debuglevel & MCX_DEBUG_MOVE)
                            savedebugdata(&p,(uint)f.ndone+idx*gcfg->threadphoton+umin(idx,(idx<gcfg->oddphotons)*idx),gdebugdata);
 	       }
@@ -671,14 +685,17 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	  if(idx1d!=idx1dold && idx1dold>0 && mediaidold){
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep.wide
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
-	          float weight;
+	          float weight=0.f;
                   int tshift=(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep));
 		  if(gcfg->outputtype==otEnergy)
 		      weight=w0-p.w;
-		  else if(gcfg->seed==SEED_FROM_FILE && gcfg->outputtype==otJacobian){
+		else if(gcfg->seed==SEED_FROM_FILE){
+		    if(gcfg->outputtype==otJacobian){
 		      weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*Lmove;
-                      tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
-		  }else
+			tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
+		    }
+		    //else if(gcfg->outputtype==otWP){}  // weight is 0.f
+		}else
 		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
@@ -690,6 +707,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 		      cc++;
                   }
 #else
+              if(weight>0.f){
   #ifdef USE_ATOMIC
                 if(!gcfg->isatomic){
   #endif
@@ -718,6 +736,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                   GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1dold,weight,p.w));
                }
   #endif
+              }
 #endif
 	     }
 	     w0=p.w;
@@ -1496,7 +1515,10 @@ is more than what your have specified (%d), please use the -H option to specify 
      CUDA_ASSERT(cudaMemcpy(Ppos,  gPpos, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
      CUDA_ASSERT(cudaMemcpy(Pdir,  gPdir, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
      CUDA_ASSERT(cudaMemcpy(Plen,  gPlen, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
-     CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(uint)  *gpu[gpuid].autothread*RAND_SEED_LEN,   cudaMemcpyDeviceToHost));
+     if(cfg->seed!=SEED_FROM_FILE)
+	CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN,   cudaMemcpyDeviceToHost));
+     else
+	CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(float)*cfg->nphoton*RAND_SEED_LEN,   cudaMemcpyDeviceToHost));
      CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
 
 #ifdef TEST_RACING

@@ -398,7 +398,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.srctype='%s';\n",strtypestr);
     }else if(strcmp(name,"outputtype")==0){
         int len=mxGetNumberOfElements(item);
-        const char *outputtype[]={"flux","fluence","energy","jacobian",""};
+        const char *outputtype[]={"flux","fluence","energy","jacobian","nscat",""};
         char outputstr[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)
@@ -602,7 +602,7 @@ void mcx_validate_config(Config *cfg){
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;
      if(cfg->seed<0 && cfg->seed!=SEED_FROM_FILE) cfg->seed=time(NULL);
-     if(cfg->outputtype==otJacobian && cfg->seed!=SEED_FROM_FILE)
+     if((cfg->outputtype==otJacobian || cfg->outputtype==otWP) && cfg->seed!=SEED_FROM_FILE)
          mexErrMsgTxt("Jacobian output is only valid in the reply mode. Please define cfg.seed");     
      for(i=0;i<cfg->detnum;i++){
         if(!cfg->issrcfrom0){
