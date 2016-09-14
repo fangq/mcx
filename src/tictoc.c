@@ -16,6 +16,8 @@
 
 #include "tictoc.h"
 
+#define _BSD_SOURCE
+
 #ifndef USE_OS_TIMER
 #include <cuda.h>
 #include <driver_types.h>
