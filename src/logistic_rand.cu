@@ -21,7 +21,6 @@
 #define MCX_RNG_NAME       "Logistic-Lattice"
 
 #define RAND_BUF_LEN       5        //register arrays
-#define RAND_SEED_LEN      5        //32bit seed length (32*5=160bits)
 #define R_PI               0.318309886183791f
 #define INIT_LOGISTIC      100
 #define INIT_MULT          1812433253      /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */

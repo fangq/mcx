@@ -87,6 +87,7 @@ OUTPUTFLAG:=-o
 
 logfast:    CUCCOPT+=-use_fast_math
 xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+xor:        LINKOPT+=-DUSE_XORSHIFT128P_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 log:        CUCCOPT+=
 debugxor:   xor

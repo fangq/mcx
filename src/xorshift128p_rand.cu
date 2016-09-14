@@ -23,7 +23,6 @@
 #define MCX_RNG_NAME       "xorshift128+"
 
 #define RAND_BUF_LEN       2        //register arrays
-#define RAND_SEED_LEN      4        //128 bit/8 byte seed needed
 #define LOG_MT_MAX         22.1807097779182f
 
 typedef uint64_t  RandType;
@@ -47,7 +46,7 @@ __device__ float xorshift128p_nextf(RandType t[RAND_BUF_LEN]){
 
 __device__ void xorshift128p_seed (uint seed[4],RandType t[RAND_BUF_LEN])
 {
-    t[0] = (uint64_t)seed[0] << 32 | seed[1] ;
+    t[0] = (uint64_t)seed[0] << 32 | seed[1];
     t[1] = (uint64_t)seed[2] << 32 | seed[3];
 }
 
@@ -65,7 +64,7 @@ __device__ float rand_uniform01(RandType t[RAND_BUF_LEN]){
 }
 
 __device__ void gpu_rng_init(RandType t[RAND_BUF_LEN], uint *n_seed,int idx){
-    xorshift128p_seed((n_seed+idx*RAND_SEED_LEN),t);
+    xorshift128p_seed((n_seed+idx*(sizeof(RandType)>>2)*RAND_BUF_LEN),t);
 }
 __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN],uint cpuseed[],uint idx,float reseed){
 }
