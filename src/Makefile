@@ -45,7 +45,7 @@ DLLFLAG=-fPIC
 OMP=-fopenmp
 CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
-CPPOPT=-g -Wall -O3 -std=c99 # -DUSE_OS_TIMER
+CPPOPT=-g -Wall -std=c99 # -DUSE_OS_TIMER
 
 OBJSUFFIX=.o
 EXESUFFIX=
@@ -87,6 +87,7 @@ OUTPUTFLAG:=-o
 
 logfast:    CUCCOPT+=-use_fast_math
 xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+xor:        LINKOPT+=-DUSE_XORSHIFT128P_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 log:        CUCCOPT+=
 debugxor:   xor

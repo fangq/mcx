@@ -77,7 +77,6 @@ typedef char RandType;
 #define TEMPER2         0xefc60000
 
 #define RAND_BUF_LEN       1                    //zero-length array buffer
-#define RAND_SEED_LEN      1                    //how many 32bit seeds
 #define MAX_MT_RAND        4294967296           //2^32
 #define R_MAX_MT_RAND      2.3283064365387e-10f //1/2^32
 #define LOG_MT_MAX         22.1807097779182f    //log(2^32)
@@ -106,11 +105,11 @@ mt19937si(uint *n_seed,int idx)
     if (threadIdx.x == 0)
     {
         mtNexts = 0;
-        for (i = 0; i < RAND_SEED_LEN; i++){
+        for (i = 0; i < RAND_BUF_LEN; i++){
 	    s_seeds[i] = n_seed[i];
         }
-        seed=s_seeds[RAND_SEED_LEN-1];
-        for (i = RAND_SEED_LEN; i < N; i++){
+        seed=s_seeds[RAND_BUF_LEN-1];
+        for (i = RAND_BUF_LEN; i < N; i++){
             seed = (INIT_MULT * (seed ^ (seed >> 30)) + i);
             s_seeds[i] = seed;
         }
@@ -167,7 +166,7 @@ mt19937sc(int loops, uint* result, uint* seeds)
 // as in logistic RNG
 
 __device__ void gpu_rng_init(char t[RAND_BUF_LEN], uint *n_seed,int idx){
-    mt19937si(n_seed+idx*RAND_SEED_LEN,idx);
+    mt19937si(n_seed+idx*RAND_BUF_LEN,idx);
 }
 __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], uint cpuseed[],uint idx,float reseed){
 }

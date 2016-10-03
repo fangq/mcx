@@ -282,7 +282,6 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
       GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 }
 
-
 template <int mcxsource>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
            uint *mediaid,float *w0,float *Lmove,uint isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
@@ -306,7 +305,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           return 1; // all photos complete
       }
       if(gcfg->seed==SEED_FROM_FILE){
-          int seedoffset=(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+(int)f->ndone)*RAND_BUF_LEN;
+          int seedoffset=(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+max(0,(int)f->ndone))*RAND_BUF_LEN;
           for(int i=0;i<RAND_BUF_LEN;i++)
 	      t[i]=rngseed[seedoffset+i];
       }
@@ -318,7 +317,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           *mediaid=gcfg->mediaidorig;
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
-	  
+
+	
+	
 	  switch(mcxsource) {
 		case(MCX_SRC_PLANAR):
 		case(MCX_SRC_PATTERN):
@@ -454,16 +455,15 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      break;
 		}
 	  }
-	
-	    *rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
+
+          *rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
 	  if((*mediaid & MED_MASK)==0){
-             int idx=skipvoid(p, v, f, rv, media); //specular reflection of the bbx is taken care of here
+             int idx=skipvoid(p, v, f, rv, media); /*specular reflection of the bbx is taken care of here*/
              if(idx>=0){
 		 *idx1d=idx;
 		 *mediaid=media[*idx1d];
 	     }
 	  }
-	  
 	  if(launchattempt++>gcfg->maxvoidstep)
 	     return -1;  // launch failed
       }while((*mediaid & MED_MASK)==0 || p->w<=gcfg->minenergy);
@@ -512,9 +512,11 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
+     if(idx>=gcfg->threadphoton*(blockDim.x * gridDim.x)+gcfg->oddphotons)
+         return;
      MCXpos  p={0.f,0.f,0.f,-1.f};//{x,y,z}: coordinates in grid unit, w:packet weight
      MCXdir *v=(MCXdir*)(sharedmem+(threadIdx.x<<2));   //{x,y,z}: unitary direction vector in grid unit, nscat:total scat event
-     MCXtime f;   //pscat: remaining scattering probability,t: photon elapse time, 
+     MCXtime f={0.f,0.f,0.f,-1.f};   //pscat: remaining scattering probability,t: photon elapse time, 
                   //tnext: next accumulation time, ndone: completed photons
      float  energyloss=genergy[idx<<1];
      float  energylaunched=genergy[(idx<<1)+1];
@@ -562,7 +564,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
      if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,0,ppath,&energyloss,
        &energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress)){
-         n_seed[idx]=NO_LAUNCH;
+         GPUDEBUG(("thread %d: fail to launch photon\n",idx));
 	 n_pos[idx]=*((float4*)(&p));
 	 n_dir[idx]=*((float4*)(v));
 	 n_len[idx]=*((float4*)(&f));
@@ -580,7 +582,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
       and we do not use MT as the default RNG.
      */
 
-     while(f.ndone<=(gcfg->threadphoton+(idx<gcfg->oddphotons))) {
+     while(f.ndone<(gcfg->threadphoton+(idx<gcfg->oddphotons))) {
 
           GPUDEBUG(("photonid [%d] L=%f w=%e medium=%d\n",(int)f.ndone,f.pscat,p.w,mediaid));
 
@@ -624,20 +626,20 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                        rotatevector(v,stheta,ctheta,sphi,cphi);
                        v->nscat++;
                        rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
-		       if(gcfg->outputtype==otWP){
-			    // photontof[] and replayweight[] should be cached using local mem to avoid global read
-			    int tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
+                       if(gcfg->outputtype==otWP){
+                            // photontof[] and replayweight[] should be cached using local mem to avoid global read
+                            int tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
 #ifdef USE_ATOMIC
-			    if(!gcfg->isatomic){
+                            if(!gcfg->isatomic){
 #endif
-				field[idx1d+tshift*gcfg->dimlen.z]+=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)];
+                                field[idx1d+tshift*gcfg->dimlen.z]+=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)];
 #ifdef USE_ATOMIC
-			    }else{
-				atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
-				GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,weight,p.w));
-			    }
+                            }else{
+                                atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
+                                GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,weight,p.w));
+                            }
 #endif
-		       }
+                       }
                        if(gcfg->debuglevel & MCX_DEBUG_MOVE)
                            savedebugdata(&p,(uint)f.ndone+idx*gcfg->threadphoton+umin(idx,(idx<gcfg->oddphotons)*idx),gdebugdata);
 	       }
@@ -689,13 +691,13 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                   int tshift=(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep));
 		  if(gcfg->outputtype==otEnergy)
 		      weight=w0-p.w;
-		else if(gcfg->seed==SEED_FROM_FILE){
-		    if(gcfg->outputtype==otJacobian){
-		      weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*Lmove;
-			tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
-		    }
-		    //else if(gcfg->outputtype==otWP){}  // weight is 0.f
-		}else
+		  else if(gcfg->seed==SEED_FROM_FILE){
+		      if(gcfg->outputtype==otJacobian){
+		        weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*Lmove;
+                        tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
+		      }
+		      //else if(gcfg->outputtype==otWP){}  // weight is 0.f
+		  }else
 		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
@@ -872,8 +874,6 @@ int mcx_corecount(int v1, int v2){
      else if(v<21) return 32;
      else if(v<30) return 48;
      else if(v<50) return 192;
-     else if(v<60) return 128;
-     else if(v<61) return 64;
      else          return 128;
 }
 
@@ -1048,7 +1048,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      if(cfg->exportdetected==NULL)
          cfg->exportdetected=(float*)malloc((cfg->medianum+1)*cfg->maxdetphoton*sizeof(float));
      if(cfg->issaveseed && cfg->seeddata==NULL)
-         cfg->seeddata=malloc(cfg->maxdetphoton*sizeof(float)*RAND_BUF_LEN);
+         cfg->seeddata=malloc(cfg->maxdetphoton*sizeof(RandType)*RAND_BUF_LEN);
      cfg->detectedcount=0;
      cfg->his.detected=0;
      cfg->energytot=0.f;
@@ -1121,11 +1121,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
            param.twin0=cfg->tstart;
            param.twin1=cfg->tend;
-           Pseed=(uint*)malloc(sizeof(uint)*RAND_SEED_LEN);
-           for (i=0; i<RAND_SEED_LEN; i++)
+           Pseed=(uint*)malloc(sizeof(RandType)*RAND_BUF_LEN);
+           for (i=0; i<(int)((sizeof(RandType)>>2)*RAND_BUF_LEN); i++)
 		Pseed[i]=rand();
-           CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(uint)*RAND_SEED_LEN));
-	   CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(uint)*RAND_SEED_LEN,  cudaMemcpyHostToDevice));
+           CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(RandType)*RAND_BUF_LEN));
+	   CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen));
            CUDA_ASSERT(cudaMemset(gfield,0,sizeof(float)*fieldlen)); // cost about 1 ms
            CUDA_ASSERT(cudaMemcpyToSymbol(gcfg,   &param, sizeof(MCXParam), 0, cudaMemcpyHostToDevice));
@@ -1165,7 +1165,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      Plen0=(float4*)malloc(sizeof(float4)*gpu[gpuid].autothread);
      energy=(float*)calloc(gpu[gpuid].autothread<<1,sizeof(float));
      Pdet=(float*)calloc(cfg->maxdetphoton,sizeof(float)*(detreclen));
-     Pseed=(uint*)malloc(sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN);
+     if(cfg->seed!=SEED_FROM_FILE)
+         Pseed=(uint*)malloc(sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN);
+     else
+         Pseed=(uint*)malloc(sizeof(RandType)*cfg->nphoton*RAND_BUF_LEN);
 
      CUDA_ASSERT(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)));
      //CUDA_ASSERT(cudaBindTexture(0, texmedia, gmedia));
@@ -1185,12 +1188,12 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          CUDA_ASSERT(cudaMalloc((void **) &gdebugdata, sizeof(float)*(debuglen*cfg->maxjumpdebug)));
      }
      if(cfg->issaveseed){
-         seeddata=(RandType*)malloc(sizeof(RandType)*cfg->maxdetphoton*RAND_SEED_LEN);
-	 CUDA_ASSERT(cudaMalloc((void **) &gseeddata, sizeof(RandType)*cfg->maxdetphoton*RAND_SEED_LEN));
+         seeddata=(RandType*)malloc(sizeof(RandType)*cfg->maxdetphoton*RAND_BUF_LEN);
+	 CUDA_ASSERT(cudaMalloc((void **) &gseeddata, sizeof(RandType)*cfg->maxdetphoton*RAND_BUF_LEN));
      }
      if(cfg->seed==SEED_FROM_FILE){
-         CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(float)*cfg->nphoton*RAND_SEED_LEN));
-	 CUDA_ASSERT(cudaMemcpy(gPseed,cfg->replay.seed,sizeof(float)*cfg->nphoton*RAND_SEED_LEN, cudaMemcpyHostToDevice));
+         CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(RandType)*cfg->nphoton*RAND_BUF_LEN));
+	 CUDA_ASSERT(cudaMemcpy(gPseed,cfg->replay.seed,sizeof(RandType)*cfg->nphoton*RAND_BUF_LEN, cudaMemcpyHostToDevice));
 	 if(cfg->replay.weight){
 	     CUDA_ASSERT(cudaMalloc((void **) &greplayw, sizeof(float)*cfg->nphoton));
 	     CUDA_ASSERT(cudaMemcpy(greplayw,cfg->replay.weight,sizeof(float)*cfg->nphoton, cudaMemcpyHostToDevice));
@@ -1200,7 +1203,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     CUDA_ASSERT(cudaMemcpy(greplaytof,cfg->replay.tof,sizeof(float)*cfg->nphoton, cudaMemcpyHostToDevice));
 	 }
      }else
-         CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN));
+         CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN));
 
      if(cfg->srctype==MCX_SRC_PATTERN)
          CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w)));
@@ -1256,7 +1259,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      MCX_FPRINTF(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
          MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
-     MCX_FPRINTF(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,RAND_SEED_LEN);
+     MCX_FPRINTF(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,(int)(sizeof(RandType)>>2)*RAND_BUF_LEN);
 #ifdef SAVE_DETECTORS
      MCX_FPRINTF(cfg->flog,"- this version CAN save photons at the detectors\n\n");
 #else
@@ -1293,7 +1296,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
-     sharedbuf=gpu[gpuid].autoblock*(sizeof(RandType)*RAND_SEED_LEN+sizeof(MCXdir));
+     sharedbuf=gpu[gpuid].autoblock*(sizeof(RandType)*RAND_BUF_LEN+sizeof(MCXdir));
 #ifdef  USE_CACHEBOX
      if(cfg->sradius>EPS || ABS(cfg->sradius+1.f)<EPS)
         sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
@@ -1332,13 +1335,13 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	   CUDA_ASSERT(cudaMemcpy(gPlen,  Plen,  sizeof(float4)*gpu[gpuid].autothread,  cudaMemcpyHostToDevice));
 
            if(cfg->seed!=SEED_FROM_FILE){
-             for (i=0; i<gpu[gpuid].autothread*RAND_SEED_LEN; i++)
+             for (i=0; i<gpu[gpuid].autothread*((int)(sizeof(RandType))>>2)*RAND_BUF_LEN; i++)
                Pseed[i]=rand();
-	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN,  cudaMemcpyHostToDevice));
+	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            }
            tic0=GetTimeMillis();
-           MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \t",iter+1); fflush(cfg->flog);
-	   
+           MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
+
 	   switch(cfg->srctype) {
 		case(MCX_SRC_PENCIL): mcx_main_loop<MCX_SRC_PENCIL> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 		case(MCX_SRC_ISOTROPIC): mcx_main_loop<MCX_SRC_ISOTROPIC> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
@@ -1516,9 +1519,9 @@ is more than what your have specified (%d), please use the -H option to specify 
      CUDA_ASSERT(cudaMemcpy(Pdir,  gPdir, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
      CUDA_ASSERT(cudaMemcpy(Plen,  gPlen, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
      if(cfg->seed!=SEED_FROM_FILE)
-	CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(uint)*gpu[gpuid].autothread*RAND_SEED_LEN,   cudaMemcpyDeviceToHost));
+        CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,   cudaMemcpyDeviceToHost));
      else
-	CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(float)*cfg->nphoton*RAND_SEED_LEN,   cudaMemcpyDeviceToHost));
+        CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(RandType)*cfg->nphoton*RAND_BUF_LEN,   cudaMemcpyDeviceToHost));
      CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
 
 #ifdef TEST_RACING
@@ -1544,7 +1547,7 @@ is more than what your have specified (%d), please use the -H option to specify 
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
      MCX_FPRINTF(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
-             cfg->nphoton,cfg->nphoton,gpu[gpuid].autothread,cfg->respin,(double)cfg->nphoton/cfg->runtime); fflush(cfg->flog);
+             cfg->nphoton,cfg->nphoton,gpu[gpuid].autothread,cfg->respin,(double)cfg->nphoton/max(1,cfg->runtime)); fflush(cfg->flog);
      MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
              cfg->energytot,(cfg->energytot-cfg->energyesc)/cfg->energytot*100.f);fflush(cfg->flog);
      fflush(cfg->flog);
@@ -1567,8 +1570,10 @@ is more than what your have specified (%d), please use the -H option to specify 
 	 free(seeddata);
      }
      if(cfg->seed==SEED_FROM_FILE){
-         CUDA_ASSERT(cudaFree(greplayw));
-         CUDA_ASSERT(cudaFree(greplaytof));
+         if(cfg->replay.weight)
+             CUDA_ASSERT(cudaFree(greplayw));
+         if(cfg->replay.tof)
+             CUDA_ASSERT(cudaFree(greplaytof));
      }
 
      CUDA_ASSERT(cudaDeviceReset());
@@ -1582,4 +1587,3 @@ is more than what your have specified (%d), please use the -H option to specify 
      free(energy);
      free(field);
 }
-
