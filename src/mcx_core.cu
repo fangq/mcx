@@ -382,7 +382,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		     if(gcfg->srctype==MCX_SRC_DISK)
 			 r=sqrtf(rand_uniform01(t))*gcfg->srcparam1.x;
 		     else
-			 r=sqrtf(-logf(rand_uniform01(t)))*gcfg->srcparam1.x;
+			 r=sqrtf(-0.5f*logf(rand_uniform01(t)))*gcfg->srcparam1.x;
 
 		      if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
 			  float tmp0=1.f-v->z*v->z;
