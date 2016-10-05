@@ -25,6 +25,7 @@ cfg.detpos=[15 30 0 2];
 newcfg=cfg;
 newcfg.seed=seeds.data;
 newcfg.outputtype='jacobian';
+newcfg.detphotons=detp.data;
 [flux2, detp2, vol2, seeds2]=mcxlab(newcfg);
 jac=sum(flux2.data,4);
 imagesc(log10(abs(squeeze(jac(:,30,:)))))

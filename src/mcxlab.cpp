@@ -31,13 +31,13 @@
 #endif
 
 #if defined(USE_XORSHIFT128P_RAND)
-    #define RAND_BUF_LEN 4
+    #define RAND_WORD_LEN 4
 #elif defined(USE_POSIX_RAND)
-    #define RAND_BUF_LEN 4
+    #define RAND_WORD_LEN 4
 #elif defined(USE_MT_RAND)
-    #define RAND_BUF_LEN 0
+    #define RAND_WORD_LEN 0
 #else
-    #define RAND_BUF_LEN 5
+    #define RAND_WORD_LEN 5
 #endif
 
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
@@ -167,7 +167,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
         }
         if(nlhs>=4){
-	    cfg.seeddata=malloc(cfg.maxdetphoton*sizeof(float)*RAND_BUF_LEN);
+	    cfg.seeddata=malloc(cfg.maxdetphoton*sizeof(float)*RAND_WORD_LEN);
 	}
         if(nlhs>=5){
 	    cfg.exportdebugdata=(float*)malloc(cfg.maxjumpdebug*sizeof(float)*MCX_DEBUG_REC_LEN);
@@ -211,10 +211,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             cfg.exportdebugdata=NULL;
 	}
         if(nlhs>=4){
-            fielddim[0]=(cfg.issaveseed>0)*RAND_BUF_LEN*sizeof(float); fielddim[1]=cfg.detectedcount; // his.savedphoton is for one repetition, should correct
+            fielddim[0]=(cfg.issaveseed>0)*RAND_WORD_LEN*sizeof(float); fielddim[1]=cfg.detectedcount; // his.savedphoton is for one repetition, should correct
     	    fielddim[2]=0; fielddim[3]=0;
-		    mxSetFieldByNumber(plhs[3],jstruct,0, mxCreateNumericArray(2,fielddim,mxUINT8_CLASS,mxREAL));
-		    memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[3],jstruct,0)),cfg.seeddata,fielddim[0]*fielddim[1]);
+	    mxSetFieldByNumber(plhs[3],jstruct,0, mxCreateNumericArray(2,fielddim,mxUINT8_CLASS,mxREAL));
+	    memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[3],jstruct,0)),cfg.seeddata,fielddim[0]*fielddim[1]);
 	    free(cfg.seeddata);
             cfg.seeddata=NULL;
 	}
@@ -462,7 +462,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         }else{
 	    seedbyte=arraydim[0];
             cfg->replay.seed=malloc(arraydim[0]*arraydim[1]);
-            if(arraydim[0]!=sizeof(float)*RAND_BUF_LEN)
+            if(arraydim[0]!=sizeof(float)*RAND_WORD_LEN)
                 mexErrMsgTxt("the row number of cfg.seed does not match RNG seed byte-length");
             memcpy(cfg->replay.seed,mxGetData(item),arraydim[0]*arraydim[1]);
             cfg->seed=SEED_FROM_FILE;
@@ -520,6 +520,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 
 void mcx_replay_prep(Config *cfg){
     int i,j;
+    if(cfg->seed==SEED_FROM_FILE && detps==NULL)
+        mexErrMsgTxt("you give cfg.seed for replay, but did not specify cfg.detphotons.\nPlease define it as the detphoton output from the baseline simulation");
     if(detps==NULL || cfg->seed!=SEED_FROM_FILE)
         return;
     if(cfg->nphoton!=dimdetps[1])
@@ -536,6 +538,7 @@ void mcx_replay_prep(Config *cfg){
             if(i!=cfg->nphoton)
                 memcpy((char *)(cfg->replay.seed)+cfg->nphoton*seedbyte, (char *)(cfg->replay.seed)+i*seedbyte, seedbyte);
             cfg->replay.weight[cfg->nphoton]=1.f;
+	    cfg->replay.tof[cfg->nphoton]=0.f;
             for(j=2;j<cfg->medianum+1;j++){
                 cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-1].mua*detps[i*dimdetps[0]+j]*cfg->unitinmm);
                 cfg->replay.tof[cfg->nphoton]+=detps[i*dimdetps[0]+j]*cfg->unitinmm*R_C0*cfg->prop[j-1].n;
