@@ -457,11 +457,11 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 					   p->z+r*gcfg->srcparam1.z,
 					   p->w);
 		      if(gcfg->srctype==MCX_SRC_LINE){
-			      float s,p;
+			      float s,q;
 			      r=1.f-2.f*rand_uniform01(t);
 			      s=1.f-2.f*rand_uniform01(t);
-			      p=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t)>0.5f ? 1.f : -1.f);
-			      *((float4*)v)=float4(v->y*p-v->z*s,v->z*r-v->x*p,v->x*s-v->y*r,v->nscat);
+			      q=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t)>0.5f ? 1.f : -1.f);
+			      *((float4*)v)=float4(v->y*q-v->z*s,v->z*r-v->x*q,v->x*s-v->y*r,v->nscat);
 		      }
                       *rv=float3(rv->x+(gcfg->srcparam1.x)*0.5f,
 		                 rv->y+(gcfg->srcparam1.y)*0.5f,
