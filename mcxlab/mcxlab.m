@@ -25,7 +25,10 @@ function [flux,detphoton]=mcxlab(cfg)
 %     *cfg.tstep:      time-gate width of the simulation (in seconds)
 %     *cfg.tend:       ending time of the simulation (in second)
 %     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
-%     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
+%     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector; if srcdir
+%                      contains a 4th element, it specifies the focal length of
+%                      the source (only valid for focuable src, such as planar, disk,
+%                      fourier, gaussian, zgaussian, slit, etc)
 %      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
 %                      sradius=0 to disable atomic operations; if sradius=-1,
 %                      use cfg.crop0 and crop1 to define a cubic atomic zone; if

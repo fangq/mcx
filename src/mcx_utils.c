@@ -131,6 +131,7 @@ void mcx_initcfg(Config *cfg){
      cfg->detectedcount=0;
      cfg->runtime=0;
      cfg->faststep=0;
+     cfg->srcdir.w=0.f;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -377,9 +378,12 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }
      MCX_ASSERT(fscanf(in,"%f %f %f", &(cfg->srcdir.x),&(cfg->srcdir.y),&(cfg->srcdir.z) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
+     if(comm!=NULL && sscanf(comm,"%f",&dtmp)==1)
+         cfg->srcdir.w=dtmp;
+
      if(in==stdin)
-     	fprintf(stdout,"%f %f %f\nPlease specify the time gates (format: start end step) in seconds [0.0 1e-9 1e-10]\n\t",
-                                   cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z);
+     	fprintf(stdout,"%f %f %f %f\nPlease specify the time gates (format: start end step) in seconds [0.0 1e-9 1e-10]\n\t",
+                                   cfg->srcdir.x,cfg->srcdir.y,cfg->srcdir.z,cfg->srcdir.w);
      MCX_ASSERT(fscanf(in,"%f %f %f", &(cfg->tstart),&(cfg->tend),&(cfg->tstep) )==3);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
@@ -687,6 +691,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
               cfg->srcdir.x=subitem->child->valuedouble;
               cfg->srcdir.y=subitem->child->next->valuedouble;
               cfg->srcdir.z=subitem->child->next->next->valuedouble;
+	      if(subitem->child->next->next->next)
+	         cfg->srcdir.w=subitem->child->next->next->next->valuedouble;
            }
 	   if(!cfg->issrcfrom0){
               cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/

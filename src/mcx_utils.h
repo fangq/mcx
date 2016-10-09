@@ -72,8 +72,8 @@ typedef struct MCXConfig{
 	unsigned int nthread;      /**<num of total threads, multiple of 128*/
 	int seed;         /**<random number generator seed*/
 
-	float3 srcpos;    /**<src position in mm*/
-	float3 srcdir;    /**<src normal direction*/
+	float4 srcpos;    /**<src position in mm*/
+	float4 srcdir;    /**<src normal direction*/
 	float tstart;     /**<start time in second*/
 	float tstep;      /**<time step in second*/
 	float tend;       /**<end time in second*/

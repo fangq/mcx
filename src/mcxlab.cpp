@@ -44,6 +44,8 @@
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
 #define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];\
                                  printf("mcx.%s=[%g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z));}
+#define GET_VEC34_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];if(mxGetNumberOfElements(item)==4) u->v.w=val[3];\
+                                 printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 #define GET_VEC4_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
@@ -330,7 +332,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,maxvoidstep)
     GET_ONE_FIELD(cfg,maxjumpdebug)
     GET_VEC3_FIELD(cfg,srcpos)
-    GET_VEC3_FIELD(cfg,srcdir)
+    GET_VEC34_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
     GET_VEC3_FIELD(cfg,crop0)
     GET_VEC3_FIELD(cfg,crop1)
