@@ -115,6 +115,7 @@ typedef struct MCXConfig{
 	char autopilot;     /**<1 optimal setting for dedicated card, 2, for non dedicated card*/
 	char issaveseed;    /**<1 save the seed for a detected photon, 0 do not save*/
 	char issaveexit;    /**<1 save the exit position and dir of a detected photon, 0 do not save*/
+	char issaveref;     /**<1 save diffuse reflectance at the boundary voxels, 0 do not save*/
 	char srctype;       /**<0:pencil,1:isotropic,2:cone,3:gaussian,4:planar,5:pattern,\
                                 6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian,12:line,13:slit*/
         char outputtype;    /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
@@ -167,7 +168,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg);
 void mcx_usage(Config *cfg,char *exename);
 void mcx_printheader(Config *cfg);
 void mcx_loadvolume(char *filename,Config *cfg);
-void mcx_normalize(float field[], float scale, int fieldlen);
+void mcx_normalize(float field[], float scale, int fieldlen, int option);
 int  mcx_readarg(int argc, char *argv[], int id, void *output,const char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);

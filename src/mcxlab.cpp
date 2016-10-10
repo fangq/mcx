@@ -70,7 +70,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        errorflag=0;
   int        threadid=0;
   const char       *outputtag[]={"data"};
-  const char       *datastruct[]={"data","stat"};
+  const char       *datastruct[]={"data","stat","dref"};
   const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","workload"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
@@ -121,7 +121,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   ncfg = mxGetNumberOfElements(prhs[0]);
 
   if(nlhs>=1)
-      plhs[0] = mxCreateStructMatrix(ncfg,1,2,datastruct);
+      plhs[0] = mxCreateStructMatrix(ncfg,1,3,datastruct);
   if(nlhs>=2)
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
   if(nlhs>=3)
@@ -241,11 +241,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             cfg.exportdetected=NULL;
 	}
         if(nlhs>=1){
+	    int fieldlen;
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
 	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
+	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3];
+            if(cfg.issaveref){
+	        float *dref=(float *)malloc(fieldlen*sizeof(float));
+		memcpy(dref,cfg.exportfield,fieldlen*sizeof(float));
+		for(int i=0;i<fieldlen;i++){
+		    if(dref[i]<0.f){
+		        dref[i]=-dref[i];
+			cfg.exportfield[i]=0.f;
+		    }else
+		        dref[i]=0.f;
+		}
+	        mxSetFieldByNumber(plhs[0],jstruct,2, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+                memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,2)),dref,fieldlen*sizeof(float));
+		free(dref);
+	    }
 	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
-            memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
-                         fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*sizeof(float));
+	    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
+                         fieldlen*sizeof(float));
             free(cfg.exportfield);
             cfg.exportfield=NULL;
 
@@ -327,6 +343,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,printnum)
     GET_ONE_FIELD(cfg,voidtime)
     GET_ONE_FIELD(cfg,issaveseed)
+    GET_ONE_FIELD(cfg,issaveref)
     GET_ONE_FIELD(cfg,issaveexit)
     GET_ONE_FIELD(cfg,replaydet)
     GET_ONE_FIELD(cfg,faststep)

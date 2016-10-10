@@ -45,7 +45,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','\0'};
+		 'k','q','Y','O','F','-','-','x','X','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -55,7 +55,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
-                 "--maxvoidstep","--saveexit",""};
+                 "--maxvoidstep","--saveexit","--saveref",""};
 
 const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
@@ -134,6 +134,7 @@ void mcx_initcfg(Config *cfg){
      cfg->runtime=0;
      cfg->faststep=0;
      cfg->srcdir.w=0.f;
+     cfg->issaveref=0;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -224,9 +225,11 @@ void mcx_printlog(Config *cfg, char *str){
      }
 }
 
-void mcx_normalize(float field[], float scale, int fieldlen){
+void mcx_normalize(float field[], float scale, int fieldlen, int option){
      int i;
      for(i=0;i<fieldlen;i++){
+         if(option==2 && field[i]<0.f)
+	     continue;
          field[i]*=scale;
      }
 }
@@ -1302,6 +1305,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
  		                i=mcx_readarg(argc,argv,i,&(cfg->issaveexit),"char");
  				if (cfg->issaveexit) cfg->issavedet=1;
  				break;
+		     case 'X':
+ 		                i=mcx_readarg(argc,argv,i,&(cfg->issaveref),"char");
+ 				if (cfg->issaveref) cfg->issaveref=1;
+ 				break;
 		     case '-':  /*additional verbose parameters*/
                                 if(strcmp(argv[i]+2,"maxvoidstep"))
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxvoidstep),"int");
@@ -1443,6 +1450,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
                                setting -x to 1 also implies setting '-d' to 1\n\
+ -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
+                               right outside of the domain; if non-zero voxels\n\
+			       appear at the boundary, pad 0s before using -X\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\

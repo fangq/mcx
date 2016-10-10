@@ -711,6 +711,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
           GPUDEBUG(("idx1d [%d]->[%d]\n",idx1dold,idx1d));
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
 	      mediaid=0;
+	      isdet=1;
 	  }else{
 	      mediaid=media[idx1d];
 	      isdet=mediaid & DET_MASK;
@@ -763,14 +764,20 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
   #endif
                       }else{
                           field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
+		          if(mediaid==0 && (isdet & 1)==0 &&gcfg->issaveref)
+		              field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                       }
                   }else{
                       field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
+		      if(mediaid==0 && (isdet & 1)==0 &&gcfg->issaveref)
+		          field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                   }
   #ifdef USE_ATOMIC
                }else{
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
+		  if(mediaid==0 && (isdet & 1)==0 &&gcfg->issaveref)
+		      atomicadd(& field[idx1d+tshift*gcfg->dimlen.z],-p.w);
                   GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1dold,weight,p.w));
                }
   #endif
@@ -1057,7 +1064,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
-		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->maxdetphoton*detreclen,cfg->seed,
+		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->issaveref>0,
+		     cfg->maxdetphoton*detreclen,cfg->seed,
 		     (uint)cfg->outputtype,0,0,cfg->faststep,cfg->debuglevel,(uint)cfg->maxjumpdebug};
      if(param.isatomic)
          param.skipradius2=0.f;
@@ -1532,7 +1540,7 @@ is more than what your have specified (%d), please use the -H option to specify 
          cfg->normalizer=scale;
 	 cfg->his.normalizer=scale;
 	 MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
-         mcx_normalize(cfg->exportfield,scale,fieldlen);
+         mcx_normalize(cfg->exportfield,scale,fieldlen,cfg->isnormalized);
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
          MCX_FPRINTF(cfg->flog,"saving data to file ... %d %d\t",fieldlen,gpu[gpuid].maxgate);

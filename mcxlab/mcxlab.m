@@ -57,7 +57,10 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
 %      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
 %      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
-%      cfg.issaveexit:  [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
+%      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
+%      cfg.issaveref:  [0]-save diffuse reflectance/transmittance in the non-zero voxels
+%                      next to a boundary voxel. The reflectance data are stored as 
+%                      negative values
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.isgpuinfo:  1-print GPU info, [0]-do not print
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
