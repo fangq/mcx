@@ -91,6 +91,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int isatomic;
   unsigned int maxvoidstep;
   unsigned int issaveseed;
+  unsigned int issaveexit;
   unsigned int seedoffset;
   int seed;
   unsigned int outputtype;

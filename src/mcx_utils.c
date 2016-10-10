@@ -45,7 +45,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','\0'};
+		 'k','q','Y','O','F','-','-','x','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -55,7 +55,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
-                 "--maxvoidstep",""};
+                 "--maxvoidstep","--saveexit",""};
 
 const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
@@ -114,6 +114,7 @@ void mcx_initcfg(Config *cfg){
      memcpy(cfg->his.magic,"MCXH",4);
      cfg->his.version=1;
      cfg->his.unitinmm=1.f;
+     cfg->his.normalizer=1.f;
      cfg->shapedata=NULL;
      cfg->seeddata=NULL;
      cfg->reseedlimit=10000000;
@@ -122,6 +123,7 @@ void mcx_initcfg(Config *cfg){
      cfg->srcpattern=NULL;
      cfg->debuglevel=0;
      cfg->issaveseed=0;
+     cfg->issaveexit=0;
      cfg->replay.seed=NULL;
      cfg->replay.weight=NULL;
      cfg->replay.tof=NULL;
@@ -513,7 +515,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
-     cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+     cfg->his.colcount=cfg->medianum+1+(cfg->issaveexit)*6; /*column count=maxmedia+2*/
 
      if(in==stdin)
      	fprintf(stdout,"Please specify the source type[pencil|cone|gaussian]:\n\t");
@@ -775,6 +777,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(cfg->issave2pt)    cfg->issave2pt=FIND_JSON_KEY("DoSaveVolume","Session.DoSaveVolume",Session,cfg->issave2pt,valueint);
         if(cfg->isnormalized) cfg->isnormalized=FIND_JSON_KEY("DoNormalize","Session.DoNormalize",Session,cfg->isnormalized,valueint);
         if(!cfg->issavedet)   cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
+        if(!cfg->issaveexit)  cfg->issaveexit=FIND_JSON_KEY("DoSaveExit","Session.DoSaveExit",Session,cfg->issaveexit,valueint);
         if(!cfg->issaveseed)  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
         cfg->reseedlimit=FIND_JSON_KEY("ReseedLimit","Session.ReseedLimit",Session,cfg->reseedlimit,valueint);
         strncpy(val,FIND_JSON_KEY("OutputType","Session.OutputType",Session,outputtype+cfg->outputtype,valuestring),1);
@@ -815,7 +818,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
-     cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+     cfg->his.colcount=cfg->medianum+1+(cfg->issaveexit)*6; /*column count=maxmedia+2*/
      return 0;
 }
 
@@ -1295,6 +1298,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'F':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
 		     	        break;
+		     case 'x':
+ 		                i=mcx_readarg(argc,argv,i,&(cfg->issaveexit),"char");
+ 				if (cfg->issaveexit) cfg->issavedet=1;
+ 				break;
 		     case '-':  /*additional verbose parameters*/
                                 if(strcmp(argv[i]+2,"maxvoidstep"))
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxvoidstep),"int");
@@ -1434,6 +1441,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
+ -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
+                               setting -x to 1 also implies setting '-d' to 1\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\

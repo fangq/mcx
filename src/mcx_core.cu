@@ -110,7 +110,7 @@ __device__ inline uint finddetector(MCXpos *p0){
       return 0;
 }
 
-__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float nscat,float *ppath,MCXpos *p0,RandType t[RAND_BUF_LEN],RandType *seeddata){
+__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float nscat,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata){
       uint detid;
       detid=finddetector(p0);
       if(detid){
@@ -119,11 +119,17 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
 	    uint i;
 	    for(i=0;i<gcfg->issaveseed*RAND_BUF_LEN;i++)
 	        seeddata[baseaddr*RAND_BUF_LEN+i]=t[i]; // save photon seed for replay
-	    baseaddr*=gcfg->maxmedia+2;
+	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6;
 	    n_det[baseaddr++]=detid;
 	    n_det[baseaddr++]=nscat;
 	    for(i=0;i<gcfg->maxmedia;i++)
 		n_det[baseaddr+i]=ppath[i]; // save partial pathlength to the memory
+	    if(gcfg->issaveexit){
+                baseaddr+=gcfg->maxmedia;
+	        *((float3*)(n_det+baseaddr))=float3(p0->x,p0->y,p0->z);
+		baseaddr+=3;
+		*((float3*)(n_det+baseaddr))=float3(v->x,v->y,v->z);
+	    }
 	 }
       }
 }
@@ -297,13 +303,13 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       // let's handle detectors here
           if(gcfg->savedet){
              if(isdet && *mediaid==0)
-	         savedetphoton(n_det,dpnum,v->nscat,ppath,p,photonseed,seeddata);
+	         savedetphoton(n_det,dpnum,v->nscat,ppath,p,v,photonseed,seeddata);
              clearpath(ppath,gcfg->maxmedia);
           }
 #endif
       }
 
-      if((int)(f->ndone)>=(gcfg->threadphoton+(threadid<gcfg->oddphotons))){
+      if((int)(f->ndone)>=(gcfg->threadphoton+(threadid<gcfg->oddphotons))-1){
           return 1; // all photos complete
       }
       if(gcfg->seed==SEED_FROM_FILE){
@@ -1044,15 +1050,15 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint   *gPseed,*gdetected;
      float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw,*greplaytof,*gdebugdata;
      RandType *gseeddata=NULL;
+     int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6;
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
-		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->maxdetphoton*(cfg->medianum+1),cfg->seed,
+		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->maxdetphoton*detreclen,cfg->seed,
 		     (uint)cfg->outputtype,0,0,cfg->faststep,cfg->debuglevel,(uint)cfg->maxjumpdebug};
-     int detreclen=cfg->medianum+1;
      if(param.isatomic)
          param.skipradius2=0.f;
 
@@ -1066,7 +1072,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      CUDA_ASSERT(cudaSetDevice(gpuid));
 
      if(gpu[gpuid].maxgate==0 && dimxyz>0){
-         int needmem=dimxyz+cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*(cfg->medianum+1)+10*1024*1024; /*keep 10M for other things*/
+         int needmem=dimxyz+cfg->nthread*sizeof(float4)*4+sizeof(float)*cfg->maxdetphoton*detreclen+10*1024*1024; /*keep 10M for other things*/
          gpu[gpuid].maxgate=(gpu[gpuid].globalmem-needmem)/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
          gpu[gpuid].maxgate=MIN(((cfg->tend-cfg->tstart)/cfg->tstep+0.5),gpu[gpuid].maxgate);     
      }
@@ -1076,7 +1082,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      if(cfg->exportfield==NULL)
          cfg->exportfield=(float *)calloc(sizeof(float)*cfg->dim.x*cfg->dim.y*cfg->dim.z,gpu[gpuid].maxgate*2);
      if(cfg->exportdetected==NULL)
-         cfg->exportdetected=(float*)malloc((cfg->medianum+1)*cfg->maxdetphoton*sizeof(float));
+         cfg->exportdetected=(float*)malloc(detreclen*cfg->maxdetphoton*sizeof(float));
      if(cfg->issaveseed && cfg->seeddata==NULL)
          cfg->seeddata=malloc(cfg->maxdetphoton*sizeof(RandType)*RAND_BUF_LEN);
      cfg->detectedcount=0;
@@ -1524,6 +1530,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	       scale=1.f/cfg->energytot;
 
          cfg->normalizer=scale;
+	 cfg->his.normalizer=scale;
 	 MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
          mcx_normalize(cfg->exportfield,scale,fieldlen);
      }
@@ -1536,6 +1543,7 @@ is more than what your have specified (%d), please use the -H option to specify 
      if(cfg->issavedet && cfg->parentid==mpStandalone && cfg->exportdetected){
          cfg->his.unitinmm=cfg->unitinmm;
          cfg->his.savedphoton=cfg->detectedcount;
+	 cfg->his.totalphoton=cfg->nphoton;
          if(cfg->issaveseed)
              cfg->his.seedbyte=sizeof(RandType)*RAND_BUF_LEN;
 

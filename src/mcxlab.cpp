@@ -166,7 +166,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
 	}
 	if(nlhs>=2){
-	    cfg.exportdetected=(float*)malloc((cfg.medianum+1)*cfg.maxdetphoton*sizeof(float));
+	    cfg.exportdetected=(float*)malloc((cfg.medianum+1+cfg.issaveexit*6)*cfg.maxdetphoton*sizeof(float));
         }
         if(nlhs>=4){
 	    cfg.seeddata=malloc(cfg.maxdetphoton*sizeof(float)*RAND_WORD_LEN);
@@ -230,7 +230,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             }
 	}
 	if(nlhs>=2){
-            fielddim[0]=(cfg.medianum+1); fielddim[1]=cfg.detectedcount; 
+            fielddim[0]=(cfg.medianum+1+cfg.issaveexit*6); fielddim[1]=cfg.detectedcount; 
             fielddim[2]=0; fielddim[3]=0;
             if(cfg.detectedcount>0){
                     mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
@@ -327,6 +327,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,printnum)
     GET_ONE_FIELD(cfg,voidtime)
     GET_ONE_FIELD(cfg,issaveseed)
+    GET_ONE_FIELD(cfg,issaveexit)
     GET_ONE_FIELD(cfg,replaydet)
     GET_ONE_FIELD(cfg,faststep)
     GET_ONE_FIELD(cfg,maxvoidstep)
@@ -606,6 +607,8 @@ void mcx_validate_config(Config *cfg){
      }
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;
+     if(cfg->issavedet==0)
+         cfg->issaveexit=0;
      if(cfg->seed<0 && cfg->seed!=SEED_FROM_FILE) cfg->seed=time(NULL);
      if((cfg->outputtype==otJacobian || cfg->outputtype==otWP) && cfg->seed!=SEED_FROM_FILE)
          mexErrMsgTxt("Jacobian output is only valid in the reply mode. Please define cfg.seed");     
@@ -632,7 +635,7 @@ void mcx_validate_config(Config *cfg){
      }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
-     cfg->his.colcount=cfg->medianum+1; /*column count=maxmedia+2*/
+     cfg->his.colcount=cfg->medianum+1+cfg->issaveexit*6; /*column count=maxmedia+2*/
      mcx_replay_prep(cfg);
 }
 
