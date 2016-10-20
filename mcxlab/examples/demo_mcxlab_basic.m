@@ -17,9 +17,10 @@ cfg.autopilot=1;
 cfg.prop=[0 0 1 1;0.005 1 0 1.37];
 cfg.tstart=0;
 cfg.tend=5e-9;
-cfg.tstep=5e-10;
+cfg.tstep=1e-10;
 % calculate the flux distribution with the given config
 flux=mcxlab(cfg);
+
 
 cfgs(1)=cfg;
 cfgs(2)=cfg;

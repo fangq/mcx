@@ -1537,9 +1537,9 @@ is more than what your have specified (%d), please use the -H option to specify 
 
                if(cfg->outputtype==otFluence)
 		   scale*=cfg->tstep;
-	   }else if(cfg->outputtype==otEnergy || cfg->outputtype==otJacobian)
+	   }else if(cfg->outputtype==otEnergy)
 	       scale=1.f/cfg->energytot;
-	   else if(cfg->outputtype==otWP){
+	   else if(cfg->outputtype==otJacobian || cfg->outputtype==otWP){
 	       scale=0.f;
 	       for(i=0;i<cfg->nphoton;i++)
 	           scale+=cfg->replay.weight[i];
