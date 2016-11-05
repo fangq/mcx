@@ -13,6 +13,7 @@ endif
 MKDIR      := mkdir
 
 CUDACC=nvcc
+MEX=mex
 AR=$(CC)
 
 BINARY=mcx
@@ -54,13 +55,14 @@ FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
-  LINKOPT=-L/c/CUDA/lib $(CUDART) --link 
+  LINKOPT=-L/c/CUDA/lib $(CUDART)
   INCLUDEDIRS +=-I/c/CUDA/include
   CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
   DLLFLAG=
   OMP=-Xcompiler /openmp
+  MEX=cmd /c mex
   CUCCOPT+=-Xcompiler "/openmp /W0"
   CUDA_STATIC=--cudart static $(OMP) -Xcompiler /MT
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
@@ -126,18 +128,18 @@ xormax xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
 static:     xormax
 static:     AR=nvcc
-static:     CUOMPLINK=-Xcompiler
+#static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
-mexbox fermimex:        AR=mex
-mexbox fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER -fopenmp $(MEXCCOPT) $(USERCCOPT)' -lgomp LDFLAGS='$$LDFLAGS -fopenmp $(USERLINKOPT)'
+mexbox fermimex:        AR=$(MEX)
+mexbox fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER $(OMP) $(MEXCCOPT) $(USERCCOPT)' -lgomp LDFLAGS='$$LDFLAGS $(OMP) $(USERLINKOPT)'
 mexbox oct octbox fermimex fermioct:    OUTPUT_DIR=../mcxlab
 fermimex:      BINARY=mcxlab
 fermioct:      BINARY=mcxlab.mex
 mexbox:                     BINARY=mcxlab_atom
 mexbox octbox fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER
 mexbox octbox fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
-mexbox fermimex:        LINKOPT+=mcxlab.cpp -cxx -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
+mexbox fermimex:        LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 octbox fermioct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX -fopenmp $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-fopenmp $(USERLINKOPT)' mkoctfile
 fermioct:               BINARY=mcxlab.mex

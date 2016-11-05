@@ -14,6 +14,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include "br2cu.h"
 #include "mcx_core.h"
 #include "tictoc.h"
