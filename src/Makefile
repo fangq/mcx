@@ -22,6 +22,7 @@ OUTPUT_DIR=../bin
 INCLUDEDIRS=-I/usr/local/cuda/include
 
 CUDART=-lcudart
+CUOMPLINK=
 
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
@@ -55,19 +56,23 @@ FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
+  CUOMPLINK=-Xcompiler
   LINKOPT=-L/c/CUDA/lib $(CUDART)
   INCLUDEDIRS +=-I/c/CUDA/include
   CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
   DLLFLAG=
-  OMP=-Xcompiler /openmp
+  OMP=/openmp
   MEX=cmd /c mex
-  CUCCOPT+=-Xcompiler "/openmp /W0"
-  CUDA_STATIC=--cudart static $(OMP) -Xcompiler /MT
+  CUCCOPT+=-Xcompiler "$(OMP) /W0"
+  CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
+  CPPOPT+=-Xcompiler $(OMP)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
+  CPPOPT+=$(OMP)
 else
+  CPPOPT+=$(OMP)
   CUCCOPT+=-Xcompiler $(OMP)
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      CPPOPT +=-m64
@@ -82,9 +87,7 @@ else
   endif
 endif
 
-CPPOPT+=$(OMP)
 CUGENCODE=-arch=sm_20
-CUOMPLINK=
 OUTPUTFLAG:=-o
 
 logfast:    CUCCOPT+=-use_fast_math
@@ -128,7 +131,7 @@ xormax xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
 static:     xormax
 static:     AR=nvcc
-#static:     CUOMPLINK=-Xcompiler
+static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
 mexbox fermimex:        AR=$(MEX)
