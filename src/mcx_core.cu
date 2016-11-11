@@ -319,7 +319,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           return 1; // all photos complete
       }
       if(gcfg->seed==SEED_FROM_FILE){
-          int seedoffset=(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+max(0,(int)f->ndone))*RAND_BUF_LEN;
+          int seedoffset=(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+max(0,(int)f->ndone+1))*RAND_BUF_LEN;
           for(int i=0;i<RAND_BUF_LEN;i++)
 	      t[i]=rngseed[seedoffset+i];
       }
