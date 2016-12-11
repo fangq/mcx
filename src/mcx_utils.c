@@ -344,6 +344,11 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	}
         mcx_loadseedfile(cfg);
      }
+     if(cfg->medianum){
+        for(int i=0;i<cfg->medianum;i++)
+             if(cfg->prop[i].mus==0.f)
+	         cfg->prop[i].mus=EPS;
+     }
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';

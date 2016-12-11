@@ -1416,11 +1416,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     do{
 	       int ndone = *progress;
 	       if (ndone > p0){
-		  mcx_progressbar(ndone/(param.threadphoton*1.5f),cfg);
+		  mcx_progressbar(ndone/(param.threadphoton*1.45f),cfg);
 		  p0 = ndone;
 	       }
                sleep_ms(100);
-	     }while (p0 < (param.threadphoton*1.5f));
+	     }while (p0 < (param.threadphoton*1.45f));
              mcx_progressbar(1.0f,cfg);
              MCX_FPRINTF(cfg->flog,"\n");
              *progress=0;
