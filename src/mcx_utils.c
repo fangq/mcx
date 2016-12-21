@@ -1057,23 +1057,31 @@ void mcx_progressbar(float percent, Config *cfg){
     unsigned int percentage, j,colwidth=79;
     static unsigned int oldmarker=0xFFFFFFFF;
 
-#ifdef TIOCGWINSZ 
+#ifndef MCX_CONTAINER
+  #ifdef TIOCGWINSZ
     struct winsize ttys;
     ioctl(0, TIOCGWINSZ, &ttys);
     colwidth=ttys.ws_col;
+  #endif
 #endif
-    
+    percent=MIN(percent,1.f);
+
     percentage=percent*(colwidth-18);
 
     if(percentage != oldmarker){
+        if(percent!=-0.f)
+	    for(j=0;j<colwidth;j++)     MCX_FPRINTF(stdout,"\b");
         oldmarker=percentage;
-        for(j=0;j<colwidth;j++)     MCX_FPRINTF(stdout,"\b");
         MCX_FPRINTF(stdout,"Progress: [");
         for(j=0;j<percentage;j++)      MCX_FPRINTF(stdout,"=");
         MCX_FPRINTF(stdout,(percentage<colwidth-18) ? ">" : "=");
         for(j=percentage;j<colwidth-18;j++) MCX_FPRINTF(stdout," ");
         MCX_FPRINTF(stdout,"] %3d%%",percentage*100/(colwidth-18));
-            fflush(stdout);
+#ifdef MCX_CONTAINER
+        mcx_matlab_flush();
+#else
+        fflush(stdout);
+#endif
     }
 }
 

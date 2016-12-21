@@ -189,7 +189,8 @@ void mcx_progressbar(float percent, Config *cfg);
 #ifdef __cplusplus
 extern "C"
 #endif
- int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum);
+ int  mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum);
+ void mcx_matlab_flush(void);
 #endif
 
 #ifdef MCX_CONTAINER

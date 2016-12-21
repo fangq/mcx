@@ -144,11 +144,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    }
 	    mcx_set_field(prhs[0],tmp,ifield,&cfg);
 	}
-#ifndef MATLAB_MEX_FILE
-        mexEvalString("fflush(stdout);");
-#else
-	mexEvalString("drawnow;");
-#endif
+	mcx_matlab_flush();
+
 	cfg.issave2pt=(nlhs>=1);
 	cfg.issavedet=(nlhs>=2);
 	cfg.issaveseed=(nlhs>=4);
@@ -669,4 +666,12 @@ extern "C" int mcx_throw_exception(const int id, const char *msg, const char *fi
 
 void mcxlab_usage(){
      printf("Usage:\n    [flux,detphoton,vol,seeds]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+}
+
+extern "C" void mcx_matlab_flush(){
+#ifndef MATLAB_MEX_FILE
+        mexEvalString("fflush(stdout);");
+#else
+        mexEvalString("pause(.0001);");
+#endif
 }

@@ -1188,7 +1188,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            CUDA_ASSERT(cudaGetLastError());
 
            CUDA_ASSERT(cudaMemcpy(field, gfield,sizeof(float)*dimxyz*gpu[gpuid].maxgate,cudaMemcpyDeviceToHost));
-           MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
+           MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n\n",GetTimeMillis()-tic);  fflush(cfg->flog);
 	   if(cfg->exportfield)
 	       memcpy(cfg->exportfield,field,fieldlen*sizeof(float));
 	   if(cfg->issave2pt && cfg->parentid==mpStandalone){
@@ -1413,6 +1413,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0;
+	     mcx_progressbar(-0.f,cfg);
 	     do{
 	       int ndone = *progress;
 	       if (ndone > p0){
