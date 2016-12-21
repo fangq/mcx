@@ -727,7 +727,7 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 
           // saving fluence to the voxel when moving out
 
-	  if(idx1d!=idx1dold && idx1dold>0 && mediaidold){
+	  if(idx1d!=idx1dold && mediaidold){
              // if t is within the time window, which spans cfg->maxgate*cfg->tstep.wide
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
 	          float weight=0.f;
