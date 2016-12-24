@@ -234,6 +234,14 @@ void mcx_normalize(float field[], float scale, int fieldlen, int option){
      }
 }
 
+void mcx_flush(Config *cfg){
+#ifdef MCX_CONTAINER
+    mcx_matlab_flush();
+#else
+    fflush(cfg->flog);
+#endif
+}
+
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
 #ifdef MCX_CONTAINER
      mcx_throw_exception(id,msg,file,linenum);

@@ -1324,7 +1324,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      MCX_FPRINTF(cfg->flog,"initializing streams ...\t");
      fflush(cfg->flog);
 
-     mcx_matlab_flush();
+     mcx_flush(cfg);
 
      CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpy(genergy,energy,sizeof(float) *(gpu[gpuid].autothread<<1), cudaMemcpyHostToDevice));
@@ -1393,7 +1393,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            }
            tic0=GetTimeMillis();
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
-           mcx_matlab_flush();
+           mcx_flush(cfg);
 
 	   switch(cfg->srctype) {
 		case(MCX_SRC_PENCIL): mcx_main_loop<MCX_SRC_PENCIL> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
@@ -1484,7 +1484,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 		}
 	   }
 #endif
-           mcx_matlab_flush();
+           mcx_flush(cfg);
 
 	   //handling the 2pt distributions
            if(cfg->issave2pt){

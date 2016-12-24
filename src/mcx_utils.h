@@ -184,6 +184,7 @@ void mcx_loadseedfile(Config *cfg);
 void mcx_cleargpuinfo(GPUInfo **gpuinfo);
 int  mcx_isbinstr(const char * str);
 void mcx_progressbar(float percent, Config *cfg);
+void mcx_flush(Config *cfg);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus
