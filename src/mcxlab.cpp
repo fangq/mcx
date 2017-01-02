@@ -144,7 +144,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    }
 	    mcx_set_field(prhs[0],tmp,ifield,&cfg);
 	}
-	mcx_matlab_flush();
+	mcx_flush(&cfg);
 
 	cfg.issave2pt=(nlhs>=1);
 	cfg.issavedet=(nlhs>=2);
