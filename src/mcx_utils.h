@@ -151,6 +151,7 @@ typedef struct MCXConfig{
 	unsigned int maxjumpdebug; /**< num of  photon scattering events to save when saving photon trajectory is enabled*/
 	unsigned int debugdatalen;
 	float *exportdebugdata;
+	uint mediabyte;
 } Config;
 
 #ifdef	__cplusplus
@@ -184,6 +185,7 @@ void mcx_loadseedfile(Config *cfg);
 void mcx_cleargpuinfo(GPUInfo **gpuinfo);
 int  mcx_isbinstr(const char * str);
 void mcx_progressbar(float percent, Config *cfg);
+int mcx_readmedia(unsigned char *vol, int idx, int len);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

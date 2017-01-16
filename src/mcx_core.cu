@@ -1217,7 +1217,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      else
          Pseed=(uint*)malloc(sizeof(RandType)*cfg->nphoton*RAND_BUF_LEN);
 
-     CUDA_ASSERT(cudaMalloc((void **) &gmedia, sizeof(uchar)*(dimxyz)));
+     CUDA_ASSERT(cudaMalloc((void **) &gmedia, sizeof(uchar)*cfg->mediabyte*(dimxyz)));
      //CUDA_ASSERT(cudaBindTexture(0, texmedia, gmedia));
      CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen));
      CUDA_ASSERT(cudaMalloc((void **) &gPpos, sizeof(float4)*gpu[gpuid].autothread));
@@ -1321,7 +1321,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      MCX_FPRINTF(cfg->flog,"initializing streams ...\t");
      fflush(cfg->flog);
 
-     CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uchar) *dimxyz, cudaMemcpyHostToDevice));
+     CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uchar)*cfg->mediabyte*dimxyz, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpy(genergy,energy,sizeof(float) *(gpu[gpuid].autothread<<1), cudaMemcpyHostToDevice));
      if(cfg->srcpattern)
          CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w), cudaMemcpyHostToDevice));
@@ -1537,9 +1537,9 @@ is more than what your have specified (%d), please use the -H option to specify 
 
                if(cfg->outputtype==otFluence)
 		   scale*=cfg->tstep;
-	   }else if(cfg->outputtype==otEnergy || cfg->outputtype==otJacobian)
+	   }else if(cfg->outputtype==otEnergy)
 	       scale=1.f/cfg->energytot;
-	   else if(cfg->outputtype==otWP){
+	   else if(cfg->outputtype==otJacobian || cfg->outputtype==otWP){
 	       scale=0.f;
 	       for(i=0;i<cfg->nphoton;i++)
 	           scale+=cfg->replay.weight[i];

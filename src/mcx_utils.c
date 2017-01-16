@@ -45,7 +45,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -55,7 +55,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
-                 "--maxvoidstep","--saveexit","--saveref",""};
+                 "--maxvoidstep","--saveexit","--saveref","--mediabyte",""};
 
 const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
@@ -64,6 +64,7 @@ const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
+     cfg->mediabyte=1;
      cfg->detnum=0;
      cfg->dim.x=0;
      cfg->dim.y=0;
@@ -846,6 +847,18 @@ void mcx_saveconfig(FILE *out, Config *cfg){
      }
 }
 
+int mcx_readmedia(unsigned char *vol, int idx, int len){
+     if(len==1)
+          return vol[idx];
+     else if(len==2)
+          return ((short*)(vol))[idx];
+     else if(len==4)
+          return ((int*)(vol))[idx];
+     else
+          mcx_error(-5,"mediabyte only supports 1, 2 and 4 bytes per record",__FILE__,__LINE__);
+    return -1;
+}
+
 void mcx_loadvolume(char *filename,Config *cfg){
      unsigned int i,datalen,res;
      FILE *fp;
@@ -869,14 +882,14 @@ void mcx_loadvolume(char *filename,Config *cfg){
      	     cfg->vol=NULL;
      }
      datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-     cfg->vol=(unsigned char*)malloc(sizeof(unsigned char)*datalen);
-     res=fread(cfg->vol,sizeof(unsigned char),datalen,fp);
+     cfg->vol=(unsigned char*)malloc(sizeof(unsigned char)*cfg->mediabyte*datalen);
+     res=fread(cfg->vol,sizeof(unsigned char)*cfg->mediabyte,datalen,fp);
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
      }
      for(i=0;i<datalen;i++){
-         if(cfg->vol[i]>=cfg->medianum)
+         if(mcx_readmedia(cfg->vol,i,cfg->mediabyte)>=cfg->medianum)
             mcx_error(-6,"medium index exceeds the specified medium types",__FILE__,__LINE__);
      }
 }
@@ -1312,6 +1325,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case '-':  /*additional verbose parameters*/
                                 if(strcmp(argv[i]+2,"maxvoidstep"))
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxvoidstep),"int");
+                                else if(strcmp(argv[i]+2,"mediabyte"))
+                                     i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
                                 else if(strcmp(argv[i]+2,"maxjumpdebug"))
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
                                 else
