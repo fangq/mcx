@@ -1415,16 +1415,20 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #pragma omp master
 {
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
-	     int p0 = 0;
+	     int p0 = 0, c0=0, ndone=-1;
+	     int stallcount=0;
 	     mcx_progressbar(-0.f,cfg);
 	     do{
-	       int ndone = *progress;
+	       c0=ndone;
+	       ndone = *progress;
 	       if (ndone > p0){
 		  mcx_progressbar(ndone/(param.threadphoton*1.45f),cfg);
 		  p0 = ndone;
 	       }
                sleep_ms(100);
-	     }while (p0 < (param.threadphoton*1.45f));
+	       if(c0==ndone)
+	           stallcount++;
+	     }while (p0 < (param.threadphoton*1.45f) || stallcount>=5);
              mcx_progressbar(1.0f,cfg);
              MCX_FPRINTF(cfg->flog,"\n");
              *progress=0;
