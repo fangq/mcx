@@ -1428,7 +1428,7 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2017 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 #         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #\n\
@@ -1495,9 +1495,15 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
  -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing\n\
  -v            (--version)     print MCX revision number\n\
+ -D [0|int]    (--debug)       print debug information (you can use an integer\n\
+  or                           or a string by combining the following flags)\n\
+ -D [''|RMP]                   1 R  debug RNG\n\
+                               2 M  photon movement info\n\
+                               4 P  print progress bar\n\
+      combine multiple items by using a string, or add selected numbers together\n\
 \n\
 example: (autopilot mode)\n\
-       %s -A -n 1e7 -f input.inp -G 1 \n\
+       %s -A -n 1e7 -f input.inp -G 1 -D P\n\
 or (manual mode)\n\
        %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n\

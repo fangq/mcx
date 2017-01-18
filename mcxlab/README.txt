@@ -63,12 +63,12 @@ the verbose command line options in MCX.
 <pre> ====================================================================
        MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2011-2016 Qianqian Fang <q.fang at neu.edu>
+ Copyright (c) 2011-2017 Qianqian Fang <q.fang at neu.edu>
                        URL: http://mcx.space
  ====================================================================
  
   Format:
-     [flux,detphoton,vol,seed]=mcxlab(cfg);
+     [flux,detphoton,vol,seed,trajectory]=mcxlab(cfg);
  
   Input:
      cfg: a struct, or struct array. Each element of cfg defines 
@@ -85,7 +85,10 @@ the verbose command line options in MCX.
       *cfg.tstep:      time-gate width of the simulation (in seconds)
       *cfg.tend:       ending time of the simulation (in second)
       *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
-      *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector
+      *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector; if srcdir
+                       contains a 4th element, it specifies the focal length of
+                       the source (only valid for focuable src, such as planar, disk,
+                       fourier, gaussian, zgaussian, slit, etc)
        cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
                        sradius=0 to disable atomic operations; if sradius=-1,
                        use cfg.crop0 and crop1 to define a cubic atomic zone; if
@@ -114,6 +117,10 @@ the verbose command line options in MCX.
        cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
        cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
        cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
+       cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
+       cfg.issaveref:  [0]-save diffuse reflectance/transmittance in the non-zero voxels
+                       next to a boundary voxel. The reflectance data are stored as 
+                       negative values
        cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
        cfg.isgpuinfo:  1-print GPU info, [0]-do not print
        cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -165,6 +172,13 @@ the verbose command line options in MCX.
                      advancing strategy; although this method is fast, the results were
                      found inaccurate, and therefore is not recommended. Setting to 0
                      enables precise ray-tracing between voxels; this is the default.
+       cfg.debuglevel:  debug flag string, one or a combination of ['R','M','P'], no space
+                     'R':  debug RNG, output flux.data is filled with 0-1 random numbers
+                     'M':  return photon trajectory data as the 5th output
+                     'P':  show progress bar
+       cfg.maxjumpdebug: [1000000|int] when trajectory is requested in the output, 
+                      use this parameter to set the maximum position stored. By default,
+                      only the first 1e6 positions are stored.
  
        fields with * are required; options in [] are the default values
  
@@ -187,6 +201,14 @@ the verbose command line options in MCX.
        seeds: (optional), if give, mcxlab returns the seeds, in the form of
              a byte array (uint8) for each detected photon. The column number
              of seed equals that of detphoton.
+       trajectory: (optional), if given, mcxlab returns the trajectory data for
+             each simulated photon. The output has 6 rows, the meanings are 
+                1:    index of the photon packet
+ 		2-4:  x/y/z/ of each trajectory position
+ 		5:    current photon packet weight
+ 		6:    reserved
+             By default, mcxlab only records the first 1e6 positions along all
+             simulated photons; change cfg.maxjumpdebug to define a different limit.
  
  
   Example:

@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.0-beta (v2016.4, Dark Matter - Beta)
+Version: 1.0-RC1 (v2017.1, Dark Matter - RC1)
 
 ---------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ A short summary of the main features includes:
 *. support over a dozen source forms, including wide-field and pattern illuminations
 *. boundary reflection support
 *. time-resolved photon transport simulations
-*. saving photon partial path lengths at the detectors
+*. saving photon partial path lengths and trajectories
 *. optimized random number generators
 *. build-in flux/fluence normalization to output Green's functions
 *. user adjustable voxel resolution
@@ -49,12 +49,13 @@ A short summary of the main features includes:
 *. cross-platform graphical user interface
 *. native Matlab/Octave support for high usability
 *. flexible JSON interface for future extensions
+*. multi-GPU support
 
 This software can be used on Windows, Linux and Mac OS. 
 MCX is written in CUDA and can be used with NVIDIA hardware
 with the native NVIDIA drivers, or used with the open-source
 GPU Ocelot libraries for CPUs and AMD GPUs. An OpenCL implementation 
-of MCX, i.e. MCX-CL, was announced on July, 2012. It supports
+of MCX, i.e. MCXCL, was announced on July, 2012. It supports
 NVIDIA/AMD/Intel hardware out-of-box. If your hardware does
 not support CUDA, please download MCXCL from the below URL:
 
@@ -73,8 +74,8 @@ instructions.
 For MCX-CUDA, the requirements for using this software include
 
 *. a CUDA capable NVIDIA graphics card
-*. pre-installed CUDA toolkit [1]
 *. pre-installed NVIDIA graphics driver
+*. pre-installed CUDA toolkit [1] (no longer needed for v2016.4 and later)
 
 You must use a CUDA capable NVIDIA graphics card in order to use
 MCX. A list of CUDA capable cards can be found at [2]. The oldest 
@@ -82,7 +83,7 @@ graphics card that MCX supports is GeForce 8XXX series (circa 2006).
 Using the latest NVIDIA card is expected to produce the best
 speed (GTX 4xx is twice faster than 2xx, which is twice faster than 
 8800/9800). To use the "fermi" version of MCX, you must have a 
-fermi (GTX 4xx) or newer (5xx/6xx/7xx series) graphics card.
+fermi (GTX 4xx) or newer (5xx/6xx/7xx/9xx/10xx series) graphics card.
 The fermi version of MCX supports atomic operations and photon
 detection within a single binary.
 
@@ -94,18 +95,6 @@ the output flux/fluence data - where Nx,Ny,Nz are the dimensions of the
 tissue volume, Ng is the number of concurrent time gates, 4 is 
 the size of a single-precision floating-point number.
 MCX does not require double-precision support in your hardware.
-
-In addition to the hardware support, it is critical to install
-your CUDA library and NVIDIA driver correctly before running MCX.
-You should always install the matching CUDA version to the binary
-package you have downloaded. For example, if you have downloaded 
-the "cuda4" version of MCX, you should install CUDA 4.x on your 
-computer; if your MCX package has "cuda5.5" in the file name, you
-should install CUDA 5.5. Always download and install the matching
-NVIDIA driver linked from the CUDA download page. Once installed,
-follow the below URL to verify the installation is correct:
-
-http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows/index.html#verify-installation
 
 To install MCX, you need to download the binary executable compiled for your 
 computer architecture (32 or 64bit) and platform, extract the package 
@@ -148,7 +137,7 @@ such as the following:
 
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2016 Qianqian Fang <q.fang at neu.edu>          #
+#          Copyright (c) 2009-2017 Qianqian Fang <q.fang at neu.edu>          #
 #                             http://mcx.space/                               #
 #                                                                             #
 #         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #
@@ -156,11 +145,11 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::c52b47 $ Last $Date::2016-04-06 01:50:15 -04$ by $Author::Qianqian Fang $
+$Rev::0a28d4 $ Last $Date::2017-01-02 10:18:07 -05$ by $Author::Qianqian Fang $
 ###############################################################################
 
-usage: mcx <param1> <param2> ...
-where possible parameters include (the first item in [] is the default value)
+usage: ./mcx <param1> <param2> ...
+where possible parameters include (the first value in [*|*] is the default)
  -i 	       (--interactive) interactive mode
  -s sessionid  (--session)     a string to label all output file names
  -f config     (--input)       read config from a file
@@ -185,15 +174,20 @@ where possible parameters include (the first item in [] is the default value)
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save
+ -x [0|1]      (--saveexit)    1 to save photon exit positions and directions
+                               setting -x to 1 also implies setting '-d' to 1
+ -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels
+                               right outside of the domain; if non-zero voxels
+			       appear at the boundary, pad 0s before using -X
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
  -H [1000000] (--maxdetphoton) max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate
                                if an mch file is followed, MMC will "replay" 
                                the detected photon; the replay mode can be used
- -O [X|XFEJT]  (--outputtype)  X - output flux, F - fluence, E - energy deposit
-                               J - Jacobian (replay mode),   T - approximated
-                               Jacobian (replay mode only)
+ -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit
+                               J - Jacobian (replay mode),   P - scattering
+                               event counts at each voxel (replay mode only)
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void
  -h            (--help)        print this message
  -l            (--log)         print messages to a log file instead
@@ -206,9 +200,15 @@ where possible parameters include (the first item in [] is the default value)
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum
  -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing
  -v            (--version)     print MCX revision number
+ -D [0|int]    (--debug)       print debug information (you can use an integer
+  or                           or a string by combining the following flags)
+ -D [''|RMP]                   1 R  debug RNG
+                               2 M  photon movement info
+                               4 P  print progress bar
+  to combine multiple items by using a string, or add selected numbers together
 
 example: (autopilot mode)
-       mcx -A -n 1e7 -f input.inp -G 1 
+       mcx -A -n 1e7 -f input.inp -G 1 -D P
 or (manual mode)
        mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)

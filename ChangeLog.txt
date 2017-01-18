@@ -1,5 +1,53 @@
 = Change Log =
 
+== MCX v2017.1 (Dark Matter - 1.0-RC1), FangQ <q.fang (a) neu.edu> ==
+
+ 2017-01-16 [d5a2cbe] prevent progress bar from stalling
+ 2017-01-02 [0a28d4e] fix compilation error on windows
+ 2016-12-21 [63e5e23] fix voxel [0 0 0] is always zero bug, regression since v2016.4
+ 2016-12-21 [1848321] refresh matlab window when running mcx
+ 2016-12-21 [8715a40]*fix progress bar in matlab when set debuglevel=P
+ 2016-12-21 [b53d8ac] avoid hanging in mcxlab when mus=0
+ 2016-12-11 [c93be5b] fix nan error when scattering coeff is 0
+ 2016-11-11 [024542c] fix replay bug due to f->ndone initial value as -1
+ 2016-11-05 [758b8b5]*enable autobuild in both windows and linux
+ 2016-11-05 [dac3cd0] autobuild for windows
+ 2016-10-20 [1f5d0ef] fix Jacobian output normalization
+ 2016-10-13 [84462a3] correct WP replay scaling factor
+ 2016-10-13 [16ab1c9] normalize scattering count based on total replay weight
+ 2016-10-12 [df62a0d] removing divergence inside hitgrid, thanks to njuffa
+ 2016-10-09 [5905e0b]*record diffuse reflectance on the air voxels outside of domain boundaries, close #6
+ 2016-10-09 [39038bf]*save detected photon position and direction using -x 1, close #16
+ 2016-10-08 [e8b21b8]*port diverging and converging widefield source beams from MMC to MCX, close #27
+ 2016-10-05 [ceb6009] fixing mcxlab crash when detps is not given in the replay mode
+ 2016-10-04 [ead4794] fix Gaussian beam waist radius scaling issue, close #25
+ 2016-10-03 [42866fa] fix two regressions for replay, returning scattering count in replay
+ 2016-09-14 [9d70a56] fix memory out-of-bound bug in replay
+ 2016-09-11 [a6792e7] fix usleep warning
+ 2016-09-09 [6393a45] save scattering event count in replay
+ 2016-08-25 [78acd39]*compiling mcx on windows
+ 2016-08-24 [f19e3d4] update core count for GP104
+ 2016-08-22 [1c21212] fix core count in Pascal
+ 2016-08-18 [55e917c] use c++ template to avoid branching in launchnewphoton - by Gustavo Maia and Fanny Paravecino
+ 2016-08-11 [5da5466] remove -code flags to create arch independent binaries, it also produces faster binaries with cuda 7.5
+ 2016-07-24 [dbbc4c6]*support Russian roulette
+ 2016-07-22 [542223d]*compiling mcxlab mex file for Pascal
+ 2016-07-22 [88441c6] support Pascal
+ 2016-07-02 [9b5ee49]*elegantly terminate mcxlab when an exception is raised
+ 2016-07-02 [382aab1] ignore user specified nonexistent devices in workload calculations - bug reported by Nicholas Dana
+ 2016-07-02 [2b98d3e]*add progress bar when user specify -D P
+ 2016-06-05 [6a6fe13]*update makefile for autobuild, correct mcxlab RNG seed length
+ 2016-06-02 [83481ff] add replay demo script
+ 2016-06-02 [2aed76d] fix replay seed bug for mcxlab
+ 2016-05-16 [701beec] make mcx gpu contest compatible with octave
+ 2016-05-16*[a4cb1e1] add debug option to save photon trajectory data
+ 2016-04-26 [590c596] fix workload and gpuid bug when handeling 0 mask
+ 2016-04-23 [4c37c0d] test gpu contest script in matlab 2014
+ 2016-04-22 [bc56e86] make static target on Linux and Mac
+ 2016-04-22 [f5342f0] update Linux static target command, make total photon number accurate
+ 2016-04-22*[690406c] fix multi-GPU hanging problem for real, wrap all CUDA calls with error testing, return workload in mcxlab
+
+
 == MCX v2016.4 (Dark Matter - 1.0-beta), FangQ <q.fang (a) neu.edu> ==
 
  2016-04-21 [release] finalize and release v2016.04

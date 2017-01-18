@@ -3,12 +3,12 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2011-2016 Qianqian Fang <q.fang at neu.edu>
+%Copyright (c) 2011-2017 Qianqian Fang <q.fang at neu.edu>
 %                      URL: http://mcx.space
 %====================================================================
 %
 % Format:
-%    [flux,detphoton,vol,seed]=mcxlab(cfg);
+%    [flux,detphoton,vol,seed,trajectory]=mcxlab(cfg);
 %
 % Input:
 %    cfg: a struct, or struct array. Each element of cfg defines 
@@ -112,6 +112,13 @@ function [flux,detphoton]=mcxlab(cfg)
 %                    advancing strategy; although this method is fast, the results were
 %                    found inaccurate, and therefore is not recommended. Setting to 0
 %                    enables precise ray-tracing between voxels; this is the default.
+%      cfg.debuglevel:  debug flag string, one or a combination of ['R','M','P'], no space
+%                    'R':  debug RNG, output flux.data is filled with 0-1 random numbers
+%                    'M':  return photon trajectory data as the 5th output
+%                    'P':  show progress bar
+%      cfg.maxjumpdebug: [1000000|int] when trajectory is requested in the output, 
+%                     use this parameter to set the maximum position stored. By default,
+%                     only the first 1e6 positions are stored.
 %
 %      fields with * are required; options in [] are the default values
 %
@@ -134,6 +141,14 @@ function [flux,detphoton]=mcxlab(cfg)
 %      seeds: (optional), if give, mcxlab returns the seeds, in the form of
 %            a byte array (uint8) for each detected photon. The column number
 %            of seed equals that of detphoton.
+%      trajectory: (optional), if given, mcxlab returns the trajectory data for
+%            each simulated photon. The output has 6 rows, the meanings are 
+%               1:    index of the photon packet
+%		2-4:  x/y/z/ of each trajectory position
+%		5:    current photon packet weight
+%		6:    reserved
+%            By default, mcxlab only records the first 1e6 positions along all
+%            simulated photons; change cfg.maxjumpdebug to define a different limit.
 %
 %
 % Example:

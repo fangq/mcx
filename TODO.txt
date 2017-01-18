@@ -2,11 +2,11 @@
 
 == Short term projects ==
 
+*. support multi-byte medium [2017/01/01, FangQ]
 
 == Long term projects ==
 
 *. fluorescent material support [2009/09/30, FangQ]
-*. study the round-off errors for the two RNGs [2009/04/30, FangQ]
 
 == Completed ==
 
@@ -28,3 +28,4 @@
 [done] *. support more complicated source forms [2009/09/30, FangQ], [2013/09/18, FangQ]
 [done] *. precise ray-tracing in a grid space [2012/01/11, FangQ]
 [done] *. multiple-GPU support [2009/09/30, FangQ]
+[dropped] study the round-off errors for the two RNGs [2009/04/30, FangQ]
