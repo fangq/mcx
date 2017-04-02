@@ -1431,7 +1431,7 @@ void mcx_printheader(Config *cfg){
 #          Copyright (c) 2009-2017 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
-#         Computational Imaging Laboratory (CIL) [http://fanglab.org]         #\n\
+# Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
 #            Department of Bioengineering, Northeastern University            #\n\
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
@@ -1445,29 +1445,50 @@ void mcx_usage(Config *cfg,char *exename){
      printf("\n\
 usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first value in [*|*] is the default)\n\
- -i 	       (--interactive) interactive mode\n\
- -s sessionid  (--session)     a string to label all output file names\n\
- -f config     (--input)       read config from a file\n\
+\n\
+== Required option ==\n\
+ -f config     (--input)       read an input file in .json or .inp format\n\
+\n\
+== MC options ==\n\
+\n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
+ -r [1|int]    (--repeat)      divide photons into r groups (1 per GPU call)\n\
+ -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
+ -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
+ -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
+ -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
+ -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
+                               if an mch file is followed, MCX \"replays\" \n\
+                               the detected photon; the replay mode can be used\n\
+                               to calculate the mua/mus Jacobian matrices\n\
+ -z [0|1]      (--srcfrom0)    1 volume origin is [0 0 0]; 0: origin at [1 1 1]\n\
+ -R [-2|float] (--skipradius)  -2: use atomics for the entire domain (default)\n\
+                                0: vanilla MCX, no atomic operations\n\
+                               >0: radius in which use shared-memory atomics\n\
+                               -1: use crop0/crop1 to determine atomic zone\n\
+ -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
+ -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
+                               detector (det ID starts from 1), used with -E \n\
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
+ -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
+ -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing\n\
+ -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
+ -g [1|int]    (--gategroup)   number of time gates per run\n\
+ -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
+\n\
+== GPU options ==\n\
+ -L            (--listgpu)     print GPU information only\n\
  -t [16384|int](--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
  -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
       or\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
- -r [1|int]    (--repeat)      number of repetitions\n\
- -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
- -z [0|1]      (--srcfrom0)    1 volume coord. origin [0 0 0]; 0 use [1 1 1]\n\
- -g [1|int]    (--gategroup)   number of time gates per run\n\
- -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
- -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
- -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -R [-2|float] (--skipradius)  0: vanilla MCX, no atomic operations\n\
-                               >0: radius in which use shared-memory atomics\n\
-                               -1: use crop0/crop1 to determine atomic zone\n\
-                               -2: use atomics for the entire domain (default)\n\
- -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
+ -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
+ -I            (--printgpu)    print GPU information and run program\n\
+\n\
+== Output options ==\n\
+ -s sessionid  (--session)     a string to label all output file names\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
                                setting -x to 1 also implies setting '-d' to 1\n\
@@ -1477,31 +1498,33 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
- -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
-                               if an mch file is followed, MMC will \"replay\" \n\
-                               the detected photon; the replay mode can be used\n\
  -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
                                J - Jacobian (replay mode),   P - scattering\n\
                                event counts at each voxel (replay mode only)\n\
- -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
+\n\
+== User IO options ==\n\
  -h            (--help)        print this message\n\
- -l            (--log)         print messages to a log file instead\n\
- -L            (--listgpu)     print GPU information only\n\
- -I            (--printgpu)    print GPU information and run program\n\
- -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
- -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
- -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
-                               detector (det ID starts from 1), used with -E \n\
- -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
- -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing\n\
  -v            (--version)     print MCX revision number\n\
+ -l            (--log)         print messages to a log file instead\n\
+ -i 	       (--interactive) interactive mode\n\
+\n\
+== Debug options ==\n\
  -D [0|int]    (--debug)       print debug information (you can use an integer\n\
   or                           or a string by combining the following flags)\n\
  -D [''|RMP]                   1 R  debug RNG\n\
-                               2 M  photon movement info\n\
+                               2 M  store photon trajectory info\n\
                                4 P  print progress bar\n\
       combine multiple items by using a string, or add selected numbers together\n\
 \n\
+== Additional options ==\n\
+ --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that\n\
+                               can travel before entering the domain, if \n\
+                               launched outside (i.e. a widefield source)\n\
+ --maxjumpdebug [1000000|int]  when trajectory is requested (i.e. -D M),\n\
+                               use this parameter to set the maximum positions\n\
+                               stored (default: 1e6)\n\
+\n\
+== Example ==\n\
 example: (autopilot mode)\n\
        %s -A -n 1e7 -f input.inp -G 1 -D P\n\
 or (manual mode)\n\

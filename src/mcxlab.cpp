@@ -415,7 +415,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.srctype='%s';\n",strtypestr);
     }else if(strcmp(name,"outputtype")==0){
         int len=mxGetNumberOfElements(item);
-        const char *outputtype[]={"flux","fluence","energy","jacobian","nscat",""};
+        const char *outputtype[]={"flux","fluence","energy","jacobian","nscat","wl","wp",""};
         char outputstr[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)
@@ -426,6 +426,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if (status != 0)
              mexWarnMsgTxt("not enough space. string is truncated.");
         cfg->outputtype=mcx_keylookup(outputstr,outputtype);
+        if(cfg->outputtype==5 || cfg->outputtype==6) // map wl to jacobian, wp to nscat
+             cfg->outputtype-=2;
         if(cfg->outputtype==-1)
              mexErrMsgTxt("the specified output type is not supported");
 	printf("mcx.outputtype='%s';\n",outputstr);

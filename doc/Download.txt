@@ -4,108 +4,77 @@ How to get MCX
 
           1. [2]Download the Latest Release
 
-          2. [3]Download Development Snapshot from SVN (not fully tested)
+                1.1. [3]Test the nightly-build packages
 
-                2.1. [4]Anonymous SVN Access
+                1.2. [4]Get the latest source code
 
-                2.2. [5]Developer SVN Access
+                1.3. [5]Contribute to MCX
 
-          3. [6]References
+          2. [6]References
 
 1. Download the Latest Release
 
-Current Release: [7]MCX and [8]MCXLAB v1.0 alpha-2 (0.9.7-2), released on Sep. 23, 2014
+Current Release: [7]MCX and [8]MCXLAB v2017.3 (1.0-RC1), released on Apr. 2, 2017
 
    Please read the [9]Release notes here.
 
-   Please download MCX and MCXLAB v0.9.7-2 at our
-   [10]registration/download page. We are greatly appreciated if you can
-   tell us a little bit about you and your related research by
-   [11]registering your copy of MCX. Binary executable (for 32bit and
-   64bit machines) and source code packages are both provided. For MCXLAB,
-   a single package containing the pre-compiled Matlab/Octave MEX files
-   for 32/64bit Linux and 32/64bit Windows is provided.
+   Please download MCX and MCXLAB v2017.3 at our [10]registration/download
+   page. We are greatly appreciated if you can tell us a little bit about
+   you and your related research by [11]registering your copy of MCX.
+   Binary executable (for 32bit and 64bit machines) and source code
+   packages are both provided. For MCXLAB, a single package containing the
+   pre-compiled Matlab MEX files for 64bit Linux and 64bit Windows is
+   provided.
 
   [os-icons3.png]
 
-Previous Alpha Release: MCX 0.9.7-1, released on Jan. 05, 2014
+Previous Beta Release: MCX v2016.4, released on Apr. 23, 2016
 
    Please read the [12]Release notes here.
 
-Previous Stable Release: MCX 0.8.0, released on Sep. 22, 2013
+Previous Alpha Release: MCX 0.9.7-2, released on Sep. 23, 2014
 
    Please read the [13]Release notes here.
 
-Previous Beta Release: MCX 0.7.9, released on Jan. 16, 2012
+1.1. Test the nightly-build packages
 
-   Please read the [14]Release notes here.
+   Starting from Apr. 2016, we automatically compile MCX and MCXLAB on a
+   daily basis and upload the binary packages to our [14]nightly-build
+   folder. If you want to try out the latest pre-compiled software, please
+   browse the following links, and select the package that matches your
+   OS:
 
-Previous Stable Release: MCX 0.5.3, released on Jan. 16, 2012
+   for MCX
+          [15]http://mcx.space/nightly/mcx/
 
-   Please read the [15]Release notes here.
+   for MCXLAB
+          [16]http://mcx.space/nightly/mcxlab/
 
-Previous Stable Release: MCX 0.5.2, released on Sep. 20, 2011
+1.2. Get the latest source code
 
-   Please read the [16]Release notes here.
+   The latest code can be downloaded from the project's [17]Github
+   repository. This can be done using the following git command.
 
-Previous Stable Release: MCX 0.5.1, released on Jun. 06, 2011
+ git clone https://github.com/fangq/mcx.git mcx
 
-   Please read the [17]Release notes here.
+   After downloading the source code, please follow [18]the instructions
+   to compile and run the software. For windows user, instructions on
+   compiling MCX with Visual Studio can be found [19]here.
 
-2. Download Development Snapshot from SVN (not fully tested)
+1.3. Contribute to MCX
 
-   If you want to get the latest development branch of MCX, you can
-   download it from our SVN. You have to be aware that an SVN snapshot is
-   not a stable release. It may have partially implemented features and,
-   thus, cause crash or erroneous results.
+   If you are interested in contributing codes, testing data and
+   documentation to MCX, please [20]fork this project on github. Once your
+   feature is fully developed in your forked branch, please send a
+   [21]pull request in order for MCX's developer to review your changes.
 
-   First, make sure you have installed svn client on your system. If you
-   are using a Debian-based GNU/Linux system (such as Ubuntu, Knoppix
-   etc), you can install svn by
-
- sudo apt-get install subversion
-
-   if you are using a Redhat-based GNU/Linux system (such as Fedora,
-   CentOS etc), you can do this by
-
- su -c 'yum install subversion'
-
-   If your operating system is Windows, we recommend you installing
-   [18]TortoiseSVN.
-
-2.1. Anonymous SVN Access
-
-   The latest code snapshot can be checked out from project's [19]SVN
-   repository. This can be done anonymously by the following command.
-
- svn co https://svn.code.sf.net/p/mcx/svn/mcextreme_cuda/trunk mcx
-
-   The password is the same as the username. After you checking out the
-   code, you can [20]compile and run the software.
-
-2.2. Developer SVN Access
-
-   If you are one of the developers who have SVN write-permission, you can
-   checkout the latest code with the same command above.
-
-   You will have to [21]register an account and ask the [22]project
-   maintainer to grant you SVN permission).
-
-   Once checkout, you can simply make changes or debug your changes in
-   your local copy. If your local changes have passed review by other
-   co-developers, you can then commit your changes back to the svn
-   repository by
-
- cd /path/to/mcx/local/copy
- svn commit -m "a short summary of your changes"
-
-3. References
+2. References
 
    The author of this software would like you to acknowledge the use of
    this software in your related publications by citing the following
    paper:
 
-     * Qianqian Fang and David A. Boas, "[23]Monte Carlo Simulation of
+     * Qianqian Fang and David A. Boas, "[22]Monte Carlo Simulation of
        Photon Migration in 3D Turbid Media Accelerated by Graphics
        Processing Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190
        (2009)
@@ -117,24 +86,23 @@ References
 
    1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
    2. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Download_the_Latest_Release
-   3. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Download_Development_Snapshot_from_SVN_not_fully_tested
-   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Anonymous_SVN_Access
-   5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Developer_SVN_Access
+   3. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Test_the_nightly_build_packages
+   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Get_the_latest_source_code
+   5. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Contribute_to_MCX
    6. http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#References
    7. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README
    8. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/MCXLAB
-   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.9.7-2
+   9. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/v2017.3
   10. http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx
   11. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=edit&editmode=prepend&id=register/mcx
-  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.9.7-1
-  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.8.0
-  14. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.7.9
-  15. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.3
-  16. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.2
-  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.5.1
-  18. http://tortoisesvn.net/downloads
-  19. http://mcx.svn.sourceforge.net/viewvc/mcx/mcextreme_cuda/trunk/
-  20. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
-  21. https://sourceforge.net/user/registration
-  22. http://sourceforge.net/users/fangq
-  23. http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-22-20178
+  12. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/v2016.4
+  13. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.9.7-2
+  14. http://mcx.space/nightly/
+  15. http://mcx.space/nightly/mcx/
+  16. http://mcx.space/nightly/mcxlab/
+  17. https://github.com/fangq/mcx
+  18. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Installation
+  19. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/NSightCompilation
+  20. https://github.com/fangq/mcx#fork-destination-box
+  21. https://yangsu.github.io/pull-request-tutorial/
+  22. http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-22-20178

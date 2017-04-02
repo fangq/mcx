@@ -1,4 +1,4 @@
-function [flux,detphoton]=mcxlab(cfg)
+function [fluence,detphoton]=mcxlab(cfg)
 %
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
@@ -8,7 +8,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %====================================================================
 %
 % Format:
-%    [flux,detphoton,vol,seed,trajectory]=mcxlab(cfg);
+%    [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg);
 %
 % Input:
 %    cfg: a struct, or struct array. Each element of cfg defines 
@@ -16,6 +16,7 @@ function [flux,detphoton]=mcxlab(cfg)
 %
 %    It may contain the following fields:
 %
+%== Required ==
 %     *cfg.nphoton:    the total number of photons to be simulated (integer)
 %     *cfg.vol:        a 3D array specifying the media index in the domain
 %     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
@@ -29,21 +30,29 @@ function [flux,detphoton]=mcxlab(cfg)
 %                      contains a 4th element, it specifies the focal length of
 %                      the source (only valid for focuable src, such as planar, disk,
 %                      fourier, gaussian, zgaussian, slit, etc)
-%      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
-%                      sradius=0 to disable atomic operations; if sradius=-1,
-%                      use cfg.crop0 and crop1 to define a cubic atomic zone; if
-%                      sradius=-2, perform atomic operations in the entire domain;
-%                      by default, srandius=-2 (atomic operations is used).
-%      cfg.nblocksize: how many CUDA thread blocks to be used [64]
-%      cfg.nthread:    the total CUDA thread number [2048]
-%      cfg.maxgate:    the num of time-gates per simulation
-%      cfg.session:    a string for output file names (used when no return variables)
+%
+%== MC simulation settings ==
 %      cfg.seed:       seed for the random number generator (integer) [0]
 %                      if set to a uint8 array, the binary data in each column is used 
 %                      to seed a photon (i.e. the "replay" mode)
-%      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
-%      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
+%      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
+%      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
+%      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
+%      cfg.maxgate:    the num of time-gates per simulation
+%      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
+%      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
+%      cfg.shapes:     a JSON string for additional shapes in the grid
+%      cfg.reseedlimit:number of scattering events before reseeding RNG
+%      cfg.faststep: when set to 1, this option enables the legacy 1mm fix-step photon
+%                    advancing strategy; although this method is fast, the results were
+%                    found inaccurate, and therefore is not recommended. Setting to 0
+%                    enables precise ray-tracing between voxels; this is the default.
+%
+%== GPU settings ==
+%      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
+%      cfg.nblocksize: how many CUDA thread blocks to be used [64]
+%      cfg.nthread:    the total CUDA thread number [2048]
 %      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
 %                      if set to an integer, gpuid specifies the index (starts at 1)
 %                      of the GPU for the simulation; if set to a binary string made
@@ -54,20 +63,16 @@ function [flux,detphoton]=mcxlab(cfg)
 %                      3 selected GPUs, respectively; [10,10] evenly divides the load 
 %                      between 2 active GPUs. A simple load balancing strategy is to 
 %                      use the GPU core counts as the weight.
-%      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-%      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
-%      cfg.isnormalized:[1]-normalize the output flux to unitary source, 0-no reflection
-%      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
-%      cfg.issaveref:  [0]-save diffuse reflectance/transmittance in the non-zero voxels
-%                      next to a boundary voxel. The reflectance data are stored as 
-%                      negative values
-%      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.isgpuinfo:  1-print GPU info, [0]-do not print
-%      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
-%      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
-%      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
-%      cfg.shapes:     a JSON string for additional shapes in the grid
-%      cfg.reseedlimit:number of scattering events before reseeding RNG
+%      cfg.sradius:    radius within which we use atomic operations (in grid) [0.0]
+%                      sradius=0 to disable atomic operations; if sradius=-1,
+%                      use cfg.crop0 and crop1 to define a cubic atomic zone; if
+%                      sradius=-2, perform atomic operations in the entire domain;
+%                      by default, srandius=-2 (atomic operations is used).
+%
+%== Source-detector parameters ==
+%      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
+%      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
 %      cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
 %                      'pencil' - default, pencil beam, no param needed
 %                      'isotropic' - isotropic source, no param needed
@@ -104,16 +109,25 @@ function [flux,detphoton]=mcxlab(cfg)
 %                               dir specified by cfg.srcdir
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
+%      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, or 0-when entering 
 %                      the first non-zero voxel
-%      cfg.outputtype:  [X] - output flux, F - fluence, E - energy deposit
-%                       J - Jacobian (replay)
-%      cfg.faststep: when set to 1, this option enables the legacy 1mm fix-step photon
-%                    advancing strategy; although this method is fast, the results were
-%                    found inaccurate, and therefore is not recommended. Setting to 0
-%                    enables precise ray-tracing between voxels; this is the default.
+%
+%== Output control ==
+%      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
+%      cfg.issaveref:  [0]-save diffuse reflectance/transmittance in the non-zero voxels
+%                      next to a boundary voxel. The reflectance data are stored as 
+%                      negative values
+%      cfg.outputtype: 'flux' - fluence-rate, (default value)
+%                      'fluence' - fluence integrated over each time gate, 
+%                      'energy' - energy deposit per voxel
+%                      'jacobian' or 'wl' - mua Jacobian (replay mode), 
+%                      'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
+%      cfg.session:    a string for output file names (used when no return variables)
+%
+%== Debug ==
 %      cfg.debuglevel:  debug flag string, one or a combination of ['R','M','P'], no space
-%                    'R':  debug RNG, output flux.data is filled with 0-1 random numbers
+%                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
 %      cfg.maxjumpdebug: [1000000|int] when trajectory is requested in the output, 
@@ -123,10 +137,10 @@ function [flux,detphoton]=mcxlab(cfg)
 %      fields with * are required; options in [] are the default values
 %
 % Output:
-%      flux: a struct array, with a length equals to that of cfg.
-%            For each element of flux, flux(i).data is a 4D array with
+%      fluence: a struct array, with a length equals to that of cfg.
+%            For each element of fluence, fluence(i).data is a 4D array with
 %            dimensions specified by [size(vol) total-time-gates]. 
-%            The content of the array is the normalized flux at 
+%            The content of the array is the normalized fluence at 
 %            each voxel of each time-gate.
 %      detphoton: a struct array, with a length equals to that of cfg.
 %            For each element of detphoton, detphoton(i).data is a 2D array with
@@ -162,8 +176,8 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfg.tstart=0;
 %      cfg.tend=5e-9;
 %      cfg.tstep=5e-10;
-%      % calculate the flux distribution with the given config
-%      flux=mcxlab(cfg);
+%      % calculate the fluence distribution with the given config
+%      fluence=mcxlab(cfg);
 %
 %      cfgs(1)=cfg;
 %      cfgs(2)=cfg;
@@ -171,10 +185,10 @@ function [flux,detphoton]=mcxlab(cfg)
 %      cfgs(2).isreflect=1;
 %      cfgs(2).issavedet=1;
 %      cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
-%      % calculate the flux and partial path lengths for the two configurations
-%      [fluxs,detps]=mcxlab(cfgs);
+%      % calculate the fluence and partial path lengths for the two configurations
+%      [fluences,detps]=mcxlab(cfgs);
 %
-%      imagesc(squeeze(log(fluxs(1).data(:,30,:,1)))-squeeze(log(fluxs(2).data(:,30,:,1))));
+%      imagesc(squeeze(log(fluences(1).data(:,30,:,1)))-squeeze(log(fluences(2).data(:,30,:,1))));
 %
 %
 % This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space

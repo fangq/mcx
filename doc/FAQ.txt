@@ -29,7 +29,7 @@ Frequently Asked Questions about MCX
    response time of a kernel (a function running on a GPU). This
    time-limit is referred to as the "driver watch-dog time limit". For
    Linux, this limit is usually about 10 seconds; for Windows, this limit
-   is about 2 seconds. When a kernel is running on a GPU for longer than
+   is about 5 seconds. When a kernel is running on a GPU for longer than
    this limit, the driver will kill this kernel for safety purposes.
 
    If you have only one graphics card on your system and you have to use
@@ -51,12 +51,15 @@ Frequently Asked Questions about MCX
    For Windows users, you may modify the TdrDelay value in the registry to
    effectively extend this time-out limit. You can find more info in
    [10]this thread. For Linux/Unix users, you can kill the x-window and
-   run mcx in the pure console mode (you may boot into [11]he "text" mode,
-   or if you are already in the graphics mode, you may [12]stop it from a
-   terminal). After killing the graphics interface, you may run mcx on a
-   non-dedicated GPU without the watch-dog limit.
+   run mcx in the pure console mode (you may boot into [11]the "text"
+   mode, or if you are already in the graphics mode, you may [12]stop it
+   from a terminal). After killing the graphics interface, you may run mcx
+   on a non-dedicated GPU without the watch-dog limit.
 
 2. When should I use the atomic version of MCX ?
+
+   This FAQ entry is outdated. Starting from MCX 2016.4, atomic operations
+   are enabled by default
 
    Answer: In an MCX Monte Carlo simulation, we need to save photon
    weights to the global memory from many parallel threads. This may cause
@@ -96,26 +99,35 @@ Frequently Asked Questions about MCX
 
 4. Does MCX support multiple GPUs in a single computer?
 
-   Answer: No, but you can launch parallel jobs and utilize all GPUs you
-   have simultaneously. You must use the "-G" option to specify a
-   different GPU ID for each job, and seed them independently by using
-   different input files (change the second row of each input file). All
-   of these can be done automatically using [17]GNU Parallel. You can find
-   examples of running parallel jobs using this tool at [18]this page.
-   This approach also supports running MCX over a distributed system such
-   as a cluster.
+   Answer: Starting from MCX 2016.4, MCX supports multiple GPUs in a
+   single workstation. To enable this feature, you need to use the -G
+   'gpumask' command line flag, where the string 'gpumask' is a string
+   made of '0's and '1's. A letter '0' disables a GPU and a letter '1'
+   enables a GPU. For example, if one use -G '1010' in the command, he/she
+   will simultaneously use GPU#1 and #3 in the simulation, and leave #2
+   and #4 unused.
 
-   In addition, the author of MCX has also developed an OpenCL code that
-   is targeted at a heterogeneous computing platform involving multiple
-   GPUs and CPUs. This code will be announced at a later time.
+   If multiple GPUs are specified in the -G flag, MCX will partition the
+   entire photons to be simulated based on the work-load distribution
+   propotional to the stream-processors (cores) inside each GPU. Use the
+   above example, GPU#1 has 512 cores, and GPU#2 has 2048 cores, if one
+   needs to simulate 1e8 photons, GPU#1 will run 2e7 photons, and GPU#2
+   will run 8e7 photons. If one want to manually partition the workload,
+   he/she can use the -W option, followed by numbers separated by "," or
+   ";". For example,
+
+  mcx ... -G '1010' -W 50,10
+
+   will run 80% of all photons using the first GPU, and 20% of the photons
+   using the 3rd GPU.
 
 5. Will you consider porting MCX to MPI to run on my cluster?
 
    Answer: There are simple alternatives, and you can find my arguments on
-   this at [19]this link]. The support for distributed systems is similar
+   this at [17]this link]. The support for distributed systems is similar
    to the support for multiple GPUs in the same box. You are recommended
-   to use [20]GNU Parallel to manage parallel jobs. Examples can be found
-   [21]here.
+   to use [18]GNU Parallel to manage parallel jobs. Examples can be found
+   [19]here.
 
 6. What is the maximum number of media types that MCX can handle?
 
@@ -123,7 +135,7 @@ Frequently Asked Questions about MCX
    need more than 128 media, you can check out a special branch of mcx by
    the following command:
 
-  svn checkout --username anonymous_user [22]https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/branches/media16 mcx
+  svn checkout --username anonymous_user [20]https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/branches/media16 mcx
 
    In this branch, we use an "unsigned short" instead of "unsigned char"
    to represent a medium index. For CUDA devices with 64k constant memory,
@@ -132,7 +144,7 @@ Frequently Asked Questions about MCX
 
 7. What is the maximum number of detectors in MCX?
 
-   Answer: The build-in maximum detector number in MCX is 256. You can
+   Answer: The build-in maximum detector number in MCX is 1024. You can
    modify this number in the mcx_const.h unit.
 
 8. My simulation created an empty history file, why is that?
@@ -149,12 +161,12 @@ Frequently Asked Questions about MCX
    differences between these two options:
 
        default or --srcfrom0 0                       --srcfrom0 1
-  [23]upload:detmask_coordinates.png
-                                     [24]upload:detmask_coordinates_srcfrom0.png
+  [21]upload:detmask_coordinates.png
+                                     [22]upload:detmask_coordinates_srcfrom0.png
 
    You can find more discussions here:
 
-   [25]http://groups.google.com/group/mcx-users/browse_thread/thread/e5e01
+   [23]http://groups.google.com/group/mcx-users/browse_thread/thread/e5e01
    40d7e73e4bf?hl=en
 
    A photon detection event only happens when a photon escapes from the
@@ -203,12 +215,10 @@ References
   14. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/Reference
   15. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/ReleaseNotes/0.4.9
   16. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
-  17. http://www.gnu.org/software/parallel/
-  18. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
-  19. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
-  20. http://www.gnu.org/software/parallel/
-  21. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
-  22. https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/branches/media16
-  23. http://mcx.sf.net/upload/detmask_coordinates.png
-  24. http://mcx.sf.net/upload/detmask_coordinates_srcfrom0.png
-  25. http://groups.google.com/group/mcx-users/browse_thread/thread/e5e0140d7e73e4bf?hl=en
+  17. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
+  18. http://www.gnu.org/software/parallel/
+  19. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/MMCCluster
+  20. https://mcx.svn.sourceforge.net/svnroot/mcx/mcextreme_cuda/branches/media16
+  21. http://mcx.sf.net/upload/detmask_coordinates.png
+  22. http://mcx.sf.net/upload/detmask_coordinates_srcfrom0.png
+  23. http://groups.google.com/group/mcx-users/browse_thread/thread/e5e0140d7e73e4bf?hl=en
