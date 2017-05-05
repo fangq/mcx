@@ -1,0 +1,28 @@
+==827== NVPROF is profiling process 827, command: ../../bin/mcx -A -g 10 -n 1e6 -f qtest.inp -s qtest -r 1 -a 0 -b 0 -G 1 -D P
+==827== Profiling application: ../../bin/mcx -A -g 10 -n 1e6 -f qtest.inp -s qtest -r 1 -a 0 -b 0 -G 1 -D P
+==827== Profiling result:
+"Start","Duration","Grid X","Grid Y","Grid Z","Block X","Block Y","Block Z","Registers Per Thread","Static SMem","Dynamic SMem","Size","Throughput","Device","Context","Stream","Name"
+ms,ms,,,,,,,,B,KB,MB,GB/s,,,,
+577.258475,0.036286,,,,,,,,,,0.205994,5.543892,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.314503,0.017471,,,,,,,,,,0.093750,5.240269,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.339877,0.000608,,,,,,,,,,0.000031,0.049017,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.347204,0.000608,,,,,,,,,,0.000061,0.098034,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.371458,0.000640,,,,,,,,,,0.000275,0.419095,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.409599,0.015999,,,,,,,,,,0.823975,50.294562,"GeForce GTX 950 (0)","1","7","[CUDA memset]"
+577.419519,0.000223,,,,,,,,,,0.000004,0.016705,"GeForce GTX 950 (0)","1","7","[CUDA memset]"
+577.427518,0.133397,,,,,,,,,,11.444092,83.779027,"GeForce GTX 950 (0)","1","7","[CUDA memset]"
+577.598192,0.033374,,,,,,,,,,0.187500,5.486471,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.658604,0.033277,,,,,,,,,,0.187500,5.502463,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+577.716135,0.032765,,,,,,,,,,0.187500,5.588447,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+578.397905,0.033117,,,,,,,,,,0.187500,5.529048,"GeForce GTX 950 (0)","1","7","[CUDA memcpy HtoD]"
+578.464940,188.351033,192,1,1,64,1,1,68,0,2.250000,,,"GeForce GTX 950 (0)","1","7","void mcx_main_loop<int=0>(unsigned char*, float*, float*, unsigned int*, float4*, float4*, float4*, float*, unsigned int*, float*, float*, float*, unsigned long*, float*, int volatile *) [251]"
+878.846985,0.001568,,,,,,,,,,0.000004,0.002376,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+878.884006,0.032574,,,,,,,,,,0.187500,5.621215,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+879.028795,2.483931,,,,,,,,,,11.444092,4.499268,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+881.908214,0.137461,,,,,,,,,,0.823975,5.853753,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+882.304183,0.017214,,,,,,,,,,0.093750,5.318504,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+884.754164,0.032894,,,,,,,,,,0.187500,5.566531,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+884.821423,0.032125,,,,,,,,,,0.187500,5.699781,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+884.884074,0.032125,,,,,,,,,,0.187500,5.699781,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+884.947397,0.032381,,,,,,,,,,0.187500,5.654719,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
+885.010656,0.016607,,,,,,,,,,0.093750,5.512900,"GeForce GTX 950 (0)","1","7","[CUDA memcpy DtoH]"
