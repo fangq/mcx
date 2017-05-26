@@ -671,9 +671,19 @@ void mcxlab_usage(){
 }
 
 extern "C" void mcx_matlab_flush(){
+#ifdef _OPENMP
+#pragma omp critical
+{
+#endif
+
 #ifndef MATLAB_MEX_FILE
         mexEvalString("fflush(stdout);");
 #else
         mexEvalString("pause(.0001);");
 #endif
+
+#ifdef _OPENMP
+}
+#endif
+
 }
