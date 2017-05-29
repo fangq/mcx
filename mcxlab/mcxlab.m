@@ -107,6 +107,11 @@ function [fluence,detphoton]=mcxlab(cfg)
 %                      'slit' - a colimated slit beam emitting from the line segment between 
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial  
 %                               dir specified by cfg.srcdir
+%                      'pencilarray' - a rectangular array of pencil beams. The srcparam1 and srcparam2
+%                               are defined similarly to 'fourier', except that srcparam1(4) and srcparam2(4)
+%                               are both integers, denoting the element counts in the x/y dimensions, respectively. 
+%                               For exp., srcparam1=[10 0 0 4] and srcparam2[0 20 0 5] represent a 4x5 pencil beam array
+%                               spanning 10 grids in the x-axis and 20 grids in the y-axis (5-voxel spacing)
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
