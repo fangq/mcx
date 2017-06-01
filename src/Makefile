@@ -57,8 +57,12 @@ FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
   CUOMPLINK=-Xcompiler
-  LINKOPT=-L/c/CUDA/lib $(CUDART)
-  INCLUDEDIRS +=-I/c/CUDA/include
+  ifeq ($(findstring x86_64,$(ARCH)), x86_64)
+      LINKOPT=-L"$(CUDA_PATH)/lib/x64" $(CUDART)
+  else
+      LINKOPT=-L"$(CUDA_PATH)/lib/Win32" $(CUDART)
+  endif
+  INCLUDEDIRS +=-I"$(CUDA_PATH)/lib/include"
   CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
   OBJSUFFIX=.obj
   EXESUFFIX=.exe

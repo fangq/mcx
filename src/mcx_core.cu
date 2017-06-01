@@ -335,7 +335,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  switch(mcxsource) {
 		case(MCX_SRC_PLANAR):
 		case(MCX_SRC_PATTERN):
-		case(MCX_SRC_FOURIER): { /*a rectangular grid over a plane*/
+		case(MCX_SRC_FOURIER):
+		case(MCX_SRC_PENCILARRAY): { /*a rectangular grid over a plane*/
 		      float rx=rand_uniform01(t);
 		      float ry=rand_uniform01(t);
 		      *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
@@ -344,9 +345,13 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 					   p->w);
 		      if(gcfg->srctype==MCX_SRC_PATTERN) // need to prevent rx/ry=1 here
 			  p->w=srcpattern[(int)(ry*JUST_BELOW_ONE*gcfg->srcparam2.w)*(int)(gcfg->srcparam1.w)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.w)];
-		      else if(gcfg->srctype==MCX_SRC_FOURIER){
+		      else if(gcfg->srctype==MCX_SRC_FOURIER)
 			  p->w=(cosf((floorf(gcfg->srcparam1.w)*rx+floorf(gcfg->srcparam2.w)*ry
 				  +gcfg->srcparam1.w-floorf(gcfg->srcparam1.w))*TWO_PI)*(1.f-gcfg->srcparam2.w+floorf(gcfg->srcparam2.w))+1.f)*0.5f; //between 0 and 1
+		      else if(gcfg->srctype==MCX_SRC_PENCILARRAY){
+			  p->x=gcfg->ps.x+ floorf(rx*gcfg->srcparam1.w)*gcfg->srcparam1.x/(gcfg->srcparam1.w-1.f)+floorf(ry*gcfg->srcparam2.w)*gcfg->srcparam2.x/(gcfg->srcparam2.w-1.f);
+			  p->y=gcfg->ps.y+ floorf(rx*gcfg->srcparam1.w)*gcfg->srcparam1.y/(gcfg->srcparam1.w-1.f)+floorf(ry*gcfg->srcparam2.w)*gcfg->srcparam2.y/(gcfg->srcparam2.w-1.f);
+			  p->z=gcfg->ps.z+ floorf(rx*gcfg->srcparam1.w)*gcfg->srcparam1.z/(gcfg->srcparam1.w-1.f)+floorf(ry*gcfg->srcparam2.w)*gcfg->srcparam2.z/(gcfg->srcparam2.w-1.f);
 		      }
 		      *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
 		      if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
@@ -1410,6 +1415,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		case(MCX_SRC_ZGAUSSIAN): mcx_main_loop<MCX_SRC_ZGAUSSIAN> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 		case(MCX_SRC_LINE): mcx_main_loop<MCX_SRC_LINE> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 		case(MCX_SRC_SLIT): mcx_main_loop<MCX_SRC_SLIT> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
+		case(MCX_SRC_PENCILARRAY): mcx_main_loop<MCX_SRC_PENCILARRAY> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 	   }
 
 #pragma omp master
