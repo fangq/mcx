@@ -1146,7 +1146,8 @@ int mcx_remap(char *opt){
     while(shortopt[i]!='\0'){
 	if(strcmp(opt,fullopt[i])==0){
 		opt[1]=shortopt[i];
-		opt[2]='\0';
+		if(shortopt[i]!='-')
+                    opt[2]='\0';
 		return 0;
 	}
 	i++;
@@ -1332,9 +1333,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
  				if (cfg->issaveref) cfg->issaveref=1;
  				break;
 		     case '-':  /*additional verbose parameters*/
-                                if(strcmp(argv[i]+2,"maxvoidstep"))
+                                if(strcmp(argv[i]+2,"maxvoidstep")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxvoidstep),"int");
-                                else if(strcmp(argv[i]+2,"maxjumpdebug"))
+                                else if(strcmp(argv[i]+2,"maxjumpdebug")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
