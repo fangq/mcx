@@ -150,6 +150,7 @@ typedef struct MCXConfig{
 	float normalizer;
 	unsigned int maxjumpdebug; /**< num of  photon scattering events to save when saving photon trajectory is enabled*/
 	unsigned int debugdatalen;
+	unsigned int gscatter;
 	float *exportdebugdata;
 } Config;
 

@@ -45,7 +45,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -55,7 +55,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
-                 "--maxvoidstep","--saveexit","--saveref",""};
+                 "--maxvoidstep","--saveexit","--saveref","--gscatter",""};
 
 const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
@@ -136,6 +136,7 @@ void mcx_initcfg(Config *cfg){
      cfg->faststep=0;
      cfg->srcdir.w=0.f;
      cfg->issaveref=0;
+     cfg->gscatter=1e9;
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -1337,6 +1338,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxvoidstep),"int");
                                 else if(strcmp(argv[i]+2,"maxjumpdebug")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
+                                else if(strcmp(argv[i]+2,"gscatter")==0)
+                                     i=mcx_readarg(argc,argv,i,&(cfg->gscatter),"int");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;

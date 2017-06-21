@@ -649,11 +649,12 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                        float tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
                        sincosf(tmp0,&sphi,&cphi);
                        GPUDEBUG(("scat phi=%f\n",tmp0));
+		       tmp0=(v->nscat > gcfg->gscatter) ? 0.f : prop.g;
 
                        //Henyey-Greenstein Phase Function, "Handbook of Optical 
                        //Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002
 
-                       if(prop.g>EPS){  //if prop.g is too small, the distribution of theta is bad
+                       if(tmp0>EPS){  //if prop.g is too small, the distribution of theta is bad
 		           tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
 		           tmp0*=tmp0;
 		           tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
@@ -696,13 +697,13 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
 	  *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
 	  
 	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)v,&(htime.x),&rv.x,&flipdir); // propagate the photon to the first intersection to the grid
-	  slen=len*prop.mus; //unitless (minstep=grid, mus=1/grid)
+	  slen=len*prop.mus*(v->nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f); //unitless (minstep=grid, mus=1/grid)
 
           GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%f %f %f] flip=%d\n",p.x,p.y,p.z,v->x,v->y,v->z,len,htime.x,htime.y,htime.z,flipdir));
 
           // dealing with absorption
 	  slen=fmin(slen,f.pscat);
-	  len=slen/prop.mus;
+	  len=slen/(prop.mus*(v->nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f));
 	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat) ? float3(p.x+len*v->x,p.y+len*v->y,p.z+len*v->z) : float3(htime.x,htime.y,htime.z);
 	  p.w*=expf(-prop.mua*len);
 	  f.pscat-=slen;     //remaining probability: sum(s_i*mus_i), unit-less
@@ -1077,7 +1078,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->issaveref>0,
 		     cfg->maxdetphoton*detreclen,cfg->seed,
-		     (uint)cfg->outputtype,0,0,cfg->faststep,cfg->debuglevel,(uint)cfg->maxjumpdebug};
+		     (uint)cfg->outputtype,0,0,cfg->faststep,cfg->debuglevel,(uint)cfg->maxjumpdebug,cfg->gscatter};
      if(param.isatomic)
          param.skipradius2=0.f;
 
