@@ -1,14 +1,13 @@
 object fmMCX: TfmMCX
-  Left = 274
-  Height = 621
-  Top = 48
-  Width = 787
+  Left = 3282
+  Height = 840
+  Top = 273
+  Width = 1287
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize, biHelp]
-  BorderStyle = bsSingle
   Caption = 'MCX Studio'
-  ClientHeight = 599
-  ClientWidth = 787
+  ClientHeight = 818
+  ClientWidth = 1287
   Icon.Data = {
     3E01000000000100010010101000000000002801000016000000280000001000
     0000200000000100040000000000C00000000000000000000000000000000000
@@ -27,157 +26,156 @@ object fmMCX: TfmMCX
   OnDestroy = FormDestroy
   OnDockOver = FormDockOver
   Position = poDesktopCenter
-  LCLVersion = '1.0.2.0'
+  LCLVersion = '1.6.0.4'
   object ToolBar1: TToolBar
     Left = 0
-    Height = 54
+    Height = 80
     Top = 0
-    Width = 787
-    ButtonHeight = 50
-    ButtonWidth = 40
+    Width = 1287
+    ButtonHeight = 80
+    ButtonWidth = 70
     Caption = 'ToolBar1'
-    Color = 14277081
-    EdgeBorders = [ebTop, ebBottom]
+    Color = cl3DLight
+    EdgeInner = esNone
+    EdgeOuter = esNone
     Images = ImageList1
     ParentColor = False
     ShowCaptions = True
     TabOrder = 1
     object ToolButton1: TToolButton
       Left = 1
-      Top = 2
+      Top = 0
       Action = mcxdoOpen
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton2: TToolButton
-      Left = 42
-      Top = 2
+      Left = 71
+      Top = 0
       Action = mcxdoSave
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 648
-      Top = 2
+      Left = 1161
+      Top = 0
       Action = mcxdoExit
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton4: TToolButton
-      Left = 132
-      Top = 2
+      Left = 311
+      Top = 0
       Action = mcxdoAddItem
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton5: TToolButton
-      Left = 127
-      Top = 2
-      Width = 5
+      Left = 261
+      Height = 80
+      Top = 0
+      Width = 50
       Caption = 'ToolButton5'
       Style = tbsDivider
     end
     object ToolButton6: TToolButton
-      Left = 226
-      Top = 2
+      Left = 451
+      Top = 0
       Action = mcxdoDeleteItem
       ParentShowHint = False
       ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 279
-      Top = 2
+      Left = 571
+      Top = 0
       Action = mcxdoVerify
       ParentShowHint = False
       ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 324
-      Top = 2
+      Left = 641
+      Top = 0
       Action = mcxdoRun
       ParentShowHint = False
       ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 364
-      Top = 2
+      Left = 711
+      Top = 0
       Action = mcxdoStop
       ParentShowHint = False
       ShowHint = True
     end
-    object tbtRunAll: TToolButton
-      Left = 404
-      Top = 2
-      Action = mcxdoRunAll
-      ParentShowHint = False
-      ShowHint = True
-    end
     object ToolButton11: TToolButton
-      Left = 563
-      Top = 2
+      Left = 971
+      Top = 0
       Action = mcxdoHelp
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 274
-      Top = 2
-      Width = 5
+      Left = 521
+      Height = 80
+      Top = 0
+      Width = 50
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 456
-      Top = 2
-      Width = 5
+      Left = 781
+      Height = 80
+      Top = 0
+      Width = 50
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 461
-      Top = 2
+      Left = 831
+      Top = 0
       Action = mcxdoAbout
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 603
-      Top = 2
+      Left = 1041
+      Top = 0
       Action = mcxdoWeb
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton15: TToolButton
-      Left = 87
-      Top = 2
+      Left = 191
+      Top = 0
       Action = mcxdoQuery
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton17: TToolButton
-      Left = 82
-      Top = 2
-      Width = 5
+      Left = 141
+      Height = 80
+      Top = 0
+      Width = 50
       Caption = 'ToolButton17'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
-      Left = 172
-      Top = 2
+      Left = 381
+      Top = 0
       Action = mcxdoDefault
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 643
-      Top = 2
-      Width = 5
+      Left = 1111
+      Height = 80
+      Top = 0
+      Width = 50
       Caption = 'ToolButton8'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 506
-      Top = 2
+      Left = 901
+      Top = 0
       Action = mcxdoHelpOptions
       ParentShowHint = False
       ShowHint = True
@@ -185,9 +183,9 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 22
-    Top = 577
-    Width = 787
+    Height = 20
+    Top = 798
+    Width = 1287
     Panels = <    
       item
         Text = 'Status: idle'
@@ -203,8 +201,8 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 377
-    Top = 54
+    Height = 457
+    Top = 94
     Width = 176
     Align = alLeft
     Columns = <    
@@ -262,6 +260,18 @@ object fmMCX: TfmMCX
       end    
       item
         Caption = 'UnitInMM'
+      end    
+      item
+        Caption = 'DoSaveRef'
+      end    
+      item
+        Caption = 'DoSaveExit'
+      end    
+      item
+        Caption = 'DoSkipVoid'
+      end    
+      item
+        Caption = 'DoSrcFrom0'
       end>
     ReadOnly = True
     RowSelect = True
@@ -274,591 +284,1492 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 377
-    Top = 54
+    Height = 457
+    Top = 94
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 377
-    Top = 54
-    Width = 603
-    Align = alClient
+    Height = 457
+    Top = 94
+    Width = 720
+    Align = alLeft
     BevelOuter = bvNone
-    ClientHeight = 377
-    ClientWidth = 603
+    ClientHeight = 457
+    ClientWidth = 720
     Enabled = False
+    ParentColor = False
     TabOrder = 4
     OnDockOver = plSettingDockOver
-    object Bevel1: TBevel
-      Left = 1
-      Height = 75
-      Top = 103
-      Width = 579
-    end
-    object Bevel2: TBevel
-      Left = 1
-      Height = 111
-      Top = 242
-      Width = 578
-    end
-    object Label1: TLabel
-      Left = 18
-      Height = 17
-      Hint = '-t (--thread)'
-      Top = 119
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Thread number (-t)'
+    object grBasic: TGroupBox
+      Left = 0
+      Height = 184
+      Top = 0
+      Width = 720
+      Align = alTop
+      Caption = 'Basic Settings'
+      ClientHeight = 166
+      ClientWidth = 716
       ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label3: TLabel
-      Left = 2
-      Height = 17
-      Hint = '-n (--photon)'
-      Top = 187
-      Width = 165
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Total photon number (-n)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label4: TLabel
-      Left = 17
-      Height = 17
-      Hint = '-s (--sessionid)'
-      Top = 74
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Session ID (-s)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label5: TLabel
-      Left = 18
-      Height = 17
-      Hint = '-r (--repeat)'
-      Top = 217
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Split into runs (-r)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label6: TLabel
-      Left = 18
-      Height = 17
-      Hint = '-a (--array)'
-      Top = 258
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Array order (-a)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label2: TLabel
-      Left = 18
-      Height = 17
-      Hint = '-T (--blocksize)'
-      Top = 149
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Thread block size (-T)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label7: TLabel
-      Left = 296
-      Height = 17
-      Hint = '-g (--gategroup)'
-      Top = 258
-      Width = 170
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Gate group size (-g)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label10: TLabel
-      Left = 255
-      Height = 17
-      Hint = '-f (--input)'
-      Top = 72
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Input file (-f)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label11: TLabel
-      Left = -7
-      Height = 17
-      Hint = '-r (--skipradius)'
-      Top = 294
-      Width = 173
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Cache radius from src (-R)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label12: TLabel
-      Left = 317
-      Height = 17
-      Hint = '-G (--gpu)'
-      Top = 149
-      Width = 149
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Which GPU (-G)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label8: TLabel
-      Left = 296
-      Height = 17
-      Hint = '-u (--unitinmm)'
-      Top = 294
-      Width = 170
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Voxel size in mm (-u)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object Label9: TLabel
-      Left = 268
-      Height = 17
-      Hint = '-H (--maxdetphoton)'
-      Top = 217
-      Width = 198
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Max detected photons(-H)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object edThread: TComboBox
-      Left = 186
-      Height = 28
-      Hint = 'ThreadNum'
-      Top = 111
-      Width = 80
-      ItemHeight = 0
-      ItemIndex = 12
-      Items.Strings = (
-        '128'
-        '256'
-        '512'
-        '1024'
-        '1280'
-        '1408'
-        '1536'
-        '1664'
-        '1792'
-        '1920'
-        '2048'
-        '3072'
-        '4096'
-        '5120'
-        '8192'
-        '16384'
-        '32768'
-        '6144'
-        '7168'
-        '8192'
-        '10240'
-        '20480'
-        '40960'
-      )
-      MaxLength = 65535
-      OnChange = edRespinChange
-      TabOrder = 2
-      Text = '4096'
-    end
-    object edPhoton: TEdit
-      Left = 186
-      Height = 28
-      Hint = 'PhotonNum'
-      Top = 182
-      Width = 80
-      OnChange = edRespinChange
-      TabOrder = 4
-      Text = '1e7'
-    end
-    object edSession: TEdit
-      Left = 186
-      Height = 28
-      Hint = 'Session'
-      Top = 67
-      Width = 120
-      OnChange = edRespinChange
       TabOrder = 0
+      object edConfigFile: TFileNameEdit
+        Left = 137
+        Height = 26
+        Hint = 'InputFile'
+        Top = 8
+        Width = 343
+        DialogOptions = []
+        FilterIndex = 0
+        HideDirectories = False
+        ButtonWidth = 23
+        NumGlyphs = 1
+        Enabled = False
+        MaxLength = 0
+        TabOrder = 0
+        OnChange = edRespinChange
+      end
+      object Label4: TLabel
+        Left = 66
+        Height = 17
+        Hint = '-s (--sessionid)'
+        Top = 49
+        Width = 95
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Session ID (-s)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edSession: TEdit
+        Left = 170
+        Height = 26
+        Hint = 'Session'
+        Top = 42
+        Width = 118
+        OnChange = edRespinChange
+        TabOrder = 1
+      end
+      object Label3: TLabel
+        Left = -8
+        Height = 17
+        Hint = '-n (--photon)'
+        Top = 76
+        Width = 165
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Total photon number (-n)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edPhoton: TEdit
+        Left = 170
+        Height = 26
+        Hint = 'PhotonNum'
+        Top = 71
+        Width = 118
+        OnChange = edRespinChange
+        TabOrder = 2
+        Text = '1e7'
+      end
+      object Label8: TLabel
+        Left = -5
+        Height = 17
+        Hint = '-u (--unitinmm)'
+        Top = 126
+        Width = 170
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Voxel size in mm (-u)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edUnitInMM: TEdit
+        Left = 170
+        Height = 26
+        Hint = 'UnitInMM'
+        Top = 119
+        Width = 118
+        OnChange = edRespinChange
+        TabOrder = 3
+        Text = '1'
+      end
+      object edSeed: TEdit
+        Left = 170
+        Height = 26
+        Hint = 'Seed'
+        Top = 95
+        Width = 118
+        OnChange = edRespinChange
+        TabOrder = 4
+        Text = '0'
+      end
+      object Label13: TLabel
+        Left = 16
+        Height = 17
+        Hint = '-E (--seed)'
+        Top = 102
+        Width = 157
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Seed (-E)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object grGPU: TGroupBox
+        Left = 320
+        Height = 105
+        Top = 49
+        Width = 368
+        Caption = 'GPU Settings'
+        ClientHeight = 87
+        ClientWidth = 364
+        ParentColor = False
+        TabOrder = 5
+        object Label1: TLabel
+          Left = -8
+          Height = 17
+          Hint = '-t (--thread)'
+          Top = 32
+          Width = 149
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Thread number (-t)'
+          ParentColor = False
+          ParentShowHint = False
+          ShowHint = True
+        end
+        object edThread: TComboBox
+          Left = 160
+          Height = 28
+          Hint = 'ThreadNum'
+          Top = 24
+          Width = 80
+          ItemHeight = 0
+          ItemIndex = 12
+          Items.Strings = (
+            '128'
+            '256'
+            '512'
+            '1024'
+            '1280'
+            '1408'
+            '1536'
+            '1664'
+            '1792'
+            '1920'
+            '2048'
+            '3072'
+            '4096'
+            '5120'
+            '8192'
+            '16384'
+            '32768'
+            '6144'
+            '7168'
+            '8192'
+            '10240'
+            '20480'
+            '40960'
+          )
+          MaxLength = 65535
+          OnChange = edRespinChange
+          TabOrder = 0
+          Text = '4096'
+        end
+        object ckAutopilot: TCheckBox
+          Left = 16
+          Height = 24
+          Hint = 'Autopilot'
+          Top = 0
+          Width = 257
+          Caption = 'Let MCX decide thread/block size (-A)'
+          Checked = True
+          OnChange = edRespinChange
+          State = cbChecked
+          TabOrder = 1
+        end
+        object Label2: TLabel
+          Left = -8
+          Height = 17
+          Hint = '-T (--blocksize)'
+          Top = 62
+          Width = 149
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Thread block size (-T)'
+          ParentColor = False
+          ParentShowHint = False
+          ShowHint = True
+        end
+        object edBlockSize: TComboBox
+          Left = 160
+          Height = 28
+          Hint = 'ThreadBlock'
+          Top = 56
+          Width = 80
+          ItemHeight = 0
+          ItemIndex = 0
+          Items.Strings = (
+            '64'
+            '128'
+            '256'
+            '512'
+          )
+          MaxLength = 65535
+          OnChange = edRespinChange
+          TabOrder = 2
+          Text = '64'
+        end
+        object Label12: TLabel
+          Left = 200
+          Height = 17
+          Hint = '-G (--gpu)'
+          Top = 40
+          Width = 149
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Which GPU (-G)'
+          ParentColor = False
+          ParentShowHint = False
+          ShowHint = True
+        end
+        object edGPUID: TComboBox
+          Left = 271
+          Height = 28
+          Hint = 'GPUID'
+          Top = 56
+          Width = 78
+          ItemHeight = 0
+          ItemIndex = 0
+          Items.Strings = (
+            '1'
+            '2'
+            '3'
+            '4'
+            '5'
+            '6'
+            '7'
+            '8'
+          )
+          MaxLength = 65535
+          OnChange = edRespinChange
+          TabOrder = 3
+          Text = '1'
+        end
+      end
+      object RadioButton1: TRadioButton
+        Left = 4
+        Height = 24
+        Top = 10
+        Width = 130
+        Caption = 'Use Input File (-f)'
+        OnChange = RadioButton1Change
+        TabOrder = 6
+      end
+      object RadioButton2: TRadioButton
+        Left = 528
+        Height = 24
+        Top = 10
+        Width = 181
+        Caption = 'Use Simulation Designer »'
+        Checked = True
+        TabOrder = 7
+        TabStop = True
+      end
+      object Label10: TLabel
+        Left = 480
+        Height = 17
+        Hint = '-a (--array)'
+        Top = 13
+        Width = 48
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'or'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
     end
-    object edRespin: TSpinEdit
-      Left = 186
-      Height = 28
-      Hint = 'RespinNum'
-      Top = 212
-      Width = 84
-      MaxValue = 100000
-      MinValue = 1
-      OnChange = edRespinChange
-      TabOrder = 5
-      Value = 1
-    end
-    object grArray: TRadioGroup
-      Left = 186
-      Height = 37
-      Hint = 'ArrayOrder'
-      Top = 248
-      Width = 120
-      AutoFill = True
-      ChildSizing.LeftRightSpacing = 6
-      ChildSizing.TopBottomSpacing = 6
-      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-      ChildSizing.EnlargeVertical = crsHomogenousChildResize
-      ChildSizing.ShrinkHorizontal = crsScaleChilds
-      ChildSizing.ShrinkVertical = crsScaleChilds
-      ChildSizing.Layout = cclLeftToRightThenTopToBottom
-      ChildSizing.ControlsPerLine = 2
-      ClientHeight = 33
-      ClientWidth = 116
-      Columns = 2
-      ItemIndex = 0
-      Items.Strings = (
-        'Matlab'
-        'C'
-      )
-      OnClick = edRespinChange
-      TabOrder = 6
-    end
-    object edBubble: TEdit
-      Left = 186
-      Height = 28
-      Hint = 'BubbleSize'
-      Top = 288
-      Width = 80
-      OnChange = edRespinChange
-      TabOrder = 7
-      Text = '0'
-    end
-    object edGate: TSpinEdit
-      Left = 483
-      Height = 28
-      Hint = 'GateNum'
-      Top = 255
-      Width = 80
-      MaxValue = 100000
-      MinValue = 1
-      OnChange = edRespinChange
-      TabOrder = 8
-      Value = 1
-    end
-    object ckReflect: TCheckBox
+    object grAdditional: TGroupBox
       Left = 0
-      Height = 21
-      Hint = 'DoReflect'
-      Top = 360
-      Width = 131
-      Caption = 'Do Reflection (-b)'
-      Checked = True
-      OnChange = edRespinChange
-      State = cbChecked
-      TabOrder = 9
-    end
-    object ckSaveData: TCheckBox
-      Left = 142
-      Height = 21
-      Hint = 'DoSave'
-      Top = 360
-      Width = 125
-      Caption = 'Save Fluence (-S)'
-      Checked = True
-      OnChange = edRespinChange
-      State = cbChecked
-      TabOrder = 10
-    end
-    object ckNormalize: TCheckBox
-      Left = 280
-      Height = 21
-      Hint = 'DoNormalize'
-      Top = 360
-      Width = 160
-      Caption = 'Do Normalization (-U)'
-      Checked = True
-      OnChange = edRespinChange
-      State = cbChecked
-      TabOrder = 11
-    end
-    object edConfigFile: TFileNameEdit
-      Left = 425
-      Height = 28
-      Hint = 'InputFile'
-      Top = 67
-      Width = 136
-      DialogOptions = []
-      FilterIndex = 0
-      HideDirectories = False
-      ButtonWidth = 23
-      NumGlyphs = 0
-      MaxLength = 0
-      TabOrder = 1
-      OnChange = edRespinChange
-    end
-    object edBlockSize: TComboBox
-      Left = 187
-      Height = 28
-      Hint = 'ThreadBlock'
-      Top = 143
-      Width = 80
-      ItemHeight = 0
-      ItemIndex = 0
-      Items.Strings = (
-        '64'
-        '128'
-        '256'
-        '512'
-      )
-      MaxLength = 65535
-      OnChange = edRespinChange
-      TabOrder = 3
-      Text = '64'
-    end
-    object ckSaveDetector: TCheckBox
-      Left = 304
-      Height = 21
-      Hint = 'SaveDetector'
-      Top = 182
-      Width = 187
-      Caption = 'Save detected photons (-d)'
-      Enabled = False
-      OnChange = edRespinChange
-      TabOrder = 12
-    end
-    object grVariant: TRadioGroup
-      Left = 0
-      Height = 57
-      Hint = 'VariantName'
-      Top = 2
-      Width = 584
-      AutoFill = True
-      Caption = 'MCX Variant'
-      ChildSizing.LeftRightSpacing = 6
-      ChildSizing.TopBottomSpacing = 6
-      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-      ChildSizing.EnlargeVertical = crsHomogenousChildResize
-      ChildSizing.ShrinkHorizontal = crsScaleChilds
-      ChildSizing.ShrinkVertical = crsScaleChilds
-      ChildSizing.Layout = cclLeftToRightThenTopToBottom
-      ChildSizing.ControlsPerLine = 6
-      ClientHeight = 37
-      ClientWidth = 580
-      Color = clBtnFace
-      Columns = 6
-      ItemIndex = 0
-      Items.Strings = (
-        'Fermi'
-        'Vanilla'
-        'Detective'
-        'Cached'
-        'Cached Det.'
-        'Atomic'
-      )
-      OnClick = edRespinChange
-      ParentColor = False
-      TabOrder = 13
-    end
-    object edGPUID: TComboBox
-      Left = 483
-      Height = 28
-      Hint = 'GPUID'
-      Top = 143
-      Width = 78
-      ItemHeight = 0
-      ItemIndex = 0
-      Items.Strings = (
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-      )
-      MaxLength = 65535
-      OnChange = edRespinChange
-      TabOrder = 14
-      Text = '1'
-    end
-    object edDetectedNum: TEdit
-      Left = 483
-      Height = 28
-      Hint = 'DetectedNum'
-      Top = 212
-      Width = 80
-      Enabled = False
-      OnChange = edRespinChange
-      TabOrder = 15
-      Text = '10000000'
-    end
-    object ckAutopilot: TCheckBox
-      Left = 304
-      Height = 21
-      Hint = 'Autopilot'
-      Top = 114
-      Width = 251
-      Caption = 'Let MCX decide thread/block size (-A)'
-      OnChange = edRespinChange
-      TabOrder = 16
-    end
-    object edUnitInMM: TEdit
-      Left = 483
-      Height = 28
-      Hint = 'UnitInMM'
-      Top = 287
-      Width = 80
-      OnChange = edRespinChange
-      TabOrder = 17
-      Text = '1'
-    end
-    object Label13: TLabel
-      Left = -6
-      Height = 17
-      Hint = '-E (--seed)'
-      Top = 328
-      Width = 173
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Seed (-E)'
-      ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
-    end
-    object edSeed: TEdit
-      Left = 186
-      Height = 28
-      Hint = 'Seed'
-      Top = 322
-      Width = 80
-      OnChange = edRespinChange
-      TabOrder = 18
-      Text = '0'
-    end
-    object ckReflect1: TCheckBox
-      Left = 657
-      Height = 21
-      Hint = 'DoReflect'
-      Top = 360
-      Width = 131
-      Caption = 'Do Reflection (-b)'
-      Checked = True
-      OnChange = edRespinChange
-      State = cbChecked
-      TabOrder = 19
-    end
-    object ckSkipVoid: TCheckBox
-      Left = 448
-      Height = 21
-      Hint = 'DoSkipVoid'
-      Top = 360
-      Width = 103
-      Caption = 'Skip void (-k)'
-      OnChange = edRespinChange
-      TabOrder = 20
-    end
-    object edReseed: TEdit
-      Left = 483
-      Height = 28
-      Hint = 'ReseedLimit'
+      Height = 137
       Top = 320
-      Width = 80
-      OnChange = edRespinChange
-      TabOrder = 21
-      Text = '10000000'
-    end
-    object Label14: TLabel
-      Left = 293
-      Height = 17
-      Hint = '-N (--reseed)'
-      Top = 326
-      Width = 173
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Reseed RNG interval (-N)'
+      Width = 720
+      Align = alClient
+      Caption = 'Additional Settings'
+      ClientHeight = 119
+      ClientWidth = 716
       ParentColor = False
-      ParentShowHint = False
-      ShowHint = True
+      TabOrder = 1
+      object Label6: TLabel
+        Left = -15
+        Height = 17
+        Hint = '-a (--array)'
+        Top = 18
+        Width = 149
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Array order (-a)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object grArray: TRadioGroup
+        Left = 153
+        Height = 37
+        Hint = 'ArrayOrder'
+        Top = 8
+        Width = 120
+        AutoFill = True
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 2
+        ClientHeight = 33
+        ClientWidth = 116
+        Columns = 2
+        ItemIndex = 0
+        Items.Strings = (
+          'Matlab'
+          'C'
+        )
+        OnClick = edRespinChange
+        TabOrder = 0
+      end
+      object Label7: TLabel
+        Left = 11
+        Height = 17
+        Hint = '-g (--gategroup)'
+        Top = 75
+        Width = 170
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Gate group size (-g)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edGate: TSpinEdit
+        Left = 204
+        Height = 26
+        Hint = 'GateNum'
+        Top = 72
+        Width = 80
+        MaxValue = 100000
+        MinValue = 1
+        OnChange = edRespinChange
+        TabOrder = 1
+        Value = 1
+      end
+      object Label11: TLabel
+        Left = 11
+        Height = 17
+        Hint = '-r (--skipradius)'
+        Top = 54
+        Width = 173
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Cache radius from src (-R)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edBubble: TEdit
+        Left = 204
+        Height = 26
+        Hint = 'BubbleSize'
+        Top = 48
+        Width = 80
+        OnChange = edRespinChange
+        TabOrder = 2
+        Text = '-2'
+      end
+      object Label14: TLabel
+        Left = 320
+        Height = 17
+        Hint = '-N (--reseed)'
+        Top = 16
+        Width = 173
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Reseed RNG interval (-N)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edReseed: TEdit
+        Left = 504
+        Height = 26
+        Hint = 'ReseedLimit'
+        Top = 9
+        Width = 80
+        OnChange = edRespinChange
+        TabOrder = 3
+        Text = '10000000'
+      end
+      object Label9: TLabel
+        Left = 304
+        Height = 17
+        Hint = '-H (--maxdetphoton)'
+        Top = 36
+        Width = 198
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Max detected photons(-H)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edDetectedNum: TEdit
+        Left = 504
+        Height = 26
+        Hint = 'DetectedNum'
+        Top = 32
+        Width = 80
+        Enabled = False
+        OnChange = edRespinChange
+        TabOrder = 4
+        Text = '10000000'
+      end
+      object Label5: TLabel
+        Left = 328
+        Height = 17
+        Hint = '-r (--repeat)'
+        Top = 64
+        Width = 174
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Split into runs (-r)'
+        ParentColor = False
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object edRespin: TSpinEdit
+        Left = 504
+        Height = 26
+        Hint = 'RespinNum'
+        Top = 56
+        Width = 84
+        MaxValue = 100000
+        MinValue = 1
+        OnChange = edRespinChange
+        TabOrder = 5
+        Value = 1
+      end
+      object Splitter2: TSplitter
+        Left = 0
+        Height = 119
+        Top = 0
+        Width = 5
+      end
     end
-  end
-  object Splitter2: TSplitter
-    Cursor = crVSplit
-    Left = 0
-    Height = 8
-    Top = 431
-    Width = 787
-    Align = alBottom
-    ResizeAnchor = akBottom
+    object grSwitches: TGroupBox
+      Left = 0
+      Height = 136
+      Top = 184
+      Width = 720
+      Align = alTop
+      Caption = 'Switches'
+      ClientHeight = 118
+      ClientWidth = 716
+      ParentColor = False
+      TabOrder = 2
+      object ckSaveExit: TCheckBox
+        Left = 15
+        Height = 24
+        Hint = 'Autopilot'
+        Top = 52
+        Width = 188
+        Caption = 'Save Exit Position && Dir (-x)'
+        OnChange = edRespinChange
+        TabOrder = 0
+      end
+      object ckSrcFrom0: TCheckBox
+        Left = 15
+        Height = 24
+        Hint = 'DoSrcFrom0'
+        Top = 76
+        Width = 123
+        Caption = 'Orign from 0 (-z)'
+        OnChange = edRespinChange
+        TabOrder = 1
+      end
+      object ckSaveRef: TCheckBox
+        Left = 288
+        Height = 24
+        Hint = 'Autopilot'
+        Top = 52
+        Width = 202
+        Caption = 'Save Diffuse Reflectance (-X)'
+        OnChange = edRespinChange
+        TabOrder = 2
+      end
+      object ckSaveDetector: TCheckBox
+        Left = 288
+        Height = 24
+        Hint = 'SaveDetector'
+        Top = 28
+        Width = 195
+        Caption = 'Save detected photons (-d)'
+        Checked = True
+        OnChange = edRespinChange
+        State = cbChecked
+        TabOrder = 3
+      end
+      object ckReflect: TCheckBox
+        Left = 15
+        Height = 24
+        Hint = 'DoReflect'
+        Top = 4
+        Width = 134
+        Caption = 'Do Reflection (-b)'
+        Checked = True
+        OnChange = edRespinChange
+        State = cbChecked
+        TabOrder = 4
+      end
+      object ckSaveData: TCheckBox
+        Left = 288
+        Height = 24
+        Hint = 'DoSave'
+        Top = 4
+        Width = 129
+        Caption = 'Save Fluence (-S)'
+        Checked = True
+        OnChange = edRespinChange
+        State = cbChecked
+        TabOrder = 5
+      end
+      object ckNormalize: TCheckBox
+        Left = 15
+        Height = 24
+        Hint = 'DoNormalize'
+        Top = 28
+        Width = 155
+        Caption = 'Do Normalization (-U)'
+        Checked = True
+        OnChange = edRespinChange
+        State = cbChecked
+        TabOrder = 6
+      end
+      object ckSkipVoid: TCheckBox
+        Left = 288
+        Height = 24
+        Hint = 'DoSkipVoid'
+        Top = 76
+        Width = 103
+        Caption = 'Skip void (-k)'
+        OnChange = edRespinChange
+        TabOrder = 7
+      end
+    end
   end
   object plOutput: TPanel
-    Left = 0
-    Height = 138
-    Top = 439
-    Width = 787
-    Align = alBottom
-    ClientHeight = 138
-    ClientWidth = 787
+    Left = 904
+    Height = 457
+    Top = 94
+    Width = 383
+    Align = alClient
+    ClientHeight = 457
+    ClientWidth = 383
     DockSite = True
-    TabOrder = 6
+    TabOrder = 5
     OnDockOver = plOutputDockOver
-    object mmOutput: TMemo
+    object pcSimuEditor: TPageControl
       Left = 1
-      Height = 136
+      Height = 455
       Top = 1
-      Width = 785
+      Width = 381
+      ActivePage = tabInputData
       Align = alClient
-      Constraints.MinHeight = 100
-      DragKind = dkDock
-      Font.Height = -11
-      Font.Name = 'Courier 10 Pitch'
+      Enabled = False
+      TabIndex = 0
+      TabOrder = 0
+      object tabInputData: TTabSheet
+        Caption = 'Simulation Designer'
+        ClientHeight = 425
+        ClientWidth = 377
+        object sgMedia: TStringGrid
+          Left = 0
+          Height = 91
+          Top = 24
+          Width = 377
+          Align = alTop
+          ColCount = 4
+          FixedCols = 0
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goSmoothScroll, goCellEllipsis]
+          RowCount = 129
+          TabOrder = 0
+          TitleStyle = tsNative
+          OnEditingDone = sgMediaEditingDone
+          OnGetEditMask = sgMediaGetEditMask
+          ColWidths = (
+            82
+            82
+            91
+            122
+          )
+          Cells = (
+            8
+            0
+            0
+            'μa (1/mm)'
+            0
+            1
+            '0'
+            1
+            0
+            'μs (1/mm)'
+            1
+            1
+            '0'
+            2
+            0
+            'g (anisotropy)'
+            2
+            1
+            '1'
+            3
+            0
+            'n (refractive index)'
+            3
+            1
+            '1'
+          )
+        end
+        object sgDet: TStringGrid
+          Left = 0
+          Height = 75
+          Top = 144
+          Width = 377
+          Align = alTop
+          ColCount = 4
+          FixedCols = 0
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goSmoothScroll]
+          RowCount = 129
+          TabOrder = 1
+          TitleStyle = tsNative
+          OnEditingDone = sgMediaEditingDone
+          ColWidths = (
+            80
+            82
+            84
+            83
+          )
+          Cells = (
+            4
+            0
+            0
+            'x'
+            1
+            0
+            'y'
+            2
+            0
+            'z'
+            3
+            0
+            'radius'
+          )
+        end
+        object StaticText1: TStaticText
+          Left = 0
+          Height = 24
+          Top = 224
+          Width = 377
+          Align = alTop
+          Caption = 'Additional Settings'
+          Color = clGray
+          Font.Color = clWhite
+          Font.Height = -13
+          Font.Style = [fsBold]
+          OnDblClick = StaticText1DblClick
+          ParentFont = False
+          ParentColor = False
+          TabOrder = 2
+        end
+        object StaticText2: TStaticText
+          Left = 0
+          Height = 24
+          Top = 0
+          Width = 377
+          Align = alTop
+          Caption = 'Media Settings'
+          Color = clGray
+          Font.Color = clWhite
+          Font.Height = -13
+          Font.Style = [fsBold]
+          OnClick = StaticText2Click
+          OnDblClick = StaticText2DblClick
+          ParentFont = False
+          ParentColor = False
+          TabOrder = 3
+        end
+        object StaticText3: TStaticText
+          Left = 0
+          Height = 24
+          Top = 120
+          Width = 377
+          Align = alTop
+          Caption = 'Detector Settings (in voxel unit)'
+          Color = clGray
+          Font.Color = clWhite
+          Font.Height = -13
+          Font.Style = [fsBold]
+          OnDblClick = StaticText3DblClick
+          ParentFont = False
+          ParentColor = False
+          TabOrder = 4
+        end
+        object sgConfig: TStringGrid
+          Left = 0
+          Height = 177
+          Top = 248
+          Width = 377
+          Align = alClient
+          ColCount = 3
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goSmoothScroll, goCellEllipsis]
+          ParentFont = False
+          RowCount = 15
+          TabOrder = 5
+          TitleStyle = tsNative
+          ColWidths = (
+            108
+            97
+            180
+          )
+          Cells = (
+            31
+            0
+            0
+            'Section Name'
+            0
+            1
+            'Domain'
+            0
+            2
+            'Domain'
+            0
+            4
+            'Session'
+            0
+            6
+            'Forward'
+            0
+            7
+            'Forward'
+            0
+            8
+            'Forward'
+            0
+            10
+            'Optode::Source'
+            0
+            11
+            'Optode::Source'
+            0
+            12
+            'Optode::Source'
+            0
+            13
+            'Optode::Source'
+            0
+            14
+            'Optode::Source'
+            1
+            0
+            'Setting Name'
+            1
+            1
+            'Dim'
+            1
+            2
+            'Step'
+            1
+            4
+            'RootPath'
+            1
+            6
+            'T0'
+            1
+            7
+            'T1'
+            1
+            8
+            'Dt'
+            1
+            10
+            'Pos'
+            1
+            11
+            'Dir'
+            1
+            12
+            'Type'
+            1
+            13
+            'Param1'
+            1
+            14
+            'Param2'
+            2
+            0
+            'Value'
+            2
+            6
+            '0'
+            2
+            7
+            '5e-9'
+            2
+            8
+            '5e-9'
+            2
+            10
+            '[29, 29, 0]'
+            2
+            11
+            '[0, 0, 1]'
+            2
+            12
+            'pencil'
+          )
+        end
+        object Splitter3: TSplitter
+          Cursor = crVSplit
+          Left = 0
+          Height = 5
+          Top = 219
+          Width = 377
+          Align = alTop
+          ResizeAnchor = akTop
+        end
+        object Splitter4: TSplitter
+          Cursor = crVSplit
+          Left = 0
+          Height = 5
+          Top = 115
+          Width = 377
+          Align = alTop
+          ResizeAnchor = akTop
+        end
+      end
+      object TabSheet2: TTabSheet
+        Caption = 'Volume Designer'
+        ClientHeight = 425
+        ClientWidth = 377
+        object TreeView1: TTreeView
+          Left = 0
+          Height = 425
+          Top = 0
+          Width = 377
+          Align = alClient
+          DefaultItemHeight = 18
+          TabOrder = 0
+          Items.Data = {
+            F9FFFFFF020001000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF010000000000
+            000001050000005368617065FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01000000
+            00000000010400000047726964FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000
+            0000000000000F00000053697A653D5B36302C36302C36305D
+          }
+        end
+      end
+    end
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 242
+    Top = 556
+    Width = 1287
+    Align = alBottom
+    ClientHeight = 242
+    ClientWidth = 1287
+    TabOrder = 6
+    object Button1: TButton
+      Left = 1
+      Height = 25
+      Top = 1
+      Width = 1285
+      Align = alTop
+      Caption = 'Clear Log'
+      OnClick = miClearLogClick
+      TabOrder = 0
+    end
+    inline mmOutput: TSynEdit
+      Left = 1
+      Height = 215
+      Top = 26
+      Width = 1285
+      Align = alClient
+      Font.Height = -13
+      Font.Name = 'Courier New'
+      Font.Pitch = fpFixed
+      Font.Quality = fqNonAntialiased
+      ParentColor = False
+      ParentFont = False
+      PopupMenu = PopupMenu1
+      TabOrder = 1
+      Gutter.Width = 57
+      Gutter.MouseActions = <>
+      RightGutter.Width = 0
+      RightGutter.MouseActions = <>
+      Highlighter = SynUNIXShellScriptSyn1
+      Keystrokes = <      
+        item
+          Command = ecUp
+          ShortCut = 38
+        end      
+        item
+          Command = ecSelUp
+          ShortCut = 8230
+        end      
+        item
+          Command = ecScrollUp
+          ShortCut = 16422
+        end      
+        item
+          Command = ecDown
+          ShortCut = 40
+        end      
+        item
+          Command = ecSelDown
+          ShortCut = 8232
+        end      
+        item
+          Command = ecScrollDown
+          ShortCut = 16424
+        end      
+        item
+          Command = ecLeft
+          ShortCut = 37
+        end      
+        item
+          Command = ecSelLeft
+          ShortCut = 8229
+        end      
+        item
+          Command = ecWordLeft
+          ShortCut = 16421
+        end      
+        item
+          Command = ecSelWordLeft
+          ShortCut = 24613
+        end      
+        item
+          Command = ecRight
+          ShortCut = 39
+        end      
+        item
+          Command = ecSelRight
+          ShortCut = 8231
+        end      
+        item
+          Command = ecWordRight
+          ShortCut = 16423
+        end      
+        item
+          Command = ecSelWordRight
+          ShortCut = 24615
+        end      
+        item
+          Command = ecPageDown
+          ShortCut = 34
+        end      
+        item
+          Command = ecSelPageDown
+          ShortCut = 8226
+        end      
+        item
+          Command = ecPageBottom
+          ShortCut = 16418
+        end      
+        item
+          Command = ecSelPageBottom
+          ShortCut = 24610
+        end      
+        item
+          Command = ecPageUp
+          ShortCut = 33
+        end      
+        item
+          Command = ecSelPageUp
+          ShortCut = 8225
+        end      
+        item
+          Command = ecPageTop
+          ShortCut = 16417
+        end      
+        item
+          Command = ecSelPageTop
+          ShortCut = 24609
+        end      
+        item
+          Command = ecLineStart
+          ShortCut = 36
+        end      
+        item
+          Command = ecSelLineStart
+          ShortCut = 8228
+        end      
+        item
+          Command = ecEditorTop
+          ShortCut = 16420
+        end      
+        item
+          Command = ecSelEditorTop
+          ShortCut = 24612
+        end      
+        item
+          Command = ecLineEnd
+          ShortCut = 35
+        end      
+        item
+          Command = ecSelLineEnd
+          ShortCut = 8227
+        end      
+        item
+          Command = ecEditorBottom
+          ShortCut = 16419
+        end      
+        item
+          Command = ecSelEditorBottom
+          ShortCut = 24611
+        end      
+        item
+          Command = ecToggleMode
+          ShortCut = 45
+        end      
+        item
+          Command = ecCopy
+          ShortCut = 16429
+        end      
+        item
+          Command = ecPaste
+          ShortCut = 8237
+        end      
+        item
+          Command = ecDeleteChar
+          ShortCut = 46
+        end      
+        item
+          Command = ecCut
+          ShortCut = 8238
+        end      
+        item
+          Command = ecDeleteLastChar
+          ShortCut = 8
+        end      
+        item
+          Command = ecDeleteLastChar
+          ShortCut = 8200
+        end      
+        item
+          Command = ecDeleteLastWord
+          ShortCut = 16392
+        end      
+        item
+          Command = ecUndo
+          ShortCut = 32776
+        end      
+        item
+          Command = ecRedo
+          ShortCut = 40968
+        end      
+        item
+          Command = ecLineBreak
+          ShortCut = 13
+        end      
+        item
+          Command = ecSelectAll
+          ShortCut = 16449
+        end      
+        item
+          Command = ecCopy
+          ShortCut = 16451
+        end      
+        item
+          Command = ecBlockIndent
+          ShortCut = 24649
+        end      
+        item
+          Command = ecLineBreak
+          ShortCut = 16461
+        end      
+        item
+          Command = ecInsertLine
+          ShortCut = 16462
+        end      
+        item
+          Command = ecDeleteWord
+          ShortCut = 16468
+        end      
+        item
+          Command = ecBlockUnindent
+          ShortCut = 24661
+        end      
+        item
+          Command = ecPaste
+          ShortCut = 16470
+        end      
+        item
+          Command = ecCut
+          ShortCut = 16472
+        end      
+        item
+          Command = ecDeleteLine
+          ShortCut = 16473
+        end      
+        item
+          Command = ecDeleteEOL
+          ShortCut = 24665
+        end      
+        item
+          Command = ecUndo
+          ShortCut = 16474
+        end      
+        item
+          Command = ecRedo
+          ShortCut = 24666
+        end      
+        item
+          Command = ecGotoMarker0
+          ShortCut = 16432
+        end      
+        item
+          Command = ecGotoMarker1
+          ShortCut = 16433
+        end      
+        item
+          Command = ecGotoMarker2
+          ShortCut = 16434
+        end      
+        item
+          Command = ecGotoMarker3
+          ShortCut = 16435
+        end      
+        item
+          Command = ecGotoMarker4
+          ShortCut = 16436
+        end      
+        item
+          Command = ecGotoMarker5
+          ShortCut = 16437
+        end      
+        item
+          Command = ecGotoMarker6
+          ShortCut = 16438
+        end      
+        item
+          Command = ecGotoMarker7
+          ShortCut = 16439
+        end      
+        item
+          Command = ecGotoMarker8
+          ShortCut = 16440
+        end      
+        item
+          Command = ecGotoMarker9
+          ShortCut = 16441
+        end      
+        item
+          Command = ecSetMarker0
+          ShortCut = 24624
+        end      
+        item
+          Command = ecSetMarker1
+          ShortCut = 24625
+        end      
+        item
+          Command = ecSetMarker2
+          ShortCut = 24626
+        end      
+        item
+          Command = ecSetMarker3
+          ShortCut = 24627
+        end      
+        item
+          Command = ecSetMarker4
+          ShortCut = 24628
+        end      
+        item
+          Command = ecSetMarker5
+          ShortCut = 24629
+        end      
+        item
+          Command = ecSetMarker6
+          ShortCut = 24630
+        end      
+        item
+          Command = ecSetMarker7
+          ShortCut = 24631
+        end      
+        item
+          Command = ecSetMarker8
+          ShortCut = 24632
+        end      
+        item
+          Command = ecSetMarker9
+          ShortCut = 24633
+        end      
+        item
+          Command = EcFoldLevel1
+          ShortCut = 41009
+        end      
+        item
+          Command = EcFoldLevel2
+          ShortCut = 41010
+        end      
+        item
+          Command = EcFoldLevel3
+          ShortCut = 41011
+        end      
+        item
+          Command = EcFoldLevel4
+          ShortCut = 41012
+        end      
+        item
+          Command = EcFoldLevel5
+          ShortCut = 41013
+        end      
+        item
+          Command = EcFoldLevel6
+          ShortCut = 41014
+        end      
+        item
+          Command = EcFoldLevel7
+          ShortCut = 41015
+        end      
+        item
+          Command = EcFoldLevel8
+          ShortCut = 41016
+        end      
+        item
+          Command = EcFoldLevel9
+          ShortCut = 41017
+        end      
+        item
+          Command = EcFoldLevel0
+          ShortCut = 41008
+        end      
+        item
+          Command = EcFoldCurrent
+          ShortCut = 41005
+        end      
+        item
+          Command = EcUnFoldCurrent
+          ShortCut = 41003
+        end      
+        item
+          Command = EcToggleMarkupWord
+          ShortCut = 32845
+        end      
+        item
+          Command = ecNormalSelect
+          ShortCut = 24654
+        end      
+        item
+          Command = ecColumnSelect
+          ShortCut = 24643
+        end      
+        item
+          Command = ecLineSelect
+          ShortCut = 24652
+        end      
+        item
+          Command = ecTab
+          ShortCut = 9
+        end      
+        item
+          Command = ecShiftTab
+          ShortCut = 8201
+        end      
+        item
+          Command = ecMatchBracket
+          ShortCut = 24642
+        end      
+        item
+          Command = ecColSelUp
+          ShortCut = 40998
+        end      
+        item
+          Command = ecColSelDown
+          ShortCut = 41000
+        end      
+        item
+          Command = ecColSelLeft
+          ShortCut = 40997
+        end      
+        item
+          Command = ecColSelRight
+          ShortCut = 40999
+        end      
+        item
+          Command = ecColSelPageDown
+          ShortCut = 40994
+        end      
+        item
+          Command = ecColSelPageBottom
+          ShortCut = 57378
+        end      
+        item
+          Command = ecColSelPageUp
+          ShortCut = 40993
+        end      
+        item
+          Command = ecColSelPageTop
+          ShortCut = 57377
+        end      
+        item
+          Command = ecColSelLineStart
+          ShortCut = 40996
+        end      
+        item
+          Command = ecColSelLineEnd
+          ShortCut = 40995
+        end      
+        item
+          Command = ecColSelEditorTop
+          ShortCut = 57380
+        end      
+        item
+          Command = ecColSelEditorBottom
+          ShortCut = 57379
+        end>
+      MouseActions = <>
+      MouseTextActions = <>
+      MouseSelActions = <>
       Lines.Strings = (
         'Output:'
       )
-      OnDragDrop = mmOutputDragDrop
-      OnDragOver = mmOutputDragOver
-      OnMouseDown = mmOutputMouseDown
-      ParentFont = False
-      PopupMenu = PopupMenu1
-      ScrollBars = ssAutoBoth
-      TabOrder = 0
-      WordWrap = False
+      VisibleSpecialChars = [vscSpace, vscTabAtLast]
+      SelectedColor.BackPriority = 50
+      SelectedColor.ForePriority = 50
+      SelectedColor.FramePriority = 50
+      SelectedColor.BoldPriority = 50
+      SelectedColor.ItalicPriority = 50
+      SelectedColor.UnderlinePriority = 50
+      SelectedColor.StrikeOutPriority = 50
+      BracketHighlightStyle = sbhsBoth
+      BracketMatchColor.Background = clNone
+      BracketMatchColor.Foreground = clNone
+      BracketMatchColor.Style = [fsBold]
+      FoldedCodeColor.Background = clNone
+      FoldedCodeColor.Foreground = clGray
+      FoldedCodeColor.FrameColor = clGray
+      MouseLinkColor.Background = clNone
+      MouseLinkColor.Foreground = clBlue
+      LineHighlightColor.Background = clNone
+      LineHighlightColor.Foreground = clNone
+      inline SynLeftGutterPartList1: TSynGutterPartList
+        object SynGutterMarks1: TSynGutterMarks
+          Width = 24
+          MouseActions = <>
+        end
+        object SynGutterLineNumber1: TSynGutterLineNumber
+          Width = 17
+          MouseActions = <>
+          MarkupInfo.Background = clBtnFace
+          MarkupInfo.Foreground = clNone
+          DigitCount = 2
+          ShowOnlyLineNumbersMultiplesOf = 1
+          ZeroStart = False
+          LeadingZeros = False
+        end
+        object SynGutterChanges1: TSynGutterChanges
+          Width = 4
+          MouseActions = <>
+          ModifiedColor = 59900
+          SavedColor = clGreen
+        end
+        object SynGutterSeparator1: TSynGutterSeparator
+          Width = 2
+          MouseActions = <>
+          MarkupInfo.Background = clWhite
+          MarkupInfo.Foreground = clGray
+        end
+        object SynGutterCodeFolding1: TSynGutterCodeFolding
+          MouseActions = <>
+          MarkupInfo.Background = clNone
+          MarkupInfo.Foreground = clGray
+          MouseActionsExpanded = <>
+          MouseActionsCollapsed = <>
+        end
+      end
     end
+  end
+  object HeaderControl1: THeaderControl
+    Left = 0
+    Height = 14
+    Top = 80
+    Width = 1287
+    DragReorder = False
+    Sections = <    
+      item
+        Alignment = taRightJustify
+        MaxWidth = 164
+        MinWidth = 164
+        Text = 'File'
+        Width = 164
+        Visible = True
+      end    
+      item
+        Alignment = taRightJustify
+        MaxWidth = 120
+        MinWidth = 120
+        Text = 'List GPU'
+        Width = 120
+        Visible = True
+      end    
+      item
+        Alignment = taRightJustify
+        MaxWidth = 260
+        MinWidth = 260
+        Text = 'Session'
+        Width = 260
+        Visible = True
+      end    
+      item
+        Alignment = taRightJustify
+        MaxWidth = 260
+        MinWidth = 260
+        Text = 'Simulation'
+        Width = 260
+        Visible = True
+      end    
+      item
+        Alignment = taRightJustify
+        MaxWidth = 330
+        MinWidth = 330
+        Text = 'Help'
+        Width = 330
+        Visible = True
+      end>
+    Align = alTop
+    Font.Height = -11
+    Font.Name = 'Sans'
+    ParentFont = False
+  end
+  object Splitter5: TSplitter
+    Cursor = crVSplit
+    Left = 0
+    Height = 5
+    Top = 551
+    Width = 1287
+    Align = alBottom
+    ResizeAnchor = akBottom
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
-    left = 448
-    top = 432
+    left = 808
+    top = 536
     object MenuItem1: TMenuItem
       Caption = 'File'
       object MenuItem5: TMenuItem
@@ -1609,9 +2520,10 @@ object fmMCX: TfmMCX
   end
   object ImageList1: TImageList
     Height = 24
+    ImageType = itMask
     Width = 24
-    left = 536
-    top = 432
+    left = 904
+    top = 536
     Bitmap = {
       4C690F0000001800000018000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
@@ -2697,8 +3609,8 @@ object fmMCX: TfmMCX
     }
   end
   object acMCX: TActionList
-    left = 448
-    top = 488
+    left = 760
+    top = 592
     object mcxdoOpen: TAction
       Category = 'Files'
       Caption = 'Open'
@@ -2774,6 +3686,7 @@ object fmMCX: TfmMCX
       Enabled = False
       Hint = 'Run all tasks'
       ImageIndex = 8
+      OnExecute = mcxdoRunAllExecute
     end
     object mcxdoHelp: TAction
       Category = 'Info'
@@ -2814,14 +3727,15 @@ object fmMCX: TfmMCX
     end
   end
   object acInteract: TActionList
-    left = 496
-    top = 488
+    left = 808
+    top = 592
     object mcxSetCurrent: TAction
       Caption = 'mcxSetCurrent'
       OnExecute = mcxSetCurrentExecute
     end
   end
   object pMCX: TAsyncProcess
+    PipeBufferSize = 4096
     Active = False
     Options = [poUsePipes, poStderrToOutPut]
     Priority = ppNormal
@@ -2836,21 +3750,21 @@ object fmMCX: TfmMCX
     FillAttribute = 0
     OnReadData = pMCXReadData
     OnTerminate = pMCXTerminate
-    left = 496
-    top = 432
+    left = 856
+    top = 536
   end
   object OpenProject: TOpenDialog
     Title = 'Open existing project'
     Filter = 'MCX Projects (*.mcxp)|*.mcxp|All (*.*)|*.*'
-    left = 536
-    top = 488
+    left = 856
+    top = 592
   end
   object SaveProject: TSaveDialog
     Title = 'Save project as'
     DefaultExt = '.mcxp'
     Filter = 'MCX Projects (*.mcxp)|*.mcxp|All (*.*)|*.*'
-    left = 584
-    top = 488
+    left = 904
+    top = 592
   end
   object pExternal: TProcess
     Active = False
@@ -2865,15 +3779,23 @@ object fmMCX: TfmMCX
     WindowTop = 0
     WindowWidth = 0
     FillAttribute = 0
-    left = 584
-    top = 432
+    left = 944
+    top = 536
   end
   object PopupMenu1: TPopupMenu
-    left = 384
-    top = 432
-    object MenuItem19: TMenuItem
+    left = 760
+    top = 536
+    object miClearLog: TMenuItem
       Caption = 'Clear Log'
-      OnClick = MenuItem19Click
+      OnClick = miClearLogClick
     end
+  end
+  object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
+    DefaultFilter = 'UNIX Shell Scripts (*.sh)|*.sh'
+    Enabled = False
+    StringAttri.Background = clSkyBlue
+    StringAttri.Style = [fsBold]
+    left = 945
+    top = 592
   end
 end

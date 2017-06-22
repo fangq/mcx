@@ -12,41 +12,69 @@ unit mcxgui;
 interface
 
 uses
-  Classes, SysUtils, process, FileUtil, LResources, Forms, Controls,
-  Graphics, Dialogs, StdCtrls, Menus, ComCtrls, ExtCtrls, Spin,
-  EditBtn, Buttons, ActnList, lcltype, AsyncProcess,
-  inifiles, mcxabout;
+  Classes, SysUtils, process, FileUtil, LvlGraphCtrl, TAGraph, SynEdit,
+  SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
+  LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
+  ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, ValEdit,
+  Grids, inifiles, fpjson, jsonparser, mcxabout;
 
 type
 
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    Button1: TButton;
+    ckAutopilot: TCheckBox;
+    ckSaveExit: TCheckBox;
+    ckSrcFrom0: TCheckBox;
+    ckSaveRef: TCheckBox;
+    ckNormalize: TCheckBox;
+    ckReflect: TCheckBox;
+    ckSaveData: TCheckBox;
+    ckSaveDetector: TCheckBox;
     ckSkipVoid: TCheckBox;
-    ckReflect1: TCheckBox;
-    edSeed: TEdit;
+    edBlockSize: TComboBox;
+    edBubble: TEdit;
+    edConfigFile: TFileNameEdit;
+    edDetectedNum: TEdit;
+    edGate: TSpinEdit;
+    edGPUID: TComboBox;
+    edPhoton: TEdit;
     edReseed: TEdit;
+    edRespin: TSpinEdit;
+    edSeed: TEdit;
+    edSession: TEdit;
+    edThread: TComboBox;
+    edUnitInMM: TEdit;
+    grAdditional: TGroupBox;
+    grArray: TRadioGroup;
+    grBasic: TGroupBox;
+    grGPU: TGroupBox;
+    grSwitches: TGroupBox;
+    HeaderControl1: THeaderControl;
+    Label1: TLabel;
+    Label10: TLabel;
+    Label11: TLabel;
+    Label12: TLabel;
     Label13: TLabel;
     Label14: TLabel;
-    mcxdoHelpOptions: TAction;
-    Bevel1: TBevel;
-    Bevel2: TBevel;
-    ckSaveDetector: TCheckBox;
-    ckAutopilot: TCheckBox;
-    edGPUID: TComboBox;
-    edDetectedNum: TEdit;
-    edUnitInMM: TEdit;
-    grVariant: TRadioGroup;
-    Label12: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label5: TLabel;
+    Label6: TLabel;
+    Label7: TLabel;
     Label8: TLabel;
     Label9: TLabel;
-    MenuItem19: TMenuItem;
-    mmOutput: TMemo;
+    lvJobs: TListView;
+    mcxdoHelpOptions: TAction;
+    miClearLog: TMenuItem;
     OpenProject: TOpenDialog;
+    pcSimuEditor: TPageControl;
+    Panel1: TPanel;
+    Panel2: TPanel;
     plOutput: TPanel;
     pMCX: TAsyncProcess;
-    edBlockSize: TComboBox;
-    Label11: TLabel;
     mcxSetCurrent: TAction;
     acInteract: TActionList;
     mcxdoDefault: TAction;
@@ -67,24 +95,7 @@ type
     mcxdoOpen: TAction;
     mcxdoInitEnv: TAction;
     acMCX: TActionList;
-    ckReflect: TCheckBox;
-    ckSaveData: TCheckBox;
-    ckNormalize: TCheckBox;
-    edThread: TComboBox;
-    edPhoton: TEdit;
-    edSession: TEdit;
-    edBubble: TEdit;
-    edConfigFile: TFileNameEdit;
     ImageList1: TImageList;
-    Label1: TLabel;
-    Label10: TLabel;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
-    Label5: TLabel;
-    Label6: TLabel;
-    Label7: TLabel;
-    lvJobs: TListView;
     MainMenu1: TMainMenu;
     MenuItem17: TMenuItem;
     MenuItem18: TMenuItem;
@@ -105,17 +116,28 @@ type
     MenuItem8: TMenuItem;
     MenuItem9: TMenuItem;
     plSetting: TPanel;
-    grArray: TRadioGroup;
-    edRespin: TSpinEdit;
-    edGate: TSpinEdit;
     pExternal: TProcess;
     PopupMenu1: TPopupMenu;
+    RadioButton1: TRadioButton;
+    RadioButton2: TRadioButton;
     SaveProject: TSaveDialog;
+    sbInfo: TStatusBar;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
-    sbInfo: TStatusBar;
+    Splitter3: TSplitter;
+    Splitter4: TSplitter;
+    Splitter5: TSplitter;
+    StaticText1: TStaticText;
+    StaticText2: TStaticText;
+    StaticText3: TStaticText;
+    sgMedia: TStringGrid;
+    sgDet: TStringGrid;
+    sgConfig: TStringGrid;
+    mmOutput: TSynEdit;
+    SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
+    tabInputData: TTabSheet;
+    TabSheet2: TTabSheet;
     tbtRun: TToolButton;
-    tbtRunAll: TToolButton;
     tbtStop: TToolButton;
     tbtVerify: TToolButton;
     ToolBar1: TToolBar;
@@ -138,7 +160,9 @@ type
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
+    TreeView1: TTreeView;
     procedure ckAtomicClick(Sender: TObject);
+    procedure ckUseInputFileChange(Sender: TObject);
     procedure FormDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
@@ -153,6 +177,7 @@ type
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
+    procedure mcxdoRunAllExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
     procedure mcxdoSaveExecute(Sender: TObject);
     procedure mcxdoStopExecute(Sender: TObject);
@@ -165,11 +190,11 @@ type
       Selected: Boolean);
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
-    procedure MenuItem19Click(Sender: TObject);
-    procedure mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure mmOutputDragOver(Sender, Source: TObject; X, Y: Integer;
+    procedure miClearLogClick(Sender: TObject);
+    procedure mmOutput1DragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure mmOutput1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
-    procedure mmOutputMouseDown(Sender: TObject; Button: TMouseButton;
+    procedure mmOutput1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
@@ -177,7 +202,16 @@ type
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
+    procedure RadioButton1Change(Sender: TObject);
+    procedure sgMediaEditingDone(Sender: TObject);
+    procedure sgMediaGetEditMask(Sender: TObject; ACol, ARow: Integer;
+      var Value: string);
+    procedure StaticText1DblClick(Sender: TObject);
+    procedure StaticText2Click(Sender: TObject);
+    procedure StaticText2DblClick(Sender: TObject);
+    procedure StaticText3DblClick(Sender: TObject);
     procedure ToolButton14Click(Sender: TObject);
+    procedure ValueListEditor1Click(Sender: TObject);
   private
     { private declarations }
   public
@@ -185,6 +219,8 @@ type
     MapList: TStringList;
     function CreateCmd:string;
     function CreateCmdOnly:string;
+    function GridToJSONArray(grid:TStringGrid):string;
+    function GridToJSONStruct(grid:TStringGrid):string;
     procedure VerifyInput;
     procedure AddLog(str:string);
     procedure ListToPanel2(node:TListItem);
@@ -243,24 +279,11 @@ begin
        if(ed.Hint = 'Session') then  node.Caption:=ed.Text;
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=ed.Text;
-       if(ed.Hint = 'BubbleSize') then begin
-            if StrToFloat(ed.Text)>0 then begin
-              if(ckSaveDetector.Checked) then begin
-                grVariant.ItemIndex:=4;
-              end else begin
-                grVariant.ItemIndex:=3;
-              end;
-            end;
-       end;
     end else if(Sender is TRadioGroup) then begin
        gr:=Sender as TRadioGroup;
        idx:=MapList.IndexOf(gr.Hint);
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=IntToStr(gr.ItemIndex);
-       if(gr.Hint = 'VariantName') then begin
-           ckSaveDetector.Enabled:=(gr.ItemIndex=0) or (gr.ItemIndex=2) or (gr.ItemIndex=4);
-           edDetectedNum.Enabled:=ckSaveDetector.Enabled;
-       end;
     end else if(Sender is TComboBox) then begin
        cb:=Sender as TComboBox;
        idx:=MapList.IndexOf(cb.Hint);
@@ -276,19 +299,6 @@ begin
            edBlockSize.Enabled:=not ck.Checked;
        end;
        if(ck.Hint='SaveDetector') then begin
-           if(ck.Checked) then begin
-             if(grVariant.ItemIndex=3) then begin
-                grVariant.ItemIndex:=4;
-             end else begin
-                grVariant.ItemIndex:=2;
-             end;
-           end else begin
-             if(grVariant.ItemIndex=4) then begin
-                grVariant.ItemIndex:=3;
-             end else begin
-                grVariant.ItemIndex:=1;
-             end;
-           end;
            edDetectedNum.Enabled:=ck.Checked;
        end;
     end else if(Sender is TFileNameEdit) then begin
@@ -328,8 +338,9 @@ procedure TfmMCX.mcxdoHelpOptionsExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmdOnly;
-          pMCX.Options := [poUsePipes];
-          AddLog('-- Executing MCX --');
+          //pMCX.Options := [poUsePipes, poStderrToOutput];
+          AddLog('"-- Print MCX Command Line Options --"');
+          mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
     end;
 end;
@@ -350,6 +361,7 @@ begin
    for i:=0 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
    node.Caption:=sessionid;
    plSetting.Enabled:=true;
+   pcSimuEditor.Enabled:=true;
    lvJobs.Selected:=node;
    mcxdoDefaultExecute(nil);
    edSession.Text:=sessionid;
@@ -366,20 +378,24 @@ begin
       edThread.Text:='4096';
       edPhoton.Text:='1e7';
       edBlockSize.Text:='64';
-      edBubble.Text:='0';
+      edBubble.Text:='-2';
       edGate.Value:=1;
       edRespin.Value:=1;
       grArray.ItemIndex:=0;
-      ckReflect.Checked:=true;
-      ckSaveData.Checked:=true;
-      ckNormalize.Checked:=true;
-      ckAutopilot.Checked:=false;
-      ckSaveDetector.Checked:=false;
-      grVariant.ItemIndex:=0;
+      ckReflect.Checked:=true;   //-b
+      ckSaveData.Checked:=true;   //-S
+      ckNormalize.Checked:=true;   //-U
+      ckSaveDetector.Checked:=true;   //-d
+      ckSaveExit.Checked:=false;  //-x
+      ckSaveRef.Checked:=false;  //-X
+      ckSrcFrom0.Checked:=false;  //-z
+      ckSkipVoid.Checked:=false;  //-k
+      ckAutopilot.Checked:=true;
+      edThread.Enabled:=false;
+      edBlockSize.Enabled:=false;
       edUnitInMM.Text:='1';
       edGPUID.ItemIndex:=0;
       edDetectedNum.Text:='10000000';
-      ckSkipVoid.Checked:=false;
       edSeed.Text:='0';
       edReseed.Text:='10000000';
       if not (lvJobs.Selected = nil) then
@@ -423,6 +439,11 @@ procedure TfmMCX.ckAtomicClick(Sender: TObject);
 begin
 end;
 
+procedure TfmMCX.ckUseInputFileChange(Sender: TObject);
+begin
+
+end;
+
 procedure TfmMCX.FormDockOver(Sender: TObject; Source: TDragDockObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
 begin
@@ -461,12 +482,18 @@ procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmdOnly+' -L';
-          pMCX.Options := [poUsePipes];
-          AddLog('-- Executing MCX --');
+          //pMCX.Options := [poUsePipes, poStderrToOutput];
+          AddLog('"-- Printing GPU Information --"');
+          mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
 
           UpdateMCXActions(acMCX,'Run','');
     end;
+end;
+
+procedure TfmMCX.mcxdoRunAllExecute(Sender: TObject);
+begin
+
 end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
@@ -474,8 +501,9 @@ begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmd;
           //pMCX.CommandLine:='du /usr/ --max-depth=1';
-          pMCX.Options := pMCX.Options+[poUsePipes];
-          AddLog('-- Executing MCX --');
+          //pMCX.Options := pMCX.Options+[poUsePipes];
+          AddLog('"-- Executing MCX --"');
+          mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
           mcxdoStop.Enabled:=true;
           mcxdoRun.Enabled:=false;
@@ -591,7 +619,7 @@ end;
 
 procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
 begin
-  RunExternalCmd(GetBrowserPath + ' http://mcx.sourceforge.net');
+  RunExternalCmd(GetBrowserPath + ' http://mcx.space');
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
@@ -599,33 +627,30 @@ begin
      if not (lvJobs.Selected = nil) then begin
          ListToPanel2(lvJobs.Selected);
          plSetting.Enabled:=true;
+         pcSimuEditor.Enabled:=true;
          mcxdoVerify.Enabled:=true;
          mcxdoDefault.Enabled:=true;
      end;
 end;
 
-procedure TfmMCX.MenuItem19Click(Sender: TObject);
+procedure TfmMCX.miClearLogClick(Sender: TObject);
 begin
     mmOutput.Lines.Clear;
 end;
 
-procedure TfmMCX.mmOutputDragDrop(Sender, Source: TObject; X, Y: Integer);
+procedure TfmMCX.mmOutput1DragDrop(Sender, Source: TObject; X, Y: Integer);
 begin
 
 end;
 
-procedure TfmMCX.mmOutputDragOver(Sender, Source: TObject; X, Y: Integer;
+procedure TfmMCX.mmOutput1DragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
-         mmOutput.DragMode:=dmManual;
 end;
 
-procedure TfmMCX.mmOutputMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TfmMCX.mmOutput1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
-    if(ssCtrl in Shift) then begin
-         mmOutput.DragMode:=dmAutomatic;
-    end;
 end;
 
 procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
@@ -652,6 +677,7 @@ end;
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
      mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
+     mmOutput.TopLine:=mmOutput.Tag;
      if not (pMCX.Running) then
          pMCXTerminate(Sender);
 end;
@@ -667,7 +693,86 @@ begin
      UpdateMCXActions(acMCX,'','Run');
 end;
 
+procedure TfmMCX.RadioButton1Change(Sender: TObject);
+var
+   btn: TRadioButton;
+begin
+   if(Sender is TRadioButton) then
+   begin
+        btn:= Sender as TRadioButton;
+        if(btn.Checked) then
+        begin
+            edConfigFile.Enabled:=true;
+            tabInputData.Enabled:=false;
+        end else begin
+            edConfigFile.Enabled:=false;
+            tabInputData.Enabled:=true;
+        end;
+   end;
+
+end;
+
+procedure TfmMCX.sgMediaEditingDone(Sender: TObject);
+var
+   grid: TStringGrid;
+   val: Extended;
+   ss: string;
+   rowid, colid: integer;
+begin
+  grid:= Sender as TStringGrid;
+  if(grid = nil) then exit;
+  try
+    try
+        ss:=grid.Cells[grid.Col,grid.Row];
+        rowid:=grid.Row;
+        colid:=grid.Col;
+        if(Length(ss)>0) then
+            val := StrToFloat(ss);
+    except
+        raise Exception.Create('Input is not a number!');
+    end;
+  except
+    On E : Exception do
+    begin
+      ShowMessage(E.Message);
+      grid.Row:=rowid;
+      grid.Col:=colid;
+      grid.EditorMode:=true;
+    end;
+  end;
+end;
+
+procedure TfmMCX.sgMediaGetEditMask(Sender: TObject; ACol, ARow: Integer;
+  var Value: string);
+begin
+end;
+
+procedure TfmMCX.StaticText1DblClick(Sender: TObject);
+begin
+  mmOutput.Lines.Add(GridToJSONStruct(sgConfig));
+end;
+
+procedure TfmMCX.StaticText2Click(Sender: TObject);
+begin
+
+end;
+
+procedure TfmMCX.StaticText2DblClick(Sender: TObject);
+begin
+  mmOutput.Lines.Add(GridToJSONArray(sgMedia));
+end;
+
+procedure TfmMCX.StaticText3DblClick(Sender: TObject);
+begin
+  mmOutput.Lines.Add(GridToJSONArray(sgDet));
+end;
+
 procedure TfmMCX.ToolButton14Click(Sender: TObject);
+begin
+
+end;
+
+procedure TfmMCX.ValueListEditor1Click(Sender: TObject);
 begin
 
 end;
@@ -693,6 +798,7 @@ begin
         BytesAvailable := pMCX.Output.NumBytesAvailable;
       end;
     end;
+    Sleep(100);
 end;
 
 procedure TfmMCX.SaveTasksToIni(fname: string);
@@ -768,10 +874,8 @@ begin
        AddLog('Warning: you can increase respin number (-r) to get more photons');
     if(nblock<0) then
        raise Exception.Create('Thread block number (-T) can not be negative');
-    if(radius<0) then
-       raise Exception.Create('Cache radius (-R) can not be negative');
-    if (grVariant.ItemIndex =3) or (grVariant.ItemIndex =4) and (radius<3) or (radius>7) then
-       AddLog('Warning: a cache radius (-R) between 3mm to 5mm is recommended');
+//    if(radius<0) then
+//       raise Exception.Create('Cache radius (-R) can not be negative');
 
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
@@ -789,17 +893,6 @@ var
     cmd: string;
 begin
     cmd:='mcx';
-    if(grVariant.ItemIndex<=1) then begin
-       cmd:='mcx';
-    end else if(grVariant.ItemIndex=2) then begin
-       cmd:='mcx_det';
-    end else if(grVariant.ItemIndex=3) then begin
-       cmd:='mcx_cached';
-    end else if(grVariant.ItemIndex=4) then begin
-       cmd:='mcx_det_cached';
-    end else if(grVariant.ItemIndex=5) then begin
-       cmd:='mcx_atomic';
-    end;
     Result:=cmd;
 end;
 
@@ -852,11 +945,62 @@ begin
     AddLog(cmd);
 end;
 
+function TfmMCX.GridToJSONArray(grid:TStringGrid):string;
+var
+    i: integer;
+    json: TStrings;
+begin
+  json := TStringList.Create;
+  Result:='';
+  try
+      for i := grid.FixedRows to grid.RowCount - 1 do
+      begin
+          if (Length(grid.Cells[0,i])=0) then break;
+          json.Add('['+grid.Rows[i].CommaText+']');
+      end;
+      json.Delimiter:=',';
+      json.QuoteChar:=' ';
+      Result:='['+json.DelimitedText+']';
+  finally
+      json.Free;
+  end;
+end;
+
+
+function TfmMCX.GridToJSONStruct(grid:TStringGrid):string;
+var
+    i, j: integer;
+    json: TStrings;
+begin
+  json := TStringList.Create;
+  Result:='';
+  try
+      try
+          for i := grid.FixedRows to grid.RowCount - 1 do
+          begin
+              if (Length(grid.Cells[0,i])=0) and (Length(grid.Cells[2,i])=0) then continue;
+              //if(Length(grid.Cells[2,i])=0) then
+              //   raise Exception.Create('Field '+grid.Cells[0,i]+'::'+grid.Cells[1,i]+' can not be empty');
+              json.Add(''''+grid.Cells[0,i]+'::'+grid.Cells[1,i]+''': '+grid.Cells[2,i]);
+          end;
+      except
+          On E : Exception do
+              ShowMessage(E.Message);
+      end;
+      json.Delimiter:=',';
+      json.QuoteChar:=' ';
+      Result:='{'+json.DelimitedText+'}';
+    finally
+        json.Free;
+    end;
+end;
+
 procedure TfmMCX.PanelToList2(node:TListItem);
 var
     ed: TEdit;
     cb: TComboBox;
     ck: TCheckBox;
+    cg: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
     i,idx: integer;
@@ -895,7 +1039,12 @@ begin
            if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
            continue;
         end;
-
+        if(plSetting.Controls[i] is TCheckBox) then begin
+           cg:=plSetting.Controls[i] as TCheckBox;
+           idx:=MapList.IndexOf(cg.Hint);
+           if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
+           continue;
+        end;
         except
         end;
     end;
