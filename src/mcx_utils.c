@@ -633,7 +633,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cfg->dim.y=val->child->next->valueint;
            cfg->dim.z=val->child->next->next->valueint;
 	}else{
-	   MCX_ERROR(-1,"You must specify the dimension of the volume");
+	   if(!Shapes)
+	      MCX_ERROR(-1,"You must specify the dimension of the volume");
 	}
 	val=FIND_JSON_OBJ("Step","Domain.Step",Domain);
 	if(val){
