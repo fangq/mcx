@@ -3,8 +3,8 @@ unit mcxgui;
     Monte Carlo eXtreme (MCX) Studio
 -------------------------------------------------------------------------------
     Author: Qianqian Fang
-    Email : fangq at nmr.mgh.harvard.edu
-    Web   : http://mcx.sourceforge.net
+    Email : q.fang at neu.edu
+    Web   : http://mcx.space
     License: GNU General Public License version 3 (GPLv3)
 ===============================================================================}
 {$mode objfpc}{$H+}
@@ -12,33 +12,54 @@ unit mcxgui;
 interface
 
 uses
-  Classes, SysUtils, process, FileUtil, LvlGraphCtrl, TAGraph, SynEdit,
+  Classes, SysUtils, process, FileUtil, TAGraph, SynEdit,
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
-  ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, ValEdit,
-  Grids, inifiles, fpjson, jsonparser, mcxabout;
+  ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess,
+  Grids, CheckLst, inifiles, fpjson, jsonparser, mcxabout, mcxshape;
 
 type
 
   { TfmMCX }
 
   TfmMCX = class(TForm)
+    acEditShape: TActionList;
+    ILJSON: TImageList;
+    shapePrint: TAction;
+    shapeEdit: TAction;
+    shapeAddCylinder: TAction;
+    shapeAddZSlabs: TAction;
+    shapeAddYSlabs: TAction;
+    shapeAddXSlabs: TAction;
+    shapeAddZLayers: TAction;
+    shapeAddYLayers: TAction;
+    shapeAddXLayers: TAction;
+    shapeAddUpperSpace: TAction;
+    shapeAddSubgrid: TAction;
+    shapeAddBox: TAction;
+    shapeAddSphere: TAction;
+    shapeAddGrid: TAction;
+    shapeAddOrigin: TAction;
+    shapeAddName: TAction;
+    shapeDelete: TAction;
+    shapeReset: TAction;
     Button1: TButton;
+    ckSaveSeed: TCheckBox;
+    edGPUID: TCheckListBox;
     ckAutopilot: TCheckBox;
-    ckSaveExit: TCheckBox;
-    ckSrcFrom0: TCheckBox;
-    ckSaveRef: TCheckBox;
     ckNormalize: TCheckBox;
     ckReflect: TCheckBox;
     ckSaveData: TCheckBox;
     ckSaveDetector: TCheckBox;
+    ckSaveExit: TCheckBox;
+    ckSaveRef: TCheckBox;
     ckSkipVoid: TCheckBox;
+    ckSrcFrom0: TCheckBox;
     edBlockSize: TComboBox;
     edBubble: TEdit;
     edConfigFile: TFileNameEdit;
     edDetectedNum: TEdit;
     edGate: TSpinEdit;
-    edGPUID: TComboBox;
     edPhoton: TEdit;
     edReseed: TEdit;
     edRespin: TSpinEdit;
@@ -46,18 +67,21 @@ type
     edSession: TEdit;
     edThread: TComboBox;
     edUnitInMM: TEdit;
-    grAdditional: TGroupBox;
+    edWorkload: TEdit;
+    grAdvSettings: TGroupBox;
     grArray: TRadioGroup;
     grBasic: TGroupBox;
     grGPU: TGroupBox;
     grSwitches: TGroupBox;
     HeaderControl1: THeaderControl;
+    ImageList2: TImageList;
     Label1: TLabel;
     Label10: TLabel;
     Label11: TLabel;
     Label12: TLabel;
     Label13: TLabel;
     Label14: TLabel;
+    Label15: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
@@ -118,8 +142,8 @@ type
     plSetting: TPanel;
     pExternal: TProcess;
     PopupMenu1: TPopupMenu;
-    RadioButton1: TRadioButton;
-    RadioButton2: TRadioButton;
+    rbUseFile: TRadioButton;
+    rbUseDesigner: TRadioButton;
     SaveProject: TSaveDialog;
     sbInfo: TStatusBar;
     Splitter1: TSplitter;
@@ -136,11 +160,12 @@ type
     mmOutput: TSynEdit;
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     tabInputData: TTabSheet;
-    TabSheet2: TTabSheet;
+    tabVolumeDesigner: TTabSheet;
     tbtRun: TToolButton;
     tbtStop: TToolButton;
     tbtVerify: TToolButton;
     ToolBar1: TToolBar;
+    ToolBar2: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
     ToolButton11: TToolButton;
@@ -153,21 +178,31 @@ type
     ToolButton18: TToolButton;
     ToolButton19: TToolButton;
     ToolButton2: TToolButton;
+    ToolButton20: TToolButton;
+    ToolButton21: TToolButton;
+    ToolButton22: TToolButton;
+    ToolButton23: TToolButton;
+    ToolButton24: TToolButton;
+    ToolButton25: TToolButton;
+    ToolButton26: TToolButton;
+    ToolButton27: TToolButton;
+    ToolButton28: TToolButton;
+    ToolButton29: TToolButton;
     ToolButton3: TToolButton;
+    ToolButton31: TToolButton;
+    ToolButton32: TToolButton;
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
     ToolButton6: TToolButton;
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
-    TreeView1: TTreeView;
-    procedure ckAtomicClick(Sender: TObject);
-    procedure ckUseInputFileChange(Sender: TObject);
-    procedure FormDockOver(Sender: TObject; Source: TDragDockObject; X,
-      Y: Integer; State: TDragState; var Accept: Boolean);
+    tvShapes: TTreeView;
+    procedure grAdvSettingsClick(Sender: TObject);
+    procedure grAdvSettingsDblClick(Sender: TObject);
+    procedure grAdvSettingsEnter(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
-    procedure lvJobsDeletion(Sender: TObject; Item: TListItem);
     procedure mcxdoAboutExecute(Sender: TObject);
     procedure mcxdoAddItemExecute(Sender: TObject);
     procedure mcxdoDefaultExecute(Sender: TObject);
@@ -177,7 +212,6 @@ type
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
-    procedure mcxdoRunAllExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
     procedure mcxdoSaveExecute(Sender: TObject);
     procedure mcxdoStopExecute(Sender: TObject);
@@ -191,36 +225,45 @@ type
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
-    procedure mmOutput1DragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure mmOutput1DragOver(Sender, Source: TObject; X, Y: Integer;
-      State: TDragState; var Accept: Boolean);
-    procedure mmOutput1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
     procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
-      Y: Integer; State: TDragState; var Accept: Boolean);
-    procedure plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
-    procedure RadioButton1Change(Sender: TObject);
+    procedure rbUseFileChange(Sender: TObject);
+    procedure sgConfigClick(Sender: TObject);
+    procedure sgConfigDblClick(Sender: TObject);
     procedure sgMediaEditingDone(Sender: TObject);
-    procedure sgMediaGetEditMask(Sender: TObject; ACol, ARow: Integer;
-      var Value: string);
+    procedure shapeAddBoxExecute(Sender: TObject);
+    procedure shapeAddCylinderExecute(Sender: TObject);
+    procedure shapeAddGridExecute(Sender: TObject);
+    procedure shapeAddNameExecute(Sender: TObject);
+    procedure shapeAddOriginExecute(Sender: TObject);
+    procedure shapeAddSphereExecute(Sender: TObject);
+    procedure shapeAddSubgridExecute(Sender: TObject);
+    procedure shapeAddUpperSpaceExecute(Sender: TObject);
+    procedure shapeAddXLayersExecute(Sender: TObject);
+    procedure shapeAddXSlabsExecute(Sender: TObject);
+    procedure shapeAddYLayersExecute(Sender: TObject);
+    procedure shapeAddYSlabsExecute(Sender: TObject);
+    procedure shapeAddZLayersExecute(Sender: TObject);
+    procedure shapeAddZSlabsExecute(Sender: TObject);
+    procedure shapePrintExecute(Sender: TObject);
+    procedure shapeResetExecute(Sender: TObject);
+    procedure shapeDeleteExecute(Sender: TObject);
     procedure StaticText1DblClick(Sender: TObject);
-    procedure StaticText2Click(Sender: TObject);
     procedure StaticText2DblClick(Sender: TObject);
-    procedure StaticText3DblClick(Sender: TObject);
-    procedure ToolButton14Click(Sender: TObject);
-    procedure ValueListEditor1Click(Sender: TObject);
+    procedure ToolButton22Click(Sender: TObject);
+    procedure tvShapesDeletion(Sender: TObject; Node: TTreeNode);
+    procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
+    procedure tvShapesSelectionChanged(Sender: TObject);
   private
     { private declarations }
   public
     { public declarations }
-    MapList: TStringList;
+    MapList, ConfigData, JSONstr : TStringList;
+    JSONdata : TJSONData;
     function CreateCmd:string;
     function CreateCmdOnly:string;
-    function GridToJSONArray(grid:TStringGrid):string;
-    function GridToJSONStruct(grid:TStringGrid):string;
     procedure VerifyInput;
     procedure AddLog(str:string);
     procedure ListToPanel2(node:TListItem);
@@ -232,6 +275,15 @@ type
     procedure RunExternalCmd(cmd: string);
     function  GetBrowserPath : string;
     function  SearchForExe(fname : string) : string;
+    function CreateWorkFolder:string;
+    procedure SaveJSONConfig(filename: string);
+    function CheckListToStr(list: TCheckListBox) : string;
+    function GridToStr(grid:TStringGrid) :string;
+    procedure StrToGrid(str: string; grid:TStringGrid);
+    procedure ShowJSONData(AParent : TTreeNode; Data : TJSONData);
+    procedure AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
+    procedure AddShapes(shapeid: string; defaultval: string);
+    procedure RebuildShapeJSON(root: TTreeNode);
   end;
 
 var
@@ -240,7 +292,17 @@ var
   MaxWait: integer;
   TaskFile: string;
 
+
+
+
 implementation
+
+Const
+  ImageTypeMap : Array[TJSONtype] of Integer =
+//      jtUnknown, jtNumber, jtString, jtBoolean, jtNull, jtArray, jtObject
+     (-1,8,9,7,6,5,4);
+  JSONTypeNames : Array[TJSONtype] of string =
+     ('Unknown','Number','String','Boolean','Null','Array','Object');
 
 { TfmMCX }
 procedure TfmMCX.AddLog(str:string);
@@ -261,6 +323,7 @@ var
     ck: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
+    ckb: TCheckListBox;
     fed:TFileNameEdit;
     idx: integer;
     node: TListItem;
@@ -301,6 +364,12 @@ begin
        if(ck.Hint='SaveDetector') then begin
            edDetectedNum.Enabled:=ck.Checked;
        end;
+    end else if(Sender is TCheckListBox) then begin
+       ckb:=Sender as TCheckListBox;
+       idx:=MapList.IndexOf(ckb.Hint);
+       if(idx>=0) then begin
+           node.SubItems.Strings[idx]:=CheckListToStr(ckb);
+       end;
     end else if(Sender is TFileNameEdit) then begin
        fed:=Sender as TFileNameEdit;
        idx:=MapList.IndexOf(fed.Hint);
@@ -339,6 +408,8 @@ begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmdOnly;
           //pMCX.Options := [poUsePipes, poStderrToOutput];
+          sbInfo.Panels[0].Text := 'Status: querying command line options';
+          sbInfo.Tag:=-2;
           AddLog('"-- Print MCX Command Line Options --"');
           mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
@@ -394,10 +465,19 @@ begin
       edThread.Enabled:=false;
       edBlockSize.Enabled:=false;
       edUnitInMM.Text:='1';
-      edGPUID.ItemIndex:=0;
+      if(edGPUID.Items.Count>0) then edGPUID.Checked[0]:=true;
       edDetectedNum.Text:='10000000';
       edSeed.Text:='0';
       edReseed.Text:='10000000';
+      rbUseDesigner.Checked:=true;
+      sgMedia.RowCount:=1;
+      sgMedia.RowCount:=129;
+      sgMedia.Rows[1].CommaText:='0,0,1,1';
+      sgDet.RowCount:=1;
+      sgDet.RowCount:=129;
+      sgConfig.ColCount:=2;
+      sgConfig.ColCount:=3;
+      sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
       if not (lvJobs.Selected = nil) then
          PanelToList2(lvJobs.Selected);
 end;
@@ -430,22 +510,30 @@ begin
   mcxdoSave.Enabled:=true;
 end;
 
-procedure TfmMCX.lvJobsDeletion(Sender: TObject; Item: TListItem);
-begin
-
-end;
-
-procedure TfmMCX.ckAtomicClick(Sender: TObject);
+procedure TfmMCX.grAdvSettingsClick(Sender: TObject);
 begin
 end;
 
-procedure TfmMCX.ckUseInputFileChange(Sender: TObject);
+procedure TfmMCX.grAdvSettingsDblClick(Sender: TObject);
+var
+    i: integer;
 begin
-
+     if(grAdvSettings.Tag<0) then begin
+       for i:=20 to plSetting.ClientHeight do begin
+            grAdvSettings.Height:=i;
+            Sleep(100);
+       end;
+       grAdvSettings.Tag:=0;
+     end else begin
+       for i:=plSetting.ClientHeight downto 20 do begin
+              grAdvSettings.Height:=i;
+              Sleep(100);
+       end;
+       grAdvSettings.Tag:=-1;
+     end;
 end;
 
-procedure TfmMCX.FormDockOver(Sender: TObject; Source: TDragDockObject; X,
-  Y: Integer; State: TDragState; var Accept: Boolean);
+procedure TfmMCX.grAdvSettingsEnter(Sender: TObject);
 begin
 end;
 
@@ -482,7 +570,8 @@ procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmdOnly+' -L';
-          //pMCX.Options := [poUsePipes, poStderrToOutput];
+          sbInfo.Panels[0].Text := 'Status: querying GPU';
+          sbInfo.Tag:=-1;
           AddLog('"-- Printing GPU Information --"');
           mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
@@ -491,23 +580,18 @@ begin
     end;
 end;
 
-procedure TfmMCX.mcxdoRunAllExecute(Sender: TObject);
-begin
-
-end;
-
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
-          pMCX.CommandLine:=CreateCmd;
           //pMCX.CommandLine:='du /usr/ --max-depth=1';
-          //pMCX.Options := pMCX.Options+[poUsePipes];
+          pMCX.CommandLine:=CreateCmd;
           AddLog('"-- Executing MCX --"');
           mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
           mcxdoStop.Enabled:=true;
           mcxdoRun.Enabled:=false;
-          sbInfo.Panels[0].Text := 'Status: busy';
+          sbInfo.Panels[0].Text := 'Status: running MCX';
+          sbInfo.Tag:=-10;
           sbInfo.Color := clRed;
           UpdateMCXActions(acMCX,'Run','');
           Application.ProcessMessages;
@@ -533,7 +617,7 @@ begin
           mcxdoStop.Enabled:=false;
           if(mcxdoVerify.Enabled) then
              mcxdoRun.Enabled:=true;
-          AddLog('-- Stopped MCX --');
+          AddLog('"-- Terminated MCX --"');
      end
 end;
 
@@ -545,17 +629,32 @@ end;
 procedure TfmMCX.FormCreate(Sender: TObject);
 var
    i: integer;
+   shaperoot: TTreeNode;
 begin
     MapList:=TStringList.Create();
     MapList.Clear;
     for i:=1 to lvJobs.Columns.Count-1 do begin
         MapList.Add(lvJobs.Columns.Items[i].Caption);
     end;
+
+    ConfigData:=TStringList.Create();
+    ConfigData.Clear;
+    ConfigData.CommaText:=sgConfig.Cols[2].CommaText;
+
     ProfileChanged:=false;
     if not (SearchForExe(CreateCmdOnly) = '') then begin
         mcxdoQuery.Enabled:=true;
         mcxdoHelpOptions.Enabled:=true;
     end;
+
+    tvShapes.Items.BeginUpdate;
+    tvShapes.Items.Clear;
+    tvShapes.Items.EndUpdate;
+    shaperoot:=tvShapes.Items.Add(nil,'Shapes');
+    FreeAndNil(JSONdata);
+    JSONdata:=GetJSON('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
+    ShowJSONData(shaperoot,JSONdata);
+    tvShapes.FullExpand;
 end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
@@ -604,11 +703,11 @@ function TfmMCX.GetBrowserPath : string;
 begin
    Result := SearchForExe('firefox');
    if Result = '' then
-     Result := SearchForExe('konqueror');  {KDE browser}
+     Result := SearchForExe('google-chrome');  {KDE browser}
    if Result = '' then
-     Result := SearchForExe('epiphany');  {GNOME browser}
+     Result := SearchForExe('konqueror');  {GNOME browser}
    if Result = '' then
-     Result := SearchForExe('mozilla');
+     Result := SearchForExe('epiphany');
    if Result = '' then
      Result := SearchForExe('opera');
    if Result = '' then
@@ -638,21 +737,6 @@ begin
     mmOutput.Lines.Clear;
 end;
 
-procedure TfmMCX.mmOutput1DragDrop(Sender, Source: TObject; X, Y: Integer);
-begin
-
-end;
-
-procedure TfmMCX.mmOutput1DragOver(Sender, Source: TObject; X, Y: Integer;
-  State: TDragState; var Accept: Boolean);
-begin
-end;
-
-procedure TfmMCX.mmOutput1MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-end;
-
 procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
 var
@@ -669,11 +753,6 @@ begin
      end;
 end;
 
-procedure TfmMCX.plSettingDockOver(Sender: TObject; Source: TDragDockObject; X,
-  Y: Integer; State: TDragState; var Accept: Boolean);
-begin
-end;
-
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
      mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
@@ -688,12 +767,13 @@ begin
      if(mcxdoVerify.Enabled) then
          mcxdoRun.Enabled:=true;
      sbInfo.Panels[0].Text := 'Status: idle';
+     sbInfo.Tag:=0;
      sbInfo.Color := clBtnFace;
-     AddLog('Task complete');
+     AddLog('"-- Task completed --"');
      UpdateMCXActions(acMCX,'','Run');
 end;
 
-procedure TfmMCX.RadioButton1Change(Sender: TObject);
+procedure TfmMCX.rbUseFileChange(Sender: TObject);
 var
    btn: TRadioButton;
 begin
@@ -709,7 +789,22 @@ begin
             tabInputData.Enabled:=true;
         end;
    end;
+end;
 
+procedure TfmMCX.sgConfigClick(Sender: TObject);
+begin
+end;
+
+procedure TfmMCX.sgConfigDblClick(Sender: TObject);
+var
+   sg: TStringGrid;
+begin
+   if(not (Sender is TStringGrid)) then exit;
+   sg:=Sender as TStringGrid;
+   if (sg.Row=1) and (sg.Col=2) then begin
+         if(sg.Cells[sg.Col,sg.Row]='See Volume Designer...') then
+              pcSimuEditor.ActivePage:=tabVolumeDesigner;
+   end;
 end;
 
 procedure TfmMCX.sgMediaEditingDone(Sender: TObject);
@@ -721,6 +816,9 @@ var
 begin
   grid:= Sender as TStringGrid;
   if(grid = nil) then exit;
+  UpdateMCXActions(acMCX,'','Work');
+  UpdateMCXActions(acMCX,'','Run');
+  mcxdoSave.Enabled:=true;
   try
     try
         ss:=grid.Cells[grid.Col,grid.Row];
@@ -742,39 +840,246 @@ begin
   end;
 end;
 
-procedure TfmMCX.sgMediaGetEditMask(Sender: TObject; ACol, ARow: Integer;
-  var Value: string);
+procedure TfmMCX.shapeAddBoxExecute(Sender: TObject);
 begin
+  AddShapes('Box','Tag=1|O=[30,30,30]|Size=[10,10,10]');
+end;
+
+procedure TfmMCX.shapeAddCylinderExecute(Sender: TObject);
+begin
+  AddShapes('Cylinder','Tag=1|C0=[30,30,0]|C1=[30,30,60]|R=5');
+end;
+
+procedure TfmMCX.AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
+var
+   fmshape:TfmShapeEditor;
+   ss: string;
+begin
+   if(node = nil) then exit;
+   if(defaultval.Count=1) then begin
+        ss:=InputBox('Edit Shape',shapeid, defaultval.Strings[0]);
+        ss:=Trim(ss);
+        if(Pos(',',ss)=0) then
+            ss:='{"'+shapeid+'":"'+ss+'"}'
+        else
+            ss:='{"'+shapeid+'":'+ss+'}';
+        ShowJSONData(node,GetJSON(ss));
+        exit;
+   end;
+
+   fmshape:=TfmShapeEditor.Create(Application, defaultval);
+   fmshape.Caption:='Add Shape: '+shapeid;
+   if(Pos('Layer',shapeid)=2) or (Pos('Slab',shapeid)=2) then
+        fmshape.plEditor.Options:=fmshape.plEditor.Options+[goAutoAddRows];
+   if(fmshape.ShowModal= mrOK) then begin
+        ss:=Trim(fmshape.JSON.DelimitedText);
+        if(Pos('[',ss)=1) then
+             ss:='{"'+shapeid+'":['+ss+']}'
+        else
+             ss:='{"'+shapeid+'":{'+ss+'}}';
+        ShowJSONData(node,GetJSON(ss));
+   end;
+   fmshape.Free;
+end;
+
+procedure TfmMCX.AddShapes(shapeid: string; defaultval: string);
+var
+    fs: TStringList;
+begin
+  try
+    fs:=TStringList.Create;
+    fs.StrictDelimiter := true;
+    fs.Delimiter:='|';
+    fs.DelimitedText:=defaultval;
+    AddShapesWindow(shapeid, fs, tvShapes.Items[0]);
+  finally
+    fs.Free;
+  end;
+end;
+
+procedure TfmMCX.shapeAddGridExecute(Sender: TObject);
+begin
+     AddShapes('Grid','Tag=1|Size=[60,60,60]');
+end;
+
+procedure TfmMCX.shapeAddNameExecute(Sender: TObject);
+begin
+   AddShapes('Name','mcxdomain');
+end;
+
+procedure TfmMCX.shapeAddOriginExecute(Sender: TObject);
+begin
+   AddShapes('Origin','[0,0,0]');
+end;
+
+procedure TfmMCX.shapeAddSphereExecute(Sender: TObject);
+begin
+  AddShapes('Sphere','Tag=1|O=[30,30,30]|R=10');
+end;
+
+procedure TfmMCX.shapeAddSubgridExecute(Sender: TObject);
+begin
+  AddShapes('Subgrid','Tag=1|O=[30,30,30]|Size=[10,10,10]');
+end;
+
+procedure TfmMCX.shapeAddUpperSpaceExecute(Sender: TObject);
+begin
+  AddShapes('UpperSpace','Tag=1|Coef=[1,-1,0,0]');
+end;
+
+procedure TfmMCX.shapeAddXLayersExecute(Sender: TObject);
+begin
+   AddShapes('XLayers','Layer 1=[1,10,1]|Layer 2=[11,30,2]|Layer 3=[31,50,3]');
+end;
+
+procedure TfmMCX.shapeAddXSlabsExecute(Sender: TObject);
+begin
+  AddShapes('XSlabs','Tag=1|Bound=[1,10]');
+end;
+
+procedure TfmMCX.shapeAddYLayersExecute(Sender: TObject);
+begin
+   AddShapes('YLayers','Layer 1=[1,10,1]|Layer 2=[11,30,2]|Layer 3=[31,50,3]');
+end;
+
+procedure TfmMCX.shapeAddYSlabsExecute(Sender: TObject);
+begin
+   AddShapes('YSlabs','Tag=1|Bound=[1,10]');
+end;
+
+procedure TfmMCX.shapeAddZLayersExecute(Sender: TObject);
+begin
+  AddShapes('ZLayers','Layer 1=[1,10,1]|Layer 2=[11,30,2]|Layer 3=[31,50,3]');
+end;
+
+procedure TfmMCX.shapeAddZSlabsExecute(Sender: TObject);
+begin
+  AddShapes('ZSlabs','Tag=1|Bound=[1,10]');
+end;
+
+procedure TfmMCX.RebuildShapeJSON(root: TTreeNode);
+var
+     i: integer;
+     jdata: TJSONData;
+begin
+     jdata:=GetJSON('{"Shapes": []}');
+     for i:=0 to root.Count-1 do begin
+         if(Assigned(root.Items[i].Data)) then
+            TJSONArray(jdata.Items[0]).Add(TJSONObject(root.Items[i].Data));
+     end;
+     root.Data:=jdata;
+end;
+
+procedure TfmMCX.shapePrintExecute(Sender: TObject);
+begin
+   //AddLog(JSONdata.FormatJSON);
+    if(tvShapes.Selected <> nil) then
+       if(tvShapes.Selected=tvShapes.Items[0]) then begin
+           RebuildShapeJSON(tvShapes.Selected);
+           AddLog(TJSONData(tvShapes.Selected.Data).FormatJSON(AsJSONFormat));
+       end else begin
+           if(tvShapes.Selected.Data <> nil) then
+               AddLog(TJSONData(tvShapes.Selected.Data).FormatJSON(AsJSONFormat));
+       end;
+end;
+
+
+
+procedure TfmMCX.shapeResetExecute(Sender: TObject);
+var
+  ret:integer;
+  shaperoot: TTreeNode;
+begin
+  ret:=Application.MessageBox('The current shape has not been saved, are you sure you want to clear?',
+    'Confirm', MB_YESNOCANCEL);
+  if (ret=IDYES) then begin
+    tvShapes.Items.BeginUpdate;
+    tvShapes.Items.Clear;
+    tvShapes.Items.EndUpdate;
+    shaperoot:=tvShapes.Items.Add(nil,'Shapes');
+    FreeAndNil(JSONdata);
+    JSONdata:=GetJSON('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
+    ShowJSONData(shaperoot,JSONdata);
+    tvShapes.FullExpand;
+  end;
+  if (ret=IDCANCEL) then
+       exit;
+end;
+
+procedure TfmMCX.shapeDeleteExecute(Sender: TObject);
+begin
+  if(tvShapes.Selected <> nil) then
+       tvShapes.Selected.Delete;
 end;
 
 procedure TfmMCX.StaticText1DblClick(Sender: TObject);
 begin
-  mmOutput.Lines.Add(GridToJSONStruct(sgConfig));
-end;
-
-procedure TfmMCX.StaticText2Click(Sender: TObject);
-begin
-
 end;
 
 procedure TfmMCX.StaticText2DblClick(Sender: TObject);
 begin
-  mmOutput.Lines.Add(GridToJSONArray(sgMedia));
+    SaveJSONConfig('');
 end;
 
-procedure TfmMCX.StaticText3DblClick(Sender: TObject);
-begin
-  mmOutput.Lines.Add(GridToJSONArray(sgDet));
-end;
-
-procedure TfmMCX.ToolButton14Click(Sender: TObject);
+procedure TfmMCX.ToolButton22Click(Sender: TObject);
 begin
 
 end;
 
-procedure TfmMCX.ValueListEditor1Click(Sender: TObject);
+procedure TfmMCX.tvShapesDeletion(Sender: TObject; Node: TTreeNode);
 begin
+  RebuildShapeJSON(tvShapes.Items[0]);
+end;
 
+procedure TfmMCX.tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string
+  );
+var
+     val: extended;
+begin
+     if(Node.Parent= nil) then exit;
+
+     if(Node.ImageIndex=ImageTypeMap[jtNumber]) then begin
+         try
+               val:=StrToFloat(S);
+               if (Pos(Node.Parent.Text,'Layer ')=0 ) then begin
+                    if(Frac(val)=0) then
+                       TJSONArray(Node.Parent.Data).Integers[Node.Index]:=Round(val)
+                    else
+                       TJSONArray(Node.Parent.Data).Floats[Node.Index]:=val;
+               end else begin
+                    if(Frac(val)=0) then
+                       TJSONArray(TJSONArray(Node.Parent.Data).Items[Node.Parent.Index]).Integers[Node.Index]:=Round(val)
+                    else
+                       TJSONArray(TJSONArray(Node.Parent.Data).Items[Node.Parent.Index]).Floats[Node.Index]:=val;
+               end;
+
+         except
+               ShowMessage('The field must be a number');
+               S:= Node.Text;
+         end;
+     end else if(Node.ImageIndex=ImageTypeMap[jtString]) then begin
+          if(Length(S)=0) then begin
+               ShowMessage('Input string can not be empty');
+               S:=Node.Text;
+               exit;
+          end;
+
+          if(Node.Parent <> nil) then
+             TJSONArray(Node.Parent.Data).Strings[Node.Index]:=S;
+     end;
+end;
+
+procedure TfmMCX.tvShapesSelectionChanged(Sender: TObject);
+begin
+    if(tvShapes.Selected <> nil) then  begin
+       shapeDelete.Enabled:=tvShapes.Selected.Level=1;
+       shapeEdit.Enabled:=tvShapes.Selected.Level=1;
+       if(tvShapes.Selected.Count=0) then begin
+           tvShapes.Options:=tvShapes.Options-[tvoReadOnly];
+       end else begin
+           tvShapes.Options:=tvShapes.Options+[tvoReadOnly];
+       end;
+    end;
 end;
 
 function TfmMCX.GetMCXOutput (outputstr: string) : string;
@@ -782,10 +1087,10 @@ var
     Buffer: string;
     BytesAvailable: DWord;
     BytesRead:LongInt;
+    list: TStringList;
+    i, idx, total, namepos: integer;
+    gpuname, ss: string;
 begin
-   Result:= outputstr;
-
-   //if(pMCX.Running) then
    if true then
     begin
       BytesAvailable := pMCX.Output.NumBytesAvailable;
@@ -798,7 +1103,26 @@ begin
         BytesAvailable := pMCX.Output.NumBytesAvailable;
       end;
     end;
+    if(sbInfo.Tag=-1) then begin
+        list:=TStringList.Create;
+        list.StrictDelimiter := true;
+        list.Delimiter:=AnsiChar(#10);
+        list.DelimitedText:=Result;
+        for i:=0 to list.Count-1 do begin
+          ss:= list.Strings[i];
+          if(sscanf(ss,'Device %d of %d:%s', [@idx, @total, @gpuname])=3) then
+          begin
+                 if(idx=1) then
+                     edGPUID.Items.Clear;
+                 namepos := Pos(gpuname, ss);
+                 edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos)));
+          end;
+        end;
+        if(edGPUID.Items.Count>0) then
+            edGPUID.Checked[0]:=true;
+    end;
     Sleep(100);
+    Result:= outputstr + Result;
 end;
 
 procedure TfmMCX.SaveTasksToIni(fname: string);
@@ -854,9 +1178,9 @@ var
     exepath: string;
 begin
   try
-    if(Length(edConfigFile.FileName)=0) then
+    if rbUseFile.Checked and (Length(edConfigFile.FileName)=0) then
         raise Exception.Create('Config file must be specified');
-    if(not FileExists(edConfigFile.FileName)) then
+    if rbUseFile.Checked and (not FileExists(edConfigFile.FileName)) then
         raise Exception.Create('Config file does not exist, please check the path');
     try
         nthread:=StrToInt(edThread.Text);
@@ -874,8 +1198,6 @@ begin
        AddLog('Warning: you can increase respin number (-r) to get more photons');
     if(nblock<0) then
        raise Exception.Create('Thread block number (-T) can not be negative');
-//    if(radius<0) then
-//       raise Exception.Create('Cache radius (-R) can not be negative');
 
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
@@ -895,26 +1217,185 @@ begin
     cmd:='mcx';
     Result:=cmd;
 end;
+procedure TfmMCX.SaveJSONConfig(filename: string);
+var
+    nthread, nblock,hitmax,seed,reseed, i: integer;
+    bubbleradius,unitinmm,nphoton: extended;
+    gpuid, section, key, val: string;
+    json, jobj, jmedium, jdet, jforward, joptode : TJSONObject;
+    jdets, jmedia: TJSONArray;
+    jsonlist: TStringList;
+begin
+  try
+      nthread:=StrToInt(edThread.Text);
+      nphoton:=StrToFloat(edPhoton.Text);
+      nblock:=StrToInt(edBlockSize.Text);
+      bubbleradius:=StrToFloat(edBubble.Text);
+      gpuid:=CheckListToStr(edGPUID);
+      unitinmm:=StrToFloat(edUnitInMM.Text);
+      hitmax:=StrToInt(edDetectedNum.Text);
+      seed:=StrToInt(edSeed.Text);
+      reseed:=StrToInt(edReseed.Text);
+  except
+      raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
+  end;
+
+  json:=TJSONObject.Create;
+
+  if(json.Find('Session') = nil) then
+      json.Objects['Session']:=TJSONObject.Create;
+  jobj:= json.Objects['Session'];
+  jobj.Floats['Photons']:=nphoton;
+  jobj.Integers['RNGSeed']:=seed;
+  jobj.Strings['ID']:=edSession.Text;
+  jobj.Integers['DoMismatch']:=Integer(ckReflect.Checked);
+  jobj.Integers['DoNormalize']:=Integer(ckNormalize.Checked);
+  jobj.Integers['DoPartialPath']:=Integer(ckSaveDetector.Checked);
+  jobj.Integers['DoSaveExit']:=Integer(ckSaveExit.Checked);
+  jobj.Integers['DoSaveSeed']:=Integer(ckSaveSeed.Checked);
+  jobj.Integers['DoSaveRef']:=Integer(ckSaveRef.Checked);
+  jobj.Integers['ReseedLimit']:=reseed;
+  //jobj.Strings['OutputType']:=edOutputType.Text;
+
+  if(json.Find('Domain') = nil) then
+      json.Objects['Domain']:=TJSONObject.Create;
+  jobj:= json.Objects['Domain'];
+  jobj.Integers['OriginType']:=Integer(ckSrcFrom0.Checked);
+  jobj.Floats['LengthUnit']:=unitinmm;
+
+  jmedia:=TJSONArray.Create;
+  for i := sgMedia.FixedRows to sgMedia.RowCount - 1 do
+  begin
+          if (Length(sgMedia.Cells[0,i])=0) then break;
+          jmedium:=TJSONObject.Create;
+          jmedium.Add('mua',sgMedia.Cells[0,i]);
+          jmedium.Add('mus',sgMedia.Cells[1,i]);
+          jmedium.Add('g',sgMedia.Cells[2,i]);
+          jmedium.Add('n',sgMedia.Cells[3,i]);
+          jmedia.Add(jmedium);
+  end;
+  if(jmedia.Count>0) then
+     jobj.Arrays['Media']:=jmedia;
+
+  jdets:=TJSONArray.Create;
+  for i := sgDet.FixedRows to sgDet.RowCount - 1 do
+  begin
+          if (Length(sgDet.Cells[0,i])=0) then break;
+          jdet:=TJSONObject.Create;
+          jdet.Arrays['Pos']:=TJSONArray.Create;
+          jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[0,i]));
+          jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[1,i]));
+          jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[2,i]));
+          jdet.Add('R',sgDet.Cells[3,i]);
+          jdets.Add(jdet);
+  end;
+  if(json.Find('Optode') = nil) then
+     json.Objects['Optode']:=TJSONObject.Create;
+
+  joptode:=json.Objects['Optode'];
+
+  if(jdets.Count>0) then
+      joptode.Arrays['Detector']:=jdets;
+  joptode.Objects['Source']:=TJSONObject.Create;
+
+  jforward:=TJSONObject.Create;
+  for i := sgConfig.FixedRows to sgConfig.RowCount - 1 do
+  begin
+          if(Length(sgConfig.Cells[0,i])=0) then break;
+          val:=sgConfig.Cells[2,i];
+          if(Length(val)=0) then continue;
+          section:= sgConfig.Cells[0,i];
+          key:=sgConfig.Cells[1,i];
+          if(section = 'Forward') then begin
+              jforward.Floats[key]:=StrToFloat(val);
+          end else if(section = 'Session') then begin
+              json.Objects['Session'].Strings[key]:=val;
+          end else if(section = 'Domain') then begin
+              if (key = 'VolumeFile') and (val='See Volume Designer...') then begin
+                  RebuildShapeJSON(tvShapes.Items[0]);
+                  json.Objects['Shapes']:=TJSONObject(TJSONObject(tvShapes.Items[0].Data).Items[0]);
+              end else begin
+                  json.Objects['Domain'].Objects[key]:=TJSONObject(GetJSON(val));
+              end;
+          end else if(section = 'Optode.Source') then begin
+              if (key = 'Type') then begin
+                  joptode.Objects['Source'].Strings[key]:=val;
+              end else begin
+                  joptode.Objects['Source'].Objects[key]:=TJSONObject(GetJSON(val));
+              end;
+          end;
+  end;
+  json.Objects['Forward']:=jforward;
+
+  AddLog(json.FormatJSON);
+
+  if(Length(filename)>0) then begin
+      jsonlist:=TStringList.Create;
+      jsonlist.Text:=json.FormatJSON;
+      try
+          jsonlist.SaveToFile(filename);
+      finally
+          jsonlist.Free;
+      end;
+  end;
+end;
+
+function TfmMCX.CreateWorkFolder : string;
+var
+    path: string;
+begin
+    path:=ExtractFileDir(Application.ExeName)
+       +DirectorySeparator+'..'+DirectorySeparator+'sessions'+DirectorySeparator+edSession.Text;
+    Result:=path;
+    try
+      if(not DirectoryExists(path)) then
+           if( not ForceDirectories(path) ) then
+               raise Exception.Create('Can not create session output folder');
+    except
+      On E : Exception do
+          ShowMessage(E.Message);
+    end;
+    AddLog(Result);
+end;
+
+function TfmMCX.CheckListToStr(list: TCheckListBox) : string;
+var
+    i: integer;
+begin
+    Result:='';
+     for i:=0 to list.Items.Count-1 do begin
+          Result:=Result + IntToStr(Integer(list.Checked[i]));
+     end;
+end;
 
 function TfmMCX.CreateCmd:string;
 var
-    nthread, nblock,gpuid,hitmax,seed,reseed: integer;
+    nthread, nblock,hitmax,seed,reseed: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    cmd: string;
+    cmd, jsonfile, gpuid: string;
+    shellscript: TStringList;
 begin
 //    cmd:='"'+Config.MCXExe+'" ';
     cmd:=CreateCmdOnly;
     if(Length(edSession.Text)>0) then
        cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
-    if(Length(edConfigFile.FileName)>0) then
+    if rbUseFile.Checked and (Length(edConfigFile.FileName)>0) then
+    begin
        cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)
          +'" --root "'+ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName))+'" ';
+    end else begin
+        jsonfile:=CreateWorkFolder+DirectorySeparator+Trim(edSession.Text)+'.json';
+        SaveJSONConfig(jsonfile);
+        cmd:=cmd+' --input "'+Trim(jsonfile)
+          +'" --root "'+ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile))+'" ';
+
+    end;
     try
         nthread:=StrToInt(edThread.Text);
         nphoton:=StrToFloat(edPhoton.Text);
         nblock:=StrToInt(edBlockSize.Text);
         bubbleradius:=StrToFloat(edBubble.Text);
-        gpuid:=StrToInt(edGPUID.Text);
+        gpuid:=CheckListToStr(edGPUID);
         unitinmm:=StrToFloat(edUnitInMM.Text);
         hitmax:=StrToInt(edDetectedNum.Text);
         seed:=StrToInt(edSeed.Text);
@@ -924,8 +1405,8 @@ begin
     end;
 
     if(ckAutopilot.Checked) then begin
-      cmd:=cmd+Format(' --gpu %d --autopilot 1 --photon %.0f --repeat %d --array %d --skipradius %f ',
-        [gpuid,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
+      cmd:=cmd+' --gpu '+gpuid+ Format(' --autopilot 1 --photon %.0f --repeat %d --array %d --skipradius %f ',
+        [nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
     end else begin
       cmd:=cmd+Format(' --thread %d --blocksize %d --photon %.0f --repeat %d --array %d --skipradius %f ',
         [nthread,nblock,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
@@ -940,36 +1421,22 @@ begin
     if(ckSkipVoid.Checked) then
       cmd:=cmd+' --skipvoid 1';
 
+    if(Length(jsonfile)>0) then begin
+         shellscript:=TStringList.Create;
+         shellscript.Add('#!/bin/sh');
+         shellscript.Add(cmd);
+         shellscript.SaveToFile(ChangeFileExt(jsonfile,'.sh'));
+         shellscript.SaveToFile(ChangeFileExt(jsonfile,'.bat'));
+         shellscript.Free;
+    end;
     Result:=cmd;
     AddLog('Command:');
     AddLog(cmd);
 end;
 
-function TfmMCX.GridToJSONArray(grid:TStringGrid):string;
+function TfmMCX.GridToStr(grid:TStringGrid):string;
 var
     i: integer;
-    json: TStrings;
-begin
-  json := TStringList.Create;
-  Result:='';
-  try
-      for i := grid.FixedRows to grid.RowCount - 1 do
-      begin
-          if (Length(grid.Cells[0,i])=0) then break;
-          json.Add('['+grid.Rows[i].CommaText+']');
-      end;
-      json.Delimiter:=',';
-      json.QuoteChar:=' ';
-      Result:='['+json.DelimitedText+']';
-  finally
-      json.Free;
-  end;
-end;
-
-
-function TfmMCX.GridToJSONStruct(grid:TStringGrid):string;
-var
-    i, j: integer;
     json: TStrings;
 begin
   json := TStringList.Create;
@@ -978,20 +1445,104 @@ begin
       try
           for i := grid.FixedRows to grid.RowCount - 1 do
           begin
-              if (Length(grid.Cells[0,i])=0) and (Length(grid.Cells[2,i])=0) then continue;
-              //if(Length(grid.Cells[2,i])=0) then
-              //   raise Exception.Create('Field '+grid.Cells[0,i]+'::'+grid.Cells[1,i]+' can not be empty');
-              json.Add(''''+grid.Cells[0,i]+'::'+grid.Cells[1,i]+''': '+grid.Cells[2,i]);
+              if (Length(grid.Cells[0,i])=0) and (Length(grid.Cells[2,i])=0) then break;
+              json.Add(grid.Rows[i].CommaText);
           end;
       except
           On E : Exception do
               ShowMessage(E.Message);
       end;
-      json.Delimiter:=',';
-      json.QuoteChar:=' ';
-      Result:='{'+json.DelimitedText+'}';
+      json.Delimiter:='|';
+      //json.QuoteChar:=' ';
+      Result:=json.DelimitedText;
     finally
         json.Free;
+    end;
+end;
+
+
+procedure TfmMCX.StrToGrid(str: string; grid:TStringGrid);
+var
+    i, j: integer;
+    json: TStrings;
+begin
+  json := TStringList.Create;
+  json.Delimiter:='|';
+  json.DelimitedText:=str;
+
+  try
+      try
+          if(grid.RowCount < json.Count) then
+              grid.RowCount:= json.Count;
+          for i := 0 to json.Count do begin
+              grid.Rows[i].CommaText:=json.Strings[i];
+          end;
+      except
+          On E : Exception do
+              ShowMessage(E.Message);
+      end;
+    finally
+        json.Free;
+    end;
+end;
+procedure TfmMCX.ShowJSONData(AParent : TTreeNode; Data : TJSONData);
+
+Var
+  N,N2 : TTreeNode;
+  I : Integer;
+  D : TJSONData;
+  C : String;
+  S : TStringList;
+begin
+  N:=nil;
+  if Assigned(Data) then
+    begin
+    case Data.JSONType of
+      jtArray,
+      jtObject:
+        begin
+        if (Data.JSONType=jtArray) then begin
+          C:='Array (%d elements)';
+        end else begin
+           C:='Object (%d members)';
+        end;
+        //N:=AParent.TreeView.Items.AddChild(AParent,Format(C,[Data.Count]));
+        if(N =nil) then N:=AParent;
+        S:=TstringList.Create;
+        try
+          for I:=0 to Data.Count-1 do
+            if Data.JSONtype=jtArray then
+              S.AddObject('_ARRAY_',Data.items[i])
+            else
+              S.AddObject(TJSONObject(Data).Names[i],Data.items[i]);
+          for I:=0 to S.Count-1 do
+            begin
+            if(not (S[i] = '_ARRAY_')) then begin
+               N2:=AParent.TreeView.Items.AddChild(N,S[i]);
+            end else begin
+               N2:=N;
+            end;
+            D:=TJSONData(S.Objects[i]);
+            N2.ImageIndex:=ImageTypeMap[D.JSONType];
+            N2.SelectedIndex:=ImageTypeMap[D.JSONType];
+            N2.Data:=Data;
+            ShowJSONData(N2,D);
+            end
+        finally
+          S.Free;
+        end;
+        end;
+      jtNull:
+        N:=AParent.TreeView.Items.AddChild(AParent,'null');
+    else
+      N:=AParent.TreeView.Items.AddChild(AParent,Data.AsString);
+    end;
+    If Assigned(N) then
+      begin
+      N.ImageIndex:=ImageTypeMap[Data.JSONType];
+      N.SelectedIndex:=ImageTypeMap[Data.JSONType];
+      //N.Data:=Data;
+      end;
     end;
 end;
 
@@ -1003,6 +1554,8 @@ var
     cg: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
+    ckb: TCheckListBox;
+    sg: TStringGrid;
     i,idx: integer;
 begin
     if(node=nil) then exit;
@@ -1045,7 +1598,25 @@ begin
            if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
            continue;
         end;
+        if(plSetting.Controls[i] is TCheckListBox) then begin
+           ckb:=plSetting.Controls[i] as TCheckListBox;
+           idx:=MapList.IndexOf(ckb.Hint);
+           if(idx>=0) then node.SubItems.Strings[idx]:=CheckListToStr(ckb);
+           continue;
+        end;
         except
+        end;
+    end;
+    for i:=0 to tabInputData.ControlCount-1 do
+    begin
+        try
+          if(tabInputData.Controls[i] is TStringGrid) then begin
+             sg:=tabInputData.Controls[i] as TStringGrid;
+             idx:=MapList.IndexOf(sg.Hint);
+             if(idx>=0) then node.SubItems.Strings[idx]:=GridToStr(sg);
+             continue;
+          end;
+        finally
         end;
     end;
 end;
@@ -1057,8 +1628,10 @@ var
     ck: TCheckBox;
     se: TSpinEdit;
     gr: TRadioGroup;
+    ckb: TCheckListBox;
+    sg: TStringGrid;
     fed:TFileNameEdit;
-    i,idx: integer;
+    i,j,idx: integer;
 begin
     if(node=nil) then exit;
     edSession.Text:=node.Caption;
@@ -1111,10 +1684,36 @@ begin
            if(idx>=0) then ck.Checked:=(node.SubItems.Strings[idx]='1');
            continue;
         end;
+        if(plSetting.Controls[i] is TCheckListBox) then begin
+           ckb:=plSetting.Controls[i] as TCheckListBox;
+           idx:=MapList.IndexOf(ck.Hint);
+           if(idx>=0) then begin
+               ckb.Items.Clear;
+               for j:=1 to Length(node.SubItems.Strings[idx]) do begin
+                   ckb.Items.Add('GPU#'+IntToStr(j));
+                   if(node.SubItems.Strings[idx][j]='1') then
+                       ckb.Checked[j]:=true;
+               end;
+           end;
+           continue;
+        end;
+    end;
+    for i:=0 to tabInputData.ControlCount-1 do
+    begin
+        try
+          if(tabInputData.Controls[i] is TStringGrid) then begin
+             sg:=tabInputData.Controls[i] as TStringGrid;
+             idx:=MapList.IndexOf(sg.Hint);
+             if(idx>=0) then
+                 StrToGrid(node.SubItems.Strings[idx],sg);
+             continue;
+          end;
+        finally
+        end;
     end;
 end;
 initialization
   {$I mcxgui.lrs}
-
+  {$I mcxdefaultinput.lrs}
 end.
 

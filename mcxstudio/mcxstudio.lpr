@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms
   { you can add units after this }, mcxgui, lazcontrols, tachartlazaruspkg,
-  mcxabout;
+  mcxabout, mcxshape;
 
 {$IFDEF WINDOWS}{$R mcxstudio.rc}{$ENDIF}
 
