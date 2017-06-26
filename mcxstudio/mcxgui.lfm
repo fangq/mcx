@@ -1,12 +1,12 @@
 object fmMCX: TfmMCX
-  Left = 473
+  Left = 3847
   Height = 881
-  Top = 86
+  Top = 177
   Width = 1287
   ActiveControl = lvJobs
   BorderIcons = [biSystemMenu, biMinimize, biHelp]
   Caption = 'MCX Studio'
-  ClientHeight = 858
+  ClientHeight = 859
   ClientWidth = 1287
   Icon.Data = {
     3E01000000000100010010101000000000002801000016000000280000001000
@@ -184,8 +184,8 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 21
-    Top = 837
+    Height = 20
+    Top = 839
     Width = 1287
     Panels = <    
       item
@@ -202,13 +202,14 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 496
+    Height = 498
     Top = 94
     Width = 176
     Align = alLeft
     Columns = <    
       item
         Caption = 'Session'
+        Width = 100
       end    
       item
         Caption = 'InputFile'
@@ -243,9 +244,6 @@ object fmMCX: TfmMCX
       end    
       item
         Caption = 'DoNormalize'
-      end    
-      item
-        Caption = 'VariantName'
       end    
       item
         Caption = 'Autopilot'
@@ -288,7 +286,17 @@ object fmMCX: TfmMCX
       end    
       item
         Caption = 'Workload'
+      end    
+      item
+        AutoSize = True
+        Caption = 'ShapeCfg'
+        Width = 70
+      end    
+      item
+        Caption = 'Seed'
       end>
+    IconOptions.Arrangement = iaLeft
+    LargeImages = ImageList1
     ReadOnly = True
     RowSelect = True
     ScrollBars = ssAutoBoth
@@ -300,31 +308,31 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 176
-    Height = 496
+    Height = 498
     Top = 94
     Width = 8
   end
   object plSetting: TPanel
     Left = 184
-    Height = 496
+    Height = 498
     Top = 94
     Width = 720
     Align = alLeft
     BevelOuter = bvNone
-    ClientHeight = 496
+    ClientHeight = 498
     ClientWidth = 720
     Enabled = False
     ParentColor = False
     TabOrder = 4
     object grBasic: TGroupBox
       Left = 0
-      Height = 152
+      Height = 112
       Top = 0
       Width = 720
       Align = alTop
       AutoSize = True
       Caption = 'Basic Settings'
-      ClientHeight = 132
+      ClientHeight = 93
       ClientWidth = 716
       Font.Name = 'Sans'
       ParentColor = False
@@ -335,11 +343,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = grBasic
         AnchorSideRight.Control = Label10
-        Left = 240
-        Height = 40
+        Left = 134
+        Height = 27
         Hint = 'InputFile'
         Top = 5
-        Width = 236
+        Width = 342
         DialogOptions = []
         FilterIndex = 0
         HideDirectories = False
@@ -358,10 +366,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edConfigFile
         Left = 0
-        Height = 30
+        Height = 17
         Hint = '-s (--sessionid)'
-        Top = 50
-        Width = 240
+        Top = 37
+        Width = 134
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Session ID (-s)'
@@ -377,10 +385,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edConfigFile
         AnchorSideTop.Side = asrBottom
-        Left = 240
-        Height = 40
+        Left = 134
+        Height = 27
         Hint = 'Session'
-        Top = 45
+        Top = 32
         Width = 118
         OnChange = edRespinChange
         TabOrder = 1
@@ -389,11 +397,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = grBasic
         AnchorSideTop.Control = edPhoton
         AnchorSideTop.Side = asrCenter
-        Left = 305
-        Height = 30
+        Left = 308
+        Height = 17
         Hint = '-n (--photon)'
-        Top = 90
-        Width = 182
+        Top = 37
+        Width = 159
         Alignment = taRightJustify
         Anchors = [akTop]
         Caption = 'Total photon number (-n)'
@@ -404,14 +412,14 @@ object fmMCX: TfmMCX
         ShowHint = True
       end
       object edPhoton: TEdit
-        AnchorSideLeft.Control = Label3
+        AnchorSideLeft.Control = edConfigFile
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edSession
-        AnchorSideTop.Side = asrBottom
-        Left = 487
-        Height = 40
+        AnchorSideTop.Side = asrCenter
+        Left = 476
+        Height = 27
         Hint = 'PhotonNum'
-        Top = 85
+        Top = 32
         Width = 118
         OnChange = edRespinChange
         TabOrder = 2
@@ -423,10 +431,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edConfigFile
         Left = 0
-        Height = 30
+        Height = 17
         Hint = '-u (--unitinmm)'
-        Top = 90
-        Width = 240
+        Top = 64
+        Width = 134
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Voxel size in mm (-u)'
@@ -440,14 +448,14 @@ object fmMCX: TfmMCX
       object edUnitInMM: TEdit
         AnchorSideLeft.Control = Label8
         AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = edSeed
+        AnchorSideTop.Control = edSession
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Control = grBasic
         AnchorSideBottom.Side = asrBottom
-        Left = 240
-        Height = 40
+        Left = 134
+        Height = 27
         Hint = 'UnitInMM'
-        Top = 85
+        Top = 59
         Width = 118
         Anchors = [akTop, akLeft, akBottom]
         BorderSpacing.Bottom = 7
@@ -456,31 +464,31 @@ object fmMCX: TfmMCX
         Text = '1'
       end
       object edSeed: TEdit
-        AnchorSideLeft.Control = Label13
+        AnchorSideLeft.Control = edConfigFile
         AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = edConfigFile
+        AnchorSideTop.Control = edPhoton
         AnchorSideTop.Side = asrBottom
         Left = 476
-        Height = 40
+        Height = 27
         Hint = 'Seed'
-        Top = 45
+        Top = 59
         Width = 118
-        Anchors = [akTop]
         OnChange = edRespinChange
         TabOrder = 4
-        Text = '0'
+        Text = '1648335518'
       end
       object Label13: TLabel
         AnchorSideLeft.Control = grBasic
         AnchorSideTop.Control = edSeed
         AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = edSeed
         Left = 300
         Height = 17
         Hint = '-E (--seed)'
-        Top = 57
+        Top = 64
         Width = 176
         Alignment = taRightJustify
-        Anchors = [akTop]
+        Anchors = [akTop, akRight]
         AutoSize = False
         Caption = 'Seed (-E)'
         Font.Name = 'Sans'
@@ -494,9 +502,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edConfigFile
         AnchorSideTop.Side = asrCenter
         Left = 0
-        Height = 34
-        Top = 8
-        Width = 240
+        Height = 24
+        Top = 6
+        Width = 134
         Caption = 'Use Input File (-f)'
         Font.Name = 'Sans'
         OnChange = rbUseFileChange
@@ -509,8 +517,8 @@ object fmMCX: TfmMCX
         AnchorSideRight.Control = grBasic
         AnchorSideRight.Side = asrBottom
         Left = 524
-        Height = 34
-        Top = 8
+        Height = 24
+        Top = 6
         Width = 192
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Use Simulation Designer »'
@@ -527,7 +535,7 @@ object fmMCX: TfmMCX
         Left = 476
         Height = 17
         Hint = '-a (--array)'
-        Top = 17
+        Top = 10
         Width = 48
         Alignment = taCenter
         Anchors = [akTop, akLeft, akRight]
@@ -543,12 +551,12 @@ object fmMCX: TfmMCX
     object grAdvSettings: TGroupBox
       Tag = -1
       Left = 0
-      Height = 113
-      Top = 399
+      Height = 132
+      Top = 356
       Width = 720
       Align = alTop
       Caption = 'Advanced Settings'
-      ClientHeight = 94
+      ClientHeight = 114
       ClientWidth = 716
       ParentColor = False
       TabOrder = 1
@@ -556,26 +564,33 @@ object fmMCX: TfmMCX
       OnDblClick = grAdvSettingsDblClick
       OnEnter = grAdvSettingsEnter
       object Label6: TLabel
+        AnchorSideLeft.Control = grAdvSettings
+        AnchorSideTop.Control = grArray
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = grArray
         Left = 0
-        Height = 17
+        Height = 16
         Hint = '-a (--array)'
-        Top = 10
-        Width = 149
+        Top = 20
+        Width = 168
         Alignment = taRightJustify
-        AutoSize = False
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 6
         Caption = 'Array order (-a)'
         ParentColor = False
         ParentShowHint = False
         ShowHint = True
       end
       object grArray: TRadioGroup
+        AnchorSideTop.Control = grAdvSettings
         Left = 168
         Height = 40
         Hint = 'ArrayOrder'
-        Top = 0
-        Width = 126
+        Top = 8
+        Width = 120
         AutoFill = True
         AutoSize = True
+        BorderSpacing.Top = 8
         ChildSizing.LeftRightSpacing = 6
         ChildSizing.TopBottomSpacing = 6
         ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
@@ -585,7 +600,7 @@ object fmMCX: TfmMCX
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 2
         ClientHeight = 36
-        ClientWidth = 122
+        ClientWidth = 116
         Columns = 2
         ItemIndex = 0
         Items.Strings = (
@@ -596,60 +611,78 @@ object fmMCX: TfmMCX
         TabOrder = 0
       end
       object Label7: TLabel
-        Left = 26
-        Height = 17
+        AnchorSideLeft.Control = grAdvSettings
+        AnchorSideTop.Control = edGate
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = edGate
+        Left = 0
+        Height = 16
         Hint = '-g (--gategroup)'
-        Top = 67
-        Width = 170
+        Top = 79
+        Width = 219
         Alignment = taRightJustify
-        AutoSize = False
+        Anchors = [akTop, akLeft, akRight]
         Caption = 'Gate group size (-g)'
         ParentColor = False
         ParentShowHint = False
         ShowHint = True
       end
       object edGate: TSpinEdit
+        AnchorSideTop.Control = edBubble
+        AnchorSideTop.Side = asrBottom
         Left = 219
-        Height = 27
+        Height = 26
         Hint = 'GateNum'
-        Top = 64
+        Top = 74
         Width = 80
         MaxValue = 100000
         MinValue = 1
         OnChange = edRespinChange
         TabOrder = 1
-        Value = 1
+        Value = 100
       end
       object Label11: TLabel
-        Left = 26
-        Height = 17
+        AnchorSideLeft.Control = grAdvSettings
+        AnchorSideTop.Control = edBubble
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = edBubble
+        Left = 0
+        Height = 16
         Hint = '-r (--skipradius)'
-        Top = 46
-        Width = 173
+        Top = 53
+        Width = 219
         Alignment = taRightJustify
-        AutoSize = False
+        Anchors = [akTop, akLeft, akRight]
         Caption = 'Cache radius from src (-R)'
         ParentColor = False
         ParentShowHint = False
         ShowHint = True
       end
       object edBubble: TEdit
+        AnchorSideTop.Control = grArray
+        AnchorSideTop.Side = asrBottom
         Left = 219
-        Height = 27
+        Height = 26
         Hint = 'BubbleSize'
-        Top = 40
+        Top = 48
         Width = 80
         OnChange = edRespinChange
         TabOrder = 2
         Text = '-2'
       end
       object Label14: TLabel
-        Left = 335
+        AnchorSideLeft.Control = grArray
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = edReseed
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = edReseed
+        Left = 288
         Height = 17
         Hint = '-N (--reseed)'
-        Top = 8
-        Width = 173
+        Top = 20
+        Width = 231
         Alignment = taRightJustify
+        Anchors = [akTop, akLeft, akRight]
         AutoSize = False
         Caption = 'Reseed RNG interval (-N)'
         ParentColor = False
@@ -657,22 +690,30 @@ object fmMCX: TfmMCX
         ShowHint = True
       end
       object edReseed: TEdit
+        AnchorSideTop.Control = grArray
+        AnchorSideTop.Side = asrCenter
         Left = 519
-        Height = 27
+        Height = 26
         Hint = 'ReseedLimit'
-        Top = 3
+        Top = 15
         Width = 80
         OnChange = edRespinChange
         TabOrder = 3
         Text = '10000000'
       end
       object Label9: TLabel
-        Left = 319
+        AnchorSideLeft.Control = edBubble
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = edDetectedNum
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = edDetectedNum
+        Left = 299
         Height = 17
         Hint = '-H (--maxdetphoton)'
-        Top = 28
-        Width = 198
+        Top = 46
+        Width = 220
         Alignment = taRightJustify
+        Anchors = [akTop, akLeft, akRight]
         AutoSize = False
         Caption = 'Max detected photons(-H)'
         ParentColor = False
@@ -680,10 +721,12 @@ object fmMCX: TfmMCX
         ShowHint = True
       end
       object edDetectedNum: TEdit
+        AnchorSideTop.Control = edReseed
+        AnchorSideTop.Side = asrBottom
         Left = 519
-        Height = 27
+        Height = 26
         Hint = 'DetectedNum'
-        Top = 24
+        Top = 41
         Width = 80
         Enabled = False
         OnChange = edRespinChange
@@ -691,12 +734,18 @@ object fmMCX: TfmMCX
         Text = '10000000'
       end
       object Label5: TLabel
-        Left = 343
+        AnchorSideLeft.Control = edGate
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = edRespin
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = edRespin
+        Left = 299
         Height = 17
         Hint = '-r (--repeat)'
-        Top = 56
-        Width = 174
+        Top = 72
+        Width = 220
         Alignment = taRightJustify
+        Anchors = [akTop, akLeft, akRight]
         AutoSize = False
         Caption = 'Split into runs (-r)'
         ParentColor = False
@@ -704,10 +753,12 @@ object fmMCX: TfmMCX
         ShowHint = True
       end
       object edRespin: TSpinEdit
+        AnchorSideTop.Control = edDetectedNum
+        AnchorSideTop.Side = asrBottom
         Left = 519
-        Height = 27
+        Height = 26
         Hint = 'RespinNum'
-        Top = 48
+        Top = 67
         Width = 84
         MaxValue = 100000
         MinValue = 1
@@ -715,17 +766,11 @@ object fmMCX: TfmMCX
         TabOrder = 5
         Value = 1
       end
-      object Splitter2: TSplitter
-        Left = 0
-        Height = 94
-        Top = 0
-        Width = 5
-      end
     end
     object grSwitches: TGroupBox
       Left = 0
-      Height = 135
-      Top = 264
+      Height = 134
+      Top = 222
       Width = 720
       Align = alTop
       Anchors = []
@@ -744,7 +789,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoReflect'
         Top = 10
-        Width = 208
+        Width = 188
         Caption = 'Do Reflection (-b)'
         Checked = True
         OnChange = edRespinChange
@@ -756,7 +801,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoNormalize'
         Top = 34
-        Width = 208
+        Width = 188
         Caption = 'Do Normalization (-U)'
         Checked = True
         OnChange = edRespinChange
@@ -766,9 +811,9 @@ object fmMCX: TfmMCX
       object ckSaveExit: TCheckBox
         Left = 10
         Height = 24
-        Hint = 'Autopilot'
+        Hint = 'DoSaveExit'
         Top = 58
-        Width = 208
+        Width = 188
         Caption = 'Save Exit Position && Dir (-x)'
         OnChange = edRespinChange
         TabOrder = 2
@@ -778,17 +823,17 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSrcFrom0'
         Top = 82
-        Width = 208
+        Width = 188
         Caption = 'Orign from 0 (-z)'
         OnChange = edRespinChange
         TabOrder = 3
       end
       object ckSaveDetector: TCheckBox
-        Left = 218
+        Left = 198
         Height = 24
         Hint = 'SaveDetector'
         Top = 10
-        Width = 226
+        Width = 202
         Caption = 'Save detected photons (-d)'
         Checked = True
         OnChange = edRespinChange
@@ -796,11 +841,11 @@ object fmMCX: TfmMCX
         TabOrder = 4
       end
       object ckSaveData: TCheckBox
-        Left = 218
+        Left = 198
         Height = 24
         Hint = 'DoSave'
         Top = 34
-        Width = 226
+        Width = 202
         Caption = 'Save Fluence (-S)'
         Checked = True
         OnChange = edRespinChange
@@ -808,31 +853,31 @@ object fmMCX: TfmMCX
         TabOrder = 5
       end
       object ckSaveRef: TCheckBox
-        Left = 218
+        Left = 198
         Height = 24
-        Hint = 'Autopilot'
+        Hint = 'DoSaveRef'
         Top = 58
-        Width = 226
+        Width = 202
         Caption = 'Save Diffuse Reflectance (-X)'
         OnChange = edRespinChange
         TabOrder = 6
       end
       object ckSkipVoid: TCheckBox
-        Left = 218
+        Left = 198
         Height = 24
         Hint = 'DoSkipVoid'
         Top = 82
-        Width = 226
+        Width = 202
         Caption = 'Skip void (-k)'
         OnChange = edRespinChange
         TabOrder = 7
       end
       object ckSaveSeed: TCheckBox
-        Left = 444
+        Left = 400
         Height = 24
         Hint = 'DoSaveSeed'
         Top = 10
-        Width = 131
+        Width = 119
         Caption = 'Save Seeds (-q)'
         OnChange = edRespinChange
         TabOrder = 8
@@ -840,15 +885,15 @@ object fmMCX: TfmMCX
     end
     object grGPU: TGroupBox
       Left = 0
-      Height = 108
-      Top = 156
+      Height = 106
+      Top = 116
       Width = 720
       Align = alTop
       Anchors = []
       AutoSize = True
       BorderSpacing.Top = 4
       Caption = 'GPU Settings'
-      ClientHeight = 89
+      ClientHeight = 88
       ClientWidth = 716
       ParentColor = False
       TabOrder = 3
@@ -874,7 +919,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = ckAutopilot
         AnchorSideTop.Side = asrBottom
         Left = 144
-        Height = 29
+        Height = 28
         Hint = 'ThreadNum'
         Top = 25
         Width = 128
@@ -917,7 +962,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'Autopilot'
         Top = 1
-        Width = 284
+        Width = 257
         BorderSpacing.Left = 5
         BorderSpacing.Top = 1
         Caption = 'Let MCX decide thread/block size (-A)'
@@ -933,7 +978,7 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 16
         Hint = '-T (--blocksize)'
-        Top = 60
+        Top = 59
         Width = 144
         Alignment = taRightJustify
         AutoSize = False
@@ -950,9 +995,9 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Control = grGPU
         AnchorSideBottom.Side = asrBottom
         Left = 144
-        Height = 29
+        Height = 28
         Hint = 'ThreadBlock'
-        Top = 54
+        Top = 53
         Width = 128
         BorderSpacing.Bottom = 6
         ItemHeight = 0
@@ -993,7 +1038,7 @@ object fmMCX: TfmMCX
           'GPU#7'
           'GPU#8'
         )
-        ItemHeight = 23
+        ItemHeight = 22
         OnClickCheck = edRespinChange
         TabOrder = 3
         Data = {
@@ -1041,7 +1086,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Side = asrBottom
         Left = 474
-        Height = 27
+        Height = 26
         Hint = 'Workload'
         Top = 25
         Width = 118
@@ -1056,18 +1101,18 @@ object fmMCX: TfmMCX
   end
   object plOutput: TPanel
     Left = 904
-    Height = 496
+    Height = 498
     Top = 94
     Width = 383
     Align = alClient
-    ClientHeight = 496
+    ClientHeight = 498
     ClientWidth = 383
     DockSite = True
     TabOrder = 5
     OnDockOver = plOutputDockOver
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 494
+      Height = 496
       Top = 1
       Width = 381
       ActivePage = tabInputData
@@ -1077,7 +1122,7 @@ object fmMCX: TfmMCX
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 463
+        ClientHeight = 466
         ClientWidth = 377
         object sgMedia: TStringGrid
           Left = 0
@@ -1094,6 +1139,7 @@ object fmMCX: TfmMCX
           TitleImageList = ImageList1
           TitleStyle = tsNative
           OnEditingDone = sgMediaEditingDone
+          OnSetEditText = sgMediaSetEditText
           ColWidths = (
             82
             82
@@ -1101,31 +1147,43 @@ object fmMCX: TfmMCX
             95
           )
           Cells = (
-            8
+            12
             0
             0
             'μa (1/mm)'
             0
             1
             '0'
+            0
+            2
+            '0.01'
             1
             0
             'μs (1/mm)'
             1
             1
             '0'
+            1
+            2
+            '1'
             2
             0
             'g (anisotropy)'
             2
             1
             '1'
+            2
+            2
+            '0.01'
             3
             0
             'n (refractive index)'
             3
             1
             '1'
+            3
+            2
+            '1.37'
           )
         end
         object sgDet: TStringGrid
@@ -1142,6 +1200,7 @@ object fmMCX: TfmMCX
           TabOrder = 1
           TitleStyle = tsNative
           OnEditingDone = sgMediaEditingDone
+          OnSetEditText = sgDetSetEditText
           ColWidths = (
             80
             82
@@ -1149,19 +1208,31 @@ object fmMCX: TfmMCX
             83
           )
           Cells = (
-            4
+            8
             0
             0
             'x'
+            0
+            1
+            '24'
             1
             0
             'y'
+            1
+            1
+            '29'
             2
             0
             'z'
+            2
+            1
+            '0'
             3
             0
             'radius'
+            3
+            1
+            '1'
           )
         end
         object StaticText1: TStaticText
@@ -1210,7 +1281,7 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 215
+          Height = 218
           Hint = 'MCXConfig'
           Top = 248
           Width = 377
@@ -1230,7 +1301,7 @@ object fmMCX: TfmMCX
             142
           )
           Cells = (
-            34
+            35
             0
             0
             'Section Name'
@@ -1316,6 +1387,9 @@ object fmMCX: TfmMCX
             1
             'See Volume Designer...'
             2
+            2
+            '[60,60,60]'
+            2
             4
             '0'
             2
@@ -1356,15 +1430,17 @@ object fmMCX: TfmMCX
       end
       object tabVolumeDesigner: TTabSheet
         Caption = 'Volume Designer'
-        ClientHeight = 463
+        ClientHeight = 466
         ClientWidth = 377
         object tvShapes: TTreeView
           Left = 0
-          Height = 343
+          Height = 346
+          Hint = 'ShapeCfg'
           Top = 120
           Width = 377
           Align = alClient
           AutoExpand = True
+          DefaultItemHeight = 18
           Images = ILJSON
           StateImages = ILJSON
           TabOrder = 0
@@ -1393,73 +1469,73 @@ object fmMCX: TfmMCX
             Action = shapeReset
           end
           object ToolButton18: TToolButton
-            Left = 48
+            Left = 45
             Top = 2
             Action = shapeDelete
           end
           object ToolButton19: TToolButton
-            Left = 1
-            Top = 42
+            Left = 333
+            Top = 2
             Action = shapeAddName
           end
           object ToolButton20: TToolButton
-            Left = 104
+            Left = 96
             Top = 2
             Action = shapeAddGrid
           end
           object ToolButton21: TToolButton
-            Left = 205
+            Left = 190
             Top = 2
             Action = shapeAddBox
           end
           object ToolButton22: TToolButton
-            Left = 144
+            Left = 136
             Top = 2
             Action = shapeAddSubgrid
             OnClick = ToolButton22Click
           end
           object ToolButton23: TToolButton
-            Left = 50
+            Left = 1
             Top = 42
             Action = shapeAddXLayers
           end
           object ToolButton24: TToolButton
-            Left = 111
+            Left = 56
             Top = 42
             Action = shapeAddYLayers
           end
           object ToolButton25: TToolButton
-            Left = 173
+            Left = 111
             Top = 42
             Action = shapeAddZLayers
           end
           object ToolButton26: TToolButton
-            Left = 235
+            Left = 166
             Top = 42
             Action = shapeAddXSlabs
           end
           object ToolButton27: TToolButton
-            Left = 245
+            Left = 230
             Top = 2
             Action = shapeAddCylinder
           end
           object ToolButton28: TToolButton
-            Left = 287
+            Left = 213
             Top = 42
             Action = shapeAddYSlabs
           end
           object ToolButton29: TToolButton
-            Left = 1
-            Top = 82
+            Left = 260
+            Top = 42
             Action = shapeAddZSlabs
           end
           object ToolButton31: TToolButton
-            Left = 54
-            Top = 82
+            Left = 307
+            Top = 42
             Action = shapePrint
           end
           object ToolButton32: TToolButton
-            Left = 310
+            Left = 289
             Top = 2
             Action = shapeAddOrigin
           end
@@ -1470,7 +1546,7 @@ object fmMCX: TfmMCX
   object Panel1: TPanel
     Left = 0
     Height = 242
-    Top = 595
+    Top = 597
     Width = 1287
     Align = alBottom
     ClientHeight = 242
@@ -2044,7 +2120,7 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 5
-    Top = 590
+    Top = 592
     Width = 1287
     Align = alBottom
     ResizeAnchor = akBottom
@@ -4045,6 +4121,7 @@ object fmMCX: TfmMCX
     Title = 'Save project as'
     DefaultExt = '.mcxp'
     Filter = 'MCX Projects (*.mcxp)|*.mcxp|All (*.*)|*.*'
+    Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
     left = 1040
     top = 736
   end
@@ -5264,7 +5341,7 @@ object fmMCX: TfmMCX
     left = 760
     top = 680
     Bitmap = {
-      4C69100000001000000010000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      4C690A0000001000000010000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
       FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
       FF006D9CD4896A9AD2FB6697CFEEFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
       FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00709ED6DB6D9C
@@ -5584,199 +5661,14 @@ object fmMCX: TfmMCX
       FAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFA
       FAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFA
       FAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFAFAFFFAFA
-      FAFFFAFAFAFFFAFAFAFFFAFAFAFF000000000000000000000000060606110606
-      064B0E0E0EFF424242FF4A4A4AFF3E3E3EFF2C2C2CFF000000FF0606063E0606
-      062100000000000000000000000000000000000000000606063A000000FF0000
-      00FF718385FFD8EDF0FFE9F1F2FFE4EDEEFFBAC6C7FF465253FF000000FF0000
-      00FF0606064B0000000000000000000000000606063E101010FFA5C0C2FFA5BF
-      C1FF67797AFF404748FF252727FF2E3536FF728587FF889EA0FF8AA1A3FF8CA3
-      A5FF000000FF0606062100000000000000002B2B2BFFBCD1D3FFC4DADCFFCFE0
-      E2FFA2B7B9FF5B6264FF363839FF333C3CFF536061FF83989AFF9BB5B7FF98B2
-      B3FF8BA2A4FF000000FF0000000000000000000000FFD3E4E8FFE9F1F4FFE4F1
-      F2FFDAE9EAFFD2E2E5FFBED2D5FFA7C1C3FF94ADAFFFA4BEC0FFACC4C6FF9CB6
-      B8FF667779FF000000FF0000000000000000000000FF75898AFFD2EDF1FFE9F8
-      FBFFEDF5F9FFEEF7F8FFECF7F8FFE6F3F5FFD9EAECFFCBDDDEFF899B9DFF5462
-      63FF4A5758FF000000FF000000000000000000000082465152FF657173FF919D
-      9FFFC8E1E4FFCFE5E9FFCBE0E2FFCBD1D1FF7F8D8EFF647576FF586768FF3842
-      43FF222829FF000000820000000000000000000000001B1F1FFF303434FF4449
-      4BFF626768FF666F70FF646B6BFF5D6C6EFF4B5758FF313939FF151617FF161A
-      1AFF191E1FFF00000000000000000000000000000000232A2AFF95A0A0FF404D
-      4DFF303636FF262A2AFF2A2F2FFF0D0F0FFF090B0BFF0D1010FF383E3EFF2B34
-      34FF1F2424FF00000000000000000000000000000000242B2BFF99A4A5FFAEB6
-      B7FF677071FF92A1A1FF637374FF354040FF5B6969FF2F3939FF5F6969FF343F
-      3FFF202626FF00000000000000000000000000000000252C2CFFA3ADADFFD2D9
-      D9FF7F8B8BFFCED5D6FF7B8888FF4F5758FF879393FF3D4A4AFF6B7878FF4250
-      50FF222929FF00000000000000000000000000000000252C2CFFA3ADADFFD3DA
-      DAFF818E8FFFD4DDDDFF99ABACFF525D5DFF93A0A0FF404D4DFF6C7979FF4250
-      50FF222929FF00000000000000000000000000000000242B2BFF757E7EFFD1D8
-      D8FF808D8DFFD3DDDDFF99ABACFF525D5DFF93A0A0FF404D4DFF6B7878FF3844
-      44FF222828FF00000000000000000000000000000000212727FF3D4343FF868E
-      8EFF555E5EFFD0DADAFF99ABACFF525D5DFF849494FF404D4DFF535D5DFF2228
-      28FF1D2323FF000000000000000000000000000000000606064B060606FF0606
-      06FF3A4142FF7B8F8FFF6C7A7AFF3C4444FF5E6C6CFF2C3535FF292E2EFF0000
-      00FF0606063E0000000000000000000000000000000000000000000000000606
-      0657060606FF000000FF0F0F0FFF050505FF000000FF000000FF0606064B0000
-      000000000000000000000000000000000081000000FF000000FF000000FF0000
-      00FF000000FF000000FF000000FF000000FF0000008100000000000000000000
-      0000000000000000000000000000000000FFB3B3B3FFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFFFFFFFFFFD6D6D6FF000000FF00000000000000000000
-      0000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FF00000000000000000000
-      0000000000000000000000000000000000FFFFFFFFFF646464FF4D4D4DFF5050
-      50FFFFFFFFFF696969FF787878FFFFFFFFFF000000FF00000000000000000000
-      0000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FF00000000000000000000
-      0000000000000000000000000000000000FFFFFFFFFF505050FF4C4C4CFFFFFF
-      FFFF505050FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-      00FF000000FF0000008100000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFF000000FFB3B3B3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFD6D6D6FF000000FF00000000000000FFE3E3E3FF5A5A5AFF535353FF9191
-      91FF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFF000000FF00000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFF000000FFFFFFFFFF646464FF4D4D4DFF505050FFFFFFFFFF696969FF7878
-      78FFFFFFFFFF000000FF00000000000000FFD6D6D6FFFFFFFFFFFFFFFFFFFFFF
-      FFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFF000000FF0000000000000081000000FF000000FF000000FF0000
-      00FF000000FFFFFFFFFF505050FF4C4C4CFFFFFFFFFFA2A2A2FF696969FFB3B3
-      B3FFFFFFFFFF000000FF00000000000000000000000000000000000000000000
-      0000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFF000000FF00000000000000000000000000000000000000000000
-      0000000000FFE3E3E3FF5A5A5AFF535353FF919191FFFFFFFFFF5C5C5CFF6666
-      66FFFFFFFFFF000000FF00000000000000000000000000000000000000000000
-      0000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFF000000FF00000000000000000000000000000000000000000000
-      0000000000FFD6D6D6FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFD6D6D6FF000000FF00000000000000000000000000000000000000000000
-      000000000081000000FF000000FF000000FF000000FF000000FF000000FF0000
-      00FF000000FF0000007100000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      00FF0000000000000000000000000000000000000000000000FF000000000000
-      00000000000000000000000000000000000000000000000000000000004D0000
-      00FF0000000000000000000000000000000000000000000000FF0000004D0000
-      0000000000000000000000000000000000000000000000000000000000FFD2D8
-      D9FF000000FF000000000000000000000000000000FFC3CED1FF000000FF0000
-      0000000000000000000000000000000000000000000000000000000000FFD9DE
-      E0FF000000FF000000000000000000000000000000FFB8C4C8FF000000FF0000
-      0000000000000000000000000000000000000000000000000000000000B7C6CA
-      CCFFBCC2C3FF000000FF00000000000000FFDDE3E5FF949DA0FF000000B00000
-      00000000000000000000000000000000000000000000000000000000004D4E4E
-      4EFFD1D6D8FF000000FF00000000000000FFB9C5C8FF4D5154FF0000004D0000
-      0000000000000000000000000000000000000000000000000000000000000000
-      00FFDDE2E4FF949A9DFF000000FFC1CCD0FFB1BBBFFF000000FF000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000FFBBC4C7FF000000FFBBC5CAFF141616E500000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      00000000005C000000CD161616FF0C0D0DE30000006A00000000000000000000
-      000000000000000000000000000000000000000000000000004D000000FF0000
-      00FF000000CD000000A1000000000000008E000000B0000000FF000000FF0000
-      005C0000000000000000000000000000000000000000000000FF3233334E6E71
-      722B000000FF0000004D000000000000004D000000FF3233334E6E71722B0000
-      00FF0000000000000000000000000000000000000000000000FFE3E8EA17E3E8
-      EA17000000FF000000000000000000000000000000FFE3E8EA17E3E8EA170000
-      00FF0000000000000000000000000000000000000000000000FF6E71722B6E71
-      722B000000FF000000000000000000000000000000FF6E71722B6E71722B0000
-      00FF00000000000000000000000000000000000000000000005C000000FF0000
-      00FF0000004D0000000000000000000000000000005C000000FF000000FF0000
-      004D000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000DD000000DF000000EE000000000000000000000000000000000000
-      000000000000000000000000000000000057000000FF000000FF000000FF0000
-      00FF8E8E8EFFE3E3E3FF696969FF000000FF000000FF000000FF000000FF0000
-      0057000000000000000000000000000000FFE1F0F1FFD5E9ECFFD8EBEDFF292D
-      2EFF767D7EFF585C5DFF4F5353FF1E2121FF6C7779FF879497FF6C868CFF0000
-      00FF000000000000000000000000000000FFD3E7EBFF85B4C1FF243134FF9EA8
-      ABFFE0ECEFFFE0ECEFFFA3ABAEFF666A6CFF1A2426FF63868FFF51727AFF0000
-      00FF000000000000000000000000000000FFD5E9ECFF85B4C1FF698E98FF2532
-      35FF1A2326FF212D30FF1A2326FF233033FF4C676EFF729BA6FF51707AFF0000
-      00FF000000000000000000000000000000FFD4E8EBFF85B4C1FF85B4C1FFB3D0
-      D8FF3D5258FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-      00FF000000FF000000FF00000057000000FFD2E6E9FF85B4C1FF698E98FF85B4
-      C1FF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFF000000FF000000FFD2E6E9FF85B4C1FF85B4C1FFB3D0
-      D8FF000000FFFFFFFFFFB9B9B9FFA1A1A1FFB9B9B9FFFFFFFFFFAAAAAAFFA1A1
-      A1FFD3D3D3FFFFFFFFFF000000FF000000FFD1E6E9FF85B4C1FF698E98FF85B4
-      C1FF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFF000000FF000000FFD0E6E9FF85B4C1FF85B4C1FFB3D0
-      D8FF000000FFFFFFFFFFB9B9B9FFA1A1A1FFB9B9B9FFD3D3D3FFB9B9B9FFA1A1
-      A1FFFFFFFFFFFFFFFFFF000000FF000000FFD0E5E8FF85B4C1FF7098A3FF85B4
-      C1FF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFF000000FF000000FFD0E5E8FF85B4C1FF85B4C1FFB3D0
-      D8FF000000FFFFFFFFFFB9B9B9FFA1A1A1FFA1A1A1FFB9B9B9FFFFFFFFFFAAAA
-      AAFFD3D3D3FFFFFFFFFF000000FF000000FFD7EAEDFF85B4C1FF7098A3FF85B4
-      C1FF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFF000000FF000000FFCEE5E9FF85B4C1FF85B4C1FF85B4
-      C1FF000000FFFFFFFFFFD3D3D3FFA1A1A1FFA1A1A1FFFFFFFFFFAAAAAAFFA1A1
-      A1FFAEAEAEFFFFFFFFFF000000FF000000FF678289FF456A74FF3D626BFF375A
-      65FF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      FFFFFFFFFFFFFFFFFFFF000000FF00000057000000FF000000FF000000FF0000
-      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-      00FF000000FF000000FF0000005700000047000000FF000000FF000000FF0000
-      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-      00FF000000FF000000FF0000005C000000FFFAF8F7FFEBDDCBFF808AC8FF848F
-      D1FF848FD1FF848FD1FF848FD1FF828DCFFF000000FF2696A4FF1E4A63FF0000
-      00FFCCBBA8FFE8D5BFFF000000FF000000FFF1E7DBFFBEA98DFF7E87B7FF6875
-      C7FF6774C7FF6774C7FF6673C5FF000000FF3DEBFCFF44B5F7FF2E5261FF0000
-      00FF9A8972FF7C6954FF000000FF000000FFEDE0CFFFBEA98DFFD7D7D7FFFEFE
-      FEFFFEFEFEFFFCFCFCFF000000FF39DFF9FF45B5F7FF345F6CFF000000FFB4B4
-      B4FFB5A084FF75644FFF000000FF000000FFEDE0CFFFBEA98DFFD7D7D7FFD7D7
-      D7FFD6D6D6FF000000FF37D8F8FF4DB4EFFF2B4D58FF000000FF8F8F8FFFF1F1
-      F1FFAE9A81FF726049FF000000FF000000FFEDE0CFFFBEA98DFFD7D7D7FFFDFD
-      FDFF000000FF36D2F6FF3EA4EDFF2B4E58FF000000FFAAAAAAFFD3D3D3FFF1F1
-      F1FFAE9A81FF715F48FF000000FF000000FFEDE0CFFFBEA98DFFD7D7D7FFD5D5
-      D5FF000000FF74AED7FF2F5661FF000000FF737373FFC5C5C5FFB0B0B0FFF1F1
-      F1FFAC987FFF726049FF000000FF000000FFEDE0CFFFBEA98DFFEDEDEDFF0000
-      00FF15414FFF000000FF000000FF8D8D8DFFD3D3D3FFEBEBEBFFEBEBEBFFECEC
-      ECFFAE9A81FF726049FF000000FF000000FFEDE0CFFFBEA98DFFCBBDACFF0000
-      00FF000000FF7D766FFFACA39AFFD6CBBFFFD6CBBFFFD6CBBFFFD4C9BDFFC4B6
-      A1FFAE9A81FF726049FF000000FF000000FFEDE0CFFFBEA98DFFBCA78BFFB09C
-      80FF94836CFFAE9A81FFAE9A81FFAE9A81FFAE9A81FFAB977DFFAC977DFFAE9A
-      81FFAE9A81FF726049FF000000FF000000FFEDE0CFFFBEA98DFFBCA78BFFB8AC
-      A4FFB9B9B9FFB9B9B9FFC7C7C7FFE1E1E1FFD4D4D4FF9D9D9CFF56462FFF8C86
-      80FFAE9A81FF726049FF000000FF000000FFEDE0CFFFBEA98DFFB5A084FFC5C5
-      C5FFC5C5C5FF423018FF5A4933FFD5D5D5FFC5C5C5FFB9B9B9FF3C2D13FF806D
-      58FFB0A597FF726049FF000000FF000000FFEDE0CFFFB9A486FFAE9A81FFC5C5
-      C5FFCDCDCDFF53432EFF82705AFFC5C5C5FFC5C5C5FFBFBFBFFF352811FF8270
-      5AFFB0A99DFF726049FF000000FF000000FF82786BFFB19D82FFAC987FFFCBCB
-      CBFFE5E5E5FF483621FF89795FFFC5C5C5FFC2C2C2FFB2B2B2FF3A2C11FF8270
-      5AFFB0A99FFF726049FF000000FF00000083000000FF6D6359FF75644FFFA1A1
-      A1FFC0C0C0FF909090FF909090FF868686FF6E6E6EFF7A7A7AFF49392DFF5C4F
-      3EFF8F8780FF40311AFF000000FF0000000000000083000000FF000000D30000
-      00DC000000FF000000FF000000FF000000FF000000FF000000FF000000E00000
-      00E1000000FF000000FF00000047FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF009C8F
-      83E2BCB0A4FF9D9185FFFFFFFF00AEA093FF9D9185FF655D55DAFFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF008E83
-      78E2C3B8AEFF655D55FFFFFFFF007C7268FFA89B8EFF9C8F83E4FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00746B62FFA4978AFF9589
-      7DFF9F9286FF3E3934FFFFFFFF004C4640FF7E746AFF857A70FF3E3934FF453F
-      3AA72522200C15131102FFFFFF00B9ACA008877D72489B8E82FF9D9185FF867B
-      71FF564F48FF504A44FF80766CFF6E665DFF826C58FFA6917DFF948474FF564F
-      48FF0C0B0B7A07070601FFFFFF00AB9D9004AFA194E1BAAEA2FF82776DFF8277
-      6DFFAA917BFFBAA794FFB7A48EFAB09781FF9F8D7DFF836D5BFF716357FF9589
-      7DFF040403E000000003FFFFFF009F9286059D9185FFB1A396FF7F756BFF7C72
-      68FF776D64FF6C635BFF2E2A26FF564F48FF80766CFF7C7268FF776D64FF7067
-      5EFF000000FE00000005FFFFFF00797066055C554EF9423D38FF58514AFF3D38
-      33FF332F2BFF23201DE5171614301E1C19B51A1816FF252220FF191715FF0F0E
-      0DFF010101EE00000002FFFFFF00FFFFFF005A524CC39F9286FFCCC3BAFFC0B4
-      AAFFA6988BFF3E3934A8FFFFFF002C2925A8908479FFC2B8ADFFC0B4AAFFA89B
-      8EFF110F0EC3FFFFFF00FFFFFF00FFFFFF00534C46FC83786FFFCCC3BAFF7970
-      66FF71685FFF37332ED5FFFFFF00252220D5857A70FFC2B8ADFF786F65FF7B71
-      67FF0A0908FCFFFFFF00FFFFFF00FFFFFF004D4741FF83786FFFCCC3BAFF786F
-      65FF7B7167FF2F2B28F9272421011D1B18EE95897DFFC2B8ADFF786F65FF7C72
-      68FF060505FFFFFFFF00FFFFFF00FFFFFF0046413BFF857A70FFC3B8AEFF7C72
-      68FF7F756BFF36322DFF1E1C190F282522D495897DFFBAAEA2FF7C7268FF7F75
-      6BFF010101FFFFFFFF00FFFFFF00FFFFFF003E3934FF393430FF332F2BFF2C29
-      25FF272421FF201D1BFF1716141A110F0EDB0B0A09FF070706FF040403FF0000
-      00FF000000FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
-      FF00FFFFFF00FFFFFF00FFFFFF00
+      FAFFFAFAFAFFFAFAFAFFFAFAFAFF
     }
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 200
+    OnTimer = Timer1Timer
+    left = 896
+    top = 632
   end
 end

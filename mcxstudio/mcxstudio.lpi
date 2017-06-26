@@ -124,7 +124,7 @@
         <PackageName Value="LCL"/>
       </Item5>
     </RequiredPackages>
-    <Units Count="16">
+    <Units Count="20">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -139,11 +139,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="1407"/>
-        <CursorPos X="64" Y="1429"/>
+        <TopLine Value="1066"/>
+        <CursorPos X="34" Y="1082"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
-          <Item0 Y="539" ID="9"/>
+          <Item0 Y="574" ID="9"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -159,80 +159,69 @@
         <UsageCount Value="229"/>
       </Unit2>
       <Unit3>
-        <Filename Value="mcxgui.lfm"/>
-        <ComponentName Value="fmMCX"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="117"/>
-        <CursorPos X="59" Y="143"/>
-        <UsageCount Value="1"/>
-        <DefaultSyntaxHighlighter Value="LFM"/>
-      </Unit3>
-      <Unit4>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/grids.pas"/>
         <UnitName Value="Grids"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="9263"/>
         <CursorPos X="33" Y="9282"/>
-        <UsageCount Value="26"/>
-      </Unit4>
-      <Unit5>
+        <UsageCount Value="24"/>
+      </Unit3>
+      <Unit4>
         <Filename Value="default.json"/>
         <EditorIndex Value="-1"/>
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="13"/>
+        <UsageCount Value="11"/>
         <DefaultSyntaxHighlighter Value="None"/>
-      </Unit5>
-      <Unit6>
+      </Unit4>
+      <Unit5>
         <Filename Value="mcxdefaultinput.json"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="97"/>
+        <UsageCount Value="122"/>
         <DefaultSyntaxHighlighter Value="None"/>
-      </Unit6>
-      <Unit7>
+      </Unit5>
+      <Unit6>
         <Filename Value="mcxdefaultinput.lrs"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="41" Y="18"/>
-        <UsageCount Value="5"/>
-      </Unit7>
-      <Unit8>
+        <UsageCount Value="3"/>
+      </Unit6>
+      <Unit7>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/lresources.pp"/>
         <UnitName Value="LResources"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="57"/>
         <CursorPos X="3" Y="81"/>
-        <UsageCount Value="5"/>
+        <UsageCount Value="3"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="/usr/share/fpcsrc/3.0.0/packages/fcl-json/src/fpjson.pp"/>
+        <EditorIndex Value="3"/>
+        <CursorPos X="35" Y="29"/>
+        <UsageCount Value="58"/>
+        <Loaded Value="True"/>
       </Unit8>
       <Unit9>
-        <Filename Value="/usr/share/fpcsrc/3.0.0/packages/fcl-json/src/fpjson.pp"/>
+        <Filename Value="/usr/lib/lazarus/1.6/lcl/include/treeview.inc"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="18"/>
-        <CursorPos X="15" Y="46"/>
-        <UsageCount Value="45"/>
+        <TopLine Value="359"/>
+        <CursorPos X="46" Y="380"/>
+        <UsageCount Value="39"/>
         <Loaded Value="True"/>
       </Unit9>
       <Unit10>
-        <Filename Value="/usr/lib/lazarus/1.6/lcl/include/treeview.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="4237"/>
-        <CursorPos Y="4248"/>
-        <UsageCount Value="36"/>
-      </Unit10>
-      <Unit11>
         <Filename Value="/usr/share/fpcsrc/3.0.0/rtl/objpas/classes/classesh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="681"/>
         <CursorPos X="44" Y="703"/>
-        <UsageCount Value="39"/>
-      </Unit11>
-      <Unit12>
+        <UsageCount Value="37"/>
+      </Unit10>
+      <Unit11>
         <Filename Value="mcxshape.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmShapeEditor"/>
@@ -241,148 +230,183 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="54"/>
         <CursorPos X="52" Y="74"/>
-        <UsageCount Value="81"/>
-      </Unit12>
-      <Unit13>
+        <UsageCount Value="106"/>
+      </Unit11>
+      <Unit12>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/include/control.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="2714"/>
         <CursorPos Y="2740"/>
-        <UsageCount Value="37"/>
-      </Unit13>
-      <Unit14>
+        <UsageCount Value="35"/>
+      </Unit12>
+      <Unit13>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/include/buttoncontrol.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="31"/>
         <CursorPos Y="55"/>
-        <UsageCount Value="37"/>
-      </Unit14>
-      <Unit15>
+        <UsageCount Value="35"/>
+      </Unit13>
+      <Unit14>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/include/containedaction.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="88"/>
         <CursorPos Y="98"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="/usr/lib/lazarus/1.6/lcl/include/listitem.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="576"/>
+        <CursorPos Y="600"/>
+        <UsageCount Value="17"/>
       </Unit15>
+      <Unit16>
+        <Filename Value="/usr/lib/lazarus/1.6/lcl/include/custombitmap.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="173"/>
+        <CursorPos X="58" Y="191"/>
+        <UsageCount Value="15"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="/usr/lib/lazarus/1.6/lcl/include/customform.inc"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="15"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="/usr/lib/lazarus/1.6/lcl/include/application.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1059"/>
+        <CursorPos X="51" Y="1079"/>
+        <UsageCount Value="15"/>
+      </Unit18>
+      <Unit19>
+        <Filename Value="/usr/lib/lazarus/1.6/lcl/lclmessageglue.pas"/>
+        <UnitName Value="LCLMessageGlue"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="93"/>
+        <CursorPos Y="114"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+      </Unit19>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1307" TopLine="1281"/>
+        <Caret Line="674" TopLine="659"/>
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1308" TopLine="1281"/>
+        <Caret Line="675" TopLine="659"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1310" TopLine="1281"/>
+        <Caret Line="676" TopLine="659"/>
       </Position3>
       <Position4>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1312" TopLine="1281"/>
+        <Caret Line="1594" TopLine="1573"/>
       </Position4>
       <Position5>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1313" TopLine="1281"/>
+        <Caret Line="1595" TopLine="1573"/>
       </Position5>
       <Position6>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1317" TopLine="1283"/>
+        <Caret Line="1596" Column="39" TopLine="1573"/>
       </Position6>
       <Position7>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1301" TopLine="1283"/>
+        <Caret Line="1598" TopLine="1573"/>
       </Position7>
       <Position8>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1303" TopLine="1283"/>
+        <Caret Line="1602" TopLine="1573"/>
       </Position8>
       <Position9>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1304" TopLine="1283"/>
+        <Caret Line="1605" TopLine="1573"/>
       </Position9>
       <Position10>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1305" TopLine="1283"/>
+        <Caret Line="1608" TopLine="1579"/>
       </Position10>
       <Position11>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1306" TopLine="1283"/>
+        <Caret Line="1609" TopLine="1579"/>
       </Position11>
       <Position12>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1307" TopLine="1295"/>
+        <Caret Line="1610" TopLine="1579"/>
       </Position12>
       <Position13>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1327" Column="27" TopLine="1295"/>
+        <Caret Line="1611" TopLine="1579"/>
       </Position13>
       <Position14>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1329" TopLine="1295"/>
+        <Caret Line="1612" TopLine="1579"/>
       </Position14>
       <Position15>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1331" TopLine="1297"/>
+        <Caret Line="1615" TopLine="1583"/>
       </Position15>
       <Position16>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1314" Column="35" TopLine="1298"/>
+        <Caret Line="1611" TopLine="1583"/>
       </Position16>
       <Position17>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="1616" TopLine="1590"/>
       </Position17>
       <Position18>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="286" Column="31" TopLine="252"/>
+        <Caret Line="1618" TopLine="1590"/>
       </Position18>
       <Position19>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="965" Column="30" TopLine="934"/>
+        <Caret Line="1426" Column="2" TopLine="1355"/>
       </Position19>
       <Position20>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="978" Column="28" TopLine="943"/>
       </Position20>
       <Position21>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="293" Column="32" TopLine="259"/>
       </Position21>
       <Position22>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="965" Column="31" TopLine="930"/>
+        <Caret Line="515" Column="24" TopLine="481"/>
       </Position22>
       <Position23>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="952" Column="63" TopLine="930"/>
+        <Caret Line="677" TopLine="644"/>
       </Position23>
       <Position24>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="17" Column="41"/>
+        <Caret Line="676" Column="42" TopLine="655"/>
       </Position24>
       <Position25>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="279" Column="23" TopLine="245"/>
+        <Caret Line="677" Column="49" TopLine="657"/>
       </Position25>
       <Position26>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1021" Column="13" TopLine="986"/>
+        <Caret Line="672" Column="48" TopLine="651"/>
       </Position26>
       <Position27>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1225" Column="48" TopLine="1206"/>
       </Position27>
       <Position28>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1429" Column="66" TopLine="1401"/>
+        <Caret Line="286" Column="21" TopLine="252"/>
       </Position28>
       <Position29>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1316" Column="100" TopLine="1296"/>
+        <Caret Line="398" Column="49" TopLine="364"/>
       </Position29>
       <Position30>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1426" Column="39" TopLine="1406"/>
+        <Caret Line="1536" Column="26" TopLine="1519"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
@@ -416,6 +440,15 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="mcxgui.pas"/>
+        <Line Value="1083"/>
+      </Item1>
+    </BreakPoints>
     <Watches Count="1">
       <Item1>
         <Expression Value="pMCX.Running"/>
