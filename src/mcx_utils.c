@@ -185,7 +185,11 @@ void mcx_clearcfg(Config *cfg){
 void mcx_savedata(float *dat, int len, int doappend, const char *suffix, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
-     sprintf(name,"%s.%s",cfg->session,suffix);
+     if(cfg->rootpath[0])
+         sprintf(name,"%s%c%s.%s",cfg->rootpath,pathsep,cfg->session,suffix);
+     else
+         sprintf(name,"%s.%s",cfg->session,suffix);
+
      if(doappend){
         fp=fopen(name,"ab");
      }else{
