@@ -12,11 +12,11 @@ unit mcxgui;
 interface
 
 uses
-  Classes, SysUtils, process, FileUtil, TAGraph, SynEdit, math,
+  Classes, SysUtils, process, FileUtil, SynEdit, math, ClipBrd,
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, IniPropStorage, inifiles, fpjson, jsonparser, mcxabout, mcxshape;
+  CheckLst, inifiles, fpjson, jsonparser, strutils, regex, mcxabout, mcxshape;
 
 type
 
@@ -24,7 +24,23 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
-    ILJSON: TImageList;
+    mcxdoToggleView: TAction;
+    mcxdoPaste: TAction;
+    mcxdoCopy: TAction;
+    ckDoReplay: TCheckBox;
+    ckSaveMask: TCheckBox;
+    ckbDebug: TCheckListBox;
+    edReplayDet: TSpinEdit;
+    JSONIcons: TImageList;
+    ImageList3: TImageList;
+    Label16: TLabel;
+    Label17: TLabel;
+    MenuItem19: TMenuItem;
+    MenuItem20: TMenuItem;
+    MenuItem21: TMenuItem;
+    miClearLog1: TMenuItem;
+    OpenHistoryFile: TOpenDialog;
+    PopupMenu2: TPopupMenu;
     shapePrint: TAction;
     shapeEdit: TAction;
     shapeAddCylinder: TAction;
@@ -146,6 +162,7 @@ type
     rbUseDesigner: TRadioButton;
     SaveProject: TSaveDialog;
     sbInfo: TStatusBar;
+    btLoadSeed: TSpeedButton;
     Splitter1: TSplitter;
     Splitter3: TSplitter;
     Splitter4: TSplitter;
@@ -189,6 +206,7 @@ type
     ToolButton28: TToolButton;
     ToolButton29: TToolButton;
     ToolButton3: TToolButton;
+    ToolButton30: TToolButton;
     ToolButton31: TToolButton;
     ToolButton32: TToolButton;
     ToolButton4: TToolButton;
@@ -198,23 +216,28 @@ type
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
     tvShapes: TTreeView;
-    procedure grAdvSettingsClick(Sender: TObject);
+    procedure btLoadSeedClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure grAdvSettingsDblClick(Sender: TObject);
-    procedure grAdvSettingsEnter(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
+    procedure lvJobsMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure mcxdoAboutExecute(Sender: TObject);
     procedure mcxdoAddItemExecute(Sender: TObject);
+    procedure mcxdoCopyExecute(Sender: TObject);
     procedure mcxdoDefaultExecute(Sender: TObject);
     procedure mcxdoDeleteItemExecute(Sender: TObject);
     procedure mcxdoExitExecute(Sender: TObject);
     procedure mcxdoHelpExecute(Sender: TObject);
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
+    procedure mcxdoPasteExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
     procedure mcxdoSaveExecute(Sender: TObject);
     procedure mcxdoStopExecute(Sender: TObject);
+    procedure mcxdoToggleViewExecute(Sender: TObject);
     procedure mcxdoVerifyExecute(Sender: TObject);
     procedure edConfigFileChange(Sender: TObject);
     procedure edRespinChange(Sender: TObject);
@@ -225,18 +248,16 @@ type
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
+    procedure mmOutputChange(Sender: TObject);
     procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
     procedure rbUseFileChange(Sender: TObject);
-    procedure sgConfigClick(Sender: TObject);
+    procedure sbInfoDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
+      const Rect: TRect);
     procedure sgConfigDblClick(Sender: TObject);
-    procedure sgDetSetEditText(Sender: TObject; ACol, ARow: Integer;
-      const Value: string);
     procedure sgMediaEditingDone(Sender: TObject);
-    procedure sgMediaSetEditText(Sender: TObject; ACol, ARow: Integer;
-      const Value: string);
     procedure shapeAddBoxExecute(Sender: TObject);
     procedure shapeAddCylinderExecute(Sender: TObject);
     procedure shapeAddGridExecute(Sender: TObject);
@@ -254,10 +275,8 @@ type
     procedure shapePrintExecute(Sender: TObject);
     procedure shapeResetExecute(Sender: TObject);
     procedure shapeDeleteExecute(Sender: TObject);
-    procedure StaticText1DblClick(Sender: TObject);
     procedure StaticText2DblClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
-    procedure ToolButton22Click(Sender: TObject);
     procedure tvShapesDeletion(Sender: TObject; Node: TTreeNode);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
     procedure tvShapesSelectionChanged(Sender: TObject);
@@ -267,6 +286,7 @@ type
     { public declarations }
     MapList, ConfigData, JSONstr : TStringList;
     JSONdata : TJSONData;
+    RegEngine:TRegexEngine;
     function CreateCmd:string;
     function CreateCmdOnly:string;
     procedure VerifyInput;
@@ -289,6 +309,7 @@ type
     procedure AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
     procedure AddShapes(shapeid: string; defaultval: string);
     function RebuildShapeJSON(root: TTreeNode): integer;
+    function RebuildLayeredObj(root: TTreeNode; out maxtag: integer): TJSONArray;
     procedure SetModified;
     procedure LoadJSONShapeTree(shapejson: string);
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
@@ -310,11 +331,13 @@ Const
      (-1,8,9,7,6,5,4);
   JSONTypeNames : Array[TJSONtype] of string =
      ('Unknown','Number','String','Boolean','Null','Array','Object');
+  DebugFlags: string ='RMP';
 
 { TfmMCX }
 procedure TfmMCX.AddLog(str:string);
 begin
     mmOutput.Lines.Add(str);
+    mmOutput.SelStart := length(mmOutput.Text);
 end;
 
 procedure TfmMCX.edConfigFileChange(Sender: TObject);
@@ -377,8 +400,14 @@ begin
            edThread.Enabled:=not ck.Checked;
            edBlockSize.Enabled:=not ck.Checked;
        end;
+       if(ck.Hint='SaveSeed') or (ck.Hint='SaveExit') then begin
+           ckSaveDetector.Checked:=true;
+       end;
        if(ck.Hint='SaveDetector') then begin
            edDetectedNum.Enabled:=ck.Checked;
+       end;
+       if(ck.Hint='DoReplay') then begin
+           edReplayDet.Enabled:=ck.Checked;
        end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
@@ -459,7 +488,7 @@ begin
    node:=lvJobs.Items.Add;
    for i:=1 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
    node.Caption:=sessionid;
-   node.ImageIndex:=6;
+   node.ImageIndex:=14;
    plSetting.Enabled:=true;
    pcSimuEditor.Enabled:=true;
    lvJobs.Selected:=node;
@@ -469,6 +498,27 @@ begin
    UpdateMCXActions(acMCX,'','Run');
    UpdateMCXActions(acMCX,'Preproc','');
    UpdateMCXActions(acMCX,'SelectedJob','');
+end;
+
+procedure TfmMCX.mcxdoCopyExecute(Sender: TObject);
+var
+   setting: TStringList;
+   j: integer;
+begin
+   if(lvJobs.Selected = nil) then exit;
+   setting:=TStringList.Create;
+   setting.Values['Session']:=lvJobs.Selected.Caption;
+   for j:=1 to lvJobs.Columns.Count-1 do begin
+           setting.Add(lvJobs.Columns.Items[j].Caption+'='+lvJobs.Selected.SubItems.Strings[j-1]);
+   end;
+   Clipboard.Open;
+   try
+      Clipboard.Clear;
+      Clipboard.AsText := setting.Text;
+   finally
+      Clipboard.Close;
+      setting.Free;
+   end;
 end;
 
 procedure TfmMCX.mcxdoDefaultExecute(Sender: TObject);
@@ -488,9 +538,11 @@ begin
       ckSaveDetector.Checked:=true;   //-d
       ckSaveExit.Checked:=false;  //-x
       ckSaveRef.Checked:=false;  //-X
-      ckSrcFrom0.Checked:=false;  //-z
+      ckSrcFrom0.Checked:=true;  //-z
       ckSkipVoid.Checked:=false;  //-k
       ckAutopilot.Checked:=true;
+      ckSaveSeed.Checked:=false;
+      ckSaveMask.Checked:=false;
       edThread.Enabled:=false;
       edBlockSize.Enabled:=false;
       edWorkLoad.Text:='100';
@@ -501,7 +553,10 @@ begin
       end;
       edDetectedNum.Text:='10000000';
       edSeed.Text:='1648335518';
+      ckDoReplay.Checked:=false;
+      ckbDebug.CheckAll(cbUnchecked);
       edReseed.Text:='10000000';
+      edReplayDet.Value:=0;
       rbUseDesigner.Checked:=true;
       sgMedia.RowCount:=1;
       sgMedia.RowCount:=129;
@@ -545,8 +600,23 @@ begin
   mcxdoSave.Enabled:=true;
 end;
 
-procedure TfmMCX.grAdvSettingsClick(Sender: TObject);
+procedure TfmMCX.lvJobsMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
 begin
+
+end;
+
+procedure TfmMCX.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+      tvShapes.Enabled:=false;
+end;
+
+procedure TfmMCX.btLoadSeedClick(Sender: TObject);
+begin
+      if(OpenHistoryFile.Execute) then begin
+          edSeed.Text:=OpenHistoryFile.FileName;
+          ckDoReplay.Checked:=true;
+      end;
 end;
 
 procedure TfmMCX.grAdvSettingsDblClick(Sender: TObject);
@@ -566,10 +636,6 @@ begin
        end;
        grAdvSettings.Tag:=-1;
      end;
-end;
-
-procedure TfmMCX.grAdvSettingsEnter(Sender: TObject);
-begin
 end;
 
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
@@ -601,6 +667,31 @@ begin
   end
 end;
 
+procedure TfmMCX.mcxdoPasteExecute(Sender: TObject);
+var
+   setting: TStringList;
+   j: integer;
+   node: TListItem;
+begin
+   if(lvJobs.Selected = nil) then exit;
+   setting:=TStringList.Create;
+   setting.Text:=Clipboard.AsText;
+   node:=lvJobs.Items.Add;
+   for j:=1 to 100000 do begin
+       if(lvJobs.FindCaption(0,setting.Values['Session']+IntToStr(j),true,true,true) = nil) then
+          break;
+   end;
+   node.Caption:=setting.Values['Session']+IntToStr(j);
+   node.ImageIndex:=14;
+   for j:=1 to lvJobs.Columns.Count-1 do
+       node.SubItems.Add('');
+   for j:=1 to lvJobs.Columns.Count-1 do begin
+       node.SubItems.Strings[j-1]:=setting.Values[lvJobs.Columns.Items[j].Caption];
+   end;
+   setting.Free;
+   lvJobs.Selected:=node;
+end;
+
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
@@ -616,12 +707,18 @@ begin
 end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
+var
+    pbar: TProgressbar;
 begin
     if(not pMCX.Running) then begin
           //pMCX.CommandLine:='du /usr/ --max-depth=1';
           pMCX.CommandLine:=CreateCmd;
           AddLog('"-- Executing MCX --"');
           mmOutput.Tag:=mmOutput.Lines.Count;
+          if(ckbDebug.Checked[2]) then begin
+              sbInfo.Panels[1].Text:='0%';
+              sbInfo.Invalidate;
+          end;
           pMCX.Execute;
           mcxdoStop.Enabled:=true;
           mcxdoRun.Enabled:=false;
@@ -653,7 +750,18 @@ begin
           if(mcxdoVerify.Enabled) then
              mcxdoRun.Enabled:=true;
           AddLog('"-- Terminated MCX --"');
+          if(ckbDebug.Checked[2]) then begin
+              sbInfo.Panels[1].Text:='0%';
+          end;
      end
+end;
+
+procedure TfmMCX.mcxdoToggleViewExecute(Sender: TObject);
+begin
+     if(lvJobs.ViewStyle=vsIcon) then
+        lvJobs.ViewStyle:=vsReport
+     else
+         lvJobs.ViewStyle:=vsIcon;
 end;
 
 procedure TfmMCX.mcxdoVerifyExecute(Sender: TObject);
@@ -666,12 +774,15 @@ var
     shaperoot: TTreeNode;
 begin
     tvShapes.Enabled:=false;
+    if(tvShapes.Items.Count >0) and (tvShapes.Items[0].Data <> nil) then begin
+        TJSONData(tvShapes.Items[0].Data).Free;
+        tvShapes.Items[0].Data:=nil;
+    end;
     tvShapes.Items.BeginUpdate;
     tvShapes.Items.Clear;
     tvShapes.Items.EndUpdate;
     tvShapes.Enabled:=true;
     shaperoot:=tvShapes.Items.Add(nil,'Shapes');
-    FreeAndNil(JSONdata);
     JSONdata:=GetJSON(shapejson);
     if(JSONData.FindPath('Shapes') <> nil) then
        ShowJSONData(shaperoot,JSONdata.Items[0])
@@ -690,9 +801,16 @@ begin
         MapList.Add(lvJobs.Columns.Items[i].Caption);
     end;
 
+    JSONdata:=TJSONObject.Create;
+
     ConfigData:=TStringList.Create();
     ConfigData.Clear;
     ConfigData.CommaText:=sgConfig.Cols[2].CommaText;
+
+    RegEngine:=TRegexEngine.Create('\%[0-9\ ]{4}\]');
+
+    btLoadSeed.Glyph.Assign(nil);
+    JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
 
     ProfileChanged:=false;
     if not (SearchForExe(CreateCmdOnly) = '') then begin
@@ -706,6 +824,8 @@ procedure TfmMCX.FormDestroy(Sender: TObject);
 begin
     MapList.Free;
     ConfigData.Free;
+    JSONData.Free;
+    RegEngine.Free;
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -715,8 +835,9 @@ begin
           if (lvJobs.Selected=nil) then begin
           end else begin
               mcxdoDeleteItem.Enabled:=true;
+              mcxdoCopy.Enabled:=Selected;
           end;
-     end
+     end;
 end;
 
 procedure TfmMCX.RunExternalCmd(cmd: string);
@@ -772,10 +893,6 @@ var
      addnew: TListItem;
 begin
      if not (lvJobs.Selected = nil) then begin
-         {if(lvJobs.Selected.ImageIndex=3) then begin
-             addnew:=lvJobs.Selected;
-             mcxdoAddItemExecute(Sender);
-         end;}
          ListToPanel2(lvJobs.Selected);
          plSetting.Enabled:=true;
          pcSimuEditor.Enabled:=true;
@@ -787,6 +904,11 @@ end;
 procedure TfmMCX.miClearLogClick(Sender: TObject);
 begin
     mmOutput.Lines.Clear;
+end;
+
+procedure TfmMCX.mmOutputChange(Sender: TObject);
+begin
+
 end;
 
 procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
@@ -808,7 +930,6 @@ end;
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
      mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
-     mmOutput.TopLine:=mmOutput.Tag;
      if not (pMCX.Running) then
          pMCXTerminate(Sender);
 end;
@@ -822,6 +943,7 @@ begin
      sbInfo.Tag:=0;
      sbInfo.Color := clBtnFace;
      AddLog('"-- Task completed --"');
+     sbInfo.Panels[1].Text:='';
      UpdateMCXActions(acMCX,'','Run');
 end;
 
@@ -843,8 +965,24 @@ begin
    end;
 end;
 
-procedure TfmMCX.sgConfigClick(Sender: TObject);
+procedure TfmMCX.sbInfoDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
+  const Rect: TRect);
+var
+   perc: integer;
+   newrect: TRect;
 begin
+   case Panel.Index of
+      1: begin
+          if not (sscanf(sbInfo.Panels[1].Text,'%d\%',[@perc])=1) then exit;
+          sbInfo.Canvas.Brush.style:= bsSolid;
+          sbInfo.Canvas.Brush.color:= RGBToColor(230, 184, 156);
+          newrect:=Rect;
+          newrect.Right:=Round(real((Rect.Right-Rect.Left)*perc)/100.0);
+          sbInfo.Canvas.FillRect(newrect);
+          sbInfo.Canvas.Brush.style:= bsClear;
+          sbInfo.Canvas.TextOut(Rect.Left+Round(Real(Rect.Right-Rect.Left)*0.5)-Rect.Bottom,Rect.Top, sbInfo.Panels[1].Text);
+      end;
+   end;
 end;
 
 procedure TfmMCX.sgConfigDblClick(Sender: TObject);
@@ -857,11 +995,6 @@ begin
          if(sg.Cells[sg.Col,sg.Row]='See Volume Designer...') then
               pcSimuEditor.ActivePage:=tabVolumeDesigner;
    end;
-end;
-
-procedure TfmMCX.sgDetSetEditText(Sender: TObject; ACol, ARow: Integer;
-  const Value: string);
-begin
 end;
 
 procedure TfmMCX.GotoColRow(grid: TStringGrid; Col, Row: Integer);
@@ -891,20 +1024,14 @@ begin
      edRespinChange(Sender);
 end;
 
-procedure TfmMCX.sgMediaSetEditText(Sender: TObject; ACol, ARow: Integer;
-  const Value: string);
-begin
-
-end;
-
 procedure TfmMCX.shapeAddBoxExecute(Sender: TObject);
 begin
-  AddShapes('Box','Tag=1|O=[30,30,30]|Size=[10,10,10]');
+  AddShapes('Box',Format('Tag=%d|O=[30,30,30]|Size=[10,10,10]',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddCylinderExecute(Sender: TObject);
 begin
-  AddShapes('Cylinder','Tag=1|C0=[30,30,0]|C1=[30,30,60]|R=5');
+  AddShapes('Cylinder',Format('Tag=%d|C0=[30,30,0]|C1=[30,30,60]|R=5',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
@@ -962,7 +1089,7 @@ end;
 
 procedure TfmMCX.shapeAddGridExecute(Sender: TObject);
 begin
-     AddShapes('Grid','Tag=1|Size=[60,60,60]');
+     AddShapes('Grid',Format('Tag=%d|Size=[60,60,60]',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddNameExecute(Sender: TObject);
@@ -977,66 +1104,104 @@ end;
 
 procedure TfmMCX.shapeAddSphereExecute(Sender: TObject);
 begin
-  AddShapes('Sphere','Tag=1|O=[30,30,30]|R=10');
+  AddShapes('Sphere',Format('Tag=%d|O=[30,30,30]|R=10',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddSubgridExecute(Sender: TObject);
 begin
-  AddShapes('Subgrid','Tag=1|O=[30,30,30]|Size=[10,10,10]');
+  AddShapes('Subgrid',Format('Tag=%d|O=[30,30,30]|Size=[10,10,10]',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddUpperSpaceExecute(Sender: TObject);
 begin
-  AddShapes('UpperSpace','Tag=1|Coef=[1,-1,0,0]');
+  AddShapes('UpperSpace',Format('Tag=%d|Coef=[1,-1,0,0]',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddXLayersExecute(Sender: TObject);
 begin
-   AddShapes('XLayers','Layer 1=[1,10,1]|Layer 2=[11,30,2]|Layer 3=[31,50,3]');
+   AddShapes('XLayers',Format('Layer 1=[1,10,%d]|Layer 2=[11,30,%d]|Layer 3=[31,50,%d]',[tvShapes.Tag+1,tvShapes.Tag+2,tvShapes.Tag+3]));
 end;
 
 procedure TfmMCX.shapeAddXSlabsExecute(Sender: TObject);
 begin
-  AddShapes('XSlabs','Tag=1|Bound=[1,10]');
+  AddShapes('XSlabs',Format('Tag=%d|Bound=[1,10]',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddYLayersExecute(Sender: TObject);
 begin
-   AddShapes('YLayers','Layer 1=[1,10,1]|Layer 2=[11,30,2]|Layer 3=[31,50,3]');
+   AddShapes('YLayers',Format('Layer 1=[1,10,%d]|Layer 2=[11,30,%d]|Layer 3=[31,50,%d]',[tvShapes.Tag+1,tvShapes.Tag+2,tvShapes.Tag+3]));
 end;
 
 procedure TfmMCX.shapeAddYSlabsExecute(Sender: TObject);
 begin
-   AddShapes('YSlabs','Tag=1|Bound=[1,10]');
+   AddShapes('YSlabs',Format('Tag=%d|Bound=[1,10]',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddZLayersExecute(Sender: TObject);
 begin
-  AddShapes('ZLayers','Layer 1=[1,10,1]|Layer 2=[11,30,2]|Layer 3=[31,50,3]');
+  AddShapes('ZLayers',Format('Layer 1=[1,10,%d]|Layer 2=[11,30,%d]|Layer 3=[31,50,%d]',[tvShapes.Tag+1,tvShapes.Tag+2,tvShapes.Tag+3]));
 end;
 
 procedure TfmMCX.shapeAddZSlabsExecute(Sender: TObject);
 begin
-  AddShapes('ZSlabs','Tag=1|Bound=[1,10]');
+  AddShapes('ZSlabs',Format('Tag=%d|Bound=[1,10]',[tvShapes.Tag+1]));
 end;
 
+function TfmMCX.RebuildLayeredObj(root: TTreeNode; out maxtag: integer): TJSONArray;
+var
+    i,j: integer;
+    val: extended;
+    row: TJSONArray;
+begin
+    Result:= TJSONArray.Create;
+    maxtag:=0;
+    for i:=0 to root.Count-1 do begin
+        if(Pos('Layer ',root.Items[i].Text)=1) then begin
+           row:= TJSONArray.Create;
+           for j:=0 to root.Items[i].Count-1 do begin
+               if not (TryStrToFloat(root.Items[i].Items[j].Text,val)) then begin
+                   raise Exception.Create('A layered object can not have non-numeric elements');
+               end;
+               if j=root.Items[i].Count-1 then
+                   maxtag:=max(Round(val),maxtag);
+               if(Frac(val)=0) then
+                   row.Add(Round(val))
+               else
+                   row.Add(val);
+           end;
+           Result.Add(row);
+        end;
+    end;
+end;
 function TfmMCX.RebuildShapeJSON(root: TTreeNode): integer;
 var
-     i, cc: integer;
+     i, maxtag: integer;
      jdata: TJSONData;
+     jobj: TJSONObject;
 begin
      Result:=0;
      jdata:=GetJSON('{"Shapes": []}');
      for i:=0 to root.Count-1 do begin
          if(Assigned(root.Items[i].Data)) then begin
-            TJSONArray(jdata.Items[0]).Add(TJSONObject(root.Items[i].Data));
+            jobj:=TJSONObject.Create;
+            if(Pos('Layers',root.Items[i].Text)=2) then begin
+                jobj.Add(root.Items[i].Text,RebuildLayeredObj(root.Items[i],maxtag));
+                Result:=Max(Result,maxtag);
+            end else begin
+                jobj.Add(root.Items[i].Text,TJSONObject(root.Items[i].Data));
+            end;
+            TJSONArray(jdata.Items[0]).Add(jobj);
+
             if(TJSONData(root.Items[i].Data).Count=0) then continue;
-            cc:= TJSONData(TJSONData(root.Items[i].Data).Items[0]).Count;
-            if(TJSONData(root.Items[i].Data).Items[0].FindPath('Tag') <> nil) then
-                Result:=Max(Result,TJSONObject(TJSONData(root.Items[i].Data).Items[0]).Integers['Tag']);
+            if(TJSONData(root.Items[i].Data).FindPath('Tag') <> nil) then
+                Result:=Max(Result,TJSONObject(root.Items[i].Data).Integers['Tag']);
+
+            if (root.Items[i].Text='Grid') and (TJSONData(root.Items[i].Data).FindPath('Size') <> nil) then
+                sgConfig.Cells[2,2]:=TJSONObject(root.Items[i].Data).Arrays['Size'].AsJSON;
          end;
      end;
      root.Data:=jdata;
+     root.TreeView.Tag:=Result;
 end;
 
 procedure TfmMCX.shapePrintExecute(Sender: TObject);
@@ -1057,7 +1222,6 @@ end;
 procedure TfmMCX.shapeResetExecute(Sender: TObject);
 var
   ret:integer;
-  shaperoot: TTreeNode;
 begin
   ret:=Application.MessageBox('The current shape has not been saved, are you sure you want to clear?',
     'Confirm', MB_YESNOCANCEL);
@@ -1074,10 +1238,6 @@ begin
        tvShapes.Selected.Delete;
 end;
 
-procedure TfmMCX.StaticText1DblClick(Sender: TObject);
-begin
-end;
-
 procedure TfmMCX.StaticText2DblClick(Sender: TObject);
 begin
     GridToStr(sgMedia);
@@ -1092,11 +1252,6 @@ begin
       GotoGrid.EditorMode := True;
   end;
 end;
-procedure TfmMCX.ToolButton22Click(Sender: TObject);
-begin
-
-end;
-
 procedure TfmMCX.tvShapesDeletion(Sender: TObject; Node: TTreeNode);
 begin
   if((Sender as TTreeView).Enabled=false) then exit;
@@ -1108,28 +1263,34 @@ procedure TfmMCX.tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string
   );
 var
      val: extended;
+     cc: integer;
+     ss: string;
 begin
      if(Node.Parent= nil) then exit;
 
      if(Node.ImageIndex=ImageTypeMap[jtNumber]) then begin
-         try
-               val:=StrToFloat(S);
-               if (Pos(Node.Parent.Text,'Layer ')=0 ) then begin
-                    if(Frac(val)=0) then
-                       TJSONArray(Node.Parent.Data).Integers[Node.Index]:=Round(val)
-                    else
-                       TJSONArray(Node.Parent.Data).Floats[Node.Index]:=val;
-               end else begin
-                    if(Frac(val)=0) then
-                       TJSONArray(TJSONArray(Node.Parent.Data).Items[Node.Parent.Index]).Integers[Node.Index]:=Round(val)
-                    else
-                       TJSONArray(TJSONArray(Node.Parent.Data).Items[Node.Parent.Index]).Floats[Node.Index]:=val;
-               end;
-
-         except
-               ShowMessage('The field must be a number');
-               S:= Node.Text;
-               exit;
+         if(not TryStrToFloat(S, val)) then begin
+             ShowMessage('The field must be a number');
+             S:= Node.Text;
+             exit;
+         end;
+         if (Pos('Layer ',Node.Parent.Text)=0) then begin
+              if(TJSONData(Node.Parent.Data).JSONType=jtArray) then begin
+                  if(Frac(val)=0) then
+                      TJSONArray(Node.Parent.Data).Integers[Node.Index]:=Round(val)
+                  else
+                      TJSONArray(Node.Parent.Data).Floats[Node.Index]:=val;
+              end else if TJSONData(Node.Parent.Data).JSONType=jtNumber then begin
+                  if(Frac(val)=0) then
+                      TJSONData(Node.Parent.Data).Value:=Round(val)
+                  else
+                      TJSONData(Node.Parent.Data).Value:=val;
+              end;
+         end else begin
+              if(Frac(val)=0) then
+                 TJSONArray(TJSONArray(Node.Parent.Data).Items[Node.Parent.Index]).Integers[Node.Index]:=Round(val)
+              else
+                 TJSONArray(TJSONArray(Node.Parent.Data).Items[Node.Parent.Index]).Floats[Node.Index]:=val;
          end;
      end else if(Node.ImageIndex=ImageTypeMap[jtString]) then begin
           if(Length(S)=0) then begin
@@ -1137,9 +1298,14 @@ begin
                S:=Node.Text;
                exit;
           end;
-
-          if(Node.Parent <> nil) then
-             TJSONArray(Node.Parent.Data).Strings[Node.Index]:=S;
+          if(Node.Parent <> nil) then begin
+              if(TJSONData(Node.Parent.Data).JSONType=jtArray) then begin
+                  TJSONArray(Node.Parent.Data).Strings[Node.Index]:=S;
+              end else if TJSONData(Node.Parent.Data).JSONType=jtString then begin
+                  ss:= TJSONData(Node.Parent.Data).AsJSON;
+                  TJSONData(Node.Parent.Data).Value:=S;
+              end;
+          end;
      end;
      edRespinChange(Sender);
 end;
@@ -1159,11 +1325,11 @@ end;
 
 function TfmMCX.GetMCXOutput (outputstr: string) : string;
 var
-    Buffer: string;
+    Buffer, revbuf, percent: string;
     BytesAvailable: DWord;
     BytesRead:LongInt;
     list: TStringList;
-    i, idx, total, namepos: integer;
+    i, idx, len, total, namepos,hh: integer;
     gpuname, ss: string;
 begin
    if true then
@@ -1174,8 +1340,20 @@ begin
       begin
         SetLength(Buffer, BytesAvailable);
         BytesRead := pMCX.OutPut.Read(Buffer[1], BytesAvailable);
+        //Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
+        if(ckbDebug.Checked[2]) then begin
+               revbuf:=ReverseString(Buffer);
+               if RegEngine.MatchString(revbuf,idx,len) then begin
+                     percent:=ReverseString(Copy(revbuf,idx,len));
+                     if(sscanf(percent,']%d\%', [@total])=1) then begin
+                        sbInfo.Panels[1].Text:=Format('%d%%',[total]);
+                     end;
+               end;
+        end;
         Result := Result + copy(Buffer,1, BytesRead);
         BytesAvailable := pMCX.Output.NumBytesAvailable;
+        Sleep(100);
+        Application.ProcessMessages;
       end;
     end;
     if(sbInfo.Tag=-1) then begin
@@ -1232,6 +1410,7 @@ begin
      for i:=0 to sessions.Count-1 do begin
          node:=lvJobs.Items.Add;
          node.Caption:=sessions.Strings[i];
+         node.ImageIndex:=14;
          inifile.ReadSectionValues(node.Caption,vals);
          for j:=1 to lvJobs.Columns.Count-1 do
              node.SubItems.Add('');
@@ -1257,6 +1436,9 @@ begin
         raise Exception.Create('Config file must be specified');
     if rbUseFile.Checked and (not FileExists(edConfigFile.FileName)) then
         raise Exception.Create('Config file does not exist, please check the path');
+    if ckDoReplay.Checked and (not FileExists(edSeed.Text)) then
+        raise Exception.Create('An existing MCH file must be set as the seed when replay is desired');
+
     try
         nthread:=StrToInt(edThread.Text);
         nphoton:=StrToFloat(edPhoton.Text);
@@ -1309,7 +1491,8 @@ begin
       gpuid:=CheckListToStr(edGPUID);
       unitinmm:=StrToFloat(edUnitInMM.Text);
       hitmax:=StrToInt(edDetectedNum.Text);
-      seed:=StrToInt(edSeed.Text);
+      if not (ckDoReplay.Checked) then
+          seed:=StrToInt(edSeed.Text);
       reseed:=StrToInt(edReseed.Text);
   except
       raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
@@ -1323,7 +1506,10 @@ begin
           json.Objects['Session']:=TJSONObject.Create;
       jobj:= json.Objects['Session'];
       jobj.Floats['Photons']:=nphoton;
-      jobj.Integers['RNGSeed']:=seed;
+      if not (ckDoReplay.Checked) then
+          jobj.Integers['RNGSeed']:=seed;
+      //else
+      //    jobj.Strings['RNGSeed']:=edSeed.Text;
       jobj.Strings['ID']:=edSession.Text;
       jobj.Integers['DoMismatch']:=Integer(ckReflect.Checked);
       jobj.Integers['DoNormalize']:=Integer(ckNormalize.Checked);
@@ -1423,13 +1609,11 @@ begin
       end;
     except
       on E: Exception do
-          ShowMessage( 'Error: '+ E.Message );
+          ShowMessage( 'Error: '+ #13#10 + E.Message );
     end;
   finally
 {
      if(Assigned(json)) then json.Free;
-
-
      if(Assigned(jmedia)) then jmedia.Free;
      if(Assigned(jdets)) then jdets.Free;
      if(Assigned(jdet)) then jdet.Free;
@@ -1469,9 +1653,9 @@ end;
 
 function TfmMCX.CreateCmd:string;
 var
-    nthread, nblock,hitmax,seed,reseed: integer;
+    nthread, nblock,hitmax,seed,reseed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    cmd, jsonfile, gpuid: string;
+    cmd, jsonfile, gpuid, debugflag: string;
     shellscript: TStringList;
 begin
 //    cmd:='"'+Config.MCXExe+'" ';
@@ -1497,7 +1681,8 @@ begin
         gpuid:=CheckListToStr(edGPUID);
         unitinmm:=StrToFloat(edUnitInMM.Text);
         hitmax:=StrToInt(edDetectedNum.Text);
-        seed:=StrToInt(edSeed.Text);
+        if not (ckDoReplay.Checked) then
+            seed:=StrToInt(edSeed.Text);
         reseed:=StrToInt(edReseed.Text);
     except
         raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
@@ -1510,15 +1695,24 @@ begin
       cmd:=cmd+Format(' --thread %d --blocksize %d --photon %.0f --repeat %d --array %d --skipradius %f ',
         [nthread,nblock,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
     end;
-    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d --unitinmm %f',
+    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d --unitinmm %f --dumpmask %d --saveseed %d',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
-      Integer(ckSaveDetector.Checked),hitmax,unitinmm]);
-    if(seed<>0) then
-      cmd:=cmd+Format(' --seed %d',[seed]);
+      Integer(ckSaveDetector.Checked),hitmax,unitinmm,Integer(ckSaveMask.Checked),Integer(ckSaveSeed.Checked)]);
+    if(Length(edSeed.Text)>0) then
+      cmd:=cmd+Format(' --seed ''%s''',[edSeed.Text]);
+    if(edReplayDet.Enabled) then
+      cmd:=cmd+Format(' --replaydet %d',[edReplayDet.Value]);
     if(reseed <> 10000000) then
       cmd:=cmd+Format(' --reseed %d',[reseed]);
     if(ckSkipVoid.Checked) then
       cmd:=cmd+' --skipvoid 1';
+    debugflag:='';
+    for i:=0 to ckbDebug.Items.Count-1 do begin
+         if(ckbDebug.Checked[i]) then
+             debugflag:=debugflag+DebugFlags[i+1];
+    end;
+    if(Length(debugflag)>0) then
+        cmd:=cmd+' --debug '+debugflag;
 
     if(Length(jsonfile)>0) then begin
          shellscript:=TStringList.Create;
@@ -1563,7 +1757,7 @@ end;
 
 procedure TfmMCX.StrToGrid(str: string; grid:TStringGrid);
 var
-    i, j: integer;
+    i: integer;
     json: TStrings;
 begin
   json := TStringList.Create;
@@ -1596,18 +1790,11 @@ Var
   S : TStringList;
 begin
   N:=nil;
-  if Assigned(Data) then
-    begin
+  if Assigned(Data) then begin
     case Data.JSONType of
       jtArray,
       jtObject:
-        begin
-        if (Data.JSONType=jtArray) then begin
-          C:='Array (%d elements)';
-        end else begin
-           C:='Object (%d members)';
-        end;
-        //N:=AParent.TreeView.Items.AddChild(AParent,Format(C,[Data.Count]));
+      begin
         if(N =nil) then N:=AParent;
         S:=TstringList.Create;
         try
@@ -1616,8 +1803,7 @@ begin
               S.AddObject('_ARRAY_',Data.items[i])
             else
               S.AddObject(TJSONObject(Data).Names[i],Data.items[i]);
-          for I:=0 to S.Count-1 do
-            begin
+          for I:=0 to S.Count-1 do begin
             if(not (S[i] = '_ARRAY_')) then begin
                N2:=AParent.TreeView.Items.AddChild(N,S[i]);
             end else begin
@@ -1626,25 +1812,24 @@ begin
             D:=TJSONData(S.Objects[i]);
             N2.ImageIndex:=ImageTypeMap[D.JSONType];
             N2.SelectedIndex:=ImageTypeMap[D.JSONType];
-            N2.Data:=Data;
+            N2.Data:=D;
             ShowJSONData(N2,D);
-            end
+          end
         finally
           S.Free;
         end;
-        end;
+      end;
       jtNull:
         N:=AParent.TreeView.Items.AddChild(AParent,'null');
     else
       N:=AParent.TreeView.Items.AddChild(AParent,Data.AsString);
     end;
-    If Assigned(N) then
-      begin
+    If Assigned(N) then begin
       N.ImageIndex:=ImageTypeMap[Data.JSONType];
       N.SelectedIndex:=ImageTypeMap[Data.JSONType];
-      //N.Data:=Data;
-      end;
+      N.Data:=Data;
     end;
+  end;
 end;
 
 procedure TfmMCX.PanelToList2(node:TListItem);
@@ -1757,10 +1942,12 @@ begin
            se:=gb.Controls[id] as TSpinEdit;
            idx:=MapList.IndexOf(se.Hint);
            if(idx>=0) then begin
+             if(Length(node.SubItems.Strings[idx])>0) then begin
                 try
                       se.Value:=StrToInt(node.SubItems.Strings[idx]);
                 except
                 end;
+             end;
            end;
            continue;
         end;
@@ -1803,13 +1990,21 @@ begin
            ckb:=gb.Controls[id] as TCheckListBox;
            idx:=MapList.IndexOf(ckb.Hint);
            if(idx>=0) then begin
+             ss:= node.SubItems.Strings[idx];
+             if(ckb.Hint='GPUID') then begin
                ckb.Items.Clear;
-               ss:= node.SubItems.Strings[idx];
                for j:=0 to Length(node.SubItems.Strings[idx])-1 do begin
                    ckb.Items.Add('GPU#'+IntToStr(j+1));
                    if(ss[j+1]='1') then
                        ckb.Checked[j]:=true;
                end;
+             end else if(ckb.Hint='DebugFlags') then begin
+               ckb.CheckAll(cbUnchecked);
+               for j:=0 to Min(ckb.Items.Count, Length(node.SubItems.Strings[idx]))-1 do begin
+                   if(ss[j+1]='1') then
+                       ckb.Checked[j]:=true;
+               end;
+             end;
            end;
            continue;
         end;
