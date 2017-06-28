@@ -1054,7 +1054,10 @@ void  mcx_maskdet(Config *cfg){
      if(cfg->isdumpmask){
      	 char fname[MAX_PATH_LENGTH];
 	 FILE *fp;
-	 sprintf(fname,"%s.mask",cfg->session);
+         if(cfg->rootpath[0])
+             sprintf(fname,"%s%c%s.vol",cfg->rootpath,pathsep,cfg->session);
+         else
+             sprintf(fname,"%s.vol",cfg->session);
 	 if((fp=fopen(fname,"wb"))==NULL){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
@@ -1091,7 +1094,7 @@ void mcx_progressbar(float percent, Config *cfg){
         for(j=0;j<percentage;j++)      MCX_FPRINTF(stdout,"=");
         MCX_FPRINTF(stdout,(percentage<colwidth-18) ? ">" : "=");
         for(j=percentage;j<colwidth-18;j++) MCX_FPRINTF(stdout," ");
-        MCX_FPRINTF(stdout,"] %3d%%",percentage*100/(colwidth-18));
+        MCX_FPRINTF(stdout,"] %3d%%",(int)(percent*100));
 #ifdef MCX_CONTAINER
         mcx_matlab_flush();
 #else
@@ -1505,6 +1508,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
                                right outside of the domain; if non-zero voxels\n\
 			       appear at the boundary, pad 0s before using -X\n\
+ -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
@@ -1527,6 +1531,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
       combine multiple items by using a string, or add selected numbers together\n\
 \n\
 == Additional options ==\n\
+ --gscatter     [1e9|int]      after a photon completes the specified number of\n\
+                               scattering events, mcx then ignores anisotropy g\n\
+                               and only performs isotropic scattering for speed\n\
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that\n\
                                can travel before entering the domain, if \n\
                                launched outside (i.e. a widefield source)\n\
