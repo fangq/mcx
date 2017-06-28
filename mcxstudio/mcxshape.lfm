@@ -1,0 +1,77 @@
+object fmShapeEditor: TfmShapeEditor
+  Left = 1675
+  Height = 246
+  Top = 352
+  Width = 227
+  BorderIcons = [biSystemMenu]
+  Caption = 'Edit Shapes'
+  ClientHeight = 246
+  ClientWidth = 227
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  Position = poOwnerFormCenter
+  LCLVersion = '1.6.0.4'
+  object plEditor: TValueListEditor
+    Left = 0
+    Height = 196
+    Top = 0
+    Width = 227
+    Align = alClient
+    FixedCols = 0
+    Flat = True
+    RowCount = 2
+    TabOrder = 0
+    OnClick = plEditorClick
+    KeyOptions = [keyEdit, keyAdd]
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goEditing, goAutoAddRows, goAlwaysShowEditor, goThumbTracking]
+    Strings.Strings = (
+      ''
+    )
+    TitleCaptions.Strings = (
+      'Property'
+      'Value'
+    )
+    ColWidths = (
+      64
+      162
+    )
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 50
+    Top = 196
+    Width = 227
+    Align = alBottom
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ClientHeight = 50
+    ClientWidth = 227
+    TabOrder = 1
+    object btOK: TButton
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
+      Left = 24
+      Height = 28
+      Top = 11
+      Width = 80
+      Caption = 'OK'
+      ModalResult = 1
+      OnClick = btOKClick
+      TabOrder = 0
+    end
+    object btCancel: TButton
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 128
+      Height = 28
+      Top = 11
+      Width = 79
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Right = 19
+      Caption = 'Cancel'
+      ModalResult = 2
+      TabOrder = 1
+    end
+  end
+end
