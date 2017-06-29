@@ -1077,9 +1077,11 @@ void mcx_progressbar(float percent, Config *cfg){
 
 #ifndef MCX_CONTAINER
   #ifdef TIOCGWINSZ
-    struct winsize ttys;
+    struct winsize ttys={0,0,0,0};
     ioctl(0, TIOCGWINSZ, &ttys);
     colwidth=ttys.ws_col;
+    if(colwidth==0)
+         colwidth=79;
   #endif
 #endif
     percent=MIN(percent,1.f);
