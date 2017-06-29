@@ -11,11 +11,10 @@ uses
   { you can add units after this }, mcxgui, lazcontrols, tachartlazaruspkg,
   mcxabout, mcxshape;
 
-{$IFDEF WINDOWS}{$R mcxstudio.rc}{$ENDIF}
-
 {$R *.res}
 
 begin
+  RequireDerivedFormResource:=True;
   Application.Title:='MCX Studio';
   Application.Initialize;
   Application.CreateForm(TfmMCX, fmMCX);

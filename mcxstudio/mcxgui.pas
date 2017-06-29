@@ -291,10 +291,11 @@ type
     function CreateCmdOnly:string;
     procedure VerifyInput;
     procedure AddLog(str:string);
+    procedure AddMultiLineLog(str:string);
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
     procedure UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
-    function  GetMCXOutput (outputstr: string) : string;
+    function  GetMCXOutput () : string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
     procedure RunExternalCmd(cmd: string);
@@ -340,6 +341,19 @@ begin
     mmOutput.SelStart := length(mmOutput.Text);
 end;
 
+procedure TfmMCX.AddMultiLineLog(str:string);
+var
+   sl: TStringList;
+begin
+    sl:=TStringList.Create;
+    sl.StrictDelimiter:=true;
+    sl.Delimiter:=#10;
+    sl.DelimitedText:=str;
+    mmOutput.Lines.AddStrings(sl);
+    mmOutput.SelStart := length(mmOutput.Text);
+    sl.Free;
+end;
+
 procedure TfmMCX.edConfigFileChange(Sender: TObject);
 begin
   if(Length(edSession.Text)=0) then
@@ -347,7 +361,7 @@ begin
 end;
 procedure TfmMCX.SetModified;
 begin
-    if(mcxdoSave.Enabled) then exit;
+    //if not (mcxdoRun.Enabled) then exit;
     UpdateMCXActions(acMCX,'','Work');
     UpdateMCXActions(acMCX,'','Run');
     mcxdoSave.Enabled:=true;
@@ -781,13 +795,13 @@ begin
     tvShapes.Items.BeginUpdate;
     tvShapes.Items.Clear;
     tvShapes.Items.EndUpdate;
-    tvShapes.Enabled:=true;
     shaperoot:=tvShapes.Items.Add(nil,'Shapes');
     JSONdata:=GetJSON(shapejson);
     if(JSONData.FindPath('Shapes') <> nil) then
        ShowJSONData(shaperoot,JSONdata.Items[0])
     else
        ShowJSONData(shaperoot,JSONdata);
+    tvShapes.Enabled:=true;
     tvShapes.FullExpand;
 end;
 
@@ -801,7 +815,7 @@ begin
         MapList.Add(lvJobs.Columns.Items[i].Caption);
     end;
 
-    JSONdata:=TJSONObject.Create;
+    //JSONdata:=TJSONObject.Create;
 
     ConfigData:=TStringList.Create();
     ConfigData.Clear;
@@ -822,9 +836,11 @@ end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
 begin
+    if(tvShapes.Items.Count>0) then
+        TJSONObject(tvShapes.Items[0].Data).Free;
     MapList.Free;
     ConfigData.Free;
-    JSONData.Free;
+    //JSONData.Free;
     RegEngine.Free;
 end;
 
@@ -929,13 +945,14 @@ end;
 
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
-     mmOutput.Lines.Text:=GetMCXOutput(mmOutput.Lines.Text);
+     AddMultiLineLog(GetMCXOutput);
      if not (pMCX.Running) then
          pMCXTerminate(Sender);
 end;
 
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
+     if(not mcxdoStop.Enabled) then exit;
      mcxdoStop.Enabled:=false;
      if(mcxdoVerify.Enabled) then
          mcxdoRun.Enabled:=true;
@@ -1210,10 +1227,10 @@ begin
     if(tvShapes.Selected <> nil) then
        if(tvShapes.Selected=tvShapes.Items[0]) then begin
            RebuildShapeJSON(tvShapes.Selected);
-           AddLog(TJSONData(tvShapes.Selected.Data).FormatJSON(AsJSONFormat));
+           AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON);
        end else begin
            if(tvShapes.Selected.Data <> nil) then
-               AddLog(TJSONData(tvShapes.Selected.Data).FormatJSON(AsJSONFormat));
+               AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON);
        end;
 end;
 
@@ -1323,7 +1340,7 @@ begin
     end;
 end;
 
-function TfmMCX.GetMCXOutput (outputstr: string) : string;
+function TfmMCX.GetMCXOutput () : string;
 var
     Buffer, revbuf, percent: string;
     BytesAvailable: DWord;
@@ -1352,7 +1369,7 @@ begin
         end;
         Result := Result + copy(Buffer,1, BytesRead);
         BytesAvailable := pMCX.Output.NumBytesAvailable;
-        Sleep(100);
+        //Sleep(100);
         Application.ProcessMessages;
       end;
     end;
@@ -1375,7 +1392,6 @@ begin
             edGPUID.Checked[0]:=true;
     end;
     Sleep(100);
-    Result:= outputstr + Result;
 end;
 
 procedure TfmMCX.SaveTasksToIni(fname: string);
@@ -1596,7 +1612,7 @@ begin
       end;
       json.Objects['Forward']:=jforward;
 
-      AddLog(json.FormatJSON);
+      AddMultiLineLog(json.FormatJSON);
 
       if(Length(filename)>0) then begin
           jsonlist:=TStringList.Create;
@@ -1609,7 +1625,7 @@ begin
       end;
     except
       on E: Exception do
-          ShowMessage( 'Error: '+ #13#10 + E.Message );
+          ShowMessage( 'Error: '+ #13#10#13#10 + E.Message );
     end;
   finally
 {
