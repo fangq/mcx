@@ -17,7 +17,6 @@ object fmShapeEditor: TfmShapeEditor
     Top = 0
     Width = 227
     Align = alClient
-    FixedCols = 0
     Flat = True
     RowCount = 2
     TabOrder = 0

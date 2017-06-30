@@ -16,7 +16,8 @@ uses
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, inifiles, fpjson, jsonparser, strutils, regex, mcxabout, mcxshape;
+  CheckLst, inifiles, fpjson, jsonparser, strutils, regex, mcxabout, mcxshape,
+  mcxnewsession, mcxsource;
 
 type
 
@@ -24,6 +25,11 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    ckSpecular: TCheckBox;
+    ckMomentum: TCheckBox;
+    edMoreParam: TEdit;
+    grAtomic: TRadioGroup;
+    Label18: TLabel;
     mcxdoToggleView: TAction;
     mcxdoPaste: TAction;
     mcxdoCopy: TAction;
@@ -40,7 +46,10 @@ type
     MenuItem21: TMenuItem;
     miClearLog1: TMenuItem;
     OpenHistoryFile: TOpenDialog;
+    OpenVolume: TOpenDialog;
     PopupMenu2: TPopupMenu;
+    grProgram: TRadioGroup;
+    OpenDir: TSelectDirectoryDialog;
     shapePrint: TAction;
     shapeEdit: TAction;
     shapeAddCylinder: TAction;
@@ -77,7 +86,6 @@ type
     edDetectedNum: TEdit;
     edGate: TSpinEdit;
     edPhoton: TEdit;
-    edReseed: TEdit;
     edRespin: TSpinEdit;
     edSeed: TEdit;
     edSession: TEdit;
@@ -93,15 +101,15 @@ type
     ImageList2: TImageList;
     Label1: TLabel;
     Label10: TLabel;
-    Label11: TLabel;
+    lbBubble: TLabel;
     Label12: TLabel;
     Label13: TLabel;
-    Label14: TLabel;
+    lbAtomic: TLabel;
     Label15: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
-    Label5: TLabel;
+    lbRespin: TLabel;
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
@@ -164,6 +172,7 @@ type
     sbInfo: TStatusBar;
     btLoadSeed: TSpeedButton;
     Splitter1: TSplitter;
+    Splitter2: TSplitter;
     Splitter3: TSplitter;
     Splitter4: TSplitter;
     Splitter5: TSplitter;
@@ -218,7 +227,9 @@ type
     tvShapes: TTreeView;
     procedure btLoadSeedClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormShow(Sender: TObject);
     procedure grAdvSettingsDblClick(Sender: TObject);
+    procedure grProgramSelectionChanged(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
     procedure lvJobsMouseDown(Sender: TObject; Button: TMouseButton;
@@ -257,6 +268,7 @@ type
     procedure sbInfoDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
       const Rect: TRect);
     procedure sgConfigDblClick(Sender: TObject);
+    procedure sgConfigEditButtonClick(Sender: TObject);
     procedure sgMediaEditingDone(Sender: TObject);
     procedure shapeAddBoxExecute(Sender: TObject);
     procedure shapeAddCylinderExecute(Sender: TObject);
@@ -314,6 +326,7 @@ type
     procedure SetModified;
     procedure LoadJSONShapeTree(shapejson: string);
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
+    procedure SetSessionType(sessiontype: integer);
   end;
 
 var
@@ -332,6 +345,8 @@ Const
      (-1,8,9,7,6,5,4);
   JSONTypeNames : Array[TJSONtype] of string =
      ('Unknown','Number','String','Boolean','Null','Array','Object');
+  MCProgram : Array[0..2] of string =
+     ('mcx','mmc','mcxcl');
   DebugFlags: string ='RMP';
 
 { TfmMCX }
@@ -478,13 +493,16 @@ procedure TfmMCX.mcxdoHelpOptionsExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
           pMCX.CommandLine:=CreateCmdOnly;
-          //pMCX.Options := [poUsePipes, poStderrToOutput];
           sbInfo.Panels[0].Text := 'Status: querying command line options';
           sbInfo.Tag:=-2;
           AddLog('"-- Print MCX Command Line Options --"');
-          mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
     end;
+end;
+
+procedure TfmMCX.SetSessionType(sessiontype: integer);
+begin
+    grProgram.ItemIndex:=sessiontype;
 end;
 
 procedure TfmMCX.mcxdoAddItemExecute(Sender: TObject);
@@ -492,22 +510,30 @@ var
    node: TListItem;
    i:integer;
    sessionid: string;
+   sessiontype: integer;
+   fmNewSession: TfmNewSession;
 begin
-   sessionid:=InputBox('Set Session Name','Please type in a unique session name','');
-   if(length(sessionid)=0) then exit;
-   for i:=0 to lvJobs.Items.Count-1 do begin
-        if(lvJobs.Items.Item[i].Caption = sessionid) then
-           raise Exception.Create('Session name already used!');
+   fmNewSession:=TfmNewSession.Create(self);
+   fmnewSession.grProgram.ChildSizing.ControlsPerLine:=1;
+   if(fmNewSession.ShowModal= mrOK) then begin
+          sessionid:=Trim(fmNewSession.edSession.Text);
+          sessiontype:=fmNewSession.grProgram.ItemIndex;
+   end else begin
+          fmNewSession.Free;
+          exit;
    end;
+   fmNewSession.Free;
+
    node:=lvJobs.Items.Add;
    for i:=1 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
    node.Caption:=sessionid;
-   node.ImageIndex:=14;
+   node.ImageIndex:=14+sessiontype;
    plSetting.Enabled:=true;
    pcSimuEditor.Enabled:=true;
    lvJobs.Selected:=node;
    mcxdoDefaultExecute(nil);
    edSession.Text:=sessionid;
+   SetSessionType(sessiontype);
    UpdateMCXActions(acMCX,'','Work');
    UpdateMCXActions(acMCX,'','Run');
    UpdateMCXActions(acMCX,'Preproc','');
@@ -559,7 +585,10 @@ begin
       ckSaveMask.Checked:=false;
       edThread.Enabled:=false;
       edBlockSize.Enabled:=false;
+      ckSpecular.Checked:=false;
+      ckMomentum.Checked:=false;
       edWorkLoad.Text:='100';
+      edMoreParam.Text:='';
       edUnitInMM.Text:='1';
       edGPUID.CheckAll(cbUnchecked);
       if(edGPUID.Items.Count>0) then begin
@@ -569,18 +598,26 @@ begin
       edSeed.Text:='1648335518';
       ckDoReplay.Checked:=false;
       ckbDebug.CheckAll(cbUnchecked);
-      edReseed.Text:='10000000';
+      grAtomic.ItemIndex:=0;
       edReplayDet.Value:=0;
       rbUseDesigner.Checked:=true;
       sgMedia.RowCount:=1;
       sgMedia.RowCount:=129;
       sgMedia.Rows[1].CommaText:='0,0,1,1';
-      sgMedia.Rows[2].CommaText:='0.01,1,0.01,1.37';
+      sgMedia.Rows[2].CommaText:='0.005,1,0.01,1.37';
       sgDet.RowCount:=1;
       sgDet.RowCount:=129;
       sgDet.Rows[1].CommaText:='24,29,0,1';
-      sgConfig.ColCount:=3;
+      //sgConfig.ColCount:=3;
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
+
+      if(grProgram.ItemIndex=1) then begin
+          sgConfig.Rows[1].CommaText:='Domain,MeshID,';
+          sgConfig.Rows[2].CommaText:='Domain,InitElem,';
+      end else begin
+          sgConfig.Rows[1].CommaText:='Domain,VolumeFile,"See Volume Designer..."';
+          sgConfig.Rows[2].CommaText:='Domain,Dim,"[60,60,60]"';
+      end;
       LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
       if not (lvJobs.Selected = nil) then
          PanelToList2(lvJobs.Selected);
@@ -625,6 +662,11 @@ begin
       tvShapes.Enabled:=false;
 end;
 
+procedure TfmMCX.FormShow(Sender: TObject);
+begin
+
+end;
+
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
 begin
       if(OpenHistoryFile.Execute) then begin
@@ -650,6 +692,46 @@ begin
        end;
        grAdvSettings.Tag:=-1;
      end;
+end;
+
+procedure TfmMCX.grProgramSelectionChanged(Sender: TObject);
+begin
+  case grProgram.ItemIndex of
+    0, 2: begin
+        grGPU.Top:=grProgram.Height+grBasic.Height;
+        grGPU.Visible:=true;
+        tabVolumeDesigner.Enabled:=true;
+        ckSpecular.Visible:=false;
+        ckMomentum.Visible:=false;
+        ckSaveRef.Visible:=true;
+        edRespin.Hint:='RespinNum';
+        lbRespin.Caption:='Split into runs (-r)';
+        edBubble.Hint:='BubbleSize';
+        lbBubble.Caption:='Cache radius from src (-R)';
+        mcxdoQuery.Enabled:=true;
+    end;
+    1: begin
+        grGPU.Visible:=false;
+        tabVolumeDesigner.Enabled:=false;
+        ckSpecular.Visible:=true;
+        ckMomentum.Visible:=true;
+        ckSaveRef.Visible:=true;
+        edRespin.Hint:='BasicOrder';
+        lbRespin.Caption:='Element order (-C)';
+        edBubble.Hint:='DebugPhoton';
+        lbBubble.Caption:='Debug photon index';
+    end;
+  end;
+  if(grProgram.ItemIndex=1) then begin
+        sgConfig.Rows[1].CommaText:='Domain,MeshID,';
+        sgConfig.Rows[2].CommaText:='Domain,InitElem,';
+  end else begin
+        sgConfig.Rows[1].CommaText:='Domain,VolumeFile,"See Volume Designer..."';
+        sgConfig.Rows[2].CommaText:='Domain,Dim,"[60,60,60]"';
+  end;
+  if(lvJobs.Selected <> nil) then
+      lvJobs.Selected.ImageIndex:=14+grProgram.ItemIndex;
+  edRespinChange(Sender);
 end;
 
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
@@ -686,17 +768,36 @@ var
    setting: TStringList;
    j: integer;
    node: TListItem;
+   fmNewSession: TfmNewSession;
 begin
    if(lvJobs.Selected = nil) then exit;
    setting:=TStringList.Create;
    setting.Text:=Clipboard.AsText;
-   node:=lvJobs.Items.Add;
+
    for j:=1 to 100000 do begin
        if(lvJobs.FindCaption(0,setting.Values['Session']+IntToStr(j),true,true,true) = nil) then
           break;
    end;
-   node.Caption:=setting.Values['Session']+IntToStr(j);
-   node.ImageIndex:=14;
+
+   fmNewSession:=TfmNewSession.Create(Application);
+   fmnewSession.grProgram.ChildSizing.ControlsPerLine:=1;
+   fmnewSession.edSession.Text:=setting.Values['Session'];
+   if(Length(setting.Values['MCProgram'])>0) then
+       fmnewSession.grProgram.ItemIndex:=StrToInt(setting.Values['MCProgram']);
+   if(fmNewSession.ShowModal= mrOK) then begin
+          setting.Values['Session']:=Trim(fmNewSession.edSession.Text);
+          setting.Values['MCProgram']:=IntToStr(fmNewSession.grProgram.ItemIndex);
+   end else begin
+          fmNewSession.Free;
+          setting.Free;
+          exit;
+   end;
+   fmNewSession.Free;
+
+   grProgram.ItemIndex:=StrToInt(setting.Values['MCProgram']);
+   node:=lvJobs.Items.Add;
+   node.Caption:=setting.Values['Session'];
+   node.ImageIndex:=14+grProgram.ItemIndex;
    for j:=1 to lvJobs.Columns.Count-1 do
        node.SubItems.Add('');
    for j:=1 to lvJobs.Columns.Count-1 do begin
@@ -713,7 +814,6 @@ begin
           sbInfo.Panels[0].Text := 'Status: querying GPU';
           sbInfo.Tag:=-1;
           AddLog('"-- Printing GPU Information --"');
-          mmOutput.Tag:=mmOutput.Lines.Count;
           pMCX.Execute;
 
           UpdateMCXActions(acMCX,'Run','');
@@ -728,7 +828,6 @@ begin
           //pMCX.CommandLine:='du /usr/ --max-depth=1';
           pMCX.CommandLine:=CreateCmd;
           AddLog('"-- Executing MCX --"');
-          mmOutput.Tag:=mmOutput.Lines.Count;
           if(ckbDebug.Checked[2]) then begin
               sbInfo.Panels[1].Text:='0%';
               sbInfo.Invalidate;
@@ -821,7 +920,7 @@ begin
     ConfigData.Clear;
     ConfigData.CommaText:=sgConfig.Cols[2].CommaText;
 
-    RegEngine:=TRegexEngine.Create('\%[0-9\ ]{4}\]');
+    RegEngine:=TRegexEngine.Create('\%[0-9 ]{4}\]');
 
     btLoadSeed.Glyph.Assign(nil);
     JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
@@ -1006,11 +1105,37 @@ procedure TfmMCX.sgConfigDblClick(Sender: TObject);
 var
    sg: TStringGrid;
 begin
-   if(not (Sender is TStringGrid)) then exit;
-   sg:=Sender as TStringGrid;
-   if (sg.Row=2) and (sg.Col=1) then begin
-         if(sg.Cells[sg.Col,sg.Row]='See Volume Designer...') then
-              pcSimuEditor.ActivePage:=tabVolumeDesigner;
+
+end;
+
+procedure TfmMCX.sgConfigEditButtonClick(Sender: TObject);
+var
+   grid: TStringGrid;
+   fmSrc: TfmSource;
+begin
+   if not(Sender is TStringGrid) then exit;
+   grid:= Sender as TStringGrid;
+   if(grid.Col=2) and (grid.Row=14) then begin
+      if(OpenDir.Execute) then
+         grid.Cells[grid.Col,grid.Row]:=OpenDir.FileName;
+   end else if(grid.Col=2) and (grid.Row=1) then begin
+      if(grid.Cells[grid.Col,grid.Row]='See Volume Designer...') then
+         pcSimuEditor.ActivePage:=tabVolumeDesigner
+      else
+          if(OpenVolume.Execute) then
+             grid.Cells[grid.Col,grid.Row]:=OpenVolume.FileName;
+   end else if(grid.Col=2) and (grid.Row>=10) and (grid.Row<=12) then begin
+      fmSrc:=TfmSource.Create(Application);
+      if(Length(grid.Cells[2,10])>0) then begin
+             fmSrc.edSource.Text:=grid.Cells[2,10];
+             fmSrc.edSourceEditingDone(fmSrc.edSource);
+      end;
+      if(fmSrc.ShowModal= mrOK) then begin
+             grid.Cells[2,10]:=Trim(fmSrc.edSource.Text);
+             grid.Cells[2,11]:='['+fmSrc.SrcParam1.CommaText+']';
+             grid.Cells[2,12]:='['+fmSrc.SrcParam2.CommaText+']';
+      end;
+      fmSrc.Free;
    end;
 end;
 
@@ -1357,19 +1482,19 @@ begin
       begin
         SetLength(Buffer, BytesAvailable);
         BytesRead := pMCX.OutPut.Read(Buffer[1], BytesAvailable);
-        //Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
+        Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
         if(ckbDebug.Checked[2]) then begin
                revbuf:=ReverseString(Buffer);
                if RegEngine.MatchString(revbuf,idx,len) then begin
                      percent:=ReverseString(Copy(revbuf,idx,len));
                      if(sscanf(percent,']%d\%', [@total])=1) then begin
                         sbInfo.Panels[1].Text:=Format('%d%%',[total]);
+                        sbInfo.Repaint;
                      end;
                end;
         end;
         Result := Result + copy(Buffer,1, BytesRead);
         BytesAvailable := pMCX.Output.NumBytesAvailable;
-        //Sleep(100);
         Application.ProcessMessages;
       end;
     end;
@@ -1487,12 +1612,12 @@ function TfmMCX.CreateCmdOnly:string;
 var
     cmd: string;
 begin
-    cmd:='mcx';
+    cmd:=MCProgram[grProgram.ItemIndex];
     Result:=cmd;
 end;
 procedure TfmMCX.SaveJSONConfig(filename: string);
 var
-    nthread, nblock,hitmax,seed,reseed, i, mediacount: integer;
+    nthread, nblock,hitmax,seed, i, mediacount: integer;
     bubbleradius,unitinmm,nphoton: extended;
     gpuid, section, key, val: string;
     json, jobj, jmedium, jdet, jforward, joptode : TJSONObject;
@@ -1509,7 +1634,6 @@ begin
       hitmax:=StrToInt(edDetectedNum.Text);
       if not (ckDoReplay.Checked) then
           seed:=StrToInt(edSeed.Text);
-      reseed:=StrToInt(edReseed.Text);
   except
       raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
   end;
@@ -1533,7 +1657,6 @@ begin
       jobj.Integers['DoSaveExit']:=Integer(ckSaveExit.Checked);
       jobj.Integers['DoSaveSeed']:=Integer(ckSaveSeed.Checked);
       jobj.Integers['DoSaveRef']:=Integer(ckSaveRef.Checked);
-      jobj.Integers['ReseedLimit']:=reseed;
       //jobj.Strings['OutputType']:=edOutputType.Text;
 
       if(json.Find('Domain') = nil) then
@@ -1583,9 +1706,9 @@ begin
       jforward:=TJSONObject.Create;
       for i := sgConfig.FixedRows to sgConfig.RowCount - 1 do
       begin
-              if(Length(sgConfig.Cells[0,i])=0) then break;
+              if(Length(sgConfig.Cells[0,i])=0) and (i>sgConfig.FixedRows) then break;
               val:=sgConfig.Cells[2,i];
-              if(Length(val)=0) then continue;
+              if(Length(val)=0) and (i>sgConfig.FixedRows) then continue;
               section:= sgConfig.Cells[0,i];
               key:=sgConfig.Cells[1,i];
               if(section = 'Forward') then begin
@@ -1593,14 +1716,20 @@ begin
               end else if(section = 'Session') then begin
                   json.Objects['Session'].Strings[key]:=val;
               end else if(section = 'Domain') then begin
-                  if (key = 'VolumeFile') and (val='See Volume Designer...') then begin
+                  if (key = 'VolumeFile') and ((val='See Volume Designer...') or (Length(val)=0)) then begin
                       mediacount:=RebuildShapeJSON(tvShapes.Items[0]);
                       json.Objects['Shapes']:=TJSONObject(TJSONObject(tvShapes.Items[0].Data).Items[0]);
                       if(jmedia.Count<=mediacount) then begin
                         raise Exception.Create(Format('%d media labels are expected (including 0), but only %d sets of media proprties are defned.',[mediacount+1,jmedia.Count]));
                       end;
                   end else begin
-                      json.Objects['Domain'].Objects[key]:=TJSONObject(GetJSON(val));
+                      if(key = 'VolumeFile') or (key='MeshID') then begin
+                         if(key = 'VolumeFile') then
+                            json.Objects['Domain'].Strings[key]:=ExtractRelativepath(ExtractFilePath(filename),ExtractFilePath(val))+DirectorySeparator+ExtractFilename(val)
+                         else
+                            json.Objects['Domain'].Strings[key]:=val;
+                      end else
+                          json.Objects['Domain'].Objects[key]:=TJSONObject(GetJSON(val));
                   end;
               end else if(section = 'Optode.Source') then begin
                   if (key = 'Type') then begin
@@ -1669,9 +1798,9 @@ end;
 
 function TfmMCX.CreateCmd:string;
 var
-    nthread, nblock,hitmax,seed,reseed, i: integer;
+    nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    cmd, jsonfile, gpuid, debugflag: string;
+    cmd, jsonfile, gpuid, debugflag, rootpath: string;
     shellscript: TStringList;
 begin
 //    cmd:='"'+Config.MCXExe+'" ';
@@ -1680,46 +1809,66 @@ begin
        cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
     if rbUseFile.Checked and (Length(edConfigFile.FileName)>0) then
     begin
-       cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)
-         +'" --root "'+ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName))+'" ';
+       cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)+'"';
+       rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
     end else begin
         jsonfile:=CreateWorkFolder+DirectorySeparator+Trim(edSession.Text)+'.json';
         SaveJSONConfig(jsonfile);
-        cmd:=cmd+' --input "'+Trim(jsonfile)
-          +'" --root "'+ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile))+'" ';
-
+        cmd:=cmd+' --input "'+Trim(jsonfile)+'"';
+        rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile));
     end;
+    if(Length(sgConfig.Cells[2,14])>0) then
+        rootpath:=sgConfig.Cells[2,14];
+    cmd:=cmd+' --root "'+rootpath+'" ';
+
     try
         nthread:=StrToInt(edThread.Text);
         nphoton:=StrToFloat(edPhoton.Text);
         nblock:=StrToInt(edBlockSize.Text);
         bubbleradius:=StrToFloat(edBubble.Text);
-        gpuid:=CheckListToStr(edGPUID);
+        if(grProgram.ItemIndex <>1) then
+            gpuid:=CheckListToStr(edGPUID);
         unitinmm:=StrToFloat(edUnitInMM.Text);
         hitmax:=StrToInt(edDetectedNum.Text);
         if not (ckDoReplay.Checked) then
             seed:=StrToInt(edSeed.Text);
-        reseed:=StrToInt(edReseed.Text);
     except
         raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
     end;
 
-    if(ckAutopilot.Checked) then begin
-      cmd:=cmd+' --gpu '+gpuid+ Format(' --autopilot 1 --photon %.0f --repeat %d --array %d --skipradius %f ',
-        [nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
-    end else begin
-      cmd:=cmd+Format(' --thread %d --blocksize %d --photon %.0f --repeat %d --array %d --skipradius %f ',
-        [nthread,nblock,nphoton,edRespin.Value,grArray.ItemIndex,bubbleradius]);
+    if(grProgram.ItemIndex <>1) then begin
+        cmd:=cmd+' --gpu '+gpuid;
+        if(ckAutopilot.Checked) then begin
+          cmd:=cmd+ ' --autopilot 1';
+        end else begin
+          cmd:=cmd+Format(' --thread %d --blocksize %d', [nthread,nblock]);
+        end;
     end;
-    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --maxdetphoton %d --unitinmm %f --dumpmask %d --saveseed %d',
+    cmd:=cmd+Format(' --photon %.0f --skipradius %f ',[nphoton,bubbleradius]);
+    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --unitinmm %f --saveseed %d',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
-      Integer(ckSaveDetector.Checked),hitmax,unitinmm,Integer(ckSaveMask.Checked),Integer(ckSaveSeed.Checked)]);
+      Integer(ckSaveDetector.Checked),unitinmm,Integer(ckSaveSeed.Checked)]);
     if(Length(edSeed.Text)>0) then
       cmd:=cmd+Format(' --seed ''%s''',[edSeed.Text]);
     if(edReplayDet.Enabled) then
       cmd:=cmd+Format(' --replaydet %d',[edReplayDet.Value]);
-    if(reseed <> 10000000) then
-      cmd:=cmd+Format(' --reseed %d',[reseed]);
+    if(grAtomic.ItemIndex=0) then
+      if(grProgram.ItemIndex=0) then
+         cmd:=cmd+' --skipradius -2';
+
+    if(grProgram.ItemIndex=1) then begin
+      if(grAtomic.ItemIndex=1) then begin
+         cmd:=cmd+' --atomic 0';
+      end;
+      cmd:=cmd+Format(' --specular %d --basisorder %d --momentum %d',[Integer(ckSpecular.Checked),edRespin.Value,Integer(ckMomentum.Checked)]);
+    end else begin
+        if(grAtomic.ItemIndex=0) then
+             cmd:=cmd+' --skipradius -2';
+        cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
+        if(grAtomic.ItemIndex=2) then
+            cmd:=cmd+ Format(' --kernel "%s%c%s"', [rootpath,PathSeparator,'mcx_core.cl'])
+    end;
+
     if(ckSkipVoid.Checked) then
       cmd:=cmd+' --skipvoid 1';
     debugflag:='';
@@ -1729,6 +1878,8 @@ begin
     end;
     if(Length(debugflag)>0) then
         cmd:=cmd+' --debug '+debugflag;
+    if(Length(edMoreParam.Text)>0) then
+        cmd:=cmd+' '+edMoreParam.Text;
 
     if(Length(jsonfile)>0) then begin
          shellscript:=TStringList.Create;
@@ -1982,7 +2133,7 @@ begin
         if(gb.Controls[id] is TRadioGroup) then begin
            gr:=gb.Controls[id] as TRadioGroup;
            idx:=MapList.IndexOf(gr.Hint);
-           if(idx>=0) then begin
+           if(idx>=0) and (Length(node.SubItems.Strings[idx])>0) then begin
                 try
                       gr.ItemIndex:=StrToInt(node.SubItems.Strings[idx]);
                 except
