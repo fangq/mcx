@@ -1,7 +1,7 @@
 object fmNewSession: TfmNewSession
-  Left = 2052
+  Left = 1900
   Height = 239
-  Top = 442
+  Top = 421
   Width = 504
   BorderIcons = []
   BorderStyle = bsDialog
@@ -31,10 +31,9 @@ object fmNewSession: TfmNewSession
     ChildSizing.ShrinkHorizontal = crsScaleChilds
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
-    ChildSizing.ControlsPerLine = 3
+    ChildSizing.ControlsPerLine = 1
     ClientHeight = 95
     ClientWidth = 470
-    Columns = 3
     ItemIndex = 0
     Items.Strings = (
       'NVIDIA GPUs (MCX)'
@@ -59,6 +58,7 @@ object fmNewSession: TfmNewSession
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 15
     BorderSpacing.Right = 15
+    OnKeyPress = edSessionKeyPress
     TabOrder = 0
   end
   object Label4: TLabel
@@ -102,6 +102,7 @@ object fmNewSession: TfmNewSession
       Top = 11
       Width = 88
       Caption = 'OK'
+      Default = True
       OnClick = btOKClick
       TabOrder = 0
     end

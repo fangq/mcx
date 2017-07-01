@@ -25,10 +25,15 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    btGBExpand: TButton;
+    ckDoRemote: TCheckBox;
+    ckReflect: TCheckBox;
     ckSpecular: TCheckBox;
     ckMomentum: TCheckBox;
     edMoreParam: TEdit;
+    edRemote: TEdit;
     grAtomic: TRadioGroup;
+    Image1: TImage;
     Label18: TLabel;
     mcxdoToggleView: TAction;
     mcxdoPaste: TAction;
@@ -73,7 +78,6 @@ type
     edGPUID: TCheckListBox;
     ckAutopilot: TCheckBox;
     ckNormalize: TCheckBox;
-    ckReflect: TCheckBox;
     ckSaveData: TCheckBox;
     ckSaveDetector: TCheckBox;
     ckSaveExit: TCheckBox;
@@ -120,7 +124,6 @@ type
     OpenProject: TOpenDialog;
     pcSimuEditor: TPageControl;
     Panel1: TPanel;
-    Panel2: TPanel;
     plOutput: TPanel;
     pMCX: TAsyncProcess;
     mcxSetCurrent: TAction;
@@ -190,6 +193,7 @@ type
     tbtStop: TToolButton;
     tbtVerify: TToolButton;
     Timer1: TTimer;
+    tmAnimation: TTimer;
     ToolBar1: TToolBar;
     ToolBar2: TToolBar;
     ToolButton1: TToolButton;
@@ -218,6 +222,7 @@ type
     ToolButton30: TToolButton;
     ToolButton31: TToolButton;
     ToolButton32: TToolButton;
+    ToolButton33: TToolButton;
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
     ToolButton6: TToolButton;
@@ -226,14 +231,12 @@ type
     ToolButton9: TToolButton;
     tvShapes: TTreeView;
     procedure btLoadSeedClick(Sender: TObject);
+    procedure btGBExpandClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
-    procedure FormShow(Sender: TObject);
     procedure grAdvSettingsDblClick(Sender: TObject);
     procedure grProgramSelectionChanged(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
       );
-    procedure lvJobsMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
     procedure mcxdoAboutExecute(Sender: TObject);
     procedure mcxdoAddItemExecute(Sender: TObject);
     procedure mcxdoCopyExecute(Sender: TObject);
@@ -259,7 +262,6 @@ type
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
-    procedure mmOutputChange(Sender: TObject);
     procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
@@ -287,9 +289,13 @@ type
     procedure shapePrintExecute(Sender: TObject);
     procedure shapeResetExecute(Sender: TObject);
     procedure shapeDeleteExecute(Sender: TObject);
+    procedure Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
+      var Accept: Boolean);
+    procedure Splitter6CanResize(Sender: TObject; var NewSize: Integer;
+      var Accept: Boolean);
     procedure StaticText2DblClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
-    procedure tvShapesDeletion(Sender: TObject; Node: TTreeNode);
+    procedure tmAnimationTimer(Sender: TObject);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
     procedure tvShapesSelectionChanged(Sender: TObject);
   private
@@ -336,6 +342,7 @@ var
   TaskFile: string;
   GotoCol, GotoRow: Integer;
   GotoGrid: TStringGrid;
+  GotoGBox: TGroupBox;
 
 implementation
 
@@ -438,6 +445,9 @@ begin
        if(ck.Hint='DoReplay') then begin
            edReplayDet.Enabled:=ck.Checked;
        end;
+       if(ck.Hint='DoRemote') then begin
+           edRemote.Enabled:=ck.Checked;
+       end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
        idx:=MapList.IndexOf(ckb.Hint);
@@ -459,9 +469,7 @@ begin
        idx:=MapList.IndexOf(tv.Hint);
        if(idx>=0) and (tv.Name='tvShapes') then  begin
            RebuildShapeJSON(tv.Items[0]);
-           idx:=MapList.IndexOf(tv.Hint);
-           if(idx>=0) then
-               node.SubItems.Strings[idx]:=TJSONData(tv.Items[0].Data).FormatJSON(AsJSONFormat);
+           node.SubItems.Strings[idx]:=TJSONData(tv.Items[0].Data).FormatJSON(AsJSONFormat);
        end;
     end;
     SetModified;
@@ -492,7 +500,10 @@ end;
 procedure TfmMCX.mcxdoHelpOptionsExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
-          pMCX.CommandLine:=CreateCmdOnly;
+          if(ckDoRemote.Checked) then
+              pMCX.CommandLine:=edRemote.Text+' '+ CreateCmdOnly+' --help'
+          else
+              pMCX.CommandLine:=CreateCmdOnly+' --help';
           sbInfo.Panels[0].Text := 'Status: querying command line options';
           sbInfo.Tag:=-2;
           AddLog('"-- Print MCX Command Line Options --"');
@@ -514,7 +525,7 @@ var
    fmNewSession: TfmNewSession;
 begin
    fmNewSession:=TfmNewSession.Create(self);
-   fmnewSession.grProgram.ChildSizing.ControlsPerLine:=1;
+   fmnewSession.grProgram.Columns:=1;
    if(fmNewSession.ShowModal= mrOK) then begin
           sessionid:=Trim(fmNewSession.edSession.Text);
           sessiontype:=fmNewSession.grProgram.ItemIndex;
@@ -594,6 +605,7 @@ begin
       if(edGPUID.Items.Count>0) then begin
           edGPUID.Checked[0]:=true;
       end;
+      pcSimuEditor.ActivePage:=tabInputData;
       edDetectedNum.Text:='10000000';
       edSeed.Text:='1648335518';
       ckDoReplay.Checked:=false;
@@ -610,6 +622,8 @@ begin
       sgDet.Rows[1].CommaText:='24,29,0,1';
       //sgConfig.ColCount:=3;
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
+      edRemote.Text:='ssh user@server';
+      ckDoRemote.Checked:=false;
 
       if(grProgram.ItemIndex=1) then begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
@@ -651,20 +665,9 @@ begin
   mcxdoSave.Enabled:=true;
 end;
 
-procedure TfmMCX.lvJobsMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-
-end;
-
 procedure TfmMCX.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
       tvShapes.Enabled:=false;
-end;
-
-procedure TfmMCX.FormShow(Sender: TObject);
-begin
-
 end;
 
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
@@ -673,6 +676,26 @@ begin
           edSeed.Text:=OpenHistoryFile.FileName;
           ckDoReplay.Checked:=true;
       end;
+end;
+
+procedure TfmMCX.btGBExpandClick(Sender: TObject);
+var
+     gr: TGroupBox;
+begin
+     if not (Sender is TButton) then exit;
+     if not ((Sender as TButton).Parent is TGroupBox) then exit;
+     gr:=((Sender as TButton).Parent as TGroupBox);
+     GotoGBox:=gr;
+     if(gr.Align=alClient) then begin // collapse
+         gr.Align:=alTop;
+         (Sender as TButton).Caption:=#65088;
+         tmAnimation.Tag:=1;
+         tmAnimation.Enabled:=true;
+     end else begin
+         (Sender as TButton).Caption:=#65087;
+         tmAnimation.Tag:=0;
+         tmAnimation.Enabled:=true;
+     end;
 end;
 
 procedure TfmMCX.grAdvSettingsDblClick(Sender: TObject);
@@ -805,12 +828,16 @@ begin
    end;
    setting.Free;
    lvJobs.Selected:=node;
+   mcxSetCurrentExecute(Sender);
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
-          pMCX.CommandLine:=CreateCmdOnly+' -L';
+          if(ckDoRemote.Checked) then
+              pMCX.CommandLine:=edRemote.Text+' '+ CreateCmdOnly+' -L'
+          else
+              pMCX.CommandLine:=CreateCmdOnly+' -L';
           sbInfo.Panels[0].Text := 'Status: querying GPU';
           sbInfo.Tag:=-1;
           AddLog('"-- Printing GPU Information --"');
@@ -1019,11 +1046,6 @@ end;
 procedure TfmMCX.miClearLogClick(Sender: TObject);
 begin
     mmOutput.Lines.Clear;
-end;
-
-procedure TfmMCX.mmOutputChange(Sender: TObject);
-begin
-
 end;
 
 procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
@@ -1256,7 +1278,7 @@ end;
 
 procedure TfmMCX.shapeAddUpperSpaceExecute(Sender: TObject);
 begin
-  AddShapes('UpperSpace',Format('Tag=%d|Coef=[1,-1,0,0]',[tvShapes.Tag+1]));
+  AddShapes('UpperSpace',Format('Tag=%d|Coef=[1,-1,0,0]|Equ="Ax+By+Cz>D"',[tvShapes.Tag+1]));
 end;
 
 procedure TfmMCX.shapeAddXLayersExecute(Sender: TObject);
@@ -1369,6 +1391,7 @@ begin
     'Confirm', MB_YESNOCANCEL);
   if (ret=IDYES) then begin
     LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
+    edRespinChange(tvShapes);
   end;
   if (ret=IDCANCEL) then
        exit;
@@ -1376,8 +1399,24 @@ end;
 
 procedure TfmMCX.shapeDeleteExecute(Sender: TObject);
 begin
-  if(tvShapes.Selected <> nil) then
+  if(tvShapes.Selected <> nil) then begin
        tvShapes.Selected.Delete;
+       edRespinChange(tvShapes);
+  end;
+end;
+
+procedure TfmMCX.Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
+  var Accept: Boolean);
+begin
+  grAdvSettings.Height:=grAdvSettings.Height+NewOffset;
+  Accept:=true;
+end;
+
+procedure TfmMCX.Splitter6CanResize(Sender: TObject; var NewSize: Integer;
+  var Accept: Boolean);
+begin
+    grAdvSettings.Height:=NewSize;
+    Accept:=true;
 end;
 
 procedure TfmMCX.StaticText2DblClick(Sender: TObject);
@@ -1394,11 +1433,29 @@ begin
       GotoGrid.EditorMode := True;
   end;
 end;
-procedure TfmMCX.tvShapesDeletion(Sender: TObject; Node: TTreeNode);
+
+procedure TfmMCX.tmAnimationTimer(Sender: TObject);
+var
+   len: integer;
 begin
-  if((Sender as TTreeView).Enabled=false) then exit;
-  RebuildShapeJSON(tvShapes.Items[0]);
-  edRespinChange(Sender);
+    if not (Assigned(GotoGBox)) then exit;
+    if(tmAnimation.Tag>0) then begin // collapse
+         GotoGBox.Height:=GotoGBox.Height-5;
+         if(GotoGBox.Height<=30) then begin
+              GotoGBox.Align:=alTop;
+              GotoGBox.Height:=30;
+              tmAnimation.Tag:=0;
+              tmAnimation.Enabled:=false;
+         end;
+    end else begin
+        GotoGBox.Height:=GotoGBox.Height+5;
+        len:=plSetting.Height-GotoGBox.Top;
+        if(GotoGBox.Height>=plSetting.Height-GotoGBox.Top) then begin
+             GotoGBox.Align:=alClient;
+             tmAnimation.Tag:=1;
+             tmAnimation.Enabled:=false;
+        end;
+    end;
 end;
 
 procedure TfmMCX.tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string
@@ -1490,6 +1547,7 @@ begin
                      if(sscanf(percent,']%d\%', [@total])=1) then begin
                         sbInfo.Panels[1].Text:=Format('%d%%',[total]);
                         sbInfo.Repaint;
+                        Application.ProcessMessages;
                      end;
                end;
         end;
@@ -1741,6 +1799,7 @@ begin
       end;
       json.Objects['Forward']:=jforward;
 
+      AddLog('"-- JSON Input: --"');
       AddMultiLineLog(json.FormatJSON);
 
       if(Length(filename)>0) then begin
@@ -1803,8 +1862,10 @@ var
     cmd, jsonfile, gpuid, debugflag, rootpath: string;
     shellscript: TStringList;
 begin
-//    cmd:='"'+Config.MCXExe+'" ';
-    cmd:=CreateCmdOnly;
+    if(ckDoRemote.Checked) then
+        cmd:=edRemote.Text+' '+ CreateCmdOnly
+    else
+        cmd:=CreateCmdOnly;
     if(Length(edSession.Text)>0) then
        cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
     if rbUseFile.Checked and (Length(edConfigFile.FileName)>0) then
@@ -1866,7 +1927,7 @@ begin
              cmd:=cmd+' --skipradius -2';
         cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
         if(grAtomic.ItemIndex=2) then
-            cmd:=cmd+ Format(' --kernel "%s%c%s"', [rootpath,PathSeparator,'mcx_core.cl'])
+            cmd:=cmd+ Format(' --kernel "%s%c%s"', [rootpath,DirectorySeparator,'mcx_core.cl'])
     end;
 
     if(ckSkipVoid.Checked) then
@@ -1890,7 +1951,7 @@ begin
          shellscript.Free;
     end;
     Result:=cmd;
-    AddLog('Command:');
+    AddLog('"-- Command: --"');
     AddLog(cmd);
 end;
 

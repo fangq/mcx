@@ -1,7 +1,7 @@
 object fmSource: TfmSource
-  Left = 703
+  Left = 4294
   Height = 387
-  Top = 296
+  Top = 754
   Width = 333
   BorderIcons = []
   Caption = 'Light Source Settings'
@@ -122,6 +122,7 @@ object fmSource: TfmSource
     AutoAdvance = aaDown
     BorderSpacing.Top = 7
     DefaultColWidth = 140
+    FixedCols = 0
     RowCount = 2
     TabOrder = 2
     Strings.Strings = (

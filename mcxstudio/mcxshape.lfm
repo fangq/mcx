@@ -1,7 +1,7 @@
 object fmShapeEditor: TfmShapeEditor
-  Left = 1675
+  Left = 4938
   Height = 246
-  Top = 352
+  Top = 380
   Width = 227
   BorderIcons = [biSystemMenu]
   Caption = 'Edit Shapes'
@@ -17,6 +17,7 @@ object fmShapeEditor: TfmShapeEditor
     Top = 0
     Width = 227
     Align = alClient
+    FixedCols = 0
     Flat = True
     RowCount = 2
     TabOrder = 0

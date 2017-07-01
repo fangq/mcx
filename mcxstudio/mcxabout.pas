@@ -5,8 +5,8 @@ unit mcxabout;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, LResources, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, Buttons, ExtCtrls;
+  Classes, SysUtils, FileUtil, SynEdit, LResources, Forms, Controls, Graphics,
+  Dialogs, StdCtrls, Buttons, ExtCtrls;
 
 type
 
@@ -16,9 +16,8 @@ type
     Button1: TButton;
     Image1: TImage;
     Image2: TImage;
-    Label1: TLabel;
-    procedure Image1Click(Sender: TObject);
-    procedure Image2Click(Sender: TObject);
+    Image3: TImage;
+    Memo1: TMemo;
   private
     { private declarations }
   public
@@ -31,16 +30,6 @@ var
 implementation
 
 { TfmAbout }
-
-procedure TfmAbout.Image1Click(Sender: TObject);
-begin
-
-end;
-
-procedure TfmAbout.Image2Click(Sender: TObject);
-begin
-
-end;
 
 initialization
   {$I mcxabout.lrs}

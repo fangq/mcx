@@ -20,6 +20,7 @@ type
     Label4: TLabel;
     Panel1: TPanel;
     procedure btOKClick(Sender: TObject);
+    procedure edSessionKeyPress(Sender: TObject; var Key: char);
     procedure FormShow(Sender: TObject);
   private
     { private declarations }
@@ -43,6 +44,11 @@ begin
     if (fmMCX.lvJobs.FindCaption(0,edSession.Text,true,true,true) <> nil) then
          raise Exception.Create('Session name already has aready existed!');
     ModalResult := mrOK;
+end;
+
+procedure TfmNewSession.edSessionKeyPress(Sender: TObject; var Key: char);
+begin
+
 end;
 
 procedure TfmNewSession.FormShow(Sender: TObject);
