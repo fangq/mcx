@@ -1,7 +1,7 @@
 object fmSource: TfmSource
-  Left = 4294
+  Left = 1799
   Height = 387
-  Top = 754
+  Top = 329
   Width = 333
   BorderIcons = []
   Caption = 'Light Source Settings'
@@ -10,7 +10,7 @@ object fmSource: TfmSource
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   Position = poOwnerFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.6.4.0'
   object edSource: TComboBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Label4
@@ -19,13 +19,13 @@ object fmSource: TfmSource
     AnchorSideRight.Side = asrBottom
     Left = 56
     Height = 28
-    Top = 49
+    Top = 53
     Width = 221
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 56
     BorderSpacing.Top = 9
     BorderSpacing.Right = 56
-    ItemHeight = 0
+    ItemHeight = 20
     ItemIndex = 0
     Items.Strings = (
       'pencil'
@@ -96,7 +96,7 @@ object fmSource: TfmSource
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 40
-    Height = 16
+    Height = 20
     Top = 24
     Width = 293
     Anchors = [akTop, akLeft, akRight]
@@ -115,8 +115,8 @@ object fmSource: TfmSource
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Panel1
     Left = 56
-    Height = 222
-    Top = 115
+    Height = 214
+    Top = 123
     Width = 221
     Anchors = [akTop, akLeft, akRight, akBottom]
     AutoAdvance = aaDown
@@ -134,7 +134,7 @@ object fmSource: TfmSource
     )
     ColWidths = (
       140
-      79
+      77
     )
   end
   object Label5: TLabel
@@ -144,8 +144,8 @@ object fmSource: TfmSource
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 40
-    Height = 16
-    Top = 92
+    Height = 20
+    Top = 96
     Width = 293
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 40

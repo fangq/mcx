@@ -1,17 +1,17 @@
 object fmAbout: TfmAbout
-  Left = 3628
-  Height = 382
-  Top = 353
+  Left = 1104
+  Height = 410
+  Top = 299
   Width = 480
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
-  ClientHeight = 382
+  ClientHeight = 410
   ClientWidth = 480
-  Color = clMenu
+  Color = clGrayText
   Position = poMainFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.6.4.0'
   object Image1: TImage
     Left = 16
     Height = 152
@@ -976,7 +976,7 @@ object fmAbout: TfmAbout
     AnchorSideBottom.Side = asrBottom
     Left = 311
     Height = 37
-    Top = 331
+    Top = 359
     Width = 124
     Anchors = [akRight, akBottom]
     BorderSpacing.Right = 45
@@ -1045,7 +1045,7 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Button1
     Left = 20
-    Height = 179
+    Height = 207
     Top = 141
     Width = 440
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -1068,7 +1068,8 @@ object fmAbout: TfmAbout
       ''
       'Acknowledgement:'
       ''
-      '  The icons were created independently; the style inspired by the "Uniform" icon-set.'
+      '  The icons were created independently; the style inspired by '
+      'the "Uniform" icon-set.'
     )
     ParentColor = True
     ParentFont = False
@@ -1082,7 +1083,7 @@ object fmAbout: TfmAbout
     Left = 24
     Height = 33
     Hint = 'About MCX'
-    Top = 331
+    Top = 359
     Width = 200
     Anchors = [akBottom]
     AutoSize = True

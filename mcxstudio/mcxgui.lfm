@@ -1,5 +1,5 @@
 object fmMCX: TfmMCX
-  Left = 1257
+  Left = 1243
   Height = 927
   Top = 0
   Width = 1299
@@ -7,7 +7,7 @@ object fmMCX: TfmMCX
   Align = alTop
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = 'MCX Studio'
-  ClientHeight = 905
+  ClientHeight = 902
   ClientWidth = 1299
   DockSite = True
   DragKind = dkDock
@@ -155,7 +155,7 @@ object fmMCX: TfmMCX
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poDesktopCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.6.4.0'
   object ToolBar1: TToolBar
     Left = 0
     Height = 120
@@ -165,7 +165,7 @@ object fmMCX: TfmMCX
     ButtonHeight = 120
     ButtonWidth = 80
     Caption = 'MCX Ribon'
-    Color = clWhite
+    Color = clMenu
     EdgeInner = esNone
     EdgeOuter = esNone
     Images = ImageList2
@@ -315,8 +315,8 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 20
-    Top = 885
+    Height = 29
+    Top = 873
     Width = 1299
     Panels = <    
       item
@@ -336,7 +336,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 482
+    Height = 477
     Top = 134
     Width = 261
     Align = alLeft
@@ -504,34 +504,42 @@ object fmMCX: TfmMCX
       item
         AutoSize = True
         Caption = 'MCProgram'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'DoSpecular'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'UseAtomic'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'BasicOrder'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'DebugPhoton'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'MoreParam'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'RemoteCmd'
+        Width = 10
       end    
       item
         AutoSize = True
         Caption = 'DoRemote'
+        Width = 10
       end>
     Constraints.MinWidth = 20
     IconOptions.AutoArrange = True
@@ -548,19 +556,19 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 261
-    Height = 482
+    Height = 477
     Top = 134
     Width = 8
   end
   object plSetting: TPanel
     Left = 269
-    Height = 482
+    Height = 477
     Top = 134
     Width = 667
     Align = alLeft
     Anchors = []
     BevelOuter = bvNone
-    ClientHeight = 482
+    ClientHeight = 477
     ClientWidth = 667
     Enabled = False
     ParentColor = False
@@ -568,16 +576,15 @@ object fmMCX: TfmMCX
     object grBasic: TGroupBox
       AnchorSideBottom.Control = grGPU
       Left = 0
-      Height = 108
-      Top = 42
+      Height = 121
+      Top = 49
       Width = 667
       Align = alTop
       AutoSize = True
       Caption = 'Basic Settings'
-      ClientHeight = 90
+      ClientHeight = 96
       ClientWidth = 663
       Font.Style = [fsBold]
-      ParentColor = False
       ParentFont = False
       TabOrder = 1
       object edConfigFile: TFileNameEdit
@@ -585,11 +592,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = grBasic
         AnchorSideRight.Control = Label10
-        Left = 130
-        Height = 26
+        Left = 140
+        Height = 28
         Hint = 'InputFile'
         Top = 5
-        Width = 294
+        Width = 284
         DialogOptions = []
         FilterIndex = 0
         HideDirectories = False
@@ -609,10 +616,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edConfigFile
         Left = 0
-        Height = 16
+        Height = 20
         Hint = '-s (--sessionid)'
-        Top = 36
-        Width = 130
+        Top = 37
+        Width = 140
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Session ID (-s)'
@@ -627,10 +634,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edConfigFile
         AnchorSideTop.Side = asrBottom
-        Left = 130
-        Height = 26
+        Left = 140
+        Height = 28
         Hint = 'Session'
-        Top = 31
+        Top = 33
         Width = 118
         OnChange = edRespinChange
         ParentFont = False
@@ -641,11 +648,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edPhoton
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edPhoton
-        Left = 273
-        Height = 16
+        Left = 255
+        Height = 20
         Hint = '-n (--photon)'
-        Top = 36
-        Width = 151
+        Top = 37
+        Width = 169
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
         Caption = 'Total photon number (-n)'
@@ -660,9 +667,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edSession
         AnchorSideTop.Side = asrCenter
         Left = 424
-        Height = 26
+        Height = 28
         Hint = 'PhotonNum'
-        Top = 31
+        Top = 33
         Width = 118
         OnChange = edRespinChange
         ParentFont = False
@@ -675,10 +682,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edConfigFile
         Left = 0
-        Height = 16
+        Height = 20
         Hint = '-u (--unitinmm)'
-        Top = 62
-        Width = 130
+        Top = 65
+        Width = 140
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Voxel size in mm (-u)'
@@ -695,10 +702,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Control = grBasic
         AnchorSideBottom.Side = asrBottom
-        Left = 130
-        Height = 26
+        Left = 140
+        Height = 28
         Hint = 'UnitInMM'
-        Top = 57
+        Top = 61
         Width = 118
         Anchors = [akTop, akLeft, akBottom]
         BorderSpacing.Bottom = 7
@@ -713,9 +720,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edPhoton
         AnchorSideTop.Side = asrBottom
         Left = 424
-        Height = 26
+        Height = 28
         Hint = 'Seed'
-        Top = 57
+        Top = 61
         Width = 118
         OnChange = edRespinChange
         ParentFont = False
@@ -727,11 +734,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edSeed
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edSeed
-        Left = 370
-        Height = 16
+        Left = 363
+        Height = 20
         Hint = '-E (--seed)'
-        Top = 62
-        Width = 54
+        Top = 65
+        Width = 61
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
         Caption = 'Seed (-E)'
@@ -746,8 +753,8 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         Left = 0
         Height = 24
-        Top = 6
-        Width = 130
+        Top = 7
+        Width = 140
         Caption = 'Use Input File (-f)'
         OnChange = rbUseFileChange
         ParentFont = False
@@ -760,7 +767,7 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         Left = 472
         Height = 24
-        Top = 6
+        Top = 7
         Width = 191
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Use Simulation Designer »'
@@ -774,9 +781,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = rbUseDesigner
         Left = 424
-        Height = 16
+        Height = 20
         Hint = '-a (--array)'
-        Top = 10
+        Top = 9
         Width = 48
         Alignment = taCenter
         Anchors = [akTop, akLeft, akRight]
@@ -793,7 +800,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         Left = 542
         Height = 24
-        Top = 58
+        Top = 63
         Width = 26
         OnClick = btLoadSeedClick
         ParentFont = False
@@ -806,8 +813,8 @@ object fmMCX: TfmMCX
         Left = 573
         Height = 24
         Hint = 'DoReplay'
-        Top = 59
-        Width = 68
+        Top = 64
+        Width = 71
         Anchors = [akLeft]
         BorderSpacing.Left = 5
         BorderSpacing.Top = 1
@@ -821,12 +828,13 @@ object fmMCX: TfmMCX
       Tag = -1
       Left = 0
       Height = 35
-      Top = 373
+      Top = 409
       Width = 667
       Align = alTop
       Caption = 'Advanced Settings'
-      ClientHeight = 17
+      ClientHeight = 10
       ClientWidth = 663
+      Color = clBtnFace
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -838,9 +846,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = grArray
         Left = 0
-        Height = 16
+        Height = 20
         Hint = '-a (--array)'
-        Top = 26
+        Top = 34
         Width = 168
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -856,7 +864,7 @@ object fmMCX: TfmMCX
         AnchorSideRight.Control = edBubble
         AnchorSideRight.Side = asrBottom
         Left = 168
-        Height = 40
+        Height = 61
         Hint = 'ArrayOrder'
         Top = 14
         Width = 120
@@ -890,9 +898,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edGate
         Left = 0
-        Height = 16
+        Height = 20
         Hint = '-g (--gategroup)'
-        Top = 85
+        Top = 107
         Width = 208
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -906,9 +914,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edBubble
         AnchorSideTop.Side = asrBottom
         Left = 208
-        Height = 26
+        Height = 28
         Hint = 'GateNum'
-        Top = 80
+        Top = 103
         Width = 80
         MaxValue = 100000
         MinValue = 1
@@ -922,11 +930,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edBubble
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edBubble
-        Left = 53
-        Height = 16
+        Left = 37
+        Height = 20
         Hint = '-r (--skipradius)'
-        Top = 59
-        Width = 155
+        Top = 79
+        Width = 171
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
         Caption = 'Cache radius from src (-R)'
@@ -939,9 +947,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = grArray
         AnchorSideTop.Side = asrBottom
         Left = 208
-        Height = 26
+        Height = 28
         Hint = 'BubbleSize'
-        Top = 54
+        Top = 75
         Width = 80
         OnChange = edRespinChange
         ParentFont = False
@@ -956,7 +964,7 @@ object fmMCX: TfmMCX
         Left = 288
         Height = 17
         Hint = '(--atomic)'
-        Top = 26
+        Top = 36
         Width = 164
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -976,7 +984,7 @@ object fmMCX: TfmMCX
         Left = 288
         Height = 17
         Hint = '-H (--maxdetphoton)'
-        Top = 59
+        Top = 81
         Width = 248
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -991,9 +999,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = grAtomic
         AnchorSideTop.Side = asrBottom
         Left = 536
-        Height = 26
+        Height = 28
         Hint = 'DetectedNum'
-        Top = 54
+        Top = 75
         Width = 80
         Enabled = False
         OnChange = edRespinChange
@@ -1009,7 +1017,7 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 17
         Hint = '-r (--repeat)'
-        Top = 111
+        Top = 137
         Width = 208
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -1025,9 +1033,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edGate
         AnchorSideTop.Side = asrBottom
         Left = 208
-        Height = 26
+        Height = 28
         Hint = 'RespinNum'
-        Top = 106
+        Top = 131
         Width = 80
         MaxValue = 100000
         MinValue = 1
@@ -1046,7 +1054,7 @@ object fmMCX: TfmMCX
         Left = 422
         Height = 72
         Hint = 'DebugFlags'
-        Top = 82
+        Top = 105
         Width = 194
         Anchors = [akTop, akRight]
         BorderSpacing.Left = 6
@@ -1057,7 +1065,7 @@ object fmMCX: TfmMCX
           'Save Trajectory Data'
           'Show Progress Bar'
         )
-        ItemHeight = 22
+        ItemHeight = 21
         OnClickCheck = edRespinChange
         ParentFont = False
         TabOrder = 7
@@ -1073,7 +1081,7 @@ object fmMCX: TfmMCX
         Left = 288
         Height = 17
         Hint = '-D (--debuglevel)'
-        Top = 87
+        Top = 110
         Width = 128
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -1090,9 +1098,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edRespin
         AnchorSideTop.Side = asrBottom
         Left = 208
-        Height = 26
+        Height = 28
         Hint = 'ReplayDet'
-        Top = 132
+        Top = 159
         Width = 80
         Enabled = False
         MaxValue = 256
@@ -1108,7 +1116,7 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 17
         Hint = '-Y (--replaydet)'
-        Top = 137
+        Top = 165
         Width = 208
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -1127,7 +1135,7 @@ object fmMCX: TfmMCX
         AnchorSideRight.Control = grAdvSettings
         AnchorSideRight.Side = asrBottom
         Left = 456
-        Height = 40
+        Height = 61
         Hint = 'UseAtomic'
         Top = 14
         Width = 207
@@ -1164,7 +1172,7 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 17
         Hint = '-Y (--replaydet)'
-        Top = 163
+        Top = 193
         Width = 208
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -1184,9 +1192,9 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Control = grAdvSettings
         AnchorSideBottom.Side = asrBottom
         Left = 208
-        Height = 26
+        Height = 28
         Hint = 'MoreParam'
-        Top = 158
+        Top = 187
         Width = 408
         Anchors = [akTop, akLeft, akRight]
         OnChange = edRespinChange
@@ -1202,9 +1210,9 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Control = grAdvSettings
         AnchorSideBottom.Side = asrBottom
         Left = 208
-        Height = 26
+        Height = 28
         Hint = 'RemoteCmd'
-        Top = 184
+        Top = 215
         Width = 408
         Anchors = [akTop, akLeft, akRight]
         Enabled = False
@@ -1218,11 +1226,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edRemote
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edRemote
-        Left = 56
+        Left = 49
         Height = 24
         Hint = 'DoRemote'
-        Top = 185
-        Width = 152
+        Top = 217
+        Width = 159
         Anchors = [akTop, akRight]
         BorderSpacing.Left = 16
         BorderSpacing.Top = 1
@@ -1250,8 +1258,8 @@ object fmMCX: TfmMCX
     object grSwitches: TGroupBox
       AnchorSideBottom.Control = grAdvSettings
       Left = 0
-      Height = 114
-      Top = 259
+      Height = 121
+      Top = 288
       Width = 667
       Align = alTop
       AutoSize = True
@@ -1263,7 +1271,6 @@ object fmMCX: TfmMCX
       ClientHeight = 96
       ClientWidth = 663
       Font.Style = [fsBold]
-      ParentColor = False
       ParentFont = False
       TabOrder = 3
       object ckReflect: TCheckBox
@@ -1272,7 +1279,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoReflect'
         Top = 0
-        Width = 212
+        Width = 216
         Caption = 'Do reflection (-b)'
         Checked = True
         OnChange = edRespinChange
@@ -1285,7 +1292,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoNormalize'
         Top = 24
-        Width = 212
+        Width = 216
         Caption = 'Do normalization (-U)'
         Checked = True
         OnChange = edRespinChange
@@ -1298,7 +1305,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSaveExit'
         Top = 48
-        Width = 212
+        Width = 216
         Caption = 'Save exit position && dir (-x)'
         OnChange = edRespinChange
         ParentFont = False
@@ -1309,7 +1316,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSrcFrom0'
         Top = 72
-        Width = 212
+        Width = 216
         Caption = 'Orign from [0,0,0] (-z)'
         Checked = True
         OnChange = edRespinChange
@@ -1318,11 +1325,11 @@ object fmMCX: TfmMCX
         TabOrder = 3
       end
       object ckSaveDetector: TCheckBox
-        Left = 222
+        Left = 226
         Height = 24
         Hint = 'SaveDetector'
         Top = 0
-        Width = 222
+        Width = 220
         Caption = 'Save detected photons (-d)'
         Checked = True
         OnChange = edRespinChange
@@ -1331,11 +1338,11 @@ object fmMCX: TfmMCX
         TabOrder = 4
       end
       object ckSaveData: TCheckBox
-        Left = 222
+        Left = 226
         Height = 24
         Hint = 'DoSave'
         Top = 24
-        Width = 222
+        Width = 220
         Caption = 'Save fluence (-S)'
         Checked = True
         OnChange = edRespinChange
@@ -1344,55 +1351,55 @@ object fmMCX: TfmMCX
         TabOrder = 5
       end
       object ckSaveRef: TCheckBox
-        Left = 222
+        Left = 226
         Height = 24
         Hint = 'DoSaveRef'
         Top = 48
-        Width = 222
+        Width = 220
         Caption = 'Save diffuse reflectance (-X)'
         OnChange = edRespinChange
         ParentFont = False
         TabOrder = 6
       end
       object ckSkipVoid: TCheckBox
-        Left = 222
+        Left = 226
         Height = 24
         Hint = 'DoSkipVoid'
         Top = 72
-        Width = 222
+        Width = 220
         Caption = 'Skip void (-k)'
         OnChange = edRespinChange
         ParentFont = False
         TabOrder = 7
       end
       object ckSaveSeed: TCheckBox
-        Left = 444
+        Left = 446
         Height = 24
         Hint = 'DoSaveSeed'
         Top = 0
-        Width = 209
+        Width = 207
         Caption = 'Save photon seeds (-q)'
         OnChange = edRespinChange
         ParentFont = False
         TabOrder = 8
       end
       object ckSaveMask: TCheckBox
-        Left = 444
+        Left = 446
         Height = 24
         Hint = 'DoSaveMask'
         Top = 24
-        Width = 209
+        Width = 207
         Caption = 'Save volume mask (-M)'
         OnChange = edRespinChange
         ParentFont = False
         TabOrder = 9
       end
       object ckSpecular: TCheckBox
-        Left = 444
+        Left = 446
         Height = 24
         Hint = 'DoSpecular'
         Top = 48
-        Width = 209
+        Width = 207
         Caption = 'Do specular reflection (-V)'
         OnChange = edRespinChange
         ParentFont = False
@@ -1400,11 +1407,11 @@ object fmMCX: TfmMCX
         Visible = False
       end
       object ckMomentum: TCheckBox
-        Left = 444
+        Left = 446
         Height = 24
         Hint = 'DoMomentum'
         Top = 72
-        Width = 209
+        Width = 207
         Caption = 'Save momentum transfer'
         OnChange = edRespinChange
         ParentFont = False
@@ -1415,17 +1422,16 @@ object fmMCX: TfmMCX
     object grGPU: TGroupBox
       AnchorSideBottom.Control = grSwitches
       Left = 0
-      Height = 105
-      Top = 154
+      Height = 114
+      Top = 174
       Width = 667
       Align = alTop
       AutoSize = True
       BorderSpacing.Top = 4
       Caption = 'GPU Settings'
-      ClientHeight = 87
+      ClientHeight = 89
       ClientWidth = 663
       Font.Style = [fsBold]
-      ParentColor = False
       ParentFont = False
       TabOrder = 2
       object Label1: TLabel
@@ -1434,10 +1440,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edThread
         Left = 0
-        Height = 16
+        Height = 20
         Hint = '-t (--thread)'
-        Top = 31
-        Width = 114
+        Top = 29
+        Width = 126
         Alignment = taRightJustify
         Caption = 'Thread number (-t)'
         ParentColor = False
@@ -1455,11 +1461,11 @@ object fmMCX: TfmMCX
         Height = 28
         Hint = 'ThreadNum'
         Top = 25
-        Width = 112
+        Width = 133
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 150
         Enabled = False
-        ItemHeight = 0
+        ItemHeight = 20
         ItemIndex = 19
         Items.Strings = (
           '128'
@@ -1499,7 +1505,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'Autopilot'
         Top = 1
-        Width = 257
+        Width = 278
         BorderSpacing.Left = 5
         BorderSpacing.Top = 1
         Caption = 'Let MCX decide thread/block size (-A)'
@@ -1514,10 +1520,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edBlockSize
         AnchorSideTop.Side = asrCenter
         Left = 0
-        Height = 16
+        Height = 20
         Hint = '-T (--blocksize)'
-        Top = 59
-        Width = 128
+        Top = 57
+        Width = 143
         Alignment = taRightJustify
         Caption = 'Thread block size (-T)'
         ParentColor = False
@@ -1537,12 +1543,12 @@ object fmMCX: TfmMCX
         Height = 28
         Hint = 'ThreadBlock'
         Top = 53
-        Width = 112
+        Width = 133
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 150
         BorderSpacing.Bottom = 6
         Enabled = False
-        ItemHeight = 0
+        ItemHeight = 20
         ItemIndex = 0
         Items.Strings = (
           '64'
@@ -1563,10 +1569,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Control = grGPU
         AnchorSideBottom.Side = asrBottom
-        Left = 279
+        Left = 300
         Height = 56
         Hint = 'GPUID'
-        Top = 23
+        Top = 25
         Width = 170
         BorderSpacing.Left = 17
         BorderSpacing.Top = 2
@@ -1581,7 +1587,7 @@ object fmMCX: TfmMCX
           'GPU#7'
           'GPU#8'
         )
-        ItemHeight = 22
+        ItemHeight = 21
         OnClickCheck = edRespinChange
         ParentFont = False
         TabOrder = 3
@@ -1593,11 +1599,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edGPUID
         AnchorSideTop.Control = ckAutopilot
         AnchorSideTop.Side = asrCenter
-        Left = 279
-        Height = 16
+        Left = 300
+        Height = 20
         Hint = '-G (--gpu)'
-        Top = 5
-        Width = 70
+        Top = 3
+        Width = 81
         Alignment = taRightJustify
         Caption = 'Run MCX on'
         ParentColor = False
@@ -1609,11 +1615,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edWorkload
         AnchorSideTop.Control = Label12
         AnchorSideTop.Side = asrCenter
-        Left = 465
-        Height = 16
+        Left = 486
+        Height = 20
         Hint = '-W (--workload)'
-        Top = 5
-        Width = 88
+        Top = 3
+        Width = 97
         Alignment = taRightJustify
         Caption = 'Workload split'
         ParentColor = False
@@ -1627,10 +1633,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = Label15
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Side = asrBottom
-        Left = 465
-        Height = 26
+        Left = 486
+        Height = 28
         Hint = 'Workload'
-        Top = 23
+        Top = 25
         Width = 118
         BorderSpacing.Left = 16
         BorderSpacing.Top = 2
@@ -1644,7 +1650,7 @@ object fmMCX: TfmMCX
     object grProgram: TRadioGroup
       AnchorSideBottom.Control = grBasic
       Left = 0
-      Height = 42
+      Height = 49
       Hint = 'MCProgram'
       Top = 0
       Width = 667
@@ -1671,7 +1677,6 @@ object fmMCX: TfmMCX
       )
       OnSelectionChanged = grProgramSelectionChanged
       ParentFont = False
-      ParentColor = False
       TabOrder = 0
     end
     object Image1: TImage
@@ -1683,7 +1688,7 @@ object fmMCX: TfmMCX
       Left = 464
       Height = 33
       Hint = 'About MCX'
-      Top = 449
+      Top = 444
       Width = 200
       Anchors = [akLeft, akRight, akBottom]
       AutoSize = True
@@ -1990,37 +1995,37 @@ object fmMCX: TfmMCX
   end
   object plOutput: TPanel
     Left = 944
-    Height = 482
+    Height = 477
     Top = 134
     Width = 355
     Align = alClient
-    ClientHeight = 482
+    ClientHeight = 477
     ClientWidth = 355
     DockSite = True
     TabOrder = 5
     OnDockOver = plOutputDockOver
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 480
+      Height = 475
       Top = 1
       Width = 353
-      ActivePage = tabVolumeDesigner
+      ActivePage = tabInputData
       Align = alClient
       Enabled = False
       Images = JSONIcons
-      TabIndex = 1
+      TabIndex = 0
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 450
-        ClientWidth = 349
+        ClientHeight = 442
+        ClientWidth = 345
         ImageIndex = 4
         object sgMedia: TStringGrid
           Left = 0
           Height = 91
           Hint = 'MediaCfg'
           Top = 24
-          Width = 349
+          Width = 345
           Align = alTop
           ColCount = 4
           FixedCols = 0
@@ -2082,7 +2087,7 @@ object fmMCX: TfmMCX
           Height = 75
           Hint = 'DetectorCfg'
           Top = 144
-          Width = 349
+          Width = 345
           Align = alTop
           ColCount = 4
           FixedCols = 0
@@ -2130,7 +2135,7 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 24
           Top = 224
-          Width = 349
+          Width = 345
           Align = alTop
           Caption = 'Additional Settings'
           Color = clGray
@@ -2145,7 +2150,7 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 24
           Top = 0
-          Width = 349
+          Width = 345
           Align = alTop
           Caption = 'Media Settings'
           Color = clGray
@@ -2161,7 +2166,7 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 24
           Top = 120
-          Width = 349
+          Width = 345
           Align = alTop
           Caption = 'Detector Settings (in voxel unit)'
           Color = clGray
@@ -2174,10 +2179,10 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 202
+          Height = 194
           Hint = 'MCXConfig'
           Top = 248
-          Width = 349
+          Width = 345
           Align = alClient
           ColCount = 3
           Columns = <          
@@ -2318,7 +2323,7 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 5
           Top = 219
-          Width = 349
+          Width = 345
           Align = alTop
           ResizeAnchor = akTop
         end
@@ -2327,25 +2332,25 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 5
           Top = 115
-          Width = 349
+          Width = 345
           Align = alTop
           ResizeAnchor = akTop
         end
       end
       object tabVolumeDesigner: TTabSheet
         Caption = 'Volume Designer'
-        ClientHeight = 450
-        ClientWidth = 349
+        ClientHeight = 442
+        ClientWidth = 345
         ImageIndex = 6
         object tvShapes: TTreeView
           Left = 0
-          Height = 244
+          Height = 236
           Hint = 'ShapeCfg'
           Top = 206
-          Width = 349
+          Width = 345
           Align = alClient
           AutoExpand = True
-          DefaultItemHeight = 18
+          DefaultItemHeight = 22
           Images = JSONIcons
           StateImages = JSONIcons
           TabOrder = 0
@@ -2362,7 +2367,7 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 206
           Top = 0
-          Width = 349
+          Width = 345
           AutoSize = True
           ButtonHeight = 68
           ButtonWidth = 48
@@ -2381,7 +2386,7 @@ object fmMCX: TfmMCX
             Action = shapeDelete
           end
           object ToolButton19: TToolButton
-            Left = 164
+            Left = 167
             Top = 70
             Action = shapeAddName
           end
@@ -2396,27 +2401,27 @@ object fmMCX: TfmMCX
             Action = shapeAddBox
           end
           object ToolButton22: TToolButton
-            Left = 261
+            Left = 263
             Top = 2
             Action = shapeAddSubgrid
           end
           object ToolButton23: TToolButton
-            Left = 283
-            Top = 70
+            Left = 1
+            Top = 138
             Action = shapeAddXLayers
           end
           object ToolButton24: TToolButton
-            Left = 1
+            Left = 59
             Top = 138
             Action = shapeAddYLayers
           end
           object ToolButton25: TToolButton
-            Left = 56
+            Left = 116
             Top = 138
             Action = shapeAddZLayers
           end
           object ToolButton26: TToolButton
-            Left = 111
+            Left = 174
             Top = 138
             Action = shapeAddXSlabs
           end
@@ -2426,12 +2431,12 @@ object fmMCX: TfmMCX
             Action = shapeAddCylinder
           end
           object ToolButton28: TToolButton
-            Left = 163
+            Left = 226
             Top = 138
             Action = shapeAddYSlabs
           end
           object ToolButton29: TToolButton
-            Left = 215
+            Left = 278
             Top = 138
             Action = shapeAddZSlabs
           end
@@ -2441,7 +2446,7 @@ object fmMCX: TfmMCX
             Action = shapePrint
           end
           object ToolButton32: TToolButton
-            Left = 112
+            Left = 115
             Top = 70
             Action = shapeAddOrigin
           end
@@ -2451,7 +2456,7 @@ object fmMCX: TfmMCX
             Action = shapeAddSphere
           end
           object ToolButton33: TToolButton
-            Left = 216
+            Left = 219
             Top = 70
             Action = shapeAddUpperSpace
           end
@@ -2461,11 +2466,11 @@ object fmMCX: TfmMCX
   end
   object Panel1: TPanel
     Left = 0
-    Height = 261
-    Top = 624
+    Height = 254
+    Top = 619
     Width = 1299
     Align = alBottom
-    ClientHeight = 261
+    ClientHeight = 254
     ClientWidth = 1299
     TabOrder = 7
     object Button1: TButton
@@ -2480,7 +2485,7 @@ object fmMCX: TfmMCX
     end
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 234
+      Height = 227
       Top = 26
       Width = 1297
       Align = alClient
@@ -2989,10 +2994,10 @@ object fmMCX: TfmMCX
     Sections = <    
       item
         Alignment = taRightJustify
-        MaxWidth = 261
-        MinWidth = 261
+        MaxWidth = 263
+        MinWidth = 263
         Text = 'Session'
-        Width = 261
+        Width = 263
         Visible = True
       end    
       item
@@ -3035,182 +3040,30 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 8
-    Top = 616
+    Top = 611
     Width = 1299
     Align = alBottom
     ResizeAnchor = akBottom
   end
   object Splitter2: TSplitter
     Left = 936
-    Height = 482
+    Height = 477
     Top = 134
     Width = 8
     OnMoved = Splitter2Moved
   end
   object MainMenu1: TMainMenu
-    Images = ImageList1
+    Images = ImageList2
     left = 944
     top = 680
     object MenuItem1: TMenuItem
       Caption = 'File'
       object MenuItem5: TMenuItem
         Action = mcxdoOpen
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0021A5
-          D6FF21A5D6FF21A5D6FF5AC6E7FF42BDE7FF29ADD6FF21A5D6FF18A5D6FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0018A5
-          D6FFADDEF7FFB5FFFFFF9CFFFFFF94F7FFFF8CEFFFFF7BE7F7FF6BD6F7FF52C6
-          E7FF42B5DEFF29ADD6FF21A5D6FF18A5D6FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0010A5
-          D6FF63BDE7FFCEFFFFFF8CF7FFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF94F7
-          FFFF8CF7FFFF8CEFFFFF73DEF7FF5ACEEFFF4AC6E7FF31B5DEFF21A5D6FF18A5
-          D6FF18A5D6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0021A5
-          D6FF42B5DEFFBDEFF7FF9CFFFFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF8CF7FFFF94F7FFFF94F7FFFF8CEFFFFF8CEFFFFF84E7FFFF63D6
-          EFFF31ADDEFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FF5AC6E7FF94D6EFFFB5FFFFFF8CF7FFFF94F7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF84E7
-          FFFF5ACEEFFF21A5D6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FF7BE7F7FF63C6E7FFC6F7FFFF8CF7FFFF94F7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF7BE7
-          F7FF73DEF7FF39BDDEFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FF94EFF7FF52CEE7FFBDE7F7FF9CFFFFFF94F7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF73DE
-          F7FF73DEFFFF63D6EFFF18A5D6FFFF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FF9CEFFFFF63DEEFFF8CCEEFFFBDFFFFFF8CF7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF73DE
-          F7FF73DEF7FF8CEFFFFF29ADD6FFFF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FF94EFF7FF8CF7FFFF4ABDDEFFCEF7FFFFA5FFFFFF94F7FFFF8CF7FFFF8CF7
-          FFFF8CF7FFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF73DE
-          F7FF087B10FF108418FF4AC6E7FFFF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FF94EFF7FF9CFFFFFF5AD6EFFF63BDE7FFBDE7F7FFBDEFF7FFC6F7FFFFC6F7
-          FFFFBDFFFFFF9CF7FFFF84EFFFFF8CEFFFFF8CEFFFFF8CEFFFFF8CEFFFFF0873
-          08FF39BD63FF4AD67BFF108418FF18A5D6FFFF00FF00FF00FF00FF00FF0029AD
-          D6FF9CEFFFFF94FFFFFF94F7FFFF63D6EFFF52CEE7FF5AC6E7FF63C6E7FF63C6
-          E7FF73C6E7FFBDE7F7FFB5F7FFFF84EFFFFF8CEFFFFF8CEFFFFF006B00FF31AD
-          52FF5AE78CFF5AE78CFF39BD5AFF087310FFFF00FF00FF00FF00FF00FF0029AD
-          D6FF9CEFFFFF94FFFFFF94F7FFFF9CFFFFFF94FFFFFF94F7FFFF8CEFFFFF84EF
-          FFFF63D6EFFF42B5DEFFADDEF7FFC6F7FFFF94F7FFFF087308FF29AD4AFF5AEF
-          94FF52DE84FF4AD66BFF21AD31FF21AD39FF087308FFFF00FF00FF00FF0029AD
-          D6FF9CEFFFFF94FFFFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF94F7
-          FFFF94F7FFFF7BE7F7FF42BDE7FF7BCEE7FF087308FF21AD31FF31AD52FF39BD
-          5AFF42CE6BFF39C65AFF29BD4AFF21AD31FF21AD31FF007308FFFF00FF0029AD
-          D6FF9CF7FFFF94FFFFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF94F7FFFF8CEFFFFF5AD6EFFF087308FF087308FF087308FF0873
-          10FF31BD4AFF31BD4AFF087308FF087308FF087308FF087308FFFF00FF0029AD
-          D6FFA5F7FFFF94FFFFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF8CF7
-          FFFF8CF7FFFF8CF7FFFF8CEFFFFF94F7FFFF8CEFFFFF7BEFFFFF84EFFFFF0873
-          08FF21AD39FF21BD39FF087308FFFF00FF00FF00FF00FF00FF00FF00FF0029AD
-          D6FFB5F7FFFF94FFFFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF94F7FFFF9CEF
-          FFFF9CEFFFFF9CEFFFFF9CEFFFFF9CEFFFFF9CEFFFFF9CEFFFFF9CF7FFFF0873
-          10FF18AD29FF10AD21FF087308FFFF00FF00FF00FF00FF00FF00FF00FF0018A5
-          D6FF7BCEE7FFB5FFFFFF94FFFFFF94FFFFFF94F7FFFF94F7FFFF84EFFFFF31AD
-          DEFF31ADDEFF39B5DEFF42B5DEFF42B5DEFF4ABDDEFF4ABDDEFF5ABDE7FF0884
-          10FF10AD21FF089C18FF087308FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0021A5D6FF84D6EFFF94E7F7FF94E7F7FF9CEFFFFFA5F7FFFF5ACEE7FF10A5
-          D6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00087308FF089C
-          18FF10AD21FF088410FF087308FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF0018A5D6FF21A5D6FF21A5D6FF29ADD6FF29ADD6FF21A5D6FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00088410FF089C18FF08A5
-          18FF088C10FF087308FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00087308FF087308FF108418FF089418FF089418FF089418FF087B
-          10FF087308FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00087308FF087310FF087308FF087308FF087308FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoOpenExecute
       end
       object MenuItem6: TMenuItem
         Action = mcxdoSave
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00AD736BFF9C5252FF9C4A4AFF9C5252FF9C4A4AFFA57373FFB5B5B5FFB5B5
-          B5FFB5B5B5FFBDB5B5FFBDB5B5FFB5B5B5FFB5B5B5FFB5B5B5FFB5B5B5FFA573
-          73FF944242FF9C4A4AFF9C4A4AFF9C4A4AFF9C4A4AFFFF00FF00FF00FF00B584
-          73FFC66B6BFFC66363FFC66363FFCE6363FFB55252FF9C6B6BFFB5B5B5FFCECE
-          CEFFE7E7DEFFEFEFEFFFF7F7EFFFF7F7EFFFEFE7E7FFE7DEDEFFDEDEDEFFB573
-          73FF942929FF943131FF9C3939FFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFBD5A5AFF9C6B6BFFA58C8CFFB584
-          84FFCEADADFFDECECEFFF7F7EFFFFFFFF7FFF7F7F7FFEFEFE7FFE7E7E7FFB573
-          73FF942929FF943131FF9C3939FFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFBD5A5AFF9C7373FFA57B7BFF9C39
-          39FFB5736BFFC69C9CFFEFE7E7FFF7F7F7FFFFF7F7FFF7F7EFFFEFEFEFFFBD7B
-          7BFF942929FF943131FF9C3939FFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFBD5A5AFFA57373FFA58484FF9431
-          31FF9C4242FFB57373FFDEDED6FFEFEFEFFFF7F7F7FFFFF7F7FFF7F7F7FFBD7B
-          7BFF942929FF943131FF9C3939FFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFBD5A5AFFA57373FFAD8C8CFF9431
-          31FF943131FF9C4A4AFFC6C6C6FFE7E7DEFFEFEFEFFFFFF7F7FFFFFFFFFFC67B
-          7BFF942929FF943131FF9C3939FFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFB55252FFAD7B7BFFB58C8CFF9429
-          29FF942929FF943131FFADA5A5FFCECECEFFE7E7DEFFF7EFEFFFFFFFFFFFC684
-          84FF942929FF943131FF9C3939FFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFB55252FFAD7B7BFFC6ADADFFA563
-          63FFA56363FF9C6363FF9C9C9CFFB5B5B5FFD6D6D6FFEFEFEFFFFFFFFFFFC684
-          84FF942929FF943131FF9C3939FFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFBD5A5AFFB57373FFD6A5A5FFC69C
-          9CFFBD9C9CFFBD9494FFAD8C8CFFAD8C8CFFC69C9CFFD6ADADFFE7C6C6FFC673
-          73FFA54242FFAD4242FFAD4A4AFFC66363FFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFCE6363FFCE6363FFCE6363FFCE6363FFCE6363FFCE6363FFCE63
-          63FFCE6363FFCE6363FFCE6363FFCE6363FFC66363FFC66363FFC66363FFCE63
-          63FFCE6363FFCE6363FFCE6363FFCE6363FFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFC66363FFBD5A5AFFC66363FFC66B6BFFCE7373FFCE7373FFCE73
-          73FFCE7373FFCE7373FFCE7373FFCE7373FFCE7373FFCE7373FFCE7373FFCE73
-          73FFCE7373FFCE7B7BFFCE6B6BFFCE6363FFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4A4AFFA54A42FFB56B6BFFC68C8CFFCEADADFFD6BDBDFFD6BD
-          BDFFD6BDBDFFD6BDBDFFD6BDBDFFD6BDBDFFD6BDBDFFD6BDBDFFD6BDBDFFD6BD
-          BDFFD6BDBDFFDEC6C6FFCE8C8CFFCE6363FFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCE9C9CFFF7F7EFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EF
-          EFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EF
-          EFFFF7EFEFFFEFE7E7FFCE8C8CFFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFF7F7F7FFF7F7F7FFF7F7F7FFF7F7
-          F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7
-          F7FFFFF7F7FFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EF
-          EFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EFEFFFF7EF
-          EFFFF7F7F7FFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFE7E7E7FFCEC6C6FFCECECEFFCECE
-          CEFFCECECEFFCECECEFFCECECEFFCECECEFFCECECEFFCECECEFFCECECEFFC6C6
-          C6FFE7DEDEFFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFF7EFEFFFEFE7E7FFEFE7E7FFEFE7
-          E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7
-          E7FFF7EFEFFFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFEFE7E7FFD6CECEFFD6CECEFFD6CE
-          CEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFCECE
-          CEFFE7E7E7FFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFEFEFE7FFE7DEDEFFE7DEDEFFE7DE
-          DEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DE
-          DEFFEFEFEFFFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFEFEFE7FFE7DEDEFFE7DEDEFFE7DE
-          DEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DEDEFFE7DE
-          DEFFEFEFEFFFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFE7E7E7FFCECECEFFD6CECEFFD6CE
-          CEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFD6CECEFFCECE
-          CEFFE7E7E7FFEFE7E7FFCE8C8CFFBD5A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFC66B6BFFAD4242FFCEA5A5FFFFFFFFFFFFF7F7FFFFF7F7FFFFF7F7FFFFF7
-          F7FFFFF7F7FFFFF7F7FFFFF7F7FFFFF7F7FFFFF7F7FFFFF7F7FFFFF7F7FFFFF7
-          F7FFFFF7F7FFEFE7E7FFCE8C8CFFC65A5AFFC66363FF9C4A4AFFFF00FF00B584
-          73FFBD6B6BFFAD4242FFCE9C9CFFEFEFEFFFEFE7E7FFEFE7E7FFEFE7E7FFEFE7
-          E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7E7FFEFE7
-          E7FFEFEFE7FFE7DEDEFFC68C8CFFB55252FFBD5A5AFF9C4A4AFFFF00FF00FF00
-          FF00AD736BFFA54242FFB58C84FFC6CECEFFC6C6C6FFC6C6C6FFC6C6C6FFC6C6
-          C6FFC6C6C6FFC6C6C6FFC6C6C6FFC6C6C6FFC6C6C6FFC6C6C6FFC6C6C6FFC6C6
-          C6FFC6C6C6FFCEC6C6FFB58484FF944242FF9C4A4AFFFF00FF00
-        }
         OnClick = mcxdoSaveExecute
       end
       object MenuItem7: TMenuItem
@@ -3218,82 +3071,6 @@ object fmMCX: TfmMCX
       end
       object MenuItem8: TMenuItem
         Action = mcxdoExit
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0052ADFFFF006BCEFF005AADFF0063BDFF0063BDFF0063BDFF0063BDFF0063
-          BDFF0063BDFF0063B5FF0063B5FF0063BDFF0063B5FF0063BDFF0063B5FF005A
-          ADFF0063B5FF52ADFFFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00007BE7FF007BE7FF0084EFFF0084F7FF0084F7FF0084F7FF0084F7FF0084
-          F7FF0084F7FF0084EFFF0084F7FF0084EFFF0084EFFF007BE7FF007BDEFF0073
-          D6FF006BC6FF0063BDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00007BDEFF008CFFFF1094FFFF1894FFFF1894FFFF1894FFFF1894FFFF1894
-          FFFF088CFFFF1094FFFF1094FFFF088CFFFF008CFFFF008CFFFF0084F7FF007B
-          E7FF007BDEFF005AADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF000084EFFF088CFFFF1094FFFF299CFFFFADDEFFFF31A5FFFFADDEFFFFADDE
-          FFFFADDEFFFFADDEFFFFADDEFFFF088CFFFF088CFFFF008CFFFF0084EFFF0084
-          F7FF007BDEFF005AADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF000084EFFF1094FFFF219CFFFF31A5FFFFFFFFFFFFADDEFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFADDEFFFF088CFFFF088CFFFF008CFFFF0084
-          F7FF007BE7FF005AADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF000084EFFF219CFFFF31A5FFFF31A5FFFFFFFFFFFFFFFFFFFFFFFFFFFFADDE
-          FFFF219CFFFF1894FFFFFFFFFFFFFFFFFFFFADDEFFFF008CFFFF0084F7FF008C
-          FFFF007BE7FF0063BDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF001894FFFF299CFFFF39A5FFFF39A5FFFFFFFFFFFFFFFFFFFFADDEFFFF31A5
-          FFFF219CFFFF1894FFFF1894FFFFFFFFFFFFADDEFFFF008CFFFF008CFFFF008C
-          FFFF0084EFFF0063BDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF001894FFFF39A5FFFF39A5FFFF39A5FFFFFFFFFFFFFFFFFFFFFFFFFFFFADDE
-          FFFF219CFFFF219CFFFF1894FFFFADDEFFFFFFFFFFFF008CFFFF0084F7FF088C
-          FFFF0084F7FF006BC6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF001894FFFF42ADFFFF39A5FFFF42ADFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFADDEFFFF1894FFFF1094FFFF1094FFFF088CFFFF31A5FFFF088CFFFF1094
-          FFFF0084F7FF0063BDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0031A5FFFF39A5FFFF42ADFFFF42ADFFFF42ADFFFF31A5FFFF31A5FFFF31A5
-          FFFF219CFFFF1894FFFF1894FFFF1894FFFF1094FFFF1094FFFF088CFFFF088C
-          FFFF008CFFFF006BC6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00299CFFFF4AADFFFF42ADFFFF31A5FFFF31A5FFFF31A5FFFF31A5FFFF31A5
-          FFFFADDEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF088CFFFF0084F7FF088C
-          FFFF008CFFFF006BC6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0031A5FFFF52ADFFFF4AADFFFF4AADFFFFFFFFFFFFADDEFFFF31A5FFFF31A5
-          FFFF299CFFFFADDEFFFFFFFFFFFFFFFFFFFFFFFFFFFF088CFFFF088CFFFF1094
-          FFFF088CFFFF0063BDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0031A5FFFF5AB5FFFF63B5FFFF52ADFFFFADDEFFFFFFFFFFFF31A5FFFF39A5
-          FFFF299CFFFF219CFFFFADDEFFFFFFFFFFFFFFFFFFFF1094FFFF1894FFFF1094
-          FFFF008CFFFF006BC6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0039A5FFFF6BBDFFFF63B5FFFF5AB5FFFFADDEFFFFFFFFFFFFFFFFFFFF31A5
-          FFFF299CFFFF219CFFFFFFFFFFFFFFFFFFFFFFFFFFFF088CFFFF088CFFFF1094
-          FFFF088CFFFF006BCEFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0042ADFFFF7BC6FFFF73C6FFFF63B5FFFF5AB5FFFFADDEFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFADDEFFFFFFFFFFFF219CFFFF219CFFFF1894
-          FFFF008CFFFF006BC6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF004AADFFFF8CCEFFFF8CCEFFFF73C6FFFF63B5FFFF63B5FFFFADDEFFFFADDE
-          FFFFADDEFFFFADDEFFFFADDEFFFF42ADFFFFADDEFFFF31A5FFFF31A5FFFF219C
-          FFFF088CFFFF0063BDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF005AB5FFFF84C6FFFF8CCEFFFF73C6FFFF63B5FFFF52ADFFFF52ADFFFF4AAD
-          FFFF4AADFFFF4AADFFFF4AADFFFF42ADFFFF39A5FFFF31A5FFFF299CFFFF1894
-          FFFF0084F7FF0073D6FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF005AB5FFFF5AB5FFFF4AADFFFF39A5FFFF31A5FFFF31A5FFFF299CFFFF299C
-          FFFF299CFFFF31A5FFFF219CFFFF1094FFFF1894FFFF1894FFFF0084EFFF0084
-          EFFF0084EFFF52ADFFFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoExitExecute
       end
     end
@@ -3301,162 +3078,10 @@ object fmMCX: TfmMCX
       Caption = 'Run'
       object MenuItem13: TMenuItem
         Action = mcxdoRun
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF006B84EFFF1831B5FF0829A5FF1029ADFF1031ADFF1031ADFF1029ADFF1031
-          ADFF1031ADFF0831ADFF0029B5FF0829B5FF0829ADFF0829B5FF0021B5FF0021
-          ADFF0831ADFF6B84EFFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF001839CEFF1031D6FF1842D6FF2142D6FF2142D6FF2142D6FF214AD6FF2142
-          D6FF2142D6FF1842D6FF1842DEFF1042DEFF1039DEFF0839DEFF0031DEFF0031
-          D6FF0029C6FF1029ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF000831D6FF2142DEFF2952E7FF3152E7FF3152E7FF3152E7FF3152E7FF3152
-          E7FF2952DEFF2952E7FF2152EFFF184AEFFF104AEFFF1042EFFF0839EFFF0031
-          E7FF0029DEFF0018ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF001039DEFF294ADEFF3152DEFF395AEFFF395AEFFF425AEFFF395AEFFF395A
-          EFFF315AEFFF295AE7FF295AE7FF2152E7FF1852EFFF104AEFFF0842E7FF0839
-          EFFF0031DEFF0021ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF001839DEFF3152DEFF395AE7FF4263EFFF4A63E7FF4A63E7FF4263E7FF3963
-          E7FF3963E7FF3163E7FF295AE7FF215AE7FF2152E7FF1852EFFF104AEFFF0842
-          EFFF0831DEFF0021ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF002142DEFF395AE7FF4263EFFF4A63E7FF4A63E7FF4A63E7FF4A63E7FF4263
-          E7FF3963E7FF3163E7FF2963E7FF295AE7FF2152E7FF184AE7FF104AE7FF1042
-          EFFF0839DEFF0829B5FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00214ADEFF3963EFFF526BE7FF526BE7FF526BE7FF4A6BE7FF4A6BE7FF4A6B
-          E7FF3963E7FF3163E7FF315AE7FF2952E7FF2152E7FF184AE7FF184AE7FF104A
-          EFFF1042DEFF0829B5FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00294ADEFF4A63EFFF526BE7FF526BE7FF526BE7FF526BE7FF4A6BE7FF4A63
-          E7FF3963E7FF395AE7FF315AE7FF2952E7FF2152E7FF184AE7FF104AE7FF184A
-          EFFF1842DEFF1031B5FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF003152E7FF526BEFFF526BE7FF5A6BE7FF526BE7FF526BE7FF4A63E7FF4A63
-          E7FF3963E7FF315AE7FF2952E7FF2952E7FF2152E7FF184AE7FF184AEFFF214A
-          EFFF184ADEFF1031ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00425AEFFF5273E7FF5A73E7FF5A73E7FF5A6BE7FF4A6BE7FF4A63E7FF4A63
-          E7FF395AE7FF315AE7FF2952EFFF2952EFFF214AEFFF214AEFFF214AE7FF214A
-          E7FF214ADEFF1831ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF004263E7FF6373E7FF5A73E7FF5A73E7FF5273E7FF4A6BE7FF4A63E7FF4A63
-          E7FF395AEFFF315AE7FF2952E7FF294AE7FF214AE7FF214AE7FF184ADEFF294A
-          DEFF214ADEFF1831ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF004A63E7FF6B7BE7FF637BE7FF637BE7FF5A73E7FF526BE7FF4A63E7FF425A
-          EFFF425AE7FF3152E7FF2952E7FF2952DEFF214AE7FF214AE7FF214AE7FF2952
-          E7FF294ADEFF1039ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF004A63E7FF6B84EFFF7384EFFF637BEFFF6373E7FF526BE7FF4A63E7FF4A63
-          EFFF425AE7FF395AE7FF3152E7FF3152DEFF2952DEFF294AE7FF2952EFFF2952
-          E7FF294AD6FF1839ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00526BE7FF7B8CEFFF738CEFFF6B84EFFF637BE7FF5A73E7FF526BE7FF4A63
-          E7FF4263E7FF395AE7FF395AE7FF3152E7FF3152E7FF2952DEFF2952DEFF3152
-          DEFF294ADEFF2139ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF005A73E7FF8C9CEFFF849CEFFF738CEFFF6B84EFFF637BEFFF6373E7FF5A73
-          E7FF526BE7FF4A6BE7FF4A63E7FF4263E7FF4263EFFF425ADEFF395AE7FF3152
-          E7FF294AD6FF1831ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00637BE7FF9CADEFFF9CADEFFF8494EFFF738CEFFF7384EFFF6B7BEFFF6B7B
-          E7FF637BE7FF637BE7FF6373E7FF5A73E7FF526BE7FF4A6BE7FF4263EFFF3952
-          E7FF294ADEFF1031ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF006B84EFFF94A5EFFF94A5F7FF8494EFFF738CEFFF6B84E7FF6B84E7FF637B
-          E7FF637BE7FF637BE7FF6373E7FF5273EFFF5273E7FF4A6BE7FF3963EFFF315A
-          E7FF2142D6FF2139B5FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF006B84EFFF6B84EFFF637BE7FF526BE7FF4A6BE7FF4A63E7FF425AE7FF4263
-          E7FF425AE7FF425AEFFF395AE7FF3152DEFF3152E7FF3152E7FF214ADEFF2142
-          DEFF214ACEFF6B84EFFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoRunExecute
       end
       object MenuItem14: TMenuItem
         Action = mcxdoStop
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00004A00FF004A
-          00FF005208FF085A08FF085A08FF005208FF004A00FF004A00FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00004A00FF004A00FF085A08FF0884
-          10FF089410FF089C10FF089C10FF089C10FF088C10FF006308FF005208FF004A
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00006308FF005A08FF088C10FF08AD18FF08BD
-          18FF08B518FF08B518FF08B518FF08B518FF08BD18FF08B518FF089410FF086B
-          08FF005208FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00086B10FF086B10FF08AD18FF08B518FF08B518FF08B5
-          18FF08B518FF08B518FF08B518FF08B518FF08B518FF08B518FF08B518FF08B5
-          18FF088410FF005208FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00086B18FF087B18FF10BD29FF10B521FF08B518FF08B518FF08B5
-          18FF00B510FF00B510FF08B518FF08B518FF08B518FF08B518FF08B518FF08B5
-          18FF08BD18FF088410FF005208FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00085A08FF087B18FF18BD42FF18BD31FF10B529FF10B521FF08B518FF08AD
-          18FF08B518FF08B518FF08B518FF08B518FF08B518FF08B518FF08B518FF08B5
-          18FF08B518FF08BD18FF088410FF005208FFFF00FF00FF00FF00FF00FF00FF00
-          FF00085A08FF18BD42FF21BD4AFF18BD39FF18BD31FF10B529FF08AD18FF08B5
-          18FF08B518FF7BD684FFEFFFEFFFEFFFEFFFADE7ADFF10B521FF08B518FF08B5
-          18FF08B518FF08B518FF08B518FF006308FFFF00FF00FF00FF00FF00FF00086B
-          10FF108C31FF29C652FF21BD4AFF18BD42FF10B531FF08B521FF10B521FF08B5
-          18FF08B518FF8CDE94FFFFFFFFFFFFFFFFFFFFFFFFFFADE7B5FF10B521FF08B5
-          18FF08B518FF08B518FF08BD18FF089410FF005208FFFF00FF00FF00FF00086B
-          10FF29BD52FF29C65AFF21BD52FF18BD42FF10B529FF08B521FF08B518FF08B5
-          18FF08B518FF10B521FFA5E7ADFFFFFFFFFFFFFFFFFFFFFFFFFFA5E7ADFF10B5
-          21FF08B518FF08B518FF08B518FF08B518FF085A08FFFF00FF00086B08FF1084
-          21FF31C66BFF29C663FF29BD5AFF18BD42FF10B521FF08B518FF08B518FF08B5
-          18FF08B518FF08B518FF08B518FF94DE9CFFFFFFFFFFFFFFFFFFFFFFFFFFA5E7
-          ADFF10B521FF08B518FF08B518FF08BD18FF087B08FF005208FF086B08FF189C
-          39FF39C673FF31C663FF29BD5AFF42CE6BFF42C65AFF39C64AFF39C652FF42C6
-          52FF39C64AFF39C64AFF39C64AFF31BD42FFBDEFBDFFFFFFFFFFFFFFFFFFFFFF
-          FFFF9CE7A5FF08B518FF08B518FF08BD18FF088C10FF005208FF087B08FF21A5
-          4AFF42CE7BFF31C66BFF39C66BFFE7F7EFFFF7FFF7FFF7FFF7FFF7FFF7FFF7FF
-          F7FFF7FFF7FFF7FFF7FFF7FFF7FFF7FFF7FFEFFFEFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFF8CDE94FF08B518FF08BD18FF089410FF005208FF088410FF31AD
-          52FF5AD68CFF39C673FF39C66BFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFEFFFEFFF08B518FF08B518FF089C10FF006308FF088410FF31AD
-          52FF73DE9CFF52CE84FF39C66BFFC6EFD6FFE7F7EFFFE7F7EFFFE7F7EFFFE7F7
-          EFFFE7F7EFFFE7F7EFFFE7F7E7FFD6F7DEFFE7F7E7FFFFFFFFFFFFFFFFFFFFFF
-          FFFFF7FFF7FF63CE73FF08B521FF08BD18FF089410FF005208FF088C10FF29AD
-          4AFF84DEADFF73D69CFF39C66BFF39C673FF42C673FF42C673FF42C673FF42C6
-          73FF42C673FF39C66BFF21BD52FF42CE6BFFCEEFDEFFFFFFFFFFFFFFFFFFEFFF
-          F7FF63CE7BFF18BD42FF10B529FF08BD18FF088C10FF005208FFFF00FF0018A5
-          31FF84DEADFF9CE7B5FF52CE84FF29C663FF39C66BFF39C66BFF39C66BFF39C6
-          6BFF39C66BFF31C66BFF5ACE84FFDEF7E7FFFFFFFFFFFFFFFFFFE7F7EFFF5ACE
-          7BFF18BD42FF18BD39FF10B521FF08BD18FF007308FFFF00FF00FF00FF0018A5
-          31FF63CE84FFBDEFCEFF8CDEADFF42C673FF29C663FF31C66BFF39C66BFF39C6
-          6BFF39C66BFF73D69CFFEFFFF7FFFFFFFFFFFFFFFFFFE7F7EFFF52CE6BFF18BD
-          39FF18BD39FF10B529FF10B529FF08B521FF085A08FFFF00FF00FF00FF00FF00
-          FF0029B54AFFADEFC6FFC6EFD6FF7BD69CFF39C66BFF29C663FF31C66BFF39C6
-          6BFF39C66BFFB5EFC6FFFFFFFFFFFFFFFFFFDEF7E7FF4ACE73FF21BD4AFF18BD
-          42FF18BD39FF10B531FF10BD31FF088C18FFFF00FF00FF00FF00FF00FF00FF00
-          FF0039B54AFF63CE84FFC6EFD6FFC6EFD6FF73D69CFF42C673FF29C663FF31C6
-          6BFF39C66BFF6BD694FFE7F7EFFFCEEFDEFF42C673FF21BD5AFF21BD52FF21BD
-          4AFF18BD42FF18BD42FF18BD31FF085A08FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF0021AD39FF84DEA5FFCEEFDEFFCEEFDEFF8CDEADFF5ACE84FF31C6
-          6BFF31C66BFF42C673FF39C66BFF31C663FF31C663FF29C663FF29C65AFF29BD
-          52FF21BD4AFF21BD4AFF087B18FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF0021AD39FF84DEADFFCEEFDEFFDEF7E7FFB5EFCEFF8CDE
-          ADFF6BD694FF52CE84FF4ACE7BFF4ACE7BFF52CE84FF52CE84FF42C673FF39C6
-          6BFF29C65AFF108421FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF0031B542FF6BD68CFFADEFC6FFCEEFDEFFCEEF
-          DEFFC6EFD6FFADEFC6FFA5E7BDFF9CE7B5FF8CDEADFF73D69CFF52CE84FF39BD
-          63FF108421FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF0031B542FF29B54AFF6BD694FF9CE7
-          B5FFADEFC6FFADEFC6FFA5E7BDFF8CDEADFF73D69CFF4ACE7BFF29A54AFF087B
-          18FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0031B542FF29B5
-          4AFF39BD5AFF39BD5AFF39BD63FF39B55AFF21A542FF108421FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoStopExecute
       end
       object MenuItem15: TMenuItem
@@ -3464,89 +3089,14 @@ object fmMCX: TfmMCX
       end
       object MenuItem16: TMenuItem
         Action = mcxdoQuery
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF008C63
-          63FF424242FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF008C6363FF9A6666FFAD6B63FFA766
-          66FF424242FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF008C6363FF9A6666FFAD6B63FFB06667FFC66667FFCD6768FFB366
-          67FF424242FF8C6363FF8C6363FF8C6363FF8C6363FF8C6363FF8C6363FF8C63
-          63FF8C6363FF8C6363FF8C6363FF8C6363FFFF00FF00FF00FF00FF00FF008C63
-          63FF9A6666FFAF6869FFC0696AFFCD6768FFCD6768FFCD6768FFCD6768FFB366
-          67FF424242FFC0797AFFC68484FFDF898AFFF29394FFF29394FFF29394FFF293
-          94FFF29394FFF29394FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFCD6768FFCD6768FFCD6768FFCE696AFFD06A6BFFD16B6CFFD16B6CFFB467
-          68FF424242FF298C63FF14A77FFF15A57EFF15A57DFF16A47DFF18A37BFF18A3
-          7CFF19A47CFF19A57DFFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFD16B6CFFD16B6CFFD16B6CFFD26C6DFFD36D6EFFD46E6FFFD36D6EFFB669
-          6AFF424242FF298C63FF15A57EFF16A47DFF17A37CFF18A17AFF1B9F78FF1E9D
-          77FF239C76FF279A75FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFD46E6FFFD46E6FFFD56F70FFD67071FFD67071FFD67071FFD46E6FFFB86B
-          6BFF424242FF298C63FF18A27BFF18A27BFF18A17BFF199E78FF1C9A74FF2496
-          72FF2E9371FF368E6EFFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFD46E6FFFD87273FFDA7475FFDB7576FFDB7576FFDA7475FFDA7475FFB96C
-          6DFF424242FF298463FF209370FF209672FF219473FF21946BFF238F6CFF298D
-          6BFF35896BFF42846BFFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFD46E6FFFDC7677FFDE7879FFDF797AFFDF797AFFDE7879FFDD7778FFBB6E
-          6FFF424242FF29735AFF218C6BFF298C6BFF298C63FF298964FF2B8763FF2D86
-          64FF298C6BFF427B63FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFD87273FFDC7677FFE37D7EFFE37D7EFFE27C7DFFE17B7CFFE07A7BFFBD70
-          70FF424242FF298C6BFF298463FF29845AFF317B5AFF327E59FF377E5BFF3984
-          5AFF427B63FF5A6B52FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFDC7677FFE88283FFE78182FFE68081FFE78788FFEF7C79FFE47E7FFFBE71
-          72FF424242FF316B4AFF397B52FF397B52FF31734AFF397B52FF4A7B5AFF5A6B
-          52FF5A6B52FF94946BFFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFE37D7EFFEC8687FFEB8586FFEA8485FFF5BBBCFFFADCDCFFEF7C79FFC073
-          74FF424242FF5A6B52FF5A6B52FF31734AFF637B52FF637B52FF94946BFFB59C
-          73FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFE37D7EFFEF898AFFEE8889FFED8788FFFADCDCFFFFFFFFFFF29394FFC275
-          75FF424242FF94946BFFB59C73FFB59C73FFF7B584FFF7B584FFF7B584FFF7B5
-          84FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFE68782FFF28C8DFFF18B8CFFF08A8BFFEF898AFFFADCDCFFED8788FFC376
-          77FF424242FFF6A468FFF7B584FFF7B584FFF7B584FFF7B584FFF7B584FFF7B5
-          84FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFF18B8CFFF69091FFF58F90FFF48E8FFFF38D8EFFF28C8DFFF18B8CFFC578
-          78FF424242FFF6A468FFF7B584FFF7B584FFF7B584FFF7B584FFF7B584FFF7B5
-          84FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFF18B8CFFF99394FFF89293FFF79192FFF69091FFF58F90FFF48E8FFFC77A
-          7AFF424242FFF6A468FFF7B584FFF7C6A5FFEFCEBDFFEFCEBDFFEFCEBDFFF7C6
-          A5FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFF18B8CFFFC9697FFFB9596FFFA9495FFF99394FFF89293FFF79192FFC87B
-          7CFF424242FFF7C6A5FFF7C6A5FFFFE7DEFFFFE7DEFFFFE7DEFFFFDECEFFEFCE
-          BDFFEFCEBDFFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFF18B8CFFFF999AFFFE9899FFFD9798FFFD9798FFFC9697FFFB9596FFCA7D
-          7DFF424242FFEFCEBDFFFCD4BCFFFFE7DEFFFFDECEFFF7D6CEFFEFCEBDFFFFE7
-          DEFFF7C6A5FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFF18B8CFFFF999AFFFF999AFFFF999AFFFF999AFFFE9899FFFE9899FFCC7F
-          7FFF424242FFF6A468FFF7C098FFF7CEBDFFFFE7DEFFF7D6CEFFF7CEBDFFF7C6
-          A5FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFF18B8CFFFF999AFFFF999AFFFF999AFFFF999AFFFF999AFFFF999AFFCD80
-          80FF424242FFF6A468FFF7B584FFF7B584FFF2C4A7FFF2C4A7FFF2C4A7FFF7B5
-          84FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00AD6B
-          63FFAD6B63FFC68484FFE49A98FFFF999AFFFF999AFFFF999AFFFF999AFFCD80
-          80FF424242FFF6A468FFF7B584FFF7B584FFF7B584FFF7B584FFF7B584FFF7B5
-          84FFF7B584FFF7B584FFF29394FF8C6363FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF009A6666FFAD6B63FFA76C6DFFC68484FFE49A98FFFF999AFFCD80
-          80FF424242FF8C6363FFAD6B63FFAD6B63FFAD6B63FFAD6B63FFAD6B63FFAD6B
-          63FFAD6B63FFAD6B63FFAD6B63FFAD6B63FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF009A6666FFAD6B63FFAD7070FFB373
-          73FF424242FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00AD6B
-          63FF424242FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoQueryExecute
       end
     end
     object MenuItem3: TMenuItem
       Caption = 'Tools'
       object MenuItem9: TMenuItem
-        Caption = 'Solution Veiwer'
+        Caption = 'Volume Designer'
+        OnClick = MenuItem9Click
       end
       object MenuItem10: TMenuItem
         Caption = '-'
@@ -3559,242 +3109,14 @@ object fmMCX: TfmMCX
       Caption = 'Help'
       object MenuItem12: TMenuItem
         Action = mcxdoAbout
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF006B8463FF527342FF319C31FF319C31FF319C31FF319C31FF319C
-          31FF319C31FF526342FF636B4AFF7B7363FF948C84FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF0073AD73FF108410FF42CE42FF21A521FF31A531FF39AD39FF39AD39FF39AD
-          39FF107B10FF319C31FF319429FF217318FF319C31FF218421FF736B5AFFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00298C29FF42CE42FF31AD31FF42BD42FF4ABD4AFF52C652FFB5E7A5FF399C
-          39FF8CBD7BFF399C39FF9CDE8CFF42BD42FF31AD31FF217318FF4A4229FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00399439FF29AD29FF39B539FF4ABD4AFF5AC65AFF9CDE8CFF52B552FF73B5
-          6BFFD6E7BDFF4AA542FFB5E7A5FF52C652FF42BD42FF299C29FF218421FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF008CBD8CFF299C29FF4ABD4AFF5AC65AFF6BCE6BFFB5E7A5FF63A563FFF7FF
-          EFFFF7FFEFFF84BD7BFFB5E7A5FF63CE63FF52C652FF31A531FF4A6B39FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00398C31FF4ABD4AFF63CE63FFB5E7A5FF52A54AFFD6E7CEFFFFFF
-          FFFFFFFFFFFF84B584FF9CDE8CFF73CE73FF5AC65AFF319C31FF637B52FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00398C31FF52B552FF4A9C42FF9CB58CFFBDC6C6FFBDC6
-          C6FFE7DECEFF94B57BFF7BCE7BFF7BD67BFF52B552FF428439FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF004A8C42FF18734AFF3984ADFF217BBDFF217B
-          BDFF428CADFF428463FF63BD63FF399C39FF528C4AFFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF005A849CFF187BC6FF218CE7FF298CE7FF298C
-          E7FF218CE7FF107BB5FF296B52FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00217BBDFF2994EFFF2994F7FF3194FFFF3194
-          FFFF319CF7FF2994EFFF216B9CFFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00297BADFF2994EFFF399CFFFF399CFFFF399CFFFF399C
-          FFFF399CFFFF399CFFFF298CE7FF106B9CFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF002184C6FF399CFFFF42A5FFFF42A5FFFF42A5FFFF42A5
-          FFFF42A5FFFF42A5FFFF399CF7FF315A6BFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF0063849CFF399CF7FF42A5FFFF4AADFFFF4AADFFFF6BBDFFFF6BBD
-          FFFF4AADFFFF4AADFFFF42A5F7FF316B84FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF006BA5C6FF42A5F7FF4AADFFFF4AB5FFFF6BBDFFFF52B5FFFF6BBD
-          FFFF52B5FFFF6BBDFFFF4AADFFFF397394FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF005294BDFF42A5EFFF52B5FFFF6BC6FFFF6BC6FFFF6BC6FFFF52B5
-          F7FF4AB5EFFF52B5F7FF52B5F7FF39738CFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF0063A5C6FF217BB5FF298CCEFF3194DEFF3194DEFF2184C6FF298C
-          C6FF318CC6FF2984C6FF2994CEFF106B9CFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF0063849CFF2173A5FF428CC6FF4A94C6FF6BADD6FF7BBDEFFF63AD
-          F7FF4A9CE7FF398CCEFF216BA5FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF002173A5FF318CC6FF6BADD6FF8CBDE7FF8CBDE7FF73BD
-          E7FF5AADDEFF3994C6FF106B9CFFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00428CB5FF4294C6FF6BADD6FF9CCEE7FF8CBD
-          E7FF4294BDFF106B9CFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF006BA5BDFF4A94B5FF529CBDFF4A8C
-          ADFF63849CFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoAboutExecute
       end
       object MenuItem17: TMenuItem
         Action = mcxdoHelp
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00ADADADFFA59C9CFFAD9C
-          9CFFADA59CFFAD9C94FFA59494FF948484FF736B6BFF7B7B7BFFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00ADADADFFADADADFFE7D6CEFFF7E7DEFFF7EF
-          E7FFEFEFEFFFEFEFEFFFEFEFEFFFEFE7E7FFEFDED6FFBDADA5FF7B7373FF7373
-          73FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00ADADADFFE7D6CEFFF7EFEFFFEFEFEFFFEFEFEFFFE7DE
-          DEFFE7E7E7FFE7E7E7FFE7E7E7FFEFEFEFFFEFEFEFFFEFEFEFFFEFE7E7FFB5A5
-          9CFF636363FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00ADADADFFEFE7E7FFEFEFEFFFEFEFEFFFE7DEDEFFCEAD9CFFBD84
-          63FFC67352FFC67B52FFCE8463FFD69C84FFDECEC6FFE7E7E7FFEFEFEFFFF7EF
-          EFFFCEBDB5FF636363FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00ADADADFFF7EFE7FFEFEFEFFFEFEFEFFFD6B5A5FFC6734AFFBD6331FFBD63
-          31FFC6947BFFDEBDA5FFC67342FFBD6331FFBD6339FFCE8C6BFFE7D6CEFFEFEF
-          EFFFF7EFEFFFC6BDB5FF636363FFFF00FF00FF00FF00FF00FF00FF00FF00ADAD
-          ADFFF7E7DEFFF7F7F7FFEFEFEFFFD6A58CFFBD6339FFC66331FFC66331FFBD73
-          4AFFD6CECEFFF7F7F7FFE7C6B5FFC66331FFC66331FFBD6331FFC6734AFFDECE
-          C6FFEFEFEFFFF7EFEFFFA59C94FF737373FFFF00FF00FF00FF00FF00FF00C6C6
-          C6FFF7F7F7FFEFEFEFFFDEAD94FFBD6331FFC66331FFC66331FFC66331FFC673
-          4AFFD6CECEFFF7F7F7FFDEAD94FFCE6331FFC66331FFC66331FFBD6331FFC673
-          4AFFE7DED6FFEFEFEFFFF7E7DEFF736B6BFFFF00FF00FF00FF00FF00FF00F7E7
-          E7FFF7F7F7FFE7D6CEFFC66B39FFC66331FFC66331FFCE6331FFCE6331FFCE63
-          31FFCE8463FFDE9C7BFFCE6B39FFCE6331FFCE6331FFC66331FFC66331FFBD63
-          31FFCE8C6BFFEFEFEFFFF7F7F7FFB5A59CFF9C9C9CFFFF00FF00D6CECEFFF7F7
-          F7FFF7F7F7FFD69473FFC66331FFC66331FFCE6B31FFCE6331FFCE6331FFCE6B
-          39FFCE8463FFDE946BFFCE734AFFCE6331FFCE6331FFCE6331FFC66331FFC663
-          31FFBD6331FFE7CEC6FFF7F7F7FFEFDED6FF6B6B6BFFFF00FF00EFDED6FFF7F7
-          F7FFEFE7E7FFC67342FFC66B39FFCE6B39FFCE6B31FFCE6331FFCE6331FFC66B
-          39FFD6CECEFFFFF7F7FFDE9C7BFFCE6331FFCE6331FFCE6331FFCE6331FFC663
-          31FFC66331FFD69C84FFEFEFEFFFF7EFE7FF8C847BFFFF00FF00EFDED6FFFFFF
-          FFFFE7CEC6FFC66B39FFCE6B39FFCE6B39FFCE6331FFCE6331FFCE6331FFC66B
-          39FFCEC6C6FFFFFFFFFFEFC6ADFFCE6B39FFCE6331FFCE6331FFCE6B31FFCE6B
-          39FFC66331FFCE7B5AFFEFEFEFFFF7F7EFFFA59494FFFF00FF00EFDED6FFFFFF
-          FFFFE7BDADFFCE6B39FFCE6B39FFCE6B39FFCE6331FFCE6331FFCE6331FFCE63
-          31FFBD947BFFEFEFEFFFFFF7F7FFDEA58CFFCE6B39FFCE6331FFCE6B31FFCE6B
-          39FFC66B39FFC6734AFFF7EFEFFFF7F7F7FFAD9C94FFFF00FF00EFDED6FFFFFF
-          FFFFEFC6ADFFCE7342FFD67342FFCE6B39FFCE6331FFCE6331FFCE6331FFCE63
-          31FFC66B39FFC6A594FFF7F7EFFFFFF7F7FFE7A584FFCE6331FFCE6B31FFCE6B
-          39FFCE6B39FFCE734AFFF7F7EFFFFFF7F7FFADA59CFFFF00FF00EFDED6FFFFFF
-          FFFFEFD6C6FFD67342FFD67342FFCE6B39FFCE6B31FFCE6331FFCE6331FFCE63
-          31FFCE6331FFC66B39FFD6B5A5FFF7F7F7FFF7F7EFFFD68452FFCE6B39FFCE6B
-          39FFCE6B39FFD67B52FFF7F7F7FFFFF7F7FFADA59CFFFF00FF00EFDED6FFFFFF
-          FFFFFFEFE7FFE78452FFDE7B4AFFD67342FFCE6B39FFCE7342FFCE734AFFCE6B
-          39FFCE6331FFCE6331FFC67342FFEFE7E7FFFFFFFFFFE7B59CFFCE6B39FFD673
-          42FFD67342FFDE9C7BFFFFFFFFFFFFF7EFFFA59C9CFFFF00FF00F7E7DEFFFFFF
-          F7FFFFFFFFFFF7AD84FFEF8C52FFDE7B4AFFD67B4AFFD6C6BDFFF7E7DEFFDEA5
-          8CFFCE6331FFCE6331FFCE6B42FFEFE7E7FFFFFFFFFFE7BDADFFD67342FFD673
-          42FFD67342FFEFD6C6FFFFFFFFFFF7E7E7FFA5A59CFFFF00FF00F7EFE7FFEFDE
-          D6FFFFFFFFFFFFE7D6FFFF9C63FFEF8C5AFFDE7B4AFFD6C6BDFFFFFFFFFFF7EF
-          E7FFDE946BFFD67B4AFFDEAD94FFF7F7F7FFF7F7F7FFDEA58CFFDE7B4AFFDE7B
-          4AFFE7946BFFFFF7F7FFFFFFFFFFDECEC6FFC6BDB5FFFF00FF00FF00FF00F7E7
-          DEFFFFFFFFFFFFFFFFFFFFCEADFFFFA573FFFF9C63FFDE9C7BFFE7E7E7FFFFFF
-          FFFFFFF7F7FFF7EFE7FFFFFFFFFFFFFFFFFFE7DED6FFEF8C63FFEF8C5AFFEF8C
-          5AFFFFE7D6FFFFFFFFFFFFF7EFFFC6BDB5FFFF00FF00FF00FF00FF00FF00FFF7
-          EFFFEFDED6FFFFFFFFFFFFFFF7FFFFD6B5FFFFBD8CFFFFAD7BFFE7B59CFFE7DE
-          D6FFE7DEDEFFE7DEDEFFE7E7E7FFEFDED6FFF7AD84FFFF9C6BFFFF9C6BFFFFD6
-          BDFFFFFFFFFFFFFFFFFFE7D6CEFF9C9C9CFFFF00FF00FF00FF00FF00FF00FF00
-          FF00F7EFE7FFEFDED6FFFFFFFFFFFFFFFFFFFFEFD6FFFFE7B5FFFFD6A5FFF7C6
-          9CFFF7C69CFFF7BD9CFFF7BD9CFFFFBD8CFFFFBD84FFFFBD94FFFFE7D6FFFFFF
-          FFFFFFFFFFFFF7E7DEFFADADADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00F7E7DEFFEFDED6FFFFFFFFFFFFFFFFFFFFFFF7FFFFFFE7FFFFF7
-          D6FFFFEFBDFFFFE7B5FFFFE7B5FFFFE7BDFFFFE7D6FFFFFFF7FFFFFFFFFFFFFF
-          FFFFF7EFE7FFADADADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00F7EFE7FFEFDED6FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7F7FFEFDE
-          D6FFADADADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00F7EFE7FFEFDED6FFF7EFEFFFFFF7F7FFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7F7FFF7EFE7FFEFDED6FFADAD
-          ADFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00F7EFE7FFEFDED6FFEFDED6FFEFDE
-          D6FFEFDED6FFEFDED6FFEFDED6FFEFDED6FFEFDED6FFEFDED6FFF7EFE7FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoHelpExecute
       end
       object MenuItem18: TMenuItem
         Action = mcxdoWeb
-        Bitmap.Data = {
-          36090000424D3609000000000000360000002800000018000000180000000100
-          2000000000000009000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00E7C4B3FFE7C4B3FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4
-          B3FFF2E7E1FFB9AEA8FFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7
-          E1FFE7E7EDFFE7E7EDFFB9B9BFFFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFE7E7
-          EDFFEDBFAEFFBF4E1EFFCA9180FFB9B9BFFFB9AEA8FFE7C4B3FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFEDBF
-          AEFFBF4E1FFFBF4E1FFFBF4E1EFFCA9180FFB9B9BFFFB9AEA8FFE7C4B3FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFEDBFAEFFC55A
-          28FFC55A28FFBF4E1FFFBF4E1FFFBF4E1EFFCA9180FFB9B9BFFFB9AEA8FFE7C4
-          B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFEDBFAEFFC55A28FFC55A
-          28FFF4DDCCFFFFFFFFFFFFFFFFFFF8E1D6FFBF4E1EFFCA9180FFB9B9BFFFB9AE
-          A8FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFEDBFAEFFC55A28FFC96430FFC964
-          30FFC55A28FFFFFFFFFFF8E1D6FFBF4E1FFFBF4E1FFFBF4E1FFFCA9180FFB9B9
-          BFFFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00E7C4B3FFF2E7E1FFFFFFFFFFEDBFAEFFD78248FFCF723FFFCA6632FFC964
-          30FFC55A28FFFFFFFFFFF8E1D6FFC55A28FFBF4E1FFFBF4E1FFFBF4E1EFFCA91
-          80FFB9B9BFFFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00E7C4
-          B3FFF2E7E1FFFFFFFFFFF8E1CAFFDA894BFFD78248FFD37A42FFCE6F39FFC964
-          30FFC65C2AFFFFFFFFFFF8E1D6FFC55A28FFC35625FFC15222FFBF4E1FFFBF4E
-          1EFFCA9180FFB9B9BFFFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00FF00E7C4
-          B3FFFFFFFFFFFFFFFFFFF8E1CAFFDA894BFFD9884CFFD8844AFFD37A42FFCE6F
-          39FFC96430FFFFFFFFFFF8E1D6FFC55A28FFC55927FFC35625FFBF4E1FFFBF4E
-          1FFFCA9180FFD0D0D6FFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00FF00E7C4
-          B3FFF2E7E1FFFFFFFFFFF8E1CAFFDA894BFFDE9459FFDC8E52FFD8864CFFD782
-          48FFD78248FFFFFFFFFFF8E1D6FFC55A28FFC55A28FFC35524FFBF4E1FFFBF4E
-          1FFFE1B9A2FFD0D0D6FFB9AEA8FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00
-          FF00E7C4B3FFF2E7E1FFFFFFFFFFF8E1CAFFE0985CFFE09A60FFDD9155FFD782
-          48FFF4DDCCFFFFFFFFFFF8E1D6FFC96430FFC55B29FFC45A2BFFBF4E1FFFE1B9
-          A2FFFFFFFFFFF2E7E1FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFF8E1CAFFE0985CFFE0985CFFE098
-          5CFFD78248FFD78248FFC96430FFC96430FFC96430FFBF4E1FFFE1B9A2FFFFFF
-          FFFFF2E7E1FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFF8E1CAFFE0985CFFE098
-          5CFFE0985CFFF8E1D6FFF8E1D6FFC96430FFC96430FFE1B9A2FFFFFFFFFFF2E7
-          E1FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFF8E1CAFFE098
-          5CFFE0985CFFFFFFFFFFF8E1D6FFC96430FFE1B9A2FFFFFFFFFFF2E7E1FFE7C4
-          B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFFFFFFF8E1
-          CAFFE0985CFFDB9769FFDB9769FFE1B9A2FFFFFFFFFFF2E7E1FFE7C4B3FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7E1FFFFFF
-          FFFFF8E1CAFFE1B9A2FFE1B9A2FFFFFFFFFFF2E7E1FFE7C4B3FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4B3FFF2E7
-          E1FFFFFFFFFFFFFFFFFFFFFFFFFFF2E7E1FFE7C4B3FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00E7C4
-          B3FFF2E7E1FFFFFFFFFFF2E7E1FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00E7C4B3FFE7C4B3FFE7C4B3FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
         OnClick = mcxdoWebExecute
       end
     end

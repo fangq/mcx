@@ -1,7 +1,7 @@
 object fmNewSession: TfmNewSession
-  Left = 3770
+  Left = 1267
   Height = 239
-  Top = 775
+  Top = 328
   Width = 504
   BorderIcons = []
   BorderStyle = bsDialog
@@ -10,7 +10,7 @@ object fmNewSession: TfmNewSession
   ClientWidth = 504
   OnShow = FormShow
   Position = poMainFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.6.4.0'
   object grProgram: TRadioGroup
     AnchorSideLeft.Control = Owner
     AnchorSideRight.Control = Owner
@@ -32,7 +32,7 @@ object fmNewSession: TfmNewSession
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 95
+    ClientHeight = 88
     ClientWidth = 470
     ItemIndex = 0
     Items.Strings = (
@@ -51,9 +51,9 @@ object fmNewSession: TfmNewSession
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 15
-    Height = 26
+    Height = 28
     Hint = 'Session'
-    Top = 159
+    Top = 163
     Width = 474
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 15
@@ -68,7 +68,7 @@ object fmNewSession: TfmNewSession
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 15
-    Height = 16
+    Height = 20
     Hint = '-s (--sessionid)'
     Top = 143
     Width = 489

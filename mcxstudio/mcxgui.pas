@@ -262,6 +262,7 @@ type
       Selected: Boolean);
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
+    procedure MenuItem9Click(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
     procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
@@ -681,7 +682,8 @@ end;
 
 procedure TfmMCX.FormShow(Sender: TObject);
 begin
-    grAdvSettings.Height:=self.Canvas.TextHeight('A')+btGBExpand.Height;
+    grGPU.Top:=grProgram.Height+grBasic.Height;
+    grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+5;
 end;
 
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
@@ -1052,6 +1054,11 @@ begin
          mcxdoVerify.Enabled:=true;
          mcxdoDefault.Enabled:=true;
      end;
+end;
+
+procedure TfmMCX.MenuItem9Click(Sender: TObject);
+begin
+    pcSimuEditor.ActivePage:=tabInputData;
 end;
 
 procedure TfmMCX.miClearLogClick(Sender: TObject);
@@ -1493,9 +1500,9 @@ begin
     if not (Assigned(GotoGBox)) then exit;
     if(tmAnimation.Tag>0) then begin // collapse
          GotoGBox.Height:=GotoGBox.Height-5;
-         if(GotoGBox.Height<=self.Canvas.TextHeight('A')+btGBExpand.Height) then begin
+         if(GotoGBox.Height<=self.Canvas.TextHeight('Ag')+btGBExpand.Height+5) then begin
               GotoGBox.Align:=alTop;
-              GotoGBox.Height:=self.Canvas.TextHeight('A')+btGBExpand.Height;
+              GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+5;
               tmAnimation.Tag:=0;
               tmAnimation.Enabled:=false;
          end;
