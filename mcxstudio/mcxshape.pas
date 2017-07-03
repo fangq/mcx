@@ -71,11 +71,7 @@ begin
          if(Length(plEditor.Cells[0,i])=0) or (Length(plEditor.Cells[1,i])=0) then begin
              exit;
          end else begin
-//             if(Pos('Layer ',plEditor.Cells[0,i])=1) then  begin
-//                ss:=plEditor.Cells[1,i];
-//             end else begin
-                ss:='"'+plEditor.Cells[0,i]+'":'+plEditor.Cells[1,i];
-//             end;
+             ss:='"'+plEditor.Cells[0,i]+'":'+plEditor.Cells[1,i];
              JSON.Add(ss);
          end;
      end;

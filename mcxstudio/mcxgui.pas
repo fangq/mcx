@@ -16,7 +16,7 @@ uses
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, inifiles, fpjson, jsonparser, strutils, regex, mcxabout, mcxshape,
+  CheckLst, inifiles, fpjson, jsonparser, strutils, RegExpr, mcxabout, mcxshape,
   mcxnewsession, mcxsource;
 
 type
@@ -233,6 +233,7 @@ type
     procedure btLoadSeedClick(Sender: TObject);
     procedure btGBExpandClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormShow(Sender: TObject);
     procedure grAdvSettingsDblClick(Sender: TObject);
     procedure grProgramSelectionChanged(Sender: TObject);
     procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
@@ -289,6 +290,7 @@ type
     procedure shapePrintExecute(Sender: TObject);
     procedure shapeResetExecute(Sender: TObject);
     procedure shapeDeleteExecute(Sender: TObject);
+    procedure Splitter2Moved(Sender: TObject);
     procedure Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
       var Accept: Boolean);
     procedure Splitter6CanResize(Sender: TObject; var NewSize: Integer;
@@ -296,6 +298,7 @@ type
     procedure StaticText2DblClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure tmAnimationTimer(Sender: TObject);
+    procedure tvShapesDeletion(Sender: TObject; Node: TTreeNode);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
     procedure tvShapesSelectionChanged(Sender: TObject);
   private
@@ -304,7 +307,7 @@ type
     { public declarations }
     MapList, ConfigData, JSONstr : TStringList;
     JSONdata : TJSONData;
-    RegEngine:TRegexEngine;
+    RegEngine:TRegExpr;
     function CreateCmd:string;
     function CreateCmdOnly:string;
     procedure VerifyInput;
@@ -324,11 +327,11 @@ type
     function CheckListToStr(list: TCheckListBox) : string;
     function GridToStr(grid:TStringGrid) :string;
     procedure StrToGrid(str: string; grid:TStringGrid);
-    procedure ShowJSONData(AParent : TTreeNode; Data : TJSONData);
+    procedure ShowJSONData(AParent : TTreeNode; Data : TJSONData; toplevel: boolean=false);
     procedure AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
     procedure AddShapes(shapeid: string; defaultval: string);
-    function RebuildShapeJSON(root: TTreeNode): integer;
-    function RebuildLayeredObj(root: TTreeNode; out maxtag: integer): TJSONArray;
+    function UpdateShapeTag(root: TJSONData; doexport: boolean = false): integer;
+    function RebuildLayeredObj(rootdata: TJSONData; out maxtag: integer): string;
     procedure SetModified;
     procedure LoadJSONShapeTree(shapejson: string);
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
@@ -402,6 +405,7 @@ var
     tv: TTreeView;
     idx: integer;
     node: TListItem;
+    ss: string;
 begin
     if(Sender=nil) or (lvJobs.Selected=nil) then exit;
     try
@@ -468,8 +472,13 @@ begin
        tv:=Sender as TTreeView;
        idx:=MapList.IndexOf(tv.Hint);
        if(idx>=0) and (tv.Name='tvShapes') then  begin
-           RebuildShapeJSON(tv.Items[0]);
-           node.SubItems.Strings[idx]:=TJSONData(tv.Items[0].Data).FormatJSON(AsJSONFormat);
+           ss:= JSONData.AsJSON;
+           if(JSONData.FindPath('Shapes') <> nil) then begin
+               tv.Tag:=UpdateShapeTag(JSONData.FindPath('Shapes'));
+           end else begin
+               tv.Tag:=UpdateShapeTag(JSONData);
+           end;
+           node.SubItems.Strings[idx]:=TJSONData(JSONData).FormatJSON(AsJSONFormat);
        end;
     end;
     SetModified;
@@ -505,7 +514,7 @@ begin
           else
               pMCX.CommandLine:=CreateCmdOnly+' --help';
           sbInfo.Panels[0].Text := 'Status: querying command line options';
-          sbInfo.Tag:=-2;
+          pMCX.Tag:=-2;
           AddLog('"-- Print MCX Command Line Options --"');
           pMCX.Execute;
     end;
@@ -670,6 +679,11 @@ begin
       tvShapes.Enabled:=false;
 end;
 
+procedure TfmMCX.FormShow(Sender: TObject);
+begin
+    grAdvSettings.Height:=self.Canvas.TextHeight('A')+btGBExpand.Height;
+end;
+
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
 begin
       if(OpenHistoryFile.Execute) then begin
@@ -778,10 +792,11 @@ begin
     TaskFile:=OpenProject.FileName;
     if(mcxdoSave.Enabled) then begin
        if(Application.MessageBox('The current session has not been saved, do you want to discard?',
-         'Confirm', MB_YESNOCANCEL)=IDYES) then
+         'Confirm', MB_YESNOCANCEL)=IDYES) then begin
             LoadTasksFromIni(TaskFile);
+       end
     end else begin
-            LoadTasksFromIni(TaskFile);
+       LoadTasksFromIni(TaskFile);
     end;
   end
 end;
@@ -839,7 +854,7 @@ begin
           else
               pMCX.CommandLine:=CreateCmdOnly+' -L';
           sbInfo.Panels[0].Text := 'Status: querying GPU';
-          sbInfo.Tag:=-1;
+          pMCX.Tag:=-1;
           AddLog('"-- Printing GPU Information --"');
           pMCX.Execute;
 
@@ -848,13 +863,10 @@ begin
 end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
-var
-    pbar: TProgressbar;
 begin
     if(not pMCX.Running) then begin
-          //pMCX.CommandLine:='du /usr/ --max-depth=1';
           pMCX.CommandLine:=CreateCmd;
-          AddLog('"-- Executing MCX --"');
+          AddLog('"-- Executing Simulation --"');
           if(ckbDebug.Checked[2]) then begin
               sbInfo.Panels[1].Text:='0%';
               sbInfo.Invalidate;
@@ -862,10 +874,12 @@ begin
           pMCX.Execute;
           mcxdoStop.Enabled:=true;
           mcxdoRun.Enabled:=false;
-          sbInfo.Panels[0].Text := 'Status: running MCX';
-          sbInfo.Tag:=-10;
+          sbInfo.Panels[0].Text := 'Status: running simulation';
+          sbInfo.Panels[2].Text := '';
+          pMCX.Tag:=-10;
           sbInfo.Color := clRed;
           UpdateMCXActions(acMCX,'Run','');
+          mcxdoRun.Tag:=GetTickCount64;
           Application.ProcessMessages;
     end;
 end;
@@ -889,9 +903,11 @@ begin
           mcxdoStop.Enabled:=false;
           if(mcxdoVerify.Enabled) then
              mcxdoRun.Enabled:=true;
-          AddLog('"-- Terminated MCX --"');
+          AddLog('"-- Terminated Simulation --"');
           if(ckbDebug.Checked[2]) then begin
               sbInfo.Panels[1].Text:='0%';
+              sbInfo.Tag:=0;
+              sbInfo.Repaint;
           end;
      end
 end;
@@ -914,19 +930,16 @@ var
     shaperoot: TTreeNode;
 begin
     tvShapes.Enabled:=false;
-    if(tvShapes.Items.Count >0) and (tvShapes.Items[0].Data <> nil) then begin
-        TJSONData(tvShapes.Items[0].Data).Free;
-        tvShapes.Items[0].Data:=nil;
-    end;
     tvShapes.Items.BeginUpdate;
     tvShapes.Items.Clear;
     tvShapes.Items.EndUpdate;
     shaperoot:=tvShapes.Items.Add(nil,'Shapes');
-    JSONdata:=GetJSON(shapejson);
+    FreeAndNil(JSONData);
+    JSONData:=GetJSON(shapejson);
     if(JSONData.FindPath('Shapes') <> nil) then
-       ShowJSONData(shaperoot,JSONdata.Items[0])
+       ShowJSONData(shaperoot,JSONData.FindPath('Shapes'))
     else
-       ShowJSONData(shaperoot,JSONdata);
+       ShowJSONData(shaperoot,JSONData);
     tvShapes.Enabled:=true;
     tvShapes.FullExpand;
 end;
@@ -941,13 +954,13 @@ begin
         MapList.Add(lvJobs.Columns.Items[i].Caption);
     end;
 
-    //JSONdata:=TJSONObject.Create;
+    JSONdata:=TJSONObject.Create;
 
     ConfigData:=TStringList.Create();
     ConfigData.Clear;
     ConfigData.CommaText:=sgConfig.Cols[2].CommaText;
 
-    RegEngine:=TRegexEngine.Create('\%[0-9 ]{4}\]');
+    RegEngine:=TRegExpr.Create('%[0-9 ]{4}\]');
 
     btLoadSeed.Glyph.Assign(nil);
     JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
@@ -962,11 +975,9 @@ end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
 begin
-    if(tvShapes.Items.Count>0) then
-        TJSONObject(tvShapes.Items[0].Data).Free;
+    FreeAndNil(JSONData);
     MapList.Free;
     ConfigData.Free;
-    //JSONData.Free;
     RegEngine.Free;
 end;
 
@@ -1074,14 +1085,19 @@ end;
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      if(not mcxdoStop.Enabled) then exit;
+     if(pMCX.Tag=-10) then
+         sbInfo.Panels[2].Text:=Format('Last simulation used %.3f seconds', [(GetTickCount64-mcxdoRun.Tag)/1000.]);
+     mcxdoRun.Tag:=0;
      mcxdoStop.Enabled:=false;
      if(mcxdoVerify.Enabled) then
          mcxdoRun.Enabled:=true;
      sbInfo.Panels[0].Text := 'Status: idle';
-     sbInfo.Tag:=0;
+     pMCX.Tag:=0;
      sbInfo.Color := clBtnFace;
      AddLog('"-- Task completed --"');
      sbInfo.Panels[1].Text:='';
+     sbInfo.Tag:=0;
+     sbInfo.Repaint;
      UpdateMCXActions(acMCX,'','Run');
 end;
 
@@ -1111,7 +1127,7 @@ var
 begin
    case Panel.Index of
       1: begin
-          if not (sscanf(sbInfo.Panels[1].Text,'%d\%',[@perc])=1) then exit;
+          perc:=sbInfo.Tag;
           sbInfo.Canvas.Brush.style:= bsSolid;
           sbInfo.Canvas.Brush.color:= RGBToColor(230, 184, 156);
           newrect:=Rect;
@@ -1159,6 +1175,7 @@ begin
       end;
       fmSrc.Free;
    end;
+   edRespinChange(Sender);
 end;
 
 procedure TfmMCX.GotoColRow(grid: TStringGrid; Col, Row: Integer);
@@ -1202,6 +1219,7 @@ procedure TfmMCX.AddShapesWindow(shapeid: string; defaultval: TStringList; node:
 var
    fmshape:TfmShapeEditor;
    ss: string;
+   jdata: TJSONData;
 begin
    if(node = nil) then exit;
    if(defaultval.Count=1) then begin
@@ -1211,9 +1229,9 @@ begin
             ss:='{"'+shapeid+'":"'+ss+'"}'
         else
             ss:='{"'+shapeid+'":'+ss+'}';
-
-        //TJSONObject(JSONdata).Extract(TJSONObject(JSONdata).IndexOf(TJSONObject(node.Data)));
-        ShowJSONData(node,GetJSON(ss));
+        jdata:= GetJSON(ss);
+        TJSONArray(node.TreeView.Items[0].Data).Add(jdata);
+        ShowJSONData(node,jdata,true);
         exit;
    end;
 
@@ -1227,23 +1245,24 @@ begin
              ss:='{"'+shapeid+'":['+ss+']}'
         else
              ss:='{"'+shapeid+'":{'+ss+'}}';
-
-        //TJSONObject(JSONdata).Extract(TJSONObject(JSONdata).IndexOf(TJSONObject(node.Data)));
-        ShowJSONData(node,GetJSON(ss));
+        jdata:= GetJSON(ss);
+        TJSONArray(node.TreeView.Items[0].Data).Add(jdata);
+        ShowJSONData(node,jdata,true);
    end;
    fmshape.Free;
-
 end;
 
 procedure TfmMCX.AddShapes(shapeid: string; defaultval: string);
 var
     fs: TStringList;
+    node: TTreeNode;
 begin
   try
     fs:=TStringList.Create;
     fs.StrictDelimiter := true;
     fs.Delimiter:='|';
     fs.DelimitedText:=defaultval;
+    //node:=tvShapes.Items.AddChild(tvShapes.Items[0],shapeid);
     AddShapesWindow(shapeid, fs, tvShapes.Items[0]);
     edRespinChange(tvShapes);
   finally
@@ -1311,21 +1330,23 @@ begin
   AddShapes('ZSlabs',Format('Tag=%d|Bound=[1,10]',[tvShapes.Tag+1]));
 end;
 
-function TfmMCX.RebuildLayeredObj(root: TTreeNode; out maxtag: integer): TJSONArray;
+function TfmMCX.RebuildLayeredObj(rootdata: TJSONData; out maxtag: integer): string;
 var
     i,j: integer;
     val: extended;
-    row: TJSONArray;
+    row, jobj: TJSONArray;
+    root: TJSONObject;
 begin
-    Result:= TJSONArray.Create;
+    if(rootdata = nil) then exit;
+    root:=TJSONObject(TJSONObject(rootdata).Items[0]);
+    jobj:= TJSONArray.Create;
     maxtag:=0;
-    for i:=0 to root.Count-1 do begin
-        if(Pos('Layer ',root.Items[i].Text)=1) then begin
+    try
+      for i:=0 to root.Count-1 do begin
+        if(Pos('Layer ',root.Names[i])=1) then begin
            row:= TJSONArray.Create;
            for j:=0 to root.Items[i].Count-1 do begin
-               if not (TryStrToFloat(root.Items[i].Items[j].Text,val)) then begin
-                   raise Exception.Create('A layered object can not have non-numeric elements');
-               end;
+               val:=TJSONArray(root.Items[i]).Floats[j];
                if j=root.Items[i].Count-1 then
                    maxtag:=max(Round(val),maxtag);
                if(Frac(val)=0) then
@@ -1333,48 +1354,61 @@ begin
                else
                    row.Add(val);
            end;
-           Result.Add(row);
+           jobj.Add(row);
         end;
+      end;
+      Result:=jobj.AsJSON;
+    finally
+      FreeAndNil(jobj);
     end;
 end;
-function TfmMCX.RebuildShapeJSON(root: TTreeNode): integer;
+// handle shape data without "Shapes" root node;
+// root should always be an array
+function TfmMCX.UpdateShapeTag(root: TJSONData; doexport: boolean = false): integer;
 var
-     i, maxtag: integer;
-     jdata: TJSONData;
+     i, j, maxlayertag, maxtag: integer;
      jobj: TJSONObject;
+     ss: string;
 begin
-     Result:=0;
-     jdata:=GetJSON('{"Shapes": []}');
+     maxtag:=0;
+     ss:= root.AsJSON;
+     if(root.JSONType <> jtArray) then
+        raise Exception.Create('Shape data root node should always be an array');
      for i:=0 to root.Count-1 do begin
-         if(Assigned(root.Items[i].Data)) then begin
-            jobj:=TJSONObject.Create;
-            if(Pos('Layers',root.Items[i].Text)=2) then begin
-                jobj.Add(root.Items[i].Text,RebuildLayeredObj(root.Items[i],maxtag));
-                Result:=Max(Result,maxtag);
+       jobj:=TJSONObject(root.Items[i]);
+       ss:=jobj.AsJSON;
+       if (jobj.Count=1) and (Pos('Layers',jobj.Names[0])=2) then begin
+            if(doexport) then begin
+                jobj.Objects[jobj.Names[0]]:= TJSONObject(GetJSON(RebuildLayeredObj(jobj,maxlayertag)));
             end else begin
-                jobj.Add(root.Items[i].Text,TJSONObject(root.Items[i].Data));
+                RebuildLayeredObj(jobj,maxlayertag);
             end;
-            TJSONArray(jdata.Items[0]).Add(jobj);
+            maxtag:=Max(maxtag,maxlayertag);
+       end;
+       if(jobj.Count=1) and (jobj.Items[0].Count>0) then
+           jobj:=TJSONObject(jobj.Items[0]);
+       ss:=jobj.AsJSON;
 
-            if(TJSONData(root.Items[i].Data).Count=0) then continue;
-            if(TJSONData(root.Items[i].Data).FindPath('Tag') <> nil) then
-                Result:=Max(Result,TJSONObject(root.Items[i].Data).Integers['Tag']);
-
-            if (root.Items[i].Text='Grid') and (TJSONData(root.Items[i].Data).FindPath('Size') <> nil) then
-                sgConfig.Cells[2,2]:=TJSONObject(root.Items[i].Data).Arrays['Size'].AsJSON;
-         end;
+       if(jobj.FindPath('Tag') <> nil) then
+          maxtag:=Max(maxtag,jobj.Integers['Tag']);
+       if (root.JSONType=jtObject) then begin
+          if (TJSONObject(root).Names[i]='Grid') and (jobj.FindPath('Size') <> nil) then
+              sgConfig.Cells[2,2]:=jobj.Arrays['Size'].AsJSON;
+       end else if (root.JSONType=jtArray) then begin
+          if (jobj.Count>0) and (TJSONObject(root.Items[i]).Names[0]='Grid') and (jobj.FindPath('Size') <> nil) then
+              sgConfig.Cells[2,2]:=jobj.FindPath('Size').AsJSON;
+       end;
      end;
-     root.Data:=jdata;
-     root.TreeView.Tag:=Result;
+     Result:=maxtag;
 end;
 
 procedure TfmMCX.shapePrintExecute(Sender: TObject);
+var
+     jdata: TJSONData;
 begin
-   //AddLog(JSONdata.FormatJSON);
     if(tvShapes.Selected <> nil) then
        if(tvShapes.Selected=tvShapes.Items[0]) then begin
-           RebuildShapeJSON(tvShapes.Selected);
-           AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON);
+           AddMultiLineLog(JSONData.FormatJSON);
        end else begin
            if(tvShapes.Selected.Data <> nil) then
                AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON);
@@ -1398,11 +1432,29 @@ begin
 end;
 
 procedure TfmMCX.shapeDeleteExecute(Sender: TObject);
+var
+     idx: integer;
+     P, D: TJSONData;
+     Node: TTreeNode;
+     ss: string;
 begin
-  if(tvShapes.Selected <> nil) then begin
-       tvShapes.Selected.Delete;
-       edRespinChange(tvShapes);
+  Node:= tvShapes.Selected;
+  if(Node <> nil) then begin
+        if(Node.Parent = nil) or (Node.Parent.Data=nil) or (Node.Data=nil) then exit;
+        P:=TJSONData(Node.Parent.Data);
+        ss:=P.AsJSON;
+        If P.JSONType=jtArray then
+          TJSONArray(P).Remove(P.Items[Node.Index])
+        else If P.JSONType=jtObject then
+          TJSONObject(P).Remove(P.Items[Node.Index]);
+        ss:=P.AsJSON;
+        Node.Delete;
+        edRespinChange(tvShapes);
   end;
+end;
+
+procedure TfmMCX.Splitter2Moved(Sender: TObject);
+begin
 end;
 
 procedure TfmMCX.Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
@@ -1441,9 +1493,9 @@ begin
     if not (Assigned(GotoGBox)) then exit;
     if(tmAnimation.Tag>0) then begin // collapse
          GotoGBox.Height:=GotoGBox.Height-5;
-         if(GotoGBox.Height<=30) then begin
+         if(GotoGBox.Height<=self.Canvas.TextHeight('A')+btGBExpand.Height) then begin
               GotoGBox.Align:=alTop;
-              GotoGBox.Height:=30;
+              GotoGBox.Height:=self.Canvas.TextHeight('A')+btGBExpand.Height;
               tmAnimation.Tag:=0;
               tmAnimation.Enabled:=false;
          end;
@@ -1456,6 +1508,10 @@ begin
              tmAnimation.Enabled:=false;
         end;
     end;
+end;
+
+procedure TfmMCX.tvShapesDeletion(Sender: TObject; Node: TTreeNode);
+begin
 end;
 
 procedure TfmMCX.tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string
@@ -1542,10 +1598,11 @@ begin
         Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
         if(ckbDebug.Checked[2]) then begin
                revbuf:=ReverseString(Buffer);
-               if RegEngine.MatchString(revbuf,idx,len) then begin
-                     percent:=ReverseString(Copy(revbuf,idx,len));
+               if RegEngine.Exec(revbuf) then begin
+                     percent:=ReverseString(RegEngine.Match[0]);
                      if(sscanf(percent,']%d\%', [@total])=1) then begin
                         sbInfo.Panels[1].Text:=Format('%d%%',[total]);
+                        sbInfo.Tag:=total;
                         sbInfo.Repaint;
                         Application.ProcessMessages;
                      end;
@@ -1556,7 +1613,7 @@ begin
         Application.ProcessMessages;
       end;
     end;
-    if(sbInfo.Tag=-1) then begin
+    if(pMCX.Tag=-1) then begin
         list:=TStringList.Create;
         list.StrictDelimiter := true;
         list.Delimiter:=AnsiChar(#10);
@@ -1571,6 +1628,7 @@ begin
                  edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos)));
           end;
         end;
+        list.Free;
         if(edGPUID.Items.Count>0) then
             edGPUID.Checked[0]:=true;
     end;
@@ -1615,7 +1673,9 @@ begin
              node.SubItems.Add('');
          for j:=1 to lvJobs.Columns.Count-1 do begin
              node.SubItems.Strings[j-1]:=vals.Values[lvJobs.Columns.Items[j].Caption];
-         end
+         end;
+         if(Length(vals.Values['MCProgram'])>0) then
+             node.ImageIndex:=node.ImageIndex+StrToInt(vals.Values['MCProgram']);
      end;
      inifile.Free;
      vals.Free;
@@ -1655,7 +1715,7 @@ begin
 
     exepath:=SearchForExe(CreateCmdOnly);
     if(exepath='') then
-       raise Exception.Create('Can not find mcx executable in the search path');
+       raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
     SaveJSONConfig('');
 
@@ -1677,9 +1737,9 @@ procedure TfmMCX.SaveJSONConfig(filename: string);
 var
     nthread, nblock,hitmax,seed, i, mediacount: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    gpuid, section, key, val: string;
+    gpuid, section, key, val, ss: string;
     json, jobj, jmedium, jdet, jforward, joptode : TJSONObject;
-    jdets, jmedia: TJSONArray;
+    jdets, jmedia, jshape: TJSONArray;
     jsonlist: TStringList;
 begin
   try
@@ -1735,7 +1795,9 @@ begin
               jmedia.Add(jmedium);
       end;
       if(jmedia.Count>0) then
-         jobj.Arrays['Media']:=jmedia;
+         jobj.Arrays['Media']:=jmedia
+      else
+         jmedia.Free;
 
       jdets:=TJSONArray.Create;
       for i := sgDet.FixedRows to sgDet.RowCount - 1 do
@@ -1750,7 +1812,9 @@ begin
               jdets.Add(jdet);
       end;
       if(json.Find('Optode') = nil) then
-         json.Objects['Optode']:=TJSONObject.Create;
+         json.Objects['Optode']:=TJSONObject.Create
+      else
+         jdets.Free;
 
       joptode:=json.Objects['Optode'];
 
@@ -1774,18 +1838,27 @@ begin
               end else if(section = 'Session') then begin
                   json.Objects['Session'].Strings[key]:=val;
               end else if(section = 'Domain') then begin
+                  if (key='MeshID') then begin
+                     json.Objects[section].Strings[key]:=val;
+                     continue;
+                  end else if(key='InitElem') then begin
+                     json.Objects[section].Integers[key]:=StrToInt(val);
+                     continue;
+                  end;
                   if (key = 'VolumeFile') and ((val='See Volume Designer...') or (Length(val)=0)) then begin
-                      mediacount:=RebuildShapeJSON(tvShapes.Items[0]);
-                      json.Objects['Shapes']:=TJSONObject(TJSONObject(tvShapes.Items[0].Data).Items[0]);
-                      if(jmedia.Count<=mediacount) then begin
-                        raise Exception.Create(Format('%d media labels are expected (including 0), but only %d sets of media proprties are defned.',[mediacount+1,jmedia.Count]));
+                      if(JSONData.FindPath('Shapes') = nil) then
+                          jshape:=TJSONArray(GetJSON(JSONData.AsJSON))
+                      else
+                          jshape:=TJSONArray(GetJSON(JSONData.FindPath('Shapes').AsJSON));
+                      ss:=jshape.AsJSON;
+                      tvShapes.Tag:=UpdateShapeTag(jshape,true);
+                      json.Arrays['Shapes']:=jshape;
+                      if(jmedia.Count<=tvShapes.Tag) then begin
+                        raise Exception.Create(Format('%d media labels are expected (including 0), but only %d sets of media proprties are defned.',[tvShapes.Tag+1,jmedia.Count]));
                       end;
                   end else begin
-                      if(key = 'VolumeFile') or (key='MeshID') then begin
-                         if(key = 'VolumeFile') then
-                            json.Objects['Domain'].Strings[key]:=ExtractRelativepath(ExtractFilePath(filename),ExtractFilePath(val))+DirectorySeparator+ExtractFilename(val)
-                         else
-                            json.Objects['Domain'].Strings[key]:=val;
+                      if(key = 'VolumeFile') then begin
+                          json.Objects['Domain'].Strings[key]:=ExtractRelativepath(ExtractFilePath(filename),ExtractFilePath(val))+DirectorySeparator+ExtractFilename(val)
                       end else
                           json.Objects['Domain'].Objects[key]:=TJSONObject(GetJSON(val));
                   end;
@@ -1816,14 +1889,7 @@ begin
           ShowMessage( 'Error: '+ #13#10#13#10 + E.Message );
     end;
   finally
-{
-     if(Assigned(json)) then json.Free;
-     if(Assigned(jmedia)) then jmedia.Free;
-     if(Assigned(jdets)) then jdets.Free;
-     if(Assigned(jdet)) then jdet.Free;
-     if(Assigned(jmedium)) then jmedium.Free;
-     if(Assigned(jforward)) then jforward.Free;
- }
+    FreeAndNil(json);
   end;
 end;
 
@@ -1832,7 +1898,7 @@ var
     path: string;
 begin
     path:=ExtractFileDir(Application.ExeName)
-       +DirectorySeparator+'..'+DirectorySeparator+'sessions'+DirectorySeparator+edSession.Text;
+       +DirectorySeparator+'..'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+edSession.Text;
     Result:=path;
     try
       if(not DirectoryExists(path)) then
@@ -2008,7 +2074,7 @@ begin
         json.Free;
     end;
 end;
-procedure TfmMCX.ShowJSONData(AParent : TTreeNode; Data : TJSONData);
+procedure TfmMCX.ShowJSONData(AParent : TTreeNode; Data : TJSONData; toplevel: boolean=false);
 
 Var
   N,N2 : TTreeNode;
@@ -2052,7 +2118,7 @@ begin
     else
       N:=AParent.TreeView.Items.AddChild(AParent,Data.AsString);
     end;
-    If Assigned(N) then begin
+    If toplevel=false and Assigned(N) then begin
       N.ImageIndex:=ImageTypeMap[Data.JSONType];
       N.SelectedIndex:=ImageTypeMap[Data.JSONType];
       N.Data:=Data;
@@ -2138,10 +2204,15 @@ begin
         finally
         end;
     end;
-    RebuildShapeJSON(tvShapes.Items[0]);
     idx:=MapList.IndexOf(tvShapes.Hint);
     if(idx>=0) then
-        node.SubItems.Strings[idx]:=TJSONData(tvShapes.Items[0].Data).FormatJSON(AsJSONFormat);
+      if(JSONData.FindPath('Shapes') <> nil) then begin
+        tvShapes.Tag:=UpdateShapeTag(JSONData.FindPath('Shapes'));
+        node.SubItems.Strings[idx]:=JSONData.FormatJSON(AsJSONFormat);
+      end else begin
+        tvShapes.Tag:=UpdateShapeTag(JSONData);
+        node.SubItems.Strings[idx]:='{"Shapes":'+JSONData.FormatJSON(AsJSONFormat)+'}';
+      end;
 end;
 
 procedure TfmMCX.ListToPanel2(node:TListItem);
@@ -2163,7 +2234,17 @@ begin
 
     for i:=0 to plSetting.ControlCount-1 do
     begin
-      if(plSetting.Controls[i] is TGroupBox) then begin
+      if(plSetting.Controls[i] is TRadioGroup) then begin
+           gr:=plSetting.Controls[i] as TRadioGroup;
+           idx:=MapList.IndexOf(gr.Hint);
+           if(idx>=0) and (Length(node.SubItems.Strings[idx])>0) then begin
+                try
+                      gr.ItemIndex:=StrToInt(node.SubItems.Strings[idx]);
+                except
+                end;
+           end;
+           continue;
+      end else if(plSetting.Controls[i] is TGroupBox) then begin
        gb:= plSetting.Controls[i] as TGroupBox;
        for id:=0 to gb.ControlCount-1 do begin
         if(gb.Controls[id] is TSpinEdit) then begin

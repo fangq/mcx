@@ -1,7 +1,7 @@
 object fmNewSession: TfmNewSession
-  Left = 1900
+  Left = 3770
   Height = 239
-  Top = 421
+  Top = 775
   Width = 504
   BorderIcons = []
   BorderStyle = bsDialog
