@@ -165,7 +165,6 @@ object fmMCX: TfmMCX
     ButtonHeight = 120
     ButtonWidth = 80
     Caption = 'MCX Ribon'
-    Color = clMenu
     EdgeInner = esNone
     EdgeOuter = esNone
     Images = ImageList2
@@ -315,8 +314,8 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 29
-    Top = 873
+    Height = 26
+    Top = 876
     Width = 1299
     Panels = <    
       item
@@ -336,7 +335,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 477
+    Height = 480
     Top = 134
     Width = 261
     Align = alLeft
@@ -556,19 +555,19 @@ object fmMCX: TfmMCX
   end
   object Splitter1: TSplitter
     Left = 261
-    Height = 477
+    Height = 480
     Top = 134
     Width = 8
   end
   object plSetting: TPanel
     Left = 269
-    Height = 477
+    Height = 480
     Top = 134
     Width = 667
     Align = alLeft
     Anchors = []
     BevelOuter = bvNone
-    ClientHeight = 477
+    ClientHeight = 480
     ClientWidth = 667
     Enabled = False
     ParentColor = False
@@ -592,11 +591,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = grBasic
         AnchorSideRight.Control = Label10
-        Left = 140
+        Left = 138
         Height = 28
         Hint = 'InputFile'
         Top = 5
-        Width = 284
+        Width = 286
         DialogOptions = []
         FilterIndex = 0
         HideDirectories = False
@@ -619,7 +618,7 @@ object fmMCX: TfmMCX
         Height = 20
         Hint = '-s (--sessionid)'
         Top = 37
-        Width = 140
+        Width = 138
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Session ID (-s)'
@@ -634,7 +633,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edConfigFile
         AnchorSideTop.Side = asrBottom
-        Left = 140
+        Left = 138
         Height = 28
         Hint = 'Session'
         Top = 33
@@ -685,7 +684,7 @@ object fmMCX: TfmMCX
         Height = 20
         Hint = '-u (--unitinmm)'
         Top = 65
-        Width = 140
+        Width = 138
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Voxel size in mm (-u)'
@@ -702,7 +701,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Control = grBasic
         AnchorSideBottom.Side = asrBottom
-        Left = 140
+        Left = 138
         Height = 28
         Hint = 'UnitInMM'
         Top = 61
@@ -754,7 +753,7 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 24
         Top = 7
-        Width = 140
+        Width = 138
         Caption = 'Use Input File (-f)'
         OnChange = rbUseFileChange
         ParentFont = False
@@ -814,7 +813,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoReplay'
         Top = 64
-        Width = 71
+        Width = 69
         Anchors = [akLeft]
         BorderSpacing.Left = 5
         BorderSpacing.Top = 1
@@ -1226,11 +1225,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edRemote
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edRemote
-        Left = 49
+        Left = 51
         Height = 24
         Hint = 'DoRemote'
         Top = 217
-        Width = 159
+        Width = 157
         Anchors = [akTop, akRight]
         BorderSpacing.Left = 16
         BorderSpacing.Top = 1
@@ -1461,7 +1460,7 @@ object fmMCX: TfmMCX
         Height = 28
         Hint = 'ThreadNum'
         Top = 25
-        Width = 133
+        Width = 131
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 150
         Enabled = False
@@ -1505,7 +1504,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'Autopilot'
         Top = 1
-        Width = 278
+        Width = 276
         BorderSpacing.Left = 5
         BorderSpacing.Top = 1
         Caption = 'Let MCX decide thread/block size (-A)'
@@ -1543,7 +1542,7 @@ object fmMCX: TfmMCX
         Height = 28
         Hint = 'ThreadBlock'
         Top = 53
-        Width = 133
+        Width = 131
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 150
         BorderSpacing.Bottom = 6
@@ -1569,7 +1568,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Control = grGPU
         AnchorSideBottom.Side = asrBottom
-        Left = 300
+        Left = 298
         Height = 56
         Hint = 'GPUID'
         Top = 25
@@ -1599,7 +1598,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edGPUID
         AnchorSideTop.Control = ckAutopilot
         AnchorSideTop.Side = asrCenter
-        Left = 300
+        Left = 298
         Height = 20
         Hint = '-G (--gpu)'
         Top = 3
@@ -1615,7 +1614,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edWorkload
         AnchorSideTop.Control = Label12
         AnchorSideTop.Side = asrCenter
-        Left = 486
+        Left = 484
         Height = 20
         Hint = '-W (--workload)'
         Top = 3
@@ -1633,7 +1632,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = Label15
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Side = asrBottom
-        Left = 486
+        Left = 484
         Height = 28
         Hint = 'Workload'
         Top = 25
@@ -1688,7 +1687,7 @@ object fmMCX: TfmMCX
       Left = 464
       Height = 33
       Hint = 'About MCX'
-      Top = 444
+      Top = 447
       Width = 200
       Anchors = [akLeft, akRight, akBottom]
       AutoSize = True
@@ -1995,18 +1994,18 @@ object fmMCX: TfmMCX
   end
   object plOutput: TPanel
     Left = 944
-    Height = 477
+    Height = 480
     Top = 134
     Width = 355
     Align = alClient
-    ClientHeight = 477
+    ClientHeight = 480
     ClientWidth = 355
     DockSite = True
     TabOrder = 5
     OnDockOver = plOutputDockOver
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 475
+      Height = 478
       Top = 1
       Width = 353
       ActivePage = tabInputData
@@ -2017,7 +2016,7 @@ object fmMCX: TfmMCX
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 442
+        ClientHeight = 445
         ClientWidth = 345
         ImageIndex = 4
         object sgMedia: TStringGrid
@@ -2179,7 +2178,7 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 194
+          Height = 197
           Hint = 'MCXConfig'
           Top = 248
           Width = 345
@@ -2467,7 +2466,7 @@ object fmMCX: TfmMCX
   object Panel1: TPanel
     Left = 0
     Height = 254
-    Top = 619
+    Top = 622
     Width = 1299
     Align = alBottom
     ClientHeight = 254
@@ -2948,6 +2947,7 @@ object fmMCX: TfmMCX
       MouseLinkColor.Foreground = clBlue
       LineHighlightColor.Background = clNone
       LineHighlightColor.Foreground = clNone
+      OnChange = mmOutputChange
       inline SynLeftGutterPartList1: TSynGutterPartList
         object SynGutterMarks1: TSynGutterMarks
           Width = 24
@@ -3040,20 +3040,20 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 8
-    Top = 611
+    Top = 614
     Width = 1299
     Align = alBottom
     ResizeAnchor = akBottom
   end
   object Splitter2: TSplitter
     Left = 936
-    Height = 477
+    Height = 480
     Top = 134
     Width = 8
     OnMoved = Splitter2Moved
   end
   object MainMenu1: TMainMenu
-    Images = ImageList2
+    Images = ImageList1
     left = 944
     top = 680
     object MenuItem1: TMenuItem
@@ -3071,6 +3071,7 @@ object fmMCX: TfmMCX
       end
       object MenuItem8: TMenuItem
         Action = mcxdoExit
+        ImageIndex = 2
         OnClick = mcxdoExitExecute
       end
     end
@@ -3078,10 +3079,12 @@ object fmMCX: TfmMCX
       Caption = 'Run'
       object MenuItem13: TMenuItem
         Action = mcxdoRun
+        ImageIndex = 6
         OnClick = mcxdoRunExecute
       end
       object MenuItem14: TMenuItem
         Action = mcxdoStop
+        ImageIndex = 7
         OnClick = mcxdoStopExecute
       end
       object MenuItem15: TMenuItem
@@ -3089,6 +3092,7 @@ object fmMCX: TfmMCX
       end
       object MenuItem16: TMenuItem
         Action = mcxdoQuery
+        ImageIndex = 12
         OnClick = mcxdoQueryExecute
       end
     end
@@ -3117,6 +3121,7 @@ object fmMCX: TfmMCX
       end
       object MenuItem18: TMenuItem
         Action = mcxdoWeb
+        ImageIndex = 10
         OnClick = mcxdoWebExecute
       end
     end

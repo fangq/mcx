@@ -264,6 +264,7 @@ type
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem9Click(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
+    procedure mmOutputChange(Sender: TObject);
     procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
@@ -1064,6 +1065,11 @@ end;
 procedure TfmMCX.miClearLogClick(Sender: TObject);
 begin
     mmOutput.Lines.Clear;
+end;
+
+procedure TfmMCX.mmOutputChange(Sender: TObject);
+begin
+
 end;
 
 procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,

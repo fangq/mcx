@@ -139,11 +139,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="1481"/>
-        <CursorPos X="80" Y="1505"/>
+        <TopLine Value="1070"/>
+        <CursorPos X="3" Y="1072"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
-          <Item0 Y="775" ID="9"/>
+          <Item0 Y="776" ID="9"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -418,118 +418,118 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1240" Column="18" TopLine="1232"/>
+        <Caret Line="1241" Column="35" TopLine="1226"/>
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1241" Column="35" TopLine="1226"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="330" Column="27" TopLine="308"/>
       </Position3>
       <Position4>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="330" Column="27" TopLine="308"/>
+        <Caret Line="940" Column="20" TopLine="928"/>
       </Position4>
       <Position5>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="940" Column="20" TopLine="928"/>
+        <Caret Line="942" Column="20" TopLine="928"/>
       </Position5>
       <Position6>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="942" Column="20" TopLine="928"/>
+        <Caret Line="1234" Column="21" TopLine="1210"/>
       </Position6>
       <Position7>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1234" Column="21" TopLine="1210"/>
+        <Caret Line="1250" Column="37" TopLine="1227"/>
       </Position7>
       <Position8>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1250" Column="37" TopLine="1227"/>
+        <Caret Line="2077" Column="30" TopLine="2074"/>
       </Position8>
       <Position9>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2077" Column="30" TopLine="2074"/>
+        <Caret Line="2120" Column="44" TopLine="2099"/>
       </Position9>
       <Position10>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2120" Column="44" TopLine="2099"/>
+        <Caret Line="882" Column="39" TopLine="869"/>
       </Position10>
       <Position11>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="882" Column="39" TopLine="869"/>
+        <Caret Line="15" Column="7"/>
       </Position11>
       <Position12>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="15" Column="7"/>
       </Position12>
       <Position13>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="236" Column="23" TopLine="215"/>
       </Position13>
       <Position14>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="236" Column="23" TopLine="215"/>
+        <Caret Line="684" Column="49" TopLine="660"/>
       </Position14>
       <Position15>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="684" Column="49" TopLine="660"/>
       </Position15>
       <Position16>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="684" Column="49" TopLine="662"/>
       </Position16>
       <Position17>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="684" Column="49" TopLine="662"/>
-      </Position17>
-      <Position18>
         <Filename Value="mcxstudio.lpr"/>
         <Caret Line="12" Column="48"/>
+      </Position17>
+      <Position18>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="1481" Column="35" TopLine="1474"/>
       </Position18>
       <Position19>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1481" Column="35" TopLine="1474"/>
       </Position19>
       <Position20>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="102" Column="10" TopLine="81"/>
       </Position20>
       <Position21>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="102" Column="10" TopLine="81"/>
+        <Caret Line="738" Column="9" TopLine="716"/>
       </Position21>
       <Position22>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="738" Column="9" TopLine="716"/>
+        <Caret Line="692" Column="31" TopLine="682"/>
       </Position22>
       <Position23>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="692" Column="31" TopLine="682"/>
+        <Caret Line="14" Column="37"/>
       </Position23>
       <Position24>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="14" Column="37"/>
+        <Caret Line="616" Column="33" TopLine="596"/>
       </Position24>
       <Position25>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="616" Column="33" TopLine="596"/>
+        <Caret Line="617" Column="26" TopLine="596"/>
       </Position25>
       <Position26>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="617" Column="26" TopLine="596"/>
+        <Caret Line="1168" Column="29" TopLine="1146"/>
       </Position26>
       <Position27>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1168" Column="29" TopLine="1146"/>
+        <Caret Line="1075" Column="57" TopLine="1059"/>
       </Position27>
       <Position28>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1075" Column="57" TopLine="1059"/>
       </Position28>
       <Position29>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="686" Column="75" TopLine="664"/>
       </Position29>
       <Position30>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="686" Column="75" TopLine="664"/>
+        <Caret Line="1511" Column="80" TopLine="1487"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
@@ -569,7 +569,7 @@
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
         <Source Value="mcxgui.pas"/>
-        <Line Value="478"/>
+        <Line Value="479"/>
       </Item1>
     </BreakPoints>
     <Watches Count="4">
