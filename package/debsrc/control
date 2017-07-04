@@ -1,0 +1,14 @@
+Package: %NAME%
+Version: %VERSION%
+Standards-Version: 1.0.RC2
+Section: Science
+Priority: optional
+Architecture: all
+Depends:
+Suggests: mcx-studio
+Installed-Size: 13124
+Maintainer: Qianqian Fang <q.fang@neu.edu>
+Homepage: http://mcx.space
+Vcs-Git: https://github.com/fangq/mcx.git: 
+Vcs-Browser: https://github.com/fangq/mcx
+Description:

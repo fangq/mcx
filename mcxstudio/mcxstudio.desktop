@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Monte Carlo eXtreme (MCX)
+Name[zh_CN]=MCX蒙特卡洛光子模拟器
+Name[zh_TW]=MCX蒙地卡羅光子模擬器
+Comment=GPU-Accelerated Monte Carlo 3D Photon Transport Simulator
+Comment[zh_CN]=GPU加速的三维蒙特卡罗光子模拟软件
+Comment[zh_TW]=GPU加速的三維蒙地卡羅光子模擬軟件
+Exec=mcxstudio
+Icon=mcx
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Settings;
+#X-Ubuntu-Gettext-Domain=mcx
