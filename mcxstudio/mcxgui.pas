@@ -338,6 +338,7 @@ type
     procedure LoadJSONShapeTree(shapejson: string);
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
     procedure SetSessionType(sessiontype: integer);
+    function ResetMCX(exitcode: LongInt) : boolean;
   end;
 
 var
@@ -865,7 +866,7 @@ end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 begin
-    if(not pMCX.Running) then begin
+    if(ResetMCX(0)) then begin
           if(ckDoRemote.Checked) then
               pMCX.CommandLine:=edRemote.Text+' '+ CreateCmdOnly+' -L'
           else
@@ -878,26 +879,40 @@ begin
           UpdateMCXActions(acMCX,'Run','');
     end;
 end;
+function TfmMCX.ResetMCX(exitcode: LongInt) : boolean;
+begin
+    Result:=false;
+    if(pMCX.Running) then begin
+        pMCX.Terminate(exitcode);
+        AddLog('Program is still running, trying to terminate ...');
+        Sleep(1000);
+    end;
+    if(pMCX.Running) then begin
+        MessageDlg('Error', 'Program is still running. Please wait or kill the program manually from your Task Manager', mtError, [mbOK],0);
+        exit;
+    end;
+    Result:=true;
+end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
 begin
-    if(not pMCX.Running) then begin
-          pMCX.CommandLine:=CreateCmd;
-          AddLog('"-- Executing Simulation --"');
-          if(ckbDebug.Checked[2]) then begin
-              sbInfo.Panels[1].Text:='0%';
-              sbInfo.Invalidate;
-          end;
-          pMCX.Execute;
-          mcxdoStop.Enabled:=true;
-          mcxdoRun.Enabled:=false;
-          sbInfo.Panels[0].Text := 'Status: running simulation';
-          sbInfo.Panels[2].Text := '';
-          pMCX.Tag:=-10;
-          sbInfo.Color := clRed;
-          UpdateMCXActions(acMCX,'Run','');
-          mcxdoRun.Tag:=GetTickCount64;
-          Application.ProcessMessages;
+    if(ResetMCX(0)) then begin
+        pMCX.CommandLine:=CreateCmd;
+        AddLog('"-- Executing Simulation --"');
+        if(ckbDebug.Checked[2]) then begin
+            sbInfo.Panels[1].Text:='0%';
+            sbInfo.Invalidate;
+        end;
+        pMCX.Execute;
+        mcxdoStop.Enabled:=true;
+        mcxdoRun.Enabled:=false;
+        sbInfo.Panels[0].Text := 'Status: running simulation';
+        sbInfo.Panels[2].Text := '';
+        pMCX.Tag:=-10;
+        sbInfo.Color := clRed;
+        UpdateMCXActions(acMCX,'Run','');
+        mcxdoRun.Tag:=GetTickCount64;
+        Application.ProcessMessages;
     end;
 end;
 

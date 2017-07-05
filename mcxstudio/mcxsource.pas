@@ -127,6 +127,7 @@ begin
         plEditor.Cells[0,i]:=fs.Names[i-1];
         plEditor.Cells[1,i]:=fs.Values[fs.Names[i-1]];
     end;
+    fs.Free;
 end;
 
 procedure TfmSource.FormCreate(Sender: TObject);
