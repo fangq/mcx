@@ -17,7 +17,7 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, inifiles, fpjson, jsonparser, strutils, RegExpr, mcxabout, mcxshape,
-  mcxnewsession, mcxsource;
+  mcxnewsession, mcxsource {$IFDEF WINDOWS},registry{$ENDIF};
 
 type
 
@@ -684,7 +684,7 @@ end;
 procedure TfmMCX.FormShow(Sender: TObject);
 begin
     grGPU.Top:=grProgram.Height+grBasic.Height;
-    grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+5;
+    grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
 end;
 
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
@@ -1506,9 +1506,9 @@ begin
     if not (Assigned(GotoGBox)) then exit;
     if(tmAnimation.Tag>0) then begin // collapse
          GotoGBox.Height:=GotoGBox.Height-5;
-         if(GotoGBox.Height<=self.Canvas.TextHeight('Ag')+btGBExpand.Height+5) then begin
+         if(GotoGBox.Height<=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2) then begin
               GotoGBox.Align:=alTop;
-              GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+5;
+              GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
               tmAnimation.Tag:=0;
               tmAnimation.Enabled:=false;
          end;
@@ -1599,6 +1599,12 @@ var
     list: TStringList;
     i, idx, len, total, namepos,hh: integer;
     gpuname, ss: string;
+    {$IFDEF WINDOWS}
+    Reg: TRegistry;
+    RegKey: DWORD;
+    Key: string;
+    needfix: boolean;
+    {$ENDIF}
 begin
    if true then
     begin
@@ -1641,9 +1647,40 @@ begin
                  edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos)));
           end;
         end;
-        list.Free;
         if(edGPUID.Items.Count>0) then
             edGPUID.Checked[0]:=true;
+        {$IFDEF WINDOWS}
+        if(list.Count=1) then begin
+            Reg := TRegistry.Create;
+            needfix:=true;
+            try
+              Reg.RootKey := HKEY_LOCAL_MACHINE;
+              Key := '\SYSTEM\CurrentControlSet\Control\GraphicsDrivers';
+              if Reg.OpenKeyReadOnly(Key) then
+              begin
+                if Reg.ValueExists('TdrDelay') then
+                begin
+                  RegKey := Reg.ReadInteger('TdrDelay');
+                  needfix:=false;
+                end;
+              end;
+              Reg.CloseKey;
+              if(needfix) then begin
+                if(Application.MessageBox('A single GPU is detected. Do you want to modify the "TdrDelay" registry to allow MCX to run for more than 5 seconds?',
+                  'Confirm', MB_YESNOCANCEL)=IDYES) then begin
+                      if Reg.OpenKey(Key, true) then  begin
+                          Reg.WriteInteger('TdrDelay', 519936);
+                          ShowMessage('Registry modification is successfully applied.');
+                      end else
+                          ShowMessage('You don''t have permission to modify registry. Please contact your administrator to apply the fix.');
+                  end;
+              end;
+            finally
+              Reg.Free
+            end;
+        end;
+        {$ENDIF}
+        list.Free;
     end;
     Sleep(100);
 end;
