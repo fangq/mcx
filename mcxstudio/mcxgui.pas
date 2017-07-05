@@ -17,7 +17,7 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, inifiles, fpjson, jsonparser, strutils, RegExpr, mcxabout, mcxshape,
-  mcxnewsession, mcxsource {$IFDEF WINDOWS},registry{$ENDIF};
+  mcxnewsession, mcxsource {$IFDEF WINDOWS},registry, ShlObj{$ENDIF};
 
 type
 
@@ -325,7 +325,7 @@ type
     function  GetBrowserPath : string;
     function  SearchForExe(fname : string) : string;
     function CreateWorkFolder:string;
-    procedure SaveJSONConfig(filename: string);
+    function SaveJSONConfig(filename: string): boolean;
     function CheckListToStr(list: TCheckListBox) : string;
     function GridToStr(grid:TStringGrid) :string;
     procedure StrToGrid(str: string; grid:TStringGrid);
@@ -420,7 +420,10 @@ begin
     end else if(Sender is TEdit) then begin
        ed:=Sender as TEdit;
        idx:=MapList.IndexOf(ed.Hint);
-       if(ed.Hint = 'Session') then  node.Caption:=ed.Text;
+       if(ed.Hint = 'Session') then  begin
+         node.Caption:=ed.Text;
+         Caption:='MCX Studio - ['+node.Caption+']';
+       end;
        if(idx>=0) then
                   node.SubItems.Strings[idx]:=ed.Text;
     end else if(Sender is TRadioGroup) then begin
@@ -490,14 +493,13 @@ end;
 
 procedure TfmMCX.mcxdoExitExecute(Sender: TObject);
 var
-   ret:integer;
+   ret:TModalResult;
 begin
     if(mcxdoSave.Enabled) then begin
-       ret:=Application.MessageBox('The current session has not been saved, do you want to save before exit?',
-         'Confirm', MB_YESNOCANCEL);
-       if (ret=IDYES) then
+       ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save before exit?', mtConfirmation, [mbYes, mbNo, mbCancel],0);
+       if (ret=mrYes) then
             mcxdoSaveExecute(Sender);
-       if (ret=IDCANCEL) then
+       if (ret=mrCancel) then
             exit;
     end;
     Close;
@@ -550,6 +552,7 @@ begin
    for i:=1 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
    node.Caption:=sessionid;
    node.ImageIndex:=14+sessiontype;
+   //node.StateIndex:=-1;
    plSetting.Enabled:=true;
    pcSimuEditor.Enabled:=true;
    lvJobs.Selected:=node;
@@ -749,17 +752,24 @@ begin
         edBubble.Hint:='BubbleSize';
         lbBubble.Caption:='Cache radius from src (-R)';
         mcxdoQuery.Enabled:=true;
+        grArray.Enabled:=true;
+        edGate.Enabled:=true;
+        edDetectedNum.Enabled:=true;
     end;
     1: begin
         grGPU.Visible:=false;
         tabVolumeDesigner.Enabled:=false;
         ckSpecular.Visible:=true;
         ckMomentum.Visible:=true;
-        ckSaveRef.Visible:=true;
+        ckSaveRef.Visible:=false;
         edRespin.Hint:='BasicOrder';
         lbRespin.Caption:='Element order (-C)';
         edBubble.Hint:='DebugPhoton';
         lbBubble.Caption:='Debug photon index';
+        mcxdoQuery.Enabled:=false;
+        grArray.Enabled:=false;
+        edGate.Enabled:=false;
+        edDetectedNum.Enabled:=false;
     end;
   end;
   if(grProgram.ItemIndex=1) then begin
@@ -778,10 +788,13 @@ procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
 begin
   if not (lvJobs.Selected = nil) then
   begin
-        if not (Application.MessageBox('The selected configuration will be deleted, are you sure?',
-          'Confirm', MB_YESNOCANCEL)=IDYES) then
+        if not (MessageDlg('Confirmation', 'The selected configuration will be deleted, are you sure?', mtConfirmation, [mbYes, mbNo, mbCancel],0)=mrYes) then
             exit;
         lvJobs.Items.Delete(lvJobs.Selected.Index);
+        if(lvJobs.Items.Count>0) then begin
+            lvJobs.Selected:=lvJobs.Items[0];
+            //lvJobs.Selected.StateIndex:=7;
+        end;
         if not (lvJobs.Selected = nil) then
             ListToPanel2(lvJobs.Selected)
         else
@@ -794,8 +807,8 @@ begin
   if(OpenProject.Execute) then begin
     TaskFile:=OpenProject.FileName;
     if(mcxdoSave.Enabled) then begin
-       if(Application.MessageBox('The current session has not been saved, do you want to discard?',
-         'Confirm', MB_YESNOCANCEL)=IDYES) then begin
+       if(MessageDlg('Confirmation', 'The current session has not been saved, do you want to discard?',
+           mtConfirmation, [mbYes, mbNo, mbCancel],0)=mrYes) then begin
             LoadTasksFromIni(TaskFile);
        end
     end else begin
@@ -839,6 +852,7 @@ begin
    node:=lvJobs.Items.Add;
    node.Caption:=setting.Values['Session'];
    node.ImageIndex:=14+grProgram.ItemIndex;
+   //node.StateIndex:=-1;
    for j:=1 to lvJobs.Columns.Count-1 do
        node.SubItems.Add('');
    for j:=1 to lvJobs.Columns.Count-1 do begin
@@ -951,6 +965,25 @@ procedure TfmMCX.FormCreate(Sender: TObject);
 var
     i: integer;
 begin
+  {$IFDEF WINDOWS}
+  with TRegistry.Create do
+    try
+      RootKey := HKEY_CURRENT_USER;
+      if OpenKeyReadOnly('\Software\Classes\.mcxp')=false or Application.HasOption('r','registry') then begin
+        if OpenKey('\Software\Classes\.mcxp', true) then
+          WriteString('', 'MCXProject');
+        if OpenKey('\Software\Classes\MCXProject', true) then
+          WriteString('', 'MCX Project File');
+        if OpenKey('\Software\Classes\MCXProject\DefaultIcon', true) then
+          WriteString('', Application.ExeName);
+        if OpenKey('\Software\Classes\MCXProject\shell\open\command', true) then
+          WriteString('', Application.ExeName+' -p "%1"');
+        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nil, nil);
+      end;
+    finally
+      Free;
+    end;
+  {$ENDIF}
     MapList:=TStringList.Create();
     MapList.Clear;
     for i:=1 to lvJobs.Columns.Count-1 do begin
@@ -974,6 +1007,8 @@ begin
         mcxdoHelpOptions.Enabled:=true;
     end;
     LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
+    if(Application.HasOption('p','project')) then
+        LoadTasksFromIni(Application.GetOptionValue('p', 'project'));
 end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
@@ -1054,6 +1089,8 @@ begin
          pcSimuEditor.Enabled:=true;
          mcxdoVerify.Enabled:=true;
          mcxdoDefault.Enabled:=true;
+         Caption:='MCX Studio - ['+lvJobs.Selected.Caption+']';
+         //lvJobs.Selected.StateIndex:=7;
      end;
 end;
 
@@ -1211,7 +1248,7 @@ begin
      if(Length(grid.Cells[grid.Col,grid.Row])=0) then exit;
      if(not TryStrToFloat(grid.Cells[grid.Col,grid.Row], val)) then
      begin
-        ShowMessage('Input is not a number!');
+        MessageDlg('Input Error', 'Input is not a number!', mtError, [mbOK],0);
         GotoColRow(grid, grid.Col,grid.Row);
         exit;
      end;
@@ -1432,15 +1469,15 @@ end;
 
 procedure TfmMCX.shapeResetExecute(Sender: TObject);
 var
-  ret:integer;
+  ret:TModalResult;
 begin
-  ret:=Application.MessageBox('The current shape has not been saved, are you sure you want to clear?',
-    'Confirm', MB_YESNOCANCEL);
+  ret:=MessageDlg('Confirmation', 'The current shape has not been saved, are you sure you want to clear?',
+        mtConfirmation, [mbYes, mbNo, mbCancel],0);
   if (ret=IDYES) then begin
     LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
     edRespinChange(tvShapes);
   end;
-  if (ret=IDCANCEL) then
+  if (ret=mrCancel) then
        exit;
 end;
 
@@ -1538,7 +1575,7 @@ begin
 
      if(Node.ImageIndex=ImageTypeMap[jtNumber]) then begin
          if(not TryStrToFloat(S, val)) then begin
-             ShowMessage('The field must be a number');
+             MessageDlg('Input Error', 'The field must be a number', mtError, [mbOK],0);
              S:= Node.Text;
              exit;
          end;
@@ -1562,7 +1599,7 @@ begin
          end;
      end else if(Node.ImageIndex=ImageTypeMap[jtString]) then begin
           if(Length(S)=0) then begin
-               ShowMessage('Input string can not be empty');
+               MessageDlg('Input Error', 'Input string can not be empty', mtError, [mbOK],0);
                S:=Node.Text;
                exit;
           end;
@@ -1597,7 +1634,7 @@ var
     BytesAvailable: DWord;
     BytesRead:LongInt;
     list: TStringList;
-    i, idx, len, total, namepos,hh: integer;
+    i, idx, len, total, namepos,gpucount: integer;
     gpuname, ss: string;
     {$IFDEF WINDOWS}
     Reg: TRegistry;
@@ -1637,6 +1674,7 @@ begin
         list.StrictDelimiter := true;
         list.Delimiter:=AnsiChar(#10);
         list.DelimitedText:=Result;
+        gpucount:=0;
         for i:=0 to list.Count-1 do begin
           ss:= list.Strings[i];
           if(sscanf(ss,'Device %d of %d:%s', [@idx, @total, @gpuname])=3) then
@@ -1645,12 +1683,13 @@ begin
                      edGPUID.Items.Clear;
                  namepos := Pos(gpuname, ss);
                  edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos)));
+                 gpucount:=gpucount+1;
           end;
         end;
         if(edGPUID.Items.Count>0) then
             edGPUID.Checked[0]:=true;
         {$IFDEF WINDOWS}
-        if(list.Count=1) then begin
+        if(gpucount>=1) then begin
             Reg := TRegistry.Create;
             needfix:=true;
             try
@@ -1666,13 +1705,13 @@ begin
               end;
               Reg.CloseKey;
               if(needfix) then begin
-                if(Application.MessageBox('A single GPU is detected. Do you want to modify the "TdrDelay" registry to allow MCX to run for more than 5 seconds?',
-                  'Confirm', MB_YESNOCANCEL)=IDYES) then begin
+                if(MessageDlg('Question', 'If you run MCX on the GPU that is connected to your monitor, you may encouter a "Kernel launch timed out" error. Do you want to modify the "TdrDelay" registry key to allow MCX to run for more than 5 seconds?', mtWarning,
+                        [mbYes, mbNo, mbCancel],0) = mrYes) then begin
                       if Reg.OpenKey(Key, true) then  begin
-                          Reg.WriteInteger('TdrDelay', 519936);
-                          ShowMessage('Registry modification is successfully applied.');
+                          Reg.WriteInteger('TdrDelay', 999999);
+                          MessageDlg('Confirmation', 'Registry modification was successfully applied.', mtInformation, [mbOK],0);
                       end else
-                          ShowMessage('You don''t have permission to modify registry. Please contact your administrator to apply the fix.');
+                          MessageDlg('Permission Error', 'You don''t have permission to modify registry. Please contact your administrator to apply the fix.', mtError, [mbOK],0);
                   end;
               end;
             finally
@@ -1718,6 +1757,7 @@ begin
          node:=lvJobs.Items.Add;
          node.Caption:=sessions.Strings[i];
          node.ImageIndex:=14;
+         //node.StateIndex:=-1;
          inifile.ReadSectionValues(node.Caption,vals);
          for j:=1 to lvJobs.Columns.Count-1 do
              node.SubItems.Add('');
@@ -1767,12 +1807,11 @@ begin
     if(exepath='') then
        raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
-    SaveJSONConfig('');
-
-    UpdateMCXActions(acMCX,'Work','');
+    if(SaveJSONConfig('')) then
+       UpdateMCXActions(acMCX,'Work','');
   except
     On E : Exception do
-      ShowMessage(E.Message);
+      MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
   end;
 end;
 
@@ -1783,15 +1822,16 @@ begin
     cmd:=MCProgram[grProgram.ItemIndex];
     Result:=cmd;
 end;
-procedure TfmMCX.SaveJSONConfig(filename: string);
+function TfmMCX.SaveJSONConfig(filename: string): boolean;
 var
     nthread, nblock,hitmax,seed, i, mediacount: integer;
     bubbleradius,unitinmm,nphoton: extended;
     gpuid, section, key, val, ss: string;
-    json, jobj, jmedium, jdet, jforward, joptode : TJSONObject;
+    json, jobj, jmedium, jdet, joptode : TJSONObject;
     jdets, jmedia, jshape: TJSONArray;
     jsonlist: TStringList;
 begin
+  Result:=false;
   try
       nthread:=StrToInt(edThread.Text);
       nphoton:=StrToFloat(edPhoton.Text);
@@ -1875,7 +1915,7 @@ begin
           joptode.Arrays['Detector']:=jdets;
       joptode.Objects['Source']:=TJSONObject.Create;
 
-      jforward:=TJSONObject.Create;
+      joptode.Objects['Forward']:=TJSONObject.Create;
       for i := sgConfig.FixedRows to sgConfig.RowCount - 1 do
       begin
               if(Length(sgConfig.Cells[0,i])=0) and (i>sgConfig.FixedRows) then break;
@@ -1884,7 +1924,7 @@ begin
               section:= sgConfig.Cells[0,i];
               key:=sgConfig.Cells[1,i];
               if(section = 'Forward') then begin
-                  jforward.Floats[key]:=StrToFloat(val);
+                  joptode.Objects['Forward'].Floats[key]:=StrToFloat(val);
               end else if(section = 'Session') then begin
                   json.Objects['Session'].Strings[key]:=val;
               end else if(section = 'Domain') then begin
@@ -1920,7 +1960,6 @@ begin
                   end;
               end;
       end;
-      json.Objects['Forward']:=jforward;
 
       AddLog('"-- JSON Input: --"');
       AddMultiLineLog(json.FormatJSON);
@@ -1934,9 +1973,10 @@ begin
               jsonlist.Free;
           end;
       end;
+      Result:=true;
     except
       on E: Exception do
-          ShowMessage( 'Error: '+ #13#10#13#10 + E.Message );
+          MessageDlg('Configuration Error', E.Message, mtError, [mbOK],0);
     end;
   finally
     FreeAndNil(json);
@@ -1956,7 +1996,7 @@ begin
                raise Exception.Create('Can not create session output folder');
     except
       On E : Exception do
-          ShowMessage(E.Message);
+          MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
     end;
     AddLog(Result);
 end;
@@ -1990,7 +2030,8 @@ begin
        rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
     end else begin
         jsonfile:=CreateWorkFolder+DirectorySeparator+Trim(edSession.Text)+'.json';
-        SaveJSONConfig(jsonfile);
+        if(SaveJSONConfig(jsonfile)=false) then
+            exit;
         cmd:=cmd+' --input "'+Trim(jsonfile)+'"';
         rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile));
     end;
@@ -2021,7 +2062,7 @@ begin
           cmd:=cmd+Format(' --thread %d --blocksize %d', [nthread,nblock]);
         end;
     end;
-    cmd:=cmd+Format(' --photon %.0f --skipradius %f ',[nphoton,bubbleradius]);
+    cmd:=cmd+Format(' --photon %.0f',[nphoton]);
     cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --unitinmm %f --saveseed %d',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
       Integer(ckSaveDetector.Checked),unitinmm,Integer(ckSaveSeed.Checked)]);
@@ -2029,9 +2070,6 @@ begin
       cmd:=cmd+Format(' --seed ''%s''',[edSeed.Text]);
     if(edReplayDet.Enabled) then
       cmd:=cmd+Format(' --replaydet %d',[edReplayDet.Value]);
-    if(grAtomic.ItemIndex=0) then
-      if(grProgram.ItemIndex=0) then
-         cmd:=cmd+' --skipradius -2';
 
     if(grProgram.ItemIndex=1) then begin
       if(grAtomic.ItemIndex=1) then begin
@@ -2088,7 +2126,7 @@ begin
           end;
       except
           On E : Exception do
-              ShowMessage(E.Message);
+              MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
       end;
       json.Delimiter:='|';
       //json.QuoteChar:=' ';
@@ -2118,7 +2156,7 @@ begin
           end;
       except
           On E : Exception do
-              ShowMessage(E.Message);
+              MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
       end;
     finally
         json.Free;
