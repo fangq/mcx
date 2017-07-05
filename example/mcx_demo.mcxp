@@ -36,6 +36,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [benchmark1]
 InputFile=
@@ -75,6 +77,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [benchmark2]
 InputFile=
@@ -114,6 +118,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [benchmark3]
 InputFile=
@@ -153,6 +159,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [spherebox]
 InputFile=
@@ -192,6 +200,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [validation]
 InputFile=
@@ -231,6 +241,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [validation_ref]
 InputFile=
@@ -270,6 +282,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [shapetest]
 InputFile=
@@ -309,6 +323,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [shapediff1]
 InputFile=
@@ -348,6 +364,8 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=--shapes '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,50,3]]}]}'
+RemoteCmd=ssh user@server
+DoRemote=0
 
 [shapediff2]
 InputFile=
@@ -387,3 +405,5 @@ UseAtomic=
 BasicOrder=
 DebugPhoton=
 MoreParam=
+RemoteCmd=ssh user@server
+DoRemote=0
