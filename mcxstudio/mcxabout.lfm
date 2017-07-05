@@ -9,9 +9,9 @@ object fmAbout: TfmAbout
   Caption = 'About Monte Carlo eXtreme Studio'
   ClientHeight = 410
   ClientWidth = 480
-  Color = clBtnText
+  Color = 4539717
   Position = poMainFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.6.4.0'
   object Image1: TImage
     Left = 16
     Height = 152
