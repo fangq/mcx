@@ -9,6 +9,6 @@ Suggests: mcx-studio
 Installed-Size: 13124
 Maintainer: Qianqian Fang <q.fang@neu.edu>
 Homepage: http://mcx.space
-Vcs-Git: https://github.com/fangq/mcx.git: 
+Vcs-Git: https://github.com/fangq/mcx.git
 Vcs-Browser: https://github.com/fangq/mcx
 Description:

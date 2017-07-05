@@ -101,7 +101,7 @@ type
     grBasic: TGroupBox;
     grGPU: TGroupBox;
     grSwitches: TGroupBox;
-    HeaderControl1: THeaderControl;
+    hcToolbar: THeaderControl;
     ImageList2: TImageList;
     Label1: TLabel;
     Label10: TLabel;
@@ -983,6 +983,9 @@ begin
     finally
       Free;
     end;
+    hcToolbar.Sections[0].MaxWidth:=hcToolbar.Sections[0].MaxWidth+2;
+    hcToolbar.Sections[0].Width:=hcToolbar.Sections[0].Width+2;
+    hcToolbar.Sections[0].MinWidth:=hcToolbar.Sections[0].MinWidth+2;
   {$ENDIF}
     MapList:=TStringList.Create();
     MapList.Clear;
@@ -1652,6 +1655,7 @@ begin
         SetLength(Buffer, BytesAvailable);
         BytesRead := pMCX.OutPut.Read(Buffer[1], BytesAvailable);
         Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
+        //Buffer:=ReplaceRegExpr('\%Progress:',Buffer,'\%'+#13+'Progress',false);
         if(ckbDebug.Checked[2]) then begin
                revbuf:=ReverseString(Buffer);
                if RegEngine.Exec(revbuf) then begin
@@ -1915,7 +1919,7 @@ begin
           joptode.Arrays['Detector']:=jdets;
       joptode.Objects['Source']:=TJSONObject.Create;
 
-      joptode.Objects['Forward']:=TJSONObject.Create;
+      json.Objects['Forward']:=TJSONObject.Create;
       for i := sgConfig.FixedRows to sgConfig.RowCount - 1 do
       begin
               if(Length(sgConfig.Cells[0,i])=0) and (i>sgConfig.FixedRows) then break;
@@ -1924,7 +1928,7 @@ begin
               section:= sgConfig.Cells[0,i];
               key:=sgConfig.Cells[1,i];
               if(section = 'Forward') then begin
-                  joptode.Objects['Forward'].Floats[key]:=StrToFloat(val);
+                  json.Objects['Forward'].Floats[key]:=StrToFloat(val);
               end else if(section = 'Session') then begin
                   json.Objects['Session'].Strings[key]:=val;
               end else if(section = 'Domain') then begin

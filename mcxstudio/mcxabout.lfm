@@ -9,9 +9,9 @@ object fmAbout: TfmAbout
   Caption = 'About Monte Carlo eXtreme Studio'
   ClientHeight = 410
   ClientWidth = 480
-  Color = clGrayText
+  Color = clBtnText
   Position = poMainFormCenter
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.6.0.4'
   object Image1: TImage
     Left = 16
     Height = 152
@@ -1068,8 +1068,13 @@ object fmAbout: TfmAbout
       ''
       'Acknowledgement:'
       ''
-      '  The icons were created independently; the style inspired by '
-      'the "Uniform" icon-set.'
+      'The icons were created by Qianqian Fang, with a style inspired by '
+      'the "Uniform" icon-set '
+      'URL: https://github.com/0rAX0/uniform-icon-theme'
+      ''
+      'The JSON shape editor uses an function "ShpwJSONData"  '
+      'adapted from the "jsonviewer" example in Lazarus.'
+      'URL: http://wiki.freepascal.org/fcl-json#From_JsonViewer'
     )
     ParentColor = True
     ParentFont = False
