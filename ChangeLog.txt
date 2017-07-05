@@ -1,6 +1,29 @@
 = Change Log =
 
-== MCX v2017.1 (Dark Matter - 1.0-RC1), FangQ <q.fang (a) neu.edu> ==
+== MCX v2017.7 (Dark Matter - 1.0-RC2), FangQ <q.fang (a) neu.edu> ==
+
+ 2017-07-05 [6144ee4] fix windows progress bar issue
+ 2017-07-05 [1319828] windows registry fix, fix memory leak, associate .mcxp, use messagedlg, fix VerifyInput bug
+ 2017-07-04 [71fa54a]*add RPM and DEB packaging scripts, add root-level makefile
+ 2017-07-03 [3406ea8] fix memory leak caused by the shape JSON editor, mmc compatible, progress bar fixed
+ 2017-07-02 [       ] automatically build mcxstudio and include the binary in the mcx nightly build
+ 2017-06-30 [ff5e25f] fix shape editor deletion handling, collapsible groupbox, allow remote execution
+ 2017-06-30 [139b50d]*unified GUI for mcx, mmc and mcxcl, ligher source designer
+ 2017-06-29 [1d0f883] initialize tty info to avoid uninitialized values
+ 2017-06-28 [950f96b]*much improved mcxstudio: simulation designer,volume designer,more options,copy and paste sessions
+ 2017-06-26 [9606e95] save mc2 file under rootpath if --root is defined
+ 2017-06-25 [1b7271d] shape editor, json input editor for advanced options, form scaling for high DPI displays
+ 2017-06-21 [325aa35] update of the GUI, more robust mcx execution, colored output, simulation designer
+ 2017-06-20 [faad1a1] user specified scattering events to disable anisotropy g
+ 2017-06-06 [5f42259] fix a bug when using verbose only flags
+ 2017-05-29 [adddbc5] support pencil beam array
+ 2017-05-28 [4ef73e1] use environment variable CUDA_PATH on windows
+ 2017-05-28 [cc22461] add registry key fix for windows
+ 2017-05-27 [cfe280b] fix matlab crash when using multiple GPUs
+ 2017-04-10 [b5170e4] fix windows compilation bug for Pascal cards
+
+
+== MCX v2017.3 (Dark Matter - 1.0-RC1), FangQ <q.fang (a) neu.edu> ==
 
  2017-01-16 [d5a2cbe] prevent progress bar from stalling
  2017-01-02 [0a28d4e] fix compilation error on windows

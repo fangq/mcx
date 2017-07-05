@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.0-RC1 (v2017.3, Dark Matter - RC1)
+Version: 1.0-RC2 (v2017.7, Dark Matter - RC2)
 
 ---------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::84462a $ Last $Date::2016-10-13 18:44:55 -04$ by $Author::Qianqian Fang $
+$Rev::ca98bb $ Last $Date::2017-07-05 12:27:41 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -200,6 +200,7 @@ where possible parameters include (the first value in [*|*] is the default)
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels
                                right outside of the domain; if non-zero voxels
 			       appear at the boundary, pad 0s before using -X
+ -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
  -H [1000000] (--maxdetphoton) max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
@@ -222,6 +223,9 @@ where possible parameters include (the first value in [*|*] is the default)
       combine multiple items by using a string, or add selected numbers together
 
 == Additional options ==
+ --gscatter     [1e9|int]      after a photon completes the specified number of
+                               scattering events, mcx then ignores anisotropy g
+                               and only performs isotropic scattering for speed
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
                                launched outside (i.e. a widefield source)
@@ -327,11 +331,7 @@ folder. The same file, qtest.json, is also shown below:
         "Domain::VolumeFile": "file full path to the volume description file, can be a binary or JSON file",
         "Domain::Dim": "dimension of the data array stored in the volume file",
         "Domain::OriginType": "similar to --srcfrom0, 1 if the origin is [0 0 0], 0 if it is [1.0,1.0,1.0]",
-        "Domain::Step": "do not change this, should be always be 1",
 	"Domain::LengthUnit": "define the voxel length in mm, similar to --unitinmm",
-        "Domain::CacheBoxP0": "for cachebox mcx with -R negative_num, this specifies a 3D index for 
-                               a corner of the cache region, in grid unit",
-        "Domain::CacheBoxP1": "the other corner, the starting value of the indices is 1",
         "Domain::Media": "the first medium is always assigned to voxels with a value of 0 or outside of
                          the volume, the second row is for medium type 1, and so on. mua and mus must 
                          be in 1/mm unit",
@@ -354,9 +354,6 @@ folder. The same file, qtest.json, is also shown below:
         "Dim":    [60,60,60],
         "OriginType": 1,
 	"LengthUnit": 1,
-        "Step":   [1.0,1.0,1.0],
-        "CacheBoxP0": [24,24,1],
-        "CacheBoxP1": [34,34,10],
         "Media": [
              {"mua": 0.00, "mus": 0.0, "g": 1.00, "n": 1.0},
              {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.0}

@@ -1184,10 +1184,10 @@ begin
           sbInfo.Canvas.Brush.style:= bsSolid;
           sbInfo.Canvas.Brush.color:= RGBToColor(230, 184, 156);
           newrect:=Rect;
-//{$IFDEF WINDOWS}
+{$IFDEF WINDOWS}
           newrect.Left:=sbInfo.Panels[0].Width;
           newrect.Right:=sbInfo.Panels[0].Width+sbInfo.Panels[1].Width;
-//{$ENDIF}
+{$ENDIF}
           newrect.Right:=Round(real((Rect.Right-Rect.Left)*perc)/100.0)+Rect.Left;
           sbInfo.Canvas.FillRect(newrect);
           sbInfo.Canvas.Brush.style:= bsClear;
