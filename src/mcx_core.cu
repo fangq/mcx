@@ -528,8 +528,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       *w0=p->w;
       *Lmove=0.f;
       if((gcfg->debuglevel & MCX_DEBUG_PROGRESS) && ((int)(f->ndone) & 1) && (threadid==0 || threadid==blockDim.x * gridDim.x - 1 
-          || threadid==((blockDim.x * gridDim.x)>>1))) // use the 1st, middle and last thread for progress report
+          || threadid==((blockDim.x * gridDim.x)>>1))) { // use the 1st, middle and last thread for progress report
           gprogress[0]++;
+      }
       return 0;
 }
 
@@ -1063,6 +1064,9 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint    detected=0,sharedbuf=0;
 
      volatile int *progress, *gprogress;
+#ifndef WIN32
+     cudaEvent_t updateprogress;
+#endif
 
      uchar *gmedia;
      float4 *gPpos,*gPdir,*gPlen;
@@ -1398,6 +1402,13 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            }
            tic0=GetTimeMillis();
+#ifndef WIN32
+#pragma omp master
+{
+           if(cfg->debuglevel & MCX_DEBUG_PROGRESS)
+               CUDA_ASSERT(cudaEventCreate(&updateprogress));
+}
+#endif
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
            mcx_flush(cfg);
 
@@ -1423,9 +1434,15 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0, ndone=-1;
+#ifndef WIN32
+             CUDA_ASSERT(cudaEventRecord(updateprogress));
+#endif
 	     mcx_progressbar(-0.f,cfg);
 	     do{
-	       ndone = *progress;
+#ifndef WIN32
+               cudaEventQuery(updateprogress);
+#endif
+               ndone = *progress;
 	       if (ndone > p0){
 		  mcx_progressbar(ndone/(param.threadphoton*1.45f),cfg);
 		  p0 = ndone;
