@@ -121,11 +121,12 @@ begin
     fs.Delimiter:='|';
     fs.DelimitedText:=SrcParams[sourceidx];
 
-    if(fs.Count =0) then exit;
     plEditor.RowCount:=fs.Count+1;
-    for i:=1 to fs.Count do begin
+    if(fs.Count > 0) then begin
+     for i:=1 to fs.Count do begin
         plEditor.Cells[0,i]:=fs.Names[i-1];
         plEditor.Cells[1,i]:=fs.Values[fs.Names[i-1]];
+     end;
     end;
     fs.Free;
 end;
