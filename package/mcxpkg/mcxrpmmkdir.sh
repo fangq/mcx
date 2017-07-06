@@ -22,4 +22,3 @@ mkdir -p rpmroot/rpm/SPECS/
 mkdir -p rpmroot/rpm/SRPMS/
 
 mkdir -p rpmroot/${PKGNAME}
-mkdir -p rpmroot/${PKGNAME}/${PKGNAME}/

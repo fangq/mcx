@@ -9,7 +9,7 @@ VERSION=2017.7
 SOURCE=src
 GUI=mcxstudio
 
-all: $(PKGNAME) $(GUI) deb rpm
+all: bin/$(PKGNAME) bin/$(GUI) deb rpm
 
 bin/$(PKGNAME):
 	-$(MAKE) -C $(SOURCE) static

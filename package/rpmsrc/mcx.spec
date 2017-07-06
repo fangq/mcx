@@ -10,12 +10,13 @@ Group:          Applications/Engineering
 
 License:        GPLv3
 URL:            http://mcx.space
-Source0:        https://github.com/fangq/mcx/archive/v%{version}.zip
+Source:         %{name}-%{version}.tar.gz
+#Source0:        https://github.com/fangq/mcx/archive/v%{version}.zip
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 BuildArch:      x86_64
 BuildRequires:  cuda
-Requires:       cuda-cudart
+#Requires:       cuda-cudart
 
 %description
 %INFO%
@@ -33,16 +34,17 @@ make bin/%{codename}
 rm -rf %{buildroot}
 
 install -m 0755 -d %{buildroot}%{_libdir}
-install -m 0644 -p %{codename}/bin/%{codename} %{buildroot}%{_libdir}
+install -m 0755 -d %{buildroot}%{_libdir}/%{codename}
+install -m 0755 -p %{codename}/bin/%{codename} %{buildroot}%{_libdir}/%{codename}
 install -m 0755 -d %{buildroot}%{_bindir}
 
 
 %clean
 rm -fr %{buildroot}
 
-
-%doc AUTHORS.txt ChangeLog.txt LICENSE.txt README.txt
-%attr(744 ,root ,root) %{_bindir}/%{setscript}
+%files
+%{_libdir}/%{codename}/%{codename}
+%doc %{codename}/AUTHORS.txt %{codename}/ChangeLog.txt %{codename}/LICENSE.txt %{codename}/README.txt
 
 
 %changelog
