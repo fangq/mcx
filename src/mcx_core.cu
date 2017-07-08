@@ -277,6 +277,30 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uchar m
       }
 }
 
+__device__ inline void rotatevector2d(MCXdir *v, float stheta, float ctheta){
+      if(gcfg->is2d==1)
+   	  *((float4*)v)=float4(
+   	       0.f,
+	       v->y*ctheta - v->z*stheta,
+   	       v->y*stheta + v->z*ctheta,
+   	       v->nscat
+   	  );
+      else if(gcfg->is2d==2)
+  	  *((float4*)v)=float4(
+	       v->x*ctheta - v->z*stheta,
+   	       0.f,
+   	       v->x*stheta + v->z*ctheta,
+   	       v->nscat
+   	  );
+      else if(gcfg->is2d==3)
+  	  *((float4*)v)=float4(
+	       v->x*ctheta - v->y*stheta,
+   	       v->x*stheta + v->y*ctheta,
+   	       0.f,
+   	       v->nscat
+   	  );
+      GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
+}
 
 __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float sphi, float cphi){
       if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
@@ -646,9 +670,12 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
 	       if(p.w<1.f){ // if this is not my first jump
                        //random arimuthal angle
-	               float cphi,sphi,theta,stheta,ctheta;
-                       float tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
-                       sincosf(tmp0,&sphi,&cphi);
+	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
+                       float tmp0=0.f;
+		       if(!gcfg->is2d){
+		           tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
+                           sincosf(tmp0,&sphi,&cphi);
+		       }
                        GPUDEBUG(("scat phi=%f\n",tmp0));
 		       tmp0=(v->nscat > gcfg->gscatter) ? 0.f : prop.g;
 
@@ -672,7 +699,10 @@ kernel void mcx_main_loop(uchar media[],float field[],float genergy[],uint n_see
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("scat theta=%f\n",theta));
-                       rotatevector(v,stheta,ctheta,sphi,cphi);
+		       if(gcfg->is2d)
+		           rotatevector2d(v,stheta,ctheta);
+		       else
+                           rotatevector(v,stheta,ctheta,sphi,cphi);
                        v->nscat++;
                        rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
                        if(gcfg->outputtype==otWP){
@@ -1074,6 +1104,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw,*greplaytof,*gdebugdata;
      RandType *gseeddata=NULL;
      int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6;
+     unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
 		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
@@ -1081,8 +1112,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->issaveref>0,
-		     cfg->maxdetphoton*detreclen,cfg->seed,
-		     (uint)cfg->outputtype,0,0,cfg->faststep,cfg->debuglevel,(uint)cfg->maxjumpdebug,cfg->gscatter};
+		     cfg->maxdetphoton*detreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
+		     cfg->debuglevel,(uint)cfg->maxjumpdebug,cfg->gscatter,is2d};
      if(param.isatomic)
          param.skipradius2=0.f;
 
@@ -1118,6 +1149,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 }
 #pragma omp barrier
 
+     if(is2d){
+         float *vec=&(param.c0.x);
+         if(ABS(vec[is2d-1])>EPS)
+             mcx_error(-1,"input domain is 2D, the initial direction can not have non-zero value in the singular dimension",__FILE__,__LINE__);
+     }
      if(!cfg->autopilot){
 	gpu[gpuid].autothread=cfg->nthread;
 	gpu[gpuid].autoblock=cfg->nblocksize;

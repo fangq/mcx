@@ -102,6 +102,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int debuglevel;
   unsigned int maxjumpdebug;
   unsigned int gscatter;
+  unsigned int is2d;
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu);
