@@ -221,9 +221,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
             fielddim[2]=cfg.dim.z; fielddim[3]=0;
             if(cfg.vol){
-                    mxSetFieldByNumber(plhs[2],jstruct,0, mxCreateNumericArray(3,fielddim,mxUINT8_CLASS,mxREAL));
+                    mxSetFieldByNumber(plhs[2],jstruct,0, mxCreateNumericArray(3,fielddim,mxUINT32_CLASS,mxREAL));
                     memcpy((unsigned char*)mxGetPr(mxGetFieldByNumber(plhs[2],jstruct,0)),cfg.vol,
-                	 fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned char));
+                	 fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned int));
             }
 	}
 	if(nlhs>=2){
@@ -355,14 +355,49 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_VEC4_FIELD(cfg,srcparam1)
     GET_VEC4_FIELD(cfg,srcparam2)
     else if(strcmp(name,"vol")==0){
-        if(!mxIsUint8(item) || mxGetNumberOfDimensions(item)!=3 )
-             mexErrMsgTxt("the 'vol' field must be a 3D uint8 array");
+        int dimxyz;
+        cfg->mediabyte=0;
+        if(mxIsUint8(item) || mxIsInt8(item))
+	     cfg->mediabyte=1;
+	else if(mxIsUint16(item) || mxIsInt16(item))
+	     cfg->mediabyte=2;
+	else if(mxIsUint32(item) || mxIsInt32(item))
+	     cfg->mediabyte=4;
+	else if(mxIsDouble(item))
+	     cfg->mediabyte=8;
+	else if(mxIsSingle(item))
+	     cfg->mediabyte=14;
+        if(cfg->mediabyte==0 || mxGetNumberOfDimensions(item)!=3 )
+             mexErrMsgTxt("the 'vol' field must be a 3D integer array");
         arraydim=mxGetDimensions(item);
 	for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i];
+	dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
 	if(cfg->vol) free(cfg->vol);
-	cfg->vol=(unsigned char *)malloc(cfg->dim.x*cfg->dim.y*cfg->dim.z);
-	memcpy(cfg->vol,mxGetData(item),cfg->dim.x*cfg->dim.y*cfg->dim.z);
+	cfg->vol=(unsigned int *)malloc(dimxyz*sizeof(unsigned int));
+	if(cfg->mediabyte==4)
+	    memcpy(cfg->vol,mxGetData(item),dimxyz*sizeof(unsigned int));
+	else{
+	    if(cfg->mediabyte==1){
+	        unsigned char *val=(unsigned char *)mxGetPr(item);
+	        for(i=0;i<dimxyz;i++)
+	            cfg->vol[i]=val[i];
+	    }else if(cfg->mediabyte==2){
+	        unsigned short *val=(unsigned short *)mxGetPr(item);
+	        for(i=0;i<dimxyz;i++)
+	            cfg->vol[i]=val[i];
+	    }else if(cfg->mediabyte==8){
+	        double *val=(double *)mxGetPr(item);
+	        for(i=0;i<dimxyz;i++)
+	            cfg->vol[i]=val[i];
+	    }else if(cfg->mediabyte==14){
+	        float *val=(float *)mxGetPr(item);
+	        for(i=0;i<dimxyz;i++)
+	            cfg->vol[i]=val[i];
+		cfg->mediabyte=4;
+	    }
+	}
         printf("mcx.dim=[%d %d %d];\n",cfg->dim.x,cfg->dim.y,cfg->dim.z);
+        printf("mcx.mediabyte=%d;\n",cfg->mediabyte);
     }else if(strcmp(name,"detpos")==0){
         arraydim=mxGetDimensions(item);
 	if(arraydim[0]>0 && arraydim[1]!=4)

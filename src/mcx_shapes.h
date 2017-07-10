@@ -10,7 +10,7 @@ extern "C" {
 #define MAX_SHAPE_ERR 256
 
 typedef struct GridSpace{
-        unsigned char **vol;
+        unsigned int **vol;
         uint3  *dim;
 	float3 orig;
 	int    rowmajor;

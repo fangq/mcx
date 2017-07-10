@@ -98,9 +98,9 @@ int mcx_parse_shapestring(Grid3D *g, char *shapedata){
     	if(jroot){
 	    int err;
 	    if(g && g->vol && *(g->vol))
-	        *(g->vol)=(unsigned char*)realloc((void *)*(g->vol),g->dim->x*g->dim->y*g->dim->z);
+	        *(g->vol)=(unsigned int*)realloc((void *)*(g->vol),g->dim->x*g->dim->y*g->dim->z*sizeof(int));
 	    else
-	        *(g->vol)=(unsigned char*)calloc(g->dim->x*g->dim->y,g->dim->z);
+	        *(g->vol)=(unsigned int*)calloc(g->dim->x*g->dim->y,g->dim->z*sizeof(int));
 
     	    if((err=mcx_parse_jsonshapes(jroot,g))) /*error msg is generated inside*/
 	       return err;
@@ -632,8 +632,8 @@ int mcx_raster_upperspace(cJSON *obj, Grid3D *g){
 */
 
 int mcx_raster_grid(cJSON *obj, Grid3D *g){
-    int dimxy;
-    unsigned char tag=0;
+    int dimxy,dimxyz;
+    unsigned int tag=0;
 
     cJSON *val=cJSON_GetObjectItem(obj,"Size");
     if(val && cJSON_GetArraySize(val)==3){
@@ -641,9 +641,10 @@ int mcx_raster_grid(cJSON *obj, Grid3D *g){
        g->dim->y=val->child->next->valuedouble;
        g->dim->z=val->child->next->next->valuedouble;
        dimxy=g->dim->x*g->dim->y;
+       dimxyz=dimxy*g->dim->z;
        if(dimxy*g->dim->z>0){
     	  if(g->vol && *g->vol) free(*(g->vol));
-          *(g->vol)=(unsigned char *)calloc(dimxy,g->dim->z);
+          *(g->vol)=(unsigned int *)calloc(dimxy*sizeof(int),g->dim->z);
        }else
           *(g->vol)=NULL;
     }else{
@@ -653,9 +654,12 @@ int mcx_raster_grid(cJSON *obj, Grid3D *g){
 
     val=cJSON_GetObjectItem(obj,"Tag");
     if(val){
+       int i;
        tag=val->valueint;
+       if(g->vol && *(g->vol))
+          for(i=0;i<dimxyz;i++)
+              (*(g->vol))[i]=tag;
     }
-    if(g->vol && *(g->vol)) memset(*(g->vol),tag,dimxy*g->dim->z);
     return 0;
 }
 

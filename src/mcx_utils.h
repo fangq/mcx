@@ -100,7 +100,7 @@ typedef struct MCXConfig{
 	unsigned int reseedlimit;    /**<number of scattering events per thread before the RNG is reseeded*/
 	int gpuid;          /**<the ID of the GPU to use, starting from 1, 0 for auto*/
 
-	unsigned char *vol; /**<pointer to the volume*/
+	unsigned int *vol; /**<pointer to the volume*/
 	char session[MAX_SESSION_LENGTH]; /**<session id, a string*/
 	char isrowmajor;    /**<1 for C-styled array in vol, 0 for matlab-styled array*/
 	char isreflect;     /**<1 for reflecting photons at boundary,0 for exiting*/
@@ -152,6 +152,7 @@ typedef struct MCXConfig{
 	unsigned int debugdatalen;
 	unsigned int gscatter;
 	float *exportdebugdata;
+	uint mediabyte;
 } Config;
 
 #ifdef	__cplusplus
@@ -175,7 +176,7 @@ void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
 void mcx_maskdet(Config *cfg);
 void mcx_version(Config *cfg);
-void mcx_convertrow2col(unsigned char **vol, uint3 *dim);
+void mcx_convertrow2col(unsigned int **vol, uint3 *dim);
 int  mcx_loadjson(cJSON *root, Config *cfg);
 int  mcx_keylookup(char *key, const char *table[]);
 int  mcx_lookupindex(char *key, const char *index);

@@ -45,7 +45,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','-','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -55,7 +55,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
-                 "--maxvoidstep","--saveexit","--saveref","--gscatter",""};
+                 "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",""};
 
 const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
@@ -65,6 +65,7 @@ const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
+     cfg->mediabyte=1;
      cfg->detnum=0;
      cfg->dim.x=0;
      cfg->dim.y=0;
@@ -485,8 +486,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                                   cfg->steps.z,cfg->dim.z,cfg->crop0.z,cfg->crop1.z);
      MCX_ASSERT(fscanf(in,"%d", &(cfg->medianum))==1);
      cfg->medianum++;
-     if(cfg->medianum>MAX_PROP)
-         mcx_error(-4,"input media types exceed the maximum (255)",__FILE__,__LINE__);
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
      if(in==stdin)
@@ -516,6 +515,9 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
      	fprintf(stdout,"%d %f\n",cfg->detnum,cfg->detradius);
+     if(cfg->medianum+cfg->detnum>MAX_PROP_AND_DETECTORS)
+         mcx_error(-4,"input media types plus detector number exceeds the maximum total (4000)",__FILE__,__LINE__);
+
      cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
      if(cfg->issavedet && cfg->detnum==0) 
       	cfg->issavedet=0;
@@ -607,8 +609,6 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cJSON *med=meds->child;
            if(med){
              cfg->medianum=cJSON_GetArraySize(meds);
-             if(cfg->medianum>MAX_PROP)
-                 MCX_ERROR(-4,"input media types exceed the maximum (255)");
              cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
              for(i=0;i<cfg->medianum;i++){
                cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
@@ -789,6 +789,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            }
         }
      }
+     if(cfg->medianum+cfg->detnum>MAX_PROP_AND_DETECTORS)
+         mcx_error(-4,"input media types plus detector number exceeds the maximum total (4000)",__FILE__,__LINE__);
      if(Session){
         char val[1];
 	if(cfg->seed==0)      cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
@@ -868,6 +870,7 @@ void mcx_saveconfig(FILE *out, Config *cfg){
 
 void mcx_loadvolume(char *filename,Config *cfg){
      unsigned int i,datalen,res;
+     unsigned char *inputvol=NULL;
      FILE *fp;
      
      if(strstr(filename,".json")!=NULL){
@@ -889,16 +892,31 @@ void mcx_loadvolume(char *filename,Config *cfg){
      	     cfg->vol=NULL;
      }
      datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-     cfg->vol=(unsigned char*)malloc(sizeof(unsigned char)*datalen);
-     res=fread(cfg->vol,sizeof(unsigned char),datalen,fp);
+     cfg->vol=(unsigned int*)malloc(sizeof(unsigned int)*datalen);
+     if(cfg->mediabyte==4)
+         inputvol=(unsigned char*)(cfg->vol);
+     else
+         inputvol=(unsigned char*)malloc(sizeof(unsigned char)*cfg->mediabyte*datalen);
+     res=fread(inputvol,sizeof(unsigned char)*cfg->mediabyte,datalen,fp);
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
+     }
+     if(cfg->mediabyte==1){  /*convert all format into 4-byte int index*/
+       unsigned char *val=inputvol;
+       for(i=0;i<datalen;i++)
+         cfg->vol[i]=val[i];
+     }else if(cfg->mediabyte==2){
+       unsigned short *val=(unsigned short *)inputvol;
+       for(i=0;i<datalen;i++)
+         cfg->vol[i]=val[i];
      }
      for(i=0;i<datalen;i++){
          if(cfg->vol[i]>=cfg->medianum)
             mcx_error(-6,"medium index exceeds the specified medium types",__FILE__,__LINE__);
      }
+     if(cfg->mediabyte<4)
+         free(inputvol);
 }
 
 void mcx_loadseedfile(Config *cfg){
@@ -954,15 +972,15 @@ void mcx_loadseedfile(Config *cfg){
     }
     fclose(fp);
 }
-void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
+void  mcx_convertrow2col(unsigned int **vol, uint3 *dim){
      uint x,y,z;
      unsigned int dimxy,dimyz;
-     unsigned char *newvol=NULL;
+     unsigned int *newvol=NULL;
      
      if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
      	return;
      }     
-     newvol=(unsigned char*)malloc(sizeof(unsigned char)*dim->x*dim->y*dim->z);
+     newvol=(unsigned int*)malloc(sizeof(unsigned int)*dim->x*dim->y*dim->z);
      dimxy=dim->x*dim->y;
      dimyz=dim->y*dim->z;
      for(x=0;x<dim->x;x++)
@@ -977,7 +995,7 @@ void  mcx_convertrow2col(unsigned char **vol, uint3 *dim){
 void  mcx_maskdet(Config *cfg){
      uint d,dx,dy,dz,idx1d,zi,yi,c,count;
      float x,y,z,ix,iy,iz,rx,ry,rz,d2,mind2,d2max;
-     unsigned char *padvol;
+     unsigned int *padvol;
      const float corners[8][3]={{0.f,0.f,0.f},{1.f,0.f,0.f},{0.f,1.f,0.f},{0.f,0.f,1.f},
                                 {1.f,1.f,0.f},{1.f,0.f,1.f},{0.f,1.f,1.f},{1.f,1.f,1.f}};
      
@@ -988,11 +1006,11 @@ void  mcx_maskdet(Config *cfg){
      /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
        then I don't need to worry about boundaries any more*/
 
-     padvol=(unsigned char*)calloc(dx*dy,dz);
+     padvol=(unsigned int*)calloc(dx*dy*sizeof(unsigned int),dz);
 
      for(zi=1;zi<=cfg->dim.z;zi++)
         for(yi=1;yi<=cfg->dim.y;yi++)
-	        memcpy(padvol+zi*dy*dx+yi*dx+1,cfg->vol+(zi-1)*cfg->dim.y*cfg->dim.x+(yi-1)*cfg->dim.x,cfg->dim.x);
+	        memcpy(padvol+zi*dy*dx+yi*dx+1,cfg->vol+(zi-1)*cfg->dim.y*cfg->dim.x+(yi-1)*cfg->dim.x,cfg->dim.x*sizeof(int));
 
      /**
         The goal here is to find a set of voxels for each 
@@ -1035,7 +1053,7 @@ void  mcx_maskdet(Config *cfg){
 		     padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
 		     padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
 		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
-		          cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)]|=(1<<7);/*set the highest bit to 1*/
+		          cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)] |= ((d+1)<<16);/*set the highest bit to 1*/
                           count++;
 	          }
 	       }
@@ -1061,7 +1079,7 @@ void  mcx_maskdet(Config *cfg){
 	 if((fp=fopen(fname,"wb"))==NULL){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
-	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y,cfg->dim.z,fp)!=cfg->dim.z){
+	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y*sizeof(int),cfg->dim.z,fp)!=cfg->dim.z){
 	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
 	 }
 	 fclose(fp);
@@ -1350,6 +1368,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
                                 else if(strcmp(argv[i]+2,"gscatter")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->gscatter),"int");
+                                else if(strcmp(argv[i]+2,"mediabyte")==0)
+                                     i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;

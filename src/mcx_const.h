@@ -13,12 +13,11 @@
 #define JUST_BELOW_ONE     0.9998f                 //test for boundary
 #define SAME_VOXEL         -9999.f                 //scatter within a voxel
 #define NO_LAUNCH          9999                    //when fail to launch, for debug
-#define MAX_PROP           128                     //maximum property number
-#define MAX_DETECTORS      1024
+#define MAX_PROP_AND_DETECTORS   4000              //maximum #property + #detectors
 #define SEED_FROM_FILE      -999
 
-#define DET_MASK           0x80
-#define MED_MASK           0x7F
+#define DET_MASK           0xFFFF0000
+#define MED_MASK           0x0000FFFF
 
 #define MCX_DEBUG_REC_LEN  6
 
