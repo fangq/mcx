@@ -26,6 +26,7 @@ type
   TfmMCX = class(TForm)
     acEditShape: TActionList;
     btGBExpand: TButton;
+    ckLockGPU: TCheckBox;
     ckDoRemote: TCheckBox;
     ckReflect: TCheckBox;
     ckSpecular: TCheckBox;
@@ -49,6 +50,8 @@ type
     MenuItem19: TMenuItem;
     MenuItem20: TMenuItem;
     MenuItem21: TMenuItem;
+    MenuItem22: TMenuItem;
+    MenuItem23: TMenuItem;
     miClearLog1: TMenuItem;
     OpenHistoryFile: TOpenDialog;
     OpenVolume: TOpenDialog;
@@ -262,6 +265,7 @@ type
       Selected: Boolean);
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
+    procedure MenuItem22Click(Sender: TObject);
     procedure MenuItem9Click(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
     procedure mmOutputChange(Sender: TObject);
@@ -323,8 +327,9 @@ type
     procedure LoadTasksFromIni(fname: string);
     procedure RunExternalCmd(cmd: string);
     function  GetBrowserPath : string;
+    function  GetFileBrowserPath : string;
     function  SearchForExe(fname : string) : string;
-    function CreateWorkFolder:string;
+    function CreateWorkFolder(session: string):string;
     function SaveJSONConfig(filename: string): boolean;
     function CheckListToStr(list: TCheckListBox) : string;
     function GridToStr(grid:TStringGrid) :string;
@@ -457,6 +462,8 @@ begin
        end;
        if(ck.Hint='DoRemote') then begin
            edRemote.Enabled:=ck.Checked;
+           if(ckLockGPU.Checked) then
+               ckLockGPU.Checked:=false;
        end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
@@ -1074,6 +1081,16 @@ begin
                      PathSeparator, [sffDontSearchInBasePath]);
 end;
 
+function TfmMCX.GetFileBrowserPath : string;
+  {Return path to first browser found.}
+begin
+   Result := SearchForExe('xdg-open'); // linux
+   if Result = '' then
+     Result := SearchForExe('open'); // mac os
+   if Result = '' then
+     Result :='cmd /c start'; // windows
+end;
+
 function TfmMCX.GetBrowserPath : string;
   {Return path to first browser found.}
 begin
@@ -1110,6 +1127,12 @@ begin
          Caption:='MCX Studio - ['+lvJobs.Selected.Caption+']';
          //lvJobs.Selected.StateIndex:=7;
      end;
+end;
+
+procedure TfmMCX.MenuItem22Click(Sender: TObject);
+begin
+  if(lvJobs.Selected <> nil) then
+      RunExternalCmd(GetFileBrowserPath + ' "'+CreateWorkFolder(lvJobs.Selected.Caption)+'"');
 end;
 
 procedure TfmMCX.MenuItem9Click(Sender: TObject);
@@ -2006,12 +2029,12 @@ begin
   end;
 end;
 
-function TfmMCX.CreateWorkFolder : string;
+function TfmMCX.CreateWorkFolder(session: string) : string;
 var
     path: string;
 begin
     path:=ExtractFileDir(Application.ExeName)
-       +DirectorySeparator+'..'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+edSession.Text;
+       +DirectorySeparator+'..'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
     Result:=path;
     try
       if(not DirectoryExists(path)) then
@@ -2052,7 +2075,7 @@ begin
        cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)+'"';
        rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
     end else begin
-        jsonfile:=CreateWorkFolder+DirectorySeparator+Trim(edSession.Text)+'.json';
+        jsonfile:=CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json';
         if(SaveJSONConfig(jsonfile)=false) then
             exit;
         cmd:=cmd+' --input "'+Trim(jsonfile)+'"';
@@ -2412,11 +2435,13 @@ begin
            if(idx>=0) then begin
              ss:= node.SubItems.Strings[idx];
              if(ckb.Hint='GPUID') then begin
-               ckb.Items.Clear;
-               for j:=0 to Length(node.SubItems.Strings[idx])-1 do begin
-                   ckb.Items.Add('GPU#'+IntToStr(j+1));
-                   if(ss[j+1]='1') then
-                       ckb.Checked[j]:=true;
+               if(not ckLockGPU.Checked) then begin
+                   ckb.Items.Clear;
+                   for j:=0 to Length(node.SubItems.Strings[idx])-1 do begin
+                       ckb.Items.Add('GPU#'+IntToStr(j+1));
+                       if(ss[j+1]='1') then
+                           ckb.Checked[j]:=true;
+                   end;
                end;
              end else if(ckb.Hint='DebugFlags') then begin
                ckb.CheckAll(cbUnchecked);
