@@ -629,11 +629,11 @@ begin
       edReplayDet.Value:=0;
       rbUseDesigner.Checked:=true;
       sgMedia.RowCount:=1;
-      sgMedia.RowCount:=129;
+      sgMedia.RowCount:=4;
       sgMedia.Rows[1].CommaText:='0,0,1,1';
       sgMedia.Rows[2].CommaText:='0.005,1,0.01,1.37';
       sgDet.RowCount:=1;
-      sgDet.RowCount:=129;
+      sgDet.RowCount:=3;
       sgDet.Rows[1].CommaText:='24,29,0,1';
       //sgConfig.ColCount:=3;
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
@@ -1700,12 +1700,12 @@ begin
         gpucount:=0;
         for i:=0 to list.Count-1 do begin
           ss:= list.Strings[i];
-          if(sscanf(ss,'Device %d of %d:%s', [@idx, @total, @gpuname])=3) then
+          if(sscanf(ss+' ','Device %d of %d:%s', [@idx, @total, @gpuname])=3) then
           begin
                  if(idx=1) then
                      edGPUID.Items.Clear;
                  namepos := Pos(gpuname, ss);
-                 edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos)));
+                 edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos+1)));
                  gpucount:=gpucount+1;
           end;
         end;
@@ -2172,8 +2172,8 @@ begin
 
   try
       try
-          if(grid.RowCount < json.Count) then
-              grid.RowCount:= json.Count;
+          if(grid.RowCount < json.Count+1) then
+              grid.RowCount:= json.Count+1;
           for i := 0 to json.Count-1 do begin
               grid.Rows[i+grid.FixedRows].CommaText:=json.Strings[i];
           end;
