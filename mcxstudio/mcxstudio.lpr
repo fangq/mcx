@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms
   { you can add units after this }, mcxgui, lazcontrols, tachartlazaruspkg,
-  mcxabout, mcxshape, mcxnewsession, mcxsource;
+  anchordockpkg, mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput;
 
 {$R *.res}
 

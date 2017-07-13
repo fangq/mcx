@@ -12,12 +12,12 @@ unit mcxgui;
 interface
 
 uses
-  Classes, SysUtils, process, FileUtil, SynEdit, math, ClipBrd,
+  Classes, SysUtils, process, FileUtil, SynEdit, math, ClipBrd, AnchorDocking,
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, inifiles, fpjson, jsonparser, strutils, RegExpr, mcxabout, mcxshape,
-  mcxnewsession, mcxsource {$IFDEF WINDOWS},registry, ShlObj{$ENDIF};
+  mcxnewsession, mcxsource, mcxoutput {$IFDEF WINDOWS},registry, ShlObj{$ENDIF};
 
 type
 
@@ -76,7 +76,6 @@ type
     shapeAddName: TAction;
     shapeDelete: TAction;
     shapeReset: TAction;
-    Button1: TButton;
     ckSaveSeed: TCheckBox;
     edGPUID: TCheckListBox;
     ckAutopilot: TCheckBox;
@@ -123,10 +122,8 @@ type
     Label9: TLabel;
     lvJobs: TListView;
     mcxdoHelpOptions: TAction;
-    miClearLog: TMenuItem;
     OpenProject: TOpenDialog;
     pcSimuEditor: TPageControl;
-    Panel1: TPanel;
     plOutput: TPanel;
     pMCX: TAsyncProcess;
     mcxSetCurrent: TAction;
@@ -171,7 +168,6 @@ type
     MenuItem9: TMenuItem;
     plSetting: TPanel;
     pExternal: TProcess;
-    PopupMenu1: TPopupMenu;
     rbUseFile: TRadioButton;
     rbUseDesigner: TRadioButton;
     SaveProject: TSaveDialog;
@@ -181,15 +177,12 @@ type
     Splitter2: TSplitter;
     Splitter3: TSplitter;
     Splitter4: TSplitter;
-    Splitter5: TSplitter;
     StaticText1: TStaticText;
     StaticText2: TStaticText;
     StaticText3: TStaticText;
     sgMedia: TStringGrid;
     sgDet: TStringGrid;
     sgConfig: TStringGrid;
-    mmOutput: TSynEdit;
-    SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     tabInputData: TTabSheet;
     tabVolumeDesigner: TTabSheet;
     tbtRun: TToolButton;
@@ -348,6 +341,7 @@ type
 
 var
   fmMCX: TfmMCX;
+  fmOutput: TfmOutput;
   ProfileChanged: Boolean;
   MaxWait: integer;
   TaskFile: string;
@@ -370,8 +364,10 @@ Const
 { TfmMCX }
 procedure TfmMCX.AddLog(str:string);
 begin
-    mmOutput.Lines.Add(str);
-    mmOutput.SelStart := length(mmOutput.Text);
+    fmOutput.mmOutput.Lines.Add(str);
+    fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
+    fmOutput.mmOutput.LeftChar:=0;
+    DockMaster.MakeDockable(fmOutput,true,true);
 end;
 
 procedure TfmMCX.AddMultiLineLog(str:string);
@@ -382,8 +378,10 @@ begin
     sl.StrictDelimiter:=true;
     sl.Delimiter:=#10;
     sl.DelimitedText:=str;
-    mmOutput.Lines.AddStrings(sl);
-    mmOutput.SelStart := length(mmOutput.Text);
+    fmOutput.mmOutput.Lines.AddStrings(sl);
+    fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
+    fmOutput.mmOutput.LeftChar:=0;
+    DockMaster.MakeDockable(fmOutput,true,true);
     sl.Free;
 end;
 
@@ -832,7 +830,6 @@ var
    node: TListItem;
    fmNewSession: TfmNewSession;
 begin
-   if(lvJobs.Selected = nil) then exit;
    setting:=TStringList.Create;
    setting.Text:=Clipboard.AsText;
 
@@ -954,7 +951,9 @@ end;
 procedure TfmMCX.mcxdoToggleViewExecute(Sender: TObject);
 begin
      if(lvJobs.ViewStyle=vsIcon) then
-        lvJobs.ViewStyle:=vsReport
+        lvJobs.ViewStyle:=vsSmallIcon
+     else if (lvJobs.ViewStyle=vsSmallIcon) then
+         lvJobs.ViewStyle:=vsReport
      else
          lvJobs.ViewStyle:=vsIcon;
 end;
@@ -1009,6 +1008,13 @@ begin
     hcToolbar.Sections[0].Width:=hcToolbar.Sections[0].Width+2;
     hcToolbar.Sections[0].MinWidth:=hcToolbar.Sections[0].MinWidth+2;
   {$ENDIF}
+    DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
+
+    fmOutput:=TfmOutput.Create(self);
+    fmOutput.Top:=self.Top+(tbtStop.Width*17 div 20);
+    fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
+    DockMaster.MakeDockable(fmOutput,true,true);
+
     MapList:=TStringList.Create();
     MapList.Clear;
     for i:=1 to lvJobs.Columns.Count-1 do begin
@@ -1042,6 +1048,7 @@ begin
     MapList.Free;
     ConfigData.Free;
     RegEngine.Free;
+    fmOutput.Free;
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -1142,7 +1149,7 @@ end;
 
 procedure TfmMCX.miClearLogClick(Sender: TObject);
 begin
-    mmOutput.Lines.Clear;
+    fmOutput.mmOutput.Lines.Clear;
 end;
 
 procedure TfmMCX.mmOutputChange(Sender: TObject);
@@ -1152,18 +1159,7 @@ end;
 
 procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
-var
-   pos:TRect;
-   mm: TMemo;
 begin
-     Accept:=false;
-     if (Sender is TMemo) then
-        Accept:=true;
-     if(Accept) then begin
-          mm:=(Sender as TMemo);
-          pos:=Rect(0,Height-mm.Height, Width, Height);
-          mm.Dock(Self,pos);
-     end;
 end;
 
 procedure TfmMCX.pMCXReadData(Sender: TObject);
@@ -2397,6 +2393,12 @@ begin
         if(gb.Controls[id] is TEdit) then begin
            ed:=gb.Controls[id] as TEdit;
            idx:=MapList.IndexOf(ed.Hint);
+           if(idx>=0) and (ed.Hint='RemoteCmd') then begin
+               if not (ckLockGPU.Checked) then begin
+                   ed.Text:=node.SubItems.Strings[idx];
+               end;
+               continue;
+           end;
            if(idx>=0) then ed.Text:=node.SubItems.Strings[idx];
            continue;
         end;

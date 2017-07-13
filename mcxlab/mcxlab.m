@@ -156,7 +156,7 @@ function [fluence,detphoton]=mcxlab(cfg)
 %            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
 %            to convert them to mm unit.
 %      vol: (optional) a struct array, each element is a preprocessed volume
-%            corresponding to each instance of cfg. Each volume is a 3D uint8 array.
+%            corresponding to each instance of cfg. Each volume is a 3D int32 array.
 %      seeds: (optional), if give, mcxlab returns the seeds, in the form of
 %            a byte array (uint8) for each detected photon. The column number
 %            of seed equals that of detphoton.
