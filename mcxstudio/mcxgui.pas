@@ -260,10 +260,6 @@ type
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem22Click(Sender: TObject);
     procedure MenuItem9Click(Sender: TObject);
-    procedure miClearLogClick(Sender: TObject);
-    procedure mmOutputChange(Sender: TObject);
-    procedure plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
-      Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
     procedure rbUseFileChange(Sender: TObject);
@@ -289,7 +285,6 @@ type
     procedure shapePrintExecute(Sender: TObject);
     procedure shapeResetExecute(Sender: TObject);
     procedure shapeDeleteExecute(Sender: TObject);
-    procedure Splitter2Moved(Sender: TObject);
     procedure Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
       var Accept: Boolean);
     procedure Splitter6CanResize(Sender: TObject; var NewSize: Integer;
@@ -297,7 +292,6 @@ type
     procedure StaticText2DblClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure tmAnimationTimer(Sender: TObject);
-    procedure tvShapesDeletion(Sender: TObject; Node: TTreeNode);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
     procedure tvShapesSelectionChanged(Sender: TObject);
   private
@@ -1147,21 +1141,6 @@ begin
     pcSimuEditor.ActivePage:=tabInputData;
 end;
 
-procedure TfmMCX.miClearLogClick(Sender: TObject);
-begin
-    fmOutput.mmOutput.Lines.Clear;
-end;
-
-procedure TfmMCX.mmOutputChange(Sender: TObject);
-begin
-
-end;
-
-procedure TfmMCX.plOutputDockOver(Sender: TObject; Source: TDragDockObject; X,
-  Y: Integer; State: TDragState; var Accept: Boolean);
-begin
-end;
-
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
      AddMultiLineLog(GetMCXOutput);
@@ -1544,10 +1523,6 @@ begin
   end;
 end;
 
-procedure TfmMCX.Splitter2Moved(Sender: TObject);
-begin
-end;
-
 procedure TfmMCX.Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
   var Accept: Boolean);
 begin
@@ -1599,10 +1574,6 @@ begin
              tmAnimation.Enabled:=false;
         end;
     end;
-end;
-
-procedure TfmMCX.tvShapesDeletion(Sender: TObject; Node: TTreeNode);
-begin
 end;
 
 procedure TfmMCX.tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string

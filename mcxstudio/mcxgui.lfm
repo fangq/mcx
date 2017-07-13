@@ -2373,7 +2373,6 @@ object fmMCX: TfmMCX
           Images = JSONIcons
           StateImages = JSONIcons
           TabOrder = 0
-          OnDeletion = tvShapesDeletion
           OnEdited = tvShapesEdited
           OnSelectionChanged = tvShapesSelectionChanged
           Options = [tvoAutoExpand, tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
@@ -2568,7 +2567,6 @@ object fmMCX: TfmMCX
     Top = 134
     Width = 8
     Align = alRight
-    OnMoved = Splitter2Moved
     ResizeAnchor = akRight
   end
   object MainMenu1: TMainMenu

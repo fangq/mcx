@@ -19,6 +19,7 @@ type
     Panel1: TPanel;
     PopupMenu1: TPopupMenu;
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
+    procedure miClearLogClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -29,6 +30,13 @@ var
   fmOutput: TfmOutput;
 
 implementation
+
+{ TfmOutput }
+
+procedure TfmOutput.miClearLogClick(Sender: TObject);
+begin
+  mmOutput.Lines.Clear;
+end;
 
 initialization
   {$I mcxoutput.lrs}

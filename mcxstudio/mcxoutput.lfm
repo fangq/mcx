@@ -23,7 +23,8 @@ object fmOutput: TfmOutput
       Top = 1
       Width = 559
       Align = alTop
-      Caption = 'Clear Log'
+      Caption = 'Clear Output'
+      OnClick = miClearLogClick
       TabOrder = 0
     end
     inline mmOutput: TSynEdit
@@ -541,6 +542,7 @@ object fmOutput: TfmOutput
     top = 192
     object miClearLog: TMenuItem
       Caption = 'Clear Log'
+      OnClick = miClearLogClick
     end
   end
 end
