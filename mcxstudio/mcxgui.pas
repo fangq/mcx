@@ -194,7 +194,6 @@ type
     ToolBar2: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
-    ToolButton11: TToolButton;
     ToolButton12: TToolButton;
     ToolButton13: TToolButton;
     ToolButton14: TToolButton;
@@ -228,6 +227,7 @@ type
     tvShapes: TTreeView;
     procedure btLoadSeedClick(Sender: TObject);
     procedure btGBExpandClick(Sender: TObject);
+    procedure ckLockGPUChange(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure grAdvSettingsDblClick(Sender: TObject);
@@ -454,8 +454,6 @@ begin
        end;
        if(ck.Hint='DoRemote') then begin
            edRemote.Enabled:=ck.Checked;
-           if(ckLockGPU.Checked) then
-               ckLockGPU.Checked:=false;
        end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
@@ -615,9 +613,11 @@ begin
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
       edUnitInMM.Text:='1';
-      edGPUID.CheckAll(cbUnchecked);
-      if(edGPUID.Items.Count>0) then begin
-          edGPUID.Checked[0]:=true;
+      if not (ckLockGPU.Checked) then begin
+          edGPUID.CheckAll(cbUnchecked);
+          if(edGPUID.Items.Count>0) then begin
+              edGPUID.Checked[0]:=true;
+          end;
       end;
       pcSimuEditor.ActivePage:=tabInputData;
       edDetectedNum.Text:='10000000';
@@ -716,6 +716,13 @@ begin
          tmAnimation.Tag:=0;
          tmAnimation.Enabled:=true;
      end;
+end;
+
+procedure TfmMCX.ckLockGPUChange(Sender: TObject);
+begin
+     edGPUID.Enabled:=not ckLockGPU.Checked;
+     edRemote.Enabled:=not ckLockGPU.Checked;
+     ckDoRemote.Enabled:=not ckLockGPU.Checked;
 end;
 
 procedure TfmMCX.grAdvSettingsDblClick(Sender: TObject);
@@ -2392,13 +2399,21 @@ begin
         end;
         if(gb.Controls[id] is TComboBox) then begin
            cb:=gb.Controls[id] as TComboBox;
+           if(Length(cb.Hint)=0) then continue;
            idx:=MapList.IndexOf(cb.Hint);
            if(idx>=0) then cb.Text:=node.SubItems.Strings[idx];
            continue;
         end;
         if(gb.Controls[id] is TCheckBox) then begin
            ck:=gb.Controls[id] as TCheckBox;
+           if(Length(ck.Hint)=0) then continue;
            idx:=MapList.IndexOf(ck.Hint);
+           if(idx>=0) and (ck.Hint='DoRemote') then begin
+               if not (ckLockGPU.Checked) then begin
+                   ck.Checked:=(node.SubItems.Strings[idx]='1');
+               end;
+               continue;
+           end;
            if(idx>=0) then ck.Checked:=(node.SubItems.Strings[idx]='1');
            continue;
         end;
