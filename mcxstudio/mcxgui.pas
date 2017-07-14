@@ -32,7 +32,7 @@ type
     ckSpecular: TCheckBox;
     ckMomentum: TCheckBox;
     edMoreParam: TEdit;
-    edRemote: TEdit;
+    edRemote: TComboBox;
     grAtomic: TRadioGroup;
     Image1: TImage;
     Label18: TLabel;
@@ -517,6 +517,8 @@ begin
               pMCX.CommandLine:=CreateCmdOnly+' --help';
           sbInfo.Panels[0].Text := 'Status: querying command line options';
           pMCX.Tag:=-2;
+          AddLog('"-- Run Command --"');
+          AddLog(pMCX.CommandLine);
           AddLog('"-- Print MCX Command Line Options --"');
           pMCX.Execute;
     end;
@@ -870,14 +872,23 @@ begin
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
+var
+    cmd: string;
 begin
     if(ResetMCX(0)) then begin
-          if(ckDoRemote.Checked) then
-              pMCX.CommandLine:=edRemote.Text+' '+ CreateCmdOnly+' -L'
-          else
-              pMCX.CommandLine:=CreateCmdOnly+' -L';
+          if(ckDoRemote.Checked) then begin
+              if(sscanf(edRemote.Text,'%s',[@cmd])=1) then
+              pMCX.CommandLine:=SearchForExe(cmd)+
+                 Copy(edRemote.Text,Length(cmd)+1,Length(edRemote.Text)-
+                 Length(cmd))+' '+ CreateCmdOnly+' -L'
+              else
+                 exit;
+          end else
+              pMCX.CommandLine:=SearchForExe(CreateCmdOnly)+' -L';
           sbInfo.Panels[0].Text := 'Status: querying GPU';
           pMCX.Tag:=-1;
+          AddLog('"-- Run Command --"');
+          AddLog(pMCX.CommandLine);
           AddLog('"-- Printing GPU Information --"');
           pMCX.Execute;
 
@@ -1034,7 +1045,7 @@ begin
     JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
 
     ProfileChanged:=false;
-    if not (SearchForExe(CreateCmdOnly) = '') then begin
+    if not (SearchForExe(CreateCmdOnly) = '""') then begin
         mcxdoQuery.Enabled:=true;
         mcxdoHelpOptions.Enabled:=true;
     end;
@@ -1084,9 +1095,9 @@ begin
    if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
            fname:=fname+'.exe';
    {$ENDIF}
-   Result :=
+   Result := '"'+
     SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+GetEnvironmentVariable('PATH'),
-                     PathSeparator, [sffDontSearchInBasePath]);
+                     PathSeparator, [sffDontSearchInBasePath])+'"';
 end;
 
 function TfmMCX.GetFileBrowserPath : string;
@@ -1096,7 +1107,7 @@ begin
    if Result = '' then
      Result := SearchForExe('open'); // mac os
    if Result = '' then
-     Result :='cmd /c start'; // windows
+     Result :=SearchForExe('explorer');; // windows
 end;
 
 function TfmMCX.GetBrowserPath : string;
@@ -1158,6 +1169,7 @@ end;
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      if(not mcxdoStop.Enabled) then exit;
+     AddMultiLineLog(GetMCXOutput);
      if(pMCX.Tag=-10) then
          sbInfo.Panels[2].Text:=Format('Last simulation used %.3f seconds', [(GetTickCount64-mcxdoRun.Tag)/1000.]);
      mcxdoRun.Tag:=0;
@@ -1565,7 +1577,7 @@ var
 begin
     if not (Assigned(GotoGBox)) then exit;
     if(tmAnimation.Tag>0) then begin // collapse
-         GotoGBox.Height:=GotoGBox.Height-5;
+         GotoGBox.Height:=GotoGBox.Height-10;
          if(GotoGBox.Height<=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2) then begin
               GotoGBox.Align:=alTop;
               GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
@@ -1573,7 +1585,7 @@ begin
               tmAnimation.Enabled:=false;
          end;
     end else begin
-        GotoGBox.Height:=GotoGBox.Height+5;
+        GotoGBox.Height:=GotoGBox.Height+10;
         len:=plSetting.Height-GotoGBox.Top;
         if(GotoGBox.Height>=plSetting.Height-GotoGBox.Top) then begin
              GotoGBox.Align:=alClient;
@@ -1709,7 +1721,7 @@ begin
         if(edGPUID.Items.Count>0) then
             edGPUID.Checked[0]:=true;
         {$IFDEF WINDOWS}
-        if(gpucount>=1) then begin
+        if (not (ckDoRemote.Checked)) and (gpucount>=1) then begin
             Reg := TRegistry.Create;
             needfix:=true;
             try
