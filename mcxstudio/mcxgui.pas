@@ -56,6 +56,7 @@ type
     miClearLog1: TMenuItem;
     OpenHistoryFile: TOpenDialog;
     OpenVolume: TOpenDialog;
+    plOutputDock: TPanel;
     PopupMenu2: TPopupMenu;
     grProgram: TRadioGroup;
     OpenDir: TSelectDirectoryDialog;
@@ -621,6 +622,7 @@ begin
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
       edUnitInMM.Text:='1';
+      ckSharedFS.Checked:=true;
       if not (ckLockGPU.Checked) then begin
           edGPUID.CheckAll(cbUnchecked);
           if(edGPUID.Items.Count>0) then begin
@@ -715,8 +717,8 @@ begin
      if not ((Sender as TButton).Parent is TGroupBox) then exit;
      gr:=((Sender as TButton).Parent as TGroupBox);
      GotoGBox:=gr;
-     if(gr.Align=alClient) then begin // collapse
-         gr.Align:=alTop;
+     if(tmAnimation.Tag=1) then begin // collapse
+         //gr.Align:=alTop;
          (Sender as TButton).Caption:=#65088;
          tmAnimation.Tag:=1;
          tmAnimation.Enabled:=true;
@@ -1580,23 +1582,21 @@ begin
 end;
 
 procedure TfmMCX.tmAnimationTimer(Sender: TObject);
-var
-   len: integer;
 begin
     if not (Assigned(GotoGBox)) then exit;
     if(tmAnimation.Tag>0) then begin // collapse
          GotoGBox.Height:=GotoGBox.Height-10;
          if(GotoGBox.Height<=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2) then begin
-              GotoGBox.Align:=alTop;
+              //GotoGBox.Align:=alTop;
               GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
               tmAnimation.Tag:=0;
               tmAnimation.Enabled:=false;
          end;
     end else begin
         GotoGBox.Height:=GotoGBox.Height+10;
-        len:=plSetting.Height-GotoGBox.Top;
-        if(GotoGBox.Height>=plSetting.Height-GotoGBox.Top) then begin
-             GotoGBox.Align:=alClient;
+        if(GotoGBox.Height>=edRemote.Top+edRemote.Height+self.Canvas.TextHeight('Ag')+5) then begin
+             //GotoGBox.Align:=alClient;
+             GotoGBox.Height:=edRemote.Top+edRemote.Height+self.Canvas.TextHeight('Ag')+5;
              tmAnimation.Tag:=1;
              tmAnimation.Enabled:=false;
         end;
@@ -2439,7 +2439,7 @@ begin
            ck:=gb.Controls[id] as TCheckBox;
            if(Length(ck.Hint)=0) then continue;
            idx:=MapList.IndexOf(ck.Hint);
-           if(idx>=0) and (ck.Hint='DoRemote') then begin
+           if(idx>=0) and ((ck.Hint='DoRemote') or (ck.Hint='DoSharedFS')) then begin
                if not (ckLockGPU.Checked) then begin
                    ck.Checked:=(node.SubItems.Strings[idx]='1');
                end;
