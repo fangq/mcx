@@ -648,7 +648,7 @@ begin
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
-      ckSharedFS.Checked:=false;
+      ckSharedFS.Checked:=true;
 
       if(grProgram.ItemIndex=1) then begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
@@ -2402,12 +2402,6 @@ begin
         if(gb.Controls[id] is TEdit) then begin
            ed:=gb.Controls[id] as TEdit;
            idx:=MapList.IndexOf(ed.Hint);
-           if(idx>=0) and (ed.Hint='RemoteCmd') then begin
-               if not (ckLockGPU.Checked) then begin
-                   ed.Text:=node.SubItems.Strings[idx];
-               end;
-               continue;
-           end;
            if(idx>=0) then ed.Text:=node.SubItems.Strings[idx];
            continue;
         end;
@@ -2432,6 +2426,12 @@ begin
            cb:=gb.Controls[id] as TComboBox;
            if(Length(cb.Hint)=0) then continue;
            idx:=MapList.IndexOf(cb.Hint);
+           if(idx>=0) and (cb.Hint='RemoteCmd') then begin
+               if not (ckLockGPU.Checked) then begin
+                   cb.Text:=node.SubItems.Strings[idx];
+               end;
+               continue;
+           end;
            if(idx>=0) then cb.Text:=node.SubItems.Strings[idx];
            continue;
         end;

@@ -1,5 +1,5 @@
 object fmOutput: TfmOutput
-  Left = 1566
+  Left = 1355
   Height = 600
   Top = 212
   Width = 561
