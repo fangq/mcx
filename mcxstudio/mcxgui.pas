@@ -26,6 +26,7 @@ type
   TfmMCX = class(TForm)
     acEditShape: TActionList;
     btGBExpand: TButton;
+    ckSharedFS: TCheckBox;
     ckLockGPU: TCheckBox;
     ckDoRemote: TCheckBox;
     ckReflect: TCheckBox;
@@ -317,7 +318,7 @@ type
     function  GetFileBrowserPath : string;
     function  SearchForExe(fname : string) : string;
     function CreateWorkFolder(session: string):string;
-    function SaveJSONConfig(filename: string): boolean;
+    function SaveJSONConfig(filename: string): string;
     function CheckListToStr(list: TCheckListBox) : string;
     function GridToStr(grid:TStringGrid) :string;
     procedure StrToGrid(str: string; grid:TStringGrid);
@@ -454,6 +455,11 @@ begin
        end;
        if(ck.Hint='DoRemote') then begin
            edRemote.Enabled:=ck.Checked;
+           ckSharedFS.Enabled:=ck.Checked;
+           if(ck.Checked) then
+              mcxdoQuery.Enabled:=true
+           else
+              mcxdoQuery.Enabled:=(SearchForExe(CreateCmdOnly) = '""');
        end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
@@ -640,6 +646,7 @@ begin
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
+      ckSharedFS.Checked:=false;
 
       if(grProgram.ItemIndex=1) then begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
@@ -725,6 +732,7 @@ begin
      edGPUID.Enabled:=not ckLockGPU.Checked;
      edRemote.Enabled:=not ckLockGPU.Checked;
      ckDoRemote.Enabled:=not ckLockGPU.Checked;
+     ckSharedFS.Enabled:=not ckLockGPU.Checked;
 end;
 
 procedure TfmMCX.grAdvSettingsDblClick(Sender: TObject);
@@ -1839,7 +1847,7 @@ begin
     if(exepath='') then
        raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
-    if(SaveJSONConfig('')) then
+    if not (SaveJSONConfig('')='') then
        UpdateMCXActions(acMCX,'Work','');
   except
     On E : Exception do
@@ -1854,7 +1862,7 @@ begin
     cmd:=MCProgram[grProgram.ItemIndex];
     Result:=cmd;
 end;
-function TfmMCX.SaveJSONConfig(filename: string): boolean;
+function TfmMCX.SaveJSONConfig(filename: string): string;
 var
     nthread, nblock,hitmax,seed, i, mediacount: integer;
     bubbleradius,unitinmm,nphoton: extended;
@@ -1863,7 +1871,7 @@ var
     jdets, jmedia, jshape: TJSONArray;
     jsonlist: TStringList;
 begin
-  Result:=false;
+  Result:='';
   try
       nthread:=StrToInt(edThread.Text);
       nphoton:=StrToFloat(edPhoton.Text);
@@ -2005,7 +2013,7 @@ begin
               jsonlist.Free;
           end;
       end;
-      Result:=true;
+      Result:=json.AsJSON;
     except
       on E: Exception do
           MessageDlg('Configuration Error', E.Message, mtError, [mbOK],0);
@@ -2047,9 +2055,10 @@ function TfmMCX.CreateCmd:string;
 var
     nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    cmd, jsonfile, gpuid, debugflag, rootpath: string;
+    cmd, jsonfile, gpuid, debugflag, rootpath, inputjson: string;
     shellscript: TStringList;
 begin
+    rootpath:='';
     if(ckDoRemote.Checked) then
         cmd:=edRemote.Text+' '+ CreateCmdOnly
     else
@@ -2062,14 +2071,24 @@ begin
        rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
     end else begin
         jsonfile:=CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json';
-        if(SaveJSONConfig(jsonfile)=false) then
+        inputjson:=SaveJSONConfig(jsonfile);
+        if(inputjson='') then
             exit;
-        cmd:=cmd+' --input "'+Trim(jsonfile)+'"';
-        rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile));
+        if(ckDoRemote.Checked) and (not (ckSharedFS.Checked)) then
+            cmd:=cmd+' --input '''+Trim(inputjson)+''''
+        else begin
+            cmd:=cmd+' --input '''+Trim(jsonfile)+'''';
+            rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile));
+        end;
     end;
     if(Length(sgConfig.Cells[2,14])>0) then
         rootpath:=sgConfig.Cells[2,14];
-    cmd:=cmd+' --root "'+rootpath+'" ';
+    if(ckDoRemote.Checked) then begin
+        if(rootpath='') then
+            rootpath:=CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+        cmd:=cmd+' --root "'+rootpath+'" ';
+    end else
+        cmd:=cmd+' --root "'+rootpath+'" ';
 
     try
         nthread:=StrToInt(edThread.Text);
