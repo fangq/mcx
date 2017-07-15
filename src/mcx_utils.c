@@ -45,22 +45,26 @@
 
 #define MCX_ASSERT(a)  (!(a) && (mcx_error((a),"input error",__FILE__,__LINE__),1) );
 
+#define MIN_HEADER_SIZE 348
+#define NII_HEADER_SIZE 352
+
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
-                 'd','r','S','p','e','U','R','l','L','I','o','G','M','A','E','v','D',
+                 'd','r','S','p','e','U','R','l','L','-','I','o','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','-','\0'};
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
                  "--unitinmm","--maxdetphoton","--shapes","--reseed","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
-                 "--normalize","--skipradius","--log","--listgpu",
+                 "--normalize","--skipradius","--log","--listgpu","--faststep",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
-		 "--replaydet","--outputtype","--faststep","--maxjumpdebug",
+		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",""};
 
 const char outputtype[]={'x','f','e','j','p','\0'};
 const char debugflag[]={'R','M','P','\0'};
+const char *outputformat[]={"mc2","nii","hdr","ubj",""};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
     "line","slit","pencilarray",""};
@@ -134,6 +138,7 @@ void mcx_initcfg(Config *cfg){
      cfg->replaydet=0;
      cfg->seedfile[0]='\0';
      cfg->outputtype=otFlux;
+     cfg->outputformat=ofMC2;
      cfg->detectedcount=0;
      cfg->runtime=0;
      cfg->faststep=0;
@@ -185,24 +190,107 @@ void mcx_clearcfg(Config *cfg){
      mcx_initcfg(cfg);
 }
 
-void mcx_savedata(float *dat, int len, int doappend, const char *suffix, Config *cfg){
+void mcx_savenii(float *dat, int len, char* name, int type32bit, int outputformatid, Config *cfg){
+     FILE *fp;
+     char fname[MAX_PATH_LENGTH]={'\0'};
+     nifti_1_header hdr;
+     nifti1_extender pad={{0,0,0,0}};
+     float *logval=dat;
+     int i;
+
+     memset((void *)&hdr, 0, sizeof(hdr));
+     hdr.sizeof_hdr = MIN_HEADER_SIZE;
+     hdr.dim[0] = 4;
+     hdr.dim[1] = cfg->dim.x;
+     hdr.dim[2] = cfg->dim.y;
+     hdr.dim[3] = cfg->dim.z;
+     hdr.dim[4] = len/(cfg->dim.x*cfg->dim.y*cfg->dim.z);
+     hdr.datatype = type32bit;
+     hdr.bitpix = 32;
+     hdr.pixdim[1] = cfg->unitinmm;
+     hdr.pixdim[2] = cfg->unitinmm;
+     hdr.pixdim[3] = cfg->unitinmm;
+     hdr.intent_code=NIFTI_INTENT_NONE;
+     logval=(float *)malloc(sizeof(float)*len);
+
+     if(type32bit==NIFTI_TYPE_FLOAT32){
+	 for(i=0;i<len;i++)
+	    logval[i]=log10f(dat[i]);
+	 hdr.intent_code=NIFTI_INTENT_LOG10PVAL;
+         hdr.pixdim[4] = cfg->tstep*1e6f;
+     }else{
+         short *mask=(short*)logval;
+	 for(i=0;i<len;i++){
+	    mask[i]    =(dat[i] && MED_MASK);
+	    mask[i+len]=(dat[i] && DET_MASK)>>16;
+	 }
+	 hdr.datatype = NIFTI_TYPE_UINT16;
+	 hdr.bitpix = 16;
+         hdr.pixdim[4] = 2.f;
+     }
+     if (outputformatid==ofNifti){
+	strncpy(hdr.magic, "n+1\0", 4);
+	hdr.vox_offset = (float) NII_HEADER_SIZE;
+     }else{
+	strncpy(hdr.magic, "ni1\0", 4);
+	hdr.vox_offset = (float)0;
+     }
+     hdr.scl_slope = 0.f;
+     hdr.xyzt_units = NIFTI_UNITS_MM | NIFTI_UNITS_USEC;
+
+     sprintf(fname,"%s.%s",name,outputformat[outputformatid]);
+
+     if (( fp = fopen(fname,"wb")) == NULL)
+             mcx_error(-9, "Error opening header file for write",__FILE__,__LINE__);
+
+     if (fwrite(&hdr, MIN_HEADER_SIZE, 1, fp) != 1)
+             mcx_error(-9, "Error writing header file",__FILE__,__LINE__);
+
+     if (outputformatid==ofNifti) {
+         if (fwrite(&pad, 4, 1, fp) != 1)
+             mcx_error(-9, "Error writing header file extension pad",__FILE__,__LINE__);
+
+         if (fwrite(logval, (size_t)(hdr.bitpix>>3), hdr.dim[1]*hdr.dim[2]*hdr.dim[3]*hdr.dim[4], fp) !=
+	          hdr.dim[1]*hdr.dim[2]*hdr.dim[3]*hdr.dim[4])
+             mcx_error(-9, "Error writing data to file",__FILE__,__LINE__);
+	 fclose(fp);
+     }else if(outputformatid==ofAnalyze){
+         fclose(fp);  /* close .hdr file */
+
+         sprintf(fname,"%s.img",name);
+
+         fp = fopen(fname,"wb");
+         if (fp == NULL)
+             mcx_error(-9, "Error opening img file for write",__FILE__,__LINE__);
+         if (fwrite(logval, (size_t)(hdr.bitpix>>3), hdr.dim[1]*hdr.dim[2]*hdr.dim[3]*hdr.dim[4], fp) != 
+	       hdr.dim[1]*hdr.dim[2]*hdr.dim[3]*hdr.dim[4])
+             mcx_error(-9, "Error writing img file",__FILE__,__LINE__);
+
+         fclose(fp);
+     }else
+         mcx_error(-9, "Output format is not supported",__FILE__,__LINE__);
+     free(logval);
+}
+
+void mcx_savedata(float *dat, int len, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
-     if(cfg->rootpath[0])
-         sprintf(name,"%s%c%s.%s",cfg->rootpath,pathsep,cfg->session,suffix);
-     else
-         sprintf(name,"%s.%s",cfg->session,suffix);
+     char fname[MAX_PATH_LENGTH];
 
-     if(doappend){
-        fp=fopen(name,"ab");
-     }else{
-        fp=fopen(name,"wb");
+     if(cfg->rootpath[0])
+         sprintf(name,"%s%c%s",cfg->rootpath,pathsep,cfg->session);
+     else
+         sprintf(name,"%s",cfg->session);
+
+     if(cfg->outputformat==ofNifti || cfg->outputformat==ofAnalyze){
+         mcx_savenii(dat, len, name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
+         return;
      }
+     sprintf(fname,"%s.%s",name,outputformat[(int)cfg->outputformat]);
+     fp=fopen(fname,"wb");
+
      if(fp==NULL){
 	mcx_error(-2,"can not save data to disk",__FILE__,__LINE__);
-     }
-     if(strcmp(suffix,"mch")==0){
-	fwrite(&(cfg->his),sizeof(History),1,fp);
      }
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
@@ -816,6 +904,10 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(!cfg->issaveexit)  cfg->issaveexit=FIND_JSON_KEY("DoSaveExit","Session.DoSaveExit",Session,cfg->issaveexit,valueint);
         if(!cfg->issaveseed)  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
         cfg->reseedlimit=FIND_JSON_KEY("ReseedLimit","Session.ReseedLimit",Session,cfg->reseedlimit,valueint);
+        if(!cfg->outputformat)  cfg->outputformat=mcx_keylookup((char *)FIND_JSON_KEY("OutputFormat","Session.OutputFormat",Session,"mc2",valuestring),outputformat);
+        if(cfg->outputformat<0)
+                mcx_error(-2,"the specified output format is not recognized",__FILE__,__LINE__);
+
         strncpy(val,FIND_JSON_KEY("OutputType","Session.OutputType",Session,outputtype+cfg->outputtype,valuestring),1);
         if(mcx_lookupindex(val, outputtype)){
                 mcx_error(-2,"the specified output data type is not recognized",__FILE__,__LINE__);
@@ -1082,18 +1174,12 @@ void  mcx_maskdet(Config *cfg){
      */
      if(cfg->isdumpmask){
      	 char fname[MAX_PATH_LENGTH];
-	 FILE *fp;
          if(cfg->rootpath[0])
-             sprintf(fname,"%s%c%s.vol",cfg->rootpath,pathsep,cfg->session);
+             sprintf(fname,"%s%c%s_vol",cfg->rootpath,pathsep,cfg->session);
          else
-             sprintf(fname,"%s.vol",cfg->session);
-	 if((fp=fopen(fname,"wb"))==NULL){
-	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
-	 }
-	 if(fwrite(cfg->vol,cfg->dim.x*cfg->dim.y*sizeof(int),cfg->dim.z,fp)!=cfg->dim.z){
-	 	mcx_error(-10,"can not save mask file",__FILE__,__LINE__);
-	 }
-	 fclose(fp);
+             sprintf(fname,"%s_vol",cfg->session);
+	     
+	 mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
          free(padvol);
 	 exit(0);
      }
@@ -1366,8 +1452,11 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                         i=mcx_readarg(argc,argv,i,&(cfg->debuglevel),"int");
                                 break;
 		     case 'F':
-		     	        i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
-		     	        break;
+                                if(i>=argc)
+                                        mcx_error(-1,"incomplete input",__FILE__,__LINE__);
+                                if((cfg->outputformat=mcx_keylookup(argv[++i], outputformat))<0)
+                                        mcx_error(-2,"the specified output data type is not recognized",__FILE__,__LINE__);
+                                break;
 		     case 'x':
  		                i=mcx_readarg(argc,argv,i,&(cfg->issaveexit),"char");
  				if (cfg->issaveexit) cfg->issavedet=1;
@@ -1385,6 +1474,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->gscatter),"int");
                                 else if(strcmp(argv[i]+2,"mediabyte")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
+                                else if(strcmp(argv[i]+2,"faststep")==0)
+                                     i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;
@@ -1523,7 +1614,6 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                detector (det ID starts from 1), used with -E \n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
- -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
@@ -1551,6 +1641,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
+ -F [mc2|...] (--outputformat) fluence data output format:\n\
+                               mc2 - MCX mc2 format (binary 32bit float)\n\
+                               nii - Nifti format\n\
+                               hdr - Analyze 7.5 hdr/img format\n\
  -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
                                J - Jacobian (replay mode),   P - scattering\n\
                                event counts at each voxel (replay mode only)\n\
@@ -1579,6 +1673,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  --maxjumpdebug [1000000|int]  when trajectory is requested (i.e. -D M),\n\
                                use this parameter to set the maximum positions\n\
                                stored (default: 1e6)\n\
+ --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing\n\
 \n\
 == Example ==\n\
 example: (autopilot mode)\n\

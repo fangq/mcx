@@ -6,6 +6,7 @@
 #include "br2cu.h"
 #include "cjson/cJSON.h"
 #include "float.h"
+#include "nifti1.h"
 
 #define EPS                FLT_EPSILON                   //round-off limit
 #define VERY_BIG           (1.f/FLT_EPSILON)             //a big number
@@ -24,6 +25,7 @@
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP};
 enum TMCXParent  {mpStandalone, mpMATLAB};
+enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON};
 
 typedef struct MCXMedium{
 	float mua;
@@ -119,6 +121,7 @@ typedef struct MCXConfig{
 	char srctype;       /**<0:pencil,1:isotropic,2:cone,3:gaussian,4:planar,5:pattern,\
                                 6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian,12:line,13:slit*/
         char outputtype;    /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
+        char outputformat;  /**<'mc2' output is text, 'nii': binary, 'img': regular json, 'ubj': universal binary json*/
 	char faststep;
         float minenergy;    /**<minimum energy to propagate photon*/
 	float unitinmm;     /**<defines the length unit in mm for grid*/
@@ -158,7 +161,8 @@ typedef struct MCXConfig{
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void mcx_savedata(float *dat, int len, int doappend, const char *suffix, Config *cfg);
+void mcx_savedata(float *dat, int len, Config *cfg);
+void mcx_savenii(float *dat, int len, char* name, int type32bit, int outputformatid, Config *cfg);
 void mcx_error(const int id,const char *msg,const char *file,const int linenum);
 void mcx_loadconfig(FILE *in, Config *cfg);
 void mcx_saveconfig(FILE *in, Config *cfg);
