@@ -139,7 +139,7 @@ static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
 mexbox fermimex:        AR=$(MEX)
-mexbox fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER $(OMP) $(MEXCCOPT) $(USERCCOPT)' -lgomp LDFLAGS='$$LDFLAGS $(OMP) $(USERLINKOPT)'
+mexbox fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER $(OMP) $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-L$$TMW_ROOT$$MATLABROOT/sys/os/$$ARCH $$LDFLAGS $(OMP) $(USERLINKOPT)' -liomp5
 mexbox oct octbox fermimex fermioct:    OUTPUT_DIR=../mcxlab
 fermimex:      BINARY=mcxlab
 fermioct:      BINARY=mcxlab.mex
