@@ -148,7 +148,7 @@ mexbox octbox fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DM
 mexbox octbox fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
 mexbox fermimex:        LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-octbox fermioct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX -fopenmp $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-fopenmp $(USERLINKOPT)' mkoctfile
+octbox fermioct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX -fopenmp $(MEXCCOPT) $(USERCCOPT)' LFLAGS='-fopenmp $(USERLINKOPT)' LDFLAGS='$(LFLAGS)' mkoctfile
 fermioct:               BINARY=mcxlab.mex
 octbox:                 BINARY=mcxlab_atom.mex
 octbox fermioct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
