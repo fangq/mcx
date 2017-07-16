@@ -41,7 +41,7 @@ procedure TfmNewSession.btOKClick(Sender: TObject);
 begin
     if(Length(edSession.Text)=0) then
          raise Exception.Create('Session ID can not be empty');
-    if (fmMCX.lvJobs.FindCaption(0,edSession.Text,true,true,true) <> nil) then
+    if (Tag=0) and (fmMCX.lvJobs.FindCaption(0,edSession.Text,true,true,true) <> nil) then
          raise Exception.Create('Session name already has aready existed!');
     ModalResult := mrOK;
 end;

@@ -26,16 +26,18 @@ type
   TfmMCX = class(TForm)
     acEditShape: TActionList;
     btGBExpand: TButton;
-    ckSharedFS: TCheckBox;
-    ckLockGPU: TCheckBox;
     ckDoRemote: TCheckBox;
+    ckLockGPU: TCheckBox;
     ckReflect: TCheckBox;
+    ckSharedFS: TCheckBox;
     ckSpecular: TCheckBox;
     ckMomentum: TCheckBox;
     edMoreParam: TEdit;
     edRemote: TComboBox;
     grAtomic: TRadioGroup;
+    gbRemote: TGroupBox;
     Image1: TImage;
+    ProgramIcon: TImageList;
     Label18: TLabel;
     mcxdoToggleView: TAction;
     mcxdoPaste: TAction;
@@ -230,12 +232,11 @@ type
     procedure btLoadSeedClick(Sender: TObject);
     procedure btGBExpandClick(Sender: TObject);
     procedure ckLockGPUChange(Sender: TObject);
+    procedure edSessionEditingDone(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure grAdvSettingsDblClick(Sender: TObject);
     procedure grProgramSelectionChanged(Sender: TObject);
-    procedure lvJobsChange(Sender: TObject; Item: TListItem; Change: TItemChange
-      );
     procedure mcxdoAboutExecute(Sender: TObject);
     procedure mcxdoAddItemExecute(Sender: TObject);
     procedure mcxdoCopyExecute(Sender: TObject);
@@ -300,7 +301,7 @@ type
     { private declarations }
   public
     { public declarations }
-    MapList, ConfigData, JSONstr : TStringList;
+    MapList, ConfigData, JSONstr, PassList : TStringList;
     JSONdata : TJSONData;
     RegEngine:TRegExpr;
     function CreateCmd:string;
@@ -311,7 +312,7 @@ type
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
     procedure UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
-    function  GetMCXOutput () : string;
+    function  GetMCXOutput: string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
     procedure RunExternalCmd(cmd: string);
@@ -333,6 +334,8 @@ type
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
     procedure SetSessionType(sessiontype: integer);
     function ResetMCX(exitcode: LongInt) : boolean;
+    function ExpandPassword(url: string): string;
+    procedure SwapState(old, new: TListItem);
   end;
 
 var
@@ -344,6 +347,7 @@ var
   GotoCol, GotoRow: Integer;
   GotoGrid: TStringGrid;
   GotoGBox: TGroupBox;
+  CurrentSession: TListItem;
 
 implementation
 
@@ -409,9 +413,10 @@ var
     node: TListItem;
     ss: string;
 begin
-    if(Sender=nil) or (lvJobs.Selected=nil) then exit;
+    if(Sender=nil) or (CurrentSession=nil) then exit;
+    if(lvJobs.Tag=1) then exit;
     try
-    node:=lvJobs.Selected;
+    node:=CurrentSession;
     if(Sender is TSpinEdit) then begin
        se:=Sender as TSpinEdit;
        idx:=MapList.IndexOf(se.Hint);
@@ -515,17 +520,34 @@ begin
    RunExternalCmd(GetBrowserPath + ' http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
 end;
 
+function TfmMCX.ExpandPassword(url: string): string;
+var
+    pass: string;
+begin
+    Result:=url;
+    if(Pos('%PASSWORD%',url)>0) then begin
+        pass:=PassList.Values[url];
+        if(Length(pass)=0) then begin
+            pass:=PasswordBox('Password', 'Please type in your password for the command:');
+            PassList.Values[url]:=pass;
+        end;
+        Result:=StringReplace(url,'%PASSWORD%', pass,[rfReplaceAll]);
+    end;
+end;
+
 procedure TfmMCX.mcxdoHelpOptionsExecute(Sender: TObject);
 begin
     if(not pMCX.Running) then begin
-          if(ckDoRemote.Checked) then
-              pMCX.CommandLine:=edRemote.Text+' '+ CreateCmdOnly+' --help'
-          else
+          AddLog('"-- Run Command --"');
+          if(ckDoRemote.Checked) then begin
+              pMCX.CommandLine:=ExpandPassword(edRemote.Text)+' '+ CreateCmdOnly+' --help';
+              AddLog(edRemote.Text+' '+ CreateCmdOnly+' --help');
+          end else begin
               pMCX.CommandLine:=CreateCmdOnly+' --help';
+              AddLog(pMCX.CommandLine);
+          end;
           sbInfo.Panels[0].Text := 'Status: querying command line options';
           pMCX.Tag:=-2;
-          AddLog('"-- Run Command --"');
-          AddLog(pMCX.CommandLine);
           AddLog('"-- Print MCX Command Line Options --"');
           pMCX.Execute;
     end;
@@ -546,6 +568,11 @@ var
 begin
    fmNewSession:=TfmNewSession.Create(self);
    fmnewSession.grProgram.Columns:=1;
+   if (Sender is TEdit) then begin
+       fmnewSession.grProgram.ItemIndex:=grProgram.ItemIndex;
+       fmNewSession.edSession.Text:=edSession.Text;
+       fmNewSession.Tag:=1;
+   end;
    if(fmNewSession.ShowModal= mrOK) then begin
           sessionid:=Trim(fmNewSession.edSession.Text);
           sessiontype:=fmNewSession.grProgram.ItemIndex;
@@ -555,14 +582,18 @@ begin
    end;
    fmNewSession.Free;
 
-   node:=lvJobs.Items.Add;
+   if not (Sender is TEdit) then
+       node:=lvJobs.Items.Add
+   else
+       node:=CurrentSession;
    for i:=1 to lvJobs.Columns.Count-1 do node.SubItems.Add('');
    node.Caption:=sessionid;
-   node.ImageIndex:=14+sessiontype;
-   //node.StateIndex:=-1;
+   node.ImageIndex:=sessiontype;
    plSetting.Enabled:=true;
    pcSimuEditor.Enabled:=true;
    lvJobs.Selected:=node;
+   SwapState(CurrentSession,lvJobs.Selected);
+   CurrentSession:=lvJobs.Selected;
    mcxdoDefaultExecute(nil);
    edSession.Text:=sessionid;
    SetSessionType(sessiontype);
@@ -658,8 +689,8 @@ begin
           sgConfig.Rows[2].CommaText:='Domain,Dim,"[60,60,60]"';
       end;
       LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
-      if not (lvJobs.Selected = nil) then
-         PanelToList2(lvJobs.Selected);
+      if not (CurrentSession = nil) then
+         PanelToList2(CurrentSession);
 end;
 
 procedure TfmMCX.UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
@@ -682,12 +713,6 @@ begin
      fmAbout:=TfmAbout.Create(Application);
      fmAbout.ShowModal;
      fmAbout.Free;
-end;
-
-procedure TfmMCX.lvJobsChange(Sender: TObject; Item: TListItem;
-  Change: TItemChange);
-begin
-  mcxdoSave.Enabled:=true;
 end;
 
 procedure TfmMCX.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -735,6 +760,12 @@ begin
      edRemote.Enabled:=not ckLockGPU.Checked;
      ckDoRemote.Enabled:=not ckLockGPU.Checked;
      ckSharedFS.Enabled:=not ckLockGPU.Checked;
+end;
+
+procedure TfmMCX.edSessionEditingDone(Sender: TObject);
+begin
+   //if()
+   edRespinChange(Sender);
 end;
 
 procedure TfmMCX.grAdvSettingsDblClick(Sender: TObject);
@@ -798,9 +829,17 @@ begin
         sgConfig.Rows[1].CommaText:='Domain,VolumeFile,"See Volume Designer..."';
         sgConfig.Rows[2].CommaText:='Domain,Dim,"[60,60,60]"';
   end;
-  if(lvJobs.Selected <> nil) then
-      lvJobs.Selected.ImageIndex:=14+grProgram.ItemIndex;
-  edRespinChange(Sender);
+  if(CurrentSession <> nil) then
+      CurrentSession.ImageIndex:=grProgram.ItemIndex+3;
+  if(lvJobs.Tag=0) then
+      edRespinChange(Sender);
+end;
+procedure TfmMCX.SwapState(old, new: TListItem);
+begin
+   if(old <> nil) then
+      if(old.ImageIndex>=3) then old.ImageIndex:=old.ImageIndex-3;
+   if(new <> nil) then
+      if(new.ImageIndex<3)  then new.ImageIndex:=new.ImageIndex+3;
 end;
 
 procedure TfmMCX.mcxdoDeleteItemExecute(Sender: TObject);
@@ -809,29 +848,40 @@ begin
   begin
         if not (MessageDlg('Confirmation', 'The selected configuration will be deleted, are you sure?', mtConfirmation, [mbYes, mbNo, mbCancel],0)=mrYes) then
             exit;
+        if(CurrentSession=lvJobs.Selected) then
+           CurrentSession:=nil;
         lvJobs.Items.Delete(lvJobs.Selected.Index);
         if(lvJobs.Items.Count>0) then begin
             lvJobs.Selected:=lvJobs.Items[0];
-            //lvJobs.Selected.StateIndex:=7;
+            SwapState(CurrentSession,lvJobs.Selected);
+            CurrentSession:=lvJobs.Selected;
         end;
-        if not (lvJobs.Selected = nil) then
-            ListToPanel2(lvJobs.Selected)
+        if not (CurrentSession = nil) then
+            ListToPanel2(CurrentSession)
         else
             mcxdoDeleteItem.Enabled:=false;
   end;
 end;
 
 procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
+var
+    ret:TModalResult;
 begin
+  ret:=mrNo;
   if(OpenProject.Execute) then begin
     TaskFile:=OpenProject.FileName;
     if(mcxdoSave.Enabled) then begin
-       if(MessageDlg('Confirmation', 'The current session has not been saved, do you want to discard?',
-           mtConfirmation, [mbYes, mbNo, mbCancel],0)=mrYes) then begin
+       ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save it?',
+           mtConfirmation, [mbYes, mbNo, mbCancel],0);
+       if(ret=mrYes) then begin
+             mcxdoSaveExecute(Sender);
+             if(mcxdoSave.Enabled=true) then exit;
+       end;
+    end;
+    if not (ret=mrCancel) then begin
+            lvJobs.Items.Clear;
+            CurrentSession:=nil;
             LoadTasksFromIni(TaskFile);
-       end
-    end else begin
-       LoadTasksFromIni(TaskFile);
     end;
   end
 end;
@@ -869,8 +919,8 @@ begin
    grProgram.ItemIndex:=StrToInt(setting.Values['MCProgram']);
    node:=lvJobs.Items.Add;
    node.Caption:=setting.Values['Session'];
-   node.ImageIndex:=14+grProgram.ItemIndex;
-   //node.StateIndex:=-1;
+   node.ImageIndex:=grProgram.ItemIndex;
+   //node.ImageIndex:=-1;
    for j:=1 to lvJobs.Columns.Count-1 do
        node.SubItems.Add('');
    for j:=1 to lvJobs.Columns.Count-1 do begin
@@ -883,22 +933,27 @@ end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 var
-    cmd: string;
+    cmd, url: string;
 begin
     if(ResetMCX(0)) then begin
+          AddLog('"-- Run Command --"');
           if(ckDoRemote.Checked) then begin
-              if(sscanf(edRemote.Text,'%s',[@cmd])=1) then
-              pMCX.CommandLine:=SearchForExe(cmd)+
-                 Copy(edRemote.Text,Length(cmd)+1,Length(edRemote.Text)-
-                 Length(cmd))+' '+ CreateCmdOnly+' -L'
-              else
-                 exit;
-          end else
+              url:=ExpandPassword(edRemote.Text);
+              if(sscanf(url,'%s',[@cmd])=1) then begin
+                  pMCX.CommandLine:=SearchForExe(cmd)+
+                     Copy(url,Length(cmd)+1,Length(url)-
+                     Length(cmd))+' '+ CreateCmdOnly+' -L';
+                  AddLog(SearchForExe(cmd)+
+                     Copy(edRemote.Text,Length(cmd)+1,Length(edRemote.Text)-
+                     Length(cmd))+' '+ CreateCmdOnly+' -L');
+              end else
+                  exit;
+          end else begin
               pMCX.CommandLine:=SearchForExe(CreateCmdOnly)+' -L';
+              AddLog(pMCX.CommandLine);
+          end;
           sbInfo.Panels[0].Text := 'Status: querying GPU';
           pMCX.Tag:=-1;
-          AddLog('"-- Run Command --"');
-          AddLog(pMCX.CommandLine);
           AddLog('"-- Printing GPU Information --"');
           pMCX.Execute;
 
@@ -1037,6 +1092,8 @@ begin
     fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
     DockMaster.MakeDockable(fmOutput,true,true);
 
+    CurrentSession:=nil;
+    PassList:=TStringList.Create();
     MapList:=TStringList.Create();
     MapList.Clear;
     for i:=1 to lvJobs.Columns.Count-1 do begin
@@ -1071,14 +1128,14 @@ begin
     ConfigData.Free;
     RegEngine.Free;
     fmOutput.Free;
+    PassList.Free;
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 begin
      if(Selected) then begin
-          if (lvJobs.Selected=nil) then begin
-          end else begin
+          if not (lvJobs.Selected=nil) then begin
               mcxdoDeleteItem.Enabled:=true;
               mcxdoCopy.Enabled:=Selected;
           end;
@@ -1144,17 +1201,19 @@ begin
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
-var
-     addnew: TListItem;
 begin
      if not (lvJobs.Selected = nil) then begin
-         ListToPanel2(lvJobs.Selected);
+         lvJobs.Tag:=1; // loading
+         SwapState(CurrentSession,lvJobs.Selected);
+         CurrentSession:=lvJobs.Selected;
+         ListToPanel2(CurrentSession);
          plSetting.Enabled:=true;
          pcSimuEditor.Enabled:=true;
          mcxdoVerify.Enabled:=true;
          mcxdoDefault.Enabled:=true;
-         Caption:='MCX Studio - ['+lvJobs.Selected.Caption+']';
-         //lvJobs.Selected.StateIndex:=7;
+         Caption:='MCX Studio - ['+CurrentSession.Caption+']';
+         lvJobs.Tag:=0;
+         //lvJobs.Selected.ImageIndex:=7;
      end;
 end;
 
@@ -1594,9 +1653,9 @@ begin
          end;
     end else begin
         GotoGBox.Height:=GotoGBox.Height+10;
-        if(GotoGBox.Height>=edRemote.Top+edRemote.Height+self.Canvas.TextHeight('Ag')+5) then begin
+        if(GotoGBox.Height>=edMoreParam.Top+edMoreParam.Height+self.Canvas.TextHeight('Ag')+5) then begin
              //GotoGBox.Align:=alClient;
-             GotoGBox.Height:=edRemote.Top+edRemote.Height+self.Canvas.TextHeight('Ag')+5;
+             GotoGBox.Height:=edMoreParam.Top+edMoreParam.Height+self.Canvas.TextHeight('Ag')+5;
              tmAnimation.Tag:=1;
              tmAnimation.Enabled:=false;
         end;
@@ -1667,7 +1726,7 @@ begin
     end;
 end;
 
-function TfmMCX.GetMCXOutput () : string;
+function TfmMCX.GetMCXOutput: string;
 var
     Buffer, revbuf, percent: string;
     BytesAvailable: DWord;
@@ -1722,7 +1781,7 @@ begin
                  if(idx=1) then
                      edGPUID.Items.Clear;
                  namepos := Pos(gpuname, ss);
-                 edGPUID.Items.Add(Trim(copy(ss, namepos, Length(ss)-namepos+1)));
+                 edGPUID.Items.Add('#'+IntToStr(idx)+':'+Trim(copy(ss, namepos, Length(ss)-namepos+1)));
                  gpucount:=gpucount+1;
           end;
         end;
@@ -1796,8 +1855,7 @@ begin
      for i:=0 to sessions.Count-1 do begin
          node:=lvJobs.Items.Add;
          node.Caption:=sessions.Strings[i];
-         node.ImageIndex:=14;
-         //node.StateIndex:=-1;
+         node.ImageIndex:=0;
          inifile.ReadSectionValues(node.Caption,vals);
          for j:=1 to lvJobs.Columns.Count-1 do
              node.SubItems.Add('');
@@ -1805,7 +1863,7 @@ begin
              node.SubItems.Strings[j-1]:=vals.Values[lvJobs.Columns.Items[j].Caption];
          end;
          if(Length(vals.Values['MCProgram'])>0) then
-             node.ImageIndex:=node.ImageIndex+StrToInt(vals.Values['MCProgram']);
+             node.ImageIndex:=StrToInt(vals.Values['MCProgram']);
      end;
      inifile.Free;
      vals.Free;
@@ -2147,6 +2205,10 @@ begin
     if(Length(edMoreParam.Text)>0) then
         cmd:=cmd+' '+edMoreParam.Text;
 
+    AddLog('"-- Command: --"');
+    AddLog(cmd);
+    cmd:=ExpandPassword(cmd);
+
     if(Length(jsonfile)>0) then begin
          shellscript:=TStringList.Create;
          shellscript.Add('#!/bin/sh');
@@ -2156,8 +2218,6 @@ begin
          shellscript.Free;
     end;
     Result:=cmd;
-    AddLog('"-- Command: --"');
-    AddLog(cmd);
 end;
 
 function TfmMCX.GridToStr(grid:TStringGrid):string;
