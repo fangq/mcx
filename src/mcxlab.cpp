@@ -708,7 +708,7 @@ void mcxlab_usage(){
 
 extern "C" void mcx_matlab_flush(){
 #ifdef _OPENMP
-#pragma omp critical
+#pragma omp master
 {
 #endif
 
