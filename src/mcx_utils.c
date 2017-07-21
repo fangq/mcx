@@ -19,6 +19,8 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <errno.h>
+
 #ifndef WIN32
   #include <sys/ioctl.h>
 #endif
@@ -353,6 +355,27 @@ URL: http://mcx.sf.net/cgi-bin/index.cgi?Doc/FAQ\n");
 #endif
 }
 
+/**
+function to recursively create output folder
+source:
+  https://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
+*/
+int mkpath(char* dir_path, mode_t mode){
+    char* p=dir_path;
+    p[strlen(p)+1]='\0';
+    p[strlen(p)]=pathsep;
+    for (p=strchr(dir_path+1, pathsep); p; p=strchr(p+1, pathsep)) {
+      *p='\0';
+      if (mkdir(dir_path, mode)==-1) {
+          if (errno!=EEXIST) { *p=pathsep; return -1; }
+      }
+      *p=pathsep;
+    }
+    if(dir_path[strlen(p)-1]==pathsep)
+        dir_path[strlen(p)-1]='\0';
+    return 0;
+}
+
 void mcx_assert(int ret){
      if(!ret) mcx_error(ret,"assert error",__FILE__,__LINE__);
 }
@@ -411,7 +434,8 @@ void mcx_readconfig(char *fname, Config *cfg){
      if(cfg->rootpath[0]!='\0'){
 	struct stat st = {0};
 	if (stat((const char *)cfg->rootpath, &st) == -1) {
-	    mkdir((const char *)cfg->rootpath, 0755);
+	    if(mkpath(cfg->rootpath, 0755))
+	       mcx_error(-9,"can not create output folder",__FILE__,__LINE__);
 	}
      }
 }
