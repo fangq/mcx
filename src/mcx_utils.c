@@ -360,7 +360,7 @@ function to recursively create output folder
 source:
   https://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
 */
-int mkpath(char* dir_path, mode_t mode){
+int mkpath(char* dir_path, int mode){
     char* p=dir_path;
     p[strlen(p)+1]='\0';
     p[strlen(p)]=pathsep;
