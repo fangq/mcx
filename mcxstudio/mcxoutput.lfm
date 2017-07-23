@@ -1,13 +1,13 @@
 object fmOutput: TfmOutput
-  Left = 1355
+  Left = 1445
   Height = 600
-  Top = 212
+  Top = 172
   Width = 561
   Caption = 'Output'
   ClientHeight = 600
   ClientWidth = 561
   Position = poDefault
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.6.4.0'
   object Panel1: TPanel
     Left = 0
     Height = 600
@@ -29,7 +29,7 @@ object fmOutput: TfmOutput
     end
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 573
+      Height = 539
       Top = 26
       Width = 559
       Align = alClient
@@ -526,6 +526,52 @@ object fmOutput: TfmOutput
           MouseActionsExpanded = <>
           MouseActionsCollapsed = <>
         end
+      end
+    end
+    object Panel2: TPanel
+      Left = 1
+      Height = 34
+      Top = 565
+      Width = 559
+      Align = alBottom
+      ClientHeight = 34
+      ClientWidth = 559
+      TabOrder = 2
+      object edCmdInput: TLabeledEdit
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel2
+        AnchorSideTop.Side = asrCenter
+        AnchorSideRight.Control = btSendCmd
+        Left = 112
+        Height = 23
+        Top = 6
+        Width = 367
+        Anchors = [akTop, akRight]
+        BorderSpacing.Right = 4
+        EditLabel.AnchorSideTop.Control = edCmdInput
+        EditLabel.AnchorSideTop.Side = asrCenter
+        EditLabel.AnchorSideRight.Control = edCmdInput
+        EditLabel.AnchorSideBottom.Control = edCmdInput
+        EditLabel.AnchorSideBottom.Side = asrBottom
+        EditLabel.Left = 27
+        EditLabel.Height = 15
+        EditLabel.Top = 10
+        EditLabel.Width = 82
+        EditLabel.Caption = 'Command line:'
+        EditLabel.ParentColor = False
+        LabelPosition = lpLeft
+        TabOrder = 0
+        OnKeyPress = edCmdInputKeyPress
+      end
+      object btSendCmd: TButton
+        Left = 483
+        Height = 32
+        Top = 1
+        Width = 75
+        Align = alRight
+        Caption = 'Send'
+        OnClick = btSendCmdClick
+        TabOrder = 1
       end
     end
   end

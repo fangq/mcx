@@ -293,6 +293,7 @@ type
     procedure Splitter6CanResize(Sender: TObject; var NewSize: Integer;
       var Accept: Boolean);
     procedure StaticText2DblClick(Sender: TObject);
+    procedure tbtRunClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure tmAnimationTimer(Sender: TObject);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
@@ -1090,6 +1091,7 @@ begin
     fmOutput:=TfmOutput.Create(self);
     fmOutput.Top:=self.Top+(tbtStop.Width*17 div 20);
     fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
+    fmOutput.pMCX:=pMCX;
     DockMaster.MakeDockable(fmOutput,true,true);
 
     CurrentSession:=nil;
@@ -1171,27 +1173,27 @@ function TfmMCX.GetFileBrowserPath : string;
   {Return path to first browser found.}
 begin
    Result := SearchForExe('xdg-open'); // linux
-   if Result = '' then
+   if Result = '""' then
      Result := SearchForExe('open'); // mac os
-   if Result = '' then
-     Result :=SearchForExe('explorer');; // windows
+   if Result = '""' then
+     Result :=SearchForExe('explorer.exe');; // windows
 end;
 
 function TfmMCX.GetBrowserPath : string;
   {Return path to first browser found.}
 begin
    Result := SearchForExe('firefox');
-   if Result = '' then
+   if Result = '""' then
      Result := SearchForExe('google-chrome');
-   if Result = '' then
+   if Result = '""' then
      Result := SearchForExe('konqueror');  {KDE browser}
-   if Result = '' then
+   if Result = '""' then
      Result := SearchForExe('epiphany');  {GNOME browser}
-   if Result = '' then
+   if Result = '""' then
      Result := SearchForExe('opera');
-   if Result = '' then
+   if Result = '""' then
      Result := SearchForExe('open'); // mac os
-   if Result = '' then
+   if Result = '""' then
      Result :='cmd /c start'; // windows
 end;
 
@@ -1630,6 +1632,11 @@ begin
     GridToStr(sgMedia);
 end;
 
+procedure TfmMCX.tbtRunClick(Sender: TObject);
+begin
+  mcxdoRunExecute(Sender);
+end;
+
 procedure TfmMCX.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
@@ -1902,7 +1909,7 @@ begin
        raise Exception.Create('Thread block number (-T) can not be negative');
 
     exepath:=SearchForExe(CreateCmdOnly);
-    if(exepath='') then
+    if(exepath='""') then
        raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
     if not (SaveJSONConfig('')='') then
@@ -2087,6 +2094,7 @@ var
 begin
     path:=ExtractFileDir(Application.ExeName)
        +DirectorySeparator+'..'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+    path:=ExpandFileName(path);
     Result:=path;
     try
       if(not DirectoryExists(path)) then
@@ -2117,10 +2125,7 @@ var
     shellscript: TStringList;
 begin
     rootpath:='';
-    if(ckDoRemote.Checked) then
-        cmd:=edRemote.Text+' '+ CreateCmdOnly
-    else
-        cmd:=CreateCmdOnly;
+    cmd:=CreateCmdOnly;
     if(Length(edSession.Text)>0) then
        cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
     if rbUseFile.Checked and (Length(edConfigFile.FileName)>0) then
@@ -2130,12 +2135,15 @@ begin
     end else begin
         jsonfile:=CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json';
         inputjson:=SaveJSONConfig(jsonfile);
+        {$IFDEF WINDOWS}
+        inputjson:=StringReplace(inputjson,'"', '\"',[rfReplaceAll]);
+        {$ENDIF}
         if(inputjson='') then
             exit;
         if(ckDoRemote.Checked) and (not (ckSharedFS.Checked)) then
             cmd:=cmd+' --input '''+Trim(inputjson)+''''
         else begin
-            cmd:=cmd+' --input '''+Trim(jsonfile)+'''';
+            cmd:=cmd+' --input "'+Trim(jsonfile)+'"';
             rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile));
         end;
     end;
@@ -2143,7 +2151,7 @@ begin
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
         if(rootpath='') then
-            rootpath:=CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+            rootpath:=CreateCmdOnly+'sessions/'+Trim(edSession.Text);
         cmd:=cmd+' --root "'+rootpath+'" ';
     end else
         cmd:=cmd+' --root "'+rootpath+'" ';
@@ -2176,7 +2184,7 @@ begin
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
       Integer(ckSaveDetector.Checked),unitinmm,Integer(ckSaveSeed.Checked)]);
     if(Length(edSeed.Text)>0) then
-      cmd:=cmd+Format(' --seed ''%s''',[edSeed.Text]);
+      cmd:=cmd+Format(' --seed "%s"',[edSeed.Text]);
     if(edReplayDet.Enabled) then
       cmd:=cmd+Format(' --replaydet %d',[edReplayDet.Value]);
 
@@ -2207,7 +2215,8 @@ begin
 
     AddLog('"-- Command: --"');
     AddLog(cmd);
-    cmd:=ExpandPassword(cmd);
+    if(ckDoRemote.Checked) then
+        cmd:=ExpandPassword(edRemote.Text)+' '+ cmd;
 
     if(Length(jsonfile)>0) then begin
          shellscript:=TStringList.Create;
