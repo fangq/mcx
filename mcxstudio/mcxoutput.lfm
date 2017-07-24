@@ -7,7 +7,7 @@ object fmOutput: TfmOutput
   ClientHeight = 600
   ClientWidth = 561
   Position = poDefault
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.6.0.4'
   object Panel1: TPanel
     Left = 0
     Height = 600
@@ -543,8 +543,8 @@ object fmOutput: TfmOutput
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = btSendCmd
         Left = 112
-        Height = 23
-        Top = 6
+        Height = 26
+        Top = 4
         Width = 367
         Anchors = [akTop, akRight]
         BorderSpacing.Right = 4
@@ -553,10 +553,10 @@ object fmOutput: TfmOutput
         EditLabel.AnchorSideRight.Control = edCmdInput
         EditLabel.AnchorSideBottom.Control = edCmdInput
         EditLabel.AnchorSideBottom.Side = asrBottom
-        EditLabel.Left = 27
-        EditLabel.Height = 15
-        EditLabel.Top = 10
-        EditLabel.Width = 82
+        EditLabel.Left = 20
+        EditLabel.Height = 16
+        EditLabel.Top = 9
+        EditLabel.Width = 89
         EditLabel.Caption = 'Command line:'
         EditLabel.ParentColor = False
         LabelPosition = lpLeft

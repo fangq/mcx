@@ -25,6 +25,12 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    mcxdoPlotMC2: TAction;
+    mcxdoStopBackend: TAction;
+    mcxdoStartBackend: TAction;
+    mcxdoPlotMesh: TAction;
+    mcxdoPlotNifty: TAction;
+    mcxdoPlotVol: TAction;
     btGBExpand: TButton;
     ckDoRemote: TCheckBox;
     ckLockGPU: TCheckBox;
@@ -37,6 +43,12 @@ type
     grAtomic: TRadioGroup;
     gbRemote: TGroupBox;
     Image1: TImage;
+    MenuItem24: TMenuItem;
+    MenuItem25: TMenuItem;
+    MenuItem26: TMenuItem;
+    MenuItem27: TMenuItem;
+    pBackend: TAsyncProcess;
+    PopupMenu1: TPopupMenu;
     ProgramIcon: TImageList;
     Label18: TLabel;
     mcxdoToggleView: TAction;
@@ -198,6 +210,7 @@ type
     ToolBar2: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
+    ToolButton11: TToolButton;
     ToolButton12: TToolButton;
     ToolButton13: TToolButton;
     ToolButton14: TToolButton;
@@ -247,6 +260,9 @@ type
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoPasteExecute(Sender: TObject);
+    procedure mcxdoPlotMC2Execute(Sender: TObject);
+    procedure mcxdoPlotNiftyExecute(Sender: TObject);
+    procedure mcxdoPlotVolExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
     procedure mcxdoSaveExecute(Sender: TObject);
@@ -309,18 +325,19 @@ type
     function CreateCmdOnly:string;
     procedure VerifyInput;
     procedure AddLog(str:string);
-    procedure AddMultiLineLog(str:string);
+    procedure AddBackendLog(str:string);
+    procedure AddMultiLineLog(str:string; Sender: TObject);
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
     procedure UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
-    function  GetMCXOutput: string;
+    function  GetMCXOutput(Sender: TObject): string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
     procedure RunExternalCmd(cmd: string);
     function  GetBrowserPath : string;
     function  GetFileBrowserPath : string;
     function  SearchForExe(fname : string) : string;
-    function CreateWorkFolder(session: string):string;
+    function CreateWorkFolder(session: string; iscreate: boolean=true):string;
     function SaveJSONConfig(filename: string): string;
     function CheckListToStr(list: TCheckListBox) : string;
     function GridToStr(grid:TStringGrid) :string;
@@ -337,11 +354,15 @@ type
     function ResetMCX(exitcode: LongInt) : boolean;
     function ExpandPassword(url: string): string;
     procedure SwapState(old, new: TListItem);
+    procedure StartBackend;
+    procedure StopBackend;
+    procedure WaitBackendRunning(maxtime: integer);
   end;
 
 var
   fmMCX: TfmMCX;
   fmOutput: TfmOutput;
+  fmBackend: TfmOutput;
   ProfileChanged: Boolean;
   MaxWait: integer;
   TaskFile: string;
@@ -371,7 +392,15 @@ begin
     DockMaster.MakeDockable(fmOutput,true,true);
 end;
 
-procedure TfmMCX.AddMultiLineLog(str:string);
+procedure TfmMCX.AddBackendLog(str:string);
+begin
+    fmBackend.mmOutput.Lines.Add(str);
+    fmBackend.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
+    fmBackend.mmOutput.LeftChar:=0;
+    DockMaster.MakeDockable(fmBackend,true,true);
+end;
+
+procedure TfmMCX.AddMultiLineLog(str:string; Sender: TObject);
 var
    sl: TStringList;
 begin
@@ -379,10 +408,17 @@ begin
     sl.StrictDelimiter:=true;
     sl.Delimiter:=#10;
     sl.DelimitedText:=str;
-    fmOutput.mmOutput.Lines.AddStrings(sl);
-    fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
-    fmOutput.mmOutput.LeftChar:=0;
-    DockMaster.MakeDockable(fmOutput,true,true);
+    if((Sender as TAsyncProcess)=pMCX) then begin
+        fmOutput.mmOutput.Lines.AddStrings(sl);
+        fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
+        fmOutput.mmOutput.LeftChar:=0;
+        DockMaster.MakeDockable(fmOutput,true,true);
+    end else begin
+        fmBackend.mmOutput.Lines.AddStrings(sl);
+        fmBackend.mmOutput.SelStart := length(fmBackend.mmOutput.Text);
+        fmBackend.mmOutput.LeftChar:=0;
+        DockMaster.MakeDockable(fmBackend,true,true);
+    end;
     sl.Free;
 end;
 
@@ -466,7 +502,7 @@ begin
            if(ck.Checked) then
               mcxdoQuery.Enabled:=true
            else
-              mcxdoQuery.Enabled:=(SearchForExe(CreateCmdOnly) = '""');
+              mcxdoQuery.Enabled:=(SearchForExe(CreateCmdOnly) = '');
        end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
@@ -518,7 +554,7 @@ end;
 
 procedure TfmMCX.mcxdoHelpExecute(Sender: TObject);
 begin
-   RunExternalCmd(GetBrowserPath + ' http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
+   RunExternalCmd('"'+GetBrowserPath + '" http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
 end;
 
 function TfmMCX.ExpandPassword(url: string): string;
@@ -932,6 +968,79 @@ begin
    mcxSetCurrentExecute(Sender);
 end;
 
+procedure TfmMCX.mcxdoPlotMC2Execute(Sender: TObject);
+begin
+  mcxdoPlotVolExecute(Sender);
+end;
+
+procedure TfmMCX.mcxdoPlotNiftyExecute(Sender: TObject);
+begin
+   mcxdoPlotVolExecute(Sender);
+end;
+
+procedure TfmMCX.StartBackend;
+var
+   exename: string;
+begin
+     if(not pBackend.Running) then begin
+          exename:=SearchForExe('octave');
+          if(not FileExists(exename)) then begin
+                ShowMessage(Format('Backend executable "%s" is not found!', ['octave']));
+                exit;
+          end;
+          pBackend.CommandLine:='"'+exename+'" --no-gui --interactive --no-history --persist ';
+          AddLog('"-- Executing backend --"');
+          pBackend.Execute;
+          fmBackend.Enabled:=true;
+     end;
+end;
+
+procedure TfmMCX.StopBackend;
+begin
+     if(pBackend.Running) then pBackend.Terminate(0);
+end;
+
+procedure TfmMCX.WaitBackendRunning(maxtime: integer);
+begin
+    //MaxWait:=maxtime;
+    //btRunCmd.Enabled:=false;
+    fmBackend.mmOutput.Lines.Text:='';
+    //tmWaitOutput.Tag:=0;
+    //tmWaitOutput.Enabled:=true;
+    //btRunCmd.Enabled:=false;
+end;
+
+procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
+var
+    outputfile, cmd: string;
+    ftype: TAction;
+begin
+    if not (grProgram.ItemIndex=0) then begin
+        MessageDlg('Error', 'You must select an MCX simulation to use this feature', mtError, [mbOK],0);
+        exit;
+    end;
+    if not (Sender is TAction) then exit;
+    ftype:=Sender as TAction;
+
+    outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+    if not (FileExists(outputfile)) then begin
+      MessageDlg('Error', Format('The %s%s output file has not been created',[edSession.Text,ftype.Hint]), mtError, [mbOK],0);
+      exit;
+    end;
+    if not (pBackend.Running) then begin
+         StartBackend;
+         Sleep(2000);
+    end;
+    if(pBackend.Running) then begin
+          if(Pos('.nii',ftype.Hint)>0) then begin
+              cmd:=Format('data=load_nii(''%s'');cwdata=sum(data,4);imagesc(squeeze(cwdata(:,:,1)));'+#10,[outputfile]);
+          end else begin
+              cmd:=Format('data=loadmc2(''%s'', %s);cwdata=sum(data,4);imagesc(log10(squeeze(cwdata(:,:,1))));'+#10,[outputfile,sgConfig.Cells[2,2]]);
+          end;
+          pBackend.Input.Write(cmd[1],Length(cmd));
+    end;
+end;
+
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 var
     cmd, url: string;
@@ -941,16 +1050,16 @@ begin
           if(ckDoRemote.Checked) then begin
               url:=ExpandPassword(edRemote.Text);
               if(sscanf(url,'%s',[@cmd])=1) then begin
-                  pMCX.CommandLine:=SearchForExe(cmd)+
+                  pMCX.CommandLine:='"'+SearchForExe(cmd)+'"'+
                      Copy(url,Length(cmd)+1,Length(url)-
                      Length(cmd))+' '+ CreateCmdOnly+' -L';
-                  AddLog(SearchForExe(cmd)+
+                  AddLog('"'+SearchForExe(cmd)+'"'+
                      Copy(edRemote.Text,Length(cmd)+1,Length(edRemote.Text)-
                      Length(cmd))+' '+ CreateCmdOnly+' -L');
               end else
                   exit;
           end else begin
-              pMCX.CommandLine:=SearchForExe(CreateCmdOnly)+' -L';
+              pMCX.CommandLine:='"'+SearchForExe(CreateCmdOnly)+'" -L';
               AddLog(pMCX.CommandLine);
           end;
           sbInfo.Panels[0].Text := 'Status: querying GPU';
@@ -1091,7 +1200,18 @@ begin
     fmOutput:=TfmOutput.Create(self);
     fmOutput.Top:=self.Top+(tbtStop.Width*17 div 20);
     fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
-    fmOutput.pMCX:=pMCX;
+    fmOutput.pProc:=pMCX;
+
+    fmBackend:=TfmOutput.Create(self);
+    fmBackend.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
+    fmBackend.Top:=fmOutput.Top+ fmOutput.Height;
+    fmBackend.Height:=Self.Height-fmOutput.Height;
+    fmBackend.pProc:=pBackend;
+    fmBackend.mmOutput.Color:=clSilver;
+    fmBackend.Caption:='Backend Output';
+
+    fmBackend.Enabled:=false;
+
     DockMaster.MakeDockable(fmOutput,true,true);
 
     CurrentSession:=nil;
@@ -1114,7 +1234,7 @@ begin
     JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
 
     ProfileChanged:=false;
-    if not (SearchForExe(CreateCmdOnly) = '""') then begin
+    if not (SearchForExe(CreateCmdOnly) = '') then begin
         mcxdoQuery.Enabled:=true;
         mcxdoHelpOptions.Enabled:=true;
     end;
@@ -1125,11 +1245,13 @@ end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
 begin
+    StopBackend;
     FreeAndNil(JSONData);
     MapList.Free;
     ConfigData.Free;
     RegEngine.Free;
     fmOutput.Free;
+    fmBackend.Free;
     PassList.Free;
 end;
 
@@ -1164,18 +1286,18 @@ begin
    if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
            fname:=fname+'.exe';
    {$ENDIF}
-   Result := '"'+
+   Result :=
     SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+GetEnvironmentVariable('PATH'),
-                     PathSeparator, [sffDontSearchInBasePath])+'"';
+                     PathSeparator, [sffDontSearchInBasePath]);
 end;
 
 function TfmMCX.GetFileBrowserPath : string;
   {Return path to first browser found.}
 begin
    Result := SearchForExe('xdg-open'); // linux
-   if Result = '""' then
+   if Result = '' then
      Result := SearchForExe('open'); // mac os
-   if Result = '""' then
+   if Result = '' then
      Result :=SearchForExe('explorer.exe');; // windows
 end;
 
@@ -1183,23 +1305,23 @@ function TfmMCX.GetBrowserPath : string;
   {Return path to first browser found.}
 begin
    Result := SearchForExe('firefox');
-   if Result = '""' then
+   if Result = '' then
      Result := SearchForExe('google-chrome');
-   if Result = '""' then
+   if Result = '' then
      Result := SearchForExe('konqueror');  {KDE browser}
-   if Result = '""' then
+   if Result = '' then
      Result := SearchForExe('epiphany');  {GNOME browser}
-   if Result = '""' then
+   if Result = '' then
      Result := SearchForExe('opera');
-   if Result = '""' then
+   if Result = '' then
      Result := SearchForExe('open'); // mac os
-   if Result = '""' then
+   if Result = '' then
      Result :='cmd /c start'; // windows
 end;
 
 procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
 begin
-  RunExternalCmd(GetBrowserPath + ' http://mcx.space');
+  RunExternalCmd('"'+GetBrowserPath + '" http://mcx.space');
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
@@ -1222,7 +1344,7 @@ end;
 procedure TfmMCX.MenuItem22Click(Sender: TObject);
 begin
   if(lvJobs.Selected <> nil) then
-      RunExternalCmd(GetFileBrowserPath + ' "'+CreateWorkFolder(lvJobs.Selected.Caption)+'"');
+      RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, false)+'"');
 end;
 
 procedure TfmMCX.MenuItem9Click(Sender: TObject);
@@ -1232,15 +1354,15 @@ end;
 
 procedure TfmMCX.pMCXReadData(Sender: TObject);
 begin
-     AddMultiLineLog(GetMCXOutput);
-     if not (pMCX.Running) then
+     AddMultiLineLog(GetMCXOutput(Sender), Sender);
+     if ((Sender as TAsyncProcess)=pMCX)  and (not (pMCX.Running)) then
          pMCXTerminate(Sender);
 end;
 
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      if(not mcxdoStop.Enabled) then exit;
-     AddMultiLineLog(GetMCXOutput);
+     AddMultiLineLog(GetMCXOutput(Sender), Sender);
      if(pMCX.Tag=-10) then
          sbInfo.Panels[2].Text:=Format('Last simulation used %.3f seconds', [(GetTickCount64-mcxdoRun.Tag)/1000.]);
      mcxdoRun.Tag:=0;
@@ -1568,10 +1690,10 @@ var
 begin
     if(tvShapes.Selected <> nil) then
        if(tvShapes.Selected=tvShapes.Items[0]) then begin
-           AddMultiLineLog(JSONData.FormatJSON);
+           AddMultiLineLog(JSONData.FormatJSON, pMCX);
        end else begin
            if(tvShapes.Selected.Data <> nil) then
-               AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON);
+               AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON, pMCX);
        end;
 end;
 
@@ -1733,7 +1855,7 @@ begin
     end;
 end;
 
-function TfmMCX.GetMCXOutput: string;
+function TfmMCX.GetMCXOutput(Sender: TObject): string;
 var
     Buffer, revbuf, percent: string;
     BytesAvailable: DWord;
@@ -1741,6 +1863,7 @@ var
     list: TStringList;
     i, idx, len, total, namepos,gpucount: integer;
     gpuname, ss: string;
+    proc: TAsyncProcess;
     {$IFDEF WINDOWS}
     Reg: TRegistry;
     RegKey: DWORD;
@@ -1748,17 +1871,18 @@ var
     needfix: boolean;
     {$ENDIF}
 begin
-   if true then
+   if (Sender is TAsyncProcess) then
+    proc:= Sender as TAsyncProcess;
     begin
-      BytesAvailable := pMCX.Output.NumBytesAvailable;
+      BytesAvailable := proc.Output.NumBytesAvailable;
       BytesRead := 0;
       while BytesAvailable>0 do
       begin
         SetLength(Buffer, BytesAvailable);
-        BytesRead := pMCX.OutPut.Read(Buffer[1], BytesAvailable);
+        BytesRead := proc.OutPut.Read(Buffer[1], BytesAvailable);
         Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
         //Buffer:=ReplaceRegExpr('\%Progress:',Buffer,'\%'+#13+'Progress',false);
-        if(ckbDebug.Checked[2]) then begin
+        if(proc=pMCX) and (ckbDebug.Checked[2]) then begin
                revbuf:=ReverseString(Buffer);
                if RegEngine.Exec(revbuf) then begin
                      percent:=ReverseString(RegEngine.Match[0]);
@@ -1771,11 +1895,11 @@ begin
                end;
         end;
         Result := Result + copy(Buffer,1, BytesRead);
-        BytesAvailable := pMCX.Output.NumBytesAvailable;
+        BytesAvailable := proc.Output.NumBytesAvailable;
         Application.ProcessMessages;
       end;
     end;
-    if(pMCX.Tag=-1) then begin
+    if(proc=pMCX) and (pMCX.Tag=-1) then begin
         list:=TStringList.Create;
         list.StrictDelimiter := true;
         list.Delimiter:=AnsiChar(#10);
@@ -1909,7 +2033,7 @@ begin
        raise Exception.Create('Thread block number (-T) can not be negative');
 
     exepath:=SearchForExe(CreateCmdOnly);
-    if(exepath='""') then
+    if(exepath='') then
        raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
     if not (SaveJSONConfig('')='') then
@@ -2067,7 +2191,7 @@ begin
       end;
 
       AddLog('"-- JSON Input: --"');
-      AddMultiLineLog(json.FormatJSON);
+      AddMultiLineLog(json.FormatJSON, pMCX);
 
       if(Length(filename)>0) then begin
           jsonlist:=TStringList.Create;
@@ -2088,7 +2212,7 @@ begin
   end;
 end;
 
-function TfmMCX.CreateWorkFolder(session: string) : string;
+function TfmMCX.CreateWorkFolder(session: string; iscreate: boolean=true) : string;
 var
     path: string;
 begin
@@ -2096,15 +2220,17 @@ begin
        +DirectorySeparator+'..'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
     path:=ExpandFileName(path);
     Result:=path;
-    try
-      if(not DirectoryExists(path)) then
-           if( not ForceDirectories(path) ) then
-               raise Exception.Create('Can not create session output folder');
-    except
-      On E : Exception do
-          MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
-    end;
     AddLog(Result);
+    if(iscreate) then begin
+        try
+          if(not DirectoryExists(path)) then
+               if( not ForceDirectories(path) ) then
+                   raise Exception.Create('Can not create session output folder');
+        except
+          On E : Exception do
+              MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
+        end;
+    end;
 end;
 
 function TfmMCX.CheckListToStr(list: TCheckListBox) : string;

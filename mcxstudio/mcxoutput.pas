@@ -30,7 +30,7 @@ type
     { private declarations }
   public
     { public declarations }
-    pMCX: TAsyncProcess;
+    pProc: TAsyncProcess;
   end;
 
 var
@@ -49,9 +49,9 @@ procedure TfmOutput.btSendCmdClick(Sender: TObject);
 var
    cmd: string;
 begin
-  cmd:=edCmdInput.Text;
-  if(Length(cmd)=0) or (pMCX=nil) then exit;
-  pMCX.Input.Write(cmd[1], Length(cmd));
+  cmd:=edCmdInput.Text+#10;
+  if(Length(cmd)=0) or (pProc=nil) then exit;
+  pProc.Input.Write(cmd[1], Length(cmd));
   mmOutput.Lines.Add('"User input:" '+cmd);
   edCmdInput.Text:='';
 end;
