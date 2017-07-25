@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, SynEdit, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, Menus,
-  AsyncProcess;
+  AsyncProcess, LCLType;
 
 type
 
@@ -16,7 +16,8 @@ type
   TfmOutput = class(TForm)
     Button1: TButton;
     btSendCmd: TButton;
-    edCmdInput: TLabeledEdit;
+    edCmdInput: TComboBox;
+    Label1: TLabel;
     miClearLog: TMenuItem;
     mmOutput: TSynEdit;
     Panel1: TPanel;
@@ -53,6 +54,9 @@ begin
   if(Length(cmd)=0) or (pProc=nil) then exit;
   pProc.Input.Write(cmd[1], Length(cmd));
   mmOutput.Lines.Add('"User input:" '+cmd);
+  if(edCmdInput.Items.IndexOf(cmd)>0) then begin
+      edCmdInput.Items.Insert(0,cmd);
+  end;
   edCmdInput.Text:='';
 end;
 
@@ -60,6 +64,8 @@ procedure TfmOutput.edCmdInputKeyPress(Sender: TObject; var Key: char);
 begin
   if Key = #13 then begin
     btSendCmdClick(Sender);
+  end else if (Key = #38 {VK_UP}) or (Key= #40{VK_DOWN}) then begin
+     edCmdInput.DroppedDown:=true;
   end;
 end;
 

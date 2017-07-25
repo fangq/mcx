@@ -13,11 +13,11 @@ interface
 
 uses
   Classes, SysUtils, process, FileUtil, SynEdit, math, ClipBrd, AnchorDocking,
-  SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,
+  SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,LclIntf,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, inifiles, fpjson, jsonparser, strutils, RegExpr, mcxabout, mcxshape,
-  mcxnewsession, mcxsource, mcxoutput {$IFDEF WINDOWS},registry, ShlObj{$ENDIF};
+  CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
+  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
 type
 
@@ -25,6 +25,8 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    webBrowser: THTMLBrowserHelpViewer;
+    HTMLHelpDatabase1: THTMLHelpDatabase;
     mcxdoPlotMC2: TAction;
     mcxdoStopBackend: TAction;
     mcxdoStartBackend: TAction;
@@ -554,7 +556,7 @@ end;
 
 procedure TfmMCX.mcxdoHelpExecute(Sender: TObject);
 begin
-   RunExternalCmd('"'+GetBrowserPath + '" http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
+   OpenURL('http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc');
 end;
 
 function TfmMCX.ExpandPassword(url: string): string;
@@ -1015,7 +1017,8 @@ var
     outputfile, cmd: string;
     ftype: TAction;
 begin
-    if not (grProgram.ItemIndex=0) then begin
+     if(CurrentSession=nil) then exit;
+     if not (grProgram.ItemIndex=0) then begin
         MessageDlg('Error', 'You must select an MCX simulation to use this feature', mtError, [mbOK],0);
         exit;
     end;
@@ -1172,6 +1175,7 @@ end;
 procedure TfmMCX.FormCreate(Sender: TObject);
 var
     i: integer;
+    BrowserPath,BrowserParams: string;
 begin
   {$IFDEF WINDOWS}
   with TRegistry.Create do
@@ -1188,6 +1192,9 @@ begin
           WriteString('', Application.ExeName+' -p "%1"');
         SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nil, nil);
       end;
+        RootKey := HKEY_LOCAL_MACHINE;
+        if OpenKeyReadOnly('\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe') then
+           webBrowser.BrowserPath:=ReadString('');
     finally
       Free;
     end;
@@ -1262,6 +1269,10 @@ begin
           if not (lvJobs.Selected=nil) then begin
               mcxdoDeleteItem.Enabled:=true;
               mcxdoCopy.Enabled:=Selected;
+              mcxdoPlotVol.Enabled:=Selected;
+              mcxdoPlotMC2.Enabled:=Selected;
+              mcxdoPlotNifty.Enabled:=Selected;
+              mcxdoPlotMesh.Enabled:=Selected;
           end;
      end;
 end;
@@ -1303,10 +1314,24 @@ end;
 
 function TfmMCX.GetBrowserPath : string;
   {Return path to first browser found.}
+var
+   RootKey: string;
 begin
    Result := SearchForExe('firefox');
-   if Result = '' then
-     Result := SearchForExe('google-chrome');
+   if Result = '' then begin
+     {$IFDEF WINDOWS}
+      with TRegistry.Create do
+       try
+         RootKey := HKEY_LOCAL_MACHINE;
+         if OpenKeyReadOnly('\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe') then
+           Result:=ReadString('');
+       finally
+         Free;
+       end;
+     {$ELSE}
+       Result := SearchForExe('google-chrome');
+     {$ENDIF}
+   end;
    if Result = '' then
      Result := SearchForExe('konqueror');  {KDE browser}
    if Result = '' then
@@ -1321,7 +1346,7 @@ end;
 
 procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
 begin
-  RunExternalCmd('"'+GetBrowserPath + '" http://mcx.space');
+  OpenURL('http://mcx.space');
 end;
 
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
