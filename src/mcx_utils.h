@@ -179,6 +179,7 @@ int  mcx_readarg(int argc, char *argv[], int id, void *output,const char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
 void mcx_maskdet(Config *cfg);
+void mcx_dumpmask(Config *cfg);
 void mcx_version(Config *cfg);
 void mcx_convertrow2col(unsigned int **vol, uint3 *dim);
 int  mcx_loadjson(cJSON *root, Config *cfg);

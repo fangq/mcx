@@ -473,6 +473,8 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	}
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
+	if(cfg->isdumpmask)
+	        mcx_dumpmask(cfg);
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
      }
@@ -1190,6 +1192,11 @@ void  mcx_maskdet(Config *cfg){
         if(cfg->issavedet && count==0)
               MCX_FPRINTF(stderr,"MCX WARNING: detector %d is not located on an interface, please check coordinates.\n",d+1);
      }
+
+     free(padvol);
+}
+
+void mcx_dumpmask(Config *cfg){
      /**
          To test the results, you should use -M to dump the det-mask, load 
 	 it in matlab, and plot the interface containing the detector with
@@ -1197,18 +1204,16 @@ void  mcx_maskdet(Config *cfg){
 	 radius and center set in the input file. the pixels should completely
 	 cover the circle.
      */
-     if(cfg->isdumpmask){
-     	 char fname[MAX_PATH_LENGTH];
-         if(cfg->rootpath[0])
-             sprintf(fname,"%s%c%s_vol",cfg->rootpath,pathsep,cfg->session);
-         else
-             sprintf(fname,"%s_vol",cfg->session);
-	     
-	 mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
-         free(padvol);
-	 exit(0);
-     }
-     free(padvol);
+
+     char fname[MAX_PATH_LENGTH];
+     if(cfg->rootpath[0])
+         sprintf(fname,"%s%c%s_vol",cfg->rootpath,pathsep,cfg->session);
+     else
+         sprintf(fname,"%s_vol",cfg->session);
+
+     mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
+     if(cfg->isdumpmask==1) /*if dumpmask>1, simulation will also run*/
+         exit(0);
 }
 
 void mcx_progressbar(float percent, Config *cfg){
@@ -1554,6 +1559,7 @@ int mcx_keylookup(char *origkey, const char *table[]){
     i=0;
     while(table[i]!='\0'){
 	if(strcmp(key,table[i])==0){
+	        free(key);
 		return i;
 	}
 	i++;
