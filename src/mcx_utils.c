@@ -223,12 +223,13 @@ void mcx_savenii(float *dat, int len, char* name, int type32bit, int outputforma
      }else{
          short *mask=(short*)logval;
 	 for(i=0;i<len;i++){
-	    mask[i]    =(dat[i] && MED_MASK);
-	    mask[i+len]=(dat[i] && DET_MASK)>>16;
+	    mask[i]    =(((unsigned int *)dat)[i] & MED_MASK);
+	    mask[i+len]=(((unsigned int *)dat)[i] & DET_MASK)>>16;
 	 }
 	 hdr.datatype = NIFTI_TYPE_UINT16;
 	 hdr.bitpix = 16;
-         hdr.pixdim[4] = 2.f;
+         hdr.dim[4] = 2;
+         hdr.pixdim[4] = 1.f;
      }
      if (outputformatid==ofNifti){
 	strncpy(hdr.magic, "n+1\0", 4);
