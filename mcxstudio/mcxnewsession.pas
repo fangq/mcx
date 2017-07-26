@@ -39,11 +39,16 @@ uses mcxgui;
 
 procedure TfmNewSession.btOKClick(Sender: TObject);
 begin
-    if(Length(edSession.Text)=0) then
-         raise Exception.Create('Session ID can not be empty');
-    if (Tag=0) and (fmMCX.lvJobs.FindCaption(0,edSession.Text,true,true,true) <> nil) then
-         raise Exception.Create('Session name already has aready existed!');
-    ModalResult := mrOK;
+    try
+      if(Length(edSession.Text)=0) then
+           raise Exception.Create('Session ID can not be empty');
+      if (Tag=0) and (fmMCX.lvJobs.FindCaption(0,edSession.Text,true,true,true) <> nil) then
+           raise Exception.Create('Session name already has aready existed!');
+      ModalResult := mrOK;
+    except
+      On E : Exception do
+        MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
+    end;
 end;
 
 procedure TfmNewSession.edSessionKeyPress(Sender: TObject; var Key: char);

@@ -79,6 +79,7 @@ procedure TfmSource.btOKClick(Sender: TObject);
 var
     i, count, srcid: integer;
 begin
+  try
     if(Length(edSource.Text)=0) then
          raise Exception.Create('Source type can not be empty');
     if (edSource.Items.IndexOf(edSource.Text)<0) then
@@ -103,6 +104,10 @@ begin
             SrcParam2.Add('0');
     end;
     ModalResult := mrOK;
+  except
+    On E : Exception do
+      MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
+  end;
 end;
 
 procedure TfmSource.edSourceChange(Sender: TObject);
@@ -145,8 +150,10 @@ end;
 
 procedure TfmSource.edSourceEditingDone(Sender: TObject);
 begin
-    if (edSource.Items.IndexOf(edSource.Text)<0) then
-         raise Exception.Create('Your specified source type is not supported!');
+    if (edSource.Items.IndexOf(edSource.Text)<0) then begin
+         MessageDlg('Input Error', 'Your specified source type is not supported!', mtError, [mbOK],0);
+         exit;
+    end;
     ChangeParams(edSource.Items.IndexOf(edSource.Text));
 end;
 

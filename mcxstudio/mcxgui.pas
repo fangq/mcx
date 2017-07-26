@@ -25,7 +25,16 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    edOutputFormat: TComboBox;
+    Label11: TLabel;
+    mcxdoDownloadMask: TAction;
+    mcxdoDownloadMCH: TAction;
+    mcxdoDownloadMC2: TAction;
     htmlHelpDatabase: THTMLHelpDatabase;
+    MenuItem28: TMenuItem;
+    MenuItem30: TMenuItem;
+    MenuItem31: TMenuItem;
+    MenuItem32: TMenuItem;
     miUseMatlab: TMenuItem;
     MenuItem29: TMenuItem;
     webBrowser: THTMLBrowserHelpViewer;
@@ -260,6 +269,9 @@ type
     procedure mcxdoCopyExecute(Sender: TObject);
     procedure mcxdoDefaultExecute(Sender: TObject);
     procedure mcxdoDeleteItemExecute(Sender: TObject);
+    procedure mcxdoDownloadMaskExecute(Sender: TObject);
+    procedure mcxdoDownloadMC2Execute(Sender: TObject);
+    procedure mcxdoDownloadMCHExecute(Sender: TObject);
     procedure mcxdoExitExecute(Sender: TObject);
     procedure mcxdoHelpExecute(Sender: TObject);
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
@@ -363,6 +375,7 @@ type
     procedure StartBackend;
     procedure StopBackend;
     procedure WaitBackendRunning(maxtime: integer);
+    function CreateSSHDownloadCmd(suffix: string='.nii'): string;
   end;
 
 var
@@ -498,6 +511,10 @@ begin
        end;
        if(ck.Hint='SaveDetector') then begin
            edDetectedNum.Enabled:=ck.Checked;
+           mcxdoDownloadMCH.Enabled:=ck.Checked;
+       end;
+       if(ck.Hint='DoSaveMask') then begin
+           mcxdoDownloadMask.Enabled:=ck.Checked;
        end;
        if(ck.Hint='DoReplay') then begin
            edReplayDet.Enabled:=ck.Checked;
@@ -509,6 +526,10 @@ begin
               mcxdoQuery.Enabled:=true
            else
               mcxdoQuery.Enabled:=(SearchForExe(CreateCmdOnly) = '');
+           mcxdoDownloadMC2.Enabled:=ck.Checked and (not ckSharedFS.Checked);
+       end;
+       if(ck.Hint='DoSharedFS') then begin
+           mcxdoDownloadMC2.Enabled:=(not ck.Checked) and (ckDoRemote.Checked);
        end;
     end else if(Sender is TCheckListBox) then begin
        ckb:=Sender as TCheckListBox;
@@ -767,6 +788,9 @@ procedure TfmMCX.FormShow(Sender: TObject);
 begin
     grGPU.Top:=grProgram.Height+grBasic.Height;
     grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
+
+    fmOutput.Top:=self.Top;
+    fmOutput.Left:=self.Left+self.Width;
 end;
 
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
@@ -904,6 +928,61 @@ begin
         else
             mcxdoDeleteItem.Enabled:=false;
   end;
+end;
+
+procedure TfmMCX.mcxdoDownloadMaskExecute(Sender: TObject);
+begin
+  mcxdoDownloadMC2Execute(Sender);
+end;
+
+function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
+var
+   rootpath, localfile, remotefile, url, cmd, scpcmd: string;
+begin
+   rootpath:=CreateCmdOnly+'sessions/'+Trim(edSession.Text);
+   localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
+   remotefile:=rootpath+'/'+edSession.Text+suffix;
+   scpcmd:=edRemote.Text;
+   scpcmd:=StringReplace(scpcmd,'plink', 'pscp',[rfReplaceAll]);
+   scpcmd:=StringReplace(scpcmd,'-ssh', '-scp',[rfReplaceAll]);
+   url:=ExpandPassword(scpcmd);
+   if(sscanf(url,'%s',[@cmd])=1) then begin
+       Result:='"'+SearchForExe(cmd)+'"'+
+          Copy(url,Length(cmd)+1,Length(url)-
+          Length(cmd))+':"'+remotefile+'" "'+localfile+'"';
+       AddLog('"'+SearchForExe(cmd)+'"'+
+          Copy(scpcmd,Length(cmd)+1,Length(scpcmd)-
+          Length(cmd))+':"'+remotefile+'" "'+localfile+'"');
+       exit;
+   end;
+   Result:='';
+end;
+
+procedure TfmMCX.mcxdoDownloadMC2Execute(Sender: TObject);
+var
+    suffix: string;
+begin
+   if not (Sender is TAction) then exit;
+   if(ResetMCX(0)) then begin
+        suffix:=(Sender as TAction).Hint;
+        if(Length(suffix)=0) then
+           suffix:='.'+edOutputFormat.Text;
+        pMCX.CommandLine:=CreateSSHDownloadCmd(suffix);
+        if(Length(pMCX.CommandLine)=0) then exit;
+        AddLog('"-- Downloading remote file --"');
+        pMCX.Execute;
+        mcxdoStop.Enabled:=true;
+        mcxdoRun.Enabled:=false;
+        sbInfo.Panels[0].Text := 'Status: downloading file';
+        sbInfo.Panels[2].Text := '';
+        pMCX.Tag:=-20;
+        Application.ProcessMessages;
+    end;
+end;
+
+procedure TfmMCX.mcxdoDownloadMCHExecute(Sender: TObject);
+begin
+  mcxdoDownloadMC2Execute(Sender);
 end;
 
 procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
@@ -1210,9 +1289,10 @@ begin
           WriteString('', Application.ExeName+' -p "%1"');
         SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nil, nil);
       end;
-        RootKey := HKEY_LOCAL_MACHINE;
+{        RootKey := HKEY_LOCAL_MACHINE;
         if OpenKeyReadOnly('\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe') then
            webBrowser.BrowserPath:=ReadString('');
+}
     finally
       Free;
     end;
@@ -1411,8 +1491,11 @@ procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      if(not mcxdoStop.Enabled) then exit;
      AddMultiLineLog(GetMCXOutput(Sender), Sender);
-     if(pMCX.Tag=-10) then
+     if(pMCX.Tag=-10) then begin
          sbInfo.Panels[2].Text:=Format('Last simulation used %.3f seconds', [(GetTickCount64-mcxdoRun.Tag)/1000.]);
+         //if ckDoRemote.Checked and (not ckSharedFS.Checked) then
+         //    mcxdoDownloadMC2Execute(Sender);
+     end;
      mcxdoRun.Tag:=0;
      mcxdoStop.Enabled:=false;
      if(mcxdoVerify.Enabled) then
@@ -2329,9 +2412,8 @@ begin
     if(ckDoRemote.Checked) then begin
         if(rootpath='') then
             rootpath:=CreateCmdOnly+'sessions/'+Trim(edSession.Text);
-        cmd:=cmd+' --root "'+rootpath+'" ';
-    end else
-        cmd:=cmd+' --root "'+rootpath+'" ';
+    end;
+    cmd:=cmd+' --root "'+rootpath+'" --outputformat '+edOutputFormat.Text;
 
     try
         nthread:=StrToInt(edThread.Text);
