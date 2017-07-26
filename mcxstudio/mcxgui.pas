@@ -789,8 +789,8 @@ begin
     grGPU.Top:=grProgram.Height+grBasic.Height;
     grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
 
-    fmOutput.Top:=self.Top;
-    fmOutput.Left:=self.Left+self.Width;
+//    fmOutput.Top:=self.Top;
+//    fmOutput.Left:=self.Left+self.Width;
 end;
 
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
