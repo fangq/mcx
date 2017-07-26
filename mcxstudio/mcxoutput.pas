@@ -64,8 +64,8 @@ procedure TfmOutput.edCmdInputKeyPress(Sender: TObject; var Key: char);
 begin
   if Key = #13 then begin
     btSendCmdClick(Sender);
-  end else if (Key = #38 {VK_UP}) or (Key= #40{VK_DOWN}) then begin
-     edCmdInput.DroppedDown:=true;
+//  end else if (Key = #38 {VK_UP}) or (Key= #40{VK_DOWN}) then begin
+//     edCmdInput.DroppedDown:=true;
   end;
 end;
 

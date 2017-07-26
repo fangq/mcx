@@ -10,3 +10,5 @@ lynx -dont_wrap_pre -dump "$ROOTURL=Doc/Basics" > Get_Started.txt
 lynx -dont_wrap_pre -dump "$ROOTURL=Doc/FAQ" > FAQ.txt
 
 wget http://mcx.sourceforge.net/upload/mcx_diagram_paper.png -Omcx_workflow.png
+
+lynx -dont_wrap_pre -dump "$ROOTURL=Doc/mcx_help" > mcx_help.html

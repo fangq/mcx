@@ -25,6 +25,9 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    htmlHelpDatabase: THTMLHelpDatabase;
+    miUseMatlab: TMenuItem;
+    MenuItem29: TMenuItem;
     webBrowser: THTMLBrowserHelpViewer;
     HTMLHelpDatabase1: THTMLHelpDatabase;
     mcxdoPlotMC2: TAction;
@@ -280,6 +283,7 @@ type
     procedure mcxdoWebExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem22Click(Sender: TObject);
+    procedure miUseMatlabClick(Sender: TObject);
     procedure MenuItem9Click(Sender: TObject);
     procedure pMCXReadData(Sender: TObject);
     procedure pMCXTerminate(Sender: TObject);
@@ -982,15 +986,29 @@ end;
 
 procedure TfmMCX.StartBackend;
 var
-   exename: string;
+   exename, backendname: string;
 begin
+     if(pBackend.Running) then begin
+       pBackend.Terminate(0);
+       Sleep(2000);
+     end;
      if(not pBackend.Running) then begin
-          exename:=SearchForExe('octave');
-          if(not FileExists(exename)) then begin
-                ShowMessage(Format('Backend executable "%s" is not found!', ['octave']));
+          if(miUseMatlab.Checked) then begin
+              backendname:='matlab';
+          end else begin
+              backendname:='octave';
+          end;
+          exename:=SearchForExe(backendname);
+
+          if (Length(exename)=0) or (not FileExists(exename)) then begin
+                ShowMessage(Format('Backend executable "%s" is not found!', [backendname]));
                 exit;
           end;
-          pBackend.CommandLine:='"'+exename+'" --no-gui --interactive --no-history --persist ';
+          if not (miUseMatlab.Checked) then
+              pBackend.CommandLine:='"'+exename+'"  --no-gui --interactive --no-history --persist '
+          else
+              pBackend.CommandLine:='"'+exename+'"  -nodesktop ';
+
           AddLog('"-- Executing backend --"');
           pBackend.Execute;
           fmBackend.Enabled:=true;
@@ -1035,12 +1053,12 @@ begin
          Sleep(2000);
     end;
     if(pBackend.Running) then begin
-          if(Pos('.nii',ftype.Hint)>0) then begin
-              cmd:=Format('data=load_nii(''%s'');cwdata=sum(data,4);imagesc(squeeze(cwdata(:,:,1)));'+#10,[outputfile]);
-          end else begin
-              cmd:=Format('data=loadmc2(''%s'', %s);cwdata=sum(data,4);imagesc(log10(squeeze(cwdata(:,:,1))));'+#10,[outputfile,sgConfig.Cells[2,2]]);
-          end;
-          pBackend.Input.Write(cmd[1],Length(cmd));
+         if(Pos('.nii',ftype.Hint)>0) then begin
+             cmd:=Format('data=mcxplotvol(''%s'');'+#10,[outputfile]);
+         end else begin
+             cmd:=Format('data=mcxplotvol(''%s'',%s);'+#10,[outputfile,sgConfig.Cells[2,2]]);
+         end;
+         pBackend.Input.Write(cmd[1],Length(cmd));
     end;
 end;
 
@@ -1372,6 +1390,11 @@ begin
       RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, false)+'"');
 end;
 
+procedure TfmMCX.miUseMatlabClick(Sender: TObject);
+begin
+     miUseMatlab.Checked:=not miUseMatlab.Checked;
+end;
+
 procedure TfmMCX.MenuItem9Click(Sender: TObject);
 begin
     pcSimuEditor.ActivePage:=tabInputData;
@@ -1679,8 +1702,10 @@ var
 begin
      maxtag:=0;
      ss:= root.AsJSON;
-     if(root.JSONType <> jtArray) then
-        raise Exception.Create('Shape data root node should always be an array');
+     if(root.JSONType <> jtArray) then begin
+        MessageDlg('JSON Error','Shape data root node should always be an array', mtError, [mbOK],0);
+        exit;
+     end;
      for i:=0 to root.Count-1 do begin
        jobj:=TJSONObject(root.Items[i]);
        ss:=jobj.AsJSON;
@@ -2097,7 +2122,8 @@ begin
       if not (ckDoReplay.Checked) then
           seed:=StrToInt(edSeed.Text);
   except
-      raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
+      MessageDlg('Input Error','Invalid numbers: check the values for thread, block, photon and time gate settings', mtError, [mbOK],0);
+      exit;
   end;
 
   try
@@ -2319,7 +2345,8 @@ begin
         if not (ckDoReplay.Checked) then
             seed:=StrToInt(edSeed.Text);
     except
-        raise Exception.Create('Invalid numbers: check the values for thread, block, photon and time gate settings');
+        MessageDlg('Input Error','Invalid numbers: check the values for thread, block, photon and time gate settings', mtError, [mbOK],0);
+        exit;
     end;
 
     if(grProgram.ItemIndex <>1) then begin

@@ -57,9 +57,9 @@ if(ndims(squeeze(data))==4)
     data=sum(squeeze(data),4);
 end
 
-if(nargout>2)
+if(nargout>=2)
     filename=fname;
-elseif(nargout>2)
+elseif(nargout>=1)
     dat=data;
 end
 
