@@ -1113,6 +1113,7 @@ procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
 var
     outputfile, cmd: string;
     ftype: TAction;
+    ngates: integer;
 begin
      if(CurrentSession=nil) then exit;
      if not (grProgram.ItemIndex=0) then begin
@@ -1135,7 +1136,8 @@ begin
          if(Pos('.nii',ftype.Hint)>0) then begin
              cmd:=Format('data=mcxplotvol(''%s'');'+#10,[outputfile]);
          end else begin
-             cmd:=Format('data=mcxplotvol(''%s'',%s);'+#10,[outputfile,sgConfig.Cells[2,2]]);
+             ngates:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
+             cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
          end;
          pBackend.Input.Write(cmd[1],Length(cmd));
     end;

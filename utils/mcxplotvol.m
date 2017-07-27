@@ -1,10 +1,10 @@
-function [dat, filename]=mcxplotvol(varargin)
+function [dat, filename, handles, hfig]=mcxplotvol(varargin)
 %
-%    [dat, filename]=mcxplotvol()
+%    [dat, filename, handles]=mcxplotvol()
 %       or
-%    [dat, filename]=mcxplotvol(fname)
-%    [dat, filename]=mcxplotvol(data)
-%    [dat, filename]=mcxplotvol(fname,dim,format)
+%    [dat, filename, handles]=mcxplotvol(fname)
+%    [dat, filename, handles]=mcxplotvol(data)
+%    [dat, filename, handles]=mcxplotvol(fname,dim,format)
 %
 %    author: Qianqian Fang (q.fang <at> neu.edu)
 %
@@ -18,8 +18,9 @@ function [dat, filename]=mcxplotvol(varargin)
 %               the .mc2 file; if omitted, it is set to 'float'
 %
 %    output:
-%        dat:  the 3-D or 4-D data being plotted
-%        filename: the name of the file being plotted
+%        dat:(optional)  the 3-D or 4-D data being plotted
+%        filename: (optional) the name of the file being plotted
+%        handles:(optional) the handles to the slice surface object
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see http://mcx.sf.net for details
@@ -53,9 +54,9 @@ else
     end
 end
 
-if(ndims(squeeze(data))==4)
-    data=sum(squeeze(data),4);
-end
+%if(ndims(squeeze(data))==4)
+%    data=sum(squeeze(data),4);
+%end
 
 if(nargout>=2)
     filename=fname;
@@ -63,4 +64,48 @@ elseif(nargout>=1)
     dat=data;
 end
 
-islicer(data);
+hfig=figure;
+
+guidata=struct('filename',fname,'data',data,'frame',1);
+guidata.handles=islicer(data(:,:,:,guidata.frame));
+
+set(hfig,'WindowKeyPressFcn',@changeframe)
+set(hfig,'name',fname);
+set(hfig,'NumberTitle','off');
+set(gca,'UserData',guidata);
+
+title({'Drag slices using mouse left-button;',
+ 'Click&drag mouse mid-button to rotate;',
+ 'Drag right-button up-down to change color level',
+ 'Up-key:next time-gate;Down-key:prev time-gate'
+},'fontweight','normal');
+
+xlabel(sprintf('x (frame=%d)',1));
+ylabel('y');
+zlabel('z');
+
+colorbar;
+
+
+function changeframe(src,event)
+
+guidata=get(gca,'UserData');
+
+if(isempty(guidata) || ~isfield(guidata,'frame'))
+    return;
+end
+
+switch(event.Key)
+    case 'uparrow'
+         newframe=min(guidata.frame+1,size(guidata.data,4));
+    case 'downarrow'
+         newframe=max(guidata.frame-1,1);
+end
+
+if(newframe~=guidata.frame)
+    delete(guidata.handles);
+    guidata.handles=islicer(guidata.data(:,:,:,newframe));
+    xlabel(sprintf('x (frame=%d)',newframe));
+    guidata.frame=newframe;
+    set(gca,'UserData',guidata);
+end

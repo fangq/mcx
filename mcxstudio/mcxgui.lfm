@@ -221,6 +221,7 @@ object fmMCX: TfmMCX
       Left = 565
       Top = 0
       Action = mcxdoVerify
+      Caption = 'Validate'
       ParentShowHint = False
       ShowHint = True
     end
@@ -2235,6 +2236,7 @@ object fmMCX: TfmMCX
           FixedCols = 0
           Flat = True
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goAutoAddRows, goSmoothScroll, goCellEllipsis]
+          ParentShowHint = False
           RowCount = 4
           TabOrder = 1
           TitleImageList = ImageList1
@@ -2300,6 +2302,7 @@ object fmMCX: TfmMCX
           FixedCols = 0
           Flat = True
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goSmoothScroll]
+          ParentShowHint = False
           RowCount = 3
           TabOrder = 3
           TitleStyle = tsNative
@@ -2405,6 +2408,7 @@ object fmMCX: TfmMCX
           Flat = True
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goSmoothScroll, goCellEllipsis]
           ParentFont = False
+          ParentShowHint = False
           RowCount = 15
           TabOrder = 7
           TitleStyle = tsNative
