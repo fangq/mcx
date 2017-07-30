@@ -1096,7 +1096,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint *gmedia;
      float4 *gPpos,*gPdir,*gPlen;
      uint   *gPseed,*gdetected;
-     float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw,*greplaytof,*gdebugdata;
+     float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL;
      RandType *gseeddata=NULL;
      int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6;
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
