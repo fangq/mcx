@@ -1116,8 +1116,8 @@ var
     ngates: integer;
 begin
      if(CurrentSession=nil) then exit;
-     if not (grProgram.ItemIndex=0) then begin
-        MessageDlg('Error', 'You must select an MCX simulation to use this feature', mtError, [mbOK],0);
+     if (grProgram.ItemIndex=1) then begin
+        MessageDlg('Error', 'You must select an MCX or MCXCL simulation to use this feature', mtError, [mbOK],0);
         exit;
     end;
     if not (Sender is TAction) then exit;
@@ -1577,7 +1577,7 @@ begin
       else
           if(OpenVolume.Execute) then
              grid.Cells[grid.Col,grid.Row]:=OpenVolume.FileName;
-   end else if(grid.Col=2) and (grid.Row>=10) and (grid.Row<=12) then begin
+   end else if(grid.Col=2) and (grid.Row>=10) and (grid.Row<=12) and (grProgram.ItemIndex<2) then begin
       fmSrc:=TfmSource.Create(Application);
       if(Length(grid.Cells[2,10])>0) then begin
              fmSrc.edSource.Text:=grid.Cells[2,10];
@@ -2457,11 +2457,15 @@ begin
       end;
       cmd:=cmd+Format(' --specular %d --basisorder %d --momentum %d',[Integer(ckSpecular.Checked),edRespin.Value,Integer(ckMomentum.Checked)]);
     end else begin
-        if(grAtomic.ItemIndex=0) then
-             cmd:=cmd+' --skipradius -2';
+        if(grAtomic.ItemIndex=0) then begin
+           if(grProgram.ItemIndex=0) then
+               cmd:=cmd+' --skipradius -2'
+           else
+               cmd:=cmd+' --compileropt "-D USE_ATOMIC"';
+        end;
         cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
-        if(grAtomic.ItemIndex=2) then
-            cmd:=cmd+ Format(' --kernel "%s%c%s"', [rootpath,DirectorySeparator,'mcx_core.cl'])
+        if(grProgram.ItemIndex=2) then
+            cmd:=cmd+ Format(' --kernel "%s%s"', [ExtractFilePath(Application.ExeName),'mcx_core.cl'])
     end;
 
     if(ckSkipVoid.Checked) then
