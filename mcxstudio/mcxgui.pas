@@ -1075,7 +1075,7 @@ begin
           if(miUseMatlab.Checked) then begin
               backendname:='matlab';
           end else begin
-              backendname:='octave';
+              backendname:='octave-cli';
           end;
           exename:=SearchForExe(backendname);
 
@@ -1816,6 +1816,7 @@ begin
               sgConfig.Cells[2,2]:=jobj.FindPath('Size').AsJSON;
        end;
      end;
+     edRespinChange(sgConfig);
      Result:=maxtag;
 end;
 
@@ -2713,6 +2714,7 @@ begin
                 except
                 end;
            end;
+           edRespinChange(ck);
            continue;
       end else if(plSetting.Controls[i] is TGroupBox) then begin
        gb:= plSetting.Controls[i] as TGroupBox;
@@ -2777,6 +2779,7 @@ begin
                continue;
            end;
            if(idx>=0) then ck.Checked:=(node.SubItems.Strings[idx]='1');
+           edRespinChange(ck);
            continue;
         end;
         if(gb.Controls[id] is TCheckListBox) then begin
