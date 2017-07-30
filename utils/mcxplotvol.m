@@ -74,13 +74,13 @@ set(hfig,'name',fname);
 set(hfig,'NumberTitle','off');
 set(gca,'UserData',guidata);
 
-title({'Drag slices using mouse left-button;',
- 'Click&drag mouse mid-button to rotate;',
- 'Drag right-button up-down to change color level',
- 'Up-key:next time-gate;Down-key:prev time-gate'
+title({'Drag slices using mouse left-key;',
+ 'Click and drag mouse mid-key to rotate;',
+ 'Drag right-key up-down to change color level',
+ 'Up-arrow:next time-gate;Down-arrow:prev time-gate'
 },'fontweight','normal');
 
-xlabel(sprintf('x (frame=%d)',1));
+xlabel(sprintf('x (frame=%d of %d)',1,size(data,4)));
 ylabel('y');
 zlabel('z');
 
@@ -105,7 +105,7 @@ end
 if(newframe~=guidata.frame)
     delete(guidata.handles);
     guidata.handles=islicer(guidata.data(:,:,:,newframe));
-    xlabel(sprintf('x (frame=%d)',newframe));
+    xlabel(sprintf('x (frame=%d of %d)',newframe,size(guidata.data,4)));
     guidata.frame=newframe;
     set(gca,'UserData',guidata);
 end

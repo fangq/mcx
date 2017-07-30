@@ -33,6 +33,7 @@ function h = slice3i(vol, I2X, slicedim, sliceidx, handle)
 %    1) compatible with octave 4.0 or newer
 %    2) start 3D rotation by clicking/holding the middle mouse key
 %    3) adjust colormap levels by dragging with the right mouse key
+%    4) support 4-D data (up/down key to change frames)
 % 
 
 try
@@ -192,3 +193,4 @@ if nargin<5 || handle == 0
 else
   h = image3i(sliceim,ij2xyz,handle);
 end
+
