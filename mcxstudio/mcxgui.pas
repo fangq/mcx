@@ -1394,11 +1394,14 @@ end;
 function TfmMCX.SearchForExe(fname : string) : string;
 begin
    {$IFDEF WINDOWS}
-   if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
+   if(Pos('.cl',Trim(LowerCase(fname)))<=0) then
+       if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
            fname:=fname+'.exe';
    {$ENDIF}
    Result :=
-    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+GetEnvironmentVariable('PATH'),
+    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+
+        ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
+        DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
 end;
 
@@ -2384,7 +2387,7 @@ function TfmMCX.CreateCmd:string;
 var
     nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    cmd, jsonfile, gpuid, debugflag, rootpath, inputjson: string;
+    cmd, jsonfile, gpuid, debugflag, rootpath, inputjson, fname: string;
     shellscript: TStringList;
 begin
     rootpath:='';
@@ -2464,8 +2467,15 @@ begin
                cmd:=cmd+' --compileropt "-D USE_ATOMIC"';
         end;
         cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
-        if(grProgram.ItemIndex=2) then
-            cmd:=cmd+ Format(' --kernel "%s%s"', [ExtractFilePath(Application.ExeName),'mcx_core.cl'])
+        if(grProgram.ItemIndex=2) then begin
+          fname:=SearchForExe('mcx_core.cl');
+          if(Length(fname)>0) then
+              cmd:=cmd+ Format(' --kernel "%s"', [fname])
+          else begin
+              MessageDlg('Input Error', 'can not find "mcx_core.cl" please copy this file from mcxcl''s bin folder to the same folder storing mcxsudio', mtError, [mbOK],0);
+              exit;
+          end;
+        end;
     end;
 
     if(ckSkipVoid.Checked) then
