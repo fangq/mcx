@@ -17,7 +17,7 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
-  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
+  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF};
 
 type
 
@@ -1074,8 +1074,10 @@ begin
      if(not pBackend.Running) then begin
           if(miUseMatlab.Checked) then begin
               backendname:='matlab';
+              pBackend.ShowWindow:=swoHIDE;
           end else begin
               backendname:='octave-cli';
+              pBackend.ShowWindow:=swoNone;
           end;
           exename:=SearchForExe(backendname);
 
@@ -1114,6 +1116,9 @@ var
     outputfile, cmd: string;
     ftype: TAction;
     ngates: integer;
+    {$IFDEF WINDOWS}
+    hwin: hWnd;
+    {$ENDIF}
 begin
      if(CurrentSession=nil) then exit;
      if (grProgram.ItemIndex=1) then begin
@@ -1128,19 +1133,35 @@ begin
       MessageDlg('Error', Format('The %s%s output file has not been created',[edSession.Text,ftype.Hint]), mtError, [mbOK],0);
       exit;
     end;
-    if not (pBackend.Running) then begin
+
+     if(Pos('.nii',ftype.Hint)>0) then begin
+         cmd:=Format('data=mcxplotvol(''%s'');'+#10,[outputfile]);
+     end else begin
+         ngates:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
+         cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
+     end;
+     {$IFDEF WINDOWS}
+     if(miUseMatlab.Checked) then begin
+         hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
+         if (hwin=0) and not (pBackend.Running) then begin
+              StartBackend;
+              Sleep(2000);
+         end;
+         repeat
+             hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
+             Sleep(1000);
+         until (hwin>0);
+         SendKeysToTitle('MATLAB Command Window',cmd);
+         exit;
+     end;
+     {$ENDIF}
+     if not (pBackend.Running) then begin
          StartBackend;
          Sleep(2000);
-    end;
-    if(pBackend.Running) then begin
-         if(Pos('.nii',ftype.Hint)>0) then begin
-             cmd:=Format('data=mcxplotvol(''%s'');'+#10,[outputfile]);
-         end else begin
-             ngates:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
-             cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
-         end;
-         pBackend.Input.Write(cmd[1],Length(cmd));
-    end;
+     end;
+     if(pBackend.Running) then begin
+          pBackend.Input.Write(cmd[1],Length(cmd));
+     end;
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
