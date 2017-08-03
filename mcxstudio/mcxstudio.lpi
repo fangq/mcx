@@ -129,7 +129,7 @@
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="7"/>
         <CursorPos X="107" Y="12"/>
         <UsageCount Value="230"/>
         <Loaded Value="True"/>
@@ -140,7 +140,6 @@
         <ComponentName Value="fmMCX"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
         <TopLine Value="1066"/>
         <CursorPos X="43" Y="1077"/>
         <UsageCount Value="230"/>
@@ -156,7 +155,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="10"/>
         <CursorPos X="17" Y="11"/>
         <UsageCount Value="229"/>
@@ -215,7 +214,7 @@
         <ComponentName Value="fmShapeEditor"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="53"/>
         <CursorPos X="16" Y="60"/>
         <UsageCount Value="201"/>
@@ -312,7 +311,7 @@
         <ComponentName Value="fmNewSession"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="2"/>
         <CursorPos Y="68"/>
         <UsageCount Value="192"/>
@@ -348,7 +347,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="112"/>
         <CursorPos X="82" Y="154"/>
         <UsageCount Value="183"/>
@@ -427,9 +426,10 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="48"/>
-        <CursorPos X="80" Y="53"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="45"/>
+        <CursorPos X="34" Y="61"/>
         <UsageCount Value="118"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -491,7 +491,7 @@
         <Filename Value="sendkeys.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SendKeys"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="1"/>
         <TopLine Value="3"/>
         <CursorPos X="22" Y="138"/>
         <UsageCount Value="22"/>
@@ -499,144 +499,138 @@
       </Unit44>
       <Unit45>
         <Filename Value="../../../../../../../lazarus/fpc/3.0.2/source/rtl/objpas/classes/classesh.inc"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="284"/>
         <CursorPos X="3" Y="298"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
       </Unit45>
       <Unit46>
         <Filename Value="../../../../../../../lazarus/lcl/lcltype.pp"/>
         <UnitName Value="LCLType"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="382"/>
         <CursorPos X="12" Y="403"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit46>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1145" Column="27" TopLine="1132"/>
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="44" Column="22" TopLine="20"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="44" Column="22" TopLine="20"/>
+        <Caret Line="375" Column="27" TopLine="359"/>
       </Position3>
       <Position4>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="375" Column="27" TopLine="359"/>
+        <Filename Value="sendkeys.pas"/>
+        <Caret Line="55" Column="27" TopLine="46"/>
       </Position4>
       <Position5>
         <Filename Value="sendkeys.pas"/>
-        <Caret Line="55" Column="27" TopLine="46"/>
+        <Caret Line="115" Column="27" TopLine="100"/>
       </Position5>
       <Position6>
         <Filename Value="sendkeys.pas"/>
-        <Caret Line="115" Column="27" TopLine="100"/>
       </Position6>
       <Position7>
         <Filename Value="sendkeys.pas"/>
+        <Caret Line="55" Column="27" TopLine="31"/>
       </Position7>
       <Position8>
         <Filename Value="sendkeys.pas"/>
-        <Caret Line="55" Column="27" TopLine="31"/>
+        <Caret Line="115" Column="27" TopLine="97"/>
       </Position8>
       <Position9>
-        <Filename Value="sendkeys.pas"/>
-        <Caret Line="115" Column="27" TopLine="97"/>
+        <Filename Value="mcxoutput.pas"/>
+        <Caret Line="63" Column="23" TopLine="48"/>
       </Position9>
       <Position10>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="63" Column="23" TopLine="48"/>
+        <Caret Line="73" TopLine="50"/>
       </Position10>
       <Position11>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="73" TopLine="50"/>
+        <Caret Line="74" Column="33" TopLine="56"/>
       </Position11>
       <Position12>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="74" Column="33" TopLine="56"/>
+        <Caret Line="70" Column="24" TopLine="54"/>
       </Position12>
       <Position13>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="70" Column="24" TopLine="54"/>
+        <Caret Line="70" Column="37" TopLine="54"/>
       </Position13>
       <Position14>
-        <Filename Value="../../../../../../../lazarus/lcl/lcltype.pp"/>
-        <Caret Line="391" Column="21" TopLine="382"/>
+        <Filename Value="mcxoutput.pas"/>
+        <Caret Line="81" Column="3" TopLine="60"/>
       </Position14>
       <Position15>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="70" Column="37" TopLine="54"/>
+        <Caret Line="70" TopLine="60"/>
       </Position15>
       <Position16>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="81" Column="3" TopLine="60"/>
+        <Caret Line="68" Column="32" TopLine="60"/>
       </Position16>
       <Position17>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="70" TopLine="60"/>
+        <Caret Line="69" TopLine="61"/>
       </Position17>
       <Position18>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="68" Column="32" TopLine="60"/>
+        <Caret Line="83" Column="75" TopLine="67"/>
       </Position18>
       <Position19>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="69" TopLine="61"/>
+        <Caret Line="89" Column="28" TopLine="69"/>
       </Position19>
       <Position20>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="83" Column="75" TopLine="67"/>
+        <Caret Line="82" TopLine="69"/>
       </Position20>
       <Position21>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="89" Column="28" TopLine="69"/>
+        <Caret Line="87" TopLine="67"/>
       </Position21>
       <Position22>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="82" TopLine="69"/>
+        <Caret Line="78" Column="26" TopLine="64"/>
       </Position22>
       <Position23>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="87" TopLine="67"/>
+        <Caret Line="71" TopLine="64"/>
       </Position23>
       <Position24>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="78" Column="26" TopLine="64"/>
+        <Caret Line="74" TopLine="64"/>
       </Position24>
       <Position25>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="71" TopLine="64"/>
+        <Caret Line="69" TopLine="64"/>
       </Position25>
       <Position26>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="74" TopLine="64"/>
+        <Caret Line="71" TopLine="64"/>
       </Position26>
       <Position27>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="69" TopLine="64"/>
+        <Caret Line="80" Column="25" TopLine="64"/>
       </Position27>
       <Position28>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="71" TopLine="64"/>
+        <Caret Line="61" Column="28" TopLine="48"/>
       </Position28>
       <Position29>
         <Filename Value="mcxoutput.pas"/>
-        <Caret Line="80" Column="25" TopLine="64"/>
+        <Caret Line="59" Column="80" TopLine="49"/>
       </Position29>
-      <Position30>
-        <Filename Value="mcxoutput.pas"/>
-        <Caret Line="61" Column="28" TopLine="48"/>
-      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
