@@ -1,13 +1,12 @@
 object fmOutput: TfmOutput
-  Left = -4
+  Left = 0
   Height = 600
-  Top = 491
+  Top = 206
   Width = 561
   Caption = 'Output'
   ClientHeight = 600
   ClientWidth = 561
-  Position = poOwnerFormCenter
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.6.0.4'
   object Panel1: TPanel
     Left = 0
     Height = 600
@@ -554,12 +553,12 @@ object fmOutput: TfmOutput
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = btSendCmd
         Left = 120
-        Height = 25
-        Top = 5
+        Height = 27
+        Top = 4
         Width = 361
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 2
-        ItemHeight = 15
+        ItemHeight = 0
         OnKeyPress = edCmdInputKeyPress
         Style = csSimple
         TabOrder = 1

@@ -1327,11 +1327,11 @@ begin
 
     fmOutput:=TfmOutput.Create(self);
     fmOutput.Top:=self.Top+(tbtStop.Width*17 div 20);
-    fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
+//    fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
     fmOutput.pProc:=pMCX;
 
     fmBackend:=TfmOutput.Create(self);
-    fmBackend.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
+//    fmBackend.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
     fmBackend.Top:=fmOutput.Top+ fmOutput.Height;
     fmBackend.Height:=Self.Height-fmOutput.Height;
     fmBackend.pProc:=pBackend;
