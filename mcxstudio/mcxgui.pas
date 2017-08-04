@@ -1424,6 +1424,11 @@ begin
         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
+   if(DirectoryExists(Result)) then
+     Result :=SearchFileInPath(fname, '',
+         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
+         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
+                      PathSeparator, [sffDontSearchInBasePath]);
 end;
 
 function TfmMCX.GetFileBrowserPath : string;
