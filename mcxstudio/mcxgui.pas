@@ -1323,6 +1323,10 @@ begin
     hcToolbar.Sections[0].Width:=hcToolbar.Sections[0].Width+2;
     hcToolbar.Sections[0].MinWidth:=hcToolbar.Sections[0].MinWidth+2;
   {$ENDIF}
+
+  {$IFDEF DARWIN}
+    lvJobs.ViewStyle:=vsReport;
+  {$ENDIF}
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
 
     fmOutput:=TfmOutput.Create(self);

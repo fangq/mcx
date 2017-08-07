@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 0
+  Left = 329
   Height = 788
-  Top = 109
+  Top = 107
   Width = 1280
   ActiveControl = lvJobs
   Align = alTop
@@ -351,212 +351,172 @@ object fmMCX: TfmMCX
     AutoSort = False
     Columns = <    
       item
-        AutoSize = True
         Caption = 'Session'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'InputFile'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'ThreadNum'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'ThreadBlock'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'PhotonNum'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'RespinNum'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'ArrayOrder'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'BubbleSize'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'GateNum'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoReflect'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSave'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoNormalize'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'Autopilot'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'SaveDetector'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DetectedNum'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'GPUID'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'UnitInMM'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSaveRef'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSaveExit'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSaveSeed'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSkipVoid'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSrcFrom0'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'MediaCfg'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DetectorCfg'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'MCXConfig'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'Workload'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'ShapeCfg'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'Seed'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSaveMask'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DebugFlags'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'ReplayDet'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoReplay'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'MCProgram'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoSpecular'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'UseAtomic'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'BasicOrder'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DebugPhoton'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'MoreParam'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'RemoteCmd'
-        Width = 10
+        Width = 100
       end    
       item
-        AutoSize = True
         Caption = 'DoRemote'
-        Width = 10
+        Width = 100
       end    
       item
         Caption = 'DoSharedFS'
-        Width = 10
+        Width = 100
       end    
       item
         Caption = 'OutputFormat'
-        Width = 10
+        Width = 100
       end>
     Constraints.MinWidth = 20
     IconOptions.AutoArrange = True
