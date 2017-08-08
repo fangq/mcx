@@ -1116,6 +1116,7 @@ var
     outputfile, cmd: string;
     ftype: TAction;
     ngates: integer;
+    ismatlabconsole: boolean;
     {$IFDEF WINDOWS}
     hwin: hWnd;
     {$ENDIF}
@@ -1143,15 +1144,25 @@ begin
      {$IFDEF WINDOWS}
      if(miUseMatlab.Checked) then begin
          hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
+         if(hwin=0) then
+             hwin:=GetHandleFromWindowTitle('Command Window');
          if (hwin=0) and not (pBackend.Running) then begin
               StartBackend;
               Sleep(2000);
          end;
+         ismatlabconsole:=false;
          repeat
              hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
+             if(hwin=0) then
+                 hwin:=GetHandleFromWindowTitle('Command Window')
+             else
+                 ismatlabconsole:=true;
              Sleep(1000);
          until (hwin>0);
-         SendKeysToTitle('MATLAB Command Window',cmd);
+         if(ismatlabconsole) then
+             SendKeysToTitle('MATLAB Command Window',cmd)
+         else
+             SendKeysToTitle('Command Window',cmd);
          exit;
      end;
      {$ENDIF}
