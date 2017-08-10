@@ -1,3 +1,26 @@
+/*******************************************************************************
+**
+**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+**
+**  \author Qianqian Fang <q.fang at neu.edu>
+**
+**  \section sref Reference:
+**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
+**          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
+**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
+**          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
+**  
+**  \section slicense License
+**        GNU General Public License v3, see LICENSE.txt for details
+**
+*******************************************************************************/
+
+/***************************************************************************//**
+\file    mcx_core.h
+
+\brief   MCX GPU kernel header file
+*******************************************************************************/
+
 #ifndef _MCEXTREME_GPU_LAUNCH_H
 #define _MCEXTREME_GPU_LAUNCH_H
 
@@ -17,25 +40,25 @@ extern "C" {
 #define ROULETTE_SIZE       10.f
 
 #ifdef  MCX_DEBUG
-#define GPUDEBUG(x)        printf x             // enable debugging in CPU mode
+#define GPUDEBUG(x)        printf x             /**< enable debugging in CPU mode */
 #else
 #define GPUDEBUG(x)
 #endif
 
-typedef float4 MCXpos;
+typedef float4 MCXpos; /**< x,y,z: position of the photon, w: weight of the photon*/
 
 typedef struct  __align__(16) MCXDir{
-        float x; /*directional vector of the photon, unit-less*/
-	float y;
-	float z;
-        float nscat; /*total number of scattering events*/
+        float x; /**< directional vector of the photon, x-component*/
+	float y; /**< directional vector of the photon, y-component*/
+	float z; /**< directional vector of the photon, z-component*/
+        float nscat; /**< total number of scattering events*/
 }MCXdir;
 
 typedef struct  __align__(16) MCXTimer{
-        float pscat; /*remaining scattering probability, unit-less*/
-        float t;     /*photon elapse time, unit=s*/
-	float tnext; /*time for the next accumulation,unit=s*/
-	float ndone; /*number of completed photons*/
+        float pscat; /**< remaining scattering probability, unit-less*/
+        float t;     /**< photon elapse time, unit=s*/
+	float tnext; /**< time for the next accumulation,unit=s*/
+	float ndone; /**< number of completed photons*/
 }MCXtime;
 
 typedef union  __align__(16) GPosition{

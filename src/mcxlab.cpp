@@ -1,18 +1,19 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
-//  Author: Qianqian Fang <q.fang at neu.edu>
-//
-//  Reference (Fang2009):
-//        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon
-//        Migration in 3D Turbid Media Accelerated by Graphics Processing
-//        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
-//
-//  mcxlab.cpp: MCX for Matlab and Octave
-//
-//  License: GNU General Public License v3, see LICENSE.txt for details
-//
-////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+**
+**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+**
+**  \author Qianqian Fang <q.fang at neu.edu>
+**
+**  \section sref Reference:
+**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
+**          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
+**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
+**          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
+**  
+**  \section slicense License
+**        GNU General Public License v3, see LICENSE.txt for details
+**
+*******************************************************************************/
 
 #include <stdio.h>
 #include <string.h>

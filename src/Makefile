@@ -6,6 +6,10 @@
 
 BACKEND ?= cuda
 
+ROOTDIR ?= ..
+MCXDIR  ?= $(ROOTDIR)
+MCXSRC :=$(MCXDIR)/src
+
 ifeq ($(BACKEND),ocelot)
   CC?=g++
 endif
@@ -17,7 +21,11 @@ MEX=mex
 AR=$(CC)
 
 BINARY=mcx
-OUTPUT_DIR=../bin
+OUTPUT_DIR=$(MCXDIR)/bin
+
+DOXY       := doxygen
+DOCDIR     := $(MCXDIR)/doc
+DOXYCFG=mcxdoxy.cfg
 
 INCLUDEDIRS=-I/usr/local/cuda/include
 
@@ -161,6 +169,10 @@ debug: debugxor
 mex: fermimex
 oct: fermioct
 
+##  Documentation  ##
+doc: makedocdir
+	$(DOXY) $(DOXYCFG)
+
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
 all xor fast log logfast racing xoratomic logatomic xorbox logbox debugxor debuglog \
@@ -168,6 +180,9 @@ all xor fast log logfast racing xoratomic logatomic xorbox logbox debugxor debug
 
 makedirs:
 	@if test ! -d $(OUTPUT_DIR); then $(MKDIR) $(OUTPUT_DIR); fi
+
+makedocdir:
+	@if test ! -d $(DOCDIR); then $(MKDIR) $(DOCDIR); fi
 
 $(OUTPUT_DIR)/$(BINARY): makedirs $(OBJS)
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
