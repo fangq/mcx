@@ -1,18 +1,25 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-//  Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
-//  Author: Qianqian Fang <q.fang at neu.edu>
-//
-//  Reference (Fang2009):
-//        Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon 
-//        Migration in 3D Turbid Media Accelerated by Graphics Processing 
-//        Units," Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009)
-//
-//  mcx_core.cu: GPU kernels and CUDA host code
-//
-//  License: GNU General Public License v3, see LICENSE.txt for details
-//
-////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+**
+**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+**
+**  \author Qianqian Fang <q.fang at neu.edu>
+**
+**  \section sref Reference:
+**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
+**          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
+**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
+**          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
+**  
+**  \section slicense License
+**        GNU General Public License v3, see LICENSE.txt for details
+**
+*******************************************************************************/
+
+/***************************************************************************//**
+\file    mcx_core.cu
+
+\brief   GPU kernel for MC simulations and CUDA host code
+*******************************************************************************/
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -879,7 +886,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } // else, total internal reflection
-	          if(Rtotal<1.f && rand_next_reflect(t)>Rtotal){ // do transmission
+	          if(Rtotal<1.f && gproperty[mediaid].w>=1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
 		    	    if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
