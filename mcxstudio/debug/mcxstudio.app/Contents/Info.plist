@@ -6,6 +6,8 @@
   <string>English</string>
   <key>CFBundleExecutable</key>
   <string>mcxstudio</string>
+  <key>CFBundleIconFile</key>
+  <string>mcxstudio</string>
   <key>CFBundleName</key>
   <string>MCX Studio</string>
   <key>CFBundleIdentifier</key>
