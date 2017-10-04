@@ -1219,8 +1219,10 @@ void mcx_dumpmask(Config *cfg){
          sprintf(fname,"%s_vol",cfg->session);
 
      mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
-     if(cfg->isdumpmask==1) /*if dumpmask>1, simulation will also run*/
+     if(cfg->isdumpmask==1){ /*if dumpmask>1, simulation will also run*/
+         MCX_FPRINTF(cfg->flog,"volume mask is saved as uint16 format in %s",fname);
          exit(0);
+     }
 }
 
 void mcx_progressbar(float percent, Config *cfg){
