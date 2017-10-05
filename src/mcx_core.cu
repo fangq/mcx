@@ -887,6 +887,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } // else, total internal reflection
 	          if(Rtotal<1.f && gproperty[mediaid].w>=1.f && rand_next_reflect(t)>Rtotal){ // do transmission
+                        transmit(v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
 		    	    if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
@@ -898,7 +899,6 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 			    continue;
 			}
 	                GPUDEBUG(("do transmission\n"));
-			transmit(v,n1,prop.n,flipdir);
                         rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
 		  }else{ //do reflection
 	                GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v->x,v->y,v->z));
