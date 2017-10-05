@@ -52,6 +52,12 @@
 
 #define SET_GPU_INFO(output,id,v)  mxSetField(output,id,#v,mxCreateDoubleScalar(gpuinfo[i].v));
 
+#if (! defined MX_API_VER) || (MX_API_VER < 0x07300000)
+      typedef int dimtype;
+#else
+      typedef size_t dimtype;
+#endif
+
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
 void mcxlab_usage();
@@ -66,7 +72,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   mxArray    *tmp;
   int        ifield, jstruct;
   int        ncfg, nfields;
-  int        fielddim[4];
+  dimtype    fielddim[4];
   int        activedev=0;
   int        errorflag=0;
   int        threadid=0;
@@ -310,7 +316,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg){
     const char *name=mxGetFieldNameByNumber(root,idx);
-    const int *arraydim;
+    const dimtype *arraydim;
     char *jsonshapes=NULL;
     int i,j;
 
@@ -356,7 +362,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_VEC4_FIELD(cfg,srcparam1)
     GET_VEC4_FIELD(cfg,srcparam2)
     else if(strcmp(name,"vol")==0){
-        int dimxyz;
+        dimtype dimxyz;
         cfg->mediabyte=0;
         if(mxIsUint8(item) || mxIsInt8(item))
 	     cfg->mediabyte=1;
