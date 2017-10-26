@@ -552,6 +552,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       
       *energylaunched+=p->w;
       *w0=p->w;
+      v->nscat=EPS;
       *Lmove=0.f;
       if((gcfg->debuglevel & MCX_DEBUG_PROGRESS) && ((int)(f->ndone) & 1) && (threadid==0 || threadid==blockDim.x * gridDim.x - 1 
           || threadid==((blockDim.x * gridDim.x)>>1))) { // use the 1st, middle and last thread for progress report
@@ -670,7 +671,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
    	       f.pscat=rand_next_scatlen(t); // random scattering probability, unit-less
 
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
-	       if(p.w<1.f){ // if this is not my first jump
+	       if(v->nscat!=EPS){ // if this is not my first jump
                        //random arimuthal angle
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
@@ -724,6 +725,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                        if(gcfg->debuglevel & MCX_DEBUG_MOVE)
                            savedebugdata(&p,(uint)f.ndone+idx*gcfg->threadphoton+umin(idx,(idx<gcfg->oddphotons)*idx),gdebugdata);
 	       }
+	       v->nscat=(int)v->nscat;
 	  }
 
           n1=prop.n;
