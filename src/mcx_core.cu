@@ -163,7 +163,7 @@ __device__ inline float mcx_nextafterf(float a, int dir){
 }
 
 __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,int *id){
-      float dist, xi[3];
+      float dist;
 
       //time-of-flight to hit the wall in each direction
       htime[0]=fabs((floorf(p0->x)+(v->x>0.f)-p0->x)*rv[0]); // absolute distance of travel in x/y/z
@@ -179,13 +179,11 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
       htime[1]=p0->y+dist*v->y;
       htime[2]=p0->z+dist*v->z;
 
-      xi[0] = mcx_nextafterf(__float2int_rn(htime[0]), (v->x > 0.f)-(v->x < 0.f));
-      xi[1] = mcx_nextafterf(__float2int_rn(htime[1]), (v->y > 0.f)-(v->y < 0.f));
-      xi[2] = mcx_nextafterf(__float2int_rn(htime[2]), (v->z > 0.f)-(v->z < 0.f));
+      int index = (*id & (int)3); 
 
-      if (*id == 0) htime[0] = xi[0];
-      if (*id == 1) htime[1] = xi[1];
-      if (*id == 2) htime[2] = xi[2];
+      if(index == 0) htime[0] = mcx_nextafterf(__float2int_rn(htime[0]), (v->x > 0.f)-(v->x < 0.f));
+      if(index == 1) htime[1] = mcx_nextafterf(__float2int_rn(htime[1]), (v->y > 0.f)-(v->y < 0.f));
+      if(index == 2) htime[2] = mcx_nextafterf(__float2int_rn(htime[2]), (v->z > 0.f)-(v->z < 0.f));
 
       return dist;
 }
