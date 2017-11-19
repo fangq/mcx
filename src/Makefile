@@ -133,12 +133,14 @@ detbox mexbox octbox: CUCCOPT+=-DMCX_TARGET_NAME='"Cached Detective MCX"'
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Fermi MCX"'
 det detbox: BINARY:=$(BINARY)_det
 logbox detbox:          BINARY:=$(BINARY)_cached
-all xorfermi maxwell pascal:    fermi
+all xorfermi maxwell pascal half:    fermi
 maxwell:    CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
 pascal:     CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
 xormax:     maxwell
 xorpas:     pascal
 xorfermi xormax xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+half:       CUCCOPT+=-DUSE_HALF
+half:       CUGENCODE=-arch=compute_60
 
 
 static:     xorfermi

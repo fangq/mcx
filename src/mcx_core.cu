@@ -29,6 +29,10 @@
 #include "tictoc.h"
 #include "mcx_const.h"
 
+#ifdef USE_HALF
+    #include "cuda_fp16.h"
+#endif
+
 #if defined(USE_XORSHIFT128P_RAND)
     #include "xorshift128p_rand.cu" // use xorshift128+ RNG (XORSHIFT128P)
 #elif defined(USE_POSIX_RAND)
@@ -162,6 +166,8 @@ __device__ inline float mcx_nextafterf(float a, int dir){
       return num.f-gcfg->maxvoidstep;
 }
 
+#ifndef USE_HALF
+
 __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,int *id){
       float dist;
 
@@ -187,6 +193,78 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
 
       return dist;
 }
+
+#else
+
+__device__ inline half mcx_nextafter_half(const half a, const short dir){
+      union{
+          half f;
+          short i;
+      } num;
+      num.f=a;
+      ((num.i & 0x7FFFU) == 0) ? (num.i = ((dir & 0x8000U) ) | 1) : ((num.i & 0x8000U) ? num.i+= -dir: num.i+= dir);
+      return num.f;
+}
+
+__device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,int *id){
+      float dist;
+
+      union {
+           unsigned int i;
+           float f;
+           half2 h2;
+           half h[2];
+      } pxy, pzw, vxy, vzw, h1, h2, temp;
+
+      pxy.h2=__floats2half2_rn(floorf(p0->x) - p0->x, floorf(p0->y) - p0->y);
+      pzw.h2=__floats2half2_rn(floorf(p0->z) - p0->z, 1e5f);
+      vxy.h2=__floats2half2_rn(rv[0],rv[1]);
+      vzw.h2=__floats2half2_rn(rv[2],1.f);
+
+      temp.h2 = __floats2half2_rn(0.f, 0.f);
+
+      h1.h2 = __hmul2(__hadd2(pxy.h2,__hgt2(vxy.h2, temp.h2 )), vxy.h2);
+      h2.h2 = __hmul2(__hadd2(pzw.h2,__hgt2(vzw.h2, temp.h2 )), vzw.h2);
+
+      // abs
+      h1.i &= 0x7FFF7FFF;
+      h2.i &= 0x7FFF7FFF;
+
+      temp.h[0]=(__hlt(h1.h[0], h1.h[1]))   ? (*id=0,h1.h[0])  : (*id=1,h1.h[1]);
+      temp.h[1]=(__hlt(temp.h[0], h2.h[0])) ?    temp.h[0]     : (*id=2,h2.h[0]);
+
+      dist=__half2float(temp.h[1]);
+
+      //p0 is inside, p is outside, move to the 1st intersection pt, now in the air side, to be corrected in the else block
+      vxy.h2=__floats2half2_rn(v->x,v->y);
+      vzw.h2=__floats2half2_rn(v->z,0.f);
+
+      pxy.h2=__floats2half2_rn(p0->x, p0->y);
+      pzw.h2=__floats2half2_rn(p0->z, 0.f);
+
+      h1.h2 =__hfma2(vxy.h2,__floats2half2_rn(dist,dist),pxy.h2);
+      h2.h2 =__hfma2(vzw.h2,__floats2half2_rn(dist,dist),pzw.h2);
+      htime[0]=__half2float(h1.h[0]);
+      htime[1]=__half2float(h1.h[1]);
+      htime[2]=__half2float(h2.h[0]);
+
+      temp.h2 = __floats2half2_rn(0.f, 0.f);
+      pxy.h2=__hgt2(vxy.h2, temp.h2 );
+      pzw.h2=__hlt2(vxy.h2, temp.h2 );
+      pxy.h2=__hsub2(pxy.h2, pzw.h2 );
+
+      pzw.h2=__hlt2(vzw.h2, temp.h2 );
+      temp.h2=__hgt2(vzw.h2, temp.h2 );
+      pzw.h2=__hsub2(temp.h2,pzw.h2 );
+
+      if((*id) == 0) htime[0] = __half2float(mcx_nextafter_half(h1.h[0], __half2short_rn(pxy.h[0])));
+      if((*id) == 1) htime[1] = __half2float(mcx_nextafter_half(h1.h[1], __half2short_rn(pxy.h[1])));
+      if((*id) == 2) htime[2] = __half2float(mcx_nextafter_half(h2.h[0], __half2short_rn(pzw.h[0])));
+
+      return dist;
+}
+
+#endif
 
 __device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
       float tmp0=n1/n2;
