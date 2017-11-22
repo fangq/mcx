@@ -187,9 +187,9 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
 
       int index = (*id & (int)3); 
 
-      if(index == 0) htime[0] = mcx_nextafterf(__float2int_rn(htime[0]), (v->x > 0.f)-(v->x < 0.f));
-      if(index == 1) htime[1] = mcx_nextafterf(__float2int_rn(htime[1]), (v->y > 0.f)-(v->y < 0.f));
-      if(index == 2) htime[2] = mcx_nextafterf(__float2int_rn(htime[2]), (v->z > 0.f)-(v->z < 0.f));
+      if(index == 0) htime[0] = mcx_nextafterf(roundf(htime[0]), (v->x > 0.f)-(v->x < 0.f));
+      if(index == 1) htime[1] = mcx_nextafterf(roundf(htime[1]), (v->y > 0.f)-(v->y < 0.f));
+      if(index == 2) htime[2] = mcx_nextafterf(roundf(htime[2]), (v->z > 0.f)-(v->z < 0.f));
 
       return dist;
 }
@@ -202,7 +202,7 @@ __device__ inline half mcx_nextafter_half(const half a, const short dir){
           short i;
       } num;
       num.f=a;
-      ((num.i & 0x7FFFU) == 0) ? (num.i = ((dir & 0x8000U) ) | 1) : ((num.i & 0x8000U) ? num.i+= -dir: num.i+= dir);
+      ((num.i & 0x7FFFU) == 0) ? (num.i = ((dir & 0x8000U) ) | 1) : ((num.i & 0x8000U) ? num.i-= dir: num.i+= dir);
       return num.f;
 }
 
@@ -257,9 +257,9 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
       temp.h2=__hgt2(vzw.h2, temp.h2 );
       pzw.h2=__hsub2(temp.h2,pzw.h2 );
 
-      if((*id) == 0) htime[0] = __half2float(mcx_nextafter_half(h1.h[0], __half2short_rn(pxy.h[0])));
-      if((*id) == 1) htime[1] = __half2float(mcx_nextafter_half(h1.h[1], __half2short_rn(pxy.h[1])));
-      if((*id) == 2) htime[2] = __half2float(mcx_nextafter_half(h2.h[0], __half2short_rn(pzw.h[0])));
+      if((*id) == 0) htime[0] = __half2float(mcx_nextafter_half(hrint(h1.h[0]), __half2short_rn(pxy.h[0])));
+      if((*id) == 1) htime[1] = __half2float(mcx_nextafter_half(hrint(h1.h[1]), __half2short_rn(pxy.h[1])));
+      if((*id) == 2) htime[2] = __half2float(mcx_nextafter_half(hrint(h2.h[0]), __half2short_rn(pzw.h[0])));
 
       return dist;
 }
