@@ -7,20 +7,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg cfgs
-cfg.nphoton=1e8;
-cfg.vol=uint8(ones(200,1,200));
-cfg.srcpos=[100.5 1 1];
+cfg.nphoton=1e7;
+cfg.vol=uint8(ones(60,60,60));
+cfg.srcpos=[30 30 1];
 cfg.srcdir=[0 0 1];
 cfg.gpuid=1;
 % cfg.gpuid='11'; % use two GPUs together
 cfg.autopilot=1;
-cfg.prop=[0 0 1 0.1;0.005 1 0 1.37];
+cfg.prop=[0 0 1 1;0.005 1 0 1.37];
 cfg.tstart=0;
 cfg.tend=5e-9;
 cfg.tstep=1e-10;
-cfg.isreflect=1;
 % calculate the flux distribution with the given config
-flux2=mcxlab(cfg);
+flux=mcxlab(cfg);
 
 
 cfgs(1)=cfg;
