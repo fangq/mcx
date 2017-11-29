@@ -110,18 +110,20 @@ __device__ inline void savecache(float *data,float *cache){
 #endif
 
 #ifdef SAVE_DETECTORS
-__device__ inline uint finddetector(MCXpos *p0,uint id){
-      float4 *gdetpos=gproperty+gcfg->maxmedia+1;
-      if((gdetpos[id].x-p0->x)*(gdetpos[id].x-p0->x)+
-	 (gdetpos[id].y-p0->y)*(gdetpos[id].y-p0->y)+
-	 (gdetpos[id].z-p0->z)*(gdetpos[id].z-p0->z) < gdetpos[id].w*gdetpos[id].w){
-	        return id+1;
+__device__ inline uint finddetector(MCXpos *p0){
+      uint i;
+      for(i=gcfg->maxmedia+1;i<gcfg->maxmedia+gcfg->detnum+1;i++){
+      	if((gproperty[i].x-p0->x)*(gproperty[i].x-p0->x)+
+	   (gproperty[i].y-p0->y)*(gproperty[i].y-p0->y)+
+	   (gproperty[i].z-p0->z)*(gproperty[i].z-p0->z) < gproperty[i].w*gproperty[i].w){
+	        return i-gcfg->maxmedia;
+	   }
       }
       return 0;
 }
 
-__device__ inline void savedetphoton(uint detid,float n_det[],uint *detectedphoton,float nscat,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata){
-      detid=finddetector(p0,detid-1);
+__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float nscat,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata){
+      uint detid=finddetector(p0);
       if(detid){
 	 uint baseaddr=atomicAdd(detectedphoton,1);
 	 if(baseaddr<gcfg->maxdetphoton){
@@ -411,7 +413,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       // let's handle detectors here
           if(gcfg->savedet){
              if(isdet && *mediaid==0)
-	         savedetphoton((isdet>>16),n_det,dpnum,v->nscat,ppath,p,v,photonseed,seeddata);
+	         savedetphoton(n_det,dpnum,v->nscat,ppath,p,v,photonseed,seeddata);
              clearpath(ppath,gcfg->maxmedia);
           }
 #endif
