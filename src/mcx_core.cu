@@ -1681,9 +1681,7 @@ is more than what your have specified (%d), please use the -H option to specify 
            MCX_FPRINTF(cfg->flog,"normalizing raw data ...\t");
            cfg->energyabs+=cfg->energytot-cfg->energyesc;
            if(cfg->outputtype==otFlux || cfg->outputtype==otFluence){
-               scale=1.f/(cfg->energytot*Vvox*cfg->tstep);
-	       if(cfg->unitinmm!=1.f)
-		   scale*=cfg->unitinmm; /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
+               scale=cfg->unitinmm/(cfg->energytot*Vvox*cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
 
                if(cfg->outputtype==otFluence)
 		   scale*=cfg->tstep;
@@ -1693,6 +1691,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	       scale=0.f;
 	       for(i=0;i<cfg->nphoton;i++)
 	           scale+=cfg->replay.weight[i];
+	       scale*=cfg->unitinmm;
 	       if(scale>0.f)
 	           scale=1.f/scale;
            }
