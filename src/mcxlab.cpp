@@ -143,6 +143,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	printf("Running simulations for configuration #%d ...\n", jstruct+1);
 
 	mcx_initcfg(&cfg);
+	detps=NULL;
 
 	for (ifield = 0; ifield < nfields; ifield++) { /* how many input struct fields */
             tmp = mxGetFieldByNumber(prhs[0], jstruct, ifield);
