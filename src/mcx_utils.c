@@ -199,13 +199,13 @@ void mcx_clearcfg(Config *cfg){
      mcx_initcfg(cfg);
 }
 
-void mcx_savenii(float *dat, int len, char* name, int type32bit, int outputformatid, Config *cfg){
+void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputformatid, Config *cfg){
      FILE *fp;
      char fname[MAX_PATH_LENGTH]={'\0'};
      nifti_1_header hdr;
      nifti1_extender pad={{0,0,0,0}};
      float *logval=dat;
-     int i;
+     size_t i;
 
      memset((void *)&hdr, 0, sizeof(hdr));
      hdr.sizeof_hdr = MIN_HEADER_SIZE;
@@ -282,7 +282,7 @@ void mcx_savenii(float *dat, int len, char* name, int type32bit, int outputforma
      free(logval);
 }
 
-void mcx_savedata(float *dat, int len, Config *cfg){
+void mcx_savedata(float *dat, size_t len, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
      char fname[MAX_PATH_LENGTH];

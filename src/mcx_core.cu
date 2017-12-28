@@ -1156,7 +1156,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      int timegate=0, totalgates, gpuid, gpuphoton=0,threadid=0;
 
      unsigned int photoncount=0,printnum;
-     unsigned int tic,tic0,tic1,toc=0,fieldlen,debuglen=MCX_DEBUG_REC_LEN;
+     unsigned int tic,tic0,tic1,toc=0,debuglen=MCX_DEBUG_REC_LEN;
+     size_t fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
      uint3 dimlen;
@@ -1309,7 +1310,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            CUDA_ASSERT(cudaMemcpyToSymbol(gcfg,   &param, sizeof(MCXParam), 0, cudaMemcpyHostToDevice));
 
            tic=StartTimer();
-           MCX_FPRINTF(cfg->flog,"generating %d random numbers ... \t",fieldlen); fflush(cfg->flog);
+           MCX_FPRINTF(cfg->flog,"generating %lu random numbers ... \t",fieldlen); fflush(cfg->flog);
            mcx_test_rng<<<1,1>>>(gfield,gPseed);
            tic1=GetTimeMillis();
            MCX_FPRINTF(cfg->flog,"kernel complete:  \t%d ms\nretrieving random numbers ... \t",tic1-tic);
@@ -1701,7 +1702,7 @@ is more than what your have specified (%d), please use the -H option to specify 
          mcx_normalize(cfg->exportfield,scale,fieldlen,cfg->isnormalized);
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
-         MCX_FPRINTF(cfg->flog,"saving data to file ... %d %d\t",fieldlen,gpu[gpuid].maxgate);
+         MCX_FPRINTF(cfg->flog,"saving data to file ... %lu %d\t",fieldlen,gpu[gpuid].maxgate);
          mcx_savedata(cfg->exportfield,fieldlen,cfg);
          MCX_FPRINTF(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
          fflush(cfg->flog);
