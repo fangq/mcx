@@ -1,24 +1,26 @@
-/*******************************************************************************
-**
-**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+/***************************************************************************//**
+**  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
+**  \copyright Qianqian Fang, 2009-2018
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
 **          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
-**  
-**  \section slicense License
-**        GNU General Public License v3, see LICENSE.txt for details
+**  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
+**          "Scalable and massively parallel Monte Carlo photon transport
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics, (in press) 2018.
 **
+**  \section slicense License
+**          GPL v3, see LICENSE.txt for details
 *******************************************************************************/
 
 /***************************************************************************//**
 \file    mcx_utils.c
 
-\brief   mcconfiguration and command line option processing unit
+@brief   mcconfiguration and command line option processing unit
 *******************************************************************************/
 
 #include <stdio.h>
@@ -54,12 +56,24 @@
 
 #define MCX_ASSERT(a)  (!(a) && (mcx_error((a),"input error",__FILE__,__LINE__),1) );
 
-#define MIN_HEADER_SIZE 348
-#define NII_HEADER_SIZE 352
+#define MIN_HEADER_SIZE 348    /**< Analyze header size */
+#define NII_HEADER_SIZE 352    /**< NIFTI header size */
+
+/**
+ * Short command line options
+ * If a short command line option is '-' that means it only has long/verbose option.
+ * Array terminates with '\0'.
+ */
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','-','I','o','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','-','\0'};
+
+/**
+ * Long command line options
+ * The length of this array must match the length of shortopt[], terminates with ""
+ */
+
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
@@ -71,16 +85,54 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",""};
 
+/**
+ * Output data types
+ * x: fluence rate
+ * f: fluence
+ * e: energy deposit
+ * j: jacobian for mua
+ * p: scattering counts for computing Jacobians for mus
+ */
+
 const char outputtype[]={'x','f','e','j','p','\0'};
+
+/**
+ * Debug flags
+ * R: debug random number generator
+ * M: record photon movement and trajectory
+ * P: show progress bar
+ */
+
 const char debugflag[]={'R','M','P','\0'};
+
+/**
+ * Output file format
+ * mc2: binary mc2 format to store fluence volume data
+ * nii: output fluence in nii format
+ * hdr: output volume in Analyze hdr/img format
+ * ubj: output volume in unversal binary json format (not implemented)
+ */
+
 const char *outputformat[]={"mc2","nii","hdr","ubj",""};
+
+/**
+ * Source type specifier
+ * User can specify the source type using a string
+ */
+
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
     "line","slit","pencilarray",""};
 
+/**
+ * @brief Initializing the simulation configuration with default values
+ *
+ * Constructor of the simulation configuration, initializing all field to default values
+ */
+
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
-     cfg->mediabyte=1;
+     cfg->mediabyte=1;        /** expect 1-byte per medium index, use --mediabyte to set to 2 or 4 */
      cfg->detnum=0;
      cfg->dim.x=0;
      cfg->dim.y=0;
@@ -88,16 +140,16 @@ void mcx_initcfg(Config *cfg){
      cfg->steps.x=1.f;
      cfg->steps.y=1.f;
      cfg->steps.z=1.f;
-     cfg->nblocksize=64;
+     cfg->nblocksize=64;      /** in theory, mcx can use min block size 32 because no communication between threads, but 64 seems to work the best */
      cfg->nphoton=0;
-     cfg->nthread=(1<<14);
-     cfg->isrowmajor=0; /* default is Matlab array*/
+     cfg->nthread=(1<<14);    /** launch many threads to saturate the device to maximize throughput */
+     cfg->isrowmajor=0;       /** default is Matlab array */
      cfg->maxgate=0;
      cfg->isreflect=1;
      cfg->isref3=1;
      cfg->isrefint=0;
      cfg->isnormalized=1;
-     cfg->issavedet=1;
+     cfg->issavedet=1;        /** output detected photon data by default, use -d 0 to disable */
      cfg->respin=1;
      cfg->issave2pt=1;
      cfg->isgpuinfo=0;
@@ -114,19 +166,19 @@ void mcx_initcfg(Config *cfg){
      cfg->issrcfrom0=0;
      cfg->unitinmm=1.f;
      cfg->isdumpmask=0;
-     cfg->srctype=0;
+     cfg->srctype=0;;         /** use pencil beam as default source type */
      cfg->maxdetphoton=1000000;
      cfg->maxjumpdebug=1000000;
      cfg->exportdebugdata=NULL;
      cfg->debugdatalen=0;
      cfg->autopilot=0;
-     cfg->seed=0x623F9A9E;
+     cfg->seed=0x623F9A9E;    /** default RNG seed, a big integer, with a hidden meaning :) */
      cfg->exportfield=NULL;
      cfg->exportdetected=NULL;
      cfg->energytot=0.f;
      cfg->energyabs=0.f;
      cfg->energyesc=0.f;
-     /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/
+     /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/   /** This format is only supported by C99 */
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);
      cfg->his.version=1;
@@ -153,12 +205,12 @@ void mcx_initcfg(Config *cfg){
      cfg->faststep=0;
      cfg->srcdir.w=0.f;
      cfg->issaveref=0;
-     cfg->gscatter=1e9;
+     cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
      memset(cfg->workload,0,MAX_DEVICE*sizeof(float));
-     cfg->deviceid[0]='1'; /*use the first GPU device by default*/
+     cfg->deviceid[0]='1';  /** use the first GPU device by default*/
 #ifdef MCX_CONTAINER
      cfg->parentid=mpMATLAB;
 #else
@@ -166,12 +218,24 @@ void mcx_initcfg(Config *cfg){
 #endif
 }
 
+/**
+ * @brief Reset and clear the GPU information data structure
+ *
+ * Clearing the GPU information data structure
+ */
+
 void mcx_cleargpuinfo(GPUInfo **gpuinfo){
     if(*gpuinfo){
 	free(*gpuinfo);
 	*gpuinfo=NULL;
     }
 }
+
+/**
+ * @brief Clearing the simulation configuration data structure
+ *
+ * Destructor of the simulation configuration, delete all dynamically allocated members
+ */
 
 void mcx_clearcfg(Config *cfg){
      if(cfg->medianum)
@@ -198,6 +262,18 @@ void mcx_clearcfg(Config *cfg){
 
      mcx_initcfg(cfg);
 }
+
+
+/**
+ * @brief Save volumetric output (fluence etc) to an Nifty format binary file
+ *
+ * @param[in] dat: volumetric data to be saved
+ * @param[in] len: total byte length of the data to be saved
+ * @param[in] name: output file name (will append '.nii')
+ * @param[in] type32bit: type of the data, only support 32bit per record
+ * @param[in] outputformatid: decide if save as nii or analyze format
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputformatid, Config *cfg){
      FILE *fp;
@@ -282,6 +358,14 @@ void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputfo
      free(logval);
 }
 
+/**
+ * @brief Save volumetric output (fluence etc) to mc2 format binary file
+ *
+ * @param[in] dat: volumetric data to be saved
+ * @param[in] len: total byte length of the data to be saved
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_savedata(float *dat, size_t len, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
@@ -305,6 +389,16 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
 }
+
+/**
+ * @brief Save detected photon data to mch format binary file
+ *
+ * @param[in] ppath: buffer pointing to the detected photon data (partial path etc)
+ * @param[in] seeds: buffer pointing to the detected photon seed data
+ * @param[in] count: number of detected photons
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_savedetphoton(float *ppath, void *seeds, int count, int doappend, Config *cfg){
 	FILE *fp;
 	char fhistory[MAX_PATH_LENGTH];
@@ -326,11 +420,28 @@ void mcx_savedetphoton(float *ppath, void *seeds, int count, int doappend, Confi
            fwrite(seeds,cfg->his.seedbyte,count,fp);
 	fclose(fp);
 }
+
+/**
+ * @brief Print a message to the console or a log file
+ *
+ * @param[in] cfg: simulation configuration
+ * @param[in] str: a string to be printed
+ */
+
 void mcx_printlog(Config *cfg, char *str){
      if(cfg->flog>0){ /*stdout is 1*/
          MCX_FPRINTF(cfg->flog,"%s\n",str);
      }
 }
+
+/**
+ * @brief Normalize the solution by multiplying a scaling factor
+ *
+ * @param[in,out] field: volumetric data before normalization
+ * @param[in] scale: the scaling factor (or normalization factor) to be applied
+ * @param[in] fieldlen: the length (floating point) of elements in the volume
+ * @param[in] opinion: if set to 2, only normalize positive values (negative values for diffuse reflectance calculations)
+ */
 
 void mcx_normalize(float field[], float scale, int fieldlen, int option){
      int i;
@@ -341,6 +452,12 @@ void mcx_normalize(float field[], float scale, int fieldlen, int option){
      }
 }
 
+/**
+ * @brief Force flush the command line to print the message
+ *
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_flush(Config *cfg){
 #ifdef MCX_CONTAINER
     mcx_matlab_flush();
@@ -348,6 +465,15 @@ void mcx_flush(Config *cfg){
     fflush(cfg->flog);
 #endif
 }
+
+/**
+ * @brief Error reporting function
+ *
+ * @param[in] id: a single integer for the types of the error
+ * @param[in] msg: the error message string
+ * @param[in] file: the unit file name where this error is raised
+ * @param[in] linenum: the line number in the file where this error is raised
+ */
 
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
 #ifdef MCX_CONTAINER
@@ -364,10 +490,13 @@ URL: http://mcx.sf.net/cgi-bin/index.cgi?Doc/FAQ\n");
 }
 
 /**
-function to recursively create output folder
-source:
-  https://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
-*/
+ * @brief Function to recursively create output folder
+ *
+ * Source: https://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
+ * @param[in] dir_path: folder name to be created
+ * @param[in] mode: mode of the created folder
+ */
+
 int mkpath(char* dir_path, int mode){
     char* p=dir_path;
     p[strlen(p)+1]='\0';
@@ -384,9 +513,22 @@ int mkpath(char* dir_path, int mode){
     return 0;
 }
 
+/**
+ * @brief Function to raise a CUDA error
+ *
+ * @param[in] ret: CUDA function return value, non-zero means an error
+ */
+
 void mcx_assert(int ret){
      if(!ret) mcx_error(ret,"assert error",__FILE__,__LINE__);
 }
+
+/**
+ * @brief Read simulation settings from a configuration file (.inp or .json)
+ *
+ * @param[in] fname: the name of the input file (.inp or .json)
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_readconfig(char *fname, Config *cfg){
      if(fname[0]==0){
@@ -448,6 +590,13 @@ void mcx_readconfig(char *fname, Config *cfg){
      }
 }
 
+/**
+ * @brief Write simulation settings to an inp file
+ *
+ * @param[in] fname: the name of the output file
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_writeconfig(char *fname, Config *cfg){
      if(fname[0]==0)
      	mcx_saveconfig(stdout,cfg);
@@ -458,6 +607,17 @@ void mcx_writeconfig(char *fname, Config *cfg){
 	fclose(fp);
      }
 }
+
+/**
+ * @brief Preprocess user input and prepare the volumetric domain for simulation
+ *
+ * This function preprocess the user input and prepare the domain for the simulation.
+ * It loads the media index array from file, add detector masks for easy detection, and
+ * check inconsistency between the user specified inputs.
+ *
+ * @param[in] filename: the name of the output file
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_prepdomain(char *filename, Config *cfg){
      if(filename[0] || cfg->vol){
@@ -502,6 +662,14 @@ void mcx_prepdomain(char *filename, Config *cfg){
            cfg->deviceid[i]='\0';
 }
 
+/**
+ * @brief Load user inputs from a .inp input file
+ *
+ * This function loads user input from a simple text input format in a .inp extension
+ *
+ * @param[in] in: file handle to the .inp file
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,itmp;
@@ -708,6 +876,15 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      }else
         return;
 }
+
+/**
+ * @brief Load user inputs from a .json input file
+ *
+ * This function loads user input from a JSON format in a .json extension
+ *
+ * @param[out] root: json data structure pointer
+ * @param[in] cfg: simulation configuration
+ */
 
 int mcx_loadjson(cJSON *root, Config *cfg){
      int i;
@@ -984,6 +1161,13 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      return 0;
 }
 
+/**
+ * @brief Save simulation settings to an inp file
+ *
+ * @param[in] out: handle to the output file
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_saveconfig(FILE *out, Config *cfg){
      uint i;
 
@@ -1004,6 +1188,13 @@ void mcx_saveconfig(FILE *out, Config *cfg){
      	fprintf(out, "%f %f %f %f\n", (cfg->detpos[i].x),(cfg->detpos[i].y),(cfg->detpos[i].z),(cfg->detpos[i].w));
      }
 }
+
+/**
+ * @brief Load media index data volume (.bin or .vol) to the memory
+ *
+ * @param[in] filename: file name to the binary volume data (support 1,2 and 4 bytes per voxel)
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_loadvolume(char *filename,Config *cfg){
      unsigned int i,datalen,res;
@@ -1055,6 +1246,13 @@ void mcx_loadvolume(char *filename,Config *cfg){
      if(cfg->mediabyte<4)
          free(inputvol);
 }
+
+
+/**
+ * @brief Load previously saved photon seeds from an .mch file for replay
+ *
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_loadseedfile(Config *cfg){
     History his;
@@ -1109,6 +1307,14 @@ void mcx_loadseedfile(Config *cfg){
     }
     fclose(fp);
 }
+
+/**
+ * @brief Convert a row-major (C/C++) array to a column-major (MATLAB/FORTRAN) array
+ *
+ * @param[in,out] vol: a 3D array (wrapped in 1D) to be converted
+ * @param[in] dim: the dimensions of the 3D array
+ */
+
 void  mcx_convertrow2col(unsigned int **vol, uint3 *dim){
      uint x,y,z;
      unsigned int dimxy,dimyz;
@@ -1128,6 +1334,17 @@ void  mcx_convertrow2col(unsigned int **vol, uint3 *dim){
      free(*vol);
      *vol=newvol;
 }
+
+/**
+ * @brief Pre-label the voxel near a detector for easy photon detection
+ *
+ * This function preprocess the volume and detector data and add the detector ID to the
+ * upper 16bits of the voxel that the detector encompasses. If two detectors cover the same
+ * voxel, the later one will overwrite the ID of the 1st one. In MCX kernel, the detector
+ * coverage is tested for all detectors despite the label written (only used as a binary mask)
+ *
+ * @param[in] cfg: simulation configuration
+ */
 
 void  mcx_maskdet(Config *cfg){
      uint d,dx,dy,dz,idx1d,zi,yi,c,count;
@@ -1203,15 +1420,19 @@ void  mcx_maskdet(Config *cfg){
      free(padvol);
 }
 
-void mcx_dumpmask(Config *cfg){
-     /**
-         To test the results, you should use -M to dump the det-mask, load 
-	 it in matlab, and plot the interface containing the detector with
-	 pcolor() (has the matching index), and then draw a circle with the
-	 radius and center set in the input file. the pixels should completely
-	 cover the circle.
-     */
+/**
+ * @brief Save the pre-masked volume (with detector ID) to an nii file
+ *
+ * To test the results, you should use -M to dump the det-mask, load 
+ * it in matlab, and plot the interface containing the detector with
+ * pcolor() (has the matching index), and then draw a circle with the
+ * radius and center set in the input file. the pixels should completely
+ * cover the circle.
+ *
+ * @param[in] cfg: simulation configuration
+ */
 
+void mcx_dumpmask(Config *cfg){
      char fname[MAX_PATH_LENGTH];
      if(cfg->rootpath[0])
          sprintf(fname,"%s%c%s_vol",cfg->rootpath,pathsep,cfg->session);
@@ -1224,6 +1445,15 @@ void mcx_dumpmask(Config *cfg){
          exit(0);
      }
 }
+
+/**
+ * @brief Print a progress bar
+ *
+ * When -D P is specified, this function prints and update a progress bar.
+ *
+ * @param[in] percent: the percentage value from 1 to 100
+ * @param[in] cfg: simulation configuration
+ */
 
 void mcx_progressbar(float percent, Config *cfg){
     unsigned int percentage, j,colwidth=79;
@@ -1258,6 +1488,18 @@ void mcx_progressbar(float percent, Config *cfg){
 #endif
     }
 }
+
+/**
+ * @brief Function to read a single parameter value followed by a command line option
+ *
+ * This function reads different types of parameter values following a command line option.
+ *
+ * @param[in] argc: the number of total command line parameters
+ * @param[in] argv: the pointer to all command line options
+ * @param[in] id: which parameter to be parsed
+ * @param[out] output: the pointer to which the parsed value to be written
+ * @param[in] type: the type of data support char, int, float, string, bytenumlist, floatlist
+ */
 
 int mcx_readarg(int argc, char *argv[], int id, void *output,const char *type){
      /*
@@ -1306,6 +1548,15 @@ int mcx_readarg(int argc, char *argv[], int id, void *output,const char *type){
      }
      return id+1;
 }
+
+/**
+ * @brief Test if a long command line option is supported
+ *
+ * This function returns 1 if a long option is found, and 0 otherwise
+ *
+ * @param[in] opt: the long command line option string
+ */
+
 int mcx_remap(char *opt){
     int i=0;
     while(shortopt[i]!='\0'){
@@ -1319,6 +1570,17 @@ int mcx_remap(char *opt){
     }
     return 1;
 }
+
+/**
+ * @brief Main function to read user command line options
+ *
+ * This function process user command line inputs and parse all short and long options.
+ *
+ * @param[in] argc: the number of total command line parameters
+ * @param[in] argv: the pointer to all command line options
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      int i=1,isinteractive=1,issavelog=0;
      char filename[MAX_PATH_LENGTH]={0}, *jsoninput=NULL;
@@ -1544,6 +1806,16 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      }
 }
 
+/**
+ * @brief Parse the debug flag in the letter format
+ *
+ * The debug flag following the -D can be either a string format, or numerical format.
+ * This function converts the string debug flags into number format
+ *
+ * @param[in] debugopt: string following the -D parameter
+ * @param[out] debugflag: the numerical format of the debug flag
+ */
+
 int mcx_parsedebugopt(char *debugopt,const char *debugflag){
     char *c=debugopt,*p;
     int debuglevel=0;
@@ -1556,6 +1828,14 @@ int mcx_parsedebugopt(char *debugopt,const char *debugflag){
     }
     return debuglevel;
 }
+
+/**
+ * @brief Look up a string in a string list and return the index
+ *
+ * @param[in] origkey: string to be looked up
+ * @param[out] table: the dictionary where the string is searched
+ * @return if found, return the index of the string in the dictionary, otherwise -1.
+ */
 
 int mcx_keylookup(char *origkey, const char *table[]){
     int i=0;
@@ -1577,6 +1857,14 @@ int mcx_keylookup(char *origkey, const char *table[]){
     return -1;
 }
 
+/**
+ * @brief Look up a single character in a string
+ *
+ * @param[in] key: character to be looked up
+ * @param[out] index: the dictionary string where the char is searched
+ * @return if found, return 0; otherwise, return 1
+ */
+
 int mcx_lookupindex(char *key, const char *index){
     int i=0;
     while(index[i]!='\0'){
@@ -1589,6 +1877,12 @@ int mcx_lookupindex(char *key, const char *index){
     return 1;
 }
 
+/**
+ * @brief Print MCX software version
+ *
+ * @param[in] cfg: simulation configuration
+ */
+
 void mcx_version(Config *cfg){
     const char ver[]="$Rev::      $";
     int v=0;
@@ -1596,6 +1890,12 @@ void mcx_version(Config *cfg){
     MCX_FPRINTF(cfg->flog, "MCX Revision %d\n",v);
     exit(0);
 }
+
+/**
+ * @brief Test if a string contains only '0' and '1'
+ *
+ * @param[in] str: string to be tested
+ */
 
 int mcx_isbinstr(const char * str){
     int i, len=strlen(str);
@@ -1606,6 +1906,12 @@ int mcx_isbinstr(const char * str){
 	   return 0;
     return 1;
 }
+
+/**
+ * @brief Print MCX output header
+ *
+ * @param[in] str: string to be tested
+ */
 
 void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
@@ -1622,6 +1928,13 @@ void mcx_printheader(Config *cfg){
 $Rev::       $ Last $Date::                       $ by $Author::              $\n\
 ###############################################################################\n");
 }
+
+/**
+ * @brief Print MCX help information
+ *
+ * @param[in] str: string to be tested
+ * @param[in] exename: path and name of the mcx executable
+ */
 
 void mcx_usage(Config *cfg,char *exename){
      mcx_printheader(cfg);

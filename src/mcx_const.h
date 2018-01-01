@@ -18,7 +18,7 @@
 /***************************************************************************//**
 \file    mcx_const.h
 
-\brief   Constants assumed in MCX codes
+@brief   Constants assumed in MCX codes
 *******************************************************************************/
 
 #ifndef _MCEXTREME_CONSTANT_H
@@ -37,12 +37,12 @@
 #define SAME_VOXEL         -9999.f                 /**< scatter within a voxel */
 #define NO_LAUNCH          9999                    /**< when fail to launch, for debug */
 #define MAX_PROP_AND_DETECTORS   4000              /**< maximum #property + #detectors */
-#define SEED_FROM_FILE      -999
+#define SEED_FROM_FILE      -999                   /**< special flag indicating to read seeds from an mch file for replay */
 
-#define DET_MASK           0xFFFF0000
-#define MED_MASK           0x0000FFFF
+#define DET_MASK           0xFFFF0000              /**< mask of the upper 16bit to get the detector ID */
+#define MED_MASK           0x0000FFFF              /**< mask of the lower 16bit to get the medium index */
 
-#define MCX_DEBUG_REC_LEN  6
+#define MCX_DEBUG_REC_LEN  6  /**<  number of floating points per position saved when -D M is used for trajectory */
 
 #define MCX_SRC_PENCIL     0  /**<  default-Pencil beam src, no param */
 #define MCX_SRC_ISOTROPIC  1  /**<  isotropic source, no param */

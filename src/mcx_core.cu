@@ -1,24 +1,26 @@
-/*******************************************************************************
-**
-**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+/***************************************************************************//**
+**  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
+**  \copyright Qianqian Fang, 2009-2018
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
 **          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
-**  
-**  \section slicense License
-**        GNU General Public License v3, see LICENSE.txt for details
+**  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
+**          "Scalable and massively parallel Monte Carlo photon transport
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics, (in press) 2018.
 **
+**  \section slicense License
+**          GPL v3, see LICENSE.txt for details
 *******************************************************************************/
 
 /***************************************************************************//**
 \file    mcx_core.cu
 
-\brief   GPU kernel for MC simulations and CUDA host code
+@brief   GPU kernel for MC simulations and CUDA host code
 *******************************************************************************/
 
 #define _USE_MATH_DEFINES
@@ -29,45 +31,78 @@
 #include "tictoc.h"
 #include "mcx_const.h"
 
-#ifdef USE_HALF
+#ifdef USE_HALF                     ///< use half-precision for ray-tracing
     #include "cuda_fp16.h"
 #endif
 
 #if defined(USE_XORSHIFT128P_RAND)
-    #include "xorshift128p_rand.cu" // use xorshift128+ RNG (XORSHIFT128P)
+    #include "xorshift128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
 #elif defined(USE_POSIX_RAND)
-    #include "posix_rand.cu"        // use POSIX erand48 RNG (POSIX)
+    #include "posix_rand.cu"        ///< use POSIX erand48 RNG (POSIX)
 #elif defined(USE_MT_RAND)
-    #include "mt_rand_s.cu"         // use Mersenne Twister RNG (MT), depreciated
+    #include "mt_rand_s.cu"         ///< use Mersenne Twister RNG (MT), depreciated
 #else
-    #include "logistic_rand.cu"     // use Logistic Lattice ring 5 RNG (LL5)
+    #include "logistic_rand.cu"     ///< use Logistic Lattice ring 5 RNG (LL5)
 #endif
 
-#ifdef _OPENMP
+#ifdef _OPENMP                      ///< use multi-threading for running simulation on multiple GPUs
     #include <omp.h>
 #endif
 
-#define CUDA_ASSERT(a)      mcx_cu_assess((a),__FILE__,__LINE__)
+#define CUDA_ASSERT(a)      mcx_cu_assess((a),__FILE__,__LINE__) ///< macro to report CUDA errors
 
-// optical properties saved in the constant memory
-// {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n)
+/**
+ * @brief Concatenated optical properties and det positions, stored in constant memory
+ *
+ * The first cfg.maxmedia elements of this array contain the optical properties of the 
+ * domains. Format: {x}:mua,{y}:mus,{z}:anisotropy (g),{w}:refractive index (n).
+ * The following cfg.detnum elements of this array contains the detector information.
+ * Format: {x,y,z}: the x/y/z coord. of the detector, and {w}: radius; all in grid unit.
+ * The total length (both media properties and detector) is defined by 
+ * MAX_PROP_AND_DETECTORS, which is 4000 to fully utilize the constant memory space
+ * (64kb=4096 float4)
+ */
+
 __constant__ float4 gproperty[MAX_PROP_AND_DETECTORS];
 
-// kernel constant parameters
+
+/**
+ * @brief Simulation constant parameters stored in the constant memory
+ *
+ * This variable stores all constants used in the simulation.
+ */
+
 __constant__ MCXParam gcfg[1];
+
+/**
+ * @brief Global variable to store the number of photon movements for debugging purposes
+ */
 
 __device__ uint gjumpdebug[1];
 
-extern __shared__ float sharedmem[]; //max 64 tissue types when block size=64
+/**
+ * @brief Pointer to the shared memory (storing photon data and spilled registers)
+ */
 
-// tested with texture memory for media, only improved 1% speed
-// to keep code portable, use global memory for now
-// also need to change all media[idx1d] to tex1Dfetch() below
+extern __shared__ float sharedmem[];
+
+/**
+ * @brief Texture memory for storing media indices
+ *
+ * Tested with texture memory for media, only improved 1% speed
+ * to keep code portable, use global memory for now
+ * also need to change all media[idx1d] to tex1Dfetch() below
+ */
+
 //texture<uchar, 1, cudaReadModeElementType> texmedia;
 
+/**
+ * @brief Floating-point atomic addition
+ */
+ 
 __device__ inline void atomicadd(float* address, float value){
 
-#if __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
+#if __CUDA_ARCH__ >= 200 ///< for Fermi, atomicAdd supports floats
 
   atomicAdd(address,value);
 
@@ -82,11 +117,23 @@ __device__ inline void atomicadd(float* address, float value){
 
 }
 
+/**
+ * @brief Reset shared memory buffer to store photon partial-path data for a new photon
+ * @param[in] p: pointer to the partial-path buffer
+ * @param[in] maxmediatype: length of the buffer to be reset
+ */
+
 __device__ inline void clearpath(float *p,int maxmediatype){
       uint i;
       for(i=0;i<maxmediatype;i++)
       	   p[i]=0.f;
 }
+
+/**
+ * @brief Reset shared memory buffer for storing fluence near the source (obsolete)
+ * @param[in] p: pointer to the cache buffer
+ * @param[in] len: length of the buffer to be reset
+ */
 
 __device__ inline void clearcache(float *p,int len){
       uint i;
@@ -96,6 +143,13 @@ __device__ inline void clearcache(float *p,int len){
 }
 
 #ifdef  USE_CACHEBOX
+
+/**
+ * @brief Save fluence near the source, stored in a small cubic shared-mem cache, to the global memory (obsolete)
+ * @param[in] data: pointer to the global memory fluence buffer
+ * @param[in] cache: pointer to the shared memory cache buffer
+ */
+
 __device__ inline void savecache(float *data,float *cache){
       uint x,y,z;
       if(threadIdx.x==0){
@@ -110,6 +164,13 @@ __device__ inline void savecache(float *data,float *cache){
 #endif
 
 #ifdef SAVE_DETECTORS
+
+/**
+ * @brief Testing which detector detects an escaping photon
+ * @param[in] p0: the position of the escaping photon
+ * @return the index of the photon that captures this photon; 0 if none.
+ */
+
 __device__ inline uint finddetector(MCXpos *p0){
       uint i;
       for(i=gcfg->maxmedia+1;i<gcfg->maxmedia+gcfg->detnum+1;i++){
@@ -122,6 +183,18 @@ __device__ inline uint finddetector(MCXpos *p0){
       return 0;
 }
 
+/**
+ * @brief Recording detected photon information at photon termination
+ * @param[in] n_det: pointer to the detector position array
+ * @param[in] detectedphoton: variable in the global-mem recording the total detected photons
+ * @param[in] nscat: number of scattering events of the current photon
+ * @param[in] ppath: buffer in the shared-mem to store the photon partial-pathlengths
+ * @param[in] p0: the position/weight of the current photon packet
+ * @param[in] v: the direction vector of the current photon packet
+ * @param[in] t: random number generator (RNG) states
+ * @param[in] seeddata: the RNG seed of the photon at launch, need to save for replay 
+ */
+
 __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float nscat,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata){
       uint detid=finddetector(p0);
       if(detid){
@@ -129,12 +202,12 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
 	 if(baseaddr<gcfg->maxdetphoton){
 	    uint i;
 	    for(i=0;i<gcfg->issaveseed*RAND_BUF_LEN;i++)
-	        seeddata[baseaddr*RAND_BUF_LEN+i]=t[i]; // save photon seed for replay
+	        seeddata[baseaddr*RAND_BUF_LEN+i]=t[i]; ///< save photon seed for replay
 	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6;
 	    n_det[baseaddr++]=detid;
 	    n_det[baseaddr++]=nscat;
 	    for(i=0;i<gcfg->maxmedia;i++)
-		n_det[baseaddr+i]=ppath[i]; // save partial pathlength to the memory
+		n_det[baseaddr+i]=ppath[i]; ///< save partial pathlength to the memory
 	    if(gcfg->issaveexit){
                 baseaddr+=gcfg->maxmedia;
 	        *((float3*)(n_det+baseaddr))=float3(p0->x,p0->y,p0->z);
@@ -145,6 +218,14 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
       }
 }
 #endif
+
+/**
+ * @brief Saving photon trajectory data for debugging purposes
+ * @param[in] p: the position/weight of the current photon packet
+ * @param[in] id: the global index of the photon
+ * @param[in] gdebugdata: pointer to the global-memory buffer to store the trajectory info
+ */
+
 __device__ inline void savedebugdata(MCXpos *p,uint id,float *gdebugdata){
       uint pos=atomicAdd(gjumpdebug,1);
       if(pos<gcfg->maxjumpdebug){
@@ -158,35 +239,56 @@ __device__ inline void savedebugdata(MCXpos *p,uint id,float *gdebugdata){
       }
 }
 
+/**
+ * @brief A simplified nextafterf() to ensure a photon moves outside of the current voxel after each move
+ * @param[in] a: a floating point number
+ * @param[in] dir: 1: change 1 bit in the positive direction; 0: no change, -1: change 1 bit in the negative direction
+ */
+
 __device__ inline float mcx_nextafterf(float a, int dir){
       union{
           float f;
 	  uint  i;
       } num;
-      num.f=a+gcfg->maxvoidstep;
-      num.i+=dir ^ (num.i & 0x80000000U);
-      return num.f-gcfg->maxvoidstep;
+      num.f=a+gcfg->maxvoidstep;         /** First, shift coordinate by 1000 to make sure values are always positive */
+      num.i+=dir ^ (num.i & 0x80000000U);/** Then make 1 bit difference along the direction indicated by dir */
+      return num.f-gcfg->maxvoidstep;    /** Last, undo the offset, and return */
 }
 
 #ifndef USE_HALF
 
+/**
+ * @brief Core function for photon-voxel ray-tracing 
+ *
+ * This is the heart of the MCX simulation algorithm. It calculates the nearest intersection
+ * of the ray inside the current cubic voxel.
+ *
+ * @param[in] p0: the x/y/z position of the current photon
+ * @param[in] v: the direction vector of the photon
+ * @param[out] htime: the intersection x/y/z position on the bounding box, right outside of this voxel
+ * @param[in] rv: pre-computed reciprocal of the velocity vector (v)
+ * @param[out] id: 0: intersect with x=x0 plane; 1: intersect with y=y0 plane; 2: intersect with z=z0 plane first
+ * @return the distance to the intersection to the voxel bounding box
+ */
+
 __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,int *id){
       float dist;
 
-      //time-of-flight to hit the wall in each direction
-      htime[0]=fabs((floorf(p0->x)+(v->x>0.f)-p0->x)*rv[0]); // absolute distance of travel in x/y/z
+      ///< time-of-flight to hit the wall in each direction
+      htime[0]=fabs((floorf(p0->x)+(v->x>0.f)-p0->x)*rv[0]); ///< time-of-flight in x
       htime[1]=fabs((floorf(p0->y)+(v->y>0.f)-p0->y)*rv[1]);
       htime[2]=fabs((floorf(p0->z)+(v->z>0.f)-p0->z)*rv[2]);
 
-      //get the direction with the smallest time-of-flight
+      ///< get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime[0],htime[1]),htime[2]);
       (*id)=(dist==htime[0]?0:(dist==htime[1]?1:2));
 
-      //p0 is inside, p is outside, move to the 1st intersection pt, now in the air side, to be corrected in the else block
+      ///< p0 is inside, htime is the 1st intersection point
       htime[0]=p0->x+dist*v->x;
       htime[1]=p0->y+dist*v->y;
       htime[2]=p0->z+dist*v->z;
 
+      ///< make sure the intersection point htime is immediately outside of the current voxel (i.e. not within the current voxel)
       int index = (*id & (int)3); 
 
       if(index == 0) htime[0] = mcx_nextafterf(roundf(htime[0]), (v->x > 0.f)-(v->x < 0.f));
@@ -198,6 +300,13 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
 
 #else
 
+/**
+ * @brief Half-precision version of the simplified nextafter
+ *
+ * @param[in] a: a half-precision floating point number
+ * @param[in] dir: 1: change 1 bit in the positive direction; 0: no change, -1: change 1 bit in the negative direction
+ */
+ 
 __device__ inline half mcx_nextafter_half(const half a, const short dir){
       union{
           half f;
@@ -207,6 +316,20 @@ __device__ inline half mcx_nextafter_half(const half a, const short dir){
       ((num.i & 0x7FFFU) == 0) ? (num.i = ((dir & 0x8000U) ) | 1) : ((num.i & 0x8000U) ? num.i-= dir: num.i+= dir);
       return num.f;
 }
+
+/**
+ * @brief Core function for photon-voxel ray-tracing (half-precision version)
+ *
+ * This is the heart of the MCX simulation algorithm. It calculates the nearest intersection
+ * of the ray inside the current cubic voxel.
+ *
+ * @param[in] p0: the x/y/z position of the current photon
+ * @param[in] v: the direction vector of the photon
+ * @param[out] htime: the intersection x/y/z position on the bounding box, right outside of this voxel
+ * @param[in] rv: pre-computed reciprocal of the velocity vector (v)
+ * @param[out] id: 0: intersect with x=x0 plane; 1: intersect with y=y0 plane; 2: intersect with z=z0 plane first
+ * @return the distance to the intersection to the voxel bounding box
+ */
 
 __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,int *id){
       float dist;
@@ -268,6 +391,20 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
 
 #endif
 
+/**
+ * @brief Calculating the direction vector after transmission
+ *
+ * This function updates the direction vector after the photon passing
+ * an interface of different refrective indicex (n1/n2). Because MCX only
+ * handles voxelated domain, transmission is applied only to 1 of the components,
+ * and then the vector is normalized.
+ *
+ * @param[in,out] v: the direction vector of the photon
+ * @param[in] n1: the refrective index of the voxel the photon leaves
+ * @param[in] n2: the refrective index of the voxel the photon enters
+ * @param[in] flipdir: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
+ */
+ 
 __device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
       float tmp0=n1/n2;
       v->x*=tmp0;
@@ -280,35 +417,60 @@ __device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
 	      (v->z=sqrtf(1.f - v->x*v->x - v->y*v->y)*((v->z>0.f)-(v->z<0.f))));
 }
 
+/**
+ * @brief Calculating the reflection coefficient at an interface
+ *
+ * This function calculates the reflection coefficient at
+ * an interface of different refrective indicex (n1/n2)
+ *
+ * @param[in] v: the direction vector of the photon
+ * @param[in] n1: the refrective index of the voxel the photon leaves
+ * @param[in] n2: the refrective index of the voxel the photon enters
+ * @param[in] flipdir: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
+ * @return the reflection coefficient R=(Rs+Rp)/2, Rs: R of the perpendicularly polarized light, Rp: parallelly polarized light
+ */
+
 __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir){
       float Icos=fabs((flipdir==0) ? v->x : (flipdir==1 ? v->y : v->z));
       float tmp0=n1*n1;
       float tmp1=n2*n2;
-      float tmp2=1.f-tmp0/tmp1*(1.f-Icos*Icos); /*1-[n1/n2*sin(si)]^2 = cos(ti)^2*/
-      if(tmp2>0.f){ // partial reflection
+      float tmp2=1.f-tmp0/tmp1*(1.f-Icos*Icos); /** 1-[n1/n2*sin(si)]^2 = cos(ti)^2*/
+      if(tmp2>0.f){ ///< partial reflection
           float Re,Im,Rtotal;
 	  Re=tmp0*Icos*Icos+tmp1*tmp2;
-	  tmp2=sqrtf(tmp2); /*to save one sqrt*/
+	  tmp2=sqrtf(tmp2); /** to save one sqrt*/
 	  Im=2.f*n1*n2*Icos*tmp2;
-	  Rtotal=(Re-Im)/(Re+Im);     /*Rp*/
+	  Rtotal=(Re-Im)/(Re+Im);     /** Rp*/
 	  Re=tmp1*Icos*Icos+tmp0*tmp2*tmp2;
-	  Rtotal=(Rtotal+(Re-Im)/(Re+Im))*0.5f; /*(Rp+Rs)/2*/
+	  Rtotal=(Rtotal+(Re-Im)/(Re+Im))*0.5f; /** (Rp+Rs)/2*/
 	  return Rtotal;
-      }else{ // total reflection
+      }else{ ///< total reflection
           return 1.f;
       }
 }
 
-/* if the source location is outside of the volume or 
-in an void voxel, mcx advances the photon in v.{xyz} direction
-until it hits an non-zero voxel */
+/**
+ * @brief Advance photon to the 1st non-zero voxel if launched in the backgruond 
+ *
+ * This function advances the photon to the 1st non-zero voxel along the direction
+ * of v if the photon is launched outside of the cubic domain or in a zero-voxel.
+ * To avoid large overhead, photon can only advance gcfg->minaccumtime steps, which
+ * can be set using the --maxvoidstep flag; by default, this limit is 1000.
+ *
+ * @param[in] v: the direction vector of the photon
+ * @param[in] n1: the refrective index of the voxel the photon leaves
+ * @param[in] n2: the refrective index of the voxel the photon enters
+ * @param[in] flipdir: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
+ * @return the reflection coefficient R=(Rs+Rp)/2, Rs: R of the perpendicularly polarized light, Rp: parallelly polarized light
+ */
+
 __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint media[]){
       int count=1,idx1d;
       while(1){
           if(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
                && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z){
 	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
-	    if(media[idx1d] & MED_MASK){ // if inside
+	    if(media[idx1d] & MED_MASK){ ///< if enters a non-zero voxel
                 GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n",p->x,p->y,p->z,v->x,v->y,v->z));
 	        float3 htime;
                 int flipdir;
@@ -357,6 +519,16 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
       }
 }
 
+/**
+ * @brief Compute 2D-scattering if the domain has a dimension of 1 in x/y or z
+ *
+ * This function performs 2D scattering calculation if the domain is only a sheet of voxels
+ *
+ * @param[in,out] v: the direction vector of the photon
+ * @param[in] stheta: the sine of the rotation angle
+ * @param[in] ctheta: the cosine of the rotation angle
+ */
+
 __device__ inline void rotatevector2d(MCXdir *v, float stheta, float ctheta){
       if(gcfg->is2d==1)
    	  *((float4*)v)=float4(
@@ -382,6 +554,18 @@ __device__ inline void rotatevector2d(MCXdir *v, float stheta, float ctheta){
       GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 }
 
+/**
+ * @brief Compute 3D-scattering direction vector
+ *
+ * This function updates the direction vector after a 3D scattering event
+ *
+ * @param[in,out] v: the direction vector of the photon
+ * @param[in] stheta: the sine of the azimuthal angle
+ * @param[in] ctheta: the cosine of the azimuthal angle
+ * @param[in] sphi: the sine of the zenith angle
+ * @param[in] cphi: the cosine of the zenith angle
+ */
+
 __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float sphi, float cphi){
       if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
    	  float tmp0=1.f-v->z*v->z;
@@ -398,17 +582,52 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
       GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
 }
 
+/**
+ * @brief Terminate a photon and launch a new photon according to specified source form
+ *
+ * This function terminates the current photon and launches a new photon according 
+ * to the source type selected. Currently, over a dozen source types are supported, 
+ * including pencil, isotropic, planar, fourierx, gaussian, zgaussian etc.
+ *
+ * @param[in,out] p: the 3D position and weight of the photon
+ * @param[in,out] v: the direction vector of the photon
+ * @param[in,out] f: the parameter vector of the photon
+ * @param[in,out] rv: the reciprocal direction vector of the photon (rv[i]=1/v[i])
+ * @param[in,out] idx1d: the linear index of the voxel containing the photon at launch
+ * @param[in,out] mediaid: the medium index at the voxel at launch
+ * @param[in,out] w0: initial weight, reset here after launch
+ * @param[in,out] Lmove: photon movement length variable, reset to 0 after launch
+ * @param[in] isdet: whether the previous photon being terminated lands at a detector
+ * @param[in,out] ppath: pointer to the shared-mem buffer to store photon partial-path data
+ * @param[in,out] energyloss: register variable to accummulate the escaped photon energy
+ * @param[in,out] energylaunched: register variable to accummulate the total launched photon energy
+ * @param[in,out] n_det: array in the constant memory where detector positions are stored
+ * @param[in,out] dpnum: global-mem variable where the count of detected photons are stored
+ * @param[in] t: RNG state
+ * @param[in,out] photonseed: RNG state stored at photon's launch time if replay is needed
+ * @param[in] media: domain medium index array, read-only
+ * @param[in] srcpattern: user-specified source pattern array if pattern source is used
+ * @param[in] threadid: the global index of the current thread
+ * @param[in] rngseed: in the replay mode, pointer to the saved detected photon seed data
+ * @param[in,out] seeddata: pointer to the buffer to save detected photon seeds
+ * @param[in,out] gdebugdata: pointer to the buffer to save photon trajectory positions
+ * @param[in,out] gprogress: pointer to the host variable to update progress bar
+ */
+
 template <int mcxsource>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
            uint *mediaid,float *w0,float *Lmove,uint isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
-      *w0=1.f;     // reuse to count for launchattempt
-      *Lmove=-1.f; // reuse as "canfocus" flag for each source: non-zero: focusable, zero: not focusable
-      *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); // reuse as the origin of the src, needed for focusable sources
+      *w0=1.f;     ///< reuse to count for launchattempt
+      *Lmove=-1.f; ///< reuse as "canfocus" flag for each source: non-zero: focusable, zero: not focusable
+      *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
 
+      /**
+       * First, let's terminate the current photon and perform detection calculations
+       */
       if(p->w>=0.f){
-          *energyloss+=p->w;  // sum all the remaining energy
+          *energyloss+=p->w;  ///< sum all the remaining energy
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
           if(gcfg->savedet){
@@ -419,14 +638,25 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 #endif
       }
 
+      /**
+       * If the thread completes all assigned photons, terminate this thread.
+       */
       if((int)(f->ndone)>=(gcfg->threadphoton+(threadid<gcfg->oddphotons))-1){
           return 1; // all photos complete
       }
+      
+      /**
+       * If this is a replay of a detected photon, initilize the RNG with the stored seed here.
+       */
       if(gcfg->seed==SEED_FROM_FILE){
           int seedoffset=(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+max(0,(int)f->ndone+1))*RAND_BUF_LEN;
           for(int i=0;i<RAND_BUF_LEN;i++)
 	      t[i]=rngseed[seedoffset+i];
       }
+
+      /**
+       * Attempt to launch a new photon until success
+       */
       do{
 	  *((float4*)p)=gcfg->ps;
 	  *((float4*)v)=gcfg->c0;
@@ -436,6 +666,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
 
+          /**
+           * Only one branch is taken because of template, this can reduce thread divergence
+           */
 	  switch(mcxsource) {
 		case(MCX_SRC_PLANAR):
 		case(MCX_SRC_PATTERN):
@@ -591,8 +824,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      break;
 		}
 	  }
-
-          if(*Lmove<0.f && gcfg->c0.w!=0.f){ // if beam focus is set, determine the incident angle
+          /**
+           * If beam focus is set, determine the incident angle
+           */
+          if(*Lmove<0.f && gcfg->c0.w!=0.f){
 	        float Rn2=(gcfg->c0.w > 0.f) - (gcfg->c0.w < 0.f);
 	        rv->x+=gcfg->c0.w*v->x;
 		rv->y+=gcfg->c0.w*v->y;
@@ -605,39 +840,69 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                 v->y*=Rn2;
                 v->z*=Rn2;
 	  }
-
+          /**
+           * Compute the reciprocal of the velocity vector
+           */
           *rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
+
+          /**
+           * If a photon is launched outside of the box, or inside a zero-voxel, move it until it hits a non-zero voxel
+           */
 	  if((*mediaid & MED_MASK)==0){
-             int idx=skipvoid(p, v, f, rv, media); /*specular reflection of the bbx is taken care of here*/
+             int idx=skipvoid(p, v, f, rv, media); /** specular reflection of the bbx is taken care of here*/
              if(idx>=0){
 		 *idx1d=idx;
 		 *mediaid=media[*idx1d];
 	     }
 	  }
 	  *w0+=1.f;
+	  
+	  /**
+           * if launch attempted for over 1000 times, stop trying and return
+           */
 	  if(*w0>gcfg->maxvoidstep)
 	     return -1;  // launch failed
       }while((*mediaid & MED_MASK)==0 || p->w<=gcfg->minenergy);
-      f->ndone++; // launch successfully
+      
+      /**
+       * Now a photon is successfully launched, perform necssary initialization for a new trajectory
+       */
+      f->ndone++; 
       *((float4*)(prop))=gproperty[*mediaid & MED_MASK]; //always use mediaid to read gproperty[]
       if(gcfg->debuglevel & MCX_DEBUG_MOVE)
           savedebugdata(p,(uint)f->ndone+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
 
-      /*total energy enters the volume. for diverging/converting 
-      beams, this is less than nphoton due to specular reflection 
-      loss. This is different from the wide-field MMC, where the 
-      total launched energy includes the specular reflection loss*/
-      
+      /**
+        total energy enters the volume. for diverging/converting 
+        beams, this is less than nphoton due to specular reflection 
+        loss. This is different from the wide-field MMC, where the 
+        total launched energy includes the specular reflection loss
+       */
       *energylaunched+=p->w;
       *w0=p->w;
       v->nscat=EPS;
       *Lmove=0.f;
+      
+      /**
+       * If a progress bar is needed, only sum completed photons from the 1st, last and middle threads to determine progress bar
+       */
       if((gcfg->debuglevel & MCX_DEBUG_PROGRESS) && ((int)(f->ndone) & 1) && (threadid==0 || threadid==blockDim.x * gridDim.x - 1 
-          || threadid==((blockDim.x * gridDim.x)>>1))) { // use the 1st, middle and last thread for progress report
+          || threadid==((blockDim.x * gridDim.x)>>1))) { ///< use the 1st, middle and last thread for progress report
           gprogress[0]++;
       }
       return 0;
 }
+
+/**
+ * @brief A stand-alone kernel to test random number generators
+ *
+ * This function fills the domain with the random numbers generated from 
+ * the GPU. One can use this function to dump RNG values and test for quality.
+ * use -D R in the command line to enable this output.
+ *
+ * @param[out] field: the array to be filled with RNG values
+ * @param[in] n_seed: the seed to the RNG
+ */
 
 kernel void mcx_test_rng(float field[],uint n_seed[]){
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
@@ -653,24 +918,41 @@ kernel void mcx_test_rng(float field[],uint n_seed[]){
 }
 
 /**
-   this is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009
-   everything in the GPU kernels is in grid-unit. To convert back to length, use
-   cfg->unitinmm (scattering/absorption coeff, T, speed etc)
-*/
+ * @brief The core Monte Carlo photon simulation kernel (!!!Important!!!)
+ *
+ * This is the core Monte Carlo simulation kernel, please see Fig. 1 in Fang2009.
+ * everything in the GPU kernels is in grid-unit. To convert back to length, use
+ * cfg->unitinmm (scattering/absorption coeff, T, speed etc)
+ *
+ * @param[in] media: domain medium index array, read-only
+ * @param[out] field: the 3D/4D array where the fluence/energy-deposit are accummulated
+ * @param[in,out] energy: the array storing the total launched and escaped energy for each thread
+ * @param[in] n_seed: the seed to the RNG of this thread
+ * @param[in,out] n_pos: the initial position state of the photon for each thread
+ * @param[in,out] n_dir: the initial direction state of the photon for each thread
+ * @param[in,out] n_len: the initial parameter state of the photon for each thread
+ * @param[in,out] detectedphoton: the buffer where the detected photon data are stored
+ * @param[in] srcpattern: user-specified source pattern array if pattern source is used
+ * @param[in] replayweight: the pre-computed detected photon weight for replay
+ * @param[in] photontof: the pre-computed detected photon time-of-fly for replay
+ * @param[in,out] seeddata: pointer to the buffer to save detected photon seeds
+ * @param[in,out] gdebugdata: pointer to the buffer to save photon trajectory positions
+ * @param[in,out] gprogress: pointer to the host variable to update progress bar
+ */
 
 template <int mcxsource>
 kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed[],
      float4 n_pos[],float4 n_dir[],float4 n_len[],float n_det[], uint detectedphoton[], 
      float srcpattern[],float replayweight[],float photontof[],RandType *seeddata,float *gdebugdata,volatile int *gprogress){
 
+     /** the 1D index of the current thread */
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
 
      if(idx>=gcfg->threadphoton*(blockDim.x * gridDim.x)+gcfg->oddphotons)
          return;
-     MCXpos  p={0.f,0.f,0.f,-1.f};//{x,y,z}: coordinates in grid unit, w:packet weight
-     MCXdir *v=(MCXdir*)(sharedmem+(threadIdx.x<<2));   //{x,y,z}: unitary direction vector in grid unit, nscat:total scat event
-     MCXtime f={0.f,0.f,0.f,-1.f};   //pscat: remaining scattering probability,t: photon elapse time, 
-                  //tnext: next accumulation time, ndone: completed photons
+     MCXpos  p={0.f,0.f,0.f,-1.f};                      ///< Photon position state: {x,y,z}: coordinates in grid unit, w:packet weight
+     MCXdir *v=(MCXdir*)(sharedmem+(threadIdx.x<<2));   ///< Photon direction state: {x,y,z}: unitary direction vector in grid unit, nscat:total scat event
+     MCXtime f={0.f,0.f,0.f,-1.f};                      ///< Photon parameter state: pscat: remaining scattering probability,t: photon elapse time, tnext: next accumulation time, ndone: completed photons
      float  energyloss=genergy[idx<<1];
      float  energylaunched=genergy[(idx<<1)+1];
 
@@ -682,20 +964,20 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 #endif
      uint  mediaid=gcfg->mediaidorig;
      uint  mediaidold=0,isdet=0;
-     float  n1;   //reflection var
-     float3 htime;            //time-of-fly for collision test
-     float3 rv;               //reciprocal velocity
+     float  n1;               ///< reflection var
+     float3 htime;            ///< time-of-flight for collision test
+     float3 rv;               ///< reciprocal velocity
 
-     //for MT RNG, these will be zero-length arrays and be optimized out
+     ///< for MT RNG, these will be zero-length arrays and be optimized out
      RandType t[RAND_BUF_LEN];
      RandType photonseed[RAND_BUF_LEN];
-     Medium prop;    //can become float2 if no reflection (mua/musp is in 1/grid unit)
+     Medium prop;
 
      float len, slen;
      float w0,Lmove;
      int   flipdir=-1;
  
-     float *ppath=sharedmem+(blockDim.x<<2); // first blockDim.x<<2 stores v for all threads
+     float *ppath=sharedmem+(blockDim.x<<2); ///< first blockDim.x*4 floats in the shared mem store spilled v from all threads
 #ifdef  USE_CACHEBOX
   #ifdef  SAVE_DETECTORS
      float *cachebox=ppath+(gcfg->savedet ? blockDim.x*gcfg->maxmedia: 0);
@@ -727,30 +1009,34 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      isdet=mediaid & DET_MASK;
      mediaid &= MED_MASK; // keep isdet to 0 to avoid launching photon ina 
 
-     /*
-      using a while-loop to terminate a thread by np.will cause MT RNG to be 3.5x slower
-      LL5 RNG will only be slightly slower than for-loop.with photon-move criterion
-
-      we have switched to while-loop since v0.4.9, as LL5 was only minimally effected
-      and we do not use MT as the default RNG.
-     */
+     /**
+         @brief The main photon movement loop
+	 Each pass of this loop, we advance photon by one step - meaning that it is either
+	 moved from one voxel to the immediately next voxel when the scattering path continues, 
+	 or moved to the end of the scattering path if it ends within the current voxel.
+      */
 
      while(f.ndone<(gcfg->threadphoton+(idx<gcfg->oddphotons))) {
 
           GPUDEBUG(("photonid [%d] L=%f w=%e medium=%d\n",(int)f.ndone,f.pscat,p.w,mediaid));
 
-          // dealing with scattering
-
-	  if(f.pscat<=0.f) {  // if this photon has finished his current jump, get next scat length & angles
+          /**
+              @brief A scattering event
+	      When a photon arrives at a scattering site, 3 values are regenrated
+	      1 - a random unitless scattering length f.pscat,
+	      2 - a 0-2pi uniformly random arimuthal angle
+	      3 - a 0-pi random zenith angle based on the Henyey-Greenstein Phase Function
+           */
+	  if(f.pscat<=0.f) {  ///< if this photon has finished his current scattering path, calculate next scat length & angles
                if(moves++>gcfg->reseedlimit){
                   moves=0;
                   gpu_rng_reseed(t,n_seed,idx,(p.x+p.y+p.z+p.w)+f.ndone*(v->x+v->y+v->z));
                }
-   	       f.pscat=rand_next_scatlen(t); // random scattering probability, unit-less
+   	       f.pscat=rand_next_scatlen(t); ///< random scattering probability, unit-less, exponential distribution
 
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
-	       if(v->nscat!=EPS){ // if this is not my first jump
-                       //random arimuthal angle
+	       if(v->nscat!=EPS){ ///< if v->nscat is EPS, this means it is the initial launch direction, no need to change direction
+                       ///< random arimuthal angle
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
 		       if(!gcfg->is2d){
@@ -760,15 +1046,14 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                        GPUDEBUG(("scat phi=%f\n",tmp0));
 		       tmp0=(v->nscat > gcfg->gscatter) ? 0.f : prop.g;
 
-                       //Henyey-Greenstein Phase Function, "Handbook of Optical 
-                       //Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002
+                       /** Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002 */
 
-                       if(tmp0>EPS){  //if prop.g is too small, the distribution of theta is bad
+                       if(tmp0>EPS){  ///< if prop.g is too small, the distribution of theta is bad
 		           tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
 		           tmp0*=tmp0;
 		           tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
 
-                           // when ran=1, CUDA gives me 1.000002 for tmp0 which produces nan later
+                           // in early CUDA, when ran=1, CUDA gives 1.000002 for tmp0 which produces nan later
                            // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
                            tmp0=fmax(-1.f, fmin(1.f, tmp0));
 
@@ -780,14 +1065,18 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("scat theta=%f\n",theta));
+
+                       /** Update direction vector with the two random angles */
 		       if(gcfg->is2d)
 		           rotatevector2d(v,stheta,ctheta);
 		       else
                            rotatevector(v,stheta,ctheta,sphi,cphi);
                        v->nscat++;
+		       
+		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                        rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
                        if(gcfg->outputtype==otWP){
-                            // photontof[] and replayweight[] should be cached using local mem to avoid global read
+                            ///< photontof[] and replayweight[] should be cached using local mem to avoid global read
                             int tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
 #ifdef USE_ATOMIC
                             if(!gcfg->isatomic){
@@ -806,26 +1095,41 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	       v->nscat=(int)v->nscat;
 	  }
 
+          /** Read the optical property of the current voxel */
           n1=prop.n;
 	  *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
 	  
+	  /** Advance photon 1 step to the next voxel */
 	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)v,&(htime.x),&rv.x,&flipdir); // propagate the photon to the first intersection to the grid
+	  
+	  /** convert photon movement length to unitless scattering length by multiplying with mus */
 	  slen=len*prop.mus*(v->nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f); //unitless (minstep=grid, mus=1/grid)
 
           GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%f %f %f] flip=%d\n",p.x,p.y,p.z,v->x,v->y,v->z,len,htime.x,htime.y,htime.z,flipdir));
 
-          // dealing with absorption
+	  /** if the consumed unitless scat length is less than what's left in f.pscat, keep moving; otherwise, stop in this voxel */
 	  slen=fmin(slen,f.pscat);
+	  
+	  /** final length that the photon moves - either the length to move to the next voxel, or the remaining scattering length */
 	  len=slen/(prop.mus*(v->nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f));
+	  
+	  /** if photon moves to the next voxel, use the precomputed intersection coord. htime which are assured to be outside of the current voxel */
 	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat) ? float3(p.x+len*v->x,p.y+len*v->y,p.z+len*v->z) : float3(htime.x,htime.y,htime.z);
+	  
+	  /** calculate photon energy loss */
 	  p.w*=expf(-prop.mua*len);
-	  f.pscat-=slen;     //remaining probability: sum(s_i*mus_i), unit-less
-	  f.t+=len*prop.n*gcfg->oneoverc0; //propagation time  (unit=s)
+	  
+	  /** remaining unitless scattering length: sum(s_i*mus_i), unit-less */
+	  f.pscat-=slen;
+
+	  /** update photon timer to add time-of-flight (unit = s) */
+	  f.t+=len*prop.n*gcfg->oneoverc0;
 	  Lmove+=len;
 
           GPUDEBUG(("update p=[%f %f %f] -> len=%f\n",p.x,p.y,p.z,len));
 
 #ifdef SAVE_DETECTORS
+	  /** accummulate partial path of the current medium */
           if(gcfg->savedet)
 	      ppath[(mediaid & MED_MASK)-1]+=len; //(unit=grid)
 #endif
@@ -834,23 +1138,29 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           idx1dold=idx1d;
           idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
           GPUDEBUG(("idx1d [%d]->[%d]\n",idx1dold,idx1d));
+
+	  /** read the medium index of the new voxel (current or next) */
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
+              /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
 	      isdet=0;
 	  }else{
+              /** otherwise, read the optical property index */
 	      mediaid=media[idx1d];
-	      isdet=mediaid & DET_MASK;
-	      mediaid &= MED_MASK;
+	      isdet=mediaid & DET_MASK;  /** upper 16bit is the mask of the covered detector */
+	      mediaid &= MED_MASK;       /** lower 16bit is the medium index */
           }
           GPUDEBUG(("medium [%d]->[%d]\n",mediaidold,mediaid));
 
-          // saving fluence to the voxel when moving out
-
+          /**  save fluence to the voxel when photon moves out */
 	  if(idx1d!=idx1dold && mediaidold){
-             // if t is within the time window, which spans cfg->maxgate*cfg->tstep.wide
+
+             /**  if t is within the time window, which spans cfg->maxgate*cfg->tstep.wide */
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
 	          float weight=0.f;
                   int tshift=(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep));
+		  
+		  /** calculate the quality to be accummulated */
 		  if(gcfg->outputtype==otEnergy)
 		      weight=w0-p.w;
 		  else if(gcfg->seed==SEED_FROM_FILE){
@@ -858,14 +1168,13 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 		        weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*Lmove;
                         tshift=(int)(floorf((photontof[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]-gcfg->twin0)*gcfg->Rtstep));
 		      }
-		      //else if(gcfg->outputtype==otWP){}  // weight is 0.f
 		  }else
 		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
 
 #ifdef TEST_RACING
-                  // enable TEST_RACING to determine how many missing accumulations due to race
+                  /** enable TEST_RACING to determine how many missing accumulations due to race */
                   if( (p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)>gcfg->skipradius2) {
                       field[idx1dold+tshift*gcfg->dimlen.z]+=1.f;
 		      cc++;
@@ -875,9 +1184,9 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
   #ifdef USE_ATOMIC
                 if(!gcfg->isatomic){
   #endif
-                  // set gcfg->skipradius2 to only start depositing energy when dist^2>gcfg->skipradius2 
                   if(gcfg->skipradius2>EPS){
   #ifdef  USE_CACHEBOX
+                      /** set gcfg->skipradius2 to only start depositing energy when dist^2>gcfg->skipradius2, this method is obsolete! */
                       if(p.x<gcfg->cp1.x+1.f && p.x>=gcfg->cp0.x &&
 		         p.y<gcfg->cp1.y+1.f && p.y>=gcfg->cp0.y &&
 			 p.z<gcfg->cp1.z+1.f && p.z>=gcfg->cp0.z){
@@ -893,12 +1202,14 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 		              field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                       }
                   }else{
+                      /** accummulate the quality to the volume using non-atomic operations  */
                       field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
 		      if(mediaid==0 && isdet==0 &&gcfg->issaveref)
 		          field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                   }
   #ifdef USE_ATOMIC
                }else{
+	          /** accummulate the quality to the volume using atomic operations  */
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
 		  if(mediaid==0 && isdet==0 &&gcfg->issaveref)
@@ -914,8 +1225,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
              //f.tnext+=gcfg->minaccumtime*prop.n; // fluence is a temporal-integration, unit=s
 	  }
 	  
-	  // launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection
-
+	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
           if((mediaid==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w))) || f.t>gcfg->twin1){
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
 	      if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
@@ -926,8 +1236,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	      continue;
 	  }
 
-          /*Russian Roulette*/
-
+          /** perform Russian Roulette*/
           if(p.w < gcfg->minenergy){
                 if(rand_do_roulette(t)*ROULETTE_SIZE<=1.f)
                    p.w*=ROULETTE_SIZE;
@@ -942,13 +1251,12 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                }
           }
 
-          // do boundary reflection/transmission
-
+          /** do boundary reflection/transmission */
 	  if(gcfg->doreflect && n1!=gproperty[mediaid].w){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
-                  *((float4*)(&prop))=gproperty[mediaid]; // optical property across the interface
+                  *((float4*)(&prop))=gproperty[mediaid]; ///< optical property across the interface
 
                   tmp0=n1*n1;
                   tmp1=prop.n*prop.n;
@@ -958,14 +1266,14 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                   len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2 = cos(ti)^2
 	          GPUDEBUG(("ref total ref=%f\n",len));
 
-                  if(len>0.f) { // if no total internal reflection
+                  if(len>0.f) { ///< if no total internal reflection
                 	ctheta=tmp0*cphi*cphi+tmp1*len;
                 	stheta=2.f*n1*prop.n*cphi*sqrtf(len);
                 	Rtotal=(ctheta-stheta)/(ctheta+stheta);
        	       		ctheta=tmp1*cphi*cphi+tmp0*len;
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
-                  } // else, total internal reflection
+                  } ///< else, total internal reflection
 	          if(Rtotal<1.f && gproperty[mediaid].w>=1.f && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
@@ -980,7 +1288,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 			}
 	                GPUDEBUG(("do transmission\n"));
                         rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
-		  }else{ //do reflection
+		  }else{ ///< do reflection
 	                GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v->x,v->y,v->z));
 			(flipdir==0) ? (v->x=-v->x) : ((flipdir==1) ? (v->y=-v->y) : (v->z=-v->z)) ;
                         rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
@@ -997,11 +1305,14 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 		  }
 	  }
      }
-     // cachebox saves the total absorbed energy of all time in the sphere r<sradius.
-     // in non-atomic mode, cachebox is more accurate than saving to the grid
-     // as it is not influenced by race conditions.
-     // now I borrow f.tnext to pass this value back
+
 #ifdef  USE_CACHEBOX
+     /**
+        cachebox saves the total absorbed energy of all time in the sphere r<sradius.
+        in non-atomic mode, cachebox is more accurate than saving to the grid
+        as it is not influenced by race conditions.
+        now I borrow f.tnext to pass this value back
+      */
      if(gcfg->skipradius2>EPS){
      	f.tnext=0.f;
         savecache(field,cachebox);
@@ -1009,13 +1320,15 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 #else
      f.tnext=accumweight;
 #endif
-
+     /** return the tracked total energyloss and launched energy back to the host */
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energylaunched;
 
 #ifdef TEST_RACING
      n_seed[idx]=cc;
 #endif
+
+     /** for debugging purposes, we also pass the last photon states back to the host for printing */
      n_pos[idx]=*((float4*)(&p));
      n_dir[idx]=*((float4*)(v));
      n_len[idx]=*((float4*)(&f));
@@ -1031,10 +1344,15 @@ void mcx_cu_assess(cudaError_t cuerr,const char *file, const int linenum){
 }
 
 /**
-  obtain GPU core number per MP, this replaces 
-  ConvertSMVer2Cores() in libcudautils to avoid 
-  extra dependency.
-*/
+ * @brief Utility function to calculate the GPU stream processors (cores) per SM
+ *
+ * Obtain GPU core number per MP, this replaces 
+ * ConvertSMVer2Cores() in libcudautils to avoid 
+ * extra dependency.
+ *
+ * @param[in] v1: the major version of an NVIDIA GPU
+ * @param[in] v2: the minor version of an NVIDIA GPU
+ */
 
 int mcx_corecount(int v1, int v2){
      int v=v1*10+v2;
@@ -1046,10 +1364,12 @@ int mcx_corecount(int v1, int v2){
 }
 
 /**
-  obtain GPU core number per MP, this replaces 
-  ConvertSMVer2Cores() in libcudautils to avoid 
-  extra dependency.
-*/
+ * @brief Utility function to calculate the maximum blocks per SMX
+ *
+ *
+ * @param[in] v1: the major version of an NVIDIA GPU
+ * @param[in] v2: the minor version of an NVIDIA GPU
+ */
 
 int mcx_smxblock(int v1, int v2){
      int v=v1*10+v2;
@@ -1059,8 +1379,15 @@ int mcx_smxblock(int v1, int v2){
 }
 
 /**
-  query GPU info and set active GPU
-*/
+ * @brief Utility function to query GPU info and set active GPU
+ *
+ * This function query and list all available GPUs on the system and print
+ * their parameters. This is used when -L or -I is used.
+ *
+ * @param[in,out] cfg: the simulation configuration structure
+ * @param[out] info: the GPU information structure
+ */
+ 
 int mcx_list_gpu(Config *cfg, GPUInfo **info){
 
 #if __DEVICE_EMULATION__
@@ -1143,8 +1470,16 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
 
 
 /**
-   host code for MCX kernels
-*/
+ * @brief Master host code for the MCX simulation kernel (!!!Important!!!)
+ *
+ * This function is the master host code for the MCX kernel. It is responsible
+ * for initializing all GPU variables, copy data from host to GPU, launch the
+ * kernel for simulation, wait for competion, and retrieve the results.
+ *
+ * @param[in,out] cfg: the simulation configuration structure
+ * @param[in] gpu: the GPU information structure
+ */
+
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      int i,iter;

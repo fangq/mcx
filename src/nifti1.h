@@ -1,5 +1,5 @@
 /** \file nifti1.h
-    \brief Official definition of the nifti1 header.  Written by Bob Cox, SSCC, NIMH.
+    @brief Official definition of the nifti1 header.  Written by Bob Cox, SSCC, NIMH.
 
     HISTORY:
 
@@ -136,7 +136,7 @@ extern "C" {
 /*=================*/
 
 /*! \struct nifti_1_header
-    \brief Data structure defining the fields in the nifti1 header.
+    @brief Data structure defining the fields in the nifti1 header.
            This binary header should be found at the beginning of a valid
            NIFTI-1 header file.
  */
@@ -278,7 +278,7 @@ typedef struct nifti_1_header nifti_1_header ;
 -----------------------------------------------------------------------------*/
 
 /*! \struct nifti1_extender
-    \brief This structure represents a 4-byte string that should follow the
+    @brief This structure represents a 4-byte string that should follow the
            binary nifti_1_header data in a NIFTI-1 header file.  If the char
            values are {1,0,0,0}, the file is expected to contain extensions,
            values of {0,0,0,0} imply the file does not contain extensions.
@@ -288,7 +288,7 @@ struct nifti1_extender { char extension[4] ; } ;
 typedef struct nifti1_extender nifti1_extender ;
 
 /*! \struct nifti1_extension
-    \brief Data structure defining the fields of a header extension.
+    @brief Data structure defining the fields of a header extension.
  */
 struct nifti1_extension {
    int    esize ; /*!< size of extension, in bytes (must be multiple of 16) */
@@ -477,7 +477,7 @@ typedef struct nifti1_extension nifti1_extension ;
 #undef DT_UNKNOWN  /* defined in dirent.h on some Unix systems */
 
 /*! \defgroup NIFTI1_DATATYPES
-    \brief nifti1 datatype codes
+    @brief nifti1 datatype codes
     @{
  */
                             /*--- the original ANALYZE 7.5 type codes ---*/
@@ -518,7 +518,7 @@ typedef struct nifti1_extension nifti1_extension ;
                             /*------- aliases for all the above codes ---*/
 
 /*! \defgroup NIFTI1_DATATYPE_ALIASES
-    \brief aliases for the nifti1 datatype codes
+    @brief aliases for the nifti1 datatype codes
     @{
  */
                                        /*! unsigned char. */
@@ -682,7 +682,7 @@ typedef struct { unsigned char r,g,b; } rgb_byte ;
        R/sqrt(1-R*R) is t-distributed with p1 DOF. */
 
 /*! \defgroup NIFTI1_INTENT_CODES
-    \brief nifti1 intent codes, to describe intended meaning of dataset contents
+    @brief nifti1 intent codes, to describe intended meaning of dataset contents
     @{
  */
 #define NIFTI_INTENT_CORREL      2
@@ -1207,7 +1207,7 @@ typedef struct { unsigned char r,g,b; } rgb_byte ;
    /*-----------------------*/      /*---------------------------------------*/
 
 /*! \defgroup NIFTI1_XFORM_CODES
-    \brief nifti1 xform codes to describe the "standard" coordinate system
+    @brief nifti1 xform codes to describe the "standard" coordinate system
     @{
  */
                                     /*! Arbitrary coordinates (Method 1). */
@@ -1271,7 +1271,7 @@ typedef struct { unsigned char r,g,b; } rgb_byte ;
 -----------------------------------------------------------------------------*/
 
 /*! \defgroup NIFTI1_UNITS
-    \brief nifti1 units codes to describe the unit of measurement for
+    @brief nifti1 units codes to describe the unit of measurement for
            each dimension of the dataset
     @{
  */
@@ -1412,7 +1412,7 @@ typedef struct { unsigned char r,g,b; } rgb_byte ;
                                       ( ( ((char)(sd)) & 0x03) << 4 )  )
 
 /*! \defgroup NIFTI1_SLICE_ORDER
-    \brief nifti1 slice order codes, describing the acquisition order
+    @brief nifti1 slice order codes, describing the acquisition order
            of the slices
     @{
  */

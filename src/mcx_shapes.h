@@ -18,7 +18,7 @@
 /***************************************************************************//**
 \file    mcx_shapes.h
 
-\brief   MCX shape JSON parser header
+@brief   MCX shape JSON parser header
 *******************************************************************************/
 
 #ifndef _MCEXTREME_RASTERIZER_H

@@ -18,7 +18,7 @@
 /***************************************************************************//**
 \file    tictoc.h
 
-\brief   Timing function header file
+@brief   Timing function header file
 *******************************************************************************/
 
 #ifndef GETTIMEOFDAY_H

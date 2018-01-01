@@ -1,18 +1,27 @@
-/*******************************************************************************
-**
-**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+/***************************************************************************//**
+**  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
+**  \copyright Qianqian Fang, 2009-2018
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
 **          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
-**  
-**  \section slicense License
-**        GNU General Public License v3, see LICENSE.txt for details
+**  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
+**          "Scalable and massively parallel Monte Carlo photon transport
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics, (in press) 2018.
 **
+**  \section slicense License
+**          GPL v3, see LICENSE.txt for details
+*******************************************************************************/
+
+
+/***************************************************************************//**
+\file    mcxlab.cpp
+
+@brief   mex function for MCXLAB
 *******************************************************************************/
 
 #include <stdio.h>
@@ -41,15 +50,25 @@
     #define RAND_WORD_LEN 5
 #endif
 
+//! Macro to read the 1st scalar cfg member
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
+
+//! Macro to read one scalar cfg member
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
+
+//! Macro to read one 3-element vector member of cfg
 #define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];\
                                  printf("mcx.%s=[%g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z));}
+
+//! Macro to read one 3- or 4-element vector member of cfg
 #define GET_VEC34_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];if(mxGetNumberOfElements(item)==4) u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
+
+//! Macro to read one 4-element vector member of cfg
 #define GET_VEC4_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
+//! Macro to output GPU parameters as field
 #define SET_GPU_INFO(output,id,v)  mxSetField(output,id,#v,mxCreateDoubleScalar(gpuinfo[i].v));
 
 #if (! defined MX_API_VER) || (MX_API_VER < 0x07300000)
@@ -62,9 +81,15 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 void mcx_validate_config(Config *cfg);
 void mcxlab_usage();
 
-float *detps=NULL;
-int    dimdetps[2]={0,0};
+float *detps=NULL;         //! buffer to receive data from cfg.detphotons field
+int    dimdetps[2]={0,0};  //! dimensions of the cfg.detphotons array
 int    seedbyte=0;
+
+/** @brief Mex function for the MCX host function for MATLAB/Octave
+ *  This is the master function to interface all MCX features inside MATLAB.
+ *  In MCXLAB, all inputs are read from the cfg structure, which contains all
+ *  simuation parameters and data.
+ */
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   Config cfg;
@@ -83,10 +108,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
                                   "constmem","sharedmem","regcount","clock","sm","core",
                                   "autoblock","autothread","maxgate"};
 
+  /**
+   * If no input is given for this function, it prints help information and return.
+   */
   if (nrhs==0){
      mcxlab_usage();
      return;
   }
+  
+  /**
+   * If a single string is passed, and if this string is 'gpuinfo', this function 
+   * returns the list of GPUs on this host and return.
+   */
   if(nrhs==1 && mxIsChar(prhs[0])){
         char shortcmd[MAX_SESSION_LENGTH];
         mxGetString(prhs[0], shortcmd, MAX_SESSION_LENGTH);
@@ -120,13 +153,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	}
 	return;
   }
+  
+  /**
+   * If a structure is passed to this function, a simulation will be launched.
+   */
   printf("Launching MCXLAB - Monte Carlo eXtreme for MATLAB & GNU Octave ...\n");
   if (!mxIsStruct(prhs[0]))
      mexErrMsgTxt("Input must be a structure.");
 
-  nfields = mxGetNumberOfFields(prhs[0]);
-  ncfg = mxGetNumberOfElements(prhs[0]);
+  /**
+   * Find out information about input and output.
+   */
+  nfields = mxGetNumberOfFields(prhs[0]); /** how many subfield in the input cfg data structure */
+  ncfg = mxGetNumberOfElements(prhs[0]);  /** if input is a struct array, each element of the struct is a simulation */
 
+  /**
+   * The function can return 1-5 outputs (i.e. the LHS)
+   */
   if(nlhs>=1)
       plhs[0] = mxCreateStructMatrix(ncfg,1,3,datastruct);
   if(nlhs>=2)
@@ -138,13 +181,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   if(nlhs>=5)
       plhs[4] = mxCreateStructMatrix(ncfg,1,1,outputtag);
 
+  /**
+   * Loop over each element of the struct if it is an array, each element is a simulation
+   */
   for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
     try{
 	printf("Running simulations for configuration #%d ...\n", jstruct+1);
 
+        /** Initialize cfg with default values first */
 	mcx_initcfg(&cfg);
 	detps=NULL;
 
+        /** Read each struct element from input and set value to the cfg configuration */
 	for (ifield = 0; ifield < nfields; ifield++) { /* how many input struct fields */
             tmp = mxGetFieldByNumber(prhs[0], jstruct, ifield);
 	    if (tmp == NULL) {
@@ -154,18 +202,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	}
 	mcx_flush(&cfg);
 
-	cfg.issave2pt=(nlhs>=1);
-	cfg.issavedet=(nlhs>=2);
-	cfg.issaveseed=(nlhs>=4);
+        /** Overwite the output flags using the number of output present */
+	cfg.issave2pt=(nlhs>=1);  /** save fluence rate to the 1st output if present */
+	cfg.issavedet=(nlhs>=2);  /** save detected photon data to the 2nd output if present */
+	cfg.issaveseed=(nlhs>=4); /** save detected photon seeds to the 4th output if present */
 #if defined(USE_MT_RAND)
         cfg.issaveseed=0;
 #endif
+        /** One must define the domain and properties */
 	if(cfg.vol==NULL || cfg.medianum==0){
 	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
 	}
+	/** One must also choose one of the GPUs */
 	if(!(activedev=mcx_list_gpu(&cfg,&gpuinfo))){
             mexErrMsgTxt("No active GPU device found");
 	}
+	
+	/** Initialize all buffers necessary to store the output variables */
 	if(nlhs>=1){
             int fieldlen=cfg.dim.x*cfg.dim.y*cfg.dim.z*(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
 	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
@@ -179,15 +232,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         if(nlhs>=5){
 	    cfg.exportdebugdata=(float*)malloc(cfg.maxjumpdebug*sizeof(float)*MCX_DEBUG_REC_LEN);
 	}
+	
+	/** Validate all input fields, and warn incompatible inputs */
         mcx_validate_config(&cfg);
+	
+	/** Start multiple threads, one thread to run portion of the simulation on one CUDA GPU, all in parallel */
 #ifdef _OPENMP
         omp_set_num_threads(activedev);
 #pragma omp parallel shared(errorflag)
 {
         threadid=omp_get_thread_num();
 #endif
+        /** Enclose all simulation calls inside a try/catch construct for exception handling */
         try{
-
+	    /** Call the main simulation host function to start the simulation */
             mcx_run_simulation(&cfg,gpuinfo);
 
         }catch(const char *err){
@@ -203,10 +261,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 #ifdef _OPENMP
 }
 #endif
-
+        /** If error is detected, gracefully terminate the mex and return back to MATLAB */
         if(errorflag)
             mexErrMsgTxt("MCXLAB Terminated due to an exception!");
 
+        /** if 5th output presents, output the photon trajectory data */
         if(nlhs>=5){
             fielddim[0]=MCX_DEBUG_REC_LEN; fielddim[1]=cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
     	    fielddim[2]=0; fielddim[3]=0;
@@ -217,6 +276,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	        free(cfg.exportdebugdata);
             cfg.exportdebugdata=NULL;
 	}
+	/** if the 4th output presents, output the detected photon seeds */
         if(nlhs>=4){
             fielddim[0]=(cfg.issaveseed>0)*RAND_WORD_LEN*sizeof(float); fielddim[1]=cfg.detectedcount; // his.savedphoton is for one repetition, should correct
     	    fielddim[2]=0; fielddim[3]=0;
@@ -225,6 +285,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    free(cfg.seeddata);
             cfg.seeddata=NULL;
 	}
+	/** if the 3rd output presents, output the detector-masked medium volume, similar to the --dumpmask flag */
 	if(nlhs>=3){
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y;
             fielddim[2]=cfg.dim.z; fielddim[3]=0;
@@ -234,6 +295,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
                 	 fielddim[0]*fielddim[1]*fielddim[2]*sizeof(unsigned int));
             }
 	}
+	/** if the 2nd output presents, output the detected photon partialpath data */
 	if(nlhs>=2){
             fielddim[0]=(cfg.medianum+1+cfg.issaveexit*6); fielddim[1]=cfg.detectedcount; 
             fielddim[2]=0; fielddim[3]=0;
@@ -245,12 +307,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             free(cfg.exportdetected);
             cfg.exportdetected=NULL;
 	}
+	/** if the 1st output presents, output the fluence/energy-deposit volume data */
         if(nlhs>=1){
 	    int fieldlen;
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
 	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
 	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3];
-            if(cfg.issaveref){
+            if(cfg.issaveref){        /** If error is detected, gracefully terminate the mex and return back to MATLAB */
+
 	        float *dref=(float *)malloc(fieldlen*sizeof(float));
 		memcpy(dref,cfg.exportfield,fieldlen*sizeof(float));
 		for(int i=0;i<fieldlen;i++){
@@ -270,27 +334,33 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             free(cfg.exportfield);
             cfg.exportfield=NULL;
 
+            /** also return the run-time info in outut.runtime */
             mxArray *stat=mxCreateStructMatrix(1,1,6,statstruct);
             mxArray *val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.runtime;
             mxSetFieldByNumber(stat,0,0, val);
 
+            /** return the total simulated photon number */
             val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.nphoton;
             mxSetFieldByNumber(stat,0,1, val);
 
+            /** return the total simulated energy */
             val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.energytot;
             mxSetFieldByNumber(stat,0,2, val);
 
+            /** return the total absorbed energy */
             val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.energyabs;
             mxSetFieldByNumber(stat,0,3, val);
 
+            /** return the normalization factor */
             val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.normalizer;
             mxSetFieldByNumber(stat,0,4, val);
 
+            /** return the relative workload between multiple GPUs */
             val = mxCreateDoubleMatrix(1,activedev,mxREAL);
 	    for(int i=0;i<activedev;i++)
                 *(mxGetPr(val)+i) = cfg.workload[i];
@@ -306,6 +376,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       mexPrintf("Unknown Exception");
     }
 
+    /** Clear up simulation data structures by calling the destructors */
     if(detps)
        free(detps);
     mcx_cleargpuinfo(&gpuinfo);
@@ -314,6 +385,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   return;
 }
 
+/** 
+ * @brief Function to parse one subfield of the input structure
+ *
+ * This function reads in all necessary information from the cfg input structure.
+ * it can handle single scalar inputs, short vectors (3-4 elem), strings and arrays.
+ *
+ * @param[in] root: the cfg input data structure
+ * @param[in] item: the current element of the cfg input data structure
+ * @param[in] idx: the index of the current element (starting from 0)
+ * @param[out] cfg: the simulation configuration structure to store all input read from the parameters
+ */
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg){
     const char *name=mxGetFieldNameByNumber(root,idx);
@@ -581,6 +663,15 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     }
 }
 
+/** 
+ * @brief Pre-computing the detected photon weight and time-of-fly from partial path input for replay
+ *
+ * When detected photons are replayed, this function recalculates the detected photon
+ * weight and their time-of-fly for the replay calculations.
+ *
+ * @param[in,out] cfg: the simulation configuration structure
+ */
+
 void mcx_replay_prep(Config *cfg){
     int i,j;
     if(cfg->seed==SEED_FROM_FILE && detps==NULL)
@@ -611,6 +702,14 @@ void mcx_replay_prep(Config *cfg){
             cfg->nphoton++;
         }
 }
+
+/** 
+ * @brief Validate all input fields, and warn incompatible inputs
+ *
+ * Perform self-checking and raise exceptions or warnings when input error is detected
+ *
+ * @param[in,out] cfg: the simulation configuration structure
+ */
 
 void mcx_validate_config(Config *cfg){
      int i,gates,idx1d;
@@ -704,15 +803,32 @@ void mcx_validate_config(Config *cfg){
      mcx_replay_prep(cfg);
 }
 
+/**
+ * @brief Error reporting function in the mex function, equivallent to mcx_error in binary mode
+ *
+ * @param[in] id: a single integer for the types of the error
+ * @param[in] msg: the error message string
+ * @param[in] file: the unit file name where this error is raised
+ * @param[in] linenum: the line number in the file where this error is raised
+ */
+
 extern "C" int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum){
      printf("MCXLAB ERROR %d in unit %s:%d: %s\n",id,filename,linenum,msg);
      throw msg;
      return id;
 }
 
+/**
+ * @brief Print a brief help information if nothing is provided
+ */
+
 void mcxlab_usage(){
      printf("Usage:\n    [flux,detphoton,vol,seeds]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
 }
+
+/**
+ * @brief Force matlab refresh the command window to print all buffered messages
+ */
 
 extern "C" void mcx_matlab_flush(){
 #ifdef _OPENMP

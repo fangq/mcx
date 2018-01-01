@@ -1,23 +1,25 @@
-/*******************************************************************************
-**
-**  \mainpage Monte Carlo eXtreme (MCX)  - GPU accelerated 3D Monte Carlo transport simulation
+/***************************************************************************//**
+**  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
+**  \copyright Qianqian Fang, 2009-2018
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
 **          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
-**  
-**  \section slicense License
-**        GNU General Public License v3, see LICENSE.txt for details
+**  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
+**          "Scalable and massively parallel Monte Carlo photon transport
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics, (in press) 2018.
 **
+**  \section slicense License
+**          GPL v3, see LICENSE.txt for details
 *******************************************************************************/
 
 /***************************************************************************//**
 \file    mcx_shapes.c
-\brief   3D shape parsing and rasterization unit
+@brief   3D shape parsing and rasterization unit
 
 In this unit, we load and parse a JSON-formatted shape file,
 rasterize the 3D objects and subsequently add to a voxelated volume.
@@ -47,7 +49,7 @@ char ErrorMsg[MAX_SHAPE_ERR]={'\0'};
 /*******************************************************************************/
 /*! \fn int mcx_load_jsonshapes(Grid3D *g, char *fname)
 
-    \brief Load a JSON-formatted shape file and process
+    @brief Load a JSON-formatted shape file and process
     \param g A structure pointing to the volume and dimension data
     \param fname The file name string to the JSON shape file
 */
@@ -88,7 +90,7 @@ int mcx_load_jsonshapes(Grid3D *g, char *fname){
 /*******************************************************************************/
 /*! \fn int mcx_parse_shapestring(Grid3D *g, char *shapedata)
 
-    \brief Load JSON-formatted shape definitions from a string
+    @brief Load JSON-formatted shape definitions from a string
     \param g A structure pointing to the volume and dimension data
     \param shapedata A string containg the JSON shape data
 */
@@ -129,7 +131,7 @@ int mcx_parse_shapestring(Grid3D *g, char *shapedata){
 /*******************************************************************************/
 /*! \fn int mcx_parse_jsonshapes(cJSON *root, Grid3D *g)
 
-    \brief Parse a JSON-formatted shape file and rasterize the objects to the volume
+    @brief Parse a JSON-formatted shape file and rasterize the objects to the volume
     \param root A cJSON pointer points to the root obj of the shape block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -166,7 +168,7 @@ int mcx_parse_jsonshapes(cJSON *root, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_origin(cJSON *obj, Grid3D *g)
 
-    \brief Reset the origin of the domain, default is [0,0,0]
+    @brief Reset the origin of the domain, default is [0,0,0]
     \param obj A cJSON pointer points to the Origin obj block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -186,7 +188,7 @@ int mcx_raster_origin(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_sphere(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D sphere and add to the volume
+    @brief Rasterize a 3D sphere and add to the volume
     \param obj A cJSON pointer points to the sphere obj block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -239,7 +241,7 @@ int mcx_raster_sphere(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_subgrid(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D rectangular region and add to the volume
+    @brief Rasterize a 3D rectangular region and add to the volume
     \param obj A cJSON pointer points to the rectangular obj block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -290,7 +292,7 @@ int mcx_raster_subgrid(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_box(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D rectangular region and add to the volume
+    @brief Rasterize a 3D rectangular region and add to the volume
     \param obj A cJSON pointer points to the rectangular obj block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -344,7 +346,7 @@ int mcx_raster_box(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_cylinder(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a finite 3D cylindrical region and add to the volume
+    @brief Rasterize a finite 3D cylindrical region and add to the volume
     \param obj A cJSON pointer points to the cylindrical obj block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -419,7 +421,7 @@ int mcx_raster_cylinder(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_slabs(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D layered-slab structure and add to the volume
+    @brief Rasterize a 3D layered-slab structure and add to the volume
     \param obj A cJSON pointer points to the layered-slab structure block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -504,7 +506,7 @@ int mcx_raster_slabs(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_layers(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D layer structure and add to the volume
+    @brief Rasterize a 3D layer structure and add to the volume
     \param obj A cJSON pointer points to the layer structure block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -584,7 +586,7 @@ int mcx_raster_layers(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_upperspace(cJSON *obj, Grid3D *g)
 
-    \brief Rasterize a 3D semi-space region and add to the volume
+    @brief Rasterize a 3D semi-space region and add to the volume
     \param obj A cJSON pointer points to the semi-space object block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -627,7 +629,7 @@ int mcx_raster_upperspace(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_raster_grid(cJSON *obj, Grid3D *g)
 
-    \brief Recreate the background grid with a different dimension or medium
+    @brief Recreate the background grid with a different dimension or medium
     \param obj A cJSON pointer points to the background grid block
     \param g  A structure pointing to the volume and dimension data
 */
@@ -667,7 +669,7 @@ int mcx_raster_grid(cJSON *obj, Grid3D *g){
 /*******************************************************************************/
 /*! \fn int mcx_find_shapeid(char *shapename)
 
-    \brief Look up the JSON object tag and return the index to the processing function
+    @brief Look up the JSON object tag and return the index to the processing function
     \param shapename The string of the JSON shape object
 */
 
@@ -685,7 +687,7 @@ int mcx_find_shapeid(char *shapename){
 /*******************************************************************************/
 /*! \fn char * mcx_last_shapeerror()
 
-    \brief return the last error message encountered in the processing
+    @brief return the last error message encountered in the processing
 */
 
 char * mcx_last_shapeerror(){

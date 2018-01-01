@@ -18,7 +18,7 @@
 /***************************************************************************//**
 \file    mcx_ieee754.h
 
-\brief   GNU random function header for Windows only
+@brief   GNU random function header for Windows only
 *******************************************************************************/
 
 #ifndef MCX_IEEE754_H
