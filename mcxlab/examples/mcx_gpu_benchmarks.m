@@ -108,7 +108,7 @@ cfg.srcpos=[10 10 -10];
 
 for i=1:size(speed,1)
     [flux, detps]=mcxlab(cfg);
-    if(abs(flux.stat.energyabs/flux.stat.energytot-0.1866)>0.005)
+    if(abs(flux.stat.energyabs/flux.stat.energytot-0.2551)>0.005)
         flux.stat
         error('output absorption fraction is incorrect');
     end
