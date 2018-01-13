@@ -99,7 +99,7 @@ else
   endif
 endif
 
-CUGENCODE=-arch=sm_20
+CUGENCODE=-arch=sm_35
 OUTPUTFLAG:=-o
 
 logfast:    CUCCOPT+=-use_fast_math
@@ -151,16 +151,16 @@ static:     LINKOPT=$(CUDA_STATIC)
 mexbox fermimex:        AR=$(MEX)
 mexbox fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER $(OMP) $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-L$$TMW_ROOT$$MATLABROOT/sys/os/$$ARCH $$LDFLAGS $(OMP) $(USERLINKOPT)' -liomp5
 mexbox oct octbox fermimex fermioct:    OUTPUT_DIR=../mcxlab
-fermimex:      BINARY=mcxlab
-fermioct:      BINARY=mcxlab.mex
-mexbox:                     BINARY=mcxlab_atom
+fermimex:      BINARY=mcx
+fermioct:      BINARY=mcx.mex
+mexbox:                     BINARY=mcx_atom
 mexbox octbox fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER
 mexbox octbox fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
 mexbox fermimex:        LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
 octbox fermioct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX -fopenmp $(MEXCCOPT) $(USERCCOPT)' LFLAGS='-fopenmp $(USERLINKOPT)' LDFLAGS='$(LFLAGS)' mkoctfile
-fermioct:               BINARY=mcxlab.mex
-octbox:                 BINARY=mcxlab_atom.mex
+fermioct:               BINARY=mcx.mex
+octbox:                 BINARY=mcx_atom.mex
 octbox fermioct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 
 fermidebug: CUCCOPT+=-DMCX_DEBUG
