@@ -32,11 +32,16 @@ extern "C" {
 
 #define MAX_SHAPE_ERR 256
 
+/**
+ * \struct GridSpace mcx_shapes.h
+ * \brief 3D voxelated space with which the shape constructs are rasterized 
+ */
+
 typedef struct GridSpace{
-        unsigned int **vol;
-        uint3  *dim;
-	float3 orig;
-	int    rowmajor;
+        unsigned int **vol;  /**< 3D volume with which the shapes are rasterized */
+        uint3  *dim;         /**< 3D dimensions of the volume */
+	float3 orig;         /**< reference origin coordinate of the rasterization of the next shape */
+	int    rowmajor;     /**< whether the volume is in row-major or col-major */
 } Grid3D;
 
 int mcx_load_jsonshapes(Grid3D *g, char *fname);

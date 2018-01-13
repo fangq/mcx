@@ -47,34 +47,34 @@
 #elif defined(USE_MT_RAND)
     #define RAND_WORD_LEN 0
 #else
-    #define RAND_WORD_LEN 5
+    #define RAND_WORD_LEN 5       /**< number of Words per RNG state */
 #endif
 
-//! Macro to read the 1st scalar cfg member
+/**<  Macro to read the 1st scalar cfg member */
 #define GET_1ST_FIELD(x,y)  if(strcmp(name,#y)==0) {double *val=mxGetPr(item);x->y=val[0];printf("mcx.%s=%g;\n",#y,(float)(x->y));}
 
-//! Macro to read one scalar cfg member
+/**<  Macro to read one scalar cfg member */
 #define GET_ONE_FIELD(x,y)  else GET_1ST_FIELD(x,y)
 
-//! Macro to read one 3-element vector member of cfg
+/**<  Macro to read one 3-element vector member of cfg */
 #define GET_VEC3_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];\
                                  printf("mcx.%s=[%g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z));}
 
-//! Macro to read one 3- or 4-element vector member of cfg
+/**<  Macro to read one 3- or 4-element vector member of cfg */
 #define GET_VEC34_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];if(mxGetNumberOfElements(item)==4) u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
-//! Macro to read one 4-element vector member of cfg
+/**<  Macro to read one 4-element vector member of cfg */
 #define GET_VEC4_FIELD(u,v) else if(strcmp(name,#v)==0) {double *val=mxGetPr(item);u->v.x=val[0];u->v.y=val[1];u->v.z=val[2];u->v.w=val[3];\
                                  printf("mcx.%s=[%g %g %g %g];\n",#v,(float)(u->v.x),(float)(u->v.y),(float)(u->v.z),(float)(u->v.w));}
 
-//! Macro to output GPU parameters as field
+/**<  Macro to output GPU parameters as field */
 #define SET_GPU_INFO(output,id,v)  mxSetField(output,id,#v,mxCreateDoubleScalar(gpuinfo[i].v));
 
 #if (! defined MX_API_VER) || (MX_API_VER < 0x07300000)
-      typedef int dimtype;
+      typedef int dimtype;                              /**<  MATLAB before 2017 uses int as the dimension array */
 #else
-      typedef size_t dimtype;
+      typedef size_t dimtype;                           /**<  MATLAB after 2017 uses size_t as the dimension array */
 #endif
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
@@ -808,7 +808,7 @@ void mcx_validate_config(Config *cfg){
  *
  * @param[in] id: a single integer for the types of the error
  * @param[in] msg: the error message string
- * @param[in] file: the unit file name where this error is raised
+ * @param[in] filename: the unit file name where this error is raised
  * @param[in] linenum: the line number in the file where this error is raised
  */
 

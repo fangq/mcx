@@ -593,6 +593,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  * @param[in,out] v: the direction vector of the photon
  * @param[in,out] f: the parameter vector of the photon
  * @param[in,out] rv: the reciprocal direction vector of the photon (rv[i]=1/v[i])
+ * @param[out] prop: the optical properties of the voxel the photon is launched into
  * @param[in,out] idx1d: the linear index of the voxel containing the photon at launch
  * @param[in,out] mediaid: the medium index at the voxel at launch
  * @param[in,out] w0: initial weight, reset here after launch
@@ -926,7 +927,7 @@ kernel void mcx_test_rng(float field[],uint n_seed[]){
  *
  * @param[in] media: domain medium index array, read-only
  * @param[out] field: the 3D/4D array where the fluence/energy-deposit are accummulated
- * @param[in,out] energy: the array storing the total launched and escaped energy for each thread
+ * @param[in,out] genergy: the array storing the total launched and escaped energy for each thread
  * @param[in] n_seed: the seed to the RNG of this thread
  * @param[in,out] n_pos: the initial position state of the photon for each thread
  * @param[in,out] n_dir: the initial direction state of the photon for each thread

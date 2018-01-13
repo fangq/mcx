@@ -171,7 +171,7 @@ typedef struct MCXConfig{
                                          6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian,12:line,13:slit*/
         char outputtype;             /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/
         char outputformat;           /**<'mc2' output is text, 'nii': binary, 'img': regular json, 'ubj': universal binary json*/
-	char faststep;
+	char faststep;               /**<1 use tMCimg-like approximated photon stepping (obsolete) */
         float minenergy;             /**<minimum energy to propagate photon*/
 	float unitinmm;              /**<defines the length unit in mm for grid*/
         FILE *flog;                  /**<stream handle to print log information*/
