@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <PathDelim Value="\"/>
+    <General>
+      <MainUnit Value="0"/>
+      <Title Value="mcxshow"/>
+      <UseXPManifest Value="True"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="1">
+      <Item1 Name="default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|ppw|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+      </local>
+    </RunParams>
+    <RequiredPackages Count="4">
+      <Item1>
+        <PackageName Value="SynEdit"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="GLSceneLCL_DesignTime"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="GLSceneLCL_RunTime"/>
+      </Item3>
+      <Item4>
+        <PackageName Value="LCL"/>
+      </Item4>
+    </RequiredPackages>
+    <Units Count="44">
+      <Unit0>
+        <Filename Value="mcxshow.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <CursorPos X="54" Y="9"/>
+        <UsageCount Value="88"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="mcxrender.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fmDomain"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="92"/>
+        <CursorPos X="12" Y="116"/>
+        <UsageCount Value="88"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\ GLSLog.pas"/>
+        <TopLine Value="452"/>
+        <CursorPos Y="459"/>
+        <UsageCount Value="5"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\GLState.pas"/>
+        <UsageCount Value="5"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\Experimental\GLShaderManager.pas"/>
+        <TopLine Value="1371"/>
+        <CursorPos X="38" Y="1385"/>
+        <UsageCount Value="5"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\Experimental\GLShaderEnvironment.pas"/>
+        <TopLine Value="214"/>
+        <CursorPos X="51" Y="233"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\Experimental\GL3xMaterial.pas"/>
+        <TopLine Value="47"/>
+        <CursorPos X="11" Y="61"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\DesignTime\GLSIDENotifierLCL.pas"/>
+        <TopLine Value="64"/>
+        <CursorPos X="38" Y="82"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\Platform\GLCrossPlatform.pas"/>
+        <TopLine Value="988"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\ GLBaseClasses.pas"/>
+        <TopLine Value="69"/>
+        <CursorPos X="3" Y="83"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PropertyEditors\FRTextureEditLCL.pas"/>
+        <TopLine Value="59"/>
+        <CursorPos X="51" Y="78"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PropertyEditors\InfoLCL.pas"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\Experimental\GL3xMaterialEditor.pas"/>
+        <TopLine Value="759"/>
+        <CursorPos Y="777"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\DesignTime\GLSceneRegisterLCL.pas"/>
+        <TopLine Value="1491"/>
+        <CursorPos X="5" Y="1516"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\GLScene.pas"/>
+        <TopLine Value="352"/>
+        <CursorPos X="12" Y="353"/>
+        <UsageCount Value="4"/>
+        <Bookmarks Count="1">
+          <Item0 Y="2502" ID="1"/>
+        </Bookmarks>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\ GLCoordinates.pas"/>
+        <TopLine Value="174"/>
+        <CursorPos X="60" Y="188"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Lazarus\materials\transparency\C:\lazarus\fpc\2.5.1\source\rtl\objpas\classes\classesh.inc"/>
+        <TopLine Value="1594"/>
+        <CursorPos X="15" Y="1608"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Lazarus\materials\transparency\C:\lazarus\fpc\2.5.1\source\rtl\objpas\classes\compon.inc"/>
+        <TopLine Value="225"/>
+        <CursorPos X="3" Y="237"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Lazarus\materials\transparency\C:\lazarus\lcl\controls.pp"/>
+        <UnitName Value="Controls"/>
+        <TopLine Value="182"/>
+        <CursorPos X="5" Y="196"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit18>
+      <Unit19>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PropertyEditors\FMaterialEditorFormLCL.pas"/>
+        <TopLine Value="212"/>
+        <CursorPos X="20" Y="242"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit19>
+      <Unit20>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PropertyEditors\FMaterialEditorFormLCL.lrs"/>
+        <CursorPos X="58" Y="3"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit20>
+      <Unit21>
+        <Filename Value="..\..\..\..\..\..\..\share\fpcsrc\2.4.2\packages\fcl-process\src\process.pp"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit21>
+      <Unit22>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PhysicsAPIs\NewtonImport_JointLibrary.pas"/>
+        <TopLine Value="62"/>
+        <CursorPos Y="73"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit22>
+      <Unit23>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\GLContext.pas"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="4410"/>
+        <CursorPos X="45" Y="4428"/>
+        <UsageCount Value="5"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit23>
+      <Unit24>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\GLGraphics.pas"/>
+        <TopLine Value="67"/>
+        <CursorPos X="27" Y="87"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit24>
+      <Unit25>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\GLNGDManager.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="45"/>
+        <CursorPos X="39" Y="71"/>
+        <UsageCount Value="5"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PhysicsAPIs\NewtonImport.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="147"/>
+        <CursorPos X="11" Y="177"/>
+        <UsageCount Value="5"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\GLScene.inc"/>
+        <TopLine Value="497"/>
+        <CursorPos X="47" Y="532"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Samples\Source\PhysicsAPIs\delphinewton.inc"/>
+        <TopLine Value="234"/>
+        <CursorPos X="9" Y="234"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="..\..\..\..\..\..\..\share\fpcsrc\2.4.2\rtl\unix\aliasptp.inc"/>
+        <TopLine Value="24"/>
+        <CursorPos X="5" Y="43"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit29>
+      <Unit30>
+        <Filename Value="..\..\..\..\..\..\..\share\fpcsrc\2.4.2\rtl\unix\unix.pp"/>
+        <UnitName Value="Unix"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\lcl\interfaces\fpgui\fpguiint.pp"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="23"/>
+        <CursorPos X="12" Y="42"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\lcl\interfaces\win32\win32int.pp"/>
+        <UnitName Value="Win32Int"/>
+        <TopLine Value="59"/>
+        <CursorPos X="4" Y="78"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLScene.pas"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="38"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLMaterial.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="505"/>
+        <CursorPos X="14" Y="518"/>
+        <UsageCount Value="41"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLColor.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="48"/>
+        <CursorPos X="28" Y="74"/>
+        <UsageCount Value="41"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit35>
+      <Unit36>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLVectorTypes.pas"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="34"/>
+        <CursorPos X="20" Y="48"/>
+        <UsageCount Value="41"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit36>
+      <Unit37>
+        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\packages\fcl-json\src\fpjson.pp"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="86"/>
+        <CursorPos X="14" Y="114"/>
+        <UsageCount Value="39"/>
+      </Unit37>
+      <Unit38>
+        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\rtl\inc\systemh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="655"/>
+        <CursorPos X="25" Y="684"/>
+        <UsageCount Value="39"/>
+      </Unit38>
+      <Unit39>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="833"/>
+        <CursorPos X="16" Y="848"/>
+        <UsageCount Value="39"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit39>
+      <Unit40>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLState.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="159"/>
+        <CursorPos X="19" Y="173"/>
+        <UsageCount Value="20"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit40>
+      <Unit41>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLLCLViewer.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="103"/>
+        <CursorPos X="28" Y="114"/>
+        <UsageCount Value="17"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit41>
+      <Unit42>
+        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLGraphics.pas"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="17"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit42>
+      <Unit43>
+        <Filename Value="mcxgui.pas"/>
+        <ComponentName Value="fmMCX"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2240"/>
+        <CursorPos X="30" Y="2271"/>
+        <UsageCount Value="11"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit43>
+    </Units>
+    <JumpHistory Count="6" HistoryIndex="5">
+      <Position1>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="116" Column="12" TopLine="92"/>
+      </Position1>
+      <Position2>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="117" Column="12" TopLine="93"/>
+      </Position2>
+      <Position3>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="116" Column="12" TopLine="92"/>
+      </Position3>
+      <Position4>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="115" Column="12" TopLine="91"/>
+      </Position4>
+      <Position5>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="116" Column="12" TopLine="92"/>
+      </Position5>
+      <Position6>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="115" Column="12" TopLine="91"/>
+      </Position6>
+    </JumpHistory>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="mcxshow"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
+    </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <SyntaxMode Value="Delphi"/>
+      </SyntaxOptions>
+    </Parsing>
+    <Linking>
+      <Debugging>
+        <StripSymbols Value="True"/>
+        <UseExternalDbgSyms Value="True"/>
+      </Debugging>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+  </CompilerOptions>
+  <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="mcxrender.pas"/>
+        <Line Value="196"/>
+      </Item1>
+    </BreakPoints>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>
