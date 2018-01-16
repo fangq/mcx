@@ -39,11 +39,17 @@
 #include "mcx_const.h"
 #include "mcx_shapes.h"
 
+/**
+ * Macro to load JSON keys
+ */
 #define FIND_JSON_KEY(id,idfull,parent,fallback,val) \
                     ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
                                 ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? fallback : tmp->val) \
                      : tmp->val)
 
+/**
+ * Macro to load JSON object
+ */
 #define FIND_JSON_OBJ(id,idfull,parent) \
                     ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
                                 ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? NULL : tmp) \
@@ -54,6 +60,9 @@
          char pathsep='/';
 #endif
 
+/**
+ * Macro to include unit name and line number in the error message
+ */
 #define MCX_ASSERT(a)  (!(a) && (mcx_error((a),"input error",__FILE__,__LINE__),1) );
 
 #define MIN_HEADER_SIZE 348    /**< Analyze header size */
@@ -396,6 +405,7 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
  * @param[in] ppath: buffer pointing to the detected photon data (partial path etc)
  * @param[in] seeds: buffer pointing to the detected photon seed data
  * @param[in] count: number of detected photons
+ * @param[in] doappend: flag if the new data is appended or write from the begining
  * @param[in] cfg: simulation configuration
  */
 
@@ -440,7 +450,7 @@ void mcx_printlog(Config *cfg, char *str){
  * @param[in,out] field: volumetric data before normalization
  * @param[in] scale: the scaling factor (or normalization factor) to be applied
  * @param[in] fieldlen: the length (floating point) of elements in the volume
- * @param[in] opinion: if set to 2, only normalize positive values (negative values for diffuse reflectance calculations)
+ * @param[in] option: if set to 2, only normalize positive values (negative values for diffuse reflectance calculations)
  */
 
 void mcx_normalize(float field[], float scale, int fieldlen, int option){
@@ -1910,7 +1920,7 @@ int mcx_isbinstr(const char * str){
 /**
  * @brief Print MCX output header
  *
- * @param[in] str: string to be tested
+ * @param[in] cfg: simulation configuration
  */
 
 void mcx_printheader(Config *cfg){
@@ -1932,7 +1942,7 @@ $Rev::       $ Last $Date::                       $ by $Author::              $\
 /**
  * @brief Print MCX help information
  *
- * @param[in] str: string to be tested
+ * @param[in] cfg: simulation configuration structure
  * @param[in] exename: path and name of the mcx executable
  */
 

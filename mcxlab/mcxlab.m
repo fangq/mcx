@@ -1,4 +1,4 @@
-function [fluence,detphoton]=mcxlab(cfg)
+function varargout=mcxlab(varargin)
 %
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
@@ -147,14 +147,16 @@ function [fluence,detphoton]=mcxlab(cfg)
 %            dimensions specified by [size(vol) total-time-gates]. 
 %            The content of the array is the normalized fluence at 
 %            each voxel of each time-gate.
-%      detphoton: a struct array, with a length equals to that of cfg.
-%            For each element of detphoton, detphoton(i).data is a 2D array with
-%            dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
-%            is the ID(>0) of the detector that captures the photon; the second row
-%	     saves the number of scattering events of each exiting photon; the rest rows
-%	     are the partial path lengths (in grid unit) traveling in medium 1 up 
-%            to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
-%            to convert them to mm unit.
+%      detphoton: (optional) a struct array, with a length equals to that of cfg.
+%            Starting from v2018, the detphoton contains the below subfields:
+%              detphoton.detid: the ID(>0) of the detector that captures the photon
+%              detphoton.nscat: cummulative scattering event counts
+%              detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
+%                   one need to multiply cfg.unitinmm with ppath to convert it to mm.
+%              detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
+%              detphoton.data: a concatenated and transposed array in the order of
+%                    [detid nscat ppath p v]'
+%              "data" is the is the only subfield in all MCXLAB before 2018
 %      vol: (optional) a struct array, each element is a preprocessed volume
 %            corresponding to each instance of cfg. Each volume is a 3D int32 array.
 %      seeds: (optional), if give, mcxlab returns the seeds, in the form of
@@ -200,3 +202,40 @@ function [fluence,detphoton]=mcxlab(cfg)
 %
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
+
+
+[varargout{1:nargout}]=mcx(varargin{:});
+
+if(nargin==0)
+    return;
+end
+
+cfg=varargin{1};
+
+if(nargout>=2)
+    
+    for i=1:length(varargout{2})
+        if(~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2)
+            medianum=size(cfg(i).prop,1)-1;
+            detp=varargout{2}(i).data;
+            if(isempty(detp))
+                continue;
+            end
+            newdetp.detid=int32(detp(1,:))';
+            newdetp.nscat=int32(detp(2,:))';    % 1st medianum block is num of scattering
+            newdetp.ppath=detp(3:2+medianum,:)';% 2nd medianum block is partial path
+            if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
+                newdetp.p=detp(end-5:end-3,:)';             %columns 7-5 from the right store the exit positions*/
+                newdetp.v=detp(end-2:end,:)';	     %columns 4-2 from the right store the exit dirs*/
+            end
+            % newdetp.w0=detp(end,:)';  % last column is the initial packet weight
+            newdetp.data=detp;      % enable this line for compatibility
+            newdetpstruct(i)=newdetp;
+        else
+            newdetpstruct(i)=varargout{2}(i);
+        end
+    end
+    if(exist('newdetpstruct','var'))
+        varargout{2}=newdetpstruct;
+    end
+end
