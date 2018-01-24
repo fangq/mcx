@@ -41,12 +41,12 @@
         <PackageName Value="LCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="44">
+    <Units Count="46">
       <Unit0>
         <Filename Value="mcxshow.lpr"/>
         <IsPartOfProject Value="True"/>
         <CursorPos X="54" Y="9"/>
-        <UsageCount Value="88"/>
+        <UsageCount Value="91"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit0>
       <Unit1>
@@ -56,10 +56,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="92"/>
-        <CursorPos X="12" Y="116"/>
-        <UsageCount Value="88"/>
+        <TopLine Value="523"/>
+        <CursorPos X="57" Y="547"/>
+        <UsageCount Value="91"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit1>
       <Unit2>
@@ -366,32 +367,143 @@
         <UsageCount Value="11"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit43>
+      <Unit44>
+        <Filename Value="..\..\..\..\..\..\..\..\kwafoo2\users\fangq\Libraries\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="730"/>
+        <CursorPos X="30" Y="750"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit44>
+      <Unit45>
+        <Filename Value="..\..\..\..\..\..\..\..\kwafoo2\users\fangq\Libraries\glscene14\GLSceneLCL\Source\GLGeomObjects.pas"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="166"/>
+        <CursorPos X="23" Y="221"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit45>
     </Units>
-    <JumpHistory Count="6" HistoryIndex="5">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="116" Column="12" TopLine="92"/>
+        <Caret Line="445" Column="29" TopLine="443"/>
       </Position1>
       <Position2>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="117" Column="12" TopLine="93"/>
+        <Caret Line="447" Column="41" TopLine="443"/>
       </Position2>
       <Position3>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="116" Column="12" TopLine="92"/>
+        <Caret Line="441" Column="37" TopLine="438"/>
       </Position3>
       <Position4>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="115" Column="12" TopLine="91"/>
+        <Caret Line="448" Column="37" TopLine="445"/>
       </Position4>
       <Position5>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="116" Column="12" TopLine="92"/>
+        <Caret Line="139" Column="8" TopLine="124"/>
       </Position5>
       <Position6>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="115" Column="12" TopLine="91"/>
+        <Caret Line="138" Column="8" TopLine="123"/>
       </Position6>
+      <Position7>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="128" TopLine="123"/>
+      </Position7>
+      <Position8>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="70" Column="114" TopLine="65"/>
+      </Position8>
+      <Position9>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="83" Column="21" TopLine="65"/>
+      </Position9>
+      <Position10>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="255" Column="27" TopLine="240"/>
+      </Position10>
+      <Position11>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="256" Column="27" TopLine="241"/>
+      </Position11>
+      <Position12>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="255" Column="27" TopLine="240"/>
+      </Position12>
+      <Position13>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="294" Column="27" TopLine="265"/>
+      </Position13>
+      <Position14>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="293" Column="33" TopLine="274"/>
+      </Position14>
+      <Position15>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="292" Column="27" TopLine="274"/>
+      </Position15>
+      <Position16>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="293" Column="27" TopLine="275"/>
+      </Position16>
+      <Position17>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="295" Column="54" TopLine="256"/>
+      </Position17>
+      <Position18>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="294" Column="54" TopLine="259"/>
+      </Position18>
+      <Position19>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="268" Column="26" TopLine="259"/>
+      </Position19>
+      <Position20>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="533" Column="13" TopLine="515"/>
+      </Position20>
+      <Position21>
+        <Filename Value="mcxrender.pas"/>
+      </Position21>
+      <Position22>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="29" Column="13"/>
+      </Position22>
+      <Position23>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="66" Column="30" TopLine="37"/>
+      </Position23>
+      <Position24>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="531" Column="45" TopLine="515"/>
+      </Position24>
+      <Position25>
+        <Filename Value="mcxrender.pas"/>
+      </Position25>
+      <Position26>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="72" Column="25" TopLine="43"/>
+      </Position26>
+      <Position27>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="555" Column="11" TopLine="523"/>
+      </Position27>
+      <Position28>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="620" Column="5" TopLine="584"/>
+      </Position28>
+      <Position29>
+        <Filename Value="mcxrender.pas"/>
+      </Position29>
+      <Position30>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="72" Column="25" TopLine="43"/>
+      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
@@ -423,15 +535,6 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <BreakPoints Count="1">
-      <Item1>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="mcxrender.pas"/>
-        <Line Value="196"/>
-      </Item1>
-    </BreakPoints>
     <Exceptions Count="3">
       <Item1>
         <Name Value="EAbort"/>

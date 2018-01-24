@@ -69,6 +69,7 @@ type
     procedure acSaveJSONExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure glCanvasMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -267,6 +268,7 @@ begin
      obj:=TGLCylinder.Create(glSpace);
      obj.Up.SetVector(0,0,1);
      obj.Direction.SetVector(0,1,0);
+     obj.Alignment:=caBottom;
 
      tag:=jobj.FindPath('Tag').AsInteger mod 1024;
      obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
@@ -287,9 +289,9 @@ begin
                       (y-obj.Position.Y)*(y-obj.Position.Y)+
                       (z-obj.Position.Z)*(z-obj.Position.Z));
 
-     obj.Direction.X:=(x-obj.Position.X)/obj.Height;
-     obj.Direction.Y:=(y-obj.Position.Y)/obj.Height;
-     obj.Direction.Z:=(z-obj.Position.Z)/obj.Height;
+     obj.Up.X:=(x-obj.Position.X)/obj.Height;
+     obj.Up.Y:=(y-obj.Position.Y)/obj.Height;
+     obj.Up.Z:=(z-obj.Position.Z)/obj.Height;
 
      obj.BottomRadius:=jobj.FindPath('R').AsFloat;
      obj.TopRadius:=obj.BottomRadius;
@@ -437,11 +439,15 @@ end;
 procedure TfmDomain.plEditorMouseEnter(Sender: TObject);
 begin
     plEditor.Width:=editorwidth;
+    glCamera.TargetObject:=glDomain;
 end;
 
 procedure TfmDomain.plEditorMouseLeave(Sender: TObject);
 begin
-    if(not btPin.Down) then plEditor.Width:=40;
+    if(not btPin.Down) then begin
+        plEditor.Width:=40;
+        glCamera.TargetObject:=glDomain;
+    end;
 end;
 
 procedure TfmDomain.ShowJSON(root: TJSONData);
@@ -524,6 +530,7 @@ procedure TfmDomain.FormShow(Sender: TObject);
 begin
     glCanvas.Invalidate;
     plEditor.Width:=40;
+    acRenderExecute(Sender);
 end;
 
 procedure TfmDomain.FormCreate(Sender: TObject);
@@ -541,6 +548,11 @@ end;
 procedure TfmDomain.FormDestroy(Sender: TObject);
 begin
    FreeAndNil(JSONData);
+end;
+
+procedure TfmDomain.FormResize(Sender: TObject);
+begin
+  glCamera.TargetObject:=glDomain;
 end;
 
 procedure TfmDomain.acResetCameraExecute(Sender: TObject);

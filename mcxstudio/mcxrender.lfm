@@ -10,6 +10,7 @@ object fmDomain: TfmDomain
   Font.Name = 'MS Sans Serif'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnResize = FormResize
   OnShow = FormShow
   LCLVersion = '1.6.0.4'
   object glCanvas: TGLSceneViewer
@@ -491,11 +492,12 @@ object fmDomain: TfmDomain
       MouseSelActions = <>
       Lines.Strings = (
         '['
+        '{"Grid":     {"Tag":1, "Size":[40,60,50]}},'
         '{"YLayers":  [[1,10,1],[11,30,2],[31,50,3]]},'
         '{"Sphere": {"Tag": 1,"O": [10, 30, 30],"R": 10}},'
         '{"Sphere": {"Tag": 2,"O": [30, 10, 30],"R": 10}},'
         '{"Sphere": {"Tag": 3,"O": [30, 30, 10],"R": 10}},'
-        '{"Sphere": {"Tag": 4,"O": [30, 50, 30],"R": 10}}'
+        '{"Cylinder": {"Tag":2, "C0": [20,20,0], "C1": [20,20,50], "R": 4.0}}'
         ']'
       )
       VisibleSpecialChars = [vscSpace, vscTabAtLast]
@@ -716,7 +718,7 @@ object fmDomain: TfmDomain
         0000A0420000C8C20000C8420000803F
       }
       Direction.Coordinates = {
-        00000000000080BF0000000000000000
+        000000000000803F0000000000000000
       }
       Up.Coordinates = {
         00000000000000000000803F00000000
