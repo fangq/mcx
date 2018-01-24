@@ -85,9 +85,11 @@ type
     procedure AddLayers(jobj: TJSONData; dim: integer);
     procedure AddSlabs(jobj: TJSONData; dim: integer);
     procedure AddName(jobj: TJSONObject);
+    procedure AddSource(jobj: TJSONData);
+    procedure AddDetector(jobj: TJSONData);
     procedure plEditorMouseEnter(Sender: TObject);
     procedure plEditorMouseLeave(Sender: TObject);
-    procedure ShowJSON(root: TJSONData);
+    procedure ShowJSON(root: TJSONData; rootstr: string);
     procedure LoadJSONShape(shapejson: string);
     procedure Splitter1Moved(Sender: TObject);
   private
@@ -436,6 +438,88 @@ begin
      end;
 end;
 
+procedure TfmDomain.AddSource(jobj: TJSONData);
+var
+     tag: integer;
+     obj: TGLPoints;
+     dir: TGLArrowLine;
+     data: TJSONArray;
+begin
+     if(jobj.Count=1) and (jobj.Items[0].Count>0) then
+         jobj:=TJSONObject(jobj.Items[0]);
+     if(jobj.FindPath('Pos')=nil) or (jobj.FindPath('Dir')=nil) then begin
+        MessageDlg('Error', 'Malformed JSON Source construct', mtError, [mbOK],0);
+        exit;
+     end;
+     obj:=TGLPoints.Create(glSpace);
+
+     obj.Up.SetVector(0,0,1);
+
+     data:=TJSONArray(jobj.FindPath('Pos'));
+     obj.Position.X:=data.Items[0].AsFloat;
+     obj.Position.Y:=data.Items[1].AsFloat;
+     obj.Position.Z:=data.Items[2].AsFloat;
+     obj.Size:=4;
+     obj.Style:=psRound;
+     obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,0.5);
+
+     glSpace.AddChild(obj);
+
+     dir:=TGLArrowLine.Create(glSpace);
+     data:=TJSONArray(jobj.FindPath('Dir'));
+     dir.Position:=obj.Position;
+     dir.Direction.SetVector(data.Items[0].AsFloat,data.Items[1].AsFloat,data.Items[2].AsFloat);
+     dir.Height:=5;
+     dir.TopRadius:=1;
+     dir.BottomRadius:=dir.TopRadius;
+     dir.TopArrowHeadRadius:=3;
+     dir.TopArrowHeadHeight:=4;
+     dir.BottomArrowHeadHeight:=0;
+     dir.Material.FrontProperties.Diffuse.SetColor(1.0,0.0,0.0,0.5);
+
+     dir.Position.X:=dir.Position.X+dir.Direction.X*dir.Height*0.5;
+     dir.Position.Y:=dir.Position.Y+dir.Direction.Y*dir.Height*0.5;
+     dir.Position.Z:=dir.Position.Z+dir.Direction.Z*dir.Height*0.5;
+
+     glSpace.AddChild(dir);
+end;
+
+procedure TfmDomain.AddDetector(jobj: TJSONData);
+var
+     i: integer;
+     obj: TGLSphere;
+     data: TJSONArray;
+     elem: TJSONData;
+begin
+     for i:=0 to jobj.Count-1 do begin;
+
+       if(jobj.JSONType=jtObject) then begin
+           elem:=jobj;
+       end else begin
+           elem:=jobj.Items[i];
+       end;
+
+       if(elem.FindPath('Pos')=nil) or (elem.FindPath('R')=nil) then begin
+          MessageDlg('Error', 'Malformed JSON Detector construct', mtError, [mbOK],0);
+          exit;
+       end;
+
+       obj:=TGLSphere.Create(glSpace);
+
+       obj.Up.SetVector(0,0,1);
+
+       data:=TJSONArray(elem.FindPath('Pos'));
+       obj.Position.X:=data.Items[0].AsFloat;
+       obj.Position.Y:=data.Items[1].AsFloat;
+       obj.Position.Z:=data.Items[2].AsFloat;
+       obj.Radius:=elem.FindPath('R').AsFloat;
+       obj.Slices:=64;
+       obj.Material.FrontProperties.Diffuse.SetColor(0.0,1.0,0.0,0.5);
+       glSpace.AddChild(obj);
+       if(jobj.JSONType=jtObject) then exit;
+     end;
+end;
+
 procedure TfmDomain.plEditorMouseEnter(Sender: TObject);
 begin
     plEditor.Width:=editorwidth;
@@ -450,26 +534,31 @@ begin
     end;
 end;
 
-procedure TfmDomain.ShowJSON(root: TJSONData);
+procedure TfmDomain.ShowJSON(root: TJSONData; rootstr: string);
 var
      i: integer;
      jobj: TJSONObject;
-     ss: string;
+     ss, objname: string;
 begin
      ss:= root.AsJSON;
-     if(root.FindPath('Shapes') <> nil) then
-         root:=root.FindPath('Shapes');
+     if(root.FindPath(rootstr) <> nil) then
+         root:=root.FindPath(rootstr);
 
-     if(root.JSONType <> jtArray) then begin
+     if(rootstr = 'Shapes') and (root.JSONType <> jtArray) then begin
         MessageDlg('JSON Error','Shape data root node should always be an array', mtError, [mbOK],0);
         exit;
      end;
      for i:=0 to root.Count-1 do begin
        jobj:=TJSONObject(root.Items[i]);
+       if(root.JSONType = jtArray) then begin
+           objname:=jobj.Names[0];
+       end else begin
+           objname:=TJSONObject(root).Names[i];
+       end;
        ss:=jobj.AsJSON;
-       Case AnsiIndexStr(jobj.Names[0], ['Origin','Grid', 'Box', 'Subgrid', 'Sphere',
+       Case AnsiIndexStr(objname, ['Origin','Grid', 'Box', 'Subgrid', 'Sphere',
           'Cylinder', 'XLayers','YLayers','ZLayers','XSlabs','YSlabs','ZSlabs',
-          'Name']) of
+          'Name','Source','Detector']) of
           0: AddOrigin(jobj);      //Origin
           1: AddGrid(jobj);        //Grid
           2: AddBox(jobj, jobj.Names[0]<>'Box');    //box
@@ -483,6 +572,8 @@ begin
           10: AddSlabs(jobj,2);    //YLayers
           11: AddSlabs(jobj,3);    //ZLayers
           12: AddName(jobj);       //Name
+          13: AddSource(jobj);     //Source
+          14: AddDetector(jobj);   //Detector
          -1: ShowMessage('Unsupported Shape Keyword'); // not present in array
        else
           ShowMessage('Shape keyword '+ jobj.Names[0]+' is not supported'); // present, but not handled above
@@ -614,7 +705,8 @@ end;
 procedure TfmDomain.acRenderExecute(Sender: TObject);
 begin
   LoadJSONShape(mmShapeJSON.Lines.Text);
-  ShowJSON(JSONdata);
+  ShowJSON(JSONdata,'Shapes');
+  ShowJSON(JSONdata,'Optode');
 end;
 
 end.
