@@ -17,7 +17,8 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
-  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF};
+  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
+  mcxrender {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF};
 
 type
 
@@ -25,6 +26,7 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    shapePreview: TAction;
     edOutputFormat: TComboBox;
     Label11: TLabel;
     mcxdoDownloadMask: TAction;
@@ -37,6 +39,8 @@ type
     MenuItem32: TMenuItem;
     miUseMatlab: TMenuItem;
     MenuItem29: TMenuItem;
+    ToolButton34: TToolButton;
+    ToolButton35: TToolButton;
     webBrowser: THTMLBrowserHelpViewer;
     HTMLHelpDatabase1: THTMLHelpDatabase;
     mcxdoPlotMC2: TAction;
@@ -320,6 +324,7 @@ type
     procedure shapeAddZLayersExecute(Sender: TObject);
     procedure shapeAddZSlabsExecute(Sender: TObject);
     procedure shapePrintExecute(Sender: TObject);
+    procedure shapePreviewExecute(Sender: TObject);
     procedure shapeResetExecute(Sender: TObject);
     procedure shapeDeleteExecute(Sender: TObject);
     procedure Splitter6CanOffset(Sender: TObject; var NewOffset: Integer;
@@ -339,49 +344,50 @@ type
     MapList, ConfigData, JSONstr, PassList : TStringList;
     JSONdata : TJSONData;
     RegEngine:TRegExpr;
-    function CreateCmd:string;
-    function CreateCmdOnly:string;
+    function CreateCmd:AnsiString;
+    function CreateCmdOnly:AnsiString;
     procedure VerifyInput;
-    procedure AddLog(str:string);
-    procedure AddBackendLog(str:string);
-    procedure AddMultiLineLog(str:string; Sender: TObject);
+    procedure AddLog(str:AnsiString);
+    procedure AddBackendLog(str:AnsiString);
+    procedure AddMultiLineLog(str:AnsiString; Sender: TObject);
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
     procedure UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
     function  GetMCXOutput(Sender: TObject): string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
-    procedure RunExternalCmd(cmd: string);
-    function  GetBrowserPath : string;
+    procedure RunExternalCmd(cmd: AnsiString);
+    function  GetBrowserPath : AnsiString;
     function  GetFileBrowserPath : string;
     function  SearchForExe(fname : string) : string;
     function CreateWorkFolder(session: string; iscreate: boolean=true):string;
-    function SaveJSONConfig(filename: string): string;
+    function SaveJSONConfig(filename: string): AnsiString;
     function CheckListToStr(list: TCheckListBox) : string;
-    function GridToStr(grid:TStringGrid) :string;
+    function GridToStr(grid:TStringGrid) :AnsiString;
     procedure StrToGrid(str: string; grid:TStringGrid);
     procedure ShowJSONData(AParent : TTreeNode; Data : TJSONData; toplevel: boolean=false);
     procedure AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
     procedure AddShapes(shapeid: string; defaultval: string);
     function UpdateShapeTag(root: TJSONData; doexport: boolean = false): integer;
-    function RebuildLayeredObj(rootdata: TJSONData; out maxtag: integer): string;
+    function RebuildLayeredObj(rootdata: TJSONData; out maxtag: integer): AnsiString;
     procedure SetModified;
     procedure LoadJSONShapeTree(shapejson: string);
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
     procedure SetSessionType(sessiontype: integer);
     function ResetMCX(exitcode: LongInt) : boolean;
-    function ExpandPassword(url: string): string;
+    function ExpandPassword(url: AnsiString): AnsiString;
     procedure SwapState(old, new: TListItem);
     procedure StartBackend;
     procedure StopBackend;
     procedure WaitBackendRunning(maxtime: integer);
-    function CreateSSHDownloadCmd(suffix: string='.nii'): string;
+    function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
   end;
 
 var
   fmMCX: TfmMCX;
   fmOutput: TfmOutput;
   fmBackend: TfmOutput;
+  fmDomain: TfmDomain;
   ProfileChanged: Boolean;
   MaxWait: integer;
   TaskFile: string;
@@ -403,7 +409,7 @@ Const
   DebugFlags: string ='RMP';
 
 { TfmMCX }
-procedure TfmMCX.AddLog(str:string);
+procedure TfmMCX.AddLog(str:AnsiString);
 begin
     fmOutput.mmOutput.Lines.Add(str);
     fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
@@ -411,7 +417,7 @@ begin
     DockMaster.MakeDockable(fmOutput,true,true);
 end;
 
-procedure TfmMCX.AddBackendLog(str:string);
+procedure TfmMCX.AddBackendLog(str:AnsiString);
 begin
     fmBackend.mmOutput.Lines.Add(str);
     fmBackend.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
@@ -419,7 +425,7 @@ begin
     DockMaster.MakeDockable(fmBackend,true,true);
 end;
 
-procedure TfmMCX.AddMultiLineLog(str:string; Sender: TObject);
+procedure TfmMCX.AddMultiLineLog(str:AnsiString; Sender: TObject);
 var
    sl: TStringList;
 begin
@@ -1394,6 +1400,7 @@ begin
     ConfigData.Free;
     RegEngine.Free;
     fmOutput.Free;
+    fmDomain.Free;
     fmBackend.Free;
     PassList.Free;
 end;
@@ -1413,7 +1420,7 @@ begin
      end;
 end;
 
-procedure TfmMCX.RunExternalCmd(cmd: string);
+procedure TfmMCX.RunExternalCmd(cmd: AnsiString);
 var
   Proc : TProcess;
 begin
@@ -1456,7 +1463,7 @@ begin
      Result :=SearchForExe('explorer.exe');; // windows
 end;
 
-function TfmMCX.GetBrowserPath : string;
+function TfmMCX.GetBrowserPath : AnsiString;
   {Return path to first browser found.}
 var
    RootKey: string;
@@ -1789,7 +1796,7 @@ begin
   AddShapes('ZSlabs',Format('Tag=%d|Bound=[1,10]',[tvShapes.Tag+1]));
 end;
 
-function TfmMCX.RebuildLayeredObj(rootdata: TJSONData; out maxtag: integer): string;
+function TfmMCX.RebuildLayeredObj(rootdata: TJSONData; out maxtag: integer): AnsiString;
 var
     i,j: integer;
     val: extended;
@@ -1875,6 +1882,14 @@ begin
            if(tvShapes.Selected.Data <> nil) then
                AddMultiLineLog(TJSONData(tvShapes.Selected.Data).FormatJSON, pMCX);
        end;
+end;
+
+procedure TfmMCX.shapePreviewExecute(Sender: TObject);
+begin
+    if(not Assigned(fmDomain)) then
+        fmDomain:=TfmDomain.Create(Self);
+    fmDomain.mmShapeJSON.Lines.Text:=GetJSON(SaveJSONConfig('')).FormatJSON;
+    fmDomain.Show;
 end;
 
 
@@ -2231,7 +2246,7 @@ begin
     cmd:=MCProgram[grProgram.ItemIndex];
     Result:=cmd;
 end;
-function TfmMCX.SaveJSONConfig(filename: string): string;
+function TfmMCX.SaveJSONConfig(filename: string): AnsiString;
 var
     nthread, nblock,hitmax,seed, i, mediacount: integer;
     bubbleradius,unitinmm,nphoton: extended;
@@ -2424,7 +2439,7 @@ begin
      end;
 end;
 
-function TfmMCX.CreateCmd:string;
+function TfmMCX.CreateCmd:AnsiString;
 var
     nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
@@ -2547,7 +2562,7 @@ begin
     Result:=cmd;
 end;
 
-function TfmMCX.GridToStr(grid:TStringGrid):string;
+function TfmMCX.GridToStr(grid:TStringGrid):AnsiString;
 var
     i: integer;
     json: TStrings;

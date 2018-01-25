@@ -1,7 +1,7 @@
 object fmDomain: TfmDomain
-  Left = 397
+  Left = 315
   Height = 639
-  Top = 165
+  Top = 198
   Width = 1048
   Caption = 'MCX Domain Renderer'
   ClientHeight = 639
@@ -12,6 +12,7 @@ object fmDomain: TfmDomain
   OnDestroy = FormDestroy
   OnResize = FormResize
   OnShow = FormShow
+  Position = poOwnerFormCenter
   LCLVersion = '1.6.0.4'
   object glCanvas: TGLSceneViewer
     Left = 418
@@ -675,7 +676,7 @@ object fmDomain: TfmDomain
     object glDomain: TGLCube
       TagFloat = 0
       Material.FrontProperties.Diffuse.Color = {
-        CDCC4C3FCDCC4C3FCDCC4C3F2B87963E
+        CDCC4C3FCDCC4C3FCDCC4C3FF853E33D
       }
       Material.BlendingMode = bmTransparency
       Direction.Coordinates = {

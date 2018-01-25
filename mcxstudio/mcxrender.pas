@@ -90,14 +90,15 @@ type
     procedure plEditorMouseEnter(Sender: TObject);
     procedure plEditorMouseLeave(Sender: TObject);
     procedure ShowJSON(root: TJSONData; rootstr: string);
-    procedure LoadJSONShape(shapejson: string);
+    procedure LoadJSONShape(shapejson: AnsiString);
     procedure Splitter1Moved(Sender: TObject);
   private
     mdx, mdy : Integer;
     editorwidth: integer;
-  public
     JSONdata : TJSONData;
     colormap: array [0..1023,0..2] of extended;
+  public
+
   end;
 
 var
@@ -113,7 +114,7 @@ begin
   glCamera.AdjustDistanceToTarget(Power(1.1, WheelDelta/1200.0));
 end;
 
-procedure TfmDomain.LoadJSONShape(shapejson: string);
+procedure TfmDomain.LoadJSONShape(shapejson: AnsiString);
 begin
     FreeAndNil(JSONData);
     glSpace.DeleteChildren;
@@ -129,7 +130,7 @@ end;
 
 procedure TfmDomain.AddGrid(jobj: TJSONData);
 var
-     tag: integer;
+     objtag: integer;
      data: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
@@ -141,10 +142,10 @@ begin
 
      glDomain.DeleteChildren; // grid object reset the domain
 
-     tag:=jobj.FindPath('Tag').AsInteger mod 1024;
+     objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
 
-     //obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+     //obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
 
      data:=TJSONArray(jobj.FindPath('Size'));
      glDomain.CubeWidth:=data.Items[0].AsFloat;
@@ -157,7 +158,7 @@ end;
 
 procedure TfmDomain.AddName(jobj: TJSONObject);
 begin
-     fmDomain.Caption:='MCX Domain Renderer ('+jobj.Strings['Name']+')';
+     Caption:='MCX Domain Renderer ('+jobj.Strings['Name']+')';
 end;
 
 procedure TfmDomain.AddOrigin(jobj: TJSONData);
@@ -172,8 +173,8 @@ begin
         exit;
      end;
 
-     //obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+     //obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
 
      data:=TJSONArray(jobj);
 
@@ -189,7 +190,7 @@ end;
 
 procedure TfmDomain.AddBox(jobj: TJSONData; isbox: Boolean);
 var
-     tag: integer;
+     objtag: integer;
      obj: TGLCube;
      data: TJSONArray;
 begin
@@ -204,9 +205,9 @@ begin
      obj.Up.SetVector(0,0,1);
      obj.Direction.SetVector(0,1,0);
 
-     tag:=jobj.FindPath('Tag').AsInteger mod 1024;
-     obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+     objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
+     obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
      obj.Material.BlendingMode:=bmTransparency;
 
      data:=TJSONArray(jobj.FindPath('O'));
@@ -224,7 +225,7 @@ end;
 
 procedure TfmDomain.AddSphere(jobj: TJSONData);
 var
-     tag: integer;
+     objtag: integer;
      obj: TGLSphere;
      data: TJSONArray;
 begin
@@ -238,9 +239,9 @@ begin
      obj.Up.SetVector(0,0,1);
      obj.Direction.SetVector(0,1,0);
 
-     tag:=jobj.FindPath('Tag').AsInteger mod 1024;
-     obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+     objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
+     obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
      obj.Material.BlendingMode:=bmTransparency;
 
      obj.Radius:=jobj.FindPath('R').AsFloat;
@@ -256,7 +257,7 @@ end;
 
 procedure TfmDomain.AddCylinder(jobj: TJSONData);
 var
-     tag: integer;
+     objtag: integer;
      x,y,z: extended;
      obj: TGLCylinder;
      data: TJSONArray;
@@ -272,9 +273,9 @@ begin
      obj.Direction.SetVector(0,1,0);
      obj.Alignment:=caBottom;
 
-     tag:=jobj.FindPath('Tag').AsInteger mod 1024;
-     obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+     objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
+     obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
      obj.Material.BlendingMode:=bmTransparency;
 
      data:=TJSONArray(jobj.FindPath('C0'));
@@ -304,7 +305,7 @@ begin
 end;
 procedure TfmDomain.AddLayers(jobj: TJSONData; dim: integer);
 var
-     tag, i: integer;
+     objtag, i: integer;
      obj: TGLCube;
      data: TJSONArray;
      elem: TJSONData;
@@ -329,10 +330,10 @@ begin
           exit;
        end;
 
-       tag:=elem.Items[2].AsInteger mod 1024;
+       objtag:=elem.Items[2].AsInteger mod 1024;
 
-       obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-       //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+       obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+       //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
        obj.Material.BlendingMode:=bmTransparency;
 
        data:=TJSONArray(jobj);
@@ -372,7 +373,7 @@ end;
 
 procedure TfmDomain.AddSlabs(jobj: TJSONData; dim: integer);
 var
-     tag, i: integer;
+     objtag, i: integer;
      obj: TGLCube;
      data: TJSONArray;
      elem: TJSONData;
@@ -384,7 +385,7 @@ begin
         exit;
      end;
 
-     tag:=jobj.FindPath('Tag').AsInteger mod 1024;
+     objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
 
      jobj:=TJSONArray(jobj.FindPath('Bound'));
      for i:=0 to jobj.Count-1 do begin
@@ -402,8 +403,8 @@ begin
           exit;
        end;
 
-       obj.Material.FrontProperties.Diffuse.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
-       //obj.Material.FrontProperties.Emission.SetColor(colormap[tag][0],colormap[tag][1],colormap[tag][2],0.5);
+       obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+       //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
        obj.Material.BlendingMode:=bmTransparency;
 
        obj.Up.SetVector(0,0,1);
@@ -440,7 +441,7 @@ end;
 
 procedure TfmDomain.AddSource(jobj: TJSONData);
 var
-     tag: integer;
+     objtag: integer;
      obj: TGLPoints;
      dir: TGLArrowLine;
      data: TJSONArray;
@@ -638,6 +639,7 @@ end;
 
 procedure TfmDomain.FormDestroy(Sender: TObject);
 begin
+   glSpace.DeleteChildren;
    FreeAndNil(JSONData);
 end;
 

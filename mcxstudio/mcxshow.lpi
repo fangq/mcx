@@ -55,6 +55,7 @@
         <ComponentName Value="fmDomain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
         <TopLine Value="475"/>
         <CursorPos X="20" Y="490"/>
         <UsageCount Value="94"/>
@@ -313,7 +314,7 @@
       </Unit36>
       <Unit37>
         <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\packages\fcl-json\src\fpjson.pp"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="1"/>
         <TopLine Value="538"/>
         <CursorPos X="100" Y="549"/>
         <UsageCount Value="40"/>
@@ -328,12 +329,10 @@
       </Unit38>
       <Unit39>
         <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="419"/>
         <CursorPos X="109" Y="428"/>
         <UsageCount Value="40"/>
-        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit39>
       <Unit40>
@@ -387,151 +386,84 @@
       </Unit45>
       <Unit46>
         <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLCoordinates.pas"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="95"/>
         <CursorPos X="15" Y="107"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit46>
       <Unit47>
         <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLVectorGeometry.pas"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="4423"/>
         <CursorPos X="18" Y="4435"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit47>
       <Unit48>
         <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLGeomObjects.pas"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="190"/>
         <CursorPos X="41" Y="201"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit48>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="14" HistoryIndex="13">
       <Position1>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLGeomObjects.pas"/>
-        <Caret Line="180" Column="24" TopLine="156"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="470" Column="33" TopLine="454"/>
       </Position1>
       <Position2>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLGeomObjects.pas"/>
-        <Caret Line="182" Column="21" TopLine="158"/>
+        <Filename Value="mcxrender.pas"/>
       </Position2>
       <Position3>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="470" Column="33" TopLine="454"/>
+        <Caret Line="152" Column="27" TopLine="128"/>
       </Position3>
       <Position4>
         <Filename Value="mcxrender.pas"/>
+        <Caret Line="220" Column="22" TopLine="196"/>
       </Position4>
       <Position5>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="152" Column="27" TopLine="128"/>
+        <Caret Line="479" Column="67" TopLine="463"/>
       </Position5>
       <Position6>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="220" Column="22" TopLine="196"/>
+        <Caret Line="483" Column="32" TopLine="483"/>
       </Position6>
       <Position7>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="479" Column="67" TopLine="463"/>
+        <Caret Line="484" Column="32" TopLine="484"/>
       </Position7>
       <Position8>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="483" Column="32" TopLine="483"/>
+        <Caret Line="483" Column="50" TopLine="475"/>
       </Position8>
       <Position9>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="484" Column="32" TopLine="484"/>
       </Position9>
       <Position10>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="483" Column="50" TopLine="475"/>
+        <Caret Line="90" Column="15" TopLine="65"/>
       </Position10>
       <Position11>
         <Filename Value="mcxrender.pas"/>
+        <Caret Line="462" Column="17" TopLine="442"/>
       </Position11>
       <Position12>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="90" Column="15" TopLine="65"/>
+        <Caret Line="461" Column="17" TopLine="441"/>
       </Position12>
       <Position13>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="462" Column="17" TopLine="442"/>
+        <Caret Line="454" Column="34" TopLine="441"/>
       </Position13>
       <Position14>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="461" Column="17" TopLine="441"/>
-      </Position14>
-      <Position15>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="454" Column="34" TopLine="441"/>
-      </Position15>
-      <Position16>
-        <Filename Value="mcxrender.pas"/>
         <Caret Line="490" Column="20" TopLine="475"/>
-      </Position16>
-      <Position17>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="817" Column="3" TopLine="811"/>
-      </Position17>
-      <Position18>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="781" Column="3" TopLine="778"/>
-      </Position18>
-      <Position19>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1627" Column="13" TopLine="1603"/>
-      </Position19>
-      <Position20>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1629" Column="22" TopLine="1605"/>
-      </Position20>
-      <Position21>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1638" Column="16" TopLine="1614"/>
-      </Position21>
-      <Position22>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1639" Column="16" TopLine="1615"/>
-      </Position22>
-      <Position23>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1652" Column="26" TopLine="1628"/>
-      </Position23>
-      <Position24>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1655" Column="26" TopLine="1631"/>
-      </Position24>
-      <Position25>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1658" Column="26" TopLine="1634"/>
-      </Position25>
-      <Position26>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1661" Column="26" TopLine="1637"/>
-      </Position26>
-      <Position27>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1664" Column="26" TopLine="1640"/>
-      </Position27>
-      <Position28>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1667" Column="26" TopLine="1643"/>
-      </Position28>
-      <Position29>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1683" Column="10" TopLine="1659"/>
-      </Position29>
-      <Position30>
-        <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
-        <Caret Line="1733" Column="10" TopLine="1709"/>
-      </Position30>
+      </Position14>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
