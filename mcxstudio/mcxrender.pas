@@ -32,9 +32,12 @@ type
     acLoadJSON: TAction;
     acSaveJSON: TAction;
     glCanvas: TGLSceneViewer;
+    GLDisk1: TGLDisk;
     glDomain: TGLCube;
     glLight2: TGLLightSource;
     glOrigin: TGLPoints;
+    GLPlane1: TGLPlane;
+    GLPolygon1: TGLPolygon;
     glShape: TGLScene;
     glCamera: TGLCamera;
     glLight1: TGLLightSource;
@@ -86,6 +89,8 @@ type
     procedure AddSlabs(jobj: TJSONData; dim: integer);
     procedure AddName(jobj: TJSONObject);
     procedure AddSource(jobj: TJSONData);
+    procedure AddDiskSource(jobj: TJSONData);
+    procedure AddPlanarSource(jobj: TJSONData);
     procedure AddDetector(jobj: TJSONData);
     procedure plEditorMouseEnter(Sender: TObject);
     procedure plEditorMouseLeave(Sender: TObject);
@@ -397,7 +402,7 @@ begin
            elem:=data.Items[i];
        end;
 
-       obj:=TGLCube.Create(glSpace);
+       obj:=TGLCube.Create(Self);
        if (elem.Count <> 2) then begin
           MessageDlg('Error', 'Malformed JSON ?Slabs shape element', mtError, [mbOK],0);
           exit;
@@ -437,6 +442,72 @@ begin
        glSpace.AddChild(obj);
        if (data.Count = 0) then exit;
      end;
+end;
+
+procedure TfmDomain.AddPlanarSource(jobj: TJSONData);
+var
+     objtag: integer;
+     obj: TGLPolygon;
+     data,data1,data2: TJSONArray;
+begin
+     if(jobj.Count=1) and (jobj.Items[0].Count>0) then
+         jobj:=TJSONObject(jobj.Items[0]);
+     if(jobj.FindPath('Param1')=nil) or (jobj.FindPath('Param2')=nil) then begin
+        MessageDlg('Error', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
+        exit;
+     end;
+     obj:=TGLPolygon.Create(Self);
+
+     obj.Up.SetVector(0,0,1);
+
+     data:=TJSONArray(jobj.FindPath('Pos'));
+     data1:=TJSONArray(jobj.FindPath('Param1'));
+     data2:=TJSONArray(jobj.FindPath('Param2'));
+     obj.Nodes.AddNode(data.Items[0].AsFloat, data.Items[1].AsFloat, data.Items[2].AsFloat);
+     obj.Nodes.AddNode(data.Items[0].AsFloat+data1.Items[0].AsFloat, data.Items[1].AsFloat+data1.Items[1].AsFloat, data.Items[2].AsFloat+data1.Items[2].AsFloat);
+     obj.Nodes.AddNode(data.Items[0].AsFloat+data1.Items[0].AsFloat+data2.Items[0].AsFloat, data.Items[1].AsFloat+data1.Items[1].AsFloat+data2.Items[1].AsFloat, data.Items[2].AsFloat+data1.Items[2].AsFloat+data2.Items[2].AsFloat);
+     obj.Nodes.AddNode(data.Items[0].AsFloat+data2.Items[0].AsFloat, data.Items[1].AsFloat+data2.Items[1].AsFloat, data.Items[2].AsFloat+data2.Items[2].AsFloat);
+     obj.Nodes.AddNode(data.Items[0].AsFloat, data.Items[1].AsFloat, data.Items[2].AsFloat);
+
+     obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,1);
+     obj.Material.BackProperties.Diffuse.SetColor(1.0,1.0,0.0,1);
+
+     data:=TJSONArray(jobj.FindPath('Dir'));
+     obj.Direction.SetVector(data.Items[0].AsFloat,data.Items[1].AsFloat,data.Items[2].AsFloat);
+
+     glSpace.AddChild(obj);
+end;
+procedure TfmDomain.AddDiskSource(jobj: TJSONData);
+var
+     objtag: integer;
+     obj: TGLDisk;
+     data: TJSONArray;
+begin
+     if(jobj.Count=1) and (jobj.Items[0].Count>0) then
+         jobj:=TJSONObject(jobj.Items[0]);
+     if(jobj.FindPath('Param1')=nil) then begin
+        MessageDlg('Error', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
+        exit;
+     end;
+     obj:=TGLDisk.Create(glSpace);
+
+     obj.Up.SetVector(0,0,1);
+
+     data:=TJSONArray(jobj.FindPath('Pos'));
+     obj.Position.X:=data.Items[0].AsFloat;
+     obj.Position.Y:=data.Items[1].AsFloat;
+     obj.Position.Z:=data.Items[2].AsFloat;
+     obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,1);
+     obj.Material.BackProperties.Diffuse.SetColor(1.0,1.0,0.0,1);
+     //obj.NormalDirection:=ndInside;
+
+     data:=TJSONArray(jobj.FindPath('Param1'));
+     obj.OuterRadius:=data.Items[0].AsFloat;
+
+     data:=TJSONArray(jobj.FindPath('Dir'));
+     obj.Direction.SetVector(data.Items[0].AsFloat,data.Items[1].AsFloat,data.Items[2].AsFloat);
+
+     glSpace.AddChild(obj);
 end;
 
 procedure TfmDomain.AddSource(jobj: TJSONData);
@@ -483,6 +554,15 @@ begin
      dir.Position.Z:=dir.Position.Z+dir.Direction.Z*dir.Height*0.5;
 
      glSpace.AddChild(dir);
+
+     if(jobj.FindPath('Type') <> nil) then begin
+         Case AnsiIndexStr(jobj.FindPath('Type').AsString, ['gaussian','disk', 'planar', 'pattern', 'fourier',
+            'fourierx', 'fourierx2d']) of
+              0..1:  AddDiskSource(jobj);      //Origin
+              2..6:  AddPlanarSource(jobj);        //Grid
+           else
+           end;
+     end;
 end;
 
 procedure TfmDomain.AddDetector(jobj: TJSONData);

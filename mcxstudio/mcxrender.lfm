@@ -738,6 +738,58 @@ object fmDomain: TfmDomain
       TurnAngle = 0
       Pickable = False
       CubeSize = 200
+      object GLPlane1: TGLPlane
+        TagFloat = 0
+        Direction.Coordinates = {
+          00000000000080BF0000000000000000
+        }
+        PitchAngle = 0
+        Position.Coordinates = {
+          0000204100002041000000000000803F
+        }
+        RollAngle = 0
+        TurnAngle = 0
+        Up.Coordinates = {
+          00000000000000000000803F00000000
+        }
+        Height = 10
+        Width = 10
+        XOffset = 0
+        YOffset = 0
+      end
+      object GLDisk1: TGLDisk
+        TagFloat = 0
+        Material.BackProperties.Emission.Color = {
+          A3A2223FABAA2A3FB1B0303F0000803F
+        }
+        Material.BackProperties.Specular.Color = {
+          9B9A9A3E8F8E8E3E8F8E8E3E0000803F
+        }
+        Direction.Coordinates = {
+          000000000000803F0000000000000000
+        }
+        PitchAngle = 0
+        Position.Coordinates = {
+          0000204100002041000020410000803F
+        }
+        RollAngle = 0
+        TurnAngle = 0
+        Up.Coordinates = {
+          00000000000000000000803F00000000
+        }
+        NormalDirection = ndInside
+        InnerRadius = 0
+        OuterRadius = 5
+        StartAngle = 0
+        SweepAngle = 360
+      end
+      object GLPolygon1: TGLPolygon
+        TagFloat = 0
+        PitchAngle = 0
+        RollAngle = 0
+        TurnAngle = 0
+        Nodes = <>
+      end
     end
     object glCamera: TGLCamera
       TagFloat = 0
