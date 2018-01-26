@@ -2028,9 +2028,8 @@ is more than what your have specified (%d), please use the -H option to specify 
 	       scale=0.f;
 	       for(i=0;i<cfg->nphoton;i++)
 	           scale+=cfg->replay.weight[i];
-	       scale*=cfg->unitinmm;
 	       if(scale>0.f)
-	           scale=1.f/scale;
+	           scale=cfg->unitinmm/scale;
            }
          cfg->normalizer=scale;
 	 cfg->his.normalizer=scale;
