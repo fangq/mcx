@@ -617,7 +617,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
 
 template <int mcxsource>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
-           uint *mediaid,float *w0,float *Lmove,uint isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
+           uint *mediaid,float *w0,float *Lmove,int isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
       *w0=1.f;     ///< reuse to count for launchattempt
@@ -632,7 +632,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
           if(gcfg->savedet){
-             if(isdet && *mediaid==0)
+             if(isdet>0 && *mediaid==0)
 	         savedetphoton(n_det,dpnum,v->nscat,ppath,p,v,photonseed,seeddata);
              clearpath(ppath,gcfg->maxmedia);
           }
@@ -964,7 +964,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      int cc=0;
 #endif
      uint  mediaid=gcfg->mediaidorig;
-     uint  mediaidold=0,isdet=0;
+     uint  mediaidold=0;
+     int   isdet=0;
      float  n1;               ///< reflection var
      float3 htime;            ///< time-of-flight for collision test
      float3 rv;               ///< reciprocal velocity
@@ -1144,7 +1145,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
-	      isdet=0;
+	      isdet=-1;
 	  }else{
               /** otherwise, read the optical property index */
 	      mediaid=media[idx1d];
@@ -1199,13 +1200,13 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
   #endif
                       }else{
                           field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
-		          if(mediaid==0 && isdet==0 &&gcfg->issaveref)
+		          if(mediaid==0 && isdet>=0 &&gcfg->issaveref)
 		              field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                       }
                   }else{
                       /** accummulate the quality to the volume using non-atomic operations  */
                       field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
-		      if(mediaid==0 && isdet==0 &&gcfg->issaveref)
+		      if(mediaid==0 && isdet>=0 &&gcfg->issaveref)
 		          field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                   }
   #ifdef USE_ATOMIC
@@ -1213,7 +1214,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	          /** accummulate the quality to the volume using atomic operations  */
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
-		  if(mediaid==0 && isdet==0 &&gcfg->issaveref)
+		  if(mediaid==0 && isdet>=0 &&gcfg->issaveref)
 		      atomicadd(& field[idx1d+tshift*gcfg->dimlen.z],-p.w);
                   GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1dold,weight,p.w));
                }
