@@ -3,7 +3,7 @@ function varargout=mcxlab(varargin)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2011-2017 Qianqian Fang <q.fang at neu.edu>
+%Copyright (c) 2011-2018 Qianqian Fang <q.fang at neu.edu>
 %                      URL: http://mcx.space
 %====================================================================
 %
@@ -203,6 +203,12 @@ function varargout=mcxlab(varargin)
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
 
+if(nargin==2 && ischar(varargin{2}))
+    if(strcmp(varargin{2},'preview'))
+        [varargout{1:nargout}]=mcxpreview(varargin{1});
+	return;
+    end
+end
 
 [varargout{1:nargout}]=mcx(varargin{:});
 
