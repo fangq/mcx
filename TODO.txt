@@ -2,7 +2,10 @@
 
 == Short term projects ==
 
-*. support multi-byte medium [2017/01/01, FangQ]
+*. support user defined phase functions [opened by FangQ, 2018/01/28]
+*. support anisotropic voxels [opened by FangQ, 2018/01/28]
+*. support non-uniform grid [opened by FangQ, 2018/01/28]
+*. support dual-mesh MMC like ray-tracing [opened by FangQ, 2018/01/28]
 
 == Long term projects ==
 
@@ -10,7 +13,8 @@
 
 == Completed ==
 
-[done] *. extend the reflection model to support mis-match at internal boundaries [2010/07/29, FangQ] (experimental)
+[done] *. support multi-byte medium [2017/01/01, FangQ] [mcx/issues/21]
+[done] *. extend the reflection model to support mis-match at internal boundaries [2010/07/29, FangQ]
 [done] *. support JSON input & output [2012/01/05, FangQ, port from MMC v0.9]
 [done] *. support object description file to produce volume at run-time [2010/07/29, FangQ, complete 2012/01/08]
 [done] *. results does not repeat with identical random number seed, need to check [2009/04/07, FangQ]

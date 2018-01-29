@@ -1,5 +1,72 @@
 = Change Log =
 
+== MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
+
+ 2018-01-29 [1b9493b]*add mcxpreview to preview the simulation domain settings
+ 2018-01-28 [5f748de] fix crash when saving diffuse reflectance
+ 2018-01-26 [6b55b4b] fix bug to properly scale Jacobian output with voxel size
+ 2018-01-24 [de1b62f] mcxstudio - render disk and planar source types
+ 2018-01-24 [f587194] mcxstudio - add mcxrender window to preview domain shapes
+ 2018-01-24 [b113840] mcxstudio - support displaying source and detectors
+ 2018-01-16 [6b34910]*mcxstudio - add shape visualization utility
+ 2018-01-13 [f6fd6a0]*rename mcxlab.mex to mcx.mex, use mcxlab.m to do pre and post processing
+ 2018-01-11 [ae8bd9a]*fix bug related to absorption fraction changed after fixing 1st scattering handling in #4b33a6f
+ 2017-12-31 [7e6e081]*add doxygen-format comments for thorough documtation of the source code
+ 2017-12-28 [57ccb84] allow saving large data files using 64bit size_t for buffer length
+ 2017-12-02 [b98d728] matlab fails to clear mex variable memory, force setting to NULL
+ 2017-11-29 [3e25d2d] revert to the old way of finding detector id, new approach gives partially detected optodes
+ 2017-11-22 [2267ad7] need to round half coordinates before calling nextafter
+ 2017-11-18 [14bb584]*half precision ray tracer support
+ 2017-10-30 [9958e32] simplify htime update in hitgrid
+ 2017-10-26 [4b33a6f] fix 2 bugs: condition for initial scattering, and v.nscat due to focal length input
+ 2017-10-05 [7703420] port mmc commit 07b33f3 to mcx to compile with matlab 2017
+ 2017-10-05 [c7895a6] change dir vector to transmission direction before terminating a photon
+ 2017-10-04 [ac6fa0e] print a message before exit when det mask is dumped
+ 2017-08-20 [56edc0d] mcxstudio - update app bundle icon
+ 2017-08-20 [dff89ab]*mcxstudio - mac osx app bundle for mcxstudio
+ 2017-08-10 [2fe8029]*apply mirror boundary condition when background n is less than 1
+ 2017-08-07 [53b13e5] mcxstudio - use matlab even in the desktop mode
+ 2017-08-04 [1bb1b26] avoid calling directory instead of executable under linux
+ 2017-08-03 [4779504] avoid output window no show on low-res displays
+ 2017-08-03 [85ee081] avoid output window no show
+ 2017-08-03 [485ca67] plot using matlab on windows
+ 2017-08-01 [275ff8c] mcxstudio - search mcx_core.cl dynamically
+ 2017-07-30 [2371eab] mcxstudio - tested with mcxcl
+ 2017-07-30 [eac9717] avoid windows compilation warnings from VS
+ 2017-07-30 [bd61e4f] mcxstudio - update database when config changes,add link to tutorials,accept enter in windows
+ 2017-07-30 [658906d] mcxstudio - display total frame count in mcxplotvol
+ 2017-07-27 [08014e3] mcxstudio - support multiple time gates in mcxplotvol
+ 2017-07-26 [85d6fa1] mcxstudio use mc2 as default output
+ 2017-07-26 [6d25ddb] mcxstudio - download output files using pscp and scp, help context to online documentation
+ 2017-07-25 [2ed5363] mcxstudio - add context help file for mcxstudio, support matlab for plotting
+ 2017-07-25 [0decc1c] dump mask independent of photon detection
+ 2017-07-25 [3929c80] fix volume mask saving bug
+ 2017-07-25 [44dcfb3] mcxstudio - add plotting functions for mcx
+ 2017-07-25 [7cb2015] mcxstudio - add help database and viewer, save user input history
+ 2017-07-24 [9819eda] mcxstudio - add plotting feature using octave
+ 2017-07-22 [71bbc40] make mkpath windows friendly
+ 2017-07-21 [60c971b] mcxstudio command line quotation,remote execution, user input
+ 2017-07-21 [0503732] recursively create output folder if does not exist
+ 2017-07-20 [6e839ef] handle progress bar for matlab 2014b or newer as the return value is now object
+ 2017-07-20 [eed619f] fix matlab2017a crash when using multiple GPUs
+ 2017-07-20 [b4a37d2] avoid windows compilation error due to mkdir and stat
+ 2017-07-16 [8d1d9cd] mcxstudio - add remote exec tab,correct save data dialog,define current session icons,renaming conflict check,oneditdone to update
+ 2017-07-15 [0fae21a] avoid static TLS error in matlab by linking with libiomp5 instead of libgomp, like mmc commit [10c8a27]
+ 2017-07-15 [d4f2ae1] fix mcxlab for octave crash due to an octave bug #48678
+ 2017-07-14 [a97e9c5] mcxstudio - fix remote cmd changing bug
+ 2017-07-14 [7752896] mcxstudio - add middle docking site
+ 2017-07-14 [2845d7e]*make true remote execution possible by passing json input via -f
+ 2017-07-14 [2012c0a] Merge branch 'master' of https://github.com/fangq/mcx
+ 2017-07-14 [35cfcec] mcxstudio - windows browse work folder,search remote command path,robust cmd output capture
+ 2017-07-14 [3081762] mcxstudio - support inline json input with -f, create root folder if --root is given
+ 2017-07-13 [21ef382] mcxstudio - lock GPU
+ 2017-07-13 [e71659d] mcxstudio - make output window dockable, lock GPU list when use ssh
+ 2017-07-11 [c08a29a] fix mcxstudio GPU name crop bug, fix window drag problem, make media/detector editor autoaddrow
+ 2017-07-09 [c672643]*use int to represent det and media index; increase max media + max det from 128+1024 to 4000, close #21
+ 2017-07-08 [bf9aa22]*mcx now supports 2D simulations, just set one dimension to a thickness of 1
+ 2017-07-05 [dd1026c] mcxstudio - fix source editor bug
+ 2017-07-05 [d1186aa]*successfully built RPM
+
 == MCX v2017.7 (Dark Matter - 1.0-RC2), FangQ <q.fang (a) neu.edu> ==
 
  2017-07-05 [6144ee4] fix windows progress bar issue

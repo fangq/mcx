@@ -75,7 +75,7 @@
  */
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
-                 'd','r','S','p','e','U','R','l','L','-','I','o','G','M','A','E','v','D',
+                 'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','-','\0'};
 
 /**
@@ -1693,9 +1693,6 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'I':
                                 cfg->isgpuinfo=1;
 		                break;
-		     case 'o':
-		     	        i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
-		     	        break;
                      case 'G':
                                 if(mcx_isbinstr(argv[i+1])){
                                     i=mcx_readarg(argc,argv,i,cfg->deviceid,"string");
@@ -1787,6 +1784,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
                                 else if(strcmp(argv[i]+2,"faststep")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
+                                else if(strcmp(argv[i]+2,"faststep")==0)
+                                     i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;
@@ -1927,7 +1926,7 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2017 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2018 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
@@ -2027,6 +2026,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
       combine multiple items by using a string, or add selected numbers together\n\
 \n\
 == Additional options ==\n\
+ --root         [''|string]    full path to the folder storing the input files\n\
  --gscatter     [1e9|int]      after a photon completes the specified number of\n\
                                scattering events, mcx then ignores anisotropy g\n\
                                and only performs isotropic scattering for speed\n\

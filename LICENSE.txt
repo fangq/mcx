@@ -2,7 +2,7 @@
 =                      Monte Carlo eXtreme (MCX) -- CUDA                      =
 ===============================================================================
 
-Copyright (C) 2010-2017  Qianqian Fang <q.fang at neu.edu>
+Copyright (C) 2010-2018  Qianqian Fang <q.fang at neu.edu>
 
 -------------------------------------------------------------------------------
 

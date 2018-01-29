@@ -5,7 +5,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.0-RC2 (v2017.7, Dark Matter - RC2)
+Version: 1.0 Final (v2018, Dark Matter)
 
 ---------------------------------------------------------------------
 
@@ -138,7 +138,7 @@ such as the following:
 
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2017 Qianqian Fang <q.fang at neu.edu>          #
+#          Copyright (c) 2009-2018 Qianqian Fang <q.fang at neu.edu>          #
 #                             http://mcx.space/                               #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
@@ -224,6 +224,7 @@ where possible parameters include (the first value in [*|*] is the default)
       combine multiple items by using a string, or add selected numbers together
 
 == Additional options ==
+ --root         [''|string]    full path to the folder storing the input files
  --gscatter     [1e9|int]      after a photon completes the specified number of
                                scattering events, mcx then ignores anisotropy g
                                and only performs isotropic scattering for speed

@@ -5,17 +5,21 @@
 ############################################################
 
 PKGNAME=mcx
-VERSION=2017.7
+VERSION=2018
 SOURCE=src
 GUI=mcxstudio
 
-all: bin/$(PKGNAME) bin/$(GUI) deb rpm
+all: bin/$(PKGNAME) bin/$(GUI) mex deb rpm
 
 bin/$(PKGNAME):
 	-$(MAKE) -C $(SOURCE) static
 bin/$(GUI):
 	-$(MAKE) -C $(GUI)
 	-$(COPY) -a $(GUI)/debug/$(GUI) bin
+mex:
+	-$(MAKE) -C $(SOURCE) mex
+oct:
+	-$(MAKE) -C $(SOURCE) oct
 deb: bin/$(PKGNAME)
 	-package/mcxpkg/mcxdebmkdir.sh $(PKGNAME)
 	-package/mcxpkg/mcxdebcopy.sh  $(PKGNAME) $(VERSION)
