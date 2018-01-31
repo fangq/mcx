@@ -91,6 +91,7 @@ type
     procedure AddSource(jobj: TJSONData);
     procedure AddDiskSource(jobj: TJSONData);
     procedure AddPlanarSource(jobj: TJSONData);
+    procedure AddPattern3DSource(jobj: TJSONData);
     procedure AddDetector(jobj: TJSONData);
     procedure plEditorMouseEnter(Sender: TObject);
     procedure plEditorMouseLeave(Sender: TObject);
@@ -510,6 +511,39 @@ begin
      glSpace.AddChild(obj);
 end;
 
+procedure TfmDomain.AddPattern3DSource(jobj: TJSONData);
+var
+     objtag: integer;
+     obj: TGLCube;
+     data: TJSONArray;
+begin
+     if(jobj.Count=1) and (jobj.Items[0].Count>0) then
+         jobj:=TJSONObject(jobj.Items[0]);
+     if(jobj.FindPath('Param1')=nil ) then begin
+        MessageDlg('Error', 'Malformed JSON Pattern3D source construct', mtError, [mbOK],0);
+        exit;
+     end;
+     obj:=TGLCube.Create(glSpace);
+
+     obj.Up.SetVector(0,0,1);
+     obj.Direction.SetVector(0,1,0);
+
+     obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,0.5);
+     obj.Material.BlendingMode:=bmTransparency;
+
+     data:=TJSONArray(jobj.FindPath('Param1'));
+     obj.CubeWidth:=data.Items[0].AsFloat;
+     obj.CubeDepth:=data.Items[1].AsFloat;
+     obj.CubeHeight:=data.Items[2].AsFloat;
+
+     data:=TJSONArray(jobj.FindPath('Pos'));
+     obj.Position.X:=data.Items[0].AsFloat+obj.CubeWidth*0.5;
+     obj.Position.Y:=data.Items[1].AsFloat+obj.CubeDepth*0.5;
+     obj.Position.Z:=data.Items[2].AsFloat+obj.CubeHeight*0.5;
+
+     glSpace.AddChild(obj);
+end;
+
 procedure TfmDomain.AddSource(jobj: TJSONData);
 var
      objtag: integer;
@@ -557,9 +591,10 @@ begin
 
      if(jobj.FindPath('Type') <> nil) then begin
          Case AnsiIndexStr(jobj.FindPath('Type').AsString, ['gaussian','disk', 'planar', 'pattern', 'fourier',
-            'fourierx', 'fourierx2d']) of
+            'fourierx', 'fourierx2d','pattern3d']) of
               0..1:  AddDiskSource(jobj);      //Origin
-              2..6:  AddPlanarSource(jobj);        //Grid
+              2..6:  AddPlanarSource(jobj);    //Planar Source
+              7:     AddPattern3DSource(jobj); //Pattern3D source
            else
            end;
      end;

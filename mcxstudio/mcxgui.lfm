@@ -29689,6 +29689,12 @@ object fmMCX: TfmMCX
   object PopupMenu1: TPopupMenu
     left = 16
     top = 632
+    object MenuItem33: TMenuItem
+      Action = shapePreview
+    end
+    object MenuItem34: TMenuItem
+      Caption = '-'
+    end
     object MenuItem24: TMenuItem
       Action = mcxdoPlotVol
       Caption = 'Plot volume (_vol.nii)'

@@ -1,7 +1,7 @@
 object fmSource: TfmSource
-  Left = 1799
+  Left = 1261
   Height = 387
-  Top = 329
+  Top = 311
   Width = 333
   BorderIcons = []
   Caption = 'Light Source Settings'
@@ -10,7 +10,7 @@ object fmSource: TfmSource
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   Position = poOwnerFormCenter
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.6.0.4'
   object edSource: TComboBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Label4
@@ -19,14 +19,13 @@ object fmSource: TfmSource
     AnchorSideRight.Side = asrBottom
     Left = 56
     Height = 28
-    Top = 53
+    Top = 49
     Width = 221
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 56
     BorderSpacing.Top = 9
     BorderSpacing.Right = 56
-    ItemHeight = 20
-    ItemIndex = 0
+    ItemHeight = 0
     Items.Strings = (
       'pencil'
       'isotropic'
@@ -34,6 +33,7 @@ object fmSource: TfmSource
       'gaussian'
       'planar'
       'pattern'
+      'pattern3d'
       'fourier'
       'arcsine'
       'disk'
@@ -44,7 +44,6 @@ object fmSource: TfmSource
       'slit'
       'pencilarray'
     )
-    OnChange = edSourceChange
     OnEditingDone = edSourceEditingDone
     TabOrder = 0
     Text = 'pencil'
@@ -96,7 +95,7 @@ object fmSource: TfmSource
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 40
-    Height = 20
+    Height = 16
     Top = 24
     Width = 293
     Anchors = [akTop, akLeft, akRight]
@@ -115,8 +114,8 @@ object fmSource: TfmSource
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Panel1
     Left = 56
-    Height = 214
-    Top = 123
+    Height = 222
+    Top = 115
     Width = 221
     Anchors = [akTop, akLeft, akRight, akBottom]
     AutoAdvance = aaDown
@@ -134,7 +133,7 @@ object fmSource: TfmSource
     )
     ColWidths = (
       140
-      77
+      79
     )
   end
   object Label5: TLabel
@@ -144,8 +143,8 @@ object fmSource: TfmSource
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 40
-    Height = 20
-    Top = 96
+    Height = 16
+    Top = 92
     Width = 293
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 40

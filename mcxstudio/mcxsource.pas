@@ -21,7 +21,6 @@ type
     Panel1: TPanel;
     plEditor: TValueListEditor;
     procedure btOKClick(Sender: TObject);
-    procedure edSourceChange(Sender: TObject);
     procedure edSourceEditingDone(Sender: TObject);
     procedure ChangeParams(sourceidx: integer);
     procedure FormCreate(Sender: TObject);
@@ -39,13 +38,14 @@ var
 implementation
 
 const
-    SrcParams : Array[0..14] of string =
+    SrcParams : Array[0..15] of string =
      ('',
       '',
       'Half-angle(radian)=0.52360',
       'Waist radius(voxel)=5',
       'x-edge vector Vx(1)=40|x-edge vector Vx(2)=0|x-edge vector Vx(3)=0|y-edge vector Vy(1)=0|y-edge vector Vy(2)=40|y-edge vector Vy(3)=0',
       'x-edge vector Vx(1)=40|x-edge vector Vx(2)=0|x-edge vector Vx(3)=0|x-dimension=100|y-edge vector Vy(1)=0|y-edge vector Vy(2)=40|y-edge vector Vy(3)=0|y-dimension=100',
+      'x-dimension Nx=40|y-dimension Ny=40|z-dimension Nz=40',
       'x-edge vector Vx(1)=40|x-edge vector Vx(2)=0|x-edge vector Vx(3)=0|kx+x-phase shift=3|y-edge vector Vy(1)=0|y-edge vector Vy(2)=40|y-edge vector Vy(3)=0|ky+y-phase shift=0',
       '',
       'disk radius(voxel)=10',
@@ -56,13 +56,14 @@ const
       'Line vector x=20|Line vector y=20|Line vector z=0',
       'x-edge vector Vx(1)=40|x-edge vector Vx(2)=0|x-edge vector Vx(3)=0|x-dimension=100|y-edge vector Vy(1)=0|y-edge vector Vy(2)=40|y-edge vector Vy(3)=0|y-dimension=100'
       );
-    ParamMask : Array[0..14] of string =
+    ParamMask : Array[0..15] of string =
      ('00000000',
       '00000000',
       '10000000',
       '10000000',
       '11101110',
       '11111111',
+      '11100000',
       '11111111',
       '00000000',
       '10000000',
@@ -110,10 +111,6 @@ begin
   end;
 end;
 
-procedure TfmSource.edSourceChange(Sender: TObject);
-begin
-
-end;
 procedure TfmSource.ChangeParams(sourceidx: integer);
 var
     fs: TStringList;

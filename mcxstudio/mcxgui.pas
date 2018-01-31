@@ -26,6 +26,8 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    MenuItem33: TMenuItem;
+    MenuItem34: TMenuItem;
     shapePreview: TAction;
     edOutputFormat: TComboBox;
     Label11: TLabel;
@@ -1832,7 +1834,7 @@ end;
 // root should always be an array
 function TfmMCX.UpdateShapeTag(root: TJSONData; doexport: boolean = false): integer;
 var
-     i, j, maxlayertag, maxtag: integer;
+     i, j, maxlayertag, maxtag, lastgood: integer;
      jobj: TJSONObject;
      ss: string;
 begin
@@ -1867,6 +1869,24 @@ begin
               sgConfig.Cells[2,2]:=jobj.FindPath('Size').AsJSON;
        end;
      end;
+
+     if(maxtag > sgMedia.RowCount-3) then begin
+          sgMedia.RowCount:=maxtag+3;
+          for i:=sgMedia.RowCount-1 downto 0 do begin
+              if(Length(sgMedia.Cells[0,i])>0) then begin
+                  lastgood:=i;
+                  break;
+              end;
+          end;
+          for i:=lastgood+1 to sgMedia.RowCount-2 do begin
+              AddLog('"WARNING:" copying media type #'+IntToStr(lastgood-1)+' to new media type #'+IntToStr(i-1));
+              AddLog('Please edit the media setting to customize.');
+              for j:=0 to sgMedia.ColCount-1 do begin
+                  sgMedia.Cells[j,i]:=sgMedia.Cells[j,lastgood];
+              end;
+          end;
+     end;
+
      edRespinChange(sgConfig);
      Result:=maxtag;
 end;
@@ -2369,7 +2389,7 @@ begin
                       tvShapes.Tag:=UpdateShapeTag(jshape,true);
                       json.Arrays['Shapes']:=jshape;
                       if(jmedia.Count<=tvShapes.Tag) then begin
-                        raise Exception.Create(Format('%d media labels are expected (including 0), but only %d sets of media proprties are defned.',[tvShapes.Tag+1,jmedia.Count]));
+                        raise Exception.Create('Insufficent media are defined');
                       end;
                   end else begin
                       if(key = 'VolumeFile') then begin
