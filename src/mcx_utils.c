@@ -131,7 +131,7 @@ const char *outputformat[]={"mc2","nii","hdr","ubj",""};
 
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
-    "line","slit","pencilarray",""};
+    "line","slit","pencilarray","pattern3d",""};
 
 /**
  * @brief Initializing the simulation configuration with default values
@@ -880,6 +880,17 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                      MCX_ERROR(-6,"pattern file can not be opened");
                MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.w*cfg->srcparam2.w,sizeof(float),fp)==sizeof(float));
                fclose(fp);
+           }else if(cfg->srctype==MCX_SRC_PATTERN3D && cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z>0){
+               char patternfile[MAX_PATH_LENGTH];
+               FILE *fp;
+               if(cfg->srcpattern) free(cfg->srcpattern);
+               cfg->srcpattern=(float*)calloc((int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z),sizeof(float));
+               MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
+               fp=fopen(patternfile,"rb");
+               if(fp==NULL)
+                     MCX_ERROR(-6,"pattern file can not be opened");
+               MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z,sizeof(float),fp)==sizeof(float));
+               fclose(fp);
            }
 	}else
 	   return;
@@ -1061,14 +1072,15 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            if(subitem){
               int nx=FIND_JSON_KEY("Nx","Optode.Source.Pattern.Nx",subitem,0,valueint);
               int ny=FIND_JSON_KEY("Ny","Optode.Source.Pattern.Ny",subitem,0,valueint);
-              if(nx>0 || ny>0){
+              int nz=FIND_JSON_KEY("Nz","Optode.Source.Pattern.Nz",subitem,1,valueint);
+              if(nx>0 && ny>0){
                  cJSON *pat=FIND_JSON_OBJ("Data","Optode.Source.Pattern.Data",subitem);
                  if(pat && pat->child){
                      int i;
                      pat=pat->child;
                      if(cfg->srcpattern) free(cfg->srcpattern);
-                     cfg->srcpattern=(float*)calloc(nx*ny,sizeof(float));
-                     for(i=0;i<nx*ny;i++){
+                     cfg->srcpattern=(float*)calloc(nx*ny*nz,sizeof(float));
+                     for(i=0;i<nx*ny*nz;i++){
                          cfg->srcpattern[i]=pat->valuedouble;
                          if((pat=pat->next)==NULL){
                              MCX_ERROR(-1,"Incomplete pattern data");

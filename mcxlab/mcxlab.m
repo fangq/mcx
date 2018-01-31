@@ -82,7 +82,9 @@ function varargout=mcxlab(varargin)
 %                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
 %                      'pattern' - a 3D quadrilateral pattern illumination, same as above, except
 %                                srcparam1(4) and srcparam2(4) specify the pattern array x/y dimensions,
-%                                and srcpattern is a pattern array, valued between [0-1]. 
+%                                and srcpattern is a floating-point pattern array, with values between [0-1]. 
+%                      'pattern3d' - a 3D illumination pattern. srcparam1{x,y,z} defines the dimensions,
+%                                and srcpattern is a floating-point pattern array, with values between [0-1]. 
 %                      'fourier' - spatial frequency domain source, similar to 'planar', except
 %                                the integer parts of srcparam1(4) and srcparam2(4) represent
 %                                the x/y frequencies; the fraction part of srcparam1(4) multiplies

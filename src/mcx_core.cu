@@ -673,16 +673,29 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  switch(mcxsource) {
 		case(MCX_SRC_PLANAR):
 		case(MCX_SRC_PATTERN):
+		case(MCX_SRC_PATTERN3D):
 		case(MCX_SRC_FOURIER):
 		case(MCX_SRC_PENCILARRAY): { /*a rectangular grid over a plane*/
 		      float rx=rand_uniform01(t);
 		      float ry=rand_uniform01(t);
-		      *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
-					   p->y+rx*gcfg->srcparam1.y+ry*gcfg->srcparam2.y,
-					   p->z+rx*gcfg->srcparam1.z+ry*gcfg->srcparam2.z,
-					   p->w);
+		      float rz;
+		      if(gcfg->srctype==MCX_SRC_PATTERN3D){
+		            rz=rand_uniform01(t);
+		            *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x,
+			 		         p->y+ry*gcfg->srcparam1.y,
+					         p->z+rz*gcfg->srcparam1.z,
+					         p->w);
+		      }else{
+		          *((float4*)p)=float4(p->x+rx*gcfg->srcparam1.x+ry*gcfg->srcparam2.x,
+					       p->y+rx*gcfg->srcparam1.y+ry*gcfg->srcparam2.y,
+					       p->z+rx*gcfg->srcparam1.z+ry*gcfg->srcparam2.z,
+					       p->w);
+		      }
 		      if(gcfg->srctype==MCX_SRC_PATTERN) // need to prevent rx/ry=1 here
 			  p->w=srcpattern[(int)(ry*JUST_BELOW_ONE*gcfg->srcparam2.w)*(int)(gcfg->srcparam1.w)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.w)];
+		      else if(gcfg->srctype==MCX_SRC_PATTERN3D)
+		          p->w=srcpattern[(int)(rz*JUST_BELOW_ONE*gcfg->srcparam1.z)*(int)(gcfg->srcparam1.y)*(int)(gcfg->srcparam1.x)+
+		                          (int)(ry*JUST_BELOW_ONE*gcfg->srcparam1.y)*(int)(gcfg->srcparam1.x)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.x)];
 		      else if(gcfg->srctype==MCX_SRC_FOURIER)
 			  p->w=(cosf((floorf(gcfg->srcparam1.w)*rx+floorf(gcfg->srcparam2.w)*ry
 				  +gcfg->srcparam1.w-floorf(gcfg->srcparam1.w))*TWO_PI)*(1.f-gcfg->srcparam2.w+floorf(gcfg->srcparam2.w))+1.f)*0.5f; //between 0 and 1
@@ -1723,7 +1736,9 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      if(cfg->srctype==MCX_SRC_PATTERN)
          CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w)));
-
+     else if(cfg->srctype==MCX_SRC_PATTERN3D)
+         CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z)));
+	 
 #ifndef SAVE_DETECTORS
 #pragma omp master
      if(cfg->issavedet){
@@ -1795,7 +1810,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uint)*dimxyz, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpy(genergy,energy,sizeof(float) *(gpu[gpuid].autothread<<1), cudaMemcpyHostToDevice));
      if(cfg->srcpattern)
-         CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w), cudaMemcpyHostToDevice));
+        if(cfg->srctype==MCX_SRC_PATTERN)
+           CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w), cudaMemcpyHostToDevice));
+	else if(cfg->srctype==MCX_SRC_PATTERN3D)
+	   CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z), cudaMemcpyHostToDevice));
+     
 
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->detpos,  cfg->detnum*sizeof(float4), cfg->medianum*sizeof(Medium), cudaMemcpyHostToDevice));
@@ -1884,6 +1903,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		case(MCX_SRC_LINE): mcx_main_loop<MCX_SRC_LINE> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 		case(MCX_SRC_SLIT): mcx_main_loop<MCX_SRC_SLIT> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 		case(MCX_SRC_PENCILARRAY): mcx_main_loop<MCX_SRC_PENCILARRAY> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
+		case(MCX_SRC_PATTERN3D): mcx_main_loop<MCX_SRC_PATTERN3D> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,gseeddata,gdebugdata,gprogress); break;
 	   }
 
 #pragma omp master

@@ -133,6 +133,10 @@ for i=1:len
             end
             nrec=[0 0 0; cfg(i).srcparam1(1:3)*voxelsize; cfg(i).srcparam1(1:3)*voxelsize+vec2; vec2];
             hsrcarea=plotmesh(rotatevec3d(nrec,[0 0 1], cfg(i).srcdir, srcpos), {[1 2 3 4 1]});
+        elseif(strcmp(cfg(i).srctype,'pattern3d'))
+            dim=cfg(i).srcparam1(1:3);
+            [bbxno,bbxfc]=latticegrid(0:dim(1):dim(1),0:dim(2):dim(2),0:dim(3):dim(3));
+            hbbx=plotmesh(((bbxno+repmat(cfg(i).srcpos(1:3),size(bbxno,1),1))+offset)*voxelsize,bbxfc,'facecolor','y','facealpha',0.3);
         elseif(strcmp(cfg(i).srctype,'slit') || strcmp(cfg(i).srctype,'line'))
             if(~isfield(cfg(i),'srcparam1'))
                 error('cfg.srcparam1 is missing');
