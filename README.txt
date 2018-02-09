@@ -346,7 +346,8 @@ folder. The same file, qtest.json, is also shown below:
         "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit",
         "Optode::Source::Dir": "the unitary directional vector of the photon at launch",
         "Optode::Source::Type": "source types, must be one of the following: 
-                   pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk,fourierx,fourierx2d",
+                   pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk,fourierx,fourierx2d,
+		   zgaussian,line,slit,pencilarray,pattern3d",
         "Optode::Source::Param1": "source parameters, 4 floating-point numbers",
         "Optode::Source::Param2": "additional source parameters, 4 floating-point numbers"
       }

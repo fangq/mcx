@@ -2,6 +2,7 @@
 
 == MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
 
+ 2018-01-31 [589ce45] support 3D pattern with type 'pattern3d'
  2018-01-29 [1b9493b]*add mcxpreview to preview the simulation domain settings
  2018-01-28 [5f748de] fix crash when saving diffuse reflectance
  2018-01-26 [6b55b4b] fix bug to properly scale Jacobian output with voxel size

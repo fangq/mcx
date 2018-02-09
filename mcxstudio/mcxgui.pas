@@ -1363,6 +1363,8 @@ begin
 
     fmBackend.Enabled:=false;
 
+    fmDomain:=TfmDomain.Create(Self);
+
     DockMaster.MakeDockable(fmOutput,true,true);
 
     CurrentSession:=nil;
@@ -1402,9 +1404,9 @@ begin
     ConfigData.Free;
     RegEngine.Free;
     fmOutput.Free;
-    fmDomain.Free;
     fmBackend.Free;
     PassList.Free;
+    fmDomain.Free;
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -1906,8 +1908,6 @@ end;
 
 procedure TfmMCX.shapePreviewExecute(Sender: TObject);
 begin
-    if(not Assigned(fmDomain)) then
-        fmDomain:=TfmDomain.Create(Self);
     fmDomain.mmShapeJSON.Lines.Text:=GetJSON(SaveJSONConfig('')).FormatJSON;
     fmDomain.Show;
 end;

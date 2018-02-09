@@ -484,6 +484,7 @@
     </Parsing>
     <Linking>
       <Debugging>
+        <UseHeaptrc Value="True"/>
         <StripSymbols Value="True"/>
         <UseExternalDbgSyms Value="True"/>
       </Debugging>
