@@ -595,6 +595,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  * @param[in,out] rv: the reciprocal direction vector of the photon (rv[i]=1/v[i])
  * @param[out] prop: the optical properties of the voxel the photon is launched into
  * @param[in,out] idx1d: the linear index of the voxel containing the photon at launch
+ * @param[in] field: the 3D array to store photon weights
  * @param[in,out] mediaid: the medium index at the voxel at launch
  * @param[in,out] w0: initial weight, reset here after launch
  * @param[in,out] Lmove: photon movement length variable, reset to 0 after launch
@@ -616,7 +617,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  */
 
 template <int mcxsource>
-__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d,
+__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, float *field,
            uint *mediaid,float *w0,float *Lmove,int isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
@@ -637,6 +638,14 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
              clearpath(ppath,gcfg->maxmedia);
           }
 #endif
+          if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME && gcfg->issaveref){
+	       int tshift=(int)(floorf((f->t-gcfg->twin0)*gcfg->Rtstep));
+#ifdef USE_ATOMIC
+               atomicadd(& field[*idx1d+tshift*gcfg->dimlen.z],-p->w);	       
+#else
+	       field[*idx1d+tshift*gcfg->dimlen.z]+=-p->w;
+#endif
+	  }
       }
 
       /**
@@ -1011,7 +1020,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 
      gpu_rng_init(t,n_seed,idx);
 
-     if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,0,ppath,&energyloss,
+     if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,&Lmove,0,ppath,&energyloss,
        &energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress)){
          GPUDEBUG(("thread %d: fail to launch photon\n",idx));
@@ -1158,7 +1167,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
-	      isdet=-1;
+	      idx1d=OUTSIDE_VOLUME;
 	  }else{
               /** otherwise, read the optical property index */
 	      mediaid=media[idx1d];
@@ -1213,22 +1222,16 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
   #endif
                       }else{
                           field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
-		          if(mediaid==0 && isdet>=0 &&gcfg->issaveref)
-		              field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                       }
                   }else{
                       /** accummulate the quality to the volume using non-atomic operations  */
                       field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
-		      if(mediaid==0 && isdet>=0 &&gcfg->issaveref)
-		          field[idx1d+tshift*gcfg->dimlen.z]+=-p.w;
                   }
   #ifdef USE_ATOMIC
                }else{
 	          /** accummulate the quality to the volume using atomic operations  */
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
-		  if(mediaid==0 && isdet>=0 &&gcfg->issaveref)
-		      atomicadd(& field[idx1d+tshift*gcfg->dimlen.z],-p.w);
                   GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1dold,weight,p.w));
                }
   #endif
@@ -1243,7 +1246,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
           if((mediaid==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w))) || f.t>gcfg->twin1){
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-	      if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
+	      if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
 	          &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                    break;
               isdet=mediaid & DET_MASK;
@@ -1257,7 +1260,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                    p.w*=ROULETTE_SIZE;
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-                   if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
+                   if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),ppath,
 	                &energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                         break;
                    isdet=mediaid & DET_MASK;
@@ -1293,7 +1296,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                         transmit(v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
+		    	    if(launchnewphoton<mcxsource>(&p,v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,&Lmove,(mediaidold & DET_MASK),
 			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,photonseed,
 				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                                 break;

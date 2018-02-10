@@ -36,6 +36,7 @@
 #define JUST_BELOW_ONE     0.9998f                 /**< test for boundary */
 #define SAME_VOXEL         -9999.f                 /**< scatter within a voxel */
 #define NO_LAUNCH          9999                    /**< when fail to launch, for debug */
+#define OUTSIDE_VOLUME     0xFFFFFFFF              /**< flag indicating the index is outside of the volume */
 #define MAX_PROP_AND_DETECTORS   4000              /**< maximum number of property + number of detectors */
 #define SEED_FROM_FILE      -999                   /**< special flag indicating to read seeds from an mch file for replay */
 
