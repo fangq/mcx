@@ -124,6 +124,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int maxdetphoton;         /**< max number of detected photons */
   unsigned int maxmedia;             /**< max number of media labels */
   unsigned int detnum;               /**< max number of detectors */
+  unsigned int maxgate;              /**< max number of time gates */
   unsigned int idx1dorig;            /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
   unsigned int mediaidorig;          /**< pre-computed media index of the photon at launch for pencil/isotropic beams */
   unsigned int reseedlimit;          /**< how many photon moves to rejuvenate the RNG (obsolete) */
