@@ -221,7 +221,7 @@ end
 cfg=varargin{1};
 
 if(nargout>=2)
-    
+
     for i=1:length(varargout{2})
         if(~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2)
             medianum=size(cfg(i).prop,1)-1;
@@ -245,5 +245,23 @@ if(nargout>=2)
     end
     if(exist('newdetpstruct','var'))
         varargout{2}=newdetpstruct;
+    end
+
+    if(nargout>=5)
+        for i=1:length(varargout{5})
+            data=varargout{5}.data;
+            if(isempty(data))
+               continue;
+            end
+            traj.pos=data(2:4,:).';
+            traj.id=typecast(data(1,:),'uint32').';
+            [traj.id,idx]=sort(traj.id);
+            traj.pos=traj.pos(idx,:);
+            traj.data=[single(traj.id)' ; data(2:end,idx)];
+            newtraj(i)=traj;
+        end
+        if(exist('newtraj','var'))
+            varargout{5}=newtraj;
+        end
     end
 end
