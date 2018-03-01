@@ -1656,7 +1656,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            param.twin0=cfg->tstart;
            param.twin1=cfg->tend;
            Pseed=(uint*)malloc(sizeof(RandType)*RAND_BUF_LEN);
-           for (i=0; i<(int)((sizeof(RandType)>>2)*RAND_BUF_LEN); i++)
+           for (i=0; i<(int)(((sizeof(RandType)*RAND_BUF_LEN)>>2)); i++)
 		Pseed[i]=rand();
            CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(RandType)*RAND_BUF_LEN));
 	   CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
@@ -1795,7 +1795,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      MCX_FPRINTF(cfg->flog,"- code name: [Vanilla MCX] compiled for GPU Capacity [%d] with CUDA [%d]\n",
          MCX_CUDA_ARCH,CUDART_VERSION);
 #endif
-     MCX_FPRINTF(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,(int)(sizeof(RandType)>>2)*RAND_BUF_LEN);
+     MCX_FPRINTF(cfg->flog,"- compiled with: RNG [%s] with Seed Length [%d]\n",MCX_RNG_NAME,(int)((sizeof(RandType)*RAND_BUF_LEN)>>2));
 #ifdef SAVE_DETECTORS
      MCX_FPRINTF(cfg->flog,"- this version CAN save photons at the detectors\n\n");
 #else
@@ -1877,7 +1877,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	   CUDA_ASSERT(cudaMemcpy(gPlen,  Plen,  sizeof(float4)*gpu[gpuid].autothread,  cudaMemcpyHostToDevice));
 
            if(cfg->seed!=SEED_FROM_FILE){
-             for (i=0; i<gpu[gpuid].autothread*((int)(sizeof(RandType))>>2)*RAND_BUF_LEN; i++)
+             for (i=0; i<gpu[gpuid].autothread*((int)(sizeof(RandType)*RAND_BUF_LEN)>>2); i++)
                Pseed[i]=rand();
 	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            }

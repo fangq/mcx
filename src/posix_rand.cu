@@ -78,7 +78,7 @@ __device__ float rand_uniform01(RandType t[RAND_BUF_LEN]){
 }
 
 __device__ void gpu_rng_init(RandType t[RAND_BUF_LEN], uint *n_seed,int idx){
-    __seed48_r((ushort *)(n_seed+idx*RAND_BUF_LEN),t);
+    __seed48_r((ushort *)(n_seed)+idx*RAND_BUF_LEN,t);
 }
 __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN],uint cpuseed[],uint idx,float reseed){
 }
