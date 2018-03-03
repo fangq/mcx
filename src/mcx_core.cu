@@ -35,7 +35,9 @@
     #include "cuda_fp16.h"
 #endif
 
-#if defined(USE_XORSHIFT128P_RAND)
+#if defined(USE_XOROSHIRO128P_RAND)
+    #include "xoroshiro128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
+#elif defined(USE_XORSHIFT128P_RAND)
     #include "xorshift128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
 #elif defined(USE_POSIX_RAND)
     #include "posix_rand.cu"        ///< use POSIX erand48 RNG (POSIX)
