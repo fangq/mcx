@@ -54,6 +54,8 @@ __device__ float xorshift128p_nextf(RandType t[RAND_BUF_LEN]){
     union {
         ieee754_double dd;
         uint64_t i;
+	float f[2];
+	uint  u[2];
     } s1;
     const uint64_t s0 = t[1];
     s1.i = t[0];
@@ -61,10 +63,10 @@ __device__ float xorshift128p_nextf(RandType t[RAND_BUF_LEN]){
     s1.i ^= s1.i << 23; // a
     t[1] = s1.i ^ s0 ^ (s1.i >> 18) ^ (s0 >> 5); // b, c
     s1.i = t[1] + s0;
-    s1.dd.ieee.negative = 0;
-    s1.dd.ieee.exponent = IEEE754_DOUBLE_BIAS;
+    
+    s1.u[0] = 0x3F800000U | (s1.u[0] >> 9);
 
-    return (float)s1.dd.d - 1.0f;
+    return s1.f[0] - 1.0f;
 }
 
 /**

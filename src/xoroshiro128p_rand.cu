@@ -58,6 +58,8 @@ __device__ float xoroshiro128p_nextf(RandType t[RAND_BUF_LEN]){
     union {
         ieee754_double dd;
         uint64_t i;
+	float f[2];
+	uint  u[2];
     } result;
     const uint64_t s0 = t[0];
     uint64_t s1 = t[1];
@@ -66,10 +68,9 @@ __device__ float xoroshiro128p_nextf(RandType t[RAND_BUF_LEN]){
     s1 ^= s0;
     t[0] = rotl(s0, 55) ^ s1 ^ (s1 << 14); // a, b
     t[1] = rotl(s1, 36); // c
-    result.dd.ieee.negative = 0;
-    result.dd.ieee.exponent = IEEE754_DOUBLE_BIAS;
+    result.u[0] = 0x3F800000U | (result.u[0] >> 9);
 
-    return (float)result.dd.d - 1.0f;
+    return result.f[0] - 1.0f;
 }
 
 
