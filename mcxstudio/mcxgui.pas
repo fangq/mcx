@@ -1907,11 +1907,14 @@ begin
 end;
 
 procedure TfmMCX.shapePreviewExecute(Sender: TObject);
+var
+    shapejson: TJSONData;
 begin
-    fmDomain.mmShapeJSON.Lines.Text:=GetJSON(SaveJSONConfig('')).FormatJSON;
+    shapejson:=GetJSON(SaveJSONConfig(''));
+    fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
     fmDomain.Show;
-end;
-
+    freeandnil(shapejson);
+end; 
 
 
 procedure TfmMCX.shapeResetExecute(Sender: TObject);
