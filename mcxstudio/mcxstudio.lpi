@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="9"/>
+    <Version Value="10"/>
     <General>
       <MainUnit Value="0"/>
       <Title Value="MCX Studio"/>
+      <Scaled Value="True"/>
       <UseXPManifest Value="True"/>
       <XPManifest>
         <DpiAware Value="True"/>
@@ -135,8 +136,8 @@
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="12"/>
-        <CursorPos X="48" Y="23"/>
+        <EditorIndex Value="8"/>
+        <CursorPos X="48" Y="24"/>
         <UsageCount Value="230"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -154,6 +155,7 @@
           <Item0 Y="901" ID="9"/>
         </Bookmarks>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="mcxabout.pas"/>
@@ -161,7 +163,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="10"/>
         <CursorPos X="17" Y="11"/>
         <UsageCount Value="229"/>
@@ -173,7 +175,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="10322"/>
         <CursorPos Y="10335"/>
-        <UsageCount Value="0"/>
+        <UsageCount Value="10"/>
       </Unit3>
       <Unit4>
         <Filename Value="default.json"/>
@@ -220,7 +222,7 @@
         <ComponentName Value="fmShapeEditor"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="7"/>
         <TopLine Value="12"/>
         <CursorPos X="67" Y="63"/>
         <UsageCount Value="201"/>
@@ -254,11 +256,10 @@
       </Unit13>
       <Unit14>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/include/customform.inc"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="2160"/>
         <CursorPos Y="2198"/>
         <UsageCount Value="34"/>
-        <Loaded Value="True"/>
       </Unit14>
       <Unit15>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/include/application.inc"/>
@@ -311,7 +312,7 @@
         <ComponentName Value="fmNewSession"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="2"/>
         <CursorPos Y="68"/>
         <UsageCount Value="200"/>
@@ -347,7 +348,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="56"/>
         <CursorPos X="28" Y="59"/>
         <UsageCount Value="239"/>
@@ -403,7 +404,7 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="3"/>
         <CursorPos X="61" Y="8"/>
         <UsageCount Value="174"/>
         <Loaded Value="True"/>
@@ -444,21 +445,21 @@
         <Filename Value="sendkeys.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SendKeys"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="102"/>
         <CursorPos X="22" Y="138"/>
         <UsageCount Value="78"/>
         <Loaded Value="True"/>
       </Unit37>
       <Unit38>
-        <Filename Value="../../../../../../../lazarus/fpc/3.0.2/source/rtl/objpas/classes/classesh.inc"/>
+        <Filename Value="../../../../../lazarus/fpc/3.0.2/source/rtl/objpas/classes/classesh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="284"/>
         <CursorPos X="3" Y="298"/>
         <UsageCount Value="5"/>
       </Unit38>
       <Unit39>
-        <Filename Value="../../../../../../../lazarus/lcl/lcltype.pp"/>
+        <Filename Value="../../../../../lazarus/lcl/lcltype.pp"/>
         <UnitName Value="LCLType"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="382"/>
@@ -487,70 +488,61 @@
         <Loaded Value="True"/>
       </Unit41>
       <Unit42>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLGeomObjects.pas"/>
+        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLGeomObjects.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="488"/>
         <CursorPos X="3" Y="500"/>
         <UsageCount Value="33"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit42>
       <Unit43>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLObjects.pas"/>
-        <EditorIndex Value="2"/>
+        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLObjects.pas"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="831"/>
         <CursorPos X="3" Y="867"/>
         <UsageCount Value="33"/>
-        <Loaded Value="True"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit43>
       <Unit44>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLMesh.pas"/>
+        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLMesh.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="112"/>
         <CursorPos X="15" Y="128"/>
         <UsageCount Value="33"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit44>
       <Unit45>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLVectorGeometry.pas"/>
+        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLVectorGeometry.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="642"/>
         <CursorPos X="20" Y="711"/>
         <UsageCount Value="33"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit45>
       <Unit46>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLVectorTypes.pas"/>
+        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLVectorTypes.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="91"/>
         <CursorPos X="3" Y="109"/>
         <UsageCount Value="33"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit46>
       <Unit47>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLColor.pas"/>
+        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLColor.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="372"/>
         <CursorPos X="4" Y="390"/>
         <UsageCount Value="33"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit47>
       <Unit48>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/forms.pp"/>
         <UnitName Value="Forms"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="1811"/>
         <CursorPos Y="1850"/>
         <UsageCount Value="30"/>
-        <Loaded Value="True"/>
       </Unit48>
       <Unit49>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/include/screen.inc"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="598"/>
         <CursorPos X="118" Y="625"/>
         <UsageCount Value="30"/>
-        <Loaded Value="True"/>
       </Unit49>
     </Units>
     <Build>
