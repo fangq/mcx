@@ -107,10 +107,10 @@
     </RunParams>
     <RequiredPackages Count="8">
       <Item1>
-        <PackageName Value="GLSceneLCL_DesignTime"/>
+        <PackageName Value="GLScene_RunTime"/>
       </Item1>
       <Item2>
-        <PackageName Value="GLSceneLCL_RunTime"/>
+        <PackageName Value="GLScene_DesignTime"/>
       </Item2>
       <Item3>
         <PackageName Value="anchordocking"/>
@@ -137,7 +137,7 @@
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="8"/>
-        <CursorPos X="48" Y="24"/>
+        <CursorPos X="48" Y="23"/>
         <UsageCount Value="230"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -148,8 +148,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="1340"/>
-        <CursorPos X="5" Y="1409"/>
+        <TopLine Value="1380"/>
+        <CursorPos X="33" Y="1386"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 Y="901" ID="9"/>
