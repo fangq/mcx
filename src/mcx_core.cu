@@ -1658,8 +1658,9 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            param.twin0=cfg->tstart;
            param.twin1=cfg->tend;
            Pseed=(uint*)malloc(sizeof(RandType)*RAND_BUF_LEN);
-           for (i=0; i<(int)(((sizeof(RandType)*RAND_BUF_LEN)>>2)); i++)
-		Pseed[i]=rand();
+           for (i=0; i<(int)(((sizeof(RandType)*RAND_BUF_LEN)>>2)); i++){
+		Pseed[i]=((rand() << 16) | (rand() << 1) | (rand() >> 14));
+	   }
            CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(RandType)*RAND_BUF_LEN));
 	   CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen));
@@ -1880,7 +1881,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
            if(cfg->seed!=SEED_FROM_FILE){
              for (i=0; i<gpu[gpuid].autothread*((int)(sizeof(RandType)*RAND_BUF_LEN)>>2); i++)
-               Pseed[i]=rand();
+               Pseed[i]=((rand() << 16) | (rand() << 1) | (rand() >> 14));
 	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            }
            tic0=GetTimeMillis();

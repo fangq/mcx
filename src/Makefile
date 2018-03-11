@@ -112,12 +112,13 @@ posix:      LINKOPT+=-DUSE_POSIX_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 log:        CUCCOPT+=
 debugxor:   xor
+debugxor:   LINKOPT+=$(OMP)
 debuglog:   CUCCOPT+=
 racing:     CUCCOPT+=-DTEST_RACING
 xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(CUGENCODE) MCX_TARGET_NAME='"Xorshift128+ Atomic MCX"'
 logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
 fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
-fermi fermimex fermioct:      xoro
+fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
 fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
