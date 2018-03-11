@@ -1796,7 +1796,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
                                 else if(strcmp(argv[i]+2,"faststep")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
-                                else if(strcmp(argv[i]+2,"faststep")==0)
+                                else if(strcmp(argv[i]+2,"root")==0)
                                      i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
