@@ -2522,10 +2522,10 @@ object fmMCX: TfmMCX
         ImageIndex = 6
         object tvShapes: TTreeView
           Left = 0
-          Height = 374
+          Height = 510
           Hint = 'ShapeCfg'
-          Top = 206
-          Width = 346
+          Top = 70
+          Width = 216
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_shapeeditor'
           Align = alClient
@@ -2543,7 +2543,7 @@ object fmMCX: TfmMCX
         end
         object ToolBar2: TToolBar
           Left = 0
-          Height = 206
+          Height = 70
           Top = 0
           Width = 346
           AutoSize = True
@@ -2567,102 +2567,10 @@ object fmMCX: TfmMCX
             ParentShowHint = False
             ShowHint = True
           end
-          object ToolButton19: TToolButton
-            Left = 218
-            Top = 70
-            Action = shapeAddName
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton20: TToolButton
-            Left = 218
-            Top = 2
-            Action = shapeAddGrid
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton21: TToolButton
-            Left = 55
-            Top = 70
-            Action = shapeAddBox
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton22: TToolButton
-            Left = 1
-            Top = 70
-            Action = shapeAddSubgrid
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton23: TToolButton
-            Left = 1
-            Top = 138
-            Action = shapeAddXLayers
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton24: TToolButton
-            Left = 56
-            Top = 138
-            Action = shapeAddYLayers
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton25: TToolButton
-            Left = 111
-            Top = 138
-            Action = shapeAddZLayers
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton26: TToolButton
-            Left = 166
-            Top = 138
-            Action = shapeAddXSlabs
-          end
-          object ToolButton27: TToolButton
-            Left = 107
-            Top = 70
-            Action = shapeAddCylinder
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton28: TToolButton
-            Left = 218
-            Top = 138
-            Action = shapeAddYSlabs
-          end
-          object ToolButton29: TToolButton
-            Left = 270
-            Top = 138
-            Action = shapeAddZSlabs
-          end
           object ToolButton31: TToolButton
             Left = 161
             Top = 2
             Action = shapePrint
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton32: TToolButton
-            Left = 166
-            Top = 70
-            Action = shapeAddOrigin
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton30: TToolButton
-            Left = 270
-            Top = 2
-            Action = shapeAddSphere
-            ParentShowHint = False
-            ShowHint = True
-          end
-          object ToolButton33: TToolButton
-            Left = 270
-            Top = 70
-            Action = shapeAddUpperSpace
             ParentShowHint = False
             ShowHint = True
           end
@@ -2673,10 +2581,118 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 5
+            Height = 68
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
+          end
+          object ToolButton38: TToolButton
+            Left = 218
+            Top = 2
+            Action = shapeAddName
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton50: TToolButton
+            Left = 270
+            Top = 2
+            Action = shapeAddOrigin
+            ParentShowHint = False
+            ShowHint = True
+          end
+        end
+        object ToolBar3: TToolBar
+          Left = 216
+          Height = 510
+          Top = 70
+          Width = 130
+          Align = alRight
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          AutoSize = True
+          ButtonHeight = 68
+          ButtonWidth = 50
+          Caption = 'ToolBar3'
+          Images = ImageList3
+          ShowCaptions = True
+          TabOrder = 2
+          object ToolButton39: TToolButton
+            Left = 51
+            Hint = 'Reset volume and define a different dimension'
+            Top = 2
+            Action = shapeAddGrid
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton40: TToolButton
+            Left = 1
+            Top = 2
+            Action = shapeAddBox
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton41: TToolButton
+            Left = 1
+            Top = 76
+            Action = shapeAddSubgrid
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton42: TToolButton
+            Left = 1
+            Top = 224
+            Action = shapeAddXLayers
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton43: TToolButton
+            Left = 1
+            Top = 298
+            Action = shapeAddYLayers
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton44: TToolButton
+            Left = 1
+            Top = 372
+            Action = shapeAddZLayers
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton45: TToolButton
+            Left = 51
+            Top = 224
+            Action = shapeAddXSlabs
+          end
+          object ToolButton46: TToolButton
+            Left = 51
+            Top = 76
+            Action = shapeAddCylinder
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton47: TToolButton
+            Left = 51
+            Top = 298
+            Action = shapeAddYSlabs
+          end
+          object ToolButton48: TToolButton
+            Left = 51
+            Top = 372
+            Action = shapeAddZSlabs
+          end
+          object ToolButton51: TToolButton
+            Left = 1
+            Top = 150
+            Action = shapeAddSphere
+            ParentShowHint = False
+            ShowHint = True
+          end
+          object ToolButton52: TToolButton
+            Left = 51
+            Top = 150
+            Action = shapeAddUpperSpace
+            ParentShowHint = False
+            ShowHint = True
           end
         end
       end
