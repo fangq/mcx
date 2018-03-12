@@ -1183,7 +1183,7 @@ begin
                  SendKeysToTitle('MATLAB Command Window',addpath)
              else
                  SendKeysToTitle('Command Window',addpath);
-         end
+         end;
 
          if(ismatlabconsole) then
              SendKeysToTitle('MATLAB Command Window',cmd)
