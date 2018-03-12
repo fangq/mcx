@@ -18,7 +18,7 @@ uses
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
   mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
-  mcxrender {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF};
+  mcxrender {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
 
 type
 
@@ -310,6 +310,8 @@ type
       const Rect: TRect);
     procedure sgConfigDblClick(Sender: TObject);
     procedure sgConfigEditButtonClick(Sender: TObject);
+    procedure sgMediaDrawCell(Sender: TObject; aCol, aRow: Integer;
+      aRect: TRect; aState: TGridDrawState);
     procedure sgMediaEditingDone(Sender: TObject);
     procedure shapeAddBoxExecute(Sender: TObject);
     procedure shapeAddCylinderExecute(Sender: TObject);
@@ -740,14 +742,15 @@ begin
       grAtomic.ItemIndex:=0;
       edReplayDet.Value:=0;
       rbUseDesigner.Checked:=true;
-      sgMedia.RowCount:=1;
-      sgMedia.RowCount:=4;
-      sgMedia.Rows[1].CommaText:='0,0,1,1';
-      sgMedia.Rows[2].CommaText:='0.005,1,0.01,1.37';
-      sgDet.RowCount:=1;
-      sgDet.RowCount:=3;
-      sgDet.Rows[1].CommaText:='24,29,0,1';
-      //sgConfig.ColCount:=3;
+      sgMedia.RowCount:=3;
+      sgMedia.Rows[1].CommaText:=',0,0,1,1';
+      sgMedia.Rows[2].CommaText:=',0.005,1,0.01,1.37';
+      sgMedia.RowCount:=20;
+
+
+      sgDet.RowCount:=2;
+      sgDet.Rows[1].CommaText:=',24,29,0,1';
+      sgConfig.ColCount:=20;
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
@@ -1102,6 +1105,7 @@ begin
           pBackend.Execute;
           fmBackend.Enabled:=true;
      end;
+     Sleep(2000);
 end;
 
 procedure TfmMCX.StopBackend;
@@ -1121,10 +1125,10 @@ end;
 
 procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
 var
-    outputfile, cmd: string;
+    outputfile, cmd, addpath: string;
     ftype: TAction;
     ngates: integer;
-    ismatlabconsole: boolean;
+    ismatlabconsole, isnewmatlab: boolean;
     {$IFDEF WINDOWS}
     hwin: hWnd;
     {$ENDIF}
@@ -1149,6 +1153,12 @@ begin
          ngates:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
          cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
      end;
+
+     addpath:='if(exist(''../mcx/utils'', ''dir'')) addpath(''../mcx/utils''); end;';
+     addpath:=addpath + 'if(exist(''../mmc/matlab'', ''dir'')) addpath(''../mmc/matlab''); end;';
+     addpath:=addpath + 'if(exist(''../../mcxlab'', ''dir'')) addpath(''../../mcxlab''); end;';
+
+     isnewmatlab:=false;
      {$IFDEF WINDOWS}
      if(miUseMatlab.Checked) then begin
          hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
@@ -1156,7 +1166,7 @@ begin
              hwin:=GetHandleFromWindowTitle('Command Window');
          if (hwin=0) and not (pBackend.Running) then begin
               StartBackend;
-              Sleep(2000);
+              isnewmatlab:=true;
          end;
          ismatlabconsole:=false;
          repeat
@@ -1167,6 +1177,14 @@ begin
                  ismatlabconsole:=true;
              Sleep(1000);
          until (hwin>0);
+
+         if(isnewmatlab) then begin
+             if(ismatlabconsole) then
+                 SendKeysToTitle('MATLAB Command Window',addpath)
+             else
+                 SendKeysToTitle('Command Window',addpath);
+         end
+
          if(ismatlabconsole) then
              SendKeysToTitle('MATLAB Command Window',cmd)
          else
@@ -1176,7 +1194,7 @@ begin
      {$ENDIF}
      if not (pBackend.Running) then begin
          StartBackend;
-         Sleep(2000);
+         pBackend.Input.Write(addpath[1],Length(addpath));
      end;
      if(pBackend.Running) then begin
           pBackend.Input.Write(cmd[1],Length(cmd));
@@ -1648,6 +1666,21 @@ begin
    edRespinChange(Sender);
 end;
 
+procedure TfmMCX.sgMediaDrawCell(Sender: TObject; aCol, aRow: Integer;
+  aRect: TRect; aState: TGridDrawState);
+var
+  LStrCell: string;
+  LRect: TRect;
+begin
+  if(ACol>0) or (ARow=0) then exit;
+  LStrCell := IntToStr(ARow-1);
+  sgMedia.Canvas.FillRect(aRect); // clear the cell
+  LRect := aRect;
+  LRect.Top := LRect.Top + 3; // adjust top to center vertical
+  // draw text
+  DrawText(sgMedia.Canvas.Handle, PChar(LStrCell), Length(LStrCell), LRect, DT_CENTER);
+end;
+
 procedure TfmMCX.GotoColRow(grid: TStringGrid; Col, Row: Integer);
 begin
   GotoCol := Col;
@@ -1872,18 +1905,20 @@ begin
        end;
      end;
 
-     if(maxtag > sgMedia.RowCount-3) then begin
-          sgMedia.RowCount:=maxtag+3;
-          for i:=sgMedia.RowCount-1 downto 0 do begin
-              if(Length(sgMedia.Cells[0,i])>0) then begin
-                  lastgood:=i;
-                  break;
-              end;
-          end;
-          for i:=lastgood+1 to sgMedia.RowCount-2 do begin
+     lastgood:=0;
+     for i:=sgMedia.RowCount-1 downto 1 do begin
+         if(Length(sgMedia.Cells[1,i])>0) then begin
+             lastgood:=i;
+             break;
+         end;
+     end;
+
+     if(maxtag > lastgood-2) then begin
+          sgMedia.RowCount:=Max(maxtag+3,sgMedia.RowCount);
+          for i:=lastgood+1 to maxtag+1 do begin
               AddLog('"WARNING:" copying media type #'+IntToStr(lastgood-1)+' to new media type #'+IntToStr(i-1));
               AddLog('Please edit the media setting to customize.');
-              for j:=0 to sgMedia.ColCount-1 do begin
+              for j:=1 to sgMedia.ColCount-1 do begin
                   sgMedia.Cells[j,i]:=sgMedia.Cells[j,lastgood];
               end;
           end;
@@ -2324,12 +2359,12 @@ begin
       jmedia:=TJSONArray.Create;
       for i := sgMedia.FixedRows to sgMedia.RowCount - 1 do
       begin
-              if (Length(sgMedia.Cells[0,i])=0) then break;
+              if (Length(sgMedia.Cells[1,i])=0) then break;
               jmedium:=TJSONObject.Create;
-              jmedium.Add('mua',StrToFloat(sgMedia.Cells[0,i]));
-              jmedium.Add('mus',StrToFloat(sgMedia.Cells[1,i]));
-              jmedium.Add('g',StrToFloat(sgMedia.Cells[2,i]));
-              jmedium.Add('n',StrToFloat(sgMedia.Cells[3,i]));
+              jmedium.Add('mua',StrToFloat(sgMedia.Cells[1,i]));
+              jmedium.Add('mus',StrToFloat(sgMedia.Cells[2,i]));
+              jmedium.Add('g',StrToFloat(sgMedia.Cells[3,i]));
+              jmedium.Add('n',StrToFloat(sgMedia.Cells[4,i]));
               jmedia.Add(jmedium);
       end;
       if(jmedia.Count>0) then
@@ -2340,13 +2375,13 @@ begin
       jdets:=TJSONArray.Create;
       for i := sgDet.FixedRows to sgDet.RowCount - 1 do
       begin
-              if (Length(sgDet.Cells[0,i])=0) then break;
+              if (Length(sgDet.Cells[1,i])=0) then break;
               jdet:=TJSONObject.Create;
               jdet.Arrays['Pos']:=TJSONArray.Create;
-              jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[0,i]));
               jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[1,i]));
               jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[2,i]));
-              jdet.Add('R',StrToFloat(sgDet.Cells[3,i]));
+              jdet.Arrays['Pos'].Add(StrToFloat(sgDet.Cells[3,i]));
+              jdet.Add('R',StrToFloat(sgDet.Cells[4,i]));
               jdets.Add(jdet);
       end;
       if(json.Find('Optode') = nil) then
@@ -2616,18 +2651,23 @@ end;
 procedure TfmMCX.StrToGrid(str: string; grid:TStringGrid);
 var
     i: integer;
-    json: TStrings;
+    json,rowtext: TStrings;
 begin
   json := TStringList.Create;
   json.StrictDelimiter:=true;
   json.Delimiter:='|';
   json.DelimitedText:=str;
 
+  rowtext := TStringList.Create;
+
   try
       try
           if(grid.RowCount < json.Count+1) then
               grid.RowCount:= json.Count+1;
           for i := 0 to json.Count-1 do begin
+              rowtext.CommaText:=json.Strings[i];
+              if((grid.Name='sgMedia') or (grid.Name='sgDet') )and (rowtext.Count=4) then
+                  json.Strings[i]:=','+json.Strings[i];
               grid.Rows[i+grid.FixedRows].CommaText:=json.Strings[i];
           end;
       except
@@ -2636,6 +2676,7 @@ begin
       end;
     finally
         json.Free;
+        rowtext.Free;
     end;
 end;
 procedure TfmMCX.ShowJSONData(AParent : TTreeNode; Data : TJSONData; toplevel: boolean=false);
@@ -2908,8 +2949,13 @@ begin
           if(tabInputData.Controls[i] is TStringGrid) then begin
              sg:=tabInputData.Controls[i] as TStringGrid;
              idx:=MapList.IndexOf(sg.Hint);
-             if(idx>=0) then
+             if(idx>=0) then begin
+                 if((sg.Name='sgMedia') or (sg.Name='sgDet') ) then begin
+                     sg.RowCount:=1;
+                     sg.RowCount:=20;
+                 end;
                  StrToGrid(node.SubItems.Strings[idx],sg);
+             end;
              continue;
           end;
         finally
