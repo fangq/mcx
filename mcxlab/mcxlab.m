@@ -9,12 +9,18 @@ function varargout=mcxlab(varargin)
 %
 % Format:
 %    [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg);
+%       or
+%    [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg, option);
 %
 % Input:
 %    cfg: a struct, or struct array. Each element of cfg defines 
 %         the parameters associated with a simulation. 
+%    option: (optional), options is a string, specifying additional options
+%         option='preview': this plots the domain configuration using mcxpreview(cfg)
+%         option='mcxcl':   this calls mcxcl.mex* instead of mcx.mex* on non-NVIDIA hardware
 %
-%    It may contain the following fields:
+%
+%    cfg may contain the following fields:
 %
 %== Required ==
 %     *cfg.nphoton:    the total number of photons to be simulated (integer)
@@ -205,14 +211,28 @@ function varargout=mcxlab(varargin)
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
 
+try
+    defaultocl=evalin('base','USE_MCXCL');
+catch
+    defaultocl=0;
+end
+
+useopencl=defaultocl;
+
 if(nargin==2 && ischar(varargin{2}))
     if(strcmp(varargin{2},'preview'))
         [varargout{1:nargout}]=mcxpreview(varargin{1});
-	return;
+	    return;
+    elseif(strcmp(varargin{2},'opencl'))
+        useopencl=1;
     end
 end
 
-[varargout{1:nargout}]=mcx(varargin{:});
+if(useopencl==0)
+    [varargout{1:nargout}]=mcx(varargin{:});
+else
+    [varargout{1:nargout}]=mcxcl(varargin{:});
+end
 
 if(nargin==0)
     return;
