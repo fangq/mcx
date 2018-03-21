@@ -1465,7 +1465,9 @@ begin
            fname:=fname+'.exe';
    {$ENDIF}
    Result :=
-    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+
+    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+'MCXSuite'+
+        DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
+        'bin'+DirectorySeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
@@ -2582,15 +2584,6 @@ begin
                cmd:=cmd+' --compileropt "-D USE_ATOMIC"';
         end;
         cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
-        if(grProgram.ItemIndex=2) then begin
-          fname:=SearchForExe('mcx_core.cl');
-          if(Length(fname)>0) then
-              cmd:=cmd+ Format(' --kernel "%s"', [fname])
-          else begin
-              MessageDlg('Input Error', 'can not find "mcx_core.cl" please copy this file from mcxcl''s bin folder to the same folder storing mcxsudio', mtError, [mbOK],0);
-              exit;
-          end;
-        end;
     end;
 
     if(ckSkipVoid.Checked) then
