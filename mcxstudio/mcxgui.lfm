@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 319
+  Left = 316
   Height = 788
-  Top = 181
+  Top = 183
   Width = 1280
   ActiveControl = lvJobs
   Align = alTop
@@ -556,6 +556,7 @@ object fmMCX: TfmMCX
       ClientHeight = 85
       ClientWidth = 644
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
       TabOrder = 1
       object edConfigFile: TFileNameEdit
@@ -1255,7 +1256,7 @@ object fmMCX: TfmMCX
         Top = 0
         Width = 644
         Align = alTop
-        Caption = '﹀'
+        Caption = '▾'
         Color = clMenuText
         Font.Color = clBlue
         Font.Style = [fsBold]
@@ -1280,6 +1281,7 @@ object fmMCX: TfmMCX
       ClientHeight = 96
       ClientWidth = 644
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
       TabOrder = 3
       object ckReflect: TCheckBox
@@ -1464,6 +1466,7 @@ object fmMCX: TfmMCX
       ClientHeight = 87
       ClientWidth = 644
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
       TabOrder = 2
       object Label1: TLabel
@@ -1738,6 +1741,7 @@ object fmMCX: TfmMCX
       )
       OnSelectionChanged = grProgramSelectionChanged
       ParentFont = False
+      ParentColor = False
       TabOrder = 0
     end
     object plOutputDock: TPanel
@@ -2076,6 +2080,7 @@ object fmMCX: TfmMCX
       ClientHeight = 28
       ClientWidth = 644
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
       TabOrder = 6
       object ckDoRemote: TCheckBox
@@ -2087,7 +2092,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoRemote'
         Top = 2
-        Width = 216
+        Width = 187
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_runremote'
         Anchors = [akTop, akLeft, akRight]
@@ -2099,16 +2104,17 @@ object fmMCX: TfmMCX
         TabOrder = 0
       end
       object edRemote: TComboBox
+        AnchorSideLeft.Control = ckDoRemote
+        AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Side = asrBottom
-        Left = 176
+        Left = 197
         Height = 28
         Hint = 'RemoteCmd'
         Top = 0
         Width = 312
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_remotecommand'
-        Anchors = [akTop]
         Enabled = False
         ItemHeight = 0
         ItemIndex = 0
@@ -2129,7 +2135,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edRemote
         AnchorSideTop.Side = asrCenter
-        Left = 488
+        Left = 509
         Height = 24
         Hint = 'DoSharedFS'
         Top = 2
@@ -2165,11 +2171,11 @@ object fmMCX: TfmMCX
       Width = 350
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_volumesigner'
-      ActivePage = tabInputData
+      ActivePage = tabVolumeDesigner
       Align = alClient
       Enabled = False
       Images = JSONIcons
-      TabIndex = 0
+      TabIndex = 1
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
@@ -2525,7 +2531,7 @@ object fmMCX: TfmMCX
           Height = 510
           Hint = 'ShapeCfg'
           Top = 70
-          Width = 216
+          Width = 240
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_shapeeditor'
           Align = alClient
@@ -2602,10 +2608,10 @@ object fmMCX: TfmMCX
           end
         end
         object ToolBar3: TToolBar
-          Left = 216
+          Left = 240
           Height = 510
           Top = 70
-          Width = 130
+          Width = 106
           Align = alRight
           Anchors = [akTop, akLeft, akRight, akBottom]
           AutoSize = True

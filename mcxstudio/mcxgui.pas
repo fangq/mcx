@@ -823,13 +823,15 @@ begin
      GotoGBox:=gr;
      if(tmAnimation.Tag=1) then begin // collapse
          //gr.Align:=alTop;
-         (Sender as TButton).Caption:=#65088;
-         tmAnimation.Tag:=1;
-         tmAnimation.Enabled:=true;
-     end else begin
-         (Sender as TButton).Caption:=#65087;
+         (Sender as TButton).Caption:=#9662;
+         GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
          tmAnimation.Tag:=0;
-         tmAnimation.Enabled:=true;
+         //tmAnimation.Enabled:=true;
+     end else begin
+         (Sender as TButton).Caption:=#9653;
+         GotoGBox.Height:=edMoreParam.Top+edMoreParam.Height+self.Canvas.TextHeight('Ag')+5;
+         tmAnimation.Tag:=1;
+         //tmAnimation.Enabled:=true;
      end;
 end;
 
@@ -951,7 +953,7 @@ function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
 var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
-   rootpath:=CreateCmdOnly+'sessions/'+Trim(edSession.Text);
+   rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
    localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
@@ -1250,6 +1252,7 @@ procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
 begin
     if(ResetMCX(0)) then begin
         pMCX.CommandLine:=CreateCmd;
+        pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
         if(ckbDebug.Checked[2]) then begin
             sbInfo.Panels[1].Text:='0%';
@@ -1467,7 +1470,7 @@ begin
    Result :=
     SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+'MCXSuite'+
         DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
-        'bin'+DirectorySeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
+        'bin'+PathSeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
@@ -2474,7 +2477,7 @@ var
     path: string;
 begin
     path:=ExtractFileDir(Application.ExeName)
-       +DirectorySeparator+'..'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+       +DirectorySeparator+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
     path:=ExpandFileName(path);
     Result:=path;
     AddLog(Result);
@@ -2534,7 +2537,7 @@ begin
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
         if(rootpath='') then
-            rootpath:=CreateCmdOnly+'sessions/'+Trim(edSession.Text);
+            rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
     end;
     cmd:=cmd+' --root "'+rootpath+'" --outputformat '+edOutputFormat.Text;
 
