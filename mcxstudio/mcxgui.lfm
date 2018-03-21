@@ -2587,7 +2587,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 68
+            Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider

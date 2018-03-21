@@ -1656,7 +1656,7 @@ begin
       else
           if(OpenVolume.Execute) then
              grid.Cells[grid.Col,grid.Row]:=OpenVolume.FileName;
-   end else if(grid.Col=2) and (grid.Row>=10) and (grid.Row<=12) and (grProgram.ItemIndex<2) then begin
+   end else if(grid.Col=2) and (grid.Row>=10) and (grid.Row<=12) then begin
       fmSrc:=TfmSource.Create(Application);
       if(Length(grid.Cells[2,10])>0) then begin
              fmSrc.edSource.Text:=grid.Cells[2,10];
@@ -2194,7 +2194,7 @@ begin
               end;
               Reg.CloseKey;
               if(needfix) then begin
-                if(MessageDlg('Question', 'If you run MCX on the GPU that is connected to your monitor, you may encouter a "Kernel launch timed out" error. Do you want to modify the "TdrDelay" registry key to allow MCX to run for more than 5 seconds?', mtWarning,
+                if(MessageDlg('Question', 'If you run MCX on the GPU that is connected to your monitor, you may encouter an "Unspecified launch failure " error. Do you want to modify the "TdrDelay" registry key to allow MCX to run for more than 5 seconds?', mtWarning,
                         [mbYes, mbNo, mbCancel],0) = mrYes) then begin
                       if Reg.OpenKey(Key, true) then  begin
                           Reg.WriteInteger('TdrDelay', 999999);
@@ -2295,8 +2295,10 @@ begin
     if(exepath='') then
        raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
-    if not (SaveJSONConfig('')='') then
+    if not (SaveJSONConfig('')='') then  begin
        UpdateMCXActions(acMCX,'Work','');
+       AddLog('"-- Input is valid, please click [Run] to execute --"');
+    end;
   except
     On E : Exception do
       MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
