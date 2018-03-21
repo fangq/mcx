@@ -2566,25 +2566,26 @@ begin
         end;
     end;
     cmd:=cmd+Format(' --photon %.0f',[nphoton]);
-    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --unitinmm %f --saveseed %d',
+    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --unitinmm %f',
       [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
-      Integer(ckSaveDetector.Checked),unitinmm,Integer(ckSaveSeed.Checked)]);
+      Integer(ckSaveDetector.Checked),unitinmm]);
     if(Length(edSeed.Text)>0) then
       cmd:=cmd+Format(' --seed "%s"',[edSeed.Text]);
     if(edReplayDet.Enabled) then
       cmd:=cmd+Format(' --replaydet %d',[edReplayDet.Value]);
 
-    if(grProgram.ItemIndex=1) then begin
-      if(grAtomic.ItemIndex=1) then begin
-         cmd:=cmd+' --atomic 0';
-      end;
-      cmd:=cmd+Format(' --specular %d --basisorder %d --momentum %d',[Integer(ckSpecular.Checked),edRespin.Value,Integer(ckMomentum.Checked)]);
+    if(grProgram.ItemIndex<2) then begin
+      cmd:=cmd+Format(' --saveseed %d',[Integer(ckSaveSeed.Checked)]);
+    end;
+
+    if(grProgram.ItemIndex>=1) then begin
+      cmd:=cmd+Format(' --atomic %d',[grAtomic.ItemIndex]);
+      if (grProgram.ItemIndex=1) then
+         cmd:=cmd+Format(' --specular %d --basisorder %d --momentum %d',[Integer(ckSpecular.Checked),edRespin.Value,Integer(ckMomentum.Checked)]);
     end else begin
         if(grAtomic.ItemIndex=0) then begin
            if(grProgram.ItemIndex=0) then
-               cmd:=cmd+' --skipradius -2'
-           else
-               cmd:=cmd+' --compileropt "-D USE_ATOMIC"';
+               cmd:=cmd+' --skipradius -2';
         end;
         cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
     end;

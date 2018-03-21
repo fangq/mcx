@@ -11,7 +11,7 @@ object fmAbout: TfmAbout
   ClientWidth = 480
   Color = 4539717
   Position = poMainFormCenter
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.8.2.0'
   object Image1: TImage
     Left = 16
     Height = 152
@@ -1084,7 +1084,6 @@ object fmAbout: TfmAbout
   object Image3: TImage
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
-    Cursor = crHandPoint
     Left = 24
     Height = 33
     Hint = 'About MCX'

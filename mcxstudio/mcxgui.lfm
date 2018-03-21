@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 316
+  Left = 318
   Height = 788
-  Top = 183
+  Top = 177
   Width = 1280
   ActiveControl = lvJobs
   Align = alTop
@@ -2171,11 +2171,11 @@ object fmMCX: TfmMCX
       Width = 350
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_volumesigner'
-      ActivePage = tabVolumeDesigner
+      ActivePage = tabInputData
       Align = alClient
       Enabled = False
       Images = JSONIcons
-      TabIndex = 1
+      TabIndex = 0
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'

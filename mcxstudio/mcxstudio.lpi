@@ -147,9 +147,8 @@
         <ComponentName Value="fmMCX"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
-        <TopLine Value="1228"/>
-        <CursorPos X="105" Y="1247"/>
+        <TopLine Value="2557"/>
+        <CursorPos X="58" Y="2582"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 Y="907" ID="9"/>
@@ -163,10 +162,12 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
         <CursorPos X="17" Y="11"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="/usr/lib/lazarus/1.6/lcl/grids.pas"/>
@@ -567,118 +568,116 @@
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2542" Column="67" TopLine="2504"/>
+        <Caret Line="2540" Column="74" TopLine="2517"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="956" Column="65" TopLine="934"/>
+        <Caret Line="954" Column="74" TopLine="934"/>
       </Position3>
       <Position4>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2236" Column="12" TopLine="2200"/>
+        <Caret Line="959" Column="59" TopLine="934"/>
       </Position4>
       <Position5>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2241" Column="14" TopLine="2205"/>
+        <Caret Line="2236" Column="12" TopLine="2200"/>
       </Position5>
       <Position6>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2244" Column="35" TopLine="2208"/>
+        <Caret Line="2241" Column="14" TopLine="2205"/>
       </Position6>
       <Position7>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2245" Column="26" TopLine="2209"/>
+        <Caret Line="2244" Column="35" TopLine="2208"/>
       </Position7>
       <Position8>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2247" Column="32" TopLine="2211"/>
+        <Caret Line="2245" Column="26" TopLine="2209"/>
       </Position8>
       <Position9>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2260" Column="14" TopLine="2224"/>
+        <Caret Line="2247" Column="32" TopLine="2211"/>
       </Position9>
       <Position10>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2480" Column="79" TopLine="2444"/>
+        <Caret Line="2260" Column="14" TopLine="2224"/>
       </Position10>
       <Position11>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2540" Column="74" TopLine="2517"/>
+        <Caret Line="2482" Column="66" TopLine="2444"/>
       </Position11>
       <Position12>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="954" Column="74" TopLine="934"/>
+        <Caret Line="2540" Column="76" TopLine="2511"/>
       </Position12>
       <Position13>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="959" Column="59" TopLine="934"/>
+        <Caret Line="1243" Column="9" TopLine="1233"/>
       </Position13>
       <Position14>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2236" Column="12" TopLine="2200"/>
       </Position14>
       <Position15>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2241" Column="14" TopLine="2205"/>
+        <Caret Line="25" Column="68"/>
       </Position15>
       <Position16>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2244" Column="35" TopLine="2208"/>
+        <Caret Line="225" Column="11" TopLine="190"/>
       </Position16>
       <Position17>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2245" Column="26" TopLine="2209"/>
+        <Caret Line="310" Column="21" TopLine="275"/>
       </Position17>
       <Position18>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2247" Column="32" TopLine="2211"/>
+        <Caret Line="624" Column="17" TopLine="588"/>
       </Position18>
       <Position19>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2260" Column="14" TopLine="2224"/>
+        <Caret Line="990" Column="15" TopLine="954"/>
       </Position19>
       <Position20>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2482" Column="66" TopLine="2444"/>
+        <Caret Line="991" Column="15" TopLine="955"/>
       </Position20>
       <Position21>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2540" Column="76" TopLine="2511"/>
+        <Caret Line="1228" Column="17" TopLine="1192"/>
       </Position21>
       <Position22>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1243" Column="9" TopLine="1233"/>
+        <Caret Line="1242" Column="39" TopLine="1228"/>
       </Position22>
       <Position23>
         <Filename Value="mcxgui.pas"/>
       </Position23>
       <Position24>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="25" Column="68"/>
+        <Caret Line="2587" Column="49" TopLine="2552"/>
       </Position24>
       <Position25>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="225" Column="11" TopLine="190"/>
       </Position25>
       <Position26>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="310" Column="21" TopLine="275"/>
+        <Caret Line="78" Column="13" TopLine="43"/>
       </Position26>
       <Position27>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="624" Column="17" TopLine="588"/>
+        <Caret Line="164" Column="13" TopLine="129"/>
       </Position27>
       <Position28>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="990" Column="15" TopLine="954"/>
+        <Caret Line="743" Column="15" TopLine="708"/>
       </Position28>
       <Position29>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="991" Column="15" TopLine="955"/>
+        <Caret Line="2578" Column="18" TopLine="2543"/>
       </Position29>
       <Position30>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1228" Column="17" TopLine="1192"/>
+        <Caret Line="2579" Column="29" TopLine="2544"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
