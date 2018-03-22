@@ -31,6 +31,7 @@ if(nargin>=1)
         fname=varargin{1};
         data=mcxloadfile(fname, varargin{2:end});
     else
+        fname='';
         data=varargin{1};
     end
 else
@@ -97,6 +98,7 @@ if(isempty(guidata) || ~isfield(guidata,'frame'))
     return;
 end
 
+newframe=-1;
 switch(event.Key)
     case 'uparrow'
          newframe=min(guidata.frame+1,size(guidata.data,4));
@@ -104,7 +106,7 @@ switch(event.Key)
          newframe=max(guidata.frame-1,1);
 end
 
-if(newframe~=guidata.frame)
+if(newframe>0 && newframe~=guidata.frame)
     delete(guidata.handles);
     guidata.handles=islicer(guidata.data(:,:,:,newframe));
     xlabel(sprintf('x (frame=%d of %d)',newframe,size(guidata.data,4)));
@@ -113,4 +115,4 @@ if(newframe~=guidata.frame)
 end
 
 function showhelp(source,event)
-msgbox(get(source,'TooltipString'));
+msgbox(get(source,'TooltipString'),'Help info');
