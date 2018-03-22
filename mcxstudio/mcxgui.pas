@@ -1157,9 +1157,11 @@ begin
          cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
      end;
 
-     addpath:='if(exist(''../mcx/utils'', ''dir'')) addpath(''../mcx/utils''); end;';
-     addpath:=addpath + 'if(exist(''../mmc/matlab'', ''dir'')) addpath(''../mmc/matlab''); end;';
-     addpath:=addpath + 'if(exist(''../../mcxlab'', ''dir'')) addpath(''../../mcxlab''); end;';
+     addpath:='if(exist(''MCXSuite/mcx/utils'', ''dir'')) addpath(''MCXSuite/mcx/utils''); end;';
+     addpath:=addpath + 'if(exist(''MCXSuite/mmc/matlab'', ''dir'')) addpath(''MCXSuite/mmc/matlab''); end;';
+     addpath:=addpath + 'if(exist(''MATLAB/mcxlab'', ''dir'')) addpath(''MATLAB/mcxlab''); end;';
+     addpath:=addpath + 'if(exist(''MATLAB/mmclab'', ''dir'')) addpath(''MATLAB/mmclab''); end;';
+     addpath:=addpath + 'if(exist(''MATLAB/iso2mesh'', ''dir'')) addpath(''MATLAB/iso2mesh''); end;';
 
      isnewmatlab:=false;
      {$IFDEF WINDOWS}
@@ -1468,14 +1470,15 @@ begin
            fname:=fname+'.exe';
    {$ENDIF}
    Result :=
-    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+'MCXSuite'+
+    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+
+        ExtractFilePath(Application.ExeName)+'MCXSuite'+
         DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
         'bin'+PathSeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
    if(DirectoryExists(Result)) then
-     Result :=SearchFileInPath(fname, '',
+     Result :=SearchFileInPath(fname, '',ExtractFilePath(Application.ExeName)+PathSeparator+
          ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
          DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                       PathSeparator, [sffDontSearchInBasePath]);
