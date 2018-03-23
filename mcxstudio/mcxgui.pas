@@ -953,7 +953,12 @@ function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
 var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
+  {$IFDEF DARWIN}
+   rootpath:=GetUserDir+DirectorySeparator+'.mcxstudio'+DirectorySeparator+
+         'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+  {$ELSE}
    rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+  {$ENDIF}
    localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
@@ -2295,7 +2300,7 @@ begin
        raise Exception.Create('Thread block number (-T) can not be negative');
 
     exepath:=SearchForExe(CreateCmdOnly);
-    if(exepath='') then
+    if(exepath='') and (not ckDoRemote.Checked) then
        raise Exception.Create(Format('Can not find %s executable in the search path',[CreateCmdOnly]));
 
     if not (SaveJSONConfig('')='') then  begin
@@ -2481,8 +2486,14 @@ function TfmMCX.CreateWorkFolder(session: string; iscreate: boolean=true) : stri
 var
     path: string;
 begin
+{$IFDEF DARWIN}
+    path:=GetUserDir
+       +DirectorySeparator+'.mcxstudio'+DirectorySeparator+'Output'
+       +DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+{$ELSE}
     path:=ExtractFileDir(Application.ExeName)
        +DirectorySeparator+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+{$ENDIF}
     path:=ExpandFileName(path);
     Result:=path;
     AddLog(Result);
@@ -2541,8 +2552,14 @@ begin
     if(Length(sgConfig.Cells[2,14])>0) then
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
+      {$IFDEF DARWIN}
+        if(rootpath='') then
+            rootpath:=GetUserDir+DirectorySeparator+'.mcxstudio'+DirectorySeparator+
+                  'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+      {$ELSE}
         if(rootpath='') then
             rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+      {$ENDIF}
     end;
     cmd:=cmd+' --root "'+rootpath+'" --outputformat '+edOutputFormat.Text;
 
@@ -2617,6 +2634,9 @@ begin
          shellscript.Add('#!/bin/sh');
          shellscript.Add(cmd);
          shellscript.SaveToFile(ChangeFileExt(jsonfile,'.sh'));
+         shellscript.Clear;
+         shellscript.Add('@echo off');
+         shellscript.Add(cmd);
          shellscript.SaveToFile(ChangeFileExt(jsonfile,'.bat'));
          shellscript.Free;
     end;
