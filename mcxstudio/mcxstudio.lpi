@@ -16,7 +16,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="9"/>
-      <BuildNr Value="543"/>
+      <BuildNr Value="544"/>
       <StringTable Comments="A unified GUI for MCX, MMC and MCXCL" CompanyName="Northeastern University" FileDescription="MCX Studio" InternalName="MCX Studio" LegalCopyright="2009,2010 Qianqian Fang" LegalTrademarks="MCX Studio" ProductName="MCX Studio" ProductVersion="0.0.0.1"/>
     </VersionInfo>
     <BuildModes Count="3" Active="Debug">
@@ -148,8 +148,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="1114"/>
-        <CursorPos X="32" Y="1125"/>
+        <TopLine Value="1100"/>
+        <CursorPos X="41" Y="1139"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 Y="908" ID="9"/>
@@ -580,7 +580,7 @@
         <EditorIndex Value="1"/>
         <TopLine Value="159"/>
         <CursorPos X="35" Y="167"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit54>
     </Units>

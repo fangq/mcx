@@ -1130,7 +1130,7 @@ begin
                 Buffer := Buffer + BufStr;
                 AddMultiLineLog(BufStr,pBackend);
                 Application.ProcessMessages;
-                Sleep(100);
+                Sleep(1000);
               end;
             until not AProcess.Running;
           if AProcess.Output.NumBytesAvailable > 0 then
