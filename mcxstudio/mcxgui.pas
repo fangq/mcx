@@ -1229,7 +1229,12 @@ begin
               end else
                   exit;
           end else begin
-              pMCX.CommandLine:='"'+SearchForExe(CreateCmdOnly)+'" -L';
+              cmd:=SearchForExe(CreateCmdOnly);
+              if(Length(cmd)=0) then begin
+                  MessageDlg('Error', 'Program is not found', mtError, [mbOK],0);
+                  exit;
+              end;
+              pMCX.CommandLine:='"'+cmd+'" -L';
               AddLog(pMCX.CommandLine);
           end;
           sbInfo.Panels[0].Text := 'Status: querying GPU';

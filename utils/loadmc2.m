@@ -1,4 +1,4 @@
-function data=loadmc2(fname,dim,format)
+function [data, dref]=loadmc2(fname,dim,format)
 %
 %    data=loadmc2(fname,dim,format)
 %       or
