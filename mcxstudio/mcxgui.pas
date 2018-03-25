@@ -1086,6 +1086,9 @@ end;
 procedure TfmMCX.StartBackend;
 var
    exename, backendname: string;
+   AProcess : TProcess;
+   Buffer   : string;
+   BufStr   : string;
 begin
      if(pBackend.Running) then begin
        pBackend.Terminate(0);
@@ -1111,6 +1114,38 @@ begin
               pBackend.CommandLine:='"'+exename+'"  -nodesktop ';
 
           AddLog('"-- Executing backend --"');
+          {$IFDEF DARWIN}
+          AProcess := TProcess.Create(nil);
+          try
+            AProcess.CommandLine:=  pBackend.CommandLine;
+            AProcess.Options := [poUsePipes,poStderrToOutput];
+            AProcess.Execute;
+            Buffer := '';
+            AddLog(AProcess.CommandLine);
+            repeat
+              if AProcess.Output.NumBytesAvailable > 0 then
+              begin
+                SetLength(BufStr, AProcess.Output.NumBytesAvailable);
+                AProcess.Output.Read(BufStr[1], Length(BufStr));
+                Buffer := Buffer + BufStr;
+                AddMultiLineLog(BufStr,pBackend);
+                Application.ProcessMessages;
+                Sleep(100);
+              end;
+            until not AProcess.Running;
+          if AProcess.Output.NumBytesAvailable > 0 then
+          begin
+            SetLength(BufStr, AProcess.Output.NumBytesAvailable);
+            AProcess.Output.Read(BufStr[1], Length(BufStr));
+            Buffer := Buffer + BufStr;
+            AddMultiLineLog(BufStr,pBackend);
+          end;
+          finally
+            AProcess.Free;
+          end;
+          AddLog('"-- Terminated Backend --"');
+          exit;
+          {$ENDIF}
           pBackend.Execute;
           fmBackend.Enabled:=true;
      end;
@@ -1205,10 +1240,18 @@ begin
      {$ENDIF}
      if not (pBackend.Running) then begin
          StartBackend;
-         pBackend.Input.Write(addpath[1],Length(addpath));
+         if(pBackend.Running) then begin
+           pBackend.Input.Write(addpath[1],Length(addpath))
+         end else begin
+           AddLog('-- Please type in MATLAB : -- ');
+           AddLog(addpath);
+         end;
      end;
      if(pBackend.Running) then begin
-          pBackend.Input.Write(cmd[1],Length(cmd));
+        pBackend.Input.Write(cmd[1],Length(cmd))
+     end else begin
+        AddLog('-- Please type in MATLAB : -- ');
+        AddLog(cmd);
      end;
 end;
 
@@ -1558,9 +1601,11 @@ begin
         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
+
    if(DirectoryExists(Result)) then
-     Result :=SearchFileInPath(fname, '',ExtractFilePath(Application.ExeName)+PathSeparator+
-         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
+     Result :=SearchFileInPath(fname, '',
+         ExtractFilePath(Application.ExeName)+'MCXSuite'+
+        DirectorySeparator+MCProgram[grProgram.ItemIndex]+
          DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                       PathSeparator, [sffDontSearchInBasePath]);
 end;
