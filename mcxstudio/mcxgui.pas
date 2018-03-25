@@ -349,7 +349,7 @@ type
     MapList, ConfigData, JSONstr, PassList : TStringList;
     JSONdata : TJSONData;
     RegEngine:TRegExpr;
-    function CreateCmd:AnsiString;
+    function CreateCmd(proc: TProcess=nil):AnsiString;
     function CreateCmdOnly:AnsiString;
     procedure VerifyInput;
     procedure AddLog(str:AnsiString);
@@ -705,7 +705,7 @@ begin
       //edSession.Text:='';
       edConfigFile.FileName:='';
       edThread.Text:='16384';
-      edPhoton.Text:='1e7';
+      edPhoton.Text:='1e6';
       edBlockSize.Text:='64';
       edBubble.Text:='-2';
       edGate.Value:=100;
@@ -1344,7 +1344,8 @@ var
     BufStr   : string;
 begin
     if(ResetMCX(0)) then begin
-        pMCX.CommandLine:=CreateCmd;
+        //pMCX.CommandLine:=CreateCmd;
+        CreateCmd(pMCX);
         pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
         if(ckbDebug.Checked[2]) then begin
@@ -2651,33 +2652,46 @@ begin
      end;
 end;
 
-function TfmMCX.CreateCmd:AnsiString;
+function TfmMCX.CreateCmd(proc: TProcess=nil):AnsiString;
 var
     nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
     cmd, jsonfile, gpuid, debugflag, rootpath, inputjson, fname: string;
-    shellscript: TStringList;
+    shellscript, param: TStringList;
 begin
     rootpath:='';
     cmd:=CreateCmdOnly;
-    if(Length(edSession.Text)>0) then
-       cmd:=cmd+' --session "'+Trim(edSession.Text)+'" ';
+    param:=TStringList.Create;
+    param.StrictDelimiter:=true;
+    param.Delimiter:=' ';
+    if(proc<> nil) then begin
+        proc.CommandLine:='';
+        proc.Executable:=cmd;
+        proc.Parameters.Clear;
+    end;
+    if(Length(edSession.Text)>0) then begin
+        param.Add('--session');
+        param.Add(Trim(edSession.Text));
+    end;
     if rbUseFile.Checked and (Length(edConfigFile.FileName)>0) then
     begin
-       cmd:=cmd+' --input "'+Trim(edConfigFile.FileName)+'"';
-       rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
+        param.Add('--input');
+        param.Add(Trim(edConfigFile.FileName));
+        rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
     end else begin
         jsonfile:=CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json';
-        inputjson:=SaveJSONConfig(jsonfile);
+        inputjson:=StringReplace(SaveJSONConfig(jsonfile),'"','"',[rfReplaceAll]);
         {$IFDEF WINDOWS}
         inputjson:=StringReplace(inputjson,'"', '\"',[rfReplaceAll]);
         {$ENDIF}
         if(inputjson='') then
             exit;
-        if(ckDoRemote.Checked) and (not (ckSharedFS.Checked)) then
-            cmd:=cmd+' --input '''+Trim(inputjson)+''''
-        else begin
-            cmd:=cmd+' --input "'+Trim(jsonfile)+'"';
+        if(ckDoRemote.Checked) and (not (ckSharedFS.Checked)) then begin
+            param.Add('--input');
+            param.Add(''''+Trim(inputjson)+'''');
+        end else begin
+            param.Add('--input');
+            param.Add(Trim(jsonfile));
             rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(jsonfile));
         end;
     end;
@@ -2687,13 +2701,16 @@ begin
       {$IFDEF DARWIN}
         if(rootpath='') then
             rootpath:=GetUserDir+DirectorySeparator+'.mcxstudio'+DirectorySeparator+
-                  'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+                  'Output'+DirectorySeparator+CreateparamOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
       {$ELSE}
         if(rootpath='') then
             rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
       {$ENDIF}
     end;
-    cmd:=cmd+' --root "'+rootpath+'" --outputformat '+edOutputFormat.Text;
+    param.Add('--root');
+    param.Add(rootpath);
+    param.Add('--outputformat');
+    param.Add(edOutputFormat.Text);
 
     try
         nthread:=StrToInt(edThread.Text);
@@ -2712,67 +2729,126 @@ begin
     end;
 
     if(grProgram.ItemIndex <>1) then begin
-        cmd:=cmd+' --gpu '+gpuid;
+        param.Add('--gpu');
+        param.Add(gpuid);
         if(ckAutopilot.Checked) then begin
-          cmd:=cmd+ ' --autopilot 1';
+          param.Add('--autopilot');
+          param.Add('1');
         end else begin
-          cmd:=cmd+Format(' --thread %d --blocksize %d', [nthread,nblock]);
+          param.Add('--thread');
+          param.Add(IntToStr(nthread));
+          param.Add('--blocksize');
+          param.Add(IntToStr(nblock));
         end;
     end;
-    cmd:=cmd+Format(' --photon %.0f',[nphoton]);
-    cmd:=cmd+Format(' --normalize %d --save2pt %d --reflect %d --savedet %d --unitinmm %f',
-      [Integer(ckNormalize.Checked),Integer(ckSaveData.Checked),Integer(ckReflect.Checked),
-      Integer(ckSaveDetector.Checked),unitinmm]);
-    if(Length(edSeed.Text)>0) then
-      cmd:=cmd+Format(' --seed "%s"',[edSeed.Text]);
-    if(edReplayDet.Enabled) then
-      cmd:=cmd+Format(' --replaydet %d',[edReplayDet.Value]);
-
+    param.Add('--photon');
+    param.Add(Format('%.0f',[nphoton]));
+    param.Add('--normalize');
+    param.Add(Format('%d',[Integer(ckNormalize.Checked)]));
+    param.Add('--save2pt');
+    param.Add(Format('%d',[Integer(ckSaveData.Checked)]));
+    param.Add('--reflect');
+    param.Add(Format('%d',[Integer(ckReflect.Checked)]));
+    param.Add('--savedet');
+    param.Add(Format('%d',[Integer(ckSaveDetector.Checked)]));
+    param.Add('--unitinmm');
+    param.Add(Format('%f',[unitinmm]));
+    if(Length(edSeed.Text)>0) then begin
+      param.Add('--seed');
+      param.Add(Format('%s',[edSeed.Text]));
+    end;
+    if(edReplayDet.Enabled) then begin
+      param.Add('--replaydet');
+      param.Add(Format('%d',[edReplayDet.Value]));
+    end;
     if(grProgram.ItemIndex<2) then begin
-      cmd:=cmd+Format(' --saveseed %d',[Integer(ckSaveSeed.Checked)]);
+      param.Add('--saveseed');
+      param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
     end;
 
     if(grProgram.ItemIndex>=1) then begin
-      cmd:=cmd+Format(' --atomic %d',[grAtomic.ItemIndex]);
-      if (grProgram.ItemIndex=1) then
-         cmd:=cmd+Format(' --specular %d --basisorder %d --momentum %d',[Integer(ckSpecular.Checked),edRespin.Value,Integer(ckMomentum.Checked)]);
+      param.Add('--atomic');
+      param.Add(Format('%d',[grAtomic.ItemIndex]));
+      if (grProgram.ItemIndex=1) then begin
+         param.Add('--specular');
+         param.Add(Format('%d',[Integer(ckSpecular.Checked)]));
+         param.Add('--basisorder');
+         param.Add(Format('%d',[edRespin.Value]));
+         param.Add('--momentum');
+         param.Add(Format('%d',[Integer(ckMomentum.Checked)]));
+      end;
     end else begin
         if(grAtomic.ItemIndex=0) then begin
-           if(grProgram.ItemIndex=0) then
-               cmd:=cmd+' --skipradius -2';
+           if(grProgram.ItemIndex=0) then begin
+               param.Add('--skipradius');
+               param.Add('-2');
+           end;
         end;
-        cmd:=cmd+Format(' --array %d --dumpmask %d --repeat %d  --maxdetphoton %d',[grArray.ItemIndex,Integer(ckSaveMask.Checked), edRespin.Value, hitmax]);
+        param.Add('--array');
+        param.Add(Format('%d',[grArray.ItemIndex]));
+        param.Add('--dumpmask');
+        param.Add(Format('%d',[Integer(ckSaveMask.Checked)]));
+        param.Add('--repeat');
+        param.Add(Format('%d',[edRespin.Value]));
+        param.Add('--maxdetphoton');
+        param.Add(Format('%d',[hitmax]));
     end;
 
-    if(ckSkipVoid.Checked) then
-      cmd:=cmd+' --skipvoid 1';
+    if(ckSkipVoid.Checked) then begin
+        param.Add('--skipvoid');
+        param.Add('1');
+    end;
     debugflag:='';
     for i:=0 to ckbDebug.Items.Count-1 do begin
          if(ckbDebug.Checked[i]) then
              debugflag:=debugflag+DebugFlags[i+1];
     end;
-    if(Length(debugflag)>0) then
-        cmd:=cmd+' --debug '+debugflag;
-    if(Length(edMoreParam.Text)>0) then
-        cmd:=cmd+' '+edMoreParam.Text;
+    if(Length(debugflag)>0) then begin
+        param.Add('--debug');
+        param.Add(debugflag);
+    end;
+    if(Length(edMoreParam.Text)>0) then begin
+        shellscript:=TStringList.Create;
+        shellscript.StrictDelimiter:=true;
+        shellscript.Delimiter:=' ';
+        shellscript.DelimitedText:=edMoreParam.Text;
+        param.AddStrings(shellscript);
+        shellscript.Free;
+    end;
 
     AddLog('"-- Command: --"');
-    AddLog(cmd);
-    if(ckDoRemote.Checked) then
-        cmd:=ExpandPassword(edRemote.Text)+' '+ cmd;
+    if(ckDoRemote.Checked) then begin
+        shellscript:=TStringList.Create;
+        shellscript.StrictDelimiter:=true;
+        shellscript.Delimiter:=' ';
+        shellscript.DelimitedText:=ExpandPassword(Trim(edRemote.Text));
+        shellscript.Add(cmd);
+        if(shellscript.Count>1) then begin
+          for i:=1 to shellscript.Count-1 do begin
+            param.Insert(i-1,shellscript.Strings[i]);
+          end;
+          cmd:=shellscript.Strings[0];
+        end;
+    end;
 
     if(Length(jsonfile)>0) then begin
          shellscript:=TStringList.Create;
          shellscript.Add('#!/bin/sh');
-         shellscript.Add(cmd);
+         shellscript.Add(cmd+' '+param.DelimitedText);
          shellscript.SaveToFile(ChangeFileExt(jsonfile,'.sh'));
          shellscript.Clear;
          shellscript.Add('@echo off');
-         shellscript.Add(cmd);
+         shellscript.Add(cmd+' '+param.DelimitedText);
          shellscript.SaveToFile(ChangeFileExt(jsonfile,'.bat'));
          shellscript.Free;
     end;
-    Result:=cmd;
+    if(proc<> nil) then begin
+        proc.Executable:=cmd;
+        proc.Parameters.CommaText:=param.CommaText;
+    end;
+    AddLog(cmd+' '+param.DelimitedText);
+    Result:=cmd+' '+param.DelimitedText;
+    param.Free;
 end;
 
 function TfmMCX.GridToStr(grid:TStringGrid):AnsiString;
