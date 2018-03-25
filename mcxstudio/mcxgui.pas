@@ -358,6 +358,7 @@ type
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
     procedure UpdateMCXActions(actlst: TActionList; ontag,offtag: string);
+    procedure UpdateGPUList(Buffer:string);
     function  GetMCXOutput(Sender: TObject): string;
     procedure SaveTasksToIni(fname: string);
     procedure LoadTasksFromIni(fname: string);
@@ -1214,6 +1215,9 @@ end;
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
 var
     cmd, url: string;
+    AProcess : TProcess;
+    Buffer   : string;
+    BufStr   : string;
 begin
     if(ResetMCX(0)) then begin
           AddLog('"-- Run Command --"');
@@ -1237,6 +1241,36 @@ begin
               pMCX.CommandLine:='"'+cmd+'" -L';
               AddLog(pMCX.CommandLine);
           end;
+          {$IFDEF DARWIN}
+          AProcess := TProcess.Create(nil);
+          try
+            AProcess.CommandLine:=  pMCX.CommandLine;
+            AProcess.Options := [poUsePipes,poStderrToOutput];
+            AProcess.Execute;
+            Buffer := '';
+            repeat
+              if AProcess.Output.NumBytesAvailable > 0 then
+              begin
+                SetLength(BufStr, AProcess.Output.NumBytesAvailable);
+                AProcess.Output.Read(BufStr[1], Length(BufStr));
+                Buffer := Buffer + BufStr;
+              end;
+            until not AProcess.Running;
+          if AProcess.Output.NumBytesAvailable > 0 then
+          begin
+            SetLength(BufStr, AProcess.Output.NumBytesAvailable);
+            AProcess.Output.Read(BufStr[1], Length(BufStr));
+            Buffer := Buffer + BufStr;
+            Application.ProcessMessages;
+          end;
+          finally
+            AProcess.Free;
+          end;
+          AddLog('"-- Printing GPU Information --"');
+          AddMultiLineLog(Buffer,pMCX);
+          UpdateGPUList(Buffer);
+          exit;
+          {$ENDIF}
           sbInfo.Panels[0].Text := 'Status: querying GPU';
           pMCX.Tag:=-1;
           AddLog('"-- Printing GPU Information --"');
@@ -1261,6 +1295,10 @@ begin
 end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
+var
+    AProcess : TProcess;
+    Buffer   : string;
+    BufStr   : string;
 begin
     if(ResetMCX(0)) then begin
         pMCX.CommandLine:=CreateCmd;
@@ -1270,7 +1308,6 @@ begin
             sbInfo.Panels[1].Text:='0%';
             sbInfo.Invalidate;
         end;
-        pMCX.Execute;
         mcxdoStop.Enabled:=true;
         mcxdoRun.Enabled:=false;
         sbInfo.Panels[0].Text := 'Status: running simulation';
@@ -1278,7 +1315,41 @@ begin
         pMCX.Tag:=-10;
         sbInfo.Color := clRed;
         UpdateMCXActions(acMCX,'Run','');
-        mcxdoRun.Tag:=GetTickCount64;
+        //mcxdoRun.Tag:=GetTickCount64;
+        {$IFDEF DARWIN}
+        AProcess := TProcess.Create(nil);
+        try
+          AProcess.CommandLine:=  pMCX.CommandLine;
+          AProcess.Options := [poUsePipes,poStderrToOutput];
+          AProcess.Execute;
+          Buffer := '';
+          repeat
+            if AProcess.Output.NumBytesAvailable > 0 then
+            begin
+              SetLength(BufStr, AProcess.Output.NumBytesAvailable);
+              AProcess.Output.Read(BufStr[1], Length(BufStr));
+              Buffer := Buffer + BufStr;
+              AddMultiLineLog(BufStr,pMCX);
+              Application.ProcessMessages;
+            end;
+          until not AProcess.Running;
+        if AProcess.Output.NumBytesAvailable > 0 then
+        begin
+          SetLength(BufStr, AProcess.Output.NumBytesAvailable);
+          AProcess.Output.Read(BufStr[1], Length(BufStr));
+          Buffer := Buffer + BufStr;
+          AddMultiLineLog(BufStr,pMCX);
+          Application.ProcessMessages;
+        end;
+        finally
+          AProcess.Free;
+        end;
+        AddLog('"-- Command Completed --"');
+        pMCXTerminate(nil);
+        exit;
+        {$ELSE}
+        pMCX.Execute;
+        {$ENDIF}
         Application.ProcessMessages;
     end;
 end;
@@ -1584,8 +1655,9 @@ end;
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      if(not mcxdoStop.Enabled) then exit;
-     AddMultiLineLog(GetMCXOutput(Sender), Sender);
-     if(pMCX.Tag=-10) then begin
+     if(Sender <> nil) then
+         AddMultiLineLog(GetMCXOutput(Sender), Sender);
+     if(Sender <> nil) and (pMCX.Tag=-10) then begin
          sbInfo.Panels[2].Text:=Format('Last simulation used %.3f seconds', [(GetTickCount64-mcxdoRun.Tag)/1000.]);
          //if ckDoRemote.Checked and (not ckSharedFS.Checked) then
          //    mcxdoDownloadMC2Execute(Sender);
@@ -2127,21 +2199,80 @@ begin
     end;
 end;
 
-function TfmMCX.GetMCXOutput(Sender: TObject): string;
+procedure TfmMCX.UpdateGPUList(Buffer:string);
 var
-    Buffer, revbuf, percent: string;
-    BytesAvailable: DWord;
-    BytesRead:LongInt;
     list: TStringList;
     i, idx, len, total, namepos,gpucount: integer;
     gpuname, ss: string;
-    proc: TAsyncProcess;
+
     {$IFDEF WINDOWS}
     Reg: TRegistry;
     RegKey: DWORD;
     Key: string;
     needfix: boolean;
     {$ENDIF}
+begin
+  list:=TStringList.Create;
+  list.StrictDelimiter := true;
+  list.Delimiter:=AnsiChar(#10);
+  list.DelimitedText:=Buffer;
+  gpucount:=0;
+  for i:=0 to list.Count-1 do begin
+    ss:= list.Strings[i];
+    if(sscanf(ss+' ','Device %d of %d:%s', [@idx, @total, @gpuname])=3) then
+    begin
+           if(idx=1) then
+               edGPUID.Items.Clear;
+           namepos := Pos(gpuname, ss);
+           edGPUID.Items.Add('#'+IntToStr(idx)+':'+Trim(copy(ss, namepos, Length(ss)-namepos+1)));
+           gpucount:=gpucount+1;
+    end;
+  end;
+  if(edGPUID.Items.Count>0) then
+      edGPUID.Checked[0]:=true;
+  {$IFDEF WINDOWS}
+  if (not (ckDoRemote.Checked)) and (gpucount>=1) then begin
+      Reg := TRegistry.Create;
+      needfix:=true;
+      try
+        Reg.RootKey := HKEY_LOCAL_MACHINE;
+        Key := '\SYSTEM\CurrentControlSet\Control\GraphicsDrivers';
+        if Reg.OpenKeyReadOnly(Key) then
+        begin
+          if Reg.ValueExists('TdrDelay') then
+          begin
+            RegKey := Reg.ReadInteger('TdrDelay');
+            needfix:=false;
+          end;
+        end;
+        Reg.CloseKey;
+        if(needfix) then begin
+          if(MessageDlg('Question', 'If you run MCX on the GPU that is connected to your monitor, you may encouter an "Unspecified launch failure " error. Do you want to modify the "TdrDelay" registry key to allow MCX to run for more than 5 seconds?', mtWarning,
+                  [mbYes, mbNo, mbCancel],0) = mrYes) then begin
+                if Reg.OpenKey(Key, true) then  begin
+                    Reg.WriteInteger('TdrDelay', 999999);
+                    MessageDlg('Confirmation', 'Registry modification was successfully applied.', mtInformation, [mbOK],0);
+                end else
+                    MessageDlg('Permission Error', 'You don''t have permission to modify registry. Please contact your administrator to apply the fix.', mtError, [mbOK],0);
+            end;
+        end;
+      finally
+        Reg.Free
+      end;
+  end;
+  {$ENDIF}
+  list.Free;
+end;
+
+function TfmMCX.GetMCXOutput(Sender: TObject): string;
+var
+    Buffer, revbuf, percent: string;
+    BytesAvailable: DWord;
+    BytesRead:LongInt;
+
+    i, idx, len, total, namepos,gpucount: integer;
+    gpuname, ss: string;
+    proc: TAsyncProcess;
 begin
    if (Sender is TAsyncProcess) then
     proc:= Sender as TAsyncProcess;
@@ -2172,56 +2303,7 @@ begin
       end;
     end;
     if(proc=pMCX) and (pMCX.Tag=-1) then begin
-        list:=TStringList.Create;
-        list.StrictDelimiter := true;
-        list.Delimiter:=AnsiChar(#10);
-        list.DelimitedText:=Result;
-        gpucount:=0;
-        for i:=0 to list.Count-1 do begin
-          ss:= list.Strings[i];
-          if(sscanf(ss+' ','Device %d of %d:%s', [@idx, @total, @gpuname])=3) then
-          begin
-                 if(idx=1) then
-                     edGPUID.Items.Clear;
-                 namepos := Pos(gpuname, ss);
-                 edGPUID.Items.Add('#'+IntToStr(idx)+':'+Trim(copy(ss, namepos, Length(ss)-namepos+1)));
-                 gpucount:=gpucount+1;
-          end;
-        end;
-        if(edGPUID.Items.Count>0) then
-            edGPUID.Checked[0]:=true;
-        {$IFDEF WINDOWS}
-        if (not (ckDoRemote.Checked)) and (gpucount>=1) then begin
-            Reg := TRegistry.Create;
-            needfix:=true;
-            try
-              Reg.RootKey := HKEY_LOCAL_MACHINE;
-              Key := '\SYSTEM\CurrentControlSet\Control\GraphicsDrivers';
-              if Reg.OpenKeyReadOnly(Key) then
-              begin
-                if Reg.ValueExists('TdrDelay') then
-                begin
-                  RegKey := Reg.ReadInteger('TdrDelay');
-                  needfix:=false;
-                end;
-              end;
-              Reg.CloseKey;
-              if(needfix) then begin
-                if(MessageDlg('Question', 'If you run MCX on the GPU that is connected to your monitor, you may encouter an "Unspecified launch failure " error. Do you want to modify the "TdrDelay" registry key to allow MCX to run for more than 5 seconds?', mtWarning,
-                        [mbYes, mbNo, mbCancel],0) = mrYes) then begin
-                      if Reg.OpenKey(Key, true) then  begin
-                          Reg.WriteInteger('TdrDelay', 999999);
-                          MessageDlg('Confirmation', 'Registry modification was successfully applied.', mtInformation, [mbOK],0);
-                      end else
-                          MessageDlg('Permission Error', 'You don''t have permission to modify registry. Please contact your administrator to apply the fix.', mtError, [mbOK],0);
-                  end;
-              end;
-            finally
-              Reg.Free
-            end;
-        end;
-        {$ENDIF}
-        list.Free;
+        UpdateGPUList(Buffer);
     end;
     Sleep(100);
 end;
