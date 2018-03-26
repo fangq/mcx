@@ -964,7 +964,7 @@ begin
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
    scpcmd:=StringReplace(scpcmd,'plink', 'pscp',[rfReplaceAll]);
-   scpcmd:=StringReplace(scpcmd,'-ssh', '-scp',[rfReplaceAll]);
+   scpcmd:=StringReplace(scpcmd,' ssh ', ' scp ',[rfReplaceAll]);
    url:=ExpandPassword(scpcmd);
    if(sscanf(url,'%s',[@cmd])=1) then begin
        Result:='"'+SearchForExe(cmd)+'"'+
