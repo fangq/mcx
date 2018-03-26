@@ -2703,7 +2703,7 @@ begin
       {$IFDEF DARWIN}
         if(rootpath='') then
             rootpath:=GetUserDir+DirectorySeparator+'.mcxstudio'+DirectorySeparator+
-                  'Output'+DirectorySeparator+CreateparamOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+                  'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
       {$ELSE}
         if(rootpath='') then
             rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
