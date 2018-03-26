@@ -1198,11 +1198,12 @@ begin
          cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
      end;
 
-     addpath:='if(exist(''MCXSuite/mcx/utils'', ''dir'')) addpath(''MCXSuite/mcx/utils''); end;';
-     addpath:=addpath + 'if(exist(''MCXSuite/mmc/matlab'', ''dir'')) addpath(''MCXSuite/mmc/matlab''); end;';
-     addpath:=addpath + 'if(exist(''MATLAB/mcxlab'', ''dir'')) addpath(''MATLAB/mcxlab''); end;';
-     addpath:=addpath + 'if(exist(''MATLAB/mmclab'', ''dir'')) addpath(''MATLAB/mmclab''); end;';
-     addpath:=addpath + 'if(exist(''MATLAB/iso2mesh'', ''dir'')) addpath(''MATLAB/iso2mesh''); end;';
+     addpath:=Format('cd ''%s''',[ExtractFilePath(Application.ExeName)])+#10;
+     addpath:=addpath + 'addpath(''MCXSuite/mcx/utils'');'+#10;
+     addpath:=addpath + 'addpath(''MCXSuite/mmc/matlab'');'+#10;
+     addpath:=addpath + 'addpath(''MATLAB/mcxlab'');'+#10;
+     addpath:=addpath + 'addpath(''MATLAB/mmclab'');'+#10;
+     addpath:=addpath + 'addpath(''MATLAB/iso2mesh'');'+#10;
 
      isnewmatlab:=false;
      {$IFDEF WINDOWS}
@@ -1246,6 +1247,7 @@ begin
            AddLog('-- Please type in MATLAB : -- ');
            AddLog(addpath);
          end;
+         Sleep(1000);
      end;
      if(pBackend.Running) then begin
         pBackend.Input.Write(cmd[1],Length(cmd))
@@ -2817,6 +2819,8 @@ begin
     end;
 
     AddLog('"-- Command: --"');
+    AddLog(cmd+' '+param.DelimitedText);
+
     if(ckDoRemote.Checked) then begin
         shellscript:=TStringList.Create;
         shellscript.StrictDelimiter:=true;
@@ -2829,6 +2833,7 @@ begin
           end;
           cmd:=shellscript.Strings[0];
         end;
+        AddLog('Remote Command: '+edRemote.Text);
     end;
 
     if(Length(jsonfile)>0) then begin
@@ -2846,7 +2851,7 @@ begin
         proc.Executable:=cmd;
         proc.Parameters.CommaText:=param.CommaText;
     end;
-    AddLog(cmd+' '+param.DelimitedText);
+
     Result:=cmd+' '+param.DelimitedText;
     param.Free;
 end;
