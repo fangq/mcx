@@ -955,7 +955,7 @@ var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
   {$IFDEF DARWIN}
-   rootpath:=GetUserDir+DirectorySeparator+'.mcxstudio'+DirectorySeparator+
+   rootpath:=GetUserDir+DirectorySeparator+'MCXStudio'+DirectorySeparator+
          'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
   {$ELSE}
    rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
@@ -1597,10 +1597,11 @@ begin
            fname:=fname+'.exe';
    {$ENDIF}
    Result :=
-    SearchFileInPath(fname, '', ExtractFilePath(Application.ExeName)+PathSeparator+
+    SearchFileInPath(fname, '',
         ExtractFilePath(Application.ExeName)+'MCXSuite'+
         DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
         'bin'+PathSeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
+        GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+
         ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                      PathSeparator, [sffDontSearchInBasePath]);
@@ -1609,7 +1610,8 @@ begin
      Result :=SearchFileInPath(fname, '',
          ExtractFilePath(Application.ExeName)+'MCXSuite'+
         DirectorySeparator+MCProgram[grProgram.ItemIndex]+
-         DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
+         DirectorySeparator+'bin'+PathSeparator+PathSeparator+
+         GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+ GetEnvironmentVariable('PATH'),
                       PathSeparator, [sffDontSearchInBasePath]);
 end;
 
@@ -2623,7 +2625,7 @@ var
 begin
 {$IFDEF DARWIN}
     path:=GetUserDir
-       +DirectorySeparator+'.mcxstudio'+DirectorySeparator+'Output'
+       +DirectorySeparator+'MCXStudio'+DirectorySeparator+'Output'
        +DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
 {$ELSE}
     path:=ExtractFileDir(Application.ExeName)
@@ -2702,7 +2704,7 @@ begin
     if(ckDoRemote.Checked) then begin
       {$IFDEF DARWIN}
         if(rootpath='') then
-            rootpath:=GetUserDir+DirectorySeparator+'.mcxstudio'+DirectorySeparator+
+            rootpath:=GetUserDir+DirectorySeparator+'MCXStudio'+DirectorySeparator+
                   'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
       {$ELSE}
         if(rootpath='') then
