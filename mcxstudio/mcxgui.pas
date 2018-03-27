@@ -964,8 +964,7 @@ begin
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
    scpcmd:=StringReplace(scpcmd,'plink', 'pscp',[rfReplaceAll]);
-   scpcmd:=StringReplace(scpcmd,'-ssh', '-scp',[rfReplaceAll]);
-   scpcmd:=StringReplace(scpcmd,' ssh ', ' scp ',[rfReplaceAll]);
+   scpcmd:=StringReplace(scpcmd,'ssh ', 'scp ',[rfReplaceAll]);
    url:=ExpandPassword(scpcmd);
    if(sscanf(url,'%s',[@cmd])=1) then begin
        Result:='"'+SearchForExe(cmd)+'"'+
@@ -1180,7 +1179,7 @@ var
 begin
      if(CurrentSession=nil) then exit;
      if (grProgram.ItemIndex=1) then begin
-        MessageDlg('Error', 'You must select an MCX or MCXCL simulation to use this feature', mtError, [mbOK],0);
+        MessageDlg('Warning', 'You must select an MCX or MCXCL simulation to use this feature', mtError, [mbOK],0);
         exit;
     end;
     if not (Sender is TAction) then exit;
@@ -1188,7 +1187,7 @@ begin
 
     outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
     if not (FileExists(outputfile)) then begin
-      MessageDlg('Error', Format('The %s%s output file has not been created',[edSession.Text,ftype.Hint]), mtError, [mbOK],0);
+      MessageDlg('Warning', Format('The %s%s output file has not been created',[edSession.Text,ftype.Hint]), mtError, [mbOK],0);
       exit;
     end;
 
@@ -1281,7 +1280,7 @@ begin
           end else begin
               cmd:=SearchForExe(CreateCmdOnly);
               if(Length(cmd)=0) then begin
-                  MessageDlg('Error', 'Program is not found', mtError, [mbOK],0);
+                  MessageDlg('Warning', 'Program is not found', mtError, [mbOK],0);
                   exit;
               end;
               pMCX.CommandLine:='"'+cmd+'" -L';
@@ -1334,7 +1333,7 @@ begin
         Sleep(1000);
     end;
     if(pMCX.Running) then begin
-        MessageDlg('Error', 'Program is still running. Please wait or kill the program manually from your Task Manager', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Program is still running. Please wait or kill the program manually from your Task Manager', mtError, [mbOK],0);
         exit;
     end;
     Result:=true;
@@ -1349,7 +1348,6 @@ begin
     if(ResetMCX(0)) then begin
         //pMCX.CommandLine:=CreateCmd;
         CreateCmd(pMCX);
-        pMCX.Executable:=SearchForExe(pMCX.Executable);
         pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
         if(ckbDebug.Checked[2]) then begin
@@ -2852,8 +2850,9 @@ begin
          shellscript.Free;
     end;
     if(proc<> nil) then begin
-        proc.Executable:=cmd;
+        proc.Executable:=SearchForExe(cmd);
         proc.Parameters.CommaText:=param.CommaText;
+        AddLog('Exename after search:'+proc.Executable);
     end;
 
     Result:=cmd+' '+param.DelimitedText;

@@ -140,7 +140,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('Size')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Grid shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Grid shape construct', mtError, [mbOK],0);
         exit;
      end;
 
@@ -173,7 +173,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if not (jobj is TJSONArray) then begin
-        MessageDlg('Error', 'Malformed JSON Origin shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Origin shape construct', mtError, [mbOK],0);
         exit;
      end;
 
@@ -201,7 +201,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('Size')=nil) or (jobj.FindPath('O')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Box shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Box shape construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLCube.Create(Self);
@@ -236,7 +236,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('R')=nil) or (jobj.FindPath('O')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Sphere shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Sphere shape construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLSphere.Create(Self);
@@ -269,7 +269,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('C0')=nil) or (jobj.FindPath('C1')=nil) or (jobj.FindPath('R')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Cylinder shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Cylinder shape construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLCylinder.Create(Self);
@@ -317,7 +317,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if not (jobj is TJSONArray) then begin
-        MessageDlg('Error', 'Malformed JSON ?Layers shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON ?Layers shape construct', mtError, [mbOK],0);
         exit;
      end;
 
@@ -330,7 +330,7 @@ begin
            elem:=data.Items[i];
        end;
        if (elem.Count <> 3) then begin
-          MessageDlg('Error', 'Malformed JSON ?Layers shape element', mtError, [mbOK],0);
+          MessageDlg('Warning', 'Malformed JSON ?Layers shape element', mtError, [mbOK],0);
           exit;
        end;
 
@@ -385,7 +385,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('Bound')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON ?Slabs shape construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON ?Slabs shape construct', mtError, [mbOK],0);
         exit;
      end;
 
@@ -403,7 +403,7 @@ begin
 
        obj:=TGLCube.Create(Self);
        if (elem.Count <> 2) then begin
-          MessageDlg('Error', 'Malformed JSON ?Slabs shape element', mtError, [mbOK],0);
+          MessageDlg('Warning', 'Malformed JSON ?Slabs shape element', mtError, [mbOK],0);
           exit;
        end;
 
@@ -453,7 +453,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Param1')=nil) or (jobj.FindPath('Param2')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLMesh.Create(Self);
@@ -497,7 +497,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Param1')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLDisk.Create(Self);
@@ -530,7 +530,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Param1')=nil ) then begin
-        MessageDlg('Error', 'Malformed JSON Pattern3D source construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Pattern3D source construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLCube.Create(Self);
@@ -564,7 +564,7 @@ begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
          jobj:=TJSONObject(jobj.Items[0]);
      if(jobj.FindPath('Pos')=nil) or (jobj.FindPath('Dir')=nil) then begin
-        MessageDlg('Error', 'Malformed JSON Source construct', mtError, [mbOK],0);
+        MessageDlg('Warning', 'Malformed JSON Source construct', mtError, [mbOK],0);
         exit;
      end;
      obj:=TGLPoints.Create(Self);
@@ -627,7 +627,7 @@ begin
        end;
 
        if(elem.FindPath('Pos')=nil) or (elem.FindPath('R')=nil) then begin
-          MessageDlg('Error', 'Malformed JSON Detector construct', mtError, [mbOK],0);
+          MessageDlg('Warning', 'Malformed JSON Detector construct', mtError, [mbOK],0);
           exit;
        end;
 
