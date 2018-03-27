@@ -2704,9 +2704,13 @@ begin
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
       {$IFDEF DARWIN}
-        if(rootpath='') then
-            rootpath:=GetUserDir+DirectorySeparator+'MCXStudio'+DirectorySeparator+
-                  'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+        if(rootpath='') then begin
+            if(ckDoRemote.Checked) then
+                rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text)
+            else
+                rootpath:=GetUserDir+DirectorySeparator+'MCXStudio'+DirectorySeparator+
+                      'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+        end;
       {$ELSE}
         if(rootpath='') then
             rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
