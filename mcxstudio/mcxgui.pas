@@ -1365,7 +1365,8 @@ begin
         {$IFDEF DARWIN}
         AProcess := TProcess.Create(nil);
         try
-          AProcess.CommandLine:=  pMCX.CommandLine;
+          AProcess.Executable:=  pMCX.Executable;
+          AProcess.Parameters:=  pMCX.Parameters;
           AProcess.Options := [poUsePipes,poStderrToOutput];
           AProcess.Execute;
           Buffer := '';
@@ -2852,7 +2853,6 @@ begin
     if(proc<> nil) then begin
         proc.Executable:=SearchForExe(cmd);
         proc.Parameters.CommaText:=param.CommaText;
-        AddLog('Exename after search:'+proc.Executable);
     end;
 
     Result:=cmd+' '+param.DelimitedText;
