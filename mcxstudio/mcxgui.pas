@@ -1349,6 +1349,7 @@ begin
     if(ResetMCX(0)) then begin
         //pMCX.CommandLine:=CreateCmd;
         CreateCmd(pMCX);
+        pMCX.Executable:=SearchForExe(pMCX.Executable);
         pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
         if(ckbDebug.Checked[2]) then begin
