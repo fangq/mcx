@@ -1197,8 +1197,11 @@ begin
          ngates:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
          cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
      end;
-
+     {$IFDEF DARWIN}
+     addpath:=Format('cd ''%s''',[GetUserDir+DirectorySeparator+'MCXStudio'])+#10;
+     {$ELSE}
      addpath:=Format('cd ''%s''',[ExtractFilePath(Application.ExeName)])+#10;
+     {$ENDIF}
      addpath:=addpath + 'addpath(''MCXSuite/mcx/utils'');'+#10;
      addpath:=addpath + 'addpath(''MCXSuite/mmc/matlab'');'+#10;
      addpath:=addpath + 'addpath(''MATLAB/mcxlab'');'+#10;
@@ -2778,21 +2781,25 @@ begin
     if(grProgram.ItemIndex>=1) then begin
       param.Add('--atomic');
       param.Add(Format('%d',[grAtomic.ItemIndex]));
-      if (grProgram.ItemIndex=1) then begin
+    end;
+
+    if (grProgram.ItemIndex=1) then begin
          param.Add('--specular');
          param.Add(Format('%d',[Integer(ckSpecular.Checked)]));
          param.Add('--basisorder');
          param.Add(Format('%d',[edRespin.Value]));
          param.Add('--momentum');
          param.Add(Format('%d',[Integer(ckMomentum.Checked)]));
-      end;
-    end else begin
-        if(grAtomic.ItemIndex=0) then begin
+    end;
+
+    if(grAtomic.ItemIndex=0) then begin
            if(grProgram.ItemIndex=0) then begin
                param.Add('--skipradius');
                param.Add('-2');
            end;
-        end;
+    end;
+
+    if(grAtomic.ItemIndex<>1) then begin
         param.Add('--array');
         param.Add(Format('%d',[grArray.ItemIndex]));
         param.Add('--dumpmask');
