@@ -229,9 +229,9 @@ if(nargin==2 && ischar(varargin{2}))
 end
 
 if(useopencl==0)
-    [varargout{1:nargout}]=mcx(varargin{:});
+    [varargout{1:nargout}]=mcx(varargin{1});
 else
-    [varargout{1:nargout}]=mcxcl(varargin{:});
+    [varargout{1:nargout}]=mcxcl(varargin{1});
 end
 
 if(nargin==0)
