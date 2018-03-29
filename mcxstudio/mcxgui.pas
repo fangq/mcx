@@ -337,7 +337,6 @@ type
     procedure Splitter6CanResize(Sender: TObject; var NewSize: Integer;
       var Accept: Boolean);
     procedure StaticText2DblClick(Sender: TObject);
-    procedure tbtRunClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure tmAnimationTimer(Sender: TObject);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
@@ -1179,7 +1178,7 @@ var
 begin
      if(CurrentSession=nil) then exit;
      if (grProgram.ItemIndex=1) then begin
-        MessageDlg('Warning', 'You must select an MCX or MCXCL simulation to use this feature', mtError, [mbOK],0);
+        MessageDlg('Warning', 'You must select an MCX or MCX-CL simulation to use this feature', mtError, [mbOK],0);
         exit;
     end;
     if not (Sender is TAction) then exit;
@@ -2150,11 +2149,6 @@ end;
 procedure TfmMCX.StaticText2DblClick(Sender: TObject);
 begin
     GridToStr(sgMedia);
-end;
-
-procedure TfmMCX.tbtRunClick(Sender: TObject);
-begin
-  mcxdoRunExecute(Sender);
 end;
 
 procedure TfmMCX.Timer1Timer(Sender: TObject);
