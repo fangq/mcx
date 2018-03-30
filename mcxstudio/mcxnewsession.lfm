@@ -10,7 +10,7 @@ object fmNewSession: TfmNewSession
   ClientWidth = 504
   OnShow = FormShow
   Position = poMainFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.8.2.0'
   object grProgram: TRadioGroup
     AnchorSideLeft.Control = Owner
     AnchorSideRight.Control = Owner
@@ -38,7 +38,7 @@ object fmNewSession: TfmNewSession
     Items.Strings = (
       'NVIDIA GPUs (MCX)'
       'CPU Only (MMC)'
-      'NVIDIA/AMD/Intel CPUs/GPUs (MCXCL)'
+      'NVIDIA/AMD/Intel CPUs/GPUs (MCX-CL)'
     )
     ParentFont = False
     ParentColor = False

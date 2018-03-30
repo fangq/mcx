@@ -6,7 +6,7 @@ object fmOutput: TfmOutput
   Caption = 'Output'
   ClientHeight = 600
   ClientWidth = 561
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.8.2.0'
   object Panel1: TPanel
     Left = 0
     Height = 600
@@ -594,6 +594,10 @@ object fmOutput: TfmOutput
     object miClearLog: TMenuItem
       Caption = 'Clear Log'
       OnClick = miClearLogClick
+    end
+    object miCopy: TMenuItem
+      Caption = 'Copy selected'
+      OnClick = miCopyClick
     end
   end
 end

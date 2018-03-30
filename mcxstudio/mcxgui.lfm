@@ -229,6 +229,7 @@ object fmMCX: TfmMCX
       Left = 604
       Top = 0
       Action = mcxdoRun
+      OnClick = tbtRunClick
       ParentShowHint = False
       ShowHint = True
     end

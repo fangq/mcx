@@ -337,6 +337,7 @@ type
     procedure Splitter6CanResize(Sender: TObject; var NewSize: Integer;
       var Accept: Boolean);
     procedure StaticText2DblClick(Sender: TObject);
+    procedure tbtRunClick(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure tmAnimationTimer(Sender: TObject);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
@@ -1347,8 +1348,9 @@ var
     Buffer   : string;
     BufStr   : string;
 begin
+    if(GetTickCount64-mcxdoRun.Tag<100) then
+       exit;
     if(ResetMCX(0)) then begin
-        //pMCX.CommandLine:=CreateCmd;
         CreateCmd(pMCX);
         pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
@@ -1363,7 +1365,7 @@ begin
         pMCX.Tag:=-10;
         sbInfo.Color := clRed;
         UpdateMCXActions(acMCX,'Run','');
-        //mcxdoRun.Tag:=GetTickCount64;
+        mcxdoRun.Tag:=GetTickCount64;
         {$IFDEF DARWIN}
         AProcess := TProcess.Create(nil);
         try
@@ -2149,6 +2151,11 @@ end;
 procedure TfmMCX.StaticText2DblClick(Sender: TObject);
 begin
     GridToStr(sgMedia);
+end;
+
+procedure TfmMCX.tbtRunClick(Sender: TObject);
+begin
+   mcxdoRunExecute(Sender);
 end;
 
 procedure TfmMCX.Timer1Timer(Sender: TObject);

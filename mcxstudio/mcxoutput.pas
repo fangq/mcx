@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, SynEdit, synhighlighterunixshellscript,
   LResources, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, Menus,
-  AsyncProcess, LCLType;
+  AsyncProcess, LCLType, ClipBrd;
 
 type
 
@@ -18,6 +18,7 @@ type
     btSendCmd: TButton;
     edCmdInput: TComboBox;
     Label1: TLabel;
+    miCopy: TMenuItem;
     miClearLog: TMenuItem;
     mmOutput: TSynEdit;
     Panel1: TPanel;
@@ -27,6 +28,7 @@ type
     procedure btSendCmdClick(Sender: TObject);
     procedure edCmdInputKeyPress(Sender: TObject; var Key: char);
     procedure miClearLogClick(Sender: TObject);
+    procedure miCopyClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -44,6 +46,11 @@ implementation
 procedure TfmOutput.miClearLogClick(Sender: TObject);
 begin
   mmOutput.Lines.Clear;
+end;
+
+procedure TfmOutput.miCopyClick(Sender: TObject);
+begin
+   Clipboard.AsText:=mmOutput.SelText;
 end;
 
 procedure TfmOutput.btSendCmdClick(Sender: TObject);
