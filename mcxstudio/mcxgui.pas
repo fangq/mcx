@@ -2155,7 +2155,9 @@ end;
 
 procedure TfmMCX.tbtRunClick(Sender: TObject);
 begin
-   mcxdoRunExecute(Sender);
+  {$IFNDEF DARWIN}
+  mcxdoRunExecute(Sender);
+  {$ENDIF}
 end;
 
 procedure TfmMCX.Timer1Timer(Sender: TObject);
