@@ -884,6 +884,7 @@ begin
         edBubble.Hint:='BubbleSize';
         lbBubble.Caption:='Cache radius from src (-R)';
         mcxdoQuery.Enabled:=true;
+        edOutputFormat.ItemIndex:=1;
         grArray.Enabled:=true;
         edGate.Enabled:=true;
         edDetectedNum.Enabled:=true;
@@ -894,6 +895,7 @@ begin
         ckSpecular.Visible:=true;
         ckMomentum.Visible:=true;
         ckSaveRef.Visible:=false;
+        edOutputFormat.ItemIndex:=4;
         edRespin.Hint:='BasicOrder';
         lbRespin.Caption:='Element order (-C)';
         edBubble.Hint:='DebugPhoton';
@@ -1784,6 +1786,7 @@ procedure TfmMCX.sgConfigEditButtonClick(Sender: TObject);
 var
    grid: TStringGrid;
    fmSrc: TfmSource;
+   meshid: string;
 begin
    if not(Sender is TStringGrid) then exit;
    grid:= Sender as TStringGrid;
@@ -1794,8 +1797,16 @@ begin
       if(grid.Cells[grid.Col,grid.Row]='See Volume Designer...') then
          pcSimuEditor.ActivePage:=tabVolumeDesigner
       else
-          if(OpenVolume.Execute) then
-             grid.Cells[grid.Col,grid.Row]:=OpenVolume.FileName;
+          if(OpenVolume.Execute) then begin
+             if(grProgram.ItemIndex<>1) then begin
+                 grid.Cells[grid.Col,grid.Row]:=OpenVolume.FileName
+             end else begin
+                 grid.Cells[2,14]:=ExtractFilePath(OpenVolume.FileName);
+                 meshid:=ExtractFileName(OpenVolume.FileName);
+                 meshid:=ReplaceRegExpr('^[a-z]{4}_',meshid,'',false);
+                 grid.Cells[grid.Col,grid.Row]:=ReplaceRegExpr('.dat$',meshid,'',false);
+             end;
+          end;
    end else if(grid.Col=2) and (grid.Row>=10) and (grid.Row<=12) then begin
       fmSrc:=TfmSource.Create(Application);
       if(Length(grid.Cells[2,10])>0) then begin
@@ -2802,7 +2813,7 @@ begin
            end;
     end;
 
-    if(grAtomic.ItemIndex<>1) then begin
+    if(grProgram.ItemIndex<>1) then begin
         param.Add('--array');
         param.Add(Format('%d',[grArray.ItemIndex]));
         param.Add('--dumpmask');
