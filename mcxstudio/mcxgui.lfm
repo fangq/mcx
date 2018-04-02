@@ -829,6 +829,7 @@ object fmMCX: TfmMCX
         Top = 57
         Width = 71
         ItemHeight = 0
+        ItemIndex = 1
         Items.Strings = (
           'nii'
           'mc2'
