@@ -162,6 +162,7 @@ function varargout=mcxlab(varargin)
 %              detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
 %                   one need to multiply cfg.unitinmm with ppath to convert it to mm.
 %              detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
+%              detphoton.prop: optical properties, a copy of cfg.prop
 %              detphoton.data: a concatenated and transposed array in the order of
 %                    [detid nscat ppath p v]'
 %              "data" is the is the only subfield in all MCXLAB before 2018
@@ -250,13 +251,17 @@ if(nargout>=2)
                 continue;
             end
             newdetp.detid=int32(detp(1,:))';
-            newdetp.nscat=int32(detp(2,:))';    % 1st medianum block is num of scattering
+            newdetp.nscat=int32(detp(2,:))';    % 2nd column is the total num of scattering
             newdetp.ppath=detp(3:2+medianum,:)';% 2nd medianum block is partial path
+            if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
+                newdetp.mom=detp(medianum+3:2*medianum+2,:)'; % 3rd medianum block is the momentum transfer
+            end
             if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
-                newdetp.p=detp(end-5:end-3,:)';             %columns 7-5 from the right store the exit positions*/
+                newdetp.p=detp(end-5:end-3,:)';      %columns 7-5 from the right store the exit positions*/
                 newdetp.v=detp(end-2:end,:)';	     %columns 4-2 from the right store the exit dirs*/
             end
             % newdetp.w0=detp(end,:)';  % last column is the initial packet weight
+            newdetp.prop=cfg(i).prop;
             newdetp.data=detp;      % enable this line for compatibility
             newdetpstruct(i)=newdetp;
         else

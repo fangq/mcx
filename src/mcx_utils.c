@@ -1640,11 +1640,6 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				}else
 		     	        	i=mcx_readarg(argc,argv,i,filename,"string");
 				break;
-		     case 'm':
-                                /*from rev 191, we have enabled -n and disabled -m*/
-				mcx_error(-2,"specifying photon move is not supported any more, please use -n",__FILE__,__LINE__);
-		     	        i=mcx_readarg(argc,argv,i,&(cfg->nphoton),"int");
-		     	        break;
 		     case 'n':
 		     	        i=mcx_readarg(argc,argv,i,&(np),"float");
 				cfg->nphoton=(int)np;

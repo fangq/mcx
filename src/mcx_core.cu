@@ -205,7 +205,7 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
 	    uint i;
 	    for(i=0;i<gcfg->issaveseed*RAND_BUF_LEN;i++)
 	        seeddata[baseaddr*RAND_BUF_LEN+i]=t[i]; ///< save photon seed for replay
-	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6+(gcfg.ismomentum*gcfg->maxmedia);
+	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6+(gcfg->ismomentum*gcfg->maxmedia);
 	    n_det[baseaddr++]=detid;
 	    n_det[baseaddr++]=nscat;
 	    for(i=0;i<gcfg->maxmedia*(1+gcfg->ismomentum);i++)
@@ -1545,7 +1545,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint   *gPseed,*gdetected;
      float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL;
      RandType *gseeddata=NULL;
-     int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6+(cfg->ismomentum*(cfg->medianum-1));
+     int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6+((cfg->ismomentum>0)*(cfg->medianum-1));
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
