@@ -205,13 +205,13 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
 	    uint i;
 	    for(i=0;i<gcfg->issaveseed*RAND_BUF_LEN;i++)
 	        seeddata[baseaddr*RAND_BUF_LEN+i]=t[i]; ///< save photon seed for replay
-	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6;
+	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6+(gcfg.ismomentum*gcfg->maxmedia);
 	    n_det[baseaddr++]=detid;
 	    n_det[baseaddr++]=nscat;
-	    for(i=0;i<gcfg->maxmedia;i++)
+	    for(i=0;i<gcfg->maxmedia*(1+gcfg->ismomentum);i++)
 		n_det[baseaddr+i]=ppath[i]; ///< save partial pathlength to the memory
 	    if(gcfg->issaveexit){
-                baseaddr+=gcfg->maxmedia;
+                baseaddr+=gcfg->maxmedia*(1+gcfg->ismomentum);
 	        *((float3*)(n_det+baseaddr))=float3(p0->x,p0->y,p0->z);
 		baseaddr+=3;
 		*((float3*)(n_det+baseaddr))=float3(v->x,v->y,v->z);
@@ -1016,8 +1016,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 #endif
 
 #ifdef  SAVE_DETECTORS
-     ppath+=threadIdx.x*gcfg->maxmedia; // block#2: maxmedia*thread number to store the partial
-     if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia);
+     ppath+=threadIdx.x*gcfg->maxmedia*(1+gcfg->ismomentum); // block#2: maxmedia*thread number to store the partial
+     if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia*(1+gcfg->ismomentum));
 #endif
 
      gpu_rng_init(t,n_seed,idx);
@@ -1091,7 +1091,11 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                            sincosf(theta,&stheta,&ctheta);
                        }
                        GPUDEBUG(("scat theta=%f\n",theta));
-
+#ifdef SAVE_DETECTORS
+	               /** accummulate momentum transfer */
+                       if(gcfg->ismomentum)
+	                   ppath[gcfg->maxmedia+(mediaid & MED_MASK)-1]+=1.f-ctheta;
+#endif
                        /** Update direction vector with the two random angles */
 		       if(gcfg->is2d)
 		           rotatevector2d(v,stheta,ctheta);
@@ -1541,7 +1545,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint   *gPseed,*gdetected;
      float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL;
      RandType *gseeddata=NULL;
-     int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6;
+     int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6+(cfg->ismomentum*(cfg->medianum-1));
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
@@ -1549,7 +1553,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
-		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->issaveref>0,
+		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->issaveref>0,cfg->ismomentum>0,
 		     cfg->maxdetphoton*detreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
 		     cfg->debuglevel,(uint)cfg->maxjumpdebug,cfg->gscatter,is2d};
      if(param.isatomic)
@@ -1847,6 +1851,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
         sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
 #endif
      if(cfg->issavedet)
+        sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
+     if(cfg->ismomentum)
         sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
 #ifdef USE_MT_RAND
      sharedbuf+=(N+2)*sizeof(uint); // MT RNG uses N+2 uint in the shared memory

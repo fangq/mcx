@@ -76,7 +76,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','-','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','-','m','\0'};
 
 /**
  * Long command line options
@@ -92,7 +92,8 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
-                 "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",""};
+                 "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
+                 "--momentum",""};
 
 /**
  * Output data types
@@ -202,6 +203,7 @@ void mcx_initcfg(Config *cfg){
      cfg->debuglevel=0;
      cfg->issaveseed=0;
      cfg->issaveexit=0;
+     cfg->ismomentum=0;
      cfg->replay.seed=NULL;
      cfg->replay.weight=NULL;
      cfg->replay.tof=NULL;
@@ -1675,6 +1677,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'd':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->issavedet),"char");
 		     	        break;
+		     case 'm':
+		                i=mcx_readarg(argc,argv,i,&(cfg->ismomentum),"char");
+				if (cfg->ismomentum) cfg->issavedet=1;
+				break;
 		     case 'r':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->respin),"int");
 		     	        break;
@@ -2011,6 +2017,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
                                right outside of the domain; if non-zero voxels\n\
 			       appear at the boundary, pad 0s before using -X\n\
+ -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save\n\
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\

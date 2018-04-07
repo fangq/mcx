@@ -133,6 +133,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */
   unsigned int issaveexit;           /**< flag if one need to save the detected photon positions and dir vectors */
   unsigned int issaveref;            /**< flag if one need to save diffuse reflectance data in the 0-voxel layer next to the boundary */
+  unsigned int ismomentum;          /**< 1 to save momentum transfer for detected photons, implies issavedet=1*/
   unsigned int seedoffset;           /**< offset of the seed, not used */
   int seed;                          /**< RNG seed passted from the host */
   unsigned int outputtype;           /**< Type of output to be accummulated */
