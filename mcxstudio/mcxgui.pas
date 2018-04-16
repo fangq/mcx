@@ -17,7 +17,7 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
-  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
+  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput, mcxvolume,
   mcxrender {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
 
 type
@@ -26,8 +26,10 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    mcxdoRenderVol: TAction;
     MenuItem33: TMenuItem;
     MenuItem34: TMenuItem;
+    miUseRenderer: TMenuItem;
     shapePreview: TAction;
     edOutputFormat: TComboBox;
     Label11: TLabel;
@@ -288,6 +290,7 @@ type
     procedure mcxdoPlotNiftyExecute(Sender: TObject);
     procedure mcxdoPlotVolExecute(Sender: TObject);
     procedure mcxdoQueryExecute(Sender: TObject);
+    procedure mcxdoRenderVolExecute(Sender: TObject);
     procedure mcxdoRunExecute(Sender: TObject);
     procedure mcxdoSaveExecute(Sender: TObject);
     procedure mcxdoStopExecute(Sender: TObject);
@@ -394,6 +397,7 @@ var
   fmOutput: TfmOutput;
   fmBackend: TfmOutput;
   fmDomain: TfmDomain;
+  fmVolume: TfmVolume;
   ProfileChanged: Boolean;
   MaxWait: integer;
   TaskFile: string;
@@ -1077,7 +1081,10 @@ end;
 
 procedure TfmMCX.mcxdoPlotMC2Execute(Sender: TObject);
 begin
-  mcxdoPlotVolExecute(Sender);
+  if(miUseRenderer.Checked) then
+      mcxdoPlotVolExecute(Sender)
+  else
+      mcxdoPlotVolExecute(Sender);
 end;
 
 procedure TfmMCX.mcxdoPlotNiftyExecute(Sender: TObject);
@@ -1329,6 +1336,32 @@ begin
           UpdateMCXActions(acMCX,'Run','');
     end;
 end;
+
+procedure TfmMCX.mcxdoRenderVolExecute(Sender: TObject);
+var
+    ftype: TAction;
+    outputfile: string;
+begin
+    if (grProgram.ItemIndex=1) then begin
+       MessageDlg('Warning', 'You must select an MCX or MCX-CL simulation to use this feature', mtError, [mbOK],0);
+       exit;
+    end;
+    if not (Sender is TAction) then exit;
+    ftype:=Sender as TAction;
+
+    outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+    if not (FileExists(outputfile)) then begin
+       MessageDlg('Warning', Format('The %s%s output file has not been created',[edSession.Text,ftype.Hint]), mtError, [mbOK],0);
+       exit;
+    end;
+
+    fmVolume:=TfmVolume.Create(Self);
+    fmVolume.InputFile:=outputfile;
+    fmVolume.
+    fmVolume.ShowModal;
+    fmVolume.Free;
+end;
+
 function TfmMCX.ResetMCX(exitcode: LongInt) : boolean;
 begin
     Result:=false;
@@ -1342,6 +1375,11 @@ begin
         exit;
     end;
     Result:=true;
+end;
+
+function TfmMCX.ExpandPassword(url: AnsiString): AnsiString;
+begin
+
 end;
 
 procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
