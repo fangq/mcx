@@ -413,10 +413,14 @@ __device__ inline void transmit(MCXdir *v, float n1, float n2,int flipdir){
       v->y*=tmp0;
       v->z*=tmp0;
       (flipdir==0) ?
-          (v->x=sqrtf(1.f - v->y*v->y - v->z*v->z)*((v->x>0.f)-(v->x<0.f))):
+          (v->x= ((tmp0 = v->y*v->y + v->z*v->z) <1.f) ? sqrtf(1.f - tmp0)*((v->x>0.f)-(v->x<0.f)) : 0.f):
 	  ((flipdir==1) ? 
-	      (v->y=sqrtf(1.f - v->x*v->x - v->z*v->z)*((v->y>0.f)-(v->y<0.f))):
-	      (v->z=sqrtf(1.f - v->x*v->x - v->y*v->y)*((v->z>0.f)-(v->z<0.f))));
+	      (v->y=((tmp0 = v->x*v->x + v->z*v->z) <1.f) ? sqrtf(1.f - tmp0)*((v->y>0.f)-(v->y<0.f)) : 0.f):
+	      (v->z=((tmp0 = v->x*v->x + v->y*v->y) <1.f) ? sqrtf(1.f - tmp0)*((v->z>0.f)-(v->z<0.f)) : 0.f));
+      tmp0=rsqrtf(v->x*v->x + v->y*v->y + v->z*v->z);
+      v->x*=tmp0;
+      v->y*=tmp0;
+      v->z*=tmp0;
 }
 
 /**
