@@ -1177,6 +1177,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
+	      isdet=-1;
 	      idx1d=OUTSIDE_VOLUME;
 	  }else{
               /** otherwise, read the optical property index */
