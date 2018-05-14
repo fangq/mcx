@@ -88,6 +88,7 @@ typedef struct MCXHistoryHeader{
  */
 
 typedef struct PhotonReplay{
+	int   *detid;                 /**< pointer to the detector index */
 	void  *seed;                  /**< pointer to the seeds of the replayed photon */
 	float *weight;                /**< pointer to the detected photon weight array */
 	float *tof;                   /**< pointer to the detected photon time-of-fly array */

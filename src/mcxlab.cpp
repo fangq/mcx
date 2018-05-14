@@ -221,6 +221,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	/** Initialize all buffers necessary to store the output variables */
 	if(nlhs>=1){
             int fieldlen=cfg.dim.x*cfg.dim.y*cfg.dim.z*(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
+	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
+	        fieldlen*=cfg.detnum;
 	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
 	}
 	if(nlhs>=2){
@@ -312,6 +314,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    int fieldlen;
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
 	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
+	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
+	        fielddim[3]*=cfg.detnum;
 	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3];
             if(cfg.issaveref){        /** If error is detected, gracefully terminate the mex and return back to MATLAB */
 
@@ -691,14 +695,16 @@ void mcx_replay_prep(Config *cfg){
 
     cfg->replay.weight=(float*)malloc(cfg->nphoton*sizeof(float));
     cfg->replay.tof=(float*)calloc(cfg->nphoton,sizeof(float));
+    cfg->replay.detid=(int*)calloc(cfg->nphoton,sizeof(int));
 
     cfg->nphoton=0;
-    for(i=0;i<dimdetps[1];i++)
-        if(cfg->replaydet==0 || cfg->replaydet==(int)(detps[i*dimdetps[0]])){
+    for(i=0;i<dimdetps[1];i++){
+        if(cfg->replaydet<=0 || cfg->replaydet==(int)(detps[i*dimdetps[0]])){
             if(i!=cfg->nphoton)
                 memcpy((char *)(cfg->replay.seed)+cfg->nphoton*seedbyte, (char *)(cfg->replay.seed)+i*seedbyte, seedbyte);
             cfg->replay.weight[cfg->nphoton]=1.f;
 	    cfg->replay.tof[cfg->nphoton]=0.f;
+            cfg->replay.detid[cfg->nphoton]=(int)(detps[i*dimdetps[0]]);
             for(j=2;j<cfg->medianum+1;j++){
                 cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-1].mua*detps[i*dimdetps[0]+j]*cfg->unitinmm);
                 cfg->replay.tof[cfg->nphoton]+=detps[i*dimdetps[0]+j]*cfg->unitinmm*R_C0*cfg->prop[j-1].n;
@@ -707,6 +713,10 @@ void mcx_replay_prep(Config *cfg){
                 continue;
             cfg->nphoton++;
         }
+    }
+    cfg->replay.weight=(float*)realloc(cfg->replay.weight, cfg->nphoton*sizeof(float));
+    cfg->replay.tof=(float*)realloc(cfg->replay.tof, cfg->nphoton*sizeof(float));
+    cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
 }
 
 /** 

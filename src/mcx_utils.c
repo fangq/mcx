@@ -207,6 +207,7 @@ void mcx_initcfg(Config *cfg){
      cfg->replay.seed=NULL;
      cfg->replay.weight=NULL;
      cfg->replay.tof=NULL;
+     cfg->replay.detid=NULL;
      cfg->replaydet=0;
      cfg->seedfile[0]='\0';
      cfg->outputtype=otFlux;
@@ -263,6 +264,8 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->replay.seed);
      if(cfg->replay.tof)
         free(cfg->replay.tof);
+     if(cfg->replay.detid)
+        free(cfg->replay.detid);
      
      if(cfg->exportfield)
         free(cfg->exportfield);
@@ -1305,16 +1308,18 @@ void mcx_loadseedfile(Config *cfg){
        float *ppath=(float*)malloc(his.savedphoton*his.colcount*sizeof(float));
        cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
        cfg->replay.tof=(float*)calloc(his.savedphoton,sizeof(float));
+       cfg->replay.detid=(int*)calloc(his.savedphoton,sizeof(int));
        fseek(fp,sizeof(his),SEEK_SET);
        if(fread(ppath,his.colcount*sizeof(float),his.savedphoton,fp)!=his.savedphoton)
            mcx_error(-7,"error when reading the seed data",__FILE__,__LINE__);
 
        cfg->nphoton=0;
        for(i=0;i<his.savedphoton;i++)
-           if(cfg->replaydet==0 || cfg->replaydet==(int)(ppath[i*his.colcount])){
+           if(cfg->replaydet<=0 || cfg->replaydet==(int)(ppath[i*his.colcount])){
                if(i!=cfg->nphoton)
                    memcpy((char *)(cfg->replay.seed)+cfg->nphoton*his.seedbyte, (char *)(cfg->replay.seed)+i*his.seedbyte, his.seedbyte);
                cfg->replay.weight[cfg->nphoton]=1.f;
+	       cfg->replay.detid[cfg->nphoton]=(int)(ppath[i*his.colcount]);
                for(j=2;j<his.maxmedia+2;j++){
                    cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-1].mua*ppath[i*his.colcount+j]*his.unitinmm);
                    cfg->replay.tof[cfg->nphoton]+=ppath[i*his.colcount+j]*his.unitinmm*R_C0*cfg->prop[j-1].n;
@@ -1327,6 +1332,7 @@ void mcx_loadseedfile(Config *cfg){
         cfg->replay.seed=realloc(cfg->replay.seed, cfg->nphoton*his.seedbyte);
         cfg->replay.weight=(float*)realloc(cfg->replay.weight, cfg->nphoton*sizeof(float));
         cfg->replay.tof=(float*)realloc(cfg->replay.tof, cfg->nphoton*sizeof(float));
+        cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
 	cfg->minenergy=0.f;
     }
     fclose(fp);
