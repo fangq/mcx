@@ -775,7 +775,7 @@ void mcx_validate_config(Config *cfg){
      if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
         cfg->unitinmm=cfg->steps.x;
 
-     if(cfg->replaydet>cfg->detnum)
+     if(cfg->replaydet>(int)cfg->detnum)
         mexErrMsgTxt("replay detector ID exceeds the maximum detector number");
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;

@@ -667,8 +667,8 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	}
         mcx_loadseedfile(cfg);
      }
-     if(cfg->replaydet>cfg->detnum)
-        MCX_ERROR(status,"replay detector ID exceeds the maximum detector number");
+     if(cfg->replaydet>(int)cfg->detnum)
+        MCX_ERROR(-4,"replay detector ID exceeds the maximum detector number");
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;
      if(cfg->medianum){
