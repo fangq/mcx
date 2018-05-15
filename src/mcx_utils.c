@@ -667,6 +667,10 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	}
         mcx_loadseedfile(cfg);
      }
+     if(cfg->replaydet>cfg->detnum)
+        MCX_ERROR(status,"replay detector ID exceeds the maximum detector number");
+     if(cfg->replaydet==-1 && cfg->detnum==1)
+        cfg->replaydet=1;
      if(cfg->medianum){
         for(int i=0;i<cfg->medianum;i++)
              if(cfg->prop[i].mus==0.f)
@@ -1993,6 +1997,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
+			       if 0, replay all detectors and sum all Jacobians\n\
+			       if -1, replay all detectors and save separately\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\

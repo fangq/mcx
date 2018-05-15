@@ -97,7 +97,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   mxArray    *tmp;
   int        ifield, jstruct;
   int        ncfg, nfields;
-  dimtype    fielddim[4];
+  dimtype    fielddim[5];
   int        activedev=0;
   int        errorflag=0;
   int        threadid=0;
@@ -267,6 +267,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         if(errorflag)
             mexErrMsgTxt("MCXLAB Terminated due to an exception!");
 
+        fielddim[4]=1;
+
         /** if 5th output presents, output the photon trajectory data */
         if(nlhs>=5){
             fielddim[0]=MCX_DEBUG_REC_LEN; fielddim[1]=cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
@@ -315,8 +317,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
 	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
 	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
-	        fielddim[3]*=cfg.detnum;
-	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3];
+	        fielddim[4]=cfg.detnum;
+	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*fielddim[4];
             if(cfg.issaveref){        /** If error is detected, gracefully terminate the mex and return back to MATLAB */
 
 	        float *dref=(float *)malloc(fieldlen*sizeof(float));
@@ -328,11 +330,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		    }else
 		        dref[i]=0.f;
 		}
-	        mxSetFieldByNumber(plhs[0],jstruct,2, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+	        mxSetFieldByNumber(plhs[0],jstruct,2, mxCreateNumericArray(4+(fielddim[4]>1),fielddim,mxSINGLE_CLASS,mxREAL));
                 memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,2)),dref,fieldlen*sizeof(float));
 		free(dref);
 	    }
-	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4,fielddim,mxSINGLE_CLASS,mxREAL));
+	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4+(fielddim[4]>1),fielddim,mxSINGLE_CLASS,mxREAL));
 	    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
                          fieldlen*sizeof(float));
             free(cfg.exportfield);
@@ -772,6 +774,11 @@ void mcx_validate_config(Config *cfg){
         mexErrMsgTxt("the 'srcpattern' field can not be empty when your 'srctype' is 'pattern'");
      if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
         cfg->unitinmm=cfg->steps.x;
+
+     if(cfg->replaydet>cfg->detnum)
+        mexErrMsgTxt("replay detector ID exceeds the maximum detector number");
+     if(cfg->replaydet==-1 && cfg->detnum==1)
+        cfg->replaydet=1;
 
      if(cfg->medianum){
         for(int i=0;i<cfg->medianum;i++)

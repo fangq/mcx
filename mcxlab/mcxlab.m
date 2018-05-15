@@ -123,6 +123,10 @@ function varargout=mcxlab(varargin)
 %      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
 %      cfg.srcpattern: see cfg.srctype for details
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
+%      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
+%                      -1 replay all detectors and save in separate volumes (output has 5 dimensions)
+%                       0 replay all detectors and sum all Jacobians into one volume
+%                       a positive number: the index of the detector to replay and obtain Jacobians
 %      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, or 0-when entering 
 %                      the first non-zero voxel
 %
