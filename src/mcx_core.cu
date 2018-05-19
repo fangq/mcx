@@ -1589,9 +1589,9 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
      if(cfg->exportfield==NULL){
          if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1){
-	     cfg->exportfield=(float *)calloc(sizeof(float)*cfg->dim.x*cfg->dim.y*cfg->dim.z,gpu[gpuid].maxgate*2*cfg->detnum);
+	     cfg->exportfield=(float *)calloc(sizeof(float)*dimxyz,gpu[gpuid].maxgate*2*cfg->detnum);
 	 }else{
-             cfg->exportfield=(float *)calloc(sizeof(float)*cfg->dim.x*cfg->dim.y*cfg->dim.z,gpu[gpuid].maxgate*2);
+             cfg->exportfield=(float *)calloc(sizeof(float)*dimxyz,gpu[gpuid].maxgate*2);
 	 }
      }
      if(cfg->exportdetected==NULL)
@@ -2089,6 +2089,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 {
      if(cfg->isnormalized){
 	   float scale=1.f;
+	   int isnormalized=0;
            MCX_FPRINTF(cfg->flog,"normalizing raw data ...\t");
            cfg->energyabs+=cfg->energytot-cfg->energyesc;
            if(cfg->outputtype==otFlux || cfg->outputtype==otFluence){
@@ -2099,16 +2100,33 @@ is more than what your have specified (%d), please use the -H option to specify 
 	   }else if(cfg->outputtype==otEnergy)
 	       scale=1.f/cfg->energytot;
 	   else if(cfg->outputtype==otJacobian || cfg->outputtype==otWP){
-	       scale=0.f;
-	       for(i=0;i<cfg->nphoton;i++)
-	           scale+=cfg->replay.weight[i];
-	       if(scale>0.f)
-	           scale=cfg->unitinmm/scale;
+	       if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1){
+                   int detid;
+		   for(detid=1;detid<=(int)cfg->detnum;detid++){
+	               scale=0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
+		       for(i=0;i<cfg->nphoton;i++)
+		           if(cfg->replay.detid[i]==detid)
+	                       scale+=cfg->replay.weight[i];
+	               if(scale>0.f)
+	                   scale=cfg->unitinmm/scale;
+                       MCX_FPRINTF(cfg->flog,"normalization factor for detector %d alpha=%f\n",detid, scale);  fflush(cfg->flog);
+                       mcx_normalize(cfg->exportfield+(detid-1)*dimxyz*gpu[gpuid].maxgate,scale,dimxyz*gpu[gpuid].maxgate,cfg->isnormalized);
+		   }
+		   isnormalized=1;
+	       }else{
+	           scale=0.f;
+	           for(i=0;i<cfg->nphoton;i++)
+	               scale+=cfg->replay.weight[i];
+	           if(scale>0.f)
+                       scale=cfg->unitinmm/scale;
+	       }
            }
          cfg->normalizer=scale;
 	 cfg->his.normalizer=scale;
-	 MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
-         mcx_normalize(cfg->exportfield,scale,fieldlen,cfg->isnormalized);
+         if(!isnormalized){
+             MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
+	     mcx_normalize(cfg->exportfield,scale,fieldlen,cfg->isnormalized);
+	 }
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
          MCX_FPRINTF(cfg->flog,"saving data to file ... %lu %d\t",fieldlen,gpu[gpuid].maxgate);
