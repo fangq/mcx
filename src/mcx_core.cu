@@ -1600,6 +1600,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          cfg->seeddata=malloc(cfg->maxdetphoton*sizeof(RandType)*RAND_BUF_LEN);
      cfg->detectedcount=0;
      cfg->his.detected=0;
+     cfg->his.respin=cfg->respin;
      cfg->energytot=0.f;
      cfg->energyabs=0.f;
      cfg->energyesc=0.f;
@@ -1622,7 +1623,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      param.maxgate=gpu[gpuid].maxgate;
 
-     if(cfg->respin>1){
+     if(ABS(cfg->respin)>1){
          if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1){
              field=(float *)calloc(sizeof(float)*dimxyz,gpu[gpuid].maxgate*2*cfg->detnum);
 	 }else{
@@ -1661,8 +1662,15 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      if(gpuphoton==0)
         return;
 
-     param.threadphoton=gpuphoton/gpu[gpuid].autothread/cfg->respin;
-     param.oddphotons=gpuphoton/cfg->respin-param.threadphoton*gpu[gpuid].autothread;
+     if(cfg->respin>=1){
+         param.threadphoton=gpuphoton/gpu[gpuid].autothread;
+         param.oddphotons=gpuphoton-param.threadphoton*gpu[gpuid].autothread;
+     }else if(cfg->respin<0){
+         param.threadphoton=-gpuphoton/gpu[gpuid].autothread/cfg->respin;
+         param.oddphotons=-gpuphoton/cfg->respin-param.threadphoton*gpu[gpuid].autothread;     
+     }else{
+         mcx_error(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value",__FILE__,__LINE__);
+     }
      totalgates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
 #pragma omp master
      if(totalgates>gpu[gpuid].maxgate && cfg->isnormalized){
@@ -1844,7 +1852,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #pragma omp barrier
 
      MCX_FPRINTF(cfg->flog,"\nGPU=%d (%s) threadph=%d extra=%d np=%d nthread=%d maxgate=%d repetition=%d\n",gpuid+1,gpu[gpuid].name,param.threadphoton,param.oddphotons,
-           gpuphoton,gpu[gpuid].autothread,gpu[gpuid].maxgate,cfg->respin);
+           gpuphoton,gpu[gpuid].autothread,gpu[gpuid].maxgate,ABS(cfg->respin));
      MCX_FPRINTF(cfg->flog,"initializing streams ...\t");
      fflush(cfg->flog);
 
@@ -1902,7 +1910,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            ,param.twin0*1e9,param.twin1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
-       for(iter=0;iter<(int)cfg->respin;iter++){
+       for(iter=0;iter<ABS(cfg->respin);iter++){
            CUDA_ASSERT(cudaMemset(gfield,0,sizeof(float)*fieldlen)); // cost about 1 ms
            CUDA_ASSERT(cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(detreclen)));
            if(cfg->issaveseed)
@@ -2010,7 +2018,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 is more than what your have specified (%d), please use the -H option to specify a greater number\t"
                            ,detected,cfg->maxdetphoton);
 		}else{
-			MCX_FPRINTF(cfg->flog,"detected %d photons, total: %d\t",detected,cfg->detectedcount+detected);
+			MCX_FPRINTF(cfg->flog,"detected %d photons, total: %ld\t",detected,cfg->detectedcount+detected);
 		}
 #pragma omp atomic
                 cfg->his.detected+=detected;
@@ -2036,7 +2044,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                CUDA_ASSERT(cudaMemcpy(field, gfield,sizeof(float)*fieldlen,cudaMemcpyDeviceToHost));
                MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
 
-               if(cfg->respin>1){
+               if(ABS(cfg->respin)>1){
                    for(i=0;i<(int)fieldlen;i++)  //accumulate field, can be done in the GPU
                       field[fieldlen+i]+=field[i];
                }
@@ -2047,7 +2055,7 @@ is more than what your have specified (%d), please use the -H option to specify 
        if(cfg->runtime<toc)
            cfg->runtime=toc;
 
-       if(cfg->respin>1)  //copy the accumulated fields back
+       if(ABS(cfg->respin)>1)  //copy the accumulated fields back
            memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
 
        if(cfg->isnormalized){
@@ -2152,8 +2160,9 @@ is more than what your have specified (%d), please use the -H option to specify 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
-     MCX_FPRINTF(cfg->flog,"simulated %d photons (%d) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
-             cfg->nphoton,cfg->nphoton,gpu[gpuid].autothread,cfg->respin,(double)cfg->nphoton/max(1,cfg->runtime)); fflush(cfg->flog);
+     MCX_FPRINTF(cfg->flog,"simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
+             (long int)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1),(long int)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1),
+	     gpu[gpuid].autothread,ABS(cfg->respin),(double)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1)/max(1,cfg->runtime)); fflush(cfg->flog);
      MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
              cfg->energytot,(cfg->energytot-cfg->energyesc)/cfg->energytot*100.f);fflush(cfg->flog);
      fflush(cfg->flog);

@@ -80,7 +80,8 @@ typedef struct MCXHistoryHeader{
 	float unitinmm;                /**< what is the voxel size of the simulation */
 	unsigned int  seedbyte;        /**< how many bytes per RNG seed */
         float normalizer;              /**< what is the normalization factor */
-	int reserved[5];               /**< reserved fields for future extension */
+	int respin;                    /**< if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset */
+	int reserved[4];               /**< reserved fields for future extension */
 } History;
 
 /**
@@ -147,7 +148,7 @@ typedef struct MCXConfig{
 	float4 *detpos;               /**<detector positions and radius, overwrite detradius*/
 
 	unsigned int maxgate;         /**<simultaneous recording gates*/
-	unsigned int respin;          /**<number of repeatitions*/
+	int respin;          /**<number of repeatitions*/
 	unsigned int printnum;        /**<number of printed threads (for debugging)*/
 	unsigned int reseedlimit;     /**<number of scattering events per thread before the RNG is reseeded*/
 	int gpuid;                    /**<the ID of the GPU to use, starting from 1, 0 for auto*/
@@ -180,7 +181,7 @@ typedef struct MCXConfig{
         History his;                 /**<header info of the history file*/
 	float *exportfield;          /**<memory buffer when returning the flux to external programs such as matlab*/
 	float *exportdetected;       /**<memory buffer when returning the partial length info to external programs such as matlab*/
-	unsigned int detectedcount;  /**<total number of detected photons*/
+	unsigned long int detectedcount;  /**<total number of detected photons*/
         char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
         char *shapedata;             /**<a pointer points to a string defining the JSON-formatted shape data*/
 	int maxvoidstep;             /**< max number of steps that a photon can advance before reaching a non-zero voxel*/

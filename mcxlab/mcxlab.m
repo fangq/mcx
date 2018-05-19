@@ -24,6 +24,8 @@ function varargout=mcxlab(varargin)
 %
 %== Required ==
 %     *cfg.nphoton:    the total number of photons to be simulated (integer)
+%                      maximum supported value is 2^31=2.1e9, if simulating more
+%                      photons is needed, please set cfg.respin to make multiple runs
 %     *cfg.vol:        a 3D array specifying the media index in the domain
 %     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
 %                      the first row corresponds to medium type 0 which is 
@@ -42,6 +44,7 @@ function varargout=mcxlab(varargin)
 %                      if set to a uint8 array, the binary data in each column is used 
 %                      to seed a photon (i.e. the "replay" mode)
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
+%                      if negative, divide the total photon number into respin subsets
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
 %      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
 %      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection

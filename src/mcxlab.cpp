@@ -348,7 +348,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
             /** return the total simulated photon number */
             val = mxCreateDoubleMatrix(1,1,mxREAL);
-            *mxGetPr(val) = cfg.nphoton;
+            *mxGetPr(val) = cfg.nphoton*((cfg.respin>1) ? (cfg.respin) : 1);
             mxSetFieldByNumber(stat,0,1, val);
 
             /** return the total simulated energy */
@@ -798,6 +798,9 @@ void mcx_validate_config(Config *cfg){
          cfg->issaveexit=0;
 	 cfg->ismomentum=0;
      }
+     if(cfg->respin==0)
+         mexErrMsgTxt("respin number can not be 0, check your -r/--repeat input or cfg.respin value");
+
      if(cfg->seed<0 && cfg->seed!=SEED_FROM_FILE) cfg->seed=time(NULL);
      if((cfg->outputtype==otJacobian || cfg->outputtype==otWP) && cfg->seed!=SEED_FROM_FILE)
          mexErrMsgTxt("Jacobian output is only valid in the reply mode. Please define cfg.seed");     
@@ -816,7 +819,7 @@ void mcx_validate_config(Config *cfg){
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
         if(cfg->seed==SEED_FROM_FILE){
-            if(cfg->respin>1){
+            if(cfg->respin>1 || cfg->respin<0){
 	       cfg->respin=1;
 	       fprintf(stderr,"Warning: respin is disabled in the replay mode\n");
 	    }

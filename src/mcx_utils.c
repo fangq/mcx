@@ -194,6 +194,7 @@ void mcx_initcfg(Config *cfg){
      cfg->his.version=1;
      cfg->his.unitinmm=1.f;
      cfg->his.normalizer=1.f;
+     cfg->his.respin=1;
      cfg->shapedata=NULL;
      cfg->seeddata=NULL;
      cfg->reseedlimit=10000000;
@@ -660,8 +661,11 @@ void mcx_prepdomain(char *filename, Config *cfg){
      }else{
      	mcx_error(-4,"one must specify a binary volume file in order to run the simulation",__FILE__,__LINE__);
      }
+     if(cfg->respin==0)
+        mcx_error(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value",__FILE__,__LINE__);
+
      if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
-        if(cfg->respin>1){
+        if(cfg->respin>1 || cfg->respin<0){
 	   cfg->respin=1;
 	   fprintf(stderr,"Warning: respin is disabled in the replay mode\n");
 	}
@@ -1652,6 +1656,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				break;
 		     case 'n':
 		     	        i=mcx_readarg(argc,argv,i,&(np),"float");
+				if((uint)np>0x7FFFFFFF)
+				    mcx_error(-2,"the maximum photon number per session is 2^31 = 2.1e9, please use -r if more photons are needed.",__FILE__,__LINE__);
 				cfg->nphoton=(int)np;
 		     	        break;
 		     case 't':
@@ -1980,7 +1986,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 == MC options ==\n\
 \n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
- -r [1|int]    (--repeat)      divide photons into r groups (1 per GPU call)\n\
+                               max value:2.14e9, use -r to run larger workload\n\
+ -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r\n\
+                               if negative, divide #photon into r subsets\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
