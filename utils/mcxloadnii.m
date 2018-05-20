@@ -14,7 +14,7 @@ function nii=mcxloadnii(filename)
 %                    uint8 per voxel, so datatype='uint8', datalen=3
 %        nii.voxelbyte: total number of bytes per voxel: for RGB data,
 %                    voxelbyte=3; also voxelbyte=header.bitpix/8
-%        nii.header: file header info, a structure has the full nii header
+%        nii.hdr: file header info, a structure has the full nii header
 %                    key subfileds include
 %
 %              sizeof_hdr: must be 348
@@ -32,6 +32,7 @@ function nii=mcxloadnii(filename)
 
 header = memmapfile(filename,                ...
       'Offset', 0,                           ...
+      'Writable', false,                     ...
       'Format', {                            ...
      'int32'   [1 1]  'sizeof_hdr'    ; %!< MUST be 348 	      %  % int sizeof_hdr;       %  ...
      'int8'    [1 10] 'data_type'     ; %!< ++UNUSED++  	      %  % char data_type[10];   %  ...
@@ -79,7 +80,7 @@ header = memmapfile(filename,                ...
      'int8'    [1 4]  'extension'	    %!< header extension	  %				...
          });
 
-nii.header=header.Data(1);
+nii.hdr=header.Data(1);
      
 type2byte=[
         0  0  % unknown                      %
@@ -125,7 +126,7 @@ type2str={
     'uint8'    4   % 4 byte RGBA (32 bits/voxel)   %
 };
 
-typeidx=find(type2byte(:,1)==nii.header.datatype);
+typeidx=find(type2byte(:,1)==nii.hdr.datatype);
 
 nii.datatype=type2str{typeidx,1};
 nii.datalen=type2str{typeidx,2};
@@ -137,13 +138,13 @@ if(type2byte(typeidx,2)==0)
 end
 
 if(type2str{typeidx,2}>1)
-    nii.header.dim=[nii.header.dim(1)+1 uint16(nii.datalen) nii.header.dim(2:end)]; 
+    nii.hdr.dim=[nii.hdr.dim(1)+1 uint16(nii.datalen) nii.hdr.dim(2:end)]; 
 end
 
 fid=fopen(filename,'rb');
-fseek(fid,nii.header.vox_offset,'bof');
-nii.img=fread(fid,prod(nii.header.dim(2:nii.header.dim(1)+1)),[nii.datatype '=>' nii.datatype]);
+fseek(fid,nii.hdr.vox_offset,'bof');
+nii.img=fread(fid,prod(nii.hdr.dim(2:nii.hdr.dim(1)+1)),[nii.datatype '=>' nii.datatype]);
 fclose(fid);
 
-nii.img=reshape(nii.img,nii.header.dim(2:nii.header.dim(1)+1));
+nii.img=reshape(nii.img,nii.hdr.dim(2:nii.hdr.dim(1)+1));
 

@@ -24,7 +24,7 @@ function [data, header]=mcxloadfile(fname,varargin)
 [pathstr,name,ext] = fileparts(fname);
 
 if(strcmpi(ext,'.nii'))
-    nii=load_nii(fname,varargin{:});
+    nii=mcxloadnii(fname,varargin{:});
     data=nii.img;
     header=nii.hdr;
 elseif(strcmpi(ext,'.mc2'))
