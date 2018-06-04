@@ -76,7 +76,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','-','m','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','\0'};
 
 /**
  * Long command line options
@@ -93,7 +93,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
-                 "--momentum",""};
+                 "--momentum","--specular",""};
 
 /**
  * Output data types
@@ -218,6 +218,7 @@ void mcx_initcfg(Config *cfg){
      cfg->faststep=0;
      cfg->srcdir.w=0.f;
      cfg->issaveref=0;
+     cfg->isspecular=0;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
@@ -1099,7 +1100,15 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                              MCX_ERROR(-1,"Incomplete pattern data");
                          }
                      }
-                 }
+                 }else if(pat){
+                     FILE *fid=fopen(pat->valuestring,"rb");
+		     if(fid!=NULL){
+		         if(cfg->srcpattern) free(cfg->srcpattern);
+                         cfg->srcpattern=(float*)calloc(nx*ny*nz,sizeof(float));
+                         fread((void*)cfg->srcpattern,sizeof(float),nx*ny*nz,fid);
+			 fclose(fid);
+                     }
+		 }
               }
            }
         }
@@ -1149,6 +1158,11 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(!cfg->issavedet)   cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
         if(!cfg->issaveexit)  cfg->issaveexit=FIND_JSON_KEY("DoSaveExit","Session.DoSaveExit",Session,cfg->issaveexit,valueint);
         if(!cfg->issaveseed)  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
+        if(!cfg->autopilot)   cfg->autopilot=FIND_JSON_KEY("DoAutoThread","Session.DoAutoThread",Session,cfg->autopilot,valueint);
+	if(!cfg->ismomentum)  cfg->ismomentum=FIND_JSON_KEY("DoDCS","Session.DoDCS",Session,cfg->ismomentum,valueint);
+	if(!cfg->isspecular)  cfg->isspecular=FIND_JSON_KEY("DoSpecular","Session.DoSpecular",Session,cfg->isspecular,valueint);
+	if(!cfg->debuglevel)  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("Debug","Session.Debug",Session,"",valuestring),debugflag);
+
         cfg->reseedlimit=FIND_JSON_KEY("ReseedLimit","Session.ReseedLimit",Session,cfg->reseedlimit,valueint);
         if(!cfg->outputformat)  cfg->outputformat=mcx_keylookup((char *)FIND_JSON_KEY("OutputFormat","Session.OutputFormat",Session,"mc2",valuestring),outputformat);
         if(cfg->outputformat<0)
@@ -1779,6 +1793,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                      case 'k':
                                 i=mcx_readarg(argc,argv,i,&(cfg->voidtime),"int");
                                 break;
+		     case 'V':
+		     	        i=mcx_readarg(argc,argv,i,&(cfg->isspecular),"char");
+		     	        break;
                      case 'v':
                                 mcx_version(cfg);
 				break;
@@ -2008,6 +2025,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       if 0, replay all detectors and sum all Jacobians\n\
 			       if -1, replay all detectors and save separately\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
+ -V [0|1]      (--specular)    1 source located in the background,0 inside mesh\n\
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\

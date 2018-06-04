@@ -163,7 +163,8 @@ typedef struct MCXConfig{
 	char issavedet;              /**<1 to count all photons hits the detectors*/
 	char issave2pt;              /**<1 to save the 2-point distribution, 0 do not save*/
 	char isgpuinfo;              /**<1 to print gpu info when attach, 0 do not print*/
-        char issrcfrom0;             /**<1 do not subtract 1 from src/det positions, 0 subtract 1*/
+        char isspecular;             /**<1 calculate the initial specular ref if outside the mesh, 0 do not calculate*/
+	char issrcfrom0;             /**<1 do not subtract 1 from src/det positions, 0 subtract 1*/
         char isdumpmask;             /**<1 dump detector mask; 0 not*/
 	char autopilot;              /**<1 optimal setting for dedicated card, 2, for non dedicated card*/
 	char issaveseed;             /**<1 save the seed for a detected photon, 0 do not save*/
