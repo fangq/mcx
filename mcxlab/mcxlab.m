@@ -48,6 +48,7 @@ function varargout=mcxlab(varargin)
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
 %      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
 %      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
+%      cfg.ispecular:  1-calculate specular reflection if source is outside, [0] no specular reflection
 %      cfg.maxgate:    the num of time-gates per simulation
 %      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
 %      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
