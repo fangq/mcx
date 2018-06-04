@@ -91,6 +91,7 @@ Session=copycfg(cfg,'isnormalize',Session,'DoNormalize');
 Session=copycfg(cfg,'outputformat',Session,'OutputFormat');
 Session=copycfg(cfg,'outputtype',Session,'OutputType');
 Session=copycfg(cfg,'debuglevel',Session,'Debug');
+Session=copycfg(cfg,'autopilot',Session,'DoAutoThread');
 
 if(isfield(cfg,'seed') && numel(cfg.seed)==1)
     Session.RNGSeed=cfg.seed;
