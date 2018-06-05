@@ -864,7 +864,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
-     cfg->his.colcount=cfg->medianum+1+(cfg->issaveexit)*6; /*column count=maxmedia+2*/
+     cfg->his.colcount=cfg->medianum+1+(cfg->issaveexit)*6+((cfg->ismomentum>0)*(cfg->medianum-1)); /*column count=maxmedia+2*/
 
      if(in==stdin)
      	fprintf(stdout,"Please specify the source type[pencil|cone|gaussian]:\n\t");
@@ -1206,7 +1206,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
-     cfg->his.colcount=cfg->medianum+1+(cfg->issaveexit)*6; /*column count=maxmedia+2*/
+     cfg->his.colcount=cfg->medianum+1+(cfg->issaveexit)*6+((cfg->ismomentum>0)*(cfg->medianum-1)); /*column count=maxmedia+2*/
      return 0;
 }
 
