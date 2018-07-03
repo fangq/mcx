@@ -1329,8 +1329,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 			(flipdir==0) ?
         		    (p.x=mcx_nextafterf(__float2int_rn(p.x), (v->x > 0.f)-(v->x < 0.f))) :
 			    ((flipdir==1) ? 
-				(p.y=mcx_nextafterf(__float2int_rn(p.y), (v->x > 0.f)-(v->x < 0.f))) :
-				(p.z=mcx_nextafterf(__float2int_rn(p.z), (v->x > 0.f)-(v->x < 0.f))) );
+				(p.y=mcx_nextafterf(__float2int_rn(p.y), (v->y > 0.f)-(v->y < 0.f))) :
+				(p.z=mcx_nextafterf(__float2int_rn(p.z), (v->z > 0.f)-(v->z < 0.f))) );
 	                GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v->x,v->y,v->z));
                 	idx1d=idx1dold;
 		 	mediaid=(media[idx1d] & MED_MASK);
