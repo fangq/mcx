@@ -44,6 +44,7 @@ cudaMemcpyDeviceToHost);}
 #define int3(a,b,c) make_int3(a,b,c)               /**< int3 constructor */
 #define uint2(a,b) make_uint2(a,b)                 /**< uint2 constructor */
 #define uint3(a,b,c) make_uint3(a,b,c)             /**< uint3 constructor */
+#define uint4(a,b,c,d) make_uint4(a,b,c,d)         /**< uint4 constructor */
 #define float1(a) make_float1(a)                   /**< float1 constructor */
 #define float2(a,b) make_float2(a,b)               /**< float2 constructor */
 #define float3(a,b,c) make_float3(a,b,c)           /**< float3 constructor */

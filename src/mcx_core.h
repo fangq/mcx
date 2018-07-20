@@ -38,6 +38,7 @@ extern "C" {
 #define MCX_DEBUG_RNG       1                   /**< MCX debug flags */
 #define MCX_DEBUG_MOVE      2
 #define MCX_DEBUG_PROGRESS  4
+#define MAX_ACCUM           1000.f
 
 #define ROULETTE_SIZE       10.f                /**< Russian Roulette size */
 
@@ -110,7 +111,7 @@ typedef struct  __align__(16) KernelParams {
   float4 ps;                         /**< initial position vector, for pencil beam */
   float4 c0;                         /**< initial directon vector, for pencil beam */
   float3 maxidx;                     /**< maximum index in x/y/z directions for out-of-bound tests */
-  uint3  dimlen;                     /**< maximum index used to convert x/y/z to 1D array index */
+  uint4  dimlen;                     /**< maximum index used to convert x/y/z to 1D array index */
   uint3  cp0;                        /**< 3D coordinates of one diagonal of the cached region  (obsolete) */
   uint3  cp1;                        /**< 3D coordinates of the other diagonal of the cached region  (obsolete) */
   uint2  cachebox;                   /**< stride for cachebox data acess  (obsolete) */

@@ -102,11 +102,11 @@ extern __shared__ float sharedmem[];
  * @brief Floating-point atomic addition
  */
  
-__device__ inline void atomicadd(float* address, float value){
+__device__ inline float atomicadd(float* address, float value){
 
 #if __CUDA_ARCH__ >= 200 ///< for Fermi, atomicAdd supports floats
 
-  atomicAdd(address,value);
+  return atomicAdd(address,value);
 
 #elif __CUDA_ARCH__ >= 110
 
@@ -114,7 +114,7 @@ __device__ inline void atomicadd(float* address, float value){
 // http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561
   float old = value;  
   while ((old = atomicExch(address, atomicExch(address, 0.0f)+old))!=0.0f);
-
+  return old;
 #endif
 
 }
@@ -1247,7 +1247,13 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                }else{
 	          /** accummulate the quality to the volume using atomic operations  */
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
-		  atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
+		  float oldval=atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
+		  if(oldval>MAX_ACCUM){
+			if(atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], -oldval)<0.f)
+			    atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], oldval);
+			else
+			    atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
+		  }
                   GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1dold,weight,p.w));
                }
   #endif
@@ -1529,7 +1535,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      size_t fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
      uint2 cachebox;
-     uint3 dimlen;
+     uint4 dimlen;
      float Vvox,fullload=0.f;
 
      dim3 mcgrid, mcblock;
@@ -1560,7 +1566,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
-		     p0,c0,maxidx,uint3(0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
+		     p0,c0,maxidx,uint4(0,0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
@@ -1748,7 +1754,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      CUDA_ASSERT(cudaMalloc((void **) &gmedia, sizeof(uint)*(dimxyz)));
      //CUDA_ASSERT(cudaBindTexture(0, texmedia, gmedia));
-     CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen));
+     CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen*2));
      CUDA_ASSERT(cudaMalloc((void **) &gPpos, sizeof(float4)*gpu[gpuid].autothread));
      CUDA_ASSERT(cudaMalloc((void **) &gPdir, sizeof(float4)*gpu[gpuid].autothread));
      CUDA_ASSERT(cudaMalloc((void **) &gPlen, sizeof(float4)*gpu[gpuid].autothread));
@@ -1806,6 +1812,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      dimlen.y=cfg->dim.y*cfg->dim.x;
 
      dimlen.z=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+     dimlen.w=fieldlen;
 
      param.dimlen=dimlen;
      param.cachebox=cachebox;
@@ -1911,7 +1918,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
        //total number of repetition for the simulations, results will be accumulated to field
        for(iter=0;iter<ABS(cfg->respin);iter++){
-           CUDA_ASSERT(cudaMemset(gfield,0,sizeof(float)*fieldlen)); // cost about 1 ms
+           CUDA_ASSERT(cudaMemset(gfield,0,sizeof(float)*fieldlen*2)); // cost about 1 ms
            CUDA_ASSERT(cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(detreclen)));
            if(cfg->issaveseed)
 	       CUDA_ASSERT(cudaMemset(gseeddata,0,sizeof(RandType)*cfg->maxdetphoton*RAND_BUF_LEN));
@@ -2041,8 +2048,12 @@ is more than what your have specified (%d), please use the -H option to specify 
 
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
-               CUDA_ASSERT(cudaMemcpy(field, gfield,sizeof(float)*fieldlen,cudaMemcpyDeviceToHost));
+	       float *rawfield=(float*)malloc(sizeof(float)*fieldlen*2);
+               CUDA_ASSERT(cudaMemcpy(rawfield, gfield,sizeof(float)*fieldlen*2,cudaMemcpyDeviceToHost));
                MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
+	       for(i=0;i<(int)fieldlen;i++)  //accumulate field, can be done in the GPU
+	           field[i]=rawfield[i]+rawfield[i+fieldlen];
+	       free(rawfield);
 
                if(ABS(cfg->respin)>1){
                    for(i=0;i<(int)fieldlen;i++)  //accumulate field, can be done in the GPU
