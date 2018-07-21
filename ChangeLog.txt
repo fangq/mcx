@@ -2,6 +2,72 @@
 
 == MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
 
+ 2018-07-21*[7850c32] support photon numbers over 2^31, new limit 2^63-1 after fixing #41
+ 2018-07-20*[db5a349] use extra global memory to help reduce roundoff error, fix #41
+ 2018-07-02 [8aba23b] fix a regression introduced in 29ea426, fix #40
+ 2018-06-04 [d9bdb33] fix incorrect column number when momentum transfer is recorded
+ 2018-06-04 [cf81b30] read RNGSeed field from the JSON file
+ 2018-06-04 [8cd8a69] support autopilot flag in JSON, fix typo
+ 2018-06-04 [c90b8b3] add specular reflection flag, passing more session flags via the JSON file
+ 2018-06-04*[3e5a1d8] add mcxlab cfg to json input file converter
+ 2018-05-19 [d28c36e] use load_nii compatible output, make sure nii is read-only
+ 2018-05-19*[78ee1ec] add built-in loadnii support
+ 2018-05-19 [1854eee] fix normalization bug in replayall mode
+ 2018-05-19*[7f1b574] positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
+ 2018-05-15 [a7632bc] fix bugs in checking replaydet values
+ 2018-05-15 [e5db8cd] output 5-dim fluence when replaydet=-1,two replay test script,add help for replaydet
+ 2018-05-14*[651c53f] replay for all detectors with -Y -1
+ 2018-05-03 [91765e1] fix issue #38, revert the regression introduced in commit 95b43708
+ 2018-05-03 [6743d25] partially fixing issue #38
+ 2018-04-07*[b537309] complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
+ 2018-04-07 [63bce2b] initial port of mmc momentum transfer calculations for DCS
+ 2018-04-07 [acef0cf] GUI update on high-res displays
+ 2018-04-02 [6ea1171] set default output format to mc2 again
+ 2018-03-31 [4884ab1] make mcxstudio work for mmc
+ 2018-03-30 [8af5a37] disable button event on the mac
+ 2018-03-30 [dbbe943] prevent double execution
+ 2018-03-29 [cbaaed7] fix double execution when clicking Run
+ 2018-03-29 [ac6c972] make mcxlab to call mcxcl without error
+ 2018-03-29 [b42b51b] fix dumpmask not working on mcxcl bug
+ 2018-03-27 [13fd3f8] fix mac remote execution path
+ 2018-03-27 [4b3af81] fix mac run cmd path bug
+ 2018-03-27 [053c9b1] replace ssh with scp;debug search path on mac
+ 2018-03-27 [ccccab8] fix mac run issue
+ 2018-03-27 [1d1242b] allow both plink and sshpass to download files
+ 2018-03-26 [9b5c010] set default path for mac to home dir
+ 2018-03-26 [07de76e] replace ssh to scp in sshpass remote file download
+ 2018-03-25 [1566fb0] fix typo after replacement
+ 2018-03-25 [b90a66d] do not print password, add matlab path
+ 2018-03-25 [5d1e4ac] use parameter and executable to define command line
+ 2018-03-25 [c7c1445] add longer delay in matlab launching
+ 2018-03-25 [b2a1152] use TProcess for Mac for execution and matlab
+ 2018-03-25 [e08f041] use TProcess on mac to call external commands
+ 2018-03-25 [c633d87] give an error if the executable is not found
+ 2018-03-23 [4766639] use home dir to write output on mac
+ 2018-03-22 [5c64bfa] fix default matlab path; fix search path for mac
+ 2018-03-22 [9844842] fix minor bugs in mcxplotvol
+ 2018-03-21 [2864522] enable src editor for mcxcl
+ 2018-03-21 [cb6c185] update atomic flag
+ 2018-03-21 [9769f8a] move help info from title to a help button
+ 2018-03-21 [cb2fa99] update mcxstudio folder structure
+ 2018-03-21 [6a17a9c] change default mcxsuite folder structure
+ 2018-03-17*[5b083b4] make mcxlab compatible with mcxlabcl to call opencl
+ 2018-03-12 [1014527] fix crash due to incorrect column number
+ 2018-03-12 [f5bf5b8] make mcxstudio compile on windows
+ 2018-03-11 [74723b1] add ID column for media and detector, addpath to matlab
+ 2018-03-11 [74b2d57] fix #32: unknown verbose option --root bug
+ 2018-03-11 [a0d445b] fix Windows low quality host RNG due to 15bit rand(), fix #31
+ 2018-03-09 [521fb85] compile on lazarus 1.8.2 with glscene svn 7114
+ 2018-03-09 [f29aa12] enable GUI scaling for high dpi displays
+ 2018-03-09 [e38bcab] remove memory leak in domain window
+ 2018-03-02 [5a43a1d] avoid casting double in xor and xoro RNGs
+ 2018-03-02 [1624105] change default RNG to xoroshiro128+, about 5% faster
+ 2018-02-28 [ae22a57] make posix RNG work again
+ 2018-02-28 [a78999d] output trajectory photon id in interger format
+ 2018-02-19 [779b27e] avoid out-of-bound error when saving diffuse reflectance
+ 2018-02-09 [95b4370] fix diffuse reflectance bug - must be performed after boundary reflection
+ 2018-02-09 [d719e78] mcxstudio update
+ 2018-01-31 [f90ee6e] support 3d pattern source in mcxstudio, automatic increase media count
  2018-01-31 [589ce45] support 3D pattern with type 'pattern3d'
  2018-01-29 [1b9493b]*add mcxpreview to preview the simulation domain settings
  2018-01-28 [5f748de] fix crash when saving diffuse reflectance

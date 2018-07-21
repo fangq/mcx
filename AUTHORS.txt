@@ -4,7 +4,7 @@ Department of Bioengineering at Northeastern University.
 
 Address: Dept. of Bioengineering
          Northeastern University
-         360 Huntington Ave, Boston, MA 02115
+         360 Huntington Ave, ISEC 206, Boston, MA 02115, USA
 URL: http://fanglab.org
 Email: <q.fang at neu.edu>
 

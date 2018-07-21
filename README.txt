@@ -3,9 +3,10 @@
                           CUDA Edition
 ---------------------------------------------------------------------
 
-Author: Qianqian Fang <q.fang at neu.edu>
+Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.0 Final (v2018, Dark Matter)
+Version: 1.0 Final (v2018, Dark Matter - Final)
+Website: http://mcx.space
 
 ---------------------------------------------------------------------
 
@@ -35,7 +36,7 @@ Carlo (MC) simulations at a blazing speed, typically hundreds to
 a thousand times faster than a fully optimized CPU-based MC 
 implementation.
 
-The algorithm of this software is detailed in the Reference [1]. 
+The algorithm of this software is detailed in the References [1,2]. 
 A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
@@ -76,17 +77,18 @@ For MCX-CUDA, the requirements for using this software include
 
 *. a CUDA capable NVIDIA graphics card
 *. pre-installed NVIDIA graphics driver
-*. pre-installed CUDA toolkit [1] (no longer needed for v2016.4 and later)
 
 You must use a CUDA capable NVIDIA graphics card in order to use
 MCX. A list of CUDA capable cards can be found at [2]. The oldest 
-graphics card that MCX supports is GeForce 8XXX series (circa 2006).
+graphics card that MCX supports is the Fermi series (circa 2010).
 Using the latest NVIDIA card is expected to produce the best
-speed (GTX 4xx is twice faster than 2xx, which is twice faster than 
-8800/9800). To use the "fermi" version of MCX, you must have a 
-fermi (GTX 4xx) or newer (5xx/6xx/7xx/9xx/10xx series) graphics card.
-The fermi version of MCX supports atomic operations and photon
-detection within a single binary.
+speed. You must have a fermi (GTX 4xx) or newer 
+(5xx/6xx/7xx/9xx/10xx series) graphics card. The default release 
+of MCX supports atomic operations and photon detection within a 
+single binary. In the below webpage, we summarized the speed differences
+between different generations of NVIDIA GPUs
+
+http://mcx.space/gpubench/
 
 For simulations with large volumes, sufficient graphics memory 
 is also required to perform the simulation. The minimum amount of 
@@ -99,8 +101,29 @@ MCX does not require double-precision support in your hardware.
 
 To install MCX, you need to download the binary executable compiled for your 
 computer architecture (32 or 64bit) and platform, extract the package 
-and run the executable under the <mcx root>/bin directory. For Linux
-and MacOS users, you need to add the following lines to your
+and run the executable under the <mcx root>/bin directory. 
+
+For Windows users, you must make sure you have installed the appropriate
+NVIDIA driver for your GPU. You should also configure your OS to run
+CUDA simulations. This requires you to open the mcx/setup/win64 folder
+using your file explorer, right-click on the "apply_timeout_registry_fix.bat"
+file and select "Run as administrator". After confirmation, you should 
+see a windows command window with message 
+
+  Patching your registry
+  Done
+  Press any key to continue ...
+
+You must reboot your Windows computer to make this setting effective.
+The above patch modifies your driver settings so that you can run MCX 
+simulations for longer than a few seconds. Otherwise, when running MCX
+for over a few seconds, you will get a CUDA error: "unspecified error".
+
+Please see the below link for details
+
+http://mcx.space/wiki/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_error_what_is_that
+
+For Linux and MacOS users, you need to add the following lines to your
 shell initialization scripts. First, use "echo $SHELL" command to 
 identify your shell type. For csh/tcsh, add the following lines 
 to your ~/.cshrc file:
@@ -146,7 +169,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::ca98bb $ Last $Date::2017-07-05 12:27:41 -04$ by $Author::Qianqian Fang $
+$Rev::7850c3 $ Last $Date::2018-07-21 12:28:44 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -158,7 +181,9 @@ where possible parameters include (the first value in [*|*] is the default)
 == MC options ==
 
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
- -r [1|int]    (--repeat)      divide photons into r groups (1 per GPU call)
+                               max accepted value:9.2234e+18 on 64bit systems
+ -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r
+                               if negative, divide #photon into r subsets
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
  -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
@@ -175,9 +200,11 @@ where possible parameters include (the first value in [*|*] is the default)
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given 
                                detector (det ID starts from 1), used with -E 
+			       if 0, replay all detectors and sum all Jacobians
+			       if -1, replay all detectors and save separately
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
+ -V [0|1]      (--specular)    1 source located in the background,0 inside mesh
  -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG
- -F [0|1]      (--faststep)    1-use fast 1mm stepping, [0]-precise ray-tracing
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
  -g [1|int]    (--gategroup)   number of time gates per run
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
@@ -201,10 +228,15 @@ where possible parameters include (the first value in [*|*] is the default)
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels
                                right outside of the domain; if non-zero voxels
 			       appear at the boundary, pad 0s before using -X
+ -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
  -H [1000000] (--maxdetphoton) max number of detected photons
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
+ -F [mc2|...] (--outputformat) fluence data output format:
+                               mc2 - MCX mc2 format (binary 32bit float)
+                               nii - Nifti format
+                               hdr - Analyze 7.5 hdr/img format
  -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit
                                J - Jacobian (replay mode),   P - scattering
                                event counts at each voxel (replay mode only)
@@ -234,6 +266,7 @@ where possible parameters include (the first value in [*|*] is the default)
  --maxjumpdebug [1000000|int]  when trajectory is requested (i.e. -D M),
                                use this parameter to set the maximum positions
                                stored (default: 1e6)
+ --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing
 
 == Example ==
 example: (autopilot mode)
@@ -801,8 +834,12 @@ XI. Reference
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
 Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009).
 
+[2] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, \
+"Scalable and massively parallel Monte Carlo photon transport simulations \
+for heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).
+
 If you use MCX in your research, the author of this software would like
-you to cite the above paper in your related publications.
+you to cite the above papers in your related publications.
 
 Links: 
 
