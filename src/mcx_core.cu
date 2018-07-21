@@ -1528,9 +1528,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float4 c0=cfg->srcdir;
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
      float *energy;
-     int timegate=0, totalgates, gpuid, gpuphoton=0,threadid=0;
+     int timegate=0, totalgates, gpuid, threadid=0;
+     size_t gpuphoton=0, photoncount=0;
 
-     unsigned int photoncount=0,printnum;
+     unsigned int printnum;
      unsigned int tic,tic0,tic1,toc=0,debuglen=MCX_DEBUG_REC_LEN;
      size_t fieldlen;
      uint3 cp0=cfg->crop0,cp1=cfg->crop1;
@@ -1858,7 +1859,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 }
 #pragma omp barrier
 
-     MCX_FPRINTF(cfg->flog,"\nGPU=%d (%s) threadph=%d extra=%d np=%d nthread=%d maxgate=%d repetition=%d\n",gpuid+1,gpu[gpuid].name,param.threadphoton,param.oddphotons,
+     MCX_FPRINTF(cfg->flog,"\nGPU=%d (%s) threadph=%d extra=%d np=%ld nthread=%d maxgate=%d repetition=%d\n",gpuid+1,gpu[gpuid].name,param.threadphoton,param.oddphotons,
            gpuphoton,gpu[gpuid].autothread,gpu[gpuid].maxgate,ABS(cfg->respin));
      MCX_FPRINTF(cfg->flog,"initializing streams ...\t");
      fflush(cfg->flog);
@@ -2115,7 +2116,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                    int detid;
 		   for(detid=1;detid<=(int)cfg->detnum;detid++){
 	               scale=0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
-		       for(i=0;i<cfg->nphoton;i++)
+		       for(size_t i=0;i<cfg->nphoton;i++)
 		           if(cfg->replay.detid[i]==detid)
 	                       scale+=cfg->replay.weight[i];
 	               if(scale>0.f)
@@ -2126,7 +2127,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 		   isnormalized=1;
 	       }else{
 	           scale=0.f;
-	           for(i=0;i<cfg->nphoton;i++)
+	           for(size_t i=0;i<cfg->nphoton;i++)
 	               scale+=cfg->replay.weight[i];
 	           if(scale>0.f)
                        scale=cfg->unitinmm/scale;

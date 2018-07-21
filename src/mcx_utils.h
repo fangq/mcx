@@ -123,7 +123,7 @@ typedef struct MCXGPUInfo {
  */
 
 typedef struct MCXConfig{
-	int nphoton;                  /**<total simulated photon number*/
+	size_t nphoton;               /**<total simulated photon number*/
         unsigned int nblocksize;      /**<thread block size*/
 	unsigned int nthread;         /**<num of total threads, multiple of 128*/
 	int seed;                     /**<random number generator seed*/

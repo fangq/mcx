@@ -697,16 +697,17 @@ void mcx_prepdomain(char *filename, Config *cfg){
 
 void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,itmp;
+     size_t count;
      float dtmp;
      char filename[MAX_PATH_LENGTH]={'\0'}, comment[MAX_PATH_LENGTH],strtypestr[MAX_SESSION_LENGTH]={'\0'},*comm;
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
-     MCX_ASSERT(fscanf(in,"%d", &(i) )==1);
-     if(cfg->nphoton==0) cfg->nphoton=i;
+     MCX_ASSERT(fscanf(in,"%ld", &(count) )==1);
+     if(cfg->nphoton==0) cfg->nphoton=count;
      comm=fgets(comment,MAX_PATH_LENGTH,in);
      if(in==stdin)
-     	fprintf(stdout,"%d\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
+     	fprintf(stdout,"%ld\nPlease specify the random number generator seed: [1234567]\n\t",cfg->nphoton);
      if(cfg->seed==0){
         MCX_ASSERT(fscanf(in,"%d", &(cfg->seed) )==1);
      }else{
@@ -1220,7 +1221,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 void mcx_saveconfig(FILE *out, Config *cfg){
      uint i;
 
-     fprintf(out,"%d\n", (cfg->nphoton) );
+     fprintf(out,"%ld\n", (cfg->nphoton) );
      fprintf(out,"%d\n", (cfg->seed) );
      fprintf(out,"%f %f %f\n", (cfg->srcpos.x),(cfg->srcpos.y),(cfg->srcpos.z) );
      fprintf(out,"%f %f %f\n", (cfg->srcdir.x),(cfg->srcdir.y),(cfg->srcdir.z) );
@@ -1670,9 +1671,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				break;
 		     case 'n':
 		     	        i=mcx_readarg(argc,argv,i,&(np),"float");
-				if((uint)np>0x7FFFFFFF)
-				    mcx_error(-2,"the maximum photon number per session is 2^31 = 2.1e9, please use -r if more photons are needed.",__FILE__,__LINE__);
-				cfg->nphoton=(int)np;
+				cfg->nphoton=(size_t)np;
 		     	        break;
 		     case 't':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->nthread),"int");
@@ -2003,7 +2002,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 == MC options ==\n\
 \n\
  -n [0|int]    (--photon)      total photon number (exponential form accepted)\n\
-                               max value:2.14e9, use -r to run larger workload\n\
+                               max accepted value:9.2234e+18 on 64bit systems\n\
  -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r\n\
                                if negative, divide #photon into r subsets\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\

@@ -625,7 +625,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
             memcpy(cfg->replay.seed,mxGetData(item),arraydim[0]*arraydim[1]);
             cfg->seed=SEED_FROM_FILE;
             cfg->nphoton=arraydim[1];
-            printf("mcx.nphoton=%d;\n",cfg->nphoton);
+            printf("mcx.nphoton=%ld;\n",cfg->nphoton);
         }
     }else if(strcmp(name,"gpuid")==0){
         int len=mxGetNumberOfElements(item);
