@@ -40,6 +40,9 @@ function [data, headerstruct, photonseed]=loadmch(fname,format,endian)
 
 if(nargin==1)
    format='float';
+   if(regexp(fname,'\.[mM][cC][tT]$'))
+       format='float32=>float32';
+   end
 end
 
 if(nargin<3)

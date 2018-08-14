@@ -2008,6 +2008,13 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #pragma omp critical
 {
 	       if(debugrec>0){
+		   if(debugrec>cfg->maxdetphoton){
+			MCX_FPRINTF(cfg->flog,"WARNING: the saved trajectory positions (%d) \
+are more than what your have specified (%d), please use the --maxjumpdebug option to specify a greater number\n"
+                           ,debugrec,cfg->maxjumpdebug);
+		   }else{
+			MCX_FPRINTF(cfg->flog,"saved %ud trajectory positions, total: %d\t",debugrec,cfg->maxjumpdebug+debugrec);
+		   }
                    debugrec=min(debugrec,cfg->maxjumpdebug);
 	           cfg->exportdebugdata=(float*)realloc(cfg->exportdebugdata,(cfg->debugdatalen+debugrec)*debuglen*sizeof(float));
                    CUDA_ASSERT(cudaMemcpy(cfg->exportdebugdata+cfg->debugdatalen, gdebugdata,sizeof(float)*debuglen*debugrec,cudaMemcpyDeviceToHost));
@@ -2155,6 +2162,13 @@ is more than what your have specified (%d), please use the -H option to specify 
 
          cfg->his.detected=cfg->detectedcount;
          mcx_savedetphoton(cfg->exportdetected,cfg->seeddata,cfg->detectedcount,0,cfg);
+     }
+     if((cfg->debuglevel & MCX_DEBUG_MOVE) && cfg->parentid==mpStandalone && cfg->exportdebugdata){
+         cfg->his.colcount=MCX_DEBUG_REC_LEN;
+         cfg->his.savedphoton=cfg->debugdatalen;
+	 cfg->his.totalphoton=cfg->nphoton;
+         cfg->his.detected=0;
+         mcx_savedetphoton(cfg->exportdebugdata,NULL,cfg->debugdatalen,0,cfg);
      }
 }
 #pragma omp barrier

@@ -233,6 +233,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	}
         if(nlhs>=5){
 	    cfg.exportdebugdata=(float*)malloc(cfg.maxjumpdebug*sizeof(float)*MCX_DEBUG_REC_LEN);
+	    cfg.debuglevel |= MCX_DEBUG_MOVE;
 	}
 	
 	/** Validate all input fields, and warn incompatible inputs */

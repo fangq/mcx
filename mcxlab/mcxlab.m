@@ -151,7 +151,7 @@ function varargout=mcxlab(varargin)
 %                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
-%      cfg.maxjumpdebug: [1000000|int] when trajectory is requested in the output, 
+%      cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output, 
 %                     use this parameter to set the maximum position stored. By default,
 %                     only the first 1e6 positions are stored.
 %
@@ -181,11 +181,11 @@ function varargout=mcxlab(varargin)
 %            of seed equals that of detphoton.
 %      trajectory: (optional), if given, mcxlab returns the trajectory data for
 %            each simulated photon. The output has 6 rows, the meanings are 
-%               1:    index of the photon packet
-%		2-4:  x/y/z/ of each trajectory position
-%		5:    current photon packet weight
-%		6:    reserved
-%            By default, mcxlab only records the first 1e6 positions along all
+%               id:  1:    index of the photon packet
+%               pos: 2-4:  x/y/z/ of each trajectory position
+%                    5:    current photon packet weight
+%                    6:    reserved
+%            By default, mcxlab only records the first 1e7 positions along all
 %            simulated photons; change cfg.maxjumpdebug to define a different limit.
 %
 %
