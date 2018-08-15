@@ -99,7 +99,7 @@ else
   endif
 endif
 
-CUGENCODE?=-arch=sm_30
+CUGENCODE?=-arch=sm_20
 OUTPUTFLAG:=-o
 
 logfast:    CUCCOPT+=-use_fast_math

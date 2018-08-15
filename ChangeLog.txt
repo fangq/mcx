@@ -2,6 +2,9 @@
 
 == MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
 
+ 2018-08-15 [13ab6f2] add more demo script for mc data processing showcase
+ 2018-08-14 [1e3eaa9] fix a bug in 2D simulations
+ 2018-08-14 [e99e5ef] allow saving photon trajectory in command line, add plotting function, bump limit to 1e7
  2018-07-21*[7850c32] support photon numbers over 2^31, new limit 2^63-1 after fixing #41
  2018-07-20*[db5a349] use extra global memory to help reduce roundoff error, fix #41
  2018-07-02 [8aba23b] fix a regression introduced in 29ea426, fix #40
