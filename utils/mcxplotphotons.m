@@ -28,7 +28,7 @@ function varargout=mcxplotphotons(traj,varargin)
 %
 
 if(~isstruct(traj) && size(traj,2)==6)
-    traj=struct('id',typecast(traj(:,1),'uint32'),'pos',traj(:,2:4),'weight',traj(:,5));
+    traj=struct('id',typecast(single(traj(:,1)),'uint32'),'pos',traj(:,2:4),'weight',traj(:,5));
 end
 
 [newid, idx]=sort(traj.id);
