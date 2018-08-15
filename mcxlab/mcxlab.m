@@ -24,9 +24,11 @@ function varargout=mcxlab(varargin)
 %
 %== Required ==
 %     *cfg.nphoton:    the total number of photons to be simulated (integer)
-%                      maximum supported value is 2^31=2.1e9, if simulating more
-%                      photons is needed, please set cfg.respin to make multiple runs
-%     *cfg.vol:        a 3D array specifying the media index in the domain
+%                      maximum supported value is 2^63-1
+%     *cfg.vol:        a 3D array specifying the media index in the domain.
+%                      2D simulations are supported if cfg.vol has a singleton
+%                      dimension (in x or y); srcpos/srcdir must belong to
+%                      the 2D plane in such case.
 %     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
 %                      the first row corresponds to medium type 0 which is 
 %                      typically [0 0 1 1]. The second row is type 1, and so on.
@@ -53,7 +55,9 @@ function varargout=mcxlab(varargin)
 %      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
 %      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
 %      cfg.shapes:     a JSON string for additional shapes in the grid
-%      cfg.reseedlimit:number of scattering events before reseeding RNG
+%      cfg.gscatter:   after a photon completes the specified number of
+%                      scattering events, mcx then ignores anisotropy g
+%                      and only performs isotropic scattering for speed [1e9]
 %      cfg.faststep: when set to 1, this option enables the legacy 1mm fix-step photon
 %                    advancing strategy; although this method is fast, the results were
 %                    found inaccurate, and therefore is not recommended. Setting to 0
@@ -190,30 +194,41 @@ function varargout=mcxlab(varargin)
 %
 %
 % Example:
+%      % define the simulation using a 
 %      cfg.nphoton=1e7;
 %      cfg.vol=uint8(ones(60,60,60));
+%      cfg.vol(20:40,20:40,10:30)=2;    % add an inclusion
+%      cfg.prop=[0 0 1 1;0.005 1 0 1.37; 0.2 10 0.9 1.37]; % [mua,mus,g,n]
+%      cfg.issrcfrom0=1;
 %      cfg.srcpos=[30 30 1];
 %      cfg.srcdir=[0 0 1];
+%      cfg.detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
+%      cfg.vol(:,:,1)=0;   % pad a layer of 0s to get diffuse reflectance
+%      cfg.issaveref=1;
 %      cfg.gpuid=1;
 %      cfg.autopilot=1;
-%      cfg.prop=[0 0 1 1;0.005 1 0 1.37];
 %      cfg.tstart=0;
 %      cfg.tend=5e-9;
 %      cfg.tstep=5e-10;
 %      % calculate the fluence distribution with the given config
-%      fluence=mcxlab(cfg);
+%      [fluence,detpt,vol,seeds,traj]=mcxlab(cfg);
 %
-%      cfgs(1)=cfg;
-%      cfgs(2)=cfg;
-%      cfgs(1).isreflect=0;
-%      cfgs(2).isreflect=1;
-%      cfgs(2).issavedet=1;
-%      cfgs(2).detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
-%      % calculate the fluence and partial path lengths for the two configurations
-%      [fluences,detps]=mcxlab(cfgs);
-%
-%      imagesc(squeeze(log(fluences(1).data(:,30,:,1)))-squeeze(log(fluences(2).data(:,30,:,1))));
-%
+%      % integrate time-axis (4th dimension) to get CW solutions
+%      cwfluence=sum(fluence.data,4);  % fluence rate
+%      cwdref=sum(fluence.dref,4);     % diffuse reflectance
+%      % plot configuration and results
+%      subplot(231);
+%      mcxpreview(cfg);title('domain preview');
+%      subplot(232);
+%      imagesc(squeeze(log(cwfluence(:,30,:))));title('fluence at y=30');
+%      subplot(233);
+%      hist(detpt.ppath(:,1),50); title('partial path tissue#1');
+%      subplot(234);
+%      plot(squeeze(fluence.data(30,30,30,:)),'-o');title('TPSF at [30,30,30]');
+%      subplot(235);
+%      newtraj=mcxplotphotons(traj);title('photon trajectories')
+%      subplot(236);
+%      imagesc(squeeze(log(cwdref(:,:,1))));title('diffuse refle. at z=1');
 %
 % This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
 %

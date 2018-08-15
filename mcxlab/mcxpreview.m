@@ -45,7 +45,9 @@ for i=1:len
         error('cfg.vol or cfg.node is missing');
     end
 
-    figure;
+    if(i>1)
+        figure;
+    end
     hold on;
 
     voxelsize=1;
@@ -65,6 +67,7 @@ for i=1:len
         hbbx=plotmesh((bbxno+offset)*voxelsize,bbxfc,'facecolor','none');
 
         val=unique(cfg(i).vol(:));
+        val(val==0)=[];
         padvol=zeros(dim+2);
         padvol(2:end-1,2:end-1,2:end-1)=cfg(i).vol;
         hseg=[];

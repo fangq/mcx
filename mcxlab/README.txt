@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) v2017.7
+Version: this package is part of Monte Carlo eXtreme (MCX) v2018
 
 <toc>
 
@@ -63,22 +63,32 @@ the verbose command line options in MCX.
 <pre> ====================================================================
        MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2011-2017 Qianqian Fang <q.fang at neu.edu>
+ Copyright (c) 2011-2018 Qianqian Fang <q.fang at neu.edu>
                        URL: http://mcx.space
  ====================================================================
  
   Format:
      [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg);
+        or
+     [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg, option);
  
   Input:
      cfg: a struct, or struct array. Each element of cfg defines 
           the parameters associated with a simulation. 
+     option: (optional), options is a string, specifying additional options
+          option='preview': this plots the domain configuration using mcxpreview(cfg)
+          option='mcxcl':   this calls mcxcl.mex* instead of mcx.mex* on non-NVIDIA hardware
  
-     It may contain the following fields:
+ 
+     cfg may contain the following fields:
  
  == Required ==
       *cfg.nphoton:    the total number of photons to be simulated (integer)
-      *cfg.vol:        a 3D array specifying the media index in the domain
+                       maximum supported value is 2^63-1
+      *cfg.vol:        a 3D array specifying the media index in the domain.
+                       2D simulations are supported if cfg.vol has a singleton
+                       dimension (in x or y); srcpos/srcdir must belong to
+                       the 2D plane in such case.
       *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
                        the first row corresponds to medium type 0 which is 
                        typically [0 0 1 1]. The second row is type 1, and so on.
@@ -96,14 +106,18 @@ the verbose command line options in MCX.
                        if set to a uint8 array, the binary data in each column is used 
                        to seed a photon (i.e. the "replay" mode)
        cfg.respin:     repeat simulation for the given time (integer) [1]
+                       if negative, divide the total photon number into respin subsets
        cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
        cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
        cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
+       cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
        cfg.maxgate:    the num of time-gates per simulation
        cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
        cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
        cfg.shapes:     a JSON string for additional shapes in the grid
-       cfg.reseedlimit:number of scattering events before reseeding RNG
+       cfg.gscatter:   after a photon completes the specified number of
+                       scattering events, mcx then ignores anisotropy g
+                       and only performs isotropic scattering for speed [1e9]
        cfg.faststep: when set to 1, this option enables the legacy 1mm fix-step photon
                      advancing strategy; although this method is fast, the results were
                      found inaccurate, and therefore is not recommended. Setting to 0
@@ -142,7 +156,9 @@ the verbose command line options in MCX.
                                  by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
                        'pattern' - a 3D quadrilateral pattern illumination, same as above, except
                                  srcparam1(4) and srcparam2(4) specify the pattern array x/y dimensions,
-                                 and srcpattern is a pattern array, valued between [0-1]. 
+                                 and srcpattern is a floating-point pattern array, with values between [0-1]. 
+                       'pattern3d' - a 3D illumination pattern. srcparam1{x,y,z} defines the dimensions,
+                                 and srcpattern is a floating-point pattern array, with values between [0-1]. 
                        'fourier' - spatial frequency domain source, similar to 'planar', except
                                  the integer parts of srcparam1(4) and srcparam2(4) represent
                                  the x/y frequencies; the fraction part of srcparam1(4) multiplies
@@ -175,6 +191,10 @@ the verbose command line options in MCX.
        cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
        cfg.srcpattern: see cfg.srctype for details
        cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
+       cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
+                       -1 replay all detectors and save in separate volumes (output has 5 dimensions)
+                        0 replay all detectors and sum all Jacobians into one volume
+                        a positive number: the index of the detector to replay and obtain Jacobians
        cfg.voidtime:   for wide-field sources, [1]-start timer at launch, or 0-when entering 
                        the first non-zero voxel
  
@@ -195,7 +215,7 @@ the verbose command line options in MCX.
                      'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
                      'M':  return photon trajectory data as the 5th output
                      'P':  show progress bar
-       cfg.maxjumpdebug: [1000000|int] when trajectory is requested in the output, 
+       cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output, 
                       use this parameter to set the maximum position stored. By default,
                       only the first 1e6 positions are stored.
  
@@ -207,28 +227,30 @@ the verbose command line options in MCX.
              dimensions specified by [size(vol) total-time-gates]. 
              The content of the array is the normalized fluence at 
              each voxel of each time-gate.
-       detphoton: a struct array, with a length equals to that of cfg.
-             For each element of detphoton, detphoton(i).data is a 2D array with
-             dimensions [size(cfg.prop,1)+1 saved-photon-num]. The first row
-             is the ID(>0) of the detector that captures the photon; the second row
- 	     saves the number of scattering events of each exiting photon; the rest rows
- 	     are the partial path lengths (in grid unit) traveling in medium 1 up 
-             to the last. If you set cfg.unitinmm, you need to multiply the path-lengths
-             to convert them to mm unit.
+       detphoton: (optional) a struct array, with a length equals to that of cfg.
+             Starting from v2018, the detphoton contains the below subfields:
+               detphoton.detid: the ID(>0) of the detector that captures the photon
+               detphoton.nscat: cummulative scattering event counts
+               detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
+                    one need to multiply cfg.unitinmm with ppath to convert it to mm.
+               detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
+               detphoton.prop: optical properties, a copy of cfg.prop
+               detphoton.data: a concatenated and transposed array in the order of
+                     [detid nscat ppath p v]'
+               "data" is the is the only subfield in all mcxlab before 2018
        vol: (optional) a struct array, each element is a preprocessed volume
-             corresponding to each instance of cfg. Each volume is a 3D uint8 array.
+             corresponding to each instance of cfg. Each volume is a 3D int32 array.
        seeds: (optional), if give, mcxlab returns the seeds, in the form of
              a byte array (uint8) for each detected photon. The column number
              of seed equals that of detphoton.
        trajectory: (optional), if given, mcxlab returns the trajectory data for
              each simulated photon. The output has 6 rows, the meanings are 
-                1:    index of the photon packet
- 		2-4:  x/y/z/ of each trajectory position
- 		5:    current photon packet weight
- 		6:    reserved
-             By default, mcxlab only records the first 1e6 positions along all
+                id:  1:    index of the photon packet
+                pos: 2-4:  x/y/z/ of each trajectory position
+                     5:    current photon packet weight
+                     6:    reserved
+             By default, mcxlab only records the first 1e7 positions along all
              simulated photons; change cfg.maxjumpdebug to define a different limit.
- 
  
   Example:
        cfg.nphoton=1e7;
