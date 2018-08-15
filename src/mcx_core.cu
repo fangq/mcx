@@ -1103,7 +1103,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 #endif
                        /** Update direction vector with the two random angles */
 		       if(gcfg->is2d)
-		           rotatevector2d(v,stheta,ctheta);
+		           rotatevector2d(v,(rand_next_aangle(t)>0.5f ? stheta: -stheta),ctheta);
 		       else
                            rotatevector(v,stheta,ctheta,sphi,cphi);
                        v->nscat++;
