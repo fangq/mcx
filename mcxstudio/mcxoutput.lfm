@@ -1,7 +1,7 @@
 object fmOutput: TfmOutput
-  Left = 260
+  Left = 481
   Height = 600
-  Top = 343
+  Top = 349
   Width = 561
   Caption = 'Output'
   ClientHeight = 600
@@ -470,8 +470,43 @@ object fmOutput: TfmOutput
       MouseTextActions = <>
       MouseSelActions = <>
       Lines.Strings = (
+        '==''References''=='
+        'If you use MCX/MMC/MCX-CL in your research, we appreciate'
+        'if you can cite our relevant papers in your publications.'
+        ''
+        ' -- "MCX" --'
+        '# [Fang2009] Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated by Graphics Processing Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190 (2009).'
+        '$Summary:  original MCX paper'
+        '$Download: https://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178'
+        ''
+        ' -- "MCX-CL" --'
+        '# [Yu2018] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, "Scalable and massively parallel Monte Carlo photon transport simulations for heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).'
+        '$Summary:  original MCX-CL (OpenCL) paper'
+        '$Download: https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
+        ''
+        ' -- "MMC" --'
+        '# [Fang2010] Qianqian Fang, "Mesh-based Monte Carlo method using fast ray-tracing in Plücker coordinates," Biomed. Opt. Express 1(1), 165-175 (2010)'
+        '$Summary:  original MMC paper'
+        '$Download: http://www.opticsinfobase.org/boe/viewmedia.cfm?uri=boe-1-1-165&seq=0&html=true'
+        ''
+        '# [Fang2011] Qianqian Fang, “Comment on ‘A study on tetrahedron-based inhomogeneous Monte-Carlo optical simulation’,” Biomed. Opt. Express, vol. 2, issue 5, pp. 1258-1264, 2011.'
+        '$Summary:  MMC ray-tracing comparisons'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258'
+        ''
+        '# [Fang2012] Qianqian Fang and David R. Kaeli, "Accelerating mesh-based Monte Carlo method on modern CPU architectures ," Biomed. Opt. Express 3(12), 3223-3230 (2012)'
+        '$Summary:  SIMD MMC'
+        '$Download: http://www.opticsinfobase.org/boe/fulltext.cfm?uri=boe-3-12-3223&id=245991'
+        ''
+        '# [Yao2016] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "Generalized mesh-based Monte Carlo for wide-field illumination and detection via mesh retessellation," Biomed. Optics Express, 7(1), 171-184, (2016)'
+        '$Summary:  Widefield MMC'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171'
+        ''
+        '# [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon ''replay''," Biomed. Optics Express, in press, (2018)'
+        '$Summary:  Building Jacobians with replay in MCX/MMC'
+        ''
         'Output:'
       )
+      MouseOptions = [emShowCtrlMouseLinks]
       VisibleSpecialChars = [vscSpace, vscTabAtLast]
       SelectedColor.BackPriority = 50
       SelectedColor.ForePriority = 50
