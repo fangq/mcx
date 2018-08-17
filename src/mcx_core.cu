@@ -641,7 +641,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           if(gcfg->savedet){
              if(isdet>0 && *mediaid==0)
 	         savedetphoton(n_det,dpnum,v->nscat,ppath,p,v,photonseed,seeddata);
-             clearpath(ppath,gcfg->maxmedia);
+             clearpath(ppath,gcfg->maxmedia*(1+gcfg->ismomentum));
           }
 #endif
           if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME && gcfg->issaveref){
