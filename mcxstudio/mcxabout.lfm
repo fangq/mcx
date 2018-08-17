@@ -1055,6 +1055,8 @@ object fmAbout: TfmAbout
     BorderStyle = bsNone
     Font.Color = clWhite
     Lines.Strings = (
+      'MCXStudio version: v2018'
+      ''
       'Funding Support:'
       '  This project is funded by the NIH/NIGMS under '
       '  grant R01-GM114365. '
