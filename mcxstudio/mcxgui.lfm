@@ -294,7 +294,7 @@ object fmMCX: TfmMCX
       Left = 945
       Hint = 'Browse help information'
       Top = 0
-      Caption = 'Help'
+      Caption = 'Help ▾'
       DropdownMenu = PopupMenu3
       ImageIndex = 17
       ParentShowHint = False
@@ -309,9 +309,9 @@ object fmMCX: TfmMCX
     end
     object ToolButton11: TToolButton
       Left = 772
-      Hint = 'Exit MCX Studio'
+      Hint = 'Plot MCX output data'
       Top = 0
-      Caption = 'Plot'
+      Caption = 'Plot ▾'
       DropdownMenu = PopupMenu1
       ImageIndex = 11
       ParentShowHint = False
@@ -2202,7 +2202,7 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 91
           Hint = 'MediaCfg'
-          Top = 24
+          Top = 20
           Width = 354
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_media_editor'
@@ -2210,31 +2210,29 @@ object fmMCX: TfmMCX
           Color = clWhite
           Columns = <          
             item
-              MaxSize = 200
               Title.Caption = 'μa (1/mm)'
               Width = 69
             end          
             item
-              MaxSize = 200
               Title.Caption = 'μs (1/mm)'
               Width = 64
             end          
             item
-              MaxSize = 200
               Title.Caption = 'g (anisotropy)'
               Width = 63
             end          
             item
-              MaxSize = 200
               Title.Caption = 'n (reflective index)'
               Width = 70
             end>
           Flat = True
+          Font.Color = clBlack
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goAutoAddRows, goSmoothScroll, goFixedRowNumbering, goCellEllipsis]
           ParentFont = False
           ParentShowHint = False
           RowCount = 20
           TabOrder = 1
+          TitleFont.Color = clBlack
           TitleImageList = ImageList1
           TitleStyle = tsNative
           OnDrawCell = sgMediaDrawCell
@@ -2281,18 +2279,20 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 75
           Hint = 'DetectorCfg'
-          Top = 144
+          Top = 136
           Width = 354
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_detector_editor'
           Align = alTop
           Color = clWhite
           Flat = True
+          Font.Color = clBlack
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goSmoothScroll, goFixedRowNumbering]
           ParentFont = False
           ParentShowHint = False
           RowCount = 20
           TabOrder = 3
+          TitleFont.Color = clBlack
           TitleStyle = tsNative
           OnEditingDone = sgMediaEditingDone
           ColWidths = (
@@ -2335,10 +2335,11 @@ object fmMCX: TfmMCX
         end
         object StaticText1: TStaticText
           Left = 0
-          Height = 24
-          Top = 224
+          Height = 20
+          Top = 216
           Width = 354
           Align = alTop
+          AutoSize = True
           Caption = 'Additional Settings'
           Color = clGray
           Font.Color = clWhite
@@ -2350,10 +2351,11 @@ object fmMCX: TfmMCX
         end
         object StaticText2: TStaticText
           Left = 0
-          Height = 24
+          Height = 20
           Top = 0
           Width = 354
           Align = alTop
+          AutoSize = True
           Caption = 'Media Settings'
           Color = clGray
           Font.Color = clWhite
@@ -2366,10 +2368,11 @@ object fmMCX: TfmMCX
         end
         object StaticText3: TStaticText
           Left = 0
-          Height = 24
-          Top = 120
+          Height = 20
+          Top = 116
           Width = 354
           Align = alTop
+          AutoSize = True
           Caption = 'Detector Settings (in voxel unit)'
           Color = clGray
           Font.Color = clWhite
@@ -2381,9 +2384,9 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 339
+          Height = 351
           Hint = 'MCXConfig'
-          Top = 248
+          Top = 236
           Width = 354
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_setting_editor'
@@ -2393,17 +2396,18 @@ object fmMCX: TfmMCX
           Columns = <          
             item
               ButtonStyle = cbsEllipsis
-              MaxSize = 200
               Title.Caption = 'Value'
               Width = 128
             end>
           FixedCols = 2
           Flat = True
+          Font.Color = clBlack
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goSmoothScroll, goCellEllipsis]
           ParentFont = False
           ParentShowHint = False
           RowCount = 15
           TabOrder = 7
+          TitleFont.Color = clBlack
           TitleStyle = tsNative
           OnDblClick = sgConfigDblClick
           OnEditButtonClick = sgConfigEditButtonClick
@@ -2529,7 +2533,7 @@ object fmMCX: TfmMCX
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 219
+          Top = 211
           Width = 354
           Align = alTop
           ResizeAnchor = akTop
@@ -2538,7 +2542,7 @@ object fmMCX: TfmMCX
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 115
+          Top = 111
           Width = 354
           Align = alTop
           ResizeAnchor = akTop

@@ -102,6 +102,10 @@ endif
 CUGENCODE?=-arch=sm_20
 OUTPUTFLAG:=-o
 
+kepler: fermi
+keplermex: fermimex
+kepler keplermex: CUGENCODE=-arch=sm_30
+
 logfast:    CUCCOPT+=-use_fast_math
 xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 xor:        LINKOPT+=-DUSE_XORSHIFT128P_RAND

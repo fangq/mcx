@@ -11,7 +11,7 @@
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
 **  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
 **          "Scalable and massively parallel Monte Carlo photon transport
-**           simulations for heterogeneous computing platforms," J. Biomed. Optics, (in press) 2018.
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics, 23(1), 010504, 2018.
 **
 **  \section slicense License
 **          GPL v3, see LICENSE.txt for details
