@@ -1,980 +1,830 @@
-   #[1]Monte Carlo eXtreme: GPU-based Monte Carlo Simulations
-
-MCX Documentation
-
-          1. [2]Command Line Options
-
-          2. [3]Input File Format
-
-1. Command Line Options
-
-Required option
-
--f / --input
-
-   Format
-          A string
-
-   Default value
-          None, user must specify
-
-   Restriction
-          parameter can not be longer than 1024 characters (including the
-          string ending mark '\0' )
-
-   Description
-
-   Use -f to specify an input file. Format:
-    -f filename.json
-
-   or
-    -f filename.inp
-
-   filename may contain absolute or relative path. If the filename has a
-   '.json' extension, this input file is in the JSON format. If the input
-   file name ends with '.inp', it is in the legacy format. If the file
-   name contains space, one must use quotation marks to quote the full
-   file name. In Windows, the quotation must be double quote (""). In
-   Linux or Mac, either single or double quotation mark works.
-
-   If this flag is followed by an inline JSON string, such as -f '{...}',
-   the parameter is parsed as an "inline JSON input file".
-
-MC options
-
--n / --photon
-
-   Format
-          An integer or floating point number
-
-   Default value
-          0
-
-   Restriction
-          the number can not exceed 2^32-1
-
-   Description
-
-   This flag specifies the total number of photons to be simulated. The
-   format is
-
-    -n N
-
-   where N can be either an integer, such as 100000 or a floating point
-   number, such as 1e5. If N is a floating point number, it will be
-   rounded to the largest integer below the current value. If this number
-   is larger than 1e9, we suggest one to use the [4]"-r" option followed
-   by an integer larger than 1.
-
--r / --repeat
-
-   Format
-          An integer
-
-   Default value
-          1
-
-   Max Value
-          the number can not exceed 2^32-1
-
-   Description
-
-   Use -r to evenly divide the total photons into smaller groups so that
-   the execution time of each group becomes managable. Format:
-
-    -r N
-
-   where N is a positive integer. When use this option, mcx runs 'total
-   photon number/N' photons in a batch.
-
-   This option is useful when one does not have access to a dedicated GPU,
-   i.e. the GPU is used for both display and computation. In such case,
-   the mcx computation time is limited to only 5 to 10 seconds due to the
-   graphics driver. One can use the -r option to make the execution time
-   per batch under the time limit set by the driver.
-
--b / --reflect
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          1
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -b to enable or disable reflections at the boundaries. Format:
-
-    '-b' or '-b 1' to enable (default) or '-b 0' to disable
-
-   When enabled, mcx will either reflect or transmit the photon at the
-   boundaries based on the Fresnel's equation.
-
-   By default, mcx considers refractive index mismatch at the boundaries.
-
--B / --reflectin
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          1
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   1 to reflect photons at int. boundary; 0 do not
-
--u / --unitinmm
-
-   Format
-          a floating point number
-
-   Default value
-          1.0
-
-   Restriction
-          can not be less than or equal to 0
-
-   Description
-
-   Use -u to set the voxel size in mm. Format:
-
-    -u S
-
-   where S is a floating point number, denoting the edge length, in mm, of
-   a voxel in the volume. For example, if the volume used in the
-   simulation is 0.1x0.1x0.1 mm^3, then, one should use '-u 0.1' in the
-   command line.
-
-   Only isotrpic voxels are currently supported by mcx.
-
--U / --normalize
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          1
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -U to enable or disable solution normalization. Format:
-
-    '-U' or '-U 1' to enable (default) or '-U 0' to disable
-
-   For fluence, the normalization aims to generate a 'Green's function'.
-   For other qualities, the normalization produces a stable solution by
-   removing the dependency due to total photon numbers, voxel sizes, and
-   time-gate settings. The detailed equations are explained in the MCX
-   paper.
-
--E / --seed
-
-   Format
-          An integer or a string
-
-   Default value
-          -1
-
-   Restriction
-          must be an integer; if is a string, the specified file must
-          exist
-
-   Description
-
-   Use -E to set the seed of the CPU random number generator (RNG). The
-   CPU RNG in turn initializes the seeds for each GPU thread. Format:
-
-    -E -1    // let MCX to automatically seed the CPU-RNG using system clock
-    -E n     // n is a large positive integer, set the CPU-RNG's seed to n
-    -E filename.mch // replay detected photons using the seeds saved in the mch file
-
-   Setting a fixed RNG seed is expected to create reproducible results on
-   NVIDIA cards if the thread/block size are kept the same.
-
--z / --srcfrom0
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -z to define the coordinate origin mode of the volume. Format:
-
-    -z 0 (default)// assumes the lower-bottom corner of the first voxel as [1 1 1]
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<!-- saved from url=(0074)http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Monte Carlo eXtreme: GPU-based Monte Carlo Simulations: Doc/mcx help</title>
+<link rel="SHORTCUT ICON" href="http://mcx.space/img/mcxicon.ico"><meta name="keywords" content="Doc/mcx_help">
+<link rel="alternate" type="application/rss+xml" title="Monte Carlo eXtreme: GPU-based Monte Carlo Simulations" href="http://mcx.space/wiki/index.cgi?action=rss"><style type="text/css">
+.wikiheader ul li{display:inline;padding-left:10px;}
+.wikiadminbar ul li{display:inline;padding-left:10px;}
+.wikiuserbar ul li{display:inline;padding-left:10px;}
+.wikititle ul li{display:inline;padding-left:10px;}
+.wikifooter {margin-top: 10pt;border-top:solid 1px black;}
+.wikiwrapper {border:1px solid black;padding:10pt;}
+.wikisearchbox {float:right;}
+.wikieditor {width:100%;}
+</style>
+<link rel="stylesheet" href="./mcx_help_files/wikistyle_column.css">
+<link rel="stylesheet" href="./mcx_help_files/wikistyle_column_print.css" media="print">
+
+<!--[if lt IE 7]>
+        <script type="text/javascript" src="/js/unitpngfix.js"></script>
+<![endif]--></head><body><div class="wikimain">
+<div class="wikilogo"><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Home"><img src="./mcx_help_files/mcx_mmc_header.png" id="logoimg" alt="[Home]" border="0"></a></div><div class="wikiheader"><ul class="wikiheaderlist"><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Home" class="wikipagelink">Home</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc" class="wikipagelink">Doc</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?RecentChanges" class="wikipagelink">Activities</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=upload">Upload</a></li><li><a href="http://mcx.sourceforge.net/cgi-bin/index.cgi"><b>MCX</b></a></li>
+<li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?MMC"><b>MMC</b></a></li>
+<li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?MMC/Colin27AtlasMesh">Models</a></li>
+<li><a href="https://github.com/Biophotonics">Github</a></li>
+<li><a href="https://sourceforge.net/projects/mcx/">SF</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=editprefs" class="wikipreflink">Preferences</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=logout">Logout</a></li></ul>
+<form method="post" action="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi" enctype="application/x-www-form-urlencoded"><input type="text" name="search" value="Search ..." size="10" onfocus="if(!this._haschanged){this.value=&#39;&#39;};this._haschanged=true;" onblur="if(this.value===&#39;&#39;){this.value=&#39;Search ...&#39;};this._haschanged=false;" class="wikisearchbox"><input type="hidden" name="dosearch" value="1"></form></div><div class="wikititle"><ul class="titletab"><li class="inactivetab"><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=edit&amp;id=Doc/mcx_help" class="icon-edit" title="Edit this page">Edit this page</a></li><li class="inactivetab"><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=history&amp;id=Doc/mcx_help" class="icon-time" title="View other revisions">View other revisions</a></li><li class="inactivetab"><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=discuss&amp;id=Doc/mcx_help" class="icon-comments" title="Discuss">Discuss</a></li></ul></div><div class="wikiwrapper"><div class="wikitext"><h1>MCX Documentation</h1>
+
+<p>
+
+<style type="text/css">
+h4 {
+    background-color: darkred;
+}
+dt {
+    color: #3399ff;
+}
+</style>
+
+</p><p>
+</p><dl class="wikitoc"><dt> </dt><dd>1. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#Command_Line_Options">Command Line Options</a></dd>
+<dt> </dt><dd><dl class="wikitoc"><dt> </dt><dd>1.1. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#Required_option">Required option</a></dd>
+<dt> </dt><dd>1.2. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#MC_options">MC options</a></dd>
+<dt> </dt><dd>1.3. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#GPU_options">GPU options</a></dd>
+<dt> </dt><dd>1.4. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#Output_options">Output options</a></dd>
+<dt> </dt><dd>1.5. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#User_IO_options">User IO options</a></dd>
+<dt> </dt><dd>1.6. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#Debug_options">Debug options</a></dd>
+<dt> </dt><dd>1.7. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#Additional_options">Additional options</a></dd>
+<dt> </dt><dd></dd></dl>
+
+2. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#Input_File_Format">Input File Format</a></dd>
+<dt> </dt><dd><dl class="wikitoc"><dt> </dt><dd>2.1. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#JSON_input_file_format">JSON input file format</a></dd>
+<dt> </dt><dd>2.2. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#inp_input_file_format">inp input file format</a></dd>
+<dt> </dt><dd>2.3. <a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?Doc/mcx_help#JSON_shape_file_format">JSON shape file format</a></dd>
+<dt> </dt><dd></dd></dl>
+
+</dd></dl>
+
+
+<p>
+</p><h2><a name="Command_Line_Options"></a>1. Command Line Options</h2>
+
+<p>
+</p><h3><a name="Required_option"></a>1.1. Required option</h3>
+
+<a name="input"></a>
+<h4>-f / --input</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A string
+</dd><dt><strong>Default value</strong></dt><dd> None, user must specify
+</dd><dt><strong>Restriction</strong></dt><dd> parameter can not be longer than 1024 characters (including the string ending mark '\0' )
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -f to specify an input file. Format: 
+<pre>    -f filename.json
+</pre>
+or
+<pre>    -f filename.inp
+</pre>
+<p>
+filename may contain absolute or relative path. If the filename has a '.json' extension, this input file is in the JSON format. If the input file name ends with '.inp', it is in the legacy format. If the file name contains space, one must use quotation marks to quote the full file name. In Windows, the quotation must be double quote (""). In Linux or Mac, either single or double quotation mark works.
+</p><p>
+If this flag is followed by an inline JSON string, such as -f '{...}', the parameter is parsed as an "inline JSON input file".
+</p><p>
+</p><h3><a name="MC_options"></a>1.2. MC options</h3>
+
+<a name="photon"></a>
+<h4>-n / --photon</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer or floating point number
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> the number can not exceed 2^63-1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+This flag specifies the total number of photons to be simulated. The format is 
+<p>
+</p><pre>    -n N 
+</pre>
+<p>
+where N can be either an integer, such as 100000 or a floating point number, such as 1e5. If N is a floating point number, it will be rounded to the largest integer below the current value.
+</p><p>
+<a name="repeat"></a>
+</p><h4>-r / --repeat</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A positive or negative integer
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Max Value</strong></dt><dd> the number can not exceed 2^32-1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -r to repeat the simulation so that the total number of photon is multiplied by the repetition count. Format: 
+<p>
+</p><pre>    -r N
+</pre>
+<p>
+where N is a positive integer. When use this option, mcx runs 'nphoton*N' photons with nphoton per batch.
+</p><p>
+If N is a negative integer, this option splits the total simulation into abs(N) number of smaller batches; in each batch, only nphoton/abs(N) number of photons are simulated.
+</p><p>
+This option is useful when one does not have access to a dedicated GPU, i.e. the GPU is used for both display and computation. In such case, the mcx computation time is limited to only 5 to 10 seconds due to the graphics driver. One can use the -r option to make the execution time per batch under the time limit set by the driver.
+</p><p>
+<a name="reflect"></a>
+</p><h4>-b / --reflect</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -b to enable or disable reflections at the boundaries. Format: 
+<p>
+</p><pre>    '-b' or '-b 1' to enable (default) or '-b 0' to disable
+</pre>
+<p>
+When enabled, mcx will either reflect or transmit the photon at the boundaries based on the Fresnel's equation. 
+</p><p>
+By default, mcx considers refractive index mismatch at the boundaries.
+</p><p>
+<a name="reflectin"></a>
+</p><h4>-B / --reflectin (*depreciated)</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+1 to reflect photons at int. boundary; 0 do not
+<p>
+<a name="unitinmm"></a>
+</p><h4>-u / --unitinmm</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> a floating point number
+</dd><dt><strong>Default value</strong></dt><dd> 1.0
+</dd><dt><strong>Restriction</strong></dt><dd> can not be less than or equal to 0
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -u to set the voxel size in mm. Format: 
+<p>
+</p><pre>    -u S 
+</pre>
+<p>
+where S is a floating point number, denoting the edge length, in mm, of a voxel in the volume. For example, if the volume used in the simulation is 0.1x0.1x0.1 mm^3, then, one should use '-u 0.1' in the command line. 
+</p><p>
+Only isotrpic voxels are currently supported by mcx.
+</p><p>
+<a name="normalize"></a>
+</p><h4>-U / --normalize</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -U to enable or disable solution normalization. Format: 
+<p>
+</p><pre>    '-U' or '-U 1' to enable (default) or '-U 0' to disable
+</pre>
+<p>
+For fluence, the normalization aims to generate a 'Green's function'. For other qualities, the normalization produces a stable solution by removing the dependency due to total photon numbers, voxel sizes, and time-gate settings. The detailed equations are explained in the MCX paper.
+</p><p>
+<a name="seed"></a>
+</p><h4>-E / --seed</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer or a string
+</dd><dt><strong>Default value</strong></dt><dd> -1
+</dd><dt><strong>Restriction</strong></dt><dd> must be an integer; if is a string, the specified file must exist
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -E to set the seed of the CPU random number generator (RNG). The CPU RNG in turn initializes the seeds for each GPU thread. Format:
+<p>
+</p><pre>    -E -1    // let MCX to automatically seed the CPU-RNG using system clock 
+    -E n     // n is a large positive integer, set the CPU-RNG's seed to n 
+    -E filename.mch // replay detected photons using the seeds saved in the mch file 
+</pre>
+<p>
+Setting a fixed RNG seed is expected to create reproducible results on NVIDIA cards if the thread/block size are kept the same.
+</p><p>
+</p><p>
+<a name="srcfrom0"></a>
+</p><h4>-z / --srcfrom0</h4>
+
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -z to define the coordinate origin mode of the volume. Format: 
+<p>
+</p><pre>    -z 0 (default)// assumes the lower-bottom corner of the first voxel as [1 1 1]
     -z or -z 1    // assumes the lower-bottom corner of the first voxel as [0 0 0]
+</pre>
+<p>
+All source and detector positions are referenced from the origin, determined by this flag.
+</p><p>
+<a name="skipradius"></a>
+</p><h4>-R / --skipradius</h4>
 
-   All source and detector positions are referenced from the origin,
-   determined by this flag.
-
--R / --skipradius
-
-   Format
-          An integer
-
-   Default value
-          -2
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -R to specify the scope within which to use atomic operations. The
-   possible options include
-
-     -R -2  // this enables full atomic opertions in the entire volume (default)
-     -R n   // when n is a positive integer, mcx uses atomic operations in the
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> -2
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -R to specify the scope within which to use atomic operations. The possible options include 
+<p>
+</p><pre>     -R -2  // this enables full atomic opertions in the entire volume (default) 
+     -R n   // when n is a positive integer, mcx uses atomic operations in the 
             // shared memory for a n x n x n sub-cubic domain centered at the source.
-     -R 0   // disable all atomic operations, data racing may exist, particularly
-            // near the source.
+     -R 0   // disable all atomic operations, data racing may exist, particularly 
+            // near the source. 
      -R -1  //use crop0/crop1 to determine atomic zone
+</pre>
+<p>
+Using full atomic operations was very slow in very early CUDA devices, but for most later NVIDIA GPUs, the use of atomic operations is as efficient as the non-atomic version.
+</p><p>
+<a name="voidtime"></a>
+</p><h4>-k / --voidtime</h4>
 
-   Using full atomic operations was very slow in very early CUDA devices,
-   but for most later NVIDIA GPUs, the use of atomic operations is as
-   efficient as the non-atomic version.
-
--k / --voidtime
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use the -k option to tell MCX whether to count the time-of-flight when
-   a photon is launched outside of the volume. Format:
-
-    -k 1 (default)  // the time-of-flight of the photon starts at the launch time
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use the -k option to tell MCX whether to count the time-of-flight when a photon is launched outside of the volume. Format: 
+<p>
+</p><pre>    -k 1 (default)  // the time-of-flight of the photon starts at the launch time 
     -k 0            // the time-of-flight starts when a photon enters the first non-zero voxel.
+</pre>
+<p>
+</p><p>
+<a name="specular"></a>
+</p><h4>-V / --specular</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -V flag to tell MCX whether to consider the specular reflection at the initial entry of the photon to the domain (entry from a 0-voxel to a non-zero voxel). By default, the initial specular reflection is considered (thus, photon loses a small fraction of energy, but enters the domain). The reflected energy is no longer modeled. Please be aware that the "absorption fraction" number printed at the end of the mcx simulation session should include this energy loss due to specular reflection.
+<p>
+If one sets "-V 0", all launched photon energy preserves after enters the domain.
+</p><p>
+<a name="replaydet"></a>
+</p><h4>-Y / --replaydet</h4>
 
--Y / --replaydet
-
-   Format
-          A positive integer
-
-   Default value
-          0
-
-   Restriction
-          can not be negative
-
-   Description
-
-   Use the -Y option to specify the ID of the detector for the 'replay'
-   calculations. Format:
-
-    -Y n   // n is a positive integer, denoting the index of the detectors to be replayed
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A positive integer
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use the -Y option to specify the ID of the detector for the 'replay' calculations. Format: 
+<p>
+</p><pre>    -Y n   // n is a positive integer, denoting the index of the detectors to be replayed 
     -Y 0   // all detected photons will be replayed regardless of detector
+</pre>
+<p>
+If -Y is not specified, MCX replays all detected photons; otherwise, MCX only replays the detected photons from the specified detector. See -E for more details.
+</p><p>
+<a name="shapes"></a>
+</p><h4>-P / --shapes</h4>
 
-   If -Y is not specified, MCX replays all detected photons; otherwise,
-   MCX only replays the detected photons from the specified detector. See
-   -E for more details.
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A string
+</dd><dt><strong>Default value</strong></dt><dd> None, user must specify
+</dd><dt><strong>Restriction</strong></dt><dd> parameter can not be longer than 1024 characters (including the string ending mark '\0' )
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use the -P option to dynamically define heterogeneities from the command line. The -P flag is followed by a JSON-formatted string. For example
+<p>
+</p><pre>    -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}' 
+</pre>
+<p>
+This defines a 3-layer medium: z slices 1-10 is filled with tissue label 1, z slices 11-30 is filled with label 2, and 31-60 is filled with label 3. 
+</p><p>
+The shape definition always starts an array object named 'Shapes'. Each element in the 'Shapes' object defines a primitive object. The supported primitives include Name/Origin/Grid/Sphere/Box/Subgrid/{XYZ}Layers/{XYZ}Slabs/Cylinder/UpperSpace. Most objects have a sub-field 'Tag', specifying the tissue label (index to the property list). The details of the Shapes objects can be found in this link
+</p><p>
+<a name="reseed"></a>
+</p><h4>-N / --reseed (*depreciated)</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+number of scattering events before reseeding RNG
+<p>
+<a name="faststep"></a>
+</p><h4>-F / --faststep (*depreciated)</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+1-use fast 1mm stepping, [0]-precise ray-tracing
+<p>
+</p><p>
+<a name="minenergy"></a>
+</p><h4>-e / --minenergy</h4>
 
--P / --shapes
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A floating point number
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be positive or 0.0
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -e to set the min photon packet weight to trigger Russian Roulette. Format: 
+<p>
+</p><pre>    -e f    // where f is a floating point number between 0 and 1.
+</pre>
+<p>
+<a name="gategroup"></a>
+</p><h4>-g / --gategroup</h4>
 
-   Format
-          A string
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A positive integer
+</dd><dt><strong>Default value</strong></dt><dd> 100
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+<p>
+Use -g to split a simulation containing many time gates into smaller but multiple sequential simulations. Format: 
+</p><p>
+</p><pre>    -g n    // n is a positive integer 
+</pre>
+<p>
+Only use this option when the GPU global memory can not hold the data for all required time gates, which only happens when one trys to simulate a very large domain with very dense time gates (very rare). If one's GPU can only hold the data for n time gates, while one has to simulate a total of N &gt; n time gates, use -g n to split the total simulations into multiple runs: in the first run, MCX will record the results for 1~n time gates, in the second run, MCX will launch a new kernel to simulate photons for 1~2*n time gates, but only records the photon fluence for n+1 ~ 2*n time gates and so on. As one can see, this method introduces overhead in the later simulations. Therefore, it is recommended to avoid.
+</p><p>
+<a name="array"></a>
+</p><h4>-a / --array</h4>
 
-   Default value
-          None, user must specify
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -a to tell mcx if the input volume data is a MATLAB-like data (column-major) or a C-like data (row-major).Format 
+<p>
+</p><pre>    -a 0 (default) // the input volume is a MATLAB-array 
+    -a 1           // the input volume is a C-array 
+</pre>
+<p>
+If an MATLAB array is used, the fastest loop index is the left-most index of an array; while for a C array, it is the right-most index.
+</p><p>
+</p><h3><a name="GPU_options"></a>1.3. GPU options</h3>
 
-   Restriction
-          parameter can not be longer than 1024 characters (including the
-          string ending mark '\0' )
+<a name="listgpu"></a>
+<h4>-L / --listgpu</h4>
 
-   Description
-
-   Use the -P option to dynamically define heterogeneities from the
-   command line. The -P flag is followed by a JSON-formatted string. For
-   example
-
-    -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
-
-   This defines a 3-layer medium: z slices 1-10 is filled with tissue
-   label 1, z slices 11-30 is filled with label 2, and 31-60 is filled
-   with label 3.
-
-   The shape definition always starts an array object named 'Shapes'. Each
-   element in the 'Shapes' object defines a primitive object. The
-   supported primitives include
-   Name/Origin/Grid/Sphere/Box/Subgrid/{XYZ}Layers/{XYZ}Slabs/Cylinder/Upp
-   erSpace. Most objects have a sub-field 'Tag', specifying the tissue
-   label (index to the property list). The details of the Shapes objects
-   can be found in this link
-
--N / --reseed (*depreciated)
-
-   Format
-          An integer
-
-   Default value
-          0
-
-   Restriction
-          can not be negative
-
-   Description
-
-   number of scattering events before reseeding RNG
-
--F / --faststep (*depreciated)
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   1-use fast 1mm stepping, [0]-precise ray-tracing
-
--e / --minenergy
-
-   Format
-          A floating point number
-
-   Default value
-          0
-
-   Restriction
-          must be positive or 0.0
-
-   Description
-
-   Use -e to set the min photon packet weight to trigger Russian Roulette.
-   Format:
-
-    -e f    // where f is a floating point number between 0 and 1.
-
--g / --gategroup
-
-   Format
-          A positive integer
-
-   Default value
-          100
-
-   Restriction
-          can not be negative
-
-   Description
-
-   Use -g to split a simulation containing many time gates into smaller
-   but multiple sequential simulations. Format:
-
-    -g n    // n is a positive integer
-
-   Only use this option when the GPU global memory can not hold the data
-   for all required time gates, which only happens when one trys to
-   simulate a very large domain with very dense time gates (very rare). If
-   one's GPU can only hold the data for n time gates, while one has to
-   simulate a total of N > n time gates, use -g n to split the total
-   simulations into multiple runs: in the first run, MCX will record the
-   results for 1~n time gates, in the second run, MCX will launch a new
-   kernel to simulate photons for 1~2*n time gates, but only records the
-   photon fluence for n+1 ~ 2*n time gates and so on. As one can see, this
-   method introduces overhead in the later simulations. Therefore, it is
-   recommended to avoid.
-
--a / --array
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -a to tell mcx if the input volume data is a MATLAB-like data
-   (column-major) or a C-like data (row-major).Format
-
-    -a 0 (default) // the input volume is a MATLAB-array
-    -a 1           // the input volume is a C-array
-
-   If an MATLAB array is used, the fastest loop index is the left-most
-   index of an array; while for a C array, it is the right-most index.
-
-GPU options
-
--L / --listgpu
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use the -L flag to list all available GPUs on your system without
-   running the simulation. For example
-fangq@wazu:~/space/git/Project/mcx/example/quicktest$  ../../bin/mcx -L
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use the -L flag to list all available GPUs on your system without running the simulation. For example 
+<pre>fangq@wazu:~/space/git/Project/mcx/example/quicktest$  ../../bin/mcx -L
 =============================   GPU Infomation  ================================
-Device 1 of 2:          GeForce GTX 980 Ti
-Compute Capability:     5.2
-Global Memory:          2147287040 B
-Constant Memory:        65536 B
-Shared Memory:          49152 B
-Registers:              65536
-Clock Speed:            1.19 GHz
-Number of MPs:          22
-Number of Cores:        2816
-SMX count:              22
+Device 1 of 2:		GeForce GTX 980 Ti
+Compute Capability:	5.2
+Global Memory:		2147287040 B
+Constant Memory:	65536 B
+Shared Memory:		49152 B
+Registers:		65536
+Clock Speed:		1.19 GHz
+Number of MPs:		22
+Number of Cores:	2816
+SMX count:		22
 =============================   GPU Infomation  ================================
-Device 2 of 2:          GeForce GT 730
-Compute Capability:     3.5
-Global Memory:          1073545216 B
-Constant Memory:        65536 B
-Shared Memory:          49152 B
-Registers:              65536
-Clock Speed:            0.90 GHz
-Number of MPs:          2
-Number of Cores:        384
-SMX count:              2
+Device 2 of 2:		GeForce GT 730
+Compute Capability:	3.5
+Global Memory:		1073545216 B
+Constant Memory:	65536 B
+Shared Memory:		49152 B
+Registers:		65536
+Clock Speed:		0.90 GHz
+Number of MPs:		2
+Number of Cores:	384
+SMX count:		2
+</pre>
+<p>
+<a name="thread"></a>
+</p><h4>-t / --thread</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> 2^14=16384
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -t to specify the number of threads. Format: 
+<p>
+</p><pre>    -t N 
+</pre>
+<p>
+where N is a positive integer. The thread number N must be a multiple of 32 - the size of a warp - on all CUDA devices. If N is not a multiple of 32, mcx will round it to the nearest multiple less than N. 
+</p><p>
+</p><pre> To achieve the best efficiency, it is recommended to launch a large number of threads to mazimize the utility of the GPU resources; a thread number larger than 10000 is generally sufficient. 
+</pre>
+<p>
+You should not manually specify the thread number using this option when you use the autopilot mode (-A).
+</p><p>
+<a name="blocksize"></a>
+</p><h4>-T / --blocksize</h4>
 
--t / --thread
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> 64
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative, must be multiples of 32
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -T to specify the size of a block. Format: 
+<p>
+</p><pre>    -T N 
+</pre>
+<p>
+where N is a positive integer. The block size N must be a multiple of 32 - the size of a warp - on all CUDA devices. If N is not a multiple of 32, mcx will round it to the nearest multiple less than N. 
+</p><p>
+</p><pre> Because mcx does not need inter-thread communication, a small block size, such as 32 or 64, is generally recommended. 
+</pre>
+<p>
+You should not manually specify the block size using this option when you use the autopilot mode (-A).
+</p><p>
+<a name="autopilot"></a>
+</p><h4>-A / --autopilot</h4>
 
-   Format
-          An integer
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -A to enable automatic thread/block configuration (i.e. autopilot). Format: 
+<p>
+</p><pre>    -A 1
+</pre>
+<p>
+When the autopilot mode is enabled, mcx will compute the 'optimal' thread number and block size using a heuristic algorithm.
+</p><p>
+<a name="gpu"></a>
+</p><h4>-G / --gpu</h4>
 
-   Default value
-          2^14=16384
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer or a string made of '0's and '1's
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> If integer, must be positive (&gt;0); if string, can only have '0's and '1's.
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -G to specify one or multiple GPUs to run the simulation. Format 
+<p>
+</p><pre>    -G 1    // use only the first GPU device (device orders based on 'mcx -L' output) 
+    -G n    // n is a positive integer, use only the n-th GPU device 
+    -G 1110 // when -G is followed by a string made of only 0s and 1s, it specifies 
+            // a mask for active GPUs, for example, 1110 means to use GPU 1-3 
+            // together while the 4th GPU is not used. 
+</pre>
+<p>
+When multiple GPU devices are specified, one need to use the -W/--workload flag to optimally partition the total photons to be simulated. By default, photons will be evenly distributed among multiple GPU devices.
+</p><p>
+<a name="workload"></a>
+</p><h4>-W / --workload</h4>
 
-   Restriction
-          can not be negative
-
-   Description
-
-   Use -t to specify the number of threads. Format:
-
-    -t N
-
-   where N is a positive integer. The thread number N must be a multiple
-   of 32 - the size of a warp - on all CUDA devices. If N is not a
-   multiple of 32, mcx will round it to the nearest multiple less than N.
-
- To achieve the best efficiency, it is recommended to launch a large number of threads to mazimize the utility of the GPU resources; a thread number larger than 10000 is generally sufficient.
-
-   You should not manually specify the thread number using this option
-   when you use the autopilot mode (-A).
-
--T / --blocksize
-
-   Format
-          An integer
-
-   Default value
-          64
-
-   Restriction
-          can not be negative, must be multiples of 32
-
-   Description
-
-   Use -T to specify the size of a block. Format:
-
-    -T N
-
-   where N is a positive integer. The block size N must be a multiple of
-   32 - the size of a warp - on all CUDA devices. If N is not a multiple
-   of 32, mcx will round it to the nearest multiple less than N.
-
- Because mcx does not need inter-thread communication, a small block size, such as 32 or 64, is generally recommended.
-
-   You should not manually specify the block size using this option when
-   you use the autopilot mode (-A).
-
--A / --autopilot
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          1
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -A to enable automatic thread/block configuration (i.e. autopilot).
-   Format:
-
-    -A 1
-
-   When the autopilot mode is enabled, mcx will compute the 'optimal'
-   thread number and block size using a heuristic algorithm.
-
--G / --gpu
-
-   Format
-          An integer or a string made of '0's and '1's
-
-   Default value
-          1
-
-   Restriction
-          If integer, must be positive (>0); if string, can only have '0's
-          and '1's.
-
-   Description
-
-   Use -G to specify one or multiple GPUs to run the simulation. Format
-
-    -G 1    // use only the first GPU device (device orders based on 'mcx -L' output)
-    -G n    // n is a positive integer, use only the n-th GPU device
-    -G 1110 // when -G is followed by a string made of only 0s and 1s, it specifies
-            // a mask for active GPUs, for example, 1110 means to use GPU 1-3
-            // together while the 4th GPU is not used.
-
-   When multiple GPU devices are specified, one need to use the
-   -W/--workload flag to optimally partition the total photons to be
-   simulated. By default, photons will be evenly distributed among
-   multiple GPU devices.
-
--W / --workload
-
-   Format
-          A list of floating point/integer values, separated by commas
-
-   Default value
-          100
-
-   Restriction
-          all values must be positive; no space is allowed; length must be
-          equal or longer than number of activated GPUs (i.e. count of all
-          '1's in -G)
-
-   Description
-
-   Use -W to partition the total simulated photon numbers between multiple
-   devices. Format
-
-    -W w1,w2,w3,...  // w_i is a numerical value, corresponding to the relative portions
-                     // of the workload of the i-th GPU device. The total load
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A list of floating point/integer values, separated by commas
+</dd><dt><strong>Default value</strong></dt><dd> 100
+</dd><dt><strong>Restriction</strong></dt><dd> all values must be positive; no space is allowed; length must be equal or longer than number of activated GPUs (i.e. count of all '1's in -G)
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -W to partition the total simulated photon numbers between multiple devices. Format 
+<p>
+</p><pre>    -W w1,w2,w3,...  // w_i is a numerical value, corresponding to the relative portions 
+                     // of the workload of the i-th GPU device. The total load 
                      // is proportional to the sum of w_i.
+</pre>
+<p>
+For example, -W 10,20,20 indicates a 1:2:2 workload split between 3 active GPUs.If one needs to simulate 1e6 photons, the 1st GPU will run 2e5 photons, while the 2nd and the 3rd GPUs will run 4e5 photons each.
+</p><p>
+<a name="printgpu"></a>
+</p><h4>-I / --printgpu</h4>
 
-   For example, -W 10,20,20 indicates a 1:2:2 workload split between 3
-   active GPUs.If one needs to simulate 1e6 photons, the 1st GPU will run
-   2e5 photons, while the 2nd and the 3rd GPUs will run 4e5 photons each.
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+<p>
+The -I option lists all available GPU, same as -L, but it also run the actual simulation.
+</p><p>
+</p><h3><a name="Output_options"></a>1.4. Output options</h3>
 
--I / --printgpu
+<a name="session"></a>
+<h4>-s / --session</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A string
+</dd><dt><strong>Default value</strong></dt><dd> same as the input file name followed by the -f flag (without the path); it can not contain &lt;&gt;:"/|?* 
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -s to specify a session ID for the simulation. Format: 
+<p>
+</p><pre>    -s session_name // session_name is a string, it can not contain &lt;&gt;:"/|?* 
+</pre>
+<p>
+If -s is set, the output fluence file (.mc2), detected photon file (.mch) and the log file (.log) will be named as session_name.{mc2,mch,log}. Otherwise, the input file name following the -f option will be used in the place of session_name.
+</p><p>
+<a name="savedet"></a>
+</p><h4>-d / --savedet</h4>
 
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   The -I option lists all available GPU, same as -L, but it also run the
-   actual simulation.
-
-Output options
-
--s / --session
-
-   Format
-          A string
-
-   Default value
-          same as the input file name followed by the -f flag (without the
-          path); it can not contain <>:"/|?*
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -s to specify a session ID for the simulation. Format:
-
-    -s session_name // session_name is a string, it can not contain <>:"/|?*
-
-   If -s is set, the output fluence file (.mc2), detected photon file
-   (.mch) and the log file (.log) will be named as
-   session_name.{mc2,mch,log}. Otherwise, the input file name following
-   the -f option will be used in the place of session_name.
-
--d / --savedet
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          1
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -d to enable or disable saving the detailed path data for all
-   detected photons. Format:
-
-    '-d' or '-d 1' to enable (default) or
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -d to enable or disable saving the detailed path data for all detected photons. Format: 
+<p>
+</p><pre>    '-d' or '-d 1' to enable (default) or 
     '-d 0' to disable
+</pre>
+<p>
+When this option is enabled, a binary file, with a suffix of .mch, will be produced in additional to the '.mc2' output. The .mch file contains the partial path data for all photons enters the aperatures of the detectors.
+</p><p>
+<a name="saveexit"></a>
+</p><h4>-x / --saveexit</h4>
 
-   When this option is enabled, a binary file, with a suffix of .mch, will
-   be produced in additional to the '.mc2' output. The .mch file contains
-   the partial path data for all photons enters the aperatures of the
-   detectors.
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+1 to save photon exit positions and directions
+setting -x to 1 also implies setting '-d' to 1
+<p>
+<a name="saveref"></a>
+</p><h4>-X / --saveref</h4>
 
--x / --saveexit
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+1 to save diffuse reflectance at the air-voxels
+right outside of the domain; if non-zero voxels
+appear at the boundary, pad 0s before using -X
+<p>
+</p><p>
+<a name="saveseed"></a>
+</p><h4>-q / --saveseed</h4>
 
-   Format
-          A boolean, 0 or 1
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+1 to save photon RNG seed for replay; 0 not save
+<p>
+<a name="dumpmask"></a>
+</p><h4>-M / --dumpmask</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -M to dump the modified volume data for debugging purposes. The dumped volume is saved in a binary file with Nx x Ny x Nz bytes, each byte contains the tissue label as the input volume, and the highest bit of each byte denotes whether the voxel is next to a detector.
+<p>
+</p><p>
+<a name="momentum"></a>
+</p><h4>-m / --momentum</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -m to save the momentum transfer for all detected photons. One can use this output for diffuse correlation spectroscopy (DCS) simulations. This information is stored in the .mch file. One can load the data using <tt>loadmch.m</tt> and process the saved data using the <tt>mcxdcsg1.m</tt> script, both matlab scripts can be found under <tt>mcx/utils</tt>.
+<p>
+<a name="maxdetphoton"></a>
+</p><h4>-H / --maxdetphoton</h4>
+ 
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> 1000000
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -H to specify the maximum number of detected photons. Format: 
+<p>
+</p><pre>    -H n    // n is a positive integer, signifying mcx to allocate a buffer to hold n detected photons 
+</pre>
+<p>
+By default, mcx can save up to 1e6 detected photons. If the detected photons exceed this limit, mcx will show a warning. Users may use the -H option to rerun the simulation and use the number in the warning to reallocate the buffer.
+</p><p>
+<a name="save2pt"></a>
+</p><h4>-S / --save2pt</h4>
 
-   Default value
-          0
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 1
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -S to enable or disable saving volumetric fluence distributions (or the requested output specified by the -X flag). 
+<p>
+<a name="outputtype"></a>
+</p><h4>-O / --outputtype</h4>
 
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   1 to save photon exit positions and directions setting -x to 1 also
-   implies setting '-d' to 1
-
--X / --saveref
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   1 to save diffuse reflectance at the air-voxels right outside of the
-   domain; if non-zero voxels appear at the boundary, pad 0s before using
-   -X
-
--q / --saveseed
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   1 to save photon RNG seed for replay; 0 not save
-
--M / --dumpmask
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -M to dump the modified volume data for debugging purposes. The
-   dumped volume is saved in a binary file with Nx x Ny x Nz bytes, each
-   byte contains the tissue label as the input volume, and the highest bit
-   of each byte denotes whether the voxel is next to a detector.
-
--H / --maxdetphoton
-
-   Format
-          An integer
-
-   Default value
-          1000000
-
-   Restriction
-          can not be negative
-
-   Description
-
-   Use -H to specify the maximum number of detected photons. Format:
-
-    -H n    // n is a positive integer, signifying mcx to allocate a buffer to hold n detected photons
-
-   By default, mcx can save up to 1e6 detected photons. If the detected
-   photons exceed this limit, mcx will show a warning. Users may use the
-   -H option to rerun the simulation and use the number in the warning to
-   reallocate the buffer.
-
--S / --save2pt
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          1
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -S to enable or disable saving volumetric fluence distributions (or
-   the requested output specified by the -X flag).
-
--O / --outputtype
-
-   Format
-          A single character (case insensitive)
-
-   Default value
-          'X'
-
-   Restriction
-          must be one of 'X,F,E,J,P', case insensitive
-
-   Description
-
-   Use -O to specify the type of data to be saved in the volumetric
-   output. The supported formats include
- 'X' - output time-resolved fluence rate (1/mm^2), i.e. TPSF
- 'F' - output time-resolved fluence rate integrated in each time-gate,
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A single character (case insensitive)
+</dd><dt><strong>Default value</strong></dt><dd> 'X'
+</dd><dt><strong>Restriction</strong></dt><dd> must be one of 'X,F,E,J,P', case insensitive
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -O to specify the type of data to be saved in the volumetric output. The supported formats include
+<pre> 'X' - output time-resolved fluence rate (1/mm^2), i.e. TPSF
+ 'F' - output time-resolved fluence rate integrated in each time-gate, 
  'E' - energy deposit at each voxel (normalized or unnormalized, depends on -n)
- 'J' - Jacobian (replay mode),
+ 'J' - Jacobian (replay mode),  
  'P' - scattering event counts at each voxel (replay mode only)
+</pre>
+<p>
+<a name="outputformat"></a>
+</p><h4>-F / --outputformat</h4>
 
--F / --outputformat
-
-   Format
-          A string
-
-   Default value
-          'mc2'
-
-   Restriction
-          must be one of 'mc2', 'nii','hdr','ubj', case insensitive
-
-   Description
-
-   Use -F to specify the volumetric data output format:
-    mc2 - MCX mc2 format (binary 32bit float) (default)
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A string
+</dd><dt><strong>Default value</strong></dt><dd> 'mc2'
+</dd><dt><strong>Restriction</strong></dt><dd> must be one of 'mc2', 'nii','hdr','ubj', case insensitive
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -F to specify the volumetric data output format:
+<pre>    mc2 - MCX mc2 format (binary 32bit float) (default)
     nii - Nifti format (fluence after taking log10())
     hdr - Analyze 7.5 hdr/img format
     ubj - universal binary JSON format (currently not supported yet)
+</pre>
+<p>
+</p><h3><a name="User_IO_options"></a>1.5. User IO options</h3>
 
-User IO options
+<a name="help"></a>
+<h4>-h / --help</h4>
 
--h / --help
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> no follow-up parameter needed
+</dd><dt><strong>Default value</strong></dt><dd> 
+</dd><dt><strong>Restriction</strong></dt><dd> None
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+<p>
+Use the -h flag to print the built-in help of all supported command line flags
+</p><p>
+<a name="version"></a>
+</p><h4>-v / --version</h4>
 
-   Format
-          no follow-up parameter needed
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> no follow-up parameter needed
+</dd><dt><strong>Default value</strong></dt><dd> 
+</dd><dt><strong>Restriction</strong></dt><dd> None
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+<p>
+Use the -v flag to print the version of MCX
+</p><p>
+</p><p>
+<a name="log"></a>
+</p><h4>-l / --log</h4>
 
-   Default value
-
-   Restriction
-          None
-
-   Description
-
-   Use the -h flag to print the built-in help of all supported command
-   line flags
-
--v / --version
-
-   Format
-          no follow-up parameter needed
-
-   Default value
-
-   Restriction
-          None
-
-   Description
-
-   Use the -v flag to print the version of MCX
-
--l / --log
-
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use the -l flag to save the MCX's command line output into a log file.
-   Format
-
-    '-l' or '-l 1' to enable (default) or
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use the -l flag to save the MCX's command line output into a log file. Format 
+<p>
+</p><pre>    '-l' or '-l 1' to enable (default) or 
     '-l 0' to disable
+</pre>
+<p>
+The output file name is 'session_name.log' where 'session_name' is the string specified by the -s flag. If -l is used, no message will be printed in the command line.
+</p><p>
+<a name="interactive"></a>
+</p><h4>-i / --interactive</h4>
 
-   The output file name is 'session_name.log' where 'session_name' is the
-   string specified by the -s flag. If -l is used, no message will be
-   printed in the command line.
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> A boolean, 0 or 1
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> must be 0 or 1
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -i when one wants to type in the domain settings in an item-by-item prompt mode. The -i option can not be used together with -f. When -i is used, one can use the redirect operator to include an input file, i.e. 
+<p>
+</p><pre>    mcx -i &lt; input.inp 
+    mcx -f input.inp 
+</pre>
+<p>
+can produce the same answer.
+</p><p>
+</p><h3><a name="Debug_options"></a>1.6. Debug options</h3>
 
--i / --interactive
+<a name="debug"></a>
+<h4>-D / --debug</h4>
 
-   Format
-          A boolean, 0 or 1
-
-   Default value
-          0
-
-   Restriction
-          must be 0 or 1
-
-   Description
-
-   Use -i when one wants to type in the domain settings in an item-by-item
-   prompt mode. The -i option can not be used together with -f. When -i is
-   used, one can use the redirect operator to include an input file, i.e.
-
-    mcx -i < input.inp
-    mcx -f input.inp
-
-   can produce the same answer.
-
-Debug options
-
--D / --debug
-
-   Format
-          An integer or a string
-
-   Default value
-          0
-
-   Restriction
-          If integer, must be positive; if string, must be made of any
-          combinations of 'R','M','P' (case insensitive).
-
-   Description
-
-   Use -D to print debug information (you can use an integer or a string
-   by combining the following flags)
-
-  1 R  debug RNG
-  2 M  store photon trajectory info
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer or a string
+</dd><dt><strong>Default value</strong></dt><dd> 0
+</dd><dt><strong>Restriction</strong></dt><dd> If integer, must be positive; if string, must be made of any combinations of 'R','M','P' (case insensitive).
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+Use -D to print debug information (you can use an integer or a string by combining the following flags)
+<p>
+</p><pre>  1 R  debug RNG
+  2 M  store photon trajectory info (saved in a .mct file, can be loaded with loadmch.m)
   4 P  print progress bar
+</pre>
+<p>
+combine multiple items by using a string, or add selected numbers together
+</p><p>
+</p><h3><a name="Additional_options"></a>1.7. Additional options</h3>
 
-   combine multiple items by using a string, or add selected numbers
-   together
+<a name="gscatter"></a>
+<h4>--gscatter</h4>
 
-Additional options
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> -1
+</dd><dt><strong>Restriction</strong></dt><dd> 1e9
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+after a photon completes the specified number of
+scattering events, mcx then ignores anisotropy g
+and only performs isotropic scattering for speed
+<p>
+</p><p>
+<a name="maxvoidstep"></a>
+</p><h4>--maxvoidstep</h4>
 
---gscatter
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> 1000
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+maximum distance (in voxel unit) of a photon that
+can travel before entering the domain, if 
+launched outside (i.e. a widefield source)
+<p>
+</p><p>
+<a name="maxjumpdebug"></a>
+</p><h4>--maxjumpdebug</h4>
 
-   Format
-          An integer
+<dl class="wikiddllevel1">
+<dt><strong>Format</strong></dt><dd> An integer
+</dd><dt><strong>Default value</strong></dt><dd> 10000000
+</dd><dt><strong>Restriction</strong></dt><dd> can not be negative
+</dd><dt><strong>Description</strong></dt><dd>
+</dd></dl>
+when trajectory is requested (i.e. -D M),
+use this parameter to set the maximum positions
+stored (default: 1e7)
+<p>
+</p><p>
+</p><h2><a name="Input_File_Format"></a>2. Input File Format</h2>
 
-   Default value
-          -1
+<p>
+</p><h3><a name="JSON_input_file_format"></a>2.1. JSON input file format</h3>
 
-   Restriction
-          1e9
-
-   Description
-
-   after a photon completes the specified number of scattering events, mcx
-   then ignores anisotropy g and only performs isotropic scattering for
-   speed
-
---maxvoidstep
-
-   Format
-          An integer
-
-   Default value
-          1000
-
-   Restriction
-          can not be negative
-
-   Description
-
-   maximum distance (in voxel unit) of a photon that can travel before
-   entering the domain, if launched outside (i.e. a widefield source)
-
---maxjumpdebug
-
-   Format
-          An integer
-
-   Default value
-          1000000
-
-   Restriction
-          can not be negative
-
-   Description
-
-   when trajectory is requested (i.e. -D M), use this parameter to set the
-   maximum positions stored (default: 1e6)
-
-2. Input File Format
-
-JSON input file format
-
-   Starting from version 0.7.9, MCX accepts a JSON-formatted input file in
-   addition to the conventional tMCimg-like input format. JSON (JavaScript
-   Object Notation) is a portable, human-readable and "fat-free" text
-   format to represent complex and hierarchical data. Using the JSON
-   format makes a input file self-explanatory, extensible and
-   easy-to-interface with other applications (like MATLAB).
-
-   A sample JSON input file can be found under the examples/quicktest
-   folder. The same file, qtest.json, is also shown below:
-
- {
+<p>
+Starting from version 0.7.9, MCX accepts a JSON-formatted input file in
+addition to the conventional tMCimg-like input format. JSON 
+(JavaScript Object Notation) is a portable, human-readable and 
+"fat-free" text format to represent complex and hierarchical data.
+Using the JSON format makes a input file self-explanatory, extensible
+and easy-to-interface with other applications (like MATLAB).
+</p><p>
+A sample JSON input file can be found under the examples/quicktest
+folder. The same file, qtest.json, is also shown below:
+</p><p>
+</p><pre> {
     "Help": {
       "[en]": {
         "Domain::VolumeFile": "file full path to the volume description file, can be a binary or JSON file",
         "Domain::Dim": "dimension of the data array stored in the volume file",
         "Domain::OriginType": "similar to --srcfrom0, 1 if the origin is [0 0 0], 0 if it is [1.0,1.0,1.0]",
-        "Domain::LengthUnit": "define the voxel length in mm, similar to --unitinmm",
+	"Domain::LengthUnit": "define the voxel length in mm, similar to --unitinmm",
         "Domain::Media": "the first medium is always assigned to voxels with a value of 0 or outside of
-                         the volume, the second row is for medium type 1, and so on. mua and mus must
+                         the volume, the second row is for medium type 1, and so on. mua and mus must 
                          be in 1/mm unit",
         "Session::Photons": "if -n is not specified in the command line, this defines the total photon number",
         "Session::ID": "if -s is not specified in the command line, this defines the output file name stub",
@@ -984,45 +834,45 @@ JSON input file format
         "Optode::Source::Pos": "the grid position of the source, can be non-integers, in grid unit",
         "Optode::Detector::Pos": "the grid position of a detector, can be non-integers, in grid unit",
         "Optode::Source::Dir": "the unitary directional vector of the photon at launch",
-        "Optode::Source::Type": "source types, must be one of the following:
+        "Optode::Source::Type": "source types, must be one of the following: 
                    pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk,fourierx,fourierx2d",
         "Optode::Source::Param1": "source parameters, 4 floating-point numbers",
         "Optode::Source::Param2": "additional source parameters, 4 floating-point numbers"
       }
     },
     "Domain": {
-        "VolumeFile": "semi60x60x60.bin",
+	"VolumeFile": "semi60x60x60.bin",
         "Dim":    [60,60,60],
         "OriginType": 1,
-        "LengthUnit": 1,
+	"LengthUnit": 1,
         "Media": [
              {"mua": 0.00, "mus": 0.0, "g": 1.00, "n": 1.0},
              {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.0}
         ]
     },
     "Session": {
-        "Photons":  1000000,
-        "RNGSeed":  29012392,
-        "ID":       "qtest"
+	"Photons":  1000000,
+	"RNGSeed":  29012392,
+	"ID":       "qtest"
     },
     "Forward": {
-        "T0": 0.0e+00,
-        "T1": 5.0e-09,
-        "Dt": 5.0e-09
+	"T0": 0.0e+00,
+	"T1": 5.0e-09,
+	"Dt": 5.0e-09
     },
     "Optode": {
-        "Source": {
-            "Pos": [29.0, 29.0, 0.0],
-            "Dir": [0.0, 0.0, 1.0],
-            "Type": "pencil",
-            "Param1": [0.0, 0.0, 0.0, 0.0],
-            "Param2": [0.0, 0.0, 0.0, 0.0]
-        },
-        "Detector": [
-            {
-                "Pos": [29.0,  19.0,  0.0],
-                "R": 1.0
-            },
+	"Source": {
+	    "Pos": [29.0, 29.0, 0.0],
+	    "Dir": [0.0, 0.0, 1.0],
+	    "Type": "pencil",
+	    "Param1": [0.0, 0.0, 0.0, 0.0],
+	    "Param2": [0.0, 0.0, 0.0, 0.0]
+	},
+	"Detector": [
+	    {
+		"Pos": [29.0,  19.0,  0.0],
+		"R": 1.0
+	    },
             {
                 "Pos": [29.0,  39.0,  0.0],
                 "R": 1.0
@@ -1035,71 +885,76 @@ JSON input file format
                 "Pos": [39.0,  29.0,  0.0],
                 "R": 1.0
             }
-        ]
+	]
     }
  }
-
-   A JSON input file requiers several root objects, namely "Domain",
-   "Session", "Forward" and "Optode". Other root sections, like "Help",
-   will be ignored. Each object is a data structure providing information
-   indicated by its name. Each object can contain various sub-fields. The
-   orders of the fields in the same level are flexible. For each field,
-   you can always find the equivalent fields in the *.inp input files. For
-   example, The "VolumeFile" field under the "Domain" object is the same
-   as Line#6 in qtest.inp; the "RNGSeed" under "Session" is the same as
-   Line#2; the "Optode.Source.Pos" is the same as the triplet in Line#3;
-   the "Forward.T0" is the same as the first number in Line#5, etc.
-
-   An MCX JSON input file must be a valid JSON text file. You can validate
-   your input file by running a JSON validator, for example
-   [5]http://jsonlint.com/ You should always use "" to quote a "name" and
-   separate parallel items by ",".
-
-   MCX accepts an alternative form of JSON input, but using it is not
-   recommended. In the alternative format, you can use
- "rootobj_name.field_name": value
-
-   to represent any parameter directly in the root level. For example
-
- {
+</pre>
+<p>
+A JSON input file requiers several root objects, namely "Domain", "Session", 
+"Forward" and "Optode". Other root sections, like "Help", will be ignored. 
+Each object is a data structure providing information
+indicated by its name. Each object can contain various sub-fields. 
+The orders of the fields in the same level are flexible. For each field, 
+you can always find the equivalent fields in the *.inp input files. 
+For example, The "VolumeFile" field under the "Domain" object 
+is the same as Line#6 in qtest.inp; the "RNGSeed" under "Session" is
+the same as Line#2; the "Optode.Source.Pos" is the same as the 
+triplet in Line#3; the "Forward.T0" is the same as the first number 
+in Line#5, etc.
+</p><p>
+An MCX JSON input file must be a valid JSON text file. You can validate
+your input file by running a JSON validator, for example <a href="http://jsonlint.com/">http://jsonlint.com/</a>
+You should always use "" to quote a "name" and separate parallel
+items by ",".
+</p><p>
+MCX accepts an alternative form of JSON input, but using it is not 
+recommended. In the alternative format, you can use 
+</p><pre> "rootobj_name.field_name": value 
+</pre>
+to represent any parameter directly in the root level. For example
+<p>
+</p><pre> {
     "Domain.VolumeFile": "semi60x60x60.json",
     "Session.Photons": 10000000,
     ...
  }
+</pre>
+<p>
+You can even mix the alternative format with the standard format. 
+If any input parameter has values in both formats in a single input 
+file, the standard-formatted value has higher priority.
+</p><p>
+To invoke the JSON-formatted input file in your simulations, you 
+can use the "-f" command line option with MCX, just like using an 
+.inp file. For example:
+</p><p>
+</p><pre>  mcx -A -n 20 -f onecube.json -s onecubejson
+</pre>
+<p>
+The input file must have a ".json" suffix in order for MCX to 
+recognize. If the input information is set in both command line,
+and input file, the command line value has higher priority
+(this is the same for .inp input files). For example, when 
+using "-n 20", the value set in "Session"/"Photons" is overwritten 
+to 20; when using "-s onecubejson", the "Session"/"ID" value is modified.
+If your JSON input file is invalid, MCX will quit and point out
+where the format is incorrect.
+</p><p>
+</p><h3><a name="inp_input_file_format"></a>2.2. inp input file format</h3>
 
-   You can even mix the alternative format with the standard format. If
-   any input parameter has values in both formats in a single input file,
-   the standard-formatted value has higher priority.
-
-   To invoke the JSON-formatted input file in your simulations, you can
-   use the "-f" command line option with MCX, just like using an .inp
-   file. For example:
-
-  mcx -A -n 20 -f onecube.json -s onecubejson
-
-   The input file must have a ".json" suffix in order for MCX to
-   recognize. If the input information is set in both command line, and
-   input file, the command line value has higher priority (this is the
-   same for .inp input files). For example, when using "-n 20", the value
-   set in "Session"/"Photons" is overwritten to 20; when using "-s
-   onecubejson", the "Session"/"ID" value is modified. If your JSON input
-   file is invalid, MCX will quit and point out where the format is
-   incorrect.
-
-inp input file format
-
-   Historically, MCX supports an extended version of the input file format
-   used by tMCimg. The difference is that MCX allows comments in the input
-   file. A typical MCX input file looks like this:
-
-1000000              # total photon, use -n to overwrite in the command line
+<p>
+Historically, MCX supports an extended version of the input file format 
+used by tMCimg. The difference is that MCX allows comments in the input file.
+A typical MCX input file looks like this:
+</p><p>
+</p><pre>1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
 30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets srcfrom0 (-z)
 0 0 1                # initial directional vector
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' binary format)
 1 60 1 60            # x voxel size in mm (isotropic only), dim, start/end indices
-1 60 1 60            # y voxel size, must be same as x, dim, start/end indices
+1 60 1 60            # y voxel size, must be same as x, dim, start/end indices 
 1 60 1 60            # y voxel size, must be same as x, dim, start/end indices
 1                    # num of media
 1.010101 0.01 0.005 1.37  # scat. mus (1/mm), g, mua (1/mm), n
@@ -1107,26 +962,30 @@ semi60x60x60.bin     # volume ('unsigned char' binary format)
 30.0  20.0  0.0  2.0 # detector 1 position (real numbers in grid unit) and individual radius (optional)
 30.0  40.0  0.0      # ..., if individual radius is ignored, MCX will use the default radius
 20.0  30.0  0.0      #
-40.0  30.0  0.0      #
+40.0  30.0  0.0      # 
 pencil               # source type (optional)
 0 0 0 0              # parameters (4 floats) for the selected source
 0 0 0 0              # additional source parameters
+</pre>
+<p>
+Note that the scattering coefficient mus=musp/(1-g).
+</p><p>
+<a name="jsonshape"></a>
+</p><h3><a name="JSON_shape_file_format"></a>2.3. JSON shape file format</h3>
 
-   Note that the scattering coefficient mus=musp/(1-g).
-
-JSON shape file format
-
-   Starting from v0.7.9, MCX can also use a shape description file in the
-   place of the volume file. Using a shape-description file can save you
-   from making a binary .bin volume. A shape file uses more descriptive
-   syntax and can be easily understood and shared with others.
-
-   Samples on how to use the shape files are included under the
-   example/shapetest folder.
-
-   The sample shape file, shapes.json, is shown below:
-
- {
+<p>
+Starting from v0.7.9, MCX can also use a shape 
+description file in the place of the volume file.
+Using a shape-description file can save you from making
+a binary .bin volume. A shape file uses more descriptive 
+syntax and can be easily understood and shared with others.
+</p><p>
+Samples on how to use the shape files are included under
+the example/shapetest folder. 
+</p><p>
+The sample shape file, shapes.json, is shown below:
+</p><p>
+</p><pre> {
   "MCX_Shape_Command_Help":{
      "Shapes::Common Rules": "Shapes is an array object. The Tag field sets the voxel value for each
          region; if Tag is missing, use 0. Tag must be smaller than the maximum media number in the
@@ -1145,7 +1004,7 @@ JSON shape file format
      "Shapes::XSlabs/YSlabs/ZSlabs": "Slab structures, consisted of a list of FP pairs [start,end]
           both ends are inclusive in MATLAB array indices, all XSlabs are perpendicular to x-axis, and so on",
      "Shapes::Cylinder": "A finite cylinder, defined by the two ends, C0 and C1, along the axis and a radius R",
-     "Shapes::UpperSpace": "A semi-space defined by inequality A*x+B*y+C*z>D, Coef is required, but not Equ"
+     "Shapes::UpperSpace": "A semi-space defined by inequality A*x+B*y+C*z&gt;D, Coef is required, but not Equ"
   },
   "Shapes": [
      {"Name":     "Test"},
@@ -1154,54 +1013,55 @@ JSON shape file format
      {"Sphere":   {"Tag":2, "O":[30,30,30],"R":20}},
      {"Box":      {"Tag":0, "O":[10,10,10],"Size":[10,10,10]}},
      {"Subgrid":  {"Tag":1, "O":[13,13,13],"Size":[5,5,5]}},
-     {"UpperSpace":{"Tag":3,"Coef":[1,-1,0,0],"Equ":"A*x+B*y+C*z>D"}},
+     {"UpperSpace":{"Tag":3,"Coef":[1,-1,0,0],"Equ":"A*x+B*y+C*z&gt;D"}},
      {"XSlabs":   {"Tag":4, "Bound":[[5,15],[35,40]]}},
      {"Cylinder": {"Tag":2, "C0": [0.0,0.0,0.0], "C1": [15.0,8.0,10.0], "R": 4.0}},
      {"ZLayers":  [[1,10,1],[11,30,2],[31,50,3]]}
   ]
  }
+</pre>
+<p>
+A shape file must contain a "Shapes" object in the root level.
+Other root-level fields are ignored. The "Shapes" object is a
+JSON array, with each element representing a 3D object or 
+setting. The object-class commands include "Grid", "Sphere",
+"Box" etc. Each of these object include a number of sub-fields
+to specify the parameters of the object. For example, the 
+"Sphere" object has 3 subfields, "O", "R" and "Tag". Field "O" 
+has a value of 1x3 array, representing the center of the sphere; 
+"R" is a scalar for the radius; "Tag" is the voxel values. 
+The most useful command is "[XYZ]Layers". It contains a 
+series of integer triplets, specifying the starting index, 
+ending index and voxel value of a layered structure. If multiple
+objects are included, the subsequent objects always overwrite 
+the overlapping regions covered by the previous objects.
+</p><p>
+There are a few ways for you to use shape description records
+in your MCX simulations. You can save it to a JSON shape file, and
+put the file name in Line#6 of yoru .inp file, or set as the
+value for Domain.VolumeFile field in a .json input file. 
+In these cases, a shape file must have a suffix of .json.
+</p><p>
+You can also merge the Shapes section with a .json input file
+by simply appending the Shapes section to the root-level object.
+You can find an example, jsonshape_allinone.json, under 
+examples/shapetest. In this case, you no longer need to define
+the "VolumeFile" field in the input.
+</p><p>
+Another way to use Shapes is to specify it using the -P (or --shapes)
+command line flag. For example:
+</p><p>
+</p><pre> mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
+</pre>
+<p>
+This will first initialize a volume based on the settings in the 
+input .json file, and then rasterize new objects to the domain and 
+overwrite regions that are overlapping.
+</p><p>
+For both JSON-formatted input and shape files, you can use
+the JSONlab toolbox [4] to load and process in MATLAB.
+</p></div><div class="wikifooter"><div class="wikiuserbar">User toolbar<ul class="userlist"><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=watch&amp;id=Doc/mcx_help">Watch page</a></li></ul></div><!--CACHE--><div class="wikiadminbar">Administration<ul class="adminlist"><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=pagelock&amp;set=1&amp;id=Doc/mcx_help">Lock page</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=delete&amp;id=Doc/mcx_help&amp;confirm=0">Delete this page</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=editbanned">Edit Banned List</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=editlinks">Edit/Rename pages</a></li><li><a href="http://mcx.space/wiki/index.cgi/wiki/index.cgi/wiki/index.cgi?action=editlock&amp;set=1">Lock site</a></li></ul></div><!--/CACHE--><div class="wikifooternote"><a href="http://wenq.org/habitat/"><b>Powered by Habitat</b></a>
 
-   A shape file must contain a "Shapes" object in the root level. Other
-   root-level fields are ignored. The "Shapes" object is a JSON array,
-   with each element representing a 3D object or setting. The object-class
-   commands include "Grid", "Sphere", "Box" etc. Each of these object
-   include a number of sub-fields to specify the parameters of the object.
-   For example, the "Sphere" object has 3 subfields, "O", "R" and "Tag".
-   Field "O" has a value of 1x3 array, representing the center of the
-   sphere; "R" is a scalar for the radius; "Tag" is the voxel values. The
-   most useful command is "[XYZ]Layers". It contains a series of integer
-   triplets, specifying the starting index, ending index and voxel value
-   of a layered structure. If multiple objects are included, the
-   subsequent objects always overwrite the overlapping regions covered by
-   the previous objects.
+</div></div></div>
 
-   There are a few ways for you to use shape description records in your
-   MCX simulations. You can save it to a JSON shape file, and put the file
-   name in Line#6 of yoru .inp file, or set as the value for
-   Domain.VolumeFile field in a .json input file. In these cases, a shape
-   file must have a suffix of .json.
-
-   You can also merge the Shapes section with a .json input file by simply
-   appending the Shapes section to the root-level object. You can find an
-   example, jsonshape_allinone.json, under examples/shapetest. In this
-   case, you no longer need to define the "VolumeFile" field in the input.
-
-   Another way to use Shapes is to specify it using the -P (or --shapes)
-   command line flag. For example:
-
- mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
-
-   This will first initialize a volume based on the settings in the input
-   .json file, and then rasterize new objects to the domain and overwrite
-   regions that are overlapping.
-
-   For both JSON-formatted input and shape files, you can use the JSONlab
-   toolbox [4] to load and process in MATLAB.
-
-References
-
-   1. http://mcx.sourceforge.net/cgi-bin/index.cgi?action=rss
-   2. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/mcx_help#Command_Line_Options
-   3. http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/mcx_help#Input_File_Format
-   4. http://mcx.sourceforge.net/cgi-bin/index.cgi?embed=1&keywords=Doc/mcx_help#repeat
-   5. http://jsonlint.com/
+</div></body></html>

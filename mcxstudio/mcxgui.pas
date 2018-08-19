@@ -908,7 +908,10 @@ begin
         grGPU.Visible:=true;
         tabVolumeDesigner.Enabled:=true;
         ckSpecular.Visible:=false;
-        ckMomentum.Visible:=false;
+        if(grProgram.ItemIndex=2) then
+            ckMomentum.Visible:=false
+        else
+            ckMomentum.Visible:=true;
         ckSaveRef.Visible:=true;
         edRespin.Hint:='RespinNum';
         lbRespin.Caption:='Split into runs (-r)';
@@ -2828,6 +2831,8 @@ begin
     if(grProgram.ItemIndex<2) then begin
       param.Add('--saveseed');
       param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
+      param.Add('--momentum');
+      param.Add(Format('%d',[Integer(ckMomentum.Checked)]));
     end;
 
     if(grProgram.ItemIndex>=1) then begin
@@ -2840,8 +2845,6 @@ begin
          param.Add(Format('%d',[Integer(ckSpecular.Checked)]));
          param.Add('--basisorder');
          param.Add(Format('%d',[edRespin.Value]));
-         param.Add('--momentum');
-         param.Add(Format('%d',[Integer(ckMomentum.Checked)]));
     end;
 
     if(grAtomic.ItemIndex=0) then begin

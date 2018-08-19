@@ -579,7 +579,7 @@ object fmMCX: TfmMCX
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#input'
         DialogOptions = []
-        Filter = 'JSON or legacy input files|*.json;*.inp|JSON input file|*.json|Legacy input file|*.inp|All (*.*)|*.*'
+        Filter = 'JSON or legacy input files (*.json;*.inp)|*.json;*.inp|JSON input file (*.json)|*.json|Legacy input file (*.inp)|*.inp|All (*.*)|*.*'
         FilterIndex = 0
         HideDirectories = False
         ButtonWidth = 23
@@ -1302,7 +1302,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoReflect'
         Top = 0
-        Width = 203
+        Width = 196
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#reflect'
         Caption = 'Do reflection (-b)'
@@ -1317,7 +1317,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoNormalize'
         Top = 24
-        Width = 203
+        Width = 196
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#normalize'
         Caption = 'Do normalization (-U)'
@@ -1332,7 +1332,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSaveExit'
         Top = 48
-        Width = 203
+        Width = 196
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#saveexit'
         Caption = 'Save exit position && dir (-x)'
@@ -1345,7 +1345,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSrcFrom0'
         Top = 72
-        Width = 203
+        Width = 196
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#srcfrom0'
         Caption = 'Orign from [0,0,0] (-z)'
@@ -1356,11 +1356,11 @@ object fmMCX: TfmMCX
         TabOrder = 3
       end
       object ckSaveDetector: TCheckBox
-        Left = 213
+        Left = 206
         Height = 24
         Hint = 'SaveDetector'
         Top = 0
-        Width = 213
+        Width = 206
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#savedet'
         Caption = 'Save detected photons (-d)'
@@ -1371,11 +1371,11 @@ object fmMCX: TfmMCX
         TabOrder = 4
       end
       object ckSaveData: TCheckBox
-        Left = 213
+        Left = 206
         Height = 24
         Hint = 'DoSave'
         Top = 24
-        Width = 213
+        Width = 206
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#save2pt'
         Caption = 'Save fluence (-S)'
@@ -1386,11 +1386,11 @@ object fmMCX: TfmMCX
         TabOrder = 5
       end
       object ckSaveRef: TCheckBox
-        Left = 213
+        Left = 206
         Height = 24
         Hint = 'DoSaveRef'
         Top = 48
-        Width = 213
+        Width = 206
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#saveref'
         Caption = 'Save diffuse reflectance (-X)'
@@ -1399,11 +1399,11 @@ object fmMCX: TfmMCX
         TabOrder = 6
       end
       object ckSkipVoid: TCheckBox
-        Left = 213
+        Left = 206
         Height = 24
         Hint = 'DoSkipVoid'
         Top = 72
-        Width = 213
+        Width = 206
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#skipvoid'
         Caption = 'Skip void space (-k)'
@@ -1412,11 +1412,11 @@ object fmMCX: TfmMCX
         TabOrder = 7
       end
       object ckSaveSeed: TCheckBox
-        Left = 426
+        Left = 412
         Height = 24
         Hint = 'DoSaveSeed'
         Top = 0
-        Width = 200
+        Width = 214
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#saveseed'
         Caption = 'Save photon seeds (-q)'
@@ -1425,11 +1425,11 @@ object fmMCX: TfmMCX
         TabOrder = 8
       end
       object ckSaveMask: TCheckBox
-        Left = 426
+        Left = 412
         Height = 24
         Hint = 'DoSaveMask'
         Top = 24
-        Width = 200
+        Width = 214
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#dumpmask'
         Caption = 'Save volume mask (-M)'
@@ -1438,11 +1438,11 @@ object fmMCX: TfmMCX
         TabOrder = 9
       end
       object ckSpecular: TCheckBox
-        Left = 426
+        Left = 412
         Height = 24
         Hint = 'DoSpecular'
         Top = 48
-        Width = 200
+        Width = 214
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#specular'
         Caption = 'Do specular reflection (-V)'
@@ -1452,18 +1452,17 @@ object fmMCX: TfmMCX
         Visible = False
       end
       object ckMomentum: TCheckBox
-        Left = 426
+        Left = 412
         Height = 24
         Hint = 'DoMomentum'
         Top = 72
-        Width = 200
+        Width = 214
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#momentum'
-        Caption = 'Save momentum transfer'
+        Caption = 'Save momentum transfer (-m)'
         OnChange = edRespinChange
         ParentFont = False
         TabOrder = 11
-        Visible = False
       end
     end
     object grGPU: TGroupBox
@@ -29204,7 +29203,7 @@ object fmMCX: TfmMCX
     top = 200
   end
   object htmlHelpDatabase: THTMLHelpDatabase
-    BaseURL = 'http://mcx.sourceforge.net/cgi-bin/index.cgi%3FDoc/'
+    BaseURL = 'http://mcx.space/wiki/index.cgi%3FDoc/'
     AutoRegister = True
     KeywordPrefix = 'HTML/'
     left = 101

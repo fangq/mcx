@@ -2,6 +2,10 @@
 
 == MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
 
+ 2018-08-18 [       ] MCX 1.0 (v2018) is fully baked! create release packages
+ 2018-08-18 [ed0612e] add Yu2018 citation, minor gui update
+ 2018-08-17 [eb9a2e6] fix momentum transfer saving bug, need to clear buffer for each new photon
+ 2018-08-17 [b11dae9] add help menu with papers and web resources
  2018-08-15 [13ab6f2] add more demo script for mc data processing showcase
  2018-08-14 [1e3eaa9] fix a bug in 2D simulations
  2018-08-14 [e99e5ef] allow saving photon trajectory in command line, add plotting function, bump limit to 1e7
