@@ -99,7 +99,7 @@ else
   endif
 endif
 
-CUGENCODE?=-arch=sm_20
+CUGENCODE?=-arch=sm_30
 OUTPUTFLAG:=-o
 
 kepler: fermi
