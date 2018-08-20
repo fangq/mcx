@@ -128,7 +128,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             mcx_initcfg(&cfg);
             cfg.isgpuinfo=3;
             if(!(activedev=mcx_list_gpu(&cfg,&gpuinfo))){
-                mexWarnMsgTxt("no active GPU device found");
+                mexErrMsgTxt("no active GPU device found");
             }
             plhs[0] = mxCreateStructMatrix(gpuinfo[0].devcount,1,15,gpuinfotag);
             for(int i=0;i<gpuinfo[0].devcount;i++){
