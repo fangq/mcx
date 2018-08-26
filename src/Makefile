@@ -102,75 +102,77 @@ endif
 CUGENCODE?=-arch=sm_30
 OUTPUTFLAG:=-o
 
+##  Target section  ##
+
 kepler: fermi
 keplermex: fermimex
+kepleroct: fermioct
 kepler keplermex: CUGENCODE=-arch=sm_30
 
-logfast:    CUCCOPT+=-use_fast_math
-xor:        CUCCOPT+=-DUSE_XORSHIFT128P_RAND
-xor:        LINKOPT+=-DUSE_XORSHIFT128P_RAND
+maxwell: kepler
+maxwellmex: keplermex
+maxwelloct: kepleroct
+maxwell maxwellmex: CUGENCODE=-arch=sm_50
+
+pascal: maxwell
+pascalmex: maxwellmex
+pascaloct: maxwelloct
+pascal pascalmex: CUGENCODE=-arch=sm_60
+
+volta: pascal
+voltamex: pascalmex
+voltaoct: pascaloct
+volta voltamex: CUGENCODE=-arch=sm_70
+
+turing: volta
+turingmex: voltamex
+turingoct: voltaoct
+turing turingmex: CUGENCODE=-arch=sm_80
+
+log xor xoro posix:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math
+xor:        LINKOPT+=
 xoro:       CUCCOPT+=-DUSE_XOROSHIRO128P_RAND
 xoro:       LINKOPT+=-DUSE_XOROSHIRO128P_RAND
 posix:      CUCCOPT+=-DUSE_POSIX_RAND
 posix:      LINKOPT+=-DUSE_POSIX_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
-log:        CUCCOPT+=
 debugxor:   xor
-debugxor:   LINKOPT+=$(OMP)
-debuglog:   CUCCOPT+=
-racing:     CUCCOPT+=-DTEST_RACING
-xoratomic:  CUCCOPT+=-DUSE_XORSHIFT128P_RAND -DUSE_ATOMIC -use_fast_math $(CUGENCODE) MCX_TARGET_NAME='"Xorshift128+ Atomic MCX"'
-logatomic:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"LL5 Atomic MCX"'
-fermi fermimex fermioct:      CUCCOPT+=-DUSE_ATOMIC -use_fast_math
+log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
 fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
-maxwellmex pascalmex: fermimex
-maxwelloct pascaloct: fermioct
-maxwellmex maxwelloct pascalmex pascaloct: CUCCOPT+=-DUSE_XORSHIFT128P_RAND
-maxwellmex maxwelloct pascalmex pascaloct: MEXCCOPT+=-DUSE_XORSHIFT128P_RAND
-maxwelloct maxwellmex: CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
-pascaloct  pascalmex:  CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
 
-xorbox logbox:		CUCCOPT+=-DUSE_CACHEBOX -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"Cachebox MCX"'
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
-xoratomic logatomic:	BINARY:=$(BINARY)_atomic
-det:    CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE) -DMCX_TARGET_NAME='"Detective MCX"'
-detbox mexbox octbox fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -DUSE_CACHEBOX -use_fast_math $(CUGENCODE)
-detbox mexbox octbox: CUCCOPT+=-DMCX_TARGET_NAME='"Cached Detective MCX"'
+fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Fermi MCX"'
-det detbox: BINARY:=$(BINARY)_det
-logbox detbox:          BINARY:=$(BINARY)_cached
-all xorfermi maxwell pascal half:    fermi
-maxwell:    CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52
-pascal:     CUGENCODE=-arch=compute_20 -code=sm_20 -code=sm_30 -code=sm_35 -code=sm_50 -code=sm_52 -code=sm_61
-xormax:     maxwell
-xorpas:     pascal
-xorfermi xormax xorpas:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
-half:       CUCCOPT+=-DUSE_HALF
-half:       CUGENCODE=-arch=compute_60
+xorfermi:   xor
+xorofermi:  xoro
+posixfermi: posix
+logfermi:   log
+xorfermi xorofermi posixfermi logfermi debugxor debuglog:   LINKOPT+=$(OMP)
+all xorfermi:    fermi
+xorfermi:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+half: CUCCOPT+=-DUSE_HALF
+half: CUGENCODE=-arch=sm_60
 
-
-static:     xorfermi
+static:     fermi
 static:     AR=nvcc
 static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
-mexbox fermimex:        AR=$(MEX)
-mexbox fermimex:        LINKOPT+= CXXFLAGS='$$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER $(OMP) $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-L$$TMW_ROOT$$MATLABROOT/sys/os/$$ARCH $$LDFLAGS $(OMP) $(USERLINKOPT)' -liomp5
-mexbox oct octbox fermimex fermioct:    OUTPUT_DIR=../mcxlab
-fermimex:      BINARY=mcx
-fermioct:      BINARY=mcx.mex
-mexbox:                     BINARY=mcx_atom
-mexbox octbox fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER
-mexbox octbox fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
-mexbox fermimex:        LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
+fermimex:   AR=$(MEX)
+fermimex:   LINKOPT+= CXXFLAGS='$$CXXFLAGS -g -DSAVE_DETECTORS -DMCX_CONTAINER $(OMP) $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-L$$TMW_ROOT$$MATLABROOT/sys/os/$$ARCH $$LDFLAGS $(OMP) $(USERLINKOPT)' -liomp5
+oct fermimex fermioct:    OUTPUT_DIR=../mcxlab
+fermimex:   BINARY=mcx
+fermioct:   BINARY=mcx.mex
+fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER
+fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER
+fermimex:   LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-octbox fermioct:        AR= CXXFLAGS='-DSAVE_DETECTORS -DUSE_CACHEBOX -fopenmp $(MEXCCOPT) $(USERCCOPT)' LFLAGS='-fopenmp $(USERLINKOPT)' LDFLAGS='$(LFLAGS)' mkoctfile
-fermioct:               BINARY=mcx.mex
-octbox:                 BINARY=mcx_atom.mex
-octbox fermioct:        LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
+fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS -fopenmp $(MEXCCOPT) $(USERCCOPT)' LFLAGS='-fopenmp $(USERLINKOPT)' LDFLAGS='$(LFLAGS)' mkoctfile
+fermioct:   BINARY=mcx.mex
+fermioct:   LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 
 fermidebug: CUCCOPT+=-DMCX_DEBUG
 fermidebug: fermi
@@ -180,14 +182,15 @@ debug: debugxor
 mex: fermimex
 oct: fermioct
 
-##  Documentation  ##
+##  Command section  ##
+
 doc: makedocdir
 	$(DOXY) $(DOXYCFG)
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
-all xor xoro posix fast log logfast racing xoratomic logatomic xorbox logbox debugxor debuglog \
- det detbox fermi mex oct mexbox octbox fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
+all xor xoro posix fast log debugxor debuglog half xorfermi xorofermi posixfermi logfermi\
+ fermi mex oct fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 makedirs:
 	@if test ! -d $(OUTPUT_DIR); then $(MKDIR) $(OUTPUT_DIR); fi

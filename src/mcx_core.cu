@@ -37,14 +37,12 @@
 
 #if defined(USE_XOROSHIRO128P_RAND)
     #include "xoroshiro128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
-#elif defined(USE_XORSHIFT128P_RAND)
-    #include "xorshift128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
+#elif defined(USE_LL5_RAND)
+    #include "logistic_rand.cu"     ///< use Logistic Lattice ring 5 RNG (LL5)
 #elif defined(USE_POSIX_RAND)
     #include "posix_rand.cu"        ///< use POSIX erand48 RNG (POSIX)
-#elif defined(USE_MT_RAND)
-    #include "mt_rand_s.cu"         ///< use Mersenne Twister RNG (MT), depreciated
-#else
-    #include "logistic_rand.cu"     ///< use Logistic Lattice ring 5 RNG (LL5)
+#else                               ///< default RNG method: USE_XORSHIFT128P_RAND
+    #include "xorshift128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
 #endif
 
 #ifdef _OPENMP                      ///< use multi-threading for running simulation on multiple GPUs
@@ -143,27 +141,6 @@ __device__ inline void clearcache(float *p,int len){
         for(i=0;i<len;i++)
       	   p[i]=0.f;
 }
-
-#ifdef  USE_CACHEBOX
-
-/**
- * @brief Save fluence near the source, stored in a small cubic shared-mem cache, to the global memory (obsolete)
- * @param[in] data: pointer to the global memory fluence buffer
- * @param[in] cache: pointer to the shared memory cache buffer
- */
-
-__device__ inline void savecache(float *data,float *cache){
-      uint x,y,z;
-      if(threadIdx.x==0){
-        for(z=gcfg->cp0.z;z<=gcfg->cp1.z;z++)
-           for(y=gcfg->cp0.y;y<=gcfg->cp1.y;y++)
-              for(x=gcfg->cp0.x;x<=gcfg->cp1.x;x++){
-                 atomicadd(data+z*gcfg->dimlen.y+y*gcfg->dimlen.x+x,
-		    cache[(z-gcfg->cp0.z)*gcfg->cachebox.y+(y-gcfg->cp0.y)*gcfg->cachebox.x+(x-gcfg->cp0.x)]);
-	      }
-      }
-}
-#endif
 
 #ifdef SAVE_DETECTORS
 
@@ -987,11 +964,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      float  energylaunched=genergy[(idx<<1)+1];
 
      uint idx1d, idx1dold;   //idx1dold is related to reflection
-     uint moves=0;
 
-#ifdef TEST_RACING
-     int cc=0;
-#endif
      uint  mediaid=gcfg->mediaidorig;
      uint  mediaidold=0;
      int   isdet=0;
@@ -1009,16 +982,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      int   flipdir=-1;
  
      float *ppath=sharedmem+(blockDim.x<<2); ///< first blockDim.x*4 floats in the shared mem store spilled v from all threads
-#ifdef  USE_CACHEBOX
-  #ifdef  SAVE_DETECTORS
-     float *cachebox=ppath+(gcfg->savedet ? blockDim.x*gcfg->maxmedia: 0);
-  #else
-     float *cachebox=ppath;
-  #endif
-     if(gcfg->skipradius2>EPS) clearcache(cachebox,(gcfg->cp1.x-gcfg->cp0.x+1)*(gcfg->cp1.y-gcfg->cp0.y+1)*(gcfg->cp1.z-gcfg->cp0.z+1));
-#else
      float accumweight=0.f;
-#endif
 
 #ifdef  SAVE_DETECTORS
      ppath+=threadIdx.x*gcfg->maxmedia*(1+gcfg->ismomentum); // block#2: maxmedia*thread number to store the partial
@@ -1059,10 +1023,6 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	      3 - a 0-pi random zenith angle based on the Henyey-Greenstein Phase Function
            */
 	  if(f.pscat<=0.f) {  ///< if this photon has finished his current scattering path, calculate next scat length & angles
-               if(moves++>gcfg->reseedlimit){
-                  moves=0;
-                  gpu_rng_reseed(t,n_seed,idx,(p.x+p.y+p.z+p.w)+f.ndone*(v->x+v->y+v->z));
-               }
    	       f.pscat=rand_next_scatlen(t); ///< random scattering probability, unit-less, exponential distribution
 
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
@@ -1122,7 +1082,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 #ifdef USE_ATOMIC
                             }else{
                                 atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
-                                GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,weight,p.w));
+                                GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)],p.w));
                             }
 #endif
                        }
@@ -1213,29 +1173,13 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
 
-#ifdef TEST_RACING
-                  /** enable TEST_RACING to determine how many missing accumulations due to race */
-                  if( (p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)>gcfg->skipradius2) {
-                      field[idx1dold+tshift*gcfg->dimlen.z]+=1.f;
-		      cc++;
-                  }
-#else
               if(weight>0.f){
-  #ifdef USE_ATOMIC
+#ifdef USE_ATOMIC
                 if(!gcfg->isatomic){
-  #endif
+#endif
                   if(gcfg->skipradius2>EPS){
-  #ifdef  USE_CACHEBOX
-                      /** set gcfg->skipradius2 to only start depositing energy when dist^2>gcfg->skipradius2, this method is obsolete! */
-                      if(p.x<gcfg->cp1.x+1.f && p.x>=gcfg->cp0.x &&
-		         p.y<gcfg->cp1.y+1.f && p.y>=gcfg->cp0.y &&
-			 p.z<gcfg->cp1.z+1.f && p.z>=gcfg->cp0.z){
-                         atomicadd(cachebox+(int(p.z-gcfg->cp0.z)*gcfg->cachebox.y
-			      +int(p.y-gcfg->cp0.y)*gcfg->cachebox.x+int(p.x-gcfg->cp0.x)),weight);
-  #else
                       if((p.x-gcfg->ps.x)*(p.x-gcfg->ps.x)+(p.y-gcfg->ps.y)*(p.y-gcfg->ps.y)+(p.z-gcfg->ps.z)*(p.z-gcfg->ps.z)<=gcfg->skipradius2){
                           accumweight+=p.w*prop.mua; // weight*absorption
-  #endif
                       }else{
                           field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
                       }
@@ -1243,7 +1187,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                       /** accummulate the quality to the volume using non-atomic operations  */
                       field[idx1dold+tshift*gcfg->dimlen.z]+=weight;
                   }
-  #ifdef USE_ATOMIC
+#ifdef USE_ATOMIC
                }else{
 	          /** accummulate the quality to the volume using atomic operations  */
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
@@ -1256,9 +1200,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 		  }
                   GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1dold,weight,p.w));
                }
-  #endif
-              }
 #endif
+              }
 	     }
 	     w0=p.w;
 	     Lmove=0.f;
@@ -1346,27 +1289,10 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	  }
      }
 
-#ifdef  USE_CACHEBOX
-     /**
-        cachebox saves the total absorbed energy of all time in the sphere r<sradius.
-        in non-atomic mode, cachebox is more accurate than saving to the grid
-        as it is not influenced by race conditions.
-        now I borrow f.tnext to pass this value back
-      */
-     if(gcfg->skipradius2>EPS){
-     	f.tnext=0.f;
-        savecache(field,cachebox);
-     }
-#else
      f.tnext=accumweight;
-#endif
      /** return the tracked total energyloss and launched energy back to the host */
      genergy[idx<<1]=energyloss;
      genergy[(idx<<1)+1]=energylaunched;
-
-#ifdef TEST_RACING
-     n_seed[idx]=cc;
-#endif
 
      /** for debugging purposes, we also pass the last photon states back to the host for printing */
      n_pos[idx]=*((float4*)(&p));
@@ -1495,12 +1421,6 @@ Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
     if(cfg->isgpuinfo==2 && cfg->parentid==mpStandalone){ //list GPU info only
           exit(0);
     }
-#ifdef USE_MT_RAND
-    if(cfg->nblocksize>N-M){
-        mcx_error(-1,"block size can not be larger than 227 when using MT19937 RNG",__FILE__,__LINE__);
-    }
-#endif
-
     if(activedev<MAX_DEVICE)
         cfg->deviceid[activedev]='\0';
 
@@ -1893,17 +1813,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
      sharedbuf=gpu[gpuid].autoblock*(sizeof(RandType)*RAND_BUF_LEN+sizeof(MCXdir));
-#ifdef  USE_CACHEBOX
-     if(cfg->sradius>EPS || ABS(cfg->sradius+1.f)<EPS)
-        sharedbuf+=sizeof(float)*((cp1.x-cp0.x+1)*(cp1.y-cp0.y+1)*(cp1.z-cp0.z+1));
-#endif
+
      if(cfg->issavedet)
         sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
      if(cfg->ismomentum)
         sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
-#ifdef USE_MT_RAND
-     sharedbuf+=(N+2)*sizeof(uint); // MT RNG uses N+2 uint in the shared memory
-#endif
 
      MCX_FPRINTF(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
@@ -2181,19 +2095,6 @@ is more than what your have specified (%d), please use the -H option to specify 
      else
         CUDA_ASSERT(cudaMemcpy(Pseed, gPseed,sizeof(RandType)*cfg->nphoton*RAND_BUF_LEN,   cudaMemcpyDeviceToHost));
      CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
-
-#ifdef TEST_RACING
-     {
-       float totalcount=0.f,hitcount=0.f;
-       for (i=0; i<fieldlen; i++)
-          hitcount+=field[i];
-       for (i=0; i<gpu[gpuid].autothread; i++)
-	  totalcount+=Pseed[i];
-
-       MCX_FPRINTF(cfg->flog,"expected total recording number: %f, got %f, missed %f\n",
-          totalcount,hitcount,(totalcount-hitcount)/totalcount);
-     }
-#endif
 
 #pragma omp master
 {

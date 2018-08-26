@@ -40,14 +40,14 @@
   #include <omp.h>
 #endif
 
-#if defined(USE_XORSHIFT128P_RAND)
+#if defined(USE_XOROSHIRO128P_RAND)
     #define RAND_WORD_LEN 4
+#elif defined(USE_LL5_RAND)
+    #define RAND_WORD_LEN 5
 #elif defined(USE_POSIX_RAND)
     #define RAND_WORD_LEN 4
-#elif defined(USE_MT_RAND)
-    #define RAND_WORD_LEN 0
 #else
-    #define RAND_WORD_LEN 5       /**< number of Words per RNG state */
+    #define RAND_WORD_LEN 4       /**< number of Words per RNG state */
 #endif
 
 /**<  Macro to read the 1st scalar cfg member */
@@ -206,9 +206,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	cfg.issave2pt=(nlhs>=1);  /** save fluence rate to the 1st output if present */
 	cfg.issavedet=(nlhs>=2);  /** save detected photon data to the 2nd output if present */
 	cfg.issaveseed=(nlhs>=4); /** save detected photon seeds to the 4th output if present */
-#if defined(USE_MT_RAND)
-        cfg.issaveseed=0;
-#endif
+
         /** One must define the domain and properties */
 	if(cfg.vol==NULL || cfg.medianum==0){
 	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
