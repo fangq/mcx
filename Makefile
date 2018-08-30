@@ -5,7 +5,7 @@
 ############################################################
 
 PKGNAME=mcx
-VERSION=2018
+VERSION=1.0.0
 SOURCE=src
 GUI=mcxstudio
 
