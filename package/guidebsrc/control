@@ -5,8 +5,8 @@ Section: Science
 Priority: optional
 Architecture: all
 Depends:
-Build-Depends: nvidia-cuda-toolkit 
-Suggests: mcxstudio, mcxcl, mmc
+Build-Depends: lazarus-ide
+Suggests: mcxlab, mcxcl, mmc
 Installed-Size: 13124
 Maintainer: Qianqian Fang <q.fang@neu.edu>
 Homepage: http://mcx.space

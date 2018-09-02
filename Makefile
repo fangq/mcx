@@ -24,6 +24,14 @@ deb: bin/$(PKGNAME)
 	-package/mcxpkg/mcxdebmkdir.sh $(PKGNAME)
 	-package/mcxpkg/mcxdebcopy.sh  $(PKGNAME) $(VERSION)
 	-dpkg -b debian $(PKGNAME)-$(VERSION).deb
+mexdeb: oct
+	-package/mcxpkg/mcxdebmkdir.sh $(PKGNAME)lab
+	-package/mcxpkg/mexdebcopy.sh  $(PKGNAME)lab $(VERSION)
+	-dpkg -b debian $(PKGNAME)lab-$(VERSION).deb
+guideb: bin/$(GUI)
+	-package/mcxpkg/mcxdebmkdir.sh $(PKGNAME)studio
+	-package/mcxpkg/guidebcopy.sh  $(PKGNAME)studio $(VERSION)
+	-dpkg -b debian $(PKGNAME)studio-$(VERSION).deb
 rpm:
 	-package/mcxpkg/mcxrpmmkdir.sh $(PKGNAME)
 	-package/mcxpkg/mcxrpmcopy.sh  $(PKGNAME) $(VERSION)
