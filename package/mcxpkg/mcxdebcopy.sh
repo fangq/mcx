@@ -18,8 +18,8 @@ VERSION=$2
 
 #INFO=`awk '/I. About this font/{dop=1;} /^$/{if(dop>0) dop++;} /./{if(dop==2) print " " $0;}' README*`
 
-BINDIR=debian/usr/lib/mcx/$PKGNAME
-DOCDIR=debian/usr/share/doc/mcx/$PKGNAME
+BINDIR=debian/usr/lib/$PKGNAME
+DOCDIR=debian/usr/share/doc/$PKGNAME
 MENUDIR=debian/usr/share/applications
 ICONDIR=debian/usr/share/pixmaps
 
@@ -39,9 +39,9 @@ for fn in LICENSE*; do
    cp -a LICENSE* $BINDIR; break;
 done
 
-for fn in mcxstudio/*.desktop; do
-   cp -a mcxstudio/*.desktop $MENUDIR; break;
-done
+#for fn in mcxstudio/*.desktop; do
+#   cp -a mcxstudio/*.desktop $MENUDIR; break;
+#done
 
 if [ -d pixmap ]; then
     mkdir -p $ICONDIR

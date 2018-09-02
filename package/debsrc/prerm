@@ -13,3 +13,5 @@
 PREFIX=/usr/lib
 NAME=%NAME%
 INSTALLPATH=$PREFIX/$NAME
+
+rm -rf /usr/bin/mcextreme

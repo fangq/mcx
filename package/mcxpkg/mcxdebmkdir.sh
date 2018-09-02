@@ -15,8 +15,8 @@ fi
 
 PKGNAME=$1
 
-BINDIR=debian/usr/lib/$PKGNAME/$PKGNAME
-DOCDIR=debian/usr/share/doc/$PKGNAME/$PKGNAME
+BINDIR=debian/usr/lib/$PKGNAME
+DOCDIR=debian/usr/share/doc/$PKGNAME
 MENUDIR=debian/usr/share/applications
 ICONDIR=debian/usr/share/pixmaps
    
