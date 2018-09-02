@@ -40,7 +40,7 @@ rpm:
 clean:
 	-$(MAKE) -C $(SOURCE) clean
 	-$(MAKE) -C $(GUI) clean
-	-rm -rf debian rpmroot pkg.info $(PKGNAME)-$(VERSION).deb $(PKGNAME)-$(VERSION)*.rpm
+	-rm -rf debian rpmroot pkg.info $(PKGNAME)*-$(VERSION).deb $(PKGNAME)*-$(VERSION)*.rpm
 
 .DEFAULT_GOAL := bin/$(PKGNAME)
 
