@@ -484,42 +484,42 @@
         <Loaded Value="True"/>
       </Unit41>
       <Unit42>
-        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLGeomObjects.pas"/>
+        <Filename Value="GLSceneLCL/GLGeomObjects.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="488"/>
         <CursorPos X="3" Y="500"/>
         <UsageCount Value="33"/>
       </Unit42>
       <Unit43>
-        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLObjects.pas"/>
+        <Filename Value="GLSceneLCL/GLObjects.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="831"/>
         <CursorPos X="3" Y="867"/>
         <UsageCount Value="33"/>
       </Unit43>
       <Unit44>
-        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLMesh.pas"/>
+        <Filename Value="GLSceneLCL/GLMesh.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="112"/>
         <CursorPos X="15" Y="128"/>
         <UsageCount Value="33"/>
       </Unit44>
       <Unit45>
-        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLVectorGeometry.pas"/>
+        <Filename Value="GLSceneLCL/GLVectorGeometry.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="642"/>
         <CursorPos X="20" Y="711"/>
         <UsageCount Value="33"/>
       </Unit45>
       <Unit46>
-        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLVectorTypes.pas"/>
+        <Filename Value="GLSceneLCL/GLVectorTypes.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="91"/>
         <CursorPos X="3" Y="109"/>
         <UsageCount Value="33"/>
       </Unit46>
       <Unit47>
-        <Filename Value="../../../../../kwafoo2/users/fangq/Libraries/glscene14/GLSceneLCL/Source/GLColor.pas"/>
+        <Filename Value="GLSceneLCL/GLColor.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="372"/>
         <CursorPos X="4" Y="390"/>
