@@ -4,8 +4,8 @@ Standards-Version: 1.0.0
 Section: Science
 Priority: optional
 Architecture: all
-Depends:
-Build-Depends: nvidia-cuda-toolkit 
+Depends: octave
+Build-Depends: liboctave-dev
 Suggests: mcxstudio, mcxcl, mmc
 Installed-Size: 13124
 Maintainer: Qianqian Fang <q.fang@neu.edu>
