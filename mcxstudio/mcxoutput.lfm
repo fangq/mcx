@@ -1,19 +1,19 @@
 object fmOutput: TfmOutput
   Left = 481
-  Height = 600
+  Height = 631
   Top = 349
   Width = 561
   Caption = 'Output'
-  ClientHeight = 600
+  ClientHeight = 631
   ClientWidth = 561
   LCLVersion = '1.8.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 600
+    Height = 631
     Top = 0
     Width = 561
     Align = alClient
-    ClientHeight = 600
+    ClientHeight = 631
     ClientWidth = 561
     TabOrder = 0
     object Button1: TButton
@@ -28,7 +28,7 @@ object fmOutput: TfmOutput
     end
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 539
+      Height = 570
       Top = 26
       Width = 559
       Align = alClient
@@ -501,8 +501,9 @@ object fmOutput: TfmOutput
         '$Summary:  Widefield MMC'
         '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171'
         ''
-        '# [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon ''replay''," Biomed. Optics Express, in press, (2018)'
+        '# [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon ''replay''," Biomed. Optics Express 9(10), 4588-4603 (2018)'
         '$Summary:  Building Jacobians with replay in MCX/MMC'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588'
         ''
         'Output:'
       )
@@ -565,7 +566,7 @@ object fmOutput: TfmOutput
     object Panel2: TPanel
       Left = 1
       Height = 34
-      Top = 565
+      Top = 596
       Width = 559
       Align = alBottom
       ChildSizing.Layout = cclLeftToRightThenTopToBottom

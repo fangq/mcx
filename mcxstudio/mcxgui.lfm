@@ -29340,7 +29340,7 @@ object fmMCX: TfmMCX
       end
       object MenuItem62: TMenuItem
         Caption = '[Yao2018] Jacobians with photon replay'
-        Hint = 'https://groups.google.com/forum/?hl=en#!topic/mcx-users/xXCRV_LpNas'
+        Hint = 'https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588'
         OnClick = mcxdoWebURLExecute
       end
     end

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="9"/>
+    <Version Value="10"/>
     <PathDelim Value="\"/>
     <General>
       <MainUnit Value="0"/>
@@ -11,9 +11,6 @@
     <i18n>
       <EnableI18N LFM="False"/>
     </i18n>
-    <VersionInfo>
-      <StringTable ProductVersion=""/>
-    </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="default" Default="True"/>
     </BuildModes>
@@ -29,13 +26,13 @@
     </RunParams>
     <RequiredPackages Count="4">
       <Item1>
-        <PackageName Value="SynEdit"/>
+        <PackageName Value="GLScene_RunTime"/>
       </Item1>
       <Item2>
-        <PackageName Value="GLSceneLCL_DesignTime"/>
+        <PackageName Value="GLScene_DesignTime"/>
       </Item2>
       <Item3>
-        <PackageName Value="GLSceneLCL_RunTime"/>
+        <PackageName Value="SynEdit"/>
       </Item3>
       <Item4>
         <PackageName Value="LCL"/>
@@ -314,11 +311,10 @@
       </Unit36>
       <Unit37>
         <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\packages\fcl-json\src\fpjson.pp"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="538"/>
         <CursorPos X="100" Y="549"/>
         <UsageCount Value="40"/>
-        <Loaded Value="True"/>
       </Unit37>
       <Unit38>
         <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\rtl\inc\systemh.inc"/>
