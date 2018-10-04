@@ -1,31 +1,30 @@
 //
 // This unit is part of the GLScene Project, http://glscene.org
 //
-{   All color types, constants and utilities should go here<p>
+{
+  All color types, constants and utilities should go here
 
-   History :  
-     10/11/12 - PW - Added CPPB compatibility: restored $NODEFINE directives
-     04/11/10 - DaStr - Removed dependancy from OpenGL (this time for good)
-     24/10/10 - DaStr - Removed dependancy from OpenGL
-     23/08/10 - Yar - Added OpenGLTokens to uses
-     31/05/10 - Yar - Fixed warnings for Delhi2009/2010
-     04/03/10 - DanB - TGLColorManager.GetColor now uses CharInSet
-     05/10/08 - DanB - Moved TGLColor/ TGLColorManager in from GLTexture.pas
-     06/06/07 - DaStr - Initial version (BugtrackerID = 1732211)
-                          (separated from GLTexture.pas and GLCrossPlatform.pas)
-   
+  History :
+  06/06/07 - DaStr - separated from GLTexture.pas and GLCrossPlatform.pas
+  The whole history is logged in previous version of the unit
 }
 unit GLColor;
 
 interface
 
-{$i GLScene.inc}
+{$I GLScene.inc}
 
 uses
-  SysUtils, Classes, Dialogs, Graphics,
-  // GLS
-  GLVectorTypes, GLVectorGeometry, GLCrossPlatform,
-  GLPersistentClasses, GLBaseClasses;
+  SysUtils, 
+  Classes, 
+  Dialogs, 
+  Graphics,
+   
+  GLVectorTypes, 
+  GLVectorGeometry, 
+  GLCrossPlatform,
+  GLPersistentClasses, 
+  GLBaseClasses;
 
 type
   PColorVector = ^TColorVector;
@@ -34,9 +33,7 @@ type
   PRGBColor = ^TRGBColor;
   TRGBColor = TVector3b;
 
-   // TGLColor
-	//
-   {: Wraps an OpenGL color. }
+   { Wraps an OpenGL color. }
    TGLColor = class(TGLUpdateAbleObject)
       private
          { Private Properties }
@@ -78,28 +75,16 @@ type
          property HSVA : TVector read GetHSVA write SetHSVA;
 
          property DefaultColor : TColorVector read FColor;
+ published
+    property Red: Single index 0 read GetColorComponent
+      write SetColorComponent;
+    property Green: Single index 1 read GetColorComponent
+      write SetColorComponent;
+    property Blue: Single index 2 read GetColorComponent
+      write SetColorComponent;
+    property Alpha: Single index 3 read GetColorComponent
+      write SetColorComponent;
 
-{$IFNDEF FPC}
-  published
-    { Published Properties }
-    property Red: Single index 0 read GetColorComponent
-      write SetColorComponent stored False;
-    property Green: Single index 1 read GetColorComponent
-      write SetColorComponent stored False;
-    property Blue: Single index 2 read GetColorComponent
-      write SetColorComponent stored False;
-    property Alpha: Single index 3 read GetColorComponent
-      write SetColorComponent stored False;
-{$ELSE}
-    property Red: Single index 0 read GetColorComponent
-      write SetColorComponent;
-    property Green: Single index 1 read GetColorComponent
-      write SetColorComponent;
-    property Blue: Single index 2 read GetColorComponent
-      write SetColorComponent;
-    property Alpha: Single index 3 read GetColorComponent
-      write SetColorComponent;
-{$ENDIF}
 	end;
 
    PColorEntry = ^TColorEntry;
@@ -113,13 +98,12 @@ type
    TGLColorManager = class (TList)
       public
          destructor Destroy; override;
-
          procedure AddColor(const aName: String; const aColor: TColorVector);
          procedure EnumColors(Proc: TGetStrProc); overload;
          procedure EnumColors(AValues: TStrings); overload;
 
          function  FindColor(const aName: String): TColorVector;
-         {: Convert a clrXxxx or a '<red green blue alpha> to a color vector }
+         { Convert a clrXxxx or a '<red green blue alpha> to a color vector }
          function  GetColor(const aName: String): TColorVector;
          function  GetColorName(const aColor: TColorVector): String;
          procedure RegisterDefaultColors;
@@ -137,15 +121,15 @@ function GetGValue(rgb: DWORD): Byte;  {$NODEFINE GetGValue}
 function GetBValue(rgb: DWORD): Byte;  {$NODEFINE GetBValue}
 
 procedure InitGLSceneColors;
-{: Converts a delphi color into its RGB fragments and correct range. }
+{ Converts a delphi color into its RGB fragments and correct range. }
 function ConvertWinColor(aColor: TColor; alpha : Single = 1) : TColorVector;
 
-//: Converts a color vector (containing float values)
+// Converts a color vector (containing float values)
 function ConvertColorVector(const AColor: TColorVector): TColor; overload;
-{: Converts a color vector (containing float values) and alter intensity.<p>
+{ Converts a color vector (containing float values) and alter intensity.
    intensity is in [0..1] }
 function ConvertColorVector(const AColor: TColorVector; intensity: Single): TColor; overload;
-//: Converts RGB components into a color vector with correct range
+// Converts RGB components into a color vector with correct range
 function ConvertRGBColor(const aColor: array of Byte): TColorVector;
 
 // color definitions
@@ -227,7 +211,6 @@ const
 // startup, since they depend on the desktop scheme)
 const
    {$J+ - allow change of the following typed constants}
-
    clrScrollBar           : TColorVector = (X:0;Y:0;Z:0;W:1);
    clrBackground          : TColorVector = (X:0;Y:0;Z:0;W:1);
    clrActiveCaption       : TColorVector = (X:0;Y:0;Z:0;W:1);
@@ -419,12 +402,15 @@ end;
 
 // ConvertWinColor
 //
+
+
+
 function ConvertWinColor(aColor: TColor; alpha: Single = 1): TColorVector;
 var
   winColor: Integer;
 begin
   // Delphi color to Windows color
-  winColor := ColorToRGB(aColor);
+  winColor := aColor and $FFFFFF; //ColorToRGB(aColor);
   // convert 0..255 range into 0..1 range
   Result.V[0] := (winColor and $FF) * (1 / 255);
   Result.V[1] := ((winColor shr 8) and $FF) * (1 / 255);
@@ -617,7 +603,7 @@ begin
   Result := FColor.V[Index];
 end;
 
-// Assign
+ 
 //
 procedure TGLColor.Assign(Source: TPersistent);
 begin
@@ -1116,4 +1102,4 @@ initialization
 finalization
 	vColorManager.Free;
 
-end.
+end.

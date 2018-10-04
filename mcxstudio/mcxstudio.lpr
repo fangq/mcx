@@ -7,8 +7,9 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, GLScene_RunTime, mcxgui, lazcontrols, tachartlazaruspkg,
-  anchordockpkg, mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput{$IFDEF WINDOWS}, sendkeys{$ENDIF};
+  Forms, mcxgui, lazcontrols, tachartlazaruspkg, anchordockpkg, mcxabout,
+  mcxshape, mcxnewsession, mcxsource, mcxoutput, GLColor, GLVectorTypes,
+  GLVectorGeometry, GLMesh, GLObjects, GLGeomObjects{$IFDEF WINDOWS}, sendkeys{$ENDIF};
 
 {$R *.res}
 
