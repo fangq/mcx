@@ -48,7 +48,7 @@
 #define MIN(a,b)           ((a)<(b)?(a):(b))             /**< macro to get the min values of two numbers */
 #define MAX(a,b)           ((a)>(b)?(a):(b))             /**< macro to get the max values of two numbers */
 
-enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP};   /**< types of output */
+enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON};           /**< output data format */
 
