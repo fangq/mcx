@@ -1097,10 +1097,10 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                      if(cfg->srcpattern) free(cfg->srcpattern);
                      cfg->srcpattern=(float*)calloc(nx*ny*nz,sizeof(float));
                      for(i=0;i<nx*ny*nz;i++){
-                         cfg->srcpattern[i]=pat->valuedouble;
-                         if((pat=pat->next)==NULL){
+                         if(pat==NULL)
                              MCX_ERROR(-1,"Incomplete pattern data");
-                         }
+                         cfg->srcpattern[i]=pat->valuedouble;
+                         pat=pat->next;
                      }
                  }else if(pat){
                      FILE *fid=fopen(pat->valuestring,"rb");
