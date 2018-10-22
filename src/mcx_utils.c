@@ -104,7 +104,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
  * p: scattering counts for computing Jacobians for mus
  */
 
-const char outputtype[]={'x','f','e','j','p','\0'};
+const char outputtype[]={'x','f','e','j','p','m','\0'};
 
 /**
  * Debug flags
@@ -1384,7 +1384,7 @@ void mcx_loadseedfile(Config *cfg){
     cfg->seed=SEED_FROM_FILE;
     cfg->nphoton=his.savedphoton;
 
-    if(cfg->outputtype==otJacobian || cfg->outputtype==otWP){ //cfg->replaydet>0
+    if(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS ){ //cfg->replaydet>0
        int i,j;
        float *ppath=(float*)malloc(his.savedphoton*his.colcount*sizeof(float));
        cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
@@ -1904,7 +1904,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		MCX_FPRINTF(cfg->flog,"unable to save to log file, will print from stdout\n");
           }
      }
-     if((cfg->outputtype==otJacobian ||cfg->outputtype==otWP) && cfg->seed!=SEED_FROM_FILE)
+     if((cfg->outputtype==otJacobian ||cfg->outputtype==otWP || cfg->outputtype==otDCS) && cfg->seed!=SEED_FROM_FILE)
          MCX_ERROR(-1,"Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.");
 
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
@@ -2116,9 +2116,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                mc2 - MCX mc2 format (binary 32bit float)\n\
                                nii - Nifti format\n\
                                hdr - Analyze 7.5 hdr/img format\n\
- -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
-                               J - Jacobian (replay mode),   P - scattering\n\
-                               event counts at each voxel (replay mode only)\n\
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
+                               J - Jacobian (replay mode),   P - scattering, \n\
+                               M - momentum transfer; \n\
+			       event counts at each voxel (replay mode only)\n\
 \n\
 == User IO options ==\n\
  -h            (--help)        print this message\n\

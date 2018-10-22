@@ -26,6 +26,7 @@
           <Version Value="11"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="GLSceneLCL"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
@@ -63,6 +64,7 @@
           <Version Value="11"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="GLSceneLCL"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
@@ -105,39 +107,33 @@
         <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="8">
+    <RequiredPackages Count="6">
       <Item1>
-        <PackageName Value="GLScene_RunTime"/>
+        <PackageName Value="anchordocking"/>
       </Item1>
       <Item2>
-        <PackageName Value="GLScene_DesignTime"/>
+        <PackageName Value="SynEdit"/>
       </Item2>
       <Item3>
-        <PackageName Value="anchordocking"/>
+        <PackageName Value="TAChartLazarusPkg"/>
       </Item3>
       <Item4>
-        <PackageName Value="SynEdit"/>
+        <PackageName Value="LazControls"/>
       </Item4>
       <Item5>
-        <PackageName Value="TAChartLazarusPkg"/>
-      </Item5>
-      <Item6>
-        <PackageName Value="LazControls"/>
-      </Item6>
-      <Item7>
         <PackageName Value="FCL"/>
         <MinVersion Major="1" Valid="True"/>
-      </Item7>
-      <Item8>
+      </Item5>
+      <Item6>
         <PackageName Value="LCL"/>
-      </Item8>
+      </Item6>
     </RequiredPackages>
-    <Units Count="63">
+    <Units Count="85">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="13"/>
-        <CursorPos X="48" Y="23"/>
+        <EditorIndex Value="14"/>
+        <CursorPos X="48" Y="24"/>
         <UsageCount Value="230"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -147,7 +143,6 @@
         <ComponentName Value="fmMCX"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
         <TopLine Value="873"/>
         <CursorPos X="54" Y="907"/>
         <UsageCount Value="230"/>
@@ -163,7 +158,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <CursorPos X="39" Y="24"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
@@ -222,7 +217,7 @@
         <ComponentName Value="fmShapeEditor"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="13"/>
         <TopLine Value="43"/>
         <CursorPos X="40" Y="16"/>
         <UsageCount Value="201"/>
@@ -312,7 +307,7 @@
         <ComponentName Value="fmNewSession"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <CursorPos X="71" Y="11"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
@@ -346,7 +341,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="11"/>
         <TopLine Value="37"/>
         <CursorPos X="5" Y="154"/>
         <UsageCount Value="239"/>
@@ -401,7 +396,7 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <CursorPos X="33" Y="10"/>
         <UsageCount Value="198"/>
         <Loaded Value="True"/>
@@ -478,13 +473,13 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="7"/>
-        <TopLine Value="619"/>
-        <CursorPos X="51" Y="643"/>
+        <CursorPos X="58" Y="15"/>
         <UsageCount Value="100"/>
         <Loaded Value="True"/>
       </Unit41>
       <Unit42>
         <Filename Value="GLSceneLCL/GLGeomObjects.pas"/>
+        <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="488"/>
         <CursorPos X="3" Y="500"/>
@@ -492,6 +487,7 @@
       </Unit42>
       <Unit43>
         <Filename Value="GLSceneLCL/GLObjects.pas"/>
+        <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="831"/>
         <CursorPos X="3" Y="867"/>
@@ -499,6 +495,7 @@
       </Unit43>
       <Unit44>
         <Filename Value="GLSceneLCL/GLMesh.pas"/>
+        <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="112"/>
         <CursorPos X="15" Y="128"/>
@@ -506,6 +503,7 @@
       </Unit44>
       <Unit45>
         <Filename Value="GLSceneLCL/GLVectorGeometry.pas"/>
+        <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="642"/>
         <CursorPos X="20" Y="711"/>
@@ -513,6 +511,7 @@
       </Unit45>
       <Unit46>
         <Filename Value="GLSceneLCL/GLVectorTypes.pas"/>
+        <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="91"/>
         <CursorPos X="3" Y="109"/>
@@ -520,6 +519,7 @@
       </Unit46>
       <Unit47>
         <Filename Value="GLSceneLCL/GLColor.pas"/>
+        <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="372"/>
         <CursorPos X="4" Y="390"/>
@@ -644,6 +644,205 @@
         <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit62>
+      <Unit63>
+        <Filename Value="GLSceneLCL/TextureError.inc"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit63>
+      <Unit64>
+        <Filename Value="GLSceneLCL/PictureRegisteredFormats.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit64>
+      <Unit65>
+        <Filename Value="GLSceneLCL/GLWidgetContext.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit65>
+      <Unit66>
+        <Filename Value="GLSceneLCL/GLViewer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit66>
+      <Unit67>
+        <Filename Value="GLSceneLCL/GLUtils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit67>
+      <Unit68>
+        <Filename Value="GLSceneLCL/GLTexture.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit68>
+      <Unit69>
+        <Filename Value="GLSceneLCL/GLState.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit69>
+      <Unit70>
+        <Filename Value="GLSceneLCL/GLStarRecord.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit70>
+      <Unit71>
+        <Filename Value="GLSceneLCL/GLSkydome.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit71>
+      <Unit72>
+        <Filename Value="GLSceneLCL/GLSilhouette.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit72>
+      <Unit73>
+        <Filename Value="GLSceneLCL/GLSelection.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit73>
+      <Unit74>
+        <Filename Value="GLSceneLCL/GLScene.pas"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="310"/>
+        <CursorPos X="16" Y="349"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
+      </Unit74>
+      <Unit75>
+        <Filename Value="GLSceneLCL/GLRenderContextInfo.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit75>
+      <Unit76>
+        <Filename Value="GLSceneLCL/GLNodes.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit76>
+      <Unit77>
+        <Filename Value="GLSceneLCL/GLMaterial.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit77>
+      <Unit78>
+        <Filename Value="GLSceneLCL/GLLCLViewer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit78>
+      <Unit79>
+        <Filename Value="GLSceneLCL/GLGraphics.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit79>
+      <Unit80>
+        <Filename Value="GLSceneLCL/GLGLXContext.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit80>
+      <Unit81>
+        <Filename Value="GLSceneLCL/GLCrossPlatform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit81>
+      <Unit82>
+        <Filename Value="GLSceneLCL/GLBehaviours.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit82>
+      <Unit83>
+        <Filename Value="GLSceneLCL/GLSceneLCL_RunTime.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit83>
+      <Unit84>
+        <Filename Value="GLSceneLCL/GLScene.inc"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit84>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
@@ -651,122 +850,122 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="625" Column="60" TopLine="623"/>
+        <Caret Line="1705" Column="3" TopLine="1703"/>
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="626" TopLine="624"/>
+        <Caret Line="1711" Column="45" TopLine="1684"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1705" Column="3" TopLine="1703"/>
+        <Caret Line="1378" Column="31" TopLine="1340"/>
       </Position3>
       <Position4>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1711" Column="45" TopLine="1684"/>
       </Position4>
       <Position5>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1378" Column="31" TopLine="1340"/>
+        <Caret Line="415" Column="28" TopLine="347"/>
       </Position5>
       <Position6>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="630" Column="31" TopLine="561"/>
       </Position6>
       <Position7>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="415" Column="28" TopLine="347"/>
+        <Caret Line="650" Column="47" TopLine="581"/>
       </Position7>
       <Position8>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="630" Column="31" TopLine="561"/>
+        <Caret Line="1001" Column="23" TopLine="932"/>
       </Position8>
       <Position9>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="650" Column="47" TopLine="581"/>
+        <Caret Line="1306" Column="34" TopLine="1237"/>
       </Position9>
       <Position10>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1001" Column="23" TopLine="932"/>
+        <Caret Line="1382" TopLine="1309"/>
       </Position10>
       <Position11>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1306" Column="34" TopLine="1237"/>
+        <Caret Line="1840" TopLine="1828"/>
       </Position11>
       <Position12>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1382" TopLine="1309"/>
+        <Caret Line="1377" TopLine="1340"/>
       </Position12>
       <Position13>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1840" TopLine="1828"/>
+        <Caret Line="2848" TopLine="2785"/>
       </Position13>
       <Position14>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1377" TopLine="1340"/>
+        <Caret Line="105" Column="10" TopLine="68"/>
       </Position14>
       <Position15>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2848" TopLine="2785"/>
+        <Caret Line="759" Column="12" TopLine="690"/>
       </Position15>
       <Position16>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="105" Column="10" TopLine="68"/>
+        <Caret Line="910" Column="35" TopLine="860"/>
       </Position16>
       <Position17>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="759" Column="12" TopLine="690"/>
+        <Caret Line="914" Column="38" TopLine="872"/>
       </Position17>
       <Position18>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="910" Column="35" TopLine="860"/>
+        <Caret Line="930" Column="14" TopLine="872"/>
       </Position18>
       <Position19>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="914" Column="38" TopLine="872"/>
+        <Caret Line="2835" Column="43" TopLine="2767"/>
       </Position19>
       <Position20>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="930" Column="14" TopLine="872"/>
+        <Caret Line="2848" TopLine="2781"/>
       </Position20>
       <Position21>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2835" Column="43" TopLine="2767"/>
+        <Caret Line="105" Column="10" TopLine="68"/>
       </Position21>
       <Position22>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2848" TopLine="2781"/>
+        <Caret Line="759" Column="32" TopLine="696"/>
       </Position22>
       <Position23>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="105" Column="10" TopLine="68"/>
+        <Caret Line="912" Column="18" TopLine="849"/>
       </Position23>
       <Position24>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="759" Column="32" TopLine="696"/>
+        <Caret Line="914" Column="18" TopLine="849"/>
       </Position24>
       <Position25>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="912" Column="18" TopLine="849"/>
+        <Caret Line="930" Column="14" TopLine="867"/>
       </Position25>
       <Position26>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="914" Column="18" TopLine="849"/>
+        <Caret Line="2835" Column="43" TopLine="2779"/>
       </Position26>
       <Position27>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="930" Column="14" TopLine="867"/>
+        <Caret Line="105" Column="44" TopLine="68"/>
       </Position27>
       <Position28>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2835" Column="43" TopLine="2779"/>
+        <Caret Line="911" Column="32" TopLine="873"/>
       </Position28>
       <Position29>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="105" Column="44" TopLine="68"/>
+        <Caret Line="907" Column="54" TopLine="873"/>
       </Position29>
       <Position30>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="911" Column="32" TopLine="873"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="15" Column="58"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
@@ -774,6 +973,7 @@
     <Version Value="11"/>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="GLSceneLCL"/>
       <UnitOutputDirectory Value="debug"/>
     </SearchPaths>
     <Parsing>
