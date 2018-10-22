@@ -209,6 +209,7 @@ typedef struct MCXConfig{
 	unsigned int gscatter;       /**<after how many scattering events that we can use mus' instead of mus */
 	float *exportdebugdata;      /**<pointer to the buffer where the photon trajectory data are stored*/
 	uint mediabyte;              /**< how many bytes per media index, mcx supports 1, 2 and 4, 4 is the default*/
+	float *dx, *dy, *dz;         /**< anisotropic voxel spacing for x,y,z axis */
 } Config;
 
 #ifdef	__cplusplus

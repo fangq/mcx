@@ -219,6 +219,7 @@ void mcx_initcfg(Config *cfg){
      cfg->srcdir.w=0.f;
      cfg->issaveref=0;
      cfg->isspecular=0;
+     cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
@@ -268,7 +269,12 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->replay.tof);
      if(cfg->replay.detid)
         free(cfg->replay.detid);
-     
+     if(cfg->dx)
+        free(cfg->dx);
+     if(cfg->dy)
+        free(cfg->dy);
+     if(cfg->dz)
+        free(cfg->dz);
      if(cfg->exportfield)
         free(cfg->exportfield);
      if(cfg->exportdetected)
@@ -935,7 +941,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 
      if(Domain){
         char volfile[MAX_PATH_LENGTH];
-	cJSON *meds,*val;
+	cJSON *meds,*val,*vv;
 	val=FIND_JSON_OBJ("VolumeFile","Domain.VolumeFile",Domain);
 	if(val){
           strncpy(volfile, val->valuestring, MAX_PATH_LENGTH);
@@ -1005,6 +1011,57 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 
 	if(cfg->unitinmm!=1.f){
            cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
+	}
+	val=FIND_JSON_OBJ("VoxelSize","Domain.VoxelSize",Domain);
+	if(val){
+	   val=FIND_JSON_OBJ("Dx","Domain.VoxelSize.Dx",Domain);
+	   if(cJSON_GetArraySize(val)>=1){
+	       int len=cJSON_GetArraySize(val);
+	       if(len==1)
+	           cfg->steps.x=-1.0f;
+	       else if(len==cfg->dim.x)
+	           cfg->steps.x=-2.0f;
+	       else
+	           MCX_ERROR(-1,"Domain::VoxelSize::Dx has incorrect element numbers");
+	       cfg->dx=malloc(sizeof(float)*len);
+	       vv=val->child;
+	       for(i=0;i<len;i++){
+	          cfg->dx[i]=vv->valuedouble;
+		  vv=vv->next;
+	       }
+           }
+	   val=FIND_JSON_OBJ("Dy","Domain.VoxelSize.Dy",Domain);
+	   if(cJSON_GetArraySize(val)>=1){
+	       int len=cJSON_GetArraySize(val);
+	       if(len==1)
+	           cfg->steps.y=-1.0f;
+	       else if(len==cfg->dim.y)
+	           cfg->steps.y=-2.0f;
+	       else
+	           MCX_ERROR(-1,"Domain::VoxelSize::Dy has incorrect element numbers");
+	       cfg->dy=malloc(sizeof(float)*len);
+	       vv=val->child;
+	       for(i=0;i<len;i++){
+	          cfg->dy[i]=vv->valuedouble;
+		  vv=vv->next;
+	       }
+           }
+	   val=FIND_JSON_OBJ("Dz","Domain.VoxelSize.Dz",Domain);
+	   if(cJSON_GetArraySize(val)>=1){
+	       int len=cJSON_GetArraySize(val);
+	       if(len==1)
+	           cfg->steps.z=-1.0f;
+	       else if(len==cfg->dim.z)
+	           cfg->steps.z=-2.0f;
+	       else
+	           MCX_ERROR(-1,"Domain::VoxelSize::Dz has incorrect element numbers");
+	       cfg->dz=malloc(sizeof(float)*len);
+	       vv=val->child;
+	       for(i=0;i<len;i++){
+	          cfg->dz[i]=vv->valuedouble;
+		  vv=vv->next;
+	       }
+           }
 	}
 	val=FIND_JSON_OBJ("CacheBoxP0","Domain.CacheBoxP0",Domain);
 	if(val){
