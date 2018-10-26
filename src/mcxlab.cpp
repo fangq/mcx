@@ -784,8 +784,10 @@ void mcx_validate_config(Config *cfg){
 
      if(cfg->medianum){
         for(int i=0;i<cfg->medianum;i++)
-             if(cfg->prop[i].mus==0.f)
+             if(cfg->prop[i].mus==0.f){
 	         cfg->prop[i].mus=EPS;
+		 cfg->prop[i].g=1.f;
+	     }
      }
      if(cfg->unitinmm!=1.f){
         cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
