@@ -685,8 +685,11 @@ void mcx_prepdomain(char *filename, Config *cfg){
         cfg->replaydet=1;
      if(cfg->medianum){
         for(int i=0;i<cfg->medianum;i++)
-             if(cfg->prop[i].mus==0.f)
+             if(cfg->prop[i].mus==0.f){
 	         cfg->prop[i].mus=EPS;
+		 cfg->prop[i].g=1.f;
+	     }
+	}
      }
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
