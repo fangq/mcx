@@ -678,7 +678,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;
      if(cfg->medianum){
-        for(int i=0;i<cfg->medianum;i++)
+        for(int i=0;i<cfg->medianum;i++){
              if(cfg->prop[i].mus==0.f){
 	         cfg->prop[i].mus=EPS;
 		 cfg->prop[i].g=1.f;
