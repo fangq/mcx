@@ -182,17 +182,18 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float ns
 	    uint i;
 	    for(i=0;i<gcfg->issaveseed*RAND_BUF_LEN;i++)
 	        seeddata[baseaddr*RAND_BUF_LEN+i]=t[i]; ///< save photon seed for replay
-	    baseaddr*=gcfg->maxmedia+2+gcfg->issaveexit*6+(gcfg->ismomentum*gcfg->maxmedia);
+	    baseaddr*=gcfg->maxmedia+3+gcfg->issaveexit*6+(gcfg->ismomentum*gcfg->maxmedia);
 	    n_det[baseaddr++]=detid;
 	    n_det[baseaddr++]=nscat;
 	    for(i=0;i<gcfg->maxmedia*(1+gcfg->ismomentum);i++)
-		n_det[baseaddr+i]=ppath[i]; ///< save partial pathlength to the memory
+		n_det[baseaddr++]=ppath[i]; ///< save partial pathlength to the memory
 	    if(gcfg->issaveexit){
-                baseaddr+=gcfg->maxmedia*(1+gcfg->ismomentum);
 	        *((float3*)(n_det+baseaddr))=float3(p0->x,p0->y,p0->z);
 		baseaddr+=3;
 		*((float3*)(n_det+baseaddr))=float3(v->x,v->y,v->z);
+		baseaddr+=3;
 	    }
+	    n_det[baseaddr++]=ppath[gcfg->maxmedia*(1+gcfg->ismomentum)];
 	 }
       }
 }
@@ -618,7 +619,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           if(gcfg->savedet){
              if(isdet>0 && *mediaid==0)
 	         savedetphoton(n_det,dpnum,v->nscat,ppath,p,v,photonseed,seeddata);
-             clearpath(ppath,gcfg->maxmedia*(1+gcfg->ismomentum));
+             clearpath(ppath,gcfg->maxmedia*(1+gcfg->ismomentum)+1);
           }
 #endif
           if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME && gcfg->issaveref){
@@ -894,6 +895,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
        */
       *energylaunched+=p->w;
       *w0=p->w;
+      ppath[gcfg->maxmedia*(1+gcfg->ismomentum)]=p->w; // store initial weight
       v->nscat=EPS;
       *Lmove=0.f;
       
@@ -993,7 +995,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      float accumweight=0.f;
 
 #ifdef  SAVE_DETECTORS
-     ppath+=threadIdx.x*gcfg->maxmedia*(1+gcfg->ismomentum); // block#2: maxmedia*thread number to store the partial
+     ppath+=threadIdx.x*(gcfg->maxmedia*(1+gcfg->ismomentum)+1); // block#2: maxmedia*thread number to store the partial
      if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia*(1+gcfg->ismomentum));
 #endif
 
@@ -1492,7 +1494,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      int    *greplaydetid=NULL;
      float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL;
      RandType *gseeddata=NULL;
-     int detreclen=cfg->medianum+1+(cfg->issaveexit>0)*6+((cfg->ismomentum>0)*(cfg->medianum-1));
+     int detreclen=cfg->medianum+2+(cfg->issaveexit>0)*6+((cfg->ismomentum>0)*(cfg->medianum-1));
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,

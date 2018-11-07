@@ -283,7 +283,7 @@ if(nargout>=2)
                 newdetp.p=detp(end-5:end-3,:)';      %columns 7-5 from the right store the exit positions*/
                 newdetp.v=detp(end-2:end,:)';	     %columns 4-2 from the right store the exit dirs*/
             end
-            % newdetp.w0=detp(end,:)';  % last column is the initial packet weight
+	    newdetp.w0=detp(end,:)';  % last column is the initial packet weight
             newdetp.prop=cfg(i).prop;
             newdetp.data=detp;      % enable this line for compatibility
             newdetpstruct(i)=newdetp;
