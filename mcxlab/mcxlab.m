@@ -274,14 +274,14 @@ if(nargout>=2)
                 continue;
             end
             newdetp.detid=int32(detp(1,:))';
-            newdetp.nscat=int32(detp(2,:))';    % 2nd column is the total num of scattering
-            newdetp.ppath=detp(3:2+medianum,:)';% 2nd medianum block is partial path
+            newdetp.nscat=int32(detp(2:medianum+1,:))';    % 1st medianum block is num of scattering
+            newdetp.ppath=detp(medianum+2:2*medianum+1,:)';% 2nd medianum block is partial path
             if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
-                newdetp.mom=detp(medianum+3:2*medianum+2,:)'; % 3rd medianum block is the momentum transfer
+                newdetp.mom=detp(2*medianum+2:3*medianum+1,:)'; % 3rd medianum block is the momentum transfer
             end
             if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
-                newdetp.p=detp(end-5:end-3,:)';      %columns 7-5 from the right store the exit positions*/
-                newdetp.v=detp(end-2:end,:)';	     %columns 4-2 from the right store the exit dirs*/
+                newdetp.p=detp(end-6:end-4,:)';             %columns 7-5 from the right store the exit positions*/
+                newdetp.v=detp(end-3:end-1,:)';	     %columns 4-2 from the right store the exit dirs*/
             end
 	    newdetp.w0=detp(end,:)';  % last column is the initial packet weight
             newdetp.prop=cfg(i).prop;

@@ -60,7 +60,7 @@ typedef struct  __align__(16) MCXDir{
 typedef struct  __align__(16) MCXTimer{
         float pscat; /**< remaining unit-less scattering length = length * scattering coeff */
         float t;     /**< photon elapse time, unit=s*/
-	float tnext; /**< time for the next accumulation,unit=s*/
+	float pathlen; /**< photon total pathlength inside a voxel, in grid unit*/
 	float ndone; /**< number of completed photons*/
 }MCXtime;
 
