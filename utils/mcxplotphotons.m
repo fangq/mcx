@@ -33,7 +33,7 @@ end
 
 [newid, idx]=sort(traj.id);
 newpos=traj.pos(idx,:);
-hg=plotmesh(newpos,'.-',varargin{:});
+hg=plot3(newpos(:,1),newpos(:,2),newpos(:,3),'.-',varargin{:});
 
 output={struct('id',newid, 'pos',newpos), hg};
 [varargout{1:nargout}]=output{1:nargout};
