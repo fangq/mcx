@@ -1811,12 +1811,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
-     sharedbuf=gpu[gpuid].autoblock*(1+sizeof(RandType)*RAND_BUF_LEN+sizeof(MCXdir)+sizeof(float)*(cfg->medianum-1));
-
-     if(cfg->issavedet)
-        sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
-     if(cfg->ismomentum)
-        sharedbuf+=gpu[gpuid].autoblock*sizeof(float)*(cfg->medianum-1);
+     sharedbuf=gpu[gpuid].autoblock*(sizeof(MCXdir)+sizeof(float)*((cfg->medianum-1)*(2+(cfg->ismomentum>0))+1));
 
      MCX_FPRINTF(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
