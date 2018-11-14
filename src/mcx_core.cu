@@ -1503,6 +1503,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            return;
 
      gpuid=cfg->deviceid[threadid]-1;
+     if(gpuid<0)
+          mcx_error(-1,"GPU ID must be non-zero",__FILE__,__LINE__);
      CUDA_ASSERT(cudaSetDevice(gpuid));
 
      if(gpu[gpuid].maxgate==0 && dimxyz>0){

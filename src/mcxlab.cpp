@@ -643,11 +643,11 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
            double *val=mxGetPr(item);
 	   cfg->gpuid=val[0];
            memset(cfg->deviceid,0,MAX_DEVICE);
-           if(cfg->gpuid<MAX_DEVICE){
+           if(cfg->gpuid>0 && cfg->gpuid<MAX_DEVICE){
                 memset(cfg->deviceid,'0',cfg->gpuid-1);
            	cfg->deviceid[cfg->gpuid-1]='1';
            }else
-           	mexErrMsgTxt("GPU id can not be more than 256");
+           	mexErrMsgTxt("GPU id must be positive and can not be more than 256");
            printf("mcx.gpuid=%d;\n",cfg->gpuid);
 	}
         for(int i=0;i<MAX_DEVICE;i++)
