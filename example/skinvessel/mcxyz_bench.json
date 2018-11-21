@@ -12,14 +12,14 @@
 	},
 	"Optode": {
 		"Source": {
-			"Pos": [100,100,0.101],
+			"Pos": [100,100,20],
 			"Dir": [0,0,1],
 			"Param1": [60,0,0,0],
 			"Type": "disk"
 		}
 	},
 	"Domain": {
-		"OriginType": 0,
+		"OriginType": 1,
 		"LengthUnit": 0.005,
 		"Media": [
 			{
