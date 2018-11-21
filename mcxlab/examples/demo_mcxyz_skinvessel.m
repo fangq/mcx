@@ -15,7 +15,8 @@ cfg.shapes=['{"Shapes":[{"ZLayers":[[1,20,1],[21,32,4],[33,200,3]]},' ...
     '{"Cylinder": {"Tag":2, "C0": [0,100.5,100.5], "C1": [200,100.5,100.5], "R": 20}}]}'];
 
 cfg.nphoton=1e7;
-cfg.srcpos=[100 100 0.101];
+cfg.issrcfrom0=1;
+cfg.srcpos=[99.5 99.5 20];
 cfg.tstart=0;
 cfg.tend=5e-8;
 cfg.tstep=5e-8;
