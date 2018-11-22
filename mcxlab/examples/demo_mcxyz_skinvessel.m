@@ -29,7 +29,7 @@ cfg.tstep=5e-8;
 cfg.srcdir=[0 0 1];
 cfg.srctype='disk';
 cfg.srcparam1=[0.3/cfg.unitinmm 0 0 0];
-cfg.isreflect=1;
+cfg.isreflect=0;
 cfg.autopilot=1;
 cfg.gpuid=1;
 
