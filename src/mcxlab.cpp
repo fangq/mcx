@@ -601,6 +601,13 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         jsonshapes=new char[len+1];
         mxGetString(item, jsonshapes, len+1);
         jsonshapes[len]='\0';
+    }else if(strcmp(name,"bc")==0){
+        int len=mxGetNumberOfElements(item);
+        if(!mxIsChar(item) || len==0 || len>7)
+             mexErrMsgTxt("the 'bc' field must be a non-empty string");
+
+        mxGetString(item, (char *)&(cfg->bc), len+1);
+        ((char *)&(cfg->bc))[len]='\0';
     }else if(strcmp(name,"detphotons")==0){
         arraydim=mxGetDimensions(item);
 	dimdetps[0]=arraydim[0];
@@ -731,6 +738,7 @@ void mcx_replay_prep(Config *cfg){
 
 void mcx_validate_config(Config *cfg){
      int i,gates,idx1d;
+     const char boundarycond[]={'r','a','m','c','\0'};
 
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
@@ -780,8 +788,13 @@ void mcx_validate_config(Config *cfg){
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;
 
+     char *bc=(char*)(&cfg->bc);
+     for(i=0;i<6;i++)
+        if(bc[i]>='A' && mcx_lookupindex(bc+i,boundarycond))
+	   mexErrMsgTxt("unknown boundary condition specifier");
+
      if(cfg->medianum){
-        for(int i=0;i<cfg->medianum;i++)
+        for(i=0;i<cfg->medianum;i++)
              if(cfg->prop[i].mus==0.f){
 	         cfg->prop[i].mus=EPS;
 		 cfg->prop[i].g=1.f;

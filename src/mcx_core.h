@@ -147,6 +147,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int gscatter;             /**< how many scattering events after which mus/g can be approximated by mus' */
   unsigned int is2d;                 /**< is the domain a 2D slice? */
   int replaydet;                     /**< select which detector to replay, 0 for all, -1 save all separately */
+  unsigned char bc[2][3];              /**< is the domain a 2D slice? */
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu);

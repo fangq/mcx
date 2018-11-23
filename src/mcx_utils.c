@@ -74,9 +74,9 @@
  * Array terminates with '\0'.
  */
 
-const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','B','z','u','H','P','N',
+const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P','N',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','\0'};
 
 /**
  * Long command line options
@@ -93,7 +93,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
-                 "--momentum","--specular",""};
+                 "--momentum","--specular","--bc",""};
 
 /**
  * Output data types
@@ -124,6 +124,16 @@ const char debugflag[]={'R','M','P','\0'};
  */
 
 const char *outputformat[]={"mc2","nii","hdr","ubj",""};
+
+/**
+ * Boundary condition (BC) types
+ * r: Fresnel boundary
+ * a: total absorption BC
+ * m: total reflection (mirror) BC
+ * c: cylic BC
+ */
+
+const char boundarycond[]={'r','a','m','c','\0'};
 
 /**
  * Source type specifier
@@ -221,6 +231,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isspecular=0;
      cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
+     memset(&(cfg->bc),0,sizeof(uint2));
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -644,6 +655,7 @@ void mcx_writeconfig(char *fname, Config *cfg){
  */
 
 void mcx_prepdomain(char *filename, Config *cfg){
+     char *bc;
      if(filename[0] || cfg->vol){
         if(cfg->vol==NULL){
 	     mcx_loadvolume(filename,cfg);
@@ -694,6 +706,11 @@ void mcx_prepdomain(char *filename, Config *cfg){
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
+
+     bc=(char*)(&cfg->bc);
+     for(int i=0;i<6;i++)
+        if(bc[i]>='A' && mcx_lookupindex(bc+i,boundarycond))
+	   MCX_ERROR(-4,"unknown boundary condition specifier");
 }
 
 /**
@@ -1755,9 +1772,13 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'b':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isreflect),"char");
 				cfg->isref3=cfg->isreflect;
+				if(cfg->isreflect)
+				    memset(&(cfg->bc),bcReflect,sizeof(uint2));
+				else
+				    memset(&(cfg->bc),bcAbsorb,sizeof(uint2));
 		     	        break;
                      case 'B':
-                                i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
+                                i=mcx_readarg(argc,argv,i,&(cfg->bc),"string");
                                	break;
 		     case 'd':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->issavedet),"char");
@@ -1892,6 +1913,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
                                 else if(strcmp(argv[i]+2,"root")==0)
                                      i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
+                                else if(strcmp(argv[i]+2,"reflectin")==0)
+                                     i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;

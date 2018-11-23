@@ -1745,7 +1745,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
          param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
      }
-
+     memcpy(&(param.bc),&(cfg->bc),sizeof(uint2));
      Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z; /*Vvox: voxel volume in mm^3*/
 
      if(cfg->seed>0)
