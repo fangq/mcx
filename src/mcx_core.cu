@@ -599,7 +599,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
 
 template <int mcxsource>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, float *field,
-           uint *mediaid,float *w0,int isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
+           uint *mediaid,float *w0,uint isdet, float ppath[],float energyloss[],float energylaunched[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
       *w0=1.f;     ///< reuse to count for launchattempt
@@ -614,7 +614,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
           if(gcfg->savedet){
-             if(isdet>0 && *mediaid==0)
+             if((isdet&DET_MASK)==DET_MASK && *mediaid==0)
 	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata);
              clearpath(ppath,gcfg->maxmedia*(2+gcfg->ismomentum)+1);
           }
@@ -981,7 +981,6 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      float3 htime;            ///< time-of-flight for collision test
      float3 rv;               ///< reciprocal velocity
 
-     ///< for MT RNG, these will be zero-length arrays and be optimized out
      RandType t[RAND_BUF_LEN];
      RandType photonseed[RAND_BUF_LEN];
      Medium prop;
