@@ -229,7 +229,7 @@ __device__ inline float mcx_nextafterf(float a, int dir){
 	  uint  i;
       } num;
       num.f=a+gcfg->maxvoidstep;         /** First, shift coordinate by 1000 to make sure values are always positive */
-      num.i+=dir ^ (num.i & 0x80000000U);/** Then make 1 bit difference along the direction indicated by dir */
+      num.i+=dir ^ (num.i & SIGN_BIT);/** Then make 1 bit difference along the direction indicated by dir */
       return num.f-gcfg->maxvoidstep;    /** Last, undo the offset, and return */
 }
 
@@ -619,7 +619,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
              clearpath(ppath,gcfg->maxmedia*(2+gcfg->ismomentum)+1);
           }
 #endif
-          if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME && gcfg->issaveref){
+          if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME_MIN && *idx1d!=OUTSIDE_VOLUME_MAX && gcfg->issaveref){
 	       int tshift=MIN(gcfg->maxgate-1,(int)(floorf((f->t-gcfg->twin0)*gcfg->Rtstep)));
 #ifdef USE_ATOMIC
                atomicadd(& field[*idx1d+tshift*gcfg->dimlen.z],-p->w);	       
@@ -1144,11 +1144,11 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           GPUDEBUG(("idx1d [%d]->[%d]\n",idx1dold,idx1d));
 
 	  /** read the medium index of the new voxel (current or next) */
-          if(p.x<0||p.y<0||p.z<0||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
+          if(p.x<0||p.y<0||p.z<0|| ((p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z) && (idx1d=OUTSIDE_VOLUME_MAX,1))){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
 	      isdet=-1;
-	      idx1d=OUTSIDE_VOLUME;
+	      idx1d=(idx1d==OUTSIDE_VOLUME_MAX) ? OUTSIDE_VOLUME_MAX : OUTSIDE_VOLUME_MIN;
 	  }else{
               /** otherwise, read the optical property index */
 	      mediaid=media[idx1d];
@@ -1205,9 +1205,22 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	     w0=p.w;
 	     f.pathlen=0.f;
 	  }
-	  
+
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
-          if((mediaid==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w))) || f.t>gcfg->twin1){
+          if((mediaid==0 && ((gcfg->bc[0][0]==bcUnknown && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[mediaid].w)))
+	     || (((idx1d & OUTSIDE_VOLUME_MAX)==OUTSIDE_VOLUME_MAX) && (gcfg->bc[idx1d==OUTSIDE_VOLUME_MAX][flipdir] & 0x2)) )) || f.t>gcfg->twin1){
+	      if(((idx1d & OUTSIDE_VOLUME_MAX)==OUTSIDE_VOLUME_MAX) &&  gcfg->bc[idx1d==OUTSIDE_VOLUME_MAX][flipdir]==bcCylic){
+		 if(flipdir==0)  p.x+=((idx1d==OUTSIDE_VOLUME_MIN) ? 1.f: -1.f)*gcfg->maxidx.x;
+		 if(flipdir==1)  p.y+=((idx1d==OUTSIDE_VOLUME_MIN) ? 1.f: -1.f)*gcfg->maxidx.y;
+		 if(flipdir==2)  p.z+=((idx1d==OUTSIDE_VOLUME_MIN) ? 1.f: -1.f)*gcfg->maxidx.z;
+                 idx1dold=idx1d;
+                 idx1d=(int(floorf(p.z))*gcfg->dimlen.y+int(floorf(p.y))*gcfg->dimlen.x+int(floorf(p.x)));
+	         mediaid=media[idx1d];
+	         isdet=mediaid & DET_MASK;  /** upper 16bit is the mask of the covered detector */
+	         mediaid &= MED_MASK;       /** lower 16bit is the medium index */
+                 GPUDEBUG(("cylic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f]\n",flipdir,idx1d,p.x,p.y,p.z));
+	         continue;
+	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
 	      if(launchnewphoton<mcxsource>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	          &energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*gcfg->issaveseed*(RAND_BUF_LEN*(sizeof(RandType)<<2))),
@@ -1235,7 +1248,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           }
 
           /** do boundary reflection/transmission */
-	  if(gcfg->doreflect && n1!=gproperty[mediaid].w){
+	  if(((gcfg->bc[0][0]==bcUnknown && gcfg->doreflect) || (((idx1d & OUTSIDE_VOLUME_MAX)==OUTSIDE_VOLUME_MAX) 
+	       && (gcfg->bc[idx1d==OUTSIDE_VOLUME_MAX][flipdir] & 0x1))) && n1!=gproperty[mediaid].w){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
@@ -1257,7 +1271,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } ///< else, total internal reflection
-	          if(Rtotal<1.f && gproperty[mediaid].w>=1.f && rand_next_reflect(t)>Rtotal){ // do transmission
+	          if(Rtotal<1.f && ((gcfg->bc[0][0]==bcUnknown && gproperty[mediaid].w>=1.f) || (((idx1d & OUTSIDE_VOLUME_MAX)==OUTSIDE_VOLUME_MAX) 
+	               && (gcfg->bc[idx1d==OUTSIDE_VOLUME_MAX][flipdir]==bcReflect))) && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));

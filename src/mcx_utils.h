@@ -51,7 +51,7 @@
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON};           /**< output data format */
-enum TBoundary {bcReflect, bcAbsorb, bcMirror, bcCylic};            /**< boundary conditions */
+enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCylic};            /**< boundary conditions */
 
 /**
  * The structure to store optical properties
@@ -210,7 +210,7 @@ typedef struct MCXConfig{
 	float *exportdebugdata;      /**<pointer to the buffer where the photon trajectory data are stored*/
 	uint mediabyte;              /**< how many bytes per media index, mcx supports 1, 2 and 4, 4 is the default*/
 	float *dx, *dy, *dz;         /**< anisotropic voxel spacing for x,y,z axis */
-	char bc[8];                  /**<boundary condition flag for [-x,+x,-y,+y,-z,+z,unused,unused] */
+	char bc[8];                  /**<boundary condition flag for [-x,-y,-z,+x,+y,+z,unused,unused] */
 } Config;
 
 #ifdef	__cplusplus

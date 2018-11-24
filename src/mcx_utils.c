@@ -127,13 +127,14 @@ const char *outputformat[]={"mc2","nii","hdr","ubj",""};
 
 /**
  * Boundary condition (BC) types
+ * ?: no condition
  * r: Fresnel boundary
  * a: total absorption BC
  * m: total reflection (mirror) BC
  * c: cylic BC
  */
 
-const char boundarycond[]={'r','a','m','c','\0'};
+const char boundarycond[]={'?','r','a','m','c','\0'};
 
 /**
  * Source type specifier
