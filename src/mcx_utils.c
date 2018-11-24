@@ -74,7 +74,7 @@
  * Array terminates with '\0'.
  */
 
-const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P','N',
+const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','\0'};
 
@@ -86,7 +86,7 @@ const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','
 const char *fullopt[]={"--help","--interactive","--input","--photon",
                  "--thread","--blocksize","--session","--array",
                  "--gategroup","--reflect","--reflectin","--srcfrom0",
-                 "--unitinmm","--maxdetphoton","--shapes","--reseed","--savedet",
+                 "--unitinmm","--maxdetphoton","--shapes","--savedet",
                  "--repeat","--save2pt","--printlen","--minenergy",
                  "--normalize","--skipradius","--log","--listgpu","--faststep",
                  "--printgpu","--root","--gpu","--dumpmask","--autopilot",
@@ -143,6 +143,12 @@ const char boundarycond[]={'r','a','m','c','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
     "line","slit","pencilarray","pattern3d",""};
+
+/**
+ * Flag to decide if parameter has been initialized over command line
+ */
+ 
+char flagset[256]={'\0'};
 
 /**
  * @brief Initializing the simulation configuration with default values
@@ -207,7 +213,6 @@ void mcx_initcfg(Config *cfg){
      cfg->his.respin=1;
      cfg->shapedata=NULL;
      cfg->seeddata=NULL;
-     cfg->reseedlimit=10000000;
      cfg->maxvoidstep=1000;
      cfg->voidtime=1;
      cfg->srcpattern=NULL;
@@ -975,7 +980,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	     strncpy(filename,volfile,MAX_PATH_LENGTH);
 	  }
 	}
-        if(cfg->unitinmm==1.f)
+        if(!flagset['u'])
 	    cfg->unitinmm=FIND_JSON_KEY("LengthUnit","Domain.LengthUnit",Domain,1.f,valuedouble);
         meds=FIND_JSON_OBJ("Media","Domain.Media",Domain);
         if(meds){
@@ -1226,23 +1231,22 @@ int mcx_loadjson(cJSON *root, Config *cfg){
          mcx_error(-4,"input media types plus detector number exceeds the maximum total (4000)",__FILE__,__LINE__);
      if(Session){
         char val[1];
-	if(cfg->seed==0x623F9A9E)  cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
-        if(cfg->nphoton==0)   cfg->nphoton=FIND_JSON_KEY("Photons","Session.Photons",Session,0,valuedouble);
+	if(!flagset['E'])  cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
+        if(!flagset['n'])  cfg->nphoton=FIND_JSON_KEY("Photons","Session.Photons",Session,0,valuedouble);
         if(cfg->session[0]=='\0')  strncpy(cfg->session, FIND_JSON_KEY("ID","Session.ID",Session,"default",valuestring), MAX_SESSION_LENGTH);
         if(cfg->rootpath[0]=='\0') strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath","Session.RootPath",Session,"",valuestring), MAX_PATH_LENGTH);
 
-        if(!cfg->isreflect)   cfg->isreflect=FIND_JSON_KEY("DoMismatch","Session.DoMismatch",Session,cfg->isreflect,valueint);
-        if(cfg->issave2pt)    cfg->issave2pt=FIND_JSON_KEY("DoSaveVolume","Session.DoSaveVolume",Session,cfg->issave2pt,valueint);
-        if(cfg->isnormalized) cfg->isnormalized=FIND_JSON_KEY("DoNormalize","Session.DoNormalize",Session,cfg->isnormalized,valueint);
-        if(!cfg->issavedet)   cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
-        if(!cfg->issaveexit)  cfg->issaveexit=FIND_JSON_KEY("DoSaveExit","Session.DoSaveExit",Session,cfg->issaveexit,valueint);
-        if(!cfg->issaveseed)  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
-        if(!cfg->autopilot)   cfg->autopilot=FIND_JSON_KEY("DoAutoThread","Session.DoAutoThread",Session,cfg->autopilot,valueint);
-	if(!cfg->ismomentum)  cfg->ismomentum=FIND_JSON_KEY("DoDCS","Session.DoDCS",Session,cfg->ismomentum,valueint);
-	if(!cfg->isspecular)  cfg->isspecular=FIND_JSON_KEY("DoSpecular","Session.DoSpecular",Session,cfg->isspecular,valueint);
-	if(!cfg->debuglevel)  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("Debug","Session.Debug",Session,"",valuestring),debugflag);
+        if(!flagset['b'])  cfg->isreflect=FIND_JSON_KEY("DoMismatch","Session.DoMismatch",Session,cfg->isreflect,valueint);
+        if(!flagset['S'])  cfg->issave2pt=FIND_JSON_KEY("DoSaveVolume","Session.DoSaveVolume",Session,cfg->issave2pt,valueint);
+        if(!flagset['U'])  cfg->isnormalized=FIND_JSON_KEY("DoNormalize","Session.DoNormalize",Session,cfg->isnormalized,valueint);
+        if(!flagset['d'])  cfg->issavedet=FIND_JSON_KEY("DoPartialPath","Session.DoPartialPath",Session,cfg->issavedet,valueint);
+        if(!flagset['X'])  cfg->issaveexit=FIND_JSON_KEY("DoSaveExit","Session.DoSaveExit",Session,cfg->issaveexit,valueint);
+        if(!flagset['q'])  cfg->issaveseed=FIND_JSON_KEY("DoSaveSeed","Session.DoSaveSeed",Session,cfg->issaveseed,valueint);
+        if(!flagset['A'])  cfg->autopilot=FIND_JSON_KEY("DoAutoThread","Session.DoAutoThread",Session,cfg->autopilot,valueint);
+	if(!flagset['m'])  cfg->ismomentum=FIND_JSON_KEY("DoDCS","Session.DoDCS",Session,cfg->ismomentum,valueint);
+	if(!flagset['V'])  cfg->isspecular=FIND_JSON_KEY("DoSpecular","Session.DoSpecular",Session,cfg->isspecular,valueint);
+	if(!flagset['D'])  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("Debug","Session.Debug",Session,"",valuestring),debugflag);
 
-        cfg->reseedlimit=FIND_JSON_KEY("ReseedLimit","Session.ReseedLimit",Session,cfg->reseedlimit,valueint);
         if(!cfg->outputformat)  cfg->outputformat=mcx_keylookup((char *)FIND_JSON_KEY("OutputFormat","Session.OutputFormat",Session,"mc2",valuestring),outputformat);
         if(cfg->outputformat<0)
                 mcx_error(-2,"the specified output format is not recognized",__FILE__,__LINE__);
@@ -1251,7 +1255,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(mcx_lookupindex(val, outputtype)){
                 mcx_error(-2,"the specified output data type is not recognized",__FILE__,__LINE__);
         }
-	cfg->outputtype=val[0];
+	if(!flagset['O']) cfg->outputtype=val[0];
      }
      if(Forward){
         uint gates;
@@ -1729,6 +1733,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				mcx_error(-2,"unknown verbose option",__FILE__,__LINE__);
 			}
 		}
+		if(argv[i][1]<='z' && argv[i][1]>='A')
+		   flagset[(int)(argv[i][1])]=1;
 	        switch(argv[i][1]){
 		     case 'h': 
 		                mcx_usage(cfg,argv[0]);
@@ -1844,9 +1850,6 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 break;
 		     case 'H':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
-		     	        break;
-		     case 'N':
-		     	        i=mcx_readarg(argc,argv,i,&(cfg->reseedlimit),"int");
 		     	        break;
                      case 'P':
                                 cfg->shapedata=argv[++i];
@@ -2109,7 +2112,6 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       if -1, replay all detectors and save separately\n\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh\n\
- -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\

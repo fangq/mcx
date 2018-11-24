@@ -128,7 +128,6 @@ typedef struct  __align__(16) KernelParams {
   unsigned int maxgate;              /**< max number of time gates */
   unsigned int idx1dorig;            /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
   unsigned int mediaidorig;          /**< pre-computed media index of the photon at launch for pencil/isotropic beams */
-  unsigned int reseedlimit;          /**< how many photon moves to rejuvenate the RNG (obsolete) */
   unsigned int isatomic;             /**< whether atomic operations are used */
   unsigned int maxvoidstep;          /**< max steps that photon can travel in the background before entering non-zero voxels */
   unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */

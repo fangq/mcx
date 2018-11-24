@@ -151,7 +151,6 @@ typedef struct MCXConfig{
 	unsigned int maxgate;         /**<simultaneous recording gates*/
 	int respin;          /**<number of repeatitions*/
 	unsigned int printnum;        /**<number of printed threads (for debugging)*/
-	unsigned int reseedlimit;     /**<number of scattering events per thread before the RNG is reseeded*/
 	int gpuid;                    /**<the ID of the GPU to use, starting from 1, 0 for auto*/
 
 	unsigned int *vol;            /**<pointer to the volume*/

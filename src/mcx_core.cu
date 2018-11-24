@@ -1489,7 +1489,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		     p0,c0,maxidx,uint4(0,0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,cfg->reseedlimit,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
+		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveexit>0,cfg->issaveref>0,cfg->ismomentum>0,cfg->isspecular>0,
 		     cfg->maxdetphoton*detreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
 		     cfg->debuglevel,(uint)cfg->maxjumpdebug,cfg->gscatter,is2d,cfg->replaydet};
