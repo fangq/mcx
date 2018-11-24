@@ -605,8 +605,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if(!mxIsChar(item) || len==0 || len>7)
              mexErrMsgTxt("the 'bc' field must be a non-empty string");
 
-        mxGetString(item, (char *)&(cfg->bc), len+1);
-        ((char *)&(cfg->bc))[len]='\0';
+        mxGetString(item, cfg->bc, len+1);
+        cfg->bc[len]='\0';
     }else if(strcmp(name,"detphotons")==0){
         arraydim=mxGetDimensions(item);
 	dimdetps[0]=arraydim[0];
@@ -787,7 +787,7 @@ void mcx_validate_config(Config *cfg){
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;
 
-     char *bc=(char*)(&cfg->bc);
+     char *bc=cfg->bc;
      for(i=0;i<6;i++)
         if(bc[i]>='A' && mcx_lookupindex(bc+i,boundarycond))
 	   mexErrMsgTxt("unknown boundary condition specifier");
