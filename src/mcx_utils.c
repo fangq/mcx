@@ -236,7 +236,7 @@ void mcx_initcfg(Config *cfg){
      cfg->isspecular=0;
      cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
-     memset(&(cfg->bc),0,sizeof(uint2));
+     memset(cfg->bc,0,8);
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -712,7 +712,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
 
-     bc=(char*)(&cfg->bc);
+     bc=cfg->bc;
      for(int i=0;i<6;i++)
         if(bc[i]>='A' && mcx_lookupindex(bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
@@ -1734,7 +1734,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 			}
 		}
 		if(argv[i][1]<='z' && argv[i][1]>='A')
-		   flagset[(int)(argv[i][1])]=1;
+		     flagset[(int)(argv[i][1])]=1;
 	        switch(argv[i][1]){
 		     case 'h': 
 		                mcx_usage(cfg,argv[0]);
@@ -1779,9 +1779,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isreflect),"char");
 				cfg->isref3=cfg->isreflect;
 				if(cfg->isreflect)
-				    memset(&(cfg->bc),bcReflect,sizeof(uint2));
+				    memset(cfg->bc,bcReflect,6);
 				else
-				    memset(&(cfg->bc),bcAbsorb,sizeof(uint2));
+				    memset(cfg->bc,bcAbsorb,6);
 		     	        break;
                      case 'B':
                                 i=mcx_readarg(argc,argv,i,&(cfg->bc),"string");
