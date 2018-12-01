@@ -1144,11 +1144,11 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
           GPUDEBUG(("idx1d [%d]->[%d]\n",idx1dold,idx1d));
 
 	  /** read the medium index of the new voxel (current or next) */
-          if(p.x<0||p.y<0||p.z<0|| ((p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z) && (idx1d=OUTSIDE_VOLUME_MAX,1))){
+          if(p.x<0.f||p.y<0.f||p.z<0.f||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
 	      isdet=-1;
-	      idx1d=(idx1d==OUTSIDE_VOLUME_MAX) ? OUTSIDE_VOLUME_MAX : OUTSIDE_VOLUME_MIN;
+	      idx1d=(p.x<0.f||p.y<0.f||p.z<0.f) ? OUTSIDE_VOLUME_MIN : OUTSIDE_VOLUME_MAX;
 	  }else{
               /** otherwise, read the optical property index */
 	      mediaid=media[idx1d];

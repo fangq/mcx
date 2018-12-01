@@ -1779,13 +1779,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'b':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isreflect),"char");
 				cfg->isref3=cfg->isreflect;
-				if(cfg->isreflect)
-				    memset(cfg->bc,bcReflect,6);
-				else
-				    memset(cfg->bc,bcAbsorb,6);
-		     	        break;
                      case 'B':
-                                i=mcx_readarg(argc,argv,i,&(cfg->bc),"string");
+                                if(i+1<argc)
+				    strncpy(cfg->bc,argv[i+1],8);
+				i++;
                                	break;
 		     case 'd':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->issavedet),"char");
@@ -1860,7 +1857,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 break;
                      case 'E':
 				if(i+1<argc && strstr(argv[i+1],".mch")!=NULL){ /*give an mch file to initialize the seed*/
-#if defined(MMC_LOGISTIC) || defined(MMC_SFMT)
+#if defined(USE_LL5_RAND)
 					mcx_error(-1,"seeding file is not supported in this binary",__FILE__,__LINE__);
 #else
                                         i=mcx_readarg(argc,argv,i,cfg->seedfile,"string");
