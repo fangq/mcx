@@ -127,14 +127,14 @@ const char *outputformat[]={"mc2","nii","hdr","ubj",""};
 
 /**
  * Boundary condition (BC) types
- * ?: no condition
+ * _: no condition (fallback to isreflect)
  * r: Fresnel boundary
  * a: total absorption BC
  * m: total reflection (mirror) BC
  * c: cylic BC
  */
 
-const char boundarycond[]={'?','r','a','m','c','\0'};
+const char boundarycond[]={'_','r','a','m','c','\0'};
 
 /**
  * Source type specifier
@@ -661,7 +661,6 @@ void mcx_writeconfig(char *fname, Config *cfg){
  */
 
 void mcx_prepdomain(char *filename, Config *cfg){
-     char *bc;
      if(filename[0] || cfg->vol){
         if(cfg->vol==NULL){
 	     mcx_loadvolume(filename,cfg);
@@ -713,9 +712,8 @@ void mcx_prepdomain(char *filename, Config *cfg){
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
 
-     bc=cfg->bc;
      for(int i=0;i<6;i++)
-        if(bc[i]>='A' && mcx_lookupindex(bc+i,boundarycond))
+        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
 }
 
@@ -1779,6 +1777,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'b':
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->isreflect),"char");
 				cfg->isref3=cfg->isreflect;
+		     	        break;
                      case 'B':
                                 if(i+1<argc)
 				    strncpy(cfg->bc,argv[i+1],8);

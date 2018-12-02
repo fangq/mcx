@@ -607,6 +607,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 
         mxGetString(item, cfg->bc, len+1);
         cfg->bc[len]='\0';
+        printf("mcx.bc='%s';\n",cfg->bc);
     }else if(strcmp(name,"detphotons")==0){
         arraydim=mxGetDimensions(item);
 	dimdetps[0]=arraydim[0];
@@ -737,7 +738,7 @@ void mcx_replay_prep(Config *cfg){
 
 void mcx_validate_config(Config *cfg){
      int i,gates,idx1d;
-     const char boundarycond[]={'r','a','m','c','\0'};
+     const char boundarycond[]={'_','r','a','m','c','\0'};
 
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
@@ -787,9 +788,8 @@ void mcx_validate_config(Config *cfg){
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;
 
-     char *bc=cfg->bc;
      for(i=0;i<6;i++)
-        if(bc[i]>='A' && mcx_lookupindex(bc+i,boundarycond))
+        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   mexErrMsgTxt("unknown boundary condition specifier");
 
      if(cfg->medianum){
