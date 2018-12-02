@@ -50,7 +50,15 @@ function varargout=mcxlab(varargin)
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
 %                      if negative, divide the total photon number into respin subsets
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-%      cfg.isrefint:   1-ref. index mismatch at inner boundaries, [0]-matched index
+%      cfg.bc          per-face boundary condition (BC), a strig of 6 letters for
+%                      bounding box faces at -x,-y,-z,+x,+y,+z axes;
+%		       overwrite cfg.isreflect if given.
+%                      each letter can be one of the following:
+%                      '_': undefined, fallback to cfg.isreflect
+%                      'r': like cfg.isreflect=1, Fresnel reflection BC
+%                      'a': like cfg.isreflect=0, total absorption BC
+%                      'm': mirror or total reflection BC
+%                      'c': cyclic BC, enter from opposite face
 %      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
 %      cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
 %      cfg.maxgate:    the num of time-gates per simulation

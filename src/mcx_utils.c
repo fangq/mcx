@@ -2090,7 +2090,15 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r\n\
                                if negative, divide #photon into r subsets\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
- -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not\n\
+ -B '______'   (--bc)          per-face boundary condition (BC), 6 letters for\n\
+                               bounding box faces at -x,-y,-z,+x,+y,+z axes;\n\
+			       overwrite -b if given. \n\
+			       each letter can be one of the following:\n\
+			       '_': undefined, fallback to -b\n\
+			       'r': like -b 1, Fresnel reflection BC\n\
+			       'a': like -b 0, total absorption BC\n\
+			       'm': mirror or total reflection BC\n\
+			       'c': cyclic BC, enter from opposite face\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\

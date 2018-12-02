@@ -5,7 +5,7 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.0 Final (v2018, Dark Matter - Final)
+Version: 1.2 (v2018.12, Ether Dome - alpha)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
@@ -169,7 +169,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::7850c3 $ Last $Date::2018-07-21 12:28:44 -04$ by $Author::Qianqian Fang $
+$Rev::094734 $ Last $Date::2018-12-02 16:45:06 -05$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -185,7 +185,15 @@ where possible parameters include (the first value in [*|*] is the default)
  -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r
                                if negative, divide #photon into r subsets
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
- -B [0|1]      (--reflectin)   1 to reflect photons at int. boundary; 0 do not
+ -B '______'   (--bc)          per-face boundary condition (BC), 6 letters for
+                               bounding box faces at -x,-y,-z,+x,+y,+z axes;
+			       overwrite -b if given. 
+			       each letter can be one of the following:
+			       '_': undefined, fallback to -b
+			       'r': like -b 1, Fresnel reflection BC
+			       'a': like -b 0, total absorption BC
+			       'm': mirror or total reflection BC
+			       'c': cyclic BC, enter from opposite face
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate
@@ -204,7 +212,6 @@ where possible parameters include (the first value in [*|*] is the default)
 			       if -1, replay all detectors and save separately
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh
- -N [10^7|int] (--reseed)      number of scattering events before reseeding RNG
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
  -g [1|int]    (--gategroup)   number of time gates per run
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
@@ -237,9 +244,10 @@ where possible parameters include (the first value in [*|*] is the default)
                                mc2 - MCX mc2 format (binary 32bit float)
                                nii - Nifti format
                                hdr - Analyze 7.5 hdr/img format
- -O [X|XFEJP]  (--outputtype)  X - output flux, F - fluence, E - energy deposit
-                               J - Jacobian (replay mode),   P - scattering
-                               event counts at each voxel (replay mode only)
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
+                               J - Jacobian (replay mode),   P - scattering, 
+                               M - momentum transfer; 
+			       event counts at each voxel (replay mode only)
 
 == User IO options ==
  -h            (--help)        print this message
@@ -263,9 +271,9 @@ where possible parameters include (the first value in [*|*] is the default)
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
                                launched outside (i.e. a widefield source)
- --maxjumpdebug [1000000|int]  when trajectory is requested (i.e. -D M),
+ --maxjumpdebug [10000000|int] when trajectory is requested (i.e. -D M),
                                use this parameter to set the maximum positions
-                               stored (default: 1e6)
+                               stored (default: 1e7)
  --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing
 
 == Example ==
