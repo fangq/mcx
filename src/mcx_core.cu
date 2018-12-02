@@ -84,7 +84,7 @@ __device__ uint gjumpdebug[1];
  * @brief Pointer to the shared memory (storing photon data and spilled registers)
  */
 
-extern __shared__ float sharedmem[];
+extern __shared__ char sharedmem[];
 
 /**
  * @brief Texture memory for storing media indices
@@ -988,7 +988,8 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      float w0;
      int   flipdir=-1;
  
-     float *ppath=sharedmem+(blockDim.x<<2)+(blockDim.x*gcfg->issaveseed*(RAND_BUF_LEN*(sizeof(RandType)<<2))); ///< first blockDim.x*4 floats in the shared mem store spilled v from all threads
+     float *ppath=(float *)(sharedmem+blockDim.x*(gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)));
+
 #ifdef  SAVE_DETECTORS
      ppath+=threadIdx.x*(gcfg->maxmedia*(2+gcfg->ismomentum)+1); // block#2: maxmedia*thread number to store the partial
      if(gcfg->savedet) clearpath(ppath,gcfg->maxmedia*(2+gcfg->ismomentum)+1);
@@ -997,7 +998,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
      gpu_rng_init(t,n_seed,idx);
 
      if(launchnewphoton<mcxsource>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,&energyloss,
-       &energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*gcfg->issaveseed*(RAND_BUF_LEN*(sizeof(RandType)<<2))),media,srcpattern,
+       &energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress)){
          GPUDEBUG(("thread %d: fail to launch photon\n",idx));
 	 n_pos[idx]=*((float4*)(&p));
@@ -1222,7 +1223,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n",idx1d,mediaid,gcfg->doreflect,isdet,f.t>gcfg->twin1));
 	      if(launchnewphoton<mcxsource>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
-	          &energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*gcfg->issaveseed*(RAND_BUF_LEN*(sizeof(RandType)<<2))),
+	          &energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                    break;
               isdet=mediaid & DET_MASK;
@@ -1237,7 +1238,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
                    if(launchnewphoton<mcxsource>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
-	                &energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*gcfg->issaveseed*(RAND_BUF_LEN*(sizeof(RandType)<<2))),
+	                &energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                         break;
                    isdet=mediaid & DET_MASK;
@@ -1274,7 +1275,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
 		    	    if(launchnewphoton<mcxsource>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
-			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+(blockDim.x<<2)+threadIdx.x*gcfg->issaveseed*(RAND_BUF_LEN*(sizeof(RandType)<<2))),
+			        ppath,&energyloss,&energylaunched,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                                 break;
                             isdet=mediaid & DET_MASK;
@@ -1823,7 +1824,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
 	 The calculation of the energy conservation will only reflect the last simulation.
      */
-     sharedbuf=gpu[gpuid].autoblock*(sizeof(MCXdir)+cfg->issaveseed*(RAND_BUF_LEN*sizeof(RandType))+sizeof(float)*((cfg->medianum-1)*(2+(cfg->ismomentum>0))+1));
+     sharedbuf=gpu[gpuid].autoblock*(cfg->issaveseed*(RAND_BUF_LEN*sizeof(RandType))+sizeof(float)*((cfg->medianum-1)*(2+(cfg->ismomentum>0))+1));
 
      MCX_FPRINTF(cfg->flog,"requesting %d bytes of shared memory\n",sharedbuf);
 
