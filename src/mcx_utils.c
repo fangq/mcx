@@ -212,11 +212,13 @@ void mcx_initcfg(Config *cfg){
      cfg->his.unitinmm=1.f;
      cfg->his.normalizer=1.f;
      cfg->his.respin=1;
+     cfg->his.srcnum=1;
      cfg->shapedata=NULL;
      cfg->seeddata=NULL;
      cfg->maxvoidstep=1000;
      cfg->voidtime=1;
      cfg->srcpattern=NULL;
+     cfg->srcnum=1;
      cfg->debuglevel=0;
      cfg->issaveseed=0;
      cfg->issaveexit=0;
@@ -896,6 +898,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
+     cfg->his.srcnum=cfg->srcnum;
      cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
 
      if(in==stdin)
@@ -919,23 +922,23 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                char patternfile[MAX_PATH_LENGTH];
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
-               cfg->srcpattern=(float*)calloc((cfg->srcparam1.w*cfg->srcparam2.w),sizeof(float));
+               cfg->srcpattern=(float*)calloc((cfg->srcparam1.w*cfg->srcparam2.w*cfg->srcnum),sizeof(float));
                MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
-               MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.w*cfg->srcparam2.w,sizeof(float),fp)==sizeof(float));
+               MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.w*cfg->srcparam2.w,sizeof(float)*cfg->srcnum,fp)==sizeof(float));
                fclose(fp);
            }else if(cfg->srctype==MCX_SRC_PATTERN3D && cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z>0){
                char patternfile[MAX_PATH_LENGTH];
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
-               cfg->srcpattern=(float*)calloc((int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z),sizeof(float));
+               cfg->srcpattern=(float*)calloc((int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z*cfg->srcnum),sizeof(float));
                MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
-               MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z,sizeof(float),fp)==sizeof(float));
+               MCX_ASSERT(fread(cfg->srcpattern,cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z,sizeof(float)*cfg->srcnum,fp)==sizeof(float));
                fclose(fp);
            }
 	}else
@@ -1165,6 +1168,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
               cfg->srcparam2.z=subitem->child->next->next->valuedouble;
               cfg->srcparam2.w=subitem->child->next->next->next->valuedouble;
            }
+	   cfg->srcnum=FIND_JSON_KEY("SrcNum","Optode.Source.SrcNum",src,cfg->srcnum,valueint);
            subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
            if(subitem){
               int nx=FIND_JSON_KEY("Nx","Optode.Source.Pattern.Nx",subitem,0,valueint);
@@ -1176,8 +1180,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                      int i;
                      pat=pat->child;
                      if(cfg->srcpattern) free(cfg->srcpattern);
-                     cfg->srcpattern=(float*)calloc(nx*ny*nz,sizeof(float));
-                     for(i=0;i<nx*ny*nz;i++){
+                     cfg->srcpattern=(float*)calloc(nx*ny*nz*cfg->srcnum,sizeof(float));
+                     for(i=0;i<nx*ny*nz*cfg->srcnum;i++){
                          if(pat==NULL)
                              MCX_ERROR(-1,"Incomplete pattern data");
                          cfg->srcpattern[i]=pat->valuedouble;
@@ -1187,8 +1191,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                      FILE *fid=fopen(pat->valuestring,"rb");
 		     if(fid!=NULL){
 		         if(cfg->srcpattern) free(cfg->srcpattern);
-                         cfg->srcpattern=(float*)calloc(nx*ny*nz,sizeof(float));
-                         fread((void*)cfg->srcpattern,sizeof(float),nx*ny*nz,fid);
+                         cfg->srcpattern=(float*)calloc(nx*ny*nz*cfg->srcnum,sizeof(float));
+                         fread((void*)cfg->srcpattern,sizeof(float),nx*ny*nz*cfg->srcnum,fid);
 			 fclose(fid);
                      }
 		 }
@@ -1288,6 +1292,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      mcx_prepdomain(filename,cfg);
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
+     cfg->his.srcnum=cfg->srcnum;
      cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
      return 0;
 }

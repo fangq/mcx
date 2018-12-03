@@ -218,7 +218,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	
 	/** Initialize all buffers necessary to store the output variables */
 	if(nlhs>=1){
-            int fieldlen=cfg.dim.x*cfg.dim.y*cfg.dim.z*(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
+            int fieldlen=cfg.dim.x*cfg.dim.y*cfg.dim.z*(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5)*cfg.srcnum;
 	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
 	        fieldlen*=cfg.detnum;
 	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
@@ -313,7 +313,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	/** if the 1st output presents, output the fluence/energy-deposit volume data */
         if(nlhs>=1){
 	    int fieldlen;
-            fielddim[0]=cfg.dim.x; fielddim[1]=cfg.dim.y; 
+            fielddim[0]=cfg.srcnum*cfg.dim.x; fielddim[1]=cfg.dim.y; 
 	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
 	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
 	        fielddim[4]=cfg.detnum;
@@ -443,6 +443,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,maxvoidstep)
     GET_ONE_FIELD(cfg,maxjumpdebug)
     GET_ONE_FIELD(cfg,gscatter)
+    GET_ONE_FIELD(cfg,srcnum)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC34_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
@@ -841,6 +842,7 @@ void mcx_validate_config(Config *cfg){
      }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
+     cfg->his.srcnum=cfg->srcnum;
      cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
      mcx_replay_prep(cfg);
 }

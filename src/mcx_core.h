@@ -146,6 +146,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int gscatter;             /**< how many scattering events after which mus/g can be approximated by mus' */
   unsigned int is2d;                 /**< is the domain a 2D slice? */
   int replaydet;                     /**< select which detector to replay, 0 for all, -1 save all separately */
+  unsigned int srcnum;               /**< total number of source patterns */
   unsigned char bc[8];               /**< boundary conditions */
 }MCXParam;
 

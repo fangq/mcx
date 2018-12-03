@@ -82,7 +82,8 @@ typedef struct MCXHistoryHeader{
 	unsigned int  seedbyte;        /**< how many bytes per RNG seed */
         float normalizer;              /**< what is the normalization factor */
 	int respin;                    /**< if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset */
-	int reserved[4];               /**< reserved fields for future extension */
+	unsigned int  srcnum;          /**< number of sources for simultaneous pattern sources */
+	int reserved[3];               /**< reserved fields for future extension */
 } History;
 
 /**
@@ -189,6 +190,7 @@ typedef struct MCXConfig{
 	int voidtime;                /**<1 start counting photon time when moves inside 0 voxels; 0: count time only after enters non-zero voxel*/
 	float4 srcparam1;            /**<a quadruplet {x,y,z,w} for additional source parameters*/
 	float4 srcparam2;            /**<a quadruplet {x,y,z,w} for additional source parameters*/
+	unsigned int srcnum;         /**<total number of pattern sources */
         float* srcpattern;           /**<a string for the source form, options include "pencil","isotropic", etc*/
 	Replay replay;               /**<a structure to prepare for photon replay*/
 	void *seeddata;              /**<poiinter to a buffer where detected photon seeds are stored*/
