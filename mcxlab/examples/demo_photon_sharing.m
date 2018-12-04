@@ -24,13 +24,13 @@ cfg.vol=uint8(ones(60,60,60));
 cfg.srctype='pattern';
 cfg.srcpattern=permute(reshape(mcximg,[6,3,size(mcximg,2)]),[2 1 3]);
 cfg.srcnum=3;
-cfg.srcpos=[-10*sqrt(2) 0 40];
-cfg.srcdir=[1 1 0]/sqrt(2);
-cfg.srcparam1=[20/sqrt(2) -20/sqrt(2) 0 size(mcximg,1)];
-cfg.srcparam2=[0 0 -15 size(mcximg,2)];
+cfg.srcpos=[0 0 0];
+cfg.srcdir=[0 0 1];
+cfg.srcparam1=[60 0 0 size(cfg.srcpattern,2)];
+cfg.srcparam2=[0 60 0 size(cfg.srcpattern,3)];
 cfg.tstart=0;
-cfg.tend=2e-10;
-cfg.tstep=2e-10;
+cfg.tend=5e-9;
+cfg.tstep=5e-9;
 cfg.voidtime=0;
 cfg.gpuid=1;
 cfg.autopilot=1;
@@ -39,9 +39,11 @@ cfg.seed=99999;
 
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
-fcw=sum(fcw,4);
-subplot(224);
-hs=slice(log10(abs(double(fcw))),1,1,60);
-set(hs,'linestyle','none');
-axis equal; colorbar
-title('an arbitrary pattern source from an angle');
+for i=1:3
+    subplot(1,3,i);
+    hs=slice(log10(abs(double(fcw(:,:,:,i)))),1,1,1);
+    view([1 1 1])
+    set(hs,'linestyle','none');
+    axis equal; colorbar
+    title(sprintf('pattern #%d',i));
+end

@@ -2,6 +2,7 @@
 
 == MCX v2018.12 (Ether Dome - 1.2), FangQ <q.fang (a) neu.edu> ==
 
+ 2018-12-03 [dc594dc]*initial implementation of "photon sharing" - one forward/replay for many patterns, to be presented in PW2019
  2018-12-02 [da93f29] fix a shared memory buffer length error, introduced in 9a631d15
  2018-11-24 [5e212a6]*setting separate boundary conditions at 6 boundary facets
  2018-11-24 [e6d4932] use char array for boundary condition input in mcxlab
