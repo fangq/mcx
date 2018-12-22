@@ -25,6 +25,7 @@ cfg.srctype='pattern';
 cfg.srcpattern=permute(reshape(mcximg,[6,3,size(mcximg,2)]),[2 1 3]);
 cfg.srcnum=3;
 cfg.srcpos=[0 0 0];
+cfg.issrcfrom0=1;
 cfg.srcdir=[0 0 1];
 cfg.srcparam1=[60 0 0 size(cfg.srcpattern,2)];
 cfg.srcparam2=[0 60 0 size(cfg.srcpattern,3)];

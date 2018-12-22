@@ -27,7 +27,7 @@
 		}
 	},
 	"Domain": {
-		"OriginType": 0,
+		"OriginType": 1,
 		"Media": [
 			{
 				"mua": 0,
