@@ -2051,28 +2051,20 @@ is more than what your have specified (%d), please use the -H option to specify 
 	 energyabs=(float *)calloc(cfg->srcnum,sizeof(float));
 	 int psize=(int)cfg->srcparam1.w*(int)cfg->srcparam2.w;
 	 for(i=0;i<int(cfg->srcnum);i++){
+	     float kahanc=0.f;
 	     for(iter=0;iter<psize;iter++)   
-	         srcpw[i]+=cfg->srcpattern[iter*cfg->srcnum+i];
+	         mcx_kahanSum(&srcpw[i],&kahanc,cfg->srcpattern[iter*cfg->srcnum+i]);
 	     energytot[i]=cfg->energytot*srcpw[i]/(float)psize;
-	     float kahanc=0.f,kahany,kahant;
+	     kahanc=0.f;
 	     if(cfg->outputtype==otEnergy){
 	         int fieldlenPsrc=fieldlen/cfg->srcnum;
-	         for(iter=0;iter<fieldlenPsrc;iter++){
-		     kahany=cfg->exportfield[iter*cfg->srcnum+i]-kahanc;
-		     kahant=energyabs[i]+kahany;
-		     kahanc=(kahant-energyabs[i])-kahany;
-		     energyabs[i]=kahant;
-		 }
+	         for(iter=0;iter<fieldlenPsrc;iter++)
+		     mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*cfg->srcnum+i]);
 	     }else{
 	         int j;
-	         for(iter=0;iter<gpu[gpuid].maxgate;iter++){
-		     for(j=0;j<(int)dimlen.z;j++){
-		         kahany=cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*cfg->prop[cfg->vol[j]].mua-kahanc;
-		         kahant=energyabs[i]+kahany;
-		         kahanc=(kahant-energyabs[i])-kahany;
-		         energyabs[i]=kahant;
-		     }
-		 }
+	         for(iter=0;iter<gpu[gpuid].maxgate;iter++)
+		     for(j=0;j<(int)dimlen.z;j++)
+		         mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*cfg->prop[cfg->vol[j]].mua);
 	     }
 	 }
      }

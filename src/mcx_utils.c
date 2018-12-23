@@ -496,6 +496,22 @@ void mcx_normalize(float field[], float scale, int fieldlen, int option, int pid
 }
 
 /**
+ * @brief Kahan summation: Add a sequence of finite precision floating point numbers  
+ *
+ * Source: https://en.wikipedia.org/wiki/Kahan_summation_algorithm
+ * @param[in,out] sum: sum of the squence before and after adding the next element
+ * @param[in,out] kahanc: a running compensation for lost low-order bits
+ * @param[in] input: the next element of the sequence
+ */
+ 
+ void mcx_kahanSum(float *sum, float *kahanc, float input){
+     float kahany=input-*kahanc;
+     float kahant=*sum+kahany;
+     *kahanc=kahant-*sum-kahany;
+     *sum=kahant;
+ }
+
+/**
  * @brief Force flush the command line to print the message
  *
  * @param[in] cfg: simulation configuration
