@@ -486,14 +486,30 @@ void mcx_printlog(Config *cfg, char *str){
  * @param[in] option: if set to 2, only normalize positive values (negative values for diffuse reflectance calculations)
  */
 
-void mcx_normalize(float field[], float scale, int fieldlen, int option){
+void mcx_normalize(float field[], float scale, int fieldlen, int option, int pidx, int srcnum){
      int i;
      for(i=0;i<fieldlen;i++){
-         if(option==2 && field[i]<0.f)
+         if(option==2 && field[i*srcnum+pidx]<0.f)
 	     continue;
-         field[i]*=scale;
+         field[i*srcnum+pidx]*=scale;
      }
 }
+
+/**
+ * @brief Kahan summation: Add a sequence of finite precision floating point numbers  
+ *
+ * Source: https://en.wikipedia.org/wiki/Kahan_summation_algorithm
+ * @param[in,out] sum: sum of the squence before and after adding the next element
+ * @param[in,out] kahanc: a running compensation for lost low-order bits
+ * @param[in] input: the next element of the sequence
+ */
+ 
+ void mcx_kahanSum(float *sum, float *kahanc, float input){
+     float kahany=input-*kahanc;
+     float kahant=*sum+kahany;
+     *kahanc=kahant-*sum-kahany;
+     *sum=kahant;
+ }
 
 /**
  * @brief Force flush the command line to print the message

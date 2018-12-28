@@ -670,18 +670,20 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 					       p->w);
 		      }
 		      if(gcfg->srctype==MCX_SRC_PATTERN){ // need to prevent rx/ry=1 here
-		          if(gcfg->srcnum<=1)
+		          if(gcfg->srcnum<=1){
 			      p->w=srcpattern[(int)(ry*JUST_BELOW_ONE*gcfg->srcparam2.w)*(int)(gcfg->srcparam1.w)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.w)];
-			  else{
+			      ppath[3]=p->w;
+			  }else{
 		            for(int i=0;i<gcfg->srcnum;i++)
 			      ppath[i+3]=srcpattern[((int)(ry*JUST_BELOW_ONE*gcfg->srcparam2.w)*(int)(gcfg->srcparam1.w)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.w))*gcfg->srcnum+i];
 			    p->w=1.f;
                           }
 		      }else if(gcfg->srctype==MCX_SRC_PATTERN3D){
-		          if(gcfg->srcnum<=1)
+		          if(gcfg->srcnum<=1){
 		              p->w=srcpattern[(int)(rz*JUST_BELOW_ONE*gcfg->srcparam1.z)*(int)(gcfg->srcparam1.y)*(int)(gcfg->srcparam1.x)+
 		                              (int)(ry*JUST_BELOW_ONE*gcfg->srcparam1.y)*(int)(gcfg->srcparam1.x)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.x)];
-			  else{
+			      ppath[3]=p->w;
+			  }else{
 		            for(int i=0;i<gcfg->srcnum;i++)
 		              ppath[i+3]=srcpattern[((int)(rz*JUST_BELOW_ONE*gcfg->srcparam1.z)*(int)(gcfg->srcparam1.y)*(int)(gcfg->srcparam1.x)+
 		                              (int)(ry*JUST_BELOW_ONE*gcfg->srcparam1.y)*(int)(gcfg->srcparam1.x)+(int)(rx*JUST_BELOW_ONE*gcfg->srcparam1.x))*gcfg->srcnum+i];
@@ -1497,6 +1499,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float4 *Ppos,*Pdir,*Plen,*Plen0;
      uint   *Pseed;
      float  *Pdet;
+     float  *srcpw=NULL,*energytot=NULL,*energyabs=NULL; // for multi-srcpattern
      RandType *seeddata=NULL;
      uint    detected=0,sharedbuf=0;
 
@@ -1639,7 +1642,6 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          fieldlen=dimxyz*gpu[gpuid].maxgate*cfg->detnum;
      else
          fieldlen=dimxyz*gpu[gpuid].maxgate;
-
      mcgrid.x=gpu[gpuid].autothread/gpu[gpuid].autoblock;
      mcblock.x=gpu[gpuid].autoblock;
 
@@ -2043,46 +2045,80 @@ is more than what your have specified (%d), please use the -H option to specify 
      /*let the master thread to deal with the normalization and file IO*/
 #pragma omp master
 {
+     if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcnum>1){// post-processing only for multi-srcpattern
+         srcpw=(float *)calloc(cfg->srcnum,sizeof(float));
+	 energytot=(float *)calloc(cfg->srcnum,sizeof(float));
+	 energyabs=(float *)calloc(cfg->srcnum,sizeof(float));
+	 int psize=(int)cfg->srcparam1.w*(int)cfg->srcparam2.w;
+	 for(i=0;i<int(cfg->srcnum);i++){
+	     float kahanc=0.f;
+	     for(iter=0;iter<psize;iter++)   
+	         mcx_kahanSum(&srcpw[i],&kahanc,cfg->srcpattern[iter*cfg->srcnum+i]);
+	     energytot[i]=cfg->energytot*srcpw[i]/(float)psize;
+	     kahanc=0.f;
+	     if(cfg->outputtype==otEnergy){
+	         int fieldlenPsrc=fieldlen/cfg->srcnum;
+	         for(iter=0;iter<fieldlenPsrc;iter++)
+		     mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*cfg->srcnum+i]);
+	     }else{
+	         int j;
+	         for(iter=0;iter<gpu[gpuid].maxgate;iter++)
+		     for(j=0;j<(int)dimlen.z;j++)
+		         mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*cfg->prop[cfg->vol[j]].mua);
+	     }
+	 }
+     }
      if(cfg->isnormalized){
-	   float scale=1.f;
+	   float *scale=(float *)calloc(cfg->srcnum,sizeof(float));
+	   scale[0]=1.f;
 	   int isnormalized=0;
            MCX_FPRINTF(cfg->flog,"normalizing raw data ...\t");
            cfg->energyabs+=cfg->energytot-cfg->energyesc;
            if(cfg->outputtype==otFlux || cfg->outputtype==otFluence){
-               scale=cfg->unitinmm/(cfg->energytot*Vvox*cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
+               scale[0]=cfg->unitinmm/(cfg->energytot*Vvox*cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
 
                if(cfg->outputtype==otFluence)
-		   scale*=cfg->tstep;
+		   scale[0]*=cfg->tstep;
 	   }else if(cfg->outputtype==otEnergy)
-	       scale=1.f/cfg->energytot;
+	       scale[0]=1.f/cfg->energytot;
 	   else if(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS){
 	       if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1){
                    int detid;
 		   for(detid=1;detid<=(int)cfg->detnum;detid++){
-	               scale=0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
+	               scale[0]=0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
 		       for(size_t i=0;i<cfg->nphoton;i++)
 		           if(cfg->replay.detid[i]==detid)
-	                       scale+=cfg->replay.weight[i];
-	               if(scale>0.f)
-	                   scale=cfg->unitinmm/scale;
-                       MCX_FPRINTF(cfg->flog,"normalization factor for detector %d alpha=%f\n",detid, scale);  fflush(cfg->flog);
-                       mcx_normalize(cfg->exportfield+(detid-1)*dimxyz*gpu[gpuid].maxgate,scale,dimxyz*gpu[gpuid].maxgate,cfg->isnormalized);
+	                       scale[0]+=cfg->replay.weight[i];
+	               if(scale[0]>0.f)
+	                   scale[0]=cfg->unitinmm/scale[0];
+                       MCX_FPRINTF(cfg->flog,"normalization factor for detector %d alpha=%f\n",detid, scale[0]);  fflush(cfg->flog);
+                       mcx_normalize(cfg->exportfield+(detid-1)*dimxyz*gpu[gpuid].maxgate,scale[0],dimxyz*gpu[gpuid].maxgate,cfg->isnormalized,0,1);
 		   }
 		   isnormalized=1;
 	       }else{
-	           scale=0.f;
+	           scale[0]=0.f;
 	           for(size_t i=0;i<cfg->nphoton;i++)
-	               scale+=cfg->replay.weight[i];
-	           if(scale>0.f)
-                       scale=cfg->unitinmm/scale;
+	               scale[0]+=cfg->replay.weight[i];
+	           if(scale[0]>0.f)
+                       scale[0]=cfg->unitinmm/scale[0];
 	       }
            }
-         cfg->normalizer=scale;
-	 cfg->his.normalizer=scale;
+	   if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcnum>1){// post-processing only for multi-srcpattern
+	       float scaleref=scale[0];
+	       int psize=(int)cfg->srcparam1.w*(int)cfg->srcparam2.w;
+	       for(i=0;i<int(cfg->srcnum);i++){
+		   scale[i]=psize/srcpw[i]*scaleref;
+	       }
+	   }
+         cfg->normalizer=scale[0];
+	 cfg->his.normalizer=scale[0];
          if(!isnormalized){
-             MCX_FPRINTF(cfg->flog,"normalization factor alpha=%f\n",scale);  fflush(cfg->flog);
-	     mcx_normalize(cfg->exportfield,scale,fieldlen,cfg->isnormalized);
+	     for(i=0;i<(int)cfg->srcnum;i++){
+                 MCX_FPRINTF(cfg->flog,"source %d, normalization factor alpha=%f\n",(i+1),scale[i]);  fflush(cfg->flog);
+	         mcx_normalize(cfg->exportfield,scale[i],fieldlen/cfg->srcnum,cfg->isnormalized,i,cfg->srcnum);
+	     }
 	 }
+	 free(scale);
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
          MCX_FPRINTF(cfg->flog,"saving data to file ... %lu %d\t",fieldlen,gpu[gpuid].maxgate);
@@ -2131,9 +2167,16 @@ is more than what your have specified (%d), please use the -H option to specify 
      MCX_FPRINTF(cfg->flog,"simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: %.2f photon/ms\n",
              (long int)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1),(long int)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1),
 	     gpu[gpuid].autothread,ABS(cfg->respin),(double)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1)/max(1,cfg->runtime)); fflush(cfg->flog);
-     MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
+     if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcnum>1){
+         for(i=0;i<(int)cfg->srcnum;i++){
+	     MCX_FPRINTF(cfg->flog,"source #%d total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
+                 i+1,energytot[i],energyabs[i]/energytot[i]*100.f);fflush(cfg->flog);
+	 }
+     }else{
+         MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: %5.5f%%\n(loss due to initial specular reflection is excluded in the total)\n",
              cfg->energytot,(cfg->energytot-cfg->energyesc)/cfg->energytot*100.f);fflush(cfg->flog);
-     fflush(cfg->flog);
+         fflush(cfg->flog);
+     }
      
      cfg->energyabs=cfg->energytot-cfg->energyesc;
 }
@@ -2171,4 +2214,7 @@ is more than what your have specified (%d), please use the -H option to specify 
      free(Pdet);
      free(energy);
      free(field);
+     free(srcpw);
+     free(energytot);
+     free(energyabs);
 }
