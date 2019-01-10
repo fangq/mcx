@@ -361,10 +361,11 @@ editor.on("change",  function() {
                     type: "array",
 		    format: "table",
 		    items: {
-		    "oneOf": [
+		    "anyOf": [
 		      {
 		        title: "Grid",
 			type: "object",
+			required: ["Tag","Size"],
 			items: {
 			  "properties": {
 			    "Tag": {
@@ -388,6 +389,7 @@ editor.on("change",  function() {
 		      {
 		        title: "Sphere",
 			type: "object",
+			required: ["Tag","O","R"],
 			"properties": {
 			  "Tag": {
 			    title: "Tag",
@@ -414,6 +416,7 @@ editor.on("change",  function() {
 		      {
 		        title: "Box",
 			type: "object",
+			required: ["Tag","O","Size"],
 			"properties": {
 			  "Tag": {
 			    title: "Tag",
@@ -445,6 +448,7 @@ editor.on("change",  function() {
 		      {
 		        title: "Subgrid",
 			type: "object",
+			required: ["Tag","O","Size"],
 			"properties": {
 			  "Tag": {
 			    title: "Tag",
@@ -476,6 +480,7 @@ editor.on("change",  function() {
 		      {
 		        title: "Cylinder",
 			type: "object",
+			required: ["Tag","C0","C1","R"],
 			"properties": {
 			  "Tag": {
 			    title: "Tag",

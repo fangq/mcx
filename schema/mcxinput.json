@@ -209,10 +209,11 @@
       "type": "array",
       "format": "table",
       "items": {
-        "oneOf": [
+        "anyOf": [
           {
             "title": "Grid",
             "type": "object",
+	    "required": ["Tag","Size"],
             "items": {
               "properties": {
                 "Tag": {
@@ -236,6 +237,7 @@
           {
             "title": "Sphere",
             "type": "object",
+	    "required": ["Tag","O","R"],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -262,6 +264,7 @@
           {
             "title": "Box",
             "type": "object",
+	    "required": ["Tag","O","Size"],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -293,6 +296,7 @@
           {
             "title": "Subgrid",
             "type": "object",
+	    "required": ["Tag","O","Size"],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -324,6 +328,7 @@
           {
             "title": "Cylinder",
             "type": "object",
+	    "required": ["Tag","C0","C1","R"],
             "properties": {
               "Tag": {
                 "title": "Tag",
