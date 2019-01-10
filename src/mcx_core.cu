@@ -597,6 +597,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
        */
       if(p->w>=0.f){
           ppath[gcfg->maxmedia*(2+gcfg->ismomentum)]+=p->w;  ///< sum all the remaining energy
+
+          if(gcfg->debuglevel & MCX_DEBUG_MOVE)
+              savedebugdata(p,((uint)f->ndone)+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
           if(gcfg->savedet){
