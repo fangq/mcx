@@ -1096,7 +1096,13 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                                 field[idx1d+tshift*gcfg->dimlen.z]+=tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)];
 #ifdef USE_ATOMIC
                             }else{
-                                atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
+			        float oldval=atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
+				    if(oldval>MAX_ACCUM){
+				        if(atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], -oldval)<0.f)
+					    atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], oldval);
+					else
+					    atomicadd(& field[idx1d+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
+				    }
                                 GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)],p.w));
                             }
 #endif
@@ -2067,7 +2073,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	         int j;
 	         for(iter=0;iter<gpu[gpuid].maxgate;iter++)
 		     for(j=0;j<(int)dimlen.z;j++)
-		         mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*cfg->prop[cfg->vol[j]].mua);
+		         mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*cfg->prop[(uint)cfg->vol[j] & MED_MASK].mua);
 	     }
 	 }
      }
