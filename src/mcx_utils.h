@@ -33,6 +33,10 @@
 #include "float.h"
 #include "nifti1.h"
 
+#ifdef _OPENMP                      ///< use multi-threading for running simulation on multiple GPUs
+    #include <omp.h>
+#endif
+
 #define EPS                FLT_EPSILON                   /**< round-off limit */
 #define VERY_BIG           (1.f/FLT_EPSILON)             /**< a big number */
 
@@ -260,7 +264,11 @@ extern "C"
 #endif
 
 #ifdef MCX_CONTAINER
+ #ifdef _OPENMP
+  #define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) mexPrintf(__VA_ARGS__);}
+ #else
   #define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__)
+ #endif
 #else
   #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__)
 #endif
