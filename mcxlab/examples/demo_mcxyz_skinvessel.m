@@ -38,13 +38,17 @@ cfg.outputtype='flux';
 flux=mcxlab(cfg);
 
 % convert mcx solution to mcxyz's output
-% cfg.tstep is used in mcx's normalization, must undo
-% 100 converts 1/mm^2 from mcx output to 1/cm^2 as in mcxyz
-mcxdata=flux.data*100;
-
+% 'energy': mcx outputs normalized energy deposition, must convert
+% it to normalized energy density (1/cm^3) as in mcxyz
+% 'flux': cfg.tstep is used in mcx's fluence normalization, must 
+% undo 100 converts 1/mm^2 from mcx output to 1/cm^2 as in mcxyz
 if(strcmp(cfg.outputtype,'energy'))
-    mcxdata=mcxdata/cfg.tstep;
+    mcxdata=flux.data/((cfg.unitinmm/10)^3);
 else
+    mcxdata=flux.data*100;
+end
+
+if(strcmp(cfg.outputtype,'flux'))
     mcxdata=mcxdata*cfg.tstep;
 end
 
@@ -57,4 +61,8 @@ imagesc(yi,zi,log10(abs(squeeze(mcxdata(100,:,:))))')
 axis equal;
 colormap(jet);
 colorbar
-set(gca,'clim',[0.5 2.8])
+if(strcmp(cfg.outputtype,'energy'))
+    set(gca,'clim',[-2.4429 4.7581])
+else
+    set(gca,'clim',[0.5 2.8])
+end
