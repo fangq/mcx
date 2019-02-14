@@ -16,7 +16,7 @@ def load_mch(path):
 	output: 
 		mch_data: 
 			the output detected photon data array
-			data has at least M*2+2 columns (M=header.medium), the first column is the 
+			data has at least M*2+2 columns (M=header.maxmedia), the first column is the 
 			ID of the detector; columns 2 to M+1 store the number of 
 			scattering events for every tissue region; the following M
 			columns are the partial path lengths (in mm) for each medium type;
@@ -104,9 +104,9 @@ def load_mch(path):
 		f.close()
 	
 	mch_data = np.asarray(mch_data).squeeze()
-	photon_seed = np.asarray(photon_seed).transpose((0,2,1)).squeeze()
 
 	if seed_byte > 0:
+		photon_seed = np.asarray(photon_seed).transpose((0,2,1)).squeeze()
 		return mch_data, header, photon_seed
 	else:
 		return mch_data, header
