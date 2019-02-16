@@ -18,7 +18,7 @@ uses
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
   mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
-  mcxrender {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
+  mcxrender, mcxview {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
 
 type
 
@@ -91,8 +91,6 @@ type
     webBrowser: THTMLBrowserHelpViewer;
     HTMLHelpDatabase1: THTMLHelpDatabase;
     mcxdoPlotMC2: TAction;
-    mcxdoStopBackend: TAction;
-    mcxdoStartBackend: TAction;
     mcxdoPlotMesh: TAction;
     mcxdoPlotNifty: TAction;
     mcxdoPlotVol: TAction;
@@ -112,7 +110,6 @@ type
     MenuItem25: TMenuItem;
     MenuItem26: TMenuItem;
     MenuItem27: TMenuItem;
-    pBackend: TAsyncProcess;
     PopupMenu1: TPopupMenu;
     ProgramIcon: TImageList;
     Label18: TLabel;
@@ -384,7 +381,6 @@ type
     function CreateCmdOnly:AnsiString;
     procedure VerifyInput;
     procedure AddLog(str:AnsiString);
-    procedure AddBackendLog(str:AnsiString);
     procedure AddMultiLineLog(str:AnsiString; Sender: TObject);
     procedure ListToPanel2(node:TListItem);
     procedure PanelToList2(node:TListItem);
@@ -414,16 +410,12 @@ type
     function ResetMCX(exitcode: LongInt) : boolean;
     function ExpandPassword(url: AnsiString): AnsiString;
     procedure SwapState(old, new: TListItem);
-    procedure StartBackend;
-    procedure StopBackend;
-    procedure WaitBackendRunning(maxtime: integer);
     function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
   end;
 
 var
   fmMCX: TfmMCX;
   fmOutput: TfmOutput;
-  fmBackend: TfmOutput;
   fmDomain: TfmDomain;
   ProfileChanged: Boolean;
   MaxWait: integer;
@@ -454,14 +446,6 @@ begin
     DockMaster.MakeDockable(fmOutput,true,true);
 end;
 
-procedure TfmMCX.AddBackendLog(str:AnsiString);
-begin
-    fmBackend.mmOutput.Lines.Add(str);
-    fmBackend.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
-    fmBackend.mmOutput.LeftChar:=0;
-    DockMaster.MakeDockable(fmBackend,true,true);
-end;
-
 procedure TfmMCX.AddMultiLineLog(str:AnsiString; Sender: TObject);
 var
    sl: TStringList;
@@ -475,11 +459,6 @@ begin
         fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
         fmOutput.mmOutput.LeftChar:=0;
         DockMaster.MakeDockable(fmOutput,true,true);
-    end else begin
-        fmBackend.mmOutput.Lines.AddStrings(sl);
-        fmBackend.mmOutput.SelStart := length(fmBackend.mmOutput.Text);
-        fmBackend.mmOutput.LeftChar:=0;
-        DockMaster.MakeDockable(fmBackend,true,true);
     end;
     sl.Free;
 end;
@@ -1119,99 +1098,12 @@ begin
    mcxdoPlotVolExecute(Sender);
 end;
 
-procedure TfmMCX.StartBackend;
-var
-   exename, backendname: string;
-   AProcess : TProcess;
-   Buffer   : string;
-   BufStr   : string;
-begin
-     if(pBackend.Running) then begin
-       pBackend.Terminate(0);
-       Sleep(2000);
-     end;
-     if(not pBackend.Running) then begin
-          if(miUseMatlab.Checked) then begin
-              backendname:='matlab';
-              pBackend.ShowWindow:=swoHIDE;
-          end else begin
-              backendname:='octave-cli';
-              pBackend.ShowWindow:=swoNone;
-          end;
-          exename:=SearchForExe(backendname);
-
-          if (Length(exename)=0) or (not FileExists(exename)) then begin
-                ShowMessage(Format('Backend executable "%s" is not found!', [backendname]));
-                exit;
-          end;
-          if not (miUseMatlab.Checked) then
-              pBackend.CommandLine:='"'+exename+'"  --no-gui --interactive --no-history --persist '
-          else
-              pBackend.CommandLine:='"'+exename+'"  -nodesktop ';
-
-          AddLog('"-- Executing backend --"');
-          {$IFDEF DARWIN}
-          AProcess := TProcess.Create(nil);
-          try
-            AProcess.CommandLine:=  pBackend.CommandLine;
-            AProcess.Options := [poUsePipes,poStderrToOutput];
-            AProcess.Execute;
-            Buffer := '';
-            AddLog(AProcess.CommandLine);
-            repeat
-              if AProcess.Output.NumBytesAvailable > 0 then
-              begin
-                SetLength(BufStr, AProcess.Output.NumBytesAvailable);
-                AProcess.Output.Read(BufStr[1], Length(BufStr));
-                Buffer := Buffer + BufStr;
-                AddMultiLineLog(BufStr,pBackend);
-                Application.ProcessMessages;
-                Sleep(1000);
-              end;
-            until not AProcess.Running;
-          if AProcess.Output.NumBytesAvailable > 0 then
-          begin
-            SetLength(BufStr, AProcess.Output.NumBytesAvailable);
-            AProcess.Output.Read(BufStr[1], Length(BufStr));
-            Buffer := Buffer + BufStr;
-            AddMultiLineLog(BufStr,pBackend);
-          end;
-          finally
-            AProcess.Free;
-          end;
-          AddLog('"-- Terminated Backend --"');
-          exit;
-          {$ENDIF}
-          pBackend.Execute;
-          fmBackend.Enabled:=true;
-     end;
-     Sleep(2000);
-end;
-
-procedure TfmMCX.StopBackend;
-begin
-     if(pBackend.Running) then pBackend.Terminate(0);
-end;
-
-procedure TfmMCX.WaitBackendRunning(maxtime: integer);
-begin
-    //MaxWait:=maxtime;
-    //btRunCmd.Enabled:=false;
-    fmBackend.mmOutput.Lines.Text:='';
-    //tmWaitOutput.Tag:=0;
-    //tmWaitOutput.Enabled:=true;
-    //btRunCmd.Enabled:=false;
-end;
-
 procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
 var
-    outputfile, cmd, addpath: string;
+    outputfile: string;
     ftype: TAction;
     ngates: integer;
-    ismatlabconsole, isnewmatlab: boolean;
-    {$IFDEF WINDOWS}
-    hwin: hWnd;
-    {$ENDIF}
+    fmViewer: TfmViewer;
 begin
      if(CurrentSession=nil) then exit;
      if (grProgram.ItemIndex=1) then begin
@@ -1222,78 +1114,10 @@ begin
     ftype:=Sender as TAction;
 
     outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
-    if not (FileExists(outputfile)) then begin
-      MessageDlg('Warning', Format('The %s%s output file has not been created',[edSession.Text,ftype.Hint]), mtError, [mbOK],0);
-      exit;
-    end;
-
-     if(Pos('.nii',ftype.Hint)>0) then begin
-         cmd:=Format('data=mcxplotvol(''%s'');'+#10,[outputfile]);
-     end else begin
-         ngates:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
-         cmd:=Format('datadim=%s; data=mcxplotvol(''%s'',[datadim %d]);'+#10,[sgConfig.Cells[2,2],outputfile,ngates]);
-     end;
-     {$IFDEF DARWIN}
-     addpath:=Format('cd ''%s''',[GetUserDir+DirectorySeparator+'MCXStudio'])+#10;
-     {$ELSE}
-     addpath:=Format('cd ''%s''',[ExtractFilePath(Application.ExeName)])+#10;
-     {$ENDIF}
-     addpath:=addpath + 'addpath(''MCXSuite/mcx/utils'');'+#10;
-     addpath:=addpath + 'addpath(''MCXSuite/mmc/matlab'');'+#10;
-     addpath:=addpath + 'addpath(''MATLAB/mcxlab'');'+#10;
-     addpath:=addpath + 'addpath(''MATLAB/mmclab'');'+#10;
-     addpath:=addpath + 'addpath(''MATLAB/iso2mesh'');'+#10;
-
-     isnewmatlab:=false;
-     {$IFDEF WINDOWS}
-     if(miUseMatlab.Checked) then begin
-         hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
-         if(hwin=0) then
-             hwin:=GetHandleFromWindowTitle('Command Window');
-         if (hwin=0) and not (pBackend.Running) then begin
-              StartBackend;
-              isnewmatlab:=true;
-         end;
-         ismatlabconsole:=false;
-         repeat
-             hwin:=GetHandleFromWindowTitle('MATLAB Command Window');
-             if(hwin=0) then
-                 hwin:=GetHandleFromWindowTitle('Command Window')
-             else
-                 ismatlabconsole:=true;
-             Sleep(1000);
-         until (hwin>0);
-
-         if(isnewmatlab) then begin
-             if(ismatlabconsole) then
-                 SendKeysToTitle('MATLAB Command Window',addpath)
-             else
-                 SendKeysToTitle('Command Window',addpath);
-         end;
-
-         if(ismatlabconsole) then
-             SendKeysToTitle('MATLAB Command Window',cmd)
-         else
-             SendKeysToTitle('Command Window',cmd);
-         exit;
-     end;
-     {$ENDIF}
-     if not (pBackend.Running) then begin
-         StartBackend;
-         if(pBackend.Running) then begin
-           pBackend.Input.Write(addpath[1],Length(addpath))
-         end else begin
-           AddLog('-- Please type in MATLAB : -- ');
-           AddLog(addpath);
-         end;
-         Sleep(1000);
-     end;
-     if(pBackend.Running) then begin
-        pBackend.Input.Write(cmd[1],Length(cmd))
-     end else begin
-        AddLog('-- Please type in MATLAB : -- ');
-        AddLog(cmd);
-     end;
+    fmViewer:=TfmViewer.Create(self);
+    fmViewer.LoadTexture(outputfile);
+    fmViewer.ShowModal;
+    fmViewer.Close;
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
@@ -1544,17 +1368,6 @@ begin
     fmOutput.Top:=self.Top+(tbtStop.Width*17 div 20);
 //    fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
     fmOutput.pProc:=pMCX;
-
-    fmBackend:=TfmOutput.Create(self);
-//    fmBackend.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
-    fmBackend.Top:=fmOutput.Top+ fmOutput.Height;
-    fmBackend.Height:=Self.Height-fmOutput.Height;
-    fmBackend.pProc:=pBackend;
-    fmBackend.mmOutput.Color:=clSilver;
-    fmBackend.Caption:='Backend Output';
-
-    fmBackend.Enabled:=false;
-
     fmDomain:=TfmDomain.Create(Self);
 
     DockMaster.MakeDockable(fmOutput,true,true);
@@ -1590,13 +1403,11 @@ end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
 begin
-    StopBackend;
     FreeAndNil(JSONData);
     MapList.Free;
     ConfigData.Free;
     RegEngine.Free;
     fmOutput.Free;
-    fmBackend.Free;
     PassList.Free;
     fmDomain.Free;
 end;
