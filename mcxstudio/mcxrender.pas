@@ -88,6 +88,7 @@ type
     procedure AddName(jobj: TJSONObject);
     procedure AddSource(jobj: TJSONData);
     procedure AddDiskSource(jobj: TJSONData);
+    procedure AddLineSource(jobj: TJSONData);
     procedure AddPlanarSource(jobj: TJSONData; isorth: boolean=false);
     procedure AddPattern3DSource(jobj: TJSONData);
     procedure AddDetector(jobj: TJSONData);
@@ -554,6 +555,33 @@ begin
      glSpace.AddChild(obj);
 end;
 
+procedure TfmDomain.AddLineSource(jobj: TJSONData);
+var
+     obj: TGLLines;
+     data,param: TJSONArray;
+begin
+     if(jobj.Count=1) and (jobj.Items[0].Count>0) then
+         jobj:=TJSONObject(jobj.Items[0]);
+     if(jobj.FindPath('Param1')=nil) then begin
+        MessageDlg('Warning', 'Malformed JSON Line Source construct', mtError, [mbOK],0);
+        exit;
+     end;
+     obj:=TGLLines.Create(Self);
+
+     obj.Up.SetVector(0,0,1);
+     obj.LineWidth:=2;
+
+     data:=TJSONArray(jobj.FindPath('Pos'));
+     obj.AddNode(data.Items[0].AsFloat, data.Items[1].AsFloat,data.Items[2].AsFloat);
+     param:=TJSONArray(jobj.FindPath('Param1'));
+     obj.AddNode(data.Items[0].AsFloat+param.Items[0].AsFloat, data.Items[1].AsFloat+param.Items[1].AsFloat,data.Items[2].AsFloat+param.Items[2].AsFloat);
+
+     data:=TJSONArray(jobj.FindPath('Dir'));
+     obj.Direction.SetVector(data.Items[0].AsFloat,data.Items[1].AsFloat,data.Items[2].AsFloat);
+
+     glSpace.AddChild(obj);
+end;
+
 procedure TfmDomain.AddSource(jobj: TJSONData);
 var
      objtag: integer;
@@ -601,11 +629,12 @@ begin
 
      if(jobj.FindPath('Type') <> nil) then begin
          Case AnsiIndexStr(jobj.FindPath('Type').AsString, ['gaussian','disk','zgaussian', 'planar', 'pattern', 'fourier',
-            'fourierx', 'fourierx2d','pattern3d']) of
+            'fourierx', 'fourierx2d','pattern3d','line','slit']) of
               0..2:  AddDiskSource(jobj);      //Origin
               3..5:  AddPlanarSource(jobj, false);    //Planar Source
               6..7:  AddPlanarSource(jobj, true);    //Planar Source
               8:     AddPattern3DSource(jobj); //Pattern3D source
+              9..10: AddLineSource(jobj); //Line and slit sources
            else
            end;
      end;
