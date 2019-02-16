@@ -214,15 +214,15 @@ begin
      //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
      obj.Material.BlendingMode:=bmTransparency;
 
-     data:=TJSONArray(jobj.FindPath('O'));
-     obj.Position.X:=data.Items[0].AsFloat+Integer(isbox)*0.5;
-     obj.Position.Y:=data.Items[1].AsFloat+Integer(isbox)*0.5;
-     obj.Position.Z:=data.Items[2].AsFloat+Integer(isbox)*0.5;
-
      data:=TJSONArray(jobj.FindPath('Size'));
      obj.CubeWidth:=data.Items[0].AsFloat;
      obj.CubeDepth:=data.Items[1].AsFloat;
      obj.CubeHeight:=data.Items[2].AsFloat;
+
+     data:=TJSONArray(jobj.FindPath('O'));
+     obj.Position.X:=data.Items[0].AsFloat+obj.CubeWidth*0.5+Integer(isbox)*0.5;
+     obj.Position.Y:=data.Items[1].AsFloat+obj.CubeDepth*0.5+Integer(isbox)*0.5;
+     obj.Position.Z:=data.Items[2].AsFloat+obj.CubeHeight*0.5+Integer(isbox)*0.5;
 
      glSpace.AddChild(obj);
 end;
