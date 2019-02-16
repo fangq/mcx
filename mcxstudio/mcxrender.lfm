@@ -1,12 +1,12 @@
 object fmDomain: TfmDomain
   Left = 341
-  Height = 632
+  Height = 619
   Top = 187
-  Width = 1037
+  Width = 1015
   Caption = 'MCX Domain Renderer'
-  ClientHeight = 632
-  ClientWidth = 1037
-  DesignTimePPI = 95
+  ClientHeight = 619
+  ClientWidth = 1015
+  DesignTimePPI = 93
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   OnCreate = FormCreate
@@ -16,10 +16,10 @@ object fmDomain: TfmDomain
   Position = poOwnerFormCenter
   LCLVersion = '1.8.2.0'
   object glCanvas: TGLSceneViewer
-    Left = 414
-    Height = 578
-    Top = 54
-    Width = 623
+    Left = 405
+    Height = 566
+    Top = 53
+    Width = 610
     Camera = glCamera
     VSync = vsmSync
     Buffer.BackgroundColor = 13224393
@@ -27,7 +27,7 @@ object fmDomain: TfmDomain
     Buffer.AmbientColor.Green = 0.200000002980232
     Buffer.AmbientColor.Blue = 0.200000002980232
     Buffer.AmbientColor.Alpha = 1
-    FieldOfView = 134.901107788086
+    FieldOfView = 134.043365478516
     Align = alClient
     OnMouseDown = glCanvasMouseDown
     OnMouseMove = glCanvasMouseMove
@@ -35,20 +35,20 @@ object fmDomain: TfmDomain
     TabOrder = 0
   end
   object Splitter1: TSplitter
-    Left = 409
-    Height = 578
-    Top = 54
+    Left = 400
+    Height = 566
+    Top = 53
     Width = 5
     OnMoved = Splitter1Moved
   end
   object plEditor: TPanel
     Left = 0
-    Height = 578
-    Top = 54
-    Width = 409
+    Height = 566
+    Top = 53
+    Width = 400
     Align = alLeft
-    ClientHeight = 578
-    ClientWidth = 409
+    ClientHeight = 566
+    ClientWidth = 400
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
     ParentFont = False
@@ -57,9 +57,9 @@ object fmDomain: TfmDomain
     OnMouseLeave = plEditorMouseLeave
     inline mmShapeJSON: TSynEdit
       Left = 1
-      Height = 576
+      Height = 564
       Top = 1
-      Width = 407
+      Width = 398
       Align = alClient
       Font.Height = -12
       Font.Name = 'Courier New'
@@ -598,11 +598,11 @@ object fmDomain: TfmDomain
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 54
+    Height = 53
     Top = 0
-    Width = 1037
-    ButtonHeight = 49
-    ButtonWidth = 49
+    Width = 1015
+    ButtonHeight = 48
+    ButtonWidth = 48
     Caption = 'ToolBar1'
     Color = clWhite
     Font.Height = -11
@@ -659,28 +659,28 @@ object fmDomain: TfmDomain
     end
     object ToolButton11: TToolButton
       Left = 209
-      Height = 49
+      Height = 48
       Top = 2
       Caption = 'ToolButton11'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
       Left = 266
-      Height = 49
+      Height = 48
       Top = 2
       Caption = 'ToolButton7'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
       Left = 375
-      Height = 49
+      Height = 48
       Top = 2
       Caption = 'ToolButton9'
       Style = tbsDivider
     end
   end
   object glShape: TGLScene
-    left = 459
+    left = 449
     top = 8
     object glDomain: TGLCube
       TagFloat = 0
@@ -830,19 +830,19 @@ object fmDomain: TfmDomain
       Up.Coordinates = {
         00000000000000000000803F00000000
       }
-      left = 238
-      top = 143
+      left = 233
+      top = 140
     end
   end
   object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
     DefaultFilter = 'UNIX Shell Scripts (*.sh)|*.sh'
     Enabled = False
-    left = 950
+    left = 930
     top = 8
   end
   object acShapeRender: TActionList
     Images = ImageList3
-    left = 530
+    left = 519
     top = 8
     object acResetCamera: TAction
       Caption = 'acResetCamera'
@@ -889,14 +889,14 @@ object fmDomain: TfmDomain
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 625
+    left = 612
     top = 8
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 713
+    left = 698
     top = 8
     Bitmap = {
       4C69080000003000000030000000000000000000000000000000000000000000
@@ -3210,14 +3210,14 @@ object fmDomain: TfmDomain
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 800
+    left = 783
     top = 8
   end
   object dlSaveFile: TSaveDialog
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 887
+    left = 868
     top = 8
   end
 end
