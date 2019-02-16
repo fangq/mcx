@@ -54,7 +54,7 @@
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
-enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON};           /**< output data format */
+enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3};           /**< output data format */
 enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCylic};            /**< boundary conditions */
 
 /**

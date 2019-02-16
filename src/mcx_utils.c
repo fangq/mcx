@@ -67,6 +67,7 @@
 
 #define MIN_HEADER_SIZE 348    /**< Analyze header size */
 #define NII_HEADER_SIZE 352    /**< NIFTI header size */
+#define GL_RGBA32F 0x8814
 
 /**
  * Short command line options
@@ -123,7 +124,7 @@ const char debugflag[]={'R','M','P','\0'};
  * ubj: output volume in unversal binary json format (not implemented)
  */
 
-const char *outputformat[]={"mc2","nii","hdr","ubj",""};
+const char *outputformat[]={"mc2","nii","hdr","ubj","tx3",""};
 
 /**
  * Boundary condition (BC) types
@@ -411,6 +412,7 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
      FILE *fp;
      char name[MAX_PATH_LENGTH];
      char fname[MAX_PATH_LENGTH];
+     unsigned int glformat=GL_RGBA32F;
 
      if(cfg->rootpath[0])
          sprintf(name,"%s%c%s",cfg->rootpath,pathsep,cfg->session);
@@ -426,6 +428,10 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
 
      if(fp==NULL){
 	mcx_error(-2,"can not save data to disk",__FILE__,__LINE__);
+     }
+     if(cfg->outputformat==ofTX3){
+	fwrite(&glformat,sizeof(unsigned int),1,fp);
+	fwrite(&(cfg->dim.x),sizeof(int),3,fp);
      }
      fwrite(dat,sizeof(float),len,fp);
      fclose(fp);
@@ -2170,6 +2176,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                mc2 - MCX mc2 format (binary 32bit float)\n\
                                nii - Nifti format\n\
                                hdr - Analyze 7.5 hdr/img format\n\
+                               tx3 - GL texture data for rendering (GL_RGBA32F)\n\
  -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
                                J - Jacobian (replay mode),   P - scattering, \n\
                                M - momentum transfer; \n\
