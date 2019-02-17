@@ -17,7 +17,7 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
-  mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
+  OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
   mcxrender, mcxview {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
 
 type
@@ -1102,7 +1102,7 @@ procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
 var
     outputfile: string;
     ftype: TAction;
-    ngates: integer;
+    nx,ny,nz,nt: integer;
     fmViewer: TfmViewer;
 begin
      if(CurrentSession=nil) then exit;
@@ -1114,8 +1114,24 @@ begin
     ftype:=Sender as TAction;
 
     outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+    if(not FileExists(outputfile)) then begin
+        MessageDlg('Warning', 'Specified file does not exists', mtError, [mbOK],0);
+        exit;
+    end;
+    nt:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
+    if(sscanf(sgConfig.Cells[2,2] ,'[%d,%d,%d]',[@nx,@ny,@nz])<>3) then begin
+      MessageDlg('Warning', 'Domain size specifier contains incorrect format', mtError, [mbOK],0);
+      exit;
+    end;
+
     fmViewer:=TfmViewer.Create(self);
-    fmViewer.LoadTexture(outputfile);
+    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+         0:  fmViewer.LoadTexture(outputfile);
+         1..2:  fmViewer.LoadTexture(outputfile,nz,ny,nz,nt,0,GL_RGBA32F);
+         3:  fmViewer.LoadTexture(outputfile,nz,ny,nz,nt,352,GL_RGBA32F);
+         4:  fmViewer.LoadTexture(outputfile,nz,ny,nz,2,352,GL_RGBA16I);
+    else
+    end;
     fmViewer.ShowModal;
     fmViewer.Close;
 end;

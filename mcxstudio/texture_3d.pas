@@ -40,11 +40,12 @@ uses
 Type
   TTexture_3D = Class (TObject)
   protected
-    M_Data_Type : Longword;
-    M_X_Size : Integer;
-    M_Y_Size : Integer;
-    M_Z_Size : Integer;
-    M_Texel_Byte_Size : Integer;
+    DataFormat : Longword;
+    XDim : Integer;
+    YDim : Integer;
+    ZDim : Integer;
+    TDim : Integer;
+    TexelByte : Integer;
     M_Data : String;
     function Data_Type_To_Texel_Byte_Size (F_Data_Type : Integer) : Integer;
     procedure Set_Data_Type (F_Value : Longword);
@@ -57,13 +58,13 @@ Type
     destructor Destroy; override;
     procedure Save_To_File (const F_FileName : String);
     procedure Load_From_File (const F_FileName : String);
-    procedure Load_From_File_Log_Float (Const F_FileName : String; datatype: LongWord=GL_INVALID_VALUE);
-    procedure Load_From_File_No_Header (const F_FileName : string; nx, ny, nz: integer;  datatype: LongWord=GL_RGBA32F);
-    property Data_Type : Longword read M_Data_Type write Set_Data_Type;
-    property X_Size : Integer read M_X_Size write Set_X_Size;
-    property Y_Size : Integer read M_Y_Size write Set_Y_Size;
-    property Z_Size : Integer read M_Z_Size write Set_Z_Size;
-    property Texel_Byte_Size : Integer read M_Texel_Byte_Size;
+    procedure Load_From_File_Skip_Header(const F_FileName : string; nx, ny, nz:integer; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_RGBA32F);
+    procedure Load_From_File_Log_Float (Const F_FileName : String; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
+    property Data_Type : Longword read DataFormat write Set_Data_Type;
+    property X_Size : Integer read XDim write Set_X_Size;
+    property Y_Size : Integer read YDim write Set_Y_Size;
+    property Z_Size : Integer read ZDim write Set_Z_Size;
+    property Texel_Byte_Size : Integer read TexelByte;
     property Data : string read M_Data write Set_Data;
   end; { TTexture_3D }
 
@@ -81,12 +82,13 @@ begin
   inherited Create;
 
   { Initialize variables }
-  M_Data_Type := GL_RGBA;
-  M_X_Size := 0;
-  M_Y_Size := 0;
-  M_Z_Size := 0;
-  M_Texel_Byte_Size := Data_Type_To_Texel_Byte_Size (M_Data_Type);
-  SetLength (M_Data, M_X_Size * M_Y_Size * M_Z_Size * M_Texel_Byte_Size);
+  DataFormat := GL_RGBA;
+  XDim := 0;
+  YDim := 0;
+  ZDim := 0;
+  TDim := 1;
+  TexelByte := Data_Type_To_Texel_Byte_Size (DataFormat);
+  SetLength (M_Data, XDim * YDim * ZDim * TDim * TexelByte);
 end;
 
 
@@ -128,10 +130,10 @@ end;
 {-------------------------------------------------------------------------------------}
 procedure TTexture_3D.Set_Data_Type (F_Value : Longword);
 begin
-  M_Data_Type := F_Value;
+  DataFormat := F_Value;
 
-  M_Texel_Byte_Size := Data_Type_To_Texel_Byte_Size (M_Data_Type);
-  SetLength (M_Data, M_X_Size * M_Y_Size * M_Z_Size * M_Texel_Byte_Size);
+  TexelByte := Data_Type_To_Texel_Byte_Size (DataFormat);
+  SetLength (M_Data, XDim * YDim * ZDim  * TDim * TexelByte);
 end;
 
 
@@ -140,9 +142,9 @@ end;
 {-------------------------------------------------------------------------------------}
 procedure TTexture_3D.Set_X_Size (F_Value : Integer);
 begin
-  M_X_Size := F_Value;
+  XDim := F_Value;
 
-  SetLength (M_Data, M_X_Size * M_Y_Size * M_Z_Size * M_Texel_Byte_Size);
+  SetLength (M_Data, XDim * YDim * ZDim * TDim * TexelByte);
 end;
 
 
@@ -151,9 +153,9 @@ end;
 {-------------------------------------------------------------------------------------}
 procedure TTexture_3D.Set_Y_Size (F_Value : Integer);
 begin
-  M_Y_Size := F_Value;
+  YDim := F_Value;
 
-  SetLength (M_Data, M_X_Size * M_Y_Size * M_Z_Size * M_Texel_Byte_Size);
+  SetLength (M_Data, XDim * YDim * ZDim * TDim * TexelByte);
 end;
 
 
@@ -162,9 +164,9 @@ end;
 {-------------------------------------------------------------------------------------}
 procedure TTexture_3D.Set_Z_Size (F_Value : Integer);
 begin
-  M_Z_Size := F_Value;
+  ZDim := F_Value;
 
-  SetLength (M_Data, M_X_Size * M_Y_Size * M_Z_Size * M_Texel_Byte_Size);
+  SetLength (M_Data, XDim * YDim * ZDim * TDim * TexelByte);
 end;
 
 
@@ -187,10 +189,10 @@ var
 begin
   File_Stream := TFileStream.Create (F_FileName, fmCreate or fmShareDenyWrite);
   try
-    File_Stream.WriteBuffer (M_Data_Type, SizeOf (Longword));
-    File_Stream.WriteBuffer (M_X_Size, SizeOf (Integer));
-    File_Stream.WriteBuffer (M_Y_Size, SizeOf (Integer));
-    File_Stream.WriteBuffer (M_Z_Size, SizeOf (Integer));
+    File_Stream.WriteBuffer (DataFormat, SizeOf (Longword));
+    File_Stream.WriteBuffer (XDim, SizeOf (Integer));
+    File_Stream.WriteBuffer (YDim, SizeOf (Integer));
+    File_Stream.WriteBuffer (ZDim, SizeOf (Integer));
     File_Stream.WriteBuffer (PChar (M_Data)^, Length (M_Data));
   finally
     File_Stream.Free;
@@ -199,71 +201,93 @@ end;
 
 
 {-------------------------------------------------------------------------------------}
-{ Load data from file                                                                 }
+{ Load 4D data from file                                                                 }
 {-------------------------------------------------------------------------------------}
-procedure TTexture_3D.Load_From_File_No_Header (const F_FileName : string; nx, ny, nz: integer; datatype: LongWord=GL_RGBA32F);
+
+procedure TTexture_3D.Load_From_File_Skip_Header (const F_FileName : string; nx, ny, nz:integer; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_RGBA32F);
 begin
-     M_X_Size:=nx;
-     M_X_Size:=ny;
-     M_X_Size:=nz;
-     Load_From_File_Log_Float (F_FileName, datatype);
+     XDim:=nx;
+     YDim:=ny;
+     ZDim:=nz;
+     TDim:=nt;
+     DataFormat:=datatype;
+     Load_From_File_Log_Float (F_FileName, skipbyte, datatype);
 end;
 
 {-------------------------------------------------------------------------------------}
 { Load data from file                                                                 }
 {-------------------------------------------------------------------------------------}
-procedure TTexture_3D.Load_From_File_Log_Float (Const F_FileName : String; datatype: LongWord=GL_INVALID_VALUE);
+procedure TTexture_3D.Load_From_File_Log_Float (Const F_FileName : String; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
 var
   File_Stream : TFileStream;
   mybuf: array of single;
   val, low, hi: single;
-  i,nx,ny,nz: integer;
+  i,nx,ny,nz,nt: integer;
+  pdata: array of ^integer;
 begin { TTexture_3D.Load_From_File_Log_Float }
   Screen.Cursor := crHourGlass;
   File_Stream := TFileStream.Create (F_FileName, fmOpenRead or fmShareDenyWrite);
   try
-    if(datatype=GL_INVALID_VALUE) then begin
+    if(datatype=GL_INVALID_VALUE) then begin  // for tx3 file
         File_Stream.ReadBuffer (datatype, SizeOf (Longword));
         File_Stream.ReadBuffer (nx, SizeOf (Integer));
         File_Stream.ReadBuffer (ny, SizeOf (Integer));
         File_Stream.ReadBuffer (nz, SizeOf (Integer));
+        nt:=1;
+        XDim:=nx;
+        YDim:=ny;
+        ZDim:=nz;
+        TDim:=nt;
     end else begin
-        datatype:= M_Data_Type;
-        nx:= M_X_Size;
-        ny:= M_Y_Size;
-        nz:= M_Z_Size;
+        datatype:= DataFormat;
+        nx:= XDim;
+        ny:= YDim;
+        nz:= ZDim;
+        nt:= TDim;
     end;
-    M_Texel_Byte_Size := Data_Type_To_Texel_Byte_Size (datatype);
-    SetLength (mybuf, nx * ny * nz);
-    File_Stream.ReadBuffer (PChar (mybuf)^, Length (mybuf)*M_Texel_Byte_Size);
+    if(skipbyte>0) then File_Stream.Seek(skipbyte,soBeginning);
+    TexelByte := Data_Type_To_Texel_Byte_Size (datatype);
+    SetLength (mybuf, nx * ny * nz * nt);
+    File_Stream.ReadBuffer (PChar (mybuf)^, Length (mybuf)*TexelByte);
 
-    M_X_Size:=nx;
-    M_Y_Size:=ny;
-    M_Z_Size:=nz;
-    M_Data_Type:=GL_LUMINANCE;
-    M_Texel_Byte_Size := Data_Type_To_Texel_Byte_Size (M_Data_Type);
-    SetLength (M_Data, nx * ny * nz * M_Texel_Byte_Size);
+    DataFormat:=GL_LUMINANCE;
+    TexelByte := Data_Type_To_Texel_Byte_Size (DataFormat);
+    SetLength (M_Data, nx * ny * nz * nt * TexelByte);
+
+    if(datatype<>GL_RGBA32F) then begin
+        SetLength(pdata, nx * ny * nz * nt);
+        for i:=0 to nx * ny * nz * nt do
+        pdata[i]:=@mybuf[i];
+    end;
 
     low:=1e10;
     hi:=-1e10;
-    for i:=0 to nx * ny * nz-1 do
+    for i:=0 to (nx * ny * nz * nt) - 1 do
     begin
-          if(mybuf[i]<=0) then begin
-              val:=0./0.;
+          if(datatype=GL_RGBA32F) then begin
+              if(mybuf[i]<=0) then begin
+                  val:=0./0.;
+              end else begin
+                  mybuf[i]:=log10(mybuf[i]);
+                  val:=mybuf[i];
+              end;
           end else begin
-              mybuf[i]:=log10(mybuf[i]);
-              val:=mybuf[i];
+                  val:=pdata[i]^;
           end;
           if(val<low) then low:=val;
           if(val>hi)  then hi:=val;
     end;
     hi:=1.0/(hi-low)*255;
-    for i:=0 to nx * ny * nz-1 do
+    for i:=0 to (nx * ny * nz * nt)-1 do
     begin
-          val:=mybuf[i];
+          if(datatype=GL_RGBA32F) then
+             val:=mybuf[i]
+          else
+             val:=pdata[i]^;
           M_Data[i]:=chr(Round((val-low)*hi));
     end;
     setLength(mybuf, 0);
+    setLength(pdata, 0);
   finally
     File_Stream.Free;
   end;
@@ -281,12 +305,12 @@ begin { TTexture_3D.Load_From_File }
   Screen.Cursor := crHourGlass;
   File_Stream := TFileStream.Create (F_FileName, fmOpenRead or fmShareDenyWrite);
   try
-    File_Stream.ReadBuffer (M_Data_Type, SizeOf (Longword));
-    File_Stream.ReadBuffer (M_X_Size, SizeOf (Integer));
-    File_Stream.ReadBuffer (M_Y_Size, SizeOf (Integer));
-    File_Stream.ReadBuffer (M_Z_Size, SizeOf (Integer));
-    M_Texel_Byte_Size := Data_Type_To_Texel_Byte_Size (M_Data_Type);
-    SetLength (M_Data, M_X_Size * M_Y_Size * M_Z_Size * M_Texel_Byte_Size);
+    File_Stream.ReadBuffer (DataFormat, SizeOf (Longword));
+    File_Stream.ReadBuffer (XDim, SizeOf (Integer));
+    File_Stream.ReadBuffer (YDim, SizeOf (Integer));
+    File_Stream.ReadBuffer (ZDim, SizeOf (Integer));
+    TexelByte := Data_Type_To_Texel_Byte_Size (DataFormat);
+    SetLength (M_Data, XDim * YDim * ZDim * TexelByte);
     File_Stream.ReadBuffer (PChar (M_Data)^, Length (M_Data));
   finally
     File_Stream.Free;

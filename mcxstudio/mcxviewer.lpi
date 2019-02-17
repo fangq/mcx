@@ -52,7 +52,7 @@
         <ResourceBaseClass Value="Form"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\texture_3d.pas"/>
+        <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
     </Units>
@@ -62,7 +62,6 @@
     <PathDelim Value="\"/>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value=".."/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>

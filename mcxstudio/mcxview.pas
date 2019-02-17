@@ -81,8 +81,8 @@ type
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     procedure glCanvasMouseWheelDown(Sender: TObject; Shift: TShiftState;
       MousePos: TPoint; var Handled: Boolean);
-    Procedure LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; datatype: LongWord=GL_INVALID_VALUE);
-    Procedure ResetTexture();
+    Procedure LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
+    Procedure ResetTexture;
     procedure GLDirectOpenGLRender(Sender: TObject; var rci: TGLRenderContextInfo);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -311,19 +311,19 @@ begin
   gl.Enable(GL_TEXTURE_GEN_T);
   gl.Enable(GL_TEXTURE_GEN_R);
 
-    gl.ClipPlane(GL_CLIP_PLANE0, @clip0);
-    gl.ClipPlane(GL_CLIP_PLANE1, @clip1);
-    gl.ClipPlane(GL_CLIP_PLANE2, @clip2);
-    gl.ClipPlane(GL_CLIP_PLANE3, @clip3);
-    gl.ClipPlane(GL_CLIP_PLANE4, @clip4);
-    gl.ClipPlane(GL_CLIP_PLANE5, @clip5);
+  gl.ClipPlane(GL_CLIP_PLANE0, @clip0);
+  gl.ClipPlane(GL_CLIP_PLANE1, @clip1);
+  gl.ClipPlane(GL_CLIP_PLANE2, @clip2);
+  gl.ClipPlane(GL_CLIP_PLANE3, @clip3);
+  gl.ClipPlane(GL_CLIP_PLANE4, @clip4);
+  gl.ClipPlane(GL_CLIP_PLANE5, @clip5);
 
-    gl.Enable(GL_CLIP_PLANE0);
-    gl.Enable(GL_CLIP_PLANE1);
-    gl.Enable(GL_CLIP_PLANE2);
-    gl.Enable(GL_CLIP_PLANE3);
-    gl.Enable(GL_CLIP_PLANE4);
-    gl.Enable(GL_CLIP_PLANE5);
+  gl.Enable(GL_CLIP_PLANE0);
+  gl.Enable(GL_CLIP_PLANE1);
+  gl.Enable(GL_CLIP_PLANE2);
+  gl.Enable(GL_CLIP_PLANE3);
+  gl.Enable(GL_CLIP_PLANE4);
+  gl.Enable(GL_CLIP_PLANE5);
 
   gl.BindTexture(GL_TEXTURE_3D, M_3D_Texture.Handle);
   gl.Enable(GL_TEXTURE_3D);
@@ -489,17 +489,17 @@ begin
 
 end;
 
-Procedure TfmViewer.LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; datatype: LongWord=GL_INVALID_VALUE);
+Procedure TfmViewer.LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
 begin
-  ResetTexture();
+  ResetTexture;
   Screen.Cursor := crHourGlass;
   M_3D_Texture := TGLTextureHandle.Create;
 
   M_Input_Texture_3D := TTexture_3D.Create;
   if(nx=0) then
-     M_Input_Texture_3D.Load_From_File_Log_Float(filename)
+     M_Input_Texture_3D.Load_From_File_Log_Float(filename,skipbyte,datatype)
   else
-     M_Input_Texture_3D.Load_From_File_No_Header(filename,nx,ny,nz,datatype);
+     M_Input_Texture_3D.Load_From_File_Skip_Header(filename,nx,ny,nz,nt,skipbyte,datatype);
 
   M_Output_Texture_3D := TTexture_3D.Create;
   M_Output_Texture_3D.Data_Type := GL_RGBA;
