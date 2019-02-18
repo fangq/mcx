@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="3">
+    <Units Count="4">
       <Unit0>
         <Filename Value="mcxviewer.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -55,6 +55,13 @@
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="mcxloadfile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fmDataFile"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit3>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -68,7 +75,14 @@
         <SyntaxMode Value="Delphi"/>
       </SyntaxOptions>
     </Parsing>
+    <CodeGeneration>
+      <SmallerCode Value="True"/>
+    </CodeGeneration>
     <Linking>
+      <Debugging>
+        <UseHeaptrc Value="True"/>
+        <StripSymbols Value="True"/>
+      </Debugging>
       <Options>
         <Win32>
           <GraphicApplication Value="True"/>

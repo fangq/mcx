@@ -1133,7 +1133,7 @@ begin
     else
     end;
     fmViewer.ShowModal;
-    fmViewer.Close;
+    fmViewer.Free;
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);

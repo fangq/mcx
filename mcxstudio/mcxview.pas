@@ -1,7 +1,7 @@
 
 unit mcxview;
 
-{$mode delphi}{$H+}
+{$mode objfpc}{$H+}
 
 interface
 
@@ -15,7 +15,7 @@ uses
   Dialogs,
   ExtCtrls,
   ComCtrls,
-  StdCtrls, ExtDlgs,
+  StdCtrls, ExtDlgs, ActnList,
   OpenGLTokens,
   GLVectorTypes,
   GLScene,
@@ -29,13 +29,22 @@ uses
   GLCrossPlatform,
   GLRenderContextInfo,
   GLGraphics,
-  texture_3d, Types;
+  texture_3d,
+  mcxloadfile,
+  Types;
 
 type
 
   { TfmViewer }
 
   TfmViewer = class(TForm)
+    mcxplotExit: TAction;
+    mcxplotUseColor: TAction;
+    mcxplotShowBBX: TAction;
+    mcxplotRefresh: TAction;
+    mcxplotSaveScreen: TAction;
+    mcxplotOpen: TAction;
+    acMCXPlot: TActionList;
     dlOpenFile: TOpenDialog;
     dlSaveScreen: TSavePictureDialog;
     GLScene: TGLScene;
@@ -73,33 +82,29 @@ type
     ToolButton3: TToolButton;
     ToolButton9: TToolButton;
 
-    procedure btRGBClick(Sender: TObject);
-    procedure btShowBBXClick(Sender: TObject);
-    Procedure Button1click(Sender : Tobject);
+    procedure mcxplotExitExecute(Sender: TObject);
+    procedure mcxplotOpenExecute(Sender: TObject);
     Procedure Formshow(Sender : Tobject);
     procedure glCanvasMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
-    procedure glCanvasMouseWheelDown(Sender: TObject; Shift: TShiftState;
-      MousePos: TPoint; var Handled: Boolean);
     Procedure LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
-    Procedure ResetTexture;
+    procedure mcxplotRefreshExecute(Sender: TObject);
+    procedure mcxplotSaveScreenExecute(Sender: TObject);
+    procedure mcxplotShowBBXExecute(Sender: TObject);
+    procedure mcxplotUseColorExecute(Sender: TObject);
     procedure GLDirectOpenGLRender(Sender: TObject; var rci: TGLRenderContextInfo);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure ResetTexture;
     procedure glCanvasMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
     procedure glCanvasMouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
     procedure GLCadencerProgress(Sender: TObject; const deltaTime, newTime: double);
     procedure TimerTimer(Sender: TObject);
     procedure Cutting_Plane_Pos_TBChange(Sender: TObject);
-    procedure Projection_N_TBChange(Sender: TObject);
     procedure cbShowBBXClick(Sender: TObject);
     procedure Pseudocolor_CBClick(Sender: TObject);
     procedure Opaque_Hull_CBClick(Sender: TObject);
     procedure Alpha_Threshold_TBChange(Sender: TObject);
-    procedure btRefreshClick(Sender: TObject);
-    procedure ToolButton1Click(Sender: TObject);
-    procedure ToolButton2Click(Sender: TObject);
-    procedure ToolButton3Click(Sender: TObject);
   protected
     procedure Calculate_Transfer_Function;
   public
@@ -147,10 +152,10 @@ end;
 
 procedure TfmViewer.FormDestroy(Sender: TObject);
 begin
-   ResetTexture();
+   ResetTexture;
 end;
 
-procedure TfmViewer.ResetTexture();
+procedure TfmViewer.ResetTexture;
 begin
   if(M_3D_Texture <> nil) then M_3D_Texture.Free;
   if(M_Input_Texture_3D <> nil) then  M_Input_Texture_3D.Free;
@@ -431,11 +436,13 @@ var
   H_1: double;
 
 begin
-  M_Output_Texture_3D := TTexture_3D.Create;
-  M_Output_Texture_3D.Data_Type := GL_RGBA;
-  M_Output_Texture_3D.X_Size := 0;
-  M_Output_Texture_3D.Y_Size := 0;
-  M_Output_Texture_3D.Z_Size := 0;
+  if(M_Output_Texture_3D=nil) then begin
+      M_Output_Texture_3D := TTexture_3D.Create;
+      M_Output_Texture_3D.Data_Type := GL_RGBA;
+      M_Output_Texture_3D.X_Size := 0;
+      M_Output_Texture_3D.Y_Size := 0;
+      M_Output_Texture_3D.Z_Size := 0;
+  end;
 
   { Calculate Color Lookup Table }
   N_begin := 0;
@@ -483,12 +490,6 @@ begin
   glCamera.AdjustDistanceToTarget(Power(1.1, WheelDelta/1200.0));
 end;
 
-procedure TfmViewer.glCanvasMouseWheelDown(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
-begin
-
-end;
-
 Procedure TfmViewer.LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
 begin
   ResetTexture;
@@ -513,60 +514,17 @@ begin
   Alpha_Threshold_TB.Position := 40;
   Projection_N_TB.Position := M_Output_Texture_3D.Y_Size;
 
-  GLDirectOpenGL.OnRender:=GLDirectOpenGLRender;
+  GLDirectOpenGL.OnRender:=@GLDirectOpenGLRender;
   Screen.Cursor := crDefault;
 end;
 
-Procedure TfmViewer.Button1click(Sender : Tobject);
-Begin
-
-End;
-
-procedure TfmViewer.btRGBClick(Sender: TObject);
-begin
-  M_Refresh := True;
-end;
-
-procedure TfmViewer.btShowBBXClick(Sender: TObject);
-begin
-  Frame.Visible:=btShowBBX.Down;
-  M_Refresh := True;
-end;
-
-
-
-procedure TfmViewer.Cutting_Plane_Pos_TBChange(Sender: TObject);
-begin
-  btRefresh.Enabled := True;
-  M_Refresh := True;
-end;
-
-procedure TfmViewer.Alpha_Threshold_TBChange(Sender: TObject);
-begin
-  btRefresh.Enabled := True;
-  //M_Refresh := True;
-end;
-
-procedure TfmViewer.btRefreshClick(Sender: TObject);
+procedure TfmViewer.mcxplotRefreshExecute(Sender: TObject);
 begin
   M_Refresh := True;
   btRefresh.Enabled := false;
 end;
 
-procedure TfmViewer.ToolButton1Click(Sender: TObject);
-begin
-  Close;
-end;
-
-procedure TfmViewer.ToolButton2Click(Sender: TObject);
-begin
-  if(dlOpenFile.Execute) then
-  begin
-      LoadTexture(dlOpenFile.FileName);
-  end;
-end;
-
-procedure TfmViewer.ToolButton3Click(Sender: TObject);
+procedure TfmViewer.mcxplotSaveScreenExecute(Sender: TObject);
 var
    bm : TBitmap;
    bmp32 : TGLBitmap32;
@@ -587,8 +545,74 @@ begin
      end;
 end;
 
-procedure TfmViewer.Projection_N_TBChange(Sender: TObject);
+procedure TfmViewer.mcxplotShowBBXExecute(Sender: TObject);
 begin
+  Frame.Visible:=btShowBBX.Down;
+  M_Refresh := True;
+end;
+
+procedure TfmViewer.mcxplotUseColorExecute(Sender: TObject);
+begin
+  M_Refresh := True;
+end;
+
+procedure TfmViewer.mcxplotOpenExecute(Sender: TObject);
+const
+   dataformat: array [0..3] of LongWord = (GL_RGBA32F,GL_RGB32I,GL_RGBA16I,GL_RGBA8);
+var
+  fm: TfmDataFile;
+  nx,ny,nz,nt: integer;
+  skipsize: integer;
+  format: LongWord;
+  fext: string;
+begin
+  if(dlOpenFile.Execute) then
+  begin
+    fext:=ExtractFileExt(dlOpenFile.FileName);
+    if(fext <> '.tx3') then begin
+        fm:=TfmDataFile.Create(Self);
+        fm.edDataFile.FileName:=dlOpenFile.FileName;
+        if(fext='.mc2') then begin
+            fm.edHeaderSize.Value:=0;
+        end else if(fext='.nii') then begin
+            fm.edHeaderSize.Value:=352;
+        end else if(fext='.img') then begin
+            fm.edHeaderSize.Value:=0;
+        end;
+        fm.ShowModal;
+        if(fm.ModalResult<>mrOk) then begin
+            fm.Free;
+            exit;
+        end;
+        nx:=fm.edNx.Value;
+        ny:=fm.edNy.Value;
+        nz:=fm.edNz.Value;
+        nt:=fm.edNt.Value;
+        skipsize:=fm.edHeaderSize.Value;
+        format:=dataformat[fm.edDataFormat.ItemIndex];
+        fm.Free;
+        LoadTexture(dlOpenFile.FileName, nx,ny,nz,nt,skipsize,format);
+    end else begin
+       LoadTexture(dlOpenFile.FileName);
+    end;
+  end;
+end;
+
+procedure TfmViewer.mcxplotExitExecute(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TfmViewer.Cutting_Plane_Pos_TBChange(Sender: TObject);
+begin
+  btRefresh.Enabled := True;
+  M_Refresh := True;
+end;
+
+procedure TfmViewer.Alpha_Threshold_TBChange(Sender: TObject);
+begin
+  btRefresh.Enabled := True;
+  //M_Refresh := True;
 end;
 
 procedure TfmViewer.cbShowBBXClick(Sender: TObject);

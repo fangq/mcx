@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 394
+  Left = 581
   Height = 770
-  Top = 99
+  Top = 138
   Width = 1240
   ActiveControl = lvJobs
   Align = alTop

@@ -12,7 +12,7 @@
 
 Unit texture_3d;
 
-{$mode delphi}{$H+}
+{$mode objfpc}{$H+}
 
 interface
 
@@ -278,12 +278,12 @@ begin { TTexture_3D.Load_From_File_Log_Float }
           if(val>hi)  then hi:=val;
     end;
     hi:=1.0/(hi-low)*255;
-    for i:=0 to (nx * ny * nz * nt)-1 do
+    for i:=1 to (nx * ny * nz * nt) do
     begin
           if(datatype=GL_RGBA32F) then
-             val:=mybuf[i]
+             val:=mybuf[i-1]
           else
-             val:=pdata[i]^;
+             val:=pdata[i-1]^;
           M_Data[i]:=chr(Round((val-low)*hi));
     end;
     setLength(mybuf, 0);

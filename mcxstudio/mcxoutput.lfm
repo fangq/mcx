@@ -1,7 +1,7 @@
 object fmOutput: TfmOutput
   Left = 481
   Height = 611
-  Top = 349
+  Top = 271
   Width = 543
   Caption = 'Output'
   ClientHeight = 611

@@ -1,7 +1,7 @@
 object fmViewer: TfmViewer
-  Left = 786
+  Left = 1124
   Height = 792
-  Top = 130
+  Top = 137
   Width = 792
   ActiveControl = glCanvas
   Caption = 'MCX Studio Volume Renderer'
@@ -41,7 +41,6 @@ object fmViewer: TfmViewer
       OnMouseDown = glCanvasMouseDown
       OnMouseMove = glCanvasMouseMove
       OnMouseWheel = glCanvasMouseWheel
-      OnMouseWheelDown = glCanvasMouseWheelDown
       TabOrder = 0
     end
   end
@@ -79,8 +78,8 @@ object fmViewer: TfmViewer
           Left = 8
           Height = 14
           Top = 8
-          Width = 106
-          Caption = 'Projection planes:'
+          Width = 105
+          Caption = 'Rendering quality'
           ParentColor = False
           ParentFont = False
         end
@@ -93,7 +92,6 @@ object fmViewer: TfmViewer
         Frequency = 10
         Max = 512
         Min = 1
-        OnChange = Projection_N_TBChange
         Position = 1
         Align = alClient
         TabOrder = 1
@@ -208,21 +206,17 @@ object fmViewer: TfmViewer
     object btRefresh: TToolButton
       Left = 105
       Top = 2
-      ImageIndex = 2
-      OnClick = btRefreshClick
+      Action = mcxplotRefresh
     end
     object ToolButton2: TToolButton
       Left = 1
       Top = 2
-      ImageIndex = 4
-      OnClick = ToolButton2Click
+      Action = mcxplotOpen
     end
     object btShowBBX: TToolButton
       Left = 162
       Top = 2
-      Down = True
-      ImageIndex = 1
-      OnClick = btShowBBXClick
+      Action = mcxplotShowBBX
       Style = tbsCheck
     end
     object ToolButton9: TToolButton
@@ -234,6 +228,7 @@ object fmViewer: TfmViewer
     end
     object btOpaque: TToolButton
       Left = 266
+      Hint = 'Show Opaque Hull'
       Top = 2
       Caption = 'btOpaque'
       ImageIndex = 0
@@ -242,18 +237,13 @@ object fmViewer: TfmViewer
     object btRGB: TToolButton
       Left = 214
       Top = 2
-      Caption = 'btRGB'
-      Down = True
-      ImageIndex = 3
-      OnClick = btRGBClick
+      Action = mcxplotUseColor
       Style = tbsCheck
     end
     object ToolButton1: TToolButton
       Left = 323
       Top = 2
-      Caption = 'ToolButton1'
-      ImageIndex = 7
-      OnClick = ToolButton1Click
+      Action = mcxplotExit
     end
     object ToolButton10: TToolButton
       Left = 318
@@ -265,9 +255,7 @@ object fmViewer: TfmViewer
     object ToolButton3: TToolButton
       Left = 53
       Top = 2
-      Caption = 'ToolButton3'
-      ImageIndex = 6
-      OnClick = ToolButton3Click
+      Action = mcxplotSaveScreen
     end
   end
   object GLScene: TGLScene
@@ -490,7 +478,7 @@ object fmViewer: TfmViewer
   end
   object dlOpenFile: TOpenDialog
     DefaultExt = '.tx3'
-    Filter = 'Texture File (*.tx3)|*.tx3|All (*.*)|*.*'
+    Filter = 'MCX volume file (*.mc2;*.nii;*.tx3;*.img)|*.mc2;*.nii;*.tx3;*.img|MCX fluence file (*.mc2)|*.mc2|Texture File (*.tx3)|*.tx3|Nifti file (*.nii)|*.nii|Analyze 7.5 (*.img)|*.img|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
     left = 688
     top = 128
@@ -2813,5 +2801,48 @@ object fmViewer: TfmViewer
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
     left = 744
     top = 128
+  end
+  object acMCXPlot: TActionList
+    Images = ImageList3
+    left = 184
+    top = 128
+    object mcxplotOpen: TAction
+      Caption = 'Open File'
+      Hint = 'Open Data File'
+      ImageIndex = 4
+      OnExecute = mcxplotOpenExecute
+    end
+    object mcxplotSaveScreen: TAction
+      Caption = 'Save Screen'
+      Hint = 'Save screenshot'
+      ImageIndex = 6
+      OnExecute = mcxplotSaveScreenExecute
+    end
+    object mcxplotRefresh: TAction
+      Caption = 'Refresh'
+      Hint = 'Refresh'
+      ImageIndex = 2
+      OnExecute = mcxplotRefreshExecute
+    end
+    object mcxplotShowBBX: TAction
+      Caption = 'Show Bounding Box'
+      Checked = True
+      Hint = 'Show Bounding Box'
+      ImageIndex = 1
+      OnExecute = mcxplotShowBBXExecute
+    end
+    object mcxplotUseColor: TAction
+      Caption = 'Pseudocolor'
+      Checked = True
+      Hint = 'Use Pseudocolor'
+      ImageIndex = 3
+      OnExecute = mcxplotUseColorExecute
+    end
+    object mcxplotExit: TAction
+      Caption = 'Exit'
+      Hint = 'Exit'
+      ImageIndex = 7
+      OnExecute = mcxplotExitExecute
+    end
   end
 end

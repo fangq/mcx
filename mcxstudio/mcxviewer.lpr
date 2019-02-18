@@ -7,7 +7,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms,  GLScene_RunTime, mcxview;
+  Forms,  GLScene_RunTime, mcxview, mcxloadfile;
 
 {$R *.res}
 
