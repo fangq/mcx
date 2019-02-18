@@ -1,0 +1,306 @@
+object fmDataFile: TfmDataFile
+  Left = 780
+  Height = 208
+  Top = 332
+  Width = 402
+  BorderStyle = bsDialog
+  Caption = ' Data File Properties'
+  ClientHeight = 208
+  ClientWidth = 402
+  DesignTimePPI = 93
+  Position = poMainFormCenter
+  LCLVersion = '1.8.2.0'
+  object Panel1: TPanel
+    Left = 0
+    Height = 48
+    Top = 160
+    Width = 402
+    Align = alBottom
+    BevelOuter = bvNone
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 48
+    ClientWidth = 402
+    ParentFont = False
+    TabOrder = 0
+    object btOK: TButton
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
+      Left = 112
+      Height = 27
+      Top = 11
+      Width = 85
+      Caption = 'OK'
+      Default = True
+      ModalResult = 1
+      ParentFont = False
+      TabOrder = 0
+    end
+    object btCancel: TButton
+      AnchorSideLeft.Control = btOK
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 230
+      Height = 27
+      Top = 11
+      Width = 85
+      BorderSpacing.Left = 33
+      BorderSpacing.Right = 18
+      Caption = 'Cancel'
+      ModalResult = 2
+      ParentFont = False
+      TabOrder = 1
+    end
+  end
+  object Label4: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edNy
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 15
+    Height = 14
+    Top = 82
+    Width = 73
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 15
+    Caption = 'Y Dimension'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object edNx: TSpinEdit
+    AnchorSideLeft.Control = Label4
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Label5
+    AnchorSideTop.Side = asrCenter
+    Left = 95
+    Height = 24
+    Top = 51
+    Width = 78
+    BorderSpacing.Left = 7
+    BorderSpacing.Top = 11
+    MaxValue = 100000
+    ParentFont = False
+    TabOrder = 1
+    Value = 100
+  end
+  object edNy: TSpinEdit
+    AnchorSideLeft.Control = edNx
+    AnchorSideTop.Control = edNx
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edNx
+    AnchorSideRight.Side = asrBottom
+    Left = 95
+    Height = 24
+    Top = 77
+    Width = 78
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 2
+    MaxValue = 100000
+    ParentFont = False
+    TabOrder = 2
+    Value = 100
+  end
+  object edNz: TSpinEdit
+    AnchorSideLeft.Control = edNy
+    AnchorSideTop.Control = edNy
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edNx
+    AnchorSideRight.Side = asrBottom
+    Left = 95
+    Height = 24
+    Top = 103
+    Width = 78
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 2
+    MaxValue = 100000
+    ParentFont = False
+    TabOrder = 3
+    Value = 100
+  end
+  object edNt: TSpinEdit
+    AnchorSideLeft.Control = edNz
+    AnchorSideTop.Control = edNz
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = edNx
+    AnchorSideRight.Side = asrBottom
+    Left = 95
+    Height = 24
+    Top = 129
+    Width = 78
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 2
+    MaxValue = 100000
+    MinValue = 1
+    ParentFont = False
+    TabOrder = 4
+    Value = 1
+  end
+  object Label5: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edDataFile
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 15
+    Height = 14
+    Top = 56
+    Width = 72
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 16
+    Caption = 'X Dimension'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object Label6: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edNz
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 15
+    Height = 14
+    Top = 108
+    Width = 71
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 15
+    Caption = 'Z Dimension'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object edDataFormat: TComboBox
+    AnchorSideLeft.Control = Label8
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edNx
+    AnchorSideTop.Side = asrCenter
+    Left = 265
+    Height = 27
+    Top = 50
+    Width = 112
+    BorderSpacing.Left = 10
+    BorderSpacing.Top = 12
+    ItemHeight = 0
+    Items.Strings = (
+      'Float (32bit)'
+      'Integer (32bit)'
+      'Short integer (16bit)'
+      'Byte (8bit)'
+    )
+    TabOrder = 5
+    Text = 'Float (32bit)'
+  end
+  object Label7: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edNt
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 15
+    Height = 14
+    Top = 134
+    Width = 67
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 15
+    Caption = 'Time Gates'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object Label8: TLabel
+    AnchorSideLeft.Control = edNx
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edNx
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 188
+    Height = 14
+    Top = 56
+    Width = 67
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 17
+    Caption = 'Time Gates'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object Label9: TLabel
+    AnchorSideLeft.Control = edNx
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edNy
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 188
+    Height = 14
+    Top = 82
+    Width = 69
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 14
+    Caption = 'Header Size'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object edHeaderSize: TSpinEdit
+    AnchorSideLeft.Control = Label9
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = edNy
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = edNx
+    AnchorSideRight.Side = asrBottom
+    Left = 265
+    Height = 24
+    Top = 77
+    Width = 78
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 2
+    MaxValue = 100000
+    ParentFont = False
+    TabOrder = 6
+    Value = 1
+  end
+  object edDataFile: TFileNameEdit
+    AnchorSideLeft.Control = edNx
+    Left = 95
+    Height = 24
+    Top = 16
+    Width = 283
+    FilterIndex = 0
+    HideDirectories = False
+    ButtonWidth = 22
+    NumGlyphs = 1
+    MaxLength = 0
+    TabOrder = 7
+  end
+  object Label10: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = edDataFile
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 15
+    Height = 14
+    Top = 21
+    Width = 53
+    BorderSpacing.Left = 15
+    BorderSpacing.Top = 15
+    Caption = 'Data File'
+    ParentColor = False
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+end
