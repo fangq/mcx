@@ -1421,7 +1421,7 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
     int dev;
     int deviceCount,activedev=0;
 
-    cudaGetDeviceCount(&deviceCount);
+    CUDA_ASSERT(cudaGetDeviceCount(&deviceCount));
     if (deviceCount == 0){
         MCX_FPRINTF(stderr,"No CUDA-capable GPU device found\n");
         return 0;
@@ -1947,7 +1947,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     mcx_progressbar(-0.f,cfg);
 	     do{
 #ifndef WIN32
-               cudaEventQuery(updateprogress);
+               CUDA_ASSERT(cudaEventQuery(updateprogress));
 #endif
                ndone = *progress;
 	       if (ndone > p0){
@@ -1961,7 +1961,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
              *progress=0;
            }
 }
-           CUDA_ASSERT(cudaThreadSynchronize());
+           CUDA_ASSERT(cudaDeviceSynchronize());
 	   CUDA_ASSERT(cudaMemcpy(&detected, gdetected,sizeof(uint),cudaMemcpyDeviceToHost));
            tic1=GetTimeMillis();
 	   toc+=tic1-tic0;
