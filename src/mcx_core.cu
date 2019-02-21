@@ -35,6 +35,14 @@
     #include "cuda_fp16.h"
 #endif
 
+#ifdef USE_DOUBLE
+    typedef double OutputType;
+    #define SHADOWCOUNT 1
+#else
+    typedef float OutputType;
+    #define SHADOWCOUNT 2
+#endif
+
 #if defined(USE_XOROSHIRO128P_RAND)
     #include "xoroshiro128p_rand.cu" ///< use xorshift128+ RNG (XORSHIFT128P)
 #elif defined(USE_LL5_RAND)
@@ -100,7 +108,7 @@ extern __shared__ char sharedmem[];
  * @brief Floating-point atomic addition
  */
  
-__device__ inline float atomicadd(float* address, float value){
+__device__ inline OutputType atomicadd(OutputType* address, OutputType value){
 
 #if __CUDA_ARCH__ >= 200 ///< for Fermi, atomicAdd supports floats
 
@@ -584,7 +592,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  */
 
 template <int mcxsource>
-__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, float *field,
+__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
            uint *mediaid,float *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
@@ -611,7 +619,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME_MIN && *idx1d!=OUTSIDE_VOLUME_MAX && gcfg->issaveref){
 	       int tshift=MIN(gcfg->maxgate-1,(int)(floorf((f->t-gcfg->twin0)*gcfg->Rtstep)));
 #ifdef USE_ATOMIC
-               atomicadd(& field[*idx1d+tshift*gcfg->dimlen.z],-p->w);	       
+               atomicAdd(& field[*idx1d+tshift*gcfg->dimlen.z],-p->w);	       
 #else
 	       field[*idx1d+tshift*gcfg->dimlen.z]+=-p->w;
 #endif
@@ -926,7 +934,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
  * @param[in] n_seed: the seed to the RNG
  */
 
-kernel void mcx_test_rng(float field[],uint n_seed[]){
+kernel void mcx_test_rng(OutputType field[],uint n_seed[]){
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
      int i;
      int len=gcfg->maxidx.x*gcfg->maxidx.y*gcfg->maxidx.z*(int)((gcfg->twin1-gcfg->twin0)*gcfg->Rtstep+0.5f);
@@ -963,7 +971,7 @@ kernel void mcx_test_rng(float field[],uint n_seed[]){
  */
 
 template <int mcxsource>
-kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed[],
+kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n_seed[],
      float4 n_pos[],float4 n_dir[],float4 n_len[],float n_det[], uint detectedphoton[], 
      float srcpattern[],float replayweight[],float photontof[],int photondetid[], 
      RandType *seeddata,float *gdebugdata,volatile int *gprogress){
@@ -1096,6 +1104,9 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
                                 field[idx1d+tshift*gcfg->dimlen.z]+=tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)];
 #ifdef USE_ATOMIC
                             }else{
+    #ifdef USE_DOUBLE
+			        atomicAdd(& field[idx1d+tshift*gcfg->dimlen.z], tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
+    #else
 			        float oldval=atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]);
 				    if(oldval>MAX_ACCUM){
 				        if(atomicadd(& field[idx1d+tshift*gcfg->dimlen.z], -oldval)<0.f)
@@ -1103,6 +1114,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 					else
 					    atomicadd(& field[idx1d+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
 				    }
+    #endif
                                 GPUDEBUG(("atomic write to [%d] %e, w=%f\n",idx1d,tmp0*replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)],p.w));
                             }
 #endif
@@ -1206,6 +1218,9 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 	          /** accummulate the quality to the volume using atomic operations  */
                   // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
 		  if(mcxsource!=MCX_SRC_PATTERN && mcxsource!=MCX_SRC_PATTERN3D){
+    #ifdef USE_DOUBLE
+		      atomicAdd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
+    #else
 		      float oldval=atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], weight);
 		      if(oldval>MAX_ACCUM){
 			if(atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z], -oldval)<0.f)
@@ -1213,9 +1228,13 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 			else
 			    atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
 		      }
+    #endif
 		  }else{
 		      for(int i=0;i<gcfg->srcnum;i++){
 		        if(ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i]>0.f){
+    #ifdef USE_DOUBLE
+		          atomicAdd(& field[(idx1dold+tshift*gcfg->dimlen.z)*gcfg->srcnum+i], weight*ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i]);
+    #else
 		          float oldval=atomicadd(& field[(idx1dold+tshift*gcfg->dimlen.z)*gcfg->srcnum+i], weight*ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i]);
 		          if(oldval>MAX_ACCUM){
 			      if(atomicadd(& field[(idx1dold+tshift*gcfg->dimlen.z)*gcfg->srcnum+i], -oldval)<0.f)
@@ -1223,6 +1242,7 @@ kernel void mcx_main_loop(uint media[],float field[],float genergy[],uint n_seed
 			      else
 			        atomicadd(& field[(idx1dold+tshift*gcfg->dimlen.z)*gcfg->srcnum+i+gcfg->dimlen.w], oldval);
 			  }
+    #endif
 			}
 		      }
 		  }
@@ -1521,7 +1541,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float4 *gPpos,*gPdir,*gPlen;
      uint   *gPseed,*gdetected;
      int    *greplaydetid=NULL;
-     float  *gPdet,*gsrcpattern,*gfield,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL;
+     float  *gPdet,*gsrcpattern,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL;
+     OutputType *gfield;
      RandType *gseeddata=NULL;
      int detreclen=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6;
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
@@ -1669,8 +1690,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	   }
            CUDA_ASSERT(cudaMalloc((void **) &gPseed, sizeof(RandType)*RAND_BUF_LEN));
 	   CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
-           CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen));
-           CUDA_ASSERT(cudaMemset(gfield,0,sizeof(float)*fieldlen)); // cost about 1 ms
+           CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(OutputType)*fieldlen));
+           CUDA_ASSERT(cudaMemset(gfield,0,sizeof(OutputType)*fieldlen)); // cost about 1 ms
            CUDA_ASSERT(cudaMemcpyToSymbol(gcfg,   &param, sizeof(MCXParam), 0, cudaMemcpyHostToDevice));
 
            tic=StartTimer();
@@ -1680,10 +1701,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            MCX_FPRINTF(cfg->flog,"kernel complete:  \t%d ms\nretrieving random numbers ... \t",tic1-tic);
            CUDA_ASSERT(cudaGetLastError());
 
-           CUDA_ASSERT(cudaMemcpy(field, gfield,sizeof(float)*dimxyz*gpu[gpuid].maxgate,cudaMemcpyDeviceToHost));
+           CUDA_ASSERT(cudaMemcpy(field, gfield,sizeof(OutputType)*dimxyz*gpu[gpuid].maxgate,cudaMemcpyDeviceToHost));
            MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n\n",GetTimeMillis()-tic);  fflush(cfg->flog);
-	   if(cfg->exportfield)
+	   if(cfg->exportfield){
 	       memcpy(cfg->exportfield,field,fieldlen*sizeof(float));
+	   }
 	   if(cfg->issave2pt && cfg->parentid==mpStandalone){
                MCX_FPRINTF(cfg->flog,"saving data to file ...\t");
 	       mcx_savedata(field,fieldlen,cfg);
@@ -1715,7 +1737,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      CUDA_ASSERT(cudaMalloc((void **) &gmedia, sizeof(uint)*(cfg->dim.x*cfg->dim.y*cfg->dim.z)));
      //CUDA_ASSERT(cudaBindTexture(0, texmedia, gmedia));
-     CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(float)*fieldlen*2));
+     CUDA_ASSERT(cudaMalloc((void **) &gfield, sizeof(OutputType)*fieldlen*SHADOWCOUNT));
      CUDA_ASSERT(cudaMalloc((void **) &gPpos, sizeof(float4)*gpu[gpuid].autothread));
      CUDA_ASSERT(cudaMalloc((void **) &gPdir, sizeof(float4)*gpu[gpuid].autothread));
      CUDA_ASSERT(cudaMalloc((void **) &gPlen, sizeof(float4)*gpu[gpuid].autothread));
@@ -1867,7 +1889,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
        //total number of repetition for the simulations, results will be accumulated to field
        for(iter=0;iter<ABS(cfg->respin);iter++){
-           CUDA_ASSERT(cudaMemset(gfield,0,sizeof(float)*fieldlen*2)); // cost about 1 ms
+           CUDA_ASSERT(cudaMemset(gfield,0,sizeof(OutputType)*fieldlen*SHADOWCOUNT)); // cost about 1 ms
            CUDA_ASSERT(cudaMemset(gPdet,0,sizeof(float)*cfg->maxdetphoton*(detreclen)));
            if(cfg->issaveseed)
 	       CUDA_ASSERT(cudaMemset(gseeddata,0,sizeof(RandType)*cfg->maxdetphoton*RAND_BUF_LEN));
@@ -2004,11 +2026,15 @@ is more than what your have specified (%d), please use the -H option to specify 
 
 	   //handling the 2pt distributions
            if(cfg->issave2pt){
-	       float *rawfield=(float*)malloc(sizeof(float)*fieldlen*2);
-               CUDA_ASSERT(cudaMemcpy(rawfield, gfield,sizeof(float)*fieldlen*2,cudaMemcpyDeviceToHost));
+	       OutputType *rawfield=(OutputType*)malloc(sizeof(OutputType)*fieldlen*SHADOWCOUNT);
+               CUDA_ASSERT(cudaMemcpy(rawfield, gfield,sizeof(OutputType)*fieldlen*SHADOWCOUNT,cudaMemcpyDeviceToHost));
                MCX_FPRINTF(cfg->flog,"transfer complete:\t%d ms\n",GetTimeMillis()-tic);  fflush(cfg->flog);
-	       for(i=0;i<(int)fieldlen;i++)  //accumulate field, can be done in the GPU
-	           field[i]=rawfield[i]+rawfield[i+fieldlen];
+	       for(i=0;i<(int)fieldlen;i++){  //accumulate field, can be done in the GPU
+	           field[i]=rawfield[i];
+#ifndef USE_DOUBLE
+                   field[i]=rawfield[i+fieldlen];
+#endif
+	       }
 	       free(rawfield);
 
                if(ABS(cfg->respin)>1){
