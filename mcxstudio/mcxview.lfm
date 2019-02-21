@@ -1,14 +1,15 @@
 object fmViewer: TfmViewer
-  Left = 1124
+  Left = 717
   Height = 792
-  Top = 137
+  Top = 164
   Width = 792
   ActiveControl = glCanvas
   Caption = 'MCX Studio Volume Renderer'
   ClientHeight = 792
   ClientWidth = 792
   Color = clBtnFace
-  DesignTimePPI = 93
+  DesignTimePPI = 95
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
@@ -78,7 +79,7 @@ object fmViewer: TfmViewer
           Left = 8
           Height = 14
           Top = 8
-          Width = 105
+          Width = 107
           Caption = 'Rendering quality'
           ParentColor = False
           ParentFont = False
@@ -121,7 +122,7 @@ object fmViewer: TfmViewer
           Left = 8
           Height = 14
           Top = 8
-          Width = 134
+          Width = 138
           Caption = 'Cutting plane position:'
           ParentColor = False
           ParentFont = False
@@ -164,7 +165,7 @@ object fmViewer: TfmViewer
           Left = 8
           Height = 14
           Top = 8
-          Width = 110
+          Width = 113
           Caption = 'Invisible threshold'
           ParentColor = False
           ParentFont = False

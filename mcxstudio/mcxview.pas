@@ -82,6 +82,7 @@ type
     ToolButton3: TToolButton;
     ToolButton9: TToolButton;
 
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure mcxplotExitExecute(Sender: TObject);
     procedure mcxplotOpenExecute(Sender: TObject);
     Procedure Formshow(Sender : Tobject);
@@ -601,6 +602,11 @@ end;
 procedure TfmViewer.mcxplotExitExecute(Sender: TObject);
 begin
   Close;
+end;
+
+procedure TfmViewer.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+  CloseAction := caFree;
 end;
 
 procedure TfmViewer.Cutting_Plane_Pos_TBChange(Sender: TObject);

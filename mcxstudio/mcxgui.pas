@@ -57,6 +57,7 @@ type
     MenuItem60: TMenuItem;
     MenuItem61: TMenuItem;
     MenuItem62: TMenuItem;
+    MenuItem63: TMenuItem;
     PopupMenu3: TPopupMenu;
     shapePreview: TAction;
     edOutputFormat: TComboBox;
@@ -1132,8 +1133,7 @@ begin
          4:  fmViewer.LoadTexture(outputfile,nz,ny,nz,2,352,GL_RGBA16I);
     else
     end;
-    fmViewer.ShowModal;
-    fmViewer.Free;
+    fmViewer.Show;
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);

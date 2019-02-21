@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms,  GLScene_RunTime, mcxview, mcxloadfile;
 
-{$R *.res}
+//{$R *.res}
 
 begin
   RequireDerivedFormResource:=True;

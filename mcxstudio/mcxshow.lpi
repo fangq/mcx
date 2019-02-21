@@ -6,13 +6,97 @@
     <General>
       <MainUnit Value="0"/>
       <Title Value="mcxshow"/>
+      <Scaled Value="True"/>
       <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+      </XPManifest>
     </General>
     <i18n>
       <EnableI18N LFM="False"/>
     </i18n>
-    <BuildModes Count="1">
+    <BuildModes Count="3">
       <Item1 Name="default" Default="True"/>
+      <Item2 Name="Debug">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <PathDelim Value="\"/>
+          <Target>
+            <Filename Value="mcxshow"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+            <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <SyntaxMode Value="Delphi"/>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+          <CodeGeneration>
+            <Checks>
+              <IOChecks Value="True"/>
+              <RangeChecks Value="True"/>
+              <OverflowChecks Value="True"/>
+              <StackChecks Value="True"/>
+            </Checks>
+            <VerifyObjMethodCallValidity Value="True"/>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <DebugInfoType Value="dsDwarf2Set"/>
+              <UseHeaptrc Value="True"/>
+              <TrashVariables Value="True"/>
+              <StripSymbols Value="True"/>
+              <UseExternalDbgSyms Value="True"/>
+            </Debugging>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+        </CompilerOptions>
+      </Item2>
+      <Item3 Name="Release">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <PathDelim Value="\"/>
+          <Target>
+            <Filename Value="mcxshow"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+            <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <SyntaxMode Value="Delphi"/>
+            </SyntaxOptions>
+          </Parsing>
+          <CodeGeneration>
+            <SmartLinkUnit Value="True"/>
+            <Optimizations>
+              <OptimizationLevel Value="3"/>
+            </Optimizations>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <GenerateDebugInfo Value="False"/>
+              <StripSymbols Value="True"/>
+            </Debugging>
+            <LinkSmart Value="True"/>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+        </CompilerOptions>
+      </Item3>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -43,7 +127,7 @@
         <Filename Value="mcxshow.lpr"/>
         <IsPartOfProject Value="True"/>
         <CursorPos X="54" Y="9"/>
-        <UsageCount Value="94"/>
+        <UsageCount Value="95"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit0>
       <Unit1>
@@ -53,9 +137,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="475"/>
-        <CursorPos X="20" Y="490"/>
-        <UsageCount Value="94"/>
+        <TopLine Value="734"/>
+        <CursorPos X="49" Y="750"/>
+        <UsageCount Value="95"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -315,6 +399,7 @@
         <TopLine Value="538"/>
         <CursorPos X="100" Y="549"/>
         <UsageCount Value="40"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit37>
       <Unit38>
         <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\rtl\inc\systemh.inc"/>
@@ -322,6 +407,7 @@
         <TopLine Value="655"/>
         <CursorPos X="25" Y="684"/>
         <UsageCount Value="39"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit38>
       <Unit39>
         <Filename Value="..\..\..\..\..\..\Library\glscene14\GLSceneLCL\Source\GLObjects.pas"/>
@@ -405,61 +491,126 @@
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit48>
     </Units>
-    <JumpHistory Count="14" HistoryIndex="13">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="470" Column="33" TopLine="454"/>
+        <Caret Line="750" TopLine="731"/>
       </Position1>
       <Position2>
         <Filename Value="mcxrender.pas"/>
+        <Caret Line="752" TopLine="731"/>
       </Position2>
       <Position3>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="152" Column="27" TopLine="128"/>
+        <Caret Line="750" TopLine="731"/>
       </Position3>
       <Position4>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="220" Column="22" TopLine="196"/>
+        <Caret Line="752" TopLine="731"/>
       </Position4>
       <Position5>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="479" Column="67" TopLine="463"/>
+        <Caret Line="750" TopLine="731"/>
       </Position5>
       <Position6>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="483" Column="32" TopLine="483"/>
+        <Caret Line="752" TopLine="731"/>
       </Position6>
       <Position7>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="484" Column="32" TopLine="484"/>
+        <Caret Line="751" TopLine="731"/>
       </Position7>
       <Position8>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="483" Column="50" TopLine="475"/>
+        <Caret Line="752" TopLine="731"/>
       </Position8>
       <Position9>
         <Filename Value="mcxrender.pas"/>
+        <Caret Line="751" TopLine="731"/>
       </Position9>
       <Position10>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="90" Column="15" TopLine="65"/>
+        <Caret Line="752" TopLine="731"/>
       </Position10>
       <Position11>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="462" Column="17" TopLine="442"/>
+        <Caret Line="751" TopLine="731"/>
       </Position11>
       <Position12>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="461" Column="17" TopLine="441"/>
+        <Caret Line="752" TopLine="731"/>
       </Position12>
       <Position13>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="454" Column="34" TopLine="441"/>
+        <Caret Line="751" TopLine="731"/>
       </Position13>
       <Position14>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="490" Column="20" TopLine="475"/>
+        <Caret Line="752" TopLine="731"/>
       </Position14>
+      <Position15>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="751" TopLine="731"/>
+      </Position15>
+      <Position16>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="752" TopLine="731"/>
+      </Position16>
+      <Position17>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="751" TopLine="731"/>
+      </Position17>
+      <Position18>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="760" Column="14" TopLine="731"/>
+      </Position18>
+      <Position19>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="751" TopLine="731"/>
+      </Position19>
+      <Position20>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="752" TopLine="731"/>
+      </Position20>
+      <Position21>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="750" TopLine="731"/>
+      </Position21>
+      <Position22>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="760" TopLine="731"/>
+      </Position22>
+      <Position23>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="318" TopLine="297"/>
+      </Position23>
+      <Position24>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="319" TopLine="297"/>
+      </Position24>
+      <Position25>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="312" Column="30" TopLine="306"/>
+      </Position25>
+      <Position26>
+        <Filename Value="mcxrender.pas"/>
+      </Position26>
+      <Position27>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="86" Column="24" TopLine="54"/>
+      </Position27>
+      <Position28>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="312" Column="30" TopLine="279"/>
+      </Position28>
+      <Position29>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="29" Column="52" TopLine="70"/>
+      </Position29>
+      <Position30>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="746" Column="58" TopLine="734"/>
+      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>

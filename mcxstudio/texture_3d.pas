@@ -119,6 +119,7 @@ begin
     GL_RGBA : Result := 4;
     GL_LUMINANCE : Result := 1;
     GL_LUMINANCE_ALPHA : Result := 2;
+    GL_RGBA16I: Result:=2;
     else
       Result := 4;
   end; { Case }
@@ -222,8 +223,8 @@ var
   File_Stream : TFileStream;
   mybuf: array of single;
   val, low, hi: single;
-  i,nx,ny,nz,nt: integer;
-  pdata: array of ^integer;
+  i,nx,ny,nz,nt,sourcebyte: integer;
+  pdata: pointer;
 begin { TTexture_3D.Load_From_File_Log_Float }
   Screen.Cursor := crHourGlass;
   File_Stream := TFileStream.Create (F_FileName, fmOpenRead or fmShareDenyWrite);
@@ -246,33 +247,29 @@ begin { TTexture_3D.Load_From_File_Log_Float }
         nt:= TDim;
     end;
     if(skipbyte>0) then File_Stream.Seek(skipbyte,soBeginning);
-    TexelByte := Data_Type_To_Texel_Byte_Size (datatype);
+    sourcebyte := Data_Type_To_Texel_Byte_Size (datatype);
     SetLength (mybuf, nx * ny * nz * nt);
-    File_Stream.ReadBuffer (PChar (mybuf)^, Length (mybuf)*TexelByte);
+    File_Stream.ReadBuffer (PChar (mybuf)^, Length (mybuf)*sourcebyte);
 
     DataFormat:=GL_LUMINANCE;
     TexelByte := Data_Type_To_Texel_Byte_Size (DataFormat);
     SetLength (M_Data, nx * ny * nz * nt * TexelByte);
 
-    if(datatype<>GL_RGBA32F) then begin
-        SetLength(pdata, nx * ny * nz * nt);
-        for i:=0 to nx * ny * nz * nt do
-        pdata[i]:=@mybuf[i];
-    end;
-
+    pdata:=@mybuf[0];
     low:=1e10;
     hi:=-1e10;
     for i:=0 to (nx * ny * nz * nt) - 1 do
     begin
-          if(datatype=GL_RGBA32F) then begin
-              if(mybuf[i]<=0) then begin
+          case datatype of
+              GL_RGBA32F:
+                if(mybuf[i]<=0) then begin
                   val:=0./0.;
-              end else begin
+                end else begin
                   mybuf[i]:=log10(mybuf[i]);
                   val:=mybuf[i];
-              end;
-          end else begin
-                  val:=pdata[i]^;
+                end;
+              GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + i*sourcebyte))^;
+              else val:=PByte(Pointer(nativeuint(pdata) + i*sourcebyte))^;
           end;
           if(val<low) then low:=val;
           if(val>hi)  then hi:=val;
@@ -280,14 +277,14 @@ begin { TTexture_3D.Load_From_File_Log_Float }
     hi:=1.0/(hi-low)*255;
     for i:=1 to (nx * ny * nz * nt) do
     begin
-          if(datatype=GL_RGBA32F) then
-             val:=mybuf[i-1]
-          else
-             val:=pdata[i-1]^;
+          case datatype of
+              GL_RGBA32F: val:=mybuf[i-1];
+              GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
+              else val:=PByte(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
+          end;
           M_Data[i]:=chr(Round((val-low)*hi));
     end;
     setLength(mybuf, 0);
-    setLength(pdata, 0);
   finally
     File_Stream.Free;
   end;

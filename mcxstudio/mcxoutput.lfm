@@ -1,28 +1,28 @@
 object fmOutput: TfmOutput
   Left = 481
-  Height = 611
+  Height = 624
   Top = 271
-  Width = 543
+  Width = 555
   Caption = 'Output'
-  ClientHeight = 611
-  ClientWidth = 543
-  DesignTimePPI = 93
+  ClientHeight = 624
+  ClientWidth = 555
+  DesignTimePPI = 95
   LCLVersion = '1.8.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 611
+    Height = 624
     Top = 0
-    Width = 543
+    Width = 555
     Align = alClient
-    ClientHeight = 611
-    ClientWidth = 543
+    ClientHeight = 624
+    ClientWidth = 555
     ParentFont = False
     TabOrder = 0
     object Button1: TButton
       Left = 1
-      Height = 24
+      Height = 25
       Top = 1
-      Width = 541
+      Width = 553
       Align = alTop
       Caption = 'Clear Output'
       OnClick = miClearLogClick
@@ -31,9 +31,9 @@ object fmOutput: TfmOutput
     end
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 552
-      Top = 25
-      Width = 541
+      Height = 563
+      Top = 26
+      Width = 553
       Align = alClient
       Font.Height = -13
       Font.Name = 'Courier New'
@@ -488,9 +488,9 @@ object fmOutput: TfmOutput
         '$Download: https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
         ''
         ' -- "MMC" --'
-        '# [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid mesh-based Monte Carlo algorithm for efficient photon1transport simulations in complex 3-D media,” J. of Biomedical Optics (in press)'
+        '# [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid mesh-based Monte Carlo algorithm for efficient photon1transport simulations in complex 3-D media,” J. of Biomedical Optics, 24(2), 020503 (2019).'
         '$Summary: Dual-grid MMC for faster and more accurate mesh-based simulations'
-        '$Download: Coming soon'
+        '$Download: http://dx.doi.org/10.1117/1.JBO.24.2.020503'
         ''
         '# [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon ''replay''," Biomed. Optics Express 9(10), 4588-4603 (2018)'
         '$Summary:  Building Jacobians with replay in MCX/MMC'
@@ -574,21 +574,21 @@ object fmOutput: TfmOutput
     end
     object Panel2: TPanel
       Left = 1
-      Height = 33
-      Top = 577
-      Width = 541
+      Height = 34
+      Top = 589
+      Width = 553
       Align = alBottom
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 3
-      ClientHeight = 33
-      ClientWidth = 541
+      ClientHeight = 34
+      ClientWidth = 553
       ParentFont = False
       TabOrder = 2
       object btSendCmd: TButton
-        Left = 467
-        Height = 31
+        Left = 477
+        Height = 32
         Top = 1
-        Width = 73
+        Width = 75
         Align = alRight
         Caption = 'Send'
         OnClick = btSendCmdClick
@@ -599,10 +599,10 @@ object fmOutput: TfmOutput
         AnchorSideTop.Control = Label1
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = btSendCmd
-        Left = 116
+        Left = 118
         Height = 27
-        Top = 3
-        Width = 349
+        Top = 4
+        Width = 357
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 2
         ItemHeight = 0
@@ -618,8 +618,8 @@ object fmOutput: TfmOutput
         AnchorSideRight.Control = edCmdInput
         Left = 1
         Height = 14
-        Top = 9
-        Width = 110
+        Top = 10
+        Width = 112
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 5
@@ -634,12 +634,12 @@ object fmOutput: TfmOutput
     Enabled = False
     StringAttri.Background = clSkyBlue
     StringAttri.Style = [fsBold]
-    left = 357
-    top = 194
+    left = 365
+    top = 198
   end
   object PopupMenu1: TPopupMenu
-    left = 279
-    top = 186
+    left = 285
+    top = 190
     object miClearLog: TMenuItem
       Caption = 'Clear Log'
       OnClick = miClearLogClick
