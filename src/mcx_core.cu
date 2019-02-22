@@ -38,9 +38,11 @@
 #ifdef USE_DOUBLE
     typedef double OutputType;
     #define SHADOWCOUNT 1
+    #define ZERO        0.0
 #else
     typedef float OutputType;
     #define SHADOWCOUNT 2
+    #define ZERO        0.f
 #endif
 
 #if defined(USE_XOROSHIRO128P_RAND)
@@ -593,7 +595,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
 
 template <int mcxsource>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
-           uint *mediaid,float *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
+           uint *mediaid,OutputType *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
       *w0=1.f;     ///< reuse to count for launchattempt
@@ -998,7 +1000,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      Medium prop;
 
      float len, slen;
-     float w0;
+     OutputType w0;
      int   flipdir=-1;
  
      float *ppath=(float *)(sharedmem+blockDim.x*(gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)));
@@ -1147,8 +1149,12 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat) ? float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z) : float3(htime.x,htime.y,htime.z);
 	  
 	  /** calculate photon energy loss */
+#ifdef USE_DOUBLE
+	  p.w*=exp(-(OutputType)prop.mua*len);
+#else
 	  p.w*=expf(-prop.mua*len);
-	  
+#endif
+
 	  /** remaining unitless scattering length: sum(s_i*mus_i), unit-less */
 	  f.pscat-=slen;
 
@@ -1189,7 +1195,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
              /**  if t is within the time window, which spans cfg->maxgate*cfg->tstep.wide */
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
-	          float weight=0.f;
+	          OutputType weight=ZERO;
                   int tshift=(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep));
 		  
 		  /** calculate the quality to be accummulated */
@@ -1203,11 +1209,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			   ( (gcfg->replaydet==-1)? ((photondetid[tshift]-1)*gcfg->maxgate) : 0);
 		      }
 		  }else
-		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
+		      weight=(prop.mua==ZERO) ? ZERO : ((w0-p.w)/(prop.mua));
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
 
-              if(weight>0.f){
+              if(weight>ZERO){
 #ifdef USE_ATOMIC
                 if(!gcfg->isatomic){
 #endif
