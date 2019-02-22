@@ -597,7 +597,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
       *w0=1.f;     ///< reuse to count for launchattempt
-      f->pathlen=-1.f; ///< reuse as "canfocus" flag for each source: non-zero: focusable, zero: not focusable
+      int canfocus=1; ///< non-zero: focusable, zero: not focusable
       *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
 
       /**
@@ -808,7 +808,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      }
 		      sincosf(ang,&stheta,&ctheta);
 		      rotatevector(v,stheta,ctheta,sphi,cphi);
-                      f->pathlen=0.f;
+                      canfocus=0;
 		      break;
 		}
 		case(MCX_SRC_ZGAUSSIAN): {
@@ -818,7 +818,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      ang=sqrtf(-2.f*logf(rand_uniform01(t)))*(1.f-2.f*rand_uniform01(t))*gcfg->srcparam1.x;
 		      sincosf(ang,&stheta,&ctheta);
 		      rotatevector(v,stheta,ctheta,sphi,cphi);
-                      f->pathlen=0.f;
+                      canfocus=0;
 		      break;
 		}
 		case(MCX_SRC_LINE):
@@ -838,15 +838,15 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                       *rv=float3(rv->x+(gcfg->srcparam1.x)*0.5f,
 		                 rv->y+(gcfg->srcparam1.y)*0.5f,
 				 rv->z+(gcfg->srcparam1.z)*0.5f);
-                      f->pathlen=(gcfg->srctype==MCX_SRC_SLIT)?-1.f:0.f;
+                      canfocus=(gcfg->srctype==MCX_SRC_SLIT);
 		      break;
 		}
 	  }
           /**
            * If beam focus is set, determine the incident angle
            */
-          if(f->pathlen<0.f){
-	    if(isnan(gcfg->c0.w)){ // isotropic if focal length is -0.f
+          if(canfocus){
+	    if(isnan(gcfg->c0.w)){ // isotropic if focal length is nan
                 float ang,stheta,ctheta,sphi,cphi;
                 ang=TWO_PI*rand_uniform01(t); //next arimuth angle
                 sincosf(ang,&sphi,&cphi);
