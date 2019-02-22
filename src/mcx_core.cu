@@ -1149,7 +1149,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat) ? float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z) : float3(htime.x,htime.y,htime.z);
 	  
 	  /** calculate photon energy loss */
-#ifdef USE_DOUBLE
+#ifdef USE_MORE_DOUBLE
 	  p.w*=exp(-(OutputType)prop.mua*len);
 #else
 	  p.w*=expf(-prop.mua*len);
@@ -1195,7 +1195,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
              /**  if t is within the time window, which spans cfg->maxgate*cfg->tstep.wide */
              if(gcfg->save2pt && f.t>=gcfg->twin0 && f.t<gcfg->twin1){
+#ifdef USE_MORE_DOUBLE
 	          OutputType weight=ZERO;
+#else
+	          float weight=0.f;
+#endif
                   int tshift=(int)(floorf((f.t-gcfg->twin0)*gcfg->Rtstep));
 		  
 		  /** calculate the quality to be accummulated */
@@ -1209,11 +1213,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			   ( (gcfg->replaydet==-1)? ((photondetid[tshift]-1)*gcfg->maxgate) : 0);
 		      }
 		  }else
-		      weight=(prop.mua==ZERO) ? ZERO : ((w0-p.w)/(prop.mua));
+		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
 
-              if(weight>ZERO){
+              if(weight>0.f){
 #ifdef USE_ATOMIC
                 if(!gcfg->isatomic){
 #endif
