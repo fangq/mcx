@@ -846,7 +846,14 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
            * If beam focus is set, determine the incident angle
            */
           if(f->pathlen<0.f){
-	    if(gcfg->c0.w!=0.f){
+	    if(isnan(gcfg->c0.w)){ // isotropic if focal length is -0.f
+                float ang,stheta,ctheta,sphi,cphi;
+                ang=TWO_PI*rand_uniform01(t); //next arimuth angle
+                sincosf(ang,&sphi,&cphi);
+                ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
+                sincosf(ang,&stheta,&ctheta);
+                rotatevector(v,stheta,ctheta,sphi,cphi);
+	    }else if(gcfg->c0.w!=0.f){
 	        float Rn2=(gcfg->c0.w > 0.f) - (gcfg->c0.w < 0.f);
 	        rv->x+=gcfg->c0.w*v->x;
 		rv->y+=gcfg->c0.w*v->y;
@@ -858,13 +865,6 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                 v->x*=Rn2;
                 v->y*=Rn2;
                 v->z*=Rn2;
-	    }else if(__float_as_int(gcfg->c0.w)==0x80000000){ // isotropic if focal length is -0.f
-                float ang,stheta,ctheta,sphi,cphi;
-                ang=TWO_PI*rand_uniform01(t); //next arimuth angle
-                sincosf(ang,&sphi,&cphi);
-                ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
-                sincosf(ang,&stheta,&ctheta);
-                rotatevector(v,stheta,ctheta,sphi,cphi);
 	    }
 	  }
 
