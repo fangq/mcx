@@ -2032,7 +2032,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	       for(i=0;i<(int)fieldlen;i++){  //accumulate field, can be done in the GPU
 	           field[i]=rawfield[i];
 #ifndef USE_DOUBLE
-                   field[i]=rawfield[i+fieldlen];
+                   field[i]+=rawfield[i+fieldlen];
 #endif
 	       }
 	       free(rawfield);
