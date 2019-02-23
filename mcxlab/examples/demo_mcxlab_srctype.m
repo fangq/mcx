@@ -179,20 +179,6 @@ axis equal; colorbar
 title('a general Fourier source (2,1.5)');
 
 % a uniform planar source outside the volume
-cfg.srctype='fourierx2d';
-cfg.srcpos=[10 10 -1];
-cfg.srcparam1=[40 0 0 40];
-cfg.srcparam2=[1.5 3 1/2 1/4];
-cfg.tend=0.4e-10;
-cfg.tstep=0.4e-10;
-flux=mcxlab(cfg);
-fcw=flux.data*cfg.tstep;
-subplot(222);
-imagesc(log10(abs(squeeze(fcw(:,:,1)))))
-axis equal; colorbar
-title('a general 2d Fourier pattern (1.5,3)');
-
-% a uniform planar source outside the volume
 cfg.srctype='slit';
 cfg.srcpos=[10 30 0];
 cfg.srcdir=[0 1 1]/sqrt(2);
@@ -203,7 +189,7 @@ cfg.tend=5e-9;
 cfg.tstep=5e-9;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
-subplot(223);
+subplot(222);
 hs=slice(log10(abs(double(fcw))),[],[15 45],[1]);
 set(hs,'linestyle','none');
 axis equal; colorbar
@@ -273,12 +259,54 @@ fcw3=flux.data*cfg.tstep;
 % imwrite(mcxframe,map,'mcx_dice.gif','DelayTime',0.5,'LoopCount',inf);
 
 fcw=sum(fcw1+fcw2+fcw3,4);
-subplot(224);
+subplot(223);
 hs=slice(log10(abs(double(fcw))),1,1,60);
 set(hs,'linestyle','none');
 axis equal; colorbar
 box on;
 title('an arbitrary pattern source from an angle');
+
+
+%% volumetric source 
+Rsrc=20;
+[xi,yi,zi]=ndgrid(-Rsrc:Rsrc,-Rsrc:Rsrc,-Rsrc:Rsrc);
+sphsrc=((xi.*xi+yi.*yi+zi.*zi)<=Rsrc*Rsrc);
+
+dim=60;
+
+% define source pattern
+clear cfg;
+% basic settings
+cfg.nphoton=1e7;
+cfg.tstart=0;
+cfg.tend=5e-9;
+cfg.tstep=5e-9;
+cfg.respin=1;
+cfg.seed=99999;
+cfg.outputtype = 'energy'; %should get the energy deposits in each voxel
+
+cfg.srctype='pattern3d';
+cfg.srcpattern=sphsrc;
+cfg.srcparam1=size(cfg.srcpattern);
+cfg.srcpos=[20,20,30];
+cfg.srcdir=[0 0 1 nan];
+cfg.autopilot=1;
+
+% define volume and inclusions
+cfg.vol=ones(dim,dim,dim);
+%%you can use a JSON string to define cfg.shapes
+cfg.shapes='{"Shapes":[{"Sphere":{"O":[25,21,10],"R":10,"Tag":2}}]}';
+cfg.prop=[0      0    1    1;    % Boundary
+          0.003  0.03 0.8  1;    % Tissue mua = 0.003 mus = 0.03 n = 1.85/1.37
+          0.006  0.09 0.8  1;    % Cancer mus  = 1.09 n = 1.37
+          1.3    0.8  0.8  1];   % TAM mua = 0.003, n = 0.095
+cfg.unitinmm=1e-3;
+
+flux = mcxlab(cfg);
+subplot(224);
+hs=slice(log10(sum(flux.data,4)),30,40,4);
+set(hs,'linestyle','none')
+
 %% test group 4
 
 clear cfg;

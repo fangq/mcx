@@ -36,12 +36,12 @@ jac=flux2.data;
 %% predict time-domain measurement change using pMC and partial-path
 
 dmua=0.0001;
-w1=mmcdetweight(detp,cfg.prop);
+w1=mcxdetweight(detp,cfg.prop);
 dprop=cfg.prop;
 dprop(3,1)=dprop(3,1)+dmua;
-w2=mmcdetweight(detp,dprop);
+w2=mcxdetweight(detp,dprop);
 dw=w2-w1;
-tof=mmcdettime(detp,cfg.prop);
+tof=mcxdettime(detp,cfg.prop);
 [counts, idx]=histc(tof,0:cfg.tstep:cfg.tend);
 
 %% predict time-domain measurement change using TD Jacobian and compare

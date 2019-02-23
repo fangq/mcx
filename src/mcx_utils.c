@@ -199,7 +199,7 @@ void mcx_initcfg(Config *cfg){
      cfg->maxjumpdebug=10000000;
      cfg->exportdebugdata=NULL;
      cfg->debugdatalen=0;
-     cfg->autopilot=0;
+     cfg->autopilot=1;
      cfg->seed=0x623F9A9E;    /** default RNG seed, a big integer, with a hidden meaning :) */
      cfg->exportfield=NULL;
      cfg->exportdetected=NULL;
@@ -1179,16 +1179,26 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            subitem=FIND_JSON_OBJ("Param1","Optode.Source.Param1",src);
            if(subitem){
               cfg->srcparam1.x=subitem->child->valuedouble;
-              cfg->srcparam1.y=subitem->child->next->valuedouble;
-              cfg->srcparam1.z=subitem->child->next->next->valuedouble;
-              cfg->srcparam1.w=subitem->child->next->next->next->valuedouble;
+              if(subitem->child->next){
+		      cfg->srcparam1.y=subitem->child->next->valuedouble;
+                      if(subitem->child->next->next){
+                          cfg->srcparam1.z=subitem->child->next->next->valuedouble;
+			  if(subitem->child->next->next->next)
+                              cfg->srcparam1.w=subitem->child->next->next->next->valuedouble;
+		      }
+	      }
            }
            subitem=FIND_JSON_OBJ("Param2","Optode.Source.Param2",src);
            if(subitem){
               cfg->srcparam2.x=subitem->child->valuedouble;
-              cfg->srcparam2.y=subitem->child->next->valuedouble;
-              cfg->srcparam2.z=subitem->child->next->next->valuedouble;
-              cfg->srcparam2.w=subitem->child->next->next->next->valuedouble;
+              if(subitem->child->next){
+		      cfg->srcparam2.y=subitem->child->next->valuedouble;
+                      if(subitem->child->next->next){
+                          cfg->srcparam2.z=subitem->child->next->next->valuedouble;
+			  if(subitem->child->next->next->next)
+                              cfg->srcparam2.w=subitem->child->next->next->next->valuedouble;
+		      }
+	      }
            }
 	   cfg->srcnum=FIND_JSON_KEY("SrcNum","Optode.Source.SrcNum",src,cfg->srcnum,valueint);
            subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
@@ -2152,7 +2162,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -L            (--listgpu)     print GPU information only\n\
  -t [16384|int](--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
- -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.\n\
+ -A [1|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
       or\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
@@ -2211,7 +2221,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n\
 == Example ==\n\
 example: (autopilot mode)\n\
-       %s -A -n 1e7 -f input.inp -G 1 -D P\n\
+       %s -A 1 -n 1e7 -f input.inp -G 1 -D P\n\
 or (manual mode)\n\
        %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n\

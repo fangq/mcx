@@ -66,10 +66,8 @@ Domain=copycfg(cfg,'unitinmm',Domain,'LengthUnit');
 Domain.Media=cell2struct(num2cell(cfg.prop), {'mua','mus','g','n'} ,2)';
 
 if(isfield(cfg,'shapes') && ischar(cfg.shapes))
-    Domain.VolumeFile=[filestub '_shapes.json'];
-    fid=fopen(Domain.VolumeFile,'wb');
-    fwrite(fid,cfg.shapes,'uchar');
-    fclose(fid);
+    Shapes=loadjson(cfg.shapes);
+    Shapes=Shapes.Shapes;
 end
 
 if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
@@ -109,6 +107,9 @@ Forward.Dt=cfg.tstep;
 %% assemble the complete input, save to a JSON or UBJSON input file
 
 mcxsession=struct('Session', Session, 'Forward', Forward, 'Optode',Optode, 'Domain', Domain);
+if(exist('Shapes','var'))
+    mcxsession.Shapes=Shapes;
+end
 if(strcmp(fext,'ubj'))
     saveubjson('',mcxsession,[filestub,'.ubj']);
 else
