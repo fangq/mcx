@@ -7,8 +7,9 @@
 #  by Qianqian Fang <q.fang at neu.edu>
 #
 #  Format:
-#     ./buildmcx.sh <releasetag>
+#     ./buildmcx.sh <releasetag> <branch>
 #                   releasetag defaults to "nightly" if not given
+#                   branch defaults to "master" if not given
 #
 #  Dependency:
 #   - To compile mcx binary, mcxlab for octave, and mcxstudio
@@ -77,6 +78,11 @@ cd mcx/mcx
 rm -rf *
 git checkout .
 
+if [ ! -z "$2" ]
+then
+      git checkout $2
+fi
+
 rm -rf .git
 cd ..
 zip -FSr $BUILDROOT/mcx-src-${BUILD}.zip mcx
@@ -106,7 +112,7 @@ g++ -O -pthread -shared -Wl,--version-script,/usr/local/MATLAB/R2010b/extern/lib
 -lrt -Wl,-Bstatic -lm -static-libgcc -static-libstdc++ -Wl,-Bdynamic \
 -Wl,-rpath-link,/usr/local/MATLAB/R2010b/bin/glnxa64 \
 -L/usr/local/MATLAB/R2010b/bin/glnxa64 -lmx -lmex -lmat \
--L/usr/local/MATLAB/R2010b/sys/os/glnxa64 -liomp5
+-L/usr/local/MATLAB/R2010b/sys/os/glnxa64
 
 elif [ "$OS" == "osx" ]; then
 
@@ -126,7 +132,7 @@ DYLD_LIBRARY_PATH="" g++ -static-libgcc -static-libstdc++ -O -Wl,-twolevel_names
 -L/Applications/MATLAB_R2016a.app/bin/maci64 -lmx -lmex
 
 elif [ "$OS" == "win" ]; then
-    cmd /c mex mcx_core.obj mcx_utils.obj mcx_shapes.obj tictoc.obj mcextreme.obj cjson/cJSON.obj -output ../mcxlab/mcx -L"E:\Applications\CUDA7.5\CUDA7.5/lib/x64" -lcudadevrt -lcudart_static  CXXFLAGS='$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER /openmp  ' LDFLAGS='-L$TMW_ROOT$MATLABROOT/sys/os/$ARCH $LDFLAGS /openmp ' -liomp5 mcxlab.cpp -outdir ../mcxlab -I/usr/local/cuda/include -I"E:\Applications\CUDA7.5\CUDA7.5/lib/include" -DUSE_XORSHIFT128P_RAND
+    cmd /c mex mcx_core.obj mcx_utils.obj mcx_shapes.obj tictoc.obj mcextreme.obj cjson/cJSON.obj -output ../mcxlab/mcx -L"E:\Applications\CUDA7.5\CUDA7.5/lib/x64" -lcudadevrt -lcudart_static  CXXFLAGS='$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER /openmp  ' LDFLAGS='-L$TMW_ROOT$MATLABROOT/sys/os/$ARCH $LDFLAGS /openmp ' mcxlab.cpp -outdir ../mcxlab -I/usr/local/cuda/include -I"E:\Applications\CUDA7.5\CUDA7.5/lib/include" -DUSE_XORSHIFT128P_RAND
     echo "Windows mcx build"
     cd ../mcxlab
     upx -9 mcx.mexa64
@@ -178,8 +184,12 @@ else
 fi
 
 cd ../mcxstudio
+lazbuild --build-mode=release ${LAZMAC} mcxshow.lpi
+lazbuild --build-mode=release ${LAZMAC} mcxviewer.lpi
 lazbuild --build-mode=release ${LAZMAC} mcxstudio.lpi
 cp debug/mcxstudio ../bin
+cp mcxshow ../bin
+cp mcxviewer ../bin
 
 if [ "$OS" == "osx" ]
 then
@@ -195,13 +205,13 @@ then
      upx -9 *.exe
      rm -rf mcx.exp mcx.lib
 elif [ "$OS" == "linux" ]; then
-     upx -9 mcx
+     upx -9 mcx*
 else
      echo "no compression on Mac"
 fi
 
 cd ../
-rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git*
+rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons
 if [ "$OS" != "win" ]
 then
     rm -rf setup
