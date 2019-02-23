@@ -2082,7 +2082,7 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2018 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2019 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
@@ -2179,8 +2179,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                tx3 - GL texture data for rendering (GL_RGBA32F)\n\
  -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
                                J - Jacobian (replay mode),   P - scattering, \n\
-                               M - momentum transfer; \n\
 			       event counts at each voxel (replay mode only)\n\
+                               M - momentum transfer; \n\
 \n\
 == User IO options ==\n\
  -h            (--help)        print this message\n\

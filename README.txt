@@ -5,7 +5,7 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.2 (v2018.12, Ether Dome - alpha)
+Version: 1.4.8 (v2019.2, Ether Dome - beta)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
@@ -161,7 +161,7 @@ such as the following:
 
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2018 Qianqian Fang <q.fang at neu.edu>          #
+#          Copyright (c) 2009-2019 Qianqian Fang <q.fang at neu.edu>          #
 #                             http://mcx.space/                               #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
@@ -169,7 +169,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::094734 $ Last $Date::2018-12-02 16:45:06 -05$ by $Author::Qianqian Fang $
+$Rev::7a4c4e $ Last $Date::2019-01-18 18:04:22 -05$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -244,10 +244,11 @@ where possible parameters include (the first value in [*|*] is the default)
                                mc2 - MCX mc2 format (binary 32bit float)
                                nii - Nifti format
                                hdr - Analyze 7.5 hdr/img format
+                               tx3 - GL texture data for rendering (GL_RGBA32F)
  -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
                                J - Jacobian (replay mode),   P - scattering, 
-                               M - momentum transfer; 
 			       event counts at each voxel (replay mode only)
+                               M - momentum transfer; 
 
 == User IO options ==
  -h            (--help)        print this message
