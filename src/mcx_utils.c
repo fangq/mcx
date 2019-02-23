@@ -2059,7 +2059,7 @@ int mcx_lookupindex(char *key, const char *index){
  */
 
 void mcx_version(Config *cfg){
-    const char ver[]="$Rev::       $";
+    const char ver[]="$Rev::      $2019.2";
     int v=0;
     sscanf(ver,"$Rev::%x",&v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n",v);
@@ -2100,7 +2100,7 @@ void mcx_printheader(Config *cfg){
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::       $ Last $Date::                       $ by $Author::              $\n\
+$Rev::      $2019.2 $Date::                       $ by $Author::              $\n\
 ###############################################################################\n");
 }
 
