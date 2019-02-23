@@ -304,8 +304,8 @@ cfg.unitinmm=1e-3;
 
 flux = mcxlab(cfg);
 subplot(224);
-hs=slice(log10(sum(flux.data,4)),30,40,4);
-set(hs,'linestyle','none')
+flux=sum(flux.data,4);
+imagesc(log10(squeeze(flux(30,:,:))));
 
 %% test group 4
 
