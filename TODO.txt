@@ -5,14 +5,11 @@
 *. support user defined phase functions [opened by FangQ, 2018/01/28]
 *. support anisotropic voxels [opened by FangQ, 2018/01/28]
 *. support non-uniform grid [opened by FangQ, 2018/01/28]
-*. support dual-mesh MMC like ray-tracing [opened by FangQ, 2018/01/28]
-
-== Long term projects ==
-
-*. fluorescent material support [2009/09/30, FangQ]
+*. support dual-grid MMC like ray-tracing [opened by FangQ, 2018/01/28]
 
 == Completed ==
 
+[done] *. fluorescent material support via pattern3d source [2009/09/30, FangQ]
 [done] *. support multi-byte medium [2017/01/01, FangQ] [mcx/issues/21]
 [done] *. extend the reflection model to support mis-match at internal boundaries [2010/07/29, FangQ]
 [done] *. support JSON input & output [2012/01/05, FangQ, port from MMC v0.9]
