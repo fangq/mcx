@@ -2162,7 +2162,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -L            (--listgpu)     print GPU information only\n\
  -t [16384|int](--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
- -A [1|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.\n\
+ -A [1|int]    (--autopilot)   1 let mcx decide thread/block size, 0 use -T/-t\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
       or\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
@@ -2171,6 +2171,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n\
 == Output options ==\n\
  -s sessionid  (--session)     a string to label all output file names\n\
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
+                               J - Jacobian (replay mode),   P - scattering, \n\
+			       event counts at each voxel (replay mode only)\n\
+                               M - momentum transfer; \n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
                                setting -x to 1 also implies setting '-d' to 1\n\
@@ -2187,10 +2191,6 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                nii - Nifti format\n\
                                hdr - Analyze 7.5 hdr/img format\n\
                                tx3 - GL texture data for rendering (GL_RGBA32F)\n\
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
-                               J - Jacobian (replay mode),   P - scattering, \n\
-			       event counts at each voxel (replay mode only)\n\
-                               M - momentum transfer; \n\
 \n\
 == User IO options ==\n\
  -h            (--help)        print this message\n\

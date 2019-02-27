@@ -288,7 +288,7 @@ cfg.outputtype = 'energy'; %should get the energy deposits in each voxel
 cfg.srctype='pattern3d';
 cfg.srcpattern=sphsrc;
 cfg.srcparam1=size(cfg.srcpattern);
-cfg.srcpos=[20,20,30];
+cfg.srcpos=[10,10,20];
 cfg.srcdir=[0 0 1 nan];
 cfg.autopilot=1;
 
@@ -305,7 +305,10 @@ cfg.unitinmm=1e-3;
 flux = mcxlab(cfg);
 subplot(224);
 flux=sum(flux.data,4);
-imagesc(log10(squeeze(flux(30,:,:))));
+hs=slice(log10(flux),20,40,4);
+set(hs,'linestyle','none')
+set(gca,'xlim',[0 dim],'ylim',[0 dim],'zlim',[0 dim]);
+axis equal;
 
 %% test group 4
 

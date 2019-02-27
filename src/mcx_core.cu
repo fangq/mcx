@@ -1613,7 +1613,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
              mcx_error(-1,"input domain is 2D, the initial direction can not have non-zero value in the singular dimension",__FILE__,__LINE__);
      }
      if(!cfg->autopilot){
-	int gates=(uint)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
+	uint gates=(uint)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
 	gpu[gpuid].autothread=cfg->nthread;
 	gpu[gpuid].autoblock=cfg->nblocksize;
 	if(cfg->maxgate==0)

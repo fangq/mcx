@@ -134,7 +134,7 @@
         <PackageName Value="LCL"/>
       </Item8>
     </RequiredPackages>
-    <Units Count="13">
+    <Units Count="12">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -272,138 +272,11 @@
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit11>
-      <Unit12>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene16/Source/Basis/XOpenGL.pas"/>
-        <EditorIndex Value="4"/>
-        <TopLine Value="174"/>
-        <CursorPos X="43" Y="189"/>
-        <UsageCount Value="10"/>
-        <Loaded Value="True"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit12>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory Count="30" HistoryIndex="29">
-      <Position1>
-        <Filename Value="texture_3d.pas"/>
-        <Caret Line="110" TopLine="90"/>
-      </Position1>
-      <Position2>
-        <Filename Value="texture_3d.pas"/>
-        <Caret Line="276" Column="54" TopLine="252"/>
-      </Position2>
-      <Position3>
-        <Filename Value="texture_3d.pas"/>
-        <Caret Line="278" Column="62" TopLine="252"/>
-      </Position3>
-      <Position4>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1132" TopLine="1121"/>
-      </Position4>
-      <Position5>
-        <Filename Value="texture_3d.pas"/>
-        <Caret Line="110" TopLine="89"/>
-      </Position5>
-      <Position6>
-        <Filename Value="texture_3d.pas"/>
-        <Caret Line="273" Column="22" TopLine="252"/>
-      </Position6>
-      <Position7>
-        <Filename Value="texture_3d.pas"/>
-        <Caret Line="110" TopLine="89"/>
-      </Position7>
-      <Position8>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene16/Source/Basis/XOpenGL.pas"/>
-        <Caret Line="194" Column="30" TopLine="173"/>
-      </Position8>
-      <Position9>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene16/Source/Basis/XOpenGL.pas"/>
-        <Caret Line="195" Column="49" TopLine="173"/>
-      </Position9>
-      <Position10>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1131" Column="32" TopLine="1121"/>
-      </Position10>
-      <Position11>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="354" Column="56" TopLine="330"/>
-      </Position11>
-      <Position12>
-        <Filename Value="mcxview.pas"/>
-      </Position12>
-      <Position13>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="97" Column="22" TopLine="65"/>
-      </Position13>
-      <Position14>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="155" TopLine="129"/>
-      </Position14>
-      <Position15>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="166" Column="25" TopLine="159"/>
-      </Position15>
-      <Position16>
-        <Filename Value="mcxview.pas"/>
-      </Position16>
-      <Position17>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="583" Column="19" TopLine="550"/>
-      </Position17>
-      <Position18>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1135" Column="19" TopLine="1103"/>
-      </Position18>
-      <Position19>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="608" Column="43" TopLine="589"/>
-      </Position19>
-      <Position20>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="156" Column="23" TopLine="136"/>
-      </Position20>
-      <Position21>
-        <Filename Value="../../../../../../../../kwafoo2/users/fangq/Libraries/glscene16/Source/Basis/XOpenGL.pas"/>
-        <Caret Line="195" Column="44" TopLine="174"/>
-      </Position21>
-      <Position22>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1135" Column="19" TopLine="1103"/>
-      </Position22>
-      <Position23>
-        <Filename Value="mcxoutput.pas"/>
-        <Caret Line="29" Column="60" TopLine="10"/>
-      </Position23>
-      <Position24>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1221" Column="31" TopLine="1201"/>
-      </Position24>
-      <Position25>
-        <Filename Value="mcxgui.pas"/>
-      </Position25>
-      <Position26>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="412" Column="28" TopLine="381"/>
-      </Position26>
-      <Position27>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="610" Column="31" TopLine="577"/>
-      </Position27>
-      <Position28>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="630" Column="47" TopLine="597"/>
-      </Position28>
-      <Position29>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="984" Column="23" TopLine="951"/>
-      </Position29>
-      <Position30>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1149" Column="34" TopLine="1116"/>
-      </Position30>
-    </JumpHistory>
+    <JumpHistory HistoryIndex="-1"/>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
@@ -434,11 +307,4 @@
       </Options>
     </Linking>
   </CompilerOptions>
-  <Debugging>
-    <Exceptions Count="1">
-      <Item1>
-        <Name Value="ERangeError"/>
-      </Item1>
-    </Exceptions>
-  </Debugging>
 </CONFIG>

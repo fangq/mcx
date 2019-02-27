@@ -285,6 +285,17 @@ if(nargin==2 && ischar(varargin{2}))
     end
 end
 
+if(isstruct(varargin{1}))
+    for i=1:length(varargin{1})
+        castlist={'srcpattern','srcpos','detpos','prop','workload','srcdir'};
+        for j=1:length(castlist)
+            if(isfield(varargin{1}(i),castlist{j}))
+                varargin{1}(i).(castlist{j})=double(varargin{1}(i).(castlist{j}));
+            end
+        end
+    end
+end
+
 if(useopencl==0)
     [varargout{1:nargout}]=mcx(varargin{1});
 else
