@@ -1,0 +1,71 @@
+{
+	"Session": {
+		"ID": "USC_19-5_atlas",
+		"DoMismatch": 1,
+		"OutputType": "fluence",
+		"DoAutoThread": 1,
+		"Photons": 100000000
+	},
+	"Forward": {
+		"T0": 0,
+		"T1": 5e-09,
+		"Dt": 5e-10
+	},
+	"Optode": {
+		"Source": {
+			"Pos": [133.537,90.1988,200.07],
+			"Dir": [-0.5086,-0.1822,-0.8415],
+			"Type": "pencil",
+			"SrcNum": 1
+		}
+	},
+	"Domain": {
+		"OriginType": 1,
+		"Media": [
+			{
+				"mua": 0,
+				"mus": 0,
+				"g": 1,
+				"n": 1
+			},
+			{
+				"mua": 0.019,
+				"mus": 7.8,
+				"g": 0.89,
+				"n": 1.37
+			},
+			{
+				"mua": 0.02,
+				"mus": 9,
+				"g": 0.89,
+				"n": 1.37
+			},
+			{
+				"mua": 0.004,
+				"mus": 0.009,
+				"g": 0.89,
+				"n": 1.37
+			},
+			{
+				"mua": 0.019,
+				"mus": 7.8,
+				"g": 0.89,
+				"n": 1.37
+			},
+			{
+				"mua": 0.08,
+				"mus": 40.9,
+				"g": 0.84,
+				"n": 1.37
+			},
+			{
+				"mua": 0,
+				"mus": 0,
+				"g": 1,
+				"n": 1
+			}
+		],
+		"Dim": [166,209,223],
+		"VolumeFile": "USC_19-5_atlas_vol.bin"
+	}
+}
