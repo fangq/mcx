@@ -32,6 +32,7 @@ cfg.srcparam1=[0.3/cfg.unitinmm 0 0 0];
 cfg.isreflect=0;
 cfg.autopilot=1;
 cfg.gpuid=1;
+cfg.debuglevel='P';
 
 %cfg.outputtype='energy';
 cfg.outputtype='flux';
