@@ -2187,7 +2187,8 @@ begin
                   [mbYes, mbNo, mbCancel],0) = mrYes) then begin
                 if Reg.OpenKey(Key, true) then  begin
                     Reg.WriteInteger('TdrDelay', 999999);
-                    MessageDlg('Confirmation', 'Registry modification was successfully applied.', mtInformation, [mbOK],0);
+                    if(MessageDlg('Confirmation', 'Registry modification was successfully applied. You MUST reboot the computer to activate the settings, select Yes to reboot (strongly recommended), No to reboot manually.', mtInformation, [mbYes, mrNo],0) = mrYes) then
+                        RunExternalCmd('shutdown /r');
                 end else
                     MessageDlg('Permission Error', 'You don''t have permission to modify registry. Please contact your administrator to apply the fix.', mtError, [mbOK],0);
             end;

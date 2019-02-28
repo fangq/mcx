@@ -75,13 +75,14 @@ cat <<EOF >> mcx/mcx/.git/config
 EOF
 
 cd mcx/mcx
-rm -rf *
-git checkout .
 
 if [ ! -z "$2" ]
 then
-      git checkout $2
+      git checkout $2 .
 fi
+
+rm -rf *
+git checkout .
 
 rm -rf .git
 cd ..
@@ -135,7 +136,7 @@ elif [ "$OS" == "win" ]; then
     cmd /c mex mcx_core.obj mcx_utils.obj mcx_shapes.obj tictoc.obj mcextreme.obj cjson/cJSON.obj -output ../mcxlab/mcx -L"E:\Applications\CUDA7.5\CUDA7.5/lib/x64" -lcudadevrt -lcudart_static  CXXFLAGS='$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER /openmp  ' LDFLAGS='-L$TMW_ROOT$MATLABROOT/sys/os/$ARCH $LDFLAGS /openmp ' mcxlab.cpp -outdir ../mcxlab -I/usr/local/cuda/include -I"E:\Applications\CUDA7.5\CUDA7.5/lib/include" -DUSE_XORSHIFT128P_RAND
     echo "Windows mcx build"
     cd ../mcxlab
-    upx -9 mcx.mexa64
+    upx -9 mcx.mexw64
     cd ../src
 fi
 
