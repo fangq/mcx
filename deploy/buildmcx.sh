@@ -78,7 +78,7 @@ cd mcx/mcx
 
 if [ ! -z "$2" ]
 then
-      git checkout $2 .
+      git checkout $2
 fi
 
 rm -rf *
@@ -189,8 +189,8 @@ lazbuild --build-mode=Release ${LAZMAC} mcxshow.lpi
 lazbuild --build-mode=Release ${LAZMAC} mcxviewer.lpi
 lazbuild --build-mode=Release ${LAZMAC} mcxstudio.lpi
 cp debug/mcxstudio ../bin
-cp debug/mcxshow ../bin
-cp debug/mcxviewer ../bin
+cp mcxshow ../bin
+cp mcxviewer ../bin
 
 if [ "$OS" == "osx" ]
 then
