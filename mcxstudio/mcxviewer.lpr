@@ -11,6 +11,8 @@ uses
 
 //{$R *.res}
 
+{$R *.res}
+
 begin
   RequireDerivedFormResource:=True;
   Application.Initialize;

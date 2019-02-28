@@ -15,7 +15,7 @@
     <i18n>
       <EnableI18N LFM="False"/>
     </i18n>
-    <BuildModes Count="3">
+    <BuildModes Count="3" Active="Debug">
       <Item1 Name="default" Default="True"/>
       <Item2 Name="Debug">
         <CompilerOptions>
@@ -26,7 +26,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+            <UnitOutputDirectory Value="debug"/>
             <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
           </SearchPaths>
           <Parsing>
@@ -138,7 +138,7 @@
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
         <TopLine Value="734"/>
-        <CursorPos X="49" Y="750"/>
+        <CursorPos X="59" Y="745"/>
         <UsageCount Value="95"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -491,7 +491,7 @@
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit48>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
         <Filename Value="mcxrender.pas"/>
         <Caret Line="750" TopLine="731"/>
@@ -605,12 +605,8 @@
       </Position28>
       <Position29>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="29" Column="52" TopLine="70"/>
-      </Position29>
-      <Position30>
-        <Filename Value="mcxrender.pas"/>
         <Caret Line="746" Column="58" TopLine="734"/>
-      </Position30>
+      </Position29>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>

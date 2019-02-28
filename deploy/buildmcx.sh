@@ -171,7 +171,7 @@ if [ "$OS" == "linux" ]
 then
     make AR=g++ BACKEND=cudastatic USERLINKOPT='-Wl,-Bstatic -lgomp -Wl,-Bdynamic' &> $BUILDROOT/mcx_buildlog_${DATE}.log
 elif [ "$OS" == "osx" ]; then
-    make &> $BUILDROOT/mcx_buildlog_${DATE}.log
+    make BACKEND=cudastatic  &> $BUILDROOT/mcx_buildlog_${DATE}.log
 else
     make static &> $BUILDROOT/mcx_buildlog_${DATE}.log
 fi
@@ -185,12 +185,12 @@ else
 fi
 
 cd ../mcxstudio
-lazbuild --build-mode=release ${LAZMAC} mcxshow.lpi
-lazbuild --build-mode=release ${LAZMAC} mcxviewer.lpi
-lazbuild --build-mode=release ${LAZMAC} mcxstudio.lpi
+lazbuild --build-mode=Release ${LAZMAC} mcxshow.lpi
+lazbuild --build-mode=Release ${LAZMAC} mcxviewer.lpi
+lazbuild --build-mode=Release ${LAZMAC} mcxstudio.lpi
 cp debug/mcxstudio ../bin
-cp mcxshow ../bin
-cp mcxviewer ../bin
+cp debug/mcxshow ../bin
+cp debug/mcxviewer ../bin
 
 if [ "$OS" == "osx" ]
 then
