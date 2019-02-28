@@ -1957,14 +1957,14 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0, ndone=-1;
-#ifndef WIN32
-             CUDA_ASSERT(cudaEventRecord(updateprogress));
-#endif
+//#ifndef WIN32
+//             CUDA_ASSERT(cudaEventRecord(updateprogress));
+//#endif
 	     mcx_progressbar(-0.f,cfg);
 	     do{
-#ifndef WIN32
-               CUDA_ASSERT(cudaEventQuery(updateprogress));
-#endif
+//#ifndef WIN32
+//               CUDA_ASSERT(cudaEventQuery(updateprogress));
+//#endif
                ndone = *progress;
 	       if (ndone > p0){
 		  mcx_progressbar(ndone/(param.threadphoton*1.45f),cfg);
@@ -2172,7 +2172,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	 free(scale);
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
-         MCX_FPRINTF(cfg->flog,"saving data to file ... %lu %d\t",fieldlen,gpu[gpuid].maxgate);
+         MCX_FPRINTF(cfg->flog,"saving data to file ...\t");
          mcx_savedata(cfg->exportfield,fieldlen,cfg);
          MCX_FPRINTF(cfg->flog,"saving data complete : %d ms\n\n",GetTimeMillis()-tic);
          fflush(cfg->flog);
