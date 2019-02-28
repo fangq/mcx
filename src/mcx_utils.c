@@ -341,9 +341,6 @@ void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputfo
      logval=(float *)malloc(sizeof(float)*len);
 
      if(type32bit==NIFTI_TYPE_FLOAT32){
-	 for(i=0;i<len;i++)
-	    logval[i]=log10f(dat[i]);
-	 hdr.intent_code=NIFTI_INTENT_LOG10PVAL;
          hdr.pixdim[4] = cfg->tstep*1e6f;
      }else{
          short *mask=(short*)logval;
