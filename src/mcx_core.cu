@@ -1433,12 +1433,12 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 
     CUDA_ASSERT(cudaGetDeviceCount(&deviceCount));
     if (deviceCount == 0){
-        MCX_FPRINTF(stderr,"No CUDA-capable GPU device found\n");
+        MCX_FPRINTF(stderr,S_RED"ERROR: No CUDA-capable GPU device found\n"S_RESET);
         return 0;
     }
     *info=(GPUInfo *)calloc(deviceCount,sizeof(GPUInfo));
     if (cfg->gpuid && cfg->gpuid > deviceCount){
-        MCX_FPRINTF(stderr,"Specified GPU ID is out of range\n");
+        MCX_FPRINTF(stderr,S_RED"ERROR: Specified GPU ID is out of range\n"S_RESET);
         return 0;
     }
     // scan from the first device

@@ -364,11 +364,19 @@ of heterogeneities. The domain is consisted of a 6x6x6 cm box with a
 
 This test is identical to that used for Fig. 3 in [Fang2010].
 
-==== demo_sphere_cube_subpixel.m ====
+==== demo_fullhead_atlas.m ====
+In this example, we demonstrate light transport simulation in a full-head 
+atlas template(USC 19.5 year group[Sanchez2012]). 
+This demo is identical to the MCX simulation used for Fig.9(a) in
+[TranYan2019](submitted).
 
-In this example, we demonstrate how to use sub-pixel resolution 
-to represent the problem domain. The domain is consisted of a 
-6x6x6 cm box with a 2cm diameter sphere embedded at the center.
+==== demo_mcxyz_skinvessel.m ====
+In this example, we compare between MCX and mcxyz written by Dr. Steve Jacques.
+The same benchmark can be found at https://omlc.org/software/mc/mcxyz/index.html
+
+==== demo_digimouse_sfdi.m ====
+This simulates a widefield SFDI source using the Digimouse atlas. There are
+21 tissue types in the atlas.
 
 ==== demo_4layer_head.m ====
 
@@ -385,10 +393,31 @@ pattern illumuniation (spatial frequency domain sources), arcsine
 distribution beam, uniform cone beam, and an arbitrary light pattern 
 (defined by a 2D image).
 
-==== bench_reseedlimit.m ====
-In this simulation, we verify the reduction of Monte Carlo stochastic
-noise with respect to the increase of photon numbers. We also test the
-effect of the reseedlimit parameter and its impact to the noise.
+==== demo_mcxlab_2d.m ====
+In this example, we show how to use MCX to run a 2D simulation.
+You must define a 3D array with one singleton dimension (with length 1).
+unfortunately if you define z as singleton, matlab will make the array 2D
+instead of 3D, so we have to purmute it to make the 1st dimension
+singleton.
+
+==== demo_photon_sharing.m ====
+This script demonstrates the "photon sharing" feature (Yao&Yan et al, 2019, 
+Photonics West) to simultaneously create forward solutions of multiple
+patterned source.
+
+==== demo_replay_timedomain.m ====
+In this example, we show how to use replay to obtain time-resolved
+Jacobians - setting cfg.replaydet to -1 to replay all detectors.
+
+==== demo_replay_vs_pmc_timedomain.m ====
+In this example, we compare perturbation MC and replay in predicting
+time-resolved measurement change with respect to mua change in a layer.
+
+==== demo_sphere_cube_subpixel.m ====
+
+In this example, we demonstrate how to use sub-pixel resolution 
+to represent the problem domain. The domain is consisted of a 
+6x6x6 cm box with a 2cm diameter sphere embedded at the center.
 
 
 == # How to compile MCXLAB ==
@@ -429,4 +458,7 @@ Screenshot for using MCXLAB in GNU Octave:
  [Fang2009] Qianqian Fang and David A. Boas, "Monte Carlo simulation 
   of photon migration in 3D turbid media accelerated by graphics processing 
   units," Opt. Express 17, 20178-20190 (2009)
+
+ [TranYan2019] A.P.Tran, S.Yan and Q.Fang, "Improving model-based fNIRS
+ analysis using mesh-based anatomical and light-transport models".
 
