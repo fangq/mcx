@@ -169,7 +169,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::7a4c4e $ Last $Date::2019-01-18 18:04:22 -05$ by $Author::Qianqian Fang $
+$Rev::3800fa$2019.3 $Date::2019-02-28 13:51:28 -05$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -179,7 +179,6 @@ where possible parameters include (the first value in [*|*] is the default)
  -f config     (--input)       read an input file in .json or .inp format
 
 == MC options ==
-
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
                                max accepted value:9.2234e+18 on 64bit systems
  -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r
@@ -220,7 +219,7 @@ where possible parameters include (the first value in [*|*] is the default)
  -L            (--listgpu)     print GPU information only
  -t [16384|int](--thread)      total thread number
  -T [64|int]   (--blocksize)   thread number per block
- -A [0|int]    (--autopilot)   auto thread config:1 dedicated GPU;2 non-dedica.
+ -A [1|int]    (--autopilot)   1 let mcx decide thread/block size, 0 use -T/-t
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto
       or
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)
@@ -229,6 +228,10 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Output options ==
  -s sessionid  (--session)     a string to label all output file names
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
+                               J - Jacobian (replay mode),   P - scattering, 
+			       event counts at each voxel (replay mode only)
+                               M - momentum transfer; 
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions
                                setting -x to 1 also implies setting '-d' to 1
@@ -245,10 +248,6 @@ where possible parameters include (the first value in [*|*] is the default)
                                nii - Nifti format
                                hdr - Analyze 7.5 hdr/img format
                                tx3 - GL texture data for rendering (GL_RGBA32F)
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
-                               J - Jacobian (replay mode),   P - scattering, 
-			       event counts at each voxel (replay mode only)
-                               M - momentum transfer; 
 
 == User IO options ==
  -h            (--help)        print this message
@@ -279,7 +278,7 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Example ==
 example: (autopilot mode)
-       mcx -A -n 1e7 -f input.inp -G 1 -D P
+       mcx -A 1 -n 1e7 -f input.inp -G 1 -D P
 or (manual mode)
        mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)

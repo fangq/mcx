@@ -65,4 +65,26 @@
 #define MCX_SRC_PENCILARRAY 14 /**<  a rectangular array of pencil beams */
 #define MCX_SRC_PATTERN3D  15  /**<  a 3D pattern source, starting from srcpos, srcparam1.{x,y,z} define the x/y/z dimensions */
 
+#ifndef MCX_CONTAINER
+  #define S_RED     "\x1b[31m"
+  #define S_GREEN   "\x1b[32m"
+  #define S_YELLOW  "\x1b[33m"
+  #define S_BLUE    "\x1b[34m"
+  #define S_MAGENTA "\x1b[35m"
+  #define S_CYAN    "\x1b[36m"
+  #define S_BOLD     "\x1b[1m"
+  #define S_ITALIC   "\x1b[3m"
+  #define S_RESET   "\x1b[0m"
+#else
+  #define S_RED
+  #define S_GREEN
+  #define S_YELLOW
+  #define S_BLUE
+  #define S_MAGENTA
+  #define S_CYAN
+  #define S_BOLD
+  #define S_ITALIC
+  #define S_RESET
+#endif
+
 #endif

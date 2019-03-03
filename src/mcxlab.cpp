@@ -670,7 +670,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	     cfg->workload[i]=val[i];
         printf("mcx.workload=<<%d>>;\n",arraydim[0]*arraydim[1]);
     }else{
-        printf("WARNING: redundant field '%s'\n",name);
+        printf(S_RED"WARNING: redundant field '%s'\n"S_RESET,name);
     }
     if(jsonshapes){
         Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},0};
@@ -836,7 +836,7 @@ void mcx_validate_config(Config *cfg){
         if(cfg->seed==SEED_FROM_FILE){
             if(cfg->respin>1 || cfg->respin<0){
 	       cfg->respin=1;
-	       fprintf(stderr,"Warning: respin is disabled in the replay mode\n");
+	       fprintf(stderr,S_RED"WARNING: respin is disabled in the replay mode\n"S_RESET);
 	    }
         }
      }

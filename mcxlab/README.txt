@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) v2019.2
+Version: this package is part of Monte Carlo eXtreme (MCX) v2019.3
 
 <toc>
 
@@ -80,8 +80,14 @@ the verbose command line options in MCX.
           see sample script at the bottom
      option: (optional), options is a string, specifying additional options
           option='preview': this plots the domain configuration using mcxpreview(cfg)
-          option='mcxcl':   this calls mcxcl.mex* instead of mcx.mex* on non-NVIDIA hardware
+          option='opencl':  force using mcxcl.mex* instead of mcx.mex* on NVIDIA/AMD/Intel hardware
+          option='cuda':    force using mcx.mex* instead of mcxcl.mex* on NVIDIA GPUs
  
+     if one defines USE_MCXCL=1 in MATLAB command line window, all following
+     mcxlab and mcxlabcl calls will use mcxcl.mex; by setting option='cuda', one can
+     force both mcxlab and mcxlabcl to use mcx (cuda version). Similarly, if
+     USE_MCXCL=0, all mcxlabcl and mcxlab call will use mcx.mex by default, unless
+     one set option='opencl'.
  
      cfg may contain the following fields:
  
