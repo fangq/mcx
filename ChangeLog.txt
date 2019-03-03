@@ -1,6 +1,12 @@
 = Change Log =
 
-== MCX v2019.2 (Ether Dome beta - 1.4.8), FangQ <q.fang (a) neu.edu> ==
+== MCX v2019.3 (Ether Dome beta - 1.4.8), FangQ <q.fang (a) neu.edu> ==
+ 2019-03-03 [a3462be] add README files for all new benchmarks, add "What's New" in master README
+ 2019-03-02 [69a7375] use ANSI colors in the output to improve readability
+ 2019-02-28 [123d11d] add USC 19.5 atlas example, Fig9a in TranYan2019(submitted)
+ 2019-02-28 [ccdf8e3]*add digimouse example
+ 2019-02-28 [e36efa0]*add colin27 atlas example using latest v3 segmentation, Fig6 in Fang2009
+ 2019-02-28 [ae2d60e] fix progress bar error in newer nvidia drivers
  2019-02-27 [6e84e26] fix mcxlab srcpattern input format bug, update mcxlab help info
  2019-02-26 [f1418cd] fix index mismatch between mcx_replay_prep and mcx detphotons output
  2019-02-23 [ae9443f]*copy detected photon post-processing scripts from mmc to mcx

@@ -2222,6 +2222,7 @@ begin
         SetLength(Buffer, BytesAvailable);
         BytesRead := proc.OutPut.Read(Buffer[1], BytesAvailable);
         Buffer:=StringReplace(Buffer,#8, '',[rfReplaceAll]);
+        Buffer:=ReplaceRegExpr(#27'\[(\d+;)*\d+m',Buffer,'',false);
         //Buffer:=ReplaceRegExpr('\%Progress:',Buffer,'\%'+#13+'Progress',false);
         if(proc=pMCX) and (ckbDebug.Checked[2]) then begin
                revbuf:=ReverseString(Buffer);

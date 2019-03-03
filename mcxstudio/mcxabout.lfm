@@ -1,22 +1,23 @@
 object fmAbout: TfmAbout
   Left = 1104
-  Height = 410
+  Height = 406
   Top = 299
-  Width = 480
+  Width = 475
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
-  ClientHeight = 410
-  ClientWidth = 480
+  ClientHeight = 406
+  ClientWidth = 475
   Color = 4539717
+  DesignTimePPI = 95
   Position = poMainFormCenter
   LCLVersion = '1.8.2.0'
   object Image1: TImage
     Left = 16
-    Height = 152
+    Height = 150
     Top = 0
-    Width = 357
+    Width = 353
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869636F76000089504E47
       0D0A1A0A0000000D49484452000001380000007C0806000000FDC1ACA4000000
@@ -974,22 +975,23 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 311
+    Left = 307
     Height = 37
-    Top = 359
-    Width = 124
+    Top = 355
+    Width = 123
     Anchors = [akRight, akBottom]
     BorderSpacing.Right = 45
     BorderSpacing.Bottom = 14
     Caption = 'OK'
     ModalResult = 1
+    ParentFont = False
     TabOrder = 0
   end
   object Image2: TImage
-    Left = 368
-    Height = 85
+    Left = 364
+    Height = 84
     Top = 24
-    Width = 88
+    Width = 87
     Center = True
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869638205000089504E47
@@ -1045,9 +1047,9 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Button1
     Left = 20
-    Height = 207
-    Top = 141
-    Width = 440
+    Height = 204
+    Top = 140
+    Width = 435
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 20
     BorderSpacing.Right = 20
@@ -1077,6 +1079,12 @@ object fmAbout: TfmAbout
       'The JSON shape editor uses an function "ShpwJSONData"  '
       'adapted from the "jsonviewer" example in Lazarus.'
       'URL: http://wiki.freepascal.org/fcl-json#From_JsonViewer'
+      ''
+      'The 3D volume renderer is adpated from the Texture3D '
+      'example from the GLScene Project. The GLScene codes '
+      'are licensed under the Mozilla Public License (MPL 2.0), '
+      'see README for details'
+      'URL: http://glscene.org'
     )
     ParentColor = True
     ParentFont = False
@@ -1086,10 +1094,10 @@ object fmAbout: TfmAbout
   object Image3: TImage
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
-    Left = 24
+    Left = 23
     Height = 33
     Hint = 'About MCX'
-    Top = 359
+    Top = 355
     Width = 200
     Anchors = [akBottom]
     AutoSize = True

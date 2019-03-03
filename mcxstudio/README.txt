@@ -4,7 +4,7 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9 (v2018)
+Version: 0.9.5 (v2019.3)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
@@ -60,14 +60,18 @@ extract mcx/mmc/mcxcl binary packags inside MCXSuite/ folder, so that one has \
 the following folder structure
 
 <pre>MCXStudio/
+├── MATLAB/
+│   ├── mcxlab
+│   ├── mcxlabcl
+│   └── mmclab
 ├── MCXSuite/
 │   ├── mcx/bin/mcx
 │   ├── mcxcl/bin/mcxcl
 │   └── mmc/bin/mmc
 ├── mcxstudio
-├── mcx
-├── mmc
-├── mcxcl
+├── mcx (dummy file)
+├── mmc (dummy file)
+├── mcxcl (dummy file)
 └── Output/
 </pre>
 
@@ -223,6 +227,23 @@ In order for a user to plot the output data, one must click on the Plot button i
 toolboar, and select one of the Download ... menus to retrieve the file back to your client
 drive in order to visualize the results. You must have scp commands available for the file 
 transfer to work.
+
+The MCX volume renderer (mcxviewer) was adapted based on the Texture3D Example
+provided by the GLScene Project (http://glscene.org). The original author
+of this example is Jürgen Abel. The license for GLScene is 
+
+GLScene is distributed under Mozilla Public Licence (MPL 2.0), which means, in short, 
+that it is free for both freeware and commercial use. 
+The code is still copyrighted (in that it isn't public domain), but you can use it 
+in products with closed or open-source freely. The only requirements are:
+Acknowledge GLScene is used somewhere in your application (in an about box, credits page or printed manual, etc.
+with at least a link to http://glscene.org)
+Modifications made to GLScene units must be made public (no need to publish the full code, 
+only to state which parts were altered, and how), but feel welcome to open-source your code if you so wish.
+Some Delphi units, API headers and DLLs are included in the GLScene package for convenience 
+but are not part of GLScene, may use different licensing scheme and have different copyright owners, 
+such files have an explicit notice attached to them or placed in their directory.
+
 
 ---------------------------------------------------------------------------
 V.    Acknowledgement

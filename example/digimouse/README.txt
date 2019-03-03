@@ -9,7 +9,19 @@ unlzma on Linux or 7-zip on Windows. For example, on Linux:
 
  unlzma digimouse_0.8mm.bin.lzma
 
+and then run it using
 
- [Fang2012] Fang Q and Kaeli D, "Accelerating mesh-based Monte Carlo method 
-  on modern CPU architectures," Biomed. Opt. Express, 3(12), 3223-3230, 2012
+ ./run_atlas.sh
+
+or
+
+ ./run_atlas.sh -n 1e6 
+
+to specify a different photon number
+
+
+=== Reference ===
+
+[Fang2012] Fang Q and Kaeli D, "Accelerating mesh-based Monte Carlo method 
+ on modern CPU architectures," Biomed. Opt. Express, 3(12), 3223-3230, 2012
 

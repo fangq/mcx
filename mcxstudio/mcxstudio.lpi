@@ -134,11 +134,11 @@
         <PackageName Value="LCL"/>
       </Item8>
     </RequiredPackages>
-    <Units Count="12">
+    <Units Count="14">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <CursorPos X="31" Y="8"/>
         <UsageCount Value="230"/>
         <Loaded Value="True"/>
@@ -150,8 +150,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="1188"/>
-        <CursorPos Y="1220"/>
+        <TopLine Value="2213"/>
+        <CursorPos X="62" Y="2223"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 Y="924" ID="9"/>
@@ -165,10 +165,11 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="6"/>
-        <CursorPos X="39" Y="24"/>
+        <EditorIndex Value="7"/>
+        <CursorPos X="4" Y="6"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="mcxshape.pas"/>
@@ -176,7 +177,7 @@
         <ComponentName Value="fmShapeEditor"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="11"/>
         <TopLine Value="16"/>
         <CursorPos X="40" Y="16"/>
         <UsageCount Value="201"/>
@@ -188,7 +189,7 @@
         <ComponentName Value="fmNewSession"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <CursorPos X="71" Y="11"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
@@ -199,7 +200,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <TopLine Value="124"/>
         <CursorPos X="5" Y="154"/>
         <UsageCount Value="239"/>
@@ -211,7 +212,7 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="10"/>
         <CursorPos X="60" Y="29"/>
         <UsageCount Value="200"/>
@@ -233,7 +234,7 @@
         <ComponentName Value="fmDomain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="3"/>
         <CursorPos X="61" Y="21"/>
         <UsageCount Value="136"/>
         <Loaded Value="True"/>
@@ -244,7 +245,7 @@
         <ComponentName Value="fmViewer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="136"/>
         <CursorPos X="23" Y="156"/>
         <UsageCount Value="54"/>
@@ -254,9 +255,8 @@
       <Unit10>
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="89"/>
-        <CursorPos X="53" Y="105"/>
+        <EditorIndex Value="5"/>
+        <CursorPos X="69" Y="14"/>
         <UsageCount Value="54"/>
         <Loaded Value="True"/>
       </Unit10>
@@ -266,17 +266,72 @@
         <ComponentName Value="fmDataFile"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <CursorPos X="28" Y="13"/>
         <UsageCount Value="26"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit11>
+      <Unit12>
+        <Filename Value="/usr/share/fpcsrc/3.0.4/packages/rtl-objpas/src/inc/strutils.pp"/>
+        <EditorIndex Value="2"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="/usr/share/fpcsrc/3.0.4/packages/regexpr/src/regexpr.pas"/>
+        <UnitName Value="RegExpr"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="611"/>
+        <CursorPos X="10" Y="625"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit13>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory HistoryIndex="-1"/>
+    <JumpHistory Count="10" HistoryIndex="9">
+      <Position1>
+        <Filename Value="texture_3d.pas"/>
+        <Caret Line="99" Column="41" TopLine="89"/>
+      </Position1>
+      <Position2>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="1198" Column="44" TopLine="1189"/>
+      </Position2>
+      <Position3>
+        <Filename Value="mcxgui.pas"/>
+      </Position3>
+      <Position4>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="19" Column="72"/>
+      </Position4>
+      <Position5>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="380" Column="22" TopLine="352"/>
+      </Position5>
+      <Position6>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="1405" Column="23" TopLine="1377"/>
+      </Position6>
+      <Position7>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="1675" Column="67" TopLine="1646"/>
+      </Position7>
+      <Position8>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="2231" Column="98" TopLine="2213"/>
+      </Position8>
+      <Position9>
+        <Filename Value="/usr/share/fpcsrc/3.0.4/packages/rtl-objpas/src/inc/strutils.pp"/>
+        <Caret Line="138" TopLine="121"/>
+      </Position9>
+      <Position10>
+        <Filename Value="mcxgui.pas"/>
+        <Caret Line="2225" Column="62" TopLine="2213"/>
+      </Position10>
+    </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>

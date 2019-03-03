@@ -17,4 +17,17 @@ In other words, when running multiple patterns using "Photon Sharing", one must 
 source pattern data so that the inner-most loop (fastest index) is the pattern; this will
 produce a fluence output where the fastest index is also the number of patterns.
 
- [Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang, Photonics West 2019.
+and then run it using
+
+ ./run_multipattern.sh
+
+or
+
+ ./run_multipattern.sh -n 1e6 
+
+to specify a different photon number
+
+=== Reference ===
+[Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang,  
+"Accelerating Monte Carlo forward model with structured light illumination via 'photon sharing'," 
+Photonics West 2019, paper#10874-11, San Francisco, CA, USA.

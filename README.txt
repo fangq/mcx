@@ -12,6 +12,7 @@ Website: http://mcx.space
 
 Table of Content:
 
+O.    What's New
 I.    Introduction
 II.   Requirement and Installation
 III.  Running Simulations
@@ -23,6 +24,41 @@ VIII. Interpreting the Outputs
 IX.   Best practices guide
 X.    Acknowledgement
 XI.   Reference
+
+
+---------------------------------------------------------------------
+
+O.    What's New
+
+In MCX v2019.3 (1.4.8), we added a list of major new additions, including
+
+* Support 4 different boundary conditions (total absorption, total reflection/mirror, Fresnel reflection and cylic), controlled independently (--bc/cfg.bc) at 6 facets of the domain
+* Add 4 built-in complex domain examples - Colin27 brain atlas, USC_19-5 brain atlas, Digimouse, and mcxyz skin-vessel benchmark
+* Support isotropic launch for all focuable sources - gaussian, pattern, pattern3d, fourier, disk, fourierx, fourierx2d, and slit - by setting cfg.srcdir(4) to nan
+* Add GPU-ANLM filter denoiser to reduce MC solution noise, detailed in our [Yao2018] paper
+* Initial support of "photon sharing" - a fast approach to simultaneouly simulate multiple pattern src/det, as detailed in our Photoncs West 2019 talk by Ruoyang Yao/Shijie Yan [Yao&Yan2019]
+* First release of MCX Viewer - a built in 3D fluence rendering tool in mcxstudio (mcxviewer and mcxshow also provided separately)
+* Output partial scattering event counts in detected photon data, similar to MMC
+* Add CMake support, python-based mch file reader (by Shih-Cheng Tu), nightly build compilation script, colored command line output, and more
+
+In addition, we also fixed a number of critical bugs, such as
+
+* fix mcxlab gpuinfo output crash using multiple GPUs
+* disable linking to Intel OMP library (libiomp5) to avoid MATLAB 2016-2017 crash
+* fix mcxlab crash when srcpattern/srcdir/srcpos/detpos are not in double precision
+* fix shared memory allocation size bug
+* add the missing photon exit position in the trajectory output
+* fix mcxlab crash due to racing in multi-threads
+* force g to 1 in region where mus is 0
+
+[Yuan2018] Yaoshen Yuan, Leiming Yu, Zafer Doğan, Qianqian Fang*, 
+"Graphics processing units-accelerated adaptive nonlocal means filter for denoising 
+three-dimensional Monte Carlo photon transport simulations," 
+J. of Biomedical Optics, 23(12), 121618 (2018), URL: https://doi.org/10.1117/1.JBO.23.12.121618
+
+[Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang,  
+"Accelerating Monte Carlo forward model with structured light illumination via 'photon sharing',"
+Photonics West 2019, paper#10874-11, San Francisco, CA, USA.
 
 ---------------------------------------------------------------------
 
@@ -36,7 +72,7 @@ Carlo (MC) simulations at a blazing speed, typically hundreds to
 a thousand times faster than a fully optimized CPU-based MC 
 implementation.
 
-The algorithm of this software is detailed in the References [1,2]. 
+The algorithm of this software is detailed in the References [Fang2009,Yu2018]. 
 A short summary of the main features includes:
 
 *. 3D heterogeneous media represented by voxelated array
@@ -61,7 +97,7 @@ of MCX, i.e. MCXCL, was announced on July, 2012. It supports
 NVIDIA/AMD/Intel hardware out-of-box. If your hardware does
 not support CUDA, please download MCXCL from the below URL:
 
-  https://github.com/fangq/mcxcl
+  http://mcx.space/wiki/index.cgi?Learn#mcxcl
 
 ---------------------------------------------------------------------------
 II. Requirement and Installation
@@ -114,7 +150,7 @@ see a windows command window with message
   Done
   Press any key to continue ...
 
-You must reboot your Windows computer to make this setting effective.
+You MUST REBOOT your Windows computer to make this setting effective.
 The above patch modifies your driver settings so that you can run MCX 
 simulations for longer than a few seconds. Otherwise, when running MCX
 for over a few seconds, you will get a CUDA error: "unspecified error".
@@ -123,32 +159,6 @@ Please see the below link for details
 
 http://mcx.space/wiki/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_error_what_is_that
 
-For Linux and MacOS users, you need to add the following lines to your
-shell initialization scripts. First, use "echo $SHELL" command to 
-identify your shell type. For csh/tcsh, add the following lines 
-to your ~/.cshrc file:
-
-  if ("`uname -p`" =~ "*_64" ) then
-	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
-  else
-	  setenv LD_LIBRARY_PATH "/usr/local/cuda/lib:$LD_LIBRARY_PATH"
-  endif
-  setenv PATH "/usr/local/cuda/bin:$PATH"
-
-and for bash/sh users, add 
-
-  if [[ "`uname -p`" =~ .*_64 ]]; then
-	  export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
-  else
-	  export LD_LIBRARY_PATH="/usr/local/cuda/lib:$LD_LIBRARY_PATH"
-  fi
-  export PATH="/usr/local/cuda/bin:$PATH"
-
-to your ~/.bash_profile (for Ubuntu users, this file is ~/.bashrc).
-
-If the path "/usr/local/cuda/lib*" does not exist on your system or
-the CUDA library is not installed under this directory, you should
-substitute the actual path under which libcudart.* presents.
 
 
 III.Running Simulations
@@ -303,7 +313,7 @@ A typical MCX input file looks like this:
 1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
 30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets srcfrom0 (-z)
-0 0 1                # initial directional vector
+0 0 1 0               # initial directional vector, 4th number is the focal-length, 0 for collimated beam, nan for isotropic
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' binary format)
 1 60 1 60            # x voxel size in mm (isotropic only), dim, start/end indices
@@ -478,7 +488,7 @@ To invoke the JSON-formatted input file in your simulations, you
 can use the "-f" command line option with MCX, just like using an 
 .inp file. For example:
 
-  mcx -A -n 20 -f onecube.json -s onecubejson
+  mcx -A 1 -n 20 -f onecube.json -s onecubejson
 
 The input file must have a ".json" suffix in order for MCX to 
 recognize. If the input information is set in both command line,
@@ -835,14 +845,35 @@ X. Acknowledgement
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
 
+=== Texture3D Sample Project in the GLScene Project by Jürgen Abel ===
+
+  Copyright (c) 2003 Jürgen Abel
+
+The MCX volume renderer (mcxviewer) was adapted based on the Texture3D Example
+provided by the GLScene Project (http://glscene.org). The original author
+of this example is Jürgen Abel. The license for GLScene is 
+
+GLScene is distributed under Mozilla Public Licence (MPL 2.0), which means, in short, 
+that it is free for both freeware and commercial use. 
+The code is still copyrighted (in that it isn't public domain), but you can use it 
+in products with closed or open-source freely. The only requirements are:
+Acknowledge GLScene is used somewhere in your application (in an about box, credits page or printed manual, etc.
+with at least a link to http://glscene.org)
+Modifications made to GLScene units must be made public (no need to publish the full code, 
+only to state which parts were altered, and how), but feel welcome to open-source your code if you so wish.
+Some Delphi units, API headers and DLLs are included in the GLScene package for convenience 
+but are not part of GLScene, may use different licensing scheme and have different copyright owners, 
+such files have an explicit notice attached to them or placed in their directory.
+
+
 ---------------------------------------------------------------------------
 XI. Reference
 
-[1] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
+[Fang2009] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
 Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009).
 
-[2] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, \
+[Yu2019] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, \
 "Scalable and massively parallel Monte Carlo photon transport simulations \
 for heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).
 
