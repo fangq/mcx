@@ -35,7 +35,7 @@ In MCX v2019.3 (1.4.8), we added a list of major new additions, including
 * Support 4 different boundary conditions (total absorption, total reflection/mirror, Fresnel reflection and cylic), controlled independently (--bc/cfg.bc) at 6 facets of the domain
 * Add 4 built-in complex domain examples - Colin27 brain atlas, USC_19-5 brain atlas, Digimouse, and mcxyz skin-vessel benchmark
 * Support isotropic launch for all focuable sources - gaussian, pattern, pattern3d, fourier, disk, fourierx, fourierx2d, and slit - by setting cfg.srcdir(4) to nan
-* Add GPU-ANLM filter denoiser to reduce MC solution noise, detailed in our [Yao2018] paper
+* Add GPU-ANLM denoiser, mcxfilter.m, to mcxlab to reduce MC fluence noise, detailed in our [Yao2018] paper
 * Initial support of "photon sharing" - a fast approach to simultaneouly simulate multiple pattern src/det, as detailed in our Photoncs West 2019 talk by Ruoyang Yao/Shijie Yan [Yao&Yan2019]
 * First release of MCX Viewer - a built in 3D fluence rendering tool in mcxstudio (mcxviewer and mcxshow also provided separately)
 * Output partial scattering event counts in detected photon data, similar to MMC

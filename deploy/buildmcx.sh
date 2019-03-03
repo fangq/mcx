@@ -66,7 +66,7 @@ cd $BUILDROOT
 
 rm -rf mcx
 mkdir -p mcx/mcx
-git clone https://github.com/fangq/mcx.git mcx/mcx
+git clone --recurse-submodules https://github.com/fangq/mcx.git mcx/mcx
 
 cat <<EOF >> mcx/mcx/.git/config
 [filter "rcs-keywords"]
@@ -83,6 +83,7 @@ fi
 
 rm -rf *
 git checkout .
+git submodule update --init --remote
 
 rm -rf .git
 cd ..
@@ -143,7 +144,9 @@ fi
 make clean
 make oct  >>  ../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
 
-if [ -f "../mcxlab/mcx.mex" ]
+mexfile=(../mcxlab/mcx.mex*)
+
+if [ -e "${mexfile[0]}" ]
 then
         echo "Build Successfully" >> ../mcxlab/AUTO_BUILD_${DATE}.log
 else
@@ -156,6 +159,26 @@ then
 fi
 
 rm -rf ../mcxlab/mcxlab.o ../mcxlab/mcxlab.obj
+
+cd ../filter/src
+make clean
+make BACKEND=cudastatic
+
+mexfile=(../bin/mcxfilter.mex*)
+
+if [ -e "${mexfile[0]}" ]
+then
+        echo "Filter Build Successfully" >> ../mcxlab/AUTO_BUILD_${DATE}.log
+	cp ../bin/mcxfilter.mex* ../../mcxlab/
+	cp mcxfilter.m ../../mcxlab/
+	mkdir ../../mcxlab/filter
+	cp -a demos  ../../mcxlab/filter
+	cp -a Wave3D ../../mcxlab/filter
+else
+        echo "Filter Build Failed" >> ../mcxlab/AUTO_BUILD_${DATE}.log
+fi
+
+cd ../
 
 cp $BUILDROOT/dlls/*.dll ../mmclab
 cd ..
@@ -185,9 +208,9 @@ else
 fi
 
 cd ../mcxstudio
-lazbuild --build-mode=Release ${LAZMAC} mcxshow.lpi
-lazbuild --build-mode=Release ${LAZMAC} mcxviewer.lpi
-lazbuild --build-mode=Release ${LAZMAC} mcxstudio.lpi
+lazbuild --build-mode=release ${LAZMAC} mcxshow.lpi
+lazbuild --build-mode=release ${LAZMAC} mcxviewer.lpi
+lazbuild --build-mode=release ${LAZMAC} mcxstudio.lpi
 cp debug/mcxstudio ../bin
 cp mcxshow ../bin
 cp mcxviewer ../bin
@@ -195,6 +218,8 @@ cp mcxviewer ../bin
 if [ "$OS" == "osx" ]
 then
 	cp -a debug/mcxstudio.app ../bin
+	cp -a debug/mcxshow.app   ../bin
+	cp -a debug/mcxviewer.app ../bin
 fi
 
 cd ../bin
@@ -212,7 +237,7 @@ else
 fi
 
 cd ../
-rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons
+rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter
 if [ "$OS" != "win" ]
 then
     rm -rf setup
