@@ -172,8 +172,8 @@ then
 	cp ../bin/mcxfilter.mex* ../../mcxlab/
 	cp mcxfilter.m ../../mcxlab/
 	mkdir ../../mcxlab/filter
-	cp -a demos  ../../mcxlab/filter
-	cp -a Wave3D ../../mcxlab/filter
+	cp -a ../demos  ../../mcxlab/filter
+	cp -a ../Wave3D ../../mcxlab/filter
 else
         echo "Filter Build Failed" >> ../mcxlab/AUTO_BUILD_${DATE}.log
 fi
