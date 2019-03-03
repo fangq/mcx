@@ -218,8 +218,8 @@ cp mcxviewer ../bin
 if [ "$OS" == "osx" ]
 then
 	cp -a debug/mcxstudio.app ../bin
-	cp -a debug/mcxshow.app   ../bin
-	cp -a debug/mcxviewer.app ../bin
+	cp -a mcxshow.app   ../bin
+	cp -a mcxviewer.app ../bin
 fi
 
 cd ../bin
