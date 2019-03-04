@@ -630,9 +630,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		  for(int i=0;i<gcfg->srcnum;i++){
 		    if(ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i]>0.f){
 #ifdef USE_ATOMIC
-                        atomicAdd(& field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i],-p->w);	       
+                        atomicAdd(& field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i],-p->w*ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i]);
 #else
-	                field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i]+=-p->w;
+	                field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i]+=-p->w*ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i];
 #endif
 		    }
 		  }
