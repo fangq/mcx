@@ -320,7 +320,7 @@ if(~ischar(cfg))
             dim=size(varargout{1}(i).data);
             varargout{1}(i).data=reshape(varargout{1}(i).data,[cfg(i).srcnum, dim(1)/cfg(i).srcnum dim(2:end)]);
             varargout{1}(i).data=permute(varargout{1}(i).data,[2:(length(dim)+1) 1]);
-            if(isfield(varargout{1}(i),'dref'))
+            if(isfield(varargout{1}(i),'dref') && ~isempty(varargout{1}(i).dref))
                 varargout{1}(i).dref=reshape(varargout{1}(i).dref,[cfg(i).srcnum, dim(1)/cfg(i).srcnum dim(2:end)]);
                 varargout{1}(i).dref=permute(varargout{1}(i).dref,[2:(length(dim)+1) 1]);
             end
