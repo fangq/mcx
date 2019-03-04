@@ -21,6 +21,8 @@ mcximg=[0 1 1 0 0 0 0 0 1 1 0
 
 cfg.nphoton=1e7;
 cfg.vol=uint8(ones(60,60,60));
+cfg.vol(:,:,1)=0;
+cfg.issaveref=1;
 cfg.srctype='pattern';
 cfg.srcpattern=permute(reshape(mcximg,[6,3,size(mcximg,2)]),[2 1 3]);
 cfg.srcnum=3;
@@ -40,6 +42,16 @@ cfg.seed=99999;
 
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
+for i=1:3
+    subplot(1,3,i);
+    hs=slice(log10(abs(double(fcw(:,:,:,i)))),1,1,2);
+    view([1 1 1])
+    set(hs,'linestyle','none');
+    axis equal; colorbar
+    title(sprintf('pattern #%d',i));
+end
+figure;
+fcw=flux.dref*cfg.tstep;
 for i=1:3
     subplot(1,3,i);
     hs=slice(log10(abs(double(fcw(:,:,:,i)))),1,1,1);

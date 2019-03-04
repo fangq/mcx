@@ -619,12 +619,24 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           }
 #endif
           if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME_MIN && *idx1d!=OUTSIDE_VOLUME_MAX && gcfg->issaveref){
-	       int tshift=MIN(gcfg->maxgate-1,(int)(floorf((f->t-gcfg->twin0)*gcfg->Rtstep)));
+	      int tshift=MIN(gcfg->maxgate-1,(int)(floorf((f->t-gcfg->twin0)*gcfg->Rtstep)));
+	      if(mcxsource!=MCX_SRC_PATTERN && mcxsource!=MCX_SRC_PATTERN3D){
 #ifdef USE_ATOMIC
-               atomicAdd(& field[*idx1d+tshift*gcfg->dimlen.z],-p->w);	       
+                  atomicAdd(& field[*idx1d+tshift*gcfg->dimlen.z],-p->w);	       
 #else
-	       field[*idx1d+tshift*gcfg->dimlen.z]+=-p->w;
+	          field[*idx1d+tshift*gcfg->dimlen.z]+=-p->w;
 #endif
+	      }else{
+		  for(int i=0;i<gcfg->srcnum;i++){
+		    if(ppath[gcfg->maxmedia*(2+gcfg->ismomentum)+3+i]>0.f){
+#ifdef USE_ATOMIC
+                        atomicAdd(& field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i],-p->w);	       
+#else
+	                field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i]+=-p->w;
+#endif
+		    }
+		  }
+	      }
 	  }
       }
 
