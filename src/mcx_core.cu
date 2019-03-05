@@ -116,7 +116,7 @@ __device__ inline OutputType atomicadd(OutputType* address, OutputType value){
 
   return atomicAdd(address,value);
 
-#elif __CUDA_ARCH__ >= 110
+#else
 
 // float-atomic-add from 
 // http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561

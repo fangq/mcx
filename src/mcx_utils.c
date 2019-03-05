@@ -338,7 +338,6 @@ void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputfo
      hdr.pixdim[2] = cfg->unitinmm;
      hdr.pixdim[3] = cfg->unitinmm;
      hdr.intent_code=NIFTI_INTENT_NONE;
-     logval=(float *)malloc(sizeof(float)*len);
 
      if(type32bit==NIFTI_TYPE_FLOAT32){
          hdr.pixdim[4] = cfg->tstep*1e6f;
@@ -394,7 +393,6 @@ void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputfo
          fclose(fp);
      }else
          mcx_error(-9, "Output format is not supported",__FILE__,__LINE__);
-     free(logval);
 }
 
 /**
