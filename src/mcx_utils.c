@@ -678,9 +678,12 @@ void mcx_prepdomain(char *filename, Config *cfg){
      if(cfg->replaydet==-1 && cfg->detnum==1)
         cfg->replaydet=1;
      if(cfg->medianum){
-        for(int i=0;i<cfg->medianum;i++)
-             if(cfg->prop[i].mus==0.f)
+        for(int i=0;i<cfg->medianum;i++){
+             if(cfg->prop[i].mus==0.f){
 	         cfg->prop[i].mus=EPS;
+		 cfg->prop[i].g=1.f;
+	     }
+	}
      }
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
@@ -1097,10 +1100,10 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                      if(cfg->srcpattern) free(cfg->srcpattern);
                      cfg->srcpattern=(float*)calloc(nx*ny*nz,sizeof(float));
                      for(i=0;i<nx*ny*nz;i++){
-                         cfg->srcpattern[i]=pat->valuedouble;
-                         if((pat=pat->next)==NULL){
+                         if(pat==NULL)
                              MCX_ERROR(-1,"Incomplete pattern data");
-                         }
+                         cfg->srcpattern[i]=pat->valuedouble;
+                         pat=pat->next;
                      }
                  }else if(pat){
                      FILE *fid=fopen(pat->valuestring,"rb");
@@ -1743,7 +1746,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 }else{
                                     i=mcx_readarg(argc,argv,i,&(cfg->gpuid),"int");
                                     memset(cfg->deviceid,'0',MAX_DEVICE);
-                                    if(cfg->gpuid<MAX_DEVICE)
+                                    if(cfg->gpuid>0 && cfg->gpuid<MAX_DEVICE)
                                          cfg->deviceid[cfg->gpuid-1]='1';
                                     else
                                          mcx_error(-2,"GPU id can not be more than 256",__FILE__,__LINE__);
