@@ -1,11 +1,12 @@
 object fmDomain: TfmDomain
   Left = 341
-  Height = 639
+  Height = 619
   Top = 187
-  Width = 1048
+  Width = 1015
   Caption = 'MCX Domain Renderer'
-  ClientHeight = 639
-  ClientWidth = 1048
+  ClientHeight = 619
+  ClientWidth = 1015
+  DesignTimePPI = 93
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   OnCreate = FormCreate
@@ -13,16 +14,20 @@ object fmDomain: TfmDomain
   OnResize = FormResize
   OnShow = FormShow
   Position = poOwnerFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.8.2.0'
   object glCanvas: TGLSceneViewer
-    Left = 418
-    Height = 584
-    Top = 55
-    Width = 630
+    Left = 405
+    Height = 566
+    Top = 53
+    Width = 610
     Camera = glCamera
     VSync = vsmSync
     Buffer.BackgroundColor = 13224393
-    FieldOfView = 135.318710327148
+    Buffer.AmbientColor.Red = 0.200000002980232
+    Buffer.AmbientColor.Green = 0.200000002980232
+    Buffer.AmbientColor.Blue = 0.200000002980232
+    Buffer.AmbientColor.Alpha = 1
+    FieldOfView = 134.043365478516
     Align = alClient
     OnMouseDown = glCanvasMouseDown
     OnMouseMove = glCanvasMouseMove
@@ -30,28 +35,31 @@ object fmDomain: TfmDomain
     TabOrder = 0
   end
   object Splitter1: TSplitter
-    Left = 413
-    Height = 584
-    Top = 55
+    Left = 400
+    Height = 566
+    Top = 53
     Width = 5
     OnMoved = Splitter1Moved
   end
   object plEditor: TPanel
     Left = 0
-    Height = 584
-    Top = 55
-    Width = 413
+    Height = 566
+    Top = 53
+    Width = 400
     Align = alLeft
-    ClientHeight = 584
-    ClientWidth = 413
+    ClientHeight = 566
+    ClientWidth = 400
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    ParentFont = False
     TabOrder = 2
     OnMouseEnter = plEditorMouseEnter
     OnMouseLeave = plEditorMouseLeave
     inline mmShapeJSON: TSynEdit
       Left = 1
-      Height = 582
+      Height = 564
       Top = 1
-      Width = 411
+      Width = 398
       Align = alClient
       Font.Height = -12
       Font.Name = 'Courier New'
@@ -578,6 +586,7 @@ object fmDomain: TfmDomain
           MarkupInfo.Foreground = clGray
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
+          AutoSize = False
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray
@@ -589,15 +598,18 @@ object fmDomain: TfmDomain
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 55
+    Height = 53
     Top = 0
-    Width = 1048
-    ButtonHeight = 50
-    ButtonWidth = 50
+    Width = 1015
+    ButtonHeight = 48
+    ButtonWidth = 48
     Caption = 'ToolBar1'
     Color = clWhite
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
     Images = ImageList3
     ParentColor = False
+    ParentFont = False
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3
@@ -647,38 +659,75 @@ object fmDomain: TfmDomain
     end
     object ToolButton11: TToolButton
       Left = 209
-      Height = 50
+      Height = 48
       Top = 2
-      Width = 5
       Caption = 'ToolButton11'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
       Left = 266
-      Height = 50
+      Height = 48
       Top = 2
-      Width = 5
       Caption = 'ToolButton7'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
       Left = 375
-      Height = 50
+      Height = 48
       Top = 2
-      Width = 5
       Caption = 'ToolButton9'
       Style = tbsDivider
     end
   end
   object glShape: TGLScene
-    left = 464
+    left = 449
     top = 8
     object glDomain: TGLCube
       TagFloat = 0
+      Material.BackProperties.Ambient.Red = 0.200000002980232
+      Material.BackProperties.Ambient.Green = 0.200000002980232
+      Material.BackProperties.Ambient.Blue = 0.200000002980232
+      Material.BackProperties.Ambient.Alpha = 1
+      Material.BackProperties.Diffuse.Red = 0.800000011920929
+      Material.BackProperties.Diffuse.Green = 0.800000011920929
+      Material.BackProperties.Diffuse.Blue = 0.800000011920929
+      Material.BackProperties.Diffuse.Alpha = 1
+      Material.BackProperties.Emission.Red = 0
+      Material.BackProperties.Emission.Green = 0
+      Material.BackProperties.Emission.Blue = 0
+      Material.BackProperties.Emission.Alpha = 1
+      Material.BackProperties.Specular.Red = 0
+      Material.BackProperties.Specular.Green = 0
+      Material.BackProperties.Specular.Blue = 0
+      Material.BackProperties.Specular.Alpha = 1
+      Material.FrontProperties.Ambient.Red = 0.200000002980232
+      Material.FrontProperties.Ambient.Green = 0.200000002980232
+      Material.FrontProperties.Ambient.Blue = 0.200000002980232
+      Material.FrontProperties.Ambient.Alpha = 1
+      Material.FrontProperties.Diffuse.Red = 0.800000011920929
+      Material.FrontProperties.Diffuse.Green = 0.800000011920929
+      Material.FrontProperties.Diffuse.Blue = 0.800000011920929
+      Material.FrontProperties.Diffuse.Alpha = 0.111000001430511
       Material.FrontProperties.Diffuse.Color = {
         CDCC4C3FCDCC4C3FCDCC4C3FF853E33D
       }
+      Material.FrontProperties.Emission.Red = 0
+      Material.FrontProperties.Emission.Green = 0
+      Material.FrontProperties.Emission.Blue = 0
+      Material.FrontProperties.Emission.Alpha = 1
+      Material.FrontProperties.Specular.Red = 0
+      Material.FrontProperties.Specular.Green = 0
+      Material.FrontProperties.Specular.Blue = 0
+      Material.FrontProperties.Specular.Alpha = 1
       Material.BlendingMode = bmTransparency
+      Material.Texture.EnvColor.Red = 0
+      Material.Texture.EnvColor.Green = 0
+      Material.Texture.EnvColor.Blue = 0
+      Material.Texture.EnvColor.Alpha = 0
+      Material.Texture.BorderColor.Red = 0
+      Material.Texture.BorderColor.Green = 0
+      Material.Texture.BorderColor.Blue = 0
+      Material.Texture.BorderColor.Alpha = 0
       Direction.Coordinates = {
         00000000000080BF0000000000000000
       }
@@ -707,25 +756,49 @@ object fmDomain: TfmDomain
     end
     object glLight2: TGLLightSource
       TagFloat = 0
+      Ambient.Red = 0
+      Ambient.Green = 0
+      Ambient.Blue = 0
+      Ambient.Alpha = 1
       ConstAttenuation = 1
+      Diffuse.Red = 1
+      Diffuse.Green = 1
+      Diffuse.Blue = 1
+      Diffuse.Alpha = 1
       LinearAttenuation = 0
       QuadraticAttenuation = 0
       Position.Coordinates = {
         000020C1000020C1000020C10000803F
       }
       LightStyle = lsOmni
+      Specular.Red = 0
+      Specular.Green = 0
+      Specular.Blue = 0
+      Specular.Alpha = 1
       SpotCutOff = 180
       SpotExponent = 0
     end
     object glLight1: TGLLightSource
       TagFloat = 0
+      Ambient.Red = 0
+      Ambient.Green = 0
+      Ambient.Blue = 0
+      Ambient.Alpha = 1
       ConstAttenuation = 1
+      Diffuse.Red = 1
+      Diffuse.Green = 1
+      Diffuse.Blue = 1
+      Diffuse.Alpha = 1
       LinearAttenuation = 0
       QuadraticAttenuation = 0
       Position.Coordinates = {
         0000C842000000000000C8420000803F
       }
       LightStyle = lsOmni
+      Specular.Red = 0
+      Specular.Green = 0
+      Specular.Blue = 0
+      Specular.Alpha = 1
       SpotCutOff = 180
       SpotExponent = 0
     end
@@ -738,6 +811,10 @@ object fmDomain: TfmDomain
       TurnAngle = 0
       Pickable = False
       CubeSize = 200
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
     end
     object glCamera: TGLCamera
       TagFloat = 0
@@ -753,19 +830,19 @@ object fmDomain: TfmDomain
       Up.Coordinates = {
         00000000000000000000803F00000000
       }
-      left = 240
-      top = 144
+      left = 233
+      top = 140
     end
   end
   object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
     DefaultFilter = 'UNIX Shell Scripts (*.sh)|*.sh'
     Enabled = False
-    left = 960
+    left = 930
     top = 8
   end
   object acShapeRender: TActionList
     Images = ImageList3
-    left = 536
+    left = 519
     top = 8
     object acResetCamera: TAction
       Caption = 'acResetCamera'
@@ -812,14 +889,14 @@ object fmDomain: TfmDomain
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 632
+    left = 612
     top = 8
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 720
+    left = 698
     top = 8
     Bitmap = {
       4C69080000003000000030000000000000000000000000000000000000000000
@@ -3133,14 +3210,14 @@ object fmDomain: TfmDomain
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 808
+    left = 783
     top = 8
   end
   object dlSaveFile: TSaveDialog
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 896
+    left = 868
     top = 8
   end
 end

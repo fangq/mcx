@@ -8,7 +8,8 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, GLScene_RunTime, mcxgui, lazcontrols, tachartlazaruspkg,
-  anchordockpkg, mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput{$IFDEF WINDOWS}, sendkeys{$ENDIF};
+  anchordockpkg, mcxabout, mcxshape, mcxnewsession, mcxsource,
+  mcxoutput, mcxview, mcxloadfile {$IFDEF WINDOWS}, sendkeys{$ENDIF};
 
 {$R *.res}
 

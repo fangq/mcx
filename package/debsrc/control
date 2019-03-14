@@ -1,6 +1,6 @@
 Package: %NAME%
 Version: %VERSION%
-Standards-Version: 1.0.0-1
+Standards-Version: 1.0.0
 Section: Science
 Priority: optional
 Architecture: all

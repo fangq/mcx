@@ -1,0 +1,48 @@
+{
+	"Session": {
+		"ID": "multipattern",
+		"DoAutoThread": 1,
+		"RNGSeed": 99999,
+		"Photons": 10000000
+	},
+	"Forward": {
+		"T0": 0,
+		"T1": 5e-9,
+		"Dt": 5e-9
+	},
+	"Optode": {
+		"Source": {
+			"Pos": [0,0,0],
+			"Dir": [0,0,1],
+			"Param1": [60,0,0,6],
+			"Param2": [0,60,0,11],
+			"Type": "pattern",
+			"SrcNum": 3,
+			"Pattern": {
+				"Nx": 3,
+				"Ny": 6,
+				"Nz": 11,
+				"Data": "multipattern_pattern.bin"
+			}
+		}
+	},
+	"Domain": {
+		"OriginType": 1,
+		"Media": [
+			{
+				"mua": 0,
+				"mus": 0,
+				"g": 1,
+				"n": 1
+			},
+			{
+				"mua": 0.005,
+				"mus": 1,
+				"g": 0.8,
+				"n": 1.37
+			}
+		],
+		"Dim": [60,60,60],
+		"VolumeFile": "cubic60.json"
+	}
+}

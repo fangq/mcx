@@ -1,36 +1,39 @@
 object fmOutput: TfmOutput
   Left = 481
-  Height = 600
-  Top = 349
-  Width = 561
+  Height = 624
+  Top = 271
+  Width = 555
   Caption = 'Output'
-  ClientHeight = 600
-  ClientWidth = 561
+  ClientHeight = 624
+  ClientWidth = 555
+  DesignTimePPI = 95
   LCLVersion = '1.8.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 600
+    Height = 624
     Top = 0
-    Width = 561
+    Width = 555
     Align = alClient
-    ClientHeight = 600
-    ClientWidth = 561
+    ClientHeight = 624
+    ClientWidth = 555
+    ParentFont = False
     TabOrder = 0
     object Button1: TButton
       Left = 1
       Height = 25
       Top = 1
-      Width = 559
+      Width = 553
       Align = alTop
       Caption = 'Clear Output'
       OnClick = miClearLogClick
+      ParentFont = False
       TabOrder = 0
     end
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 539
+      Height = 563
       Top = 26
-      Width = 559
+      Width = 553
       Align = alClient
       Font.Height = -13
       Font.Name = 'Courier New'
@@ -485,24 +488,30 @@ object fmOutput: TfmOutput
         '$Download: https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
         ''
         ' -- "MMC" --'
-        '# [Fang2010] Qianqian Fang, "Mesh-based Monte Carlo method using fast ray-tracing in Plücker coordinates," Biomed. Opt. Express 1(1), 165-175 (2010)'
-        '$Summary:  original MMC paper'
-        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165'
+        '# [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid mesh-based Monte Carlo algorithm for efficient photon1transport simulations in complex 3-D media,” J. of Biomedical Optics, 24(2), 020503 (2019).'
+        '$Summary: Dual-grid MMC for faster and more accurate mesh-based simulations'
+        '$Download: http://dx.doi.org/10.1117/1.JBO.24.2.020503'
         ''
-        '# [Fang2011] Qianqian Fang, “Comment on ‘A study on tetrahedron-based inhomogeneous Monte-Carlo optical simulation’,” Biomed. Opt. Express, vol. 2, issue 5, pp. 1258-1264, 2011.'
-        '$Summary:  MMC ray-tracing comparisons'
-        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258'
-        ''
-        '# [Fang2012] Qianqian Fang and David R. Kaeli, "Accelerating mesh-based Monte Carlo method on modern CPU architectures ," Biomed. Opt. Express 3(12), 3223-3230 (2012)'
-        '$Summary:  SIMD MMC'
-        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-3223'
+        '# [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon ''replay''," Biomed. Optics Express 9(10), 4588-4603 (2018)'
+        '$Summary:  Building Jacobians with replay in MCX/MMC'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588'
         ''
         '# [Yao2016] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "Generalized mesh-based Monte Carlo for wide-field illumination and detection via mesh retessellation," Biomed. Optics Express, 7(1), 171-184, (2016)'
         '$Summary:  Widefield MMC'
         '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171'
         ''
-        '# [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon ''replay''," Biomed. Optics Express, in press, (2018)'
-        '$Summary:  Building Jacobians with replay in MCX/MMC'
+        '# [Fang2012] Qianqian Fang and David R. Kaeli, "Accelerating mesh-based Monte Carlo method on modern CPU architectures ," Biomed. Opt. Express 3(12), 3223-3230 (2012)'
+        '$Summary:  SIMD MMC'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-3223'
+        ''
+        '# [Fang2011] Qianqian Fang, “Comment on ‘A study on tetrahedron-based inhomogeneous Monte-Carlo optical simulation’,” Biomed. Opt. Express, vol. 2, issue 5, pp. 1258-1264, 2011.'
+        '$Summary:  MMC ray-tracing comparisons'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258'
+        ''
+        '# [Fang2010] Qianqian Fang, "Mesh-based Monte Carlo method using fast ray-tracing in Plücker coordinates," Biomed. Opt. Express 1(1), 165-175 (2010)'
+        '$Summary:  original MMC paper'
+        '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165'
+        ''
         ''
         'Output:'
       )
@@ -554,6 +563,7 @@ object fmOutput: TfmOutput
           MarkupInfo.Foreground = clGray
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
+          AutoSize = False
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray
@@ -565,36 +575,39 @@ object fmOutput: TfmOutput
     object Panel2: TPanel
       Left = 1
       Height = 34
-      Top = 565
-      Width = 559
+      Top = 589
+      Width = 553
       Align = alBottom
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 3
       ClientHeight = 34
-      ClientWidth = 559
+      ClientWidth = 553
+      ParentFont = False
       TabOrder = 2
       object btSendCmd: TButton
-        Left = 483
+        Left = 477
         Height = 32
         Top = 1
         Width = 75
         Align = alRight
         Caption = 'Send'
         OnClick = btSendCmdClick
+        ParentFont = False
         TabOrder = 0
       end
       object edCmdInput: TComboBox
         AnchorSideTop.Control = Label1
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = btSendCmd
-        Left = 120
-        Height = 28
-        Top = 3
-        Width = 361
+        Left = 118
+        Height = 27
+        Top = 4
+        Width = 357
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 2
         ItemHeight = 0
         OnKeyPress = edCmdInputKeyPress
+        ParentFont = False
         Style = csSimple
         TabOrder = 1
       end
@@ -604,14 +617,15 @@ object fmOutput: TfmOutput
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edCmdInput
         Left = 1
-        Height = 16
-        Top = 9
-        Width = 114
+        Height = 14
+        Top = 10
+        Width = 112
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 5
         Caption = 'Command Input:'
         ParentColor = False
+        ParentFont = False
       end
     end
   end
@@ -620,12 +634,12 @@ object fmOutput: TfmOutput
     Enabled = False
     StringAttri.Background = clSkyBlue
     StringAttri.Style = [fsBold]
-    left = 368
-    top = 200
+    left = 365
+    top = 198
   end
   object PopupMenu1: TPopupMenu
-    left = 288
-    top = 192
+    left = 285
+    top = 190
     object miClearLog: TMenuItem
       Caption = 'Clear Log'
       OnClick = miClearLogClick

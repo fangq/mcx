@@ -1,0 +1,15 @@
+#!/bin/sh
+############################################################
+#   MCX Monte Carlo Photon Simulator Packaging System
+#
+#  postinst: post-installation script for deb package
+#
+#  Author: Qianqian Fang <q.fang at neu.edu>
+#  
+#  Macro %NAME% and %VERSION% must be replaced before running
+#
+############################################################
+
+PREFIX=/usr/lib
+NAME=%NAME%
+INSTALLPATH=$PREFIX/$NAME

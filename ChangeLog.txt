@@ -1,32 +1,80 @@
 = Change Log =
 
+== MCX v2019.3 (Ether Dome beta - 1.4.8), FangQ <q.fang (a) neu.edu> ==
+ 2019-03-03 [a3462be] add README files for all new benchmarks, add "What's New" in master README
+ 2019-03-02 [69a7375] use ANSI colors in the output to improve readability
+ 2019-02-28 [123d11d] add USC 19.5 atlas example, Fig9a in TranYan2019(submitted)
+ 2019-02-28 [ccdf8e3]*add digimouse example
+ 2019-02-28 [e36efa0]*add colin27 atlas example using latest v3 segmentation, Fig6 in Fang2009
+ 2019-02-28 [ae2d60e] fix progress bar error in newer nvidia drivers
+ 2019-02-27 [6e84e26] fix mcxlab srcpattern input format bug, update mcxlab help info
+ 2019-02-26 [f1418cd] fix index mismatch between mcx_replay_prep and mcx detphotons output
+ 2019-02-23 [ae9443f]*copy detected photon post-processing scripts from mmc to mcx
+ 2019-02-23 [19e88b0] add function to convert fluence and energy deposition
+ 2019-02-22 [8644714] use USE_MORE_DOUBLE macro to enable additional double precision calls
+ 2019-02-22 [005ca00] disable linking with iomp5 to avoid matlab2016/2017 crashes
+ 2019-02-22 [f7be969]*use nan as srcdir.w, i.e. focal length, for isotropic launch
+ 2019-02-20 [ce1abbe] use double precision for data output,alternative to #41, for sm_60
+ 2019-02-20 [c647f18] support integer data rendering, support multiple windows
+ 2019-02-17 [3a3e72d]*mcx volume renderer is now integrated with mcxstudio
+ 2019-02-16 [70226e6] support output tx3 3D texture file
+ 2019-02-16 [b968133] add line, slit and cone sources in mcxrender, close #36
+ 2019-01-18 [335c9a0] fix mcxlab crash due to racing in multi-thread, close #60
+ 2019-01-10 [b8db72b] add photon's exiting position in the trajectory data
+ 2018-12-22 [2f8483b] fix mcxlab 'gpuinfo' output error for multiple GPUs
+ 2018-12-08 [3c8a9c3]*add gpu anlm filter as submodule, detailed in Yao2018 paper
+ 2018-12-03 [dc594dc]*initial implementation of "photon sharing" - one forward/replay for many patterns, presented in PW2019
+ 2018-12-02 [da93f29] fix a shared memory buffer length error, introduced in 9a631d15
+ 2018-11-24 [5e212a6]*setting separate boundary conditions at 6 boundary facets
+ 2018-11-24 [e6d4932] use char array for boundary condition input in mcxlab
+ 2018-11-23 [817609e] test if parameter has been initialized in command line
+ 2018-11-23 [9a631d1] offloading photonseed to sharedmem,move v back to register
+ 2018-11-23 [e478c37] only use the sign bit to decide detector coverage, like in the old days
+ 2018-11-14 [405ce9c]*add benchmark from mcxyz skinvessel example
+ 2018-11-13 [9a2f696] test if gpuid is 0 to avoid mcxlab crashing
+ 2018-11-12 [3a05df8] fix shared memory allocation size bug
+ 2018-11-07 [5339563] add help info for the new detphoton fields
+ 2018-11-07 [7e45ec0]*save initial weight and partial scattering count to match mmc output
+ 2018-11-07 [01ec192]*isotropic launch if srcdir(4) is -0.f, valid for all src
+ 2018-10-26 [183742d]*set g to 1 when mus is 0, fix #51
+ 2018-10-22 [0721ab4] change NULL pointer test order in reading srcpattern
+ 2018-10-21 [f37e0e2] prepare for nonuniform grid support
+ 2018-10-13 [cfa8e31]*accummulate momemtum transfer for all detected photons in replay mode
+ 2018-09-24 [d3df9b2] update Ruoyang Replay paper citation
+ 2018-09-02 [4d49f3b] add mcxstudio and mcxlab-octave deb packages
+ 2018-09-01 [75b3f7c]*add nightly build script to help people build mcx
+ 2018-08-29 [ecd4053] change deb package folder structure, handcode 1.0 keywords
+ 2018-08-26 [8c86b3e]*add cmake-styled makefile
+ 2018-08-26 [79a47bf]*remove outdated examples and flags, simplify Makefile for a clean start
+ 2018-08-20 [e3bb0e8] add README for mcxstudio
+
 == MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
 
- 2018-08-18 [       ] MCX 1.0 (v2018) is fully baked! create release packages
+ 2018-08-18 [	    ] MCX 1.0 (v2018) is fully baked! create release packages
  2018-08-18 [ed0612e] add Yu2018 citation, minor gui update
  2018-08-17 [eb9a2e6] fix momentum transfer saving bug, need to clear buffer for each new photon
  2018-08-17 [b11dae9] add help menu with papers and web resources
  2018-08-15 [13ab6f2] add more demo script for mc data processing showcase
  2018-08-14 [1e3eaa9] fix a bug in 2D simulations
  2018-08-14 [e99e5ef] allow saving photon trajectory in command line, add plotting function, bump limit to 1e7
- 2018-07-21*[7850c32] support photon numbers over 2^31, new limit 2^63-1 after fixing #41
- 2018-07-20*[db5a349] use extra global memory to help reduce roundoff error, fix #41
+ 2018-07-21 [7850c32]*support photon numbers over 2^31, new limit 2^63-1 after fixing #41
+ 2018-07-20 [db5a349]*use extra global memory to help reduce roundoff error, fix #41
  2018-07-02 [8aba23b] fix a regression introduced in 29ea426, fix #40
  2018-06-04 [d9bdb33] fix incorrect column number when momentum transfer is recorded
  2018-06-04 [cf81b30] read RNGSeed field from the JSON file
  2018-06-04 [8cd8a69] support autopilot flag in JSON, fix typo
  2018-06-04 [c90b8b3] add specular reflection flag, passing more session flags via the JSON file
- 2018-06-04*[3e5a1d8] add mcxlab cfg to json input file converter
+ 2018-06-04 [3e5a1d8]*add mcxlab cfg to json input file converter
  2018-05-19 [d28c36e] use load_nii compatible output, make sure nii is read-only
- 2018-05-19*[78ee1ec] add built-in loadnii support
+ 2018-05-19 [78ee1ec]*add built-in loadnii support
  2018-05-19 [1854eee] fix normalization bug in replayall mode
- 2018-05-19*[7f1b574] positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
+ 2018-05-19 [7f1b574]*positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
  2018-05-15 [a7632bc] fix bugs in checking replaydet values
  2018-05-15 [e5db8cd] output 5-dim fluence when replaydet=-1,two replay test script,add help for replaydet
- 2018-05-14*[651c53f] replay for all detectors with -Y -1
+ 2018-05-14 [651c53f]*replay for all detectors with -Y -1
  2018-05-03 [91765e1] fix issue #38, revert the regression introduced in commit 95b43708
  2018-05-03 [6743d25] partially fixing issue #38
- 2018-04-07*[b537309] complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
+ 2018-04-07 [b537309]*complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
  2018-04-07 [63bce2b] initial port of mmc momentum transfer calculations for DCS
  2018-04-07 [acef0cf] GUI update on high-res displays
  2018-04-02 [6ea1171] set default output format to mc2 again
@@ -58,7 +106,7 @@
  2018-03-21 [9769f8a] move help info from title to a help button
  2018-03-21 [cb2fa99] update mcxstudio folder structure
  2018-03-21 [6a17a9c] change default mcxsuite folder structure
- 2018-03-17*[5b083b4] make mcxlab compatible with mcxlabcl to call opencl
+ 2018-03-17 [5b083b4]*make mcxlab compatible with mcxlabcl to call opencl
  2018-03-12 [1014527] fix crash due to incorrect column number
  2018-03-12 [f5bf5b8] make mcxstudio compile on windows
  2018-03-11 [74723b1] add ID column for media and detector, addpath to matlab

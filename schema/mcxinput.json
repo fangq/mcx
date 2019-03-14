@@ -1,0 +1,446 @@
+{
+  "title": "MCX Settings",
+  "type": "object",
+  "required": [
+    "Session",
+    "Forward",
+    "Optode",
+    "Shapes",
+    "Domain"
+  ],
+  "format": "categories",
+  "properties": {
+    "Session": {
+      "type": "object",
+      "title": "Session",
+      "format": "grid",
+      "required": [
+        "ID",
+        "Photons",
+        "DoMismatch",
+        "DoAutoThread"
+      ],
+      "properties": {
+        "ID": {
+          "title": "Session Name",
+          "type": "string",
+          "default": "mcx"
+        },
+        "Photons": {
+          "title": "Photon number",
+          "type": "integer",
+          "default": 100000,
+          "maximum": 10000000
+        },
+        "DoMismatch": {
+          "title": "Do Reflection",
+          "type": "boolean",
+          "default": true
+        },
+        "DoAutoThread": {
+          "title": "Let MCX decide thread/block size",
+          "type": "boolean",
+          "default": true
+        },
+        "RNGSeed": {
+          "title": "Random seed",
+          "type": "number",
+          "default": 29012392
+        }
+      }
+    },
+    "Forward": {
+      "type": "object",
+      "title": "Forward",
+      "format": "grid",
+      "required": [
+        "T0",
+        "T1",
+        "Dt"
+      ],
+      "properties": {
+        "T0": {
+          "title": "Starting time",
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1e-7
+        },
+        "T1": {
+          "title": "Ending time",
+          "type": "number",
+          "default": 5e-9,
+          "minimum": 0,
+          "maximum": 1e-7
+        },
+        "Dt": {
+          "title": "Time gate width",
+          "type": "number",
+          "default": 5e-9,
+          "minimum": 0,
+          "maximum": 1e-7
+        }
+      }
+    },
+    "Optode": {
+      "type": "object",
+      "title": "Optode",
+      "required": [
+        "Source"
+      ],
+      "properties": {
+        "Source": {
+          "title": "Source",
+          "type": "object",
+          "required": [
+            "Type",
+            "Pos",
+            "Dir"
+          ],
+          "properties": {
+            "Type": {
+              "title": "Type",
+              "type": "string",
+              "default": "pencil",
+              "enum": [
+                "pencil",
+                "isotropic",
+                "cone",
+                "gaussian",
+                "planar",
+                "pattern",
+                "pattern3d",
+                "fourier",
+                "arcsine",
+                "disk",
+                "fourierx",
+                "fourierx2d",
+                "zgaussian",
+                "line",
+                "slit",
+                "pencilarray"
+              ]
+            },
+            "Pos": {
+              "title": "Position",
+              "type": "array",
+              "format": "tabs",
+              "items": {
+                "type": "number"
+              },
+              "default": [
+                30,
+                30,
+                0
+              ],
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "Dir": {
+              "title": "Launch Direction",
+              "type": "array",
+              "format": "tabs",
+              "default": [
+                0,
+                0,
+                1
+              ],
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 4
+            },
+            "Param1": {
+              "title": "Source Parameter 1",
+              "type": "array",
+              "format": "tabs",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "Param2": {
+              "title": "Source Parameter 1",
+              "type": "array",
+              "format": "tabs",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          }
+        },
+        "Detector": {
+          "title": "Detector",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "object",
+            "required": [
+              "Pos",
+              "R"
+            ],
+            "properties": {
+              "Pos": {
+                "title": "Position",
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "R": {
+                "title": "Radius",
+                "type": "number",
+                "default": 2,
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "Shapes": {
+      "title": "Shapes",
+      "type": "array",
+      "format": "table",
+      "items": {
+        "anyOf": [
+          {
+            "title": "Grid",
+            "type": "object",
+	    "required": ["Tag","Size"],
+            "items": {
+              "properties": {
+                "Tag": {
+                  "title": "Tag",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "Size": {
+                  "title": "Size",
+                  "type": "array",
+                  "format": "tabs",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                }
+              }
+            }
+          },
+          {
+            "title": "Sphere",
+            "type": "object",
+	    "required": ["Tag","O","R"],
+            "properties": {
+              "Tag": {
+                "title": "Tag",
+                "type": "integer",
+                "minimum": 0
+              },
+              "O": {
+                "title": "Center",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "R": {
+                "title": "Radius",
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "title": "Box",
+            "type": "object",
+	    "required": ["Tag","O","Size"],
+            "properties": {
+              "Tag": {
+                "title": "Tag",
+                "type": "integer",
+                "minimum": 0
+              },
+              "Size": {
+                "title": "Size",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "O": {
+                "title": "Center",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          },
+          {
+            "title": "Subgrid",
+            "type": "object",
+	    "required": ["Tag","O","Size"],
+            "properties": {
+              "Tag": {
+                "title": "Tag",
+                "type": "integer",
+                "minimum": 0
+              },
+              "Size": {
+                "title": "Size",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "O": {
+                "title": "Center",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          },
+          {
+            "title": "Cylinder",
+            "type": "object",
+	    "required": ["Tag","C0","C1","R"],
+            "properties": {
+              "Tag": {
+                "title": "Tag",
+                "type": "integer",
+                "minimum": 0
+              },
+              "C0": {
+                "title": "Size",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "C1": {
+                "title": "Center",
+                "type": "array",
+                "format": "tabs",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "R": {
+                "title": "Radius",
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "title": "Name",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "Domain": {
+      "type": "object",
+      "title": "Domain",
+      "required": [
+        "Media",
+        "Dim",
+        "OriginType"
+      ],
+      "properties": {
+        "OriginType": {
+          "title": "Origin at [0,0,0]",
+          "type": "boolean",
+          "default": true
+        },
+        "Dim": {
+          "title": "Dimensions",
+          "type": "array",
+          "format": "tabs",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "VolumeFile": {
+          "title": "Volume File",
+          "type": "string",
+          "default": ""
+        },
+        "Media": {
+          "title": "Media",
+          "type": "array",
+          "format": "table",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "mua",
+              "mus",
+              "g",
+              "n"
+            ],
+            "properties": {
+              "mua": {
+                "title": "Absorption (μa 1/mm)",
+                "type": "number",
+                "default": 0,
+                "minimum": 0
+              },
+              "mus": {
+                "title": "Scattering (μs 1/mm)",
+                "type": "number",
+                "default": 0,
+                "minimum": 0
+              },
+              "g": {
+                "title": "Anisotropy (g)",
+                "type": "number",
+                "default": 1,
+                "minimum": -1,
+                "maximum": 1
+              },
+              "n": {
+                "title": "Reflective Index (n)",
+                "type": "number",
+                "default": 1,
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

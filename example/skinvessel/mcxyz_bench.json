@@ -1,0 +1,59 @@
+{
+	"Session": {
+		"ID": "skinvessel",
+		"DoMismatch": 1,
+		"DoAutoThread": 1,
+		"Photons": 10000000
+	},
+	"Forward": {
+		"T0": 0,
+		"T1": 5e-08,
+		"Dt": 5e-08
+	},
+	"Optode": {
+		"Source": {
+			"Pos": [100,100,20],
+			"Dir": [0,0,1],
+			"Param1": [60,0,0,0],
+			"Type": "disk"
+		}
+	},
+	"Domain": {
+		"OriginType": 1,
+		"LengthUnit": 0.005,
+		"Media": [
+			{
+				"mua": 1e-05,
+				"mus": 0,
+				"g": 1,
+				"n": 1.37
+			},
+			{
+				"mua": 3.564e-05,
+				"mus": 1,
+				"g": 1,
+				"n": 1.37
+			},
+			{
+				"mua": 23.05426549,
+				"mus": 9.398496241,
+				"g": 0.9,
+				"n": 1.37
+			},
+			{
+				"mua": 0.04584957865,
+				"mus": 35.65405549,
+				"g": 0.9,
+				"n": 1.37
+			},
+			{
+				"mua": 1.657237447,
+				"mus": 37.59398496,
+				"g": 0.9,
+				"n": 1.37
+			}
+		],
+	        "Dim":    [200,200,200],
+		"VolumeFile": "skinvessel.json"
+	}
+}

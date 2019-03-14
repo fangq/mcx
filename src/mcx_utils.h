@@ -33,6 +33,10 @@
 #include "float.h"
 #include "nifti1.h"
 
+#ifdef _OPENMP                      ///< use multi-threading for running simulation on multiple GPUs
+    #include <omp.h>
+#endif
+
 #define EPS                FLT_EPSILON                   /**< round-off limit */
 #define VERY_BIG           (1.f/FLT_EPSILON)             /**< a big number */
 
@@ -48,9 +52,10 @@
 #define MIN(a,b)           ((a)<(b)?(a):(b))             /**< macro to get the min values of two numbers */
 #define MAX(a,b)           ((a)>(b)?(a):(b))             /**< macro to get the max values of two numbers */
 
-enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP};   /**< types of output */
+enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
-enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON};           /**< output data format */
+enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3};           /**< output data format */
+enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCylic};            /**< boundary conditions */
 
 /**
  * The structure to store optical properties
@@ -81,7 +86,8 @@ typedef struct MCXHistoryHeader{
 	unsigned int  seedbyte;        /**< how many bytes per RNG seed */
         float normalizer;              /**< what is the normalization factor */
 	int respin;                    /**< if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset */
-	int reserved[4];               /**< reserved fields for future extension */
+	unsigned int  srcnum;          /**< number of sources for simultaneous pattern sources */
+	int reserved[3];               /**< reserved fields for future extension */
 } History;
 
 /**
@@ -150,7 +156,6 @@ typedef struct MCXConfig{
 	unsigned int maxgate;         /**<simultaneous recording gates*/
 	int respin;          /**<number of repeatitions*/
 	unsigned int printnum;        /**<number of printed threads (for debugging)*/
-	unsigned int reseedlimit;     /**<number of scattering events per thread before the RNG is reseeded*/
 	int gpuid;                    /**<the ID of the GPU to use, starting from 1, 0 for auto*/
 
 	unsigned int *vol;            /**<pointer to the volume*/
@@ -189,6 +194,7 @@ typedef struct MCXConfig{
 	int voidtime;                /**<1 start counting photon time when moves inside 0 voxels; 0: count time only after enters non-zero voxel*/
 	float4 srcparam1;            /**<a quadruplet {x,y,z,w} for additional source parameters*/
 	float4 srcparam2;            /**<a quadruplet {x,y,z,w} for additional source parameters*/
+	unsigned int srcnum;         /**<total number of pattern sources */
         float* srcpattern;           /**<a string for the source form, options include "pencil","isotropic", etc*/
 	Replay replay;               /**<a structure to prepare for photon replay*/
 	void *seeddata;              /**<poiinter to a buffer where detected photon seeds are stored*/
@@ -209,6 +215,8 @@ typedef struct MCXConfig{
 	unsigned int gscatter;       /**<after how many scattering events that we can use mus' instead of mus */
 	float *exportdebugdata;      /**<pointer to the buffer where the photon trajectory data are stored*/
 	uint mediabyte;              /**< how many bytes per media index, mcx supports 1, 2 and 4, 4 is the default*/
+	float *dx, *dy, *dz;         /**< anisotropic voxel spacing for x,y,z axis */
+	char bc[8];                  /**<boundary condition flag for [-x,-y,-z,+x,+y,+z,unused,unused] */
 } Config;
 
 #ifdef	__cplusplus
@@ -227,7 +235,8 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg);
 void mcx_usage(Config *cfg,char *exename);
 void mcx_printheader(Config *cfg);
 void mcx_loadvolume(char *filename,Config *cfg);
-void mcx_normalize(float field[], float scale, int fieldlen, int option);
+void mcx_normalize(float field[], float scale, int fieldlen, int option, int pidx, int srcnum);
+void mcx_kahanSum(float *sum, float *kahanc, float input);
 int  mcx_readarg(int argc, char *argv[], int id, void *output,const char *type);
 void mcx_printlog(Config *cfg, char *str);
 int  mcx_remap(char *opt);
@@ -255,7 +264,11 @@ extern "C"
 #endif
 
 #ifdef MCX_CONTAINER
+ #ifdef _OPENMP
+  #define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) mexPrintf(__VA_ARGS__);}
+ #else
   #define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__)
+ #endif
 #else
   #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__)
 #endif

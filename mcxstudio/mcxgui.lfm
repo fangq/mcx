@@ -1,16 +1,17 @@
 object fmMCX: TfmMCX
-  Left = 437
-  Height = 795
-  Top = 108
-  Width = 1280
+  Left = 581
+  Height = 787
+  Top = 138
+  Width = 1267
   ActiveControl = lvJobs
   Align = alTop
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = 'MCX Studio'
-  ClientHeight = 773
-  ClientWidth = 1280
-  Constraints.MinHeight = 500
-  Constraints.MinWidth = 1280
+  ClientHeight = 767
+  ClientWidth = 1267
+  Constraints.MinHeight = 494
+  Constraints.MinWidth = 1267
+  DesignTimePPI = 95
   DockSite = True
   DragMode = dmAutomatic
   Icon.Data = {
@@ -160,11 +161,11 @@ object fmMCX: TfmMCX
   LCLVersion = '1.8.2.0'
   object ToolBar1: TToolBar
     Left = 0
-    Height = 120
+    Height = 118
     Top = 0
-    Width = 1280
+    Width = 1267
     AutoSize = True
-    ButtonHeight = 120
+    ButtonHeight = 118
     ButtonWidth = 80
     Caption = 'MCX Ribon'
     EdgeInner = esNone
@@ -205,7 +206,7 @@ object fmMCX: TfmMCX
     end
     object ToolButton5: TToolButton
       Left = 515
-      Height = 120
+      Height = 118
       Top = 0
       Caption = 'ToolButton5'
       Style = tbsDivider
@@ -242,14 +243,14 @@ object fmMCX: TfmMCX
     end
     object ToolButton12: TToolButton
       Left = 426
-      Height = 120
+      Height = 118
       Top = 0
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
       Left = 856
-      Height = 120
+      Height = 118
       Top = 0
       Caption = 'ToolButton13'
       Style = tbsDivider
@@ -270,7 +271,7 @@ object fmMCX: TfmMCX
     end
     object ToolButton17: TToolButton
       Left = 253
-      Height = 120
+      Height = 118
       Top = 0
       Caption = 'ToolButton17'
       Style = tbsDivider
@@ -285,7 +286,7 @@ object fmMCX: TfmMCX
     end
     object ToolButton8: TToolButton
       Left = 1113
-      Height = 120
+      Height = 118
       Top = 0
       Caption = 'ToolButton8'
       Style = tbsDivider
@@ -320,21 +321,21 @@ object fmMCX: TfmMCX
   end
   object sbInfo: TStatusBar
     Left = 0
-    Height = 20
-    Top = 753
-    Width = 1280
+    Height = 18
+    Top = 749
+    Width = 1267
     Panels = <    
       item
         Text = 'Status: idle'
-        Width = 400
+        Width = 396
       end    
       item
         Alignment = taCenter
         Style = psOwnerDraw
-        Width = 400
+        Width = 396
       end    
       item
-        Width = 400
+        Width = 396
       end>
     ParentFont = False
     SimplePanel = False
@@ -342,9 +343,9 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 619
-    Top = 134
-    Width = 264
+    Height = 617
+    Top = 132
+    Width = 262
     HelpType = htKeyword
     HelpKeyword = 'HTML/mcx_help#GUI_sessionlist'
     Align = alLeft
@@ -352,173 +353,173 @@ object fmMCX: TfmMCX
     Columns = <    
       item
         Caption = 'Session'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'InputFile'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'ThreadNum'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'ThreadBlock'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'PhotonNum'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'RespinNum'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'ArrayOrder'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'BubbleSize'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'GateNum'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoReflect'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSave'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoNormalize'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'Autopilot'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'SaveDetector'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DetectedNum'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'GPUID'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'UnitInMM'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSaveRef'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSaveExit'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSaveSeed'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSkipVoid'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSrcFrom0'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'MediaCfg'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DetectorCfg'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'MCXConfig'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'Workload'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'ShapeCfg'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'Seed'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSaveMask'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DebugFlags'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'ReplayDet'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoReplay'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'MCProgram'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSpecular'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'UseAtomic'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'BasicOrder'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DebugPhoton'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'MoreParam'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'RemoteCmd'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoRemote'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'DoSharedFS'
-        Width = 100
+        Width = 99
       end    
       item
         Caption = 'OutputFormat'
-        Width = 100
+        Width = 99
       end>
-    Constraints.MinWidth = 20
+    Constraints.MinWidth = 19
     IconOptions.AutoArrange = True
     LargeImages = ProgramIcon
     ParentFont = False
@@ -532,21 +533,21 @@ object fmMCX: TfmMCX
     OnSelectItem = lvJobsSelectItem
   end
   object Splitter1: TSplitter
-    Left = 264
-    Height = 619
-    Top = 134
+    Left = 262
+    Height = 617
+    Top = 132
     Width = 8
   end
   object plSetting: TPanel
-    Left = 272
-    Height = 619
-    Top = 134
-    Width = 640
+    Left = 270
+    Height = 617
+    Top = 132
+    Width = 632
     Align = alClient
     Anchors = []
     BevelOuter = bvNone
-    ClientHeight = 619
-    ClientWidth = 640
+    ClientHeight = 617
+    ClientWidth = 632
     Enabled = False
     ParentColor = False
     ParentFont = False
@@ -554,14 +555,14 @@ object fmMCX: TfmMCX
     object grBasic: TGroupBox
       AnchorSideBottom.Control = grGPU
       Left = 0
-      Height = 103
-      Top = 42
-      Width = 640
+      Height = 95
+      Top = 40
+      Width = 632
       Align = alTop
       AutoSize = True
       Caption = 'Basic Settings'
-      ClientHeight = 85
-      ClientWidth = 636
+      ClientHeight = 79
+      ClientWidth = 628
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -572,17 +573,17 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = grBasic
         AnchorSideRight.Control = Label10
         Left = 130
-        Height = 26
+        Height = 24
         Hint = 'InputFile'
         Top = 5
-        Width = 294
+        Width = 290
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#input'
         DialogOptions = []
         Filter = 'JSON or legacy input files (*.json;*.inp)|*.json;*.inp|JSON input file (*.json)|*.json|Legacy input file (*.inp)|*.inp|All (*.*)|*.*'
         FilterIndex = 0
         HideDirectories = False
-        ButtonWidth = 23
+        ButtonWidth = 22
         NumGlyphs = 1
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 5
@@ -598,9 +599,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edConfigFile
         Left = 0
-        Height = 16
+        Height = 14
         Hint = '-s (--sessionid)'
-        Top = 36
+        Top = 34
         Width = 130
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -617,10 +618,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edConfigFile
         AnchorSideTop.Side = asrBottom
         Left = 130
-        Height = 26
+        Height = 24
         Hint = 'Session'
-        Top = 31
-        Width = 118
+        Top = 29
+        Width = 116
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#session'
         OnClick = mcxdoAddItemExecute
@@ -634,10 +635,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edPhoton
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edPhoton
-        Left = 273
-        Height = 16
+        Left = 269
+        Height = 14
         Hint = '-n (--photon)'
-        Top = 36
+        Top = 34
         Width = 151
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
@@ -652,11 +653,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edSession
         AnchorSideTop.Side = asrCenter
-        Left = 424
-        Height = 26
+        Left = 420
+        Height = 24
         Hint = 'PhotonNum'
-        Top = 31
-        Width = 118
+        Top = 29
+        Width = 116
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#photon'
         OnEditingDone = edRespinChange
@@ -670,9 +671,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edConfigFile
         Left = 0
-        Height = 16
+        Height = 14
         Hint = '-u (--unitinmm)'
-        Top = 62
+        Top = 58
         Width = 130
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
@@ -691,10 +692,10 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Control = grBasic
         AnchorSideBottom.Side = asrBottom
         Left = 130
-        Height = 26
+        Height = 24
         Hint = 'UnitInMM'
-        Top = 57
-        Width = 65
+        Top = 53
+        Width = 64
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#unitinmm'
         Anchors = [akTop, akLeft, akBottom]
@@ -709,11 +710,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edPhoton
         AnchorSideTop.Side = asrBottom
-        Left = 424
-        Height = 26
+        Left = 420
+        Height = 24
         Hint = 'Seed'
-        Top = 57
-        Width = 118
+        Top = 53
+        Width = 116
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#seed'
         OnEditingDone = edRespinChange
@@ -726,10 +727,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edSeed
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edSeed
-        Left = 370
-        Height = 16
+        Left = 366
+        Height = 14
         Hint = '-E (--seed)'
-        Top = 62
+        Top = 58
         Width = 54
         Alignment = taRightJustify
         Anchors = [akTop, akRight]
@@ -745,7 +746,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         Left = 0
         Height = 24
-        Top = 6
+        Top = 5
         Width = 130
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#input'
@@ -759,10 +760,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = grBasic
         AnchorSideRight.Side = asrBottom
-        Left = 464
+        Left = 460
         Height = 24
-        Top = 6
-        Width = 172
+        Top = 5
+        Width = 168
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_simulation_designer'
         Anchors = [akTop, akLeft, akRight]
@@ -776,8 +777,8 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edConfigFile
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = rbUseDesigner
-        Left = 424
-        Height = 16
+        Left = 420
+        Height = 14
         Hint = '-a (--array)'
         Top = 10
         Width = 40
@@ -794,10 +795,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edSeed
         AnchorSideTop.Side = asrCenter
-        Left = 542
-        Height = 24
+        Left = 536
+        Height = 23
         Hint = 'Load seed data from previous simulations for replay'
-        Top = 58
+        Top = 54
         Width = 26
         OnClick = btLoadSeedClick
         ShowHint = True
@@ -809,10 +810,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = btLoadSeed
         AnchorSideTop.Side = asrCenter
-        Left = 573
+        Left = 567
         Height = 24
         Hint = 'DoReplay'
-        Top = 58
+        Top = 53
         Width = 68
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_replay'
@@ -826,9 +827,9 @@ object fmMCX: TfmMCX
       object edOutputFormat: TComboBox
         AnchorSideTop.Control = edUnitInMM
         AnchorSideTop.Side = asrCenter
-        Left = 296
-        Height = 26
-        Top = 57
+        Left = 293
+        Height = 25
+        Top = 53
         Width = 72
         ItemHeight = 0
         ItemIndex = 1
@@ -836,6 +837,7 @@ object fmMCX: TfmMCX
           'nii'
           'mc2'
           'hdr'
+          'tx3'
           'ascii'
           'bin'
         )
@@ -852,11 +854,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edUnitInMM
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edOutputFormat
-        Left = 195
-        Height = 16
+        Left = 194
+        Height = 14
         Hint = '-u (--unitinmm)'
-        Top = 62
-        Width = 101
+        Top = 58
+        Width = 99
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Output format'
@@ -870,13 +872,13 @@ object fmMCX: TfmMCX
     object grAdvSettings: TGroupBox
       Tag = -1
       Left = 0
-      Height = 201
-      Top = 410
-      Width = 640
+      Height = 199
+      Top = 391
+      Width = 632
       Align = alTop
       Caption = 'Advanced Settings'
       ClientHeight = 183
-      ClientWidth = 636
+      ClientWidth = 628
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -888,10 +890,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = grArray
         Left = 0
-        Height = 16
+        Height = 14
         Hint = '-a (--array)'
-        Top = 26
-        Width = 168
+        Top = 27
+        Width = 167
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Top = 6
@@ -905,11 +907,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = grAdvSettings
         AnchorSideRight.Control = edBubble
         AnchorSideRight.Side = asrBottom
-        Left = 168
+        Left = 167
         Height = 40
         Hint = 'ArrayOrder'
         Top = 14
-        Width = 120
+        Width = 119
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#array'
         Anchors = [akTop, akLeft, akRight]
@@ -925,7 +927,7 @@ object fmMCX: TfmMCX
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 2
         ClientHeight = 36
-        ClientWidth = 116
+        ClientWidth = 115
         Columns = 2
         ItemIndex = 0
         Items.Strings = (
@@ -942,10 +944,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edGate
         Left = 0
-        Height = 16
+        Height = 14
         Hint = '-g (--gategroup)'
-        Top = 87
-        Width = 208
+        Top = 85
+        Width = 206
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Gate group size (-g)'
@@ -957,10 +959,10 @@ object fmMCX: TfmMCX
       object edGate: TSpinEdit
         AnchorSideTop.Control = edBubble
         AnchorSideTop.Side = asrBottom
-        Left = 208
-        Height = 26
+        Left = 206
+        Height = 24
         Hint = 'GateNum'
-        Top = 82
+        Top = 80
         Width = 80
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#gategroup'
@@ -977,8 +979,8 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edBubble
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edBubble
-        Left = 53
-        Height = 16
+        Left = 51
+        Height = 14
         Hint = '-r (--skipradius)'
         Top = 59
         Width = 155
@@ -993,8 +995,8 @@ object fmMCX: TfmMCX
       object edBubble: TEdit
         AnchorSideTop.Control = grArray
         AnchorSideTop.Side = asrBottom
-        Left = 208
-        Height = 26
+        Left = 206
+        Height = 24
         Hint = 'BubbleSize'
         Top = 54
         Width = 80
@@ -1010,13 +1012,13 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = grArray
         AnchorSideTop.Side = asrCenter
-        Left = 306
-        Height = 16
+        Left = 303
+        Height = 14
         Hint = '(--atomic)'
-        Top = 26
+        Top = 27
         Width = 113
         Alignment = taRightJustify
-        BorderSpacing.Left = 18
+        BorderSpacing.Left = 17
         Caption = 'Atomic operations'
         ParentColor = False
         ParentFont = False
@@ -1029,11 +1031,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edDetectedNum
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edDetectedNum
-        Left = 288
-        Height = 17
+        Left = 286
+        Height = 16
         Hint = '-H (--maxdetphoton)'
-        Top = 59
-        Width = 248
+        Top = 58
+        Width = 244
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         AutoSize = False
@@ -1046,8 +1048,8 @@ object fmMCX: TfmMCX
       object edDetectedNum: TEdit
         AnchorSideTop.Control = grAtomic
         AnchorSideTop.Side = asrBottom
-        Left = 536
-        Height = 26
+        Left = 530
+        Height = 24
         Hint = 'DetectedNum'
         Top = 54
         Width = 80
@@ -1064,10 +1066,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edRespin
         Left = 0
-        Height = 17
+        Height = 16
         Hint = '-r (--repeat)'
-        Top = 115
-        Width = 208
+        Top = 110
+        Width = 206
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         AutoSize = False
@@ -1081,10 +1083,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edGate
         AnchorSideTop.Control = edGate
         AnchorSideTop.Side = asrBottom
-        Left = 208
-        Height = 26
+        Left = 206
+        Height = 24
         Hint = 'RespinNum'
-        Top = 110
+        Top = 106
         Width = 80
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#repeat'
@@ -1103,11 +1105,11 @@ object fmMCX: TfmMCX
         AnchorSideRight.Control = edDetectedNum
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Side = asrBottom
-        Left = 422
+        Left = 418
         Height = 72
         Hint = 'DebugFlags'
-        Top = 82
-        Width = 194
+        Top = 80
+        Width = 192
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#debug'
         Anchors = [akTop, akRight]
@@ -1119,7 +1121,7 @@ object fmMCX: TfmMCX
           'Save Trajectory Data'
           'Show Progress Bar'
         )
-        ItemHeight = 22
+        ItemHeight = 20
         OnClickCheck = edRespinChange
         ParentFont = False
         TabOrder = 7
@@ -1132,11 +1134,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = ckbDebug
         AnchorSideRight.Control = ckbDebug
-        Left = 288
-        Height = 17
+        Left = 286
+        Height = 16
         Hint = '-D (--debuglevel)'
-        Top = 87
-        Width = 128
+        Top = 85
+        Width = 126
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         AutoSize = False
@@ -1151,10 +1153,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edGate
         AnchorSideTop.Control = edRespin
         AnchorSideTop.Side = asrBottom
-        Left = 208
-        Height = 26
+        Left = 206
+        Height = 24
         Hint = 'ReplayDet'
-        Top = 138
+        Top = 132
         Width = 80
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#replaydet'
@@ -1171,10 +1173,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edRespin
         Left = 0
-        Height = 17
+        Height = 16
         Hint = '-Y (--replaydet)'
-        Top = 143
-        Width = 208
+        Top = 136
+        Width = 206
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         AutoSize = False
@@ -1191,7 +1193,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = grAdvSettings
         AnchorSideRight.Side = asrBottom
-        Left = 423
+        Left = 420
         Height = 40
         Hint = 'UseAtomic'
         Top = 14
@@ -1228,10 +1230,10 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edRespin
         Left = 0
-        Height = 17
+        Height = 16
         Hint = '-Y (--replaydet)'
-        Top = 169
-        Width = 208
+        Top = 160
+        Width = 206
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         AutoSize = False
@@ -1249,11 +1251,11 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = grAdvSettings
         AnchorSideBottom.Side = asrBottom
-        Left = 208
-        Height = 26
+        Left = 206
+        Height = 24
         Hint = 'MoreParam'
-        Top = 164
-        Width = 408
+        Top = 156
+        Width = 404
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_userparam'
         Anchors = [akTop, akLeft, akRight]
@@ -1266,7 +1268,7 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 14
         Top = 0
-        Width = 636
+        Width = 628
         Align = alTop
         Caption = '▾'
         Color = clMenuText
@@ -1280,9 +1282,9 @@ object fmMCX: TfmMCX
     object grSwitches: TGroupBox
       AnchorSideBottom.Control = grAdvSettings
       Left = 0
-      Height = 114
-      Top = 250
-      Width = 640
+      Height = 112
+      Top = 236
+      Width = 632
       Align = alTop
       AutoSize = True
       Caption = 'Switches'
@@ -1291,7 +1293,7 @@ object fmMCX: TfmMCX
       ChildSizing.Layout = cclTopToBottomThenLeftToRight
       ChildSizing.ControlsPerLine = 4
       ClientHeight = 96
-      ClientWidth = 636
+      ClientWidth = 628
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -1302,7 +1304,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoReflect'
         Top = 0
-        Width = 196
+        Width = 194
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#reflect'
         Caption = 'Do reflection (-b)'
@@ -1317,7 +1319,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoNormalize'
         Top = 24
-        Width = 196
+        Width = 194
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#normalize'
         Caption = 'Do normalization (-U)'
@@ -1332,7 +1334,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSaveExit'
         Top = 48
-        Width = 196
+        Width = 194
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#saveexit'
         Caption = 'Save exit position && dir (-x)'
@@ -1345,7 +1347,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSrcFrom0'
         Top = 72
-        Width = 196
+        Width = 194
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#srcfrom0'
         Caption = 'Orign from [0,0,0] (-z)'
@@ -1356,11 +1358,11 @@ object fmMCX: TfmMCX
         TabOrder = 3
       end
       object ckSaveDetector: TCheckBox
-        Left = 206
+        Left = 204
         Height = 24
         Hint = 'SaveDetector'
         Top = 0
-        Width = 206
+        Width = 204
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#savedet'
         Caption = 'Save detected photons (-d)'
@@ -1371,11 +1373,11 @@ object fmMCX: TfmMCX
         TabOrder = 4
       end
       object ckSaveData: TCheckBox
-        Left = 206
+        Left = 204
         Height = 24
         Hint = 'DoSave'
         Top = 24
-        Width = 206
+        Width = 204
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#save2pt'
         Caption = 'Save fluence (-S)'
@@ -1386,11 +1388,11 @@ object fmMCX: TfmMCX
         TabOrder = 5
       end
       object ckSaveRef: TCheckBox
-        Left = 206
+        Left = 204
         Height = 24
         Hint = 'DoSaveRef'
         Top = 48
-        Width = 206
+        Width = 204
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#saveref'
         Caption = 'Save diffuse reflectance (-X)'
@@ -1399,11 +1401,11 @@ object fmMCX: TfmMCX
         TabOrder = 6
       end
       object ckSkipVoid: TCheckBox
-        Left = 206
+        Left = 204
         Height = 24
         Hint = 'DoSkipVoid'
         Top = 72
-        Width = 206
+        Width = 204
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#skipvoid'
         Caption = 'Skip void space (-k)'
@@ -1412,11 +1414,11 @@ object fmMCX: TfmMCX
         TabOrder = 7
       end
       object ckSaveSeed: TCheckBox
-        Left = 412
+        Left = 408
         Height = 24
         Hint = 'DoSaveSeed'
         Top = 0
-        Width = 214
+        Width = 210
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#saveseed'
         Caption = 'Save photon seeds (-q)'
@@ -1425,11 +1427,11 @@ object fmMCX: TfmMCX
         TabOrder = 8
       end
       object ckSaveMask: TCheckBox
-        Left = 412
+        Left = 408
         Height = 24
         Hint = 'DoSaveMask'
         Top = 24
-        Width = 214
+        Width = 210
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#dumpmask'
         Caption = 'Save volume mask (-M)'
@@ -1438,11 +1440,11 @@ object fmMCX: TfmMCX
         TabOrder = 9
       end
       object ckSpecular: TCheckBox
-        Left = 412
+        Left = 408
         Height = 24
         Hint = 'DoSpecular'
         Top = 48
-        Width = 214
+        Width = 210
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#specular'
         Caption = 'Do specular reflection (-V)'
@@ -1452,11 +1454,11 @@ object fmMCX: TfmMCX
         Visible = False
       end
       object ckMomentum: TCheckBox
-        Left = 412
+        Left = 408
         Height = 24
         Hint = 'DoMomentum'
         Top = 72
-        Width = 214
+        Width = 210
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#momentum'
         Caption = 'Save momentum transfer (-m)'
@@ -1468,14 +1470,14 @@ object fmMCX: TfmMCX
     object grGPU: TGroupBox
       AnchorSideBottom.Control = grSwitches
       Left = 0
-      Height = 105
-      Top = 145
-      Width = 640
+      Height = 101
+      Top = 135
+      Width = 632
       Align = alTop
       AutoSize = True
       Caption = 'GPU Settings'
-      ClientHeight = 87
-      ClientWidth = 636
+      ClientHeight = 85
+      ClientWidth = 628
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -1486,7 +1488,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = edThread
         Left = 0
-        Height = 16
+        Height = 14
         Hint = '-t (--thread)'
         Top = 31
         Width = 114
@@ -1503,15 +1505,15 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = ckAutopilot
         AnchorSideRight.Side = asrBottom
-        Left = 150
-        Height = 28
+        Left = 148
+        Height = 27
         Hint = 'ThreadNum'
         Top = 25
-        Width = 112
+        Width = 114
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#thread'
         Anchors = [akTop, akLeft, akRight]
-        BorderSpacing.Left = 150
+        BorderSpacing.Left = 148
         Enabled = False
         ItemHeight = 0
         ItemIndex = 19
@@ -1570,9 +1572,9 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = edBlockSize
         AnchorSideTop.Side = asrCenter
         Left = 0
-        Height = 16
+        Height = 14
         Hint = '-T (--blocksize)'
-        Top = 59
+        Top = 58
         Width = 128
         Alignment = taRightJustify
         Caption = 'Thread block size (-T)'
@@ -1589,15 +1591,15 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = grGPU
         AnchorSideBottom.Side = asrBottom
-        Left = 150
-        Height = 28
+        Left = 148
+        Height = 27
         Hint = 'ThreadBlock'
-        Top = 53
-        Width = 112
+        Top = 52
+        Width = 114
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#blocksize'
         Anchors = [akTop, akLeft, akRight]
-        BorderSpacing.Left = 150
+        BorderSpacing.Left = 148
         BorderSpacing.Bottom = 6
         Enabled = False
         ItemHeight = 0
@@ -1621,14 +1623,14 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Control = grGPU
         AnchorSideBottom.Side = asrBottom
-        Left = 279
-        Height = 56
+        Left = 278
+        Height = 55
         Hint = 'GPUID'
-        Top = 23
-        Width = 170
+        Top = 22
+        Width = 169
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#gpu'
-        BorderSpacing.Left = 17
+        BorderSpacing.Left = 16
         BorderSpacing.Top = 2
         BorderSpacing.Bottom = 8
         Items.Strings = (
@@ -1641,7 +1643,7 @@ object fmMCX: TfmMCX
           'GPU#7'
           'GPU#8'
         )
-        ItemHeight = 22
+        ItemHeight = 20
         OnClickCheck = edRespinChange
         ParentFont = False
         TabOrder = 3
@@ -1653,10 +1655,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edGPUID
         AnchorSideTop.Control = ckAutopilot
         AnchorSideTop.Side = asrCenter
-        Left = 279
-        Height = 16
+        Left = 278
+        Height = 14
         Hint = '-G (--gpu)'
-        Top = 5
+        Top = 6
         Width = 70
         Alignment = taRightJustify
         Caption = 'Run MCX on'
@@ -1669,10 +1671,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Control = edWorkload
         AnchorSideTop.Control = Label12
         AnchorSideTop.Side = asrCenter
-        Left = 465
-        Height = 16
+        Left = 463
+        Height = 14
         Hint = '-W (--workload)'
-        Top = 5
+        Top = 6
         Width = 88
         Alignment = taRightJustify
         Caption = 'Workload split'
@@ -1687,11 +1689,11 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = Label15
         AnchorSideTop.Side = asrBottom
         AnchorSideBottom.Side = asrBottom
-        Left = 465
-        Height = 26
+        Left = 463
+        Height = 24
         Hint = 'Workload'
-        Top = 23
-        Width = 118
+        Top = 22
+        Width = 116
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#workload'
         BorderSpacing.Left = 16
@@ -1707,7 +1709,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = Label12
         AnchorSideTop.Side = asrCenter
-        Left = 359
+        Left = 358
         Height = 24
         Top = 1
         Width = 84
@@ -1723,10 +1725,10 @@ object fmMCX: TfmMCX
     object grProgram: TRadioGroup
       AnchorSideBottom.Control = grBasic
       Left = 0
-      Height = 42
+      Height = 40
       Hint = 'MCProgram'
       Top = 0
-      Width = 640
+      Width = 632
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_mcprogram'
       Align = alTop
@@ -1741,7 +1743,7 @@ object fmMCX: TfmMCX
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 3
       ClientHeight = 24
-      ClientWidth = 636
+      ClientWidth = 628
       Columns = 3
       Font.Color = clGreen
       ItemIndex = 0
@@ -1757,13 +1759,13 @@ object fmMCX: TfmMCX
     end
     object plOutputDock: TPanel
       Left = 0
-      Height = 8
-      Top = 611
-      Width = 640
+      Height = 27
+      Top = 590
+      Width = 632
       Align = alClient
       BevelOuter = bvNone
-      ClientHeight = 8
-      ClientWidth = 640
+      ClientHeight = 27
+      ClientWidth = 632
       DockSite = True
       ParentFont = False
       TabOrder = 5
@@ -1773,15 +1775,15 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Control = plOutputDock
         AnchorSideBottom.Side = asrBottom
         Cursor = crHandPoint
-        Left = 440
+        Left = 434
         Height = 33
         Hint = 'About MCX'
-        Top = -25
-        Width = 200
+        Top = -6
+        Width = 198
         Anchors = [akRight, akBottom]
         AutoSize = True
-        Constraints.MaxHeight = 200
-        Constraints.MaxWidth = 200
+        Constraints.MaxHeight = 198
+        Constraints.MaxWidth = 198
         OnClick = mcxdoAboutExecute
         ParentShowHint = False
         Picture.Data = {
@@ -2083,14 +2085,14 @@ object fmMCX: TfmMCX
     end
     object gbRemote: TGroupBox
       Left = 0
-      Height = 46
-      Top = 364
-      Width = 640
+      Height = 43
+      Top = 348
+      Width = 632
       Align = alTop
       AutoSize = True
       Caption = 'Remote Execution'
-      ClientHeight = 28
-      ClientWidth = 636
+      ClientHeight = 27
+      ClientWidth = 628
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -2103,8 +2105,8 @@ object fmMCX: TfmMCX
         Left = 10
         Height = 24
         Hint = 'DoRemote'
-        Top = 2
-        Width = 179
+        Top = 1
+        Width = 176
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_runremote'
         Anchors = [akTop, akLeft, akRight]
@@ -2120,11 +2122,11 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Side = asrBottom
-        Left = 189
-        Height = 28
+        Left = 186
+        Height = 27
         Hint = 'RemoteCmd'
         Top = 0
-        Width = 312
+        Width = 308
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_remotecommand'
         Enabled = False
@@ -2147,10 +2149,10 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edRemote
         AnchorSideTop.Side = asrCenter
-        Left = 501
+        Left = 494
         Height = 24
         Hint = 'DoSharedFS'
-        Top = 2
+        Top = 1
         Width = 139
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_sharedfilesystem'
@@ -2166,22 +2168,22 @@ object fmMCX: TfmMCX
     end
   end
   object plOutput: TPanel
-    Left = 920
-    Height = 619
-    Top = 134
-    Width = 360
+    Left = 910
+    Height = 617
+    Top = 132
+    Width = 357
     Align = alRight
-    ClientHeight = 619
-    ClientWidth = 360
+    ClientHeight = 617
+    ClientWidth = 357
     ParentFont = False
     ParentShowHint = False
     ShowHint = True
     TabOrder = 5
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 617
+      Height = 615
       Top = 1
-      Width = 358
+      Width = 355
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_volumesigner'
       ActivePage = tabInputData
@@ -2193,36 +2195,40 @@ object fmMCX: TfmMCX
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 587
-        ClientWidth = 354
+        ClientHeight = 585
+        ClientWidth = 351
         ImageIndex = 4
         ParentFont = False
         object sgMedia: TStringGrid
           Left = 0
-          Height = 91
+          Height = 90
           Hint = 'MediaCfg'
-          Top = 20
-          Width = 354
+          Top = 18
+          Width = 351
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_media_editor'
           Align = alTop
           Color = clWhite
           Columns = <          
             item
+              MaxSize = 198
               Title.Caption = 'μa (1/mm)'
-              Width = 69
+              Width = 68
             end          
             item
+              MaxSize = 198
               Title.Caption = 'μs (1/mm)'
-              Width = 64
-            end          
-            item
-              Title.Caption = 'g (anisotropy)'
               Width = 63
             end          
             item
+              MaxSize = 198
+              Title.Caption = 'g (anisotropy)'
+              Width = 62
+            end          
+            item
+              MaxSize = 198
               Title.Caption = 'n (reflective index)'
-              Width = 70
+              Width = 69
             end>
           Flat = True
           Font.Color = clBlack
@@ -2238,10 +2244,10 @@ object fmMCX: TfmMCX
           OnEditingDone = sgMediaEditingDone
           ColWidths = (
             46
-            69
-            64
+            68
             63
-            70
+            62
+            69
           )
           Cells = (
             9
@@ -2278,8 +2284,8 @@ object fmMCX: TfmMCX
           Left = 0
           Height = 75
           Hint = 'DetectorCfg'
-          Top = 136
-          Width = 354
+          Top = 131
+          Width = 351
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_detector_editor'
           Align = alTop
@@ -2295,11 +2301,11 @@ object fmMCX: TfmMCX
           TitleStyle = tsNative
           OnEditingDone = sgMediaEditingDone
           ColWidths = (
-            50
-            68
-            70
-            66
-            64
+            49
+            67
+            69
+            65
+            63
           )
           Cells = (
             9
@@ -2334,9 +2340,9 @@ object fmMCX: TfmMCX
         end
         object StaticText1: TStaticText
           Left = 0
-          Height = 20
-          Top = 216
-          Width = 354
+          Height = 18
+          Top = 211
+          Width = 351
           Align = alTop
           AutoSize = True
           Caption = 'Additional Settings'
@@ -2350,9 +2356,9 @@ object fmMCX: TfmMCX
         end
         object StaticText2: TStaticText
           Left = 0
-          Height = 20
+          Height = 18
           Top = 0
-          Width = 354
+          Width = 351
           Align = alTop
           AutoSize = True
           Caption = 'Media Settings'
@@ -2367,9 +2373,9 @@ object fmMCX: TfmMCX
         end
         object StaticText3: TStaticText
           Left = 0
-          Height = 20
-          Top = 116
-          Width = 354
+          Height = 18
+          Top = 113
+          Width = 351
           Align = alTop
           AutoSize = True
           Caption = 'Detector Settings (in voxel unit)'
@@ -2383,10 +2389,10 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 351
+          Height = 356
           Hint = 'MCXConfig'
-          Top = 236
-          Width = 354
+          Top = 229
+          Width = 351
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_setting_editor'
           Align = alClient
@@ -2395,8 +2401,9 @@ object fmMCX: TfmMCX
           Columns = <          
             item
               ButtonStyle = cbsEllipsis
+              MaxSize = 198
               Title.Caption = 'Value'
-              Width = 128
+              Width = 127
             end>
           FixedCols = 2
           Flat = True
@@ -2412,9 +2419,9 @@ object fmMCX: TfmMCX
           OnEditButtonClick = sgConfigEditButtonClick
           OnEditingDone = edRespinChange
           ColWidths = (
-            108
-            85
-            128
+            107
+            84
+            127
           )
           Cells = (
             36
@@ -2532,8 +2539,8 @@ object fmMCX: TfmMCX
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 211
-          Width = 354
+          Top = 206
+          Width = 351
           Align = alTop
           ResizeAnchor = akTop
         end
@@ -2541,16 +2548,16 @@ object fmMCX: TfmMCX
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 111
-          Width = 354
+          Top = 108
+          Width = 351
           Align = alTop
           ResizeAnchor = akTop
         end
       end
       object tabVolumeDesigner: TTabSheet
         Caption = 'Volume Designer'
-        ClientHeight = 587
-        ClientWidth = 354
+        ClientHeight = 585
+        ClientWidth = 351
         ImageIndex = 6
         ParentFont = False
         object tvShapes: TTreeView
@@ -2581,29 +2588,29 @@ object fmMCX: TfmMCX
           Top = 0
           Width = 334
           AutoSize = True
-          ButtonHeight = 68
-          ButtonWidth = 49
+          ButtonHeight = 67
+          ButtonWidth = 48
           Caption = 'ToolBar2'
           Images = ImageList3
           ParentFont = False
           ShowCaptions = True
           TabOrder = 1
           object ToolButton10: TToolButton
-            Left = 58
+            Left = 57
             Top = 2
             Action = shapeReset
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton18: TToolButton
-            Left = 110
+            Left = 109
             Top = 2
             Action = shapeDelete
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton31: TToolButton
-            Left = 163
+            Left = 161
             Top = 2
             Action = shapePrint
             ParentShowHint = False
@@ -2615,21 +2622,21 @@ object fmMCX: TfmMCX
             Action = shapePreview
           end
           object ToolButton35: TToolButton
-            Left = 215
+            Left = 212
             Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
           end
           object ToolButton38: TToolButton
-            Left = 220
+            Left = 218
             Top = 2
             Action = shapeAddName
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton50: TToolButton
-            Left = 273
+            Left = 270
             Top = 2
             Action = shapeAddOrigin
             ParentShowHint = False
@@ -2644,15 +2651,15 @@ object fmMCX: TfmMCX
           Align = alRight
           Anchors = [akTop, akLeft, akRight, akBottom]
           AutoSize = True
-          ButtonHeight = 68
-          ButtonWidth = 50
+          ButtonHeight = 67
+          ButtonWidth = 49
           Caption = 'ToolBar3'
           Images = ImageList3
           ParentFont = False
           ShowCaptions = True
           TabOrder = 2
           object ToolButton39: TToolButton
-            Left = 51
+            Left = 50
             Hint = 'Reset volume and define a different dimension'
             Top = 2
             Action = shapeAddGrid
@@ -2675,57 +2682,57 @@ object fmMCX: TfmMCX
           end
           object ToolButton42: TToolButton
             Left = 1
-            Top = 226
+            Top = 224
             Action = shapeAddXLayers
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton43: TToolButton
             Left = 1
-            Top = 301
+            Top = 298
             Action = shapeAddYLayers
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton44: TToolButton
             Left = 1
-            Top = 376
+            Top = 372
             Action = shapeAddZLayers
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton45: TToolButton
-            Left = 51
-            Top = 226
+            Left = 50
+            Top = 224
             Action = shapeAddXSlabs
           end
           object ToolButton46: TToolButton
-            Left = 51
+            Left = 50
             Top = 77
             Action = shapeAddCylinder
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton47: TToolButton
-            Left = 51
-            Top = 301
+            Left = 50
+            Top = 298
             Action = shapeAddYSlabs
           end
           object ToolButton48: TToolButton
-            Left = 51
-            Top = 376
+            Left = 50
+            Top = 372
             Action = shapeAddZSlabs
           end
           object ToolButton51: TToolButton
             Left = 1
-            Top = 152
+            Top = 150
             Action = shapeAddSphere
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton52: TToolButton
-            Left = 51
-            Top = 152
+            Left = 50
+            Top = 150
             Action = shapeAddUpperSpace
             ParentShowHint = False
             ShowHint = True
@@ -2737,8 +2744,8 @@ object fmMCX: TfmMCX
   object hcToolbar: THeaderControl
     Left = 0
     Height = 14
-    Top = 120
-    Width = 1280
+    Top = 118
+    Width = 1267
     DragReorder = False
     Sections = <    
       item
@@ -2787,9 +2794,9 @@ object fmMCX: TfmMCX
     ParentFont = False
   end
   object Splitter2: TSplitter
-    Left = 912
-    Height = 619
-    Top = 134
+    Left = 902
+    Height = 617
+    Top = 132
     Width = 8
     Align = alRight
     ResizeAnchor = akRight
@@ -2797,7 +2804,7 @@ object fmMCX: TfmMCX
   object MainMenu1: TMainMenu
     Images = ImageList1
     left = 16
-    top = 272
+    top = 270
     object MenuItem1: TMenuItem
       Caption = 'File'
       object MenuItem5: TMenuItem
@@ -2872,8 +2879,8 @@ object fmMCX: TfmMCX
     Height = 24
     ImageType = itMask
     Width = 24
-    left = 88
-    top = 400
+    left = 87
+    top = 396
     Bitmap = {
       4C690F0000001800000018000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
@@ -3961,7 +3968,7 @@ object fmMCX: TfmMCX
   object acMCX: TActionList
     Images = ImageList2
     left = 32
-    top = 136
+    top = 135
     object mcxdoOpen: TAction
       Category = 'Files'
       Caption = 'Open'
@@ -4102,14 +4109,6 @@ object fmMCX: TfmMCX
       Hint = '_vol.nii'
       OnExecute = mcxdoPlotVolExecute
     end
-    object mcxdoStartBackend: TAction
-      Category = 'Backend'
-      Caption = 'Start Backend'
-    end
-    object mcxdoStopBackend: TAction
-      Category = 'Backend'
-      Caption = 'Stop Backend'
-    end
     object mcxdoPlotMC2: TAction
       Category = 'Postproc'
       Caption = 'Plot fluence (mc2)'
@@ -4155,8 +4154,8 @@ object fmMCX: TfmMCX
     end
   end
   object acInteract: TActionList
-    left = 96
-    top = 136
+    left = 95
+    top = 135
     object mcxSetCurrent: TAction
       Caption = 'mcxSetCurrent'
       OnExecute = mcxSetCurrentExecute
@@ -4178,22 +4177,22 @@ object fmMCX: TfmMCX
     FillAttribute = 0
     OnReadData = pMCXReadData
     OnTerminate = pMCXTerminate
-    left = 24
-    top = 200
+    left = 23
+    top = 198
   end
   object OpenProject: TOpenDialog
     Title = 'Open existing project'
     Filter = 'MCX Projects (*.mcxp)|*.mcxp|All (*.*)|*.*'
-    left = 88
-    top = 344
+    left = 87
+    top = 340
   end
   object SaveProject: TSaveDialog
     Title = 'Save project as'
     DefaultExt = '.mcxp'
     Filter = 'MCX Projects (*.mcxp)|*.mcxp|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 88
-    top = 272
+    left = 87
+    top = 270
   end
   object pExternal: TProcess
     Active = False
@@ -4208,15 +4207,15 @@ object fmMCX: TfmMCX
     WindowTop = 0
     WindowWidth = 0
     FillAttribute = 0
-    left = 96
-    top = 200
+    left = 95
+    top = 198
   end
   object ImageList2: TImageList
     Height = 80
     ImageType = itMask
     Width = 80
     left = 16
-    top = 392
+    top = 388
     Bitmap = {
       4C69120000005000000050000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -18623,8 +18622,8 @@ object fmMCX: TfmMCX
   end
   object acEditShape: TActionList
     Images = ImageList3
-    left = 168
-    top = 136
+    left = 167
+    top = 135
     object shapeReset: TAction
       Caption = 'Reset'
       Hint = 'Reset to a 60x60x60 homogeneous cubic domain'
@@ -18754,7 +18753,7 @@ object fmMCX: TfmMCX
   end
   object JSONIcons: TImageList
     left = 16
-    top = 456
+    top = 452
     Bitmap = {
       4C690A0000001000000010000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
       FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
@@ -19083,15 +19082,15 @@ object fmMCX: TfmMCX
     Enabled = False
     Interval = 200
     OnTimer = Timer1Timer
-    left = 104
-    top = 544
+    left = 103
+    top = 538
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 88
-    top = 456
+    left = 87
+    top = 452
     Bitmap = {
       4C69120000003000000030000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -24283,12 +24282,12 @@ object fmMCX: TfmMCX
   object OpenHistoryFile: TOpenDialog
     Title = 'Open Photon History File (*.mch)'
     Filter = 'Photon History File (*.mch)|*.mch|All (*.*)|*.*'
-    left = 216
-    top = 272
+    left = 213
+    top = 270
   end
   object PopupMenu2: TPopupMenu
     left = 16
-    top = 337
+    top = 333
     object miClearLog1: TMenuItem
       Action = mcxdoCopy
       ShortCut = 16451
@@ -24312,28 +24311,28 @@ object fmMCX: TfmMCX
     end
   end
   object OpenDir: TSelectDirectoryDialog
-    left = 145
-    top = 280
+    left = 143
+    top = 277
   end
   object OpenVolume: TOpenDialog
     Title = 'Open Photon History File (*.mch)'
     Filter = 'Volume or Mesh Data|*.bin;*.dat;*.json;*.vol|Volume File|*.bin;*.vol|JSON Shapes|*.json|Mesh Data File (*.dat)|*.dat|All (*.*)|*.*'
-    left = 145
-    top = 344
+    left = 143
+    top = 340
   end
   object tmAnimation: TTimer
     Enabled = False
     Interval = 10
     OnTimer = tmAnimationTimer
-    left = 24
-    top = 552
+    left = 23
+    top = 547
   end
   object ProgramIcon: TImageList
     Height = 80
     ImageType = itMask
     Width = 80
-    left = 200
-    top = 416
+    left = 198
+    top = 412
     Bitmap = {
       4C69060000005000000050000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -29140,7 +29139,7 @@ object fmMCX: TfmMCX
   end
   object PopupMenu1: TPopupMenu
     left = 16
-    top = 632
+    top = 625
     object MenuItem33: TMenuItem
       Action = shapePreview
     end
@@ -29184,40 +29183,22 @@ object fmMCX: TfmMCX
       OnClick = miUseMatlabClick
     end
   end
-  object pBackend: TAsyncProcess
-    PipeBufferSize = 4096
-    Active = False
-    Options = [poUsePipes, poStderrToOutPut, poNoConsole]
-    Priority = ppNormal
-    StartupOptions = [suoUseCountChars]
-    ShowWindow = swoNone
-    WindowColumns = 80
-    WindowHeight = 0
-    WindowLeft = 0
-    WindowRows = 0
-    WindowTop = 0
-    WindowWidth = 0
-    FillAttribute = 0
-    OnReadData = pMCXReadData
-    left = 184
-    top = 200
-  end
   object htmlHelpDatabase: THTMLHelpDatabase
     BaseURL = 'http://mcx.space/wiki/index.cgi%3FDoc/'
     AutoRegister = True
     KeywordPrefix = 'HTML/'
-    left = 101
-    top = 615
+    left = 100
+    top = 609
   end
   object webBrowser: THTMLBrowserHelpViewer
     BrowserParams = '%s'
     AutoRegister = True
-    left = 101
-    top = 672
+    left = 100
+    top = 665
   end
   object PopupMenu3: TPopupMenu
-    left = 184
-    top = 544
+    left = 182
+    top = 538
     object MenuItem35: TMenuItem
       Caption = 'MCX Documentation'
       Hint = 'http://mcx.space/wiki/index.cgi?Doc'
@@ -29340,7 +29321,12 @@ object fmMCX: TfmMCX
       end
       object MenuItem62: TMenuItem
         Caption = '[Yao2018] Jacobians with photon replay'
-        Hint = 'https://groups.google.com/forum/?hl=en#!topic/mcx-users/xXCRV_LpNas'
+        Hint = 'https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588'
+        OnClick = mcxdoWebURLExecute
+      end
+      object MenuItem63: TMenuItem
+        Caption = '[Yan2019] Dual-grid MMC'
+        Hint = 'https://na01.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdx.doi.org%2F10.1117%2F1.JBO.24.2.020503&data=02%7C01%7Cq.fang%40northeastern.edu%7Cbb8daa56735543068b9c08d697592492%7Ca8eec281aaa34daeac9b9a398b9215e7%7C0%7C0%7C636862806460866013&sdata=2dWyN3eVPwwymydjXEWIHBfVZI43Fcl5zuZ8wiaJ10k%3D&reserved=0'
         OnClick = mcxdoWebURLExecute
       end
     end

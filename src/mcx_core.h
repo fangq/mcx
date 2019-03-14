@@ -60,7 +60,7 @@ typedef struct  __align__(16) MCXDir{
 typedef struct  __align__(16) MCXTimer{
         float pscat; /**< remaining unit-less scattering length = length * scattering coeff */
         float t;     /**< photon elapse time, unit=s*/
-	float tnext; /**< time for the next accumulation,unit=s*/
+	float pathlen; /**< photon total pathlength inside a voxel, in grid unit*/
 	float ndone; /**< number of completed photons*/
 }MCXtime;
 
@@ -128,7 +128,6 @@ typedef struct  __align__(16) KernelParams {
   unsigned int maxgate;              /**< max number of time gates */
   unsigned int idx1dorig;            /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
   unsigned int mediaidorig;          /**< pre-computed media index of the photon at launch for pencil/isotropic beams */
-  unsigned int reseedlimit;          /**< how many photon moves to rejuvenate the RNG (obsolete) */
   unsigned int isatomic;             /**< whether atomic operations are used */
   unsigned int maxvoidstep;          /**< max steps that photon can travel in the background before entering non-zero voxels */
   unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */
@@ -147,6 +146,8 @@ typedef struct  __align__(16) KernelParams {
   unsigned int gscatter;             /**< how many scattering events after which mus/g can be approximated by mus' */
   unsigned int is2d;                 /**< is the domain a 2D slice? */
   int replaydet;                     /**< select which detector to replay, 0 for all, -1 save all separately */
+  unsigned int srcnum;               /**< total number of source patterns */
+  unsigned char bc[8];               /**< boundary conditions */
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu);
