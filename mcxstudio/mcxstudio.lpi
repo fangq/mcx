@@ -149,9 +149,8 @@
         <ComponentName Value="fmMCX"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
         <TopLine Value="2213"/>
-        <CursorPos X="62" Y="2223"/>
+        <CursorPos X="88" Y="2223"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 Y="924" ID="9"/>
@@ -166,7 +165,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="7"/>
-        <CursorPos X="4" Y="6"/>
+        <CursorPos X="48" Y="10"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -212,6 +211,7 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="6"/>
         <TopLine Value="10"/>
         <CursorPos X="60" Y="29"/>

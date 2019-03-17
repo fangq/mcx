@@ -23,83 +23,70 @@ VI.   Reference
 I.  Introduction
 
 MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL. 
-It gives user an intuitive way to browse and set parameters for different
-simulations. It also provides a way to save, edit and reopen a set of
-pre-defined simulations and share among different users.
+It gives user an intuitive environment to browse and set parameters for a wide range
+of simulations. It also provides functionalities to save, edit and reopen a set of
+pre-defined simulations and share among users.
 
-MCXStudio is written in Object Pascal language using the open-source
-Lazarus rapid application development (RAD) environment and LCL (Lazarus
-component library). The OpenGL rendering of the GUI is provided by the
-GLScene Library.
+MCXStudio is written in Object Pascal using the open-source Lazarus 
+(https://www.lazarus-ide.org/) rapid application development (RAD) 
+environment and LCL (Lazarus component library). The OpenGL rendering 
+of the GUI is provided by the GLScene Library (http://glscene.org).
 
-MCXStudio is cross-platform and can be run on Windows, Linux and Mac OS.
-The GUI itself does not contain any Monte Carlo (MC) modeling codes. Instead,
+MCXStudio is cross-platform and can run on Windows, Linux and Mac OS.
+The GUI itself does not contain any Monte Carlo (MC) modeling capability. Instead,
 it serves as a shell within which one can launch MC simulations by calling
 externally compiled mcx, mmc and mcxcl binaries. 
 
 MCXStudio contains many features that are designed to ease the pre-processing,
-simulation and post-processing of a biomedical optics researcher. It is compatible
-with mcx (NVIDIA GPU), mmc (CPU) and mcxcl (cross-vendor CPUs/GPUs). It has built-in
-domain designer, source designer with convenient media/detector settings. It also
-supports visualization of simulation output data (mc2, nii, hdr/img) by calling
-MATLAB or Octave installed in your system. One can also launch remote MCX/MMC 
+simulation and post-processing for MC simulations. It is compatible
+with mcx (NVIDIA GPU), mmc (CPU) and mcxcl (cross-vendor CPUs/GPUs). It has a built-in
+domain designer, source designer with a convenient panel for media/detector settings. 
+It also supports visualization of simulation output data (mc2, nii, hdr/img) using
+the built-in 3D volumetric data renderer. One can also launch remote MCX/MMC 
 simulations using the Remote Execution panel.
 
 ---------------------------------------------------------------------
 
 II.   Installation
 
-MCXStudio binary is portable and can be directly executed without installation.
+MCXStudio is portable and can be directly executed without installation.
 However, in order for MCXStudio to find mcx/mmc/mcxcl binaries, you should use
 one of the following methods
 
-# place mcx/mmc/mcxcl executables side-by-side with mcxstudio executable
-# change system environment variable and add the paths to mcx/mmc/mcxcl to the PATH variable
+# place mcx/mmc/mcxcl executables side-by-side with the mcxstudio executable
+# modify system environment variable and add the full paths to mcx/mmc/mcxcl to the PATH variable
 # create a MCXSuite/ subfolder in the same directory storing mcxstudio, and \
 extract mcx/mmc/mcxcl binary packags inside MCXSuite/ folder, so that one has \
 the following folder structure
 
 <pre>MCXStudio/
-├── MATLAB/
-│   ├── mcxlab
-│   ├── mcxlabcl
-│   └── mmclab
 ├── MCXSuite/
 │   ├── mcx/bin/mcx
 │   ├── mcxcl/bin/mcxcl
 │   └── mmc/bin/mmc
 ├── mcxstudio
-├── mcx (dummy file)
-├── mmc (dummy file)
-├── mcxcl (dummy file)
+├── mcx (empty file, no suffix)
+├── mmc (empty file, no suffix
+├── mcxcl (empty file, no suffix)
 └── Output/
 </pre>
 
-the mcx/mmc/mcxcl files on the same level as mcxstudio can be a link or a dummy file
-with that name (create using touch command in linux or mac) indicating that the module 
-has been installed inside MCXSuite/. If you download the MCXStudio package, the
-above folder structure already exist, and you can simply double click on the 
+the empty mcx/mmc/mcxcl files stored alongside with mcxstudio can be a link or a dummy file
+(can be created using the "touch" command in linux or mac) indicating that the module 
+has been installed inside the "MCXSuite/" subfolder. If you download the MCXStudio package, the
+above folder structure already exists, and you can simply double click on the 
 mcxstudio executable to start the program.
-
-In order to use MATLAB or Octave for plotting the output in MCXStudio, you must
-install either of the software in your system, and add the matlab/octave command
-in the PATH environment variable, so that typing "matlab" or "octave" in the command
-window starts the program directly. If you type these commands and get file not found
-error, that means your OS can not find those progams in the search path.
-
-Instructions on setting MATLAB can be found at
-
-http://mcx.space/wiki/index.cgi?Workshop/MCX18Preparation/MethodA
 
 For windows users, the first time to start MCXStudio, you may see a popup window
 asking you that your system registry needs to be modified in order for MCX/MCXCL
 to run more than 5 seconds. You must click "yes" and then reboot the computer in 
 order for this setting to be effective. 
 
-If you click yes and receive a permission error, you will have to quit MCXStudio, 
-and then right-click on the executable and select "Run as administrator" instead.
+If you click yes and receive a permission error, you have to first quit MCXStudio, 
+and then right-click on the executable and select "Run as administrator", then accept
+the prompt.
 
-Alternatively, one should open file browser, navigate into mcxcl/setup/win64 folder,
+Alternatively, one should open file browser, navigate into mcx/setup/win64 folder,
 and right-click on the "apply_timeout_registry_fix.bat" file and select 
 "Run as Administrator".
 
@@ -110,43 +97,45 @@ and right-click on the "apply_timeout_registry_fix.bat" file and select
 III. Using MCX Studio GUI
 
 
-Once launched, MCX Studio first automatically check if mcx
-binary is in the search path, if so, the "GPU" button in the 
-toolbar will be enabled. If you do not have NVIDIA GPUs and intend
+Once MCXStudio is launched, it first checks if the mcx
+binary presents in the system search paths; if yes, the "GPU" button on the 
+toolbar becomes enabled. If you do not have an NVIDIA GPU and intend
 to use mcxcl for your simulations, you may click on the "New" button
 in the toolbar, and select the 3rd option (NVIDIA/AMD/Inte CPUs/GPUs MCX-CL).
-After click on OK, and if mcxcl binary presents in your folders, 
+After selecting "OK", and if mcxcl binary presents in your folders, 
 the GPU button will also become active.
 
-It is recommended to click on this button once, and see if you can see 
-a list of GPUs and their parameters printed in the floating output window. 
-If you are able to see this information, your system is ready
-to run MCX (or mcxcl) simulations. If you get error messages or not able
+It is recommended to click on the GPU button once, and verify if you have
+compatible GPUs or processors suitables to run MCX or MCXCL simulations.
+If you are able to see printed information in a message window, your system 
+is ready to run MCX (or mcxcl). If you get an error message or not able
 to see any usable GPU, please check the drivers and the binary files.
 
-If your system has been properly configured, you can now add new simulations 
-by clicking the "New" button. MCX Studio will ask you to give a session
-ID string for this new simulation. Then you are allowed to adjust the parameters
+If your system is verified to support MCX/MCXCL, you can now create new simulations 
+by clicking on the "New" button. MCX Studio will ask you to provide a session
+name for this new simulation. After a valid session name is provide, MCXStudio
+creates the simulation and set all parameters to a ready-to-run default configuration
+(containing a 60x60x60 mm^3 homogeneous domain). You should modify the settings
 based on your needs. Once you finish the adjustment, you should click the 
-"Verify" button to see if there are missing settings. If everything looks
-fine, the "Run" button will be activated. Click on it once will start your
+"Verify" button to see if there are missing/conflicting settings. If everything looks
+ok, the "Run" button will become activated. Clicking on it once will start your
 simulation. If you want to abort the current simulation, you can click
 the "Stop" button.
 
 You can create multiple tasks with MCX Studio by hitting the "New"
 button again. The information for all session configurations can
-be saved as a project file (with .mcxp extension) by clicking the
-"Save" button. You can load a previously saved project file back
-to MCX Studio by clicking the "Load" button.
+be saved as a project file (with a ".mcxp" file extension) by clicking the
+"Save" button. You can load a previously saved project, containing multiple
+simulation sessions, back to MCX Studio by clicking the "Load" button.
 
 In both the unzipped binary packags of mcx and mcxcl, under the folder named
 "examples", one can find a pre-created project file (*_examples.mcxp) 
 for MCXStudio. Loading these files using the "Load" button allows you to
 see these preconfigured simulation.
 
-On Windows, once you start MCXStudio once, the .mcxp suffix becomes 
+On Windows, once you start MCXStudio once, the .mcxp suffix becomes automatically
 associated with mcxstudio executable. To load a .mcxp file, you can simply
-double click on the file, mcxstudio will be started automatically.
+double-click on the file, mcxstudio will be started automatically.
 
 ---------------------------------------------------------------------------
 IV. Remote Execution
@@ -228,6 +217,18 @@ toolboar, and select one of the Download ... menus to retrieve the file back to 
 drive in order to visualize the results. You must have scp commands available for the file 
 transfer to work.
 
+
+---------------------------------------------------------------------------
+V.    Acknowledgement
+
+The icon set was created by Qianqian Fang, with a style inspired by 
+the "Uniform" icon-set 
+URL: https://github.com/0rAX0/uniform-icon-theme
+
+The JSON shape editor uses an function "ShpwJSONData"  
+adapted from the "jsonviewer" example in Lazarus.
+URL: http://wiki.freepascal.org/fcl-json#From_JsonViewer
+
 The MCX volume renderer (mcxviewer) was adapted based on the Texture3D Example
 provided by the GLScene Project (http://glscene.org). The original author
 of this example is Jürgen Abel. The license for GLScene is 
@@ -243,18 +244,6 @@ only to state which parts were altered, and how), but feel welcome to open-sourc
 Some Delphi units, API headers and DLLs are included in the GLScene package for convenience 
 but are not part of GLScene, may use different licensing scheme and have different copyright owners, 
 such files have an explicit notice attached to them or placed in their directory.
-
-
----------------------------------------------------------------------------
-V.    Acknowledgement
-
-The icon set was created by Qianqian Fang, with a style inspired by 
-the "Uniform" icon-set 
-URL: https://github.com/0rAX0/uniform-icon-theme
-
-The JSON shape editor uses an function "ShpwJSONData"  
-adapted from the "jsonviewer" example in Lazarus.
-URL: http://wiki.freepascal.org/fcl-json#From_JsonViewer
 
 ---------------------------------------------------------------------------
 VI.   Reference

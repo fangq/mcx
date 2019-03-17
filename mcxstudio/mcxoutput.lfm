@@ -1,28 +1,27 @@
 object fmOutput: TfmOutput
   Left = 481
-  Height = 624
+  Height = 631
   Top = 271
-  Width = 555
+  Width = 561
   Caption = 'Output'
-  ClientHeight = 624
-  ClientWidth = 555
-  DesignTimePPI = 95
+  ClientHeight = 631
+  ClientWidth = 561
   LCLVersion = '1.8.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 624
+    Height = 631
     Top = 0
-    Width = 555
+    Width = 561
     Align = alClient
-    ClientHeight = 624
-    ClientWidth = 555
+    ClientHeight = 631
+    ClientWidth = 561
     ParentFont = False
     TabOrder = 0
     object Button1: TButton
       Left = 1
       Height = 25
       Top = 1
-      Width = 553
+      Width = 559
       Align = alTop
       Caption = 'Clear Output'
       OnClick = miClearLogClick
@@ -31,9 +30,9 @@ object fmOutput: TfmOutput
     end
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 563
+      Height = 570
       Top = 26
-      Width = 553
+      Width = 559
       Align = alClient
       Font.Height = -13
       Font.Name = 'Courier New'
@@ -488,7 +487,7 @@ object fmOutput: TfmOutput
         '$Download: https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
         ''
         ' -- "MMC" --'
-        '# [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid mesh-based Monte Carlo algorithm for efficient photon1transport simulations in complex 3-D media,” J. of Biomedical Optics, 24(2), 020503 (2019).'
+        '# [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid mesh-based Monte Carlo algorithm for efficient photon transport simulations in complex 3-D media,” J. of Biomedical Optics, 24(2), 020503 (2019).'
         '$Summary: Dual-grid MMC for faster and more accurate mesh-based simulations'
         '$Download: http://dx.doi.org/10.1117/1.JBO.24.2.020503'
         ''
@@ -575,20 +574,20 @@ object fmOutput: TfmOutput
     object Panel2: TPanel
       Left = 1
       Height = 34
-      Top = 589
-      Width = 553
+      Top = 596
+      Width = 559
       Align = alBottom
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 3
       ClientHeight = 34
-      ClientWidth = 553
+      ClientWidth = 559
       ParentFont = False
       TabOrder = 2
       object btSendCmd: TButton
-        Left = 477
+        Left = 482
         Height = 32
         Top = 1
-        Width = 75
+        Width = 76
         Align = alRight
         Caption = 'Send'
         OnClick = btSendCmdClick
@@ -599,10 +598,10 @@ object fmOutput: TfmOutput
         AnchorSideTop.Control = Label1
         AnchorSideTop.Side = asrCenter
         AnchorSideRight.Control = btSendCmd
-        Left = 118
+        Left = 119
         Height = 27
         Top = 4
-        Width = 357
+        Width = 361
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 2
         ItemHeight = 0
@@ -619,7 +618,7 @@ object fmOutput: TfmOutput
         Left = 1
         Height = 14
         Top = 10
-        Width = 112
+        Width = 113
         Alignment = taRightJustify
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Right = 5
@@ -634,12 +633,12 @@ object fmOutput: TfmOutput
     Enabled = False
     StringAttri.Background = clSkyBlue
     StringAttri.Style = [fsBold]
-    left = 365
-    top = 198
+    left = 369
+    top = 200
   end
   object PopupMenu1: TPopupMenu
-    left = 285
-    top = 190
+    left = 288
+    top = 192
     object miClearLog: TMenuItem
       Caption = 'Clear Log'
       OnClick = miClearLogClick

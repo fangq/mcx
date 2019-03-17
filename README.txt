@@ -59,6 +59,7 @@ J. of Biomedical Optics, 23(12), 121618 (2018), URL: https://doi.org/10.1117/1.J
 [Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang,  
 "Accelerating Monte Carlo forward model with structured light illumination via 'photon sharing',"
 Photonics West 2019, paper#10874-11, San Francisco, CA, USA.
+[https://www.spiedigitallibrary.org/conference-presentations/10874/108740B/Accelerating-Monte-Carlo-forward-model-with-structured-light-illumination-via/10.1117/12.2510291?SSO=1 Full presentation for our invited talk]
 
 ---------------------------------------------------------------------
 

@@ -1,23 +1,22 @@
 object fmAbout: TfmAbout
   Left = 1104
-  Height = 406
+  Height = 410
   Top = 299
-  Width = 475
+  Width = 480
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
-  ClientHeight = 406
-  ClientWidth = 475
+  ClientHeight = 410
+  ClientWidth = 480
   Color = 4539717
-  DesignTimePPI = 95
   Position = poMainFormCenter
   LCLVersion = '1.8.2.0'
   object Image1: TImage
     Left = 16
-    Height = 150
+    Height = 152
     Top = 0
-    Width = 353
+    Width = 357
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869636F76000089504E47
       0D0A1A0A0000000D49484452000001380000007C0806000000FDC1ACA4000000
@@ -975,10 +974,10 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 307
+    Left = 311
     Height = 37
-    Top = 355
-    Width = 123
+    Top = 359
+    Width = 124
     Anchors = [akRight, akBottom]
     BorderSpacing.Right = 45
     BorderSpacing.Bottom = 14
@@ -988,10 +987,10 @@ object fmAbout: TfmAbout
     TabOrder = 0
   end
   object Image2: TImage
-    Left = 364
-    Height = 84
+    Left = 368
+    Height = 85
     Top = 24
-    Width = 87
+    Width = 88
     Center = True
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869638205000089504E47
@@ -1047,9 +1046,9 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Button1
     Left = 20
-    Height = 204
-    Top = 140
-    Width = 435
+    Height = 207
+    Top = 141
+    Width = 440
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 20
     BorderSpacing.Right = 20
@@ -1057,7 +1056,7 @@ object fmAbout: TfmAbout
     BorderStyle = bsNone
     Font.Color = clWhite
     Lines.Strings = (
-      'MCXStudio version: v2018'
+      'MCXStudio version: v2019'
       ''
       'Funding Support:'
       '  This project is funded by the NIH/NIGMS under '
@@ -1094,10 +1093,10 @@ object fmAbout: TfmAbout
   object Image3: TImage
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
-    Left = 23
+    Left = 24
     Height = 33
     Hint = 'About MCX'
-    Top = 355
+    Top = 359
     Width = 200
     Anchors = [akBottom]
     AutoSize = True
