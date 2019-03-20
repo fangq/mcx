@@ -14,15 +14,8 @@ type
   { TfmOutput }
 
   TfmOutput = class(TForm)
-    Button1: TButton;
-    btSendCmd: TButton;
-    edCmdInput: TComboBox;
-    Label1: TLabel;
     miCopy: TMenuItem;
     miClearLog: TMenuItem;
-    mmOutput: TSynEdit;
-    Panel1: TPanel;
-    Panel2: TPanel;
     PopupMenu1: TPopupMenu;
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     procedure btSendCmdClick(Sender: TObject);

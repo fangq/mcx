@@ -17,7 +17,7 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
-  OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource, mcxoutput,
+  OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
   mcxrender, mcxview {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
 
 type
@@ -26,6 +26,7 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    Button1: TButton;
     mcxdoWebURL: TAction;
     MenuItem33: TMenuItem;
     MenuItem34: TMenuItem;
@@ -58,7 +59,12 @@ type
     MenuItem61: TMenuItem;
     MenuItem62: TMenuItem;
     MenuItem63: TMenuItem;
+    miClearLog: TMenuItem;
+    miCopy: TMenuItem;
+    mmOutput: TSynEdit;
+    Panel1: TPanel;
     PopupMenu3: TPopupMenu;
+    PopupMenu4: TPopupMenu;
     shapePreview: TAction;
     edOutputFormat: TComboBox;
     Label11: TLabel;
@@ -72,6 +78,8 @@ type
     MenuItem32: TMenuItem;
     miUseMatlab: TMenuItem;
     MenuItem29: TMenuItem;
+    Splitter5: TSplitter;
+    SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     ToolBar3: TToolBar;
     ToolButton34: TToolButton;
     ToolButton35: TToolButton;
@@ -293,10 +301,12 @@ type
     tvShapes: TTreeView;
     procedure btLoadSeedClick(Sender: TObject);
     procedure btGBExpandClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
     procedure ckLockGPUChange(Sender: TObject);
     procedure edSessionEditingDone(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormShow(Sender: TObject);
+    procedure grAdvSettingsClick(Sender: TObject);
     procedure grAdvSettingsDblClick(Sender: TObject);
     procedure grProgramSelectionChanged(Sender: TObject);
     procedure mcxdoAboutExecute(Sender: TObject);
@@ -331,6 +341,8 @@ type
     procedure mcxdoWebURLExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem22Click(Sender: TObject);
+    procedure miClearLogClick(Sender: TObject);
+    procedure miCopyClick(Sender: TObject);
     procedure miUseMatlabClick(Sender: TObject);
     procedure MenuItem9Click(Sender: TObject);
     procedure pMCXReadData(Sender: TObject);
@@ -416,7 +428,6 @@ type
 
 var
   fmMCX: TfmMCX;
-  fmOutput: TfmOutput;
   fmDomain: TfmDomain;
   ProfileChanged: Boolean;
   MaxWait: integer;
@@ -441,10 +452,9 @@ Const
 { TfmMCX }
 procedure TfmMCX.AddLog(str:AnsiString);
 begin
-    fmOutput.mmOutput.Lines.Add(str);
-    fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
-    fmOutput.mmOutput.LeftChar:=0;
-    DockMaster.MakeDockable(fmOutput,true,true);
+    mmOutput.Lines.Add(str);
+    mmOutput.SelStart := length(mmOutput.Text);
+    mmOutput.LeftChar:=0;
 end;
 
 procedure TfmMCX.AddMultiLineLog(str:AnsiString; Sender: TObject);
@@ -456,10 +466,9 @@ begin
     sl.Delimiter:=#10;
     sl.DelimitedText:=str;
     if((Sender as TAsyncProcess)=pMCX) then begin
-        fmOutput.mmOutput.Lines.AddStrings(sl);
-        fmOutput.mmOutput.SelStart := length(fmOutput.mmOutput.Text);
-        fmOutput.mmOutput.LeftChar:=0;
-        DockMaster.MakeDockable(fmOutput,true,true);
+        mmOutput.Lines.AddStrings(sl);
+        mmOutput.SelStart := length(mmOutput.Text);
+        mmOutput.LeftChar:=0;
     end;
     sl.Free;
 end;
@@ -607,7 +616,7 @@ begin
 
 end;
 
-function TfmMCX.ExpandPassword(url: string): string;
+function TfmMCX.ExpandPassword(url: AnsiString): AnsiString;
 var
     pass: string;
 begin
@@ -812,9 +821,11 @@ procedure TfmMCX.FormShow(Sender: TObject);
 begin
     grGPU.Top:=grProgram.Height+grBasic.Height;
     grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
+end;
 
-//    fmOutput.Top:=self.Top;
-//    fmOutput.Left:=self.Left+self.Width;
+procedure TfmMCX.grAdvSettingsClick(Sender: TObject);
+begin
+
 end;
 
 procedure TfmMCX.btLoadSeedClick(Sender: TObject);
@@ -845,6 +856,11 @@ begin
          tmAnimation.Tag:=1;
          //tmAnimation.Enabled:=true;
      end;
+end;
+
+procedure TfmMCX.Button1Click(Sender: TObject);
+begin
+
 end;
 
 procedure TfmMCX.ckLockGPUChange(Sender: TObject);
@@ -1380,13 +1396,7 @@ begin
   {$ENDIF}
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
 
-    fmOutput:=TfmOutput.Create(self);
-    fmOutput.Top:=self.Top+(tbtStop.Width*17 div 20);
-//    fmOutput.Left:=self.Left+self.Width+(tbtStop.Height*16 div 20);
-    fmOutput.pProc:=pMCX;
     fmDomain:=TfmDomain.Create(Self);
-
-    DockMaster.MakeDockable(fmOutput,true,true);
 
     CurrentSession:=nil;
     PassList:=TStringList.Create();
@@ -1423,7 +1433,6 @@ begin
     MapList.Free;
     ConfigData.Free;
     RegEngine.Free;
-    fmOutput.Free;
     PassList.Free;
     fmDomain.Free;
 end;
@@ -1558,6 +1567,16 @@ procedure TfmMCX.MenuItem22Click(Sender: TObject);
 begin
   if(lvJobs.Selected <> nil) then
       RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, false)+'"');
+end;
+
+procedure TfmMCX.miClearLogClick(Sender: TObject);
+begin
+  mmOutput.Lines.Clear;
+end;
+
+procedure TfmMCX.miCopyClick(Sender: TObject);
+begin
+   Clipboard.AsText:=mmOutput.SelText;
 end;
 
 procedure TfmMCX.miUseMatlabClick(Sender: TObject);
