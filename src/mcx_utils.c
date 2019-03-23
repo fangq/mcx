@@ -77,7 +77,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','W','\0'};
 
 /**
  * Long command line options
@@ -94,7 +94,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
-                 "--momentum","--specular","--bc",""};
+                 "--momentum","--specular","--bc","--workload",""};
 
 /**
  * Output data types
