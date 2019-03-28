@@ -24,7 +24,13 @@ function cfg=json2mcx(filename)
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
 
-json=loadjson(filename);
+if(ischar(filename))
+    json=loadjson(filename);
+elseif(isstruct(filename))
+    json=filename;
+else
+    error('first input is not supported');
+end
 
 %% define the optodes: sources and detectors
 
@@ -47,10 +53,7 @@ if(isfield(json,'Optode'))
     end
   end
   if(isfield(json.Optode,'Detector'))
-    cfg=copycfg(cfg,'detpos',json.Optode.Detector,'Pos');
-    if(isfield(json.Optode.Detector,'R'))
-       cfg.detpos(:,4)=json.Optode.Detector.R;
-    end
+    cfg.detpos=cell2mat(struct2cell(cell2mat(json.Optode.Detector)')');
   end
 end
 
@@ -69,14 +72,14 @@ if(isfield(json,'Domain'))
     [fpath, fname, fext]=fileparts(json.Domain.VolumeFile);
     switch(fext)
         case '.json'
-	    cfg.shapes=loadjson(json.Domain.VolumeFile);
-	    if(isfield(json.Dimain,'Dim'))
-	       cfg.vol=zeros(json.Domain.Dim);
-	    end
-	case '.bin'
-	    cfg.vol=loadmc2(json.Domain.VolumeFile,json.Domain.Dim,'uchar=>int32');
-	case '.nii'
-	    cfg.vol=mcxloadnii(json.Domain.VolumeFile);
+            if(isfield(json.Domain,'Dim'))
+               cfg.vol=uint8(zeros(json.Domain.Dim));
+            end
+            cfg.shapes=savejson('',loadjson(json.Domain.VolumeFile));           
+        case '.bin'
+            cfg.vol=loadmc2(json.Domain.VolumeFile,json.Domain.Dim,'uchar=>int32');
+        case '.nii'
+            cfg.vol=mcxloadnii(json.Domain.VolumeFile);
     end
 end
 
@@ -111,7 +114,7 @@ if(isfield(json,'Forward'))
 end
 
 function outdata=copycfg(cfg,name,outroot,outfield,defaultval)
-if(nargin>=5)
+if(nargin>=5 && ~isfield(outroot,outfield))
     outroot.(outfield)=defaultval;
 end
 if(isfield(outroot,outfield))
