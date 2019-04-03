@@ -2114,7 +2114,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	     float kahanc=0.f;
 	     for(iter=0;iter<psize;iter++)   
 	         mcx_kahanSum(&srcpw[i],&kahanc,cfg->srcpattern[iter*cfg->srcnum+i]);
-	     energytot[i]=cfg->energytot*srcpw[i]/(float)psize;
+	     energytot[i]=cfg->nphoton*srcpw[i]/(float)psize;
 	     kahanc=0.f;
 	     if(cfg->outputtype==otEnergy){
 	         int fieldlenPsrc=fieldlen/cfg->srcnum;
