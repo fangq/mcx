@@ -2151,7 +2151,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                if negative, divide #photon into r subsets\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
  -B '______'   (--bc)          per-face boundary condition (BC), 6 letters for\n\
-                               bounding box faces at -x,-y,-z,+x,+y,+z axes;\n\
+    /case insensitive/         bounding box faces at -x,-y,-z,+x,+y,+z axes;\n\
 			       overwrite -b if given. \n\
 			       each letter can be one of the following:\n\
 			       '_': undefined, fallback to -b\n\
@@ -2195,16 +2195,28 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 == Output options ==\n"S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
  -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
-                               J - Jacobian (replay mode),   P - scattering, \n\
+    /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
 			       event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; \n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
+ -w [DP|DSPMXVW](--savedetflag)a string controlling detected photon data fields\n\
+    /case insensitive/         1 D  output detector ID (1)\n\
+                               2 S  output partial scat. even counts (#media)\n\
+                               4 P  output partial path-lengths (#media)\n\
+			       8 M  output momentum transfer (#media)\n\
+			      16 X  output exit position (3)\n\
+			      32 V  output exit direction (3)\n\
+			      64 W  output initial weight (1)\n\
+      combine multiple items by using a string, or add selected numbers together\n\
+      by default, mcx only saves detector ID and partial-path data\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
-                               setting -x to 1 also implies setting '-d' to 1\n\
+                               setting -x to 1 also implies setting '-d' to 1.\n\
+			       save as adding 'XV' to -w.\n\
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
                                right outside of the domain; if non-zero voxels\n\
 			       appear at the boundary, pad 0s before using -X\n\
- -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save\n\
+ -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.\n\
+                               save as adding 'M' to the -w flag\n\
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
@@ -2225,7 +2237,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -D [0|int]    (--debug)       print debug information (you can use an integer\n\
   or                           or a string by combining the following flags)\n\
  -D [''|RMP]                   1 R  debug RNG\n\
-                               2 M  store photon trajectory info\n\
+    /case insensitive/         2 M  store photon trajectory info\n\
                                4 P  print progress bar\n\
       combine multiple items by using a string, or add selected numbers together\n\
 \n"S_BOLD S_CYAN"\
@@ -2246,7 +2258,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 example: (autopilot mode)\n"S_GREEN"\
        %s -A 1 -n 1e7 -f input.inp -G 1 -D P\n"S_RESET"\
 or (manual mode)\n"S_GREEN"\
-       %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1\n"S_RESET"\
+       %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -w dpx -b 1 -G 1\n"S_RESET"\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n"S_GREEN"\
        %s -A -n 1e7 -f input.inp -G 1101 -W 10,10,10\n"S_RESET"\
 or (use inline domain definition)\n"S_GREEN"\

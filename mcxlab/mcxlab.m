@@ -66,7 +66,7 @@ function varargout=mcxlab(varargin)
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
 %                      if negative, divide the total photon number into respin subsets
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-%      cfg.bc          per-face boundary condition (BC), a strig of 6 letters for
+%      cfg.bc          per-face boundary condition (BC), a strig of 6 letters (case insensitive) for
 %                      bounding box faces at -x,-y,-z,+x,+y,+z axes;
 %		               overwrite cfg.isreflect if given.
 %                      each letter can be one of the following:
@@ -169,8 +169,20 @@ function varargout=mcxlab(varargin)
 %                      the first non-zero voxel
 %
 %== Output control ==
+%      cfg.savedetflag: ['dp'] - a string (case insensitive) controlling the output detected photon data fields\n\
+%                          1 d  output detector ID (1)\n\
+%                          2 s  output partial scat. even counts (#media)\n\
+%                          4 p  output partial path-lengths (#media)\n\
+%                          8 m  output momentum transfer (#media)\n\
+%                         16 x  output exit position (3)\n\
+%                         32 v  output exit direction (3)\n\
+%                         64 w  output initial weight (1)\n\
+%                      combine multiple items by using a string, or add selected numbers together\n\
+%                      by default, mcx only saves detector ID (d) and partial-path data (p)\n\
 %      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
-%                      Example: <demo_lambertian_exit_angle.m>
+%                      same as adding 'xv' to cfg.savedetflag. Example: <demo_lambertian_exit_angle.m>
+%      cfg.ismomentum: 1 to save photon momentum transfer,[0] not to save.\n\
+%                      save as adding 'M' to cfg.savedetflag string\n\
 %      cfg.issaveref:  [0]-save diffuse reflectance/transmittance in the non-zero voxels
 %                      next to a boundary voxel. The reflectance data are stored as 
 %                      negative values; must pad zeros next to boundaries
@@ -185,7 +197,7 @@ function varargout=mcxlab(varargin)
 %      cfg.session:    a string for output file names (only used when no return variables)
 %
 %== Debug ==
-%      cfg.debuglevel:  debug flag string, one or a combination of ['R','M','P'], no space
+%      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P'], no space
 %                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
