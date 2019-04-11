@@ -193,8 +193,25 @@ doc: makedocdir
 
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
+TARGETSUFFIX:=$(suffix $(BINARY))
+
+ifeq ($(TARGETSUFFIX),.so)
+        CPPOPT+= $(DLLFLAG) 
+	CUCCOPT+= -Xcompiler $(DLLFLAG) 
+        LINKOPT+= -shared -Wl,-soname,$(BINARY).1 
+endif
+
+ifeq ($(TARGETSUFFIX),.a)
+        CCFLAGS+=
+        AR         := ar  
+        ARFLAGS    := cr
+        AROUTPUT   :=
+        EXTRALIB   :=
+        OPENMPLIB  :=
+endif
+
 all xor xoro posix fast log debugxor debuglog half xorfermi xorofermi posixfermi logfermi\
- fermi mex oct fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
+ fermi mex oct fermimex fermioct: cudasdk lib $(OUTPUT_DIR)/$(BINARY)
 
 makedirs:
 	@if test ! -d $(OUTPUT_DIR); then $(MKDIR) $(OUTPUT_DIR); fi

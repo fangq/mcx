@@ -256,6 +256,7 @@ void mcx_cleargpuinfo(GPUInfo **gpuinfo);
 int  mcx_isbinstr(const char * str);
 void mcx_progressbar(float percent, Config *cfg);
 void mcx_flush(Config *cfg);
+int  mcx_run_from_json(char *jsonstr);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

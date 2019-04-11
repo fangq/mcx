@@ -38,6 +38,7 @@
 #include "mcx_utils.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
+#include "mcx_core.h"
 
 /**
  * Macro to load JSON keys
@@ -2104,6 +2105,39 @@ int mcx_isbinstr(const char * str){
         if(str[i]!='0' && str[i]!='1')
 	   return 0;
     return 1;
+}
+
+/**
+ * @brief Run MCX simulations from a JSON input in a persistent session
+ *
+ * @param[in] jsonstr: a string in the JSON format, the content of the .json input file
+ */
+
+int mcx_run_from_json(char *jsonstr){
+     Config  mcxconfig;            /** mcxconfig: structure to store all simulation parameters */
+     GPUInfo *gpuinfo=NULL;        /** gpuinfo: structure to store GPU information */
+     unsigned int activedev=0;     /** activedev: count of total active GPUs to be used */
+
+     mcx_initcfg(&mcxconfig);
+     mcx_readconfig(jsonstr, &mcxconfig);
+
+     if(!(activedev=mcx_list_gpu(&mcxconfig,&gpuinfo))){
+         mcx_error(-1,"No GPU device found\n",__FILE__,__LINE__);
+     }
+
+#ifdef _OPENMP
+     omp_set_num_threads(activedev);
+     #pragma omp parallel
+     {
+#endif
+         mcx_run_simulation(&mcxconfig,gpuinfo); 
+#ifdef _OPENMP
+     }
+#endif
+
+     mcx_cleargpuinfo(&gpuinfo);
+     mcx_clearcfg(&mcxconfig);
+     return 0;
 }
 
 /**
