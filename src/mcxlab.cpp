@@ -186,6 +186,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
    */
   for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
     try{
+        unsigned int partialdata,hostdetreclen;
 	printf("Running simulations for configuration #%d ...\n", jstruct+1);
 
         /** Initialize cfg with default values first */
@@ -207,6 +208,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	cfg.issavedet=(nlhs>=2);  /** save detected photon data to the 2nd output if present */
 	cfg.issaveseed=(nlhs>=4); /** save detected photon seeds to the 4th output if present */
 
+	partialdata=(cfg.medianum-1)*(SAVE_NSCAT(cfg.savedetflag)+SAVE_PPATH(cfg.savedetflag)+SAVE_MOM(cfg.savedetflag));
+	hostdetreclen=partialdata+SAVE_DETID(cfg.savedetflag)+3*(SAVE_PEXIT(cfg.savedetflag)+SAVE_VEXIT(cfg.savedetflag))+SAVE_W0(cfg.savedetflag);
+
         /** One must define the domain and properties */
 	if(cfg.vol==NULL || cfg.medianum==0){
 	    mexErrMsgTxt("You must define 'vol' and 'prop' field.");
@@ -224,7 +228,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
 	}
 	if(nlhs>=2){
-	    cfg.exportdetected=(float*)malloc((2+(cfg.medianum-1)*(2+(cfg.ismomentum>0))+(cfg.issaveexit>0)*6)*cfg.maxdetphoton*sizeof(float));
+	    cfg.exportdetected=(float*)malloc(hostdetreclen*cfg.maxdetphoton*sizeof(float));
         }
         if(nlhs>=4){
 	    cfg.seeddata=malloc(cfg.maxdetphoton*sizeof(float)*RAND_WORD_LEN);
@@ -300,7 +304,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	}
 	/** if the 2nd output presents, output the detected photon partialpath data */
 	if(nlhs>=2){
-            fielddim[0]=2+(cfg.medianum-1)*(2+(cfg.ismomentum>0))+(cfg.issaveexit>0)*6; fielddim[1]=cfg.detectedcount; 
+            fielddim[0]=hostdetreclen; fielddim[1]=cfg.detectedcount; 
             fielddim[2]=0; fielddim[3]=0;
             if(cfg.detectedcount>0){
                     mxSetFieldByNumber(plhs[1],jstruct,0, mxCreateNumericArray(2,fielddim,mxSINGLE_CLASS,mxREAL));
@@ -582,6 +586,20 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if(cfg->debuglevel==0)
              mexWarnMsgTxt("the specified debuglevel is not supported");
 	printf("mcx.debuglevel='%d';\n",cfg->debuglevel);
+    }else if(strcmp(name,"savedetflag")==0){
+        int len=mxGetNumberOfElements(item);
+        const char saveflag[]={'D','S','P','M','X','V','W','\0'};
+        char savedetflag[MAX_SESSION_LENGTH]={'\0'};
+
+        if(!mxIsChar(item) || len==0)
+             mexErrMsgTxt("the 'savedetflag' field must be a non-empty string");
+	if(len>MAX_SESSION_LENGTH)
+	     mexErrMsgTxt("the 'savedetflag' field is too long");
+        int status = mxGetString(item, savedetflag, MAX_SESSION_LENGTH);
+        if (status != 0)
+             mexWarnMsgTxt("not enough space. string is truncated.");
+        cfg->savedetflag=mcx_parsedebugopt(savedetflag,saveflag);
+	printf("mcx.savedetflag='%d';\n",cfg->savedetflag);
     }else if(strcmp(name,"srcpattern")==0){
         arraydim=mxGetDimensions(item);
         dimtype dimz=1;
@@ -740,6 +758,8 @@ void mcx_replay_prep(Config *cfg){
 void mcx_validate_config(Config *cfg){
      int i,gates,idx1d;
      const char boundarycond[]={'_','r','a','m','c','\0'};
+     unsigned int partialdata=(cfg->medianum-1)*(SAVE_NSCAT(cfg->savedetflag)+SAVE_PPATH(cfg->savedetflag)+SAVE_MOM(cfg->savedetflag));
+     unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+(cfg->issaveexit>0)*3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
 
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
@@ -812,6 +832,7 @@ void mcx_validate_config(Config *cfg){
      if(cfg->issavedet==0){
          cfg->issaveexit=0;
 	 cfg->ismomentum=0;
+	 cfg->savedetflag=0;
      }
      if(cfg->respin==0)
          mexErrMsgTxt("respin number can not be 0, check your -r/--repeat input or cfg.respin value");
@@ -840,10 +861,21 @@ void mcx_validate_config(Config *cfg){
 	    }
         }
      }
+
+     if(cfg->ismomentum)
+         cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
+     if(cfg->issaveexit){
+         cfg->savedetflag=SET_SAVE_PEXIT(cfg->savedetflag);
+	 cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
+     }
+     if(cfg->issavedet && cfg->savedetflag==0)
+         cfg->savedetflag=0x5;
+
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.srcnum=cfg->srcnum;
-     cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
+     cfg->his.colcount=hostdetreclen; /*column count=maxmedia+2*/
+     cfg->his.savedetflag=cfg->savedetflag;
      mcx_replay_prep(cfg);
 }
 

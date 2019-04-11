@@ -77,7 +77,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','W','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','W','w','\0'};
 
 /**
  * Long command line options
@@ -94,7 +94,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
-                 "--momentum","--specular","--bc","--workload",""};
+                 "--momentum","--specular","--bc","--workload","--savedetflag",""};
 
 /**
  * Output data types
@@ -115,6 +115,15 @@ const char outputtype[]={'x','f','e','j','p','m','\0'};
  */
 
 const char debugflag[]={'R','M','P','\0'};
+
+/**
+ * Debug flags
+ * R: debug random number generator
+ * M: record photon movement and trajectory
+ * P: show progress bar
+ */
+
+const char saveflag[]={'D','S','P','M','X','V','W','\0'};
 
 /**
  * Output file format
@@ -214,6 +223,8 @@ void mcx_initcfg(Config *cfg){
      cfg->his.normalizer=1.f;
      cfg->his.respin=1;
      cfg->his.srcnum=1;
+     cfg->savedetflag=0x5;
+     cfg->his.savedetflag=cfg->savedetflag;
      cfg->shapedata=NULL;
      cfg->seeddata=NULL;
      cfg->maxvoidstep=1000;
@@ -734,6 +745,15 @@ void mcx_prepdomain(char *filename, Config *cfg){
      for(int i=0;i<6;i++)
         if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
+     
+     if(cfg->ismomentum)
+         cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
+     if(cfg->issaveexit){
+         cfg->savedetflag=SET_SAVE_PEXIT(cfg->savedetflag);
+	 cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
+     }
+     if(cfg->issavedet && cfg->savedetflag==0)
+         cfg->savedetflag=0x5;
 }
 
 /**
@@ -916,7 +936,8 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.srcnum=cfg->srcnum;
-     cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
+     cfg->his.savedetflag=cfg->savedetflag;
+     //cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
 
      if(in==stdin)
      	fprintf(stdout,"Please specify the source type[pencil|cone|gaussian]:\n\t");
@@ -1276,6 +1297,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	if(!flagset['m'])  cfg->ismomentum=FIND_JSON_KEY("DoDCS","Session.DoDCS",Session,cfg->ismomentum,valueint);
 	if(!flagset['V'])  cfg->isspecular=FIND_JSON_KEY("DoSpecular","Session.DoSpecular",Session,cfg->isspecular,valueint);
 	if(!flagset['D'])  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("Debug","Session.Debug",Session,"",valuestring),debugflag);
+	cfg->savedetflag=mcx_parsedebugopt(FIND_JSON_KEY("SaveDataMask","Session.SaveDataMask",Session,"",valuestring),saveflag);
 
         if(!cfg->outputformat)  cfg->outputformat=mcx_keylookup((char *)FIND_JSON_KEY("OutputFormat","Session.OutputFormat",Session,"mc2",valuestring),outputformat);
         if(cfg->outputformat<0)
@@ -1320,7 +1342,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      cfg->his.maxmedia=cfg->medianum-1; /*skip media 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.srcnum=cfg->srcnum;
-     cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
+     cfg->his.savedetflag=cfg->savedetflag;
+     //cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
      return 0;
 }
 
@@ -1931,6 +1954,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     case 'X':
  		                i=mcx_readarg(argc,argv,i,&(cfg->issaveref),"char");
  				if (cfg->issaveref) cfg->issaveref=1;
+ 				break;
+		     case 'w':
+			        if(i+1<argc && isalpha(argv[i+1][0]) ){
+				    cfg->savedetflag=mcx_parsedebugopt(argv[++i],saveflag);
+			        }else
+				    i=mcx_readarg(argc,argv,i,&(cfg->savedetflag),"int");
  				break;
 		     case '-':  /*additional verbose parameters*/
                                 if(strcmp(argv[i]+2,"maxvoidstep")==0)

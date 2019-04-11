@@ -131,9 +131,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int isatomic;             /**< whether atomic operations are used */
   unsigned int maxvoidstep;          /**< max steps that photon can travel in the background before entering non-zero voxels */
   unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */
-  unsigned int issaveexit;           /**< flag if one need to save the detected photon positions and dir vectors */
   unsigned int issaveref;            /**< flag if one need to save diffuse reflectance data in the 0-voxel layer next to the boundary */
-  unsigned int ismomentum;           /**< 1 to save momentum transfer for detected photons, implies issavedet=1*/
   unsigned int isspecular;           /**< 0 do not perform specular reflection at launch, 1 do specular reflection */
   unsigned int seedoffset;           /**< offset of the seed, not used */
   int seed;                          /**< RNG seed passted from the host */
@@ -142,6 +140,10 @@ typedef struct  __align__(16) KernelParams {
   int oddphotons;                    /**< how many threads need to simulate 1 more photon above the basic load (threadphoton) */
   int faststep;                      /**< use an approximated stepping approach, not used */
   unsigned int debuglevel;           /**< debug flags */
+  unsigned int savedetflag;          /**< detected photon save flags */
+  unsigned int reclen;               /**< length of buffer per detected photon */
+  unsigned int partialdata;          /**< per-medium detected photon data length */
+  unsigned int w0offset;             /**< photon-sharing buffer offset */
   unsigned int maxjumpdebug;         /**< max number of positions to be saved to save photon trajectory when -D M is used */
   unsigned int gscatter;             /**< how many scattering events after which mus/g can be approximated by mus' */
   unsigned int is2d;                 /**< is the domain a 2D slice? */

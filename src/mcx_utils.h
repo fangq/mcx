@@ -87,7 +87,8 @@ typedef struct MCXHistoryHeader{
         float normalizer;              /**< what is the normalization factor */
 	int respin;                    /**< if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset */
 	unsigned int  srcnum;          /**< number of sources for simultaneous pattern sources */
-	int reserved[3];               /**< reserved fields for future extension */
+	unsigned int  savedetflag;     /**< number of sources for simultaneous pattern sources */
+	int reserved[2];               /**< reserved fields for future extension */
 } History;
 
 /**
@@ -201,6 +202,7 @@ typedef struct MCXConfig{
         int replaydet;               /**<the detector id for which to replay the detected photons, start from 1*/
         char seedfile[MAX_PATH_LENGTH];/**<if the seed is specified as a file (mch), mcx will replay the photons*/
         unsigned int debuglevel;     /**<a flag to control the printing of the debug information*/
+        unsigned int savedetflag;    /**<a flag to control the output fields of detected photon data*/
         char deviceid[MAX_DEVICE];   /**<a 0-1 mask for all the GPUs, a mask of 1 means this GPU will be used*/
         float workload[MAX_DEVICE];  /**<an array storing the relative weight when distributing photons between multiple GPUs*/
         int parentid;                /**<flag for testing if mcx is executed inside matlab*/

@@ -331,23 +331,51 @@ end
 if(nargout>=2)
 
     for i=1:length(varargout{2})
-        if(~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2)
+        if(~isfield(cfg(i),'savedetflag'))
+	        cfg(i).savedetflag='DP';
+	    end
+        if((~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2))
             medianum=size(cfg(i).prop,1)-1;
             detp=varargout{2}(i).data;
             if(isempty(detp))
                 continue;
             end
-            newdetp.detid=int32(detp(1,:))';
-            newdetp.nscat=int32(detp(2:medianum+1,:))';    % 1st medianum block is num of scattering
-            newdetp.ppath=detp(medianum+2:2*medianum+1,:)';% 2nd medianum block is partial path
-            if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
-                newdetp.mom=detp(2*medianum+2:3*medianum+1,:)'; % 3rd medianum block is the momentum transfer
+            c0=1;
+            len=1;
+            if(regexp(cfg(i).savedetflag,'[dD]'))
+                newdetp.detid=int32(detp(1,:))';
+                c0=2;
             end
-            if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
-                newdetp.p=detp(end-6:end-4,:)';             %columns 7-5 from the right store the exit positions*/
-                newdetp.v=detp(end-3:end-1,:)';	     %columns 4-2 from the right store the exit dirs*/
+            len=medianum;
+            if(regexp(cfg(i).savedetflag,'[sS]'))
+                newdetp.nscat=int32(detp(c0:(c0+len-1),:))';    % 1st medianum block is num of scattering
+                c0=c0+len;
             end
-	    newdetp.w0=detp(end,:)';  % last column is the initial packet weight
+            if(regexp(cfg(i).savedetflag,'[pP]'))
+                newdetp.ppath=detp(c0:(c0+len-1),:)';% 2nd medianum block is partial path
+                c0=c0+len;
+            end
+            if(regexp(cfg(i).savedetflag,'[mM]'))
+                newdetp.mom=detp(c0:(c0+len-1),:)'; % 3rd medianum block is the momentum transfer
+                c0=c0+len;
+            end
+            len=3;
+            if(regexp(cfg(i).savedetflag,'[xX]'))
+                newdetp.p=detp(c0:(c0+len-1),:)';             %columns 7-5 from the right store the exit positions*/
+                c0=c0+len;
+            end
+            if(regexp(cfg(i).savedetflag,'[vV]'))
+                newdetp.v=detp(c0:(c0+len-1),:)';	     %columns 4-2 from the right store the exit dirs*/
+                c0=c0+len;
+            end
+            if(regexp(cfg(i).savedetflag,'[wW]'))
+                len=1;
+                newdetp.w0=detp(c0:(c0+len-1),:)';  % last column is the initial packet weight
+                if(isfield(cfg(i),'srcnum') && cfg(i).srcnum>1)
+                    newdetp.w0=typecast(newdetp.w0,'uint32');
+                end
+                c0=c0+len;
+            end
             newdetp.prop=cfg(i).prop;
             newdetp.data=detp;      % enable this line for compatibility
             newdetpstruct(i)=newdetp;
