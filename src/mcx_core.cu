@@ -112,7 +112,7 @@ extern __shared__ char sharedmem[];
  
 __device__ inline OutputType atomicadd(OutputType* address, OutputType value){
 
-#if __CUDA_ARCH__ >= 200 ///< for Fermi, atomicAdd supports floats
+#if ! defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 200 ///< for Fermi, atomicAdd supports floats
 
   return atomicAdd(address,value);
 

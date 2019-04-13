@@ -153,12 +153,17 @@ logfermi:   log
 xorfermi xorofermi posixfermi logfermi debugxor debuglog:   LINKOPT+=$(OMP)
 xorfermi:    fermi
 xorfermi:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
+
 half: CUCCOPT+=-DUSE_HALF
 half: CUGENCODE=-arch=sm_60
 
 double: fermi
 double: CUCCOPT+=-DUSE_DOUBLE
 double: CUGENCODE=-arch=sm_60
+
+moredouble: fermi
+moredouble: CUCCOPT+=-DUSE_MORE_DOUBLE
+moredouble: CUGENCODE=-arch=sm_60
 
 static:     fermi
 static:     AR=nvcc
@@ -211,7 +216,7 @@ ifeq ($(TARGETSUFFIX),.a)
 endif
 
 all xor xoro posix fast log debugxor debuglog half xorfermi xorofermi posixfermi logfermi\
- fermi mex oct fermimex fermioct: cudasdk lib $(OUTPUT_DIR)/$(BINARY)
+ fermi mex oct fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 makedirs:
 	@if test ! -d $(OUTPUT_DIR); then $(MKDIR) $(OUTPUT_DIR); fi
