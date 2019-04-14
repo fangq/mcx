@@ -78,7 +78,7 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','-','m','V','B','W','w','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','\0'};
 
 /**
  * Long command line options
@@ -2247,11 +2247,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                detector (det ID starts from 1), used with -E \n\
 			       if 0, replay all detectors and sum all Jacobians\n\
 			       if -1, replay all detectors and save separately\n\
- -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh\n\
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
  -g [1|int]    (--gategroup)   number of time gates per run\n\
- -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
 \n"S_BOLD S_CYAN"\
 == GPU options ==\n"S_RESET"\
  -L            (--listgpu)     print GPU information only\n\
@@ -2263,6 +2261,19 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
  -I            (--printgpu)    print GPU information and run program\n\
+\n"S_BOLD S_CYAN"\
+== Input options ==\n"S_RESET"\
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
+ -K [1|int|str](--mediabyte)   volume data format, use either a number or a str\n\
+                               1 or byte: 0-128 tissue labels\n\
+			       2 or short: 0-65535 (max to 4000) tissue labels\n\
+			       4 or integer: integer tissue labels \n\
+                             100 or muamus_float: 2x 32bit floats for mua/mus\n\
+                             101 or mua_float: 1 float per voxel for mua\n\
+			     102 or muamus_half: 2x 16bit float for mua/mus\n\
+			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
+			     104 or muamus_short: 2x short gray-levels for mua/s\n\
+ -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n"S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
@@ -2315,15 +2326,6 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Additional options ==\n"S_RESET"\
  --root         [''|string]    full path to the folder storing the input files\n\
- --mediabyte    [1|int|str]    volume data format, use either a number or a str\n\
-                               1 or byte: 0-128 tissue labels\n\
-			       2 or short: 0-65535 (max to 4000) tissue labels\n\
-			       4 or integer: integer tissue labels \n\
-                             100 or muamus_float: 2x 32bit floats for mua/mus\n\
-                             101 or mua_float: 1 float per voxel for mua\n\
-			     102 or muamus_half: 2x 16bit float for mua/mus\n\
-			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
-			     104 or muamus_short: 2x short gray-levels for mua/s\n\
  --gscatter     [1e9|int]      after a photon completes the specified number of\n\
                                scattering events, mcx then ignores anisotropy g\n\
                                and only performs isotropic scattering for speed\n\
