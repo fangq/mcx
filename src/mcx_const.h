@@ -43,7 +43,7 @@
 
 #define SIGN_BIT           0x80000000U
 #define DET_MASK           0x80000000              /**< mask of the sign bit to get the detector */
-#define MED_MASK           0x7FFFFFFF              /**< mask of the lower 16bit to get the medium index */
+#define MED_MASK           0x7FFFFFFF              /**< mask of the remaining bits to get the medium index */
 
 #define MEDIA_AS_F2H          100  /**<  media format: {[float32: mua][float32: mus]} -> 32bit:{[half: mua],{half: mus}} */
 #define MEDIA_MUA_FLOAT       101  /**<  media format: 32bit:{[float32: mua]} */

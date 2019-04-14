@@ -118,10 +118,14 @@ const char outputtype[]={'x','f','e','j','p','m','\0'};
 const char debugflag[]={'R','M','P','\0'};
 
 /**
- * Debug flags
- * R: debug random number generator
- * M: record photon movement and trajectory
- * P: show progress bar
+ * Recorded fields for detected photons
+ * D: detector ID (starting from 1) [1]
+ * S: partial scattering event count [#media]
+ * P: partial path lengths [#media]
+ * M: momentum transfer [#media]
+ * X: exit position [3]
+ * V: exit direction vector [3]
+ * W: initial weight [1]
  */
 
 const char saveflag[]={'D','S','P','M','X','V','W','\0'};
@@ -155,6 +159,16 @@ const char boundarycond[]={'_','r','a','m','c','\0'};
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
     "line","slit","pencilarray","pattern3d",""};
+
+
+/**
+ * Media byte format
+ * User can specify the source type using a string
+ */
+
+const unsigned int mediaformatid[]={1,2,4,100,101,102,103,104,0};
+const char *mediaformat[]={"byte","short","integer","muamus_float","mua_float","muamus_half","asgn_byte","muamus_short",""};
+
 
 /**
  * Flag to decide if parameter has been initialized over command line
@@ -746,7 +760,12 @@ void mcx_prepdomain(char *filename, Config *cfg){
      for(int i=0;i<6;i++)
         if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
-     
+
+     if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
+         MCX_ERROR(-4,"the 'prop' field must contain at least 2 rows for the requested media format");
+     if((cfg->mediabyte==MEDIA_ASGN_BYTE || cfg->mediabyte==MEDIA_AS_SHORT) && cfg->medianum<3)
+         MCX_ERROR(-4,"the 'prop' field must contain at least 3 rows for the requested media format");
+
      if(cfg->ismomentum)
          cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
      if(cfg->issaveexit){
@@ -1025,6 +1044,13 @@ int mcx_loadjson(cJSON *root, Config *cfg){
           }else{
 	     strncpy(filename,volfile,MAX_PATH_LENGTH);
 	  }
+	}
+	val=FIND_JSON_OBJ("MediaFormat","Domain.MediaFormat",Domain);
+	if(val){
+            cfg->mediabyte=mcx_keylookup((char*)FIND_JSON_KEY("MediaFormat","Domain.MediaFormat",Domain,"byte",valuestring),mediaformat);
+	    if(cfg->mediabyte==-1)
+	       MCX_ERROR(-1,"Unsupported media format.");
+	    cfg->mediabyte=mediaformatid[cfg->mediabyte];
 	}
         if(!flagset['u'])
 	    cfg->unitinmm=FIND_JSON_KEY("LengthUnit","Domain.LengthUnit",Domain,1.f,valuedouble);
@@ -1975,9 +2001,15 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
                                 else if(strcmp(argv[i]+2,"gscatter")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->gscatter),"int");
-                                else if(strcmp(argv[i]+2,"mediabyte")==0)
-                                     i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
-                                else if(strcmp(argv[i]+2,"faststep")==0)
+                                else if(strcmp(argv[i]+2,"mediabyte")==0){
+				     if(i+1<argc && isalpha(argv[i+1][0]) ){
+				         cfg->mediabyte=mcx_keylookup(argv[++i],mediaformat);
+					 if(cfg->mediabyte==-1)
+					     MCX_ERROR(-1,"Unsupported media format.");
+					 cfg->mediabyte=mediaformatid[cfg->mediabyte];
+			             }else
+				         i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
+                                }else if(strcmp(argv[i]+2,"faststep")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
                                 else if(strcmp(argv[i]+2,"root")==0)
                                      i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
@@ -2090,7 +2122,7 @@ int mcx_lookupindex(char *key, const char *index){
  */
 
 void mcx_version(Config *cfg){
-    const char ver[]="$Rev::      $2019.3";
+    const char ver[]="$Rev::      $2019.3+";
     int v=0;
     sscanf(ver,"$Rev::%x",&v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n",v);
@@ -2164,7 +2196,7 @@ void mcx_printheader(Config *cfg){
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $2019.3 $Date::                       $ by $Author::              $\n\
+$Rev::      $2019.3+$Date::                       $ by $Author::              $\n\
 ###############################################################################\n"S_RESET);
 }
 
@@ -2283,6 +2315,15 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Additional options ==\n"S_RESET"\
  --root         [''|string]    full path to the folder storing the input files\n\
+ --mediabyte    [1|int|str]    volume data format, use either a number or a str\n\
+                               1 or byte: 0-128 tissue labels\n\
+			       2 or short: 0-65535 (max to 4000) tissue labels\n\
+			       4 or integer: integer tissue labels \n\
+                             100 or muamus_float: 2x 32bit floats for mua/mus\n\
+                             101 or mua_float: 1 float per voxel for mua\n\
+			     102 or muamus_half: 2x 16bit float for mua/mus\n\
+			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
+			     104 or muamus_short: 2x short gray-levels for mua/s\n\
  --gscatter     [1e9|int]      after a photon completes the specified number of\n\
                                scattering events, mcx then ignores anisotropy g\n\
                                and only performs isotropic scattering for speed\n\

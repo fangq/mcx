@@ -902,7 +902,10 @@ void mcx_validate_config(Config *cfg){
 	    }
         }
      }
-
+     if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
+         mexErrMsgTxt("the 'prop' field must contain at least 2 rows for the requested media format");
+     if((cfg->mediabyte==MEDIA_ASGN_BYTE || cfg->mediabyte==MEDIA_AS_SHORT) && cfg->medianum<3)
+         mexErrMsgTxt("the 'prop' field must contain at least 3 rows for the requested media format");
      if(cfg->ismomentum)
          cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
      if(cfg->issaveexit){
