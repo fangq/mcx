@@ -43,8 +43,13 @@
 
 #define SIGN_BIT           0x80000000U
 #define DET_MASK           0x80000000              /**< mask of the sign bit to get the detector */
-#define MED_MASK           0x0000FFFF              /**< mask of the lower 16bit to get the medium index */
-#define MIX_MASK           0x7FFF0000              /**< mask of the upper 16bit to get the volume mix ratio */
+#define MED_MASK           0x7FFFFFFF              /**< mask of the lower 16bit to get the medium index */
+
+#define MEDIA_AS_F2H          100  /**<  media format: {[float32: mua][float32: mus]} -> 32bit:{[half: mua],{half: mus}} */
+#define MEDIA_MUA_FLOAT       101  /**<  media format: 32bit:{[float32: mua]} */
+#define MEDIA_AS_HALF         102  /**<  media format: 32bit:{[half: mua],[half: mus]} */
+#define MEDIA_ASGN_BYTE       103  /**<  media format: 32bit:{[byte: mua],[byte: mus],[byte: g],[byte: n]} */
+#define MEDIA_AS_SHORT        104  /**<  media format: 32bit:{[short: mua],[short: mus]} */
 
 #define MCX_DEBUG_REC_LEN  6  /**<  number of floating points per position saved when -D M is used for trajectory */
 
@@ -80,6 +85,14 @@
 #define SET_SAVE_PEXIT(a)     ((a) | 0x1<<4)   /**<  save exit positions */
 #define SET_SAVE_VEXIT(a)     ((a) | 0x1<<5)   /**<  save exit vector/directions */
 #define SET_SAVE_W0(a)        ((a) | 0x1<<6)   /**<  save initial weight */
+
+#define UNSET_SAVE_DETID(a)     ((a) & ~(0x1)   )   /**<  mask to save detector ID*/
+#define UNSET_SAVE_NSCAT(a)     ((a) & ~(0x1<<1))   /**<  output partial scattering counts */
+#define UNSET_SAVE_PPATH(a)     ((a) & ~(0x1<<2))   /**<  output partial path */
+#define UNSET_SAVE_MOM(a)       ((a) & ~(0x1<<3))   /**<  output momentum transfer */
+#define UNSET_SAVE_PEXIT(a)     ((a) & ~(0x1<<4))   /**<  save exit positions */
+#define UNSET_SAVE_VEXIT(a)     ((a) & ~(0x1<<5))   /**<  save exit vector/directions */
+#define UNSET_SAVE_W0(a)        ((a) & ~(0x1<<6))   /**<  save initial weight */
 
 #ifndef MCX_CONTAINER
   #define S_RED     "\x1b[31m"

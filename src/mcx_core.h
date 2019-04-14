@@ -144,6 +144,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int reclen;               /**< length of buffer per detected photon */
   unsigned int partialdata;          /**< per-medium detected photon data length */
   unsigned int w0offset;             /**< photon-sharing buffer offset */
+  unsigned int mediaformat;          /**< format of the media buffer */
   unsigned int maxjumpdebug;         /**< max number of positions to be saved to save photon trajectory when -D M is used */
   unsigned int gscatter;             /**< how many scattering events after which mus/g can be approximated by mus' */
   unsigned int is2d;                 /**< is the domain a 2D slice? */

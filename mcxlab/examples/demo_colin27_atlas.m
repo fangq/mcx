@@ -24,6 +24,7 @@
 %   of photon migration in 3D turbid media accelerated by graphics processing
 %   units," Opt. Express 17, 20178-20190 (2009)
 
+clear cfg
 
 load colin27_v3.mat
 cfg.vol=colin27;

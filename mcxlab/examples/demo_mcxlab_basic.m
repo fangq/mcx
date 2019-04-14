@@ -19,6 +19,10 @@ cfg.tstart=0;
 cfg.tend=5e-9;
 cfg.tstep=1e-10;
 % calculate the flux distribution with the given config
+
+cfg.vol=single(0.005*ones(60,60,60));
+cfg.vol(:,:,1:20)=0.1;
+cfg.vol=permute(cfg.vol, [4,1,2,3]);
 flux=mcxlab(cfg);
 
 

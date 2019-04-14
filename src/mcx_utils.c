@@ -755,6 +755,11 @@ void mcx_prepdomain(char *filename, Config *cfg){
      }
      if(cfg->issavedet && cfg->savedetflag==0)
          cfg->savedetflag=0x5;
+     if(cfg->mediabyte>=100){
+	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
+	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
+	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
+     }
 }
 
 /**
@@ -1408,11 +1413,11 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
      datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
      cfg->vol=(unsigned int*)malloc(sizeof(unsigned int)*datalen);
-     if(cfg->mediabyte==4)
+     if(cfg->mediabyte>=4)
          inputvol=(unsigned char*)(cfg->vol);
      else
          inputvol=(unsigned char*)malloc(sizeof(unsigned char)*cfg->mediabyte*datalen);
-     res=fread(inputvol,sizeof(unsigned char)*cfg->mediabyte,datalen,fp);
+     res=fread(inputvol,sizeof(unsigned char)*MIN(cfg->mediabyte,4),datalen,fp);
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
@@ -1426,7 +1431,8 @@ void mcx_loadvolume(char *filename,Config *cfg){
        for(i=0;i<datalen;i++)
          cfg->vol[i]=val[i];
      }
-     for(i=0;i<datalen;i++){
+     if(cfg->mediabyte<=4)
+       for(i=0;i<datalen;i++){
          if(cfg->vol[i]>=cfg->medianum)
             mcx_error(-6,"medium index exceeds the specified medium types",__FILE__,__LINE__);
      }

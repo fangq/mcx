@@ -208,6 +208,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	cfg.issavedet=(nlhs>=2);  /** save detected photon data to the 2nd output if present */
 	cfg.issaveseed=(nlhs>=4); /** save detected photon seeds to the 4th output if present */
 
+	/** Validate all input fields, and warn incompatible inputs */
+        mcx_validate_config(&cfg);
+
 	partialdata=(cfg.medianum-1)*(SAVE_NSCAT(cfg.savedetflag)+SAVE_PPATH(cfg.savedetflag)+SAVE_MOM(cfg.savedetflag));
 	hostdetreclen=partialdata+SAVE_DETID(cfg.savedetflag)+3*(SAVE_PEXIT(cfg.savedetflag)+SAVE_VEXIT(cfg.savedetflag))+SAVE_W0(cfg.savedetflag);
 
@@ -237,10 +240,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    cfg.exportdebugdata=(float*)malloc(cfg.maxjumpdebug*sizeof(float)*MCX_DEBUG_REC_LEN);
 	    cfg.debuglevel |= MCX_DEBUG_MOVE;
 	}
-	
-	/** Validate all input fields, and warn incompatible inputs */
-        mcx_validate_config(&cfg);
-	
+		
 	/** Start multiple threads, one thread to run portion of the simulation on one CUDA GPU, all in parallel */
 #ifdef _OPENMP
         omp_set_num_threads(activedev);
@@ -458,24 +458,38 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     else if(strcmp(name,"vol")==0){
         dimtype dimxyz;
         cfg->mediabyte=0;
-        if(mxIsUint8(item) || mxIsInt8(item))
-	     cfg->mediabyte=1;
-	else if(mxIsUint16(item) || mxIsInt16(item))
-	     cfg->mediabyte=2;
-	else if(mxIsUint32(item) || mxIsInt32(item))
-	     cfg->mediabyte=4;
-	else if(mxIsDouble(item))
-	     cfg->mediabyte=8;
-	else if(mxIsSingle(item))
-	     cfg->mediabyte=14;
-        if(cfg->mediabyte==0 || mxGetNumberOfDimensions(item)!=3 )
-             mexErrMsgTxt("the 'vol' field must be a 3D integer array");
         arraydim=mxGetDimensions(item);
-	for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i];
+
+	if(mxGetNumberOfDimensions(item)==3){
+	    if(mxIsUint8(item) || mxIsInt8(item)) // input is a 3D byte array
+		 cfg->mediabyte=1;
+	    else if(mxIsUint16(item) || mxIsInt16(item)) // input is a 3D short array
+		 cfg->mediabyte=2;
+	    else if(mxIsUint32(item) || mxIsInt32(item)) // input is a 3D integer array
+		 cfg->mediabyte=4;
+	    else if(mxIsDouble(item)) // input is a 3D double array
+		 cfg->mediabyte=8;
+	    else if(mxIsSingle(item)) // input is a float32 array
+		 cfg->mediabyte=14;
+            for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i];
+	}else if(mxGetNumberOfDimensions(item)==4){ // if dimension is 4D, 1st dim is the property records: mua/mus/g/n
+	    if((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0]==4) // if 4D byte array has a 1st dim of 4
+		 cfg->mediabyte=MEDIA_ASGN_BYTE;
+	    else if((mxIsUint16(item) || mxIsInt16(item)) && arraydim[0]==2)// if 4D short array has a 1st dim of 2
+		 cfg->mediabyte=MEDIA_AS_SHORT;
+	    else if(mxIsSingle(item) && arraydim[0]==2) // if 4D float32 array has a 1st dim of 2
+		 cfg->mediabyte=MEDIA_AS_F2H;
+	    else if(mxIsSingle(item) && arraydim[0]==1) // if 4D byte array has a 1st dim of 1
+		 cfg->mediabyte=MEDIA_MUA_FLOAT;
+            for(i=0;i<3;i++) ((unsigned int *)(&cfg->dim))[i]=arraydim[i+1];
+	}
+        if(cfg->mediabyte==0)
+	    mexErrMsgTxt("the 'vol' field must be a 3D or 4D array");
+
 	dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
 	if(cfg->vol) free(cfg->vol);
 	cfg->vol=(unsigned int *)malloc(dimxyz*sizeof(unsigned int));
-	if(cfg->mediabyte==4)
+	if(cfg->mediabyte==4 || cfg->mediabyte>100)
 	    memcpy(cfg->vol,mxGetData(item),dimxyz*sizeof(unsigned int));
 	else{
 	    if(cfg->mediabyte==1){
@@ -490,11 +504,38 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	        double *val=(double *)mxGetPr(item);
 	        for(i=0;i<dimxyz;i++)
 	            cfg->vol[i]=val[i];
+		cfg->mediabyte=4;
 	    }else if(cfg->mediabyte==14){
 	        float *val=(float *)mxGetPr(item);
 	        for(i=0;i<dimxyz;i++)
 	            cfg->vol[i]=val[i];
 		cfg->mediabyte=4;
+	    }else if(cfg->mediabyte==MEDIA_AS_F2H){
+	        float *val=(float *)mxGetPr(item);
+		union{
+		    float f[2];
+		    unsigned int i[2];
+		    unsigned short h[2];
+		} f2h;
+		unsigned short tmp;
+	        for(i=0;i<dimxyz;i++){
+		    f2h.f[0]=val[i<<1];
+		    f2h.f[1]=val[(i<<1)+1];
+
+		    f2h.h[0] = (f2h.i[0] >> 31) << 5;
+		    tmp = (f2h.i[0] >> 23) & 0xff;
+		    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+		    f2h.h[0] = (f2h.h[0] | tmp) << 10;
+		    f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+
+		    f2h.h[1] = (f2h.i[1] >> 31) << 5;
+		    tmp = (f2h.i[1] >> 23) & 0xff;
+		    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+		    f2h.h[1] = (f2h.h[1] | tmp) << 10;
+		    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+
+	            cfg->vol[i]=f2h.i[0];
+		}
 	    }
 	}
         printf("mcx.dim=[%d %d %d];\n",cfg->dim.x,cfg->dim.y,cfg->dim.z);
@@ -759,7 +800,7 @@ void mcx_validate_config(Config *cfg){
      int i,gates,idx1d;
      const char boundarycond[]={'_','r','a','m','c','\0'};
      unsigned int partialdata=(cfg->medianum-1)*(SAVE_NSCAT(cfg->savedetflag)+SAVE_PPATH(cfg->savedetflag)+SAVE_MOM(cfg->savedetflag));
-     unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+(cfg->issaveexit>0)*3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
+     unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
 
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
@@ -871,6 +912,11 @@ void mcx_validate_config(Config *cfg){
      if(cfg->issavedet && cfg->savedetflag==0)
          cfg->savedetflag=0x5;
 
+     if(cfg->mediabyte>=100){
+	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
+	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
+	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
+     }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.srcnum=cfg->srcnum;

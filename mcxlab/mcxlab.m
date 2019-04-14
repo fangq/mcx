@@ -344,8 +344,17 @@ if(nargout>=2)
 
     for i=1:length(varargout{2})
         if(~isfield(cfg(i),'savedetflag'))
-	        cfg(i).savedetflag='DP';
-	    end
+            cfg(i).savedetflag='DP';
+            if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
+                cfg(i).savedetflag=[cfg(i).savedetflag,'XV'];
+            end
+            if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
+                cfg(i).savedetflag=[cfg(i).savedetflag,'M'];
+            end
+	end
+	if(ndims(cfg(i).vol)==4)
+	    cfg(i).savedetflag='';
+	end
         if((~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2))
             medianum=size(cfg(i).prop,1)-1;
             detp=varargout{2}(i).data;

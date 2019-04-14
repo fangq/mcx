@@ -31,9 +31,9 @@
 #include "tictoc.h"
 #include "mcx_const.h"
 
-#ifdef USE_HALF                     ///< use half-precision for ray-tracing
+//#ifdef USE_HALF                     ///< use half-precision for ray-tracing
     #include "cuda_fp16.h"
-#endif
+//#endif
 
 #ifdef USE_DOUBLE
     typedef double OutputType;
@@ -433,6 +433,71 @@ __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir)
 }
 
 /**
+ * @brief Loading optical properties from constant memory
+ *
+ * This function parses the media input and load optical properties
+ * from GPU memory
+ *
+ * @param[out] prop: pointer to the current optical properties {mua, mus, g, n}
+ * @param[in] mediaid: the media ID (32 bit) of the current voxel, format is specified in gcfg->mediaformat or cfg->mediabyte
+ */
+ 
+__device__ void updateproperty(Medium *prop, unsigned int mediaid){
+	  if(gcfg->mediaformat<=4)
+	      *((float4*)(prop))=gproperty[mediaid & MED_MASK];
+          else if(gcfg->mediaformat==MEDIA_MUA_FLOAT)
+	      prop->mua=fabs(*((float *)&mediaid));
+	  else if(gcfg->mediaformat==MEDIA_AS_F2H||gcfg->mediaformat==MEDIA_AS_HALF){
+	      union {
+                 unsigned int i;
+                 half h[2];
+              } val;
+	      val.i=mediaid & MED_MASK;
+	      prop->mua=fabs(__half2float(val.h[0]));
+	      prop->mus=fabs(__half2float(val.h[1]));
+	  }else if(gcfg->mediaformat==MEDIA_ASGN_BYTE){
+	      union {
+                 unsigned int i;
+                 unsigned char h[4];
+              } val;
+	      val.i=mediaid & MED_MASK;
+	      prop->mua=val.h[0]*(1.f/255.f)*(gproperty[2].x-gproperty[1].x)+gproperty[1].x;
+	      prop->mus=val.h[1]*(1.f/255.f)*(gproperty[2].y-gproperty[1].y)+gproperty[1].y;
+	      prop->g  =val.h[2]*(1.f/255.f)*(gproperty[2].z-gproperty[1].z)+gproperty[1].z;
+	      prop->n  =val.h[3]*(1.f/255.f)*(gproperty[2].w-gproperty[1].w)+gproperty[1].w;
+          }else if(gcfg->mediaformat==MEDIA_AS_SHORT){
+	      union {
+                 unsigned int i;
+                 unsigned short h[2];
+              } val;
+	      val.i=mediaid & MED_MASK;
+	      prop->mua=val.h[0]*(1.f/65535.f)*(gproperty[2].x-gproperty[1].x)+gproperty[1].x;
+	      prop->mus=val.h[1]*(1.f/65535.f)*(gproperty[2].y-gproperty[1].y)+gproperty[1].y;
+          }
+	  //else{} //else do nothing
+}
+
+/**
+ * @brief Loading optical properties from constant memory
+ *
+ * This function parses the media input and load optical properties
+ * from GPU memory
+ *
+ * @param[in] mediaid: the media ID (32 bit) of the current voxel, format is specified in gcfg->mediaformat or cfg->mediabyte
+ */
+ 
+__device__ float getrefractiveidx(unsigned int mediaid){
+          if((mediaid& MED_MASK)==0)
+	      return gproperty[0].w;
+          if(gcfg->mediaformat<=4)
+	      return gproperty[mediaid & MED_MASK].w;
+	  else if(gcfg->mediaformat==MEDIA_ASGN_BYTE)
+	      return 0.9f;
+          else
+	      return gproperty[1].w;
+}
+
+/**
  * @brief Advance photon to the 1st non-zero voxel if launched in the backgruond 
  *
  * This function advances the photon to the 1st non-zero voxel along the direction
@@ -455,7 +520,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
 	    if(media[idx1d] & MED_MASK){ ///< if enters a non-zero voxel
                 GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n",p->x,p->y,p->z,v->x,v->y,v->z));
-	        float3 htime;
+	        float4 htime;
                 int flipdir;
                 p->x-=v->x;
                 p->y-=v->y;
@@ -478,12 +543,12 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 		    }
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
-
-		if(gcfg->isspecular && gproperty[media[idx1d] & MED_MASK].w!=gproperty[0].w){
-	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,gproperty[media[idx1d] & MED_MASK].w,flipdir);
+                updateproperty((Medium *)&htime,media[idx1d]);
+		if(gcfg->isspecular && htime.w!=gproperty[0].w){
+	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,htime.w,flipdir);
                     GPUDEBUG(("transmitted intensity w=%e\n",p->w));
 	            if(p->w>EPS){
-		        transmit(v, gproperty[0].w,gproperty[media[idx1d] & MED_MASK].w,flipdir);
+		        transmit(v, gproperty[0].w,htime.w,flipdir);
                         GPUDEBUG(("transmit into volume v=<%f %f %f>\n",v->x,v->y,v->z));
                     }
 		}
@@ -916,8 +981,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       /**
        * Now a photon is successfully launched, perform necssary initialization for a new trajectory
        */
-      f->ndone++; 
-      *((float4*)(prop))=gproperty[*mediaid & MED_MASK]; //always use mediaid to read gproperty[]
+      f->ndone++;
+      updateproperty(prop,*mediaid);
       if(gcfg->debuglevel & MCX_DEBUG_MOVE)
           savedebugdata(p,(uint)f->ndone+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
 
@@ -942,6 +1007,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       }
       return 0;
 }
+
 
 /**
  * @brief A stand-alone kernel to test random number generators
@@ -1029,6 +1095,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      ppath[gcfg->partialdata]  =genergy[idx<<1];
      ppath[gcfg->partialdata+1]=genergy[(idx<<1)+1];
 #endif
+
+     *((float4*)(&prop))=gproperty[1];
 
      gpu_rng_init(t,n_seed,idx);
 
@@ -1148,8 +1216,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
           /** Read the optical property of the current voxel */
           n1=prop.n;
-	  *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
-	  
+	  updateproperty(&prop,mediaid);
+
 	  /** Advance photon 1 step to the next voxel */
 	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)&v,&(htime.x),&rv.x,&flipdir); // propagate the photon to the first intersection to the grid
 	  
@@ -1326,11 +1394,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           }
 
           /** do boundary reflection/transmission */
-	  if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=gproperty[mediaid].w){
+	  if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
-                  *((float4*)(&prop))=gproperty[mediaid]; ///< optical property across the interface
+                  updateproperty(&prop,mediaid); ///< optical property across the interface  
 
                   tmp0=n1*n1;
                   tmp1=prop.n*prop.n;
@@ -1374,7 +1442,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	                GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
                 	idx1d=idx1dold;
 		 	mediaid=(media[idx1d] & MED_MASK);
-        	  	*((float4*)(&prop))=gproperty[mediaid];
+        	  	updateproperty(&prop,mediaid); ///< optical property across the interface
                   	n1=prop.n;
 		  }
 	  }
@@ -1596,7 +1664,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveref>0,cfg->isspecular>0,
 		     cfg->maxdetphoton*hostdetreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
-		     cfg->debuglevel,cfg->savedetflag,hostdetreclen,partialdata,w0offset,(uint)cfg->maxjumpdebug,cfg->gscatter,is2d,cfg->replaydet,cfg->srcnum};
+		     cfg->debuglevel,cfg->savedetflag,hostdetreclen,partialdata,w0offset,cfg->mediabyte,
+		     (uint)cfg->maxjumpdebug,cfg->gscatter,is2d,cfg->replaydet,cfg->srcnum};
      if(param.isatomic)
          param.skipradius2=0.f;
 #ifdef _OPENMP
