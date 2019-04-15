@@ -372,7 +372,11 @@ if(nargout>=2)
             c0=1;
             len=1;
             if(regexp(cfg(i).savedetflag,'[dD]'))
-                newdetp.detid=int32(detp(1,:))';
+                if(isfield(cfg(i),'issaveref') && cfg(i).issaveref>1)
+                    newdetp.w0=detp(1,:)';
+                else
+                    newdetp.detid=int32(detp(1,:))';
+                end
                 c0=2;
             end
             len=medianum;

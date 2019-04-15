@@ -159,6 +159,17 @@ __device__ inline uint finddetector(MCXpos *p0){
       return 0;
 }
 
+__device__ inline void saveexitppath(float n_det[],float *ppath,MCXpos *p0,uint *idx1d){
+      if(gcfg->issaveref>1){
+          if(*idx1d>=gcfg->maxdetphoton)
+	      return;
+          uint baseaddr=(*idx1d)*gcfg->reclen;
+	  n_det[baseaddr]+=p0->w;
+	  for(int i=0;i<gcfg->maxmedia;i++)
+		n_det[baseaddr+i]+=ppath[i]*p0->w;
+      }
+}
+
 /**
  * @brief Recording detected photon information at photon termination
  * @param[in] n_det: pointer to the detector position array
@@ -170,7 +181,7 @@ __device__ inline uint finddetector(MCXpos *p0){
  * @param[in] seeddata: the RNG seed of the photon at launch, need to save for replay 
  */
 
-__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata){
+__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata,uint *idx1d){
       uint detid=finddetector(p0);
       if(detid){
 	 uint baseaddr=atomicAdd(detectedphoton,1);
@@ -679,15 +690,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 
           if(gcfg->debuglevel & MCX_DEBUG_MOVE)
               savedebugdata(p,((uint)f->ndone)+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
-#ifdef SAVE_DETECTORS
-      // let's handle detectors here
-          if(gcfg->savedet){
-             if((isdet&DET_MASK)==DET_MASK && *mediaid==0)
-	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata);
-             clearpath(ppath,gcfg->partialdata);
-          }
-#endif
+
           if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME_MIN && *idx1d!=OUTSIDE_VOLUME_MAX && gcfg->issaveref){
+            if(gcfg->issaveref==1){
 	      int tshift=MIN(gcfg->maxgate-1,(int)(floorf((f->t-gcfg->twin0)*gcfg->Rtstep)));
 	      if(mcxsource!=MCX_SRC_PATTERN && mcxsource!=MCX_SRC_PATTERN3D){
 #ifdef USE_ATOMIC
@@ -706,7 +711,18 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		    }
 		  }
 	      }
+            }else{
+	      saveexitppath(n_det,ppath,p,idx1d);
+	    }
 	  }
+#ifdef SAVE_DETECTORS
+      // let's handle detectors here
+          if(gcfg->savedet){
+             if((isdet&DET_MASK)==DET_MASK && *mediaid==0 && gcfg->issaveref<2)
+	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata,idx1d);
+             clearpath(ppath,gcfg->partialdata);
+          }
+#endif
       }
 
       /**
@@ -1451,6 +1467,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      /** return the tracked total energyloss and launched energy back to the host */
      genergy[idx<<1]    =ppath[gcfg->partialdata];
      genergy[(idx<<1)+1]=ppath[gcfg->partialdata+1];
+     
+     if(gcfg->issaveref>1)
+         *detectedphoton=gcfg->maxdetphoton;
 
      /** for debugging purposes, we also pass the last photon states back to the host for printing */
      n_pos[idx]=*((float4*)(&p));
@@ -1662,7 +1681,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
 		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
-		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,cfg->issaveref>0,cfg->isspecular>0,
+		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,(uint)cfg->issaveref,cfg->isspecular>0,
 		     cfg->maxdetphoton*hostdetreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
 		     cfg->debuglevel,cfg->savedetflag,hostdetreclen,partialdata,w0offset,cfg->mediabyte,
 		     (uint)cfg->maxjumpdebug,cfg->gscatter,is2d,cfg->replaydet,cfg->srcnum};

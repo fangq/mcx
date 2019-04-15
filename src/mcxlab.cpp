@@ -920,6 +920,16 @@ void mcx_validate_config(Config *cfg){
 	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
 	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
      }
+     if(cfg->issaveref>1){
+        if(cfg->issavedet==0)
+	    mexErrMsgTxt("you must have at least two outputs if issaveref is greater than 1");
+
+        if(cfg->dim.x*cfg->dim.y*cfg->dim.z > cfg->maxdetphoton){
+	    mexWarnMsgTxt("you must set cfg.maxdetphoton larger than prod(size(cfg.vol)) when cfg.issaveref is greater than 1, autocorrecting ...");
+	    cfg->maxdetphoton=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+	}
+	cfg->savedetflag=0x5;
+     }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.srcnum=cfg->srcnum;
