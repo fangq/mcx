@@ -71,7 +71,7 @@ guidata=struct('filename',fname,'data',data,'frame',1);
 guidata.handles=islicer(data(:,:,:,guidata.frame));
 
 set(hfig,'WindowKeyPressFcn',@changeframe)
-set(hfig,'name',fname);
+set(hfig,'name',['MCX Viewer (mcxplotvol) ' fname]);
 set(hfig,'NumberTitle','off');
 set(gca,'UserData',guidata);
 
