@@ -1,5 +1,26 @@
 = Change Log =
 
+Major updates are marked with a "*"
+
+== MCX v2019.4 (Ether Dome RC1 - 1.4.9), FangQ <q.fang (a) neu.edu> ==
+
+ 2019-04-22 [5e0f0c5] add title to mcxplotvol window
+ 2019-04-15 [a8fa3f5]*combining partial path on the surface
+ 2019-04-14 [dc5ec7c] assign -K for --mediabyte
+ 2019-04-14 [357ef7c] add help info for continuous media, accept string input, sanity check
+ 2019-04-13 [ac10b73]*supports continuously varying media - mua/mus can vary in every voxel
+ 2019-04-13 [03228c8] add moredouble target
+ 2019-04-11 [7e31145] compile to dynamic lib, add function to enable library calls
+ 2019-04-11 [1c2f2e6] add help info in mcx and mcxlab on savedetflag
+ 2019-04-10 [ada0b8e]*support -w / --savedetflag to specify which det photon data to output
+ 2019-03-29 [825537c] fix print information for multiptle patterns when cfg.isnormalized==0
+ 2019-03-28 [43b377a] update json2mcx, add colin27 for mcxlab
+ 2019-03-28 [b9a053f]*add json2mcx, converting from json file to mcxlab cfg
+ 2019-03-23 [f71fd39] add the missing verbose flag --workload, although -W was working
+ 2019-03-20 [3cdfc54] fix empty string test
+ 2019-03-20 [6b19d01] mcxstudio: merge output window back to main; update infinite slab sample
+ 2019-03-19 [ac76ff7]*fix cyclic bc, add mcxlab demo
+
 == MCX v2019.3 (Ether Dome beta - 1.4.8), FangQ <q.fang (a) neu.edu> ==
  2019-03-03 [a3462be] add README files for all new benchmarks, add "What's New" in master README
  2019-03-02 [69a7375] use ANSI colors in the output to improve readability

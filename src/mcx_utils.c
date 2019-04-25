@@ -2132,7 +2132,7 @@ int mcx_lookupindex(char *key, const char *index){
  */
 
 void mcx_version(Config *cfg){
-    const char ver[]="$Rev::      $2019.3+";
+    const char ver[]="$Rev::      $2019.4";
     int v=0;
     sscanf(ver,"$Rev::%x",&v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n",v);
@@ -2206,7 +2206,7 @@ void mcx_printheader(Config *cfg){
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $2019.3+$Date::                       $ by $Author::              $\n\
+$Rev::      $2019.4 $Date::                       $ by $Author::              $\n\
 ###############################################################################\n"S_RESET);
 }
 
@@ -2304,12 +2304,12 @@ where possible parameters include (the first value in [*|*] is the default)\n\
       by default, mcx only saves detector ID and partial-path data\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
                                setting -x to 1 also implies setting '-d' to 1.\n\
-			       save as adding 'XV' to -w.\n\
+			       same as adding 'XV' to -w.\n\
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
                                right outside of the domain; if non-zero voxels\n\
 			       appear at the boundary, pad 0s before using -X\n\
  -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.\n\
-                               save as adding 'M' to the -w flag\n\
+                               same as adding 'M' to the -w flag\n\
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
