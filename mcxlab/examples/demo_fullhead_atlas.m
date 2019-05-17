@@ -18,7 +18,7 @@
 
 clc
 clear
-load("fullhead_atlas.mat");
+load('fullhead_atlas.mat');
 %% prepare cfg for MCX simulation
 clear cfg
 cfg.nphoton=1e8;
