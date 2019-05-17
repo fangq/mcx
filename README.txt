@@ -5,7 +5,7 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 1.4.8 (v2019.3, Ether Dome - beta)
+Version: 1.4.9 (v2019.4, Ether Dome - RC1)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
@@ -29,6 +29,15 @@ XI.   Reference
 ---------------------------------------------------------------------
 
 O.    What's New
+
+In MCX v2019.4 (1.4.9), several important key features were added
+
+* Support continuously varying media - mua/mus can vary in every voxel
+* Support -w / --savedetflag to specify which det photon data to output
+* Add json2mcx, converting from json file to mcxlab cfg
+* Can simulate infinite domain using cylic BC - added MCXLAB example
+* A new output type - partial-path data on all exiting voxels (experimental)
+
 
 In MCX v2019.3 (1.4.8), we added a list of major new additions, including
 
@@ -180,7 +189,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::3800fa$2019.3 $Date::2019-02-28 13:51:28 -05$ by $Author::Qianqian Fang $
+$Rev::5e0f0c$2019.4 $Date::2019-04-22 18:40:07 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -196,7 +205,7 @@ where possible parameters include (the first value in [*|*] is the default)
                                if negative, divide #photon into r subsets
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
  -B '______'   (--bc)          per-face boundary condition (BC), 6 letters for
-                               bounding box faces at -x,-y,-z,+x,+y,+z axes;
+    /case insensitive/         bounding box faces at -x,-y,-z,+x,+y,+z axes;
 			       overwrite -b if given. 
 			       each letter can be one of the following:
 			       '_': undefined, fallback to -b
@@ -220,11 +229,9 @@ where possible parameters include (the first value in [*|*] is the default)
                                detector (det ID starts from 1), used with -E 
 			       if 0, replay all detectors and sum all Jacobians
 			       if -1, replay all detectors and save separately
- -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
  -g [1|int]    (--gategroup)   number of time gates per run
- -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
 
 == GPU options ==
  -L            (--listgpu)     print GPU information only
@@ -237,19 +244,44 @@ where possible parameters include (the first value in [*|*] is the default)
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum
  -I            (--printgpu)    print GPU information and run program
 
+== Input options ==
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
+ -K [1|int|str](--mediabyte)   volume data format, use either a number or a str
+                               1 or byte: 0-128 tissue labels
+			       2 or short: 0-65535 (max to 4000) tissue labels
+			       4 or integer: integer tissue labels 
+                             100 or muamus_float: 2x 32bit floats for mua/mus
+                             101 or mua_float: 1 float per voxel for mua
+			     102 or muamus_half: 2x 16bit float for mua/mus
+			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n
+			     104 or muamus_short: 2x short gray-levels for mua/s
+ -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
+
 == Output options ==
  -s sessionid  (--session)     a string to label all output file names
  -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
-                               J - Jacobian (replay mode),   P - scattering, 
+    /case insensitive/         J - Jacobian (replay mode),   P - scattering, 
 			       event counts at each voxel (replay mode only)
                                M - momentum transfer; 
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save
+ -w [DP|DSPMXVW](--savedetflag)a string controlling detected photon data fields
+    /case insensitive/         1 D  output detector ID (1)
+                               2 S  output partial scat. even counts (#media)
+                               4 P  output partial path-lengths (#media)
+			       8 M  output momentum transfer (#media)
+			      16 X  output exit position (3)
+			      32 V  output exit direction (3)
+			      64 W  output initial weight (1)
+      combine multiple items by using a string, or add selected numbers together
+      by default, mcx only saves detector ID and partial-path data
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions
-                               setting -x to 1 also implies setting '-d' to 1
+                               setting -x to 1 also implies setting '-d' to 1.
+			       same as adding 'XV' to -w.
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels
                                right outside of the domain; if non-zero voxels
 			       appear at the boundary, pad 0s before using -X
- -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save
+ -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.
+                               same as adding 'M' to the -w flag
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
  -H [1000000] (--maxdetphoton) max number of detected photons
@@ -270,7 +302,7 @@ where possible parameters include (the first value in [*|*] is the default)
  -D [0|int]    (--debug)       print debug information (you can use an integer
   or                           or a string by combining the following flags)
  -D [''|RMP]                   1 R  debug RNG
-                               2 M  store photon trajectory info
+    /case insensitive/         2 M  store photon trajectory info
                                4 P  print progress bar
       combine multiple items by using a string, or add selected numbers together
 
@@ -291,7 +323,7 @@ where possible parameters include (the first value in [*|*] is the default)
 example: (autopilot mode)
        mcx -A 1 -n 1e7 -f input.inp -G 1 -D P
 or (manual mode)
-       mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -b 1 -G 1
+       mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -w dpx -b 1 -G 1
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)
        mcx -A -n 1e7 -f input.inp -G 1101 -W 10,10,10
 or (use inline domain definition)

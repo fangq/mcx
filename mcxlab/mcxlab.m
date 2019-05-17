@@ -394,11 +394,11 @@ if(nargout>=2)
             end
             len=3;
             if(regexp(cfg(i).savedetflag,'[xX]'))
-                newdetp.p=detp(c0:(c0+len-1),:)';             %columns 7-5 from the right store the exit positions*/
+                newdetp.p=detp(c0:(c0+len-1),:)';             %columns 7-5 from the right store the exit positions
                 c0=c0+len;
             end
             if(regexp(cfg(i).savedetflag,'[vV]'))
-                newdetp.v=detp(c0:(c0+len-1),:)';	     %columns 4-2 from the right store the exit dirs*/
+                newdetp.v=detp(c0:(c0+len-1),:)';	     %columns 4-2 from the right store the exit dirs
                 c0=c0+len;
             end
             if(regexp(cfg(i).savedetflag,'[wW]'))
