@@ -232,6 +232,7 @@ editor.on("change",  function() {
                         RNGSeed: {
 			    title: "Random seed",
                             type: "number",
+			    required: false,
                             default: 29012392
                         },
                     }
@@ -309,6 +310,7 @@ editor.on("change",  function() {
 				Param1: {
 				    title: "Source Parameter 1",
 				    type: "array",
+				    required: false,
 				    format: "tabs",
 				    items: {
 					     "type": "number"
@@ -319,6 +321,7 @@ editor.on("change",  function() {
 				Param2: {
 				    title: "Source Parameter 1",
 				    type: "array",
+				    required: false,
 				    format: "tabs",
 				    items: {
 					     "type": "number"
@@ -331,6 +334,7 @@ editor.on("change",  function() {
                         Detector: {
 			    title: "Detector",
                             type: "array",
+			    required: false,
 			    format: "table",
 			    items: {
 			      "type": "object",
@@ -357,11 +361,11 @@ editor.on("change",  function() {
 	        }
 	    },
             Shapes: {
-		    title: "Shapes",
                     type: "array",
+		    title: "Shapes",
 		    format: "table",
 		    items: {
-		    "anyOf": [
+		    type: [
 		      {
 		        title: "Grid",
 			type: "object",
@@ -371,6 +375,7 @@ editor.on("change",  function() {
 			    "Tag": {
 			      title: "Tag",
 			      "type": "integer",
+			      default: 1,
 			      minimum: 0
 			    },
 			    "Size": {
@@ -380,6 +385,7 @@ editor.on("change",  function() {
 				    items: {
 					     "type": "number"
 				    },
+				    default: [60,60,60],
 				    "minItems": 3,
 				    "maxItems": 3
 			    }
@@ -517,7 +523,7 @@ editor.on("change",  function() {
 		      {
 		        title: "Name",
 			type: "string",
-		      },
+		      }
 		    ]
                 }
             },
@@ -538,12 +544,14 @@ editor.on("change",  function() {
 			    items: {
 				     "type": "integer"
 			    },
+			    default: [60,60,60],
 			    "minItems": 3,
 			    "maxItems": 3
 			},
                         VolumeFile: {
 			    title: "Volume File",
                             type: "string",
+			    required: false,
 			    default: ""
                         },
                         Media: {

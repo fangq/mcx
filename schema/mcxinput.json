@@ -1,5 +1,5 @@
 {
-  "title": "MCX Settings",
+  "title": "Settings",
   "type": "object",
   "required": [
     "Session",
@@ -45,6 +45,7 @@
         "RNGSeed": {
           "title": "Random seed",
           "type": "number",
+          "required": false,
           "default": 29012392
         }
       }
@@ -154,6 +155,7 @@
             "Param1": {
               "title": "Source Parameter 1",
               "type": "array",
+              "required": false,
               "format": "tabs",
               "items": {
                 "type": "number"
@@ -164,6 +166,7 @@
             "Param2": {
               "title": "Source Parameter 1",
               "type": "array",
+              "required": false,
               "format": "tabs",
               "items": {
                 "type": "number"
@@ -176,6 +179,7 @@
         "Detector": {
           "title": "Detector",
           "type": "array",
+          "required": false,
           "format": "table",
           "items": {
             "type": "object",
@@ -213,7 +217,10 @@
           {
             "title": "Grid",
             "type": "object",
-	    "required": ["Tag","Size"],
+            "required": [
+              "Tag",
+              "Size"
+            ],
             "items": {
               "properties": {
                 "Tag": {
@@ -237,7 +244,11 @@
           {
             "title": "Sphere",
             "type": "object",
-	    "required": ["Tag","O","R"],
+            "required": [
+              "Tag",
+              "O",
+              "R"
+            ],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -264,7 +275,11 @@
           {
             "title": "Box",
             "type": "object",
-	    "required": ["Tag","O","Size"],
+            "required": [
+              "Tag",
+              "O",
+              "Size"
+            ],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -296,7 +311,11 @@
           {
             "title": "Subgrid",
             "type": "object",
-	    "required": ["Tag","O","Size"],
+            "required": [
+              "Tag",
+              "O",
+              "Size"
+            ],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -328,7 +347,12 @@
           {
             "title": "Cylinder",
             "type": "object",
-	    "required": ["Tag","C0","C1","R"],
+            "required": [
+              "Tag",
+              "C0",
+              "C1",
+              "R"
+            ],
             "properties": {
               "Tag": {
                 "title": "Tag",
@@ -375,7 +399,8 @@
       "required": [
         "Media",
         "Dim",
-        "OriginType"
+        "OriginType",
+        "VolumeFile"
       ],
       "properties": {
         "OriginType": {
@@ -390,6 +415,11 @@
           "items": {
             "type": "integer"
           },
+          "default": [
+            0,
+            0,
+            0
+          ],
           "minItems": 3,
           "maxItems": 3
         },
