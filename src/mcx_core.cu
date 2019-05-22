@@ -461,7 +461,11 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	  else if(gcfg->mediaformat==MEDIA_AS_F2H||gcfg->mediaformat==MEDIA_AS_HALF){
 	      union {
                  unsigned int i;
+#if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
+                 __half_raw h[2];
+#else
                  half h[2];
+#endif
               } val;
 	      val.i=mediaid & MED_MASK;
 	      prop->mua=fabs(__half2float(val.h[0]));
