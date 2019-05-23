@@ -77,7 +77,29 @@ if(isfield(json,'Domain'))
             end
             cfg.shapes=savejson('',loadjson(json.Domain.VolumeFile));           
         case '.bin'
-            cfg.vol=loadmc2(json.Domain.VolumeFile,json.Domain.Dim,'uchar=>int32');
+            bytelen=1;
+            mediaclass='uint8';
+            if(isfield(json.Domain,'MediaFormat'))
+                idx=find(ismember({'byte','short','integer','muamus_float',...
+                    'mua_float','muamus_half','asgn_byte','muamus_short'},...
+                    lower(json.Domain.MediaFormat)));
+                if(idx)
+                    typebyte=[1,2,4,8,4,4,4,4];
+                    typenames={'uint8','uint16','uint32','single','single','uint16','uint8','uint16'};
+                    bytelen=typebyte(idx);
+                    mediaclass=typenames{idx};
+                else
+                    error('incorrect Domain.MediaFormat setting')
+                end
+            end
+            cfg.vol=loadmc2(json.Domain.VolumeFile,[bytelen, json.Domain.Dim],'uchar=>uchar');
+            cfg.vol=typecast(cfg.vol(:),mediaclass);
+            cfg.vol=reshape(cfg.vol,[length(cfg.vol)/prod(json.Domain.Dim), json.Domain.Dim]);
+            if(size(cfg.vol,1)==1)
+                if(exist(idx,'var') && idx~=5)
+                    cfg.vol=squeeze(cfg.vol);
+                end
+            end
         case '.nii'
             cfg.vol=mcxloadnii(json.Domain.VolumeFile);
     end

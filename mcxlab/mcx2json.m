@@ -71,7 +71,40 @@ if(isfield(cfg,'shapes') && ischar(cfg.shapes))
 end
 
 if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
+    switch(class(cfg.vol))
+        case {'uint8','int8'}
+            Domain.MediaFormat='byte';
+            if(ndims(cfg.vol)==4 && size(cfg.vol,1)==4)
+                Domain.MediaFormat='asgn_byte';
+            end
+        case {'uint16','int16'}
+            Domain.MediaFormat='short';
+            if(ndims(cfg.vol)==4 && size(cfg.vol,1)==2)
+                Domain.MediaFormat='muamus_short';
+            end
+        case {'uint32','int32'}
+            Domain.MediaFormat='integer';
+        case {'single','double'}
+            if(isa(cfg.vol,'double'))
+                cfg.vol=single(cfg.vol);
+            end
+            if(all(mod(cfg.vol(:),1) == 0))
+                Domain.MediaFormat='integer';
+            elseif(ndims(cfg.vol)==4)
+                if(size(cfg.vol,1))==1
+                    Domain.MediaFormat='mua_float';
+                elseif(size(cfg.vol,1)==2)
+                    Domain.MediaFormat='muamus_float';
+                end
+            end
+        otherwise
+            error('cfg.vol has format that is not supported');
+    end
+
     Domain.Dim=size(cfg.vol);
+    if(length(Domain.Dim)==4)
+        Domain.Dim(1)=[];
+    end
     Domain.VolumeFile=[filestub '_vol.bin'];
     fid=fopen(Domain.VolumeFile,'wb');
     fwrite(fid,cfg.vol,class(cfg.vol));

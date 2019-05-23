@@ -1449,11 +1449,13 @@ void mcx_loadvolume(char *filename,Config *cfg){
      }
      datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
      cfg->vol=(unsigned int*)malloc(sizeof(unsigned int)*datalen);
-     if(cfg->mediabyte>=4)
+     if(cfg->mediabyte==MEDIA_AS_F2H)
+         inputvol=(unsigned char*)malloc(sizeof(unsigned char)*(datalen<<3));
+     else if(cfg->mediabyte>=4)
          inputvol=(unsigned char*)(cfg->vol);
      else
          inputvol=(unsigned char*)malloc(sizeof(unsigned char)*cfg->mediabyte*datalen);
-     res=fread(inputvol,sizeof(unsigned char)*MIN(cfg->mediabyte,4),datalen,fp);
+     res=fread(inputvol,sizeof(unsigned char)*(cfg->mediabyte==MEDIA_AS_F2H? 8 : MIN(cfg->mediabyte,4)),datalen,fp);
      fclose(fp);
      if(res!=datalen){
      	 mcx_error(-6,"file size does not match specified dimensions",__FILE__,__LINE__);
@@ -1466,13 +1468,39 @@ void mcx_loadvolume(char *filename,Config *cfg){
        unsigned short *val=(unsigned short *)inputvol;
        for(i=0;i<datalen;i++)
          cfg->vol[i]=val[i];
+     }else if(cfg->mediabyte==MEDIA_AS_F2H){
+        float *val=(float *)inputvol;
+	union{
+	    float f[2];
+	    unsigned int i[2];
+	    unsigned short h[2];
+	} f2h;
+	unsigned short tmp;
+        for(i=0;i<datalen;i++){
+	    f2h.f[0]=val[i<<1];
+	    f2h.f[1]=val[(i<<1)+1];
+
+	    f2h.h[0] = (f2h.i[0] >> 31) << 5;
+	    tmp = (f2h.i[0] >> 23) & 0xff;
+	    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+	    f2h.h[0] = (f2h.h[0] | tmp) << 10;
+	    f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+
+	    f2h.h[1] = (f2h.i[1] >> 31) << 5;
+	    tmp = (f2h.i[1] >> 23) & 0xff;
+	    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+	    f2h.h[1] = (f2h.h[1] | tmp) << 10;
+	    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+
+            cfg->vol[i]=f2h.i[0];
+	}
      }
      if(cfg->mediabyte<=4)
        for(i=0;i<datalen;i++){
          if(cfg->vol[i]>=cfg->medianum)
             mcx_error(-6,"medium index exceeds the specified medium types",__FILE__,__LINE__);
      }
-     if(cfg->mediabyte<4)
+     if(cfg->mediabyte<4 || cfg->mediabyte==MEDIA_AS_F2H)
          free(inputvol);
 }
 
