@@ -456,9 +456,13 @@ __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir)
 __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	  if(gcfg->mediaformat<=4)
 	      *((float4*)(prop))=gproperty[mediaid & MED_MASK];
-          else if(gcfg->mediaformat==MEDIA_MUA_FLOAT)
+          else if(gcfg->mediaformat==MEDIA_MUA_FLOAT){
 	      prop->mua=fabs(*((float *)&mediaid));
-	  else if(gcfg->mediaformat==MEDIA_AS_F2H||gcfg->mediaformat==MEDIA_AS_HALF){
+	      if(prop->mua==0.f)
+	          prop->n=1.f;
+	      else
+	          prop->n=gproperty[1].w;
+	  }else if(gcfg->mediaformat==MEDIA_AS_F2H||gcfg->mediaformat==MEDIA_AS_HALF){
 	      union {
                  unsigned int i;
 #if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
@@ -2235,7 +2239,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	         int j;
 	         for(iter=0;iter<gpu[gpuid].maxgate;iter++)
 		     for(j=0;j<(int)dimlen.z;j++)
-		         mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*cfg->prop[(uint)cfg->vol[j] & MED_MASK].mua);
+		         mcx_kahanSum(&energyabs[i],&kahanc,cfg->exportfield[iter*dimxyz+(j*cfg->srcnum+i)]*mcx_updatemua((uint)cfg->vol[j],cfg));
 	     }
 	 }
      }

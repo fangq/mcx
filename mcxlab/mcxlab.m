@@ -351,7 +351,7 @@ end
 if(nargout>=2)
 
     for i=1:length(varargout{2})
-        if(~isfield(cfg(i),'savedetflag'))
+        if((~isfield(cfg(i),'savedetflag')) || ((isfield(cfg(i),'savedetflag')) && isempty(cfg(i).savedetflag)))
             cfg(i).savedetflag='DP';
             if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
                 cfg(i).savedetflag=[cfg(i).savedetflag,'XV'];

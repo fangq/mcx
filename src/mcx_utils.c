@@ -538,6 +538,38 @@ void mcx_normalize(float field[], float scale, int fieldlen, int option, int pid
      *sum=kahant;
  }
 
+ /**
+ * @brief Retrieve mua for different cfg.vol formats to convert fluence back to energy in post-processing 
+ *
+ * @param[out] output: medium absorption coefficient for the current voxel
+ * @param[in] mediaid: medium index of the current voxel
+ * @param[in] cfg: simulation configuration
+ */
+ 
+ float mcx_updatemua(unsigned int mediaid, Config *cfg){
+     float mua;
+     if(cfg->mediabyte<=4)
+         mua=cfg->prop[mediaid & MED_MASK].mua;
+     else if(cfg->mediabyte==MEDIA_MUA_FLOAT)
+         mua=fabs(*((float *)&mediaid));
+     else if(cfg->mediabyte==MEDIA_ASGN_BYTE){
+         union {
+            unsigned i;
+            unsigned char h[4];
+        } val;
+        val.i=mediaid & MED_MASK;
+        mua=val.h[0]*(1.f/255.f)*(cfg->prop[2].mua-cfg->prop[1].mua)+cfg->prop[1].mua;
+     }else if(cfg->mediabyte==MEDIA_AS_SHORT){
+         union {
+            unsigned int i;
+            unsigned short h[2];
+         } val;
+        val.i=mediaid & MED_MASK;
+        mua=val.h[0]*(1.f/65535.f)*(cfg->prop[2].mua-cfg->prop[1].mua)+cfg->prop[1].mua;
+     }
+     return mua;
+ }
+
 /**
  * @brief Force flush the command line to print the message
  *
