@@ -458,10 +458,7 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	      *((float4*)(prop))=gproperty[mediaid & MED_MASK];
           else if(gcfg->mediaformat==MEDIA_MUA_FLOAT){
 	      prop->mua=fabs(*((float *)&mediaid));
-	      if(prop->mua==0.f)
-	          prop->n=1.f;
-	      else
-	          prop->n=gproperty[1].w;
+              prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
 	  }else if(gcfg->mediaformat==MEDIA_AS_F2H||gcfg->mediaformat==MEDIA_AS_HALF){
 	      union {
                  unsigned int i;
@@ -474,6 +471,7 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	      val.i=mediaid & MED_MASK;
 	      prop->mua=fabs(__half2float(val.h[0]));
 	      prop->mus=fabs(__half2float(val.h[1]));
+	      prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
 	  }else if(gcfg->mediaformat==MEDIA_ASGN_BYTE){
 	      union {
                  unsigned int i;
@@ -483,7 +481,7 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	      prop->mua=val.h[0]*(1.f/255.f)*(gproperty[2].x-gproperty[1].x)+gproperty[1].x;
 	      prop->mus=val.h[1]*(1.f/255.f)*(gproperty[2].y-gproperty[1].y)+gproperty[1].y;
 	      prop->g  =val.h[2]*(1.f/255.f)*(gproperty[2].z-gproperty[1].z)+gproperty[1].z;
-	      prop->n  =val.h[3]*(1.f/255.f)*(gproperty[2].w-gproperty[1].w)+gproperty[1].w;
+	      prop->n  =val.h[3]*(1.f/127.f)*(gproperty[2].w-gproperty[1].w)+gproperty[1].w;
           }else if(gcfg->mediaformat==MEDIA_AS_SHORT){
 	      union {
                  unsigned int i;
@@ -492,8 +490,8 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	      val.i=mediaid & MED_MASK;
 	      prop->mua=val.h[0]*(1.f/65535.f)*(gproperty[2].x-gproperty[1].x)+gproperty[1].x;
 	      prop->mus=val.h[1]*(1.f/65535.f)*(gproperty[2].y-gproperty[1].y)+gproperty[1].y;
+	      prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
           }
-	  //else{} //else do nothing
 }
 
 /**
