@@ -1500,6 +1500,16 @@ void mcx_loadvolume(char *filename,Config *cfg){
        unsigned short *val=(unsigned short *)inputvol;
        for(i=0;i<datalen;i++)
          cfg->vol[i]=val[i];
+     }else if(cfg->mediabyte==MEDIA_MUA_FLOAT){
+       union{
+           float f;
+	   uint  i;
+       } f2i;
+       float *val=(float *)inputvol;
+       for(i=0;i<datalen;i++){
+         f2i.f=val[i]*cfg->unitinmm;
+         cfg->vol[i]=f2i.i;
+       }
      }else if(cfg->mediabyte==MEDIA_AS_F2H){
         float *val=(float *)inputvol;
 	union{
@@ -1509,8 +1519,8 @@ void mcx_loadvolume(char *filename,Config *cfg){
 	} f2h;
 	unsigned short tmp;
         for(i=0;i<datalen;i++){
-	    f2h.f[0]=val[i<<1];
-	    f2h.f[1]=val[(i<<1)+1];
+	    f2h.f[0]=val[i<<1]*cfg->unitinmm;
+	    f2h.f[1]=val[(i<<1)+1]*cfg->unitinmm;
 
 	    f2h.h[0] = (f2h.i[0] >> 31) << 5;
 	    tmp = (f2h.i[0] >> 23) & 0xff;

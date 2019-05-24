@@ -362,6 +362,9 @@ if(nargout>=2)
 	end
 	if(ndims(cfg(i).vol)==4)
 	    cfg(i).savedetflag='';
+	    if((isa(cfg(i).vol,'single') || isa(cfg(i).vol,'double')) && isfield(cfg(i),'unitinmm'))
+	        cfg(i).vol=cfg(i).vol*cfg(i).unitinmm;
+	    end
 	end
         if((~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2))
             medianum=size(cfg(i).prop,1)-1;
