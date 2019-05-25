@@ -154,6 +154,7 @@ xorfermi xorofermi posixfermi logfermi debugxor debuglog:   LINKOPT+=$(OMP)
 xorfermi:    fermi
 xorfermi:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
+half: fermi
 half: CUCCOPT+=-DUSE_HALF
 half: CUGENCODE=-arch=sm_60
 
