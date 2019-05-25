@@ -299,7 +299,11 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
  
 __device__ inline half mcx_nextafter_half(const half a, const short dir){
       union{
+#if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
+          __half_raw f;
+#else
           half f;
+#endif
           short i;
       } num;
       num.f=a;
@@ -327,8 +331,13 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,in
       union {
            unsigned int i;
            float f;
+#if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
+          __half2_raw h2;
+          __half_raw h[2];
+#else
            half2 h2;
            half h[2];
+#endif
       } pxy, pzw, vxy, vzw, h1, h2, temp;
 
       pxy.h2=__floats2half2_rn(floorf(p0->x) - p0->x, floorf(p0->y) - p0->y);
