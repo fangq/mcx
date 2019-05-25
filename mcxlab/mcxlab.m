@@ -319,6 +319,11 @@ if(isstruct(varargin{1}))
                 varargin{1}(i).(castlist{j})=double(varargin{1}(i).(castlist{j}));
             end
         end
+        if (isfield(varargin{1}(i),'vol') && ndims(varargin{1}(i).vol)==4)
+            if((isa(varargin{1}(i).vol,'single') || isa(varargin{1}(i).vol,'double')) && isfield(varargin{1}(i),'unitinmm'))
+                varargin{1}(i).vol=varargin{1}(i).vol*varargin{1}(i).unitinmm;
+            end
+        end
     end
 end
 
