@@ -1201,7 +1201,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		           ppath[(mediaid & MED_MASK)-1]++;
 	               /** accummulate momentum transfer */
                        if(SAVE_MOM(gcfg->savedetflag))
-	                   ppath[SAVE_NSCAT(gcfg->savedetflag)+SAVE_PPATH(gcfg->savedetflag)+(mediaid & MED_MASK)-1]+=1.f-ctheta;
+	                   ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag)+SAVE_PPATH(gcfg->savedetflag))+(mediaid & MED_MASK)-1]+=1.f-ctheta;
 #endif
                        /** Update direction vector with the two random angles */
 		       if(gcfg->is2d)
@@ -1285,7 +1285,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 #ifdef SAVE_DETECTORS
 	  /** accummulate partial path of the current medium */
           if(gcfg->savedet && SAVE_PPATH(gcfg->savedetflag))
-	      ppath[SAVE_NSCAT(gcfg->savedetflag)+(mediaid & MED_MASK)-1]+=len; //(unit=grid)
+	      ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag))+(mediaid & MED_MASK)-1]+=len; //(unit=grid)
 #endif
 
           mediaidold=mediaid | isdet;
