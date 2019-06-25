@@ -1,8 +1,6 @@
-function detw=mcxdetweight(detp,prop,w0)
+function detw=mcxdetweight(detp,prop)
 %
 % detw=mcxdetweight(detp,prop)
-%    or
-% detw=mcxdetweight(detp,prop,w0)
 %
 % Recalculate the detected photon weight using partial path data and 
 % optical properties (for perturbation Monte Carlo or detector readings)
@@ -10,11 +8,8 @@ function detw=mcxdetweight(detp,prop,w0)
 % author: Qianqian Fang (q.fang <at> neu.edu)
 %
 % input:
-%     detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
+%     detp: the 2nd output from mcxlab. detp must a struct 
 %     prop: optical property list, as defined in the cfg.prop field of mcxlab's input
-%     w0: (optional), the initial weight of photon. 
-%           if detp is a struct, this input is ignored, detp.w0 is used instead
-%           if detp is an array and w0 is ignored, the last row of detp is used as w0
 %
 % output:
 %     detw: re-caculated detected photon weight based on the partial path data and optical property table
@@ -39,18 +34,5 @@ if(isstruct(detp))
         detw=detw.*exp(-prop(i+1,1)*detp.ppath(:,i));
     end
 else
-    detp=detp';
-    if(nargin<3)
-        w0=detp(:,end);
-    end
-    detw=w0(:);
-    if(size(detp,2)>=2*medianum+1)
-        for i=1:medianum-1
-            detw=detw.*exp(-prop(i+1,1)*detp(:,i+medianum));
-        end
-    else
-        for i=1:medianum-1
-            detw=detw.*exp(-prop(i+1,1)*detp(:,i+2));
-        end
-    end
+    error('the first input must be a struct with a subfield named "ppath"');
 end

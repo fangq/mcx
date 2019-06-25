@@ -21,6 +21,7 @@ cfg.tend=5e-9;
 cfg.tstep=5e-10;
 % calculate the flux distribution with the given config
 cfg.detpos=[15 30 0 2];
+%cfg.savedetflag='dsp';
 [flux, detp, vol, seeds]=mcxlab(cfg);
 
 newcfg=cfg;

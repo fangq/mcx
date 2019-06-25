@@ -63,19 +63,25 @@ while(~feof(fid))
 	end
 	hd=fread(fid,7,'uint'); % version, maxmedia, detnum, colcount, totalphoton, detected, savedphoton
 	if(hd(1)~=1) error('version higher than 1 is not supported'); end
-        unitmm=fread(fid,1,'float32');
+    unitmm=fread(fid,1,'float32');
 	seedbyte=fread(fid,1,'uint');
-        normalizer=fread(fid,1,'float32');
+    normalizer=fread(fid,1,'float32');
 	respin=fread(fid,1,'int');
 	srcnum=fread(fid,1,'uint');
 	savedetflag=fread(fid,1,'uint');
 	junk=fread(fid,2,'uint');
 
-	dat=fread(fid,hd(7)*hd(4),format);
-	dat=reshape(dat,[hd(4),hd(7)])';
-	if(hd(4)>=(2+hd(2)))
-            dat(:,3:(2+hd(2)))=dat(:,3:(2+hd(2)))*unitmm;
-        end
+    detflag=dec2bin(bitand(savedetflag,63))-'0';
+    datalen=[1 hd(2) hd(2) hd(2) 3 3 1];
+    datlen=detflag.*datalen(1:length(detflag));
+
+    dat=fread(fid,hd(7)*hd(4),format);
+    dat=reshape(dat,[hd(4),hd(7)])';
+    if(savedetflag && length(detflag)>2 && detflag(3)>0)
+	    dat(:,sum(datlen(1:2))+1:sum(datlen(1:3)))=dat(:,sum(datlen(1:2))+1:sum(datlen(1:3)))*unitmm;
+    else
+        dat(:,2+hd(2):(1+2*hd(2)))=dat(:,2+hd(2):(1+2*hd(2)))*unitmm;
+    end
 	data=[data;dat];
         if(seedbyte>0)
             try

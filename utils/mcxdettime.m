@@ -9,7 +9,7 @@ function dett=mcxdettime(detp,prop)
 %	  Ruoyang Yao (yaor <at> rpi.edu) 
 %
 % input:
-%     detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
+%     detp: the 2nd output from mcxlab. detp must be a struct
 %     prop: optical property list, as defined in the cfg.prop field of mcxlab's input
 %
 % output:
@@ -33,9 +33,5 @@ if(isstruct(detp))
         dett=dett+prop(i+1,4)*detp.ppath(:,i)*R_C0;
     end
 else
-    detp=detp';
-    dett=zeros(size(detp,1),1);
-    for i=1:medianum-1
-        dett=dett+prop(i+1,4)*detp(:,i+medianum)*R_C0;
-    end
+    error('the first input must be a struct with a subfield named "ppath"');
 end

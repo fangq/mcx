@@ -9,7 +9,7 @@ function tpsf = mcxdettpsf(detp,detnum,prop,time)
 %	  Ruoyang Yao (yaor <at> rpi.edu) 
 %
 % input:
-%     detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
+%     detp: the 2nd output from mcxlab. detp must be a struct with detid and ppath subfields
 %     detnum: specified detector number
 %     prop: optical property list, as defined in the cfg.prop field of mcxlab's input
 %     time: distribution of time bins, a 1*3 vector [tstart tend tstep]
@@ -23,11 +23,12 @@ function tpsf = mcxdettpsf(detp,detnum,prop,time)
 %
 
 % select the photon data of the specified detector
-detp.data=detp.data(:,detp.detid==detnum);
+detp.ppath=detp.ppath(:,detp.detid==detnum);
+detp.detid=detp.detid(detp.detid==detnum);
 
 % calculate the detected photon weight and arrival time
-replayweight=mcxdetweight(detp.data,prop);
-replaytime=mcxdettime(detp.data,prop);
+replayweight=mcxdetweight(detp,prop);
+replaytime=mcxdettime(detp,prop);
 
 % define temporal point spread function vector
 nTG = round((time(2)-time(1))/time(3));     % maximum time gate number

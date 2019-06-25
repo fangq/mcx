@@ -1576,8 +1576,15 @@ void mcx_loadseedfile(Config *cfg){
     cfg->nphoton=his.savedphoton;
 
     if(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS ){ //cfg->replaydet>0
-       int i,j;
-       float *ppath=(float*)malloc(his.savedphoton*his.colcount*sizeof(float));
+       int i,j, hasdetid=0, offset;
+       float plen, *ppath;
+       hasdetid=SAVE_DETID(his.savedetflag);
+       offset=SAVE_NSCAT(his.savedetflag)*his.maxmedia;
+
+       if(((!hasdetid) && cfg->detnum>1) || !SAVE_PPATH(his.savedetflag))
+           mcx_error(-7,"please rerun the baseline simulation and save detector ID (D) and partial-path (P) using '-w DP'",__FILE__,__LINE__);
+
+       ppath=(float*)malloc(his.savedphoton*his.colcount*sizeof(float));
        cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
        cfg->replay.tof=(float*)calloc(his.savedphoton,sizeof(float));
        cfg->replay.detid=(int*)calloc(his.savedphoton,sizeof(int));
@@ -1591,10 +1598,11 @@ void mcx_loadseedfile(Config *cfg){
                if(i!=cfg->nphoton)
                    memcpy((char *)(cfg->replay.seed)+cfg->nphoton*his.seedbyte, (char *)(cfg->replay.seed)+i*his.seedbyte, his.seedbyte);
                cfg->replay.weight[cfg->nphoton]=1.f;
-	       cfg->replay.detid[cfg->nphoton]=(int)(ppath[i*his.colcount]);
-               for(j=2;j<his.maxmedia+2;j++){
-                   cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-1].mua*ppath[i*his.colcount+j]*his.unitinmm);
-                   cfg->replay.tof[cfg->nphoton]+=ppath[i*his.colcount+j]*his.unitinmm*R_C0*cfg->prop[j-1].n;
+               cfg->replay.detid[cfg->nphoton]=(hasdetid) ? (int)(ppath[i*his.colcount]): 1;
+               for(j=hasdetid;j<his.maxmedia+hasdetid;j++){
+	           plen=ppath[i*his.colcount+offset+j]*his.unitinmm;
+                   cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-hasdetid+1].mua*plen);
+                   cfg->replay.tof[cfg->nphoton]+=plen*R_C0*cfg->prop[j-hasdetid+1].n;
                }
                if(cfg->replay.tof[cfg->nphoton]<cfg->tstart || cfg->replay.tof[cfg->nphoton]>cfg->tend) /*need to consider -g*/
                    continue;
