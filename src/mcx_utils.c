@@ -325,6 +325,8 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->exportfield);
      if(cfg->exportdetected)
         free(cfg->exportdetected);
+     if(cfg->exportdebugdata)
+        free(cfg->exportdebugdata);
      if(cfg->seeddata)
         free(cfg->seeddata);
 

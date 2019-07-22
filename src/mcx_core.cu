@@ -1120,12 +1120,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
  
      float *ppath=(float *)(sharedmem+blockDim.x*(gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)));
 
-#ifdef  SAVE_DETECTORS
      ppath+=threadIdx.x*(gcfg->w0offset + gcfg->srcnum); // block#2: maxmedia*thread number to store the partial
-     if(gcfg->savedet) clearpath(ppath,gcfg->w0offset + gcfg->srcnum);
+     clearpath(ppath,gcfg->w0offset + gcfg->srcnum);
      ppath[gcfg->partialdata]  =genergy[idx<<1];
      ppath[gcfg->partialdata+1]=genergy[(idx<<1)+1];
-#endif
 
      *((float4*)(&prop))=gproperty[1];
 
@@ -1323,6 +1321,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		  /** calculate the quality to be accummulated */
 		  if(gcfg->outputtype==otEnergy)
 		      weight=w0-p.w;
+		  else if(gcfg->outputtype==otFluence || gcfg->outputtype==otFlux)
+		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
 		  else if(gcfg->seed==SEED_FROM_FILE){
 		      if(gcfg->outputtype==otJacobian){
 		        weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*f.pathlen;
@@ -1330,8 +1330,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			tshift=(int)(floorf((photontof[tshift]-gcfg->twin0)*gcfg->Rtstep)) + 
 			   ( (gcfg->replaydet==-1)? ((photondetid[tshift]-1)*gcfg->maxgate) : 0);
 		      }
-		  }else
-		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
+		  }
 
                   GPUDEBUG(("deposit to [%d] %e, w=%f\n",idx1dold,weight,p.w));
 
@@ -2373,6 +2372,8 @@ is more than what your have specified (%d), please use the -H option to specify 
      CUDA_ASSERT(cudaFree(genergy));
      CUDA_ASSERT(cudaFree(gPdet));
      CUDA_ASSERT(cudaFree(gdetected));
+     if(cfg->debuglevel & MCX_DEBUG_MOVE)
+         CUDA_ASSERT(cudaFree(gdebugdata));
      if(cfg->issaveseed){
          CUDA_ASSERT(cudaFree(gseeddata));
 	 free(seeddata);
