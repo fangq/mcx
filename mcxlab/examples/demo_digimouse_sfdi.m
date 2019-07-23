@@ -15,7 +15,7 @@
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear all; close all
+clear cfg;
 
 load digimouse.mat
 cfg.vol=digimouse;

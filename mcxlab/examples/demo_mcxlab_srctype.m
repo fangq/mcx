@@ -65,7 +65,7 @@ title('isotrpoic source at [30 30 -10]');
 
 clear cfg;
 figure;
-cfg.nphoton=1e8;
+cfg.nphoton=1e7;
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcdir=[0 0 1 0];
 cfg.gpuid=1;
