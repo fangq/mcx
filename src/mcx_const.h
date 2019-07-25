@@ -45,6 +45,10 @@
 #define DET_MASK           0x80000000              /**< mask of the sign bit to get the detector */
 #define MED_MASK           0x7FFFFFFF              /**< mask of the remaining bits to get the medium index */
 
+#define MCX_DEBUG_RNG       1                   /**< MCX debug flags */
+#define MCX_DEBUG_MOVE      2
+#define MCX_DEBUG_PROGRESS  4
+
 #define MEDIA_AS_F2H          100  /**<  media format: {[float32: mua][float32: mus]} -> 32bit:{[half: mua],{half: mus}} */
 #define MEDIA_MUA_FLOAT       101  /**<  media format: 32bit:{[float32: mua]} */
 #define MEDIA_AS_HALF         102  /**<  media format: 32bit:{[half: mua],[half: mus]} */

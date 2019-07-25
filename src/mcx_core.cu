@@ -1033,7 +1033,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
        * If a progress bar is needed, only sum completed photons from the 1st, last and middle threads to determine progress bar
        */
       if((gcfg->debuglevel & MCX_DEBUG_PROGRESS) && ((int)(f->ndone) & 1) && (threadid==0 || threadid==blockDim.x * gridDim.x - 1 
-          || threadid==((blockDim.x * gridDim.x)>>1))) { ///< use the 1st, middle and last thread for progress report
+          || threadid==((blockDim.x * gridDim.x)>>2) || threadid==(((blockDim.x * gridDim.x)>>1) + ((blockDim.x * gridDim.x)>>2))
+	  || threadid==((blockDim.x * gridDim.x)>>1))) { ///< use the 1st, middle and last thread for progress report
           gprogress[0]++;
       }
       return 0;
@@ -2097,11 +2098,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 //#endif
                ndone = *progress;
 	       if (ndone > p0){
-		  mcx_progressbar(ndone/(param.threadphoton*1.45f),cfg);
+		  mcx_progressbar(ndone/((param.threadphoton>>1)*4.5f),cfg);
 		  p0 = ndone;
 	       }
                sleep_ms(100);
-	     }while (p0 < (param.threadphoton*1.45f));
+	     }while (p0 < (param.threadphoton>>1)*4.5f);
              mcx_progressbar(1.0f,cfg);
              MCX_FPRINTF(cfg->flog,"\n");
              *progress=0;

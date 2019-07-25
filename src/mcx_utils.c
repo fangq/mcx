@@ -246,7 +246,7 @@ void mcx_initcfg(Config *cfg){
      cfg->voidtime=1;
      cfg->srcpattern=NULL;
      cfg->srcnum=1;
-     cfg->debuglevel=0;
+     cfg->debuglevel=MCX_DEBUG_PROGRESS;
      cfg->issaveseed=0;
      cfg->issaveexit=0;
      cfg->ismomentum=0;
@@ -1372,7 +1372,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         if(!flagset['A'])  cfg->autopilot=FIND_JSON_KEY("DoAutoThread","Session.DoAutoThread",Session,cfg->autopilot,valueint);
 	if(!flagset['m'])  cfg->ismomentum=FIND_JSON_KEY("DoDCS","Session.DoDCS",Session,cfg->ismomentum,valueint);
 	if(!flagset['V'])  cfg->isspecular=FIND_JSON_KEY("DoSpecular","Session.DoSpecular",Session,cfg->isspecular,valueint);
-	if(!flagset['D'])  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("Debug","Session.Debug",Session,"",valuestring),debugflag);
+	if(!flagset['D'])  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("DebugFlag","Session.DebugFlag",Session,"P",valuestring),debugflag);
 	cfg->savedetflag=mcx_parsedebugopt(FIND_JSON_KEY("SaveDataMask","Session.SaveDataMask",Session,"",valuestring),saveflag);
 
         if(!cfg->outputformat)  cfg->outputformat=mcx_keylookup((char *)FIND_JSON_KEY("OutputFormat","Session.OutputFormat",Session,"mc2",valuestring),outputformat);
@@ -2407,9 +2407,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -i 	       (--interactive) interactive mode\n\
 \n"S_BOLD S_CYAN"\
 == Debug options ==\n"S_RESET"\
- -D [0|int]    (--debug)       print debug information (you can use an integer\n\
+ -D [4|int]    (--debug)       print debug information (you can use an integer\n\
   or                           or a string by combining the following flags)\n\
- -D [''|RMP]                   1 R  debug RNG\n\
+ -D ['P'|RMP]                  1 R  debug RNG\n\
     /case insensitive/         2 M  store photon trajectory info\n\
                                4 P  print progress bar\n\
       combine multiple items by using a string, or add selected numbers together\n\
