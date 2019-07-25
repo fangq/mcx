@@ -2282,6 +2282,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	               scale[0]+=cfg->replay.weight[i];
 	           if(scale[0]>0.f)
                        scale[0]=cfg->unitinmm/scale[0];
+                   MCX_FPRINTF(cfg->flog,"normalization factor for detector %d alpha=%f\n",cfg->replaydet, scale[0]);  fflush(cfg->flog);
 	       }
            }
 	   if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcnum>1){// post-processing only for multi-srcpattern
