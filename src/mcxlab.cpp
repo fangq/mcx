@@ -881,7 +881,8 @@ void mcx_validate_config(Config *cfg){
      if(cfg->issavedet==0){
          cfg->issaveexit=0;
 	 cfg->ismomentum=0;
-	 cfg->savedetflag=0;
+	 if(cfg->seed!=SEED_FROM_FILE)
+	    cfg->savedetflag=0;
      }
      if(cfg->respin==0)
          mexErrMsgTxt("respin number can not be 0, check your -r/--repeat input or cfg.respin value");
