@@ -94,6 +94,12 @@ function varargout=mcxlab(varargin)
 %      cfg.gscatter:   after a photon completes the specified number of
 %                      scattering events, mcx then ignores anisotropy g
 %                      and only performs isotropic scattering for speed [1e9]
+%      cfg.detphotons: detected photon data for replay. In the replay mode (cfg.seed 
+%                      is set as the 4th output of the baseline simulation), cfg.detphotons
+%                      should be set to the 2nd output (detphoton) of the baseline simulation
+%                      or detphoton.data subfield (as a 2D array). cfg.detphotons can use
+%                      a subset of the detected photon selected by the user.
+%                      Example: <demo_mcxlab_replay.m>
 %
 %== GPU settings ==
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -323,6 +329,24 @@ if(isstruct(varargin{1}))
             if((isa(varargin{1}(i).vol,'single') || isa(varargin{1}(i).vol,'double')) && isfield(varargin{1}(i),'unitinmm'))
                 varargin{1}(i).vol=varargin{1}(i).vol*varargin{1}(i).unitinmm;
             end
+        end
+	if(isfield(varargin{1}(i),'detphotons') && isstruct(varargin{1}(i).detphotons))
+	    if(isfield(varargin{1}(i).detphotons,'data'))
+	        varargin{1}(i).detphotons=varargin{1}(i).detphotons.data;
+	    else
+	        fulldetdata={'detid','nscat','ppath','mom','p','v','w0'};
+	        detfields=ismember(fulldetdata,fieldnames(varargin{1}(i).detphotons));
+		detdata=[];
+		for j=1:length(detfields)
+		    if(detfields(j))
+                        val=typecast(varargin{1}(i).detphotons.(fulldetdata{j})(:),'single');
+		        detdata=[detdata reshape(val,size(varargin{1}(i).detphotons.(fulldetdata{j})))];
+		    end
+		end
+		varargin{1}(i).detphotons=detdata';
+		varargin{1}(i).savedetflag='dspmxvw';
+		varargin{1}(i).savedetflag(detfields==0)=[];
+	    end
         end
     end
 end
