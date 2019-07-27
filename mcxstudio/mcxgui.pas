@@ -18,7 +18,7 @@ uses
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser, strutils,
   RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
-  mcxrender, mcxview, Types;
+  mcxrender, mcxview, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
 type
 
@@ -387,6 +387,8 @@ type
     procedure tmAnimationTimer(Sender: TObject);
     procedure tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string);
     procedure tvShapesSelectionChanged(Sender: TObject);
+    procedure vlBCGetPickList(Sender: TObject; const KeyName: string;
+      Values: TStrings);
   private
     { private declarations }
   public
@@ -729,6 +731,8 @@ begin
 end;
 
 procedure TfmMCX.mcxdoDefaultExecute(Sender: TObject);
+var
+   bcprop: TItemProp;
 begin
       //edSession.Text:='';
       edConfigFile.FileName:='';
@@ -788,7 +792,7 @@ begin
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
       edOutputType.ItemIndex:=0;
-      vlBC.Strings.CommaText:='x-=a,x+=a,y-=a,y+=a,z-=a,z+=a';
+      //vlBC.Strings.CommaText:='x-=absorb,x+=absorb,y-=absorb,y+=absorb,z-=absorb,z+=absorb';
 
       if(grProgram.ItemIndex=1) then begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
@@ -1370,6 +1374,7 @@ procedure TfmMCX.FormCreate(Sender: TObject);
 var
     i: integer;
     BrowserPath,BrowserParams: string;
+    bcprop: TItemProp;
 begin
   {$IFDEF WINDOWS}
   with TRegistry.Create do
@@ -1423,6 +1428,11 @@ begin
 
     btLoadSeed.Glyph.Assign(nil);
     JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
+
+    bcprop := TItemProp.Create(vlBC);
+    bcprop.EditStyle := esPickList;
+    bcprop.ReadOnly := True;
+    vlBC.ItemProps['x-'] := bcprop;
 
     ProfileChanged:=false;
     if not (SearchForExe(CreateCmdOnly) = '') then begin
@@ -2159,6 +2169,17 @@ begin
            tvShapes.Options:=tvShapes.Options+[tvoReadOnly];
        end;
     end;
+end;
+
+procedure TfmMCX.vlBCGetPickList(Sender: TObject; const KeyName: string;
+  Values: TStrings);
+begin
+    Values.Clear;
+    Values.Add('absorb');
+    Values.Add('reflect');
+    Values.Add('mirror');
+    Values.Add('cyclic');
+    ShowMessage(KeyName);
 end;
 
 procedure TfmMCX.UpdateGPUList(Buffer:string);

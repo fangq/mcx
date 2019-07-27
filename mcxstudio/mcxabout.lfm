@@ -1,22 +1,23 @@
 object fmAbout: TfmAbout
   Left = 1104
-  Height = 410
+  Height = 718
   Top = 299
-  Width = 480
+  Width = 840
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
-  ClientHeight = 410
-  ClientWidth = 480
+  ClientHeight = 718
+  ClientWidth = 840
   Color = 4539717
+  DesignTimePPI = 168
   Position = poMainFormCenter
   LCLVersion = '1.8.2.0'
   object Image1: TImage
-    Left = 16
-    Height = 152
+    Left = 28
+    Height = 266
     Top = 0
-    Width = 357
+    Width = 625
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869636F76000089504E47
       0D0A1A0A0000000D49484452000001380000007C0806000000FDC1ACA4000000
@@ -974,23 +975,23 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 311
-    Height = 37
-    Top = 359
-    Width = 124
+    Left = 544
+    Height = 65
+    Top = 629
+    Width = 217
     Anchors = [akRight, akBottom]
-    BorderSpacing.Right = 45
-    BorderSpacing.Bottom = 14
+    BorderSpacing.Right = 79
+    BorderSpacing.Bottom = 24
     Caption = 'OK'
     ModalResult = 1
     ParentFont = False
     TabOrder = 0
   end
   object Image2: TImage
-    Left = 368
-    Height = 85
-    Top = 24
-    Width = 88
+    Left = 644
+    Height = 149
+    Top = 42
+    Width = 154
     Center = True
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869638205000089504E47
@@ -1045,14 +1046,14 @@ object fmAbout: TfmAbout
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Button1
-    Left = 20
-    Height = 207
-    Top = 141
-    Width = 440
+    Left = 35
+    Height = 362
+    Top = 248
+    Width = 770
     Anchors = [akTop, akLeft, akRight, akBottom]
-    BorderSpacing.Left = 20
-    BorderSpacing.Right = 20
-    BorderSpacing.Bottom = 11
+    BorderSpacing.Left = 35
+    BorderSpacing.Right = 35
+    BorderSpacing.Bottom = 19
     BorderStyle = bsNone
     Font.Color = clWhite
     Lines.Strings = (
@@ -1093,10 +1094,10 @@ object fmAbout: TfmAbout
   object Image3: TImage
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
-    Left = 24
+    Left = 117
     Height = 33
     Hint = 'About MCX'
-    Top = 359
+    Top = 653
     Width = 200
     Anchors = [akBottom]
     AutoSize = True
