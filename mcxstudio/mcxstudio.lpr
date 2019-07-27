@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms, GLScene_RunTime, mcxgui, lazcontrols, tachartlazaruspkg,
   anchordockpkg, mcxabout, mcxshape, mcxnewsession, mcxsource,
-  mcxview, mcxloadfile {$IFDEF WINDOWS}, sendkeys{$ENDIF};
+  mcxview, mcxloadfile, mcxconfig {$IFDEF WINDOWS}, sendkeys{$ENDIF};
 
 {$R *.res}
 

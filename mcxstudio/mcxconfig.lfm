@@ -1,0 +1,245 @@
+object fmConfig: TfmConfig
+  Left = 2808
+  Height = 498
+  Top = 355
+  Width = 371
+  BorderStyle = bsDialog
+  Caption = 'MCX Studio Config'
+  ClientHeight = 498
+  ClientWidth = 371
+  DesignTimePPI = 94
+  KeyPreview = True
+  Position = poOwnerFormCenter
+  LCLVersion = '1.8.2.0'
+  object GroupBox1: TGroupBox
+    Left = 5
+    Height = 48
+    Top = 5
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'MCXStudio Local Output Root Directory'
+    ClientHeight = 32
+    ClientWidth = 357
+    TabOrder = 0
+    object edWorkPath: TDirectoryEdit
+      AnchorSideLeft.Control = GroupBox1
+      AnchorSideTop.Control = GroupBox1
+      AnchorSideRight.Control = GroupBox1
+      AnchorSideRight.Side = asrBottom
+      Left = 10
+      Height = 24
+      Top = 0
+      Width = 337
+      ShowHidden = False
+      ButtonWidth = 23
+      NumGlyphs = 1
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 10
+      BorderSpacing.Right = 10
+      MaxLength = 0
+      TabOrder = 0
+    end
+  end
+  object GroupBox3: TGroupBox
+    Left = 5
+    Height = 56
+    Top = 195
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'Remote MCX/MMC/MCXCl Executable Search Paths'
+    ClientHeight = 40
+    ClientWidth = 357
+    TabOrder = 2
+    object edRemotePath: TEdit
+      Left = 6
+      Height = 28
+      Top = 6
+      Width = 345
+      Align = alClient
+      BorderSpacing.Around = 6
+      TabOrder = 0
+    end
+  end
+  object GroupBox4: TGroupBox
+    Left = 5
+    Height = 132
+    Top = 58
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'Local MCX/MMC/MCXCl Executable Search Paths'
+    ClientHeight = 116
+    ClientWidth = 357
+    TabOrder = 1
+    object edLocalPath: TStringGrid
+      Left = 10
+      Height = 106
+      Top = 5
+      Width = 337
+      Align = alClient
+      BorderSpacing.Left = 10
+      BorderSpacing.Top = 5
+      BorderSpacing.Right = 10
+      BorderSpacing.Bottom = 5
+      BorderStyle = bsNone
+      ColCount = 1
+      DefaultRowHeight = 21
+      FixedCols = 0
+      FixedRows = 0
+      Flat = True
+      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goAlwaysShowEditor, goSmoothScroll, goCellEllipsis]
+      RowCount = 10
+      ScrollBars = ssAutoVertical
+      TabOrder = 0
+      OnButtonClick = edLocalPathButtonClick
+      ColWidths = (
+        311
+      )
+    end
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 49
+    Top = 449
+    Width = 371
+    Align = alBottom
+    BevelOuter = bvNone
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 2
+    ClientHeight = 49
+    ClientWidth = 371
+    ParentFont = False
+    TabOrder = 6
+    object btOK: TButton
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
+      Left = 84
+      Height = 27
+      Top = 11
+      Width = 86
+      BorderSpacing.Left = 84
+      Caption = 'OK'
+      ModalResult = 1
+      ParentFont = False
+      TabOrder = 0
+    end
+    object btCancel: TButton
+      AnchorSideLeft.Control = btOK
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 203
+      Height = 27
+      Top = 11
+      Width = 86
+      BorderSpacing.Left = 33
+      BorderSpacing.Right = 19
+      Caption = 'Cancel'
+      ModalResult = 2
+      ParentFont = False
+      TabOrder = 1
+    end
+  end
+  object GroupBox5: TGroupBox
+    Left = 5
+    Height = 56
+    Top = 317
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'Local SSH Executable Path'
+    ClientHeight = 40
+    ClientWidth = 357
+    TabOrder = 4
+    object edSSHPath: TFileNameEdit
+      AnchorSideLeft.Control = GroupBox5
+      AnchorSideRight.Control = GroupBox5
+      AnchorSideRight.Side = asrBottom
+      Left = 25
+      Height = 24
+      Hint = 'Local SSH Path'
+      Top = 9
+      Width = 307
+      HelpType = htKeyword
+      DialogOptions = []
+      FilterIndex = 0
+      HideDirectories = False
+      ButtonWidth = 22
+      NumGlyphs = 1
+      Anchors = [akLeft, akRight]
+      BorderSpacing.Left = 20
+      BorderSpacing.Top = 5
+      BorderSpacing.Right = 20
+      BorderSpacing.Around = 5
+      MaxLength = 0
+      ParentFont = False
+      TabOrder = 0
+    end
+  end
+  object GroupBox6: TGroupBox
+    Left = 5
+    Height = 56
+    Top = 378
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'Local SCP Executable Path'
+    ClientHeight = 40
+    ClientWidth = 357
+    TabOrder = 5
+    object edSCPPath: TFileNameEdit
+      AnchorSideLeft.Control = GroupBox6
+      AnchorSideRight.Control = GroupBox6
+      AnchorSideRight.Side = asrBottom
+      Left = 25
+      Height = 24
+      Hint = 'Local SCP Executable Path'
+      Top = 9
+      Width = 307
+      HelpType = htKeyword
+      DialogOptions = []
+      FilterIndex = 0
+      HideDirectories = False
+      ButtonWidth = 22
+      NumGlyphs = 1
+      Anchors = [akLeft, akRight]
+      BorderSpacing.Left = 20
+      BorderSpacing.Top = 5
+      BorderSpacing.Right = 20
+      BorderSpacing.Around = 5
+      MaxLength = 0
+      ParentFont = False
+      TabOrder = 0
+    end
+  end
+  object GroupBox7: TGroupBox
+    Left = 5
+    Height = 56
+    Top = 256
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'Remote MCX/MMC/MCXCl Output Directory'
+    ClientHeight = 40
+    ClientWidth = 357
+    TabOrder = 3
+    object edRemoteOutputPath: TEdit
+      Left = 6
+      Height = 28
+      Top = 6
+      Width = 345
+      Align = alClient
+      BorderSpacing.Around = 6
+      TabOrder = 0
+    end
+  end
+  object dlBrowsePath: TSelectDirectoryDialog
+    left = 435
+    top = 16
+  end
+end

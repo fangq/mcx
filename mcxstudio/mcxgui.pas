@@ -16,9 +16,9 @@ uses
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript, LclIntf,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser, strutils,
-  RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
-  mcxrender, mcxview, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
+  CheckLst, LazHelpHTML, ValEdit, JSONPropStorage, inifiles, fpjson, jsonparser,
+  strutils, RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
+  mcxrender, mcxview, mcxconfig, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
 type
 
@@ -26,11 +26,15 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    mcxdoConfig: TAction;
     Button1: TButton;
     ckbDet: TCheckListBox;
     edOutputType: TComboBox;
     grBC: TGroupBox;
     grDet: TGroupBox;
+    MenuItem64: TMenuItem;
+    MenuItem65: TMenuItem;
+    StudioConfig: TJSONPropStorage;
     Label14: TLabel;
     mcxdoWebURL: TAction;
     MenuItem33: TMenuItem;
@@ -315,6 +319,7 @@ type
     procedure grProgramSelectionChanged(Sender: TObject);
     procedure mcxdoAboutExecute(Sender: TObject);
     procedure mcxdoAddItemExecute(Sender: TObject);
+    procedure mcxdoConfigExecute(Sender: TObject);
     procedure mcxdoCopyExecute(Sender: TObject);
     procedure mcxdoDefaultExecute(Sender: TObject);
     procedure mcxdoDeleteItemExecute(Sender: TObject);
@@ -356,6 +361,8 @@ type
       const Rect: TRect);
     procedure sgConfigDblClick(Sender: TObject);
     procedure sgConfigEditButtonClick(Sender: TObject);
+    procedure sgConfigSelectEditor(Sender: TObject; aCol, aRow: Integer;
+      var Editor: TWinControl);
     procedure sgMediaDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
     procedure sgMediaEditingDone(Sender: TObject);
@@ -442,6 +449,7 @@ var
   GotoGrid: TStringGrid;
   GotoGBox: TGroupBox;
   CurrentSession: TListItem;
+  BCItemProp: TItemProp;
 
 implementation
 
@@ -454,6 +462,9 @@ Const
   MCProgram : Array[0..2] of string =
      ('mcx','mmc','mcxcl');
   DebugFlags: string ='RMP';
+  SaveDetFlags: string ='DSPMXVW';
+  BCFlags: string = 'ARMC';
+  OutputTypeFlags: string = 'XFEJPM';
 
 { TfmMCX }
 procedure TfmMCX.AddLog(str:AnsiString);
@@ -709,6 +720,30 @@ begin
    UpdateMCXActions(acMCX,'SelectedJob','');
 end;
 
+procedure TfmMCX.mcxdoConfigExecute(Sender: TObject);
+var
+    fmConfig: TfmConfig;
+begin
+    fmConfig:=TfmConfig.Create(self);
+    fmConfig.edWorkPath.Text:=StudioConfig.ReadString('LocalOutputPath','');
+    fmConfig.edRemotePath.Text:=StudioConfig.ReadString('RemoteExePath','');
+    fmConfig.edLocalPath.Cols[0].Delimiter:=';';
+    fmConfig.edLocalPath.Cols[0].DelimitedText:=StudioConfig.ReadString('LocalExePath','');
+    fmConfig.edRemoteOutputPath.Text:=StudioConfig.ReadString('RemoteOutputPath','');
+    fmConfig.edSSHPath.Text:=StudioConfig.ReadString('SSHPath','');
+    fmConfig.edSCPPath.Text:=StudioConfig.ReadString('SCPPath','');
+
+    if(fmConfig.ShowModal= mrOK) then begin
+        StudioConfig.StoredValue['LocalOutputPath']:=fmConfig.edWorkPath.Text;
+        StudioConfig.StoredValue['RemoteExePath']:=fmConfig.edRemotePath.Text;
+        StudioConfig.StoredValue['LocalExePath']:=fmConfig.edLocalPath.Cols[0].DelimitedText;
+        StudioConfig.StoredValue['RemoteOutputPath']:=fmConfig.edRemoteOutputPath.Text;
+        StudioConfig.StoredValue['SSHPath']:=fmConfig.edSSHPath.Text;
+        StudioConfig.StoredValue['SCPPath']:=fmConfig.edSCPPath.Text;
+    end;
+    fmConfig.Free;
+end;
+
 procedure TfmMCX.mcxdoCopyExecute(Sender: TObject);
 var
    setting: TStringList;
@@ -731,9 +766,13 @@ begin
 end;
 
 procedure TfmMCX.mcxdoDefaultExecute(Sender: TObject);
-var
-   bcprop: TItemProp;
 begin
+
+      if(mcxdoSave.Enabled) then begin
+            if not (MessageDlg('Confirmation', 'Are you sure you want to discard the current setting?', mtConfirmation, [mbYes, mbNo, mbCancel],0)=mrYes) then
+                exit;
+      end;
+
       //edSession.Text:='';
       edConfigFile.FileName:='';
       edThread.Text:='16384';
@@ -779,7 +818,6 @@ begin
       sgMedia.Rows[2].CommaText:=',0.005,1,0.01,1.37';
       sgMedia.RowCount:=20;
 
-
       sgDet.RowCount:=2;
       sgDet.Rows[1].CommaText:=',24,29,0,1';
       sgDet.RowCount:=20;
@@ -792,7 +830,14 @@ begin
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
       edOutputType.ItemIndex:=0;
-      //vlBC.Strings.CommaText:='x-=absorb,x+=absorb,y-=absorb,y+=absorb,z-=absorb,z+=absorb';
+      edOutputFormat.ItemIndex:=0;
+      vlBC.Values['x-'] := 'absorb';
+      vlBC.Values['x+'] := 'absorb';
+      vlBC.Values['y-'] := 'absorb';
+      vlBC.Values['y+'] := 'absorb';
+      vlBC.Values['z-'] := 'absorb';
+      vlBC.Values['z+'] := 'absorb';
+      vlBC.FixedCols:=1;
 
       if(grProgram.ItemIndex=1) then begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
@@ -919,7 +964,7 @@ begin
         grGPU.Top:=grProgram.Height+grBasic.Height;
         grGPU.Visible:=true;
         tabVolumeDesigner.Enabled:=true;
-        ckSpecular.Visible:=false;
+        ckSpecular.Visible:=true;
         ckSaveRef.Visible:=true;
         edRespin.Hint:='RespinNum';
         lbRespin.Caption:='Split into runs (-r)';
@@ -1374,7 +1419,6 @@ procedure TfmMCX.FormCreate(Sender: TObject);
 var
     i: integer;
     BrowserPath,BrowserParams: string;
-    bcprop: TItemProp;
 begin
   {$IFDEF WINDOWS}
   with TRegistry.Create do
@@ -1429,10 +1473,17 @@ begin
     btLoadSeed.Glyph.Assign(nil);
     JSONIcons.GetBitmap(2, btLoadSeed.Glyph);
 
-    bcprop := TItemProp.Create(vlBC);
-    bcprop.EditStyle := esPickList;
-    bcprop.ReadOnly := True;
-    vlBC.ItemProps['x-'] := bcprop;
+    BCItemProp := TItemProp.Create(vlBC);
+    BCItemProp.EditStyle := esPickList;
+    BCItemProp.ReadOnly := True;
+    BCItemProp.PickList.CommaText:='absorb,reflect,mirror,cyclic';
+
+    vlBC.ItemProps['x-'] := BCItemProp;
+    vlBC.ItemProps['x+'] := BCItemProp;
+    vlBC.ItemProps['y-'] := BCItemProp;
+    vlBC.ItemProps['y+'] := BCItemProp;
+    vlBC.ItemProps['z-'] := BCItemProp;
+    vlBC.ItemProps['z+'] := BCItemProp;
 
     ProfileChanged:=false;
     if not (SearchForExe(CreateCmdOnly) = '') then begin
@@ -1725,6 +1776,23 @@ begin
       fmSrc.Free;
    end;
    edRespinChange(Sender);
+end;
+
+procedure TfmMCX.sgConfigSelectEditor(Sender: TObject; aCol, aRow: Integer;
+  var Editor: TWinControl);
+begin
+   if (aCol=2) and (aRow=3) then begin
+     Editor := sgConfig.EditorByStyle(cbsPickList);
+     TCustomComboBox(Editor).Items.Clear;
+     TCustomComboBox(Editor).Items.Add('1 (byte)');
+     TCustomComboBox(Editor).Items.Add('2 (short)');
+     TCustomComboBox(Editor).Items.Add('4 (integer)');
+     TCustomComboBox(Editor).Items.Add('100 (per voxel mua/mus in float)');
+     TCustomComboBox(Editor).Items.Add('101 (per voxel mua in float)');
+     TCustomComboBox(Editor).Items.Add('102 (per voxel mua/mus in half-float)');
+     TCustomComboBox(Editor).Items.Add('103 (per voxel mua/mus/g/n grayscale in byte)');
+     TCustomComboBox(Editor).Items.Add('104 (per voxel mua/mus grayscale in short)');
+   end;
 end;
 
 procedure TfmMCX.sgMediaDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -2174,12 +2242,6 @@ end;
 procedure TfmMCX.vlBCGetPickList(Sender: TObject; const KeyName: string;
   Values: TStrings);
 begin
-    Values.Clear;
-    Values.Add('absorb');
-    Values.Add('reflect');
-    Values.Add('mirror');
-    Values.Add('cyclic');
-    ShowMessage(KeyName);
 end;
 
 procedure TfmMCX.UpdateGPUList(Buffer:string);
@@ -2395,7 +2457,7 @@ begin
 end;
 function TfmMCX.SaveJSONConfig(filename: string): AnsiString;
 var
-    nthread, nblock,hitmax,seed, i, mediacount: integer;
+    nthread, nblock,hitmax,seed, i, mediacount, formatid: integer;
     bubbleradius,unitinmm,nphoton: extended;
     gpuid, section, key, val, ss: string;
     json, jobj, jmedium, jdet, joptode : TJSONObject;
@@ -2427,16 +2489,17 @@ begin
       jobj:= json.Objects['Session'];
       jobj.Floats['Photons']:=nphoton;
       if not (ckDoReplay.Checked) then
-          jobj.Integers['RNGSeed']:=seed;
-      //else
-      //    jobj.Strings['RNGSeed']:=edSeed.Text;
+          jobj.Integers['RNGSeed']:=seed
+      else
+          jobj.Strings['RNGSeed']:=edSeed.Text;
       jobj.Strings['ID']:=edSession.Text;
       jobj.Integers['DoMismatch']:=Integer(ckReflect.Checked);
       jobj.Integers['DoNormalize']:=Integer(ckNormalize.Checked);
       jobj.Integers['DoPartialPath']:=Integer(ckSaveDetector.Checked);
       jobj.Integers['DoSaveSeed']:=Integer(ckSaveSeed.Checked);
       jobj.Integers['DoSaveRef']:=Integer(ckSaveRef.Checked);
-      //jobj.Strings['OutputType']:=edOutputType.Text;
+      ShowMessage(IntToStr(edOutputType.ItemIndex));
+      jobj.Strings['OutputType']:=OutputTypeFlags[edOutputType.ItemIndex+1];
 
       if(json.Find('Domain') = nil) then
           json.Objects['Domain']:=TJSONObject.Create;
@@ -2505,6 +2568,10 @@ begin
                   end else if(key='InitElem') then begin
                      json.Objects[section].Integers[key]:=StrToInt(val);
                      continue;
+                  end else if(key='MediaFormat') then begin
+                     if(sscanf(val,'%d',[@formatid])=1) then
+                        json.Objects[section].Integers[key]:=formatid;
+                    continue;
                   end;
                   if (key = 'VolumeFile') and ((val='See Volume Designer...') or (Length(val)=0)) then begin
                       if(JSONData.FindPath('Shapes') = nil) then
@@ -2595,7 +2662,7 @@ function TfmMCX.CreateCmd(proc: TProcess=nil):AnsiString;
 var
     nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    cmd, jsonfile, gpuid, debugflag, rootpath, inputjson, fname: string;
+    cmd, jsonfile, gpuid, debugflag, rootpath, inputjson, fname, savedetflag: string;
     shellscript, param: TStringList;
 begin
     rootpath:='';
@@ -2739,6 +2806,29 @@ begin
         param.Add(Format('%d',[hitmax]));
     end;
 
+    if(grProgram.ItemIndex<>1) then begin
+        savedetflag:='';
+        for i:=0 to ckbDet.Items.Count-1 do begin
+             if(ckbDet.Checked[i]) then
+                 savedetflag:=savedetflag+SaveDetFlags[i+1];
+        end;
+        if(Length(savedetflag)>0) then begin
+            param.Add('--savedetflag');
+            param.Add(savedetflag);
+        end;
+
+        if(not ckReflect.Checked) then begin
+            savedetflag:='';
+            for i:=0 to vlBC.Strings.Count-1 do begin
+                savedetflag:=savedetflag+vlBC.Values[vlBC.Cells[0,i]][1];
+            end;
+            if(Length(savedetflag)>0) then begin
+                param.Add('--bc');
+                param.Add(savedetflag);
+            end;
+        end;
+    end;
+
     if(ckSkipVoid.Checked) then begin
         param.Add('--skipvoid');
         param.Add('1');
@@ -2752,6 +2842,7 @@ begin
         param.Add('--debug');
         param.Add(debugflag);
     end;
+
     if(Length(edMoreParam.Text)>0) then begin
         shellscript:=TStringList.Create;
         shellscript.StrictDelimiter:=true;
@@ -2976,7 +3067,7 @@ begin
         if(gb.Controls[id] is TValueListEditor) then begin
            vl:=gb.Controls[id] as TValueListEditor;
            idx:=MapList.IndexOf(vl.Hint);
-           if(idx>=0) then node.SubItems.Strings[idx]:=vl.Strings.DelimitedText;
+           if(idx>=0) then node.SubItems.Strings[idx]:=vl.Strings.CommaText;
            continue;
         end;
         except
@@ -3020,6 +3111,7 @@ var
     vl: TValueListEditor;
     i,id,j,idx: integer;
     ss: string;
+    slist: TStringList;
 begin
     if(node=nil) then exit;
     edSession.Text:=node.Caption;
@@ -3068,7 +3160,20 @@ begin
         if(gb.Controls[id] is TValueListEditor) then begin
            vl:=gb.Controls[id] as TValueListEditor;
            idx:=MapList.IndexOf(vl.Hint);
-           if(idx>=0) then vl.Strings.DelimitedText:=node.SubItems.Strings[idx];
+           if(vl.Hint='Boundary') then
+           begin
+               slist:=TStringList.Create;
+               slist.CommaText:=node.SubItems.Strings[idx];
+               vl.Values['x-']:=slist.Values['x-'];
+               vl.Values['x+']:=slist.Values['x+'];
+               vl.Values['y-']:=slist.Values['y-'];
+               vl.Values['y+']:=slist.Values['y+'];
+               vl.Values['z-']:=slist.Values['z-'];
+               vl.Values['z+']:=slist.Values['z+'];
+               slist.Free;
+           end else begin
+               if(idx>=0) then vl.Strings.CommaText:=node.SubItems.Strings[idx];
+           end;
            continue;
         end;
         if(gb.Controls[id] is TRadioGroup) then begin

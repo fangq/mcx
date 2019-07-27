@@ -1,31 +1,33 @@
 object fmSource: TfmSource
   Left = 1261
-  Height = 387
+  Height = 379
   Top = 311
-  Width = 333
+  Width = 326
   BorderIcons = []
   Caption = 'Light Source Settings'
-  ClientHeight = 387
-  ClientWidth = 333
+  ClientHeight = 379
+  ClientWidth = 326
+  DesignTimePPI = 94
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   Position = poOwnerFormCenter
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.8.2.0'
   object edSource: TComboBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Label4
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    Left = 56
-    Height = 28
-    Top = 49
-    Width = 221
+    Left = 55
+    Height = 27
+    Top = 47
+    Width = 216
     Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Left = 56
+    BorderSpacing.Left = 55
     BorderSpacing.Top = 9
-    BorderSpacing.Right = 56
+    BorderSpacing.Right = 55
     ItemHeight = 0
+    ItemIndex = 0
     Items.Strings = (
       'pencil'
       'isotropic'
@@ -45,30 +47,34 @@ object fmSource: TfmSource
       'pencilarray'
     )
     OnEditingDone = edSourceEditingDone
+    ParentFont = False
     TabOrder = 0
     Text = 'pencil'
   end
   object Panel1: TPanel
     Left = 0
-    Height = 50
-    Top = 337
-    Width = 333
+    Height = 49
+    Top = 330
+    Width = 326
     Align = alBottom
     BevelOuter = bvNone
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 2
-    ClientHeight = 50
-    ClientWidth = 333
+    ClientHeight = 49
+    ClientWidth = 326
+    ParentFont = False
     TabOrder = 1
     object btOK: TButton
       AnchorSideTop.Control = Panel1
       AnchorSideTop.Side = asrCenter
-      Left = 64
-      Height = 28
+      Left = 63
+      Height = 27
       Top = 11
-      Width = 88
+      Width = 86
       Caption = 'OK'
+      ModalResult = 1
       OnClick = btOKClick
+      ParentFont = False
       TabOrder = 0
     end
     object btCancel: TButton
@@ -78,14 +84,15 @@ object fmSource: TfmSource
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
-      Left = 186
-      Height = 28
+      Left = 182
+      Height = 27
       Top = 11
-      Width = 88
-      BorderSpacing.Left = 34
+      Width = 86
+      BorderSpacing.Left = 33
       BorderSpacing.Right = 19
       Caption = 'Cancel'
       ModalResult = 2
+      ParentFont = False
       TabOrder = 1
     end
   end
@@ -94,12 +101,12 @@ object fmSource: TfmSource
     AnchorSideTop.Control = Owner
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    Left = 40
-    Height = 16
+    Left = 39
+    Height = 14
     Top = 24
-    Width = 293
+    Width = 287
     Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Left = 40
+    BorderSpacing.Left = 39
     BorderSpacing.Top = 24
     Caption = 'Please select a light source type:'
     ParentColor = False
@@ -113,15 +120,16 @@ object fmSource: TfmSource
     AnchorSideRight.Control = edSource
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Panel1
-    Left = 56
-    Height = 222
-    Top = 115
-    Width = 221
+    Left = 55
+    Height = 220
+    Top = 110
+    Width = 216
     Anchors = [akTop, akLeft, akRight, akBottom]
     AutoAdvance = aaDown
     BorderSpacing.Top = 7
-    DefaultColWidth = 140
+    DefaultColWidth = 137
     FixedCols = 0
+    ParentFont = False
     RowCount = 2
     TabOrder = 2
     Strings.Strings = (
@@ -132,8 +140,8 @@ object fmSource: TfmSource
       'Value'
     )
     ColWidths = (
-      140
-      79
+      137
+      77
     )
   end
   object Label5: TLabel
@@ -142,12 +150,12 @@ object fmSource: TfmSource
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    Left = 40
-    Height = 16
-    Top = 92
-    Width = 293
+    Left = 39
+    Height = 14
+    Top = 89
+    Width = 287
     Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Left = 40
+    BorderSpacing.Left = 39
     BorderSpacing.Top = 15
     Caption = 'Please define source parameters:'
     ParentColor = False
