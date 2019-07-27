@@ -13,12 +13,12 @@ interface
 
 uses
   Classes, SysUtils, process, FileUtil, SynEdit, math, ClipBrd, AnchorDocking,
-  SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript,LclIntf,
+  SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript, LclIntf,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, LazHelpHTML, inifiles, fpjson, jsonparser, strutils, RegExpr,
-  OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
-  mcxrender, mcxview {$IFDEF WINDOWS}, sendkeys, registry, ShlObj{$ENDIF}, Types;
+  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser, strutils,
+  RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
+  mcxrender, mcxview, Types;
 
 type
 
@@ -27,6 +27,11 @@ type
   TfmMCX = class(TForm)
     acEditShape: TActionList;
     Button1: TButton;
+    ckbDet: TCheckListBox;
+    edOutputType: TComboBox;
+    grBC: TGroupBox;
+    grDet: TGroupBox;
+    Label14: TLabel;
     mcxdoWebURL: TAction;
     MenuItem33: TMenuItem;
     MenuItem34: TMenuItem;
@@ -97,6 +102,7 @@ type
     ToolButton50: TToolButton;
     ToolButton51: TToolButton;
     ToolButton52: TToolButton;
+    vlBC: TValueListEditor;
     webBrowser: THTMLBrowserHelpViewer;
     HTMLHelpDatabase1: THTMLHelpDatabase;
     mcxdoPlotMC2: TAction;
@@ -109,7 +115,6 @@ type
     ckReflect: TCheckBox;
     ckSharedFS: TCheckBox;
     ckSpecular: TCheckBox;
-    ckMomentum: TCheckBox;
     edMoreParam: TEdit;
     edRemote: TComboBox;
     grAtomic: TRadioGroup;
@@ -169,7 +174,6 @@ type
     ckNormalize: TCheckBox;
     ckSaveData: TCheckBox;
     ckSaveDetector: TCheckBox;
-    ckSaveExit: TCheckBox;
     ckSaveRef: TCheckBox;
     ckSkipVoid: TCheckBox;
     ckSrcFrom0: TCheckBox;
@@ -541,9 +545,13 @@ begin
        if(ck.Hint='SaveSeed') or (ck.Hint='SaveExit') then begin
            ckSaveDetector.Checked:=true;
        end;
+       if(ck.Hint='DoReflect') then begin
+           vlBC.Enabled:=not ck.Checked;
+       end;
        if(ck.Hint='SaveDetector') then begin
            edDetectedNum.Enabled:=ck.Checked;
            mcxdoDownloadMCH.Enabled:=ck.Checked;
+           ckbDet.Enabled:=ck.Checked;
        end;
        if(ck.Hint='DoSaveMask') then begin
            mcxdoDownloadMask.Enabled:=ck.Checked;
@@ -735,7 +743,6 @@ begin
       ckSaveData.Checked:=true;   //-S
       ckNormalize.Checked:=true;   //-U
       ckSaveDetector.Checked:=true;   //-d
-      ckSaveExit.Checked:=false;  //-x
       ckSaveRef.Checked:=false;  //-X
       ckSrcFrom0.Checked:=true;  //-z
       ckSkipVoid.Checked:=false;  //-k
@@ -745,7 +752,6 @@ begin
       edThread.Enabled:=false;
       edBlockSize.Enabled:=false;
       ckSpecular.Checked:=false;
-      ckMomentum.Checked:=false;
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
       edUnitInMM.Text:='1';
@@ -777,6 +783,12 @@ begin
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
       ckSharedFS.Checked:=true;
+      vlBC.Enabled:=false;
+      ckbDet.CheckAll(cbUnchecked);
+      ckbDet.Checked[0]:=true;
+      ckbDet.Checked[2]:=true;
+      edOutputType.ItemIndex:=0;
+      vlBC.Strings.CommaText:='x-=a,x+=a,y-=a,y+=a,z-=a,z+=a';
 
       if(grProgram.ItemIndex=1) then begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
@@ -904,10 +916,6 @@ begin
         grGPU.Visible:=true;
         tabVolumeDesigner.Enabled:=true;
         ckSpecular.Visible:=false;
-        if(grProgram.ItemIndex=2) then
-            ckMomentum.Visible:=false
-        else
-            ckMomentum.Visible:=true;
         ckSaveRef.Visible:=true;
         edRespin.Hint:='RespinNum';
         lbRespin.Caption:='Split into runs (-r)';
@@ -923,7 +931,6 @@ begin
         grGPU.Visible:=false;
         tabVolumeDesigner.Enabled:=false;
         ckSpecular.Visible:=true;
-        ckMomentum.Visible:=true;
         ckSaveRef.Visible:=false;
         edOutputFormat.ItemIndex:=4;
         edRespin.Hint:='BasicOrder';
@@ -2406,7 +2413,6 @@ begin
       jobj.Integers['DoMismatch']:=Integer(ckReflect.Checked);
       jobj.Integers['DoNormalize']:=Integer(ckNormalize.Checked);
       jobj.Integers['DoPartialPath']:=Integer(ckSaveDetector.Checked);
-      jobj.Integers['DoSaveExit']:=Integer(ckSaveExit.Checked);
       jobj.Integers['DoSaveSeed']:=Integer(ckSaveSeed.Checked);
       jobj.Integers['DoSaveRef']:=Integer(ckSaveRef.Checked);
       //jobj.Strings['OutputType']:=edOutputType.Text;
@@ -2680,8 +2686,6 @@ begin
     if(grProgram.ItemIndex<2) then begin
       param.Add('--saveseed');
       param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
-      param.Add('--momentum');
-      param.Add(Format('%d',[Integer(ckMomentum.Checked)]));
     end;
 
     if(grProgram.ItemIndex>=1) then begin
@@ -2896,6 +2900,7 @@ var
     ckb: TCheckListBox;
     gb: TGroupBox;
     sg: TStringGrid;
+    vl: TValueListEditor;
     i,id,idx: integer;
 begin
     if(node=nil) then exit;
@@ -2947,6 +2952,12 @@ begin
            if(idx>=0) then node.SubItems.Strings[idx]:=CheckListToStr(ckb);
            continue;
         end;
+        if(gb.Controls[id] is TValueListEditor) then begin
+           vl:=gb.Controls[id] as TValueListEditor;
+           idx:=MapList.IndexOf(vl.Hint);
+           if(idx>=0) then node.SubItems.Strings[idx]:=vl.Strings.DelimitedText;
+           continue;
+        end;
         except
         end;
       end;
@@ -2985,6 +2996,7 @@ var
     sg: TStringGrid;
     gb: TGroupBox;
     fed:TFileNameEdit;
+    vl: TValueListEditor;
     i,id,j,idx: integer;
     ss: string;
 begin
@@ -3030,6 +3042,12 @@ begin
            fed:=gb.Controls[id] as TFileNameEdit;
            idx:=MapList.IndexOf(fed.Hint);
            if(idx>=0) then fed.Text:=node.SubItems.Strings[idx];
+           continue;
+        end;
+        if(gb.Controls[id] is TValueListEditor) then begin
+           vl:=gb.Controls[id] as TValueListEditor;
+           idx:=MapList.IndexOf(vl.Hint);
+           if(idx>=0) then vl.Strings.DelimitedText:=node.SubItems.Strings[idx];
            continue;
         end;
         if(gb.Controls[id] is TRadioGroup) then begin
@@ -3084,7 +3102,7 @@ begin
                            ckb.Checked[j]:=true;
                    end;
                end;
-             end else if(ckb.Hint='DebugFlags') then begin
+             end else if(ckb.Hint='DebugFlags') or (ckb.Hint='SaveDetFlag') then begin
                ckb.CheckAll(cbUnchecked);
                for j:=0 to Min(ckb.Items.Count, Length(node.SubItems.Strings[idx]))-1 do begin
                    if(ss[j+1]='1') then
