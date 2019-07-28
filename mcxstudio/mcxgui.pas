@@ -26,6 +26,7 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    ckShowProgress: TCheckBox;
     mcxdoConfig: TAction;
     Button1: TButton;
     ckbDet: TCheckListBox;
@@ -558,6 +559,9 @@ begin
        if(ck.Hint='SaveSeed') or (ck.Hint='SaveExit') then begin
            ckSaveDetector.Checked:=true;
        end;
+       if(ck.Hint='ShowProgress') then begin
+           ckbDebug.Checked[2]:=ck.Checked;
+       end;
        if(ck.Hint='DoReflect') then begin
            vlBC.Enabled:=not ck.Checked;
        end;
@@ -590,6 +594,8 @@ begin
        if(idx>=0) then begin
            node.SubItems.Strings[idx]:=CheckListToStr(ckb);
        end;
+       if(ckb.Hint='DebugFlags') then
+           ckShowProgress.Checked:=ckb.Checked[2];
     end else if(Sender is TFileNameEdit) then begin
        fed:=Sender as TFileNameEdit;
        idx:=MapList.IndexOf(fed.Hint);
@@ -817,11 +823,19 @@ begin
       sgMedia.Rows[1].CommaText:=',0,0,1,1';
       sgMedia.Rows[2].CommaText:=',0.005,1,0.01,1.37';
       sgMedia.RowCount:=20;
+      sgMedia.FixedCols:=1;
+      sgMedia.FixedRows:=1;
 
       sgDet.RowCount:=2;
       sgDet.Rows[1].CommaText:=',24,29,0,1';
       sgDet.RowCount:=20;
+      sgDet.FixedCols:=1;
+      sgDet.FixedRows:=1;
+
       sgConfig.Cols[2].CommaText:=ConfigData.CommaText;
+      sgConfig.FixedCols:=2;
+      sgConfig.FixedRows:=1;
+
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
       ckSharedFS.Checked:=true;
@@ -882,6 +896,11 @@ procedure TfmMCX.FormShow(Sender: TObject);
 begin
     grGPU.Top:=grProgram.Height+grBasic.Height;
     grAdvSettings.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
+    sgMedia.FixedCols:=1;
+    sgMedia.FixedRows:=1;
+    sgDet.FixedCols:=1;
+    sgDet.FixedRows:=1;
+    vlBC.FixedCols:=1;
 end;
 
 procedure TfmMCX.grAdvSettingsClick(Sender: TObject);
@@ -1785,14 +1804,14 @@ begin
    if (aCol=2) and (aRow=3) then begin
      Editor := sgConfig.EditorByStyle(cbsPickList);
      TCustomComboBox(Editor).Items.Clear;
-     TCustomComboBox(Editor).Items.Add('1 (byte)');
-     TCustomComboBox(Editor).Items.Add('2 (short)');
-     TCustomComboBox(Editor).Items.Add('4 (integer)');
-     TCustomComboBox(Editor).Items.Add('100 (per voxel mua/mus in float)');
-     TCustomComboBox(Editor).Items.Add('101 (per voxel mua in float)');
-     TCustomComboBox(Editor).Items.Add('102 (per voxel mua/mus in half-float)');
-     TCustomComboBox(Editor).Items.Add('103 (per voxel mua/mus/g/n grayscale in byte)');
-     TCustomComboBox(Editor).Items.Add('104 (per voxel mua/mus grayscale in short)');
+     TCustomComboBox(Editor).Items.Add('byte - 1-byte integer');
+     TCustomComboBox(Editor).Items.Add('short - 2-byte integer');
+     TCustomComboBox(Editor).Items.Add('integer - 4-byte integer');
+     TCustomComboBox(Editor).Items.Add('muamus_float - per voxel mua/mus in float');
+     TCustomComboBox(Editor).Items.Add('mua_float - per voxel mua in float');
+     TCustomComboBox(Editor).Items.Add('muamus_half - per voxel mua/mus in half-float');
+     TCustomComboBox(Editor).Items.Add('asgn_byte - per voxel mua/mus/g/n grayscale in byte');
+     TCustomComboBox(Editor).Items.Add('muamus_short - per voxel mua/mus grayscale in short');
    end;
 end;
 
@@ -1823,8 +1842,6 @@ procedure TfmMCX.sgMediaEditingDone(Sender: TObject);
 var
      grid: TStringGrid;
      val: Extended;
-     ss: string;
-     rowid, colid: integer;
 begin
      if not(Sender is TStringGrid) then exit;
      grid:= Sender as TStringGrid;
@@ -2000,8 +2017,8 @@ end;
 function TfmMCX.UpdateShapeTag(root: TJSONData; doexport: boolean = false): integer;
 var
      i, j, maxlayertag, maxtag, lastgood: integer;
-     jobj: TJSONObject;
      ss: string;
+     jobj: TJSONObject;
 begin
      maxtag:=0;
      ss:= root.AsJSON;
@@ -2059,8 +2076,6 @@ begin
 end;
 
 procedure TfmMCX.shapePrintExecute(Sender: TObject);
-var
-     jdata: TJSONData;
 begin
     if(tvShapes.Selected <> nil) then
        if(tvShapes.Selected=tvShapes.Items[0]) then begin
@@ -2098,21 +2113,19 @@ end;
 
 procedure TfmMCX.shapeDeleteExecute(Sender: TObject);
 var
-     idx: integer;
-     P, D: TJSONData;
+     P: TJSONData;
      Node: TTreeNode;
-     ss: string;
 begin
   Node:= tvShapes.Selected;
   if(Node <> nil) then begin
         if(Node.Parent = nil) or (Node.Parent.Data=nil) or (Node.Data=nil) then exit;
         P:=TJSONData(Node.Parent.Data);
-        ss:=P.AsJSON;
+        //ss:=P.AsJSON;
         If P.JSONType=jtArray then
           TJSONArray(P).Remove(P.Items[Node.Index])
         else If P.JSONType=jtObject then
           TJSONObject(P).Remove(P.Items[Node.Index]);
-        ss:=P.AsJSON;
+        //ss:=P.AsJSON;
         Node.Delete;
         edRespinChange(tvShapes);
   end;
@@ -2180,8 +2193,6 @@ procedure TfmMCX.tvShapesEdited(Sender: TObject; Node: TTreeNode; var S: string
   );
 var
      val: extended;
-     cc: integer;
-     ss: string;
 begin
      if(Node.Parent= nil) then exit;
 
@@ -2219,7 +2230,7 @@ begin
               if(TJSONData(Node.Parent.Data).JSONType=jtArray) then begin
                   TJSONArray(Node.Parent.Data).Strings[Node.Index]:=S;
               end else if TJSONData(Node.Parent.Data).JSONType=jtString then begin
-                  ss:= TJSONData(Node.Parent.Data).AsJSON;
+                  //ss:= TJSONData(Node.Parent.Data).AsJSON;
                   TJSONData(Node.Parent.Data).Value:=S;
               end;
           end;
@@ -2248,7 +2259,7 @@ end;
 procedure TfmMCX.UpdateGPUList(Buffer:string);
 var
     list: TStringList;
-    i, idx, len, total, namepos,gpucount: integer;
+    i, idx, total, namepos,gpucount: integer;
     gpuname, ss: string;
 
     {$IFDEF WINDOWS}
@@ -2318,8 +2329,7 @@ var
     BytesAvailable: DWord;
     BytesRead:LongInt;
 
-    i, idx, len, total, namepos,gpucount: integer;
-    gpuname, ss: string;
+    total: integer;
     proc: TAsyncProcess;
 begin
    if (Sender is TAsyncProcess) then
@@ -2409,7 +2419,7 @@ end;
 procedure TfmMCX.VerifyInput;
 var
     nthread, nblock: integer;
-    radius,nphoton: extended;
+    nphoton, radius: extended;
     exepath: string;
 begin
   try
@@ -2458,9 +2468,9 @@ begin
 end;
 function TfmMCX.SaveJSONConfig(filename: string): AnsiString;
 var
-    nthread, nblock,hitmax,seed, i, mediacount, formatid: integer;
+    nthread, nblock,hitmax,seed, i: integer;
     bubbleradius,unitinmm,nphoton: extended;
-    gpuid, section, key, val, ss: string;
+    gpuid, section, key, val, ss, formatid: string;
     json, jobj, jmedium, jdet, joptode : TJSONObject;
     jdets, jmedia, jshape: TJSONArray;
     jsonlist: TStringList;
@@ -2569,9 +2579,9 @@ begin
                      json.Objects[section].Integers[key]:=StrToInt(val);
                      continue;
                   end else if(key='MediaFormat') then begin
-                     if(sscanf(val,'%d',[@formatid])=1) then
-                        json.Objects[section].Integers[key]:=formatid;
-                    continue;
+                     if(sscanf(val,'%s',[@formatid])=1) then
+                        json.Objects[section].Strings[key]:=formatid;
+                     continue;
                   end;
                   if (key = 'VolumeFile') and ((val='See Volume Designer...') or (Length(val)=0)) then begin
                       if(JSONData.FindPath('Shapes') = nil) then
@@ -2776,7 +2786,7 @@ begin
 
     if(grProgram.ItemIndex>=1) then begin
       param.Add('--atomic');
-      param.Add(Format('%d',[grAtomic.ItemIndex]));
+      param.Add(Format('%d',[1 - grAtomic.ItemIndex]));
     end;
     param.Add('--specular');
     param.Add(Format('%d',[Integer(ckSpecular.Checked)]));

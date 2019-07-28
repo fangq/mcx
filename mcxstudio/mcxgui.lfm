@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 206
+  Left = 357
   Height = 814
-  Top = 0
+  Top = 107
   Width = 1253
   ActiveControl = lvJobs
   Align = alTop
@@ -177,21 +177,21 @@ object fmMCX: TfmMCX
     TabOrder = 0
     Transparent = True
     object ToolButton1: TToolButton
-      Left = 256
+      Left = 258
       Top = 0
       Action = mcxdoOpen
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton2: TToolButton
-      Left = 340
+      Left = 342
       Top = 0
       Action = mcxdoSave
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 1108
+      Left = 1118
       Top = 0
       Action = mcxdoExit
       ParentShowHint = False
@@ -205,7 +205,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton5: TToolButton
-      Left = 511
+      Left = 515
       Height = 117
       Top = 0
       Caption = 'ToolButton5'
@@ -219,7 +219,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 514
+      Left = 520
       Top = 0
       Action = mcxdoVerify
       Caption = 'Validate'
@@ -227,7 +227,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 598
+      Left = 604
       Top = 0
       Action = mcxdoRun
       OnClick = tbtRunClick
@@ -235,35 +235,35 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 682
+      Left = 688
       Top = 0
       Action = mcxdoStop
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 424
+      Left = 426
       Height = 117
       Top = 0
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 850
+      Left = 856
       Height = 117
       Top = 0
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 853
+      Left = 861
       Top = 0
       Action = mcxdoAbout
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton15: TToolButton
-      Left = 427
+      Left = 431
       Top = 0
       Action = mcxdoQuery
       ParentShowHint = False
@@ -285,14 +285,14 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 1105
+      Left = 1113
       Height = 117
       Top = 0
       Caption = 'ToolButton8'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 937
+      Left = 945
       Hint = 'Browse help information'
       Top = 0
       Caption = 'Help ▾'
@@ -302,14 +302,14 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 1021
+      Left = 1029
       Top = 0
       Action = mcxdoConfig
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 766
+      Left = 772
       Hint = 'Plot MCX output data'
       Top = 0
       Caption = 'Plot ▾'
@@ -1493,14 +1493,18 @@ object fmMCX: TfmMCX
         TabOrder = 9
       end
       object grBC: TGroupBox
-        Left = 424
+        AnchorSideLeft.Control = ckSaveRef
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideBottom.Control = grSwitches
+        AnchorSideBottom.Side = asrBottom
+        Left = 415
         Height = 120
         Top = 0
-        Width = 120
-        Align = alRight
+        Width = 124
+        Anchors = [akTop, akLeft, akBottom]
         Caption = 'Boundary cond.'
         ClientHeight = 104
-        ClientWidth = 116
+        ClientWidth = 120
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 10
@@ -1509,18 +1513,16 @@ object fmMCX: TfmMCX
           Height = 104
           Hint = 'Boundary'
           Top = 0
-          Width = 116
+          Width = 120
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#bc'
           Align = alClient
           AlternateColor = clSkyBlue
           AutoEdit = False
           BorderStyle = bsNone
-          Color = clSilver
           DefaultColWidth = 40
           DefaultRowHeight = 22
-          FixedColor = clInactiveCaption
-          FixedCols = 0
+          FixedColor = clCream
           Flat = True
           ParentFont = False
           ParentShowHint = False
@@ -1539,20 +1541,24 @@ object fmMCX: TfmMCX
           )
           OnGetPickList = vlBCGetPickList
           ColWidths = (
-            50
-            50
+            52
+            52
           )
         end
       end
       object grDet: TGroupBox
-        Left = 544
+        AnchorSideLeft.Control = grBC
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideBottom.Control = grSwitches
+        AnchorSideBottom.Side = asrBottom
+        Left = 539
         Height = 120
         Top = 0
-        Width = 168
-        Align = alRight
+        Width = 173
+        Anchors = [akTop, akLeft, akBottom]
         Caption = 'Save detected photon'
         ClientHeight = 104
-        ClientWidth = 164
+        ClientWidth = 169
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 11
@@ -1561,11 +1567,10 @@ object fmMCX: TfmMCX
           Height = 94
           Hint = 'SaveDetFlag'
           Top = 2
-          Width = 158
+          Width = 163
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#savedetflag'
           Align = alClient
-          AllowGrayed = True
           BorderSpacing.Left = 6
           BorderSpacing.Top = 2
           BorderSpacing.Bottom = 8
@@ -1753,7 +1758,6 @@ object fmMCX: TfmMCX
         Width = 167
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#gpu'
-        AllowGrayed = True
         BorderSpacing.Left = 16
         BorderSpacing.Top = 2
         BorderSpacing.Bottom = 8
@@ -1844,6 +1848,26 @@ object fmMCX: TfmMCX
         OnChange = ckLockGPUChange
         ParentFont = False
         TabOrder = 5
+      end
+      object ckShowProgress: TCheckBox
+        AnchorSideLeft.Control = edWorkload
+        AnchorSideTop.Side = asrCenter
+        AnchorSideBottom.Control = edGPUID
+        AnchorSideBottom.Side = asrBottom
+        Left = 466
+        Height = 24
+        Hint = 'ShowProgress'
+        Top = 53
+        Width = 138
+        HelpType = htKeyword
+        HelpKeyword = 'HTML/mcx_help#debug'
+        Anchors = [akLeft, akBottom]
+        BorderSpacing.Left = 5
+        BorderSpacing.Top = 1
+        Caption = 'Show progress bar'
+        OnChange = edRespinChange
+        ParentFont = False
+        TabOrder = 6
       end
     end
     object grProgram: TRadioGroup
@@ -2336,30 +2360,26 @@ object fmMCX: TfmMCX
           Color = clWhite
           Columns = <          
             item
-              MinSize = 10
               MaxSize = 196
               Title.Caption = 'μa (1/mm)'
               Width = 68
             end          
             item
-              MinSize = 10
               MaxSize = 196
               Title.Caption = 'μs (1/mm)'
               Width = 63
             end          
             item
-              MinSize = 10
               MaxSize = 196
               Title.Caption = 'g (anisotropy)'
               Width = 62
             end          
             item
-              MinSize = 10
               MaxSize = 196
               Title.Caption = 'n (reflective index)'
               Width = 69
             end>
-          FixedColor = clSilver
+          FixedColor = clCream
           Flat = True
           Font.Color = clBlack
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goAutoAddRows, goSmoothScroll, goFixedRowNumbering, goCellEllipsis]
@@ -2421,7 +2441,7 @@ object fmMCX: TfmMCX
           Align = alTop
           AlternateColor = clSkyBlue
           Color = clWhite
-          FixedColor = clSilver
+          FixedColor = clCream
           Flat = True
           Font.Color = clBlack
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goSmoothScroll, goFixedRowNumbering]
@@ -2534,12 +2554,11 @@ object fmMCX: TfmMCX
           Columns = <          
             item
               ButtonStyle = cbsEllipsis
-              MinSize = 10
               MaxSize = 196
               Title.Caption = 'Value'
               Width = 125
             end>
-          FixedColor = clSilver
+          FixedColor = clCream
           FixedCols = 2
           Flat = True
           Font.Color = clBlack
@@ -2656,7 +2675,7 @@ object fmMCX: TfmMCX
             '[60,60,60]'
             2
             3
-            '1 (byte)'
+            'byte - 1-byte integer'
             2
             4
             '0'
@@ -2765,7 +2784,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 3
+            Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
