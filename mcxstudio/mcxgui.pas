@@ -1503,6 +1503,7 @@ begin
     RegEngine.Free;
     PassList.Free;
     fmDomain.Free;
+    BCItemProp.Free;
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -2498,7 +2499,6 @@ begin
       jobj.Integers['DoPartialPath']:=Integer(ckSaveDetector.Checked);
       jobj.Integers['DoSaveSeed']:=Integer(ckSaveSeed.Checked);
       jobj.Integers['DoSaveRef']:=Integer(ckSaveRef.Checked);
-      ShowMessage(IntToStr(edOutputType.ItemIndex));
       jobj.Strings['OutputType']:=OutputTypeFlags[edOutputType.ItemIndex+1];
 
       if(json.Find('Domain') = nil) then
@@ -2771,19 +2771,16 @@ begin
       param.Add('--replaydet');
       param.Add(Format('%d',[edReplayDet.Value]));
     end;
-    if(grProgram.ItemIndex<2) then begin
-      param.Add('--saveseed');
-      param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
-    end;
+    param.Add('--saveseed');
+    param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
 
     if(grProgram.ItemIndex>=1) then begin
       param.Add('--atomic');
       param.Add(Format('%d',[grAtomic.ItemIndex]));
     end;
-
+    param.Add('--specular');
+    param.Add(Format('%d',[Integer(ckSpecular.Checked)]));
     if (grProgram.ItemIndex=1) then begin
-         param.Add('--specular');
-         param.Add(Format('%d',[Integer(ckSpecular.Checked)]));
          param.Add('--basisorder');
          param.Add(Format('%d',[edRespin.Value]));
     end;

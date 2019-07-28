@@ -138,7 +138,7 @@
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="11"/>
         <CursorPos X="31" Y="8"/>
         <UsageCount Value="230"/>
         <Loaded Value="True"/>
@@ -150,8 +150,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="2798"/>
-        <CursorPos X="73" Y="2823"/>
+        <TopLine Value="2482"/>
+        <CursorPos X="64" Y="2511"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 Y="996" ID="9"/>
@@ -165,7 +165,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="6"/>
         <CursorPos X="42" Y="11"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
@@ -176,7 +176,7 @@
         <ComponentName Value="fmShapeEditor"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="9"/>
         <TopLine Value="16"/>
         <CursorPos X="40" Y="16"/>
         <UsageCount Value="201"/>
@@ -188,7 +188,7 @@
         <ComponentName Value="fmNewSession"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="8"/>
         <CursorPos X="71" Y="11"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
@@ -199,7 +199,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="7"/>
         <TopLine Value="102"/>
         <CursorPos X="36" Y="110"/>
         <UsageCount Value="239"/>
@@ -211,9 +211,9 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="15"/>
-        <CursorPos X="4" Y="46"/>
+        <CursorPos X="29" Y="23"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit6>
@@ -224,7 +224,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="102"/>
         <CursorPos X="22" Y="138"/>
-        <UsageCount Value="153"/>
+        <UsageCount Value="154"/>
       </Unit7>
       <Unit8>
         <Filename Value="mcxrender.pas"/>
@@ -232,9 +232,9 @@
         <ComponentName Value="fmDomain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="5"/>
-        <CursorPos X="61" Y="21"/>
-        <UsageCount Value="151"/>
+        <EditorIndex Value="3"/>
+        <CursorPos X="27" Y="15"/>
+        <UsageCount Value="152"/>
         <Loaded Value="True"/>
       </Unit8>
       <Unit9>
@@ -243,18 +243,18 @@
         <ComponentName Value="fmViewer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="136"/>
-        <CursorPos X="23" Y="156"/>
-        <UsageCount Value="69"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="592"/>
+        <CursorPos X="23" Y="603"/>
+        <UsageCount Value="70"/>
         <Loaded Value="True"/>
       </Unit9>
       <Unit10>
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="5"/>
         <CursorPos X="69" Y="14"/>
-        <UsageCount Value="69"/>
+        <UsageCount Value="70"/>
         <Loaded Value="True"/>
       </Unit10>
       <Unit11>
@@ -263,10 +263,12 @@
         <ComponentName Value="fmDataFile"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="11"/>
-        <CursorPos X="28" Y="13"/>
-        <UsageCount Value="41"/>
+        <EditorIndex Value="10"/>
+        <TopLine Value="9"/>
+        <CursorPos X="14" Y="15"/>
+        <UsageCount Value="42"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit11>
       <Unit12>
         <Filename Value="/usr/share/fpcsrc/3.0.4/packages/rtl-objpas/src/inc/strutils.pp"/>
@@ -300,151 +302,152 @@
         <Filename Value="mcxconfig.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmConfig"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="1"/>
         <TopLine Value="27"/>
         <CursorPos X="96" Y="40"/>
-        <UsageCount Value="25"/>
+        <UsageCount Value="26"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit16>
       <Unit17>
         <Filename Value="/usr/share/lazarus/1.8.2/lcl/groupededit.pp"/>
         <UnitName Value="GroupedEdit"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="909"/>
         <CursorPos Y="931"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
       </Unit17>
       <Unit18>
         <Filename Value="/usr/share/lazarus/1.8.2/lcl/editbtn.pas"/>
         <UnitName Value="EditBtn"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="1036"/>
         <CursorPos X="41" Y="1043"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
       </Unit18>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="946" Column="33" TopLine="918"/>
+        <Caret Line="695" Column="45" TopLine="666"/>
       </Position1>
       <Position2>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="952" Column="27" TopLine="924"/>
+        <Caret Line="842" Column="18" TopLine="816"/>
       </Position2>
       <Position3>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="883" Column="24" TopLine="851"/>
       </Position3>
       <Position4>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1545" Column="21" TopLine="1530"/>
+        <Caret Line="960" Column="26" TopLine="944"/>
       </Position4>
       <Position5>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="962" Column="16" TopLine="944"/>
       </Position5>
       <Position6>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1545" Column="21" TopLine="1517"/>
+        <Caret Line="964" Column="28" TopLine="944"/>
       </Position6>
       <Position7>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="1557" Column="41" TopLine="1527"/>
+        <Caret Line="995" Column="14" TopLine="970"/>
       </Position7>
       <Position8>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="1003" Column="42" TopLine="971"/>
       </Position8>
       <Position9>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="32" Column="17" TopLine="4"/>
+        <Caret Line="1135" Column="25" TopLine="1105"/>
       </Position9>
       <Position10>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="467" Column="13" TopLine="439"/>
+        <Caret Line="1138" Column="29" TopLine="1109"/>
       </Position10>
       <Position11>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="832" Column="19" TopLine="804"/>
+        <Caret Line="1141" Column="70" TopLine="1109"/>
       </Position11>
       <Position12>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2499" Column="23" TopLine="2473"/>
+        <Caret Line="1149" Column="12" TopLine="1134"/>
       </Position12>
       <Position13>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2492" Column="30" TopLine="2473"/>
+        <Caret Line="1152" Column="29" TopLine="1134"/>
       </Position13>
       <Position14>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2501" Column="22" TopLine="2484"/>
+        <Caret Line="1182" Column="18" TopLine="1155"/>
       </Position14>
       <Position15>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2502" Column="50" TopLine="2484"/>
+        <Caret Line="1547" Column="46" TopLine="1519"/>
       </Position15>
       <Position16>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="1550" Column="64" TopLine="1519"/>
       </Position16>
       <Position17>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="464" Column="13" TopLine="436"/>
+        <Caret Line="1557" Column="46" TopLine="1525"/>
       </Position17>
       <Position18>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2839" Column="45" TopLine="2811"/>
+        <Caret Line="1756" Column="25" TopLine="1738"/>
       </Position18>
       <Position19>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="3231" Column="46" TopLine="3203"/>
+        <Caret Line="2455" Column="28" TopLine="2423"/>
       </Position19>
       <Position20>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="460" Column="56" TopLine="447"/>
+        <Caret Line="2730" Column="20" TopLine="2698"/>
       </Position20>
       <Position21>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="465" Column="15" TopLine="447"/>
+        <Caret Line="2741" Column="16" TopLine="2709"/>
       </Position21>
       <Position22>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="2813" Column="61" TopLine="2785"/>
+        <Caret Line="2775" Column="5" TopLine="2750"/>
       </Position22>
       <Position23>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="466" Column="10" TopLine="448"/>
+        <Caret Line="2782" Column="62" TopLine="2750"/>
       </Position23>
       <Position24>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="2783" Column="17" TopLine="2751"/>
       </Position24>
       <Position25>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="466" Column="10" TopLine="438"/>
+        <Caret Line="2789" Column="23" TopLine="2761"/>
       </Position25>
       <Position26>
         <Filename Value="mcxgui.pas"/>
-        <Caret Line="458" Column="36" TopLine="438"/>
+        <Caret Line="2795" Column="16" TopLine="2772"/>
       </Position26>
       <Position27>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="467" Column="18" TopLine="439"/>
+        <Filename Value="mcxloadfile.pas"/>
+        <Caret Line="13" Column="28"/>
       </Position27>
       <Position28>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="2493" Column="47" TopLine="2509"/>
+        <Filename Value="mcxview.pas"/>
+        <Caret Line="138" Column="25" TopLine="136"/>
       </Position28>
       <Position29>
         <Filename Value="mcxgui.pas"/>
+        <Caret Line="2897" Column="17" TopLine="2890"/>
       </Position29>
-      <Position30>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="452" Column="85" TopLine="438"/>
-      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
