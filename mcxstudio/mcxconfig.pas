@@ -72,16 +72,16 @@ procedure TfmConfig.jsonConfigRestoreProperties(Sender: TObject);
 begin
     edLocalPath.Cols[0].Delimiter:=';';
     if Length(edLocalPath.Hint)>0 then begin
-       edLocalPath.Cols[0].CommaText:=edLocalPath.Hint;
+       edLocalPath.Cols[0].DelimitedText:=edLocalPath.Hint;
     end else begin
-       edLocalPath.Hint:=edLocalPath.Cols[0].CommaText;
+       edLocalPath.Hint:=edLocalPath.Cols[0].DelimitedText;
     end;
 end;
 
 procedure TfmConfig.jsonConfigSaveProperties(Sender: TObject);
 begin
     edLocalPath.Cols[0].Delimiter:=';';
-    edLocalPath.Hint:=edLocalPath.Cols[0].CommaText;
+    edLocalPath.Hint:=edLocalPath.Cols[0].DelimitedText;
 end;
 
 procedure TfmConfig.edLocalPathButtonClick(Sender: TObject; aCol, aRow: Integer);

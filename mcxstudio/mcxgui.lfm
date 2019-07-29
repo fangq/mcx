@@ -2781,7 +2781,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 67
+            Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
@@ -29959,6 +29959,13 @@ object fmMCX: TfmMCX
       Caption = 'MCX-CL Documentation'
       Hint = 'http://mcx.space/wiki/index.cgi?MCXCL'
       OnClick = mcxdoWebURLExecute
+    end
+    object MenuItem67: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem66: TMenuItem
+      Caption = 'Table of all input flags'
+      Hint = 'http://bit.ly/2K0rG4R '
     end
     object MenuItem38: TMenuItem
       Caption = '-'
