@@ -1,0 +1,73 @@
+object fmStop: TfmStop
+  Left = 867
+  Height = 159
+  Top = 284
+  Width = 218
+  Align = alBottom
+  BorderStyle = bsDialog
+  Caption = 'Running ...'
+  ClientHeight = 159
+  ClientWidth = 218
+  DesignTimePPI = 94
+  Position = poOwnerFormCenter
+  LCLVersion = '2.0.2.0'
+  object ToolBar1: TToolBar
+    Left = 0
+    Height = 117
+    Top = 42
+    Width = 218
+    Align = alBottom
+    AutoSize = True
+    ButtonHeight = 117
+    ButtonWidth = 100
+    Caption = 'Running'
+    EdgeInner = esNone
+    EdgeOuter = esNone
+    HotImages = fmMCX.ImageList2
+    Images = fmMCX.ImageList2
+    ParentColor = False
+    ParentFont = False
+    ShowCaptions = True
+    TabOrder = 0
+    Transparent = True
+    object tbtStop: TToolButton
+      Left = 1
+      Top = 0
+      Action = fmMCX.mcxdoStop
+      Caption = 'Terminate'
+      ParentShowHint = False
+      ShowHint = True
+    end
+    object ToolButton8: TToolButton
+      Left = 101
+      Height = 117
+      Top = 0
+      Caption = 'ToolButton8'
+      Style = tbsDivider
+    end
+    object ToolButton3: TToolButton
+      Left = 106
+      Hint = 'Exit MCX Studio'
+      Top = 0
+      Caption = 'Hide'
+      ImageIndex = 13
+      OnClick = ToolButton3Click
+      ParentShowHint = False
+      ShowHint = True
+    end
+  end
+  object Memo1: TMemo
+    Left = 0
+    Height = 42
+    Top = 0
+    Width = 218
+    Align = alClient
+    Font.Color = clGreen
+    Lines.Strings = (
+      'Press "Terminate" to force stop.'
+    )
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 1
+  end
+end

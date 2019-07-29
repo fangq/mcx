@@ -18,7 +18,7 @@ uses
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, ValEdit, JSONPropStorage, inifiles, fpjson, jsonparser,
   strutils, RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
-  mcxrender, mcxview, mcxconfig, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
+  mcxrender, mcxview, mcxconfig, mcxstoprun, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
 type
 
@@ -447,6 +447,7 @@ var
   fmMCX: TfmMCX;
   fmDomain: TfmDomain;
   fmConfig: TfmConfig;
+  fmStop: TfmStop;
   ProfileChanged: Boolean;
   MaxWait: integer;
   TaskFile: string;
@@ -567,7 +568,7 @@ begin
            ckbDebug.Checked[2]:=ck.Checked;
        end;
        if(ck.Hint='DoReflect') then begin
-           vlBC.Enabled:=not ck.Checked;
+           grBC.Enabled:=not ck.Checked;
        end;
        if(ck.Hint='SaveDetector') then begin
            edDetectedNum.Enabled:=ck.Checked;
@@ -824,7 +825,7 @@ begin
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
       ckSharedFS.Checked:=true;
-      vlBC.Enabled:=false;
+      grBC.Enabled:=false;
       ckbDet.CheckAll(cbUnchecked);
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
@@ -1310,6 +1311,9 @@ begin
             sbInfo.Panels[1].Text:='0%';
             sbInfo.Invalidate;
         end;
+
+        fmStop.Show;
+
         mcxdoStop.Enabled:=true;
         mcxdoRun.Enabled:=false;
         sbInfo.Panels[0].Text := 'Status: running simulation';
@@ -1382,6 +1386,7 @@ begin
               sbInfo.Tag:=0;
               sbInfo.Repaint;
           end;
+          fmStop.Hide;
      end
 end;
 
@@ -1458,6 +1463,8 @@ begin
 
     fmDomain:=TfmDomain.Create(Self);
     fmConfig:=TfmConfig.Create(Self);
+    fmStop:=TfmStop.Create(Self);
+    fmStop.FormStyle:=fsStayOnTop;
 
     CurrentSession:=nil;
     PassList:=TStringList.Create();
@@ -1730,6 +1737,9 @@ begin
          //if ckDoRemote.Checked and (not ckSharedFS.Checked) then
          //    mcxdoDownloadMC2Execute(Sender);
      end;
+
+     fmStop.Hide;
+
      mcxdoRun.Tag:=0;
      mcxdoStop.Enabled:=false;
      if(mcxdoVerify.Enabled) then

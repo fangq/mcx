@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 391
+  Left = 358
   Height = 814
-  Top = 169
+  Top = 139
   Width = 1253
   ActiveControl = lvJobs
   Align = alTop
@@ -910,10 +910,10 @@ object fmMCX: TfmMCX
         Items.Strings = (
           'X - fluence rate in [J/(mm^2s)]'
           'F - fluence [J/mm^2]'
-          'E - energy [J]'
-          'J - jacobian (mua) [1/mm^3]'
-          'P - jacobian (scat) [1/mm^3]'
-          'M - jacobian (mom)'
+          'E - energy deposition [J]'
+          'J - jacobian (mua) [1/mm]'
+          'P - jacobian (scat) [1/mm]'
+          'M - jacobian (dcs)'
         )
         OnChange = edRespinChange
         ParentFont = False
@@ -1358,10 +1358,10 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoReflect'
         Top = 0
-        Width = 207
+        Width = 219
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#reflect'
-        Caption = 'Do reflection at boundary (-b)'
+        Caption = 'Do reflection all boundaries (-b)'
         Checked = True
         OnChange = edRespinChange
         ParentFont = False
@@ -1373,7 +1373,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoNormalize'
         Top = 24
-        Width = 207
+        Width = 219
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#normalize'
         Caption = 'Do normalization (-U)'
@@ -1388,7 +1388,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSrcFrom0'
         Top = 48
-        Width = 207
+        Width = 219
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#srcfrom0'
         Caption = 'Orign from [0,0,0] (-z)'
@@ -1403,7 +1403,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'SaveDetector'
         Top = 72
-        Width = 207
+        Width = 219
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#savedet'
         Caption = 'Save detected photons (-d)'
@@ -1418,7 +1418,7 @@ object fmMCX: TfmMCX
         Height = 24
         Hint = 'DoSave'
         Top = 96
-        Width = 207
+        Width = 219
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#save2pt'
         Caption = 'Save fluence (-S)'
@@ -1429,7 +1429,7 @@ object fmMCX: TfmMCX
         TabOrder = 4
       end
       object ckSaveRef: TCheckBox
-        Left = 217
+        Left = 229
         Height = 24
         Hint = 'DoSaveRef'
         Top = 0
@@ -1442,7 +1442,7 @@ object fmMCX: TfmMCX
         TabOrder = 5
       end
       object ckSkipVoid: TCheckBox
-        Left = 217
+        Left = 229
         Height = 24
         Hint = 'DoSkipVoid'
         Top = 24
@@ -1455,7 +1455,7 @@ object fmMCX: TfmMCX
         TabOrder = 6
       end
       object ckSaveSeed: TCheckBox
-        Left = 217
+        Left = 229
         Height = 24
         Hint = 'DoSaveSeed'
         Top = 48
@@ -1468,7 +1468,7 @@ object fmMCX: TfmMCX
         TabOrder = 7
       end
       object ckSaveMask: TCheckBox
-        Left = 217
+        Left = 229
         Height = 24
         Hint = 'DoSaveMask'
         Top = 72
@@ -1481,7 +1481,7 @@ object fmMCX: TfmMCX
         TabOrder = 8
       end
       object ckSpecular: TCheckBox
-        Left = 217
+        Left = 229
         Height = 24
         Hint = 'DoSpecular'
         Top = 96
@@ -1498,7 +1498,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideBottom.Control = grSwitches
         AnchorSideBottom.Side = asrBottom
-        Left = 415
+        Left = 427
         Height = 120
         Top = 0
         Width = 124
@@ -1553,7 +1553,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideBottom.Control = grSwitches
         AnchorSideBottom.Side = asrBottom
-        Left = 539
+        Left = 551
         Height = 120
         Top = 0
         Width = 173
@@ -2402,7 +2402,7 @@ object fmMCX: TfmMCX
             69
           )
           Cells = (
-            7
+            9
             0
             0
             'Type'
@@ -2424,6 +2424,12 @@ object fmMCX: TfmMCX
             3
             2
             '0.01'
+            4
+            1
+            '1'
+            4
+            2
+            '1.37'
           )
         end
         object sgDet: TStringGrid
@@ -4886,7 +4892,7 @@ object fmMCX: TfmMCX
     end
     object mcxdoConfig: TAction
       Category = 'Init'
-      Caption = 'Config'
+      Caption = 'Setting'
       Hint = 'Modify default paths'
       ImageIndex = 10
       OnExecute = mcxdoConfigExecute
@@ -29966,6 +29972,7 @@ object fmMCX: TfmMCX
     object MenuItem66: TMenuItem
       Caption = 'Table of all input flags'
       Hint = 'http://bit.ly/2K0rG4R '
+      OnClick = mcxdoWebURLExecute
     end
     object MenuItem38: TMenuItem
       Caption = '-'
