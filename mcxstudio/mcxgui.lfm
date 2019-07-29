@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 357
+  Left = 391
   Height = 814
-  Top = 107
+  Top = 169
   Width = 1253
   ActiveControl = lvJobs
   Align = alTop
@@ -158,7 +158,7 @@ object fmMCX: TfmMCX
   OnResize = FormShow
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.8.2.0'
+  LCLVersion = '2.0.2.0'
   object ToolBar1: TToolBar
     Left = 0
     Height = 117
@@ -331,6 +331,7 @@ object fmMCX: TfmMCX
       end    
       item
         Alignment = taCenter
+        Bevel = pbRaised
         Style = psOwnerDraw
         Width = 392
       end    
@@ -1523,6 +1524,7 @@ object fmMCX: TfmMCX
           DefaultColWidth = 40
           DefaultRowHeight = 22
           FixedColor = clCream
+          FixedCols = 0
           Flat = True
           ParentFont = False
           ParentShowHint = False
@@ -2400,7 +2402,7 @@ object fmMCX: TfmMCX
             69
           )
           Cells = (
-            9
+            7
             0
             0
             'Type'
@@ -2422,12 +2424,6 @@ object fmMCX: TfmMCX
             3
             2
             '0.01'
-            4
-            1
-            '1'
-            4
-            2
-            '1.37'
           )
         end
         object sgDet: TStringGrid
@@ -2572,6 +2568,7 @@ object fmMCX: TfmMCX
           OnDblClick = sgConfigDblClick
           OnEditButtonClick = sgConfigEditButtonClick
           OnEditingDone = edRespinChange
+          OnResize = sgConfigResize
           OnSelectEditor = sgConfigSelectEditor
           ColWidths = (
             106
@@ -2784,7 +2781,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 5
+            Height = 67
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
@@ -30099,31 +30096,5 @@ object fmMCX: TfmMCX
     StringAttri.Style = [fsBold]
     left = 94
     top = 556
-  end
-  object StudioConfig: TJSONPropStorage
-    StoredValues = <    
-      item
-        Name = 'LocalOutputPath'
-      end    
-      item
-        Name = 'LocalExePath'
-        Value = './MCXStuite/$EXE/bin;./;$PATH'
-      end    
-      item
-        Name = 'RemoteExePath'
-      end    
-      item
-        Name = 'RemoteOutputPath'
-      end    
-      item
-        Name = 'SSHPath'
-      end    
-      item
-        Name = 'SCPPath'
-      end>
-    JSONFileName = 'mcxstudio.json'
-    Formatted = True
-    left = 576
-    top = 658
   end
 end

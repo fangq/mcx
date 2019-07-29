@@ -35,7 +35,6 @@ type
     grDet: TGroupBox;
     MenuItem64: TMenuItem;
     MenuItem65: TMenuItem;
-    StudioConfig: TJSONPropStorage;
     Label14: TLabel;
     mcxdoWebURL: TAction;
     MenuItem33: TMenuItem;
@@ -362,6 +361,7 @@ type
       const Rect: TRect);
     procedure sgConfigDblClick(Sender: TObject);
     procedure sgConfigEditButtonClick(Sender: TObject);
+    procedure sgConfigResize(Sender: TObject);
     procedure sgConfigSelectEditor(Sender: TObject; aCol, aRow: Integer;
       var Editor: TWinControl);
     procedure sgMediaDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -419,7 +419,7 @@ type
     procedure RunExternalCmd(cmd: AnsiString);
     function  GetBrowserPath : AnsiString;
     function  GetFileBrowserPath : string;
-    function  SearchForExe(fname : string) : string;
+    function  SearchForExe(fname : string; isremote: boolean = false) : string;
     function CreateWorkFolder(session: string; iscreate: boolean=true):string;
     function SaveJSONConfig(filename: string): AnsiString;
     function CheckListToStr(list: TCheckListBox) : string;
@@ -435,6 +435,7 @@ type
     procedure GotoColRow(grid: TStringGrid; Col, Row: Integer);
     procedure SetSessionType(sessiontype: integer);
     function ResetMCX(exitcode: LongInt) : boolean;
+    function ExpandPathMacro(path, app: string): string;
     function ExpandPassword(url: AnsiString): AnsiString;
     procedure SwapState(old, new: TListItem);
     function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
@@ -443,6 +444,7 @@ type
 var
   fmMCX: TfmMCX;
   fmDomain: TfmDomain;
+  fmConfig: TfmConfig;
   ProfileChanged: Boolean;
   MaxWait: integer;
   TaskFile: string;
@@ -460,8 +462,8 @@ Const
      (-1,8,9,7,6,5,4);
   JSONTypeNames : Array[TJSONtype] of string =
      ('Unknown','Number','String','Boolean','Null','Array','Object');
-  MCProgram : Array[0..2] of string =
-     ('mcx','mmc','mcxcl');
+  MCProgram : Array[0..3] of string =
+     ('mcx','mmc','mcxcl','mmcl');
   DebugFlags: string ='RMP';
   SaveDetFlags: string ='DSPMXVW';
   BCFlags: string = 'ARMC';
@@ -727,27 +729,8 @@ begin
 end;
 
 procedure TfmMCX.mcxdoConfigExecute(Sender: TObject);
-var
-    fmConfig: TfmConfig;
 begin
-    fmConfig:=TfmConfig.Create(self);
-    fmConfig.edWorkPath.Text:=StudioConfig.ReadString('LocalOutputPath','');
-    fmConfig.edRemotePath.Text:=StudioConfig.ReadString('RemoteExePath','');
-    fmConfig.edLocalPath.Cols[0].Delimiter:=';';
-    fmConfig.edLocalPath.Cols[0].DelimitedText:=StudioConfig.ReadString('LocalExePath','');
-    fmConfig.edRemoteOutputPath.Text:=StudioConfig.ReadString('RemoteOutputPath','');
-    fmConfig.edSSHPath.Text:=StudioConfig.ReadString('SSHPath','');
-    fmConfig.edSCPPath.Text:=StudioConfig.ReadString('SCPPath','');
-
-    if(fmConfig.ShowModal= mrOK) then begin
-        StudioConfig.StoredValue['LocalOutputPath']:=fmConfig.edWorkPath.Text;
-        StudioConfig.StoredValue['RemoteExePath']:=fmConfig.edRemotePath.Text;
-        StudioConfig.StoredValue['LocalExePath']:=fmConfig.edLocalPath.Cols[0].DelimitedText;
-        StudioConfig.StoredValue['RemoteOutputPath']:=fmConfig.edRemoteOutputPath.Text;
-        StudioConfig.StoredValue['SSHPath']:=fmConfig.edSSHPath.Text;
-        StudioConfig.StoredValue['SCPPath']:=fmConfig.edSCPPath.Text;
-    end;
-    fmConfig.Free;
+    fmConfig.ShowModal;
 end;
 
 procedure TfmMCX.mcxdoCopyExecute(Sender: TObject);
@@ -1472,6 +1455,7 @@ begin
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
 
     fmDomain:=TfmDomain.Create(Self);
+    fmConfig:=TfmConfig.Create(Self);
 
     CurrentSession:=nil;
     PassList:=TStringList.Create();
@@ -1523,6 +1507,7 @@ begin
     PassList.Free;
     fmDomain.Free;
     BCItemProp.Free;
+    fmConfig.Free;
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -1554,30 +1539,79 @@ begin
   end;
 end;
 
-function TfmMCX.SearchForExe(fname : string) : string;
+function TfmMCX.ExpandPathMacro(path, app: string): string;
+begin
+  Result:=path;
+  Result:=StringReplace(Result,'%MCXSTUDIO%', ExtractFilePath(Application.ExeName),[rfReplaceAll]);
+  Result:=StringReplace(Result,'%EXE%', app, [rfReplaceAll]);
+  Result:=StringReplace(Result,'$HOME', GetUserDir, [rfReplaceAll]);
+  Result:=StringReplace(Result,'$PATH', GetEnvironmentVariable('PATH'), [rfReplaceAll]);
+  {$IFDEF WINDOWS}
+  Result:=StringReplace(Result,'/', DirectorySeparator, [rfReplaceAll]);
+  {$ENDIF}
+end;
+
+function TfmMCX.SearchForExe(fname : string; isremote: boolean = false) : string;
+var
+   path: string;
 begin
    {$IFDEF WINDOWS}
    if(Pos('.cl',Trim(LowerCase(fname)))<=0) then
        if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
            fname:=fname+'.exe';
    {$ENDIF}
-   Result :=
-    SearchFileInPath(fname, '',
-        ExtractFilePath(Application.ExeName)+'MCXSuite'+
-        DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
-        'bin'+PathSeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
-        GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+
-        ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
-        DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
-                     PathSeparator, [sffDontSearchInBasePath]);
+   if(fmConfig.ckUseManualPath.Checked) then begin
+        if(fname='mcx') or (fname='mmc') or (fname='mcxcl') then begin
+          if not (isremote) then begin
+              path:=fmConfig.edLocalPath.Cols[0].CommaText;
+              if(not path.IsEmpty) then begin
+                  path:=ExpandPathMacro(path,fname);
+                  Result := SearchFileInPath(fname, '', path,PathSeparator, [sffDontSearchInBasePath]);
+                  if (not Result.IsEmpty) then exit;
+              end;
+          end else begin
+              path:=fmConfig.edRemotePath.Text;
+              if(not path.IsEmpty) and FileExists(path+DirectorySeparator+fname) then
+                  Result:=path+DirectorySeparator+fname
+              else
+                  Result:=fname;
+              exit;
+          end;
+        end else begin
+              if(fname='ssh') or (fname='plink') then begin
+                   path:=fmConfig.edSSHPath.Text;
+                   if (not path.IsEmpty) and FileExists(path) then begin
+                       Result:=path;
+                       exit;
+                   end;
+              end else if (fname='scp') then begin
+                    path:=fmConfig.edSCPPath.Text;
+                    if (not path.IsEmpty) and FileExists(path) then begin
+                        Result:=path;
+                        exit;
+                    end;
+              end;
 
-   if(DirectoryExists(Result)) then
-     Result :=SearchFileInPath(fname, '',
-         ExtractFilePath(Application.ExeName)+'MCXSuite'+
-        DirectorySeparator+MCProgram[grProgram.ItemIndex]+
-         DirectorySeparator+'bin'+PathSeparator+PathSeparator+
-         GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+ GetEnvironmentVariable('PATH'),
-                      PathSeparator, [sffDontSearchInBasePath]);
+        end;
+   end;
+
+   Result :=
+        SearchFileInPath(fname, '',
+            ExtractFilePath(Application.ExeName)+'MCXSuite'+
+            DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
+            'bin'+PathSeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
+            GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+
+            ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
+            DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
+                         PathSeparator, [sffDontSearchInBasePath]);
+
+   if not (DirectoryExists(Result)) then
+         Result :=SearchFileInPath(fname, '',
+             ExtractFilePath(Application.ExeName)+'MCXSuite'+
+            DirectorySeparator+MCProgram[grProgram.ItemIndex]+
+             DirectorySeparator+'bin'+PathSeparator+PathSeparator+
+             GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+ GetEnvironmentVariable('PATH'),
+                          PathSeparator, [sffDontSearchInBasePath]);
 end;
 
 function TfmMCX.GetFileBrowserPath : string;
@@ -1796,6 +1830,11 @@ begin
       fmSrc.Free;
    end;
    edRespinChange(Sender);
+end;
+
+procedure TfmMCX.sgConfigResize(Sender: TObject);
+begin
+
 end;
 
 procedure TfmMCX.sgConfigSelectEditor(Sender: TObject; aCol, aRow: Integer;
@@ -2452,6 +2491,9 @@ begin
     if not (SaveJSONConfig('')='') then  begin
        UpdateMCXActions(acMCX,'Work','');
        AddLog('"-- Input is valid, please click [Run] to execute --"');
+
+       if (MessageDlg('Confirmation', 'Input is valid. Do you want to execute the simulation?', mtConfirmation, [mbYes, mbCancel],0)=mrYes) then
+           mcxdoRunExecute(nil);
     end;
   except
     On E : Exception do
@@ -2643,6 +2685,11 @@ begin
     path:=ExtractFileDir(Application.ExeName)
        +DirectorySeparator+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
 {$ENDIF}
+    if fmConfig.ckUseManualPath.Checked then begin
+         path:=fmConfig.edWorkPath.Text;
+         path:=ExpandPathMacro(path,session);
+         path:=path+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+    end;
     path:=ExpandFileName(path);
     Result:=path;
     AddLog(Result);
@@ -2781,8 +2828,10 @@ begin
       param.Add('--replaydet');
       param.Add(Format('%d',[edReplayDet.Value]));
     end;
-    param.Add('--saveseed');
-    param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
+    if(ckSaveDetector.Checked) then begin
+      param.Add('--saveseed');
+      param.Add(Format('%d',[Integer(ckSaveSeed.Checked)]));
+    end;
 
     if(grProgram.ItemIndex>=1) then begin
       param.Add('--atomic');
@@ -2809,19 +2858,21 @@ begin
         param.Add(Format('%d',[Integer(ckSaveMask.Checked)]));
         param.Add('--repeat');
         param.Add(Format('%d',[edRespin.Value]));
-        param.Add('--maxdetphoton');
-        param.Add(Format('%d',[hitmax]));
     end;
 
     if(grProgram.ItemIndex<>1) then begin
-        savedetflag:='';
-        for i:=0 to ckbDet.Items.Count-1 do begin
-             if(ckbDet.Checked[i]) then
-                 savedetflag:=savedetflag+SaveDetFlags[i+1];
-        end;
-        if(Length(savedetflag)>0) then begin
-            param.Add('--savedetflag');
-            param.Add(savedetflag);
+        if(ckSaveDetector.Checked) then begin
+            savedetflag:='';
+            for i:=0 to ckbDet.Items.Count-1 do begin
+                 if(ckbDet.Checked[i]) then
+                     savedetflag:=savedetflag+SaveDetFlags[i+1];
+            end;
+            if(Length(savedetflag)>0) then begin
+                param.Add('--savedetflag');
+                param.Add(savedetflag);
+            end;
+            param.Add('--maxdetphoton');
+            param.Add(Format('%d',[hitmax]));
         end;
 
         if(not ckReflect.Checked) then begin
@@ -2835,7 +2886,6 @@ begin
             end;
         end;
     end;
-
     if(ckSkipVoid.Checked) then begin
         param.Add('--skipvoid');
         param.Add('1');

@@ -282,7 +282,11 @@ begin { TTexture_3D.Load_From_File_Log_Float }
               GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
               else val:=PByte(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
           end;
-          M_Data[i]:=chr(Round((val-low)*hi));
+          if(val=0) then begin
+             M_Data[i]:=#0;
+          end else begin
+             M_Data[i]:=chr(Round((val-low)*hi));
+          end;
     end;
     setLength(mybuf, 0);
   finally
