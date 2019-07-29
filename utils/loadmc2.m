@@ -1,8 +1,8 @@
-function [data, dref]=loadmc2(fname,dim,format)
+function [data, dref]=loadmc2(fname,dim,format,offset)
 %
 %    data=loadmc2(fname,dim,format)
 %       or
-%    [data dref]=loadmc2(fname,dim,format)
+%    [data dref]=loadmc2(fname,dim,format,offset)
 %
 %    author: Qianqian Fang (q.fang <at> neu.edu)
 %
@@ -30,6 +30,15 @@ if(nargin==2)
 end
 
 fid=fopen(fname,'rb');
+
+if(fid==0)
+    error('can not open the specified file');
+end
+
+if(nargin>3)
+    fseek(fid,offset,'bof');
+end
+
 data=fread(fid,inf,format);
 fclose(fid);
 

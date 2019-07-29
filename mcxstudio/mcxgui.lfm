@@ -29891,10 +29891,6 @@ object fmMCX: TfmMCX
     object MenuItem34: TMenuItem
       Caption = '-'
     end
-    object MenuItem24: TMenuItem
-      Action = mcxdoPlotVol
-      Caption = 'Plot volume (_vol.nii)'
-    end
     object MenuItem25: TMenuItem
       Action = mcxdoPlotMC2
     end
@@ -29903,6 +29899,10 @@ object fmMCX: TfmMCX
     end
     object MenuItem26: TMenuItem
       Action = mcxdoPlotMesh
+    end
+    object MenuItem24: TMenuItem
+      Action = mcxdoPlotVol
+      Caption = 'Plot volume (_vol.nii)'
     end
     object MenuItem29: TMenuItem
       Caption = '-'

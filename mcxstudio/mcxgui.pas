@@ -1182,6 +1182,7 @@ var
     ftype: TAction;
     nx,ny,nz,nt: integer;
     fmViewer: TfmViewer;
+    cmd: TStringList;
 begin
      if(CurrentSession=nil) then exit;
      if (grProgram.ItemIndex=1) then begin
@@ -1201,6 +1202,26 @@ begin
       MessageDlg('Warning', 'Domain size specifier contains incorrect format', mtError, [mbOK],0);
       exit;
     end;
+
+    cmd:=TStringList.Create;
+    cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
+    cmd.Add(Format('addpath(''%s'');',[ExtractFilePath(Application.ExeName)+
+        'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
+    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+          0:    cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'',256);', [outputfile,nz,ny,nz]));
+          1..2: cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [outputfile,nz,ny,nz]));
+          3..4: cmd.Add(Format('img=mcxloadnii(''%s'');data=img.img;', [outputfile]));
+    else
+    end;
+    if not (ftype.Hint='_vol.nii') then
+        cmd.Add('mcxplotvol(log10(data));')
+    else
+        cmd.Add('mcxplotvol(data);');
+
+    cmd.Add('%%%%%%%%% END PLOTTING SCRIPT %%%%%%%%%');
+    cmd.Delimiter:=#10;
+    AddMultiLineLog(cmd.DelimitedText,pMCX);
+    cmd.Free;
 
     fmViewer:=TfmViewer.Create(self);
     Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
@@ -2140,11 +2161,23 @@ end;
 procedure TfmMCX.shapePreviewExecute(Sender: TObject);
 var
     shapejson: TJSONData;
+    cmd: TStringList;
 begin
     shapejson:=GetJSON(SaveJSONConfig(''));
     fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
     fmDomain.Show;
     freeandnil(shapejson);
+
+    cmd:=TStringList.Create;
+    cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
+    cmd.Add(Format('addpath(''%s'');',[ExtractFilePath(Application.ExeName)+
+        'MATLAB'+DirectorySeparator+'mcxlab']));
+    cmd.Add(Format('cfg=json2mcx(''%s'')',[CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json']));
+    cmd.Add('mcxpreview(cfg)');
+    cmd.Add('%%%%%%%%% END PLOTTING SCRIPT %%%%%%%%%');
+    cmd.Delimiter:=#10;
+    AddMultiLineLog(cmd.DelimitedText,pMCX);
+    cmd.Free;
 end; 
 
 

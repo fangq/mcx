@@ -41,8 +41,8 @@ randseed=hex2dec('623F9A9E');
 rand('state',randseed);
 
 for i=1:len
-    if(~isfield(cfg(i),'vol') && ~isfield(cfg(i),'node'))
-        error('cfg.vol or cfg.node is missing');
+    if(~isfield(cfg(i),'vol') && ~isfield(cfg(i),'node') && ~isfield(cfg(i),'shapes'))
+        error('cfg.vol or cfg.node or cfg.shapes is missing');
     end
 
     if(i>1)
