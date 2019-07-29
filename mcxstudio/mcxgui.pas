@@ -1552,7 +1552,7 @@ function TfmMCX.ExpandPathMacro(path, app: string): string;
 begin
   Result:=path;
   Result:=StringReplace(Result,'%MCXSTUDIO%', ExtractFilePath(Application.ExeName),[rfReplaceAll]);
-  Result:=StringReplace(Result,'%EXE%', app, [rfReplaceAll]);
+  Result:=StringReplace(Result,'%APP%', app, [rfReplaceAll]);
   Result:=StringReplace(Result,'$HOME', GetUserDir, [rfReplaceAll]);
   Result:=StringReplace(Result,'$PATH', GetEnvironmentVariable('PATH'), [rfReplaceAll]);
   {$IFDEF WINDOWS}

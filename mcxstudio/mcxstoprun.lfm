@@ -34,7 +34,6 @@ object fmStop: TfmStop
       Left = 1
       Top = 0
       Action = fmMCX.mcxdoStop
-      Caption = 'Terminate'
       ParentShowHint = False
       ShowHint = True
     end
@@ -62,8 +61,9 @@ object fmStop: TfmStop
     Top = 0
     Width = 218
     Align = alClient
-    Font.Color = clGreen
+    Font.Style = [fsItalic]
     Lines.Strings = (
+      ''
       'Press "Terminate" to force stop.'
     )
     ParentFont = False

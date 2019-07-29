@@ -152,7 +152,7 @@ object fmConfig: TfmConfig
           3
           0
           0
-          '%MCXSTUDIO%/MCXSuite/%EXE%/bin/'
+          '%MCXSTUDIO%/MCXSuite/%APP%/bin/'
           0
           1
           '%MCXSTUDIO%/'
@@ -299,7 +299,7 @@ object fmConfig: TfmConfig
     Formatted = True
     OnSaveProperties = jsonConfigSaveProperties
     OnRestoreProperties = jsonConfigRestoreProperties
-    left = 312
+    left = 320
     top = 464
   end
 end

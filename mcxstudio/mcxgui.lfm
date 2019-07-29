@@ -1494,11 +1494,11 @@ object fmMCX: TfmMCX
         TabOrder = 9
       end
       object grBC: TGroupBox
-        AnchorSideLeft.Control = ckSaveRef
+        AnchorSideLeft.Control = grDet
         AnchorSideLeft.Side = asrBottom
         AnchorSideBottom.Control = grSwitches
         AnchorSideBottom.Side = asrBottom
-        Left = 427
+        Left = 600
         Height = 120
         Top = 0
         Width = 124
@@ -1549,11 +1549,11 @@ object fmMCX: TfmMCX
         end
       end
       object grDet: TGroupBox
-        AnchorSideLeft.Control = grBC
+        AnchorSideLeft.Control = ckSaveRef
         AnchorSideLeft.Side = asrBottom
         AnchorSideBottom.Control = grSwitches
         AnchorSideBottom.Side = asrBottom
-        Left = 551
+        Left = 427
         Height = 120
         Top = 0
         Width = 173
