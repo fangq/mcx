@@ -1643,7 +1643,7 @@ begin
             GetAppRoot+MCProgram[grProgram.ItemIndex]+
             DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                          PathSeparator, [sffDontSearchInBasePath]);
-   AddLog(Result);
+   AddLog('EXEPATH='+Result);
 end;
 
 function TfmMCX.GetFileBrowserPath : string;
