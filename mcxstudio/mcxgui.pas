@@ -16,7 +16,7 @@ uses
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript, LclIntf,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, LazHelpHTML, ValEdit, JSONPropStorage, inifiles, fpjson, jsonparser,
+  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser,
   strutils, RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
   mcxrender, mcxview, mcxconfig, mcxstoprun, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
@@ -439,6 +439,7 @@ type
     function ResetMCX(exitcode: LongInt) : boolean;
     function ExpandPathMacro(path, app: string): string;
     function ExpandPassword(url: AnsiString): AnsiString;
+    function GetAppRoot: string;
     procedure SwapState(old, new: TListItem);
     function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
   end;
@@ -1047,12 +1048,7 @@ function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
 var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
-  {$IFDEF DARWIN}
-   rootpath:=GetUserDir+DirectorySeparator+'MCXStudio'+DirectorySeparator+
-         'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
-  {$ELSE}
-   rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
-  {$ENDIF}
+   rootpath:=GetAppRoot+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
    localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
@@ -1205,7 +1201,7 @@ begin
 
     cmd:=TStringList.Create;
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
-    cmd.Add(Format('addpath(''%s'');',[ExtractFilePath(Application.ExeName)+
+    cmd.Add(Format('addpath(''%s'');',[GetAppRoot+
         'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
     Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
           0:    cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'',16);', [outputfile,nx,ny,nz,nt]));
@@ -1341,8 +1337,10 @@ begin
         sbInfo.Panels[2].Text := '';
         pMCX.Tag:=-10;
         sbInfo.Color := clRed;
+
         UpdateMCXActions(acMCX,'Run','');
-        mcxdoRun.Tag:=GetTickCount64;
+        mcxdoRun.Tag:=ptrint(GetTickCount64);
+
         {$IFDEF DARWIN}
         AProcess := TProcess.Create(nil);
         try
@@ -1478,7 +1476,7 @@ begin
   {$ENDIF}
 
   {$IFDEF DARWIN}
-    lvJobs.ViewStyle:=vsReport;
+    //lvJobs.ViewStyle:=vsReport;
   {$ENDIF}
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
 
@@ -1572,13 +1570,21 @@ end;
 function TfmMCX.ExpandPathMacro(path, app: string): string;
 begin
   Result:=path;
-  Result:=StringReplace(Result,'%MCXSTUDIO%', ExtractFilePath(Application.ExeName),[rfReplaceAll]);
+  Result:=StringReplace(Result,'%MCXSTUDIO%', GetAppRoot,[rfReplaceAll]);
   Result:=StringReplace(Result,'%APP%', app, [rfReplaceAll]);
   Result:=StringReplace(Result,'$HOME', GetUserDir, [rfReplaceAll]);
   Result:=StringReplace(Result,'$PATH', GetEnvironmentVariable('PATH'), [rfReplaceAll]);
   {$IFDEF WINDOWS}
   Result:=StringReplace(Result,'/', DirectorySeparator, [rfReplaceAll]);
   {$ENDIF}
+end;
+
+function TfmMCX.GetAppRoot: string;
+begin
+      Result:=ExtractFilePath(Application.ExeName);
+      {$IFDEF DARWIN}
+      Result:=ReplaceRegExpr('/mcxstudio.app/Contents/MacOS/$',Result, '/', false);
+      {$ENDIF}
 end;
 
 function TfmMCX.SearchForExe(fname : string; isremote: boolean = false) : string;
@@ -1590,6 +1596,7 @@ begin
        if (Pos('.exe',Trim(LowerCase(fname)))<=0) or (Pos('.exe',Trim(LowerCase(fname))) <> Length(Trim(fname))-3) then
            fname:=fname+'.exe';
    {$ENDIF}
+
    if(fmConfig.ckUseManualPath.Checked) then begin
         if(fname='mcx') or (fname='mmc') or (fname='mcxcl') then begin
           if not (isremote) then begin
@@ -1627,21 +1634,14 @@ begin
 
    Result :=
         SearchFileInPath(fname, '',
-            ExtractFilePath(Application.ExeName)+'MCXSuite'+
+            GetAppRoot+'MCXSuite'+
             DirectorySeparator+MCProgram[grProgram.ItemIndex]+DirectorySeparator+
-            'bin'+PathSeparator+ExtractFilePath(Application.ExeName)+PathSeparator+
+            'bin'+PathSeparator+GetAppRoot+PathSeparator+
             GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+
-            ExtractFilePath(Application.ExeName)+MCProgram[grProgram.ItemIndex]+
+            GetAppRoot+MCProgram[grProgram.ItemIndex]+
             DirectorySeparator+'bin'+PathSeparator+GetEnvironmentVariable('PATH'),
                          PathSeparator, [sffDontSearchInBasePath]);
-
-   if not (DirectoryExists(Result)) then
-         Result :=SearchFileInPath(fname, '',
-             ExtractFilePath(Application.ExeName)+'MCXSuite'+
-            DirectorySeparator+MCProgram[grProgram.ItemIndex]+
-             DirectorySeparator+'bin'+PathSeparator+PathSeparator+
-             GetUserDir+DirectorySeparator+'MCXStudio'+PathSeparator+ GetEnvironmentVariable('PATH'),
-                          PathSeparator, [sffDontSearchInBasePath]);
+   AddLog(Result);
 end;
 
 function TfmMCX.GetFileBrowserPath : string;
@@ -2170,7 +2170,7 @@ begin
 
     cmd:=TStringList.Create;
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
-    cmd.Add(Format('addpath(''%s'');',[ExtractFilePath(Application.ExeName)+
+    cmd.Add(Format('addpath(''%s'');',[GetAppRoot+
         'MATLAB'+DirectorySeparator+'mcxlab']));
     cmd.Add(Format('cfg=json2mcx(''%s'')',[CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json']));
     cmd.Add('mcxpreview(cfg)');
@@ -2722,14 +2722,8 @@ function TfmMCX.CreateWorkFolder(session: string; iscreate: boolean=true) : stri
 var
     path: string;
 begin
-{$IFDEF DARWIN}
-    path:=GetUserDir
-       +DirectorySeparator+'MCXStudio'+DirectorySeparator+'Output'
-       +DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
-{$ELSE}
-    path:=ExtractFileDir(Application.ExeName)
+    path:=GetAppRoot
        +DirectorySeparator+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
-{$ENDIF}
     if fmConfig.ckUseManualPath.Checked then begin
          path:=fmConfig.edWorkPath.Text;
          path:=ExpandPathMacro(path,session);
@@ -2806,18 +2800,8 @@ begin
     if(Length(sgConfig.Cells[2,14])>0) then
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
-      {$IFDEF DARWIN}
-        if(rootpath='') then begin
-            if(ckDoRemote.Checked) then
-                rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text)
-            else
-                rootpath:=GetUserDir+DirectorySeparator+'MCXStudio'+DirectorySeparator+
-                      'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
-        end;
-      {$ELSE}
         if(rootpath='') then
             rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
-      {$ENDIF}
     end;
     param.Add('--root');
     param.Add(rootpath);

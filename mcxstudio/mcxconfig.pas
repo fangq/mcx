@@ -70,7 +70,7 @@ end;
 
 procedure TfmConfig.jsonConfigRestoreProperties(Sender: TObject);
 begin
-    edLocalPath.Cols[0].Delimiter:=';';
+    edLocalPath.Cols[0].Delimiter:=PathSeparator;
     if Length(edLocalPath.Hint)>0 then begin
        edLocalPath.Cols[0].DelimitedText:=edLocalPath.Hint;
     end else begin
@@ -80,7 +80,7 @@ end;
 
 procedure TfmConfig.jsonConfigSaveProperties(Sender: TObject);
 begin
-    edLocalPath.Cols[0].Delimiter:=';';
+    edLocalPath.Cols[0].Delimiter:=PathSeparator;
     edLocalPath.Hint:=edLocalPath.Cols[0].DelimitedText;
 end;
 
