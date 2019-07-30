@@ -1208,8 +1208,8 @@ begin
     cmd.Add(Format('addpath(''%s'');',[ExtractFilePath(Application.ExeName)+
         'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
     Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
-          0:    cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'',256);', [outputfile,nz,ny,nz]));
-          1..2: cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [outputfile,nz,ny,nz]));
+          0:    cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'',16);', [outputfile,nx,ny,nz,nt]));
+          1..2: cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [outputfile,nx,ny,nz,nt]));
           3..4: cmd.Add(Format('img=mcxloadnii(''%s'');data=img.img;', [outputfile]));
     else
     end;
@@ -1226,9 +1226,9 @@ begin
     fmViewer:=TfmViewer.Create(self);
     Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
          0:  fmViewer.LoadTexture(outputfile);
-         1..2:  fmViewer.LoadTexture(outputfile,nz,ny,nz,nt,0,GL_RGBA32F);
-         3:  fmViewer.LoadTexture(outputfile,nz,ny,nz,nt,352,GL_RGBA32F);
-         4:  fmViewer.LoadTexture(outputfile,nz,ny,nz,2,352,GL_RGBA16I);
+         1..2:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,0,GL_RGBA32F);
+         3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,GL_RGBA32F);
+         4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
     else
     end;
     fmViewer.Show;
