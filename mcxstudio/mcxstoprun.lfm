@@ -1,12 +1,12 @@
 object fmStop: TfmStop
   Left = 867
-  Height = 159
+  Height = 179
   Top = 284
   Width = 218
   Align = alBottom
   BorderStyle = bsDialog
   Caption = 'Running ...'
-  ClientHeight = 159
+  ClientHeight = 179
   ClientWidth = 218
   DesignTimePPI = 94
   Position = poOwnerFormCenter
@@ -46,7 +46,7 @@ object fmStop: TfmStop
     end
     object ToolButton3: TToolButton
       Left = 106
-      Hint = 'Exit MCX Studio'
+      Hint = 'Hide this window'
       Top = 0
       Caption = 'Hide'
       ImageIndex = 13
@@ -69,5 +69,16 @@ object fmStop: TfmStop
     ParentFont = False
     ReadOnly = True
     TabOrder = 1
+  end
+  object pbProgress: TProgressBar
+    Left = 0
+    Height = 20
+    Top = 159
+    Width = 218
+    Align = alBottom
+    Smooth = True
+    Step = 1
+    TabOrder = 2
+    BarShowText = True
   end
 end

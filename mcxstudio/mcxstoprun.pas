@@ -14,6 +14,7 @@ type
 
   TfmStop = class(TForm)
     Memo1: TMemo;
+    pbProgress: TProgressBar;
     tbtStop: TToolButton;
     ToolBar1: TToolBar;
     ToolButton3: TToolButton;

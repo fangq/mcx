@@ -70,6 +70,7 @@ type
     MenuItem63: TMenuItem;
     MenuItem66: TMenuItem;
     MenuItem67: TMenuItem;
+    MenuItem68: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
     mmOutput: TSynEdit;
@@ -1403,6 +1404,7 @@ begin
           if(ckbDebug.Checked[2]) then begin
               sbInfo.Panels[1].Text:='0%';
               sbInfo.Tag:=0;
+              fmStop.pbProgress.Position:=0;
               sbInfo.Repaint;
           end;
           fmStop.Hide;
@@ -1771,6 +1773,7 @@ begin
      AddLog('"-- Task completed --"');
      sbInfo.Panels[1].Text:='';
      sbInfo.Tag:=0;
+     fmStop.pbProgress.Position:=0;
      sbInfo.Repaint;
      UpdateMCXActions(acMCX,'','Run');
 end;
@@ -2164,9 +2167,6 @@ var
     cmd: TStringList;
 begin
     shapejson:=GetJSON(SaveJSONConfig(''));
-    fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
-    fmDomain.Show;
-    freeandnil(shapejson);
 
     cmd:=TStringList.Create;
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
@@ -2178,6 +2178,10 @@ begin
     cmd.Delimiter:=#10;
     AddMultiLineLog(cmd.DelimitedText,pMCX);
     cmd.Free;
+
+    fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
+    fmDomain.Show;
+    freeandnil(shapejson);
 end; 
 
 
@@ -2435,6 +2439,7 @@ begin
                      if(sscanf(percent,']%d\%', [@total])=1) then begin
                         sbInfo.Panels[1].Text:=Format('%d%%',[total]);
                         sbInfo.Tag:=total;
+                        fmStop.pbProgress.Position:=total;
                         sbInfo.Repaint;
                         Application.ProcessMessages;
                      end;
@@ -3138,12 +3143,6 @@ begin
            if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
            continue;
         end;
-        if(gb.Controls[id] is TCheckBox) then begin
-           cg:=gb.Controls[id] as TCheckBox;
-           idx:=MapList.IndexOf(cg.Hint);
-           if(idx>=0) then node.SubItems.Strings[idx]:=IntToStr(Integer(ck.Checked));
-           continue;
-        end;
         if(gb.Controls[id] is TCheckListBox) then begin
            ckb:=gb.Controls[id] as TCheckListBox;
            idx:=MapList.IndexOf(ckb.Hint);
@@ -3283,7 +3282,12 @@ begin
                end;
                continue;
            end;
-           if(idx>=0) then cb.Text:=node.SubItems.Strings[idx];
+           if(idx>=0) then begin
+             if(node.SubItems.Strings[idx].IsEmpty) then
+                 cb.ItemIndex:=0
+             else
+                 cb.Text:=node.SubItems.Strings[idx];
+           end;
            continue;
         end;
         if(gb.Controls[id] is TCheckBox) then begin
