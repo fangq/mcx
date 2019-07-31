@@ -1478,13 +1478,14 @@ begin
   {$ENDIF}
 
   {$IFDEF DARWIN}
-    //lvJobs.ViewStyle:=vsReport;
+    lvJobs.ViewStyle:=vsReport;
   {$ENDIF}
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
 
     fmDomain:=TfmDomain.Create(Self);
     fmConfig:=TfmConfig.Create(Self);
     fmStop:=TfmStop.Create(Self);
+    fmDomain.FormStyle:=fsStayOnTop;
     fmStop.FormStyle:=fsStayOnTop;
 
     CurrentSession:=nil;
@@ -2180,8 +2181,8 @@ begin
     cmd.Free;
 
     fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
-    fmDomain.Show;
     freeandnil(shapejson);
+    fmDomain.Show;
 end; 
 
 
