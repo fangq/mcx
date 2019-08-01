@@ -26,9 +26,12 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    btSendCmd: TButton;
+    Button2: TButton;
     ckShowProgress: TCheckBox;
+    edCmdInput: TEdit;
+    Label5: TLabel;
     mcxdoConfig: TAction;
-    Button1: TButton;
     ckbDet: TCheckListBox;
     edOutputType: TComboBox;
     grBC: TGroupBox;
@@ -75,6 +78,7 @@ type
     miCopy: TMenuItem;
     mmOutput: TSynEdit;
     Panel1: TPanel;
+    Panel2: TPanel;
     PopupMenu3: TPopupMenu;
     PopupMenu4: TPopupMenu;
     shapePreview: TAction;
@@ -265,7 +269,6 @@ type
     MenuItem8: TMenuItem;
     MenuItem9: TMenuItem;
     plSetting: TPanel;
-    pExternal: TProcess;
     rbUseFile: TRadioButton;
     rbUseDesigner: TRadioButton;
     SaveProject: TSaveDialog;
@@ -312,8 +315,10 @@ type
     tvShapes: TTreeView;
     procedure btLoadSeedClick(Sender: TObject);
     procedure btGBExpandClick(Sender: TObject);
+    procedure btSendCmdClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure ckLockGPUChange(Sender: TObject);
+    procedure edCmdInputKeyPress(Sender: TObject; var Key: char);
     procedure edSessionEditingDone(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormShow(Sender: TObject);
@@ -926,6 +931,17 @@ begin
      end;
 end;
 
+procedure TfmMCX.btSendCmdClick(Sender: TObject);
+var
+    cmd: string;
+begin
+    cmd:=edCmdInput.Text+#10;
+    if(Length(cmd)=0) or (pMCX=nil) or (not pMCX.Running) then exit;
+    pMCX.Input.Write(cmd[1], Length(cmd));
+    mmOutput.Lines.Add('"User input:" '+cmd);
+    edCmdInput.Text:='';
+end;
+
 procedure TfmMCX.Button1Click(Sender: TObject);
 begin
 
@@ -937,6 +953,13 @@ begin
      edRemote.Enabled:=not ckLockGPU.Checked;
      ckDoRemote.Enabled:=not ckLockGPU.Checked;
      ckSharedFS.Enabled:=not ckLockGPU.Checked;
+end;
+
+procedure TfmMCX.edCmdInputKeyPress(Sender: TObject; var Key: char);
+begin
+     if (Key = #13) or (Key = #10) then begin
+       btSendCmdClick(Sender);
+     end;
 end;
 
 procedure TfmMCX.edSessionEditingDone(Sender: TObject);
