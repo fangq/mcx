@@ -1,40 +1,41 @@
 object fmConfig: TfmConfig
-  Left = 2469
-  Height = 539
-  Top = 24
-  Width = 379
+  Left = 706
+  Height = 528
+  Top = 175
+  Width = 371
   BorderStyle = bsDialog
   Caption = 'MCX Studio Config'
-  ClientHeight = 539
-  ClientWidth = 379
+  ClientHeight = 528
+  ClientWidth = 371
+  DesignTimePPI = 94
   KeyPreview = True
   OnClose = FormClose
   OnShow = FormShow
   Position = poOwnerFormCenter
   SessionProperties = 'ckUseManualPath.Checked;edLocalPath.Hint;edRemoteOutputPath.Text;edRemotePath.Text;edSCPPath.Text;edSSHPath.Text;edWorkPath.Text;grConfig.Enabled'
-  LCLVersion = '2.0.0.4'
+  LCLVersion = '2.0.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 50
-    Top = 489
-    Width = 379
+    Height = 49
+    Top = 479
+    Width = 371
     Align = alBottom
     BevelOuter = bvNone
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 2
-    ClientHeight = 50
-    ClientWidth = 379
+    ClientHeight = 49
+    ClientWidth = 371
     ParentFont = False
     TabOrder = 0
     object btOK: TButton
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
       AnchorSideTop.Side = asrCenter
-      Left = 86
-      Height = 28
+      Left = 84
+      Height = 27
       Top = 11
-      Width = 88
-      BorderSpacing.Left = 86
+      Width = 86
+      BorderSpacing.Left = 84
       Caption = 'OK'
       ModalResult = 1
       OnClick = btOKClick
@@ -48,11 +49,11 @@ object fmConfig: TfmConfig
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
-      Left = 208
-      Height = 28
+      Left = 203
+      Height = 27
       Top = 11
-      Width = 88
-      BorderSpacing.Left = 34
+      Width = 86
+      BorderSpacing.Left = 33
       BorderSpacing.Right = 19
       Caption = 'Cancel'
       ModalResult = 2
@@ -62,25 +63,25 @@ object fmConfig: TfmConfig
   end
   object grConfig: TGroupBox
     Left = 0
-    Height = 466
-    Top = 23
-    Width = 379
+    Height = 450
+    Top = 29
+    Width = 371
     Align = alClient
     BorderSpacing.Top = 5
-    ClientHeight = 459
-    ClientWidth = 371
+    ClientHeight = 446
+    ClientWidth = 367
     Enabled = False
     ParentFont = False
     TabOrder = 1
     object GroupBox2: TGroupBox
       Left = 5
-      Height = 49
+      Height = 48
       Top = 5
-      Width = 361
+      Width = 357
       Align = alTop
       BorderSpacing.Around = 5
       Caption = 'MCXStudio Local Output Root Directory'
-      ClientHeight = 26
+      ClientHeight = 32
       ClientWidth = 353
       ParentFont = False
       TabOrder = 0
@@ -90,7 +91,7 @@ object fmConfig: TfmConfig
         AnchorSideRight.Control = GroupBox2
         AnchorSideRight.Side = asrBottom
         Left = 10
-        Height = 22
+        Height = 24
         Top = 0
         Width = 333
         Directory = '%MCXSTUDIO%/Output'
@@ -108,19 +109,19 @@ object fmConfig: TfmConfig
     end
     object GroupBox4: TGroupBox
       Left = 5
-      Height = 135
-      Top = 59
-      Width = 361
+      Height = 132
+      Top = 58
+      Width = 357
       Align = alTop
       BorderSpacing.Around = 5
       Caption = 'Local MCX/MMC/MCXCl Executable Search Paths'
-      ClientHeight = 112
+      ClientHeight = 116
       ClientWidth = 353
       ParentFont = False
       TabOrder = 1
       object edLocalPath: TStringGrid
         Left = 0
-        Height = 112
+        Height = 116
         Top = 0
         Width = 353
         HelpType = htKeyword
@@ -131,9 +132,9 @@ object fmConfig: TfmConfig
         Columns = <        
           item
             ButtonStyle = cbsEllipsis
-            MaxSize = 200
+            MaxSize = 196
             Title.Caption = 'Value'
-            Width = 342
+            Width = 335
           end>
         FixedColor = clCream
         FixedCols = 0
@@ -149,7 +150,7 @@ object fmConfig: TfmConfig
         TitleStyle = tsNative
         OnButtonClick = edLocalPathButtonClick
         ColWidths = (
-          342
+          335
         )
         Cells = (
           3
@@ -167,19 +168,19 @@ object fmConfig: TfmConfig
     end
     object GroupBox3: TGroupBox
       Left = 5
-      Height = 57
-      Top = 199
-      Width = 361
+      Height = 56
+      Top = 195
+      Width = 357
       Align = alTop
       BorderSpacing.Around = 5
       Caption = 'Remote MCX/MMC/MCXCl Executable Search Paths'
-      ClientHeight = 34
+      ClientHeight = 40
       ClientWidth = 353
       ParentFont = False
       TabOrder = 2
       object edRemotePath: TEdit
         Left = 6
-        Height = 22
+        Height = 28
         Top = 6
         Width = 341
         Align = alClient
@@ -190,19 +191,19 @@ object fmConfig: TfmConfig
     end
     object GroupBox7: TGroupBox
       Left = 5
-      Height = 57
-      Top = 261
-      Width = 361
+      Height = 56
+      Top = 256
+      Width = 357
       Align = alTop
       BorderSpacing.Around = 5
       Caption = 'Remote MCX/MMC/MCXCl Output Directory'
-      ClientHeight = 34
+      ClientHeight = 40
       ClientWidth = 353
       ParentFont = False
       TabOrder = 3
       object edRemoteOutputPath: TEdit
         Left = 6
-        Height = 22
+        Height = 28
         Top = 6
         Width = 341
         Align = alClient
@@ -213,13 +214,13 @@ object fmConfig: TfmConfig
     end
     object GroupBox5: TGroupBox
       Left = 5
-      Height = 57
-      Top = 323
-      Width = 361
+      Height = 56
+      Top = 317
+      Width = 357
       Align = alTop
       BorderSpacing.Around = 5
       Caption = 'Local SSH Executable Path'
-      ClientHeight = 34
+      ClientHeight = 40
       ClientWidth = 353
       ParentFont = False
       TabOrder = 4
@@ -228,9 +229,9 @@ object fmConfig: TfmConfig
         AnchorSideRight.Control = GroupBox5
         AnchorSideRight.Side = asrBottom
         Left = 25
-        Height = 22
+        Height = 24
         Hint = 'Local SSH Path'
-        Top = 7
+        Top = 9
         Width = 303
         HelpType = htKeyword
         DialogOptions = []
@@ -250,13 +251,13 @@ object fmConfig: TfmConfig
     end
     object GroupBox6: TGroupBox
       Left = 5
-      Height = 57
-      Top = 385
-      Width = 361
+      Height = 56
+      Top = 378
+      Width = 357
       Align = alTop
       BorderSpacing.Around = 5
       Caption = 'Local SCP Executable Path'
-      ClientHeight = 34
+      ClientHeight = 40
       ClientWidth = 353
       ParentFont = False
       TabOrder = 5
@@ -265,9 +266,9 @@ object fmConfig: TfmConfig
         AnchorSideRight.Control = GroupBox6
         AnchorSideRight.Side = asrBottom
         Left = 25
-        Height = 22
+        Height = 24
         Hint = 'Local SCP Executable Path'
-        Top = 7
+        Top = 9
         Width = 303
         HelpType = htKeyword
         DialogOptions = []
@@ -288,9 +289,9 @@ object fmConfig: TfmConfig
   end
   object ckUseManualPath: TCheckBox
     Left = 0
-    Height = 18
+    Height = 24
     Top = 0
-    Width = 379
+    Width = 371
     HelpType = htKeyword
     Align = alTop
     Caption = 'Use Manual Paths'
@@ -299,7 +300,7 @@ object fmConfig: TfmConfig
     TabOrder = 2
   end
   object dlBrowsePath: TSelectDirectoryDialog
-    left = 444
+    left = 435
     top = 16
   end
   object jsonConfig: TJSONPropStorage
@@ -308,7 +309,7 @@ object fmConfig: TfmConfig
     Formatted = True
     OnSaveProperties = jsonConfigSaveProperties
     OnRestoreProperties = jsonConfigRestoreProperties
-    left = 327
-    top = 474
+    left = 320
+    top = 464
   end
 end

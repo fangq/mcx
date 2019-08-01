@@ -1534,10 +1534,10 @@ object fmMCX: TfmMCX
           DropDownRows = 4
           Strings.Strings = (
             'x-=absorb'
-            'x+=absorb'
             'y-=absorb'
-            'y+=absorb'
             'z-=absorb'
+            'x+=absorb'
+            'y+=absorb'
             'z+=absorb'
           )
           OnGetPickList = vlBCGetPickList
