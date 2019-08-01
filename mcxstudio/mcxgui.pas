@@ -28,8 +28,11 @@ type
     acEditShape: TActionList;
     btSendCmd: TButton;
     Button2: TButton;
+    ckDoRemote: TCheckBox;
+    ckSharedFS: TCheckBox;
     ckShowProgress: TCheckBox;
     edCmdInput: TEdit;
+    edRemote: TComboBox;
     Label5: TLabel;
     mcxdoConfig: TAction;
     ckbDet: TCheckListBox;
@@ -81,6 +84,7 @@ type
     Panel2: TPanel;
     PopupMenu3: TPopupMenu;
     PopupMenu4: TPopupMenu;
+    plSetting: TScrollBox;
     shapePreview: TAction;
     edOutputFormat: TComboBox;
     Label11: TLabel;
@@ -121,15 +125,11 @@ type
     mcxdoPlotNifty: TAction;
     mcxdoPlotVol: TAction;
     btGBExpand: TButton;
-    ckDoRemote: TCheckBox;
     ckLockGPU: TCheckBox;
     ckReflect: TCheckBox;
-    ckSharedFS: TCheckBox;
     ckSpecular: TCheckBox;
     edMoreParam: TEdit;
-    edRemote: TComboBox;
     grAtomic: TRadioGroup;
-    gbRemote: TGroupBox;
     Image1: TImage;
     MenuItem24: TMenuItem;
     MenuItem25: TMenuItem;
@@ -268,7 +268,6 @@ type
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
     MenuItem9: TMenuItem;
-    plSetting: TPanel;
     rbUseFile: TRadioButton;
     rbUseDesigner: TRadioButton;
     SaveProject: TSaveDialog;
@@ -921,8 +920,8 @@ begin
          //gr.Align:=alTop;
          (Sender as TButton).Caption:=#9662;
          GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
-         tmAnimation.Tag:=0;
          //tmAnimation.Enabled:=true;
+         tmAnimation.Tag:=0;
      end else begin
          (Sender as TButton).Caption:=#9653;
          GotoGBox.Height:=edMoreParam.Top+edMoreParam.Height+self.Canvas.TextHeight('Ag')+5;
@@ -1072,7 +1071,7 @@ function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
 var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
-   rootpath:=GetAppRoot+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+   rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
    localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
@@ -2983,6 +2982,7 @@ begin
           end;
           cmd:=shellscript.Strings[0];
         end;
+        shellscript.Free;
         AddLog('Remote Command: '+edRemote.Text);
     end;
 
