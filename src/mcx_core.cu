@@ -1666,9 +1666,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint    detected=0,sharedbuf=0;
 
      volatile int *progress, *gprogress;
-#ifndef WIN32
      cudaEvent_t updateprogress;
-#endif
 
      uint *gmedia;
      float4 *gPpos,*gPdir,*gPlen;
@@ -2055,13 +2053,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            }
            tic0=GetTimeMillis();
-#ifndef WIN32
 #pragma omp master
 {
            if(cfg->debuglevel & MCX_DEBUG_PROGRESS)
                CUDA_ASSERT(cudaEventCreate(&updateprogress));
 }
-#endif
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
            mcx_flush(cfg);
 
@@ -2089,12 +2085,12 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0, ndone=-1;
 //#ifndef WIN32
-//             CUDA_ASSERT(cudaEventRecord(updateprogress));
+             CUDA_ASSERT(cudaEventRecord(updateprogress));
 //#endif
 	     mcx_progressbar(-0.f,cfg);
 	     do{
 //#ifndef WIN32
-//               CUDA_ASSERT(cudaEventQuery(updateprogress));
+               CUDA_ASSERT(cudaEventQuery(updateprogress));
 //#endif
                ndone = *progress;
 	       if (ndone > p0){
