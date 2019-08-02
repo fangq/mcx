@@ -1884,7 +1884,7 @@ object fmMCX: TfmMCX
         Width = 58
         Align = alRight
         Anchors = [akTop, akBottom]
-        Caption = '⏶'
+        Caption = '▵'
         OnClick = btExpandOutputClick
         ParentFont = False
         TabOrder = 6
@@ -1918,12 +1918,12 @@ object fmMCX: TfmMCX
       Left = 0
       Height = 94
       Top = 40
-      Width = 738
+      Width = 726
       Align = alTop
       AutoSize = True
       Caption = 'Basic Settings'
       ClientHeight = 78
-      ClientWidth = 734
+      ClientWidth = 722
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -2120,7 +2120,7 @@ object fmMCX: TfmMCX
         Left = 503
         Height = 24
         Top = 5
-        Width = 231
+        Width = 219
         HelpType = htKeyword
         HelpKeyword = 'HTML/mcx_help#GUI_simulation_designer'
         Anchors = [akTop, akLeft, akRight]
@@ -2279,11 +2279,11 @@ object fmMCX: TfmMCX
       Left = 0
       Height = 197
       Top = 371
-      Width = 738
+      Width = 726
       Align = alTop
       Caption = 'Advanced Settings'
       ClientHeight = 181
-      ClientWidth = 734
+      ClientWidth = 722
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -2674,9 +2674,9 @@ object fmMCX: TfmMCX
         Left = 0
         Height = 14
         Top = 0
-        Width = 734
+        Width = 722
         Align = alTop
-        Caption = '⏷'
+        Caption = '▾'
         Color = clMenuText
         Font.Color = clBlue
         Font.Style = [fsBold]
@@ -2690,7 +2690,7 @@ object fmMCX: TfmMCX
       Left = 0
       Height = 136
       Top = 235
-      Width = 738
+      Width = 726
       Align = alTop
       AutoSize = True
       Caption = 'Switches'
@@ -2698,7 +2698,7 @@ object fmMCX: TfmMCX
       ChildSizing.Layout = cclTopToBottomThenLeftToRight
       ChildSizing.ControlsPerLine = 5
       ClientHeight = 120
-      ClientWidth = 734
+      ClientWidth = 722
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -2849,14 +2849,14 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         AnchorSideBottom.Control = grSwitches
         AnchorSideBottom.Side = asrBottom
-        Left = 600
+        Left = 584
         Height = 120
         Top = 0
-        Width = 124
+        Width = 128
         Anchors = [akTop, akLeft, akBottom]
         Caption = 'Boundary cond.'
         ClientHeight = 104
-        ClientWidth = 120
+        ClientWidth = 124
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 10
@@ -2865,7 +2865,7 @@ object fmMCX: TfmMCX
           Height = 104
           Hint = 'Boundary'
           Top = 0
-          Width = 120
+          Width = 124
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#bc'
           Align = alClient
@@ -2894,8 +2894,8 @@ object fmMCX: TfmMCX
           )
           OnGetPickList = vlBCGetPickList
           ColWidths = (
-            52
-            52
+            54
+            54
           )
         end
       end
@@ -2907,11 +2907,11 @@ object fmMCX: TfmMCX
         Left = 427
         Height = 120
         Top = 0
-        Width = 173
+        Width = 157
         Anchors = [akTop, akLeft, akBottom]
         Caption = 'Save detected photon'
         ClientHeight = 104
-        ClientWidth = 169
+        ClientWidth = 153
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 11
@@ -2920,7 +2920,7 @@ object fmMCX: TfmMCX
           Height = 94
           Hint = 'SaveDetFlag'
           Top = 2
-          Width = 163
+          Width = 147
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#savedetflag'
           Align = alClient
@@ -2953,12 +2953,12 @@ object fmMCX: TfmMCX
       Left = 0
       Height = 101
       Top = 134
-      Width = 738
+      Width = 726
       Align = alTop
       AutoSize = True
       Caption = 'GPU Settings'
       ClientHeight = 85
-      ClientWidth = 734
+      ClientWidth = 722
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -3229,7 +3229,7 @@ object fmMCX: TfmMCX
       Height = 40
       Hint = 'MCProgram'
       Top = 0
-      Width = 738
+      Width = 726
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_mcprogram'
       Align = alTop
@@ -3244,7 +3244,7 @@ object fmMCX: TfmMCX
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 3
       ClientHeight = 24
-      ClientWidth = 734
+      ClientWidth = 722
       Columns = 3
       Font.Color = clGreen
       ItemIndex = 0
@@ -3262,11 +3262,11 @@ object fmMCX: TfmMCX
       Left = 0
       Height = 33
       Top = 568
-      Width = 738
+      Width = 726
       Align = alClient
       BevelOuter = bvNone
       ClientHeight = 33
-      ClientWidth = 738
+      ClientWidth = 726
       DockSite = True
       ParentFont = False
       TabOrder = 5
@@ -3276,7 +3276,7 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Control = plOutputDock
         AnchorSideBottom.Side = asrBottom
         Cursor = crHandPoint
-        Left = 542
+        Left = 530
         Height = 33
         Hint = 'About MCX'
         Top = 0
@@ -29913,8 +29913,8 @@ object fmMCX: TfmMCX
     }
   end
   object PopupMenu1: TPopupMenu
-    left = 184
-    top = 728
+    left = 200
+    top = 552
     object MenuItem33: TMenuItem
       Action = shapePreview
     end
@@ -29953,8 +29953,7 @@ object fmMCX: TfmMCX
       Caption = '-'
     end
     object miUseMatlab: TMenuItem
-      Caption = 'Use MATLAB insead of Octave'
-      Checked = True
+      Caption = 'Print MATLAB plotting commands only'
       OnClick = miUseMatlabClick
     end
   end

@@ -914,10 +914,10 @@ procedure TfmMCX.btExpandOutputClick(Sender: TObject);
 begin
       if(btExpandOutput.Tag=0) then begin // expand
           btExpandOutput.Tag:=plConsole.Height;
-          btExpandOutput.Caption:=#9207;
+          btExpandOutput.Caption:=#9662;
           plConsole.Height:=lvJobs.Height;
       end else begin
-          btExpandOutput.Caption:=#9206;
+          btExpandOutput.Caption:=#9653;
           plConsole.Height:=btExpandOutput.Tag;
           btExpandOutput.Tag:=0;
       end;
@@ -933,12 +933,12 @@ begin
      GotoGBox:=gr;
      if(tmAnimation.Tag=1) then begin // collapse
          //gr.Align:=alTop;
-         (Sender as TButton).Caption:=#9207;
+         (Sender as TButton).Caption:=#9662;
          GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
          //tmAnimation.Enabled:=true;
          tmAnimation.Tag:=0;
      end else begin
-         (Sender as TButton).Caption:=#9206;
+         (Sender as TButton).Caption:=#9653;
          GotoGBox.Height:=edMoreParam.Top+edMoreParam.Height+self.Canvas.TextHeight('Ag')+5;
          tmAnimation.Tag:=1;
          //tmAnimation.Enabled:=true;
@@ -1269,6 +1269,8 @@ begin
     cmd.Delimiter:=#10;
     AddMultiLineLog(cmd.DelimitedText,pMCX);
     cmd.Free;
+
+    if(miUseMatlab.Checked) then exit;
 
     fmViewer:=TfmViewer.Create(self);
     Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
@@ -2252,6 +2254,8 @@ begin
     AddMultiLineLog(cmd.DelimitedText,pMCX);
     cmd.Free;
 
+    if(miUseMatlab.Checked) then exit;
+
     fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
     freeandnil(shapejson);
     fmDomain.Show;
@@ -2879,7 +2883,7 @@ begin
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
         if(rootpath='') then
-            rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+            rootpath:='Output'+'/'+CreateCmdOnly+'sessions'+'/'+Trim(edSession.Text);
     end;
     param.Add('--root');
     param.Add(rootpath);
