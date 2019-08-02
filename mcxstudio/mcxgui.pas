@@ -595,7 +595,7 @@ begin
            if(ck.Checked) then
               mcxdoQuery.Enabled:=true
            else
-              mcxdoQuery.Enabled:=(SearchForExe(CreateCmdOnly) = '');
+              mcxdoQuery.Enabled:=(SearchForExe(CreateCmdOnly) <> '');
            mcxdoDownloadMC2.Enabled:=ck.Checked and (not ckSharedFS.Checked);
        end;
        if(ck.Hint='DoSharedFS') then begin
