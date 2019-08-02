@@ -27,12 +27,14 @@ type
   TfmMCX = class(TForm)
     acEditShape: TActionList;
     btSendCmd: TButton;
+    btExpandOutput: TButton;
     Button2: TButton;
     ckDoRemote: TCheckBox;
     ckSharedFS: TCheckBox;
     ckShowProgress: TCheckBox;
     edCmdInput: TEdit;
     edRemote: TComboBox;
+    Image1: TImage;
     Label5: TLabel;
     mcxdoConfig: TAction;
     ckbDet: TCheckListBox;
@@ -80,8 +82,9 @@ type
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
     mmOutput: TSynEdit;
-    Panel1: TPanel;
+    plConsole: TPanel;
     Panel2: TPanel;
+    plOutputDock: TPanel;
     PopupMenu3: TPopupMenu;
     PopupMenu4: TPopupMenu;
     plSetting: TScrollBox;
@@ -130,7 +133,6 @@ type
     ckSpecular: TCheckBox;
     edMoreParam: TEdit;
     grAtomic: TRadioGroup;
-    Image1: TImage;
     MenuItem24: TMenuItem;
     MenuItem25: TMenuItem;
     MenuItem26: TMenuItem;
@@ -157,7 +159,6 @@ type
     miClearLog1: TMenuItem;
     OpenHistoryFile: TOpenDialog;
     OpenVolume: TOpenDialog;
-    plOutputDock: TPanel;
     PopupMenu2: TPopupMenu;
     grProgram: TRadioGroup;
     OpenDir: TSelectDirectoryDialog;
@@ -312,6 +313,7 @@ type
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
     tvShapes: TTreeView;
+    procedure btExpandOutputClick(Sender: TObject);
     procedure btLoadSeedClick(Sender: TObject);
     procedure btGBExpandClick(Sender: TObject);
     procedure btSendCmdClick(Sender: TObject);
@@ -796,7 +798,7 @@ begin
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
       edUnitInMM.Text:='1';
-      ckSharedFS.Checked:=true;
+      ckSharedFS.Checked:=false;
       if not (ckLockGPU.Checked) then begin
           edGPUID.CheckAll(cbUnchecked);
           if(edGPUID.Items.Count>0) then begin
@@ -830,13 +832,13 @@ begin
 
       edRemote.Text:='ssh user@server';
       ckDoRemote.Checked:=false;
-      ckSharedFS.Checked:=true;
+      ckSharedFS.Checked:=false;
       grBC.Enabled:=false;
       ckbDet.CheckAll(cbUnchecked);
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
       edOutputType.ItemIndex:=0;
-      edOutputFormat.ItemIndex:=0;
+      edOutputFormat.ItemIndex:=1;
       vlBC.Values['x-'] := 'absorb';
       vlBC.Values['x+'] := 'absorb';
       vlBC.Values['y-'] := 'absorb';
@@ -908,6 +910,19 @@ begin
       end;
 end;
 
+procedure TfmMCX.btExpandOutputClick(Sender: TObject);
+begin
+      if(btExpandOutput.Tag=0) then begin // expand
+          btExpandOutput.Tag:=plConsole.Height;
+          btExpandOutput.Caption:=#9207;
+          plConsole.Height:=lvJobs.Height;
+      end else begin
+          btExpandOutput.Caption:=#9206;
+          plConsole.Height:=btExpandOutput.Tag;
+          btExpandOutput.Tag:=0;
+      end;
+end;
+
 procedure TfmMCX.btGBExpandClick(Sender: TObject);
 var
      gr: TGroupBox;
@@ -918,12 +933,12 @@ begin
      GotoGBox:=gr;
      if(tmAnimation.Tag=1) then begin // collapse
          //gr.Align:=alTop;
-         (Sender as TButton).Caption:=#9662;
+         (Sender as TButton).Caption:=#9207;
          GotoGBox.Height:=self.Canvas.TextHeight('Ag')+btGBExpand.Height+2;
          //tmAnimation.Enabled:=true;
          tmAnimation.Tag:=0;
      end else begin
-         (Sender as TButton).Caption:=#9653;
+         (Sender as TButton).Caption:=#9206;
          GotoGBox.Height:=edMoreParam.Top+edMoreParam.Height+self.Canvas.TextHeight('Ag')+5;
          tmAnimation.Tag:=1;
          //tmAnimation.Enabled:=true;
@@ -1202,6 +1217,7 @@ var
     nx,ny,nz,nt: integer;
     fmViewer: TfmViewer;
     cmd: TStringList;
+    dref: string;
 begin
      if(CurrentSession=nil) then exit;
      if (grProgram.ItemIndex=1) then begin
@@ -1222,16 +1238,28 @@ begin
       exit;
     end;
 
+    dref:='';
+    if(ckSaveRef.Checked) then dref:=',dref';
+
     cmd:=TStringList.Create;
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
     cmd.Add(Format('addpath(''%s'');',[GetAppRoot+
         'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
     Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
-          0:    cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'',16);', [outputfile,nx,ny,nz,nt]));
-          1..2: cmd.Add(Format('data=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [outputfile,nx,ny,nz,nt]));
+          0:    cmd.Add(Format('[data%s]=loadmc2(''%s'',[%d,%d,%d,%d],''float'',16);', [dref,outputfile,nx,ny,nz,nt]));
+          1..2: cmd.Add(Format('[data%s]=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [dref,outputfile,nx,ny,nz,nt]));
           3..4: cmd.Add(Format('img=mcxloadnii(''%s'');data=img.img;', [outputfile]));
     else
     end;
+    if(ckSaveDetector.Checked) then begin
+        cmd.Add(Format('detps=loadmch(''%s'');', [ChangeFileExt(outputfile,'.mch')]));
+        cmd.Add('%% call mcxdetphoton to parse it into subfields');
+    end;
+    if(ckbDebug.Checked[1]) then begin
+        cmd.Add(Format('traj=loadmch(''%s'');', [ChangeFileExt(outputfile,'.mct')]));
+        cmd.Add('% mcxplotphotons(traj); %% plot the trajectories');
+    end;
+
     if not (ftype.Hint='_vol.nii') then
         cmd.Add('mcxplotvol(log10(data));')
     else
@@ -1295,6 +1323,9 @@ begin
               begin
                 SetLength(BufStr, AProcess.Output.NumBytesAvailable);
                 AProcess.Output.Read(BufStr[1], Length(BufStr));
+
+                BufStr:=StringReplace(BufStr,#8, '',[rfReplaceAll]);
+                BufStr:=ReplaceRegExpr(#27'\[(\d+;)*\d+m',BufStr,'',false);
                 Buffer := Buffer + BufStr;
               end;
             until not AProcess.Running;
@@ -1302,6 +1333,8 @@ begin
           begin
             SetLength(BufStr, AProcess.Output.NumBytesAvailable);
             AProcess.Output.Read(BufStr[1], Length(BufStr));
+            BufStr:=StringReplace(BufStr,#8, '',[rfReplaceAll]);
+            BufStr:=ReplaceRegExpr(#27'\[(\d+;)*\d+m',BufStr,'',false);
             Buffer := Buffer + BufStr;
             Application.ProcessMessages;
           end;
@@ -1341,6 +1374,7 @@ var
     AProcess : TProcess;
     Buffer   : string;
     BufStr   : string;
+    total: integer;
 begin
     if(GetTickCount64-mcxdoRun.Tag<100) then
        exit;
@@ -1378,6 +1412,19 @@ begin
             begin
               SetLength(BufStr, AProcess.Output.NumBytesAvailable);
               AProcess.Output.Read(BufStr[1], Length(BufStr));
+              BufStr:=StringReplace(BufStr,#8, '',[rfReplaceAll]);
+              BufStr:=ReplaceRegExpr(#27'\[(\d+;)*\d+m',BufStr,'',false);
+              if (ckbDebug.Checked[2]) then begin
+                       if RegEngine.Exec(ReverseString(BufStr)) then begin
+                             if(sscanf(ReverseString(RegEngine.Match[0]),']%d\%', [@total])=1) then begin
+                                sbInfo.Panels[1].Text:=Format('%d%%',[total]);
+                                sbInfo.Tag:=total;
+                                fmStop.pbProgress.Position:=total;
+                                sbInfo.Repaint;
+                                Application.ProcessMessages;
+                             end;
+                       end;
+              end;
               Buffer := Buffer + BufStr;
               AddMultiLineLog(BufStr,pMCX);
               Application.ProcessMessages;
@@ -1387,6 +1434,8 @@ begin
         begin
           SetLength(BufStr, AProcess.Output.NumBytesAvailable);
           AProcess.Output.Read(BufStr[1], Length(BufStr));
+          BufStr:=StringReplace(BufStr,#8, '',[rfReplaceAll]);
+          BufStr:=ReplaceRegExpr(#27'\[(\d+;)*\d+m',BufStr,'',false);
           Buffer := Buffer + BufStr;
           AddMultiLineLog(BufStr,pMCX);
           Application.ProcessMessages;
