@@ -1089,7 +1089,7 @@ function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
 var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
-   rootpath:='Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+Trim(edSession.Text);
+   rootpath:='Output'+'/'+CreateCmdOnly+'sessions'+'/'+Trim(edSession.Text);
    localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;

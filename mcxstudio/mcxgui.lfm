@@ -1024,7 +1024,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 67
+            Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
@@ -2294,7 +2294,6 @@ object fmMCX: TfmMCX
     end
     object grAdvSettings: TGroupBox
       Tag = -1
-      AnchorSideTop.Control = grSwitches
       AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 197
@@ -2706,7 +2705,6 @@ object fmMCX: TfmMCX
       end
     end
     object grSwitches: TGroupBox
-      AnchorSideTop.Control = grGPU
       AnchorSideTop.Side = asrBottom
       AnchorSideBottom.Control = grAdvSettings
       Left = 0
@@ -2971,7 +2969,6 @@ object fmMCX: TfmMCX
       end
     end
     object grGPU: TGroupBox
-      AnchorSideTop.Control = grBasic
       AnchorSideTop.Side = asrBottom
       AnchorSideBottom.Control = grSwitches
       Left = 0
@@ -3257,7 +3254,6 @@ object fmMCX: TfmMCX
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_mcprogram'
       Align = alTop
-      Anchors = [akTop, akLeft, akRight, akBottom]
       AutoFill = True
       AutoSize = True
       Caption = 'Run Monte Carlo simulation with'
