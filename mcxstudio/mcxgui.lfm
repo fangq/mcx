@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 341
+  Left = 2599
   Height = 822
-  Top = 133
+  Top = 226
   Width = 1261
   ActiveControl = lvJobs
   Align = alTop
@@ -320,6 +320,9 @@ object fmMCX: TfmMCX
     end
   end
   object sbInfo: TStatusBar
+    AnchorSideTop.Control = plConsole
+    AnchorSideTop.Side = asrBottom
+    AnchorSideBottom.Control = Owner
     Left = 0
     Height = 18
     Top = 784
@@ -542,6 +545,9 @@ object fmMCX: TfmMCX
     OnSelectItem = lvJobsSelectItem
   end
   object Splitter1: TSplitter
+    AnchorSideLeft.Control = lvJobs
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideRight.Control = plSetting
     Left = 158
     Height = 485
     Top = 131
@@ -956,16 +962,17 @@ object fmMCX: TfmMCX
         ParentFont = False
         object tvShapes: TTreeView
           Left = 0
-          Height = 376
+          Height = 384
           Hint = 'ShapeCfg'
           Top = 69
-          Width = 176
+          Width = 177
           HelpType = htKeyword
           HelpKeyword = 'HTML/mcx_help#GUI_shapeeditor'
           Align = alClient
           AutoExpand = True
           Images = JSONIcons
           ParentFont = False
+          ScrollBars = ssAutoBoth
           StateImages = JSONIcons
           TabOrder = 0
           OnEdited = tvShapesEdited
@@ -1017,7 +1024,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 5
+            Height = 67
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
@@ -1038,10 +1045,10 @@ object fmMCX: TfmMCX
           end
         end
         object ToolBar3: TToolBar
-          Left = 176
-          Height = 376
+          Left = 184
+          Height = 384
           Top = 69
-          Width = 171
+          Width = 163
           Align = alRight
           Anchors = [akTop, akLeft, akRight, akBottom]
           AutoSize = True
@@ -1055,7 +1062,7 @@ object fmMCX: TfmMCX
           object ToolButton39: TToolButton
             Left = 50
             Hint = 'Reset volume and define a different dimension'
-            Top = 74
+            Top = 218
             Action = shapeAddGrid
             ParentShowHint = False
             ShowHint = True
@@ -1068,69 +1075,77 @@ object fmMCX: TfmMCX
             ShowHint = True
           end
           object ToolButton41: TToolButton
-            Left = 1
+            Left = 50
             Top = 74
             Action = shapeAddSubgrid
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton42: TToolButton
-            Left = 1
-            Top = 218
+            Left = 50
+            Top = 2
             Action = shapeAddXLayers
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton43: TToolButton
-            Left = 1
+            Left = 50
             Top = 290
             Action = shapeAddYLayers
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton44: TToolButton
-            Left = 50
-            Top = 2
+            Left = 1
+            Top = 146
             Action = shapeAddZLayers
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton45: TToolButton
-            Left = 50
-            Top = 290
+            Left = 99
+            Top = 74
             Action = shapeAddXSlabs
           end
           object ToolButton46: TToolButton
-            Left = 50
-            Top = 146
+            Left = 1
+            Top = 218
             Action = shapeAddCylinder
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton47: TToolButton
-            Left = 99
-            Top = 2
+            Left = 1
+            Top = 290
             Action = shapeAddYSlabs
           end
           object ToolButton48: TToolButton
             Left = 99
-            Top = 74
+            Top = 2
             Action = shapeAddZSlabs
           end
           object ToolButton51: TToolButton
             Left = 1
-            Top = 146
+            Top = 74
             Action = shapeAddSphere
             ParentShowHint = False
             ShowHint = True
           end
           object ToolButton52: TToolButton
             Left = 50
-            Top = 218
+            Top = 146
             Action = shapeAddUpperSpace
             ParentShowHint = False
             ShowHint = True
           end
+        end
+        object Splitter6: TSplitter
+          Left = 177
+          Height = 384
+          Top = 69
+          Width = 7
+          Align = alRight
+          ResizeAnchor = akRight
         end
       end
     end
@@ -1188,6 +1203,7 @@ object fmMCX: TfmMCX
     ParentFont = False
   end
   object Splitter2: TSplitter
+    AnchorSideRight.Control = plOutput
     Left = 900
     Height = 485
     Top = 131
@@ -1196,6 +1212,7 @@ object fmMCX: TfmMCX
     ResizeAnchor = akRight
   end
   object plConsole: TPanel
+    AnchorSideBottom.Control = sbInfo
     Left = 0
     Height = 163
     Top = 621
@@ -1892,6 +1909,7 @@ object fmMCX: TfmMCX
     end
   end
   object Splitter5: TSplitter
+    AnchorSideBottom.Control = plConsole
     Cursor = crVSplit
     Left = 0
     Height = 5
@@ -2276,6 +2294,8 @@ object fmMCX: TfmMCX
     end
     object grAdvSettings: TGroupBox
       Tag = -1
+      AnchorSideTop.Control = grSwitches
+      AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 197
       Top = 371
@@ -2686,6 +2706,8 @@ object fmMCX: TfmMCX
       end
     end
     object grSwitches: TGroupBox
+      AnchorSideTop.Control = grGPU
+      AnchorSideTop.Side = asrBottom
       AnchorSideBottom.Control = grAdvSettings
       Left = 0
       Height = 136
@@ -2949,6 +2971,8 @@ object fmMCX: TfmMCX
       end
     end
     object grGPU: TGroupBox
+      AnchorSideTop.Control = grBasic
+      AnchorSideTop.Side = asrBottom
       AnchorSideBottom.Control = grSwitches
       Left = 0
       Height = 101
@@ -3233,6 +3257,7 @@ object fmMCX: TfmMCX
       HelpType = htKeyword
       HelpKeyword = 'HTML/mcx_help#GUI_mcprogram'
       Align = alTop
+      Anchors = [akTop, akLeft, akRight, akBottom]
       AutoFill = True
       AutoSize = True
       Caption = 'Run Monte Carlo simulation with'

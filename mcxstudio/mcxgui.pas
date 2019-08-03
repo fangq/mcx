@@ -102,6 +102,7 @@ type
     miUseMatlab: TMenuItem;
     MenuItem29: TMenuItem;
     Splitter5: TSplitter;
+    Splitter6: TSplitter;
     SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn;
     ToolBar3: TToolBar;
     ToolButton34: TToolButton;
@@ -916,10 +917,12 @@ begin
           btExpandOutput.Tag:=plConsole.Height;
           btExpandOutput.Caption:=#9662;
           plConsole.Height:=lvJobs.Height;
+          sbInfo.Top:=plConsole.Top+plConsole.Height;
       end else begin
           btExpandOutput.Caption:=#9653;
           plConsole.Height:=btExpandOutput.Tag;
           btExpandOutput.Tag:=0;
+          sbInfo.Top:=plConsole.Top+plConsole.Height;
       end;
 end;
 

@@ -2085,12 +2085,12 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0, ndone=-1;
 //#ifndef WIN32
-             CUDA_ASSERT(cudaEventRecord(updateprogress));
+//             CUDA_ASSERT(cudaEventRecord(updateprogress));
 //#endif
 	     mcx_progressbar(-0.f,cfg);
 	     do{
 //#ifndef WIN32
-               CUDA_ASSERT(cudaEventQuery(updateprogress));
+//               CUDA_ASSERT(cudaEventQuery(updateprogress));
 //#endif
                ndone = *progress;
 	       if (ndone > p0){
