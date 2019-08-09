@@ -2808,7 +2808,7 @@ var
     path: string;
 begin
     path:=GetAppRoot
-       +DirectorySeparator+'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+       +'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
     if fmConfig.ckUseManualPath.Checked then begin
          path:=fmConfig.edWorkPath.Text;
          path:=ExpandPathMacro(path,session);
