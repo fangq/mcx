@@ -16,7 +16,7 @@ uses
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript, LclIntf,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser,
+  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser, runssh,
   strutils, RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
   mcxrender, mcxview, mcxconfig, mcxstoprun, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
@@ -449,6 +449,7 @@ type
     function ExpandPassword(url: AnsiString): AnsiString;
     function GetAppRoot: string;
     procedure SwapState(old, new: TListItem);
+    procedure RunSSHCmd(Sender: TObject; cmd: string);
     function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
   end;
 
@@ -1274,17 +1275,34 @@ begin
     cmd.Free;
 
     if(miUseMatlab.Checked) then exit;
-
-    fmViewer:=TfmViewer.Create(self);
-    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
-         0:  fmViewer.LoadTexture(outputfile);
-         1..2:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,0,GL_RGBA32F);
-         3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,GL_RGBA32F);
-         4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
-    else
+    try
+          fmViewer:=TfmViewer.Create(self);
+          Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+               0:  fmViewer.LoadTexture(outputfile);
+               1..2:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,0,GL_RGBA32F);
+               3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,GL_RGBA32F);
+               4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
+          else
+          end;
+          fmViewer.FormStyle:=fsStayOnTop;
+          fmViewer.Show;
+    except
+        on E: Exception do
+           ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
     end;
-    fmViewer.FormStyle:=fsStayOnTop;
-    fmViewer.Show;
+end;
+
+procedure TfmMCX.RunSSHCmd(Sender: TObject; cmd: string);
+var
+    pass, host, username: string;
+    sshrun: TSSHThread;
+begin
+    pass:=PasswordBox('SSH','Plese type your SSH password');
+    host:=fmConfig.cbHost.Text;
+    username:=fmConfig.edUserName.Text;
+    sshrun := TSSHThread.Create(host, fmConfig.edPort.Text, username, pass,cmd,@pMCXTerminate,true);
+    sshrun.OutputMemo:=mmOutput;
+    sshrun.Start;
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
@@ -1297,6 +1315,19 @@ begin
     if(ResetMCX(0)) then begin
           AddLog('"-- Run Command --"');
           if(ckDoRemote.Checked) then begin
+              if(edRemote.ItemIndex=0) then
+              begin
+                url:=fmConfig.cbHost.Text;
+                cmd:=fmConfig.edUserName.Text;
+                if(url.IsEmpty) or (cmd.IsEmpty) then begin
+                   if(MessageDlg('Question', 'You have not set up remote server information. Do you want to set now?', mtWarning,
+                       [mbYes, mbNo, mbCancel],0) <> mrYes) then exit;
+                   mcxdoConfigExecute(Sender);
+                end;
+                cmd:=CreateCmdOnly+' -L';
+                RunSSHCmd(Sender, cmd);
+                exit;
+              end;
               url:=ExpandPassword(edRemote.Text);
               if(sscanf(url,'%s',[@cmd])=1) then begin
                   pMCX.CommandLine:='"'+SearchForExe(cmd)+'"'+
@@ -2259,10 +2290,15 @@ begin
 
     if(miUseMatlab.Checked) then exit;
 
-    fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
-    freeandnil(shapejson);
-    fmDomain.Show;
-end; 
+    try
+        fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
+        freeandnil(shapejson);
+        fmDomain.Show;
+    except
+        on E: Exception do
+           ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
+    end;
+end;
 
 
 procedure TfmMCX.shapeResetExecute(Sender: TObject);

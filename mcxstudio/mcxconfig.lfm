@@ -1,23 +1,23 @@
 object fmConfig: TfmConfig
   Left = 706
-  Height = 528
+  Height = 607
   Top = 175
   Width = 371
   BorderStyle = bsDialog
   Caption = 'MCX Studio Config'
-  ClientHeight = 528
+  ClientHeight = 607
   ClientWidth = 371
   DesignTimePPI = 94
   KeyPreview = True
   OnClose = FormClose
   OnShow = FormShow
   Position = poOwnerFormCenter
-  SessionProperties = 'ckUseManualPath.Checked;edLocalPath.Hint;edRemoteOutputPath.Text;edRemotePath.Text;edSCPPath.Text;edSSHPath.Text;edWorkPath.Text;grConfig.Enabled'
+  SessionProperties = 'ckUseManualPath.Checked;edLocalPath.Hint;edRemoteOutputPath.Text;edRemotePath.Text;edSCPPath.Text;edSSHPath.Text;edWorkPath.Text;grConfig.Enabled;edPort.Text;edUserName.Text;cbHost.Text;cbHost.Items'
   LCLVersion = '2.0.2.0'
   object Panel1: TPanel
     Left = 0
     Height = 49
-    Top = 479
+    Top = 558
     Width = 371
     Align = alBottom
     BevelOuter = bvNone
@@ -63,12 +63,12 @@ object fmConfig: TfmConfig
   end
   object grConfig: TGroupBox
     Left = 0
-    Height = 450
-    Top = 29
+    Height = 447
+    Top = 111
     Width = 371
     Align = alClient
     BorderSpacing.Top = 5
-    ClientHeight = 446
+    ClientHeight = 443
     ClientWidth = 367
     Enabled = False
     ParentFont = False
@@ -299,6 +299,99 @@ object fmConfig: TfmConfig
     ParentFont = False
     TabOrder = 2
   end
+  object GroupBox8: TGroupBox
+    Left = 5
+    Height = 77
+    Top = 29
+    Width = 361
+    Align = alTop
+    BorderSpacing.Around = 5
+    Caption = 'Remote GPU Server'
+    ClientHeight = 61
+    ClientWidth = 357
+    ParentFont = False
+    TabOrder = 3
+    object cbHost: TComboBox
+      AnchorSideTop.Control = GroupBox8
+      AnchorSideRight.Control = GroupBox8
+      AnchorSideRight.Side = asrBottom
+      Left = 112
+      Height = 27
+      Top = 0
+      Width = 238
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Right = 7
+      ItemHeight = 0
+      TabOrder = 0
+    end
+    object Label1: TLabel
+      AnchorSideLeft.Control = GroupBox8
+      AnchorSideTop.Control = cbHost
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = cbHost
+      Left = 4
+      Height = 14
+      Top = 6
+      Width = 108
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 4
+      Caption = 'Hostname or IP'
+      ParentColor = False
+    end
+    object Label2: TLabel
+      AnchorSideLeft.Control = edUserName
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = edUserName
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = edUserName
+      Left = 236
+      Height = 14
+      Top = 32
+      Width = 27
+      BorderSpacing.Left = 4
+      Caption = 'Port'
+      ParentColor = False
+    end
+    object edUserName: TEdit
+      AnchorSideLeft.Control = cbHost
+      AnchorSideTop.Control = cbHost
+      AnchorSideTop.Side = asrBottom
+      Left = 112
+      Height = 24
+      Top = 27
+      Width = 120
+      TabOrder = 1
+    end
+    object Label3: TLabel
+      AnchorSideLeft.Control = GroupBox8
+      AnchorSideTop.Control = edUserName
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = edUserName
+      Left = 4
+      Height = 14
+      Top = 32
+      Width = 108
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 4
+      Caption = 'User name'
+      ParentColor = False
+    end
+    object edPort: TEdit
+      AnchorSideLeft.Control = Label2
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = edUserName
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = GroupBox8
+      AnchorSideRight.Side = asrBottom
+      Left = 263
+      Height = 24
+      Top = 27
+      Width = 90
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Right = 4
+      TabOrder = 2
+    end
+  end
   object dlBrowsePath: TSelectDirectoryDialog
     left = 435
     top = 16
@@ -309,7 +402,7 @@ object fmConfig: TfmConfig
     Formatted = True
     OnSaveProperties = jsonConfigSaveProperties
     OnRestoreProperties = jsonConfigRestoreProperties
-    left = 320
-    top = 464
+    left = 328
+    top = 336
   end
 end

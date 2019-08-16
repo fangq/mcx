@@ -1,13 +1,13 @@
 object fmMCX: TfmMCX
-  Left = 2599
-  Height = 822
-  Top = 226
+  Left = 198
+  Height = 663
+  Top = 0
   Width = 1261
   ActiveControl = lvJobs
   Align = alTop
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = 'MCX Studio'
-  ClientHeight = 802
+  ClientHeight = 643
   ClientWidth = 1261
   Constraints.MinHeight = 489
   Constraints.MinWidth = 1253
@@ -325,7 +325,7 @@ object fmMCX: TfmMCX
     AnchorSideBottom.Control = Owner
     Left = 0
     Height = 18
-    Top = 784
+    Top = 625
     Width = 1261
     Panels = <    
       item
@@ -347,7 +347,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 485
+    Height = 326
     Top = 131
     Width = 158
     HelpType = htKeyword
@@ -549,17 +549,17 @@ object fmMCX: TfmMCX
     AnchorSideLeft.Side = asrBottom
     AnchorSideRight.Control = plSetting
     Left = 158
-    Height = 485
+    Height = 326
     Top = 131
     Width = 8
   end
   object plOutput: TPanel
     Left = 908
-    Height = 485
+    Height = 326
     Top = 131
     Width = 353
     Align = alRight
-    ClientHeight = 485
+    ClientHeight = 326
     ClientWidth = 353
     ParentFont = False
     ParentShowHint = False
@@ -567,7 +567,7 @@ object fmMCX: TfmMCX
     TabOrder = 4
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 483
+      Height = 324
       Top = 1
       Width = 351
       HelpType = htKeyword
@@ -581,7 +581,7 @@ object fmMCX: TfmMCX
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 453
+        ClientHeight = 294
         ClientWidth = 347
         ImageIndex = 4
         ParentFont = False
@@ -779,7 +779,7 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 226
+          Height = 67
           Hint = 'MCXConfig'
           Top = 227
           Width = 347
@@ -956,7 +956,7 @@ object fmMCX: TfmMCX
       end
       object tabVolumeDesigner: TTabSheet
         Caption = 'Volume Designer'
-        ClientHeight = 453
+        ClientHeight = 294
         ClientWidth = 347
         ImageIndex = 6
         ParentFont = False
@@ -1205,7 +1205,7 @@ object fmMCX: TfmMCX
   object Splitter2: TSplitter
     AnchorSideRight.Control = plOutput
     Left = 900
-    Height = 485
+    Height = 326
     Top = 131
     Width = 8
     Align = alRight
@@ -1215,7 +1215,7 @@ object fmMCX: TfmMCX
     AnchorSideBottom.Control = sbInfo
     Left = 0
     Height = 163
-    Top = 621
+    Top = 462
     Width = 1261
     Align = alBottom
     ClientHeight = 163
@@ -1860,6 +1860,7 @@ object fmMCX: TfmMCX
         ItemHeight = 0
         ItemIndex = 0
         Items.Strings = (
+          'Use Settings dialog'
           'ssh user@server'
           'plink -pw %PASSWORD% -ssh user@server'
           'sshpass -p %PASSWORD% ssh user@server'
@@ -1869,7 +1870,7 @@ object fmMCX: TfmMCX
         OnEditingDone = edRespinChange
         ParentFont = False
         TabOrder = 4
-        Text = 'ssh user@server'
+        Text = 'Use Settings dialog'
       end
       object ckSharedFS: TCheckBox
         AnchorSideLeft.Control = edRemote
@@ -1913,20 +1914,20 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 5
-    Top = 616
+    Top = 457
     Width = 1261
     Align = alBottom
     ResizeAnchor = akBottom
   end
   object plSetting: TScrollBox
     Left = 166
-    Height = 485
+    Height = 326
     Top = 131
     Width = 734
     HorzScrollBar.Page = 716
-    VertScrollBar.Page = 467
+    VertScrollBar.Page = 308
     Align = alClient
-    ClientHeight = 467
+    ClientHeight = 308
     ClientWidth = 716
     DockSite = True
     Enabled = False

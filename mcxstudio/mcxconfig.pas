@@ -15,11 +15,14 @@ type
   TfmConfig = class(TForm)
     btCancel: TButton;
     btOK: TButton;
+    cbHost: TComboBox;
     ckUseManualPath: TCheckBox;
+    edPort: TEdit;
     edRemoteOutputPath: TEdit;
     edRemotePath: TEdit;
     edSCPPath: TFileNameEdit;
     edSSHPath: TFileNameEdit;
+    edUserName: TEdit;
     edWorkPath: TDirectoryEdit;
     edWorkPath2: TFileNameEdit;
     grConfig: TGroupBox;
@@ -29,7 +32,11 @@ type
     GroupBox5: TGroupBox;
     GroupBox6: TGroupBox;
     GroupBox7: TGroupBox;
+    GroupBox8: TGroupBox;
     jsonConfig: TJSONPropStorage;
+    Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
     Panel1: TPanel;
     dlBrowsePath: TSelectDirectoryDialog;
     edLocalPath: TStringGrid;
