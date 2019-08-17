@@ -6,7 +6,7 @@ uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   {$ENDIF}{$ENDIF}
-  Classes, SysUtils, SynEdit, sshclient;
+  Classes, SysUtils, ComCtrls, RegExpr, SynEdit, strutils, sshclient;
 
 var
   StopSSH: boolean = false;
@@ -26,10 +26,14 @@ type
     UserName: string;
     Password: string;
     Command: string;
+    isshowprogress: boolean;
     Param: TStringList;
     OutputMemo: TSynEdit;
+    sbInfo: TStatusBar;
+    ProgressBar: TProgressBar;
+    RegEngine:TRegExpr;
     Buf: string;
-    constructor Create(const hostname, sshport, userid, pass, cmd: string; SSHDone: TNotifyEvent = nil;
+    constructor Create(const hostname, sshport, userid, pass, cmd: string; isprogress: boolean; SSHDone: TNotifyEvent = nil;
        CreateSuspended: boolean = true);
   end;
 
@@ -37,7 +41,7 @@ type
 
 implementation
 
-constructor TSSHThread.Create(const hostname, sshport, userid, pass, cmd: string;  SSHDone: TNotifyEvent;
+constructor TSSHThread.Create(const hostname, sshport, userid, pass, cmd: string; isprogress: boolean; SSHDone: TNotifyEvent;
    CreateSuspended: boolean);
 begin
   FOnSSHDone := SSHDone;
@@ -47,7 +51,12 @@ begin
   Password:=pass;
   Command := cmd;
   OutputMemo:=nil;
+  ProgressBar:=nil;
+  isshowprogress:=isprogress;
+  sbInfo:=nil;
   Buf:='';
+
+  RegEngine:=TRegExpr.Create('%[0-9 ]{4}\]');
 
   inherited Create(CreateSuspended);
   FreeOnTerminate := true;
@@ -57,12 +66,39 @@ procedure TSSHThread.Done;
 begin
   if assigned(FOnSSHDone) then
     FOnSSHDone(self);
+  RegEngine.Free;
 end;
 
 procedure TSSHThread.AddLog;
+var
+    revbuf, percent: string;
+    total: integer;
+    sl: TStringList;
 begin
-    if(OutputMemo<>nil) and (Buf<>'') then
-        OutputMemo.Lines.Add(Buf);
+    if(OutputMemo<>nil) and (Buf<>'') then begin
+        Buf:=StringReplace(Buf,#8, '',[rfReplaceAll]);
+        Buf:=ReplaceRegExpr(#27'\[(\d+;)*\d+m',Buf,'',false);
+        sl:=TStringList.Create;
+        sl.StrictDelimiter:=true;
+        sl.Delimiter:='|';
+        sl.DelimitedText:=Buf;
+        OutputMemo.Lines.AddStrings(sl);
+        sl.Free;
+        OutputMemo.SelStart := length(OutputMemo.Text);
+        OutputMemo.LeftChar:=0;
+        if isshowprogress and (sbInfo<>nil) and (ProgressBar<>nil) then begin
+               revbuf:=ReverseString(Buf);
+               if RegEngine.Exec(revbuf) then begin
+                     percent:=ReverseString(RegEngine.Match[0]);
+                     if(sscanf(percent,']%d\%', [@total])=1) then begin
+                        sbInfo.Panels[1].Text:=Format('%d%%',[total]);
+                        sbInfo.Tag:=total;
+                        ProgressBar.Position:=total;
+                        sbInfo.Repaint;
+                     end;
+               end;
+        end;
+    end;
 end;
 
 procedure TSSHThread.Execute;
@@ -73,15 +109,8 @@ begin
     lSSh := TSSHClient.Create(host,port, username, password);
     if lSSh.LogIn then
     begin
-      Buf:='SSH Connected!.';
+      Buf:='SSH: Connected!.';
       Synchronize(@AddLog);
-      (* Get welcome message *)
-
-      while lSSh.HasBuffer do
-      begin
-        Buf:=lSSh.ReadBuffer;
-        Synchronize(@AddLog);
-      end;
 
       (* Send command *)
       lSSh.SendCommand(Command);
@@ -89,18 +118,19 @@ begin
 
       while lSSh.HasBuffer do
       begin
-        Buf:=lSSh.ReadBuffer;
-        Synchronize(@AddLog);
+          Buf:=lSSh.ReadBuffer;
+          Synchronize(@AddLog);
+          Sleep(100);
       end;
       Buf:=lSSh.ReadBuffer;
       Synchronize(@AddLog);
       lSSh.LogOut;
-      Buf:='SSH Logged out.';
+      Buf:='SSH: Logged out.';
       Synchronize(@AddLog);
     end
     else begin
-      Buf:='SSH Can''t connect.';
-      Synchronize(@AddLog);
+        Buf:='SSH: Fail to connect.';
+        Synchronize(@AddLog);
     end;
     lSSh.Free;
   finally

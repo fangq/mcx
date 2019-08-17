@@ -3,12 +3,14 @@ unit sshclient;
 interface
 
 uses
-  tlntsend, ssl_openssl, ssl_openssl_lib, ssl_libssh2;
+  tlntsend, ssl_openssl, ssl_openssl_lib, ssl_libssh2, Classes;
 
 type
   TSSHClient = class
   private
     FTelnetSend: TTelnetSend;
+    lastpos: integer;
+    FullLog: string;
   public
     constructor Create(AHost, APort, AUser, APass: string);
     destructor Destroy; override;
@@ -31,6 +33,8 @@ begin
   FTelnetSend.TargetPort := APort;
   FTelnetSend.UserName := AUser;
   FTelnetSend.Password := APass;
+  lastpos:=0;
+  FullLog:='';
 end;
 
 destructor TSSHClient.Destroy;
@@ -51,16 +55,37 @@ end;
 
 function TSSHClient.HasBuffer: Boolean;
 begin
-  Result:= FTelnetSend.Sock.CanRead(1000) or (FTelnetSend.Sock.WaitingData>0);
+  Result:= FTelnetSend.Sock.CanReadEx(1000) or (FTelnetSend.Sock.WaitingData>0);
 end;
 
 function TSSHClient.ReadBuffer: String;
 var
     lPos: Integer;
+    slog, sl: TStringList;
+    i: integer;
 begin
-  lPos := Length(FTelnetSend.SessionLog)+1;
+  Result:='';
+  lPos := Length(FTelnetSend.SessionLog);
   FTelnetSend.Sock.RecvPacket(1000);
-  Result := Copy(FTelnetSend.SessionLog, lPos, Length(FTelnetSend.SessionLog));
+  if(Length(FTelnetSend.SessionLog)>lPos) then begin
+      FullLog:=FullLog + Copy(FTelnetSend.SessionLog, lPos+1, Length(FTelnetSend.SessionLog)-lPos);
+      slog:=TStringList.Create;
+      slog.StrictDelimiter:=true;
+      slog.Delimiter:=#10;
+      slog.DelimitedText:=FullLog;
+      if(slog.Count-1>lastpos) then begin
+          sl:=TStringList.Create;
+          sl.StrictDelimiter:=true;
+          sl.Delimiter:='|';
+          for i:=lastpos to slog.Count-1 do begin
+             sl.Add(slog[i]);
+          end;
+          Result:=sl.DelimitedText;
+          lastpos:=slog.Count-1;
+          sl.Free;
+      end;
+      slog.Free;
+  end;
 end;
 
 function TSSHClient.ReceiveData: string;

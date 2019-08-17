@@ -449,7 +449,7 @@ type
     function ExpandPassword(url: AnsiString): AnsiString;
     function GetAppRoot: string;
     procedure SwapState(old, new: TListItem);
-    procedure RunSSHCmd(Sender: TObject; cmd: string);
+    procedure RunSSHCmd(Sender: TObject; cmd: string; doprogress: boolean=false);
     function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
   end;
 
@@ -498,10 +498,12 @@ begin
     sl.StrictDelimiter:=true;
     sl.Delimiter:=#10;
     sl.DelimitedText:=str;
-    if((Sender as TAsyncProcess)=pMCX) then begin
+    if(Sender is TAsyncProcess) then begin
+      if((Sender as TAsyncProcess)=pMCX) then begin
         mmOutput.Lines.AddStrings(sl);
         mmOutput.SelStart := length(mmOutput.Text);
         mmOutput.LeftChar:=0;
+      end;
     end;
     sl.Free;
 end;
@@ -832,7 +834,7 @@ begin
       sgConfig.FixedCols:=2;
       sgConfig.FixedRows:=1;
 
-      edRemote.Text:='ssh user@server';
+      edRemote.ItemIndex:=0;
       ckDoRemote.Checked:=false;
       ckSharedFS.Checked:=false;
       grBC.Enabled:=false;
@@ -1292,16 +1294,23 @@ begin
     end;
 end;
 
-procedure TfmMCX.RunSSHCmd(Sender: TObject; cmd: string);
+procedure TfmMCX.RunSSHCmd(Sender: TObject; cmd: string; doprogress: boolean=false);
 var
-    pass, host, username: string;
+    pass, host, username, url: string;
     sshrun: TSSHThread;
 begin
-    pass:=PasswordBox('SSH','Plese type your SSH password');
     host:=fmConfig.cbHost.Text;
     username:=fmConfig.edUserName.Text;
-    sshrun := TSSHThread.Create(host, fmConfig.edPort.Text, username, pass,cmd,@pMCXTerminate,true);
+    url:=username+'@'+host+':'+fmConfig.edPort.Text;
+    pass:=PassList.Values[url];
+    if(Length(pass)=0) then begin
+            pass:=PasswordBox('SSH','Plese type your SSH password');
+            PassList.Values[url]:=pass;
+    end;
+    sshrun := TSSHThread.Create(host,fmConfig.edPort.Text,username,pass,cmd,doprogress,@pMCXTerminate,true);
     sshrun.OutputMemo:=mmOutput;
+    sshrun.sbInfo:=sbInfo;
+    sshrun.ProgressBar:=fmStop.pbProgress;
     sshrun.Start;
 end;
 
@@ -1325,7 +1334,7 @@ begin
                    mcxdoConfigExecute(Sender);
                 end;
                 cmd:=CreateCmdOnly+' -L';
-                RunSSHCmd(Sender, cmd);
+                RunSSHCmd(Sender, cmd, false);
                 exit;
               end;
               url:=ExpandPassword(edRemote.Text);
@@ -1409,13 +1418,13 @@ procedure TfmMCX.mcxdoRunExecute(Sender: TObject);
 var
     AProcess : TProcess;
     Buffer   : string;
-    BufStr   : string;
+    BufStr, url,cmd, fullcmd  : string;
     total: integer;
 begin
     if(GetTickCount64-mcxdoRun.Tag<100) then
        exit;
     if(ResetMCX(0)) then begin
-        CreateCmd(pMCX);
+        fullcmd:=CreateCmd(pMCX);
         pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
         if(ckbDebug.Checked[2]) then begin
@@ -1434,6 +1443,20 @@ begin
 
         UpdateMCXActions(acMCX,'Run','');
         mcxdoRun.Tag:=ptrint(GetTickCount64);
+
+        if(edRemote.ItemIndex=0) then
+        begin
+          url:=fmConfig.cbHost.Text;
+          cmd:=fmConfig.edUserName.Text;
+          if(url.IsEmpty) or (cmd.IsEmpty) then begin
+             if(MessageDlg('Question', 'You have not set up remote server information. Do you want to set now?', mtWarning,
+                 [mbYes, mbNo, mbCancel],0) <> mrYes) then exit;
+             mcxdoConfigExecute(Sender);
+          end;
+          //cmd:=pMCX.Executable+' '+pMCX.Parameters.DelimitedText;
+          RunSSHCmd(Sender, fullcmd, ckbDebug.Checked[2]);
+          exit;
+        end;
 
         {$IFDEF DARWIN}
         AProcess := TProcess.Create(nil);
@@ -1862,7 +1885,7 @@ end;
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
      if(not mcxdoStop.Enabled) then exit;
-     if(Sender <> nil) then
+     if(Sender <> nil) and (Sender is TAsyncProcess) then
          AddMultiLineLog(GetMCXOutput(Sender), Sender);
      if(Sender <> nil) and (pMCX.Tag=-10) then begin
          sbInfo.Panels[2].Text:=Format('Last simulation used %.3f seconds', [(GetTickCount64-mcxdoRun.Tag)/1000.]);
@@ -3062,7 +3085,7 @@ begin
     AddLog('"-- Command: --"');
     AddLog(cmd+' '+param.DelimitedText);
 
-    if(ckDoRemote.Checked) then begin
+    if(ckDoRemote.Checked) and (edRemote.ItemIndex<>0) then begin
         shellscript:=TStringList.Create;
         shellscript.StrictDelimiter:=true;
         shellscript.Delimiter:=' ';
@@ -3093,7 +3116,7 @@ begin
         proc.Executable:=SearchForExe(cmd);
         proc.Parameters.CommaText:=param.CommaText;
     end;
-
+    param.QuoteChar:='''';
     Result:=cmd+' '+param.DelimitedText;
     param.Free;
 end;
