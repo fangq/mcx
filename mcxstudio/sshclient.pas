@@ -3,7 +3,7 @@ unit sshclient;
 interface
 
 uses
-  tlntsend, ssl_openssl, ssl_openssl_lib, ssl_libssh2, Classes;
+  tlntsend, ssl_openssl, ssl_openssl_lib, ssl_libssh2,SysUtils, strutils, Classes;
 
 type
   TSSHClient = class
@@ -20,6 +20,7 @@ type
     function HasBuffer: Boolean;
     function ReadBuffer: string;
     function LogIn: Boolean;
+    function GetFullLog: string;
   end;
 
 implementation
@@ -48,6 +49,11 @@ begin
   Result := FTelnetSend.SSHLogin;
 end;
 
+function TSSHClient.GetFullLog: string;
+begin
+   Result:=FullLog;
+end;
+
 procedure TSSHClient.LogOut;
 begin
   FTelnetSend.Logout;
@@ -55,7 +61,7 @@ end;
 
 function TSSHClient.HasBuffer: Boolean;
 begin
-  Result:= FTelnetSend.Sock.CanReadEx(1000) or (FTelnetSend.Sock.WaitingData>0);
+  Result:= FTelnetSend.Sock.CanRead(2000) or (FTelnetSend.Sock.WaitingData>0);
 end;
 
 function TSSHClient.ReadBuffer: String;
@@ -63,12 +69,15 @@ var
     lPos: Integer;
     slog, sl: TStringList;
     i: integer;
+    newbuf: string;
 begin
   Result:='';
   lPos := Length(FTelnetSend.SessionLog);
   FTelnetSend.Sock.RecvPacket(1000);
   if(Length(FTelnetSend.SessionLog)>lPos) then begin
-      FullLog:=FullLog + Copy(FTelnetSend.SessionLog, lPos+1, Length(FTelnetSend.SessionLog)-lPos);
+      newbuf:=Copy(FTelnetSend.SessionLog, lPos+1, Length(FTelnetSend.SessionLog)-lPos);
+      newbuf:=StringReplace(newbuf,#13, '',[rfReplaceAll]);
+      FullLog:=FullLog + newbuf;
       slog:=TStringList.Create;
       slog.StrictDelimiter:=true;
       slog.Delimiter:=#10;

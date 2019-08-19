@@ -414,6 +414,7 @@ type
     MapList, ConfigData, JSONstr, PassList : TStringList;
     JSONdata : TJSONData;
     RegEngine:TRegExpr;
+    sshrun: TSSHThread;
     function CreateCmd(proc: TProcess=nil):AnsiString;
     function CreateCmdOnly:AnsiString;
     procedure VerifyInput;
@@ -449,7 +450,7 @@ type
     function ExpandPassword(url: AnsiString): AnsiString;
     function GetAppRoot: string;
     procedure SwapState(old, new: TListItem);
-    procedure RunSSHCmd(Sender: TObject; cmd: string; doprogress: boolean=false);
+    procedure RunSSHCmd(Sender: TObject; cmd: string; updategpu:boolean=false; doprogress: boolean=false);
     function CreateSSHDownloadCmd(suffix: string='.nii'): AnsiString;
   end;
 
@@ -1294,10 +1295,9 @@ begin
     end;
 end;
 
-procedure TfmMCX.RunSSHCmd(Sender: TObject; cmd: string; doprogress: boolean=false);
+procedure TfmMCX.RunSSHCmd(Sender: TObject; cmd: string; updategpu:boolean=false; doprogress: boolean=false);
 var
     pass, host, username, url: string;
-    sshrun: TSSHThread;
 begin
     host:=fmConfig.cbHost.Text;
     username:=fmConfig.edUserName.Text;
@@ -1308,10 +1308,11 @@ begin
             PassList.Values[url]:=pass;
     end;
     sshrun := TSSHThread.Create(host,fmConfig.edPort.Text,username,pass,cmd,doprogress,@pMCXTerminate,true);
+    sshrun.isupdategpu:=updategpu;
     sshrun.OutputMemo:=mmOutput;
     sshrun.sbInfo:=sbInfo;
     sshrun.ProgressBar:=fmStop.pbProgress;
-    sshrun.Start;
+    sshrun.Resume;
 end;
 
 procedure TfmMCX.mcxdoQueryExecute(Sender: TObject);
@@ -1334,7 +1335,7 @@ begin
                    mcxdoConfigExecute(Sender);
                 end;
                 cmd:=CreateCmdOnly+' -L';
-                RunSSHCmd(Sender, cmd, false);
+                RunSSHCmd(Sender, cmd, true, false);
                 exit;
               end;
               url:=ExpandPassword(edRemote.Text);
@@ -1453,8 +1454,7 @@ begin
                  [mbYes, mbNo, mbCancel],0) <> mrYes) then exit;
              mcxdoConfigExecute(Sender);
           end;
-          //cmd:=pMCX.Executable+' '+pMCX.Parameters.DelimitedText;
-          RunSSHCmd(Sender, fullcmd, ckbDebug.Checked[2]);
+          RunSSHCmd(Sender, fullcmd, false, ckbDebug.Checked[2]);
           exit;
         end;
 
@@ -1525,7 +1525,13 @@ end;
 
 procedure TfmMCX.mcxdoStopExecute(Sender: TObject);
 begin
-     if(pMCX.Running) then pMCX.Terminate(0);
+     if(ckDoRemote.Checked) and (sshrun<>nil) then
+     begin
+          sshrun.Terminate;
+     end else if(pMCX.Running) then
+     begin
+       pMCX.Terminate(0);
+     end;
      Sleep(1000);
      if(not pMCX.Running) then begin
           mcxdoStop.Enabled:=false;
@@ -1620,6 +1626,8 @@ begin
     fmStop.FormStyle:=fsStayOnTop;
 
     CurrentSession:=nil;
+    sshrun:=nil;
+
     PassList:=TStringList.Create();
     MapList:=TStringList.Create();
     MapList.Clear;
@@ -1884,6 +1892,8 @@ end;
 
 procedure TfmMCX.pMCXTerminate(Sender: TObject);
 begin
+     if (ckDoRemote.Checked) and (sshrun<>nil) and (sshrun.isupdategpu) then
+         UpdateGPUList(sshrun.FullLog);
      if(not mcxdoStop.Enabled) then exit;
      if(Sender <> nil) and (Sender is TAsyncProcess) then
          AddMultiLineLog(GetMCXOutput(Sender), Sender);
@@ -2539,7 +2549,7 @@ begin
                          mtInformation, [mbYes, mbNo],0) = mrYes) then
                         RunExternalCmd('shutdown /r');
                 end else
-                    MessageDlg('Permission Error', 'You don''t have permission to modify registry. Please contact your administrator to apply the fix.', mtError, [mbOK],0);
+                    MessageDlg('Permission Error', 'You don''t have permission to modify registry. Please restart the program by right-clicking mcxstudio.exe and select "Run as Administrator"', mtError, [mbOK],0);
             end;
         end;
       finally

@@ -26,7 +26,9 @@ type
     UserName: string;
     Password: string;
     Command: string;
+    FullLog: string;
     isshowprogress: boolean;
+    isupdategpu: boolean;
     Param: TStringList;
     OutputMemo: TSynEdit;
     sbInfo: TStatusBar;
@@ -55,6 +57,8 @@ begin
   isshowprogress:=isprogress;
   sbInfo:=nil;
   Buf:='';
+  FullLog:='';
+  isupdategpu:=false;
 
   RegEngine:=TRegExpr.Create('%[0-9 ]{4}\]');
 
@@ -86,6 +90,7 @@ begin
         sl.Free;
         OutputMemo.SelStart := length(OutputMemo.Text);
         OutputMemo.LeftChar:=0;
+        if Terminated then raise Exception.Create('Terminated');
         if isshowprogress and (sbInfo<>nil) and (ProgressBar<>nil) then begin
                revbuf:=ReverseString(Buf);
                if RegEngine.Exec(revbuf) then begin
@@ -111,19 +116,20 @@ begin
     begin
       Buf:='SSH: Connected!.';
       Synchronize(@AddLog);
-
+      lSSh.ReceiveData;
       (* Send command *)
       lSSh.SendCommand(Command);
       (* Receive results *)
-
+      if Terminated then raise Exception.Create('Terminated');
       while lSSh.HasBuffer do
       begin
           Buf:=lSSh.ReadBuffer;
           Synchronize(@AddLog);
-          Sleep(100);
+          if Terminated then raise Exception.Create('Terminated');
       end;
       Buf:=lSSh.ReadBuffer;
       Synchronize(@AddLog);
+      FullLog:=lSSh.GetFullLog;
       lSSh.LogOut;
       Buf:='SSH: Logged out.';
       Synchronize(@AddLog);
@@ -133,7 +139,9 @@ begin
         Synchronize(@AddLog);
     end;
     lSSh.Free;
+    lSSh:=nil;
   finally
+    if(lSSh<>nil) then lSSh.Free;
     if assigned(FOnSSHDone) and not AppClosing then
       Synchronize(@Done);
   end;
