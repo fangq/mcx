@@ -2,6 +2,68 @@
 
 Major updates are marked with a "*"
 
+== MCX v2019.10 (Ether Dome RC2 - 1.5.0), FangQ <q.fang (a) neu.edu> ==
+
+ 2019-10-27 [a743b47] resolve compiler complaint: warning: invalid suffix on literal; C++11 requires a space between literal and string macro [-Wliteral-suffix]
+ 2019-09-06 [f9ad72b] fix the incorrect short opt flag for savedetflag
+ 2019-08-21 [d9d5238] allow one to overwrite SaveDataMask from command line
+ 2019-08-18 [6023d51] debugged builtin ssh
+ 2019-08-17 [7f98c48] mcxstudio builtin ssh update
+ 2019-08-15 [cec9ecf] add missing windows unit
+ 2019-08-15 [1a84b9e] add runssh in a thread
+ 2019-08-15 [8cb29c4] add run external command in a thread
+ 2019-08-15 [997f986]*builtin ssh using synapse
+ 2019-08-15 [1482b0a]*use new template to speed up with specialization
+ 2019-08-08 [0bdbef6] allow to browse file folder on windows
+ 2019-08-03 [e34f9c5] change remote folder path separator
+ 2019-08-03 [1cab6ce] disable event
+ 2019-08-02 [f4ab7cf] minor gui updates
+ 2019-08-02 [e2efbf7] query gpu button status correction
+ 2019-08-02 [6520c4c] enlarge output window, more plotting scripts, fix outputformat default value
+ 2019-08-02 [3784d0a]*fix missing dosaveref field, swap incorrect short flag
+ 2019-08-01 [7ec73b7] make settings scrollable, tested remote execution on windows
+ 2019-08-01 [3bc5994] fix incorrect BC order
+ 2019-08-01 [87d0261] add user input to use ssh
+ 2019-07-30 [e3c0b58] make viewer window on top
+ 2019-07-30 [3cd64f1] show preview window on top
+ 2019-07-30 [8c902c9] print for debug
+ 2019-07-30 [74be22c] allow to load old project files
+ 2019-07-30 [3af9a1c]*fix a few mac bugs
+ 2019-07-29 [adb194d] fix rendering dimensions
+ 2019-07-29 [5fbe79f] print matlab commands for plotting
+ 2019-07-29 [0158d4d] rename macro from exe to app
+ 2019-07-29 [3e800c6] add a window to stop simulation
+ 2019-07-29 [973e83a] use DelimitedText for json storage
+ 2019-07-28 [a760432] enable manual path settings
+ 2019-07-28 [5c71f34] minor polishing of the gui
+ 2019-07-27 [39e54fb] change color
+ 2019-07-27 [cb747d3] minor update from windows
+ 2019-07-27 [99e697a] add config unit
+ 2019-07-27 [55a6b8c] add windows unit to compile
+ 2019-07-26 [8a341ee]*update mcxstudio to add the new flags
+ 2019-07-26 [f3a3345]*do not print progress bar by default, still causing hanging on certain gpu
+ 2019-07-25 [74414b3] print progress bar by default
+ 2019-07-25 [289b40b] update demo script to use the new detphoton format
+ 2019-07-25 [334d0a2]*accept struct-based detphotons input, #76
+ 2019-07-25 [5f1d965] print normalization factor in single-det replay for debugging, #76
+ 2019-07-25 [0142557]*allow to run replay without giving the 2nd output, #76
+ 2019-07-24 [337c54e] fix wrong pattern number index for single pattern illumination
+ 2019-07-23 [e3b53dc]*add 2d sample script
+ 2019-07-22 [c4baa84] output fluence/flux in replay, backport changes from mcxcl
+ 2019-07-15 [80357fc] remove volumetric mua input in the basic example
+ 2019-06-25 [4985db6] fix incorrect indexing, #73
+ 2019-06-24 [d3f3922]*additional changes due to flexible savedetflag detected photon data format, fix #73
+ 2019-06-20 [4ac001f] fix incorrect detphoton data buffer indexing, fix #73
+ 2019-05-25 [2b907e2] fix the unitinmm scaling for single/double FP mua/mus
+ 2019-05-24 [71571e6]*fix half compilation error
+ 2019-05-24 [33df8bf] fix the missing unitinmm scaling when input is float mua/mus, half2 input still not working
+ 2019-05-24 [071262b]*allow to update n in continuous media
+ 2019-05-24 [02efc62]*bug fix for continuous varying media patch
+ 2019-05-23 [e1b50b6]*convert all volume formats between mcxlab and mcx, fix #67
+ 2019-05-22 [711bf81]*allow cuda 9/10 to compile mcx
+ 2019-05-19 [72afd6a] get rid of json editor validation errors
+ 2019-05-17 [e92d91c] avoid using string class to keep backward compatibility
+
 == MCX v2019.4 (Ether Dome RC1 - 1.4.9), FangQ <q.fang (a) neu.edu> ==
 
  2019-04-22 [5e0f0c5] add title to mcxplotvol window
