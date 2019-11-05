@@ -77,9 +77,9 @@ while(~feof(fid))
 
     dat=fread(fid,hd(7)*hd(4),format);
     dat=reshape(dat,[hd(4),hd(7)])';
-    if(savedetflag && length(detflag)>2)
+    if(savedetflag && length(detflag)>2 && detflag(3)>0)
 	    dat(:,sum(datlen(1:2))+1:sum(datlen(1:3)))=dat(:,sum(datlen(1:2))+1:sum(datlen(1:3)))*unitmm;
-    else
+    elseif(savedetflag==0)
         dat(:,2+hd(2):(1+2*hd(2)))=dat(:,2+hd(2):(1+2*hd(2)))*unitmm;
     end
 	data=[data;dat];
