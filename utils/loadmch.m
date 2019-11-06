@@ -71,7 +71,11 @@ while(~feof(fid))
 	savedetflag=fread(fid,1,'uint');
 	junk=fread(fid,2,'uint');
 
-    detflag=dec2bin(bitand(savedetflag,63))-'0';
+    detflag=dec2bin(bitand(savedetflag,(2^8-1)))-'0';
+    if(strcmp(endian,'ieee-le'))
+        detflag=fliplr(detflag);
+    end
+
     datalen=[1 hd(2) hd(2) hd(2) 3 3 1];
     datlen=detflag.*datalen(1:length(detflag));
 
