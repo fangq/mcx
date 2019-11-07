@@ -759,6 +759,14 @@ void mcx_prepdomain(char *filename, Config *cfg){
 		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
 		cfg->isrowmajor=0;
 	}
+        if(cfg->issavedet && cfg->detnum==0)
+            cfg->issavedet=0;
+        if(cfg->issavedet==0){
+            cfg->issaveexit=0;
+	    cfg->ismomentum=0;
+	    if(cfg->seed!=SEED_FROM_FILE)
+	        cfg->savedetflag=0;
+        }
 	if(cfg->issavedet)
 		mcx_maskdet(cfg);
 	if(cfg->isdumpmask)
@@ -809,7 +817,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
      }
      if(cfg->issavedet && cfg->savedetflag==0)
          cfg->savedetflag=0x5;
-     if(cfg->mediabyte>=100){
+     if(cfg->mediabyte>=100 && cfg->savedetflag){
 	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
 	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
 	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
@@ -985,8 +993,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
          mcx_error(-4,"input media types plus detector number exceeds the maximum total (4000)",__FILE__,__LINE__);
 
      cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
-     if(cfg->issavedet && cfg->detnum==0) 
-      	cfg->issavedet=0;
+
      for(i=0;i<cfg->detnum;i++){
         if(in==stdin)
 		fprintf(stdout,"Please define detector #%d: x,y,z (in grid unit): [5 5 5 1]\n\t",i);
@@ -1330,8 +1337,6 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            if(det){
              cfg->detnum=cJSON_GetArraySize(dets);
              cfg->detpos=(float4*)malloc(sizeof(float4)*cfg->detnum);
-	     if(cfg->issavedet && cfg->detnum==0) 
-      		cfg->issavedet=0;
              for(i=0;i<cfg->detnum;i++){
                cJSON *pos=dets, *rad=NULL;
                rad=FIND_JSON_OBJ("R","Optode.Detector.R",det);
