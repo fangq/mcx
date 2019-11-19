@@ -344,7 +344,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             cfg.exportfield=NULL;
 
             /** also return the run-time info in outut.runtime */
-            mxArray *stat=mxCreateStructMatrix(1,1,6,statstruct);
+            mxArray *stat=mxCreateStructMatrix(1,1,7,statstruct);
             mxArray *val = mxCreateDoubleMatrix(1,1,mxREAL);
             *mxGetPr(val) = cfg.runtime;
             mxSetFieldByNumber(stat,0,0, val);
