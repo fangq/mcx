@@ -103,7 +103,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        threadid=0;
   const char       *outputtag[]={"data"};
   const char       *datastruct[]={"data","stat","dref"};
-  const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","workload"};
+  const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","unitinmm","workload"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
                                   "autoblock","autothread","maxgate"};
@@ -369,11 +369,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             *mxGetPr(val) = cfg.normalizer;
             mxSetFieldByNumber(stat,0,4, val);
 
+            /** return the voxel size unitinmm */
+            val = mxCreateDoubleMatrix(1,1,mxREAL);
+            *mxGetPr(val) = cfg.unitinmm;
+            mxSetFieldByNumber(stat,0,5, val);
+
             /** return the relative workload between multiple GPUs */
             val = mxCreateDoubleMatrix(1,activedev,mxREAL);
 	    for(int i=0;i<activedev;i++)
                 *(mxGetPr(val)+i) = cfg.workload[i];
-            mxSetFieldByNumber(stat,0,5, val);
+            mxSetFieldByNumber(stat,0,6, val);
 
 	    mxSetFieldByNumber(plhs[0],jstruct,1, stat);
         }

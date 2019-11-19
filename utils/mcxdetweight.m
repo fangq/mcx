@@ -21,13 +21,25 @@ function detw=mcxdetweight(detp,prop,unitinmm)
 % License: GPLv3, see http://mcx.space/ for details
 %
 
+if(nargin<2)
+    if(isfield(detp,'prop'))
+        prop=detp.prop;
+    else
+        error('must provide input "prop"');
+    end
+end
+
 medianum=size(prop,1);
 if(medianum<=1)
     error('empty property list');
 end
 
-if(nargin<=3)
-    unitinmm=1;
+if(nargin<3)
+    if(isfield(detp,'unitinmm'))
+        unitinmm=detp.unitinmm;
+    else
+        unitinmm=1;
+    end
 end
 
 if(isstruct(detp))

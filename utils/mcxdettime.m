@@ -24,8 +24,20 @@ function dett=mcxdettime(detp,prop,unitinmm)
 
 R_C0 = 3.335640951981520e-12;	% inverse of light speed in vacuum
 
-if(nargin<=3)
-    unitinmm=1;
+if(nargin<3)
+    if(isfield(detp,'unitinmm'))
+        unitinmm=detp.unitinmm;
+    else
+        unitinmm=1;
+    end
+end
+
+if(nargin<2)
+    if(isfield(detp,'prop'))
+        prop=detp.prop;
+    else
+        error('must provide input "prop"');
+    end
 end
 
 medianum=size(prop,1);
