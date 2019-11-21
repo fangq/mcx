@@ -17,6 +17,11 @@ function avgpath=mcxmeanpath(detp,prop)
 %
 % License: GPLv3, see http://mcx.space/ for details
 %
+ if(isfield(detp,'unitinmm'))
+    unitinmm=detp.unitinmm;
+else
+    unitinmm=1;
+end
 
 detw=mcxdetweight(detp,prop);
-avgpath=sum(detp.ppath.*repmat(detw(:),1,size(detp.ppath,2))) / sum(detw(:));
+avgpath=sum(detp.ppath.*unitinmm.*repmat(detw(:),1,size(detp.ppath,2))) / sum(detw(:));
