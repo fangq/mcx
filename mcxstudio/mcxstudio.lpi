@@ -66,6 +66,7 @@
           <Version Value="11"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="synapse"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
