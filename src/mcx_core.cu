@@ -927,9 +927,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      ang=TWO_PI*rand_uniform01(t); //next arimuth angle
 		      sincosf(ang,&sphi,&cphi);
 		      if(gcfg->srctype==MCX_SRC_CONE){  // a solid-angle section of a uniform sphere
-			  do{
-			      ang=(gcfg->srcparam1.y>0) ? TWO_PI*rand_uniform01(t) : acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
-			  }while(ang>gcfg->srcparam1.x);
+		          ang=cosf(gcfg->srcparam1.x);
+		          ang=(gcfg->srcparam1.y>0.f) ? rand_uniform01(t)*gcfg->srcparam1.x : acos(rand_uniform01(t)*(1.0-ang)+ang); //sine distribution
 		      }else{
 			  if(gcfg->srctype==MCX_SRC_ISOTROPIC) // uniform sphere
 			      ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
