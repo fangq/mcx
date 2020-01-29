@@ -553,18 +553,20 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		} f2bh;
 		unsigned short tmp;
 		for(i=0;i<dimxyz;i++){
-		    f2bh.f[0]=val[i*3];
+		    f2bh.f[2]=val[i*3];
 		    f2bh.f[1]=val[i*3+1];
-		    f2bh.f[2]=val[i*3+2];
+		    f2bh.f[0]=val[i*3+2];
 
-		    f2bh.h[0] = (f2bh.i[0] >> 31) << 5;
-		    tmp = (f2bh.i[0] >> 23) & 0xff;
+		    if(f2bh.f[1]<0.f || f2bh.f[1]>=4.f || f2bh.f[0]<0.f )
+		        mexErrMsgTxt("the 2nd volume must have an integer value between 0 and 3");
+
+		    f2bh.h[0]=( (((unsigned char)(f2bh.f[1]) & 0x3) << 14) | (unsigned short)(f2bh.f[0]) );
+
+		    f2bh.h[1] = (f2bh.i[2] >> 31) << 5;
+		    tmp = (f2bh.i[2] >> 23) & 0xff;
 		    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-		    f2bh.h[0] = (f2bh.h[0] | tmp) << 10;
-		    f2bh.h[0] |= (f2bh.i[0] >> 13) & 0x3ff;
-		    
-		    f2bh.c[3]=(unsigned char)(f2bh.f[2]);
-		    f2bh.c[2]=(unsigned char)(f2bh.f[1]);
+		    f2bh.h[1] = (f2bh.h[1] | tmp) << 10;
+		    f2bh.h[1] |= (f2bh.i[2] >> 13) & 0x3ff;
 
 	            cfg->vol[i]=f2bh.i[0];
 		}

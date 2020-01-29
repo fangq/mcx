@@ -38,7 +38,7 @@ hold on;
 contour(log10(squeeze(flux1_new.data(31,:,:))*cfg1.tstep),clines,'w--');
 legend('conventional','new');
 colorbar;
-title("homogeneous cube");
+title('homogeneous cube');
 
 %% case 2: Two-layer slab: The refractive indices of tissue type 1 and 2 will be updated to 1.45 and 1.6 respectively
 clear cfg2
@@ -82,7 +82,7 @@ contourf(log10(squeeze(flux2_conventional.data(31,:,:))*cfg2.tstep),clines,'r-')
 hold on;
 contour(log10(squeeze(flux2_new.data(31,:,:))*cfg2.tstep),clines,'w--');
 legend('conventional','new');
-title("two layer slab");
+title('two layer slab');
 
 %% case 3: multi-layer slab: mua of tissue type 1 will be updated to 0.05 while the refractive indices of tissue type 2 will be updated to [1.30,1.35,1.40,1.45,1.50,1.55]
 clear cfg3
@@ -150,4 +150,4 @@ contourf(log10(squeeze(flux2_conventional.data(31,:,:))*cfg3.tstep),clines,'r-')
 hold on;
 contour(log10(squeeze(flux2_new.data(31,:,:))*cfg3.tstep),clines,'w--');
 legend('conventional','new');
-title("multi-layered slab");
+title('multi-layered slab');

@@ -473,14 +473,12 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 #else
                  half h[2];
 #endif
-		 unsigned char c[4];	  
+		 unsigned short s[2]; /*s[1]: half-prec property; s[0]: high 2bits: idx 0-3, low 14bits: tissue label*/
 	      } val;
 	      val.i=mediaid & MED_MASK;
-	      *((float4*)(prop))=gproperty[(unsigned int)(val.c[2])];
-	      if((unsigned int)(val.c[3])>0 && (unsigned int)(val.c[3])<5){
-	         float *p=(float*)(prop);
-	         p[(unsigned int)(val.c[3])-1]=fabs(__half2float(val.h[0]));
-	      }
+	      *((float4*)(prop))=gproperty[val.s[0] & 0x3FFF];
+              float *p=(float*)(prop);
+	      p[(val.s[0] & 0xC000)>>14]=fabs(__half2float(val.h[1]));
           }else if(gcfg->mediaformat==MEDIA_MUA_FLOAT){
 	      prop->mua=fabs(*((float *)&mediaid));
               prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
