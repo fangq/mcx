@@ -1579,12 +1579,12 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 
     CUDA_ASSERT(cudaGetDeviceCount(&deviceCount));
     if (deviceCount == 0){
-        MCX_FPRINTF(stderr,S_RED"ERROR: No CUDA-capable GPU device found\n"S_RESET);
+        MCX_FPRINTF(stderr,S_RED "ERROR: No CUDA-capable GPU device found\n" S_RESET);
         return 0;
     }
     *info=(GPUInfo *)calloc(deviceCount,sizeof(GPUInfo));
     if (cfg->gpuid && cfg->gpuid > deviceCount){
-        MCX_FPRINTF(stderr,S_RED"ERROR: Specified GPU ID is out of range\n"S_RESET);
+        MCX_FPRINTF(stderr,S_RED "ERROR: Specified GPU ID is out of range\n" S_RESET);
         return 0;
     }
     // scan from the first device
@@ -1618,7 +1618,7 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
-	    MCX_FPRINTF(stdout,S_BLUE"=============================   GPU Infomation  ================================\n"S_RESET);
+	    MCX_FPRINTF(stdout,S_BLUE"=============================   GPU Infomation  ================================\n" S_RESET);
 	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",(*info)[dev].id,(*info)[dev].devcount,(*info)[dev].name);
 	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",(*info)[dev].major,(*info)[dev].minor);
 	    MCX_FPRINTF(stdout,"Global Memory:\t\t%u B\nConstant Memory:\t%u B\n"
@@ -1835,7 +1835,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      totalgates=(int)((cfg->tend-cfg->tstart)/cfg->tstep+0.5);
 #pragma omp master
      if(totalgates>gpu[gpuid].maxgate && cfg->isnormalized){
-         MCX_FPRINTF(stderr,S_RED"WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n"S_RESET);
+         MCX_FPRINTF(stderr,S_RED "WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n" S_RESET);
          cfg->isnormalized=0;
      }
 #pragma omp barrier
@@ -1954,7 +1954,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #ifndef SAVE_DETECTORS
 #pragma omp master
      if(cfg->issavedet){
-           MCX_FPRINTF(stderr,S_RED"WARNING: this MCX binary can not save partial path, please use mcx_det or mcx_det_cached\n"S_RESET);
+           MCX_FPRINTF(stderr,S_RED "WARNING: this MCX binary can not save partial path, please use mcx_det or mcx_det_cached\n" S_RESET);
            cfg->issavedet=0;
      }
 #pragma omp barrier
@@ -2052,7 +2052,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
        CUDA_ASSERT(cudaMemcpyToSymbol(gcfg,   &param,     sizeof(MCXParam), 0, cudaMemcpyHostToDevice));
 
-       MCX_FPRINTF(cfg->flog,S_CYAN"launching MCX simulation for time window [%.2ens %.2ens] ...\n"S_RESET
+       MCX_FPRINTF(cfg->flog,S_CYAN"launching MCX simulation for time window [%.2ens %.2ens] ...\n" S_RESET
            ,param.twin0*1e9,param.twin1*1e9);
 
        //total number of repetition for the simulations, results will be accumulated to field
@@ -2137,8 +2137,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
 	       if(debugrec>0){
 		   if(debugrec>cfg->maxdetphoton){
-			MCX_FPRINTF(cfg->flog,S_RED"WARNING: the saved trajectory positions (%d) \
-are more than what your have specified (%d), please use the --maxjumpdebug option to specify a greater number\n"S_RESET
+			MCX_FPRINTF(cfg->flog,S_RED "WARNING: the saved trajectory positions (%d) \
+are more than what your have specified (%d), please use the --maxjumpdebug option to specify a greater number\n" S_RESET
                            ,debugrec,cfg->maxjumpdebug);
 		   }else{
 			MCX_FPRINTF(cfg->flog,"saved %ud trajectory positions, total: %d\t",debugrec,cfg->maxjumpdebug+debugrec);
@@ -2157,11 +2157,11 @@ are more than what your have specified (%d), please use the --maxjumpdebug optio
 		if(cfg->issaveseed)
 		    CUDA_ASSERT(cudaMemcpy(seeddata, gseeddata,sizeof(RandType)*cfg->maxdetphoton*RAND_BUF_LEN,cudaMemcpyDeviceToHost));
 		if(detected>cfg->maxdetphoton){
-			MCX_FPRINTF(cfg->flog,S_RED"WARNING: the detected photon (%d) \
-is more than what your have specified (%d), please use the -H option to specify a greater number\t"S_RESET
+			MCX_FPRINTF(cfg->flog,S_RED "WARNING: the detected photon (%d) \
+is more than what your have specified (%d), please use the -H option to specify a greater number\t" S_RESET
                            ,detected,cfg->maxdetphoton);
 		}else{
-			MCX_FPRINTF(cfg->flog,"detected "S_BOLD""S_BLUE"%d photons"S_RESET", total: "S_BOLD""S_BLUE"%ld"S_RESET"\t",detected,cfg->detectedcount+detected);
+			MCX_FPRINTF(cfg->flog,"detected " S_BOLD "" S_BLUE "%d photons" S_RESET", total: " S_BOLD "" S_BLUE "%ld" S_RESET"\t",detected,cfg->detectedcount+detected);
 		}
 #pragma omp atomic
                 cfg->his.detected+=detected;
@@ -2358,16 +2358,16 @@ is more than what your have specified (%d), please use the -H option to specify 
             Ppos[i].x,Ppos[i].y,Ppos[i].z,Plen[i].y,Plen[i].x,(float)Pseed[i]);
      }
      // total energy here equals total simulated photons+unfinished photons for all threads
-     MCX_FPRINTF(cfg->flog,"simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: "S_BOLD""S_BLUE"%.2f photon/ms\n"S_RESET,
+     MCX_FPRINTF(cfg->flog,"simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: " S_BOLD "" S_BLUE "%.2f photon/ms\n" S_RESET,
              (long int)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1),(long int)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1),
 	     gpu[gpuid].autothread,ABS(cfg->respin),(double)cfg->nphoton*((cfg->respin>1) ? (cfg->respin) : 1)/max(1,cfg->runtime)); fflush(cfg->flog);
      if(cfg->srctype==MCX_SRC_PATTERN && cfg->srcnum>1){
          for(i=0;i<(int)cfg->srcnum;i++){
-	     MCX_FPRINTF(cfg->flog,"source #%d total simulated energy: %.2f\tabsorbed: "S_BOLD""S_BLUE"%5.5f%%"S_RESET"\n(loss due to initial specular reflection is excluded in the total)\n",
+	     MCX_FPRINTF(cfg->flog,"source #%d total simulated energy: %.2f\tabsorbed: " S_BOLD "" S_BLUE "%5.5f%%" S_RESET"\n(loss due to initial specular reflection is excluded in the total)\n",
                  i+1,energytot[i],energyabs[i]/energytot[i]*100.f);fflush(cfg->flog);
 	 }
      }else{
-         MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: "S_BOLD""S_BLUE"%5.5f%%"S_RESET"\n(loss due to initial specular reflection is excluded in the total)\n",
+         MCX_FPRINTF(cfg->flog,"total simulated energy: %.2f\tabsorbed: " S_BOLD "" S_BLUE "%5.5f%%" S_RESET"\n(loss due to initial specular reflection is excluded in the total)\n",
              cfg->energytot,(cfg->energytot-cfg->energyesc)/cfg->energytot*100.f);fflush(cfg->flog);
          fflush(cfg->flog);
      }
