@@ -25,7 +25,7 @@
 
 #include "tictoc.h"
 
-#define _BSD_SOURCE
+#define DEFAULT_SOURCE
 
 #ifndef USE_OS_TIMER          /**< use CUDA event for time estimation */
 #include <cuda.h>
