@@ -463,7 +463,7 @@ __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir)
  */
 
 template <const int islabel>
-__device__ void updateproperty(Medium *prop, unsigned int mediaid){
+__device__ void updateproperty(Medium *prop, unsigned int mediaid, RandType t[RAND_BUF_LEN]){
 	  if(islabel){
 	      *((float4*)(prop))=gproperty[mediaid & MED_MASK];
 	  }else if(gcfg->mediaformat==MEDIA_LABEL_HALF){
@@ -496,6 +496,17 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid){
 	      prop->mua=fabs(__half2float(val.h[0]));
 	      prop->mus=fabs(__half2float(val.h[1]));
 	      prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
+	  }else if(gcfg->mediaformat==MEDIA_2LABEL_MIX){
+	      union {
+                 unsigned int   i;
+                 unsigned short h[2];
+		 unsigned char  c[4];
+              } val;
+	      val.i=mediaid & MED_MASK;
+	      if((rand_uniform01(t)*32767.f)>val.h[1])
+	          *((float4*)(prop))=gproperty[val.c[1]];
+	      else
+	          *((float4*)(prop))=gproperty[val.c[0]];
 	  }else if(gcfg->mediaformat==MEDIA_ASGN_BYTE){
 	      union {
                  unsigned int i;
@@ -554,7 +565,7 @@ __device__ float getrefractiveidx(unsigned int mediaid){
  */
 
 template <const int islabel>
-__device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint media[]){
+__device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint media[],RandType t[RAND_BUF_LEN]){
       int count=1,idx1d;
       while(1){
           if(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
@@ -585,7 +596,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 		    }
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
-                updateproperty<islabel>((Medium *)&htime,media[idx1d]);
+                updateproperty<islabel>((Medium *)&htime,media[idx1d],t);
 		if(gcfg->isspecular && htime.w!=gproperty[0].w){
 	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,htime.w,flipdir);
                     GPUDEBUG(("transmitted intensity w=%e\n",p->w));
@@ -1009,7 +1020,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
            */
 	  if(!isinternal){
 	      if((*mediaid & MED_MASK)==0){
-		 int idx=skipvoid<islabel>(p, v, f, rv, media); /** specular reflection of the bbx is taken care of here*/
+		 int idx=skipvoid<islabel>(p, v, f, rv, media,t); /** specular reflection of the bbx is taken care of here*/
 		 if(idx>=0){
 		     *idx1d=idx;
 		     *mediaid=media[*idx1d];
@@ -1030,7 +1041,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
        * Now a photon is successfully launched, perform necssary initialization for a new trajectory
        */
       f->ndone++;
-      updateproperty<islabel>(prop,*mediaid);
+      updateproperty<islabel>(prop,*mediaid,t);
       if(gcfg->debuglevel & MCX_DEBUG_MOVE)
           savedebugdata(p,(uint)f->ndone+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
 
@@ -1268,7 +1279,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  if(islabel)
 	    *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
 	  else
-	    updateproperty<islabel>(&prop,mediaid);
+	    updateproperty<islabel>(&prop,mediaid,t);
 
 	  /** Advance photon 1 step to the next voxel */
 	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)&v,&(htime.x),&rv.x,&flipdir); // propagate the photon to the first intersection to the grid
@@ -1450,12 +1461,12 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           /** do boundary reflection/transmission */
 	  if(isreflect){
 	      if(gcfg->mediaformat==MEDIA_LABEL_HALF)
-	          updateproperty<islabel>(&prop,mediaid); ///< optical property across the interface
+	          updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
 	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat==MEDIA_LABEL_HALF)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
-                  updateproperty<islabel>(&prop,mediaid); ///< optical property across the interface  
+                  updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface  
 
                   tmp0=n1*n1;
                   tmp1=prop.n*prop.n;
@@ -1499,11 +1510,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	                GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
                 	idx1d=idx1dold;
 		 	mediaid=(media[idx1d] & MED_MASK);
-        	  	updateproperty<islabel>(&prop,mediaid); ///< optical property across the interface
+        	  	updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
                   	n1=prop.n;
 		  }
 	      }else if(gcfg->mediaformat==MEDIA_LABEL_HALF)
-	          updateproperty<islabel>(&prop,mediaidold); ///< optical property across the interface
+	          updateproperty<islabel>(&prop,mediaidold,t); ///< optical property across the interface
 	  }
      }
 

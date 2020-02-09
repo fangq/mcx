@@ -480,8 +480,10 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	}else if(mxGetNumberOfDimensions(item)==4){ // if dimension is 4D, 1st dim is the property records: mua/mus/g/n
 	    if((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0]==4) // if 4D byte array has a 1st dim of 4
 		 cfg->mediabyte=MEDIA_ASGN_BYTE;
-	    else if(arraydim[0]==3)
+	    else if(mxIsSingle(item) && arraydim[0]==3)
 		 cfg->mediabyte=MEDIA_LABEL_HALF;
+	    else if((mxIsUint16(item) || mxIsInt16(item)) && arraydim[0]==3)
+		 cfg->mediabyte=MEDIA_2LABEL_MIX;
 	    else if((mxIsUint16(item) || mxIsInt16(item)) && arraydim[0]==2)// if 4D short array has a 1st dim of 2
 		 cfg->mediabyte=MEDIA_AS_SHORT;
 	    else if(mxIsSingle(item) && arraydim[0]==2) // if 4D float32 array has a 1st dim of 2
@@ -568,6 +570,20 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		    f2bh.h[1] = (f2bh.h[1] | tmp) << 10;
 		    f2bh.h[1] |= (f2bh.i[2] >> 13) & 0x3ff;
 
+	            cfg->vol[i]=f2bh.i[0];
+		}
+	    }else if(cfg->mediabyte==MEDIA_2LABEL_MIX){
+		unsigned short *val=(unsigned short *)mxGetPr(item);
+		union{
+		    unsigned short h[2];
+		    unsigned char  c[4];
+		    unsigned int   i[1];
+		} f2bh;
+		unsigned short tmp;
+		for(i=0;i<dimxyz;i++){
+		    f2bh.c[0]=val[i*3]   & 0xFF;
+		    f2bh.c[1]=val[i*3+1] & 0xFF;
+		    f2bh.h[1]=val[i*3+2] & 0x7FFF;
 	            cfg->vol[i]=f2bh.i[0];
 		}
 	    }
