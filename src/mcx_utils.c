@@ -1380,7 +1380,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	if(!flagset['m'])  cfg->ismomentum=FIND_JSON_KEY("DoDCS","Session.DoDCS",Session,cfg->ismomentum,valueint);
 	if(!flagset['V'])  cfg->isspecular=FIND_JSON_KEY("DoSpecular","Session.DoSpecular",Session,cfg->isspecular,valueint);
 	if(!flagset['D'])  cfg->debuglevel=mcx_parsedebugopt(FIND_JSON_KEY("DebugFlag","Session.DebugFlag",Session,"",valuestring),debugflag);
-	if(!flagset['w'])  cfg->savedetflag=mcx_parsedebugopt(FIND_JSON_KEY("SaveDataMask","Session.SaveDataMask",Session,"",valuestring),saveflag);
+	if(!flagset['w'])  cfg->savedetflag=mcx_parsedebugopt(FIND_JSON_KEY("SaveDataMask","Session.SaveDataMask",Session,"DP",valuestring),saveflag);
 
         if(!cfg->outputformat)  cfg->outputformat=mcx_keylookup((char *)FIND_JSON_KEY("OutputFormat","Session.OutputFormat",Session,"mc2",valuestring),outputformat);
         if(cfg->outputformat<0)
