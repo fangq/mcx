@@ -1,3 +1,6 @@
 [submodule "filter"]
 	path = filter
 	url = https://github.com/fangq/GPU-ANLM.git
+[submodule "pymcx"]
+	path = pymcx
+	url = https://github.com/4D42/pymcx.git
