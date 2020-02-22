@@ -1449,7 +1449,7 @@ begin
         begin
           url:=fmConfig.cbHost.Text;
           cmd:=fmConfig.edUserName.Text;
-          if(url.IsEmpty) or (cmd.IsEmpty) then begin
+          if ckDoRemote.Checked and ( (url.IsEmpty) or (cmd.IsEmpty) ) then begin
              if(MessageDlg('Question', 'You have not set up remote server information. Do you want to set now?', mtWarning,
                  [mbYes, mbNo, mbCancel],0) <> mrYes) then exit;
              mcxdoConfigExecute(Sender);
