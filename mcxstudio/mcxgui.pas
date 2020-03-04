@@ -79,6 +79,9 @@ type
     MenuItem66: TMenuItem;
     MenuItem67: TMenuItem;
     MenuItem68: TMenuItem;
+    MenuItem69: TMenuItem;
+    MenuItem70: TMenuItem;
+    MenuItem71: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
     mmOutput: TSynEdit;

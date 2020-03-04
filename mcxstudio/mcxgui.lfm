@@ -1675,6 +1675,10 @@ object fmMCX: TfmMCX
         '$Download: https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
         ''
         ' -- "MMC" --'
+        '# [Fang2019] Qianqian Fang*, Shijie Yan, ““Graphics processing unit-accelerated mesh-based Monte Carlo photon transport simulations,” J. of Biomedical Optics, 24(11), 115002 (2019)'
+        '$Summary:  GPU-based MMC'
+        '$Download: http://dx.doi.org/10.1117/1.JBO.24.11.115002'
+        ''
         '# [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid mesh-based Monte Carlo algorithm for efficient photon transport simulations in complex 3-D media,” J. of Biomedical Optics, 24(2), 020503 (2019).'
         '$Summary: Dual-grid MMC for faster and more accurate mesh-based simulations'
         '$Download: http://dx.doi.org/10.1117/1.JBO.24.2.020503'
@@ -1699,9 +1703,18 @@ object fmMCX: TfmMCX
         '$Summary:  original MMC paper'
         '$Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165'
         ''
+        ' -- "Applications" --'
+        '# [Yuan2020] Yaoshen Yuan, Paolo Cassano, Matthew Pias, Qianqian Fang*, (2020) "Transcranial photobiomodulation with near-infrared light from childhood to elderliness: simulation of dosimetry,", Neurophotonics, 7(1), 015009, URL: https://doi.org/10.1117/1.NPh.7.1.015009'
+        '$Summary: PBM dosage over lifespan'
+        '$Download: https://doi.org/10.1117/1.NPh.7.1.015009'
+        ''
+        '# [Brain2Mesh2020] Anh Phong Tran† , Shijie Yan† , Qianqian Fang*, (2020) "Improving model-based fNIRS analysis using mesh-based anatomical and light-transport models," Neurophotonics, 7(1), 015008, URL: https://doi.org/10.1117/1.NPh.7.1.015008'
+        '$Summary: Brain2Mesh - a one-liner for brain mesh generator (http://mcx.space/brain2mesh)'
+        '$Download: https://doi.org/10.1117/1.NPh.7.1.015008'
         ''
         'Output:'
       )
+      Options = [eoAutoIndent, eoBracketHighlight, eoGroupUndo, eoScrollPastEol, eoSmartTabs, eoTabsToSpaces, eoTrimTrailingSpaces, eoShowCtrlMouseLinks]
       MouseOptions = [emShowCtrlMouseLinks]
       VisibleSpecialChars = [vscSpace, vscTabAtLast]
       SelectedColor.BackPriority = 50
@@ -30133,6 +30146,18 @@ object fmMCX: TfmMCX
         Caption = '[Yan2019] Dual-grid MMC'
         Hint = 'https://na01.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdx.doi.org%2F10.1117%2F1.JBO.24.2.020503&data=02%7C01%7Cq.fang%40northeastern.edu%7Cbb8daa56735543068b9c08d697592492%7Ca8eec281aaa34daeac9b9a398b9215e7%7C0%7C0%7C636862806460866013&sdata=2dWyN3eVPwwymydjXEWIHBfVZI43Fcl5zuZ8wiaJ10k%3D&reserved=0'
         OnClick = mcxdoWebURLExecute
+      end
+      object MenuItem69: TMenuItem
+        Caption = '[Fang2019] GPU MMC'
+        Hint = 'http://dx.doi.org/10.1117/1.JBO.24.11.115002'
+      end
+      object MenuItem71: TMenuItem
+        Caption = '[Yuan2020] PBM over lifespan'
+        Hint = 'https://doi.org/10.1117/1.NPh.7.1.015009'
+      end
+      object MenuItem70: TMenuItem
+        Caption = '[Brain2Mesh2020] Brain2Mesh brain meshing toolbox'
+        Hint = 'https://doi.org/10.1117/1.NPh.7.1.015008'
       end
     end
   end
