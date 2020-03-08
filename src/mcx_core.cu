@@ -503,7 +503,7 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid, RandType t[RA
 		 unsigned char  c[4];
               } val;
 	      val.i=mediaid & MED_MASK;
-	      if((rand_uniform01(t)*32767.f)>val.h[1])
+	      if(val.h[1]>0 && (rand_uniform01(t)*32767.f)>val.h[1])
 	          *((float4*)(prop))=gproperty[val.c[1]];
 	      else
 	          *((float4*)(prop))=gproperty[val.c[0]];
