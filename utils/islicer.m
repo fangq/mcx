@@ -38,6 +38,8 @@ set([h1,h2,h3],'CDataMapping','scaled', varargin{:});
 %colormap(jet(64));
 
 view(3);
+set(camlight,'Visible','on')
+
 axis equal;
 
 
