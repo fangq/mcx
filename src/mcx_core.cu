@@ -503,7 +503,7 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid, RandType t[RA
 		 unsigned char  c[4];
               } val;
 	      val.i=mediaid & MED_MASK;
-	      if((rand_uniform01(t)*32767.f)>val.h[1])
+	      if(val.h[1]>0 && (rand_uniform01(t)*32767.f)<val.h[1])
 	          *((float4*)(prop))=gproperty[val.c[1]];
 	      else
 	          *((float4*)(prop))=gproperty[val.c[0]];
@@ -1460,9 +1460,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
           /** do boundary reflection/transmission */
 	  if(isreflect){
-	      if(gcfg->mediaformat==MEDIA_LABEL_HALF)
+	      if(gcfg->mediaformat<100)
 	          updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
-	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat==MEDIA_LABEL_HALF)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
+	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
@@ -1513,7 +1513,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
         	  	updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
                   	n1=prop.n;
 		  }
-	      }else if(gcfg->mediaformat==MEDIA_LABEL_HALF)
+	      }else if(gcfg->mediaformat<100)
 	          updateproperty<islabel>(&prop,mediaidold,t); ///< optical property across the interface
 	  }
      }
