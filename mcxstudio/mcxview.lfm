@@ -1,35 +1,34 @@
 object fmViewer: TfmViewer
-  Left = 717
-  Height = 792
-  Top = 164
-  Width = 792
+  Left = 2732
+  Height = 800
+  Top = 250
+  Width = 800
   ActiveControl = glCanvas
   Caption = 'MCX Studio Volume Renderer'
-  ClientHeight = 792
-  ClientWidth = 792
+  ClientHeight = 800
+  ClientWidth = 800
   Color = clBtnFace
-  DesignTimePPI = 95
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  ParentFont = True
   Position = poScreenCenter
-  LCLVersion = '1.8.2.0'
+  LCLVersion = '2.0.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 603
-    Top = 53
-    Width = 792
+    Height = 609
+    Top = 54
+    Width = 800
     Align = alClient
-    ClientHeight = 603
-    ClientWidth = 792
+    ClientHeight = 609
+    ClientWidth = 800
+    ParentFont = False
     TabOrder = 0
     object glCanvas: TGLSceneViewer
       Left = 1
-      Height = 601
+      Height = 607
       Top = 1
-      Width = 790
+      Width = 798
       Camera = GLCamera
       Buffer.BackgroundColor = clBlack
       Buffer.AmbientColor.Red = 0.200000002980232
@@ -37,7 +36,7 @@ object fmViewer: TfmViewer
       Buffer.AmbientColor.Blue = 0.200000002980232
       Buffer.AmbientColor.Alpha = 1
       Buffer.ShadeModel = smSmooth
-      FieldOfView = 172
+      FieldOfView = 172.078811645508
       Align = alClient
       OnMouseDown = glCanvasMouseDown
       OnMouseMove = glCanvasMouseMove
@@ -47,33 +46,36 @@ object fmViewer: TfmViewer
   end
   object Panel2: TPanel
     Left = 0
-    Height = 136
-    Top = 656
-    Width = 792
+    Height = 137
+    Top = 663
+    Width = 800
     Align = alBottom
     BevelOuter = bvNone
-    ClientHeight = 136
-    ClientWidth = 792
+    ClientHeight = 137
+    ClientWidth = 800
+    ParentFont = False
     TabOrder = 1
     object Panel3: TPanel
       Left = 4
       Height = 40
       Top = 92
-      Width = 784
+      Width = 792
       Align = alTop
       BorderSpacing.Around = 4
       ClientHeight = 40
-      ClientWidth = 784
+      ClientWidth = 792
+      ParentFont = False
       TabOrder = 0
       object Panel6: TPanel
         Left = 1
         Height = 38
         Top = 1
-        Width = 191
+        Width = 193
         Align = alLeft
         BevelOuter = bvNone
         ClientHeight = 38
-        ClientWidth = 191
+        ClientWidth = 193
+        ParentFont = False
         TabOrder = 0
         object Label1: TLabel
           Left = 8
@@ -86,15 +88,16 @@ object fmViewer: TfmViewer
         end
       end
       object Projection_N_TB: TTrackBar
-        Left = 192
-        Height = 43
+        Left = 194
+        Height = 38
         Top = 1
-        Width = 591
+        Width = 597
         Frequency = 10
         Max = 512
         Min = 1
         Position = 1
         Align = alClient
+        ParentFont = False
         TabOrder = 1
       end
     end
@@ -102,21 +105,23 @@ object fmViewer: TfmViewer
       Left = 4
       Height = 40
       Top = 4
-      Width = 784
+      Width = 792
       Align = alTop
       BorderSpacing.Around = 4
       ClientHeight = 40
-      ClientWidth = 784
+      ClientWidth = 792
+      ParentFont = False
       TabOrder = 1
       object Panel5: TPanel
         Left = 1
         Height = 38
         Top = 1
-        Width = 191
+        Width = 193
         Align = alLeft
         BevelOuter = bvNone
         ClientHeight = 38
-        ClientWidth = 191
+        ClientWidth = 193
+        ParentFont = False
         TabOrder = 0
         object Label2: TLabel
           Left = 8
@@ -129,15 +134,16 @@ object fmViewer: TfmViewer
         end
       end
       object Cutting_Plane_Pos_TB: TTrackBar
-        Left = 192
-        Height = 43
+        Left = 194
+        Height = 38
         Top = 1
-        Width = 591
+        Width = 597
         Frequency = 10
         Max = 127
         OnChange = Cutting_Plane_Pos_TBChange
         Position = 0
         Align = alClient
+        ParentFont = False
         TabOrder = 1
       end
     end
@@ -145,21 +151,23 @@ object fmViewer: TfmViewer
       Left = 4
       Height = 40
       Top = 48
-      Width = 784
+      Width = 792
       Align = alTop
       BorderSpacing.Around = 4
       ClientHeight = 40
-      ClientWidth = 784
+      ClientWidth = 792
+      ParentFont = False
       TabOrder = 2
       object Panel9: TPanel
         Left = 1
         Height = 38
         Top = 1
-        Width = 191
+        Width = 193
         Align = alLeft
         BevelOuter = bvNone
         ClientHeight = 38
-        ClientWidth = 191
+        ClientWidth = 193
+        ParentFont = False
         TabOrder = 0
         object Label3: TLabel
           Left = 8
@@ -172,27 +180,28 @@ object fmViewer: TfmViewer
         end
       end
       object Alpha_Threshold_TB: TTrackBar
-        Left = 192
-        Height = 43
+        Left = 194
+        Height = 38
         Top = 1
-        Width = 591
+        Width = 597
         Frequency = 10
         Max = 256
         Min = 1
         OnChange = Alpha_Threshold_TBChange
         Position = 1
         Align = alClient
+        ParentFont = False
         TabOrder = 1
       end
     end
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 53
+    Height = 54
     Top = 0
-    Width = 792
-    ButtonHeight = 48
-    ButtonWidth = 48
+    Width = 800
+    ButtonHeight = 49
+    ButtonWidth = 49
     Caption = 'ToolBar1'
     Color = clWhite
     Font.Height = -11
@@ -222,7 +231,7 @@ object fmViewer: TfmViewer
     end
     object ToolButton9: TToolButton
       Left = 157
-      Height = 48
+      Height = 49
       Top = 2
       Caption = 'ToolButton9'
       Style = tbsDivider
@@ -248,7 +257,7 @@ object fmViewer: TfmViewer
     end
     object ToolButton10: TToolButton
       Left = 318
-      Height = 48
+      Height = 49
       Top = 2
       Caption = 'ToolButton10'
       Style = tbsDivider
@@ -260,8 +269,8 @@ object fmViewer: TfmViewer
     end
   end
   object GLScene: TGLScene
-    left = 472
-    top = 64
+    left = 477
+    top = 65
     object Frame: TGLLines
       TagFloat = 0
       PitchAngle = 0
@@ -469,27 +478,27 @@ object fmViewer: TfmViewer
     MinDeltaTime = 0
     FixedDeltaTime = 0
     OnProgress = GLCadencerProgress
-    left = 536
-    top = 64
+    left = 542
+    top = 65
   end
   object Timer: TTimer
     OnTimer = TimerTimer
-    left = 600
-    top = 64
+    left = 606
+    top = 65
   end
   object dlOpenFile: TOpenDialog
     DefaultExt = '.tx3'
     Filter = 'MCX volume file (*.mc2;*.nii;*.tx3;*.img)|*.mc2;*.nii;*.tx3;*.img|MCX fluence file (*.mc2)|*.mc2|Texture File (*.tx3)|*.tx3|Nifti file (*.nii)|*.nii|Analyze 7.5 (*.img)|*.img|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 688
-    top = 128
+    left = 695
+    top = 129
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 680
-    top = 64
+    left = 687
+    top = 65
     Bitmap = {
       4C69080000003000000030000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -2800,13 +2809,13 @@ object fmViewer: TfmViewer
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 744
-    top = 128
+    left = 752
+    top = 129
   end
   object acMCXPlot: TActionList
     Images = ImageList3
-    left = 184
-    top = 128
+    left = 186
+    top = 129
     object mcxplotOpen: TAction
       Caption = 'Open File'
       Hint = 'Open Data File'

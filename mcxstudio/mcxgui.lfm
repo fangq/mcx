@@ -587,7 +587,7 @@ object fmMCX: TfmMCX
         object sgMedia: TStringGrid
           Left = 0
           Height = 91
-          Hint = 'MediaCfg '#10#10'This table defines all optical properties for all needed tissue labels.'#10#10'The first row (label 0) is reserved for the background medium - which includes'#10'the space outside the bounding box of the volume, as well as any voxels with'#10'a zero-value.'#10#10'One can select a row and copy/paste to other rows.'#10#10'If more labels are needed, move to the bottom of the table, and press "down"'#10'arrow key to create a new row below.'
+          Hint = 'MediaCfg '#10#10'This table defines the optical properties for all needed tissue labels.'#10#10'The first row (label 0) is reserved for the background medium - which includes'#10'the space outside the bounding box of the volume, as well as any voxels with'#10'a zero-value.'#10#10'One can select a row and copy/paste to other rows.'#10#10'If more labels are needed, move to the bottom of the table, and press "down"'#10'arrow key to create a new row below.'
           Top = 18
           Width = 355
           HelpType = htKeyword
@@ -619,6 +619,7 @@ object fmMCX: TfmMCX
           ParentFont = False
           ParentShowHint = False
           RowCount = 20
+          ShowHint = True
           TabOrder = 1
           TitleFont.Color = clBlack
           TitleImageList = ImageList1
@@ -681,6 +682,7 @@ object fmMCX: TfmMCX
           ParentFont = False
           ParentShowHint = False
           RowCount = 20
+          ShowHint = True
           TabOrder = 3
           TitleFont.Color = clBlack
           TitleStyle = tsNative
@@ -798,6 +800,7 @@ object fmMCX: TfmMCX
           ParentFont = False
           ParentShowHint = False
           RowCount = 15
+          ShowHint = True
           TabOrder = 7
           TitleFont.Color = clBlack
           TitleStyle = tsNative
@@ -1788,12 +1791,15 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         Left = 404
         Height = 27
+        Hint = 'Send the user input to the input buffer of the external program '#10'currently being executed.'
         Top = 1
         Width = 102
         Anchors = [akTop, akLeft, akBottom]
         Caption = 'Send'
         OnClick = btSendCmdClick
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 0
       end
       object edCmdInput: TEdit
@@ -1802,10 +1808,13 @@ object fmMCX: TfmMCX
         AnchorSideRight.Control = btSendCmd
         Left = 69
         Height = 24
+        Hint = 'User Input'#10#10'When connecting to a remote server via ssh/scp, one may asked to type'#10'"yes" to save the ssh key or other interactive inputs. If this is the case, one'#10'can use this field to type user input, and click "Send" to pipe user input to '#10'the external program.'
         Top = 1
         Width = 335
         OnKeyPress = edCmdInputKeyPress
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 1
       end
       object Label5: TLabel
@@ -1849,6 +1858,8 @@ object fmMCX: TfmMCX
         Caption = 'Run remote command:'
         OnChange = edRespinChange
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 3
       end
       object edRemote: TComboBox
@@ -1858,7 +1869,7 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         Left = 676
         Height = 25
-        Hint = 'RemoteCmd'
+        Hint = 'RemoteCmd '#10#10'Please choose the remote connection command using the dropdown list, or'#10'type in this field manually. For windows, it is recommended to choose the '#10'plink.exe command; for Linux, it is recommended to use the ssh command.'#10#10'Please replace the user@server by the actual username and the server IP'#10'or domain name.'#10#10'You are highly recommended to set up key-based ssh access to avoid typing'#10'password. Tutorials can be found at http://www.linuxproblem.org/art_9.html'
         Top = 0
         Width = 255
         HelpType = htKeyword
@@ -1876,6 +1887,8 @@ object fmMCX: TfmMCX
         OnChangeBounds = edRespinChange
         OnEditingDone = edRespinChange
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 4
         Text = 'Built-in ssh'
       end
@@ -1898,6 +1911,8 @@ object fmMCX: TfmMCX
         Enabled = False
         OnChange = edRespinChange
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 5
       end
       object btExpandOutput: TButton
@@ -1905,6 +1920,7 @@ object fmMCX: TfmMCX
         AnchorSideLeft.Side = asrBottom
         Left = 1227
         Height = 29
+        Hint = 'To expand or collapse the command window.'
         Top = 0
         Width = 59
         Align = alRight
@@ -1912,6 +1928,8 @@ object fmMCX: TfmMCX
         Caption = '▵'
         OnClick = btExpandOutputClick
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 6
       end
     end
@@ -3068,7 +3086,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Control = grGPU
         Left = 5
         Height = 22
-        Hint = 'Autopilot'
+        Hint = 'Autopilot '#10#10'Checking this box tells MCX/MMC to automatically determine the "optimal"'#10'thread number and block size by using the hardware information.'#10#10'It is recommended to always check this box. The key to maximize simulation'#10'throughput is to ensure a large number of threads are launched to keep the'#10'hardware resources fully utilized.'
         Top = 1
         Width = 255
         HelpType = htKeyword
@@ -3227,6 +3245,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         Left = 356
         Height = 22
+        Hint = 'Checking this box prevents MCXStudio from updating the device list'#10'when switching between different simulation sessions.'#10#10'When running simulation on a remote server, it is recommended to'#10'lock the GPU to avoid resetting of the device list.'
         Top = 1
         Width = 82
         HelpType = htKeyword
