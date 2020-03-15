@@ -1939,6 +1939,8 @@ object fmMCX: TfmMCX
     DockSite = True
     Enabled = False
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 9
     object grBasic: TGroupBox
       Left = 0
@@ -2006,7 +2008,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrBottom
         Left = 128
         Height = 24
-        Hint = 'Session'
+        Hint = 'Session '#10#10'This string will be used in all output files as part of the file names.'
         Top = 29
         Width = 117
         HelpType = htKeyword
@@ -2042,7 +2044,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         Left = 433
         Height = 24
-        Hint = 'PhotonNum'
+        Hint = 'PhotonNum '#10#10'This defines the total simulated photons.'#10#10'Can be an integer or number in scientific form. For example'#10'100000 and 1e5 are both acceptable.'#10#10'Please be noted that we highly suggest one to start with a'#10'small photon number to avoid extended run time.'
         Top = 29
         Width = 117
         HelpType = htKeyword
@@ -2051,6 +2053,7 @@ object fmMCX: TfmMCX
         ParentFont = False
         TabOrder = 4
         Text = '1e6'
+        TextHint = 'Integer'
       end
       object Label8: TLabel
         AnchorSideLeft.Control = edPhoton
@@ -2078,7 +2081,7 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Side = asrBottom
         Left = 672
         Height = 24
-        Hint = 'UnitInMM'
+        Hint = 'UnitInMM '#10#10'This defines the voxel size. By default, 1x1x1 mm^3 voxels'#10'are used. Has to be a positive floating point number. For example,'#10'0.1 defines a 0.1x0.1x0.1 mm^3 voxel.'#10#10'Currently, only isotropic voxels are supported.'
         Top = 29
         Width = 52
         HelpType = htKeyword
@@ -2096,7 +2099,7 @@ object fmMCX: TfmMCX
         AnchorSideTop.Side = asrCenter
         Left = 487
         Height = 24
-        Hint = 'Seed'
+        Hint = 'Seed '#10#10'If this field is a large integer number, this specifies the RNG seed; '#10#10'if this is a file name ending with .mch, it loads an .mch file generated '#10'from previous simulation and replays the detected photons.'
         Top = 52
         Width = 117
         HelpType = htKeyword
@@ -2105,6 +2108,7 @@ object fmMCX: TfmMCX
         ParentFont = False
         TabOrder = 6
         Text = '1648335518'
+        TextHint = 'A large integer or .mch file name'
       end
       object Label13: TLabel
         AnchorSideLeft.Control = edPhoton
@@ -2278,16 +2282,15 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         Left = 128
         Height = 23
-        Hint = 'OutputType'
+        Hint = 'OutputType '#10#10'This option specifies the output data type. '#10#10'* Fluence rate [J/mm^2/s] - the default output'#10'* Fluence [J/mm^2] - the integration of the fluence '#10'   rate over each time gate'#10'* Energy density [J/mm^3] - can be computed by multiplying '#10'   fluence with absorption μa'#10'* Absorption Jacobian (mua) [1/mm] - in the replay mode, this'#10'   outputs the sensitivity matrix for μa;'#10'* Average scattering event count - in the replay mode, this'#10'   outputs the number of scattering event per voxel'#10'* Momentum transfer sensivity (DCS) - in the replay mode, this '#10'   outputs the momentum transfer contribution/sensitivity from '#10'   each voxel.'
         Top = 53
         Width = 117
         Anchors = [akTop, akLeft, akRight]
         ItemHeight = 0
-        ItemIndex = 0
         Items.Strings = (
           'X - fluence rate in [J/(mm^2s)]'
           'F - fluence [J/mm^2]'
-          'E - energy deposition [J]'
+          'E - energy density [J/mm^3]'
           'J - jacobian (mua) [1/mm]'
           'P - jacobian (scat) [1/mm]'
           'M - jacobian (dcs)'
@@ -2297,7 +2300,6 @@ object fmMCX: TfmMCX
         ParentShowHint = False
         Style = csDropDownList
         TabOrder = 9
-        Text = 'X - fluence rate in [J/(mm^2s)]'
       end
     end
     object grAdvSettings: TGroupBox
@@ -3017,7 +3019,7 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         Left = 150
         Height = 25
-        Hint = 'ThreadNum'
+        Hint = 'ThreadNum'#10#10'Specify a large integer multiple of 32 (the warp size) to manually '#10'define the thread numbers.'#10#10'This is only used when the -A (autopilot mode) is not enabled.'
         Top = 23
         Width = 110
         HelpType = htKeyword
@@ -3103,7 +3105,7 @@ object fmMCX: TfmMCX
         AnchorSideBottom.Side = asrBottom
         Left = 150
         Height = 25
-        Hint = 'ThreadBlock'
+        Hint = 'ThreadBlock'#10#10'Specify a small integer, preferably a multiple of 32, to define '#10'the block size - for example, 64 means a thread block contains '#10'64 threads.'#10#10'This is only used when the -A (autopilot mode) is not enabled.'
         Top = 48
         Width = 110
         HelpType = htKeyword
@@ -3213,6 +3215,7 @@ object fmMCX: TfmMCX
         ParentFont = False
         TabOrder = 4
         Text = '100'
+        TextHint = 'Comma separated numbers'
       end
       object ckLockGPU: TCheckBox
         AnchorSideLeft.Control = Label12
@@ -30112,11 +30115,6 @@ object fmMCX: TfmMCX
         Hint = 'http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178'
         OnClick = mcxdoWebURLExecute
       end
-      object MenuItem58: TMenuItem
-        Caption = '[Yu2018] Original MCX-CL Paper'
-        Hint = 'https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
-        OnClick = mcxdoWebURLExecute
-      end
       object MenuItem57: TMenuItem
         Caption = '[Fang2010] Original MMC Paper'
         Hint = 'https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165'
@@ -30137,6 +30135,11 @@ object fmMCX: TfmMCX
         Hint = 'https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171'
         OnClick = mcxdoWebURLExecute
       end
+      object MenuItem58: TMenuItem
+        Caption = '[Yu2018] Original MCX-CL Paper'
+        Hint = 'https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink'
+        OnClick = mcxdoWebURLExecute
+      end
       object MenuItem62: TMenuItem
         Caption = '[Yao2018] Jacobians with photon replay'
         Hint = 'https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588'
@@ -30150,14 +30153,17 @@ object fmMCX: TfmMCX
       object MenuItem69: TMenuItem
         Caption = '[Fang2019] GPU MMC'
         Hint = 'http://dx.doi.org/10.1117/1.JBO.24.11.115002'
+        OnClick = mcxdoWebURLExecute
       end
       object MenuItem71: TMenuItem
         Caption = '[Yuan2020] PBM over lifespan'
         Hint = 'https://doi.org/10.1117/1.NPh.7.1.015009'
+        OnClick = mcxdoWebURLExecute
       end
       object MenuItem70: TMenuItem
         Caption = '[Brain2Mesh2020] Brain2Mesh brain meshing toolbox'
         Hint = 'https://doi.org/10.1117/1.NPh.7.1.015008'
+        OnClick = mcxdoWebURLExecute
       end
     end
   end
