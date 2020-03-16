@@ -28,7 +28,7 @@ uses
   GLCoordinates,
   GLCrossPlatform,
   GLRenderContextInfo,
-  GLGraphics,
+  GLGraphics, GLWindowsFont, GLBitmapFont,
   texture_3d,
   mcxloadfile,
   Types;
@@ -38,6 +38,10 @@ type
   { TfmViewer }
 
   TfmViewer = class(TForm)
+    DCCoordsZ: TGLDummyCube;
+    DCCoordsY: TGLDummyCube;
+    DCCoordsX: TGLDummyCube;
+    GLWinBmpFont: TGLWindowsBitmapFont;
     mcxplotExit: TAction;
     mcxplotUseColor: TAction;
     mcxplotShowBBX: TAction;
@@ -58,7 +62,7 @@ type
     glCanvas: TGLSceneViewer;
     GLLightSource: TGLLightSource;
     Frame: TGLLines;
-    GLCube1: TGLCube;
+    glDomain: TGLCube;
     Panel3: TPanel;
     Panel4: TPanel;
     Panel5: TPanel;
@@ -106,6 +110,7 @@ type
     procedure Pseudocolor_CBClick(Sender: TObject);
     procedure Opaque_Hull_CBClick(Sender: TObject);
     procedure Alpha_Threshold_TBChange(Sender: TObject);
+    Procedure DrawAxis(Sender : TObject);
   protected
     procedure Calculate_Transfer_Function;
   public
@@ -117,7 +122,6 @@ type
     M_Output_Texture_3D: TTexture_3D;
     M_CLUT: array [0..255] of integer;
   end;
-
 
 var
   fmViewer: TfmViewer;
@@ -131,6 +135,8 @@ implementation
 
 const
   DIAGONAL_LENGTH = 1.732;
+  AxisStep :  TGLFloat =  10;
+  AxisMini :  TGLFloat =  0;
 
 
 var
@@ -515,6 +521,15 @@ begin
   Alpha_Threshold_TB.Position := 40;
   Projection_N_TB.Position := M_Output_Texture_3D.Y_Size;
 
+  glDomain.CubeWidth:=M_Output_Texture_3D.X_Size;
+  glDomain.CubeDepth:=M_Output_Texture_3D.Y_Size;
+  glDomain.CubeHeight:=M_Output_Texture_3D.Z_Size;
+  glDomain.Position.X:=glDomain.CubeWidth*0.5;
+  glDomain.Position.Y:=glDomain.CubeDepth*0.5;
+  glDomain.Position.Z:=glDomain.CubeHeight*0.5;
+
+  DrawAxis(nil);
+
   GLDirectOpenGL.OnRender:=@GLDirectOpenGLRender;
   Screen.Cursor := crDefault;
 end;
@@ -634,6 +649,158 @@ end;
 procedure TfmViewer.Opaque_Hull_CBClick(Sender: TObject);
 begin
   M_Refresh := True;
+end;
+
+
+Procedure TfmViewer.DrawAxis(Sender : TObject);
+Var
+  ScaleFactor : TGLFloat;
+  CurrentXCoord: TGLFloat;
+
+  CurrentYCoord: TGLFloat;
+  CurrentZCoord: TGLFloat;
+  CurrentFlatText: TGLFlatText;
+Begin
+  ScaleFactor := 0.0025;
+  { Draw X }
+  CurrentXCoord := AxisMini;
+  CurrentYCoord := 0;
+  CurrentZCoord := 0;
+  while CurrentXCoord <= M_Output_Texture_3D.X_Size do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsX);
+    with DCCoordsX do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, -1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        //Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clRed;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(CurrentXCoord);
+      end;
+    end;
+    CurrentXCoord := CurrentXCoord + AxisStep;
+  end;
+  CurrentXCoord := AxisMini;
+  while CurrentXCoord <= M_Output_Texture_3D.X_Size do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsX);
+    with DCCoordsX do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, 1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        // Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clRed;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(CurrentXCoord);
+      end;
+    end;
+    CurrentXCoord := CurrentXCoord + AxisStep;
+  end;
+  { Draw Y }
+  CurrentXCoord := 0;
+  CurrentYCoord := AxisMini;
+  CurrentZCoord := 0;
+  while CurrentYCoord <= M_Output_Texture_3D.Y_Size do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsY);
+    with DCCoordsY do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(1, 0, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        // Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clLime;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(CurrentYCoord);
+      end;
+    end;
+    CurrentYCoord := CurrentYCoord + AxisStep;
+  end;
+  CurrentYCoord := AxisMini;
+  while CurrentYCoord <= M_Output_Texture_3D.Y_Size do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsY);
+    with DCCoordsY do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(-1, 0, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        // Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clLime;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(CurrentYCoord);
+      end;
+    end;
+    CurrentYCoord := CurrentYCoord + AxisStep;
+  end;
+  { Draw Z }
+  CurrentXCoord := 0;
+  CurrentYCoord := 0;
+  CurrentZCoord := AxisMini;
+  while CurrentZCoord <= M_Output_Texture_3D.Z_Size do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsZ);
+    with DCCoordsZ do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, -1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlCenter;
+        ModulateColor.AsWinColor := clBlue;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text :=  FloatToStr(CurrentZCoord);
+      end;
+    end;
+    CurrentZCoord := CurrentZCoord + AxisStep;
+  end;
+  CurrentZCoord := AxisMini;
+  while CurrentZCoord <= M_Output_Texture_3D.Z_Size do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsZ);
+    with DCCoordsZ do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, 1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlCenter;
+        ModulateColor.AsWinColor := clBlue;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text :=  FloatToStr(CurrentZCoord);
+      end;
+    end;
+    CurrentZCoord := CurrentZCoord + AxisStep;
+  end;
 end;
 
 end.

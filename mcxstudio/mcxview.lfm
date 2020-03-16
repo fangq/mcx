@@ -275,6 +275,7 @@ object fmViewer: TfmViewer
       TagFloat = 0
       PitchAngle = 0
       RollAngle = 0
+      ShowAxes = True
       TurnAngle = 0
       LineColor.Red = 1
       LineColor.Green = 1
@@ -379,7 +380,7 @@ object fmViewer: TfmViewer
       UseBuildList = False
       Blend = False
     end
-    object GLCube1: TGLCube
+    object glDomain: TGLCube
       TagFloat = 0
       Material.BackProperties.Ambient.Red = 0.200000002980232
       Material.BackProperties.Ambient.Green = 0.200000002980232
@@ -434,13 +435,56 @@ object fmViewer: TfmViewer
       RollAngle = 0
       TurnAngle = 0
       Visible = False
+      object DCCoordsZ: TGLDummyCube
+        TagFloat = 0
+        PitchAngle = 0
+        Position.Coordinates = {
+          0000003F000000BF000000BF0000803F
+        }
+        RollAngle = 0
+        TurnAngle = 0
+        CubeSize = 1
+        EdgeColor.Red = 1
+        EdgeColor.Green = 1
+        EdgeColor.Blue = 1
+        EdgeColor.Alpha = 1
+      end
+      object DCCoordsY: TGLDummyCube
+        TagFloat = 0
+        PitchAngle = 0
+        Position.Coordinates = {
+          0000003F000000BF000000BF0000803F
+        }
+        RollAngle = 0
+        TurnAngle = 0
+        CubeSize = 1
+        EdgeColor.Red = 1
+        EdgeColor.Green = 1
+        EdgeColor.Blue = 1
+        EdgeColor.Alpha = 1
+      end
+      object DCCoordsX: TGLDummyCube
+        TagFloat = 0
+        PitchAngle = 0
+        Position.Coordinates = {
+          0000003F000000BF000000BF0000803F
+        }
+        RollAngle = 0
+        ShowAxes = True
+        TurnAngle = 0
+        CubeSize = 1
+        EdgeColor.Red = 1
+        EdgeColor.Green = 1
+        EdgeColor.Blue = 1
+        EdgeColor.Alpha = 1
+      end
     end
     object GLCamera: TGLCamera
       TagFloat = 0
       DepthOfView = 100
       FocalLength = 21.0130195617676
       SceneScale = 3
-      TargetObject = Frame
+      TargetObject = glDomain
       Position.Coordinates = {
         000080BF3333333F0000803F0000803F
       }
@@ -2854,5 +2898,12 @@ object fmViewer: TfmViewer
       ImageIndex = 7
       OnExecute = mcxplotExitExecute
     end
+  end
+  object GLWinBmpFont: TGLWindowsBitmapFont
+    Font.Color = clWhite
+    Font.Height = 20
+    Font.Name = 'Arial'
+    left = 488
+    top = 160
   end
 end
