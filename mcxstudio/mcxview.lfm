@@ -1,7 +1,7 @@
 object fmViewer: TfmViewer
   Left = 2732
   Height = 800
-  Top = 250
+  Top = 249
   Width = 800
   ActiveControl = glCanvas
   Caption = 'MCX Studio Volume Renderer'
@@ -13,7 +13,7 @@ object fmViewer: TfmViewer
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '2.0.2.0'
+  LCLVersion = '2.0.6.0'
   object Panel1: TPanel
     Left = 0
     Height = 609
@@ -484,7 +484,7 @@ object fmViewer: TfmViewer
       DepthOfView = 100
       FocalLength = 21.0130195617676
       SceneScale = 3
-      TargetObject = glDomain
+      TargetObject = Frame
       Position.Coordinates = {
         000080BF3333333F0000803F0000803F
       }

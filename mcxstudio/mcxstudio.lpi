@@ -164,7 +164,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="9"/>
         <CursorPos X="36" Y="11"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
@@ -196,7 +196,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="10"/>
         <TopLine Value="102"/>
         <CursorPos X="36" Y="110"/>
         <UsageCount Value="239"/>
@@ -244,7 +244,7 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="7"/>
         <TopLine Value="481"/>
-        <CursorPos X="33" Y="516"/>
+        <CursorPos X="55" Y="497"/>
         <UsageCount Value="139"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -252,7 +252,7 @@
       <Unit10>
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="8"/>
         <TopLine Value="253"/>
         <CursorPos X="44" Y="273"/>
         <UsageCount Value="139"/>
@@ -509,11 +509,10 @@
         <ComponentName Value="Form1"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="135"/>
         <CursorPos X="57" Y="169"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit44>
     </Units>
