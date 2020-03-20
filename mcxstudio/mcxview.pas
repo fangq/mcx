@@ -15,7 +15,7 @@ uses
   Dialogs,
   ExtCtrls,
   ComCtrls,
-  StdCtrls, ExtDlgs, ActnList,
+  StdCtrls, ExtDlgs, ActnList, Spin,
   OpenGLTokens,
   GLVectorTypes,
   GLScene,
@@ -28,7 +28,7 @@ uses
   GLCoordinates,
   GLCrossPlatform,
   GLRenderContextInfo,
-  GLGraphics, GLWindowsFont, GLBitmapFont,
+  GLGraphics, GLWindowsFont, GLBitmapFont, GLGraph,
   texture_3d,
   mcxloadfile,
   Types;
@@ -38,10 +38,13 @@ type
   { TfmViewer }
 
   TfmViewer = class(TForm)
+    ColorStep: TTrackBar;
     DCCoordsZ: TGLDummyCube;
     DCCoordsY: TGLDummyCube;
     DCCoordsX: TGLDummyCube;
     GLWinBmpFont: TGLWindowsBitmapFont;
+    grDir: TRadioGroup;
+    Label4: TLabel;
     mcxplotExit: TAction;
     mcxplotUseColor: TAction;
     mcxplotShowBBX: TAction;
@@ -56,10 +59,14 @@ type
     GLDirectOpenGL: TGLDirectOpenGL;
     GLCadencer: TGLCadencer;
     ImageList3: TImageList;
+    Panel10: TPanel;
     Timer: TTimer;
     Panel1: TPanel;
     Panel2: TPanel;
     glCanvas: TGLSceneViewer;
+    XYGrid: TGLXYZGrid;
+    YZGrid: TGLXYZGrid;
+    XZGrid: TGLXYZGrid;
     GLLightSource: TGLLightSource;
     Frame: TGLLines;
     glDomain: TGLCube;
@@ -86,6 +93,7 @@ type
     ToolButton3: TToolButton;
     ToolButton9: TToolButton;
 
+    procedure btOpaqueClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure mcxplotExitExecute(Sender: TObject);
     procedure mcxplotOpenExecute(Sender: TObject);
@@ -125,6 +133,7 @@ type
 
 var
   fmViewer: TfmViewer;
+  AxisStep :  TGLFloat =  10;
 
 
 implementation
@@ -135,7 +144,6 @@ implementation
 
 const
   DIAGONAL_LENGTH = 1.732;
-  AxisStep :  TGLFloat =  10;
   AxisMini :  TGLFloat =  0;
 
 
@@ -212,7 +220,7 @@ var
   Y: integer;
   Z: integer;
   Index: integer;
-  Value: integer;
+  Value, cid: integer;
   Alpha: integer;
 
 begin
@@ -248,7 +256,8 @@ begin
 
         if btRGB.Down = True then
         begin { then }
-          PLongWord((PChar(M_Output_Texture_3D.Data)) + (Index * 4))^ := M_Clut[Value];
+          cid:=Value shr (8-ColorStep.Position);
+          PLongWord((PChar(M_Output_Texture_3D.Data)) + (Index * 4))^ := M_Clut[cid*(1 shl (8-ColorStep.Position))];
         end { then }
         else
         begin { else }
@@ -307,8 +316,8 @@ begin
 
   gl.Enable(GL_BLEND);
   gl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //  glDisable (GL_CULL_FACE);
-  //  glDisable (GL_LIGHTING);
+  //gl.Disable (GL_CULL_FACE);
+  //gl.Disable (GL_LIGHTING);
 
   gl.TexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
   gl.TexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
@@ -364,15 +373,37 @@ begin
     gl.Normal3f(-GLCamera.AbsoluteVectorToTarget.X,
       -GLCamera.AbsoluteVectorToTarget.Y, -GLCamera.AbsoluteVectorToTarget.Z);
 
-    gl.Vertex3f(vx.X + vy.X + vz.X * z, vx.Y + vy.Y + vz.Y * z,
-      vx.Z + vy.Z + vz.Z * z);
-    gl.Vertex3f(-vx.X + vy.X + vz.X * z, -vx.Y + vy.Y + vz.Y * z,
-      -vx.Z + vy.Z + vz.Z * z);
-    gl.Vertex3f(-vx.X - vy.X + vz.X * z, -vx.Y - vy.Y + vz.Y * z,
-      -vx.Z - vy.Z + vz.Z * z);
-    gl.Vertex3f(vx.X - vy.X + vz.X * z, vx.Y - vy.Y + vz.Y * z,
-      vx.Z - vy.Z + vz.Z * z);
-    z := z + step;
+    if(grDir.ItemIndex=0) then begin
+        gl.Vertex3f( vx.X + vy.X + vz.X * z,  vx.Y + vy.Y + vz.Y * z,
+           vx.Z + vy.Z + vz.Z * z);
+        gl.Vertex3f(-vx.X + vy.X + vz.X * z, -vx.Y + vy.Y + vz.Y * z,
+          -vx.Z + vy.Z + vz.Z * z);
+        gl.Vertex3f(-vx.X - vy.X + vz.X * z, -vx.Y - vy.Y + vz.Y * z,
+          -vx.Z - vy.Z + vz.Z * z);
+        gl.Vertex3f( vx.X - vy.X + vz.X * z,  vx.Y - vy.Y + vz.Y * z,
+           vx.Z - vy.Z + vz.Z * z);
+        z := z + step;
+    end else if(grDir.ItemIndex=1) then begin
+        gl.Vertex3f( vx.X + vy.X* z + vz.X,  vx.Y + vy.Y* z + vz.Y ,
+           vx.Z + vy.Z* z + vz.Z );
+        gl.Vertex3f(-vx.X + vy.X* z + vz.X, -vx.Y + vy.Y* z + vz.Y ,
+          -vx.Z + vy.Z* z + vz.Z );
+        gl.Vertex3f(-vx.X + vy.X* z - vz.X, -vx.Y + vy.Y* z - vz.Y ,
+          -vx.Z + vy.Z* z - vz.Z );
+        gl.Vertex3f( vx.X + vy.X* z - vz.X,  vx.Y + vy.Y* z - vz.Y ,
+           vx.Z + vy.Z* z - vz.Z );
+        z := z + step;
+    end else begin
+        gl.Vertex3f(vx.X* z + vy.X + vz.X, vx.Y* z + vy.Y + vz.Y ,
+          vx.Z* z + vy.Z + vz.Z );
+        gl.Vertex3f(vx.X* z - vy.X + vz.X, vx.Y* z - vy.Y + vz.Y ,
+          vx.Z* z - vy.Z + vz.Z );
+        gl.Vertex3f(vx.X* z - vy.X - vz.X, vx.Y* z - vy.Y - vz.Y ,
+          vx.Z* z - vy.Z - vz.Z );
+        gl.Vertex3f(vx.X* z + vy.X - vz.X, vx.Y* z + vy.Y - vz.Y ,
+          vx.Z* z + vy.Z - vz.Z );
+        z := z + step;
+    end;
   end;
   gl.End_;
 
@@ -498,6 +529,8 @@ begin
 end;
 
 Procedure TfmViewer.LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
+var
+  gridstep: double;
 begin
   ResetTexture;
   Screen.Cursor := crHourGlass;
@@ -521,12 +554,71 @@ begin
   Alpha_Threshold_TB.Position := 40;
   Projection_N_TB.Position := M_Output_Texture_3D.Y_Size;
 
-  glDomain.CubeWidth:=M_Output_Texture_3D.X_Size;
-  glDomain.CubeDepth:=M_Output_Texture_3D.Y_Size;
-  glDomain.CubeHeight:=M_Output_Texture_3D.Z_Size;
-  glDomain.Position.X:=glDomain.CubeWidth*0.5;
-  glDomain.Position.Y:=glDomain.CubeDepth*0.5;
-  glDomain.Position.Z:=glDomain.CubeHeight*0.5;
+  Frame.Scale.X:=M_Output_Texture_3D.X_Size;
+  Frame.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  Frame.Scale.Z:=M_Output_Texture_3D.Z_Size;
+
+  DCCoordsX.Scale.X:=M_Output_Texture_3D.X_Size;
+  DCCoordsX.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  DCCoordsX.Scale.Z:=M_Output_Texture_3D.Z_Size;
+  DCCoordsY.Scale.X:=M_Output_Texture_3D.X_Size;
+  DCCoordsY.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  DCCoordsY.Scale.Z:=M_Output_Texture_3D.Z_Size;
+  DCCoordsZ.Scale.X:=M_Output_Texture_3D.X_Size;
+  DCCoordsZ.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  DCCoordsZ.Scale.Z:=M_Output_Texture_3D.Z_Size;
+
+  XYGrid.Scale.X:=M_Output_Texture_3D.X_Size;
+  XYGrid.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  XYGrid.Scale.Z:=M_Output_Texture_3D.Z_Size;
+  YZGrid.Scale.X:=M_Output_Texture_3D.X_Size;
+  YZGrid.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  YZGrid.Scale.Z:=M_Output_Texture_3D.Z_Size;
+  XZGrid.Scale.X:=M_Output_Texture_3D.X_Size;
+  XZGrid.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  XZGrid.Scale.Z:=M_Output_Texture_3D.Z_Size;
+
+  gridstep:=10.0/M_Output_Texture_3D.X_Size;
+  XYGrid.XSamplingScale.Step:=gridstep;
+  YZGrid.XSamplingScale.Step:=gridstep;
+  XZGrid.XSamplingScale.Step:=gridstep;
+  gridstep:=10.0/M_Output_Texture_3D.Y_Size;
+  XYGrid.YSamplingScale.Step:=gridstep;
+  YZGrid.YSamplingScale.Step:=gridstep;
+  XZGrid.YSamplingScale.Step:=gridstep;
+  gridstep:=10.0/M_Output_Texture_3D.Z_Size;
+  XYGrid.ZSamplingScale.Step:=gridstep;
+  YZGrid.ZSamplingScale.Step:=gridstep;
+  XZGrid.ZSamplingScale.Step:=gridstep;
+
+  GLDirectOpenGL.Scale.X:=M_Output_Texture_3D.X_Size;
+  GLDirectOpenGL.Scale.Y:=M_Output_Texture_3D.Y_Size;
+  GLDirectOpenGL.Scale.Z:=M_Output_Texture_3D.Z_Size;
+
+  DCCoordsX.Position.X:=-M_Output_Texture_3D.X_Size/2;
+  DCCoordsX.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
+  DCCoordsX.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
+  DCCoordsY.Position.X:=-M_Output_Texture_3D.X_Size/2;
+  DCCoordsY.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
+  DCCoordsY.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
+  DCCoordsZ.Position.X:=-M_Output_Texture_3D.X_Size/2;
+  DCCoordsZ.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
+  DCCoordsZ.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
+
+  XYGrid.Position.X:=-M_Output_Texture_3D.X_Size/2;
+  XYGrid.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
+  XYGrid.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
+  YZGrid.Position.X:=-M_Output_Texture_3D.X_Size/2;
+  YZGrid.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
+  YZGrid.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
+  XZGrid.Position.X:=-M_Output_Texture_3D.X_Size/2;
+  XZGrid.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
+  XZGrid.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
+
+  GLCamera.DepthOfView:=2.0*sqrt(Frame.Scale.X*Frame.Scale.X+Frame.Scale.Y*Frame.Scale.Y+Frame.Scale.Z*Frame.Scale.Z);
+  GLCamera.Position.X:=M_Output_Texture_3D.X_Size;
+  GLCamera.Position.Y:=M_Output_Texture_3D.Y_Size*0.7;
+  GLCamera.Position.Z:=M_Output_Texture_3D.Z_Size;
 
   DrawAxis(nil);
 
@@ -624,6 +716,12 @@ begin
   CloseAction := caFree;
 end;
 
+procedure TfmViewer.btOpaqueClick(Sender: TObject);
+begin
+  btRefresh.Enabled := True;
+  M_Refresh := True;
+end;
+
 procedure TfmViewer.Cutting_Plane_Pos_TBChange(Sender: TObject);
 begin
   btRefresh.Enabled := True;
@@ -666,7 +764,8 @@ Begin
   CurrentXCoord := AxisMini;
   CurrentYCoord := 0;
   CurrentZCoord := 0;
-  while CurrentXCoord <= M_Output_Texture_3D.X_Size do
+  AxisStep:= 10.0/M_Output_Texture_3D.X_Size;
+  while CurrentXCoord <= 1.0 do
   begin
     TGLFlatText.CreateAsChild(DCCoordsX);
     with DCCoordsX do
@@ -682,13 +781,13 @@ Begin
         ModulateColor.AsWinColor := clRed;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
-        Text := FloatToStr(CurrentXCoord);
+        Text := FloatToStr(Round(CurrentXCoord*M_Output_Texture_3D.X_Size));
       end;
     end;
     CurrentXCoord := CurrentXCoord + AxisStep;
   end;
   CurrentXCoord := AxisMini;
-  while CurrentXCoord <= M_Output_Texture_3D.X_Size do
+  while CurrentXCoord <= 1.0 do
   begin
     TGLFlatText.CreateAsChild(DCCoordsX);
     with DCCoordsX do
@@ -704,7 +803,7 @@ Begin
         ModulateColor.AsWinColor := clRed;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
-        Text := FloatToStr(CurrentXCoord);
+        Text := FloatToStr(Round(CurrentXCoord*M_Output_Texture_3D.X_Size));
       end;
     end;
     CurrentXCoord := CurrentXCoord + AxisStep;
@@ -713,7 +812,8 @@ Begin
   CurrentXCoord := 0;
   CurrentYCoord := AxisMini;
   CurrentZCoord := 0;
-  while CurrentYCoord <= M_Output_Texture_3D.Y_Size do
+  AxisStep:= 10.0/M_Output_Texture_3D.Y_Size;
+  while CurrentYCoord <= 1.0 do
   begin
     TGLFlatText.CreateAsChild(DCCoordsY);
     with DCCoordsY do
@@ -729,13 +829,13 @@ Begin
         ModulateColor.AsWinColor := clLime;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
-        Text := FloatToStr(CurrentYCoord);
+        Text := FloatToStr(Round(CurrentYCoord*M_Output_Texture_3D.Y_Size));
       end;
     end;
     CurrentYCoord := CurrentYCoord + AxisStep;
   end;
   CurrentYCoord := AxisMini;
-  while CurrentYCoord <= M_Output_Texture_3D.Y_Size do
+  while CurrentYCoord <= 1 do
   begin
     TGLFlatText.CreateAsChild(DCCoordsY);
     with DCCoordsY do
@@ -751,7 +851,7 @@ Begin
         ModulateColor.AsWinColor := clLime;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
-        Text := FloatToStr(CurrentYCoord);
+        Text := FloatToStr(Round(CurrentYCoord*M_Output_Texture_3D.Y_Size));
       end;
     end;
     CurrentYCoord := CurrentYCoord + AxisStep;
@@ -760,7 +860,8 @@ Begin
   CurrentXCoord := 0;
   CurrentYCoord := 0;
   CurrentZCoord := AxisMini;
-  while CurrentZCoord <= M_Output_Texture_3D.Z_Size do
+  AxisStep:= 10.0/M_Output_Texture_3D.Z_Size;
+  while CurrentZCoord <= 1 do
   begin
     TGLFlatText.CreateAsChild(DCCoordsZ);
     with DCCoordsZ do
@@ -775,13 +876,13 @@ Begin
         ModulateColor.AsWinColor := clBlue;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
-        Text :=  FloatToStr(CurrentZCoord);
+        Text := FloatToStr(Round(CurrentZCoord*M_Output_Texture_3D.Z_Size));
       end;
     end;
     CurrentZCoord := CurrentZCoord + AxisStep;
   end;
   CurrentZCoord := AxisMini;
-  while CurrentZCoord <= M_Output_Texture_3D.Z_Size do
+  while CurrentZCoord <= 1 do
   begin
     TGLFlatText.CreateAsChild(DCCoordsZ);
     with DCCoordsZ do
@@ -796,7 +897,7 @@ Begin
         ModulateColor.AsWinColor := clBlue;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
-        Text :=  FloatToStr(CurrentZCoord);
+        Text := FloatToStr(Round(CurrentZCoord*M_Output_Texture_3D.Z_Size));
       end;
     end;
     CurrentZCoord := CurrentZCoord + AxisStep;

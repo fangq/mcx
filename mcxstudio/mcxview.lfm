@@ -1,7 +1,7 @@
 object fmViewer: TfmViewer
-  Left = 2732
+  Left = 696
   Height = 800
-  Top = 249
+  Top = 144
   Width = 800
   ActiveControl = glCanvas
   Caption = 'MCX Studio Volume Renderer'
@@ -36,7 +36,7 @@ object fmViewer: TfmViewer
       Buffer.AmbientColor.Blue = 0.200000002980232
       Buffer.AmbientColor.Alpha = 1
       Buffer.ShadeModel = smSmooth
-      FieldOfView = 172.078811645508
+      FieldOfView = 172.459564208984
       Align = alClient
       OnMouseDown = glCanvasMouseDown
       OnMouseMove = glCanvasMouseMove
@@ -70,11 +70,11 @@ object fmViewer: TfmViewer
         Left = 1
         Height = 38
         Top = 1
-        Width = 193
+        Width = 161
         Align = alLeft
         BevelOuter = bvNone
         ClientHeight = 38
-        ClientWidth = 193
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 0
         object Label1: TLabel
@@ -88,10 +88,10 @@ object fmViewer: TfmViewer
         end
       end
       object Projection_N_TB: TTrackBar
-        Left = 194
+        Left = 162
         Height = 38
         Top = 1
-        Width = 597
+        Width = 629
         Frequency = 10
         Max = 512
         Min = 1
@@ -116,11 +116,11 @@ object fmViewer: TfmViewer
         Left = 1
         Height = 38
         Top = 1
-        Width = 193
+        Width = 161
         Align = alLeft
         BevelOuter = bvNone
         ClientHeight = 38
-        ClientWidth = 193
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 0
         object Label2: TLabel
@@ -134,10 +134,10 @@ object fmViewer: TfmViewer
         end
       end
       object Cutting_Plane_Pos_TB: TTrackBar
-        Left = 194
+        Left = 162
         Height = 38
         Top = 1
-        Width = 597
+        Width = 520
         Frequency = 10
         Max = 127
         OnChange = Cutting_Plane_Pos_TBChange
@@ -145,6 +145,37 @@ object fmViewer: TfmViewer
         Align = alClient
         ParentFont = False
         TabOrder = 1
+      end
+      object grDir: TRadioGroup
+        Left = 682
+        Height = 38
+        Top = 1
+        Width = 109
+        HelpType = htKeyword
+        Align = alRight
+        AutoFill = True
+        AutoSize = True
+        Caption = 'Slicing direction'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 3
+        ClientHeight = 22
+        ClientWidth = 105
+        Columns = 3
+        Font.Color = clGreen
+        ItemIndex = 0
+        Items.Strings = (
+          'X'
+          'Y'
+          'Z'
+        )
+        ParentFont = False
+        ParentColor = False
+        TabOrder = 2
       end
     end
     object Panel8: TPanel
@@ -162,11 +193,11 @@ object fmViewer: TfmViewer
         Left = 1
         Height = 38
         Top = 1
-        Width = 193
+        Width = 161
         Align = alLeft
         BevelOuter = bvNone
         ClientHeight = 38
-        ClientWidth = 193
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 0
         object Label3: TLabel
@@ -180,10 +211,10 @@ object fmViewer: TfmViewer
         end
       end
       object Alpha_Threshold_TB: TTrackBar
-        Left = 194
+        Left = 162
         Height = 38
         Top = 1
-        Width = 597
+        Width = 236
         Frequency = 10
         Max = 256
         Min = 1
@@ -192,6 +223,40 @@ object fmViewer: TfmViewer
         Align = alClient
         ParentFont = False
         TabOrder = 1
+      end
+      object ColorStep: TTrackBar
+        Left = 559
+        Height = 38
+        Top = 1
+        Width = 232
+        Frequency = 10
+        Max = 8
+        OnChange = Cutting_Plane_Pos_TBChange
+        Position = 8
+        Align = alRight
+        ParentFont = False
+        TabOrder = 2
+      end
+      object Panel10: TPanel
+        Left = 398
+        Height = 38
+        Top = 1
+        Width = 161
+        Align = alRight
+        BevelOuter = bvNone
+        ClientHeight = 38
+        ClientWidth = 161
+        ParentFont = False
+        TabOrder = 3
+        object Label4: TLabel
+          Left = 88
+          Height = 14
+          Top = 8
+          Width = 68
+          Caption = 'Color level'
+          ParentColor = False
+          ParentFont = False
+        end
       end
     end
   end
@@ -242,6 +307,7 @@ object fmViewer: TfmViewer
       Top = 2
       Caption = 'btOpaque'
       ImageIndex = 0
+      OnClick = btOpaqueClick
       Style = tbsCheck
     end
     object btRGB: TToolButton
@@ -270,13 +336,113 @@ object fmViewer: TfmViewer
   end
   object GLScene: TGLScene
     left = 477
-    top = 65
+    top = 64
+    object DCCoordsY: TGLDummyCube
+      TagFloat = 0
+      PitchAngle = 0
+      Position.Coordinates = {
+        000000BF000000BF000000BF0000803F
+      }
+      RollAngle = 0
+      TurnAngle = 0
+      CubeSize = 1
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
+    end
+    object YZGrid: TGLXYZGrid
+      TagFloat = 0
+      PitchAngle = 0
+      Position.Coordinates = {
+        000000BF000000BF000000BF0000803F
+      }
+      RollAngle = 0
+      TurnAngle = 0
+      LineColor.Red = 1
+      LineColor.Green = 0
+      LineColor.Blue = 0
+      LineColor.Alpha = 1
+      LineColor.Color = {
+        0000803F00000000000000000000803F
+      }
+      XSamplingScale.Min = -1
+      XSamplingScale.Max = 1
+      XSamplingScale.Origin = 0
+      XSamplingScale.Step = 0.100000001490116
+      YSamplingScale.Min = 0
+      YSamplingScale.Max = 1
+      YSamplingScale.Origin = 0
+      YSamplingScale.Step = 0.100000001490116
+      ZSamplingScale.Min = 0
+      ZSamplingScale.Max = 1
+      ZSamplingScale.Origin = 0
+      ZSamplingScale.Step = 0.100000001490116
+      Parts = [gpY, gpZ]
+    end
+    object XZGrid: TGLXYZGrid
+      TagFloat = 0
+      PitchAngle = 0
+      Position.Coordinates = {
+        000000BF000000BF000000BF0000803F
+      }
+      RollAngle = 0
+      TurnAngle = 0
+      LineColor.Red = 0
+      LineColor.Green = 1
+      LineColor.Blue = 0
+      LineColor.Alpha = 1
+      LineColor.Color = {
+        000000000000803F000000000000803F
+      }
+      XSamplingScale.Min = 0
+      XSamplingScale.Max = 1
+      XSamplingScale.Origin = 0
+      XSamplingScale.Step = 0.100000001490116
+      YSamplingScale.Min = 0
+      YSamplingScale.Max = 1
+      YSamplingScale.Origin = 0
+      YSamplingScale.Step = 0.100000001490116
+      ZSamplingScale.Min = 0
+      ZSamplingScale.Max = 1
+      ZSamplingScale.Origin = 0
+      ZSamplingScale.Step = 0.100000001490116
+      Parts = [gpX, gpZ]
+    end
+    object XYGrid: TGLXYZGrid
+      TagFloat = 0
+      PitchAngle = 0
+      Position.Coordinates = {
+        000000BF000000BF000000BF0000803F
+      }
+      RollAngle = 0
+      TurnAngle = 0
+      LineColor.Red = 0
+      LineColor.Green = 0
+      LineColor.Blue = 1
+      LineColor.Alpha = 1
+      LineColor.Color = {
+        00000000000000000000803F0000803F
+      }
+      XSamplingScale.Min = 0
+      XSamplingScale.Max = 1
+      XSamplingScale.Origin = 0
+      XSamplingScale.Step = 0.100000001490116
+      YSamplingScale.Min = 0
+      YSamplingScale.Max = 1
+      YSamplingScale.Origin = 0
+      YSamplingScale.Step = 0.100000001490116
+      ZSamplingScale.Min = 0
+      ZSamplingScale.Max = 1
+      ZSamplingScale.Origin = 0
+      ZSamplingScale.Step = 0.100000001490116
+    end
     object Frame: TGLLines
       TagFloat = 0
       PitchAngle = 0
       RollAngle = 0
-      ShowAxes = True
       TurnAngle = 0
+      Visible = False
       LineColor.Red = 1
       LineColor.Green = 1
       LineColor.Blue = 1
@@ -380,113 +546,14 @@ object fmViewer: TfmViewer
       UseBuildList = False
       Blend = False
     end
-    object glDomain: TGLCube
-      TagFloat = 0
-      Material.BackProperties.Ambient.Red = 0.200000002980232
-      Material.BackProperties.Ambient.Green = 0.200000002980232
-      Material.BackProperties.Ambient.Blue = 0.200000002980232
-      Material.BackProperties.Ambient.Alpha = 1
-      Material.BackProperties.Diffuse.Red = 0.800000011920929
-      Material.BackProperties.Diffuse.Green = 0.800000011920929
-      Material.BackProperties.Diffuse.Blue = 0.800000011920929
-      Material.BackProperties.Diffuse.Alpha = 1
-      Material.BackProperties.Emission.Red = 0
-      Material.BackProperties.Emission.Green = 0
-      Material.BackProperties.Emission.Blue = 0
-      Material.BackProperties.Emission.Alpha = 1
-      Material.BackProperties.Specular.Red = 0
-      Material.BackProperties.Specular.Green = 0
-      Material.BackProperties.Specular.Blue = 0
-      Material.BackProperties.Specular.Alpha = 1
-      Material.FrontProperties.Ambient.Red = 0.200000002980232
-      Material.FrontProperties.Ambient.Green = 0.200000002980232
-      Material.FrontProperties.Ambient.Blue = 0.200000002980232
-      Material.FrontProperties.Ambient.Alpha = 1
-      Material.FrontProperties.Diffuse.Red = 0.858824014663696
-      Material.FrontProperties.Diffuse.Green = 0.858824014663696
-      Material.FrontProperties.Diffuse.Blue = 0.439215987920761
-      Material.FrontProperties.Diffuse.Alpha = 1
-      Material.FrontProperties.Diffuse.Color = {
-        E4DB5B3FE4DB5B3FEBE0E03E0000803F
-      }
-      Material.FrontProperties.Emission.Red = 0
-      Material.FrontProperties.Emission.Green = 0
-      Material.FrontProperties.Emission.Blue = 0
-      Material.FrontProperties.Emission.Alpha = 1
-      Material.FrontProperties.Specular.Red = 0.200000002980232
-      Material.FrontProperties.Specular.Green = 0
-      Material.FrontProperties.Specular.Blue = 0
-      Material.FrontProperties.Specular.Alpha = 1
-      Material.FrontProperties.Specular.Color = {
-        CDCC4C3E00000000000000000000803F
-      }
-      Material.Texture.EnvColor.Red = 0
-      Material.Texture.EnvColor.Green = 0
-      Material.Texture.EnvColor.Blue = 0
-      Material.Texture.EnvColor.Alpha = 0
-      Material.Texture.BorderColor.Red = 0
-      Material.Texture.BorderColor.Green = 0
-      Material.Texture.BorderColor.Blue = 0
-      Material.Texture.BorderColor.Alpha = 0
-      PitchAngle = 0
-      Position.Coordinates = {
-        0000803F00000000000000000000803F
-      }
-      RollAngle = 0
-      TurnAngle = 0
-      Visible = False
-      object DCCoordsZ: TGLDummyCube
-        TagFloat = 0
-        PitchAngle = 0
-        Position.Coordinates = {
-          0000003F000000BF000000BF0000803F
-        }
-        RollAngle = 0
-        TurnAngle = 0
-        CubeSize = 1
-        EdgeColor.Red = 1
-        EdgeColor.Green = 1
-        EdgeColor.Blue = 1
-        EdgeColor.Alpha = 1
-      end
-      object DCCoordsY: TGLDummyCube
-        TagFloat = 0
-        PitchAngle = 0
-        Position.Coordinates = {
-          0000003F000000BF000000BF0000803F
-        }
-        RollAngle = 0
-        TurnAngle = 0
-        CubeSize = 1
-        EdgeColor.Red = 1
-        EdgeColor.Green = 1
-        EdgeColor.Blue = 1
-        EdgeColor.Alpha = 1
-      end
-      object DCCoordsX: TGLDummyCube
-        TagFloat = 0
-        PitchAngle = 0
-        Position.Coordinates = {
-          0000003F000000BF000000BF0000803F
-        }
-        RollAngle = 0
-        ShowAxes = True
-        TurnAngle = 0
-        CubeSize = 1
-        EdgeColor.Red = 1
-        EdgeColor.Green = 1
-        EdgeColor.Blue = 1
-        EdgeColor.Alpha = 1
-      end
-    end
     object GLCamera: TGLCamera
       TagFloat = 0
       DepthOfView = 100
-      FocalLength = 21.0130195617676
+      FocalLength = 20
       SceneScale = 3
       TargetObject = Frame
       Position.Coordinates = {
-        000080BF3333333F0000803F0000803F
+        0000803F3333333F0000803F0000803F
       }
       Direction.Coordinates = {
         00000000FFFF7F3F0000008000000000
@@ -514,6 +581,35 @@ object fmViewer: TfmViewer
         SpotCutOff = 180
         SpotExponent = 0
       end
+    end
+    object DCCoordsX: TGLDummyCube
+      TagFloat = 0
+      PitchAngle = 0
+      Position.Coordinates = {
+        000000BF000000BF000000BF0000803F
+      }
+      RollAngle = 0
+      ShowAxes = True
+      TurnAngle = 0
+      CubeSize = 1
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
+    end
+    object DCCoordsZ: TGLDummyCube
+      TagFloat = 0
+      PitchAngle = 0
+      Position.Coordinates = {
+        000000BF000000BF000000BF0000803F
+      }
+      RollAngle = 0
+      TurnAngle = 0
+      CubeSize = 1
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
     end
   end
   object GLCadencer: TGLCadencer

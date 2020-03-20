@@ -1,7 +1,7 @@
 object fmMCX: TfmMCX
-  Left = 2110
+  Left = 406
   Height = 849
-  Top = 130
+  Top = 61
   Width = 1288
   ActiveControl = lvJobs
   Align = alTop
@@ -157,7 +157,7 @@ object fmMCX: TfmMCX
   OnResize = FormShow
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '2.0.2.0'
+  LCLVersion = '2.0.6.0'
   object ToolBar1: TToolBar
     Left = 0
     Height = 119
@@ -1021,7 +1021,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 213
-            Height = 68
+            Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
