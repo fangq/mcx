@@ -1,12 +1,11 @@
 object fmDomain: TfmDomain
-  Left = 341
-  Height = 619
-  Top = 187
-  Width = 1015
+  Left = 2285
+  Height = 639
+  Top = 198
+  Width = 1048
   Caption = 'MCX Domain Renderer'
-  ClientHeight = 619
-  ClientWidth = 1015
-  DesignTimePPI = 93
+  ClientHeight = 639
+  ClientWidth = 1048
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   OnCreate = FormCreate
@@ -14,20 +13,20 @@ object fmDomain: TfmDomain
   OnResize = FormResize
   OnShow = FormShow
   Position = poOwnerFormCenter
-  LCLVersion = '1.8.2.0'
+  LCLVersion = '2.0.6.0'
   object glCanvas: TGLSceneViewer
-    Left = 405
-    Height = 566
-    Top = 53
-    Width = 610
+    Left = 418
+    Height = 584
+    Top = 55
+    Width = 630
     Camera = glCamera
     VSync = vsmSync
-    Buffer.BackgroundColor = 13224393
+    Buffer.BackgroundColor = clSilver
     Buffer.AmbientColor.Red = 0.200000002980232
     Buffer.AmbientColor.Green = 0.200000002980232
     Buffer.AmbientColor.Blue = 0.200000002980232
     Buffer.AmbientColor.Alpha = 1
-    FieldOfView = 134.043365478516
+    FieldOfView = 135.318710327148
     Align = alClient
     OnMouseDown = glCanvasMouseDown
     OnMouseMove = glCanvasMouseMove
@@ -35,20 +34,20 @@ object fmDomain: TfmDomain
     TabOrder = 0
   end
   object Splitter1: TSplitter
-    Left = 400
-    Height = 566
-    Top = 53
+    Left = 413
+    Height = 584
+    Top = 55
     Width = 5
     OnMoved = Splitter1Moved
   end
   object plEditor: TPanel
     Left = 0
-    Height = 566
-    Top = 53
-    Width = 400
+    Height = 584
+    Top = 55
+    Width = 413
     Align = alLeft
-    ClientHeight = 566
-    ClientWidth = 400
+    ClientHeight = 584
+    ClientWidth = 413
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
     ParentFont = False
@@ -57,9 +56,9 @@ object fmDomain: TfmDomain
     OnMouseLeave = plEditorMouseLeave
     inline mmShapeJSON: TSynEdit
       Left = 1
-      Height = 564
+      Height = 582
       Top = 1
-      Width = 398
+      Width = 411
       Align = alClient
       Font.Height = -12
       Font.Name = 'Courier New'
@@ -598,11 +597,11 @@ object fmDomain: TfmDomain
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 53
+    Height = 55
     Top = 0
-    Width = 1015
-    ButtonHeight = 48
-    ButtonWidth = 48
+    Width = 1048
+    ButtonHeight = 50
+    ButtonWidth = 50
     Caption = 'ToolBar1'
     Color = clWhite
     Font.Height = -11
@@ -640,7 +639,7 @@ object fmDomain: TfmDomain
       Action = acSaveJSON
     end
     object ToolButton6: TToolButton
-      Left = 380
+      Left = 435
       Top = 2
       Action = acExit
     end
@@ -659,29 +658,119 @@ object fmDomain: TfmDomain
     end
     object ToolButton11: TToolButton
       Left = 209
-      Height = 48
+      Height = 50
       Top = 2
       Caption = 'ToolButton11'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
       Left = 266
-      Height = 48
+      Height = 50
       Top = 2
       Caption = 'ToolButton7'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
       Left = 375
-      Height = 48
+      Height = 50
       Top = 2
       Caption = 'ToolButton9'
       Style = tbsDivider
     end
+    object btBackground: TColorButton
+      Left = 384
+      Height = 50
+      Hint = 'Change Background Color'
+      Top = 2
+      Width = 51
+      Align = alLeft
+      BorderWidth = 2
+      ButtonColorSize = 16
+      ButtonColor = clSilver
+      Flat = True
+      OnColorChanged = btBackgroundColorChanged
+    end
   end
   object glShape: TGLScene
-    left = 449
+    left = 463
     top = 8
+    object XYGrid: TGLXYZGrid
+      TagFloat = 0
+      PitchAngle = 0
+      RollAngle = 0
+      TurnAngle = 0
+      LineColor.Red = 0
+      LineColor.Green = 0
+      LineColor.Blue = 1
+      LineColor.Alpha = 1
+      LineColor.Color = {
+        00000000000000000000803F0000803F
+      }
+      XSamplingScale.Min = 0
+      XSamplingScale.Max = 1
+      XSamplingScale.Origin = 0
+      XSamplingScale.Step = 0.100000001490116
+      YSamplingScale.Min = 0
+      YSamplingScale.Max = 1
+      YSamplingScale.Origin = 0
+      YSamplingScale.Step = 0.100000001490116
+      ZSamplingScale.Min = 0
+      ZSamplingScale.Max = 1
+      ZSamplingScale.Origin = 0
+      ZSamplingScale.Step = 0.100000001490116
+    end
+    object XZGrid: TGLXYZGrid
+      TagFloat = 0
+      PitchAngle = 0
+      RollAngle = 0
+      TurnAngle = 0
+      LineColor.Red = 0
+      LineColor.Green = 1
+      LineColor.Blue = 0
+      LineColor.Alpha = 1
+      LineColor.Color = {
+        000000000000803F000000000000803F
+      }
+      XSamplingScale.Min = 0
+      XSamplingScale.Max = 1
+      XSamplingScale.Origin = 0
+      XSamplingScale.Step = 0.100000001490116
+      YSamplingScale.Min = 0
+      YSamplingScale.Max = 1
+      YSamplingScale.Origin = 0
+      YSamplingScale.Step = 0.100000001490116
+      ZSamplingScale.Min = 0
+      ZSamplingScale.Max = 1
+      ZSamplingScale.Origin = 0
+      ZSamplingScale.Step = 0.100000001490116
+      Parts = [gpX, gpZ]
+    end
+    object YZGrid: TGLXYZGrid
+      TagFloat = 0
+      PitchAngle = 0
+      RollAngle = 0
+      TurnAngle = 0
+      LineColor.Red = 1
+      LineColor.Green = 0
+      LineColor.Blue = 0
+      LineColor.Alpha = 1
+      LineColor.Color = {
+        0000803F00000000000000000000803F
+      }
+      XSamplingScale.Min = -1
+      XSamplingScale.Max = 1
+      XSamplingScale.Origin = 0
+      XSamplingScale.Step = 0.100000001490116
+      YSamplingScale.Min = 0
+      YSamplingScale.Max = 1
+      YSamplingScale.Origin = 0
+      YSamplingScale.Step = 0.100000001490116
+      ZSamplingScale.Min = 0
+      ZSamplingScale.Max = 1
+      ZSamplingScale.Origin = 0
+      ZSamplingScale.Step = 0.100000001490116
+      Parts = [gpY, gpZ]
+    end
     object glDomain: TGLCube
       TagFloat = 0
       Material.BackProperties.Ambient.Red = 0.200000002980232
@@ -744,16 +833,6 @@ object fmDomain: TfmDomain
         000070420000704200007042
       }
     end
-    object glOrigin: TGLPoints
-      TagFloat = 0
-      PitchAngle = 0
-      RollAngle = 0
-      TurnAngle = 0
-      NoZWrite = False
-      Static = False
-      Size = 20
-      Style = psRound
-    end
     object glLight2: TGLLightSource
       TagFloat = 0
       Ambient.Red = 0
@@ -807,7 +886,6 @@ object fmDomain: TfmDomain
       ObjectsSorting = osRenderFarthestFirst
       PitchAngle = 0
       RollAngle = 0
-      ShowAxes = True
       TurnAngle = 0
       Pickable = False
       CubeSize = 200
@@ -830,19 +908,52 @@ object fmDomain: TfmDomain
       Up.Coordinates = {
         00000000000000000000803F00000000
       }
-      left = 233
-      top = 140
+      left = 241
+      top = 145
+    end
+    object DCCoordsX: TGLDummyCube
+      TagFloat = 0
+      PitchAngle = 0
+      RollAngle = 0
+      TurnAngle = 0
+      CubeSize = 1
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
+    end
+    object DCCoordsY: TGLDummyCube
+      TagFloat = 0
+      PitchAngle = 0
+      RollAngle = 0
+      TurnAngle = 0
+      CubeSize = 1
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
+    end
+    object DCCoordsZ: TGLDummyCube
+      TagFloat = 0
+      PitchAngle = 0
+      RollAngle = 0
+      TurnAngle = 0
+      CubeSize = 1
+      EdgeColor.Red = 1
+      EdgeColor.Green = 1
+      EdgeColor.Blue = 1
+      EdgeColor.Alpha = 1
     end
   end
   object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
     DefaultFilter = 'UNIX Shell Scripts (*.sh)|*.sh'
     Enabled = False
-    left = 930
+    left = 960
     top = 8
   end
   object acShapeRender: TActionList
     Images = ImageList3
-    left = 519
+    left = 536
     top = 8
     object acResetCamera: TAction
       Caption = 'acResetCamera'
@@ -889,14 +1000,14 @@ object fmDomain: TfmDomain
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 612
+    left = 632
     top = 8
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 698
+    left = 721
     top = 8
     Bitmap = {
       4C69080000003000000030000000000000000000000000000000000000000000
@@ -3210,14 +3321,21 @@ object fmDomain: TfmDomain
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 783
+    left = 808
     top = 8
   end
   object dlSaveFile: TSaveDialog
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 868
+    left = 896
+    top = 8
+  end
+  object GLWinBmpFont: TGLWindowsBitmapFont
+    Font.Color = clWhite
+    Font.Height = 20
+    Font.Name = 'Arial'
+    left = 592
     top = 8
   end
 end

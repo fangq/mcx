@@ -1304,7 +1304,7 @@ begin
                4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
           else
           end;
-          fmViewer.FormStyle:=fsStayOnTop;
+          fmViewer.BringToFront;
           fmViewer.Show;
     except
         on E: Exception do

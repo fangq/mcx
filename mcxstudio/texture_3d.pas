@@ -225,6 +225,8 @@ var
   val, low, hi: single;
   i,nx,ny,nz,nt,sourcebyte: integer;
   pdata: pointer;
+  slen: Int16;
+  dlen: int64;
 begin { TTexture_3D.Load_From_File_Log_Float }
   Screen.Cursor := crHourGlass;
   File_Stream := TFileStream.Create (F_FileName, fmOpenRead or fmShareDenyWrite);
@@ -234,6 +236,35 @@ begin { TTexture_3D.Load_From_File_Log_Float }
         File_Stream.ReadBuffer (nx, SizeOf (Integer));
         File_Stream.ReadBuffer (ny, SizeOf (Integer));
         File_Stream.ReadBuffer (nz, SizeOf (Integer));
+        nt:=1;
+        XDim:=nx;
+        YDim:=ny;
+        ZDim:=nz;
+        TDim:=nt;
+    end else if(skipbyte=352) then begin
+        File_Stream.ReadBuffer (skipbyte, SizeOf (Integer));
+        if(skipbyte=348) then begin
+            File_Stream.Seek(42,soBeginning);
+            File_Stream.ReadBuffer (slen, SizeOf (Int16));
+            nx:=slen;
+            File_Stream.ReadBuffer (slen, SizeOf (Int16));
+            ny:=slen;
+            File_Stream.ReadBuffer (slen, SizeOf (Int16));
+            nz:=slen;
+            File_Stream.ReadBuffer (slen, SizeOf (Int16));
+            nt:=slen;
+        end else begin
+            File_Stream.Seek(24,soBeginning);
+            File_Stream.ReadBuffer (dlen, SizeOf (Int64));
+            nx:=dlen;
+            File_Stream.ReadBuffer (dlen, SizeOf (Int64));
+            ny:=dlen;
+            File_Stream.ReadBuffer (dlen, SizeOf (Int64));
+            nz:=dlen;
+            File_Stream.ReadBuffer (dlen, SizeOf (Int64));
+            nt:=dlen;
+        end;
+        skipbyte:=skipbyte+4;
         nt:=1;
         XDim:=nx;
         YDim:=ny;
@@ -282,7 +313,7 @@ begin { TTexture_3D.Load_From_File_Log_Float }
               GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
               else val:=PByte(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
           end;
-          if(val=0) then begin
+          if(val<low) or (val=0) or (val<>val) then begin
              M_Data[i]:=#0;
           end else begin
              M_Data[i]:=chr(Round((val-low)*hi));

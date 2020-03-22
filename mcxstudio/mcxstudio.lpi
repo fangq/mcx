@@ -135,7 +135,7 @@
         <PackageName Value="LCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="51">
+    <Units Count="60">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -149,15 +149,14 @@
         <ComponentName Value="fmMCX"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
-        <TopLine Value="3420"/>
-        <CursorPos X="34" Y="3434"/>
-        <ComponentState Value="1"/>
+        <TopLine Value="1284"/>
+        <CursorPos X="42" Y="1297"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 ID="9"/>
         </Bookmarks>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="mcxabout.pas"/>
@@ -165,7 +164,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="13"/>
         <CursorPos X="36" Y="11"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
@@ -197,7 +196,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="14"/>
         <TopLine Value="102"/>
         <CursorPos X="36" Y="110"/>
         <UsageCount Value="239"/>
@@ -208,7 +207,7 @@
         <ComponentName Value="fmOutput"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="15"/>
         <CursorPos X="29" Y="23"/>
         <UsageCount Value="200"/>
@@ -229,9 +228,9 @@
         <ComponentName Value="fmDomain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="111"/>
-        <CursorPos Y="157"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="11"/>
+        <CursorPos X="30" Y="38"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -242,19 +241,21 @@
         <ComponentName Value="fmViewer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="7"/>
-        <TopLine Value="372"/>
-        <CursorPos X="46" Y="383"/>
-        <UsageCount Value="151"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="500"/>
+        <CursorPos X="51" Y="530"/>
+        <UsageCount Value="202"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit9>
       <Unit10>
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="289"/>
-        <CursorPos X="20" Y="159"/>
-        <UsageCount Value="151"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="280"/>
+        <CursorPos X="58" Y="291"/>
+        <UsageCount Value="202"/>
+        <Loaded Value="True"/>
       </Unit10>
       <Unit11>
         <Filename Value="mcxloadfile.pas"/>
@@ -264,12 +265,12 @@
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="14" Y="15"/>
-        <UsageCount Value="123"/>
+        <UsageCount Value="175"/>
       </Unit11>
       <Unit12>
         <Filename Value="/usr/share/fpcsrc/3.0.4/packages/rtl-objpas/src/inc/strutils.pp"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="1"/>
       </Unit12>
       <Unit13>
         <Filename Value="/usr/share/fpcsrc/3.0.4/packages/regexpr/src/regexpr.pas"/>
@@ -277,7 +278,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="611"/>
         <CursorPos X="10" Y="625"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="1"/>
       </Unit13>
       <Unit14>
         <Filename Value="/usr/share/lazarus/1.8.2/components/anchordocking/anchordocking.pas"/>
@@ -285,14 +286,14 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="2670"/>
         <CursorPos Y="2687"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="1"/>
       </Unit14>
       <Unit15>
         <Filename Value="../../../../../lazarus/lcl/valedit.pas"/>
         <UnitName Value="ValEdit"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="3" Y="20"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit15>
       <Unit16>
         <Filename Value="mcxconfig.pas"/>
@@ -300,10 +301,10 @@
         <ComponentName Value="fmConfig"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="45"/>
         <CursorPos X="46" Y="68"/>
-        <UsageCount Value="107"/>
+        <UsageCount Value="159"/>
         <Loaded Value="True"/>
       </Unit16>
       <Unit17>
@@ -312,7 +313,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="909"/>
         <CursorPos Y="931"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit17>
       <Unit18>
         <Filename Value="/usr/share/lazarus/1.8.2/lcl/editbtn.pas"/>
@@ -320,7 +321,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="1036"/>
         <CursorPos X="41" Y="1043"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit18>
       <Unit19>
         <Filename Value="/usr/share/lazarus/2.0.2/lcl/forms.pp"/>
@@ -328,7 +329,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="789"/>
         <CursorPos X="14" Y="808"/>
-        <UsageCount Value="11"/>
+        <UsageCount Value="6"/>
       </Unit19>
       <Unit20>
         <Filename Value="mcxstoprun.pas"/>
@@ -336,9 +337,9 @@
         <ComponentName Value="fmStop"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="1"/>
         <CursorPos X="43" Y="13"/>
-        <UsageCount Value="92"/>
+        <UsageCount Value="144"/>
         <Loaded Value="True"/>
       </Unit20>
       <Unit21>
@@ -347,7 +348,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="33"/>
         <CursorPos X="54" Y="43"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit21>
       <Unit22>
         <Filename Value="/Developer/lazarus/lcl/lclintf.pas"/>
@@ -355,53 +356,53 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="63"/>
         <CursorPos X="49" Y="77"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit22>
       <Unit23>
         <Filename Value="../../../../../Applications/Lazarus/components/lazutils/utf8process.pp"/>
         <UnitName Value="UTF8Process"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit23>
       <Unit24>
         <Filename Value="../../../../../Applications/Lazarus/lcl/include/customaction.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="95"/>
         <CursorPos X="16" Y="114"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit24>
       <Unit25>
         <Filename Value="../../../../../Applications/Lazarus/lcl/include/containedaction.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="81"/>
         <CursorPos Y="100"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit25>
       <Unit26>
         <Filename Value="../../../../../Applications/Lazarus/lcl/include/control.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="2884"/>
         <CursorPos Y="2917"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit26>
       <Unit27>
         <Filename Value="../../../../../../../../users/fangq/tmp/unit1.pas"/>
         <UnitName Value="Unit1"/>
         <EditorIndex Value="-1"/>
         <CursorPos Y="35"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="4"/>
       </Unit27>
       <Unit28>
         <Filename Value="sshclient.pas"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="64" Y="6"/>
-        <UsageCount Value="20"/>
+        <UsageCount Value="15"/>
       </Unit28>
       <Unit29>
         <Filename Value="synapse/libssh2.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="79"/>
-        <UsageCount Value="19"/>
+        <UsageCount Value="14"/>
       </Unit29>
       <Unit30>
         <Filename Value="synapse/ssl_libssh2.pas"/>
@@ -409,7 +410,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="4"/>
         <CursorPos X="69" Y="14"/>
-        <UsageCount Value="79"/>
+        <UsageCount Value="131"/>
       </Unit30>
       <Unit31>
         <Filename Value="synapse/ssl_openssl.pas"/>
@@ -417,7 +418,7 @@
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="19"/>
+        <UsageCount Value="14"/>
       </Unit31>
       <Unit32>
         <Filename Value="synapse/ssl_openssl_lib.pas"/>
@@ -425,34 +426,34 @@
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="19"/>
+        <UsageCount Value="14"/>
       </Unit32>
       <Unit33>
         <Filename Value="synapse/tlntsend.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="329"/>
         <CursorPos X="3" Y="99"/>
-        <UsageCount Value="20"/>
+        <UsageCount Value="15"/>
       </Unit33>
       <Unit34>
         <Filename Value="synapse/blcksock.pas"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="41" Y="18"/>
-        <UsageCount Value="11"/>
+        <UsageCount Value="6"/>
       </Unit34>
       <Unit35>
         <Filename Value="synapse/synsock.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="44"/>
         <CursorPos X="10" Y="72"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit35>
       <Unit36>
         <Filename Value="synapse/synautil.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="31"/>
         <CursorPos X="2" Y="52"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit36>
       <Unit37>
         <Filename Value="../../../../../../../../users/fangq/.lazarus/onlinepackagemanager/packages/synapse40.1/ssl_libssh2.pas"/>
@@ -460,47 +461,45 @@
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="17"/>
+        <UsageCount Value="12"/>
       </Unit37>
       <Unit38>
         <Filename Value="runexec.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="22"/>
-        <UsageCount Value="76"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="128"/>
       </Unit38>
       <Unit39>
         <Filename Value="runssh.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="75"/>
+        <UsageCount Value="127"/>
       </Unit39>
       <Unit40>
         <Filename Value="../../../../../../../../users/fangq/tmp/runssh.pas"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="37" Y="9"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit40>
       <Unit41>
         <Filename Value="../../../../../../../../users/fangq/tmp/sshclient.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="39"/>
         <CursorPos X="5" Y="80"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="2"/>
       </Unit41>
       <Unit42>
         <Filename Value="/usr/share/fpcsrc/3.0.4/rtl/objpas/sysutils/sysstrh.inc"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="28" Y="27"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="3"/>
       </Unit42>
       <Unit43>
         <Filename Value="/usr/share/fpcsrc/3.0.4/packages/fcl-process/src/process.pp"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <CursorPos X="32" Y="8"/>
-        <UsageCount Value="18"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="44"/>
       </Unit43>
       <Unit44>
         <Filename Value="/space/taote/1/users/fangq/Download/Axis Ruler/Unit1.pas"/>
@@ -510,38 +509,37 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="135"/>
         <CursorPos X="57" Y="169"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="5"/>
       </Unit44>
       <Unit45>
         <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/OpenGLAdapter.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="534"/>
         <CursorPos X="35" Y="540"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="4"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit45>
       <Unit46>
         <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/OpenGLTokens.pas"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="1077"/>
-        <CursorPos X="16" Y="1094"/>
-        <UsageCount Value="10"/>
+        <TopLine Value="125"/>
+        <CursorPos X="3" Y="142"/>
+        <UsageCount Value="9"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit46>
       <Unit47>
         <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/GLObjects.pas"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="12"/>
         <TopLine Value="3363"/>
         <CursorPos X="26" Y="3370"/>
-        <UsageCount Value="13"/>
+        <UsageCount Value="39"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit47>
       <Unit48>
         <Filename Value="mcxview.lfm"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="284"/>
-        <CursorPos X="28" Y="298"/>
+        <CursorPos X="55" Y="21"/>
         <UsageCount Value="10"/>
         <DefaultSyntaxHighlighter Value="LFM"/>
       </Unit48>
@@ -550,7 +548,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="70"/>
         <CursorPos Y="81"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="5"/>
         <DefaultSyntaxHighlighter Value="LFM"/>
       </Unit49>
       <Unit50>
@@ -558,130 +556,139 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="542"/>
         <CursorPos X="11" Y="559"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="5"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit50>
+      <Unit51>
+        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/GLGraph.pas"/>
+        <EditorIndex Value="11"/>
+        <TopLine Value="178"/>
+        <CursorPos X="3" Y="195"/>
+        <UsageCount Value="28"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit51>
+      <Unit52>
+        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/GLScene.pas"/>
+        <EditorIndex Value="10"/>
+        <TopLine Value="1458"/>
+        <CursorPos X="44" Y="1466"/>
+        <UsageCount Value="27"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit52>
+      <Unit53>
+        <Filename Value="mcxrender.lfm"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="810"/>
+        <CursorPos X="13" Y="842"/>
+        <UsageCount Value="9"/>
+        <DefaultSyntaxHighlighter Value="LFM"/>
+      </Unit53>
+      <Unit54>
+        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/GLBitmapFont.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="334"/>
+        <CursorPos X="14" Y="356"/>
+        <UsageCount Value="9"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit54>
+      <Unit55>
+        <Filename Value="/usr/share/lazarus/2.0.6/lcl/include/customform.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2193"/>
+        <CursorPos Y="2215"/>
+        <UsageCount Value="14"/>
+      </Unit55>
+      <Unit56>
+        <Filename Value="/usr/share/lazarus/2.0.6/lcl/include/application.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2412"/>
+        <CursorPos Y="2428"/>
+        <UsageCount Value="13"/>
+      </Unit56>
+      <Unit57>
+        <Filename Value="/usr/share/lazarus/2.0.6/lcl/forms.pp"/>
+        <UnitName Value="Forms"/>
+        <EditorIndex Value="7"/>
+        <TopLine Value="1217"/>
+        <CursorPos X="28" Y="1238"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+      </Unit57>
+      <Unit58>
+        <Filename Value="/usr/share/lazarus/2.0.6/lcl/include/containedaction.inc"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="77"/>
+        <CursorPos X="45" Y="91"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+      </Unit58>
+      <Unit59>
+        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/XOpenGL.pas"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="177"/>
+        <CursorPos X="78" Y="191"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit59>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="13" HistoryIndex="12">
       <Position1>
-        <Filename Value="mcxview.pas"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="897" Column="9" TopLine="897"/>
       </Position1>
       <Position2>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="316" Column="3" TopLine="292"/>
+        <Filename Value="mcxrender.pas"/>
       </Position2>
       <Position3>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="310" Column="59" TopLine="299"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="59" Column="12" TopLine="32"/>
       </Position3>
       <Position4>
-        <Filename Value="mcxview.pas"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="139" Column="12" TopLine="111"/>
       </Position4>
       <Position5>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="584" Column="36" TopLine="572"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="243" Column="13" TopLine="215"/>
       </Position5>
       <Position6>
-        <Filename Value="mcxview.pas"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="278" Column="13" TopLine="251"/>
       </Position6>
       <Position7>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="109" Column="32" TopLine="81"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="310" Column="13" TopLine="283"/>
       </Position7>
       <Position8>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="177" Column="38" TopLine="149"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="359" Column="13" TopLine="331"/>
       </Position8>
       <Position9>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="244" Column="27" TopLine="217"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="412" Column="33" TopLine="396"/>
       </Position9>
       <Position10>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="254" Column="22" TopLine="226"/>
+        <Filename Value="mcxrender.pas"/>
       </Position10>
       <Position11>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="633" Column="32" TopLine="605"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="39" Column="13" TopLine="11"/>
       </Position11>
       <Position12>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="714" Column="34" TopLine="686"/>
+        <Filename Value="mcxrender.pas"/>
+        <Caret Line="38" Column="30" TopLine="11"/>
       </Position12>
       <Position13>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="109" Column="32" TopLine="93"/>
+        <Filename Value="texture_3d.pas"/>
+        <Caret Line="291" Column="58" TopLine="280"/>
       </Position13>
-      <Position14>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="169" Column="17" TopLine="149"/>
-      </Position14>
-      <Position15>
-        <Filename Value="mcxview.pas"/>
-      </Position15>
-      <Position16>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="48" Column="19" TopLine="20"/>
-      </Position16>
-      <Position17>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="89" Column="14" TopLine="61"/>
-      </Position17>
-      <Position18>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="103" Column="29" TopLine="75"/>
-      </Position18>
-      <Position19>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="114" Column="24" TopLine="86"/>
-      </Position19>
-      <Position20>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="631" Column="35" TopLine="603"/>
-      </Position20>
-      <Position21>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="633" Column="27" TopLine="605"/>
-      </Position21>
-      <Position22>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="712" Column="30" TopLine="684"/>
-      </Position22>
-      <Position23>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="714" Column="29" TopLine="686"/>
-      </Position23>
-      <Position24>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="53" Column="56" TopLine="31"/>
-      </Position24>
-      <Position25>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="52" Column="56" TopLine="31"/>
-      </Position25>
-      <Position26>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="53" Column="56" TopLine="31"/>
-      </Position26>
-      <Position27>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="37" Column="6" TopLine="31"/>
-      </Position27>
-      <Position28>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="53" Column="52" TopLine="31"/>
-      </Position28>
-      <Position29>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="396" Column="50" TopLine="373"/>
-      </Position29>
-      <Position30>
-        <Filename Value="mcxview.pas"/>
-        <Caret Line="386" Column="34" TopLine="359"/>
-      </Position30>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
@@ -715,7 +722,7 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <Watches Count="4">
+    <Watches Count="5">
       <Item1>
         <Expression Value="edOutputType.ItemIndex"/>
       </Item1>
@@ -728,6 +735,9 @@
       <Item4>
         <Expression Value="FullLog"/>
       </Item4>
+      <Item5>
+        <Expression Value="vx.X + vy.X + vz.X * z"/>
+      </Item5>
     </Watches>
   </Debugging>
 </CONFIG>
