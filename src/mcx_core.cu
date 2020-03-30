@@ -463,7 +463,7 @@ __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir)
  */
 
 template <const int islabel>
-__device__ void updateproperty(Medium *prop, unsigned int mediaid, RandType t[RAND_BUF_LEN]){
+__device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[RAND_BUF_LEN]){
 	  if(islabel){
 	      *((float4*)(prop))=gproperty[mediaid & MED_MASK];
 	  }else if(gcfg->mediaformat==MEDIA_LABEL_HALF){
@@ -503,10 +503,15 @@ __device__ void updateproperty(Medium *prop, unsigned int mediaid, RandType t[RA
 		 unsigned char  c[4];
               } val;
 	      val.i=mediaid & MED_MASK;
-	      if(val.h[1]>0 && (rand_uniform01(t)*32767.f)>val.h[1])
-	          *((float4*)(prop))=gproperty[val.c[1]];
-	      else
-	          *((float4*)(prop))=gproperty[val.c[0]];
+	      if(val.h[1]>0){
+                  if((rand_uniform01(t)*32767.f)<val.h[1]){
+	              *((float4*)(prop))=gproperty[val.c[1]];
+                      mediaid>>=8;
+	          }else
+	              *((float4*)(prop))=gproperty[val.c[0]];
+                  mediaid &= 0xFFFF;
+              }else
+                  *((float4*)(prop))=gproperty[val.c[0]];
 	  }else if(gcfg->mediaformat==MEDIA_ASGN_BYTE){
 	      union {
                  unsigned int i;
