@@ -1460,9 +1460,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
           /** do boundary reflection/transmission */
 	  if(isreflect){
-	      if(gcfg->mediaformat==MEDIA_LABEL_HALF)
+	      if(gcfg->mediaformat<100)
 	          updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
-	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat==MEDIA_LABEL_HALF)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
+	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
@@ -1484,7 +1484,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } ///< else, total internal reflection
-	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat==MEDIA_LABEL_HALF) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && rand_next_reflect(t)>Rtotal){ // do transmission
+	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
@@ -1513,7 +1513,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
         	  	updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
                   	n1=prop.n;
 		  }
-	      }else if(gcfg->mediaformat==MEDIA_LABEL_HALF)
+	      }else if(gcfg->mediaformat<100)
 	          updateproperty<islabel>(&prop,mediaidold,t); ///< optical property across the interface
 	  }
      }
