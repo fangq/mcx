@@ -13,11 +13,11 @@ interface
 
 uses
   SysUtils, Classes, Graphics, Controls, Forms, Dialogs, GLScene, GLObjects,
-  ExtCtrls, ComCtrls, ActnList, ExtDlgs, SynEdit, SynHighlighterJScript,
-  synhighlighterunixshellscript, GLBehaviours, GLTexture, GLVectorGeometry,
-  GLLCLViewer, GLGeomObjects, GLCoordinates, GLCrossPlatform, GLGraphics,
-  GLMaterial, GLColor, GLState, GLSkydome, GLMesh, Types, strutils, fpjson,
-  jsonparser;
+  ExtCtrls, ComCtrls, ActnList, ExtDlgs, Buttons, SynEdit,
+  SynHighlighterJScript, synhighlighterunixshellscript, GLBehaviours, GLTexture,
+  GLVectorGeometry, GLLCLViewer, GLGeomObjects, GLCoordinates, GLCrossPlatform,
+  GLGraphics, GLMaterial, GLColor, GLState, GLSkydome, GLMesh, Types, strutils,
+  fpjson, jsonparser, GLWindowsFont, GLBitmapFont, GLGraph, OpenGLTokens;
 
 type
 
@@ -32,14 +32,21 @@ type
     acExit: TAction;
     acLoadJSON: TAction;
     acSaveJSON: TAction;
+    btBackground: TColorButton;
     glCanvas: TGLSceneViewer;
     glDomain: TGLCube;
     glLight2: TGLLightSource;
-    glOrigin: TGLPoints;
     glShape: TGLScene;
     glCamera: TGLCamera;
     glLight1: TGLLightSource;
     glShapes: TGLDummyCube;
+    DCCoordsZ: TGLDummyCube;
+    DCCoordsY: TGLDummyCube;
+    DCCoordsX: TGLDummyCube;
+    GLWinBmpFont: TGLWindowsBitmapFont;
+    XYGrid: TGLXYZGrid;
+    YZGrid: TGLXYZGrid;
+    XZGrid: TGLXYZGrid;
     ImageList3: TImageList;
     dlOpenFile: TOpenDialog;
     plEditor: TPanel;
@@ -68,6 +75,7 @@ type
     procedure acResetCameraExecute(Sender: TObject);
     procedure acSaveImageExecute(Sender: TObject);
     procedure acSaveJSONExecute(Sender: TObject);
+    procedure btBackgroundColorChanged(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -98,6 +106,7 @@ type
     procedure ShowJSON(root: TJSONData; rootstr: string);
     procedure LoadJSONShape(shapejson: AnsiString);
     procedure Splitter1Moved(Sender: TObject);
+    procedure DrawAxis(Sender : TObject);
   private
     mdx, mdy : Integer;
     editorwidth: integer;
@@ -113,6 +122,9 @@ var
 implementation
 
 {$R *.lfm}
+
+const
+  AxisStep :  TGLFloat =  10;
 
 procedure TfmDomain.glCanvasMouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
@@ -138,9 +150,10 @@ procedure TfmDomain.AddGrid(jobj: TJSONData);
 var
      objtag: integer;
      data: TJSONArray;
+     gridstep: double;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('Size')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON Grid shape construct', mtError, [mbOK],0);
         exit;
@@ -160,6 +173,41 @@ begin
      glDomain.Position.X:=glDomain.CubeWidth*0.5;
      glDomain.Position.Y:=glDomain.CubeDepth*0.5;
      glDomain.Position.Z:=glDomain.CubeHeight*0.5;
+
+     DCCoordsX.Position.X:=glDomain.CubeWidth*0.5;
+     DCCoordsX.Position.Y:=glDomain.CubeDepth*0.5;
+     DCCoordsX.Position.Z:=glDomain.CubeHeight*0.5;
+     DCCoordsY.Position.X:=glDomain.CubeWidth*0.5;
+     DCCoordsY.Position.Y:=glDomain.CubeDepth*0.5;
+     DCCoordsY.Position.Z:=glDomain.CubeHeight*0.5;
+     DCCoordsZ.Position.X:=glDomain.CubeWidth*0.5;
+     DCCoordsZ.Position.Y:=glDomain.CubeDepth*0.5;
+     DCCoordsZ.Position.Z:=glDomain.CubeHeight*0.5;
+
+     XYGrid.Scale.X:=glDomain.CubeWidth;
+     XYGrid.Scale.Y:=glDomain.CubeDepth;
+     XYGrid.Scale.Z:=glDomain.CubeHeight;
+     YZGrid.Scale.X:=glDomain.CubeWidth;
+     YZGrid.Scale.Y:=glDomain.CubeDepth;
+     YZGrid.Scale.Z:=glDomain.CubeHeight;
+     XZGrid.Scale.X:=glDomain.CubeWidth;
+     XZGrid.Scale.Y:=glDomain.CubeDepth;
+     XZGrid.Scale.Z:=glDomain.CubeHeight;
+
+     gridstep:=10.0/glDomain.CubeWidth;
+     XYGrid.XSamplingScale.Step:=gridstep;
+     YZGrid.XSamplingScale.Step:=gridstep;
+     XZGrid.XSamplingScale.Step:=gridstep;
+     gridstep:=10.0/glDomain.CubeDepth;
+     XYGrid.YSamplingScale.Step:=gridstep;
+     YZGrid.YSamplingScale.Step:=gridstep;
+     XZGrid.YSamplingScale.Step:=gridstep;
+     gridstep:=10.0/glDomain.CubeHeight;
+     XYGrid.ZSamplingScale.Step:=gridstep;
+     YZGrid.ZSamplingScale.Step:=gridstep;
+     XZGrid.ZSamplingScale.Step:=gridstep;
+
+     DrawAxis(nil);
 end;
 
 procedure TfmDomain.AddName(jobj: TJSONObject);
@@ -173,7 +221,7 @@ var
      data: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if not (jobj is TJSONArray) then begin
         MessageDlg('Warning', 'Malformed JSON Origin shape construct', mtError, [mbOK],0);
         exit;
@@ -201,7 +249,7 @@ var
      data: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('Size')=nil) or (jobj.FindPath('O')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON Box shape construct', mtError, [mbOK],0);
         exit;
@@ -236,7 +284,7 @@ var
      data: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('R')=nil) or (jobj.FindPath('O')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON Sphere shape construct', mtError, [mbOK],0);
         exit;
@@ -269,7 +317,7 @@ var
      data: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('C0')=nil) or (jobj.FindPath('C1')=nil) or (jobj.FindPath('R')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON Cylinder shape construct', mtError, [mbOK],0);
         exit;
@@ -317,7 +365,7 @@ var
      elem: TJSONData;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if not (jobj is TJSONArray) then begin
         MessageDlg('Warning', 'Malformed JSON ?Layers shape construct', mtError, [mbOK],0);
         exit;
@@ -385,7 +433,7 @@ var
      elem: TJSONData;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Tag')=nil) or (jobj.FindPath('Bound')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON ?Slabs shape construct', mtError, [mbOK],0);
         exit;
@@ -453,7 +501,7 @@ var
      data,data1,data2,dir: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Param1')=nil) or (jobj.FindPath('Param2')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
         exit;
@@ -497,7 +545,7 @@ var
      data: TJSONArray;
 begin
      if(jobj.Count=1) and (jobj.Items[0].Count>0) then
-         jobj:=TJSONObject(jobj.Items[0]);
+         jobj:=TJSONData(jobj.Items[0]);
      if(jobj.FindPath('Param1')=nil) then begin
         MessageDlg('Warning', 'Malformed JSON Disk Source construct', mtError, [mbOK],0);
         exit;
@@ -728,7 +776,7 @@ end;
 procedure TfmDomain.ShowJSON(root: TJSONData; rootstr: string);
 var
      i: integer;
-     jobj: TJSONObject;
+     jobj: TJSONData;
      ss, objname: string;
 begin
      ss:= root.AsJSON;
@@ -740,9 +788,9 @@ begin
         exit;
      end;
      for i:=0 to root.Count-1 do begin
-       jobj:=TJSONObject(root.Items[i]);
+       jobj:=root.Items[i];
        if(root.JSONType = jtArray) then begin
-           objname:=jobj.Names[0];
+           objname:=TJSONObject(jobj).Names[0];
        end else begin
            objname:=TJSONObject(root).Names[i];
        end;
@@ -752,8 +800,8 @@ begin
           'Name','Source','Detector']) of
           0: AddOrigin(jobj);      //Origin
           1: AddGrid(jobj);        //Grid
-          2: AddBox(jobj, jobj.Names[0]<>'Box');    //box
-          3: AddBox(jobj, jobj.Names[0]<>'Box');    //Subgrid
+          2: AddBox(jobj, objname<>'Box');    //box
+          3: AddBox(jobj, objname<>'Box');    //Subgrid
           4: AddSphere(jobj);      //Sphere
           5: AddCylinder(jobj);    //Cylinder
           6: AddLayers(jobj,1);    //XLayers
@@ -762,12 +810,12 @@ begin
           9: AddSlabs(jobj,1);     //XLayers
           10: AddSlabs(jobj,2);    //YLayers
           11: AddSlabs(jobj,3);    //ZLayers
-          12: AddName(jobj);       //Name
+          12: AddName(TJSONObject(jobj));       //Name
           13: AddSource(jobj);     //Source
           14: AddDetector(jobj);   //Detector
          -1: ShowMessage('Unsupported Shape Keyword'); // not present in array
        else
-          ShowMessage('Shape keyword '+ jobj.Names[0]+' is not supported'); // present, but not handled above
+          ShowMessage('Shape keyword '+ objname+' is not supported'); // present, but not handled above
        end;
      end;
 end;
@@ -863,6 +911,7 @@ begin
         end;
      finally
         bmp32.Free;
+
      end;
 end;
 
@@ -871,6 +920,11 @@ begin
     if(dlSaveFile.Execute) then begin
         mmShapeJSON.Lines.SaveToFile(dlSaveFile.FileName);
     end;
+end;
+
+procedure TfmDomain.btBackgroundColorChanged(Sender: TObject);
+begin
+   glCanvas.Buffer.BackgroundColor:=btBackground.ButtonColor;
 end;
 
 procedure TfmDomain.acHideBBXExecute(Sender: TObject);
@@ -899,6 +953,164 @@ begin
   LoadJSONShape(mmShapeJSON.Lines.Text);
   ShowJSON(JSONdata,'Shapes');
   ShowJSON(JSONdata,'Optode');
+end;
+
+Procedure TfmDomain.DrawAxis(Sender : TObject);
+Var
+  ScaleFactor : TGLFloat;
+  CurrentXCoord: TGLFloat;
+  AxisMini :  TGLFloat;
+
+  CurrentYCoord: TGLFloat;
+  CurrentZCoord: TGLFloat;
+  CurrentFlatText: TGLFlatText;
+Begin
+  DCCoordsX.DeleteChildren;
+  DCCoordsY.DeleteChildren;
+  DCCoordsZ.DeleteChildren;
+  ScaleFactor := 0.2;
+  { Draw X }
+  AxisMini:=-glDomain.CubeWidth*0.5;
+  CurrentXCoord := -glDomain.CubeWidth*0.5;
+  CurrentYCoord := -glDomain.CubeDepth*0.5;
+  CurrentZCoord := -glDomain.CubeHeight*0.5;
+  while CurrentXCoord <= glDomain.CubeWidth*0.5 do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsX);
+    with DCCoordsX do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, -1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        //Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clRed;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(Round(CurrentXCoord-AxisMini));
+      end;
+    end;
+    CurrentXCoord := CurrentXCoord + AxisStep;
+  end;
+  CurrentXCoord := AxisMini;
+  while CurrentXCoord <= glDomain.CubeWidth*0.5 do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsX);
+    with DCCoordsX do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, 1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        // Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clRed;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(Round(CurrentXCoord-AxisMini));
+      end;
+    end;
+    CurrentXCoord := CurrentXCoord + AxisStep;
+  end;
+  { Draw Y }
+  AxisMini:=-glDomain.CubeDepth*0.5;
+  CurrentXCoord := -glDomain.CubeWidth*0.5;
+  CurrentYCoord := -glDomain.CubeDepth*0.5;
+  CurrentZCoord := -glDomain.CubeHeight*0.5;
+  while CurrentYCoord <= glDomain.CubeDepth*0.5 do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsY);
+    with DCCoordsY do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(1, 0, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        // Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clLime;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(Round(CurrentYCoord-AxisMini));
+      end;
+    end;
+    CurrentYCoord := CurrentYCoord + AxisStep;
+  end;
+  CurrentYCoord := AxisMini;
+  while CurrentYCoord <= glDomain.CubeDepth*0.5 do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsY);
+    with DCCoordsY do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(-1, 0, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlBottom; { locate at z maximum }
+        // Layout := tlTop; { or tlBottom, tlCenter }
+        ModulateColor.AsWinColor := clLime;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(Round(CurrentYCoord-AxisMini));
+      end;
+    end;
+    CurrentYCoord := CurrentYCoord + AxisStep;
+  end;
+  { Draw Z }
+  AxisMini:=-glDomain.CubeHeight*0.5;
+  CurrentXCoord := -glDomain.CubeWidth*0.5;
+  CurrentYCoord := -glDomain.CubeDepth*0.5;
+  CurrentZCoord := -glDomain.CubeHeight*0.5;
+  while CurrentZCoord <= glDomain.CubeHeight*0.5 do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsZ);
+    with DCCoordsZ do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, -1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlCenter;
+        ModulateColor.AsWinColor := clBlue;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(Round(CurrentZCoord-AxisMini));
+      end;
+    end;
+    CurrentZCoord := CurrentZCoord + AxisStep;
+  end;
+  CurrentZCoord := AxisMini;
+  while CurrentZCoord <= glDomain.CubeHeight*0.5 do
+  begin
+    TGLFlatText.CreateAsChild(DCCoordsZ);
+    with DCCoordsZ do
+    begin
+      CurrentFlatText := TGLFlatText(Children[Count -1]);
+      with CurrentFlatText do
+      begin
+        BitmapFont := GLWinBmpFont;
+        Direction.AsVector := VectorMake(0, 1, 0);
+        Up.AsVector := VectorMake(0, 0, 1);
+        Layout := tlCenter;
+        ModulateColor.AsWinColor := clBlue;
+        Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
+        Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
+        Text := FloatToStr(Round(CurrentZCoord-AxisMini));
+      end;
+    end;
+    CurrentZCoord := CurrentZCoord + AxisStep;
+  end;
 end;
 
 end.

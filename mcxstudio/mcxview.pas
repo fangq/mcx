@@ -38,6 +38,8 @@ type
   { TfmViewer }
 
   TfmViewer = class(TForm)
+    btBackground: TColorButton;
+    mcxplotResetCamera: TAction;
     ColorStep: TTrackBar;
     DCCoordsZ: TGLDummyCube;
     DCCoordsY: TGLDummyCube;
@@ -64,6 +66,7 @@ type
     Panel1: TPanel;
     Panel2: TPanel;
     glCanvas: TGLSceneViewer;
+    ToolButton4: TToolButton;
     XYGrid: TGLXYZGrid;
     YZGrid: TGLXYZGrid;
     XZGrid: TGLXYZGrid;
@@ -75,7 +78,7 @@ type
     Panel5: TPanel;
     Panel6: TPanel;
     Cutting_Plane_Pos_TB: TTrackBar;
-    Projection_N_TB: TTrackBar;
+    tbProj: TTrackBar;
     Label1: TLabel;
     Label2: TLabel;
     Panel8: TPanel;
@@ -93,8 +96,10 @@ type
     ToolButton3: TToolButton;
     ToolButton9: TToolButton;
 
+    procedure btBackgroundColorChanged(Sender: TObject);
     procedure btOpaqueClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure grDirSelectionChanged(Sender: TObject);
     procedure mcxplotExitExecute(Sender: TObject);
     procedure mcxplotOpenExecute(Sender: TObject);
     Procedure Formshow(Sender : Tobject);
@@ -102,6 +107,7 @@ type
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     Procedure LoadTexture(filename: string; nx:integer=0; ny:integer=0; nz: integer=0; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
     procedure mcxplotRefreshExecute(Sender: TObject);
+    procedure mcxplotResetCameraExecute(Sender: TObject);
     procedure mcxplotSaveScreenExecute(Sender: TObject);
     procedure mcxplotShowBBXExecute(Sender: TObject);
     procedure mcxplotUseColorExecute(Sender: TObject);
@@ -118,7 +124,7 @@ type
     procedure Pseudocolor_CBClick(Sender: TObject);
     procedure Opaque_Hull_CBClick(Sender: TObject);
     procedure Alpha_Threshold_TBChange(Sender: TObject);
-    Procedure DrawAxis(Sender : TObject);
+    procedure DrawAxis(Sender : TObject);
   protected
     procedure Calculate_Transfer_Function;
   public
@@ -222,8 +228,19 @@ var
   Index: integer;
   Value, cid: integer;
   Alpha: integer;
+  minx,miny,minz: integer;
 
 begin
+  minx:=0;
+  miny:=0;
+  minz:=0;
+  if(grDir.ItemIndex=0) then begin
+      minx:=Cutting_Plane_Pos_TB.Position;
+  end else if(grDir.ItemIndex=1) then begin
+      miny:=Cutting_Plane_Pos_TB.Position;
+  end else begin
+      minz:=Cutting_Plane_Pos_TB.Position;
+  end;
   { Set texture values }
   for Z := 0 to M_Output_Texture_3D.Z_Size - 1 do
   begin { For }
@@ -234,16 +251,14 @@ begin
         Index := (Z * M_Output_Texture_3D.Y_Size * M_Output_Texture_3D.X_Size) + (Y * M_Output_Texture_3D.X_Size) + X;
         Value := PByte(PChar(M_Input_Texture_3D.Data) + Index)^;
 
-        if (Value < Alpha_Threshold_TB.Position) or
-          (Y > Cutting_Plane_Pos_TB.Position) or (X = 0) or
+        if (Value < Alpha_Threshold_TB.Position) or (X = 0) or
+          ((Y>miny) and (X>minx) and (Z>minz)) or
           (X = M_Output_Texture_3D.X_Size - 1) or (Y = 0) or
           (Y = M_Output_Texture_3D.Y_Size - 1) or (Z = 0) or
           (Z = M_Output_Texture_3D.Z_Size - 1) then
         begin { then }
           Alpha := 0;
-        end { then }
-        else
-        begin { else }
+        end else begin { else }
           if btOpaque.Down = True then
           begin { then }
             Alpha := 255;
@@ -258,9 +273,7 @@ begin
         begin { then }
           cid:=Value shr (8-ColorStep.Position);
           PLongWord((PChar(M_Output_Texture_3D.Data)) + (Index * 4))^ := M_Clut[cid*(1 shl (8-ColorStep.Position))];
-        end { then }
-        else
-        begin { else }
+        end else begin { else }
           PLongWord((PChar(M_Output_Texture_3D.Data)) + (Index * 4))^ := Value + (Value shl 8) + (Value shl 16);
         end; { else }
 
@@ -363,47 +376,21 @@ begin
   ScaleVector(vy, DIAGONAL_LENGTH * 0.5 / VectorLength(vy));
   ScaleVector(vz, DIAGONAL_LENGTH * 0.5 / VectorLength(vz));
 
-  step := DIAGONAL_LENGTH / Projection_N_TB.Position;
+  step := DIAGONAL_LENGTH / tbProj.Position;
   z := -DIAGONAL_LENGTH / 2;
   gl.begin_(GL_QUADS);
-  for i := 0 to Projection_N_TB.Position - 1 do
+  for i := 0 to tbProj.Position - 1 do
   begin
     gl.Color4f(1.0, 1.0, 1.0, 1.0);
 
     gl.Normal3f(-GLCamera.AbsoluteVectorToTarget.X,
       -GLCamera.AbsoluteVectorToTarget.Y, -GLCamera.AbsoluteVectorToTarget.Z);
 
-    if(grDir.ItemIndex=0) then begin
-        gl.Vertex3f( vx.X + vy.X + vz.X * z,  vx.Y + vy.Y + vz.Y * z,
-           vx.Z + vy.Z + vz.Z * z);
-        gl.Vertex3f(-vx.X + vy.X + vz.X * z, -vx.Y + vy.Y + vz.Y * z,
-          -vx.Z + vy.Z + vz.Z * z);
-        gl.Vertex3f(-vx.X - vy.X + vz.X * z, -vx.Y - vy.Y + vz.Y * z,
-          -vx.Z - vy.Z + vz.Z * z);
-        gl.Vertex3f( vx.X - vy.X + vz.X * z,  vx.Y - vy.Y + vz.Y * z,
-           vx.Z - vy.Z + vz.Z * z);
-        z := z + step;
-    end else if(grDir.ItemIndex=1) then begin
-        gl.Vertex3f( vx.X + vy.X* z + vz.X,  vx.Y + vy.Y* z + vz.Y ,
-           vx.Z + vy.Z* z + vz.Z );
-        gl.Vertex3f(-vx.X + vy.X* z + vz.X, -vx.Y + vy.Y* z + vz.Y ,
-          -vx.Z + vy.Z* z + vz.Z );
-        gl.Vertex3f(-vx.X + vy.X* z - vz.X, -vx.Y + vy.Y* z - vz.Y ,
-          -vx.Z + vy.Z* z - vz.Z );
-        gl.Vertex3f( vx.X + vy.X* z - vz.X,  vx.Y + vy.Y* z - vz.Y ,
-           vx.Z + vy.Z* z - vz.Z );
-        z := z + step;
-    end else begin
-        gl.Vertex3f(vx.X* z + vy.X + vz.X, vx.Y* z + vy.Y + vz.Y ,
-          vx.Z* z + vy.Z + vz.Z );
-        gl.Vertex3f(vx.X* z - vy.X + vz.X, vx.Y* z - vy.Y + vz.Y ,
-          vx.Z* z - vy.Z + vz.Z );
-        gl.Vertex3f(vx.X* z - vy.X - vz.X, vx.Y* z - vy.Y - vz.Y ,
-          vx.Z* z - vy.Z - vz.Z );
-        gl.Vertex3f(vx.X* z + vy.X - vz.X, vx.Y* z + vy.Y - vz.Y ,
-          vx.Z* z + vy.Z - vz.Z );
-        z := z + step;
-    end;
+    gl.Vertex3f( vx.X+vy.X+vz.X*z, vx.Y+vy.Y+vz.Y*z, vx.Z+vy.Z+vz.Z*z);
+    gl.Vertex3f(-vx.X+vy.X+vz.X*z,-vx.Y+vy.Y+vz.Y*z,-vx.Z+vy.Z+vz.Z*z);
+    gl.Vertex3f(-vx.X-vy.X+vz.X*z,-vx.Y-vy.Y+vz.Y*z,-vx.Z-vy.Z+vz.Z*z);
+    gl.Vertex3f( vx.X-vy.X+vz.X*z, vx.Y-vy.Y+vz.Y*z, vx.Z-vy.Z+vz.Z*z);
+    z := z + step;
   end;
   gl.End_;
 
@@ -411,7 +398,7 @@ begin
   gl.PopAttrib;
 end;
 
-Procedure TfmViewer.Formshow(Sender : Tobject);
+Procedure TfmViewer.FormShow(Sender : Tobject);
 function HSLtoRGB(H, S, L: single): longword;
 const
   OneOverThree = 1 / 3;
@@ -549,10 +536,10 @@ begin
   M_Output_Texture_3D.Z_Size := M_Input_Texture_3D.Z_Size;
 
   M_Refresh := True;
-  Cutting_Plane_Pos_TB.Max:=M_Output_Texture_3D.Y_Size;
-  Cutting_Plane_Pos_TB.Position := M_Output_Texture_3D.Y_Size div 2;
+  Cutting_Plane_Pos_TB.Max:=M_Output_Texture_3D.X_Size;
+  Cutting_Plane_Pos_TB.Position := M_Output_Texture_3D.X_Size div 2;
   Alpha_Threshold_TB.Position := 40;
-  Projection_N_TB.Position := M_Output_Texture_3D.Y_Size;
+  tbProj.Position := M_Output_Texture_3D.X_Size;
 
   Frame.Scale.X:=M_Output_Texture_3D.X_Size;
   Frame.Scale.Y:=M_Output_Texture_3D.Y_Size;
@@ -632,6 +619,14 @@ begin
   btRefresh.Enabled := false;
 end;
 
+procedure TfmViewer.mcxplotResetCameraExecute(Sender: TObject);
+begin
+   GLCamera.DepthOfView:=2.0*sqrt(Frame.Scale.X*Frame.Scale.X+Frame.Scale.Y*Frame.Scale.Y+Frame.Scale.Z*Frame.Scale.Z);
+   GLCamera.Position.X:=Frame.Scale.X;
+   GLCamera.Position.Y:=Frame.Scale.Y*0.7;
+   GLCamera.Position.Z:=Frame.Scale.Z;
+end;
+
 procedure TfmViewer.mcxplotSaveScreenExecute(Sender: TObject);
 var
    bm : TBitmap;
@@ -708,6 +703,7 @@ end;
 
 procedure TfmViewer.mcxplotExitExecute(Sender: TObject);
 begin
+  GLDirectOpenGL.Visible:=false;
   Close;
 end;
 
@@ -716,10 +712,27 @@ begin
   CloseAction := caFree;
 end;
 
+procedure TfmViewer.grDirSelectionChanged(Sender: TObject);
+begin
+  if(grDir.ItemIndex=0) then begin
+      Cutting_Plane_Pos_TB.Max:=M_Output_Texture_3D.X_Size;
+  end else if(grDir.ItemIndex=1) then begin
+      Cutting_Plane_Pos_TB.Max:=M_Output_Texture_3D.Y_Size;
+  end else begin
+      Cutting_Plane_Pos_TB.Max:=M_Output_Texture_3D.Z_Size;
+  end;
+  M_Refresh := True;
+end;
+
 procedure TfmViewer.btOpaqueClick(Sender: TObject);
 begin
   btRefresh.Enabled := True;
   M_Refresh := True;
+end;
+
+procedure TfmViewer.btBackgroundColorChanged(Sender: TObject);
+begin
+  glCanvas.Buffer.BackgroundColor:=btBackground.ButtonColor;
 end;
 
 procedure TfmViewer.Cutting_Plane_Pos_TBChange(Sender: TObject);
@@ -759,6 +772,9 @@ Var
   CurrentZCoord: TGLFloat;
   CurrentFlatText: TGLFlatText;
 Begin
+  DCCoordsX.DeleteChildren;
+  DCCoordsY.DeleteChildren;
+  DCCoordsZ.DeleteChildren;
   ScaleFactor := 0.0025;
   { Draw X }
   CurrentXCoord := AxisMini;

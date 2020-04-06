@@ -29,7 +29,7 @@ DOXYCFG=mcxdoxy.cfg
 
 INCLUDEDIRS=-I/usr/local/cuda/include
 
-CUDART=-lcudart -lstdc++
+CUDART=-lcudart
 CUOMPLINK=
 
 ARCH = $(shell uname -m)
