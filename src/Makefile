@@ -21,11 +21,14 @@ MEX=mex
 AR=$(CC)
 
 BINARY=mcx
+MAKE=make
 OUTPUT_DIR=$(MCXDIR)/bin
 
 DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
 DOXYCFG=mcxdoxy.cfg
+ZMATLIB    :=libzmat.a
+USERLINKOPT?=$(ZMATLIB)
 
 INCLUDEDIRS=-I/usr/local/cuda/include
 
@@ -225,7 +228,7 @@ makedirs:
 makedocdir:
 	@if test ! -d $(DOCDIR); then $(MKDIR) $(DOCDIR); fi
 
-$(OUTPUT_DIR)/$(BINARY): makedirs $(OBJS)
+$(OUTPUT_DIR)/$(BINARY): makedirs $(ZMATLIB) $(OBJS)
 $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(AR) $(OBJS) $(OUTPUTFLAG) $(OUTPUT_DIR)/$(BINARY) $(LINKOPT) $(USERLINKOPT)
 
@@ -235,8 +238,11 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
+$(ZMATLIB):
+	-$(MAKE) -C zmat lib
 clean:
-	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX)
+	-$(MAKE) -C zmat clean
+	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)
 cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
