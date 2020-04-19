@@ -58,6 +58,7 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   MEX=cmd /c mex
   CPPOPT+=-Xcompiler $(OMP)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
+  OUTPUTFLAG=
   CPPOPT+=
 else
   CPPOPT+=
