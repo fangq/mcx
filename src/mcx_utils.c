@@ -39,6 +39,7 @@
 #include "mcx_const.h"
 #include "mcx_shapes.h"
 #include "mcx_core.h"
+#include "mcx_bench.h"
 
 /**
  * Macro to load JSON keys
@@ -78,7 +79,8 @@
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
-		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-','\0'};
+		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-',
+		 '-','\0'};
 
 /**
  * Long command line options
@@ -95,7 +97,8 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--seed","--version","--debug","--voidtime","--saveseed",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
-                 "--momentum","--specular","--bc","--workload","--savedetflag","--internalsrc",""};
+                 "--momentum","--specular","--bc","--workload","--savedetflag",
+		 "--internalsrc","--bench",""};
 
 /**
  * Output data types
@@ -168,7 +171,6 @@ const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
 
 const unsigned int mediaformatid[]={1,2,4,98,99,100,101,102,103,104,0};
 const char *mediaformat[]={"byte","short","integer","mixlabel","labelplus","muamus_float","mua_float","muamus_half","asgn_byte","muamus_short",""};
-
 
 /**
  * Flag to decide if parameter has been initialized over command line
@@ -2110,6 +2112,19 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
                                 else if(strcmp(argv[i]+2,"root")==0)
                                      i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");
+                                else if(strcmp(argv[i]+2,"bench")==0)
+                                     if(i+1<argc && isalpha(argv[i+1][0]) ){
+				         int idx=mcx_keylookup(argv[++i],benchname);
+					 if(idx==-1)
+					     MCX_ERROR(-1,"Unsupported bechmark.");
+					 isinteractive=0;
+					 jsoninput=(char *)benchjson[idx];
+			             }else{
+				         MCX_FPRINTF(cfg->flog,"Built-in benchmarks:\n");
+				         for(int i=0;i<sizeof(benchname)/sizeof(char*)-1;i++)
+					     MCX_FPRINTF(cfg->flog,"\t%s\n",benchname[i]);
+				         exit(0);
+				     }
                                 else if(strcmp(argv[i]+2,"reflectin")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
                                 else if(strcmp(argv[i]+2,"internalsrc")==0)
