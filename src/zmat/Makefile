@@ -33,7 +33,7 @@ PLATFORM = $(shell uname -s)
 DLLFLAG=-fPIC
 OMP=-fopenmp
 
-CPPOPT=-g -Wall -O3 -DNO_LZMA
+CPPOPT=-g -Wall -O3 -DNO_LZMA -fPIC
 
 OUTPUTFLAG:=-o
 OBJSUFFIX=.o
