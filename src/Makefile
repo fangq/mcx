@@ -28,9 +28,9 @@ DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
 DOXYCFG=mcxdoxy.cfg
 ZMATLIB    :=libzmat.a
-USERLINKOPT?=$(ZMATLIB)
+USERLINKOPT?=$(ZMATLIB) -lz
 
-INCLUDEDIRS=-I/usr/local/cuda/include
+INCLUDEDIRS=-I./zmat -I/usr/local/cuda/include
 
 CUDART=-lcudart
 CUOMPLINK=
@@ -58,7 +58,7 @@ DLLFLAG=-fPIC
 OMP=-fopenmp
 CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
-CPPOPT=-g -Wall -std=c99 # -DUSE_OS_TIMER
+CPPOPT=-g -Wall -std=c99 -DNO_LZMA # -DUSE_OS_TIMER
 
 OBJSUFFIX=.o
 EXESUFFIX=

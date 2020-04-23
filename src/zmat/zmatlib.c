@@ -68,6 +68,7 @@ int zmat_run(const size_t inputsize, unsigned char *inputstr, size_t *outputsize
 	            if(deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15|16, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK)
 	        	return -2;
 		}
+
 		buflen[0] =deflateBound(&zs,inputsize);
 		*outputbuf=(unsigned char *)malloc(buflen[0]);
 		zs.avail_in = inputsize; /* size of input, string + terminator*/
