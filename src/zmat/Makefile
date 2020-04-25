@@ -43,20 +43,20 @@ FILES=zmatlib lz4/lz4 lz4/lz4hc
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
-  CUOMPLINK=-Xcompiler
+  #CUOMPLINK=-Xcompiler
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
       LINKOPT=-L"$(CUDA_PATH)/lib/x64" $(CUDART)
   else
       LINKOPT=-L"$(CUDA_PATH)/lib/Win32" $(CUDART)
   endif
   INCLUDEDIRS +=-I"$(CUDA_PATH)/lib/include"
-  CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
+  CPPOPT =-c -DWIN32 -g -Wall -O3 -DNO_LZMA -fPIC
   OBJSUFFIX=.obj
   EXESUFFIX=
   DLLFLAG=
-  OMP=/openmp
+  OMP=-fopenmp
   MEX=cmd /c mex
-  CPPOPT+=-Xcompiler $(OMP)
+  #CPPOPT+=-Xcompiler $(OMP)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   OUTPUTFLAG=
   CPPOPT+=

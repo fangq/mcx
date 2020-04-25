@@ -74,7 +74,7 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
       LINKOPT=-L"$(CUDA_PATH)/lib/Win32" $(CUDART)
   endif
   INCLUDEDIRS +=-I"$(CUDA_PATH)/lib/include"
-  CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32
+  CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32 -DNO_LZMA
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
   DLLFLAG=
@@ -83,6 +83,8 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CUCCOPT+=-Xcompiler "$(OMP) /W0"
   CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
   CPPOPT+=-Xcompiler $(OMP)
+  ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj
+  USERLINKOPT:=$(ZMATLIB) -lzlib
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)
@@ -239,7 +241,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 $(ZMATLIB):
-	-$(MAKE) -C zmat lib AR=ar USERLINKOPT=
+	-$(MAKE) -C zmat lib AR=ar CPPOPT=-DNO_LZMA
 clean:
 	-$(MAKE) -C zmat clean
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)

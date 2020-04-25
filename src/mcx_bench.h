@@ -259,8 +259,11 @@ MSTR(
 	       {"ZLayers":[[1,20,1],[21,32,4],[33,200,3]]}, 
 	       {"Cylinder": {"Tag":2, "C0": [0,100.5,100.5], "C1": [200,100.5,100.5], "R": 20}}
         ]
-}),
+})
 
+#ifndef _MSC_VER
+
+,
 MSTR(
 {
     "Session": {
@@ -7927,6 +7930,7 @@ NHop9droldQr7hBXR4+WZGRl9GhGXhYkIwiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiC\
 IAiCIAiCIAiCIAiCIPPkP0pG+h0="}
 })
 
+#endif
 };
 
 #endif
