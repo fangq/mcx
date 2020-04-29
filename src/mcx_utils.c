@@ -645,8 +645,8 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 	cJSON_AddItemToObject(hdr, "Media", sub = cJSON_CreateArray());
 	for(int i=0;i<cfg->medianum;i++){
 	     cJSON_AddItemToArray(sub,dat=cJSON_CreateObject());
-	     cJSON_AddNumberToObject(dat, "mua", cfg->prop[i].mua);
-	     cJSON_AddNumberToObject(dat, "mus", cfg->prop[i].mus);
+	     cJSON_AddNumberToObject(dat, "mua", cfg->prop[i].mua/cfg->unitinmm);
+	     cJSON_AddNumberToObject(dat, "mus", cfg->prop[i].mus/cfg->unitinmm);
 	     cJSON_AddNumberToObject(dat, "g",   cfg->prop[i].g);
 	     cJSON_AddNumberToObject(dat, "n",   cfg->prop[i].n);
 	}
@@ -670,20 +670,32 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 	    }
 	}else{
 	    char colnum[]={1,cfg->his.maxmedia,cfg->his.maxmedia,cfg->his.maxmedia,3,3,1};
-	    char *dtype[]={"single","single","single","single","single","single","single"};
+	    char *dtype[]={"uint32","uint32","single","single","single","single","single"};
 	    char *dname[]={"detid","nscat","ppath","mom","p","v","w0"};
 	    cJSON_AddItemToObject(obj, "PhotonData", dat = cJSON_CreateObject());
 	    for(int id=0;id<sizeof(colnum);id++){
 	      if((cfg->savedetflag >> id) & 0x1){
 		uint dims[2]={count,colnum[id]};
-		float *buf=(float *)calloc(dims[0]*dims[1],sizeof(float));
-		for(int i=0;i<dims[0];i++)
-		    for(int j=0;j<dims[1];j++)
-			buf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
+		void *val=NULL;
+		float *fbuf=NULL;
+		uint  *ibuf=NULL;
+		if(!strcmp(dtype[id],"uint32")){
+		    ibuf=(uint *)calloc(dims[0]*dims[1],sizeof(uint));
+		    for(int i=0;i<dims[0];i++)
+			for(int j=0;j<dims[1];j++)
+			    ibuf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
+		    val=(void*)ibuf;
+		}else{
+		    fbuf=(float *)calloc(dims[0]*dims[1],sizeof(float));
+		    for(int i=0;i<dims[0];i++)
+			for(int j=0;j<dims[1];j++)
+			    fbuf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
+		    val=(void*)fbuf;
+		}
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, zmZlib, sub))
+		if(mcx_jdataencode(val,2,dims,dtype[id], 4, zmZlib, sub))
 		    MCX_ERROR(-1,"error when converting to JSON");
-		free(buf);
+		free(val);
 		col+=dims[1];
 	      }
 	    }
@@ -1779,13 +1791,12 @@ void mcx_savejdata(char *filename, Config *cfg){
 	     break;
 	 }
      }
-     if(cfg->isdumpjson==2)
-         cJSON_AddNumberToObject(obj, "LengthUnit", cfg->unitinmm);
+     cJSON_AddNumberToObject(obj, "LengthUnit", cfg->unitinmm);
      cJSON_AddItemToObject(obj, "Media", sub = cJSON_CreateArray());
      for(int i=0;i<cfg->medianum;i++){
 	 cJSON_AddItemToArray(sub,tmp=cJSON_CreateObject());
-	 cJSON_AddNumberToObject(tmp, "mua", cfg->prop[i].mua);
-	 cJSON_AddNumberToObject(tmp, "mus", cfg->prop[i].mus);
+	 cJSON_AddNumberToObject(tmp, "mua", cfg->prop[i].mua/cfg->unitinmm);
+	 cJSON_AddNumberToObject(tmp, "mus", cfg->prop[i].mus/cfg->unitinmm);
 	 cJSON_AddNumberToObject(tmp, "g",   cfg->prop[i].g);
 	 cJSON_AddNumberToObject(tmp, "n",   cfg->prop[i].n);
      }
@@ -2282,12 +2293,12 @@ int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int 
      /*compress data using zlib*/
      ret=zmat_encode(totalbytes, (uchar *)vol, &compressedbytes, (uchar **)&compressed, zipid, &status);
      if(!ret){
-         MCX_FPRINTF(stdout,"compression ratio: %.1f%%\n",compressedbytes*100.f/totalbytes);
+         MCX_FPRINTF(stdout,"compression ratio: %.1f%%\t",compressedbytes*100.f/totalbytes);
          totalbytes=0;
          /*encode data using base64*/
          ret=zmat_encode(compressedbytes, compressed, &totalbytes, (uchar **)&buf, zmBase64, &status);
+	 MCX_FPRINTF(stdout,"after encoding: %.1f%%\n",totalbytes*100.f/(datalen*byte));
 	 if(!ret){
-
 	     cJSON_AddStringToObject(obj, "_ArrayType_", type);
 	     cJSON_AddItemToObject(obj,   "_ArraySize_", cJSON_CreateIntArray((int *)dims,ndim));
 	     cJSON_AddStringToObject(obj, "_ArrayZipType_", zipformat[zipid]);
