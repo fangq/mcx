@@ -583,6 +583,10 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
 void mcx_savedetphoton(float *ppath, void *seeds, int count, int doappend, Config *cfg){
 	FILE *fp;
 	char fhistory[MAX_FULL_PATH], filetag;
+	if(cfg->outputformat==ofJNifti){
+	    mcx_savejdet(ppath,seeds,count,doappend,cfg);
+	    return;
+	}
 	filetag=((cfg->his.detected==0  && cfg->his.savedphoton) ? 't' : 'h');
         if(cfg->rootpath[0])
                 sprintf(fhistory,"%s%c%s.mc%c",cfg->rootpath,pathsep,cfg->session,filetag);
@@ -601,6 +605,121 @@ void mcx_savedetphoton(float *ppath, void *seeds, int count, int doappend, Confi
 	if(cfg->issaveseed && seeds!=NULL)
            fwrite(seeds,cfg->his.seedbyte,count,fp);
 	fclose(fp);
+}
+
+/**
+ * @brief Save detected photon data to mch format binary file
+ *
+ * @param[in] ppath: buffer pointing to the detected photon data (partial path etc)
+ * @param[in] seeds: buffer pointing to the detected photon seed data
+ * @param[in] count: number of detected photons
+ * @param[in] doappend: flag if the new data is appended or write from the begining
+ * @param[in] cfg: simulation configuration
+ */
+
+void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg){
+	FILE *fp;
+	char fhistory[MAX_FULL_PATH], filetag;
+        cJSON *root=NULL, *obj=NULL, *hdr=NULL, *dat=NULL, *sub=NULL;
+        char *jsonstr=NULL;
+	int col=0;
+
+        root=cJSON_CreateObject();
+
+        /* the "NIFTIHeader" section */
+        cJSON_AddItemToObject(root, "MCXData", obj = cJSON_CreateObject());
+	cJSON_AddItemToObject(obj, "Info", hdr = cJSON_CreateObject());
+        cJSON_AddNumberToObject(hdr, "Version", cfg->his.version);
+	cJSON_AddNumberToObject(hdr, "MediaNum", cfg->his.maxmedia);
+	cJSON_AddNumberToObject(hdr, "DetNum", cfg->his.detnum);
+	cJSON_AddNumberToObject(hdr, "ColumnNum", cfg->his.colcount);
+	cJSON_AddNumberToObject(hdr, "TotalPhoton", cfg->his.totalphoton);
+	cJSON_AddNumberToObject(hdr, "DetectedPhoton", count);
+	cJSON_AddNumberToObject(hdr, "SavedPhoton", cfg->his.savedphoton);
+	cJSON_AddNumberToObject(hdr, "LengthUnit", cfg->his.unitinmm);
+	cJSON_AddNumberToObject(hdr, "SeedByte", cfg->his.seedbyte);
+	cJSON_AddNumberToObject(hdr, "Normalizer", cfg->his.normalizer);
+	cJSON_AddNumberToObject(hdr, "Repeat", cfg->his.respin);
+	cJSON_AddNumberToObject(hdr, "SrcNum", cfg->his.srcnum);
+	cJSON_AddNumberToObject(hdr, "SaveDetFlag", cfg->his.savedetflag);
+	cJSON_AddItemToObject(hdr, "Media", sub = cJSON_CreateArray());
+	for(int i=0;i<cfg->medianum;i++){
+	     cJSON_AddItemToArray(sub,dat=cJSON_CreateObject());
+	     cJSON_AddNumberToObject(dat, "mua", cfg->prop[i].mua);
+	     cJSON_AddNumberToObject(dat, "mus", cfg->prop[i].mus);
+	     cJSON_AddNumberToObject(dat, "g",   cfg->prop[i].g);
+	     cJSON_AddNumberToObject(dat, "n",   cfg->prop[i].n);
+	}
+
+        if(cfg->his.detected==0  && cfg->his.savedphoton){
+	    char colnum[]={1,3,1};
+	    char *dtype[]={"uint32","single","single"};
+	    char *dname[]={"photonid","p","w0"};
+	    cJSON_AddItemToObject(obj, "Trajectory", dat = cJSON_CreateObject());
+	    for(int id=0;id<sizeof(colnum);id++){
+		uint dims[2]={count,colnum[id]};
+		float *buf=(float *)calloc(dims[0]*dims[1],sizeof(float));
+		for(int i=0;i<dims[0];i++)
+		    for(int j=0;j<dims[1];j++)
+			buf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
+		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
+		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, zmZlib, sub))
+		    MCX_ERROR(-1,"error when converting to JSON");
+		free(buf);
+		col+=dims[1];
+	    }
+	}else{
+	    char colnum[]={1,cfg->his.maxmedia,cfg->his.maxmedia,cfg->his.maxmedia,3,3,1};
+	    char *dtype[]={"single","single","single","single","single","single","single"};
+	    char *dname[]={"detid","nscat","ppath","mom","p","v","w0"};
+	    cJSON_AddItemToObject(obj, "PhotonData", dat = cJSON_CreateObject());
+	    for(int id=0;id<sizeof(colnum);id++){
+	      if((cfg->savedetflag >> id) & 0x1){
+		uint dims[2]={count,colnum[id]};
+		float *buf=(float *)calloc(dims[0]*dims[1],sizeof(float));
+		for(int i=0;i<dims[0];i++)
+		    for(int j=0;j<dims[1];j++)
+			buf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
+		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
+		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, zmZlib, sub))
+		    MCX_ERROR(-1,"error when converting to JSON");
+		free(buf);
+		col+=dims[1];
+	      }
+	    }
+	}
+	if(cfg->issaveseed && seeds!=NULL){
+	    uint dims[2]={count,cfg->his.seedbyte};
+            cJSON_AddItemToObject(dat, "seed", sub = cJSON_CreateObject());
+	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, zmZlib, sub))
+                MCX_ERROR(-1,"error when converting to JSON");
+	}
+
+        /* now save JSON to file */
+        jsonstr=cJSON_Print(root);
+        if(jsonstr==NULL)
+            MCX_ERROR(-1,"error when converting to JSON");
+
+	filetag=((cfg->his.detected==0  && cfg->his.savedphoton) ? 't' : 'h');
+        if(cfg->rootpath[0])
+                sprintf(fhistory,"%s%c%s_%s.jdat",cfg->rootpath,pathsep,cfg->session,(filetag=='t'?"traj":"detp"));
+        else
+                sprintf(fhistory,"%s_%s.jdat",cfg->session,(filetag=='t'?"traj":"detp"));
+
+	if(doappend){
+           fp=fopen(fhistory,"at");
+	}else{
+           fp=fopen(fhistory,"wt");
+	}
+	if(fp==NULL)
+	   MCX_ERROR(-2,"can not save data to disk");
+        fprintf(fp,"%s\n",jsonstr);
+        fclose(fp);
+
+        if(jsonstr)
+           free(jsonstr);
+        if(root)
+           cJSON_Delete(root);   
 }
 
 /**

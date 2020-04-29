@@ -266,6 +266,7 @@ void mcx_savejdata(char *filename, Config *cfg);
 int  mcx_jdataencode(void *vol,  int ndim, uint *dims, char *type, int byte, int zipid, cJSON *obj);
 int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type, cJSON *obj, Config *cfg);
 void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name, int isfloat, Config *cfg);
+void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus
