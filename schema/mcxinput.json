@@ -30,10 +30,10 @@
           "title": "Photon number",
           "type": "integer",
           "default": 100000,
-          "maximum": 10000000
+          "maximum": 1000000000
         },
         "DoMismatch": {
-          "title": "Do Reflection",
+          "title": "Do reflection",
           "type": "boolean",
           "default": true
         },
@@ -42,11 +42,88 @@
           "type": "boolean",
           "default": true
         },
+        "DoSaveVolume": {
+          "title": "Save fluence",
+          "type": "boolean",
+          "default": true
+        },
+	"DoPartialPath": {
+          "title": "Save detected photons",
+          "type": "boolean",
+          "default": true
+        },
+	"DoNormalize": {
+          "title": "Do normalization",
+          "type": "boolean",
+          "default": true
+        },
+	"DoSaveRef": {
+          "title": "Save diffuse reflectance",
+          "type": "boolean",
+          "default": false
+        },
+	"DoSaveExit": {
+          "title": "Save exit position",
+          "type": "boolean",
+          "default": false
+        },
+	"DoSaveSeed": {
+          "title": "Save photon seeds",
+          "type": "boolean",
+          "default": false
+        },
+	"DoDCS": {
+          "title": "Save momentum transfer",
+          "type": "boolean",
+          "default": false
+        },
+	"DoSpecular": {
+          "title": "Do specular reflection",
+          "type": "boolean",
+          "default": true
+        },
+	"DebugFlag": {
+          "title": "Debug flags",
+          "type": "string",
+          "required": false,
+          "default": ""
+        },
+	"SaveDataMask": {
+          "title": "Save detected photon flags",
+          "type": "string",
+          "required": false,
+          "default": "DP"
+        },
+	"OutputFormat": {
+          "title": "Output file format",
+          "type": "string",
+          "required": false,
+	  "default": "jnii",
+          "enum": [
+                "mc2",
+                "nii",
+                "jnii",
+                "hdr"
+              ]
+        },
+	"OutputType": {
+          "title": "Output data type",
+          "type": "string",
+          "required": false,
+	  "default": "x",
+          "enum": [
+                "x",
+                "f",
+                "e",
+                "j",
+		"p"
+              ]
+        },
         "RNGSeed": {
           "title": "Random seed",
           "type": "number",
           "required": false,
-          "default": 29012392
+          "default": 1648335518
         }
       }
     },
@@ -157,6 +234,12 @@
               "type": "array",
               "required": false,
               "format": "tabs",
+	      "default": [
+                0,
+                0,
+                0,
+		0
+              ],
               "items": {
                 "type": "number"
               },
@@ -168,6 +251,12 @@
               "type": "array",
               "required": false,
               "format": "tabs",
+	      "default": [
+                0,
+                0,
+                0,
+		0
+              ],
               "items": {
                 "type": "number"
               },
@@ -194,13 +283,18 @@
                 "items": {
                   "type": "number"
                 },
+		"default": [
+                  25,
+                  30,
+                  0
+                ],
                 "minItems": 3,
                 "maxItems": 3
               },
               "R": {
                 "title": "Radius",
                 "type": "number",
-                "default": 2,
+                "default": 1,
                 "minimum": 0
               }
             }
@@ -226,12 +320,18 @@
                 "Tag": {
                   "title": "Tag",
                   "type": "integer",
+		  "default": 1,
                   "minimum": 0
                 },
                 "Size": {
                   "title": "Size",
                   "type": "array",
                   "format": "tabs",
+                  "default": [
+                     60,
+                     60,
+                     60
+		  ],
                   "items": {
                     "type": "number"
                   },
@@ -416,9 +516,9 @@
             "type": "integer"
           },
           "default": [
-            0,
-            0,
-            0
+            60,
+            60,
+            60
           ],
           "minItems": 3,
           "maxItems": 3
