@@ -250,6 +250,7 @@ void mcx_maskdet(Config *cfg);
 void mcx_dumpmask(Config *cfg);
 void mcx_version(Config *cfg);
 void mcx_convertrow2col(unsigned int **vol, uint3 *dim);
+void mcx_convertcol2row(unsigned int **vol, uint3 *dim);
 int  mcx_loadjson(cJSON *root, Config *cfg);
 int  mcx_keylookup(char *key, const char *table[]);
 int  mcx_lookupindex(char *key, const char *index);

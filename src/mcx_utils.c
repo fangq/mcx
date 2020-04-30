@@ -105,7 +105,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
  * Output data types
  * x: fluence rate
  * f: fluence
- * e: energy deposit
+ * e: energy deposition
  * j: jacobian for mua
  * p: scattering counts for computing Jacobians for mus
  */
@@ -460,11 +460,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
      cJSON_AddNumberToObject(hdr, "Param1", 0);
      cJSON_AddNumberToObject(hdr, "Param2", 0);
      cJSON_AddNumberToObject(hdr, "Param3", 0);
-     if(cfg->outputtype>=0){
-        char outputtypestr[2]={'\0'};
-	outputtypestr[0]=outputtype[(int)cfg->outputtype];
-	cJSON_AddStringToObject(hdr, "Intent", outputtypestr);
-     }
+     cJSON_AddNumberToObject(hdr, "Intent", 0);
      cJSON_AddStringToObject(hdr, "DataType", (isfloat?"single":"uint32"));
      cJSON_AddNumberToObject(hdr, "BitDepth", 32);
      cJSON_AddNumberToObject(hdr, "FirstSliceID", 0);
@@ -484,7 +480,13 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
      cJSON_AddNumberToObject(hdr, "MinIntensity", 0);
      cJSON_AddNumberToObject(hdr, "SliceTime", 0);
      cJSON_AddNumberToObject(hdr, "TimeOffset", 0);
-     cJSON_AddStringToObject(hdr, "Description", "MCX volumetric output, see Intent for output data type");
+     if(cfg->outputtype>=0){
+        const char *typestr[]={"Fluence rate (W/mm^2)","Fluence (J/mm^2)", 
+	"Energy density (J/mm^3)","Jacobian for mua (J/mm)","Scattering count",
+	"Partial momentum transfer"};
+	cJSON_AddStringToObject(hdr, "Description", typestr[(int)cfg->outputtype]);
+     }else
+        cJSON_AddStringToObject(hdr, "Description", "MCX volumetric output");
      cJSON_AddStringToObject(hdr, "AuxFile", "");
      cJSON_AddNumberToObject(hdr, "QForm", 0);
      cJSON_AddNumberToObject(hdr, "SForm", 1);
@@ -551,9 +553,13 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
          mcx_savenii(dat, len, name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
          return;
      }else if(cfg->outputformat==ofJNifti){
-         uint dims[]={cfg->dim.x,cfg->dim.y,cfg->dim.z,cfg->maxgate};
-         float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z,cfg->tstep};
-         mcx_savejnii(dat, 4, dims, voxelsize, name, 1, cfg);
+         uint dims[5]={cfg->detnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
+         float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
+	 int d1=(cfg->maxgate==1);
+	 if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1 && cfg->detnum>1)
+             mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
+	 else
+	     mcx_savejnii(dat, 4-d1, dims+d1+1, voxelsize+d1+1, name, 1, cfg);
          return;
      }
      sprintf(fname,"%s.%s",name,outputformat[(int)cfg->outputformat]);
@@ -2071,17 +2077,44 @@ void  mcx_convertrow2col(unsigned int **vol, uint3 *dim){
      uint x,y,z;
      unsigned int dimxy,dimyz;
      unsigned int *newvol=NULL;
-     
+
      if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
      	return;
-     }     
+     }
      newvol=(unsigned int*)malloc(sizeof(unsigned int)*dim->x*dim->y*dim->z);
      dimxy=dim->x*dim->y;
      dimyz=dim->y*dim->z;
      for(x=0;x<dim->x;x++)
       for(y=0;y<dim->y;y++)
        for(z=0;z<dim->z;z++){
-       		newvol[z*dimxy+y*dim->x+x]=*vol[x*dimyz+y*dim->z+z];
+       		newvol[z*dimxy+y*dim->x+x]=(*vol)[x*dimyz+y*dim->z+z];
+       }
+     free(*vol);
+     *vol=newvol;
+}
+
+/**
+ * @brief Convert a column-major (MATLAB/FORTRAN) array to a row-major (C/C++) array
+ *
+ * @param[in,out] vol: a 3D array (wrapped in 1D) to be converted
+ * @param[in] dim: the dimensions of the 3D array
+ */
+
+void  mcx_convertcol2row(unsigned int **vol, uint3 *dim){
+     uint x,y,z;
+     unsigned int dimxy,dimyz;
+     unsigned int *newvol=NULL;
+
+     if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
+     	return;
+     }
+     newvol=(unsigned int*)malloc(sizeof(unsigned int)*dim->x*dim->y*dim->z);
+     dimxy=dim->x*dim->y;
+     dimyz=dim->y*dim->z;
+     for(z=0;z<dim->z;z++)
+      for(y=0;y<dim->y;y++)
+       for(x=0;x<dim->x;x++){
+       		newvol[x*dimyz+y*dim->z+z]=(*vol)[z*dimxy+y*dim->x+x];
        }
      free(*vol);
      *vol=newvol;
@@ -2230,8 +2263,16 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
          ztype=cJSON_GetObjectItem(obj,"_ArrayZipType_");
          vdata=cJSON_GetObjectItem(obj,"_ArrayZipData_");
      }
-     if(vtype)
+     if(vtype){
          *type=vtype->valuestring;
+         cfg->mediabyte=4;
+	 if(strstr(*type,"int8"))
+	     cfg->mediabyte=1;
+	 else if(strstr(*type,"int16"))
+	     cfg->mediabyte=2;
+	 else if(strstr(*type,"double") || strstr(*type,"int64"))
+	     MCX_ERROR(-1,"8-byte volume array is not supported");
+     }
      if(vdata){
          if(vsize){
 	     cJSON *tmp=vsize->child;
@@ -2254,6 +2295,7 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
 	     }
 	     if(buf)
 	         free(buf);
+	     cfg->isrowmajor=1;
 	 }else
 	     MCX_ERROR(-1,"Only compressed JData array constructs are supported");
      }else
@@ -2955,7 +2997,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit\n\
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy density\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
 			       event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; \n\

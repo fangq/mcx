@@ -11,14 +11,12 @@ atlas template (Colin27). There are 7 tissue types:
 5: white matter
 6: air cavities in the brain
 
-To run the simulation, you must first unzip the domain binary file using 
-unlzma on Linux or 7-zip on Windows. For example, on Linux:
-
- unlzma colin27_v3.bin.lzma
 
 This demo is identical to the MCX simulation used for Fig.6 in
 the original MCX paper [Fang2009].
 
+This example is a built-in dataset in MCX. Run "mcx --bench" to show
+the full list of built-in examples.
 
  [Fang2009] Qianqian Fang and David A. Boas, "Monte Carlo simulation
   of photon migration in 3D turbid media accelerated by graphics processing
