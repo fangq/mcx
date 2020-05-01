@@ -28,7 +28,7 @@
 
 #define MSTR(...) #__VA_ARGS__
 
-const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","colin27",""};
+const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","spherebox","colin27",""};
 const char *benchjson[]={
 MSTR(
 {
@@ -91,7 +91,7 @@ MSTR(
 	"ID":       "cube60b",
 	"Photons":  1e6,
 	"RNGSeed":  1648335518,
-	"DoMismatch": 1
+	"DoMismatch": true
     },
     "Domain": {
         "Dim":    [60,60,60],
@@ -146,7 +146,7 @@ MSTR(
 	"ID":       "cube60planar",
 	"Photons":  1e6,
 	"RNGSeed":  1648335518,
-	"DoMismatch": 1
+	"DoMismatch": true
     },
     "Domain": {
         "Dim":    [60,60,60],
@@ -200,8 +200,8 @@ MSTR(
 {
 	"Session": {
 		"ID": "skinvessel",
-		"DoMismatch": 1,
-		"DoAutoThread": 1,
+		"DoMismatch": true,
+		"DoAutoThread": true,
 		"Photons": 10000000
 	},
 	"Forward": {
@@ -259,7 +259,85 @@ MSTR(
 	       {"ZLayers":[[1,20,1],[21,32,4],[33,200,3]]}, 
 	       {"Cylinder": {"Tag":2, "C0": [0,100.5,100.5], "C1": [200,100.5,100.5], "R": 20}}
         ]
-})
+}),
+
+MSTR(
+{
+	"Session":	{
+		"ID":	"spherebox",
+		"Photons":	1e6,
+		"RNGSeed":	1648335518,
+		"DoMismatch":	false,
+		"DoSaveVolume":	true,
+		"DoNormalize":	true,
+		"DoPartialPath":	false,
+		"DoSaveRef":	false,
+		"DoSaveExit":	false,
+		"DoSaveSeed":	false,
+		"DoAutoThread":	true,
+		"DoDCS":	false,
+		"DoSpecular":	false,
+		"DebugFlag":	0,
+		"SaveDataMask":	0,
+		"OutputFormat":	"mc2",
+		"OutputType":	"x"
+	},
+	"Forward":	{
+		"T0":	0,
+		"T1":	5e-09,
+		"Dt":	1e-10
+	},
+	"Domain":	{
+		"MediaFormat":	"byte",
+		"LengthUnit":	1,
+		"Media":	[{
+				"mua":	0,
+				"mus":	0,
+				"g":	1,
+				"n":	1
+			}, {
+				"mua":	0.002,
+				"mus":	1,
+				"g":	0.01,
+				"n":	1.37
+			}, {
+				"mua":	0.05,
+				"mus":	5,
+				"g":	0.9,
+				"n":	1.37
+			}],
+		"Dim":	[60, 60, 60],
+		"OriginType":	1
+	},
+	"Optode":	{
+		"Source":	{
+			"Type":	"pencil",
+			"Pos":	[29.5, 29.5, 0],
+			"Dir":	[0, 0, 1, 0],
+			"Param1":	[0, 0, 0, 0],
+			"Param2":	[0, 0, 0, 0],
+			"SrcNum":	1
+		},
+		"Detector":	[{
+				"Pos":	[29, 19, 0],
+				"R":	1
+			}, {
+				"Pos":	[29, 39, 0],
+				"R":	1
+			}, {
+				"Pos":	[19, 29, 0],
+				"R":	1
+			}, {
+				"Pos":	[39, 29, 0],
+				"R":	1
+			}]
+	},
+	"Shapes":	[
+		{"Grid":     {"Tag":1, "Size":[60,60,60]}},
+		{"Sphere":   {"Tag":2, "O":[30,30,30],"R":10}}
+	]
+}
+)
 
 #ifndef _MSC_VER
 

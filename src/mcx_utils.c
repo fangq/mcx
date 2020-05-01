@@ -382,13 +382,17 @@ void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputfo
      }else{
          short *mask=(short*)logval;
 	 for(i=0;i<len;i++){
-	    mask[i]    =(((unsigned int *)dat)[i] & MED_MASK);
-	    mask[i+len]=(((unsigned int *)dat)[i] & DET_MASK)>>16;
+	    mask[(i<<1)]    =(((unsigned int *)dat)[i] & MED_MASK);
+	    mask[(i<<1)+1]=(((unsigned int *)dat)[i] & DET_MASK)>>31;
 	 }
 	 hdr.datatype = NIFTI_TYPE_UINT16;
 	 hdr.bitpix = 16;
-         hdr.dim[4] = 2;
-         hdr.pixdim[4] = 1.f;
+         hdr.dim[1] = 2;
+	 hdr.dim[2] = cfg->dim.x;
+	 hdr.dim[3] = cfg->dim.y;
+	 hdr.dim[4] = cfg->dim.z;
+         hdr.pixdim[4] = cfg->unitinmm;
+         hdr.pixdim[1] = 1.f;
      }
      if (outputformatid==ofNifti){
 	strncpy(hdr.magic, "n+1\0", 4);
@@ -481,9 +485,9 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
      cJSON_AddNumberToObject(hdr, "SliceTime", 0);
      cJSON_AddNumberToObject(hdr, "TimeOffset", 0);
      if(cfg->outputtype>=0){
-        const char *typestr[]={"Fluence rate (W/mm^2)","Fluence (J/mm^2)", 
-	"Energy density (J/mm^3)","Jacobian for mua (J/mm)","Scattering count",
-	"Partial momentum transfer"};
+        const char *typestr[]={"MCX volumetric output: Fluence rate (W/mm^2)","MCX volumetric output: Fluence (J/mm^2)", 
+	"MCX volumetric output: Energy density (J/mm^3)","MCX volumetric output: Jacobian for mua (J/mm)","MCX volumetric output: Scattering count",
+	"MCX volumetric output: Partial momentum transfer"};
 	cJSON_AddStringToObject(hdr, "Description", typestr[(int)cfg->outputtype]);
      }else
         cJSON_AddStringToObject(hdr, "Description", "MCX volumetric output");
@@ -507,7 +511,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 
      /* the "NIFTIData" section stores volumetric data */
      cJSON_AddItemToObject(root, "NIFTIData",   dat = cJSON_CreateObject());
-     if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, zmZlib, dat))
+     if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, zmZlib, dat,cfg))
          MCX_ERROR(-1,"error when converting to JSON");
 
      /* now save JSON to file */
@@ -553,13 +557,20 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
          mcx_savenii(dat, len, name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
          return;
      }else if(cfg->outputformat==ofJNifti){
-         uint dims[5]={cfg->detnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
-         float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
 	 int d1=(cfg->maxgate==1);
-	 if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1 && cfg->detnum>1)
+	 if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1 && (cfg->detnum>1 || cfg->srcnum>1)){
+             uint dims[5]={cfg->detnum*cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
+             float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
              mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
-	 else
-	     mcx_savejnii(dat, 4-d1, dims+d1+1, voxelsize+d1+1, name, 1, cfg);
+	 }else{
+             uint dims[5]={cfg->dim.x,cfg->dim.y,cfg->dim.z,cfg->maxgate};
+             float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z,cfg->tstep};
+	     if(d1)
+	         mcx_convertcol2row((uint **)(&dat), (uint3 *)dims);
+	     else
+	         mcx_convertcol2row4d((uint **)(&dat), (uint4 *)dims);
+	     mcx_savejnii(dat, 4-d1, dims, voxelsize, name, 1, cfg);
+	 }
          return;
      }
      sprintf(fname,"%s.%s",name,outputformat[(int)cfg->outputformat]);
@@ -669,7 +680,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 		    for(int j=0;j<dims[1];j++)
 			buf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, zmZlib, sub))
+		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, zmZlib, sub,cfg))
 		    MCX_ERROR(-1,"error when converting to JSON");
 		free(buf);
 		col+=dims[1];
@@ -699,7 +710,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 		    val=(void*)fbuf;
 		}
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(val,2,dims,dtype[id], 4, zmZlib, sub))
+		if(mcx_jdataencode(val,2,dims,dtype[id], 4, zmZlib, sub,cfg))
 		    MCX_ERROR(-1,"error when converting to JSON");
 		free(val);
 		col+=dims[1];
@@ -709,7 +720,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 	if(cfg->issaveseed && seeds!=NULL){
 	    uint dims[2]={count,cfg->his.seedbyte};
             cJSON_AddItemToObject(dat, "seed", sub = cJSON_CreateObject());
-	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, zmZlib, sub))
+	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, zmZlib, sub,cfg))
                 MCX_ERROR(-1,"error when converting to JSON");
 	}
 
@@ -1807,7 +1818,7 @@ void mcx_savejdata(char *filename, Config *cfg){
 	 cJSON_AddNumberToObject(tmp, "n",   cfg->prop[i].n);
      }
      cJSON_AddItemToObject(obj, "Dim", cJSON_CreateIntArray((int *)&(cfg->dim.x),3));
-     cJSON_AddNumberToObject(obj, "OriginType", cfg->issrcfrom0);
+     cJSON_AddNumberToObject(obj, "OriginType", 1);
      
      /* the "Optode" section */
      cJSON_AddItemToObject(root, "Optode", obj = cJSON_CreateObject());
@@ -1841,27 +1852,31 @@ void mcx_savejdata(char *filename, Config *cfg){
          uint datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
 	 size_t outputbytes=datalen*sizeof(int);
 	 uchar *buf=(uchar *)calloc(datalen,sizeof(int));
+	 uint  *vol;
          int ret=0;
 
 	 /*converting volume to the minimal size*/
 	 memcpy(buf,cfg->vol,datalen*sizeof(int));
+	 mcx_convertcol2row((uint **)(&buf),&cfg->dim);
+         vol=(uint *)buf;
+
 	 if(cfg->mediabyte==1){
 	    outputbytes=datalen;
 	    for(int i=0;i<datalen;i++)
-	       buf[i]=cfg->vol[i] & 0xFF;
+	       buf[i]=vol[i] & 0xFF;
 	 }else if(cfg->mediabyte==2){
 	    unsigned short *p=(unsigned short *)buf;
 	    outputbytes=datalen*sizeof(short);
 	    for(int i=0;i<datalen;i++)
-	       p[i]=cfg->vol[i] & 0xFFFF;
+	       p[i]=vol[i] & 0xFFFF;
 	 }else{
-	    uint *p=(uint *)buf;
 	    for(int i=0;i<datalen;i++)
-	       p[i]=cfg->vol[i] & MED_MASK;
+	       vol[i]=vol[i] & MED_MASK;
 	 }
+
 	 obj = cJSON_CreateObject();
 	 ret=mcx_jdataencode(buf,3,&cfg->dim.x,(cfg->mediabyte==1 ? "uint8" : (cfg->mediabyte==2 ? "uint16" : "uint32")),
-	     outputbytes/datalen, zmZlib, obj);
+	     outputbytes/datalen, zmZlib, obj,cfg);
          if(buf)
              free(buf);
 
@@ -2121,6 +2136,36 @@ void  mcx_convertcol2row(unsigned int **vol, uint3 *dim){
 }
 
 /**
+ * @brief Convert a column-major (MATLAB/FORTRAN) array to a row-major (C/C++) array
+ *
+ * @param[in,out] vol: a 3D array (wrapped in 1D) to be converted
+ * @param[in] dim: the dimensions of the 3D array
+ */
+
+void  mcx_convertcol2row4d(unsigned int **vol, uint4 *dim){
+     uint x,y,z,w;
+     unsigned int dimxyz, dimyzw, dimxy, dimzw;
+     unsigned int *newvol=NULL;
+
+     if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0 || dim->w==0){
+     	return;
+     }
+     newvol=(unsigned int*)malloc(sizeof(unsigned int)*dim->x*dim->y*dim->z*dim->w);
+     dimxyz=dim->x*dim->y*dim->z;
+     dimyzw=dim->y*dim->z*dim->w;
+     dimxy=dim->x*dim->y;
+     dimzw=dim->z*dim->w;
+     for(w=0;w<dim->w;w++)
+       for(z=0;z<dim->z;z++)
+         for(y=0;y<dim->y;y++)
+           for(x=0;x<dim->x;x++){
+       		newvol[x*dimyzw+y*dimzw+z*dim->w+w]=(*vol)[w*dimxyz+z*dimxy+y*dim->x+x];
+           }
+     free(*vol);
+     *vol=newvol;
+}
+
+/**
  * @brief Pre-label the voxel near a detector for easy photon detection
  *
  * This function preprocess the volume and detector data and add the detector ID to the
@@ -2225,8 +2270,13 @@ void mcx_dumpmask(Config *cfg){
          sprintf(fname,"%s_vol",cfg->session);
      if(cfg->outputformat==ofJNifti){
          uint dims[]={cfg->dim.x,cfg->dim.y,cfg->dim.z};
+	 size_t datalen=sizeof(uint)*cfg->dim.x*cfg->dim.y*cfg->dim.z;
          float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z};
-         mcx_savejnii((float *)cfg->vol, 3, dims, voxelsize, fname, 0, cfg);
+	 uint *buf=malloc(datalen);
+	 memcpy(buf,cfg->vol,datalen);
+	 mcx_convertcol2row((uint **)(&buf), (uint3 *)dims);
+         mcx_savejnii((float *)buf, 3, dims, voxelsize, fname, 0, cfg);
+	 free(buf);
      }else
          mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
      if(cfg->isdumpmask==1){ /*if dumpmask>1, simulation will also run*/
@@ -2320,7 +2370,7 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
  * @param[in] obj: a pre-created cJSON object to store the output JData fields
  */
  
-int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int zipid, cJSON *obj){
+int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int zipid, cJSON *obj, Config *cfg){
      uint datalen=1;
      size_t compressedbytes, totalbytes;
      uchar *compressed=NULL, *buf=NULL;
@@ -2330,16 +2380,19 @@ int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int 
          datalen*=dims[i];
      totalbytes=datalen*byte;
 
-     MCX_FPRINTF(stdout,"compressing data ...");
+     if(!cfg->isdumpjson)
+        MCX_FPRINTF(stdout,"compressing data ...");
 
      /*compress data using zlib*/
      ret=zmat_encode(totalbytes, (uchar *)vol, &compressedbytes, (uchar **)&compressed, zipid, &status);
      if(!ret){
-         MCX_FPRINTF(stdout,"compression ratio: %.1f%%\t",compressedbytes*100.f/totalbytes);
+         if(!cfg->isdumpjson)
+             MCX_FPRINTF(stdout,"compression ratio: %.1f%%\t",compressedbytes*100.f/totalbytes);
          totalbytes=0;
          /*encode data using base64*/
          ret=zmat_encode(compressedbytes, compressed, &totalbytes, (uchar **)&buf, zmBase64, &status);
-	 MCX_FPRINTF(stdout,"after encoding: %.1f%%\n",totalbytes*100.f/(datalen*byte));
+	 if(!cfg->isdumpjson)
+	     MCX_FPRINTF(stdout,"after encoding: %.1f%%\n",totalbytes*100.f/(datalen*byte));
 	 if(!ret){
 	     cJSON_AddStringToObject(obj, "_ArrayType_", type);
 	     cJSON_AddItemToObject(obj,   "_ArraySize_", cJSON_CreateIntArray((int *)dims,ndim));

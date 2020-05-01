@@ -1,0 +1,83 @@
+{
+	"Session":	{
+		"ID":	"spherebox",
+		"Photons":	1000000,
+		"RNGSeed":	1648335518,
+		"DoMismatch":	false,
+		"DoSaveVolume":	true,
+		"DoNormalize":	true,
+		"DoPartialPath":	false,
+		"DoSaveRef":	false,
+		"DoSaveExit":	false,
+		"DoSaveSeed":	false,
+		"DoAutoThread":	true,
+		"DoDCS":	false,
+		"DoSpecular":	false,
+		"DebugFlag":	0,
+		"SaveDataMask":	0,
+		"OutputFormat":	"mc2",
+		"OutputType":	"x"
+	},
+	"Forward":	{
+		"T0":	0,
+		"T1":	4.99999996961265e-09,
+		"Dt":	1.00000001335143e-10
+	},
+	"Domain":	{
+		"MediaFormat":	"byte",
+		"LengthUnit":	1,
+		"Media":	[{
+				"mua":	0,
+				"mus":	1.19209289550781e-07,
+				"g":	1,
+				"n":	1
+			}, {
+				"mua":	0.0020000000949949,
+				"mus":	1,
+				"g":	0.00999999977648258,
+				"n":	1.3700000047683716
+			}, {
+				"mua":	0.0500000007450581,
+				"mus":	5,
+				"g":	0.89999997615814209,
+				"n":	1.3700000047683716
+			}],
+		"Dim":	[60, 60, 60],
+		"OriginType":	1
+	},
+	"Optode":	{
+		"Source":	{
+			"Type":	"pencil",
+			"Pos":	[29.5, 29.5, 0],
+			"Dir":	[0, 0, 1, 0],
+			"Param1":	[0, 0, 0, 0],
+			"Param2":	[0, 0, 0, 0],
+			"SrcNum":	1
+		},
+		"Detector":	[{
+				"Pos":	[29, 19, 0],
+				"R":	1
+			}, {
+				"Pos":	[29, 39, 0],
+				"R":	1
+			}, {
+				"Pos":	[19, 29, 0],
+				"R":	1
+			}, {
+				"Pos":	[39, 29, 0],
+				"R":	1
+			}]
+	},
+	"Shapes":	[{
+			"Grid":	{
+				"Tag":	1,
+				"Size":	[60, 60, 60]
+			}
+		}, {
+			"Sphere":	{
+				"Tag":	2,
+				"O":	[30, 30, 30],
+				"R":	10
+			}
+		}]
+}
