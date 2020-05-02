@@ -57,6 +57,10 @@ enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< 
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3, ofJNifti, ofBJNifti};           /**< output data format */
 enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCylic};            /**< boundary conditions */
+enum TBJData {JDB_mixed, JDB_nulltype, JDB_noop,JDB_true,JDB_false,
+     JDB_char,JDB_string,JDB_hp,JDB_int8,JDB_uint8,JDB_int16,JDB_int32,
+     JDB_int64,JDB_single,JDB_double,JDB_array,JDB_object,JDB_numtypes,
+     JDB_uint16=10,JDB_uint32,JDB_uint64};
 
 /**
  * The structure to store optical properties
@@ -266,9 +270,10 @@ void mcx_flush(Config *cfg);
 int  mcx_run_from_json(char *jsonstr);
 float mcx_updatemua(unsigned int mediaid, Config *cfg);
 void mcx_savejdata(char *filename, Config *cfg);
-int  mcx_jdataencode(void *vol,  int ndim, uint *dims, char *type, int byte, int zipid, cJSON *obj, Config *cfg);
+int  mcx_jdataencode(void *vol,  int ndim, uint *dims, char *type, int byte, int zipid, void *obj, int isubj, Config *cfg);
 int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type, cJSON *obj, Config *cfg);
 void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name, int isfloat, Config *cfg);
+void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name, int isfloat, Config *cfg);
 void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg);
 
 #ifdef MCX_CONTAINER

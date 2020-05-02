@@ -41,6 +41,7 @@
 #include "mcx_core.h"
 #include "mcx_bench.h"
 #include "zmat/zmatlib.h"
+#include "ubj/ubj.h"
 
 /**
  * Macro to load JSON keys
@@ -57,6 +58,16 @@
                     ((tmp=cJSON_GetObjectItem(parent,id))==0 ? \
                                 ((tmp=cJSON_GetObjectItem(root,idfull))==0 ? NULL : tmp) \
                      : tmp)
+
+#define UBJ_WRITE_KEY(ctx, key,  type, val)    {ubjw_write_key( (ctx), (key)); ubjw_write_##type((ctx), (val));}
+#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), JDB_##type, (nlen));}
+
+#define ubjw_write_single ubjw_write_float32
+#define ubjw_write_double ubjw_write_float64
+#define ubjw_write_uint16 ubjw_write_int16
+#define ubjw_write_uint32 ubjw_write_int32
+#define ubjw_write_uint64 ubjw_write_int64
+
 #ifdef WIN32
          char pathsep='\\';
 #else
@@ -171,7 +182,8 @@ const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
  */
 
 const unsigned int mediaformatid[]={1,2,4,98,99,100,101,102,103,104,0};
-const char *mediaformat[]={"byte","short","integer","mixlabel","labelplus","muamus_float","mua_float","muamus_half","asgn_byte","muamus_short",""};
+const char *mediaformat[]={"byte","short","integer","mixlabel","labelplus",
+     "muamus_float","mua_float","muamus_half","asgn_byte","muamus_short",""};
 
 /**
  * Flag to decide if parameter has been initialized over command line
@@ -439,7 +451,128 @@ void mcx_savenii(float *dat, size_t len, char* name, int type32bit, int outputfo
 }
 
 /**
- * @brief Save volumetric output (fluence etc) to an JNIfTI/JSON/JData format file
+ * @brief Save volumetric output (fluence etc) to a binary JNIfTI/JSON/JData format file
+ *
+ * @param[in] dat: volumetric data to be saved
+ * @param[in] len: total byte length of the data to be saved
+ * @param[in] name: output file name (will append '.nii')
+ * @param[in] type32bit: type of the data, only support 32bit per record
+ * @param[in] outputformatid: decide if save as nii or analyze format
+ * @param[in] cfg: simulation configuration
+ */
+
+void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name, int isfloat, Config *cfg){
+     FILE *fp;
+     char fname[MAX_FULL_PATH]={'\0'};
+     int affine[]={0,0,1,0,0,0};
+     size_t datalen=sizeof(int), outputlen=0;
+
+     ubjw_context_t *root=NULL;
+     uchar *jsonstr=NULL;
+
+     for(int i=0;i<ndim;i++)
+         datalen*=dims[i];
+     jsonstr=malloc(datalen<<1);
+     root=ubjw_open_memory(jsonstr,jsonstr+(datalen<<1));
+     
+     /* the "NIFTIHeader" section */
+     ubjw_begin_object(root,UBJ_MIXED,0);
+         ubjw_write_key(root,"NIFTIHeader");
+	 ubjw_begin_object(root,UBJ_MIXED,0);
+	     UBJ_WRITE_KEY(root,"NIIHeaderSize", uint16, 348);
+	     ubjw_write_key(root,"Dim");
+	     UBJ_WRITE_ARRAY(root, uint32, ndim, dims);
+	     UBJ_WRITE_KEY(root,"Param1", uint8, 0);
+	     UBJ_WRITE_KEY(root,"Param2", uint8, 0);
+	     UBJ_WRITE_KEY(root,"Param3", uint8, 0);
+	     UBJ_WRITE_KEY(root,"Intent", uint8, 0);
+	     UBJ_WRITE_KEY(root,"DataType", string, ((isfloat?"single":"uint32")));
+	     UBJ_WRITE_KEY(root,"BitDepth", uint8, 32);
+	     UBJ_WRITE_KEY(root,"FirstSliceID", uint8, 0);
+	     ubjw_write_key(root,"VoxelSize");
+	     UBJ_WRITE_ARRAY(root, single, ndim, voxelsize);
+	     ubjw_write_key(root,"Orientation");
+	     ubjw_begin_object(root,UBJ_MIXED,3);
+	         UBJ_WRITE_KEY(root,"x", char, 'r');
+		 UBJ_WRITE_KEY(root,"y", char, 'a');
+		 UBJ_WRITE_KEY(root,"z", char, 's');
+	     ubjw_end(root);
+	     UBJ_WRITE_KEY(root,"ScaleSlope", uint8, 1);
+	     UBJ_WRITE_KEY(root,"ScaleOffset", uint8, 1);
+	     UBJ_WRITE_KEY(root,"LastSliceID", uint32, cfg->maxgate);
+	     UBJ_WRITE_KEY(root,"SliceType", uint8, 1);
+	     ubjw_write_key(root,"Unit");
+	     ubjw_begin_object(root,UBJ_MIXED,2);
+	         UBJ_WRITE_KEY(root,"L", string, "mm");
+		 UBJ_WRITE_KEY(root,"T", string, "s");
+	     ubjw_end(root);
+	     UBJ_WRITE_KEY(root,"MaxIntensity", uint32, 1);
+	     UBJ_WRITE_KEY(root,"MinIntensity", uint32, 0);
+	     UBJ_WRITE_KEY(root,"SliceTime", uint8, 0);
+	     UBJ_WRITE_KEY(root,"TimeOffset", uint8, 0);
+
+	     if(cfg->outputtype>=0){
+		const char *typestr[]={"MCX volumetric output: Fluence rate (W/mm^2)","MCX volumetric output: Fluence (J/mm^2)", 
+		"MCX volumetric output: Energy density (J/mm^3)","MCX volumetric output: Jacobian for mua (J/mm)","MCX volumetric output: Scattering count",
+		"MCX volumetric output: Partial momentum transfer"};
+		     UBJ_WRITE_KEY(root,"Description", string, typestr[(int)cfg->outputtype]);
+	     }else
+		UBJ_WRITE_KEY(root, "Description", string, "MCX volumetric output");
+	     UBJ_WRITE_KEY(root, "AuxFile", string, "");
+	     UBJ_WRITE_KEY(root,"QForm", uint8, 0);
+	     UBJ_WRITE_KEY(root,"SForm", uint8, 1);
+	     ubjw_write_key(root,"Quatern");
+	     ubjw_begin_object(root,UBJ_MIXED,3);
+	         UBJ_WRITE_KEY(root,"b", uint8, 0);
+		 UBJ_WRITE_KEY(root,"c", uint8, 0);
+		 UBJ_WRITE_KEY(root,"d", uint8, 0);
+	     ubjw_end(root);
+	     ubjw_write_key(root,"QuaternOffset");
+	     ubjw_begin_object(root,UBJ_MIXED,3);
+	         UBJ_WRITE_KEY(root,"x", uint8, 0);
+		 UBJ_WRITE_KEY(root,"y", uint8, 0);
+		 UBJ_WRITE_KEY(root,"z", uint8, 0);
+	     ubjw_end(root);
+             ubjw_write_key(root,"Affine");
+	     ubjw_begin_array(root ,UBJ_MIXED, 0);
+	         UBJ_WRITE_ARRAY(root, int32, 4, affine+2);
+		 UBJ_WRITE_ARRAY(root, int32, 4, affine+1);
+		 UBJ_WRITE_ARRAY(root, int32, 4, affine);
+	     ubjw_end(root);
+	     UBJ_WRITE_KEY(root,"Name", string, cfg->session);
+	     UBJ_WRITE_KEY(root,"NIIFormat", string, "JNIfTI v0.4");
+         ubjw_end(root);
+
+	 ubjw_write_key(root,"NIFTIData");
+         
+	 /* the "NIFTIData" section stores volumetric data */
+	 ubjw_begin_object(root,UBJ_MIXED,0);
+         if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, cfg->zipid, root, 1, cfg))
+	      MCX_ERROR(-1,"error when converting to JSON");
+         ubjw_end(root);
+     ubjw_end(root);
+
+     /* now save JSON to file */
+     outputlen = ubjw_close_context(root);
+
+     if(jsonstr==NULL)
+         MCX_ERROR(-1,"error when converting to JSON");
+
+     sprintf(fname,"%s.bnii",name);
+
+     fp=fopen(fname,"wb");
+     if(fp==NULL)
+	  MCX_ERROR(-1,"error opening file to write");
+     fwrite(jsonstr,outputlen, 1, fp);
+     fclose(fp);
+
+     if(jsonstr)
+         free(jsonstr); 
+}
+
+
+/**
+ * @brief Save volumetric output (fluence etc) to a JNIfTI/JSON/JData format file
  *
  * @param[in] dat: volumetric data to be saved
  * @param[in] len: total byte length of the data to be saved
@@ -512,7 +645,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 
      /* the "NIFTIData" section stores volumetric data */
      cJSON_AddItemToObject(root, "NIFTIData",   dat = cJSON_CreateObject());
-     if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, cfg->zipid, dat,cfg))
+     if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, cfg->zipid, dat, 0, cfg))
          MCX_ERROR(-1,"error when converting to JSON");
 
      /* now save JSON to file */
@@ -557,12 +690,15 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
      if(cfg->outputformat==ofNifti || cfg->outputformat==ofAnalyze){
          mcx_savenii(dat, len, name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
          return;
-     }else if(cfg->outputformat==ofJNifti){
+     }else if(cfg->outputformat==ofJNifti || cfg->outputformat==ofBJNifti){
 	 int d1=(cfg->maxgate==1);
 	 if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1 && (cfg->detnum>1 || cfg->srcnum>1)){
              uint dims[5]={cfg->detnum*cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
              float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
-             mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
+	     if(cfg->outputformat==ofJNifti )
+                 mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
+	     else
+	         mcx_savebnii(dat, 5, dims, voxelsize, name, 1, cfg);
 	 }else{
              uint dims[5]={cfg->dim.x,cfg->dim.y,cfg->dim.z,cfg->maxgate};
              float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z,cfg->tstep};
@@ -570,7 +706,10 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
 	         mcx_convertcol2row((uint **)(&dat), (uint3 *)dims);
 	     else
 	         mcx_convertcol2row4d((uint **)(&dat), (uint4 *)dims);
-	     mcx_savejnii(dat, 4-d1, dims, voxelsize, name, 1, cfg);
+	     if(cfg->outputformat==ofJNifti)
+	         mcx_savejnii(dat, 4-d1, dims, voxelsize, name, 1, cfg);
+	     else
+	         mcx_savebnii(dat, 4-d1, dims, voxelsize, name, 1, cfg);
 	 }
          return;
      }
@@ -601,7 +740,7 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
 void mcx_savedetphoton(float *ppath, void *seeds, int count, int doappend, Config *cfg){
 	FILE *fp;
 	char fhistory[MAX_FULL_PATH], filetag;
-	if(cfg->outputformat==ofJNifti){
+	if(cfg->outputformat==ofJNifti || cfg->outputformat==ofBJNifti){
 	    mcx_savejdet(ppath,seeds,count,doappend,cfg);
 	    return;
 	}
@@ -681,7 +820,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 		    for(int j=0;j<dims[1];j++)
 			buf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, cfg->zipid, sub,cfg))
+		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, cfg->zipid, sub, 0, cfg))
 		    MCX_ERROR(-1,"error when converting to JSON");
 		free(buf);
 		col+=dims[1];
@@ -711,7 +850,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 		    val=(void*)fbuf;
 		}
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(val,2,dims,dtype[id], 4, cfg->zipid, sub,cfg))
+		if(mcx_jdataencode(val,2,dims,dtype[id], 4, cfg->zipid, sub, 0, cfg))
 		    MCX_ERROR(-1,"error when converting to JSON");
 		free(val);
 		col+=dims[1];
@@ -721,7 +860,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 	if(cfg->issaveseed && seeds!=NULL){
 	    uint dims[2]={count,cfg->his.seedbyte};
             cJSON_AddItemToObject(dat, "seed", sub = cJSON_CreateObject());
-	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, cfg->zipid, sub,cfg))
+	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, cfg->zipid, sub, 0, cfg))
                 MCX_ERROR(-1,"error when converting to JSON");
 	}
 
@@ -1877,7 +2016,7 @@ void mcx_savejdata(char *filename, Config *cfg){
 
 	 obj = cJSON_CreateObject();
 	 ret=mcx_jdataencode(buf,3,&cfg->dim.x,(cfg->mediabyte==1 ? "uint8" : (cfg->mediabyte==2 ? "uint16" : "uint32")),
-	     outputbytes/datalen, cfg->zipid, obj,cfg);
+	     outputbytes/datalen, cfg->zipid, obj, 0, cfg);
          if(buf)
              free(buf);
 
@@ -2269,14 +2408,17 @@ void mcx_dumpmask(Config *cfg){
          sprintf(fname,"%s%c%s_vol",cfg->rootpath,pathsep,cfg->session);
      else
          sprintf(fname,"%s_vol",cfg->session);
-     if(cfg->outputformat==ofJNifti){
+     if(cfg->outputformat==ofJNifti || cfg->outputformat==ofBJNifti){
          uint dims[]={cfg->dim.x,cfg->dim.y,cfg->dim.z};
 	 size_t datalen=sizeof(uint)*cfg->dim.x*cfg->dim.y*cfg->dim.z;
          float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z};
 	 uint *buf=malloc(datalen);
 	 memcpy(buf,cfg->vol,datalen);
 	 mcx_convertcol2row((uint **)(&buf), (uint3 *)dims);
-         mcx_savejnii((float *)buf, 3, dims, voxelsize, fname, 0, cfg);
+	 if(cfg->outputformat==ofJNifti)
+             mcx_savejnii((float *)buf, 3, dims, voxelsize, fname, 0, cfg);
+	 else
+	     mcx_savebnii((float *)buf, 3, dims, voxelsize, fname, 0, cfg);
 	 free(buf);
      }else
          mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
@@ -2369,7 +2511,7 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
  * @param[in] obj: a pre-created cJSON object to store the output JData fields
  */
  
-int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int zipid, cJSON *obj, Config *cfg){
+int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int zipid, void *obj, int isubj, Config *cfg){
      uint datalen=1;
      size_t compressedbytes, totalbytes;
      uchar *compressed=NULL, *buf=NULL;
@@ -2387,17 +2529,28 @@ int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int 
      if(!ret){
          if(!cfg->isdumpjson)
              MCX_FPRINTF(stdout,"compression ratio: %.1f%%\t",compressedbytes*100.f/totalbytes);
-         totalbytes=0;
-         /*encode data using base64*/
-         ret=zmat_encode(compressedbytes, compressed, &totalbytes, (uchar **)&buf, zmBase64, &status);
-	 if(!cfg->isdumpjson)
-	     MCX_FPRINTF(stdout,"after encoding: %.1f%%\n",totalbytes*100.f/(datalen*byte));
-	 if(!ret){
-	     cJSON_AddStringToObject(obj, "_ArrayType_", type);
-	     cJSON_AddItemToObject(obj,   "_ArraySize_", cJSON_CreateIntArray((int *)dims,ndim));
-	     cJSON_AddStringToObject(obj, "_ArrayZipType_", zipformat[zipid]);
-	     cJSON_AddNumberToObject(obj, "_ArrayZipSize_", datalen);
-	     cJSON_AddStringToObject(obj, "_ArrayZipData_", (char *)buf);
+	 if(isubj){
+	      ubjw_context_t *item=(ubjw_context_t *)obj;
+	      UBJ_WRITE_KEY(item, "_ArrayType_", string, type);
+	      ubjw_write_key(item,"_ArraySize_");
+	      UBJ_WRITE_ARRAY(item, uint32, ndim, dims);
+	      UBJ_WRITE_KEY(item, "_ArrayZipType_", string, zipformat[zipid]);
+	      UBJ_WRITE_KEY(item, "_ArrayZipSize_", uint32, datalen);
+	      ubjw_write_key(item,"_ArrayZipData_");
+              ubjw_write_buffer(item,compressed,UBJ_UINT8,compressedbytes);
+         }else{
+	     totalbytes=0;
+	     /*encode data using base64*/
+	     ret=zmat_encode(compressedbytes, compressed, &totalbytes, (uchar **)&buf, zmBase64, &status);
+	     if(!cfg->isdumpjson)
+		 MCX_FPRINTF(stdout,"after encoding: %.1f%%\n",totalbytes*100.f/(datalen*byte));
+	     if(!ret){
+		 cJSON_AddStringToObject((cJSON*)obj, "_ArrayType_", type);
+		 cJSON_AddItemToObject((cJSON*)obj,   "_ArraySize_", cJSON_CreateIntArray((int *)dims,ndim));
+		 cJSON_AddStringToObject((cJSON*)obj, "_ArrayZipType_", zipformat[zipid]);
+		 cJSON_AddNumberToObject((cJSON*)obj, "_ArrayZipSize_", datalen);
+		 cJSON_AddStringToObject((cJSON*)obj, "_ArrayZipData_", (char *)buf);
+	     }
 	 }
      }
      if(compressed)
@@ -3085,9 +3238,16 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -F [mc2|...] (--outputformat) fluence data output format:\n\
                                mc2 - MCX mc2 format (binary 32bit float)\n\
                                jnii - JNIfTI format (http://openjdata.org)\n\
+                               bnii - Binary JNIfTI (http://openjdata.org)\n\
                                nii - NIfTI format\n\
                                hdr - Analyze 7.5 hdr/img format\n\
                                tx3 - GL texture data for rendering (GL_RGBA32F)\n\
+	the bnii/jnii formats support compression (-Z) and generate small files\n\
+	load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:\n\
+	  MATLAB/Octave: JNIfTI toolbox   https://github.com/fangq/jnifti, \n\
+	  MATLAB/Octave: JSONLab toolbox  https://github.com/fangq/jsonlab, \n\
+	  Python:        PyJData:         https://pypi.org/project/jdata\n\
+	  JavaScript:    JSData:          https://github.com/fangq/jsdata\n\
  -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson\n\
                                is used (when saving data to JSON/JNIfTI format)\n\
 			       0 zlib: zip format (moderate compression,fast) \n\

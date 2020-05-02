@@ -30,7 +30,7 @@ DOXYCFG=mcxdoxy.cfg
 ZMATLIB    :=libzmat.a
 USERLINKOPT?=$(ZMATLIB) -lz
 
-INCLUDEDIRS=-Izmat -Izmat/easylzma -I/usr/local/cuda/include
+INCLUDEDIRS=-Izmat -Izmat/easylzma -I/usr/local/cuda/include -Iubj
 
 CUDART=-lcudart
 CUOMPLINK=
@@ -63,7 +63,7 @@ CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON
+FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
