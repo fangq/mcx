@@ -179,7 +179,8 @@ typedef struct MCXConfig{
 	char issaveref;              /**<1 save diffuse reflectance at the boundary voxels, 0 do not save*/
         char ismomentum;             /**<1 to save momentum transfer for detected photons, implies issavedet=1*/
         char isdumpjson;             /**<1 to save json */
-        char internalsrc;            /*1 all photons launch positions are inside non-zero voxels, 0 let mcx search entry point*/
+        char internalsrc;            /**<1 all photons launch positions are inside non-zero voxels, 0 let mcx search entry point*/
+	int  zipid;                  /**<data zip method "zlib","gzip","base64","lzip","lzma","lz4","lz4hc"*/
 	char srctype;                /**<0:pencil,1:isotropic,2:cone,3:gaussian,4:planar,5:pattern,\
                                          6:fourier,7:arcsine,8:disk,9:fourierx,10:fourierx2d,11:zgaussian,12:line,13:slit*/
         char outputtype;             /**<'X' output is flux, 'F' output is fluence, 'E' energy deposit*/

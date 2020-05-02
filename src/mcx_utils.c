@@ -81,7 +81,7 @@
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-',
-		 '-','-','\0'};
+		 '-','-','Z','\0'};
 
 /**
  * Long command line options
@@ -99,7 +99,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
                  "--momentum","--specular","--bc","--workload","--savedetflag",
-		 "--internalsrc","--bench","--dumpjson",""};
+		 "--internalsrc","--bench","--dumpjson","--zip",""};
 
 /**
  * Output data types
@@ -236,6 +236,7 @@ void mcx_initcfg(Config *cfg){
      cfg->energytot=0.f;
      cfg->energyabs=0.f;
      cfg->energyesc=0.f;
+     cfg->zipid=zmZlib;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/   /** This format is only supported by C99 */
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);
@@ -511,7 +512,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 
      /* the "NIFTIData" section stores volumetric data */
      cJSON_AddItemToObject(root, "NIFTIData",   dat = cJSON_CreateObject());
-     if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, zmZlib, dat,cfg))
+     if(mcx_jdataencode(vol,ndim,dims,(isfloat?"single":"uint32"), 4, cfg->zipid, dat,cfg))
          MCX_ERROR(-1,"error when converting to JSON");
 
      /* now save JSON to file */
@@ -680,7 +681,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 		    for(int j=0;j<dims[1];j++)
 			buf[i*dims[1]+j]=ppath[i*cfg->his.colcount+col+j];
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, zmZlib, sub,cfg))
+		if(mcx_jdataencode(buf,2,dims,dtype[id], 4, cfg->zipid, sub,cfg))
 		    MCX_ERROR(-1,"error when converting to JSON");
 		free(buf);
 		col+=dims[1];
@@ -710,7 +711,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 		    val=(void*)fbuf;
 		}
 		cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
-		if(mcx_jdataencode(val,2,dims,dtype[id], 4, zmZlib, sub,cfg))
+		if(mcx_jdataencode(val,2,dims,dtype[id], 4, cfg->zipid, sub,cfg))
 		    MCX_ERROR(-1,"error when converting to JSON");
 		free(val);
 		col+=dims[1];
@@ -720,7 +721,7 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 	if(cfg->issaveseed && seeds!=NULL){
 	    uint dims[2]={count,cfg->his.seedbyte};
             cJSON_AddItemToObject(dat, "seed", sub = cJSON_CreateObject());
-	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, zmZlib, sub,cfg))
+	    if(mcx_jdataencode(seeds,2,dims,"uint8", 1, cfg->zipid, sub,cfg))
                 MCX_ERROR(-1,"error when converting to JSON");
 	}
 
@@ -1683,7 +1684,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
      }
      if(filename[0]=='\0'){
          if(Shapes){
-	     if(!cfg->shapedata)
+	     if(!FIND_JSON_OBJ("_ArraySize_","Volume._ArraySize_",Shapes) && !cfg->shapedata)
 	         cfg->shapedata=cJSON_Print(Shapes);
 	     
 	     if(FIND_JSON_OBJ("_ArrayZipData_","Volume._ArrayZipData_",Shapes)){
@@ -1876,7 +1877,7 @@ void mcx_savejdata(char *filename, Config *cfg){
 
 	 obj = cJSON_CreateObject();
 	 ret=mcx_jdataencode(buf,3,&cfg->dim.x,(cfg->mediabyte==1 ? "uint8" : (cfg->mediabyte==2 ? "uint16" : "uint32")),
-	     outputbytes/datalen, zmZlib, obj,cfg);
+	     outputbytes/datalen, cfg->zipid, obj,cfg);
          if(buf)
              free(buf);
 
@@ -2279,8 +2280,8 @@ void mcx_dumpmask(Config *cfg){
 	 free(buf);
      }else
          mcx_savenii((float *)cfg->vol, cfg->dim.x*cfg->dim.y*cfg->dim.z, fname, NIFTI_TYPE_UINT32, ofNifti, cfg);
-     if(cfg->isdumpmask==1){ /*if dumpmask>1, simulation will also run*/
-         MCX_FPRINTF(cfg->flog,"volume mask is saved as uint16 format in %s\n",fname);
+     if(cfg->isdumpmask==1 && cfg->isdumpjson==0){ /*if dumpmask>1, simulation will also run*/
+         MCX_FPRINTF(cfg->flog,"volume mask is saved in %s\n",fname);
          exit(0);
      }
 }
@@ -2337,8 +2338,6 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
 	     int status=0;
 	     char *buf=NULL;
 	     int zipid=mcx_keylookup((char *)(ztype->valuestring),zipformat);
-	     if(zipid==zmLzip || zipid==zmLzma)
-	         MCX_ERROR(-1,"lzma and lzip compression are not yet supported");
 	     ret=zmat_decode(strlen(vdata->valuestring), (uchar *)vdata->valuestring, &len, (uchar **)&buf, zmBase64, &status);
 	     if(!ret && vsize){
 	         ret=zmat_decode(len, (uchar *)buf, &newlen, (uchar **)(vol), zipid, &status);
@@ -2381,7 +2380,7 @@ int  mcx_jdataencode(void *vol, int ndim, uint *dims, char *type, int byte, int 
      totalbytes=datalen*byte;
 
      if(!cfg->isdumpjson)
-        MCX_FPRINTF(stdout,"compressing data ...");
+        MCX_FPRINTF(stdout,"compressing data [%s] ...", zipformat[zipid]);
 
      /*compress data using zlib*/
      ret=zmat_encode(totalbytes, (uchar *)vol, &compressedbytes, (uchar **)&compressed, zipid, &status);
@@ -2733,6 +2732,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
  		                i=mcx_readarg(argc,argv,i,&(cfg->issaveref),"char");
  				if (cfg->issaveref) cfg->issaveref=1;
  				break;
+		     case 'Z':
+			        if(i+1<argc && isalpha(argv[i+1][0]) ){
+				    cfg->zipid=mcx_keylookup(argv[++i],zipformat);
+			        }else
+				    i=mcx_readarg(argc,argv,i,&(cfg->zipid),"int");
+ 				break;
 		     case 'w':
 			        if(i+1<argc && isalpha(argv[i+1][0]) ){
 				    cfg->savedetflag=mcx_parsedebugopt(argv[++i],saveflag);
@@ -3083,6 +3088,15 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                nii - NIfTI format\n\
                                hdr - Analyze 7.5 hdr/img format\n\
                                tx3 - GL texture data for rendering (GL_RGBA32F)\n\
+ -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson\n\
+                               is used (when saving data to JSON/JNIfTI format)\n\
+			       0 zlib: zip format (moderate compression,fast) \n\
+			       1 gzip: gzip format (compatible with *.gz)\n\
+			       2 base64: base64 encoding with no compression\n\
+			       3 lzip: lzip format (high compression,very slow)\n\
+			       4 lzma: lzma format (high compression,very slow)\n\
+			       5 lz4: LZ4 format (low compression,extrem. fast)\n\
+			       6 lz4hc: LZ4HC format (moderate compression,fast)\n\
  --dumpjson [-,2,'file.json']  export all settings, including volume data using\n\
                                JSON/JData (http://openjdata.org) format for \n\
 			       easy sharing; can be reused using -f\n\
