@@ -83,7 +83,7 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CUCCOPT+=-Xcompiler "$(OMP) /W0"
   CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
   CPPOPT+=-Xcompiler $(OMP)
-  ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj
+  ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=$(ZMATLIB) -lzlib
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
