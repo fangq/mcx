@@ -30,7 +30,7 @@ DOXYCFG=mcxdoxy.cfg
 ZMATLIB    :=libzmat.a
 USERLINKOPT?=$(ZMATLIB) -lz
 
-INCLUDEDIRS=-I./zmat -I/usr/local/cuda/include
+INCLUDEDIRS=-Izmat -Izmat/easylzma -I/usr/local/cuda/include
 
 CUDART=-lcudart
 CUOMPLINK=
@@ -58,7 +58,7 @@ DLLFLAG=-fPIC
 OMP=-fopenmp
 CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
-CPPOPT=-g -Wall -std=c99 -DNO_LZMA # -DUSE_OS_TIMER
+CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
 
 OBJSUFFIX=.o
 EXESUFFIX=
@@ -74,7 +74,7 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
       LINKOPT=-L"$(CUDA_PATH)/lib/Win32" $(CUDART)
   endif
   INCLUDEDIRS +=-I"$(CUDA_PATH)/lib/include"
-  CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32 -DNO_LZMA
+  CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32 #-DNO_LZMA
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
   DLLFLAG=
@@ -241,7 +241,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 $(ZMATLIB):
-	-$(MAKE) -C zmat lib AR=ar CPPOPT="-DNO_LZMA $(DLLFLAG)" USERLINKOPT=
+	-$(MAKE) -C zmat lib AR=ar CPPOPT="$(DLLFLAG)" USERLINKOPT=
 clean:
 	-$(MAKE) -C zmat clean
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)

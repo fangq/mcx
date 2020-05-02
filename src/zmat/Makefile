@@ -23,7 +23,7 @@ DOXY       := doxygen
 DOCDIR     := $(ZMATDIR)/doc
 DOXYCFG=zmat.cfg
 
-INCLUDEDIRS=-Ieasylzma/easylzma-0.0.8/include -Ilz4
+INCLUDEDIRS=-Ieasylzma -Ieasylzma/pavlov -Ilz4
 
 CUOMPLINK=
 
@@ -33,13 +33,17 @@ PLATFORM = $(shell uname -s)
 DLLFLAG=-fPIC
 OMP=-fopenmp
 
-CPPOPT=-g -Wall -O3 -DNO_LZMA -fPIC
+CPPOPT=-g -Wall -O3 -fPIC
 
 OUTPUTFLAG:=-o
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=zmatlib lz4/lz4 lz4/lz4hc
+FILES=zmatlib lz4/lz4 lz4/lz4hc easylzma/compress easylzma/decompress \
+easylzma/lzma_header easylzma/lzip_header easylzma/common_internal \
+easylzma/pavlov/LzmaEnc easylzma/pavlov/LzmaDec easylzma/pavlov/LzmaLib \
+easylzma/pavlov/LzFind easylzma/pavlov/Bra easylzma/pavlov/BraIA64 \
+easylzma/pavlov/Alloc easylzma/pavlov/7zCrc
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
@@ -50,7 +54,7 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
       LINKOPT=-L"$(CUDA_PATH)/lib/Win32" $(CUDART)
   endif
   INCLUDEDIRS +=-I"$(CUDA_PATH)/lib/include"
-  CPPOPT =-c -DWIN32 -g -Wall -O3 -DNO_LZMA -fPIC
+  CPPOPT =-c -DWIN32 -g -Wall -O3 -fPIC
   OBJSUFFIX=.obj
   EXESUFFIX=
   DLLFLAG=
@@ -92,7 +96,7 @@ dll:   AROUTPUT   :=-o
 
 oct mex: CPPOPT+= $(DLLFLAG)
 oct:   OUTPUT_DIR=..
-oct:   AR= CXXFLAGS='-O3' LFLAGS='$(-lz)' LDFLAGS='$(LFLAGS)' mkoctfile zmat.cpp easylzma/easylzma-0.0.8/lib/libeasylzma_s.a
+oct:   AR= CXXFLAGS='-O3' LFLAGS='$(-lz)' LDFLAGS='$(LFLAGS)' mkoctfile zmat.cpp
 oct:   BINARY=zmat.mex
 oct:   ARFLAGS    :=
 oct:   LINKOPT+=--mex $(INCLUDEDIRS)
@@ -100,7 +104,7 @@ oct:   CXX=mkoctfile
 
 mex:   CXX=$(MEX)
 mex:   OUTPUTFLAG:=-output
-mex:   AR=$(MEX) zmat.cpp easylzma/easylzma-0.0.8/lib/libeasylzma_s.a $(INCLUDEDIRS)
+mex:   AR=$(MEX) zmat.cpp $(INCLUDEDIRS)
 mex:   LINKOPT+= -cxx CXXLIBS='$$CXXLIBS -lz' -outdir $(ZMATDIR)
 mex:   ARFLAGS    :=
 mex:   OUTPUT_DIR=..
