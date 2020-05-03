@@ -695,21 +695,25 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
 	 if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1 && (cfg->detnum>1 || cfg->srcnum>1)){
              uint dims[5]={cfg->detnum*cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
              float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
-	     if(cfg->outputformat==ofJNifti )
+	     if(cfg->outputformat==ofJNifti)
                  mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
 	     else
 	         mcx_savebnii(dat, 5, dims, voxelsize, name, 1, cfg);
 	 }else{
-             uint dims[5]={cfg->dim.x,cfg->dim.y,cfg->dim.z,cfg->maxgate};
+             uint dims[]={cfg->dim.x,cfg->dim.y,cfg->dim.z,cfg->maxgate};
              float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z,cfg->tstep};
+	     size_t datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z*cfg->maxgate;
+	     uint *buf=(uint *)malloc(datalen*sizeof(float));
+	     memcpy(buf,dat,datalen*sizeof(float));
 	     if(d1)
-	         mcx_convertcol2row((uint **)(&dat), (uint3 *)dims);
+	         mcx_convertcol2row(&buf, (uint3 *)dims);
 	     else
-	         mcx_convertcol2row4d((uint **)(&dat), (uint4 *)dims);
+	         mcx_convertcol2row4d(&buf, (uint4 *)dims);
 	     if(cfg->outputformat==ofJNifti)
-	         mcx_savejnii(dat, 4-d1, dims, voxelsize, name, 1, cfg);
+	         mcx_savejnii((float*)buf, 4-d1, dims, voxelsize, name, 1, cfg);
 	     else
-	         mcx_savebnii(dat, 4-d1, dims, voxelsize, name, 1, cfg);
+	         mcx_savebnii((float*)buf, 4-d1, dims, voxelsize, name, 1, cfg);
+	     free(buf);
 	 }
          return;
      }
@@ -1828,7 +1832,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	     
 	     if(FIND_JSON_OBJ("_ArrayZipData_","Volume._ArrayZipData_",Shapes)){
 	         int ndim;
-		 char *type, *buf;
+		 char *type=NULL, *buf=NULL;
 	         if(mcx_jdatadecode((void **)&buf, &ndim, &(cfg->dim.x), 3, &type, Shapes,cfg)==0)
 		     mcx_loadvolume(buf,cfg,1);
 		 if(buf)
@@ -2482,6 +2486,8 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
 	     int zipid=mcx_keylookup((char *)(ztype->valuestring),zipformat);
 	     ret=zmat_decode(strlen(vdata->valuestring), (uchar *)vdata->valuestring, &len, (uchar **)&buf, zmBase64, &status);
 	     if(!ret && vsize){
+	         if(*vol)
+		    free(*vol);
 	         ret=zmat_decode(len, (uchar *)buf, &newlen, (uchar **)(vol), zipid, &status);
 	     }
 	     if(buf)
@@ -2927,7 +2933,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 					 i++;
 			             }else
 				         i=mcx_readarg(argc,argv,i,&(cfg->isdumpjson),"int");
-                                }else if(strcmp(argv[i]+2,"bench")==0)
+                                }else if(strcmp(argv[i]+2,"bench")==0){
                                      if(i+1<argc && isalpha(argv[i+1][0]) ){
 				         int idx=mcx_keylookup(argv[++i],benchname);
 					 if(idx==-1)
@@ -2940,7 +2946,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 					     MCX_FPRINTF(cfg->flog,"\t%s\n",benchname[i]);
 				         exit(0);
 				     }
-                                else if(strcmp(argv[i]+2,"reflectin")==0)
+                                }else if(strcmp(argv[i]+2,"reflectin")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
                                 else if(strcmp(argv[i]+2,"internalsrc")==0)
 		                     i=mcx_readarg(argc,argv,i,&(cfg->internalsrc),"int");
