@@ -1420,7 +1420,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	     }
 	     w0=p.w;
 	     f.pathlen=0.f;
-	  }
+	  }else
+	       mediaid = mediaidold;
 
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
           if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCylic) )) || f.t>gcfg->twin1){
