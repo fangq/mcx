@@ -33,8 +33,10 @@ type
     ckSharedFS: TCheckBox;
     ckShowProgress: TCheckBox;
     edCmdInput: TEdit;
+    edBenchmark: TComboBox;
     edRemote: TComboBox;
     Image1: TImage;
+    Label19: TLabel;
     Label5: TLabel;
     mcxdoConfig: TAction;
     ckbDet: TCheckListBox;
@@ -91,6 +93,7 @@ type
     PopupMenu3: TPopupMenu;
     PopupMenu4: TPopupMenu;
     plSetting: TScrollBox;
+    rbUseBench: TRadioButton;
     shapePreview: TAction;
     edOutputFormat: TComboBox;
     Label11: TLabel;
@@ -473,6 +476,7 @@ var
   GotoGBox: TGroupBox;
   CurrentSession: TListItem;
   BCItemProp: TItemProp;
+  UseUserFolder: Boolean;
 
 implementation
 
@@ -852,7 +856,8 @@ begin
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
       edOutputType.ItemIndex:=0;
-      edOutputFormat.ItemIndex:=1;
+      edOutputFormat.ItemIndex:=3;
+      edBenchmark.ItemIndex:=0;
       vlBC.Values['x-'] := 'absorb';
       vlBC.Values['x+'] := 'absorb';
       vlBC.Values['y-'] := 'absorb';
@@ -1045,7 +1050,7 @@ begin
         tabVolumeDesigner.Enabled:=false;
         ckSpecular.Visible:=true;
         //ckSaveRef.Visible:=false;
-        edOutputFormat.ItemIndex:=4;
+        edOutputFormat.ItemIndex:=6;
         edRespin.Hint:='BasicOrder';
         lbRespin.Caption:='Element order (-C)';
         edBubble.Hint:='DebugPhoton';
@@ -1110,7 +1115,7 @@ function TfmMCX.CreateSSHDownloadCmd(suffix: string='.nii'): string;
 var
    rootpath, localfile, remotefile, url, cmd, scpcmd: string;
 begin
-   rootpath:='Output'+'/'+CreateCmdOnly+'sessions'+'/'+Trim(edSession.Text);
+   rootpath:='MCXOutput'+'/'+CreateCmdOnly+'sessions'+'/'+Trim(edSession.Text);
    localfile:=CreateWorkFolder(edSession.Text, true)+DirectorySeparator+edSession.Text+suffix;
    remotefile:=rootpath+'/'+edSession.Text+suffix;
    scpcmd:=edRemote.Text;
@@ -1691,6 +1696,9 @@ begin
     LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
     if(Application.HasOption('p','project')) then
         LoadTasksFromIni(Application.GetOptionValue('p', 'project'));
+    UseUserFolder:=false;
+    if(Application.HasOption('u','user')) then
+        UseUserFolder:=true;
 end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
@@ -2915,8 +2923,13 @@ function TfmMCX.CreateWorkFolder(session: string; iscreate: boolean=true) : stri
 var
     path: string;
 begin
-    path:=GetAppRoot
-       +'Output'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+    if(UseUserFolder) then
+        path:=GetUserDir
+           +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session
+    else
+        path:=GetAppRoot
+            +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+
     if fmConfig.ckUseManualPath.Checked then begin
          path:=fmConfig.edWorkPath.Text;
          path:=ExpandPathMacro(path,session);
@@ -2928,8 +2941,12 @@ begin
     if(iscreate) then begin
         try
           if(not DirectoryExists(path)) then
-               if( not ForceDirectories(path) ) then
-                   raise Exception.Create('Can not create session output folder');
+               if( not ForceDirectories(path) ) then begin
+                   path:=GetUserDir
+                      +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+                   if( not ForceDirectories(path) ) then
+                      raise Exception.Create('Can not create session output folder');
+               end;
         except
           On E : Exception do
               MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
@@ -2994,7 +3011,7 @@ begin
         rootpath:=sgConfig.Cells[2,14];
     if(ckDoRemote.Checked) then begin
         if(rootpath='') then
-            rootpath:='Output'+'/'+CreateCmdOnly+'sessions'+'/'+Trim(edSession.Text);
+            rootpath:='MCXOutput'+'/'+CreateCmdOnly+'sessions'+'/'+Trim(edSession.Text);
     end;
     param.Add('--root');
     param.Add(rootpath);
@@ -3079,6 +3096,11 @@ begin
         param.Add(Format('%d',[Integer(ckSaveMask.Checked)]));
         param.Add('--repeat');
         param.Add(Format('%d',[edRespin.Value]));
+    end;
+
+    if(rbUseBench.Checked) then begin
+      param.Add('--bench');
+      param.Add(edBenchmark.Text);
     end;
 
     if(grProgram.ItemIndex<>1) then begin
