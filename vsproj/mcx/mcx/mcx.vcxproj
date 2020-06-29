@@ -77,11 +77,12 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\Users\fangq\Gitroot\Project\github\mcx\src\zmat\easylzma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
@@ -198,6 +199,31 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\..\..\src\mcx_shapes.h" />
     <ClInclude Include="..\..\..\src\mcx_utils.h" />
     <ClInclude Include="..\..\..\src\tictoc.h" />
+    <ClInclude Include="..\..\..\src\ubj\ubj.h" />
+    <ClInclude Include="..\..\..\src\ubj\ubj_internal.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\common_internal.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\easylzma\common.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\easylzma\compress.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\easylzma\decompress.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\lzip_header.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\lzma_header.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zBuf.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zCrc.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zFile.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zVersion.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Alloc.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Bcj2.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Bra.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\CpuArch.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzFind.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzHash.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzmaDec.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzmaEnc.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzmaLib.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Types.h" />
+    <ClInclude Include="..\..\..\src\zmat\lz4\lz4.h" />
+    <ClInclude Include="..\..\..\src\zmat\lz4\lz4hc.h" />
+    <ClInclude Include="..\..\..\src\zmat\zmatlib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\cjson\cJSON.c" />
@@ -205,6 +231,37 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\..\..\src\mcx_shapes.c" />
     <ClCompile Include="..\..\..\src\mcx_utils.c" />
     <ClCompile Include="..\..\..\src\tictoc.c" />
+    <ClCompile Include="..\..\..\src\ubj\ubjr.c" />
+    <ClCompile Include="..\..\..\src\ubj\ubjrw.c" />
+    <ClCompile Include="..\..\..\src\ubj\ubjw.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\common_internal.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\compress.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\decompress.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\lzip_header.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\lzma_header.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zBuf.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zBuf2.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zCrc.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zFile.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zStream.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Alloc.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Bcj2.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Bra.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Bra86.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\BraIA64.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzFind.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzmaDec.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzmaEnc.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzmaLib.c" />
+    <ClCompile Include="..\..\..\src\zmat\lz4\lz4.c" />
+    <ClCompile Include="..\..\..\src\zmat\lz4\lz4hc.c" />
+    <ClCompile Include="..\..\..\src\zmat\zmatlib.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlibstatic.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlib.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

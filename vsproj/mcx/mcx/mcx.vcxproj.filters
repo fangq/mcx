@@ -4,6 +4,21 @@
     <Filter Include="cjson">
       <UniqueIdentifier>{cd43fdf2-e942-4d52-aed2-ef337e864363}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zmat">
+      <UniqueIdentifier>{5a69ca5f-c08f-4d88-992b-0568ecfb834d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ubj">
+      <UniqueIdentifier>{9a8ea52a-9207-4233-97e7-1b630032eb9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zmat\easylzma">
+      <UniqueIdentifier>{43f86a76-166a-4853-8d88-d9245b7897c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zmat\lz4">
+      <UniqueIdentifier>{875fc4e0-cdde-4db6-aad4-60daffd64aec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zmat\easylzma\pavlov">
+      <UniqueIdentifier>{0d0692e0-58a4-48cb-99a6-617f91fc3aa4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\cjson\cJSON.c">
@@ -13,20 +28,178 @@
     <ClCompile Include="..\..\..\src\mcx_shapes.c" />
     <ClCompile Include="..\..\..\src\mcx_utils.c" />
     <ClCompile Include="..\..\..\src\tictoc.c" />
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zBuf.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zBuf2.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zCrc.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zFile.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\7zStream.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Alloc.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Bcj2.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Bra.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\Bra86.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\BraIA64.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\common_internal.c">
+      <Filter>zmat\easylzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\compress.c">
+      <Filter>zmat\easylzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\lz4\lz4.c">
+      <Filter>zmat\lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\lz4\lz4hc.c">
+      <Filter>zmat\lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzFind.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzmaDec.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzmaEnc.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\pavlov\LzmaLib.c">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\decompress.c">
+      <Filter>zmat\easylzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\lzip_header.c">
+      <Filter>zmat\easylzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\easylzma\lzma_header.c">
+      <Filter>zmat\easylzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ubj\ubjr.c">
+      <Filter>ubj</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ubj\ubjrw.c">
+      <Filter>ubj</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ubj\ubjw.c">
+      <Filter>ubj</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zmat\zmatlib.c">
+      <Filter>zmat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\cjson\cJSON.h">
       <Filter>cjson</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\br2cu.h" />
     <ClInclude Include="..\..\..\src\mcx_const.h" />
     <ClInclude Include="..\..\..\src\mcx_core.h" />
     <ClInclude Include="..\..\..\src\mcx_ieee754.h" />
     <ClInclude Include="..\..\..\src\mcx_shapes.h" />
     <ClInclude Include="..\..\..\src\mcx_utils.h" />
     <ClInclude Include="..\..\..\src\tictoc.h" />
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zBuf.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zCrc.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zFile.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\7zVersion.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Alloc.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Bcj2.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\br2cu.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Bra.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\easylzma\common.h">
+      <Filter>zmat\easylzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\common_internal.h">
+      <Filter>zmat\easylzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\easylzma\compress.h">
+      <Filter>zmat\easylzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\lz4\lz4.h">
+      <Filter>zmat\lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\lz4\lz4hc.h">
+      <Filter>zmat\lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzHash.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzFind.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzmaDec.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzmaEnc.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\LzmaLib.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\CpuArch.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\easylzma\decompress.h">
+      <Filter>zmat\easylzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\lzip_header.h">
+      <Filter>zmat\easylzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\lzma_header.h">
+      <Filter>zmat\easylzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\ubj\ubj.h">
+      <Filter>ubj</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\ubj\ubj_internal.h">
+      <Filter>ubj</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\zmatlib.h">
+      <Filter>zmat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zmat\easylzma\pavlov\Types.h">
+      <Filter>zmat\easylzma\pavlov</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\..\src\mcx_core.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlibstatic.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlib.dll" />
   </ItemGroup>
 </Project>
