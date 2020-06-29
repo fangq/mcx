@@ -18,7 +18,7 @@ MKDIR      := mkdir
 
 CUDACC=nvcc
 MEX=mex
-AR=$(CC)
+AR=$(CXX)
 
 BINARY=mcx
 MAKE=make

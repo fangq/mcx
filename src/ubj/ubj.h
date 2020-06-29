@@ -47,8 +47,8 @@ struct ubjw_context_t_s;
 typedef struct ubjw_context_t_s ubjw_context_t;
 
 ubjw_context_t* ubjw_open_callback(void* userdata,
-	size_t(*write_cb)(const void* data, size_t size, size_t count, void* userdata),
-	int(*close_cb)(void* userdata),
+	size_t(*write_cb)(const void* data, size_t size, size_t count, FILE* userdata),
+	int(*close_cb)(FILE* userdata),
 	void(*error_cb)(const char* error_msg)
 	);
 ubjw_context_t* ubjw_open_file(FILE*);
@@ -103,9 +103,9 @@ typedef struct ubjr_context_t_s ubjr_context_t;
 
 //Open up a reader context for reading using a custom calllback
 ubjr_context_t* ubjr_open_callback(void* userdata,
-	size_t(*read_cb)(void* data, size_t size, size_t count, void* userdata),
-	int(*peek_cb)(void* userdata),
-	int(*close_cb)(void* userdata),
+	size_t(*read_cb)(void* data, size_t size, size_t count, FILE* userdata),
+	int(*peek_cb)(FILE* userdata),
+	int(*close_cb)(FILE* userdata),
 	void(*error_cb)(const char* error_msg)
 	);
 
@@ -155,7 +155,7 @@ typedef struct ubjr_dynamic_t_s
 		ubjr_string_t string;
 		ubjr_array_t container_array;
 		ubjr_object_t container_object;
-	};
+	} data;
 } ubjr_dynamic_t;
 
 //Parse a dynamic object from the stream
