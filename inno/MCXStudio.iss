@@ -1,16 +1,16 @@
-;=======================================================================
-; Inno Setup Script for MCX Studio and MCX Suite Windows Installer
-;
-; Author: Qianqian Fang <q.fang at neu.edu>
-; Initially added on Jun. 28, 2020
-; URL: http://mcx.space
-; Github: http://github.com/fangq/mcx
-;
-;=======================================================================
+;;======================================================================
+;; Inno Setup Script for MCX Studio and MCX Suite Windows Installer
+;;
+;; Author: Qianqian Fang <q.fang at neu.edu>
+;; Initially added on Jun. 28, 2020
+;; URL: http://mcx.space
+;; Github: http://github.com/fangq/mcx
+;;
+;;======================================================================
 
 #define MyAppName "MCX Studio"
 #define MyAppDir "MCXStudio"
-#define MyAppVersion "1"
+#define MyAppVersion "v2020"
 #define MyAppPublisher "COTILab"
 #define MyAppURL "http://mcx.space"
 #define MyAppExeName "mcxstudio.exe"

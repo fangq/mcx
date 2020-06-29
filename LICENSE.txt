@@ -1,10 +1,10 @@
-===============================================================================
-=                      Monte Carlo eXtreme (MCX) -- CUDA                      =
-===============================================================================
+=============================================================
+=            Monte Carlo eXtreme (MCX) -- CUDA              =
+=============================================================
 
-Copyright (c) 2010-2019  Qianqian Fang <q.fang at neu.edu>
+Copyright (c) 2010-2020  Qianqian Fang <q.fang at neu.edu>
 
--------------------------------------------------------------------------------
+=============================================================
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-------------------------------------------------------------------------
+=============================================================
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
