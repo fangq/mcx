@@ -82,7 +82,8 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>zlib.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlibstat.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
@@ -231,8 +232,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\..\..\src\mcx_shapes.c" />
     <ClCompile Include="..\..\..\src\mcx_utils.c" />
     <ClCompile Include="..\..\..\src\tictoc.c" />
-    <ClCompile Include="..\..\..\src\ubj\ubjr.c" />
-    <ClCompile Include="..\..\..\src\ubj\ubjrw.c" />
     <ClCompile Include="..\..\..\src\ubj\ubjw.c" />
     <ClCompile Include="..\..\..\src\zmat\easylzma\common_internal.c" />
     <ClCompile Include="..\..\..\src\zmat\easylzma\compress.c" />
@@ -256,12 +255,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\..\..\src\zmat\lz4\lz4.c" />
     <ClCompile Include="..\..\..\src\zmat\lz4\lz4hc.c" />
     <ClCompile Include="..\..\..\src\zmat\zmatlib.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlibstatic.lib" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlib.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

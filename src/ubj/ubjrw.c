@@ -27,7 +27,7 @@ static UBJ_TYPE compute_best_integer_type(ubjr_dynamic_t* vals, size_t sz)
 	size_t i;
 	for (i = 0; i < sz; i++)
 	{
-		typemask |= 1UL << ubjw_min_integer_type(vals[i].integer);
+		typemask |= 1UL << ubjw_min_integer_type(vals[i].data.integer);
 	}
 	return typemask2type(typemask);
 }
@@ -36,7 +36,7 @@ static uint32_t compute_best_string_type(ubjr_dynamic_t* vals, size_t sz)
 	size_t i;
 	for (i = 0; i < sz; i++)
 	{
-		if (strlen(vals[i].string) > 1)
+		if (strlen(vals[i].data.string) > 1)
 		{
 			return UBJ_STRING;
 		}
@@ -47,10 +47,11 @@ static UBJ_TYPE optimize_type(UBJ_TYPE typein,ubjr_dynamic_t* vals, size_t sz)
 {
 	static const uint32_t intmask = (1 << UBJ_INT8) | (1 << UBJ_UINT8) | (1 << UBJ_INT16) | (1 << UBJ_INT32) | (1 << UBJ_INT64);
 	static const uint32_t stringmask = (1 << UBJ_STRING) | (1 << UBJ_CHAR);
+        uint32_t tm;
 	if (typein != UBJ_MIXED)
 		return typein;
 	//integer optimization can be done here...
-	uint32_t tm = compute_typemask(vals, sz);
+	tm = compute_typemask(vals, sz);
 	if ((tm & intmask) == tm) //if all values are integers
 	{
 		return compute_best_integer_type(vals,sz);	//calculate the optimum type given the data

@@ -91,12 +91,6 @@
     <ClCompile Include="..\..\..\src\zmat\easylzma\lzma_header.c">
       <Filter>zmat\easylzma</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ubj\ubjr.c">
-      <Filter>ubj</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\ubj\ubjrw.c">
-      <Filter>ubj</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\ubj\ubjw.c">
       <Filter>ubj</Filter>
     </ClCompile>
@@ -195,11 +189,5 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\..\src\mcx_core.cu" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlibstatic.lib" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib\zlib.dll" />
   </ItemGroup>
 </Project>
