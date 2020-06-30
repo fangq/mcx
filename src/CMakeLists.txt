@@ -30,8 +30,8 @@ set(
 
 # C Options
 set(CMAKE_C_FLAGS "-g -Wall -std=c99 -fopenmp -fPIC")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../../bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../../lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../lib)
 
 # Add include directories
 include_directories(cjson ubj zmat zmat/easylzma)
@@ -81,5 +81,5 @@ if(BUILD_MEX AND Matlab_FOUND)
       LINK_TO mex mx zmat mcx
     )
 set_target_properties(mcxlab
-        PROPERTIES OUTPUT_NAME ../../mcxlab/mcx)
+        PROPERTIES OUTPUT_NAME ${CMAKE_SOURCE_DIR}/../mcxlab/mcx)
 endif()
