@@ -28,6 +28,7 @@
           <PathDelim Value="\"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="glscene"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
@@ -71,6 +72,7 @@
           <PathDelim Value="\"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="glscene"/>
           </SearchPaths>
           <Parsing>
             <SyntaxOptions>
@@ -112,14 +114,8 @@
     </RunParams>
     <RequiredPackages Count="3">
       <Item1>
-        <PackageName Value="GLScene_DesignTime"/>
-      </Item1>
-      <Item2>
-        <PackageName Value="GLScene_RunTime"/>
-      </Item2>
-      <Item3>
         <PackageName Value="LCL"/>
-      </Item3>
+      </Item1>
     </RequiredPackages>
     <Units Count="4">
       <Unit0>
@@ -151,6 +147,7 @@
     <PathDelim Value="\"/>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="glscene"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>

@@ -21,14 +21,14 @@
       <BuildNr Value="557"/>
       <StringTable Comments="A unified GUI for MCX, MMC and MCXCL" CompanyName="Northeastern University" FileDescription="MCX Studio" InternalName="MCX Studio" LegalCopyright="2009,2010 Qianqian Fang" LegalTrademarks="MCX Studio" ProductName="MCX Studio" ProductVersion="0.0.0.1"/>
     </VersionInfo>
-    <BuildModes Count="3" Active="Debug">
+    <BuildModes Count="3" Active="Release">
       <Item1 Name="default" Default="True"/>
       <Item2 Name="Debug">
         <CompilerOptions>
           <Version Value="11"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="synapse"/>
+            <OtherUnitFiles Value="synapse;glscene"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
@@ -66,7 +66,7 @@
           <Version Value="11"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="synapse"/>
+            <OtherUnitFiles Value="synapse;glscene"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
@@ -102,9 +102,6 @@
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
-      </local>
       <FormatVersion Value="2"/>
       <Modes Count="1">
         <Mode0 Name="default">
@@ -114,31 +111,25 @@
         </Mode0>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="7">
+    <RequiredPackages Count="5">
       <Item1>
-        <PackageName Value="GLScene_RunTime"/>
+        <PackageName Value="anchordocking"/>
       </Item1>
       <Item2>
-        <PackageName Value="GLScene_DesignTime"/>
+        <PackageName Value="SynEdit"/>
       </Item2>
       <Item3>
-        <PackageName Value="anchordocking"/>
+        <PackageName Value="LazControls"/>
       </Item3>
       <Item4>
-        <PackageName Value="SynEdit"/>
-      </Item4>
-      <Item5>
-        <PackageName Value="LazControls"/>
-      </Item5>
-      <Item6>
         <PackageName Value="FCL"/>
         <MinVersion Major="1" Valid="True"/>
-      </Item6>
-      <Item7>
+      </Item4>
+      <Item5>
         <PackageName Value="LCL"/>
-      </Item7>
+      </Item5>
     </RequiredPackages>
-    <Units Count="62">
+    <Units Count="16">
       <Unit0>
         <Filename Value="mcxstudio.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -207,17 +198,6 @@
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="mcxoutput.pas"/>
-        <ComponentName Value="fmOutput"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="5"/>
-        <TopLine Value="15"/>
-        <CursorPos X="29" Y="23"/>
-        <UsageCount Value="200"/>
-        <Loaded Value="True"/>
-      </Unit6>
-      <Unit7>
         <Filename Value="sendkeys.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SendKeys"/>
@@ -225,8 +205,8 @@
         <TopLine Value="102"/>
         <CursorPos X="22" Y="138"/>
         <UsageCount Value="200"/>
-      </Unit7>
-      <Unit8>
+      </Unit6>
+      <Unit7>
         <Filename Value="mcxrender.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmDomain"/>
@@ -237,8 +217,8 @@
         <CursorPos X="30" Y="38"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
-      </Unit8>
-      <Unit9>
+      </Unit7>
+      <Unit8>
         <Filename Value="mcxview.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmViewer"/>
@@ -249,8 +229,8 @@
         <CursorPos X="51" Y="530"/>
         <UsageCount Value="202"/>
         <Loaded Value="True"/>
-      </Unit9>
-      <Unit10>
+      </Unit8>
+      <Unit9>
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="8"/>
@@ -258,8 +238,8 @@
         <CursorPos X="58" Y="291"/>
         <UsageCount Value="202"/>
         <Loaded Value="True"/>
-      </Unit10>
-      <Unit11>
+      </Unit9>
+      <Unit10>
         <Filename Value="mcxloadfile.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmDataFile"/>
@@ -268,36 +248,8 @@
         <EditorIndex Value="-1"/>
         <CursorPos X="14" Y="15"/>
         <UsageCount Value="181"/>
-      </Unit11>
-      <Unit12>
-        <Filename Value="/usr/share/fpcsrc/3.0.4/packages/rtl-objpas/src/inc/strutils.pp"/>
-        <EditorIndex Value="-1"/>
-        <UsageCount Value="1"/>
-      </Unit12>
-      <Unit13>
-        <Filename Value="/usr/share/fpcsrc/3.0.4/packages/regexpr/src/regexpr.pas"/>
-        <UnitName Value="RegExpr"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="611"/>
-        <CursorPos X="10" Y="625"/>
-        <UsageCount Value="1"/>
-      </Unit13>
-      <Unit14>
-        <Filename Value="/usr/share/lazarus/1.8.2/components/anchordocking/anchordocking.pas"/>
-        <UnitName Value="AnchorDocking"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="2670"/>
-        <CursorPos Y="2687"/>
-        <UsageCount Value="1"/>
-      </Unit14>
-      <Unit15>
-        <Filename Value="../../../../../lazarus/lcl/valedit.pas"/>
-        <UnitName Value="ValEdit"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="3" Y="20"/>
-        <UsageCount Value="2"/>
-      </Unit15>
-      <Unit16>
+      </Unit10>
+      <Unit11>
         <Filename Value="mcxconfig.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmConfig"/>
@@ -308,32 +260,8 @@
         <CursorPos X="100" Y="61"/>
         <UsageCount Value="165"/>
         <Loaded Value="True"/>
-      </Unit16>
-      <Unit17>
-        <Filename Value="/usr/share/lazarus/1.8.2/lcl/groupededit.pp"/>
-        <UnitName Value="GroupedEdit"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="909"/>
-        <CursorPos Y="931"/>
-        <UsageCount Value="2"/>
-      </Unit17>
-      <Unit18>
-        <Filename Value="/usr/share/lazarus/1.8.2/lcl/editbtn.pas"/>
-        <UnitName Value="EditBtn"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="1036"/>
-        <CursorPos X="41" Y="1043"/>
-        <UsageCount Value="2"/>
-      </Unit18>
-      <Unit19>
-        <Filename Value="/usr/share/lazarus/2.0.2/lcl/forms.pp"/>
-        <UnitName Value="Forms"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="789"/>
-        <CursorPos X="14" Y="808"/>
-        <UsageCount Value="6"/>
-      </Unit19>
-      <Unit20>
+      </Unit11>
+      <Unit12>
         <Filename Value="mcxstoprun.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmStop"/>
@@ -343,439 +271,39 @@
         <CursorPos X="43" Y="13"/>
         <UsageCount Value="150"/>
         <Loaded Value="True"/>
-      </Unit20>
-      <Unit21>
-        <Filename Value="/usr/share/lazarus/2.0.2/lcl/dialogs.pp"/>
-        <UnitName Value="Dialogs"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="33"/>
-        <CursorPos X="54" Y="43"/>
-        <UsageCount Value="3"/>
-      </Unit21>
-      <Unit22>
-        <Filename Value="/Developer/lazarus/lcl/lclintf.pas"/>
-        <UnitName Value="LCLIntf"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="63"/>
-        <CursorPos X="49" Y="77"/>
-        <UsageCount Value="2"/>
-      </Unit22>
-      <Unit23>
-        <Filename Value="../../../../../Applications/Lazarus/components/lazutils/utf8process.pp"/>
-        <UnitName Value="UTF8Process"/>
-        <EditorIndex Value="-1"/>
-        <UsageCount Value="2"/>
-      </Unit23>
-      <Unit24>
-        <Filename Value="../../../../../Applications/Lazarus/lcl/include/customaction.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="95"/>
-        <CursorPos X="16" Y="114"/>
-        <UsageCount Value="3"/>
-      </Unit24>
-      <Unit25>
-        <Filename Value="../../../../../Applications/Lazarus/lcl/include/containedaction.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="81"/>
-        <CursorPos Y="100"/>
-        <UsageCount Value="3"/>
-      </Unit25>
-      <Unit26>
-        <Filename Value="../../../../../Applications/Lazarus/lcl/include/control.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="2884"/>
-        <CursorPos Y="2917"/>
-        <UsageCount Value="3"/>
-      </Unit26>
-      <Unit27>
-        <Filename Value="/users/fangq/tmp/unit1.pas"/>
-        <UnitName Value="Unit1"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos Y="35"/>
-        <UsageCount Value="4"/>
-      </Unit27>
-      <Unit28>
-        <Filename Value="sshclient.pas"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="64" Y="6"/>
-        <UsageCount Value="15"/>
-      </Unit28>
-      <Unit29>
-        <Filename Value="synapse/libssh2.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="79"/>
-        <UsageCount Value="14"/>
-      </Unit29>
-      <Unit30>
+      </Unit12>
+      <Unit13>
         <Filename Value="synapse/ssl_libssh2.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="4"/>
         <CursorPos X="69" Y="14"/>
         <UsageCount Value="137"/>
-      </Unit30>
-      <Unit31>
-        <Filename Value="synapse/ssl_openssl.pas"/>
-        <EditorIndex Value="-1"/>
-        <WindowIndex Value="-1"/>
-        <TopLine Value="-1"/>
-        <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="14"/>
-      </Unit31>
-      <Unit32>
-        <Filename Value="synapse/ssl_openssl_lib.pas"/>
-        <EditorIndex Value="-1"/>
-        <WindowIndex Value="-1"/>
-        <TopLine Value="-1"/>
-        <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="14"/>
-      </Unit32>
-      <Unit33>
-        <Filename Value="synapse/tlntsend.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="329"/>
-        <CursorPos X="3" Y="99"/>
-        <UsageCount Value="15"/>
-      </Unit33>
-      <Unit34>
-        <Filename Value="synapse/blcksock.pas"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="41" Y="18"/>
-        <UsageCount Value="6"/>
-      </Unit34>
-      <Unit35>
-        <Filename Value="synapse/synsock.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="44"/>
-        <CursorPos X="10" Y="72"/>
-        <UsageCount Value="3"/>
-      </Unit35>
-      <Unit36>
-        <Filename Value="synapse/synautil.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="31"/>
-        <CursorPos X="2" Y="52"/>
-        <UsageCount Value="3"/>
-      </Unit36>
-      <Unit37>
-        <Filename Value="/users/fangq/.lazarus/onlinepackagemanager/packages/synapse40.1/ssl_libssh2.pas"/>
-        <EditorIndex Value="-1"/>
-        <WindowIndex Value="-1"/>
-        <TopLine Value="-1"/>
-        <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="12"/>
-      </Unit37>
-      <Unit38>
+      </Unit13>
+      <Unit14>
         <Filename Value="runexec.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="22"/>
         <UsageCount Value="134"/>
-      </Unit38>
-      <Unit39>
+      </Unit14>
+      <Unit15>
         <Filename Value="runssh.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <UsageCount Value="133"/>
-      </Unit39>
-      <Unit40>
-        <Filename Value="/users/fangq/tmp/runssh.pas"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="37" Y="9"/>
-        <UsageCount Value="2"/>
-      </Unit40>
-      <Unit41>
-        <Filename Value="/users/fangq/tmp/sshclient.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="39"/>
-        <CursorPos X="5" Y="80"/>
-        <UsageCount Value="2"/>
-      </Unit41>
-      <Unit42>
-        <Filename Value="/usr/share/fpcsrc/3.0.4/rtl/objpas/sysutils/sysstrh.inc"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="28" Y="27"/>
-        <UsageCount Value="3"/>
-      </Unit42>
-      <Unit43>
-        <Filename Value="/usr/share/fpcsrc/3.0.4/packages/fcl-process/src/process.pp"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="32" Y="8"/>
-        <UsageCount Value="44"/>
-      </Unit43>
-      <Unit44>
-        <Filename Value="/space/taote/1/users/fangq/Download/Axis Ruler/Unit1.pas"/>
-        <ComponentName Value="Form1"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="135"/>
-        <CursorPos X="57" Y="169"/>
-        <UsageCount Value="5"/>
-      </Unit44>
-      <Unit45>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/OpenGLAdapter.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="534"/>
-        <CursorPos X="35" Y="540"/>
-        <UsageCount Value="4"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit45>
-      <Unit46>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/OpenGLTokens.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="125"/>
-        <CursorPos X="3" Y="142"/>
-        <UsageCount Value="9"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit46>
-      <Unit47>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/GLObjects.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="3363"/>
-        <CursorPos X="26" Y="3370"/>
-        <UsageCount Value="39"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit47>
-      <Unit48>
-        <Filename Value="mcxview.lfm"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="55" Y="21"/>
-        <UsageCount Value="10"/>
-        <DefaultSyntaxHighlighter Value="LFM"/>
-      </Unit48>
-      <Unit49>
-        <Filename Value="../../../../../../Library/glscene7124/Samples/Lazarus/graph/fxy/Unit1.lfm"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="70"/>
-        <CursorPos Y="81"/>
-        <UsageCount Value="5"/>
-        <DefaultSyntaxHighlighter Value="LFM"/>
-      </Unit49>
-      <Unit50>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/GLVectorGeometry.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="542"/>
-        <CursorPos X="11" Y="559"/>
-        <UsageCount Value="5"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit50>
-      <Unit51>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/GLGraph.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="178"/>
-        <CursorPos X="3" Y="195"/>
-        <UsageCount Value="28"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit51>
-      <Unit52>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/GLScene.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="1458"/>
-        <CursorPos X="44" Y="1466"/>
-        <UsageCount Value="27"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit52>
-      <Unit53>
-        <Filename Value="mcxrender.lfm"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="810"/>
-        <CursorPos X="13" Y="842"/>
-        <UsageCount Value="9"/>
-        <DefaultSyntaxHighlighter Value="LFM"/>
-      </Unit53>
-      <Unit54>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/GLBitmapFont.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="334"/>
-        <CursorPos X="14" Y="356"/>
-        <UsageCount Value="9"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit54>
-      <Unit55>
-        <Filename Value="/usr/share/lazarus/2.0.6/lcl/include/customform.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="2193"/>
-        <CursorPos Y="2215"/>
-        <UsageCount Value="14"/>
-      </Unit55>
-      <Unit56>
-        <Filename Value="/usr/share/lazarus/2.0.6/lcl/include/application.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="2412"/>
-        <CursorPos Y="2428"/>
-        <UsageCount Value="13"/>
-      </Unit56>
-      <Unit57>
-        <Filename Value="/usr/share/lazarus/2.0.6/lcl/forms.pp"/>
-        <UnitName Value="Forms"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="1217"/>
-        <CursorPos X="28" Y="1238"/>
-        <UsageCount Value="13"/>
-      </Unit57>
-      <Unit58>
-        <Filename Value="/usr/share/lazarus/2.0.6/lcl/include/containedaction.inc"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="77"/>
-        <CursorPos X="45" Y="91"/>
-        <UsageCount Value="13"/>
-      </Unit58>
-      <Unit59>
-        <Filename Value="../../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/XOpenGL.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="177"/>
-        <CursorPos X="78" Y="191"/>
-        <UsageCount Value="13"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit59>
-      <Unit60>
-        <Filename Value="../../../../../../.lazarus/onlinepackagemanager/packages/GLSceneLCL/Source/Basis/XOpenGL.pas"/>
-        <EditorIndex Value="2"/>
-        <TopLine Value="178"/>
-        <CursorPos X="74" Y="187"/>
-        <UsageCount Value="12"/>
-        <Loaded Value="True"/>
-        <DefaultSyntaxHighlighter Value="Delphi"/>
-      </Unit60>
-      <Unit61>
-        <Filename Value="/usr/share/lazarus/2.0.8/lcl/asyncprocess.pp"/>
-        <UnitName Value="AsyncProcess"/>
-        <EditorIndex Value="1"/>
-        <TopLine Value="33"/>
-        <CursorPos X="34" Y="42"/>
-        <UsageCount Value="12"/>
-        <Loaded Value="True"/>
-      </Unit61>
+      </Unit15>
     </Units>
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory Count="30" HistoryIndex="29">
-      <Position1>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1932" TopLine="1906"/>
-      </Position1>
-      <Position2>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1922" TopLine="1906"/>
-      </Position2>
-      <Position3>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1923" TopLine="1906"/>
-      </Position3>
-      <Position4>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1922" Column="53" TopLine="1906"/>
-      </Position4>
-      <Position5>
-        <Filename Value="mcxgui.pas"/>
-      </Position5>
-      <Position6>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="691" Column="24" TopLine="665"/>
-      </Position6>
-      <Position7>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="976" Column="57" TopLine="950"/>
-      </Position7>
-      <Position8>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1431" Column="26" TopLine="1409"/>
-      </Position8>
-      <Position9>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1432" Column="20" TopLine="1409"/>
-      </Position9>
-      <Position10>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1437" Column="20" TopLine="1411"/>
-      </Position10>
-      <Position11>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1559" Column="30" TopLine="1539"/>
-      </Position11>
-      <Position12>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1565" Column="25" TopLine="1539"/>
-      </Position12>
-      <Position13>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1921" Column="21" TopLine="1896"/>
-      </Position13>
-      <Position14>
-        <Filename Value="mcxgui.pas"/>
-      </Position14>
-      <Position15>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="431" Column="30" TopLine="406"/>
-      </Position15>
-      <Position16>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="519" Column="13" TopLine="499"/>
-      </Position16>
-      <Position17>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1394" Column="51" TopLine="1369"/>
-      </Position17>
-      <Position18>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1396" Column="68" TopLine="1371"/>
-      </Position18>
-      <Position19>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1404" Column="47" TopLine="1379"/>
-      </Position19>
-      <Position20>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1406" Column="64" TopLine="1381"/>
-      </Position20>
-      <Position21>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1497" Column="49" TopLine="1472"/>
-      </Position21>
-      <Position22>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1499" Column="66" TopLine="1474"/>
-      </Position22>
-      <Position23>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1519" Column="45" TopLine="1494"/>
-      </Position23>
-      <Position24>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1521" Column="62" TopLine="1496"/>
-      </Position24>
-      <Position25>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="2637" Column="42" TopLine="2624"/>
-      </Position25>
-      <Position26>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1923" TopLine="1907"/>
-      </Position26>
-      <Position27>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1932" TopLine="1907"/>
-      </Position27>
-      <Position28>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1923" TopLine="1907"/>
-      </Position28>
-      <Position29>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1895" Column="51" TopLine="1883"/>
-      </Position29>
-      <Position30>
-        <Filename Value="mcxgui.pas"/>
-      </Position30>
-    </JumpHistory>
+    <JumpHistory HistoryIndex="-1"/>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="synapse"/>
+      <OtherUnitFiles Value="synapse;glscene"/>
       <UnitOutputDirectory Value="debug"/>
     </SearchPaths>
     <Parsing>
@@ -801,23 +329,4 @@
       </Options>
     </Linking>
   </CompilerOptions>
-  <Debugging>
-    <Watches Count="5">
-      <Item1>
-        <Expression Value="edOutputType.ItemIndex"/>
-      </Item1>
-      <Item2>
-        <Expression Value="StudioConfig.ReadString('UseManualPath','false')"/>
-      </Item2>
-      <Item3>
-        <Expression Value="FTelnetSend"/>
-      </Item3>
-      <Item4>
-        <Expression Value="FullLog"/>
-      </Item4>
-      <Item5>
-        <Expression Value="vx.X + vy.X + vz.X * z"/>
-      </Item5>
-    </Watches>
-  </Debugging>
 </CONFIG>
