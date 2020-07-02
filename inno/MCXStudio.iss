@@ -30,8 +30,8 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppDir}
 DisableProgramGroupPage=yes
-LicenseFile=..\MCXStudio\MCXSuite\mcx\LICENSE.txt
-InfoAfterFile=..\MCXStudio\README.txt
+LicenseFile=..\MCXSuite\mcx\LICENSE.txt
+InfoAfterFile=..\README.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename=mcxstudio
@@ -59,13 +59,13 @@ Name: "{app}\MCXSuite"
 ;;----------------------------------------------------------------------
 
 [Files]
-Source: "..\MCXStudio\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MCXStudio\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MCXStudio\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MCXStudio\README.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MCXStudio\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MCXStudio\mcxsuite_addpath.m"; DestDir: "{code:GetMatlabToolboxLocalPath}\local"; Flags: ignoreversion
-Source: "..\MCXStudio\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\mcxsuite_addpath.m"; DestDir: "{code:GetMatlabToolboxLocalPath}\local"; Flags: ignoreversion
+Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ;;----------------------------------------------------------------------
@@ -119,8 +119,8 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 const
   EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
 
-; codes to finding MATLAB's installation path is derived from
-; https://stackoverflow.com/a/46283761/4271392
+// codes to finding MATLAB's installation path is derived from
+// https://stackoverflow.com/a/46283761/4271392
 var
   MatlabToolboxLocalPath: string;
 
@@ -146,8 +146,8 @@ begin
   Result := True;
 end;
 
-; codes to modify PATH environment variable is derived from
-; https://stackoverflow.com/a/46609047/4271392
+// codes to modify PATH environment variable is derived from
+// https://stackoverflow.com/a/46609047/4271392
 
 procedure EnvAddPath(Path: string);
 var
