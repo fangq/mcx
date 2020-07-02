@@ -100,15 +100,15 @@
 #define UNSET_SAVE_VEXIT(a)     ((a) & ~(0x1<<5))   /**<  save exit vector/directions */
 #define UNSET_SAVE_W0(a)        ((a) & ~(0x1<<6))   /**<  save initial weight */
 
-#ifndef MCX_CONTAINER
+#if !defined(MCX_CONTAINER) && !defined(_MSC_VER)
   #define S_RED     "\x1b[31m"
   #define S_GREEN   "\x1b[32m"
   #define S_YELLOW  "\x1b[33m"
   #define S_BLUE    "\x1b[34m"
   #define S_MAGENTA "\x1b[35m"
   #define S_CYAN    "\x1b[36m"
-  #define S_BOLD     "\x1b[1m"
-  #define S_ITALIC   "\x1b[3m"
+  #define S_BOLD    "\x1b[1m"
+  #define S_ITALIC  "\x1b[3m"
   #define S_RESET   "\x1b[0m"
 #else
   #define S_RED
