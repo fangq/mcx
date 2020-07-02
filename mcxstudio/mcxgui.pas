@@ -2649,7 +2649,7 @@ begin
     if(proc=pMCX) and (pMCX.Tag=-1) then begin
         UpdateGPUList(Buffer);
     end;
-    Sleep(100);
+    Sleep(500);
 end;
 
 procedure TfmMCX.SaveTasksToIni(fname: string);
