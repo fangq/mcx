@@ -41,6 +41,8 @@
 }
 unit GLCadencer;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

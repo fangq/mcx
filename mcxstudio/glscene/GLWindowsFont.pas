@@ -27,6 +27,8 @@
 }
 unit GLWindowsFont;
 
+{$mode delphi}
+
 interface
 
 {$INCLUDE GLScene.inc}

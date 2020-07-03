@@ -35,6 +35,8 @@
 
 unit GLSLog;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

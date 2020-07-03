@@ -344,6 +344,8 @@
 }
 unit GLScene;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

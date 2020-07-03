@@ -216,6 +216,8 @@
 }
 unit GLTexture;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

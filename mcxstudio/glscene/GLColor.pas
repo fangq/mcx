@@ -10,6 +10,8 @@
 }
 unit GLColor;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

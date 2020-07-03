@@ -16,6 +16,8 @@
 
 unit GLImageUtils;
 
+{$mode delphi}
+
 // DONE: ConvertImage
 // TODO: Complite InfToXXX
 // DONE: S3TC decompression

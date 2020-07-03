@@ -17,6 +17,8 @@
 }
 unit GLSpline;
 
+{$mode delphi}
+
 interface
 
 uses

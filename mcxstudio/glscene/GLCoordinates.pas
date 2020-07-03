@@ -14,6 +14,8 @@
 }
 unit GLCoordinates;
 
+{$mode delphi}
+
 interface
 
 uses

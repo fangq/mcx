@@ -43,6 +43,8 @@
 }
 unit GLPersistentClasses;
 
+{$mode delphi}
+
 interface
 {$I GLScene.inc}
 

@@ -143,6 +143,8 @@
 }
 unit GLObjects;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

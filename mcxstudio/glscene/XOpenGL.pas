@@ -37,6 +37,8 @@
 }
 unit XOpenGL;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

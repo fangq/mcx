@@ -23,6 +23,8 @@
 
 unit OpenGLAdapter;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

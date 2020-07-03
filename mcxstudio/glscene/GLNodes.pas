@@ -18,6 +18,8 @@
 }
 unit GLNodes;
 
+{$mode delphi}
+
 interface
 
 uses

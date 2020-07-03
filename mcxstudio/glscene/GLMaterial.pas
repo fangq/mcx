@@ -44,6 +44,8 @@
 }
 unit GLMaterial;
 
+{$mode delphi}
+
 interface
 
 uses

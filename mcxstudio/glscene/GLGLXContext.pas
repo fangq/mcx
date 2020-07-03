@@ -21,6 +21,8 @@
 }
 unit GLGLXContext;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

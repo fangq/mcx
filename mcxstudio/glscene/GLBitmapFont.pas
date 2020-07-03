@@ -50,6 +50,8 @@
 }
 unit GLBitmapFont;
 
+{$mode delphi}
+
 {$I GLScene.inc}
 
 {$DEFINE GLS_UNICODE_SUPPORT}

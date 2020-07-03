@@ -12,6 +12,8 @@
 
 unit GLBaseClasses;
 
+{$mode delphi}
+
 interface
 
 uses

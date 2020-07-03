@@ -79,6 +79,8 @@
 }
 unit GLContext;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

@@ -79,6 +79,8 @@
 }
 unit GLCrossPlatform;
 
+{$mode delphi}
+
 interface
 
 {$INCLUDE GLScene.inc}

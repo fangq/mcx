@@ -33,6 +33,8 @@
 }
 unit GLGraph;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

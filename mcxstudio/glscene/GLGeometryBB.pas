@@ -33,6 +33,8 @@
 }
 unit GLGeometryBB;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

@@ -57,6 +57,8 @@
 }
 unit GLVectorLists;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}
