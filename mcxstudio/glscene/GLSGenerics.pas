@@ -12,6 +12,8 @@
 
 unit GLSGenerics;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

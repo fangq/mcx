@@ -24,6 +24,8 @@
 
 unit GLViewer;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}

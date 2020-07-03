@@ -55,6 +55,8 @@
 }
 unit GLWin32Context;
 
+{$mode delphi}
+
 interface
 
 {$I GLScene.inc}
