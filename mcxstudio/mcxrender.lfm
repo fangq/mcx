@@ -1,24 +1,25 @@
 object fmDomain: TfmDomain
   Left = 2285
-  Height = 639
+  Height = 732
   Top = 198
-  Width = 1048
+  Width = 1201
   Caption = 'MCX Domain Renderer'
-  ClientHeight = 639
-  ClientWidth = 1048
-  Font.Height = -11
+  ClientHeight = 732
+  ClientWidth = 1201
+  DesignTimePPI = 110
+  Font.Height = -13
   Font.Name = 'MS Sans Serif'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnResize = FormResize
   OnShow = FormShow
-  Position = poOwnerFormCenter
-  LCLVersion = '2.0.6.0'
+  Position = poScreenCenter
+  LCLVersion = '2.0.8.0'
   object glCanvas: TGLSceneViewer
-    Left = 418
-    Height = 584
-    Top = 55
-    Width = 630
+    Left = 479
+    Height = 669
+    Top = 63
+    Width = 722
     Camera = glCamera
     VSync = vsmSync
     Buffer.BackgroundColor = clSilver
@@ -26,7 +27,7 @@ object fmDomain: TfmDomain
     Buffer.AmbientColor.Green = 0.200000002980232
     Buffer.AmbientColor.Blue = 0.200000002980232
     Buffer.AmbientColor.Alpha = 1
-    FieldOfView = 135.318710327148
+    FieldOfView = 140.529663085938
     Align = alClient
     OnMouseDown = glCanvasMouseDown
     OnMouseMove = glCanvasMouseMove
@@ -34,21 +35,21 @@ object fmDomain: TfmDomain
     TabOrder = 0
   end
   object Splitter1: TSplitter
-    Left = 413
-    Height = 584
-    Top = 55
-    Width = 5
+    Left = 473
+    Height = 669
+    Top = 63
+    Width = 6
     OnMoved = Splitter1Moved
   end
   object plEditor: TPanel
     Left = 0
-    Height = 584
-    Top = 55
-    Width = 413
+    Height = 669
+    Top = 63
+    Width = 473
     Align = alLeft
-    ClientHeight = 584
-    ClientWidth = 413
-    Font.Height = -11
+    ClientHeight = 669
+    ClientWidth = 473
+    Font.Height = -13
     Font.Name = 'MS Sans Serif'
     ParentFont = False
     TabOrder = 2
@@ -56,11 +57,11 @@ object fmDomain: TfmDomain
     OnMouseLeave = plEditorMouseLeave
     inline mmShapeJSON: TSynEdit
       Left = 1
-      Height = 582
+      Height = 667
       Top = 1
-      Width = 411
+      Width = 471
       Align = alClient
-      Font.Height = -12
+      Font.Height = -14
       Font.Name = 'Courier New'
       Font.Pitch = fpFixed
       Font.Quality = fqNonAntialiased
@@ -69,7 +70,7 @@ object fmDomain: TfmDomain
       TabOrder = 0
       OnMouseEnter = plEditorMouseEnter
       OnMouseLeave = plEditorMouseLeave
-      Gutter.Width = 31
+      Gutter.Width = 37
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -558,12 +559,12 @@ object fmDomain: TfmDomain
       LineHighlightColor.Foreground = clNone
       inline SynLeftGutterPartList1: TSynGutterPartList
         object SynGutterMarks1: TSynGutterMarks
-          Width = 24
+          Width = 28
           Visible = False
           MouseActions = <>
         end
         object SynGutterLineNumber1: TSynGutterLineNumber
-          Width = 15
+          Width = 17
           MouseActions = <>
           MarkupInfo.Background = clBtnFace
           MarkupInfo.Foreground = clNone
@@ -573,7 +574,7 @@ object fmDomain: TfmDomain
           LeadingZeros = False
         end
         object SynGutterChanges1: TSynGutterChanges
-          Width = 4
+          Width = 5
           MouseActions = <>
           ModifiedColor = 59900
           SavedColor = clGreen
@@ -586,6 +587,7 @@ object fmDomain: TfmDomain
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
           AutoSize = False
+          Width = 13
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray
@@ -597,14 +599,14 @@ object fmDomain: TfmDomain
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 55
+    Height = 63
     Top = 0
-    Width = 1048
-    ButtonHeight = 50
-    ButtonWidth = 50
+    Width = 1201
+    ButtonHeight = 57
+    ButtonWidth = 57
     Caption = 'ToolBar1'
     Color = clWhite
-    Font.Height = -11
+    Font.Height = -13
     Font.Name = 'MS Sans Serif'
     Images = ImageList3
     ParentColor = False
@@ -619,37 +621,37 @@ object fmDomain: TfmDomain
       Action = acRender
     end
     object ToolButton2: TToolButton
-      Left = 53
+      Left = 58
       Top = 2
       Action = acHideBBX
     end
     object ToolButton3: TToolButton
-      Left = 105
+      Left = 115
       Top = 2
       Action = acResetCamera
     end
     object ToolButton4: TToolButton
-      Left = 214
+      Left = 234
       Top = 2
       Action = acSaveImage
     end
     object ToolButton5: TToolButton
-      Left = 323
+      Left = 442
       Top = 2
       Action = acSaveJSON
     end
     object ToolButton6: TToolButton
-      Left = 435
+      Left = 504
       Top = 2
       Action = acExit
     end
     object ToolButton8: TToolButton
-      Left = 271
+      Left = 296
       Top = 2
       Action = acLoadJSON
     end
     object btPin: TToolButton
-      Left = 157
+      Left = 172
       Hint = 'Show editor'
       Top = 2
       Caption = 'Pin Editor'
@@ -657,22 +659,22 @@ object fmDomain: TfmDomain
       Style = tbsCheck
     end
     object ToolButton11: TToolButton
-      Left = 209
-      Height = 50
+      Left = 229
+      Height = 57
       Top = 2
       Caption = 'ToolButton11'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
-      Left = 266
-      Height = 50
+      Left = 291
+      Height = 57
       Top = 2
       Caption = 'ToolButton7'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 375
-      Height = 50
+      Left = 499
+      Height = 57
       Top = 2
       Caption = 'ToolButton9'
       Style = tbsDivider
@@ -682,18 +684,21 @@ object fmDomain: TfmDomain
       Height = 50
       Hint = 'Change Background Color'
       Top = 2
-      Width = 51
+      Width = 58
       Align = alLeft
       BorderWidth = 2
       ButtonColorSize = 16
       ButtonColor = clSilver
       Flat = True
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
       OnColorChanged = btBackgroundColorChanged
+      ParentFont = False
     end
   end
   object glShape: TGLScene
-    left = 463
-    top = 8
+    left = 531
+    top = 9
     object XYGrid: TGLXYZGrid
       TagFloat = 0
       PitchAngle = 0
@@ -908,8 +913,8 @@ object fmDomain: TfmDomain
       Up.Coordinates = {
         00000000000000000000803F00000000
       }
-      left = 241
-      top = 145
+      left = 276
+      top = 166
     end
     object DCCoordsX: TGLDummyCube
       TagFloat = 0
@@ -948,13 +953,13 @@ object fmDomain: TfmDomain
   object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
     DefaultFilter = 'UNIX Shell Scripts (*.sh)|*.sh'
     Enabled = False
-    left = 960
-    top = 8
+    left = 1100
+    top = 9
   end
   object acShapeRender: TActionList
     Images = ImageList3
-    left = 536
-    top = 8
+    left = 614
+    top = 9
     object acResetCamera: TAction
       Caption = 'acResetCamera'
       Hint = 'Reset Camera'
@@ -1000,15 +1005,15 @@ object fmDomain: TfmDomain
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 632
-    top = 8
+    left = 724
+    top = 9
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 721
-    top = 8
+    left = 826
+    top = 9
     Bitmap = {
       4C69080000003000000030000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -3321,21 +3326,20 @@ object fmDomain: TfmDomain
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 808
-    top = 8
+    left = 926
+    top = 9
   end
   object dlSaveFile: TSaveDialog
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 896
-    top = 8
+    left = 1027
+    top = 9
   end
   object GLWinBmpFont: TGLWindowsBitmapFont
     Font.Color = clWhite
-    Font.Height = 20
     Font.Name = 'Arial'
-    left = 592
-    top = 8
+    left = 678
+    top = 9
   end
 end

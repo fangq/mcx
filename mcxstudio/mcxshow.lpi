@@ -26,7 +26,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="$(ProjPath)/glscene"/>
+            <OtherUnitFiles Value="$(ProjPath)\glscene"/>
             <UnitOutputDirectory Value="debug"/>
             <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
           </SearchPaths>
@@ -70,7 +70,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="$(ProjPath)/glscene"/>                        
+            <OtherUnitFiles Value="$(ProjPath)\glscene"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
             <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
           </SearchPaths>
@@ -109,7 +109,7 @@
         <Mode0 Name="default"/>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="4">
+    <RequiredPackages Count="2">
       <Item1>
         <PackageName Value="SynEdit"/>
       </Item1>
@@ -117,12 +117,12 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="54">
+    <Units Count="56">
       <Unit0>
         <Filename Value="mcxshow.lpr"/>
         <IsPartOfProject Value="True"/>
         <CursorPos X="54" Y="9"/>
-        <UsageCount Value="97"/>
+        <UsageCount Value="100"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit0>
       <Unit1>
@@ -132,9 +132,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="910"/>
-        <CursorPos X="43" Y="927"/>
-        <UsageCount Value="97"/>
+        <TopLine Value="861"/>
+        <CursorPos X="56" Y="877"/>
+        <UsageCount Value="100"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -389,7 +389,7 @@
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit36>
       <Unit37>
-        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\packages\fcl-json\src\fpjson.pp"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\packages\fcl-json\src\fpjson.pp"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="538"/>
         <CursorPos X="100" Y="549"/>
@@ -397,7 +397,7 @@
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit37>
       <Unit38>
-        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\rtl\inc\systemh.inc"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.0\rtl\inc\systemh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="655"/>
         <CursorPos X="25" Y="684"/>
@@ -486,39 +486,36 @@
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit48>
       <Unit49>
-        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.4\packages\fcl-json\src\fpjson.pp"/>
-        <EditorIndex Value="4"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\fpcsrc\3.0.4\packages\fcl-json\src\fpjson.pp"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="109"/>
         <CursorPos X="46" Y="125"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit49>
       <Unit50>
         <Filename Value="..\..\..\..\..\..\..\.lazarus\onlinepackagemanager\packages\GLSceneLCL\Source\GLScene.pas"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="2078"/>
         <CursorPos X="14" Y="2095"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit50>
       <Unit51>
-        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.6\lcl\dialogs.pp"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.6\lcl\dialogs.pp"/>
         <UnitName Value="Dialogs"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="319"/>
         <CursorPos X="14" Y="335"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit51>
       <Unit52>
-        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.6\lcl\buttons.pp"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.6\lcl\buttons.pp"/>
         <UnitName Value="Buttons"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="375"/>
         <CursorPos X="14" Y="391"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit52>
       <Unit53>
         <Filename Value="..\..\..\..\..\..\..\.lazarus\onlinepackagemanager\packages\GLSceneLCL\Source\GLColor.pas"/>
@@ -528,125 +525,143 @@
         <UsageCount Value="10"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit53>
+      <Unit54>
+        <Filename Value="glscene\GLTexture.pas"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="214"/>
+        <CursorPos X="22" Y="227"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit54>
+      <Unit55>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="192"/>
+        <CursorPos X="49" Y="207"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit55>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="790" TopLine="774"/>
+        <Caret Line="1010" Column="35" TopLine="985"/>
       </Position1>
       <Position2>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="785" Column="15" TopLine="774"/>
+        <Caret Line="1036" Column="35" TopLine="1011"/>
       </Position2>
       <Position3>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="790" TopLine="774"/>
+        <Caret Line="1058" Column="35" TopLine="1033"/>
       </Position3>
       <Position4>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="791" TopLine="774"/>
+        <Caret Line="1084" Column="36" TopLine="1071"/>
       </Position4>
       <Position5>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="793" Column="45" TopLine="768"/>
       </Position5>
       <Position6>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="795" Column="24" TopLine="768"/>
+        <Caret Line="80" Column="22" TopLine="55"/>
       </Position6>
       <Position7>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="793" Column="34" TopLine="768"/>
+        <Caret Line="883" Column="31" TopLine="861"/>
       </Position7>
       <Position8>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="800" Column="23" TopLine="774"/>
+        <Caret Line="869" Column="17" TopLine="861"/>
       </Position8>
       <Position9>
         <Filename Value="mcxrender.pas"/>
+        <Caret Line="884" TopLine="861"/>
       </Position9>
       <Position10>
         <Filename Value="mcxrender.pas"/>
-        <Caret Line="89" Column="24" TopLine="61"/>
+        <Caret Line="885" TopLine="861"/>
       </Position10>
       <Position11>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="217" Column="30" TopLine="198"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="981" TopLine="965"/>
       </Position11>
       <Position12>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="785" Column="39" TopLine="772"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="186" TopLine="170"/>
       </Position12>
       <Position13>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="809" Column="54" TopLine="789"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="200" TopLine="177"/>
       </Position13>
       <Position14>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="812" Column="22" TopLine="795"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="202" TopLine="183"/>
       </Position14>
       <Position15>
-        <Filename Value="mcxrender.pas"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="203" TopLine="189"/>
       </Position15>
       <Position16>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="95" Column="38" TopLine="67"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="204" TopLine="189"/>
       </Position16>
       <Position17>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="798" Column="86" TopLine="784"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="205" TopLine="189"/>
       </Position17>
       <Position18>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="799" Column="86" TopLine="785"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="206" TopLine="189"/>
       </Position18>
       <Position19>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="800" Column="86" TopLine="786"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="207" TopLine="189"/>
       </Position19>
       <Position20>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="799" Column="86" TopLine="785"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="208" TopLine="189"/>
       </Position20>
       <Position21>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="800" Column="86" TopLine="786"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="209" TopLine="189"/>
       </Position21>
       <Position22>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="929" Column="51" TopLine="924"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="210" TopLine="189"/>
       </Position22>
       <Position23>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="927" Column="35" TopLine="910"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="209" TopLine="189"/>
       </Position23>
       <Position24>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="928" Column="28" TopLine="910"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="210" TopLine="189"/>
       </Position24>
       <Position25>
-        <Filename Value="..\..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.6\lcl\dialogs.pp"/>
-        <Caret Line="335" Column="14" TopLine="319"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="209" TopLine="189"/>
       </Position25>
       <Position26>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="921" Column="32" TopLine="910"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="210" TopLine="189"/>
       </Position26>
       <Position27>
-        <Filename Value="..\..\..\..\..\..\..\.lazarus\onlinepackagemanager\packages\GLSceneLCL\Source\GLScene.pas"/>
-        <Caret Line="2095" Column="14" TopLine="2078"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="209" TopLine="189"/>
       </Position27>
       <Position28>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="922" Column="18" TopLine="910"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="212" TopLine="189"/>
       </Position28>
       <Position29>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="927" Column="53" TopLine="910"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="216" TopLine="190"/>
       </Position29>
       <Position30>
-        <Filename Value="mcxrender.pas"/>
-        <Caret Line="928" Column="62" TopLine="910"/>
+        <Filename Value="..\..\..\..\..\..\..\..\usr\share\lazarus\2.0.8\lcl\include\customform.inc"/>
+        <Caret Line="207" Column="49" TopLine="192"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
@@ -658,7 +673,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="$(ProjPath)/glscene"/>
+      <OtherUnitFiles Value="$(ProjPath)\glscene"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)"/>
     </SearchPaths>
