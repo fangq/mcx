@@ -30,11 +30,11 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppDir}
 DisableProgramGroupPage=yes
-LicenseFile=..\MCXSuite\mcx\LICENSE.txt
+LicenseFile=..\MCXSuite\mcx\NOTICE.txt
 InfoAfterFile=..\README.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputBaseFilename=mcxstudio
+OutputBaseFilename={#MyAppDir}-{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern

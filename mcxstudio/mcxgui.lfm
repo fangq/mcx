@@ -2931,9 +2931,11 @@ object fmMCX: TfmMCX
         TabOrder = 8
       end
       object edOutputFormat: TComboBox
+        AnchorSideLeft.Control = Label11
+        AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = edOutputType
         AnchorSideTop.Side = asrCenter
-        Left = 351
+        Left = 305
         Height = 23
         Hint = 'OutputFormat '#10#10'This specifies the output data file format. The supported formats are'#10#10'.mc2 - a simple binary format stores the voxel-by-voxel binary data'#10'    in the column-major order'#10'.nii - the NIfTI-1 format'#10'.tx3 - a simple 3D texture binary format.'#10'ascii - text-based data file'
         Top = 51

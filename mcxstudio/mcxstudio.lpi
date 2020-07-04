@@ -144,8 +144,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="2926"/>
-        <CursorPos X="57" Y="2946"/>
+        <TopLine Value="729"/>
+        <CursorPos X="23" Y="759"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="1">
           <Item0 ID="9"/>
@@ -159,7 +159,7 @@
         <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="5"/>
         <CursorPos X="36" Y="11"/>
         <UsageCount Value="229"/>
         <Loaded Value="True"/>
@@ -191,7 +191,7 @@
         <ComponentName Value="fmSource"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="102"/>
         <CursorPos X="36" Y="110"/>
         <UsageCount Value="239"/>
@@ -212,7 +212,7 @@
         <ComponentName Value="fmDomain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="11"/>
         <CursorPos X="30" Y="38"/>
         <UsageCount Value="200"/>
@@ -224,7 +224,7 @@
         <ComponentName Value="fmViewer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="500"/>
         <CursorPos X="51" Y="530"/>
         <UsageCount Value="202"/>
@@ -233,7 +233,7 @@
       <Unit9>
         <Filename Value="texture_3d.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="280"/>
         <CursorPos X="58" Y="291"/>
         <UsageCount Value="202"/>
@@ -255,11 +255,10 @@
         <ComponentName Value="fmConfig"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="2"/>
-        <TopLine Value="45"/>
-        <CursorPos X="100" Y="61"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="93"/>
+        <CursorPos X="19" Y="99"/>
         <UsageCount Value="165"/>
-        <Loaded Value="True"/>
       </Unit11>
       <Unit12>
         <Filename Value="mcxstoprun.pas"/>
@@ -297,27 +296,7 @@
     <Build>
       <CleanOutputFileMask Value="*.ppu;*.ppl;*.o;*.or"/>
     </Build>
-    <JumpHistory Count="5" HistoryIndex="4">
-      <Position1>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1701" Column="22" TopLine="1675"/>
-      </Position1>
-      <Position2>
-        <Filename Value="mcxgui.pas"/>
-      </Position2>
-      <Position3>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="479" Column="16" TopLine="451"/>
-      </Position3>
-      <Position4>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1699" Column="18" TopLine="1671"/>
-      </Position4>
-      <Position5>
-        <Filename Value="mcxgui.pas"/>
-        <Caret Line="1701" Column="22" TopLine="1664"/>
-      </Position5>
-    </JumpHistory>
+    <JumpHistory HistoryIndex="-1"/>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>

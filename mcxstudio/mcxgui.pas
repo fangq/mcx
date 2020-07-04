@@ -2940,15 +2940,12 @@ begin
     AddLog(Result);
     if(iscreate) then begin
         try
-          if(not DirectoryExists(path)) then
-               if( not ForceDirectories(path) ) then begin
-                   raise Exception.Create('Can not create session output folder');
-               end;
+          if(not DirectoryExists(path)) then  ForceDirectories(path);
         except
           try
             path:=GetUserDir
                +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
-            ForceDirectories(path);
+            if(not DirectoryExists(path)) then  ForceDirectories(path);
           except
               On E : Exception do
                   MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
