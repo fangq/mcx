@@ -49,7 +49,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: envPath; Description: "Add to PATH variable" 
+Name: "envPath"; Description: "Add to PATH variable" 
+Name: "addMATLABPath"; Description: "Add toolbox paths to MATLAB"
 
 ;;----------------------------------------------------------------------
 
@@ -60,22 +61,25 @@ Name: "{app}\MCXSuite"
 
 [Files]
 Source: "..\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MCXSuite\mcx\bin\mcxshow.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MCXSuite\mcx\bin\mcxviewer.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\mcxsuite_addpath.m"; DestDir: "{code:GetMatlabToolboxLocalPath}\local"; Flags: ignoreversion
-Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mmctools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ;;----------------------------------------------------------------------
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user"; Tasks: desktopicon
-Name: "{autoprograms}\MCX Website"; Filename: "http://mcx.space/"
-Name: "{autoprograms}\MCX Wiki"; Filename: "http://mcx.space/wiki/"
-Name: "{autoprograms}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
+Name: "{group}\MCX Website"; Filename: "http://mcx.space/"
+Name: "{group}\MCX Wiki"; Filename: "http://mcx.space/wiki/"
+Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
 
 ;;----------------------------------------------------------------------
 
@@ -140,7 +144,7 @@ begin
     Result := true;
     Exit;
   end;
-
+  Log(Format('MATLAB Path found at %s', [MatlabExePath]));
   MatlabToolboxLocalPath := ExtractFilePath(MatlabExePath) + '..\toolbox';
 
   Result := True;
@@ -191,6 +195,113 @@ begin
     else Log(Format('Error while removing the [%s] from PATH: [%s]', [Path, Paths]));
 end;
 
+function AddLineToTemplate(
+  FileName: string; StartLine, EndLine, LinePattern, AddLine: string): Boolean;
+var
+  Lines: TArrayOfString;
+  Count, I, I2: Integer;
+  Line: string;
+  State: Integer;
+begin
+  Result := True;
+
+  if not LoadStringsFromFile(FileName, Lines) then  begin
+    Log(Format('Error reading %s', [FileName]));
+    Result := False;
+  end  else  begin
+    State := 0;
+
+    Count := GetArrayLength(Lines);
+    for I := 0 to Count - 1 do begin
+      Line := Trim(Lines[I]);
+      if (CompareText(Line, StartLine) = 0) then begin
+        State := 1;
+        Log(Format('Start line found at %d', [I]));
+      end else if (State = 1) and (Pos(LinePattern,Line) > 0) then  begin
+        Log(Format('Line already present at %d', [I]));
+        State := 2;
+        break;
+      end else if (State = 1) and (CompareText(Line, EndLine) = 0) then  begin
+        Log(Format('End line found at %d, inserting', [I]));
+        SetArrayLength(Lines, Count + 1);
+        for I2 := Count - 1 downto I do
+          Lines[I2 + 1] := Lines[I2];
+        Lines[I] := AddLine;
+        State := 2;
+
+        if not SaveStringsToFile(FileName, Lines, False) then
+        begin
+          Log(Format('Error writting %s', [FileName]));
+          Result := False;
+        end
+          else
+        begin
+          Log(Format('Modifications saved to %s', [FileName]));
+        end;
+
+        break;
+      end;
+    end;
+
+    if Result and (State <> 2) then
+    begin
+      Log(Format('Spot to insert line was not found in %s', [FileName]));
+      Result := False;
+    end;
+  end;
+end;
+
+function DeleteLineInTemplate(
+  FileName: string; StartLine, EndLine, LinePattern: string): Boolean;
+var
+  Lines: TArrayOfString;
+  Count, I, I2: Integer;
+  Line: string;
+  State: Integer;
+begin
+  Result := True;
+
+  if not LoadStringsFromFile(FileName, Lines) then begin
+    Log(Format('Error reading %s', [FileName]));
+    Result := False;
+  end else begin
+    State := 0;
+
+    Count := GetArrayLength(Lines);
+    for I := 0 to Count - 1 do begin
+      Line := Trim(Lines[I]);
+      if (CompareText(Line, StartLine) = 0) then begin
+        State := 1;
+        Log(Format('Start line found at %d', [I]));
+      end else if (State = 1) and (CompareText(Line, EndLine) = 0) then begin
+        Log(Format('Line is not found in the file %d', [I]));
+        State := 2;
+        break;
+      end else if (State = 1) and (Pos(LinePattern,Line) > 0) then   begin
+        Log(Format('End line found at %d, deleting', [I]));
+        for I2 := I+1 to Count - 1 do
+          Lines[I2 - 1] := Lines[I2];
+        SetArrayLength(Lines, Count - 1);
+        State := 2;
+
+        if not SaveStringsToFile(FileName, Lines, False) then begin
+          Log(Format('Error writting %s', [FileName]));
+          Result := False;
+        end else begin
+          Log(Format('Modifications saved to %s', [FileName]));
+        end;
+
+        break;
+      end;
+    end;
+
+    if Result and (State <> 2) then begin
+      Log(Format('Spot to insert line was not found in %s', [FileName]));
+      Result := False;
+    end;
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
     if (CurStep = ssPostInstall) and (IsTaskSelected('envPath')) then begin
@@ -199,15 +310,31 @@ begin
       EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin');
       EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin');
     end;
+    if (CurStep = ssPostInstall) and (IsTaskSelected('addMATLABPath')) then begin
+       AddLineToTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
+              '%%% BEGIN ENTRIES %%%',
+              '%%% END ENTRIES %%%',
+              '%%% MCX PATHS %%%',
+              'matlabroot,''\toolbox\mcxlab;'','+
+              'matlabroot,''\toolbox\mmclab;'','+
+              'matlabroot,''\toolbox\mcxtools;'','+
+              'matlabroot,''\toolbox\mmctools;'','+' ... %%% MCX PATHS %%%'
+           );
+    end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
-    if CurUninstallStep = usPostUninstall then 
-    begin
+    if CurUninstallStep = usPostUninstall then begin
       EnvRemovePath(ExpandConstant('{app}'));
       EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin');
       EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin');
       EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin');
+      InitializeSetup();
+      DeleteLineInTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
+              '%%% BEGIN ENTRIES %%%',
+              '%%% END ENTRIES %%%',
+              '%%% MCX PATHS %%%'
+           );
     end;
 end;

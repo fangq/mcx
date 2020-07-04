@@ -2942,14 +2942,17 @@ begin
         try
           if(not DirectoryExists(path)) then
                if( not ForceDirectories(path) ) then begin
-                   path:=GetUserDir
-                      +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
-                   if( not ForceDirectories(path) ) then
-                      raise Exception.Create('Can not create session output folder');
+                   raise Exception.Create('Can not create session output folder');
                end;
         except
-          On E : Exception do
-              MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
+          try
+            path:=GetUserDir
+               +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+            ForceDirectories(path);
+          except
+              On E : Exception do
+                  MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
+          end;
         end;
     end;
 end;
