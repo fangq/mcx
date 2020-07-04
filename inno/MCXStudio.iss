@@ -39,6 +39,7 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=true
+SetupIconFile=mcxstudio_2020.ico
 
 ;;----------------------------------------------------------------------
 
