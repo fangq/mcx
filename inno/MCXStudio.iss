@@ -154,7 +154,7 @@ end;
 // codes to modify PATH environment variable is derived from
 // https://stackoverflow.com/a/46609047/4271392
 
-procedure EnvAddPath(Path: string);
+procedure EnvAddPath(Path: string; isprepend: boolean);
 var
     Paths: string;
 begin
@@ -165,8 +165,11 @@ begin
     { Skip if string already found in path }
     if Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';') > 0 then exit;
 
-    { App string to the end of the path variable }
-    Paths := Paths + ';'+ Path +';'
+    { Append or prepend string to the end of the path variable }
+    if(isprepend) then
+        Paths := Path + ';' + Paths + ';'
+    else
+        Paths := Paths + ';' + Path + ';';
 
     { Overwrite (or create if missing) path environment variable }
     if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
@@ -306,10 +309,10 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
     if (CurStep = ssPostInstall) and (IsTaskSelected('envPath')) then begin
-      EnvAddPath(ExpandConstant('{app}'));
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin');
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin');
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin');
+      EnvAddPath(ExpandConstant('{app}'), false);
+      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin', false);
+      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin', true);
+      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin',false);
     end;
     if (CurStep = ssPostInstall) and (IsTaskSelected('addMATLABPath')) then begin
        AddLineToTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
