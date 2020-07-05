@@ -1893,7 +1893,7 @@ end;
 procedure TfmMCX.MenuItem22Click(Sender: TObject);
 begin
   if(lvJobs.Selected <> nil) then
-      RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, false)+'"');
+      RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, true)+'"');
 end;
 
 procedure TfmMCX.miClearLogClick(Sender: TObject);
@@ -2940,16 +2940,19 @@ begin
     AddLog(Result);
     if(iscreate) then begin
         try
-          if(not DirectoryExists(path)) then  ForceDirectories(path);
+          if(not DirectoryExists(path)) then
+              ForceDirectories(path);
+          if(not DirectoryExists(path)) then begin
+              path:=GetUserDir
+                 +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
+              Result:=path;
+              AddLog(Result);
+              if(not DirectoryExists(path)) then
+                  ForceDirectories(path);
+          end;
         except
-          try
-            path:=GetUserDir
-               +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
-            if(not DirectoryExists(path)) then  ForceDirectories(path);
-          except
               On E : Exception do
                   MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
-          end;
         end;
     end;
 end;
