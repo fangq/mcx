@@ -318,6 +318,7 @@ begin
               '%%% MCX PATHS %%%',
               'matlabroot,''\toolbox\mcx\mcxlab;'','+
               'matlabroot,''\toolbox\mcx\mmclab;'','+
+              'matlabroot,''\toolbox\mcx\mcxlabcl;'','+
               'matlabroot,''\toolbox\mcx\mcxtools;'','+
               'matlabroot,''\toolbox\mcx\mmctools;'','+' ... %%% MCX PATHS %%%'
            );
