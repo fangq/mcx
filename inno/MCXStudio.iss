@@ -68,9 +68,9 @@ Source: "..\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mmctools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx\mmctools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ;;----------------------------------------------------------------------
@@ -316,10 +316,10 @@ begin
               '%%% BEGIN ENTRIES %%%',
               '%%% END ENTRIES %%%',
               '%%% MCX PATHS %%%',
-              'matlabroot,''\toolbox\mcxlab;'','+
-              'matlabroot,''\toolbox\mmclab;'','+
-              'matlabroot,''\toolbox\mcxtools;'','+
-              'matlabroot,''\toolbox\mmctools;'','+' ... %%% MCX PATHS %%%'
+              'matlabroot,''\toolbox\mcx\mcxlab;'','+
+              'matlabroot,''\toolbox\mcx\mmclab;'','+
+              'matlabroot,''\toolbox\mcx\mcxtools;'','+
+              'matlabroot,''\toolbox\mcx\mmctools;'','+' ... %%% MCX PATHS %%%'
            );
     end;
 end;
