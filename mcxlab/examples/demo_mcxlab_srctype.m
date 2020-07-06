@@ -305,7 +305,7 @@ cfg.unitinmm=1e-3;
 flux = mcxlab(cfg);
 subplot(224);
 flux=sum(flux.data,4);
-hs=slice(log10(flux),20,40,4);
+hs=slice(log10(double(flux)),20,40,4);
 set(hs,'linestyle','none')
 set(gca,'xlim',[0 dim],'ylim',[0 dim],'zlim',[0 dim]);
 axis equal;
