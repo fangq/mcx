@@ -1,25 +1,25 @@
 object fmStop: TfmStop
   Left = 867
-  Height = 179
+  Height = 209
   Top = 284
-  Width = 218
+  Width = 255
   Align = alBottom
   BorderStyle = bsDialog
   Caption = 'Running ...'
-  ClientHeight = 179
-  ClientWidth = 218
-  DesignTimePPI = 94
+  ClientHeight = 209
+  ClientWidth = 255
+  DesignTimePPI = 110
   Position = poOwnerFormCenter
-  LCLVersion = '2.0.2.0'
+  LCLVersion = '2.0.8.0'
   object ToolBar1: TToolBar
     Left = 0
-    Height = 117
-    Top = 42
-    Width = 218
+    Height = 137
+    Top = 49
+    Width = 255
     Align = alBottom
     AutoSize = True
-    ButtonHeight = 117
-    ButtonWidth = 100
+    ButtonHeight = 137
+    ButtonWidth = 117
     Caption = 'Running'
     EdgeInner = esNone
     EdgeOuter = esNone
@@ -38,14 +38,14 @@ object fmStop: TfmStop
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 101
-      Height = 117
+      Left = 118
+      Height = 137
       Top = 0
       Caption = 'ToolButton8'
       Style = tbsDivider
     end
     object ToolButton3: TToolButton
-      Left = 106
+      Left = 124
       Hint = 'Hide this window'
       Top = 0
       Caption = 'Hide'
@@ -57,9 +57,9 @@ object fmStop: TfmStop
   end
   object Memo1: TMemo
     Left = 0
-    Height = 42
+    Height = 49
     Top = 0
-    Width = 218
+    Width = 255
     Align = alClient
     Font.Style = [fsItalic]
     Lines.Strings = (
@@ -72,10 +72,11 @@ object fmStop: TfmStop
   end
   object pbProgress: TProgressBar
     Left = 0
-    Height = 20
-    Top = 159
-    Width = 218
+    Height = 23
+    Top = 186
+    Width = 255
     Align = alBottom
+    ParentFont = False
     Smooth = True
     Step = 1
     TabOrder = 2
