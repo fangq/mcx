@@ -29,8 +29,6 @@ var
 
 implementation
 
-{ TfmAbout }
-
 initialization
   {$I mcxabout.lrs}
 

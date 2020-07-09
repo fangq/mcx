@@ -1900,7 +1900,7 @@ void mcx_savejdata(char *filename, Config *cfg){
      cJSON *root=NULL, *obj=NULL, *sub=NULL, *tmp=NULL;
      char *jsonstr=NULL;
      root=cJSON_CreateObject();
-     
+
      /* the "Session" section */
      cJSON_AddItemToObject(root, "Session", obj = cJSON_CreateObject());
      cJSON_AddStringToObject(obj, "ID", cfg->session);
@@ -2038,7 +2038,13 @@ void mcx_savejdata(char *filename, Config *cfg){
      if(!strcmp(filename,"-"))
          fprintf(cfg->flog, "%s\n",jsonstr);
      else{
-	 FILE *fp=fopen(filename,"wt");
+         FILE *fp;
+         if(cfg->rootpath[0]){
+             char name[MAX_FULL_PATH];
+             sprintf(name,"%s%c%s",cfg->rootpath,pathsep,filename);
+             fp=fopen(name,"wt");
+         }else
+             fp=fopen(filename,"wt");
 	 if(fp==NULL)
 	     MCX_ERROR(-1,"error opening file to write");
 	 fprintf(fp,"%s\n",jsonstr);

@@ -84,6 +84,7 @@ type
     MenuItem69: TMenuItem;
     MenuItem70: TMenuItem;
     MenuItem71: TMenuItem;
+    miExportJSON: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
     mmOutput: TSynEdit;
@@ -213,7 +214,6 @@ type
     grBasic: TGroupBox;
     grGPU: TGroupBox;
     grSwitches: TGroupBox;
-    hcToolbar: THeaderControl;
     ImageList2: TImageList;
     Label1: TLabel;
     Label10: TLabel;
@@ -366,6 +366,7 @@ type
     procedure mcxdoWebURLExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem22Click(Sender: TObject);
+    procedure miExportJSONClick(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
     procedure miCopyClick(Sender: TObject);
     procedure miUseMatlabClick(Sender: TObject);
@@ -856,7 +857,7 @@ begin
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
       edOutputType.ItemIndex:=0;
-      edOutputFormat.ItemIndex:=3;
+      edOutputFormat.ItemIndex:=0;
       edBenchmark.ItemIndex:=0;
       vlBC.Values['x-'] := 'absorb';
       vlBC.Values['x+'] := 'absorb';
@@ -1040,7 +1041,7 @@ begin
         //mcxdoQuery.Enabled:=true;
         ckSrcFrom0.Visible:=true;
         ckSaveMask.Visible:=true;
-        edOutputFormat.ItemIndex:=1;
+        edOutputFormat.ItemIndex:=0;
         grArray.Enabled:=true;
         edGate.Enabled:=true;
         edDetectedNum.Enabled:=true;
@@ -1452,6 +1453,11 @@ begin
        exit;
     if(ResetMCX(0)) then begin
         fullcmd:=CreateCmd(pMCX);
+        if(Sender=miExportJSON) then begin
+            pMCX.Parameters.Add('--dumpjson');
+            pMCX.Parameters.Add(edSession.Text+'_input.json');
+            AddLog(pMCX.Executable+' '+pMCX.Parameters.CommaText);
+        end;
         pMCX.CurrentDirectory:=ExtractFilePath(SearchForExe(CreateCmdOnly));
         AddLog('"-- Executing Simulation --"');
         if(ckbDebug.Checked[2]) then begin
@@ -1534,6 +1540,9 @@ begin
         exit;
         {$ELSE}
         pMCX.Execute;
+        Sleep(50);
+        if(not pMCX.Running) then
+           pMCXTerminate(pMCX);
         {$ENDIF}
         Application.ProcessMessages;
     end;
@@ -1614,7 +1623,7 @@ end;
 procedure TfmMCX.FormCreate(Sender: TObject);
 var
     i: integer;
-    BrowserPath,BrowserParams: string;
+    BrowserPath,BrowserParams, workdir: string;
 begin
   {$IFDEF WINDOWS}
   with TRegistry.Create do
@@ -1638,9 +1647,6 @@ begin
     finally
       Free;
     end;
-    hcToolbar.Sections[0].MaxWidth:=hcToolbar.Sections[0].MaxWidth+2;
-    hcToolbar.Sections[0].Width:=hcToolbar.Sections[0].Width+2;
-    hcToolbar.Sections[0].MinWidth:=hcToolbar.Sections[0].MinWidth+2;
   {$ENDIF}
 
   {$IFDEF DARWIN}
@@ -1698,6 +1704,11 @@ begin
         LoadTasksFromIni(Application.GetOptionValue('p', 'project'));
     UseUserFolder:=false;
     if(Application.HasOption('u','user')) then
+        UseUserFolder:=true;
+    workdir:=GetAppRoot + 'MCXOutput';
+    if(not DirectoryExists(workdir)) then
+        ForceDirectories(workdir);
+    if(not DirectoryExists(workdir)) then
         UseUserFolder:=true;
 end;
 
@@ -1894,6 +1905,12 @@ procedure TfmMCX.MenuItem22Click(Sender: TObject);
 begin
   if(lvJobs.Selected <> nil) then
       RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, true)+'"');
+end;
+
+procedure TfmMCX.miExportJSONClick(Sender: TObject);
+begin
+  if(lvJobs.Selected <> nil) then
+      mcxdoRunExecute(miExportJSON);
 end;
 
 procedure TfmMCX.miClearLogClick(Sender: TObject);
@@ -2942,14 +2959,6 @@ begin
         try
           if(not DirectoryExists(path)) then
               ForceDirectories(path);
-          if(not DirectoryExists(path)) then begin
-              path:=GetUserDir
-                 +'MCXOutput'+DirectorySeparator+CreateCmdOnly+'sessions'+DirectorySeparator+session;
-              Result:=path;
-              AddLog(Result);
-              if(not DirectoryExists(path)) then
-                  ForceDirectories(path);
-          end;
         except
               On E : Exception do
                   MessageDlg('Input Error', E.Message, mtError, [mbOK],0);
@@ -2984,6 +2993,12 @@ begin
         proc.Executable:=cmd;
         proc.Parameters.Clear;
     end;
+
+    if(rbUseBench.Checked) then begin
+        param.Add('--bench');
+        param.Add(edBenchmark.Text);
+    end;
+
     if(Length(edSession.Text)>0) then begin
         param.Add('--session');
         param.Add(Trim(edSession.Text));
@@ -3099,11 +3114,6 @@ begin
         param.Add(Format('%d',[Integer(ckSaveMask.Checked)]));
         param.Add('--repeat');
         param.Add(Format('%d',[edRespin.Value]));
-    end;
-
-    if(rbUseBench.Checked) then begin
-      param.Add('--bench');
-      param.Add(edBenchmark.Text);
     end;
 
     if(grProgram.ItemIndex<>1) then begin
