@@ -214,7 +214,6 @@ type
     grBasic: TGroupBox;
     grGPU: TGroupBox;
     grSwitches: TGroupBox;
-    hcToolbar: THeaderControl;
     ImageList2: TImageList;
     Label1: TLabel;
     Label10: TLabel;
@@ -1648,9 +1647,6 @@ begin
     finally
       Free;
     end;
-    hcToolbar.Sections[0].MaxWidth:=hcToolbar.Sections[0].MaxWidth+2;
-    hcToolbar.Sections[0].Width:=hcToolbar.Sections[0].Width+2;
-    hcToolbar.Sections[0].MinWidth:=hcToolbar.Sections[0].MinWidth+2;
   {$ENDIF}
 
   {$IFDEF DARWIN}
