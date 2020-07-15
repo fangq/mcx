@@ -122,7 +122,7 @@ for i=1:len
             if(~isfield(cfg(i),'srcparam1'))
                 error('cfg.srcparam1 is missing');
             end
-            [ncyl,fcyl]=meshacylinder(srcpos,srcpos+cfg(i).srcdir*1e-5,cfg(i).srcparam1(1)*voxelsize,0,0);
+            [ncyl,fcyl]=meshacylinder(srcpos,srcpos+cfg(i).srcdir(1:3)*1e-5,cfg(i).srcparam1(1)*voxelsize,0,0);
             hsrcarea=plotmesh(ncyl,fcyl{end-1},'facecolor','r','linestyle','none');
         elseif(strcmp(cfg(i).srctype,'planar') || strcmp(cfg(i).srctype,'pattern') || strcmp(cfg(i).srctype,'fourier') || ...
                strcmp(cfg(i).srctype,'fourierx') || strcmp(cfg(i).srctype,'fourierx2d') || strcmp(cfg(i).srctype,'pencilarray'))
