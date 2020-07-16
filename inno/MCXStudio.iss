@@ -132,6 +132,11 @@ var
 function GetMatlabToolboxLocalPath(Param: string): string;
 begin
   Result := MatlabToolboxLocalPath;
+  if Result = '..\toolbox' then
+  begin
+    Result := ExpandConstant('{app}') + '\MATLAB';
+  end;
+  Log(Format('MCX Toolbox Path found at %s', [Result]));
 end;
 
 function InitializeSetup(): Boolean;
@@ -139,14 +144,9 @@ var
   MatlabExePath: string;
 begin
   MatlabExePath := FileSearch('matlab.exe', GetEnv('PATH'));
-  if MatlabExePath = '' then
-  begin
-    MatlabExePath := ExpandConstant('{app}') + '\MATLAB';
-    Result := true;
-    Exit;
-  end;
   Log(Format('MATLAB Path found at %s', [MatlabExePath]));
   MatlabToolboxLocalPath := ExtractFilePath(MatlabExePath) + '..\toolbox';
+  Log(Format('MATLAB Toolbox Path found at %s', [MatlabToolboxLocalPath]));
 
   Result := True;
 end;
