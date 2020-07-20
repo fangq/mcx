@@ -48,6 +48,19 @@ extern "C" {
 
 typedef float4 MCXpos; /**< x,y,z: position of the photon, w: weight of the photon*/
 
+typedef struct __align__(16) SPLITvox{
+	int issplit;
+	int lower;
+	int upper;
+	int isupper;
+}SPvox;
+
+typedef struct __align__(16) MCXsplit{
+	SPvox  sp;
+	float3 nv; /**< normal vector of mixed voxel(lower -> upper)*/
+	float3 rp; /**< reference point for mixed voxel*/
+}MCXsp;
+
 typedef struct  __align__(16) MCXDir{
         float x; /**< directional vector of the photon, x-component*/
 	float y; /**< directional vector of the photon, y-component*/

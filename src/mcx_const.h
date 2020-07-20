@@ -49,6 +49,7 @@
 #define MCX_DEBUG_MOVE      2
 #define MCX_DEBUG_PROGRESS  4
 
+#define MEDIA_2LABEL_SPLIT    97   /**<  media Format: 64bit:{[byte: lower label][byte: upper label][byte*3: reference point][byte*3: normal vector]} */
 #define MEDIA_2LABEL_MIX      98   /**<  media format: {[int: label1][int: label2][float32: label1 %]} -> 32bit:{[half: label1 %],[byte: label2],[byte: label1]} */
 #define MEDIA_LABEL_HALF      99   /**<  media format: {[float32: 1/2/3/4][float32: type][float32: mua/mus/g/n]} -> 32bit:{[half: mua/mus/g/n][int16: [B15-B16: 0/1/2/3][B1-B14: tissue type]} */
 #define MEDIA_AS_F2H          100  /**<  media format: {[float32: mua][float32: mus]} -> 32bit:{[half: mua],{half: mus}} */

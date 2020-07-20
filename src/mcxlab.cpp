@@ -480,6 +480,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	}else if(mxGetNumberOfDimensions(item)==4){ // if dimension is 4D, 1st dim is the property records: mua/mus/g/n
 	    if((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0]==4) // if 4D byte array has a 1st dim of 4
 		 cfg->mediabyte=MEDIA_ASGN_BYTE;
+	    else if((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0]==8)
+		 cfg->mediabyte=MEDIA_2LABEL_SPLIT;
 	    else if(mxIsSingle(item) && arraydim[0]==3)
 		 cfg->mediabyte=MEDIA_LABEL_HALF;
 	    else if((mxIsUint16(item) || mxIsInt16(item)) && arraydim[0]==3)
@@ -585,6 +587,30 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		    f2bh.c[1]=val[i*3+1] & 0xFF;
 		    f2bh.h[1]=val[i*3+2] & 0x7FFF;
 	            cfg->vol[i]=f2bh.i[0];
+		}
+	    }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
+		unsigned char *val=(unsigned char *)mxGetPr(item);
+		if(cfg->vol)
+		    free(cfg->vol);
+		cfg->vol=(unsigned int *)malloc((dimxyz<<1)*sizeof(unsigned int));
+		union{
+		    unsigned char c[8];
+		    unsigned int  i[2];
+		} b2u;
+		for(i=0;i<dimxyz;i++){
+		    b2u.c[2]=val[(i<<3)+5]; // encoding normal vector nx, ny, nz
+		    b2u.c[1]=val[(i<<3)+6]; 
+		    b2u.c[0]=val[(i<<3)+7]; 
+
+		    b2u.c[5]=val[(i<<3)+2]; // encoding reference point px, py, pz
+		    b2u.c[4]=val[(i<<3)+3];
+		    b2u.c[3]=val[(i<<3)+4];
+
+		    b2u.c[7]=val[(i<<3)];   // lower label and upper label
+		    b2u.c[6]=val[(i<<3)+1]; 
+
+		    cfg->vol[i]=b2u.i[1]; // first half: high 4 byte, second half: low 4 bytes
+		    cfg->vol[i+dimxyz]=b2u.i[0];
 		}
 	    }
 	}
