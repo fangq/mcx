@@ -49,10 +49,10 @@ extern "C" {
 typedef float4 MCXpos; /**< x,y,z: position of the photon, w: weight of the photon*/
 
 typedef struct __align__(16) SPLITvox{
-	int issplit;
-	int lower;
-	int upper;
-	int isupper;
+	unsigned char issplit;
+	unsigned char lower;
+	unsigned char upper;
+	unsigned char isupper;
 }SPvox;
 
 typedef struct __align__(16) MCXsplit{
