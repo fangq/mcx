@@ -629,7 +629,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         int len=mxGetNumberOfElements(item);
         const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
 	   "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
-	   "line","slit","pencilarray","pattern3d",""};
+	   "line","slit","pencilarray","pattern3d","anglepattern",""};
         char strtypestr[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)
@@ -898,7 +898,7 @@ void mcx_validate_config(Config *cfg){
         mexErrMsgTxt("you must define the 'prop' field in the input structure");
      if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
         mexErrMsgTxt("the 'vol' field in the input structure can not be empty");
-     if((cfg->srctype==MCX_SRC_PATTERN || cfg->srctype==MCX_SRC_PATTERN3D) && cfg->srcpattern==NULL)
+     if((cfg->srctype==MCX_SRC_PATTERN || cfg->srctype==MCX_SRC_PATTERN3D || cfg->srctype==MCX_SRC_ANGLEPATTERN) && cfg->srcpattern==NULL)
         mexErrMsgTxt("the 'srcpattern' field can not be empty when your 'srctype' is 'pattern'");
      if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
         cfg->unitinmm=cfg->steps.x;

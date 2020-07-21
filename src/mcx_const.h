@@ -75,6 +75,7 @@
 #define MCX_SRC_SLIT       13 /**<  a collimated line source */
 #define MCX_SRC_PENCILARRAY 14 /**<  a rectangular array of pencil beams */
 #define MCX_SRC_PATTERN3D  15  /**<  a 3D pattern source, starting from srcpos, srcparam1.{x,y,z} define the x/y/z dimensions */
+#define MCX_SRC_ANGLEPATTERN 16  /**<  a pattern which is the CDF of the total energy of the certain angle */
 
 #define SAVE_DETID(a)         ((a)    & 0x1)   /**<  mask to save detector ID*/
 #define SAVE_NSCAT(a)         ((a)>>1 & 0x1)   /**<  output partial scattering counts */
