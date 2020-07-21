@@ -937,6 +937,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      break;
 		  }
 		case(MCX_SRC_CONE):
+                case(MCX_SRC_ANGLEPATTERN):
 		case(MCX_SRC_ISOTROPIC):
 		case(MCX_SRC_ARCSINE): {
 		      // Uniform point picking on a sphere 
@@ -947,6 +948,11 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      if(gcfg->srctype==MCX_SRC_CONE){  // a solid-angle section of a uniform sphere
 		          ang=cosf(gcfg->srcparam1.x);
 		          ang=(gcfg->srcparam1.y>0.f) ? rand_uniform01(t)*gcfg->srcparam1.x : acos(rand_uniform01(t)*(1.0-ang)+ang); //sine distribution
+                      }else if(gcfg->srctype==MCX_SRC_ANGLEPATTERN){  // cone which have a 
+                          // TODO
+                          ang=rand_uniform01(t);
+                          int temp_index=(int)(roundf(ang*gcfg->srcparam1.x)); // random a point on the CDF curve
+                          ang=srcpattern[temp_index]+(srcpattern[temp_index+1]-srcpattern[temp_index])*(ang*gcfg->srcparam1.x-roundf(ang*gcfg->srcparam1.x)); // find the corresponding angle
 		      }else{
 			  if(gcfg->srctype==MCX_SRC_ISOTROPIC) // uniform sphere
 			      ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
@@ -1972,6 +1978,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w*cfg->srcnum)));
      else if(cfg->srctype==MCX_SRC_PATTERN3D)
          CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z*cfg->srcnum)));
+     else if(cfg->srctype==MCX_SRC_ANGLEPATTERN)
+         CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.x+1)));
 	 
 #ifndef SAVE_DETECTORS
 #pragma omp master
@@ -2039,12 +2047,14 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uint)*cfg->dim.x*cfg->dim.y*cfg->dim.z, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpy(genergy,energy,sizeof(float) *(gpu[gpuid].autothread<<1), cudaMemcpyHostToDevice));
      if(cfg->srcpattern)
+     {
         if(cfg->srctype==MCX_SRC_PATTERN)
            CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.w*cfg->srcparam2.w*cfg->srcnum), cudaMemcpyHostToDevice));
 	else if(cfg->srctype==MCX_SRC_PATTERN3D)
 	   CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z*cfg->srcnum), cudaMemcpyHostToDevice));
         else if(cfg->srctype==MCX_SRC_ANGLEPATTERN)
-           CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.x*2), cudaMemcpyHostToDevice));
+           CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.x+1), cudaMemcpyHostToDevice));
+     }
      
 
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice));
