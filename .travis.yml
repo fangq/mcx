@@ -7,19 +7,15 @@ compiler:
 
 matrix:
   include:
-    - name: CUDA 8
-      env:
-      - CUDA=8.0.61-1
-      - CUDA_SHORT=8.0
-      - UBUNTU_VERSION=ubuntu1604
-      dist: xenial
-    - name: CUDA 9
+    - os: linux
+      name: Xanial
       env:
       - CUDA=9.2.148-1
       - CUDA_SHORT=9.2
       - UBUNTU_VERSION=ubuntu1604
       dist: xenial
-    - name: CUDA 10
+    - os: linux
+      name: Bionic
       env:
       - CUDA=10.1.105-1
       - CUDA_SHORT=10.1
@@ -33,7 +29,7 @@ before_install:
   - wget https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/7fa2af80.pub
   - sudo apt-key add 7fa2af80.pub
   - sudo apt update -qq
-  - sudo apt install -y cuda-core-${CUDA_SHORT/./-} cuda-cudart-dev-${CUDA_SHORT/./-} cuda-cufft-dev-${CUDA_SHORT/./-}
+  - sudo apt install -y cuda-core-${CUDA_SHORT/./-} cuda-cudart-dev-${CUDA_SHORT/./-}
   - sudo apt clean
   - CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
   - LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
