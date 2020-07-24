@@ -31,12 +31,13 @@ before_install:
   - sudo apt update -qq
   - sudo apt install -y cuda-core-${CUDA_SHORT/./-} cuda-cudart-dev-${CUDA_SHORT/./-} liboctave-dev
   - sudo apt clean
-  - CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
+  - export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
   - LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
   - PATH=${CUDA_HOME}/bin:.:${PATH}
 
 script:
     - cd src
+    - ls $CUDA_HOME/include/vector_types.h
     - make oct
     - make clean
     - make
