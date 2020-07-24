@@ -2,6 +2,41 @@
 
 Major updates are marked with a "*"
 
+== MCX v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
+
+ 2020-07-22*[f844fe8] add automated building script via travis-ci
+ 2020-07-22*[cbf0225] add unit testing script
+ 2020-07-09 [5b038a7] add winget manifest
+ 2020-07-04*[4bda593] inno windows installer
+ 2020-07-02 [38529a7] accept -f in mcxshow and mcxviewer
+ 2020-07-02 [34ecf5f] add glscene directly to the source code
+ 2020-07-01*[f1828d3] add manpage for mcx
+ 2020-06-29 [cd4acb8] visual studio project file updated
+ 2020-06-29 [b22025d] update vs project file
+ 2020-06-28 [71bedc5] add benchmark options, add jnii/bnii output formats
+ 2020-05-02 [e7ce8f7] compiles lzma on windows, #94
+ 2020-05-02*[e56fa2b] add UBJ support, output .bnii files, close #95
+ 2020-05-01 [ed80ad5] now support lzma and lzip compression
+ 2020-05-01 [f136bc9] upgrade all built-in binary files to JData formatted JSON files #94
+ 2020-04-29 [0d9c162] save detected photon data in JSON/JData format, close #94
+ 2020-04-25 [045a3de] update json schema
+ 2020-04-25 [e8aae66] initialize gsrcpattern
+ 2020-04-23*[8086175] add built-in colini27 data,add --dumpjson, add -F jnii output format
+ 2020-04-19*[da73b8d] add mcx built in benchmarks
+ 2020-03-21*[b8fb79a] plot data in x/y/z slices,add axis labels and grid
+ 2020-03-20 [d7e6203] add axis lable and scaling to volume viewer
+ 2020-03-14*[b91dc5a] update mcxstudio gui to support gpu mmc
+ 2020-02-18*[8c37911] adding pymcx written by Maxime Baillot as submodule
+ 2020-02-08 [ba78df5] add template to disable continuous medium support, close #89
+ 2020-01-28 [b7c1982] speed up cone beam photon launch, fix accuracy, close #86
+ 2020-01-25*[984b2a0] initial support for hybrid optical properties: tissue type label combined with continous optical properties
+ 2019-11-19 [1c07b16] scale partial-path when getting det photon time and weight, close #83
+ 2019-08-08 [0bdbef6] allow to browse file folder on windows
+ 2019-07-26*[8a341ee] update mcxstudio to add the new flags
+ 2019-07-23 [e3b53dc] add 2d sample script
+ 2019-07-22*[c4baa84] output fluence/flux in replay, backport changes from mcxcl
+ 2019-05-24 [02efc62] bug fix for continuous varying media patch
+
 == MCX v2019.10 (Ether Dome RC2 - 1.5.0), FangQ <q.fang (a) neu.edu> ==
 
  2019-10-27 [a743b47] resolve compiler complaint: warning: invalid suffix on literal; C++11 requires a space between literal and string macro [-Wliteral-suffix]

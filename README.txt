@@ -188,16 +188,18 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::5e0f0c$2019.4 $Date::2019-04-22 18:40:07 -04$ by $Author::Qianqian Fang $
+$Rev::0aea3b$2020.4 $Date::2020-07-23 15:43:20 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
 where possible parameters include (the first value in [*|*] is the default)
 
-== # Required option ==
+== Required option ==
  -f config     (--input)       read an input file in .json or .inp format
+ --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name
+                               run --bench without parameter to get a list
 
-== # MC options ==
+== MC options ==
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
                                max accepted value:9.2234e+18 on 64bit systems
  -r [1|+/-int] (--repeat)      if positive, repeat by r times,total= #photon*r
@@ -232,7 +234,7 @@ where possible parameters include (the first value in [*|*] is the default)
  -e [0.|float] (--minenergy)   minimum energy level to terminate a photon
  -g [1|int]    (--gategroup)   number of time gates per run
 
-== # GPU options ==
+== GPU options ==
  -L            (--listgpu)     print GPU information only
  -t [16384|int](--thread)      total thread number
  -T [64|int]   (--blocksize)   thread number per block
@@ -243,7 +245,7 @@ where possible parameters include (the first value in [*|*] is the default)
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum
  -I            (--printgpu)    print GPU information and run program
 
-== # Input options ==
+== Input options ==
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str
                                1 or byte: 0-128 tissue labels
@@ -256,9 +258,9 @@ where possible parameters include (the first value in [*|*] is the default)
 			     104 or muamus_short: 2x short gray-levels for mua/s
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
 
-== # Output options ==
+== Output options ==
  -s sessionid  (--session)     a string to label all output file names
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy density
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, 
 			       event counts at each voxel (replay mode only)
                                M - momentum transfer; 
@@ -287,17 +289,42 @@ where possible parameters include (the first value in [*|*] is the default)
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
  -F [mc2|...] (--outputformat) fluence data output format:
                                mc2 - MCX mc2 format (binary 32bit float)
-                               nii - Nifti format
+                               jnii - JNIfTI format (http://openjdata.org)
+                               bnii - Binary JNIfTI (http://openjdata.org)
+                               nii - NIfTI format
                                hdr - Analyze 7.5 hdr/img format
                                tx3 - GL texture data for rendering (GL_RGBA32F)
+	the bnii/jnii formats support compression (-Z) and generate small files
+	load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
+	  MATLAB/Octave: JNIfTI toolbox   https://github.com/fangq/jnifti, 
+	  MATLAB/Octave: JSONLab toolbox  https://github.com/fangq/jsonlab, 
+	  Python:        PyJData:         https://pypi.org/project/jdata
+	  JavaScript:    JSData:          https://github.com/fangq/jsdata
+ -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson
+                               is used (when saving data to JSON/JNIfTI format)
+			       0 zlib: zip format (moderate compression,fast) 
+			       1 gzip: gzip format (compatible with *.gz)
+			       2 base64: base64 encoding with no compression
+			       3 lzip: lzip format (high compression,very slow)
+			       4 lzma: lzma format (high compression,very slow)
+			       5 lz4: LZ4 format (low compression,extrem. fast)
+			       6 lz4hc: LZ4HC format (moderate compression,fast)
+ --dumpjson [-,2,'file.json']  export all settings, including volume data using
+                               JSON/JData (http://openjdata.org) format for 
+			       easy sharing; can be reused using -f
+			       if followed by nothing or '-', mcx will print
+			       the JSON to the console; write to a file if file
+			       name is specified; by default, prints settings
+			       after pre-processing; '--dumpjson 2' prints 
+			       raw inputs before pre-processing
 
-== # User IO options ==
+== User IO options ==
  -h            (--help)        print this message
  -v            (--version)     print MCX revision number
  -l            (--log)         print messages to a log file instead
  -i 	       (--interactive) interactive mode
 
-== # Debug options ==
+== Debug options ==
  -D [0|int]    (--debug)       print debug information (you can use an integer
   or                           or a string by combining the following flags)
  -D [''|RMP]                   1 R  debug RNG
@@ -305,11 +332,12 @@ where possible parameters include (the first value in [*|*] is the default)
                                4 P  print progress bar
       combine multiple items by using a string, or add selected numbers together
 
-== # Additional options ==
+== Additional options ==
  --root         [''|string]    full path to the folder storing the input files
  --gscatter     [1e9|int]      after a photon completes the specified number of
                                scattering events, mcx then ignores anisotropy g
                                and only performs isotropic scattering for speed
+ --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
                                launched outside (i.e. a widefield source)
@@ -318,7 +346,7 @@ where possible parameters include (the first value in [*|*] is the default)
                                stored (default: 1e7)
  --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing
 
-== # Example ==
+== Example ==
 example: (autopilot mode)
        mcx -A 1 -n 1e7 -f input.inp -G 1 -D P
 or (manual mode)
@@ -602,7 +630,7 @@ the overlapping regions covered by the previous objects.
 
 There are a few ways for you to use shape description records
 in your MCX simulations. You can save it to a JSON shape file, and
-put the file name in Line#6 of yoru .inp file, or set as the
+put the file name in Line#6 of your .inp file, or set as the
 value for Domain.VolumeFile field in a .json input file. 
 In these cases, a shape file must have a suffix of .json.
 
