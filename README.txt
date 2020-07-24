@@ -3,10 +3,10 @@
                           CUDA Edition
 ---------------------------------------------------------------------
 
-Author:  Qianqian Fang <q.fang at neu.edu>
-License: GNU General Public License version 3 (GPLv3)
-Version: 1.4.9 (v2019.4, Ether Dome - RC1)
-Website: http://mcx.space
+*Author:  Qianqian Fang <q.fang at neu.edu>
+*License: GNU General Public License version 3 (GPLv3)
+*Version: 1.8 (v2020, Furious Fermion)
+*Website: http://mcx.space
 
 ---------------------------------------------------------------------
 
@@ -30,45 +30,55 @@ XI.   Reference
 
 O.    What's New
 
-In MCX v2019.4 (1.4.9), several important key features were added
+MCX v2020 represents a new milestone towards the development of a fast,
+versatile and feature-rich open-source Monte Carlo 3D photon simulator.
+It is packed with numerous improvements in both functionality and stability. 
+We want to specifically highlight the below major additions:
 
-* Support continuously varying media - mua/mus can vary in every voxel
-* Support -w / --savedetflag to specify which det photon data to output
-* Add json2mcx, converting from json file to mcxlab cfg
-* Can simulate infinite domain using cylic BC - added MCXLAB example
-* A new output type - partial-path data on all exiting voxels (experimental)
+* JSON/Binary JSON output files with built-in compression for easy data sharing
+* Built-in benchmarks for easy testing and adoption by new users
+* Exporting simulation as JSON with binary volume data
+* All-in-one Windows installer for MCXStudio/MCX/MMC/MCXCL
+* Automated code building, testing and continuous integration via Travis-CI
+* CMake based compilation and Visual Studio support
 
+A detailed list of updates is summarized below (key features marked with "*"):
 
-In MCX v2019.3 (1.4.8), we added a list of major new additions, including
+ 2020-07-22*[f844fe8] add automated building script via travis-ci
+ 2020-07-22*[cbf0225] add unit testing script
+ 2020-07-09 [5b038a7] add winget manifest
+ 2020-07-04*[4bda593] inno windows installer
+ 2020-07-02 [38529a7] accept -f in mcxshow and mcxviewer
+ 2020-07-02 [34ecf5f] add glscene directly to the source code
+ 2020-07-01*[f1828d3] add manpage for mcx
+ 2020-06-29 [cd4acb8] visual studio project file updated
+ 2020-06-29 [b22025d] update vs project file
+ 2020-06-28 [71bedc5] add benchmark options, add jnii/bnii output formats
+ 2020-05-02 [e7ce8f7] compiles lzma on windows, #94
+ 2020-05-02*[e56fa2b] add UBJ support, output .bnii files, close #95
+ 2020-05-01 [ed80ad5] now support lzma and lzip compression
+ 2020-05-01 [f136bc9] upgrade all built-in binary files to JData formatted JSON files #94
+ 2020-04-29 [0d9c162] save detected photon data in JSON/JData format, close #94
+ 2020-04-25 [045a3de] update json schema
+ 2020-04-25 [e8aae66] initialize gsrcpattern
+ 2020-04-23*[8086175] add built-in colini27 data,add --dumpjson, add -F jnii output format
+ 2020-04-19*[da73b8d] add mcx built in benchmarks
+ 2020-03-21*[b8fb79a] plot data in x/y/z slices,add axis labels and grid
+ 2020-03-20 [d7e6203] add axis lable and scaling to volume viewer
+ 2020-03-14*[b91dc5a] update mcxstudio gui to support gpu mmc
+ 2020-02-18*[8c37911] adding pymcx written by Maxime Baillot as submodule
+ 2020-02-08 [ba78df5] add template to disable continuous medium support, close #89
+ 2020-01-28 [b7c1982] speed up cone beam photon launch, fix accuracy, close #86
+ 2020-01-25*[984b2a0] initial support for hybrid optical properties: tissue type label combined with continous optical properties
+ 2019-11-19 [1c07b16] scale partial-path when getting det photon time and weight, close #83
+ 2019-08-08 [0bdbef6] allow to browse file folder on windows
+ 2019-07-26*[8a341ee] update mcxstudio to add the new flags
+ 2019-07-23 [e3b53dc] add 2d sample script
+ 2019-07-22*[c4baa84] output fluence/flux in replay, backport changes from mcxcl
+ 2019-05-24 [02efc62] bug fix for continuous varying media patch
 
-* Support 4 different boundary conditions (total absorption, total reflection/mirror, Fresnel reflection and cylic), controlled independently (--bc/cfg.bc) at 6 facets of the domain
-* Add 4 built-in complex domain examples - Colin27 brain atlas, USC_19-5 brain atlas, Digimouse, and mcxyz skin-vessel benchmark
-* Support isotropic launch for all focuable sources - gaussian, pattern, pattern3d, fourier, disk, fourierx, fourierx2d, and slit - by setting cfg.srcdir(4) to nan
-* Add GPU-ANLM denoiser, mcxfilter.m, to mcxlab to reduce MC fluence noise, detailed in our [Yao2018] paper
-* Initial support of "photon sharing" - a fast approach to simultaneouly simulate multiple pattern src/det, as detailed in our Photoncs West 2019 talk by Ruoyang Yao/Shijie Yan [Yao&Yan2019]
-* First release of MCX Viewer - a built in 3D fluence rendering tool in mcxstudio (mcxviewer and mcxshow also provided separately)
-* Output partial scattering event counts in detected photon data, similar to MMC
-* Add CMake support, python-based mch file reader (by Shih-Cheng Tu), nightly build compilation script, colored command line output, and more
-
-In addition, we also fixed a number of critical bugs, such as
-
-* fix mcxlab gpuinfo output crash using multiple GPUs
-* disable linking to Intel OMP library (libiomp5) to avoid MATLAB 2016-2017 crash
-* fix mcxlab crash when srcpattern/srcdir/srcpos/detpos are not in double precision
-* fix shared memory allocation size bug
-* add the missing photon exit position in the trajectory output
-* fix mcxlab crash due to racing in multi-threads
-* force g to 1 in region where mus is 0
-
-[Yuan2018] Yaoshen Yuan, Leiming Yu, Zafer Doğan, Qianqian Fang*, 
-"Graphics processing units-accelerated adaptive nonlocal means filter for denoising 
-three-dimensional Monte Carlo photon transport simulations," 
-J. of Biomedical Optics, 23(12), 121618 (2018), URL: https://doi.org/10.1117/1.JBO.23.12.121618
-
-[Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang,  
-"Accelerating Monte Carlo forward model with structured light illumination via 'photon sharing',"
-Photonics West 2019, paper#10874-11, San Francisco, CA, USA.
-[https://www.spiedigitallibrary.org/conference-presentations/10874/108740B/Accelerating-Monte-Carlo-forward-model-with-structured-light-illumination-via/10.1117/12.2510291?SSO=1 Full presentation for our invited talk]
+Between 2019 and 2020, three new journal papers have been published as 
+the result of this project, please see the full list at http://mcx.space/#publication
 
 ---------------------------------------------------------------------
 
