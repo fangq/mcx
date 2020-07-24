@@ -37,7 +37,6 @@ before_install:
 
 script:
     - cd src
-    - ls $CUDA_HOME/include/vector_types.h
     - make oct
     - make clean
     - make
