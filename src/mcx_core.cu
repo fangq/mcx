@@ -2107,7 +2107,11 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            mcx_flush(cfg);
 
            int isinternal=((cfg->internalsrc>0) || (param.mediaidorig && (cfg->srctype==MCX_SRC_PENCIL || cfg->srctype==MCX_SRC_CONE || cfg->srctype==MCX_SRC_ISOTROPIC)));
-	   switch(isinternal*100 + (cfg->isreflect>0)*10+(cfg->mediabyte<=4)){
+	   int isref=cfg->isreflect;
+	   for(i=0;i<6;i++)
+	       if(cfg->bc[i]==1)
+	           isref=1;
+	   switch(isinternal*100 + (isref>0)*10+(cfg->mediabyte<=4)){
 	       case 0:  mcx_main_loop<0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
 	       case 1:  mcx_main_loop<0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
 	       case 10: mcx_main_loop<0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;

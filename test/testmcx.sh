@@ -53,7 +53,7 @@ temp=`$MCX --bench cube60 -b 1 | grep -o -E 'absorbed:.*27\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to use -b 1 flag to enable reflection"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test boundary condition flag -B ... "
-temp=`$MCX --bench cube60 -b 1 -B aarraa | grep -o -E 'absorbed:.*27\.[0-9]+%'`
+temp=`$MCX --bench cube60 -b 0 -B aarraa | grep -o -E 'absorbed:.*27\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to use -B flag to set facet based boundary condition"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon detection ... "
