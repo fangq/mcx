@@ -1563,7 +1563,8 @@ int mcx_corecount(int v1, int v2){
      else if(v<21) return 32;
      else if(v<30) return 48;
      else if(v<50) return 192;
-     else          return 128;
+     else if(v<60 || v==61) return 128;
+     else          return 64;
 }
 
 /**
