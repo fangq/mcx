@@ -1643,10 +1643,10 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 	    MCX_FPRINTF(stdout,S_BLUE"=============================   GPU Infomation  ================================\n" S_RESET);
 	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",(*info)[dev].id,(*info)[dev].devcount,(*info)[dev].name);
 	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",(*info)[dev].major,(*info)[dev].minor);
-	    MCX_FPRINTF(stdout,"Global Memory:\t\t%u B\nConstant Memory:\t%u B\n"
-				"Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
-               (unsigned int)(*info)[dev].globalmem,(unsigned int)(*info)[dev].constmem,
-               (unsigned int)(*info)[dev].sharedmem,(unsigned int)(*info)[dev].regcount,(*info)[dev].clock*1e-6f);
+	    MCX_FPRINTF(stdout,"Global Memory:\t\t%.0f B\nConstant Memory:\t%.0f B\n"
+				"Shared Memory:\t\t%.0f B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
+               (double)(*info)[dev].globalmem,(double)(*info)[dev].constmem,
+               (double)(*info)[dev].sharedmem,(unsigned int)(*info)[dev].regcount,(*info)[dev].clock*1e-6f);
 	  #if CUDART_VERSION >= 2000
 	       MCX_FPRINTF(stdout,"Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
 	          (*info)[dev].sm,(*info)[dev].core);
