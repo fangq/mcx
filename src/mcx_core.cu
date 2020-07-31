@@ -1637,8 +1637,8 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 	(*info)[dev].maxmpthread=dp.maxThreadsPerMultiProcessor;
         (*info)[dev].maxgate=cfg->maxgate;
         (*info)[dev].autoblock=(*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor);
-        if((*info)[dev].autoblock){
-             MCX_FPRINTF(stderr,"WARNING: maxThreadsPerMultiProcessor can not be detected\n");
+        if((*info)[dev].autoblock==0){
+             MCX_FPRINTF(stderr,S_RED "WARNING: maxThreadsPerMultiProcessor can not be detected\n" S_RESET);
              (*info)[dev].autoblock=64;
         }
         (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm;
