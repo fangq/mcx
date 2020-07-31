@@ -1637,6 +1637,10 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 	(*info)[dev].maxmpthread=dp.maxThreadsPerMultiProcessor;
         (*info)[dev].maxgate=cfg->maxgate;
         (*info)[dev].autoblock=(*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor);
+        if((*info)[dev].autoblock){
+             MCX_FPRINTF(stderr,"WARNING: maxThreadsPerMultiProcessor can not be detected\n");
+             (*info)[dev].autoblock=64;
+        }
         (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm;
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
@@ -1649,10 +1653,11 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
                (double)(*info)[dev].globalmem,(double)(*info)[dev].constmem,
                (double)(*info)[dev].sharedmem,(unsigned int)(*info)[dev].regcount,(*info)[dev].clock*1e-6f);
 	  #if CUDART_VERSION >= 2000
-	       MCX_FPRINTF(stdout,"Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
+	       MCX_FPRINTF(stdout,"Number of SMs:\t\t%u\nNumber of Cores:\t%u\n",
 	          (*info)[dev].sm,(*info)[dev].core);
 	  #endif
-            MCX_FPRINTF(stdout,"SMX count:\t\t%u\n", (*info)[dev].sm);
+            MCX_FPRINTF(stdout,"Auto-thread:\t\t%d\n",(*info)[dev].autothread);
+            MCX_FPRINTF(stdout,"Auto-block:\t\t%d\n", (*info)[dev].autoblock);
 	  }
 	}
     }
