@@ -248,7 +248,10 @@ sub comparegpu(){
 
 	my ($url)=@_;
 	my $database = get $url;
-	die("fail to download data from $url") if($database eq '');
+	if(!defined($database)){
+		$database = `curl --silent $url`;
+		die("fail to download database from $url") if($database eq '');
+	}
 	my @res=split(/\n/,$database);
 	my $pos=0;
 	for my $line (@res){
@@ -341,7 +344,11 @@ sub submitresult(){
 		my $ua      = LWP::UserAgent->new(); 
 		my $response = $ua->post( $url, \%form);
 		my $content = $response->decoded_content;
-                die("fail to submit benchmark data") if($content eq '');
+		if(!defined($content)){
+			$content=system("curl --header 'Content-Type: application/json' --request POST --data '" . to_json(\%form)."' $url");
+			print("return: $content");
+			die("fail to submit benchmark data") if($content eq '');
+		}
 		if($response->is_success && $content=~/success/i){
 			print "Submission is successful, please browse http://mcx.space/gpubench/ to see the result\n";
 		}
