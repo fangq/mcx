@@ -169,7 +169,9 @@ sub listgpu(){
 		if(length($report{$keyname})==0){
 			die('no GPU found on your system, can not continue');
 		}
-	}
+	}else{
+                die('GPU listing failed, output incomplete');
+        }
 	if($mcxopt=~/-G\s+['"]*([0-9]+)['"]*/ || $mcxopt=~/--gpu\s+['"]*([0-9]+)['"]*/){
 		if($1 ne '' && $1>0){
 			my @newgpu=();
@@ -233,6 +235,8 @@ sub runbench(){
 		}else{
 			die('$benchname failed, output incomplete');
 		}
+	}else{
+                die('$benchname failed, output incomplete');
 	}
 }
 
@@ -244,6 +248,7 @@ sub comparegpu(){
 
 	my ($url)=@_;
 	my $database = get $url;
+	die("fail to download data from $url") if($database eq '');
 	my @res=split(/\n/,$database);
 	my $pos=0;
 	for my $line (@res){
@@ -336,6 +341,7 @@ sub submitresult(){
 		my $ua      = LWP::UserAgent->new(); 
 		my $response = $ua->post( $url, \%form);
 		my $content = $response->decoded_content;
+                die("fail to submit benchmark data") if($content eq '');
 		if($response->is_success && $content=~/success/i){
 			print "Submission is successful, please browse http://mcx.space/gpubench/ to see the result\n";
 		}
