@@ -13,7 +13,6 @@
 
 use strict;
 use warnings;
-use JSON 'to_json';
 
 my $MCX="../bin/mcx";
 my $URL="http://mcx.space/gpubench/";
@@ -87,8 +86,6 @@ $report{'speedsum'}=$report{'benchmark1'}{'speed'}+$report{'benchmark2'}{'speed'
     +$report{'benchmark3'}{'speed'};
 $report{'version'}=1;
 $report{'mcxversion'}=$report{'benchmark1'}{'mcxversion'};
-
-#print to_json(\%report,\%jsonopt);
 
 printf("Speed test completed\nYour device(s) score is %.0f\n",$report{'speedsum'});
 
@@ -285,6 +282,7 @@ sub comparegpu(){
 
 sub submitresult(){
 	use LWP::UserAgent ();
+	use JSON;
 
 	my ($report, $url, $jsonopt)=@_;
 	my %form=();
@@ -325,14 +323,14 @@ sub submitresult(){
 		$gpuname=~s/\s*NVIDIA\s*//g;
 		$form{'computer'}.=$gpuname."/";
 	}
-	$form{'report'}= to_json($report,$jsonopt);
+	$form{'report'}= encode_json($report);
 
 	print "Do you want to see the full data to be submitted ([yes]/no)?";
 	my $ans=<STDIN>;
 	chomp $ans;
 	if($ans =~/^yes/i || $ans eq ''){
 		print "---------------- begin data -----------------\n";
-		print to_json(\%form,$jsonopt);
+		print encode_json(\%form);
 		print "----------------- end data ------------------\n";
 	}
         $ans='';
@@ -345,7 +343,7 @@ sub submitresult(){
 		my $response = $ua->post( $url, \%form);
 		my $content = $response->decoded_content;
 		if(!defined($content)){
-			$content=system("curl --header 'Content-Type: application/json' --request POST --data '" . to_json(\%form)."' $url");
+			$content=system("curl --header 'Content-Type: application/json' --request POST --data '" . encode_json(\%form)."' $url");
 			print("return: $content");
 			die("fail to submit benchmark data") if($content eq '');
 		}
