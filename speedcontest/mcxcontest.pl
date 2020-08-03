@@ -1,4 +1,15 @@
 #!/usr/bin/perl
+###############################################################################
+#
+# MCX Benchmark and Speed Contest
+#
+# Author:  Qianqian Fang <q.fang at neu.edu>
+# License: GPLv3
+# Version: 0.5
+# URL:     http://mcx.space/gpubench
+# Github:  https://github.com/fangq/mcx/
+#
+###############################################################################
 
 use strict;
 use warnings;
@@ -46,9 +57,9 @@ The supported options include (multiple parameters can be used, separated by spa
 	-l      compare your benchmark with other GPUs submitted by other users
 	-c      print JSON in compact form, otherwise, print in the indented form
 	-o 'mcx options'   supply additional mcx command line options, such as '-n 1e6'
-	--bin /path/to/mcx manually         specify mcx binary location
-	--get url  specify mcx benchmark database browse link (default: http://mcx.space/gpubench)
-	--post url overwrite submission link (default: http://mcx.space/gpubench/gpucontest.cgi)\n",
+	--bin /path/to/mcx  manually specify mcx binary location (default: ../bin/mcx)
+	--get url  specify mcx benchmark web link (default: http://mcx.space/gpubench)
+	--post url specify submission link (default: http://mcx.space/gpubench/gpucontest.cgi)\n",
 		$0,$0);
 		exit 0;
 	}else{
@@ -271,21 +282,22 @@ sub submitresult(){
 	my %form=();
 	my %userinfo=(
 	  "name"=>"Please provide your full name (will not publish)",
-	  "email"=>"Please provide your email (will not publish)*",
+	  "email"=>"Please provide your email (will not publish)[required]",
 	  "institution"=>"What is your institution/company (will not publish)?",
-	  "nickname"=>"Please provide your web name/ID (visible on webpage)*",
-	  "machine"=>"Short description of your computer (OS/version/driver, visible)",
+	  "nickname"=>"Please provide your web name/ID (visible on webpage)[required]",
+	  "machine"=>"Short description of your computer (OS/version/driver, visible)[required]",
 	  "comment"=>"Optional comment"
 	);
 	my @formitem=('name','email','institution','nickname','machine','comment');
 	foreach my $key (@formitem){
-		print $userinfo{$key}."\n";
+		print $userinfo{$key}."\n\t";
 		my $ans=<STDIN>;
 		chomp $ans;
-		if(($key eq 'nickname' || $key eq 'email') && $ans eq ''){
+		if(($key eq 'nickname' || $key eq 'email' ||  $key eq 'machine' ) && $ans eq ''){
 			while($ans eq ''){
-				print "required field, can not be empty, please input again";
+				print "required field, can not be empty, please input again\n\t";
 				$ans=<STDIN>;
+				chomp $ans;
 			}
 		}
 		$report{'userinfo'}{$key}=$ans;
@@ -300,7 +312,10 @@ sub submitresult(){
 	$form{'score'}=$report{'speedsum'};
 	$form{'computer'}=$report{'userinfo'}{'machine'}.":/";
 	foreach my $gpu (@{$report{'gpu'}}){
-		$form{'computer'}.=%{$gpu}{'name'}."/";
+		my $gpuname=%{$gpu}{'name'};
+		$gpuname=~s/\s*GeForce\s*//g;
+		$gpuname=~s/\s*NVIDIA\s*//g;
+		$form{'computer'}.=$gpuname."/";
 	}
 	$form{'report'}= to_json($report,$jsonopt);
 
