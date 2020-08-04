@@ -345,7 +345,8 @@ sub submitresult(){
 	$ans=<STDIN>;
 	chomp $ans;
 	if($ans =~/^yes/i || $ans eq ''){
-		my $content=system("curl --header 'Content-Type: application/json' --request POST --data '" . $json->encode(\%form)."' $url");
+		my $submitdata=$json->encode(\%form);
+		my $content=`curl --header 'Content-Type: application/json' --request POST --data '$submitdata' $url`;
 		if($content eq ''){
 	                eval("use LWP::UserAgent ();");
 			my $ua      = LWP::UserAgent->new(); 
