@@ -2241,19 +2241,16 @@ is more than what your have specified (%d), please use the -H option to specify 
        if(ABS(cfg->respin)>1)  //copy the accumulated fields back
            memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
 
-       if(cfg->isnormalized){
-           CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
+       CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
 #pragma omp critical
 {
-           for(i=0;i<gpu[gpuid].autothread;i++){
-               cfg->energyesc+=energy[i<<1];
-       	       cfg->energytot+=energy[(i<<1)+1];
-           }
-	   for(i=0;i<gpu[gpuid].autothread;i++)
-               cfg->energyabs+=Plen0[i].z;  // the accumulative absorpted energy near the source
-}
+       for(i=0;i<gpu[gpuid].autothread;i++){
+           cfg->energyesc+=energy[i<<1];
+           cfg->energytot+=energy[(i<<1)+1];
        }
-       MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
+       for(i=0;i<gpu[gpuid].autothread;i++)
+           cfg->energyabs+=Plen0[i].z;  // the accumulative absorpted energy near the source
+}
 
        if(cfg->exportfield){
 	       for(i=0;i<(int)fieldlen;i++)
@@ -2345,6 +2342,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	     }
 	 }
 	 free(scale);
+         MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
          MCX_FPRINTF(cfg->flog,"saving data to file ...\t");
