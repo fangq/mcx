@@ -325,15 +325,19 @@ sub submitresult(){
 		$gpuname=~s/\s*NVIDIA\s*//g;
 		$form{'computer'}.=$gpuname."/";
 	}
-	$form{'report'}= encode_json($report);
+
+	my $json = JSON::PP->new;
+        $json = $json->pretty(1);
+
+	$form{'report'}= $json->encode($report);
 
 	print "Do you want to see the full data to be submitted ([yes]/no)?";
 	$ans=<STDIN>;
 	chomp $ans;
 	if($ans =~/^yes/i || $ans eq ''){
 		print "---------------- begin data -----------------\n";
-		print encode_json(\%form);
-		print "----------------- end data ------------------\n";
+		print $json->encode(\%form);
+		print "\n----------------- end data ------------------\n";
 	}
         $ans='';
 
@@ -341,7 +345,7 @@ sub submitresult(){
 	$ans=<STDIN>;
 	chomp $ans;
 	if($ans =~/^yes/i || $ans eq ''){
-		my $content=system("curl --header 'Content-Type: application/json' --request POST --data '" . encode_json(\%form)."' $url");
+		my $content=system("curl --header 'Content-Type: application/json' --request POST --data '" . $json->encode(\%form)."' $url");
 		if($content eq ''){
 	                eval("use LWP::UserAgent ();");
 			my $ua      = LWP::UserAgent->new(); 
