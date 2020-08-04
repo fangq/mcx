@@ -175,14 +175,14 @@ sub listgpu(){
 			my $mask=$1;
 			my $count=0;
 			if($mask =~/^[01]+$/){
-				foreach my $i (split(undef,$mask)){
+				foreach my $i (split(//,$mask)){
 					if($count>=@{$report{$keyname}}){
 						last;
 					}
 					push(@newgpu,$report{$keyname}[$count])  if($i==1);
 					$count++;
 				}
-			}elsif($mask < @{$report{$keyname}}){
+			}elsif($mask <= @{$report{$keyname}}){
 				push(@newgpu,$report{$keyname}[$mask-1]);
 			}
 			@{$report{$keyname}} = @newgpu;
@@ -240,13 +240,15 @@ sub runbench(){
 #==============================================================================
 
 sub comparegpu(){
-	use LWP::Simple qw(get);
 	use Term::ANSIColor qw(:constants);
 
 	my ($url)=@_;
-	my $database = get $url;
-	if(!defined($database)){
-		$database = `curl --silent $url`;
+	my $database;
+        $database = `curl --silent $url`;
+
+        if($database eq ''){
+                eval("use LWP::Simple qw(get);");
+                $database = get $url;
 		die("fail to download database from $url") if($database eq '');
 	}
 	my @res=split(/\n/,$database);
@@ -281,8 +283,7 @@ sub comparegpu(){
 #==============================================================================
 
 sub submitresult(){
-	use LWP::UserAgent ();
-	use JSON;
+	use JSON::PP;
 
 	my ($report, $url, $jsonopt)=@_;
 	my %form=();
@@ -340,15 +341,15 @@ sub submitresult(){
 	$ans=<STDIN>;
 	chomp $ans;
 	if($ans =~/^yes/i || $ans eq ''){
-		my $ua      = LWP::UserAgent->new(); 
-		my $response = $ua->post( $url, \%form);
-		my $content = $response->decoded_content;
-		if(!defined($content)){
-			$content=system("curl --header 'Content-Type: application/json' --request POST --data '" . encode_json(\%form)."' $url");
-			print("return: $content");
+		my $content=system("curl --header 'Content-Type: application/json' --request POST --data '" . encode_json(\%form)."' $url");
+		if($content eq ''){
+	                eval("use LWP::UserAgent ();");
+			my $ua      = LWP::UserAgent->new(); 
+			my $response = $ua->post( $url, \%form);
+			$content = $response->decoded_content;
 			die("fail to submit benchmark data") if($content eq '');
 		}
-		if($response->is_success && $content=~/success/i){
+		if($content=~/success/i){
 			print "Submission is successful, please browse http://mcx.space/gpubench/ to see the result\n";
 		}
 	}
