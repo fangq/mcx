@@ -2173,7 +2173,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 are more than what your have specified (%d), please use the --maxjumpdebug option to specify a greater number\n" S_RESET
                            ,debugrec,cfg->maxjumpdebug);
 		   }else{
-			MCX_FPRINTF(cfg->flog,"saved %ud trajectory positions, total: %d\t",debugrec,cfg->maxjumpdebug+debugrec);
+			MCX_FPRINTF(cfg->flog,"saved %u trajectory positions, total: %d\t",debugrec,cfg->debugdatalen+debugrec);
 		   }
                    debugrec=min(debugrec,cfg->maxjumpdebug);
 	           cfg->exportdebugdata=(float*)realloc(cfg->exportdebugdata,(cfg->debugdatalen+debugrec)*debuglen*sizeof(float));

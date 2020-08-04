@@ -676,7 +676,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         cfg->debuglevel=mcx_parsedebugopt(debuglevel,debugflag);
         if(cfg->debuglevel==0)
              mexWarnMsgTxt("the specified debuglevel is not supported");
-	printf("mcx.debuglevel='%d';\n",cfg->debuglevel);
+	printf("mcx.debuglevel=%d;\n",cfg->debuglevel);
     }else if(strcmp(name,"savedetflag")==0){
         int len=mxGetNumberOfElements(item);
         const char saveflag[]={'D','S','P','M','X','V','W','\0'};
@@ -690,7 +690,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         if (status != 0)
              mexWarnMsgTxt("not enough space. string is truncated.");
         cfg->savedetflag=mcx_parsedebugopt(savedetflag,saveflag);
-	printf("mcx.savedetflag='%d';\n",cfg->savedetflag);
+	printf("mcx.savedetflag=%d;\n",cfg->savedetflag);
     }else if(strcmp(name,"srcpattern")==0){
         arraydim=mxGetDimensions(item);
         dimtype dimz=1;
