@@ -39,7 +39,7 @@ while(my $opt = $ARGV[0]) {
 		next;
         }elsif($opt =~ /^-[nGW]$/){
                 shift;
-                $mcxopt=" ".shift;
+                $mcxopt.=" $opt ".shift;
                 next;
 	}elsif($opt eq '--bin'){
 		shift;
