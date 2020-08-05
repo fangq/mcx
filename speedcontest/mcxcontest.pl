@@ -40,13 +40,16 @@ my $prettyjson=1;
 my $options='';
 my $mcxopt='-n 1e8';
 while(my $opt = $ARGV[0]) {
-    if($opt =~ /^-[coslnGW-]/){
+    if($opt =~ /^-[coslnGWL-]/){
         if($opt eq '-s'){
 		$options.='s';
 	}elsif($opt eq '-c'){
 		$prettyjson=0;
 	}elsif($opt eq '-l'){
 		$options.='l';
+	}elsif($opt eq '-L'){
+		system("$MCX -L");
+		exit 0;
 	}elsif($opt eq '-o'){
 		shift;
 		$mcxopt=shift;
@@ -73,7 +76,8 @@ while(my $opt = $ARGV[0]) {
 The supported options include (multiple parameters can be used, separated by spaces)
 	-s      submit result to MCX Speed Contest by default (will ask if not used)
         -c      print JSON in compact form, otherwise, print in the indented form
-	-l      compare your benchmark with other GPUs submitted by other users
+	-l      compare your GPU with other GPUs in the database (will ask if not used)
+	-L      list all GPUs supported on your system
 	-o 'mcx options'   supply additional mcx command line options, such as '-n 1e6'
 	-n <num> / -G <01> / -W <w1,w2,..> additional mcx command options add after those in -o
 	--bin /path/to/mcx  manually specify mcx binary location (default: ../bin/mcx)
@@ -249,6 +253,9 @@ sub runbench(){
 				$bench{'mcxversion'}=$1;
 			}
 		}
+		if($mcxopt=~/-W\s+['"]*\s*(([0-9.-]+\s*,\s*)*[0-9.-]+)\s*['"]*/ || $mcxopt=~/--workload\s+['"]*\s*(([0-9.-]+\s*,\s*)*[0-9.-]+)\s*['"]*/){
+			$bench{'workload'}="[$1]";
+        	}
 		if(%bench){
 			$report{$keyname}=\%bench;
 			my $absfrac=$bench{'stat'}{'absorbfrac'};
