@@ -13,6 +13,7 @@
 
 use strict;
 use warnings;
+use Term::ANSIColor qw(:constants);
 
 my $MCX="../bin/mcx";
 my $URL="http://mcx.space/gpubench/";
@@ -25,7 +26,7 @@ my $prettyjson=1;
 my $options='';
 my $mcxopt='-n 1e8';
 while(my $opt = $ARGV[0]) {
-    if($opt =~ /^-[cosl-]/){
+    if($opt =~ /^-[coslnGW-]/){
         if($opt eq '-s'){
 		$options.='s';
 	}elsif($opt eq '-c'){
@@ -36,6 +37,10 @@ while(my $opt = $ARGV[0]) {
 		shift;
 		$mcxopt=shift;
 		next;
+        }elsif($opt =~ /^-[nGW]$/){
+                shift;
+                $mcxopt=" ".shift;
+                next;
 	}elsif($opt eq '--bin'){
 		shift;
 		$MCX=shift;
@@ -56,6 +61,7 @@ The supported options include (multiple parameters can be used, separated by spa
         -c      print JSON in compact form, otherwise, print in the indented form
 	-l      compare your benchmark with other GPUs submitted by other users
 	-o 'mcx options'   supply additional mcx command line options, such as '-n 1e6'
+	-n <num> / -G <01> / -W <w1,w2,..> additional mcx command options add after those in -o
 	--bin /path/to/mcx  manually specify mcx binary location (default: ../bin/mcx)
 	--get url  specify mcx benchmark web link (default: http://mcx.space/gpubench)
 	--post url specify submission link (default: http://mcx.space/gpubench/gpucontest.cgi)\n",
@@ -126,7 +132,7 @@ sub listgpu(){
 
 	printf("Running '$MCX -L' to inquire GPUs ...\n");
 
-	if($mcxoutput =~ /Global Memory/){
+	if($mcxoutput =~ /Global Memory/i){
 		my @gpustr=split(/=+\s+[CG]PU .*\s+=+/,$mcxoutput);
 		foreach my $gpurec (@gpustr){
 			my @gpudata=split(/\n/,$gpurec);
@@ -136,18 +142,18 @@ sub listgpu(){
 					$gpuinfo{'name'}=$3;
 					$gpuinfo{'id'}=$1+0;
 					$gpuinfo{'devcount'}=$2+0;
-				}elsif($info =~ /Compute Capability\s*:\s*(\d+)\.(\d+)/){
+				}elsif($info =~ /Compute Capability\s*:\s*(\d+)\.(\d+)/i){
 					$gpuinfo{'major'}=$1+0;
 					$gpuinfo{'minor'}=$2+0;
-				}elsif($info =~ /Global Memory\s*:\s*(\d+)\s*B/){
+				}elsif($info =~ /Global Memory\s*:\s*(\d+)\s*B/i){
 					$gpuinfo{'globalmem'}=$1+0;
-				}elsif($info =~ /Constant Memory\s*:\s*(\d+)\s*B/){
+				}elsif($info =~ /Constant Memory\s*:\s*(\d+)\s*B/i){
 					$gpuinfo{'constmem'}=$1+0;
-				}elsif($info =~ /Shared Memory\s*:\s*(\d+)\s*B/){
+				}elsif($info =~ /Shared Memory\s*:\s*(\d+)\s*B/i){
 					$gpuinfo{'sharedmem'}=$1+0;
 				}elsif($info =~ /Registers\s*:\s*(\d+)$/){
 					$gpuinfo{'regcount'}=$1+0;
-				}elsif($info =~ /Clock Speed\s*:\s*([0-9.]+)\s+GHz/){
+				}elsif($info =~ /Clock Speed\s*:\s*([0-9.]+)\s+GHz/i){
 					$gpuinfo{'clock'}=$1*1e6;
 				}elsif($info =~ /Number of Cores\s*:\s*(\d+)$/){
 					$gpuinfo{'core'}=$1+0;
@@ -213,7 +219,7 @@ sub runbench(){
 			}elsif($line =~ /simulation speed:\s*([-0-9.]+)/){
 				$bench{'speed'}=$1+0;
                                 printf(RED);
-                                printf("Speed: %.0f", $bench{'speed'});
+                                printf("Speed: %.0f photon/ms", $bench{'speed'});
                                 printf(RESET);
 			}elsif($line =~ /total simulated energy:\s*([-0-9.]+)\s*absorbed: ([-0-9.]+)%/){
 				$bench{'stat'}{'energytot'}=$1+0;
@@ -247,8 +253,6 @@ sub runbench(){
 #==============================================================================
 
 sub comparegpu(){
-	use Term::ANSIColor qw(:constants);
-
 	my ($url)=@_;
 	my $database;
         $database = `curl --silent $url`;
