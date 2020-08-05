@@ -19,17 +19,17 @@ my $URL="http://mcx.space/gpubench/";
 my $POSTURL="http://mcx.space/gpubench/gpucontest.cgi";
 
 my %report=();
-my %jsonopt=(utf8 => 1, pretty => 1);
+my $prettyjson=1;
 
 # parse commandline options
 my $options='';
 my $mcxopt='-n 1e8';
 while(my $opt = $ARGV[0]) {
-    if($opt =~ /^-[ocsl-]/){
-        if($opt eq '-c'){
-		$jsonopt{'pretty'}=0;
-	}elsif($opt eq '-s'){
+    if($opt =~ /^-[cosl-]/){
+        if($opt eq '-s'){
 		$options.='s';
+	}elsif($opt eq '-c'){
+		$prettyjson=0;
 	}elsif($opt eq '-l'){
 		$options.='l';
 	}elsif($opt eq '-o'){
@@ -49,17 +49,17 @@ while(my $opt = $ARGV[0]) {
 		$POSTURL=shift;
 		next;
 	}elsif($opt eq '--help'){
-		printf("%s - running MCX benchmarks and submit to MCX Speed Contest
+		printf("mcxcontest - running MCX benchmarks and submit to MCX Speed Contest
 	Format: %s <option1> <option2> ...\n
 The supported options include (multiple parameters can be used, separated by spaces)
 	-s      submit result to MCX Speed Contest by default (will ask if not used)
+        -c      print JSON in compact form, otherwise, print in the indented form
 	-l      compare your benchmark with other GPUs submitted by other users
-	-c      print JSON in compact form, otherwise, print in the indented form
 	-o 'mcx options'   supply additional mcx command line options, such as '-n 1e6'
 	--bin /path/to/mcx  manually specify mcx binary location (default: ../bin/mcx)
 	--get url  specify mcx benchmark web link (default: http://mcx.space/gpubench)
 	--post url specify submission link (default: http://mcx.space/gpubench/gpucontest.cgi)\n",
-		$0,$0);
+		$0);
 		exit 0;
 	}else{
 		die('invalid command line option');
@@ -87,7 +87,10 @@ $report{'speedsum'}=$report{'benchmark1'}{'speed'}+$report{'benchmark2'}{'speed'
 $report{'version'}=1;
 $report{'mcxversion'}=$report{'benchmark1'}{'mcxversion'};
 
-printf("Speed test completed\nYour device(s) score is %.0f\n",$report{'speedsum'});
+print("Speed test completed\nYour device(s) score is ");
+print(RED);
+printf("%.0f\n",$report{'speedsum'});
+print(RESET);
 
 ## download report and compare
 
@@ -110,7 +113,7 @@ if(! ($options=~/s/)){
 	chomp $ans; 
 }
 if($options=~/s/ || $ans =~/^yes/i){
-	&submitresult(\%report,$POSTURL,\%jsonopt);
+	&submitresult(\%report,$POSTURL,$prettyjson);
 }
 $ans='';
 
@@ -198,7 +201,7 @@ sub runbench(){
 	my $mcxoutput=`$MCX --bench $benchname $mcxopt`;
 	$mcxoutput=~s/\e\[\d+(?>(;\d+)*)m//g;
 
-	printf("Running benchmark '$MCX --bench $benchname $mcxopt' ...\n");
+	printf("Running benchmark '$MCX --bench $benchname $mcxopt' ... ");
 
 	if($mcxoutput =~ /total simulated energy:/){
 		my @lines=split(/\n/,$mcxoutput);
@@ -209,6 +212,9 @@ sub runbench(){
 				$bench{'stat'}{'nphoton'}=$1;
 			}elsif($line =~ /simulation speed:\s*([-0-9.]+)/){
 				$bench{'speed'}=$1+0;
+                                printf(RED);
+                                printf("Speed: %.0f", $bench{'speed'});
+                                printf(RESET);
 			}elsif($line =~ /total simulated energy:\s*([-0-9.]+)\s*absorbed: ([-0-9.]+)%/){
 				$bench{'stat'}{'energytot'}=$1+0;
 				$bench{'stat'}{'absorbfrac'}=$2+0;
@@ -235,6 +241,7 @@ sub runbench(){
 	}else{
                 die('$benchname failed, output incomplete');
 	}
+        print("\n");
 }
 
 #==============================================================================
@@ -285,7 +292,7 @@ sub comparegpu(){
 sub submitresult(){
 	use JSON::PP;
 
-	my ($report, $url, $jsonopt)=@_;
+	my ($report, $url, $ispretty)=@_;
 	my %form=();
 	my $ans='';
 	my %userinfo=(
@@ -327,7 +334,7 @@ sub submitresult(){
 	}
 
 	my $json = JSON::PP->new;
-        $json = $json->pretty(1);
+        $json = $json->pretty($ispretty);
 
 	$form{'report'}= $json->encode($report);
 
