@@ -10,6 +10,20 @@
 # Github:  https://github.com/fangq/mcx/
 #
 ###############################################################################
+#
+# Dependencies:
+#
+# For Linux and Mac OS: no additional package is needed, Perl is supported by default
+#
+# For Windows: please install cygwin64 (http://cygwin.com/) or MSYS2 (http://msys2.org/)
+#
+# Specifically, this script requires Perl 5.x and curl (if curl is not install 
+# in the path, mcxcontest.pl looks for the LWP::UserAgent and LWP::Simple perl modules.
+#
+# How to use:
+#    type "mcxcontest.pl --help" to see the format
+#
+###############################################################################
 
 use strict;
 use warnings;
@@ -352,7 +366,7 @@ sub submitresult(){
 	}
         $ans='';
 
-	print "\nFinal confirmation - do you want ot submit ([yes]/no)?";
+	print "\nFinal confirmation - please type enter or yes to submit, type no to cancel ([yes]/no)?";
 	$ans=<STDIN>;
 	chomp $ans;
 	if($ans =~/^yes/i || $ans eq ''){
