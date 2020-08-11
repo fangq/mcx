@@ -1583,6 +1583,21 @@ int mcx_smxblock(int v1, int v2){
 }
 
 /**
+ * @brief Utility function to calculate the maximum blocks per SMX
+ *
+ *
+ * @param[in] v1: the major version of an NVIDIA GPU
+ * @param[in] v2: the minor version of an NVIDIA GPU
+ */
+
+int mcx_threadmultiplier(int v1, int v2){
+     int v=v1*10+v2;
+     if(v<=75)      return 1;
+     else           return 2;
+}
+
+
+/**
  * @brief Utility function to query GPU info and set active GPU
  *
  * This function query and list all available GPUs on the system and print
@@ -1636,12 +1651,12 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 	(*info)[dev].core=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
 	(*info)[dev].maxmpthread=dp.maxThreadsPerMultiProcessor;
         (*info)[dev].maxgate=cfg->maxgate;
-        (*info)[dev].autoblock=(*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor);
+        (*info)[dev].autoblock=MAX((*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor),64);
         if((*info)[dev].autoblock==0){
              MCX_FPRINTF(stderr,S_RED "WARNING: maxThreadsPerMultiProcessor can not be detected\n" S_RESET);
              (*info)[dev].autoblock=64;
         }
-        (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm;
+        (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm * mcx_threadmultiplier(dp.major,dp.minor);
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
