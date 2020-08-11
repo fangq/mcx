@@ -720,7 +720,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int isinternal, const int isreflect, const int islabel>
+template <const int ispencil, const int isreflect, const int islabel>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
            uint *mediaid,OutputType *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
@@ -805,7 +805,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           /**
            * Only one branch is taken because of template, this can reduce thread divergence
            */
-	  switch(gcfg->srctype) {
+          if(!ispencil){
+	    switch(gcfg->srctype) {
 		case(MCX_SRC_PLANAR):
 		case(MCX_SRC_PATTERN):
 		case(MCX_SRC_PATTERN3D):
@@ -988,19 +989,19 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                       canfocus=(gcfg->srctype==MCX_SRC_SLIT);
 		      break;
 		}
-	  }
-          /**
-           * If beam focus is set, determine the incident angle
-           */
-          if(canfocus){
-	    if(isnan(gcfg->c0.w)){ // isotropic if focal length is nan
+	    }
+            /**
+             * If beam focus is set, determine the incident angle
+             */
+            if(canfocus){
+	      if(isnan(gcfg->c0.w)){ // isotropic if focal length is nan
                 float ang,stheta,ctheta,sphi,cphi;
                 ang=TWO_PI*rand_uniform01(t); //next arimuth angle
                 sincosf(ang,&sphi,&cphi);
                 ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
                 sincosf(ang,&stheta,&ctheta);
                 rotatevector(v,stheta,ctheta,sphi,cphi);
-	    }else if(gcfg->c0.w!=0.f){
+	      }else if(gcfg->c0.w!=0.f){
 	        float Rn2=(gcfg->c0.w > 0.f) - (gcfg->c0.w < 0.f);
 	        rv->x+=gcfg->c0.w*v->x;
 		rv->y+=gcfg->c0.w*v->y;
@@ -1012,6 +1013,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                 v->x*=Rn2;
                 v->y*=Rn2;
                 v->z*=Rn2;
+	      }
 	    }
 	  }
 
@@ -1023,14 +1025,12 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           /**
            * If a photon is launched outside of the box, or inside a zero-voxel, move it until it hits a non-zero voxel
            */
-	  if(!isinternal){
-	      if((*mediaid & MED_MASK)==0){
+	  if((*mediaid & MED_MASK)==0){
 		 int idx=skipvoid<islabel>(p, v, f, rv, media,t); /** specular reflection of the bbx is taken care of here*/
 		 if(idx>=0){
 		     *idx1d=idx;
 		     *mediaid=media[*idx1d];
 		 }
-	      }
 	  }
 	  *w0+=1.f;
 	  GPUDEBUG(("retry %f: mediaid=%d idx=%d w0=%e\n",*w0, *mediaid, *idx1d, p->w));
@@ -1121,7 +1121,7 @@ kernel void mcx_test_rng(OutputType field[],uint n_seed[]){
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int isinternal, const int isreflect, const int islabel>
+template <const int ispencil, const int isreflect, const int islabel>
 kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n_seed[],
      float4 n_pos[],float4 n_dir[],float4 n_len[],float n_det[], uint detectedphoton[], 
      float srcpattern[],float replayweight[],float photontof[],int photondetid[], 
@@ -1163,7 +1163,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
      gpu_rng_init(t,n_seed,idx);
 
-     if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
+     if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
        n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress)){
          GPUDEBUG(("thread %d: fail to launch photon\n",idx));
@@ -1439,7 +1439,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		 }
 	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n",idx1d,mediaid,gcfg->doreflect,isdet,f.t>gcfg->twin1));
-	      if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
+	      if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	          n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                    break;
@@ -1454,7 +1454,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                    p.w*=ROULETTE_SIZE;
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-                   if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
+                   if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	                n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                         break;
@@ -1494,7 +1494,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+		    	    if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 			        ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress))
                                 break;
@@ -2112,12 +2112,12 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
            mcx_flush(cfg);
 
-           int isinternal=((cfg->internalsrc>0) || (param.mediaidorig && (cfg->srctype==MCX_SRC_PENCIL || cfg->srctype==MCX_SRC_CONE || cfg->srctype==MCX_SRC_ISOTROPIC)));
+           int ispencil=(cfg->srctype==MCX_SRC_PENCIL);
 	   int isref=cfg->isreflect;
 	   for(i=0;i<6;i++)
 	       if(cfg->bc[i]==1)
 	           isref=1;
-	   switch(isinternal*100 + (isref>0)*10+(cfg->mediabyte<=4)){
+	   switch(ispencil*100 + (isref>0)*10+(cfg->mediabyte<=4)){
 	       case 0:  mcx_main_loop<0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
 	       case 1:  mcx_main_loop<0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
 	       case 10: mcx_main_loop<0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
