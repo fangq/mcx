@@ -54,7 +54,7 @@ figure;
 fcw=flux.dref*cfg.tstep;
 for i=1:3
     subplot(1,3,i);
-    hs=slice(log10(abs(double(fcw(:,:,:,i)))),1,1,1);
+    hs=slice(abs(double(fcw(:,:,:,i))),[],[],1);
     view([1 1 1])
     set(hs,'linestyle','none');
     axis equal; colorbar

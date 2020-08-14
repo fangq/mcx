@@ -30,13 +30,14 @@ DOXYCFG=mcxdoxy.cfg
 ZMATLIB    :=libzmat.a
 USERLINKOPT?=$(ZMATLIB) -lz
 
-INCLUDEDIRS=-Izmat -Izmat/easylzma -I/usr/local/cuda/include -Iubj
-
 CUDART=-lcudart
 CUOMPLINK=
 
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
+CUDA_HOME ?= /usr/local/cuda
+
+INCLUDEDIRS=-Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo
@@ -47,10 +48,10 @@ else ifeq ($(BACKEND),cudastatic)
   else
       CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
   endif
-  LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
+  LINKOPT=-L$(CUDA_HOME)/lib -lm $(CUDART)
   CUCCOPT=-g -lineinfo -Xcompiler -Wall#-arch compute_20 #--maxrregcount 32
 else
-  LINKOPT=-L/usr/local/cuda/lib -lm $(CUDART)
+  LINKOPT=-L$(CUDA_HOME)/lib -lm $(CUDART)
   CUCCOPT=-g -lineinfo -Xcompiler -Wall#-arch compute_20 #--maxrregcount 32
 endif
 
@@ -94,11 +95,11 @@ else
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
      CPPOPT +=-m64
      CUCCOPT +=-m64
-     ifeq "$(wildcard /usr/local/cuda/lib64)" "/usr/local/cuda/lib64"
+     ifeq "$(wildcard $(CUDA_HOME)/lib64)" "$(CUDA_HOME)/lib64"
         ifeq ($(BACKEND),cuda)
-           LINKOPT=-L/usr/local/cuda/lib64 $(CUDART) -lm -lstdc++
+           LINKOPT=-L$(CUDA_HOME)/lib64 $(CUDART) -lm -lstdc++
         else ifeq ($(BACKEND),cudastatic)
-           LINKOPT=-L/usr/local/cuda/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
+           LINKOPT=-L$(CUDA_HOME)/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
         endif
      endif
   endif

@@ -122,7 +122,7 @@ for i=1:len
             if(~isfield(cfg(i),'srcparam1'))
                 error('cfg.srcparam1 is missing');
             end
-            [ncyl,fcyl]=meshacylinder(srcpos,srcpos+cfg(i).srcdir*1e-5,cfg(i).srcparam1(1)*voxelsize,0,0);
+            [ncyl,fcyl]=meshacylinder(srcpos,srcpos+cfg(i).srcdir(1:3)*1e-5,cfg(i).srcparam1(1)*voxelsize,0,0);
             hsrcarea=plotmesh(ncyl,fcyl{end-1},'facecolor','r','linestyle','none');
         elseif(strcmp(cfg(i).srctype,'planar') || strcmp(cfg(i).srctype,'pattern') || strcmp(cfg(i).srctype,'fourier') || ...
                strcmp(cfg(i).srctype,'fourierx') || strcmp(cfg(i).srctype,'fourierx2d') || strcmp(cfg(i).srctype,'pencilarray'))
@@ -135,7 +135,7 @@ for i=1:len
                 vec2=cfg(i).srcparam2(1:3)*voxelsize;
             end
             nrec=[0 0 0; cfg(i).srcparam1(1:3)*voxelsize; cfg(i).srcparam1(1:3)*voxelsize+vec2; vec2];
-            hsrcarea=plotmesh(rotatevec3d(nrec,[0 0 1], cfg(i).srcdir, srcpos), {[1 2 3 4 1]});
+            hsrcarea=plotmesh(nrec+repmat(srcpos(:)',[4,1]), {[1 2 3 4 1]});
         elseif(strcmp(cfg(i).srctype,'pattern3d'))
             dim=cfg(i).srcparam1(1:3);
             [bbxno,bbxfc]=latticegrid(0:dim(1):dim(1),0:dim(2):dim(2),0:dim(3):dim(3));

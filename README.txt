@@ -1,78 +1,76 @@
 ---------------------------------------------------------------------
-                   Monte Carlo eXtreme  (MCX)
+=                   Monte Carlo eXtreme  (MCX)                      =
                           CUDA Edition
 ---------------------------------------------------------------------
 
-Author:  Qianqian Fang <q.fang at neu.edu>
-License: GNU General Public License version 3 (GPLv3)
-Version: 1.4.9 (v2019.4, Ether Dome - RC1)
-Website: http://mcx.space
+*Author:  Qianqian Fang <q.fang at neu.edu>
+*License: GNU General Public License version 3 (GPLv3)
+*Version: 1.8 (v2020, Furious Fermion)
+*Website: http://mcx.space
 
 ---------------------------------------------------------------------
 
 Table of Content:
 
-O.    What's New
-I.    Introduction
-II.   Requirement and Installation
-III.  Running Simulations
-IV.   Using JSON-formatted input files
-V.    Using JSON-formatted shape description files
-VI.   Using MCXLAB in MATLAB and Octave
-VII.  Using MCX Studio GUI
-VIII. Interpreting the Outputs
-IX.   Best practices guide
-X.    Acknowledgement
-XI.   Reference
-
+<toc>
 
 ---------------------------------------------------------------------
 
-O.    What's New
+== #  What's New ==
 
-In MCX v2019.4 (1.4.9), several important key features were added
+MCX v2020 represents a new milestone towards the development of a fast,
+versatile and feature-rich open-source Monte Carlo 3D photon simulator.
+It is packed with numerous improvements in both functionality and stability. 
+We want to specifically highlight the below major additions:
 
-* Support continuously varying media - mua/mus can vary in every voxel
-* Support -w / --savedetflag to specify which det photon data to output
-* Add json2mcx, converting from json file to mcxlab cfg
-* Can simulate infinite domain using cylic BC - added MCXLAB example
-* A new output type - partial-path data on all exiting voxels (experimental)
+* JSON/Binary JSON output files with built-in compression for easy data sharing
+* Built-in benchmarks for easy testing and adoption by new users
+* Exporting simulation as JSON with binary volume data
+* All-in-one Windows installer for MCXStudio/MCX/MMC/MCXCL
+* Automated code building, testing and continuous integration via Travis-CI
+* CMake based compilation and Visual Studio support
 
+A detailed list of updates is summarized below (key features marked with "*"):
 
-In MCX v2019.3 (1.4.8), we added a list of major new additions, including
+*2020-07-22*[f844fe8] add automated building script via travis-ci
+*2020-07-22*[cbf0225] add unit testing script
+*2020-07-09 [5b038a7] add winget manifest
+*2020-07-04*[4bda593] inno windows installer
+*2020-07-02 [38529a7] accept -f in mcxshow and mcxviewer
+*2020-07-02 [34ecf5f] add glscene directly to the source code
+*2020-07-01*[f1828d3] add manpage for mcx
+*2020-06-29 [cd4acb8] visual studio project file updated
+*2020-06-29 [b22025d] update vs project file
+*2020-06-28 [71bedc5] add benchmark options, add jnii/bnii output formats
+*2020-05-02 [e7ce8f7] compiles lzma on windows, #94
+*2020-05-02*[e56fa2b] add UBJ support, output .bnii files, close #95
+*2020-05-01 [ed80ad5] now support lzma and lzip compression
+*2020-05-01 [f136bc9] upgrade all built-in binary files to JData formatted JSON files #94
+*2020-04-29 [0d9c162] save detected photon data in JSON/JData format, close #94
+*2020-04-25 [045a3de] update json schema
+*2020-04-25 [e8aae66] initialize gsrcpattern
+*2020-04-23*[8086175] add built-in colini27 data,add --dumpjson, add -F jnii output format
+*2020-04-19*[da73b8d] add mcx built in benchmarks
+*2020-03-21*[b8fb79a] plot data in x/y/z slices,add axis labels and grid
+*2020-03-20 [d7e6203] add axis lable and scaling to volume viewer
+*2020-03-14*[b91dc5a] update mcxstudio gui to support gpu mmc
+*2020-02-18*[8c37911] adding pymcx written by Maxime Baillot as submodule
+*2020-02-08 [ba78df5] add template to disable continuous medium support, close #89
+*2020-01-28 [b7c1982] speed up cone beam photon launch, fix accuracy, close #86
+*2020-01-25*[984b2a0] initial support for hybrid optical properties: tissue type label combined with continous optical properties
+*2019-11-19 [1c07b16] scale partial-path when getting det photon time and weight, close #83
+*2019-08-08 [0bdbef6] allow to browse file folder on windows
+*2019-07-26*[8a341ee] update mcxstudio to add the new flags
+*2019-07-23 [e3b53dc] add 2d sample script
+*2019-07-22*[c4baa84] output fluence/flux in replay, backport changes from mcxcl
+*2019-05-24 [02efc62] bug fix for continuous varying media patch
 
-* Support 4 different boundary conditions (total absorption, total reflection/mirror, Fresnel reflection and cylic), controlled independently (--bc/cfg.bc) at 6 facets of the domain
-* Add 4 built-in complex domain examples - Colin27 brain atlas, USC_19-5 brain atlas, Digimouse, and mcxyz skin-vessel benchmark
-* Support isotropic launch for all focuable sources - gaussian, pattern, pattern3d, fourier, disk, fourierx, fourierx2d, and slit - by setting cfg.srcdir(4) to nan
-* Add GPU-ANLM denoiser, mcxfilter.m, to mcxlab to reduce MC fluence noise, detailed in our [Yao2018] paper
-* Initial support of "photon sharing" - a fast approach to simultaneouly simulate multiple pattern src/det, as detailed in our Photoncs West 2019 talk by Ruoyang Yao/Shijie Yan [Yao&Yan2019]
-* First release of MCX Viewer - a built in 3D fluence rendering tool in mcxstudio (mcxviewer and mcxshow also provided separately)
-* Output partial scattering event counts in detected photon data, similar to MMC
-* Add CMake support, python-based mch file reader (by Shih-Cheng Tu), nightly build compilation script, colored command line output, and more
-
-In addition, we also fixed a number of critical bugs, such as
-
-* fix mcxlab gpuinfo output crash using multiple GPUs
-* disable linking to Intel OMP library (libiomp5) to avoid MATLAB 2016-2017 crash
-* fix mcxlab crash when srcpattern/srcdir/srcpos/detpos are not in double precision
-* fix shared memory allocation size bug
-* add the missing photon exit position in the trajectory output
-* fix mcxlab crash due to racing in multi-threads
-* force g to 1 in region where mus is 0
-
-[Yuan2018] Yaoshen Yuan, Leiming Yu, Zafer Doğan, Qianqian Fang*, 
-"Graphics processing units-accelerated adaptive nonlocal means filter for denoising 
-three-dimensional Monte Carlo photon transport simulations," 
-J. of Biomedical Optics, 23(12), 121618 (2018), URL: https://doi.org/10.1117/1.JBO.23.12.121618
-
-[Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang,  
-"Accelerating Monte Carlo forward model with structured light illumination via 'photon sharing',"
-Photonics West 2019, paper#10874-11, San Francisco, CA, USA.
-[https://www.spiedigitallibrary.org/conference-presentations/10874/108740B/Accelerating-Monte-Carlo-forward-model-with-structured-light-illumination-via/10.1117/12.2510291?SSO=1 Full presentation for our invited talk]
+Between 2019 and 2020, three new journal papers have been published as 
+the result of this project, please see the full list at http://mcx.space/#publication
 
 ---------------------------------------------------------------------
 
-I.  Introduction
+== # Introduction ==
 
 Monte Carlo eXtreme (MCX) is a fast photon transport simulation 
 software for 3D heterogeneous turbid media. By taking advantage of 
@@ -85,19 +83,19 @@ implementation.
 The algorithm of this software is detailed in the References [Fang2009,Yu2018]. 
 A short summary of the main features includes:
 
-*. 3D heterogeneous media represented by voxelated array
-*. support over a dozen source forms, including wide-field and pattern illuminations
-*. boundary reflection support
-*. time-resolved photon transport simulations
-*. saving photon partial path lengths and trajectories
-*. optimized random number generators
-*. build-in flux/fluence normalization to output Green's functions
-*. user adjustable voxel resolution
-*. improved accuracy with atomic operations
-*. cross-platform graphical user interface
-*. native Matlab/Octave support for high usability
-*. flexible JSON interface for future extensions
-*. multi-GPU support
+* 3D heterogeneous media represented by voxelated array
+* support over a dozen source forms, including wide-field and pattern illuminations
+* boundary reflection support
+* time-resolved photon transport simulations
+* saving photon partial path lengths and trajectories
+* optimized random number generators
+* build-in flux/fluence normalization to output Green's functions
+* user adjustable voxel resolution
+* improved accuracy with atomic operations
+* cross-platform graphical user interface
+* native Matlab/Octave support for high usability
+* flexible JSON interface for future extensions
+* multi-GPU support
 
 This software can be used on Windows, Linux and Mac OS. 
 MCX is written in CUDA and can be used with NVIDIA hardware
@@ -110,7 +108,7 @@ not support CUDA, please download MCXCL from the below URL:
   http://mcx.space/wiki/index.cgi?Learn#mcxcl
 
 ---------------------------------------------------------------------------
-II. Requirement and Installation
+== # Requirement and Installation ==
 
 Please read this section carefully. The majority of failures 
 using MCX were found related to incorrect installation of CUDA 
@@ -121,8 +119,8 @@ instructions.
 
 For MCX-CUDA, the requirements for using this software include
 
-*. a CUDA capable NVIDIA graphics card
-*. pre-installed NVIDIA graphics driver
+* a CUDA capable NVIDIA graphics card
+* pre-installed NVIDIA graphics driver
 
 You must use a CUDA capable NVIDIA graphics card in order to use
 MCX. A list of CUDA capable cards can be found at [2]. The oldest 
@@ -155,10 +153,11 @@ CUDA simulations. This requires you to open the mcx/setup/win64 folder
 using your file explorer, right-click on the "apply_timeout_registry_fix.bat"
 file and select "Run as administrator". After confirmation, you should 
 see a windows command window with message 
-
+<pre>
   Patching your registry
   Done
   Press any key to continue ...
+</pre>
 
 You MUST REBOOT your Windows computer to make this setting effective.
 The above patch modifies your driver settings so that you can run MCX 
@@ -171,7 +170,7 @@ http://mcx.space/wiki/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_e
 
 
 
-III.Running Simulations
+== # Running Simulations ==
 
 To run a simulation, the minimum input is a configuration (text) file,
 and a volume file (a binary file with each byte representing a medium 
@@ -189,7 +188,7 @@ such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::5e0f0c$2019.4 $Date::2019-04-22 18:40:07 -04$ by $Author::Qianqian Fang $
+$Rev::0aea3b$2020.4 $Date::2020-07-23 15:43:20 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -197,6 +196,8 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Required option ==
  -f config     (--input)       read an input file in .json or .inp format
+ --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name
+                               run --bench without parameter to get a list
 
 == MC options ==
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
@@ -259,7 +260,7 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Output options ==
  -s sessionid  (--session)     a string to label all output file names
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy density
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, 
 			       event counts at each voxel (replay mode only)
                                M - momentum transfer; 
@@ -288,9 +289,34 @@ where possible parameters include (the first value in [*|*] is the default)
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save
  -F [mc2|...] (--outputformat) fluence data output format:
                                mc2 - MCX mc2 format (binary 32bit float)
-                               nii - Nifti format
+                               jnii - JNIfTI format (http://openjdata.org)
+                               bnii - Binary JNIfTI (http://openjdata.org)
+                               nii - NIfTI format
                                hdr - Analyze 7.5 hdr/img format
                                tx3 - GL texture data for rendering (GL_RGBA32F)
+	the bnii/jnii formats support compression (-Z) and generate small files
+	load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
+	  MATLAB/Octave: JNIfTI toolbox   https://github.com/fangq/jnifti, 
+	  MATLAB/Octave: JSONLab toolbox  https://github.com/fangq/jsonlab, 
+	  Python:        PyJData:         https://pypi.org/project/jdata
+	  JavaScript:    JSData:          https://github.com/fangq/jsdata
+ -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson
+                               is used (when saving data to JSON/JNIfTI format)
+			       0 zlib: zip format (moderate compression,fast) 
+			       1 gzip: gzip format (compatible with *.gz)
+			       2 base64: base64 encoding with no compression
+			       3 lzip: lzip format (high compression,very slow)
+			       4 lzma: lzma format (high compression,very slow)
+			       5 lz4: LZ4 format (low compression,extrem. fast)
+			       6 lz4hc: LZ4HC format (moderate compression,fast)
+ --dumpjson [-,2,'file.json']  export all settings, including volume data using
+                               JSON/JData (http://openjdata.org) format for 
+			       easy sharing; can be reused using -f
+			       if followed by nothing or '-', mcx will print
+			       the JSON to the console; write to a file if file
+			       name is specified; by default, prints settings
+			       after pre-processing; '--dumpjson 2' prints 
+			       raw inputs before pre-processing
 
 == User IO options ==
  -h            (--help)        print this message
@@ -311,6 +337,7 @@ where possible parameters include (the first value in [*|*] is the default)
  --gscatter     [1e9|int]      after a photon completes the specified number of
                                scattering events, mcx then ignores anisotropy g
                                and only performs isotropic scattering for speed
+ --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
                                launched outside (i.e. a widefield source)
@@ -343,6 +370,7 @@ Historically, MCX supports an extended version of the input file format
 used by tMCimg. The difference is that MCX allows comments in the input file.
 A typical MCX input file looks like this:
 
+<pre>
 1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate
 30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets srcfrom0 (-z)
@@ -362,6 +390,7 @@ semi60x60x60.bin     # volume ('unsigned char' binary format)
 pencil               # source type (optional)
 0 0 0 0              # parameters (4 floats) for the selected source
 0 0 0 0              # additional source parameters
+</pre>
 
 Note that the scattering coefficient mus=musp/(1-g).
 
@@ -399,7 +428,7 @@ are automatically estimated for you.
 
 
 ---------------------------------------------------------------------------
-IV. Using JSON-formatted input files
+== # Using JSON-formatted input files ==
 
 Starting from version 0.7.9, MCX accepts a JSON-formatted input file in
 addition to the conventional tMCimg-like input format. JSON 
@@ -410,8 +439,8 @@ and easy-to-interface with other applications (like MATLAB).
 
 A sample JSON input file can be found under the examples/quicktest
 folder. The same file, qtest.json, is also shown below:
-
- {
+<pre>
+{
     "Help": {
       "[en]": {
         "Domain::VolumeFile": "file full path to the volume description file, can be a binary or JSON file",
@@ -483,7 +512,8 @@ folder. The same file, qtest.json, is also shown below:
             }
 	]
     }
- }
+}
+</pre>
 
 A JSON input file requiers several root objects, namely "Domain", "Session", 
 "Forward" and "Optode". Other root sections, like "Help", will be ignored. 
@@ -503,15 +533,15 @@ You should always use "" to quote a "name" and separate parallel
 items by ",".
 
 MCX accepts an alternative form of JSON input, but using it is not 
-recommended. In the alternative format, you can use 
- "rootobj_name.field_name": value 
+recommended. In the alternative format, you can use <tt>"rootobj_name.field_name": value</tt>
 to represent any parameter directly in the root level. For example
-
- {
+<pre>
+{
     "Domain.VolumeFile": "semi60x60x60.json",
     "Session.Photons": 10000000,
     ...
- }
+}
+</pre>
 
 You can even mix the alternative format with the standard format. 
 If any input parameter has values in both formats in a single input 
@@ -520,8 +550,9 @@ file, the standard-formatted value has higher priority.
 To invoke the JSON-formatted input file in your simulations, you 
 can use the "-f" command line option with MCX, just like using an 
 .inp file. For example:
-
+<pre>
   mcx -A 1 -n 20 -f onecube.json -s onecubejson
+</pre>
 
 The input file must have a ".json" suffix in order for MCX to 
 recognize. If the input information is set in both command line,
@@ -533,7 +564,7 @@ If your JSON input file is invalid, MCX will quit and point out
 where the format is incorrect.
 
 ---------------------------------------------------------------------------
-V. Using JSON-formatted shape description files
+== # Using JSON-formatted shape description files ==
 
 Starting from v0.7.9, MCX can also use a shape 
 description file in the place of the volume file.
@@ -545,8 +576,8 @@ Samples on how to use the shape files are included under
 the example/shapetest folder. 
 
 The sample shape file, shapes.json, is shown below:
-
- {
+<pre>
+{
   "MCX_Shape_Command_Help":{
      "Shapes::Common Rules": "Shapes is an array object. The Tag field sets the voxel value for each
          region; if Tag is missing, use 0. Tag must be smaller than the maximum media number in the
@@ -580,6 +611,7 @@ The sample shape file, shapes.json, is shown below:
      {"ZLayers":  [[1,10,1],[11,30,2],[31,50,3]]}
   ]
  }
+</pre>
 
 A shape file must contain a "Shapes" object in the root level.
 Other root-level fields are ignored. The "Shapes" object is a
@@ -598,7 +630,7 @@ the overlapping regions covered by the previous objects.
 
 There are a few ways for you to use shape description records
 in your MCX simulations. You can save it to a JSON shape file, and
-put the file name in Line#6 of yoru .inp file, or set as the
+put the file name in Line#6 of your .inp file, or set as the
 value for Domain.VolumeFile field in a .json input file. 
 In these cases, a shape file must have a suffix of .json.
 
@@ -610,8 +642,9 @@ the "VolumeFile" field in the input.
 
 Another way to use Shapes is to specify it using the -P (or --shapes)
 command line flag. For example:
-
+<pre>
  mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
+</pre>
 
 This will first initialize a volume based on the settings in the 
 input .json file, and then rasterize new objects to the domain and 
@@ -622,7 +655,7 @@ the JSONlab toolbox [4] to load and process in MATLAB.
 
 
 ---------------------------------------------------------------------------
-VI. Using MCXLAB in MATLAB and Octave
+== # Using MCXLAB in MATLAB and Octave ==
 
 MCXLAB is the native MEX version of MCX for Matlab and GNU Octave. It includes
 the entire MCX code in a MEX function which can be called directly inside
@@ -637,7 +670,7 @@ install and use MCXLAB.
 
 
 ---------------------------------------------------------------------------
-VII. Using MCX Studio GUI
+== # Using MCX Studio GUI ==
 
 MCX Studio is a graphics user interface (GUI) for MCX. It gives users
 a straightforward way to set the command line options and simulation
@@ -680,12 +713,12 @@ to MCX Studio by clicking the "Load" button.
 
 
 ---------------------------------------------------------------------------
-VIII. Interpreting the Output
+== # Interpreting the Output ==
 
 MCX output consists of two parts, the flux volume 
 file and messages printed on the screen.
 
-8.1 Output files
+=== Output files ===
 
 An mc2 file contains the fluence-rate distribution from the simulation in 
 the given medium. By default, this fluence-rate is a normalized solution 
@@ -698,8 +731,9 @@ where Ng is the total number of time gates.
 By default, MCX produces the '''Green's function''' of the 
 '''fluence rate'''  for the given domain and source. Sometime it is also 
 known as the time-domain "two-point" function. If you run MCX with the following command
-
+<pre>
   mcx -f input.inp -s output ....
+</pre>
 
 the fluence-rate data will be saved in a file named "output.dat" under
 the current folder. If you run MCX without "-s output", the
@@ -722,8 +756,9 @@ MCX paper [6] (MCX and MMC outputs share the same meanings).
 
 Please be aware that the output flux is calculated at each time-window 
 defined in the input file. For example, if you type 
-
+<pre>
  0.e+00 5.e-09 1e-10  # time-gates(s): start, end, step
+</pre>
 
 in the 5th row in the input file, MCX will produce 50 fluence-rate
 snapshots, corresponding to the time-windows at [0 0.1] ns, 
@@ -744,10 +779,10 @@ loadmc2 function in the <mcx root>/utils folder.
 To get a continuous-wave solution, run a simulation with a sufficiently 
 long time window, and sum the flux along the time dimension, for 
 example
-
+<pre>
    mcx=loadmc2('output.mc2',[60 60 60 10],'float');
    cw_mcx=sum(mcx,4);
-
+</pre>
 Note that for time-resolved simulations, the corresponding solution
 in the results approximates the flux at the center point
 of each time window. For example, if the simulation time window 
@@ -763,14 +798,14 @@ referring to the expected number of photons or Joule of energy flowing
 through a unit area pointing towards a particular direction per unit time.
 The current density can be calculated at the boundary of the domain by two means:
 
-1. using the detected photon partial path output (i.e. the second output of mcxlab.m),
+# using the detected photon partial path output (i.e. the second output of mcxlab.m),
 one can compute the total energy E received by a detector, then one can
 divide E by the area/aperture of the detector to obtain the J(r) at a detector
 (E should be calculated as a function of t by using the time-of-fly of detected
 photons, the E(t)/A gives J(r,t); if you integrate all time gates, the total E/A
 gives the current I(r), instead of the current density).
 
-2. use -X 1 or --saveref/cfg.issaveref option in mcx to enable the
+# use -X 1 or --saveref/cfg.issaveref option in mcx to enable the
 diffuse reflectance recordings on the boundary. the diffuse reflectance
 is represented by the current density J(r) flowing outward from the domain.
 
@@ -782,7 +817,7 @@ time.
 You can find more rigorous definitions of these quantities in Lihong Wang's
 Biomedical Optics book, Chapter 5.
 
-8.2 Console print messages
+=== Console print messages ===
 
 Timing information is printed on the screen (stdout). The 
 clock starts (at time T0) right before the initialization data is copied 
@@ -794,7 +829,7 @@ When a user specifies "-D P" in the command line, or set cfg.debuglevel='P',
 MCX or MCXLAB prints a progress bar showing the percentage of completition.
 
 ---------------------------------------------------------------------------
-IX. Best practices guide
+== # Best practices guide ==
 
 To maximize MCX's performance on your hardware, you should follow the
 best practices guide listed below:
@@ -821,10 +856,10 @@ is recommended. Please use the autopilot mode, "-A", to let MCX determine
 the "optimal" thread number when you are not sure what to use.
 
 ---------------------------------------------------------------------------
-X. Acknowledgement
+== # Acknowledgement ==
 
 === cJSON library by Dave Gamble ===
-
+<pre>
   Files included: mcx/src/cJSON folder
 
   Copyright (c) 2009 Dave Gamble
@@ -848,7 +883,7 @@ X. Acknowledgement
   THE SOFTWARE.
   
 === myslicer toolbox by Anders Brun ===
-
+<pre>
   Files included: mcx/utils/{islicer.m, slice3i.m, image3i.m}
   
   Copyright (c) 2009 Anders Brun, anders@cb.uu.se
@@ -877,10 +912,11 @@ X. Acknowledgement
   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
+</pre>
 
 === Texture3D Sample Project in the GLScene Project by Jürgen Abel ===
 
-  Copyright (c) 2003 Jürgen Abel
+Copyright (c) 2003 Jürgen Abel
 
 The MCX volume renderer (mcxviewer) was adapted based on the Texture3D Example
 provided by the GLScene Project (http://glscene.org). The original author
@@ -900,13 +936,13 @@ such files have an explicit notice attached to them or placed in their directory
 
 
 ---------------------------------------------------------------------------
-XI. Reference
+== # Reference ==
 
-[Fang2009] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
+* [Fang2009] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
 Optics Express, vol. 17, issue 22, pp. 20178-20190 (2009).
 
-[Yu2019] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, \
+* [Yu2019] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, \
 "Scalable and massively parallel Monte Carlo photon transport simulations \
 for heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).
 

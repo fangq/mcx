@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <PathDelim Value="\"/>
     <General>
       <Flags>
@@ -18,7 +18,10 @@
       <UseXPManifest Value="True"/>
       <XPManifest>
         <DpiAware Value="True"/>
+        <TextName Value="Qianqian Fang"/>
+        <TextDesc Value="MCX Viewer - 3D volumetric image renderer (for NIfTI/JNIfTI/Analyze7.5 files)"/>
       </XPManifest>
+      <Icon Value="0"/>
     </General>
     <BuildModes Count="3">
       <Item1 Name="Default" Default="True"/>
@@ -28,6 +31,7 @@
           <PathDelim Value="\"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="glscene"/>
             <UnitOutputDirectory Value="debug"/>
           </SearchPaths>
           <Parsing>
@@ -71,6 +75,7 @@
           <PathDelim Value="\"/>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
+            <OtherUnitFiles Value="glscene"/>
           </SearchPaths>
           <Parsing>
             <SyntaxOptions>
@@ -106,20 +111,15 @@
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default"/>
+      </Modes>
     </RunParams>
-    <RequiredPackages Count="3">
+    <RequiredPackages Count="1">
       <Item1>
-        <PackageName Value="GLScene_DesignTime"/>
-      </Item1>
-      <Item2>
-        <PackageName Value="GLScene_RunTime"/>
-      </Item2>
-      <Item3>
         <PackageName Value="LCL"/>
-      </Item3>
+      </Item1>
     </RequiredPackages>
     <Units Count="4">
       <Unit0>
@@ -151,6 +151,7 @@
     <PathDelim Value="\"/>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="glscene"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>

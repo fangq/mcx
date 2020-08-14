@@ -6,7 +6,7 @@ uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   {$ENDIF}{$ENDIF}
-  Forms, GLScene_RunTime, Interfaces,
+  Forms, Interfaces,
   mcxrender;
 
 {$R *.res}

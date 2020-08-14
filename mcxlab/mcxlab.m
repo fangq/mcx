@@ -3,7 +3,7 @@ function varargout=mcxlab(varargin)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2011-2019 Qianqian Fang <q.fang at neu.edu>
+%Copyright (c) 2011-2020 Qianqian Fang <q.fang at neu.edu>
 %                      URL: http://mcx.space
 %====================================================================
 %
@@ -397,19 +397,19 @@ if(nargout>=2)
     for i=1:length(varargout{2})
         if((~isfield(cfg(i),'savedetflag')) || ((isfield(cfg(i),'savedetflag')) && isempty(cfg(i).savedetflag)))
             cfg(i).savedetflag='DP';
-            if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
-                cfg(i).savedetflag=[cfg(i).savedetflag,'XV'];
+        end
+        if(isfield(cfg(i),'issaveexit') && cfg(i).issaveexit)
+            cfg(i).savedetflag=[cfg(i).savedetflag,'XV'];
+        end
+        if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
+            cfg(i).savedetflag=[cfg(i).savedetflag,'M'];
+        end
+        if(ndims(cfg(i).vol)==4)
+            cfg(i).savedetflag='';
+            if((isa(cfg(i).vol,'single') || isa(cfg(i).vol,'double')) && isfield(cfg(i),'unitinmm'))
+                cfg(i).vol=cfg(i).vol*cfg(i).unitinmm;
             end
-            if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
-                cfg(i).savedetflag=[cfg(i).savedetflag,'M'];
-            end
-	end
-	if(ndims(cfg(i).vol)==4)
-	    cfg(i).savedetflag='';
-	    if((isa(cfg(i).vol,'single') || isa(cfg(i).vol,'double')) && isfield(cfg(i),'unitinmm'))
-	        cfg(i).vol=cfg(i).vol*cfg(i).unitinmm;
-	    end
-	end
+        end
         if((~isfield(cfg(i),'issaveexit') || cfg(i).issaveexit~=2))
             medianum=size(cfg(i).prop,1)-1;
             detp=varargout{2}(i).data;
@@ -425,9 +425,9 @@ if(nargout>=2)
             end
             newdetp=mcxdetphoton(detp,medianum,flags{:});
             newdetp.prop=cfg(i).prop;
-	    if(isfield(cfg(i),'unitinmm'))
-		newdetp.unitinmm=cfg(i).unitinmm;
-	    end
+            if(isfield(cfg(i),'unitinmm'))
+                newdetp.unitinmm=cfg(i).unitinmm;
+            end
             newdetp.data=detp;      % enable this line for compatibility
             newdetpstruct(i)=newdetp;
         else

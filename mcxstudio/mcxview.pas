@@ -169,6 +169,9 @@ begin
   M_3D_Texture:=nil;
   M_Input_Texture_3D:=nil;
   M_Output_Texture_3D:=nil;
+  if(Application.HasOption('f','file')) then begin
+        LoadTexture(Application.GetOptionValue('f', 'file'));
+  end;
 end;
 
 procedure TfmViewer.FormDestroy(Sender: TObject);

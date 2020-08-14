@@ -1900,7 +1900,7 @@ void mcx_savejdata(char *filename, Config *cfg){
      cJSON *root=NULL, *obj=NULL, *sub=NULL, *tmp=NULL;
      char *jsonstr=NULL;
      root=cJSON_CreateObject();
-     
+
      /* the "Session" section */
      cJSON_AddItemToObject(root, "Session", obj = cJSON_CreateObject());
      cJSON_AddStringToObject(obj, "ID", cfg->session);
@@ -2038,7 +2038,13 @@ void mcx_savejdata(char *filename, Config *cfg){
      if(!strcmp(filename,"-"))
          fprintf(cfg->flog, "%s\n",jsonstr);
      else{
-	 FILE *fp=fopen(filename,"wt");
+         FILE *fp;
+         if(cfg->rootpath[0]){
+             char name[MAX_FULL_PATH];
+             sprintf(name,"%s%c%s",cfg->rootpath,pathsep,filename);
+             fp=fopen(name,"wt");
+         }else
+             fp=fopen(filename,"wt");
 	 if(fp==NULL)
 	     MCX_ERROR(-1,"error opening file to write");
 	 fprintf(fp,"%s\n",jsonstr);
@@ -3057,7 +3063,7 @@ int mcx_lookupindex(char *key, const char *index){
  */
 
 void mcx_version(Config *cfg){
-    const char ver[]="$Rev::      $2019.4";
+    const char ver[]="$Rev::      $2020";
     int v=0;
     sscanf(ver,"$Rev::%x",&v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n",v);
@@ -3123,7 +3129,7 @@ void mcx_printheader(Config *cfg){
     MCX_FPRINTF(cfg->flog,S_GREEN"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2019 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2020 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\

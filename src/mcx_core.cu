@@ -861,7 +861,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int isinternal, const int isreflect, const int islabel>
+template <const int ispencil, const int isreflect, const int islabel>
 __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
            uint *mediaid,OutputType *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
@@ -893,9 +893,9 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		  for(int i=0;i<gcfg->srcnum;i++){
 		    if(ppath[gcfg->w0offset+i]>0.f){
 #ifdef USE_ATOMIC
-                        atomicAdd(& field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i],-p->w*ppath[gcfg->w0offset+i]);
+                        atomicAdd(& field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i],-((gcfg->srcnum==1)?p->w:p->w*ppath[gcfg->w0offset+i]));
 #else
-	                field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i]+=-p->w*ppath[gcfg->w0offset+i];
+	                field[(*idx1d+tshift*gcfg->dimlen.z)*gcfg->srcnum+i]+=-((gcfg->srcnum==1)?p->w:p->w*ppath[gcfg->w0offset+i]);
 #endif
 		    }
 		  }
@@ -947,7 +947,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           /**
            * Only one branch is taken because of template, this can reduce thread divergence
            */
-	  switch(gcfg->srctype) {
+          if(!ispencil){
+	    switch(gcfg->srctype) {
 		case(MCX_SRC_PLANAR):
 		case(MCX_SRC_PATTERN):
 		case(MCX_SRC_PATTERN3D):
@@ -1130,19 +1131,19 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                       canfocus=(gcfg->srctype==MCX_SRC_SLIT);
 		      break;
 		}
-	  }
-          /**
-           * If beam focus is set, determine the incident angle
-           */
-          if(canfocus){
-	    if(isnan(gcfg->c0.w)){ // isotropic if focal length is nan
+	    }
+            /**
+             * If beam focus is set, determine the incident angle
+             */
+            if(canfocus){
+	      if(isnan(gcfg->c0.w)){ // isotropic if focal length is nan
                 float ang,stheta,ctheta,sphi,cphi;
                 ang=TWO_PI*rand_uniform01(t); //next arimuth angle
                 sincosf(ang,&sphi,&cphi);
                 ang=acosf(2.f*rand_uniform01(t)-1.f); //sine distribution
                 sincosf(ang,&stheta,&ctheta);
                 rotatevector(v,stheta,ctheta,sphi,cphi);
-	    }else if(gcfg->c0.w!=0.f){
+	      }else if(gcfg->c0.w!=0.f){
 	        float Rn2=(gcfg->c0.w > 0.f) - (gcfg->c0.w < 0.f);
 	        rv->x+=gcfg->c0.w*v->x;
 		rv->y+=gcfg->c0.w*v->y;
@@ -1154,6 +1155,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                 v->x*=Rn2;
                 v->y*=Rn2;
                 v->z*=Rn2;
+	      }
 	    }
 	  }
 
@@ -1165,14 +1167,12 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           /**
            * If a photon is launched outside of the box, or inside a zero-voxel, move it until it hits a non-zero voxel
            */
-	  if(!isinternal){
-	      if((*mediaid & MED_MASK)==0){
+	  if((*mediaid & MED_MASK)==0){
 		 int idx=skipvoid<islabel>(p, v, f, rv, media,t,nuvox); /** specular reflection of the bbx is taken care of here*/
 		 if(idx>=0){
 		     *idx1d=idx;
 		     *mediaid=media[*idx1d];
 		 }
-	      }
 	  }
 	  *w0+=1.f;
 	  GPUDEBUG(("retry %f: mediaid=%d idx=%d w0=%e\n",*w0, *mediaid, *idx1d, p->w));
@@ -1263,7 +1263,7 @@ kernel void mcx_test_rng(OutputType field[],uint n_seed[]){
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int isinternal, const int isreflect, const int islabel>
+template <const int ispencil, const int isreflect, const int islabel>
 kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n_seed[],
      float4 n_pos[],float4 n_dir[],float4 n_len[],float n_det[], uint detectedphoton[], 
      float srcpattern[],float replayweight[],float photontof[],int photondetid[], 
@@ -1313,7 +1313,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
      gpu_rng_init(t,n_seed,idx);
 
-     if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
+     if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
        n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox)){
          GPUDEBUG(("thread %d: fail to launch photon\n",idx));
@@ -1596,7 +1596,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		 }
 	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n",idx1d,mediaid,gcfg->doreflect,isdet,f.t>gcfg->twin1));
-	      if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
+	      if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	          n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
                    break;
@@ -1611,7 +1611,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                    p.w*=ROULETTE_SIZE;
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-                   if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
+                   if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	                n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
                         break;
@@ -1651,7 +1651,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+		    	    if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 			        ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
                                 break;
@@ -1690,7 +1690,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	          }
 	      }else{
 	          if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ //transmit through external boundary
-		      if(launchnewphoton<isinternal, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+		      if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 		          ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
 			  break;
@@ -1742,7 +1742,8 @@ int mcx_corecount(int v1, int v2){
      else if(v<21) return 32;
      else if(v<30) return 48;
      else if(v<50) return 192;
-     else          return 128;
+     else if(v<60 || v==61) return 128;
+     else          return 64;
 }
 
 /**
@@ -1759,6 +1760,21 @@ int mcx_smxblock(int v1, int v2){
      else if(v<50) return 16;
      else          return 32;
 }
+
+/**
+ * @brief Utility function to calculate the maximum blocks per SMX
+ *
+ *
+ * @param[in] v1: the major version of an NVIDIA GPU
+ * @param[in] v2: the minor version of an NVIDIA GPU
+ */
+
+int mcx_threadmultiplier(int v1, int v2){
+     int v=v1*10+v2;
+     if(v<=75)      return 1;
+     else           return 2;
+}
+
 
 /**
  * @brief Utility function to query GPU info and set active GPU
@@ -1814,23 +1830,28 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 	(*info)[dev].core=dp.multiProcessorCount*mcx_corecount(dp.major,dp.minor);
 	(*info)[dev].maxmpthread=dp.maxThreadsPerMultiProcessor;
         (*info)[dev].maxgate=cfg->maxgate;
-        (*info)[dev].autoblock=(*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor);
-        (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm;
+        (*info)[dev].autoblock=MAX((*info)[dev].maxmpthread / mcx_smxblock(dp.major,dp.minor),64);
+        if((*info)[dev].autoblock==0){
+             MCX_FPRINTF(stderr,S_RED "WARNING: maxThreadsPerMultiProcessor can not be detected\n" S_RESET);
+             (*info)[dev].autoblock=64;
+        }
+        (*info)[dev].autothread=(*info)[dev].autoblock * mcx_smxblock(dp.major,dp.minor) * (*info)[dev].sm * mcx_threadmultiplier(dp.major,dp.minor);
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
 	    MCX_FPRINTF(stdout,S_BLUE"=============================   GPU Infomation  ================================\n" S_RESET);
 	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",(*info)[dev].id,(*info)[dev].devcount,(*info)[dev].name);
 	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",(*info)[dev].major,(*info)[dev].minor);
-	    MCX_FPRINTF(stdout,"Global Memory:\t\t%u B\nConstant Memory:\t%u B\n"
-				"Shared Memory:\t\t%u B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
-               (unsigned int)(*info)[dev].globalmem,(unsigned int)(*info)[dev].constmem,
-               (unsigned int)(*info)[dev].sharedmem,(unsigned int)(*info)[dev].regcount,(*info)[dev].clock*1e-6f);
+	    MCX_FPRINTF(stdout,"Global Memory:\t\t%.0f B\nConstant Memory:\t%.0f B\n"
+				"Shared Memory:\t\t%.0f B\nRegisters:\t\t%u\nClock Speed:\t\t%.2f GHz\n",
+               (double)(*info)[dev].globalmem,(double)(*info)[dev].constmem,
+               (double)(*info)[dev].sharedmem,(unsigned int)(*info)[dev].regcount,(*info)[dev].clock*1e-6f);
 	  #if CUDART_VERSION >= 2000
-	       MCX_FPRINTF(stdout,"Number of MPs:\t\t%u\nNumber of Cores:\t%u\n",
+	       MCX_FPRINTF(stdout,"Number of SMs:\t\t%u\nNumber of Cores:\t%u\n",
 	          (*info)[dev].sm,(*info)[dev].core);
 	  #endif
-            MCX_FPRINTF(stdout,"SMX count:\t\t%u\n", (*info)[dev].sm);
+            MCX_FPRINTF(stdout,"Auto-thread:\t\t%d\n",(*info)[dev].autothread);
+            MCX_FPRINTF(stdout,"Auto-block:\t\t%d\n", (*info)[dev].autoblock);
 	  }
 	}
     }
@@ -2291,8 +2312,12 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
            mcx_flush(cfg);
 
-           int isinternal=((cfg->internalsrc>0) || (param.mediaidorig && (cfg->srctype==MCX_SRC_PENCIL || cfg->srctype==MCX_SRC_CONE || cfg->srctype==MCX_SRC_ISOTROPIC)));
-	   switch(isinternal*100 + (cfg->isreflect>0)*10+(cfg->mediabyte<=4)){
+           int ispencil=(cfg->srctype==MCX_SRC_PENCIL);
+	   int isref=cfg->isreflect;
+	   for(i=0;i<6;i++)
+	       if(cfg->bc[i]==1)
+	           isref=1;
+	   switch(ispencil*100 + (isref>0)*10+(cfg->mediabyte<=4)){
 	       case 0:  mcx_main_loop<0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
 	       case 1:  mcx_main_loop<0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
 	       case 10: mcx_main_loop<0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
@@ -2348,7 +2373,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 are more than what your have specified (%d), please use the --maxjumpdebug option to specify a greater number\n" S_RESET
                            ,debugrec,cfg->maxjumpdebug);
 		   }else{
-			MCX_FPRINTF(cfg->flog,"saved %ud trajectory positions, total: %d\t",debugrec,cfg->maxjumpdebug+debugrec);
+			MCX_FPRINTF(cfg->flog,"saved %u trajectory positions, total: %d\t",debugrec,cfg->debugdatalen+debugrec);
 		   }
                    debugrec=min(debugrec,cfg->maxjumpdebug);
 	           cfg->exportdebugdata=(float*)realloc(cfg->exportdebugdata,(cfg->debugdatalen+debugrec)*debuglen*sizeof(float));
@@ -2416,19 +2441,16 @@ is more than what your have specified (%d), please use the -H option to specify 
        if(ABS(cfg->respin)>1)  //copy the accumulated fields back
            memcpy(field,field+fieldlen,sizeof(float)*fieldlen);
 
-       if(cfg->isnormalized){
-           CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
+       CUDA_ASSERT(cudaMemcpy(energy,genergy,sizeof(float)*(gpu[gpuid].autothread<<1),cudaMemcpyDeviceToHost));
 #pragma omp critical
 {
-           for(i=0;i<gpu[gpuid].autothread;i++){
-               cfg->energyesc+=energy[i<<1];
-       	       cfg->energytot+=energy[(i<<1)+1];
-           }
-	   for(i=0;i<gpu[gpuid].autothread;i++)
-               cfg->energyabs+=Plen0[i].z;  // the accumulative absorpted energy near the source
-}
+       for(i=0;i<gpu[gpuid].autothread;i++){
+           cfg->energyesc+=energy[i<<1];
+           cfg->energytot+=energy[(i<<1)+1];
        }
-       MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
+       for(i=0;i<gpu[gpuid].autothread;i++)
+           cfg->energyabs+=Plen0[i].z;  // the accumulative absorpted energy near the source
+}
 
        if(cfg->exportfield){
 	       for(i=0;i<(int)fieldlen;i++)
@@ -2520,6 +2542,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 	     }
 	 }
 	 free(scale);
+         MCX_FPRINTF(cfg->flog,"data normalization complete : %d ms\n",GetTimeMillis()-tic);
      }
      if(cfg->issave2pt && cfg->parentid==mpStandalone){
          MCX_FPRINTF(cfg->flog,"saving data to file ...\t");

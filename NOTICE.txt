@@ -1,0 +1,89 @@
+=============================================================
+             Monte Carlo eXtreme (MCX) Suite
+                    version 2020
+=============================================================
+
+Copyright (c) 2010-2020  Qianqian Fang <q.fang at neu.edu>
+
+- Computational Optics & Translational Imaging (COTI) Lab (http://fanglab.org)
+- Department of Bioengineering, Northeastern University
+- 360 Huntington Ave, ISEC 204, Boston, MA 02115, USA
+- Website: http://mcx.space
+- Github: http://github.com/mcextreme/
+
+=============================================================
+:: Acknowledgement:
+
+The MCX Project is funded by the US National Institutes of Health (NIH)/National Institute of General Medical Sciences (NIGMS) under grant R01-GM114365 (PI: Qianqian Fang)
+
+=============================================================
+:: License:
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published 
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+The full text of the software license can be found at
+https://www.gnu.org/licenses/gpl-3.0.en.html
+
+To continue installation, you must agree with the above license.
+
+=============================================================
+:: Citation:
+
+The technical details of the software tools included in this
+package can be found in the below publications.
+
+If you use MCX/MMC/MCX-CL in your research, you agree to
+cite the relevant papers in your publications.
+
+-- "MCX" --
+[Fang2009] Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated by Graphics Processing Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190 (2009).
+*Summary:  original MCX paper
+*Download: http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178
+
+-- "MCX-CL" --
+[Yu2018] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, "Scalable and massively parallel Monte Carlo photon transport simulations for heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).
+*Summary:  original MCX-CL (OpenCL) paper
+*Download: https://doi.org/10.1117/1.JBO.23.1.010504
+
+-- "MMC" --
+[Fang2019] Qianqian Fang*, Shijie Yan, "Graphics processing unit-accelerated mesh-based Monte Carlo photon transport simulations," J. of Biomedical Optics, 24(11), 115002 (2019)
+*Summary:  GPU-based MMC
+*Download: http://dx.doi.org/10.1117/1.JBO.24.11.115002
+
+[Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, "A dual-grid mesh-based Monte Carlo algorithm for efficient photon transport simulations in complex 3-D media," J. of Biomedical Optics, 24(2), 020503 (2019).
+*Summary: Dual-grid MMC for faster and more accurate mesh-based simulations
+*Download: http://dx.doi.org/10.1117/1.JBO.24.2.020503
+
+[Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct approach to compute Jacobians for diffuse optical tomography using perturbation Monte Carlo-based photon 'replay'," Biomed. Optics Express 9(10), 4588-4603 (2018)
+*Summary:  Building Jacobians with replay in MCX/MMC
+*Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588
+
+[Yao2016] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "Generalized mesh-based Monte Carlo for wide-field illumination and detection via mesh retessellation," Biomed. Optics Express, 7(1), 171-184, (2016)
+*Summary:  Widefield MMC
+*Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171
+
+[Fang2012] Qianqian Fang and David R. Kaeli, "Accelerating mesh-based Monte Carlo method on modern CPU architectures ," Biomed. Opt. Express 3(12), 3223-3230 (2012)
+*Summary:  SIMD MMC
+*Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-3223
+
+[Fang2011] Qianqian Fang, "Comment on 'A study on tetrahedron-based inhomogeneous Monte-Carlo optical simulation'," Biomed. Opt. Express, vol. 2, issue 5, pp. 1258-1264, 2011.
+*Summary:  MMC ray-tracing comparisons
+*Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258
+
+[Fang2010] Qianqian Fang, "Mesh-based Monte Carlo method using fast ray-tracing in Plücker coordinates," Biomed. Opt. Express 1(1), 165-175 (2010)
+*Summary:  original MMC paper
+*Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165
+
+-- "Applications" --
+[Yuan2020] Yaoshen Yuan, Paolo Cassano, Matthew Pias, Qianqian Fang*, (2020) "Transcranial photobiomodulation with near-infrared light from childhood to elderliness: simulation of dosimetry,", Neurophotonics, 7(1), 015009
+*Summary: PBM dosage over lifespan
+*Download: https://doi.org/10.1117/1.NPh.7.1.015009
+
+[Brain2Mesh2020] Anh Phong Tran, Shijie Yan, Qianqian Fang*, (2020) "Improving model-based fNIRS analysis using mesh-based anatomical and light-transport models," Neurophotonics, 7(1), 015008
+*Summary: Brain2Mesh - a one-liner for brain mesh generator (http://mcx.space/brain2mesh)
+*Download: https://doi.org/10.1117/1.NPh.7.1.015008
+
+=============================================================

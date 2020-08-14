@@ -40,6 +40,7 @@ type
     Panel1: TPanel;
     dlBrowsePath: TSelectDirectoryDialog;
     edLocalPath: TStringGrid;
+    procedure btCancelClick(Sender: TObject);
     procedure btOKClick(Sender: TObject);
     procedure ckUseManualPathChange(Sender: TObject);
     procedure edLocalPathButtonClick(Sender: TObject; aCol, aRow: Integer);
@@ -110,7 +111,12 @@ end;
 
 procedure TfmConfig.btOKClick(Sender: TObject);
 begin
+  Close;
+end;
 
+procedure TfmConfig.btCancelClick(Sender: TObject);
+begin
+  Close;
 end;
 
 initialization

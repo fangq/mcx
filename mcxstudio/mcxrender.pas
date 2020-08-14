@@ -873,6 +873,9 @@ begin
       colormap[i][2]:=random;
    end;
    editorwidth:=plEditor.Width;
+   if(Application.HasOption('f','json')) then begin
+      mmShapeJSON.Lines.LoadFromFile(Application.GetOptionValue('f', 'json'));
+   end;
 end;
 
 procedure TfmDomain.FormDestroy(Sender: TObject);
