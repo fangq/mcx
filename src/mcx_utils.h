@@ -227,7 +227,7 @@ typedef struct MCXConfig{
 	float *exportdebugdata;      /**<pointer to the buffer where the photon trajectory data are stored*/
 	uint mediabyte;              /**< how many bytes per media index, mcx supports 1, 2 and 4, 4 is the default*/
 	float *dx, *dy, *dz;         /**< anisotropic voxel spacing for x,y,z axis */
-	char bc[8];                  /**<boundary condition flag for [-x,-y,-z,+x,+y,+z,unused,unused] */
+	char bc[12];                 /**<boundary condition flag for [-x,-y,-z,+x,+y,+z, det(-x,-y,-z,+x,+y,+z)] */
 } Config;
 
 #ifdef	__cplusplus
