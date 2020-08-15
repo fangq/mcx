@@ -87,6 +87,7 @@
  * Short command line options
  * If a short command line option is '-' that means it only has long/verbose option.
  * Array terminates with '\0'.
+ * Currently un-used options: cCjJNoQy0-9
  */
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
@@ -1225,6 +1226,14 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	     }
 	}
      }
+     if(cfg->vol && cfg->mediabyte <= 4){
+         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+	 unsigned int maxlabel=0;
+         for(uint i=0;i<fieldlen;i++)
+	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
+	 if(cfg->medianum<=maxlabel)
+	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
+     }
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
@@ -1578,7 +1587,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cfg->dim.y=val->child->next->valueint;
            cfg->dim.z=val->child->next->next->valueint;
 	}else{
-	   if(!Shapes && cfg->extrajson==NULL)
+	   if(!Shapes && (!(cfg->extrajson && cfg->extrajson[0]=='_')) )
 	      MCX_ERROR(-1,"You must specify the dimension of the volume");
 	}
 	val=FIND_JSON_OBJ("Step","Domain.Step",Domain);
@@ -1859,7 +1868,11 @@ int mcx_loadjson(cJSON *root, Config *cfg){
          if(Shapes){
 	     if(!FIND_JSON_OBJ("_ArraySize_","Volume._ArraySize_",Shapes) && !cfg->shapedata)
 	         cfg->shapedata=cJSON_Print(Shapes);
-	     
+	     if(cfg->extrajson && cfg->extrajson[0]=='_'){
+	         if(cfg->shapedata)
+		     free(cfg->shapedata);
+	         cfg->shapedata=cJSON_Print(Shapes);
+             }
 	     if(FIND_JSON_OBJ("_ArrayZipData_","Volume._ArrayZipData_",Shapes)){
 	         int ndim;
 		 char *type=NULL, *buf=NULL;
@@ -1876,7 +1889,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 		     MCX_ERROR(status,mcx_last_shapeerror());
 		 }
 	     }
-	 }else if(cfg->extrajson==NULL){
+	 }else if(!(cfg->extrajson && cfg->extrajson[0]=='_')){
 	     MCX_ERROR(-1,"You must either define Domain.VolumeFile, or define a Shapes section");
 	 }
      }else if(Shapes){
@@ -3029,12 +3042,17 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 	  if(cfg->extrajson){
              cJSON *jroot = cJSON_Parse(cfg->extrajson);
              if(jroot){
+	        cfg->extrajson[0]='_';
                 mcx_loadjson(jroot,cfg);
                 cJSON_Delete(jroot);
              }else{
 	        MCX_ERROR(-1,"invalid json fragment following --json");
 	     }
 	  }
+     }
+     if(cfg->isdumpjson==3){
+	  mcx_savejdata(cfg->jsonfile, cfg);
+	  exit(0);
      }
 }
 

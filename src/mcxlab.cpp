@@ -927,6 +927,14 @@ void mcx_validate_config(Config *cfg){
 		 cfg->prop[i].g=1.f;
 	     }
      }
+     if(cfg->vol && cfg->mediabyte <= 4){
+         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+	 unsigned int maxlabel=0;
+         for(uint i=0;i<fieldlen;i++)
+	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
+	 if(cfg->medianum<=maxlabel)
+	     mexErrMsgTxt("input media optical properties are less than the labels in the volume");
+     }
      if(cfg->unitinmm!=1.f){
         cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
         for(i=1;i<cfg->medianum;i++){
