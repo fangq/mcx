@@ -278,10 +278,10 @@ sub comparegpu(){
 	my $database;
         $database = `curl --silent $url`;
 
-        if($database eq ''){
-                eval("use LWP::Simple qw(get);");
-                $database = get $url;
-		die("fail to download database from $url") if($database eq '');
+        if(!defined($database)){
+                eval("use LWP::Simple; 1") or warn "LWP::Simple is not available: $@";
+                $database = get($url);
+		die("fail to download database from $url") if(!defined($database));
 	}
 	my @res=split(/\n/,$database);
 	my $pos=0;
@@ -380,7 +380,7 @@ sub submitresult(){
 		my $submitdata=$json->encode(\%form);
 		my $content=`curl --header 'Content-Type: application/json' --request POST --data '$submitdata' $url`;
 		if($content eq ''){
-	                eval("use LWP::UserAgent ();");
+	                eval("use LWP::UserAgent (); 1")  or warn "LWP::UserAgent is not available: $@";;
 			my $ua      = LWP::UserAgent->new(); 
 			my $response = $ua->post( $url, \%form);
 			$content = $response->decoded_content;
