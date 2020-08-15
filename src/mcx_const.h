@@ -44,6 +44,8 @@
 #define SIGN_BIT           0x80000000U
 #define DET_MASK           0x80000000              /**< mask of the sign bit to get the detector */
 #define MED_MASK           0x7FFFFFFF              /**< mask of the remaining bits to get the medium index */
+#define LOWER_MASK         0xFF000000              /**< mask of the lower label for SVMC */
+#define UPPER_MASK         0x00FF0000              /**< mask of the upper label for SVMC */
 
 #define MCX_DEBUG_RNG       1                   /**< MCX debug flags */
 #define MCX_DEBUG_MOVE      2

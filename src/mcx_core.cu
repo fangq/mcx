@@ -652,6 +652,7 @@ __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium
 	    if(rand_next_reflect(t)<=Rtotal){ /*do reflection*/
 	        *c0+=(FL3(-2.f*Icos))*nuvox->nv;
 	    }else if(((nuvox->sp.isupper)? nuvox->sp.lower:nuvox->sp.upper)==0){ /*transmission to external boundary*/
+	        nuvox->sp.isupper=!nuvox->sp.isupper;
 	        return 1;
 	    }else{   /*do transmission*/
 	        *c0+=(FL3(-Icos))*nuvox->nv;
@@ -907,7 +908,8 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
           if(gcfg->savedet){
-             if((isdet&DET_MASK)==DET_MASK && *mediaid==0 && gcfg->issaveref<2)
+             if((isdet&DET_MASK)==DET_MASK && (*mediaid==0 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && 
+	        (nuvox->sp.isupper ? nuvox->sp.upper : nuvox->sp.lower)==0)) && gcfg->issaveref<2)
 	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata,idx1d);
              clearpath(ppath,gcfg->partialdata);
           }
@@ -1380,11 +1382,21 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        GPUDEBUG(("scat theta=%f\n",theta));
 #ifdef SAVE_DETECTORS
                        if(gcfg->savedet){
-                           if(SAVE_NSCAT(gcfg->savedetflag))
-		               ppath[(mediaid & MED_MASK)-1]++;
+                           if(SAVE_NSCAT(gcfg->savedetflag)){
+			       if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT && ((nuvox.sp.isupper) ? nuvox.sp.upper:nuvox.sp.lower)>0)
+		                   ppath[((nuvox.sp.isupper) ? nuvox.sp.upper:nuvox.sp.lower)-1]++;
+			       else if(gcfg->mediaformat!=MEDIA_2LABEL_SPLIT)
+			           ppath[(mediaid & MED_MASK)-1]++;
+			   }
 			   /** accummulate momentum transfer */
-			   if(SAVE_MOM(gcfg->savedetflag))
-			       ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag)+SAVE_PPATH(gcfg->savedetflag))+(mediaid & MED_MASK)-1]+=1.f-ctheta;
+			   if(SAVE_MOM(gcfg->savedetflag)){
+			       if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT && ((nuvox.sp.isupper) ? nuvox.sp.upper:nuvox.sp.lower)>0)
+			           ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag)+SAVE_PPATH(gcfg->savedetflag))+
+	                                 ((nuvox.sp.isupper) ? nuvox.sp.upper:nuvox.sp.lower)-1]+=1.f-ctheta;
+			       else if(gcfg->mediaformat!=MEDIA_2LABEL_SPLIT)
+			           ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag)+SAVE_PPATH(gcfg->savedetflag))+
+				         (mediaid & MED_MASK)-1]+=1.f-ctheta;
+			   }
 		       }
 #endif
                        /** Update direction vector with the two random angles */
@@ -1476,7 +1488,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** accummulate partial path of the current medium */
 	  if(gcfg->savedet)
 	    if(SAVE_PPATH(gcfg->savedetflag))
-	      ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag))+(mediaid & MED_MASK)-1]+=len; //(unit=grid)
+	      if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT && ((nuvox.sp.isupper) ? nuvox.sp.upper:nuvox.sp.lower)>0)
+	        ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag))+((nuvox.sp.isupper) ? nuvox.sp.upper:nuvox.sp.lower)-1]+=len; //(unit=grid)
+	      else if(gcfg->mediaformat!=MEDIA_2LABEL_SPLIT)
+	        ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag))+(mediaid & MED_MASK)-1]+=len; //(unit=grid)
 #endif
 
           mediaidold=mediaid | isdet;
@@ -1649,7 +1664,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                   } ///< else, total internal reflection
 	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(&v,n1,prop.n,flipdir);
-                        if(mediaid==0){ // transmission to external boundary
+                        if(mediaid==0 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && (nuvox.sp.isupper ? nuvox.sp.upper : nuvox.sp.lower)==0)) { // transmitted to background medium
                             GPUDEBUG(("transmit to air, relaunch\n"));
 		    	    if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 			        ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
@@ -1681,10 +1696,20 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  }else if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT && hit){ ///< handle reflection/transmittion inside split voxel
 	      if(!gcfg->doreflect || (gcfg->doreflect && gproperty[nuvox.sp.lower].w==gproperty[nuvox.sp.upper].w)){
 	          nuvox.nv=-nuvox.nv; // flip normal vector for transmitted light
-	          if(nuvox.sp.isupper){
-	              *((float4*)(&prop))=gproperty[nuvox.sp.lower];
-		      nuvox.sp.isupper=0;
-	          }else{
+	          if(nuvox.sp.isupper){ // transmit from upper to lower region
+		      if(!nuvox.sp.lower){ // exit domain
+		          if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+		              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+			      media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
+			      break;
+			  isdet=mediaid & DET_MASK;
+		          mediaid &= MED_MASK;
+		          continue;
+	              }else{
+		          *((float4*)(&prop))=gproperty[nuvox.sp.lower];
+		          nuvox.sp.isupper=0;
+		      }
+	          }else{ // transmit from lower to upper region
 	              *((float4*)(&prop))=gproperty[nuvox.sp.upper];
 		      nuvox.sp.isupper=1;
 	          }
