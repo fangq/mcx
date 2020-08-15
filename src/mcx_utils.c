@@ -2752,6 +2752,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      	    if(argv[i][0]=='-'){
 		if(argv[i][1]=='-'){
 			if(mcx_remap(argv[i])){
+                                MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
 				MCX_ERROR(-2,"unknown verbose option");
 			}
 		}
@@ -2998,6 +2999,10 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;
+		     default:
+                                MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
+				MCX_ERROR(-2,"unknown short option");
+				break;
 		}
 	    }
 	    i++;
