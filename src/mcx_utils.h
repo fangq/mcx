@@ -199,6 +199,7 @@ typedef struct MCXConfig{
 	unsigned long int detectedcount;  /**<total number of detected photons*/
         char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
         char *shapedata;             /**<a pointer points to a string defining the JSON-formatted shape data*/
+        char *extrajson;             /**<a pointer points to a string defining the extra JSON input data*/
 	int maxvoidstep;             /**< max number of steps that a photon can advance before reaching a non-zero voxel*/
 	int voidtime;                /**<1 start counting photon time when moves inside 0 voxels; 0: count time only after enters non-zero voxel*/
 	float4 srcparam1;            /**<a quadruplet {x,y,z,w} for additional source parameters*/

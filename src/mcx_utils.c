@@ -92,7 +92,7 @@
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-',
-		 '-','-','Z','\0'};
+		 '-','-','Z','-','\0'};
 
 /**
  * Long command line options
@@ -110,7 +110,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
                  "--momentum","--specular","--bc","--workload","--savedetflag",
-		 "--internalsrc","--bench","--dumpjson","--zip",""};
+		 "--internalsrc","--bench","--dumpjson","--zip","--json",""};
 
 /**
  * Output data types
@@ -268,6 +268,7 @@ void mcx_initcfg(Config *cfg){
      cfg->savedetflag=0x5;
      cfg->his.savedetflag=cfg->savedetflag;
      cfg->shapedata=NULL;
+     cfg->extrajson=NULL;
      cfg->seeddata=NULL;
      cfg->maxvoidstep=1000;
      cfg->voidtime=1;
@@ -360,7 +361,8 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->seeddata);
      if(cfg->shapedata)
      	free(cfg->shapedata);
-
+     if(cfg->extrajson)
+     	free(cfg->extrajson);
      mcx_initcfg(cfg);
 }
 
@@ -1083,6 +1085,7 @@ void mcx_readconfig(char *fname, Config *cfg){
                 jbuf[len-1]='\0';
             }else
 		jbuf=fname;
+
             jroot = cJSON_Parse(jbuf);
             if(jroot){
                 mcx_loadjson(jroot,cfg);
@@ -1863,7 +1866,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 		     MCX_ERROR(status,mcx_last_shapeerror());
 		 }
 	     }
-	 }else{
+	 }else if(cfg->extrajson==NULL){
 	     MCX_ERROR(-1,"You must either define Domain.VolumeFile, or define a Shapes section");
 	 }
      }else if(Shapes){
@@ -2969,6 +2972,15 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 					     MCX_FPRINTF(cfg->flog,"\t%s\n",benchname[i]);
 				         exit(0);
 				     }
+                                }else if(strcmp(argv[i]+2,"json")==0){
+				     if(i+1<argc){
+					len=strlen(argv[i+1]);
+					if(cfg->extrajson)
+					    free(cfg->extrajson);
+					cfg->extrajson=(char *)calloc(1,len+1);
+					memcpy(cfg->extrajson,argv[++i],len);
+				     }else
+				        MCX_ERROR(-1,"json fragment is expected after --json");
                                 }else if(strcmp(argv[i]+2,"reflectin")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
                                 else if(strcmp(argv[i]+2,"internalsrc")==0)
@@ -2999,6 +3011,15 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 	  }else{
              mcx_readconfig(filename,cfg);
           }
+	  if(cfg->extrajson){
+             cJSON *jroot = cJSON_Parse(cfg->extrajson);
+             if(jroot){
+                mcx_loadjson(jroot,cfg);
+                cJSON_Delete(jroot);
+             }else{
+	        MCX_ERROR(-1,"invalid json fragment following --json");
+	     }
+	  }
      }
 }
 
