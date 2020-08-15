@@ -83,6 +83,14 @@ function varargout=mcxlab(varargin)
 %                      'a': like cfg.isreflect=0, total absorption BC
 %                      'm': mirror or total reflection BC
 %                      'c': cyclic BC, enter from opposite face
+%
+%                      in addition, cfg.bc can contain up to 12 characters,
+%                      with the 7-12 characters indicating bounding box
+%                      facets -x,-y,-z,+x,+y,+z are used as a detector. The 
+%                      acceptable characters for digits 7-12 include
+%                      '0': this face is not used to detector photons
+%                      '1': this face is used to capture photons (if output detphoton)
+%                      see <demo_bc_det.m>
 %      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
 %      cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
 %      cfg.maxgate:    the num of time-gates per simulation

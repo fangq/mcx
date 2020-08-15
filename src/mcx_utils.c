@@ -167,6 +167,14 @@ const char *outputformat[]={"mc2","nii","hdr","ubj","tx3","jnii","bnii",""};
 const char boundarycond[]={'_','r','a','m','c','\0'};
 
 /**
+ * Boundary detection flags
+ * 0: do not detect photon
+ * 1: detect photon at that boundary
+ */
+
+const char boundarydetflag[]={'0','1','\0'};
+
+/**
  * Source type specifier
  * User can specify the source type using a string
  */
@@ -287,7 +295,7 @@ void mcx_initcfg(Config *cfg){
      cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
      memset(cfg->jsonfile,0,MAX_PATH_LENGTH);
-     memset(cfg->bc,0,8);
+     memset(cfg->bc,0,12);
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -1142,6 +1150,19 @@ void mcx_writeconfig(char *fname, Config *cfg){
  */
 
 void mcx_prepdomain(char *filename, Config *cfg){
+     int isbcdet=0;
+
+     for(int i=0;i<6;i++)
+        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
+	   MCX_ERROR(-4,"unknown boundary condition specifier");
+
+     for(int i=6;i<12;i++){
+        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
+	   MCX_ERROR(-4,"unknown boundary detection flags");
+	if(cfg->bc[i])
+	   isbcdet=1;
+     }
+
      if(cfg->isdumpjson==2){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
@@ -1164,7 +1185,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
 		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
 		cfg->isrowmajor=0;
 	}
-        if(cfg->issavedet && cfg->detnum==0)
+        if(cfg->issavedet && cfg->detnum==0 && isbcdet)
             cfg->issavedet=0;
         if(cfg->issavedet==0){
             cfg->issaveexit=0;
@@ -1204,10 +1225,6 @@ void mcx_prepdomain(char *filename, Config *cfg){
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
-
-     for(int i=0;i<6;i++)
-        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
-	   MCX_ERROR(-4,"unknown boundary condition specifier");
 
      if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
          MCX_ERROR(-4,"the 'prop' field must contain at least 2 rows for the requested media format");
@@ -2773,7 +2790,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        break;
                      case 'B':
                                 if(i<argc+1)
-				    strncpy(cfg->bc,argv[i+1],8);
+				    strncpy(cfg->bc,argv[i+1],12);
 				i++;
                                	break;
 		     case 'd':
@@ -3174,6 +3191,14 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       'a': like -b 0, total absorption BC\n\
 			       'm': mirror or total reflection BC\n\
 			       'c': cyclic BC, enter from opposite face\n\
+\n\
+			       if input contains additional 6 letters,\n\
+			       the 7th-12th letters can be:\n\
+			       '0': do not use this face to detect photon, or\n\
+			       '1': use this face for photon detection (-d 1)\n\
+			       the order of the faces for letters 7-12 is \n\
+			       the same as the first 6 letters\n\
+			       eg: --bc ______010 saves photons exiting at y=0\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
