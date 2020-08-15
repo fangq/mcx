@@ -1540,17 +1540,27 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cJSON *med=meds->child;
            if(med){
              cfg->medianum=cJSON_GetArraySize(meds);
+	     if(cfg->prop)
+	         free(cfg->prop);
              cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
              for(i=0;i<cfg->medianum;i++){
-               cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
-               if(val) cfg->prop[i].mua=val->valuedouble;
-	       val=FIND_JSON_OBJ("mus",(MCX_ERROR(-1,"You must specify scattering coeff, default in 1/mm"),""),med);
-               if(val) cfg->prop[i].mus=val->valuedouble;
-	       val=FIND_JSON_OBJ("g",(MCX_ERROR(-1,"You must specify anisotropy [0-1]"),""),med);
-               if(val) cfg->prop[i].g=val->valuedouble;
-	       val=FIND_JSON_OBJ("n",(MCX_ERROR(-1,"You must specify refractive index"),""),med);
-	       if(val) cfg->prop[i].n=val->valuedouble;
-
+	       if(cJSON_IsObject(med)){
+                   cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
+                   if(val) cfg->prop[i].mua=val->valuedouble;
+	           val=FIND_JSON_OBJ("mus",(MCX_ERROR(-1,"You must specify scattering coeff, default in 1/mm"),""),med);
+                   if(val) cfg->prop[i].mus=val->valuedouble;
+	           val=FIND_JSON_OBJ("g",(MCX_ERROR(-1,"You must specify anisotropy [0-1]"),""),med);
+                   if(val) cfg->prop[i].g=val->valuedouble;
+	           val=FIND_JSON_OBJ("n",(MCX_ERROR(-1,"You must specify refractive index"),""),med);
+	           if(val) cfg->prop[i].n=val->valuedouble;
+	       }else if(cJSON_IsArray(med)){
+                   cfg->prop[i].mua=med->child->valuedouble;
+		   cfg->prop[i].mus=med->child->next->valuedouble;
+		   cfg->prop[i].g=med->child->next->next->valuedouble;
+		   cfg->prop[i].n=med->child->next->next->next->valuedouble;
+               }else{
+	           MCX_ERROR(-1,"Session.Media must be either an array of objects or array of 4-elem numerical arrays");
+	       }
                med=med->next;
                if(med==NULL) break;
              }
@@ -1568,7 +1578,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cfg->dim.y=val->child->next->valueint;
            cfg->dim.z=val->child->next->next->valueint;
 	}else{
-	   if(!Shapes)
+	   if(!Shapes && cfg->extrajson==NULL)
 	      MCX_ERROR(-1,"You must specify the dimension of the volume");
 	}
 	val=FIND_JSON_OBJ("Step","Domain.Step",Domain);
