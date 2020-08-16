@@ -41,25 +41,37 @@ echo "test exporting json input from builtin examples with volume data ... "
 temp=`$MCX --bench colin27 --dumpjson - | grep '"_ArrayZipData_":\s*"eJzs3Yl666oOBe'`
 if [ -z "$temp" ]; then echo "fail to dump json input with volume from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test default options ... "
+temp=`$MCX --bench cube60 --dumpjson | grep -Pzo '"DoMismatch":\s*false,\n\s*"DoSaveVolume":\s*true,\n\s*"DoNormalize":\s*true,\n\s*"DoPartialPath":\s*true,\n\s*"DoSaveRef":\s*false,\n\s*"DoSaveExit":\s*false,\n\s*"DoSaveSeed":\s*false,\n\s*"DoAutoThread":\s*true,\n\s*"DoDCS":\s*false,\n\s*"DoSpecular":\s*false,\n\s*"DebugFlag":\s*0,\n\s*"SaveDataMask":\s*5,\n\s*"OutputFormat":\s*"mc2",\n\s*"OutputType":\s*"x"' | wc -l`
+if [ "$temp" != "13" ]; then echo "fail to verify default options "; fail=$((fail+1)); else echo "ok"; fi
+
 echo "test exporting builtin volume with gzip compression ... "
 temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA[EA]\+z'`
 if [ -z "$temp" ]; then echo "fail to set gzip compression for volume exporting"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test json input modifier --json ... "
+temp=`$MCX --bench cube60 --json '{"Optode":{"Source":{"Type":"isotropic","Pos":[29,29,29]}}}' --dumpjson 3 $PARAM | grep 'isotropic'`
+if [ -z "$temp" ]; then echo "fail to modify input via --json"; fail=$((fail+1)); else echo "ok"; fi
+
 echo "test homogeneous domain simulation ... "
-temp=`$MCX --bench cube60 $PARAM | grep -o -E 'absorbed:.*17\.[0-9]+%'`
+temp=`$MCX --bench cube60 -S 0 $PARAM | grep -o -E 'absorbed:.*17\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run cube60 benchmark"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test boundary reflection ... "
-temp=`$MCX --bench cube60b $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
+temp=`$MCX --bench cube60b -S 0 $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run cube60b benchmark"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test boundary reflection flag -b ... "
-temp=`$MCX --bench cube60 -b 1 $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
+temp=`$MCX --bench cube60 -b 1 -S 0 $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to use -b 1 flag to enable reflection"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test boundary condition flag -B ... "
-temp=`$MCX --bench cube60 -b 0 -B aarraa $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
+temp=`$MCX --bench cube60 -b 0 -B aarraa -S 0 $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to use -B flag to set facet based boundary condition"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test cylic boundary condition ... "
+temp=`$MCX --bench cube60 --bc 'cccccc' $PARAM -n 1e3 | grep -o -E 'absorbed:.*99\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to apply the cylic boundary condition"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon detection ... "
 temp=`$MCX --bench cube60b $PARAM | grep -o -E 'detected.*4[0-9]+ photons'`
@@ -69,14 +81,64 @@ echo "test planary widefield source ... "
 temp=`$MCX --bench cube60planar $PARAM | grep -o -E 'absorbed:.*25\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run cube60planar benchmark"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test isotropic source ... "
+temp=`$MCX --bench cube60 --json '{"Optode":{"Source":{"Type":"isotropic","Pos":[29,29,29]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*88\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run isotropic source"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test cone beam source ... "
+temp=`$MCX --bench cube60 --json '{"Domain":{"Media":[[0,0,1,1],[0.001,0.001,0,1]]},"Optode":{"Source":{"Type":"cone","Param1":[0.5,0,0,0]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*6\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run cone beam source"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test Fourier source ... "
+temp=`$MCX --bench cube60planar --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*25\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run Fourier source"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test pencil array source ... "
+temp=`$MCX --bench cube60planar --json '{"Optode":{"Source":{"Type":"pencilarray","Param1":[40,0,0,4],"Param2":[0,20,0,2]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*23\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run pencil array source"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test boundary detector flags ... "
+temp=`$MCX --bench cube60 --bc '______111111' $PARAM -n 1e4 | grep -o -E 'detected.*[0-9.]+ photons' | grep -o -E '[0-9.]+ photon' | grep -o -E '9[7-9][0-9.]+'`
+if [ -z "$temp" ]; then echo "fail to detect photons in the cube60b benchmark"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test saving photon seeds ... "
+temp=`$MCX --bench cube60 -q 1 -F jnii -S 0 $PARAM | grep -o -E 'after encoding: 13[0-9]\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to save photon seeds"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test photon replay flag -E ... "
+rm -rf replaytest.*
+temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest.mch -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'detected.*[0-9.]+ photons' | sort | uniq -c | grep '^\s*2\s*detected'`
+if [ -z "$temp" ]; then echo "fail to run photon replay -E"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test photon replay ... "
+rm -rf replaytest.*
+temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest.mch -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'absorbed:.*3[0-8]\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run photon replay"; fail=$((fail+1)); else echo "ok"; fi
+
 echo "test heterogeneous domain ... "
-temp=`$MCX --bench spherebox $PARAM | grep -o -E 'absorbed:.*1[01]\.[0-9]+%'`
+temp=`$MCX --bench spherebox -S 0 $PARAM | grep -o -E 'absorbed:.*1[01]\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run spherebox benchmark"; fail=$((fail+1)); else echo "ok"; fi
 
-echo "test progress bar ... "
+echo "test save detect photon data flag -w ... "
+temp=`$MCX --bench cube60 -w dspxvw -F jnii -S 0 $PARAM | grep -o -E 'compressing data \[zlib\]' | uniq -c | grep '^\s*6\s*compressing'`
+if [ -z "$temp" ]; then echo "fail to save detected photon data using -w flag"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test progress bar -D P ... "
 temp=`$MCX --bench cube60 -D P  $PARAM | grep 'Progress: .* 100%'`
 if [ -z "$temp" ]; then echo "fail to print progress bar"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test random number generator -D R ... "
+temp=`$MCX --bench cube60 -D R $PARAM | grep 'generating 216000 random numbers'`
+if [ -z "$temp" ]; then echo "fail to output random numbers via -D R"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test random number generator ... "
+rm -rf testrng222.jnii
+temp=`($MCX --bench cube60 -d 0 -s testrng222 --json '{"Shapes":[{"Grid":{"Tag":0,"Size":[2,2,2]}}]}' -F jnii -D R) && (grep 'eJx7Vx1tP2k7k71dbK29xRJe\+w\/JJfZ3Qqvs783Ot79008UeAOTRDlI' testrng222.jnii)`
+if [ -z "$temp" ]; then echo "fail to create random numbers"; fail=$((fail+1)); else echo "ok"; fi
+
+echo "test saving trajectory feature -D M ... "
+temp=`$MCX --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved [6-9][0-9]+ trajectory'`
+if [ -z "$temp" ]; then echo "fail to save trajectory data via -D M"; fail=$((fail+1)); else echo "ok"; fi
 
 if [ "$fail" -gt "0" ];  then
     echo "failed $fail tests";
