@@ -28,7 +28,7 @@
 
 #define MSTR(...) #__VA_ARGS__
 
-const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","spherebox","colin27",""};
+const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","sphshell","spherebox","colin27",""};
 const char *benchjson[]={
 MSTR(
 {
@@ -200,9 +200,10 @@ MSTR(
 {
 	"Session": {
 		"ID": "skinvessel",
+		"Photons": 1e6,
+		"RNGSeed":  1648335518,
 		"DoMismatch": true,
-		"DoAutoThread": true,
-		"Photons": 10000000
+		"DoAutoThread": true
 	},
 	"Forward": {
 		"T0": 0,
@@ -259,6 +260,68 @@ MSTR(
 	       {"ZLayers":[[1,20,1],[21,32,4],[33,200,3]]}, 
 	       {"Cylinder": {"Tag":2, "C0": [0,100.5,100.5], "C1": [200,100.5,100.5], "R": 20}}
         ]
+}),
+
+MSTR(
+{
+	"Session":	{
+		"ID":	"sphshell",
+		"Photons": 1e6,
+		"RNGSeed":  1648335518,
+		"DoMismatch":	true,
+		"DoPartialPath":	false,
+		"DoAutoThread":	true
+	},
+	"Forward":	{
+		"T0":	0,
+		"T1":	5e-09,
+		"Dt":	5e-09
+	},
+	"Domain":	{
+		"LengthUnit":	1,
+		"Media":	[{
+				"mua":	0.0,
+				"mus":	0.0,
+				"g":	1.0,
+				"n":	1.0
+			}, {
+				"mua":	0.02,
+				"mus":	7.0,
+				"g":	0.89,
+				"n":	1.37
+			}, {
+				"mua":	0.004,
+				"mus":	0.009,
+				"g":	0.89,
+				"n":	1.37
+			}, {
+				"mua":	0.02,
+				"mus":	9.0,
+				"g":	0.89,
+				"n":	1.37
+			}, {
+				"mua":	0.05,
+				"mus":	0.0,
+				"g":	1.0,
+				"n":	1.37
+			}],
+		"Dim":	[60, 60, 60],
+		"OriginType":	1
+	},
+	"Optode":	{
+		"Source":	{
+			"Type":	"pencil",
+			"Pos":	[30, 30.1, 0],
+			"Dir":	[0, 0, 1, 0],
+			"SrcNum":	1
+		}
+	},
+	"Shapes":	[
+		{"Grid":     {"Tag":1, "Size":[60,60,60]}},
+		{"Sphere":   {"Tag":2, "O":[30,30,30],"R":25}},
+		{"Sphere":   {"Tag":3, "O":[30,30,30],"R":23}},
+		{"Sphere":   {"Tag":4, "O":[30,30,30],"R":10}}
+	]
 }),
 
 MSTR(
@@ -336,8 +399,7 @@ MSTR(
 		{"Grid":     {"Tag":1, "Size":[60,60,60]}},
 		{"Sphere":   {"Tag":2, "O":[30,30,30],"R":10}}
 	]
-}
-)
+})
 
 #ifndef _MSC_VER
 
