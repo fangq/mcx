@@ -690,7 +690,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savedata(float *dat, size_t len, Config *cfg){
      FILE *fp;
      char name[MAX_FULL_PATH];
-     char fname[MAX_FULL_PATH];
+     char fname[MAX_FULL_PATH+10];
      unsigned int glformat=GL_RGBA32F;
 
      if(cfg->rootpath[0])
@@ -1285,7 +1285,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,itmp;
      size_t count;
      float dtmp;
-     char filename[MAX_FULL_PATH]={'\0'}, comment[MAX_FULL_PATH],strtypestr[MAX_FULL_PATH]={'\0'},*comm;
+     char filename[MAX_PATH_LENGTH]={'\0'}, comment[MAX_FULL_PATH],strtypestr[MAX_FULL_PATH]={'\0'},*comm;
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
@@ -1343,7 +1343,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 #else
          sprintf(comment,"%s/%s",cfg->rootpath,filename);
 #endif
-         strncpy(filename,comment,MAX_PATH_LENGTH);
+         strncpy(filename,comment,MAX_FULL_PATH);
      }
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 

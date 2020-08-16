@@ -22,7 +22,7 @@
 
 @brief   MCX configuration header
 *******************************************************************************/
-                                                                                         
+
 #ifndef _MCEXTREME_UTILITIES_H
 #define _MCEXTREME_UTILITIES_H
 
