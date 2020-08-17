@@ -42,8 +42,8 @@ temp=`$MCX --bench colin27 --dumpjson - | grep '"_ArrayZipData_":\s*"eJzs3Yl666o
 if [ -z "$temp" ]; then echo "fail to dump json input with volume from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test default options ... "
-temp=`$MCX --bench cube60 --dumpjson | grep -Pzo '"DoMismatch":\s*false,\n\s*"DoSaveVolume":\s*true,\n\s*"DoNormalize":\s*true,\n\s*"DoPartialPath":\s*true,\n\s*"DoSaveRef":\s*false,\n\s*"DoSaveExit":\s*false,\n\s*"DoSaveSeed":\s*false,\n\s*"DoAutoThread":\s*true,\n\s*"DoDCS":\s*false,\n\s*"DoSpecular":\s*false,\n\s*"DebugFlag":\s*0,\n\s*"SaveDataMask":\s*5,\n\s*"OutputFormat":\s*"mc2",\n\s*"OutputType":\s*"x"' | wc -l`
-if [ "$temp" != "13" ]; then echo "fail to verify default options "; fail=$((fail+1)); else echo "ok"; fi
+temp=`$MCX --bench cube60 --dumpjson | sed -e 's/\n/|/g' | grep -o -E '"DoMismatch":\s*false,|\s*"DoSaveVolume":\s*true,|\s*"DoNormalize":\s*true,|\s*"DoPartialPath":\s*true,|\s*"DoSaveRef":\s*false,|\s*"DoSaveExit":\s*false,|\s*"DoSaveSeed":\s*false,|\s*"DoAutoThread":\s*true,|\s*"DoDCS":\s*false,|\s*"DoSpecular":\s*false,|\s*"DebugFlag":\s*0,|\s*"SaveDataMask":\s*5,|\s*"OutputFormat":\s*"mc2",|\s*"OutputType":\s*"x"' | wc -l`
+if [ "$temp" -ne "14" ]; then echo "fail to verify default options "; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting builtin volume with gzip compression ... "
 temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA[EA]\+z'`
@@ -69,7 +69,7 @@ echo "test boundary condition flag -B ... "
 temp=`$MCX --bench cube60 -b 0 -B aarraa -S 0 $PARAM | grep -o -E 'absorbed:.*27\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to use -B flag to set facet based boundary condition"; fail=$((fail+1)); else echo "ok"; fi
 
-echo "test cylic boundary condition ... "
+echo "test cyclic boundary condition ... "
 temp=`$MCX --bench cube60 --bc 'cccccc' $PARAM -n 1e3 | grep -o -E 'absorbed:.*99\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to apply the cylic boundary condition"; fail=$((fail+1)); else echo "ok"; fi
 
