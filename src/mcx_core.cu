@@ -608,12 +608,13 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 	  }
 }
 
-__device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, MCXsp *nuvox){
+__device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, 
+                                   MCXsp *nuvox, MCXtime f, float3 htime){
 	
 	if(dot(*(float3*)v,nuvox->nv)<=0){ // no intersection, as nv always points to the other side
 	    return 0;
 	}else{
-	    float3 p1=*p0+len*(*(float3*)v);
+	    float3 p1=(gcfg->faststep || slen==f.pscat) ? (*p0+len*(*(float3*)v)) : float3(htime.x,htime.y,htime.z);
 	    float3 rp0=*p0-nuvox->rp;
 	    float3 rp1=p1-nuvox->rp;
 	    float d0=dot(rp0,nuvox->nv); // signed perpendicular distance from p0 to patch
@@ -1291,7 +1292,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      uint  mediaid=gcfg->mediaidorig;
      uint  mediaidold=0;
      int   isdet=0;
-     int   hit=0;
+     int   hit=0, hitted=0;
      
      float  n1;               ///< reflection var
      float3 htime;            ///< time-of-flight for collision test
@@ -1348,7 +1349,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
            */
 	  if(f.pscat<=0.f) {  ///< if this photon has finished his current scattering path, calculate next scat length & angles
    	       f.pscat=rand_next_scatlen(t); ///< random scattering probability, unit-less, exponential distribution
-		  
+	       hitted=0; ///< new scattering event, enable ray interface intersection test
+
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
 	       if(v.nscat!=EPS){ ///< if v.nscat is EPS, this means it is the initial launch direction, no need to change direction
                        ///< random arimuthal angle
@@ -1462,8 +1464,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** final length that the photon moves - either the length to move to the next voxel, or the remaining scattering length */
 	  len=slen/(prop.mus*(v.nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f));
 	  
-	  if(gcfg->mediaformat == MEDIA_2LABEL_SPLIT && nuvox.sp.issplit)
-	    hit=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox);
+	  if(gcfg->mediaformat == MEDIA_2LABEL_SPLIT && nuvox.sp.issplit && !hitted)
+	    hit=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,htime);
+	  else
+	    hit=0;
 	  
 	  /** if photon moves to the next voxel, use the precomputed intersection coord. htime which are assured to be outside of the current voxel */
 	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat || hit) ? float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z) : float3(htime.x,htime.y,htime.z);
@@ -1588,8 +1592,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	     }
 	     w0=p.w;
 	     f.pathlen=0.f;
-	     if(idx1d!=idx1dold)
+	     if(idx1d!=idx1dold){
 	       nuvox.sp.issplit=0;
+	       hitted=0;
+	     }
 	  }else
 	       mediaid = mediaidold;
 
@@ -1617,6 +1623,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                    break;
               isdet=mediaid & DET_MASK;
               mediaid &= MED_MASK;
+	      hitted=0;
 	      continue;
 	  }
 
@@ -1632,6 +1639,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                         break;
                    isdet=mediaid & DET_MASK;
                    mediaid &= MED_MASK;
+		   hitted=0;
                    continue;
                }
           }
@@ -1672,24 +1680,37 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                                 break;
                             isdet=mediaid & DET_MASK;
                             mediaid &= MED_MASK;
+			    hitted=0;
 			    continue;
 			}
 	                GPUDEBUG(("do transmission\n"));
                         rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
 		  }else{ ///< do reflection
-	                GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
-			(flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
-                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
-			(flipdir==0) ?
-        		    (p.x=mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f)-(v.x < 0.f))) :
-			    ((flipdir==1) ? 
+                        GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
+                        (flipdir==0) ?
+                            (p.x=mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f)-(v.x < 0.f))) :
+                            ((flipdir==1) ?
 				(p.y=mcx_nextafterf(__float2int_rn(p.y), (v.y > 0.f)-(v.y < 0.f))) :
 				(p.z=mcx_nextafterf(__float2int_rn(p.z), (v.z > 0.f)-(v.z < 0.f))) );
-	                GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
-                	idx1d=idx1dold;
-		 	mediaid=(media[idx1d] & MED_MASK);
-        	  	updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
-                  	n1=prop.n;
+                        idx1d=idx1dold;
+                        mediaid=(media[idx1d] & MED_MASK);
+                        updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
+                        if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT){
+                            if((nuvox.sp.isupper?nuvox.sp.upper:nuvox.sp.lower)==0){ // terminate photon
+                                if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                                  ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+                                  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
+                                  break;
+                              isdet=mediaid & DET_MASK;
+                              mediaid &= MED_MASK;
+                              hitted = 0;
+                              continue;
+                            }
+                        }
+                        (flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
+                         rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
+                        n1=prop.n;
+                        hitted=0;
 		  }
 	      }else if(gcfg->mediaformat<100  && gcfg->mediaformat!=MEDIA_2LABEL_SPLIT)
 	          updateproperty<islabel>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
@@ -1704,6 +1725,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			      break;
 			  isdet=mediaid & DET_MASK;
 		          mediaid &= MED_MASK;
+			  hitted=0;
 		          continue;
 	              }else{
 		          *((float4*)(&prop))=gproperty[nuvox.sp.lower];
@@ -1721,10 +1743,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			  break;
 		      isdet=mediaid & DET_MASK;
 		      mediaid &= MED_MASK;
+		      hitted=0;
 		      continue;
 		  }
-	        }      
-	        hit=0;
+	        }
+	        hitted=1;
 	  }
      }
 
