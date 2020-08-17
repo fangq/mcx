@@ -60,7 +60,7 @@
                      : tmp)
 
 #define UBJ_WRITE_KEY(ctx, key,  type, val)    {ubjw_write_key( (ctx), (key)); ubjw_write_##type((ctx), (val));}
-#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), JDB_##type, (nlen));}
+#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), (UBJ_TYPE)(JDB_##type), (nlen));}
 
 #define ubjw_write_single ubjw_write_float32
 #define ubjw_write_double ubjw_write_float64
