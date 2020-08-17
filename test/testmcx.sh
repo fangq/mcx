@@ -1,7 +1,11 @@
 #!/bin/sh
 
 fail=0
-MCX=../bin/mcx
+EXE=mcx
+MCX=../bin/$EXE
+if [ ! -f "$MCX" ]; then MCX=`which $EXE`; fi
+if [ -z "$MCX" ]; then echo "can not find $EXE"; exit 100; fi
+
 PARAM=$@
 LDD=`which ldd`
 if [ -z "$LDD" ]; then LDD="otool -L"; fi
@@ -23,7 +27,7 @@ if [ -z "$temp" ]; then echo "fail to print version number"; fail=$((fail+1)); e
 
 echo "test help info ... "
 temp=`$MCX | grep -o -E '\-\-[a-z]+' | sort | uniq | wc -l`
-if [ "$temp" -lt "40" ]; then echo "fail to print all command line flags"; fail=$((fail+1)); else echo "ok"; fi
+if [ "$temp" -lt "50" ]; then echo "fail to print all command line flags"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test gpu info ... "
 temp=`$MCX -L | grep 'Global [Mm]emory'`
@@ -139,6 +143,21 @@ if [ -z "$temp" ]; then echo "fail to create random numbers"; fail=$((fail+1)); 
 echo "test saving trajectory feature -D M ... "
 temp=`$MCX --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved [6-9][0-9]+ trajectory'`
 if [ -z "$temp" ]; then echo "fail to save trajectory data via -D M"; fail=$((fail+1)); else echo "ok"; fi
+
+temp=`which valgrind`
+if [ ! -z "$temp" ]; then
+    echo "test memory access errors using valgrind ... "
+    temp=`valgrind --log-fd=1 $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e4 | grep -o -E 'mcx_[a-z]+\.c'`
+    if [ ! -z "$temp" ]; then echo "fail to pass valgrind memory check"; fail=$((fail+1)); else echo "ok"; fi
+fi
+
+temp=`which cuda-memcheck`
+if [ ! -z "$temp" ]; then
+    echo "test gpu memory errors using cuda-memcheck ... "
+    temp=`cuda-memcheck $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e5 | grep -o -E '^=+\s+Invalid '`
+    if [ ! -z "$temp" ]; then echo "fail to pass cuda memory check"; fail=$((fail+1)); else echo "ok"; fi
+fi
+
 
 if [ "$fail" -gt "0" ];  then
     echo "failed $fail tests";
