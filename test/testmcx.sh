@@ -138,7 +138,7 @@ if [ -z "$temp" ]; then echo "fail to output random numbers via -D R"; fail=$((f
 echo "test random number generator ... "
 rm -rf testrng222.jnii
 temp=`($MCX --bench cube60 -d 0 -s testrng222 --json '{"Shapes":[{"Grid":{"Tag":0,"Size":[2,2,2]}}]}' -F jnii -D R) && (grep 'eJx7Vx1tP2k7k71dbK29xRJe\+w\/JJfZ3Qqvs783Ot79008UeAOTRDlI' testrng222.jnii)`
-if [ -z "$temp" ]; then echo "fail to create random numbers"; fail=$((fail+1)); else echo "ok"; fi
+if [ -z "$temp" ] || [ ! -f testrng222.jnii ] ; then echo "fail to create random numbers"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test saving trajectory feature -D M ... "
 temp=`$MCX --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved [6-9][0-9]+ trajectory'`
@@ -147,15 +147,19 @@ if [ -z "$temp" ]; then echo "fail to save trajectory data via -D M"; fail=$((fa
 temp=`which valgrind`
 if [ ! -z "$temp" ]; then
     echo "test memory access errors using valgrind ... "
-    temp=`valgrind --log-fd=1 $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e4 | grep -o -E 'mcx_[a-z]+\.c'`
-    if [ ! -z "$temp" ]; then echo "fail to pass valgrind memory check"; fail=$((fail+1)); else echo "ok"; fi
+    temp=`valgrind --log-fd=1 $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e4`
+    haserror=`echo $temp | grep -o -E 'MCX[A-Z]* ERROR.-'`
+    temp=`echo $temp | grep -o -E 'definitely lost:\s+0\s+bytes in\s+0\s+blocks'`
+    if [ ! -z "$haserror" ] || [ -z "$temp" ]; then echo "fail to pass valgrind memory check"; fail=$((fail+1)); else echo "ok"; fi
 fi
 
 temp=`which cuda-memcheck`
 if [ ! -z "$temp" ]; then
     echo "test gpu memory errors using cuda-memcheck ... "
-    temp=`cuda-memcheck $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e5 | grep -o -E '^=+\s+Invalid '`
-    if [ ! -z "$temp" ]; then echo "fail to pass cuda memory check"; fail=$((fail+1)); else echo "ok"; fi
+    temp=`cuda-memcheck $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e5`
+    haserror=`echo $temp | grep -o -E 'MCX[A-Z]* ERROR.-'`
+    temp=`echo $temp | grep -o -E '=+\s+ERROR SUMMARY:\s+0\s+error'`
+    if [ ! -z "$haserror" ] || [ -z "$temp" ]; then echo "fail to pass cuda memory check"; fail=$((fail+1)); else echo "ok"; fi
 fi
 
 
