@@ -60,7 +60,7 @@
                      : tmp)
 
 #define UBJ_WRITE_KEY(ctx, key,  type, val)    {ubjw_write_key( (ctx), (key)); ubjw_write_##type((ctx), (val));}
-#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), JDB_##type, (nlen));}
+#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), (UBJ_TYPE)(JDB_##type), (nlen));}
 
 #define ubjw_write_single ubjw_write_float32
 #define ubjw_write_double ubjw_write_float64
@@ -87,13 +87,13 @@
  * Short command line options
  * If a short command line option is '-' that means it only has long/verbose option.
  * Array terminates with '\0'.
- * Currently un-used options: cCjJNoQy0-9
+ * Currently un-used options: cCJNoQy0-9
  */
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-',
-		 '-','-','Z','-','\0'};
+		 '-','-','Z','j','\0'};
 
 /**
  * Long command line options
@@ -690,7 +690,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savedata(float *dat, size_t len, Config *cfg){
      FILE *fp;
      char name[MAX_FULL_PATH];
-     char fname[MAX_FULL_PATH];
+     char fname[MAX_FULL_PATH+10];
      unsigned int glformat=GL_RGBA32F;
 
      if(cfg->rootpath[0])
@@ -1285,7 +1285,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,itmp;
      size_t count;
      float dtmp;
-     char filename[MAX_FULL_PATH]={'\0'}, comment[MAX_FULL_PATH],strtypestr[MAX_FULL_PATH]={'\0'},*comm;
+     char filename[MAX_PATH_LENGTH]={'\0'}, comment[MAX_FULL_PATH],strtypestr[MAX_FULL_PATH]={'\0'},*comm;
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
@@ -1343,7 +1343,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 #else
          sprintf(comment,"%s/%s",cfg->rootpath,filename);
 #endif
-         strncpy(filename,comment,MAX_PATH_LENGTH);
+         strncpy(filename,comment,MAX_FULL_PATH);
      }
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
@@ -2886,12 +2886,25 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
 		     	        break;
                      case 'P':
-		                len=strlen(argv[i]);
-                                if(cfg->shapedata)
-				    free(cfg->shapedata);
-				cfg->shapedata=(char *)malloc(len);
-				memcpy(cfg->shapedata,argv[++i],len);
+                                if(i+1<argc){
+					len=strlen(argv[i+1]);
+					if(cfg->shapedata)
+						free(cfg->shapedata);
+					cfg->shapedata=(char *)malloc(len);
+					memcpy(cfg->shapedata,argv[++i],len);
+				}else
+					MCX_ERROR(-1,"json shape constructs are expected after -P");
                                 break;
+                     case 'j':
+				if(i+1<argc){
+					len=strlen(argv[i+1]);
+					if(cfg->extrajson)
+						free(cfg->extrajson);
+					cfg->extrajson=(char *)calloc(1,len+1);
+					memcpy(cfg->extrajson,argv[++i],len);
+				}else
+				        MCX_ERROR(-1,"json fragment is expected after --json");
+				break;
                      case 'A':
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
@@ -2996,15 +3009,6 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 					     MCX_FPRINTF(cfg->flog,"\t%s\n",benchname[i]);
 				         exit(0);
 				     }
-                                }else if(strcmp(argv[i]+2,"json")==0){
-				     if(i+1<argc){
-					len=strlen(argv[i+1]);
-					if(cfg->extrajson)
-					    free(cfg->extrajson);
-					cfg->extrajson=(char *)calloc(1,len+1);
-					memcpy(cfg->extrajson,argv[++i],len);
-				     }else
-				        MCX_ERROR(-1,"json fragment is expected after --json");
                                 }else if(strcmp(argv[i]+2,"reflectin")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
                                 else if(strcmp(argv[i]+2,"internalsrc")==0)
@@ -3227,6 +3231,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Required option ==\n" S_RESET"\
  -f config     (--input)       read an input file in .json or .inp format\n\
+                               if the string starts with '{', it is parsed as\n\
+			       an inline JSON input file\n\
  --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name\n\
                                run --bench without parameter to get a list\n\
 \n"S_BOLD S_CYAN"\
@@ -3285,7 +3291,13 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -I            (--printgpu)    print GPU information and run program\n\
 \n"S_BOLD S_CYAN"\
 == Input options ==\n" S_RESET"\
- -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid.\n\
+                               only the root object named 'Shapes' is parsed \n\
+			       and added to the existing domain defined via -f \n\
+			       or --bench\n\
+ -j '{...}'    (--json)        a JSON string for modifying all input settings.\n\
+                               this input can be used to modify all existing \n\
+			       settings defined by -f or --bench\n\
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str\n\
                                1 or byte: 0-128 tissue labels\n\
 			       2 or short: 0-65535 (max to 4000) tissue labels\n\
@@ -3348,7 +3360,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       4 lzma: lzma format (high compression,very slow)\n\
 			       5 lz4: LZ4 format (low compression,extrem. fast)\n\
 			       6 lz4hc: LZ4HC format (moderate compression,fast)\n\
- --dumpjson [-,2,'file.json']  export all settings, including volume data using\n\
+ --dumpjson [-,2,3,'file.json']  export all settings, including volume data using\n\
                                JSON/JData (http://openjdata.org) format for \n\
 			       easy sharing; can be reused using -f\n\
 			       if followed by nothing or '-', mcx will print\n\
@@ -3386,13 +3398,17 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing\n\
 \n"S_BOLD S_CYAN"\
 == Example ==\n" S_RESET"\
-example: (autopilot mode)\n"S_GREEN"\
-       %s -A 1 -n 1e7 -f input.inp -G 1 -D P\n" S_RESET"\
-or (manual mode)\n"S_GREEN"\
-       %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -w dpx -b 1 -G 1\n" S_RESET"\
+example: (list built-in benchmarks)\n"S_GREEN"\
+       %s --bench\n" S_RESET"\
+or (list supported GPUs on the system)\n"S_GREEN"\
+       %s -L\n" S_RESET"\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n"S_GREEN"\
-       %s -A -n 1e7 -f input.inp -G 1101 -W 10,10,10\n" S_RESET"\
+       %s --bench cube60b -n 1e7 -G 1101 -W 10,10,10\n" S_RESET"\
 or (use inline domain definition)\n"S_GREEN"\
-       %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'" S_RESET"\n",
-              exename,exename,exename,exename,exename);
+       %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n" S_RESET"\
+or (use inline json setting modifier)\n"S_GREEN"\
+       %s -f input.json -j '{\"Optode\":{\"Source\":{\"Type\":\"isotropic\"}}}'\n" S_RESET"\
+or (dump simulation in a single json file)\n"S_GREEN"\
+       %s --bench cube60planar --dumpjson" S_RESET"\n",
+              exename,exename,exename,exename,exename,exename,exename);
 }

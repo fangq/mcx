@@ -72,4 +72,4 @@ end
 
 figure;
 hist(double(detpt.w0))
-xlable('1D pixel index of the launch position');
+xlabel('1D pixel index of the launch position');

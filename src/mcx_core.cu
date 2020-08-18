@@ -1721,7 +1721,6 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float Vvox,fullload=0.f;
 
      dim3 mcgrid, mcblock;
-     dim3 clgrid, clblock;
 
      int dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z*((cfg->srctype==MCX_SRC_PATTERN || cfg->srctype==MCX_SRC_PATTERN3D) ? cfg->srcnum : 1);
 
@@ -1892,10 +1891,6 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          fieldlen=dimxyz*gpu[gpuid].maxgate;
      mcgrid.x=gpu[gpuid].autothread/gpu[gpuid].autoblock;
      mcblock.x=gpu[gpuid].autoblock;
-
-     clgrid.x=cfg->dim.x;
-     clgrid.y=cfg->dim.y;
-     clblock.x=cfg->dim.z;
 
      if(cfg->debuglevel & MCX_DEBUG_RNG){
 #pragma omp master
