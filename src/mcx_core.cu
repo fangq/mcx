@@ -1425,8 +1425,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	       mediaid = mediaidold;
 
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
-          if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCylic) )) || f.t>gcfg->twin1){
-	      if(isdet==bcCylic){
+          if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCyclic) )) || f.t>gcfg->twin1){
+	      if(isdet==bcCyclic){
                  if(flipdir==0)  p.x=mcx_nextafterf(roundf(p.x+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.x: -gcfg->maxidx.x)),(v.x > 0.f)-(v.x < 0.f));
                  if(flipdir==1)  p.y=mcx_nextafterf(roundf(p.y+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.y: -gcfg->maxidx.y)),(v.y > 0.f)-(v.y < 0.f));
                  if(flipdir==2)  p.z=mcx_nextafterf(roundf(p.z+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.z: -gcfg->maxidx.z)),(v.z > 0.f)-(v.z < 0.f));
@@ -1435,7 +1435,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	             mediaid=media[idx1d];
 	             isdet=mediaid & DET_MASK;  /** upper 16bit is the mask of the covered detector */
 	             mediaid &= MED_MASK;       /** lower 16bit is the medium index */
-                     GPUDEBUG(("Cylic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f]\n",flipdir,isdet,p.x,p.y,p.z));
+                     GPUDEBUG(("Cyclic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f]\n",flipdir,isdet,p.x,p.y,p.z));
 	             continue;
 		 }
 	      }
