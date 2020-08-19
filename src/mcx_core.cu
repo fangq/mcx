@@ -2153,7 +2153,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #endif
 	     mcx_progressbar(-0.f,cfg);
 	     do{
-#ifndef _WIN32
+#ifdef _WIN32
                cudaEventQuery(updateprogress);
 #endif
                ndone = *progress;
