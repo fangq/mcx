@@ -22,13 +22,19 @@
 
 @brief   MCX builtin benchmarks
 *******************************************************************************/
-                                                                                         
+
 #ifndef _MCEXTREME_BENCHMARK_H
 #define _MCEXTREME_BENCHMARK_H
 
 #define MSTR(...) #__VA_ARGS__
 
-const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","sphshell","spherebox","colin27",""};
+const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","sphshell","spherebox",
+#ifndef _MSC_VER
+			 "colin27",""};
+#else
+                         ""};
+#endif
+
 const char *benchjson[]={
 MSTR(
 {

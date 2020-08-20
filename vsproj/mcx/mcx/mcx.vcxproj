@@ -237,6 +237,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\..\..\src\mcx_shapes.c" />
     <ClCompile Include="..\..\..\src\mcx_utils.c" />
     <ClCompile Include="..\..\..\src\tictoc.c" />
+    <ClCompile Include="..\..\..\src\mcx_bench.cc" />
     <ClCompile Include="..\..\..\src\ubj\ubjw.c" />
     <ClCompile Include="..\..\..\src\zmat\easylzma\common_internal.c" />
     <ClCompile Include="..\..\..\src\zmat\easylzma\compress.c" />
