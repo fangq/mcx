@@ -241,7 +241,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cc
-	$(GCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+	$(GCC) $(INCLUDEDIRS) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
