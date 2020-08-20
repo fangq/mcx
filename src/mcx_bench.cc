@@ -23,8 +23,7 @@
 @brief   MCX builtin benchmarks
 *******************************************************************************/
 
-#ifndef _MCEXTREME_BENCHMARK_H
-#define _MCEXTREME_BENCHMARK_H
+#include "mcx_bench.h"
 
 #define MSTR(...) #__VA_ARGS__
 
@@ -6907,4 +6906,3 @@ qEmyAqahJVFvWGDJa+jyFXVSpgZKwIvdtjVOrzrD3f//Hz5CAA=="}
 #endif
 };
 
-#endif
