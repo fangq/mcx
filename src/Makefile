@@ -241,7 +241,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 mcx_bench$(OBJSUFFIX): mcx_bench.c
-	$(GCC) $(INCLUDEDIRS) $(CPPOPT) -c -o mcx_bench$(OBJSUFFIX)  $<
+	$(GCC) $(INCLUDEDIRS) -c -o mcx_bench$(OBJSUFFIX)  $<
 
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
