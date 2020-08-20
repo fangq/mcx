@@ -20,6 +20,8 @@ CUDACC=nvcc
 MEX=mex
 AR=$(CXX)
 
+GCC?=gcc
+
 BINARY=mcx
 MAKE=make
 OUTPUT_DIR=$(MCXDIR)/bin
@@ -64,7 +66,7 @@ CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON ubj/ubjw
+FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme mcx_bench cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
@@ -237,6 +239,9 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+
+%$(OBJSUFFIX): %.cc
+	$(GCC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<

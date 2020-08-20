@@ -39,9 +39,11 @@
 #include "mcx_const.h"
 #include "mcx_shapes.h"
 #include "mcx_core.h"
-#include "mcx_bench.h"
 #include "zmat/zmatlib.h"
 #include "ubj/ubj.h"
+
+extern const char *benchname[8];
+extern const char *benchjson[7];
 
 /**
  * Macro to load JSON keys
