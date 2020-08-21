@@ -50,7 +50,7 @@ temp=`$MCX --bench cube60 --dumpjson | sed -e 's/\n/|/g' | grep -o -E '"DoMismat
 if [ "$temp" -ne "14" ]; then echo "fail to verify default options "; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting builtin volume with gzip compression ... "
-temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA[EA]\+z'`
+temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA..z'`
 if [ -z "$temp" ]; then echo "fail to set gzip compression for volume exporting"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test json input modifier --json ... "
@@ -144,7 +144,7 @@ echo "test saving trajectory feature -D M ... "
 temp=`$MCX --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved [6-9][0-9]+ trajectory'`
 if [ -z "$temp" ]; then echo "fail to save trajectory data via -D M"; fail=$((fail+1)); else echo "ok"; fi
 
-temp=`which valgrind`
+temp=`which valgrind 2> /dev/null`
 if [ ! -z "$temp" ]; then
     echo "test memory access errors using valgrind ... "
     temp=`valgrind --log-fd=1 $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e4`
@@ -153,7 +153,7 @@ if [ ! -z "$temp" ]; then
     if [ ! -z "$haserror" ] || [ ! -z "$temp" ]; then echo "fail to pass valgrind memory check"; fail=$((fail+1)); else echo "ok"; fi
 fi
 
-temp=`which cuda-memcheck`
+temp=`which cuda-memcheck 2> /dev/null`
 if [ ! -z "$temp" ]; then
     echo "test gpu memory errors using cuda-memcheck ... "
     temp=`cuda-memcheck $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' -B 'ararar1' -w dpw $PARAM -n 1e5`
