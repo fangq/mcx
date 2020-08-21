@@ -156,7 +156,7 @@ fi
 temp=`which cuda-memcheck`
 if [ ! -z "$temp" ]; then
     echo "test gpu memory errors using cuda-memcheck ... "
-    temp=`cuda-memcheck $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e5`
+    temp=`cuda-memcheck $MCX --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' -B 'ararar1' -w dpw $PARAM -n 1e5`
     haserror=`echo $temp | grep -o -E 'MCX[A-Z]* ERROR.-'`
     temp=`echo $temp | grep -o -E '=+\s+ERROR SUMMARY:\s+0\s+error'`
     if [ ! -z "$haserror" ] || [ -z "$temp" ]; then echo "fail to pass cuda memory check"; fail=$((fail+1)); else echo "ok"; fi
