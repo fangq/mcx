@@ -1617,8 +1617,14 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 #else
     int dev;
     int deviceCount,activedev=0;
+    
+    cudaError_t cuerr=cudaGetDeviceCount(&deviceCount);
+    if(cuerr!=cudaSuccess){
+	if(cuerr==(cudaError_t)30)
+            mcx_error(-(int)cuerr,"A CUDA-capable GPU is not found or configured",__FILE__,__LINE__);
+        CUDA_ASSERT(cuerr);
+    }
 
-    CUDA_ASSERT(cudaGetDeviceCount(&deviceCount));
     if (deviceCount == 0){
         MCX_FPRINTF(stderr,S_RED "ERROR: No CUDA-capable GPU device found\n" S_RESET);
         return 0;
