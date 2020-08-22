@@ -39,16 +39,34 @@ versatile and feature-rich open-source Monte Carlo 3D photon simulator. It is
 packed with numerous improvements in both functionality and stability. We want 
 to specifically highlight the below major additions:
 
--   JSON/Binary JSON output files with built-in compression for easy data 
-sharing
+-   JSON/Binary JSON output files with built-in compression for easy sharing
 -   Built-in benchmarks for easy testing and adoption by new users
 -   Exporting simulation as JSON with binary volume data
 -   All-in-one Windows installer for MCXStudio/MCX/MMC/MCXCL
 -   Automated code building, testing and continuous integration via Travis-CI
 -   CMake based compilation and Visual Studio support
+-   1.6x speedup on Pascal GPUs
 
 A detailed list of updates is summarized below (key features marked with “\*”):
 
+-   2020-08-20 [e8e6b58] print an explicit messgae if error 30 is found
+-   2020-08-19\*[883f61b] restore windows progress bar support, disabled in @ae2d60e45
+-   2020-08-17 [c47de01] allow running testing script on machines without nvidia gpu
+-   2020-08-16 [0c25958] add more tests for various mcx options
+-   2020-08-16 [ff2f68f] add sphshell benchmark - see GPU MMC paper
+-   2020-08-15 [2afab4a] test if media prop count is less than max label
+-   2020-08-15 [2d71eb7] accept array as Domain.Media json input
+-   2020-08-15\*[433df1f] accept json modifier via --json for easy testing
+-   2020-08-14 [09adbd0] support --bc or cfg.bc to set an entire bounding face as detector
+-   2020-08-11\*[e095dbb] speed up by 1.6x on 1080Ti by restoring source template for pencil beam only
+-   2020-08-11 [a220cc2] autoblock size no less than 64, speed up on Turing GPU by doubling threads
+-   2020-08-04 [71d4196] fix incorrect detpt column when savedetflag/issaveexit are both set
+-   2020-08-04 [20c596a] retrieve energy tot and abs regardless of isnormalized
+-   2020-08-03\*[30e01a1] add standalone script to submit to mcx speed contest
+-   2020-07-31 [d9a5953] avoid autoblock is 0 when driver fails, close #99
+-   2020-07-28 [daa9d56] fix inaccurate core count on Volta, Turing and Pascal
+-   2020-07-25 [37793ae] fix -b 0 -B rrrrrr crash, thanks to @ShijieYan
+-   2020-07-22\*[f844fe8] add automated building script via travis-ci
 -   2020-07-22\*[f844fe8] add automated building script via travis-ci
 -   2020-07-22\*[cbf0225] add unit testing script
 -   2020-07-09 [5b038a7] add winget manifest
@@ -192,7 +210,7 @@ information and a list of supported parameters, such as the following:
 ```
 ###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2019 Qianqian Fang <q.fang at neu.edu>          #
+#          Copyright (c) 2009-2020 Qianqian Fang <q.fang at neu.edu>          #
 #                             http://mcx.space/                               #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
@@ -200,7 +218,7 @@ information and a list of supported parameters, such as the following:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::0aea3b$2020.4 $Date::2020-07-23 15:43:20 -04$ by $Author::Qianqian Fang $
+$Rev::0aea3b$v2020  $Date::2020-07-23 15:43:20 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -208,6 +226,8 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Required option ==
  -f config     (--input)       read an input file in .json or .inp format
+                               if the string starts with '{', it is parsed as
+			       an inline JSON input file
  --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name
                                run --bench without parameter to get a list
 
@@ -226,6 +246,14 @@ where possible parameters include (the first value in [*|*] is the default)
 			       'a': like -b 0, total absorption BC
 			       'm': mirror or total reflection BC
 			       'c': cyclic BC, enter from opposite face
+
+			       if input contains additional 6 letters,
+			       the 7th-12th letters can be:
+			       '0': do not use this face to detect photon, or
+			       '1': use this face for photon detection (-d 1)
+			       the order of the faces for letters 7-12 is 
+			       the same as the first 6 letters
+			       eg: --bc ______010 saves photons exiting at y=0
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate
@@ -258,7 +286,13 @@ where possible parameters include (the first value in [*|*] is the default)
  -I            (--printgpu)    print GPU information and run program
 
 == Input options ==
- -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid.
+                               only the root object named 'Shapes' is parsed 
+			       and added to the existing domain defined via -f 
+			       or --bench
+ -j '{...}'    (--json)        a JSON string for modifying all input settings.
+                               this input can be used to modify all existing 
+			       settings defined by -f or --bench
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str
                                1 or byte: 0-128 tissue labels
 			       2 or short: 0-65535 (max to 4000) tissue labels
@@ -321,7 +355,7 @@ where possible parameters include (the first value in [*|*] is the default)
 			       4 lzma: lzma format (high compression,very slow)
 			       5 lz4: LZ4 format (low compression,extrem. fast)
 			       6 lz4hc: LZ4HC format (moderate compression,fast)
- --dumpjson [-,2,'file.json']  export all settings, including volume data using
+ --dumpjson [-,2,3,'file.json']  export all settings, including volume data using
                                JSON/JData (http://openjdata.org) format for 
 			       easy sharing; can be reused using -f
 			       if followed by nothing or '-', mcx will print
@@ -359,14 +393,18 @@ where possible parameters include (the first value in [*|*] is the default)
  --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing
 
 == Example ==
-example: (autopilot mode)
-       mcx -A 1 -n 1e7 -f input.inp -G 1 -D P
-or (manual mode)
-       mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -w dpx -b 1 -G 1
+example: (list built-in benchmarks)
+       mcx --bench
+or (list supported GPUs on the system)
+       mcx -L
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)
-       mcx -A -n 1e7 -f input.inp -G 1101 -W 10,10,10
+       mcx --bench cube60b -n 1e7 -G 1101 -W 10,10,10
 or (use inline domain definition)
        mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
+or (use inline json setting modifier)
+       mcx -f input.json -j '{"Optode":{"Source":{"Type":"isotropic"}}}'
+or (dump simulation in a single json file)
+       mcx --bench cube60planar --dumpjson
 ```
 
 the 2nd command above will launch 16384 GPU threads (`-t`) with every 64 threads 

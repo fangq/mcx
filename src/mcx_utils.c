@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2018
+**  \copyright Qianqian Fang, 2009-2020
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -20,7 +20,7 @@
 /***************************************************************************//**
 \file    mcx_utils.c
 
-@brief   mcconfiguration and command line option processing unit
+@brief   Simulation configuration and command line option handling
 *******************************************************************************/
 
 #include <stdio.h>
@@ -3138,7 +3138,7 @@ int mcx_lookupindex(char *key, const char *index){
  */
 
 void mcx_version(Config *cfg){
-    const char ver[]="$Rev::      $2020";
+    const char ver[]="$Rev::      $v2020";
     int v=0;
     sscanf(ver,"$Rev::%x",&v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n",v);
@@ -3212,7 +3212,7 @@ void mcx_printheader(Config *cfg){
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $2020.4 $Date::                       $ by $Author::              $\n\
+$Rev::      $v2020 $Date::                       $ by $Author::              $\n\
 ###############################################################################\n" S_RESET);
 }
 

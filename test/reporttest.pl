@@ -22,7 +22,7 @@ my %alltests=();
 my %res=();
 
 for my $ln (@lines){
-	if($ln =~/^temp=`([^|]+)\s*\|\s*grep\s+(-o\s+-E)*\s+'(.*)'/){
+	if($ln =~/^temp=`(.+)\s*\|\s*grep\s+(-o\s+-E)*\s+'(.*)'`$/){
 		my $cmd=$1;
 		my $pat=$3;
 		$cmd=~s/\$MCX/$mcx/g;
