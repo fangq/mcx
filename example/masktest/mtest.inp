@@ -3,7 +3,7 @@
 4 4 4        # source position (in grid unit)
 0 0 1                # initial directional vector
 0.e+00 5.e-09 5.e-9  # time-gates(s): start, end, step
-semi8x8x8.bin     # volume ('uchar' format)
+cube8.json         # volume ('uchar' format)
 1 8 1 8            # x: voxel size (isotropic only), dim, start/end indices
 1 8 1 8            # y: voxel size, dim, start/end indices 
 1 8 1 8            # z: voxel size, dim, start/end indices

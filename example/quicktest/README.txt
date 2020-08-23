@@ -18,10 +18,10 @@ run_qtest.sh
     the example used in the Fang2009 paper. It will launch 
     only 0.3 million photons and take roughly half a second. 
 
-run_qtest_silent.sh
-    This script does the same thing as run_qtest.sh, 
-    except it let mcx to print messages to a log file 
-    rather than printing on the screen (so called silent mode) 
+run_grid2x.sh/run_grid3x.sh
+    These scripts does the same thing as run_qtest.sh, 
+    except it they use a voxel size of 0.5 mm and 1/3 mm, 
+    respectively.
 
 
 [Fang2009]   Qianqian Fang and David A. Boas, "Monte Carlo 

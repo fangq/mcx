@@ -3233,6 +3233,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -f config     (--input)       read an input file in .json or .inp format\n\
                                if the string starts with '{', it is parsed as\n\
 			       an inline JSON input file\n\
+      or\n\
  --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name\n\
                                run --bench without parameter to get a list\n\
 \n"S_BOLD S_CYAN"\

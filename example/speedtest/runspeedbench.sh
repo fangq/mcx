@@ -2,13 +2,8 @@
 
 RT=`pwd`
 
-# generate a 60x60x60 homogeneous medium filled with index 1
-
-dd if=/dev/zero of=seg60x60x60.bin bs=1000 count=216
-perl -pi -e 's/\x0/\x1/g' seg60x60x60.bin
-
 if [ $# = 0 ]; then
-   options="mt fast log logfast mtatomic logatomic"
+   options="log"
 else
    options=$*
 fi
