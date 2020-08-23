@@ -115,29 +115,34 @@ OUTPUTFLAG:=-o
 kepler: fermi
 keplermex: fermimex
 kepleroct: fermioct
-kepler keplermex: CUGENCODE=-arch=sm_30
+kepler keplermex kepleroct: CUGENCODE:=-arch=sm_30
 
 maxwell: kepler
 maxwellmex: keplermex
 maxwelloct: kepleroct
-maxwell maxwellmex: CUGENCODE=-arch=sm_50
+maxwell maxwellmex maxwelloct: CUGENCODE:=-arch=sm_50
 
 pascal: maxwell
 pascalmex: maxwellmex
 pascaloct: maxwelloct
-pascal pascalmex: CUGENCODE=-arch=sm_60
+pascal pascalmex pascaloct: CUGENCODE:=-arch=sm_60
 
 volta: pascal
 voltamex: pascalmex
 voltaoct: pascaloct
-volta voltamex: CUGENCODE=-arch=sm_70
+volta voltamex voltaoct: CUGENCODE:=-arch=sm_70
 
 turing: volta
 turingmex: voltamex
 turingoct: voltaoct
-turing turingmex: CUGENCODE=-arch=sm_80
+turing turingmex turingoct: CUGENCODE:=-arch=sm_75
 
-log xor xoro posix:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math
+ampere: turing
+amperemex: turingmex
+ampereoct: turingoct
+ampere amperemex ampereoct: CUGENCODE:=-arch=sm_80
+
+log xor xoro posix:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -DSAVE_DETECTORS
 xor:        LINKOPT+=
 xoro:       CUCCOPT+=-DUSE_XOROSHIRO128P_RAND
 xoro:       LINKOPT+=-DUSE_XOROSHIRO128P_RAND
@@ -149,7 +154,7 @@ log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
-fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
+log xor xoro posix fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
 
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
 fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
