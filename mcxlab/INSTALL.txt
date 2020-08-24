@@ -1,18 +1,30 @@
 = Additional Installation Notes =
 
-=== For Ubuntu users: ===
+One can manually install mcxlab by simply unzip the mcxlab zip file and use command
+`addpath('/path/to/mcxlab/')` to install it for Octave/MATLAB.
 
-Because the Octave mex binaries were compiled on two CentOS 
-workstations (i386 and x86_64), the library names may be 
-slightly different from Ubuntu's default installation.
-To use these mex files on your Octave, you need to install the 
-following libraries on your Ubuntu machine:
+Alternatively, for Windows, if you run the Windows all-in-one installer, the mcxlab
+toolbox, along with other toolboxes are automatically added to your MATLAB path,
+and can be used immediately.
 
-  sudo apt-get install libblas3gf libhdf5-serial-1.8.4 libgfortran3
+If you use Linux, you can also install these packages via the official software
+repositories
 
-then create the following links:
+=== For Ubuntu/Debian users ===
 
-  sudo ln -sf /usr/lib/libblas.so.3gf /usr/lib/libblas.so.3
-  sudo ln -sf /usr/lib/libhdf5.so.6.0.3 /usr/lib/libhdf5.so.0
-  sudo ln -sf /usr/lib/libgfortran.so.3.0.0 /usr/lib/libgfortran.so.1
+Please add the fangq/ppa repository (https://launchpad.net/~fangq/+archive/ubuntu/ppa) 
+to your system via
 
+  sudo add-apt-repository ppa:fangq/ppa
+  sudo apt-get update
+  sudo apt-get install octave-mcxlab matlab-mcxlab
+
+When opening Octave, one must run
+  pkg load mcxlab
+
+to load mcxlab toolbox if installed via the official octave-mcxlab package.
+
+=== For Fedora users ===
+
+The official octave-mcxlab package supported on Fedora since F24 is not the 
+CUDA version of MCXLAB, but MCXLAB-CL for OpenCL. 

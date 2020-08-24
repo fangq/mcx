@@ -17,6 +17,10 @@ Table of Content:
   * [Running Simulations](#running-simulations)
   * [Using JSON-formatted input files](#using-json-formatted-input-files)
   * [Using JSON-formatted shape description files](#using-json-formatted-shape-description-files)
+  * [Output data formats](#output-data-formats)
+    + [Volumetric output](#volumetric-output)
+    + [Detected photon data](#detected-photon-data)
+    + [Photon trajectory data](#photon-trajectory-data)
   * [Using MCXLAB in MATLAB and Octave](#using-mcxlab-in-matlab-and-octave)
   * [Using MCX Studio GUI](#using-mcx-studio-gui)
   * [Interpreting the Output](#interpreting-the-output)
@@ -229,7 +233,7 @@ supported parameters, as shown below:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::0aea3b$v2020  $Date::2020-07-23 15:43:20 -04$ by $Author::Qianqian Fang $
+$Rev::041e38$ v2020 $Date::2020-08-24 14:25:23 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -423,7 +427,7 @@ mcx -A 0 -t 16384 -T 64 -n 1e7 -G 1 -f input.json -r 2 -s test -g 10 -d 1 -w dpx
 ```
 the command above asks mcx to manually (`-A 0`) set GPU threads, and launch 16384 
 GPU threads (`-t`) with every 64 threads a block (`-T`); a total of 1e7 photons (`-n`)
-are simulated by the first GPU (`-G 1`) with two equally divided runs (`-r`); 
+are simulated by the first GPU (`-G 1`) and repeat twice (`-r`) - i.e. total 2e7 photons;
 the media/source configuration will be read from a JSON file named `input.json` 
 (`-f`) and the output will be labeled with the session id “test” (`-s`); the 
 simulation will run 10 concurrent time gates (`-g`) if the GPU memory can not 
@@ -1055,7 +1059,7 @@ time-window, you just need to multiply each solution by the width of the
 window, 0.1 ns in this case. To convert the time-dependent fluence-rate to 
 continuous-wave (CW) fluence (fluence in short), you need to integrate the 
 fluence-rate along the time dimension. Assuming the fluence-rate after 5 ns is 
-negligible, then the CW fluence is simply `sum(flux\_i\*0.1 ns, i=1,50)`. You can 
+negligible, then the CW fluence is simply `sum(flux_i*0.1 ns, i=1,50)`. You can 
 read `mcx/examples/validation/plotsimudata.m` and 
 `mcx/examples/sphbox/plotresults.m` for examples to compare an MCX output with 
 the analytical fluence-rate/fluence solutions.
@@ -1073,7 +1077,7 @@ Note that for time-resolved simulations, the corresponding solution in the
 results approximates the flux at the center point of each time window. For 
 example, if the simulation time window setting is 
 `[t0,t0+dt,t0+2dt,t0+3dt...,t1]`, the time points for the snapshots stored in 
-the solution file is located at `[t0+dt/2, t0+3\*dt/2, t0+5\*dt/2, ... ,t1-dt/2]`
+the solution file is located at `[t0+dt/2, t0+3*dt/2, t0+5*dt/2, ... ,t1-dt/2]`
 
 A more detailed interpretation of the output data can be found at 
 http://mcx.sf.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data

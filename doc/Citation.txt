@@ -1,0 +1,189 @@
+   #[1]Monte Carlo eXtreme: GPU-based Monte Carlo Simulations
+
+Papers
+
+                1.1. [2]MCX
+
+                1.2. [3]MCX-CL
+
+                1.3. [4]MMC
+
+                1.4. [5]General MC algorithm
+
+                1.5. [6]Applications
+
+   If you use MCX/MMC/MCX-CL in your research, we appreciate if you can
+   cite our relevant papers in your publications.
+
+1.1. MCX
+
+     * [Fang2009] Qianqian Fang and David Boas, "Monte Carlo Simulation of
+       Photon Migration in 3D Turbid Media Accelerated by Graphics
+       Processing Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190
+       (2009).
+     * Summary: original MCX paper
+     * Download:
+       [7]http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178
+
+1.2. MCX-CL
+
+     * [Yu2018] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian
+       Fang, "Scalable and massively parallel Monte Carlo photon transport
+       simulations for heterogeneous computing platforms," J. Biomed. Opt.
+       23(1), 010504 (2018).
+     * Summary: original MCX-CL (OpenCL) paper
+     * Download: [8]https://doi.org/10.1117/1.JBO.23.1.010504
+
+1.3. MMC
+
+     * [Fang2019] Qianqian Fang* and Shijie Yan, “Graphics processing
+       unit-accelerated mesh-based Monte Carlo photon transport
+       simulations,” J. of Biomedical Optics, 24(11), 115002 (2019).
+     * Summary: GPU-accelerated (OpenCL) MMC algorithm and software - MMCL
+     * Download: [9]http://dx.doi.org/10.1117/1.JBO.24.11.115002
+
+     * [Yan2019] Shijie Yan, Anh Phong Tran, Qianqian Fang*, “A dual-grid
+       mesh-based Monte Carlo algorithm for efficient photon transport
+       simulations in complex 3-D media,” J. of Biomedical Optics, 24(2),
+       020503 (2019).
+     * Summary: Dual-grid MMC for faster and more accurate mesh-based
+       simulations
+     * Download: [10]http://dx.doi.org/10.1117/1.JBO.24.2.020503
+
+     * [Yao2016] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "Generalized
+       mesh-based Monte Carlo for wide-field illumination and detection
+       via mesh retessellation," Biomed. Optics Express, 7(1), 171-184,
+       (2016)
+     * Summary: Widefield MMC
+     * Download:
+       [11]https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171
+
+     * [Jin2012] Chen J, Fang Q, Intes X, “Mesh-based Monte Carlo method
+       in time-domain widefield fluorescence molecular tomography,” J. of
+       Biomedical Optics, 17(10), 106009 (2012).
+     * Summary: Axis-aligned wide-field MMC algorithm for fluorescence
+       molecular tomography
+     * Download: [12]https://doi.org/10.1117/1.JBO.17.10.106009
+
+     * [Fang2012] Qianqian Fang and David R. Kaeli, "Accelerating
+       mesh-based Monte Carlo method on modern CPU architectures ,"
+       Biomed. Opt. Express 3(12), 3223-3230 (2012)
+     * Summary: SIMD MMC
+     * Download:
+       [13]https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-322
+       3
+
+     * [Fang2011] Qianqian Fang, “Comment on ‘A study on tetrahedron-based
+       inhomogeneous Monte-Carlo optical simulation’,” Biomed. Opt.
+       Express, vol. 2, issue 5, pp. 1258-1264, 2011.
+     * Summary: MMC ray-tracing comparisons
+     * Download:
+       [14]https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258
+
+     * [Fang2010] Qianqian Fang, "Mesh-based Monte Carlo method using fast
+       ray-tracing in Plücker coordinates," Biomed. Opt. Express 1(1),
+       165-175 (2010)
+     * Summary: original MMC paper
+     * Download:
+       [15]https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165
+
+1.4. General MC algorithm
+
+     * [Yan2020] Shijie Yan, Ruoyang Yao, Xavier Intes, and Qianqian Fang,
+       "Accelerating Monte Carlo modeling of structured-light-based
+       diffuse optical imaging via 'photon sharing'," Opt. Lett. 45,
+       2842-2845 (2020)
+     * Summary: Photon sharing for simultaneous simulations of multiple
+       patterns
+     * Download:
+       [16]https://www.biorxiv.org/content/10.1101/2020.02.16.951590v2
+
+     * [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang*, "A direct
+       approach to compute Jacobians for diffuse optical tomography using
+       perturbation Monte Carlo-based photon 'replay'," Biomed. Optics
+       Express 9(10), 4588-4603, (2018)
+     * Summary: Building Jacobians with replay in MCX/MMC
+     * Download:
+       [17]https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-458
+       8
+
+     * [Yuan2018] Yaoshen Yuan, Leiming Yu, Zafer Doğan, Qianqian Fang,
+       "Graphics processing units-accelerated adaptive nonlocal means
+       filter for denoising three-dimensional Monte Carlo photon transport
+       simulations," J. of Biomedical Optics, 23(12), 121618 (2018).
+     * Summary: Denoising MC simulation using a noise-adaptive filter
+     * Download:
+       [18]https://www.spiedigitallibrary.org/journalArticle/Download?full
+       DOI=10.1117%2F1.JBO.23.12.121618
+
+1.5. Applications
+
+     * [Yuan2020] Yaoshen Yuan, Paolo Cassano, Matthew Pias, Qianqian
+       Fang*, (2020) "Transcranial photobiomodulation with near-infrared
+       light from childhood to elderliness: simulation of dosimetry,",
+       Neurophotonics, 7(1), 015009, URL:
+       [19]https://doi.org/10.1117/1.NPh.7.1.015009
+     * Summary: PBM dosage over lifespan
+     * Download: [20]https://doi.org/10.1117/1.NPh.7.1.015009
+
+     * [Brain2Mesh2020] Anh Phong Tran† , Shijie Yan† , Qianqian Fang*,
+       (2020) "Improving model-based fNIRS analysis using mesh-based
+       anatomical and light-transport models," Neurophotonics, 7(1),
+       015008, URL: [21]https://doi.org/10.1117/1.NPh.7.1.015008
+     * Summary: Brain2Mesh - a one-liner for brain mesh generator
+       ([22]http://mcx.space/brain2mesh)
+     * Download: [23]https://doi.org/10.1117/1.NPh.7.1.015008
+
+     * [Cassano2019] Tran AP+, Cassano P+, Katnani H, Bleier BS, Hamblin
+       MR, Yuan Y, Fang Q*, (2019) “Selective photobiomodulation for
+       emotion regulation: model-based dosimetry study,” Neurophotonics
+       6(1) 015004, PMCID: PMC6366475
+     * Summary: Use MCX to systematically study transcranial or intranasal
+       photobiomodulation (t-PBM/i-PBM) light dosage
+     * Download: [24]https://doi.org/10.1117/1.NPh.6.1.015004
+
+     * [Draghici2018] Draghici AE, Potart D, Hollmann JL, Pera V, Fang Q,
+       DiMarzio CA, Andrew Taylor J, Niedre MJ, Shefelbine SJ, (2018)
+       “Near infrared spectroscopy for measuring changes in bone
+       hemoglobin content after exercise in individuals with spinal cord
+       injury,” J Orthop Res. 36(1), 183-191, PMCID: PMC5711624
+     * Summary: Use MCX to study NIR imaging of human bones in spinal cord
+       injury
+     * Download: [25]https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5711624/
+
+     * [Verleker2016] Verleker AP, Shaffer M, Fang Q, Choi, MR, Clare S.
+       Stantz KM, (2016) “Optical dosimetry probes to validate Monte Carlo
+       and Empirical-method based NIR dose planning in the brain”, Appl.
+       Optics, 55(34) 9875-9888, PMCID: PMC5483856
+     * Summary: Optical dosimetry study using MCX for photodynamic therapy
+       (PDT) in the brain
+     * Download: [26]https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5483856/
+
+References
+
+   1. http://mcx.space/wiki/index.cgi?action=rss
+   2. http://mcx.space/wiki/index.cgi?Citation#MCX
+   3. http://mcx.space/wiki/index.cgi?Citation#MCX_CL
+   4. http://mcx.space/wiki/index.cgi?Citation#MMC
+   5. http://mcx.space/wiki/index.cgi?Citation#General_MC_algorithm
+   6. http://mcx.space/wiki/index.cgi?Citation#Applications
+   7. http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178
+   8. https://doi.org/10.1117/1.JBO.23.1.010504
+   9. http://dx.doi.org/10.1117/1.JBO.24.11.115002
+  10. http://dx.doi.org/10.1117/1.JBO.24.2.020503
+  11. https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171
+  12. https://doi.org/10.1117/1.JBO.17.10.106009
+  13. https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-3223
+  14. https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258
+  15. https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165
+  16. https://www.biorxiv.org/content/10.1101/2020.02.16.951590v2
+  17. https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588
+  18. https://www.spiedigitallibrary.org/journalArticle/Download?fullDOI=10.1117/1.JBO.23.12.121618
+  19. https://doi.org/10.1117/1.NPh.7.1.015009
+  20. https://doi.org/10.1117/1.NPh.7.1.015009
+  21. https://doi.org/10.1117/1.NPh.7.1.015008
+  22. http://mcx.space/brain2mesh
+  23. https://doi.org/10.1117/1.NPh.7.1.015008
+  24. https://doi.org/10.1117/1.NPh.6.1.015004
+  25. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5711624/
+  26. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5483856/

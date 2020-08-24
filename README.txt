@@ -211,7 +211,7 @@ supported parameters, as shown below:
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::0aea3b$v2020  $Date::2020-07-23 15:43:20 -04$ by $Author::Qianqian Fang $
+$Rev::041e38$ v2020 $Date::2020-08-24 14:25:23 -04$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -405,7 +405,7 @@ To further illustrate the command line options, below one can find a sample comm
 
 the command above asks mcx to manually (`-A 0`) set GPU threads, and launch 16384 
 GPU threads (`-t`) with every 64 threads a block (`-T`); a total of 1e7 photons (`-n`)
-are simulated by the first GPU (`-G 1`) with two equally divided runs (`-r`); 
+are simulated by the first GPU (`-G 1`) and repeat twice (`-r`) - i.e. total 2e7 photons;
 the media/source configuration will be read from a JSON file named `input.json` 
 (`-f`) and the output will be labeled with the session id “test” (`-s`); the 
 simulation will run 10 concurrent time gates (`-g`) if the GPU memory can not 

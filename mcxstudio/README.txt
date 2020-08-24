@@ -4,23 +4,18 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9.5 (v2019.3)
+Version: 0.9.8 (v2020)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
 
 Table of Content:
 
-I.    Introduction
-II.   Installation
-III.  Using MCX Studio GUI
-IV.   Remote Execution
-V.    Acknowledgement
-VI.   Reference
+<toc>
 
 ---------------------------------------------------------------------
 
-I.  Introduction
+== # Introduction ==
 
 MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL. 
 It gives user an intuitive environment to browse and set parameters for a wide range
@@ -47,7 +42,7 @@ simulations using the Remote Execution panel.
 
 ---------------------------------------------------------------------
 
-II.   Installation
+== # Installation ==
 
 MCXStudio is portable and can be directly executed without installation.
 However, in order for MCXStudio to find mcx/mmc/mcxcl binaries, you should use
@@ -65,15 +60,12 @@ the following folder structure
 │   ├── mcxcl/bin/mcxcl
 │   └── mmc/bin/mmc
 ├── mcxstudio
-├── mcx (empty file, no suffix)
-├── mmc (empty file, no suffix
-├── mcxcl (empty file, no suffix)
+├── mcxshow
+├── mcxviewer
 └── Output/
 </pre>
 
-the empty mcx/mmc/mcxcl files stored alongside with mcxstudio can be a link or a dummy file
-(can be created using the "touch" command in linux or mac) indicating that the module 
-has been installed inside the "MCXSuite/" subfolder. If you download the MCXStudio package, the
+If you download and unzip the released MCXStudio package, the
 above folder structure already exists, and you can simply double click on the 
 mcxstudio executable to start the program.
 
@@ -83,8 +75,8 @@ to run more than 5 seconds. You must click "yes" and then reboot the computer in
 order for this setting to be effective. 
 
 If you click yes and receive a permission error, you have to first quit MCXStudio, 
-and then right-click on the executable and select "Run as administrator", then accept
-the prompt.
+and then right-click on the mcxstudio executable and select "Run as administrator", 
+then accept the prompt.
 
 Alternatively, one should open file browser, navigate into mcx/setup/win64 folder,
 and right-click on the "apply_timeout_registry_fix.bat" file and select 
@@ -94,7 +86,7 @@ and right-click on the "apply_timeout_registry_fix.bat" file and select
 
 
 ---------------------------------------------------------------------------
-III. Using MCX Studio GUI
+== # Using MCX Studio GUI ==
 
 
 Once MCXStudio is launched, it first checks if the mcx
@@ -138,7 +130,7 @@ associated with mcxstudio executable. To load a .mcxp file, you can simply
 double-click on the file, mcxstudio will be started automatically.
 
 ---------------------------------------------------------------------------
-IV. Remote Execution
+== # Remote Execution ==
 
 MCXStudio not only supports running mmc/mmc/mcxcl simulations on your local
 computer, but also running those remotely on a more powerful server/cluster.
@@ -219,7 +211,7 @@ transfer to work.
 
 
 ---------------------------------------------------------------------------
-V.    Acknowledgement
+== #  Acknowledgement ==
 
 The icon set was created by Qianqian Fang, with a style inspired by 
 the "Uniform" icon-set 
@@ -246,7 +238,7 @@ but are not part of GLScene, may use different licensing scheme and have differe
 such files have an explicit notice attached to them or placed in their directory.
 
 ---------------------------------------------------------------------------
-VI.   Reference
+== #  Reference ==
 
 [1] Qianqian Fang and David A. Boas, "Monte Carlo Simulation of Photon \
 Migration in 3D Turbid Media Accelerated by Graphics Processing Units,"
