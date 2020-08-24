@@ -49,6 +49,10 @@ cite the relevant papers in your publications.
 *Download: https://doi.org/10.1117/1.JBO.23.1.010504
 
 -- "MMC" --
+[Yan2020] Shijie Yan, Ruoyang Yao, Xavier Intes, and Qianqian Fang, "Accelerating Monte Carlo modeling of structured-light-based diffuse optical imaging via 'photon sharing'," Opt. Lett. 45, 2842-2845 (2020)
+*Summary:  "Photon sharing" for simultaneous multi-pattern simulation
+*Download: https://www.biorxiv.org/content/10.1101/2020.02.16.951590v2
+
 [Fang2019] Qianqian Fang*, Shijie Yan, "Graphics processing unit-accelerated mesh-based Monte Carlo photon transport simulations," J. of Biomedical Optics, 24(11), 115002 (2019)
 *Summary:  GPU-based MMC
 *Download: http://dx.doi.org/10.1117/1.JBO.24.11.115002

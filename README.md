@@ -39,8 +39,8 @@ versatile and feature-rich open-source Monte Carlo 3D photon simulator. It is
 packed with numerous improvements in both functionality and stability. We want 
 to specifically highlight the below major additions:
 
--   JSON/Binary JSON output files with built-in compression for easy sharing
 -   Built-in benchmarks for easy testing and adoption by new users
+-   Transition to JSON/JNIfTI input/output files for easy data sharing
 -   Exporting simulation as JSON with binary volume data
 -   All-in-one Windows installer for MCXStudio/MCX/MMC/MCXCL
 -   Automated code building, testing and continuous integration via Travis-CI
@@ -100,8 +100,8 @@ A detailed list of updates is summarized below (key features marked with “\*�
 -   2019-07-22\*[c4baa84] output fluence/flux in replay, backport changes from mcxcl
 -   2019-05-24 [02efc62] bug fix for continuous varying media patch
 
-Between 2019 and 2020, three new journal papers have been published as the 
-result of this project, please see the full list at 
+Between 2019 and 2020, four new journal papers have been published as the 
+result of this project. Please see the full list at 
 <http://mcx.space/#publication>
 
 
@@ -111,7 +111,7 @@ Introduction
 Monte Carlo eXtreme (MCX) is a fast photon transport simulation software for 3D 
 heterogeneous turbid media. By taking advantage of the massively parallel 
 threads and extremely low memory latency in a modern graphics processing unit 
-(GPU), this program is able to perform Monte Carlo (MC) simulations at a 
+(GPU), MCX is capable of performing Monte Carlo (MC) photon simulations at a 
 blazing speed, typically hundreds to a thousand times faster than a fully 
 optimized CPU-based MC implementation.
 
@@ -146,7 +146,7 @@ Requirement and Installation
 -------------------------------
 
 Please read this section carefully. The majority of failures using MCX were 
-found related to incorrect installation of CUDA library and NVIDIA driver.
+found related to incorrect installation of NVIDIA GPU driver.
 
 Please browse <http://mcx.space/#documentation> for step-by-step instructions.
 
@@ -155,20 +155,21 @@ For MCX-CUDA, the requirements for using this software include
 -   a CUDA capable NVIDIA graphics card
 -   pre-installed NVIDIA graphics driver
 
-You must use a CUDA capable NVIDIA graphics card in order to use MCX. A list of 
-CUDA capable cards can be found at [2]. The oldest graphics card that MCX 
-supports is the Fermi series (circa 2010). Using the latest NVIDIA card is 
-expected to produce the best speed. You must have a fermi (GTX 4xx) or newer 
-(9xx/10xx/20xx/30xx series) graphics card. The default release of MCX 
-supports atomic operations and photon detection within a single binary. In the 
-below webpage, we summarized the speed differences between different 
-generations of NVIDIA GPUs
+You must install a CUDA capable NVIDIA graphics card in order to use
+MCX. A list of CUDA capable cards can be found at [2]. The oldest 
+graphics card that MCX supports is the Fermi series (circa 2010).
+Using the latest NVIDIA card is expected to produce the best
+speed. You must have a fermi (GTX 4xx) or newer 
+(5xx/6xx/7xx/9xx/10xx/20xx series) graphics card. The default release 
+of MCX supports atomic operations and photon detection. 
+In the below webpage, we summarized the speed differences
+between different generations of NVIDIA GPUs
 
 <http://mcx.space/gpubench/>
 
 For simulations with large volumes, sufficient graphics memory is also required 
 to perform the simulation. The minimum amount of graphics memory required for a 
-MC simulation is Nx\*Ny\*Nz\*Ng bytes for the input tissue data plus 
+MC simulation is Nx\*Ny\*Nz bytes for the input tissue data plus 
 Nx\*Ny\*Nz\*Ng\*4 bytes for the output flux/fluence data - where Nx,Ny,Nz are 
 the dimensions of the tissue volume, Ng is the number of concurrent time gates, 
 4 is the size of a single-precision floating-point number. MCX does not require 
@@ -202,9 +203,10 @@ error_what_is_that>
 Running Simulations
 ----------------------
 
-To run a simulation, the minimum input is a configuration (text) file, and a 
-volume file (a binary file with each byte representing a medium index). Typing 
-the name of the executable without any parameters, will print the help 
+To run a simulation, the minimum input is a configuration (text) file, and, if
+the input file does not contain built-in domain shape descriptions, an external
+volume file (a binary file with a specified voxel format via `-K/--mediabyte`). 
+Typing the name of the executable without any parameters, will print the help 
 information and a list of supported parameters, such as the following:
 
 ```
@@ -407,26 +409,34 @@ or (dump simulation in a single json file)
        mcx --bench cube60planar --dumpjson
 ```
 
-the 2nd command above will launch 16384 GPU threads (`-t`) with every 64 threads 
-a block (`-T`); a total of 1e7 photons will be simulated by the first GPU (`-G 1`) 
-with two equally divided runs (`-r`); the media/source configuration will be read 
-from `input.inp` (`-f`) and the output will be labeled with the session id 
-“test” (`-s`); the simulation will run 10 concurrent time gates (`-g`). Photons 
-passing through the defined detector positions will be saved for later 
-rescaling (`-d`); refractive index mismatch is considered at media boundaries 
-(`-b`).
+To further illustrate the command line options, below one can find a sample command
+```
+mcx -A 0 -t 16384 -T 64 -n 1e7 -G 1 -f input.json -r 2 -s test -g 10 -d 1 -w dpx -b 1
+```
+the command above asks mcx to manually (`-A 0`) set GPU threads, and launch 16384 
+GPU threads (`-t`) with every 64 threads a block (`-T`); a total of 1e7 photons (`-n`)
+are simulated by the first GPU (`-G 1`) with two equally divided runs (`-r`); 
+the media/source configuration will be read from a JSON file named `input.json` 
+(`-f`) and the output will be labeled with the session id “test” (`-s`); the 
+simulation will run 10 concurrent time gates (`-g`) if the GPU memory can not 
+simulate all desired time gates at once. Photons passing through the defined 
+detector positions are saved for later rescaling (`-d`); refractive index 
+mismatch is considered at media boundaries (`-b`).
 
-Historically, MCX supports an extended version of the input file format used by 
-tMCimg. The difference is that MCX allows comments in the input file. A typical 
-MCX input file looks like this:
+Historically, MCX supports an extended version of the input file format (.inp)
+used by tMCimg. However, we are phasing out the .inp support and strongly 
+encourage users to adopt JSON formatted (.json) input files. Many of the 
+advanced MCX options are only supported in the JSON input format.
+
+A legacy .inp MCX input file looks like this:
 
 ```
 1000000              # total photon, use -n to overwrite in the command line
-29012392             # RNG seed, negative to generate
-30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets srcfrom0 (-z)
-0 0 1 0               # initial directional vector, 4th number is the focal-length, 0 for collimated beam, nan for isotropic
+29012392             # RNG seed, negative to generate, use -E to overwrite
+30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets --srcfrom0 (-z)
+0 0 1 0              # initial directional vector, 4th number is the focal-length, 0 for collimated beam, nan for isotropic
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
-semi60x60x60.bin     # volume ('unsigned char' binary format)
+semi60x60x60.bin     # volume ('unsigned char' binary format, or specified by -K/--mediabyte)
 1 60 1 60            # x voxel size in mm (isotropic only), dim, start/end indices
 1 60 1 60            # y voxel size, must be same as x, dim, start/end indices 
 1 60 1 60            # y voxel size, must be same as x, dim, start/end indices
