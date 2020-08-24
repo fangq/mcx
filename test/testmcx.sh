@@ -54,7 +54,7 @@ temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_
 if [ -z "$temp" ]; then echo "fail to set gzip compression for volume exporting"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test json input modifier --json ... "
-temp=`$MCX --bench cube60 --json '{"Optode":{"Source":{"Type":"isotropic","Pos":[29,29,29]}}}' --dumpjson 3 $PARAM | grep 'isotropic'`
+temp=`$MCX --bench cube60 --json '{"Optode":{"Source":{"Type":"isotropic","Pos":[29,29,29]}}}' --dumpjson 1 $PARAM | grep 'isotropic'`
 if [ -z "$temp" ]; then echo "fail to modify input via --json"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test homogeneous domain simulation ... "

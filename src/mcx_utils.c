@@ -93,7 +93,7 @@
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-',
-		 '-','-','Z','j','\0'};
+		 '-','-','Z','j','-','\0'};
 
 /**
  * Long command line options
@@ -111,7 +111,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
                  "--momentum","--specular","--bc","--workload","--savedetflag",
-		 "--internalsrc","--bench","--dumpjson","--zip","--json",""};
+		 "--internalsrc","--bench","--dumpjson","--zip","--json","--atomic",""};
 
 /**
  * Output data types
@@ -1266,7 +1266,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
         }
 	cfg->savedetflag=0x5;
      }
-     if(cfg->isdumpjson==1){
+     if(cfg->isdumpjson==3){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
      }
@@ -3011,7 +3011,11 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 				     }
                                 }else if(strcmp(argv[i]+2,"reflectin")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
-                                else if(strcmp(argv[i]+2,"internalsrc")==0)
+                                else if(strcmp(argv[i]+2,"atomic")==0){
+				     int isatomic=1;
+                                     i=mcx_readarg(argc,argv,i,&(isatomic),"char");
+				     cfg->sradius=(isatomic)? -2.f: 0.f;
+                                }else if(strcmp(argv[i]+2,"internalsrc")==0)
 		                     i=mcx_readarg(argc,argv,i,&(cfg->internalsrc),"int");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
@@ -3054,7 +3058,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 	     }
 	  }
      }
-     if(cfg->isdumpjson==3){
+     if(cfg->isdumpjson==1){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
      }
@@ -3208,11 +3212,11 @@ void mcx_printheader(Config *cfg){
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
-#            Department of Bioengineering, Northeastern University            #\n\
+#   Department of Bioengineering, Northeastern University, Boston, MA, USA    #\n\
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $v2020 $Date::                       $ by $Author::              $\n\
+$Rev::      $ v2020 $Date::                       $ by $Author::              $\n\
 ###############################################################################\n" S_RESET);
 }
 
@@ -3267,18 +3271,14 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                the detected photon; the replay mode can be used\n\
                                to calculate the mua/mus Jacobian matrices\n\
  -z [0|1]      (--srcfrom0)    1 volume origin is [0 0 0]; 0: origin at [1 1 1]\n\
- -R [-2|float] (--skipradius)  -2: use atomics for the entire domain (default)\n\
-                                0: vanilla MCX, no atomic operations\n\
-                               >0: radius in which use shared-memory atomics\n\
-                               -1: use crop0/crop1 to determine atomic zone\n\
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
 			       if 0, replay all detectors and sum all Jacobians\n\
 			       if -1, replay all detectors and save separately\n\
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh\n\
- -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -g [1|int]    (--gategroup)   number of time gates per run\n\
+ -e [0.|float] (--minenergy)   minimum energy level to trigger Russian roulette\n\
+ -g [1|int]    (--gategroup)   number of maximum time gates per run\n\
 \n"S_BOLD S_CYAN"\
 == GPU options ==\n" S_RESET"\
  -L            (--listgpu)     print GPU information only\n\
@@ -3290,6 +3290,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
  -I            (--printgpu)    print GPU information and run program\n\
+ --atomic [1|0]                1: use atomic operations to avoid thread racing\n\
+                               0: do not use atomic operation (not recommended)\n\
 \n"S_BOLD S_CYAN"\
 == Input options ==\n" S_RESET"\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid.\n\
@@ -3303,6 +3305,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                1 or byte: 0-128 tissue labels\n\
 			       2 or short: 0-65535 (max to 4000) tissue labels\n\
 			       4 or integer: integer tissue labels \n\
+			      99 or labelplus: 32bit composite voxel format\n\
                              100 or muamus_float: 2x 32bit floats for mua/mus\n\
                              101 or mua_float: 1 float per voxel for mua\n\
 			     102 or muamus_half: 2x 16bit float for mua/mus\n\
@@ -3361,7 +3364,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       4 lzma: lzma format (high compression,very slow)\n\
 			       5 lz4: LZ4 format (low compression,extrem. fast)\n\
 			       6 lz4hc: LZ4HC format (moderate compression,fast)\n\
- --dumpjson [-,2,3,'file.json']  export all settings, including volume data using\n\
+ --dumpjson [-,0,1,'file.json']  export all settings, including volume data using\n\
                                JSON/JData (http://openjdata.org) format for \n\
 			       easy sharing; can be reused using -f\n\
 			       if followed by nothing or '-', mcx will print\n\
@@ -3396,7 +3399,6 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  --maxjumpdebug [10000000|int] when trajectory is requested (i.e. -D M),\n\
                                use this parameter to set the maximum positions\n\
                                stored (default: 1e7)\n\
- --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing\n\
 \n"S_BOLD S_CYAN"\
 == Example ==\n" S_RESET"\
 example: (list built-in benchmarks)\n"S_GREEN"\
