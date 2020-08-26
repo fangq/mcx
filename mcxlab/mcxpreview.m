@@ -55,9 +55,9 @@ for i=1:len
         voxelsize=cfg(i).unitinmm;
     end
 
-    offset=0;
+    offset=1;
     if(isfield(cfg(i),'issrcfrom0') && cfg(i).issrcfrom0==1 || isfield(cfg(i),'node'))
-        offset=1;
+        offset=0;
     end
     
     if(isfield(cfg(i),'vol') && ~isfield(cfg(i),'node'))
@@ -105,7 +105,7 @@ for i=1:len
         error('cfg.srcpos or cfg.srcdir is missing');
     end
     
-    cfg(i).srcpos=cfg(i).srcpos-(1-offset);
+    cfg(i).srcpos=cfg(i).srcpos;
     srcpos=cfg(i).srcpos*voxelsize;
     hsrc=plotmesh(srcpos,'r*');
     srcvec=cfg(i).srcdir*10*voxelsize;
@@ -152,7 +152,7 @@ for i=1:len
     hdet=[];
     if(isfield(cfg(i),'detpos'))
         hdet=zeros(size(cfg(i).detpos,1),1);
-        detpos=(cfg(i).detpos(1:3)-(1-offset))*voxelsize;
+        detpos=(cfg(i).detpos(1:3))*voxelsize;
         if(length(cfg(i).detpos)==4)
             detpos(end+1)=cfg(i).detpos(4)*voxelsize;
         end
