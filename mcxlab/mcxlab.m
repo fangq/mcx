@@ -353,6 +353,18 @@ if(isstruct(varargin{1}))
                 varargin{1}(i).vol=varargin{1}(i).vol*varargin{1}(i).unitinmm;
             end
         end
+        if (~isfield(varargin{1}(i),'tstart'))
+            varargin{1}(i).tstart=0;
+        end
+        if (~isfield(varargin{1}(i),'tend'))
+            error('you must define cfg.tend for the maximum time-of-flight of a photon in seconds');
+        end
+        if (~isfield(varargin{1}(i),'tstep'))
+            varargin{1}(i).tstep=varargin{1}(i).tend;
+        end
+        if (~isfield(varargin{1}(i),'srcpos'))
+            error('you must define cfg.srcpos to defin the x/y/z position of the source in voxel unit');
+        end
 	if(isfield(varargin{1}(i),'detphotons') && isstruct(varargin{1}(i).detphotons))
 	    if(isfield(varargin{1}(i).detphotons,'data'))
 	        varargin{1}(i).detphotons=varargin{1}(i).detphotons.data;

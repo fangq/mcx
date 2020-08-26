@@ -152,7 +152,10 @@ for i=1:len
     hdet=[];
     if(isfield(cfg(i),'detpos'))
         hdet=zeros(size(cfg(i).detpos,1),1);
-        detpos=(cfg(i).detpos-(1-offset))*voxelsize;
+        detpos=(cfg(i).detpos(1:3)-(1-offset))*voxelsize;
+        if(length(cfg(i).detpos)==4)
+            detpos(end+1)=cfg(i).detpos(4);
+        end
         for id=1:size(detpos,1)
             [sx,sy,sz]=sphere;
             hdet(id)=surf(sx*detpos(id,4)+(detpos(id,1)), ...

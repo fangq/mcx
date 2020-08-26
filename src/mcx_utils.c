@@ -242,6 +242,9 @@ void mcx_initcfg(Config *cfg){
      cfg->rootpath[0]='\0';
      cfg->gpuid=0;
      cfg->issrcfrom0=0;
+     cfg->tstart=0.f;
+     cfg->tend=0.f;
+     cfg->tstep=VERY_BIG;
      cfg->unitinmm=1.f;
      cfg->isdumpmask=0;
      cfg->isdumpjson=0;
