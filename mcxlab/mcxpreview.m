@@ -154,7 +154,7 @@ for i=1:len
         hdet=zeros(size(cfg(i).detpos,1),1);
         detpos=(cfg(i).detpos(1:3)-(1-offset))*voxelsize;
         if(length(cfg(i).detpos)==4)
-            detpos(end+1)=cfg(i).detpos(4);
+            detpos(end+1)=cfg(i).detpos(4)*voxelsize;
         end
         for id=1:size(detpos,1)
             [sx,sy,sz]=sphere;
