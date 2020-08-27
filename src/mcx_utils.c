@@ -2423,7 +2423,7 @@ void  mcx_maskdet(Config *cfg){
 			}
 			if(d2<mind2) mind2=d2;
 		 }
-		 if(mind2==VERY_BIG || mind2>=cfg->detpos[d].w*cfg->detpos[d].w) continue;
+		 if(mind2==VERY_BIG || mind2>=(cfg->detpos[d].w+0.5f)*(cfg->detpos[d].w+0.5f)) continue;
 		 idx1d=((int)(iz+1.f)*dy*dx+(int)(iy+1.f)*dx+(int)(ix+1.f)); /*1.f comes from the padded layer*/
 
 		 if(padvol[idx1d])  /*looking for a voxel on the interface or bounding box*/
