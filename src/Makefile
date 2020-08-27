@@ -154,7 +154,7 @@ log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
-log xor xoro posix fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
+log posix xoro fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
 
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
 fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
