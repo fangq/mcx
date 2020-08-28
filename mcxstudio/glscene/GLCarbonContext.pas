@@ -14,6 +14,8 @@
 }
 unit GLCarbonContext;
 
+{$mode delphi}
+
 {$I GLScene.inc}
 
 interface
