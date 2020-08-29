@@ -365,31 +365,31 @@ if(isstruct(varargin{1}))
         if (~isfield(varargin{1}(i),'srcpos'))
             error('you must define cfg.srcpos to defin the x/y/z position of the source in voxel unit');
         end
-	if(isfield(varargin{1}(i),'detphotons') && isstruct(varargin{1}(i).detphotons))
-	    if(isfield(varargin{1}(i).detphotons,'data'))
-	        varargin{1}(i).detphotons=varargin{1}(i).detphotons.data;
-	    else
-	        fulldetdata={'detid','nscat','ppath','mom','p','v','w0'};
-	        detfields=ismember(fulldetdata,fieldnames(varargin{1}(i).detphotons));
-		detdata=[];
-		for j=1:length(detfields)
-		    if(detfields(j))
+        if(isfield(varargin{1}(i),'detphotons') && isstruct(varargin{1}(i).detphotons))
+            if(isfield(varargin{1}(i).detphotons,'data'))
+                varargin{1}(i).detphotons=varargin{1}(i).detphotons.data;
+            else
+                fulldetdata={'detid','nscat','ppath','mom','p','v','w0'};
+                detfields=ismember(fulldetdata,fieldnames(varargin{1}(i).detphotons));
+                detdata=[];
+                for j=1:length(detfields)
+                    if(detfields(j))
                         val=typecast(varargin{1}(i).detphotons.(fulldetdata{j})(:),'single');
-		        detdata=[detdata reshape(val,size(varargin{1}(i).detphotons.(fulldetdata{j})))];
-		    end
-		end
-		varargin{1}(i).detphotons=detdata';
-		varargin{1}(i).savedetflag='dspmxvw';
-		varargin{1}(i).savedetflag(detfields==0)=[];
-	    end
+                        detdata=[detdata reshape(val,size(varargin{1}(i).detphotons.(fulldetdata{j})))];
+                    end
+                end
+                varargin{1}(i).detphotons=detdata';
+                varargin{1}(i).savedetflag='dspmxvw';
+                varargin{1}(i).savedetflag(detfields==0)=[];
+            end
         end
     end
 end
 
 if(useopencl==0)
-    [varargout{1:nargout}]=mcx(varargin{1});
+    [varargout{1:max(1,nargout)}]=mcx(varargin{1});
 else
-    [varargout{1:nargout}]=mcxcl(varargin{1});
+    [varargout{1:max(1,nargout)}]=mcxcl(varargin{1});
 end
 
 if(nargin==0)
