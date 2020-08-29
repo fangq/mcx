@@ -2771,6 +2771,9 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
 				MCX_ERROR(-2,"unknown verbose option");
 			}
+		}else if(strlen(argv[i])>2){
+		        MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
+			MCX_ERROR(-2,"unknown short option");
 		}
 		if(argv[i][1]<='z' && argv[i][1]>='A')
 		     flagset[(int)(argv[i][1])]=1;
