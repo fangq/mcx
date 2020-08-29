@@ -4,6 +4,11 @@ Major updates are marked with a "*"
 
 == MCX v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
 
+ 2020-08-29*[6eb9596] add mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-27 [63e5a5f] handle det radii less than or equal to 0.5, fix #101
+ 2020-08-24 [6f11857] add command line option cheatsheet
+ 2020-08-24 [cea663b] test cmake in travis
+ 2020-08-24 [782b4a3] massive update of documentation
  2020-08-20 [e8e6b58] print an explicit messgae if error 30 is found
  2020-08-19*[883f61b] restore windows progress bar support, disabled in @ae2d60e45
  2020-08-17 [c47de01] allow running testing script on machines without nvidia gpu
