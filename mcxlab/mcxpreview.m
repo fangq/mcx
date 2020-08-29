@@ -37,8 +37,12 @@ if(nargout>0)
     hs=cell(len,1);
 end
 
+rngstate = rand ('state');
+
 randseed=hex2dec('623F9A9E');
 rand('state',randseed);
+surfcolors=rand(1024,3);
+isholdplot=ishold;
 
 for i=1:len
     if(~isfield(cfg(i),'vol') && ~isfield(cfg(i),'node') && ~isfield(cfg(i),'shapes'))
@@ -76,7 +80,7 @@ for i=1:len
             hseg=zeros(length(val),1);
             for id=1:length(val)
                 [no,fc]=binsurface(padvol==val(id));
-                hseg(id)=plotmesh((no-1)*voxelsize,fc,'facealpha',0.3, 'linestyle', 'none', 'facecolor',rand(1,3), varargin{:});
+                hseg(id)=plotmesh((no-1)*voxelsize,fc,'facealpha',0.3, 'linestyle', 'none', 'facecolor',surfcolors(val(id)+1,:), varargin{:});
             end
         end
     else
@@ -96,10 +100,18 @@ for i=1:len
         no=cfg(i).node*voxelsize;
         hseg=zeros(length(etypes),1);
         for id=1:size(etypes,1)
-            hseg(id)=plotmesh(no,[],cfg(i).elem(elemtype==etypes(id),:),'facealpha',0.3, 'linestyle', 'none', 'facecolor',rand(1,3), varargin{:});
+            hseg(id)=plotmesh(no,[],cfg(i).elem(elemtype==etypes(id),:),'facealpha',0.3, 'linestyle', 'none', 'facecolor',surfcolors(etypes(id)+1,:), varargin{:});
         end
     end
-    
+
+    if(isfield(cfg(i),'shapes'))
+        if(isfield(cfg(i),'vol'))
+            hseg=mcxplotshapes(cfg(i).shapes,size(cfg(i).vol),offset,hseg,varargin{:});
+        else
+            hseg=mcxplotshapes(cfg(i).shapes,[60,60,60],offset,hseg,varargin{:});
+        end
+    end
+
     % rendering source position and direction
     if(~isfield(cfg(i),'srcpos') || ~isfield(cfg(i),'srcdir'))
         error('cfg.srcpos or cfg.srcdir is missing');
@@ -152,9 +164,11 @@ for i=1:len
     hdet=[];
     if(isfield(cfg(i),'detpos'))
         hdet=zeros(size(cfg(i).detpos,1),1);
-        detpos=(cfg(i).detpos(1:3))*voxelsize;
-        if(length(cfg(i).detpos)==4)
-            detpos(end+1)=cfg(i).detpos(4)*voxelsize;
+        detpos=cfg(i).detpos(:,1:3)*voxelsize;
+        if(size(cfg(i).detpos,2)==4)
+            detpos(:,4)=cfg(i).detpos(:,4)*voxelsize;
+        else
+            detpos(:,4)=1;
         end
         for id=1:size(detpos,1)
             [sx,sy,sz]=sphere;
@@ -170,3 +184,9 @@ for i=1:len
         hs{i}=struct('bbx',hbbx, 'seg', hseg, 'src', hsrc, 'srcarrow', hdir, 'srcarea', hsrcarea, 'det', hdet);
     end
 end
+
+if(~isholdplot)
+    hold off;
+end
+
+rand ('state',rngstate);
