@@ -652,20 +652,14 @@ __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium
 	    Rtotal=(Rtotal+(Re-Im)/(Re+Im))*0.5f; /*(Rp+Rs)/2*/
 	    if(rand_next_reflect(t)<=Rtotal){ /*do reflection*/
 	        *c0+=(FL3(-2.f*Icos))*nuvox->nv;
-	    }else if(((nuvox->sp.isupper)? nuvox->sp.lower:nuvox->sp.upper)==0){ /*transmission to external boundary*/
-	        nuvox->sp.isupper=!nuvox->sp.isupper;
-	        return 1;
 	    }else{   /*do transmission*/
+	        if(((nuvox->sp.isupper)? nuvox->sp.lower:nuvox->sp.upper)==0) /*transmit to background medium*/
+	            return 1;
 	        *c0+=(FL3(-Icos))*nuvox->nv;
 		*c0=(FL3(tmp2))*nuvox->nv+FL3(n1/n2)*(*c0);
 		nuvox->nv=-nuvox->nv;
-		if(nuvox->sp.isupper){
-	            *((float4*)prop)=gproperty[nuvox->sp.lower];
-		    nuvox->sp.isupper=0;
-	        }else{
-	            *((float4*)prop)=gproperty[nuvox->sp.upper];
-		    nuvox->sp.isupper=1;
-	        }
+		nuvox->sp.isupper=!nuvox->sp.isupper;
+		*((float4*)prop)=gproperty[nuvox->sp.isupper ? nuvox->sp.upper:nuvox->sp.lower];
 	    }
 	}else{ /*total internal reflection*/
 	    *c0+=(FL3(-2.f*Icos))*nuvox->nv;
@@ -1349,7 +1343,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
            */
 	  if(f.pscat<=0.f) {  ///< if this photon has finished his current scattering path, calculate next scat length & angles
    	       f.pscat=rand_next_scatlen(t); ///< random scattering probability, unit-less, exponential distribution
-	       hitted=0; ///< new scattering event, enable ray interface intersection test
+	       hitted=0; ///< new scattering event, enable ray-interface intersection test
 
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
 	       if(v.nscat!=EPS){ ///< if v.nscat is EPS, this means it is the initial launch direction, no need to change direction
@@ -1464,10 +1458,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** final length that the photon moves - either the length to move to the next voxel, or the remaining scattering length */
 	  len=slen/(prop.mus*(v.nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f));
 	  
-	  if(gcfg->mediaformat == MEDIA_2LABEL_SPLIT && nuvox.sp.issplit && !hitted)
+	  if(gcfg->mediaformat == MEDIA_2LABEL_SPLIT && nuvox.sp.issplit && !hitted) // do test for steps with new dir and hasn't hit subvoxel boundary in a split voxel
 	    hit=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,htime);
 	  else
-	    hit=0;
+	    hit=0; // if the step did not hit subvoxel interface or it is not split voxel
 	  
 	  /** if photon moves to the next voxel, use the precomputed intersection coord. htime which are assured to be outside of the current voxel */
 	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat || hit) ? float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z) : float3(htime.x,htime.y,htime.z);
@@ -1592,7 +1586,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	     }
 	     w0=p.w;
 	     f.pathlen=0.f;
-	     if(idx1d!=idx1dold){
+	     if(idx1d!=idx1dold){ // if photon hit voxel boundary, reset the flags for SVMC feature
 	       nuvox.sp.issplit=0;
 	       hitted=0;
 	     }
@@ -1646,13 +1640,14 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
           /** do boundary reflection/transmission */
 	  if(isreflect && !hit){
-	      if(gcfg->mediaformat<100)
+	      if(gcfg->mediaformat<100 && idx1d!=idx1dold)
 	          updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
 	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
-                  updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface  
+		  if(gcfg->mediaformat!=MEDIA_2LABEL_SPLIT)
+                      updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface  
 
                   tmp0=n1*n1;
                   tmp1=prop.n*prop.n;
@@ -1696,7 +1691,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                         mediaid=(media[idx1d] & MED_MASK);
                         updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
                         if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT){
-                            if((nuvox.sp.isupper?nuvox.sp.upper:nuvox.sp.lower)==0){ // terminate photon
+                            if((nuvox.sp.isupper?nuvox.sp.upper:nuvox.sp.lower)==0){ // terminate photon if photon is reflected to background medium
                                 if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                                   ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
                                   media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
@@ -1716,25 +1711,19 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	          updateproperty<islabel>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
 	  }else if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT && hit){ ///< handle reflection/transmittion inside split voxel
 	      if(!gcfg->doreflect || (gcfg->doreflect && gproperty[nuvox.sp.lower].w==gproperty[nuvox.sp.upper].w)){
-	          nuvox.nv=-nuvox.nv; // flip normal vector for transmitted light
-	          if(nuvox.sp.isupper){ // transmit from upper to lower region
-		      if(!nuvox.sp.lower){ // exit domain
-		          if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
-		              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
-			      media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
-			      break;
-			  isdet=mediaid & DET_MASK;
-		          mediaid &= MED_MASK;
-			  hitted=0;
-		          continue;
-	              }else{
-		          *((float4*)(&prop))=gproperty[nuvox.sp.lower];
-		          nuvox.sp.isupper=0;
-		      }
-	          }else{ // transmit from lower to upper region
-	              *((float4*)(&prop))=gproperty[nuvox.sp.upper];
-		      nuvox.sp.isupper=1;
-	          }
+	          nuvox.nv=-nuvox.nv; // flip normal vector for transmission
+	          if(nuvox.sp.isupper && !nuvox.sp.lower){ // transmit from to background medium
+	              if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+	                  ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+		          media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
+		          break;
+		          isdet=mediaid & DET_MASK;
+	                  mediaid &= MED_MASK;
+		          hitted=0;
+	                  continue;
+	              }
+		  nuvox.sp.isupper=!nuvox.sp.isupper; // cross subvoxel interface, change tissue type lable
+		  *((float4*)(&prop))=gproperty[nuvox.sp.isupper ? nuvox.sp.upper : nuvox.sp.lower]; // update property
 	      }else{
 	          if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ //transmit through external boundary
 		      if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
@@ -1743,11 +1732,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			  break;
 		      isdet=mediaid & DET_MASK;
 		      mediaid &= MED_MASK;
-		      hitted=0;
+		      hitted=0; // launch new photon, enable ray-interafece inter. test for next step
 		      continue;
 		  }
 	        }
-	        hitted=1;
+	        hitted=1; // hit subvox interface, disable ray-interafece inter. test for next step
 	  }
      }
 
