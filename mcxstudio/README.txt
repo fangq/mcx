@@ -54,16 +54,16 @@ one of the following methods
 extract mcx/mmc/mcxcl binary packags inside MCXSuite/ folder, so that one has \
 the following folder structure
 
-<pre>MCXStudio/
-├── MCXSuite/
-│   ├── mcx/bin/mcx
-│   ├── mcxcl/bin/mcxcl
-│   └── mmc/bin/mmc
-├── mcxstudio
-├── mcxshow
-├── mcxviewer
-└── Output/
-</pre>
+
+ MCXStudio/
+  |-  MCXSuite/
+  |      |- mcx/bin/mcx
+  |      |- mcxcl/bin/mcxcl
+  |      |- mmc/bin/mmc
+  |-  mcxstudio
+  |-  mcxshow
+  |-  mcxviewer
+
 
 If you download and unzip the released MCXStudio package, the
 above folder structure already exists, and you can simply double click on the 
@@ -223,7 +223,7 @@ URL: http://wiki.freepascal.org/fcl-json#From_JsonViewer
 
 The MCX volume renderer (mcxviewer) was adapted based on the Texture3D Example
 provided by the GLScene Project (http://glscene.org). The original author
-of this example is Jürgen Abel. The license for GLScene is 
+of this example is Jurgen Abel. The license for GLScene is 
 
 GLScene is distributed under Mozilla Public Licence (MPL 2.0), which means, in short, 
 that it is free for both freeware and commercial use. 
