@@ -27,14 +27,14 @@
 
 #define MSTR(...) #__VA_ARGS__
 
-const char *benchname[]={"cube60","cube60b","cube60planar","skinvessel","sphshell","spherebox",
+const char *benchname[MAX_MCX_BENCH]={"cube60","cube60b","cube60planar","cubesph60b","skinvessel","sphshells","spherebox",
 #ifndef _MSC_VER
 			 "colin27",""};
 #else
                          ""};
 #endif
 
-const char *benchjson[]={
+const char *benchjson[MAX_MCX_BENCH]={
 MSTR(
 {
     "Session": {
@@ -203,6 +203,62 @@ MSTR(
 
 MSTR(
 {
+    "Session": {
+	"ID":       "cubesph60b",
+	"Photons":  1e6,
+	"RNGSeed":  1648335518,
+	"DoMismatch": true
+    },
+    "Domain": {
+        "Dim":    [60,60,60],
+        "OriginType": 1,
+        "Media": [
+             {"mua": 0.00, "mus": 0.0, "g": 1.00, "n": 1.0},
+             {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.37},
+             {"mua": 0.002,"mus": 5.0, "g": 0.90, "n": 1.0}
+        ]
+    },
+    "Shapes": [
+        {"Name":     "cubesph60b"},
+        {"Origin":   [0,0,0]},
+        {"Grid":     {"Tag":1, "Size":[60,60,60]}},
+        {"Sphere":   {"Tag":2, "O":[30,30,30],"R":15}}
+    ],
+    "Forward": {
+	"T0": 0.0e+00,
+	"T1": 5.0e-09,
+	"Dt": 5.0e-09
+    },
+    "Optode": {
+	"Source": {
+	    "Type":"pencil",
+	    "Pos": [29.0, 29.0, 0.0],
+	    "Dir": [0.0, 0.0, 1.0]
+	},
+	"Detector": [
+	    {
+		"Pos": [29.0,  19.0,  0.0],
+		"R": 1.0
+	    },
+            {
+                "Pos": [29.0,  39.0,  0.0],
+                "R": 1.0
+            },
+            {
+                "Pos": [19.0,  29.0,  0.0],
+                "R": 1.0
+            },
+            {
+                "Pos": [39.0,  29.0,  0.0],
+                "R": 1.0
+            }
+	]
+    }
+}),
+
+
+MSTR(
+{
 	"Session": {
 		"ID": "skinvessel",
 		"Photons": 1e6,
@@ -270,7 +326,7 @@ MSTR(
 MSTR(
 {
 	"Session":	{
-		"ID":	"sphshell",
+		"ID":	"sphshells",
 		"Photons": 1e6,
 		"RNGSeed":  1648335518,
 		"DoMismatch":	true,

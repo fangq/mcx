@@ -101,7 +101,7 @@ $report{'date'} = sprintf("%.4d-%.2d-%.2d %.2d:%.2d:%.2d", $year+1900, $mon+1, $
 
 &listgpu(\%report,'gpu',$mcxopt);
 &runbench('cube60',\%report,'benchmark1',17.69,$mcxopt);
-&runbench('cube60b',\%report,'benchmark2',27.24,$mcxopt);
+&runbench('cubesph60b',\%report,'benchmark2',27.02,$mcxopt);
 &runbench('cube60planar',\%report,'benchmark3',25.51,$mcxopt);
 
 ## assemble report data

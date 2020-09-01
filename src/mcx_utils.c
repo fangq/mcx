@@ -3011,8 +3011,11 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 					 jsoninput=(char *)benchjson[idx];
 			             }else{
 				         MCX_FPRINTF(cfg->flog,"Built-in benchmarks:\n");
-				         for(int i=0;i<sizeof(benchname)/sizeof(char*)-1;i++)
+				         for(int i=0;i<MAX_MCX_BENCH-1;i++){
+					     if(benchname[i][0]=='\0')
+					         break;
 					     MCX_FPRINTF(cfg->flog,"\t%s\n",benchname[i]);
+					 }
 				         exit(0);
 				     }
                                 }else if(strcmp(argv[i]+2,"reflectin")==0)

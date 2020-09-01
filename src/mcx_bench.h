@@ -26,7 +26,8 @@
 #ifndef _MCEXTREME_BENCHMARK_H
 #define _MCEXTREME_BENCHMARK_H
 
-extern const char *benchname[8];
-extern const char *benchjson[7];
+#define MAX_MCX_BENCH  9
+extern const char *benchname[MAX_MCX_BENCH];
+extern const char *benchjson[MAX_MCX_BENCH];
 
 #endif
