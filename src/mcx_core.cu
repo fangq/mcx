@@ -1470,7 +1470,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  if(isreflect){
 	      if(gcfg->mediaformat<100)
 	          updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
-	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
+	      if(((isreflect && (isdet & 0xF)==0) || ((isdet & 0xF) & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
@@ -1492,7 +1492,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } ///< else, total internal reflection
-	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && rand_next_reflect(t)>Rtotal){ // do transmission
+	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && (isdet!=bcMirror) && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0){ // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
@@ -2138,7 +2138,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
            int ispencil=(cfg->srctype==MCX_SRC_PENCIL);
 	   int isref=cfg->isreflect;
 	   for(i=0;i<6;i++)
-	       if(cfg->bc[i]==1)
+	       if(cfg->bc[i]==bcReflect || cfg->bc[i]==bcMirror)
 	           isref=1;
 	   switch(ispencil*100 + (isref>0)*10+(cfg->mediabyte<=4)){
 	       case 0:  mcx_main_loop<0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
