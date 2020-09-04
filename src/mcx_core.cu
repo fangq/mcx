@@ -991,6 +991,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      break;
 		}
 	    }
+
+	    if(p->w<=gcfg->minenergy)
+	        continue;
+
             /**
              * If beam focus is set, determine the incident angle
              */
@@ -1470,7 +1474,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  if(isreflect){
 	      if(gcfg->mediaformat<100)
 	          updateproperty<islabel>(&prop,mediaid,t); ///< optical property across the interface
-	      if(((isreflect && (isdet & 0xF)==0) || ((isdet & 0xF) & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
+	      if(((isreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
