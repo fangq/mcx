@@ -728,7 +728,6 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[]){
       *w0=1.f;     ///< reuse to count for launchattempt
       int canfocus=1; ///< non-zero: focusable, zero: not focusable
-      *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
 
       /**
        * First, let's terminate the current photon and perform detection calculations
@@ -802,6 +801,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           *mediaid=gcfg->mediaidorig;
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
+          *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
 
           /**
            * Only one branch is taken because of template, this can reduce thread divergence
