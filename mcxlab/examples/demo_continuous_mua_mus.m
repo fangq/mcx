@@ -32,11 +32,11 @@ cfg.vol=permute(mua, [4,1,2,3]); % make 1st dimension the property dimension
 
 flux=mcxlab(cfg);
 
-mcxplotvol(squeeze(cfg.vol))
+mcxplotvol(squeeze(double(cfg.vol)))
 title('continuously varying absorption coeff \mu_a (1/mm)')
 view([-25.5,21.2]);
 
-mcxplotvol(log10(flux.data))
+mcxplotvol(log10(double(flux.data)))
 colormap(jet);
 title('fluence in continuously varying media (1/mm^2)')
 view([-25.5,21.2]);
@@ -51,11 +51,11 @@ cfg.vol=reshape([mua(:)'; mus(:)'],[2 60 60 60]);
 
 flux=mcxlab(cfg);
 
-mcxplotvol(squeeze(cfg.vol(2,:,:,:)))
+mcxplotvol(squeeze(double(cfg.vol(2,:,:,:))))
 title('continuously varying scattering coeff \mu_s (1/mm)')
 view([-25.5,21.2]);
 
-mcxplotvol(log10(flux.data))
+mcxplotvol(log10(double(flux.data)))
 colormap(jet);
 title('fluence in continuously varying media (1/mm^2)')
 view([-25.5,21.2]);

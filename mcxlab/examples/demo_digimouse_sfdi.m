@@ -64,6 +64,6 @@ cfg.debuglevel='P';
 
 flux=mcxlab(cfg);
 fcw=flux.data;
-mcxplotvol(log10(fcw));
+mcxplotvol(log10(double(fcw)));
 
 %mcx2json(cfg,'digimouse.json');
