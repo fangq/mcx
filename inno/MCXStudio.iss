@@ -23,7 +23,7 @@
 AppId={{0A4EBE79-4F72-4379-8C40-2A395E069EC8}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyAppVersion}
+;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -41,7 +41,7 @@ WizardStyle=modern
 ChangesEnvironment=true
 SetupIconFile=mcxstudio_2020.ico
 ArchitecturesInstallIn64BitMode=x64
-DefaultGroupName={#AppVerName}
+DefaultGroupName={#MyAppName} {#MyAppVersion}
 
 ;;----------------------------------------------------------------------
 
