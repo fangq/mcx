@@ -40,6 +40,7 @@ SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=true
 SetupIconFile=mcxstudio_2020.ico
+ArchitecturesInstallIn64BitMode=x64
 
 ;;----------------------------------------------------------------------
 
