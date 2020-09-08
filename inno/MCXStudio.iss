@@ -29,19 +29,21 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppDir}
-DisableProgramGroupPage=yes
+DisableProgramGroupPage=no
 LicenseFile=..\MCXSuite\mcx\NOTICE.txt
 InfoAfterFile=..\README.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputBaseFilename={#MyAppDir}-{#MyAppVersion}
+OutputBaseFilename="{#MyAppDir}-{#MyAppVersion}"
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=true
 SetupIconFile=mcxstudio_2020.ico
 ArchitecturesInstallIn64BitMode=x64
-DefaultGroupName={#MyAppName} {#MyAppVersion}
+DefaultGroupName="{#MyAppName} {#MyAppVersion}"
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoCopyRight="(C) {#MyAppPublisher}"
 
 ;;----------------------------------------------------------------------
 
