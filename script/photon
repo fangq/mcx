@@ -67,6 +67,7 @@ while(my $opt = $ARGV[0]) {
 
 		if($infile =~ /\.json$/i){
 		    my $json = JSON::PP->new;
+		    $json->loose(1);
 		    my %jsondata = %{ $json->decode($input) };
 		    if($jsondata{'Mesh'} ne "" && $jsondata{'Mesh'}{"MeshID"} ne ""){
 		        $key="mmc";
