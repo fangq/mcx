@@ -28,10 +28,10 @@ use strict;
 use warnings;
 use JSON::PP;
 
-my $EXEPATH="/home/users/fangq/bin";
-my %cmd=("mcx"=>"$EXEPATH/mcx","mcxcl"=>"$EXEPATH/mcxcl","mmc"=>"$EXEPATH/mmc");
+my $EXEPATH="/usr/libexec/";
+my %cmd=("mcx"=>"$EXEPATH/mcx/mcx","mcxcl"=>"mcxcl","mmc"=>"$EXEPATH/mmc/mmc");
 
-my @mmconly=("--method","-c","-C","--gridsize","--mc","--basisorder","--compute");
+my @mmconly=("--method","--gridsize","--mc","--basisorder","-C","--compute","-c");
 my @isopencl=("--compileopt","-J","--optlevel","-o","--kernel","--showkernel");
 my @forcecmd=("-mcx","-mcxcl","-mmc","--mcx","--mcxcl","--mmc");
 my $isforced=0;
@@ -46,8 +46,11 @@ if(@ARGV==0 || grep(/--info/,@ARGV)){
 
 foreach my $exename (keys %cmd){
     if(! (-x $cmd{$exename})){
-	print "del $exename $cmd{$exename}\n";
-        $cmd{$exename}="";
+        if(-x $ENV{"HOME"}."/bin/$exename"){
+	    $cmd{$exename}=$ENV{"HOME"}."/bin/$exename";
+	}else{
+            $cmd{$exename}="";
+	}
     }
 }
 
@@ -121,7 +124,11 @@ system($cmd{$key}, @mcxopt) && die("failed to run my $cmd{$key}");
 
 #-------------------------------------------------------------------------------
 sub printhelp{
-    printf("Photon - a unified command line interface for MCX/MMC/MCXCL
+    printf("=================================================================
+Photon - a unified command line interface for MCX/MMC/MCXCL
+author: Qianqian Fang <q.fang at neu.edu>
+web:    http://mcx.space
+=================================================================
 
 	Format: %s <option1> <option2> ...
 
@@ -137,7 +144,9 @@ mcxcl\t - when input does not contain mesh data
 	   and when one of %s is used
 	   and mcx -L failed to list any CUDA devices
 mcx (default)\t - when input does not contain mesh data, 
-	   and when mcx -L output valid CUDA devices\n",
+	   and when mcx -L output valid CUDA devices
+	   
+One can append --mcx, --mcxcl and --mmc to force photon to call one of the simulators\n",
 		$0,join(", ",@mmconly),join(", ",@isopencl));
     exit 0;
 
