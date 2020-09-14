@@ -5,7 +5,7 @@
 ROOTURL="http://mcx.space/wiki/index.cgi?embed=1&keywords"
 
 lynx -dont_wrap_pre -dump "$ROOTURL=Download" > Download.txt
-lynx -dont_wrap_pre -dump "$ROOTURL=Doc/Installation" > INSTALL.txt
+lynx -dont_wrap_pre -dump "$ROOTURL=Doc/Installation" > Setup_MCX.txt
 lynx -dont_wrap_pre -dump "$ROOTURL=Doc/Basics" > Get_Started.txt
 lynx -dont_wrap_pre -dump "$ROOTURL=Doc/FAQ" > FAQ.txt
 lynx -dont_wrap_pre -dump "$ROOTURL=Citation" > Citation.txt

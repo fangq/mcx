@@ -697,7 +697,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         cfg->srcpattern=(float*)malloc(arraydim[0]*arraydim[1]*dimz*sizeof(float));
         for(i=0;i<arraydim[0]*arraydim[1]*dimz;i++)
              cfg->srcpattern[i]=val[i];
-        printf("mcx.srcpattern=[%d %d %d];\n",arraydim[0],arraydim[1],dimz);
+        printf("mcx.srcpattern=[%ld %ld %ld];\n",arraydim[0],arraydim[1],dimz);
     }else if(strcmp(name,"shapes")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
@@ -720,7 +720,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	dimdetps[1]=arraydim[1];
         detps=(float *)malloc(arraydim[0]*arraydim[1]*sizeof(float));
         memcpy(detps,mxGetData(item),arraydim[0]*arraydim[1]*sizeof(float));
-        printf("mcx.detphotons=[%d %d];\n",arraydim[0],arraydim[1]);
+        printf("mcx.detphotons=[%ld %ld];\n",arraydim[0],arraydim[1]);
     }else if(strcmp(name,"seed")==0){
         arraydim=mxGetDimensions(item);
         if(MAX(arraydim[0],arraydim[1])==0)
@@ -773,7 +773,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	     mexErrMsgTxt("the workload list can not be longer than 256");
 	for(i=0;i<arraydim[0]*arraydim[1];i++)
 	     cfg->workload[i]=val[i];
-        printf("mcx.workload=<<%d>>;\n",arraydim[0]*arraydim[1]);
+        printf("mcx.workload=<<%ld>>;\n",arraydim[0]*arraydim[1]);
     }else{
         printf(S_RED "WARNING: redundant field '%s'\n" S_RESET,name);
     }
