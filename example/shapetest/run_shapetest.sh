@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 ../../bin/mcx -f jsonshape_allinone.json -M
 ../../bin/mcx -f jsonshape.json -M
