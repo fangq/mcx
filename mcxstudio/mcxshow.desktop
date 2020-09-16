@@ -1,5 +1,4 @@
 [Desktop Entry]
-Encoding=UTF-8
 Name=MCX Previewer
 Name[zh_CN]=MCX模拟预览器
 Name[zh_TW]=MCX模擬預覽器
@@ -13,4 +12,4 @@ Terminal=false
 Type=Application
 StartupNotify=true
 Categories=Education;Science;DataVisualization;MedicalSoftware;
-#X-Ubuntu-Gettext-Domain=habitat-wiki
+Keywords=Monte Carlo;MCX;MMC;OpenGL;NIfTI;Rendering;3D;JSON
