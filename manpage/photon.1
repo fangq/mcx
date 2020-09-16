@@ -1,0 +1,66 @@
+.\" Manpage for photon.
+.\" Contact fangqq@gmail.com to correct errors or typos.
+.TH man 7 "16 September 2020" "v2020" "photon man page"
+.SH NAME
+photon \- a unified command line interface for running MCX/MMC photon simulations
+.SH SYNOPSIS
+photon <option1> <option2> ...
+.SH DESCRIPTION
+Monte Carlo eXtreme (mcx) and Mesh-based Monte Carlo (mmc) are rigirously
+validated, physically-accurate and GPU-accelerated 3D photon transport simulators.
+The MCX/MMC simulators are developed by Dr. Qianqian Fang at the Computational 
+Optics and Translational Imaging (COTI) Lab, at Northeastern University, Boston,
+USA. More details regarding mcx/mmc can be found at http://mcx.space
+
+To simplify running mcx/mmc simulations, we have created a unified graphical user 
+interface (GUI) `mcxstudio`, and a unified command line interface `photon`.
+The command `photon` is a perl script that automatically selects between 
+`mcx` (CUDA-based), `mcxcl` (OpenCL based), and `mmc` (SSE4 CPU/OpenCL) based
+on the following command line flags and input file data structures. In other
+words, one can simply replace a command starting with `mcx`, `mcxcl` and `mmc`
+by `photon` and photon runs the simulation according to a set of heuristics.
+
+
+.SH OPTIONS
+Running `photon` without any parameter prints the help information. 
+
+If additional command line flags are used, `photon` by default treats the input 
+flags in the format that are supported by `mcx`; however, `photon` further parses
+the use simulation input file and flags, and determines if `mmc` or `mcxcl` 
+should be used instead.
+
+The supported options are fully compatible with those from MCX/MMC/MCXCL. Photon
+determines which of the simulators among mcx/mmc/mcxcl based on a set of simple 
+tests, the selected simulator and their conditions are listed below
+
+.TP
+\fBchoose mmc\fR
+when the input .json file contains 'Mesh' or 'MeshID' elements
+or when the input .inp file contains a mesh file stub without suffix in line#6
+or when the input .inp file contains a single integer on line#7
+or one of --method, --gridsize, --mc, --basisorder, -C, --compute, -c is used
+
+.TP
+\fBchoose mcxcl\fR
+when input does not contain mesh data
+and when one of --compileopt, -J, --optlevel, -o, --kernel, --showkernel is used
+and mcx -L failed to list any CUDA devices
+
+.TP
+\fBchoose mcx\fR
+when input does not contain mesh data, 
+and when `mcx -L` outputs valid CUDA devices
+
+.TP
+\fB--mcx\fR
+.TP
+\fB--mcxcl\fR
+.TP
+\fB--mmc\fR
+
+One can append --mcx, --mcxcl or --mmc to force `photon` to use the specified simulator.
+
+.SH SEE ALSO
+mcx(7), mmc(7), mcxcl(7), mcxstudio(7), mcxshow(7), mcxviewer(7)
+.SH AUTHOR
+Qianqian Fang (q.fang@neu.edu)

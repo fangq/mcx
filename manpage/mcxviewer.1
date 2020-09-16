@@ -1,0 +1,33 @@
+.\" Manpage for mcxviewer.
+.\" Contact fangqq@gmail.com to correct errors or typos.
+.TH man 7 "16 September 2020" "v2020" "mcxviewer man page"
+.SH NAME
+mcxviewer \- a 3D NIfTI/MC2 volumetric data renderer for MCX/MCXCL/MMC photon transport simulations
+.SH SYNOPSIS
+mcxviewer <-f input.nii>
+.SH DESCRIPTION
+MCX Viewer is an OpenGL based 3D renderer for visualization of the volumetric output
+from MCX/MCXCL/MMC. Monte Carlo eXtreme (mcx) and Mesh-based Monte Carlo (mmc) are 
+rigirously validated, physically-accurate and GPU-accelerated 3D photon transport 
+simulators. The MCX/MMC simulators are developed by Dr. Qianqian Fang at the 
+Computational Optics and Translational Imaging (COTI) Lab, at Northeastern 
+University, Boston, USA. More details regarding mcx/mmc can be found at http://mcx.space
+
+.SH OPTIONS
+If `mcxviewer` command is executed without parameter, it opens a blank window, and
+user can click on the toolbar to load a .mc2/.nii MCX/MCXCL volumetric output file 
+to render.
+
+However, one can also use the below options to load a default input file:
+
+.TP
+\fB-f/--file\fR
+.TP
+Use `-f` or `--file` flag to specify an MCX/MCXCL .nii output file.
+Currently, only 32-bit floating point data are accepted (default output format for 
+mcx/mcxcl)
+
+.SH SEE ALSO
+mcx(7), mmc(7), mcxcl(7), photon(7), mcxstudio(7), mcxshow(7)
+.SH AUTHOR
+Qianqian Fang (q.fang@neu.edu)
