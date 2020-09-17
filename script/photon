@@ -29,7 +29,7 @@ use warnings;
 use JSON::PP;
 
 my $EXEPATH="/usr/libexec/";
-my %cmd=("mcx"=>"$EXEPATH/mcx/mcx","mcxcl"=>"mcxcl","mmc"=>"$EXEPATH/mmc/mmc");
+my %cmd=("mcx"=>"$EXEPATH/mcx","mcxcl"=>"mcxcl","mmc"=>"$EXEPATH/mmc");
 
 my @mmconly=("--method","--gridsize","--mc","--basisorder","-C","--compute","-c");
 my @isopencl=("--compileopt","-J","--optlevel","-o","--kernel","--showkernel");
