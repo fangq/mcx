@@ -1,0 +1,35 @@
+mcxtools >> MCXTools
+Detected photon processing
+ mcxdetphoton.m
+ mcxdettime.m
+ mcxdettpsf.m
+ mcxdetweight.m
+ mcxmeanpath.m
+ mcxmeanscat.m
+ mcxdcsg1.m
+Loading simulation output files
+ mcxloadfile.m
+ mcxloadnii.m
+ loadmc2.m
+ loadmch.m
+Analytical solutions
+ cwdiffusion.m
+ tddiffusion.m
+JSON to MCXLAB conversion
+ mcxcreate.m
+ json2mcx.m
+ mcx2json.m
+Pre and post processing
+ mcxfluence2energy.m
+ mcxnuvoxel.m
+ normalizemcx.m
+ serialcorr.m
+ getdistance.m
+Visualization
+ mcxplotvol.m
+ mcxpreview.m
+ mcxplotphotons.m
+ mcxplotshapes.m
+ image3i.m
+ islicer.m
+ slice3i.m
