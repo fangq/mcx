@@ -13,5 +13,5 @@ Description:  MCXLAB is the native MEX version of MCX (http://mcx.space)
  With MCXLAB, your analysis can be streamlined and speed-up without involving 
  accessing disk files. This toolbox requires NVIDIA GPUs and graphics drivers.
 URL: http://mcx.space
-Depends: octave-mcxtools
+Depends: mcxtools
 Categories: Physics
