@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2018
+**  \copyright Qianqian Fang, 2009-2020
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -161,7 +161,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int is2d;                 /**< is the domain a 2D slice? */
   int replaydet;                     /**< select which detector to replay, 0 for all, -1 save all separately */
   unsigned int srcnum;               /**< total number of source patterns */
-  unsigned char bc[8];               /**< boundary conditions */
+  unsigned char bc[12];              /**< boundary conditions */
 }MCXParam;
 
 void mcx_run_simulation(Config *cfg,GPUInfo *gpu);

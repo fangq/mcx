@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2018
+**  \copyright Qianqian Fang, 2009-2020
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -20,7 +20,7 @@
 /***************************************************************************//**
 \file    mcx_utils.c
 
-@brief   mcconfiguration and command line option processing unit
+@brief   Simulation configuration and command line option handling
 *******************************************************************************/
 
 #include <stdio.h>
@@ -60,7 +60,7 @@
                      : tmp)
 
 #define UBJ_WRITE_KEY(ctx, key,  type, val)    {ubjw_write_key( (ctx), (key)); ubjw_write_##type((ctx), (val));}
-#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), JDB_##type, (nlen));}
+#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), (UBJ_TYPE)(JDB_##type), (nlen));}
 
 #define ubjw_write_single ubjw_write_float32
 #define ubjw_write_double ubjw_write_float64
@@ -87,12 +87,13 @@
  * Short command line options
  * If a short command line option is '-' that means it only has long/verbose option.
  * Array terminates with '\0'.
+ * Currently un-used options: cCJNoQy0-9
  */
 
 const char shortopt[]={'h','i','f','n','t','T','s','a','g','b','-','z','u','H','P',
                  'd','r','S','p','e','U','R','l','L','-','I','-','G','M','A','E','v','D',
 		 'k','q','Y','O','F','-','-','x','X','-','K','m','V','B','W','w','-',
-		 '-','-','Z','\0'};
+		 '-','-','Z','j','-','\0'};
 
 /**
  * Long command line options
@@ -110,7 +111,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
 		 "--replaydet","--outputtype","--outputformat","--maxjumpdebug",
                  "--maxvoidstep","--saveexit","--saveref","--gscatter","--mediabyte",
                  "--momentum","--specular","--bc","--workload","--savedetflag",
-		 "--internalsrc","--bench","--dumpjson","--zip",""};
+		 "--internalsrc","--bench","--dumpjson","--zip","--json","--atomic",""};
 
 /**
  * Output data types
@@ -165,6 +166,14 @@ const char *outputformat[]={"mc2","nii","hdr","ubj","tx3","jnii","bnii",""};
  */
 
 const char boundarycond[]={'_','r','a','m','c','\0'};
+
+/**
+ * Boundary detection flags
+ * 0: do not detect photon
+ * 1: detect photon at that boundary
+ */
+
+const char boundarydetflag[]={'0','1','\0'};
 
 /**
  * Source type specifier
@@ -233,6 +242,9 @@ void mcx_initcfg(Config *cfg){
      cfg->rootpath[0]='\0';
      cfg->gpuid=0;
      cfg->issrcfrom0=0;
+     cfg->tstart=0.f;
+     cfg->tend=0.f;
+     cfg->tstep=VERY_BIG;
      cfg->unitinmm=1.f;
      cfg->isdumpmask=0;
      cfg->isdumpjson=0;
@@ -260,6 +272,7 @@ void mcx_initcfg(Config *cfg){
      cfg->savedetflag=0x5;
      cfg->his.savedetflag=cfg->savedetflag;
      cfg->shapedata=NULL;
+     cfg->extrajson=NULL;
      cfg->seeddata=NULL;
      cfg->maxvoidstep=1000;
      cfg->voidtime=1;
@@ -287,7 +300,7 @@ void mcx_initcfg(Config *cfg){
      cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
      memset(cfg->jsonfile,0,MAX_PATH_LENGTH);
-     memset(cfg->bc,0,8);
+     memset(cfg->bc,0,12);
      memset(&(cfg->srcparam1),0,sizeof(float4));
      memset(&(cfg->srcparam2),0,sizeof(float4));
      memset(cfg->deviceid,0,MAX_DEVICE);
@@ -352,7 +365,8 @@ void mcx_clearcfg(Config *cfg){
         free(cfg->seeddata);
      if(cfg->shapedata)
      	free(cfg->shapedata);
-
+     if(cfg->extrajson)
+     	free(cfg->extrajson);
      mcx_initcfg(cfg);
 }
 
@@ -679,7 +693,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savedata(float *dat, size_t len, Config *cfg){
      FILE *fp;
      char name[MAX_FULL_PATH];
-     char fname[MAX_FULL_PATH];
+     char fname[MAX_FULL_PATH+10];
      unsigned int glformat=GL_RGBA32F;
 
      if(cfg->rootpath[0])
@@ -1075,6 +1089,7 @@ void mcx_readconfig(char *fname, Config *cfg){
                 jbuf[len-1]='\0';
             }else
 		jbuf=fname;
+
             jroot = cJSON_Parse(jbuf);
             if(jroot){
                 mcx_loadjson(jroot,cfg);
@@ -1142,6 +1157,19 @@ void mcx_writeconfig(char *fname, Config *cfg){
  */
 
 void mcx_prepdomain(char *filename, Config *cfg){
+     int isbcdet=0;
+
+     for(int i=0;i<6;i++)
+        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
+	   MCX_ERROR(-4,"unknown boundary condition specifier");
+
+     for(int i=6;i<12;i++){
+        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
+	   MCX_ERROR(-4,"unknown boundary detection flags");
+	if(cfg->bc[i])
+	   isbcdet=1;
+     }
+
      if(cfg->isdumpjson==2){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
@@ -1164,7 +1192,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
 		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
 		cfg->isrowmajor=0;
 	}
-        if(cfg->issavedet && cfg->detnum==0)
+        if(cfg->issavedet && cfg->detnum==0 && isbcdet)
             cfg->issavedet=0;
         if(cfg->issavedet==0){
             cfg->issaveexit=0;
@@ -1201,13 +1229,17 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	     }
 	}
      }
+     if(cfg->vol && cfg->mediabyte <= 4){
+         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+	 unsigned int maxlabel=0;
+         for(uint i=0;i<fieldlen;i++)
+	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
+	 if(cfg->medianum<=maxlabel)
+	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
+     }
      for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
-
-     for(int i=0;i<6;i++)
-        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
-	   MCX_ERROR(-4,"unknown boundary condition specifier");
 
      if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
          MCX_ERROR(-4,"the 'prop' field must contain at least 2 rows for the requested media format");
@@ -1237,7 +1269,7 @@ void mcx_prepdomain(char *filename, Config *cfg){
         }
 	cfg->savedetflag=0x5;
      }
-     if(cfg->isdumpjson==1){
+     if(cfg->isdumpjson==3){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
      }
@@ -1256,7 +1288,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      uint i,gates,itmp;
      size_t count;
      float dtmp;
-     char filename[MAX_FULL_PATH]={'\0'}, comment[MAX_FULL_PATH],strtypestr[MAX_FULL_PATH]={'\0'},*comm;
+     char filename[MAX_PATH_LENGTH]={'\0'}, comment[MAX_FULL_PATH],strtypestr[MAX_FULL_PATH]={'\0'},*comm;
      
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of photons: [1000000]\n\t");
@@ -1314,7 +1346,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 #else
          sprintf(comment,"%s/%s",cfg->rootpath,filename);
 #endif
-         strncpy(filename,comment,MAX_PATH_LENGTH);
+         strncpy(filename,comment,MAX_FULL_PATH);
      }
      comm=fgets(comment,MAX_PATH_LENGTH,in);
 
@@ -1520,17 +1552,27 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cJSON *med=meds->child;
            if(med){
              cfg->medianum=cJSON_GetArraySize(meds);
+	     if(cfg->prop)
+	         free(cfg->prop);
              cfg->prop=(Medium*)malloc(sizeof(Medium)*cfg->medianum);
              for(i=0;i<cfg->medianum;i++){
-               cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
-               if(val) cfg->prop[i].mua=val->valuedouble;
-	       val=FIND_JSON_OBJ("mus",(MCX_ERROR(-1,"You must specify scattering coeff, default in 1/mm"),""),med);
-               if(val) cfg->prop[i].mus=val->valuedouble;
-	       val=FIND_JSON_OBJ("g",(MCX_ERROR(-1,"You must specify anisotropy [0-1]"),""),med);
-               if(val) cfg->prop[i].g=val->valuedouble;
-	       val=FIND_JSON_OBJ("n",(MCX_ERROR(-1,"You must specify refractive index"),""),med);
-	       if(val) cfg->prop[i].n=val->valuedouble;
-
+	       if(cJSON_IsObject(med)){
+                   cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
+                   if(val) cfg->prop[i].mua=val->valuedouble;
+	           val=FIND_JSON_OBJ("mus",(MCX_ERROR(-1,"You must specify scattering coeff, default in 1/mm"),""),med);
+                   if(val) cfg->prop[i].mus=val->valuedouble;
+	           val=FIND_JSON_OBJ("g",(MCX_ERROR(-1,"You must specify anisotropy [0-1]"),""),med);
+                   if(val) cfg->prop[i].g=val->valuedouble;
+	           val=FIND_JSON_OBJ("n",(MCX_ERROR(-1,"You must specify refractive index"),""),med);
+	           if(val) cfg->prop[i].n=val->valuedouble;
+	       }else if(cJSON_IsArray(med)){
+                   cfg->prop[i].mua=med->child->valuedouble;
+		   cfg->prop[i].mus=med->child->next->valuedouble;
+		   cfg->prop[i].g=med->child->next->next->valuedouble;
+		   cfg->prop[i].n=med->child->next->next->next->valuedouble;
+               }else{
+	           MCX_ERROR(-1,"Session.Media must be either an array of objects or array of 4-elem numerical arrays");
+	       }
                med=med->next;
                if(med==NULL) break;
              }
@@ -1548,7 +1590,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            cfg->dim.y=val->child->next->valueint;
            cfg->dim.z=val->child->next->next->valueint;
 	}else{
-	   if(!Shapes)
+	   if(!Shapes && (!(cfg->extrajson && cfg->extrajson[0]=='_')) )
 	      MCX_ERROR(-1,"You must specify the dimension of the volume");
 	}
 	val=FIND_JSON_OBJ("Step","Domain.Step",Domain);
@@ -1829,7 +1871,11 @@ int mcx_loadjson(cJSON *root, Config *cfg){
          if(Shapes){
 	     if(!FIND_JSON_OBJ("_ArraySize_","Volume._ArraySize_",Shapes) && !cfg->shapedata)
 	         cfg->shapedata=cJSON_Print(Shapes);
-	     
+	     if(cfg->extrajson && cfg->extrajson[0]=='_'){
+	         if(cfg->shapedata)
+		     free(cfg->shapedata);
+	         cfg->shapedata=cJSON_Print(Shapes);
+             }
 	     if(FIND_JSON_OBJ("_ArrayZipData_","Volume._ArrayZipData_",Shapes)){
 	         int ndim;
 		 char *type=NULL, *buf=NULL;
@@ -1846,7 +1892,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 		     MCX_ERROR(status,mcx_last_shapeerror());
 		 }
 	     }
-	 }else{
+	 }else if(!(cfg->extrajson && cfg->extrajson[0]=='_')){
 	     MCX_ERROR(-1,"You must either define Domain.VolumeFile, or define a Shapes section");
 	 }
      }else if(Shapes){
@@ -2392,7 +2438,7 @@ void  mcx_maskdet(Config *cfg){
 			}
 			if(d2<mind2) mind2=d2;
 		 }
-		 if(mind2==VERY_BIG || mind2>=cfg->detpos[d].w*cfg->detpos[d].w) continue;
+		 if(mind2==VERY_BIG || mind2>=(cfg->detpos[d].w+0.5f)*(cfg->detpos[d].w+0.5f)) continue;
 		 idx1d=((int)(iz+1.f)*dy*dx+(int)(iy+1.f)*dx+(int)(ix+1.f)); /*1.f comes from the padded layer*/
 
 		 if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
@@ -2761,8 +2807,12 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
      	    if(argv[i][0]=='-'){
 		if(argv[i][1]=='-'){
 			if(mcx_remap(argv[i])){
+                                MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
 				MCX_ERROR(-2,"unknown verbose option");
 			}
+		}else if(strlen(argv[i])>2){
+		        MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
+			MCX_ERROR(-2,"unknown short option");
 		}
 		if(argv[i][1]<='z' && argv[i][1]>='A')
 		     flagset[(int)(argv[i][1])]=1;
@@ -2812,7 +2862,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        break;
                      case 'B':
                                 if(i<argc+1)
-				    strncpy(cfg->bc,argv[i+1],8);
+				    strncpy(cfg->bc,argv[i+1],12);
 				i++;
                                	break;
 		     case 'd':
@@ -2881,12 +2931,25 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		     	        i=mcx_readarg(argc,argv,i,&(cfg->maxdetphoton),"int");
 		     	        break;
                      case 'P':
-		                len=strlen(argv[i]);
-                                if(cfg->shapedata)
-				    free(cfg->shapedata);
-				cfg->shapedata=(char *)malloc(len);
-				memcpy(cfg->shapedata,argv[++i],len);
+                                if(i+1<argc){
+					len=strlen(argv[i+1]);
+					if(cfg->shapedata)
+						free(cfg->shapedata);
+					cfg->shapedata=(char *)malloc(len);
+					memcpy(cfg->shapedata,argv[++i],len);
+				}else
+					MCX_ERROR(-1,"json shape constructs are expected after -P");
                                 break;
+                     case 'j':
+				if(i+1<argc){
+					len=strlen(argv[i+1]);
+					if(cfg->extrajson)
+						free(cfg->extrajson);
+					cfg->extrajson=(char *)calloc(1,len+1);
+					memcpy(cfg->extrajson,argv[++i],len);
+				}else
+				        MCX_ERROR(-1,"json fragment is expected after --json");
+				break;
                      case 'A':
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
@@ -2987,17 +3050,28 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 					 jsoninput=(char *)benchjson[idx];
 			             }else{
 				         MCX_FPRINTF(cfg->flog,"Built-in benchmarks:\n");
-				         for(int i=0;i<sizeof(benchname)/sizeof(char*)-1;i++)
+				         for(int i=0;i<MAX_MCX_BENCH-1;i++){
+					     if(benchname[i][0]=='\0')
+					         break;
 					     MCX_FPRINTF(cfg->flog,"\t%s\n",benchname[i]);
+					 }
 				         exit(0);
 				     }
                                 }else if(strcmp(argv[i]+2,"reflectin")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->isrefint),"char");
-                                else if(strcmp(argv[i]+2,"internalsrc")==0)
+                                else if(strcmp(argv[i]+2,"atomic")==0){
+				     int isatomic=1;
+                                     i=mcx_readarg(argc,argv,i,&(isatomic),"char");
+				     cfg->sradius=(isatomic)? -2.f: 0.f;
+                                }else if(strcmp(argv[i]+2,"internalsrc")==0)
 		                     i=mcx_readarg(argc,argv,i,&(cfg->internalsrc),"int");
                                 else
                                      MCX_FPRINTF(cfg->flog,"unknown verbose option: --%s\n",argv[i]+2);
 		     	        break;
+		     default:
+                                MCX_FPRINTF(cfg->flog,"Command option: %s",argv[i]);
+				MCX_ERROR(-2,"unknown short option");
+				break;
 		}
 	    }
 	    i++;
@@ -3021,6 +3095,20 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 	  }else{
              mcx_readconfig(filename,cfg);
           }
+	  if(cfg->extrajson){
+             cJSON *jroot = cJSON_Parse(cfg->extrajson);
+             if(jroot){
+	        cfg->extrajson[0]='_';
+                mcx_loadjson(jroot,cfg);
+                cJSON_Delete(jroot);
+             }else{
+	        MCX_ERROR(-1,"invalid json fragment following --json");
+	     }
+	  }
+     }
+     if(cfg->isdumpjson==1){
+	  mcx_savejdata(cfg->jsonfile, cfg);
+	  exit(0);
      }
 }
 
@@ -3102,7 +3190,7 @@ int mcx_lookupindex(char *key, const char *index){
  */
 
 void mcx_version(Config *cfg){
-    const char ver[]="$Rev::      $2020";
+    const char ver[]="$Rev::      $v2020";
     int v=0;
     sscanf(ver,"$Rev::%x",&v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n",v);
@@ -3172,11 +3260,11 @@ void mcx_printheader(Config *cfg){
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
-#            Department of Bioengineering, Northeastern University            #\n\
+#   Department of Bioengineering, Northeastern University, Boston, MA, USA    #\n\
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $2020.4 $Date::                       $ by $Author::              $\n\
+$Rev::      $ v2020 $Date::                       $ by $Author::              $\n\
 ###############################################################################\n" S_RESET);
 }
 
@@ -3195,6 +3283,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Required option ==\n" S_RESET"\
  -f config     (--input)       read an input file in .json or .inp format\n\
+                               if the string starts with '{', it is parsed as\n\
+			       an inline JSON input file\n\
+      or\n\
  --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name\n\
                                run --bench without parameter to get a list\n\
 \n"S_BOLD S_CYAN"\
@@ -3213,6 +3304,14 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       'a': like -b 0, total absorption BC\n\
 			       'm': mirror or total reflection BC\n\
 			       'c': cyclic BC, enter from opposite face\n\
+\n\
+			       if input contains additional 6 letters,\n\
+			       the 7th-12th letters can be:\n\
+			       '0': do not use this face to detect photon, or\n\
+			       '1': use this face for photon detection (-d 1)\n\
+			       the order of the faces for letters 7-12 is \n\
+			       the same as the first 6 letters\n\
+			       eg: --bc ______010 saves photons exiting at y=0\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
@@ -3220,18 +3319,14 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                the detected photon; the replay mode can be used\n\
                                to calculate the mua/mus Jacobian matrices\n\
  -z [0|1]      (--srcfrom0)    1 volume origin is [0 0 0]; 0: origin at [1 1 1]\n\
- -R [-2|float] (--skipradius)  -2: use atomics for the entire domain (default)\n\
-                                0: vanilla MCX, no atomic operations\n\
-                               >0: radius in which use shared-memory atomics\n\
-                               -1: use crop0/crop1 to determine atomic zone\n\
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
 			       if 0, replay all detectors and sum all Jacobians\n\
 			       if -1, replay all detectors and save separately\n\
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh\n\
- -e [0.|float] (--minenergy)   minimum energy level to terminate a photon\n\
- -g [1|int]    (--gategroup)   number of time gates per run\n\
+ -e [0.|float] (--minenergy)   minimum energy level to trigger Russian roulette\n\
+ -g [1|int]    (--gategroup)   number of maximum time gates per run\n\
 \n"S_BOLD S_CYAN"\
 == GPU options ==\n" S_RESET"\
  -L            (--listgpu)     print GPU information only\n\
@@ -3243,13 +3338,22 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
  -I            (--printgpu)    print GPU information and run program\n\
+ --atomic [1|0]                1: use atomic operations to avoid thread racing\n\
+                               0: do not use atomic operation (not recommended)\n\
 \n"S_BOLD S_CYAN"\
 == Input options ==\n" S_RESET"\
- -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid\n\
+ -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid.\n\
+                               only the root object named 'Shapes' is parsed \n\
+			       and added to the existing domain defined via -f \n\
+			       or --bench\n\
+ -j '{...}'    (--json)        a JSON string for modifying all input settings.\n\
+                               this input can be used to modify all existing \n\
+			       settings defined by -f or --bench\n\
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str\n\
                                1 or byte: 0-128 tissue labels\n\
 			       2 or short: 0-65535 (max to 4000) tissue labels\n\
 			       4 or integer: integer tissue labels \n\
+			      99 or labelplus: 32bit composite voxel format\n\
                              100 or muamus_float: 2x 32bit floats for mua/mus\n\
                              101 or mua_float: 1 float per voxel for mua\n\
 			     102 or muamus_half: 2x 16bit float for mua/mus\n\
@@ -3308,7 +3412,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       4 lzma: lzma format (high compression,very slow)\n\
 			       5 lz4: LZ4 format (low compression,extrem. fast)\n\
 			       6 lz4hc: LZ4HC format (moderate compression,fast)\n\
- --dumpjson [-,2,'file.json']  export all settings, including volume data using\n\
+ --dumpjson [-,0,1,'file.json']  export all settings, including volume data using\n\
                                JSON/JData (http://openjdata.org) format for \n\
 			       easy sharing; can be reused using -f\n\
 			       if followed by nothing or '-', mcx will print\n\
@@ -3343,16 +3447,19 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  --maxjumpdebug [10000000|int] when trajectory is requested (i.e. -D M),\n\
                                use this parameter to set the maximum positions\n\
                                stored (default: 1e7)\n\
- --faststep [0|1]              1-use fast 1mm stepping, [0]-precise ray-tracing\n\
 \n"S_BOLD S_CYAN"\
 == Example ==\n" S_RESET"\
-example: (autopilot mode)\n"S_GREEN"\
-       %s -A 1 -n 1e7 -f input.inp -G 1 -D P\n" S_RESET"\
-or (manual mode)\n"S_GREEN"\
-       %s -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -w dpx -b 1 -G 1\n" S_RESET"\
+example: (list built-in benchmarks)\n"S_GREEN"\
+       %s --bench\n" S_RESET"\
+or (list supported GPUs on the system)\n"S_GREEN"\
+       %s -L\n" S_RESET"\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n"S_GREEN"\
-       %s -A -n 1e7 -f input.inp -G 1101 -W 10,10,10\n" S_RESET"\
+       %s --bench cube60b -n 1e7 -G 1101 -W 10,10,10\n" S_RESET"\
 or (use inline domain definition)\n"S_GREEN"\
-       %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'" S_RESET"\n",
-              exename,exename,exename,exename,exename);
+       %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n" S_RESET"\
+or (use inline json setting modifier)\n"S_GREEN"\
+       %s -f input.json -j '{\"Optode\":{\"Source\":{\"Type\":\"isotropic\"}}}'\n" S_RESET"\
+or (dump simulation in a single json file)\n"S_GREEN"\
+       %s --bench cube60planar --dumpjson" S_RESET"\n",
+              exename,exename,exename,exename,exename,exename,exename);
 }

@@ -1,0 +1,260 @@
+   #[1]Monte Carlo eXtreme: GPU-based Monte Carlo Simulations
+
+Installation Instructions for MCX
+
+          1. [2]System Requirements
+
+          2. [3]Download and Install
+
+          3. [4]Testing hardware support
+
+          4. [5]Testing hardware support for MCXLAB
+
+          5. [6]Running MCX with GUI
+
+          6. [7]Compiling MCX from source code
+
+                6.1. [8]Download the source code
+
+                6.2. [9]Install the compilers
+
+                6.3. [10]Setup paths
+
+                6.4. [11]make your binary
+
+1. System Requirements
+
+   We aim to port MCX for all modern GPUs. Currently, we have two MCX
+   editions, the CUDA-edition is supported only on the NVIDIA graphics
+   card, and an [12]OpenCL-edition, supported for all OpenCL-compliant
+   computing devices (Intel/AMD CPUs, NVIDIA GPU and AMD GPUs, etc). In
+   order to run MCX (CUDA-edition), you have to make sure you have the
+   right hardware and software support, this includes:
+
+     * a CUDA enabled graphics card made by NVIDIA
+     * the latest graphics driver for the GPU, update from [13]NVIDIA's
+       website.
+
+   Starting from v0.9, MCX/MCXLAB released packages are compiled with CUDA
+   library statically linked (embedded). Therefore, you do not need to
+   install CUDA library in order to run MCX/MCXLAB.
+
+   You must use a CUDA capable NVIDIA graphics card in order to use MCX. A
+   list of CUDA capable cards can be found at [14]here. The oldest
+   graphics card that MCX supports is the "Fermi" series (circa 2010).
+   Using the latest NVIDIA card is expected to produce the best speed. The
+   default release of MCX supports atomic operations and photon detection
+   within a single binary. In the below webpage, we summarized the speed
+   differences between different generations of NVIDIA GPUs
+
+   [15]http://mcx.space/gpubench/
+
+   Windows users: if you use [16]MCXStudio, please follow this video
+   tutorial (Lesson 6) to apply a registry fix to enable MCX to run more
+   than 5 seconds on your computer. Alternatively, you may use the Windows
+   installer to install MCX. This is important!
+
+   [17]http://mcx.space/wiki/index.cgi/wiki/index.cgi?Demo/MCXStudio#Lesso
+   n_6_Fix_Unspecified_launch_failure_error_on_Windows_11_minutes
+
+2. Download and Install
+
+   To install MCX, you need to download the binary executable compiled for
+   your computer architecture (32 or 64bit) and platform, extract the
+   package and run the executable under the <mcx root>/bin directory.
+
+3. Testing hardware support
+
+   To test if your system supports MCX, you need to open a terminal (for
+   Windows users, please click on the Start menu and type "cmd", then
+   enter), and type
+
+ cd "path/to/mcx/bin"
+
+   where path/to/mcx/bin should be replaced to the actual extracted bin
+   folder from the downloaded package. If your path contains space, you
+   must enclose it with double-quotes.
+
+   Once you are in the bin/ folder, you can then type
+
+ mcx -L
+
+   You may see 3 possible outcomes
+
+     * 1. mcx successfully prints at least 1 supported GPU on your system
+       - to this end, MCX is ready to use
+     * 2. mcx shows the below error
+
+ No CUDA-capable GPU device found
+
+ MCX ERROR(-1):No GPU device found
+  in unit mcextreme.c:54
+
+   If your are certain your system has a working NVIDIA GPU, it is likely
+   that your GPU driver was not up to date or was not installed properly.
+   Please check your driver installation again.
+     * 3. mcx gives an error or pops up an error window showing that some
+       libraries (*.dll on Windows, or *.so on Linux, or *.dylib on Mac)
+       are missing. If the missing library is a CUDA library, that means
+       the binary was not compiled with static-linking and you must
+       download the library file separately. You may google this missing
+       file, and download it and place it inside your system folder.
+
+   In the event that your system does not have supported GPU, you may
+   consider using [18]MCX-CL instead - MCX-CL has the same functionality
+   as MCX but it can also be executed on AMD/Intel CPUs and GPUs.
+
+4. Testing hardware support for MCXLAB
+
+   If you use MCXLAB, you may use the below procedure to test if it can
+   use your GPU. First, open MATLAB or octave, then type
+
+ addpath('/path/to/mcxlab/')
+
+   so that mcx.mex* file is in the search path. You may type
+
+ which mcx
+
+   or
+ which mcxlab
+
+   to confirm it is added to MATLAB. Then you can use the below command to
+   query your GPUs
+
+ info=mcxlab('gpuinfo')
+
+   You must see valid output from this call, otherwise, your system does
+   not have GPU or it is not properly configured to run MCXLAB.
+
+5. Running MCX with GUI
+
+   If you are used to graphics interfaces, you can find an executable
+   mcxstudio under the same folder as mcx. [19]MCX Studio is a
+   cross-platform interface to interact with MCX. It gives users a
+   straightforward way to set various of parameters for a MCX session, and
+   organize different sessions into projects that can be saved for later
+   use. Please read [20]README to see how to use this tool to create, run
+   and save the simulation sessions.
+
+6. Compiling MCX from source code
+
+   If you want to compile an executable on your machine from the source
+   code, you should follow the steps described below:
+
+   To compile MCX/MCXLAB, you need to install [21]CUDA toolkit (version
+   7-10 is supported). Once you install the CUDA library, you need to
+   setup the system environment variable in order to let the compiler find
+   the needed CUDA run-time library. For Linux and Mac OS users, you might
+   need to add the following settings to your shell initialization file.
+   Use "echo $SHELL" command to identify your shell type. For c-shell,
+   i.e. csh/tcsh, add the following lines to your ~/.cshrc file
+  if ("uname -p" =~ "*_64" ) then
+          setenv LD_LIBRARY_PATH "/usr/local/cuda/lib64"
+  else
+          setenv LD_LIBRARY_PATH "/usr/local/cuda/lib"
+  endif
+  setenv PATH "/usr/local/cuda/bin:$PATH"
+
+   and for "bash" or "sh" users, add
+  if [[ "uname -p" =~ .*_64 ]]; then
+          export LD_LIBRARY_PATH="/usr/local/cuda/lib64"
+  else
+          export LD_LIBRARY_PATH="/usr/local/cuda/lib"
+  fi
+  export PATH="/usr/local/cuda/bin:$PATH"
+
+   to your ~/.bash_profile. If the libcudart.so* file is installed in a
+   non-standard folder, please replace the paths in the above scripts to
+   your installation path where libcudart.so resides.
+
+6.1. Download the source code
+
+   You need to first download the source code from the [22]Download page.
+
+6.2. Install the compilers
+
+   You need install the CUDA and C compilers on your system, this includes
+     * 1. CUDA compiler and run-time libraries: this will be installed
+       when you download and install the CUDA driver/sdk/tools from
+       [23]this link
+     * 2. GNU toolchain: you need to have gcc and make commands on your
+       system. Usually
+          + for Debian-based Linux users, you can get these basic
+            compiling tools by a single command:
+sudo apt-get install build-essential
+            and then type your own password
+          + for Redhat-based systems:
+su -c 'yum groupinstall "Development Tools"'
+            and then type the root password
+          + for Windows users, you need to install [24]MinGW, a minimum
+            Unix system on Windows, the [25]automatic-installer can be
+            downloaded from [26]here.
+          + for Mac OS users, the GNU compilers can be installed from the
+            Xcode tools from [27]this link
+     * 3. For Windows, you also need to install [28]Microsoft Visual C++
+       200x Express Edition (or the full version; the Express edition is
+       free. MCX was tested with VC++2005).
+
+6.3. Setup paths
+
+   For Linux/Mac OS users, you need to make sure you have followed the
+   instructions to setup the paths described in the "Running MCX" section.
+
+   For Windows, one need to add the path to nvcc (by default,
+   C:\CUDA\bin), path to cl.exe (by default, C:\Program Files\Microsoft
+   Visual Studio 8\VC\bin) and path to gcc/make (by default, C:\MinGW\bin)
+   to your Path environment variable. You can follow the screenshots as in
+   [29]this tutorial, and paste the following string at the beginning of
+   the variable value field.
+ C:\Program Files\Microsoft Visual Studio 8\VC\bin;C:\MinGW\bin;C:\CUDA\bin;
+
+   If you have installed VC2008, you need to replace "Microsoft Visual
+   Studio 8" to "Microsoft Visual Studio 9".
+
+   If you have installed CUDA, MSVC or MinGW at a non-standard location,
+   please open the Makefile under <mcx>/src to update all the
+   library/include directories to the actual path.
+
+6.4. make your binary
+
+   For Linux/Mac OS, you need to open an terminal, "cd" to <mcx>/src, and
+   type "make". This will compile MCX with the default option, i.e.
+   non-atomic memory write, LL5 RNG and fast-math library. You can "cat
+   Makefile" and see other options. If everything is working ok, you
+   should see a binary file generated under <mcx>/bin.
+
+   For Windows, you need to double click on a shortcut named "MSYS", a
+   terminal will pop up. Then type "cd /path/to/your/mcx/src", then type
+   "make". The binary will be generated as <mcx>/bin/mcx.exe.
+
+References
+
+   1. http://mcx.space/wiki/index.cgi?action=rss
+   2. http://mcx.space/wiki/index.cgi?Doc/Installation#System_Requirements
+   3. http://mcx.space/wiki/index.cgi?Doc/Installation#Download_and_Install
+   4. http://mcx.space/wiki/index.cgi?Doc/Installation#Testing_hardware_support
+   5. http://mcx.space/wiki/index.cgi?Doc/Installation#Testing_hardware_support_for_MCXLAB
+   6. http://mcx.space/wiki/index.cgi?Doc/Installation#Running_MCX_with_GUI
+   7. http://mcx.space/wiki/index.cgi?Doc/Installation#Compiling_MCX_from_source_code
+   8. http://mcx.space/wiki/index.cgi?Doc/Installation#Download_the_source_code
+   9. http://mcx.space/wiki/index.cgi?Doc/Installation#Install_the_compilers
+  10. http://mcx.space/wiki/index.cgi?Doc/Installation#Setup_paths
+  11. http://mcx.space/wiki/index.cgi?Doc/Installation#make_your_binary
+  12. http://mcx.space/wiki/index.cgi?MCXCL
+  13. https://www.nvidia.com/Download/index.aspx
+  14. https://developer.nvidia.com/cuda-gpus
+  15. http://mcx.space/gpubench/
+  16. http://mcx.space/wiki/index.cgi?Learn#mcxstudio
+  17. http://mcx.space/wiki/index.cgi/wiki/index.cgi?Demo/MCXStudio#Lesson_6_Fix_Unspecified_launch_failure_error_on_Windows_11_minutes
+  18. http://mcx.space/wiki/index.cgi?MCXCL
+  19. http://mcx.space/wiki/index.cgi?Doc/MCXStudio
+  20. http://mcx.space/wiki/index.cgi?Doc/README
+  21. https://developer.nvidia.com/cuda-toolkit
+  22. http://mcx.space/wiki/index.cgi?Download
+  23. http://www.nvidia.com/object/cuda_get.html
+  24. http://www.mingw.org/
+  25. http://sourceforge.net/projects/mingw/files/
+  26. http://sourceforge.net/projects/mingw/files/Automated MinGW Installer/
+  27. http://developer.apple.com/technology/xcode.html
+  28. http://www.microsoft.com/Express/VC/
+  29. http://technet.microsoft.com/en-us/library/aa997841(EXCHG.65).aspx

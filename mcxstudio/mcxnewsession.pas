@@ -43,7 +43,7 @@ begin
       if(Length(edSession.Text)=0) then
            raise Exception.Create('Session ID can not be empty');
       if (Tag=0) and (fmMCX.lvJobs.FindCaption(0,edSession.Text,true,true,true) <> nil) then
-           raise Exception.Create('Session name already has aready existed!');
+           raise Exception.Create('Session name has already existed!');
       ModalResult := mrOK;
     except
       On E : Exception do

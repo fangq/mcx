@@ -20,6 +20,8 @@ CUDACC=nvcc
 MEX=mex
 AR=$(CXX)
 
+GCC?=gcc
+
 BINARY=mcx
 MAKE=make
 OUTPUT_DIR=$(MCXDIR)/bin
@@ -64,7 +66,7 @@ CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme cjson/cJSON ubj/ubjw
+FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme mcx_bench cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
@@ -113,29 +115,34 @@ OUTPUTFLAG:=-o
 kepler: fermi
 keplermex: fermimex
 kepleroct: fermioct
-kepler keplermex: CUGENCODE=-arch=sm_30
+kepler keplermex kepleroct: CUGENCODE:=-arch=sm_30
 
 maxwell: kepler
 maxwellmex: keplermex
 maxwelloct: kepleroct
-maxwell maxwellmex: CUGENCODE=-arch=sm_50
+maxwell maxwellmex maxwelloct: CUGENCODE:=-arch=sm_50
 
 pascal: maxwell
 pascalmex: maxwellmex
 pascaloct: maxwelloct
-pascal pascalmex: CUGENCODE=-arch=sm_60
+pascal pascalmex pascaloct: CUGENCODE:=-arch=sm_60
 
 volta: pascal
 voltamex: pascalmex
 voltaoct: pascaloct
-volta voltamex: CUGENCODE=-arch=sm_70
+volta voltamex voltaoct: CUGENCODE:=-arch=sm_70
 
 turing: volta
 turingmex: voltamex
 turingoct: voltaoct
-turing turingmex: CUGENCODE=-arch=sm_80
+turing turingmex turingoct: CUGENCODE:=-arch=sm_75
 
-log xor xoro posix:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math
+ampere: turing
+amperemex: turingmex
+ampereoct: turingoct
+ampere amperemex ampereoct: CUGENCODE:=-arch=sm_80
+
+log xor xoro posix:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -DSAVE_DETECTORS
 xor:        LINKOPT+=
 xoro:       CUCCOPT+=-DUSE_XOROSHIRO128P_RAND
 xoro:       LINKOPT+=-DUSE_XOROSHIRO128P_RAND
@@ -147,7 +154,7 @@ log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
-fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
+log posix xoro fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
 
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
 fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
@@ -238,11 +245,14 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
+mcx_bench$(OBJSUFFIX): mcx_bench.c
+	$(GCC) $(INCLUDEDIRS) -c -o mcx_bench$(OBJSUFFIX)  $<
+
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 $(ZMATLIB):
-	-$(MAKE) -C zmat lib AR=ar CPPOPT="$(DLLFLAG)" USERLINKOPT=
+	-$(MAKE) -C zmat lib AR=ar CPPOPT="$(DLLFLAG) -O3" USERLINKOPT=
 clean:
 	-$(MAKE) -C zmat clean
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)

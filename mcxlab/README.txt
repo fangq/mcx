@@ -9,42 +9,39 @@ Version: this package is part of Monte Carlo eXtreme (MCX) v2020
 
 == # Introduction ==
 
-MCXLAB is the native MEX version of MCX for Matlab and GNU Octave. It compiles
+MCXLAB is the native MEX version of MCX for MATLAB and GNU Octave. It compiles
 the entire MCX code into a MEX function which can be called directly inside
-Matlab or Octave. The input and output files in MCX are replaced by convenient
+MATLAB or Octave. The input and output files in MCX are replaced by convenient
 in-memory struct variables in MCXLAB, thus, making it much easier to use 
-and interact. Matlab/Octave also provides convenient plotting and data
+and interact. MATLAB/Octave also provides convenient plotting and data
 analysis functions. With MCXLAB, your analysis can be streamlined and speed-
 up without involving disk files.
 
 Because MCXLAB contains the exact computational codes for the GPU calculations
 as in the MCX binaries, MCXLAB is expected to have identical performance when
-running simulations. By default, we compile MCXLAB with the support of recording
-detected photon partial path-lengths (i.e. the "make det" option). In addition,
-we also provide "mcxlab_atom": an atomic version of mcxlab compiled similarly
-as "make detbox" for MCX. It supports atomic operations using shared memory
-enabled by setting "cfg.sradius" input parameter to a positive number.
+running simulations.
 
 
 == # Installation ==
 
-To download MCXLAB, please visit [http://mcx.sourceforge.net/cgi-bin/index.cgi?Download#Download_the_Latest_Release this link]. 
+To download MCXLAB, please visit [http://mcx.space/wiki/index.cgi?Download#Download_the_Latest_Release this link]. 
 If you choose to [http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx register], 
-you will have an option to be notified for any future updates.
+you will have an option to be notified for any future updates including 
+critical bug fixes and new milestone releases.
 
 The system requirements for MCXLAB are the same as MCX: you have to make
 sure that you have a CUDA-capable graphics card with properly configured 
-CUDA driver (you can run the standard MCX binary first to test if your 
-system is capable to run MCXLAB). Of course, you need to have either Matlab
+GPU driver (you can run the standard MCX binary first to test if your 
+system is capable to run MCXLAB). Of course, you need to have either MATLAB
 or Octave installed.
 
 Once you set up the CUDA toolkit and NVIDIA driver, you can then add the 
-"mcxlab" directory to your Matlab/Octave search path using the addpath command.
+"mcxlab" directory to your MATLAB/Octave search path using the addpath command.
 If you want to add this path permanently, please use the "pathtool" 
-command, or edit your startup.m (~/.octaverc for Octave).
+command, or edit your `startup.m` (`~/.octaverc` for Octave).
 
-If everything works ok, typing "help mcxlab" in Matlab/Octave will print the
-help information. If you see any error, particularly any missing libraries,
+If everything works ok, typing `mcxlab('gpuinfo')` in MATLAB/Octave will print the
+supported GPUs. If you see any error, particularly any missing libraries,
 please make sure you have downloaded the matching version built for your
 platform.
 
@@ -55,7 +52,7 @@ To learn the basic usage of MCXLAB, you can type
 
   help mcxlab
 
-in Matlab/Octave to see the help information regarding how to use this 
+in MATLAB/Octave to see the help information regarding how to use this 
 function. The help information is listed below. You can find the input/output 
 formats and examples. The input cfg structure has very similar field names as
 the verbose command line options in MCX.
@@ -63,7 +60,7 @@ the verbose command line options in MCX.
 <pre> ====================================================================
        MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2011-2019 Qianqian Fang <q.fang at neu.edu>
+ Copyright (c) 2011-2020 Qianqian Fang <q.fang at neu.edu>
                        URL: http://mcx.space
  ====================================================================
  
@@ -143,6 +140,14 @@ the verbose command line options in MCX.
                        'a': like cfg.isreflect=0, total absorption BC
                        'm': mirror or total reflection BC
                        'c': cyclic BC, enter from opposite face
+ 
+                       in addition, cfg.bc can contain up to 12 characters,
+                       with the 7-12 characters indicating bounding box
+                       facets -x,-y,-z,+x,+y,+z are used as a detector. The 
+                       acceptable characters for digits 7-12 include
+                       '0': this face is not used to detector photons
+                       '1': this face is used to capture photons (if output detphoton)
+                       see <demo_bc_det.m>
        cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
        cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
        cfg.maxgate:    the num of time-gates per simulation
@@ -154,6 +159,12 @@ the verbose command line options in MCX.
        cfg.gscatter:   after a photon completes the specified number of
                        scattering events, mcx then ignores anisotropy g
                        and only performs isotropic scattering for speed [1e9]
+       cfg.detphotons: detected photon data for replay. In the replay mode (cfg.seed 
+                       is set as the 4th output of the baseline simulation), cfg.detphotons
+                       should be set to the 2nd output (detphoton) of the baseline simulation
+                       or detphoton.data subfield (as a 2D array). cfg.detphotons can use
+                       a subset of the detected photon selected by the user.
+                       Example: <demo_mcxlab_replay.m>
  
  == GPU settings ==
        cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -277,10 +288,25 @@ the verbose command line options in MCX.
  
   Output:
        fluence: a struct array, with a length equals to that of cfg.
-             For each element of fluence, fluence(i).data is a 4D array with
-             dimensions specified by [size(vol) total-time-gates]. 
-             The content of the array is the normalized fluence at 
-             each voxel of each time-gate.
+             For each element of fluence, 
+             fluence(i).data is a 4D array with
+                  dimensions specified by [size(vol) total-time-gates]. 
+                  The content of the array is the normalized fluence at 
+                  each voxel of each time-gate.
+             fluence(i).dref is a 4D array with the same dimension as fluence(i).data
+                  if cfg.issaveref is set to 1, containing only non-zero values in the 
+                  layer of voxels immediately next to the non-zero voxels in cfg.vol,
+                  storing the normalized total diffuse reflectance (summation of the weights 
+                  of all escaped photon to the background regardless of their direction);
+                  it is an empty array [] when if cfg.issaveref is 0.
+             fluence(i).stat is a structure storing additional information, including
+                  runtime: total simulation run-time in millisecond
+                  nphoton: total simulated photon number
+                  energytot: total initial weight/energy of all launched photons
+                  energyabs: total absorbed weight/energy of all photons
+                  normalizer: normalization factor
+                  unitinmm: same as cfg.unitinmm, voxel edge-length in mm
+ 
        detphoton: (optional) a struct array, with a length equals to that of cfg.
              Starting from v2018, the detphoton contains the below subfields:
                detphoton.detid: the ID(>0) of the detector that captures the photon
@@ -442,11 +468,11 @@ to represent the problem domain. The domain is consisted of a
 
 == # How to compile MCXLAB ==
 
-To compile MCXLAB for Matlab, you need to cd mcx/src directory, and type 
+To compile MCXLAB for MATLAB, you need to cd mcx/src directory, and type 
 
  make mex
 
-from a shell window. You need to make sure your Matlab is installed and 
+from a shell window. You need to make sure your MATLAB is installed and 
 the command <tt>mex</tt> is included in your PATH environment variable. Similarly, 
 to compile MCXLAB for Octave, you type
 
@@ -462,7 +488,7 @@ level of atomic operations using the cfg.sradius settings.
 
 == # Screenshots ==
 
-Screenshot for using MCXLAB in Matlab:
+Screenshot for using MCXLAB in MATLAB:
   http://mcx.sourceforge.net/upload/matlab_mcxlab.png
 
 Screenshot for using MCXLAB in GNU Octave:
@@ -479,6 +505,7 @@ Screenshot for using MCXLAB in GNU Octave:
   of photon migration in 3D turbid media accelerated by graphics processing 
   units," Opt. Express 17, 20178-20190 (2009)
 
- [TranYan2019] A.P.Tran, S.Yan and Q.Fang, "Improving model-based fNIRS
- analysis using mesh-based anatomical and light-transport models".
+ [TranYan2020] A.P.Tran, S.Yan and Q.Fang, "Improving model-based fNIRS
+ analysis using mesh-based anatomical and light-transport models", 
+ Neurophotonics, 7(1), 015008
 

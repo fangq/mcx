@@ -4,6 +4,28 @@ Major updates are marked with a "*"
 
 == MCX v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
 
+ 2020-08-29*[6eb9596] add mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-27 [63e5a5f] handle det radii less than or equal to 0.5, fix #101
+ 2020-08-24 [6f11857] add command line option cheatsheet
+ 2020-08-24 [cea663b] test cmake in travis
+ 2020-08-24 [782b4a3] massive update of documentation
+ 2020-08-20 [e8e6b58] print an explicit messgae if error 30 is found
+ 2020-08-19*[883f61b] restore windows progress bar support, disabled in @ae2d60e45
+ 2020-08-17 [c47de01] allow running testing script on machines without nvidia gpu
+ 2020-08-16 [0c25958] add more tests for various mcx options
+ 2020-08-16 [ff2f68f] add sphshell benchmark - see GPU MMC paper
+ 2020-08-15 [2afab4a] test if media prop count is less than max label
+ 2020-08-15 [2d71eb7] accept array as Domain.Media json input
+ 2020-08-15*[433df1f] accept json modifier via --json for easy testing
+ 2020-08-14 [09adbd0] support --bc or cfg.bc to set an entire bounding face as detector
+ 2020-08-11*[e095dbb] speed up by 1.6x on 1080Ti by restoring source template for pencil beam only
+ 2020-08-11 [a220cc2] autoblock size no less than 64, speed up on Turing GPU by doubling threads
+ 2020-08-04 [71d4196] fix incorrect detpt column when savedetflag/issaveexit are both set
+ 2020-08-04 [20c596a] retrieve energy tot and abs regardless of isnormalized
+ 2020-08-03*[30e01a1] add standalone script to submit to mcx speed contest
+ 2020-07-31 [d9a5953] avoid autoblock is 0 when driver fails, close #99
+ 2020-07-28 [daa9d56] fix inaccurate core count on Volta, Turing and Pascal
+ 2020-07-25 [37793ae] fix -b 0 -B rrrrrr crash, thanks to @ShijieYan
  2020-07-22*[f844fe8] add automated building script via travis-ci
  2020-07-22*[cbf0225] add unit testing script
  2020-07-09 [5b038a7] add winget manifest

@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2018
+**  \copyright Qianqian Fang, 2009-2020
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -22,7 +22,7 @@
 
 @brief   MCX configuration header
 *******************************************************************************/
-                                                                                         
+
 #ifndef _MCEXTREME_UTILITIES_H
 #define _MCEXTREME_UTILITIES_H
 
@@ -56,7 +56,7 @@
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3, ofJNifti, ofBJNifti};           /**< output data format */
-enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCylic};            /**< boundary conditions */
+enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCyclic};            /**< boundary conditions */
 enum TBJData {JDB_mixed, JDB_nulltype, JDB_noop,JDB_true,JDB_false,
      JDB_char,JDB_string,JDB_hp,JDB_int8,JDB_uint8,JDB_int16,JDB_int32,
      JDB_int64,JDB_single,JDB_double,JDB_array,JDB_object,JDB_numtypes,
@@ -199,6 +199,7 @@ typedef struct MCXConfig{
 	unsigned long int detectedcount;  /**<total number of detected photons*/
         char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
         char *shapedata;             /**<a pointer points to a string defining the JSON-formatted shape data*/
+        char *extrajson;             /**<a pointer points to a string defining the extra JSON input data*/
 	int maxvoidstep;             /**< max number of steps that a photon can advance before reaching a non-zero voxel*/
 	int voidtime;                /**<1 start counting photon time when moves inside 0 voxels; 0: count time only after enters non-zero voxel*/
 	float4 srcparam1;            /**<a quadruplet {x,y,z,w} for additional source parameters*/
@@ -227,7 +228,7 @@ typedef struct MCXConfig{
 	float *exportdebugdata;      /**<pointer to the buffer where the photon trajectory data are stored*/
 	uint mediabyte;              /**< how many bytes per media index, mcx supports 1, 2 and 4, 4 is the default*/
 	float *dx, *dy, *dz;         /**< anisotropic voxel spacing for x,y,z axis */
-	char bc[8];                  /**<boundary condition flag for [-x,-y,-z,+x,+y,+z,unused,unused] */
+	char bc[12];                 /**<boundary condition flag for [-x,-y,-z,+x,+y,+z, det(-x,-y,-z,+x,+y,+z)] */
 } Config;
 
 #ifdef	__cplusplus

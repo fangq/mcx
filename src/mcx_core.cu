@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2018
+**  \copyright Qianqian Fang, 2009-2020
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -217,8 +217,9 @@ __device__ inline void saveexitppath(float n_det[],float *ppath,MCXpos *p0,uint 
  * @param[in] seeddata: the RNG seed of the photon at launch, need to save for replay 
  */
 
-__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata,uint *idx1d){
-      uint detid=finddetector(p0);
+__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata,uint isdet){
+      int detid;
+      detid=(isdet==OUTSIDE_VOLUME_MIN)?-1:(int)finddetector(p0);
       if(detid){
 	 uint baseaddr=atomicAdd(detectedphoton,1);
 	 if(baseaddr<gcfg->maxdetphoton){
@@ -865,7 +866,6 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	   MCXsp *nuvox){
       *w0=1.f;     ///< reuse to count for launchattempt
       int canfocus=1; ///< non-zero: focusable, zero: not focusable
-      *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
 
       /**
        * First, let's terminate the current photon and perform detection calculations
@@ -905,7 +905,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           if(gcfg->savedet){
              if((isdet&DET_MASK)==DET_MASK && (*mediaid==0 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && 
 	        (nuvox->sp.isupper ? nuvox->sp.upper : nuvox->sp.lower)==0)) && gcfg->issaveref<2)
-	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata,idx1d);
+	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata,isdet);
              clearpath(ppath,gcfg->partialdata);
           }
 #endif
@@ -940,6 +940,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           *mediaid=gcfg->mediaidorig;
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
+          *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
 
           /**
            * Only one branch is taken because of template, this can reduce thread divergence
@@ -1129,6 +1130,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      break;
 		}
 	    }
+
+	    if(p->w<=gcfg->minenergy)
+	        continue;
+
             /**
              * If beam focus is set, determine the incident angle
              */
@@ -1501,9 +1506,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           if(p.x<0.f||p.y<0.f||p.z<0.f||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
-	      isdet=gcfg->bc[(!(p.x<0.f||p.y<0.f||p.z<0.f))*3+flipdir];  /** isdet now stores the boundary condition flag, this will be overwriten before the end of the loop */
-              GPUDEBUG(("moving outside: [%f %f %f], idx1d [%d]->[out], bcflag %d\n",p.x,p.y,p.z,idx1d,isdet));
 	      idx1d=(p.x<0.f||p.y<0.f||p.z<0.f) ? OUTSIDE_VOLUME_MIN : OUTSIDE_VOLUME_MAX;
+	      isdet=gcfg->bc[(idx1d==OUTSIDE_VOLUME_MAX)*3+flipdir];  /** isdet now stores the boundary condition flag, this will be overwriten before the end of the loop */
+              GPUDEBUG(("moving outside: [%f %f %f], idx1d [%d]->[out], bcflag %d\n",p.x,p.y,p.z,idx1d,isdet));
 	  }else{
               /** otherwise, read the optical property index */
 	      mediaid=media[idx1d];
@@ -1594,10 +1599,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	       mediaid = mediaidold;
 
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
-          if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCylic) )) || 
+          if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCyclic) )) || 
 	      f.t>gcfg->twin1 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && hit && !nuvox.sp.lower && nuvox.sp.isupper && 
 	      (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w)))){
-	      if(isdet==bcCylic){
+	      if(isdet==bcCyclic){
                  if(flipdir==0)  p.x=mcx_nextafterf(roundf(p.x+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.x: -gcfg->maxidx.x)),(v.x > 0.f)-(v.x < 0.f));
                  if(flipdir==1)  p.y=mcx_nextafterf(roundf(p.y+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.y: -gcfg->maxidx.y)),(v.y > 0.f)-(v.y < 0.f));
                  if(flipdir==2)  p.z=mcx_nextafterf(roundf(p.z+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.z: -gcfg->maxidx.z)),(v.z > 0.f)-(v.z < 0.f));
@@ -1606,13 +1611,14 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	             mediaid=media[idx1d];
 	             isdet=mediaid & DET_MASK;  /** upper 16bit is the mask of the covered detector */
 	             mediaid &= MED_MASK;       /** lower 16bit is the medium index */
-                     GPUDEBUG(("Cylic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f]\n",flipdir,isdet,p.x,p.y,p.z));
+                     GPUDEBUG(("Cyclic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f]\n",flipdir,isdet,p.x,p.y,p.z));
 	             continue;
 		 }
 	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n",idx1d,mediaid,gcfg->doreflect,isdet,f.t>gcfg->twin1));
-	      if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
-	          n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+	      if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+	          (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
+	          ppath, n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
                    break;
               isdet=mediaid & DET_MASK;
@@ -1642,7 +1648,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  if(isreflect && !hit){
 	      if(gcfg->mediaformat<100 && idx1d!=idx1dold)
 	          updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
-	      if(((gcfg->doreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w))){
+	      if(((isreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
 	          float Rtotal=1.f;
 	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
@@ -1665,11 +1671,12 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
        	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
 	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
                   } ///< else, total internal reflection
-	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && rand_next_reflect(t)>Rtotal){ // do transmission
+	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && (isdet!=bcMirror) && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && (nuvox.sp.isupper ? nuvox.sp.upper : nuvox.sp.lower)==0)) { // transmitted to background medium
                             GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+		    	    if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+			        (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
 			        ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
                                 break;
@@ -1830,8 +1837,14 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 #else
     int dev;
     int deviceCount,activedev=0;
+    
+    cudaError_t cuerr=cudaGetDeviceCount(&deviceCount);
+    if(cuerr!=cudaSuccess){
+	if(cuerr==(cudaError_t)30)
+            mcx_error(-(int)cuerr,"A CUDA-capable GPU is not found or configured",__FILE__,__LINE__);
+        CUDA_ASSERT(cuerr);
+    }
 
-    CUDA_ASSERT(cudaGetDeviceCount(&deviceCount));
     if (deviceCount == 0){
         MCX_FPRINTF(stderr,S_RED "ERROR: No CUDA-capable GPU device found\n" S_RESET);
         return 0;
@@ -1876,7 +1889,7 @@ int mcx_list_gpu(Config *cfg, GPUInfo **info){
 
         if (strncmp(dp.name, "Device Emulation", 16)) {
 	  if(cfg->isgpuinfo){
-	    MCX_FPRINTF(stdout,S_BLUE"=============================   GPU Infomation  ================================\n" S_RESET);
+	    MCX_FPRINTF(stdout,S_BLUE"=============================   GPU Information  ================================\n" S_RESET);
 	    MCX_FPRINTF(stdout,"Device %d of %d:\t\t%s\n",(*info)[dev].id,(*info)[dev].devcount,(*info)[dev].name);
 	    MCX_FPRINTF(stdout,"Compute Capability:\t%u.%u\n",(*info)[dev].major,(*info)[dev].minor);
 	    MCX_FPRINTF(stdout,"Global Memory:\t\t%.0f B\nConstant Memory:\t%.0f B\n"
@@ -1934,7 +1947,6 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float Vvox,fullload=0.f;
 
      dim3 mcgrid, mcblock;
-     dim3 clgrid, clblock;
 
      int dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z*((cfg->srctype==MCX_SRC_PATTERN || cfg->srctype==MCX_SRC_PATTERN3D) ? cfg->srcnum : 1);
 
@@ -1948,7 +1960,9 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      uint    detected=0,sharedbuf=0;
 
      volatile int *progress, *gprogress;
+#ifdef _WIN32
      cudaEvent_t updateprogress;
+#endif
 
      uint *gmedia;
      float4 *gPpos,*gPdir,*gPlen;
@@ -2106,10 +2120,6 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      mcgrid.x=gpu[gpuid].autothread/gpu[gpuid].autoblock;
      mcblock.x=gpu[gpuid].autoblock;
 
-     clgrid.x=cfg->dim.x;
-     clgrid.y=cfg->dim.y;
-     clblock.x=cfg->dim.z;
-
      if(cfg->debuglevel & MCX_DEBUG_RNG){
 #pragma omp master
 {
@@ -2240,7 +2250,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          param.idx1dorig=(int(floorf(p0.z))*dimlen.y+int(floorf(p0.y))*dimlen.x+int(floorf(p0.x)));
          param.mediaidorig=(cfg->vol[param.idx1dorig] & MED_MASK);
      }
-     memcpy(&(param.bc),cfg->bc,8);
+     memcpy(&(param.bc),cfg->bc,12);
      Vvox=cfg->steps.x*cfg->steps.y*cfg->steps.z; /*Vvox: voxel volume in mm^3*/
      if(cfg->seed>0)
      	srand(cfg->seed+threadid);
@@ -2341,18 +2351,20 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
            }
            tic0=GetTimeMillis();
+#ifdef _WIN32
 #pragma omp master
 {
            if(cfg->debuglevel & MCX_DEBUG_PROGRESS)
                CUDA_ASSERT(cudaEventCreate(&updateprogress));
 }
+#endif
            MCX_FPRINTF(cfg->flog,"simulation run#%2d ... \n",iter+1); fflush(cfg->flog);
            mcx_flush(cfg);
 
            int ispencil=(cfg->srctype==MCX_SRC_PENCIL);
 	   int isref=cfg->isreflect;
 	   for(i=0;i<6;i++)
-	       if(cfg->bc[i]==1)
+	       if(cfg->bc[i]==bcReflect || cfg->bc[i]==bcMirror)
 	           isref=1;
 	   switch(ispencil*100 + (isref>0)*10+(cfg->mediabyte<=4)){
 	       case 0:  mcx_main_loop<0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,gprogress);break;
@@ -2368,14 +2380,14 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 {
            if((param.debuglevel & MCX_DEBUG_PROGRESS)){
 	     int p0 = 0, ndone=-1;
-//#ifndef WIN32
-//             CUDA_ASSERT(cudaEventRecord(updateprogress));
-//#endif
+#ifdef _WIN32
+             CUDA_ASSERT(cudaEventRecord(updateprogress));
+#endif
 	     mcx_progressbar(-0.f,cfg);
 	     do{
-//#ifndef WIN32
-//               CUDA_ASSERT(cudaEventQuery(updateprogress));
-//#endif
+#ifdef _WIN32
+               cudaEventQuery(updateprogress);
+#endif
                ndone = *progress;
 	       if (ndone > p0){
 		  mcx_progressbar(ndone/((param.threadphoton>>1)*4.5f),cfg);

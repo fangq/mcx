@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=MCX Previewer
+Name[zh_CN]=MCX模拟预览器
+Name[zh_TW]=MCX模擬預覽器
+Comment=Start MCX Previewer
+Comment[zh_CN]=启动MCX模拟预览器
+Comment[zh_TW]=啟動MCX模擬預覽器
+Exec=mcxshow
+TryExec=mcxshow
+Icon=/usr/share/icons/mcx/scalable/preview.svg
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Education;Science;DataVisualization;MedicalSoftware;
+Keywords=Monte Carlo;MCX;MMC;OpenGL;NIfTI;Rendering;3D;JSON

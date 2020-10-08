@@ -28,6 +28,7 @@ or
 to specify a different photon number
 
 === Reference ===
-[Yao&Yan2019] Ruoyang Yao, Shijie Yan, Xavier Intes, Qianqian Fang,  
-"Accelerating Monte Carlo forward model with structured light illumination via 'photon sharing'," 
-Photonics West 2019, paper#10874-11, San Francisco, CA, USA.
+[Yan2020] Shijie Yan, Ruoyang Yao, Xavier Intes, and Qianqian Fang, "Accelerating 
+Monte Carlo modeling of structured-light-based diffuse optical imaging via 
+'photon sharing'," Opt. Lett. 45, 2842-2845 (2020)
+URL: https://www.biorxiv.org/content/10.1101/2020.02.16.951590v2

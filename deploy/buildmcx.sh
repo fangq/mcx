@@ -109,9 +109,9 @@ g++ -c  -I/usr/local/cuda/include -I/usr/local/MATLAB/R2010b/extern/include \
 
 g++ -O -pthread -shared -Wl,--version-script,/usr/local/MATLAB/R2010b/extern/lib/glnxa64/mexFunction.map \
 -Wl,--no-undefined -fopenmp  -o  "../mcxlab/mcx.mexa64"   "mcx_core.o"  \
-"mcx_utils.o"  "mcx_shapes.o"  "tictoc.o"  "mcextreme.o"  "cjson/cJSON.o" \
+"mcx_utils.o"  "mcx_shapes.o"  "tictoc.o"  "mcextreme.o"  "cjson/cJSON.o" libzmat.a "ubj/ubjw.o" \
 ../mcxlab/mcxlab.o  -L/usr/local/cuda/lib64 -lcudadevrt -lcudart_static -ldl \
--lrt -Wl,-Bstatic -lm -static-libgcc -static-libstdc++ -Wl,-Bdynamic \
+-lrt -Wl,-Bstatic -lm -static-libgcc -static-libstdc++ -Wl,-Bdynamic -lz \
 -Wl,-rpath-link,/usr/local/MATLAB/R2010b/bin/glnxa64 \
 -L/usr/local/MATLAB/R2010b/bin/glnxa64 -lmx -lmex -lmat \
 -L/usr/local/MATLAB/R2010b/sys/os/glnxa64
@@ -128,13 +128,13 @@ DYLD_LIBRARY_PATH="" g++ -static-libgcc -static-libstdc++ -O -Wl,-twolevel_names
 -Wl,-syslibroot,/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.5 \
 -bundle -Wl,-exported_symbols_list,/Applications/MATLAB_R2016a.app/extern/lib/maci64/mexFunction.map \
 -L/Applications/MATLAB_R2016a.app/bin/maci64 -lmx -lmex -L/usr/lib -fopenmp \
--o "../mcxlab/mcx.mexmaci64" "mcx_core.o" "mcx_utils.o" "mcx_shapes.o" "tictoc.o" \
-"mcextreme.o" "cjson/cJSON.o" ../mcxlab/mcxlab.o /opt/local/lib/gcc49/libgomp.a \
--L/usr/local/lib/ -L/usr/local/cuda/lib -lcudadevrt -lcudart_static -ldl -lm \
+-o "../mcxlab/mcx.mexmaci64" "mcx_core.o" "mcx_utils.o" "mcx_shapes.o" "tictoc.o" libzmat.a \
+"mcextreme.o" "cjson/cJSON.o" "ubj/ubjw.o" ../mcxlab/mcxlab.o /opt/local/lib/gcc49/libgomp.a \
+-L/usr/local/lib/ -L/usr/local/cuda/lib -lcudadevrt -lcudart_static -ldl -lm -lz \
 -L/Applications/MATLAB_R2016a.app/bin/maci64 -lmx -lmex
 
 elif [ "$OS" == "win" ]; then
-    cmd /c mex mcx_core.obj mcx_utils.obj mcx_shapes.obj tictoc.obj mcextreme.obj cjson/cJSON.obj -output ../mcxlab/mcx -L"E:\Applications\CUDA7.5\CUDA7.5/lib/x64" -lcudadevrt -lcudart_static  CXXFLAGS='$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER /openmp  ' LDFLAGS='-L$TMW_ROOT$MATLABROOT/sys/os/$ARCH $LDFLAGS /openmp ' mcxlab.cpp -outdir ../mcxlab -I/usr/local/cuda/include -I"E:\Applications\CUDA7.5\CUDA7.5/lib/include" -DUSE_XORSHIFT128P_RAND
+    cmd /c mex mcx_core.obj mcx_utils.obj mcx_shapes.obj tictoc.obj mcextreme.obj mcx_bench.obj cjson/cJSON.obj ubj/ubjw.obj libzmat.a -output ../mcxlab/mcx -L"E:\Applications\CUDA7.5\CUDA7.5/lib/x64" -lcudadevrt -lcudart_static  CXXFLAGS='$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER /openmp  ' LDFLAGS='-L$TMW_ROOT$MATLABROOT/sys/os/$ARCH $LDFLAGS /openmp ' mcxlab.cpp -outdir ../mcxlab -I/usr/local/cuda/include -I"E:\Applications\CUDA7.5\CUDA7.5/lib/include" -DUSE_XORSHIFT128P_RAND -lzlib
     echo "Windows mcx build"
     cd ../mcxlab
     upx -9 mcx.mexw64
@@ -143,6 +143,11 @@ fi
 
 make clean
 make oct  >>  ../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
+
+if [ "$OS" == "linux" ]
+then
+	make oct BACKEND=cudastatic >>  ../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
+fi
 
 mexfile=(../mcxlab/mcx.mex*)
 
@@ -180,7 +185,7 @@ fi
 
 cd ../
 
-cp $BUILDROOT/dlls/*.dll ../mmclab
+cp $BUILDROOT/dlls/zlib.dll ../mcxlab
 cd ..
 zip -FSr $BUILDROOT/mcxlab-${TAG}.zip mcxlab
 cd src
@@ -192,7 +197,7 @@ make clean
 
 if [ "$OS" == "linux" ]
 then
-    make AR=g++ BACKEND=cudastatic USERLINKOPT='-Wl,-Bstatic -lgomp -Wl,-Bdynamic' &> $BUILDROOT/mcx_buildlog_${DATE}.log
+    make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -lz -Wl,-Bstatic -lgomp -Wl,-Bdynamic' &> $BUILDROOT/mcx_buildlog_${DATE}.log
 elif [ "$OS" == "osx" ]; then
     make BACKEND=cudastatic  &> $BUILDROOT/mcx_buildlog_${DATE}.log
 else
@@ -220,6 +225,12 @@ then
 	cp -a debug/mcxstudio.app ../bin
 	cp -a mcxshow.app   ../bin
 	cp -a mcxviewer.app ../bin
+
+	cat <<EOF > ../MAC_USER_PLEASE_RUN_THIS_FIRST.sh
+#/bin/sh
+xattr -dr com.apple.quarantine *
+EOF
+	chmod +x MAC_USER_PLEASE_RUN_THIS_FIRST.sh
 fi
 
 cd ../bin
@@ -253,7 +264,13 @@ then
 	rm -rf mcx/AUTO_BUILD_${DATE}.log
 fi
 
-zip -FSr mcx-${TAG}.zip mcx
+
+if [ "$OS" == "win" ]
+then
+   zip -FSr mcx-${TAG}.zip mcx
+else
+   zip -FSry mcx-${TAG}.zip mcx
+fi
 
 mv mcx-${TAG}.zip $BUILDROOT
 

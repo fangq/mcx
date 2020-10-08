@@ -83,6 +83,14 @@ function varargout=mcxlab(varargin)
 %                      'a': like cfg.isreflect=0, total absorption BC
 %                      'm': mirror or total reflection BC
 %                      'c': cyclic BC, enter from opposite face
+%
+%                      in addition, cfg.bc can contain up to 12 characters,
+%                      with the 7-12 characters indicating bounding box
+%                      facets -x,-y,-z,+x,+y,+z are used as a detector. The 
+%                      acceptable characters for digits 7-12 include
+%                      '0': this face is not used to detector photons
+%                      '1': this face is used to capture photons (if output detphoton)
+%                      see <demo_bc_det.m>
 %      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
 %      cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
 %      cfg.maxgate:    the num of time-gates per simulation
@@ -345,31 +353,43 @@ if(isstruct(varargin{1}))
                 varargin{1}(i).vol=varargin{1}(i).vol*varargin{1}(i).unitinmm;
             end
         end
-	if(isfield(varargin{1}(i),'detphotons') && isstruct(varargin{1}(i).detphotons))
-	    if(isfield(varargin{1}(i).detphotons,'data'))
-	        varargin{1}(i).detphotons=varargin{1}(i).detphotons.data;
-	    else
-	        fulldetdata={'detid','nscat','ppath','mom','p','v','w0'};
-	        detfields=ismember(fulldetdata,fieldnames(varargin{1}(i).detphotons));
-		detdata=[];
-		for j=1:length(detfields)
-		    if(detfields(j))
+        if (~isfield(varargin{1}(i),'tstart'))
+            varargin{1}(i).tstart=0;
+        end
+        if (~isfield(varargin{1}(i),'tend'))
+            error('you must define cfg.tend for the maximum time-of-flight of a photon in seconds');
+        end
+        if (~isfield(varargin{1}(i),'tstep'))
+            varargin{1}(i).tstep=varargin{1}(i).tend;
+        end
+        if (~isfield(varargin{1}(i),'srcpos'))
+            error('you must define cfg.srcpos to defin the x/y/z position of the source in voxel unit');
+        end
+        if(isfield(varargin{1}(i),'detphotons') && isstruct(varargin{1}(i).detphotons))
+            if(isfield(varargin{1}(i).detphotons,'data'))
+                varargin{1}(i).detphotons=varargin{1}(i).detphotons.data;
+            else
+                fulldetdata={'detid','nscat','ppath','mom','p','v','w0'};
+                detfields=ismember(fulldetdata,fieldnames(varargin{1}(i).detphotons));
+                detdata=[];
+                for j=1:length(detfields)
+                    if(detfields(j))
                         val=typecast(varargin{1}(i).detphotons.(fulldetdata{j})(:),'single');
-		        detdata=[detdata reshape(val,size(varargin{1}(i).detphotons.(fulldetdata{j})))];
-		    end
-		end
-		varargin{1}(i).detphotons=detdata';
-		varargin{1}(i).savedetflag='dspmxvw';
-		varargin{1}(i).savedetflag(detfields==0)=[];
-	    end
+                        detdata=[detdata reshape(val,size(varargin{1}(i).detphotons.(fulldetdata{j})))];
+                    end
+                end
+                varargin{1}(i).detphotons=detdata';
+                varargin{1}(i).savedetflag='dspmxvw';
+                varargin{1}(i).savedetflag(detfields==0)=[];
+            end
         end
     end
 end
 
 if(useopencl==0)
-    [varargout{1:nargout}]=mcx(varargin{1});
+    [varargout{1:max(1,nargout)}]=mcx(varargin{1});
 else
-    [varargout{1:nargout}]=mcxcl(varargin{1});
+    [varargout{1:max(1,nargout)}]=mcxcl(varargin{1});
 end
 
 if(nargin==0)

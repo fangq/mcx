@@ -1,0 +1,154 @@
+#!/usr/bin/perl
+###############################################################################
+#
+# Unified command line interface for MCX/MMC/MCXCL
+#
+# Author:  Qianqian Fang <q.fang at neu.edu>
+# License: GPLv3
+# Version: 0.5 (v2020)
+# Github:  https://github.com/fangq/mcx/
+#
+###############################################################################
+#
+# Dependencies:
+#
+# For Linux and Mac OS: no additional package is needed, Perl is supported by default
+#
+# For Windows: please install cygwin64 (http://cygwin.com/) or MSYS2 (http://msys2.org/)
+#
+# Specifically, this script requires Perl 5.x and curl (if curl is not install 
+# in the path, photon looks for the LWP::UserAgent and LWP::Simple perl modules.
+#
+# How to use:
+#    type "photon --help" to see the format
+#
+###############################################################################
+
+use strict;
+use warnings;
+use JSON::PP;
+
+my $EXEPATH="/usr/libexec";
+my %cmd=("mcx"=>"$EXEPATH/mcx","mcxcl"=>"mcxcl","mmc"=>"$EXEPATH/mmc");
+
+my @mmconly=("--method","--gridsize","--mc","--basisorder","-C","--compute","-c");
+my @isopencl=("--compileopt","-J","--optlevel","-o","--kernel","--showkernel");
+my @forcecmd=("-mcx","-mcxcl","-mmc","--mcx","--mcxcl","--mmc");
+my $isforced=0;
+
+# parse commandline options
+my $key="mcx";
+my $usecuda=1;
+
+if(@ARGV==0 || grep(/--info/,@ARGV)){
+    &printhelp;
+}
+
+foreach my $exename (keys %cmd){
+    if(! (-x $cmd{$exename})){
+        if(-x $ENV{"HOME"}."/bin/$exename"){
+	    $cmd{$exename}=$ENV{"HOME"}."/bin/$exename";
+	}else{
+            $cmd{$exename}="";
+	}
+    }
+}
+
+my @mcxopt=@ARGV;
+
+while(my $opt = $ARGV[0]) {
+    if($opt =~ /^-[-a-zA-Z]/){
+        if($opt eq '-f' || $opt eq '--input'){
+		shift;
+		my $infile=shift;
+		open my $fh, '<', $infile or die "error opening $infile: $!";
+		my $input = do { local $/; <$fh> };
+		close($fh);
+
+		if($infile =~ /\.json$/i){
+		    my $json = JSON::PP->new;
+		    $json->loose(1);
+		    my %jsondata = %{ $json->decode($input) };
+		    if($jsondata{'Mesh'} ne "" && $jsondata{'Mesh'}{"MeshID"} ne ""){
+		        $key="mmc";
+			last;
+		    }
+		}elsif($infile =~ /\.inp$/i){
+		    my @userdata=split(/\n/,$input);
+		    if(@userdata>6 && $userdata[5] =~/^[^\.]+\s/){
+		        $key="mmc";
+			last;
+		    }
+		    if(@userdata>7 && $userdata[6] =~/^\s*\d+\s*(#.*)*$/){
+		        $key="mmc";
+			last;
+		    }
+		}
+		next;
+	}elsif(grep(/^$opt$/, @mmconly)){
+		$key="mmc";
+		last;
+	}elsif(grep(/^$opt$/, @isopencl)){
+		$usecuda=0;
+	}elsif(grep(/^$opt$/, @forcecmd)){
+		if($opt =~ /^--([mcxl]+)/){
+		    $key=$1;
+		    $isforced=1;
+		    @mcxopt = grep !/$opt/, @mcxopt;
+		    last;
+		}
+	}
+    }
+    shift;
+}
+
+if($key ne 'mmc' && $usecuda==1 && $isforced==0){
+    my @listgpu=`$cmd{'mcx'} --listgpu`;
+    if(grep(/^Compute Capability/,@listgpu)){
+	$key="mcx";
+    }else{
+	$key="mcxcl";
+    }
+}
+
+if($cmd{$key} eq ''){
+    die("executable $key is not installed");
+}
+
+print "Photon - 3D Monte Carlo photon transport simulator based on MCX/MMC/MCXCL\n".
+      ('=' x 79)."\n".
+      "author: Qianqian Fang <q.fang at neu.edu>\n".
+      "web:    http://mcx.space\n".
+      "status: Based on user inputs, simulator '$key' located at '$cmd{$key}' is selected\n";
+
+system($cmd{$key}, @mcxopt) && die("failed to run my $cmd{$key}");
+
+#-------------------------------------------------------------------------------
+sub printhelp{
+    printf("=================================================================
+Photon - a unified command line interface for MCX/MMC/MCXCL
+author: Qianqian Fang <q.fang at neu.edu>
+web:    http://mcx.space
+=================================================================
+
+	Format: %s <option1> <option2> ...
+
+The supported options are fully compatible with those from MCX/MMC/MCXCL. Photon
+determines which of the simulators among mcx/mmc/mcxcl based on a set of simple 
+tests, the selected simulator and their conditions are listed below
+
+mmc\t - when the input .json file contains 'Mesh' or 'MeshID' elements
+	   or when the input .inp file contains a mesh file stub without suffix in line#6
+	   or when the input .inp file contains a single integer on line#7
+	   or one of %s is used
+mcxcl\t - when input does not contain mesh data
+	   and when one of %s is used
+	   and mcx -L failed to list any CUDA devices
+mcx (default)\t - when input does not contain mesh data, 
+	   and when mcx -L output valid CUDA devices
+	   
+One can append --mcx, --mcxcl and --mmc to force photon to call one of the simulators\n",
+		$0,join(", ",@mmconly),join(", ",@isopencl));
+    exit 0;
+
+}

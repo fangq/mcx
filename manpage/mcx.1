@@ -1,6 +1,6 @@
 .\" Manpage for mcx.
 .\" Contact fangqq@gmail.com to correct errors or typos.
-.TH man 7 "1 July 2020" "v2020" "Monte Carlo eXtreme (MCX) man page"
+.TH man 7 "23 August 2020" "v2020" "Monte Carlo eXtreme (MCX) man page"
 .SH NAME
 mcx \- a GPU-accelerated 3-D photon transport simulator
 .SH SYNOPSIS
@@ -54,8 +54,27 @@ with '.inp', it is in the legacy format. If the file name contains space, one
 must use quotation marks to quote the full file name. In Windows, the quotation 
 must be double quote (""). In Linux or Mac, either single or double quotation 
 mark works.
+
 If this flag is followed by an inline JSON string, such as -f '{...}', the 
 parameter is parsed as an "inline JSON input file".
+.TP
+\fB--bench  <A string>\fR
+.TP
+Use --bench to list all built-in benchmarks. As of MCX v2020, these benchmarks include
+     cube60
+     cube60b
+     cube60planar
+     skinvessel
+     sphshell
+     spherebox
+     colin27
+One can execute one of the built-in benchmarks by following the benchmark name, such as
+    --bench skinvessel
+
+The default settings in each built-in benchmark can be overwritten by the additional 
+command line flags, such as --bench cube60 -n 1e8 runs 1e8 photons instead of the 
+default 1e6. Use --bench name --dumpjson to export the benchmark as a standalone JSON 
+input file.
 
 .TP
 \fB=========== MC options =========== 
@@ -97,10 +116,23 @@ based on the Fresnel's equation.
 By default, mcx considers refractive index mismatch at the boundaries.
 
 .TP
-\fB-B/--reflectin   <0 or 1, if ignored, assumed to be 1> \fR(*depreciated)
+\fB-B/--bc  <a string up to 12 characters, default '______000000'> \fR
 
-1 to reflect photons at int. boundary; 0 do not
+The --bc option describes per-face boundary condition (BC). The first 6 letters 
+defines the boundary condition for bounding box faces at -x,-y,-z,+x,+y,+z axes; overwrite -b if given.
+The first 6 letters can be one of the following:
+    '_': undefined, fallback to -b
+    'r': like -b 1, Fresnel reflection BC
+    'a': like -b 0, total absorption BC
+    'm': mirror or total reflection BC
+    'c': cyclic BC, enter from opposite face
 
+if input contains additional 6 letters, the 7th-12th letters can be:
+    '0': do not use this face to detect photon, or
+    '1': use this face for photon detection (-d 1)
+the order of the faces for letters 7-12 is the same as the first 6 letters
+
+For example: --bc ______010 saves photons exiting at plane y=0
 .TP
 \fB-u/--unitinmm  <a floating point number>\fR
 Use -u to set the voxel size in mm.   
@@ -112,7 +144,7 @@ mm^3, then, one should use '-u 0.1' in the command line.
 Only isotrpic voxels are currently supported by mcx.
 
 .TP
-\fB-U/--normalize  <0 or 1, if ignored, assumed to be 1>\fR
+\fB-U/--normalize  <0,1,2, if ignored, assumed to be 1>\fR
 Use -U to enable or disable solution normalization.   
     '-U' or '-U 1' to 
 enable (default) or '-U 0' to disable
@@ -121,6 +153,11 @@ For fluence, the normalization aims to generate a 'Green's function'. For other
 qualities, the normalization produces a stable solution by removing the 
 dependency due to total photon numbers, voxel sizes, and time-gate settings. 
 The detailed equations are explained in the MCX paper.
+
+If one sets -U 2, the normalization is only applied to the fluence in the 
+interior voxels, and does not apply to the diffuse reflectance (as negative 
+numbers in the raw output volume) along the air voxels right outside of the 
+non-zero voxels.
 
 .TP
 \fB-E/--seed  <An integer or a string>\fR
@@ -195,7 +232,7 @@ replays the detected photons from the specified detector. See -E for more
 details.
 
 .TP
-\fB-P/--shapes  <A string>\fR
+\fB-P/--shapes  <A JSON string>\fR
 Use the -P option to dynamically define heterogeneities from the command line. 
 The -P flag is followed by a JSON-formatted string. For example
     -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}' 
@@ -205,25 +242,48 @@ slices 11-30 is filled with label 2, and 31-60 is filled with label 3.
 The shape definition always starts an array object named 'Shapes'. Each element 
 in the 'Shapes' object defines a primitive object. The supported primitives 
 include 
-Name/Origin/Grid/Sphere/Box/Subgrid/{XYZ}Layers/{XYZ}Slabs/Cylinder/UpperSpace. 
+Name, Origin, Grid, Sphere, Box, Subgrid, {XYZ}Layers, {XYZ}Slabs, Cylinder, UpperSpace. 
 Most objects have a sub-field 'Tag', specifying the tissue label (index to the 
 property list). The details of the Shapes objects can be found in this link
 
 .TP
-\fB-N/--reseed   <An integer> (*depreciated)\fR
- 
-number of scattering events before reseeding RNG
+\fB-j / --json  <A JSON string>\fR
+Use the -j option to dynamically define simulation parameters to overwrite/modify 
+the default settings as specified in the .inp/.json file provided after the -f 
+flag. The -j flag is followed by a JSON-formatted string. The format of the JSON 
+construct is the same as in an MCX JSON input file. For example
+
+    -j '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' 
+
+This changes the source type, whatever it was defined in the input file, to 
+"fourier" source, and sets the source parameter 1 to [40,0,0,2] while keeping 
+everything else unchanged.
+
+if -f, -j, -P and other parameters (such as -n, -S ...) all present in the 
+command line, the priorities are
+
+    all other command line flags > -j > -P > -f
+
+where the settings in -n/-S/-d/... overwrite the settings in -j, which also 
+overwrites the input file in -f
 
 .TP
-\fB-F/--faststep   <0 or 1, if ignored, assumed to be 1>\fR (*depreciated)
- 
-1-use fast 1mm stepping, [0]-precise ray-tracing
+\fB-K / --mediabyte  <A number or a string>\fR
+This flag defines the volumetric input data format. Use either a number or a string 
+from below list
+     1 or byte: 0-128 tissue labels
+     2 or short: 0-65535 (max to 4000) tissue labels
+     4 or integer: integer tissue labels
+     100 or muamus_float: 2x 32bit floats for mua/mus
+     101 or mua_float: 1 float per voxel for mua
+     102 or muamus_half: 2x 16bit float for mua/mus
+     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n
+     104 or muamus_short: 2x short gray-levels for mua/s
 
 .TP
 \fB-e/--minenergy  <A floating point number>\fR
 Use -e to set the min photon packet weight to trigger Russian Roulette.   
     -e f    // where f is a floating point number between 0 and 1.
-
 
 .TP
 \fB-g/--gategroup  <A positive integer>\fR
@@ -260,7 +320,7 @@ array; while for a C array, it is the right-most index.
 Use the -L flag to list all available GPUs on your system without running the 
 simulation. For example 
     $mcx -L
-    =========================   GPU Infomation  ============================
+    =========================   GPU Information  ============================
     Device 1 of 2:		GeForce GTX 980 Ti
     Compute Capability:	5.2
     Global Memory:		2147287040 B
@@ -271,7 +331,7 @@ simulation. For example
     Number of MPs:		22
     Number of Cores:	2816
     SMX count:		22
-    =========================   GPU Infomation  ============================
+    =========================   GPU Information  ============================
     Device 2 of 2:		GeForce GT 730
     Compute Capability:	3.5
     Global Memory:		1073545216 B
@@ -379,6 +439,26 @@ When this option is enabled, a binary file, with a suffix of .mch, will be
 produced in additional to the '.mc2' output. The .mch file contains the partial 
 path data for all photons enters the aperatures of the detectors.
 
+
+.TP
+\fB-w/--savedetflag <a string or number, if ignored, assumed to be 'dp'>\fR
+A case-insensitive string controlling the presence of each detected photon 
+data fields. The presence of a letter denotes that the corresponding detected 
+photon data is saved, otherwise, it is not saved. The below list shows all 
+supported data fields (the data columns of each field is shown in the parentheses)
+
+     1 D output detector ID (1)
+     2 S output partial scat. even counts (#media)
+     4 P output partial path-lengths (#media)
+     8 M output momentum transfer (#media)
+     16 X output exit position (3)
+     32 V output exit direction (3)
+     64 W output initial weight (1)
+
+For example, -w dspmxvw asks mcx to save all supported field. If a domain 
+contains 2 tissue types (#media=2), this results in a 2D floating point array 
+made of 14 columns and #detected photon rows.
+
 .TP
 \fB-x/--saveexit  <0 or 1, if ignored, assumed to be 1>\fR
 1 to save photon exit positions and directions
@@ -437,12 +517,45 @@ supported formats include
 
 
 .TP
-\fB-F/--outputformat  <A string>\fR
+\fB-F/--outputformat  <A string, if ignored, set 'mc2'>\fR
 Use -F to specify the volumetric data output format:
     mc2 - MCX mc2 format (binary 32bit float) (default)
     nii - Nifti format (fluence after taking log10())
+    jnii - JNIfTI format (http://openjdata.org)
+    bnii - Binary JNIfTI (http://openjdata.org)
     hdr - Analyze 7.5 hdr/img format
-    ubj - universal binary JSON format (currently not supported yet)
+    tx3 - GL texture data for rendering (GL_RGBA32F)
+
+the bnii/jnii formats support compression (-Z) and generate small files
+load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
+    MATLAB/Octave: JNIfTI toolbox https://github.com/fangq/jnifti,
+    MATLAB/Octave: JSONLab toolbox https://github.com/fangq/jsonlab,
+    Python: PyJData: https://pypi.org/project/jdata
+    JavaScript: JSData: https://github.com/fangq/jsdata
+
+.TP
+\fB-Z/--zip  <A string, if ignored, assume to be 'zlib'>\fR
+Set compression method if -F jnii or --dumpjson is used (when saving data to JSON/JNIfTI format)
+must be 0-6 or one of 'zlib', 'gzip','base64','lzip','lzma','lz4' or 'lz4hc', case insensitive
+    0 zlib: zip format (moderate compression,fast)
+    1 gzip: gzip format (compatible with *.gz)
+    2 base64: base64 encoding with no compression
+    3 lzip: lzip format (high compression,very slow)
+    4 lzma: lzma format (high compression,very slow)
+    5 lz4: LZ4 format (low compression,extrem. fast)
+    6 lz4hc: LZ4HC format (moderate compression,fast)
+
+.TP
+\fB--dumpjson  <A file name or number, if ignored, assume to be '-'>\fR
+Must be a number (1-3), empty, '-' or a file name
+Export all settings,including volume data using JSON/JData (http://openjdata.org) 
+format for easy sharing; can be reused using -f
+
+if followed by nothing or '-', mcx will print the JSON to the console; 
+write to a file if file name is specified; 
+by default, prints settings after pre-processing; 
+--dumpjson 2 prints raw inputs before pre-processing
+--dumpjson 3 prints raw inputs after pre-processing
 
 .TP
 \fB=========== User IO options =========== 

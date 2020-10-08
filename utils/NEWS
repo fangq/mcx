@@ -1,0 +1,58 @@
+= Change Log =
+
+Major updates are marked with a "*"
+
+== MCXLAB v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
+
+ 2020-03-08 [0be6448] enable camlight in mcxplotvol
+ 2019-11-21 [084a7d1] consider unitinmm in meanpath function
+ 2019-11-19 [c0aad14] use detp.prop and detp.unitinmm if present, #83
+ 2019-11-19 [1c07b16] scale partial-path when getting det photon time and weight, close #83
+ 2019-11-06 [b7f0338] further fix the detflag handling problem reported by Maxime Baillot in #82
+ 2019-11-05 [a68c97d] revert the previous change, use a more robust condition,fix #82, again
+ 2019-11-05 [72851a8] remove the unneeded condition when converting ppath in loadmch.m, fix #82
+ 2019-07-29 [5fbe79f] print matlab commands for plotting
+ 2019-06-25 [4985db6] fix incorrect indexing, #73
+ 2019-06-24 [d3f3922] additional changes due to flexible savedetflag detected photon data format, fix #73
+
+== MCXLAB v2019.4 and earlier (Ether Dome), FangQ <q.fang (a) neu.edu> ==
+
+ 2019-04-22 [5e0f0c5] add title to mcxplotvol window
+ 2019-04-10 [ada0b8e] support -w / --savedetflag to specify which det photon data to output
+ 2019-02-23 [ae9443f] copy detected photon post-processing scripts from mmc to mcx
+ 2019-02-23 [19e88b0] add function to convert fluence and energy deposition
+ 2019-02-13 [2cc1603] fix load_mch error, update help info, fix #61
+ 2018-12-03 [dc594dc] initial support for photon sharing - simultaneous forward for multiple src
+ 2018-11-07 [5339563] add help info for the new detphoton fields
+ 2018-10-06 [7b78146] add author info, modify load_mch
+ 2018-08-15 [6d03a55] change loadmch default format
+ 2018-08-14 [e99e5ef] saving photon trajectory in command line, add plotting function, bump limit to 1e7
+ 2018-05-19 [d28c36e] use load_nii compatible output, make sure nii is read-only
+ 2018-05-19 [78ee1ec] add built-in loadnii support
+ 2018-05-19 [7f1b574] positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
+ 2018-04-07 [b537309] complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
+ 2018-03-25 [c633d87] give an error if the executable is not found
+ 2018-03-22 [9844842] fix minor bugs in mcxplotvol
+ 2018-03-21 [9769f8a] move help info from title to a help button
+ 2017-07-30 [658906d] display total frame count in mcxplotvol
+ 2017-07-27 [08014e3] support multiple time gates in mcxplotvol
+ 2017-07-25 [2ed5363] add context help file for mcxstudio, support matlab for plotting
+ 2017-07-25 [44dcfb3] add plotting functions for mcx
+ 2016-10-09 [5905e0b] record diffuse reflectance on the air voxels outside of domain boundaries, close #6
+ 2016-10-09 [39038bf] save detected photon position and direction using -x 1, close #16
+ 2016-04-07 [dabdb0a] update documentation for 2016.4 release
+ 2015-06-10 [3c8a116] accept endianness input
+ 2013-08-29 [5d600e7] update loadmch to load mmc output; adjust makefile for newer gcc
+ 2012-07-06 [5dd3b15] cwdiffusion minor update
+ 2011-03-18 [fe8d891] massive update of documentation
+ 2011-03-10 [67a1bda] store MCXLAB in a top-level folder
+ 2011-03-10 [222e579] mcxlab support output parameters, add Octave support with make oct
+ 2010-08-15 [10b3222] add make mex in the Makefile
+ 2010-08-10 [7d130db] add demo for mcxlab
+ 2010-08-02 [d972c5e] fix bugs when saving multiple blocks of mch, update loadmch, update GUI
+ 2010-07-29 [a4f157f] __CUDA_ARCH__ is only available in device kernels
+ 2010-07-29 [b946f7a] print MCX compilation parameters, return struct for loadmch
+ 2010-07-28 [db747e3] modularize photon saving at the detector
+ 2010-07-28 [a7d65b6] use column major as the internal format, remove all index order tests
+ 2010-07-27 [ebd8943] support saving detected photons, but got 20% slower
+ 2009-12-03 [88953c3] add help text for all matlab scripts

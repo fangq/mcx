@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2018
+**  \copyright Qianqian Fang, 2009-2020
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -71,11 +71,7 @@
 /**<  Macro to output GPU parameters as field */
 #define SET_GPU_INFO(output,id,v)  mxSetField(output,id,#v,mxCreateDoubleScalar(gpuinfo[i].v));
 
-#if (! defined MX_API_VER) || (MX_API_VER < 0x07300000)
-      typedef int dimtype;                              /**<  MATLAB before 2017 uses int as the dimension array */
-#else
-      typedef size_t dimtype;                           /**<  MATLAB after 2017 uses size_t as the dimension array */
-#endif
+typedef mwSize dimtype;
 
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg);
 void mcx_validate_config(Config *cfg);
@@ -727,7 +723,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         cfg->srcpattern=(float*)malloc(arraydim[0]*arraydim[1]*dimz*sizeof(float));
         for(i=0;i<arraydim[0]*arraydim[1]*dimz;i++)
              cfg->srcpattern[i]=val[i];
-        printf("mcx.srcpattern=[%d %d %d];\n",arraydim[0],arraydim[1],dimz);
+        printf("mcx.srcpattern=[%ld %ld %ld];\n",arraydim[0],arraydim[1],dimz);
     }else if(strcmp(name,"shapes")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
@@ -738,7 +734,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         jsonshapes[len]='\0';
     }else if(strcmp(name,"bc")==0){
         int len=mxGetNumberOfElements(item);
-        if(!mxIsChar(item) || len==0 || len>7)
+        if(!mxIsChar(item) || len==0 || len>12)
              mexErrMsgTxt("the 'bc' field must be a non-empty string");
 
         mxGetString(item, cfg->bc, len+1);
@@ -750,7 +746,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	dimdetps[1]=arraydim[1];
         detps=(float *)malloc(arraydim[0]*arraydim[1]*sizeof(float));
         memcpy(detps,mxGetData(item),arraydim[0]*arraydim[1]*sizeof(float));
-        printf("mcx.detphotons=[%d %d];\n",arraydim[0],arraydim[1]);
+        printf("mcx.detphotons=[%ld %ld];\n",arraydim[0],arraydim[1]);
     }else if(strcmp(name,"seed")==0){
         arraydim=mxGetDimensions(item);
         if(MAX(arraydim[0],arraydim[1])==0)
@@ -803,7 +799,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	     mexErrMsgTxt("the workload list can not be longer than 256");
 	for(i=0;i<arraydim[0]*arraydim[1];i++)
 	     cfg->workload[i]=val[i];
-        printf("mcx.workload=<<%d>>;\n",arraydim[0]*arraydim[1]);
+        printf("mcx.workload=<<%ld>>;\n",arraydim[0]*arraydim[1]);
     }else{
         printf(S_RED "WARNING: redundant field '%s'\n" S_RESET,name);
     }
@@ -881,8 +877,9 @@ void mcx_replay_prep(Config *cfg){
  */
 
 void mcx_validate_config(Config *cfg){
-     int i,gates,idx1d;
+     int i,gates,idx1d, isbcdet=0;
      const char boundarycond[]={'_','r','a','m','c','\0'};
+     const char boundarydetflag[]={'0','1','\0'};
      unsigned int partialdata=(cfg->medianum-1)*(SAVE_NSCAT(cfg->savedetflag)+SAVE_PPATH(cfg->savedetflag)+SAVE_MOM(cfg->savedetflag));
      unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
 
@@ -938,12 +935,27 @@ void mcx_validate_config(Config *cfg){
         if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   mexErrMsgTxt("unknown boundary condition specifier");
 
+     for(i=6;i<12;i++){
+        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
+	   mexErrMsgTxt("unknown boundary detection flags");
+	if(cfg->bc[i])
+	   isbcdet=1;
+     }
+
      if(cfg->medianum){
         for(i=0;i<cfg->medianum;i++)
              if(cfg->prop[i].mus==0.f){
 	         cfg->prop[i].mus=EPS;
 		 cfg->prop[i].g=1.f;
 	     }
+     }
+     if(cfg->vol && cfg->mediabyte <= 4){
+         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+	 unsigned int maxlabel=0;
+         for(uint i=0;i<fieldlen;i++)
+	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
+	 if(cfg->medianum<=maxlabel)
+	     mexErrMsgTxt("input media optical properties are less than the labels in the volume");
      }
      if(cfg->unitinmm!=1.f){
         cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
@@ -952,7 +964,7 @@ void mcx_validate_config(Config *cfg){
 		cfg->prop[i].mua*=cfg->unitinmm;
         }
      }
-     if(cfg->issavedet && cfg->detnum==0) 
+     if(cfg->issavedet && cfg->detnum==0 && isbcdet==0)
       	cfg->issavedet=0;
      if(cfg->issavedet==0){
          cfg->issaveexit=0;

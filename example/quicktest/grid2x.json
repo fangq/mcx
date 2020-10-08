@@ -1,0 +1,71 @@
+{
+	"Session":	{
+		"ID":	"grid2x",
+		"Photons":	10000000,
+		"RNGSeed":	1648335518,
+		"DoMismatch":	false,
+		"DoSaveVolume":	true,
+		"DoNormalize":	true,
+		"DoPartialPath":	true,
+		"DoSaveRef":	false,
+		"DoSaveExit":	false,
+		"DoSaveSeed":	false,
+		"DoAutoThread":	true,
+		"DoDCS":	false,
+		"DoSpecular":	false,
+		"DebugFlag":	0,
+		"SaveDataMask":	5,
+		"OutputFormat":	"mc2",
+		"OutputType":	"x"
+	},
+	"Forward":	{
+		"T0":	0,
+		"T1":	5e-09,
+		"Dt":	5e-09
+	},
+	"Domain":	{
+		"MediaFormat":	"byte",
+		"LengthUnit":	0.5,
+		"Media":	[{
+				"mua":	0,
+				"mus":	0,
+				"g":	1,
+				"n":	1
+			}, {
+				"mua":	0.005,
+				"mus":	1,
+				"g":	0.01,
+				"n":	1
+			}],
+		"Dim":	[120, 120, 120],
+		"OriginType":	1
+	},
+	"Optode":	{
+		"Source":	{
+			"Type":	"pencil",
+			"Pos":	[59, 59, 0],
+			"Dir":	[0, 0, 1, 0],
+			"Param1":	[0, 0, 0, 0],
+			"Param2":	[0, 0, 0, 0],
+			"SrcNum":	1
+		},
+		"Detector":	[{
+				"Pos":	[59, 39, 0],
+				"R":	2
+			}, {
+				"Pos":	[59, 79, 0],
+				"R":	2
+			}, {
+				"Pos":	[39, 59, 0],
+				"R":	2
+			}, {
+				"Pos":	[79, 59, 0],
+				"R":	2
+			}]
+	},
+	"Shapes": [
+		{"Name":     "cube120"},
+		{"Origin":   [0,0,0]},
+		{"Grid":     {"Tag":1, "Size":[120,120,120]}}
+	]
+}

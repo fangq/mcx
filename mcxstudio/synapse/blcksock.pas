@@ -180,7 +180,7 @@ type
      receiving is stopped for satisfy bandwidth limit. Parameter is count of
      waiting milliseconds.}
     HR_Wait,
-    {:report situation where communication error occured. When raiseexcept is
+    {:report situation where communication error occurred. When raiseexcept is
      @true, then exception is called after this Hook reason.}
     HR_Error
     );
@@ -540,7 +540,7 @@ type
     function RecvBlock(Timeout: Integer): AnsiString; virtual;
 
     {:Read all data from socket to stream until socket is closed (or any error
-     occured.)}
+     occurred.)}
     procedure RecvStreamRaw(const Stream: TStream; Timeout: Integer); virtual;
     {:Read requested count of bytes from socket to stream.}
     procedure RecvStreamSize(const Stream: TStream; Timeout: Integer; Size: Integer);

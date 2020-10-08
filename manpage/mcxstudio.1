@@ -1,0 +1,114 @@
+.\" Manpage for mcxstudio.
+.\" Contact fangqq@gmail.com to correct errors or typos.
+.TH man 7 "16 September 2020" "v2020" "Monte Carlo eXtreme (MCX) Studio man page"
+.SH NAME
+MCXStudio \- a cross-platform GUI for managing MCX/MCXCL/MMC simulations
+.SH SYNOPSIS
+mcxstudio <-p project.mcxp> <-u/--user> ...
+.SH DESCRIPTION
+MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL
+(http://mcx.space). It gives user an intuitive environment to browse and set
+parameters for a wide range of simulations. It also provides functionalities to
+save, edit and reopen a set of pre-defined simulations and share among users.
+
+The MCX//MCXCL/MMC simulators are developed by Dr. Qianqian Fang at the Computational 
+Optics and Translational Imaging (COTI) Lab, at Northeastern University, Boston,
+USA. More details regarding mcx/mmc can be found at http://mcx.space
+
+MCXStudio is written in Object Pascal using the open-source Lazarus
+(https://www.lazarus-ide.org/) rapid application development (RAD)
+environment and LCL (Lazarus component library). The OpenGL rendering
+of the GUI is provided by the GLScene Library (http://glscene.org).
+
+MCXStudio is cross-platform and can run on Windows, Linux and Mac OS.
+The GUI itself does not contain any Monte Carlo (MC) modeling capability. Instead,
+it serves as a shell within which one can launch MC simulations by calling
+externally compiled mcx, mmc and mcxcl binaries.
+
+MCXStudio contains many features that are designed to ease the pre-processing,
+simulation and post-processing for MC simulations. It is compatible
+with mcx (NVIDIA GPU), mmc (CPU) and mcxcl (cross-vendor CPUs/GPUs). It has a built-in
+domain designer, source designer with a convenient panel for media/detector settings.
+It also supports visualization of simulation output data (mc2, nii, hdr/img) using
+the built-in 3D volumetric data renderer. One can also launch remote MCX/MMC
+simulations using the Remote Execution panel.
+
+
+.SH HOW TO USE
+
+Start MCXStudio by typing "mcxstudio" and enter in a terminal or click
+on the "MCX Studio" icon in the system menu (under section Education\MCXStudio).
+
+After being launched, mcxstudio first checks if the mcx
+binary presents in the system search paths; if yes, the "GPU" button on the
+toolbar becomes enabled. If you do not have an NVIDIA GPU and intend
+to use mcxcl for your simulations, you may click on the "New" button
+in the toolbar, and select the 3rd option (NVIDIA/AMD/Inte CPUs/GPUs MCX-CL).
+After selecting "OK", and if mcxcl binary presents in your folders,
+the GPU button will also become active.
+
+It is recommended to click on the GPU button once, and verify if you have
+compatible GPUs or processors suitables to run MCX or MCXCL simulations.
+If you are able to see printed information in a message window, your system
+is ready to run MCX (or mcxcl). If you get an error message or not able
+to see any usable GPU, please check the drivers and the binary files.
+
+If your system is verified to support MCX/MCXCL, you can now create new simulations
+by clicking on the "New" button. MCX Studio will ask you to provide a session
+name for this new simulation. After a valid session name is provide, MCXStudio
+creates the simulation and set all parameters to a ready-to-run default configuration
+(containing a 60x60x60 mm^3 homogeneous domain). You should modify the settings
+based on your needs. Once you finish the adjustment, you should click the
+"Verify" button to see if there are missing/conflicting settings. If everything looks
+ok, the "Run" button will become activated. Clicking on it once will start your
+simulation. If you want to abort the current simulation, you can click
+the "Stop" button.
+
+You can create multiple tasks with MCX Studio by hitting the "New"
+button again. The information for all session configurations can
+be saved as a project file (with a ".mcxp" file extension) by clicking the
+"Save" button. You can load a previously saved project, containing multiple
+simulation sessions, back to MCX Studio by clicking the "Load" button.
+
+In both the unzipped binary packags of mcx and mcxcl, under the folder named
+"examples", one can find a pre-created project file (*_examples.mcxp)
+for MCXStudio. Loading these files using the "Load" button allows you to
+see these preconfigured simulation.
+
+On Windows, once you start MCXStudio once, the .mcxp suffix becomes automatically
+associated with mcxstudio executable. To load a .mcxp file, you can simply
+double-click on the file, mcxstudio will be started automatically.
+
+
+.SH OPTIONS
+MCX Studio is primarily used in an interactive mode. However, the below command
+line options are accepted
+
+.TP
+\fB-p/--project  <A filename>\fR
+Use -f to specify a default MCX project file (*.mcxp)
+    -f filename.mcxp
+
+If a .mcxp file is specified via the -p flag, mcxstudio loads this project file 
+at start time.
+
+.TP
+\fB-u/--user\fR
+.TP
+Use `--user` to tell mcxstudio to store all user output files to the `~/MCXOutput`
+directory where `~` represents user's home directory. You should use this command
+when mcxstudio is installed via an automated installer and is located in a system
+folder (such as `/usr/bin`).
+
+If this flag is not provided while `mcxstudio` was installed in a system folder 
+without write-permission, mcxstudio will attempt to create an output folder
+named `MCXOutput` under the same parent folder as mcxstudio executable. If this
+fails, it falls back to creating and writing outputs to `~/MCXOutput`. If 
+`~/MCXOutput` can not be created or can not be written, mcx/mmc/mcxcl commands
+will throw an error.
+
+
+.SH SEE ALSO
+mcx(7), mmc(7), mcxcl(7), mcxshow(7), mcxviewer(7)
+.SH AUTHOR
+Qianqian Fang (q.fang@neu.edu)

@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=MCX Viewer
+Name[zh_CN]=MCX三维渲染器
+Name[zh_TW]=MCX三維渲染器
+Comment=Start MCX Viewer
+Comment[zh_CN]=启动MCX三维渲染器
+Comment[zh_TW]=啟動MCX三維渲染器
+Exec=mcxviewer
+TryExec=mcxviewer
+Icon=/usr/share/icons/mcx/scalable/box.svg
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Education;Science;DataVisualization;MedicalSoftware;
+Keywords=Photon;Monte Carlo;MCX;MMC;OpenGL;NIfTI;Rendering;3D

@@ -11,10 +11,13 @@ The detailed report can be found in the paper Fang2010
 Section 3.2 and Fig. 3.
 
 To run this example, you need to first compile the mcx
-binary. Then you need to run createmcxbin in matlab to create
-the volume file. Once complete, you can run the simulation by
+binary. Once complete, you can run the simulation by
 
-   mcx -A -n 3e7 -f runspherebox.sh -s sphbox -G 1
+   mcx -A -n 3e7 -f spherebox.json -s sphbox -G 1
+
+or
+
+   runspherebox.sh
 
 use the number following the -G option to specify which GPU you
 want to use on your system. Once complete, you can use the 
