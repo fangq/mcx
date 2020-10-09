@@ -1646,7 +1646,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
           /** do boundary reflection/transmission */
 	  if(isreflect && !hit){
-	      if(gcfg->mediaformat<100 && idx1d!=idx1dold)
+	      if(gcfg->mediaformat<100 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && idx1d!=idx1dold))
 	          updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
 	      if(((isreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
 	          float Rtotal=1.f;
@@ -1688,15 +1688,18 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	                GPUDEBUG(("do transmission\n"));
                         rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
 		  }else{ ///< do reflection
-                        GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
-                        (flipdir==0) ?
-                            (p.x=mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f)-(v.x < 0.f))) :
-                            ((flipdir==1) ?
+			GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
+			(flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
+                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
+			(flipdir==0) ?
+        		    (p.x=mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f)-(v.x < 0.f))) :
+			    ((flipdir==1) ? 
 				(p.y=mcx_nextafterf(__float2int_rn(p.y), (v.y > 0.f)-(v.y < 0.f))) :
 				(p.z=mcx_nextafterf(__float2int_rn(p.z), (v.z > 0.f)-(v.z < 0.f))) );
-                        idx1d=idx1dold;
-                        mediaid=(media[idx1d] & MED_MASK);
-                        updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
+	                GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
+                	idx1d=idx1dold;
+		 	mediaid=(media[idx1d] & MED_MASK);
+        	  	updateproperty<islabel>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
                         if(gcfg->mediaformat==MEDIA_2LABEL_SPLIT){
                             if((nuvox.sp.isupper?nuvox.sp.upper:nuvox.sp.lower)==0){ // terminate photon if photon is reflected to background medium
                                 if(launchnewphoton<ispencil, isreflect, islabel>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
@@ -1709,8 +1712,6 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                               continue;
                             }
                         }
-                        (flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
-                         rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
                         n1=prop.n;
                         hitted=0;
 		  }
