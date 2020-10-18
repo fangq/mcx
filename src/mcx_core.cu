@@ -570,7 +570,6 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 	      prop->mus=val.h[1]*(1.f/65535.f)*(gproperty[2].y-gproperty[1].y)+gproperty[1].y;
 	      prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
           }else if(issvmc){ // SVMC mode
-	      if(!nuvox->sv.issplit){  // when a photon either enters a new voxel or keeps propagating inside a non-mixed voxel
 	          if(idx1d==OUTSIDE_VOLUME_MIN || idx1d==OUTSIDE_VOLUME_MAX){
                       *((float4*)(prop))=gproperty[0]; // out-of-bounds
                       return;
@@ -607,7 +606,6 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 		      nuvox->sv.issplit=0;
 		      nuvox->sv.isupper=0;
 	          }
-	      }
 	  }
 }
 
@@ -905,7 +903,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 #ifdef SAVE_DETECTORS
       // let's handle detectors here
           if(gcfg->savedet){
-             if((isdet&DET_MASK)==DET_MASK && (*mediaid==0 || (gcfg->mediaformat==MEDIA_2LABEL_SPLIT && 
+             if((isdet&DET_MASK)==DET_MASK && (*mediaid==0 || (issvmc && 
 	        (nuvox->sv.isupper ? nuvox->sv.upper : nuvox->sv.lower)==0)) && gcfg->issaveref<2)
 	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata,isdet);
              clearpath(ppath,gcfg->partialdata);
@@ -943,7 +941,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 	  if(gcfg->issaveseed)
               copystate(t,photonseed);
           *rv=float3(gcfg->ps.x,gcfg->ps.y,gcfg->ps.z); ///< reuse as the origin of the src, needed for focusable sources
-	  
+
           if(issvmc){
               nuvox->sv.issplit=0;   ///< initialize the tissue type indicator under SVMC mode
               nuvox->sv.lower  =0;
@@ -1455,7 +1453,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           n1=prop.n;
 	  if(islabel)
 	    *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
-	  else
+	  else if(issvmc){
+	    if(!nuvox.sv.issplit)
+	      updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
+	  }else
 	    updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
 
 	  /** Advance photon 1 step to the next voxel */
@@ -1735,9 +1736,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		  
 	      }else if(gcfg->mediaformat<100 && !issvmc)
 	          updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
-	  }else if(isreflect && issvmc){ 
-	      if(hitintf){ // handle reflection/refraction when a photon intersects with an intra-voxel interface
-	          if(!gcfg->doreflect || (gcfg->doreflect && gproperty[nuvox.sv.lower].w==gproperty[nuvox.sv.upper].w)){
+	  }else if(issvmc){
+	      if(hitintf){ // handle reflection/refraction when a photon intersects with the intra-voxel interface
+	          if(!isreflect || (isreflect && gproperty[nuvox.sv.lower].w==gproperty[nuvox.sv.upper].w)){
 	              nuvox.nv=-nuvox.nv; // flip normal vector for transmission
 	              if(nuvox.sv.isupper && !nuvox.sv.lower){ // transmit from to background medium
 	                  if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
@@ -1752,7 +1753,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		      nuvox.sv.isupper=!nuvox.sv.isupper; // cross subvoxel interface, change tissue type lable
 		      *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower]; // update property
 	          }else{
-	              if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ //transmit through external boundary
+	              if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ // true if photon transmits to background media
 		          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 		              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			      media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,&nuvox))
