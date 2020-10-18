@@ -48,17 +48,17 @@ extern "C" {
 
 typedef float4 MCXpos; /**< x,y,z: position of the photon, w: weight of the photon*/
 
-typedef struct __align__(16) SPLITvox{
-	unsigned char issplit;
-	unsigned char lower;
-	unsigned char upper;
-	unsigned char isupper;
-}SPvox;
+typedef struct __align__(16) SplitVoxel{
+	unsigned char issplit; /**< flag if a photon is inside a mixed voxel*/
+	unsigned char lower;   /**< label of the tissue type at -nv direction (lower region)*/
+	unsigned char upper;   /**< label of the tissue type at +nv direction (upper region)*/
+	unsigned char isupper; /**< flag if a photon is in the upper region*/
+}SVox;
 
-typedef struct __align__(16) MCXsplit{
-	SPvox  sp;
-	float3 nv; /**< normal vector of mixed voxel(lower -> upper)*/
-	float3 rp; /**< reference point for mixed voxel*/
+typedef struct __align__(16) MCXSplit{
+	SVox   sv; /**< indicator of tissue type under split-voxel MC (SVMC) mode*/
+	float3 rp; /**< reference point of the intra-voxel interface*/
+	float3 nv; /**< normal vector of the intra-voxel interafece (direction: lower -> upper)*/
 }MCXsp;
 
 typedef struct  __align__(16) MCXDir{
