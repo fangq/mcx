@@ -654,12 +654,12 @@ __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium
 	    if(rand_next_reflect(t)<=Rtotal){ /*do reflection*/
 	        *c0+=(FL3(-2.f*Icos))*nuvox->nv;
 	    }else{   /*do transmission*/
-	        if(((nuvox->sv.isupper)? nuvox->sv.lower:nuvox->sv.upper)==0) /*transmit to background medium*/
-	            return 1;
 	        *c0+=(FL3(-Icos))*nuvox->nv;
 		*c0=(FL3(tmp2))*nuvox->nv+FL3(n1/n2)*(*c0);
 		nuvox->nv=-nuvox->nv;
 		nuvox->sv.isupper=!nuvox->sv.isupper;
+		if(((nuvox->sv.isupper)? nuvox->sv.isupper:nuvox->sv.lower)==0) /*transmit to background medium*/
+	            return 1;
 		*((float4*)prop)=gproperty[nuvox->sv.isupper ? nuvox->sv.upper:nuvox->sv.lower];
 	    }
 	}else{ /*total internal reflection*/
