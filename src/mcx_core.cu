@@ -570,42 +570,42 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 	      prop->mus=val.h[1]*(1.f/65535.f)*(gproperty[2].y-gproperty[1].y)+gproperty[1].y;
 	      prop->n=gproperty[!(mediaid & MED_MASK)==0].w;
           }else if(issvmc){ // SVMC mode
-	          if(idx1d==OUTSIDE_VOLUME_MIN || idx1d==OUTSIDE_VOLUME_MAX){
-                      *((float4*)(prop))=gproperty[0]; // out-of-bounds
-                      return;
-	          }
-	          union {
-	              unsigned char c[8];
-		      unsigned int  i[2];
-	          } val; // c[7-6]: lower & upper label, c[5-3]: reference point, c[2-0]: normal vector
-	          val.i[0]=media[idx1d+gcfg->dimlen.z];
-	          val.i[1]=mediaid & MED_MASK;
-	          nuvox->sv.lower=val.c[7];
-	          nuvox->sv.upper=val.c[6];
-	          if(val.c[6]){ // if upper label is not zero, the photon is inside a mixed voxel
-	              /**< Extract the reference point of the intra-voxel interface*/
-	              nuvox->rp=float3(val.c[5]*(1.f/255.f),val.c[4]*(1.f/255.f),val.c[3]*(1.f/255.f));
-		      (nuvox->rp)+=float3(floorf(p->x),floorf(p->y),floorf(p->z));
+	      if(idx1d==OUTSIDE_VOLUME_MIN || idx1d==OUTSIDE_VOLUME_MAX){
+	          *((float4*)(prop))=gproperty[0]; // out-of-bounds
+		  return;
+	      }
+	      union {
+	          unsigned char c[8];
+		  unsigned int  i[2];
+	      } val; // c[7-6]: lower & upper label, c[5-3]: reference point, c[2-0]: normal vector
+	      val.i[0]=media[idx1d+gcfg->dimlen.z];
+	      val.i[1]=mediaid & MED_MASK;
+	      nuvox->sv.lower=val.c[7];
+	      nuvox->sv.upper=val.c[6];
+	      if(val.c[6]){ // if upper label is not zero, the photon is inside a mixed voxel
+	          /**< Extract the reference point of the intra-voxel interface*/
+		  nuvox->rp=float3(val.c[5]*(1.f/255.f),val.c[4]*(1.f/255.f),val.c[3]*(1.f/255.f));
+		  (nuvox->rp)+=float3(floorf(p->x),floorf(p->y),floorf(p->z));
 		  
-		      /**< Extract the normal vector of the intra-voxel interface*/
-		      nuvox->nv=float3(val.c[2]*(2.f/255.f)-1,val.c[1]*(2.f/255.f)-1,val.c[0]*(2.f/255.f)-1);
-		      nuvox->nv=nuvox->nv*rsqrt(dot(nuvox->nv,nuvox->nv));
+		  /**< Extract the normal vector of the intra-voxel interface*/
+		  nuvox->nv=float3(val.c[2]*(2.f/255.f)-1,val.c[1]*(2.f/255.f)-1,val.c[0]*(2.f/255.f)-1);
+		  nuvox->nv=nuvox->nv*rsqrt(dot(nuvox->nv,nuvox->nv));
 		  
-		      /**< Determine tissue label corresponding to the current photon position*/
-		      if(dot(nuvox->rp-*p,nuvox->nv)<0){
-		          *((float4*)(prop))=gproperty[nuvox->sv.upper]; // upper label
-		          nuvox->sv.isupper=1;
-		          nuvox->nv=-nuvox->nv; // normal vector always points to the other side (outward-pointing)
-		      }else{
-		          *((float4*)(prop))=gproperty[nuvox->sv.lower]; // lower label
-		          nuvox->sv.isupper=0;
-		      }
-		      nuvox->sv.issplit=1;
-	          }else{ // if upper label is zero, the photon is inside a regular voxel
-	              *((float4*)(prop))=gproperty[val.c[7]]; // voxel uniquely labeled
-		      nuvox->sv.issplit=0;
+		  /**< Determine tissue label corresponding to the current photon position*/
+		  if(dot(nuvox->rp-*p,nuvox->nv)<0){
+		      *((float4*)(prop))=gproperty[nuvox->sv.upper]; // upper label
+		      nuvox->sv.isupper=1;
+		      nuvox->nv=-nuvox->nv; // normal vector always points to the other side (outward-pointing)
+		  }else{
+		      *((float4*)(prop))=gproperty[nuvox->sv.lower]; // lower label
 		      nuvox->sv.isupper=0;
-	          }
+		  }
+		  nuvox->sv.issplit=1;
+	      }else{ // if upper label is zero, the photon is inside a regular voxel
+	          *((float4*)(prop))=gproperty[val.c[7]]; // voxel uniquely labeled
+		  nuvox->sv.issplit=0;
+		  nuvox->sv.isupper=0;
+	      }
 	  }
 }
 
