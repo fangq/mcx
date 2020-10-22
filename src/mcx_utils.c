@@ -2362,6 +2362,21 @@ void  mcx_convertcol2row4d(unsigned int **vol, uint4 *dim){
 }
 
 /**
+ * @brief Check if a voxel contains background medium(0)
+ *
+ * This function check if a voxel contains background medium,
+ * under SVMC mode
+ *
+ * @param[in] vol: high 32 bit of the input volume under SVMC mdoe
+ */
+ 
+int mcx_svmc_bgvoxel(int vol){
+    unsigned int lower;
+    lower = (unsigned int)(vol & LOWER_MASK) >> 24;
+    return !lower;
+}
+
+/**
  * @brief Pre-label the voxel near a detector for easy photon detection
  *
  * This function preprocess the volume and detector data and add the detector ID to the
@@ -2426,16 +2441,40 @@ void  mcx_maskdet(Config *cfg){
 		 if(mind2==VERY_BIG || mind2>=(cfg->detpos[d].w+0.5f)*(cfg->detpos[d].w+0.5f)) continue;
 		 idx1d=((int)(iz+1.f)*dy*dx+(int)(iy+1.f)*dx+(int)(ix+1.f)); /*1.f comes from the padded layer*/
 
-		 if(padvol[idx1d])  /*looking for a voxel on the interface or bounding box*/
-                  if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
-		     padvol[idx1d+dx+1]&&padvol[idx1d+dx-1]&&padvol[idx1d-dx+1]&&padvol[idx1d-dx-1]&&
-		     padvol[idx1d+dy*dx+1]&&padvol[idx1d+dy*dx-1]&&padvol[idx1d-dy*dx+1]&&padvol[idx1d-dy*dx-1]&&
-		     padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
-		     padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
-		     padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
-		          cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)] |= DET_MASK;/*set the highest bit to 1*/
-                          count++;
-	          }
+		 if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
+		     unsigned int lower, upper;
+		     lower = (unsigned int)(padvol[idx1d] & LOWER_MASK) >> 24;
+		     upper = (unsigned int)(padvol[idx1d] & UPPER_MASK) >> 16;
+		     if(lower || upper){ /*background voxel if both are 0, do nothing*/
+		         if(!lower && upper){ /*a split voxel that contains background*/
+		             cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)] |= DET_MASK;/*set the highest bit to 1*/
+			     count++;
+			 }else if((lower && !upper) || (lower && upper)) /*a split voxel that contains no background, check surrounding voxels*/
+			     if(mcx_svmc_bgvoxel(padvol[idx1d+1])||mcx_svmc_bgvoxel(padvol[idx1d-1])||mcx_svmc_bgvoxel(padvol[idx1d+dx])||
+			        mcx_svmc_bgvoxel(padvol[idx1d-dx])||mcx_svmc_bgvoxel(padvol[idx1d+dy*dx])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx])||
+			        mcx_svmc_bgvoxel(padvol[idx1d+dx+1])||mcx_svmc_bgvoxel(padvol[idx1d+dx-1])||mcx_svmc_bgvoxel(padvol[idx1d-dx+1])||
+			        mcx_svmc_bgvoxel(padvol[idx1d-dx-1])||mcx_svmc_bgvoxel(padvol[idx1d+dy*dx+1])||mcx_svmc_bgvoxel(padvol[idx1d+dy*dx-1])||
+			        mcx_svmc_bgvoxel(padvol[idx1d-dy*dx+1])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx-1])||mcx_svmc_bgvoxel(padvol[idx1d+dy*dx+dx])||
+			        mcx_svmc_bgvoxel(padvol[idx1d+dy*dx-dx])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx+dx])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx-dx])||
+			        mcx_svmc_bgvoxel(padvol[idx1d+dy*dx+dx+1])||mcx_svmc_bgvoxel(padvol[idx1d+dy*dx+dx-1])||mcx_svmc_bgvoxel(padvol[idx1d+dy*dx-dx+1])||
+			        mcx_svmc_bgvoxel(padvol[idx1d+dy*dx-dx-1])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx+dx+1])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx+dx-1])||
+			        mcx_svmc_bgvoxel(padvol[idx1d-dy*dx-dx+1])||mcx_svmc_bgvoxel(padvol[idx1d-dy*dx-dx-1])){
+			         cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)] |= DET_MASK;/*set the highest bit to 1*/
+				 count++;
+			     }
+		     }
+		 }else{
+		     if(padvol[idx1d])  /*looking for a voxel on the interface or bounding box*/
+                      if(!(padvol[idx1d+1]&&padvol[idx1d-1]&&padvol[idx1d+dx]&&padvol[idx1d-dx]&&padvol[idx1d+dy*dx]&&padvol[idx1d-dy*dx]&&
+		         padvol[idx1d+dx+1]&&padvol[idx1d+dx-1]&&padvol[idx1d-dx+1]&&padvol[idx1d-dx-1]&&
+		         padvol[idx1d+dy*dx+1]&&padvol[idx1d+dy*dx-1]&&padvol[idx1d-dy*dx+1]&&padvol[idx1d-dy*dx-1]&&
+		         padvol[idx1d+dy*dx+dx]&&padvol[idx1d+dy*dx-dx]&&padvol[idx1d-dy*dx+dx]&&padvol[idx1d-dy*dx-dx]&&
+		         padvol[idx1d+dy*dx+dx+1]&&padvol[idx1d+dy*dx+dx-1]&&padvol[idx1d+dy*dx-dx+1]&&padvol[idx1d+dy*dx-dx-1]&&
+		         padvol[idx1d-dy*dx+dx+1]&&padvol[idx1d-dy*dx+dx-1]&&padvol[idx1d-dy*dx-dx+1]&&padvol[idx1d-dy*dx-dx-1])){
+		              cfg->vol[((int)iz*cfg->dim.y*cfg->dim.x+(int)iy*cfg->dim.x+(int)ix)] |= DET_MASK;/*set the highest bit to 1*/
+                              count++;
+	              }
+		  }
 	       }
 	   }
         }
