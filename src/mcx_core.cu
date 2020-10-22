@@ -609,6 +609,10 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 	  }
 }
 
+/**
+ * @brief Compute intersection point between a photon path and the intra-voxel interface if present
+ */
+
 __device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, 
                                    MCXsp *nuvox, MCXtime f, float3 htime){
 	
@@ -631,7 +635,10 @@ __device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &l
 	}
 }
 
-// if a ray intersects with the embedded patch, perform reflection/transmittance computation
+/**
+ * @brief Perform reflection/refraction computation along mismatched intra-voxel interface
+ */
+
 __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium *prop, RandType t[RAND_BUF_LEN]){
 	/*to handle refractive index mismatch*/
 	float Icos,Re,Im,Rtotal,tmp0,tmp1,tmp2,n2;
@@ -1286,7 +1293,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      MCXpos  p={0.f,0.f,0.f,-1.f};   ///< Photon position state: {x,y,z}: coordinates in grid unit, w:packet weight
      MCXdir  v={0.f,0.f,0.f, 0.f};   ///< Photon direction state: {x,y,z}: unitary direction vector in grid unit, nscat:total scat event
      MCXtime f={0.f,0.f,0.f,-1.f};   ///< Photon parameter state: pscat: remaining scattering probability,t: photon elapse time, pathlen: total pathlen in one voxel, ndone: completed photons
-     
+
      MCXsp nuvox;
      unsigned char testint=0;  ///< flag used under SVMC mode: if a ray-interface intersection test is needed along current photon path
      unsigned char hitintf=0;  ///< flag used under SVMC mode: if a photon path hit the intra-voxel interface inside a mixed voxel
@@ -1296,7 +1303,6 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      uint  mediaid=gcfg->mediaidorig;
      uint  mediaidold=0;
      int   isdet=0;
-     
      float  n1;               ///< reflection var
      float3 htime;            ///< time-of-flight for collision test
      float3 rv;               ///< reciprocal velocity
@@ -1352,7 +1358,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
            */
 	  if(f.pscat<=0.f) {  ///< if this photon has finished his current scattering path, calculate next scat length & angles
    	       f.pscat=rand_next_scatlen(t); ///< random scattering probability, unit-less, exponential distribution
-
+		  
                GPUDEBUG(("scat L=%f RNG=[%0lX %0lX] \n",f.pscat,t[0],t[1]));
 	       if(v.nscat!=EPS){ ///< if v.nscat is EPS, this means it is the initial launch direction, no need to change direction
                        ///< random arimuthal angle
@@ -1691,7 +1697,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                   } ///< else, total internal reflection
 	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && (isdet!=bcMirror) && rand_next_reflect(t)>Rtotal){ // do transmission
                         transmit(&v,n1,prop.n,flipdir);
-                        if(mediaid==0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower)==0)) { // transmitted to background medium
+                        if(mediaid==0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower)==0)) { // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
 		    	    if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
 			        (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
@@ -1707,7 +1713,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	                GPUDEBUG(("do transmission\n"));
                         rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
 		  }else{ ///< do reflection
-			GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
+	                GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
 			(flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
                         rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
 			(flipdir==0) ?
@@ -1731,9 +1737,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                               continue;
                             }
                         }
-                        n1=prop.n;
+                  	n1=prop.n;
 		  }
-		  
 	      }else if(gcfg->mediaformat<100 && !issvmc)
 	          updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox); ///< optical property across the interface
 	  }else if(issvmc){
@@ -2582,7 +2587,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                if(cfg->outputtype==otFluence)
 		   scale[0]*=cfg->tstep;
 	   }else if(cfg->outputtype==otEnergy)
-	       scale[0]=1.f/(cfg->energytot*Vvox);
+	       scale[0]=1.f/cfg->energytot;
 	   else if(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS){
 	       if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1){
                    int detid;
