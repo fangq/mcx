@@ -24,10 +24,10 @@ flux1_conventional=mcxlab(cfg1);
 
 % tissue-type based continuous varying media
 cfg1.prop=[0 0 1 1;0.005 1 0 n_old];                 % n=1.37 will be updated during simulation
-property_substitute=single(4*ones(size(cfg1.vol)));  % 0-no update, 1-update mua, 2-update mus, 3-update g, 4-update n
-label=single(ones(size(cfg1.vol)));                  % label-based tissue type 0-255
+property_substitute=single(3*ones(size(cfg1.vol)));  % 0-update mua, 1-update mus, 2-update g, 3-update n
+label=single(ones(size(cfg1.vol)));                  % label-based tissue type
 replace_property=single(n_new*ones(size(cfg1.vol))); % values to substitute corresponding optical properties
-cfg1.vol=permute(cat(4,replace_property,label,property_substitute),[4 1 2 3]); % Concatenated as a 4-D single array 
+cfg1.vol=permute(cat(4,replace_property,property_substitute,label),[4 1 2 3]); % Concatenated as a 4-D single array 
 flux1_new=mcxlab(cfg1);
 
 % compare fluence maps between two approaches
@@ -67,12 +67,12 @@ flux2_conventional=mcxlab(cfg2);
 
 % tissue-type based continuous varying media
 cfg2.prop=[0 0 1 1;0.005 1 0 n_old_1;0.01 2 0 n_old];  % n=1.37 will be updated during the simulation
-property_substitute=single(4*ones(size(cfg2.vol)));    % 0-no update, 1-update mua, 2-update mus, 3-update g, 4-update n
-label=single(ones(size(cfg2.vol)));                    % label-based tissue type 0-255
+property_substitute=single(3*ones(size(cfg2.vol)));    % 0-update mua, 1-update mus, 2-update g, 3-update n
+label=single(ones(size(cfg2.vol)));                    % label-based tissue type
 label(:,:,31:60)=2;
 replace_property=single(n_new_1*ones(size(cfg2.vol))); % values to substitute corresponding optical properties
 replace_property(:,:,31:60)=n_new_2;
-cfg2.vol=permute(cat(4,replace_property,label,property_substitute),[4 1 2 3]); % Concatenated as a 4-D array 
+cfg2.vol=permute(cat(4,replace_property,property_substitute,label),[4 1 2 3]); % Concatenated as a 4-D array 
 flux2_new=mcxlab(cfg2);
 
 clines=[-10:0.5:-2];
@@ -129,8 +129,8 @@ flux2_conventional=mcxlab(cfg3);
 
 % tissue-type based continuous varying media
 cfg3.prop=[0 0 1 1;0.005 1 0 1.37;0.01 2 0 n_old];     % n=1.37 will be updated during the simulation
-property_substitute=single(ones(size(cfg3.vol)));      % 0-no update, 1-update mua, 2-update mus, 3-update g, 4-update n
-property_substitute(:,:,31:60)=4;
+property_substitute=single(zeros(size(cfg3.vol)));     % 0-update mua, 1-update mus, 2-update g, 3-update n
+property_substitute(:,:,31:60)=3;
 label=single(ones(size(cfg3.vol)));                    % label-based tissue type 0-255
 label(:,:,31:60)=2;
 replace_property=single(mua_new_1*ones(size(cfg3.vol))); % values to substitute corresponding optical properties
@@ -140,7 +140,7 @@ replace_property(:,:,41:45)=n_new_3;
 replace_property(:,:,46:50)=n_new_4;
 replace_property(:,:,51:55)=n_new_5;
 replace_property(:,:,56:60)=n_new_6;
-cfg3.vol=permute(cat(4,replace_property,label,property_substitute),[4 1 2 3]); % Concatenated as a 4-D array 
+cfg3.vol=permute(cat(4,replace_property,property_substitute,label),[4 1 2 3]); % Concatenated as a 4-D array 
 flux2_new=mcxlab(cfg3);
 
 clines=[-12:1:-2];
