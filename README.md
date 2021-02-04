@@ -52,8 +52,6 @@ time. In addition, several bugs have been fixed.
 -   Added a unified command line interface, photon, to call mcx/mcxcl/mmc
 -   Fine-tuned Windows installer
 -   Support CMake in Travis-CI automation
--   CMake based compilation and Visual Studio support
--   1.6x speedup on Pascal GPUs
 
 A detailed list of updates is summarized below (key features marked with “\*”):
 
@@ -127,7 +125,7 @@ blazing speed, typically hundreds to a thousand times faster than a fully
 optimized CPU-based MC implementation.
 
 The algorithm of this software is detailed in the References 
-[Fang2009,Yu2018]. A short summary of the main features includes:
+[Fang2009,Yu2018,Yan2020]. A short summary of the main features includes:
 
 -   3D heterogeneous media represented by voxelated array
 -   support complex sources including wide-field and pattern illuminations
@@ -166,12 +164,12 @@ For MCX-CUDA, the requirements for using this software include
 -   a CUDA capable NVIDIA graphics card
 -   pre-installed NVIDIA graphics driver
 
-You must install a CUDA capable NVIDIA graphics card in order to use
-MCX. A list of CUDA capable cards can be found at [2]. The oldest 
+You must make sure that your NVIDIA graphics driver was installed properly.
+A list of CUDA capable cards can be found at [2]. The oldest 
 graphics card that MCX supports is the Fermi series (circa 2010).
 Using the latest NVIDIA card is expected to produce the best
 speed. You must have a fermi (GTX 4xx) or newer 
-(5xx/6xx/7xx/9xx/10xx/20xx series) graphics card. The default release 
+(5xx/6xx/7xx/9xx/10xx/20xx/30xx series) graphics card. The default release 
 of MCX supports atomic operations and photon detection. 
 In the below webpage, we summarized the speed differences
 between different generations of NVIDIA GPUs
