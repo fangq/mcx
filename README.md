@@ -4,7 +4,7 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 
 -   Author: Qianqian Fang (q.fang at neu.edu)
 -   License: GNU General Public License version 3 (GPLv3)
--   Version: 1.8 (v2020, Furious Fermion)
+-   Version: 1.9.0 (v2021.2, Glossy Gluon)
 -   Website: <http://mcx.space>
 
 [![Build Status](https://travis-ci.com/fangq/mcx.svg?branch=master)](https://travis-ci.com/fangq/mcx)
@@ -38,76 +38,83 @@ Table of Content:
 What's New
 -------------
 
-MCX v2020 represents a new milestone towards the development of a fast, 
-versatile and feature-rich open-source Monte Carlo 3D photon simulator. It is 
-packed with numerous improvements in both functionality and stability. We want 
-to specifically highlight the below major additions:
+MCX v2021.2 introduces a major new feature - split-voxel MC (SVMC), published in 
+Biomedical Optics Express recently by Shijie Yan and Qianqian Fang, see 
+[Yan2020](https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262) for details.
+Shortly, SVMC provides a level of accuracy close to mesh-based MC (MMC) in modeling
+curved boundaries but it is 4x to 6x faster than MMC. Several demo scripts of SVMC 
+can be found in the MCXLAB package under examples/demo_svmc_\*. Moreover, MCX v2021.2
+provides Debian/Ubuntu packages for easy installation on these platforms for the first
+time. In addition, several bugs have been fixed.
 
--   Built-in benchmarks for easy testing and adoption by new users
--   Transition to JSON/JNIfTI input/output files for easy data sharing
--   Exporting simulation as JSON with binary volume data
--   All-in-one Windows installer for MCXStudio/MCX/MMC/MCXCL
--   Automated code building, testing and continuous integration via Travis-CI
+-   Introduced Split voxel MC (SVMC) to accurately model curved boundaries
+-   Added Debian/Ubuntu packages for easy installation
+-   Added a unified command line interface, photon, to call mcx/mcxcl/mmc
+-   Fine-tuned Windows installer
+-   Support CMake in Travis-CI automation
 -   CMake based compilation and Visual Studio support
 -   1.6x speedup on Pascal GPUs
 
 A detailed list of updates is summarized below (key features marked with “\*”):
 
--   2020-08-20 [e8e6b58] print an explicit messgae if error 30 is found
--   2020-08-19\*[883f61b] restore windows progress bar support, disabled in @ae2d60e45
--   2020-08-17 [c47de01] allow running testing script on machines without nvidia gpu
--   2020-08-16 [0c25958] add more tests for various mcx options
--   2020-08-16 [ff2f68f] add sphshell benchmark - see GPU MMC paper
--   2020-08-15 [2afab4a] test if media prop count is less than max label
--   2020-08-15 [2d71eb7] accept array as Domain.Media json input
--   2020-08-15\*[433df1f] accept json modifier via --json for easy testing
--   2020-08-14 [09adbd0] support --bc or cfg.bc to set an entire bounding face as detector
--   2020-08-11\*[e095dbb] speed up by 1.6x on 1080Ti by restoring source template for pencil beam only
--   2020-08-11 [a220cc2] autoblock size no less than 64, speed up on Turing GPU by doubling threads
--   2020-08-04 [71d4196] fix incorrect detpt column when savedetflag/issaveexit are both set
--   2020-08-04 [20c596a] retrieve energy tot and abs regardless of isnormalized
--   2020-08-03\*[30e01a1] add standalone script to submit to mcx speed contest
--   2020-07-31 [d9a5953] avoid autoblock is 0 when driver fails, close #99
--   2020-07-28 [daa9d56] fix inaccurate core count on Volta, Turing and Pascal
--   2020-07-25 [37793ae] fix -b 0 -B rrrrrr crash, thanks to @ShijieYan
--   2020-07-22\*[f844fe8] add automated building script via travis-ci
--   2020-07-22\*[f844fe8] add automated building script via travis-ci
--   2020-07-22\*[cbf0225] add unit testing script
--   2020-07-09 [5b038a7] add winget manifest
--   2020-07-04\*[4bda593] inno windows installer
--   2020-07-02 [38529a7] accept `-f` in mcxshow and mcxviewer
--   2020-07-02 [34ecf5f] add glscene directly to the source code
--   2020-07-01\*[f1828d3] add manpage for mcx
--   2020-06-29 [cd4acb8] visual studio project file updated
--   2020-06-29 [b22025d] update vs project file
--   2020-06-28 [71bedc5] add benchmark options, add `jnii/bnii` output formats
--   2020-05-02 [e7ce8f7] compiles lzma on windows, \#94
--   2020-05-02\*[e56fa2b] add UBJ support, output .bnii files, close \#95
--   2020-05-01 [ed80ad5] now support lzma and lzip compression
--   2020-05-01 [f136bc9] upgrade all built-in binary files to JData formatted JSON files \#94
--   2020-04-29 [0d9c162] save detected photon data in JSON/JData format, close \#94
--   2020-04-25 [045a3de] update json schema
--   2020-04-25 [e8aae66] initialize gsrcpattern
--   2020-04-23\*[8086175] add built-in colini27 data,add `--dumpjson`, add `-F jnii` output format
--   2020-04-19\*[da73b8d] add mcx built in benchmarks
--   2020-03-21\*[b8fb79a] plot data in x/y/z slices,add axis labels and grid
--   2020-03-20 [d7e6203] add axis lable and scaling to volume viewer
--   2020-03-14\*[b91dc5a] update mcxstudio gui to support gpu mmc
--   2020-02-18\*[8c37911] adding pymcx written by Maxime Baillot as submodule
--   2020-02-08 [ba78df5] add template to disable continuous medium support, close \#89
--   2020-01-28 [b7c1982] speed up cone beam photon launch, fix accuracy, close \#86
--   2020-01-25\*[984b2a0] initial support for hybrid optical properties
--   2019-11-19 [1c07b16] scale partial-path when getting det photon time and weight, close \#83
--   2019-08-08 [0bdbef6] allow to browse file folder on windows
--   2019-07-26\*[8a341ee] update mcxstudio to add the new flags
--   2019-07-23 [e3b53dc] add 2d sample script
--   2019-07-22\*[c4baa84] output fluence/flux in replay, backport changes from mcxcl
--   2019-05-24 [02efc62] bug fix for continuous varying media patch
+- 2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
+- 2020-10-22 [991910e] add function comment and revert unnecessary changes
+- 2020-10-22 [3343338] \* add benchmarks from SVMC paper to mcxlab
+- 2020-10-19 [de87cbf] resolve code alignment issue
+- 2020-10-18 [5acd287] fix photon detection issue for SVMC mode
+- 2020-10-18 [61dbf63] fix ray-tracing issue after the initial template implementation
+- 2020-10-17 [fbb4f8c] initial implementation of template for SVMC mode
+- 2020-10-08 [dad83c6] resolve conflict between two branches to elimate mismatch in demo_focus_mirror_bc.m
+- 2020-10-08 [fb61782] \* sync master branch into nuvox(SVMC) branch
+- 2020-09-20 [75f08c5] remove empty depends
+- 2020-09-20 [fa98229] fix incorrect dependency
+- 2020-09-20 [d748d29] add octave package files for mcxlab and mcxtools
+- 2020-09-16 [cf3b1f0] fix typo, change default exe path
+- 2020-09-16 [15e9946] \* fix warnings found by debian packaging at https://mentors.debian.net/package/mcx/
+- 2020-09-16 [04bb0e7] add man pages for other binaries
+- 2020-09-14 [aca9f97] remove additional debian packging warnings
+- 2020-09-14 [ce4e341] add desktop icon files
+- 2020-09-14 [eb0aa9f] allow new lines in string values in json
+- 2020-09-14 [4b1301a] set default exe folder to /usr/libexec, fall back to ~/bin/
+- 2020-09-14 [643e4a1] \* add photon as unified cmd for mcx/mcxcl/mmc,polish for debian packaging
+- 2020-09-14 [a67bc6d] updates to ease debian packaging
+- 2020-09-08 [8983305] Inno Installer Setup paths and file details fixed
+- 2020-09-07 [a6bc5a9] another attempt to fix #105
+- 2020-09-07 [ca303dd] change default shortcut group name, fix #105
+- 2020-09-06 [0313d4c] install mcxstudio to 64bit folder, close #105
+- 2020-09-04 [37b4914] add demo script for mirror bc
+- 2020-09-04 [e561890] make mcxplotvol work in matlab 2010 or earlier
+- 2020-09-04 [9518cfa] handle mirror bc correctly, close #104
+- 2020-09-04 [64896aa] \* reset pattern center position following a failed launch, fix #103
+- 2020-09-02 [5af2e76] fix -geometry 0x0 error, see https://forum.lazarus.freepascal.org/index.php?topic=40593.0
+- 2020-09-01 [dd4be78] add cubesph60b to match example/benchmark2
+- 2020-08-30 [971ffac] fix extended ascii letters
+- 2020-08-29 [6eb9596] update mcxcreate.m, add mcxplotshapes.m to render json shapes
+- 2020-08-29 [0199dad] clean up code and add comments for SVMC
+- 2020-08-29 [94d55a7] \* add mcxcreate, force mcxlab return one output
+- 2020-08-28 [d917751] give an error for unsupported single dash option
+- 2020-08-28 [093c9ba] \* add pre-processing for SVMC mode
+- 2020-08-28 [a79e116] add mode delphi in carbon unit
+- 2020-08-27 [63e5a5f] handle det radii less than or equal to 0.5, fix #101
+- 2020-08-27 [8f93ee2] fix make mex link error
+- 2020-08-26 [65f0fe4] fix issrcfrom0 offset
+- 2020-08-26 [79f9d70] \* multiply voxelsize with det radius
+- 2020-08-26 [d5c3c11] fix mcxpreview det radis issue, require srcpos and tend in mcxlab
+- 2020-08-24 [1af5507] avoid error on mac
+- 2020-08-24 [2fce8e5] add missing carbon unit for mac
+- 2020-08-24 [6f11857] add command line option cheatsheet
+- 2020-08-24 [5046de0] fix cmake command
+- 2020-08-24 [cea663b] test cmake in travis
+- 2020-08-24 [782b4a3] massive update of documentation
+- 2020-08-24 [041e386] massive update to README to describe all output formats
 
-Between 2019 and 2020, four new journal papers have been published as the 
-result of this project. Please see the full list at 
+Between 2020 and 2021, two new journal papers have been published as the 
+result of this project, including [Yan2020]. Please see the full list at 
 http://mcx.space/#publication
 
+* [Yan2020] Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel based Monte Carlo
+ algorithm for accurate and efficient photon transport modeling in complex bio-tissues," 
+ Biomed. Opt. Express, 11(11) pp. 6262-6270.
 
 Introduction
 ---------------
