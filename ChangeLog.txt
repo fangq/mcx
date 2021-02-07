@@ -2,6 +2,59 @@
 
 Major updates are marked with a "*"
 
+== MCX v2021.2 (Glossy Gluon - 1.9), FangQ <q.fang (a) neu.edu> ==
+
+ 2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
+ 2020-10-22 [991910e] add function comment and revert unnecessary changes
+ 2020-10-22 [3343338]*add benchmarks from SVMC paper to mcxlab
+ 2020-10-19 [de87cbf] resolve code alignment issue
+ 2020-10-18 [5acd287] fix photon detection issue for SVMC mode (by Shijie Yan)
+ 2020-10-18 [61dbf63] fix ray-tracing issue after the initial template implementation
+ 2020-10-17 [fbb4f8c] initial implementation of template for SVMC mode (by Shijie Yan)
+ 2020-10-08 [dad83c6] resolve conflict between two branches to elimate mismatch in demo_focus_mirror_bc.m
+ 2020-10-08 [fb61782]*sync master branch into nuvox(SVMC) branch (by Shijie Yan)
+ 2020-09-20 [75f08c5] remove empty depends
+ 2020-09-20 [fa98229] fix incorrect dependency
+ 2020-09-20 [d748d29] add octave package files for mcxlab and mcxtools
+ 2020-09-16 [cf3b1f0] fix typo, change default exe path
+ 2020-09-16 [15e9946]*fix warnings found by debian packaging at https://mentors.debian.net/package/mcx/
+ 2020-09-16 [04bb0e7] add man pages for other binaries
+ 2020-09-14 [aca9f97] remove additional debian packging warnings
+ 2020-09-14 [ce4e341] add desktop icon files
+ 2020-09-14 [eb0aa9f] allow new lines in string values in json
+ 2020-09-14 [4b1301a] set default exe folder to /usr/libexec, fall back to ~/bin/
+ 2020-09-14 [643e4a1]*add photon as unified cmd for mcx/mcxcl/mmc,polish for debian packaging
+ 2020-09-14 [a67bc6d] updates to ease debian packaging
+ 2020-09-08 [8983305] Inno Installer Setup paths and file details fixed
+ 2020-09-07 [a6bc5a9] another attempt to fix #105
+ 2020-09-07 [ca303dd] change default shortcut group name, fix #105
+ 2020-09-06 [0313d4c] install mcxstudio to 64bit folder, close #105
+ 2020-09-04 [37b4914] add demo script for mirror bc
+ 2020-09-04 [e561890] make mcxplotvol work in matlab 2010 or earlier
+ 2020-09-04 [9518cfa] handle mirror bc correctly, close #104
+ 2020-09-04 [64896aa]*reset pattern center position following a failed launch, fix #103
+ 2020-09-02 [5af2e76] fix -geometry 0x0 error, see https://forum.lazarus.freepascal.org/index.php?topic=40593.0
+ 2020-09-01 [dd4be78] add cubesph60b to match example/benchmark2
+ 2020-08-30 [971ffac] fix extended ascii letters
+ 2020-08-29 [6eb9596] update mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-29 [0199dad] clean up code and add comments for SVMC
+ 2020-08-29 [94d55a7]*add mcxcreate, force mcxlab return one output
+ 2020-08-28 [d917751] give an error for unsupported single dash option
+ 2020-08-28 [093c9ba]*add pre-processing for SVMC mode
+ 2020-08-28 [a79e116] add mode delphi in carbon unit
+ 2020-08-27 [63e5a5f] handle det radii less than or equal to 0.5, fix #101
+ 2020-08-27 [8f93ee2] fix make mex link error
+ 2020-08-26 [65f0fe4] fix issrcfrom0 offset
+ 2020-08-26 [79f9d70]*multiply voxelsize with det radius
+ 2020-08-26 [d5c3c11] fix mcxpreview det radis issue, require srcpos and tend in mcxlab
+ 2020-08-24 [1af5507] avoid error on mac
+ 2020-08-24 [2fce8e5] add missing carbon unit for mac
+ 2020-08-24 [6f11857] add command line option cheatsheet
+ 2020-08-24 [5046de0] fix cmake command
+ 2020-08-24 [cea663b] test cmake in travis
+ 2020-08-24 [782b4a3] massive update of documentation
+ 2020-08-24 [041e386] massive update to README to describe all output formats
+
 == MCX v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
 
  2020-08-29*[6eb9596] add mcxcreate.m, add mcxplotshapes.m to render json shapes

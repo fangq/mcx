@@ -2,8 +2,42 @@
 
 Major updates are marked with a "*"
 
+== MCX v2021.2 (Glossy Gluon - 1.9), FangQ <q.fang (a) neu.edu> ==
+
+ 2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
+ 2020-10-22 [3343338] add benchmarks from SVMC paper to mcxlab
+ 2020-10-08 [fb61782] merge master branch into nuvox(SVMC) branch
+ 2020-09-20 [75f08c5] remove empty depends
+ 2020-09-20 [fa98229] fix incorrect dependency
+ 2020-09-20 [d748d29] add octave package files for mcxlab and mcxtools
+ 2020-09-14 [643e4a1] add photon as unified cmd for mcx/mcxcl/mmc,polish for debian packaging
+ 2020-09-14 [a67bc6d] updates to ease debian packaging
+
 == MCXLAB v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
 
+ 2020-09-04 [37b4914] add demo script for mirror bc
+ 2020-09-04 [e561890] make mcxplotvol work in matlab 2010 or earlier
+ 2020-08-29 [6eb9596] update mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-29 [94d55a7] add mcxcreate, force mcxlab return one output
+ 2020-08-28 [093c9ba] add pre-processing for SVMC mode
+ 2020-08-26 [65f0fe4] fix issrcfrom0 offset
+ 2020-08-26 [79f9d70] multiply voxelsize with det radius
+ 2020-08-26 [d5c3c11] fix mcxpreview det radis issue, require srcpos and tend in mcxlab
+ 2020-08-24 [782b4a3] massive update of documentation
+ 2020-08-22 [5bd88ac] update documentation
+ 2020-08-16 [5f747b6] fix function typo
+ 2020-08-15 [2afab4a] test if media prop count is less than max label
+ 2020-08-14 [65de370] initial support for photon detection under SVMC mode
+ 2020-08-14 [09adbd0] support --bc or cfg.bc to set an entire bounding face as detector
+ 2020-08-14 [92ba5fa] demo w0 output - pixel index - in photon sharing
+ 2020-08-13 [01aa002] merge upstream master branch with nuvox branch
+ 2020-08-04 [71d4196] fix incorrect detpt column when savedetflag/issaveexit are both set
+ 2020-07-27 [e204772] fix preview for pattern source etc.
+ 2020-07-24 [bf0840f] update README and ChangeLog
+ 2020-07-19 [adbff54] initial support for MCX to consider curved boundaries
+ 2020-07-15 [b1e2dff] skip the 4th number in srcdir
+ 2020-07-09 [88e88fe] add mcxnuvxel
+ 2020-07-06 [84649dd] fix empty figures due to plotting commands
  2020-03-08 [0be6448] enable camlight in mcxplotvol
  2019-11-21 [084a7d1] consider unitinmm in meanpath function
  2019-11-19 [c0aad14] use detp.prop and detp.unitinmm if present, #83

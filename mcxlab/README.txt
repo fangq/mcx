@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) v2020
+Version: this package is part of Monte Carlo eXtreme (MCX) v2021.2
 
 <toc>
 
@@ -60,7 +60,7 @@ the verbose command line options in MCX.
 <pre> ====================================================================
        MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2011-2020 Qianqian Fang <q.fang at neu.edu>
+ Copyright (c) 2011-2021 Qianqian Fang <q.fang at neu.edu>
                        URL: http://mcx.space
  ====================================================================
  
@@ -414,7 +414,7 @@ This test is identical to that used for Fig. 3 in [Fang2010].
 In this example, we demonstrate light transport simulation in a full-head 
 atlas template(USC 19.5 year group[Sanchez2012]). 
 This demo is identical to the MCX simulation used for Fig.9(a) in
-[TranYan2019](submitted).
+[TranYan2019].
 
 ==== demo_mcxyz_skinvessel.m ====
 In this example, we compare between MCX and mcxyz written by Dr. Steve Jacques.
@@ -497,6 +497,11 @@ Screenshot for using MCXLAB in GNU Octave:
 
 == # Reference ==
 
+ [Yan2020] Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel 
+  based Monte Carlo algorithm for accurate and efficient photon transport 
+  modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) pp. 6262-6270.
+  https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262
+ 
  [Yu2018] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, 
  "Scalable and massively parallel Monte Carlo photon transport simulations 
  for heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).

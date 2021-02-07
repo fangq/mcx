@@ -40,11 +40,11 @@ A detailed list of updates is summarized below (key features marked with “*”
 * 2020-10-22 [991910e] add function comment and revert unnecessary changes
 * 2020-10-22 [3343338]*add benchmarks from SVMC paper to mcxlab
 * 2020-10-19 [de87cbf] resolve code alignment issue
-* 2020-10-18 [5acd287] fix photon detection issue for SVMC mode
+* 2020-10-18 [5acd287] fix photon detection issue for SVMC mode (by Shijie Yan)
 * 2020-10-18 [61dbf63] fix ray-tracing issue after the initial template implementation
-* 2020-10-17 [fbb4f8c] initial implementation of template for SVMC mode
+* 2020-10-17 [fbb4f8c] initial implementation of template for SVMC mode (by Shijie Yan)
 * 2020-10-08 [dad83c6] resolve conflict between two branches to elimate mismatch in demo_focus_mirror_bc.m
-* 2020-10-08 [fb61782]*sync master branch into nuvox(SVMC) branch
+* 2020-10-08 [fb61782]*sync master branch into nuvox(SVMC) branch (by Shijie Yan)
 * 2020-09-20 [75f08c5] remove empty depends
 * 2020-09-20 [fa98229] fix incorrect dependency
 * 2020-09-20 [d748d29] add octave package files for mcxlab and mcxtools
@@ -108,7 +108,7 @@ blazing speed, typically hundreds to a thousand times faster than a fully
 optimized CPU-based MC implementation.
 
 The algorithm of this software is detailed in the References 
-[Fang2009,Yu2018]. A short summary of the main features includes:
+[Fang2009,Yu2018,Yan2020]. A short summary of the main features includes:
 
 * 3D heterogeneous media represented by voxelated array
 * support over a dozen source forms, including wide-field and pattern illuminations

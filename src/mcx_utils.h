@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2020
+**  \copyright Qianqian Fang, 2009-2021
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -11,7 +11,12 @@
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
 **  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
 **          "Scalable and massively parallel Monte Carlo photon transport
-**           simulations for heterogeneous computing platforms," J. Biomed. Optics, 23(1), 010504, 2018.
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics, 
+**           23(1), 010504, 2018. https://doi.org/10.1117/1.JBO.23.1.010504
+**  \li \c (\b Yan2020) Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel 
+**          based Monte Carlo algorithm for accurate and efficient photon transport 
+**          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) 
+**          pp. 6262-6270. https://doi.org/10.1364/BOE.409468
 **
 **  \section slicense License
 **          GPL v3, see LICENSE.txt for details
@@ -74,7 +79,7 @@ typedef struct MCXMedium{
 } Medium;
 
 /**
- * Filer header data structure to .mch files to store detected photon data 
+ * Header data structure in .mch/.mct files to store detected photon data 
  * This header has a total of 256 bytes
  */
 
@@ -130,7 +135,7 @@ typedef struct MCXGPUInfo {
 	int maxmpthread;              /**< maximum thread number per multi-processor */
 } GPUInfo;
 
-/*! \struct MCXConfig
+/**
  * Data structure for MCX simulation settings
  */
 
@@ -160,7 +165,7 @@ typedef struct MCXConfig{
 	float4 *detpos;               /**<detector positions and radius, overwrite detradius*/
 
 	unsigned int maxgate;         /**<simultaneous recording gates*/
-	int respin;          /**<number of repeatitions*/
+	int respin;                   /**<number of repeatitions (if positive), or number of divisions (if negative)*/
 	unsigned int printnum;        /**<number of printed threads (for debugging)*/
 	int gpuid;                    /**<the ID of the GPU to use, starting from 1, 0 for auto*/
 
@@ -227,7 +232,9 @@ typedef struct MCXConfig{
 	unsigned int gscatter;       /**<after how many scattering events that we can use mus' instead of mus */
 	float *exportdebugdata;      /**<pointer to the buffer where the photon trajectory data are stored*/
 	uint mediabyte;              /**< how many bytes per media index, mcx supports 1, 2 and 4, 4 is the default*/
-	float *dx, *dy, *dz;         /**< anisotropic voxel spacing for x,y,z axis */
+	float *dx;                   /**< anisotropic voxel spacing for x-axis */
+	float *dy;                   /**< anisotropic voxel spacing for y-axis */
+	float *dz;                   /**< anisotropic voxel spacing for z-axis */
 	char bc[12];                 /**<boundary condition flag for [-x,-y,-z,+x,+y,+z, det(-x,-y,-z,+x,+y,+z)] */
 } Config;
 
@@ -288,12 +295,12 @@ extern "C"
 
 #ifdef MCX_CONTAINER
  #ifdef _OPENMP
-  #define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) mexPrintf(__VA_ARGS__);}
+  #define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) mexPrintf(__VA_ARGS__);}  /**< macro to print messages, calls mexPrint if inside MATLAB */
  #else
-  #define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__)
+  #define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__) /**< macro to print messages, calls mexPrint in MATLAB */
  #endif
 #else
-  #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__)
+  #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__) /**< macro to print messages, calls fprintf in command line mode */
 #endif
 
 #if defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER)

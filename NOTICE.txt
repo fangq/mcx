@@ -1,13 +1,13 @@
 =============================================================
              Monte Carlo eXtreme (MCX) Suite
-                    version 2020
+                    version 2021.2
 =============================================================
 
-Copyright (c) 2010-2020  Qianqian Fang <q.fang at neu.edu>
+Copyright (c) 2010-2021  Qianqian Fang <q.fang at neu.edu>
 
 - Computational Optics & Translational Imaging (COTI) Lab (http://fanglab.org)
 - Department of Bioengineering, Northeastern University
-- 360 Huntington Ave, ISEC 204, Boston, MA 02115, USA
+- 360 Huntington Ave, ISEC 206, Boston, MA 02115, USA
 - Website: http://mcx.space
 - Github: http://github.com/mcextreme/
 
@@ -40,6 +40,10 @@ cite the relevant papers in your publications.
 
 === MCX ===
 
+[Yan2020b] Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel based Monte Carlo algorithm for accurate and efficient photon transport modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) pp. 6262-6270.
+*Summary: Hybrid voxel/mesh based MC - SVMC
+*Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262
+
 [Fang2009] Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated by Graphics Processing Units," Opt. Express, vol. 17, issue 22, pp. 20178-20190 (2009).
 *Summary:  original MCX paper
 *Download: http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178
@@ -51,6 +55,10 @@ cite the relevant papers in your publications.
 *Download: https://doi.org/10.1117/1.JBO.23.1.010504
 
 === MMC ===
+
+[Yuan2021] Yaoshen Yuan, Shijie Yan, and Qianqian Fang*, "Light transport modeling in highly complex tissues using the implicit mesh-based Monte Carlo algorithm," Biomed. Optics Express, 12(1), 147-161, (2021)
+*Summary:  Implicit MMC (iMMC)
+*Download: https://www.osapublishing.org/boe/fulltext.cfm?uri=boe-12-1-147
 
 [Fang2019] Qianqian Fang*, Shijie Yan, "Graphics processing unit-accelerated mesh-based Monte Carlo photon transport simulations," J. of Biomedical Optics, 24(11), 115002 (2019)
 *Summary:  GPU-based MMC
