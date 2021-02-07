@@ -230,15 +230,15 @@ supported parameters, as shown below:
 ```
 ###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2020 Qianqian Fang <q.fang at neu.edu>          #
+#          Copyright (c) 2009-2021 Qianqian Fang <q.fang at neu.edu>          #
 #                             http://mcx.space/                               #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
-#            Department of Bioengineering, Northeastern University            #
+#   Department of Bioengineering, Northeastern University, Boston, MA, USA    #
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::041e38$ v2020 $Date::2020-08-24 14:25:23 -04$ by $Author::Qianqian Fang $
+$Rev::e8fdb3$v2021.2$Date::2021-02-07 16:04:46 -05$ by $Author::Qianqian Fang $
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -1256,6 +1256,11 @@ Reference
 - [Yu2018] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, 
   “Scalable and massively parallel Monte Carlo photon transport simulations 
   for heterogeneous computing platforms,” J. Biomed. Opt. 23(1), 010504 (2018).
+
+- [Yan2020] Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel 
+  based Monte Carlo algorithm for accurate and efficient photon transport 
+  modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) pp. 6262-6270.
+  https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262
 
 If you use MCX in your research, the author of this software would like you to 
 cite the above papers in your related publications.
