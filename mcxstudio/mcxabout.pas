@@ -18,6 +18,7 @@ type
     Image2: TImage;
     Image3: TImage;
     Memo1: TMemo;
+    Panel1: TPanel;
   private
     { private declarations }
   public

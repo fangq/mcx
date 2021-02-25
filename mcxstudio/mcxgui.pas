@@ -742,6 +742,8 @@ begin
    node.Caption:=sessionid;
    node.ImageIndex:=sessiontype;
    plSetting.Enabled:=true;
+   shapePreview.Enabled:=true;
+   shapePreview.Enabled:=true;
    pcSimuEditor.Enabled:=true;
    lvJobs.Selected:=node;
    SwapState(CurrentSession,lvJobs.Selected);
@@ -2997,6 +2999,7 @@ begin
     if(rbUseBench.Checked) then begin
         param.Add('--bench');
         param.Add(edBenchmark.Text);
+        rootpath:=CreateWorkFolder(edSession.Text);
     end;
 
     if(Length(edSession.Text)>0) then begin
@@ -3008,7 +3011,7 @@ begin
         param.Add('--input');
         param.Add(Trim(edConfigFile.FileName));
         rootpath:=ExcludeTrailingPathDelimiter(ExtractFilePath(edConfigFile.FileName));
-    end else begin
+    end else if rbUseDesigner.Checked then begin
         jsonfile:=CreateWorkFolder(edSession.Text)+DirectorySeparator+Trim(edSession.Text)+'.json';
         inputjson:=StringReplace(SaveJSONConfig(jsonfile),'"','"',[rfReplaceAll]);
         {$IFDEF WINDOWS}
