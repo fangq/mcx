@@ -1,7 +1,7 @@
 object fmAbout: TfmAbout
-  Left = 2548
+  Left = 706
   Height = 489
-  Top = 406
+  Top = 257
   Width = 470
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]

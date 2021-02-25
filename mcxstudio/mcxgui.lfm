@@ -1,13 +1,13 @@
 object fmMCX: TfmMCX
-  Left = 2718
-  Height = 813
-  Top = 277
+  Left = 429
+  Height = 790
+  Top = 177
   Width = 1260
   ActiveControl = lvJobs
   Align = alTop
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = 'MCX Studio'
-  ClientHeight = 793
+  ClientHeight = 770
   ClientWidth = 1260
   Constraints.MinHeight = 437
   Constraints.MinWidth = 1120
@@ -875,21 +875,21 @@ object fmMCX: TfmMCX
     TabOrder = 0
     Transparent = True
     object ToolButton1: TToolButton
-      Left = 255
+      Left = 258
       Top = 0
       Action = mcxdoOpen
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton2: TToolButton
-      Left = 339
+      Left = 342
       Top = 0
       Action = mcxdoSave
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 1103
+      Left = 1118
       Top = 0
       Action = mcxdoExit
       ParentShowHint = False
@@ -903,7 +903,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton5: TToolButton
-      Left = 509
+      Left = 515
       Height = 104
       Top = 0
       Caption = 'ToolButton5'
@@ -917,7 +917,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 511
+      Left = 520
       Top = 0
       Action = mcxdoVerify
       Caption = 'Validate'
@@ -925,7 +925,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 595
+      Left = 604
       Top = 0
       Action = mcxdoRun
       OnClick = tbtRunClick
@@ -933,35 +933,35 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 679
+      Left = 688
       Top = 0
       Action = mcxdoStop
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 423
+      Left = 426
       Height = 104
       Top = 0
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 847
+      Left = 856
       Height = 104
       Top = 0
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 849
+      Left = 861
       Top = 0
       Action = mcxdoAbout
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton15: TToolButton
-      Left = 425
+      Left = 431
       Top = 0
       Action = mcxdoQuery
       ParentShowHint = False
@@ -983,14 +983,14 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 1101
+      Left = 1113
       Height = 104
       Top = 0
       Caption = 'ToolButton8'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 933
+      Left = 945
       Hint = 'Browse help information'
       Top = 0
       Caption = 'Help ▾'
@@ -1000,14 +1000,14 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 1017
+      Left = 1029
       Top = 0
       Action = mcxdoConfig
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 763
+      Left = 772
       Hint = 'Plot MCX output data'
       Top = 0
       Caption = 'Plot ▾'
@@ -1023,7 +1023,7 @@ object fmMCX: TfmMCX
     AnchorSideBottom.Control = Owner
     Left = 0
     Height = 18
-    Top = 775
+    Top = 752
     Width = 1260
     Panels = <    
       item
@@ -1045,7 +1045,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 522
+    Height = 448
     Top = 104
     Width = 140
     HelpType = htKeyword
@@ -1251,17 +1251,17 @@ object fmMCX: TfmMCX
     AnchorSideLeft.Side = asrBottom
     AnchorSideRight.Control = plSetting
     Left = 140
-    Height = 522
+    Height = 448
     Top = 104
     Width = 7
   end
   object plOutput: TPanel
     Left = 944
-    Height = 522
+    Height = 448
     Top = 104
     Width = 316
     Align = alRight
-    ClientHeight = 522
+    ClientHeight = 448
     ClientWidth = 316
     ParentFont = False
     ParentShowHint = False
@@ -1269,7 +1269,7 @@ object fmMCX: TfmMCX
     TabOrder = 4
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 520
+      Height = 446
       Top = 1
       Width = 314
       HelpType = htKeyword
@@ -1283,7 +1283,7 @@ object fmMCX: TfmMCX
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 490
+        ClientHeight = 416
         ClientWidth = 310
         ImageIndex = 4
         ParentFont = False
@@ -1487,7 +1487,7 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 282
+          Height = 208
           Hint = 'MCXConfig '#10#10'This defines the remaining key parameters used in an MCX/MMC'#10'simulation.'
           Top = 208
           Width = 310
@@ -1666,7 +1666,7 @@ object fmMCX: TfmMCX
       end
       object tabVolumeDesigner: TTabSheet
         Caption = 'Volume Designer'
-        ClientHeight = 490
+        ClientHeight = 416
         ClientWidth = 310
         ImageIndex = 6
         ParentFont = False
@@ -1734,7 +1734,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 186
-            Height = 2
+            Height = 5
             Top = 2
             Caption = 'ToolButton35'
             Style = tbsDivider
@@ -1863,7 +1863,7 @@ object fmMCX: TfmMCX
   object Splitter2: TSplitter
     AnchorSideRight.Control = plOutput
     Left = 937
-    Height = 522
+    Height = 448
     Top = 104
     Width = 7
     Align = alRight
@@ -1872,17 +1872,17 @@ object fmMCX: TfmMCX
   object plConsole: TPanel
     AnchorSideBottom.Control = sbInfo
     Left = 0
-    Height = 145
-    Top = 630
+    Height = 196
+    Top = 556
     Width = 1260
     Align = alBottom
-    ClientHeight = 145
+    ClientHeight = 196
     ClientWidth = 1260
     ParentFont = False
     TabOrder = 6
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 118
+      Height = 169
       Top = 26
       Width = 1258
       Align = alClient
@@ -1894,7 +1894,7 @@ object fmMCX: TfmMCX
       ParentFont = False
       PopupMenu = PopupMenu4
       TabOrder = 0
-      Gutter.Width = 52
+      Gutter.Width = 51
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -2439,6 +2439,7 @@ object fmMCX: TfmMCX
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
           AutoSize = False
+          Width = 9
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray
@@ -2611,20 +2612,20 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 4
-    Top = 626
+    Top = 552
     Width = 1260
     Align = alBottom
     ResizeAnchor = akBottom
   end
   object plSetting: TScrollBox
     Left = 147
-    Height = 522
+    Height = 448
     Top = 104
     Width = 790
     HorzScrollBar.Page = 691
-    VertScrollBar.Page = 520
+    VertScrollBar.Page = 446
     Align = alClient
-    ClientHeight = 520
+    ClientHeight = 446
     ClientWidth = 776
     DockSite = True
     Enabled = False
@@ -30930,10 +30931,12 @@ object fmMCX: TfmMCX
       object MenuItem72: TMenuItem
         Caption = '[Yuan2021] Implicit MMC (iMMC)'
         Hint = 'https://www.osapublishing.org/boe/fulltext.cfm?uri=boe-12-1-147'
+        OnClick = mcxdoWebURLExecute
       end
       object MenuItem73: TMenuItem
         Caption = '[Yan2020] SVMC hybrid method'
         Hint = 'https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262'
+        OnClick = mcxdoWebURLExecute
       end
     end
   end
