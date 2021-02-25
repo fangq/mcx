@@ -84,6 +84,8 @@ type
     MenuItem69: TMenuItem;
     MenuItem70: TMenuItem;
     MenuItem71: TMenuItem;
+    MenuItem72: TMenuItem;
+    MenuItem73: TMenuItem;
     miExportJSON: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
