@@ -1,13 +1,13 @@
 object fmMCX: TfmMCX
   Left = 278
-  Height = 907
-  Top = 50
+  Height = 914
+  Top = 43
   Width = 1467
   ActiveControl = lvJobs
   Align = alTop
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = 'MCX Studio'
-  ClientHeight = 885
+  ClientHeight = 892
   ClientWidth = 1467
   Constraints.MinHeight = 572
   Constraints.MinWidth = 1467
@@ -875,21 +875,21 @@ object fmMCX: TfmMCX
     TabOrder = 0
     Transparent = True
     object ToolButton1: TToolButton
-      Left = 287
+      Left = 285
       Top = 0
       Action = mcxdoOpen
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton2: TToolButton
-      Left = 380
+      Left = 378
       Top = 0
       Action = mcxdoSave
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton3: TToolButton
-      Left = 1245
+      Left = 1235
       Top = 0
       Action = mcxdoExit
       ParentShowHint = False
@@ -903,7 +903,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton5: TToolButton
-      Left = 573
+      Left = 569
       Height = 136
       Top = 0
       Caption = 'ToolButton5'
@@ -917,7 +917,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtVerify: TToolButton
-      Left = 580
+      Left = 574
       Top = 0
       Action = mcxdoVerify
       Caption = 'Validate'
@@ -925,7 +925,7 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtRun: TToolButton
-      Left = 673
+      Left = 667
       Top = 0
       Action = mcxdoRun
       OnClick = tbtRunClick
@@ -933,35 +933,35 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object tbtStop: TToolButton
-      Left = 766
+      Left = 760
       Top = 0
       Action = mcxdoStop
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton12: TToolButton
-      Left = 473
+      Left = 471
       Height = 136
       Top = 0
       Caption = 'ToolButton12'
       Style = tbsDivider
     end
     object ToolButton13: TToolButton
-      Left = 952
+      Left = 946
       Height = 136
       Top = 0
       Caption = 'ToolButton13'
       Style = tbsDivider
     end
     object ToolButton16: TToolButton
-      Left = 959
+      Left = 951
       Top = 0
       Action = mcxdoAbout
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton15: TToolButton
-      Left = 480
+      Left = 476
       Top = 0
       Action = mcxdoQuery
       ParentShowHint = False
@@ -983,14 +983,14 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton8: TToolButton
-      Left = 1238
+      Left = 1230
       Height = 136
       Top = 0
       Caption = 'ToolButton8'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 1052
+      Left = 1044
       Hint = 'Browse help information'
       Top = 0
       Caption = 'Help ▾'
@@ -1000,14 +1000,14 @@ object fmMCX: TfmMCX
       ShowHint = True
     end
     object ToolButton14: TToolButton
-      Left = 1145
+      Left = 1137
       Top = 0
       Action = mcxdoConfig
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton11: TToolButton
-      Left = 859
+      Left = 853
       Hint = 'Plot MCX output data'
       Top = 0
       Caption = 'Plot ▾'
@@ -1023,7 +1023,7 @@ object fmMCX: TfmMCX
     AnchorSideBottom.Control = Owner
     Left = 0
     Height = 19
-    Top = 866
+    Top = 873
     Width = 1467
     Panels = <    
       item
@@ -1045,7 +1045,7 @@ object fmMCX: TfmMCX
   end
   object lvJobs: TListView
     Left = 0
-    Height = 468
+    Height = 510
     Top = 136
     Width = 183
     HelpType = htKeyword
@@ -1251,17 +1251,17 @@ object fmMCX: TfmMCX
     AnchorSideLeft.Side = asrBottom
     AnchorSideRight.Control = plSetting
     Left = 183
-    Height = 468
+    Height = 510
     Top = 136
     Width = 9
   end
   object plOutput: TPanel
     Left = 1053
-    Height = 468
+    Height = 510
     Top = 136
     Width = 414
     Align = alRight
-    ClientHeight = 468
+    ClientHeight = 510
     ClientWidth = 414
     ParentFont = False
     ParentShowHint = False
@@ -1269,7 +1269,7 @@ object fmMCX: TfmMCX
     TabOrder = 4
     object pcSimuEditor: TPageControl
       Left = 1
-      Height = 466
+      Height = 508
       Top = 1
       Width = 412
       HelpType = htKeyword
@@ -1283,7 +1283,7 @@ object fmMCX: TfmMCX
       TabOrder = 0
       object tabInputData: TTabSheet
         Caption = 'Simulation Designer'
-        ClientHeight = 436
+        ClientHeight = 478
         ClientWidth = 408
         ImageIndex = 4
         ParentFont = False
@@ -1300,25 +1300,21 @@ object fmMCX: TfmMCX
           Color = clWhite
           Columns = <          
             item
-              MinSize = 10
               MaxSize = 229
               Title.Caption = 'μa (1/mm)'
               Width = 79
             end          
             item
-              MinSize = 10
               MaxSize = 229
               Title.Caption = 'μs (1/mm)'
               Width = 73
             end          
             item
-              MinSize = 10
               MaxSize = 229
               Title.Caption = 'g (anisotropy)'
               Width = 72
             end          
             item
-              MinSize = 10
               MaxSize = 229
               Title.Caption = 'n (reflective index)'
               Width = 80
@@ -1485,7 +1481,7 @@ object fmMCX: TfmMCX
         end
         object sgConfig: TStringGrid
           Left = 0
-          Height = 175
+          Height = 217
           Hint = 'MCXConfig '#10#10'This defines the remaining key parameters used in an MCX/MMC'#10'simulation.'
           Top = 261
           Width = 408
@@ -1498,7 +1494,6 @@ object fmMCX: TfmMCX
           Columns = <          
             item
               ButtonStyle = cbsEllipsis
-              MinSize = 10
               MaxSize = 229
               Title.Caption = 'Value'
               Width = 147
@@ -1663,7 +1658,7 @@ object fmMCX: TfmMCX
       end
       object tabVolumeDesigner: TTabSheet
         Caption = 'Volume Designer'
-        ClientHeight = 436
+        ClientHeight = 478
         ClientWidth = 408
         ImageIndex = 6
         ParentFont = False
@@ -1731,7 +1726,7 @@ object fmMCX: TfmMCX
           end
           object ToolButton35: TToolButton
             Left = 244
-            Height = 7
+            Height = 5
             Top = 3
             Caption = 'ToolButton35'
             Style = tbsDivider
@@ -1860,7 +1855,7 @@ object fmMCX: TfmMCX
   object Splitter2: TSplitter
     AnchorSideRight.Control = plOutput
     Left = 1044
-    Height = 468
+    Height = 510
     Top = 136
     Width = 9
     Align = alRight
@@ -1869,17 +1864,17 @@ object fmMCX: TfmMCX
   object plConsole: TPanel
     AnchorSideBottom.Control = sbInfo
     Left = 0
-    Height = 257
-    Top = 609
+    Height = 222
+    Top = 651
     Width = 1467
     Align = alBottom
-    ClientHeight = 257
+    ClientHeight = 222
     ClientWidth = 1467
     ParentFont = False
     TabOrder = 6
     inline mmOutput: TSynEdit
       Left = 1
-      Height = 222
+      Height = 187
       Top = 34
       Width = 1465
       Align = alClient
@@ -2609,20 +2604,20 @@ object fmMCX: TfmMCX
     Cursor = crVSplit
     Left = 0
     Height = 5
-    Top = 604
+    Top = 646
     Width = 1467
     Align = alBottom
     ResizeAnchor = akBottom
   end
   object plSetting: TScrollBox
     Left = 192
-    Height = 468
+    Height = 510
     Top = 136
     Width = 852
     HorzScrollBar.Page = 773
-    VertScrollBar.Page = 466
+    VertScrollBar.Page = 508
     Align = alClient
-    ClientHeight = 466
+    ClientHeight = 508
     ClientWidth = 838
     DockSite = True
     Enabled = False
@@ -2860,6 +2855,7 @@ object fmMCX: TfmMCX
         Width = 50
         Alignment = taCenter
         Anchors = [akTop, akLeft, akRight]
+        AutoSize = False
         Caption = 'or'
         ParentColor = False
         ParentFont = False
@@ -4018,7 +4014,7 @@ object fmMCX: TfmMCX
       AnchorSideBottom.Control = grBasic
       Left = 0
       Height = 40
-      Hint = 'MCProgram'
+      Hint = 'MCProgram'#10#10'In this panel, you choose which simulator to use. '#10'Currently we support 3 simulators, '#10#10'* MCX: NVIDIA GPU-based simulation using voxelated domain'#10'* MCX-CL: OpenCL based CPU/GPU simulation using voxelated domain'#10'* MMC: OpenCL based CPU/GPU simulation using tetrahedral meshes'#10#10'The built-in domain designer only supports creating voxelated '#10'domains and creating meshes will be supported in the future.'
       Top = 0
       Width = 838
       HelpType = htKeyword

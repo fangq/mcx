@@ -2,13 +2,13 @@ object fmAbout: TfmAbout
   Left = 706
   Height = 574
   Top = 257
-  Width = 527
+  Width = 544
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
   ClientHeight = 574
-  ClientWidth = 527
+  ClientWidth = 544
   Color = 5329233
   DesignTimePPI = 110
   Position = poMainFormCenter
@@ -18,7 +18,7 @@ object fmAbout: TfmAbout
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 335
+    Left = 352
     Height = 43
     Top = 515
     Width = 141
@@ -38,7 +38,7 @@ object fmAbout: TfmAbout
     Left = 24
     Height = 314
     Top = 189
-    Width = 479
+    Width = 496
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 24
     BorderSpacing.Right = 24
@@ -88,7 +88,7 @@ object fmAbout: TfmAbout
   object Image3: TImage
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
-    Left = 37
+    Left = 41
     Height = 33
     Hint = 'About MCX'
     Top = 531
@@ -397,12 +397,12 @@ object fmAbout: TfmAbout
     Left = 0
     Height = 178
     Top = 0
-    Width = 527
+    Width = 544
     Align = alTop
     BevelColor = clBlack
     BevelOuter = bvNone
     ClientHeight = 178
-    ClientWidth = 527
+    ClientWidth = 544
     Color = clBlack
     ParentColor = False
     ParentFont = False
@@ -411,7 +411,7 @@ object fmAbout: TfmAbout
       Left = 0
       Height = 192
       Top = 0
-      Width = 527
+      Width = 544
       Align = alTop
       Picture.Data = {
         1754506F727461626C654E6574776F726B47726170686963A428000089504E47
@@ -748,7 +748,7 @@ object fmAbout: TfmAbout
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 435
+      Left = 452
       Height = 152
       Top = 13
       Width = 79
