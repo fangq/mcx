@@ -1,30 +1,30 @@
 object fmAbout: TfmAbout
   Left = 706
-  Height = 489
+  Height = 574
   Top = 257
-  Width = 470
+  Width = 527
   ActiveControl = Button1
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Monte Carlo eXtreme Studio'
-  ClientHeight = 489
-  ClientWidth = 470
+  ClientHeight = 574
+  ClientWidth = 527
   Color = 5329233
-  DesignTimePPI = 84
+  DesignTimePPI = 110
   Position = poMainFormCenter
-  LCLVersion = '2.0.2.0'
+  LCLVersion = '2.0.8.0'
   object Button1: TButton
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 323
-    Height = 33
-    Top = 444
-    Width = 108
+    Left = 335
+    Height = 43
+    Top = 515
+    Width = 141
     Anchors = [akRight, akBottom]
-    BorderSpacing.Right = 39
-    BorderSpacing.Bottom = 12
+    BorderSpacing.Right = 51
+    BorderSpacing.Bottom = 16
     Caption = 'OK'
     ModalResult = 1
     ParentFont = False
@@ -35,14 +35,14 @@ object fmAbout: TfmAbout
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Button1
-    Left = 18
-    Height = 291
-    Top = 144
-    Width = 434
+    Left = 24
+    Height = 314
+    Top = 189
+    Width = 479
     Anchors = [akTop, akLeft, akRight, akBottom]
-    BorderSpacing.Left = 18
-    BorderSpacing.Right = 18
-    BorderSpacing.Bottom = 9
+    BorderSpacing.Left = 24
+    BorderSpacing.Right = 24
+    BorderSpacing.Bottom = 12
     BorderStyle = bsNone
     Font.Color = clWhite
     Lines.Strings = (
@@ -88,10 +88,10 @@ object fmAbout: TfmAbout
   object Image3: TImage
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
-    Left = 22
+    Left = 37
     Height = 33
     Hint = 'About MCX'
-    Top = 448
+    Top = 531
     Width = 200
     Anchors = [akBottom]
     AutoSize = True
@@ -395,23 +395,23 @@ object fmAbout: TfmAbout
   end
   object Panel1: TPanel
     Left = 0
-    Height = 136
+    Height = 178
     Top = 0
-    Width = 470
+    Width = 527
     Align = alTop
     BevelColor = clBlack
     BevelOuter = bvNone
-    ClientHeight = 136
-    ClientWidth = 470
+    ClientHeight = 178
+    ClientWidth = 527
     Color = clBlack
     ParentColor = False
     ParentFont = False
     TabOrder = 2
     object Image1: TImage
       Left = 0
-      Height = 147
+      Height = 192
       Top = 0
-      Width = 470
+      Width = 527
       Align = alTop
       Picture.Data = {
         1754506F727461626C654E6574776F726B47726170686963A428000089504E47
@@ -748,14 +748,14 @@ object fmAbout: TfmAbout
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 400
-      Height = 116
-      Top = 10
-      Width = 60
+      Left = 435
+      Height = 152
+      Top = 13
+      Width = 79
       Anchors = [akTop, akRight, akBottom]
-      BorderSpacing.Top = 10
-      BorderSpacing.Right = 10
-      BorderSpacing.Bottom = 10
+      BorderSpacing.Top = 13
+      BorderSpacing.Right = 13
+      BorderSpacing.Bottom = 13
       Center = True
       Picture.Data = {
         1754506F727461626C654E6574776F726B47726170686963B121000089504E47

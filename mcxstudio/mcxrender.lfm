@@ -1,7 +1,7 @@
 object fmDomain: TfmDomain
-  Left = 2285
+  Left = 430
   Height = 732
-  Top = 198
+  Top = 166
   Width = 1201
   Caption = 'MCX Domain Renderer'
   ClientHeight = 732
