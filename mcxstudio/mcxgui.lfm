@@ -5757,7 +5757,7 @@ object fmMCX: TfmMCX
   end
   object OpenProject: TOpenDialog
     Title = 'Open existing project'
-    Filter = 'MCX Projects (*.mcxp)|*.mcxp|All (*.*)|*.*'
+    Filter = 'MCX Projects (*.mcxp)|*.mcxp|MCX JSON input (*.json)|*.json|All (*.*)|*.*'
     left = 101
     top = 394
   end

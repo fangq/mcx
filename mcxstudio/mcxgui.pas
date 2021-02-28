@@ -416,6 +416,8 @@ type
     procedure tvShapesSelectionChanged(Sender: TObject);
     procedure vlBCGetPickList(Sender: TObject; const KeyName: string;
       Values: TStrings);
+    procedure LoadSessionFromJSON(jfile: string);
+    procedure NewSessionFromJSON(jsonstr: string);
   private
     { private declarations }
   public
@@ -720,23 +722,28 @@ var
    sessiontype: integer;
    fmNewSession: TfmNewSession;
 begin
-   fmNewSession:=TfmNewSession.Create(self);
-   fmnewSession.grProgram.Columns:=1;
-   if (Sender is TEdit) then begin
-       fmnewSession.grProgram.ItemIndex:=grProgram.ItemIndex;
-       fmNewSession.edSession.Text:=edSession.Text;
-       fmNewSession.Tag:=1;
-   end;
-   if(fmNewSession.ShowModal= mrOK) then begin
-          sessionid:=Trim(fmNewSession.edSession.Text);
-          sessiontype:=fmNewSession.grProgram.ItemIndex;
+   if(not (Sender is TJSONObject)) then begin
+     fmNewSession:=TfmNewSession.Create(self);
+     fmnewSession.grProgram.Columns:=1;
+     if (Sender is TEdit) then begin
+         fmnewSession.grProgram.ItemIndex:=grProgram.ItemIndex;
+         fmNewSession.edSession.Text:=edSession.Text;
+         fmNewSession.Tag:=1;
+     end;
+     if(fmNewSession.ShowModal= mrOK) then begin
+            sessionid:=Trim(fmNewSession.edSession.Text);
+            sessiontype:=fmNewSession.grProgram.ItemIndex;
+     end else begin
+            fmNewSession.Free;
+            exit;
+     end;
+     fmNewSession.Free;
    end else begin
-          fmNewSession.Free;
-          exit;
+     sessionid:=TJSONObject(Sender).Strings['ID'];
+     sessiontype:=0;
    end;
-   fmNewSession.Free;
 
-   if not (Sender is TEdit) then
+   if (not (Sender is TEdit)) or (Sender is TJSONObject) then
        node:=lvJobs.Items.Add
    else
        node:=CurrentSession;
@@ -1182,9 +1189,13 @@ begin
        end;
     end;
     if not (ret=mrCancel) then begin
-            lvJobs.Items.Clear;
-            CurrentSession:=nil;
-            LoadTasksFromIni(TaskFile);
+            if(Pos('.json',TaskFile)>0) then
+                 LoadSessionFromJSON(TaskFile)
+            else begin
+                 lvJobs.Items.Clear;
+                 CurrentSession:=nil;
+                 LoadTasksFromIni(TaskFile);
+            end;
     end;
   end
 end;
@@ -1718,14 +1729,17 @@ end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);
 begin
-    FreeAndNil(JSONData);
     MapList.Free;
     ConfigData.Free;
     RegEngine.Free;
     PassList.Free;
-    fmDomain.Free;
     BCItemProp.Free;
+
+    fmDomain.Free;
     fmConfig.Free;
+    fmStop.Free;
+
+    FreeAndNil(JSONData);
 end;
 
 procedure TfmMCX.lvJobsSelectItem(Sender: TObject; Item: TListItem;
@@ -3586,6 +3600,71 @@ function TfmMCX.SKey(str: AnsiString):AnsiString;
 begin
   if(sscanf(str,'%s',[@SKey])<>1) then
       SKey:='';
+end;
+
+procedure TfmMCX.LoadSessionFromJSON(jfile: string);
+var
+    sl: TStringList;
+begin
+    sl:=TStringList.Create;
+    try
+      sl.LoadFromFile(jfile);
+      NewSessionFromJSON(sl.Text);
+    finally
+      sl.Free;
+    end;
+end;
+
+procedure TfmMCX.NewSessionFromJSON(jsonstr: string);
+var
+    js: TJSONData;
+    root, jobj : TJSONObject;
+    idx: integer;
+begin
+    try
+      js:=GetJSON(jsonstr);
+      if(js.JSONType <> jtObject) then
+         raise Exception.Create('Invalid JSON input string');
+      root:=TJSONObject(js);
+      jobj:=root.Objects['Session'];
+      if(jobj = nil) then
+         raise Exception.Create('Root-level object Session is required');
+      mcxdoAddItemExecute(jobj);
+      if(jobj.FindPath('Photons') <> nil) then
+         edPhoton.Text:=jobj.FindPath('Photons').AsString;
+      if(jobj.FindPath('RNGSeed') <> nil) then
+         edSeed.Text:=jobj.FindPath('RNGSeed').AsString;
+      if(jobj.FindPath('DoMismatch') <> nil) then
+         ckReflect.Checked:=(jobj.FindPath('DoMismatch').AsInteger=1);
+      if(jobj.FindPath('DoSaveVolume') <> nil) then
+         ckSaveData.Checked:=(jobj.FindPath('DoSaveVolume').AsInteger=1);
+      if(jobj.FindPath('DoNormalize') <> nil) then
+         ckNormalize.Checked:=(jobj.FindPath('DoNormalize').AsInteger=1);
+      if(jobj.FindPath('DoPartialPath') <> nil) then
+         ckSaveDetector.Checked:=(jobj.FindPath('DoPartialPath').AsInteger=1);
+      if(jobj.FindPath('DoSaveRef') <> nil) then
+         ckSaveRef.Checked:=(jobj.FindPath('DoSaveRef').AsInteger=1);
+      if(jobj.FindPath('DoSaveExit') <> nil) then begin
+         ckbDet.Checked[4]:=(jobj.FindPath('DoSaveExit').AsInteger=1);
+         ckbDet.Checked[5]:=ckbDet.Checked[4];
+      end;
+      if(jobj.FindPath('DoSaveSeed') <> nil) then
+         ckSaveSeed.Checked:=(jobj.FindPath('DoSaveSeed').AsInteger=1);
+      if(jobj.FindPath('DoAutoThread') <> nil) then
+         ckAutopilot.Checked:=(jobj.FindPath('DoAutoThread').AsInteger=1);
+      if(jobj.FindPath('DoDCS') <> nil) then
+         ckbDet.Checked[3]:=(jobj.FindPath('DoDCS').AsInteger=1);
+      if(jobj.FindPath('DoSpecular') <> nil) then
+         ckSpecular.Checked:=(jobj.FindPath('DoSpecular').AsInteger=1);
+      if(jobj.FindPath('OutputFormat') <> nil) then
+         edOutputFormat.Text:=jobj.FindPath('OutputFormat').AsString;
+      if(jobj.FindPath('OutputType') <> nil) then begin
+         idx:=Pos(LowerCase(jobj.FindPath('OutputType').AsString),LowerCase(OutputTypeFlags));
+         if(idx>0) then edOutputType.ItemIndex:=idx-1;
+      end;
+    finally
+      //FreeAndNil(js);
+    end;
 end;
 initialization
   {$I mcxgui.lrs}
