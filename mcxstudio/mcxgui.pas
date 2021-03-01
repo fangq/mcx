@@ -417,7 +417,7 @@ type
     procedure vlBCGetPickList(Sender: TObject; const KeyName: string;
       Values: TStrings);
     procedure LoadSessionFromJSON(jfile: string);
-    procedure NewSessionFromJSON(jsonstr: string);
+    procedure NewSessionFromJSON(jsonstr, folder: string);
   private
     { private declarations }
   public
@@ -3621,19 +3621,20 @@ begin
     sl:=TStringList.Create;
     try
       sl.LoadFromFile(jfile);
-      NewSessionFromJSON(StringReplace(sl.Text, #10, '',[rfReplaceAll]));
+      NewSessionFromJSON(StringReplace(sl.Text, #10, '',[rfReplaceAll]), ExtractFilePath(jfile));
     finally
       sl.Free;
     end;
 end;
 
-procedure TfmMCX.NewSessionFromJSON(jsonstr: string);
+procedure TfmMCX.NewSessionFromJSON(jsonstr, folder: string);
 var
     js: TJSONData;
     root, jobj, jsrc : TJSONObject;
     media, jarr: TJSONArray;
     idx, i: integer;
-    key: string;
+    key, jfile: string;
+    sl: TStringList;
 begin
     try
       js:=GetJSON(jsonstr);
@@ -3705,8 +3706,28 @@ begin
       // Domain Section
       jobj:=root.Objects['Domain'];
       if(jobj <> nil) then begin
+         if(jobj.FindPath('VolumeFile') <> nil) then begin
+            jfile:=jobj.FindPath('VolumeFile').AsString;
+            if(Pos('.json', jfile) >0) then begin
+              if(Pos('.'+PathDelim, jfile) >0) or (Length(ExtractFileName(jfile))=Length(jfile)) then
+                  jfile:=folder+jfile;
+              if(FileExists(jfile)) then begin
+                try
+                  sl:=TStringList.Create();
+                  sl.LoadFromFile(jfile);
+                  LoadJSONShapeTree(StringReplace(sl.Text, #10, '',[rfReplaceAll]));
+                finally
+                  sl.Free;
+                end;
+              end else begin
+                sgConfig.Cells[2,1]:=jobj.FindPath('VolumeFile').AsString;
+              end
+            end else begin
+              sgConfig.Cells[2,1]:=jobj.FindPath('VolumeFile').AsString;
+            end;
+         end;
          if(jobj.FindPath('MediaFormat') <> nil) then
-            edMoreParam.Text:=edMoreParam.Text+' --mediabyte '+jobj.FindPath('MediaFormat').AsString;
+            sgConfig.Cells[2,2]:=jobj.FindPath('MediaFormat').AsString;
          if(jobj.FindPath('LengthUnit') <> nil) then
             edUnitInMM.Text:=jobj.FindPath('LengthUnit').AsString;
          if(jobj.FindPath('OriginType') <> nil) then

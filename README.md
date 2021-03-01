@@ -55,6 +55,7 @@ time. In addition, several bugs have been fixed.
 
 A detailed list of updates is summarized below (key features marked with “\*”):
 
+- 2021-02-27 [a3b8457] \* open/import JSON input file in MCX Studio
 - 2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
 - 2020-10-22 [991910e] add function comment and revert unnecessary changes
 - 2020-10-22 [3343338] \* add benchmarks from SVMC paper to mcxlab
