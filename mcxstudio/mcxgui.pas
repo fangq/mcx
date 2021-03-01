@@ -16,7 +16,7 @@ uses
   SynHighlighterAny, SynHighlighterPerl, synhighlighterunixshellscript, LclIntf,
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
-  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser {$IFDEF USE_SYNAPSE}, runssh{$ENDIF},
+  CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser,jsonscanner {$IFDEF USE_SYNAPSE}, runssh{$ENDIF},
   strutils, RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
   mcxrender, mcxview, mcxconfig, mcxstoprun, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
@@ -475,7 +475,6 @@ var
   fmStop: TfmStop;
   ProfileChanged: Boolean;
   MaxWait: integer;
-  TaskFile: string;
   GotoCol, GotoRow: Integer;
   GotoGrid: TStringGrid;
   GotoGBox: TGroupBox;
@@ -741,6 +740,15 @@ begin
    end else begin
      sessionid:=TJSONObject(Sender).Strings['ID'];
      sessiontype:=0;
+     // append number if same name exist
+     if(lvJobs.FindCaption(0,sessionid,true,true,true) <> nil) then begin
+       for i:=1 to 100000 do begin
+         if(lvJobs.FindCaption(0,sessionid+IntToStr(i),true,true,true) = nil) then begin
+           sessionid:=sessionid+IntToStr(i);
+           break;
+         end;
+       end;
+     end;
    end;
 
    if (not (Sender is TEdit)) or (Sender is TJSONObject) then
@@ -757,6 +765,7 @@ begin
    lvJobs.Selected:=node;
    SwapState(CurrentSession,lvJobs.Selected);
    CurrentSession:=lvJobs.Selected;
+   if(Sender is TJSONObject) then mcxdoSave.Enabled:=false;
    mcxdoDefaultExecute(nil);
    edSession.Text:=sessionid;
    SetSessionType(sessiontype);
@@ -1176,27 +1185,28 @@ end;
 procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
 var
     ret:TModalResult;
+    TaskFile: string;
 begin
   ret:=mrNo;
   if(OpenProject.Execute) then begin
     TaskFile:=OpenProject.FileName;
-    if(mcxdoSave.Enabled) then begin
-       ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save it?',
-           mtConfirmation, [mbYes, mbNo, mbCancel],0);
-       if(ret=mrYes) then begin
-             mcxdoSaveExecute(Sender);
-             if(mcxdoSave.Enabled=true) then exit;
-       end;
-    end;
-    if not (ret=mrCancel) then begin
-            if(Pos('.json',TaskFile)>0) then
-                 LoadSessionFromJSON(TaskFile)
-            else begin
-                 lvJobs.Items.Clear;
-                 CurrentSession:=nil;
-                 LoadTasksFromIni(TaskFile);
-            end;
-    end;
+    if(Pos('.json',TaskFile)>0) then  // adding new session
+         LoadSessionFromJSON(TaskFile)
+    else begin
+      if(mcxdoSave.Enabled) then begin
+         ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save it?',
+             mtConfirmation, [mbYes, mbNo, mbCancel],0);
+         if(ret=mrYes) then begin
+               mcxdoSaveExecute(Sender);
+               if(mcxdoSave.Enabled=true) then exit;
+         end;
+      end;
+      if not (ret=mrCancel) then begin
+        lvJobs.Items.Clear;
+        CurrentSession:=nil;
+        LoadTasksFromIni(TaskFile);
+      end;
+    end
   end
 end;
 
@@ -1564,6 +1574,8 @@ begin
 end;
 
 procedure TfmMCX.mcxdoSaveExecute(Sender: TObject);
+var
+    TaskFile: string;
 begin
   if(SaveProject.Execute) then begin
     TaskFile:=SaveProject.FileName;
@@ -1905,7 +1917,7 @@ end;
 procedure TfmMCX.mcxSetCurrentExecute(Sender: TObject);
 begin
      if not (lvJobs.Selected = nil) then begin
-         lvJobs.Tag:=1; // loading
+         lvJobs.Tag:=0; // loading
          SwapState(CurrentSession,lvJobs.Selected);
          CurrentSession:=lvJobs.Selected;
          ListToPanel2(CurrentSession);
@@ -3609,7 +3621,7 @@ begin
     sl:=TStringList.Create;
     try
       sl.LoadFromFile(jfile);
-      NewSessionFromJSON(sl.Text);
+      NewSessionFromJSON(StringReplace(sl.Text, #10, '',[rfReplaceAll]));
     finally
       sl.Free;
     end;
@@ -3618,18 +3630,24 @@ end;
 procedure TfmMCX.NewSessionFromJSON(jsonstr: string);
 var
     js: TJSONData;
-    root, jobj : TJSONObject;
-    idx: integer;
+    root, jobj, jsrc : TJSONObject;
+    media, jarr: TJSONArray;
+    idx, i: integer;
+    key: string;
 begin
     try
       js:=GetJSON(jsonstr);
       if(js.JSONType <> jtObject) then
          raise Exception.Create('Invalid JSON input string');
       root:=TJSONObject(js);
+
+      // Session Section
       jobj:=root.Objects['Session'];
       if(jobj = nil) then
          raise Exception.Create('Root-level object Session is required');
+
       mcxdoAddItemExecute(jobj);
+
       if(jobj.FindPath('Photons') <> nil) then
          edPhoton.Text:=jobj.FindPath('Photons').AsString;
       if(jobj.FindPath('RNGSeed') <> nil) then
@@ -3662,8 +3680,91 @@ begin
          idx:=Pos(LowerCase(jobj.FindPath('OutputType').AsString),LowerCase(OutputTypeFlags));
          if(idx>0) then edOutputType.ItemIndex:=idx-1;
       end;
+      if(jobj.FindPath('RootPath') <> nil) then
+         sgConfig.Cells[2,14]:=jobj.FindPath('RootPath').AsString;
+      if(jobj.FindPath('SaveDataMask') <> nil) then begin
+        key:=jobj.FindPath('SaveDataMask').AsString;
+        if(Length(key)>0) then begin
+          for i:=0 to ckbDet.Items.Count-1 do begin
+             ckbDet.Checked[i]:=(Pos(SaveDetFlags[i+1],UpperCase(key))>0);
+          end;
+        end;
+      end;
+
+      // Forward Section
+      jobj:=root.Objects['Forward'];
+      if(jobj <> nil) then begin
+         if(jobj.FindPath('T0') <> nil) then
+            sgConfig.Cells[2,4]:=Format('%g',[jobj.FindPath('T0').AsFloat]);
+         if(jobj.FindPath('T1') <> nil) then
+            sgConfig.Cells[2,5]:=Format('%g',[jobj.FindPath('T1').AsFloat]);
+         if(jobj.FindPath('Dt') <> nil) then
+            sgConfig.Cells[2,6]:=Format('%g',[jobj.FindPath('Dt').AsFloat]);
+      end;
+
+      // Domain Section
+      jobj:=root.Objects['Domain'];
+      if(jobj <> nil) then begin
+         if(jobj.FindPath('MediaFormat') <> nil) then
+            edMoreParam.Text:=edMoreParam.Text+' --mediabyte '+jobj.FindPath('MediaFormat').AsString;
+         if(jobj.FindPath('LengthUnit') <> nil) then
+            edUnitInMM.Text:=jobj.FindPath('LengthUnit').AsString;
+         if(jobj.FindPath('OriginType') <> nil) then
+            ckSrcFrom0.Checked:=(jobj.FindPath('OriginType').AsInteger=1);
+         if(jobj.FindPath('Media') <> nil) then begin
+            media:=TJSONArray(jobj.FindPath('Media'));
+            for i:=0 to media.Count-1 do begin
+              sgMedia.Cells[1,i+1]:=Format('%g',[media.Items[i].FindPath('mua').AsFloat]);
+              sgMedia.Cells[2,i+1]:=Format('%g',[media.Items[i].FindPath('mus').AsFloat]);
+              sgMedia.Cells[3,i+1]:=Format('%g',[media.Items[i].FindPath('g').AsFloat]);
+              sgMedia.Cells[4,i+1]:=Format('%g',[media.Items[i].FindPath('n').AsFloat]);
+            end;
+         end;
+         if(jobj.FindPath('Dim') <> nil) then
+            sgConfig.Cells[2,2]:=jobj.Arrays['Dim'].AsJSON;
+      end;
+
+      // Optode Section
+      jobj:=root.Objects['Optode'];
+      if(jobj <> nil) then begin
+         jsrc:=TJSONObject(jobj.FindPath('Source'));
+         if(jsrc <> nil) then begin
+             if(jsrc.FindPath('Type') <> nil) then
+                 sgConfig.Cells[2,10]:= jsrc.Strings['Type'];
+             if(jsrc.FindPath('Pos') <> nil) then
+                 sgConfig.Cells[2,8]:= jsrc.Arrays['Pos'].AsJSON;
+             if(jsrc.FindPath('Dir') <> nil) then
+                 sgConfig.Cells[2,9]:= jsrc.Arrays['Dir'].AsJSON;
+             if(jsrc.FindPath('Param1') <> nil) then
+                 sgConfig.Cells[2,11]:= jsrc.Arrays['Param1'].AsJSON;
+             if(jsrc.FindPath('Param2') <> nil) then
+                 sgConfig.Cells[2,12]:= jsrc.Arrays['Param2'].AsJSON;
+         end;
+
+         if(jobj.Find('Detector') <> nil) then begin
+           if(jobj.Find('Detector').JSONType = jtArray) then begin
+             jarr:=TJSONArray(jobj.Find('Detector'));
+             for i:=0 to jarr.Count-1 do begin
+               sgDet.Cells[1,i+1]:=Format('%g',[TJSONArray(jarr.Items[i].FindPath('Pos')).Items[0].AsFloat]);
+               sgDet.Cells[2,i+1]:=Format('%g',[TJSONArray(jarr.Items[i].FindPath('Pos')).Items[1].AsFloat]);
+               sgDet.Cells[3,i+1]:=Format('%g',[TJSONArray(jarr.Items[i].FindPath('Pos')).Items[2].AsFloat]);
+               sgDet.Cells[4,i+1]:=Format('%g',[TJSONArray(jarr.Items[i].FindPath('R')).AsFloat]);
+             end;
+           end else if(jobj.Find('Detector').JSONType = jtObject) then begin
+             sgDet.Cells[1,i+1]:=Format('%g',[TJSONArray(jobj.FindPath('Detector.Pos')).Items[0].AsFloat]);
+             sgDet.Cells[2,i+1]:=Format('%g',[TJSONArray(jobj.FindPath('Detector.Pos')).Items[1].AsFloat]);
+             sgDet.Cells[3,i+1]:=Format('%g',[TJSONArray(jobj.FindPath('Detector.Pos')).Items[2].AsFloat]);
+             sgDet.Cells[4,i+1]:=Format('%g',[jobj.FindPath('Detector.R').AsFloat]);
+           end;
+         end;
+
+         if(root.FindPath('Shapes') <> nil) then begin
+              LoadJSONShapeTree(root.Arrays['Shapes'].AsJSON);
+         end;
+      end;
     finally
-      //FreeAndNil(js);
+      if not (CurrentSession = nil) then
+         PanelToList2(CurrentSession);
     end;
 end;
 initialization
