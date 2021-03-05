@@ -498,7 +498,7 @@
 			"minimum": 0
 		      },
 		      "C0": {
-			"title": "Size",
+			"title": "Axis Center 1",
 			"type": "array",
 			"format": "table",
 			"items": {
@@ -508,7 +508,7 @@
 			"maxItems": 3
 		      },
 		      "C1": {
-			"title": "Center",
+			"title": "Axis Center 2",
 			"type": "array",
 			"format": "table",
 			"items": {
@@ -528,7 +528,14 @@
           },
           {
             "title": "Name",
-            "type": "string"
+            "type": "object",
+            "required": ["Name"],
+            "properties": {
+	       "Name":{
+                   "type": "string",
+	           "default": ""
+	       }
+	    }
           },
           {
             "title": "Origin",
@@ -803,7 +810,7 @@
                 "maximum": 1
               },
               "n": {
-                "title": "Reflective Index (n)",
+                "title": "Refractive Index (n)",
                 "type": "number",
                 "default": 1,
                 "minimum": 0
