@@ -42,36 +42,36 @@ cfg.tstep=5e-9;
 cfg.issaveexit=1;
 
 % set up detectors: non-overlapping fiber detectors along x = 30
-detpY=31:1:55; % y changes from 31 to 55
+detpy=31:1:55; % y changes from 31 to 55
 r=0.25; % radius 0.25mm
-for i=1:size(detpY,2)
-    cfg.detpos(i,:) = [30,detpY(i),0,r];
+for i=1:size(detpy,2)
+    cfg.detpos(i,:) = [30,detpy(i),0,r];
 end
 
 % visualize domain settings
 figure(1);mcxpreview(cfg);
 
 % launch simulations
-[~,detp]=mcxlab(cfg);
+[fluence,detp]=mcxlab(cfg);
 
 % compute diffuse reflectance at detectors
-drefMC = cwDrefMC(detp, cfg);
+drefmc = mcxcwdref(detp, cfg);
 
 %% Diffusion
 % flux at detectors
-fluxDiffusion = cwFluxDiffusion(cfg.prop(2,1), cfg.prop(2,2) * (1 - cfg.prop(2,3)), ...
-    cfg.prop(2,4), cfg.srcpos, cfg.detpos(:, 1:3));
+fluxdiffusion = cwfluxdiffusion(cfg.prop(2,1), cfg.prop(2,2) * (1 - cfg.prop(2,3)), ...
+    rbgetreff(1.4,1.0), cfg.srcpos, cfg.detpos(:, 1:3));
 
 % fluence at detectors
-fluenceDiffusion = cwdiffusion(cfg.prop(2,1), cfg.prop(2,2) * (1 - cfg.prop(2,3)), ...
-    findReff(cfg.prop(2,4)), cfg.srcpos, cfg.detpos(:, 1:3));
+fluencediffusion = cwfluencediffusion(cfg.prop(2,1), cfg.prop(2,2) * (1 - cfg.prop(2,3)), ...
+    rbgetreff(1.4,1.0), cfg.srcpos, cfg.detpos(:, 1:3));
 
 % surface diffuse reflectance
-drefDiffusion = 0.118 * fluenceDiffusion + 0.306 * fluxDiffusion; % Eq. 8 of Kienle1997
+drefdiffusion = 0.118 * fluencediffusion + 0.306 * fluxdiffusion; % Eq. 8 of Kienle1997
 
 %% compare diffuse reflectance
 figure(2);
-h=semilogy(1:length(detpY), drefDiffusion, 'r--', 1:length(detpY), drefMC, 'b+');
+h=semilogy(1:length(detpy), drefdiffusion, 'r--', 1:length(detpy), drefmc, 'b+');
 legend("Diffusion", "MC");
 title("log10(Diffuse reflectance) [1/mm^{2}]");
 xlabel("Source-Detector seperation [mm]");
