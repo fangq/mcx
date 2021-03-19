@@ -648,7 +648,7 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 		  
 		  /** Extract the normal vector of the intra-voxel interface*/
 		  nuvox->nv=float3(val.c[2]*(2.f/255.f)-1,val.c[1]*(2.f/255.f)-1,val.c[0]*(2.f/255.f)-1);
-		  nuvox->nv=nuvox->nv*rsqrt(dot(nuvox->nv,nuvox->nv));
+		  nuvox->nv=nuvox->nv*rsqrtf(dot(nuvox->nv,nuvox->nv));
 		  
 		  /** Determine tissue label corresponding to the current photon position*/
 		  if(dot(nuvox->rp-*p,nuvox->nv)<0){
@@ -752,7 +752,7 @@ __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium
 	}else{ /*total internal reflection*/
 	    *c0+=(FL3(-2.f*Icos))*nuvox->nv;
 	}
-	tmp0=rsqrt(dot(*c0,*c0));
+	tmp0=rsqrtf(dot(*c0,*c0));
 	(*c0)=(*c0)*FL3(tmp0);
 	(*rv)=float3(__fdividef(1.f,c0->x),__fdividef(1.f,c0->y),__fdividef(1.f,c0->z));
 	return 0;
@@ -1108,7 +1108,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 		      float ry=rand_uniform01(t);
 		      float4 v2=gcfg->srcparam1;
 		      // calculate v2 based on v2=|v2| * unit(v0) x unit(v1)
-		      v2.w*=rsqrt(gcfg->srcparam1.x*gcfg->srcparam1.x+gcfg->srcparam1.y*gcfg->srcparam1.y+gcfg->srcparam1.z*gcfg->srcparam1.z);
+		      v2.w*=rsqrtf(gcfg->srcparam1.x*gcfg->srcparam1.x+gcfg->srcparam1.y*gcfg->srcparam1.y+gcfg->srcparam1.z*gcfg->srcparam1.z);
 		      v2.x=v2.w*(gcfg->c0.y*gcfg->srcparam1.z - gcfg->c0.z*gcfg->srcparam1.y);
 		      v2.y=v2.w*(gcfg->c0.z*gcfg->srcparam1.x - gcfg->c0.x*gcfg->srcparam1.z); 
 		      v2.z=v2.w*(gcfg->c0.x*gcfg->srcparam1.y - gcfg->c0.y*gcfg->srcparam1.x);
@@ -1214,7 +1214,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
 			      float s,q;
 			      r=1.f-2.f*rand_uniform01(t);
 			      s=1.f-2.f*rand_uniform01(t);
-			      q=sqrt(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t)>0.5f ? 1.f : -1.f);
+			      q=sqrtf(1.f-v->x*v->x-v->y*v->y)*(rand_uniform01(t)>0.5f ? 1.f : -1.f);
 			      *((float4*)v)=float4(v->y*q-v->z*s,v->z*r-v->x*q,v->x*s-v->y*r,v->nscat);
 		      }
                       *rv=float3(rv->x+(gcfg->srcparam1.x)*0.5f,
