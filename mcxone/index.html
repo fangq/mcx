@@ -6,22 +6,111 @@
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="./polyfills/assign.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <link rel='stylesheet' id='theme-link'>
     <link rel='stylesheet' id='iconlib-link'>
 </head>
 <body>
-<div class='container grid-xl'>
-    <div class="row columns md:flex">
-        <div class='col-8 col-md-8 w-8/12'>
-            <h1>MCX One</h1>
-            <p>A Web-based <a href="http://mcx.space">MCX</a> Input File Creator (based on <a href="https://json-schema.org/">JSON Schema</a> and <a href="https://github.com/jdorn/json-editor" title="JSON Editor">JSON-editor</a>).</p>
+<style type="text/css">
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: gray;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+.tab-item {
+  display: inline;
+}
+
+section {
+    width: 100%;
+}
+
+#site-navigation{
+  float:none;
+}
+
+.col-8{
+  display:none;
+  width: 100%;
+  padding: 0 4% 0 4%;
+}
+
+.active{
+  display:block;
+}
+.nav {
+ flex-direction: row;
+}
+</style>
+<script>
+function showoptions() {
+  $("mcx1-options").css("width","400px");
+}
+
+function hideoptions() {
+  $("mcx1-options").css("width","0");
+}
+
+function showtab(event, name) {
+  $(".col-8").removeClass('active');
+  $("#mcx1-"+name).addClass('active');
+  $("#site-navigation li").removeClass('active');
+  event.target.parentNode.classList.add('active');
+}
+
+function runsimulation() {
+  alert($("#output-textarea").val());
+}
+
+
+</script>
+
+<section id="mcx1-title" class='current'>
+        <h1>MCX One</h1>
+        <p>A Web-based <a href="http://mcx.space">MCX</a> Input File Creator (based on <a href="https://json-schema.org/">JSON Schema</a> and <a href="https://github.com/jdorn/json-editor" title="JSON Editor">JSON-editor</a>).</p>
+</section>
+
+
+<header id="masthead" class="home">
+        <nav id="site-navigation">
+        	<div class="menu-navigation-container">
+			<ul class="tab nav nav-tabs ">
+			<li class="tab-item active"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')">Create</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')">Schema</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')">JSON</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')">Preview</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')">Run</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')">Share</a></li>
+			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options">Link</a></li>
+			<li class="tab-item"><a href="?" title="reload editor with default example settings">Reset</a></li>
+			<li class="tab-item"><span style="font-size:30px;cursor:pointer" onclick="showoptions()">&#9776;</span></li>
+			</ul>
+		</div>
+        </nav><!-- #site-navigation -->
+</header>
+
+<section class='tab-content'>
+    <section id="mcx1-create" class='col-8 col-md-8 w-8/8 active'>
             <div id="json-editor-form"></div>
-        </div>
-        <div class='col-4 col-md-4 w-4/12'>
-            <div>
-                <a class="btn btn-primary" id="direct-link" title="preserves schema, value, and options">Direct Link</a>
-                <a class="btn btn-secondary" href="?" title="reload editor with default example settings">reset</a>
-            </div>
+    </section>
+
+    <section id="mcx1-json" class='col-8 col-md-8 w-8/8'>
             <h2>JSON Output</h2>
             <p>You can also make changes to the JSON here and set the value in the editor by clicking "Update Form"</p>
             <label for="output-textarea"></label>
@@ -32,6 +121,36 @@
             <label for="validate-textarea">This will update whenever the form changes to show validation errors if there
                 are any.</label><br>
             <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
+    </section>
+
+    <section id="mcx1-schema" class='col-8 col-md-8 w-8/8'>
+            <h2>Schema</h2>
+            <label for="schema-textarea">You can change the schema and see how the generated form looks. After you make
+                changes, click "Update Schema"</label>
+            <button class='btn btn-primary btn-block' id='setschema'>Update Schema</button>
+            <textarea id='schema-textarea' rows="30" style="width: 100%; font-family: monospace;"
+                      class='form-control'></textarea>
+    </section>
+
+    <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
+            <h2>Preview</h2>
+    </section>
+
+    <section id="mcx1-run" class='col-8 col-md-8 w-8/8'>
+            <h2>Run</h2>
+	    <button class='btn btn-primary btn-block' id='run' onClick="runsimulation()">Submit</button>
+            <label for="run-log">Job status</label>
+	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;"
+                      class='form-control'></textarea>
+    </section>
+
+    <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
+            <h2>Share</h2>
+    </section>
+
+    <div id="mcx1-options" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="hideoptions()">&times;</a>
+        <div>
             <h2>Options</h2>
             <div>
                 <label for="boolean-options-select">Boolean options</label><br>
@@ -109,18 +228,7 @@
                 </select>
             </div>
         </div>
-    </div>
-    <div class="row columns md:flex">
-        <div class='col-12 col-md-12 w-12/12'>
-            <h2>Schema</h2>
-            <label for="schema-textarea">You can change the schema and see how the generated form looks. After you make
-                changes, click "Update Schema"</label>
-            <button class='btn btn-primary btn-block' id='setschema'>Update Schema</button>
-            <textarea id='schema-textarea' rows="30" style="width: 100%; font-family: monospace;"
-                      class='form-control'></textarea>
-        </div>
-    </div>
-</div>
+</section>
 <script>
 
   var defaultSchema = {
