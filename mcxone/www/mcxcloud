@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+use DBI;
+use JSON::PP;
+use strict;
+my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname);
+my $req;
+
+my %jobstatus=('1'=>'queued','2'=>'starting','3'=>'running','4'=>'completed','5'=>'deleted','6'=>'invalid');
+
+$DBName="dbi:SQLite:dbname=/db/mcxcloud.db";
+$DBUser="";
+$DBPass="";
+%DBErr=(RaiseError=>0,PrintError=>1);
+$dbname="mcxcloud";
+$savetime=time();
+
+
+$dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+
+# delete all expired folder (1 hr or older), if --clean is attached
+
+if(grep(/--clean/,@ARGV)){
+    $sth=$dbh->selectall_arrayref("select jobid from $dbname where time<".(time()-60*60).";");
+    if(defined $sth->[0]){
+        foreach my $rec (@{$sth}){
+            my ($job)=@$rec;
+            if(-d "workspace/$job"){
+	        print "removing expired workfolder workspace/$job\n";
+	        system("rm -rf workspace/$job");
+            }
+        }
+    }
+}
+
+# find the next queued job and start running it
+
+$sth=$dbh->selectall_arrayref("select time,jobid,json from $dbname where status=1 limit 1;");
+if(defined $sth->[0]){
+    my ($savetime,$jobid,$json)=@{$sth->[0]};
+    print "updating job $jobid\n";
+    $sth=$dbh->prepare("update $dbname set status=2 where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    $sth->execute();
+
+    mkdir("/workspace/$jobid", 0777);
+    open(FF, ">/workspace/$jobid/input.json") or die("can not write to output folder");
+    print FF "$json\n";
+    close(FF);
+
+    print "starting job $jobid\n";
+
+    #system("cd /workspace/$jobid; mcx -f input.json -s output -F jnii > log.txt");
+    system("cd /workspace/$jobid; mcx -L > log.txt");
+
+    $sth=$dbh->prepare("update $dbname set status=3 where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    $sth->execute();
+}else{
+    print "no waiting job, skip\n";
+}
+
+$dbh->disconnect() or die($DBI::errstr);
+

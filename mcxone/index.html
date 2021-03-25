@@ -4,7 +4,6 @@
     <meta charset="utf-8"/>
     <title>MCX One - A Web-based MCX Input File Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
-    <script src="./polyfills/assign.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <link rel='stylesheet' id='theme-link'>
@@ -55,31 +54,12 @@ section {
   display:block;
 }
 .nav {
- flex-direction: row;
+  flex-direction: row;
+}
+#mcx1-run input{
+  width:40%;
 }
 </style>
-<script>
-function showoptions() {
-  $("mcx1-options").css("width","400px");
-}
-
-function hideoptions() {
-  $("mcx1-options").css("width","0");
-}
-
-function showtab(event, name) {
-  $(".col-8").removeClass('active');
-  $("#mcx1-"+name).addClass('active');
-  $("#site-navigation li").removeClass('active');
-  event.target.parentNode.classList.add('active');
-}
-
-function runsimulation() {
-  alert($("#output-textarea").val());
-}
-
-
-</script>
 
 <section id="mcx1-title" class='current'>
         <h1>MCX One</h1>
@@ -90,7 +70,7 @@ function runsimulation() {
 <header id="masthead" class="home">
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
-			<ul class="tab nav nav-tabs ">
+			<ul class="tab nav nav-tabs">
 			<li class="tab-item active"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')">Create</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')">Schema</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')">JSON</a></li>
@@ -138,6 +118,12 @@ function runsimulation() {
 
     <section id="mcx1-run" class='col-8 col-md-8 w-8/8'>
             <h2>Run</h2>
+	    <input id="fullname" name="fullname" type="text" value='' required minlength="1" placeholder="Full Name (required, internal use only, not be used publicly)">
+	    <input id="inst" name="inst" type="text" value='' required minlength="1" placeholder="Institution (required, internal use only, not be used publicly)">
+	    <input id="email" name="email" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
+	    <input id="netname" name="netname" type="text" value='' required minlength="1" placeholder="Network Name (required, for future public use)">
+	    <input id="jobid" type="hidden" name="jobid" value=''>
+
 	    <button class='btn btn-primary btn-block' id='run' onClick="runsimulation()">Submit</button>
             <label for="run-log">Job status</label>
 	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;"
@@ -1399,6 +1385,86 @@ function runsimulation() {
     }
     refreshUI()
   })
+
+  /* -------------------------------------------------------- mcxone functions */
+
+var timer, jobid, count=0;
+
+function showoptions() {
+  $("mcx1-options").css("width","400px");
+}
+
+function hideoptions() {
+  $("mcx1-options").css("width","0");
+}
+
+function showtab(event, name) {
+  $(".col-8").removeClass('active');
+  $("#mcx1-"+name).addClass('active');
+  $("#site-navigation li").removeClass('active');
+  event.target.parentNode.classList.add('active');
+}
+
+function updatestatus(data){
+  jobid=data.jobid;
+  if(jobid != null){
+      $("#jobid").val(jobid);
+      $("#run-log").val($("#run-log").val()+"\n"+"Successfully submitted job "+jobid);
+      count=0;
+      timer=setInterval(jobstatus,5000);
+  }else
+      $("#run-log").val($("#run-log").val()+"\n"+ 'failed to submit, please try again');
+}
+
+function addlog(data){
+  var status=data.status;
+  if(status != null){
+      var d = new Date();
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+status);
+  }
+}
+
+function jobstatus() {
+  if(count++>10 && timer != null){
+      clearInterval(timer);
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job expired");
+  }
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
+      data: { 'jobid': jobid },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      success: function( data ){},
+      error: function(xhr,status,error) {}// { $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
+  });
+}
+
+function runsimulation() {
+  var fullname=$("#fullname").val();
+  var email=$("#email").val();
+  var inst=$("#inst").val();
+  var netname=$("#netname").val();
+  var json=$("#output-textarea").val();
+  var isvalid=$("#validate-textarea").val();
+
+  if(!(isvalid === 'valid'))
+      throw "Input JSON is not valid";
+  if(fullname === "" || email === "" || inst === "" || netname === "")
+     throw "required fields are not provided";
+
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': json },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      success: function( data ){alert('success');},
+      error: function(xhr,status,error) {}//{ $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
+  });
+}
+
+  /* -------------------------------------------------------- main function */
 
   parseUrl()
 
