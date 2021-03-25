@@ -8,7 +8,7 @@ RUN apt-get install -y wget zip sqlite3 libdbd-sqlite3-perl
 # Setup some convenient tools/functionalities
 RUN wget http://mcx.space/nightly/release/v2020/mcx-linux-x86_64-v2020.zip -O /mcx-linux.zip && \
     unzip /mcx-linux.zip -d /
-RUN wget http://kwafoo.coe.neu.edu/mcxone/mcxcloud.txt -O /mcxcloud
+RUN wget http://kwafoo.coe.neu.edu/mcxone/mcxcloud -O /mcxcloud
 RUN chmod +x /mcxcloud
 
 RUN useradd -u 6047 mcxcloud
