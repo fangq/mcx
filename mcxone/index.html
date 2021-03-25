@@ -6,6 +6,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
     <link rel='stylesheet' id='theme-link'>
     <link rel='stylesheet' id='iconlib-link'>
 </head>
@@ -58,6 +60,14 @@ section {
 }
 #mcx1-run input{
   width:40%;
+}
+
+#canvas {
+    background-color: #000;
+    width: 800px;
+    height: 400px;
+    border: 1px solid black;
+    padding: 0px;
 }
 </style>
 
@@ -114,6 +124,7 @@ section {
 
     <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
             <h2>Preview</h2>
+	    <div id="canvas"></div>
     </section>
 
     <section id="mcx1-run" class='col-8 col-md-8 w-8/8'>
@@ -1403,6 +1414,10 @@ function showtab(event, name) {
   $("#mcx1-"+name).addClass('active');
   $("#site-navigation li").removeClass('active');
   event.target.parentNode.classList.add('active');
+  if(name === "preview"){
+      var cfg = JSON.parse($("#output-textarea").val());
+      drawpreview(cfg);
+  }
 }
 
 function updatestatus(data){
@@ -1463,6 +1478,96 @@ function runsimulation() {
       error: function(xhr,status,error) {}//{ $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
   });
 }
+
+  /* -------------------------------------------------------- 3d rendering functions */
+
+function drawshape(shape,index){
+  var keys = Object.keys(shape);
+  var geometry, material, obj;
+
+  switch(keys[0]){
+    case "Grid":
+      scene.remove.apply(scene, scene.children);
+      geometry = new THREE.BoxGeometry(shape.Grid.Size[0],shape.Grid.Size[1],shape.Grid.Size[2]);
+      origin=[-shape.Grid.Size[0]*0.5, -shape.Grid.Size[1]*0.5, -shape.Grid.Size[2]*0.5 ];
+      material = new THREE.MeshBasicMaterial( { color: 0x0000ff, wireframe: true, transparent: false } );
+      obj = new THREE.Mesh( geometry, material );
+      scene.add( obj );
+      break;
+    case "Sphere":
+      geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
+      geometry.applyMatrix( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0]+origin[0],shape.Sphere.O[1]+origin[1],shape.Sphere.O[2]+origin[2]) );
+      material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
+      obj = new THREE.Mesh( geometry, material );
+      scene.add( obj );
+      break;
+  }
+}
+
+
+function drawsrc(obj){
+  const dir = new THREE.Vector3( obj.Dir[0],obj.Dir[1],obj.Dir[2] );
+
+  //normalize the direction vector (convert to vector of length 1)
+  dir.normalize();
+
+  const orig = new THREE.Vector3( obj.Pos[0]+origin[0],obj.Pos[1]+origin[1],obj.Pos[2]+origin[2] );
+  const length = 10;
+  const hex = 0xffff00;
+
+  const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex );
+  scene.add( arrowHelper );
+}
+
+function drawdet(obj,index){
+  const geometry = new THREE.SphereGeometry(obj.R, 32,32);
+  geometry.applyMatrix( new THREE.Matrix4().makeTranslation(obj.Pos[0]+origin[0],obj.Pos[1]+origin[1],obj.Pos[2]+origin[2]) );
+  const material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
+  const det = new THREE.Mesh( geometry, material );
+  scene.add( det );
+}
+
+function drawpreview(cfg){
+  scene.remove.apply(scene, scene.children);
+
+  if(cfg.Shapes != null){
+     cfg.Shapes.forEach(drawshape);
+  }
+  if(cfg.Optode != null){
+    if(cfg.Optode.Source !=null)
+      drawsrc(cfg.Optode.Source);
+    if(cfg.Optode.Detector !=null)
+      cfg.Optode.Detector.forEach(drawdet);
+  }
+  camera.position.x = -3*origin[0];
+  camera.position.y = -3*origin[1];
+  camera.position.z = -3*origin[2];
+
+  update();
+}
+
+function update() {
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(update);
+}
+
+var canvas = $("#canvas");
+var w = canvas.width();
+var h = canvas.height();
+var origin=[0,0,0];
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
+
+camera.up = new THREE.Vector3(0,0,1);
+camera.lookAt(new THREE.Vector3(0,0,0));
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize( w,h );
+canvas.append( renderer.domElement );
+
+controls = new THREE.OrbitControls(camera, renderer.domElement);
 
   /* -------------------------------------------------------- main function */
 
