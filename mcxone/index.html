@@ -36,10 +36,13 @@
 
 .tab-item {
   display: inline;
+  min-width: 5em;
+  font-size: 130%;
 }
 
 section {
     width: 100%;
+    margin-left: 10px;
 }
 
 #site-navigation{
@@ -58,45 +61,76 @@ section {
 .nav {
   flex-direction: row;
 }
+
+.bigtab li{
+  vertical-align: middle;
+  text-align: center;
+  width: 200px;
+  font-size: 30px;
+  margin-right: 2em;
+}
+.bigtab i{
+  font-size: 200px;
+  color: #7744d1;
+}
+
+.bigtab{
+  width: 1000px;
+  border-bottom: 0px;
+}
+
 #mcx1-run input{
   width:40%;
 }
 
 #canvas {
     background-color: #000;
-    width: 800px;
-    height: 400px;
+    width: 1000px;
+    height: 800px;
     border: 1px solid black;
     padding: 0px;
 }
+.info{
+  max-width:60em;
+}
+body {
+background-color: #dad1ff;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'%3E%3Cpolygon fill='%23cc0000' points='957 450 539 900 1396 900'/%3E%3Cpolygon fill='%23aa0000' points='957 450 872.9 900 1396 900'/%3E%3Cpolygon fill='%23d6002b' points='-60 900 398 662 816 900'/%3E%3Cpolygon fill='%23b10022' points='337 900 398 662 816 900'/%3E%3Cpolygon fill='%23d9004b' points='1203 546 1552 900 876 900'/%3E%3Cpolygon fill='%23b2003d' points='1203 546 1552 900 1162 900'/%3E%3Cpolygon fill='%23d3006c' points='641 695 886 900 367 900'/%3E%3Cpolygon fill='%23ac0057' points='587 900 641 695 886 900'/%3E%3Cpolygon fill='%23c4008c' points='1710 900 1401 632 1096 900'/%3E%3Cpolygon fill='%239e0071' points='1710 900 1401 632 1365 900'/%3E%3Cpolygon fill='%23aa00aa' points='1210 900 971 687 725 900'/%3E%3Cpolygon fill='%23880088' points='943 900 1210 900 971 687'/%3E%3C/svg%3E");
+background-attachment: fixed;
+background-size: cover;
+margin: 20px;
+}
+
 </style>
 
 <section id="mcx1-title" class='current'>
-        <h1>MCX One</h1>
-        <p>A Web-based <a href="http://mcx.space">MCX</a> Input File Creator (based on <a href="https://json-schema.org/">JSON Schema</a> and <a href="https://github.com/jdorn/json-editor" title="JSON Editor">JSON-editor</a>).</p>
+        <h1>MCX Cloud</h1>
+        <p class="info">A web-based <a href="http://mcx.space">Monte Carlo eXtreme (MCX)</a> based on <a href="https://json-schema.org/">JSON Schema</a> and <a href="https://github.com/jdorn/json-editor" title="JSON Editor">JSON-editor</a>.
+	MCX and this open-source web-interface were developed by the <a href="http://fanglab.org">COTI Lab</a> (aka Fang Lab), funded by the National Institute of Health (NIH) and National Institute of General Medical Sciences (NIGMS) under grant R01-GM114365.
+	</p>
 </section>
 
 
 <header id="masthead" class="home">
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
-			<ul class="tab nav nav-tabs">
-			<li class="tab-item active"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')">Create</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')">Schema</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')">JSON</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')">Preview</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')">Run</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')">Share</a></li>
-			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options">Link</a></li>
-			<li class="tab-item"><a href="?" title="reload editor with default example settings">Reset</a></li>
-			<li class="tab-item"><span style="font-size:30px;cursor:pointer" onclick="showoptions()">&#9776;</span></li>
+			<ul id="navbar" class="tab nav nav-tabs bigtab">
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
+			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
+			<li class="tab-item"><a href="?" title="reload editor with default example settings"><i class="fas fa-undo"></i>Reset</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-options" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
 			</ul>
 		</div>
         </nav><!-- #site-navigation -->
 </header>
 
 <section class='tab-content'>
-    <section id="mcx1-create" class='col-8 col-md-8 w-8/8 active'>
+    <section id="mcx1-create" class='col-8 col-md-8 w-8/8'>
             <div id="json-editor-form"></div>
     </section>
 
@@ -1402,14 +1436,16 @@ section {
 var timer, jobid, count=0;
 
 function showoptions() {
-  $("mcx1-options").css("width","400px");
+  $("#mcx1-options").css("width","400px");
 }
 
 function hideoptions() {
-  $("mcx1-options").css("width","0");
+  $("#mcx1-options").css("width","0");
 }
 
 function showtab(event, name) {
+  $("#navbar").removeClass('bigtab');
+  $('#navbar a').removeClass('active');
   $(".col-8").removeClass('active');
   $("#mcx1-"+name).addClass('active');
   $("#site-navigation li").removeClass('active');
