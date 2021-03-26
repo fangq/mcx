@@ -65,12 +65,12 @@ section {
 .bigtab li{
   vertical-align: middle;
   text-align: center;
-  width: 200px;
+  width: 150px;
   font-size: 30px;
   margin-right: 2em;
 }
 .bigtab i{
-  font-size: 200px;
+  font-size: 150px;
   color: #7744d1;
 }
 
@@ -1517,22 +1517,49 @@ function runsimulation() {
 
   /* -------------------------------------------------------- 3d rendering functions */
 
+function createbox(bsize, orig, tag){
+      geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
+      geometry.applyMatrix( new THREE.Matrix4().makeTranslation(orig[0]+origin[0], orig[1]+origin[1], orig[2]+origin[2]) );
+      material = new THREE.MeshNormalMaterial( { color: 0x7795aa, transparent: true, opacity: 0.6 } );
+      var obj = new THREE.Mesh( geometry, material );
+      return obj;
+}
+
 function drawshape(shape,index){
   var keys = Object.keys(shape);
-  var geometry, material, obj;
+  var geometry, material, obj, c0, c1, height;
 
   switch(keys[0]){
     case "Grid":
       scene.remove.apply(scene, scene.children);
-      geometry = new THREE.BoxGeometry(shape.Grid.Size[0],shape.Grid.Size[1],shape.Grid.Size[2]);
+      const light = new THREE.DirectionalLight( 0xffffff );
+      light.position.set( 100, 100, 100 ).normalize();
+      scene.add(light);
+      scene.add( createbox(shape.Grid.Size,[0,0,0],shape.Grid.Tag) );
       origin=[-shape.Grid.Size[0]*0.5, -shape.Grid.Size[1]*0.5, -shape.Grid.Size[2]*0.5 ];
-      material = new THREE.MeshBasicMaterial( { color: 0x0000ff, wireframe: true, transparent: false } );
-      obj = new THREE.Mesh( geometry, material );
-      scene.add( obj );
+      break;
+    case "Box":
+      scene.add( createbox(shape.Box.Size,shape.Box.O,shape.Box.Tag) );
+      break;
+    case "Subgrid":
+      scene.add( createbox(shape.Subgrid.Size,shape.Subgrid.O,shape.Subgrid.Tag) );
       break;
     case "Sphere":
       geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
       geometry.applyMatrix( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0]+origin[0],shape.Sphere.O[1]+origin[1],shape.Sphere.O[2]+origin[2]) );
+      material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
+      obj = new THREE.Mesh( geometry, material );
+      scene.add( obj );
+      break;
+    case "Cylinder":
+      c0 = new THREE.Vector3( shape.Cylinder.C0[0],shape.Cylinder.C0[1],shape.Cylinder.C0[2] );
+      c1 = new THREE.Vector3( shape.Cylinder.C1[0],shape.Cylinder.C1[1],shape.Cylinder.C1[2] );
+      height= c0.distanceTo(c1);
+      geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
+      geometry.translate( 0, height / 2, 0 );
+      geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
+      c1.sub(c0).normalize();
+      geometry.lookAt( c1 );
       material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
       obj = new THREE.Mesh( geometry, material );
       scene.add( obj );
