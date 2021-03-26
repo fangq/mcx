@@ -1566,13 +1566,16 @@ function drawdet(obj,index){
 function drawpreview(cfg){
   scene.remove.apply(scene, scene.children);
 
-  if(cfg.Shapes != null){
+  if(cfg.Shapes != null && cfg.Shapes.length>0){
      cfg.Shapes.forEach(drawshape);
+  }else if(cfg.Domain !=null && cfg.Domain.Dim!=null){
+     var box={Grid: {Size: cfg.Domain.Dim}};
+     drawshape(box,0);
   }
   if(cfg.Optode != null){
     if(cfg.Optode.Source !=null)
       drawsrc(cfg.Optode.Source);
-    if(cfg.Optode.Detector !=null)
+    if(cfg.Optode.Detector !=null && cfg.Optode.Detector.length>0)
       cfg.Optode.Detector.forEach(drawdet);
   }
   camera.position.x = -3*origin[0];
