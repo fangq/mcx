@@ -1522,39 +1522,92 @@ function runsimulation() {
   /* -------------------------------------------------------- 3d rendering functions */
 
 function createbox(bsize, orig, tag){
-      var geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
-      geometry.applyMatrix( new THREE.Matrix4().makeTranslation(orig[0]+origin[0], orig[1]+origin[1], orig[2]+origin[2]) );
-      var material = new THREE.MeshNormalMaterial( { color: 0x7795aa, transparent: true, opacity: 0.6, side:THREE.DoubleSide } );
-      var obj = new THREE.Mesh( geometry, material );
+      const geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
+      geometry.translate(bsize[0]*0.5,bsize[1]*0.5,bsize[2]*0.5);
+      const material = new THREE.MeshNormalMaterial( { color: materialcolor[tag], transparent: true, opacity: 0.6, alphaTest: 0.5, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const obj = new THREE.Mesh( geometry, material );
       return obj;
 }
 
+function createlayer(s, dim, tag){
+      let bsize=bbxsize;
+      bsize[dim]=Math.abs(s[0]-s[1]);
+      let orig=[0,0,0];
+      orig[dim]=Math.min(s[0],s[1]);
+      return createbox(bsize, orig, tag);
+}
+/*
+function createlabel(text, pos){
+  const geometry = new THREE.TextGeometry( text, {font: font,size: 15, height: 5, curveSegments: 10 } );
+  const material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
+  const obj = new THREE.Mesh(geometry, material);
+  obj.position.set(pos[0],pos[1],pos[2]);
+  return obj;
+}
+*/
+function resetscene(s){
+      scene.remove.apply(scene, scene.children);
+      const light = new THREE.AmbientLight( 0xffffff );
+      light.position.set(s[0]*0.5,s[1]*0.5,s[2]*1.5);
+      scene.add(light);
+      camera.position.set(s[0]*2,s[1]*2,s[2]*2);
+      camera.lookAt(new THREE.Vector3(s[0]*0.5,s[1]*0.5,s[2]*0.5));
+}
+
 function drawshape(shape,index){
-  var keys = Object.keys(shape);
-  var obj, c0, c1, height;
+  let keys = Object.keys(shape);
+  let obj, c0, c1, height;
+  const dir={XLayers:0,YLayers:1,ZLayers:2,XSlabs:0,YSlabs:1,ZSlabs:2};
 
   switch(keys[0]){
     case "Grid":
-      scene.remove.apply(scene, scene.children);
-      const light = new THREE.AmbientLight( 0xffffff );
-      light.position.set( 100, 100, 100 );
-      scene.add(light);
-      var bbx=createbox(shape.Grid.Size,[0,0,0],shape.Grid.Tag);
-      scene.add( bbx );
-      origin=[-shape.Grid.Size[0]*0.5, -shape.Grid.Size[1]*0.5, -shape.Grid.Size[2]*0.5 ];
+      resetscene(shape.Grid.Size);
+      boundingbox=createbox(shape.Grid.Size,[0,0,0],shape.Grid.Tag);
+      const geo = new THREE.EdgesGeometry( boundingbox.geometry );
+      const mat = new THREE.LineDashedMaterial( { color: 0xFFFF00, linewidth: 3, dashSize: 3, gapSize: 1 } );
+      boundingbox = new THREE.LineSegments( geo, mat );
+      boundingbox.computeLineDistances();
+      scene.add( boundingbox );
+/*      
+      boundingbox.add( createlabel('x',[shape.Grid.Size[0]/2,0,0]) );
+      boundingbox.add( createlabel('y',[0,shape.Grid.Size[1]/2,0]) );
+      boundingbox.add( createlabel('z',[0,0,shape.Grid.Size[2]/2]) );
+*/
+      bbxsize=shape.Grid.Size;
+      controls.target.set( shape.Grid.Size[0]*0.5, shape.Grid.Size[1]*0.5,shape.Grid.Size[2]*0.5);
       break;
     case "Box":
-      scene.add( createbox(shape.Box.Size,shape.Box.O,shape.Box.Tag) );
+      boundingbox.add( createbox(shape.Box.Size,shape.Box.O,shape.Box.Tag) );
       break;
     case "Subgrid":
-      scene.add( createbox(shape.Subgrid.Size,shape.Subgrid.O,shape.Subgrid.Tag) );
+      boundingbox.add( createbox(shape.Subgrid.Size,shape.Subgrid.O,shape.Subgrid.Tag) );
+      break;
+    case "XLayers":
+    case "YLayers":
+    case "ZLayers":
+      if(shape[keys[0]] != null)
+         for (let i = 0; i < shape[keys[0]].length; i++)
+            boundingbox.add( createlayer(shape[keys[0]][i], dir[keys[0]], shape[keys[0]][i][2]) );
+      break;
+    case "XSlabs":
+    case "YSlabs":
+    case "ZSlabs":
+      if(shape[keys[0]] != null && shape[keys[0]].Bound != null){
+         let slabs=shape[keys[0]].Bound;
+	 if(slabs.length>0 && !Array.isArray(slabs[0]))
+	     boundingbox.add(createlayer(slabs, dir[keys[0]]));
+	 else
+             for (let i = 0; i < slabs.length; i++)
+                 boundingbox.add( createlayer(slabs[i], dir[keys[0]], shape[keys[0]].Tag ) );
+      }
       break;
     case "Sphere":
       var geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
-      geometry.applyMatrix( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0]+origin[0],shape.Sphere.O[1]+origin[1],shape.Sphere.O[2]+origin[2]) );
-      var material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
+      //geometry.applyMatrix( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
+      var material = new THREE.MeshNormalMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
       obj = new THREE.Mesh( geometry, material );
-      scene.add( obj );
+      obj.position.set(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]);
+      boundingbox.add( obj );
       break;
     case "Cylinder":
       c0 = new THREE.Vector3( shape.Cylinder.C0[0],shape.Cylinder.C0[1],shape.Cylinder.C0[2] );
@@ -1565,56 +1618,58 @@ function drawshape(shape,index){
       geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
       c1.sub(c0).normalize();
       geometry.lookAt( c1 );
-      var material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
+      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
       obj = new THREE.Mesh( geometry, material );
-      scene.add( obj );
+      boundingbox.add( obj );
       break;
   }
 }
 
-
 function drawsrc(obj){
   const dir = new THREE.Vector3( obj.Dir[0],obj.Dir[1],obj.Dir[2] );
-
-  //normalize the direction vector (convert to vector of length 1)
   dir.normalize();
-
-  const orig = new THREE.Vector3( obj.Pos[0]+origin[0],obj.Pos[1]+origin[1],obj.Pos[2]+origin[2] );
+  const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
   const length = 10;
-  const hex = 0xffff00;
+  const hex = 0xFFFFFF;
 
   const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex );
-  scene.add( arrowHelper );
+  boundingbox.add( arrowHelper );
 }
 
 function drawdet(obj,index){
   const geometry = new THREE.SphereGeometry(obj.R, 32,32);
-  geometry.applyMatrix( new THREE.Matrix4().makeTranslation(obj.Pos[0]+origin[0],obj.Pos[1]+origin[1],obj.Pos[2]+origin[2]) );
+  geometry.applyMatrix( new THREE.Matrix4().makeTranslation(obj.Pos[0],obj.Pos[1],obj.Pos[2]) );
   const material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
   const det = new THREE.Mesh( geometry, material );
-  scene.add( det );
+  boundingbox.add( det );
 }
 
 function drawpreview(cfg){
   scene.remove.apply(scene, scene.children);
 
-  if(cfg.Shapes != null && cfg.Shapes.length>0){
-     cfg.Shapes.forEach(drawshape);
-  }else if(cfg.Domain !=null && cfg.Domain.Dim!=null){
-     var box={Grid: {Size: cfg.Domain.Dim}};
+  if(cfg.Domain !=null && cfg.Domain.Dim!=null){
+     const box={Grid: {Size: cfg.Domain.Dim}};
      drawshape(box,0);
   }
+  if(cfg.Shapes != null && cfg.Shapes.length>0)
+     cfg.Shapes.forEach(drawshape);
+
   if(cfg.Optode != null){
     if(cfg.Optode.Source !=null)
       drawsrc(cfg.Optode.Source);
     if(cfg.Optode.Detector !=null && cfg.Optode.Detector.length>0)
       cfg.Optode.Detector.forEach(drawdet);
   }
-  camera.position.x = -3*origin[0];
-  camera.position.y = -3*origin[1];
-  camera.position.z = -3*origin[2];
-
   update();
+}
+
+function mulberry32(a) {
+    return function() {
+      var t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
 }
 
 function update() {
@@ -1626,10 +1681,15 @@ function update() {
 var canvas = $("#canvas");
 var w = canvas.width();
 var h = canvas.height();
-var origin=[0,0,0];
+var bbxsize=[0,0,0];
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
+var boundingbox=scene;
+var randseed=1648335518;
+var materialcolor=[];
+for(let i=0;i<256;i++)
+    materialcolor.push(randseed=mulberry32(randseed));
 
 camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
