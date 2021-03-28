@@ -8,6 +8,10 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script src="http://openjdata.org/js/jdata.js"></script>
     <link rel='stylesheet' id='theme-link'>
     <link rel='stylesheet' id='iconlib-link'>
 </head>
@@ -1082,6 +1086,53 @@ margin: 20px;
               }
             }
           }
+        },
+        "Volume": {
+          "title": "Volume",
+          "type": "object",
+            "required": ["_ArrayType_","_ArraySize_","_ArrayZipType_","_ArrayZipSize_","_ArrayZipData_"],
+            "properties": {
+	      "_ArrayType_":{
+		  "type": "string",
+		  "default": "uint8",
+		  "enum": [
+			"uint8",
+			"uint16",
+			"uint32",
+			"int8",
+			"int16",
+			"int32"
+		      ]
+	      },
+	      "_ArraySize_":{
+		  "type": "array",
+		  "default": [0,0,0],
+		  "format": "table",
+		  "items": {
+		      "type": "integer",
+		      "minimum": 0
+		  },
+	          "minItems": 3,
+	          "maxItems": 3
+	      },
+	      "_ArrayZipType_":{
+		  "type": "string",
+		  "default": "zlib",
+		  "enum": [
+			"zlib",
+			"gzip"
+		      ]
+	      },
+	      "_ArrayZipSize_":{
+		  "type": "integer",
+		  "default": 0,
+		  "minimum": 0
+	      },
+	      "_ArrayZipData_":{
+		  "type": "string",
+		  "default": ""
+	      }
+	    }
         }
       }
     }

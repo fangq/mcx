@@ -817,6 +817,53 @@
               }
             }
           }
+        },
+        "Volume": {
+          "title": "Volume",
+          "type": "object",
+            "required": ["_ArrayType_","_ArraySize_","_ArrayZipType_","_ArrayZipSize_","_ArrayZipData_"],
+            "properties": {
+	      "_ArrayType_":{
+		  "type": "string",
+		  "default": "uint8",
+		  "enum": [
+			"uint8",
+			"uint16",
+			"uint32",
+			"int8",
+			"int16",
+			"int32"
+		      ]
+	      },
+	      "_ArraySize_":{
+		  "type": "array",
+		  "default": [0,0,0],
+		  "format": "table",
+		  "items": {
+		      "type": "integer",
+		      "minimum": 0
+		  },
+	          "minItems": 3,
+	          "maxItems": 3
+	      },
+	      "_ArrayZipType_":{
+		  "type": "string",
+		  "default": "zlib",
+		  "enum": [
+			"zlib",
+			"gzip"
+		      ]
+	      },
+	      "_ArrayZipSize_":{
+		  "type": "integer",
+		  "default": 0,
+		  "minimum": 0
+	      },
+	      "_ArrayZipData_":{
+		  "type": "string",
+		  "default": ""
+	      }
+	    }
         }
       }
     }
