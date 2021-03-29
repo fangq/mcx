@@ -9,7 +9,7 @@
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
+    <script src="http://openjdata.org/js/pako.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
     <script src="http://openjdata.org/js/jdata.js"></script>
     <link rel='stylesheet' id='theme-link'>
@@ -567,449 +567,500 @@ margin: 20px;
     },
     "Shapes": {
       "title": "Shapes",
-      "type": "array",
-      "format": "table",
-      "items": {
-        "anyOf": [
-          {
-            "title": "Grid",
-            "type": "object",
-            "required": ["Grid"],
-            "properties": {
-	        "Grid":{
-                   "title": "Grid",
-                   "type": "object",
+      "anyOf" :[
+	{
+	"type": "array",
+	"format": "table",
+	"items": {
+          "anyOf": [
+            {
+              "title": "Grid",
+              "type": "object",
+              "required": ["Grid"],
+              "properties": {
+	          "Grid":{
+                     "title": "Grid",
+                     "type": "object",
+		      "required": [
+			"Tag",
+			"Size"
+		      ],
+		     "properties": {
+			  "Tag": {
+			    "title": "Tag",
+			    "type": "integer",
+			    "default": 1,
+			    "minimum": 0
+			  },
+			  "Size": {
+			    "title": "Size",
+			    "type": "array",
+			    "format": "table",
+			    "default": [
+			       60,
+			       60,
+			       60
+			    ],
+			    "items": {
+			      "type": "number"
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+			  }
+		     }
+		  }
+        	}
+            },
+            {
+              "title": "Sphere",
+              "type": "object",
+              "required": ["Sphere"],
+              "properties": {
+		"Sphere":{
+                    "title": "Sphere",
+                    "type": "object",
 		    "required": [
-		      "Tag",
-		      "Size"
+		       "Tag",
+		       "O",
+		       "R"
 		    ],
-		   "properties": {
+		    "properties": {
+			  "Tag": {
+			      "title": "Tag",
+			      "type": "integer",
+			      "minimum": 0
+			    },
+			    "O": {
+			      "title": "Center",
+			      "type": "array",
+			      "format": "table",
+			      "items": {
+				"type": "number"
+			      },
+			      "default": [
+				 30,
+				 30,
+				 30
+			      ],
+			      "minItems": 3,
+			      "maxItems": 3
+			    },
+			    "R": {
+			      "title": "Radius",
+			      "type": "number",
+			      "minimum": 0
+			    }
+		     }
+		}
+              }
+            },
+            {
+              "title": "Box",
+              "type": "object",
+              "required": ["Box"],
+              "properties": {
+		"Box":{
+                    "title": "Box",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "O",
+		       "Size"
+		    ],
+		    "properties": {
 			"Tag": {
 			  "title": "Tag",
 			  "type": "integer",
-			  "default": 1,
 			  "minimum": 0
 			},
 			"Size": {
 			  "title": "Size",
 			  "type": "array",
 			  "format": "table",
-			  "default": [
-			     60,
-			     60,
-			     60
-			  ],
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			},
+			"O": {
+			  "title": "Origin",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			}
+		    }
+		}
+              }
+            },
+            {
+              "title": "Subgrid",
+              "type": "object",
+              "required": ["Subgrid"],
+              "properties": {
+		"Subgrid":{
+                    "title": "Subgrid",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "O",
+		       "Size"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Size": {
+			  "title": "Size",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			},
+			"O": {
+			  "title": "Origin",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			}
+		    }
+		}
+              }
+            },
+            {
+              "title": "Cylinder",
+              "type": "object",
+              "required": ["Cylinder"],
+              "properties": {
+		"Cylinder":{
+                    "title": "Cylinder",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "CO",
+		       "C1",
+		       "R"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"C0": {
+			  "title": "Axis Center 1",
+			  "type": "array",
+			  "format": "table",
 			  "items": {
 			    "type": "number"
 			  },
 			  "minItems": 3,
 			  "maxItems": 3
+			},
+			"C1": {
+			  "title": "Axis Center 2",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "number"
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			},
+			"R": {
+			  "title": "Radius",
+			  "type": "number",
+			  "minimum": 0
 			}
-		   }
+		    }
 		}
               }
-          },
-          {
-            "title": "Sphere",
-            "type": "object",
-            "required": ["Sphere"],
-            "properties": {
-	      "Sphere":{
-                  "title": "Sphere",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "O",
-		     "R"
-		  ],
-		  "properties": {
+            },
+            {
+              "title": "Name",
+              "type": "object",
+              "required": ["Name"],
+              "properties": {
+		 "Name":{
+                     "type": "string",
+	             "default": ""
+		 }
+	      }
+            },
+            {
+              "title": "Origin",
+              "type": "object",
+              "required": ["Origin"],
+              "properties": {
+		"Origin":{
+                    "title": "Origin",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "number",
+			    "minimum": 0,
+			    "default": 0
+		    },
+		    "minItems": 3,
+		    "maxItems": 3
+		}
+              }
+            },
+            {
+              "title": "XLayers",
+              "type": "object",
+              "required": ["XLayers"],
+              "properties": {
+		"XLayers":{
+                    "title": "XLayers",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "array",
+		            "format": "table",
+			    "items": {
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+		    }
+		}
+              }
+            },
+            {
+              "title": "YLayers",
+              "type": "object",
+              "required": ["YLayers"],
+              "properties": {
+		"YLayers":{
+                    "title": "YLayers",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "array",
+		            "format": "table",
+			    "items": {
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+		    }
+		}
+              }
+            },
+            {
+              "title": "ZLayers",
+              "type": "object",
+              "required": ["ZLayers"],
+              "properties": {
+		"ZLayers":{
+                    "title": "ZLayers",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "array",
+		            "format": "table",
+			    "items": {
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+		    }
+		}
+              }
+            },
+            {
+              "title": "XSlabs",
+              "type": "object",
+              "required": ["XSlabs"],
+              "properties": {
+		"XSlabs":{
+                    "title": "XSlabs",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "Bound"
+		    ],
+  		    "properties": {
 			"Tag": {
-			    "title": "Tag",
-			    "type": "integer",
-			    "minimum": 0
-			  },
-			  "O": {
-			    "title": "Center",
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Bound": {
+			    "title": "Start/End Indices",
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-			      "type": "number"
-			    },
-			    "default": [
-			       30,
-			       30,
-			       30
-			    ],
-			    "minItems": 3,
-			    "maxItems": 3
-			  },
-			  "R": {
-			    "title": "Radius",
-			    "type": "number",
-			    "minimum": 0
-			  }
-		   }
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
+			}
+		    }
+		}
+	      }
+            },
+            {
+              "title": "YSlabs",
+              "type": "object",
+              "required": ["YSlabs"],
+              "properties": {
+		"YSlabs":{
+                    "title": "YSlabs",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "Bound"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Bound": {
+			    "title": "Start/End Indices",
+			    "type": "array",
+			    "format": "table",
+			    "items": {
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
+			}
+		    }
+		}
+	      }
+            },
+            {
+              "title": "ZSlabs",
+              "type": "object",
+              "required": ["ZSlabs"],
+              "properties": {
+		"ZSlabs":{
+                    "title": "ZSlabs",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "Bound"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Bound": {
+			    "title": "Start/End Indices",
+			    "type": "array",
+			    "format": "table",
+			    "items": {
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
+			}
+		    }
+		}
 	      }
             }
-          },
-          {
-            "title": "Box",
+          ]
+	}
+      },
+      {
             "type": "object",
-            "required": ["Box"],
+            "required": ["_ArrayType_","_ArraySize_","_ArrayZipType_","_ArrayZipSize_","_ArrayZipData_"],
             "properties": {
-	      "Box":{
-                  "title": "Box",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "O",
-		     "Size"
-		  ],
-		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Size": {
-			"title": "Size",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "O": {
-			"title": "Origin",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      }
-		  }
-	      }
-            }
-          },
-          {
-            "title": "Subgrid",
-            "type": "object",
-            "required": ["Subgrid"],
-            "properties": {
-	      "Subgrid":{
-                  "title": "Subgrid",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "O",
-		     "Size"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Size": {
-			"title": "Size",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "O": {
-			"title": "Origin",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      }
-		  }
-	      }
-            }
-          },
-          {
-            "title": "Cylinder",
-            "type": "object",
-            "required": ["Cylinder"],
-            "properties": {
-	      "Cylinder":{
-                  "title": "Cylinder",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "CO",
-		     "C1",
-		     "R"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "C0": {
-			"title": "Axis Center 1",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "number"
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "C1": {
-			"title": "Axis Center 2",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "number"
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "R": {
-			"title": "Radius",
-			"type": "number",
-			"minimum": 0
-		      }
-		  }
-	      }
-            }
-          },
-          {
-            "title": "Name",
-            "type": "object",
-            "required": ["Name"],
-            "properties": {
-	       "Name":{
-                   "type": "string",
-	           "default": ""
-	       }
-	    }
-          },
-          {
-            "title": "Origin",
-            "type": "object",
-            "required": ["Origin"],
-            "properties": {
-	      "Origin":{
-                  "title": "Origin",
-                  "type": "array",
+	      "_ArrayType_":{
+		  "type": "string",
+		  "default": "uint8",
+		  "enum": [
+			"uint8",
+			"uint16",
+			"uint32",
+			"int8",
+			"int16",
+			"int32",
+			"single"
+		      ]
+	      },
+	      "_ArraySize_":{
+		  "type": "array",
+		  "default": [0,0,0],
 		  "format": "table",
 		  "items": {
-			  "type": "number",
-			  "minimum": 0,
-			  "default": 0
+		      "type": "integer",
+		      "minimum": 0
 		  },
-		  "minItems": 3,
-		  "maxItems": 3
-	      }
-            }
-          },
-          {
-            "title": "XLayers",
-            "type": "object",
-            "required": ["XLayers"],
-            "properties": {
-	      "XLayers":{
-                  "title": "XLayers",
-                  "type": "array",
-		  "format": "table",
-		  "items": {
-			  "type": "array",
-		          "format": "table",
-			  "items": {
-				  "type": "integer",
-				  "minimum": 0,
-				  "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-		  }
-	      }
-            }
-          },
-          {
-            "title": "YLayers",
-            "type": "object",
-            "required": ["YLayers"],
-            "properties": {
-	      "YLayers":{
-                  "title": "YLayers",
-                  "type": "array",
-		  "format": "table",
-		  "items": {
-			  "type": "array",
-		          "format": "table",
-			  "items": {
-				  "type": "integer",
-				  "minimum": 0,
-				  "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-		  }
-	      }
-            }
-          },
-          {
-            "title": "ZLayers",
-            "type": "object",
-            "required": ["ZLayers"],
-            "properties": {
-	      "ZLayers":{
-                  "title": "ZLayers",
-                  "type": "array",
-		  "format": "table",
-		  "items": {
-			  "type": "array",
-		          "format": "table",
-			  "items": {
-				  "type": "integer",
-				  "minimum": 0,
-				  "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-		  }
-	      }
-            }
-          },
-          {
-            "title": "XSlabs",
-            "type": "object",
-            "required": ["XSlabs"],
-            "properties": {
-	      "XSlabs":{
-                  "title": "XSlabs",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "Bound"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Bound": {
-			  "title": "Start/End Indices",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-				  "type": "array",
-				  "format": "table",
-				  "items": {
-					  "type": "integer",
-					  "minimum": 0,
-					  "default": 0
-				  },
-				  "minItems": 2,
-				  "maxItems": 2
-			  }
-		      }
-		  }
+	          "minItems": 3,
+	          "maxItems": 3
+	      },
+	      "_ArrayZipType_":{
+		  "type": "string",
+		  "default": "zlib",
+		  "enum": [
+			"zlib",
+			"gzip"
+		      ]
+	      },
+	      "_ArrayZipSize_":{
+		  "type": "integer",
+		  "default": 0,
+		  "minimum": 0
+	      },
+	      "_ArrayZipData_":{
+		  "type": "string",
+		  "default": ""
 	      }
 	    }
-          },
-          {
-            "title": "YSlabs",
-            "type": "object",
-            "required": ["YSlabs"],
-            "properties": {
-	      "YSlabs":{
-                  "title": "YSlabs",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "Bound"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Bound": {
-			  "title": "Start/End Indices",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-				  "type": "array",
-				  "format": "table",
-				  "items": {
-					  "type": "integer",
-					  "minimum": 0,
-					  "default": 0
-				  },
-				  "minItems": 2,
-				  "maxItems": 2
-			  }
-		      }
-		  }
-	      }
-	    }
-          },
-          {
-            "title": "ZSlabs",
-            "type": "object",
-            "required": ["ZSlabs"],
-            "properties": {
-	      "ZSlabs":{
-                  "title": "ZSlabs",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "Bound"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Bound": {
-			  "title": "Start/End Indices",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-				  "type": "array",
-				  "format": "table",
-				  "items": {
-					  "type": "integer",
-					  "minimum": 0,
-					  "default": 0
-				  },
-				  "minItems": 2,
-				  "maxItems": 2
-			  }
-		      }
-		  }
-	      }
-	    }
-          }
-        ]
-      }
+	}
+      ]
     },
     "Domain": {
       "type": "object",
@@ -1086,58 +1137,285 @@ margin: 20px;
               }
             }
           }
-        },
-        "Volume": {
-          "title": "Volume",
-          "type": "object",
-            "required": ["_ArrayType_","_ArraySize_","_ArrayZipType_","_ArrayZipSize_","_ArrayZipData_"],
-            "properties": {
-	      "_ArrayType_":{
-		  "type": "string",
-		  "default": "uint8",
-		  "enum": [
-			"uint8",
-			"uint16",
-			"uint32",
-			"int8",
-			"int16",
-			"int32"
-		      ]
-	      },
-	      "_ArraySize_":{
-		  "type": "array",
-		  "default": [0,0,0],
-		  "format": "table",
-		  "items": {
-		      "type": "integer",
-		      "minimum": 0
-		  },
-	          "minItems": 3,
-	          "maxItems": 3
-	      },
-	      "_ArrayZipType_":{
-		  "type": "string",
-		  "default": "zlib",
-		  "enum": [
-			"zlib",
-			"gzip"
-		      ]
-	      },
-	      "_ArrayZipSize_":{
-		  "type": "integer",
-		  "default": 0,
-		  "minimum": 0
-	      },
-	      "_ArrayZipData_":{
-		  "type": "string",
-		  "default": ""
-	      }
-	    }
         }
       }
     }
   }
   }
+
+
+var VolumeRenderShader1 = {
+	uniforms: {
+		'u_size': { value: new THREE.Vector3( 1, 1, 1 ) },
+		'u_renderstyle': { value: 0 },
+		'u_renderthreshold': { value: 0.5 },
+		'u_clim': { value: new THREE.Vector2( 1, 1 ) },
+		'u_data': { value: null },
+		'u_cmdata': { value: null }
+	},
+	vertexShader: [
+		'		varying vec4 v_nearpos;',
+		'		varying vec4 v_farpos;',
+		'		varying vec3 v_position;',
+
+		'		void main() {',
+		// Prepare transforms to map to "camera view". See also:
+		// https://threejs.org/docs/#api/renderers/webgl/WebGLProgram
+		'				mat4 viewtransformf = modelViewMatrix;',
+		'				mat4 viewtransformi = inverse(modelViewMatrix);',
+
+		// Project local vertex coordinate to camera position. Then do a step
+		// backward (in cam coords) to the near clipping plane, and project back. Do
+		// the same for the far clipping plane. This gives us all the information we
+		// need to calculate the ray and truncate it to the viewing cone.
+		'				vec4 position4 = vec4(position, 1.0);',
+		'				vec4 pos_in_cam = viewtransformf * position4;',
+
+		// Intersection of ray and near clipping plane (z = -1 in clip coords)
+		'				pos_in_cam.z = -pos_in_cam.w;',
+		'				v_nearpos = viewtransformi * pos_in_cam;',
+
+		// Intersection of ray and far clipping plane (z = +1 in clip coords)
+		'				pos_in_cam.z = pos_in_cam.w;',
+		'				v_farpos = viewtransformi * pos_in_cam;',
+
+		// Set varyings and output pos
+		'				v_position = position;',
+		'				gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;',
+		'		}',
+	].join( '\n' ),
+	fragmentShader: [
+		'		precision highp float;',
+		'		precision mediump sampler3D;',
+
+		'		uniform vec3 u_size;',
+		'		uniform int u_renderstyle;',
+		'		uniform float u_renderthreshold;',
+		'		uniform vec2 u_clim;',
+
+		'		uniform sampler3D u_data;',
+		'		uniform sampler2D u_cmdata;',
+
+		'		varying vec3 v_position;',
+		'		varying vec4 v_nearpos;',
+		'		varying vec4 v_farpos;',
+
+		// The maximum distance through our rendering volume is sqrt(3).
+		'		const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3',
+		'		const int REFINEMENT_STEPS = 4;',
+		'		const float relative_step_size = 1.0;',
+		'		const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);',
+		'		const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);',
+		'		const vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);',
+		'		const float shininess = 40.0;',
+
+		'		void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);',
+		'		void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);',
+
+		'		float sample1(vec3 texcoords);',
+		'		vec4 apply_colormap(float val);',
+		'		vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);',
+
+
+		'		void main() {',
+		// Normalize clipping plane info
+		'				vec3 farpos = v_farpos.xyz / v_farpos.w;',
+		'				vec3 nearpos = v_nearpos.xyz / v_nearpos.w;',
+
+		// Calculate unit vector pointing in the view direction through this fragment.
+		'				vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);',
+
+		// Compute the (negative) distance to the front surface or near clipping plane.
+		// v_position is the back face of the cuboid, so the initial distance calculated in the dot
+		// product below is the distance from near clip plane to the back of the cuboid
+		'				float distance = dot(nearpos - v_position, view_ray);',
+		'				distance = max(distance, min((-0.5 - v_position.x) / view_ray.x,',
+		'																		(u_size.x - 0.5 - v_position.x) / view_ray.x));',
+		'				distance = max(distance, min((-0.5 - v_position.y) / view_ray.y,',
+		'																		(u_size.y - 0.5 - v_position.y) / view_ray.y));',
+		'				distance = max(distance, min((-0.5 - v_position.z) / view_ray.z,',
+		'																		(u_size.z - 0.5 - v_position.z) / view_ray.z));',
+
+		// Now we have the starting position on the front surface
+		'				vec3 front = v_position + view_ray * distance;',
+
+		// Decide how many steps to take
+		'				int nsteps = int(-distance / relative_step_size + 0.5);',
+		'				if ( nsteps < 1 )',
+		'						discard;',
+
+		// Get starting location and step vector in texture coordinates
+		'				vec3 step = ((v_position - front) / u_size) / float(nsteps);',
+		'				vec3 start_loc = front / u_size;',
+
+		// For testing: show the number of steps. This helps to establish
+		// whether the rays are correctly oriented
+		//'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
+		//'return;',
+
+		'				if (u_renderstyle == 0)',
+		'						cast_mip(start_loc, step, nsteps, view_ray);',
+		'				else if (u_renderstyle == 1)',
+		'						cast_iso(start_loc, step, nsteps, view_ray);',
+
+		'				if (gl_FragColor.a < 0.05)',
+		'						discard;',
+		'		}',
+
+
+		'		float sample1(vec3 texcoords) {',
+		'				/* Sample float value from a 3D texture. Assumes intensity data. */',
+		'				return texture(u_data, texcoords.xyz).r;',
+		'		}',
+
+
+		'		vec4 apply_colormap(float val) {',
+		'				val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);',
+		'				return texture2D(u_cmdata, vec2(val, 0.5));',
+		'		}',
+
+
+		'		void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
+
+		'				float max_val = -1e6;',
+		'				int max_i = 100;',
+		'				vec3 loc = start_loc;',
+
+		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
+		// non-constant expression. So we use a hard-coded max, and an additional condition
+		// inside the loop.
+		'				for (int iter=0; iter<MAX_STEPS; iter++) {',
+		'						if (iter >= nsteps)',
+		'								break;',
+		// Sample from the 3D texture
+		'						float val = sample1(loc);',
+		// Apply MIP operation
+		'						if (val > max_val) {',
+		'								max_val = val;',
+		'								max_i = iter;',
+		'						}',
+		// Advance location deeper into the volume
+		'						loc += step;',
+		'				}',
+
+		// Refine location, gives crispier images
+		'				vec3 iloc = start_loc + step * (float(max_i) - 0.5);',
+		'				vec3 istep = step / float(REFINEMENT_STEPS);',
+		'				for (int i=0; i<REFINEMENT_STEPS; i++) {',
+		'						max_val = max(max_val, sample1(iloc));',
+		'						iloc += istep;',
+		'				}',
+
+		// Resolve final color
+		'				gl_FragColor = apply_colormap(max_val);',
+		'		}',
+
+
+		'		void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
+
+		'				gl_FragColor = vec4(0.0);	// init transparent',
+		'				vec4 color3 = vec4(0.0);	// final color',
+		'				vec3 dstep = 1.5 / u_size;	// step to sample derivative',
+		'				vec3 loc = start_loc;',
+
+		'				float low_threshold = u_renderthreshold - 0.02 * (u_clim[1] - u_clim[0]);',
+
+		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
+		// non-constant expression. So we use a hard-coded max, and an additional condition
+		// inside the loop.
+		'				for (int iter=0; iter<MAX_STEPS; iter++) {',
+		'						if (iter >= nsteps)',
+		'								break;',
+
+		// Sample from the 3D texture
+		'						float val = sample1(loc);',
+
+		'						if (val > low_threshold) {',
+		// Take the last interval in smaller steps
+		'								vec3 iloc = loc - 0.5 * step;',
+		'								vec3 istep = step / float(REFINEMENT_STEPS);',
+		'								for (int i=0; i<REFINEMENT_STEPS; i++) {',
+		'										val = sample1(iloc);',
+		'										if (val > u_renderthreshold) {',
+		'												gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
+		'												return;',
+		'										}',
+		'										iloc += istep;',
+		'								}',
+		'						}',
+
+		// Advance location deeper into the volume
+		'						loc += step;',
+		'				}',
+		'		}',
+
+
+		'		vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)',
+		'		{',
+		// Calculate color by incorporating lighting
+
+		// View direction
+		'				vec3 V = normalize(view_ray);',
+
+		// calculate normal vector from gradient
+		'				vec3 N;',
+		'				float val1, val2;',
+		'				val1 = sample1(loc + vec3(-step[0], 0.0, 0.0));',
+		'				val2 = sample1(loc + vec3(+step[0], 0.0, 0.0));',
+		'				N[0] = val1 - val2;',
+		'				val = max(max(val1, val2), val);',
+		'				val1 = sample1(loc + vec3(0.0, -step[1], 0.0));',
+		'				val2 = sample1(loc + vec3(0.0, +step[1], 0.0));',
+		'				N[1] = val1 - val2;',
+		'				val = max(max(val1, val2), val);',
+		'				val1 = sample1(loc + vec3(0.0, 0.0, -step[2]));',
+		'				val2 = sample1(loc + vec3(0.0, 0.0, +step[2]));',
+		'				N[2] = val1 - val2;',
+		'				val = max(max(val1, val2), val);',
+
+		'				float gm = length(N); // gradient magnitude',
+		'				N = normalize(N);',
+
+		// Flip normal so it points towards viewer
+		'				float Nselect = float(dot(N, V) > 0.0);',
+		'				N = (2.0 * Nselect - 1.0) * N;	// ==	Nselect * N - (1.0-Nselect)*N;',
+
+		// Init colors
+		'				vec4 ambient_color = vec4(0.0, 0.0, 0.0, 0.0);',
+		'				vec4 diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);',
+		'				vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);',
+
+		// note: could allow multiple lights
+		'				for (int i=0; i<1; i++)',
+		'				{',
+								 // Get light direction (make sure to prevent zero devision)
+		'						vec3 L = normalize(view_ray);	//lightDirs[i];',
+		'						float lightEnabled = float( length(L) > 0.0 );',
+		'						L = normalize(L + (1.0 - lightEnabled));',
+
+		// Calculate lighting properties
+		'						float lambertTerm = clamp(dot(N, L), 0.0, 1.0);',
+		'						vec3 H = normalize(L+V); // Halfway vector',
+		'						float specularTerm = pow(max(dot(H, N), 0.0), shininess);',
+
+		// Calculate mask
+		'						float mask1 = lightEnabled;',
+
+		// Calculate colors
+		'						ambient_color +=	mask1 * ambient_color;	// * gl_LightSource[i].ambient;',
+		'						diffuse_color +=	mask1 * lambertTerm;',
+		'						specular_color += mask1 * specularTerm * specular_color;',
+		'				}',
+
+		// Calculate final color by componing different components
+		'				vec4 final_color;',
+		'				vec4 color = apply_colormap(val);',
+		'				final_color = color * (ambient_color + diffuse_color) + specular_color;',
+		'				final_color.a = color.a;',
+		'				return final_color;',
+		'		}',
+	].join( '\n' )
+};
 
   // parse url -> merge options -> refreshUI() -> initJsoneditor() -> direct link
 
@@ -1506,6 +1784,7 @@ function showtab(event, name) {
       if(lastjson != $("#output-textarea").val()){
           lastjson=$("#output-textarea").val();
           var cfg = JSON.parse(lastjson);
+	  
           drawpreview(cfg);
       }
   }
@@ -1695,15 +1974,89 @@ function drawdet(obj,index){
   boundingbox.add( det );
 }
 
+function isWebGL2Available (){
+  try {
+    var canvas = document.createElement( 'canvas' );
+    return !! ( window.WebGL2RenderingContext && canvas.getContext( 'webgl2' ) );
+  } catch ( e ) {
+    return false;
+  }
+}
+
+function render(){
+  renderer.render( scene, camera );
+}
+		
+function drawvolume(volume){
+  const dtype={
+    uint8:THREE.UnsignedByteType,
+    uint16:THREE.UnsignedShortType,
+    uint32:THREE.UnsignedIntType,
+    int8:THREE.ByteType,
+    int16:THREE.ShortType,
+    int32:THREE.IntType,
+    float32:THREE.FloatType
+  };
+  const dim=volume.shape;
+
+  const texture = new THREE.DataTexture3D( volume.data, dim[0], dim[1], dim[2]);
+  texture.format = THREE.RedIntegerFormat;
+  texture.type = dtype[volume.dtype];
+  texture.minFilter = texture.magFilter = THREE.LinearFilter;
+  texture.internalFormat = 'R8UI';
+
+  // Colormap textures
+  const cmtextures = {
+	  viridis: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/cm_viridis.png', render ),
+	  gray: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/cm_gray.png', render )
+  };
+
+  // Material
+  const shader = VolumeRenderShader1;
+
+  const uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+  uniforms[ "u_data" ].value = texture;
+  uniforms[ "u_size" ].value.set( dim[0], dim[1], dim[2] );
+  uniforms[ "u_clim" ].value.set( volume.min(), volume.max() );
+  uniforms[ "u_renderstyle" ].value = 0;
+  uniforms[ "u_renderthreshold" ].value =  0.1;
+  uniforms[ "u_cmdata" ].value = cmtextures[ "viridis" ];
+
+  const material = new THREE.ShaderMaterial( {
+	  uniforms: uniforms,
+	  vertexShader: shader.vertexShader,
+	  fragmentShader: shader.fragmentShader,
+	  side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+  } );
+
+  // THREE.Mesh
+  const geometry = new THREE.BoxGeometry(  dim[0], dim[1], dim[2] );
+  geometry.translate(dim[0]*0.5 - 0.5, dim[1]*0.5 - 0.5, dim[2]*0.5 - 0.5 );
+
+  const mesh = new THREE.Mesh( geometry, material );
+  return mesh;
+}
+
 function drawpreview(cfg){
   scene.remove.apply(scene, scene.children);
 
-  if(cfg.Domain !=null && cfg.Domain.Dim!=null){
-     const box={Grid: {Size: cfg.Domain.Dim}};
+  if(cfg.Shapes.constructor===Object && cfg.Shapes._ArraySize_ != null){
+     let box={Grid: {Size: cfg.Shapes._ArraySize_}};
      drawshape(box,0);
+     if(isWebGL2Available()){
+       let jd=new jdata(cfg.Shapes,{});
+       let vol=jd.decode().data;
+       boundingbox.add( drawvolume(vol) );
+     }
+  }else{
+     if(cfg.Domain !=null && cfg.Domain.Dim!=null){
+       let box={Grid: {Size: cfg.Domain.Dim}};
+       drawshape(box,0);
+     }
+     if(cfg.Shapes != null && cfg.Shapes.length>0)
+       cfg.Shapes.forEach(drawshape);
   }
-  if(cfg.Shapes != null && cfg.Shapes.length>0)
-     cfg.Shapes.forEach(drawshape);
 
   if(cfg.Optode != null){
     if(cfg.Optode.Source !=null)
@@ -1738,6 +2091,8 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
 var boundingbox=scene;
 var randseed=1648335518;
+
+// default color for each label, 0,1,2,...
 var materialcolor=[];
 for(let i=0;i<256;i++)
     materialcolor.push(randseed=mulberry32(randseed));
