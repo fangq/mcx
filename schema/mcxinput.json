@@ -298,7 +298,7 @@
     },
     "Shapes": {
       "title": "Shapes",
-      "anyOf" :[
+      "oneOf" :[
 	{
 	"type": "array",
 	"format": "table",

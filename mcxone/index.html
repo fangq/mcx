@@ -567,7 +567,7 @@ margin: 20px;
     },
     "Shapes": {
       "title": "Shapes",
-      "anyOf" :[
+      "oneOf" :[
 	{
 	"type": "array",
 	"format": "table",
@@ -1998,12 +1998,13 @@ function drawvolume(volume){
     float32:THREE.FloatType
   };
   const dim=volume.shape;
+  const buf=nj.array(volume.flatten().selection.data, 'float32');
 
-  const texture = new THREE.DataTexture3D( volume.data, dim[0], dim[1], dim[2]);
-  texture.format = THREE.RedIntegerFormat;
-  texture.type = dtype[volume.dtype];
+  const texture = new THREE.DataTexture3D( buf.selection.data, dim[2], dim[1], dim[0]);
+  texture.format = THREE.RedFormat;
+  texture.type = THREE.FloatType;
   texture.minFilter = texture.magFilter = THREE.LinearFilter;
-  texture.internalFormat = 'R8UI';
+  texture.unpackAlignment = 1;
 
   // Colormap textures
   const cmtextures = {
@@ -2017,10 +2018,10 @@ function drawvolume(volume){
   const uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
   uniforms[ "u_data" ].value = texture;
-  uniforms[ "u_size" ].value.set( dim[0], dim[1], dim[2] );
+  uniforms[ "u_size" ].value.set( dim[2], dim[1], dim[0] );
   uniforms[ "u_clim" ].value.set( volume.min(), volume.max() );
   uniforms[ "u_renderstyle" ].value = 0;
-  uniforms[ "u_renderthreshold" ].value =  0.1;
+  uniforms[ "u_renderthreshold" ].value =  0.2;
   uniforms[ "u_cmdata" ].value = cmtextures[ "viridis" ];
 
   const material = new THREE.ShaderMaterial( {
@@ -2031,8 +2032,8 @@ function drawvolume(volume){
   } );
 
   // THREE.Mesh
-  const geometry = new THREE.BoxGeometry(  dim[0], dim[1], dim[2] );
-  geometry.translate(dim[0]*0.5 - 0.5, dim[1]*0.5 - 0.5, dim[2]*0.5 - 0.5 );
+  const geometry = new THREE.BoxGeometry(  dim[2], dim[1], dim[0] );
+  geometry.translate(dim[2]*0.5 - 0.5, dim[1]*0.5 - 0.5, dim[0]*0.5 - 0.5 );
 
   const mesh = new THREE.Mesh( geometry, material );
   return mesh;
@@ -2047,7 +2048,7 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.Shapes,{});
        let vol=jd.decode().data;
-       boundingbox.add( drawvolume(vol) );
+       boundingbox.add( drawvolume(vol.transpose()) );
      }
   }else{
      if(cfg.Domain !=null && cfg.Domain.Dim!=null){
