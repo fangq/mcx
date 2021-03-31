@@ -9,6 +9,7 @@
     "Domain"
   ],
   "format": "categories",
+  "basicCategoryTitle": "Shapes",
   "properties": {
     "Session": {
       "type": "object",

@@ -278,6 +278,7 @@ margin: 20px;
     "Domain"
   ],
   "format": "categories",
+  "basicCategoryTitle": "Shapes",
   "properties": {
     "Session": {
       "type": "object",
@@ -2048,7 +2049,7 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.Shapes,{});
        let vol=jd.decode().data;
-       boundingbox.add( drawvolume(vol.transpose()) );
+       scene.add( drawvolume(vol.transpose()) );
      }
   }else{
      if(cfg.Domain !=null && cfg.Domain.Dim!=null){
@@ -2102,10 +2103,14 @@ camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
 
 const renderer = new THREE.WebGLRenderer();
+renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( w,h );
 canvas.append( renderer.domElement );
 
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.minZoom = 0.3;
+controls.maxZoom = 4;
+controls.update();
 
   /* -------------------------------------------------------- main function */
 
