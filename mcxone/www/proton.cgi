@@ -5,8 +5,9 @@ use strict;
 use DBI;
 use URI::Escape;
 use JSON::PP;
+use Digest::MD5 qw(md5);
 
-my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname);
+my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$md5key);
 my $q = new CGI;
 my $req;
 my %jobstatus=('1'=>'queued','2'=>'starting','3'=>'running','4'=>'completed','5'=>'deleted','6'=>'invalid');
@@ -28,9 +29,10 @@ print "Content-Type: application/javascript\n\n";
 $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
 
 if(&V("email") ne '' && &V("json") ne ''){
-    $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,shape,jobid,status,priority) values (?,?,?,?,?,?,?,?,?,?)")
+    $md5key=md5_hex(&V("json"));
+    $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,shape,jobid,hash,status,priority) values (?,?,?,?,?,?,?,?,?,?)")
                  or die "Couldn't prepare statement: ";
-    $sth->execute($savetime,&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),'',$jobid,1,50) or die($DBI::errstr);
+    $sth->execute($savetime,&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),'',$jobid,$md5key,1,50) or die($DBI::errstr);
     $html ='updatestatus({"status":"success","jobid":"'.$jobid.'","dberror":"'.$DBI::errstr.'"})'."\n";
 }else{
     $jobid=&V("jobid");
