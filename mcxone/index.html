@@ -1854,7 +1854,7 @@ function runsimulation() {
 
 function createbox(bsize, orig, tag){
       const geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
-      geometry.translate(bsize[0]*0.5,bsize[1]*0.5,bsize[2]*0.5);
+      geometry.translate(bsize[0]*0.5+orig[0],bsize[1]*0.5+orig[1],bsize[2]*0.5+orig[2]);
       const material = new THREE.MeshNormalMaterial( { color: materialcolor[tag], transparent: true, opacity: 0.6, alphaTest: 0.5, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
       const obj = new THREE.Mesh( geometry, material );
       return obj;
@@ -1887,7 +1887,7 @@ function resetscene(s){
 
 function drawshape(shape,index){
   let keys = Object.keys(shape);
-  let obj, c0, c1, height;
+  let obj, c0, c1, dc, height;
   const dir={XLayers:0,YLayers:1,ZLayers:2,XSlabs:0,YSlabs:1,ZSlabs:2};
 
   switch(keys[0]){
@@ -1943,12 +1943,14 @@ function drawshape(shape,index){
     case "Cylinder":
       c0 = new THREE.Vector3( shape.Cylinder.C0[0],shape.Cylinder.C0[1],shape.Cylinder.C0[2] );
       c1 = new THREE.Vector3( shape.Cylinder.C1[0],shape.Cylinder.C1[1],shape.Cylinder.C1[2] );
+      dc=c1;
       height= c0.distanceTo(c1);
       var geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
       geometry.translate( 0, height / 2, 0 );
       geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
-      c1.sub(c0).normalize();
-      geometry.lookAt( c1 );
+      dc.sub(c0).normalize();
+      geometry.lookAt( dc );
+      geometry.translate((c0.x+c1.x), (c0.y+c1.y), (c0.z+c1.z))
       var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
       obj = new THREE.Mesh( geometry, material );
       boundingbox.add( obj );
@@ -2049,7 +2051,7 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.Shapes,{});
        let vol=jd.decode().data;
-       scene.add( drawvolume(vol.transpose()) );
+       boundingbox.add( drawvolume(vol.transpose()) );
      }
   }else{
      if(cfg.Domain !=null && cfg.Domain.Dim!=null){
