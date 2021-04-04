@@ -1855,7 +1855,7 @@ function runsimulation() {
 function createbox(bsize, orig, tag){
       const geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
       geometry.translate(bsize[0]*0.5+orig[0],bsize[1]*0.5+orig[1],bsize[2]*0.5+orig[2]);
-      const material = new THREE.MeshNormalMaterial( { color: materialcolor[tag], transparent: true, opacity: 0.6, alphaTest: 0.5, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const material = new THREE.MeshNormalMaterial( { color: materialcolor[tag], transparent: true, opacity: 0.6, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
       const obj = new THREE.Mesh( geometry, material );
       return obj;
 }
@@ -1867,15 +1867,24 @@ function createlayer(s, dim, tag){
       orig[dim]=Math.min(s[0],s[1]);
       return createbox(bsize, orig, tag);
 }
-/*
-function createlabel(text, pos){
-  const geometry = new THREE.TextGeometry( text, {font: font,size: 15, height: 5, curveSegments: 10 } );
-  const material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
-  const obj = new THREE.Mesh(geometry, material);
-  obj.position.set(pos[0],pos[1],pos[2]);
-  return obj;
+
+function createdisk(R, orig, norm){
+      const geometry = new THREE.CircleGeometry(R, 32);
+      geometry.up=new THREE.Vector3(norm[0],norm[1],norm[2]);
+      geometry.translate(orig[0],orig[1],orig[2]);
+      const material = new THREE.MeshBasicMaterial( { color: 0xFFFF00, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const obj = new THREE.Mesh( geometry, material );
+      return obj;
 }
-*/
+
+function createpoly(pos, norm){
+      const geometry = new THREE.BufferGeometry().setFromPoints(pos);
+      geometry.computeVertexNormals();
+      const material = new THREE.MeshBasicMaterial( { color: 0xFFFF00, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const obj = new THREE.Mesh( geometry, material );
+      return obj;
+}
+
 function resetscene(s){
       scene.remove.apply(scene, scene.children);
       const light = new THREE.AmbientLight( 0xffffff );
@@ -1899,11 +1908,7 @@ function drawshape(shape,index){
       boundingbox = new THREE.LineSegments( geo, mat );
       boundingbox.computeLineDistances();
       scene.add( boundingbox );
-/*      
-      boundingbox.add( createlabel('x',[shape.Grid.Size[0]/2,0,0]) );
-      boundingbox.add( createlabel('y',[0,shape.Grid.Size[1]/2,0]) );
-      boundingbox.add( createlabel('z',[0,0,shape.Grid.Size[2]/2]) );
-*/
+
       bbxsize=shape.Grid.Size;
       controls.target.set( shape.Grid.Size[0]*0.5, shape.Grid.Size[1]*0.5,shape.Grid.Size[2]*0.5);
       break;
@@ -1935,7 +1940,7 @@ function drawshape(shape,index){
     case "Sphere":
       var geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
       //geometry.applyMatrix( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
-      var material = new THREE.MeshNormalMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
+      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
       obj = new THREE.Mesh( geometry, material );
       obj.position.set(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]);
       boundingbox.add( obj );
@@ -1962,11 +1967,38 @@ function drawsrc(obj){
   const dir = new THREE.Vector3( obj.Dir[0],obj.Dir[1],obj.Dir[2] );
   dir.normalize();
   const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
-  const length = 10;
+  let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
   const hex = 0xFFFFFF;
+  v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
 
-  const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex );
+  const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
+  arrowHelper.line.material.linewidth = length*0.2;
   boundingbox.add( arrowHelper );
+  
+  switch(obj.Type){
+      case 'disk':
+      case 'gaussian':
+      case 'zgaussian':
+         boundingbox.add( createdisk(obj.Param1[0], obj.Pos, obj.Dir) );
+	 break;
+      case 'planar':
+      case 'fourier':
+      case 'pattern':
+         v2=new THREE.Vector3( obj.Param2[0], obj.Param2[1], obj.Param2[2] );
+         boundingbox.add( createpoly([ orig, orig.clone().add(v1), orig.clone().add(v1).add(v2), 
+	      orig.clone().add(v1).add(v2), orig.clone().add(v2), orig ], obj.Dir ) );
+	 break;
+      case 'fourierx':
+      case 'fourierx2d':
+         v2.cross(dir,v1).normalize().multiplyScalar(obj.Param1[3]);
+         boundingbox.add( createpoly([ orig, orig.clone().add(v1), orig.clone().add(v1).add(v2), 
+	      orig.clone().add(v1).add(v2), orig.clone().add(v2), orig ], obj.Dir ) );
+	 break;
+      case 'line':
+      case 'slit':
+         boundingbox.add( new THREE.ArrowHelper( v1.clone().normalize(), orig, v1.length(), hex, 0, 0 ) );
+	 break;
+  }
 }
 
 function drawdet(obj,index){
@@ -2001,9 +2033,9 @@ function drawvolume(volume){
     float32:THREE.FloatType
   };
   const dim=volume.shape;
-  const buf=nj.array(volume.flatten().selection.data, 'float32');
+  const buf=nj.array(volume.transpose().flatten().selection.data, 'float32');
 
-  const texture = new THREE.DataTexture3D( buf.selection.data, dim[2], dim[1], dim[0]);
+  const texture = new THREE.DataTexture3D( buf.selection.data, dim[0], dim[1], dim[2]);
   texture.format = THREE.RedFormat;
   texture.type = THREE.FloatType;
   texture.minFilter = texture.magFilter = THREE.LinearFilter;
@@ -2021,7 +2053,7 @@ function drawvolume(volume){
   const uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
   uniforms[ "u_data" ].value = texture;
-  uniforms[ "u_size" ].value.set( dim[2], dim[1], dim[0] );
+  uniforms[ "u_size" ].value.set( dim[0], dim[1], dim[2] );
   uniforms[ "u_clim" ].value.set( volume.min(), volume.max() );
   uniforms[ "u_renderstyle" ].value = 0;
   uniforms[ "u_renderthreshold" ].value =  0.2;
@@ -2035,10 +2067,12 @@ function drawvolume(volume){
   } );
 
   // THREE.Mesh
-  const geometry = new THREE.BoxGeometry(  dim[2], dim[1], dim[0] );
-  geometry.translate(dim[2]*0.5 - 0.5, dim[1]*0.5 - 0.5, dim[0]*0.5 - 0.5 );
+  const geometry = new THREE.BoxGeometry(  dim[0], dim[1], dim[2] );
+  geometry.translate(dim[0]*0.5 - 0.5, dim[1]*0.5 - 0.5, dim[2]*0.5 - 0.5 );
 
   const mesh = new THREE.Mesh( geometry, material );
+  mesh.frustumCulled = false;
+
   return mesh;
 }
 
@@ -2051,7 +2085,7 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.Shapes,{});
        let vol=jd.decode().data;
-       boundingbox.add( drawvolume(vol.transpose()) );
+       boundingbox.add( drawvolume(vol) );
      }
   }else{
      if(cfg.Domain !=null && cfg.Domain.Dim!=null){
@@ -2072,12 +2106,10 @@ function drawpreview(cfg){
 }
 
 function mulberry32(a) {
-    return function() {
       var t = a += 0x6D2B79F5;
       t = Math.imul(t ^ t >>> 15, t | 1);
       t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    }
+      return ((t ^ t >>> 14) >>> 0);
 }
 
 function update() {
@@ -2092,17 +2124,23 @@ var h = canvas.height();
 var bbxsize=[0,0,0];
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
+
 var boundingbox=scene;
 var randseed=1648335518;
 
 // default color for each label, 0,1,2,...
 var materialcolor=[];
-for(let i=0;i<256;i++)
-    materialcolor.push(randseed=mulberry32(randseed));
+for(let i=0;i<256;i++){
+    randseed=mulberry32(randseed);
+    materialcolor.push(randseed);
+}
+
+const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
+//const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 2000);
 
 camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
+camera.updateProjectionMatrix();
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setPixelRatio( window.devicePixelRatio );
