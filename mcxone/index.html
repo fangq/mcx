@@ -173,7 +173,7 @@ margin: 20px;
 	    <input id="netname" name="netname" type="text" value='' required minlength="1" placeholder="Network Name (required, for future public use)">
 	    <input id="jobid" type="hidden" name="jobid" value=''>
 
-	    <button class='btn btn-primary btn-block' id='run' onClick="runsimulation()">Submit</button>
+	    <button class='btn btn-primary btn-block' id='run'>Submit</button>
             <label for="run-log">Job status</label>
 	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;"
                       class='form-control'></textarea>
@@ -1785,7 +1785,6 @@ function showtab(event, name) {
       if(lastjson != $("#output-textarea").val()){
           lastjson=$("#output-textarea").val();
           var cfg = JSON.parse(lastjson);
-	  
           drawpreview(cfg);
       }
   }
@@ -1802,22 +1801,40 @@ function updatestatus(data){
       $("#run-log").val($("#run-log").val()+"\n"+ 'failed to submit, please try again');
 }
 
+function resetjob(){
+    count=0;
+    clearInterval(timer);
+    $("#run").html("Submit");
+    $("#run").click(runsimulation);
+}
+
 function addlog(data){
-  var status=data.status;
-  if(status != null){
-      var d = new Date();
-      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+status);
+  var d = new Date();
+  if(data.hasOwnProperty('status')){
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
+  }
+  if(data.hasOwnProperty('log')){
+      lastlog=data.log;
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+lastlog);
+  }
+  if(data.hasOwnProperty('output')){
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+"output data received");
+      lastoutput=data.output;
+      resetjob();
+      var nii = JSON.parse(lastoutput);
+      drawpreview(nii);
   }
 }
 
 function jobstatus() {
-  if(count++>10 && timer != null){
+  if(count++>60 && timer != null){
       clearInterval(timer);
+      var d = new Date();
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job expired");
   }
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
-      data: { 'jobid': jobid },
+      data: { 'jobid': jobid, 'handler': 'addlog' },
       type: 'GET',
       crossOrigin: true,
       dataType: 'jsonp',
@@ -1826,6 +1843,21 @@ function jobstatus() {
   });
 }
 
+function canceljob() {
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
+      data: { 'jobid': jobid, 'action': 'cancel' },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      success: function( data ){},
+      error: function(xhr,status,error) {
+          var d = new Date();
+          resetjob();
+	  $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job canceled");
+      }//{ $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
+  });
+}
 function runsimulation() {
   var fullname=$("#fullname").val();
   var email=$("#email").val();
@@ -1839,13 +1871,16 @@ function runsimulation() {
   if(fullname === "" || email === "" || inst === "" || netname === "")
      throw "required fields are not provided";
 
+  $("#run").html("Cancel");
+  $("#run").click(canceljob);
+    
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
-      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': json },
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'handler': 'updatestatus', 'json': encodeURIComponent(json) },
       type: 'POST',
       crossOrigin: true,
       dataType: 'jsonp',
-      success: function( data ){alert('success');},
+      success: function( data ){},
       error: function(xhr,status,error) {}//{ $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
   });
 }
@@ -2068,7 +2103,7 @@ function drawvolume(volume){
 
   // THREE.Mesh
   const geometry = new THREE.BoxGeometry(  dim[0], dim[1], dim[2] );
-  geometry.translate(dim[0]*0.5 - 0.5, dim[1]*0.5 - 0.5, dim[2]*0.5 - 0.5 );
+  geometry.translate(dim[0]*0.5, dim[1]*0.5, dim[2]*0.5 );
 
   const mesh = new THREE.Mesh( geometry, material );
   mesh.frustumCulled = false;
@@ -2078,8 +2113,8 @@ function drawvolume(volume){
 
 function drawpreview(cfg){
   scene.remove.apply(scene, scene.children);
-
-  if(cfg.Shapes.constructor===Object && cfg.Shapes._ArraySize_ != null){
+  if(cfg.hasOwnProperty('Shapes')){
+    if(cfg.Shapes.constructor===Object && cfg.Shapes._ArraySize_ != null){
      let box={Grid: {Size: cfg.Shapes._ArraySize_}};
      drawshape(box,0);
      if(isWebGL2Available()){
@@ -2087,20 +2122,30 @@ function drawpreview(cfg){
        let vol=jd.decode().data;
        boundingbox.add( drawvolume(vol) );
      }
-  }else{
+    }else{
      if(cfg.Domain !=null && cfg.Domain.Dim!=null){
        let box={Grid: {Size: cfg.Domain.Dim}};
        drawshape(box,0);
      }
      if(cfg.Shapes != null && cfg.Shapes.length>0)
        cfg.Shapes.forEach(drawshape);
-  }
-
-  if(cfg.Optode != null){
+   }
+   if(cfg.Optode != null){
     if(cfg.Optode.Source !=null)
       drawsrc(cfg.Optode.Source);
     if(cfg.Optode.Detector !=null && cfg.Optode.Detector.length>0)
       cfg.Optode.Detector.forEach(drawdet);
+   }
+  }else{
+   if(cfg.hasOwnProperty('NIFTIData')){
+     let box={Grid: {Size: cfg.NIFTIHeader.Dim}};
+     drawshape(box,0);
+     if(isWebGL2Available()){
+       let jd=new jdata(cfg.NIFTIData,{});
+       let vol=jd.decode().data;
+       boundingbox.add( drawvolume(vol.log()) );
+     }
+   }
   }
   update();
 }
@@ -2127,6 +2172,9 @@ const scene = new THREE.Scene();
 
 var boundingbox=scene;
 var randseed=1648335518;
+var lastlog='', lastoutput='';
+
+$("#run").click(runsimulation);
 
 // default color for each label, 0,1,2,...
 var materialcolor=[];
@@ -2135,8 +2183,8 @@ for(let i=0;i<256;i++){
     materialcolor.push(randseed);
 }
 
-const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
-//const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 2000);
+//const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
+const camera = new THREE.OrthographicCamera(w / -20, w / 20, h / 20, h / -20, 1, 2000);
 
 camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
@@ -2145,6 +2193,7 @@ camera.updateProjectionMatrix();
 const renderer = new THREE.WebGLRenderer();
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( w,h );
+//renderer.state.enable("logarithmicDepthBuffer");
 canvas.append( renderer.domElement );
 
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
