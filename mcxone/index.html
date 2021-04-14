@@ -149,6 +149,7 @@ margin: 20px;
             <label for="validate-textarea">This will update whenever the form changes to show validation errors if there
                 are any.</label><br>
             <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
+            <a class='btn btn-primary btn-block' id='saveinput' href="#">Download</a>
     </section>
 
     <section id="mcx1-schema" class='col-8 col-md-8 w-8/8'>
@@ -172,11 +173,14 @@ margin: 20px;
 	    <input id="email" name="email" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
 	    <input id="netname" name="netname" type="text" value='' required minlength="1" placeholder="Network Name (required, for future public use)">
 	    <input id="jobid" type="hidden" name="jobid" value=''>
+	    <input id="jobhash" type="hidden" name="jobhash" value=''>
 
 	    <button class='btn btn-primary btn-block' id='run'>Submit</button>
+
             <label for="run-log">Job status</label>
 	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;"
                       class='form-control'></textarea>
+            <a class='btn btn-primary btn-block' id='saveoutput' href="?">Download Output</a>
     </section>
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
@@ -1706,6 +1710,7 @@ var VolumeRenderShader1 = {
 
   setValue.addEventListener('click', function () {
     jsoneditor.setValue(JSON.parse(outputTextarea.value))
+    updatejsonlink("saveinput", outputTextarea.value, "input.json");
   })
 
   setSchema.addEventListener('click', function () {
@@ -1794,6 +1799,7 @@ function updatestatus(data){
   jobid=data.jobid;
   if(jobid != null){
       $("#jobid").val(jobid);
+      $("#jobhash").val(data.hash);
       $("#run-log").val($("#run-log").val()+"\n"+"Successfully submitted job "+jobid);
       count=0;
       timer=setInterval(jobstatus,5000);
@@ -1805,6 +1811,7 @@ function resetjob(){
     count=0;
     clearInterval(timer);
     $("#run").html("Submit");
+    $('#run').unbind('click');
     $("#run").click(runsimulation);
 }
 
@@ -1821,6 +1828,8 @@ function addlog(data){
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+"output data received");
       lastoutput=data.output;
       resetjob();
+      if(!(lastoutput === ''))
+          updatejsonlink("saveoutput", lastoutput, "output.json");
       var nii = JSON.parse(lastoutput);
       drawpreview(nii);
   }
@@ -1834,12 +1843,16 @@ function jobstatus() {
   }
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
-      data: { 'jobid': jobid, 'handler': 'addlog' },
+      data: { 'jobid': jobid, 'hash': $("#jobhash").val() },
       type: 'GET',
       crossOrigin: true,
       dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'addlog',
       success: function( data ){},
-      error: function(xhr,status,error) {}// { $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
+      error: function(xhr,status,error) {
+          $("#run-log").val($("#run-log").val()+"\n"+"jobstatus error: "+status);
+      }
   });
 }
 
@@ -1850,12 +1863,14 @@ function canceljob() {
       type: 'POST',
       crossOrigin: true,
       dataType: 'jsonp',
-      success: function( data ){},
-      error: function(xhr,status,error) {
+      success: function( data ){
           var d = new Date();
           resetjob();
 	  $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job canceled");
-      }//{ $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
+      },
+      error: function(xhr,status,error) {
+          $("#run-log").val($("#run-log").val()+"\n"+"canceljob error: "+status);
+      }
   });
 }
 function runsimulation() {
@@ -1871,17 +1886,22 @@ function runsimulation() {
   if(fullname === "" || email === "" || inst === "" || netname === "")
      throw "required fields are not provided";
 
-  $("#run").html("Cancel");
-  $("#run").click(canceljob);
-    
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
-      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'handler': 'updatestatus', 'json': encodeURIComponent(json) },
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json) },
       type: 'POST',
       crossOrigin: true,
       dataType: 'jsonp',
-      success: function( data ){},
-      error: function(xhr,status,error) {}//{ $("#run-log").val($("#run-log").val()+"\n"+"return: "+status); }
+      jsonp: 'callback',
+      jsonpCallback: 'updatestatus',
+      success: function( data ){
+         $("#run").html("Cancel");
+	 $('#run').unbind('click');
+         $("#run").click(canceljob);
+      },
+      error: function(xhr,status,error) {
+         $("#run-log").val($("#run-log").val()+"\n"+"runsimulation error: "+status);
+      }
   });
 }
 
@@ -1927,6 +1947,7 @@ function resetscene(s){
       scene.add(light);
       camera.position.set(s[0]*2,s[1]*2,s[2]*2);
       camera.lookAt(new THREE.Vector3(s[0]*0.5,s[1]*0.5,s[2]*0.5));
+      camera.zoom=2*Math.max($("#canvas").width()/(Math.max(s[0],s[1])), $("#canvas").height()/s[2]);
 }
 
 function drawshape(shape,index){
@@ -2143,7 +2164,7 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.NIFTIData,{});
        let vol=jd.decode().data;
-       boundingbox.add( drawvolume(vol.log()) );
+       boundingbox.add( drawvolume(nj.log(nj.clip(vol, 1e-16, 1/0)) ));
      }
    }
   }
@@ -2155,6 +2176,13 @@ function mulberry32(a) {
       t = Math.imul(t ^ t >>> 15, t | 1);
       t ^= t + Math.imul(t ^ t >>> 7, t | 61);
       return ((t ^ t >>> 14) >>> 0);
+}
+
+function updatejsonlink(linkid, text, name) {
+  const a = document.getElementById(linkid);
+  const type = name.split(".").pop();
+  a.href = URL.createObjectURL( new Blob([text], { type:`text/${type === "txt" ? "plain" : type}` }) );
+  a.download = name;
 }
 
 function update() {
@@ -2174,6 +2202,7 @@ var boundingbox=scene;
 var randseed=1648335518;
 var lastlog='', lastoutput='';
 
+$('#run').unbind('click');
 $("#run").click(runsimulation);
 
 // default color for each label, 0,1,2,...
