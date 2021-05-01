@@ -97,20 +97,43 @@ section {
 .info{
   max-width:60em;
 }
+h1 {
+  color:red;
+  font-weight: 700;
+  font-size: 2.5rem;
+}
 body {
-background-color: #dad1ff;
+background-color: #e8efff;
 background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'%3E%3Cpolygon fill='%23cc0000' points='957 450 539 900 1396 900'/%3E%3Cpolygon fill='%23aa0000' points='957 450 872.9 900 1396 900'/%3E%3Cpolygon fill='%23d6002b' points='-60 900 398 662 816 900'/%3E%3Cpolygon fill='%23b10022' points='337 900 398 662 816 900'/%3E%3Cpolygon fill='%23d9004b' points='1203 546 1552 900 876 900'/%3E%3Cpolygon fill='%23b2003d' points='1203 546 1552 900 1162 900'/%3E%3Cpolygon fill='%23d3006c' points='641 695 886 900 367 900'/%3E%3Cpolygon fill='%23ac0057' points='587 900 641 695 886 900'/%3E%3Cpolygon fill='%23c4008c' points='1710 900 1401 632 1096 900'/%3E%3Cpolygon fill='%239e0071' points='1710 900 1401 632 1365 900'/%3E%3Cpolygon fill='%23aa00aa' points='1210 900 971 687 725 900'/%3E%3Cpolygon fill='%23880088' points='943 900 1210 900 971 687'/%3E%3C/svg%3E");
 background-attachment: fixed;
 background-size: cover;
-margin: 20px;
+background-position: left bottom;
+font-family: Ubuntu;
 }
-
+footer {
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
+  text-align:right;
+  background-color: rgba(255,255,255,0.2);
+  padding: 5px;
+  font-size: 120%;
+  color: white;
+  z-index: -1;
+}
+footer img{
+  height: 30px;
+  vertical-align: middle;
+  margin-right: 5pt;
+}
+header, section{
+  padding-left: 20px;
+}
 </style>
 
 <section id="mcx1-title" class='current'>
         <h1>MCX Cloud</h1>
-        <p class="info">A web-based <a href="http://mcx.space">Monte Carlo eXtreme (MCX)</a> based on <a href="https://json-schema.org/">JSON Schema</a> and <a href="https://github.com/jdorn/json-editor" title="JSON Editor">JSON-editor</a>.
-	MCX and this open-source web-interface were developed by the <a href="http://fanglab.org">COTI Lab</a> (aka Fang Lab), funded by the National Institute of Health (NIH) and National Institute of General Medical Sciences (NIGMS) under grant R01-GM114365.
+	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a></h4>
 	</p>
 </section>
 
@@ -149,7 +172,7 @@ margin: 20px;
             <label for="validate-textarea">This will update whenever the form changes to show validation errors if there
                 are any.</label><br>
             <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
-            <a class='btn btn-primary btn-block' id='saveinput' href="#">Download</a>
+            <a class='btn btn-primary btn-block' id='saveinput' href="?">Download</a>
     </section>
 
     <section id="mcx1-schema" class='col-8 col-md-8 w-8/8'>
@@ -268,6 +291,13 @@ margin: 20px;
             </div>
         </div>
 </section>
+
+<footer>
+  Presented to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="http://fanglab.org/wiki/images/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
+  <a href="http://mcx.space" title="MCX photon simulator"><img src="http://mcx.space/img/mcx_logo_2020.png" title="MCX photon simulator"/>MCX</a>
+  <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="http://mcx.space/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a>
+</footer>
+
 <script>
   "use strict";
 
@@ -763,7 +793,7 @@ margin: 20px;
                     "type": "object",
 		    "required": [
 		       "Tag",
-		       "CO",
+		       "C0",
 		       "C1",
 		       "R"
 		    ],
@@ -1819,6 +1849,8 @@ function addlog(data){
   var d = new Date();
   if(data.hasOwnProperty('status')){
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
+      if(data.status === 'invalid')
+          resetjob();
   }
   if(data.hasOwnProperty('log')){
       lastlog=data.log;
@@ -1837,9 +1869,9 @@ function addlog(data){
 
 function jobstatus() {
   if(count++>60 && timer != null){
-      clearInterval(timer);
       var d = new Date();
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job expired");
+      resetjob();
   }
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
