@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+
+use DBI;
+use JSON::PP;
+use strict;
+my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$jobstatus,$dockercmd);
+my $req;
+
+my %jobstatus=('0'=>'queued','1'=>'initiated','2'=>'created','3'=>'running','4'=>'completed','5'=>'deleted','6'=>'failed','7'=>'invalid');
+
+$DBName="dbi:SQLite:dbname=db/mcxcloud.db";
+$DBUser="";
+$DBPass="";
+%DBErr=(RaiseError=>0,PrintError=>1);
+$dbname="mcxcloud";
+$savetime=time();
+
+
+# delete all expired folder (1 hr or older), if --clean is attached
+
+if(grep(/--clean/,@ARGV)){
+    $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+    $sth=$dbh->selectall_arrayref("select jobid from $dbname where time<".(time()-60*60).";");
+    if(defined $sth->[0]){
+        foreach my $rec (@{$sth}){
+            my ($job)=@$rec;
+            if(-d "workspace/$job"){
+	        print "removing expired workfolder workspace/$job\n";
+	        system("rm -rf workspace/$job");
+            }
+        }
+    }
+    $dbh->disconnect() or die($DBI::errstr);
+    print "finish cleaning expired job folders\n";
+    my $oldjob=`docker service ls  | awk '{if (NR!=1 && \$4 == "0/1") {print \$1}}'`;
+    if($oldjob ne ''){
+        system("docker service rm $oldjob");
+    }
+    print "finish cleaning expired docker service jobs\n";
+    exit;
+}
+
+# find the next queued job and start running it
+
+my @dockernode=`docker node ls`;
+my @activenode=grep(/\bReady\s*Active\b/, @dockernode);
+if(@activenode==0){
+    print "docker service has no active node\n";
+    exit;
+}
+
+my @activejob=`docker service ls | grep '1\/[01]'`;
+if(@activejob >= @activenode){
+    print "docker service queue is full".($#activejob+1)." ".$#dockernode."\n";
+    exit;
+}
+
+$dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+
+$sth=$dbh->selectall_arrayref("select time,jobid,json,hash from $dbname where status=1 limit 1;");
+if(defined $sth->[0]){
+
+    my ($savetime,$jobid,$json,$jobhash)=@{$sth->[0]};
+    print "updating job $jobid\n";
+
+    if(-d "workspace/_${jobhash}" && not -d "workspace/$jobid"){
+        print "cached job found, skip";
+        $dbh->disconnect() or die($DBI::errstr);
+        exit;
+    }
+    if(-d "workspace/$jobid"){
+        $jobstatus=1;
+    }else{
+        mkdir("workspace/$jobid", 0777);
+    }
+
+    if(-e "workspace/$jobid/input.json" && not -z "workspace/$jobid/input.json"){
+        $jobstatus=2;
+    }else{
+        open(FF, ">workspace/$jobid/input.json") or die("can not write to output folder");
+        print FF "$json\n";
+        close(FF);
+    }
+
+    print "starting job $jobid\n";
+
+    $jobstatus=3;
+    $sth=$dbh->prepare("update $dbname set status=$jobstatus where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    $sth->execute();
+
+    $dockercmd='docker service create --user "6047:503" --restart-condition=none --mount '
+               .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
+               .'--update-monitor 1s '
+               .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
+               ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii > /data/log.txt' "
+               .'> workspace/'.$jobid.'/docker.txt';
+    system($dockercmd);
+
+    if(-e "workspace/$jobid/output.jnii" && not -z "workspace/$jobid/output.jnii"){
+         $sth=$dbh->prepare("update $dbname set status=5 where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    }else{
+         $sth=$dbh->prepare("update $dbname set status=6 where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    }
+    $sth->execute();
+}else{
+    print "no waiting job, skip\n";
+}
+
+$dbh->disconnect() or die($DBI::errstr);
+
+

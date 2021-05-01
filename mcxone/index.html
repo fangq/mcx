@@ -1874,7 +1874,7 @@ function jobstatus() {
       resetjob();
   }
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
       data: { 'jobid': jobid, 'hash': $("#jobhash").val() },
       type: 'GET',
       crossOrigin: true,
@@ -1890,7 +1890,7 @@ function jobstatus() {
 
 function canceljob() {
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
       data: { 'jobid': jobid, 'action': 'cancel' },
       type: 'POST',
       crossOrigin: true,
@@ -1919,7 +1919,7 @@ function runsimulation() {
      throw "required fields are not provided";
 
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/proton.cgi',
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
       data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json) },
       type: 'POST',
       crossOrigin: true,
