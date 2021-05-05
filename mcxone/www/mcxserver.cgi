@@ -10,7 +10,7 @@ use Digest::MD5 qw(md5_hex);
 my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$md5key,$callback,$jobhash);
 my $q = new CGI;
 my $req;
-my %jobstatus=('0'=>'queued','1'=>'initiated','2'=>'created','3'=>'running','4'=>'completed','5'=>'deleted','6'=>'failed','7'=>'invalid','8'=>'cancelled');
+my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output');
 
 if($q->param('json') =~/"RNGSeed"/){
 	$req=decode_json($q->param( 'json' ));
@@ -25,15 +25,15 @@ $savetime=time();
 $jobid=uc(join "", map { unpack "H*", chr(rand(256)) } 1..20);
 $callback='addlog';
 
-print $q -> header(
--type => 'application/javascript',
--access_control_allow_origin => '*',
--access_control_allow_headers => 'content-type,X-Requested-With',
--access_control_allow_methods => 'GET,POST,OPTIONS',
--access_control_allow_credentials => 'true',
-);
+#print $q -> header(
+#-type => 'application/javascript',
+#-access_control_allow_origin => '*',
+#-access_control_allow_headers => 'content-type,X-Requested-With',
+#-access_control_allow_methods => 'GET,POST,OPTIONS',
+#-access_control_allow_credentials => 'true',
+#);
 
-#print "Content-Type: application/javascript\n\n";
+print "Content-Type: application/javascript\n\n";
 
 if(&V("callback") ne ''){
     $callback=&V("callback");
@@ -63,18 +63,34 @@ if(&V("email") ne '' && &V("json") ne ''){
         $jobid=$jobhash;
     }
     if(-e "workspace/$jobid/output.jnii" && not -z "workspace/$jobid/output.jnii"){
-        $status=4;
-        open FF, "<workspace/$jobid/output.jnii" || die("can not open log file");
-        chomp(my @lines = <FF>);
-        close(FF);
-        my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'output'=>join(/\n/,@lines));
-        $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
-    }elsif(-e "workspace/$jobid/log.txt" && not -z "workspace/$jobid/input.txt"){
+        $status=9;
+        if(-e "workspace/$jobid/done"){
+          open FF, "<workspace/$jobid/output.jnii" || die("can not open log file");
+          chomp(my @lines = <FF>);
+          close(FF);
+          my $outstr=join(/\n/,@lines);
+          my $logstr="";
+          if(-e "workspace/$jobid/output.log" && not -z "workspace/$jobid/output.log"){
+              open FF, "<workspace/$jobid/output.log" || die("can not open log file");
+              chomp(my @logs = <FF>);
+              close(FF);
+              $logstr=join("\n",@logs);
+          }
+          $status=4;
+          my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'output'=>$outstr, 'log'=>$logstr);
+          $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
+        }else{
+          $status=3;
+          my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid);
+          $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
+        }
+    }elsif(-e "workspace/$jobid/output.log" && not -z "workspace/$jobid/output.log"){
+        select(undef, undef, undef, 0.5); # delay 500 ms
         $status=3;
-        open FF, "<workspace/$jobid/log.txt" || die("can not open log file");
-        chomp(my @lines = <FF>);
+        open FF, "<workspace/$jobid/output.log" || die("can not open log file");
+        chomp(my @logs = <FF>);
         close(FF);
-        my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'log'=>join(/\n/,@lines));
+        my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'log'=>join(/\n/,@logs));
         $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
     }elsif(-e "workspace/$jobid/input.json" && not -z "workspace/$jobid/input.json"){
         $status=2;

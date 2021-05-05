@@ -186,6 +186,10 @@ header, section{
 
     <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
             <h2>Preview</h2>
+	    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
+	    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
+	    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
+	    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>
 	    <div id="canvas"></div>
     </section>
 
@@ -293,9 +297,9 @@ header, section{
 </section>
 
 <footer>
-  Presented to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="http://fanglab.org/wiki/images/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
-  <a href="http://mcx.space" title="MCX photon simulator"><img src="http://mcx.space/img/mcx_logo_2020.png" title="MCX photon simulator"/>MCX</a>
-  <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="http://mcx.space/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a>
+  Presented to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="https://openjdata.org/img/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
+  <a href="http://mcx.space" title="MCX photon simulator"><img src="https://openjdata.org/img/mcx_logo_2020.png" title="MCX photon simulator"/>MCX</a>
+  <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="https://openjdata.org/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a>
 </footer>
 
 <script>
@@ -1853,8 +1857,8 @@ function addlog(data){
           resetjob();
   }
   if(data.hasOwnProperty('log')){
-      lastlog=data.log;
-      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+lastlog);
+      lastlog=data.log.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '').replace(/\n/g, "\n ");
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" log\n "+lastlog);
   }
   if(data.hasOwnProperty('output')){
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+"output data received");
@@ -1892,7 +1896,7 @@ function canceljob() {
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
       data: { 'jobid': jobid, 'action': 'cancel' },
-      type: 'POST',
+      type: 'GET',
       crossOrigin: true,
       dataType: 'jsonp',
       success: function( data ){
@@ -1920,7 +1924,7 @@ function runsimulation() {
 
   $.ajax({
       url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
-      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json) },
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback': 'updatestatus' },
       type: 'POST',
       crossOrigin: true,
       dataType: 'jsonp',
@@ -1942,7 +1946,7 @@ function runsimulation() {
 function createbox(bsize, orig, tag){
       const geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
       geometry.translate(bsize[0]*0.5+orig[0],bsize[1]*0.5+orig[1],bsize[2]*0.5+orig[2]);
-      const material = new THREE.MeshNormalMaterial( { color: materialcolor[tag], transparent: true, opacity: 0.6, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const material = new THREE.MeshNormalMaterial( { transparent: true, opacity: 0.6, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
       const obj = new THREE.Mesh( geometry, material );
       return obj;
 }
@@ -1977,9 +1981,24 @@ function resetscene(s){
       const light = new THREE.AmbientLight( 0xffffff );
       light.position.set(s[0]*0.5,s[1]*0.5,s[2]*1.5);
       scene.add(light);
-      camera.position.set(s[0]*2,s[1]*2,s[2]*2);
+      camera.position.set(s[0]*2,s[1]*1.5,s[2]*1.5);
       camera.lookAt(new THREE.Vector3(s[0]*0.5,s[1]*0.5,s[2]*0.5));
-      camera.zoom=2*Math.max($("#canvas").width()/(Math.max(s[0],s[1])), $("#canvas").height()/s[2]);
+      camera.zoom=0.5*Math.max($("#canvas").width()/(Math.max(s[0],s[1])), $("#canvas").height()/s[2]);
+      camera.updateProjectionMatrix();
+      camera.updateMatrix();
+      
+      let diag=Math.sqrt(s[0]*s[0]+s[1]*s[1]+s[2]*s[2]);
+      let distcenter=Math.sqrt(1.5*1.5*s[0]*s[0]+s[1]*s[1]+s[2]*s[2]);
+      let near=distcenter-diag*0.6;
+      let far =distcenter+diag*0.6;
+
+      $("#camera-near").val(near);
+      $("#camera-near").prop('min',near);
+      $("#camera-near").prop('max',far);
+ 
+      $("#camera-far").val(far);
+      $("#camera-far").prop('min',near);
+      $("#camera-far").prop('max',far);
 }
 
 function drawshape(shape,index){
@@ -2027,7 +2046,7 @@ function drawshape(shape,index){
       break;
     case "Sphere":
       var geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
-      //geometry.applyMatrix( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
+      //geometry.applyMatrix4( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
       var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
       obj = new THREE.Mesh( geometry, material );
       obj.position.set(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]);
@@ -2091,7 +2110,7 @@ function drawsrc(obj){
 
 function drawdet(obj,index){
   const geometry = new THREE.SphereGeometry(obj.R, 32,32);
-  geometry.applyMatrix( new THREE.Matrix4().makeTranslation(obj.Pos[0],obj.Pos[1],obj.Pos[2]) );
+  geometry.applyMatrix4( new THREE.Matrix4().makeTranslation(obj.Pos[0],obj.Pos[1],obj.Pos[2]) );
   const material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
   const det = new THREE.Mesh( geometry, material );
   boundingbox.add( det );
@@ -2147,6 +2166,17 @@ function drawvolume(volume){
   uniforms[ "u_renderthreshold" ].value =  0.2;
   uniforms[ "u_cmdata" ].value = cmtextures[ "viridis" ];
 
+  lastclim=uniforms[ "u_clim" ].value;
+  $("#clim-low").prop( "disabled", false );
+  $("#clim-low").prop('min',lastclim.x);
+  $("#clim-low").prop('max',lastclim.y);
+  $("#clim-low").val(lastclim.x);
+
+  $("#clim-hi").prop( "disabled", false );
+  $("#clim-hi").prop('min',lastclim.x);
+  $("#clim-hi").prop('max',lastclim.y);
+  $("#clim-hi").val(lastclim.y);
+
   const material = new THREE.ShaderMaterial( {
 	  uniforms: uniforms,
 	  vertexShader: shader.vertexShader,
@@ -2173,7 +2203,8 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.Shapes,{});
        let vol=jd.decode().data;
-       boundingbox.add( drawvolume(vol) );
+       lastvolume=drawvolume(vol);
+       boundingbox.add( lastvolume );
      }
     }else{
      if(cfg.Domain !=null && cfg.Domain.Dim!=null){
@@ -2196,7 +2227,8 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.NIFTIData,{});
        let vol=jd.decode().data;
-       boundingbox.add( drawvolume(nj.log(nj.clip(vol, 1e-16, 1/0)) ));
+       lastvolume=drawvolume(nj.log(nj.clip(vol, 1e-16, 1/0)) );
+       boundingbox.add( lastvolume );
      }
    }
   }
@@ -2218,9 +2250,9 @@ function updatejsonlink(linkid, text, name) {
 }
 
 function update() {
-    controls.update();
-    renderer.render(scene, camera);
     requestAnimationFrame(update);
+    renderer.render(scene, camera);
+    controls.update();
 }
 
 var canvas = $("#canvas");
@@ -2245,7 +2277,7 @@ for(let i=0;i<256;i++){
 }
 
 //const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
-const camera = new THREE.OrthographicCamera(w / -20, w / 20, h / 20, h / -20, 1, 2000);
+const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 1000);
 
 camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
@@ -2258,9 +2290,43 @@ renderer.setSize( w,h );
 canvas.append( renderer.domElement );
 
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.minZoom = 0.3;
-controls.maxZoom = 4;
+controls.minZoom = 0.5;
+controls.maxZoom = 40;
+controls.enableKeys=false;
+
 controls.update();
+var lastvolume=null;
+var lastclim=0;
+
+$("#clip-low").prop( "disabled", true );
+$("#clip-hi").prop( "disabled", true );
+
+$("#camera-near").on('change', function() {
+    camera.near=parseFloat($(this).val());
+    renderer.render(scene, camera);
+    controls.update();
+});
+$("#camera-far").on('change', function() {
+    camera.far=parseFloat($(this).val());
+    renderer.render(scene, camera);
+    controls.update();
+});
+$("#clim-low").on('change', function() {
+    if(lastvolume !== null){
+        let val=lastvolume.material.uniforms[ "u_clim" ].value;
+        lastvolume.material.uniforms[ "u_clim" ].value.set( parseFloat($(this).val()), val.y );
+        renderer.render(scene, camera);
+        update();
+    }
+});
+$("#clim-hi").on('change', function() {
+    if(lastvolume !== null){
+        let val=lastvolume.material.uniforms[ "u_clim" ].value;
+        lastvolume.material.uniforms[ "u_clim" ].value.set( val.x, parseFloat($(this).val()) );
+        renderer.render(scene, camera);
+        update();
+    }
+});
 
   /* -------------------------------------------------------- main function */
 

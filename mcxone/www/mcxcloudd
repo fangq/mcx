@@ -93,7 +93,7 @@ if(defined $sth->[0]){
                .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
                .'--update-monitor 1s '
                .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
-               ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii > /data/log.txt' "
+               ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii --log; touch /data/done' "
                .'> workspace/'.$jobid.'/docker.txt';
     system($dockercmd);
 
@@ -106,7 +106,7 @@ if(defined $sth->[0]){
     }
     $sth->execute();
 }else{
-    print "no waiting job, skip\n";
+    #print "no waiting job, skip\n";
 }
 
 $dbh->disconnect() or die($DBI::errstr);
