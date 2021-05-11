@@ -20,10 +20,14 @@ $DBName="dbi:SQLite:dbname=db/mcxcloud.db";
 $DBUser="";
 $DBPass="";
 %DBErr=(RaiseError=>0,PrintError=>1);
-$dbname="mcxcloud";
 $savetime=time();
 $jobid=uc(join "", map { unpack "H*", chr(rand(256)) } 1..20);
 $callback='addlog';
+if(&V("license") eq ''){
+  $dbname="mcxcloud";
+}else{
+  $dbname="mcxpub";
+}
 
 #print $q -> header(
 #-type => 'application/javascript',
@@ -39,11 +43,53 @@ if(&V("callback") ne ''){
     $callback=&V("callback");
 };
 
-if(&V("email") ne '' && &V("json") ne ''){
+if(&V("hash") ne '' && &V("id") ne ''){
+    my $ct=&V("id");
+    my $key=&V("hash");
+    $dbname='mcxpub';
+    $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+    $sth=$dbh->selectall_arrayref("select json from $dbname where time=$ct and hash='$key';");
+    my $jsondata='';
+    if(defined $sth->[0]){
+        foreach my $rec (@{$sth}){
+            ($jsondata)=@$rec;
+        }
+    }
+    my %response=('status'=>"success",'hash'=>$key, 'json'=>$jsondata);
+    $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
+    $dbh->disconnect() or die($DBI::errstr);
+}elsif(&V("limit") ne ''){
+    my $offset=&V("offset");
+    $dbname='mcxpub';
+    $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+    if(&V("keyword") eq ''){
+        $sth=$dbh->selectall_arrayref("select time,hash,title,comment,license,thumbnail,readcount from $dbname order by readcount desc limit ".&V("limit")." offset $offset;");
+    }else{
+        my $k=&V("keyword");
+        $sth=$dbh->selectall_arrayref("select time,hash,title,comment,license,thumbnail,readcount from $dbname where title like '%$k%' or comment like '%$k%' limit ".&V("limit")." offset $offset;");
+    }
+    my @res=();
+    if(defined $sth->[0]){
+        foreach my $rec (@{$sth}){
+            my ($id,$key,$title,$comment,$lic,$thumb)=@$rec;
+            my %simu=('time'=>$id,'hash'=>$key,'title'=>$title,'comment'=>$comment,'license'=>$lic,'thumbnail'=>$thumb);
+            push( @res, \%simu );
+        }
+    }
+    $html =$callback.'('.JSON::PP->new->utf8->encode(\@res).")\n";
+    $dbh->disconnect() or die($DBI::errstr);
+}elsif($dbname eq 'mcxpub'){
     $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
     $md5key=md5_hex(&V("json"));
-    $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,shape,jobid,hash,status,priority) values (?,?,?,?,?,?,?,?,?,?,?)");
-    $sth->execute($savetime,&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),'',$jobid,$md5key,1,50);
+    $sth=$dbh->prepare("insert into $dbname (time,title,comment,license,name,inst,email,netname,json,thumbnail,hash,createtime) values (?,?,?,?,?,?,?,?,?,?,?,?)");
+    $sth->execute($savetime,&V("title"),&V("comment"),&V("license"),&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key,$savetime);
+    $html =$callback.'({"status":"success","createtime":"'.$savetime.'","hash":"'.$md5key.'","dberror":"'.$DBI::errstr.'"})'."\n";
+    $dbh->disconnect() or die($DBI::errstr);
+}elsif(&V("email") ne '' && &V("json") ne ''){
+    $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+    $md5key=md5_hex(&V("json"));
+    $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,jobid,hash,status,priority) values (?,?,?,?,?,?,?,?,?,?)");
+    $sth->execute($savetime,&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),$jobid,$md5key,1,50);
     $html =$callback.'({"status":"success","jobid":"'.$jobid.'","hash":"'.$md5key.'","dberror":"'.$DBI::errstr.'"})'."\n";
     $dbh->disconnect() or die($DBI::errstr);
 }elsif(&V("action") eq 'cancel'){
@@ -84,14 +130,6 @@ if(&V("email") ne '' && &V("json") ne ''){
           my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid);
           $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
         }
-    }elsif(-e "workspace/$jobid/output.log" && not -z "workspace/$jobid/output.log"){
-        select(undef, undef, undef, 0.5); # delay 500 ms
-        $status=3;
-        open FF, "<workspace/$jobid/output.log" || die("can not open log file");
-        chomp(my @logs = <FF>);
-        close(FF);
-        my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'log'=>join(/\n/,@logs));
-        $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
     }elsif(-e "workspace/$jobid/input.json" && not -z "workspace/$jobid/input.json"){
         $status=2;
         $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'"})'."\n";

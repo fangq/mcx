@@ -43,7 +43,16 @@
   min-width: 5em;
   font-size: 130%;
 }
-
+.longinput{
+  width: 100%;
+}
+.shortinput{
+  width: 24%;
+}
+#thumbnail{
+  width: 40%;
+  height: auto;
+}
 section {
     width: 100%;
     margin-left: 10px;
@@ -84,13 +93,13 @@ section {
 }
 
 #mcx1-run input{
-  width:40%;
+  width:49%;
 }
 
 #canvas {
     background-color: #000;
-    width: 1000px;
-    height: 800px;
+    width: 937px;
+    height: 750px;
     border: 1px solid black;
     padding: 0px;
 }
@@ -129,6 +138,38 @@ footer img{
 header, section{
   padding-left: 20px;
 }
+#mcx1-share label img{
+  width: 14%;
+}
+input:required {
+  background-color:#ffb700;
+}
+#mcxlibrary{
+  width: 64%;
+  max-height: 100%;
+  float: left;
+}
+#simuinfo{
+  width: 34%;
+  float:right;
+  background-color: rgba(48,55,66,0.3);
+  color: white;
+}
+img.simupreview{
+  float: left;
+  width: 200px;
+  margin: 2px;
+}
+#rpreview img{
+  width: 100%;
+}
+#simuinfo dt{
+  font-weight: bold;
+  color: #1a9f2b;
+}
+#mcx1-browse input{
+  height: 1.8rem;
+}
 </style>
 
 <section id="mcx1-title" class='current'>
@@ -142,6 +183,7 @@ header, section{
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
 			<ul id="navbar" class="tab nav nav-tabs bigtab">
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-browse" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
@@ -157,6 +199,20 @@ header, section{
 </header>
 
 <section class='tab-content'>
+    <section id="mcx1-browse" class='col-8 col-md-8 w-8/8'>
+            <h2>Browse</h2>
+            <input id="keyword" style="width:33%" name="fullname" type="text" value='' required minlength="3" placeholder="Search by keywords, if empty, download the top downloaded">
+            <button class='btn btn-primary' style="width:33%" id='btsearch' onclick="searchpub(0)">Search</button>
+	    <button class='btn btn-primary' style="width:33%" id='btclearlib' onclick="clearpub()">Clear Results</button>
+	    <div id="mcxlibrary"></div>
+	    <div id="simuinfo">
+	      <div id="rpreview"></div>
+	      <p id="rtitle"></p>
+	      <p id="rcomment"></p>
+	      <p id="rlicense"></p>
+	    </div>
+    </section>
+
     <section id="mcx1-create" class='col-8 col-md-8 w-8/8'>
             <div id="json-editor-form"></div>
     </section>
@@ -195,23 +251,34 @@ header, section{
 
     <section id="mcx1-run" class='col-8 col-md-8 w-8/8'>
             <h2>Run</h2>
-	    <input id="fullname" name="fullname" type="text" value='' required minlength="1" placeholder="Full Name (required, internal use only, not be used publicly)">
-	    <input id="inst" name="inst" type="text" value='' required minlength="1" placeholder="Institution (required, internal use only, not be used publicly)">
+	    <input id="fullname" name="fullname" type="text" value='' required minlength="3" placeholder="Full Name (required, internal use only, not be used publicly)">
+	    <input id="netname" name="netname" type="text" value='' required minlength="3" placeholder="Network Name (required, for future public use)">
 	    <input id="email" name="email" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
-	    <input id="netname" name="netname" type="text" value='' required minlength="1" placeholder="Network Name (required, for future public use)">
+	    <input id="inst" name="inst" type="text" value='' required minlength="4" placeholder="Institute/Company (required, internal use only, not be used publicly)">
 	    <input id="jobid" type="hidden" name="jobid" value=''>
 	    <input id="jobhash" type="hidden" name="jobhash" value=''>
 
 	    <button class='btn btn-primary btn-block' id='run'>Submit</button>
 
             <label for="run-log">Job status</label>
-	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;"
-                      class='form-control'></textarea>
+	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;" class='form-control'></textarea>
             <a class='btn btn-primary btn-block' id='saveoutput' href="?">Download Output</a>
     </section>
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
             <h2>Share</h2>
+	    If you wish, you may use the below form to share your simulation by contributing it to our database. Submitted data can be reused by you and other users in the future (required shown in orange).
+	    <input id="stitle" class="longinput" name="stitle" type="text" value='' required minlength="3" placeholder="Simulation Title (searchable, can not be empty)">
+	    <textarea id='sdescription' rows="3" style="width: 100%; font-family: monospace;" class='form-control' placeholder="Description (searchable, can not be empty), may include citation information, background and detailed explanations"></textarea>
+	    <input id="sfullname" class="shortinput" name="sfullname" type="text" value='' required minlength="3" placeholder="Your Name (required, public and searchable, may use 'Anonymous' if do not want to be acknowledged)">
+	    <input id="semail" class="shortinput" name="semail" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
+	    <input id="snetname" class="shortinput" name="snetname" type="text" value='' minlength="3" placeholder="Your Network Name (public and searchable)">
+	    <input id="sinst" class="shortinput" name="sinst" type="text" value='' minlength="4" placeholder="Institute/Company (public, can be empty if you do not prefer to include)"><br/>
+	    <label for="thumbnail">Permission</label><input type="radio" id="CC0" name="slicense" value="CC0"><label for="CC0"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/cc-zero.png" title="CC0 (Can be reused for any purpose, you do not claim copyright to the submitted simulation setting/data)"/></label>
+	    <input type="radio" id="CC-BY" name="slicense" value="CC-BY"><label for="CC-BY"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by.png" title="CC-BY (Can be reused for any purpose, but reuser must acknowledge the creator)"/></label>
+	    <input type="radio" id="CC-BY-SA" name="slicense" value="CC-BY-SA"><label for="CC-BY-SA"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-sa.png" title="CC-BY-SA (Can be reused for any purpose, but reuser must acknowledge the creator and adaption must be shared under the same terms)"/></label><br/>
+	    <label for="thumbnail">Preview</label><br/><img id="thumbnail" src="" title="Domain Preview"/><br/>
+	    <label for="thumbnail">You must first successfully run your simulation before clicking this button</label><button class='btn btn-primary btn-block' id='sharesubmit' disabled>Submit</button>
     </section>
 
     <div id="mcx1-options" class="sidenav">
@@ -1820,12 +1887,21 @@ function showtab(event, name) {
   $("#mcx1-"+name).addClass('active');
   $("#site-navigation li").removeClass('active');
   event.target.parentNode.classList.add('active');
-  if(name === "preview"){
+  if(name === "preview" || name === "share"){
+      reqid=requestAnimationFrame(update);
       if(lastjson != $("#output-textarea").val()){
           lastjson=$("#output-textarea").val();
-          var cfg = JSON.parse(lastjson);
+          let cfg = JSON.parse(lastjson);
+          renderer.setSize( canvas.width()/2, canvas.height()/2 );
           drawpreview(cfg);
+          let screenshot = renderer.domElement.toDataURL("image/png");
+	  $("#thumbnail").attr('src', screenshot);
+	  console.log(screenshot.length);
+          renderer.setSize( canvas.width(), canvas.height() );
+          renderer.render( scene, camera );
       }
+  }else if(reqid!==undefined){
+      cancelAnimationFrame(reqid);
   }
 }
 
@@ -1868,12 +1944,14 @@ function addlog(data){
           updatejsonlink("saveoutput", lastoutput, "output.json");
       var nii = JSON.parse(lastoutput);
       drawpreview(nii);
+      lastjson = $("#output-textarea").val();
+      $("#sharesubmit").prop( "disabled", false );
   }
 }
 
 function jobstatus() {
   if(count++>60 && timer != null){
-      var d = new Date();
+      let d = new Date();
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job expired");
       resetjob();
   }
@@ -1900,7 +1978,7 @@ function canceljob() {
       crossOrigin: true,
       dataType: 'jsonp',
       success: function( data ){
-          var d = new Date();
+          let d = new Date();
           resetjob();
 	  $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job canceled");
       },
@@ -1937,6 +2015,42 @@ function runsimulation() {
       },
       error: function(xhr,status,error) {
          $("#run-log").val($("#run-log").val()+"\n"+"runsimulation error: "+status);
+      }
+  });
+}
+
+function sharecomplete(data){
+  alert("your simulation data have been recorded, thank you for sharing!");
+}
+
+function sharesimulation() {
+  var fullname=$("#sfullname").val();
+  var email=$("#semail").val();
+  var inst=$("#sinst").val();
+  var netname=$("#snetname").val();
+  var comment=$("#sdescription").val();
+  var json=$("#output-textarea").val();
+  var title=$("#stitle").val();
+  var license=$("input[name='slicense']:checked").val();
+  var thumb=$("#thumbnail").prop('src');
+
+  if(fullname === "" || email === "" || json === "" || comment==="" || title ==="" || license === undefined)
+     throw "Required fields are not provided";
+
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 
+              'title': encodeURIComponent(title), 'comment': encodeURIComponent(comment), 
+	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': 'sharecomplete' },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'sharecomplete',
+      success: function( data ){
+      },
+      error: function(xhr,status,error) {
+         alert("sharesimulation error: "+status);
       }
   });
 }
@@ -2168,6 +2282,7 @@ function drawvolume(volume){
 
   lastclim=uniforms[ "u_clim" ].value;
   $("#clim-low").prop( "disabled", false );
+  
   $("#clim-low").prop('min',lastclim.x);
   $("#clim-low").prop('max',lastclim.y);
   $("#clim-low").val(lastclim.x);
@@ -2250,11 +2365,73 @@ function updatejsonlink(linkid, text, name) {
 }
 
 function update() {
-    requestAnimationFrame(update);
+    reqid=requestAnimationFrame(update);
     renderer.render(scene, camera);
     controls.update();
 }
-
+function loadpubsimu(data){
+  $("#output-textarea").val(data.json);
+  $("#setvalue").click();
+}
+function loadsimulib(key,time){
+  if (confirm('Are you sure you want to replace the current simulation settings by the selected one?')) {
+    $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'id':time, 'hash': key, 'callback': 'loadpubsimu' },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'loadpubsimu',
+      success: function( data ){
+      },
+      error: function(xhr,status,error) {
+         alert("loadsimulib error: "+status);
+      }
+    });
+  }
+}
+function showsimudata(obj,time,lic){
+  $("#rpreview").html('<img src="'+$("#"+obj.id).prop('src')+'">');
+  $("#rpreview").append("<button class='btn btn-primary btn-block' id='btloadsimu' onclick='loadsimulib(\""+obj.id+"\","+time+")'>Load</button>");
+  $("#rtitle").html('<dt>Title</dt><dd>'+$("#"+obj.id).prop('title')+"</dd>");
+  $("#rcomment").html('<dt>Comment</dt><dd>'+$("#"+obj.id).prop('alt')+"</dd>");
+  $("#rlicense").html('<dt>License</dt><dd>'+lic+"</dd>");
+}
+function loadpubdata(data){
+  for (let i = 0; i < data.length; i++) {
+     $("#mcxlibrary").append('<img class="simupreview" onclick="showsimudata(this,'+data[i].time+',\''+data[i].license+'\')" id="'+data[i].hash+
+       '" src="'+data[i].thumbnail+'" title=\''+data[i].title.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\' alt=\''+data[i].comment.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\'/>');
+  }
+  if(data.length==5){
+    let offset=$("#mcxlibrary img").length;
+    $("#mcxlibrary").append("<button class='btn btn-primary btn-block' id='btloadnext' onclick='searchpub("+offset+");this.remove()'>Load Next 5</button>");
+  }
+}
+function clearpub(){
+  $("#mcxlibrary").html('');
+  $("#rpreview").html('');
+  $("#rtitle").html('');
+  $("#rcomment").html('');
+  $("#rlicense").html('');
+}
+function searchpub(offset){
+  let keyword=$("#keyword").val();
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'keyword': keyword, 'limit': 5, 'offset': offset, 'callback': 'loadpubdata' },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'loadpubdata',
+      success: function( data ){
+      },
+      error: function(xhr,status,error) {
+         alert("searchpub error: "+status);
+      }
+  });
+}
 var canvas = $("#canvas");
 var w = canvas.width();
 var h = canvas.height();
@@ -2268,6 +2445,8 @@ var lastlog='', lastoutput='';
 
 $('#run').unbind('click');
 $("#run").click(runsimulation);
+$("#sharesubmit").click(sharesimulation);
+window.onerror = function(message) { alert(message); return true; }; 
 
 // default color for each label, 0,1,2,...
 var materialcolor=[];
@@ -2297,6 +2476,7 @@ controls.enableKeys=false;
 controls.update();
 var lastvolume=null;
 var lastclim=0;
+var reqid=undefined;
 
 $("#clip-low").prop( "disabled", true );
 $("#clip-hi").prop( "disabled", true );
