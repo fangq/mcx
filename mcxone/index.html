@@ -4,9 +4,14 @@
     <meta charset="utf-8"/>
     <title>MCX One - A Web-based MCX Input File Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
-    <script src="./polyfills/assign.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script src="https://openjdata.org/js/jdata.js"></script>
     <link rel='stylesheet' id='theme-link'>
     <link rel='stylesheet' id='iconlib-link'>
 </head>
@@ -35,10 +40,22 @@
 
 .tab-item {
   display: inline;
+  min-width: 5em;
+  font-size: 130%;
 }
-
+.longinput{
+  width: 100%;
+}
+.shortinput{
+  width: 24%;
+}
+#thumbnail{
+  width: 40%;
+  height: auto;
+}
 section {
     width: 100%;
+    margin-left: 10px;
 }
 
 #site-navigation{
@@ -55,58 +72,148 @@ section {
   display:block;
 }
 .nav {
- flex-direction: row;
+  flex-direction: row;
+}
+
+.bigtab li{
+  vertical-align: middle;
+  text-align: center;
+  width: 150px;
+  font-size: 30px;
+  margin-right: 2em;
+}
+.bigtab i{
+  font-size: 150px;
+  color: #7744d1;
+}
+
+.bigtab{
+  width: 1000px;
+  border-bottom: 0px;
+}
+
+#mcx1-run input{
+  width:49%;
+}
+
+#canvas {
+    background-color: #000;
+    width: 937px;
+    height: 750px;
+    border: 1px solid black;
+    padding: 0px;
+}
+.info{
+  max-width:60em;
+}
+h1 {
+  color:red;
+  font-weight: 700;
+  font-size: 2.5rem;
+}
+body {
+background-color: #e8efff;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'%3E%3Cpolygon fill='%23cc0000' points='957 450 539 900 1396 900'/%3E%3Cpolygon fill='%23aa0000' points='957 450 872.9 900 1396 900'/%3E%3Cpolygon fill='%23d6002b' points='-60 900 398 662 816 900'/%3E%3Cpolygon fill='%23b10022' points='337 900 398 662 816 900'/%3E%3Cpolygon fill='%23d9004b' points='1203 546 1552 900 876 900'/%3E%3Cpolygon fill='%23b2003d' points='1203 546 1552 900 1162 900'/%3E%3Cpolygon fill='%23d3006c' points='641 695 886 900 367 900'/%3E%3Cpolygon fill='%23ac0057' points='587 900 641 695 886 900'/%3E%3Cpolygon fill='%23c4008c' points='1710 900 1401 632 1096 900'/%3E%3Cpolygon fill='%239e0071' points='1710 900 1401 632 1365 900'/%3E%3Cpolygon fill='%23aa00aa' points='1210 900 971 687 725 900'/%3E%3Cpolygon fill='%23880088' points='943 900 1210 900 971 687'/%3E%3C/svg%3E");
+background-attachment: fixed;
+background-size: cover;
+background-position: left bottom;
+font-family: Ubuntu;
+}
+footer {
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
+  text-align:right;
+  background-color: rgba(255,255,255,0.2);
+  padding: 5px;
+  font-size: 120%;
+  color: white;
+  z-index: -1;
+}
+footer img{
+  height: 30px;
+  vertical-align: middle;
+  margin-right: 5pt;
+}
+header, section{
+  padding-left: 20px;
+}
+#mcx1-share label img{
+  width: 14%;
+}
+input:required {
+  background-color:#ffb700;
+}
+#mcxlibrary{
+  width: 64%;
+  max-height: 100%;
+  float: left;
+}
+#simuinfo{
+  width: 34%;
+  float:right;
+  background-color: rgba(48,55,66,0.3);
+  color: white;
+}
+img.simupreview{
+  float: left;
+  width: 200px;
+  margin: 2px;
+}
+#rpreview img{
+  width: 100%;
+}
+#simuinfo dt{
+  font-weight: bold;
+  color: #1a9f2b;
+}
+#mcx1-browse input{
+  height: 1.8rem;
 }
 </style>
-<script>
-function showoptions() {
-  $("mcx1-options").css("width","400px");
-}
-
-function hideoptions() {
-  $("mcx1-options").css("width","0");
-}
-
-function showtab(event, name) {
-  $(".col-8").removeClass('active');
-  $("#mcx1-"+name).addClass('active');
-  $("#site-navigation li").removeClass('active');
-  event.target.parentNode.classList.add('active');
-}
-
-function runsimulation() {
-  alert($("#output-textarea").val());
-}
-
-
-</script>
 
 <section id="mcx1-title" class='current'>
-        <h1>MCX One</h1>
-        <p>A Web-based <a href="http://mcx.space">MCX</a> Input File Creator (based on <a href="https://json-schema.org/">JSON Schema</a> and <a href="https://github.com/jdorn/json-editor" title="JSON Editor">JSON-editor</a>).</p>
+        <h1>MCX Cloud</h1>
+	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a></h4>
+	</p>
 </section>
 
 
 <header id="masthead" class="home">
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
-			<ul class="tab nav nav-tabs ">
-			<li class="tab-item active"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')">Create</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')">Schema</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')">JSON</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')">Preview</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')">Run</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')">Share</a></li>
-			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options">Link</a></li>
-			<li class="tab-item"><a href="?" title="reload editor with default example settings">Reset</a></li>
-			<li class="tab-item"><span style="font-size:30px;cursor:pointer" onclick="showoptions()">&#9776;</span></li>
+			<ul id="navbar" class="tab nav nav-tabs bigtab">
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-browse" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
+			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
+			<li class="tab-item"><a href="?" title="reload editor with default example settings"><i class="fas fa-undo"></i>Reset</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#mcx1-options" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
 			</ul>
 		</div>
         </nav><!-- #site-navigation -->
 </header>
 
 <section class='tab-content'>
-    <section id="mcx1-create" class='col-8 col-md-8 w-8/8 active'>
+    <section id="mcx1-browse" class='col-8 col-md-8 w-8/8'>
+            <h2>Browse</h2>
+            <input id="keyword" style="width:33%" name="fullname" type="text" value='' required minlength="3" placeholder="Search by keywords, if empty, download the top downloaded">
+            <button class='btn btn-primary' style="width:33%" id='btsearch' onclick="searchpub(0)">Search</button>
+	    <button class='btn btn-primary' style="width:33%" id='btclearlib' onclick="clearpub()">Clear Results</button>
+	    <div id="mcxlibrary"></div>
+	    <div id="simuinfo">
+	      <div id="rpreview"></div>
+	      <p id="rtitle"></p>
+	      <p id="rcomment"></p>
+	      <p id="rlicense"></p>
+	    </div>
+    </section>
+
+    <section id="mcx1-create" class='col-8 col-md-8 w-8/8'>
             <div id="json-editor-form"></div>
     </section>
 
@@ -121,6 +228,7 @@ function runsimulation() {
             <label for="validate-textarea">This will update whenever the form changes to show validation errors if there
                 are any.</label><br>
             <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
+            <a class='btn btn-primary btn-block' id='saveinput' href="?">Download</a>
     </section>
 
     <section id="mcx1-schema" class='col-8 col-md-8 w-8/8'>
@@ -134,18 +242,43 @@ function runsimulation() {
 
     <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
             <h2>Preview</h2>
+	    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
+	    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
+	    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
+	    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>
+	    <div id="canvas"></div>
     </section>
 
     <section id="mcx1-run" class='col-8 col-md-8 w-8/8'>
             <h2>Run</h2>
-	    <button class='btn btn-primary btn-block' id='run' onClick="runsimulation()">Submit</button>
+	    <input id="fullname" name="fullname" type="text" value='' required minlength="3" placeholder="Full Name (required, internal use only, not be used publicly)">
+	    <input id="netname" name="netname" type="text" value='' required minlength="3" placeholder="Network Name (required, for future public use)">
+	    <input id="email" name="email" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
+	    <input id="inst" name="inst" type="text" value='' required minlength="4" placeholder="Institute/Company (required, internal use only, not be used publicly)">
+	    <input id="jobid" type="hidden" name="jobid" value=''>
+	    <input id="jobhash" type="hidden" name="jobhash" value=''>
+
+	    <button class='btn btn-primary btn-block' id='run'>Submit</button>
+
             <label for="run-log">Job status</label>
-	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;"
-                      class='form-control'></textarea>
+	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;" class='form-control'></textarea>
+            <a class='btn btn-primary btn-block' id='saveoutput' href="?">Download Output</a>
     </section>
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
             <h2>Share</h2>
+	    If you wish, you may use the below form to share your simulation by contributing it to our database. Submitted data can be reused by you and other users in the future (required shown in orange).
+	    <input id="stitle" class="longinput" name="stitle" type="text" value='' required minlength="3" placeholder="Simulation Title (searchable, can not be empty)">
+	    <textarea id='sdescription' rows="3" style="width: 100%; font-family: monospace;" class='form-control' placeholder="Description (searchable, can not be empty), may include citation information, background and detailed explanations"></textarea>
+	    <input id="sfullname" class="shortinput" name="sfullname" type="text" value='' required minlength="3" placeholder="Your Name (required, public and searchable, may use 'Anonymous' if do not want to be acknowledged)">
+	    <input id="semail" class="shortinput" name="semail" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
+	    <input id="snetname" class="shortinput" name="snetname" type="text" value='' minlength="3" placeholder="Your Network Name (public and searchable)">
+	    <input id="sinst" class="shortinput" name="sinst" type="text" value='' minlength="4" placeholder="Institute/Company (public, can be empty if you do not prefer to include)"><br/>
+	    <label for="thumbnail">Permission</label><input type="radio" id="CC0" name="slicense" value="CC0"><label for="CC0"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/cc-zero.png" title="CC0 (Can be reused for any purpose, you do not claim copyright to the submitted simulation setting/data)"/></label>
+	    <input type="radio" id="CC-BY" name="slicense" value="CC-BY"><label for="CC-BY"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by.png" title="CC-BY (Can be reused for any purpose, but reuser must acknowledge the creator)"/></label>
+	    <input type="radio" id="CC-BY-SA" name="slicense" value="CC-BY-SA"><label for="CC-BY-SA"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-sa.png" title="CC-BY-SA (Can be reused for any purpose, but reuser must acknowledge the creator and adaption must be shared under the same terms)"/></label><br/>
+	    <label for="thumbnail">Preview</label><br/><img id="thumbnail" src="" title="Domain Preview"/><br/>
+	    <label for="thumbnail">You must first successfully run your simulation before clicking this button</label><button class='btn btn-primary btn-block' id='sharesubmit' disabled>Submit</button>
     </section>
 
     <div id="mcx1-options" class="sidenav">
@@ -229,7 +362,15 @@ function runsimulation() {
             </div>
         </div>
 </section>
+
+<footer>
+  Presented to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="https://openjdata.org/img/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
+  <a href="http://mcx.space" title="MCX photon simulator"><img src="https://openjdata.org/img/mcx_logo_2020.png" title="MCX photon simulator"/>MCX</a>
+  <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="https://openjdata.org/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a>
+</footer>
+
 <script>
+  "use strict";
 
   var defaultSchema = {
   "title": "Settings",
@@ -242,6 +383,7 @@ function runsimulation() {
     "Domain"
   ],
   "format": "categories",
+  "basicCategoryTitle": "Shapes",
   "properties": {
     "Session": {
       "type": "object",
@@ -531,449 +673,500 @@ function runsimulation() {
     },
     "Shapes": {
       "title": "Shapes",
-      "type": "array",
-      "format": "table",
-      "items": {
-        "anyOf": [
-          {
-            "title": "Grid",
-            "type": "object",
-            "required": ["Grid"],
-            "properties": {
-	        "Grid":{
-                   "title": "Grid",
-                   "type": "object",
+      "oneOf" :[
+	{
+	"type": "array",
+	"format": "table",
+	"items": {
+          "anyOf": [
+            {
+              "title": "Grid",
+              "type": "object",
+              "required": ["Grid"],
+              "properties": {
+	          "Grid":{
+                     "title": "Grid",
+                     "type": "object",
+		      "required": [
+			"Tag",
+			"Size"
+		      ],
+		     "properties": {
+			  "Tag": {
+			    "title": "Tag",
+			    "type": "integer",
+			    "default": 1,
+			    "minimum": 0
+			  },
+			  "Size": {
+			    "title": "Size",
+			    "type": "array",
+			    "format": "table",
+			    "default": [
+			       60,
+			       60,
+			       60
+			    ],
+			    "items": {
+			      "type": "number"
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+			  }
+		     }
+		  }
+        	}
+            },
+            {
+              "title": "Sphere",
+              "type": "object",
+              "required": ["Sphere"],
+              "properties": {
+		"Sphere":{
+                    "title": "Sphere",
+                    "type": "object",
 		    "required": [
-		      "Tag",
-		      "Size"
+		       "Tag",
+		       "O",
+		       "R"
 		    ],
-		   "properties": {
+		    "properties": {
+			  "Tag": {
+			      "title": "Tag",
+			      "type": "integer",
+			      "minimum": 0
+			    },
+			    "O": {
+			      "title": "Center",
+			      "type": "array",
+			      "format": "table",
+			      "items": {
+				"type": "number"
+			      },
+			      "default": [
+				 30,
+				 30,
+				 30
+			      ],
+			      "minItems": 3,
+			      "maxItems": 3
+			    },
+			    "R": {
+			      "title": "Radius",
+			      "type": "number",
+			      "minimum": 0
+			    }
+		     }
+		}
+              }
+            },
+            {
+              "title": "Box",
+              "type": "object",
+              "required": ["Box"],
+              "properties": {
+		"Box":{
+                    "title": "Box",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "O",
+		       "Size"
+		    ],
+		    "properties": {
 			"Tag": {
 			  "title": "Tag",
 			  "type": "integer",
-			  "default": 1,
 			  "minimum": 0
 			},
 			"Size": {
 			  "title": "Size",
 			  "type": "array",
 			  "format": "table",
-			  "default": [
-			     60,
-			     60,
-			     60
-			  ],
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			},
+			"O": {
+			  "title": "Origin",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			}
+		    }
+		}
+              }
+            },
+            {
+              "title": "Subgrid",
+              "type": "object",
+              "required": ["Subgrid"],
+              "properties": {
+		"Subgrid":{
+                    "title": "Subgrid",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "O",
+		       "Size"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Size": {
+			  "title": "Size",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			},
+			"O": {
+			  "title": "Origin",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "integer",
+			    "minimum": 0,
+			    "default": 0
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			}
+		    }
+		}
+              }
+            },
+            {
+              "title": "Cylinder",
+              "type": "object",
+              "required": ["Cylinder"],
+              "properties": {
+		"Cylinder":{
+                    "title": "Cylinder",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "C0",
+		       "C1",
+		       "R"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"C0": {
+			  "title": "Axis Center 1",
+			  "type": "array",
+			  "format": "table",
 			  "items": {
 			    "type": "number"
 			  },
 			  "minItems": 3,
 			  "maxItems": 3
+			},
+			"C1": {
+			  "title": "Axis Center 2",
+			  "type": "array",
+			  "format": "table",
+			  "items": {
+			    "type": "number"
+			  },
+			  "minItems": 3,
+			  "maxItems": 3
+			},
+			"R": {
+			  "title": "Radius",
+			  "type": "number",
+			  "minimum": 0
 			}
-		   }
+		    }
 		}
               }
-          },
-          {
-            "title": "Sphere",
-            "type": "object",
-            "required": ["Sphere"],
-            "properties": {
-	      "Sphere":{
-                  "title": "Sphere",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "O",
-		     "R"
-		  ],
-		  "properties": {
+            },
+            {
+              "title": "Name",
+              "type": "object",
+              "required": ["Name"],
+              "properties": {
+		 "Name":{
+                     "type": "string",
+	             "default": ""
+		 }
+	      }
+            },
+            {
+              "title": "Origin",
+              "type": "object",
+              "required": ["Origin"],
+              "properties": {
+		"Origin":{
+                    "title": "Origin",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "number",
+			    "minimum": 0,
+			    "default": 0
+		    },
+		    "minItems": 3,
+		    "maxItems": 3
+		}
+              }
+            },
+            {
+              "title": "XLayers",
+              "type": "object",
+              "required": ["XLayers"],
+              "properties": {
+		"XLayers":{
+                    "title": "XLayers",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "array",
+		            "format": "table",
+			    "items": {
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+		    }
+		}
+              }
+            },
+            {
+              "title": "YLayers",
+              "type": "object",
+              "required": ["YLayers"],
+              "properties": {
+		"YLayers":{
+                    "title": "YLayers",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "array",
+		            "format": "table",
+			    "items": {
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+		    }
+		}
+              }
+            },
+            {
+              "title": "ZLayers",
+              "type": "object",
+              "required": ["ZLayers"],
+              "properties": {
+		"ZLayers":{
+                    "title": "ZLayers",
+                    "type": "array",
+		    "format": "table",
+		    "items": {
+			    "type": "array",
+		            "format": "table",
+			    "items": {
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 3,
+			    "maxItems": 3
+		    }
+		}
+              }
+            },
+            {
+              "title": "XSlabs",
+              "type": "object",
+              "required": ["XSlabs"],
+              "properties": {
+		"XSlabs":{
+                    "title": "XSlabs",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "Bound"
+		    ],
+  		    "properties": {
 			"Tag": {
-			    "title": "Tag",
-			    "type": "integer",
-			    "minimum": 0
-			  },
-			  "O": {
-			    "title": "Center",
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Bound": {
+			    "title": "Start/End Indices",
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-			      "type": "number"
-			    },
-			    "default": [
-			       30,
-			       30,
-			       30
-			    ],
-			    "minItems": 3,
-			    "maxItems": 3
-			  },
-			  "R": {
-			    "title": "Radius",
-			    "type": "number",
-			    "minimum": 0
-			  }
-		   }
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
+			}
+		    }
+		}
+	      }
+            },
+            {
+              "title": "YSlabs",
+              "type": "object",
+              "required": ["YSlabs"],
+              "properties": {
+		"YSlabs":{
+                    "title": "YSlabs",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "Bound"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Bound": {
+			    "title": "Start/End Indices",
+			    "type": "array",
+			    "format": "table",
+			    "items": {
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
+			}
+		    }
+		}
+	      }
+            },
+            {
+              "title": "ZSlabs",
+              "type": "object",
+              "required": ["ZSlabs"],
+              "properties": {
+		"ZSlabs":{
+                    "title": "ZSlabs",
+                    "type": "object",
+		    "required": [
+		       "Tag",
+		       "Bound"
+		    ],
+  		    "properties": {
+			"Tag": {
+			  "title": "Tag",
+			  "type": "integer",
+			  "minimum": 0
+			},
+			"Bound": {
+			    "title": "Start/End Indices",
+			    "type": "array",
+			    "format": "table",
+			    "items": {
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
+			}
+		    }
+		}
 	      }
             }
-          },
-          {
-            "title": "Box",
+          ]
+	}
+      },
+      {
             "type": "object",
-            "required": ["Box"],
+            "required": ["_ArrayType_","_ArraySize_","_ArrayZipType_","_ArrayZipSize_","_ArrayZipData_"],
             "properties": {
-	      "Box":{
-                  "title": "Box",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "O",
-		     "Size"
-		  ],
-		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Size": {
-			"title": "Size",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "O": {
-			"title": "Origin",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      }
-		  }
-	      }
-            }
-          },
-          {
-            "title": "Subgrid",
-            "type": "object",
-            "required": ["Subgrid"],
-            "properties": {
-	      "Subgrid":{
-                  "title": "Subgrid",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "O",
-		     "Size"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Size": {
-			"title": "Size",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "O": {
-			"title": "Origin",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "integer",
-			  "minimum": 0,
-			  "default": 0
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      }
-		  }
-	      }
-            }
-          },
-          {
-            "title": "Cylinder",
-            "type": "object",
-            "required": ["Cylinder"],
-            "properties": {
-	      "Cylinder":{
-                  "title": "Cylinder",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "CO",
-		     "C1",
-		     "R"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "C0": {
-			"title": "Axis Center 1",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "number"
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "C1": {
-			"title": "Axis Center 2",
-			"type": "array",
-			"format": "table",
-			"items": {
-			  "type": "number"
-			},
-			"minItems": 3,
-			"maxItems": 3
-		      },
-		      "R": {
-			"title": "Radius",
-			"type": "number",
-			"minimum": 0
-		      }
-		  }
-	      }
-            }
-          },
-          {
-            "title": "Name",
-            "type": "object",
-            "required": ["Name"],
-            "properties": {
-	       "Name":{
-                   "type": "string",
-	           "default": ""
-	       }
-	    }
-          },
-          {
-            "title": "Origin",
-            "type": "object",
-            "required": ["Origin"],
-            "properties": {
-	      "Origin":{
-                  "title": "Origin",
-                  "type": "array",
+	      "_ArrayType_":{
+		  "type": "string",
+		  "default": "uint8",
+		  "enum": [
+			"uint8",
+			"uint16",
+			"uint32",
+			"int8",
+			"int16",
+			"int32",
+			"single"
+		      ]
+	      },
+	      "_ArraySize_":{
+		  "type": "array",
+		  "default": [0,0,0],
 		  "format": "table",
 		  "items": {
-			  "type": "number",
-			  "minimum": 0,
-			  "default": 0
+		      "type": "integer",
+		      "minimum": 0
 		  },
-		  "minItems": 3,
-		  "maxItems": 3
-	      }
-            }
-          },
-          {
-            "title": "XLayers",
-            "type": "object",
-            "required": ["XLayers"],
-            "properties": {
-	      "XLayers":{
-                  "title": "XLayers",
-                  "type": "array",
-		  "format": "table",
-		  "items": {
-			  "type": "array",
-		          "format": "table",
-			  "items": {
-				  "type": "integer",
-				  "minimum": 0,
-				  "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-		  }
-	      }
-            }
-          },
-          {
-            "title": "YLayers",
-            "type": "object",
-            "required": ["YLayers"],
-            "properties": {
-	      "YLayers":{
-                  "title": "YLayers",
-                  "type": "array",
-		  "format": "table",
-		  "items": {
-			  "type": "array",
-		          "format": "table",
-			  "items": {
-				  "type": "integer",
-				  "minimum": 0,
-				  "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-		  }
-	      }
-            }
-          },
-          {
-            "title": "ZLayers",
-            "type": "object",
-            "required": ["ZLayers"],
-            "properties": {
-	      "ZLayers":{
-                  "title": "ZLayers",
-                  "type": "array",
-		  "format": "table",
-		  "items": {
-			  "type": "array",
-		          "format": "table",
-			  "items": {
-				  "type": "integer",
-				  "minimum": 0,
-				  "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-		  }
-	      }
-            }
-          },
-          {
-            "title": "XSlabs",
-            "type": "object",
-            "required": ["XSlabs"],
-            "properties": {
-	      "XSlabs":{
-                  "title": "XSlabs",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "Bound"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Bound": {
-			  "title": "Start/End Indices",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-				  "type": "array",
-				  "format": "table",
-				  "items": {
-					  "type": "integer",
-					  "minimum": 0,
-					  "default": 0
-				  },
-				  "minItems": 2,
-				  "maxItems": 2
-			  }
-		      }
-		  }
+	          "minItems": 3,
+	          "maxItems": 3
+	      },
+	      "_ArrayZipType_":{
+		  "type": "string",
+		  "default": "zlib",
+		  "enum": [
+			"zlib",
+			"gzip"
+		      ]
+	      },
+	      "_ArrayZipSize_":{
+		  "type": "integer",
+		  "default": 0,
+		  "minimum": 0
+	      },
+	      "_ArrayZipData_":{
+		  "type": "string",
+		  "default": ""
 	      }
 	    }
-          },
-          {
-            "title": "YSlabs",
-            "type": "object",
-            "required": ["YSlabs"],
-            "properties": {
-	      "YSlabs":{
-                  "title": "YSlabs",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "Bound"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Bound": {
-			  "title": "Start/End Indices",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-				  "type": "array",
-				  "format": "table",
-				  "items": {
-					  "type": "integer",
-					  "minimum": 0,
-					  "default": 0
-				  },
-				  "minItems": 2,
-				  "maxItems": 2
-			  }
-		      }
-		  }
-	      }
-	    }
-          },
-          {
-            "title": "ZSlabs",
-            "type": "object",
-            "required": ["ZSlabs"],
-            "properties": {
-	      "ZSlabs":{
-                  "title": "ZSlabs",
-                  "type": "object",
-		  "required": [
-		     "Tag",
-		     "Bound"
-		  ],
-  		  "properties": {
-		      "Tag": {
-			"title": "Tag",
-			"type": "integer",
-			"minimum": 0
-		      },
-		      "Bound": {
-			  "title": "Start/End Indices",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-				  "type": "array",
-				  "format": "table",
-				  "items": {
-					  "type": "integer",
-					  "minimum": 0,
-					  "default": 0
-				  },
-				  "minItems": 2,
-				  "maxItems": 2
-			  }
-		      }
-		  }
-	      }
-	    }
-          }
-        ]
-      }
+	}
+      ]
     },
     "Domain": {
       "type": "object",
@@ -1055,6 +1248,280 @@ function runsimulation() {
     }
   }
   }
+
+
+var VolumeRenderShader1 = {
+	uniforms: {
+		'u_size': { value: new THREE.Vector3( 1, 1, 1 ) },
+		'u_renderstyle': { value: 0 },
+		'u_renderthreshold': { value: 0.5 },
+		'u_clim': { value: new THREE.Vector2( 1, 1 ) },
+		'u_data': { value: null },
+		'u_cmdata': { value: null }
+	},
+	vertexShader: [
+		'		varying vec4 v_nearpos;',
+		'		varying vec4 v_farpos;',
+		'		varying vec3 v_position;',
+
+		'		void main() {',
+		// Prepare transforms to map to "camera view". See also:
+		// https://threejs.org/docs/#api/renderers/webgl/WebGLProgram
+		'				mat4 viewtransformf = modelViewMatrix;',
+		'				mat4 viewtransformi = inverse(modelViewMatrix);',
+
+		// Project local vertex coordinate to camera position. Then do a step
+		// backward (in cam coords) to the near clipping plane, and project back. Do
+		// the same for the far clipping plane. This gives us all the information we
+		// need to calculate the ray and truncate it to the viewing cone.
+		'				vec4 position4 = vec4(position, 1.0);',
+		'				vec4 pos_in_cam = viewtransformf * position4;',
+
+		// Intersection of ray and near clipping plane (z = -1 in clip coords)
+		'				pos_in_cam.z = -pos_in_cam.w;',
+		'				v_nearpos = viewtransformi * pos_in_cam;',
+
+		// Intersection of ray and far clipping plane (z = +1 in clip coords)
+		'				pos_in_cam.z = pos_in_cam.w;',
+		'				v_farpos = viewtransformi * pos_in_cam;',
+
+		// Set varyings and output pos
+		'				v_position = position;',
+		'				gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;',
+		'		}',
+	].join( '\n' ),
+	fragmentShader: [
+		'		precision highp float;',
+		'		precision mediump sampler3D;',
+
+		'		uniform vec3 u_size;',
+		'		uniform int u_renderstyle;',
+		'		uniform float u_renderthreshold;',
+		'		uniform vec2 u_clim;',
+
+		'		uniform sampler3D u_data;',
+		'		uniform sampler2D u_cmdata;',
+
+		'		varying vec3 v_position;',
+		'		varying vec4 v_nearpos;',
+		'		varying vec4 v_farpos;',
+
+		// The maximum distance through our rendering volume is sqrt(3).
+		'		const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3',
+		'		const int REFINEMENT_STEPS = 4;',
+		'		const float relative_step_size = 1.0;',
+		'		const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);',
+		'		const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);',
+		'		const vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);',
+		'		const float shininess = 40.0;',
+
+		'		void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);',
+		'		void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);',
+
+		'		float sample1(vec3 texcoords);',
+		'		vec4 apply_colormap(float val);',
+		'		vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);',
+
+
+		'		void main() {',
+		// Normalize clipping plane info
+		'				vec3 farpos = v_farpos.xyz / v_farpos.w;',
+		'				vec3 nearpos = v_nearpos.xyz / v_nearpos.w;',
+
+		// Calculate unit vector pointing in the view direction through this fragment.
+		'				vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);',
+
+		// Compute the (negative) distance to the front surface or near clipping plane.
+		// v_position is the back face of the cuboid, so the initial distance calculated in the dot
+		// product below is the distance from near clip plane to the back of the cuboid
+		'				float distance = dot(nearpos - v_position, view_ray);',
+		'				distance = max(distance, min((-0.5 - v_position.x) / view_ray.x,',
+		'																		(u_size.x - 0.5 - v_position.x) / view_ray.x));',
+		'				distance = max(distance, min((-0.5 - v_position.y) / view_ray.y,',
+		'																		(u_size.y - 0.5 - v_position.y) / view_ray.y));',
+		'				distance = max(distance, min((-0.5 - v_position.z) / view_ray.z,',
+		'																		(u_size.z - 0.5 - v_position.z) / view_ray.z));',
+
+		// Now we have the starting position on the front surface
+		'				vec3 front = v_position + view_ray * distance;',
+
+		// Decide how many steps to take
+		'				int nsteps = int(-distance / relative_step_size + 0.5);',
+		'				if ( nsteps < 1 )',
+		'						discard;',
+
+		// Get starting location and step vector in texture coordinates
+		'				vec3 step = ((v_position - front) / u_size) / float(nsteps);',
+		'				vec3 start_loc = front / u_size;',
+
+		// For testing: show the number of steps. This helps to establish
+		// whether the rays are correctly oriented
+		//'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
+		//'return;',
+
+		'				if (u_renderstyle == 0)',
+		'						cast_mip(start_loc, step, nsteps, view_ray);',
+		'				else if (u_renderstyle == 1)',
+		'						cast_iso(start_loc, step, nsteps, view_ray);',
+
+		'				if (gl_FragColor.a < 0.05)',
+		'						discard;',
+		'		}',
+
+
+		'		float sample1(vec3 texcoords) {',
+		'				/* Sample float value from a 3D texture. Assumes intensity data. */',
+		'				return texture(u_data, texcoords.xyz).r;',
+		'		}',
+
+
+		'		vec4 apply_colormap(float val) {',
+		'				val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);',
+		'				return texture2D(u_cmdata, vec2(val, 0.5));',
+		'		}',
+
+
+		'		void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
+
+		'				float max_val = -1e6;',
+		'				int max_i = 100;',
+		'				vec3 loc = start_loc;',
+
+		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
+		// non-constant expression. So we use a hard-coded max, and an additional condition
+		// inside the loop.
+		'				for (int iter=0; iter<MAX_STEPS; iter++) {',
+		'						if (iter >= nsteps)',
+		'								break;',
+		// Sample from the 3D texture
+		'						float val = sample1(loc);',
+		// Apply MIP operation
+		'						if (val > max_val) {',
+		'								max_val = val;',
+		'								max_i = iter;',
+		'						}',
+		// Advance location deeper into the volume
+		'						loc += step;',
+		'				}',
+
+		// Refine location, gives crispier images
+		'				vec3 iloc = start_loc + step * (float(max_i) - 0.5);',
+		'				vec3 istep = step / float(REFINEMENT_STEPS);',
+		'				for (int i=0; i<REFINEMENT_STEPS; i++) {',
+		'						max_val = max(max_val, sample1(iloc));',
+		'						iloc += istep;',
+		'				}',
+
+		// Resolve final color
+		'				gl_FragColor = apply_colormap(max_val);',
+		'		}',
+
+
+		'		void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
+
+		'				gl_FragColor = vec4(0.0);	// init transparent',
+		'				vec4 color3 = vec4(0.0);	// final color',
+		'				vec3 dstep = 1.5 / u_size;	// step to sample derivative',
+		'				vec3 loc = start_loc;',
+
+		'				float low_threshold = u_renderthreshold - 0.02 * (u_clim[1] - u_clim[0]);',
+
+		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
+		// non-constant expression. So we use a hard-coded max, and an additional condition
+		// inside the loop.
+		'				for (int iter=0; iter<MAX_STEPS; iter++) {',
+		'						if (iter >= nsteps)',
+		'								break;',
+
+		// Sample from the 3D texture
+		'						float val = sample1(loc);',
+
+		'						if (val > low_threshold) {',
+		// Take the last interval in smaller steps
+		'								vec3 iloc = loc - 0.5 * step;',
+		'								vec3 istep = step / float(REFINEMENT_STEPS);',
+		'								for (int i=0; i<REFINEMENT_STEPS; i++) {',
+		'										val = sample1(iloc);',
+		'										if (val > u_renderthreshold) {',
+		'												gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
+		'												return;',
+		'										}',
+		'										iloc += istep;',
+		'								}',
+		'						}',
+
+		// Advance location deeper into the volume
+		'						loc += step;',
+		'				}',
+		'		}',
+
+
+		'		vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)',
+		'		{',
+		// Calculate color by incorporating lighting
+
+		// View direction
+		'				vec3 V = normalize(view_ray);',
+
+		// calculate normal vector from gradient
+		'				vec3 N;',
+		'				float val1, val2;',
+		'				val1 = sample1(loc + vec3(-step[0], 0.0, 0.0));',
+		'				val2 = sample1(loc + vec3(+step[0], 0.0, 0.0));',
+		'				N[0] = val1 - val2;',
+		'				val = max(max(val1, val2), val);',
+		'				val1 = sample1(loc + vec3(0.0, -step[1], 0.0));',
+		'				val2 = sample1(loc + vec3(0.0, +step[1], 0.0));',
+		'				N[1] = val1 - val2;',
+		'				val = max(max(val1, val2), val);',
+		'				val1 = sample1(loc + vec3(0.0, 0.0, -step[2]));',
+		'				val2 = sample1(loc + vec3(0.0, 0.0, +step[2]));',
+		'				N[2] = val1 - val2;',
+		'				val = max(max(val1, val2), val);',
+
+		'				float gm = length(N); // gradient magnitude',
+		'				N = normalize(N);',
+
+		// Flip normal so it points towards viewer
+		'				float Nselect = float(dot(N, V) > 0.0);',
+		'				N = (2.0 * Nselect - 1.0) * N;	// ==	Nselect * N - (1.0-Nselect)*N;',
+
+		// Init colors
+		'				vec4 ambient_color = vec4(0.0, 0.0, 0.0, 0.0);',
+		'				vec4 diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);',
+		'				vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);',
+
+		// note: could allow multiple lights
+		'				for (int i=0; i<1; i++)',
+		'				{',
+								 // Get light direction (make sure to prevent zero devision)
+		'						vec3 L = normalize(view_ray);	//lightDirs[i];',
+		'						float lightEnabled = float( length(L) > 0.0 );',
+		'						L = normalize(L + (1.0 - lightEnabled));',
+
+		// Calculate lighting properties
+		'						float lambertTerm = clamp(dot(N, L), 0.0, 1.0);',
+		'						vec3 H = normalize(L+V); // Halfway vector',
+		'						float specularTerm = pow(max(dot(H, N), 0.0), shininess);',
+
+		// Calculate mask
+		'						float mask1 = lightEnabled;',
+
+		// Calculate colors
+		'						ambient_color +=	mask1 * ambient_color;	// * gl_LightSource[i].ambient;',
+		'						diffuse_color +=	mask1 * lambertTerm;',
+		'						specular_color += mask1 * specularTerm * specular_color;',
+		'				}',
+
+		// Calculate final color by componing different components
+		'				vec4 final_color;',
+		'				vec4 color = apply_colormap(val);',
+		'				final_color = color * (ambient_color + diffuse_color) + specular_color;',
+		'				final_color.a = color.a;',
+		'				return final_color;',
+		'		}',
+	].join( '\n' )
+};
 
   // parse url -> merge options -> refreshUI() -> initJsoneditor() -> direct link
 
@@ -1344,6 +1811,7 @@ function runsimulation() {
 
   setValue.addEventListener('click', function () {
     jsoneditor.setValue(JSON.parse(outputTextarea.value))
+    updatejsonlink("saveinput", outputTextarea.value, "input.json");
   })
 
   setSchema.addEventListener('click', function () {
@@ -1399,6 +1867,648 @@ function runsimulation() {
     }
     refreshUI()
   })
+
+  /* -------------------------------------------------------- mcxone functions */
+
+var timer, jobid, count=0, lastjson="";
+
+function showoptions() {
+  $("#mcx1-options").css("width","400px");
+}
+
+function hideoptions() {
+  $("#mcx1-options").css("width","0");
+}
+
+function showtab(event, name) {
+  $("#navbar").removeClass('bigtab');
+  $('#navbar a').removeClass('active');
+  $(".col-8").removeClass('active');
+  $("#mcx1-"+name).addClass('active');
+  $("#site-navigation li").removeClass('active');
+  event.target.parentNode.classList.add('active');
+  if(name === "preview" || name === "share"){
+      reqid=requestAnimationFrame(update);
+      if(lastjson != $("#output-textarea").val()){
+          lastjson=$("#output-textarea").val();
+          let cfg = JSON.parse(lastjson);
+          renderer.setSize( canvas.width()/2, canvas.height()/2 );
+          drawpreview(cfg);
+          let screenshot = renderer.domElement.toDataURL("image/png");
+	  $("#thumbnail").attr('src', screenshot);
+	  console.log(screenshot.length);
+          renderer.setSize( canvas.width(), canvas.height() );
+          renderer.render( scene, camera );
+      }
+  }else if(reqid!==undefined){
+      cancelAnimationFrame(reqid);
+  }
+}
+
+function updatestatus(data){
+  jobid=data.jobid;
+  if(jobid != null){
+      $("#jobid").val(jobid);
+      $("#jobhash").val(data.hash);
+      $("#run-log").val($("#run-log").val()+"\n"+"Successfully submitted job "+jobid);
+      count=0;
+      timer=setInterval(jobstatus,5000);
+  }else
+      $("#run-log").val($("#run-log").val()+"\n"+ 'failed to submit, please try again');
+}
+
+function resetjob(){
+    count=0;
+    clearInterval(timer);
+    $("#run").html("Submit");
+    $('#run').unbind('click');
+    $("#run").click(runsimulation);
+}
+
+function addlog(data){
+  var d = new Date();
+  if(data.hasOwnProperty('status')){
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
+      if(data.status === 'invalid')
+          resetjob();
+  }
+  if(data.hasOwnProperty('log')){
+      lastlog=data.log.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '').replace(/\n/g, "\n ");
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" log\n "+lastlog);
+  }
+  if(data.hasOwnProperty('output')){
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+"output data received");
+      lastoutput=data.output;
+      resetjob();
+      if(!(lastoutput === ''))
+          updatejsonlink("saveoutput", lastoutput, "output.json");
+      var nii = JSON.parse(lastoutput);
+      drawpreview(nii);
+      lastjson = $("#output-textarea").val();
+      $("#sharesubmit").prop( "disabled", false );
+  }
+}
+
+function jobstatus() {
+  if(count++>60 && timer != null){
+      let d = new Date();
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job expired");
+      resetjob();
+  }
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'jobid': jobid, 'hash': $("#jobhash").val() },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'addlog',
+      success: function( data ){},
+      error: function(xhr,status,error) {
+          $("#run-log").val($("#run-log").val()+"\n"+"jobstatus error: "+status);
+      }
+  });
+}
+
+function canceljob() {
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'jobid': jobid, 'action': 'cancel' },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      success: function( data ){
+          let d = new Date();
+          resetjob();
+	  $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" job canceled");
+      },
+      error: function(xhr,status,error) {
+          $("#run-log").val($("#run-log").val()+"\n"+"canceljob error: "+status);
+      }
+  });
+}
+function runsimulation() {
+  var fullname=$("#fullname").val();
+  var email=$("#email").val();
+  var inst=$("#inst").val();
+  var netname=$("#netname").val();
+  var json=$("#output-textarea").val();
+  var isvalid=$("#validate-textarea").val();
+
+  if(!(isvalid === 'valid'))
+      throw "Input JSON is not valid";
+  if(fullname === "" || email === "" || inst === "" || netname === "")
+     throw "required fields are not provided";
+
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback': 'updatestatus' },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'updatestatus',
+      success: function( data ){
+         $("#run").html("Cancel");
+	 $('#run').unbind('click');
+         $("#run").click(canceljob);
+      },
+      error: function(xhr,status,error) {
+         $("#run-log").val($("#run-log").val()+"\n"+"runsimulation error: "+status);
+      }
+  });
+}
+
+function sharecomplete(data){
+  alert("your simulation data have been recorded, thank you for sharing!");
+}
+
+function sharesimulation() {
+  var fullname=$("#sfullname").val();
+  var email=$("#semail").val();
+  var inst=$("#sinst").val();
+  var netname=$("#snetname").val();
+  var comment=$("#sdescription").val();
+  var json=$("#output-textarea").val();
+  var title=$("#stitle").val();
+  var license=$("input[name='slicense']:checked").val();
+  var thumb=$("#thumbnail").prop('src');
+
+  if(fullname === "" || email === "" || json === "" || comment==="" || title ==="" || license === undefined)
+     throw "Required fields are not provided";
+
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 
+              'title': encodeURIComponent(title), 'comment': encodeURIComponent(comment), 
+	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': 'sharecomplete' },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'sharecomplete',
+      success: function( data ){
+      },
+      error: function(xhr,status,error) {
+         alert("sharesimulation error: "+status);
+      }
+  });
+}
+
+  /* -------------------------------------------------------- 3d rendering functions */
+
+function createbox(bsize, orig, tag){
+      const geometry = new THREE.BoxGeometry(bsize[0],bsize[1],bsize[2]);
+      geometry.translate(bsize[0]*0.5+orig[0],bsize[1]*0.5+orig[1],bsize[2]*0.5+orig[2]);
+      const material = new THREE.MeshNormalMaterial( { transparent: true, opacity: 0.6, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const obj = new THREE.Mesh( geometry, material );
+      return obj;
+}
+
+function createlayer(s, dim, tag){
+      let bsize=bbxsize;
+      bsize[dim]=Math.abs(s[0]-s[1]);
+      let orig=[0,0,0];
+      orig[dim]=Math.min(s[0],s[1]);
+      return createbox(bsize, orig, tag);
+}
+
+function createdisk(R, orig, norm){
+      const geometry = new THREE.CircleGeometry(R, 32);
+      geometry.up=new THREE.Vector3(norm[0],norm[1],norm[2]);
+      geometry.translate(orig[0],orig[1],orig[2]);
+      const material = new THREE.MeshBasicMaterial( { color: 0xFFFF00, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const obj = new THREE.Mesh( geometry, material );
+      return obj;
+}
+
+function createpoly(pos, norm){
+      const geometry = new THREE.BufferGeometry().setFromPoints(pos);
+      geometry.computeVertexNormals();
+      const material = new THREE.MeshBasicMaterial( { color: 0xFFFF00, side:THREE.DoubleSide, wireframe: false, depthWrite :false } );
+      const obj = new THREE.Mesh( geometry, material );
+      return obj;
+}
+
+function resetscene(s){
+      scene.remove.apply(scene, scene.children);
+      const light = new THREE.AmbientLight( 0xffffff );
+      light.position.set(s[0]*0.5,s[1]*0.5,s[2]*1.5);
+      scene.add(light);
+      camera.position.set(s[0]*2,s[1]*1.5,s[2]*1.5);
+      camera.lookAt(new THREE.Vector3(s[0]*0.5,s[1]*0.5,s[2]*0.5));
+      camera.zoom=0.5*Math.max($("#canvas").width()/(Math.max(s[0],s[1])), $("#canvas").height()/s[2]);
+      camera.updateProjectionMatrix();
+      camera.updateMatrix();
+      
+      let diag=Math.sqrt(s[0]*s[0]+s[1]*s[1]+s[2]*s[2]);
+      let distcenter=Math.sqrt(1.5*1.5*s[0]*s[0]+s[1]*s[1]+s[2]*s[2]);
+      let near=distcenter-diag*0.6;
+      let far =distcenter+diag*0.6;
+
+      $("#camera-near").val(near);
+      $("#camera-near").prop('min',near);
+      $("#camera-near").prop('max',far);
+ 
+      $("#camera-far").val(far);
+      $("#camera-far").prop('min',near);
+      $("#camera-far").prop('max',far);
+}
+
+function drawshape(shape,index){
+  let keys = Object.keys(shape);
+  let obj, c0, c1, dc, height;
+  const dir={XLayers:0,YLayers:1,ZLayers:2,XSlabs:0,YSlabs:1,ZSlabs:2};
+
+  switch(keys[0]){
+    case "Grid":
+      resetscene(shape.Grid.Size);
+      boundingbox=createbox(shape.Grid.Size,[0,0,0],shape.Grid.Tag);
+      const geo = new THREE.EdgesGeometry( boundingbox.geometry );
+      const mat = new THREE.LineDashedMaterial( { color: 0xFFFF00, linewidth: 3, dashSize: 3, gapSize: 1 } );
+      boundingbox = new THREE.LineSegments( geo, mat );
+      boundingbox.computeLineDistances();
+      scene.add( boundingbox );
+
+      bbxsize=shape.Grid.Size;
+      controls.target.set( shape.Grid.Size[0]*0.5, shape.Grid.Size[1]*0.5,shape.Grid.Size[2]*0.5);
+      break;
+    case "Box":
+      boundingbox.add( createbox(shape.Box.Size,shape.Box.O,shape.Box.Tag) );
+      break;
+    case "Subgrid":
+      boundingbox.add( createbox(shape.Subgrid.Size,shape.Subgrid.O,shape.Subgrid.Tag) );
+      break;
+    case "XLayers":
+    case "YLayers":
+    case "ZLayers":
+      if(shape[keys[0]] != null)
+         for (let i = 0; i < shape[keys[0]].length; i++)
+            boundingbox.add( createlayer(shape[keys[0]][i], dir[keys[0]], shape[keys[0]][i][2]) );
+      break;
+    case "XSlabs":
+    case "YSlabs":
+    case "ZSlabs":
+      if(shape[keys[0]] != null && shape[keys[0]].Bound != null){
+         let slabs=shape[keys[0]].Bound;
+	 if(slabs.length>0 && !Array.isArray(slabs[0]))
+	     boundingbox.add(createlayer(slabs, dir[keys[0]]));
+	 else
+             for (let i = 0; i < slabs.length; i++)
+                 boundingbox.add( createlayer(slabs[i], dir[keys[0]], shape[keys[0]].Tag ) );
+      }
+      break;
+    case "Sphere":
+      var geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
+      //geometry.applyMatrix4( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
+      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
+      obj = new THREE.Mesh( geometry, material );
+      obj.position.set(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]);
+      boundingbox.add( obj );
+      break;
+    case "Cylinder":
+      c0 = new THREE.Vector3( shape.Cylinder.C0[0],shape.Cylinder.C0[1],shape.Cylinder.C0[2] );
+      c1 = new THREE.Vector3( shape.Cylinder.C1[0],shape.Cylinder.C1[1],shape.Cylinder.C1[2] );
+      dc=c1;
+      height= c0.distanceTo(c1);
+      var geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
+      geometry.translate( 0, height / 2, 0 );
+      geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
+      dc.sub(c0).normalize();
+      geometry.lookAt( dc );
+      geometry.translate((c0.x+c1.x), (c0.y+c1.y), (c0.z+c1.z))
+      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
+      obj = new THREE.Mesh( geometry, material );
+      boundingbox.add( obj );
+      break;
+  }
+}
+
+function drawsrc(obj){
+  const dir = new THREE.Vector3( obj.Dir[0],obj.Dir[1],obj.Dir[2] );
+  dir.normalize();
+  const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
+  let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
+  const hex = 0xFFFFFF;
+  v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
+
+  const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
+  arrowHelper.line.material.linewidth = length*0.2;
+  boundingbox.add( arrowHelper );
+  
+  switch(obj.Type){
+      case 'disk':
+      case 'gaussian':
+      case 'zgaussian':
+         boundingbox.add( createdisk(obj.Param1[0], obj.Pos, obj.Dir) );
+	 break;
+      case 'planar':
+      case 'fourier':
+      case 'pattern':
+         v2=new THREE.Vector3( obj.Param2[0], obj.Param2[1], obj.Param2[2] );
+         boundingbox.add( createpoly([ orig, orig.clone().add(v1), orig.clone().add(v1).add(v2), 
+	      orig.clone().add(v1).add(v2), orig.clone().add(v2), orig ], obj.Dir ) );
+	 break;
+      case 'fourierx':
+      case 'fourierx2d':
+         v2.cross(dir,v1).normalize().multiplyScalar(obj.Param1[3]);
+         boundingbox.add( createpoly([ orig, orig.clone().add(v1), orig.clone().add(v1).add(v2), 
+	      orig.clone().add(v1).add(v2), orig.clone().add(v2), orig ], obj.Dir ) );
+	 break;
+      case 'line':
+      case 'slit':
+         boundingbox.add( new THREE.ArrowHelper( v1.clone().normalize(), orig, v1.length(), hex, 0, 0 ) );
+	 break;
+  }
+}
+
+function drawdet(obj,index){
+  const geometry = new THREE.SphereGeometry(obj.R, 32,32);
+  geometry.applyMatrix4( new THREE.Matrix4().makeTranslation(obj.Pos[0],obj.Pos[1],obj.Pos[2]) );
+  const material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true, transparent: false } );
+  const det = new THREE.Mesh( geometry, material );
+  boundingbox.add( det );
+}
+
+function isWebGL2Available (){
+  try {
+    var canvas = document.createElement( 'canvas' );
+    return !! ( window.WebGL2RenderingContext && canvas.getContext( 'webgl2' ) );
+  } catch ( e ) {
+    return false;
+  }
+}
+
+function render(){
+  renderer.render( scene, camera );
+}
+		
+function drawvolume(volume){
+  const dtype={
+    uint8:THREE.UnsignedByteType,
+    uint16:THREE.UnsignedShortType,
+    uint32:THREE.UnsignedIntType,
+    int8:THREE.ByteType,
+    int16:THREE.ShortType,
+    int32:THREE.IntType,
+    float32:THREE.FloatType
+  };
+  const dim=volume.shape;
+  const buf=nj.array(volume.transpose().flatten().selection.data, 'float32');
+
+  const texture = new THREE.DataTexture3D( buf.selection.data, dim[0], dim[1], dim[2]);
+  texture.format = THREE.RedFormat;
+  texture.type = THREE.FloatType;
+  texture.minFilter = texture.magFilter = THREE.LinearFilter;
+  texture.unpackAlignment = 1;
+
+  // Colormap textures
+  const cmtextures = {
+	  viridis: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/cm_viridis.png', render ),
+	  gray: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/cm_gray.png', render )
+  };
+
+  // Material
+  const shader = VolumeRenderShader1;
+
+  const uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+  uniforms[ "u_data" ].value = texture;
+  uniforms[ "u_size" ].value.set( dim[0], dim[1], dim[2] );
+  uniforms[ "u_clim" ].value.set( volume.min(), volume.max() );
+  uniforms[ "u_renderstyle" ].value = 0;
+  uniforms[ "u_renderthreshold" ].value =  0.2;
+  uniforms[ "u_cmdata" ].value = cmtextures[ "viridis" ];
+
+  lastclim=uniforms[ "u_clim" ].value;
+  $("#clim-low").prop( "disabled", false );
+  
+  $("#clim-low").prop('min',lastclim.x);
+  $("#clim-low").prop('max',lastclim.y);
+  $("#clim-low").val(lastclim.x);
+
+  $("#clim-hi").prop( "disabled", false );
+  $("#clim-hi").prop('min',lastclim.x);
+  $("#clim-hi").prop('max',lastclim.y);
+  $("#clim-hi").val(lastclim.y);
+
+  const material = new THREE.ShaderMaterial( {
+	  uniforms: uniforms,
+	  vertexShader: shader.vertexShader,
+	  fragmentShader: shader.fragmentShader,
+	  side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+  } );
+
+  // THREE.Mesh
+  const geometry = new THREE.BoxGeometry(  dim[0], dim[1], dim[2] );
+  geometry.translate(dim[0]*0.5, dim[1]*0.5, dim[2]*0.5 );
+
+  const mesh = new THREE.Mesh( geometry, material );
+  mesh.frustumCulled = false;
+
+  return mesh;
+}
+
+function drawpreview(cfg){
+  scene.remove.apply(scene, scene.children);
+  if(cfg.hasOwnProperty('Shapes')){
+    if(cfg.Shapes.constructor===Object && cfg.Shapes._ArraySize_ != null){
+     let box={Grid: {Size: cfg.Shapes._ArraySize_}};
+     drawshape(box,0);
+     if(isWebGL2Available()){
+       let jd=new jdata(cfg.Shapes,{});
+       let vol=jd.decode().data;
+       lastvolume=drawvolume(vol);
+       boundingbox.add( lastvolume );
+     }
+    }else{
+     if(cfg.Domain !=null && cfg.Domain.Dim!=null){
+       let box={Grid: {Size: cfg.Domain.Dim}};
+       drawshape(box,0);
+     }
+     if(cfg.Shapes != null && cfg.Shapes.length>0)
+       cfg.Shapes.forEach(drawshape);
+   }
+   if(cfg.Optode != null){
+    if(cfg.Optode.Source !=null)
+      drawsrc(cfg.Optode.Source);
+    if(cfg.Optode.Detector !=null && cfg.Optode.Detector.length>0)
+      cfg.Optode.Detector.forEach(drawdet);
+   }
+  }else{
+   if(cfg.hasOwnProperty('NIFTIData')){
+     let box={Grid: {Size: cfg.NIFTIHeader.Dim}};
+     drawshape(box,0);
+     if(isWebGL2Available()){
+       let jd=new jdata(cfg.NIFTIData,{});
+       let vol=jd.decode().data;
+       lastvolume=drawvolume(nj.log(nj.clip(vol, 1e-16, 1/0)) );
+       boundingbox.add( lastvolume );
+     }
+   }
+  }
+  update();
+}
+
+function mulberry32(a) {
+      var t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0);
+}
+
+function updatejsonlink(linkid, text, name) {
+  const a = document.getElementById(linkid);
+  const type = name.split(".").pop();
+  a.href = URL.createObjectURL( new Blob([text], { type:`text/${type === "txt" ? "plain" : type}` }) );
+  a.download = name;
+}
+
+function update() {
+    reqid=requestAnimationFrame(update);
+    renderer.render(scene, camera);
+    controls.update();
+}
+function loadpubsimu(data){
+  $("#output-textarea").val(data.json);
+  $("#setvalue").click();
+}
+function loadsimulib(key,time){
+  if (confirm('Are you sure you want to replace the current simulation settings by the selected one?')) {
+    $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'id':time, 'hash': key, 'callback': 'loadpubsimu' },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'loadpubsimu',
+      success: function( data ){
+      },
+      error: function(xhr,status,error) {
+         alert("loadsimulib error: "+status);
+      }
+    });
+  }
+}
+function showsimudata(obj,time,lic){
+  $("#rpreview").html('<img src="'+$("#"+obj.id).prop('src')+'">');
+  $("#rpreview").append("<button class='btn btn-primary btn-block' id='btloadsimu' onclick='loadsimulib(\""+obj.id+"\","+time+")'>Load</button>");
+  $("#rtitle").html('<dt>Title</dt><dd>'+$("#"+obj.id).prop('title')+"</dd>");
+  $("#rcomment").html('<dt>Comment</dt><dd>'+$("#"+obj.id).prop('alt')+"</dd>");
+  $("#rlicense").html('<dt>License</dt><dd>'+lic+"</dd>");
+}
+function loadpubdata(data){
+  for (let i = 0; i < data.length; i++) {
+     $("#mcxlibrary").append('<img class="simupreview" onclick="showsimudata(this,'+data[i].time+',\''+data[i].license+'\')" id="'+data[i].hash+
+       '" src="'+data[i].thumbnail+'" title=\''+data[i].title.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\' alt=\''+data[i].comment.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\'/>');
+  }
+  if(data.length==5){
+    let offset=$("#mcxlibrary img").length;
+    $("#mcxlibrary").append("<button class='btn btn-primary btn-block' id='btloadnext' onclick='searchpub("+offset+");this.remove()'>Load Next 5</button>");
+  }
+}
+function clearpub(){
+  $("#mcxlibrary").html('');
+  $("#rpreview").html('');
+  $("#rtitle").html('');
+  $("#rcomment").html('');
+  $("#rlicense").html('');
+}
+function searchpub(offset){
+  let keyword=$("#keyword").val();
+  $.ajax({
+      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      data: { 'keyword': keyword, 'limit': 5, 'offset': offset, 'callback': 'loadpubdata' },
+      type: 'POST',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'loadpubdata',
+      success: function( data ){
+      },
+      error: function(xhr,status,error) {
+         alert("searchpub error: "+status);
+      }
+  });
+}
+var canvas = $("#canvas");
+var w = canvas.width();
+var h = canvas.height();
+var bbxsize=[0,0,0];
+
+const scene = new THREE.Scene();
+
+var boundingbox=scene;
+var randseed=1648335518;
+var lastlog='', lastoutput='';
+
+$('#run').unbind('click');
+$("#run").click(runsimulation);
+$("#sharesubmit").click(sharesimulation);
+window.onerror = function(message) { alert(message); return true; }; 
+
+// default color for each label, 0,1,2,...
+var materialcolor=[];
+for(let i=0;i<256;i++){
+    randseed=mulberry32(randseed);
+    materialcolor.push(randseed);
+}
+
+//const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
+const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 1000);
+
+camera.up = new THREE.Vector3(0,0,1);
+camera.lookAt(new THREE.Vector3(0,0,0));
+camera.updateProjectionMatrix();
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setSize( w,h );
+//renderer.state.enable("logarithmicDepthBuffer");
+canvas.append( renderer.domElement );
+
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.minZoom = 0.5;
+controls.maxZoom = 40;
+controls.enableKeys=false;
+
+controls.update();
+var lastvolume=null;
+var lastclim=0;
+var reqid=undefined;
+
+$("#clip-low").prop( "disabled", true );
+$("#clip-hi").prop( "disabled", true );
+
+$("#camera-near").on('change', function() {
+    camera.near=parseFloat($(this).val());
+    renderer.render(scene, camera);
+    controls.update();
+});
+$("#camera-far").on('change', function() {
+    camera.far=parseFloat($(this).val());
+    renderer.render(scene, camera);
+    controls.update();
+});
+$("#clim-low").on('change', function() {
+    if(lastvolume !== null){
+        let val=lastvolume.material.uniforms[ "u_clim" ].value;
+        lastvolume.material.uniforms[ "u_clim" ].value.set( parseFloat($(this).val()), val.y );
+        renderer.render(scene, camera);
+        update();
+    }
+});
+$("#clim-hi").on('change', function() {
+    if(lastvolume !== null){
+        let val=lastvolume.material.uniforms[ "u_clim" ].value;
+        lastvolume.material.uniforms[ "u_clim" ].value.set( val.x, parseFloat($(this).val()) );
+        renderer.render(scene, camera);
+        update();
+    }
+});
+
+  /* -------------------------------------------------------- main function */
 
   parseUrl()
 
