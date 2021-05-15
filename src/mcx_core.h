@@ -171,6 +171,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int is2d;                 /**< is the domain a 2D slice? */
   int replaydet;                     /**< select which detector to replay, 0 for all, -1 save all separately */
   unsigned int srcnum;               /**< total number of source patterns */
+  float omega;                       /**< modulation frequency in Hz for RF/FD simulations */
   unsigned char bc[12];              /**< boundary conditions */
 }MCXParam;
 

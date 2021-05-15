@@ -127,7 +127,7 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
  * p: scattering counts for computing Jacobians for mus
  */
 
-const char outputtype[]={'x','f','e','j','p','m','\0'};
+const char outputtype[]={'x','f','e','j','p','m','r','\0'};
 
 /**
  * Debug flags
@@ -266,6 +266,7 @@ void mcx_initcfg(Config *cfg){
      cfg->energyabs=0.f;
      cfg->energyesc=0.f;
      cfg->zipid=zmZlib;
+     cfg->omega=0.f;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/   /** This format is only supported by C99 */
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);
@@ -707,17 +708,26 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
          sprintf(name,"%s",cfg->session);
 
      if(cfg->outputformat==ofNifti || cfg->outputformat==ofAnalyze){
-         mcx_savenii(dat, len, name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
+         mcx_savenii(dat, len*(1+(cfg->outputtype==otRF)), name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
          return;
      }else if(cfg->outputformat==ofJNifti || cfg->outputformat==ofBJNifti){
 	 int d1=(cfg->maxgate==1);
-	 if(cfg->seed==SEED_FROM_FILE && cfg->replaydet==-1 && (cfg->detnum>1 || cfg->srcnum>1)){
-             uint dims[5]={cfg->detnum*cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
-             float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
-	     if(cfg->outputformat==ofJNifti)
-                 mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
-	     else
-	         mcx_savebnii(dat, 5, dims, voxelsize, name, 1, cfg);
+	 if(cfg->seed==SEED_FROM_FILE && ((cfg->replaydet==-1 && cfg->detnum>1) || cfg->srcnum>1 || cfg->outputtype==otRF)){
+	     if(cfg->outputtype==otRF){
+                 uint dims[6]={2,cfg->detnum*cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
+                 float voxelsize[]={1,1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
+	         if(cfg->outputformat==ofJNifti)
+                     mcx_savejnii(dat, 6, dims, voxelsize, name, 1, cfg);
+	         else
+	             mcx_savebnii(dat, 6, dims, voxelsize, name, 1, cfg);
+	     }else{
+                 uint dims[5]={cfg->detnum*cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
+                 float voxelsize[]={1,cfg->tstep,cfg->steps.z,cfg->steps.y,cfg->steps.x};
+	         if(cfg->outputformat==ofJNifti)
+                     mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
+	         else
+	             mcx_savebnii(dat, 5, dims, voxelsize, name, 1, cfg);
+	     }
 	 }else{
              uint dims[]={cfg->dim.x,cfg->dim.y,cfg->dim.z,cfg->maxgate};
              float voxelsize[]={cfg->steps.x,cfg->steps.y,cfg->steps.z,cfg->tstep};
@@ -746,7 +756,7 @@ void mcx_savedata(float *dat, size_t len, Config *cfg){
 	fwrite(&glformat,sizeof(unsigned int),1,fp);
 	fwrite(&(cfg->dim.x),sizeof(int),3,fp);
      }
-     fwrite(dat,sizeof(float),len,fp);
+     fwrite(dat,sizeof(float),len*(1+(cfg->outputtype==otRF)),fp);
      fclose(fp);
 }
 
@@ -1756,6 +1766,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 		      }
 	      }
            }
+	   cfg->omega=FIND_JSON_KEY("Omega","Optode.Source.Omega",src,cfg->omega,valuedouble);
 	   cfg->srcnum=FIND_JSON_KEY("SrcNum","Optode.Source.SrcNum",src,cfg->srcnum,valueint);
            subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
            if(subitem){
@@ -2239,7 +2250,7 @@ void mcx_loadseedfile(Config *cfg){
     cfg->seed=SEED_FROM_FILE;
     cfg->nphoton=his.savedphoton;
 
-    if(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS ){ //cfg->replaydet>0
+    if(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS  || cfg->outputtype==otRF){ //cfg->replaydet>0
        int i,j, hasdetid=0, offset;
        float plen, *ppath;
        hasdetid=SAVE_DETID(his.savedetflag);
@@ -3089,7 +3100,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
 		MCX_FPRINTF(cfg->flog,"unable to save to log file, will print from stdout\n");
           }
      }
-     if((cfg->outputtype==otJacobian ||cfg->outputtype==otWP || cfg->outputtype==otDCS) && cfg->seed!=SEED_FROM_FILE)
+     if((cfg->outputtype==otJacobian ||cfg->outputtype==otWP || cfg->outputtype==otDCS  || cfg->outputtype==otRF) && cfg->seed!=SEED_FROM_FILE)
          MCX_ERROR(-1,"Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.");
 
      if(cfg->isgpuinfo!=2){ /*print gpu info only*/
@@ -3368,10 +3379,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy density\n\
+ -O [X|XFEJPMR] (--outputtype) X - output flux, F - fluence, E - energy density\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
 			       event counts at each voxel (replay mode only)\n\
-                               M - momentum transfer; \n\
+                               M - momentum transfer; R - RF/FD Jacobian\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
  -w [DP|DSPMXVW](--savedetflag)a string controlling detected photon data fields\n\
     /case insensitive/         1 D  output detector ID (1)\n\

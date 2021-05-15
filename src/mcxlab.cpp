@@ -97,7 +97,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   mxArray    *tmp;
   int        ifield, jstruct;
   int        ncfg, nfields;
-  dimtype    fielddim[5];
+  dimtype    fielddim[6];
   int        activedev=0;
   int        errorflag=0;
   int        threadid=0;
@@ -228,6 +228,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             int fieldlen=cfg.dim.x*cfg.dim.y*cfg.dim.z*(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5)*cfg.srcnum;
 	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
 	        fieldlen*=cfg.detnum;
+	    if(cfg.replay.seed!=NULL && cfg.outputtype==otRF)
+	        fieldlen*=2;
 	    cfg.exportfield = (float*)calloc(fieldlen,sizeof(float));
 	}
 	if(nlhs>=2){
@@ -271,6 +273,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             mexErrMsgTxt("MCXLAB Terminated due to an exception!");
 
         fielddim[4]=1;
+	fielddim[5]=1;
 
         /** if 5th output presents, output the photon trajectory data */
         if(nlhs>=5){
@@ -321,7 +324,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    fielddim[2]=cfg.dim.z; fielddim[3]=(int)((cfg.tend-cfg.tstart)/cfg.tstep+0.5);
 	    if(cfg.replay.seed!=NULL && cfg.replaydet==-1)
 	        fielddim[4]=cfg.detnum;
-	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*fielddim[4];
+	    if(cfg.replay.seed!=NULL && cfg.outputtype==otRF)
+	        fielddim[5]=2;
+	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*fielddim[4]*fielddim[5];
             if(cfg.issaveref){        /** If error is detected, gracefully terminate the mex and return back to MATLAB */
 
 	        float *dref=(float *)malloc(fieldlen*sizeof(float));
@@ -333,11 +338,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		    }else
 		        dref[i]=0.f;
 		}
-	        mxSetFieldByNumber(plhs[0],jstruct,2, mxCreateNumericArray(4+(fielddim[4]>1),fielddim,mxSINGLE_CLASS,mxREAL));
+	        mxSetFieldByNumber(plhs[0],jstruct,2, mxCreateNumericArray(((fielddim[5]>1) ? 6 : (4+(fielddim[4]>1))),fielddim,mxSINGLE_CLASS,mxREAL));
                 memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,2)),dref,fieldlen*sizeof(float));
 		free(dref);
 	    }
-	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(4+(fielddim[4]>1),fielddim,mxSINGLE_CLASS,mxREAL));
+	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(((fielddim[5]>1) ? 6 : (4+(fielddim[4]>1))),fielddim,mxSINGLE_CLASS,mxREAL));
 	    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
                          fieldlen*sizeof(float));
             free(cfg.exportfield);
@@ -453,6 +458,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,maxjumpdebug)
     GET_ONE_FIELD(cfg,gscatter)
     GET_ONE_FIELD(cfg,srcnum)
+    GET_ONE_FIELD(cfg,omega)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC34_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
@@ -671,7 +677,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.srctype='%s';\n",strtypestr);
     }else if(strcmp(name,"outputtype")==0){
         int len=mxGetNumberOfElements(item);
-        const char *outputtype[]={"flux","fluence","energy","jacobian","nscat","wl","wp","wm",""};
+        const char *outputtype[]={"flux","fluence","energy","jacobian","nscat","wl","wp","wm","rf",""};
         char outputstr[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)
@@ -980,7 +986,7 @@ void mcx_validate_config(Config *cfg){
          mexErrMsgTxt("respin number can not be 0, check your -r/--repeat input or cfg.respin value");
 
      if(cfg->seed<0 && cfg->seed!=SEED_FROM_FILE) cfg->seed=time(NULL);
-     if((cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS) && cfg->seed!=SEED_FROM_FILE)
+     if((cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS || cfg->outputtype==otRF) && cfg->seed!=SEED_FROM_FILE)
          mexErrMsgTxt("Jacobian output is only valid in the reply mode. Please define cfg.seed");     
      for(i=0;i<cfg->detnum;i++){
         if(!cfg->issrcfrom0){

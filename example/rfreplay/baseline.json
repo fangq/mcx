@@ -1,0 +1,56 @@
+{
+	"Session":{
+		"ID":"baseline",
+		"DoAutoThread":1,
+		"Photons":100000000
+	},
+	"Forward":{
+		"T0":0,
+		"T1":5e-09,
+		"Dt":5e-10
+	},
+	"Optode":{
+		"Source":{
+			"Pos":[30,30,0],
+			"Dir":[0,0,1]
+		},
+		"Detector":[
+			{
+				"Pos":[15,30,0],
+				"R":2
+			}
+		]
+	},
+	"Domain":{
+		"OriginType":1,
+		"Media":[
+			{
+				"mua":0,
+				"mus":0,
+				"g":1,
+				"n":1
+			},
+			{
+				"mua":0.005,
+				"mus":1,
+				"g":0,
+				"n":1.37
+			}
+		],
+		"MediaFormat":"byte",
+		"Dim":[60,60,60],
+		"VolumeFile":""
+	},
+	"Shapes":{
+		"_ArrayType_":"uint8",
+		"_ArraySize_":[60,60,60],
+		"_ArrayZipType_":"zlib",
+		"_ArrayZipSize_":[1,216000],
+		"_ArrayZipData_":"eJztwTENAAAAw6DUv+l52A0UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACP
+AXeFS+4=
+"
+	}
+}

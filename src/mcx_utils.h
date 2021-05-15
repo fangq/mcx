@@ -58,7 +58,7 @@
 #define MIN(a,b)           ((a)<(b)?(a):(b))             /**< macro to get the min values of two numbers */
 #define MAX(a,b)           ((a)>(b)?(a):(b))             /**< macro to get the max values of two numbers */
 
-enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS};   /**< types of output */
+enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3, ofJNifti, ofBJNifti};           /**< output data format */
 enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCyclic};            /**< boundary conditions */
@@ -197,6 +197,7 @@ typedef struct MCXConfig{
 	char faststep;               /**<1 use tMCimg-like approximated photon stepping (obsolete) */
         float minenergy;             /**<minimum energy to propagate photon*/
 	float unitinmm;              /**<defines the length unit in mm for grid*/
+        float omega;                 /**<modulation frequency for FD/RF simulations*/
         FILE *flog;                  /**<stream handle to print log information*/
         History his;                 /**<header info of the history file*/
 	float *exportfield;          /**<memory buffer when returning the flux to external programs such as matlab*/
