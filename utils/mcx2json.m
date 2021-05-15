@@ -105,10 +105,15 @@ if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
     if(length(Domain.Dim)==4)
         Domain.Dim(1)=[];
     end
-    Domain.VolumeFile=[filestub '_vol.bin'];
-    fid=fopen(Domain.VolumeFile,'wb');
-    fwrite(fid,cfg.vol,class(cfg.vol));
-    fclose(fid);
+    if(exist('Shapes','var'))
+        Domain.VolumeFile=[filestub '_vol.bin'];
+        fid=fopen(Domain.VolumeFile,'wb');
+        fwrite(fid,cfg.vol,class(cfg.vol));
+        fclose(fid);
+    else
+        Domain.VolumeFile='';
+        Shapes=cfg.vol;
+    end
 end
 
 %% define the simulation session flags
@@ -146,7 +151,7 @@ end
 if(strcmp(fext,'ubj'))
     saveubjson('',mcxsession,[filestub,'.ubj']);
 else
-    savejson('',mcxsession,[filestub,'.json']);
+    savejson('',mcxsession,'filename',[filestub,'.json'],'compression','zlib');
 end
 
 
