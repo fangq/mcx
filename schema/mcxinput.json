@@ -115,7 +115,9 @@
                 "f",
                 "e",
                 "j",
-		"p"
+		"p",
+		"m",
+		"r"
               ]
         },
         "RNGSeed": {
@@ -258,6 +260,12 @@
               },
               "minItems": 4,
               "maxItems": 4
+            },
+            "Frequency": {
+              "title": "Modulation Frequency in Hz",
+              "type": "number",
+              "default": 0,
+              "minimum": 0
             }
           }
         },

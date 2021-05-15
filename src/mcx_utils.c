@@ -125,6 +125,8 @@ const char *fullopt[]={"--help","--interactive","--input","--photon",
  * e: energy deposition
  * j: jacobian for mua
  * p: scattering counts for computing Jacobians for mus
+ * m: momentum transfer in replay
+ * r: frequency domain/RF mua Jacobian by replay
  */
 
 const char outputtype[]={'x','f','e','j','p','m','r','\0'};
@@ -1766,7 +1768,8 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 		      }
 	      }
            }
-	   cfg->omega=FIND_JSON_KEY("Omega","Optode.Source.Omega",src,cfg->omega,valuedouble);
+	   cfg->omega=FIND_JSON_KEY("Frequency","Optode.Source.Frequency",src,0.f,valuedouble);
+	   cfg->omega*=TWO_PI;
 	   cfg->srcnum=FIND_JSON_KEY("SrcNum","Optode.Source.SrcNum",src,cfg->srcnum,valueint);
            subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
            if(subitem){

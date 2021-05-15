@@ -1655,7 +1655,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		        if(gcfg->outputtype==otJacobian)
 		            weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*f.pathlen;
 			else
-			    weight=p.w*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum];
+			    weight=-p.w*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum];
 			tshift=(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone);
 			tshift=(int)(floorf((photontof[tshift]-gcfg->twin0)*gcfg->Rtstep)) + 
 			   ( (gcfg->replaydet==-1)? ((photondetid[tshift]-1)*gcfg->maxgate) : 0);
@@ -1685,7 +1685,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			else
 			    atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
 		      }else if(gcfg->outputtype==otRF && gcfg->omega>0.f){
-			oldval=p.w*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum+1];
+			oldval=-p.w*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum+1];
 		        atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
 		      }
     #endif

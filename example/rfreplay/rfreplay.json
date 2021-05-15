@@ -15,7 +15,7 @@
 		"Source":{
 			"Pos":[30,30,0],
 			"Dir":[0,0,1],
-                        "Omega": 1e8
+                        "Frequency": 1e8
 		},
 		"Detector":[
 			{

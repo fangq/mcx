@@ -182,6 +182,7 @@ function varargout=mcxlab(varargin)
 %                      simultaneously simulated; only works for 'pattern'
 %                      source, see cfg.srctype='pattern' for details
 %                      Example <demo_photon_sharing.m>
+%      cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
 %                      -1 replay all detectors and save in separate volumes (output has 5 dimensions)
