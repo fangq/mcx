@@ -14,11 +14,19 @@ my $q = new CGI;
 my $req;
 my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output');
 
+# Default paths for storage of the job/simulation database and simulation work folders
+# both folders must be symbolic links pointing to network-shared folders via NSF that
+# are accessible from all Docker Swarm nodes. Autofs is strongly recommended.
+# both folders shall NOT be located inside the web server folder, typiclaly located at "/var/www/html"
+
+my $dbpath="/var/lib/mcxcloud/db";
+my $workspace="/var/lib/mcxcloud/workspace";
+
 if($q->param('json') =~/"RNGSeed"/){
-	$req=decode_json($q->param( 'json' ));
+  $req=decode_json($q->param( 'json' ));
 }
 
-$DBName="dbi:SQLite:dbname=db/mcxcloud.db";
+$DBName="dbi:SQLite:dbname=$dbpath/mcxcloud.db";
 $DBUser="";
 $DBPass="";
 %DBErr=(RaiseError=>0,PrintError=>1);
@@ -107,19 +115,19 @@ if(&V("hash") ne '' && &V("id") ne ''){
     $status=7;
     $jobid=&V("jobid");
     $jobhash="_".&V("hash");
-    if($jobid ne '' && not (-d "workspace/$jobid") && $jobhash ne '' && (-d "workspace/$jobhash") ){
+    if($jobid ne '' && not (-d "$workspace/$jobid") && $jobhash ne '' && (-d "$workspace/$jobhash") ){
         $jobid=$jobhash;
     }
-    if(-e "workspace/$jobid/output.jnii" && not -z "workspace/$jobid/output.jnii"){
+    if(-e "$workspace/$jobid/output.jnii" && not -z "$workspace/$jobid/output.jnii"){
         $status=9;
-        if(-e "workspace/$jobid/done"){
-          open FF, "<workspace/$jobid/output.jnii" || die("can not open log file");
+        if(-e "$workspace/$jobid/done"){
+          open FF, "<$workspace/$jobid/output.jnii" || die("can not open log file");
           chomp(my @lines = <FF>);
           close(FF);
           my $outstr=join(/\n/,@lines);
           my $logstr="";
-          if(-e "workspace/$jobid/output.log" && not -z "workspace/$jobid/output.log"){
-              open FF, "<workspace/$jobid/output.log" || die("can not open log file");
+          if(-e "$workspace/$jobid/output.log" && not -z "$workspace/$jobid/output.log"){
+              open FF, "<$workspace/$jobid/output.log" || die("can not open log file");
               chomp(my @logs = <FF>);
               close(FF);
               $logstr=join("\n",@logs);
@@ -132,10 +140,10 @@ if(&V("hash") ne '' && &V("id") ne ''){
           my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid);
           $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
         }
-    }elsif(-e "workspace/$jobid/input.json" && not -z "workspace/$jobid/input.json"){
+    }elsif(-e "$workspace/$jobid/input.json" && not -z "$workspace/$jobid/input.json"){
         $status=2;
         $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'"})'."\n";
-    }elsif($jobid ne '' && -d "workspace/$jobid"){
+    }elsif($jobid ne '' && -d "$workspace/$jobid"){
         $status=1;
         $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'"})'."\n";
     }else{
@@ -155,7 +163,6 @@ print $html;
 sub V{
     my ($id)=@_;
     my $val=$q->param($id);
-    $val=$req->{$id} if($val eq '');
     $val=~ s/\+/ /g;
     return uri_unescape($val);
 }
