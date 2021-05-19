@@ -14,9 +14,36 @@
     <script src="https://openjdata.org/js/jdata.js"></script>
     <link rel='stylesheet' id='theme-link'>
     <link rel='stylesheet' id='iconlib-link'>
+    <style id=page_style>
+      @page { size: 9in 7.5in ; margin : 0px }
+    </style>
 </head>
 <body>
 <style type="text/css">
+/* latin */
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Ubuntu Medium'), local('Ubuntu-Medium'), url('http://mcx.space/fonts/ubuntu-medium.woff2') format('woff2'),  url('http://mcx.space/fonts/ubuntu-medium.woff') format('woff');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 300;
+  src: url('http://mcx.space/fonts/ubuntu-light.woff') format('woff');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: bold;
+  font-weight: 700;
+  src: url('http://mcx.space/fonts/ubuntu-bold.woff') format('woff');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
 .sidenav {
   height: 100%;
   width: 0;
@@ -118,6 +145,8 @@ background-attachment: fixed;
 background-size: cover;
 background-position: left bottom;
 font-family: Ubuntu;
+zoom: 0.8;
+background-repeat: no-repeat;
 }
 footer {
   position: fixed;
@@ -169,6 +198,17 @@ img.simupreview{
 }
 #mcx1-browse input{
   height: 1.8rem;
+}
+#canvas{
+  float:left;
+}
+#renderpanel{
+  float:left;
+  width: 20%;
+}
+#renderpanel label,input,button{
+  width: 100%;
+  margin-top:5px;
 }
 </style>
 
@@ -242,11 +282,15 @@ img.simupreview{
 
     <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
             <h2>Preview</h2>
-	    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
-	    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
-	    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
-	    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>
 	    <div id="canvas"></div>
+	    <div id="renderpanel">
+		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
+		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
+		    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
+		    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>	 
+		    <button class='btn btn-primary btn-block' id='drawlastinput'>Draw Last Input</button>
+		    <button class='btn btn-primary btn-block' id='drawlastoutput'>Draw Last Output</button>
+	    </div>
     </section>
 
     <section id="mcx1-run" class='col-8 col-md-8 w-8/8'>
@@ -2414,6 +2458,7 @@ function loadpubdata(data){
   if(data.length==5){
     let offset=$("#mcxlibrary img").length;
     $("#mcxlibrary").append("<button class='btn btn-primary btn-block' id='btloadnext' onclick='searchpub("+offset+");this.remove()'>Load Next 5</button>");
+    $("#btsearch").prop("disabled",true);
   }
 }
 function clearpub(){
@@ -2422,6 +2467,7 @@ function clearpub(){
   $("#rtitle").html('');
   $("#rcomment").html('');
   $("#rlicense").html('');
+  $("#btsearch").prop("disabled",false);
 }
 function searchpub(offset){
   let keyword=$("#keyword").val();
@@ -2450,6 +2496,18 @@ const scene = new THREE.Scene();
 var boundingbox=scene;
 var randseed=1648335518;
 var lastlog='', lastoutput='';
+
+$('#drawlastinput').click(function () {
+  if(lastjson !== ""){
+      drawpreview(JSON.parse(lastjson));
+  }
+});
+
+$('#drawlastoutput').click(function () {
+  if(lastoutput !== ""){
+      drawpreview(JSON.parse(lastoutput));
+  }
+});
 
 $('#run').unbind('click');
 $("#run").click(runsimulation);

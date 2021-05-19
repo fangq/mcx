@@ -7,6 +7,8 @@ use URI::Escape;
 use JSON::PP;
 use Digest::MD5 qw(md5_hex);
 
+die if(not ($ENV{"HTTP_REFERER"} =~ /^https*:\/\/mcx\.space/));
+
 my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$md5key,$callback,$jobhash);
 my $q = new CGI;
 my $req;
