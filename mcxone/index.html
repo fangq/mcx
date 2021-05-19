@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
-    <title>MCX One - A Web-based MCX Input File Editor</title>
+    <title>MCX Cloud - A Web-based Monte Carlo Photon Simulator</title>
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
@@ -227,6 +227,11 @@ img.simupreview{
   color: yellow;
   font-weight: bold;
 }
+#credits .closebtn{
+  font-size: 50px;
+  color: yellow;
+  float: right;
+}
 </style>
 
 <section id="mcx1-title" class='current'>
@@ -344,7 +349,7 @@ img.simupreview{
     </section>
 
     <div id="mcx1-options" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="hideoptions()">&times;</a>
+        <a href="javascript:void(0)" class="closebtn" onclick="hideoptions()" title="Close">&times;</a>
         <div>
             <h2>Options</h2>
             <div>
@@ -426,17 +431,34 @@ img.simupreview{
 </section>
 
 <section id="credits">
-  <h2>This software is powered by</h2>
-  <h3>MCX Cloud Front-end</h3>
+  <a href="javascript:void(0)" class="closebtn" onclick="$('#credits').hide();" title="Close">&times;</a>
+  <h1>Acknowledgement</h1>
+  <p>We acknowledge that MCX Cloud is built upon the following open-source libraries and resources</p>
+  <h3>Front-end</h3>
   <ul>
   <li>Monte Carlo eXtreme (MCX) - http://mcx.space</li>
   <li>JSON Schema</li>
   <li>JSON Editor</li>
   <li>JQuery</li>
   <li>Three.js</li>
+  <li>FontAwesome</li>
+  <li>Pako</li>
+  <li>Numjs</li>
+  <li>lz-string</li>
+  <li>JSData</li>
+  <li>Spectre</li>
+  <li>Bootstrap</li>
+  <li>Background graphics: <a href="https://www.svgbackgrounds.com/#flat-mountains">SVG Backgrounds</a></li>
   </ul>
   
-  <h3>MCX Cloud Backend</h3>
+  <h3>Backend</h3>
+  <ul>
+  <li>Docker</li>
+  <li>Docker Swarm</li>
+  <li>Perl</li>
+  <li>DBI</li>
+  <li>Sqlite</li>
+  </ul>
 </section>
 
 <footer>
@@ -2630,9 +2652,6 @@ $("#clim-hi").on('change', function() {
 
 $('#opensourcelib').click(function () {
   $("#credits").show();
-});
-$('#credits').click(function () {
-  $("#credits").hide();
 });
   /* -------------------------------------------------------- main function */
 
