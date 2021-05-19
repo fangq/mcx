@@ -144,6 +144,7 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 background-attachment: fixed;
 background-size: cover;
 background-position: left bottom;
+/* background by SVGBackgrounds.com */
 font-family: Ubuntu;
 zoom: 0.8;
 background-repeat: no-repeat;
@@ -205,10 +206,26 @@ img.simupreview{
 #renderpanel{
   float:left;
   width: 20%;
+  margin-left: 10px;
 }
-#renderpanel label,input,button{
+#renderpanel>* {
   width: 100%;
   margin-top:5px;
+}
+#credits {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left:0;
+  background-color: rgba(48,55,66,0.9);;
+  padding: 20%;
+  color: white;
+  font-size: 130%;
+}
+#opensourcelib{
+  color: yellow;
+  font-weight: bold;
 }
 </style>
 
@@ -290,6 +307,7 @@ img.simupreview{
 		    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>	 
 		    <button class='btn btn-primary btn-block' id='drawlastinput'>Draw Last Input</button>
 		    <button class='btn btn-primary btn-block' id='drawlastoutput'>Draw Last Output</button>
+		    <button class='btn btn-primary btn-block' id='updatethumbnail'>Update Thumbnail</button>
 	    </div>
     </section>
 
@@ -407,10 +425,25 @@ img.simupreview{
         </div>
 </section>
 
+<section id="credits">
+  <h2>This software is powered by</h2>
+  <h3>MCX Cloud Front-end</h3>
+  <ul>
+  <li>Monte Carlo eXtreme (MCX) - http://mcx.space</li>
+  <li>JSON Schema</li>
+  <li>JSON Editor</li>
+  <li>JQuery</li>
+  <li>Three.js</li>
+  </ul>
+  
+  <h3>MCX Cloud Backend</h3>
+</section>
+
 <footer>
   Presented to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="https://openjdata.org/img/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
   <a href="http://mcx.space" title="MCX photon simulator"><img src="https://openjdata.org/img/mcx_logo_2020.png" title="MCX photon simulator"/>MCX</a>
-  <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="https://openjdata.org/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a>
+  <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="https://openjdata.org/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a> 
+  Powered by <span id="opensourcelib">open-source</span>
 </footer>
 
 <script>
@@ -1932,6 +1965,30 @@ function hideoptions() {
   $("#mcx1-options").css("width","0");
 }
 
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+function updatethumb(lastdatastr='', waittime=0){
+  if(lastdatastr !== ''){
+    renderer.setSize( canvas.width()/2, canvas.height()/2 );
+    let cfg = JSON.parse(lastdatastr);
+    drawpreview(cfg);
+  }
+  if(waittime>0){
+    sleep(waittime).then(() => {
+      let screenshot = renderer.domElement.toDataURL("image/png");
+      $("#thumbnail").attr('src', screenshot);
+      console.log(screenshot.length);
+      renderer.setSize( canvas.width(), canvas.height() );
+      renderer.render( scene, camera );
+    });
+  }else{
+    renderer.setSize( canvas.width(), canvas.height() );
+    renderer.render( scene, camera );
+  }
+}
+
 function showtab(event, name) {
   $("#navbar").removeClass('bigtab');
   $('#navbar a').removeClass('active');
@@ -1943,14 +2000,7 @@ function showtab(event, name) {
       reqid=requestAnimationFrame(update);
       if(lastjson != $("#output-textarea").val()){
           lastjson=$("#output-textarea").val();
-          let cfg = JSON.parse(lastjson);
-          renderer.setSize( canvas.width()/2, canvas.height()/2 );
-          drawpreview(cfg);
-          let screenshot = renderer.domElement.toDataURL("image/png");
-	  $("#thumbnail").attr('src', screenshot);
-	  console.log(screenshot.length);
-          renderer.setSize( canvas.width(), canvas.height() );
-          renderer.render( scene, camera );
+          updatethumb(lastjson, ($("#thumbnail").attr('src').length==0 ? 300 : 0));
       }
   }else if(reqid!==undefined){
       cancelAnimationFrame(reqid);
@@ -2149,7 +2199,7 @@ function resetscene(s){
       scene.add(light);
       camera.position.set(s[0]*2,s[1]*1.5,s[2]*1.5);
       camera.lookAt(new THREE.Vector3(s[0]*0.5,s[1]*0.5,s[2]*0.5));
-      camera.zoom=0.5*Math.max($("#canvas").width()/(Math.max(s[0],s[1])), $("#canvas").height()/s[2]);
+      camera.zoom=0.7*Math.min($("#canvas").width()/(Math.sqrt(s[0]*s[0]+s[1]*s[1])), $("#canvas").height()/s[2]);
       camera.updateProjectionMatrix();
       camera.updateMatrix();
       
@@ -2508,7 +2558,11 @@ $('#drawlastoutput').click(function () {
       drawpreview(JSON.parse(lastoutput));
   }
 });
+$('#updatethumbnail').click(function () {
+  updatethumb('',300);
+});
 
+$("#credits").hide();
 $('#run').unbind('click');
 $("#run").click(runsimulation);
 $("#sharesubmit").click(sharesimulation);
@@ -2528,7 +2582,7 @@ camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
 camera.updateProjectionMatrix();
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( w,h );
 //renderer.state.enable("logarithmicDepthBuffer");
@@ -2574,6 +2628,12 @@ $("#clim-hi").on('change', function() {
     }
 });
 
+$('#opensourcelib').click(function () {
+  $("#credits").show();
+});
+$('#credits').click(function () {
+  $("#credits").hide();
+});
   /* -------------------------------------------------------- main function */
 
   parseUrl()
