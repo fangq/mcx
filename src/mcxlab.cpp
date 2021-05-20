@@ -927,63 +927,6 @@ void mcx_validate_config(Config *cfg){
             cfg->crop1.x--;cfg->crop1.y--;cfg->crop1.z--;
         }
      }
-     if(cfg->medianum==0)
-        mexErrMsgTxt("you must define the 'prop' field in the input structure");
-     if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
-        mexErrMsgTxt("the 'vol' field in the input structure can not be empty");
-     if((cfg->srctype==MCX_SRC_PATTERN || cfg->srctype==MCX_SRC_PATTERN3D) && cfg->srcpattern==NULL)
-        mexErrMsgTxt("the 'srcpattern' field can not be empty when your 'srctype' is 'pattern'");
-     if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
-        cfg->unitinmm=cfg->steps.x;
-
-     if(cfg->replaydet>(int)cfg->detnum)
-        mexErrMsgTxt("replay detector ID exceeds the maximum detector number");
-     if(cfg->replaydet==-1 && cfg->detnum==1)
-        cfg->replaydet=1;
-
-     for(i=0;i<6;i++)
-        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
-	   mexErrMsgTxt("unknown boundary condition specifier");
-
-     for(i=6;i<12;i++){
-        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
-	   mexErrMsgTxt("unknown boundary detection flags");
-	if(cfg->bc[i])
-	   isbcdet=1;
-     }
-
-     if(cfg->medianum){
-        for(i=0;i<cfg->medianum;i++)
-             if(cfg->prop[i].mus==0.f){
-	         cfg->prop[i].mus=EPS;
-		 cfg->prop[i].g=1.f;
-	     }
-     }
-     if(cfg->vol && cfg->mediabyte <= 4){
-         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-	 unsigned int maxlabel=0;
-         for(uint i=0;i<fieldlen;i++)
-	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
-	 if(cfg->medianum<=maxlabel)
-	     mexErrMsgTxt("input media optical properties are less than the labels in the volume");
-     }
-     if(cfg->unitinmm!=1.f){
-        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
-        for(i=1;i<cfg->medianum;i++){
-		cfg->prop[i].mus*=cfg->unitinmm;
-		cfg->prop[i].mua*=cfg->unitinmm;
-        }
-     }
-     if(cfg->issavedet && cfg->detnum==0 && isbcdet==0)
-      	cfg->issavedet=0;
-     if(cfg->issavedet==0){
-         cfg->issaveexit=0;
-	 cfg->ismomentum=0;
-	 if(cfg->seed!=SEED_FROM_FILE)
-	    cfg->savedetflag=0;
-     }
-     if(cfg->respin==0)
-         mexErrMsgTxt("respin number can not be 0, check your -r/--repeat input or cfg.respin value");
 
      if(cfg->seed<0 && cfg->seed!=SEED_FROM_FILE) cfg->seed=time(NULL);
      if((cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS || cfg->outputtype==otRF) && cfg->seed!=SEED_FROM_FILE)
@@ -993,50 +936,9 @@ void mcx_validate_config(Config *cfg){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
      }
-     if(1){
-        cfg->isrowmajor=0; /*matlab is always col-major*/
-	if(cfg->isrowmajor){
-		/*from here on, the array is always col-major*/
-		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
-		cfg->isrowmajor=0;
-	}
-	if(cfg->issavedet)
-		mcx_maskdet(cfg);
-        if(cfg->seed==SEED_FROM_FILE){
-            if(cfg->respin>1 || cfg->respin<0){
-	       cfg->respin=1;
-	       fprintf(stderr,S_RED "WARNING: respin is disabled in the replay mode\n" S_RESET);
-	    }
-        }
-     }
-     if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
-         mexErrMsgTxt("the 'prop' field must contain at least 2 rows for the requested media format");
-     if((cfg->mediabyte==MEDIA_ASGN_BYTE || cfg->mediabyte==MEDIA_AS_SHORT) && cfg->medianum<3)
-         mexErrMsgTxt("the 'prop' field must contain at least 3 rows for the requested media format");
-     if(cfg->ismomentum)
-         cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
-     if(cfg->issaveexit){
-         cfg->savedetflag=SET_SAVE_PEXIT(cfg->savedetflag);
-	 cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
-     }
-     if(cfg->issavedet && cfg->savedetflag==0)
-         cfg->savedetflag=0x5;
 
-     if(cfg->mediabyte>=100){
-	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
-	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
-	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
-     }
-     if(cfg->issaveref>1){
-        if(cfg->issavedet==0)
-	    mexErrMsgTxt("you must have at least two outputs if issaveref is greater than 1");
+     mcx_preprocess(cfg);
 
-        if(cfg->dim.x*cfg->dim.y*cfg->dim.z > cfg->maxdetphoton){
-	    mexWarnMsgTxt("you must set cfg.maxdetphoton larger than prod(size(cfg.vol)) when cfg.issaveref is greater than 1, autocorrecting ...");
-	    cfg->maxdetphoton=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-	}
-	cfg->savedetflag=0x5;
-     }
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/
      cfg->his.detnum=cfg->detnum;
      cfg->his.srcnum=cfg->srcnum;

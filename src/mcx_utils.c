@@ -1163,6 +1163,126 @@ void mcx_writeconfig(char *fname, Config *cfg){
 }
 
 /**
+ * @brief Preprocess user input and prepare the cfg data structure
+ *
+ * This function preprocess the user input and prepare the domain for the simulation.
+ * It loads the media index array from file, add detector masks for easy detection, and
+ * check inconsistency between the user specified inputs.
+ *
+ * @param[in] cfg: simulation configuration
+ */
+
+void mcx_preprocess(Config *cfg){
+    int isbcdet=0;
+
+    for(int i=0;i<6;i++)
+        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
+	   MCX_ERROR(-4,"unknown boundary condition specifier");
+
+    for(int i=6;i<12;i++){
+        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
+	   MCX_ERROR(-4,"unknown boundary detection flags");
+	if(cfg->bc[i])
+	   isbcdet=1;
+    }
+
+    if(cfg->medianum==0)
+        MCX_ERROR(-4,"you must define the 'prop' field in the input structure");
+    if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
+        MCX_ERROR(-4,"the 'vol' field in the input structure can not be empty");
+    if((cfg->srctype==MCX_SRC_PATTERN || cfg->srctype==MCX_SRC_PATTERN3D) && cfg->srcpattern==NULL)
+        MCX_ERROR(-4,"the 'srcpattern' field can not be empty when your 'srctype' is 'pattern'");
+    if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
+        cfg->unitinmm=cfg->steps.x;
+
+    if(cfg->unitinmm!=1.f){
+        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
+        for(int i=1;i<cfg->medianum;i++){
+		cfg->prop[i].mus*=cfg->unitinmm;
+		cfg->prop[i].mua*=cfg->unitinmm;
+        }
+    }
+
+    if(cfg->isrowmajor){
+    	/*from here on, the array is always col-major*/
+    	mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
+    	cfg->isrowmajor=0;
+    }
+    if(cfg->issavedet && cfg->detnum==0 && isbcdet==0)
+        cfg->issavedet=0;
+    if(cfg->issavedet==0){
+        cfg->issaveexit=0;
+        cfg->ismomentum=0;
+        if(cfg->seed!=SEED_FROM_FILE)
+            cfg->savedetflag=0;
+    }
+    if(cfg->issavedet)
+    	mcx_maskdet(cfg);
+
+    if(cfg->respin==0)
+        MCX_ERROR(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value");
+
+    if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
+        if(cfg->respin>1 || cfg->respin<0){
+	   cfg->respin=1;
+	   fprintf(stderr,S_RED "WARNING: respin is disabled in the replay mode\n" S_RESET);
+	}
+    }
+    if(cfg->replaydet>(int)cfg->detnum)
+        MCX_ERROR(-4,"replay detector ID exceeds the maximum detector number");
+    if(cfg->replaydet==-1 && cfg->detnum==1)
+        cfg->replaydet=1;
+    if(cfg->medianum){
+        for(int i=0;i<cfg->medianum;i++){
+             if(cfg->prop[i].mus==0.f){
+	         cfg->prop[i].mus=EPS;
+		 cfg->prop[i].g=1.f;
+	     }
+	}
+    }
+    if(cfg->vol && cfg->mediabyte <= 4){
+         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+	 unsigned int maxlabel=0;
+         for(uint i=0;i<fieldlen;i++)
+	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
+	 if(cfg->medianum<=maxlabel)
+	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
+    }
+    for(int i=0;i<MAX_DEVICE;i++)
+        if(cfg->deviceid[i]=='0')
+           cfg->deviceid[i]='\0';
+
+    if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
+         MCX_ERROR(-4,"the 'prop' field must contain at least 2 rows for the requested media format");
+    if((cfg->mediabyte==MEDIA_ASGN_BYTE || cfg->mediabyte==MEDIA_AS_SHORT) && cfg->medianum<3)
+         MCX_ERROR(-4,"the 'prop' field must contain at least 3 rows for the requested media format");
+
+    if(cfg->ismomentum)
+         cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
+    if(cfg->issaveexit){
+         cfg->savedetflag=SET_SAVE_PEXIT(cfg->savedetflag);
+	 cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
+    }
+    if(cfg->issavedet && cfg->savedetflag==0)
+         cfg->savedetflag=0x5;
+    if(cfg->mediabyte>=100 && cfg->savedetflag){
+	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
+	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
+	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
+    }
+    if(cfg->issaveref>1){
+        if(cfg->issavedet==0)
+	    MCX_ERROR(-4,"you must have at least two outputs if issaveref is greater than 1");
+
+        if(cfg->dim.x*cfg->dim.y*cfg->dim.z > cfg->maxdetphoton){
+	    MCX_FPRINTF(cfg->flog,"you must set --maxdetphoton larger than the total size of the voxels when --issaveref is greater than 1; autocorrecting ...\n");
+	    cfg->maxdetphoton=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+        }
+	cfg->savedetflag=0x5;
+    }
+}
+
+/**
  * @brief Preprocess user input and prepare the volumetric domain for simulation
  *
  * This function preprocess the user input and prepare the domain for the simulation.
@@ -1174,23 +1294,11 @@ void mcx_writeconfig(char *fname, Config *cfg){
  */
 
 void mcx_prepdomain(char *filename, Config *cfg){
-     int isbcdet=0;
-
-     for(int i=0;i<6;i++)
-        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
-	   MCX_ERROR(-4,"unknown boundary condition specifier");
-
-     for(int i=6;i<12;i++){
-        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
-	   MCX_ERROR(-4,"unknown boundary detection flags");
-	if(cfg->bc[i])
-	   isbcdet=1;
-     }
-
      if(cfg->isdumpjson==2){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
      }
+
      if(filename[0] || cfg->vol){
         if(cfg->vol==NULL){
 	     mcx_loadvolume(filename,cfg,0);
@@ -1204,88 +1312,16 @@ void mcx_prepdomain(char *filename, Config *cfg){
 		  }
 	     }
 	}
-	if(cfg->isrowmajor){
-		/*from here on, the array is always col-major*/
-		mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
-		cfg->isrowmajor=0;
-	}
-        if(cfg->issavedet && cfg->detnum==0 && isbcdet)
-            cfg->issavedet=0;
-        if(cfg->issavedet==0){
-            cfg->issaveexit=0;
-	    cfg->ismomentum=0;
-	    if(cfg->seed!=SEED_FROM_FILE)
-	        cfg->savedetflag=0;
-        }
-	if(cfg->issavedet)
-		mcx_maskdet(cfg);
-	if(cfg->isdumpmask)
-	        mcx_dumpmask(cfg);
      }else{
      	MCX_ERROR(-4,"one must specify a binary volume file in order to run the simulation");
      }
-     if(cfg->respin==0)
-        MCX_ERROR(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value");
 
      if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
-        if(cfg->respin>1 || cfg->respin<0){
-	   cfg->respin=1;
-	   fprintf(stderr,S_RED "WARNING: respin is disabled in the replay mode\n" S_RESET);
-	}
         mcx_loadseedfile(cfg);
      }
-     if(cfg->replaydet>(int)cfg->detnum)
-        MCX_ERROR(-4,"replay detector ID exceeds the maximum detector number");
-     if(cfg->replaydet==-1 && cfg->detnum==1)
-        cfg->replaydet=1;
-     if(cfg->medianum){
-        for(int i=0;i<cfg->medianum;i++){
-             if(cfg->prop[i].mus==0.f){
-	         cfg->prop[i].mus=EPS;
-		 cfg->prop[i].g=1.f;
-	     }
-	}
-     }
-     if(cfg->vol && cfg->mediabyte <= 4){
-         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-	 unsigned int maxlabel=0;
-         for(uint i=0;i<fieldlen;i++)
-	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
-	 if(cfg->medianum<=maxlabel)
-	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
-     }
-     for(int i=0;i<MAX_DEVICE;i++)
-        if(cfg->deviceid[i]=='0')
-           cfg->deviceid[i]='\0';
 
-     if((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_MUA_FLOAT || cfg->mediabyte==MEDIA_AS_HALF) && cfg->medianum<2)
-         MCX_ERROR(-4,"the 'prop' field must contain at least 2 rows for the requested media format");
-     if((cfg->mediabyte==MEDIA_ASGN_BYTE || cfg->mediabyte==MEDIA_AS_SHORT) && cfg->medianum<3)
-         MCX_ERROR(-4,"the 'prop' field must contain at least 3 rows for the requested media format");
+     mcx_preprocess(cfg);
 
-     if(cfg->ismomentum)
-         cfg->savedetflag=SET_SAVE_MOM(cfg->savedetflag);
-     if(cfg->issaveexit){
-         cfg->savedetflag=SET_SAVE_PEXIT(cfg->savedetflag);
-	 cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
-     }
-     if(cfg->issavedet && cfg->savedetflag==0)
-         cfg->savedetflag=0x5;
-     if(cfg->mediabyte>=100 && cfg->savedetflag){
-	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
-	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
-	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
-     }
-     if(cfg->issaveref>1){
-        if(cfg->issavedet==0)
-	    MCX_ERROR(-4,"you must have at least two outputs if issaveref is greater than 1");
-
-        if(cfg->dim.x*cfg->dim.y*cfg->dim.z > cfg->maxdetphoton){
-	    MCX_FPRINTF(cfg->flog,"you must set --maxdetphoton larger than the total size of the voxels when --issaveref is greater than 1; autocorrecting ...\n");
-	    cfg->maxdetphoton=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-        }
-	cfg->savedetflag=0x5;
-     }
      if(cfg->isdumpjson==3){
 	  mcx_savejdata(cfg->jsonfile, cfg);
 	  exit(0);
@@ -1390,10 +1426,6 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
         cfg->unitinmm=cfg->steps.x;
 
-     if(cfg->unitinmm!=1.f){
-        cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
-     }
-
      if(cfg->sradius>0.f){
      	cfg->crop0.x=MAX((uint)(cfg->srcpos.x-cfg->sradius),0);
      	cfg->crop0.y=MAX((uint)(cfg->srcpos.y-cfg->sradius),0);
@@ -1435,12 +1467,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
         if(in==stdin)
 		fprintf(stdout,"%f %f %f %f\n",cfg->prop[i].mus,cfg->prop[i].g,cfg->prop[i].mua,cfg->prop[i].n);
      }
-     if(cfg->unitinmm!=1.f){
-         for(i=1;i<cfg->medianum;i++){
-		cfg->prop[i].mus*=cfg->unitinmm;
-		cfg->prop[i].mua*=cfg->unitinmm;
-         }
-     }
+
      if(in==stdin)
      	fprintf(stdout,"Please specify the total number of detectors and fiber diameter (in grid unit):\n\t");
      MCX_ASSERT(fscanf(in,"%d %f", &(cfg->detnum), &(cfg->detradius))==2);
@@ -1593,12 +1620,6 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                med=med->next;
                if(med==NULL) break;
              }
-	     if(cfg->unitinmm!=1.f){
-        	 for(i=0;i<cfg->medianum;i++){
-			cfg->prop[i].mus*=cfg->unitinmm;
-			cfg->prop[i].mua*=cfg->unitinmm;
-        	 }
-	     }
            }
         }
 	val=FIND_JSON_OBJ("Dim","Domain.Dim",Domain);
@@ -1626,9 +1647,6 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
            cfg->unitinmm=cfg->steps.x;
 
-	if(cfg->unitinmm!=1.f){
-           cfg->steps.x=cfg->unitinmm; cfg->steps.y=cfg->unitinmm; cfg->steps.z=cfg->unitinmm;
-	}
 	val=FIND_JSON_OBJ("VoxelSize","Domain.VoxelSize",Domain);
 	if(val){
 	   val=FIND_JSON_OBJ("Dx","Domain.VoxelSize.Dx",Domain);

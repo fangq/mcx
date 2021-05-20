@@ -251,6 +251,7 @@ void mcx_readconfig(char *fname, Config *cfg);
 void mcx_writeconfig(char *fname, Config *cfg);
 void mcx_initcfg(Config *cfg);
 void mcx_clearcfg(Config *cfg);
+void mcx_preprocess(Config *cfg);
 void mcx_parsecmd(int argc, char* argv[], Config *cfg);
 void mcx_usage(Config *cfg,char *exename);
 void mcx_printheader(Config *cfg);
