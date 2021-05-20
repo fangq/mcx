@@ -197,8 +197,8 @@ const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
  * User can specify the source type using a string
  */
 
-const unsigned int mediaformatid[]={1,2,4,98,99,100,101,102,103,104,0};
-const char *mediaformat[]={"byte","short","integer","mixlabel","labelplus",
+const unsigned int mediaformatid[]={1,2,4,97,98,99,100,101,102,103,104,0};
+const char *mediaformat[]={"byte","short","integer","svmc","mixlabel","labelplus",
      "muamus_float","mua_float","muamus_half","asgn_byte","muamus_short",""};
 
 /**
@@ -3003,6 +3003,15 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                         cfg->debuglevel=mcx_parsedebugopt(argv[++i],debugflag);
                                 else
                                         i=mcx_readarg(argc,argv,i,&(cfg->debuglevel),"int");
+                                break;
+                     case 'K':
+                                if(i+1<argc && isalpha(argv[i+1][0]) ){
+                                        cfg->mediabyte=mcx_keylookup(argv[++i],mediaformat);
+                                        if(cfg->mediabyte==-1)
+                                             MCX_ERROR(-1,"Unsupported media format.");
+                                        cfg->mediabyte=mediaformatid[cfg->mediabyte];
+                                }else
+                                        i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
                                 break;
 		     case 'F':
                                 if(i>=argc)
