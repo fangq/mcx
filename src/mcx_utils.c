@@ -2198,7 +2198,7 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
      	     cfg->vol=NULL;
      }
      datalen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
-     cfg->vol=(unsigned int*)malloc(sizeof(unsigned int)*datalen);
+     cfg->vol=(unsigned int*)malloc(sizeof(unsigned int)*datalen*(1+(cfg->mediabyte==MEDIA_2LABEL_SPLIT)));
      if(!isbuf){
 	 if(cfg->mediabyte==MEDIA_AS_F2H)
 	     inputvol=(unsigned char*)malloc(sizeof(unsigned char)*(datalen<<3));
@@ -2206,7 +2206,7 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
 	     inputvol=(unsigned char*)(cfg->vol);
 	 else
 	     inputvol=(unsigned char*)malloc(sizeof(unsigned char)*cfg->mediabyte*datalen);
-	 res=fread(inputvol,sizeof(unsigned char)*(cfg->mediabyte==MEDIA_AS_F2H? 8 : MIN(cfg->mediabyte,4)),datalen,fp);
+	 res=fread(inputvol,sizeof(unsigned char)*((cfg->mediabyte==MEDIA_AS_F2H || cfg->mediabyte==MEDIA_2LABEL_SPLIT)? 8 : MIN(cfg->mediabyte,4)),datalen,fp);
 	 fclose(fp);
 	 if(res!=datalen){
 	     MCX_ERROR(-6,"file size does not match specified dimensions");
