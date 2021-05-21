@@ -1240,13 +1240,39 @@ void mcx_preprocess(Config *cfg){
 	     }
 	}
     }
-    if(cfg->vol && cfg->mediabyte <= 4){
-         unsigned int fieldlen=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+    if(cfg->vol){
+      unsigned int dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
+      if(cfg->mediabyte <= 4){
 	 unsigned int maxlabel=0;
-         for(uint i=0;i<fieldlen;i++)
+         for(uint i=0;i<dimxyz;i++)
 	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
 	 if(cfg->medianum<=maxlabel)
 	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
+      }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
+    	 unsigned char *val=(unsigned char *)(cfg->vol);
+    	 unsigned int *newvol=(unsigned int *)malloc(dimxyz<<3);
+    	 union{
+    	    unsigned char c[8];
+    	    unsigned int  i[2];
+    	 } b2u;
+    	 for(int i=0;i<dimxyz;i++){
+    	    b2u.c[2]=val[(i<<3)+5]; // encoding normal vector nx, ny, nz
+    	    b2u.c[1]=val[(i<<3)+6];
+    	    b2u.c[0]=val[(i<<3)+7];
+
+    	    b2u.c[5]=val[(i<<3)+2]; // encoding reference point px, py, pz
+    	    b2u.c[4]=val[(i<<3)+3];
+    	    b2u.c[3]=val[(i<<3)+4];
+
+    	    b2u.c[7]=val[(i<<3)];   // lower label and upper label
+    	    b2u.c[6]=val[(i<<3)+1];
+
+    	    newvol[i]=b2u.i[1]; // first half: high 4 byte, second half: low 4 bytes
+    	    newvol[i+dimxyz]=b2u.i[0];
+    	 }
+	 memcpy(cfg->vol, newvol, (dimxyz<<3));
+	 free(newvol);
+      }
     }
     for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
@@ -3064,15 +3090,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                      i=mcx_readarg(argc,argv,i,&(cfg->maxjumpdebug),"int");
                                 else if(strcmp(argv[i]+2,"gscatter")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->gscatter),"int");
-                                else if(strcmp(argv[i]+2,"mediabyte")==0){
-				     if(i+1<argc && isalpha(argv[i+1][0]) ){
-				         cfg->mediabyte=mcx_keylookup(argv[++i],mediaformat);
-					 if(cfg->mediabyte==-1)
-					     MCX_ERROR(-1,"Unsupported media format.");
-					 cfg->mediabyte=mediaformatid[cfg->mediabyte];
-			             }else
-				         i=mcx_readarg(argc,argv,i,&(cfg->mediabyte),"int");
-                                }else if(strcmp(argv[i]+2,"faststep")==0)
+                                else if(strcmp(argv[i]+2,"faststep")==0)
                                      i=mcx_readarg(argc,argv,i,&(cfg->faststep),"char");
                                 else if(strcmp(argv[i]+2,"root")==0)
                                      i=mcx_readarg(argc,argv,i,cfg->rootpath,"string");

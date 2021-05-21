@@ -598,26 +598,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		unsigned char *val=(unsigned char *)mxGetPr(item);
 		if(cfg->vol)
 		    free(cfg->vol);
-		cfg->vol=(unsigned int *)malloc((dimxyz<<1)*sizeof(unsigned int));
-		union{
-		    unsigned char c[8];
-		    unsigned int  i[2];
-		} b2u;
-		for(i=0;i<dimxyz;i++){
-		    b2u.c[2]=val[(i<<3)+5]; // encoding normal vector nx, ny, nz
-		    b2u.c[1]=val[(i<<3)+6]; 
-		    b2u.c[0]=val[(i<<3)+7]; 
-
-		    b2u.c[5]=val[(i<<3)+2]; // encoding reference point px, py, pz
-		    b2u.c[4]=val[(i<<3)+3];
-		    b2u.c[3]=val[(i<<3)+4];
-
-		    b2u.c[7]=val[(i<<3)];   // lower label and upper label
-		    b2u.c[6]=val[(i<<3)+1]; 
-
-		    cfg->vol[i]=b2u.i[1]; // first half: high 4 byte, second half: low 4 bytes
-		    cfg->vol[i+dimxyz]=b2u.i[0];
-		}
+		cfg->vol=(unsigned int *)malloc(dimxyz<<3);
+		memcpy(cfg->vol, val, (dimxyz<<3));
 	    }
 	}
         printf("mcx.dim=[%d %d %d];\n",cfg->dim.x,cfg->dim.y,cfg->dim.z);
