@@ -154,7 +154,9 @@ function varargout=mcxlab(varargin)
 %                      'arcsine' - similar to isotropic, except the zenith angle is uniform
 %                                distribution, rather than a sine distribution.
 %                      'disk' [*] - a uniform disk source pointing along srcdir; the radius is 
-%                               set by srcparam1(1) (in grid unit)
+%                               set by srcparam1(1) (in grid unit); if srcparam1(2) is set to a non-zero
+%                               value, this source defines a ring (annulus) shaped source, with
+%                               srcparam1(2) denoting the inner circle's radius, here srcparam1(1)>=srcparam1(2)
 %                      'fourierx' [*] - a general Fourier source, the parameters are 
 %                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phi0,M]
 %                               normalized vectors satisfy: srcdir cross v1=v2
