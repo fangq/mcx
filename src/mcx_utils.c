@@ -1205,7 +1205,10 @@ void mcx_preprocess(Config *cfg){
 
     if(cfg->isrowmajor){
     	/*from here on, the array is always col-major*/
-    	mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
+	if(cfg->mediabyte==MEDIA_2LABEL_SPLIT)
+	    mcx_convertrow2col64((size_t**)&(cfg->vol), &(cfg->dim));
+	else
+	    mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
     	cfg->isrowmajor=0;
     }
     if(cfg->issavedet && cfg->detnum==0 && isbcdet==0)
@@ -2258,6 +2261,8 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
 
             cfg->vol[i]=f2h.i[0];
 	}
+     }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
+        memcpy(cfg->vol,inputvol,(datalen<<3));
      }
      if(cfg->mediabyte<=4)
        for(i=0;i<datalen;i++){
@@ -2356,6 +2361,33 @@ void  mcx_convertrow2col(unsigned int **vol, uint3 *dim){
      	return;
      }
      newvol=(unsigned int*)malloc(sizeof(unsigned int)*dim->x*dim->y*dim->z);
+     dimxy=dim->x*dim->y;
+     dimyz=dim->y*dim->z;
+     for(x=0;x<dim->x;x++)
+      for(y=0;y<dim->y;y++)
+       for(z=0;z<dim->z;z++){
+       		newvol[z*dimxy+y*dim->x+x]=(*vol)[x*dimyz+y*dim->z+z];
+       }
+     free(*vol);
+     *vol=newvol;
+}
+
+/**
+ * @brief Convert a row-major (C/C++) array to a column-major (MATLAB/FORTRAN) array
+ *
+ * @param[in,out] vol: a 3D array (wrapped in 1D) to be converted
+ * @param[in] dim: the dimensions of the 3D array
+ */
+
+void  mcx_convertrow2col64(size_t **vol, uint3 *dim){
+     uint x,y,z;
+     size_t dimxy,dimyz;
+     size_t *newvol=NULL;
+
+     if(*vol==NULL || dim->x==0 || dim->y==0 || dim->z==0){
+     	return;
+     }
+     newvol=(size_t*)malloc(sizeof(size_t)*dim->x*dim->y*dim->z);
      dimxy=dim->x*dim->y;
      dimyz=dim->y*dim->z;
      for(x=0;x<dim->x;x++)
@@ -2616,13 +2648,16 @@ int  mcx_jdatadecode(void **vol, int *ndim, uint *dims, int maxdim, char **type,
      }
      if(vtype){
          *type=vtype->valuestring;
-         cfg->mediabyte=4;
 	 if(strstr(*type,"int8"))
 	     cfg->mediabyte=1;
 	 else if(strstr(*type,"int16"))
 	     cfg->mediabyte=2;
-	 else if(strstr(*type,"double") || strstr(*type,"int64"))
+	 else if(strstr(*type,"int64") && cfg->mediabyte==MEDIA_2LABEL_SPLIT)
+	     cfg->mediabyte=MEDIA_2LABEL_SPLIT;
+	 else if(strstr(*type,"double") || (strstr(*type,"int64") && cfg->mediabyte!=MEDIA_2LABEL_SPLIT))
 	     MCX_ERROR(-1,"8-byte volume array is not supported");
+	 else
+             cfg->mediabyte=4;
      }
      if(vdata){
          if(vsize){

@@ -76,6 +76,9 @@ if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
             Domain.MediaFormat='byte';
             if(ndims(cfg.vol)==4 && size(cfg.vol,1)==4)
                 Domain.MediaFormat='asgn_byte';
+            elseif(ndims(cfg.vol)==4 && size(cfg.vol,1)==8)
+                cfg.vol=reshape(typecast(uint8(cfg.vol(:)),'uint64'),size(cfg.vol,2,3,4));
+                Domain.MediaFormat='svmc';
             end
         case {'uint16','int16'}
             Domain.MediaFormat='short';
