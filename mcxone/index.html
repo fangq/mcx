@@ -222,6 +222,7 @@ img.simupreview{
   padding: 20%;
   color: white;
   font-size: 130%;
+  display:none;
 }
 #opensourcelib{
   color: yellow;
@@ -436,28 +437,29 @@ img.simupreview{
   <p>We acknowledge that MCX Cloud is built upon the following open-source libraries and resources</p>
   <h3>Front-end</h3>
   <ul>
-  <li>Monte Carlo eXtreme (MCX) - http://mcx.space</li>
-  <li>JSON Schema</li>
-  <li>JSON Editor</li>
-  <li>JQuery</li>
-  <li>Three.js</li>
-  <li>FontAwesome</li>
-  <li>Pako</li>
-  <li>Numjs</li>
-  <li>lz-string</li>
-  <li>JSData</li>
-  <li>Spectre</li>
-  <li>Bootstrap</li>
+  <li>JSON Editor (<a href="https://github.com/json-editor/json-editor">https://github.com/json-editor/json-editor</a>)</li>
+  <li>JSON Schema (<a href="https://json-schema.org/">https://json-schema.org/</a>)</li>
+  <li>JData Specifications (<a href="http://openjdata.org/">http://openjdata.org/</a>)</li>
+  <li>JQuery (<a href="https://jquery.com/">https://jquery.com/</a>)</li>
+  <li>Three.js (<a href="https://threejs.org/">https://threejs.org/</a>)</li>
+  <li>FontAwesome (<a href="https://fontawesome.com/">https://fontawesome.com/</a>)</li>
+  <li>Pako (<a href="https://github.com/nodeca/pako">https://github.com/nodeca/pako</a>)</li>
+  <li>Numjs (<a href="https://github.com/nicolaspanel/numjs">https://github.com/nicolaspanel/numjs</a>)</li>
+  <li>lz-string (<a href="https://threejs.org/">https://threejs.org/</a>)</li>
+  <li>JSData (<a href="https://github.com/fangq/jsdata">https://github.com/fangq/jsdata</a>)</li>
+  <li>Spectre (<a href="https://picturepan2.github.io/spectre/">https://picturepan2.github.io/spectre/</a>)</li>
+  <li>Bootstrap (<a href="https://getbootstrap.com/">https://getbootstrap.com/</a>)</li>
   <li>Background graphics: <a href="https://www.svgbackgrounds.com/#flat-mountains">SVG Backgrounds</a></li>
   </ul>
   
   <h3>Backend</h3>
   <ul>
-  <li>Docker</li>
-  <li>Docker Swarm</li>
-  <li>Perl</li>
-  <li>DBI</li>
-  <li>Sqlite</li>
+  <li>Monte Carlo eXtreme (MCX) (<a href="http://mcx.space/">http://mcx.space/</a>)</li>
+  <li>Docker (<a href="https://docker.com/">https://docker.com/</a>)</li>
+  <li>Docker Swarm (<a href="https://docs.docker.com/engine/swarm/">https://docs.docker.com/engine/swarm/</a>)</li>
+  <li>Perl (<a href="https://www.perl.org/">https://perl.org</a>)</li>
+  <li>DBI (<a href="https://dbi.perl.org/">https://dbi.perl.org/</a>)</li>
+  <li>Sqlite (<a href="https://www.sqlite.org/">https://sqlite.org/</a>)</li>
   </ul>
 </section>
 
@@ -2030,6 +2032,18 @@ function showtab(event, name) {
 }
 
 function updatestatus(data){
+  if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
+      var d = new Date();
+      if(data.status === 'invalid'){
+         $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
+         resetjob();
+         return;
+      }else if(data.status === 'success'){
+         $("#run").html("Cancel");
+	 $('#run').unbind('click');
+         $("#run").click(canceljob);
+      }
+  }
   jobid=data.jobid;
   if(jobid != null){
       $("#jobid").val(jobid);
@@ -2080,7 +2094,7 @@ function jobstatus() {
       resetjob();
   }
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      url: serverurl,
       data: { 'jobid': jobid, 'hash': $("#jobhash").val() },
       type: 'GET',
       crossOrigin: true,
@@ -2096,7 +2110,7 @@ function jobstatus() {
 
 function canceljob() {
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      url: serverurl,
       data: { 'jobid': jobid, 'action': 'cancel' },
       type: 'GET',
       crossOrigin: true,
@@ -2111,6 +2125,49 @@ function canceljob() {
       }
   });
 }
+
+/* 
+In this preview version of MCX Cloud, we initially set the below restrictions to 
+ensure the smooth roll-out of this new service and help us testing the system.
+We anticipate the gradual removal of these restrictions as the service is increasingly
+tested. 
+
+If you are building a private MCX Cloud, please disable the checklimit() call in the
+runsimulation() function, as well as the checklimit() call in the mcxserver.cgi server
+script.
+*/
+
+function checklimit(cfg) {
+  if(cfg.Session.hasOwnProperty('Photons') && cfg.Session.Photons>1e7)
+      throw new Error('the max photon number is limited to 1e7 in this preview version');
+  else if(cfg.Session.DebugFlag.includes('m')||cfg.Session.DebugFlag.includes('M'))
+      throw new Error('storing photon trajectories is not supported in this preview version');
+  else if(cfg.Forward.T1/cfg.Forward.Dt>20)
+      throw new Error('the maximum time gate number is limited to 20 in this preview version');
+  else if(cfg.Domain.hasOwnProperty('Dim') && cfg.Domain.Dim.length==3){
+      cfg.Domain.Dim.map(function(x) {
+         if(x>100)
+	   throw new Error('the maximum domain dimension is 100 in this preview version');
+      });
+  }
+  if(cfg.hasOwnProperty('Shapes') && cfg.Shapes.length>0){
+      cfg.Shapes.map(function(x) {
+         if(x.hasOwnProperty('Grid')){
+	   x.Grid.Size.map(function(s) {
+             if(s>100)
+	       throw new Error('the maximum domain dimension is 100 in this preview version');
+             });
+	 }
+      });
+  }
+  if(cfg.Domain.hasOwnProperty('Media') && cfg.Domain.Media.length>0){
+      cfg.Domain.Media.map(function(o) {
+         if(o.mus>20)
+	   throw new Error('scattering coeff (mus) is limited to 20/mm in this preview version');
+      });
+  }
+}
+
 function runsimulation() {
   var fullname=$("#fullname").val();
   var email=$("#email").val();
@@ -2120,23 +2177,21 @@ function runsimulation() {
   var isvalid=$("#validate-textarea").val();
 
   if(!(isvalid === 'valid'))
-      throw "Input JSON is not valid";
+      throw "Input JSON is not valid according to the defined JSON schema";
   if(fullname === "" || email === "" || inst === "" || netname === "")
-     throw "required fields are not provided";
+      throw "required fields are not provided, please type full name (private), email address (private), institute name (private) and net-name (public)";
+
+  checklimit(JSON.parse(json));
 
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      url: serverurl,
       data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback': 'updatestatus' },
       type: 'POST',
       crossOrigin: true,
       dataType: 'jsonp',
       jsonp: 'callback',
       jsonpCallback: 'updatestatus',
-      success: function( data ){
-         $("#run").html("Cancel");
-	 $('#run').unbind('click');
-         $("#run").click(canceljob);
-      },
+      success: function( data ){},
       error: function(xhr,status,error) {
          $("#run-log").val($("#run-log").val()+"\n"+"runsimulation error: "+status);
       }
@@ -2162,7 +2217,7 @@ function sharesimulation() {
      throw "Required fields are not provided";
 
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      url: serverurl,
       data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 
               'title': encodeURIComponent(title), 'comment': encodeURIComponent(comment), 
 	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': 'sharecomplete' },
@@ -2500,7 +2555,7 @@ function loadpubsimu(data){
 function loadsimulib(key,time){
   if (confirm('Are you sure you want to replace the current simulation settings by the selected one?')) {
     $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      url: serverurl,
       data: { 'id':time, 'hash': key, 'callback': 'loadpubsimu' },
       type: 'GET',
       crossOrigin: true,
@@ -2544,7 +2599,7 @@ function clearpub(){
 function searchpub(offset){
   let keyword=$("#keyword").val();
   $.ajax({
-      url: 'https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi',
+      url: serverurl,
       data: { 'keyword': keyword, 'limit': 5, 'offset': offset, 'callback': 'loadpubdata' },
       type: 'POST',
       crossOrigin: true,
@@ -2568,6 +2623,7 @@ const scene = new THREE.Scene();
 var boundingbox=scene;
 var randseed=1648335518;
 var lastlog='', lastoutput='';
+var serverurl="https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi";
 
 $('#drawlastinput').click(function () {
   if(lastjson !== ""){
