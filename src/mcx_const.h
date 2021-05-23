@@ -48,6 +48,7 @@
 #define BOUNDARY_DET_MASK  0xFFFF0000              /**< flag indicating a boundary face is used as a detector*/
 #define MAX_PROP_AND_DETECTORS   4000              /**< maximum number of property + number of detectors */
 #define SEED_FROM_FILE      -999                   /**< special flag indicating to read seeds from an mch file for replay */
+#define NANGLES            1000                    /**< number of discretization points in scattering angles */
 
 #define SIGN_BIT           0x80000000U
 #define DET_MASK           0x80000000              /**< mask of the sign bit to get the detector */

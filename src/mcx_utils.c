@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <complex.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -217,6 +218,7 @@ const char *zipformat[]={"zlib","gzip","base64","lzip","lzma","lz4","lz4hc",""};
 
 void mcx_initcfg(Config *cfg){
      cfg->medianum=0;
+     cfg->polmedianum=0;
      cfg->mediabyte=1;        /** expect 1-byte per medium index, use --mediabyte to set to 2 or 4 */
      cfg->detnum=0;
      cfg->dim.x=0;
@@ -239,7 +241,9 @@ void mcx_initcfg(Config *cfg){
      cfg->issave2pt=1;
      cfg->isgpuinfo=0;
      cfg->prop=NULL;
+     cfg->polprop=NULL;
      cfg->detpos=NULL;
+     cfg->smatrix=NULL;
      cfg->vol=NULL;
      cfg->session[0]='\0';
      cfg->printnum=0;
@@ -269,6 +273,7 @@ void mcx_initcfg(Config *cfg){
      cfg->energyesc=0.f;
      cfg->zipid=zmZlib;
      cfg->omega=0.f;
+     cfg->lambda=0.f;
      /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/   /** This format is only supported by C99 */
      memset(&cfg->his,0,sizeof(History));
      memcpy(cfg->his.magic,"MCXH",4);
@@ -343,6 +348,10 @@ void mcx_cleargpuinfo(GPUInfo **gpuinfo){
 void mcx_clearcfg(Config *cfg){
      if(cfg->medianum)
      	free(cfg->prop);
+     if(cfg->polmedianum)
+        free(cfg->polprop);
+     if(cfg->smatrix)
+        free(cfg->smatrix);
      if(cfg->detnum)
      	free(cfg->detpos);
      if(cfg->dim.x && cfg->dim.y && cfg->dim.z)
@@ -1249,6 +1258,12 @@ void mcx_preprocess(Config *cfg){
 	 unsigned int maxlabel=0;
          for(uint i=0;i<dimxyz;i++)
 	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
+         if(cfg->polprop){
+             cfg->medianum=cfg->polmedianum+1;
+             if(cfg->medianum+cfg->detnum+cfg->polmedianum*NANGLES>MAX_PROP_AND_DETECTORS)
+                 MCX_ERROR(-4,"input media types, detector number plus scattering matrix exceeds the maximum total (4000)");
+             mcx_prep_polarized(cfg);
+         }
 	 if(cfg->medianum<=maxlabel)
 	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
       }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
@@ -1308,6 +1323,326 @@ void mcx_preprocess(Config *cfg){
 	    cfg->maxdetphoton=cfg->dim.x*cfg->dim.y*cfg->dim.z;
         }
 	cfg->savedetflag=0x5;
+    }
+}
+
+/**
+ * @brief 
+ * @param cfg
+ */
+
+void mcx_prep_polarized(Config *cfg){
+    Medium *prop=(Medium *)malloc(cfg->medianum*sizeof(Medium));
+    if(cfg->prop) {  // copy the ambient medium optical properties
+        memcpy(prop,cfg->prop,sizeof(Medium));
+        free(cfg->prop);
+    }
+    
+    /* precompute cosine of discretized scattering angles */
+    double *mu=(double *)malloc(NANGLES*sizeof(double));
+    for(int i=0;i<NANGLES;i++){
+        mu[i]=cos(ONE_PI*i/(NANGLES-1));
+    }
+    
+    cfg->smatrix=(float4 *)malloc(cfg->polmedianum*NANGLES*sizeof(float4));
+    POLMedium *polprop=cfg->polprop;
+    FILE *pfile;
+    pfile=fopen("polarizedMC_preprocessing.dat","w");
+    for(int i=0;i<cfg->polmedianum;i++){
+        printf("%5.5f %5.5f %5.5f %5.5f %5.5f\n",polprop[i].mua,polprop[i].r,polprop[i].rho,polprop[i].np,polprop[i].nmed);
+        prop[i+1].mua=polprop[i].mua;
+        prop[i+1].n=polprop[i].nmed;
+        prop[i+1].g=0.89; // g will store the index that points to the corresponding smatrix
+        /* for (i-1)th sphere(r, rho, nsph)-background medium(nmed) combination, compute mus and s-matrix */
+        double x,qsca,A;
+        x=2.0*ONE_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
+        A=ONE_PI*polprop[i].r*polprop[i].r;                           // cross-sectional area in micron^2
+        double _Complex m=(polprop[i].np+I*0.0)/polprop[i].nmed;      // complex relative refractive index (unitless)
+        printf("x = %5.5f, m = %5.5f + I * %5.5f\n", x, creal(m), cimag(m));
+        Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca);
+        /* compute scattering coefficient (in mm^-1) */
+        prop[i+1].mus=qsca*A*polprop[i].rho*1e3;
+        if(pfile!=NULL){
+            float4 *smatrix=cfg->smatrix+i*NANGLES;
+            fprintf(pfile,"sphere particle:x = %5.5f, qsca = %5.5f\n",x,qsca);
+            fprintf(pfile,"prop:[%5.5f %5.5f %5.5f %5.5f]\n",prop[i+1].mua,prop[i+1].mus,prop[i+1].g,prop[i+1].n);
+            for(int j=0;j<NANGLES;j++){
+                fprintf(pfile,"%5.5f %5.5f %5.5f %5.5f\n",smatrix[j].x,smatrix[j].y,smatrix[j].z,smatrix[j].w);
+            }
+        }
+    }
+    cfg->prop=prop;
+    free(mu);
+    if(pfile) fclose(pfile);
+}
+
+/**
+ * @brief 
+ * @param x
+ * @param _Complex
+ * @param mu
+ * @param smatrix
+ * @param qsca
+ */
+
+void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
+    double _Complex *D,*s1,*s2;
+    double _Complex z1,an,bn;
+    double *pi0,*pi1,*tau;
+    double _Complex xi,xi0,xi1;
+    double psi0,psi1;
+    double alpha,beta,factor;
+    long n,k,nstop,sign;
+    
+    if(x<=0.0) MCX_ERROR(-6,"sphere size must be positive");
+    if(x>20000.f) MCX_ERROR(-6,"spheres with x>20000 are not validated");
+    
+    if((creal(m)==0 && x<0.1) || (creal(m)>0.0 && cabs(m)*x<0.1)){
+        small_Mie(x,m,mu,smatrix,qsca);
+        return;
+    }
+    
+    nstop=floor(x+4.05*pow(x,0.33333)+2.0);
+    
+    s1=(double _Complex *)calloc(NANGLES,sizeof(double _Complex));
+    s2=(double _Complex *)calloc(NANGLES,sizeof(double _Complex));
+    pi0=(double *)calloc(NANGLES,sizeof(double));
+    tau=(double *)calloc(NANGLES,sizeof(double));
+    pi1=(double *)calloc(NANGLES,sizeof(double));
+    for(int i=0;i<NANGLES;i++) pi1[i]=1.0;
+    
+    if(creal(m)>0.0){
+        double _Complex z=x*m;
+        D=(double _Complex *)calloc(nstop+1,sizeof(double _Complex));
+        if(fabs(cimag(m)*x)<((13.78*creal(m)-10.8)*creal(m)+3.9))
+            Dn_up(z,nstop,D);
+        else
+            Dn_down(z,nstop,D);
+    }
+        
+    psi0=sin(x);
+    psi1=psi0/x-cos(x);
+    xi0=psi0+I*cos(x);
+    xi1=psi1+I*(cos(x)/x+sin(x));
+    *qsca=0.0;
+    sign=1;
+
+    for(n=1;n<=nstop;n++){
+        if(creal(m)==0.0){
+            an=(n*psi1/x-psi0)/(n/x*xi1-xi0);
+            bn=psi1/xi1;
+        }else if(cimag(m)==0){
+            z1=creal(D[n])/creal(m)+n/x+I*cimag(z1);
+            an=(creal(z1)*psi1-psi0)/(creal(z1)*xi1-xi0);
+            
+            z1=creal(D[n])*creal(m)+n/x+I*cimag(z1);
+            bn=(creal(z1)*psi1-psi0)/(creal(z1)*xi1-xi0);
+        }else{
+            z1=D[n]/m;
+            z1+=n/x;
+            an=(creal(z1)*psi1-psi0+I*cimag(z1)*psi1)/(z1*xi1-xi0);
+            
+            z1=D[n]*m;
+            z1+=n/x;
+            bn=(creal(z1)*psi1-psi0+I*cimag(z1)*psi1)/(z1*xi1-xi0);
+        }
+        
+        for(k=0;k<NANGLES;k++){
+            factor=(2.0*n+1.0)/(n+1.0)/n;
+            tau[k]=n*mu[k]*pi1[k]-(n+1)*pi0[k];
+            alpha=factor*pi1[k];
+            beta=factor*tau[k];
+            s1[k]+=alpha*creal(an)+beta*creal(bn)+I*(alpha*cimag(an)+beta*cimag(bn));
+            s2[k]+=alpha*creal(bn)+beta*creal(an)+I*(alpha*cimag(bn)+beta*cimag(an));
+        }
+        
+        for(k=0;k<NANGLES;k++){
+            factor=pi1[k];
+            pi1[k]=((2.0*n+1.0)*mu[k]*pi1[k]-(n+1.0)*pi0[k])/n;
+            pi0[k]=factor;
+        }
+        
+        factor=2.0*n+1.0;
+        *qsca+=factor*(cabs(an)*cabs(an)+cabs(bn)*cabs(bn));
+        sign*=-1;
+        
+        factor=(2.0*n+1.0)/x;
+        xi=factor*xi1-xi0;
+        xi0=xi1;
+        xi1=xi;
+        
+        psi0=psi1;
+        psi1=creal(xi1);
+        
+    }
+    /* compute scattering efficiency and smatrix */
+    (*qsca)*=2/(x*x);
+    for(int i=0;i<NANGLES;i++){
+        smatrix[i].x=0.5*cabs(s2[i])*cabs(s2[i])+0.5*cabs(s1[i])*cabs(s1[i]);
+        smatrix[i].y=0.5*cabs(s2[i])*cabs(s2[i])-0.5*cabs(s1[i])*cabs(s1[i]);
+        smatrix[i].z=creal(conj(s1[i])*s2[i]);
+        smatrix[i].w=cimag(conj(s1[i])*s2[i]);
+    }
+    
+    if(creal(m)>0.0) free(D);
+    free(s1);
+    free(s2);
+    free(pi0);
+    free(pi1);
+    free(tau);
+}
+
+/**
+ * @brief 
+ * @param x
+ * @param _Complex
+ * @param mu
+ * @param smatrix
+ * @param qsca
+ */
+
+void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
+    double _Complex ahat1,ahat2,bhat1;
+    double _Complex z0,m2,m4;
+    double x2,x3,x4;
+    
+    m2=m*m;
+    m4=m2*m2;
+    x2=x*x;
+    x3=x2*x;
+    x4=x2*x2;
+    z0=-cimag(m2)+I*(creal(m2)-1.0);
+    {
+        double _Complex z1,z2,z3,z4,D;
+        
+        if(creal(m)==0.0){
+            z3=0.0+I*(2.0/3.0*(1.0-0.2*x2));
+            D=1.0-0.5*x2+I*(2.0/3.0*x3);
+        }else{
+            z1=2.0/3.0*z0;
+            z2=1.0-0.1*x2+(4.0*creal(m2)+5.0)*x4/1400.0+I*(4.0*x4*cimag(m2)/1400.0);
+            z3=z1*z2;
+            
+            z4=x3*(1.0-0.1*x2)*z1;
+            D=2.0+creal(m2)+(1-0.7*creal(m2))*x2+(8*creal(m4)-385*creal(m2)+350.0)/1400*x4+creal(z4)+
+                I*((-0.7*cimag(m2))*x2+(8*cimag(m4)-385*cimag(m2))/1400*x4+cimag(z4));
+        }
+        ahat1=z3/D;
+    }
+    {
+        double _Complex z2,z6,z7;
+        if(creal(m)==0.0){
+            bhat1=(0.0+I*(-(1.0-0.1*x2)/3.0))/(1+0.5*x2+I*(-x3/3.0));
+        }else{
+            z2=x2/45.0*z0;
+            z6=1.0+(2.0*creal(m2)-5.0)*x2/70.0+I*(cimag(m2)*x2/35.0);
+            z7=1.0-(2.0*creal(m2)-5.0)*x2/30.0+I*(-cimag(m2)*x2/15.0);
+            bhat1=z2*(z6/z7);
+        }
+    }
+    {
+        double _Complex z3,z8;
+        
+        if(creal(m)==0.0){
+            ahat2=0.0+I*x2/30.0;
+        }else{
+            z3=(1.0-x2/14)*x2/15.0*z0;
+            z8=2.0*creal(m2)+3.0-(creal(m2)/7.0-0.5)*x2+
+                I*(2.0*cimag(m2)-cimag(m2)/7.0*x2);
+            ahat2=z3/z8;
+        }
+    }
+    {
+        double T;
+        
+        T=cabs(ahat1)*cabs(ahat1)+cabs(bhat1)*cabs(bhat1)+5.0/3.0*cabs(ahat2)*cabs(ahat2);
+        *qsca=6.0*x4*T;
+    }
+    {
+        double muj,angle;
+        double _Complex s1,s2;
+        
+        x3*=1.5;
+        ahat1*=x3;
+        bhat1*=x3;
+        ahat2*=x3*5.0/3.0;
+        for(int j=0;j<NANGLES;j++){
+            muj=mu[j];
+            angle=2*muj*muj-1;
+            s1=ahat1+(bhat1+ahat2)*muj;
+            s2=bhat1+(ahat1+ahat2)*angle;
+            
+            smatrix[j].x=0.5*cabs(s2)*cabs(s2)+0.5*cabs(s1)*cabs(s1);
+            smatrix[j].y=0.5*cabs(s2)*cabs(s2)-0.5*cabs(s1)*cabs(s1);
+            smatrix[j].z=creal(conj(s1)*s2);
+            smatrix[j].w=cimag(conj(s1)*s2);
+        }
+    }
+}
+
+/**
+ * @brief 
+ * @param _Complex
+ * @param n
+ */
+
+double _Complex Lentz_Dn(double _Complex z,long n){
+    double _Complex alpha_j1,alpha_j2,zinv,aj;
+    double _Complex alpha,ratio,runratio;
+    
+    zinv=2.0/z;
+    alpha=(n+0.5)*zinv;
+    aj=(-n-1.5)*zinv;
+    alpha_j1=aj+1.0/alpha;
+    alpha_j2=aj;
+    ratio=alpha_j1/alpha_j2;
+    runratio=alpha*ratio;
+    
+    do{
+        aj=zinv-aj;
+        alpha_j1=1.0/alpha_j1+aj;
+        alpha_j2=1.0/alpha_j2+aj;
+        ratio=alpha_j1/alpha_j2;
+        zinv=-zinv;
+        runratio*=ratio;
+    }while(fabs(cabs(ratio)-1.0)>1e-12);
+    
+    return -n/z+runratio;
+}
+
+/**
+ * @brief 
+ * @param _Complex
+ * @param nstop
+ * @param _Complex
+ */
+
+void Dn_up(double _Complex z, long nstop, double _Complex *D){
+    double _Complex zinv,k_over_z;
+    zinv=1.0/z;
+    
+    D[0]=1.0/ctan(z);
+    for(long k=1;k<nstop;k++){
+        k_over_z=k*zinv;
+        D[k]=1.0/(k_over_z-D[k-1])-k_over_z;
+    }
+}
+
+/**
+ * @brief 
+ * @param _Complex
+ * @param nstop
+ * @param _Complex
+ */
+
+void Dn_down(double _Complex z, long nstop, double _Complex *D){
+    double _Complex zinv,k_over_z;
+    zinv=1.0/z;
+    
+    D[nstop-1]=Lentz_Dn(z,nstop);
+    for(long k=nstop-1;k>=1;k--){
+        k_over_z=k*zinv;
+        D[k-1]=k_over_z-1.0/(D[k]+k_over_z);
     }
 }
 

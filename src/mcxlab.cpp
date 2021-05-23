@@ -459,6 +459,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,gscatter)
     GET_ONE_FIELD(cfg,srcnum)
     GET_ONE_FIELD(cfg,omega)
+    GET_ONE_FIELD(cfg,lambda)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC34_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
@@ -628,6 +629,20 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
           for(i=0;i<cfg->medianum;i++)
              ((float *)(&cfg->prop[i]))[j]=val[j*cfg->medianum+i];
         printf("mcx.medianum=%d;\n",cfg->medianum);
+    }else if(strcmp(name,"polprop")==0){
+        if(mxGetNumberOfDimensions(item)!=2)
+            mexErrMsgTxt("the 'polprop' field must a 2D array");
+        arraydim=mxGetDimensions(item);
+        if(arraydim[0]>0 && arraydim[1]!=5)
+            mexErrMsgTxt("the 'polprop' field must have 5 columns (mua,radius,rho,n_sph,n_bkg");
+        double *val=mxGetPr(item);
+        cfg->polmedianum=arraydim[0];
+        if(cfg->polprop) free(cfg->polprop);
+        cfg->polprop=(POLMedium *)malloc(cfg->polmedianum*sizeof(POLMedium));
+        for(j=0;j<5;j++)
+          for(i=0;i<cfg->polmedianum;i++)
+             ((float *)(&cfg->polprop[i]))[j]=val[j*arraydim[0]+i];
+        printf("mcx.polmedianum=%d;\n",cfg->polmedianum);
     }else if(strcmp(name,"session")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
