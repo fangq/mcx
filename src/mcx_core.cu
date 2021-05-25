@@ -946,7 +946,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  */
 
 template <const int ispencil, const int isreflect, const int islabel, const int issvmc>
-__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
+__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *iquv,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
            uint *mediaid,OutputType *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[],
@@ -1035,6 +1035,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
               nuvox->sv.upper  =0;
               nuvox->sv.isupper=0;
 	  }
+
+          if(gcfg->maxpolmedia){
+              *((float4*)iquv)=gcfg->iquv;
+          }
 
           /**
            * Only one branch is taken because of template, this can reduce thread divergence
@@ -1379,6 +1383,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      MCXtime f={0.f,0.f,0.f,-1.f};   //< Photon parameter state: pscat: remaining scattering probability,t: photon elapse time, pathlen: total pathlen in one voxel, ndone: completed photons
 
      MCXsp nuvox;
+     Stokes iquv;
+
      unsigned char testint=0;  //< flag used under SVMC mode: if a ray-interface intersection test is needed along current photon path
      unsigned char hitintf=0;  //< flag used under SVMC mode: if a photon path hit the intra-voxel interface inside a mixed voxel
      
@@ -1417,7 +1423,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	 Launch the first photon
       */
 
-     if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
+     if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
        n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox)){
          GPUDEBUG(("thread %d: fail to launch photon\n",idx));
@@ -1460,32 +1466,48 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        //< random arimuthal angle
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
-		       if(!gcfg->is2d){
-		           tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
+                       if(gcfg->maxpolmedia && !gcfg->is2d){
+                           idx1dold=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
+                           /* REJECTION METHOD to choose azimuthal angle phi and deflection angle theta */
+                           do{
+                               theta=acosf(2.f*rand_next_zangle(t)-1.f);
+                               tmp0=TWO_PI*rand_next_aangle(t);
+                               stheta=gproperty[idx1dold].x*iquv.s0+gproperty[idx1dold].y*(iquv.s1*cosf(2.f*tmp0)+iquv.s2*sinf(2.f*tmp0));
+                               mediaidold=min(NANGLES-1,(int)floorf(theta*R_PI*NANGLES));
+                               ctheta=gproperty[idx1dold+mediaidold].x*iquv.s0+gproperty[idx1dold+mediaidold].y*(iquv.s1*cosf(2.f*tmp0)+iquv.s2*sinf(2.f*tmp0));
+                           }while(rand_uniform01(t)*stheta>=ctheta);
                            sincosf(tmp0,&sphi,&cphi);
-		       }
-                       GPUDEBUG(("scat phi=%f\n",tmp0));
-		       tmp0=(v.nscat > gcfg->gscatter) ? 0.f : prop.g;
-
-                       /** Here we use Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002 */
-
-                       if(tmp0>EPS){  //< if prop.g is too small, the distribution of theta is bad
-		           tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
-		           tmp0*=tmp0;
-		           tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
-
-                           // in early CUDA, when ran=1, CUDA gives 1.000002 for tmp0 which produces nan later
-                           // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
-                           tmp0=fmax(-1.f, fmin(1.f, tmp0));
-
-		           theta=acosf(tmp0);
-		           stheta=sinf(theta);
-		           ctheta=tmp0;
-                       }else{
-			   theta=acosf(2.f*rand_next_zangle(t)-1.f);
                            sincosf(theta,&stheta,&ctheta);
+                           GPUDEBUG(("scat phi=%f\n",tmp0));
+                           GPUDEBUG(("scat theta=%f\n",theta));
+                       }else{
+                           if(!gcfg->is2d){
+                               tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
+                               sincosf(tmp0,&sphi,&cphi);
+                           }
+                           GPUDEBUG(("scat phi=%f\n",tmp0));
+                           tmp0=(v.nscat > gcfg->gscatter) ? 0.f : prop.g;
+
+                           /** Here we use Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002 */
+
+                           if(tmp0>EPS){  //< if prop.g is too small, the distribution of theta is bad
+                               tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
+                               tmp0*=tmp0;
+                               tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
+
+                               // in early CUDA, when ran=1, CUDA gives 1.000002 for tmp0 which produces nan later
+                               // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
+                               tmp0=fmax(-1.f, fmin(1.f, tmp0));
+
+                               theta=acosf(tmp0);
+                               stheta=sinf(theta);
+                               ctheta=tmp0;
+                           }else{
+                               theta=acosf(2.f*rand_next_zangle(t)-1.f);
+                               sincosf(theta,&stheta,&ctheta);
+                           }
+                           GPUDEBUG(("scat theta=%f\n",theta));
                        }
-                       GPUDEBUG(("scat theta=%f\n",theta));
 #ifdef SAVE_DETECTORS
                        if(gcfg->savedet){
                            if(SAVE_NSCAT(gcfg->savedetflag)){
@@ -1507,12 +1529,49 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			   }
 		       }
 #endif
+                       /** Store old direction cosines for polarized photon simulation */
+                       if(gcfg->maxpolmedia){
+                           rv=float3(v.x,v.y,v.z);
+                       }
+
                        /** Update direction vector with the two random angles */
 		       if(gcfg->is2d)
 		           rotatevector2d(&v,(rand_next_aangle(t)>0.5f ? stheta: -stheta),ctheta);
 		       else
                            rotatevector(&v,stheta,ctheta,sphi,cphi);
                        v.nscat++;
+
+                       /** Update stokes parameters */
+                       if(gcfg->maxpolmedia){
+                           /* mathmatically equivalent to line #389-431 of stok1.c [Jessica's 2005 code] */
+                           sphi=iquv.s1, cphi=iquv.s2; // reuse variables to temporarily store original s[1],s[2],sin(2phi),cos(2phi)
+                           n1=sinf(2.f*tmp0), stheta=cosf(2.f*tmp0);
+                           iquv.s1=gproperty[idx1dold+mediaidold].y*iquv.s0+gproperty[idx1dold+mediaidold].x*(iquv.s1*stheta+iquv.s2*n1);   // s[1]=s12*s[0]+s11*(s[1]*cos2phi+s[2]*sin2phi)
+                           iquv.s2=gproperty[idx1dold+mediaidold].z*(-iquv.s1*n1+iquv.s2*stheta)+gproperty[idx1dold+mediaidold].w*iquv.s3;  // s[2]=s33*(-s[1]*sin2phi+s[2]*cos2phi)+s43*s[3]
+                           iquv.s0=gproperty[idx1dold+mediaidold].x*iquv.s0+gproperty[idx1dold+mediaidold].y*(iquv.s1*stheta+iquv.s2*n1);   // s[0]=s11*s[0]+s12*(s[1]*cos2phi+s[2]*sin2phi)
+                           iquv.s3=-gproperty[idx1dold+mediaidold].w*(-iquv.s1*n1+iquv.s2*stheta)+gproperty[idx1dold+mediaidold].z*iquv.s3; // s[3]=-s43*(-s[1]*sin2phi+s[2]*cos2phi)+s33*s[3]
+                           
+                           /* mathmatically equivalent to line #399-417 of stok1.c [Jessica's 2005 code] */
+                           n1=cosf(theta);
+                           stheta=sqrtf(1.f-n1*n1)*sqrtf(1.f-v.z*v.z);
+                           if(stheta==0.f){
+                               cphi=0.f;
+                           }else{
+                               cphi=((tmp0>ONE_PI) && (tmp0<TWO_PI)) ? (v.z*n1-v.z)/stheta : -(v.z*n1-v.z)/stheta;
+                               if(cphi<-1.f) cphi=-1.f;
+                               if(cphi>1.f)  cphi=1.f;
+                           }
+                           sphi=sqrtf(1.f-cphi*cphi);
+                           sphi=2.f*sphi*cphi;      // sin22=2*sini*cosi;
+                           cphi=2.f*cphi*cphi-1.f;  // cos22=2*cosi*cosi-1;
+                           
+                           /* mathmatically equivalent to line #419-425 of stok1.c [Jessica's 2005 code] */
+                           sphi=iquv.s1, cphi=iquv.s2;
+                           iquv.s1=(iquv.s1*cphi-iquv.s2*sphi)/iquv.s0; // s[1]=(s[1]*cos22-s[2]*sin22)/s[0]
+                           iquv.s2=(iquv.s1*sphi+iquv.s2*cphi)/iquv.s0; // s[2]=(s[1]*sin22+s[2]*cos22)/s[0]
+                           iquv.s3=iquv.s3/iquv.s0;                     // s[3]=s[3]/s[0]
+                           iquv.s0=1.f;                                 // s[0]=1.0
+                       }
 
 		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
@@ -1743,7 +1802,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		 }
 	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n",idx1d,mediaid,gcfg->doreflect,isdet,f.t>gcfg->twin1));
-	      if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+	      if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
 	          (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
 	          ppath, n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
@@ -1761,7 +1820,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                    p.w*=ROULETTE_SIZE;
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-                   if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
+                   if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	                n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
                         break;
@@ -1804,7 +1863,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                         transmit(&v,n1,prop.n,flipdir);
                         if(mediaid==0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower)==0)) { // transmission to external boundary
                             GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+		    	    if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
 			        (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
 			        ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
@@ -1832,7 +1891,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
         	  	updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
                         if(issvmc){
                             if((nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower)==0){ // terminate photon if photon is reflected to background medium
-                                if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                                if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                                   ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
                                   media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
                                   break;
@@ -1851,7 +1910,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	          if(!isreflect || (isreflect && gproperty[nuvox.sv.lower].w==gproperty[nuvox.sv.upper].w)){
 	              nuvox.nv=-nuvox.nv; // flip normal vector for transmission
 	              if(nuvox.sv.isupper && !nuvox.sv.lower){ // transmit from to background medium
-	                  if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+	                  if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 	                      ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		              media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
 		              break;
@@ -1864,7 +1923,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		      *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower]; // update property
 	          }else{
 	              if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ // true if photon transmits to background media
-		          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+		          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&iquv,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
 		              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			      media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
 			      break;
@@ -2070,6 +2129,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      
      /** \c c0 - initial photon direction state, used to initialize \c{MCXdir v={vx,vy,vz,}} state in the GPU kernel */
      float4 c0=cfg->srcdir;
+     
+     /** \c stokesvec - initial photon polarization state, described by Stokes Vector */
+     float4 iquv=(float4)cfg->iquv;
+     
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
      int timegate=0, totalgates, gpuid, threadid=0;
      
@@ -2170,10 +2233,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      /** \c param - constants to be used in the GPU, copied to GPU as \c gcfg, stored in the constant memory */
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
-		     p0,c0,maxidx,uint4(0,0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
+		     p0,c0,iquv,maxidx,uint4(0,0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
+		     cfg->medianum-1,cfg->detnum,cfg->polmedianum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,(uint)cfg->issaveref,cfg->isspecular>0,
 		     cfg->maxdetphoton*hostdetreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
 		     cfg->debuglevel,cfg->savedetflag,hostdetreclen,partialdata,w0offset,cfg->mediabyte,
@@ -2548,6 +2611,8 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
        */
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->detpos,  cfg->detnum*sizeof(float4), cfg->medianum*sizeof(Medium), cudaMemcpyHostToDevice));
+     CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->smatrix, cfg->polmedianum*NANGLES*sizeof(float4), cfg->medianum*sizeof(Medium)+
+         cfg->detnum*sizeof(float4), cudaMemcpyHostToDevice));
 
      MCX_FPRINTF(cfg->flog,"init complete : %d ms\n",GetTimeMillis()-tic);
 

@@ -159,6 +159,7 @@ typedef struct MCXConfig{
 
 	float4 srcpos;                /**<src position in mm*/
 	float4 srcdir;                /**<src normal direction*/
+        float4 iquv;                  /**<initial stokes parameter*/
 	float tstart;                 /**<start time in second*/
 	float tstep;                  /**<time step in second*/
 	float tend;                   /**<end time in second*/
