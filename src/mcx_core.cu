@@ -1552,10 +1552,10 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                            /* mathmatically equivalent to line #389-431 of stok1.c [Jessica's 2005 code] */
                            sphi=s.q, cphi=s.u; // reuse variables to temporarily store original s[1],s[2],sin(2phi),cos(2phi)
                            n1=sinf(2.f*tmp0), stheta=cosf(2.f*tmp0);
-                           s.q=gproperty[idx1dold+mediaidold].y*s.i+gproperty[idx1dold+mediaidold].x*(s.q*stheta+s.u*n1);   // s[1]=s12*s[0]+s11*(s[1]*cos2phi+s[2]*sin2phi)
-                           s.u=gproperty[idx1dold+mediaidold].z*(-s.q*n1+s.u*stheta)+gproperty[idx1dold+mediaidold].w*s.v;  // s[2]=s33*(-s[1]*sin2phi+s[2]*cos2phi)+s43*s[3]
-                           s.i=gproperty[idx1dold+mediaidold].x*s.i+gproperty[idx1dold+mediaidold].y*(s.q*stheta+s.u*n1);   // s[0]=s11*s[0]+s12*(s[1]*cos2phi+s[2]*sin2phi)
-                           s.v=-gproperty[idx1dold+mediaidold].w*(-s.q*n1+s.u*stheta)+gproperty[idx1dold+mediaidold].z*s.v; // s[3]=-s43*(-s[1]*sin2phi+s[2]*cos2phi)+s33*s[3]
+                           s.q=gproperty[idx1dold+mediaidold].y*s.i+gproperty[idx1dold+mediaidold].x*(sphi*stheta+cphi*n1);   // s[1]=s12*s[0]+s11*(s[1]*cos2phi+s[2]*sin2phi)
+                           s.u=gproperty[idx1dold+mediaidold].z*(-sphi*n1+cphi*stheta)+gproperty[idx1dold+mediaidold].w*s.v;  // s[2]=s33*(-s[1]*sin2phi+s[2]*cos2phi)+s43*s[3]
+                           s.i=gproperty[idx1dold+mediaidold].x*s.i+gproperty[idx1dold+mediaidold].y*(sphi*stheta+cphi*n1);   // s[0]=s11*s[0]+s12*(s[1]*cos2phi+s[2]*sin2phi)
+                           s.v=-gproperty[idx1dold+mediaidold].w*(-sphi*n1+cphi*stheta)+gproperty[idx1dold+mediaidold].z*s.v; // s[3]=-s43*(-s[1]*sin2phi+s[2]*cos2phi)+s33*s[3]
                            
                            /* mathmatically equivalent to line #399-417 of stok1.c [Jessica's 2005 code] */
                            n1=cosf(theta);
@@ -1572,11 +1572,11 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                            cphi=2.f*cphi*cphi-1.f;  // cos22=2*cosi*cosi-1;
                            
                            /* mathmatically equivalent to line #419-425 of stok1.c [Jessica's 2005 code] */
-                           sphi=s.q, cphi=s.u;
-                           s.q=(s.q*cphi-s.u*sphi)/s.i; // s[1]=(s[1]*cos22-s[2]*sin22)/s[0]
-                           s.u=(s.q*sphi+s.u*cphi)/s.i; // s[2]=(s[1]*sin22+s[2]*cos22)/s[0]
-                           s.v=s.v/s.i;                 // s[3]=s[3]/s[0]
-                           s.i=1.f;                     // s[0]=1.0
+                           n1=s.q, stheta=s.u;
+                           s.q=(n1*cphi-stheta*sphi)/s.i; // s[1]=(s[1]*cos22-s[2]*sin22)/s[0]
+                           s.u=(n1*sphi+stheta*cphi)/s.i; // s[2]=(s[1]*sin22+s[2]*cos22)/s[0]
+                           s.v=s.v/s.i;                   // s[3]=s[3]/s[0]
+                           s.i=1.f;                       // s[0]=1.0
                        }
 
 		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
