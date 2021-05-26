@@ -1307,12 +1307,21 @@ void mcx_preprocess(Config *cfg){
          cfg->savedetflag=SET_SAVE_PEXIT(cfg->savedetflag);
 	 cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
     }
+    if(cfg->polmedianum){
+         cfg->savedetflag=SET_SAVE_PPATH(cfg->savedetflag);
+         cfg->savedetflag=SET_SAVE_VEXIT(cfg->savedetflag);
+         cfg->savedetflag=SET_SAVE_W0(cfg->savedetflag);
+         cfg->savedetflag=SET_SAVE_IQUV(cfg->savedetflag);
+    }else{
+         cfg->savedetflag=UNSET_SAVE_IQUV(cfg->savedetflag);
+    }
     if(cfg->issavedet && cfg->savedetflag==0)
          cfg->savedetflag=0x5;
     if(cfg->mediabyte>=100 && cfg->savedetflag){
 	 cfg->savedetflag=UNSET_SAVE_NSCAT(cfg->savedetflag);
 	 cfg->savedetflag=UNSET_SAVE_PPATH(cfg->savedetflag);
 	 cfg->savedetflag=UNSET_SAVE_MOM(cfg->savedetflag);
+         cfg->savedetflag=UNSET_SAVE_IQUV(cfg->savedetflag);
     }
     if(cfg->issaveref>1){
         if(cfg->issavedet==0)

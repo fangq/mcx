@@ -200,6 +200,7 @@ function varargout=mcxlab(varargin)
 %                         16 x  output exit position (3)
 %                         32 v  output exit direction (3)
 %                         64 w  output initial weight (1)
+%                        128 i  output stokes vector (4)
 %                      combine multiple items by using a string, or add selected numbers together
 %                      by default, mcx only saves detector ID (d) and partial-path data (p)
 %      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
@@ -426,6 +427,9 @@ if(nargout>=2)
         if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
             cfg(i).savedetflag=[cfg(i).savedetflag,'M'];
         end
+        if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
+            cfg(i).savedetflag=[cfg(i).savedetflag,'PVWI'];
+        end
         if(ndims(cfg(i).vol)==4 && size(cfg(i).vol,1)~=8)
             cfg(i).savedetflag='';
             if((isa(cfg(i).vol,'single') || isa(cfg(i).vol,'double')) && isfield(cfg(i),'unitinmm'))
@@ -438,6 +442,9 @@ if(nargout>=2)
             if(isempty(detp))
                 continue;
             end
+            if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
+                medianum=size(cfg(i).polprop,1);
+            end
             flags={cfg(i).savedetflag};
             if(isfield(cfg(i),'issaveref'))
                 flags{end+1}=cfg(i).issaveref;
@@ -446,7 +453,13 @@ if(nargout>=2)
                 flags{end+1}=cfg(i).srcnum;
             end
             newdetp=mcxdetphoton(detp,medianum,flags{:});
-            newdetp.prop=cfg(i).prop;
+            if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
+                newdetp.prop=zeros(medianum+1,4);
+                newdetp.prop(1,:)=cfg(i).prop(1,:);
+                newdetp.prop(2:end,1)=cfg(i).polprop(:,1);
+            else
+                newdetp.prop=cfg(i).prop;
+            end
             if(isfield(cfg(i),'unitinmm'))
                 newdetp.unitinmm=cfg(i).unitinmm;
             end

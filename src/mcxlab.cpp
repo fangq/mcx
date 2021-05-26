@@ -212,7 +212,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         mcx_validate_config(&cfg);
 
 	partialdata=(cfg.medianum-1)*(SAVE_NSCAT(cfg.savedetflag)+SAVE_PPATH(cfg.savedetflag)+SAVE_MOM(cfg.savedetflag));
-	hostdetreclen=partialdata+SAVE_DETID(cfg.savedetflag)+3*(SAVE_PEXIT(cfg.savedetflag)+SAVE_VEXIT(cfg.savedetflag))+SAVE_W0(cfg.savedetflag);
+	hostdetreclen=partialdata+SAVE_DETID(cfg.savedetflag)+3*(SAVE_PEXIT(cfg.savedetflag)+SAVE_VEXIT(cfg.savedetflag))+SAVE_W0(cfg.savedetflag)+4*SAVE_IQUV(cfg.savedetflag);
 
         /** One must define the domain and properties */
 	if(cfg.vol==NULL || cfg.medianum==0){
@@ -467,7 +467,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_VEC3_FIELD(cfg,crop1)
     GET_VEC4_FIELD(cfg,srcparam1)
     GET_VEC4_FIELD(cfg,srcparam2)
-    GET_VEC4_FIELD(cfg,iquv)
+    GET_VEC4_FIELD(cfg,srciquv)
     else if(strcmp(name,"vol")==0){
         dimtype dimxyz;
         cfg->mediabyte=0;
@@ -709,7 +709,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.debuglevel=%d;\n",cfg->debuglevel);
     }else if(strcmp(name,"savedetflag")==0){
         int len=mxGetNumberOfElements(item);
-        const char saveflag[]={'D','S','P','M','X','V','W','\0'};
+        const char saveflag[]={'D','S','P','M','X','V','W','I','\0'};
         char savedetflag[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)
@@ -890,6 +890,7 @@ void mcx_validate_config(Config *cfg){
      const char boundarydetflag[]={'0','1','\0'};
      unsigned int partialdata=(cfg->medianum-1)*(SAVE_NSCAT(cfg->savedetflag)+SAVE_PPATH(cfg->savedetflag)+SAVE_MOM(cfg->savedetflag));
      unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
+     hostdetreclen+=cfg->polmedianum?(4*SAVE_IQUV(cfg->savedetflag)):0; // for polarized photon simulation
 
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/

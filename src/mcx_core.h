@@ -66,10 +66,10 @@ typedef struct __align__(16) SplitVoxel{
 }SVox;
 
 typedef struct __align__(16) StokesVector{
-        float s0; /**< total light intensity: IH + IV */
-        float s1; /**< IH - IV */
-        float s2; /**< I(+pi/4) - I(-pi/4) */
-        float s3; /**< IR - IL */
+        float i; /**< total light intensity: IH + IV */
+        float q; /**< IH - IV */
+        float u; /**< I(+pi/4) - I(-pi/4) */
+        float v; /**< IR - IL */
 }Stokes;
 
 typedef struct __align__(16) MCXSplit{
@@ -138,7 +138,7 @@ typedef struct  __align__(16) KernelParams {
   float  Rtstep;                     /**< reciprocal of the step size */
   float4 ps;                         /**< initial position vector, for pencil beam */
   float4 c0;                         /**< initial directon vector, for pencil beam */
-  float4 iquv;                       /**< initial stokes parameters, for polarized photon simulation */
+  float4 s0;                         /**< initial stokes parameters, for polarized photon simulation */
   float3 maxidx;                     /**< maximum index in x/y/z directions for out-of-bound tests */
   uint4  dimlen;                     /**< maximum index used to convert x/y/z to 1D array index */
   uint3  cp0;                        /**< 3D coordinates of one diagonal of the cached region  (obsolete) */

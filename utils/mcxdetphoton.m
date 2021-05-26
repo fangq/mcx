@@ -40,3 +40,8 @@ if(regexp(savedetflag,'[wW]'))
     end
     c0=c0+len;
 end
+if(regexp(savedetflag,'[iI]'))
+    len=4;
+    newdetp.s=detp(c0:(c0+len-1),:)';
+    c0=c0+len;
+end
