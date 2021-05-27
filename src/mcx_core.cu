@@ -1563,7 +1563,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                            if(stheta==0.f){
                                cphi=0.f;
                            }else{
-                               cphi=((tmp0>ONE_PI) && (tmp0<TWO_PI)) ? (v.z*n1-v.z)/stheta : -(v.z*n1-v.z)/stheta;
+                               cphi=((tmp0>ONE_PI) && (tmp0<TWO_PI)) ? (v.z*n1-rv.z)/stheta : -(v.z*n1-rv.z)/stheta;
                                if(cphi<-1.f) cphi=-1.f;
                                if(cphi>1.f)  cphi=1.f;
                            }
