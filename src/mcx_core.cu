@@ -254,6 +254,58 @@ __device__ inline void saveexitppath(float n_det[],float *ppath,MCXpos *p0,uint 
       }
 }
 
+__device__ inline void rotsphi(Stokes *s, float phi, Stokes *s2){
+    float sin2phi, cos2phi;
+    sincosf(2.f*phi,&sin2phi,&cos2phi);
+    
+    s2->i = s->i;
+    s2->q = s->q*cos2phi + s->u*sin2phi;
+    s2->u = -s->q*sin2phi + s->u*cos2phi;
+    s2->v = s->v;
+}
+
+__device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, Medium prop){
+    float costheta = cosf(theta);
+    Stokes s2;
+    rotsphi(s,phi,&s2);
+    
+    uint imedia=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
+    uint ithedeg=floorf(theta*NANGLES*R_PI);
+    
+    s->i= gproperty[imedia+ithedeg].x*s2.i+gproperty[imedia+ithedeg].y*s2.q;
+    s->q= gproperty[imedia+ithedeg].y*s2.i+gproperty[imedia+ithedeg].x*s2.q;
+    s->u= gproperty[imedia+ithedeg].z*s2.u+gproperty[imedia+ithedeg].w*s2.v;
+    s->v=-gproperty[imedia+ithedeg].w*s2.u+gproperty[imedia+ithedeg].z*s2.v;
+    
+    float temp,sini,cosi,sin22,cos22;
+    
+    temp=(sqrtf(1-costheta*costheta)*sqrtf(1-u2->z*u2->z));
+    
+    if(temp==0.f){
+        cosi=0.f;
+    }else{
+        if(phi>ONE_PI & phi<TWO_PI)
+            cosi=(u2->z*costheta-u->z)/temp;
+        else
+            cosi=-(u2->z*costheta-u->z)/temp;
+        if(cosi < -1.f) cosi=-1.f;
+        if(cosi > 1.f)  cosi=1.f;
+    }
+    sini=sqrtf(1-cosi*cosi);
+    cos22=2.f*cosi*cosi-1.f;
+    sin22=2.f*sini*cosi;
+    
+    s2.i=s->i;
+    s2.q=s->q*cos22-s->u*sin22;
+    s2.u=s->q*sin22+s->u*cos22;
+    s2.v=s->v;
+    
+    s->q=s2.q/s2.i;
+    s->u=s2.u/s2.i;
+    s->v=s2.v/s2.i;
+    s->i=1.f;
+}
+
 /**
  * @brief Recording detected photon information at photon termination
  * @param[in] n_det: pointer to the detector position array
@@ -1473,15 +1525,16 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
                        if(gcfg->maxpolmedia && !gcfg->is2d){
-                           idx1dold=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
+                           uint i=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
                            /* REJECTION METHOD to choose azimuthal angle phi and deflection angle theta */
+                           float I0,I;
                            do{
                                theta=acosf(2.f*rand_next_zangle(t)-1.f);
                                tmp0=TWO_PI*rand_next_aangle(t);
-                               stheta=gproperty[idx1dold].x*s.i+gproperty[idx1dold].y*(s.q*cosf(2.f*tmp0)+s.u*sinf(2.f*tmp0));
-                               mediaidold=min(NANGLES-1,(int)floorf(theta*R_PI*NANGLES));
-                               ctheta=gproperty[idx1dold+mediaidold].x*s.i+gproperty[idx1dold+mediaidold].y*(s.q*cosf(2.f*tmp0)+s.u*sinf(2.f*tmp0));
-                           }while(rand_uniform01(t)*stheta>=ctheta);
+                               I0=gproperty[i].x*s.i+gproperty[i].y*(s.q*cosf(2.f*tmp0)+s.u*sinf(2.f*tmp0));
+                               uint ithedeg=floorf(theta*NANGLES*R_PI);
+                               I=gproperty[i+ithedeg].x*s.i+gproperty[i+ithedeg].y*(s.q*cosf(2.f*tmp0)+s.u*sinf(2.f*tmp0));
+                           }while(rand_uniform01(t)*I0>=I);
                            sincosf(tmp0,&sphi,&cphi);
                            sincosf(theta,&stheta,&ctheta);
                            GPUDEBUG(("scat phi=%f\n",tmp0));
@@ -1548,36 +1601,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        v.nscat++;
 
                        /** Update stokes parameters */
-                       if(gcfg->maxpolmedia){
-                           /* mathmatically equivalent to line #389-431 of stok1.c [Jessica's 2005 code] */
-                           sphi=s.q, cphi=s.u; // reuse variables to temporarily store original s[1],s[2],sin(2phi),cos(2phi)
-                           n1=sinf(2.f*tmp0), stheta=cosf(2.f*tmp0);
-                           s.q=gproperty[idx1dold+mediaidold].y*s.i+gproperty[idx1dold+mediaidold].x*(sphi*stheta+cphi*n1);   // s[1]=s12*s[0]+s11*(s[1]*cos2phi+s[2]*sin2phi)
-                           s.u=gproperty[idx1dold+mediaidold].z*(-sphi*n1+cphi*stheta)+gproperty[idx1dold+mediaidold].w*s.v;  // s[2]=s33*(-s[1]*sin2phi+s[2]*cos2phi)+s43*s[3]
-                           s.i=gproperty[idx1dold+mediaidold].x*s.i+gproperty[idx1dold+mediaidold].y*(sphi*stheta+cphi*n1);   // s[0]=s11*s[0]+s12*(s[1]*cos2phi+s[2]*sin2phi)
-                           s.v=-gproperty[idx1dold+mediaidold].w*(-sphi*n1+cphi*stheta)+gproperty[idx1dold+mediaidold].z*s.v; // s[3]=-s43*(-s[1]*sin2phi+s[2]*cos2phi)+s33*s[3]
-                           
-                           /* mathmatically equivalent to line #399-417 of stok1.c [Jessica's 2005 code] */
-                           n1=cosf(theta);
-                           stheta=sqrtf(1.f-n1*n1)*sqrtf(1.f-v.z*v.z);
-                           if(stheta==0.f){
-                               cphi=0.f;
-                           }else{
-                               cphi=((tmp0>ONE_PI) && (tmp0<TWO_PI)) ? (v.z*n1-rv.z)/stheta : -(v.z*n1-rv.z)/stheta;
-                               if(cphi<-1.f) cphi=-1.f;
-                               if(cphi>1.f)  cphi=1.f;
-                           }
-                           sphi=sqrtf(1.f-cphi*cphi);
-                           sphi=2.f*sphi*cphi;      // sin22=2*sini*cosi;
-                           cphi=2.f*cphi*cphi-1.f;  // cos22=2*cosi*cosi-1;
-                           
-                           /* mathmatically equivalent to line #419-425 of stok1.c [Jessica's 2005 code] */
-                           n1=s.q, stheta=s.u;
-                           s.q=(n1*cphi-stheta*sphi)/s.i; // s[1]=(s[1]*cos22-s[2]*sin22)/s[0]
-                           s.u=(n1*sphi+stheta*cphi)/s.i; // s[2]=(s[1]*sin22+s[2]*cos22)/s[0]
-                           s.v=s.v/s.i;                   // s[3]=s[3]/s[0]
-                           s.i=1.f;                       // s[0]=1.0
-                       }
+                       if(gcfg->maxpolmedia) updatestokes(&s, theta, tmp0, (float3*)&rv, (float3*)&v, prop);
 
 		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
