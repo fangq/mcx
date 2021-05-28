@@ -1527,13 +1527,14 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        if(gcfg->maxpolmedia && !gcfg->is2d){
                            uint i=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
                            /* REJECTION METHOD to choose azimuthal angle phi and deflection angle theta */
-                           float I0,I;
+                           float I0,I,sin2phi,cos2phi;
                            do{
                                theta=acosf(2.f*rand_next_zangle(t)-1.f);
                                tmp0=TWO_PI*rand_next_aangle(t);
-                               I0=gproperty[i].x*s.i+gproperty[i].y*(s.q*cosf(2.f*tmp0)+s.u*sinf(2.f*tmp0));
+                               sincosf(2.f*tmp0,&sin2phi,&cos2phi);
+                               I0=gproperty[i].x*s.i+gproperty[i].y*(s.q*cos2phi+s.u*sin2phi);
                                uint ithedeg=floorf(theta*NANGLES*R_PI);
-                               I=gproperty[i+ithedeg].x*s.i+gproperty[i+ithedeg].y*(s.q*cosf(2.f*tmp0)+s.u*sinf(2.f*tmp0));
+                               I=gproperty[i+ithedeg].x*s.i+gproperty[i+ithedeg].y*(s.q*cos2phi+s.u*sin2phi);
                            }while(rand_uniform01(t)*I0>=I);
                            sincosf(tmp0,&sphi,&cphi);
                            sincosf(theta,&stheta,&ctheta);
