@@ -279,7 +279,11 @@ __device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u
     
     float temp,sini,cosi,sin22,cos22;
     
-    temp=(sqrtf(1-costheta*costheta)*sqrtf(1-u2->z*u2->z));
+    if(u2->z>-1.f && u2->z<1.f){
+        temp=(sqrtf(1-costheta*costheta)*sqrtf(1-u2->z*u2->z));
+    }else{
+        temp=0.f;
+    }
     
     if(temp==0.f){
         cosi=0.f;
