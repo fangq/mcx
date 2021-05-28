@@ -11,7 +11,6 @@ die if(not ($ENV{"HTTP_REFERER"} =~ /^https*:\/\/mcx\.space/));
 
 my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$md5key,$callback,$jobhash);
 my $q = new CGI;
-my $req;
 my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output');
 
 # Default paths for storage of the job/simulation database and simulation work folders
@@ -21,10 +20,6 @@ my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'complete
 
 my $dbpath="/var/lib/mcxcloud/db";
 my $workspace="/var/lib/mcxcloud/workspace";
-
-if($q->param('json') =~/"RNGSeed"/){
-  $req=decode_json($q->param( 'json' ));
-}
 
 $DBName="dbi:SQLite:dbname=$dbpath/mcxcloud.db";
 $DBUser="";
@@ -39,19 +34,20 @@ if(&V("license") eq ''){
   $dbname="mcxpub";
 }
 
-#print $q -> header(
-#-type => 'application/javascript',
-#-access_control_allow_origin => '*',
-#-access_control_allow_headers => 'content-type,X-Requested-With',
-#-access_control_allow_methods => 'GET,POST,OPTIONS',
-#-access_control_allow_credentials => 'true',
-#);
-
 print "Content-Type: application/javascript\n\n";
 
 if(&V("callback") ne ''){
     $callback=&V("callback");
-};
+}
+
+# for stability, we are setting a few limitations to the simulations submitted
+# if you are building a private mcx cloud, please disable the below if-block 
+# by adding "&& false" in the condition
+
+if(&V('json') =~/"RNGSeed"/){
+   checklimit(decode_json(&V('json')));
+}
+
 
 if(&V("hash") ne '' && &V("id") ne ''){
     my $ct=&V("id");
@@ -165,4 +161,51 @@ sub V{
     my $val=$q->param($id);
     $val=~ s/\+/ /g;
     return uri_unescape($val);
+}
+
+sub checklimit{
+  my ($req)=@_;
+  my $html;
+  if($req->{'Session'}->{'Photons'}>=1e7){
+     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the max photon number is limited to 1e7 in this preview version"})'."\n";
+  }
+  if($html eq '' && defined($req->{'Session'}->{'DebugFlag'}) && $req->{'Session'}->{'DebugFlag'} =~ /m/i){
+     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"storing photon trajectories is not supported in this preview version"})'."\n";
+  }
+  if($html eq '' && ($req->{'Forward'}->{'T1'}/$req->{'Forward'}->{'Dt'})>20){
+     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum time gate number is limited to 20 in this preview version"})'."\n";
+  }
+  if($html eq '' && @{$req->{'Domain'}->{'Dim'}} == 3){
+     foreach my $len (@{$req->{'Domain'}->{'Dim'}}){
+       if($len>100){
+         $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum domain dimension is 100 in this preview version"})'."\n";
+         last;
+       }
+     }
+  }
+  if($html eq '' && @{$req->{'Shapes'}} > 1){
+     foreach my $obj (@{$req->{'Shapes'}}){
+       if(defined($obj->{'Grid'})){
+         foreach my $len (@{$obj->{'Grid'}->{'Size'}}){
+            if($len>100){
+                $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum domain dimension is 100 in this preview version"})'."\n";
+                last;
+            }
+         }
+         last if $html ne '';
+       }
+     }
+  }
+  if($html eq '' && @{$req->{'Domain'}->{'Media'}} > 1){
+     foreach my $obj (@{$req->{'Domain'}->{'Media'}}){
+       if(defined($obj->{'mus'}) && $obj->{'mus'}>20){
+           $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"scattering coeff (mus) is limited to 20/mm in this preview version"})'."\n";
+           last;
+       }
+     }
+  }
+  if($html ne ''){
+     print $html;
+     exit;
+  }
 }
