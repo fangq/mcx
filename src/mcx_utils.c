@@ -1355,32 +1355,23 @@ void mcx_prep_polarized(Config *cfg){
     
     cfg->smatrix=(float4 *)malloc(cfg->polmedianum*NANGLES*sizeof(float4));
     POLMedium *polprop=cfg->polprop;
-    FILE *pfile;
-    pfile=fopen("polarizedMC_preprocessing.dat","w");
     for(int i=0;i<cfg->polmedianum;i++){
         prop[i+1].mua=polprop[i].mua;
         prop[i+1].n=polprop[i].nmed;
         prop[i+1].g=(float)i; // g will store the index that points to the corresponding smatrix
+        
         /* for (i-1)th sphere(r, rho, nsph)-background medium(nmed) combination, compute mus and s-matrix */
         double x,qsca,A;
         x=2.0*ONE_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
         A=ONE_PI*polprop[i].r*polprop[i].r;                           // cross-sectional area in micron^2
         double _Complex m=(polprop[i].np+I*0.0)/polprop[i].nmed;      // complex relative refractive index (unitless)
         Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca);
+        
         /* compute scattering coefficient (in mm^-1) */
         prop[i+1].mus=qsca*A*polprop[i].rho*1e3;
-        if(pfile!=NULL){ // for now, output scattering matrix for debugging purpose
-            float4 *smatrix=cfg->smatrix+i*NANGLES;
-            fprintf(pfile,"sphere particle:x = %5.5f, qsca = %5.5f\n",x,qsca);
-            fprintf(pfile,"prop:[%5.5f %5.5f %5.5f %5.5f]\n",prop[i+1].mua,prop[i+1].mus,prop[i+1].g,prop[i+1].n);
-            for(int j=0;j<NANGLES;j++){
-                fprintf(pfile,"%5.5f %5.5f %5.5f %5.5f\n",smatrix[j].x,smatrix[j].y,smatrix[j].z,smatrix[j].w);
-            }
-        }
     }
     cfg->prop=prop;
     free(mu);
-    if(pfile) fclose(pfile);
 }
 
 /**
