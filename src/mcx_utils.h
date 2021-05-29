@@ -178,7 +178,7 @@ typedef struct MCXConfig{
 	Medium *prop;                 /**<optical property mapping table*/
         POLMedium *polprop;           /**<absorption and scatterer mapping table for polarized photon simulation*/
 	float4 *detpos;               /**<detector positions and radius, overwrite detradius*/
-        float4 *smatrix;
+        float4 *smatrix;              /**<scattering Mueller matrix */
 
 	unsigned int maxgate;         /**<simultaneous recording gates*/
 	int respin;                   /**<number of repeatitions (if positive), or number of divisions (if negative)*/

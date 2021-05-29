@@ -254,6 +254,17 @@ __device__ inline void saveexitppath(float n_det[],float *ppath,MCXpos *p0,uint 
       }
 }
 
+/**
+ * @brief Rotate Stokes vector s by phi
+ * 
+ * This function represents a rotation in the clockwise direction with respect
+ * to an observer looking into the direction of the photon propagation.
+ * 
+ * @param[in] s: input Stokes parameter
+ * @param[in] phi: rotation angle in radians
+ * @param[out] s2: output Stokes parameter
+ */
+
 __device__ inline void rotsphi(Stokes *s, float phi, Stokes *s2){
     float sin2phi, cos2phi;
     sincosf(2.f*phi,&sin2phi,&cos2phi);
@@ -263,6 +274,16 @@ __device__ inline void rotsphi(Stokes *s, float phi, Stokes *s2){
     s2->u = -s->q*sin2phi + s->u*cos2phi;
     s2->v = s->v;
 }
+
+/**
+ * @brief Update Stokes vector after a scattering event
+ * @param[in,out] s: input and output Stokes vector
+ * @param[in] theta: scattering angle in radiance
+ * @param[in] phi: azimuthal angle in radiance
+ * @param[in] u: incident direction cosine
+ * @param[in] u2: scattering direction cosine
+ * @param[in] prop: pointer to the current optical properties
+ */
 
 __device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, Medium prop){
     float costheta = cosf(theta);

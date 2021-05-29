@@ -1336,8 +1336,12 @@ void mcx_preprocess(Config *cfg){
 }
 
 /**
- * @brief 
- * @param cfg
+ * @brief Preprocess media to prepare polarized photon simulation
+ * 
+ * This function precompute the scattering coefficent and smatrix for
+ * different sphere-medium combinations.
+ * 
+ * @param[in] cfg: simulation configuration
  */
 
 void mcx_prep_polarized(Config *cfg){
@@ -1375,12 +1379,16 @@ void mcx_prep_polarized(Config *cfg){
 }
 
 /**
- * @brief 
- * @param x
- * @param _Complex
- * @param mu
- * @param smatrix
- * @param qsca
+ * @brief Precompute scattering parameters based on Mie theory [bohren and huffman]
+ * 
+ * For each combination of sphere and background medium, compute the scattering
+ * efficiency and scattering Mueller matrix w.r.t. different scattering angles. 
+ * 
+ * @param[in] x: sphere particle size parameters
+ * @param[in] m: complex relative refractive index
+ * @param[in] mu: precomputed cosine of sampled scattering angles
+ * @param[out] smatrix: scattering Mueller matrix 
+ * @param[out] qsca: scattering efficiency
  */
 
 void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
@@ -1491,12 +1499,12 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
 }
 
 /**
- * @brief 
- * @param x
- * @param _Complex
- * @param mu
- * @param smatrix
- * @param qsca
+ * @brief Precompute scattering parameters for small particles
+ * @param[in] x: sphere particle size parameters
+ * @param[in] m: complex relative refractive index
+ * @param[in] mu: precomputed cosine of sampled scattering angles
+ * @param[out] smatrix: scattering Mueller matrix 
+ * @param[out] qsca: scattering efficiency
  */
 
 void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
@@ -1580,7 +1588,7 @@ void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, d
 
 /**
  * @brief 
- * @param _Complex
+ * @param z
  * @param n
  */
 
@@ -1610,9 +1618,9 @@ double _Complex Lentz_Dn(double _Complex z,long n){
 
 /**
  * @brief 
- * @param _Complex
+ * @param z
  * @param nstop
- * @param _Complex
+ * @param D
  */
 
 void Dn_up(double _Complex z, long nstop, double _Complex *D){
@@ -1628,9 +1636,9 @@ void Dn_up(double _Complex z, long nstop, double _Complex *D){
 
 /**
  * @brief 
- * @param _Complex
+ * @param z
  * @param nstop
- * @param _Complex
+ * @param D
  */
 
 void Dn_down(double _Complex z, long nstop, double _Complex *D){
