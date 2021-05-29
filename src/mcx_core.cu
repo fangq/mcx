@@ -279,23 +279,12 @@ __device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u
     
     float temp,sini,cosi,sin22,cos22;
     
-    if(u2->z>-1.f && u2->z<1.f){
-        temp=(sqrtf(1-costheta*costheta)*sqrtf(1-u2->z*u2->z));
-    }else{
-        temp=0.f;
-    }
+    temp=(u2->z>-1.f && u2->z<1.f) ? rsqrtf((1.f-costheta*costheta)*(1.f-u2->z*u2->z)) : 0.f;
     
-    if(temp==0.f){
-        cosi=0.f;
-    }else{
-        if(phi>ONE_PI & phi<TWO_PI)
-            cosi=(u2->z*costheta-u->z)/temp;
-        else
-            cosi=-(u2->z*costheta-u->z)/temp;
-        if(cosi < -1.f) cosi=-1.f;
-        if(cosi > 1.f)  cosi=1.f;
-    }
-    sini=sqrtf(1-cosi*cosi);
+    cosi=(temp==0.f) ? 0.f :(((phi>ONE_PI && phi<TWO_PI) ? 1.f : -1.f)*(u2->z*costheta-u->z)*temp);
+    cosi=fmax(-1.f,fmin(cosi,1.f));
+
+    sini=sqrtf(1.f-cosi*cosi);
     cos22=2.f*cosi*cosi-1.f;
     sin22=2.f*sini*cosi;
     
@@ -304,9 +293,10 @@ __device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u
     s2.u=s->q*sin22+s->u*cos22;
     s2.v=s->v;
     
-    s->q=s2.q/s2.i;
-    s->u=s2.u/s2.i;
-    s->v=s2.v/s2.i;
+    temp=__fdividef(1.f,s2.i); 
+    s->q=s2.q*temp;
+    s->u=s2.u*temp;
+    s->v=s2.v*temp;
     s->i=1.f;
 }
 
