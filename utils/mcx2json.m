@@ -48,13 +48,7 @@ if(isfield(cfg,'detpos') && ~isempty(cfg.detpos))
     end
 end
 if(isfield(cfg,'srcpattern') && ~isempty(cfg.srcpattern))
-    Optode.Source.Pattern.Nx=size(cfg.srcpattern,1);
-    Optode.Source.Pattern.Ny=size(cfg.srcpattern,2);
-    Optode.Source.Pattern.Nz=size(cfg.srcpattern,3);
-    Optode.Source.Pattern.Data=[filestub '_pattern.bin'];
-    fid=fopen(Optode.Source.Pattern.Data,'wb');
-    fwrite(fid,cfg.srcpattern,'float32');
-    fclose(fid);
+    Optode.Source.Pattern=single(cfg.srcpattern);
 end
 
 %% define the domain and optical properties

@@ -2161,33 +2161,47 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	   cfg->srcnum=FIND_JSON_KEY("SrcNum","Optode.Source.SrcNum",src,cfg->srcnum,valueint);
            subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
            if(subitem){
-              int nx=FIND_JSON_KEY("Nx","Optode.Source.Pattern.Nx",subitem,0,valueint);
-              int ny=FIND_JSON_KEY("Ny","Optode.Source.Pattern.Ny",subitem,0,valueint);
-              int nz=FIND_JSON_KEY("Nz","Optode.Source.Pattern.Nz",subitem,1,valueint);
-              if(nx>0 && ny>0){
-                 cJSON *pat=FIND_JSON_OBJ("Data","Optode.Source.Pattern.Data",subitem);
-                 if(pat && pat->child){
-                     int i;
-                     pat=pat->child;
-                     if(cfg->srcpattern) free(cfg->srcpattern);
-                     cfg->srcpattern=(float*)calloc(nx*ny*nz*cfg->srcnum,sizeof(float));
-                     for(i=0;i<nx*ny*nz*cfg->srcnum;i++){
-                         if(pat==NULL)
-                             MCX_ERROR(-1,"Incomplete pattern data");
-                         cfg->srcpattern[i]=pat->valuedouble;
-                         pat=pat->next;
-                     }
-                 }else if(pat){
-                     FILE *fid=fopen(pat->valuestring,"rb");
-		     if(fid!=NULL){
-		         if(cfg->srcpattern) free(cfg->srcpattern);
-                         cfg->srcpattern=(float*)calloc(nx*ny*nz*cfg->srcnum,sizeof(float));
-                         fread((void*)cfg->srcpattern,sizeof(float),nx*ny*nz*cfg->srcnum,fid);
-			 fclose(fid);
-                     }
+	     if(FIND_JSON_OBJ("_ArrayZipData_","Optode.Source.Pattern._ArrayZipData_",subitem)){
+	         int ndim;
+		 uint dims[3]={1,1,1};
+		 char *type=NULL;
+		 if(cfg->srcpattern) free(cfg->srcpattern);
+	         mcx_jdatadecode((void **)&cfg->srcpattern, &ndim, dims, 3, &type, subitem, cfg);
+		 if(strcmp(type,"single")){
+		     if(cfg->srcpattern) free(cfg->srcpattern);
+		     MCX_ERROR(-1,"Optode.Source.Pattern JData-annotated array must be in the 'single' format");
 		 }
-              }
-           }
+		 if(ndim==3 && dims[2]>1 && dims[0]>1 && cfg->srctype==MCX_SRC_PATTERN)
+		     cfg->srcnum=dims[0];
+	     }else{
+                 int nx=FIND_JSON_KEY("Nx","Optode.Source.Pattern.Nx",subitem,0,valueint);
+                 int ny=FIND_JSON_KEY("Ny","Optode.Source.Pattern.Ny",subitem,0,valueint);
+                 int nz=FIND_JSON_KEY("Nz","Optode.Source.Pattern.Nz",subitem,1,valueint);
+                 if(nx>0 && ny>0){
+                    cJSON *pat=FIND_JSON_OBJ("Data","Optode.Source.Pattern.Data",subitem);
+                    if(pat && pat->child){
+                        int i;
+                        pat=pat->child;
+                        if(cfg->srcpattern) free(cfg->srcpattern);
+                        cfg->srcpattern=(float*)calloc(nx*ny*nz*cfg->srcnum,sizeof(float));
+                        for(i=0;i<nx*ny*nz*cfg->srcnum;i++){
+                            if(pat==NULL)
+                                MCX_ERROR(-1,"Incomplete pattern data");
+                            cfg->srcpattern[i]=pat->valuedouble;
+                            pat=pat->next;
+                        }
+                    }else if(pat){
+                        FILE *fid=fopen(pat->valuestring,"rb");
+		        if(fid!=NULL){
+		            if(cfg->srcpattern) free(cfg->srcpattern);
+                            cfg->srcpattern=(float*)calloc(nx*ny*nz*cfg->srcnum,sizeof(float));
+                            fread((void*)cfg->srcpattern,sizeof(float),nx*ny*nz*cfg->srcnum,fid);
+			    fclose(fid);
+                        }
+		    }
+                 }
+	     }
+	   }
         }
         dets=FIND_JSON_OBJ("Detector","Optode.Detector",Optode);
         if(dets){
@@ -2428,6 +2442,17 @@ void mcx_savejdata(char *filename, Config *cfg){
      cJSON_AddItemToObject(sub, "Param1", cJSON_CreateFloatArray(&(cfg->srcparam1.x),4));
      cJSON_AddItemToObject(sub, "Param2", cJSON_CreateFloatArray(&(cfg->srcparam2.x),4));
      cJSON_AddNumberToObject(sub, "SrcNum", cfg->srcnum);
+     if(cfg->srcpattern){
+         uint dims[3];
+	 dims[0]=cfg->srcnum;
+	 dims[1]=cfg->srcparam1.w;
+	 dims[2]=cfg->srcparam2.w;
+	 cJSON_AddItemToObject(sub, "Pattern", tmp = cJSON_CreateObject());
+	 
+	 int ret=mcx_jdataencode(cfg->srcpattern,2+(cfg->srcnum>1),dims+(cfg->srcnum==1),"single", dims[0]*dims[1]*dims[2], cfg->zipid, tmp, 0, cfg);
+	 if(ret)
+	     MCX_ERROR(ret,"data compression or base64 encoding failed");
+     }
 
      cJSON_AddItemToObject(obj, "Detector", sub = cJSON_CreateArray());
      for(int i=0;i<cfg->detnum;i++){
