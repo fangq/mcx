@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
+    <meta name="author" content="Qianqian Fang">
+    <meta name="copyright" content="Qianqian Fang" />
+    <meta name="license" content="GNU General Public License v3 or later" />
+    <meta name="keywords" content="Monte Carlo,photon,tissue optics,MCX,Monte Carlo eXtreme,COTI,FangLab,MCX Cloud,Docker,JQuery,JSON,JSON Schema,JSON Editor,WebGL"/>
     <title>MCX Cloud - A Web-based Monte Carlo Photon Simulator</title>
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
@@ -139,15 +143,15 @@ h1 {
   font-size: 2.5rem;
 }
 body {
-background-color: #e8efff;
-background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'%3E%3Cpolygon fill='%23cc0000' points='957 450 539 900 1396 900'/%3E%3Cpolygon fill='%23aa0000' points='957 450 872.9 900 1396 900'/%3E%3Cpolygon fill='%23d6002b' points='-60 900 398 662 816 900'/%3E%3Cpolygon fill='%23b10022' points='337 900 398 662 816 900'/%3E%3Cpolygon fill='%23d9004b' points='1203 546 1552 900 876 900'/%3E%3Cpolygon fill='%23b2003d' points='1203 546 1552 900 1162 900'/%3E%3Cpolygon fill='%23d3006c' points='641 695 886 900 367 900'/%3E%3Cpolygon fill='%23ac0057' points='587 900 641 695 886 900'/%3E%3Cpolygon fill='%23c4008c' points='1710 900 1401 632 1096 900'/%3E%3Cpolygon fill='%239e0071' points='1710 900 1401 632 1365 900'/%3E%3Cpolygon fill='%23aa00aa' points='1210 900 971 687 725 900'/%3E%3Cpolygon fill='%23880088' points='943 900 1210 900 971 687'/%3E%3C/svg%3E");
-background-attachment: fixed;
-background-size: cover;
-background-position: left bottom;
-/* background by SVGBackgrounds.com */
-font-family: Ubuntu;
-zoom: 0.8;
-background-repeat: no-repeat;
+  background-color: #e8efff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'%3E%3Cpolygon fill='%23cc0000' points='957 450 539 900 1396 900'/%3E%3Cpolygon fill='%23aa0000' points='957 450 872.9 900 1396 900'/%3E%3Cpolygon fill='%23d6002b' points='-60 900 398 662 816 900'/%3E%3Cpolygon fill='%23b10022' points='337 900 398 662 816 900'/%3E%3Cpolygon fill='%23d9004b' points='1203 546 1552 900 876 900'/%3E%3Cpolygon fill='%23b2003d' points='1203 546 1552 900 1162 900'/%3E%3Cpolygon fill='%23d3006c' points='641 695 886 900 367 900'/%3E%3Cpolygon fill='%23ac0057' points='587 900 641 695 886 900'/%3E%3Cpolygon fill='%23c4008c' points='1710 900 1401 632 1096 900'/%3E%3Cpolygon fill='%239e0071' points='1710 900 1401 632 1365 900'/%3E%3Cpolygon fill='%23aa00aa' points='1210 900 971 687 725 900'/%3E%3Cpolygon fill='%23880088' points='943 900 1210 900 971 687'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: left bottom;
+  /* background by SVGBackgrounds.com */
+  font-family: Ubuntu;
+  zoom: 0.8;
+  background-repeat: no-repeat;
 }
 footer {
   position: fixed;
@@ -184,6 +188,7 @@ input:required {
   float:right;
   background-color: rgba(48,55,66,0.3);
   color: white;
+  display:none;
 }
 img.simupreview{
   float: left;
@@ -219,10 +224,9 @@ img.simupreview{
   top: 0;
   left:0;
   background-color: rgba(48,55,66,0.9);;
-  padding: 20%;
   color: white;
-  font-size: 130%;
   display:none;
+  padding: 100px;
 }
 #opensourcelib{
   color: yellow;
@@ -464,7 +468,8 @@ img.simupreview{
 </section>
 
 <footer>
-  Presented to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="https://openjdata.org/img/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
+  <span style="float:left">Copyright © 2021 <a href="http://github.com/fangq">Qianqian Fang</a></span>
+  Brought to you by <a href="http://fanglab.org" title="COTI Lab/aka Fang Lab"><img src="https://openjdata.org/img/coti_favicon.png" title="COTI Lab@Northeastern"/>COTILab</a>
   <a href="http://mcx.space" title="MCX photon simulator"><img src="https://openjdata.org/img/mcx_logo_2020.png" title="MCX photon simulator"/>MCX</a>
   <a href="https://grantome.com/grant/NIH/R01-GM114365-06"><img src="https://openjdata.org/img/nih_nigms_logo.png" title="NIH/NIGMS Grant#R01-GM114365"/>NIH/NIGMS</a> 
   Powered by <span id="opensourcelib">open-source</span>
@@ -2571,6 +2576,7 @@ function loadsimulib(key,time){
   }
 }
 function showsimudata(obj,time,lic){
+  $("#simuinfo").show();
   $("#rpreview").html('<img src="'+$("#"+obj.id).prop('src')+'">');
   $("#rpreview").append("<button class='btn btn-primary btn-block' id='btloadsimu' onclick='loadsimulib(\""+obj.id+"\","+time+")'>Load</button>");
   $("#rtitle").html('<dt>Title</dt><dd>'+$("#"+obj.id).prop('title')+"</dd>");
@@ -2595,6 +2601,7 @@ function clearpub(){
   $("#rcomment").html('');
   $("#rlicense").html('');
   $("#btsearch").prop("disabled",false);
+  $('#simuinfo').hide();
 }
 function searchpub(offset){
   let keyword=$("#keyword").val();
@@ -2614,8 +2621,6 @@ function searchpub(offset){
   });
 }
 var canvas = $("#canvas");
-var w = canvas.width();
-var h = canvas.height();
 var bbxsize=[0,0,0];
 
 const scene = new THREE.Scene();
@@ -2653,8 +2658,8 @@ for(let i=0;i<256;i++){
     materialcolor.push(randseed);
 }
 
-//const camera = new THREE.PerspectiveCamera( 50, w/h, 1, 2000 );
-const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 1000);
+//const camera = new THREE.PerspectiveCamera( 50, canvas.width()/canvas.height(), 1, 2000 );
+const camera = new THREE.OrthographicCamera(canvas.width() / -2, canvas.width() / 2, canvas.height() / 2, canvas.height() / -2, 1, 1000);
 
 camera.up = new THREE.Vector3(0,0,1);
 camera.lookAt(new THREE.Vector3(0,0,0));
@@ -2662,7 +2667,7 @@ camera.updateProjectionMatrix();
 
 const renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
 renderer.setPixelRatio( window.devicePixelRatio );
-renderer.setSize( w,h );
+renderer.setSize( canvas.width(), canvas.height());
 //renderer.state.enable("logarithmicDepthBuffer");
 canvas.append( renderer.domElement );
 
