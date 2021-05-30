@@ -88,7 +88,9 @@ section {
     width: 100%;
     margin-left: 10px;
 }
-
+.tab-content section{
+    height: 100vh;
+}
 #site-navigation{
   float:none;
 }
@@ -186,7 +188,7 @@ input:required {
 #simuinfo{
   width: 34%;
   float:right;
-  background-color: rgba(48,55,66,0.3);
+  background-color: rgba(48,55,66,0.4);
   color: white;
   display:none;
 }
@@ -201,7 +203,11 @@ img.simupreview{
 }
 #simuinfo dt{
   font-weight: bold;
-  color: #1a9f2b;
+  color: blue;
+}
+#simuinfo pre{
+  background-color:green;
+  margin: 5px;
 }
 #mcx1-browse input{
   height: 1.8rem;
@@ -239,6 +245,7 @@ img.simupreview{
   color: yellow;
   float: right;
 }
+
 </style>
 
 <section id="mcx1-title" class='current'>
@@ -2587,8 +2594,10 @@ function showsimudata(obj,time,lic){
 }
 function loadpubdata(data){
   for (let i = 0; i < data.length; i++) {
+     let comment=data[i].comment.replace(/'/g,"`").replace(/\n +([^\n]*)\n/g,"<pre>$1</pre>").replace(/\n\*([^\n]+)/g,"<ul><li>$1</li></ul>").replace(/\n/g,'<br/>');
+     comment=comment.replace(/(https?:\/\/)([^ \s<]+)/g,'<a target="_blank" href="$&">$1$2</a>');
      $("#mcxlibrary").append('<img class="simupreview" onclick="showsimudata(this,'+data[i].time+',\''+data[i].license+'\')" id="'+data[i].hash+
-       '" src="'+data[i].thumbnail+'" title=\''+data[i].title.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\' alt=\''+data[i].comment.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\'/>');
+       '" src="'+data[i].thumbnail+'" title=\''+data[i].title.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\' alt=\''+comment+'\'/>');
   }
   if(data.length==5){
     let offset=$("#mcxlibrary img").length;
