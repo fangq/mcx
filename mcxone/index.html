@@ -189,6 +189,7 @@ img.simupreview{
   float: left;
   width: 200px;
   margin: 2px;
+  cursor: pointer;
 }
 #rpreview img{
   width: 100%;
@@ -219,7 +220,7 @@ img.simupreview{
   top: 0;
   left:0;
   background-color: rgba(48,55,66,0.9);;
-  padding: 20%;
+  padding: 10%;
   color: white;
   font-size: 130%;
   display:none;
@@ -227,6 +228,7 @@ img.simupreview{
 #opensourcelib{
   color: yellow;
   font-weight: bold;
+  cursor: pointer;
 }
 #credits .closebtn{
   font-size: 50px;
@@ -237,7 +239,7 @@ img.simupreview{
 
 <section id="mcx1-title" class='current'>
         <h1>MCX Cloud</h1>
-	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a></h4>
+	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a> and <a href="http://openjdata.org" title="OpenJData">JData</h4>
 	</p>
 </section>
 
@@ -2613,6 +2615,12 @@ function searchpub(offset){
       }
   });
 }
+function previewjsonfile(fname){
+    $.get(fname, function(data) {
+        drawpreview(JSON.parse(data));
+    }, "text");
+}
+
 var canvas = $("#canvas");
 var w = canvas.width();
 var h = canvas.height();
@@ -2645,6 +2653,33 @@ $('#run').unbind('click');
 $("#run").click(runsimulation);
 $("#sharesubmit").click(sharesimulation);
 window.onerror = function(message) { alert(message); return true; }; 
+
+// preventing page from redirecting
+$("html").on("dragover", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+});
+
+$("html").on("drop", function(e) { e.preventDefault(); e.stopPropagation(); });
+
+// Drag over
+$('#canvas').on('dragover', function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    $("#mcx1-preview h1").text("Drop to Plot");
+});
+
+// Drop
+$('#canvas').on('drop', function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    $("#mcx1-preview h1").text("Loading");
+
+    var file = e.originalEvent.dataTransfer.files;
+    previewjsonfile(file[0]);
+    $("#mcx1-preview h1").text("Preview");
+});
 
 // default color for each label, 0,1,2,...
 var materialcolor=[];
