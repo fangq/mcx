@@ -2195,7 +2195,8 @@ function runsimulation() {
   if(fullname === "" || email === "" || inst === "" || netname === "")
       throw "required fields are not provided, please type full name (private), email address (private), institute name (private) and net-name (public)";
 
-  checklimit(JSON.parse(json));
+  if(json!==lastloaded)
+      checklimit(JSON.parse(json));
 
   $.ajax({
       url: serverurl,
@@ -2565,6 +2566,7 @@ function update() {
 function loadpubsimu(data){
   $("#output-textarea").val(data.json);
   $("#setvalue").click();
+  lastloaded=$("#output-textarea").val();
 }
 function loadsimulib(key,time){
   if (confirm('Are you sure you want to replace the current simulation settings by the selected one?')) {
@@ -2722,6 +2724,7 @@ controls.enableKeys=false;
 
 controls.update();
 var lastvolume=null;
+var lastloaded=null;
 var lastclim=0;
 var reqid=undefined;
 
