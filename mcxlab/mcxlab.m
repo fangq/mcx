@@ -108,6 +108,13 @@ function varargout=mcxlab(varargin)
 %                      or detphoton.data subfield (as a 2D array). cfg.detphotons can use
 %                      a subset of the detected photon selected by the user.
 %                      Example: <demo_mcxlab_replay.m>
+%      cfg.polprop:    an N by 5 array, each row specifies [mua, radius(micron), volume
+%                      density(1/micron^3), sphere refractive index, ambient medium
+%                      refractive index] in order. The first row is type 1,
+%                      and so on. The background medium (type 0) should be
+%                      defined in the first row of cfg.prop. If cfg.polprop
+%                      is defined, the medium properties starting from the
+%                      second row of cfg.prop will not be used.
 %
 %== GPU settings ==
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -185,6 +192,7 @@ function varargout=mcxlab(varargin)
 %                      source, see cfg.srctype='pattern' for details
 %                      Example <demo_photon_sharing.m>
 %      cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
+%      cfg.lambda: source light wavelength (nm) for polarized MC
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
 %                      -1 replay all detectors and save in separate volumes (output has 5 dimensions)
@@ -264,6 +272,7 @@ function varargout=mcxlab(varargin)
 %              detphoton.mom: cummulative cos_theta for momentum transfer in each medium  
 %              detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
 %              detphoton.w0: photon initial weight at launch time
+%              detphoton.s: exit Stokes parameters for polarized photon
 %              detphoton.prop: optical properties, a copy of cfg.prop
 %              detphoton.data: a concatenated and transposed array in the order of
 %                    [detid nscat ppath mom p v w0]'
