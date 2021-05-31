@@ -86,7 +86,7 @@ typedef struct MCXPolarizeMedium{
         float mua;                     /**< background medium absorption coefficient (in 1/mm) */
         float r;                       /**< spherical particle radius (in micron) */
         float rho;                     /**< particle volume density (in 1/micron^3) */
-        float np;                      /**< particle refractive index */
+        float nsph;                    /**< particle refractive index */
         float nmed;                    /**< background medium refrative index */
 } POLMedium;
 

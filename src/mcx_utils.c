@@ -1195,6 +1195,16 @@ void mcx_preprocess(Config *cfg){
 	   isbcdet=1;
     }
 
+    if(cfg->vol && cfg->polprop){
+        if(!(cfg->mediabyte<=4)) MCX_ERROR(-1,"Unsupported media format");
+        cfg->medianum=cfg->polmedianum+1;
+        if(cfg->medianum+cfg->detnum+cfg->polmedianum*NANGLES>MAX_PROP_AND_DETECTORS)
+            MCX_ERROR(-4,"input media types, detector number plus scattering matrix exceeds the maximum total (4000)");
+        if(cfg->lambda==0.f)
+            MCX_ERROR(-1,"you must specify light wavelength lambda to run polarized photon simulation");
+        mcx_prep_polarized(cfg); // cfg->medianum will be updated
+    }
+
     if(cfg->medianum==0)
         MCX_ERROR(-4,"you must define the 'prop' field in the input structure");
     if(cfg->dim.x==0||cfg->dim.y==0||cfg->dim.z==0)
@@ -1258,12 +1268,6 @@ void mcx_preprocess(Config *cfg){
 	 unsigned int maxlabel=0;
          for(uint i=0;i<dimxyz;i++)
 	     maxlabel=MAX(maxlabel,(cfg->vol[i]&MED_MASK));
-         if(cfg->polprop){
-             cfg->medianum=cfg->polmedianum+1;
-             if(cfg->medianum+cfg->detnum+cfg->polmedianum*NANGLES>MAX_PROP_AND_DETECTORS)
-                 MCX_ERROR(-4,"input media types, detector number plus scattering matrix exceeds the maximum total (4000)");
-             mcx_prep_polarized(cfg);
-         }
 	 if(cfg->medianum<=maxlabel)
 	     MCX_ERROR(-4,"input media optical properties are less than the labels in the volume");
       }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
@@ -1368,7 +1372,7 @@ void mcx_prep_polarized(Config *cfg){
         double x,qsca,A;
         x=2.0*ONE_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
         A=ONE_PI*polprop[i].r*polprop[i].r;                           // cross-sectional area in micron^2
-        double _Complex m=(polprop[i].np+I*0.0)/polprop[i].nmed;      // complex relative refractive index (unitless)
+        double _Complex m=(polprop[i].nsph+I*0.0)/polprop[i].nmed;      // complex relative refractive index (unitless)
         Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca);
         
         /* compute scattering coefficient (in mm^-1) */
@@ -1992,6 +1996,39 @@ int mcx_loadjson(cJSON *root, Config *cfg){
              }
            }
         }
+        meds=FIND_JSON_OBJ("MieScatter","Domain.MieScatter",Domain);
+        if(meds){
+            cJSON *med=meds->child;
+            if(med){
+                cfg->polmedianum=cJSON_GetArraySize(meds);
+                if(cfg->polprop) free(cfg->polprop);
+                cfg->polprop=(POLMedium*)malloc(cfg->polmedianum*sizeof(POLMedium));
+                for(i=0;i<cfg->polmedianum;i++){
+                    if(cJSON_IsObject(med)){
+                        cJSON *val=FIND_JSON_OBJ("mua",(MCX_ERROR(-1,"You must specify absorption coeff, default in 1/mm"),""),med);
+                        if(val) cfg->polprop[i].mua=val->valuedouble;
+                        val=FIND_JSON_OBJ("radius",(MCX_ERROR(-1,"You must specify sphere particle radius, default in micron"),""),med);
+                        if(val) cfg->polprop[i].r=val->valuedouble;
+                        val=FIND_JSON_OBJ("rho",(MCX_ERROR(-1,"You must specify particle volume density default in 1/micron^3"),""),med);
+                        if(val) cfg->polprop[i].rho=val->valuedouble;
+                        val=FIND_JSON_OBJ("nsph",(MCX_ERROR(-1,"You must specify particle sphere refractive index"),""),med);
+                        if(val) cfg->polprop[i].nsph=val->valuedouble;
+                        val=FIND_JSON_OBJ("nmed",(MCX_ERROR(-1,"You must specify particle background medium refractive index"),""),med);
+                        if(val) cfg->polprop[i].nmed=val->valuedouble;
+                    }else if(cJSON_IsArray(med)){
+                        cfg->polprop[i].mua=med->child->valuedouble;
+                        cfg->polprop[i].r=med->child->next->valuedouble;
+                        cfg->polprop[i].rho=med->child->next->next->valuedouble;
+                        cfg->polprop[i].nsph=med->child->next->next->next->valuedouble;
+                        cfg->polprop[i].nmed=med->child->next->next->next->next->valuedouble;
+                    }else{
+                       MCX_ERROR(-1,"Domain.MieScatter must be either an array of objects or array of 5-elem numerical arrays");
+                    }
+                    med=med->next;
+                    if(med==NULL) break;
+                }
+            }
+        }
 	val=FIND_JSON_OBJ("Dim","Domain.Dim",Domain);
 	if(val && cJSON_GetArraySize(val)>=3){
 	   cfg->dim.x=val->child->valueint;
@@ -2128,6 +2165,13 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 	      if(subitem->child->next->next->next)
 	         cfg->srcdir.w=subitem->child->next->next->next->valuedouble;
            }
+           subitem=FIND_JSON_OBJ("IQUV","Optode.Source.IQUV",src);
+           if(subitem){
+              cfg->srciquv.x=subitem->child->valuedouble;
+              cfg->srciquv.y=subitem->child->next->valuedouble;
+              cfg->srciquv.z=subitem->child->next->next->valuedouble;
+              cfg->srciquv.w=subitem->child->next->next->next->valuedouble;
+           }
 	   if(!cfg->issrcfrom0){
               cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
 	   }
@@ -2158,6 +2202,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
            }
 	   cfg->omega=FIND_JSON_KEY("Frequency","Optode.Source.Frequency",src,0.f,valuedouble);
 	   cfg->omega*=TWO_PI;
+           cfg->lambda=FIND_JSON_KEY("WaveLength","Optode.Source.WaveLength",src,0.f,valuedouble);
 	   cfg->srcnum=FIND_JSON_KEY("SrcNum","Optode.Source.SrcNum",src,cfg->srcnum,valueint);
            subitem=FIND_JSON_OBJ("Pattern","Optode.Source.Pattern",src);
            if(subitem){
@@ -2238,8 +2283,10 @@ int mcx_loadjson(cJSON *root, Config *cfg){
         char val[1];
 	if(!flagset['E'])  cfg->seed=FIND_JSON_KEY("RNGSeed","Session.RNGSeed",Session,-1,valueint);
         if(!flagset['n'])  cfg->nphoton=FIND_JSON_KEY("Photons","Session.Photons",Session,0,valuedouble);
+        if(!flagset['H'])  cfg->maxdetphoton=FIND_JSON_KEY("MaxDetPhoton","Session.MaxDetPhoton",Session,cfg->maxdetphoton,valuedouble);
         if(cfg->session[0]=='\0')  strncpy(cfg->session, FIND_JSON_KEY("ID","Session.ID",Session,"default",valuestring), MAX_SESSION_LENGTH);
         if(cfg->rootpath[0]=='\0') strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath","Session.RootPath",Session,"",valuestring), MAX_PATH_LENGTH);
+        if(!flagset['B'])  strncpy(cfg->bc, FIND_JSON_KEY("BCFlags","Session.BCFlags",Session,cfg->bc,valuestring), 12);
 
         if(!flagset['b'])  cfg->isreflect=FIND_JSON_KEY("DoMismatch","Session.DoMismatch",Session,cfg->isreflect,valueint);
         if(!flagset['S'])  cfg->issave2pt=FIND_JSON_KEY("DoSaveVolume","Session.DoSaveVolume",Session,cfg->issave2pt,valueint);
@@ -2273,6 +2320,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
                 MCX_ERROR(-2,"the specified output data type is not recognized");
         }
 	if(!flagset['O']) cfg->outputtype=val[0];
+        if(!flagset['e']) cfg->minenergy=FIND_JSON_KEY("MinEnergy","Session.MinEnergy",Session,cfg->minenergy,valuedouble);
      }
      if(Forward){
         uint gates;
@@ -2630,9 +2678,10 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
      }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
         memcpy(cfg->vol,inputvol,(datalen<<3));
      }
+     int medianum=MAX(cfg->medianum,cfg->polmedianum+1);
      if(cfg->mediabyte<=4)
        for(i=0;i<datalen;i++){
-         if(cfg->vol[i]>=cfg->medianum)
+         if(cfg->vol[i]>=medianum)
             MCX_ERROR(-6,"medium index exceeds the specified medium types");
      }
      if(!isbuf && (cfg->mediabyte<4 || cfg->mediabyte==MEDIA_AS_F2H))
