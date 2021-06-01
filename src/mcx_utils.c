@@ -1397,7 +1397,8 @@ void mcx_prep_polarized(Config *cfg){
 
 void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
     double _Complex *D,*s1,*s2;
-    double _Complex z1,an,bn;
+    double _Complex z1=0.+I*0.;
+    double _Complex an,bn;
     double *pi0,*pi1,*tau;
     double _Complex xi,xi0,xi1;
     double psi0,psi1;
@@ -1405,7 +1406,7 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
     long n,k,nstop,sign;
     
     if(x<=0.0) MCX_ERROR(-6,"sphere size must be positive");
-    if(x>20000.f) MCX_ERROR(-6,"spheres with x>20000 are not validated");
+    if(x>20000.0) MCX_ERROR(-6,"spheres with x>20000 are not validated");
     
     if((creal(m)==0 && x<0.1) || (creal(m)>0.0 && cabs(m)*x<0.1)){
         small_Mie(x,m,mu,smatrix,qsca);
