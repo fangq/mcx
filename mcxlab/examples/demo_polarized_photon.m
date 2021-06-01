@@ -54,7 +54,7 @@ cfg1.srciquv=[1.0, 1.0, 0.0, 0.0];
 cfg1.savedetflag='ixvspw';
 
 % cyclic boundary condition towards -x, +x, -y and +y direction
-cfg1.bc='cc_cc_001000'; % for reflectance; use 'cc_cc_000001' instead for transmittance
+cfg1.bc='______001000'; % for reflectance; use '______000001' instead for transmittance
 
 % photon number
 cfg1.nphoton=1e7; 

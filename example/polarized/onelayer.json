@@ -4,7 +4,7 @@
 		"DoMismatch": 0,
 		"DoAutoThread": 1,
 		"MaxDetPhoton": 10000000,
-		"BCFlags": "cc_cc_001000",
+		"BCFlags": "______001000",
 		"SaveDataMask": "IXVSPW",
 		"Photons": 10000000,
 		"MinEnergy": 0.01
