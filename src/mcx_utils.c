@@ -1369,11 +1369,11 @@ void mcx_prep_polarized(Config *cfg){
         prop[i+1].g=(float)i; // g will store the index that points to the corresponding smatrix
         
         /* for (i-1)th sphere(r, rho, nsph)-background medium(nmed) combination, compute mus and s-matrix */
-        double x,qsca,A;
+        double x,A,qsca,g;
         x=2.0*ONE_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
         A=ONE_PI*polprop[i].r*polprop[i].r;                           // cross-sectional area in micron^2
         double _Complex m=(polprop[i].nsph+I*0.0)/polprop[i].nmed;      // complex relative refractive index (unitless)
-        Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca);
+        Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca,&g);
         
         /* compute scattering coefficient (in mm^-1) */
         prop[i+1].mus=qsca*A*polprop[i].rho*1e3;
@@ -1395,10 +1395,10 @@ void mcx_prep_polarized(Config *cfg){
  * @param[out] qsca: scattering efficiency
  */
 
-void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
+void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g){
     double _Complex *D,*s1,*s2;
     double _Complex z1=0.+I*0.;
-    double _Complex an,bn;
+    double _Complex an,bn,bnm1,anm1;
     double *pi0,*pi1,*tau;
     double _Complex xi,xi0,xi1;
     double psi0,psi1;
@@ -1408,8 +1408,8 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
     if(x<=0.0) MCX_ERROR(-6,"sphere size must be positive");
     if(x>20000.0) MCX_ERROR(-6,"spheres with x>20000 are not validated");
     
-    if((creal(m)==0 && x<0.1) || (creal(m)>0.0 && cabs(m)*x<0.1)){
-        small_Mie(x,m,mu,smatrix,qsca);
+    if((creal(m)==0.0 && x<0.1) || (creal(m)>0.0 && cabs(m)*x<0.1)){
+        small_Mie(x,m,mu,smatrix,qsca,g);
         return;
     }
     
@@ -1436,13 +1436,16 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
     xi0=psi0+I*cos(x);
     xi1=psi1+I*(cos(x)/x+sin(x));
     *qsca=0.0;
+    *g=0.0;
     sign=1;
+    anm1=0.0+I*0.0;
+    bnm1=0.0+I*0.0;
 
     for(n=1;n<=nstop;n++){
         if(creal(m)==0.0){
             an=(n*psi1/x-psi0)/(n/x*xi1-xi0);
             bn=psi1/xi1;
-        }else if(cimag(m)==0){
+        }else if(cimag(m)==0.0){
             z1=creal(D[n])/creal(m)+n/x+I*cimag(z1);
             an=(creal(z1)*psi1-psi0)/(creal(z1)*xi1-xi0);
             
@@ -1474,6 +1477,8 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
         }
         
         factor=2.0*n+1.0;
+        *g+=(n-1.0/n)*(creal(anm1)*creal(an)+cimag(anm1)*cimag(an)+creal(bnm1)*creal(bn)+cimag(bnm1)*cimag(bn));
+        *g+=factor/n/(n+1.0)*(creal(an)*creal(bn)+cimag(an)*cimag(bn));
         *qsca+=factor*(cabs(an)*cabs(an)+cabs(bn)*cabs(bn));
         sign*=-1;
         
@@ -1485,9 +1490,12 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
         psi0=psi1;
         psi1=creal(xi1);
         
+        anm1=an;
+        bnm1=bn;
     }
     /* compute scattering efficiency and smatrix */
-    (*qsca)*=2/(x*x);
+    (*qsca)*=2.0/(x*x);
+    (*g)*=4.0/(*qsca)/(x*x);
     for(int i=0;i<NANGLES;i++){
         smatrix[i].x=0.5*cabs(s2[i])*cabs(s2[i])+0.5*cabs(s1[i])*cabs(s1[i]);
         smatrix[i].y=0.5*cabs(s2[i])*cabs(s2[i])-0.5*cabs(s1[i])*cabs(s1[i]);
@@ -1512,7 +1520,7 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
  * @param[out] qsca: scattering efficiency
  */
 
-void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca){
+void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g){
     double _Complex ahat1,ahat2,bhat1;
     double _Complex z0,m2,m4;
     double x2,x3,x4;
@@ -1568,6 +1576,7 @@ void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, d
         
         T=cabs(ahat1)*cabs(ahat1)+cabs(bhat1)*cabs(bhat1)+5.0/3.0*cabs(ahat2)*cabs(ahat2);
         *qsca=6.0*x4*T;
+        *g=(creal(ahat1)*(creal(ahat2)+creal(bhat1))+cimag(ahat1)*(cimag(ahat2)+cimag(bhat1)))/T;
     }
     {
         double muj,angle;

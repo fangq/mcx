@@ -305,8 +305,8 @@ void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg);
 int  mcx_svmc_bgvoxel(int vol);
 void mcx_prep_polarized(Config *cfg);
-void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca);
-void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca);
+void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
+void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
 double _Complex Lentz_Dn(double _Complex z,long n);
 void Dn_up(double _Complex z, long nstop, double _Complex *D);
 void Dn_down(double _Complex z, long nstop, double _Complex *D);
