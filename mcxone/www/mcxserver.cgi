@@ -34,20 +34,17 @@ if(&V("license") eq ''){
   $dbname="mcxpub";
 }
 
-print "Content-Type: application/javascript\n\n";
+print $q -> header( 
+    -type => 'application/javascript', 
+    -access_control_allow_origin => 'http://mcx.space', 
+    -access_control_allow_headers => 'content-type,X-Requested-With', 
+    -access_control_allow_methods => 'GET,POST,OPTIONS', 
+    -access_control_allow_credentials => 'true', 
+);
 
 if(&V("callback") ne ''){
     $callback=&V("callback");
 }
-
-# for stability, we are setting a few limitations to the simulations submitted
-# if you are building a private mcx cloud, please disable the below if-block 
-# by adding "&& false" in the condition
-
-if(&V('json') =~/"RNGSeed"/){
-   checklimit(decode_json(&V('json')));
-}
-
 
 if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clicks on "Load" in the Browse tab
     my $ct=&V("id");
@@ -88,8 +85,8 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
     $md5key=md5_hex(&V("json"));
     if(&V("title") =~ /^(.*)\{ID=(\d+)\}$/){  # for admin use to update entry
-        $sth=$dbh->prepare("update $dbname set title=?,comment=?,license=?,name=?,inst=?,email=?,netname=?,json=?,thumbnail=? where time = $2");
-        $sth->execute($1,&V("comment"),&V("license"),&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"));
+        $sth=$dbh->prepare("update $dbname set title=?,comment=?,license=?,name=?,inst=?,email=?,netname=?,json=?,thumbnail=?,hash=? where time = $2");
+        $sth->execute($1,&V("comment"),&V("license"),&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key);
     }else{
         $sth=$dbh->prepare("insert into $dbname (time,title,comment,license,name,inst,email,netname,json,thumbnail,hash,createtime,ip) values (?,?,?,?,?,?,?,?,?,?,?,?,?)");
         $sth->execute($savetime,&V("title"),&V("comment"),&V("license"),&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key,$savetime,$ENV{"REMOTE_ADDR"});
@@ -99,6 +96,17 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
 }elsif(&V("email") ne '' && &V("json") ne ''){  # add user submitted simulation in the Run tab to the processing queue
     $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
     $md5key=md5_hex(&V("json"));
+
+    # for stability, we are setting a few limitations to the simulations submitted
+    # if you are building a private mcx cloud, please disable the below if-block 
+    # by adding "&& false" in the condition
+
+    if(&V('json') =~/"Photons"/){
+       if($dbh->selectrow_array("select count(*) from mcxpub where hash = '".$md5key."'")==0){
+          checklimit(decode_json(&V('json')));
+       }
+    }
+
     $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,jobid,hash,status,priority,ip) values (?,?,?,?,?,?,?,?,?,?,?)");
     $sth->execute($savetime,&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),$jobid,$md5key,1,50,$ENV{"REMOTE_ADDR"});
     $html =$callback.'({"status":"success","jobid":"'.$jobid.'","hash":"'.$md5key.'","dberror":"'.$DBI::errstr.'"})'."\n";
@@ -164,6 +172,7 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     }
 }
 
+$html =~ s/^-\((.*)\)\n$/$1/g;
 print $html;
 
 sub V{
@@ -215,6 +224,7 @@ sub checklimit{
      }
   }
   if($html ne ''){
+     $html =~ s/^-\((.*)\)\n$/$1/g;
      print $html;
      exit;
   }

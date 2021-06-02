@@ -2047,7 +2047,7 @@ function showtab(event, name) {
 
 function updatestatus(data){
   if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
-      var d = new Date();
+      let d = new Date();
       if(data.status === 'invalid'){
          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
          resetjob();
@@ -2078,7 +2078,7 @@ function resetjob(){
 }
 
 function addlog(data){
-  var d = new Date();
+  let d = new Date();
   if(data.hasOwnProperty('status')){
       $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
       if(data.status === 'invalid')
@@ -2094,7 +2094,7 @@ function addlog(data){
       resetjob();
       if(!(lastoutput === ''))
           updatejsonlink("saveoutput", lastoutput, "output.json");
-      var nii = JSON.parse(lastoutput);
+      let nii = JSON.parse(lastoutput);
       drawpreview(nii);
       lastjson = $("#output-textarea").val();
       $("#sharesubmit").prop( "disabled", false );
@@ -2183,30 +2183,30 @@ function checklimit(cfg) {
 }
 
 function runsimulation() {
-  var fullname=$("#fullname").val();
-  var email=$("#email").val();
-  var inst=$("#inst").val();
-  var netname=$("#netname").val();
-  var json=$("#output-textarea").val();
-  var isvalid=$("#validate-textarea").val();
+  let fullname=$("#fullname").val();
+  let email=$("#email").val();
+  let inst=$("#inst").val();
+  let netname=$("#netname").val();
+  let json=$("#output-textarea").val();
+  let isvalid=$("#validate-textarea").val();
 
   if(!(isvalid === 'valid'))
       throw "Input JSON is not valid according to the defined JSON schema";
   if(fullname === "" || email === "" || inst === "" || netname === "")
       throw "required fields are not provided, please type full name (private), email address (private), institute name (private) and net-name (public)";
 
-  if(json!==lastloaded)
+  if(json !== lastloaded)
       checklimit(JSON.parse(json));
 
   $.ajax({
       url: serverurl,
-      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback': 'updatestatus' },
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback':'-' },
       type: 'POST',
       crossOrigin: true,
-      dataType: 'jsonp',
-      jsonp: 'callback',
-      jsonpCallback: 'updatestatus',
-      success: function( data ){},
+      dataType: 'json',
+      success: function( data ){
+         updatestatus(data);
+      },
       error: function(xhr,status,error) {
          $("#run-log").val($("#run-log").val()+"\n"+"runsimulation error: "+status);
       }
@@ -2218,15 +2218,15 @@ function sharecomplete(data){
 }
 
 function sharesimulation() {
-  var fullname=$("#sfullname").val();
-  var email=$("#semail").val();
-  var inst=$("#sinst").val();
-  var netname=$("#snetname").val();
-  var comment=$("#sdescription").val();
-  var json=$("#output-textarea").val();
-  var title=$("#stitle").val();
-  var license=$("input[name='slicense']:checked").val();
-  var thumb=$("#thumbnail").prop('src');
+  let fullname=$("#sfullname").val();
+  let email=$("#semail").val();
+  let inst=$("#sinst").val();
+  let netname=$("#snetname").val();
+  let comment=$("#sdescription").val();
+  let json=$("#output-textarea").val();
+  let title=$("#stitle").val();
+  let license=$("input[name='slicense']:checked").val();
+  let thumb=$("#thumbnail").prop('src');
 
   if(fullname === "" || email === "" || json === "" || comment==="" || title ==="" || license === undefined)
      throw "Required fields are not provided";
@@ -2235,13 +2235,12 @@ function sharesimulation() {
       url: serverurl,
       data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 
               'title': encodeURIComponent(title), 'comment': encodeURIComponent(comment), 
-	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': 'sharecomplete' },
+	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': '-' },
       type: 'POST',
       crossOrigin: true,
-      dataType: 'jsonp',
-      jsonp: 'callback',
-      jsonpCallback: 'sharecomplete',
+      dataType: 'json',
       success: function( data ){
+         sharecomplete(data);
       },
       error: function(xhr,status,error) {
          alert("sharesimulation error: "+status);
@@ -2311,7 +2310,7 @@ function resetscene(s){
 
 function drawshape(shape,index){
   let keys = Object.keys(shape);
-  let obj, c0, c1, dc, height;
+  let obj, c0, c1, dc, height, geometry, material;
   const dir={XLayers:0,YLayers:1,ZLayers:2,XSlabs:0,YSlabs:1,ZSlabs:2};
 
   switch(keys[0]){
@@ -2353,9 +2352,9 @@ function drawshape(shape,index){
       }
       break;
     case "Sphere":
-      var geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
+      geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
       //geometry.applyMatrix4( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
-      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
+      material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
       obj = new THREE.Mesh( geometry, material );
       obj.position.set(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]);
       boundingbox.add( obj );
@@ -2365,13 +2364,13 @@ function drawshape(shape,index){
       c1 = new THREE.Vector3( shape.Cylinder.C1[0],shape.Cylinder.C1[1],shape.Cylinder.C1[2] );
       dc=c1;
       height= c0.distanceTo(c1);
-      var geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
+      geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
       geometry.translate( 0, height / 2, 0 );
       geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
       dc.sub(c0).normalize();
       geometry.lookAt( dc );
       geometry.translate((c0.x+c1.x), (c0.y+c1.y), (c0.z+c1.z))
-      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
+      material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
       obj = new THREE.Mesh( geometry, material );
       boundingbox.add( obj );
       break;
@@ -2426,7 +2425,7 @@ function drawdet(obj,index){
 
 function isWebGL2Available (){
   try {
-    var canvas = document.createElement( 'canvas' );
+    let canvas = document.createElement( 'canvas' );
     return !! ( window.WebGL2RenderingContext && canvas.getContext( 'webgl2' ) );
   } catch ( e ) {
     return false;
@@ -2545,7 +2544,7 @@ function drawpreview(cfg){
 }
 
 function mulberry32(a) {
-      var t = a += 0x6D2B79F5;
+      let t = a += 0x6D2B79F5;
       t = Math.imul(t ^ t >>> 15, t | 1);
       t ^= t + Math.imul(t ^ t >>> 7, t | 61);
       return ((t ^ t >>> 14) >>> 0);
@@ -2566,7 +2565,9 @@ function update() {
 function loadpubsimu(data){
   $("#output-textarea").val(data.json);
   $("#setvalue").click();
-  lastloaded=$("#output-textarea").val();
+  sleep(100).then(() => {
+      lastloaded=$("#output-textarea").val();
+  });
 }
 function loadsimulib(key,time){
   if (confirm('Are you sure you want to replace the current simulation settings by the selected one?')) {
