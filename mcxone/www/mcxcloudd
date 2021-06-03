@@ -117,7 +117,7 @@ if(defined $sth->[0]){
                  or die "Couldn't prepare statement: ";
     $sth0->execute();
 
-    $dockercmd='docker service create --user "6047:503" --restart-condition=on-failure --mount '
+    $dockercmd='docker service create --user "6047:503" --restart-condition=none --mount '
                .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
                .'--update-monitor 1s '
                .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
