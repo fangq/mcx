@@ -11,7 +11,7 @@ die if(not ($ENV{"HTTP_REFERER"} =~ /^https*:\/\/mcx\.space/));
 
 my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$md5key,$callback,$jobhash);
 my $q = new CGI;
-my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output');
+my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output', 10=>'use cached data');
 
 # Default paths for storage of the job/simulation database and simulation work folders
 # both folders must be symbolic links pointing to network-shared folders via NSF that
@@ -86,10 +86,10 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     $md5key=md5_hex(&V("json"));
     if(&V("title") =~ /^(.*)\{ID=(\d+)\}$/){  # for admin use to update entry
         $sth=$dbh->prepare("update $dbname set title=?,comment=?,license=?,name=?,inst=?,email=?,netname=?,json=?,thumbnail=?,hash=? where time = $2");
-        $sth->execute($1,&V("comment"),&V("license"),&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key);
+        $sth->execute($1,&V("comment"),&V("license"),&V("fullname"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key);
     }else{
         $sth=$dbh->prepare("insert into $dbname (time,title,comment,license,name,inst,email,netname,json,thumbnail,hash,createtime,ip) values (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $sth->execute($savetime,&V("title"),&V("comment"),&V("license"),&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key,$savetime,$ENV{"REMOTE_ADDR"});
+        $sth->execute($savetime,&V("title"),&V("comment"),&V("license"),&V("fullname"),&V("inst"),&V("email"),&V("netname"),&V("json"),&V("thumbnail"),$md5key,$savetime,$ENV{"REMOTE_ADDR"});
     }
     $html =$callback.'({"status":"success","createtime":"'.$savetime.'","hash":"'.$md5key.'","dberror":"'.$DBI::errstr.'"})'."\n";
     $dbh->disconnect() or die($DBI::errstr);
@@ -108,7 +108,7 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     }
 
     $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,jobid,hash,status,priority,ip) values (?,?,?,?,?,?,?,?,?,?,?)");
-    $sth->execute($savetime,&V("name"),&V("inst"),&V("email"),&V("netname"),&V("json"),$jobid,$md5key,1,50,$ENV{"REMOTE_ADDR"});
+    $sth->execute($savetime,&V("fullname"),&V("inst"),&V("email"),&V("netname"),&V("json"),$jobid,$md5key,0,50,$ENV{"REMOTE_ADDR"});
     $html =$callback.'({"status":"success","jobid":"'.$jobid.'","hash":"'.$md5key.'","dberror":"'.$DBI::errstr.'"})'."\n";
 
     # update library
@@ -146,7 +146,11 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
               close(FF);
               $logstr=join("\n",@logs);
           }
-          $status=4;
+          if($jobid eq $jobhash){
+              $status=10;
+          }else{
+              $status=4;
+          }
           my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'output'=>$outstr, 'log'=>$logstr);
           $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
         }else{ # when the output file is currently being written
@@ -185,7 +189,7 @@ sub V{
 sub checklimit{
   my ($req)=@_;
   my $html;
-  if($req->{'Session'}->{'Photons'}>=1e7){
+  if($req->{'Session'}->{'Photons'}>1e7){
      $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the max photon number is limited to 1e7 in this preview version"})'."\n";
   }
   if($html eq '' && defined($req->{'Session'}->{'DebugFlag'}) && $req->{'Session'}->{'DebugFlag'} =~ /m/i){

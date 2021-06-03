@@ -455,6 +455,7 @@ img.simupreview{
   <li>JData Specifications (<a href="http://openjdata.org/">http://openjdata.org/</a>)</li>
   <li>JQuery (<a href="https://jquery.com/">https://jquery.com/</a>)</li>
   <li>Three.js (<a href="https://threejs.org/">https://threejs.org/</a>)</li>
+  <li>Ubuntu Font Family (<a href="https://design.ubuntu.com/font/">https://design.ubuntu.com/font/</a>)</li>
   <li>FontAwesome (<a href="https://fontawesome.com/">https://fontawesome.com/</a>)</li>
   <li>Pako (<a href="https://github.com/nodeca/pako">https://github.com/nodeca/pako</a>)</li>
   <li>Numjs (<a href="https://github.com/nicolaspanel/numjs">https://github.com/nicolaspanel/numjs</a>)</li>
@@ -2154,7 +2155,7 @@ script.
 function checklimit(cfg) {
   if(cfg.Session.hasOwnProperty('Photons') && cfg.Session.Photons>1e7)
       throw new Error('the max photon number is limited to 1e7 in this preview version');
-  else if(cfg.Session.DebugFlag.includes('m')||cfg.Session.DebugFlag.includes('M'))
+  else if(cfg.Session.hasOwnProperty('DebugFlag') && (cfg.Session.DebugFlag.includes('m')||cfg.Session.DebugFlag.includes('M')))
       throw new Error('storing photon trajectories is not supported in this preview version');
   else if(cfg.Forward.T1/cfg.Forward.Dt>20)
       throw new Error('the maximum time gate number is limited to 20 in this preview version');

@@ -3,10 +3,10 @@
 use DBI;
 use JSON::PP;
 use strict;
-my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$sth0,$html,$page,$jobid,$savetime,$dbname,$jobstatus,$dockercmd);
+my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$sth0,$html,$page,$jobid,$savetime,$dbname,$status,$dockercmd);
 my $req;
 
-my %jobstatus=('0'=>'queued','1'=>'initiated','2'=>'created','3'=>'running','4'=>'completed','5'=>'deleted','6'=>'failed','7'=>'invalid');
+my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output', 10=>'use cached data');
 
 $DBName="dbi:SQLite:dbname=db/mcxcloud.db";
 $DBUser="";
@@ -14,6 +14,25 @@ $DBPass="";
 %DBErr=(RaiseError=>0,PrintError=>1);
 $dbname="mcxcloud";
 $savetime=time();
+
+# delete all jobs running over 1 min, if --kill is attached
+
+if(grep(/--kill/,@ARGV)){
+    my @joblist=`docker service ls | grep 'fangqq/mcx:v20'| cut -f 1 -d" " | xargs docker service ps | grep 'Running [0-9]* minute' | cut -f 1,4 -d" "`;
+    chomp @joblist;
+    if(@joblist>0){
+        my @jobid;
+        foreach my $job (@joblist){
+            if($job=~/^(\w+)\s+(\w+)\./){
+                push(@jobid,$1);
+                system("touch workspace/$2/killed");
+                print "killed overtime job: $2\n";
+            }
+        }
+        system("docker service rm ".join(' ',@jobid)) if(@jobid>0);
+    }
+    exit;
+}
 
 # delete all expired folder (1 hr or older), if --clean is attached
 
@@ -63,25 +82,28 @@ my $remainingjob=$maxjob-($#activejob+1);
 
 $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
 
-$sth=$dbh->selectall_arrayref("select time,jobid,json,hash from $dbname where status=1 limit $remainingjob;");
+$sth=$dbh->selectall_arrayref("select time,jobid,json,hash from $dbname where status=0 limit $remainingjob;");
 if(defined $sth->[0]){
   foreach my $rec (@{$sth}){
     my ($savetime,$jobid,$json,$jobhash)=@$rec;
     tprint("updating job $jobid");
 
     if(-d "workspace/_${jobhash}" && not -d "workspace/$jobid"){
-        tprint("cached job found, skip");
-        $dbh->disconnect() or die($DBI::errstr);
-        exit;
+        tprint("cached job found $jobhash $jobid, skip");
+        $status=10;
+        $sth0=$dbh->prepare("update $dbname set status=$status where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+        $sth0->execute();
+        next;
     }
     if(-d "workspace/$jobid"){
-        $jobstatus=1;
+        $status=1;
     }else{
         mkdir("workspace/$jobid", 0777);
     }
 
     if(-e "workspace/$jobid/input.json" && not -z "workspace/$jobid/input.json"){
-        $jobstatus=2;
+        $status=2;
     }else{
         open(FF, ">workspace/$jobid/input.json") or die("can not write to output folder");
         print FF "$json\n";
@@ -90,8 +112,8 @@ if(defined $sth->[0]){
 
     tprint("starting job $jobid");
 
-    $jobstatus=3;
-    $sth0=$dbh->prepare("update $dbname set status=$jobstatus where jobid='$jobid';")
+    $status=3;
+    $sth0=$dbh->prepare("update $dbname set status=$status where jobid='$jobid';")
                  or die "Couldn't prepare statement: ";
     $sth0->execute();
 
