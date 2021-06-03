@@ -574,14 +574,34 @@ img.simupreview{
           "default": true
         },
 	"DebugFlag": {
-          "title": "Debug flags",
-          "type": "string",
-          "default": ""
+	  "oneOf" :[
+	   {
+            "title": "Debug flags",
+            "type": "string",
+            "default": ""
+	   },
+	   {
+            "title": "Debug flags",
+            "type": "integer",
+            "default": 0,
+	    "minimum": 0
+	   }
+	  ]
         },
 	"SaveDataMask": {
-          "title": "Save detected photon flags",
-          "type": "string",
-          "default": "DP"
+	  "oneOf" :[
+	   {
+            "title": "Save detected photon flags",
+            "type": "string",
+            "default": "DP"
+	   },
+	   {
+            "title": "Save detected photon flags",
+            "type": "integer",
+            "default": 5,
+	    "minimum": 0
+	   }
+	  ]
         },
 	"OutputFormat": {
           "title": "Output file format",
@@ -988,7 +1008,7 @@ img.simupreview{
                     "type": "object",
 		    "required": [
 		       "Tag",
-		       "C0",
+		       "CO",
 		       "C1",
 		       "R"
 		    ],
@@ -1320,6 +1340,28 @@ img.simupreview{
           ],
           "minItems": 3,
           "maxItems": 3
+        },
+	"LengthUnit": {
+          "title": "Voxel Size (in mm)",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+	},
+	"MediaFormat": {
+          "title": "Binary Volume Format",
+          "type": "string",
+	  "default": "byte",
+          "enum": [
+                "byte",
+                "short",
+		"svmc",
+		"mixlabel",
+                "labelplus",
+		"muamus_float",
+		"muamus_half",
+		"asgn_byte",
+		"muamus_short"
+              ]
         },
         "VolumeFile": {
           "title": "Volume File",
