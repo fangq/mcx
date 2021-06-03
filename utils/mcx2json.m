@@ -56,6 +56,7 @@ end
 Domain=struct();
 Domain=copycfg(cfg,'issrcfrom0',Domain,'OriginType',0);
 Domain=copycfg(cfg,'unitinmm',Domain,'LengthUnit');
+Domain=copycfg(cfg,'invcdf',Domain,'InverseCDF');
 
 Domain.Media=cell2struct(num2cell(cfg.prop), {'mua','mus','g','n'} ,2)';
 

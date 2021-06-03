@@ -307,6 +307,8 @@ void mcx_initcfg(Config *cfg){
      cfg->isspecular=0;
      cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
+     cfg->nphase=0;
+     cfg->invcdf=NULL;
      memset(cfg->jsonfile,0,MAX_PATH_LENGTH);
      memset(cfg->bc,0,12);
      memset(&(cfg->srcparam1),0,sizeof(float4));
@@ -375,6 +377,8 @@ void mcx_clearcfg(Config *cfg){
      	free(cfg->shapedata);
      if(cfg->extrajson)
      	free(cfg->extrajson);
+     if(cfg->invcdf)
+        free(cfg->invcdf);
      mcx_initcfg(cfg);
 }
 
@@ -1675,6 +1679,23 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 
 	if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
            cfg->unitinmm=cfg->steps.x;
+
+	val=FIND_JSON_OBJ("InverseCDF","Domain.InverseCDF",Domain);
+	if(val){
+	   cfg->nphase=cJSON_GetArraySize(val)+2; /*left-/right-ends are excluded, so added 2*/
+           if(cfg->invcdf)
+	       free(cfg->invcdf);
+	   cfg->invcdf=(float*)calloc(cfg->nphase,sizeof(float));
+	   cfg->invcdf[0]=-1.f; /*left end is always -1.f,right-end is always 1.f*/
+	   vv=val->child;
+	   for(i=1;i<cfg->nphase-1;i++){
+	      cfg->invcdf[i]=vv->valuedouble;
+	      vv=vv->next;
+	      if(cfg->invcdf[i]<cfg->invcdf[i-1] || (cfg->invcdf[i]>1.f || cfg->invcdf[i]<-1.f))
+	         MCX_ERROR(-1,"Domain.InverseCDF contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
+	   }
+	   cfg->invcdf[cfg->nphase-1]=1.f; /*left end is always -1.f,right-end is always 1.f*/
+	}
 
 	val=FIND_JSON_OBJ("VoxelSize","Domain.VoxelSize",Domain);
 	if(val){
