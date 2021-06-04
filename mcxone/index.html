@@ -2083,8 +2083,8 @@ function sleep (time) {
 }
 
 function updatethumb(lastdatastr='', waittime=0){
+  renderer.setSize( canvas.width()/2, canvas.height()/2 );
   if(lastdatastr !== ''){
-    renderer.setSize( canvas.width()/2, canvas.height()/2 );
     let cfg = JSON.parse(lastdatastr);
     drawpreview(cfg);
   }
