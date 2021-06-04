@@ -81,7 +81,6 @@
   width: 24%;
 }
 #thumbnail{
-  width: 40%;
   height: auto;
 }
 section {
@@ -125,13 +124,35 @@ section {
 #mcx1-run input{
   width:49%;
 }
-
+#shareinfo{
+  float:left;
+  width:60%;
+  margin-right: 2em;
+  min-width: 700px;
+}
+#previewinfo{
+  float:left;
+  width:35%;
+}
+#submitshare{
+  overflow: hidden;
+  width: 100%;
+}
 #canvas {
     background-color: #000;
     width: 937px;
     height: 750px;
     border: 1px solid black;
     padding: 0px;
+}
+#run-log, #output-textarea{
+  height: 60vh;
+}
+#schema-textarea{
+  height: 75vh;
+}
+.tab-content > section{
+  height: 95vh;
 }
 .info{
   max-width:60em;
@@ -312,7 +333,7 @@ img.simupreview{
                       class='form-control'></textarea>
     </section>
 
-    <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
+    <section id="mcx1-preview" class='col-8 col-md-8 w-8/8' style="min-width: 1500px">
             <h2>Preview</h2>
 	    <div id="canvas"></div>
 	    <div id="renderpanel">
@@ -344,18 +365,27 @@ img.simupreview{
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
             <h2>Share</h2>
-	    If you wish, you may use the below form to share your simulation by contributing it to our database. Submitted data can be reused by you and other users in the future (required shown in orange).
+	    <p>If you wish, you may use the below form to share your simulation by contributing it to our database. Submitted data can be reused by you and other users in the future (required shown in orange).</p>
+
+	    <div id="shareinfo">
 	    <input id="stitle" class="longinput" name="stitle" type="text" value='' required minlength="3" placeholder="Simulation Title (searchable, can not be empty)">
-	    <textarea id='sdescription' rows="3" style="width: 100%; font-family: monospace;" class='form-control' placeholder="Description (searchable, can not be empty), may include citation information, background and detailed explanations"></textarea>
+	    <textarea id='sdescription' rows="15" style="width: 100%; font-family: monospace;" class='form-control' placeholder="Description (searchable, can not be empty), may include citation information, background and detailed explanations"></textarea>
 	    <input id="sfullname" class="shortinput" name="sfullname" type="text" value='' required minlength="3" placeholder="Your Name (required, public and searchable, may use 'Anonymous' if do not want to be acknowledged)">
 	    <input id="semail" class="shortinput" name="semail" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
 	    <input id="snetname" class="shortinput" name="snetname" type="text" value='' minlength="3" placeholder="Your Network Name (public and searchable)">
 	    <input id="sinst" class="shortinput" name="sinst" type="text" value='' minlength="4" placeholder="Institute/Company (public, can be empty if you do not prefer to include)"><br/>
-	    <label for="thumbnail">Permission</label><input type="radio" id="CC0" name="slicense" value="CC0"><label for="CC0"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/cc-zero.png" title="CC0 (Can be reused for any purpose, you do not claim copyright to the submitted simulation setting/data)"/></label>
+	    <label for="slicense">Permission</label><input type="radio" id="CC0" name="slicense" value="CC0"><label for="CC0"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/cc-zero.png" title="CC0 (Can be reused for any purpose, you do not claim copyright to the submitted simulation setting/data)"/></label>
 	    <input type="radio" id="CC-BY" name="slicense" value="CC-BY"><label for="CC-BY"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by.png" title="CC-BY (Can be reused for any purpose, but reuser must acknowledge the creator)"/></label>
 	    <input type="radio" id="CC-BY-SA" name="slicense" value="CC-BY-SA"><label for="CC-BY-SA"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-sa.png" title="CC-BY-SA (Can be reused for any purpose, but reuser must acknowledge the creator and adaption must be shared under the same terms)"/></label><br/>
-	    <label for="thumbnail">Preview</label><br/><img id="thumbnail" src="" title="Domain Preview"/><br/>
-	    <label for="thumbnail">You must first successfully run your simulation before clicking this button</label><button class='btn btn-primary btn-block' id='sharesubmit' disabled>Submit</button>
+	    </div>
+
+	    <div id="previewinfo">
+	    <label for="thumbnail">Preview</label><br/><img id="thumbnail" src="" title="Domain Preview"/>
+	    </div>
+
+	    <div id="submitshare">
+	    <label for="sharesubmit">You must first successfully run your simulation before clicking this button</label><button class='btn btn-primary btn-block' id='sharesubmit' disabled>Submit</button>
+	    </div>
     </section>
 
     <div id="mcx1-options" class="sidenav">
