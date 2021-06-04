@@ -88,9 +88,6 @@ section {
     width: 100%;
     margin-left: 10px;
 }
-.tab-content section{
-    height: 100vh;
-}
 #site-navigation{
   float:none;
 }
@@ -193,7 +190,6 @@ input:required {
   display:none;
 }
 img.simupreview{
-  float: left;
   width: 200px;
   margin: 2px;
   cursor: pointer;
@@ -230,7 +226,7 @@ img.simupreview{
   position: absolute;
   top: 0;
   left:0;
-  background-color: rgba(48,55,66,0.9);;
+  background-color: rgba(48,55,66,0.95);;
   color: white;
   display:none;
   padding: 100px;
@@ -259,16 +255,16 @@ img.simupreview{
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
 			<ul id="navbar" class="tab nav nav-tabs bigtab">
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-browse" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
 			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
 			<li class="tab-item"><a href="?" title="reload editor with default example settings"><i class="fas fa-undo"></i>Reset</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-options" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
 			</ul>
 		</div>
         </nav><!-- #site-navigation -->
@@ -448,6 +444,7 @@ img.simupreview{
   <a href="javascript:void(0)" class="closebtn" onclick="$('#credits').hide();" title="Close">&times;</a>
   <h1>Acknowledgement</h1>
   <p>We acknowledge that MCX Cloud is built upon the following open-source libraries and resources</p>
+ <div style="float:left;margin-right:3em;">
   <h3>Front-end</h3>
   <ul>
   <li>JSON Editor (<a href="https://github.com/json-editor/json-editor">https://github.com/json-editor/json-editor</a>)</li>
@@ -465,7 +462,9 @@ img.simupreview{
   <li>Bootstrap (<a href="https://getbootstrap.com/">https://getbootstrap.com/</a>)</li>
   <li>Background graphics: <a href="https://www.svgbackgrounds.com/#flat-mountains">SVG Backgrounds</a></li>
   </ul>
-  
+ </div>
+
+ <div style="float:left">
   <h3>Backend</h3>
   <ul>
   <li>Monte Carlo eXtreme (MCX) (<a href="http://mcx.space/">http://mcx.space/</a>)</li>
@@ -475,6 +474,7 @@ img.simupreview{
   <li>DBI (<a href="https://dbi.perl.org/">https://dbi.perl.org/</a>)</li>
   <li>Sqlite (<a href="https://www.sqlite.org/">https://sqlite.org/</a>)</li>
   </ul>
+ </div>
 </section>
 
 <footer>
@@ -2610,6 +2610,7 @@ function loadpubsimu(data){
   $("#setvalue").click();
   sleep(100).then(() => {
       lastloaded=$("#output-textarea").val();
+      updatethumb(lastloaded, 300);
   });
 }
 function loadsimulib(key,time){
