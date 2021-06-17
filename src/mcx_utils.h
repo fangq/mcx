@@ -289,6 +289,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name, int isfloat, Config *cfg);
 void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg);
 int  mcx_svmc_bgvoxel(int vol);
+void mcx_loadseedjdat(char *filename, Config *cfg);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

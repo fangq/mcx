@@ -1350,7 +1350,10 @@ void mcx_prepdomain(char *filename, Config *cfg){
      }
 
      if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
-        mcx_loadseedfile(cfg);
+        if(strstr(cfg->seedfile,".jdat")!=NULL)
+           mcx_loadseedjdat(cfg->seedfile, cfg);
+	else
+           mcx_loadseedfile(cfg);
      }
 
      mcx_preprocess(cfg);
@@ -2320,10 +2323,124 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
 }
 
 
+void mcx_replayprep(int *detid, float *ppath, History *his, Config *cfg){
+       int i,j;
+       float plen;
+       cfg->nphoton=0;
+       for(i=0;i<his->savedphoton;i++){
+           if(cfg->replaydet<=0 || (detid && cfg->replaydet==detid[i])){
+               if(i!=cfg->nphoton)
+                   memcpy((char *)(cfg->replay.seed)+cfg->nphoton*his->seedbyte, (char *)(cfg->replay.seed)+i*his->seedbyte, his->seedbyte);
+               cfg->replay.weight[cfg->nphoton]=1.f;
+               cfg->replay.detid[cfg->nphoton]=(detid!=NULL) ? detid[i]: 1;
+               for(j=0;j<his->maxmedia;j++){
+	           plen=ppath[i*his->maxmedia+j]*his->unitinmm;
+                   cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j+1].mua*plen);
+                   cfg->replay.tof[cfg->nphoton]+=plen*R_C0*cfg->prop[j+1].n;
+               }
+               if(cfg->replay.tof[cfg->nphoton]<cfg->tstart || cfg->replay.tof[cfg->nphoton]>cfg->tend) /*need to consider -g*/
+                   continue;
+               cfg->nphoton++;
+           }
+       }
+       cfg->replay.seed=realloc(cfg->replay.seed, cfg->nphoton*his->seedbyte);
+       cfg->replay.weight=(float*)realloc(cfg->replay.weight, cfg->nphoton*sizeof(float));
+       cfg->replay.tof=(float*)realloc(cfg->replay.tof, cfg->nphoton*sizeof(float));
+       cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
+       cfg->minenergy=0.f;
+}
+
+/**
+ * @brief Load previously saved photon seeds from an .jdat file for replay
+ *
+ * @param[in] filename: the name/path of the .jdat file produced from the baseline simulation
+ * @param[in,out] cfg: simulation configuration
+ */
+
+void mcx_loadseedjdat(char *filename, Config *cfg){
+    char *jbuf;
+    int len;
+
+    if(!(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS  || cfg->outputtype==otRF)){ //do nothing if not replay
+        return;
+    }
+
+    FILE *fp=fopen(filename,"rt");
+    if(fp==NULL)
+        MCX_ERROR(-6,"fail to open the specified seed jdata file");
+
+    fseek (fp, 0, SEEK_END);
+    len=ftell(fp)+1;
+    jbuf=(char *)malloc(len);
+    rewind(fp);
+    if(fread(jbuf,len-1,1,fp)!=1)
+        MCX_ERROR(-2,"reading input file is terminated");
+    jbuf[len-1]='\0';
+    fclose(fp);
+
+    cJSON *root = cJSON_Parse(jbuf);
+    free(jbuf);
+
+    if(root){
+        cJSON *photondata=NULL, *detid=NULL, *info=NULL, *ppathdata=NULL, *seed=NULL, *tmp=NULL;
+	cJSON *obj = cJSON_GetObjectItem(root,"MCXData");
+	if(obj){
+	    photondata=cJSON_GetObjectItem(obj,"PhotonData");
+	    info=cJSON_GetObjectItem(obj,"Info");
+	    if(photondata){
+	        ppathdata=cJSON_GetObjectItem(photondata,"ppath");
+		seed=cJSON_GetObjectItem(photondata,"seed");
+		detid=cJSON_GetObjectItem(photondata,"detid");
+	    }
+	}
+	if(!seed || !ppathdata || !detid || !info)
+	    MCX_ERROR(-1,"invalid jdat file, expect MCXData.PhotonData.seed, .detid and .ppath");
+	if(cJSON_IsObject(seed) && cJSON_IsObject(detid) && cJSON_IsObject(ppathdata) && cJSON_GetObjectItem(seed,"_ArraySize_")){
+            int ndim;
+	    uint dims[3]={1,1,1};
+	    float *ppath=NULL;
+	    char *type;
+	    History his;
+
+	    cJSON *vsize=cJSON_GetObjectItem(seed,"_ArraySize_");
+            if(vsize){
+	       cJSON *tmp=vsize->child;
+	       his.savedphoton=tmp->valueint;
+	       tmp=tmp->next;
+	       his.seedbyte=tmp->valueint;
+	    }
+	    if(info)
+	       his.unitinmm=FIND_JSON_KEY("LengthUnit","LengthUnit",info,1.f,valuedouble);
+	    else
+	       his.unitinmm=1.f;
+
+	    cfg->nphoton=his.savedphoton;
+	    cfg->seed=SEED_FROM_FILE;
+
+	    mcx_jdatadecode((void **)&ppath, &ndim, dims, 2, &type, ppathdata, cfg);
+	    his.maxmedia=dims[1];
+
+	    mcx_jdatadecode((void **)&cfg->replay.seed, &ndim, dims, 2, &type, seed, cfg);
+	    mcx_jdatadecode((void **)&cfg->replay.detid, &ndim, dims, 2, &type, detid, cfg);
+
+	    cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
+	    cfg->replay.tof=(float*)calloc(his.savedphoton,sizeof(float));
+	    mcx_replayprep(cfg->replay.detid, ppath, &his, cfg);
+
+	    if(ppath)
+	        free(ppath);
+	}
+        cJSON_Delete(root);
+    }else{
+	MCX_ERROR(-1,"invalid jdat file");
+    }
+}
+
+
 /**
  * @brief Load previously saved photon seeds from an .mch file for replay
  *
- * @param[in] cfg: simulation configuration
+ * @param[in,out] cfg: simulation configuration
  */
 
 void mcx_loadseedfile(Config *cfg){
@@ -3098,7 +3215,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
                      case 'E':
-				if(i<argc-1 && strstr(argv[i+1],".mch")!=NULL){ /*give an mch file to initialize the seed*/
+				if(i<argc-1 && (strstr(argv[i+1],".mch")!=NULL || strstr(argv[i+1],".jdat")!=NULL) ){ /*give an mch file to initialize the seed*/
 #if defined(USE_LL5_RAND)
 					MCX_ERROR(-1,"seeding file is not supported in this binary");
 #else
