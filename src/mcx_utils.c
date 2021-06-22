@@ -1350,6 +1350,9 @@ void mcx_prepdomain(char *filename, Config *cfg){
      }
 
      if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
+        if(!(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS  || cfg->outputtype==otRF))
+           MCX_FPRINTF(stderr,S_RED "replay is detected but the output datatype (-O) is not one of j,p,m or r\n" S_RESET);
+
         if(strstr(cfg->seedfile,".jdat")!=NULL)
            mcx_loadseedjdat(cfg->seedfile, cfg);
 	else
@@ -2361,10 +2364,6 @@ void mcx_loadseedjdat(char *filename, Config *cfg){
     char *jbuf;
     int len;
 
-    if(!(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS  || cfg->outputtype==otRF)){ //do nothing if not replay
-        return;
-    }
-
     FILE *fp=fopen(filename,"rt");
     if(fp==NULL)
         MCX_ERROR(-6,"fail to open the specified seed jdata file");
@@ -2505,6 +2504,7 @@ void mcx_loadseedfile(Config *cfg){
         cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
 	cfg->minenergy=0.f;
     }
+
     fclose(fp);
 }
 
