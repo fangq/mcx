@@ -1431,7 +1431,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      else if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
-     MCX_ASSERT(fscanf(in,"%s", filename)==1);
+     MCX_ASSERT(fscanf(in,"%1023s", filename)==1);
      if(cfg->rootpath[0]){
 #ifdef WIN32
          sprintf(comment,"%s\\%s",cfg->rootpath,filename);
@@ -1542,7 +1542,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 
      if(in==stdin)
      	fprintf(stdout,"Please specify the source type[pencil|cone|gaussian]:\n\t");
-     if(fscanf(in,"%s", strtypestr)==1 && strtypestr[0]){
+     if(fscanf(in,"%32s", strtypestr)==1 && strtypestr[0]){
         int srctype=mcx_keylookup(strtypestr,srctypeid);
 	if(srctype==-1)
 	   MCX_ERROR(-6,"the specified source type is not supported");
@@ -1562,7 +1562,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
                cfg->srcpattern=(float*)calloc((cfg->srcparam1.w*cfg->srcparam2.w*cfg->srcnum),sizeof(float));
-               MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
+               MCX_ASSERT(fscanf(in, "%1023s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
@@ -1573,7 +1573,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
                cfg->srcpattern=(float*)calloc((int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z*cfg->srcnum),sizeof(float));
-               MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
+               MCX_ASSERT(fscanf(in, "%1023s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
