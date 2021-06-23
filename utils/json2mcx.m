@@ -52,7 +52,7 @@ if(isfield(json,'Optode'))
 	  [Optode.Source.Pattern.Nx,Optode.Source.Pattern.Ny,nz]);
     end
   end
-  if(isfield(json.Optode,'Detector'))
+  if(isfield(json.Optode,'Detector') && ~isempty(json.Optode.Detector))
     cfg.detpos=cell2mat(struct2cell(cell2mat(json.Optode.Detector)')');
   end
 end
@@ -68,7 +68,7 @@ if(isfield(json,'Shapes'))
     cfg.shapes=savejson('',json.Shapes);
 end
 
-if(isfield(json,'Domain'))
+if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
     [fpath, fname, fext]=fileparts(json.Domain.VolumeFile);
     switch(fext)
         case '.json'
