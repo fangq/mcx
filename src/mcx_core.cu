@@ -1492,7 +1492,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        }else{
 		       	   tmp0=(v.nscat > gcfg->gscatter) ? 0.f : prop.g;
                            /** Here we use Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002 */
-                           if(tmp0>EPS){  //< if prop.g is too small, the distribution of theta is bad
+                           if(fabs(tmp0)>EPS){  //< if prop.g is too small, the distribution of theta is bad
 		               tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
 		               tmp0*=tmp0;
 		               tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
