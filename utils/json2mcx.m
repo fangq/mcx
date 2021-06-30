@@ -65,7 +65,7 @@ cfg=copycfg(cfg,'unitinmm',json.Domain,'LengthUnit');
 cfg.prop=squeeze(cell2mat(struct2cell(cell2mat(json.Domain.Media))))';
 
 if(isfield(json,'Shapes'))
-    cfg.shapes=savejson('',json.Shapes);
+    cfg.shapes=savejson('Shapes',json.Shapes);
 end
 
 if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
@@ -103,6 +103,8 @@ if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
         case '.nii'
             cfg.vol=mcxloadnii(json.Domain.VolumeFile);
     end
+else
+    cfg.vol=uint8(zeros(60,60,60));
 end
 
 %% define the simulation session flags
