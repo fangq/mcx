@@ -339,10 +339,10 @@ img.simupreview{
             <h2>Preview</h2>
 	    <div id="canvas"></div>
 	    <div id="renderpanel">
-		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
-		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
 		    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
 		    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>	 
+		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
+		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
 		    <button class='btn btn-primary btn-block' id='drawlastinput'>Draw Last Input</button>
 		    <button class='btn btn-primary btn-block' id='drawlastoutput'>Draw Last Output</button>
 		    <button class='btn btn-primary btn-block' id='updatethumbnail'>Update Thumbnail</button>
@@ -521,7 +521,7 @@ img.simupreview{
   "use strict";
 
   var defaultSchema = {
-  "title": "Settings",
+  "title": "MCX JSON Input",
   "type": "object",
   "required": [
     "Session",
@@ -788,7 +788,7 @@ img.simupreview{
               "maxItems": 4
             },
             "Param2": {
-              "title": "Source Parameter 1",
+              "title": "Source Parameter 2",
               "type": "array",
               "format": "table",
 	      "default": [
@@ -1162,8 +1162,8 @@ img.simupreview{
               "properties": {
 		"ZLayers":{
                     "title": "ZLayers",
-                    "type": "array",
-		    "format": "table",
+		    "type": "array",
+	            "format": "table",
 		    "items": {
 			    "type": "array",
 		            "format": "table",
@@ -1201,16 +1201,12 @@ img.simupreview{
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-				    "type": "array",
-				    "format": "table",
-				    "items": {
-					    "type": "integer",
-					    "minimum": 0,
-					    "default": 0
-				    },
-				    "minItems": 2,
-				    "maxItems": 2
-			    }
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 2,
+			    "maxItems": 2
 			}
 		    }
 		}
@@ -1239,16 +1235,12 @@ img.simupreview{
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-				    "type": "array",
-				    "format": "table",
-				    "items": {
-					    "type": "integer",
-					    "minimum": 0,
-					    "default": 0
-				    },
-				    "minItems": 2,
-				    "maxItems": 2
-			    }
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 2,
+			    "maxItems": 2
 			}
 		    }
 		}
@@ -1277,16 +1269,12 @@ img.simupreview{
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-				    "type": "array",
-				    "format": "table",
-				    "items": {
-					    "type": "integer",
-					    "minimum": 0,
-					    "default": 0
-				    },
-				    "minItems": 2,
-				    "maxItems": 2
-			    }
+				    "type": "integer",
+				    "minimum": 0,
+				    "default": 0
+			    },
+			    "minItems": 2,
+			    "maxItems": 2
 			}
 		    }
 		}
