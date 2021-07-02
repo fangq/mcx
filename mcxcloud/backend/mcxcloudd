@@ -149,7 +149,7 @@ if(defined $sth->[0]){
     $sth0->execute();
     my $seedflag='';
     $seedflag=' --seed -1 ' if $jobid =~/_\d+$/;
-    $dockercmd='docker service create --user "6047:503" --restart-condition=none --mount '
+    $dockercmd='docker service create --user "$(id -u):$(id -g)" --restart-condition=none --mount '
                .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
                .'--update-monitor 1s '
                .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
