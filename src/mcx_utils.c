@@ -1179,6 +1179,14 @@ void mcx_writeconfig(char *fname, Config *cfg){
 void mcx_preprocess(Config *cfg){
     int isbcdet=0;
 
+    double tmp=sqrt(cfg->srcdir.x*cfg->srcdir.x+cfg->srcdir.y*cfg->srcdir.y+cfg->srcdir.z*cfg->srcdir.z);
+    if(tmp<EPS)
+        MCX_ERROR(-4,"source initial direction vector can not have a length of 0");
+    tmp=1.f/tmp;
+    cfg->srcdir.x*=tmp;
+    cfg->srcdir.y*=tmp;
+    cfg->srcdir.z*=tmp;
+
     for(int i=0;i<6;i++)
         if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
