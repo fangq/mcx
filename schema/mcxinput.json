@@ -640,8 +640,8 @@
               "properties": {
 		"ZLayers":{
                     "title": "ZLayers",
-		    "type": "array",
-	            "format": "table",
+                    "type": "array",
+		    "format": "table",
 		    "items": {
 			    "type": "array",
 		            "format": "table",
@@ -679,12 +679,16 @@
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-				    "type": "integer",
-				    "minimum": 0,
-				    "default": 0
-			    },
-			    "minItems": 2,
-			    "maxItems": 2
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
 			}
 		    }
 		}
@@ -713,12 +717,16 @@
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-				    "type": "integer",
-				    "minimum": 0,
-				    "default": 0
-			    },
-			    "minItems": 2,
-			    "maxItems": 2
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
 			}
 		    }
 		}
@@ -747,12 +755,16 @@
 			    "type": "array",
 			    "format": "table",
 			    "items": {
-				    "type": "integer",
-				    "minimum": 0,
-				    "default": 0
-			    },
-			    "minItems": 2,
-			    "maxItems": 2
+				    "type": "array",
+				    "format": "table",
+				    "items": {
+					    "type": "integer",
+					    "minimum": 0,
+					    "default": 0
+				    },
+				    "minItems": 2,
+				    "maxItems": 2
+			    }
 			}
 		    }
 		}
