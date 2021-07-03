@@ -1797,7 +1797,10 @@ var VolumeRenderShader1 = {
 
   var refreshUI = function () {
     // schema
-    schemaTextarea.value = JSON.stringify(data.options.schema, null, 2)
+    if(data.options.hasOwnProperty('schema'))
+       schemaTextarea.value = JSON.stringify(data.options.schema, null, 2)
+    else
+       schemaTextarea.value = defaultSchema;
 
     // theme
     var themeMap = {
@@ -1970,6 +1973,11 @@ var VolumeRenderShader1 = {
     }
 
     initJsoneditor()
+
+    if(data.options.hasOwnProperty('json')){
+       outputTextarea.value = JSON.stringify(data.options.json, null, 2)
+       $("#setvalue").click();
+    }
   }
 
   /* --------------------------------------------------------- initJsoneditor */
@@ -2003,9 +2011,11 @@ var VolumeRenderShader1 = {
   /* ------------------------------------------------------- updateDirectLink */
 
   var updateDirectLink = function () {
-    var url = window.location.href.replace(/\?.*/, '')
+    var url = window.location.href.replace(/\?.*/, '').replace(/#$/,'')
     url += '?data='
-    url += LZString.compressToBase64(JSON.stringify(data))
+    let linkdata=data;
+    delete linkdata.options.schema;
+    url += LZString.compressToBase64(JSON.stringify(linkdata))
     directLink.href = url
   }
 
@@ -2013,6 +2023,8 @@ var VolumeRenderShader1 = {
 
   setValue.addEventListener('click', function () {
     jsoneditor.setValue(JSON.parse(outputTextarea.value))
+    data.options.json = JSON.parse(outputTextarea.value);
+    updateDirectLink();
     updatejsonlink("saveinput", outputTextarea.value, "input.json");
   })
 
