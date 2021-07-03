@@ -313,7 +313,7 @@ img.simupreview{
     </section>
 
     <section id="mcx1-json" class='col-8 col-md-8 w-8/8'>
-            <h2>JSON Output</h2>
+            <h2>JSON Input</h2>
             <p>You can also make changes to the JSON here and set the value in the editor by clicking "Update Form"</p>
             <label for="output-textarea"></label>
             <button class='btn btn-primary btn-block' id='setvalue'>Update Form</button>
@@ -323,7 +323,7 @@ img.simupreview{
             <label for="validate-textarea">This will update whenever the form changes to show validation errors if there
                 are any.</label><br>
             <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
-            <a class='btn btn-primary btn-block' id='saveinput' href="?">Download</a>
+	    <a class='btn btn-primary btn-block' id='saveinput' href="#">Download Input</a>
     </section>
 
     <section id="mcx1-schema" class='col-8 col-md-8 w-8/8'>
@@ -341,11 +341,15 @@ img.simupreview{
 	    <div id="renderpanel">
 		    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
 		    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>	 
+		    <div style="display:none">
 		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
 		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
+		    </div>
 		    <button class='btn btn-primary btn-block' id='drawlastinput'>Draw Last Input</button>
 		    <button class='btn btn-primary btn-block' id='drawlastoutput'>Draw Last Output</button>
 		    <button class='btn btn-primary btn-block' id='updatethumbnail'>Update Thumbnail</button>
+		    <hr/>
+		    <a class='btn btn-primary btn-block' id='saveoutput' href="#">Download Output</a>
 	    </div>
     </section>
 
@@ -362,7 +366,6 @@ img.simupreview{
 
             <label for="run-log">Job status</label>
 	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;" class='form-control'></textarea>
-            <a class='btn btn-primary btn-block' id='saveoutput' href="?">Download Output</a>
     </section>
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
@@ -2629,8 +2632,9 @@ function mulberry32(a) {
 function updatejsonlink(linkid, text, name) {
   const a = document.getElementById(linkid);
   const type = name.split(".").pop();
-  a.href = URL.createObjectURL( new Blob([text], { type:`text/${type === "txt" ? "plain" : type}` }) );
+  a.href = URL.createObjectURL( new Blob([text.replace(/\n/g, "\r\n")], { type:`text/${type === "txt" ? "plain" : type}` }) );
   a.download = name;
+  $("#"+linkid).prop( "disabled", false );
 }
 
 function update() {
