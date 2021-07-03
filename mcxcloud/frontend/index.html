@@ -278,13 +278,13 @@ img.simupreview{
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
 			<ul id="navbar" class="tab nav nav-tabs bigtab">
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
+			<li class="tab-item"><a id="menu-browse" data-toggle="tab" href="#" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
+			<li class="tab-item"><a id="menu-create" data-toggle="tab" href="#" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
+			<li class="tab-item"><a id="menu-json"   data-toggle="tab" href="#" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
+			<li class="tab-item"><a id="menu-preview" data-toggle="tab" href="#" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
+			<li class="tab-item"><a id="menu-run"    data-toggle="tab" href="#" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
+			<li class="tab-item"><a id="menu-share"  data-toggle="tab" href="#" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
+			<li class="tab-item"><a id="menu-schema" data-toggle="tab" href="#" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
 			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
 			<li class="tab-item"><a href="?" title="reload editor with default example settings"><i class="fas fa-undo"></i>Reset</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
@@ -1779,7 +1779,10 @@ var VolumeRenderShader1 = {
             data = JSON.parse(LZString.decompressFromBase64(value))
           } catch (reason) {
           }
-        }
+        }else if (param === 'tab') {
+	  lastjson='';
+	  showtab({'target': document.querySelector('#menu-'+value)}, value)
+	}
       })
     }
 
