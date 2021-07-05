@@ -2016,7 +2016,7 @@ var VolumeRenderShader1 = {
   var updateDirectLink = function () {
     var url = window.location.href.replace(/\?.*/, '').replace(/#$/,'')
     url += '?data='
-    let linkdata=data;
+    let linkdata=Object.create(data);
     delete linkdata.options.schema;
     url += LZString.compressToBase64(JSON.stringify(linkdata))
     directLink.href = url
@@ -2025,8 +2025,8 @@ var VolumeRenderShader1 = {
   /* -------------------------------------------------------- event listeners */
 
   setValue.addEventListener('click', function () {
-    jsoneditor.setValue(JSON.parse(outputTextarea.value))
-    data.options.json = JSON.parse(outputTextarea.value);
+    jsoneditor.setValue(JSON.parse(outputTextarea.value.replace(/\n/g,'')))
+    data.options.json = outputTextarea.value;
     updateDirectLink();
     updatejsonlink("saveinput", outputTextarea.value, "input.json");
   })
