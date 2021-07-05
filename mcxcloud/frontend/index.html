@@ -1765,6 +1765,7 @@ var VolumeRenderShader1 = {
     var url = window.location.search
     var queryParamsString = url.substring(1, url.length)
     var queryParams = queryParamsString.split('&')
+    let inittab=''
 
     if (queryParamsString.length) {
       queryParams.forEach(function (queryParam) {
@@ -1780,13 +1781,17 @@ var VolumeRenderShader1 = {
           } catch (reason) {
           }
         }else if (param === 'tab') {
-	  lastjson='';
-	  showtab({'target': document.querySelector('#menu-'+value)}, value)
+          inittab=value;
 	}
       })
     }
 
     mergeOptions()
+
+    if(inittab!==''){
+	  lastjson='';
+	  showtab({'target': document.querySelector('#menu-'+inittab)}, inittab)
+    }
   }
 
   /* ----------------------------------------------------------- mergeOptions */
@@ -2025,8 +2030,8 @@ var VolumeRenderShader1 = {
   /* -------------------------------------------------------- event listeners */
 
   setValue.addEventListener('click', function () {
-    jsoneditor.setValue(JSON.parse(outputTextarea.value.replace(/\n/g,'')))
-    data.options.json = outputTextarea.value;
+    data.options.json = JSON.parse(outputTextarea.value.replace(/\n/g,''));
+    jsoneditor.setValue(data.options.json)
     updateDirectLink();
     updatejsonlink("saveinput", outputTextarea.value, "input.json");
   })
