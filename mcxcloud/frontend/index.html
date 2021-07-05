@@ -2016,7 +2016,7 @@ var VolumeRenderShader1 = {
   var updateDirectLink = function () {
     var url = window.location.href.replace(/\?.*/, '').replace(/#$/,'')
     url += '?data='
-    let linkdata=Object.create(data);
+    let linkdata={options: Object.assign({},data.options)};
     delete linkdata.options.schema;
     url += LZString.compressToBase64(JSON.stringify(linkdata))
     directLink.href = url
