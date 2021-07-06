@@ -810,9 +810,24 @@
 		      ]
 	      },
 	      "_ArrayZipSize_":{
-		  "type": "integer",
-		  "default": 0,
-		  "minimum": 0
+	          "oneOf" :[
+		      {
+			  "type": "integer",
+			  "default": 0,
+			  "minimum": 0
+		      },
+		      {
+			  "type": "array",
+			  "default": [0,0],
+			  "format": "table",
+			  "items": {
+			      "type": "integer",
+			      "minimum": 0
+			  },
+			  "minItems": 2,
+			  "maxItems": 2
+		      }
+		  ]
 	      },
 	      "_ArrayZipData_":{
 		  "type": "string",
