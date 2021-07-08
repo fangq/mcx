@@ -1696,19 +1696,22 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 
 	val=FIND_JSON_OBJ("InverseCDF","Domain.InverseCDF",Domain);
 	if(val){
-	   cfg->nphase=cJSON_GetArraySize(val)+2; /*left-/right-ends are excluded, so added 2*/
+	   int nphase=cJSON_GetArraySize(val);
+	   cfg->nphase=nphase+2; /*left-/right-ends are excluded, so added 2*/
+	   cfg->nphase+=(cfg->nphase & 0x1); /* make cfg.nphase even number */
            if(cfg->invcdf)
 	       free(cfg->invcdf);
 	   cfg->invcdf=(float*)calloc(cfg->nphase,sizeof(float));
 	   cfg->invcdf[0]=-1.f; /*left end is always -1.f,right-end is always 1.f*/
 	   vv=val->child;
-	   for(i=1;i<cfg->nphase-1;i++){
+	   for(i=1;i<=nphase;i++){
 	      cfg->invcdf[i]=vv->valuedouble;
 	      vv=vv->next;
 	      if(cfg->invcdf[i]<cfg->invcdf[i-1] || (cfg->invcdf[i]>1.f || cfg->invcdf[i]<-1.f))
 	         MCX_ERROR(-1,"Domain.InverseCDF contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
 	   }
-	   cfg->invcdf[cfg->nphase-1]=1.f; /*left end is always -1.f,right-end is always 1.f*/
+	   cfg->invcdf[nphase+1]=1.f; /*left end is always -1.f,right-end is always 1.f*/
+	   cfg->invcdf[cfg->nphase-1]=1.f;
 	}
 
 	val=FIND_JSON_OBJ("VoxelSize","Domain.VoxelSize",Domain);

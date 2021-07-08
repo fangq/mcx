@@ -721,6 +721,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	double *val=mxGetPr(item);
 	if(cfg->invcdf) free(cfg->invcdf);
 	cfg->nphase=(unsigned int)nphase+2;
+	cfg->nphase+=(cfg->nphase & 0x1); // make cfg.nphase even number
         cfg->invcdf=(float*)calloc(cfg->nphase,sizeof(float));
         for(i=0;i<nphase;i++){
              cfg->invcdf[i+1]=val[i];
@@ -729,7 +730,8 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	}
 	cfg->invcdf[0]=-1.f;
 	cfg->invcdf[nphase+1]=1.f;
-        printf("mcx.invcdf=[%ld];\n",nphase);
+	cfg->invcdf[cfg->nphase-1]=1.f;
+        printf("mcx.invcdf=[%ld];\n",cfg->nphase);
     }else if(strcmp(name,"shapes")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
