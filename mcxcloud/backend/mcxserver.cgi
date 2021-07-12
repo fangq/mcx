@@ -188,6 +188,12 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
           my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid);
           $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
         }
+    }elsif(-e "$workspace/$jobid/done" && not -z "$workspace/$jobid/error.txt"){ # MCX encountered an error
+        $status=6;
+        open FF, "<$workspace/$jobid/error.txt" || die("can not open error file");
+        chomp(my @lines = <FF>);
+        close(FF);
+        $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'", "dberror": "'.join(/\n/,@lines).'"})'."\n";
     }elsif(-e "$workspace/$jobid/input.json" && not -z "$workspace/$jobid/input.json"){ # when a job is started, the input file is written to the work folder
         $status=2;
         $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'"})'."\n";

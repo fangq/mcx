@@ -285,7 +285,7 @@ img.simupreview{
 			<li class="tab-item"><a id="menu-run"    data-toggle="tab" href="#" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
 			<li class="tab-item"><a id="menu-share"  data-toggle="tab" href="#" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
 			<li class="tab-item"><a id="menu-schema" data-toggle="tab" href="#" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
-			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
+			<li class="tab-item"><a id="direct-link" title="preserves JSON settings and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
 			<li class="tab-item"><a href="?" title="reload editor with default example settings"><i class="fas fa-undo"></i>Reset</a></li>
 			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
 			</ul>
@@ -296,7 +296,7 @@ img.simupreview{
 <section class='tab-content'>
     <section id="mcx1-browse" class='col-8 col-md-8 w-8/8'>
             <h2>Browse</h2>
-            <input id="keyword" style="width:33%" name="fullname" type="text" value='' required minlength="3" placeholder="Search by keywords, if empty, download the top downloaded">
+            <input id="keyword" style="width:33%" name="fullname" type="text" value='' required minlength="3" placeholder="Search by keywords; if empty, retrieve the top downloaded (5 each time)">
             <button class='btn btn-primary' style="width:33%" id='btsearch' onclick="searchpub(0)">Search</button>
 	    <button class='btn btn-primary' style="width:33%" id='btclearlib' onclick="clearpub()">Clear Results</button>
 	    <div id="mcxlibrary"></div>
@@ -366,6 +366,7 @@ img.simupreview{
 
             <label for="run-log">Job status</label>
 	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;" class='form-control'></textarea>
+	    <button class='btn btn-primary btn-block' id='clearlog' onclick='$("#run-log").val("");'>Clear</button>
     </section>
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
@@ -2035,7 +2036,7 @@ var VolumeRenderShader1 = {
 
   var updateDirectLink = function () {
     var url = window.location.href.replace(/\?.*/, '').replace(/#$/,'')
-    url += '?data='
+    url += '?tab=preview&data='
     let linkdata={options: Object.assign({},data.options)};
     delete linkdata.options.schema;
     url += LZString.compressToBase64(JSON.stringify(linkdata))
@@ -2160,8 +2161,8 @@ function showtab(event, name) {
 }
 
 function updatestatus(data){
+  let d = new Date();
   if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
-      let d = new Date();
       if(data.status === 'invalid'){
          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
          resetjob();
@@ -2176,11 +2177,11 @@ function updatestatus(data){
   if(jobid != null){
       $("#jobid").val(jobid);
       $("#jobhash").val(data.hash);
-      $("#run-log").val($("#run-log").val()+"\n"+"Successfully submitted job "+jobid);
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" Successfully submitted job "+jobid);
       count=0;
       timer=setInterval(jobstatus,5000);
   }else
-      $("#run-log").val($("#run-log").val()+"\n"+ 'failed to submit, please try again');
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+' failed to submit, please try again');
 }
 
 function resetjob(){
@@ -2194,8 +2195,11 @@ function resetjob(){
 function addlog(data){
   let d = new Date();
   if(data.hasOwnProperty('status')){
-      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
-      if(data.status === 'invalid')
+      if(data.hasOwnProperty('dberror'))
+          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
+      else
+          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
+      if(data.status === 'invalid' || data.status === 'failed')
           resetjob();
   }
   if(data.hasOwnProperty('log')){

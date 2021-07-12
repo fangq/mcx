@@ -25,7 +25,10 @@
 # - ln -s /drive/machine1/folder1/mcxcloud/db ~/bin/
 # - test this script by typing "cd ~/bin && ./mcxcloudd"
 # - run "crontab -e", and copy paste the below two lines
+#* * * * * (cd ~/bin && ./mcxcloudd) >> ~/bin/mcxcloudd.log
 #* * * * * (sleep 20 && cd ~/bin && ./mcxcloudd) >> ~/bin/mcxcloudd.log
+#* * * * * (sleep 40 && cd ~/bin && ./mcxcloudd) >> ~/bin/mcxcloudd.log
+#* * * * * (sleep 50 && cd ~/bin && ./mcxcloudd --kill) > /dev/null
 #33 * * * * (cd ~/bin && ./mcxcloudd --clean) > /dev/null
 # - watch your ~/bin/mcxcloudd.log log file or mail for any error messages
 ###############################################################################
@@ -109,7 +112,7 @@ if(@activejob >= $maxjob){
 }
 
 my $remainingjob=$maxjob-($#activejob+1);
-print "remaining job=$remainingjob\n";
+#print "remaining job=$remainingjob\n";
 
 $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
 
@@ -153,7 +156,7 @@ if(defined $sth->[0]){
                .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
                .'--update-monitor 1s '
                .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
-               ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii --log $seedflag; touch /data/done' "
+               ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii --log $seedflag &> /data/error.txt; touch /data/done' "
                .'> workspace/'.$jobid.'/docker.txt';
     system($dockercmd);
 
