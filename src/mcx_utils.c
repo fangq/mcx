@@ -3631,8 +3631,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 			       4 or integer: integer tissue labels \n\
 			      97 or svmc: split-voxel MC 8-byte format\n\
 			        {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}\n\
-			      98 or mixlabel: label1+label2+label1%\n\
-			        {[h:label1 percentage][label2][label1]}\n\
+			      98 or mixlabel: label1+label2+label1_percentage\n\
+			        {[label1][label2][s:0-65535 label1 percentage]}\n\
 			      99 or labelplus: 32bit composite voxel format\n\
 			        {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}\n\
                              100 or muamus_float: 2x 32bit floats for mua/mus\n\
