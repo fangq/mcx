@@ -81,14 +81,15 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     my $key=&V("hash");
     $dbname='mcxpub';
     $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
-    $sth=$dbh->selectall_arrayref("select json from $dbname where time=$ct and hash='$key';");
-    my $jsondata='';
+    $sth=$dbh->selectall_arrayref("select json,title,comment,license,netname,time from $dbname where time=$ct and hash='$key' limit 1;");
+    my ($jsondata,$lic,$title,$comm,$netname,$dtime)=('','','','','','');
     if(defined $sth->[0]){
         foreach my $rec (@{$sth}){
-            ($jsondata)=@$rec;
+            ($jsondata,$title,$comm,$lic,$netname,$dtime)=@$rec;
         }
+        $comm.="\n#History (do not edit below):\n#$dtime $netname";
     }
-    my %response=('status'=>"success",'hash'=>$key, 'json'=>$jsondata);
+    my %response=('status'=>"success",'hash'=>$key, 'json'=>$jsondata, 'title'=>$title, 'license'=>$lic, 'comment'=>$comm);
     $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
     $dbh->disconnect() or die($DBI::errstr);
 }elsif(&V("limit") ne ''){  # search and load simulation library in the Browse tab

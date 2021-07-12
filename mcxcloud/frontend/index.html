@@ -2683,6 +2683,12 @@ function update() {
 }
 function loadpubsimu(data){
   $("#output-textarea").val(data.json);
+  if(data.hasOwnProperty('title'))
+      $("#stitle").val(data.title);
+  if(data.hasOwnProperty('comment'))
+      $("#sdescription").val(data.comment);
+  if(data.hasOwnProperty('license'))
+      $("input[name='slicense']:checked").val(data.license);
   $("#setvalue").click();
   sleep(100).then(() => {
       lastloaded=$("#output-textarea").val();
