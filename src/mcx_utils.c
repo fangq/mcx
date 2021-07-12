@@ -3623,15 +3623,28 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                this input can be used to modify all existing \n\
 			       settings defined by -f or --bench\n\
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str\n\
+       voxel binary data layouts are shown in {...}, where [] for byte,[i:]\n\
+       for 4-byte integer, [s:] for 2-byte short, [h:] for 2-byte half float,\n\
+       [f:] for 4-byte float; on Little-Endian systems, least-sig. bit on left\n\
                                1 or byte: 0-128 tissue labels\n\
 			       2 or short: 0-65535 (max to 4000) tissue labels\n\
 			       4 or integer: integer tissue labels \n\
+			      97 or svmc: split-voxel MC 8-byte format\n\
+			        {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}\n\
+			      98 or mixlabel: label1+label2+label1%\n\
+			        {[h:label1 percentage][label2][label1]}\n\
 			      99 or labelplus: 32bit composite voxel format\n\
+			        {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}\n\
                              100 or muamus_float: 2x 32bit floats for mua/mus\n\
+			        {[f:mua][f:mus]}; g/n from medium type 1\n\
                              101 or mua_float: 1 float per voxel for mua\n\
+			        {[f:mua]}; mus/g/n from medium type 1\n\
 			     102 or muamus_half: 2x 16bit float for mua/mus\n\
+			        {[h:mua][h:mus]}; g/n from medium type 1\n\
 			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
+			        {[mua][mus][g][n]}; 0-255 mixing prop types 1&2\n\
 			     104 or muamus_short: 2x short gray-levels for mua/s\n\
+			        {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2\n\
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
