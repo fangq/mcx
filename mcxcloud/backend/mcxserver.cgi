@@ -155,6 +155,12 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     $sth->execute();
     $dbh->disconnect();
     $html =$callback.'({"status":"cancelled","jobid":"'.$jobid.'","dberror":"'.$DBI::errstr.'"})'."\n";
+}elsif(&V("action") eq 'detphoton'){  # download detphoton data from the current simulation
+    $jobid=&V("jobid");
+    open FF, "<$workspace/$jobid/output_detp.jdat" || die("can not open detected photon data file");
+    chomp(my @lines = <FF>);
+    close(FF);
+    $html=$callback.'('.join(//,@lines).')'."\n";
 }else{ # respond to the inquiries of job status after a job is submitted in the Run tab
     my ($status,$output,$log);
     $status=7;
@@ -183,6 +189,9 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
               $status=4;
           }
           my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid, 'output'=>$outstr, 'log'=>$logstr);
+          if(-e "$workspace/$jobid/output_detp.jdat" && not -z "$workspace/$jobid/output_detp.jdat"){
+             $response{'detphoton'}=1;
+          }
           $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
         }else{ # when the output file is currently being written
           $status=3;
