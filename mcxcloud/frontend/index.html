@@ -2494,8 +2494,8 @@ function drawshape(shape,index){
       dc=c1;
       height= c0.distanceTo(c1);
       geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
-      geometry.translate( 0, height / 2, 0 );
-      geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
+      geometry.translate( 0, height*0.5 - 1, 0 );
+      geometry.rotateX( Math.PI*0.5 ); // orient along z-axis - required
       dc.sub(c0).normalize();
       geometry.lookAt( dc );
       geometry.translate((c0.x+c1.x), (c0.y+c1.y), (c0.z+c1.z))
