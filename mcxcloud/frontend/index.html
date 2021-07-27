@@ -2512,7 +2512,8 @@ function drawsrc(obj){
   const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
   let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
   const hex = 0xFFFFFF;
-  v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
+  if(obj.hasOwnProperty('Param1') && obj.Param1.length>3)
+      v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
 
   const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
   arrowHelper.line.material.linewidth = length*0.2;
