@@ -1231,8 +1231,6 @@ void mcx_preprocess(Config *cfg){
         if(cfg->seed!=SEED_FROM_FILE)
             cfg->savedetflag=0;
     }
-    if(cfg->issavedet)
-    	mcx_maskdet(cfg);
 
     if(cfg->respin==0)
         MCX_ERROR(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value");
@@ -1289,6 +1287,10 @@ void mcx_preprocess(Config *cfg){
 	 free(newvol);
       }
     }
+
+    if(cfg->issavedet)
+        mcx_maskdet(cfg);
+
     for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
