@@ -551,6 +551,9 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		    f2h.h[1] = (f2h.h[1] | tmp) << 10;
 		    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
 
+	            if(f2h.i[0]==0) /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+	                f2h.i[0]=0x00010000;
+
 	            cfg->vol[i]=f2h.i[0];
 		}
 	    }else if(cfg->mediabyte==MEDIA_LABEL_HALF){

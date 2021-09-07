@@ -43,6 +43,7 @@ Optode.Source=copycfg(cfg,'srcnum',Optode.Source,'SrcNum');
 if(isfield(cfg,'detpos') && ~isempty(cfg.detpos))
     Optode.Detector=struct();
     Optode.Detector=cell2struct(mat2cell(cfg.detpos, ones(1,size(cfg.detpos,1)),[3 1]), {'Pos','R'} ,2);
+    Optode.Detector=Optode.Detector(:)';
     if(length(Optode.Detector)==1)
         Optode.Detector={Optode.Detector};
     end

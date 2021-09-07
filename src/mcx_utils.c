@@ -1231,8 +1231,6 @@ void mcx_preprocess(Config *cfg){
         if(cfg->seed!=SEED_FROM_FILE)
             cfg->savedetflag=0;
     }
-    if(cfg->issavedet)
-    	mcx_maskdet(cfg);
 
     if(cfg->respin==0)
         MCX_ERROR(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value");
@@ -1289,6 +1287,10 @@ void mcx_preprocess(Config *cfg){
 	 free(newvol);
       }
     }
+
+    if(cfg->issavedet)
+        mcx_maskdet(cfg);
+
     for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
@@ -2296,6 +2298,8 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
        float *val=(float *)inputvol;
        for(i=0;i<datalen;i++){
          f2i.f=val[i]*cfg->unitinmm;
+	 if(f2i.i==0) /*avoid being detected as a 0-label voxel*/
+	     f2i.f=EPS;
          cfg->vol[i]=f2i.i;
        }
      }else if(cfg->mediabyte==MEDIA_AS_F2H){
@@ -2321,6 +2325,9 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
 	    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
 	    f2h.h[1] = (f2h.h[1] | tmp) << 10;
 	    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+
+	    if(f2h.i[0]==0) /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+	        f2h.i[0]=0x00010000;
 
             cfg->vol[i]=f2h.i[0];
 	}

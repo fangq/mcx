@@ -2494,8 +2494,8 @@ function drawshape(shape,index){
       dc=c1;
       height= c0.distanceTo(c1);
       geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
-      geometry.translate( 0, height / 2, 0 );
-      geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
+      geometry.translate( 0, height*0.5 - 1, 0 );
+      geometry.rotateX( Math.PI*0.5 ); // orient along z-axis - required
       dc.sub(c0).normalize();
       geometry.lookAt( dc );
       geometry.translate((c0.x+c1.x), (c0.y+c1.y), (c0.z+c1.z))
@@ -2512,7 +2512,8 @@ function drawsrc(obj){
   const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
   let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
   const hex = 0xFFFFFF;
-  v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
+  if(obj.hasOwnProperty('Param1') && obj.Param1.length>=3)
+      v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
 
   const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
   arrowHelper.line.material.linewidth = length*0.2;
