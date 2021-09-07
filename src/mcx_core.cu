@@ -2770,7 +2770,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 #pragma omp critical
 {
 	       if(debugrec>0){
-		   if(debugrec>cfg->maxdetphoton){
+		   if(debugrec>cfg->maxjumpdebug){
 			MCX_FPRINTF(cfg->flog,S_RED "WARNING: the saved trajectory positions (%d) \
 are more than what your have specified (%d), please use the --maxjumpdebug option to specify a greater number\n" S_RESET
                            ,debugrec,cfg->maxjumpdebug);
