@@ -1752,7 +1752,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
           if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCyclic) )) || 
-	      f.t>gcfg->twin1 || (issvmc && hitintf && !nuvox.sv.lower && nuvox.sv.isupper && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w)))){
+	      f.t>gcfg->twin1){
 	      if(isdet==bcCyclic){
                  if(flipdir==0)  p.x=mcx_nextafterf(roundf(p.x+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.x: -gcfg->maxidx.x)),(v.x > 0.f)-(v.x < 0.f));
                  if(flipdir==1)  p.y=mcx_nextafterf(roundf(p.y+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.y: -gcfg->maxidx.y)),(v.y > 0.f)-(v.y < 0.f));
@@ -1797,9 +1797,55 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                }
           }
 
+          /** do boundary reflection/transmission for SVMC */
+          if(issvmc){
+              if(hitintf){  // intersects with the intra-voxel interface
+                  if(!isreflect || (isreflect && gproperty[nuvox.sv.lower].w==gproperty[nuvox.sv.upper].w)){
+                      nuvox.nv=-nuvox.nv;  // flip normal vector for transmission
+                      nuvox.sv.isupper=!nuvox.sv.isupper;  // cross subvoxel interface, change tissue type lable
+                      *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower];
+                      if(!nuvox.sv.isupper && !nuvox.sv.lower){  // transmit to background medium
+                          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+                              media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
+                              break;
+                          isdet=mediaid & DET_MASK;
+                          mediaid &= MED_MASK;
+                          testint=1;
+                          continue;
+                      }
+                  }else{
+                      if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ // true if photon transmits to background media
+                          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+                              media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
+                              break;
+                          isdet=mediaid & DET_MASK;
+                          mediaid &= MED_MASK;
+                          testint=1; //< launch new photon, enable ray-interafece inter. test for next step
+                          continue;
+                      }
+                    }
+                    testint=0; // disable ray-interafece intersection test immediately after an intersection event
+              }else if(idx1d!=idx1dold){ // intersects with voxel boundary
+                  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
+                  int curr_mediaid=nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower;
+                  if(curr_mediaid==0 && (!isreflect || n1==gproperty[curr_mediaid].w)){ // transmit to background medium
+                      if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                          ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+                          media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
+                      break;
+                      isdet=mediaid & DET_MASK;
+                      mediaid &= MED_MASK;
+                      testint=1; //< launch new photon, enable ray-interafece inter. test for next step
+                      continue;
+                  }
+              }
+          }
+
           /** do boundary reflection/transmission */
 	  if(isreflect && !(issvmc && hitintf)){
-	      if(gcfg->mediaformat<100 || (issvmc && idx1d!=idx1dold))
+	      if(gcfg->mediaformat<100 && !issvmc)
 	          updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
 	      if(((isreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
 	          float Rtotal=1.f;
@@ -1870,36 +1916,6 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		  }
 	      }else if(gcfg->mediaformat<100 && !issvmc)
 	          updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
-	  }else if(issvmc){
-	      if(hitintf){ //< handle reflection/refraction when a photon intersects with the intra-voxel interface
-	          if(!isreflect || (isreflect && gproperty[nuvox.sv.lower].w==gproperty[nuvox.sv.upper].w)){
-	              nuvox.nv=-nuvox.nv; // flip normal vector for transmission
-	              if(nuvox.sv.isupper && !nuvox.sv.lower){ // transmit from to background medium
-	                  if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
-	                      ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
-		              media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
-		              break;
-		              isdet=mediaid & DET_MASK;
-	                      mediaid &= MED_MASK;
-		              testint=1;
-	                      continue;
-	                  }
-		      nuvox.sv.isupper=!nuvox.sv.isupper; // cross subvoxel interface, change tissue type lable
-		      *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower]; // update property
-	          }else{
-	              if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ // true if photon transmits to background media
-		          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
-		              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
-			      media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
-			      break;
-		          isdet=mediaid & DET_MASK;
-		          mediaid &= MED_MASK;
-		          testint=1; //< launch new photon, enable ray-interafece inter. test for next step
-		          continue;
-		      }
-	            }
-	            testint=0; // disable ray-interafece intersection test immediately after an intersection event
-	      }
 	  }
      }
 
