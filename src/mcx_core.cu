@@ -684,12 +684,13 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
  */
 
 __device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, 
-                                   MCXsp *nuvox, MCXtime f, float3 htime){
+                                   MCXsp *nuvox, MCXtime f, float3 &htime, int &flipdir){
 	
 	if(dot(*(float3*)v,nuvox->nv)<=0){ // no intersection, as nv always points to the other side
 	    return 0;
 	}else{
-	    float3 p1=(gcfg->faststep || slen==f.pscat) ? (*p0+len*(*(float3*)v)) : float3(htime.x,htime.y,htime.z);
+	    float3 p1=(gcfg->faststep || slen==f.pscat) ? (*p0+len*(*(float3*)v)) : float3(flipdir==0 ? roundf(htime.x) : htime.x,
+                flipdir==1 ? roundf(htime.y) : htime.y, flipdir==2 ? roundf(htime.z) : htime.z);
 	    float3 rp0=*p0-nuvox->rp;
 	    float3 rp1=p1-nuvox->rp;
 	    float d0=dot(rp0,nuvox->nv); // signed perpendicular distance from p0 to patch
@@ -1602,7 +1603,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** perform ray-interface intersection test to consider intra-voxel curvature (SVMC mode) */
 	  if(issvmc){
 	    if(nuvox.sv.issplit && testint)
-	      hitintf=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,htime);
+	      hitintf=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,htime,flipdir);
 	    else
 	      hitintf=0;
 	  }
