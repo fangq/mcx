@@ -254,6 +254,8 @@ typedef struct MCXConfig{
 	float *dy;                   /**< anisotropic voxel spacing for y-axis */
 	float *dz;                   /**< anisotropic voxel spacing for z-axis */
 	char bc[12];                 /**<boundary condition flag for [-x,-y,-z,+x,+y,+z, det(-x,-y,-z,+x,+y,+z)] */
+	unsigned int nphase;         /**< number of samples for inverse-cdf, will be added by 2 to include -1 and 1 on the two ends */
+	float *invcdf;               /**< equal-space sampled inversion of CDF(cos(theta)) for the phase function of the zenith angle */
 } Config;
 
 #ifdef	__cplusplus
@@ -304,6 +306,7 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name, int isfloat, Config *cfg);
 void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg);
 int  mcx_svmc_bgvoxel(int vol);
+void mcx_loadseedjdat(char *filename, Config *cfg);
 void mcx_prep_polarized(Config *cfg);
 void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
 void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);

@@ -1,5 +1,5 @@
 {
-  "title": "Settings",
+  "title": "MCX JSON Input",
   "type": "object",
   "required": [
     "Session",
@@ -84,14 +84,34 @@
           "default": true
         },
 	"DebugFlag": {
-          "title": "Debug flags",
-          "type": "string",
-          "default": ""
+	  "oneOf" :[
+	   {
+            "title": "Debug flags",
+            "type": "string",
+            "default": ""
+	   },
+	   {
+            "title": "Debug flags",
+            "type": "integer",
+            "default": 0,
+	    "minimum": 0
+	   }
+	  ]
         },
 	"SaveDataMask": {
-          "title": "Save detected photon flags",
-          "type": "string",
-          "default": "DP"
+	  "oneOf" :[
+	   {
+            "title": "Save detected photon flags",
+            "type": "string",
+            "default": "DP"
+	   },
+	   {
+            "title": "Save detected photon flags",
+            "type": "integer",
+            "default": 5,
+	    "minimum": 0
+	   }
+	  ]
         },
 	"OutputFormat": {
           "title": "Output file format",
@@ -246,7 +266,7 @@
               "maxItems": 4
             },
             "Param2": {
-              "title": "Source Parameter 1",
+              "title": "Source Parameter 2",
               "type": "array",
               "format": "table",
 	      "default": [
@@ -498,7 +518,7 @@
                     "type": "object",
 		    "required": [
 		       "Tag",
-		       "CO",
+		       "C0",
 		       "C1",
 		       "R"
 		    ],
@@ -790,9 +810,24 @@
 		      ]
 	      },
 	      "_ArrayZipSize_":{
-		  "type": "integer",
-		  "default": 0,
-		  "minimum": 0
+	          "oneOf" :[
+		      {
+			  "type": "integer",
+			  "default": 0,
+			  "minimum": 0
+		      },
+		      {
+			  "type": "array",
+			  "default": [0,0],
+			  "format": "table",
+			  "items": {
+			      "type": "integer",
+			      "minimum": 0
+			  },
+			  "minItems": 2,
+			  "maxItems": 2
+		      }
+		  ]
 	      },
 	      "_ArrayZipData_":{
 		  "type": "string",
@@ -830,6 +865,28 @@
           ],
           "minItems": 3,
           "maxItems": 3
+        },
+	"LengthUnit": {
+          "title": "Voxel Size (in mm)",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+	},
+	"MediaFormat": {
+          "title": "Binary Volume Format",
+          "type": "string",
+	  "default": "byte",
+          "enum": [
+                "byte",
+                "short",
+		"svmc",
+		"mixlabel",
+                "labelplus",
+		"muamus_float",
+		"muamus_half",
+		"asgn_byte",
+		"muamus_short"
+              ]
         },
         "VolumeFile": {
           "title": "Volume File",

@@ -45,6 +45,7 @@ Optode.Source=copycfg(cfg,'lambda',Optode.Source,'WaveLength');
 if(isfield(cfg,'detpos') && ~isempty(cfg.detpos))
     Optode.Detector=struct();
     Optode.Detector=cell2struct(mat2cell(cfg.detpos, ones(1,size(cfg.detpos,1)),[3 1]), {'Pos','R'} ,2);
+    Optode.Detector=Optode.Detector(:)';
     if(length(Optode.Detector)==1)
         Optode.Detector={Optode.Detector};
     end
@@ -58,6 +59,7 @@ end
 Domain=struct();
 Domain=copycfg(cfg,'issrcfrom0',Domain,'OriginType',0);
 Domain=copycfg(cfg,'unitinmm',Domain,'LengthUnit');
+Domain=copycfg(cfg,'invcdf',Domain,'InverseCDF');
 
 Domain.Media=cell2struct(num2cell(cfg.prop), {'mua','mus','g','n'} ,2)';
 

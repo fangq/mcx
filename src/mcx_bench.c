@@ -264,24 +264,26 @@ MSTR(
 
 MSTR(
 {
-	"Session": {
-		"ID": "skinvessel",
-		"Photons": 1e6,
-		"RNGSeed":  1648335518,
-		"DoMismatch": true,
-		"DoAutoThread": true
+	"Session":	{
+		"ID":	"skinvessel",
+		"Photons":	1e6,
+		"RNGSeed":	1648335518,
+		"DoMismatch":	false,
+		"DoPartialPath":	false,
+		"DoAutoThread":	true,
+		"OutputType":	"f"
 	},
 	"Forward": {
 		"T0": 0,
 		"T1": 5e-08,
 		"Dt": 5e-08
 	},
-	"Optode": {
-		"Source": {
-			"Pos": [100,100,20],
-			"Dir": [0,0,1],
-			"Param1": [60,0,0,0],
-			"Type": "disk"
+	"Optode":	{
+		"Source":	{
+			"Type":	"disk",
+			"Pos":	[100, 100, 20],
+			"Dir":	[0, 0, 1, 0],
+			"Param1":	[60, 0, 0, 0]
 		}
 	},
 	"Domain": {

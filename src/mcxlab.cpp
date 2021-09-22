@@ -553,6 +553,9 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		    f2h.h[1] = (f2h.h[1] | tmp) << 10;
 		    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
 
+	            if(f2h.i[0]==0) /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+	                f2h.i[0]=0x00010000;
+
 	            cfg->vol[i]=f2h.i[0];
 		}
 	    }else if(cfg->mediabyte==MEDIA_LABEL_HALF){
@@ -732,6 +735,22 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         for(i=0;i<arraydim[0]*arraydim[1]*dimz;i++)
              cfg->srcpattern[i]=val[i];
         printf("mcx.srcpattern=[%ld %ld %ld];\n",arraydim[0],arraydim[1],dimz);
+    }else if(strcmp(name,"invcdf")==0){
+        dimtype nphase=mxGetNumberOfElements(item);
+	double *val=mxGetPr(item);
+	if(cfg->invcdf) free(cfg->invcdf);
+	cfg->nphase=(unsigned int)nphase+2;
+	cfg->nphase+=(cfg->nphase & 0x1); // make cfg.nphase even number
+        cfg->invcdf=(float*)calloc(cfg->nphase,sizeof(float));
+        for(i=0;i<nphase;i++){
+             cfg->invcdf[i+1]=val[i];
+	     if(i>0 && (val[i]<val[i-1] || (val[i]>1.f || val[i]<-1.f)))
+	         mexErrMsgTxt("cfg.invcdf contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
+	}
+	cfg->invcdf[0]=-1.f;
+	cfg->invcdf[nphase+1]=1.f;
+	cfg->invcdf[cfg->nphase-1]=1.f;
+        printf("mcx.invcdf=[%ld];\n",cfg->nphase);
     }else if(strcmp(name,"shapes")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)

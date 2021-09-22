@@ -312,6 +312,8 @@ void mcx_initcfg(Config *cfg){
      cfg->isspecular=0;
      cfg->dx=cfg->dy=cfg->dz=NULL;
      cfg->gscatter=1e9;     /** by default, honor anisotropy for all scattering, use --gscatter to reduce it */
+     cfg->nphase=0;
+     cfg->invcdf=NULL;
      memset(cfg->jsonfile,0,MAX_PATH_LENGTH);
      memset(cfg->bc,0,12);
      memset(&(cfg->srcparam1),0,sizeof(float4));
@@ -384,6 +386,8 @@ void mcx_clearcfg(Config *cfg){
      	free(cfg->shapedata);
      if(cfg->extrajson)
      	free(cfg->extrajson);
+     if(cfg->invcdf)
+        free(cfg->invcdf);
      mcx_initcfg(cfg);
 }
 
@@ -1184,6 +1188,14 @@ void mcx_writeconfig(char *fname, Config *cfg){
 void mcx_preprocess(Config *cfg){
     int isbcdet=0;
 
+    double tmp=sqrt(cfg->srcdir.x*cfg->srcdir.x+cfg->srcdir.y*cfg->srcdir.y+cfg->srcdir.z*cfg->srcdir.z);
+    if(tmp<EPS)
+        MCX_ERROR(-4,"source initial direction vector can not have a length of 0");
+    tmp=1.f/tmp;
+    cfg->srcdir.x*=tmp;
+    cfg->srcdir.y*=tmp;
+    cfg->srcdir.z*=tmp;
+
     for(int i=0;i<6;i++)
         if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
@@ -1238,8 +1250,6 @@ void mcx_preprocess(Config *cfg){
         if(cfg->seed!=SEED_FROM_FILE)
             cfg->savedetflag=0;
     }
-    if(cfg->issavedet)
-    	mcx_maskdet(cfg);
 
     if(cfg->respin==0)
         MCX_ERROR(-1,"respin number can not be 0, check your -r/--repeat input or cfg.respin value");
@@ -1296,6 +1306,10 @@ void mcx_preprocess(Config *cfg){
 	 free(newvol);
       }
     }
+
+    if(cfg->issavedet)
+        mcx_maskdet(cfg);
+
     for(int i=0;i<MAX_DEVICE;i++)
         if(cfg->deviceid[i]=='0')
            cfg->deviceid[i]='\0';
@@ -1712,7 +1726,13 @@ void mcx_prepdomain(char *filename, Config *cfg){
      }
 
      if(cfg->seed==SEED_FROM_FILE && cfg->seedfile[0]){
-        mcx_loadseedfile(cfg);
+        if(!(cfg->outputtype==otJacobian || cfg->outputtype==otWP || cfg->outputtype==otDCS  || cfg->outputtype==otRF))
+           MCX_FPRINTF(stderr,S_RED "replay is detected but the output datatype (-O) is not one of j,p,m or r\n" S_RESET);
+
+        if(strstr(cfg->seedfile,".jdat")!=NULL)
+           mcx_loadseedjdat(cfg->seedfile, cfg);
+	else
+           mcx_loadseedfile(cfg);
      }
 
      mcx_preprocess(cfg);
@@ -1787,7 +1807,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
      else if(cfg->maxgate>gates)
 	 cfg->maxgate=gates;
 
-     MCX_ASSERT(fscanf(in,"%s", filename)==1);
+     MCX_ASSERT(fscanf(in,"%1023s", filename)==1);
      if(cfg->rootpath[0]){
 #ifdef WIN32
          sprintf(comment,"%s\\%s",cfg->rootpath,filename);
@@ -1898,7 +1918,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
 
      if(in==stdin)
      	fprintf(stdout,"Please specify the source type[pencil|cone|gaussian]:\n\t");
-     if(fscanf(in,"%s", strtypestr)==1 && strtypestr[0]){
+     if(fscanf(in,"%32s", strtypestr)==1 && strtypestr[0]){
         int srctype=mcx_keylookup(strtypestr,srctypeid);
 	if(srctype==-1)
 	   MCX_ERROR(-6,"the specified source type is not supported");
@@ -1918,7 +1938,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
                cfg->srcpattern=(float*)calloc((cfg->srcparam1.w*cfg->srcparam2.w*cfg->srcnum),sizeof(float));
-               MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
+               MCX_ASSERT(fscanf(in, "%1023s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
@@ -1929,7 +1949,7 @@ void mcx_loadconfig(FILE *in, Config *cfg){
                FILE *fp;
                if(cfg->srcpattern) free(cfg->srcpattern);
                cfg->srcpattern=(float*)calloc((int)(cfg->srcparam1.x*cfg->srcparam1.y*cfg->srcparam1.z*cfg->srcnum),sizeof(float));
-               MCX_ASSERT(fscanf(in, "%s", patternfile)==1);
+               MCX_ASSERT(fscanf(in, "%1023s", patternfile)==1);
                fp=fopen(patternfile,"rb");
                if(fp==NULL)
                      MCX_ERROR(-6,"pattern file can not be opened");
@@ -2074,6 +2094,26 @@ int mcx_loadjson(cJSON *root, Config *cfg){
 
 	if(cfg->steps.x!=1.f && cfg->unitinmm==1.f)
            cfg->unitinmm=cfg->steps.x;
+
+	val=FIND_JSON_OBJ("InverseCDF","Domain.InverseCDF",Domain);
+	if(val){
+	   int nphase=cJSON_GetArraySize(val);
+	   cfg->nphase=nphase+2; /*left-/right-ends are excluded, so added 2*/
+	   cfg->nphase+=(cfg->nphase & 0x1); /* make cfg.nphase even number */
+           if(cfg->invcdf)
+	       free(cfg->invcdf);
+	   cfg->invcdf=(float*)calloc(cfg->nphase,sizeof(float));
+	   cfg->invcdf[0]=-1.f; /*left end is always -1.f,right-end is always 1.f*/
+	   vv=val->child;
+	   for(i=1;i<=nphase;i++){
+	      cfg->invcdf[i]=vv->valuedouble;
+	      vv=vv->next;
+	      if(cfg->invcdf[i]<cfg->invcdf[i-1] || (cfg->invcdf[i]>1.f || cfg->invcdf[i]<-1.f))
+	         MCX_ERROR(-1,"Domain.InverseCDF contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
+	   }
+	   cfg->invcdf[nphase+1]=1.f; /*left end is always -1.f,right-end is always 1.f*/
+	   cfg->invcdf[cfg->nphase-1]=1.f;
+	}
 
 	val=FIND_JSON_OBJ("VoxelSize","Domain.VoxelSize",Domain);
 	if(val){
@@ -2668,6 +2708,8 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
        float *val=(float *)inputvol;
        for(i=0;i<datalen;i++){
          f2i.f=val[i]*cfg->unitinmm;
+	 if(f2i.i==0) /*avoid being detected as a 0-label voxel*/
+	     f2i.f=EPS;
          cfg->vol[i]=f2i.i;
        }
      }else if(cfg->mediabyte==MEDIA_AS_F2H){
@@ -2694,6 +2736,9 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
 	    f2h.h[1] = (f2h.h[1] | tmp) << 10;
 	    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
 
+	    if(f2h.i[0]==0) /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+	        f2h.i[0]=0x00010000;
+
             cfg->vol[i]=f2h.i[0];
 	}
      }else if(cfg->mediabyte==MEDIA_2LABEL_SPLIT){
@@ -2710,10 +2755,120 @@ void mcx_loadvolume(char *filename,Config *cfg,int isbuf){
 }
 
 
+void mcx_replayprep(int *detid, float *ppath, History *his, Config *cfg){
+       int i,j;
+       float plen;
+       cfg->nphoton=0;
+       for(i=0;i<his->savedphoton;i++){
+           if(cfg->replaydet<=0 || (detid && cfg->replaydet==detid[i])){
+               if(i!=cfg->nphoton)
+                   memcpy((char *)(cfg->replay.seed)+cfg->nphoton*his->seedbyte, (char *)(cfg->replay.seed)+i*his->seedbyte, his->seedbyte);
+               cfg->replay.weight[cfg->nphoton]=1.f;
+               cfg->replay.detid[cfg->nphoton]=(detid!=NULL) ? detid[i]: 1;
+               for(j=0;j<his->maxmedia;j++){
+	           plen=ppath[i*his->maxmedia+j]*his->unitinmm;
+                   cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j+1].mua*plen);
+                   cfg->replay.tof[cfg->nphoton]+=plen*R_C0*cfg->prop[j+1].n;
+               }
+               if(cfg->replay.tof[cfg->nphoton]<cfg->tstart || cfg->replay.tof[cfg->nphoton]>cfg->tend) /*need to consider -g*/
+                   continue;
+               cfg->nphoton++;
+           }
+       }
+       cfg->replay.seed=realloc(cfg->replay.seed, cfg->nphoton*his->seedbyte);
+       cfg->replay.weight=(float*)realloc(cfg->replay.weight, cfg->nphoton*sizeof(float));
+       cfg->replay.tof=(float*)realloc(cfg->replay.tof, cfg->nphoton*sizeof(float));
+       cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
+       cfg->minenergy=0.f;
+}
+
+/**
+ * @brief Load previously saved photon seeds from an .jdat file for replay
+ *
+ * @param[in] filename: the name/path of the .jdat file produced from the baseline simulation
+ * @param[in,out] cfg: simulation configuration
+ */
+
+void mcx_loadseedjdat(char *filename, Config *cfg){
+    char *jbuf;
+    int len;
+
+    FILE *fp=fopen(filename,"rt");
+    if(fp==NULL)
+        MCX_ERROR(-6,"fail to open the specified seed jdata file");
+
+    fseek (fp, 0, SEEK_END);
+    len=ftell(fp)+1;
+    jbuf=(char *)malloc(len);
+    rewind(fp);
+    if(fread(jbuf,len-1,1,fp)!=1)
+        MCX_ERROR(-2,"reading input file is terminated");
+    jbuf[len-1]='\0';
+    fclose(fp);
+
+    cJSON *root = cJSON_Parse(jbuf);
+    free(jbuf);
+
+    if(root){
+        cJSON *photondata=NULL, *detid=NULL, *info=NULL, *ppathdata=NULL, *seed=NULL, *tmp=NULL;
+	cJSON *obj = cJSON_GetObjectItem(root,"MCXData");
+	if(obj){
+	    photondata=cJSON_GetObjectItem(obj,"PhotonData");
+	    info=cJSON_GetObjectItem(obj,"Info");
+	    if(photondata){
+	        ppathdata=cJSON_GetObjectItem(photondata,"ppath");
+		seed=cJSON_GetObjectItem(photondata,"seed");
+		detid=cJSON_GetObjectItem(photondata,"detid");
+	    }
+	}
+	if(!seed || !ppathdata || !detid || !info)
+	    MCX_ERROR(-1,"invalid jdat file, expect MCXData.PhotonData.seed, .detid and .ppath");
+	if(cJSON_IsObject(seed) && cJSON_IsObject(detid) && cJSON_IsObject(ppathdata) && cJSON_GetObjectItem(seed,"_ArraySize_")){
+            int ndim;
+	    uint dims[3]={1,1,1};
+	    float *ppath=NULL;
+	    char *type;
+	    History his;
+
+	    cJSON *vsize=cJSON_GetObjectItem(seed,"_ArraySize_");
+            if(vsize){
+	       cJSON *tmp=vsize->child;
+	       his.savedphoton=tmp->valueint;
+	       tmp=tmp->next;
+	       his.seedbyte=tmp->valueint;
+	    }
+	    if(info)
+	       his.unitinmm=FIND_JSON_KEY("LengthUnit","LengthUnit",info,1.f,valuedouble);
+	    else
+	       his.unitinmm=1.f;
+
+	    cfg->nphoton=his.savedphoton;
+	    cfg->seed=SEED_FROM_FILE;
+
+	    mcx_jdatadecode((void **)&ppath, &ndim, dims, 2, &type, ppathdata, cfg);
+	    his.maxmedia=dims[1];
+
+	    mcx_jdatadecode((void **)&cfg->replay.seed, &ndim, dims, 2, &type, seed, cfg);
+	    mcx_jdatadecode((void **)&cfg->replay.detid, &ndim, dims, 2, &type, detid, cfg);
+
+	    cfg->replay.weight=(float*)malloc(his.savedphoton*sizeof(float));
+	    cfg->replay.tof=(float*)calloc(his.savedphoton,sizeof(float));
+	    mcx_replayprep(cfg->replay.detid, ppath, &his, cfg);
+
+	    if(ppath)
+	        free(ppath);
+	}
+        cJSON_Delete(root);
+    }else{
+	MCX_ERROR(-1,"invalid jdat file");
+    }
+}
+
+
 /**
  * @brief Load previously saved photon seeds from an .mch file for replay
  *
- * @param[in] cfg: simulation configuration
+ * @param[in,out] cfg: simulation configuration
  */
 
 void mcx_loadseedfile(Config *cfg){
@@ -2778,6 +2933,7 @@ void mcx_loadseedfile(Config *cfg){
         cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
 	cfg->minenergy=0.f;
     }
+
     fclose(fp);
 }
 
@@ -3488,7 +3644,7 @@ void mcx_parsecmd(int argc, char* argv[], Config *cfg){
                                 i=mcx_readarg(argc,argv,i,&(cfg->autopilot),"char");
                                 break;
                      case 'E':
-				if(i<argc-1 && strstr(argv[i+1],".mch")!=NULL){ /*give an mch file to initialize the seed*/
+				if(i<argc-1 && (strstr(argv[i+1],".mch")!=NULL || strstr(argv[i+1],".jdat")!=NULL) ){ /*give an mch file to initialize the seed*/
 #if defined(USE_LL5_RAND)
 					MCX_ERROR(-1,"seeding file is not supported in this binary");
 #else
@@ -3885,15 +4041,28 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                this input can be used to modify all existing \n\
 			       settings defined by -f or --bench\n\
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str\n\
+       voxel binary data layouts are shown in {...}, where [] for byte,[i:]\n\
+       for 4-byte integer, [s:] for 2-byte short, [h:] for 2-byte half float,\n\
+       [f:] for 4-byte float; on Little-Endian systems, least-sig. bit on left\n\
                                1 or byte: 0-128 tissue labels\n\
 			       2 or short: 0-65535 (max to 4000) tissue labels\n\
 			       4 or integer: integer tissue labels \n\
+			      97 or svmc: split-voxel MC 8-byte format\n\
+			        {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}\n\
+			      98 or mixlabel: label1+label2+label1_percentage\n\
+			        {[label1][label2][s:0-65535 label1 percentage]}\n\
 			      99 or labelplus: 32bit composite voxel format\n\
+			        {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}\n\
                              100 or muamus_float: 2x 32bit floats for mua/mus\n\
+			        {[f:mua][f:mus]}; g/n from medium type 1\n\
                              101 or mua_float: 1 float per voxel for mua\n\
+			        {[f:mua]}; mus/g/n from medium type 1\n\
 			     102 or muamus_half: 2x 16bit float for mua/mus\n\
+			        {[h:mua][h:mus]}; g/n from medium type 1\n\
 			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
+			        {[mua][mus][g][n]}; 0-255 mixing prop types 1&2\n\
 			     104 or muamus_short: 2x short gray-levels for mua/s\n\
+			        {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2\n\
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\

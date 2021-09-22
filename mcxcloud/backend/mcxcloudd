@@ -1,0 +1,183 @@
+#!/usr/bin/perl
+###############################################################################
+#
+# MCX Cloud Daemon (mcxcloudd) - a cronjob to process MCX Cloud jobs
+#
+# Author:  Qianqian Fang <q.fang at neu.edu>
+# License: GPLv3
+# Version: 0.5 (v2021.7)
+# Github:  https://github.com/fangq/mcx/
+#
+###############################################################################
+#
+# Dependencies:
+# - perl
+# - libdbi-perl
+# - docker
+# - nfs-server
+#
+# Configuration
+# - configure Docker Swarm, and designating one or multiple Manager nodes and several worker nodes (see docker_swarm_setup.txt for details)
+# - log on the manager node, add user "mcxcloud" to the manager node
+# - install nfs-server, explicitly mount (/etc/fstab) or use autofs to mount drives from the exports of other docker servers
+# - create a folder on the nfs-shared drives, say /drive/machine1/folder1/mcxcloud/db, set ownership so that mcxcloud can write to it
+# - log in with mcxcloud, create ~/bin, copy mcxcloudd to ~/bin, and chmod +x ~/bin/mcxcloudd
+# - ln -s /drive/machine1/folder1/mcxcloud/db ~/bin/
+# - test this script by typing "cd ~/bin && ./mcxcloudd"
+# - run "crontab -e", and copy paste the below two lines
+#* * * * * (cd ~/bin && ./mcxcloudd) >> ~/bin/mcxcloudd.log
+#* * * * * (sleep 20 && cd ~/bin && ./mcxcloudd) >> ~/bin/mcxcloudd.log
+#* * * * * (sleep 40 && cd ~/bin && ./mcxcloudd) >> ~/bin/mcxcloudd.log
+#* * * * * (sleep 50 && cd ~/bin && ./mcxcloudd --kill) > /dev/null
+#33 * * * * (cd ~/bin && ./mcxcloudd --clean) > /dev/null
+# - watch your ~/bin/mcxcloudd.log log file or mail for any error messages
+###############################################################################
+
+use DBI;
+use JSON::PP;
+use strict;
+my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$sth0,$html,$page,$jobid,$savetime,$dbname,$status,$dockercmd);
+my $req;
+
+my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output', 10=>'use cached data');
+
+$DBName="dbi:SQLite:dbname=db/mcxcloud.db";
+$DBUser="";
+$DBPass="";
+%DBErr=(RaiseError=>0,PrintError=>1);
+$dbname="mcxcloud";
+$savetime=time();
+
+# delete all jobs running over 1 min, if --kill is attached
+
+if(grep(/--kill/,@ARGV)){
+    my @joblist=`docker service ls | grep 'fangqq/mcx:v20'| cut -f 1 -d" " | xargs docker service ps | grep 'Running [0-9]* minute' | cut -f 1,4 -d" "`;
+    chomp @joblist;
+    if(@joblist>0){
+        my @jobid;
+        foreach my $job (@joblist){
+            if($job=~/^(\w+)\s+(\w+)\./){
+                push(@jobid,$1);
+                system("touch workspace/$2/killed");
+                print "killed overtime job: $2\n";
+            }
+        }
+        system("docker service rm ".join(' ',@jobid)) if(@jobid>0);
+    }
+    exit;
+}
+
+# delete all expired folder (1 hr or older), if --clean is attached
+
+if(grep(/--clean/,@ARGV)){
+    $dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+    $sth=$dbh->selectall_arrayref("select jobid from $dbname where time<".(time()-60*60).";");
+    if(defined $sth->[0]){
+        foreach my $rec (@{$sth}){
+            my ($job)=@$rec;
+            if(-d "workspace/$job"){
+	        print "removing expired workfolder workspace/$job\n";
+	        system("rm -rf workspace/$job");
+            }
+        }
+    }
+    $dbh->disconnect() or die($DBI::errstr);
+    print "finish cleaning expired job folders\n";
+    my $oldjob=`docker service ls  | awk '{if (NR!=1 && \$4 == "0/1") {print \$1}}'`;
+    if($oldjob ne ''){
+        system("docker service rm $oldjob");
+    }
+    print "finish cleaning expired docker service jobs\n";
+    exit;
+}
+
+# get the total number of GPU devices on all active nodes
+
+my $maxjob=`docker node ls | grep ' Active '| cut -f 1 -d" " | xargs docker inspect | grep 'GPU-' | wc -l`;
+
+
+# find the next batch of queued job and start running them to fill out devices
+
+my @dockernode=`docker node ls`;
+my @activenode=grep(/\bReady\s*Active\b/, @dockernode);
+if(@activenode==0){
+    tprint("docker service has no active node");
+    exit;
+}
+
+my @activejob=`docker service ls | grep '1\/[01]'`;
+if(@activejob >= $maxjob){
+    tprint("docker service queue is full".($#activejob+1)." ".$maxjob);
+    exit;
+}
+
+my $remainingjob=$maxjob-($#activejob+1);
+#print "remaining job=$remainingjob\n";
+
+$dbh=DBI->connect($DBName,$DBUser,$DBPass,\%DBErr) or die($DBI::errstr);
+
+$sth=$dbh->selectall_arrayref("select time,jobid,json,hash from $dbname where status=0 limit $remainingjob;");
+if(defined $sth->[0]){
+  foreach my $rec (@{$sth}){
+    my ($savetime,$jobid,$json,$jobhash)=@$rec;
+    tprint("updating job $jobid");
+
+    if(-d "workspace/_${jobhash}" && not -d "workspace/$jobid"){
+        tprint("cached job found $jobhash $jobid, skip");
+        $status=10;
+        $sth0=$dbh->prepare("update $dbname set status=$status where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+        $sth0->execute();
+        next;
+    }
+    if(-d "workspace/$jobid"){
+        $status=1;
+    }else{
+        mkdir("workspace/$jobid", 0777);
+    }
+
+    if(-e "workspace/$jobid/input.json" && not -z "workspace/$jobid/input.json"){
+        $status=2;
+    }else{
+        open(FF, ">workspace/$jobid/input.json") or die("can not write to output folder");
+        print FF "$json\n";
+        close(FF);
+    }
+
+    tprint("starting job $jobid");
+
+    $status=3;
+    $sth0=$dbh->prepare("update $dbname set status=$status where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    $sth0->execute();
+    my $seedflag='';
+    $seedflag=' --seed -1 ' if $jobid =~/_\d+$/;
+    $dockercmd='docker service create --user "$(id -u):$(id -g)" --restart-condition=none --mount '
+               .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
+               .'--update-monitor 1s '
+               .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
+               ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii --log $seedflag &> /data/error.txt; touch /data/done' "
+               .'> workspace/'.$jobid.'/docker.txt';
+    system($dockercmd);
+
+    if(-e "workspace/$jobid/output.jnii" && not -z "workspace/$jobid/output.jnii"){
+         $sth0=$dbh->prepare("update $dbname set status=5 where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    }else{
+         $sth0=$dbh->prepare("update $dbname set status=6 where jobid='$jobid';")
+                 or die "Couldn't prepare statement: ";
+    }
+    $sth0->execute();
+  }
+}else{
+    #print "no waiting job, skip";
+}
+
+$dbh->disconnect() or die($DBI::errstr);
+
+
+sub tprint{
+  my ($msg)=@_;
+  my ($sec,$min,$hour,$mday,$mon,$year) = localtime();
+  print sprintf("%04d-%02d-%02d %02d:%02d:%02d - %s\n", $year+1900, $mon+1, $mday, $hour, $min, $sec, $msg);
+}

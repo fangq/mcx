@@ -451,15 +451,15 @@ int mcx_raster_slabs(cJSON *obj, Grid3D *g){
         return 1;
     }
     val=cJSON_GetObjectItem(obj,"Bound");
-    if(val){
+    if(val && val->type==cJSON_Array){
        num=cJSON_GetArraySize(val);
        if(num==0) return 0;
-       if(num==2 && obj->child->type!=cJSON_Array){
-          item=obj;
+       if(num==2 && val->child->type!=cJSON_Array){
+          item=val;
 	  bd=(float *)malloc(cJSON_GetArraySize(obj)*sizeof(float));
 	  num=1;
        }else{
-          item=obj->child;
+          item=val->child;
           bd=(float *)malloc(cJSON_GetArraySize(obj)*2*sizeof(float));
        }
        for(i=0;i<num;i++){
@@ -477,7 +477,7 @@ int mcx_raster_slabs(cJSON *obj, Grid3D *g){
            item=item->next;
        }
     }else{
-       sprintf(ErrorMsg,"A %s command misses Bound field",obj->string);
+       sprintf(ErrorMsg,"A %s command misses Bound field or not an array",obj->string);
        return 1;
     }
 

@@ -21,6 +21,17 @@
     <style id=page_style>
       @page { size: 9in 7.5in ; margin : 0px }
     </style>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YHNSQJPJEW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-YHNSQJPJEW');
+</script>
+
 </head>
 <body>
 <style type="text/css">
@@ -81,14 +92,12 @@
   width: 24%;
 }
 #thumbnail{
-  width: 40%;
   height: auto;
 }
 section {
     width: 100%;
     margin-left: 10px;
 }
-
 #site-navigation{
   float:none;
 }
@@ -126,13 +135,37 @@ section {
 #mcx1-run input{
   width:49%;
 }
-
+#shareinfo{
+  float:left;
+  width:60%;
+  margin-right: 2em;
+  min-width: 700px;
+}
+#previewinfo{
+  float:left;
+  width:35%;
+}
+#submitshare{
+  overflow: hidden;
+  width: 100%;
+}
 #canvas {
     background-color: #000;
     width: 937px;
     height: 750px;
     border: 1px solid black;
     padding: 0px;
+}
+#run-log, #output-textarea{
+  height: 60vh;
+}
+#schema-textarea{
+  height: 75vh;
+}
+.tab-content > section{
+  height: 96vh;
+  padding-bottom: 3em;
+  overflow-y: auto;
 }
 .info{
   max-width:60em;
@@ -173,7 +206,7 @@ header, section{
   padding-left: 20px;
 }
 #mcx1-share label img{
-  width: 14%;
+  width: 20%;
 }
 input:required {
   background-color:#ffb700;
@@ -186,12 +219,11 @@ input:required {
 #simuinfo{
   width: 34%;
   float:right;
-  background-color: rgba(48,55,66,0.3);
+  background-color: rgba(48,55,66,0.4);
   color: white;
   display:none;
 }
 img.simupreview{
-  float: left;
   width: 200px;
   margin: 2px;
   cursor: pointer;
@@ -201,7 +233,11 @@ img.simupreview{
 }
 #simuinfo dt{
   font-weight: bold;
-  color: #1a9f2b;
+  color: blue;
+}
+#simuinfo pre{
+  background-color:green;
+  margin: 5px;
 }
 #mcx1-browse input{
   height: 1.8rem;
@@ -224,7 +260,7 @@ img.simupreview{
   position: absolute;
   top: 0;
   left:0;
-  background-color: rgba(48,55,66,0.9);;
+  background-color: rgba(48,55,66,0.95);;
   color: white;
   display:none;
   padding: 100px;
@@ -239,11 +275,12 @@ img.simupreview{
   color: yellow;
   float: right;
 }
+
 </style>
 
 <section id="mcx1-title" class='current'>
         <h1>MCX Cloud</h1>
-	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a> and <a href="http://openjdata.org" title="OpenJData">JData</h4>
+	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a> and <a href="http://openjdata.org" title="OpenJData">JData</a>. See <a href="https://youtu.be/TnfmrO12jI0" title="Video tutorial">Tutorial 1</a>,<a href="https://youtu.be/RztC-uXMqkw" title="Sharing and reuse simulations">2</a> & <a href="https://www.biorxiv.org/content/10.1101/2021.06.28.450034v1">Preprint</a>.</h4>
 	</p>
 </section>
 
@@ -252,16 +289,16 @@ img.simupreview{
         <nav id="site-navigation">
         	<div class="menu-navigation-container">
 			<ul id="navbar" class="tab nav nav-tabs bigtab">
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-browse" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-create" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-json" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-preview" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-run" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-share" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-schema" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
-			<li class="tab-item"><a id="direct-link" title="preserves schema, value, and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
+			<li class="tab-item"><a id="menu-browse" data-toggle="tab" href="#" onclick="showtab(event, 'browse')"><i class="fas fa-cloud-download-alt"></i>Browse</a></li>
+			<li class="tab-item"><a id="menu-create" data-toggle="tab" href="#" onclick="showtab(event, 'create')"><i class="fas fa-edit"></i>Create</a></li>
+			<li class="tab-item"><a id="menu-json"   data-toggle="tab" href="#" onclick="showtab(event, 'json')"><i class="fas fa-code"></i>JSON</a></li>
+			<li class="tab-item"><a id="menu-preview" data-toggle="tab" href="#" onclick="showtab(event, 'preview')"><i class="fas fa-cube"></i>Preview</a></li>
+			<li class="tab-item"><a id="menu-run"    data-toggle="tab" href="#" onclick="showtab(event, 'run')"><i class="fas fa-rocket"></i>Run</a></li>
+			<li class="tab-item"><a id="menu-share"  data-toggle="tab" href="#" onclick="showtab(event, 'share')"><i class="fas fa-share-alt"></i>Share</a></li>
+			<li class="tab-item"><a id="menu-schema" data-toggle="tab" href="#" onclick="showtab(event, 'schema')"><i class="far fa-file-code"></i>Schema</a></li>
+			<li class="tab-item"><a id="direct-link" title="preserves JSON settings and options"><i class="fas fa-external-link-alt"></i>Link</a></li>
 			<li class="tab-item"><a href="?" title="reload editor with default example settings"><i class="fas fa-undo"></i>Reset</a></li>
-			<li class="tab-item"><a data-toggle="tab" href="#mcx1-options" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
+			<li class="tab-item"><a data-toggle="tab" href="#" onclick="showoptions()"><i class="fas fa-bars"></i>Options</a></li>
 			</ul>
 		</div>
         </nav><!-- #site-navigation -->
@@ -270,7 +307,7 @@ img.simupreview{
 <section class='tab-content'>
     <section id="mcx1-browse" class='col-8 col-md-8 w-8/8'>
             <h2>Browse</h2>
-            <input id="keyword" style="width:33%" name="fullname" type="text" value='' required minlength="3" placeholder="Search by keywords, if empty, download the top downloaded">
+            <input id="keyword" style="width:33%" name="fullname" type="text" value='' required minlength="3" placeholder="Search by keywords; if empty, retrieve the top downloaded (5 each time)">
             <button class='btn btn-primary' style="width:33%" id='btsearch' onclick="searchpub(0)">Search</button>
 	    <button class='btn btn-primary' style="width:33%" id='btclearlib' onclick="clearpub()">Clear Results</button>
 	    <div id="mcxlibrary"></div>
@@ -287,7 +324,7 @@ img.simupreview{
     </section>
 
     <section id="mcx1-json" class='col-8 col-md-8 w-8/8'>
-            <h2>JSON Output</h2>
+            <h2>JSON Input</h2>
             <p>You can also make changes to the JSON here and set the value in the editor by clicking "Update Form"</p>
             <label for="output-textarea"></label>
             <button class='btn btn-primary btn-block' id='setvalue'>Update Form</button>
@@ -297,7 +334,7 @@ img.simupreview{
             <label for="validate-textarea">This will update whenever the form changes to show validation errors if there
                 are any.</label><br>
             <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
-            <a class='btn btn-primary btn-block' id='saveinput' href="?">Download</a>
+	    <a class='btn btn-primary btn-block' id='saveinput' href="#">Download Input</a>
     </section>
 
     <section id="mcx1-schema" class='col-8 col-md-8 w-8/8'>
@@ -309,17 +346,21 @@ img.simupreview{
                       class='form-control'></textarea>
     </section>
 
-    <section id="mcx1-preview" class='col-8 col-md-8 w-8/8'>
+    <section id="mcx1-preview" class='col-8 col-md-8 w-8/8' style="min-width: 1500px">
             <h2>Preview</h2>
 	    <div id="canvas"></div>
 	    <div id="renderpanel">
-		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
-		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
 		    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
 		    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>	 
+		    <div style="display:none">
+		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
+		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
+		    </div>
 		    <button class='btn btn-primary btn-block' id='drawlastinput'>Draw Last Input</button>
 		    <button class='btn btn-primary btn-block' id='drawlastoutput'>Draw Last Output</button>
 		    <button class='btn btn-primary btn-block' id='updatethumbnail'>Update Thumbnail</button>
+		    <hr/>
+		    <a class='btn btn-primary btn-block' id='saveoutput' href="#">Download Output</a>
 	    </div>
     </section>
 
@@ -336,23 +377,32 @@ img.simupreview{
 
             <label for="run-log">Job status</label>
 	    <textarea id='run-log' rows="30" style="width: 100%; font-family: monospace;" class='form-control'></textarea>
-            <a class='btn btn-primary btn-block' id='saveoutput' href="?">Download Output</a>
+	    <button class='btn btn-primary btn-block' id='clearlog' onclick='$("#run-log").val("");'>Clear</button>
     </section>
 
     <section id="mcx1-share" class='col-8 col-md-8 w-8/8'>
             <h2>Share</h2>
-	    If you wish, you may use the below form to share your simulation by contributing it to our database. Submitted data can be reused by you and other users in the future (required shown in orange).
+	    <p>If you wish, you may use the below form to share your simulation by contributing it to our database. Submitted data can be reused by you and other users in the future (required shown in orange).</p>
+
+	    <div id="shareinfo">
 	    <input id="stitle" class="longinput" name="stitle" type="text" value='' required minlength="3" placeholder="Simulation Title (searchable, can not be empty)">
-	    <textarea id='sdescription' rows="3" style="width: 100%; font-family: monospace;" class='form-control' placeholder="Description (searchable, can not be empty), may include citation information, background and detailed explanations"></textarea>
+	    <textarea id='sdescription' rows="15" style="width: 100%; font-family: monospace;" class='form-control' placeholder="Description (searchable, can not be empty), may include citation information, background and detailed explanations"></textarea>
 	    <input id="sfullname" class="shortinput" name="sfullname" type="text" value='' required minlength="3" placeholder="Your Name (required, public and searchable, may use 'Anonymous' if do not want to be acknowledged)">
 	    <input id="semail" class="shortinput" name="semail" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)">
 	    <input id="snetname" class="shortinput" name="snetname" type="text" value='' minlength="3" placeholder="Your Network Name (public and searchable)">
 	    <input id="sinst" class="shortinput" name="sinst" type="text" value='' minlength="4" placeholder="Institute/Company (public, can be empty if you do not prefer to include)"><br/>
-	    <label for="thumbnail">Permission</label><input type="radio" id="CC0" name="slicense" value="CC0"><label for="CC0"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/cc-zero.png" title="CC0 (Can be reused for any purpose, you do not claim copyright to the submitted simulation setting/data)"/></label>
+	    <label for="slicense">Permission</label><input type="radio" id="CC0" name="slicense" value="CC0"><label for="CC0"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/cc-zero.png" title="CC0 (Can be reused for any purpose, you do not claim copyright to the submitted simulation setting/data)"/></label>
 	    <input type="radio" id="CC-BY" name="slicense" value="CC-BY"><label for="CC-BY"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by.png" title="CC-BY (Can be reused for any purpose, but reuser must acknowledge the creator)"/></label>
 	    <input type="radio" id="CC-BY-SA" name="slicense" value="CC-BY-SA"><label for="CC-BY-SA"><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-sa.png" title="CC-BY-SA (Can be reused for any purpose, but reuser must acknowledge the creator and adaption must be shared under the same terms)"/></label><br/>
-	    <label for="thumbnail">Preview</label><br/><img id="thumbnail" src="" title="Domain Preview"/><br/>
-	    <label for="thumbnail">You must first successfully run your simulation before clicking this button</label><button class='btn btn-primary btn-block' id='sharesubmit' disabled>Submit</button>
+	    </div>
+
+	    <div id="previewinfo">
+	    <label for="thumbnail">Preview</label><br/><img id="thumbnail" src="" title="Domain Preview"/>
+	    </div>
+
+	    <div id="submitshare">
+	    <label for="sharesubmit">You must first successfully run your simulation before clicking this button</label><button class='btn btn-primary btn-block' id='sharesubmit' disabled>Submit</button>
+	    </div>
     </section>
 
     <div id="mcx1-options" class="sidenav">
@@ -441,6 +491,7 @@ img.simupreview{
   <a href="javascript:void(0)" class="closebtn" onclick="$('#credits').hide();" title="Close">&times;</a>
   <h1>Acknowledgement</h1>
   <p>We acknowledge that MCX Cloud is built upon the following open-source libraries and resources</p>
+ <div style="float:left;margin-right:3em;">
   <h3>Front-end</h3>
   <ul>
   <li>JSON Editor (<a href="https://github.com/json-editor/json-editor">https://github.com/json-editor/json-editor</a>)</li>
@@ -448,6 +499,7 @@ img.simupreview{
   <li>JData Specifications (<a href="http://openjdata.org/">http://openjdata.org/</a>)</li>
   <li>JQuery (<a href="https://jquery.com/">https://jquery.com/</a>)</li>
   <li>Three.js (<a href="https://threejs.org/">https://threejs.org/</a>)</li>
+  <li>Ubuntu Font Family (<a href="https://design.ubuntu.com/font/">https://design.ubuntu.com/font/</a>)</li>
   <li>FontAwesome (<a href="https://fontawesome.com/">https://fontawesome.com/</a>)</li>
   <li>Pako (<a href="https://github.com/nodeca/pako">https://github.com/nodeca/pako</a>)</li>
   <li>Numjs (<a href="https://github.com/nicolaspanel/numjs">https://github.com/nicolaspanel/numjs</a>)</li>
@@ -457,7 +509,9 @@ img.simupreview{
   <li>Bootstrap (<a href="https://getbootstrap.com/">https://getbootstrap.com/</a>)</li>
   <li>Background graphics: <a href="https://www.svgbackgrounds.com/#flat-mountains">SVG Backgrounds</a></li>
   </ul>
-  
+ </div>
+
+ <div style="float:left">
   <h3>Backend</h3>
   <ul>
   <li>Monte Carlo eXtreme (MCX) (<a href="http://mcx.space/">http://mcx.space/</a>)</li>
@@ -467,6 +521,7 @@ img.simupreview{
   <li>DBI (<a href="https://dbi.perl.org/">https://dbi.perl.org/</a>)</li>
   <li>Sqlite (<a href="https://www.sqlite.org/">https://sqlite.org/</a>)</li>
   </ul>
+ </div>
 </section>
 
 <footer>
@@ -480,8 +535,9 @@ img.simupreview{
 <script>
   "use strict";
 
-  var defaultSchema = {
-  "title": "Settings",
+  var defaultSchema = 
+{
+  "title": "MCX JSON Input",
   "type": "object",
   "required": [
     "Session",
@@ -566,14 +622,34 @@ img.simupreview{
           "default": true
         },
 	"DebugFlag": {
-          "title": "Debug flags",
-          "type": "string",
-          "default": ""
+	  "oneOf" :[
+	   {
+            "title": "Debug flags",
+            "type": "string",
+            "default": ""
+	   },
+	   {
+            "title": "Debug flags",
+            "type": "integer",
+            "default": 0,
+	    "minimum": 0
+	   }
+	  ]
         },
 	"SaveDataMask": {
-          "title": "Save detected photon flags",
-          "type": "string",
-          "default": "DP"
+	  "oneOf" :[
+	   {
+            "title": "Save detected photon flags",
+            "type": "string",
+            "default": "DP"
+	   },
+	   {
+            "title": "Save detected photon flags",
+            "type": "integer",
+            "default": 5,
+	    "minimum": 0
+	   }
+	  ]
         },
 	"OutputFormat": {
           "title": "Output file format",
@@ -728,7 +804,7 @@ img.simupreview{
               "maxItems": 4
             },
             "Param2": {
-              "title": "Source Parameter 1",
+              "title": "Source Parameter 2",
               "type": "array",
               "format": "table",
 	      "default": [
@@ -1272,9 +1348,24 @@ img.simupreview{
 		      ]
 	      },
 	      "_ArrayZipSize_":{
-		  "type": "integer",
-		  "default": 0,
-		  "minimum": 0
+	          "oneOf" :[
+		      {
+			  "type": "integer",
+			  "default": 0,
+			  "minimum": 0
+		      },
+		      {
+			  "type": "array",
+			  "default": [0,0],
+			  "format": "table",
+			  "items": {
+			      "type": "integer",
+			      "minimum": 0
+			  },
+			  "minItems": 2,
+			  "maxItems": 2
+		      }
+		  ]
 	      },
 	      "_ArrayZipData_":{
 		  "type": "string",
@@ -1312,6 +1403,28 @@ img.simupreview{
           ],
           "minItems": 3,
           "maxItems": 3
+        },
+	"LengthUnit": {
+          "title": "Voxel Size (in mm)",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+	},
+	"MediaFormat": {
+          "title": "Binary Volume Format",
+          "type": "string",
+	  "default": "byte",
+          "enum": [
+                "byte",
+                "short",
+		"svmc",
+		"mixlabel",
+                "labelplus",
+		"muamus_float",
+		"muamus_half",
+		"asgn_byte",
+		"muamus_short"
+              ]
         },
         "VolumeFile": {
           "title": "Volume File",
@@ -1363,7 +1476,7 @@ img.simupreview{
       }
     }
   }
-  }
+}
 
 
 var VolumeRenderShader1 = {
@@ -1679,6 +1792,7 @@ var VolumeRenderShader1 = {
     var url = window.location.search
     var queryParamsString = url.substring(1, url.length)
     var queryParams = queryParamsString.split('&')
+    let inittab=''
 
     if (queryParamsString.length) {
       queryParams.forEach(function (queryParam) {
@@ -1693,11 +1807,18 @@ var VolumeRenderShader1 = {
             data = JSON.parse(LZString.decompressFromBase64(value))
           } catch (reason) {
           }
-        }
+        }else if (param === 'tab') {
+          inittab=value;
+	}
       })
     }
 
     mergeOptions()
+
+    if(inittab!==''){
+	  lastjson='';
+	  showtab({'target': document.querySelector('#menu-'+inittab)}, inittab)
+    }
   }
 
   /* ----------------------------------------------------------- mergeOptions */
@@ -1711,7 +1832,10 @@ var VolumeRenderShader1 = {
 
   var refreshUI = function () {
     // schema
-    schemaTextarea.value = JSON.stringify(data.options.schema, null, 2)
+    if(data.options.hasOwnProperty('schema'))
+       schemaTextarea.value = JSON.stringify(data.options.schema, null, 2)
+    else
+       schemaTextarea.value = defaultSchema;
 
     // theme
     var themeMap = {
@@ -1884,6 +2008,11 @@ var VolumeRenderShader1 = {
     }
 
     initJsoneditor()
+
+    if(data.options.hasOwnProperty('json')){
+       outputTextarea.value = JSON.stringify(data.options.json, null, 2)
+       $("#setvalue").click();
+    }
   }
 
   /* --------------------------------------------------------- initJsoneditor */
@@ -1917,16 +2046,20 @@ var VolumeRenderShader1 = {
   /* ------------------------------------------------------- updateDirectLink */
 
   var updateDirectLink = function () {
-    var url = window.location.href.replace(/\?.*/, '')
-    url += '?data='
-    url += LZString.compressToBase64(JSON.stringify(data))
+    var url = window.location.href.replace(/\?.*/, '').replace(/#$/,'')
+    url += '?tab=preview&data='
+    let linkdata={options: Object.assign({},data.options)};
+    delete linkdata.options.schema;
+    url += LZString.compressToBase64(JSON.stringify(linkdata))
     directLink.href = url
   }
 
   /* -------------------------------------------------------- event listeners */
 
   setValue.addEventListener('click', function () {
-    jsoneditor.setValue(JSON.parse(outputTextarea.value))
+    data.options.json = JSON.parse(outputTextarea.value.replace(/\n/g,''));
+    jsoneditor.setValue(data.options.json)
+    updateDirectLink();
     updatejsonlink("saveinput", outputTextarea.value, "input.json");
   })
 
@@ -2001,8 +2134,8 @@ function sleep (time) {
 }
 
 function updatethumb(lastdatastr='', waittime=0){
+  renderer.setSize( canvas.width()/2, canvas.height()/2 );
   if(lastdatastr !== ''){
-    renderer.setSize( canvas.width()/2, canvas.height()/2 );
     let cfg = JSON.parse(lastdatastr);
     drawpreview(cfg);
   }
@@ -2039,8 +2172,8 @@ function showtab(event, name) {
 }
 
 function updatestatus(data){
+  let d = new Date();
   if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
-      var d = new Date();
       if(data.status === 'invalid'){
          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
          resetjob();
@@ -2055,11 +2188,11 @@ function updatestatus(data){
   if(jobid != null){
       $("#jobid").val(jobid);
       $("#jobhash").val(data.hash);
-      $("#run-log").val($("#run-log").val()+"\n"+"Successfully submitted job "+jobid);
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" Successfully submitted job "+jobid);
       count=0;
       timer=setInterval(jobstatus,5000);
   }else
-      $("#run-log").val($("#run-log").val()+"\n"+ 'failed to submit, please try again');
+      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+' failed to submit, please try again');
 }
 
 function resetjob(){
@@ -2071,10 +2204,13 @@ function resetjob(){
 }
 
 function addlog(data){
-  var d = new Date();
+  let d = new Date();
   if(data.hasOwnProperty('status')){
-      $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
-      if(data.status === 'invalid')
+      if(data.hasOwnProperty('dberror'))
+          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
+      else
+          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
+      if(data.status === 'invalid' || data.status === 'failed')
           resetjob();
   }
   if(data.hasOwnProperty('log')){
@@ -2087,7 +2223,7 @@ function addlog(data){
       resetjob();
       if(!(lastoutput === ''))
           updatejsonlink("saveoutput", lastoutput, "output.json");
-      var nii = JSON.parse(lastoutput);
+      let nii = JSON.parse(lastoutput);
       drawpreview(nii);
       lastjson = $("#output-textarea").val();
       $("#sharesubmit").prop( "disabled", false );
@@ -2147,7 +2283,7 @@ script.
 function checklimit(cfg) {
   if(cfg.Session.hasOwnProperty('Photons') && cfg.Session.Photons>1e7)
       throw new Error('the max photon number is limited to 1e7 in this preview version');
-  else if(cfg.Session.DebugFlag.includes('m')||cfg.Session.DebugFlag.includes('M'))
+  else if(cfg.Session.hasOwnProperty('DebugFlag') && (cfg.Session.DebugFlag.includes('m')||cfg.Session.DebugFlag.includes('M')))
       throw new Error('storing photon trajectories is not supported in this preview version');
   else if(cfg.Forward.T1/cfg.Forward.Dt>20)
       throw new Error('the maximum time gate number is limited to 20 in this preview version');
@@ -2176,29 +2312,30 @@ function checklimit(cfg) {
 }
 
 function runsimulation() {
-  var fullname=$("#fullname").val();
-  var email=$("#email").val();
-  var inst=$("#inst").val();
-  var netname=$("#netname").val();
-  var json=$("#output-textarea").val();
-  var isvalid=$("#validate-textarea").val();
+  let fullname=$("#fullname").val();
+  let email=$("#email").val();
+  let inst=$("#inst").val();
+  let netname=$("#netname").val();
+  let json=$("#output-textarea").val();
+  let isvalid=$("#validate-textarea").val();
 
   if(!(isvalid === 'valid'))
       throw "Input JSON is not valid according to the defined JSON schema";
   if(fullname === "" || email === "" || inst === "" || netname === "")
       throw "required fields are not provided, please type full name (private), email address (private), institute name (private) and net-name (public)";
 
-  checklimit(JSON.parse(json));
+  if(json !== lastloaded)
+      checklimit(JSON.parse(json));
 
   $.ajax({
       url: serverurl,
-      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback': 'updatestatus' },
+      data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback':'-' },
       type: 'POST',
       crossOrigin: true,
-      dataType: 'jsonp',
-      jsonp: 'callback',
-      jsonpCallback: 'updatestatus',
-      success: function( data ){},
+      dataType: 'json',
+      success: function( data ){
+         updatestatus(data);
+      },
       error: function(xhr,status,error) {
          $("#run-log").val($("#run-log").val()+"\n"+"runsimulation error: "+status);
       }
@@ -2210,15 +2347,15 @@ function sharecomplete(data){
 }
 
 function sharesimulation() {
-  var fullname=$("#sfullname").val();
-  var email=$("#semail").val();
-  var inst=$("#sinst").val();
-  var netname=$("#snetname").val();
-  var comment=$("#sdescription").val();
-  var json=$("#output-textarea").val();
-  var title=$("#stitle").val();
-  var license=$("input[name='slicense']:checked").val();
-  var thumb=$("#thumbnail").prop('src');
+  let fullname=$("#sfullname").val();
+  let email=$("#semail").val();
+  let inst=$("#sinst").val();
+  let netname=$("#snetname").val();
+  let comment=$("#sdescription").val();
+  let json=$("#output-textarea").val();
+  let title=$("#stitle").val();
+  let license=$("input[name='slicense']:checked").val();
+  let thumb=$("#thumbnail").prop('src');
 
   if(fullname === "" || email === "" || json === "" || comment==="" || title ==="" || license === undefined)
      throw "Required fields are not provided";
@@ -2227,13 +2364,12 @@ function sharesimulation() {
       url: serverurl,
       data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 
               'title': encodeURIComponent(title), 'comment': encodeURIComponent(comment), 
-	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': 'sharecomplete' },
+	      'thumbnail': encodeURIComponent(thumb), 'license': license, 'callback': '-' },
       type: 'POST',
       crossOrigin: true,
-      dataType: 'jsonp',
-      jsonp: 'callback',
-      jsonpCallback: 'sharecomplete',
+      dataType: 'json',
       success: function( data ){
+         sharecomplete(data);
       },
       error: function(xhr,status,error) {
          alert("sharesimulation error: "+status);
@@ -2303,7 +2439,7 @@ function resetscene(s){
 
 function drawshape(shape,index){
   let keys = Object.keys(shape);
-  let obj, c0, c1, dc, height;
+  let obj, c0, c1, dc, height, geometry, material;
   const dir={XLayers:0,YLayers:1,ZLayers:2,XSlabs:0,YSlabs:1,ZSlabs:2};
 
   switch(keys[0]){
@@ -2345,9 +2481,9 @@ function drawshape(shape,index){
       }
       break;
     case "Sphere":
-      var geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
+      geometry = new THREE.SphereGeometry(shape.Sphere.R, 32,32);
       //geometry.applyMatrix4( new THREE.Matrix4().makeTranslation(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]) );
-      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
+      material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Sphere.Tag], wireframe: true, transparent: true,  } );
       obj = new THREE.Mesh( geometry, material );
       obj.position.set(shape.Sphere.O[0],shape.Sphere.O[1],shape.Sphere.O[2]);
       boundingbox.add( obj );
@@ -2357,13 +2493,13 @@ function drawshape(shape,index){
       c1 = new THREE.Vector3( shape.Cylinder.C1[0],shape.Cylinder.C1[1],shape.Cylinder.C1[2] );
       dc=c1;
       height= c0.distanceTo(c1);
-      var geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
-      geometry.translate( 0, height / 2, 0 );
-      geometry.rotateX( Math.PI / 2 ); // orient along z-axis - required
+      geometry = new THREE.CylinderGeometry(shape.Cylinder.R, shape.Cylinder.R, height, 32);
+      geometry.translate( 0, height*0.5 - 1, 0 );
+      geometry.rotateX( Math.PI*0.5 ); // orient along z-axis - required
       dc.sub(c0).normalize();
       geometry.lookAt( dc );
       geometry.translate((c0.x+c1.x), (c0.y+c1.y), (c0.z+c1.z))
-      var material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
+      material = new THREE.MeshBasicMaterial( { color: materialcolor[shape.Cylinder.Tag], wireframe: true, transparent: false } );
       obj = new THREE.Mesh( geometry, material );
       boundingbox.add( obj );
       break;
@@ -2376,7 +2512,8 @@ function drawsrc(obj){
   const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
   let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
   const hex = 0xFFFFFF;
-  v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
+  if(obj.hasOwnProperty('Param1') && obj.Param1.length>=3)
+      v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
 
   const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
   arrowHelper.line.material.linewidth = length*0.2;
@@ -2418,7 +2555,7 @@ function drawdet(obj,index){
 
 function isWebGL2Available (){
   try {
-    var canvas = document.createElement( 'canvas' );
+    let canvas = document.createElement( 'canvas' );
     return !! ( window.WebGL2RenderingContext && canvas.getContext( 'webgl2' ) );
   } catch ( e ) {
     return false;
@@ -2537,7 +2674,7 @@ function drawpreview(cfg){
 }
 
 function mulberry32(a) {
-      var t = a += 0x6D2B79F5;
+      let t = a += 0x6D2B79F5;
       t = Math.imul(t ^ t >>> 15, t | 1);
       t ^= t + Math.imul(t ^ t >>> 7, t | 61);
       return ((t ^ t >>> 14) >>> 0);
@@ -2546,8 +2683,9 @@ function mulberry32(a) {
 function updatejsonlink(linkid, text, name) {
   const a = document.getElementById(linkid);
   const type = name.split(".").pop();
-  a.href = URL.createObjectURL( new Blob([text], { type:`text/${type === "txt" ? "plain" : type}` }) );
+  a.href = URL.createObjectURL( new Blob([text.replace(/\n/g, "\r\n")], { type:`text/${type === "txt" ? "plain" : type}` }) );
   a.download = name;
+  $("#"+linkid).prop( "disabled", false );
 }
 
 function update() {
@@ -2557,7 +2695,17 @@ function update() {
 }
 function loadpubsimu(data){
   $("#output-textarea").val(data.json);
+  if(data.hasOwnProperty('title'))
+      $("#stitle").val(data.title);
+  if(data.hasOwnProperty('comment'))
+      $("#sdescription").val(data.comment);
+  if(data.hasOwnProperty('license'))
+      $("input[name='slicense']:checked").val(data.license);
   $("#setvalue").click();
+  sleep(100).then(() => {
+      lastloaded=$("#output-textarea").val();
+      updatethumb(lastloaded, 300);
+  });
 }
 function loadsimulib(key,time){
   if (confirm('Are you sure you want to replace the current simulation settings by the selected one?')) {
@@ -2587,8 +2735,10 @@ function showsimudata(obj,time,lic){
 }
 function loadpubdata(data){
   for (let i = 0; i < data.length; i++) {
+     let comment=data[i].comment.replace(/'/g,"`").replace(/\n +([^\n]*)\n/g,"<pre>$1</pre>").replace(/\n\*([^\n]+)/g,"<ul><li>$1</li></ul>").replace(/\n/g,'<br/>');
+     comment=comment.replace(/(https?:\/\/)([^ \s<]+)/g,'<a target="_blank" href="$&">$1$2</a>');
      $("#mcxlibrary").append('<img class="simupreview" onclick="showsimudata(this,'+data[i].time+',\''+data[i].license+'\')" id="'+data[i].hash+
-       '" src="'+data[i].thumbnail+'" title=\''+data[i].title.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\' alt=\''+data[i].comment.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\'/>');
+       '" src="'+data[i].thumbnail+'" title=\''+data[i].title.replace(/'/g,"`").replace(/\n/g,'<br/>')+'\' alt=\''+comment+'\'/>');
   }
   if(data.length==5){
     let offset=$("#mcxlibrary img").length;
@@ -2636,7 +2786,7 @@ const scene = new THREE.Scene();
 var boundingbox=scene;
 var randseed=1648335518;
 var lastlog='', lastoutput='';
-var serverurl="https://kwafoo.coe.neu.edu/mcxone/mcxserver.cgi";
+var serverurl="https://kwafoo.coe.neu.edu/mcxcloud/mcxserver.cgi";
 
 $('#drawlastinput').click(function () {
   if(lastjson !== ""){
@@ -2713,6 +2863,7 @@ controls.enableKeys=false;
 
 controls.update();
 var lastvolume=null;
+var lastloaded=null;
 var lastclim=0;
 var reqid=undefined;
 
