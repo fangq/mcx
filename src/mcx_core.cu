@@ -800,7 +800,7 @@ __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium
 	
 	Icos=fabs(dot(*c0,nuvox->nv));
 	
-	n2=(nuvox->sv.isupper)? gproperty[nuvox->sv.lower].w : gproperty[nuvox->sv.upper].w;
+	n2=(nuvox->sv.isupper)? gproperty[nuvox->sv.upper].w : gproperty[nuvox->sv.lower].w;
 		
 	tmp0=n1*n1;
 	tmp1=n2*n2;
@@ -815,17 +815,18 @@ __device__ int reflectray(float n1, float3 *c0, float3 *rv, MCXsp *nuvox, Medium
 	    Rtotal=(Rtotal+(Re-Im)/(Re+Im))*0.5f; /*(Rp+Rs)/2*/
 	    if(rand_next_reflect(t)<=Rtotal){ /*do reflection*/
 	        *c0+=(FL3(-2.f*Icos))*nuvox->nv;
+		nuvox->sv.isupper=!nuvox->sv.isupper;
 	    }else{   /*do transmission*/
 	        *c0+=(FL3(-Icos))*nuvox->nv;
 		*c0=(FL3(tmp2))*nuvox->nv+FL3(n1/n2)*(*c0);
 		nuvox->nv=-nuvox->nv;
-		nuvox->sv.isupper=!nuvox->sv.isupper;
 		if(((nuvox->sv.isupper)? nuvox->sv.isupper:nuvox->sv.lower)==0) /*transmit to background medium*/
 	            return 1;
 		*((float4*)prop)=gproperty[nuvox->sv.isupper ? nuvox->sv.upper:nuvox->sv.lower];
 	    }
 	}else{ /*total internal reflection*/
 	    *c0+=(FL3(-2.f*Icos))*nuvox->nv;
+	    nuvox->sv.isupper=!nuvox->sv.isupper;
 	}
 	tmp0=rsqrtf(dot(*c0,*c0));
 	(*c0)=(*c0)*FL3(tmp0);
@@ -1682,8 +1683,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                            savedebugdata(&p,(uint)f.ndone+idx*gcfg->threadphoton+umin(idx,(idx<gcfg->oddphotons)*idx),gdebugdata);
 	       }
 	       v.nscat=(int)v.nscat;
-	       if(issvmc)
-       	           testint=1;  //< new propagation direction after scattering, enable ray-interface intersection test
+	       if(issvmc) testint=1;  //< new propagation direction after scattering, enable ray-interface intersection test
 	  }
 
           /** Read the optical property of the current voxel */
@@ -1851,18 +1851,24 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	     }
 	     w0=p.w;
 	     f.pathlen=0.f;
-	     if(issvmc){
-	       /** if the photon hits boundaries of the enclosing voxel, reset the flags for SVMC mode */
-	       if(idx1d!=idx1dold){
-	         nuvox.sv.issplit=0;
-		 testint=1;
-	       }
-	     }
 	  }else
 	       mediaid = mediaidold;
 
+	  /** in SVMC mode, update tissue type when photons cross voxel or intra-voxel boundary */
+	  if(issvmc){
+	      if(idx1d!=idx1dold){
+		  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
+		  testint=1; // re-enable ray-interface intesection test after launching a new photon under SVMC mode
+	      }else if(hitintf){
+		  nuvox.nv=-nuvox.nv;  // flip normal vector for transmission
+		  nuvox.sv.isupper=!nuvox.sv.isupper;
+		  testint=0; // disable ray-interafece intersection test immediately after an intersection event
+	      }
+	  }
+
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
           if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCyclic) )) || 
+	      (issvmc && (idx1d!=idx1dold || hitintf) && !nuvox.sv.isupper && !nuvox.sv.lower && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) ||
 	      f.t>gcfg->twin1){
 	      if(isdet==bcCyclic){
                  if(flipdir==0)  p.x=mcx_nextafterf(roundf(p.x+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.x: -gcfg->maxidx.x)),(v.x > 0.f)-(v.x < 0.f));
@@ -1885,8 +1891,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                    break;
               isdet=mediaid & DET_MASK;
               mediaid &= MED_MASK;
-	      if(issvmc)
-	          testint=1; // re-enable ray-interface intesection test after launching a new photon under SVMC mode
+	      if(issvmc) testint=1; // re-enable ray-interface intesection test after launching a new photon under SVMC mode
 	      continue;
 	  }
 
@@ -1902,30 +1907,18 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                         break;
                    isdet=mediaid & DET_MASK;
                    mediaid &= MED_MASK;
-		   if(issvmc)
-		       testint=1;
+		   if(issvmc) testint=1;
                    continue;
                }
           }
 
-          /** do boundary reflection/transmission for SVMC */
-          if(issvmc){
-              if(hitintf){  // intersects with the intra-voxel interface
-                  if(!isreflect || (isreflect && gproperty[nuvox.sv.lower].w==gproperty[nuvox.sv.upper].w)){
-                      nuvox.nv=-nuvox.nv;  // flip normal vector for transmission
-                      nuvox.sv.isupper=!nuvox.sv.isupper;  // cross subvoxel interface, change tissue type lable
-                      *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower];
-                      if(!nuvox.sv.isupper && !nuvox.sv.lower){  // transmit to background medium
-                          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
-                              ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
-                              media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
-                              break;
-                          isdet=mediaid & DET_MASK;
-                          mediaid &= MED_MASK;
-                          testint=1;
-                          continue;
-                      }
-                  }else{
+          /** do boundary reflection/transmission */
+          if(isreflect){
+              if(gcfg->mediaformat<100 && !issvmc)
+                  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
+              if(issvmc && hitintf){
+                  if(gproperty[nuvox.sv.lower].w != gproperty[nuvox.sv.upper].w){
+                      nuvox.nv=-nuvox.nv; // flip normal vector back for reflection/refraction computation
                       if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ // true if photon transmits to background media
                           if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                               ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
@@ -1936,84 +1929,63 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                           testint=1; //< launch new photon, enable ray-interafece inter. test for next step
                           continue;
                       }
-                    }
-                    testint=0; // disable ray-interafece intersection test immediately after an intersection event
-              }else if(idx1d!=idx1dold){ // intersects with voxel boundary
-                  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
-                  int curr_mediaid=nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower;
-                  if(curr_mediaid==0 && (!isreflect || n1==gproperty[curr_mediaid].w)){ // transmit to background medium
-                      if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
-                          ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
-                          media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
-                      break;
-                      isdet=mediaid & DET_MASK;
-                      mediaid &= MED_MASK;
-                      testint=1; //< launch new photon, enable ray-interafece inter. test for next step
-                      continue;
+                  }else{
+                      *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower];
                   }
-              }
-          }
+              }else{
+                  if(((isreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
+                      float Rtotal=1.f;
+                      float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
-          /** do boundary reflection/transmission */
-	  if(isreflect && !(issvmc && hitintf)){
-	      if(gcfg->mediaformat<100 && !issvmc)
-	          updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
-	      if(((isreflect && (isdet & 0xF)==0) || (isdet & 0x1)) && ((isdet & 0xF)==bcMirror || n1!=((gcfg->mediaformat<100)? (prop.n):(gproperty[(mediaid>0 && gcfg->mediaformat>=100)?1:mediaid].w)))){
-	          float Rtotal=1.f;
-	          float cphi,sphi,stheta,ctheta,tmp0,tmp1;
+                      if(!issvmc) updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
 
-		  if(!issvmc)
-                      updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface  
+                      tmp0=n1*n1;
+                      tmp1=prop.n*prop.n;
+                      cphi=fabs( (flipdir==0) ? v.x : (flipdir==1 ? v.y : v.z)); // cos(si)
+                      sphi=1.f-cphi*cphi;            // sin(si)^2
 
-                  tmp0=n1*n1;
-                  tmp1=prop.n*prop.n;
-		  cphi=fabs( (flipdir==0) ? v.x : (flipdir==1 ? v.y : v.z)); // cos(si)
-		  sphi=1.f-cphi*cphi;            // sin(si)^2
+                      len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2 = cos(ti)^2
+                      GPUDEBUG(("ref total ref=%f\n",len));
 
-                  len=1.f-tmp0/tmp1*sphi;   //1-[n1/n2*sin(si)]^2 = cos(ti)^2
-	          GPUDEBUG(("ref total ref=%f\n",len));
-
-                  if(len>0.f) { //< if no total internal reflection
-                	ctheta=tmp0*cphi*cphi+tmp1*len;
-                	stheta=2.f*n1*prop.n*cphi*sqrtf(len);
-                	Rtotal=(ctheta-stheta)/(ctheta+stheta);
-       	       		ctheta=tmp1*cphi*cphi+tmp0*len;
-       	       		Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
-	        	GPUDEBUG(("Rtotal=%f\n",Rtotal));
-                  } //< else, total internal reflection
-	          if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && (isdet!=bcMirror) && rand_next_reflect(t)>Rtotal){ // do transmission
-                        transmit(&v,n1,prop.n,flipdir);
-                        if(mediaid==0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower)==0)) { // transmission to external boundary
-                            GPUDEBUG(("transmit to air, relaunch\n"));
-		    	    if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
-			        (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
-			        ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
-				media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
-                                break;
-                            isdet=mediaid & DET_MASK;
-                            mediaid &= MED_MASK;
-			    if(issvmc)
-			        testint=1;
-			    continue;
-			}
-	                GPUDEBUG(("do transmission\n"));
-                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
-		  }else{ //< do reflection
-	                GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
-			(flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
-                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
-			(flipdir==0) ?
-        		    (p.x=mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f)-(v.x < 0.f))) :
-			    ((flipdir==1) ? 
-				(p.y=mcx_nextafterf(__float2int_rn(p.y), (v.y > 0.f)-(v.y < 0.f))) :
-				(p.z=mcx_nextafterf(__float2int_rn(p.z), (v.z > 0.f)-(v.z < 0.f))) );
-	                GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
-                	idx1d=idx1dold;
-		 	mediaid=(media[idx1d] & MED_MASK);
-        	  	updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
-                        if(issvmc){
-                            if((nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower)==0){ // terminate photon if photon is reflected to background medium
-                                if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                      if(len>0.f) { //< if no total internal reflection
+                          ctheta=tmp0*cphi*cphi+tmp1*len;
+                          stheta=2.f*n1*prop.n*cphi*sqrtf(len);
+                          Rtotal=(ctheta-stheta)/(ctheta+stheta);
+                          ctheta=tmp1*cphi*cphi+tmp0*len;
+                          Rtotal=(Rtotal+(ctheta-stheta)/(ctheta+stheta))*0.5f;
+                          GPUDEBUG(("Rtotal=%f\n",Rtotal));
+                      } //< else, total internal reflection
+                      if(Rtotal<1.f && (((isdet & 0xF)==0 && ((gcfg->mediaformat<100) ? prop.n:gproperty[mediaid].w) >= 1.f) || isdet==bcReflect) && (isdet!=bcMirror) && rand_next_reflect(t)>Rtotal){ // do transmission
+                          transmit(&v,n1,prop.n,flipdir);
+                          if(mediaid==0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower)==0)) { // transmission to external boundary
+                              GPUDEBUG(("transmit to air, relaunch\n"));
+                              if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+                                  (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
+                                  ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
+                                  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
+                                  break;
+                              isdet=mediaid & DET_MASK;
+                              mediaid &= MED_MASK;
+                              if(issvmc) testint=1;
+                              continue;
+                          }
+                          GPUDEBUG(("do transmission\n"));
+                          rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
+                      }else{ //< do reflection
+                          GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n",flipdir,p.x,p.y,p.z,v.x,v.y,v.z));
+                          (flipdir==0) ? (v.x=-v.x) : ((flipdir==1) ? (v.y=-v.y) : (v.z=-v.z)) ;
+                          rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
+                          (flipdir==0) ?
+                              (p.x=mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f)-(v.x < 0.f))) :
+                              ((flipdir==1) ?
+                                  (p.y=mcx_nextafterf(__float2int_rn(p.y), (v.y > 0.f)-(v.y < 0.f))) :
+                                  (p.z=mcx_nextafterf(__float2int_rn(p.z), (v.z > 0.f)-(v.z < 0.f))) );
+                          GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
+                          idx1d=idx1dold;
+                          mediaid=(media[idx1d] & MED_MASK);
+                          updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
+                          if(issvmc && (nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower)==0){ // terminate photon if photon is reflected to background medium
+                              if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                                   ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
                                   media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
                                   break;
@@ -2021,13 +1993,16 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                               mediaid &= MED_MASK;
                               testint=1;
                               continue;
-                            }
-                        }
-                  	n1=prop.n;
-		  }
-	      }else if(gcfg->mediaformat<100 && !issvmc)
-	          updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
-	  }
+                          }
+                          n1=prop.n;
+                      }
+                  }else if(gcfg->mediaformat<100 && !issvmc){
+                      updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox);
+                  }
+              }
+          }else{
+              if(issvmc) *((float4*)(&prop))=gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower];
+          }
      }
 
      /** return the accumulated total energyloss and launched energy back to the host */
