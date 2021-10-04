@@ -1302,7 +1302,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
       v->nscat=EPS;
       if(gcfg->outputtype==otRF){ // if run RF replay
           f->pathlen=photontof[(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+(int)f->ndone)];
-          sincosf(gcfg->omega*f->pathlen, ppath+4+gcfg->srcnum, ppath+3+gcfg->srcnum);
+          sincosf(TWO_PI*gcfg->omega*f->pathlen, ppath+4+gcfg->srcnum, ppath+3+gcfg->srcnum);
       }
       f->pathlen=0.f;
       
@@ -1677,10 +1677,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		      weight=(prop.mua==0.f) ? 0.f : ((w0-p.w)/(prop.mua));
 		  else if(gcfg->seed==SEED_FROM_FILE){
 		      if(gcfg->outputtype==otJacobian || gcfg->outputtype==otRF){
-		        if(gcfg->outputtype==otJacobian)
-		            weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*f.pathlen;
-			else
-			    weight=-p.w*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum];
+		        weight=replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*f.pathlen;
+			if(gcfg->outputtype==otRF)
+			    weight=-weight*ppath[gcfg->w0offset+gcfg->srcnum];
 			tshift=(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone);
 			tshift=(int)(floorf((photontof[tshift]-gcfg->twin0)*gcfg->Rtstep)) + 
 			   ( (gcfg->replaydet==-1)? ((photondetid[tshift]-1)*gcfg->maxgate) : 0);
