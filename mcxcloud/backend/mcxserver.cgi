@@ -87,7 +87,7 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
         foreach my $rec (@{$sth}){
             ($jsondata,$title,$comm,$lic,$netname,$dtime)=@$rec;
         }
-        $comm.="\n#History (do not edit below):\n#$dtime $netname";
+        $comm.="\n#$dtime $netname # DO NOT EDIT";
     }
     my %response=('status'=>"success",'hash'=>$key, 'json'=>$jsondata, 'title'=>$title, 'license'=>$lic, 'comment'=>$comm);
     $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
@@ -157,6 +157,10 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     $html =$callback.'({"status":"cancelled","jobid":"'.$jobid.'","dberror":"'.$DBI::errstr.'"})'."\n";
 }elsif(&V("action") eq 'detphoton'){  # download detphoton data from the current simulation
     $jobid=&V("jobid");
+    $jobhash="_".&V("hash");
+    if($jobid ne '' && not (-d "$workspace/$jobid") && $jobhash ne '' && (-d "$workspace/$jobhash") ){ # search to see if a simulation is cached, if yes, load cache first
+        $jobid=$jobhash;
+    }
     open FF, "<$workspace/$jobid/output_detp.jdat" || die("can not open detected photon data file");
     chomp(my @lines = <FF>);
     close(FF);

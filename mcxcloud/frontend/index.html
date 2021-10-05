@@ -361,6 +361,7 @@ img.simupreview{
 		    <button class='btn btn-primary btn-block' id='updatethumbnail'>Update Thumbnail</button>
 		    <hr/>
 		    <a class='btn btn-primary btn-block' id='saveoutput' href="#">Download Output</a>
+		    <a class='btn btn-primary btn-block' id='savedetphoton' href="#">Download Detected Photon</a>
 	    </div>
     </section>
 
@@ -2171,6 +2172,28 @@ function showtab(event, name) {
   }
 }
 
+function updatedetplink(data){
+  $("#savedetphoton").unbind('click');
+  updatejsonlink("savedetphoton", JSON.stringify(data), "output_detp.json");
+  $("#savedetphoton").text("Click to Save Detected Photon Data");
+}
+
+function getdetphoton() {
+  $.ajax({
+      url: serverurl,
+      data: { 'jobid': jobid, 'hash': $("#jobhash").val(), 'action': 'detphoton' },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'updatedetplink',
+      success: function( data ){},
+      error: function(xhr,status,error) {
+          $("#run-log").val($("#run-log").val()+"\n"+"failed to download detected photon data file: "+status);
+      }
+  });
+}
+
 function updatestatus(data){
   let d = new Date();
   if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
@@ -2227,6 +2250,11 @@ function addlog(data){
       drawpreview(nii);
       lastjson = $("#output-textarea").val();
       $("#sharesubmit").prop( "disabled", false );
+      $("#savedetphoton").attr( "disabled", !(data.hasOwnProperty('detphoton') && data.detphoton>0));
+      if(data.hasOwnProperty('detphoton') && data.detphoton>0){
+         $("#savedetphoton").text("Click to Retrieve Detected Photon");
+         $("#savedetphoton").click(getdetphoton);
+      }
   }
 }
 
@@ -2512,7 +2540,7 @@ function drawsrc(obj){
   const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
   let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
   const hex = 0xFFFFFF;
-  if(obj.hasOwnProperty('Param1') && obj.Param1.length>=3)
+  if(obj.hasOwnProperty('Param1') && obj.Param1.length>3)
       v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
 
   const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
