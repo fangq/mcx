@@ -2252,6 +2252,8 @@ function addlog(data){
       $("#sharesubmit").prop( "disabled", false );
       $("#savedetphoton").attr( "disabled", !(data.hasOwnProperty('detphoton') && data.detphoton>0));
       if(data.hasOwnProperty('detphoton') && data.detphoton>0){
+         $("#savedetphoton").attr("href","#");
+         $("#savedetphoton").removeAttr("download");
          $("#savedetphoton").text("Click to Retrieve Detected Photon");
          $("#savedetphoton").click(getdetphoton);
       }
