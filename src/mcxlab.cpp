@@ -102,7 +102,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        errorflag=0;
   int        threadid=0;
   const char       *outputtag[]={"data"};
-  const char       *datastruct[]={"data","stat","dref"};
+  const char       *datastruct[]={"data","stat","dref","prop"};
   const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","unitinmm","workload"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
@@ -171,7 +171,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
    * The function can return 1-5 outputs (i.e. the LHS)
    */
   if(nlhs>=1)
-      plhs[0] = mxCreateStructMatrix(ncfg,1,3,datastruct);
+      plhs[0] = mxCreateStructMatrix(ncfg,1,4,datastruct);
   if(nlhs>=2)
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
   if(nlhs>=3)
@@ -386,6 +386,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             mxSetFieldByNumber(stat,0,6, val);
 
 	    mxSetFieldByNumber(plhs[0],jstruct,1, stat);
+
+            /** return the final optical properties for polarized MCX simulation */
+            if(cfg.polprop){
+                for(int i=0;i<cfg.polmedianum;i++){
+                    // remember that g was replaced by the index of Mueller matrix, now restore it
+                    cfg.prop[i+1].g=cfg.polprop[i].mua;
+                }
+
+                dimtype propdim[2]={4,cfg.medianum};
+                mxSetFieldByNumber(plhs[0],jstruct,3, mxCreateNumericArray(2,propdim,mxSINGLE_CLASS,mxREAL));
+                memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,3)),cfg.prop,cfg.medianum*4*sizeof(float));
+            }
         }
     }catch(const char *err){
       mexPrintf("Error: %s\n",err);

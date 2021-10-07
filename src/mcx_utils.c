@@ -1373,8 +1373,6 @@ void mcx_prep_polarized(Config *cfg){
     cfg->smatrix=(float4 *)malloc(cfg->polmedianum*NANGLES*sizeof(float4));
     Medium *prop=cfg->prop;
     POLMedium *polprop=cfg->polprop;
-    FILE *pfile;
-    pfile=fopen("Mie_outputs.dat","w");
 
     for(int i=0;i<cfg->polmedianum;i++){
         prop[i+1].mua=polprop[i].mua;
@@ -1402,16 +1400,10 @@ void mcx_prep_polarized(Config *cfg){
         /* g will store the index that points to the corresponding smatrix */
         prop[i+1].g=(float)i;
 
-        /* save Mie function outputs to a file */
-        if(pfile!=NULL){
-            fprintf(pfile,"Tissue type %d: ",i+1);
-            fprintf(pfile,"mua=%5.5f mm^(-1), radius=%5.5f micron, rho=%5.5f micron^(-3), n_sph=%5.5f, n_med=%5.5f\n",
-                polprop[i].mua,polprop[i].r,polprop[i].rho,polprop[i].nsph,polprop[i].nmed);
-            fprintf(pfile,"Mie function outputs: mus=%5.5f mm^(-1), g=%5.5f\n\n",prop[i+1].mus,g);
-        }
+        /* store g in polprop, which will be output to detphoton later for post-processing */
+        polprop[i].mua=g;
     }
     free(mu);
-    if(pfile) fclose(pfile);
 }
 
 /**

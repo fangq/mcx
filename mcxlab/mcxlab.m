@@ -466,12 +466,9 @@ if(nargout>=2)
                 flags{end+1}=cfg(i).srcnum;
             end
             newdetp=mcxdetphoton(detp,medianum,flags{:});
-            if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
-                newdetp.prop=zeros(medianum+1,4);
-                newdetp.prop(1,:)=cfg(i).prop(1,:);
-                newdetp.prop(2:end,1)=cfg(i).polprop(:,1);
-            else
-                newdetp.prop=cfg(i).prop;
+            newdetp.prop=cfg(i).prop;
+            if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop)) && isfield(varargout{1}(i),'prop')
+                newdetp.prop(2:end,:)=varargout{1}(i).prop(:,2:end)';
             end
             if(isfield(cfg(i),'unitinmm'))
                 newdetp.unitinmm=cfg(i).unitinmm;
