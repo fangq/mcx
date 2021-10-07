@@ -82,10 +82,9 @@ R1=s2'*w/cfg1.nphoton;
 % output 2D maps (100x100) for I Q U V
 ix=discretize(detphoton1.p(:,1),0:0.2:20);
 iy=discretize(detphoton1.p(:,2),0:0.2:20);
-idx1d=sub2ind([100,100],iy,ix);
 HIQUV1=zeros(4,100,100);
 for i=1:4
-    HIQUV1(i,:,:)=reshape(accumarray(idx1d,s2(:,i)),[100,100]);
+    HIQUV1(i,:,:)=accumarray([iy,ix],s2(:,i),[100,100]);
 end
 
 % plot
@@ -135,10 +134,9 @@ R2=s2'*w/cfg2.nphoton;
 % output 2D maps (100x100) for I Q U V
 ix=discretize(detphoton2.p(:,1),0:0.2:20);
 iy=discretize(detphoton2.p(:,2),0:0.2:20);
-idx1d=sub2ind([100,100],iy,ix);
 HIQUV2=zeros(4,100,100);
 for i=1:4
-    HIQUV2(i,:,:)=reshape(accumarray(idx1d,s2(:,i)),[100,100]);
+    HIQUV2(i,:,:)=accumarray([iy,ix],s2(:,i),[100,100]);
 end
 
 % plot
