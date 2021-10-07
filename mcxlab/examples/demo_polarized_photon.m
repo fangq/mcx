@@ -23,6 +23,7 @@ cfg1.polprop=[
 % optical property of ambient material: mua, mus, g, n
 cfg1.prop=[
     0 0 1 1; % represent label 0 (if present in vol)
+    0 0 1 1;
     ];
 
 % add pencil beam source
@@ -106,6 +107,14 @@ cfg2.polprop=[
     0.0, 1.015, 1.152e-4, 1.59, 1.33; % represent label 1
     0.0, 0.500, 1.152e-4, 1.55, 1.33; % represent label 2
     0.0, 1.500, 1.152e-4, 1.50, 1.33; % represent label 3
+    ];
+
+% optical property of ambient material: mua, mus, g, n
+cfg2.prop=[
+    0 0 1 1; % represent label 0 (if present in vol)
+    0 0 1 1;
+    0 0 1 1;
+    0 0 1 1;
     ];
 
 % run simulation, output profile of detected photons

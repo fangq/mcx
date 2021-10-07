@@ -1209,7 +1209,8 @@ void mcx_preprocess(Config *cfg){
 
     if(cfg->vol && cfg->polprop){
         if(!(cfg->mediabyte<=4)) MCX_ERROR(-1,"Unsupported media format");
-        cfg->medianum=cfg->polmedianum+1;
+        if(cfg->medianum!=cfg->polmedianum+1)
+            MCX_ERROR(-6,"number of particle types does not match number of media");
         if(cfg->medianum+cfg->detnum+cfg->polmedianum*NANGLES>MAX_PROP_AND_DETECTORS)
             MCX_ERROR(-4,"input media types, detector number plus scattering matrix exceeds the maximum total (4000)");
         if(cfg->lambda==0.f)
@@ -1363,12 +1364,6 @@ void mcx_preprocess(Config *cfg){
  */
 
 void mcx_prep_polarized(Config *cfg){
-    Medium *prop=(Medium *)malloc(cfg->medianum*sizeof(Medium));
-    if(cfg->prop) {  // copy the ambient medium optical properties
-        memcpy(prop,cfg->prop,sizeof(Medium));
-        free(cfg->prop);
-    }
-    
     /* precompute cosine of discretized scattering angles */
     double *mu=(double *)malloc(NANGLES*sizeof(double));
     for(int i=0;i<NANGLES;i++){
@@ -1376,13 +1371,14 @@ void mcx_prep_polarized(Config *cfg){
     }
     
     cfg->smatrix=(float4 *)malloc(cfg->polmedianum*NANGLES*sizeof(float4));
+    Medium *prop=cfg->prop;
     POLMedium *polprop=cfg->polprop;
     FILE *pfile;
     pfile=fopen("Mie_outputs.dat","w");
+
     for(int i=0;i<cfg->polmedianum;i++){
         prop[i+1].mua=polprop[i].mua;
         prop[i+1].n=polprop[i].nmed;
-        prop[i+1].g=(float)i; // g will store the index that points to the corresponding smatrix
         
         /* for (i-1)th sphere(r, rho, nsph)-background medium(nmed) combination, compute mus and s-matrix */
         double x,A,qsca,g;
@@ -1391,8 +1387,20 @@ void mcx_prep_polarized(Config *cfg){
         double _Complex m=(polprop[i].nsph+I*0.0)/polprop[i].nmed;      // complex relative refractive index (unitless)
         Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca,&g);
         
+        if(prop[i+1].mus>EPS) {
+            float target_mus=prop[i+1].mus; // achieve target mus
+            if(prop[i+1].g<1.f-EPS) {
+                float target_musp=prop[i+1].mus*(1.0f-prop[i+1].g); // achieve target mus(1-g)
+                target_mus=target_musp/(1.0-g);
+            }
+            polprop[i].rho=target_mus/qsca/A*1e-3;
+        }
+
         /* compute scattering coefficient (in mm^-1) */
         prop[i+1].mus=qsca*A*polprop[i].rho*1e3;
+
+        /* g will store the index that points to the corresponding smatrix */
+        prop[i+1].g=(float)i;
 
         /* save Mie function outputs to a file */
         if(pfile!=NULL){
@@ -1402,7 +1410,6 @@ void mcx_prep_polarized(Config *cfg){
             fprintf(pfile,"Mie function outputs: mus=%5.5f mm^(-1), g=%5.5f\n\n",prop[i+1].mus,g);
         }
     }
-    cfg->prop=prop;
     free(mu);
     if(pfile) fclose(pfile);
 }

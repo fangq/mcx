@@ -112,9 +112,11 @@ function varargout=mcxlab(varargin)
 %                      density(1/micron^3), sphere refractive index, ambient medium
 %                      refractive index] in order. The first row is type 1,
 %                      and so on. The background medium (type 0) should be
-%                      defined in the first row of cfg.prop. If cfg.polprop
-%                      is defined, the medium properties starting from the
-%                      second row of cfg.prop will not be used.
+%                      defined in the first row of cfg.prop. For polprop type
+%                      i, if prop(i,2) is not zero: 1) if prop(i,3) == 1, the
+%                      density polprop(i,3) will be adjusted to achieve the target
+%                      mus prop(i,2); 2) if prop(i,3) < 1, polprop(i,3) will be
+%                      adjusted to achieve the target mus' prop(i,2)*(1-prop(i,3))
 %
 %== GPU settings ==
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
