@@ -1205,6 +1205,54 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
                       canfocus=0;
 		      break;
 		}
+		case(MCX_SRC_HYPERBOLOID_GAUSSIAN): { // hyperboloid gaussian beam, patch submitted by Gijs Buist (https://groups.google.com/g/mcx-users/c/wauKd1IbEJE/m/_7AQPgFYAAAJ)
+		      float sphi, cphi;
+		      float phi=TWO_PI*rand_uniform01(t);
+		      sincosf(phi,&sphi,&cphi);
+
+		      float r=sqrtf(-0.5f*logf(rand_uniform01(t)))*gcfg->srcparam1.x;
+
+		      /** parameter to generate photon path from coordinates at focus (depends on focal distance and rayleigh range) */
+		      float tt=-gcfg->srcparam1.y/gcfg->srcparam1.z;
+		      float l=rsqrtf(r*r+gcfg->srcparam1.z*gcfg->srcparam1.z);
+
+		      /** if beam direction is along +z or -z direction */
+		      float3 pd=float3(r*(cphi-tt*sphi), r*(sphi+tt*cphi), 0.f); // position displacement from srcpos
+		      float3 v0=float3(-r*sphi*l, r*cphi*l, gcfg->srcparam1.z*l); // photon dir. w.r.t the beam dir. v
+
+		      /** if beam dir. is not +z or -z, compute photon position and direction after rotation */
+		      if( v->z>-1.f+EPS && v->z<1.f-EPS ) {
+		          float tmp0=1.f-v->z*v->z;
+		          float tmp1=rsqrtf(tmp0);
+		          float ctheta=v->z;
+		          float stheta=sqrtf(tmp0);
+		          cphi=v->x*tmp1;
+		          sphi=v->y*tmp1;
+
+			  /** photon position displacement after rotation */
+			  pd=float3(pd.x*cphi*ctheta - pd.y*sphi, pd.x*sphi*ctheta + pd.y*cphi, -pd.x*stheta);
+
+			  /** photon direction after rotation */
+			  *((float4*)v)=float4(v0.x*cphi*ctheta - v0.y*sphi + v0.z*cphi*stheta,
+					       v0.x*sphi*ctheta + v0.y*cphi + v0.z*sphi*stheta,
+					       -v0.x*stheta + v0.z*ctheta,
+					       v->nscat);
+			  GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
+		      } else {
+		          *((float4*)v)=float4(v0.x, v0.y, (v->z > 0.f) ? v0.z : -v0.z, v->nscat);
+		          GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n",v->x,v->y,v->z));
+		      }
+
+		      /** compute final launch position and update medium label */
+		      *((float4*)p)=float4(p->x+pd.x, p->y+pd.y, p->z+pd.z, p->w);
+		      *idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+		      if(p->x<0.f || p->y<0.f || p->z<0.f || p->x>=gcfg->maxidx.x || p->y>=gcfg->maxidx.y || p->z>=gcfg->maxidx.z){
+		          *mediaid=0;
+		      }else{
+		          *mediaid=media[*idx1d];
+		      }
+		      break;
+		}
 		case(MCX_SRC_LINE):   // uniformally emitting line source, emitting cylindrically
 		case(MCX_SRC_SLIT): { // a line source emitting only along a specified direction, like a light sheet
 		      float r=rand_uniform01(t);
