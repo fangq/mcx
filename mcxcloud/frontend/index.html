@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/load_avg@0.16.0/build/stats.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
@@ -2192,7 +2193,7 @@ function getdetphoton() {
           $("#run-log").val($("#run-log").val()+"\n"+"failed to download detected photon data file: "+status);
       }
   });
-}
+}   
 
 function updatestatus(data){
   let d = new Date();
@@ -2722,6 +2723,7 @@ function update() {
     reqid=requestAnimationFrame(update);
     renderer.render(scene, camera);
     controls.update();
+    stats.update();
 }
 function loadpubsimu(data){
   $("#output-textarea").val(data.json);
@@ -2808,6 +2810,15 @@ function previewjsonfile(fname){
     }, "text");
 }
 
+function createStats() {
+  var stats = new Stats();
+  stats.setMode(0);
+
+  stats.domElement.style.position = 'relative';
+
+  return stats;
+}
+
 var canvas = $("#canvas");
 var bbxsize=[0,0,0];
 
@@ -2892,6 +2903,10 @@ controls.maxZoom = 40;
 controls.enableKeys=false;
 
 controls.update();
+
+var stats = createStats();
+document.getElementById('renderpanel').appendChild( stats.domElement );
+
 var lastvolume=null;
 var lastloaded=null;
 var lastclim=0;
