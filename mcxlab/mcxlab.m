@@ -144,6 +144,9 @@ function varargout=mcxlab(varargin)
 %                      'isotropic' - isotropic source, no param needed
 %                      'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
 %                      'gaussian' [*] - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
+%                      'hyperboloid' - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
+%                                radius (in voxels), srcparam1(2) specifies distance between launch plane and focus,
+%                                srcparam1(3) specifies rayleigh range
 %                      'planar' [*] - a 3D quadrilateral uniform planar source, with three corners specified 
 %                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
 %                      'pattern' [*] - a 3D quadrilateral pattern illumination, same as above, except

@@ -181,7 +181,7 @@ typedef struct  __align__(16) KernelParams {
   int replaydet;                     /**< select which detector to replay, 0 for all, -1 save all separately */
   unsigned int srcnum;               /**< total number of source patterns */
   unsigned int nphase;               /**< number of samples for inverse-cdf, will be added by 2 to include -1 and 1 on the two ends */
-  float omega;                       /**< modulation frequency in Hz for RF/FD simulations */
+  float omega;                       /**< modulation angular frequency (2*pi*f), in rad/s, for FD/RF replay */
   unsigned char bc[12];              /**< boundary conditions */
 }MCXParam;
 

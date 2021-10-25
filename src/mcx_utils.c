@@ -190,7 +190,7 @@ const char boundarydetflag[]={'0','1','\0'};
 
 const char *srctypeid[]={"pencil","isotropic","cone","gaussian","planar",
     "pattern","fourier","arcsine","disk","fourierx","fourierx2d","zgaussian",
-    "line","slit","pencilarray","pattern3d",""};
+    "line","slit","pencilarray","pattern3d","hyperboloid",""};
 
 
 /**
@@ -1197,11 +1197,11 @@ void mcx_preprocess(Config *cfg){
     cfg->srcdir.z*=tmp;
 
     for(int i=0;i<6;i++)
-        if(cfg->bc[i]>='A' && mcx_lookupindex(cfg->bc+i,boundarycond))
+        if(cfg->bc[i] && mcx_lookupindex(cfg->bc+i,boundarycond))
 	   MCX_ERROR(-4,"unknown boundary condition specifier");
 
     for(int i=6;i<12;i++){
-        if(cfg->bc[i]>='0' && mcx_lookupindex(cfg->bc+i,boundarydetflag))
+        if(cfg->bc[i] && mcx_lookupindex(cfg->bc+i,boundarydetflag))
 	   MCX_ERROR(-4,"unknown boundary detection flags");
 	if(cfg->bc[i])
 	   isbcdet=1;

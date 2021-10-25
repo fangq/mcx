@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/load_avg@0.16.0/build/stats.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
@@ -361,6 +362,7 @@ img.simupreview{
 		    <button class='btn btn-primary btn-block' id='updatethumbnail'>Update Thumbnail</button>
 		    <hr/>
 		    <a class='btn btn-primary btn-block' id='saveoutput' href="#">Download Output</a>
+		    <a class='btn btn-primary btn-block' id='savedetphoton' href="#">Download Detected Photon</a>
 	    </div>
     </section>
 
@@ -2171,6 +2173,28 @@ function showtab(event, name) {
   }
 }
 
+function updatedetplink(data){
+  $("#savedetphoton").unbind('click');
+  updatejsonlink("savedetphoton", JSON.stringify(data), "output_detp.json");
+  $("#savedetphoton").text("Click to Save Detected Photon Data");
+}
+
+function getdetphoton() {
+  $.ajax({
+      url: serverurl,
+      data: { 'jobid': jobid, 'hash': $("#jobhash").val(), 'action': 'detphoton' },
+      type: 'GET',
+      crossOrigin: true,
+      dataType: 'jsonp',
+      jsonp: 'callback',
+      jsonpCallback: 'updatedetplink',
+      success: function( data ){},
+      error: function(xhr,status,error) {
+          $("#run-log").val($("#run-log").val()+"\n"+"failed to download detected photon data file: "+status);
+      }
+  });
+}   
+
 function updatestatus(data){
   let d = new Date();
   if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
@@ -2227,6 +2251,13 @@ function addlog(data){
       drawpreview(nii);
       lastjson = $("#output-textarea").val();
       $("#sharesubmit").prop( "disabled", false );
+      $("#savedetphoton").attr( "disabled", !(data.hasOwnProperty('detphoton') && data.detphoton>0));
+      if(data.hasOwnProperty('detphoton') && data.detphoton>0){
+         $("#savedetphoton").attr("href","#");
+         $("#savedetphoton").removeAttr("download");
+         $("#savedetphoton").text("Click to Retrieve Detected Photon");
+         $("#savedetphoton").click(getdetphoton);
+      }
   }
 }
 
@@ -2512,7 +2543,7 @@ function drawsrc(obj){
   const orig = new THREE.Vector3( obj.Pos[0],obj.Pos[1],obj.Pos[2] );
   let length = Math.max(bbxsize[0],bbxsize[1],bbxsize[2])*0.2, v1, v2;
   const hex = 0xFFFFFF;
-  if(obj.hasOwnProperty('Param1') && obj.Param1.length>=3)
+  if(obj.hasOwnProperty('Param1') && obj.Param1.length>3)
       v1=new THREE.Vector3( obj.Param1[0], obj.Param1[1], obj.Param1[2] );
 
   const arrowHelper = new THREE.ArrowHelper( dir, orig, length, hex, 0.3*length, 0.15*length );
@@ -2692,6 +2723,7 @@ function update() {
     reqid=requestAnimationFrame(update);
     renderer.render(scene, camera);
     controls.update();
+    stats.update();
 }
 function loadpubsimu(data){
   $("#output-textarea").val(data.json);
@@ -2778,6 +2810,15 @@ function previewjsonfile(fname){
     }, "text");
 }
 
+function createStats() {
+  var stats = new Stats();
+  stats.setMode(0);
+
+  stats.domElement.style.position = 'relative';
+
+  return stats;
+}
+
 var canvas = $("#canvas");
 var bbxsize=[0,0,0];
 
@@ -2862,6 +2903,10 @@ controls.maxZoom = 40;
 controls.enableKeys=false;
 
 controls.update();
+
+var stats = createStats();
+document.getElementById('renderpanel').appendChild( stats.domElement );
+
 var lastvolume=null;
 var lastloaded=null;
 var lastclim=0;
