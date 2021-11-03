@@ -200,13 +200,10 @@ if(curveonly)
 end
 
 %% discretize nn and nc vector components to 0-255 gray-scale numbers
-edge_c = linspace(0,1,256);
-edge_n = linspace(-1,1,256);
 
 nc=nc-floor(nc);
-nc=discretize(nc, edge_c) - 1;
-
-nn=discretize(nn, edge_n) - 1;
+nc=floor(nc*255);
+nn=floor((nn+1)*255/2);
 
 %% assemble the final volume
 if(nargout==1)
