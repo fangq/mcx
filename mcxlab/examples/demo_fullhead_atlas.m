@@ -16,8 +16,6 @@
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clc
-clear
 load('fullhead_atlas.mat');
 %% prepare cfg for MCX simulation
 clear cfg

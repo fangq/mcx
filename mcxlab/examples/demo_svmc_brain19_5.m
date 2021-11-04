@@ -20,9 +20,8 @@
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clc
-clear
-close all
+
+clear cfg cfg_svmc
 
 %% common MC setup
 cfg.nphoton=1e8;
@@ -103,15 +102,15 @@ phi_svmc_interp=squeeze(interp1(y,phi_svmc_y_pivot,y_plane+0.5));
 figure;
 clines=-20:0.5:0;
 contourf(xx-0.5,zz-0.5,log10(abs(phi_svmc_interp')),clines,'linestyle','-',...
-    'color','k','linewidth',2,'DisplayName','SVMC');
+    'linecolor','k','linewidth',2,'DisplayName','SVMC');
 hold on;
 contour(xx,zz,log10(abs(squeeze(phi_vmc(:,ceil(y_plane),:))')),clines,'linestyle','--',...
-    'color','w','linewidth',2,'DisplayName','VMC');
+    'linecolor','w','linewidth',2,'DisplayName','VMC');
 colorbar('EastOutside');
 
 % plot tissue boundaries
 contour(squeeze(USC_atlas(:,ceil(y_plane),:))','linestyle','--',...
-    'color',[0.5 0.5 0.5],'linewidth',1.5,'HandleVisibility','off');
+    'linecolor',[0.5 0.5 0.5],'linewidth',1.5,'HandleVisibility','off');
 
 axis equal;
 lg=legend;
