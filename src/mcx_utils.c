@@ -1824,8 +1824,12 @@ int mcx_loadjson(cJSON *root, Config *cfg){
               cfg->srcdir.x=subitem->child->valuedouble;
               cfg->srcdir.y=subitem->child->next->valuedouble;
               cfg->srcdir.z=subitem->child->next->next->valuedouble;
-	      if(subitem->child->next->next->next)
-	         cfg->srcdir.w=subitem->child->next->next->next->valuedouble;
+	      if(subitem->child->next->next->next){
+                 if(cJSON_IsString(subitem->child->next->next->next) && strcmp(subitem->child->next->next->next->valuestring,"_NaN_")==0)
+		     cfg->srcdir.w=-(0.0 / 0.0);
+                 else
+	             cfg->srcdir.w=subitem->child->next->next->next->valuedouble;
+	      }
            }
 	   if(!cfg->issrcfrom0){
               cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/
