@@ -2169,7 +2169,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      float  *field;
 
      /** \c rfimag - imaginary part of the RF Jacobian, length is \c dimxyz */
-     float  *rfimag=NULL;
+     OutputType  *rfimag=NULL;
      
      /** \c Ppos - per-thread photon state initialization host buffers */
      float4 *Ppos,*Pdir,*Plen,*Plen0;
