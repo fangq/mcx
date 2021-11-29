@@ -1826,7 +1826,7 @@ int mcx_loadjson(cJSON *root, Config *cfg){
               cfg->srcdir.z=subitem->child->next->next->valuedouble;
 	      if(subitem->child->next->next->next){
                  if(cJSON_IsString(subitem->child->next->next->next) && strcmp(subitem->child->next->next->next->valuestring,"_NaN_")==0)
-		     cfg->srcdir.w=-(0.0 / 0.0);
+		     cfg->srcdir.w=NAN;
                  else
 	             cfg->srcdir.w=subitem->child->next->next->next->valuedouble;
 	      }
