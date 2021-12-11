@@ -285,18 +285,18 @@ __device__ inline void rotsphi(Stokes *s, float phi, Stokes *s2){
  * @param[in] prop: pointer to the current optical properties
  */
 
-__device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, Medium prop){
+__device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, Medium prop, float4 *gsmatrix){
     float costheta = cosf(theta);
     Stokes s2;
     rotsphi(s,phi,&s2);
     
-    uint imedia=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
+    uint imedia=NANGLES*(uint)prop.g;
     uint ithedeg=floorf(theta*NANGLES*R_PI);
     
-    s->i= gproperty[imedia+ithedeg].x*s2.i+gproperty[imedia+ithedeg].y*s2.q;
-    s->q= gproperty[imedia+ithedeg].y*s2.i+gproperty[imedia+ithedeg].x*s2.q;
-    s->u= gproperty[imedia+ithedeg].z*s2.u+gproperty[imedia+ithedeg].w*s2.v;
-    s->v=-gproperty[imedia+ithedeg].w*s2.u+gproperty[imedia+ithedeg].z*s2.v;
+    s->i= gsmatrix[imedia+ithedeg].x*s2.i+gsmatrix[imedia+ithedeg].y*s2.q;
+    s->q= gsmatrix[imedia+ithedeg].y*s2.i+gsmatrix[imedia+ithedeg].x*s2.q;
+    s->u= gsmatrix[imedia+ithedeg].z*s2.u+gsmatrix[imedia+ithedeg].w*s2.v;
+    s->v=-gsmatrix[imedia+ithedeg].w*s2.u+gsmatrix[imedia+ithedeg].z*s2.v;
     
     float temp,sini,cosi,sin22,cos22;
     
@@ -1496,7 +1496,7 @@ template <const int ispencil, const int isreflect, const int islabel, const int 
 kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n_seed[],
      float4 n_pos[],float4 n_dir[],float4 n_len[],float n_det[], uint detectedphoton[], 
      float srcpattern[],float replayweight[],float photontof[],int photondetid[], 
-     RandType *seeddata,float *gdebugdata, float *ginvcdf,volatile int *gprogress){
+     RandType *seeddata,float *gdebugdata, float *ginvcdf, float4 *gsmatrix, volatile int *gprogress){
 
      /** the 1D index of the current thread */
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
@@ -1607,7 +1607,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
                        if(gcfg->maxpolmedia && !gcfg->is2d){
-                           uint i=(uint)gcfg->maxmedia+gcfg->detnum+1+NANGLES*(uint)prop.g;
+                           uint i=(uint)NANGLES*(uint)prop.g;
 
                            /** Rejection method to choose azimuthal angle phi and deflection angle theta */
                            float I0,I,sin2phi,cos2phi;
@@ -1615,9 +1615,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                                theta=acosf(2.f*rand_next_zangle(t)-1.f);
                                tmp0=TWO_PI*rand_next_aangle(t);
                                sincosf(2.f*tmp0,&sin2phi,&cos2phi);
-                               I0=gproperty[i].x*s.i+gproperty[i].y*(s.q*cos2phi+s.u*sin2phi);
+                               I0=gsmatrix[i].x*s.i+gsmatrix[i].y*(s.q*cos2phi+s.u*sin2phi);
                                uint ithedeg=floorf(theta*NANGLES*R_PI);
-                               I=gproperty[i+ithedeg].x*s.i+gproperty[i+ithedeg].y*(s.q*cos2phi+s.u*sin2phi);
+                               I=gsmatrix[i+ithedeg].x*s.i+gsmatrix[i+ithedeg].y*(s.q*cos2phi+s.u*sin2phi);
                            }while(rand_uniform01(t)*I0>=I);
 
                            sincosf(tmp0,&sphi,&cphi);
@@ -1696,7 +1696,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        v.nscat++;
 
                        /** Update stokes parameters */
-                       if(gcfg->maxpolmedia) updatestokes(&s, theta, tmp0, (float3*)&rv, (float3*)&v, prop);
+                       if(gcfg->maxpolmedia) updatestokes(&s, theta, tmp0, (float3*)&rv, (float3*)&v, prop, gsmatrix);
 
 		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
@@ -2316,7 +2316,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      /** all pointers start with g___ are the corresponding GPU buffers to read/write host variables defined above */
      uint *gmedia;
-     float4 *gPpos,*gPdir,*gPlen;
+     float4 *gPpos,*gPdir,*gPlen,*gsmatrix;
      uint   *gPseed,*gdetected;
      int    *greplaydetid=NULL;
      float  *gPdet,*gsrcpattern=NULL,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL,*ginvcdf=NULL;
@@ -2600,6 +2600,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          CUDA_ASSERT(cudaMalloc((void **) &ginvcdf, sizeof(float)*cfg->nphase));
 	 CUDA_ASSERT(cudaMemcpy(ginvcdf,cfg->invcdf,sizeof(float)*cfg->nphase, cudaMemcpyHostToDevice));
      }
+     if(cfg->polmedianum){
+         CUDA_ASSERT(cudaMalloc((void **) &gsmatrix, cfg->polmedianum*NANGLES*sizeof(float4)));
+	 CUDA_ASSERT(cudaMemcpy(gsmatrix, cfg->smatrix, cfg->polmedianum*NANGLES*sizeof(float4), cudaMemcpyHostToDevice));
+     }
      /** 
        * Allocate and copy data needed for photon replay, the needed variables include
        * \c gPseed per-photon seed to be replayed
@@ -2729,8 +2733,6 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
        */
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum*sizeof(Medium), 0, cudaMemcpyHostToDevice));
      CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->detpos,  cfg->detnum*sizeof(float4), cfg->medianum*sizeof(Medium), cudaMemcpyHostToDevice));
-     CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->smatrix, cfg->polmedianum*NANGLES*sizeof(float4), cfg->medianum*sizeof(Medium)+
-         cfg->detnum*sizeof(float4), cudaMemcpyHostToDevice));
 
      MCX_FPRINTF(cfg->flog,"init complete : %d ms\n",GetTimeMillis()-tic);
 
@@ -2831,22 +2833,22 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     * compilation time, but brings up to 20%-30% speed improvement on certain simulations.
              */
 	   switch(ispencil*1000 + (isref>0)*100 + (cfg->mediabyte<=4)*10 + issvmc){
-	       case 0:   mcx_main_loop<0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1:   mcx_main_loop<0,0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 10:  mcx_main_loop<0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 11:  mcx_main_loop<0,0,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 100: mcx_main_loop<0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 101: mcx_main_loop<0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 110: mcx_main_loop<0,1,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 111: mcx_main_loop<0,1,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1000:mcx_main_loop<1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1001:mcx_main_loop<1,0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1010:mcx_main_loop<1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1011:mcx_main_loop<1,0,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1100:mcx_main_loop<1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1101:mcx_main_loop<1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1110:mcx_main_loop<1,1,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1111:mcx_main_loop<1,1,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
+	       case 0:   mcx_main_loop<0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1:   mcx_main_loop<0,0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 10:  mcx_main_loop<0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 11:  mcx_main_loop<0,0,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 100: mcx_main_loop<0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 101: mcx_main_loop<0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 110: mcx_main_loop<0,1,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 111: mcx_main_loop<0,1,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1000:mcx_main_loop<1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1001:mcx_main_loop<1,0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1010:mcx_main_loop<1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1011:mcx_main_loop<1,0,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1100:mcx_main_loop<1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1101:mcx_main_loop<1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1110:mcx_main_loop<1,1,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1111:mcx_main_loop<1,1,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
 	   }
 #pragma omp master
 {
@@ -3251,6 +3253,8 @@ is more than what your have specified (%d), please use the -H option to specify 
      CUDA_ASSERT(cudaFree(gdetected));
      if(cfg->nphase)
          CUDA_ASSERT(cudaFree(ginvcdf));
+     if(cfg->polmedianum)
+         CUDA_ASSERT(cudaFree(gsmatrix));
      if(cfg->debuglevel & MCX_DEBUG_MOVE)
          CUDA_ASSERT(cudaFree(gdebugdata));
      if(cfg->issaveseed){
