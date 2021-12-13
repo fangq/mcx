@@ -1211,8 +1211,6 @@ void mcx_preprocess(Config *cfg){
         if(!(cfg->mediabyte<=4)) MCX_ERROR(-1,"Unsupported media format");
         if(cfg->medianum!=cfg->polmedianum+1)
             MCX_ERROR(-6,"number of particle types does not match number of media");
-        if(cfg->medianum+cfg->detnum+cfg->polmedianum*NANGLES>MAX_PROP_AND_DETECTORS)
-            MCX_ERROR(-4,"input media types, detector number plus scattering matrix exceeds the maximum total (4000)");
         if(cfg->lambda==0.f)
             MCX_ERROR(-1,"you must specify light wavelength lambda to run polarized photon simulation");
         mcx_prep_polarized(cfg); // cfg->medianum will be updated
