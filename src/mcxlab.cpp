@@ -389,11 +389,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
             /** return the final optical properties for polarized MCX simulation */
             if(cfg.polprop){
-                for(int i=0;i<cfg.polmedianum;i++){
-                    // remember that g was replaced by the index of Mueller matrix, now restore it
-                    cfg.prop[i+1].g=cfg.polprop[i].mua;
-                }
-
+		for(int i=0;i<cfg.polmedianum;i++){
+		    // restore mua and mus values
+		    cfg.prop[i+1].mua/=cfg.unitinmm;
+		    cfg.prop[i+1].mus/=cfg.unitinmm;
+		}
                 dimtype propdim[2]={4,cfg.medianum};
                 mxSetFieldByNumber(plhs[0],jstruct,3, mxCreateNumericArray(2,propdim,mxSINGLE_CLASS,mxREAL));
                 memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,3)),cfg.prop,cfg.medianum*4*sizeof(float));

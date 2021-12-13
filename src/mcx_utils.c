@@ -1397,11 +1397,8 @@ void mcx_prep_polarized(Config *cfg){
         /* compute scattering coefficient (in mm^-1) */
         prop[i+1].mus=qsca*A*polprop[i].rho*1e3;
 
-        /* g will store the index that points to the corresponding smatrix */
-        prop[i+1].g=(float)i;
-
-        /* store g in polprop, which will be output to detphoton later for post-processing */
-        polprop[i].mua=g;
+        /* store anisotropy g (not used in polarized MCX simulation) */
+        prop[i+1].g=g;
     }
     free(mu);
 }

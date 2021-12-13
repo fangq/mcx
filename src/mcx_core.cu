@@ -285,12 +285,12 @@ __device__ inline void rotsphi(Stokes *s, float phi, Stokes *s2){
  * @param[in] prop: pointer to the current optical properties
  */
 
-__device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, Medium prop, float4 *gsmatrix){
+__device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, uint *mediaid, float4 *gsmatrix){
     float costheta = cosf(theta);
     Stokes s2;
     rotsphi(s,phi,&s2);
     
-    uint imedia=NANGLES*(uint)prop.g;
+    uint imedia=NANGLES*((*mediaid & MED_MASK)-1);
     uint ithedeg=floorf(theta*NANGLES*R_PI);
     
     s->i= gsmatrix[imedia+ithedeg].x*s2.i+gsmatrix[imedia+ithedeg].y*s2.q;
@@ -1607,7 +1607,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
                        if(gcfg->maxpolmedia && !gcfg->is2d){
-                           uint i=(uint)NANGLES*(uint)prop.g;
+                           uint i=(uint)NANGLES*((mediaid & MED_MASK)-1);
 
                            /** Rejection method to choose azimuthal angle phi and deflection angle theta */
                            float I0,I,sin2phi,cos2phi;
@@ -1696,7 +1696,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        v.nscat++;
 
                        /** Update stokes parameters */
-                       if(gcfg->maxpolmedia) updatestokes(&s, theta, tmp0, (float3*)&rv, (float3*)&v, prop, gsmatrix);
+                       if(gcfg->maxpolmedia) updatestokes(&s, theta, tmp0, (float3*)&rv, (float3*)&v, &mediaid, gsmatrix);
 
 		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
