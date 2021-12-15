@@ -197,6 +197,14 @@ function varargout=mcxlab(varargin)
 %                      source, see cfg.srctype='pattern' for details
 %                      Example <demo_photon_sharing.m>
 %      cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
+%      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
+%                   I: total light intensity (I >= 0)
+%                   Q: balance between horizontal and vertical linearly
+%                   polaized light (-1 <= Q <= 1)
+%                   U: balance between +45° and -45° linearly polaized
+%                   light (-1 <= Q <= 1)
+%                   V: balance between right and left circularly polaized
+%                   light (-1 <= Q <= 1)
 %      cfg.lambda: source light wavelength (nm) for polarized MC
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
@@ -361,7 +369,7 @@ end
 
 if(isstruct(varargin{1}))
     for i=1:length(varargin{1})
-        castlist={'srcpattern','srcpos','detpos','prop','workload','srcdir'};
+        castlist={'srcpattern','srcpos','detpos','prop','workload','srcdir','srciquv'};
         for j=1:length(castlist)
             if(isfield(varargin{1}(i),castlist{j}))
                 varargin{1}(i).(castlist{j})=double(varargin{1}(i).(castlist{j}));

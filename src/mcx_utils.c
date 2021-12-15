@@ -1213,6 +1213,9 @@ void mcx_preprocess(Config *cfg){
             MCX_ERROR(-6,"number of particle types does not match number of media");
         if(cfg->lambda==0.f)
             MCX_ERROR(-1,"you must specify light wavelength lambda to run polarized photon simulation");
+	if(cfg->srciquv.x<0.f) MCX_ERROR(-4,"initial total light intensity must not be negative");
+	if(cfg->srciquv.y<-1.f || cfg->srciquv.y>1.f || cfg->srciquv.z<-1.f || cfg->srciquv.z>1.f || cfg->srciquv.w<-1.f || cfg->srciquv.w>1.f)
+	    MCX_ERROR(-4,"initial Q, U and V must be floating-point numbers between -1 and 1");
         mcx_prep_polarized(cfg); // cfg->medianum will be updated
     }
 
