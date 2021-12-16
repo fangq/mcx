@@ -291,7 +291,7 @@ __device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u
     rotsphi(s,phi,&s2);
     
     uint imedia=NANGLES*((*mediaid & MED_MASK)-1);
-    uint ithedeg=floorf(theta*NANGLES*R_PI);
+    uint ithedeg=floorf(theta*NANGLES*(R_PI-EPS));
     
     s->i= gsmatrix[imedia+ithedeg].x*s2.i+gsmatrix[imedia+ithedeg].y*s2.q;
     s->q= gsmatrix[imedia+ithedeg].y*s2.i+gsmatrix[imedia+ithedeg].x*s2.q;
@@ -1616,7 +1616,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                                tmp0=TWO_PI*rand_next_aangle(t);
                                sincosf(2.f*tmp0,&sin2phi,&cos2phi);
                                I0=gsmatrix[i].x*s.i+gsmatrix[i].y*(s.q*cos2phi+s.u*sin2phi);
-                               uint ithedeg=floorf(theta*NANGLES*R_PI);
+                               uint ithedeg=floorf(theta*NANGLES*(R_PI-EPS));
                                I=gsmatrix[i+ithedeg].x*s.i+gsmatrix[i+ithedeg].y*(s.q*cos2phi+s.u*sin2phi);
                            }while(rand_uniform01(t)*I0>=I);
 
