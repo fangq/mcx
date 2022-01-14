@@ -548,22 +548,45 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		    unsigned int i[2];
 		    unsigned short h[2];
 		} f2h;
-		unsigned short tmp;
+		unsigned short tmp,m;
 	        for(i=0;i<dimxyz;i++){
 		    f2h.f[0]=val[i<<1];
 		    f2h.f[1]=val[(i<<1)+1];
 
-		    f2h.h[0] = (f2h.i[0] >> 31) << 5;
-		    tmp = (f2h.i[0] >> 23) & 0xff;
+		    /**
+			float to half conversion
+			https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
+			https://gamedev.stackexchange.com/a/17410  (for denorms)
+		    */
+		    m = ((f2h.i[0] >> 13) & 0x03ff);
+		    tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
 		    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-		    f2h.h[0] = (f2h.h[0] | tmp) << 10;
-		    f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+		    if(m<0x10 && tmp==0){ /*handle denorms - between 2^-24 and 2^-14*/
+			unsigned short sign = (f2h.i[0] >> 16) & 0x8000;
+			tmp = ((f2h.i[0] >> 23) & 0xff);
+			m = (f2h.i[0] >> 12) & 0x07ff;
+			m |= 0x0800u;
+			f2h.h[0] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+		    }else{
+			f2h.h[0] = (f2h.i[0] >> 31) << 5;
+			f2h.h[0] = (f2h.h[0] | tmp) << 10;
+			f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+		    }
 
-		    f2h.h[1] = (f2h.i[1] >> 31) << 5;
-		    tmp = (f2h.i[1] >> 23) & 0xff;
+		    m = ((f2h.i[1] >> 13) & 0x03ff);
+		    tmp = (f2h.i[1] >> 23) & 0xff; /*exponent*/
 		    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-		    f2h.h[1] = (f2h.h[1] | tmp) << 10;
-		    f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+		    if(m<0x10 && tmp==0){ /*handle denorms - between 2^-24 and 2^-14*/
+			unsigned short sign = (f2h.i[1] >> 16) & 0x8000;
+			tmp = ((f2h.i[1] >> 23) & 0xff);
+			m = (f2h.i[1] >> 12) & 0x07ff;
+			m |= 0x0800u;
+			f2h.h[1] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+		    }else{
+			f2h.h[1] = (f2h.i[1] >> 31) << 5;
+			f2h.h[1] = (f2h.h[1] | tmp) << 10;
+			f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+		    }
 
 	            if(f2h.i[0]==0) /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
 	                f2h.i[0]=0x00010000;

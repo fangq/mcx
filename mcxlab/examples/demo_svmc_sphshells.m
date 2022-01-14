@@ -14,9 +14,8 @@
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clc
-clear
-close all
+
+clear cfg cfg_svmc
 
 %% common MC setup
 cfg.nphoton=1e8;
@@ -94,24 +93,24 @@ phi_svmc=sum(output_svmc.data,4);
 figure;
 clines=-10:0.5:10;
 contourf(log10(abs(squeeze(phi_svmc(31,:,:))')),clines,'linestyle','-',...
-    'color','k','linewidth',2,'DisplayName','SVMC');
+    'linecolor','k','linewidth',2,'DisplayName','SVMC');
 hold on;
 contour(log10(abs(squeeze(phi_vmc(31,:,:))')),clines,'linestyle','--',...
-    'color','w','linewidth',2,'DisplayName','VMC');
+    'linecolor','w','linewidth',2,'DisplayName','VMC');
 colorbar('EastOutside');
 
 % plot media boundaries
-[xcirc,ycirc] = cylinder(10,200);
+[xcirc,ycirc] = cylinder([10,10],200);
 xcirc=xcirc(1,:)+31;
 ycirc=ycirc(1,:)+31;
 plot(xcirc,ycirc,'--','linewidth',1.5,'color',[.5 .5 .5],'HandleVisibility','off');
 
-[xcirc,ycirc] = cylinder(23,200);
+[xcirc,ycirc] = cylinder([23,23],200);
 xcirc=xcirc(1,:)+31;
 ycirc=ycirc(1,:)+31;
 plot(xcirc,ycirc,'--','linewidth',1.5,'color',[.5 .5 .5],'HandleVisibility','off');
 
-[xcirc,ycirc] = cylinder(25,200);
+[xcirc,ycirc] = cylinder([25,25],200);
 xcirc=xcirc(1,:)+31;
 ycirc=ycirc(1,:)+31;
 plot(xcirc,ycirc,'--','linewidth',1.5,'color',[.5 .5 .5],'HandleVisibility','off');

@@ -1,5 +1,3 @@
-clear
-clc
 
 %% case 1: homogenous media, update the refractive index from n_old to n_new for all voxels
 clear cfg1

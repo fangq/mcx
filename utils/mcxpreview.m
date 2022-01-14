@@ -64,6 +64,7 @@ for i=1:len
         offset=0;
     end
     
+    hseg=[];
     if(isfield(cfg(i),'vol') && ~isfield(cfg(i),'node'))
         % render mcxlab voxelated domain
         dim=size(cfg(i).vol);
@@ -74,7 +75,6 @@ for i=1:len
         val(val==0)=[];
         padvol=zeros(dim+2);
         padvol(2:end-1,2:end-1,2:end-1)=cfg(i).vol;
-        hseg=[];
 
         if(length(val)>1)
             hseg=zeros(length(val),1);
@@ -83,11 +83,9 @@ for i=1:len
                 hseg(id)=plotmesh((no-1)*voxelsize,fc,'facealpha',0.3, 'linestyle', 'none', 'facecolor',surfcolors(val(id)+1,:), varargin{:});
             end
         end
-    else
+    elseif(isfield(cfg(i),'node') && isfield(cfg(i),'elem'))
         % render mmclab mesh domain
-        if(~isfield(cfg(i),'node') || ~isfield(cfg(i),'elem'))
-            error('cfg.node or cfg.elem is missing');
-        end
+
         elemtype=ones(size(cfg(i).elem,1),1);
         if(isfield(cfg(i),'elemprop'))
             elemtype=cfg(i).elemprop;
@@ -106,9 +104,9 @@ for i=1:len
 
     if(isfield(cfg(i),'shapes'))
         if(isfield(cfg(i),'vol'))
-            hseg=mcxplotshapes(cfg(i).shapes,size(cfg(i).vol),offset,hseg,varargin{:});
+            hseg=mcxplotshapes(cfg(i).shapes,size(cfg(i).vol),offset,hseg,voxelsize,varargin{:});
         else
-            hseg=mcxplotshapes(cfg(i).shapes,[60,60,60],offset,hseg,varargin{:});
+            hseg=mcxplotshapes(cfg(i).shapes,[60,60,60],offset,hseg,voxelsize,varargin{:});
         end
     end
 

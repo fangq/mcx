@@ -95,7 +95,7 @@ for i=1:length(labels)
     % convert each label into a binary mask, smooth it, then extract the
     % isosurface using marching cube algorithm (matlab builtin)
     if(dosmooth)
-        volsmooth=smooth3(vol==labels(i),'g',ksize,kstd);
+        volsmooth=smooth3(double(vol==labels(i)),'g',ksize,kstd);
     else
         volsmooth=(vol==labels(i));
     end
@@ -200,13 +200,10 @@ if(curveonly)
 end
 
 %% discretize nn and nc vector components to 0-255 gray-scale numbers
-edge_c = linspace(0,1,256);
-edge_n = linspace(-1,1,256);
 
 nc=nc-floor(nc);
-nc=discretize(nc, edge_c) - 1;
-
-nn=discretize(nn, edge_n) - 1;
+nc=floor(nc*255);
+nn=min(floor((nn+1)*255/2),254);
 
 %% assemble the final volume
 if(nargout==1)

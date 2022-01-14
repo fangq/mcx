@@ -15,9 +15,8 @@
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clc
-clear
-close all
+
+clear cfg
 
 %% Monte Carlo
 cfg.nphoton=1e8; % photon number
