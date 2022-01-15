@@ -1,0 +1,63 @@
+{
+	"Session": {
+		"ID": "onelayer",
+		"DoMismatch": 0,
+		"DoAutoThread": 1,
+		"MaxDetPhoton": 10000000,
+		"BCFlags": "______001000",
+		"SaveDataMask": "IXVSPW",
+		"Photons": 10000000,
+		"MinEnergy": 0.01
+	},
+	"Forward": {
+		"T0": 0,
+		"T1": 5e-09,
+		"Dt": 5e-09
+	},
+	"Optode": {
+		"Source": {
+			"Pos": [10,10,0],
+			"Dir": [0,0,1],
+			"IQUV": [1,1,0,0],
+			"WaveLength": 632.8
+		}
+	},
+	"Domain": {
+		"OriginType": 1,
+		"LengthUnit": 1,
+		"Media": [
+            {
+                "mua": 0,
+                "mus": 0,
+                "g": 1,
+                "n": 1
+            },
+            {
+                "mua": 0,
+                "mus": 0,
+                "g": 1,
+                "n": 1
+            }
+        ],
+		"MieScatter": [
+            {
+                "mua": 0.0,
+                "radius": 1.015,
+                "rho": 0.0001152,
+                "nsph": 1.59,
+                "nmed": 1.33
+            }
+        ],
+		"MediaFormat": "byte",
+		"Dim": [20,20,10],
+		"VolumeFile": ""
+	},
+	"Shapes": {
+		"_ArrayType_": "uint8",
+		"_ArraySize_": [20,20,10],
+		"_ArrayZipType_": "zlib",
+		"_ArrayZipSize_": [1,4000],
+		"_ArrayZipData_": "eJztwTENAAAAw6DUv+nJ2AMUAAAA8DYwlg+h
+"
+	}
+}

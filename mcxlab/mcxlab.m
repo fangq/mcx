@@ -108,6 +108,15 @@ function varargout=mcxlab(varargin)
 %                      or detphoton.data subfield (as a 2D array). cfg.detphotons can use
 %                      a subset of the detected photon selected by the user.
 %                      Example: <demo_mcxlab_replay.m>
+%      cfg.polprop:    an N by 5 array, each row specifies [mua, radius(micron), volume
+%                      density(1/micron^3), sphere refractive index, ambient medium
+%                      refractive index] in order. The first row is type 1,
+%                      and so on. The background medium (type 0) should be
+%                      defined in the first row of cfg.prop. For polprop type
+%                      i, if prop(i,2) is not zero: 1) if prop(i,3) == 1, the
+%                      density polprop(i,3) will be adjusted to achieve the target
+%                      mus prop(i,2); 2) if prop(i,3) < 1, polprop(i,3) will be
+%                      adjusted to achieve the target mus' prop(i,2)*(1-prop(i,3))
 %
 %== GPU settings ==
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -188,6 +197,15 @@ function varargout=mcxlab(varargin)
 %                      source, see cfg.srctype='pattern' for details
 %                      Example <demo_photon_sharing.m>
 %      cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
+%      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
+%                   I: total light intensity (I >= 0)
+%                   Q: balance between horizontal and vertical linearly
+%                   polaized light (-1 <= Q <= 1)
+%                   U: balance between +45° and -45° linearly polaized
+%                   light (-1 <= Q <= 1)
+%                   V: balance between right and left circularly polaized
+%                   light (-1 <= Q <= 1)
+%      cfg.lambda: source light wavelength (nm) for polarized MC
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
 %      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
 %                      -1 replay all detectors and save in separate volumes (output has 5 dimensions)
@@ -205,6 +223,7 @@ function varargout=mcxlab(varargin)
 %                         16 x  output exit position (3)
 %                         32 v  output exit direction (3)
 %                         64 w  output initial weight (1)
+%                        128 i  output stokes vector (4)
 %                      combine multiple items by using a string, or add selected numbers together
 %                      by default, mcx only saves detector ID (d) and partial-path data (p)
 %      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
@@ -266,6 +285,7 @@ function varargout=mcxlab(varargin)
 %              detphoton.mom: cummulative cos_theta for momentum transfer in each medium  
 %              detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
 %              detphoton.w0: photon initial weight at launch time
+%              detphoton.s: exit Stokes parameters for polarized photon
 %              detphoton.prop: optical properties, a copy of cfg.prop
 %              detphoton.data: a concatenated and transposed array in the order of
 %                    [detid nscat ppath mom p v w0]'
@@ -349,7 +369,7 @@ end
 
 if(isstruct(varargin{1}))
     for i=1:length(varargin{1})
-        castlist={'srcpattern','srcpos','detpos','prop','workload','srcdir'};
+        castlist={'srcpattern','srcpos','detpos','prop','workload','srcdir','srciquv'};
         for j=1:length(castlist)
             if(isfield(varargin{1}(i),castlist{j}))
                 varargin{1}(i).(castlist{j})=double(varargin{1}(i).(castlist{j}));
@@ -431,6 +451,11 @@ if(nargout>=2)
         if(isfield(cfg(i),'ismomentum') && cfg(i).ismomentum)
             cfg(i).savedetflag=[cfg(i).savedetflag,'M'];
         end
+        if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
+            cfg(i).savedetflag=[cfg(i).savedetflag,'PVWI'];
+        else
+            cfg(i).savedetflag(regexp(cfg(i).savedetflag,'[I,i]'))=[];
+        end
         if(ndims(cfg(i).vol)==4 && size(cfg(i).vol,1)~=8)
             cfg(i).savedetflag='';
             if((isa(cfg(i).vol,'single') || isa(cfg(i).vol,'double')) && isfield(cfg(i),'unitinmm'))
@@ -443,6 +468,9 @@ if(nargout>=2)
             if(isempty(detp))
                 continue;
             end
+            if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
+                medianum=size(cfg(i).polprop,1);
+            end
             flags={cfg(i).savedetflag};
             if(isfield(cfg(i),'issaveref'))
                 flags{end+1}=cfg(i).issaveref;
@@ -452,6 +480,9 @@ if(nargout>=2)
             end
             newdetp=mcxdetphoton(detp,medianum,flags{:});
             newdetp.prop=cfg(i).prop;
+            if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop)) && isfield(varargout{1}(i),'prop')
+                newdetp.prop(2:end,:)=varargout{1}(i).prop(:,2:end)';
+            end
             if(isfield(cfg(i),'unitinmm'))
                 newdetp.unitinmm=cfg(i).unitinmm;
             end

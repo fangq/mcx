@@ -102,7 +102,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
   int        errorflag=0;
   int        threadid=0;
   const char       *outputtag[]={"data"};
-  const char       *datastruct[]={"data","stat","dref"};
+  const char       *datastruct[]={"data","stat","dref","prop"};
   const char       *statstruct[]={"runtime","nphoton","energytot","energyabs","normalizer","unitinmm","workload"};
   const char       *gpuinfotag[]={"name","id","devcount","major","minor","globalmem",
                                   "constmem","sharedmem","regcount","clock","sm","core",
@@ -171,7 +171,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
    * The function can return 1-5 outputs (i.e. the LHS)
    */
   if(nlhs>=1)
-      plhs[0] = mxCreateStructMatrix(ncfg,1,3,datastruct);
+      plhs[0] = mxCreateStructMatrix(ncfg,1,4,datastruct);
   if(nlhs>=2)
       plhs[1] = mxCreateStructMatrix(ncfg,1,1,outputtag);
   if(nlhs>=3)
@@ -212,7 +212,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
         mcx_validate_config(&cfg);
 
 	partialdata=(cfg.medianum-1)*(SAVE_NSCAT(cfg.savedetflag)+SAVE_PPATH(cfg.savedetflag)+SAVE_MOM(cfg.savedetflag));
-	hostdetreclen=partialdata+SAVE_DETID(cfg.savedetflag)+3*(SAVE_PEXIT(cfg.savedetflag)+SAVE_VEXIT(cfg.savedetflag))+SAVE_W0(cfg.savedetflag);
+	hostdetreclen=partialdata+SAVE_DETID(cfg.savedetflag)+3*(SAVE_PEXIT(cfg.savedetflag)+SAVE_VEXIT(cfg.savedetflag))+SAVE_W0(cfg.savedetflag)+4*SAVE_IQUV(cfg.savedetflag);
 
         /** One must define the domain and properties */
 	if(cfg.vol==NULL || cfg.medianum==0){
@@ -386,6 +386,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
             mxSetFieldByNumber(stat,0,6, val);
 
 	    mxSetFieldByNumber(plhs[0],jstruct,1, stat);
+
+            /** return the final optical properties for polarized MCX simulation */
+            if(cfg.polprop){
+		for(int i=0;i<cfg.polmedianum;i++){
+		    // restore mua and mus values
+		    cfg.prop[i+1].mua/=cfg.unitinmm;
+		    cfg.prop[i+1].mus/=cfg.unitinmm;
+		}
+                dimtype propdim[2]={4,cfg.medianum};
+                mxSetFieldByNumber(plhs[0],jstruct,3, mxCreateNumericArray(2,propdim,mxSINGLE_CLASS,mxREAL));
+                memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,3)),cfg.prop,cfg.medianum*4*sizeof(float));
+            }
         }
     }catch(const char *err){
       mexPrintf("Error: %s\n",err);
@@ -459,6 +471,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,gscatter)
     GET_ONE_FIELD(cfg,srcnum)
     GET_ONE_FIELD(cfg,omega)
+    GET_ONE_FIELD(cfg,lambda)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC34_FIELD(cfg,srcdir)
     GET_VEC3_FIELD(cfg,steps)
@@ -466,6 +479,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_VEC3_FIELD(cfg,crop1)
     GET_VEC4_FIELD(cfg,srcparam1)
     GET_VEC4_FIELD(cfg,srcparam2)
+    GET_VEC4_FIELD(cfg,srciquv)
     else if(strcmp(name,"vol")==0){
         dimtype dimxyz;
         cfg->mediabyte=0;
@@ -654,6 +668,20 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
           for(i=0;i<cfg->medianum;i++)
              ((float *)(&cfg->prop[i]))[j]=val[j*cfg->medianum+i];
         printf("mcx.medianum=%d;\n",cfg->medianum);
+    }else if(strcmp(name,"polprop")==0){
+        if(mxGetNumberOfDimensions(item)!=2)
+            mexErrMsgTxt("the 'polprop' field must a 2D array");
+        arraydim=mxGetDimensions(item);
+        if(arraydim[0]>0 && arraydim[1]!=5)
+            mexErrMsgTxt("the 'polprop' field must have 5 columns (mua,radius,rho,n_sph,n_bkg");
+        double *val=mxGetPr(item);
+        cfg->polmedianum=arraydim[0];
+        if(cfg->polprop) free(cfg->polprop);
+        cfg->polprop=(POLMedium *)malloc(cfg->polmedianum*sizeof(POLMedium));
+        for(j=0;j<5;j++)
+          for(i=0;i<cfg->polmedianum;i++)
+             ((float *)(&cfg->polprop[i]))[j]=val[j*arraydim[0]+i];
+        printf("mcx.polmedianum=%d;\n",cfg->polmedianum);
     }else if(strcmp(name,"session")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
@@ -719,7 +747,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	printf("mcx.debuglevel=%d;\n",cfg->debuglevel);
     }else if(strcmp(name,"savedetflag")==0){
         int len=mxGetNumberOfElements(item);
-        const char saveflag[]={'D','S','P','M','X','V','W','\0'};
+        const char saveflag[]={'D','S','P','M','X','V','W','I','\0'};
         char savedetflag[MAX_SESSION_LENGTH]={'\0'};
 
         if(!mxIsChar(item) || len==0)
@@ -916,6 +944,7 @@ void mcx_validate_config(Config *cfg){
      const char boundarydetflag[]={'0','1','\0'};
      unsigned int partialdata=(cfg->medianum-1)*(SAVE_NSCAT(cfg->savedetflag)+SAVE_PPATH(cfg->savedetflag)+SAVE_MOM(cfg->savedetflag));
      unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
+     hostdetreclen+=cfg->polmedianum?(4*SAVE_IQUV(cfg->savedetflag)):0; // for polarized photon simulation
 
      if(!cfg->issrcfrom0){
         cfg->srcpos.x--;cfg->srcpos.y--;cfg->srcpos.z--; /*convert to C index, grid center*/

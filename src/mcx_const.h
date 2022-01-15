@@ -48,6 +48,7 @@
 #define BOUNDARY_DET_MASK  0xFFFF0000              /**< flag indicating a boundary face is used as a detector*/
 #define MAX_PROP_AND_DETECTORS   4000              /**< maximum number of property + number of detectors */
 #define SEED_FROM_FILE      -999                   /**< special flag indicating to read seeds from an mch file for replay */
+#define NANGLES            1000                    /**< number of discretization points in scattering angles */
 
 #define SIGN_BIT           0x80000000U
 #define DET_MASK           0x80000000              /**< mask of the sign bit to get the detector */
@@ -95,6 +96,7 @@
 #define SAVE_PEXIT(a)         ((a)>>4 & 0x1)   /**<  save exit positions */
 #define SAVE_VEXIT(a)         ((a)>>5 & 0x1)   /**<  save exit vector/directions */
 #define SAVE_W0(a)            ((a)>>6 & 0x1)   /**<  save initial weight */
+#define SAVE_IQUV(a)          ((a)>>7 & 0x1)   /**<  save stokes parameters */
 
 #define SET_SAVE_DETID(a)     ((a) | 0x1   )   /**<  mask to save detector ID*/
 #define SET_SAVE_NSCAT(a)     ((a) | 0x1<<1)   /**<  output partial scattering counts */
@@ -103,6 +105,7 @@
 #define SET_SAVE_PEXIT(a)     ((a) | 0x1<<4)   /**<  save exit positions */
 #define SET_SAVE_VEXIT(a)     ((a) | 0x1<<5)   /**<  save exit vector/directions */
 #define SET_SAVE_W0(a)        ((a) | 0x1<<6)   /**<  save initial weight */
+#define SET_SAVE_IQUV(a)      ((a) | 0x1<<7)   /**<  save stokes parameters */
 
 #define UNSET_SAVE_DETID(a)     ((a) & ~(0x1)   )   /**<  mask to save detector ID*/
 #define UNSET_SAVE_NSCAT(a)     ((a) & ~(0x1<<1))   /**<  output partial scattering counts */
@@ -111,6 +114,7 @@
 #define UNSET_SAVE_PEXIT(a)     ((a) & ~(0x1<<4))   /**<  save exit positions */
 #define UNSET_SAVE_VEXIT(a)     ((a) & ~(0x1<<5))   /**<  save exit vector/directions */
 #define UNSET_SAVE_W0(a)        ((a) & ~(0x1<<6))   /**<  save initial weight */
+#define UNSET_SAVE_IQUV(a)      ((a) & ~(0x1<<7))   /**<  unsave stokes parameters */
 
 #if !defined(MCX_CONTAINER) && !defined(_MSC_VER)
   #define S_RED     "\x1b[31m"

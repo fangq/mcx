@@ -23,8 +23,9 @@ function [data, headerstruct, photonseed]=loadmch(fname,format,endian)
 %                when the exit photon position/dir are recorded, 6 additional columns
 %                are inserted before the last column, first 3 columns represent the
 %                exiting position (x/y/z); the next 3 columns are the dir vector (vx/vy/vz).
+%                in polarized photon simulation, the last 4 colums are the exit Stokes vector.
 %                in other words, data is stored in the follow format
-%                    [detid(1) nscat(M) ppath(M) mom(M) p(3) v(3) w0(1)]
+%                    [detid(1) nscat(M) ppath(M) mom(M) p(3) v(3) w0(1) s(4)]
 %        header: file header info, a structure has the following fields
 %                [version,medianum,detnum,recordnum,totalphoton,detectedphoton,
 %                 savedphoton,lengthunit,seedbyte,normalizer,respin,srcnum,savedetflag]
@@ -76,7 +77,7 @@ while(~feof(fid))
         detflag=fliplr(detflag);
     end
 
-    datalen=[1 hd(2) hd(2) hd(2) 3 3 1];
+    datalen=[1 hd(2) hd(2) hd(2) 3 3 1 4];
     datlen=detflag.*datalen(1:length(detflag));
 
     dat=fread(fid,hd(7)*hd(4),format);

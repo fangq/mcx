@@ -65,6 +65,13 @@ typedef struct __align__(16) SplitVoxel{
 	unsigned char isupper; /**< flag if a photon is in the upper region*/
 }SVox;
 
+typedef struct __align__(16) StokesVector{
+        float i; /**< total light intensity: IH + IV */
+        float q; /**< IH - IV */
+        float u; /**< I(+pi/4) - I(-pi/4) */
+        float v; /**< IR - IL */
+}Stokes;
+
 typedef struct __align__(16) MCXSplit{
 	SVox   sv; /**< indicator of tissue type under split-voxel MC (SVMC) mode*/
 	float3 rp; /**< reference point of the intra-voxel interface*/
@@ -131,6 +138,7 @@ typedef struct  __align__(16) KernelParams {
   float  Rtstep;                     /**< reciprocal of the step size */
   float4 ps;                         /**< initial position vector, for pencil beam */
   float4 c0;                         /**< initial directon vector, for pencil beam */
+  float4 s0;                         /**< initial stokes parameters, for polarized photon simulation */
   float3 maxidx;                     /**< maximum index in x/y/z directions for out-of-bound tests */
   uint4  dimlen;                     /**< maximum index used to convert x/y/z to 1D array index */
   uint3  cp0;                        /**< 3D coordinates of one diagonal of the cached region  (obsolete) */
@@ -146,6 +154,7 @@ typedef struct  __align__(16) KernelParams {
   unsigned int maxdetphoton;         /**< max number of detected photons */
   unsigned int maxmedia;             /**< max number of media labels */
   unsigned int detnum;               /**< max number of detectors */
+  unsigned int maxpolmedia;          /**< max number of media labels for polarized light */
   unsigned int maxgate;              /**< max number of time gates */
   unsigned int idx1dorig;            /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
   unsigned int mediaidorig;          /**< pre-computed media index of the photon at launch for pencil/isotropic beams */

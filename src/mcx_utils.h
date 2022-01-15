@@ -79,6 +79,18 @@ typedef struct MCXMedium{
 } Medium;
 
 /**
+ * The stucture to store medium parameters for
+ * polarized photon simulations.
+ */
+typedef struct MCXPolarizeMedium{
+        float mua;                     /**< background medium absorption coefficient (in 1/mm) */
+        float r;                       /**< spherical particle radius (in micron) */
+        float rho;                     /**< particle volume density (in 1/micron^3) */
+        float nsph;                    /**< particle refractive index */
+        float nmed;                    /**< background medium refrative index */
+} POLMedium;
+
+/**
  * Header data structure in .mch/.mct files to store detected photon data 
  * This header has a total of 256 bytes
  */
@@ -147,6 +159,7 @@ typedef struct MCXConfig{
 
 	float4 srcpos;                /**<src position in mm*/
 	float4 srcdir;                /**<src normal direction*/
+        float4 srciquv;               /**<initial stokes parameter*/
 	float tstart;                 /**<start time in second*/
 	float tstep;                  /**<time step in second*/
 	float tend;                   /**<end time in second*/
@@ -156,13 +169,16 @@ typedef struct MCXConfig{
 	uint3 crop0;                  /**<sub-volume for cache*/
 	uint3 crop1;                  /**<the other end of the caching box*/
 	unsigned int medianum;        /**<total types of media*/
+        unsigned int polmedianum;     /**<total types of media for polarized photon simulation*/
 	unsigned int detnum;          /**<total detector numbers*/
 	unsigned int maxdetphoton;    /**<anticipated maximum detected photons*/
 	float detradius;              /**<default detector radius*/
         float sradius;                /**<source region radius, if set to non-zero, accumulation will not perform for dist<sradius*/
 
 	Medium *prop;                 /**<optical property mapping table*/
+        POLMedium *polprop;           /**<absorption and scatterer mapping table for polarized photon simulation*/
 	float4 *detpos;               /**<detector positions and radius, overwrite detradius*/
+        float4 *smatrix;              /**<scattering Mueller matrix */
 
 	unsigned int maxgate;         /**<simultaneous recording gates*/
 	int respin;                   /**<number of repeatitions (if positive), or number of divisions (if negative)*/
@@ -198,6 +214,7 @@ typedef struct MCXConfig{
         float minenergy;             /**<minimum energy to propagate photon*/
 	float unitinmm;              /**<defines the length unit in mm for grid*/
         float omega;                 /**<modulation angular frequency (2*pi*f), in rad/s, for FD/RF replay*/
+        float lambda;                /**<light wavelength (in nm), for polarized light simulation*/
         FILE *flog;                  /**<stream handle to print log information*/
         History his;                 /**<header info of the history file*/
 	float *exportfield;          /**<memory buffer when returning the flux to external programs such as matlab*/
@@ -290,6 +307,12 @@ void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
 void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *cfg);
 int  mcx_svmc_bgvoxel(int vol);
 void mcx_loadseedjdat(char *filename, Config *cfg);
+void mcx_prep_polarized(Config *cfg);
+void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
+void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
+double _Complex Lentz_Dn(double _Complex z,long n);
+void Dn_up(double _Complex z, long nstop, double _Complex *D);
+void Dn_down(double _Complex z, long nstop, double _Complex *D);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

@@ -255,6 +255,73 @@ __device__ inline void saveexitppath(float n_det[],float *ppath,MCXpos *p0,uint 
 }
 
 /**
+ * @brief Rotate Stokes vector s by phi
+ * 
+ * This function represents a rotation in the clockwise direction with respect
+ * to an observer looking into the direction of the photon propagation.
+ * 
+ * @param[in] s: input Stokes parameter
+ * @param[in] phi: rotation angle in radians
+ * @param[out] s2: output Stokes parameter
+ */
+
+__device__ inline void rotsphi(Stokes *s, float phi, Stokes *s2){
+    float sin2phi, cos2phi;
+    sincosf(2.f*phi,&sin2phi,&cos2phi);
+    
+    s2->i = s->i;
+    s2->q = s->q*cos2phi + s->u*sin2phi;
+    s2->u = -s->q*sin2phi + s->u*cos2phi;
+    s2->v = s->v;
+}
+
+/**
+ * @brief Update Stokes vector after a scattering event
+ * @param[in,out] s: input and output Stokes vector
+ * @param[in] theta: scattering angle in radiance
+ * @param[in] phi: azimuthal angle in radiance
+ * @param[in] u: incident direction cosine
+ * @param[in] u2: scattering direction cosine
+ * @param[in] prop: pointer to the current optical properties
+ */
+
+__device__ inline void updatestokes(Stokes *s, float theta, float phi, float3 *u, float3 *u2, uint *mediaid, float4 *gsmatrix){
+    float costheta = cosf(theta);
+    Stokes s2;
+    rotsphi(s,phi,&s2);
+    
+    uint imedia=NANGLES*((*mediaid & MED_MASK)-1);
+    uint ithedeg=floorf(theta*NANGLES*(R_PI-EPS));
+    
+    s->i= gsmatrix[imedia+ithedeg].x*s2.i+gsmatrix[imedia+ithedeg].y*s2.q;
+    s->q= gsmatrix[imedia+ithedeg].y*s2.i+gsmatrix[imedia+ithedeg].x*s2.q;
+    s->u= gsmatrix[imedia+ithedeg].z*s2.u+gsmatrix[imedia+ithedeg].w*s2.v;
+    s->v=-gsmatrix[imedia+ithedeg].w*s2.u+gsmatrix[imedia+ithedeg].z*s2.v;
+    
+    float temp,sini,cosi,sin22,cos22;
+    
+    temp=(u2->z>-1.f && u2->z<1.f) ? rsqrtf((1.f-costheta*costheta)*(1.f-u2->z*u2->z)) : 0.f;
+    
+    cosi=(temp==0.f) ? 0.f :(((phi>ONE_PI && phi<TWO_PI) ? 1.f : -1.f)*(u2->z*costheta-u->z)*temp);
+    cosi=fmax(-1.f,fmin(cosi,1.f));
+
+    sini=sqrtf(1.f-cosi*cosi);
+    cos22=2.f*cosi*cosi-1.f;
+    sin22=2.f*sini*cosi;
+    
+    s2.i=s->i;
+    s2.q=s->q*cos22-s->u*sin22;
+    s2.u=s->q*sin22+s->u*cos22;
+    s2.v=s->v;
+    
+    temp=__fdividef(1.f,s2.i); 
+    s->q=s2.q*temp;
+    s->u=s2.u*temp;
+    s->v=s2.v*temp;
+    s->i=1.f;
+}
+
+/**
  * @brief Recording detected photon information at photon termination
  * @param[in] n_det: pointer to the detector position array
  * @param[in] detectedphoton: variable in the global-mem recording the total detected photons
@@ -265,7 +332,7 @@ __device__ inline void saveexitppath(float n_det[],float *ppath,MCXpos *p0,uint 
  * @param[in] seeddata: the RNG seed of the photon at launch, need to save for replay 
  */
 
-__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *ppath,MCXpos *p0,MCXdir *v,RandType t[RAND_BUF_LEN],RandType *seeddata,uint isdet){
+__device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *ppath,MCXpos *p0,MCXdir *v,Stokes *s,RandType t[RAND_BUF_LEN],RandType *seeddata,uint isdet){
       int detid;
       detid=(isdet==OUTSIDE_VOLUME_MIN)?-1:(int)finddetector(p0);
       if(detid){
@@ -289,6 +356,12 @@ __device__ inline void savedetphoton(float n_det[],uint *detectedphoton,float *p
 	    }
 	    if(SAVE_W0(gcfg->savedetflag))
 	        n_det[baseaddr++]=ppath[gcfg->w0offset-1];
+            if(SAVE_IQUV(gcfg->savedetflag)){
+                n_det[baseaddr++]=s->i;
+                n_det[baseaddr++]=s->q;
+                n_det[baseaddr++]=s->u;
+                n_det[baseaddr++]=s->v;
+            }
 	 }
       }
 }
@@ -681,6 +754,7 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
  * @param[in] nuvox: a struct storing normal direction (nv) and a point on the plane
  * @param[in] f: photon state including total time-of-flight, number of scattering etc
  * @param[in] htime: nearest intersection of the enclosing voxel, returned by hitgrid
+ * @param[in] flipdir: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
  */
 
 __device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, 
@@ -926,6 +1000,7 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  * @param[in,out] p: the 3D position and weight of the photon
  * @param[in,out] v: the direction vector of the photon
  * @param[in,out] f: the parameter vector of the photon
+ * @param[in,out] s: the Stokes vector of the photon
  * @param[in,out] rv: the reciprocal direction vector of the photon (rv[i]=1/v[i])
  * @param[out] prop: the optical properties of the voxel the photon is launched into
  * @param[in,out] idx1d: the linear index of the voxel containing the photon at launch
@@ -947,8 +1022,8 @@ __device__ inline void rotatevector(MCXdir *v, float stheta, float ctheta, float
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int ispencil, const int isreflect, const int islabel, const int issvmc>
-__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
+template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized>
+__device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,float3* rv,Medium *prop,uint *idx1d, OutputType *field,
            uint *mediaid,OutputType *w0,uint isdet, float ppath[],float n_det[],uint *dpnum,
 	   RandType t[RAND_BUF_LEN],RandType photonseed[RAND_BUF_LEN],
 	   uint media[],float srcpattern[],int threadid,RandType rngseed[],RandType seeddata[],float gdebugdata[],volatile int gprogress[],
@@ -994,7 +1069,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
           if(gcfg->savedet){
              if((isdet&DET_MASK)==DET_MASK && (*mediaid==0 || (issvmc && 
 	        (nuvox->sv.isupper ? nuvox->sv.upper : nuvox->sv.lower)==0)) && gcfg->issaveref<2)
-	         savedetphoton(n_det,dpnum,ppath,p,v,photonseed,seeddata,isdet);
+	         savedetphoton(n_det,dpnum,ppath,p,v,s,photonseed,seeddata,isdet);
              clearpath(ppath,gcfg->partialdata);
           }
 #endif
@@ -1037,6 +1112,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,
               nuvox->sv.upper  =0;
               nuvox->sv.isupper=0;
 	  }
+
+          if(ispolarized){
+              *((float4*)s)=gcfg->s0;
+          }
 
           /**
            * Only one branch is taken because of template, this can reduce thread divergence
@@ -1413,11 +1492,11 @@ kernel void mcx_test_rng(OutputType field[],uint n_seed[]){
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int ispencil, const int isreflect, const int islabel, const int issvmc>
+template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized>
 kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n_seed[],
      float4 n_pos[],float4 n_dir[],float4 n_len[],float n_det[], uint detectedphoton[], 
      float srcpattern[],float replayweight[],float photontof[],int photondetid[], 
-     RandType *seeddata,float *gdebugdata, float *ginvcdf,volatile int *gprogress){
+     RandType *seeddata,float *gdebugdata, float *ginvcdf, float4 *gsmatrix, volatile int *gprogress){
 
      /** the 1D index of the current thread */
      int idx= blockDim.x * blockIdx.x + threadIdx.x;
@@ -1429,6 +1508,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      MCXtime f={0.f,0.f,0.f,-1.f};   //< Photon parameter state: pscat: remaining scattering probability,t: photon elapse time, pathlen: total pathlen in one voxel, ndone: completed photons
 
      MCXsp nuvox;
+     Stokes s;
+
      unsigned char testint=0;  //< flag used under SVMC mode: if a ray-interface intersection test is needed along current photon path
      unsigned char hitintf=0;  //< flag used under SVMC mode: if a photon path hit the intra-voxel interface inside a mixed voxel
      
@@ -1482,7 +1563,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	 Launch the first photon
       */
 
-     if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
+     if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,0,ppath,
        n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),media,srcpattern,
        idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox)){
          GPUDEBUG(("thread %d: fail to launch photon\n",idx));
@@ -1525,41 +1606,62 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                        //< random arimuthal angle
 	               float cphi=1.f,sphi=0.f,theta,stheta,ctheta;
                        float tmp0=0.f;
-		       if(!gcfg->is2d){
-		           tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
+                       if(ispolarized && !gcfg->is2d){
+                           uint i=(uint)NANGLES*((mediaid & MED_MASK)-1);
+
+                           /** Rejection method to choose azimuthal angle phi and deflection angle theta */
+                           float I0,I,sin2phi,cos2phi;
+                           do{
+                               theta=acosf(2.f*rand_next_zangle(t)-1.f);
+                               tmp0=TWO_PI*rand_next_aangle(t);
+                               sincosf(2.f*tmp0,&sin2phi,&cos2phi);
+                               I0=gsmatrix[i].x*s.i+gsmatrix[i].y*(s.q*cos2phi+s.u*sin2phi);
+                               uint ithedeg=floorf(theta*NANGLES*(R_PI-EPS));
+                               I=gsmatrix[i+ithedeg].x*s.i+gsmatrix[i+ithedeg].y*(s.q*cos2phi+s.u*sin2phi);
+                           }while(rand_uniform01(t)*I0>=I);
+
                            sincosf(tmp0,&sphi,&cphi);
-		       }
-                       GPUDEBUG(("scat phi=%f\n",tmp0));
+                           sincosf(theta,&stheta,&ctheta);
 
-                       if(gcfg->nphase>2){ // after padding the left/right ends, nphase must be 3 or more
-		           tmp0=rand_uniform01(t)*(gcfg->nphase-1);
-			   theta=tmp0-((int)tmp0);
-		           tmp0=(1.f-theta)*((float *)(sharedmem))[(int)tmp0   >= gcfg->nphase ? gcfg->nphase-1 : (int)(tmp0)  ]+
-			             theta *((float *)(sharedmem))[(int)tmp0+1 >= gcfg->nphase ? gcfg->nphase-1 : (int)(tmp0)+1];
-			   theta=acosf(tmp0);
-			   stheta=sinf(theta);
-			   ctheta=tmp0;
+                           GPUDEBUG(("scat phi=%f\n",tmp0));
+                           GPUDEBUG(("scat theta=%f\n",theta));
                        }else{
-		       	   tmp0=(v.nscat > gcfg->gscatter) ? 0.f : prop.g;
-                           /** Here we use Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002 */
-                           if(fabs(tmp0)>EPS){  //< if prop.g is too small, the distribution of theta is bad
-		               tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
-		               tmp0*=tmp0;
-		               tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
-
-                               // in early CUDA, when ran=1, CUDA gives 1.000002 for tmp0 which produces nan later
-                               // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
-                               tmp0=fmax(-1.f, fmin(1.f, tmp0));
-
-		               theta=acosf(tmp0);
-		               stheta=sinf(theta);
-		               ctheta=tmp0;
-                           }else{
-			       theta=acosf(2.f*rand_next_zangle(t)-1.f);
-                               sincosf(theta,&stheta,&ctheta);
+                           if(!gcfg->is2d){
+                               tmp0=TWO_PI*rand_next_aangle(t); //next arimuth angle
+                               sincosf(tmp0,&sphi,&cphi);
                            }
-		       }
-                       GPUDEBUG(("scat theta=%f\n",theta));
+                           GPUDEBUG(("scat phi=%f\n",tmp0));
+
+                           if(gcfg->nphase>2){ // after padding the left/right ends, nphase must be 3 or more
+                               tmp0=rand_uniform01(t)*(gcfg->nphase-1);
+                               theta=tmp0-((int)tmp0);
+                               tmp0=(1.f-theta)*((float *)(sharedmem))[(int)tmp0   >= gcfg->nphase ? gcfg->nphase-1 : (int)(tmp0)  ]+
+                                         theta *((float *)(sharedmem))[(int)tmp0+1 >= gcfg->nphase ? gcfg->nphase-1 : (int)(tmp0)+1];
+                               theta=acosf(tmp0);
+                               stheta=sinf(theta);
+                               ctheta=tmp0;
+                           }else{
+                               tmp0=(v.nscat > gcfg->gscatter) ? 0.f : prop.g;
+                               /** Here we use Henyey-Greenstein Phase Function, "Handbook of Optical Biomedical Diagnostics",2002,Chap3,p234, also see Boas2002 */
+                               if(fabs(tmp0)>EPS){  //< if prop.g is too small, the distribution of theta is bad
+                                   tmp0=(1.f-prop.g*prop.g)/(1.f-prop.g+2.f*prop.g*rand_next_zangle(t));
+                                   tmp0*=tmp0;
+                                   tmp0=(1.f+prop.g*prop.g-tmp0)/(2.f*prop.g);
+
+                                   // in early CUDA, when ran=1, CUDA gives 1.000002 for tmp0 which produces nan later
+                                   // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
+                                   tmp0=fmax(-1.f, fmin(1.f, tmp0));
+
+                                   theta=acosf(tmp0);
+                                   stheta=sinf(theta);
+                                   ctheta=tmp0;
+                               }else{
+                                   theta=acosf(2.f*rand_next_zangle(t)-1.f);
+                                   sincosf(theta,&stheta,&ctheta);
+                               }
+                           }
+                           GPUDEBUG(("scat theta=%f\n",theta));
+                       }
 #ifdef SAVE_DETECTORS
                        if(gcfg->savedet){
                            if(SAVE_NSCAT(gcfg->savedetflag)){
@@ -1581,12 +1683,20 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			   }
 		       }
 #endif
+                       /** Store old direction cosines for polarized photon simulation */
+                       if(ispolarized){
+                           rv=float3(v.x,v.y,v.z);
+                       }
+
                        /** Update direction vector with the two random angles */
 		       if(gcfg->is2d)
 		           rotatevector2d(&v,(rand_next_aangle(t)>0.5f ? stheta: -stheta),ctheta);
 		       else
                            rotatevector(&v,stheta,ctheta,sphi,cphi);
                        v.nscat++;
+
+                       /** Update stokes parameters */
+                       if(ispolarized) updatestokes(&s, theta, tmp0, (float3*)&rv, (float3*)&v, &mediaid, gsmatrix);
 
 		       /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                        rv=float3(__fdividef(1.f,v.x),__fdividef(1.f,v.y),__fdividef(1.f,v.z));
@@ -1821,7 +1931,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 		 }
 	      }
               GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n",idx1d,mediaid,gcfg->doreflect,isdet,f.t>gcfg->twin1));
-	      if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+	      if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
 	          (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
 	          ppath, n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 		  media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
@@ -1838,7 +1948,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                    p.w*=ROULETTE_SIZE;
                 else{
                    GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n",idx1d,mediaid,gcfg->doreflect));
-                   if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
+                   if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),ppath,
 	                n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
 			media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
                         break;
@@ -1857,7 +1967,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                   if(gproperty[nuvox.sv.lower].w != gproperty[nuvox.sv.upper].w){
                       nuvox.nv=-nuvox.nv; // flip normal vector back for reflection/refraction computation
                       if(reflectray(n1,(float3*)&(v),&rv,&nuvox,&prop,t)){ // true if photon transmits to background media
-                          if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                          if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                               ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
                               media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
                               break;
@@ -1896,7 +2006,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                           transmit(&v,n1,prop.n,flipdir);
                           if(mediaid==0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower)==0)) { // transmission to external boundary
                               GPUDEBUG(("transmit to air, relaunch\n"));
-                              if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
+                              if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,
                                   (((idx1d==OUTSIDE_VOLUME_MAX && gcfg->bc[9+flipdir]) || (idx1d==OUTSIDE_VOLUME_MIN && gcfg->bc[6+flipdir]))? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
                                   ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
                                   media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
@@ -1922,7 +2032,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                           mediaid=(media[idx1d] & MED_MASK);
                           updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
                           if(issvmc && (nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower)==0){ // terminate photon if photon is reflected to background medium
-                              if(launchnewphoton<ispencil, isreflect, islabel, issvmc>(&p,&v,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
+                              if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                                   ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
                                   media,srcpattern,idx,(RandType*)n_seed,seeddata,gdebugdata,gprogress,photontof,&nuvox))
                                   break;
@@ -2133,6 +2243,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      
      /** \c c0 - initial photon direction state, used to initialize \c{MCXdir v={vx,vy,vz,}} state in the GPU kernel */
      float4 c0=cfg->srcdir;
+     
+     /** \c stokesvec - initial photon polarization state, described by Stokes Vector */
+     float4 s0=(float4)cfg->srciquv;
+     
      float3 maxidx=float3(cfg->dim.x,cfg->dim.y,cfg->dim.z);
      int timegate=0, totalgates, gpuid, threadid=0;
      
@@ -2202,7 +2316,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      /** all pointers start with g___ are the corresponding GPU buffers to read/write host variables defined above */
      uint *gmedia;
-     float4 *gPpos,*gPdir,*gPlen;
+     float4 *gPpos,*gPdir,*gPlen,*gsmatrix;
      uint   *gPseed,*gdetected;
      int    *greplaydetid=NULL;
      float  *gPdet,*gsrcpattern=NULL,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL,*ginvcdf=NULL;
@@ -2225,7 +2339,7 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      unsigned int w0offset=partialdata+3;
      
      //< \c hostdetreclen - host-side det photon data buffer per-photon length
-     unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag);
+     unsigned int hostdetreclen=partialdata+SAVE_DETID(cfg->savedetflag)+3*(SAVE_PEXIT(cfg->savedetflag)+SAVE_VEXIT(cfg->savedetflag))+SAVE_W0(cfg->savedetflag)+4*SAVE_IQUV(cfg->savedetflag);
      
      //< \c is2d - flag to tell mcx if the simulation domain is 2D, set to 1 if any of the x/y/z dimensions has a length of 1
      unsigned int is2d=(cfg->dim.x==1 ? 1 : (cfg->dim.y==1 ? 2 : (cfg->dim.z==1 ? 3 : 0)));
@@ -2233,10 +2347,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
      /** \c param - constants to be used in the GPU, copied to GPU as \c gcfg, stored in the constant memory */
      MCXParam param={cfg->steps,minstep,0,0,cfg->tend,R_C0*cfg->unitinmm,
                      (uint)cfg->issave2pt,(uint)cfg->isreflect,(uint)cfg->isrefint,(uint)cfg->issavedet,1.f/cfg->tstep,
-		     p0,c0,maxidx,uint4(0,0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
+		     p0,c0,s0,maxidx,uint4(0,0,0,0),cp0,cp1,uint2(0,0),cfg->minenergy,
                      cfg->sradius*cfg->sradius,minstep*R_C0*cfg->unitinmm,cfg->srctype,
 		     cfg->srcparam1,cfg->srcparam2,cfg->voidtime,cfg->maxdetphoton,
-		     cfg->medianum-1,cfg->detnum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
+		     cfg->medianum-1,cfg->detnum,cfg->polmedianum,cfg->maxgate,0,0,ABS(cfg->sradius+2.f)<EPS /*isatomic*/,
 		     (uint)cfg->maxvoidstep,cfg->issaveseed>0,(uint)cfg->issaveref,cfg->isspecular>0,
 		     cfg->maxdetphoton*hostdetreclen,cfg->seed,(uint)cfg->outputtype,0,0,cfg->faststep,
 		     cfg->debuglevel,cfg->savedetflag,hostdetreclen,partialdata,w0offset,cfg->mediabyte,
@@ -2486,6 +2600,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
          CUDA_ASSERT(cudaMalloc((void **) &ginvcdf, sizeof(float)*cfg->nphase));
 	 CUDA_ASSERT(cudaMemcpy(ginvcdf,cfg->invcdf,sizeof(float)*cfg->nphase, cudaMemcpyHostToDevice));
      }
+     if(cfg->polmedianum){
+         CUDA_ASSERT(cudaMalloc((void **) &gsmatrix, cfg->polmedianum*NANGLES*sizeof(float4)));
+	 CUDA_ASSERT(cudaMemcpy(gsmatrix, cfg->smatrix, cfg->polmedianum*NANGLES*sizeof(float4), cudaMemcpyHostToDevice));
+     }
      /** 
        * Allocate and copy data needed for photon replay, the needed variables include
        * \c gPseed per-photon seed to be replayed
@@ -2705,6 +2823,9 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	   /** \c issvmc: template constant, if 1, consider the input volume containing split-voxel data, see Yan2020 for details */
 	   int issvmc=(cfg->mediabyte==MEDIA_2LABEL_SPLIT);
 
+           /** \c ispolarized: template constant, if 1, perform polarized light simulations, currently only supports label-based media */
+           int ispolarized=(cfg->mediabyte<=4) && (cfg->polmedianum>0);
+
 	   /** Enable reflection flag when c or m flags are used in the cfg.bc boundary condition flags */
 	   for(i=0;i<6;i++)
 	       if(cfg->bc[i]==bcReflect || cfg->bc[i]==bcMirror)
@@ -2714,23 +2835,23 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 	     * kernel PTX binaries for each combination of template variables. This creates bigger binary and slower 
 	     * compilation time, but brings up to 20%-30% speed improvement on certain simulations.
              */
-	   switch(ispencil*1000 + (isref>0)*100 + (cfg->mediabyte<=4)*10 + issvmc){
-	       case 0:   mcx_main_loop<0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1:   mcx_main_loop<0,0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 10:  mcx_main_loop<0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 11:  mcx_main_loop<0,0,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 100: mcx_main_loop<0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 101: mcx_main_loop<0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 110: mcx_main_loop<0,1,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 111: mcx_main_loop<0,1,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1000:mcx_main_loop<1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1001:mcx_main_loop<1,0,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1010:mcx_main_loop<1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1011:mcx_main_loop<1,0,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1100:mcx_main_loop<1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1101:mcx_main_loop<1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1110:mcx_main_loop<1,1,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
-	       case 1111:mcx_main_loop<1,1,1,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gprogress);break;
+	   switch(ispencil*10000 + (isref>0)*1000 + (cfg->mediabyte<=4)*100 + issvmc*10 + ispolarized){
+	       case 0:    mcx_main_loop<0,0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 10:   mcx_main_loop<0,0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 100:  mcx_main_loop<0,0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 101:  mcx_main_loop<0,0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1000: mcx_main_loop<0,1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1010: mcx_main_loop<0,1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1100: mcx_main_loop<0,1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+	       case 1101: mcx_main_loop<0,1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 10000:mcx_main_loop<1,0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 10010:mcx_main_loop<1,0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 10100:mcx_main_loop<1,0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 10101:mcx_main_loop<1,0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 11000:mcx_main_loop<1,1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 11010:mcx_main_loop<1,1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 11100:mcx_main_loop<1,1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               case 11101:mcx_main_loop<1,1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
 	   }
 #pragma omp master
 {
@@ -3135,6 +3256,8 @@ is more than what your have specified (%d), please use the -H option to specify 
      CUDA_ASSERT(cudaFree(gdetected));
      if(cfg->nphase)
          CUDA_ASSERT(cudaFree(ginvcdf));
+     if(cfg->polmedianum)
+         CUDA_ASSERT(cudaFree(gsmatrix));
      if(cfg->debuglevel & MCX_DEBUG_MOVE)
          CUDA_ASSERT(cudaFree(gdebugdata));
      if(cfg->issaveseed){
