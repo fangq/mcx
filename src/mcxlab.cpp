@@ -520,7 +520,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
 	if(cfg->vol) free(cfg->vol);
 	cfg->vol=(unsigned int *)malloc(dimxyz*sizeof(unsigned int));
-	if(cfg->mediabyte==4 || cfg->mediabyte>100)
+	if(cfg->mediabyte==4 || (cfg->mediabyte>100 && cfg->mediabyte!=MEDIA_MUA_FLOAT))
 	    memcpy(cfg->vol,mxGetData(item),dimxyz*sizeof(unsigned int));
 	else{
 	    if(cfg->mediabyte==1){
@@ -541,6 +541,21 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	        for(i=0;i<dimxyz;i++)
 	            cfg->vol[i]=val[i];
 		cfg->mediabyte=4;
+            }else if(cfg->mediabyte==MEDIA_MUA_FLOAT){
+                union{
+                    float f;
+	            uint  i;
+                } f2i;
+	        float *val=(float *)mxGetPr(item);
+	        for(i=0;i<dimxyz;i++){
+                    f2i.f=val[i];
+	            if(f2i.i==0) /*avoid being detected as a 0-label voxel*/
+	                f2i.f=EPS;
+                    if(val[i]!=val[i]) /*if input is nan in continuous medium, convert to 0-voxel*/
+                        f2i.i=0;
+	            cfg->vol[i]=f2i.i;
+                }
+		cfg->mediabyte=4;
 	    }else if(cfg->mediabyte==MEDIA_AS_F2H){
 	        float *val=(float *)mxGetPr(item);
 		union{
@@ -552,7 +567,10 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	        for(i=0;i<dimxyz;i++){
 		    f2h.f[0]=val[i<<1];
 		    f2h.f[1]=val[(i<<1)+1];
-
+		    if(f2h.f[0]!=f2h.f[0] || f2h.f[1]!=f2h.f[1]){ /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
+			cfg->vol[i]=0;
+			continue;
+                    }
 		    /**
 			float to half conversion
 			https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
