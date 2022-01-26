@@ -1429,7 +1429,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
       v->nscat=EPS;
       if(gcfg->outputtype==otRF){ // if run RF replay
           f->pathlen=photontof[(threadid*gcfg->threadphoton+min(threadid,gcfg->oddphotons-1)+(int)f->ndone)];
-          sincosf(TWO_PI*gcfg->omega*f->pathlen, ppath+4+gcfg->srcnum, ppath+3+gcfg->srcnum);
+          sincosf(gcfg->omega*f->pathlen, ppath+4+gcfg->srcnum, ppath+3+gcfg->srcnum);
       }
       f->pathlen=0.f;
       
@@ -1867,7 +1867,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 			else
 			    atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
 		      }else if(gcfg->outputtype==otRF && gcfg->omega>0.f){
-			oldval=-p.w*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum+1];
+			oldval=-replayweight[(idx*gcfg->threadphoton+min(idx,gcfg->oddphotons-1)+(int)f.ndone)]*f.pathlen*ppath[gcfg->w0offset+gcfg->srcnum+1];
 		        atomicadd(& field[idx1dold+tshift*gcfg->dimlen.z+gcfg->dimlen.w], oldval);
 		      }
     #endif
