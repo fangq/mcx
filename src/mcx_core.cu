@@ -3131,7 +3131,9 @@ is more than what your have specified (%d), please use the -H option to specify 
 	               if(scale[0]>0.f)
 	                   scale[0]=cfg->unitinmm/scale[0];
                        MCX_FPRINTF(cfg->flog,"normalization factor for detector %d alpha=%f\n",detid, scale[0]);  fflush(cfg->flog);
-                       mcx_normalize(cfg->exportfield+(detid-1)*dimxyz*gpu[gpuid].maxgate,scale[0],dimxyz*gpu[gpuid].maxgate*((cfg->outputtype==otRF)+1),cfg->isnormalized,0,1);
+                       mcx_normalize(cfg->exportfield+(detid-1)*dimxyz*gpu[gpuid].maxgate,scale[0],dimxyz*gpu[gpuid].maxgate,cfg->isnormalized,0,1);
+                       if(cfg->outputtype==otRF)
+                           mcx_normalize(cfg->exportfield+fieldlen+(detid-1)*dimxyz*gpu[gpuid].maxgate,scale[0],dimxyz*gpu[gpuid].maxgate,cfg->isnormalized,0,1);
 		   }
 		   isnormalized=1;
 	       }else{
