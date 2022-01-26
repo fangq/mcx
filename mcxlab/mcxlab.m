@@ -417,6 +417,14 @@ if(isstruct(varargin{1}))
     end
 end
 
+
+% detect [~,...]=mcxlab() in Octave. unfortunately matlab does not have isargout()
+if(nargout>=1 && exist('isargout','builtin') && isargout(1)==0)
+    for i=1:length(varargin{1})
+        varargin{1}(i).issave2pt=0;
+    end
+end
+
 if(useopencl==0)
     [varargout{1:max(1,nargout)}]=mcx(varargin{1});
 else
@@ -444,7 +452,6 @@ if(~ischar(cfg))
 end
 
 if(nargout>=2)
-
     for i=1:length(varargout{2})
         if((~isfield(cfg(i),'savedetflag')) || ((isfield(cfg(i),'savedetflag')) && isempty(cfg(i).savedetflag)))
             cfg(i).savedetflag='DP';
