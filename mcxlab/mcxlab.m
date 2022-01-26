@@ -234,6 +234,10 @@ function varargout=mcxlab(varargin)
 %                      next to a boundary voxel. The reflectance data are stored as 
 %                      negative values; must pad zeros next to boundaries
 %                      Example: see the demo script at the bottom
+%      cfg.issave2pt:  [1]-save volumetric output in the first output fluence.data; user can disable this output
+%                      by explicitly setting cfg.issave2pt=0, this way, even the first output fluence presents
+%                      in mcxlab call, volume data will not be saved, this can speed up simulation when only 
+%                      detphoton is needed
 %      cfg.outputtype: 'flux' - fluence-rate, (default value)
 %                      'fluence' - fluence integrated over each time gate, 
 %                      'energy' - energy deposit per voxel

@@ -204,7 +204,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	mcx_flush(&cfg);
 
         /** Overwite the output flags using the number of output present */
-	cfg.issave2pt=(nlhs>=1);  /** save fluence rate to the 1st output if present */
+	if(nlhs<1)
+            cfg.issave2pt=0; /** issave2pt defualt is 1, but allow users to manually disable, auto disable only if there is no output */
 	cfg.issavedet=(nlhs>=2);  /** save detected photon data to the 2nd output if present */
 	cfg.issaveseed=(nlhs>=4); /** save detected photon seeds to the 4th output if present */
 
@@ -327,8 +328,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	    if(cfg.replay.seed!=NULL && cfg.outputtype==otRF)
 	        fielddim[5]=2;
 	    fieldlen=fielddim[0]*fielddim[1]*fielddim[2]*fielddim[3]*fielddim[4]*fielddim[5];
-            if(cfg.issaveref){        /** If error is detected, gracefully terminate the mex and return back to MATLAB */
-
+            if(cfg.issaveref){
 	        float *dref=(float *)malloc(fieldlen*sizeof(float));
 		memcpy(dref,cfg.exportfield,fieldlen*sizeof(float));
 		for(int i=0;i<fieldlen;i++){
@@ -342,9 +342,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
                 memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,2)),dref,fieldlen*sizeof(float));
 		free(dref);
 	    }
-	    mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(((fielddim[5]>1) ? 6 : (4+(fielddim[4]>1))),fielddim,mxSINGLE_CLASS,mxREAL));
-	    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
+	    if(cfg.issave2pt){
+                mxSetFieldByNumber(plhs[0],jstruct,0, mxCreateNumericArray(((fielddim[5]>1) ? 6 : (4+(fielddim[4]>1))),fielddim,mxSINGLE_CLASS,mxREAL));
+	        memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0],jstruct,0)),cfg.exportfield,
                          fieldlen*sizeof(float));
+            }
             free(cfg.exportfield);
             cfg.exportfield=NULL;
 
@@ -471,6 +473,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
     GET_ONE_FIELD(cfg,gscatter)
     GET_ONE_FIELD(cfg,srcnum)
     GET_ONE_FIELD(cfg,omega)
+    GET_ONE_FIELD(cfg,issave2pt)
     GET_ONE_FIELD(cfg,lambda)
     GET_VEC3_FIELD(cfg,srcpos)
     GET_VEC34_FIELD(cfg,srcdir)
