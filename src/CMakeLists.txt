@@ -49,6 +49,8 @@ cuda_add_library(mcx STATIC
     mcx_shapes.h
     mcx_bench.c
     mcx_bench.h
+    mcx_mie.c
+    mcx_mie.h
     tictoc.c
     tictoc.h
     cjson/cJSON.c
