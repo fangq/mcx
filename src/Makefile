@@ -66,7 +66,7 @@ CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme mcx_bench cjson/cJSON ubj/ubjw
+FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc

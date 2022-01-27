@@ -308,11 +308,6 @@ void mcx_savejdet(float *ppath, void *seeds, uint count, int doappend, Config *c
 int  mcx_svmc_bgvoxel(int vol);
 void mcx_loadseedjdat(char *filename, Config *cfg);
 void mcx_prep_polarized(Config *cfg);
-void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
-void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
-double _Complex Lentz_Dn(double _Complex z,long n);
-void Dn_up(double _Complex z, long nstop, double _Complex *D);
-void Dn_down(double _Complex z, long nstop, double _Complex *D);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus
