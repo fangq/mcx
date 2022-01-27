@@ -433,7 +433,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg){
     const char *name=mxGetFieldNameByNumber(root,idx);
     const dimtype *arraydim;
-    char *jsonshapes=NULL;
     int i,j;
 
     if(strcmp(name,"nphoton")==0 && cfg->replay.seed!=NULL)
@@ -543,7 +542,6 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 	        float *val=(float *)mxGetPr(item);
 	        for(i=0;i<dimxyz;i++)
 	            cfg->vol[i]=val[i];
-		cfg->mediabyte=4;
             }else if(cfg->mediabyte==MEDIA_MUA_FLOAT){
                 union{
                     float f;
@@ -558,7 +556,6 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
                         f2i.i=0;
 	            cfg->vol[i]=f2i.i;
                 }
-		cfg->mediabyte=4;
 	    }else if(cfg->mediabyte==MEDIA_AS_F2H){
 	        float *val=(float *)mxGetPr(item);
 		union{
@@ -811,10 +808,11 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0)
              mexErrMsgTxt("the 'shapes' field must be a non-empty string");
-
-        jsonshapes=new char[len+1];
-        mxGetString(item, jsonshapes, len+1);
-        jsonshapes[len]='\0';
+        cfg->shapedata=(char *)calloc(len+2,1);
+        int status = mxGetString(item, cfg->shapedata, len+1);
+        if (status != 0)
+             mexWarnMsgTxt("not enough space. string is truncated.");
+        printf("mcx.shapedata='%s';\n",cfg->shapedata);
     }else if(strcmp(name,"bc")==0){
         int len=mxGetNumberOfElements(item);
         if(!mxIsChar(item) || len==0 || len>12)
@@ -885,15 +883,6 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
         printf("mcx.workload=<<%ld>>;\n",arraydim[0]*arraydim[1]);
     }else{
         printf(S_RED "WARNING: redundant field '%s'\n" S_RESET,name);
-    }
-    if(jsonshapes){
-        Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},0};
-        if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
-        int status=mcx_parse_shapestring(&grid,jsonshapes);
-        delete [] jsonshapes;
-        if(status){
-              mexErrMsgTxt(mcx_last_shapeerror());
-        }
     }
 }
 
@@ -1010,7 +999,17 @@ void mcx_validate_config(Config *cfg){
 		cfg->detpos[i].x--;cfg->detpos[i].y--;cfg->detpos[i].z--;  /*convert to C index*/
 	}
      }
-
+     if(cfg->shapedata && strstr(cfg->shapedata,":")!=NULL){
+         if(cfg->mediabyte>4){
+               mexErrMsgTxt("rasterization of shapes must be used with label-based mediatype");
+         }
+         Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},0};
+         if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
+         int status=mcx_parse_shapestring(&grid,cfg->shapedata);
+         if(status){
+               mexErrMsgTxt(mcx_last_shapeerror());
+         }
+     }
      mcx_preprocess(cfg);
 
      cfg->his.maxmedia=cfg->medianum-1; /*skip medium 0*/

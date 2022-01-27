@@ -1710,6 +1710,9 @@ void mcx_prepdomain(char *filename, Config *cfg){
 	     mcx_loadvolume(filename,cfg,0);
 	     if(cfg->shapedata && strstr(cfg->shapedata,":")!=NULL){
 	          int status;
+                  if(cfg->mediabyte>4){
+                      MCX_ERROR(-10, "rasterization of shapes must be used with label-based mediatype");
+                  }
      		  Grid3D grid={&(cfg->vol),&(cfg->dim),{1.f,1.f,1.f},cfg->isrowmajor};
         	  if(cfg->issrcfrom0) memset(&(grid.orig.x),0,sizeof(float3));
 		  status=mcx_parse_shapestring(&grid,cfg->shapedata);
