@@ -142,7 +142,9 @@ int mcx_parse_jsonshapes(cJSON *root, Grid3D *g){
     int (*raster)(cJSON *obj, Grid3D *g)=NULL;
 
     if(g && g->dim && g->dim->x*g->dim->y*g->dim->z>0){
-        if(g->vol && *(g->vol)==NULL)
+        if(g->vol && *(g->vol))
+            (*(g->vol))=(unsigned int*)realloc((void *)(*(g->vol)), sizeof(unsigned int)*g->dim->x*g->dim->y*g->dim->z);
+        else
             (*(g->vol))=(unsigned int*)calloc(sizeof(unsigned int),g->dim->x*g->dim->y*g->dim->z);
     }
     shapes  = cJSON_GetObjectItem(root,"Shapes");

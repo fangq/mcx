@@ -521,7 +521,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 
 	dimxyz=cfg->dim.x*cfg->dim.y*cfg->dim.z;
 	if(cfg->vol) free(cfg->vol);
-	cfg->vol=(unsigned int *)malloc(dimxyz*sizeof(unsigned int));
+	cfg->vol=static_cast<unsigned int *>(malloc(dimxyz*sizeof(unsigned int)));
 	if(cfg->mediabyte==4 || (cfg->mediabyte>100 && cfg->mediabyte!=MEDIA_MUA_FLOAT))
 	    memcpy(cfg->vol,mxGetData(item),dimxyz*sizeof(unsigned int));
 	else{
@@ -656,7 +656,7 @@ void mcx_set_field(const mxArray *root,const mxArray *item,int idx, Config *cfg)
 		unsigned char *val=(unsigned char *)mxGetPr(item);
 		if(cfg->vol)
 		    free(cfg->vol);
-		cfg->vol=(unsigned int *)malloc(dimxyz<<3);
+		cfg->vol=static_cast<unsigned int *>(malloc(dimxyz<<3));
 		memcpy(cfg->vol, val, (dimxyz<<3));
 	    }
 	}
