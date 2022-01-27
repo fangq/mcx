@@ -465,7 +465,7 @@ if(nargout>=2)
         if(isfield(cfg(i),'polprop') && ~isempty(cfg(i).polprop))
             cfg(i).savedetflag=[cfg(i).savedetflag,'PVWI'];
         else
-            cfg(i).savedetflag(regexp(cfg(i).savedetflag,'[I,i]'))=[];
+            cfg(i).savedetflag(regexp(cfg(i).savedetflag,'[Ii]'))=[];
         end
         if(ndims(cfg(i).vol)==4 && size(cfg(i).vol,1)~=8)
             cfg(i).savedetflag='';

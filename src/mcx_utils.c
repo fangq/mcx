@@ -152,7 +152,7 @@ const char debugflag[]={'R','M','P','\0'};
  * W: initial weight [1]
  */
 
-const char saveflag[]={'D','S','P','M','X','V','W','\0'};
+const char saveflag[]={'D','S','P','M','X','V','W','I','\0'};
 
 /**
  * Output file format
