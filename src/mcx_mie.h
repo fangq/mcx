@@ -31,18 +31,47 @@
 #ifndef _MCEXTREME_MIE_H
 #define _MCEXTREME_MIE_H
 
-#include <complex.h>
 #include <vector_types.h>
+
+#ifdef _MSC_VER
+#include <complex>
+typedef std::complex<double> Dcomplex;
+#else
+#include <complex.h>
+typedef double _Complex Dcomplex;
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
-void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g);
-double _Complex Lentz_Dn(double _Complex z,long n);
-void Dn_up(double _Complex z, long nstop, double _Complex *D);
-void Dn_down(double _Complex z, long nstop, double _Complex *D);
+#ifdef _MSC_VER
+inline Dcomplex make_Dcomplex(double re, double im) {
+    return Dcomplex(re,im);
+}
+inline double creal(Dcomplex z) {
+    return real(z);
+}
+inline double cimag(Dcomplex z) {
+    return imag(z);
+}
+inline double cabs(Dcomplex z) {
+    return abs(z);
+}
+inline Dcomplex ctan(Dcomplex z) {
+    return tan(z);
+}
+#else
+inline Dcomplex make_Dcomplex(double re, double im) {
+    return re + I * im;
+}
+#endif
+
+void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g);
+void small_Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g);
+Dcomplex Lentz_Dn(Dcomplex z,long n);
+void Dn_up(Dcomplex z, long nstop, Dcomplex *D);
+void Dn_down(Dcomplex z, long nstop, Dcomplex *D);
 
 #ifdef	__cplusplus
 }

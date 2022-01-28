@@ -47,12 +47,12 @@
  * @param[out] qsca: scattering efficiency
  */
 
-void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g){
-    double _Complex *D,*s1,*s2;
-    double _Complex z1=0.+I*0.;
-    double _Complex an,bn,bnm1,anm1;
+void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g){
+    Dcomplex *D,*s1,*s2;
+    Dcomplex z1=make_Dcomplex(0.0,0.0);
+    Dcomplex an,bn,bnm1,anm1;
     double *pi0,*pi1,*tau;
-    double _Complex xi,xi0,xi1;
+    Dcomplex xi,xi0,xi1;
     double psi0,psi1;
     double alpha,beta,factor;
     long n,k,nstop,sign;
@@ -67,16 +67,16 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
     
     nstop=floor(x+4.05*pow(x,0.33333)+2.0);
     
-    s1=(double _Complex *)calloc(NANGLES,sizeof(double _Complex));
-    s2=(double _Complex *)calloc(NANGLES,sizeof(double _Complex));
+    s1=(Dcomplex *)calloc(NANGLES,sizeof(Dcomplex));
+    s2=(Dcomplex *)calloc(NANGLES,sizeof(Dcomplex));
     pi0=(double *)calloc(NANGLES,sizeof(double));
     tau=(double *)calloc(NANGLES,sizeof(double));
     pi1=(double *)calloc(NANGLES,sizeof(double));
     for(int i=0;i<NANGLES;i++) pi1[i]=1.0;
     
     if(creal(m)>0.0){
-        double _Complex z=x*m;
-        D=(double _Complex *)calloc(nstop+1,sizeof(double _Complex));
+        Dcomplex z=x*m;
+        D=(Dcomplex *)calloc(nstop+1,sizeof(Dcomplex));
         if(fabs(cimag(m)*x)<((13.78*creal(m)-10.8)*creal(m)+3.9))
             Dn_up(z,nstop,D);
         else
@@ -85,32 +85,32 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
         
     psi0=sin(x);
     psi1=psi0/x-cos(x);
-    xi0=psi0+I*cos(x);
-    xi1=psi1+I*(cos(x)/x+sin(x));
+    xi0=make_Dcomplex(psi0,cos(x));
+    xi1=make_Dcomplex(psi1,cos(x)/x+sin(x));
     *qsca=0.0;
     *g=0.0;
     sign=1;
-    anm1=0.0+I*0.0;
-    bnm1=0.0+I*0.0;
+    anm1=make_Dcomplex(0.0,0.0);
+    bnm1=make_Dcomplex(0.0,0.0);
 
     for(n=1;n<=nstop;n++){
         if(creal(m)==0.0){
             an=(n*psi1/x-psi0)/(n/x*xi1-xi0);
             bn=psi1/xi1;
         }else if(cimag(m)==0.0){
-            z1=creal(D[n])/creal(m)+n/x+I*cimag(z1);
+            z1=make_Dcomplex(creal(D[n])/creal(m)+n/x,cimag(z1));
             an=(creal(z1)*psi1-psi0)/(creal(z1)*xi1-xi0);
             
-            z1=creal(D[n])*creal(m)+n/x+I*cimag(z1);
+            z1=make_Dcomplex(creal(D[n])*creal(m)+n/x,cimag(z1));
             bn=(creal(z1)*psi1-psi0)/(creal(z1)*xi1-xi0);
         }else{
             z1=D[n]/m;
             z1+=n/x;
-            an=(creal(z1)*psi1-psi0+I*cimag(z1)*psi1)/(z1*xi1-xi0);
+            an=make_Dcomplex(creal(z1)*psi1-psi0,cimag(z1)*psi1)/(z1*xi1-xi0);
             
             z1=D[n]*m;
             z1+=n/x;
-            bn=(creal(z1)*psi1-psi0+I*cimag(z1)*psi1)/(z1*xi1-xi0);
+            bn=make_Dcomplex(creal(z1)*psi1-psi0,cimag(z1)*psi1)/(z1*xi1-xi0);
         }
         
         for(k=0;k<NANGLES;k++){
@@ -118,8 +118,8 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
             tau[k]=n*mu[k]*pi1[k]-(n+1)*pi0[k];
             alpha=factor*pi1[k];
             beta=factor*tau[k];
-            s1[k]+=alpha*creal(an)+beta*creal(bn)+I*(alpha*cimag(an)+beta*cimag(bn));
-            s2[k]+=alpha*creal(bn)+beta*creal(an)+I*(alpha*cimag(bn)+beta*cimag(an));
+            s1[k]+=make_Dcomplex(alpha*creal(an)+beta*creal(bn),alpha*cimag(an)+beta*cimag(bn));
+            s2[k]+=make_Dcomplex(alpha*creal(bn)+beta*creal(an),alpha*cimag(bn)+beta*cimag(an));
         }
         
         for(k=0;k<NANGLES;k++){
@@ -172,9 +172,9 @@ void Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double 
  * @param[out] qsca: scattering efficiency
  */
 
-void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, double *qsca, double *g){
-    double _Complex ahat1,ahat2,bhat1;
-    double _Complex z0,m2,m4;
+void small_Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g){
+    Dcomplex ahat1,ahat2,bhat1;
+    Dcomplex z0,m2,m4;
     double x2,x3,x4;
     
     m2=m*m;
@@ -182,44 +182,43 @@ void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, d
     x2=x*x;
     x3=x2*x;
     x4=x2*x2;
-    z0=-cimag(m2)+I*(creal(m2)-1.0);
+    z0=make_Dcomplex(-cimag(m2),creal(m2)-1.0);
     {
-        double _Complex z1,z2,z3,z4,D;
+        Dcomplex z1,z2,z3,z4,D;
         
         if(creal(m)==0.0){
-            z3=0.0+I*(2.0/3.0*(1.0-0.2*x2));
-            D=1.0-0.5*x2+I*(2.0/3.0*x3);
+            z3=make_Dcomplex(0.0,2.0/3.0*(1.0-0.2*x2));
+            D=make_Dcomplex(1.0-0.5*x2,2.0/3.0*x3);
         }else{
             z1=2.0/3.0*z0;
-            z2=1.0-0.1*x2+(4.0*creal(m2)+5.0)*x4/1400.0+I*(4.0*x4*cimag(m2)/1400.0);
+            z2=make_Dcomplex(1.0-0.1*x2+(4.0*creal(m2)+5.0)*x4/1400.0,4.0*x4*cimag(m2)/1400.0);
             z3=z1*z2;
             
             z4=x3*(1.0-0.1*x2)*z1;
-            D=2.0+creal(m2)+(1-0.7*creal(m2))*x2+(8*creal(m4)-385*creal(m2)+350.0)/1400*x4+creal(z4)+
-                I*((-0.7*cimag(m2))*x2+(8*cimag(m4)-385*cimag(m2))/1400*x4+cimag(z4));
+            D=make_Dcomplex(2.0+creal(m2)+(1-0.7*creal(m2))*x2+(8*creal(m4)-385*creal(m2)+350.0)/1400*x4+creal(z4),
+                (-0.7*cimag(m2))*x2+(8*cimag(m4)-385*cimag(m2))/1400*x4+cimag(z4));
         }
         ahat1=z3/D;
     }
     {
-        double _Complex z2,z6,z7;
+        Dcomplex z2,z6,z7;
         if(creal(m)==0.0){
-            bhat1=(0.0+I*(-(1.0-0.1*x2)/3.0))/(1+0.5*x2+I*(-x3/3.0));
+            bhat1=make_Dcomplex(0.0,-(1.0-0.1*x2)/3.0)/make_Dcomplex(1+0.5*x2,-x3/3.0);
         }else{
             z2=x2/45.0*z0;
-            z6=1.0+(2.0*creal(m2)-5.0)*x2/70.0+I*(cimag(m2)*x2/35.0);
-            z7=1.0-(2.0*creal(m2)-5.0)*x2/30.0+I*(-cimag(m2)*x2/15.0);
+            z6=make_Dcomplex(1.0+(2.0*creal(m2)-5.0)*x2/70.0,cimag(m2)*x2/35.0);
+            z7=make_Dcomplex(1.0-(2.0*creal(m2)-5.0)*x2/30.0,-cimag(m2)*x2/15.0);
             bhat1=z2*(z6/z7);
         }
     }
     {
-        double _Complex z3,z8;
+        Dcomplex z3,z8;
         
         if(creal(m)==0.0){
-            ahat2=0.0+I*x2/30.0;
+            ahat2=make_Dcomplex(0.0,x2/30.0);
         }else{
             z3=(1.0-x2/14)*x2/15.0*z0;
-            z8=2.0*creal(m2)+3.0-(creal(m2)/7.0-0.5)*x2+
-                I*(2.0*cimag(m2)-cimag(m2)/7.0*x2);
+            z8=make_Dcomplex(2.0*creal(m2)+3.0-(creal(m2)/7.0-0.5)*x2, 2.0*cimag(m2)-cimag(m2)/7.0*x2);
             ahat2=z3/z8;
         }
     }
@@ -232,7 +231,7 @@ void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, d
     }
     {
         double muj,angle;
-        double _Complex s1,s2;
+        Dcomplex s1,s2;
         
         x3*=1.5;
         ahat1*=x3;
@@ -258,9 +257,9 @@ void small_Mie(double x, double _Complex m, const double *mu, float4 *smatrix, d
  * @param n
  */
 
-double _Complex Lentz_Dn(double _Complex z,long n){
-    double _Complex alpha_j1,alpha_j2,zinv,aj;
-    double _Complex alpha,ratio,runratio;
+Dcomplex Lentz_Dn(Dcomplex z,long n){
+    Dcomplex alpha_j1,alpha_j2,zinv,aj;
+    Dcomplex alpha,ratio,runratio;
     
     zinv=2.0/z;
     alpha=(n+0.5)*zinv;
@@ -289,8 +288,8 @@ double _Complex Lentz_Dn(double _Complex z,long n){
  * @param D
  */
 
-void Dn_up(double _Complex z, long nstop, double _Complex *D){
-    double _Complex zinv,k_over_z;
+void Dn_up(Dcomplex z, long nstop, Dcomplex *D){
+    Dcomplex zinv,k_over_z;
     zinv=1.0/z;
     
     D[0]=1.0/ctan(z);
@@ -307,8 +306,8 @@ void Dn_up(double _Complex z, long nstop, double _Complex *D){
  * @param D
  */
 
-void Dn_down(double _Complex z, long nstop, double _Complex *D){
-    double _Complex zinv,k_over_z;
+void Dn_down(Dcomplex z, long nstop, Dcomplex *D){
+    Dcomplex zinv,k_over_z;
     zinv=1.0/z;
     
     D[nstop-1]=Lentz_Dn(z,nstop);
