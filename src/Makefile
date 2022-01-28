@@ -245,6 +245,9 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
+mcx_mie$(OBJSUFFIX): mcx_mie.cpp
+	$(CC) $(INCLUDEDIRS) -c -o mcx_mie$(OBJSUFFIX)  $<
+
 mcx_bench$(OBJSUFFIX): mcx_bench.c
 	$(GCC) $(INCLUDEDIRS) -c -o mcx_bench$(OBJSUFFIX)  $<
 
