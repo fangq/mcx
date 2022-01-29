@@ -1381,9 +1381,9 @@ void mcx_prep_polarized(Config *cfg){
         
         /* for (i-1)th sphere(r, rho, nsph)-background medium(nmed) combination, compute mus and s-matrix */
         double x,A,qsca,g;
-        x=2.0*ONE_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
+        x=TWO_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
         A=ONE_PI*polprop[i].r*polprop[i].r;                           // cross-sectional area in micron^2
-        Mie(x,polprop[i].nsph/polprop[i].nmed,0.0,mu,cfg->smatrix+i*NANGLES,&qsca,&g);
+        Mie(x,polprop[i].nsph/polprop[i].nmed,mu,cfg->smatrix+i*NANGLES,&qsca,&g);
         
         if(prop[i+1].mus>EPS) {
             float target_mus=prop[i+1].mus; // achieve target mus
