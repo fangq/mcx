@@ -70,6 +70,7 @@ FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme mcx_bench mcx_mie cjson/cJS
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
+  CXX=nvcc
   CUOMPLINK=-Xcompiler
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
       LINKOPT=-L"$(CUDA_PATH)/lib/x64" $(CUDART)
@@ -245,8 +246,8 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 %$(OBJSUFFIX): %.c
 	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
-mcx_mie$(OBJSUFFIX): mcx_mie.cpp
-	$(CC) $(INCLUDEDIRS) -g -Wall -m64 -fPIC -c -o mcx_mie$(OBJSUFFIX)  $<
+%$(OBJSUFFIX): %.cpp
+	$(CXX) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 mcx_bench$(OBJSUFFIX): mcx_bench.c
 	$(GCC) $(INCLUDEDIRS) -c -o mcx_bench$(OBJSUFFIX)  $<

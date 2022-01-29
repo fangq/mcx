@@ -34,6 +34,43 @@
 #include "mcx_mie.h"
 #include "mcx_const.h"
 
+#include <vector_types.h>
+
+#ifdef _MSC_VER
+#include <complex>
+typedef std::complex<double> Dcomplex;
+#else
+#include <complex.h>
+typedef double _Complex Dcomplex;
+#endif
+
+#ifdef _MSC_VER
+inline Dcomplex make_Dcomplex(double re, double im) {
+    return Dcomplex(re,im);
+}
+inline double creal(Dcomplex z) {
+    return real(z);
+}
+inline double cimag(Dcomplex z) {
+    return imag(z);
+}
+inline double cabs(Dcomplex z) {
+    return abs(z);
+}
+inline Dcomplex ctan(Dcomplex z) {
+    return tan(z);
+}
+#else
+inline Dcomplex make_Dcomplex(double re, double im) {
+    return re + I * im;
+}
+#endif
+
+
+Dcomplex Lentz_Dn(Dcomplex z,long n);
+void Dn_up(Dcomplex z, long nstop, Dcomplex *D);
+void Dn_down(Dcomplex z, long nstop, Dcomplex *D);
+
 /**
  * @brief Precompute scattering parameters based on Mie theory [bohren and huffman]
  * 
@@ -47,7 +84,8 @@
  * @param[out] qsca: scattering efficiency
  */
 
-void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g){
+void Mie(double x, double mx, const double *mu, float4 *smatrix, double *qsca, double *g){
+    Dcomplex  m=make_Dcomplex(mx,0.0);
     Dcomplex *D,*s1,*s2;
     Dcomplex z1=make_Dcomplex(0.0,0.0);
     Dcomplex an,bn,bnm1,anm1;
@@ -61,7 +99,7 @@ void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, 
     if(x>20000.0) MCX_ERROR(-6,"spheres with x>20000 are not validated");
     
     if((creal(m)==0.0 && x<0.1) || (creal(m)>0.0 && cabs(m)*x<0.1)){
-        small_Mie(x,m,mu,smatrix,qsca,g);
+        small_Mie(x,mx,mu,smatrix,qsca,g);
         return;
     }
     
@@ -172,7 +210,8 @@ void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, 
  * @param[out] qsca: scattering efficiency
  */
 
-void small_Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g){
+void small_Mie(double x, double mx, const double *mu, float4 *smatrix, double *qsca, double *g){
+    Dcomplex  m=make_Dcomplex(mx,0.0);
     Dcomplex ahat1,ahat2,bhat1;
     Dcomplex z0,m2,m4;
     double x2,x3,x4;
@@ -278,7 +317,7 @@ Dcomplex Lentz_Dn(Dcomplex z,long n){
         runratio*=ratio;
     }while(fabs(cabs(ratio)-1.0)>1e-12);
     
-    return -n/z+runratio;
+    return ((double)-n)/z+runratio;
 }
 
 /**
@@ -294,7 +333,7 @@ void Dn_up(Dcomplex z, long nstop, Dcomplex *D){
     
     D[0]=1.0/ctan(z);
     for(long k=1;k<nstop;k++){
-        k_over_z=k*zinv;
+        k_over_z=((double)k)*zinv;
         D[k]=1.0/(k_over_z-D[k-1])-k_over_z;
     }
 }
@@ -312,7 +351,7 @@ void Dn_down(Dcomplex z, long nstop, Dcomplex *D){
     
     D[nstop-1]=Lentz_Dn(z,nstop);
     for(long k=nstop-1;k>=1;k--){
-        k_over_z=k*zinv;
+        k_over_z=((double)k)*zinv;
         D[k-1]=k_over_z-1.0/(D[k]+k_over_z);
     }
 }
