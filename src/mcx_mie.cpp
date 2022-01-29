@@ -280,7 +280,7 @@ Dcomplex Lentz_Dn(Dcomplex z,long n){
         runratio*=ratio;
     }while(fabs(cabs(ratio)-1.0)>1e-12);
     
-    return -n/z+runratio;
+    return -((double)n)/z+runratio;
 }
 
 /**
@@ -296,7 +296,7 @@ void Dn_up(Dcomplex z, long nstop, Dcomplex *D){
     
     D[0]=1.0/ctan(z);
     for(long k=1;k<nstop;k++){
-        k_over_z=k*zinv;
+        k_over_z=((double)k)*zinv;
         D[k]=1.0/(k_over_z-D[k-1])-k_over_z;
     }
 }
@@ -314,7 +314,7 @@ void Dn_down(Dcomplex z, long nstop, Dcomplex *D){
     
     D[nstop-1]=Lentz_Dn(z,nstop);
     for(long k=nstop-1;k>=1;k--){
-        k_over_z=k*zinv;
+        k_over_z=((double)k)*zinv;
         D[k-1]=k_over_z-1.0/(D[k]+k_over_z);
     }
 }
