@@ -41,10 +41,6 @@ typedef std::complex<double> Dcomplex;
 typedef double _Complex Dcomplex;
 #endif
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
 #ifdef _MSC_VER
 inline static Dcomplex make_Dcomplex(double re, double im) {
     return Dcomplex(re,im);
@@ -67,11 +63,16 @@ inline static Dcomplex make_Dcomplex(double re, double im) {
 }
 #endif
 
-void Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g);
-void small_Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g);
 Dcomplex Lentz_Dn(Dcomplex z,long n);
 void Dn_up(Dcomplex z, long nstop, Dcomplex *D);
 void Dn_down(Dcomplex z, long nstop, Dcomplex *D);
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+void Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g);
+void small_Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g);
 
 #ifdef	__cplusplus
 }
