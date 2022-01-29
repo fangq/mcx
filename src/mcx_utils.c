@@ -1383,8 +1383,7 @@ void mcx_prep_polarized(Config *cfg){
         double x,A,qsca,g;
         x=2.0*ONE_PI*polprop[i].r*polprop[i].nmed/(cfg->lambda*1e-3); // size parameter (unitless)
         A=ONE_PI*polprop[i].r*polprop[i].r;                           // cross-sectional area in micron^2
-        Dcomplex m=make_Dcomplex(polprop[i].nsph/polprop[i].nmed,0.0);// complex relative refractive index (unitless)
-        Mie(x,m,mu,cfg->smatrix+i*NANGLES,&qsca,&g);
+        Mie(x,polprop[i].nsph/polprop[i].nmed,mu,cfg->smatrix+i*NANGLES,&qsca,&g);
         
         if(prop[i+1].mus>EPS) {
             float target_mus=prop[i+1].mus; // achieve target mus

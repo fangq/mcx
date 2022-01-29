@@ -67,8 +67,8 @@ inline Dcomplex make_Dcomplex(double re, double im) {
 }
 #endif
 
-void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g);
-void small_Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g);
+void Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g);
+void small_Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g);
 Dcomplex Lentz_Dn(Dcomplex z,long n);
 void Dn_up(Dcomplex z, long nstop, Dcomplex *D);
 void Dn_down(Dcomplex z, long nstop, Dcomplex *D);

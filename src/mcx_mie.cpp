@@ -47,7 +47,8 @@
  * @param[out] qsca: scattering efficiency
  */
 
-void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g){
+void Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g){
+    Dcomplex m=make_Dcomplex(nre,0.0);
     Dcomplex *D,*s1,*s2;
     Dcomplex z1=make_Dcomplex(0.0,0.0);
     Dcomplex an,bn,bnm1,anm1;
@@ -61,7 +62,7 @@ void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, 
     if(x>20000.0) MCX_ERROR(-6,"spheres with x>20000 are not validated");
     
     if((creal(m)==0.0 && x<0.1) || (creal(m)>0.0 && cabs(m)*x<0.1)){
-        small_Mie(x,m,mu,smatrix,qsca,g);
+        small_Mie(x,nre,mu,smatrix,qsca,g);
         return;
     }
     
@@ -172,7 +173,8 @@ void Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, 
  * @param[out] qsca: scattering efficiency
  */
 
-void small_Mie(double x, Dcomplex m, const double *mu, float4 *smatrix, double *qsca, double *g){
+void small_Mie(double x, double nre, const double *mu, float4 *smatrix, double *qsca, double *g){
+    Dcomplex m=make_Dcomplex(nre,0.0);
     Dcomplex ahat1,ahat2,bhat1;
     Dcomplex z0,m2,m4;
     double x2,x3,x4;
