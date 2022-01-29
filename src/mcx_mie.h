@@ -46,23 +46,23 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-inline Dcomplex make_Dcomplex(double re, double im) {
+inline static Dcomplex make_Dcomplex(double re, double im) {
     return Dcomplex(re,im);
 }
-inline double creal(Dcomplex z) {
+inline static double creal(Dcomplex z) {
     return real(z);
 }
-inline double cimag(Dcomplex z) {
+inline static double cimag(Dcomplex z) {
     return imag(z);
 }
-inline double cabs(Dcomplex z) {
+inline static double cabs(Dcomplex z) {
     return abs(z);
 }
-inline Dcomplex ctan(Dcomplex z) {
+inline static Dcomplex ctan(Dcomplex z) {
     return tan(z);
 }
 #else
-inline Dcomplex make_Dcomplex(double re, double im) {
+inline static Dcomplex make_Dcomplex(double re, double im) {
     return re + I * im;
 }
 #endif
