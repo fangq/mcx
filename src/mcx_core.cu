@@ -2316,10 +2316,10 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
 
      /** all pointers start with g___ are the corresponding GPU buffers to read/write host variables defined above */
      uint *gmedia;
-     float4 *gPpos,*gPdir,*gPlen,*gsmatrix;
+     float4 *gPpos,*gPdir,*gPlen;
      uint   *gPseed,*gdetected;
      int    *greplaydetid=NULL;
-     float  *gPdet,*gsrcpattern=NULL,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL,*ginvcdf=NULL;
+     float  *gPdet,*gsrcpattern=NULL,*genergy,*greplayw=NULL,*greplaytof=NULL,*gdebugdata=NULL,*ginvcdf=NULL,*gsmatrix=NULL;
      OutputType *gfield;
      RandType *gseeddata=NULL;
      volatile int *gprogress;
