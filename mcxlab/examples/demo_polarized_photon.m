@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MCXLAB - Monte Carlo eXtreme for MATLAB/Octave by Qianqina Fang
 %
-% In this example, we model propagation of polarized light inside a 
+% In this example, we model propagation of polarized light inside a
 % heterogeneous media.
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
@@ -30,7 +30,7 @@ cfg.unitinmm=0.1;
 cfg.polprop=[
     0.005, 0.05, 19.1142,    1.59, 1.33; % label 1
     0.005, 1.0,  1.11078e-3, 1.59, 1.33; % label 2
-    ]; 
+    ];
 
 % optical properties
 cfg.prop=[
@@ -66,7 +66,7 @@ cfg.lambda=632.8;
 % disable boundary reflection/refraction
 cfg.isreflect=0;
 
-% For each detected photon, save stokes parameter[i], exit position[x] and 
+% For each detected photon, save stokes parameter[i], exit position[x] and
 % direction[v] and initial photon energy[w]
 cfg.savedetflag='ixvw';
 
@@ -74,8 +74,8 @@ cfg.savedetflag='ixvw';
 cfg.bc='cc_cc_001000';
 
 % photon number
-cfg.nphoton=1e8; 
-cfg.maxdetphoton=1e8; % max number of detected photons
+cfg.nphoton=1e7;
+cfg.maxdetphoton=1e7; % max number of detected photons
 
 %% run simulation and plot results
 [~,detphoton]=mcxlab(cfg);
