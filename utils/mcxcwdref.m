@@ -24,6 +24,6 @@ function [dref] = mcxcwdref(detp, cfg)
     for i = 1 : length(detp.detid)
         detweightsum(detp.detid(i)) = detweightsum(detp.detid(i)) + detweight(i);
     end
-    area = pi * cfg.detpos(:,4).^2;
+    area = pi * (cfg.detpos(:,4)*cfg.unitinmm).^2;
     dref = detweightsum ./ area / cfg.nphoton; % Eq.12 of photon replay paper[Yao2018]
 end
