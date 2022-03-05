@@ -103,7 +103,7 @@ section {
   float:none;
 }
 
-.col-8{
+.col-md-8{
   display:none;
   width: 100%;
   padding: 0 4% 0 4%;
@@ -281,7 +281,7 @@ img.simupreview{
 
 <section id="mcx1-title" class='current'>
         <h1>MCX Cloud</h1>
-	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a> and <a href="http://openjdata.org" title="OpenJData">JData</a>. See <a href="https://youtu.be/TnfmrO12jI0" title="Video tutorial">Tutorial 1</a>,<a href="https://youtu.be/RztC-uXMqkw" title="Sharing and reuse simulations">2</a> & <a href="https://www.biorxiv.org/content/10.1101/2021.06.28.450034v2">Preprint</a>.</h4>
+	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="http://mcx.space" title="Monte Carlo eXtreme">MCX</a> and <a href="http://openjdata.org" title="OpenJData">JData</a>. See <a href="https://youtu.be/TnfmrO12jI0" title="Video tutorial">Tutorial 1</a>,<a href="https://youtu.be/RztC-uXMqkw" title="Sharing and reuse simulations">2</a> & <a href="https://doi.org/10.1117/1.JBO.27.8.083008">Full Paper</a>.</h4>
 	</p>
 </section>
 
@@ -2158,7 +2158,7 @@ function updatethumb(lastdatastr='', waittime=0){
 function showtab(event, name) {
   $("#navbar").removeClass('bigtab');
   $('#navbar a').removeClass('active');
-  $(".col-8").removeClass('active');
+  $(".col-md-8").removeClass('active');
   $("#mcx1-"+name).addClass('active');
   $("#site-navigation li").removeClass('active');
   event.target.parentNode.classList.add('active');
