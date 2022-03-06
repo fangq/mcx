@@ -2358,6 +2358,8 @@ function runsimulation() {
   if(json !== lastloaded)
       checklimit(JSON.parse(json));
 
+  setuserinfo();
+
   $.ajax({
       url: serverurl,
       data: { 'fullname': fullname, 'inst': inst, 'email': email, 'netname': netname, 'json': encodeURIComponent(json), 'callback':'-' },
@@ -2819,6 +2821,36 @@ function createStats() {
   return stats;
 }
 
+// Fetch storage for the website.
+function getstorage() {
+  if (window.localStorage) {
+     return window.localStorage;
+  } else if (window.globalStorage) {
+     var host = location.hostname || location.host || "localhost";
+     return window.globalStorage[host]
+  } else {
+     return;
+  }
+}
+
+function getuserinfo() {
+  let storage = getstorage();
+  if (!storage) return;
+  if(storage.userinfo){
+    let userinfo=JSON.parse(storage.userinfo);
+    $("#fullname").val(userinfo.fullname);
+    $("#inst").val(userinfo.inst);
+    $("#email").val(userinfo.email);
+    $("#netname").val(userinfo.netname);
+  }
+}
+
+function setuserinfo() {
+  let storage = getstorage();
+  if (!storage) return;
+  storage.userinfo = JSON.stringify({ fullname: $("#fullname").val(), inst: $("#inst").val(), email: $("#email").val(), netname: $("#netname").val()});
+}
+
 var canvas = $("#canvas");
 var bbxsize=[0,0,0];
 
@@ -2914,6 +2946,8 @@ var reqid=undefined;
 
 $("#clip-low").prop( "disabled", true );
 $("#clip-hi").prop( "disabled", true );
+
+getuserinfo();
 
 $("#camera-near").on('change', function() {
     camera.near=parseFloat($(this).val());
