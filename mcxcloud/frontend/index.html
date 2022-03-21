@@ -1576,9 +1576,7 @@ var VolumeRenderShader1 = {
 		'				vec3 front = v_position + view_ray * distance;',
 
 		// Decide how many steps to take
-		'				int nsteps = int(-distance / relative_step_size + 0.5);',
-		'				if ( nsteps < 1 )',
-		'						discard;',
+		'				int nsteps = max(1, int(-distance / relative_step_size + 0.5));',
 
 		// Get starting location and step vector in texture coordinates
 		'				vec3 step = ((v_position - front) / u_size) / float(nsteps);',
@@ -1588,14 +1586,7 @@ var VolumeRenderShader1 = {
 		// whether the rays are correctly oriented
 		//'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
 		//'return;',
-    'cast_mip(start_loc, step, nsteps, view_ray); return;',
-		'				if (u_renderstyle == 0)',
-		'						cast_mip(start_loc, step, nsteps, view_ray);',
-		'				else if (u_renderstyle == 1)',
-		'						cast_iso(start_loc, step, nsteps, view_ray);',
-
-		'				if (gl_FragColor.a < 0.05)',
-		'						discard;',
+    '       cast_mip(start_loc, step, nsteps, view_ray);',
 		'		}',
 
 
@@ -1620,28 +1611,22 @@ var VolumeRenderShader1 = {
 		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
 		// non-constant expression. So we use a hard-coded max, and an additional condition
 		// inside the loop.
-		'				for (int iter=0; iter<=nsteps; iter++) {',
-		//'						if (iter >= nsteps)',
-		//'								break;',
+    isWebGL2Available() ? 'for (int iter=0; iter<=nsteps; iter++) {' : 'for (int iter=0; iter<=MAX_STEPS; iter++) {\nif(iter >= nsteps) break;',
 		// Sample from the 3D texture
 		'						float val = sample1(loc);',
-    '						max_val = max(val, max_val);',
 		// Apply MIP operation
-		//'						if (val > max_val) {',
-		//'								max_val = val;',
-		//'								max_i = iter;',
-		//'						}',
+    '						max_val = max(val, max_val);',
 		// Advance location deeper into the volume
 		'						loc += step;',
 		'				}',
 
 		// Refine location, gives crispier images
-		/*'				vec3 iloc = start_loc + step * (float(max_i) - 0.5);',
+		'				vec3 iloc = loc + step * (-0.5);',
 		'				vec3 istep = step / float(REFINEMENT_STEPS);',
 		'				for (int i=0; i<REFINEMENT_STEPS; i++) {',
 		'						max_val = max(max_val, sample1(iloc));',
 		'						iloc += istep;',
-		'				}',*/
+		'				}',
 
 		// Resolve final color
 		'				gl_FragColor = apply_colormap(max_val);',
@@ -2163,6 +2148,9 @@ function showtab(event, name) {
   $("#site-navigation li").removeClass('active');
   event.target.parentNode.classList.add('active');
   if(name === "preview" || name === "share"){
+      if(reqid !== undefined) {
+        cancelAnimationFrame(reqid);
+      }
       reqid=requestAnimationFrame(update);
       if(lastjson != $("#output-textarea").val()){
           lastjson=$("#output-textarea").val();
@@ -2703,7 +2691,9 @@ function drawpreview(cfg){
      }
    }
   }
-  update();
+  if(reqid === undefined) {
+    requestAnimationFrame(update);
+  }
 }
 
 function mulberry32(a) {
@@ -2725,7 +2715,7 @@ function update() {
     reqid=requestAnimationFrame(update);
     if(renderer.updateComplete === undefined || !renderer.updateComplete) {
       renderer.render(scene, camera);
-      renderer.updateComplete = false;
+      renderer.updateComplete = true;
     }
     controls.update();
     stats.update();
@@ -2968,20 +2958,18 @@ $("#camera-far").on('change', function() {
     renderer.render(scene, camera);
     controls.update();
 });
-$("#clim-low").on('change', function() {
+$("#clim-low").on('input', function() {
     if(lastvolume !== null){
         let val=lastvolume.material.uniforms[ "u_clim" ].value;
         lastvolume.material.uniforms[ "u_clim" ].value.set( parseFloat($(this).val()), val.y );
-        renderer.render(scene, camera);
-        update();
+        renderer.updateComplete = false;
     }
 });
-$("#clim-hi").on('change', function() {
+$("#clim-hi").on('input', function() {
     if(lastvolume !== null){
         let val=lastvolume.material.uniforms[ "u_clim" ].value;
         lastvolume.material.uniforms[ "u_clim" ].value.set( val.x, parseFloat($(this).val()) );
-        renderer.render(scene, camera);
-        update();
+        renderer.updateComplete = false;
     }
 });
 
