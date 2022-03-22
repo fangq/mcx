@@ -70,9 +70,6 @@
 
 #define ubjw_write_single ubjw_write_float32
 #define ubjw_write_double ubjw_write_float64
-#define ubjw_write_uint16 ubjw_write_int16
-#define ubjw_write_uint32 ubjw_write_int32
-#define ubjw_write_uint64 ubjw_write_int64
 
 #ifdef WIN32
          char pathsep='\\';
@@ -509,9 +506,34 @@ void mcx_savebnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
          datalen*=dims[i];
      jsonstr=malloc(datalen<<1);
      root=ubjw_open_memory(jsonstr,jsonstr+(datalen<<1));
-     
-     /* the "NIFTIHeader" section */
+
      ubjw_begin_object(root,UBJ_MIXED,0);
+         /* the "_DataInfo_" section */
+         ubjw_write_key(root,"_DataInfo_");
+         ubjw_begin_object(root,UBJ_MIXED,0);
+             UBJ_WRITE_KEY(root, "JNIFTIVersion", string, "0.5");
+             UBJ_WRITE_KEY(root, "Comment", string, "Created by MCX (http://mcx.space)");
+             UBJ_WRITE_KEY(root, "AnnotationFormat", string, "https://github.com/NeuroJSON/jnifti/blob/master/JNIfTI_specification.md");
+             UBJ_WRITE_KEY(root, "SerialFormat", string, "https://github.com/NeuroJSON/bjdata/blob/Draft_2/Binary_JData_Specification.md");
+             ubjw_write_key(root,"Parser");
+             ubjw_begin_object(root,UBJ_MIXED,0);
+                 ubjw_write_key(root,"Python");
+                 ubjw_begin_array(root, UBJ_STRING, 2);
+                     ubjw_write_string(root, "https://pypi.org/project/jdata");
+                     ubjw_write_string(root, "https://pypi.org/project/bjdata");
+                 ubjw_end(root);
+                 ubjw_write_key(root,"MATLAB");
+                 ubjw_begin_array(root, UBJ_STRING, 2);
+                     ubjw_write_string(root, "https://github.com/NeuroJSON/jnifty");
+                     ubjw_write_string(root, "https://github.com/NeuroJSON/jsonlab");
+                 ubjw_end(root);
+                 UBJ_WRITE_KEY(root, "JavaScript", string, "https://github.com/NeuroJSON/jsdata");
+                 UBJ_WRITE_KEY(root, "CPP", string, "https://github.com/NeuroJSON/json");
+                 UBJ_WRITE_KEY(root, "C", string, "https://github.com/NeuroJSON/ubj");
+             ubjw_end(root);
+         ubjw_end(root);
+
+         /* the "NIFTIHeader" section */
          ubjw_write_key(root,"NIFTIHeader");
 	 ubjw_begin_object(root,UBJ_MIXED,0);
 	     UBJ_WRITE_KEY(root,"NIIHeaderSize", uint16, 348);
@@ -621,11 +643,26 @@ void mcx_savejnii(float *vol, int ndim, uint *dims, float *voxelsize, char* name
      FILE *fp;
      char fname[MAX_FULL_PATH]={'\0'};
      int affine[]={0,0,1,0,0,0};
+     const char *libpy[] ={"https://pypi.org/project/jdata","https://pypi.org/project/bjdata"};
+     const char *libmat[]={"https://github.com/NeuroJSON/jnifty","https://github.com/NeuroJSON/jsonlab"};
 
-     cJSON *root=NULL, *hdr=NULL, *dat=NULL, *sub=NULL;
+     cJSON *root=NULL, *hdr=NULL, *dat=NULL, *sub=NULL, *info=NULL, *parser=NULL;
      char *jsonstr=NULL;
      root=cJSON_CreateObject();
-     
+
+     /* the "_DataInfo_" section */
+     cJSON_AddItemToObject(root, "_DataInfo_", info = cJSON_CreateObject());
+     cJSON_AddStringToObject(info, "JNIFTIVersion", "0.5");
+     cJSON_AddStringToObject(info, "Comment", "Created by MCX (http://mcx.space)");
+     cJSON_AddStringToObject(info, "AnnotationFormat", "https://github.com/NeuroJSON/jnifti/blob/master/JNIfTI_specification.md");
+     cJSON_AddStringToObject(info, "SerialFormat", "https://github.com/NeuroJSON/bjdata/blob/Draft_2/Binary_JData_Specification.md");
+     cJSON_AddItemToObject(info, "Parser", parser = cJSON_CreateObject());
+     cJSON_AddItemToObject(parser, "Python", cJSON_CreateStringArray(libpy,2));
+     cJSON_AddItemToObject(parser, "MATLAB", cJSON_CreateStringArray(libmat,2));
+     cJSON_AddStringToObject(parser, "JavaScript", "https://github.com/NeuroJSON/jsdata");
+     cJSON_AddStringToObject(parser, "CPP", "https://github.com/NeuroJSON/json");
+     cJSON_AddStringToObject(parser, "C", "https://github.com/NeuroJSON/ubj");
+
      /* the "NIFTIHeader" section */
      cJSON_AddItemToObject(root, "NIFTIHeader", hdr = cJSON_CreateObject());
      cJSON_AddNumberToObject(hdr, "NIIHeaderSize", 348);
