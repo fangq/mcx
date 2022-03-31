@@ -381,6 +381,15 @@ img.simupreview{
             <label for="cross-z-hi">Max </label><input style="width: 90px" id="cross-z-hi" type="range" min="0" max="1" value="1" step="any">
           </div>
         </div>
+        <div style="display:block;">
+          <b>View</b><br>
+          <button class='btn btn-primary' id="neg-x-view">-X</button>
+          <button class='btn btn-primary' id="pos-x-view">+X</button>
+          <button class='btn btn-primary' id="neg-y-view">-Y</button>
+          <button class='btn btn-primary' id="pos-y-view">+Y</button>
+          <button class='btn btn-primary' id="neg-z-view">-Z</button>
+          <button class='btn btn-primary' id="pos-z-view">+Z</button>
+        </div>
 		    <div style="display:none">
 		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
 		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
@@ -1583,7 +1592,6 @@ function createFragmentShader(mode) {
     `       vec3 nstepmaxbound = mix(vec3(float(nsteps)), ceil((u_maxslice - start_loc) / step), greaterThan((start_loc + float(nsteps) * step), u_maxslice));
             nstepmaxbound = min(nstepmaxbound, mix(vec3(float(nsteps)), ceil((u_minslice - start_loc) / step), lessThan((start_loc + float(nsteps) * step), u_minslice)));
             nsteps = int(min(nstepmaxbound.x, min(nstepmaxbound.y, nstepmaxbound.z)) + 0.5);`,
-
 
 		// For testing: show the number of steps. This helps to establish
 		// whether the rays are correctly oriented
@@ -3094,6 +3102,46 @@ $("#cross-y-hi").on('input', function() {
 
 $("#cross-z-hi").on('input', function() {
     setcrosssectionsizes();
+});
+
+function setControlAngles(polar, azimuth) {
+  let mi = controls.minAzimuthAngle;
+  let mx = controls.maxAzimuthAngle;
+  let mip = controls.minPolarAngle;
+  let mxp = controls.maxPolarAngle;
+  controls.minAzimuthAngle = azimuth;
+  controls.maxAzimuthAngle = azimuth;
+  controls.minPolarAngle = polar;
+  controls.maxPolarAngle = polar;
+  controls.update();
+  controls.minAzimuthAngle = mi;
+  controls.maxAzimuthAngle = mx;
+  controls.minPolarAngle = mip;
+  controls.maxPolarAngle = mxp;
+}
+
+$("#pos-x-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 90 / 180);
+});
+
+$("#neg-x-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 270 / 180);
+});
+
+$("#pos-y-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 180 / 180);
+});
+
+$("#neg-y-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 0 / 180);
+});
+
+$("#pos-z-view").on('click', function() {
+  setControlAngles(0, 0);
+});
+
+$("#neg-z-view").on('click', function() {
+  setControlAngles(Math.PI * 180 / 180, 0);
 });
 
   /* -------------------------------------------------------- main function */
