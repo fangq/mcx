@@ -351,8 +351,45 @@ img.simupreview{
             <h2>Preview</h2>
 	    <div id="canvas"></div>
 	    <div id="renderpanel">
-		    Colormap <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled>
-		    <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>	 
+        <div style="display:block;">
+          <b>Display Mode</b><br>
+          <input type="radio" id="mip-radio-button" name="displaymode" value="mip" checked>
+          <label for="mip">MIP</label><br>
+          <input type="radio" id="iso-radio-button" name="displaymode" value="iso">
+          <label for="iso">Isosurface</label>
+        </div>
+        <div style="display:block;">
+          <b>Colormap</b><br>
+          <label for="clim-low">Lower-bound</label><input id="clim-low" type="range" min="1" max="100" value="50" disabled><br>
+          <label for="clim-hi">Upper-bound</label><input id="clim-hi" type="range" min="1" max="100" value="50" disabled>
+        </div>
+        <div style="display:block;">
+          <b>Cross Sections</b><br>
+          <div>
+            X
+            <label for="cross-x-low">Min </label><input style="width: 90px" id="cross-x-low" type="range" min="0" max="1" value="0" step="any">
+            <label for="cross-x-hi">Max </label><input style="width: 90px" id="cross-x-hi" type="range" min="0" max="1" value="1" step="any">
+          </div>
+          <div>
+            Y
+            <label for="cross-y-low">Min </label><input style="width: 90px" id="cross-y-low" type="range" min="0" max="1" value="0" step="any">
+            <label for="cross-y-hi">Max </label><input style="width: 90px" id="cross-y-hi" type="range" min="0" max="1" value="1" step="any">
+          </div>
+          <div>
+            Z
+            <label for="cross-z-low">Min </label><input style="width: 90px" id="cross-z-low" type="range" min="0" max="1" value="0" step="any">
+            <label for="cross-z-hi">Max </label><input style="width: 90px" id="cross-z-hi" type="range" min="0" max="1" value="1" step="any">
+          </div>
+        </div>
+        <div style="display:block;">
+          <b>View</b><br>
+          <button class='btn btn-primary' id="neg-x-view">-X</button>
+          <button class='btn btn-primary' id="pos-x-view">+X</button>
+          <button class='btn btn-primary' id="neg-y-view">-Y</button>
+          <button class='btn btn-primary' id="pos-y-view">+Y</button>
+          <button class='btn btn-primary' id="neg-z-view">-Z</button>
+          <button class='btn btn-primary' id="pos-z-view">+Z</button>
+        </div>
 		    <div style="display:none">
 		    Clip Plane <label for="camera-near">Near</label><input id="camera-near" type="range" min="1" max="100" value="50">
 		    <label for="camera-far">Far</label><input id="camera-far" type="range" min="1" max="100" value="50">
@@ -1480,48 +1517,8 @@ img.simupreview{
   }
 }
 
-
-var VolumeRenderShader1 = {
-	uniforms: {
-		'u_size': { value: new THREE.Vector3( 1, 1, 1 ) },
-		'u_renderstyle': { value: 0 },
-		'u_renderthreshold': { value: 0.5 },
-		'u_clim': { value: new THREE.Vector2( 1, 1 ) },
-		'u_data': { value: null },
-		'u_cmdata': { value: null }
-	},
-	vertexShader: [
-		'		varying vec4 v_nearpos;',
-		'		varying vec4 v_farpos;',
-		'		varying vec3 v_position;',
-
-		'		void main() {',
-		// Prepare transforms to map to "camera view". See also:
-		// https://threejs.org/docs/#api/renderers/webgl/WebGLProgram
-		'				mat4 viewtransformf = modelViewMatrix;',
-		'				mat4 viewtransformi = inverse(modelViewMatrix);',
-
-		// Project local vertex coordinate to camera position. Then do a step
-		// backward (in cam coords) to the near clipping plane, and project back. Do
-		// the same for the far clipping plane. This gives us all the information we
-		// need to calculate the ray and truncate it to the viewing cone.
-		'				vec4 position4 = vec4(position, 1.0);',
-		'				vec4 pos_in_cam = viewtransformf * position4;',
-
-		// Intersection of ray and near clipping plane (z = -1 in clip coords)
-		'				pos_in_cam.z = -pos_in_cam.w;',
-		'				v_nearpos = viewtransformi * pos_in_cam;',
-
-		// Intersection of ray and far clipping plane (z = +1 in clip coords)
-		'				pos_in_cam.z = pos_in_cam.w;',
-		'				v_farpos = viewtransformi * pos_in_cam;',
-
-		// Set varyings and output pos
-		'				v_position = position;',
-		'				gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;',
-		'		}',
-	].join( '\n' ),
-	fragmentShader: [
+function createFragmentShader(mode) {
+  return [
 		'		precision highp float;',
 		'		precision mediump sampler3D;',
 
@@ -1532,6 +1529,8 @@ var VolumeRenderShader1 = {
 
 		'		uniform sampler3D u_data;',
 		'		uniform sampler2D u_cmdata;',
+    '		uniform vec3 u_minslice;',
+    '		uniform vec3 u_maxslice;',
 
 		'		varying vec3 v_position;',
 		'		varying vec4 v_nearpos;',
@@ -1561,42 +1560,51 @@ var VolumeRenderShader1 = {
 
 		// Calculate unit vector pointing in the view direction through this fragment.
 		'				vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);',
-
 		// Compute the (negative) distance to the front surface or near clipping plane.
 		// v_position is the back face of the cuboid, so the initial distance calculated in the dot
 		// product below is the distance from near clip plane to the back of the cuboid
-		'				float distance = dot(nearpos - v_position, view_ray);',
-		'				distance = max(distance, min((-0.5 - v_position.x) / view_ray.x,',
-		'																		(u_size.x - 0.5 - v_position.x) / view_ray.x));',
-		'				distance = max(distance, min((-0.5 - v_position.y) / view_ray.y,',
-		'																		(u_size.y - 0.5 - v_position.y) / view_ray.y));',
-		'				distance = max(distance, min((-0.5 - v_position.z) / view_ray.z,',
-		'																		(u_size.z - 0.5 - v_position.z) / view_ray.z));',
+
+    '				float distance = dot(nearpos - v_position, view_ray);',
+    '				vec3 cmp = (-vec3(0.5) - v_position) / view_ray;',
+    '				vec3 cmpu = (u_size * vec3(1.0, 1.0, 1.0)) / view_ray + cmp;',
+    '				cmp = min(cmp, cmpu);',
+		'				distance = max(distance, max(cmp.x, max(cmp.y, cmp.z)));',
 
 		// Now we have the starting position on the front surface
 		'				vec3 front = v_position + view_ray * distance;',
 
 		// Decide how many steps to take
-		'				int nsteps = int(-distance / relative_step_size + 0.5);',
-		'				if ( nsteps < 1 )',
-		'						discard;',
+		'				int nsteps = max(1, int(-distance / relative_step_size + 0.5));',
 
 		// Get starting location and step vector in texture coordinates
 		'				vec3 step = ((v_position - front) / u_size) / float(nsteps);',
 		'				vec3 start_loc = front / u_size;',
 
+    // Clip starting position and step count within the bounding box defined by u_minslice and u_maxslice
+    // allowing for cross-sectional views.
+    `       vec3 nstepminbound = mix(vec3(float(0)), (u_maxslice - start_loc) / step, greaterThan(start_loc, u_maxslice));
+            float skips = max(nstepminbound.x, max(nstepminbound.y, nstepminbound.z));
+            nstepminbound = mix(vec3(float(0)), (u_minslice - start_loc) / step, lessThan(start_loc, u_minslice));
+            skips = max(skips, max(nstepminbound.x, max(nstepminbound.y, nstepminbound.z)));
+            start_loc += skips * step;
+            nsteps -= int(skips + 0.5);`,
+    
+    `       vec3 nstepmaxbound = mix(vec3(float(nsteps)), ceil((u_maxslice - start_loc) / step), greaterThan((start_loc + float(nsteps) * step), u_maxslice));
+            nstepmaxbound = min(nstepmaxbound, mix(vec3(float(nsteps)), ceil((u_minslice - start_loc) / step), lessThan((start_loc + float(nsteps) * step), u_minslice)));
+            nsteps = int(min(nstepmaxbound.x, min(nstepmaxbound.y, nstepmaxbound.z)) + 0.5);`,
+
 		// For testing: show the number of steps. This helps to establish
 		// whether the rays are correctly oriented
 		//'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
 		//'return;',
-
-		'				if (u_renderstyle == 0)',
-		'						cast_mip(start_loc, step, nsteps, view_ray);',
-		'				else if (u_renderstyle == 1)',
-		'						cast_iso(start_loc, step, nsteps, view_ray);',
-
-		'				if (gl_FragColor.a < 0.05)',
-		'						discard;',
+    `
+            if(` + mode + `) {
+                cast_mip(start_loc, step, nsteps, view_ray);
+            }
+            else {
+                cast_iso(start_loc, step, nsteps, view_ray);
+            }
+    `,
 		'		}',
 
 
@@ -1607,85 +1615,75 @@ var VolumeRenderShader1 = {
 
 
 		'		vec4 apply_colormap(float val) {',
-		'				val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);',
+		'				val = (val - u_clim.x) / (u_clim.y - u_clim.x);',
 		'				return texture2D(u_cmdata, vec2(val, 0.5));',
 		'		}',
 
 
 		'		void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
 
-		'				float max_val = -1e6;',
-		'				int max_i = 100;',
+		'				float max_val = 0.0;',
 		'				vec3 loc = start_loc;',
 
 		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
 		// non-constant expression. So we use a hard-coded max, and an additional condition
 		// inside the loop.
-		'				for (int iter=0; iter<MAX_STEPS; iter++) {',
-		'						if (iter >= nsteps)',
-		'								break;',
+    isWebGL2Available() ? 'for (int iter=0; iter<=nsteps; iter++) {' : 'for (int iter=0; iter<=MAX_STEPS; iter++) {\nif(iter >= nsteps) break;',
 		// Sample from the 3D texture
 		'						float val = sample1(loc);',
 		// Apply MIP operation
-		'						if (val > max_val) {',
-		'								max_val = val;',
-		'								max_i = iter;',
-		'						}',
+    '						max_val = max(val, max_val);',
 		// Advance location deeper into the volume
 		'						loc += step;',
-		'				}',
-
-		// Refine location, gives crispier images
-		'				vec3 iloc = start_loc + step * (float(max_i) - 0.5);',
-		'				vec3 istep = step / float(REFINEMENT_STEPS);',
-		'				for (int i=0; i<REFINEMENT_STEPS; i++) {',
-		'						max_val = max(max_val, sample1(iloc));',
-		'						iloc += istep;',
 		'				}',
 
 		// Resolve final color
 		'				gl_FragColor = apply_colormap(max_val);',
 		'		}',
 
-
 		'		void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
 
-		'				gl_FragColor = vec4(0.0);	// init transparent',
 		'				vec4 color3 = vec4(0.0);	// final color',
 		'				vec3 dstep = 1.5 / u_size;	// step to sample derivative',
 		'				vec3 loc = start_loc;',
 
-		'				float low_threshold = u_renderthreshold - 0.02 * (u_clim[1] - u_clim[0]);',
+		'				float low_threshold = u_renderthreshold - 0.02 * (u_clim.y - u_clim.x);',
+		'				float val = 0.0;',
 
 		// Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
 		// non-constant expression. So we use a hard-coded max, and an additional condition
 		// inside the loop.
-		'				for (int iter=0; iter<MAX_STEPS; iter++) {',
-		'						if (iter >= nsteps)',
-		'								break;',
-
+    isWebGL2Available() ? 'for (int iter=0; iter<=nsteps; iter++) {' : 'for (int iter=0; iter<=MAX_STEPS; iter++) {\nif(iter >= nsteps) break;',
 		// Sample from the 3D texture
-		'						float val = sample1(loc);',
+		'						val = sample1(loc);',
 
-		'						if (val > low_threshold) {',
+		'						if (val > u_renderthreshold) {',
 		// Take the last interval in smaller steps
-		'								vec3 iloc = loc - 0.5 * step;',
-		'								vec3 istep = step / float(REFINEMENT_STEPS);',
-		'								for (int i=0; i<REFINEMENT_STEPS; i++) {',
-		'										val = sample1(iloc);',
-		'										if (val > u_renderthreshold) {',
-		'												gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
-		'												return;',
-		'										}',
-		'										iloc += istep;',
-		'								}',
+		'								break;',
 		'						}',
 
 		// Advance location deeper into the volume
 		'						loc += step;',
 		'				}',
+    
+    '				if (val > u_renderthreshold) {',
+		// Take the last interval in smaller steps
+		'						vec3 iloc = loc - 0.5 * step;',
+		'						vec3 istep = step / float(REFINEMENT_STEPS);',
+		'						for (int i=0; i<REFINEMENT_STEPS; i++) {',
+		'								val = sample1(iloc);',
+		'								if (val > u_renderthreshold) {',
+		'										gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
+		'										return;',
+		'								}',
+		'								iloc += istep;',
+		'						}',
+    '						gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
+		'				}',
+    '       else {',
+		'			    	gl_FragColor = vec4(0.0);',
+    '       }',
 		'		}',
-
 
 		'		vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)',
 		'		{',
@@ -1751,7 +1749,58 @@ var VolumeRenderShader1 = {
 		'				final_color.a = color.a;',
 		'				return final_color;',
 		'		}',
-	].join( '\n' )
+	].join( '\n' );
+}
+
+var MipRenderShader = {
+	uniforms: {
+		'u_size': { value: new THREE.Vector3( 1, 1, 1 ) },
+		'u_renderstyle': { value: 0 },
+		'u_renderthreshold': { value: 0.5 },
+		'u_clim': { value: new THREE.Vector2( 1, 1 ) },
+		'u_data': { value: null },
+		'u_cmdata': { value: null },
+    'u_minslice': { value: new THREE.Vector3( 0, 0, 0 ) },
+    'u_maxslice': { value: new THREE.Vector3( 1, 1, 1 ) }
+	},
+	vertexShader: [
+		'		varying vec4 v_nearpos;',
+		'		varying vec4 v_farpos;',
+		'		varying vec3 v_position;',
+
+		'		void main() {',
+		// Prepare transforms to map to "camera view". See also:
+		// https://threejs.org/docs/#api/renderers/webgl/WebGLProgram
+		'				mat4 viewtransformf = modelViewMatrix;',
+		'				mat4 viewtransformi = inverse(modelViewMatrix);',
+
+		// Project local vertex coordinate to camera position. Then do a step
+		// backward (in cam coords) to the near clipping plane, and project back. Do
+		// the same for the far clipping plane. This gives us all the information we
+		// need to calculate the ray and truncate it to the viewing cone.
+		'				vec4 position4 = vec4(position, 1.0);',
+		'				vec4 pos_in_cam = viewtransformf * position4;',
+
+		// Intersection of ray and near clipping plane (z = -1 in clip coords)
+		'				pos_in_cam.z = -pos_in_cam.w;',
+		'				v_nearpos = viewtransformi * pos_in_cam;',
+
+		// Intersection of ray and far clipping plane (z = +1 in clip coords)
+		'				pos_in_cam.z = pos_in_cam.w;',
+		'				v_farpos = viewtransformi * pos_in_cam;',
+
+		// Set varyings and output pos
+		'				v_position = position;',
+		'				gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;',
+		'		}',
+	].join( '\n' ),
+	fragmentShader: createFragmentShader(true)
+};
+
+var IsoRenderShader = {
+	uniforms: MipRenderShader.uniforms,
+	vertexShader: MipRenderShader.vertexShader,
+	fragmentShader: createFragmentShader(false)
 };
 
   // parse url -> merge options -> refreshUI() -> initJsoneditor() -> direct link
@@ -2163,6 +2212,9 @@ function showtab(event, name) {
   $("#site-navigation li").removeClass('active');
   event.target.parentNode.classList.add('active');
   if(name === "preview" || name === "share"){
+      if(reqid !== undefined) {
+        cancelAnimationFrame(reqid);
+      }
       reqid=requestAnimationFrame(update);
       if(lastjson != $("#output-textarea").val()){
           lastjson=$("#output-textarea").val();
@@ -2625,16 +2677,18 @@ function drawvolume(volume){
   };
 
   // Material
-  const shader = VolumeRenderShader1;
+  const shader = document.getElementById('mip-radio-button').checked ? MipRenderShader : IsoRenderShader;
 
   const uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
   uniforms[ "u_data" ].value = texture;
   uniforms[ "u_size" ].value.set( dim[0], dim[1], dim[2] );
   uniforms[ "u_clim" ].value.set( volume.min(), volume.max() );
-  uniforms[ "u_renderstyle" ].value = 0;
+  uniforms[ "u_renderstyle" ].value = document.getElementById('mip-radio-button').checked ? 0 : 1;
   uniforms[ "u_renderthreshold" ].value =  0.2;
   uniforms[ "u_cmdata" ].value = cmtextures[ "viridis" ];
+  uniforms[ "u_minslice" ].value.set( parseFloat($("#cross-x-low").val()), parseFloat($("#cross-y-low").val()), parseFloat($("#cross-z-low").val()) );
+  uniforms[ "u_maxslice" ].value.set( parseFloat($("#cross-x-hi").val()), parseFloat($("#cross-y-hi").val()), parseFloat($("#cross-z-hi").val()) );
 
   lastclim=uniforms[ "u_clim" ].value;
   $("#clim-low").prop( "disabled", false );
@@ -2654,9 +2708,9 @@ function drawvolume(volume){
 	  fragmentShader: shader.fragmentShader,
 	  side: THREE.BackSide // The volume shader uses the backface as its "reference point"
   } );
-
+  
   // THREE.Mesh
-  const geometry = new THREE.BoxGeometry(  dim[0], dim[1], dim[2] );
+  const geometry = new THREE.BoxGeometry(dim[0], dim[1], dim[2]);
   geometry.translate(dim[0]*0.5, dim[1]*0.5, dim[2]*0.5 );
 
   const mesh = new THREE.Mesh( geometry, material );
@@ -2703,7 +2757,9 @@ function drawpreview(cfg){
      }
    }
   }
-  update();
+  if(reqid === undefined) {
+    requestAnimationFrame(update);
+  }
 }
 
 function mulberry32(a) {
@@ -2723,7 +2779,10 @@ function updatejsonlink(linkid, text, name) {
 
 function update() {
     reqid=requestAnimationFrame(update);
-    renderer.render(scene, camera);
+    if(renderer.updateComplete === undefined || !renderer.updateComplete) {
+      renderer.render(scene, camera);
+      renderer.updateComplete = true;
+    }
     controls.update();
     stats.update();
 }
@@ -2851,6 +2910,14 @@ function setuserinfo() {
   storage.userinfo = JSON.stringify({ fullname: $("#fullname").val(), inst: $("#inst").val(), email: $("#email").val(), netname: $("#netname").val()});
 }
 
+function setcrosssectionsizes() {
+  if(lastvolume !== null){
+    lastvolume.material.uniforms[ "u_minslice" ].value.set( parseFloat($("#cross-x-low").val()), parseFloat($("#cross-y-low").val()), parseFloat($("#cross-z-low").val()) );
+    lastvolume.material.uniforms[ "u_maxslice" ].value.set( parseFloat($("#cross-x-hi").val()), parseFloat($("#cross-y-hi").val()), parseFloat($("#cross-z-hi").val()) );
+    renderer.updateComplete = false;
+  }
+}
+
 var canvas = $("#canvas");
 var bbxsize=[0,0,0];
 
@@ -2936,6 +3003,12 @@ controls.enableKeys=false;
 
 controls.update();
 
+function onPositionChange(o) {
+  renderer.updateComplete = false;
+}
+
+controls.addEventListener('change', onPositionChange);
+
 var stats = createStats();
 document.getElementById('renderpanel').appendChild( stats.domElement );
 
@@ -2959,26 +3032,118 @@ $("#camera-far").on('change', function() {
     renderer.render(scene, camera);
     controls.update();
 });
-$("#clim-low").on('change', function() {
+$("#clim-low").on('input', function() {
     if(lastvolume !== null){
         let val=lastvolume.material.uniforms[ "u_clim" ].value;
         lastvolume.material.uniforms[ "u_clim" ].value.set( parseFloat($(this).val()), val.y );
-        renderer.render(scene, camera);
-        update();
+        renderer.updateComplete = false;
     }
 });
-$("#clim-hi").on('change', function() {
+$("#clim-hi").on('input', function() {
     if(lastvolume !== null){
         let val=lastvolume.material.uniforms[ "u_clim" ].value;
         lastvolume.material.uniforms[ "u_clim" ].value.set( val.x, parseFloat($(this).val()) );
-        renderer.render(scene, camera);
-        update();
+        renderer.updateComplete = false;
     }
 });
 
 $('#opensourcelib').click(function () {
   $("#credits").show();
 });
+
+$("#mip-radio-button").on('change', function() {
+  if(lastvolume !== null){
+    const unfs = lastvolume.material.uniforms;
+    lastvolume.material = new THREE.ShaderMaterial( {
+      uniforms: THREE.UniformsUtils.clone( MipRenderShader.uniforms ),
+      vertexShader: MipRenderShader.vertexShader,
+      fragmentShader: MipRenderShader.fragmentShader,
+      side: THREE.BackSide
+    } );
+    lastvolume.material.uniforms = unfs;
+
+    renderer.updateComplete = false;
+  }
+});
+
+$("#iso-radio-button").on('change', function() {
+  if(lastvolume !== null){
+    const unfs = lastvolume.material.uniforms;
+    lastvolume.material = new THREE.ShaderMaterial( {
+      uniforms: THREE.UniformsUtils.clone( IsoRenderShader.uniforms ),
+      vertexShader: IsoRenderShader.vertexShader,
+      fragmentShader: IsoRenderShader.fragmentShader,
+      side: THREE.BackSide
+    } );
+    lastvolume.material.uniforms = unfs;
+    renderer.updateComplete = false;
+  }
+});
+
+$("#cross-x-low").on('input', function() {
+    setcrosssectionsizes();
+});
+
+$("#cross-y-low").on('input', function() {
+    setcrosssectionsizes();
+});
+
+$("#cross-z-low").on('input', function() {
+    setcrosssectionsizes();
+});
+
+$("#cross-x-hi").on('input', function() {
+    setcrosssectionsizes();
+});
+
+$("#cross-y-hi").on('input', function() {
+    setcrosssectionsizes();
+});
+
+$("#cross-z-hi").on('input', function() {
+    setcrosssectionsizes();
+});
+
+function setControlAngles(polar, azimuth) {
+  let mi = controls.minAzimuthAngle;
+  let mx = controls.maxAzimuthAngle;
+  let mip = controls.minPolarAngle;
+  let mxp = controls.maxPolarAngle;
+  controls.minAzimuthAngle = azimuth;
+  controls.maxAzimuthAngle = azimuth;
+  controls.minPolarAngle = polar;
+  controls.maxPolarAngle = polar;
+  controls.update();
+  controls.minAzimuthAngle = mi;
+  controls.maxAzimuthAngle = mx;
+  controls.minPolarAngle = mip;
+  controls.maxPolarAngle = mxp;
+}
+
+$("#pos-x-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 90 / 180);
+});
+
+$("#neg-x-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 270 / 180);
+});
+
+$("#pos-y-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 180 / 180);
+});
+
+$("#neg-y-view").on('click', function() {
+  setControlAngles(Math.PI * 90 / 180, Math.PI * 0 / 180);
+});
+
+$("#pos-z-view").on('click', function() {
+  setControlAngles(0, 0);
+});
+
+$("#neg-z-view").on('click', function() {
+  setControlAngles(Math.PI * 180 / 180, 0);
+});
+
   /* -------------------------------------------------------- main function */
 
   parseUrl()
