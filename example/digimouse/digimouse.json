@@ -25,7 +25,7 @@
 	},
 	"Domain":	{
 		"MediaFormat":	"byte",
-		"LengthUnit":	0.8,
+		"LengthUnit":	0.2,
 		"Media":	[{
                                "mua": 0,
                                "mus": 0,
