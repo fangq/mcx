@@ -109,13 +109,13 @@ void ubjrw_write_dynamic(ubjw_context_t* ctx, ubjr_dynamic_t dobj,uint8_t optimi
 		ubjw_write_int16(ctx, (int16_t)dobj.integer);
 		return;
 	case UBJ_UINT16:
-		ubjw_write_uint16(ctx, (int16_t)dobj.integer);
+		ubjw_write_uint16(ctx, (uint16_t)dobj.integer);
 		return;
 	case UBJ_INT32:
 		ubjw_write_int32(ctx, (int32_t)dobj.integer);
 		return;
 	case UBJ_UINT32:
-		ubjw_write_uint32(ctx, (int32_t)dobj.integer);
+		ubjw_write_uint32(ctx, (uint32_t)dobj.integer);
 		return;
 	case UBJ_INT64:
 		ubjw_write_int64(ctx, (int64_t)dobj.integer);
@@ -168,7 +168,6 @@ void ubjrw_write_dynamic(ubjw_context_t* ctx, ubjr_dynamic_t dobj,uint8_t optimi
 		size_t i;
 		ubjr_dynamic_t scratch;
 		size_t ls = UBJR_TYPE_localsize[ctyp];
-
 		for (i = 0; i < csize; i++)
 		{
 			if (dobj.type == UBJ_OBJECT)

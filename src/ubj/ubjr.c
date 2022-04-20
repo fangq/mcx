@@ -59,6 +59,8 @@ ubjr_context_t* ubjr_open_callback(void* userdata,
 size_t ubjr_close_context(ubjr_context_t* ctx)
 {
 	size_t n = ctx->total_read;
+        if(ctx->userdata)
+            free(ctx->userdata);
 	free(ctx);
 	return n;
 }
@@ -185,14 +187,14 @@ static inline uint16_t priv_ubjr_read_2b(ubjr_context_t* ctx)
 static inline uint32_t priv_ubjr_read_4b(ubjr_context_t* ctx)
 {
 	return (!ctx->isbjdata
-            ? ((uint32_t)priv_ubjr_read_1b(ctx) << 16 | (uint32_t)priv_ubjr_read_1b(ctx))
-            : ((uint32_t)priv_ubjr_read_1b(ctx) | (uint32_t)priv_ubjr_read_1b(ctx) << 16));
+            ? ((uint32_t)priv_ubjr_read_2b(ctx) << 16 | (uint32_t)priv_ubjr_read_2b(ctx))
+            : ((uint32_t)priv_ubjr_read_2b(ctx) | (uint32_t)priv_ubjr_read_2b(ctx) << 16));
 }
 static inline uint64_t priv_ubjr_read_8b(ubjr_context_t* ctx)
 {
 	return (!ctx->isbjdata
-            ? ((uint64_t)priv_ubjr_read_1b(ctx) << 32 | (uint64_t)priv_ubjr_read_1b(ctx))
-            : ((uint64_t)priv_ubjr_read_1b(ctx) | (uint64_t)priv_ubjr_read_1b(ctx) << 32));
+            ? ((uint64_t)priv_ubjr_read_4b(ctx) << 32 | (uint64_t)priv_ubjr_read_4b(ctx))
+            : ((uint64_t)priv_ubjr_read_4b(ctx) | (uint64_t)priv_ubjr_read_4b(ctx) << 32));
 }
 
 static inline int64_t priv_ubjw_read_integer(ubjr_context_t* ctx)
@@ -423,11 +425,6 @@ static inline ubjr_array_t priv_ubjr_read_raw_array(ubjr_context_t* ctx)
 			}
 		}
 	}
-	if (myarray.dims == NULL)
-	{
-		myarray.dims = malloc(sizeof(size_t));
-		myarray.dims[0] = myarray.size;
-	}
 	return myarray;
 }
 
@@ -520,7 +517,10 @@ static inline void priv_ubjr_cleanup_pointer(UBJ_TYPE typ,void* value)
 		{
 			ubjr_array_t* arr=(ubjr_array_t*)value;
 			priv_ubjr_cleanup_container(arr->type,arr->size,arr->values);
-			free(arr->dims);
+			if(arr->dims)
+                        {
+                            free(arr->dims);
+                        }
 			break;
 		}
 		case UBJ_OBJECT:
