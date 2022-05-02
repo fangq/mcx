@@ -1,14 +1,13 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "openmp-use-default-none"
-#include "pybind11/include/pybind11/pybind11.h"
-#include "pybind11/include/pybind11/numpy.h"
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 #include <iostream>
 #include <string>
 #include "mcx_utils.h"
 #include "mcx_core.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
-#include "pybind11/include/pybind11/common.h"
+#include <pybind11/common.h>
+#include <pybind11/iostream.h>
 
 namespace pybind11 {
   PYBIND11_RUNTIME_EXCEPTION(runtime_error, PyExc_RuntimeError);
@@ -51,9 +50,11 @@ int    seedbyte = 0;
 
 
 void parseVolume(const py::dict& userCfg, Config& mcxConfig) {
+  if (!userCfg.contains("vol"))
+    throw py::value_error("Configuration must specify a 2/3/4D volume.");
   auto volumeHandle = userCfg["vol"];
   if (py::array_t<int8_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<int8_t, py::array::f_style>::ensure(userCfg["vol"]);
+    auto fStyleVolume = py::array_t<int8_t, py::array::f_style>::ensure(volumeHandle);
     auto buffer = fStyleVolume.request();
     int i = buffer.shape.size() == 4;
     mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
@@ -229,7 +230,9 @@ void parseConfig(const py::dict& userCfg, Config& mcxConfig) {
   GET_VEC4_FIELD(userCfg, mcxConfig, srcparam1, float);
   GET_VEC4_FIELD(userCfg, mcxConfig, srcparam2, float);
   GET_VEC4_FIELD(userCfg, mcxConfig, srciquv, float);
+  std::cout << "Parsing volume:" << std::endl;
   parseVolume(userCfg, mcxConfig);
+  std::cout << "Parsed volume" << std::endl;
 
   if (userCfg.contains("detpos")) {
     auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["detpos"]);
@@ -237,7 +240,12 @@ void parseConfig(const py::dict& userCfg, Config& mcxConfig) {
     if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 4)
       throw py::value_error("the 'detpos' field must have 4 columns (x,y,z,radius)");
     mcxConfig.detnum = bufferInfo.shape.at(0);
-    mcxConfig.detpos = static_cast<float4*>(bufferInfo.ptr);
+    if(mcxConfig.detpos) free(mcxConfig.detpos);
+    mcxConfig.detpos = (float4 *)malloc(mcxConfig.detnum * sizeof(float4));
+    auto val = static_cast<float *>(bufferInfo.ptr);
+    for(int j = 0; j < 4; j++)
+      for(int i = 0; i < mcxConfig.detnum; i++)
+        ((float *)(&mcxConfig.detpos[i]))[j] = val[j * mcxConfig.detnum + i];
   }
   if (userCfg.contains("prop")) {
     auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["prop"]);
@@ -245,7 +253,12 @@ void parseConfig(const py::dict& userCfg, Config& mcxConfig) {
     if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 4)
       throw py::value_error("the 'prop' field must have 4 columns (mua,mus,g,n)");
     mcxConfig.medianum = bufferInfo.shape.at(0);
-    mcxConfig.prop = static_cast<Medium *>(bufferInfo.ptr);
+    if(mcxConfig.prop) free(mcxConfig.prop);
+    mcxConfig.prop = (Medium *)malloc(mcxConfig.medianum * sizeof(Medium));
+    auto val = static_cast<float*>(bufferInfo.ptr);
+    for(int j = 0; j < 4; j++)
+      for(int i = 0; i < mcxConfig.medianum; i++)
+        ((float *)(&mcxConfig.prop[i]))[j]=val[j * mcxConfig.medianum + i];
   }
   if (userCfg.contains("polprop")) {
     auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["polprop"]);
@@ -255,7 +268,12 @@ void parseConfig(const py::dict& userCfg, Config& mcxConfig) {
     if(bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 5)
       throw py::value_error("the 'polprop' field must have 5 columns (mua,radius,rho,n_sph,n_bkg");
     mcxConfig.polmedianum = bufferInfo.shape.at(0);
-    mcxConfig.polprop = static_cast<POLMedium *>(bufferInfo.ptr);
+    if(mcxConfig.polprop) free(mcxConfig.polprop);
+    mcxConfig.polprop = (POLMedium *)malloc(mcxConfig.polmedianum * sizeof(POLMedium));
+    auto val = static_cast<float*>(bufferInfo.ptr);
+    for(int j = 0; j < 5;j++)
+      for(int i = 0; i < mcxConfig.polmedianum; i++)
+        ((float *)(&mcxConfig.polprop[i]))[j] = val[j *  mcxConfig.polmedianum + i];
   }
   if(userCfg.contains("session")) {
     std::string session = py::str(userCfg["session"]);
@@ -552,59 +570,7 @@ void parseConfig(const py::dict& userCfg, Config& mcxConfig) {
 
 
 
-/**
- * @brief Pre-computing the detected photon weight and time-of-fly from partial path input for replay
- *
- * When detected photons are replayed, this function recalculates the detected photon
- * weight and their time-of-fly for the replay calculations.
- *
- * @param[in,out] cfg: the simulation configuration structure
- */
 
-void mcx_replay_prep(Config *cfg){
-  int i, j, hasdetid = 0, offset;
-  float plen;
-  if(cfg->seed == SEED_FROM_FILE && detps == NULL)
-    std::cerr << "you give cfg.seed for replay, but did not specify cfg.detphotons.\nPlease define it as the detphoton output from the baseline simulation" << std::endl;
-  if(detps == NULL || cfg->seed != SEED_FROM_FILE)
-    return;
-  if(cfg->nphoton != dimdetps[1])
-    std::cerr << "the column numbers of detphotons and seed do not match" << std::endl;
-  if(seedbyte == 0)
-    std::cerr << "the seed input is empty";
-
-  hasdetid = SAVE_DETID(cfg->savedetflag);
-  offset = SAVE_NSCAT(cfg->savedetflag) * (cfg->medianum-1);
-
-  if(((!hasdetid) && cfg->detnum>1) || !SAVE_PPATH(cfg->savedetflag))
-    std::cerr << "please rerun the baseline simulation and save detector ID (D) and partial-path (P) using cfg.savedetflag='dp' " << std::endl;
-
-  cfg->replay.weight = (float*)malloc(cfg->nphoton*sizeof(float));
-  cfg->replay.tof = (float*)calloc(cfg->nphoton,sizeof(float));
-  cfg->replay.detid = (int*)calloc(cfg->nphoton,sizeof(int));
-
-  cfg->nphoton = 0;
-  for(i = 0; i < dimdetps[1]; i++){
-    if(cfg->replaydet <= 0 || cfg->replaydet == (int)(detps[i*dimdetps[0]])){
-      if(i != cfg->nphoton)
-        memcpy((char *)(cfg->replay.seed) + cfg->nphoton*seedbyte, (char *)(cfg->replay.seed)+i*seedbyte, seedbyte);
-      cfg->replay.weight[cfg->nphoton]=1.f;
-      cfg->replay.tof[cfg->nphoton]=0.f;
-      cfg->replay.detid[cfg->nphoton]=(hasdetid) ? (int)(detps[i*dimdetps[0]]) : 1;
-      for(j=hasdetid;j<cfg->medianum-1+hasdetid;j++){
-        plen=detps[i*dimdetps[0]+offset+j]*cfg->unitinmm;
-        cfg->replay.weight[cfg->nphoton]*=expf(-cfg->prop[j-hasdetid+1].mua*plen);
-        cfg->replay.tof[cfg->nphoton]+=plen*R_C0*cfg->prop[j-hasdetid+1].n;
-      }
-      if(cfg->replay.tof[cfg->nphoton]<cfg->tstart || cfg->replay.tof[cfg->nphoton]>cfg->tend) /*need to consider -g*/
-        continue;
-      cfg->nphoton++;
-    }
-  }
-  cfg->replay.weight=(float*)realloc(cfg->replay.weight, cfg->nphoton*sizeof(float));
-  cfg->replay.tof=(float*)realloc(cfg->replay.tof, cfg->nphoton*sizeof(float));
-  cfg->replay.detid=(int*)realloc(cfg->replay.detid, cfg->nphoton*sizeof(int));
-}
 
 
 /**
@@ -689,33 +655,34 @@ void validateConfig(Config *cfg){
 
 
 py::dict pyMcxInterface(const py::dict& userCfg) {
-  unsigned int partialdata, hostdetreclen;
-  Config  mcxConfig;            /** mcxConfig: structure to store all simulation parameters */
-  GPUInfo *gpuInfo = nullptr;        /** gpuInfo: structure to store GPU information */
-  unsigned int activeDev = 0;     /** activeDev: count of total active GPUs to be used */
-  int     errorflag = 0;
+  unsigned int partial_data, hostdetreclen;
+  Config  mcx_config;  /* mcx_config: structure to store all simulation parameters */
+  GPUInfo *gpu_info = nullptr;        /** gpuInfo: structure to store GPU information */
+  unsigned int active_dev = 0;     /** activeDev: count of total active GPUs to be used */
+  int     error_flag = 0;
   int     threadid = 0;
   size_t fielddim[6];
   py::dict output;
   try {
-    /** To start an MCX simulation, we first create a simulation configuration and set all elements to its default settings.
+    /*
+     * To start an MCX simulation, we first create a simulation configuration and set all elements to its default settings.
      */
-    parseConfig(userCfg, mcxConfig);
+    parseConfig(userCfg, mcx_config);
 
     /** The next step, we identify gpu number and query all GPU info */
-    if(!(activeDev = mcx_list_gpu(&mcxConfig, &gpuInfo))) {
-      mcx_error(-1,"No GPU device found\n",__FILE__,__LINE__);
+    if(!(active_dev = mcx_list_gpu(&mcx_config, &gpu_info))) {
+      mcx_error(-1, "No GPU device found\n", __FILE__, __LINE__);
     }
     detps = nullptr;
 
-    mcx_flush(&mcxConfig);
+    mcx_flush(&mcx_config);
 
     /*
      * Number of output arguments has to be explicitly specified, unlike Matlab.
     */
     if (!userCfg.contains("nlhs"))
       throw py::value_error("Number of output arguments must be specified.");
-    if (py::int_::check_(userCfg["nlhs"]))
+    if (!py::int_::check_(userCfg["nlhs"]))
       throw py::value_error("Number of output arguments must be int.");
     int nlhs = py::int_(userCfg["nlhs"]);
     if (nlhs < 0)
@@ -723,71 +690,70 @@ py::dict pyMcxInterface(const py::dict& userCfg) {
 
     /** Overwrite the output flags using the number of output present */
     if(nlhs < 1)
-      mcxConfig.issave2pt = 0; /** issave2pt default is 1, but allow users to manually disable, auto disable only if there is no output */
-    mcxConfig.issavedet = (nlhs >= 2);  /** save detected photon data to the 2nd output if present */
-    mcxConfig.issaveseed = (nlhs >= 4); /** save detected photon seeds to the 4th output if present */
-
+      mcx_config.issave2pt = 0; /** issave2pt default is 1, but allow users to manually disable, auto disable only if there is no output */
+    mcx_config.issavedet = nlhs >= 2 ? 1 : 0;  /** save detected photon data to the 2nd output if present */
+    mcx_config.issaveseed = nlhs >= 4 ? 1 : 0; /** save detected photon seeds to the 4th output if present */
     /** Validate all input fields, and warn incompatible inputs */
-    validateConfig(&mcxConfig);
+    validateConfig(&mcx_config);
 
-    partialdata = (mcxConfig.medianum - 1) * (SAVE_NSCAT(mcxConfig.savedetflag) + SAVE_PPATH(mcxConfig.savedetflag) +
-        SAVE_MOM(mcxConfig.savedetflag));
-    hostdetreclen = partialdata + SAVE_DETID(mcxConfig.savedetflag) + 3 * (SAVE_PEXIT(mcxConfig.savedetflag) +
-        SAVE_VEXIT(mcxConfig.savedetflag)) + SAVE_W0(mcxConfig.savedetflag) + 4 * SAVE_IQUV(mcxConfig.savedetflag);
+    partial_data = (mcx_config.medianum - 1) * (SAVE_NSCAT(mcx_config.savedetflag) + SAVE_PPATH(mcx_config.savedetflag) +
+        SAVE_MOM(mcx_config.savedetflag));
+    hostdetreclen = partial_data + SAVE_DETID(mcx_config.savedetflag) + 3 * (SAVE_PEXIT(mcx_config.savedetflag) +
+        SAVE_VEXIT(mcx_config.savedetflag)) + SAVE_W0(mcx_config.savedetflag) + 4 * SAVE_IQUV(mcx_config.savedetflag);
 
     /** One must define the domain and properties */
-    if(mcxConfig.vol == nullptr || mcxConfig.medianum == 0){
+    if(mcx_config.vol == nullptr || mcx_config.medianum == 0){
       throw py::value_error("You must define 'vol' and 'prop' field.");
     }
 
     /** Initialize all buffers necessary to store the output variables */
     if(nlhs >= 1) {
-      int fieldlen = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z *
-          (int)((mcxConfig.tend - mcxConfig.tstart) / mcxConfig.tstep + 0.5) * mcxConfig.srcnum;
-      if(mcxConfig.replay.seed != nullptr && mcxConfig.replaydet == -1)
-        fieldlen *= mcxConfig.detnum;
-      if(mcxConfig.replay.seed != NULL && mcxConfig.outputtype == otRF)
+      int fieldlen = static_cast<int>(mcx_config.dim.x) * static_cast<int>(mcx_config.dim.y) * static_cast<int>(mcx_config.dim.z) *
+          (int)((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5) * mcx_config.srcnum;
+      if(mcx_config.replay.seed != nullptr && mcx_config.replaydet == -1)
+        fieldlen *= mcx_config.detnum;
+      if(mcx_config.replay.seed != NULL && mcx_config.outputtype == otRF)
         fieldlen *= 2;
-      mcxConfig.exportfield = (float*)calloc(fieldlen,sizeof(float));
+      mcx_config.exportfield = (float*)calloc(fieldlen, sizeof(float));
     }
     if(nlhs >= 2){
-      mcxConfig.exportdetected = (float*)malloc(hostdetreclen * mcxConfig.maxdetphoton*sizeof(float));
+      mcx_config.exportdetected = (float*)malloc(hostdetreclen * mcx_config.maxdetphoton*sizeof(float));
     }
     if(nlhs >= 4){
-      mcxConfig.seeddata = malloc(mcxConfig.maxdetphoton * sizeof(float) * RAND_WORD_LEN);
+      mcx_config.seeddata = malloc(mcx_config.maxdetphoton * sizeof(float) * RAND_WORD_LEN);
     }
     if(nlhs >= 5) {
-      mcxConfig.exportdebugdata = (float*)malloc(mcxConfig.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
-      mcxConfig.debuglevel |= MCX_DEBUG_MOVE;
+      mcx_config.exportdebugdata = (float*)malloc(mcx_config.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
+      mcx_config.debuglevel |= MCX_DEBUG_MOVE;
     }
 
     /** Start multiple threads, one thread to run portion of the simulation on one CUDA GPU, all in parallel */
 #ifdef _OPENMP
-    omp_set_num_threads(activeDev);
-#pragma omp parallel shared(errorflag)
+    omp_set_num_threads(active_dev);
+#pragma omp parallel shared(error_flag)
       {
         threadid = omp_get_thread_num();
 #endif
         /** Enclose all simulation calls inside a try/catch construct for exception handling */
         try{
           /** Call the main simulation host function to start the simulation */
-          mcx_run_simulation(&mcxConfig, gpuInfo);
+          mcx_run_simulation(&mcx_config, gpu_info);
 
         }catch(const char *err){
           std::cerr << "Error from thread (" << threadid << "): " << err << std::endl;
-          errorflag++;
+          error_flag++;
         }catch(const std::exception &err){
           std::cerr << "C++ Error from thread (" << threadid << "): " << err.what() << std::endl;
-          errorflag++;
+          error_flag++;
         }catch(...){
           std::cerr << "Unknown Exception from thread (" << threadid << ")" << std::endl;
-          errorflag++;
+          error_flag++;
         }
 #ifdef _OPENMP
       }
 #endif
     /** If error is detected, gracefully terminate the mex and return back to MATLAB */
-    if(errorflag)
+    if(error_flag)
       throw py::runtime_error("PyMCX Terminated due to an exception!");
     fielddim[4] = 1;
     fielddim[5] = 1;
@@ -795,37 +761,37 @@ py::dict pyMcxInterface(const py::dict& userCfg) {
     /** if 5th output presents, output the photon trajectory data */
     if(nlhs >= 5) {
       fielddim[0] = MCX_DEBUG_REC_LEN;
-      fielddim[1] = mcxConfig.debugdatalen; // his.savedphoton is for one repetition, should correct
+      fielddim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
       fielddim[2] = 0;
       fielddim[3] = 0;
       auto photonTrajData = py::array_t<float, py::array::f_style>({fielddim[0], fielddim[1]});
-      if(mcxConfig.debuglevel & MCX_DEBUG_MOVE)
-        memcpy(photonTrajData.mutable_data(), mcxConfig.exportdebugdata, fielddim[0] * fielddim[1] * sizeof(float));
-      if(mcxConfig.exportdebugdata)
-        free(mcxConfig.exportdebugdata);
-      mcxConfig.exportdebugdata = nullptr;
+      if(mcx_config.debuglevel & MCX_DEBUG_MOVE)
+        memcpy(photonTrajData.mutable_data(), mcx_config.exportdebugdata, fielddim[0] * fielddim[1] * sizeof(float));
+      if(mcx_config.exportdebugdata)
+        free(mcx_config.exportdebugdata);
+      mcx_config.exportdebugdata = nullptr;
       output["photontraj"] = photonTrajData;
     }
       /** if the 4th output presents, output the detected photon seeds */
       if(nlhs >= 4) {
-        fielddim[0] = (mcxConfig.issaveseed > 0) * RAND_WORD_LEN * sizeof(float);
-        fielddim[1]= mcxConfig.detectedcount; // his.savedphoton is for one repetition, should correct
+        fielddim[0] = (mcx_config.issaveseed > 0) * RAND_WORD_LEN * sizeof(float);
+        fielddim[1]= mcx_config.detectedcount; // his.savedphoton is for one repetition, should correct
         fielddim[2] = 0; fielddim[3] = 0;
         auto detectedSeeds = py::array_t<uint8_t, py::array::f_style>({fielddim[0], fielddim[1]});
-        memcpy(detectedSeeds.mutable_data(), mcxConfig.seeddata,fielddim[0]*fielddim[1]);
-        free(mcxConfig.seeddata);
-        mcxConfig.seeddata=NULL;
+        memcpy(detectedSeeds.mutable_data(), mcx_config.seeddata, fielddim[0]*fielddim[1]);
+        free(mcx_config.seeddata);
+        mcx_config.seeddata=NULL;
         output["detectedseeds"] = detectedSeeds;
       }
       /** if the 3rd output presents, output the detector-masked medium volume, similar to the --dumpmask flag */
       if(nlhs >= 3){
-        fielddim[0] = mcxConfig.dim.x;
-        fielddim[1] = mcxConfig.dim.y;
-        fielddim[2] = mcxConfig.dim.z;
+        fielddim[0] = mcx_config.dim.x;
+        fielddim[1] = mcx_config.dim.y;
+        fielddim[2] = mcx_config.dim.z;
         fielddim[3] = 0;
-        if(mcxConfig.vol) {
+        if(mcx_config.vol) {
           auto detectorVol = py::array_t<uint32_t, py::array::f_style>({fielddim[0], fielddim[1], fielddim[2]});
-          memcpy(detectorVol.mutable_data(), mcxConfig.vol,
+          memcpy(detectorVol.mutable_data(), mcx_config.vol,
                  fielddim[0] * fielddim[1] * fielddim[2] * sizeof(unsigned int));
           output["detector"] = detectorVol;
         }
@@ -833,28 +799,28 @@ py::dict pyMcxInterface(const py::dict& userCfg) {
       /** if the 2nd output presents, output the detected photon partialpath data */
       if(nlhs >= 2){
         fielddim[0] = hostdetreclen;
-        fielddim[1] = mcxConfig.detectedcount;
+        fielddim[1] = mcx_config.detectedcount;
         fielddim[2] = 0;
         fielddim[3] = 0;
-        if(mcxConfig.detectedcount > 0){
-          auto partialPath = py::array_t<float, py::array::f_style>({fielddim[0], mcxConfig.detectedcount});
-          memcpy(partialPath.mutable_data(), mcxConfig.exportdetected,
+        if(mcx_config.detectedcount > 0){
+          auto partialPath = py::array_t<float, py::array::f_style>({fielddim[0], mcx_config.detectedcount});
+          memcpy(partialPath.mutable_data(), mcx_config.exportdetected,
                  fielddim[0]*fielddim[1]*sizeof(float));
           output["partialpath"] = partialPath;
         }
-        free(mcxConfig.exportdetected);
-        mcxConfig.exportdetected = NULL;
+        free(mcx_config.exportdetected);
+        mcx_config.exportdetected = NULL;
       }
       /** if the 1st output presents, output the fluence/energy-deposit volume data */
       if(nlhs >= 1) {
         int fieldlen;
-        fielddim[0] = mcxConfig.srcnum * mcxConfig.dim.x;
-        fielddim[1] = mcxConfig.dim.y;
-        fielddim[2] = mcxConfig.dim.z;
-        fielddim[3] = (int)((mcxConfig.tend - mcxConfig.tstart) / mcxConfig.tstep + 0.5);
-        if(mcxConfig.replay.seed != nullptr && mcxConfig.replaydet == -1)
-          fielddim[4] = mcxConfig.detnum;
-        if(mcxConfig.replay.seed != nullptr && mcxConfig.outputtype == otRF)
+        fielddim[0] = mcx_config.srcnum * mcx_config.dim.x;
+        fielddim[1] = mcx_config.dim.y;
+        fielddim[2] = mcx_config.dim.z;
+        fielddim[3] = (int)((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5);
+        if(mcx_config.replay.seed != nullptr && mcx_config.replaydet == -1)
+          fielddim[4] = mcx_config.detnum;
+        if(mcx_config.replay.seed != nullptr && mcx_config.outputtype == otRF)
           fielddim[5] = 2;
         fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
         py::detail::any_container<ssize_t> arrayDims;
@@ -864,46 +830,46 @@ py::dict pyMcxInterface(const py::dict& userCfg) {
           arrayDims = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4]};
         else
           arrayDims = {fielddim[0], fielddim[1], fielddim[2], fielddim[3]};
-        auto fluenceMap = py::array_t<float, py::array::f_style>(arrayDims);
-        if(mcxConfig.issaveref) {
-          auto* dref = static_cast<float*>(fluenceMap.mutable_data());
-          memcpy(dref, mcxConfig.exportfield, fieldlen * sizeof(float));
+        auto drefArray = py::array_t<float, py::array::f_style>(arrayDims);
+        if(mcx_config.issaveref) {
+          auto* dref = static_cast<float*>(drefArray.mutable_data());
+          memcpy(dref, mcx_config.exportfield, fieldlen * sizeof(float));
           for(int i = 0; i < fieldlen; i++) {
             if(dref[i]<0.f){
               dref[i]=-dref[i];
-              mcxConfig.exportfield[i]=0.f;
+              mcx_config.exportfield[i]=0.f;
             }else
               dref[i]=0.f;
           }
-          output["fluence"] = fluenceMap;
+          output["dref"] = drefArray;
         }
-        if(mcxConfig.issave2pt) {
+        if(mcx_config.issave2pt) {
           auto data = py::array_t<float, py::array::f_style>(arrayDims);
-          memcpy(data.mutable_data(), mcxConfig.exportfield, fieldlen*sizeof(float));
+          memcpy(data.mutable_data(), mcx_config.exportfield, fieldlen * sizeof(float));
+          output["data"] = data;
         }
-        free(mcxConfig.exportfield);
-        mcxConfig.exportfield = nullptr;
-        py::dict stats;
-        stats["runtime"] = mcxConfig.runtime;
-        stats["nphoton"] = mcxConfig.nphoton * ((mcxConfig.respin > 1) ? (mcxConfig.respin) : 1);
-        stats["energytot"] = mcxConfig.energytot;
-        stats["energyabs"] = mcxConfig.energyabs;
-        stats["normalizer"] = mcxConfig.normalizer;
-        stats["unitinmm"] = mcxConfig.normalizer;
+        free(mcx_config.exportfield);
+        mcx_config.exportfield = nullptr;
+        output["runtime"] = mcx_config.runtime;
+        output["nphoton"] = mcx_config.nphoton * ((mcx_config.respin > 1) ? (mcx_config.respin) : 1);
+        output["energytot"] = mcx_config.energytot;
+        output["energyabs"] = mcx_config.energyabs;
+        output["normalizer"] = mcx_config.normalizer;
+        output["unitinmm"] = mcx_config.normalizer;
         py::list workload;
-        for(int i = 0; i < activeDev; i++)
-          workload.append(mcxConfig.workload[i]);
-        stats["workload"] = workload;
+        for(int i = 0; i < active_dev; i++)
+          workload.append(mcx_config.workload[i]);
+        output["workload"] = workload;
 
         /** return the final optical properties for polarized MCX simulation */
-        if(mcxConfig.polprop) {
-          for(int i = 0; i < mcxConfig.polmedianum; i++){
+        if(mcx_config.polprop) {
+          for(int i = 0; i < mcx_config.polmedianum; i++){
             // restore mua and mus values
-            mcxConfig.prop[i+1].mua /= mcxConfig.unitinmm;
-            mcxConfig.prop[i+1].mus /= mcxConfig.unitinmm;
+            mcx_config.prop[i+1].mua /= mcx_config.unitinmm;
+            mcx_config.prop[i+1].mus /= mcx_config.unitinmm;
           }
-          auto optProperties = py::array_t<float, py::array::f_style>({4, int(mcxConfig.medianum)});
-          memcpy(optProperties.mutable_data(), mcxConfig.prop, mcxConfig.medianum * 4 * sizeof(float));
+          auto optProperties = py::array_t<float, py::array::f_style>({4, int(mcx_config.medianum)});
+          memcpy(optProperties.mutable_data(), mcx_config.prop, mcx_config.medianum * 4 * sizeof(float));
           output["opticalprops"] = optProperties;
         }
       }
@@ -918,8 +884,8 @@ py::dict pyMcxInterface(const py::dict& userCfg) {
     /** Clear up simulation data structures by calling the destructors */
     if(detps)
       free(detps);
-    mcx_cleargpuinfo(&gpuInfo);
-    mcx_clearcfg(&mcxConfig);
+    mcx_cleargpuinfo(&gpu_info);
+    mcx_clearcfg(&mcx_config);
   // return a pointer to the MCX output, wrapped in a std::vector
   return output;
 }
@@ -974,9 +940,13 @@ py::list getGPUInfo() {
 
 PYBIND11_MODULE(pymcx, m) {
   m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, www.mcx.space.";
-  m.def("mcx", &pyMcxInterface, "Runs MCX");
-  m.def("mcx", &pyMcxInterfaceWargs, "Runs MCX");
-  m.def("mcx", &printMCXUsage, "");
-  m.def("gpu_info", &getGPUInfo, "Prints out the list of CUDA-capable devices attached to this system.");
+  m.def("mcx", &pyMcxInterface, "Runs MCX", py::call_guard<py::scoped_ostream_redirect,
+                                                           py::scoped_estream_redirect>());
+  m.def("mcx", &pyMcxInterfaceWargs, "Runs MCX", py::call_guard<py::scoped_ostream_redirect,
+                                                                py::scoped_estream_redirect>());
+  m.def("mcx", &printMCXUsage, "", py::call_guard<py::scoped_ostream_redirect,
+                                                  py::scoped_estream_redirect>());
+  m.def("gpu_info", &getGPUInfo, "Prints out the list of CUDA-capable devices attached to this system.", py::call_guard<py::scoped_ostream_redirect,
+                                                                                                                        py::scoped_estream_redirect>());
 }
 
