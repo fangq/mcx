@@ -8,6 +8,7 @@
 #include "mcx_shapes.h"
 #include <pybind11/common.h>
 #include <pybind11/iostream.h>
+#include "interface-common.h"
 
 namespace pybind11 {
   PYBIND11_RUNTIME_EXCEPTION(runtime_error, PyExc_RuntimeError);
@@ -650,7 +651,7 @@ void validateConfig(Config *cfg){
   cfg->his.srcnum=cfg->srcnum;
   cfg->his.colcount=hostdetreclen; /*column count=maxmedia+2*/
   cfg->his.savedetflag=cfg->savedetflag;
-  mcx_replay_prep(cfg);
+  mcx_replay_prep(cfg, detps, dimdetps, seedbyte, [](const char* msg){throw py::value_error(msg);});
 }
 
 

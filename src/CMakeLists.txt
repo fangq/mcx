@@ -87,6 +87,8 @@ target_link_libraries(
 
 if (BUILD_PYTHON)
     cuda_add_library(pymcx MODULE
+            interface-common.h
+            interface-common.cpp
             mcx_core.cu
             mcx_core.h
             mcx_utils.c
