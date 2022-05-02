@@ -925,6 +925,11 @@ py::dict pyMcxInterface(const py::dict& userCfg) {
 }
 
 
+py::dict pyMcxInterfaceWargs(py::args args, const py::kwargs& kwargs) {
+  return pyMcxInterface(kwargs);
+}
+
+
 void printMCXUsage() {
   std::cout << "PyMCX v2021.2\nUsage:\n    flux, detphoton, vol, seeds = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
 }
@@ -969,8 +974,8 @@ py::list getGPUInfo() {
 
 PYBIND11_MODULE(pymcx, m) {
   m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, www.mcx.space.";
-
   m.def("mcx", &pyMcxInterface, "Runs MCX");
+  m.def("mcx", &pyMcxInterfaceWargs, "Runs MCX");
   m.def("mcx", &printMCXUsage, "");
   m.def("gpu_info", &getGPUInfo, "Prints out the list of CUDA-capable devices attached to this system.");
 }
