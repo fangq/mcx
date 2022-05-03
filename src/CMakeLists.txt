@@ -19,7 +19,7 @@ option(BUILD_MEX "Build mex" ON)
 
 if(BUILD_PYTHON)
     add_subdirectory(pybind11)
-    find_package(PythonLibs 3.8 REQUIRED)
+    find_package(PythonLibs REQUIRED)
     include_directories(${PYTHON_INCLUDE_DIRS})
 endif()
 
@@ -107,7 +107,7 @@ if (BUILD_PYTHON)
             ubj/ubjw.c
             pymcx.cpp
             )
-#    pybind11_add_module(example example.cpp)
+
     target_link_libraries(pymcx OpenMP::OpenMP_CXX zmat ZLIB::ZLIB pybind11::module pybind11::lto pybind11::windows_extras)
 
     pybind11_extension(pymcx)

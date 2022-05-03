@@ -362,9 +362,7 @@ void parseConfig(const py::dict &userCfg, Config &mcxConfig) {
   GET_VEC4_FIELD(userCfg, mcxConfig, srcparam1, float);
   GET_VEC4_FIELD(userCfg, mcxConfig, srcparam2, float);
   GET_VEC4_FIELD(userCfg, mcxConfig, srciquv, float);
-  std::cout << "Parsing volume:" << std::endl;
   parseVolume(userCfg, mcxConfig);
-  std::cout << "Parsed volume" << std::endl;
 
   if (userCfg.contains("detpos")) {
     auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["detpos"]);
@@ -800,13 +798,17 @@ py::dict pyMcxInterface(const py::dict &userCfg) {
   return output;
 }
 
-py::dict pyMcxInterfaceWargs(py::args args, const py::kwargs &kwargs) {
-  return pyMcxInterface(kwargs);
-}
-
 void printMCXUsage() {
   std::cout
-      << "PyMCX v2021.2\nUsage:\n    flux, detphoton, vol, seeds = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
+      << "PyMCX v2021.2\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
+}
+
+py::dict pyMcxInterfaceWargs(py::args args, const py::kwargs &kwargs) {
+  if (py::len(kwargs) == 0) {
+    printMCXUsage();
+    return {};
+  }
+  return pyMcxInterface(kwargs);
 }
 
 py::list getGPUInfo() {
@@ -846,12 +848,10 @@ py::list getGPUInfo() {
 
 PYBIND11_MODULE(pymcx, m) {
   m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, www.mcx.space.";
-  m.def("mcx", &pyMcxInterface, "Runs MCX", py::call_guard<py::scoped_ostream_redirect,
+  m.def("mcx", &pyMcxInterface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
                                                            py::scoped_estream_redirect>());
-  m.def("mcx", &pyMcxInterfaceWargs, "Runs MCX", py::call_guard<py::scoped_ostream_redirect,
+  m.def("mcx", &pyMcxInterfaceWargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
                                                                 py::scoped_estream_redirect>());
-  m.def("mcx", &printMCXUsage, "", py::call_guard<py::scoped_ostream_redirect,
-                                                  py::scoped_estream_redirect>());
   m.def("gpu_info",
         &getGPUInfo,
         "Prints out the list of CUDA-capable devices attached to this system.",
