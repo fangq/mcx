@@ -607,7 +607,7 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
 }
 
 
-py::dict pyMcxInterface(const py::dict &user_cfg) {
+py::dict py_mcx_interface(const py::dict &user_cfg) {
   unsigned int partial_data, hostdetreclen;
   Config mcx_config;  /* mcx_config: structure to store all simulation parameters */
   GPUInfo *gpu_info = nullptr;        /** gpuInfo: structure to store GPU information */
@@ -828,15 +828,15 @@ void printMCXUsage() {
       << "PyMCX v2021.2\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
 }
 
-py::dict pyMcxInterfaceWargs(py::args args, const py::kwargs &kwargs) {
+py::dict py_mcx_interface_wargs(py::args args, const py::kwargs &kwargs) {
   if (py::len(kwargs) == 0) {
     printMCXUsage();
     return {};
   }
-  return pyMcxInterface(kwargs);
+  return py_mcx_interface(kwargs);
 }
 
-py::list getGPUInfo() {
+py::list get_GPU_info() {
   Config mcxConfig;            /** mcxconfig: structure to store all simulation parameters */
   GPUInfo *gpuInfo = nullptr;        /** gpuinfo: structure to store GPU information */
   mcx_initcfg(&mcxConfig);
@@ -873,12 +873,12 @@ py::list getGPUInfo() {
 
 PYBIND11_MODULE(pymcx, m) {
   m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, www.mcx.space.";
-  m.def("mcx", &pyMcxInterface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
-                                                           py::scoped_estream_redirect>());
-  m.def("mcx", &pyMcxInterfaceWargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
-                                                                py::scoped_estream_redirect>());
+  m.def("mcx", &py_mcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
+                                                                                    py::scoped_estream_redirect>());
+  m.def("mcx", &py_mcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
+                                                                                          py::scoped_estream_redirect>());
   m.def("gpu_info",
-        &getGPUInfo,
+        &get_GPU_info,
         "Prints out the list of CUDA-capable devices attached to this system.",
         py::call_guard<py::scoped_ostream_redirect,
                        py::scoped_estream_redirect>());
