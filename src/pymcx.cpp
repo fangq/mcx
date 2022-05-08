@@ -1,3 +1,32 @@
+/***************************************************************************//**
+**  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
+**
+**  \author Qianqian Fang <q.fang at neu.edu>
+**  \copyright Qianqian Fang, 2009-2021
+**
+**  \section sref Reference:
+**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
+**          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
+**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated
+**          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
+**  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
+**          "Scalable and massively parallel Monte Carlo photon transport
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics,
+**           23(1), 010504, 2018. https://doi.org/10.1117/1.JBO.23.1.010504
+**  \li \c (\b Yan2020) Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel
+**          based Monte Carlo algorithm for accurate and efficient photon transport
+**          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11)
+**          pp. 6262-6270. https://doi.org/10.1364/BOE.409468
+**
+**  \section slicense License
+**          GPL v3, see LICENSE.txt for details
+*******************************************************************************/
+
+/***************************************************************************//**
+\file    pymcx.cpp
+
+@brief   Python interface using Pybind11 for MCX
+*******************************************************************************/
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <iostream>
@@ -6,10 +35,10 @@
 #include "mcx_core.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
-#include <pybind11/common.h>
 #include <pybind11/iostream.h>
 #include "interface-common.h"
 
+// Python binding for runtime_error exception in Python.
 namespace pybind11 {
 PYBIND11_RUNTIME_EXCEPTION(runtime_error, PyExc_RuntimeError);
 }
@@ -30,7 +59,7 @@ float *detps = nullptr;         //! buffer to receive data from cfg.detphotons f
 int dimdetps[2] = {0, 0};  //! dimensions of the cfg.detphotons array
 int seedbyte = 0;
 
-#define GET_SCALAR_FIELD(src, dst, prop, type) if (src.contains(#prop)) {dst.prop = py::reinterpret_borrow<type>(src[#prop]); std::cout << #prop << ": " << dst.prop << std::endl;}
+#define GET_SCALAR_FIELD(src, dst, prop, type) if (src.contains(#prop)) {dst.prop = py::reinterpret_borrow<type>(src[#prop]); std::cout << #prop << ": " << (float) dst.prop << std::endl;}
 
 #define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::reinterpret_borrow<py::list>(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>()};\
@@ -43,8 +72,13 @@ int seedbyte = 0;
 #define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::reinterpret_borrow<py::list>(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : 1}; \
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z;\
-                                             (list.size() == 4 ? (std::cout << ", " << dst.prop.w << "]") :  std::cout << "]") << "]\n";}
+                                             if (list.size() == 4) std::cout << ", " << dst.prop.w; std::cout << "]\n";}
 
+/**
+ * Determines the type of volume passed to the interface and decides how to copy it to MCXConfig.
+ * @param userCfg
+ * @param mcxConfig
+ */
 void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
   if (!userCfg.contains("vol"))
     throw py::value_error("Configuration must specify a 2/3/4D volume.");
@@ -312,7 +346,6 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
   }
   else
     throw py::value_error("Invalid data type for vol array.");
-  std::cout << "End of volume assignment" << std::endl;
 }
 
 void parseConfig(const py::dict &userCfg, Config &mcxConfig) {
@@ -471,7 +504,11 @@ void parseConfig(const py::dict &userCfg, Config &mcxConfig) {
   if (userCfg.contains("srcpattern")) {
     auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["srcpattern"]);
     auto bufferInfo = fStyleVolume.request();
-    mcxConfig.srcpattern = static_cast<float *>(bufferInfo.ptr);
+    if (mcxConfig.srcpattern) free(mcxConfig.srcpattern);
+    mcxConfig.srcpattern = (float*) malloc(bufferInfo.size * sizeof(float));
+    auto val = static_cast<float*>(bufferInfo.ptr);
+    for(int i = 0; i < bufferInfo.size; i++)
+      mcxConfig.srcpattern[i] = val[i];
   }
   if (userCfg.contains("invcdf")) {
     auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["invcdf"]);
@@ -555,6 +592,9 @@ void parseConfig(const py::dict &userCfg, Config &mcxConfig) {
     for (int i = 0; i < bufferInfo.size; i++)
       mcxConfig.workload[i] = static_cast<float *>(bufferInfo.ptr)[i];
   }
+  // Flush the std::cout and std::cerr to avoid
+  std::cout.flush();
+  std::cerr.flush();
 }
 
 
