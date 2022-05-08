@@ -353,105 +353,105 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
     throw py::type_error("Invalid data type for vol array.");
 }
 
-void parse_config(const py::dict &userCfg, Config &mcxConfig) {
-  mcx_initcfg(&mcxConfig);
+void parse_config(const py::dict &user_cfg, Config &mcx_config) {
+  mcx_initcfg(&mcx_config);
 
-  mcxConfig.flog = stderr;
-  GET_SCALAR_FIELD(userCfg, mcxConfig, nphoton, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, nblocksize, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, nthread, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, tstart, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, tstep, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, tend, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, maxdetphoton, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, sradius, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, maxgate, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, respin, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, isreflect, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, isref3, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, isrefint, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, isnormalized, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, isref3, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issrcfrom0, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, autopilot, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, minenergy, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, unitinmm, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, printnum, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, voidtime, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issaveseed, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issaveref, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issaveexit, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, ismomentum, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, isspecular, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, replaydet, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, faststep, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, maxvoidstep, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, maxjumpdebug, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, gscatter, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, srcnum, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, omega, py::float_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, lambda, py::float_);
-  GET_VEC3_FIELD(userCfg, mcxConfig, srcpos, float);
-  GET_VEC34_FIELD(userCfg, mcxConfig, srcdir, float);
-  GET_VEC3_FIELD(userCfg, mcxConfig, steps, float);
-  GET_VEC3_FIELD(userCfg, mcxConfig, crop0, uint);
-  GET_VEC3_FIELD(userCfg, mcxConfig, crop1, uint);
-  GET_VEC4_FIELD(userCfg, mcxConfig, srcparam1, float);
-  GET_VEC4_FIELD(userCfg, mcxConfig, srcparam2, float);
-  GET_VEC4_FIELD(userCfg, mcxConfig, srciquv, float);
-  parseVolume(userCfg, mcxConfig);
+  mcx_config.flog = stdout;
+  GET_SCALAR_FIELD(user_cfg, mcx_config, nphoton, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, nblocksize, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, nthread, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, tstart, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, tstep, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, tend, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, maxdetphoton, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, sradius, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, maxgate, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, respin, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isreflect, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isref3, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isrefint, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isnormalized, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isref3, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issrcfrom0, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, autopilot, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, minenergy, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, unitinmm, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, printnum, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, voidtime, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveexit, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, ismomentum, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isspecular, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, replaydet, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, faststep, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, maxvoidstep, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, maxjumpdebug, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, gscatter, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, srcnum, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, omega, py::float_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, lambda, py::float_);
+  GET_VEC3_FIELD(user_cfg, mcx_config, srcpos, float);
+  GET_VEC34_FIELD(user_cfg, mcx_config, srcdir, float);
+  GET_VEC3_FIELD(user_cfg, mcx_config, steps, float);
+  GET_VEC3_FIELD(user_cfg, mcx_config, crop0, uint);
+  GET_VEC3_FIELD(user_cfg, mcx_config, crop1, uint);
+  GET_VEC4_FIELD(user_cfg, mcx_config, srcparam1, float);
+  GET_VEC4_FIELD(user_cfg, mcx_config, srcparam2, float);
+  GET_VEC4_FIELD(user_cfg, mcx_config, srciquv, float);
+  parseVolume(user_cfg, mcx_config);
 
-  if (userCfg.contains("detpos")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["detpos"]);
+  if (user_cfg.contains("detpos")) {
+    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["detpos"]);
     auto bufferInfo = fStyleVolume.request();
     if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 4)
       throw py::value_error("the 'detpos' field must have 4 columns (x,y,z,radius)");
-    mcxConfig.detnum = bufferInfo.shape.at(0);
-    if (mcxConfig.detpos) free(mcxConfig.detpos);
-    mcxConfig.detpos = (float4 *) malloc(mcxConfig.detnum * sizeof(float4));
+    mcx_config.detnum = bufferInfo.shape.at(0);
+    if (mcx_config.detpos) free(mcx_config.detpos);
+    mcx_config.detpos = (float4 *) malloc(mcx_config.detnum * sizeof(float4));
     auto val = static_cast<float *>(bufferInfo.ptr);
     for (int j = 0; j < 4; j++)
-      for (int i = 0; i < mcxConfig.detnum; i++)
-        ((float *) (&mcxConfig.detpos[i]))[j] = val[j * mcxConfig.detnum + i];
+      for (int i = 0; i < mcx_config.detnum; i++)
+        ((float *) (&mcx_config.detpos[i]))[j] = val[j * mcx_config.detnum + i];
   }
-  if (userCfg.contains("prop")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["prop"]);
+  if (user_cfg.contains("prop")) {
+    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["prop"]);
     auto bufferInfo = fStyleVolume.request();
     if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 4)
       throw py::value_error("the 'prop' field must have 4 columns (mua,mus,g,n)");
-    mcxConfig.medianum = bufferInfo.shape.at(0);
-    if (mcxConfig.prop) free(mcxConfig.prop);
-    mcxConfig.prop = (Medium *) malloc(mcxConfig.medianum * sizeof(Medium));
+    mcx_config.medianum = bufferInfo.shape.at(0);
+    if (mcx_config.prop) free(mcx_config.prop);
+    mcx_config.prop = (Medium *) malloc(mcx_config.medianum * sizeof(Medium));
     auto val = static_cast<float *>(bufferInfo.ptr);
     for (int j = 0; j < 4; j++)
-      for (int i = 0; i < mcxConfig.medianum; i++)
-        ((float *) (&mcxConfig.prop[i]))[j] = val[j * mcxConfig.medianum + i];
+      for (int i = 0; i < mcx_config.medianum; i++)
+        ((float *) (&mcx_config.prop[i]))[j] = val[j * mcx_config.medianum + i];
   }
-  if (userCfg.contains("polprop")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["polprop"]);
+  if (user_cfg.contains("polprop")) {
+    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["polprop"]);
     auto bufferInfo = fStyleVolume.request();
     if (bufferInfo.shape.size() != 2)
       throw py::value_error("the 'polprop' field must a 2D array");
     if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 5)
       throw py::value_error("the 'polprop' field must have 5 columns (mua, radius, rho, n_sph,n_bkg)");
-    mcxConfig.polmedianum = bufferInfo.shape.at(0);
-    if (mcxConfig.polprop) free(mcxConfig.polprop);
-    mcxConfig.polprop = (POLMedium *) malloc(mcxConfig.polmedianum * sizeof(POLMedium));
+    mcx_config.polmedianum = bufferInfo.shape.at(0);
+    if (mcx_config.polprop) free(mcx_config.polprop);
+    mcx_config.polprop = (POLMedium *) malloc(mcx_config.polmedianum * sizeof(POLMedium));
     auto val = static_cast<float *>(bufferInfo.ptr);
     for (int j = 0; j < 5; j++)
-      for (int i = 0; i < mcxConfig.polmedianum; i++)
-        ((float *) (&mcxConfig.polprop[i]))[j] = val[j * mcxConfig.polmedianum + i];
+      for (int i = 0; i < mcx_config.polmedianum; i++)
+        ((float *) (&mcx_config.polprop[i]))[j] = val[j * mcx_config.polmedianum + i];
   }
-  if (userCfg.contains("session")) {
-    std::string session = py::str(userCfg["session"]);
+  if (user_cfg.contains("session")) {
+    std::string session = py::str(user_cfg["session"]);
     if (session.empty())
       throw py::value_error("the 'session' field must be a non-empty string");
     if (session.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'session' field is too long");
-    strncpy(mcxConfig.session, session.c_str(), MAX_SESSION_LENGTH);
+    strncpy(mcx_config.session, session.c_str(), MAX_SESSION_LENGTH);
   }
-  if (userCfg.contains("srctype")) {
-    std::string srcType = py::str(userCfg["srctype"]);
+  if (user_cfg.contains("srctype")) {
+    std::string srcType = py::str(user_cfg["srctype"]);
     const char *srctypeid[] = {"pencil", "isotropic", "cone", "gaussian", "planar",
                                "pattern", "fourier", "arcsine", "disk", "fourierx", "fourierx2d", "zgaussian",
                                "line", "slit", "pencilarray", "pattern3d", "hyperboloid", ""};
@@ -462,12 +462,12 @@ void parse_config(const py::dict &userCfg, Config &mcxConfig) {
     if (srcType.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'srctype' field is too long");
     strncpy(strtypestr, srcType.c_str(), MAX_SESSION_LENGTH);
-    mcxConfig.srctype = mcx_keylookup(strtypestr, srctypeid);
-    if (mcxConfig.srctype == -1)
+    mcx_config.srctype = mcx_keylookup(strtypestr, srctypeid);
+    if (mcx_config.srctype == -1)
       throw py::value_error("the specified source type is not supported");
   }
-  if (userCfg.contains("outputtype")) {
-    std::string outputType = py::str(userCfg["outputtype"]);
+  if (user_cfg.contains("outputtype")) {
+    std::string outputType = py::str(user_cfg["outputtype"]);
     const char *outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", ""};
     char outputstr[MAX_SESSION_LENGTH] = {'\0'};
     if (outputType.empty())
@@ -475,14 +475,14 @@ void parse_config(const py::dict &userCfg, Config &mcxConfig) {
     if (outputType.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'srctype' field is too long");
     strncpy(outputstr, outputType.c_str(), MAX_SESSION_LENGTH);
-    mcxConfig.outputtype = mcx_keylookup(outputstr, outputtype);
-    if (mcxConfig.outputtype >= 5) // map wl to jacobian, wp to nscat
-      mcxConfig.outputtype -= 2;
-    if (mcxConfig.outputtype == -1)
+    mcx_config.outputtype = mcx_keylookup(outputstr, outputtype);
+    if (mcx_config.outputtype >= 5) // map wl to jacobian, wp to nscat
+      mcx_config.outputtype -= 2;
+    if (mcx_config.outputtype == -1)
       throw py::value_error("the specified output type is not supported");
   }
-  if (userCfg.contains("debuglevel")) {
-    std::string debugLevel = py::str(userCfg["debuglevel"]);
+  if (user_cfg.contains("debuglevel")) {
+    std::string debugLevel = py::str(user_cfg["debuglevel"]);
     const char debugflag[] = {'R', 'M', 'P', '\0'};
     char debuglevel[MAX_SESSION_LENGTH] = {'\0'};
     if (debugLevel.empty())
@@ -490,12 +490,12 @@ void parse_config(const py::dict &userCfg, Config &mcxConfig) {
     if (debugLevel.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'debuglevel' field is too long");
     strncpy(debuglevel, debugLevel.c_str(), MAX_SESSION_LENGTH);
-    mcxConfig.debuglevel = mcx_parsedebugopt(debuglevel, debugflag);
-    if (mcxConfig.debuglevel == 0)
+    mcx_config.debuglevel = mcx_parsedebugopt(debuglevel, debugflag);
+    if (mcx_config.debuglevel == 0)
       throw py::value_error("the specified debuglevel is not supported");
   }
-  if (userCfg.contains("savedetflag")) {
-    std::string saveDetFlag = py::str(userCfg["savedetflag"]);
+  if (user_cfg.contains("savedetflag")) {
+    std::string saveDetFlag = py::str(user_cfg["savedetflag"]);
     const char saveflag[] = {'D', 'S', 'P', 'M', 'X', 'V', 'W', 'I', '\0'};
     char savedetflag[MAX_SESSION_LENGTH] = {'\0'};
     if (saveDetFlag.empty())
@@ -503,56 +503,56 @@ void parse_config(const py::dict &userCfg, Config &mcxConfig) {
     if (saveDetFlag.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'savedetflag' field is too long");
     strncpy(savedetflag, saveDetFlag.c_str(), MAX_SESSION_LENGTH);
-    mcxConfig.savedetflag = mcx_parsedebugopt(savedetflag, saveflag);
+    mcx_config.savedetflag = mcx_parsedebugopt(savedetflag, saveflag);
   }
-  if (userCfg.contains("srcpattern")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["srcpattern"]);
+  if (user_cfg.contains("srcpattern")) {
+    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["srcpattern"]);
     auto bufferInfo = fStyleVolume.request();
-    if (mcxConfig.srcpattern) free(mcxConfig.srcpattern);
-    mcxConfig.srcpattern = (float*) malloc(bufferInfo.size * sizeof(float));
+    if (mcx_config.srcpattern) free(mcx_config.srcpattern);
+    mcx_config.srcpattern = (float*) malloc(bufferInfo.size * sizeof(float));
     auto val = static_cast<float*>(bufferInfo.ptr);
     for(int i = 0; i < bufferInfo.size; i++)
-      mcxConfig.srcpattern[i] = val[i];
+      mcx_config.srcpattern[i] = val[i];
   }
-  if (userCfg.contains("invcdf")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["invcdf"]);
+  if (user_cfg.contains("invcdf")) {
+    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["invcdf"]);
     auto bufferInfo = fStyleVolume.request();
     unsigned int nphase = bufferInfo.shape.size();
     float *val = static_cast<float *>(bufferInfo.ptr);
-    mcxConfig.nphase = nphase + 2;
-    mcxConfig.nphase += (mcxConfig.nphase & 0x1); // make cfg.nphase even number
-    mcxConfig.invcdf = (float *) calloc(mcxConfig.nphase, sizeof(float));
+    mcx_config.nphase = nphase + 2;
+    mcx_config.nphase += (mcx_config.nphase & 0x1); // make cfg.nphase even number
+    mcx_config.invcdf = (float *) calloc(mcx_config.nphase, sizeof(float));
     for (int i = 0; i < nphase; i++) {
-      mcxConfig.invcdf[i + 1] = val[i];
+      mcx_config.invcdf[i + 1] = val[i];
       if (i > 0 && (val[i] < val[i - 1] || (val[i] > 1.f || val[i] < -1.f)))
         throw py::value_error(
             "cfg.invcdf contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
     }
-    mcxConfig.invcdf[0] = -1.f;
-    mcxConfig.invcdf[nphase + 1] = 1.f;
-    mcxConfig.invcdf[mcxConfig.nphase - 1] = 1.f;
+    mcx_config.invcdf[0] = -1.f;
+    mcx_config.invcdf[nphase + 1] = 1.f;
+    mcx_config.invcdf[mcx_config.nphase - 1] = 1.f;
   }
-  if (userCfg.contains("shapes")) {
-    std::string shapesString = py::str(userCfg["shapes"]);
+  if (user_cfg.contains("shapes")) {
+    std::string shapesString = py::str(user_cfg["shapes"]);
     if (shapesString.empty())
       throw py::value_error("the 'shapes' field must be a non-empty string");
-    mcxConfig.shapedata = (char *) calloc(shapesString.size() + 2, 1);
-    strncpy(mcxConfig.shapedata, shapesString.c_str(), shapesString.size() + 1);
+    mcx_config.shapedata = (char *) calloc(shapesString.size() + 2, 1);
+    strncpy(mcx_config.shapedata, shapesString.c_str(), shapesString.size() + 1);
   }
-  if (userCfg.contains("bc")) {
-    std::string bcString = py::str(userCfg["bc"]);
+  if (user_cfg.contains("bc")) {
+    std::string bcString = py::str(user_cfg["bc"]);
     if (bcString.empty() || bcString.size() > 12)
       throw py::value_error("the 'bc' field must be a non-empty string / have less than 12 characters.");
-    strncpy(mcxConfig.bc, bcString.c_str(), bcString.size() + 1);
-    mcxConfig.bc[bcString.size()] = '\0';
+    strncpy(mcx_config.bc, bcString.c_str(), bcString.size() + 1);
+    mcx_config.bc[bcString.size()] = '\0';
   }
-  if (userCfg.contains("seed")) {
-    auto seedValue = userCfg["seed"];
+  if (user_cfg.contains("seed")) {
+    auto seedValue = user_cfg["seed"];
     // If the seed value is scalar (int or float), then assign it directly
     if (py::int_::check_(seedValue))
-      mcxConfig.seed = py::int_(seedValue);
+      mcx_config.seed = py::int_(seedValue);
     else if (py::float_::check_(seedValue))
-      mcxConfig.seed = py::float_(seedValue).cast<int>();
+      mcx_config.seed = py::float_(seedValue).cast<int>();
       // Set seed from array
     else {
       auto fStyleArray = py::array_t<uint8_t, py::array::f_style | py::array::forcecast>::ensure(seedValue);
@@ -560,20 +560,20 @@ void parse_config(const py::dict &userCfg, Config &mcxConfig) {
       seed_byte = bufferInfo.shape.at(0);
       if (bufferInfo.shape.at(0) != sizeof(float) * RAND_WORD_LEN)
         throw py::value_error("the row number of cfg.seed does not match RNG seed byte-length");
-      mcxConfig.replay.seed = malloc(bufferInfo.size);
-      memcpy(mcxConfig.replay.seed, bufferInfo.ptr, bufferInfo.size);
-      mcxConfig.seed = SEED_FROM_FILE;
-      mcxConfig.nphoton = bufferInfo.shape.at(1);
+      mcx_config.replay.seed = malloc(bufferInfo.size);
+      memcpy(mcx_config.replay.seed, bufferInfo.ptr, bufferInfo.size);
+      mcx_config.seed = SEED_FROM_FILE;
+      mcx_config.nphoton = bufferInfo.shape.at(1);
     }
   }
-  if (userCfg.contains("gpuid")) {
-    auto gpuIdValue = userCfg["gpuid"];
+  if (user_cfg.contains("gpuid")) {
+    auto gpuIdValue = user_cfg["gpuid"];
     if (py::int_::check_(gpuIdValue)) {
-      mcxConfig.gpuid = py::int_(gpuIdValue);
-      memset(mcxConfig.deviceid, 0, MAX_DEVICE);
-      if (mcxConfig.gpuid > 0 && mcxConfig.gpuid < MAX_DEVICE) {
-        memset(mcxConfig.deviceid, '0', mcxConfig.gpuid - 1);
-        mcxConfig.deviceid[mcxConfig.gpuid - 1] = '1';
+      mcx_config.gpuid = py::int_(gpuIdValue);
+      memset(mcx_config.deviceid, 0, MAX_DEVICE);
+      if (mcx_config.gpuid > 0 && mcx_config.gpuid < MAX_DEVICE) {
+        memset(mcx_config.deviceid, '0', mcx_config.gpuid - 1);
+        mcx_config.deviceid[mcx_config.gpuid - 1] = '1';
       } else
         throw py::value_error("GPU id must be positive and can not be more than 256");
     } else if (py::str::check_(gpuIdValue)) {
@@ -582,26 +582,26 @@ void parse_config(const py::dict &userCfg, Config &mcxConfig) {
         throw py::value_error("the 'gpuid' field must be an integer or non-empty string");
       if (gpuIdStringValue.size() > MAX_DEVICE)
         throw py::value_error("the 'gpuid' field is too long");
-      strncpy(mcxConfig.deviceid, gpuIdStringValue.c_str(), MAX_DEVICE);
+      strncpy(mcx_config.deviceid, gpuIdStringValue.c_str(), MAX_DEVICE);
     }
     for (int i = 0; i < MAX_DEVICE; i++)
-      if (mcxConfig.deviceid[i] == '0')
-        mcxConfig.deviceid[i] = '\0';
+      if (mcx_config.deviceid[i] == '0')
+        mcx_config.deviceid[i] = '\0';
   }
-  if (userCfg.contains("workload")) {
-    auto workloadValue = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(userCfg["workload"]);
+  if (user_cfg.contains("workload")) {
+    auto workloadValue = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["workload"]);
     auto bufferInfo = workloadValue.request();
     if (bufferInfo.shape.size() < 2 && bufferInfo.size > MAX_DEVICE)
       throw py::value_error("the workload list can not be longer than 256");
     for (int i = 0; i < bufferInfo.size; i++)
-      mcxConfig.workload[i] = static_cast<float *>(bufferInfo.ptr)[i];
+      mcx_config.workload[i] = static_cast<float *>(bufferInfo.ptr)[i];
   }
   // Output arguments parsing
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issave2pt, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issavedet, py::int_);
-  GET_SCALAR_FIELD(userCfg, mcxConfig, issaveseed, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issave2pt, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issavedet, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::int_);
 
-  // Flush the std::cout and std::cerr to avoid
+  // Flush the std::cout and std::cerr
   std::cout.flush();
   std::cerr.flush();
 }
@@ -630,23 +630,6 @@ py::dict pyMcxInterface(const py::dict &user_cfg) {
 
     mcx_flush(&mcx_config);
 
-    /*
-     * Number of output arguments has to be explicitly specified, unlike Matlab.
-    */
-//    if (!user_cfg.contains("nlhs"))
-//      throw py::value_error("Number of output arguments must be specified.");
-//    if (!py::int_::check_(user_cfg["nlhs"]))
-//      throw py::value_error("Number of output arguments must be int.");
-//    int nlhs = py::int_(user_cfg["nlhs"]);
-//    if (nlhs < 0)
-//      throw py::value_error("Number of output arguments must be greater than zero.");
-
-    /** Overwrite the output flags using the number of output present */
-//    if (nlhs < 1)
-//      mcx_config.issave2pt =
-//          0; /** issave2pt default is 1, but allow users to manually disable, auto disable only if there is no output */
-//    mcx_config.issavedet = nlhs >= 2 ? 1 : 0;  /** save detected photon data to the 2nd output if present */
-//    mcx_config.issaveseed = nlhs >= 4 ? 1 : 0; /** save detected photon seeds to the 4th output if present */
     /** Validate all input fields, and warn incompatible inputs */
     validate_config(&mcx_config, det_ps, dim_det_ps, seed_byte, [](const char *msg) { throw py::value_error(msg); });
 
@@ -708,13 +691,12 @@ py::dict pyMcxInterface(const py::dict &user_cfg) {
 #ifdef _OPENMP
     }
 #endif
-    /** If error is detected, gracefully terminate the mex and return back to MATLAB */
+    /** If error is detected, gracefully terminate the mex and return back to Python */
     if (error_flag)
       throw py::runtime_error("PyMCX Terminated due to an exception!");
     fielddim[4] = 1;
     fielddim[5] = 1;
 
-    /** if 5th output presents, output the photon trajectory data */
     if (mcx_config.debuglevel != 0) {
       fielddim[0] = MCX_DEBUG_REC_LEN;
       fielddim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
@@ -728,7 +710,6 @@ py::dict pyMcxInterface(const py::dict &user_cfg) {
       mcx_config.exportdebugdata = nullptr;
       output["photontraj"] = photonTrajData;
     }
-    /** if the 4th output presents, output the detected photon seeds */
     if (mcx_config.issaveseed == 1) {
       fielddim[0] = (mcx_config.issaveseed > 0) * RAND_WORD_LEN * sizeof(float);
       fielddim[1] = mcx_config.detectedcount; // his.savedphoton is for one repetition, should correct
@@ -740,7 +721,6 @@ py::dict pyMcxInterface(const py::dict &user_cfg) {
       mcx_config.seeddata = nullptr;
       output["detectedseeds"] = detectedSeeds;
     }
-    /** if the 3rd output presents, output the detector-masked medium volume, similar to the --dumpmask flag */
     if (user_cfg.contains("dumpmask") && py::reinterpret_borrow<py::bool_>(user_cfg["dumpmask"]).cast<bool>()) {
       fielddim[0] = mcx_config.dim.x;
       fielddim[1] = mcx_config.dim.y;
@@ -753,7 +733,6 @@ py::dict pyMcxInterface(const py::dict &user_cfg) {
         output["detector"] = detectorVol;
       }
     }
-    /** if the 2nd output presents, output the detected photon partialpath data */
     if (mcx_config.issavedet == 1) {
       fielddim[0] = hostdetreclen;
       fielddim[1] = mcx_config.detectedcount;
@@ -768,7 +747,6 @@ py::dict pyMcxInterface(const py::dict &user_cfg) {
       free(mcx_config.exportdetected);
       mcx_config.exportdetected = NULL;
     }
-    /** if the 1st output presents, output the fluence/energy-deposit volume data */
     if (mcx_config.issave2pt) {
       int fieldlen;
       fielddim[0] = mcx_config.srcnum * mcx_config.dim.x;
