@@ -82,55 +82,55 @@ int seed_byte = 0;
 
 /**
  * Determines the type of volume passed to the interface and decides how to copy it to MCXConfig.
- * @param userCfg
- * @param mcxConfig
+ * @param user_cfg
+ * @param mcx_config
  */
-void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
-  if (!userCfg.contains("vol"))
+void parseVolume(const py::dict &user_cfg, Config &mcx_config) {
+  if (!user_cfg.contains("vol"))
     throw py::value_error("Configuration must specify a 2/3/4D volume.");
-  auto volumeHandle = userCfg["vol"];
+  auto volume_handle = user_cfg["vol"];
   // Free the volume
-  if (mcxConfig.vol) free(mcxConfig.vol);
+  if (mcx_config.vol) free(mcx_config.vol);
   unsigned int dim_xyz = 0;
   // Data type-specific logic
-  if (py::array_t<int8_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<int8_t, py::array::f_style>::ensure(volumeHandle);
-    auto buffer = fStyleVolume.request();
+  if (py::array_t<int8_t, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<int8_t, py::array::f_style>::ensure(volume_handle);
+    auto buffer = f_style_volume.request();
     int i = buffer.shape.size() == 4;
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
-                     static_cast<unsigned int>(buffer.shape.at(i + 1)),
-                     static_cast<unsigned int>(buffer.shape.at(i + 2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
+                      static_cast<unsigned int>(buffer.shape.at(i + 1)),
+                      static_cast<unsigned int>(buffer.shape.at(i + 2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
     if (i == 1) {
       if (buffer.shape.at(0) == 4) {
-        mcxConfig.mediabyte = MEDIA_ASGN_BYTE;
-        memcpy(mcxConfig.vol, buffer.ptr, dim_xyz * sizeof(unsigned int));
+        mcx_config.mediabyte = MEDIA_ASGN_BYTE;
+        memcpy(mcx_config.vol, buffer.ptr, dim_xyz * sizeof(unsigned int));
       } else if (buffer.shape.at(0) == 8) {
-        mcxConfig.mediabyte = MEDIA_2LABEL_SPLIT;
+        mcx_config.mediabyte = MEDIA_2LABEL_SPLIT;
         auto val = (unsigned char *) buffer.ptr;
-        if (mcxConfig.vol) free(mcxConfig.vol);
-        mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz << 3));
-        memcpy(mcxConfig.vol, val, (dim_xyz << 3));
+        if (mcx_config.vol) free(mcx_config.vol);
+        mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz << 3));
+        memcpy(mcx_config.vol, val, (dim_xyz << 3));
       }
     } else {
-      mcxConfig.mediabyte = 1;
+      mcx_config.mediabyte = 1;
       for (i = 0; i < buffer.size; i++)
-        mcxConfig.vol[i] = static_cast<unsigned char *>(buffer.ptr)[i];
+        mcx_config.vol[i] = static_cast<unsigned char *>(buffer.ptr)[i];
     }
   }
-  else if (py::array_t<int16_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<int16_t, py::array::f_style>::ensure(volumeHandle);
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<int16_t, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<int16_t, py::array::f_style>::ensure(volume_handle);
+    auto buffer = f_style_volume.request();
     int i = buffer.shape.size() == 4;
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
-                     static_cast<unsigned int>(buffer.shape.at(i + 1)),
-                     static_cast<unsigned int>(buffer.shape.at(i + 2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
+                      static_cast<unsigned int>(buffer.shape.at(i + 1)),
+                      static_cast<unsigned int>(buffer.shape.at(i + 2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
     if (i == 1) {
       if (buffer.shape.at(0) == 3) {
-        mcxConfig.mediabyte = MEDIA_2LABEL_MIX;
+        mcx_config.mediabyte = MEDIA_2LABEL_MIX;
         auto *val = (unsigned short *) buffer.ptr;
         union {
           unsigned short h[2];
@@ -141,87 +141,87 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
           f2bh.c[0] = val[i * 3] & 0xFF;
           f2bh.c[1] = val[i * 3 + 1] & 0xFF;
           f2bh.h[1] = val[i * 3 + 2] & 0x7FFF;
-          mcxConfig.vol[i] = f2bh.i[0];
+          mcx_config.vol[i] = f2bh.i[0];
         }
       } else if (buffer.shape.at(0) == 2) {
-        mcxConfig.mediabyte = MEDIA_AS_SHORT;
-        memcpy(mcxConfig.vol, buffer.ptr, dim_xyz * sizeof(unsigned int));
+        mcx_config.mediabyte = MEDIA_AS_SHORT;
+        memcpy(mcx_config.vol, buffer.ptr, dim_xyz * sizeof(unsigned int));
       }
     } else {
-      mcxConfig.mediabyte = 2;
-      mcxConfig.vol = static_cast<unsigned int *>(malloc(buffer.size * sizeof(unsigned int)));
+      mcx_config.mediabyte = 2;
+      mcx_config.vol = static_cast<unsigned int *>(malloc(buffer.size * sizeof(unsigned int)));
       for (i = 0; i < buffer.size; i++)
-        mcxConfig.vol[i] = static_cast<unsigned short *>(buffer.ptr)[i];
+        mcx_config.vol[i] = static_cast<unsigned short *>(buffer.ptr)[i];
     }
   }
-  else if (py::array_t<int32_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<int32_t, py::array::f_style>::ensure(volumeHandle);
-    mcxConfig.mediabyte = 4;
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<int32_t, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<int32_t, py::array::f_style>::ensure(volume_handle);
+    mcx_config.mediabyte = 4;
+    auto buffer = f_style_volume.request();
     if (buffer.shape.size() == 4)
       throw py::value_error("Invalid volume dims for int32_t volume.");
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
-                     static_cast<unsigned int>(buffer.shape.at(1)),
-                     static_cast<unsigned int>(buffer.shape.at(2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
-    memcpy(mcxConfig.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
+                      static_cast<unsigned int>(buffer.shape.at(1)),
+                      static_cast<unsigned int>(buffer.shape.at(2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    memcpy(mcx_config.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
   }
-  else if (py::array_t<u_int8_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<u_int8_t, py::array::f_style>::ensure(volumeHandle);
-    mcxConfig.mediabyte = 1;
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<u_int8_t, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<u_int8_t, py::array::f_style>::ensure(volume_handle);
+    mcx_config.mediabyte = 1;
+    auto buffer = f_style_volume.request();
     if (buffer.shape.size() == 4)
       throw py::value_error("Invalid volume dims for uint8_t volume.");
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
-                     static_cast<unsigned int>(buffer.shape.at(1)),
-                     static_cast<unsigned int>(buffer.shape.at(2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
+                      static_cast<unsigned int>(buffer.shape.at(1)),
+                      static_cast<unsigned int>(buffer.shape.at(2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
     for (int i = 0; i < buffer.size; i++)
-      mcxConfig.vol[i] = static_cast<unsigned char *>(buffer.ptr)[i];
+      mcx_config.vol[i] = static_cast<unsigned char *>(buffer.ptr)[i];
   }
-  else if (py::array_t<u_int16_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<u_int16_t, py::array::f_style>::ensure(volumeHandle);
-    mcxConfig.mediabyte = 2;
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<u_int16_t, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<u_int16_t, py::array::f_style>::ensure(volume_handle);
+    mcx_config.mediabyte = 2;
+    auto buffer = f_style_volume.request();
     if (buffer.shape.size() == 4)
       throw py::value_error("Invalid volume dims for u_int16_t volume.");
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
-                     static_cast<unsigned int>(buffer.shape.at(1)),
-                     static_cast<unsigned int>(buffer.shape.at(2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
+                      static_cast<unsigned int>(buffer.shape.at(1)),
+                      static_cast<unsigned int>(buffer.shape.at(2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
     for (int i = 0; i < buffer.size; i++)
-      mcxConfig.vol[i] = static_cast<unsigned short *>(buffer.ptr)[i];
+      mcx_config.vol[i] = static_cast<unsigned short *>(buffer.ptr)[i];
   }
-  else if (py::array_t<u_int32_t, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<u_int32_t, py::array::f_style>::ensure(volumeHandle);
-    mcxConfig.mediabyte = 8;
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<u_int32_t, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<u_int32_t, py::array::f_style>::ensure(volume_handle);
+    mcx_config.mediabyte = 8;
+    auto buffer = f_style_volume.request();
     if (buffer.shape.size() == 4)
       throw py::value_error("Invalid volume dims for u_int32_t volume.");
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
-                     static_cast<unsigned int>(buffer.shape.at(1)),
-                     static_cast<unsigned int>(buffer.shape.at(2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
-    memcpy(mcxConfig.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
+                      static_cast<unsigned int>(buffer.shape.at(1)),
+                      static_cast<unsigned int>(buffer.shape.at(2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    memcpy(mcx_config.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
   }
-  else if (py::array_t<float, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style>::ensure(volumeHandle);
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<float, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<float, py::array::f_style>::ensure(volume_handle);
+    auto buffer = f_style_volume.request();
     int i = buffer.shape.size() == 4;
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
-                     static_cast<unsigned int>(buffer.shape.at(i + 1)),
-                     static_cast<unsigned int>(buffer.shape.at(i + 2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
+                      static_cast<unsigned int>(buffer.shape.at(i + 1)),
+                      static_cast<unsigned int>(buffer.shape.at(i + 2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
 
     if (i) {
       switch (buffer.shape.at(0)) {
         case 3: {
-          mcxConfig.mediabyte = MEDIA_LABEL_HALF;
+          mcx_config.mediabyte = MEDIA_LABEL_HALF;
           auto val = (float *) buffer.ptr;
           union {
             float f[3];
@@ -246,12 +246,12 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
             f2bh.h[1] = (f2bh.h[1] | tmp) << 10;
             f2bh.h[1] |= (f2bh.i[2] >> 13) & 0x3ff;
 
-            mcxConfig.vol[i] = f2bh.i[0];
+            mcx_config.vol[i] = f2bh.i[0];
           }
           break;
         }
         case 2: {
-          mcxConfig.mediabyte = MEDIA_AS_F2H;
+          mcx_config.mediabyte = MEDIA_AS_F2H;
           auto val = (float *) buffer.ptr;
           union {
             float f[2];
@@ -264,7 +264,7 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
             f2h.f[1] = val[(i << 1) + 1];
             if (f2h.f[0] != f2h.f[0]
                 || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
-              mcxConfig.vol[i] = 0;
+              mcx_config.vol[i] = 0;
               continue;
             }
             /**
@@ -305,12 +305,12 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
             if (f2h.i[0] == 0) /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
               f2h.i[0] = 0x00010000;
 
-            mcxConfig.vol[i] = f2h.i[0];
+            mcx_config.vol[i] = f2h.i[0];
           }
           break;
         }
         case 1: {
-          mcxConfig.mediabyte = MEDIA_MUA_FLOAT;
+          mcx_config.mediabyte = MEDIA_MUA_FLOAT;
           union {
             float f;
             uint i;
@@ -322,32 +322,32 @@ void parseVolume(const py::dict &userCfg, Config &mcxConfig) {
               f2i.f = EPS;
             if (val[i] != val[i]) /*if input is nan in continuous medium, convert to 0-voxel*/
               f2i.i = 0;
-            mcxConfig.vol[i] = f2i.i;
+            mcx_config.vol[i] = f2i.i;
           }
           break;
         }
         default:throw py::value_error("Invalid array for vol array.");
       }
     } else {
-      mcxConfig.mediabyte = 14;
-      mcxConfig.vol = static_cast<unsigned int *>(malloc(buffer.size * sizeof(unsigned int)));
+      mcx_config.mediabyte = 14;
+      mcx_config.vol = static_cast<unsigned int *>(malloc(buffer.size * sizeof(unsigned int)));
       for (i = 0; i < buffer.size; i++)
-        mcxConfig.vol[i] = static_cast<float *>(buffer.ptr)[i];
+        mcx_config.vol[i] = static_cast<float *>(buffer.ptr)[i];
     }
   }
-  else if (py::array_t<double, py::array::c_style>::check_(volumeHandle)) {
-    auto fStyleVolume = py::array_t<double, py::array::f_style>::ensure(volumeHandle);
-    mcxConfig.mediabyte = 4;
-    auto buffer = fStyleVolume.request();
+  else if (py::array_t<double, py::array::c_style>::check_(volume_handle)) {
+    auto f_style_volume = py::array_t<double, py::array::f_style>::ensure(volume_handle);
+    mcx_config.mediabyte = 4;
+    auto buffer = f_style_volume.request();
     if (buffer.shape.size() == 4)
       throw py::value_error("Invalid volume dims for double volume.");
-    mcxConfig.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
-                     static_cast<unsigned int>(buffer.shape.at(1)),
-                     static_cast<unsigned int>(buffer.shape.at(2))};
-    dim_xyz = mcxConfig.dim.x * mcxConfig.dim.y * mcxConfig.dim.z;
-    mcxConfig.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
+    mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
+                      static_cast<unsigned int>(buffer.shape.at(1)),
+                      static_cast<unsigned int>(buffer.shape.at(2))};
+    dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
+    mcx_config.vol = static_cast<unsigned int *>(malloc(dim_xyz * sizeof(unsigned int)));
     for (int i = 0; i < buffer.size; i++)
-      mcxConfig.vol[i] = static_cast<double *>(buffer.ptr)[i];
+      mcx_config.vol[i] = static_cast<double *>(buffer.ptr)[i];
   }
   else
     throw py::type_error("Invalid data type for vol array.");
@@ -402,42 +402,42 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   parseVolume(user_cfg, mcx_config);
 
   if (user_cfg.contains("detpos")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["detpos"]);
-    auto bufferInfo = fStyleVolume.request();
-    if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 4)
+    auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["detpos"]);
+    auto buffer_info = f_style_volume.request();
+    if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4)
       throw py::value_error("the 'detpos' field must have 4 columns (x,y,z,radius)");
-    mcx_config.detnum = bufferInfo.shape.at(0);
+    mcx_config.detnum = buffer_info.shape.at(0);
     if (mcx_config.detpos) free(mcx_config.detpos);
     mcx_config.detpos = (float4 *) malloc(mcx_config.detnum * sizeof(float4));
-    auto val = static_cast<float *>(bufferInfo.ptr);
+    auto val = static_cast<float *>(buffer_info.ptr);
     for (int j = 0; j < 4; j++)
       for (int i = 0; i < mcx_config.detnum; i++)
         ((float *) (&mcx_config.detpos[i]))[j] = val[j * mcx_config.detnum + i];
   }
   if (user_cfg.contains("prop")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["prop"]);
-    auto bufferInfo = fStyleVolume.request();
-    if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 4)
+    auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["prop"]);
+    auto buffer_info = f_style_volume.request();
+    if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4)
       throw py::value_error("the 'prop' field must have 4 columns (mua,mus,g,n)");
-    mcx_config.medianum = bufferInfo.shape.at(0);
+    mcx_config.medianum = buffer_info.shape.at(0);
     if (mcx_config.prop) free(mcx_config.prop);
     mcx_config.prop = (Medium *) malloc(mcx_config.medianum * sizeof(Medium));
-    auto val = static_cast<float *>(bufferInfo.ptr);
+    auto val = static_cast<float *>(buffer_info.ptr);
     for (int j = 0; j < 4; j++)
       for (int i = 0; i < mcx_config.medianum; i++)
         ((float *) (&mcx_config.prop[i]))[j] = val[j * mcx_config.medianum + i];
   }
   if (user_cfg.contains("polprop")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["polprop"]);
-    auto bufferInfo = fStyleVolume.request();
-    if (bufferInfo.shape.size() != 2)
+    auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["polprop"]);
+    auto buffer_info = f_style_volume.request();
+    if (buffer_info.shape.size() != 2)
       throw py::value_error("the 'polprop' field must a 2D array");
-    if (bufferInfo.shape.at(0) > 0 && bufferInfo.shape.at(1) != 5)
+    if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5)
       throw py::value_error("the 'polprop' field must have 5 columns (mua, radius, rho, n_sph,n_bkg)");
-    mcx_config.polmedianum = bufferInfo.shape.at(0);
+    mcx_config.polmedianum = buffer_info.shape.at(0);
     if (mcx_config.polprop) free(mcx_config.polprop);
     mcx_config.polprop = (POLMedium *) malloc(mcx_config.polmedianum * sizeof(POLMedium));
-    auto val = static_cast<float *>(bufferInfo.ptr);
+    auto val = static_cast<float *>(buffer_info.ptr);
     for (int j = 0; j < 5; j++)
       for (int i = 0; i < mcx_config.polmedianum; i++)
         ((float *) (&mcx_config.polprop[i]))[j] = val[j * mcx_config.polmedianum + i];
@@ -506,19 +506,19 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
     mcx_config.savedetflag = mcx_parsedebugopt(savedetflag, saveflag);
   }
   if (user_cfg.contains("srcpattern")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["srcpattern"]);
-    auto bufferInfo = fStyleVolume.request();
+    auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["srcpattern"]);
+    auto buffer_info = f_style_volume.request();
     if (mcx_config.srcpattern) free(mcx_config.srcpattern);
-    mcx_config.srcpattern = (float*) malloc(bufferInfo.size * sizeof(float));
-    auto val = static_cast<float*>(bufferInfo.ptr);
-    for(int i = 0; i < bufferInfo.size; i++)
+    mcx_config.srcpattern = (float*) malloc(buffer_info.size * sizeof(float));
+    auto val = static_cast<float*>(buffer_info.ptr);
+    for(int i = 0; i < buffer_info.size; i++)
       mcx_config.srcpattern[i] = val[i];
   }
   if (user_cfg.contains("invcdf")) {
-    auto fStyleVolume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["invcdf"]);
-    auto bufferInfo = fStyleVolume.request();
-    unsigned int nphase = bufferInfo.shape.size();
-    float *val = static_cast<float *>(bufferInfo.ptr);
+    auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["invcdf"]);
+    auto buffer_info = f_style_volume.request();
+    unsigned int nphase = buffer_info.shape.size();
+    float *val = static_cast<float *>(buffer_info.ptr);
     mcx_config.nphase = nphase + 2;
     mcx_config.nphase += (mcx_config.nphase & 0x1); // make cfg.nphase even number
     mcx_config.invcdf = (float *) calloc(mcx_config.nphase, sizeof(float));
@@ -556,14 +556,14 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
       // Set seed from array
     else {
       auto fStyleArray = py::array_t<uint8_t, py::array::f_style | py::array::forcecast>::ensure(seedValue);
-      auto bufferInfo = fStyleArray.request();
-      seed_byte = bufferInfo.shape.at(0);
-      if (bufferInfo.shape.at(0) != sizeof(float) * RAND_WORD_LEN)
+      auto buffer_info = fStyleArray.request();
+      seed_byte = buffer_info.shape.at(0);
+      if (buffer_info.shape.at(0) != sizeof(float) * RAND_WORD_LEN)
         throw py::value_error("the row number of cfg.seed does not match RNG seed byte-length");
-      mcx_config.replay.seed = malloc(bufferInfo.size);
-      memcpy(mcx_config.replay.seed, bufferInfo.ptr, bufferInfo.size);
+      mcx_config.replay.seed = malloc(buffer_info.size);
+      memcpy(mcx_config.replay.seed, buffer_info.ptr, buffer_info.size);
       mcx_config.seed = SEED_FROM_FILE;
-      mcx_config.nphoton = bufferInfo.shape.at(1);
+      mcx_config.nphoton = buffer_info.shape.at(1);
     }
   }
   if (user_cfg.contains("gpuid")) {
@@ -590,11 +590,11 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   }
   if (user_cfg.contains("workload")) {
     auto workloadValue = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["workload"]);
-    auto bufferInfo = workloadValue.request();
-    if (bufferInfo.shape.size() < 2 && bufferInfo.size > MAX_DEVICE)
+    auto buffer_info = workloadValue.request();
+    if (buffer_info.shape.size() < 2 && buffer_info.size > MAX_DEVICE)
       throw py::value_error("the workload list can not be longer than 256");
-    for (int i = 0; i < bufferInfo.size; i++)
-      mcx_config.workload[i] = static_cast<float *>(bufferInfo.ptr)[i];
+    for (int i = 0; i < buffer_info.size; i++)
+      mcx_config.workload[i] = static_cast<float *>(buffer_info.ptr)[i];
   }
   // Output arguments parsing
   GET_SCALAR_FIELD(user_cfg, mcx_config, issave2pt, py::int_);
@@ -613,8 +613,8 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
   GPUInfo *gpu_info = nullptr;        /** gpuInfo: structure to store GPU information */
   unsigned int active_dev = 0;     /** activeDev: count of total active GPUs to be used */
   int error_flag = 0;
-  int threadid = 0;
-  size_t fielddim[6];
+  int thread_id = 0;
+  size_t field_dim[6];
   py::dict output;
   try {
     /*
@@ -646,14 +646,14 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
 
     /** Initialize all buffers necessary to store the output variables */
     if (mcx_config.issave2pt == 1) {
-      int fieldlen =
+      int field_len =
           static_cast<int>(mcx_config.dim.x) * static_cast<int>(mcx_config.dim.y) * static_cast<int>(mcx_config.dim.z) *
               (int) ((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5) * mcx_config.srcnum;
       if (mcx_config.replay.seed != nullptr && mcx_config.replaydet == -1)
-        fieldlen *= mcx_config.detnum;
-      if (mcx_config.replay.seed != NULL && mcx_config.outputtype == otRF)
-        fieldlen *= 2;
-      mcx_config.exportfield = (float *) calloc(fieldlen, sizeof(float));
+        field_len *= mcx_config.detnum;
+      if (mcx_config.replay.seed != nullptr && mcx_config.outputtype == otRF)
+        field_len *= 2;
+      mcx_config.exportfield = (float *) calloc(field_len, sizeof(float));
     }
     if (mcx_config.issavedet == 1) {
       mcx_config.exportdetected = (float *) malloc(hostdetreclen * mcx_config.maxdetphoton * sizeof(float));
@@ -671,7 +671,7 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
     omp_set_num_threads(active_dev);
 #pragma omp parallel shared(error_flag)
     {
-      threadid = omp_get_thread_num();
+      thread_id = omp_get_thread_num();
 #endif
       /** Enclose all simulation calls inside a try/catch construct for exception handling */
       try {
@@ -679,13 +679,13 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
         mcx_run_simulation(&mcx_config, gpu_info);
 
       } catch (const char *err) {
-        std::cerr << "Error from thread (" << threadid << "): " << err << std::endl;
+        std::cerr << "Error from thread (" << thread_id << "): " << err << std::endl;
         error_flag++;
       } catch (const std::exception &err) {
-        std::cerr << "C++ Error from thread (" << threadid << "): " << err.what() << std::endl;
+        std::cerr << "C++ Error from thread (" << thread_id << "): " << err.what() << std::endl;
         error_flag++;
       } catch (...) {
-        std::cerr << "Unknown Exception from thread (" << threadid << ")" << std::endl;
+        std::cerr << "Unknown Exception from thread (" << thread_id << ")" << std::endl;
         error_flag++;
       }
 #ifdef _OPENMP
@@ -694,92 +694,92 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
     /** If error is detected, gracefully terminate the mex and return back to Python */
     if (error_flag)
       throw py::runtime_error("PyMCX Terminated due to an exception!");
-    fielddim[4] = 1;
-    fielddim[5] = 1;
+    field_dim[4] = 1;
+    field_dim[5] = 1;
 
     if (mcx_config.debuglevel != 0) {
-      fielddim[0] = MCX_DEBUG_REC_LEN;
-      fielddim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
-      fielddim[2] = 0;
-      fielddim[3] = 0;
-      auto photonTrajData = py::array_t<float, py::array::f_style>({fielddim[0], fielddim[1]});
+      field_dim[0] = MCX_DEBUG_REC_LEN;
+      field_dim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
+      field_dim[2] = 0;
+      field_dim[3] = 0;
+      auto photon_traj_data = py::array_t<float, py::array::f_style>({field_dim[0], field_dim[1]});
       if (mcx_config.debuglevel & MCX_DEBUG_MOVE)
-        memcpy(photonTrajData.mutable_data(), mcx_config.exportdebugdata, fielddim[0] * fielddim[1] * sizeof(float));
+        memcpy(photon_traj_data.mutable_data(), mcx_config.exportdebugdata, field_dim[0] * field_dim[1] * sizeof(float));
       if (mcx_config.exportdebugdata)
         free(mcx_config.exportdebugdata);
       mcx_config.exportdebugdata = nullptr;
-      output["photontraj"] = photonTrajData;
+      output["photontraj"] = photon_traj_data;
     }
     if (mcx_config.issaveseed == 1) {
-      fielddim[0] = (mcx_config.issaveseed > 0) * RAND_WORD_LEN * sizeof(float);
-      fielddim[1] = mcx_config.detectedcount; // his.savedphoton is for one repetition, should correct
-      fielddim[2] = 0;
-      fielddim[3] = 0;
-      auto detectedSeeds = py::array_t<uint8_t, py::array::f_style>({fielddim[0], fielddim[1]});
-      memcpy(detectedSeeds.mutable_data(), mcx_config.seeddata, fielddim[0] * fielddim[1]);
+      field_dim[0] = (mcx_config.issaveseed > 0) * RAND_WORD_LEN * sizeof(float);
+      field_dim[1] = mcx_config.detectedcount; // his.savedphoton is for one repetition, should correct
+      field_dim[2] = 0;
+      field_dim[3] = 0;
+      auto detected_seeds = py::array_t<uint8_t, py::array::f_style>({field_dim[0], field_dim[1]});
+      memcpy(detected_seeds.mutable_data(), mcx_config.seeddata, field_dim[0] * field_dim[1]);
       free(mcx_config.seeddata);
       mcx_config.seeddata = nullptr;
-      output["detectedseeds"] = detectedSeeds;
+      output["detectedseeds"] = detected_seeds;
     }
     if (user_cfg.contains("dumpmask") && py::reinterpret_borrow<py::bool_>(user_cfg["dumpmask"]).cast<bool>()) {
-      fielddim[0] = mcx_config.dim.x;
-      fielddim[1] = mcx_config.dim.y;
-      fielddim[2] = mcx_config.dim.z;
-      fielddim[3] = 0;
+      field_dim[0] = mcx_config.dim.x;
+      field_dim[1] = mcx_config.dim.y;
+      field_dim[2] = mcx_config.dim.z;
+      field_dim[3] = 0;
       if (mcx_config.vol) {
-        auto detectorVol = py::array_t<uint32_t, py::array::f_style>({fielddim[0], fielddim[1], fielddim[2]});
-        memcpy(detectorVol.mutable_data(), mcx_config.vol,
-               fielddim[0] * fielddim[1] * fielddim[2] * sizeof(unsigned int));
-        output["detector"] = detectorVol;
+        auto detector_vol = py::array_t<uint32_t, py::array::f_style>({field_dim[0], field_dim[1], field_dim[2]});
+        memcpy(detector_vol.mutable_data(), mcx_config.vol,
+               field_dim[0] * field_dim[1] * field_dim[2] * sizeof(unsigned int));
+        output["detector"] = detector_vol;
       }
     }
     if (mcx_config.issavedet == 1) {
-      fielddim[0] = hostdetreclen;
-      fielddim[1] = mcx_config.detectedcount;
-      fielddim[2] = 0;
-      fielddim[3] = 0;
+      field_dim[0] = hostdetreclen;
+      field_dim[1] = mcx_config.detectedcount;
+      field_dim[2] = 0;
+      field_dim[3] = 0;
       if (mcx_config.detectedcount > 0) {
-        auto partialPath = py::array_t<float, py::array::f_style>({fielddim[0], mcx_config.detectedcount});
-        memcpy(partialPath.mutable_data(), mcx_config.exportdetected,
-               fielddim[0] * fielddim[1] * sizeof(float));
-        output["partialpath"] = partialPath;
+        auto partial_path = py::array_t<float, py::array::f_style>({field_dim[0], mcx_config.detectedcount});
+        memcpy(partial_path.mutable_data(), mcx_config.exportdetected,
+               field_dim[0] * field_dim[1] * sizeof(float));
+        output["partialpath"] = partial_path;
       }
       free(mcx_config.exportdetected);
       mcx_config.exportdetected = NULL;
     }
     if (mcx_config.issave2pt) {
-      int fieldlen;
-      fielddim[0] = mcx_config.srcnum * mcx_config.dim.x;
-      fielddim[1] = mcx_config.dim.y;
-      fielddim[2] = mcx_config.dim.z;
-      fielddim[3] = (int) ((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5);
+      int field_len;
+      field_dim[0] = mcx_config.srcnum * mcx_config.dim.x;
+      field_dim[1] = mcx_config.dim.y;
+      field_dim[2] = mcx_config.dim.z;
+      field_dim[3] = (int) ((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5);
       if (mcx_config.replay.seed != nullptr && mcx_config.replaydet == -1)
-        fielddim[4] = mcx_config.detnum;
+        field_dim[4] = mcx_config.detnum;
       if (mcx_config.replay.seed != nullptr && mcx_config.outputtype == otRF)
-        fielddim[5] = 2;
-      fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
-      py::detail::any_container<ssize_t> arrayDims;
-      if (fielddim[5] > 1)
-        arrayDims = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4], fielddim[5]};
-      else if (fielddim[4] > 1)
-        arrayDims = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4]};
+        field_dim[5] = 2;
+      field_len = field_dim[0] * field_dim[1] * field_dim[2] * field_dim[3] * field_dim[4] * field_dim[5];
+      py::detail::any_container<ssize_t> array_dims;
+      if (field_dim[5] > 1)
+        array_dims = {field_dim[0], field_dim[1], field_dim[2], field_dim[3], field_dim[4], field_dim[5]};
+      else if (field_dim[4] > 1)
+        array_dims = {field_dim[0], field_dim[1], field_dim[2], field_dim[3], field_dim[4]};
       else
-        arrayDims = {fielddim[0], fielddim[1], fielddim[2], fielddim[3]};
-      auto drefArray = py::array_t<float, py::array::f_style>(arrayDims);
+        array_dims = {field_dim[0], field_dim[1], field_dim[2], field_dim[3]};
+      auto dref_array = py::array_t<float, py::array::f_style>(array_dims);
       if (mcx_config.issaveref) {
-        auto *dref = static_cast<float *>(drefArray.mutable_data());
-        memcpy(dref, mcx_config.exportfield, fieldlen * sizeof(float));
-        for (int i = 0; i < fieldlen; i++) {
+        auto *dref = static_cast<float *>(dref_array.mutable_data());
+        memcpy(dref, mcx_config.exportfield, field_len * sizeof(float));
+        for (int i = 0; i < field_len; i++) {
           if (dref[i] < 0.f) {
             dref[i] = -dref[i];
             mcx_config.exportfield[i] = 0.f;
           } else
             dref[i] = 0.f;
         }
-        output["dref"] = drefArray;
+        output["dref"] = dref_array;
       }
-      auto data = py::array_t<float, py::array::f_style>(arrayDims);
-      memcpy(data.mutable_data(), mcx_config.exportfield, fieldlen * sizeof(float));
+      auto data = py::array_t<float, py::array::f_style>(array_dims);
+      memcpy(data.mutable_data(), mcx_config.exportfield, field_len * sizeof(float));
       output["data"] = data;
       free(mcx_config.exportfield);
       mcx_config.exportfield = nullptr;
@@ -801,9 +801,9 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
           mcx_config.prop[i + 1].mua /= mcx_config.unitinmm;
           mcx_config.prop[i + 1].mus /= mcx_config.unitinmm;
         }
-        auto optProperties = py::array_t<float, py::array::f_style>({4, int(mcx_config.medianum)});
-        memcpy(optProperties.mutable_data(), mcx_config.prop, mcx_config.medianum * 4 * sizeof(float));
-        output["opticalprops"] = optProperties;
+        auto opt_properties = py::array_t<float, py::array::f_style>({4, int(mcx_config.medianum)});
+        memcpy(opt_properties.mutable_data(), mcx_config.prop, mcx_config.medianum * 4 * sizeof(float));
+        output["opticalprops"] = opt_properties;
       }
     }
   } catch (const char *err) {
@@ -823,51 +823,51 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
   return output;
 }
 
-void printMCXUsage() {
+void print_mcx_usage() {
   std::cout
       << "PyMCX v2021.2\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
 }
 
 py::dict py_mcx_interface_wargs(py::args args, const py::kwargs &kwargs) {
   if (py::len(kwargs) == 0) {
-    printMCXUsage();
+    print_mcx_usage();
     return {};
   }
   return py_mcx_interface(kwargs);
 }
 
 py::list get_GPU_info() {
-  Config mcxConfig;            /** mcxconfig: structure to store all simulation parameters */
-  GPUInfo *gpuInfo = nullptr;        /** gpuinfo: structure to store GPU information */
-  mcx_initcfg(&mcxConfig);
-  mcxConfig.isgpuinfo = 3;
+  Config mcx_config;            /** mcxconfig: structure to store all simulation parameters */
+  GPUInfo *gpu_info = nullptr;        /** gpuinfo: structure to store GPU information */
+  mcx_initcfg(&mcx_config);
+  mcx_config.isgpuinfo = 3;
   py::list output;
-  if (!(mcx_list_gpu(&mcxConfig, &gpuInfo))) {
+  if (!(mcx_list_gpu(&mcx_config, &gpu_info))) {
     std::cerr << "No CUDA-capable device was found." << std::endl;
     return output;
   }
 
-  for (int i = 0; i < gpuInfo[0].devcount; i++) {
-    py::dict currentDeviceInfo;
-    currentDeviceInfo["name"] = gpuInfo[i].name;
-    currentDeviceInfo["id"] = gpuInfo[i].id;
-    currentDeviceInfo["devcount"] = gpuInfo[i].devcount;
-    currentDeviceInfo["major"] = gpuInfo[i].major;
-    currentDeviceInfo["minor"] = gpuInfo[i].minor;
-    currentDeviceInfo["globalmem"] = gpuInfo[i].globalmem;
-    currentDeviceInfo["constmem"] = gpuInfo[i].constmem;
-    currentDeviceInfo["sharedmem"] = gpuInfo[i].sharedmem;
-    currentDeviceInfo["regcount"] = gpuInfo[i].regcount;
-    currentDeviceInfo["clock"] = gpuInfo[i].clock;
-    currentDeviceInfo["sm"] = gpuInfo[i].sm;
-    currentDeviceInfo["core"] = gpuInfo[i].core;
-    currentDeviceInfo["autoblock"] = gpuInfo[i].autoblock;
-    currentDeviceInfo["autothread"] = gpuInfo[i].autothread;
-    currentDeviceInfo["maxgate"] = gpuInfo[i].maxgate;
-    output.append(currentDeviceInfo);
+  for (int i = 0; i < gpu_info[0].devcount; i++) {
+    py::dict current_device_info;
+    current_device_info["name"] = gpu_info[i].name;
+    current_device_info["id"] = gpu_info[i].id;
+    current_device_info["devcount"] = gpu_info[i].devcount;
+    current_device_info["major"] = gpu_info[i].major;
+    current_device_info["minor"] = gpu_info[i].minor;
+    current_device_info["globalmem"] = gpu_info[i].globalmem;
+    current_device_info["constmem"] = gpu_info[i].constmem;
+    current_device_info["sharedmem"] = gpu_info[i].sharedmem;
+    current_device_info["regcount"] = gpu_info[i].regcount;
+    current_device_info["clock"] = gpu_info[i].clock;
+    current_device_info["sm"] = gpu_info[i].sm;
+    current_device_info["core"] = gpu_info[i].core;
+    current_device_info["autoblock"] = gpu_info[i].autoblock;
+    current_device_info["autothread"] = gpu_info[i].autothread;
+    current_device_info["maxgate"] = gpu_info[i].maxgate;
+    output.append(current_device_info);
   }
-  mcx_cleargpuinfo(&gpuInfo);
-  mcx_clearcfg(&mcxConfig);
+  mcx_cleargpuinfo(&gpu_info);
+  mcx_clearcfg(&mcx_config);
   return output;
 }
 
