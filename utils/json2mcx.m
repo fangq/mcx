@@ -52,7 +52,7 @@ if(isfield(json,'Optode'))
 	  [Optode.Source.Pattern.Nx,Optode.Source.Pattern.Ny,nz]);
     end
   end
-  if(isfield(json.Optode,'Detector') && ~isempty(json.Optode.Detector))
+  if(isfield(json.Optode,'Detector') && ~isempty(json.Optode.Detector) && iscell(json.Optode.Detector) )
     cfg.detpos=cell2mat(struct2cell(cell2mat(json.Optode.Detector)')');
   end
 end
@@ -62,10 +62,13 @@ end
 cfg=copycfg(cfg,'issrcfrom0',json.Domain,'OriginType');
 cfg=copycfg(cfg,'unitinmm',json.Domain,'LengthUnit');
 
-cfg.prop=squeeze(cell2mat(struct2cell(cell2mat(json.Domain.Media))))';
+if(iscell(json.Domain.Media))
+    json.Domain.Media=cell2mat(json.Domain.Media);
+end
+cfg.prop=squeeze(cell2mat(struct2cell(json.Domain.Media)))';
 
 if(isfield(json,'Shapes'))
-    cfg.shapes=savejson('Shapes',json.Shapes);
+    cfg.shapes=savejson('',json.Shapes);
 end
 
 if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
@@ -96,15 +99,13 @@ if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
             cfg.vol=typecast(cfg.vol(:),mediaclass);
             cfg.vol=reshape(cfg.vol,[length(cfg.vol)/prod(json.Domain.Dim), json.Domain.Dim]);
             if(size(cfg.vol,1)==1)
-                if(exist(idx,'var') && idx~=5)
+                if(exist('idx','var') && idx~=5)
                     cfg.vol=squeeze(cfg.vol);
                 end
             end
         case '.nii'
             cfg.vol=mcxloadnii(json.Domain.VolumeFile);
     end
-else
-    cfg.vol=uint8(zeros(60,60,60));
 end
 
 %% define the simulation session flags
