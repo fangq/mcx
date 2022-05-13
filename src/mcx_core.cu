@@ -2756,21 +2756,37 @@ void mcx_run_simulation(Config *cfg,GPUInfo *gpu){
              */
 	   switch(ispencil*10000 + (isref>0)*1000 + (cfg->mediabyte<=4)*100 + issvmc*10 + ispolarized){
 	       case 0:    mcx_main_loop<0,0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 88 registers, 464 bytes cmem[0], 320 bytes cmem[2]
 	       case 10:   mcx_main_loop<0,0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 112 registers, 464 bytes cmem[0], 348 bytes cmem[2]
 	       case 100:  mcx_main_loop<0,0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 92 registers, 464 bytes cmem[0], 320 bytes cmem[2]
 	       case 101:  mcx_main_loop<0,0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 96 registers, 464 bytes cmem[0], 328 bytes cmem[2]
 	       case 1000: mcx_main_loop<0,1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 96 registers, 464 bytes cmem[0], 320 bytes cmem[2]
 	       case 1010: mcx_main_loop<0,1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 130 registers, 464 bytes cmem[0], 432 bytes cmem[2]
 	       case 1100: mcx_main_loop<0,1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 96 registers, 464 bytes cmem[0], 320 bytes cmem[2]
 	       case 1101: mcx_main_loop<0,1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 96 registers, 464 bytes cmem[0], 328 bytes cmem[2]
                case 10000:mcx_main_loop<1,0,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 70 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                case 10010:mcx_main_loop<1,0,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 80 registers, 464 bytes cmem[0], 68 bytes cmem[2]
                case 10100:mcx_main_loop<1,0,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 64 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                case 10101:mcx_main_loop<1,0,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 72 registers, 464 bytes cmem[0], 52 bytes cmem[2]
                case 11000:mcx_main_loop<1,1,0,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 72 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                case 11010:mcx_main_loop<1,1,0,1,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 80 registers, 464 bytes cmem[0], 152 bytes cmem[2]
                case 11100:mcx_main_loop<1,1,1,0,0> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 72 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                case 11101:mcx_main_loop<1,1,1,0,1> <<<mcgrid,mcblock,sharedbuf>>>(gmedia,gfield,genergy,gPseed,gPpos,gPdir,gPlen,gPdet,gdetected,gsrcpattern,greplayw,greplaytof,greplaydetid,gseeddata,gdebugdata,ginvcdf,gsmatrix,gprogress);break;
+               // Used 78 registers, 464 bytes cmem[0], 52 bytes cmem[2]
 	   }
 #pragma omp master
 {
