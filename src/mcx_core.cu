@@ -782,9 +782,9 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 	            float dist=hitgrid((float3*)p,(float3*)v,&rv->x,flipdir);
                     f->t+=gcfg->minaccumtime*dist;
                     *((float3*)(p))=float3(p->x+dist*v->x,p->y+dist*v->y,p->z+dist*v->z);
-                    flipdir[0]=floorf(p->x);
-                    flipdir[1]=floorf(p->y);
-                    flipdir[2]=floorf(p->z);
+                    if(flipdir[3]==0) flipdir[0] += (v->x > 0.f ? 1 : -1);
+                    if(flipdir[3]==1) flipdir[1] += (v->y > 0.f ? 1 : -1);
+                    if(flipdir[3]==2) flipdir[2] += (v->z > 0.f ? 1 : -1);
                     idx1d=(flipdir[2]*gcfg->dimlen.y+flipdir[1]*gcfg->dimlen.x+flipdir[0]);
                     GPUDEBUG(("entry p=[%f %f %f] flipdir=%d\n",p->x,p->y,p->z,flipdir[3]));
 
@@ -816,7 +816,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
           flipdir[0]=floorf(p->x);
           flipdir[1]=floorf(p->y);
           flipdir[2]=floorf(p->z);
-          GPUDEBUG(("inside void [%f %f %f]\n",p->x,p->y,p->z));
+          GPUDEBUG(("inside void [%f %f %f], voxel [%d %d %d]\n",p->x,p->y,p->z,flipdir[0],flipdir[1],flipdir[2]));
           f->t+=gcfg->minaccumtime;
 	  if(count++>gcfg->maxvoidstep)
 	      return -1;
@@ -1711,7 +1711,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           if((ushort)flipdir[0]>=gcfg->maxidx.x||(ushort)flipdir[1]>=gcfg->maxidx.y||(ushort)flipdir[2]>=gcfg->maxidx.z){
               /** if photon moves outside of the volume, set mediaid to 0 */
 	      mediaid=0;
-	      idx1d=(p.x<0.f||p.y<0.f||p.z<0.f) ? OUTSIDE_VOLUME_MIN : OUTSIDE_VOLUME_MAX;
+	      idx1d=(flipdir[0]<0||flipdir[1]<0||flipdir[2]<0) ? OUTSIDE_VOLUME_MIN : OUTSIDE_VOLUME_MAX;
 	      isdet=gcfg->bc[(idx1d==OUTSIDE_VOLUME_MAX)*3+flipdir[3]];  /** isdet now stores the boundary condition flag, this will be overwriten before the end of the loop */
               GPUDEBUG(("moving outside: [%f %f %f], idx1d [%d]->[out], bcflag %d\n",p.x,p.y,p.z,idx1d,isdet));
 	  }else{
@@ -1820,8 +1820,8 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  }
 
 	  /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
-          if((mediaid==0 && (((isdet & 0xF)==0 && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCyclic) )) || 
-	      (issvmc && (idx1d!=idx1dold || hitintf) && !nuvox.sv.isupper && !nuvox.sv.lower && (!gcfg->doreflect || (gcfg->doreflect && n1==gproperty[0].w))) ||
+          if((mediaid==0 && (((isdet & 0xF)==0 && (!isreflect || (isreflect && n1==gproperty[0].w))) || (isdet==bcAbsorb || isdet==bcCyclic) )) ||
+	      (issvmc && (idx1d!=idx1dold || hitintf) && !nuvox.sv.isupper && !nuvox.sv.lower && (!isreflect || (isreflect && n1==gproperty[0].w))) ||
 	      f.t>gcfg->twin1){
 	      if(isdet==bcCyclic){
                  if(flipdir[3]==0){
@@ -1836,13 +1836,12 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                      p.z=mcx_nextafterf(roundf(p.z+((idx1d==OUTSIDE_VOLUME_MIN) ? gcfg->maxidx.z: -gcfg->maxidx.z)),(v.z > 0.f)-(v.z < 0.f));
                      flipdir[2]=floorf(p.z);
                  }
-
-		 if(!(p.x<0.f||p.y<0.f||p.z<0.f||p.x>=gcfg->maxidx.x||p.y>=gcfg->maxidx.y||p.z>=gcfg->maxidx.z)){
+		 if((ushort)flipdir[0]<gcfg->maxidx.x && (ushort)flipdir[1]<gcfg->maxidx.y && (ushort)flipdir[2]<gcfg->maxidx.z){
                      idx1d=(flipdir[2]*gcfg->dimlen.y+flipdir[1]*gcfg->dimlen.x+flipdir[0]);
 	             mediaid=media[idx1d];
 	             isdet=mediaid & DET_MASK;  /** upper 16bit is the mask of the covered detector */
 	             mediaid &= MED_MASK;       /** lower 16bit is the medium index */
-                     GPUDEBUG(("Cyclic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f]\n",flipdir[3],isdet,p.x,p.y,p.z));
+                     GPUDEBUG(("Cyclic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f] [%d %d %d]\n",flipdir[3],isdet,p.x,p.y,p.z,flipdir[0],flipdir[1],flipdir[2]));
 	             continue;
 		 }
 	      }
