@@ -411,14 +411,14 @@ __device__ inline float mcx_nextafterf(float a, int dir){
  *
  * @param[in] p0: the x/y/z position of the current photon
  * @param[in] v: the direction vector of the photon
- * @param[out] htime: the intersection x/y/z position on the bounding box, right outside of this voxel
  * @param[in] rv: pre-computed reciprocal of the velocity vector (v)
  * @param[out] id: 0: intersect with x=x0 plane; 1: intersect with y=y0 plane; 2: intersect with z=z0 plane first
  * @return the distance to the intersection to the voxel bounding box
  */
 
-__device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,short id[4]){
+__device__ inline float hitgrid(float3 *p0, float3 *v, float* rv,short id[4]){
       float dist;
+      float htime[3];
 
       //< time-of-flight to hit the wall in each direction
       htime[0]=fabs((id[0]+(v->x>0.f)-p0->x)*rv[0]); //< time-of-flight in x
@@ -428,11 +428,6 @@ __device__ inline float hitgrid(float3 *p0, float3 *v, float *htime,float* rv,sh
       //< get the direction with the smallest time-of-flight
       dist=fminf(fminf(htime[0],htime[1]),htime[2]);
       id[3]=(dist==htime[0]?0:(dist==htime[1]?1:2));
-
-      //< p0 is inside, htime is the 1st intersection point
-      htime[0]=p0->x+dist*v->x;
-      htime[1]=p0->y+dist*v->y;
-      htime[2]=p0->z+dist*v->z;
 
       return dist;
 }
@@ -642,18 +637,17 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
  * @param[in,out] slen: remaining unitless scattering length, updated if intersection is found
  * @param[in] nuvox: a struct storing normal direction (nv) and a point on the plane
  * @param[in] f: photon state including total time-of-flight, number of scattering etc
- * @param[in] htime: nearest intersection of the enclosing voxel, returned by hitgrid
- * @param[in] flipdir: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
+ * @param[in] flipdir[0,1,2]: current voxel xi/yi/zi; flipdir[3]: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
  */
 
 __device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, 
-                                   MCXsp *nuvox, MCXtime f, float3 &htime, short &flipdir){
+                                   MCXsp *nuvox, MCXtime f, short flipdir[4]){
 	
 	if(dot(*(float3*)v,nuvox->nv)<=0){ // no intersection, as nv always points to the other side
 	    return 0;
 	}else{
-	    float3 p1=(gcfg->faststep || slen==f.pscat) ? (*p0+len*(*(float3*)v)) : float3(flipdir==0 ? roundf(htime.x) : htime.x,
-                flipdir==1 ? roundf(htime.y) : htime.y, flipdir==2 ? roundf(htime.z) : htime.z);
+	    float3 p1=(slen==f.pscat) ? (*p0+len*(*(float3*)v)) : float3(flipdir[3]==0 ? flipdir[0] : p0->x,
+                flipdir[3]==1 ? flipdir[1] : p0->y, flipdir[3]==2 ? flipdir[2] : p0->z);
 	    float3 rp0=*p0-nuvox->rp;
 	    float3 rp1=p1-nuvox->rp;
 	    float d0=dot(rp0,nuvox->nv); // signed perpendicular distance from p0 to patch
@@ -762,14 +756,16 @@ template <const int islabel, const int issvmc>
 __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint media[],RandType t[RAND_BUF_LEN],
                                MCXsp *nuvox){
       int count=1,idx1d;
-      short flipdir[4]={0};
+      short flipdir[4]={0,0,0,-1};
+      flipdir[0]=floorf(p->x);
+      flipdir[1]=floorf(p->y);
+      flipdir[2]=floorf(p->z);
+
       while(1){
-          if(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
-               && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z){
-	    idx1d=(int(floorf(p->z))*gcfg->dimlen.y+int(floorf(p->y))*gcfg->dimlen.x+int(floorf(p->x)));
+          if((ushort)flipdir[0]<gcfg->maxidx.x && (ushort)flipdir[1]<gcfg->maxidx.y && (ushort)flipdir[2]<gcfg->maxidx.z){
+	    idx1d=(flipdir[2]*gcfg->dimlen.y+flipdir[1]*gcfg->dimlen.x+flipdir[0]);
 	    if(media[idx1d] & MED_MASK){ //< if enters a non-zero voxel
                 GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n",p->x,p->y,p->z,v->x,v->y,v->z));
-	        float4 htime;
                 p->x-=v->x;
                 p->y-=v->y;
                 p->z-=v->z;
@@ -781,12 +777,16 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 
                 GPUDEBUG(("look for entry p0=[%f %f %f] rv=[%f %f %f]\n",p->x,p->y,p->z,rv->x,rv->y,rv->z));
 		count=0;
-		while(!(p->x>=0.f && p->y>=0.f && p->z>=0.f && p->x < gcfg->maxidx.x
-                  && p->y < gcfg->maxidx.y && p->z < gcfg->maxidx.z) || !(media[idx1d] & MED_MASK)){ // at most 3 times
-	            f->t+=gcfg->minaccumtime*hitgrid((float3*)p,(float3*)v,&htime.x,&rv->x,flipdir);
-                    *((float4*)(p))=float4(htime.x,htime.y,htime.z,p->w);
+		while(!((ushort)flipdir[0]<gcfg->maxidx.x && (ushort)flipdir[1]<gcfg->maxidx.y
+                     && (ushort)flipdir[2]<gcfg->maxidx.z) || !(media[idx1d] & MED_MASK)){ // at most 3 times
+	            float dist=hitgrid((float3*)p,(float3*)v,&rv->x,flipdir);
+                    f->t+=gcfg->minaccumtime*dist;
+                    *((float3*)(p))=float3(p->x+dist*v->x,p->y+dist*v->y,p->z+dist*v->z);
+                    flipdir[0]=floorf(p->x);
+                    flipdir[1]=floorf(p->y);
+                    flipdir[2]=floorf(p->z);
                     idx1d=(flipdir[2]*gcfg->dimlen.y+flipdir[1]*gcfg->dimlen.x+flipdir[0]);
-                    GPUDEBUG(("entry p=[%f %f %f] flipdir=%d\n",p->x,p->y,p->z,flipdir));
+                    GPUDEBUG(("entry p=[%f %f %f] flipdir=%d\n",p->x,p->y,p->z,flipdir[3]));
 
 		    if(count++>3){
 		       GPUDEBUG(("fail to find entry point after 3 iterations, something is wrong, abort!!"));
@@ -794,6 +794,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 		    }
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
+	        float4 htime;
                 updateproperty<islabel, issvmc>((Medium *)&htime,media[idx1d],t,idx1d,media,(float3*)p,nuvox);
 		if(gcfg->isspecular && htime.w!=gproperty[0].w){
 	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,htime.w,flipdir[3]);
@@ -1283,9 +1284,6 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
            * Compute the reciprocal of the velocity vector
            */
           *rv=float3(__fdividef(1.f,v->x),__fdividef(1.f,v->y),__fdividef(1.f,v->z));
-          flipdir[0]=floorf(p->x);
-          flipdir[1]=floorf(p->y);
-          flipdir[2]=floorf(p->z);
 
           /**
            * If a photon is launched outside of the box, or inside a zero-voxel, move it until it hits a non-zero voxel
@@ -1297,6 +1295,10 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
 		     *mediaid=media[*idx1d];
 		 }
 	  }
+          flipdir[0]=floorf(p->x);
+          flipdir[1]=floorf(p->y);
+          flipdir[2]=floorf(p->z);
+
 	  *w0+=1.f;
 	  GPUDEBUG(("retry %f: mediaid=%d idx=%d w0=%e\n",*w0, *mediaid, *idx1d, p->w));
 
@@ -1417,7 +1419,6 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
      uint  mediaidold=0;
      int   isdet=0;
      float  n1;               //< reflection var
-     float3 htime;            //< time-of-flight for collision test
      float3 rv;               //< reciprocal velocity
 
      RandType t[RAND_BUF_LEN];
@@ -1643,12 +1644,12 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	    updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
 
 	  /** Advance photon 1 step to the next voxel */
-	  len=(gcfg->faststep) ? gcfg->minstep : hitgrid((float3*)&p,(float3*)&v,&(htime.x),&rv.x,flipdir); // propagate the photon to the first intersection to the grid
+	  len=hitgrid((float3*)&p,(float3*)&v,&rv.x,flipdir); // propagate the photon to the first intersection to the grid
 
 	  /** convert photon movement length to unitless scattering length by multiplying with mus */
 	  slen=len*prop.mus*(v.nscat+1.f > gcfg->gscatter ? (1.f-prop.g) : 1.f); //unitless (minstep=grid, mus=1/grid)
 
-          GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%f %f %f] flip=%d\n",p.x,p.y,p.z,v.x,v.y,v.z,len,htime.x,htime.y,htime.z,flipdir[3]));
+          GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%d %d %d] flip=%d\n",p.x,p.y,p.z,v.x,v.y,v.z,len,flipdir[0],flipdir[1],flipdir[2],flipdir[3]));
 
 	  /** if the consumed unitless scat length is less than what's left in f.pscat, keep moving; otherwise, stop in this voxel */
 	  slen=fmin(slen,f.pscat);
@@ -1659,14 +1660,17 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** perform ray-interface intersection test to consider intra-voxel curvature (SVMC mode) */
 	  if(issvmc){
 	    if(nuvox.sv.issplit && testint)
-	      hitintf=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,htime,flipdir[3]);
+	      hitintf=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,flipdir);
 	    else
 	      hitintf=0;
 	  }
 	  
-	  /** if photon moves to the next voxel, use the precomputed intersection coord. htime which are assured to be outside of the current voxel */
-	  *((float3*)(&p)) = (gcfg->faststep || slen==f.pscat || hitintf) ? float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z) : 
-               ((flipdir[flipdir[3]] += (((float *)&v)[flipdir[3]] > 0) ? 1 : -1), float3(htime.x,htime.y,htime.z));
+	  /** if photon moves to the next voxel, use the precomputed intersection coord */
+          *((float3*)(&p)) = float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z);
+
+          if(flipdir[3]==0) flipdir[0] += (slen==f.pscat) ? 0 : (v.x > 0.f ? 1 : -1);
+          if(flipdir[3]==1) flipdir[1] += (slen==f.pscat) ? 0 : (v.y > 0.f ? 1 : -1);
+          if(flipdir[3]==2) flipdir[2] += (slen==f.pscat) ? 0 : (v.z > 0.f ? 1 : -1);
 
 	  /** calculate photon energy loss */
 #ifdef USE_MORE_DOUBLE
@@ -1686,19 +1690,22 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 
 #ifdef SAVE_DETECTORS
 	  /** accummulate partial path of the current medium */
-	  if(gcfg->savedet)
-	    if(SAVE_PPATH(gcfg->savedetflag))
+	  if(gcfg->savedet){
+	    if(SAVE_PPATH(gcfg->savedetflag)){
 	      if(issvmc){
 	        if((nuvox.sv.isupper ? nuvox.sv.upper:nuvox.sv.lower)>0)
 		  ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag))+(nuvox.sv.isupper ? nuvox.sv.upper:nuvox.sv.lower)-1]+=len; //(unit=grid)
-	      }else
+	      }else{
 	        ppath[gcfg->maxmedia*(SAVE_NSCAT(gcfg->savedetflag))+(mediaid & MED_MASK)-1]+=len; //(unit=grid)
+              }
+            }
+          }
 #endif
 
           mediaidold=mediaid | isdet;
           idx1dold=idx1d;
           idx1d=(flipdir[2]*gcfg->dimlen.y+flipdir[1]*gcfg->dimlen.x+flipdir[0]);
-          GPUDEBUG(("idx1d [%d]->[%d]\n",idx1dold,idx1d));
+          GPUDEBUG(("idx1d [%d]->[%d] [%d %d %d %d]\n",idx1dold,idx1d,flipdir[0],flipdir[1],flipdir[2],flipdir[3]));
 
 	  /** read the medium index of the new voxel (current or next) */
           if((ushort)flipdir[0]>=gcfg->maxidx.x||(ushort)flipdir[1]>=gcfg->maxidx.y||(ushort)flipdir[2]>=gcfg->maxidx.z){
