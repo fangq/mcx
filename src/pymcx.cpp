@@ -27,6 +27,7 @@
 
 @brief   Python interface using Pybind11 for MCX
 *******************************************************************************/
+#define PYBIND11_DETAILED_ERROR_MESSAGES
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <iostream>
@@ -64,18 +65,18 @@ int seed_byte = 0;
  * MCX Config. The scalar is cast to the python type before assignment.
  */
 #define GET_SCALAR_FIELD(src_pydict, dst_mcx_config, property, py_type) if ((src_pydict).contains(#property))\
-                                                                        {(dst_mcx_config).property = py::reinterpret_borrow<py_type>((src_pydict)[#property]);\
+                                                                        {(dst_mcx_config).property = py_type((src_pydict)[#property]);\
                                                                         std::cout << #property << ": " << (float) (dst_mcx_config).property << std::endl;}
 
-#define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::reinterpret_borrow<py::list>(src[#prop]);\
+#define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>()};\
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << "]\n";}
 
-#define GET_VEC4_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::reinterpret_borrow<py::list>(src[#prop]);\
+#define GET_VEC4_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list[3].cast<type>()}; \
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";}
 
-#define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::reinterpret_borrow<py::list>(src[#prop]);\
+#define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : 1}; \
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z;\
                                              if (list.size() == 4) std::cout << ", " << dst.prop.w; std::cout << "]\n";}
@@ -378,13 +379,13 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   GET_SCALAR_FIELD(user_cfg, mcx_config, unitinmm, py::float_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, printnum, py::int_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, voidtime, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveexit, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, ismomentum, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, isspecular, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveexit, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, ismomentum, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, isspecular, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, replaydet, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, faststep, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, faststep, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, maxvoidstep, py::int_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, maxjumpdebug, py::int_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, gscatter, py::int_);
@@ -721,7 +722,7 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
       mcx_config.seeddata = nullptr;
       output["detectedseeds"] = detected_seeds;
     }
-    if (user_cfg.contains("dumpmask") && py::reinterpret_borrow<py::bool_>(user_cfg["dumpmask"]).cast<bool>()) {
+    if (user_cfg.contains("dumpmask") && py::bool_(user_cfg["dumpmask"]).cast<bool>()) {
       field_dim[0] = mcx_config.dim.x;
       field_dim[1] = mcx_config.dim.y;
       field_dim[2] = mcx_config.dim.z;
@@ -783,16 +784,19 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
       output["data"] = data;
       free(mcx_config.exportfield);
       mcx_config.exportfield = nullptr;
-      output["runtime"] = mcx_config.runtime;
-      output["nphoton"] = mcx_config.nphoton * ((mcx_config.respin > 1) ? (mcx_config.respin) : 1);
-      output["energytot"] = mcx_config.energytot;
-      output["energyabs"] = mcx_config.energyabs;
-      output["normalizer"] = mcx_config.normalizer;
-      output["unitinmm"] = mcx_config.normalizer;
+      // Stat dictionary output
+      auto stat_dict = py::dict();
+      stat_dict["runtime"] = mcx_config.runtime;
+      stat_dict["nphoton"] = mcx_config.nphoton * ((mcx_config.respin > 1) ? (mcx_config.respin) : 1);
+      stat_dict["energytot"] = mcx_config.energytot;
+      stat_dict["energyabs"] = mcx_config.energyabs;
+      stat_dict["normalizer"] = mcx_config.normalizer;
+      stat_dict["unitinmm"] = mcx_config.normalizer;
       py::list workload;
       for (int i = 0; i < active_dev; i++)
         workload.append(mcx_config.workload[i]);
-      output["workload"] = workload;
+      stat_dict["workload"] = workload;
+      output["stat"] = stat_dict;
 
       /** return the final optical properties for polarized MCX simulation */
       if (mcx_config.polprop) {
@@ -809,7 +813,7 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
   } catch (const char *err) {
     std::cerr << "Error: " << err << std::endl;
   } catch (const std::exception &err) {
-    std::cerr << "C++ Error: " << err.what() << std::endl;
+    std::cerr << "PyBind11 Error: " << err.what() << std::endl;
   } catch (...) {
     std::cerr << "Unknown Exception" << std::endl;
   }
