@@ -68,24 +68,24 @@ int seed_byte = 0;
                                                                         {try {(dst_mcx_config).property = py_type((src_pydict)[#property]);\
                                                                         std::cout << #property << ": " << (float) (dst_mcx_config).property << std::endl;} \
                                                                         catch (const std::runtime_error &err)\
-                                                                        {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#property) + ": " + err.what()));}\
+                                                                        {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#property) + ". Reason: " + err.what()));}\
                                                                         }
 
 #define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>()};\
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << "]\n";} \
-                                             catch (const std::runtime_error &err ) {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#prop) + ": " + err.what()));}}
+                                             catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}}
 
 #define GET_VEC4_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list[3].cast<type>()}; \
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
-                                             catch (const std::runtime_error &err ) {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#prop) + ": " + err.what()));}}
+                                             catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}}
 
 #define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : 1}; \
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z;\
                                              if (list.size() == 4) std::cout << ", " << dst.prop.w; std::cout << "]\n";}                                                 \
-                                             catch (const std::runtime_error &err ) {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#prop) + ": " + err.what()));}                                                                 \
+                                             catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}                                                                 \
                                              }
 
 /**
@@ -386,7 +386,6 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   GET_SCALAR_FIELD(user_cfg, mcx_config, unitinmm, py::float_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, printnum, py::int_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, voidtime, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, issaveexit, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, ismomentum, py::bool_);
@@ -411,6 +410,8 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
 
   if (user_cfg.contains("detpos")) {
     auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["detpos"]);
+    if (!f_style_volume)
+      throw py::value_error("Invalid detpos field value");
     auto buffer_info = f_style_volume.request();
     if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4)
       throw py::value_error("the 'detpos' field must have 4 columns (x,y,z,radius)");
@@ -424,6 +425,8 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   }
   if (user_cfg.contains("prop")) {
     auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["prop"]);
+    if (!f_style_volume)
+      throw py::value_error("Invalid prop field format");
     auto buffer_info = f_style_volume.request();
     if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4)
       throw py::value_error("the 'prop' field must have 4 columns (mua,mus,g,n)");
@@ -437,6 +440,8 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   }
   if (user_cfg.contains("polprop")) {
     auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["polprop"]);
+    if (!f_style_volume)
+      throw py::value_error("Invalid polprop field value");
     auto buffer_info = f_style_volume.request();
     if (buffer_info.shape.size() != 2)
       throw py::value_error("the 'polprop' field must a 2D array");
@@ -459,30 +464,30 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
     strncpy(mcx_config.session, session.c_str(), MAX_SESSION_LENGTH);
   }
   if (user_cfg.contains("srctype")) {
-    std::string srcType = py::str(user_cfg["srctype"]);
+    std::string src_type = py::str(user_cfg["srctype"]);
     const char *srctypeid[] = {"pencil", "isotropic", "cone", "gaussian", "planar",
                                "pattern", "fourier", "arcsine", "disk", "fourierx", "fourierx2d", "zgaussian",
                                "line", "slit", "pencilarray", "pattern3d", "hyperboloid", ""};
     char strtypestr[MAX_SESSION_LENGTH] = {'\0'};
 
-    if (srcType.empty())
+    if (src_type.empty())
       throw py::value_error("the 'srctype' field must be a non-empty string");
-    if (srcType.size() > MAX_SESSION_LENGTH)
+    if (src_type.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'srctype' field is too long");
-    strncpy(strtypestr, srcType.c_str(), MAX_SESSION_LENGTH);
+    strncpy(strtypestr, src_type.c_str(), MAX_SESSION_LENGTH);
     mcx_config.srctype = mcx_keylookup(strtypestr, srctypeid);
     if (mcx_config.srctype == -1)
       throw py::value_error("the specified source type is not supported");
   }
   if (user_cfg.contains("outputtype")) {
-    std::string outputType = py::str(user_cfg["outputtype"]);
+    std::string output_type_str = py::str(user_cfg["outputtype"]);
     const char *outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", ""};
     char outputstr[MAX_SESSION_LENGTH] = {'\0'};
-    if (outputType.empty())
+    if (output_type_str.empty())
       throw py::value_error("the 'srctype' field must be a non-empty string");
-    if (outputType.size() > MAX_SESSION_LENGTH)
+    if (output_type_str.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'srctype' field is too long");
-    strncpy(outputstr, outputType.c_str(), MAX_SESSION_LENGTH);
+    strncpy(outputstr, output_type_str.c_str(), MAX_SESSION_LENGTH);
     mcx_config.outputtype = mcx_keylookup(outputstr, outputtype);
     if (mcx_config.outputtype >= 5) // map wl to jacobian, wp to nscat
       mcx_config.outputtype -= 2;
@@ -490,31 +495,33 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
       throw py::value_error("the specified output type is not supported");
   }
   if (user_cfg.contains("debuglevel")) {
-    std::string debugLevel = py::str(user_cfg["debuglevel"]);
+    std::string debug_level = py::str(user_cfg["debuglevel"]);
     const char debugflag[] = {'R', 'M', 'P', '\0'};
     char debuglevel[MAX_SESSION_LENGTH] = {'\0'};
-    if (debugLevel.empty())
+    if (debug_level.empty())
       throw py::value_error("the 'debuglevel' field must be a non-empty string");
-    if (debugLevel.size() > MAX_SESSION_LENGTH)
+    if (debug_level.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'debuglevel' field is too long");
-    strncpy(debuglevel, debugLevel.c_str(), MAX_SESSION_LENGTH);
+    strncpy(debuglevel, debug_level.c_str(), MAX_SESSION_LENGTH);
     mcx_config.debuglevel = mcx_parsedebugopt(debuglevel, debugflag);
     if (mcx_config.debuglevel == 0)
       throw py::value_error("the specified debuglevel is not supported");
   }
   if (user_cfg.contains("savedetflag")) {
-    std::string saveDetFlag = py::str(user_cfg["savedetflag"]);
+    std::string save_det_flag = py::str(user_cfg["savedetflag"]);
     const char saveflag[] = {'D', 'S', 'P', 'M', 'X', 'V', 'W', 'I', '\0'};
     char savedetflag[MAX_SESSION_LENGTH] = {'\0'};
-    if (saveDetFlag.empty())
+    if (save_det_flag.empty())
       throw py::value_error("the 'savedetflag' field must be a non-empty string");
-    if (saveDetFlag.size() > MAX_SESSION_LENGTH)
+    if (save_det_flag.size() > MAX_SESSION_LENGTH)
       throw py::value_error("the 'savedetflag' field is too long");
-    strncpy(savedetflag, saveDetFlag.c_str(), MAX_SESSION_LENGTH);
+    strncpy(savedetflag, save_det_flag.c_str(), MAX_SESSION_LENGTH);
     mcx_config.savedetflag = mcx_parsedebugopt(savedetflag, saveflag);
   }
   if (user_cfg.contains("srcpattern")) {
     auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["srcpattern"]);
+    if (!f_style_volume)
+      throw py::value_error("Invalid srcpattern field value");
     auto buffer_info = f_style_volume.request();
     if (mcx_config.srcpattern) free(mcx_config.srcpattern);
     mcx_config.srcpattern = (float*) malloc(buffer_info.size * sizeof(float));
@@ -524,6 +531,8 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   }
   if (user_cfg.contains("invcdf")) {
     auto f_style_volume = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["invcdf"]);
+    if (!f_style_volume)
+      throw py::value_error("Invalid invcdf field value");
     auto buffer_info = f_style_volume.request();
     unsigned int nphase = buffer_info.shape.size();
     float *val = static_cast<float *>(buffer_info.ptr);
@@ -541,30 +550,32 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
     mcx_config.invcdf[mcx_config.nphase - 1] = 1.f;
   }
   if (user_cfg.contains("shapes")) {
-    std::string shapesString = py::str(user_cfg["shapes"]);
-    if (shapesString.empty())
+    std::string shapes_string = py::str(user_cfg["shapes"]);
+    if (shapes_string.empty())
       throw py::value_error("the 'shapes' field must be a non-empty string");
-    mcx_config.shapedata = (char *) calloc(shapesString.size() + 2, 1);
-    strncpy(mcx_config.shapedata, shapesString.c_str(), shapesString.size() + 1);
+    mcx_config.shapedata = (char *) calloc(shapes_string.size() + 2, 1);
+    strncpy(mcx_config.shapedata, shapes_string.c_str(), shapes_string.size() + 1);
   }
   if (user_cfg.contains("bc")) {
-    std::string bcString = py::str(user_cfg["bc"]);
-    if (bcString.empty() || bcString.size() > 12)
+    std::string bc_string = py::str(user_cfg["bc"]);
+    if (bc_string.empty() || bc_string.size() > 12)
       throw py::value_error("the 'bc' field must be a non-empty string / have less than 12 characters.");
-    strncpy(mcx_config.bc, bcString.c_str(), bcString.size() + 1);
-    mcx_config.bc[bcString.size()] = '\0';
+    strncpy(mcx_config.bc, bc_string.c_str(), bc_string.size() + 1);
+    mcx_config.bc[bc_string.size()] = '\0';
   }
   if (user_cfg.contains("seed")) {
-    auto seedValue = user_cfg["seed"];
+    auto seed_value = user_cfg["seed"];
     // If the seed value is scalar (int or float), then assign it directly
-    if (py::int_::check_(seedValue))
-      mcx_config.seed = py::int_(seedValue);
-    else if (py::float_::check_(seedValue))
-      mcx_config.seed = py::float_(seedValue).cast<int>();
+    if (py::int_::check_(seed_value))
+      mcx_config.seed = py::int_(seed_value);
+    else if (py::float_::check_(seed_value))
+      mcx_config.seed = py::float_(seed_value).cast<int>();
       // Set seed from array
     else {
-      auto fStyleArray = py::array_t<uint8_t, py::array::f_style | py::array::forcecast>::ensure(seedValue);
-      auto buffer_info = fStyleArray.request();
+      auto f_style_array = py::array_t<uint8_t, py::array::f_style | py::array::forcecast>::ensure(seed_value);
+      if (!f_style_array)
+        throw py::value_error("Invalid seed field value");
+      auto buffer_info = f_style_array.request();
       seed_byte = buffer_info.shape.at(0);
       if (buffer_info.shape.at(0) != sizeof(float) * RAND_WORD_LEN)
         throw py::value_error("the row number of cfg.seed does not match RNG seed byte-length");
@@ -575,39 +586,41 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
     }
   }
   if (user_cfg.contains("gpuid")) {
-    auto gpuIdValue = user_cfg["gpuid"];
-    if (py::int_::check_(gpuIdValue)) {
-      mcx_config.gpuid = py::int_(gpuIdValue);
+    auto gpu_id_value = user_cfg["gpuid"];
+    if (py::int_::check_(gpu_id_value)) {
+      mcx_config.gpuid = py::int_(gpu_id_value);
       memset(mcx_config.deviceid, 0, MAX_DEVICE);
       if (mcx_config.gpuid > 0 && mcx_config.gpuid < MAX_DEVICE) {
         memset(mcx_config.deviceid, '0', mcx_config.gpuid - 1);
         mcx_config.deviceid[mcx_config.gpuid - 1] = '1';
       } else
         throw py::value_error("GPU id must be positive and can not be more than 256");
-    } else if (py::str::check_(gpuIdValue)) {
-      std::string gpuIdStringValue = py::str(gpuIdValue);
-      if (gpuIdStringValue.empty())
+    } else if (py::str::check_(gpu_id_value)) {
+      std::string gpu_id_string_value = py::str(gpu_id_value);
+      if (gpu_id_string_value.empty())
         throw py::value_error("the 'gpuid' field must be an integer or non-empty string");
-      if (gpuIdStringValue.size() > MAX_DEVICE)
+      if (gpu_id_string_value.size() > MAX_DEVICE)
         throw py::value_error("the 'gpuid' field is too long");
-      strncpy(mcx_config.deviceid, gpuIdStringValue.c_str(), MAX_DEVICE);
+      strncpy(mcx_config.deviceid, gpu_id_string_value.c_str(), MAX_DEVICE);
     }
     for (int i = 0; i < MAX_DEVICE; i++)
       if (mcx_config.deviceid[i] == '0')
         mcx_config.deviceid[i] = '\0';
   }
   if (user_cfg.contains("workload")) {
-    auto workloadValue = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["workload"]);
-    auto buffer_info = workloadValue.request();
+    auto workload_value = py::array_t<float, py::array::f_style | py::array::forcecast>::ensure(user_cfg["workload"]);
+    if (!workload_value)
+      throw py::value_error("Invalid workload field value");
+    auto buffer_info = workload_value.request();
     if (buffer_info.shape.size() < 2 && buffer_info.size > MAX_DEVICE)
       throw py::value_error("the workload list can not be longer than 256");
     for (int i = 0; i < buffer_info.size; i++)
       mcx_config.workload[i] = static_cast<float *>(buffer_info.ptr)[i];
   }
   // Output arguments parsing
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issave2pt, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issavedet, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::int_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issave2pt, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issavedet, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::bool_);
 
   // Flush the std::cout and std::cerr
   std::cout.flush();
@@ -831,10 +844,14 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
   } catch (const char *err) {
     cleanup_configs(gpu_info, mcx_config);
     throw py::runtime_error(std::string("Error: ") + err);
-  } catch (const std::invalid_argument &err) {
+  } catch (const py::type_error &err) {
     cleanup_configs(gpu_info, mcx_config);
-    throw py::type_error(err.what());
-  } catch (const py::runtime_error &err) {
+    throw err;
+  } catch (const py::value_error &err) {
+    cleanup_configs(gpu_info, mcx_config);
+    throw err;
+  }
+  catch (const py::runtime_error &err) {
     cleanup_configs(gpu_info, mcx_config);
     std::string error_msg = err.what();
     for (const auto& m : exception_msgs)
