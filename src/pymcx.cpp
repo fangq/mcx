@@ -927,7 +927,7 @@ PYBIND11_MODULE(pymcx, m) {
                                                                                     py::scoped_estream_redirect>());
   m.def("mcx", &py_mcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
                                                                                           py::scoped_estream_redirect>());
-  m.def("gpu_info",
+  m.def("gpuinfo",
         &get_GPU_info,
         "Prints out the list of CUDA-capable devices attached to this system.",
         py::call_guard<py::scoped_ostream_redirect,
