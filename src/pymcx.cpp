@@ -65,21 +65,28 @@ int seed_byte = 0;
  * MCX Config. The scalar is cast to the python type before assignment.
  */
 #define GET_SCALAR_FIELD(src_pydict, dst_mcx_config, property, py_type) if ((src_pydict).contains(#property))\
-                                                                        {(dst_mcx_config).property = py_type((src_pydict)[#property]);\
-                                                                        std::cout << #property << ": " << (float) (dst_mcx_config).property << std::endl;}
+                                                                        {try {(dst_mcx_config).property = py_type((src_pydict)[#property]);\
+                                                                        std::cout << #property << ": " << (float) (dst_mcx_config).property << std::endl;} \
+                                                                        catch (const std::runtime_error &err)\
+                                                                        {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#property) + ": " + err.what()));}\
+                                                                        }
 
-#define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::list(src[#prop]);\
+#define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>()};\
-                                             std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << "]\n";}
+                                             std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << "]\n";} \
+                                             catch (const std::runtime_error &err ) {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#prop) + ": " + err.what()));}}
 
-#define GET_VEC4_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::list(src[#prop]);\
+#define GET_VEC4_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list[3].cast<type>()}; \
-                                             std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";}
+                                             std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
+                                             catch (const std::runtime_error &err ) {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#prop) + ": " + err.what()));}}
 
-#define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {auto list = py::list(src[#prop]);\
+#define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
                                              dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : 1}; \
                                              std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z;\
-                                             if (list.size() == 4) std::cout << ", " << dst.prop.w; std::cout << "]\n";}
+                                             if (list.size() == 4) std::cout << ", " << dst.prop.w; std::cout << "]\n";}                                                 \
+                                             catch (const std::runtime_error &err ) {throw std::invalid_argument(std::string("Failed to assign MCX property " + std::string(#prop) + ": " + err.what()));}                                                                 \
+                                             }
 
 /**
  * Determines the type of volume passed to the interface and decides how to copy it to MCXConfig.
@@ -607,6 +614,19 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   std::cerr.flush();
 }
 
+/**
+ * Function that's called to cleanup any memory/configs allocated by PyMCX. It is used in both normal and exceptional
+ * termination of the application
+ * @param gpu_info reference to an array of MCXGPUInfo data structure
+ * @param mcx_config reference to MCXConfig data structure
+ */
+inline void cleanup_configs(MCXGPUInfo*& gpu_info, MCXConfig& mcx_config) {
+  if (det_ps)
+    free(det_ps);
+  mcx_cleargpuinfo(&gpu_info);
+  mcx_clearcfg(&mcx_config);
+}
+
 
 py::dict py_mcx_interface(const py::dict &user_cfg) {
   unsigned int partial_data, hostdetreclen;
@@ -614,6 +634,7 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
   GPUInfo *gpu_info = nullptr;        /** gpuInfo: structure to store GPU information */
   unsigned int active_dev = 0;     /** activeDev: count of total active GPUs to be used */
   int error_flag = 0;
+  std::vector<std::string> exception_msgs;
   int thread_id = 0;
   size_t field_dim[6];
   py::dict output;
@@ -670,7 +691,7 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
     /** Start multiple threads, one thread to run portion of the simulation on one CUDA GPU, all in parallel */
 #ifdef _OPENMP
     omp_set_num_threads(active_dev);
-#pragma omp parallel shared(error_flag)
+#pragma omp parallel shared(exception_msgs)
     {
       thread_id = omp_get_thread_num();
 #endif
@@ -680,21 +701,18 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
         mcx_run_simulation(&mcx_config, gpu_info);
 
       } catch (const char *err) {
-        std::cerr << "Error from thread (" << thread_id << "): " << err << std::endl;
-        error_flag++;
+        exception_msgs.push_back("Error from thread (" + std::to_string(thread_id) + "): " + err);
       } catch (const std::exception &err) {
-        std::cerr << "C++ Error from thread (" << thread_id << "): " << err.what() << std::endl;
-        error_flag++;
+        exception_msgs.push_back("C++ Error from thread (" + std::to_string(thread_id) + "): " + err.what());
       } catch (...) {
-        std::cerr << "Unknown Exception from thread (" << thread_id << ")" << std::endl;
-        error_flag++;
+        exception_msgs.push_back("Unknown Exception from thread (" + std::to_string(thread_id) + ")");
       }
 #ifdef _OPENMP
     }
 #endif
     /** If error is detected, gracefully terminate the mex and return back to Python */
-    if (error_flag)
-      throw py::runtime_error("PyMCX Terminated due to an exception!");
+    if (!exception_msgs.empty())
+      throw py::runtime_error("MCX Terminated due to an exception!");
     field_dim[4] = 1;
     field_dim[5] = 1;
 
@@ -811,19 +829,30 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
       }
     }
   } catch (const char *err) {
-    std::cerr << "Error: " << err << std::endl;
-  } catch (const std::exception &err) {
-    std::cerr << "PyBind11 Error: " << err.what() << std::endl;
-  } catch (...) {
-    std::cerr << "Unknown Exception" << std::endl;
+    cleanup_configs(gpu_info, mcx_config);
+    throw py::runtime_error(std::string("Error: ") + err);
+  } catch (const std::invalid_argument &err) {
+    cleanup_configs(gpu_info, mcx_config);
+    throw py::type_error(err.what());
+  } catch (const py::runtime_error &err) {
+    cleanup_configs(gpu_info, mcx_config);
+    std::string error_msg = err.what();
+    for (const auto& m : exception_msgs)
+      error_msg += (m + "\n");
+    throw py::runtime_error(error_msg);
+  }
+  catch (const std::exception &err) {
+    cleanup_configs(gpu_info, mcx_config);
+    throw py::runtime_error(std::string("C++ Error: ") + err.what());
+  }
+  catch (...) {
+    cleanup_configs(gpu_info, mcx_config);
+    throw py::runtime_error("Unknown exception occurred");
   }
 
   /** Clear up simulation data structures by calling the destructors */
-  if (det_ps)
-    free(det_ps);
-  mcx_cleargpuinfo(&gpu_info);
-  mcx_clearcfg(&mcx_config);
-  // return a pointer to the MCX output, wrapped in a std::vector
+  cleanup_configs(gpu_info, mcx_config);
+  // return the MCX output dictionary
   return output;
 }
 
