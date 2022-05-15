@@ -1,8 +1,8 @@
 /***************************************************************************//**
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
-**  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \author Matin Raayai Ardakani <raayaiardakani.m at northeastern.edu>
+**  \copyright Matin Raayai Ardakani, 2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -843,7 +843,7 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
     }
   } catch (const char *err) {
     cleanup_configs(gpu_info, mcx_config);
-    throw py::runtime_error(std::string("Error: ") + err);
+    throw py::runtime_error(err);
   } catch (const py::type_error &err) {
     cleanup_configs(gpu_info, mcx_config);
     throw err;
@@ -871,6 +871,21 @@ py::dict py_mcx_interface(const py::dict &user_cfg) {
   cleanup_configs(gpu_info, mcx_config);
   // return the MCX output dictionary
   return output;
+}
+
+
+/**
+ * @brief Error reporting function in PyMCX, equivalent to mcx_error in binary mode
+ *
+ * @param[in] id: a single integer for the types of the error
+ * @param[in] msg: the error message string
+ * @param[in] filename: the unit file name where this error is raised
+ * @param[in] linenum: the line number in the file where this error is raised
+ */
+
+int mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum) {
+  throw msg;
+  return id;
 }
 
 void print_mcx_usage() {
