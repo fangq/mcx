@@ -386,7 +386,7 @@ void parse_config(const py::dict &user_cfg, Config &mcx_config) {
   GET_SCALAR_FIELD(user_cfg, mcx_config, unitinmm, py::float_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, printnum, py::int_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, voidtime, py::int_);
-  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::bool_);
+  GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::int_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, issaveexit, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, ismomentum, py::bool_);
   GET_SCALAR_FIELD(user_cfg, mcx_config, isspecular, py::bool_);
