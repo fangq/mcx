@@ -1668,6 +1668,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** if photon moves to the next voxel, use the precomputed intersection coord */
           *((float3*)(&p)) = float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z);
 
+          /** although the below 3 lines look dumb, if you change it to flipdir[flipdir[3]] += ..., the speed drops by half, likely due to step locking */
           if(flipdir[3]==0) flipdir[0] += (slen==f.pscat) ? 0 : (v.x > 0.f ? 1 : -1);
           if(flipdir[3]==1) flipdir[1] += (slen==f.pscat) ? 0 : (v.y > 0.f ? 1 : -1);
           if(flipdir[3]==2) flipdir[2] += (slen==f.pscat) ? 0 : (v.z > 0.f ? 1 : -1);
@@ -1942,9 +1943,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                               ((flipdir[3]==1) ?
                                   (p.y=mcx_nextafterf(__float2int_rn(p.y), (v.y > 0.f)-(v.y < 0.f))) :
                                   (p.z=mcx_nextafterf(__float2int_rn(p.z), (v.z > 0.f)-(v.z < 0.f))) );
-                          flipdir[0]=floorf(p.x);
-                          flipdir[1]=floorf(p.y);
-                          flipdir[2]=floorf(p.z);
+                          (flipdir[3]==0) ? (flipdir[0]=floorf(p.x)) : ((flipdir[3]==1) ? (flipdir[1]=floorf(p.y)) : (flipdir[2]=floorf(p.z))) ;
                           GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
                           idx1d=idx1dold;
                           mediaid=(media[idx1d] & MED_MASK);
