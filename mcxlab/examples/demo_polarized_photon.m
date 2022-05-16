@@ -6,9 +6,7 @@
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear
-clc
-close all
+clear cfg
 
 %% simulation configurations
 % domain bounding box
@@ -78,7 +76,7 @@ cfg.nphoton=1e7;
 cfg.maxdetphoton=1e7; % max number of detected photons
 
 %% run simulation and plot results
-[~,detphoton]=mcxlab(cfg);
+[frate,detphoton]=mcxlab(cfg);
 
 % compute backscattered IQUV
 phi=atan2(detphoton.v(:,2),detphoton.v(:,1));
