@@ -506,7 +506,7 @@ __device__ inline float reflectcoeff(MCXdir *v, float n1, float n2, int flipdir)
 
 template <const int islabel, const int issvmc>
 __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[RAND_BUF_LEN], unsigned int idx1d, 
-                               uint media[], float3 *p, MCXsp *nuvox){
+                               uint media[], float3 *p, MCXsp *nuvox, short flipdir[4]){
           /**
 	   * The default mcx input volume is assumed to be 4-byte per voxel
 	   * (SVMC mode requires 2x 4-byte voxels for 8 data points) 
@@ -601,7 +601,7 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
 	      if(val.c[6]){ // if upper label is not zero, the photon is inside a mixed voxel
 	          /** Extract the reference point of the intra-voxel interface*/
 		  nuvox->rp=float3(val.c[5]*(1.f/255.f),val.c[4]*(1.f/255.f),val.c[3]*(1.f/255.f));
-		  (nuvox->rp)+=float3(floorf(p->x),floorf(p->y),floorf(p->z));
+		  (nuvox->rp)+=float3(flipdir[0],flipdir[1],flipdir[2]);
 		  
 		  /** Extract the normal vector of the intra-voxel interface*/
 		  nuvox->nv=float3(val.c[2]*(2.f/255.f)-1,val.c[1]*(2.f/255.f)-1,val.c[0]*(2.f/255.f)-1);
@@ -640,14 +640,12 @@ __device__ void updateproperty(Medium *prop, unsigned int& mediaid, RandType t[R
  * @param[in] flipdir[0,1,2]: current voxel xi/yi/zi; flipdir[3]: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
  */
 
-__device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, 
-                                   MCXsp *nuvox, MCXtime f, short flipdir[4]){
+__device__ int ray_plane_intersect(float3 *p0, MCXdir *v, Medium *prop, float &len, float &slen, MCXsp *nuvox){
 	
 	if(dot(*(float3*)v,nuvox->nv)<=0){ // no intersection, as nv always points to the other side
 	    return 0;
 	}else{
-	    float3 p1=(slen==f.pscat) ? (*p0+len*(*(float3*)v)) : float3(flipdir[3]==0 ? flipdir[0] : p0->x,
-                flipdir[3]==1 ? flipdir[1] : p0->y, flipdir[3]==2 ? flipdir[2] : p0->z);
+	    float3 p1=*p0+len*(*(float3*)v);
 	    float3 rp0=*p0-nuvox->rp;
 	    float3 rp1=p1-nuvox->rp;
 	    float d0=dot(rp0,nuvox->nv); // signed perpendicular distance from p0 to patch
@@ -795,7 +793,7 @@ __device__ inline int skipvoid(MCXpos *p,MCXdir *v,MCXtime *f,float3* rv,uint me
 		}
                 f->t= (gcfg->voidtime) ? f->t : 0.f;
 	        float4 htime;
-                updateproperty<islabel, issvmc>((Medium *)&htime,media[idx1d],t,idx1d,media,(float3*)p,nuvox);
+                updateproperty<islabel, issvmc>((Medium *)&htime,media[idx1d],t,idx1d,media,(float3*)p,nuvox,flipdir);
 		if(gcfg->isspecular && htime.w!=gproperty[0].w){
 	            p->w*=1.f-reflectcoeff(v, gproperty[0].w,htime.w,flipdir[3]);
                     GPUDEBUG(("transmitted intensity w=%e\n",p->w));
@@ -1313,7 +1311,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
        * Now a photon is successfully launched, perform necssary initialization for a new trajectory
        */
       f->ndone++;
-      updateproperty<islabel, issvmc>(prop,*mediaid,t,*idx1d,media,(float3*)p,nuvox);
+      updateproperty<islabel, issvmc>(prop,*mediaid,t,*idx1d,media,(float3*)p,nuvox,flipdir);
       if(gcfg->debuglevel & MCX_DEBUG_MOVE)
           savedebugdata(p,(uint)f->ndone+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
 
@@ -1639,9 +1637,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	    *((float4*)(&prop))=gproperty[mediaid & MED_MASK];
 	  else if(issvmc){
 	    if(!nuvox.sv.issplit)
-	      updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
+	      updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox,flipdir);
 	  }else
-	    updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
+	    updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox,flipdir);
 
 	  /** Advance photon 1 step to the next voxel */
 	  len=hitgrid((float3*)&p,(float3*)&v,&rv.x,flipdir); // propagate the photon to the first intersection to the grid
@@ -1660,7 +1658,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** perform ray-interface intersection test to consider intra-voxel curvature (SVMC mode) */
 	  if(issvmc){
 	    if(nuvox.sv.issplit && testint)
-	      hitintf=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox,f,flipdir);
+	      hitintf=ray_plane_intersect((float3*)&p,&v,&prop,len,slen,&nuvox);
 	    else
 	      hitintf=0;
 	  }
@@ -1669,9 +1667,9 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           *((float3*)(&p)) = float3(p.x+len*v.x,p.y+len*v.y,p.z+len*v.z);
 
           /** although the below 3 lines look dumb, if you change it to flipdir[flipdir[3]] += ..., the speed drops by half, likely due to step locking */
-          if(flipdir[3]==0) flipdir[0] += (slen==f.pscat) ? 0 : (v.x > 0.f ? 1 : -1);
-          if(flipdir[3]==1) flipdir[1] += (slen==f.pscat) ? 0 : (v.y > 0.f ? 1 : -1);
-          if(flipdir[3]==2) flipdir[2] += (slen==f.pscat) ? 0 : (v.z > 0.f ? 1 : -1);
+          if(flipdir[3]==0) flipdir[0] += (slen==f.pscat || (issvmc && hitintf)) ? 0 : (v.x > 0.f ? 1 : -1);
+          if(flipdir[3]==1) flipdir[1] += (slen==f.pscat || (issvmc && hitintf)) ? 0 : (v.y > 0.f ? 1 : -1);
+          if(flipdir[3]==2) flipdir[2] += (slen==f.pscat || (issvmc && hitintf)) ? 0 : (v.z > 0.f ? 1 : -1);
 
 	  /** calculate photon energy loss */
 #ifdef USE_MORE_DOUBLE
@@ -1811,7 +1809,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 	  /** in SVMC mode, update tissue type when photons cross voxel or intra-voxel boundary */
 	  if(issvmc){
 	      if(idx1d!=idx1dold){
-		  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
+		  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox,flipdir);
 		  testint=1; // re-enable ray-interface intesection test after launching a new photon under SVMC mode
 	      }else if(hitintf){
 		  nuvox.nv=-nuvox.nv;  // flip normal vector for transmission
@@ -1878,7 +1876,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
           /** do boundary reflection/transmission */
           if(isreflect){
               if(gcfg->mediaformat<100 && !issvmc)
-                  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
+                  updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox,flipdir); //< optical property across the interface
               if(issvmc && hitintf){
                   if(gproperty[nuvox.sv.lower].w != gproperty[nuvox.sv.upper].w){
                       nuvox.nv=-nuvox.nv; // flip normal vector back for reflection/refraction computation
@@ -1900,7 +1898,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                       float Rtotal=1.f;
                       float cphi,sphi,stheta,ctheta,tmp0,tmp1;
 
-                      if(!issvmc) updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox);
+                      if(!issvmc) updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox,flipdir);
 
                       tmp0=n1*n1;
                       tmp1=prop.n*prop.n;
@@ -1947,7 +1945,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                           GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n",p.x,p.y,p.z,v.x,v.y,v.z));
                           idx1d=idx1dold;
                           mediaid=(media[idx1d] & MED_MASK);
-                          updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox); //< optical property across the interface
+                          updateproperty<islabel, issvmc>(&prop,mediaid,t,idx1d,media,(float3*)&p,&nuvox,flipdir); //< optical property across the interface
                           if(issvmc && (nuvox.sv.isupper?nuvox.sv.upper:nuvox.sv.lower)==0){ // terminate photon if photon is reflected to background medium
                               if(launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p,&v,&s,&f,&rv,flipdir,&prop,&idx1d,field,&mediaid,&w0,(mediaidold & DET_MASK),
                                   ppath,n_det,detectedphoton,t,(RandType*)(sharedmem+sizeof(float)*gcfg->nphase+threadIdx.x*gcfg->issaveseed*RAND_BUF_LEN*sizeof(RandType)),
@@ -1961,7 +1959,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
                           n1=prop.n;
                       }
                   }else if(gcfg->mediaformat<100 && !issvmc){
-                      updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox);
+                      updateproperty<islabel, issvmc>(&prop,mediaidold,t,idx1d,media,(float3*)&p,&nuvox,flipdir);
                   }
               }
           }else{
