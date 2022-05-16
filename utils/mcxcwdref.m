@@ -18,12 +18,16 @@ function [dref] = mcxcwdref(detp, cfg)
 %    License: GPLv3, see http://mcx.sf.net for details
 %    see Yao2018
 %
+    unitinmm=1;
+    if(isfield(cfg,'unitinmm'))
+        unitinmm=cfg.unitinmm;
+    end
     detweight = mcxdetweight(detp, cfg.prop);
     detnum = length(unique(detp.detid));
     detweightsum = zeros(detnum, 1);
     for i = 1 : length(detp.detid)
         detweightsum(detp.detid(i)) = detweightsum(detp.detid(i)) + detweight(i);
     end
-    area = pi * (cfg.detpos(:,4)*cfg.unitinmm).^2;
+    area = pi * (cfg.detpos(:,4)*unitinmm).^2;
     dref = detweightsum ./ area / cfg.nphoton; % Eq.12 of photon replay paper[Yao2018]
 end
