@@ -932,7 +932,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
           ppath[gcfg->partialdata]+=p->w;  //< sum all the remaining energy
 
           if(gcfg->debuglevel & MCX_DEBUG_MOVE)
-              savedebugdata(p,((uint)f->ndone)+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
+              savedebugdata(p,((uint)f->ndone)+threadid*gcfg->threadphoton+umin(threadid,gcfg->oddphotons),gdebugdata);
 
           if(*mediaid==0 && *idx1d!=OUTSIDE_VOLUME_MIN && *idx1d!=OUTSIDE_VOLUME_MAX && gcfg->issaveref){
             if(gcfg->issaveref==1){
@@ -1313,7 +1313,7 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
       f->ndone++;
       updateproperty<islabel, issvmc>(prop,*mediaid,t,*idx1d,media,(float3*)p,nuvox,flipdir);
       if(gcfg->debuglevel & MCX_DEBUG_MOVE)
-          savedebugdata(p,(uint)f->ndone+threadid*gcfg->threadphoton+umin(threadid,(threadid<gcfg->oddphotons)*threadid),gdebugdata);
+          savedebugdata(p,(uint)f->ndone+threadid*gcfg->threadphoton+umin(threadid,gcfg->oddphotons),gdebugdata);
 
       /**
         total energy enters the volume. for diverging/converting 
@@ -1625,7 +1625,7 @@ kernel void mcx_main_loop(uint media[],OutputType field[],float genergy[],uint n
 #endif
                        }
                        if(gcfg->debuglevel & MCX_DEBUG_MOVE)
-                           savedebugdata(&p,(uint)f.ndone+idx*gcfg->threadphoton+umin(idx,(idx<gcfg->oddphotons)*idx),gdebugdata);
+                           savedebugdata(&p,(uint)f.ndone+idx*gcfg->threadphoton+umin(idx,gcfg->oddphotons),gdebugdata);
 	       }
 	       v.nscat=(int)v.nscat;
 	       if(issvmc) testint=1;  //< new propagation direction after scattering, enable ray-interface intersection test
