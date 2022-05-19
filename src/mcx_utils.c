@@ -319,9 +319,11 @@ void mcx_initcfg(Config *cfg){
      memset(cfg->workload,0,MAX_DEVICE*sizeof(float));
      cfg->deviceid[0]='1';  /** use the first GPU device by default*/
 #if defined(MCX_CONTAINER)
+  #ifndef PYBIND11_VERSION_MAJOR
      cfg->parentid=mpMATLAB;
-#elif defined(PYMCX_CONTAINER)
+  #else
      cfg->parentid=mpPython;
+  #endif
 #else
      cfg->parentid=mpStandalone;
 #endif
@@ -1087,7 +1089,7 @@ void mcx_flush(Config *cfg){
  */
 
 void mcx_error(const int id,const char *msg,const char *file,const int linenum){
-#if defined(MCX_CONTAINER) || defined(PYMCX_CONTAINER)
+#ifdef MCX_CONTAINER
      mcx_throw_exception(id,msg,file,linenum);
 #else
      MCX_FPRINTF(stdout,S_RED "\nMCX ERROR(%d):%s in unit %s:%d\n" S_RESET,id,msg,file,linenum);

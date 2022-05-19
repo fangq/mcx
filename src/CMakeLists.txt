@@ -107,7 +107,7 @@ if (BUILD_PYTHON)
             ubj/ubjw.c
             pymcx.cpp
             )
-    target_compile_definitions(pymcx PUBLIC PYMCX_CONTAINER)
+    target_compile_definitions(pymcx PUBLIC MCX_CONTAINER)
 
     target_link_libraries(pymcx OpenMP::OpenMP_CXX zmat ZLIB::ZLIB pybind11::module pybind11::lto pybind11::windows_extras)
 
