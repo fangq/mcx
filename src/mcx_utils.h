@@ -59,7 +59,7 @@
 #define MAX(a,b)           ((a)>(b)?(a):(b))             /**< macro to get the max values of two numbers */
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF};   /**< types of output */
-enum TMCXParent  {mpStandalone, mpMATLAB};                          /**< whether MCX is run in binary or mex mode */
+enum TMCXParent  {mpStandalone, mpMATLAB, mpPython};                   /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3, ofJNifti, ofBJNifti};           /**< output data format */
 enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCyclic};            /**< boundary conditions */
 enum TBJData {JDB_mixed, JDB_nulltype, JDB_noop,JDB_true,JDB_false,
@@ -314,6 +314,13 @@ extern "C"
 #endif
  int  mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum);
  void mcx_matlab_flush(void);
+#endif
+
+#ifdef PYMCX_CONTAINER
+#ifdef __cplusplus
+extern "C"
+#endif
+ int  mcx_throw_exception(const int id, const char *msg, const char *filename, const int linenum);
 #endif
 
 #ifdef MCX_CONTAINER

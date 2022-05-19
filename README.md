@@ -1246,6 +1246,11 @@ open-source projects (with a compatible license).
 - URL: https://github.com/fangq/GPU-ANLM/
 - License: GPL version 3 or later, https://github.com/4D42/pymcx/blob/master/LICENSE.txt
 
+### Pybind11
+- Files: src/pybind11/*
+- Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
+- URL: https://github.com/pybind/pybind11/
+- License: BSD-style license, https://github.com/pybind/pybind11/blob/master/LICENSE
 
 Reference
 ------------
