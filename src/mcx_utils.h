@@ -316,7 +316,7 @@ extern "C"
  void mcx_matlab_flush(void);
 #endif
 
-#if defined(MCX_CONTAINER) && defined(PYBIND11_VERSION_MAJOR)
+#if defined(MCX_CONTAINER) && !defined(PYBIND11_VERSION_MAJOR)
  #ifdef _OPENMP
   #define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) mexPrintf(__VA_ARGS__);}  /**< macro to print messages, calls mexPrint if inside MATLAB */
  #else
