@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -23,13 +23,13 @@
 *******************************************************************************/
 
 /***************************************************************************//**
-\file    xorshift128p_rand.cu
+\file    xoroshiro128p_rand.cu
 
-@brief    A Random Number Generator based on the xorshift128+ algorithm
+@brief    A Random Number Generator based on the xoroshiro128+ algorithm
 *******************************************************************************/
 
-#ifndef _MCEXTREME_XORSHIFT128PLUS_RAND_H
-#define _MCEXTREME_XORSHIFT128PLUS_RAND_H
+#ifndef _MCEXTREME_XOROSHIRO128PLUS_RAND_H
+#define _MCEXTREME_XOROSHIRO128PLUS_RAND_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@
     #include <ieee754.h>
 #endif
 
-#define MCX_RNG_NAME       "xorshift128+"
+#define MCX_RNG_NAME       "xoroshiro128+"
 
 #define RAND_BUF_LEN       2        //register arrays
 #define LOG_MT_MAX         22.1807097779182f
@@ -55,31 +55,36 @@ typedef uint64_t  RandType;
  * We only use the 1st 32 random bits of the 64bit state for random number generation
  */
 
-__device__ float xorshift128p_nextf(RandType t[RAND_BUF_LEN]) {
+__device__ uint64_t rotl(const uint64_t x, int k) {
+    return (x << k) | (x >> (64 - k));
+}
+
+__device__ float xoroshiro128p_nextf(RandType t[RAND_BUF_LEN]) {
     union {
         ieee754_double dd;
         uint64_t i;
         float f[2];
         uint  u[2];
-    } s1;
-    const uint64_t s0 = t[1];
-    s1.i = t[0];
-    t[0] = s0;
-    s1.i ^= s1.i << 23; // a
-    t[1] = s1.i ^ s0 ^ (s1.i >> 18) ^ (s0 >> 5); // b, c
-    s1.i = t[1] + s0;
+    } result;
+    const uint64_t s0 = t[0];
+    uint64_t s1 = t[1];
+    result.i = s0 + s1;
 
-    s1.u[0] = 0x3F800000U | (s1.u[0] >> 9);
+    s1 ^= s0;
+    t[0] = rotl(s0, 55) ^ s1 ^ (s1 << 14); // a, b
+    t[1] = rotl(s1, 36); // c
+    result.u[0] = 0x3F800000U | (result.u[0] >> 9);
 
-    return s1.f[0] - 1.0f;
+    return result.f[0] - 1.0f;
 }
 
+
 /**
- * @brief Initialize the xorshift128+ RNG with host seeds
+ * @brief Initialize the xoroshiro128+ RNG with host seeds
  * 64bit host seeds are computed by the host and are different for each thread
  */
 
-__device__ void xorshift128p_seed (uint seed[4], RandType t[RAND_BUF_LEN]) {
+__device__ void xoroshiro128p_seed (uint seed[4], RandType t[RAND_BUF_LEN]) {
     t[0] = (uint64_t)seed[0] << 32 | seed[1];
     t[1] = (uint64_t)seed[2] << 32 | seed[3];
 }
@@ -103,14 +108,14 @@ __device__ void rand_need_more(RandType t[RAND_BUF_LEN]) {
  * @brief Generate random floating point between 0 and 1
  */
 __device__ float rand_uniform01(RandType t[RAND_BUF_LEN]) {
-    return xorshift128p_nextf(t);
+    return xoroshiro128p_nextf(t);
 }
 
 /**
  * @brief Inteface function to initialize the RNG
  */
 __device__ void gpu_rng_init(RandType t[RAND_BUF_LEN], uint* n_seed, int idx) {
-    xorshift128p_seed((n_seed + idx * (sizeof(RandType) >> 2)*RAND_BUF_LEN), t);
+    xoroshiro128p_seed((n_seed + idx * (sizeof(RandType) >> 2)*RAND_BUF_LEN), t);
 }
 
 /**

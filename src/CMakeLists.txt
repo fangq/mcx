@@ -59,8 +59,8 @@ cuda_add_library(mcx STATIC
     mcx_bench.h
     mcx_mie.cpp
     mcx_mie.h
-    tictoc.c
-    tictoc.h
+    mcx_tictoc.c
+    mcx_tictoc.h
     cjson/cJSON.c
     cjson/cJSON.h
     ubj/ubj.h
@@ -70,7 +70,7 @@ cuda_add_library(mcx STATIC
 # Add all project units
 cuda_add_executable(
     mcx-exe
-    mcextreme.c
+    mcx.c
     )
 
 set_target_properties(mcx-exe
@@ -87,8 +87,6 @@ target_link_libraries(
 
 if (BUILD_PYTHON)
     cuda_add_library(pymcx MODULE
-            interface-common.h
-            interface-common.cpp
             mcx_core.cu
             mcx_core.h
             mcx_utils.c
@@ -99,8 +97,8 @@ if (BUILD_PYTHON)
             mcx_bench.h
             mcx_mie.cpp
             mcx_mie.h
-            tictoc.c
-            tictoc.h
+            mcx_tictoc.c
+            mcx_tictoc.h
             cjson/cJSON.c
             cjson/cJSON.h
             ubj/ubj.h

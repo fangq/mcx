@@ -37,7 +37,6 @@
 #include "mcx_const.h"
 #include "mcx_shapes.h"
 #include <pybind11/iostream.h>
-#include "interface-common.h"
 
 // Python binding for runtime_error exception in Python.
 namespace pybind11 {
@@ -48,8 +47,6 @@ namespace py = pybind11;
 
 #if defined(USE_XOROSHIRO128P_RAND)
     #define RAND_WORD_LEN 4
-#elif defined(USE_LL5_RAND)
-    #define RAND_WORD_LEN 5
 #elif defined(USE_POSIX_RAND)
     #define RAND_WORD_LEN 4
 #else
@@ -865,9 +862,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
         mcx_flush(&mcx_config);
 
         /** Validate all input fields, and warn incompatible inputs */
-        validate_config(&mcx_config, det_ps, dim_det_ps, seed_byte, [](const char* msg) {
-            throw py::value_error(msg);
-        });
+        mcx_validatecfg(&mcx_config, det_ps, dim_det_ps, seed_byte);
 
         partial_data =
             (mcx_config.medianum - 1) * (SAVE_NSCAT(mcx_config.savedetflag) + SAVE_PPATH(mcx_config.savedetflag) +
@@ -1132,7 +1127,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PyMCX v2021.2\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
+            << "PyMCX v2022\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
 }
 
 py::dict py_mcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
@@ -1182,7 +1177,7 @@ py::list get_GPU_info() {
 }
 
 PYBIND11_MODULE(pymcx, m) {
-    m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, www.mcx.space.";
+    m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, http://mcx.space";
     m.def("mcx", &py_mcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
     m.def("mcx", &py_mcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,

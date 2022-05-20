@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -29,7 +29,7 @@
 *******************************************************************************/
 
 #include <stdio.h>
-#include "tictoc.h"
+#include "mcx_tictoc.h"
 #include "mcx_utils.h"
 #include "mcx_core.h"
 #ifdef _OPENMP
@@ -44,14 +44,14 @@ int main (int argc, char* argv[]) {
     unsigned int activedev = 0;   /** activedev: count of total active GPUs to be used */
 
     /**
-       To start an MCX simulation, we first create a simulation configuration and
-    set all elements to its default settings.
-         */
+      * To start an MCX simulation, we first create a simulation configuration and
+      * set all elements to its default settings.
+      */
     mcx_initcfg(&mcxconfig);
 
     /**
-       Then, we parse the full command line parameters and set user specified settings
-     */
+      * Then, we parse the full command line parameters and set user specified settings
+      */
     mcx_parsecmd(argc, argv, &mcxconfig);
 
     /** The next step, we identify gpu number and query all GPU info */
@@ -61,16 +61,16 @@ int main (int argc, char* argv[]) {
 
 #ifdef _OPENMP
     /**
-       Now we are ready to launch one thread for each involked GPU to run the simulation
-     */
+      * Now we are ready to launch one thread for each involked GPU to run the simulation
+      */
     omp_set_num_threads(activedev);
     #pragma omp parallel
     {
 #endif
 
         /**
-           This line runs the main MCX simulation for each GPU inside each thread
-         */
+          * This line runs the main MCX simulation for each GPU inside each thread
+          */
         mcx_run_simulation(&mcxconfig, gpuinfo);
 
 #ifdef _OPENMP
@@ -78,8 +78,8 @@ int main (int argc, char* argv[]) {
 #endif
 
     /**
-       Once simulation is complete, we clean up the allocated memory in config and gpuinfo, and exit
-     */
+      * Once simulation is complete, we clean up the allocated memory in config and gpuinfo, and exit
+      */
     mcx_cleargpuinfo(&gpuinfo);
     mcx_clearcfg(&mcxconfig);
     return 0;

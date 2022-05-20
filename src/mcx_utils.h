@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -33,7 +33,6 @@
 
 #include <stdio.h>
 #include <vector_types.h>
-#include "br2cu.h"
 #include "cjson/cJSON.h"
 #include "float.h"
 #include "nifti1.h"
@@ -50,6 +49,8 @@
 #define MAX_SESSION_LENGTH  256                          /**< max session name length */
 #define MAX_DEVICE          256                          /**< max number of GPUs to be used */
 
+#define MCX_CUDA_ERROR_LAUNCH_FAILED    719              /**< CUDA kernel launch error code */
+
 #ifndef MCX_CUDA_ARCH
     #define MCX_CUDA_ARCH       100                        /**< fallback CUDA version */
 #endif
@@ -57,6 +58,8 @@
 #define MCX_ERROR(id,msg)   mcx_error(id,msg,__FILE__,__LINE__)  /**< macro for error handling */
 #define MIN(a,b)           ((a)<(b)?(a):(b))             /**< macro to get the min values of two numbers */
 #define MAX(a,b)           ((a)>(b)?(a):(b))             /**< macro to get the max values of two numbers */
+
+typedef unsigned int uint;                         /**< use uint for unsigned int */
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB, mpPython};                   /**< whether MCX is run in binary or mex mode */
@@ -308,6 +311,8 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
 int  mcx_svmc_bgvoxel(int vol);
 void mcx_loadseedjdat(char* filename, Config* cfg);
 void mcx_prep_polarized(Config* cfg);
+void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
+void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

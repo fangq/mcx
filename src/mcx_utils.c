@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -1242,7 +1242,7 @@ void mcx_error(const int id, const char* msg, const char* file, const int linenu
 #else
     MCX_FPRINTF(stdout, S_RED "\nMCX ERROR(%d):%s in unit %s:%d\n" S_RESET, id, msg, file, linenum);
 
-    if (id == -CUDA_ERROR_LAUNCH_FAILED) {
+    if (id == -MCX_CUDA_ERROR_LAUNCH_FAILED) {
         MCX_FPRINTF(stdout, S_RED "MCX is terminated by your graphics driver. If you use windows, \n\
 please modify TdrDelay value in the registry. Please checkout FAQ #1 for more details:\n\
 URL: http://mcx.space/wiki/index.cgi?Doc/FAQ\n" S_RESET);
@@ -3264,6 +3264,87 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
     }
 }
 
+/**
+ * @brief Initialize the replay data structure from detected photon data - in embedded mode (MATLAB/Python)
+ *
+ * @param[in,out] cfg: simulation configuration
+ * @param[in] detps: detected photon data
+ * @param[in] dimdetps: the dimension vector of the detected photon data
+ * @param[in] seedbyte: the number of bytes per RNG seed
+ */
+
+void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
+    int i, j, hasdetid = 0, offset;
+    float plen;
+
+    if (cfg->seed == SEED_FROM_FILE && detps == NULL) {
+        MCX_ERROR(-6, "you give cfg.seed for replay, but did not specify cfg.detphotons.\nPlease define it as the detphoton output from the baseline simulation\n");
+    }
+
+    if (detps == NULL || cfg->seed != SEED_FROM_FILE) {
+        return;
+    }
+
+    if (cfg->nphoton != dimdetps[1]) {
+        MCX_ERROR(-6, "the column numbers of detphotons and seed do not match\n");
+    }
+
+    if (seedbyte == 0) {
+        MCX_ERROR(-6, "the seed input is empty");
+    }
+
+    hasdetid = SAVE_DETID(cfg->savedetflag);
+    offset = SAVE_NSCAT(cfg->savedetflag) * (cfg->medianum - 1);
+
+    if (((!hasdetid) && cfg->detnum > 1) || !SAVE_PPATH(cfg->savedetflag)) {
+        MCX_ERROR(-6, "please rerun the baseline simulation and save detector ID (D) and partial-path (P) using cfg.savedetflag='dp' ");
+    }
+
+    cfg->replay.weight = (float*) malloc(cfg->nphoton * sizeof(float));
+    cfg->replay.tof = (float*) calloc(cfg->nphoton, sizeof(float));
+    cfg->replay.detid = (int*) calloc(cfg->nphoton, sizeof(int));
+
+    cfg->nphoton = 0;
+
+    for (i = 0; i < dimdetps[1]; i++) {
+        if (cfg->replaydet <= 0 || cfg->replaydet == (int) (detps[i * dimdetps[0]])) {
+            if (i != cfg->nphoton)
+                memcpy((char*) (cfg->replay.seed) + cfg->nphoton * seedbyte,
+                       (char*) (cfg->replay.seed) + i * seedbyte,
+                       seedbyte);
+
+            cfg->replay.weight[cfg->nphoton] = 1.f;
+            cfg->replay.tof[cfg->nphoton] = 0.f;
+            cfg->replay.detid[cfg->nphoton] = (hasdetid) ? (int) (detps[i * dimdetps[0]]) : 1;
+
+            for (j = hasdetid; j < cfg->medianum - 1 + hasdetid; j++) {
+                plen = detps[i * dimdetps[0] + offset + j] * cfg->unitinmm;
+                cfg->replay.weight[cfg->nphoton] *= expf(-cfg->prop[j - hasdetid + 1].mua * plen);
+                cfg->replay.tof[cfg->nphoton] += plen * R_C0 * cfg->prop[j - hasdetid + 1].n;
+            }
+
+            if (cfg->replay.tof[cfg->nphoton] < cfg->tstart
+                    || cfg->replay.tof[cfg->nphoton] > cfg->tend) { /*need to consider -g*/
+                continue;
+            }
+
+            cfg->nphoton++;
+        }
+    }
+
+    cfg->replay.weight = (float*) realloc(cfg->replay.weight, cfg->nphoton * sizeof(float));
+    cfg->replay.tof = (float*) realloc(cfg->replay.tof, cfg->nphoton * sizeof(float));
+    cfg->replay.detid = (int*) realloc(cfg->replay.detid, cfg->nphoton * sizeof(int));
+}
+
+/**
+ * @brief Initialize the replay data structure from detected photon data - in standalone mode
+ *
+ * @param[in,out] cfg: simulation configuration
+ * @param[in] detps: detected photon data
+ * @param[in] dimdetps: the dimension vector of the detected photon data
+ * @param[in] seedbyte: the number of bytes per RNG seed
+ */
 
 void mcx_replayprep(int* detid, float* ppath, History* his, Config* cfg) {
     int i, j;
@@ -3298,6 +3379,119 @@ void mcx_replayprep(int* detid, float* ppath, History* his, Config* cfg) {
     cfg->replay.tof = (float*)realloc(cfg->replay.tof, cfg->nphoton * sizeof(float));
     cfg->replay.detid = (int*)realloc(cfg->replay.detid, cfg->nphoton * sizeof(int));
     cfg->minenergy = 0.f;
+}
+
+/**
+ * @brief Validate all input fields, and warn incompatible inputs
+ *
+ * Perform self-checking and raise exceptions or warnings when input error is detected
+ *
+ * @param[in,out] cfg: simulation configuration
+ * @param[in] detps: detected photon data
+ * @param[in] dimdetps: the dimension vector of the detected photon data
+ * @param[in] seedbyte: the number of bytes per RNG seed
+ */
+
+void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
+    int i, gates;
+    unsigned int partialdata =
+        (cfg->medianum - 1) * (SAVE_NSCAT(cfg->savedetflag) + SAVE_PPATH(cfg->savedetflag) + SAVE_MOM(cfg->savedetflag));
+    unsigned int hostdetreclen =
+        partialdata + SAVE_DETID(cfg->savedetflag) + 3 * (SAVE_PEXIT(cfg->savedetflag) + SAVE_VEXIT(cfg->savedetflag))
+        + SAVE_W0(cfg->savedetflag);
+    hostdetreclen += cfg->polmedianum ? (4 * SAVE_IQUV(cfg->savedetflag)) : 0; // for polarized photon simulation
+
+    if (!cfg->issrcfrom0) {
+        cfg->srcpos.x--;
+        cfg->srcpos.y--;
+        cfg->srcpos.z--; /*convert to C index, grid center*/
+    }
+
+    if (cfg->tstart > cfg->tend || cfg->tstep == 0.f) {
+        MCX_ERROR(-6, "incorrect time gate settings");
+    }
+
+    if (ABS(cfg->srcdir.x * cfg->srcdir.x + cfg->srcdir.y * cfg->srcdir.y + cfg->srcdir.z * cfg->srcdir.z - 1.f) > 1e-5) {
+        MCX_ERROR(-6, "field 'srcdir' must be a unitary vector");
+    }
+
+    if (cfg->steps.x == 0.f || cfg->steps.y == 0.f || cfg->steps.z == 0.f) {
+        MCX_ERROR(-6, "field 'steps' can not have zero elements");
+    }
+
+    if (cfg->tend <= cfg->tstart) {
+        MCX_ERROR(-6, "field 'tend' must be greater than field 'tstart'");
+    }
+
+    gates = (int) ((cfg->tend - cfg->tstart) / cfg->tstep + 0.5);
+
+    if (cfg->maxgate > gates) {
+        cfg->maxgate = gates;
+    }
+
+    if (cfg->sradius > 0.f) {
+        cfg->crop0.x = MAX((int) (cfg->srcpos.x - cfg->sradius), 0);
+        cfg->crop0.y = MAX((int) (cfg->srcpos.y - cfg->sradius), 0);
+        cfg->crop0.z = MAX((int) (cfg->srcpos.z - cfg->sradius), 0);
+        cfg->crop1.x = MIN((int) (cfg->srcpos.x + cfg->sradius), cfg->dim.x - 1);
+        cfg->crop1.y = MIN((int) (cfg->srcpos.y + cfg->sradius), cfg->dim.y - 1);
+        cfg->crop1.z = MIN((int) (cfg->srcpos.z + cfg->sradius), cfg->dim.z - 1);
+    } else if (cfg->sradius == 0.f) {
+        memset(&(cfg->crop0), 0, sizeof(uint3));
+        memset(&(cfg->crop1), 0, sizeof(uint3));
+    } else {
+        /*
+            if -R is followed by a negative radius, mcx uses crop0/crop1 to set the cachebox
+        */
+        if (!cfg->issrcfrom0) {
+            cfg->crop0.x--;
+            cfg->crop0.y--;
+            cfg->crop0.z--;  /*convert to C index*/
+            cfg->crop1.x--;
+            cfg->crop1.y--;
+            cfg->crop1.z--;
+        }
+    }
+
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF)
+            && cfg->seed != SEED_FROM_FILE) {
+        MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
+    }
+
+    for (i = 0; i < cfg->detnum; i++) {
+        if (!cfg->issrcfrom0) {
+            cfg->detpos[i].x--;
+            cfg->detpos[i].y--;
+            cfg->detpos[i].z--;  /*convert to C index*/
+        }
+    }
+
+    if (cfg->shapedata && strstr(cfg->shapedata, ":") != NULL) {
+        if (cfg->mediabyte > 4) {
+            MCX_ERROR(-6, "rasterization of shapes must be used with label-based mediatype");
+        }
+
+        Grid3D grid = {&(cfg->vol), &(cfg->dim), {1.f, 1.f, 1.f}, 0};
+
+        if (cfg->issrcfrom0) {
+            memset(&(grid.orig.x), 0, sizeof(float3));
+        }
+
+        int status = mcx_parse_shapestring(&grid, cfg->shapedata);
+
+        if (status) {
+            MCX_ERROR(-6, mcx_last_shapeerror());
+        }
+    }
+
+    mcx_preprocess(cfg);
+
+    cfg->his.maxmedia = cfg->medianum - 1; /*skip medium 0*/
+    cfg->his.detnum = cfg->detnum;
+    cfg->his.srcnum = cfg->srcnum;
+    cfg->his.colcount = hostdetreclen; /*column count=maxmedia+2*/
+    cfg->his.savedetflag = cfg->savedetflag;
+    mcx_replayinit(cfg, detps, dimdetps, seedbyte);
 }
 
 /**
@@ -4666,7 +4860,7 @@ int mcx_lookupindex(char* key, const char* index) {
  */
 
 void mcx_version(Config* cfg) {
-    const char ver[] = "$Rev::      $v2021.2";
+    const char ver[] = "$Rev::      $v2022";
     int v = 0;
     sscanf(ver, "$Rev::%x", &v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n", v);
@@ -4737,7 +4931,7 @@ void mcx_printheader(Config* cfg) {
     MCX_FPRINTF(cfg->flog, S_GREEN"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2021 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2022 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
@@ -4745,7 +4939,7 @@ void mcx_printheader(Config* cfg) {
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $v2021.2$Date::                       $ by $Author::              $\n\
+$Rev::      $ v2022 $Date::                       $ by $Author::              $\n\
 ###############################################################################\n" S_RESET);
 }
 

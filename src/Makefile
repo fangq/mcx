@@ -28,7 +28,7 @@ OUTPUT_DIR=$(MCXDIR)/bin
 
 DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
-DOXYCFG=mcxdoxy.cfg
+DOXYCFG=mcx_doxygen.cfg
 ZMATLIB    :=libzmat.a
 USERLINKOPT?=$(ZMATLIB) -lz
 
@@ -66,7 +66,7 @@ CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils mcx_shapes tictoc mcextreme mcx_bench mcx_mie cjson/cJSON ubj/ubjw
+FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   CC=nvcc
@@ -265,6 +265,7 @@ cudasdk:
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
 	fi
 
+# derived the astyle settings from https://github.com/nlohmann/json
 pretty:
 	astyle \
 	    --style=attach \

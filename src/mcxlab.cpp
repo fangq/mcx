@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -46,8 +46,6 @@
 
 #if defined(USE_XOROSHIRO128P_RAND)
     #define RAND_WORD_LEN 4
-#elif defined(USE_LL5_RAND)
-    #define RAND_WORD_LEN 5
 #elif defined(USE_POSIX_RAND)
     #define RAND_WORD_LEN 4
 #else

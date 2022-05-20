@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2022
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -41,14 +41,12 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#include "br2cu.h"
 #include "mcx_core.h"
-#include "tictoc.h"
+#include "mcx_tictoc.h"
 #include "mcx_const.h"
 
-//#ifdef USE_HALF                     //< use half-precision for ray-tracing
+#include <cuda.h>
 #include "cuda_fp16.h"
-//#endif
 
 #ifdef USE_DOUBLE
     typedef double OutputType;
@@ -61,13 +59,11 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #endif
 
 #if defined(USE_XOROSHIRO128P_RAND)
-    #include "xoroshiro128p_rand.cu" //< Use USE_XOROSHIRO128P_RAND macro to enable xoroshiro128p+ RNG (XORSHIFT128P)
-#elif defined(USE_LL5_RAND)
-    #include "logistic_rand.cu"     //< Use USE_LL5_RAND macro to enable Logistic Lattice ring 5 RNG (LL5), used in the original MCX paper but depreciated
+    #include "mcx_rand_xoroshiro128p.cu" //< Use USE_XOROSHIRO128P_RAND macro to enable xoroshiro128p+ RNG (XORSHIFT128P)
 #elif defined(USE_POSIX_RAND)
-    #include "posix_rand.cu"        //< Use USE_POSIX_RAND to enable POSIX erand48 RNG (POSIX)
+    #include "mcx_rand_posix.cu"        //< Use USE_POSIX_RAND to enable POSIX erand48 RNG (POSIX)
 #else                               //< The default RNG method is use xorshift128+ RNG (XORSHIFT128P)
-    #include "xorshift128p_rand.cu"
+    #include "mcx_rand_xorshift128p.cu"
 #endif
 
 #ifdef _OPENMP                      //< If compiled with -fopenmp with GCC, this enables OpenMP multi-threading for running simulation on multiple GPUs
@@ -75,6 +71,16 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #endif
 
 #define CUDA_ASSERT(a)      mcx_cu_assess((a),__FILE__,__LINE__) //< macro to report CUDA errors
+
+#define int2(a,b) make_int2(a,b)                   /**< int2 constructor */
+#define int3(a,b,c) make_int3(a,b,c)               /**< int3 constructor */
+#define uint2(a,b) make_uint2(a,b)                 /**< uint2 constructor */
+#define uint3(a,b,c) make_uint3(a,b,c)             /**< uint3 constructor */
+#define uint4(a,b,c,d) make_uint4(a,b,c,d)         /**< uint4 constructor */
+#define float1(a) make_float1(a)                   /**< float1 constructor */
+#define float2(a,b) make_float2(a,b)               /**< float2 constructor */
+#define float3(a,b,c) make_float3(a,b,c)           /**< float3 constructor */
+#define float4(a,b,c,d) make_float4(a,b,c,d)       /**< float4 constructor */
 
 #define FL3(f) make_float3(f,f,f)
 
@@ -1474,7 +1480,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
  * @param[in] n_seed: the seed to the RNG
  */
 
-kernel void mcx_test_rng(OutputType field[], uint n_seed[]) {
+__global__ void mcx_test_rng(OutputType field[], uint n_seed[]) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     int i;
     int len = gcfg->maxidx.x * gcfg->maxidx.y * gcfg->maxidx.z * (int)((gcfg->twin1 - gcfg->twin0) * gcfg->Rtstep + 0.5f);
@@ -1511,10 +1517,10 @@ kernel void mcx_test_rng(OutputType field[], uint n_seed[]) {
  */
 
 template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized>
-kernel void mcx_main_loop(uint media[], OutputType field[], float genergy[], uint n_seed[],
-                          float4 n_pos[], float4 n_dir[], float4 n_len[], float n_det[], uint detectedphoton[],
-                          float srcpattern[], float replayweight[], float photontof[], int photondetid[],
-                          RandType* seeddata, float* gdebugdata, float* ginvcdf, float4* gsmatrix, volatile int* gprogress) {
+__global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[], uint n_seed[],
+                              float4 n_pos[], float4 n_dir[], float4 n_len[], float n_det[], uint detectedphoton[],
+                              float srcpattern[], float replayweight[], float photontof[], int photondetid[],
+                              RandType* seeddata, float* gdebugdata, float* ginvcdf, float4* gsmatrix, volatile int* gprogress) {
 
     /** the 1D index of the current thread */
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
