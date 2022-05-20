@@ -1072,7 +1072,7 @@ void mcx_normalize(float field[], float scale, int fieldlen, int option, int pid
  */
 
 void mcx_flush(Config *cfg){
-#ifdef MCX_CONTAINER
+#if defined(MCX_CONTAINER) && (defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER))
     mcx_matlab_flush();
 #else
     fflush(cfg->flog);
@@ -3178,7 +3178,7 @@ void mcx_progressbar(float percent, Config *cfg){
         MCX_FPRINTF(stdout,(percentage<colwidth-18) ? ">" : "=");
         for(j=percentage;j<colwidth-18;j++) MCX_FPRINTF(stdout," ");
         MCX_FPRINTF(stdout,"] %3d%%" S_RESET,(int)(percent*100));
-#ifdef MCX_CONTAINER
+#if defined(MCX_CONTAINER) && (defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER))
         mcx_matlab_flush();
 #else
         fflush(stdout);
