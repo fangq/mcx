@@ -5,17 +5,17 @@
 **  \copyright Qianqian Fang, 2009-2021
 **
 **  \section sref Reference:
-**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
+**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
-**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
+**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
 **  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
 **          "Scalable and massively parallel Monte Carlo photon transport
-**           simulations for heterogeneous computing platforms," J. Biomed. Optics, 
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics,
 **           23(1), 010504, 2018. https://doi.org/10.1117/1.JBO.23.1.010504
-**  \li \c (\b Yan2020) Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel 
-**          based Monte Carlo algorithm for accurate and efficient photon transport 
-**          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) 
+**  \li \c (\b Yan2020) Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel
+**          based Monte Carlo algorithm for accurate and efficient photon transport
+**          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11)
 **          pp. 6262-6270. https://doi.org/10.1364/BOE.409468
 **
 **  \section slicense License
@@ -117,25 +117,25 @@
 #define UNSET_SAVE_IQUV(a)      ((a) & ~(0x1<<7))   /**<  unsave stokes parameters */
 
 #if !defined(MCX_CONTAINER) && !defined(_MSC_VER)
-  #define S_RED     "\x1b[31m"
-  #define S_GREEN   "\x1b[32m"
-  #define S_YELLOW  "\x1b[33m"
-  #define S_BLUE    "\x1b[34m"
-  #define S_MAGENTA "\x1b[35m"
-  #define S_CYAN    "\x1b[36m"
-  #define S_BOLD    "\x1b[1m"
-  #define S_ITALIC  "\x1b[3m"
-  #define S_RESET   "\x1b[0m"
+    #define S_RED     "\x1b[31m"
+    #define S_GREEN   "\x1b[32m"
+    #define S_YELLOW  "\x1b[33m"
+    #define S_BLUE    "\x1b[34m"
+    #define S_MAGENTA "\x1b[35m"
+    #define S_CYAN    "\x1b[36m"
+    #define S_BOLD    "\x1b[1m"
+    #define S_ITALIC  "\x1b[3m"
+    #define S_RESET   "\x1b[0m"
 #else
-  #define S_RED
-  #define S_GREEN
-  #define S_YELLOW
-  #define S_BLUE
-  #define S_MAGENTA
-  #define S_CYAN
-  #define S_BOLD
-  #define S_ITALIC
-  #define S_RESET
+    #define S_RED
+    #define S_GREEN
+    #define S_YELLOW
+    #define S_BLUE
+    #define S_MAGENTA
+    #define S_CYAN
+    #define S_BOLD
+    #define S_ITALIC
+    #define S_RESET
 #endif
 
 #endif

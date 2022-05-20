@@ -20,8 +20,8 @@
  * @param[in, out] seedbyte
  * @param[in] error_function
  */
-void mcx_replay_prep(Config *cfg, float *detps, int dimdetps[2], int seedbyte,
-                     const std::function<void(const char *)> &error_function);
+void mcx_replay_prep(Config* cfg, float* detps, int dimdetps[2], int seedbyte,
+                     const std::function<void(const char*)>& error_function);
 
 /**
  * @brief Validate all input fields, and warn incompatible inputs
@@ -30,7 +30,7 @@ void mcx_replay_prep(Config *cfg, float *detps, int dimdetps[2], int seedbyte,
  *
  * @param[in,out] cfg: the simulation configuration structure
  */
-void validate_config(Config *cfg, float *detps, int dimdetps[2], int seedbyte,
-                     const std::function<void(const char *)> &error_function);
+void validate_config(Config* cfg, float* detps, int dimdetps[2], int seedbyte,
+                     const std::function<void(const char*)>& error_function);
 
 #endif

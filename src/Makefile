@@ -287,7 +287,7 @@ pretty:
 	    --formatted \
 	    --break-blocks \
 	    --exclude=mcx_bench.c \
-	   *.c *.h *.cpp *.cu
+	   "*.c" "*.h" "*.cpp" "*.cu"
 
 .DEFAULT_GOAL := all
 

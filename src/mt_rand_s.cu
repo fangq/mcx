@@ -53,13 +53,13 @@
 #define NVG80                           /* For Nvidia G80 achitecture where mod is VERY slow */
 
 #ifdef NVG80
-#define mod(x, y)       ((x) < (y) ? (x) : (x) - (y))   /* Short mod - known input range */
+    #define mod(x, y)       ((x) < (y) ? (x) : (x) - (y))   /* Short mod - known input range */
 #else
-#define mod(x, y)       ((x) % (y))
+    #define mod(x, y)       ((x) % (y))
 #endif
 
 #ifdef _WIN32
-typedef unsigned int uint;
+    typedef unsigned int uint;
 #endif
 
 typedef char RandType;
@@ -84,9 +84,9 @@ typedef char RandType;
 
 // structure for fast int->float convert
 
-union ifconvert{
-     uint i;
-     float f;
+union ifconvert {
+    uint i;
+    float f;
 };
 
 /*************************************************************************************
@@ -98,30 +98,32 @@ __shared__ uint s_seeds[N + 1];
 __constant__ uint mag01[2] = {0, MATRIX_A};     /* 2 way bus conflict for each read */
 
 /* Init by single seed - single threaded as only used once */
-__device__ void 
-mt19937si(uint *n_seed,int idx)
-{
+__device__ void
+mt19937si(uint* n_seed, int idx) {
     int         i;
     uint     seed;
-    if (threadIdx.x == 0)
-    {
+
+    if (threadIdx.x == 0) {
         mtNexts = 0;
-        for (i = 0; i < RAND_SEED_LEN; i++){
-	    s_seeds[i] = n_seed[i];
+
+        for (i = 0; i < RAND_SEED_LEN; i++) {
+            s_seeds[i] = n_seed[i];
         }
-        seed=s_seeds[RAND_SEED_LEN-1];
-        for (i = RAND_SEED_LEN; i < N; i++){
+
+        seed = s_seeds[RAND_SEED_LEN - 1];
+
+        for (i = RAND_SEED_LEN; i < N; i++) {
             seed = (INIT_MULT * (seed ^ (seed >> 30)) + i);
             s_seeds[i] = seed;
         }
     }
+
     __syncthreads();                            /* Ensure mtNexts set & needed for mt19937w() */
     return;
 }
 /* Return next MT random by increasing thread ID for 1-227 threads. */
 __device__ uint
-mt19937s(void)
-{
+mt19937s(void) {
     int         kk;
     uint        y;
     const int   tid = threadIdx.x;
@@ -129,20 +131,21 @@ mt19937s(void)
     kk = mod(mtNexts + tid, N);
     __syncthreads();                            /* Finished with mtNexts & s_seed[] ready from last run */
 
-    if (tid == blockDim.x - 1)
-    {
+    if (tid == blockDim.x - 1) {
         mtNexts = kk + 1;                       /* Will get modded on next call */
     }
+
     y = (s_seeds[kk] & UPPER_MASK) | (s_seeds[kk + 1] & LOWER_MASK);
     y = s_seeds[kk < N - M ? kk + M : kk + (M - N)] ^ (y >> 1) ^ mag01[y & 1];
     //y = s_seeds[kk < N - M ? kk + M : kk + (M - N)] ^ (y >> 1) ^ (y & 1 ? MATRIX_A : 0);      // Same speed
     __syncthreads();                            /* All done before we update */
 
     s_seeds[kk] = y;
-    if (kk == 0)                                /* Copy up for next round */
-    {
+
+    if (kk == 0) {                              /* Copy up for next round */
         s_seeds[N] = y;
     }
+
     y ^= (y >> 11);                             /* Tempering */
     y ^= (y <<  7) & TEMPER1;
     y ^= (y << 15) & TEMPER2;
@@ -152,10 +155,10 @@ mt19937s(void)
 
 // Return calculated values
 __global__ void
-mt19937sc(int loops, uint* result, uint* seeds)
-{
-    mt19937si(seeds,blockIdx.x);
-    for (int i = 0; i < loops; ++i){
+mt19937sc(int loops, uint* result, uint* seeds) {
+    mt19937si(seeds, blockIdx.x);
+
+    for (int i = 0; i < loops; ++i) {
         result[(blockIdx.x * loops + i) * blockDim.x + threadIdx.x] = mt19937s();
     }
 }
@@ -166,27 +169,27 @@ mt19937sc(int loops, uint* result, uint* seeds)
 // the only purpose to keep them is to share the same format
 // as in logistic RNG
 
-__device__ void gpu_rng_init(char t[RAND_BUF_LEN], uint *n_seed,int idx){
-    mt19937si(n_seed+idx*RAND_SEED_LEN,idx);
+__device__ void gpu_rng_init(char t[RAND_BUF_LEN], uint* n_seed, int idx) {
+    mt19937si(n_seed + idx * RAND_SEED_LEN, idx);
 }
-__device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], uint cpuseed[],uint idx,float reseed){
+__device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], uint cpuseed[], uint idx, float reseed) {
 }
-__device__ void copystate(RandType *t,RandType *tnew){
+__device__ void copystate(RandType* t, RandType* tnew) {
 }
 // transform into [0,1] random number
-// use a trick found from 
+// use a trick found from
 // http://xor0110.wordpress.com/2010/09/24/how-to-generate-floating-point-random-numbers-efficiently/
-__device__ float rand_uniform01(uint ran){
+__device__ float rand_uniform01(uint ran) {
     ifconvert myran;
     myran.i = ran & 0x007fffff | 0x40000000;
-    return myran.f*0.5f-1.0f;
+    return myran.f * 0.5f - 1.0f;
 }
 // generate [0,1] random number for the next scattering length
-__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]){
+__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]) {
     return -logf(rand_uniform01(mt19937s()));
 }
 // generate [0,1] random number for the next arimuthal angle
-__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
+__device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]) {
     return rand_uniform01(mt19937s());
 }
 #define rand_next_zangle(t)  rand_next_aangle(t)
@@ -194,7 +197,7 @@ __device__ float rand_next_aangle(RandType t[RAND_BUF_LEN]){
 #define rand_do_roulette(t)  rand_next_aangle(t)
 
 // generate random number for the next zenith angle
-__device__ void rand_need_more(RandType t[RAND_BUF_LEN]){
+__device__ void rand_need_more(RandType t[RAND_BUF_LEN]) {
     // do nothing
 }
 #endif
