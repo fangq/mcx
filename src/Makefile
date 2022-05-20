@@ -265,5 +265,29 @@ cudasdk:
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
 	fi
 
+pretty:
+	astyle \
+	    --style=attach \
+	    --indent=spaces=4 \
+	    --indent-modifiers \
+	    --indent-switches \
+	    --indent-preproc-block \
+	    --indent-preproc-define \
+	    --indent-col1-comments \
+	    --pad-oper \
+	    --pad-header \
+	    --align-pointer=type \
+	    --align-reference=type \
+	    --add-brackets \
+	    --convert-tabs \
+	    --close-templates \
+	    --lineend=linux \
+	    --preserve-date \
+	    --suffix=none \
+	    --formatted \
+	    --break-blocks \
+	    --exclude=mcx_bench.c \
+	   *.c *.h *.cpp *.cu
+
 .DEFAULT_GOAL := all
 
