@@ -52,14 +52,15 @@
 #define MCX_CUDA_ERROR_LAUNCH_FAILED    719              /**< CUDA kernel launch error code */
 
 #ifndef MCX_CUDA_ARCH
-    #define MCX_CUDA_ARCH       100                        /**< fallback CUDA version */
+    #define MCX_CUDA_ARCH       100                      /**< fallback CUDA version */
 #endif
 
 #define MCX_ERROR(id,msg)   mcx_error(id,msg,__FILE__,__LINE__)  /**< macro for error handling */
 #define MIN(a,b)           ((a)<(b)?(a):(b))             /**< macro to get the min values of two numbers */
 #define MAX(a,b)           ((a)>(b)?(a):(b))             /**< macro to get the max values of two numbers */
 
-typedef unsigned int uint;                         /**< use uint for unsigned int */
+typedef unsigned int   uint;                             /**< use uint for unsigned int */
+typedef unsigned short ushort;                           /**< use ushort for unsigned short */
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB, mpPython};                   /**< whether MCX is run in binary or mex mode */

@@ -2489,7 +2489,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
 #ifdef _WIN32
     /** \c updateprogress - CUDA event needed to avoid hanging on Windows, see https://forums.developer.nvidia.com/t/solved-how-to-update-host-memory-variable-from-device-during-opencl-kernel-execution/59409/5 */
-    cudaEvent_t updateprogress;
+    cudaEvent_t updateprogress = NULL;
 #endif
 
     /** all pointers start with g___ are the corresponding GPU buffers to read/write host variables defined above */
