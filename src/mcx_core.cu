@@ -1933,7 +1933,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                 GPUDEBUG(("deposit to [%d] %e, w=%f\n", idx1dold, weight, p.w));
 
-                if (weight > 0.f) {
+                if (weight > 0.f || gcfg->outputtype == otRF) {
 #ifdef USE_ATOMIC
 
                     if (!gcfg->isatomic) {
