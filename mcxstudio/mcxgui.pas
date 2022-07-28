@@ -824,7 +824,7 @@ begin
       ckSaveDetector.Checked:=true;   //-d
       ckSaveRef.Checked:=false;  //-X
       ckSrcFrom0.Checked:=true;  //-z
-      ckSkipVoid.Checked:=false;  //-k
+      ckSkipVoid.Checked:=true;  //-k
       ckAutopilot.Checked:=true;
       ckSaveSeed.Checked:=false;
       ckSaveMask.Checked:=false;
@@ -3173,9 +3173,9 @@ begin
             end;
         end;
     end;
-    if(ckSkipVoid.Checked) then begin
-        param.Add('--skipvoid');
-        param.Add('1');
+    if(not ckSkipVoid.Checked) then begin
+        param.Add('--voidtime');
+        param.Add('0');
     end;
     debugflag:='';
     for i:=0 to ckbDebug.Items.Count-1 do begin
