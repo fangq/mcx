@@ -2470,8 +2470,14 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->srcdir.z = subitem->child->next->next->valuedouble;
 
                 if (subitem->child->next->next->next) {
-                    if (cJSON_IsString(subitem->child->next->next->next) && strcmp(subitem->child->next->next->next->valuestring, "_NaN_") == 0) {
-                        cfg->srcdir.w = NAN;
+                    if (cJSON_IsString(subitem->child->next->next->next)) {
+                        if (strcmp(subitem->child->next->next->next->valuestring, "_NaN_") == 0) {
+                            cfg->srcdir.w = NAN;
+                        } else if (strcmp(subitem->child->next->next->next->valuestring, "_Inf_") == 0) {
+                            cfg->srcdir.w = (1.f / 0.f);
+                        } else if (strcmp(subitem->child->next->next->next->valuestring, "-_Inf_") == 0) {
+                            cfg->srcdir.w = -(1.f / 0.f);
+                        }
                     } else {
                         cfg->srcdir.w = subitem->child->next->next->next->valuedouble;
                     }

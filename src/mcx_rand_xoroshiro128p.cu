@@ -37,12 +37,6 @@
 #include <float.h>
 #include <stdint.h>
 
-#if defined(__clang__) || defined(_MSC_VER)
-    #include "mcx_ieee754.h"
-#else
-    #include <ieee754.h>
-#endif
-
 #define MCX_RNG_NAME       "xoroshiro128+"
 
 #define RAND_BUF_LEN       2        //register arrays
@@ -61,7 +55,6 @@ __device__ uint64_t rotl(const uint64_t x, int k) {
 
 __device__ float xoroshiro128p_nextf(RandType t[RAND_BUF_LEN]) {
     union {
-        ieee754_double dd;
         uint64_t i;
         float f[2];
         uint  u[2];

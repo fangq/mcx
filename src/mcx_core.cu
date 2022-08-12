@@ -1381,6 +1381,13 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     ang = acosf(2.f * rand_uniform01(t) - 1.f); //sine distribution
                     sincosf(ang, &stheta, &ctheta);
                     rotatevector(v, stheta, ctheta, sphi, cphi);
+                } else if (gcfg->c0.w < 0.f && isinf(gcfg->c0.w)) { // lambertian (cosine distribution) if focal length is -inf
+                    float ang, stheta, ctheta, sphi, cphi;
+                    ang = TWO_PI * rand_uniform01(t); //next arimuth angle
+                    sincosf(ang, &sphi, &cphi);
+                    stheta = sqrtf(rand_uniform01(t));
+                    ctheta = sqrtf(1.f - stheta * stheta);
+                    rotatevector(v, stheta, ctheta, sphi, cphi);
                 } else if (gcfg->c0.w != 0.f) {
                     float Rn2 = (gcfg->c0.w > 0.f) - (gcfg->c0.w < 0.f);
                     rv->x += gcfg->c0.w * v->x;
