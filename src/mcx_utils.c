@@ -2474,9 +2474,9 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         if (strcmp(subitem->child->next->next->next->valuestring, "_NaN_") == 0) {
                             cfg->srcdir.w = NAN;
                         } else if (strcmp(subitem->child->next->next->next->valuestring, "_Inf_") == 0) {
-                            cfg->srcdir.w = (1.f / 0.f);
+                            cfg->srcdir.w = INFINITY;
                         } else if (strcmp(subitem->child->next->next->next->valuestring, "-_Inf_") == 0) {
-                            cfg->srcdir.w = -(1.f / 0.f);
+                            cfg->srcdir.w = -INFINITY;
                         }
                     } else {
                         cfg->srcdir.w = subitem->child->next->next->next->valuedouble;
