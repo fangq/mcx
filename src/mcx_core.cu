@@ -1295,7 +1295,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     float phi = TWO_PI * rand_uniform01(t);
                     sincosf(phi, &sphi, &cphi);
 
-                    float r = sqrtf(-0.5f * logf(rand_uniform01(t))) * gcfg->srcparam1.x;
+                    float r = sqrtf(0.5f * rand_next_scatlen(t)) * gcfg->srcparam1.x;
 
                     /** parameter to generate photon path from coordinates at focus (depends on focal distance and rayleigh range) */
                     float tt = -gcfg->srcparam1.y / gcfg->srcparam1.z;
