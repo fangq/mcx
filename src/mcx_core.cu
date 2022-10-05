@@ -1220,10 +1220,10 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (gcfg->srctype == MCX_SRC_DISK) {
                         r = sqrtf(rand_uniform01(t) * fabs(gcfg->srcparam1.x * gcfg->srcparam1.x - gcfg->srcparam1.y * gcfg->srcparam1.y) + gcfg->srcparam1.y * gcfg->srcparam1.y);
                     } else if (fabs(gcfg->c0.w) < 1e-5f || fabs(gcfg->srcparam1.y) < 1e-5f) {
-                        r = sqrtf(-0.5f * logf(rand_uniform01(t))) * gcfg->srcparam1.x;
+                        r = sqrtf(0.5f * rand_next_scatlen(t)) * gcfg->srcparam1.x;
                     } else {
                         r = gcfg->srcparam1.x * gcfg->srcparam1.x * M_PI / gcfg->srcparam1.y; //Rayleigh range
-                        r = sqrtf(-0.5f * logf(rand_uniform01(t)) * (1.f + (gcfg->c0.w * gcfg->c0.w / (r * r)))) * gcfg->srcparam1.x;
+                        r = sqrtf(0.5f * rand_next_scatlen(t) * (1.f + (gcfg->c0.w * gcfg->c0.w / (r * r)))) * gcfg->srcparam1.x;
                     }
 
                     if ( v->z > -1.f + EPS && v->z < 1.f - EPS ) {
@@ -1283,7 +1283,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     float ang, stheta, ctheta, sphi, cphi;
                     ang = TWO_PI * rand_uniform01(t); //next arimuth angle
                     sincosf(ang, &sphi, &cphi);
-                    ang = sqrtf(-2.f * logf(rand_uniform01(t))) * (1.f - 2.f * rand_uniform01(t)) * gcfg->srcparam1.x;
+                    ang = sqrtf(2.f * rand_next_scatlen(t)) * (1.f - 2.f * rand_uniform01(t)) * gcfg->srcparam1.x;
                     sincosf(ang, &stheta, &ctheta);
                     rotatevector(v, stheta, ctheta, sphi, cphi);
                     canfocus = 0;
