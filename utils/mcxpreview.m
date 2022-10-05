@@ -68,6 +68,10 @@ for i=1:len
     if(isfield(cfg(i),'vol') && ~isfield(cfg(i),'node'))
         % render mcxlab voxelated domain
         dim=size(cfg(i).vol);
+        if(ndims(cfg(i).vol)==4) % for spatially varying medium
+            dim=dim(2:end);
+            cfg(i).vol=ones(dim);
+        end
         [bbxno,bbxfc]=latticegrid(0:dim(1):dim(1),0:dim(2):dim(2),0:dim(3):dim(3));
         hbbx=plotmesh((bbxno+offset)*voxelsize,bbxfc,'facecolor','none');
 
