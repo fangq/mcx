@@ -10,7 +10,7 @@
 
 #define MyAppName "MCX Studio"
 #define MyAppDir "MCXStudio"
-#define MyAppVersion "v2021.2"
+#define MyAppVersion "v2022.10"
 #define MyAppPublisher "COTILab"
 #define MyAppURL "http://mcx.space"
 #define MyAppExeName "mcxstudio.exe"
