@@ -2,8 +2,247 @@
 
 Major updates are marked with a "*"
 
+== MCX v2022.10 (Heroic Hexagon - 1.9.7), FangQ <q.fang (a) neu.edu> ==
+
+ 2022-10-05 [dc42951] prevent nan where log(rand) is calculated
+ 2022-10-05 [63ffc1e] fix nan in detected photon data when using hyperboloid src, see https://groups.google.com/g/mcx-users/c/vyfHbzEO-0M/m/JzlpEZ3TBwAJ
+ 2022-09-07 [e281f3e] allow to preview continuously varying medium (4D cfg.vol)
+ 2022-08-19 [10330ef] fix windows compilation error
+ 2022-08-17 [bbb4425] prevent zero-valued mus creating nan, #133
+ 2022-08-12 [51f42f5] fix mcxlab log printing caused by commit f3beb75a
+ 2022-08-12 [7058785] Lambertian launch for all focusable sources when focal-length is -inf
+ 2022-07-28 [6d64c0b] fix incorrect flag for skipvoid
+ 2022-06-27 [3d4fb26] partially fix rf replay
+ 2022-06-04 [8af3631] fix line source
+ 2022-05-22 [149b1ef] make code compile on windows
+ 2022-05-20 [e87bb49] use consistent file naming convention, remove outdated units
+ 2022-05-20 [45d84d3] complete reformat source code using astyle, always run make pretty before committing
+ 2022-05-20 [aff8ff0] add source code formatting option
+ 2022-05-20 [f3beb75] use MATLAB_MEX_FILE to determine container environment
+ 2022-05-18 [1295024] fix incorrect trajectory id, fix #147
+ 2022-05-18 [ccd2deb] fix macro condition
+ 2022-05-18 [6f4ee88] use MCX_CONTAINER and env macros to replace extra PYMCX_CONTAINER
+ 2022-05-16 [6fa1580] avoid using clear all and ~ in return value
+ 2022-05-16 [21f9bd7] merge changes with @ShijieYan's svmc fix
+ 2022-05-16 [8b2740f] debugging svmc crashes
+ 2022-05-16 [7582a6e] fix svmc issue after patch f8da832f11b751c07d33c77dd7d428a2c75a888b
+ 2022-05-15 [188ac2a] Added Pybind11's license info to README.md.
+ 2022-05-15 [86529cf] Added PYMCX_CONTAINER compilation macro. Added support for extracting MCX_ERRORs like Mex + author fix.
+ 2022-05-15 [b58ad88] Renamed gpu_info to gpuinfo for consistency.
+ 2022-05-15 [0582974] changed issaveref to accept ints.
+ 2022-05-15 [1cf1b3b] Added py::value_error handling + additional error checking for volume assurance.
+ 2022-05-15 [7df8938] Added better + more informative exception handling for pymcx.
+ 2022-05-15 [6a741e8] Changed reinterpret_casts to direct object construction + added the stat dict to the output dict + defined PYBIND11_DETAILED_ERROR_MESSAGES for easier debugging.
+ 2022-05-15 [e4547ba] add pybind11 as submodule to build pymcx
+ 2022-05-13 [f8da832] fix cyclic bc demo and srctype demo error, svmc still not working
+ 2022-05-13 [4bd3974] report register counts on sm_60 using nvcc --ptxas-options=-v
+ 2022-05-13 [e8f6a2d] fix cfg.unitinmm does not exist error
+ 2022-05-13 [447975f] complete dda ray-marching, cube60 benchmark gain 40% speed, others are similar
+ 2022-05-12 [b873f90] add integer voxel indices to avoid nextafter
+ 2022-05-11 [32d46cd] merge additional updates from mcxcl version of json2mcx, #139
+ 2022-05-11 [3d6d7df] fix bugs in json2mcx, #139
+ 2022-05-08 [3b1c320] Removed nlhs argument left from Matlab.
+ 2022-05-08 [61cc994] Fixed issue with std::cout and std::cerr flush.
+ 2022-05-06 [d9793e9] Added working setup.py.
+ 2022-05-03 [a3e47c8] Minor fix.
+ 2022-05-02 [c9bedd6] Moved validate_config.
+ 2022-05-02 [5427ece] Working prototype with different volume configs.
+ 2022-05-02 [739b7ea] Moved some stuff to interface-common.cpp.
+ 2022-05-02 [d852a87] Minor bug fixes.
+ 2022-05-01 [f4cd3c3] Added kwargs version of mcx.
+ 2022-05-01 [baa5fdd] Skeleton is done.
+ 2022-04-24 [e919716] Prints GPU info.
+ 2022-04-23 [0c7b6a7] Working interface and CMakeLists.txt file.
+ 2022-04-19 [c710c3c] update ubj parser, update jnifti metadata
+ 2022-04-15 [4033c54] mcxlab bug fix: digimouse atlas voxel size is 0.2mm, not 0.8mm
+ 2022-04-15 [9b17eee] critical bug fix: digimouse atlas voxel size is 0.2mm, not 0.8mm
+ 2022-03-31 [df6c311] Add viewing axis selection
+ 2022-03-25 [04f1565] Add optimized isosurface rendering; add the ability to view cross-sectional slices of geometry
+ 2022-03-23 [200decb] Remove testing files
+ 2022-03-23 [e434553] Remove unnecessary variable
+ 2022-03-22 [ebd5bee] update ubj to support BJData Draft 2, add JNIfTI _DataInfo_, fix #142
+ 2022-03-21 [6de0855] Enable event-based repainting; re-add shader refinement, remove animation frame bugs; remove unnecessary shader branches and discards
+ 2022-03-19 [7ef65a8] Added event-based repainting; shader optimizations
+ 2022-03-05 [a93f6fa] save user info in local storage to avoid retyping
+ 2022-03-05 [34d9afa] fix SaveDataFlag invisible bug
+ 2022-02-18 [f051314] add missing voxel unit
+ 2022-02-03 [23bf5b2] lowering default photon number so it can be launched on most gpus
+ 2022-01-31 [220d9c2] fix incorrect type for gsmatrix
+ 2022-01-31 [28e20d6] fix windows vs warning
+ 2022-01-29 [6a9ad2f] update mcx_utils to use the Mie interface
+ 2022-01-29 [13679e9] fix compilation issue of mcx_mie.cpp using MSVC, close #138
+ 2022-01-28 [d7daf57] manually resolve complaint in CUDA 9
+ 2022-01-28 [e99edb2] update .travis.yml
+ 2022-01-28 [533c8ce] manually add mcx_mie in Makefile
+ 2022-01-28 [e56b5cb] improve complex arithmetic compatablity with MSVC
+ 2022-01-27 [a0ed0e7] add Mie function modules into cmake
+ 2022-01-27 [c350c67] seperate Mie scattering functions from mcx_utils.h
+ 2022-01-27 [0d51bb7] add missing i detflag in command line
+ 2022-01-27 [9b74e4b] fix: add save detector flag for Stokes vectors
+ 2022-01-26 [077060a] use static_cast in mcxlab so that cfg.vol can be realloc in mcx_shapes
+ 2022-01-26 [8503125] do not reset cfg.vol when rasterizing cfg.shapes
+ 2022-01-26 [3f22070] fix normalization in multiple detector RF replay
+ 2022-01-26 [cdfd468] apply normalization to both real and imaginary jacobain for RF replay
+ 2022-01-26 [87a310e] one can use ~ to ignore fluence output in octave, not in matlab
+ 2022-01-26 [d45f084] allow users to explicitly disable fluence output by accepting cfg.issave2pt
+ 2022-01-25 [376a730] partial fix to RF Jacobian calculation, need verification
+ 2022-01-25 [d6e2b9e] NaN value in mua_float and muamus_float signifies a 0-value voxel
+ 2022-01-24 [c9f2ad9] force threejs version to avoid breaking update in R136
+ 2022-01-14 [51483eb] add template specialization for polarized mode
+ 2022-01-12 [3487dfe] update the example for the polarized MCX
+ 2021-12-15 [b9e046a] fix out of bounds error due to limited precision of R_PI
+ 2021-12-15 [3b10265] fix the built-in example to match the update in e5dfd78f28f31d710e02206cb2835aabcd4d5508
+ 2021-12-15 [dbe17af] no Stoke vector output for unpolarized MCX simulation
+ 2021-12-15 [99293dd] add sanity check for incident Stokes vector
+ 2021-12-13 [f1537bd] no need to check constant memory usage in polarized mode
+ 2021-12-13 [61281ae] use prop.g to return the anisotropy computed from Mie
+ 2021-12-12 [3b0ecc0] fix #133, handling underflowing denorms in float to half conversion for muamus_float
+ 2021-12-11 [979f691] Move scattering matrix from constant memory to global memory
+ 2021-11-29 [5c13f4b] avoid divided by zero on windows cygwin gcc
+ 2021-11-29 [ef57f4b] allow make double to compile
+ 2021-11-28 [0c96fe8] accept JData styled NaN in the JSON input for srcdir
+ 2021-11-26 [a4545a4] fix #131, mcxplotshapes now plots shapes with correct scale
+ 2021-11-04 [2585471] making svmc matlab demos compatible with Octave 5
+ 2021-11-03 [5976811] replace matlab-only function with more portable code
+ 2021-11-01 [37e121c] update preprint version url
+ 2021-10-21 [7a77bf7] display rendering frame rate
+ 2021-10-18 [99592c1] fix: #114 improve robustness to unknown boundry conditions
+ 2021-10-14 [1aa2922] feat: Add one-sheet hyperboloid gaussian beam
+ 2021-10-07 [86d56c2] feat: output prop. along with det. photon profile
+ 2021-10-07 [24f4698] fix: ensure the largest grid to be accumulated
+ 2021-10-06 [e5dfd78] feat: Support target mus or musp in polarized MCX
+ 2021-10-06 [ae9216d] remove old det photon data after a new simulation
+ 2021-10-05 [8cb21b5] support downloading detected photon data in mcxcloud
+ 2021-10-04 [81ff4b1] fix rf replay bugs reported by Pauliina Hirvi
+ 2021-09-24 [833bf6a] Reorganize some kernel code to optimize SVMC speed
+ 2021-09-20 [605c15f] Fix numerical error of intersection test in SVMC
+ 2021-09-20 [392ee87] Reorder code to fix photon detection for SVMC
+ 2021-09-07 [5c44c6e] fix trajectory saving buffer length bug
+ 2021-08-20 [99ea2b6] avoid continuous mua/mus inputs be treated as 0-label if mua=mus=0
+ 2021-08-01 [943197a] Reorder preprocessing code to allow detector in SVMC Mask detector voxels only after the volume has been fully prepared!
+ 2021-07-27 [65359f7] avoid extra level of square brackets for Optode.Detector
+ 2021-07-27 [6b2f074] accept 3-element param1
+ 2021-07-27 [2633bfb] avoid param1 missing error if not present
+ 2021-07-23 [192613b] fix offset of cylinder along the axis direction, close #119
+ 2021-07-17 [fc0465d] add tutorial 2 link
+ 2021-07-17 [8c72d17] restore accidentally removed analytics tag
+ 2021-07-13 [566df5e] provide flags to help access the detp.jdat file
+ 2021-07-12 [b97c0f6] return metadata when loading simulation from library
+ 2021-07-12 [3be6603] add default tab in the direct link,return mcx error if failed
+ 2021-07-12 [70fb2a7] fix mixlabel byte order
+ 2021-07-11 [24df0c3] add comment on raw voxel binary data layout
+ 2021-07-07 [53d7ac0] fix shared mem misalignment error, close #118
+ 2021-07-06 [7f8a2ac] allow ArrayZipSize to accept 1x2 array
+ 2021-07-05 [9b00fa3] fix initial tab
+ 2021-07-05 [2737853] deep copy data.options to avoid script error
+ 2021-07-05 [0398b95] fix several bug while recording utorials
+ 2021-07-04 [f5974ed] add preprint link
+ 2021-07-04 [5d21a0d] create mcx cloud tutorial, add link
+ 2021-07-03 [df0a48b] support tab param in url to open default tab
+ 2021-07-03 [4c3f240] link json in direct link, remove schema
+ 2021-07-03 [da6595e] add newline to json file download
+ 2021-07-03 [cc3c06d] fix X/Y/ZSlabs parsing, restore original schemas
+ 2021-07-03 [7c5054d] internal normalization of srcdir
+ 2021-07-02 [877e9fe] get user id and group at runtime
+ 2021-07-02 [22d6ffe] fix X/Y/ZSlabs schemas
+ 2021-07-01 [270bb7c] prepare for beta testing
+ 2021-06-30 [4b6df28] rename mcxone to mcxcloud, add help info
+ 2021-06-30 [66b77fb] partial fix of json2mcx.m conversion issues
+ 2021-06-25 [c399efa] enable negative g value support
+ 2021-06-23 [3c642ce] set maximum characters to read for fscanf, fix #117
+ 2021-06-23 [606b3d1] handle empty detector array in json2mcx
+ 2021-06-22 [b537143] give a warning if the output type is not jacobian in replay
+ 2021-06-17 [363d2d8] support reading .jdat file for replay
+ 2021-06-04 [7191ca3] make thumbnail the same size when updating
+ 2021-06-04 [5a2e13e] add tab overflow control
+ 2021-06-04 [59e6be2] layout adjustments
+ 2021-06-04 [4b55c88] minor polishing
+ 2021-06-03 [1c29578] fix regression
+ 2021-06-03 [3aedee6] add LengthUnit, MediaFormat in schema, support number and string for DebugFlag/SaveDataMask
+ 2021-06-03 [64c5dd0] fix unnecessary shared memory allocation related to invcdf
+ 2021-06-03 [ebf1ea1] support user-defined phase functions via cfg.invcdf, close #13
+ 2021-06-03 [0731511] revert back to no restarting policy so that overtime jobs can be killed
+ 2021-06-02 [4d2a891] process cache,fix fullname,fix job status,fix server-side limit,kill overtime job
+ 2021-06-02 [a08d676] update the skinvessel benchmark
+ 2021-06-02 [168db14] feat: save Mie function outputs mus, g to a file
+ 2021-06-02 [57a44c5] feat: Add anisotropy g as an output of Mie func.
+ 2021-06-02 [7387394] finally fix crossdomain post, change jsonp to json,test simu lib edit
+ 2021-06-01 [95c6e1d] test:use default BC for all polarizedMC benchmarks
+ 2021-06-01 [98697de] Add a three-layer slab demo for polarizedMC
+ 2021-06-01 [7d86804] Add visualization for polarized MC example(MATLAB)
+ 2021-05-31 [7d82a51] fix: resolve valgrind complaint: uninit. values
+ 2021-05-31 [d6c9743] Add outputs in mcx2json.m to support polarizedMC
+ 2021-05-31 [5088678] Add an example for polarized MC
+ 2021-05-31 [d3054fd] Add document for polarized MC in mcxlab
+ 2021-05-31 [44e0e9c] fea: extend loadmch.m to load output Stokes vector
+ 2021-05-31 [a51cb52] feat: support polarized MC in command line (JSON)
+ 2021-05-30 [d7921fe] skip checklimit if json is directly loaded from lib
+ 2021-05-30 [65870f5] gui fine adjustment,use hash to update runcount,enable restart on fail,permit mcxpub update
+ 2021-05-30 [692adfb] fix broken link
+ 2021-05-30 [7a159ab] merge css
+ 2021-05-30 [55bb1ea] initial drag and drop support, not working
+ 2021-05-30 [fc9ca38] add meta headers, other minor adjustments
+ 2021-05-29 [96cf071] support embedding src pattern in the all-in-one json/jdata file
+ 2021-05-28 [450462c] Add document for functions used in polarized MC
+ 2021-05-28 [cbc3340] Optimize Stokes vector computation
+ 2021-05-28 [9bd2ce0] Remove redundant code in preprocessing
+ 2021-05-28 [06a9c6b] fix: resolve nan results due to numerical error
+ 2021-05-28 [d9d1d0a] rewrite some code to save computation
+ 2021-05-28 [9195141] Add an example to show polarized photon simulation
+ 2021-05-27 [2b87275] fix: rewrite code for better readability
+ 2021-05-26 [d836c81] fix: correct formula for stokes parameter update
+ 2021-05-25 [105d5a9] feat: Add stokes parameter output in MCXLAB
+ 2021-05-25 [87d8847] feat: add polarized photon simulation
+ 2021-05-23 [d398cc9] add simulation restrictions for initial public testing of mcx cloud
+ 2021-05-23 [26536d3] feat: add preprocessing for polarized MC in mcxlab
+ 2021-05-22 [f0975c5] support ring/annulus shaped source via disk source
+ 2021-05-21 [6ed9727] support svmc in command line;add svmc example
+ 2021-05-21 [3d0a793] reading 8-byte svmc volume format from input file
+ 2021-05-20 [4010d99] move svmc repacking to mcx_preprocess
+ 2021-05-20 [3214c1b] remove duplicated preprocessing codes in mcx and mcxlab,fix detbc bug in command line
+ 2021-05-20 [54b0602] run batch of jobs in each call to fill all GPU devices
+ 2021-05-20 [de9850c] add -K short option and svmc mediatype
+ 2021-05-19 [660a8b8] relocate db and workspace folder to non www-data accessible paths
+ 2021-05-19 [64f3008] update acknowledgement list
+ 2021-05-19 [c168a87] can update thumbnail, add credit links
+ 2021-05-19 [b9361a1] update to mcxcloud scripts
+ 2021-05-15 [cef630b] save volume in jdata format by default
+ 2021-05-15 [c50f871] define Frequency in json file instead of Omega
+ 2021-05-15 [b4e7b57] initial support RF mua Jacobian in replay, thx Ilkka Nissilä, formula based on Juha Heiskala PhD thesis p45
+ 2021-05-10 [073b168] mcxcloud initial preview at JBO hot-topics
+ 2021-05-05 [5732e6a] update front and backends
+ 2021-05-01 [ee3f88d] update and rename mcxcloudd and mcxserver.cgi
+ 2021-05-01 [eac952d] fix cylinder schema, add footer
+ 2021-04-14 [aaa1eab] add download, fix jsonp callback, render output volume
+ 2021-04-10 [aaef1f3] draw 3d fluence,use orth camera,add cancel
+ 2021-04-04 [4ab8105] add src rendering, fix material color
+ 2021-04-02 [1ed5272] fix cylinder and layer object drawing bug
+ 2021-04-02 [f4ba0b4] add md5 digest for each submitted json for cache lookup
+ 2021-03-31 [2c55c3b] change basic tab name
+ 2021-03-31 [3c466a1] now mcxcloud can render 3D volumes, float32 buffer only
+ 2021-03-29 [b379b2b] initial support in rendering 3d volume, add schema to support jdata ND array
+ 2021-03-28 [31345a1] support Domain.Volume to encode JData-formatted 3D array
+ 2021-03-28 [9c2e8c7] rendering all shape types, bbx as dashed box,add tag based material color
+ 2021-03-27 [9f6e82c] avoid repainting preview
+ 2021-03-26 [5109d29] add normal material, add box, subgrid and cylinder
+ 2021-03-25 [ad0b814] draw grid from Domain.Dim
+ 2021-03-25 [9b0cf95] fine tune fonts, add big tab initial screen, add svg background, add funding info
+ 2021-03-25 [77f8f7a] add three.js for 3d preview
+ 2021-03-24 [4274c77] rename mcxcloud.txt to mcxcloud
+ 2021-03-24 [dc25a87] add mcx cloud service server and client files, partially working
+ 2021-03-22 [f9bc07c] use tabs in mcxone, add jquery by default
+ 2021-03-18 [d8b88e1] fix unwanted double-precision math functions
+ 2021-03-11 [f6ce5bd] update variable and function name to follow the convention
+ 2021-03-11 [ca2ce60] add example: comparison of surface diffuse reflectance between MC and Diffusion
+ 2021-03-05 [bcbb324] change window sizes using 96dpi default setting
+ 2021-03-05 [5c8d27f] fix Name shape object schema
+ 2021-03-03 [02add69] MCX json schema and json editor are working, added more Shapes objects
+ 2021-03-01 [940d725] wrapping up json input import feature in mcxstudio
+ 2021-02-28 [64d629c] parse src/detector, media and shape
+
 == MCX v2021.2 (Glossy Gluon - 1.9), FangQ <q.fang (a) neu.edu> ==
 
+ 2021-02-27 [a3b8457]*open/import JSON input file in MCX Studio
  2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
  2020-10-22 [991910e] add function comment and revert unnecessary changes
  2020-10-22 [3343338]*add benchmarks from SVMC paper to mcxlab
