@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.145.0/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/load_avg@0.16.0/build/stats.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
@@ -2191,6 +2191,7 @@ function updatethumb(lastdatastr='', waittime=0){
     drawpreview(cfg);
   }
   if(waittime>0){
+    renderer.updateComplete = false;
     sleep(waittime).then(() => {
       let screenshot = renderer.domElement.toDataURL("image/png");
       $("#thumbnail").attr('src', screenshot);
@@ -2669,6 +2670,7 @@ function drawvolume(volume){
   texture.type = THREE.FloatType;
   texture.minFilter = texture.magFilter = THREE.LinearFilter;
   texture.unpackAlignment = 1;
+  texture.needsUpdate = true;
 
   // Colormap textures
   const cmtextures = {
