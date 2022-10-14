@@ -2687,8 +2687,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         param.threadphoton = gpuphoton / gpu[gpuid].autothread;
         param.oddphotons = gpuphoton - param.threadphoton * gpu[gpuid].autothread;
     } else if (cfg->respin < 0) {
-        param.threadphoton = -gpuphoton / gpu[gpuid].autothread / cfg->respin;
-        param.oddphotons = -gpuphoton / cfg->respin - param.threadphoton * gpu[gpuid].autothread;
+        param.threadphoton = gpuphoton / gpu[gpuid].autothread / (-cfg->respin);
+        param.oddphotons = gpuphoton / (-cfg->respin) - param.threadphoton * gpu[gpuid].autothread;
     } else {
         mcx_error(-1, "respin number can not be 0, check your -r/--repeat input or cfg.respin value", __FILE__, __LINE__);
     }
