@@ -932,7 +932,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
 
         /** If error is detected, gracefully terminate the mex and return back to Python */
         if (!exception_msgs.empty()) {
-            throw py::runtime_error("MCX Terminated due to an exception!");
+            throw py::runtime_error("PyMCX terminated due to an exception!");
         }
 
         field_dim[4] = 1;
@@ -954,7 +954,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
             }
 
             mcx_config.exportdebugdata = nullptr;
-            output["photontraj"] = photon_traj_data;
+            output["traj"] = photon_traj_data;
         }
 
         if (mcx_config.issaveseed == 1) {
@@ -966,7 +966,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
             memcpy(detected_seeds.mutable_data(), mcx_config.seeddata, field_dim[0] * field_dim[1]);
             free(mcx_config.seeddata);
             mcx_config.seeddata = nullptr;
-            output["detectedseeds"] = detected_seeds;
+            output["seeds"] = detected_seeds;
         }
 
         if (user_cfg.contains("dumpmask") && py::bool_(user_cfg["dumpmask"]).cast<bool>()) {
@@ -979,7 +979,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
                 auto detector_vol = py::array_t<uint32_t, py::array::f_style>({field_dim[0], field_dim[1], field_dim[2]});
                 memcpy(detector_vol.mutable_data(), mcx_config.vol,
                        field_dim[0] * field_dim[1] * field_dim[2] * sizeof(unsigned int));
-                output["detector"] = detector_vol;
+                output["vol"] = detector_vol;
             }
         }
 
@@ -993,7 +993,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
                 auto partial_path = py::array_t<float, py::array::f_style>({field_dim[0], mcx_config.detectedcount});
                 memcpy(partial_path.mutable_data(), mcx_config.exportdetected,
                        field_dim[0] * field_dim[1] * sizeof(float));
-                output["partialpath"] = partial_path;
+                output["detphotons"] = partial_path;
             }
 
             free(mcx_config.exportdetected);
@@ -1045,7 +1045,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
 
             auto data = py::array_t<float, py::array::f_style>(array_dims);
             memcpy(data.mutable_data(), mcx_config.exportfield, field_len * sizeof(float));
-            output["data"] = data;
+            output["flux"] = data;
             free(mcx_config.exportfield);
             mcx_config.exportfield = nullptr;
             // Stat dictionary output
@@ -1075,7 +1075,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
 
                 auto opt_properties = py::array_t<float, py::array::f_style>({4, int(mcx_config.medianum)});
                 memcpy(opt_properties.mutable_data(), mcx_config.prop, mcx_config.medianum * 4 * sizeof(float));
-                output["opticalprops"] = opt_properties;
+                output["prop"] = opt_properties;
             }
         }
     } catch (const char* err) {
@@ -1127,7 +1127,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PyMCX v2022\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
+            << "PyMCX v2022.10\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
 }
 
 py::dict py_mcx_interface_wargs(py::args args, const py::kwargs& kwargs) {

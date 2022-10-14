@@ -5,14 +5,16 @@
 ############################################################
 
 PKGNAME=mcx
-VERSION=1.0.0
+VERSION=1.9.7
 SOURCE=src
 GUI=mcxstudio
 
-all: bin/$(PKGNAME) bin/$(GUI) mex deb rpm
+all: bin gui mex deb rpm
 
+bin: bin/$(PKGNAME)
 bin/$(PKGNAME):
 	-$(MAKE) -C $(SOURCE) static
+gui: bin/$(GUI)
 bin/$(GUI):
 	-$(MAKE) -C $(GUI)
 	-$(COPY) -a $(GUI)/debug/$(GUI) bin
@@ -43,4 +45,5 @@ clean:
 	-rm -rf debian rpmroot pkg.info $(PKGNAME)*-$(VERSION).deb $(PKGNAME)*-$(VERSION)*.rpm
 
 .DEFAULT_GOAL := bin/$(PKGNAME)
+.PHONY: all mex deb rpm mexdeb guideb
 
