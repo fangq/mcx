@@ -1761,10 +1761,6 @@ void mcx_prepdomain(char* filename, Config* cfg) {
     }
 
     if (cfg->seed == SEED_FROM_FILE && cfg->seedfile[0]) {
-        if (!(cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF)) {
-            MCX_FPRINTF(stderr, S_RED "replay is detected but the output datatype (-O) is not one of j,p,m or r\n" S_RESET);
-        }
-
         if (strstr(cfg->seedfile, ".jdat") != NULL) {
             mcx_loadseedjdat(cfg->seedfile, cfg);
         } else {
