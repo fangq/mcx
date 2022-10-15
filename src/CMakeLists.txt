@@ -3,6 +3,13 @@
 #  Qianqian Fang <q.fang at neu.edu>
 #  2018/08/26
 #################################################################
+# Note: when multiple gcc versions are installed, cmake may find
+# the highest version, but nvcc may throw an error saying it does
+# not support this gcc version. To solve this, one should run
+#      CC=gcc-X CXX=g++-X cmake ..
+# where "X" is the version (such as 9) that both installed on
+# your system and is supported by nvcc
+#################################################################
 
 cmake_minimum_required(VERSION 3.3)
 
@@ -101,13 +108,11 @@ if (BUILD_PYTHON)
             mcx_tictoc.h
             cjson/cJSON.c
             cjson/cJSON.h
-            ubj/ubj.h
-            ubj/ubjw.c
             pymcx.cpp
             )
     target_compile_definitions(pymcx PUBLIC MCX_CONTAINER)
 
-    target_link_libraries(pymcx OpenMP::OpenMP_CXX zmat ZLIB::ZLIB pybind11::module pybind11::lto pybind11::windows_extras)
+    target_link_libraries(pymcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras)
 
     pybind11_extension(pymcx)
     pybind11_strip(pymcx)
@@ -121,7 +126,7 @@ if(BUILD_MEX AND Matlab_FOUND)
     matlab_add_mex(
       NAME mcxlab
       SRC mcxlab.cpp
-      LINK_TO mex mx zmat mcx
+      LINK_TO mex mx mcx
     )
 set_target_properties(mcxlab
         PROPERTIES OUTPUT_NAME ${CMAKE_SOURCE_DIR}/../mcxlab/mcx)
