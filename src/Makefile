@@ -108,6 +108,18 @@ else
   endif
 endif
 
+ifeq ($(MAKECMDGOALS),mex)
+  FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
+  ZMATLIB=
+  USERLINKOPT=
+endif
+
+ifeq ($(MAKECMDGOALS),oct)
+  FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
+  ZMATLIB=
+  USERLINKOPT=
+endif
+
 CUGENCODE?=-arch=sm_35
 OUTPUTFLAG:=-o
 

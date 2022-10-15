@@ -46,8 +46,11 @@
 #include "mcx_core.h"
 #include "mcx_bench.h"
 #include "mcx_mie.h"
-#include "zmat/zmatlib.h"
-#include "ubj/ubj.h"
+
+#ifndef MCX_CONTAINER
+    #include "zmat/zmatlib.h"
+    #include "ubj/ubj.h"
+#endif
 
 /**
  * Macro to load JSON keys
@@ -66,7 +69,7 @@
      : tmp)
 
 #define UBJ_WRITE_KEY(ctx, key,  type, val)    {ubjw_write_key( (ctx), (key)); ubjw_write_##type((ctx), (val));}
-#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (uint8_t*)(val), (UBJ_TYPE)(JDB_##type), (nlen));}
+#define UBJ_WRITE_ARRAY(ctx, type, nlen, val)  {ubjw_write_buffer( (ctx), (unsigned char*)(val), (UBJ_TYPE)(JDB_##type), (nlen));}
 
 #define ubjw_write_single ubjw_write_float32
 #define ubjw_write_double ubjw_write_float64
@@ -272,7 +275,9 @@ void mcx_initcfg(Config* cfg) {
     cfg->energytot = 0.f;
     cfg->energyabs = 0.f;
     cfg->energyesc = 0.f;
+#ifndef MCX_CONTAINER
     cfg->zipid = zmZlib;
+#endif
     cfg->omega = 0.f;
     cfg->lambda = 0.f;
     /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/   /** This format is only supported by C99 */
@@ -436,6 +441,7 @@ void mcx_clearcfg(Config* cfg) {
     mcx_initcfg(cfg);
 }
 
+#ifndef MCX_CONTAINER
 
 /**
  * @brief Save volumetric output (fluence etc) to an Nifty format binary file
@@ -1129,6 +1135,8 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
     }
 }
 
+#endif
+
 /**
  * @brief Print a message to the console or a log file
  *
@@ -1297,6 +1305,8 @@ void mcx_assert(int ret) {
     }
 }
 
+#ifndef MCX_CONTAINER
+
 /**
  * @brief Read simulation settings from a configuration file (.inp or .json)
  *
@@ -1418,6 +1428,8 @@ void mcx_writeconfig(char* fname, Config* cfg) {
         fclose(fp);
     }
 }
+
+#endif
 
 /**
  * @brief Preprocess user input and prepare the cfg data structure
@@ -1714,6 +1726,8 @@ void mcx_prep_polarized(Config* cfg) {
 
     free(mu);
 }
+
+#ifndef MCX_CONTAINER
 
 /**
  * @brief Preprocess user input and prepare the volumetric domain for simulation
@@ -3266,6 +3280,8 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
     }
 }
 
+#endif
+
 /**
  * @brief Initialize the replay data structure from detected photon data - in embedded mode (MATLAB/Python)
  *
@@ -3496,6 +3512,8 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
     mcx_replayinit(cfg, detps, dimdetps, seedbyte);
 }
 
+#ifndef MCX_CONTAINER
+
 /**
  * @brief Load previously saved photon seeds from an .jdat file for replay
  *
@@ -3691,6 +3709,8 @@ void mcx_loadseedfile(Config* cfg) {
 
     fclose(fp);
 }
+
+#endif
 
 /**
  * @brief Convert a row-major (C/C++) array to a column-major (MATLAB/FORTRAN) array
@@ -3970,6 +3990,8 @@ void  mcx_maskdet(Config* cfg) {
  * @param[in] cfg: simulation configuration
  */
 
+#ifndef MCX_CONTAINER
+
 void mcx_dumpmask(Config* cfg) {
     char fname[MAX_FULL_PATH];
 
@@ -4003,7 +4025,6 @@ void mcx_dumpmask(Config* cfg) {
         exit(0);
     }
 }
-
 
 /**
  * @brief Decode an ND array from JSON/JData construct and output to a volumetric array
@@ -4171,6 +4192,7 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
     return ret;
 }
 
+#endif
 
 /**
  * @brief Print a progress bar
@@ -4322,6 +4344,8 @@ int mcx_remap(char* opt) {
 
     return 1;
 }
+
+#ifndef MCX_CONTAINER
 
 /**
  * @brief Main function to read user command line options
@@ -4772,6 +4796,8 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
     }
 }
 
+#endif
+
 /**
  * @brief Parse the debug flag in the letter format
  *
@@ -4890,6 +4916,8 @@ int mcx_isbinstr(const char* str) {
     return 1;
 }
 
+#ifndef MCX_CONTAINER
+
 /**
  * @brief Run MCX simulations from a JSON input in a persistent session
  *
@@ -4922,6 +4950,8 @@ int mcx_run_from_json(char* jsonstr) {
     mcx_clearcfg(&mcxconfig);
     return 0;
 }
+
+#endif
 
 /**
  * @brief Print MCX output header

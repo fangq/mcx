@@ -2752,12 +2752,16 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                 memcpy(cfg->exportfield, field, fieldlen * sizeof(float));
             }
 
+#ifndef MCX_CONTAINER
+
             if (cfg->issave2pt && cfg->parentid == mpStandalone) {
                 MCX_FPRINTF(cfg->flog, "saving data to file ...\t");
                 mcx_savedata(field, fieldlen, cfg);
                 MCX_FPRINTF(cfg->flog, "saving data complete : %d ms\n\n", GetTimeMillis() - tic);
                 fflush(cfg->flog);
             }
+
+#endif
 
             CUDA_ASSERT(cudaFree(gfield));
             CUDA_ASSERT(cudaFree(gPseed));
@@ -3560,6 +3564,9 @@ is more than what your have specified (%d), please use the -H option to specify 
           * If not running as a mex file, we need to save volumetric output data, if enabled, as
           * a file, with suffix specifed by cfg.outputformat (mc2,nii, or .jdat or .jbat)
           */
+
+#ifndef MCX_CONTAINER
+
         if (cfg->issave2pt && cfg->parentid == mpStandalone) {
             MCX_FPRINTF(cfg->flog, "saving data to file ...\t");
             mcx_savedata(cfg->exportfield, fieldlen, cfg);
@@ -3567,10 +3574,14 @@ is more than what your have specified (%d), please use the -H option to specify 
             fflush(cfg->flog);
         }
 
+#endif
+
         /**
           * If not running as a mex file, we need to save detected photon data, if enabled, as
           * a file, either as a .mch file, or a .jdat/.jbat file
           */
+#ifndef MCX_CONTAINER
+
         if (cfg->issavedet && cfg->parentid == mpStandalone && cfg->exportdetected) {
             cfg->his.unitinmm = cfg->unitinmm;
             cfg->his.savedphoton = cfg->detectedcount;
@@ -3584,10 +3595,14 @@ is more than what your have specified (%d), please use the -H option to specify 
             mcx_savedetphoton(cfg->exportdetected, cfg->seeddata, cfg->detectedcount, 0, cfg);
         }
 
+#endif
+
         /**
           * If not running as a mex file, we need to save photon trajectory data, if enabled, as
           * a file, either as a .mct file, or a .jdat/.jbat file
           */
+#ifndef MCX_CONTAINER
+
         if ((cfg->debuglevel & MCX_DEBUG_MOVE) && cfg->parentid == mpStandalone && cfg->exportdebugdata) {
             cfg->his.colcount = MCX_DEBUG_REC_LEN;
             cfg->his.savedphoton = cfg->debugdatalen;
@@ -3595,6 +3610,8 @@ is more than what your have specified (%d), please use the -H option to specify 
             cfg->his.detected = 0;
             mcx_savedetphoton(cfg->exportdebugdata, NULL, cfg->debugdatalen, 0, cfg);
         }
+
+#endif
     }
     #pragma omp barrier
     /**
