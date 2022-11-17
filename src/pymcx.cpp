@@ -105,7 +105,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
     unsigned int dim_xyz = 0;
 
     // Data type-specific logic
-    if (py::array_t<int8_t, py::array::c_style>::check_(volume_handle)) {
+    if (py::array_t<int8_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<int8_t, py::array::f_style>::ensure(volume_handle);
         auto buffer = f_style_volume.request();
         int i = buffer.shape.size() == 4;
@@ -138,7 +138,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                 mcx_config.vol[i] = static_cast<unsigned char*>(buffer.ptr)[i];
             }
         }
-    } else if (py::array_t<int16_t, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<int16_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<int16_t, py::array::f_style>::ensure(volume_handle);
         auto buffer = f_style_volume.request();
         int i = buffer.shape.size() == 4;
@@ -177,7 +177,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                 mcx_config.vol[i] = static_cast<unsigned short*>(buffer.ptr)[i];
             }
         }
-    } else if (py::array_t<int32_t, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<int32_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<int32_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 4;
         auto buffer = f_style_volume.request();
@@ -193,7 +193,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
         mcx_config.vol = static_cast<unsigned int*>(malloc(dim_xyz * sizeof(unsigned int)));
         memcpy(mcx_config.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
-    } else if (py::array_t<u_int8_t, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<u_int8_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<u_int8_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 1;
         auto buffer = f_style_volume.request();
@@ -212,7 +212,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         for (int i = 0; i < buffer.size; i++) {
             mcx_config.vol[i] = static_cast<unsigned char*>(buffer.ptr)[i];
         }
-    } else if (py::array_t<u_int16_t, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<u_int16_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<u_int16_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 2;
         auto buffer = f_style_volume.request();
@@ -231,7 +231,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         for (int i = 0; i < buffer.size; i++) {
             mcx_config.vol[i] = static_cast<unsigned short*>(buffer.ptr)[i];
         }
-    } else if (py::array_t<u_int32_t, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<u_int32_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<u_int32_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 8;
         auto buffer = f_style_volume.request();
@@ -247,7 +247,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
         mcx_config.vol = static_cast<unsigned int*>(malloc(dim_xyz * sizeof(unsigned int)));
         memcpy(mcx_config.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
-    } else if (py::array_t<float, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<float>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<float, py::array::f_style>::ensure(volume_handle);
         auto buffer = f_style_volume.request();
         int i = buffer.shape.size() == 4;
@@ -397,7 +397,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                 mcx_config.vol[i] = static_cast<float*>(buffer.ptr)[i];
             }
         }
-    } else if (py::array_t<double, py::array::c_style>::check_(volume_handle)) {
+    } else if (py::array_t<double>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<double, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 4;
         auto buffer = f_style_volume.request();
