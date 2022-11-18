@@ -28,12 +28,11 @@ jobs:
       - name: Build Manylinux2014 Wheels
         shell: bash
         run: |
-          docker run -v ${GITHUB_WORKSPACE}/src/:/build/ mcx-wheel-builder
+          docker run -v ${GITHUB_WORKSPACE}/src/:/src/ mcx-wheel-builder
           
   upload_pypi:
-    needs: build_wheels  # last but not least
+    needs: build_wheels
     runs-on: ubuntu-latest
-    if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - uses: actions/download-artifact@v3
         with:
