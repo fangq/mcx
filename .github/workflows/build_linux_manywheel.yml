@@ -16,10 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     # Only build wheels when tagging (typically a release)
     if: startsWith(github.event.ref, 'refs/tags')
-    strategy:
-      matrix:
-        os: ubuntu-latest
-        arch: [x86_64]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
