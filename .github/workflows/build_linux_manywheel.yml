@@ -14,8 +14,6 @@ jobs:
   build_wheels:
     name: Build manylinux2014 wheels
     runs-on: ubuntu-latest
-    # Only build wheels when tagging (typically a release)
-    if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
