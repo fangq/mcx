@@ -26,7 +26,7 @@ option(BUILD_MEX "Build mex" ON)
 
 if(BUILD_PYTHON)
     add_subdirectory(pybind11)
-    find_package(PythonLibs REQUIRED)
+    find_package (Python3 COMPONENTS Interpreter Development)
     include_directories(${PYTHON_INCLUDE_DIRS})
 endif()
 

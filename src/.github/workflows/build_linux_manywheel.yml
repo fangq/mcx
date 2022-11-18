@@ -1,0 +1,58 @@
+name: Python wheels
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+
+  build_wheels:
+    name: Build manylinux2014 wheels
+    runs-on: ubuntu-latest
+    # Only build wheels when tagging (typically a release)
+    if: startsWith(github.event.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os: ubuntu-latest
+        arch: [x86_64]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Build Wheel Builder Container
+        shell: bash
+        run: |
+          set -x
+          cd Docker/PyPI
+          docker build --tag mcx-wheel-builder --force-rm .
+      - name: Build Manylinux2014 Wheels
+        shell: bash
+        run: |
+          docker run -v "${GITHUB_WORKSPACE}/src/:/build/ mcx-wheel-builder
+          
+
+  upload_pypi:
+    needs: build_wheels  # last but not least
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.ref, 'refs/tags')
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.mcx_pypi_secret }}
