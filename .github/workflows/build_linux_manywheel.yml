@@ -82,6 +82,7 @@ jobs:
           cd src/
           $ENV:CMAKE_INCLUDE_PATH = "$PWD\zlib\include"
           $ENV:CMAKE_LIBRARY_PATH = "$PWD\zlib\lib"
+          $ENV:ZLIB_LIBRARY = "$PWD\zlib\lib"
           pip install wheel
           python setup.py bdist_wheel
           
