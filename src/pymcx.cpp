@@ -193,8 +193,8 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
         mcx_config.vol = static_cast<unsigned int*>(malloc(dim_xyz * sizeof(unsigned int)));
         memcpy(mcx_config.vol, buffer.ptr, buffer.size * sizeof(unsigned int));
-    } else if (py::array_t<u_int8_t>::check_(volume_handle)) {
-        auto f_style_volume = py::array_t<u_int8_t, py::array::f_style>::ensure(volume_handle);
+    } else if (py::array_t<uint8_t>::check_(volume_handle)) {
+        auto f_style_volume = py::array_t<uint8_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 1;
         auto buffer = f_style_volume.request();
 
@@ -212,13 +212,13 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         for (int i = 0; i < buffer.size; i++) {
             mcx_config.vol[i] = static_cast<unsigned char*>(buffer.ptr)[i];
         }
-    } else if (py::array_t<u_int16_t>::check_(volume_handle)) {
-        auto f_style_volume = py::array_t<u_int16_t, py::array::f_style>::ensure(volume_handle);
+    } else if (py::array_t<uint16_t>::check_(volume_handle)) {
+        auto f_style_volume = py::array_t<uint16_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 2;
         auto buffer = f_style_volume.request();
 
         if (buffer.shape.size() == 4) {
-            throw py::value_error("Invalid volume dims for u_int16_t volume.");
+            throw py::value_error("Invalid volume dims for uint16_t volume.");
         }
 
         mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
@@ -231,13 +231,13 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         for (int i = 0; i < buffer.size; i++) {
             mcx_config.vol[i] = static_cast<unsigned short*>(buffer.ptr)[i];
         }
-    } else if (py::array_t<u_int32_t>::check_(volume_handle)) {
-        auto f_style_volume = py::array_t<u_int32_t, py::array::f_style>::ensure(volume_handle);
+    } else if (py::array_t<uint32_t>::check_(volume_handle)) {
+        auto f_style_volume = py::array_t<uint32_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 8;
         auto buffer = f_style_volume.request();
 
         if (buffer.shape.size() == 4) {
-            throw py::value_error("Invalid volume dims for u_int32_t volume.");
+            throw py::value_error("Invalid volume dims for uint32_t volume.");
         }
 
         mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
@@ -990,7 +990,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
             field_dim[3] = 0;
 
             if (mcx_config.detectedcount > 0) {
-                auto partial_path = py::array_t<float, py::array::f_style>({field_dim[0], mcx_config.detectedcount});
+                auto partial_path = py::array_t<float, py::array::f_style>(std::initializer_list<size_t>({field_dim[0], mcx_config.detectedcount}));
                 memcpy(partial_path.mutable_data(), mcx_config.exportdetected,
                        field_dim[0] * field_dim[1] * sizeof(float));
                 output["detphotons"] = partial_path;
@@ -1016,7 +1016,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
             }
 
             field_len = field_dim[0] * field_dim[1] * field_dim[2] * field_dim[3] * field_dim[4] * field_dim[5];
-            py::detail::any_container<ssize_t> array_dims;
+            std::initializer_list<size_t> array_dims;
 
             if (field_dim[5] > 1)
                 array_dims = {field_dim[0], field_dim[1], field_dim[2], field_dim[3], field_dim[4], field_dim[5]};
