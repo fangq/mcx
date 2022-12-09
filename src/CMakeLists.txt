@@ -38,7 +38,7 @@ endif()
 set(
     CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS};
-    -g -lineinfo -Xcompiler -Wall -Xcompiler -fopenmp -O3 -arch=sm_50
+    -g -lineinfo -Xcompiler -Wall -Xcompiler -fopenmp -O3 -arch=sm_35
     -DMCX_TARGET_NAME="Fermi MCX" -DUSE_ATOMIC -use_fast_math
     -DSAVE_DETECTORS -Xcompiler -fPIC
     )
