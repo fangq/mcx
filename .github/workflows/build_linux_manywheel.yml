@@ -48,23 +48,23 @@ jobs:
 #      - name: Install Dependencies
 #        uses: crazy-max/ghaction-chocolatey@v2
 #        with:
-#          args: install -y cuda cmake
-      - name: Install VS 2022 Build Tools
-        uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: install -y visualstudio2022buildtools --package-parameters "--nocache --norestart --wait --add Microsoft.VisualStudio.Component.Roslyn.Compiler
-                --add Microsoft.Component.MSBuild
-                --add Microsoft.VisualStudio.Component.CoreBuildTools
-                --add Microsoft.VisualStudio.Workload.MSBuildTools
-                --add Microsoft.VisualStudio.Component.Windows10SDK
-                --add Microsoft.VisualStudio.Component.VC.CoreBuildTools
-                --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
-                --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest
-                --add Microsoft.VisualStudio.Component.VC.CMake.Project
-                --add Microsoft.VisualStudio.Component.TextTemplating
-                --add Microsoft.VisualStudio.Component.VC.CoreIde
-                --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core
-                --add Microsoft.VisualStudio.Workload.VCTools"
+#          args: install -y cuda
+#      - name: Install VS 2022 Build Tools
+#        uses: crazy-max/ghaction-chocolatey@v2
+#        with:
+#          args: install -y visualstudio2022buildtools --package-parameters "--nocache --norestart --wait --add Microsoft.VisualStudio.Component.Roslyn.Compiler
+#                --add Microsoft.Component.MSBuild
+#                --add Microsoft.VisualStudio.Component.CoreBuildTools
+#                --add Microsoft.VisualStudio.Workload.MSBuildTools
+#                --add Microsoft.VisualStudio.Component.Windows10SDK
+#                --add Microsoft.VisualStudio.Component.VC.CoreBuildTools
+#                --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+#                --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest
+#                --add Microsoft.VisualStudio.Component.VC.CMake.Project
+#                --add Microsoft.VisualStudio.Component.TextTemplating
+#                --add Microsoft.VisualStudio.Component.VC.CoreIde
+#                --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core
+#                --add Microsoft.VisualStudio.Workload.VCTools"
       - name: Install Zlib Dev
         run: |
           curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
