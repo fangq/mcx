@@ -1,4 +1,4 @@
-name: Build and Upload Windows Python Wheels
+name: Build and Upload MacOS Python Wheels
 on:
   push:
     branches:
@@ -11,9 +11,9 @@ on:
 
 
 jobs:
-  build_windows_wheels:
-    name: Build Windows wheels
-    runs-on: windows-latest
+  build_macos_wheels:
+    name: Build MacOS Wheels
+    runs-on: macos-10.15
     strategy:
       matrix:
         python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
@@ -28,17 +28,11 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install CUDA
         run: |
-          choco install -y cuda --version=11.8.0.52206
-          $CUDA_PATH=Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA" -filter "v*.*" -Directory | % { $_.fullname }
-          echo "CUDA_PATH=$CUDA_PATH" >> $env:GITHUB_ENV
-          echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_PATH" >> $env:GITHUB_ENV
-      - name: Install Zlib Dev
-        run: |
-          curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
-          Expand-Archive .\zlib.zip -DestinationPath zlib\
-          echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $env:GITHUB_ENV
-          echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
-          rm zlib.zip
+          curl https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_mac.dmg -o cuda.dmg
+          hdiutil attach cuda.dmg
+          /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller --no-window --toolkit --accept-eula
+          echo /Developer/NVIDIA/CUDA-10.2/bin >> $GITHUB_PATH
+          echo "DYLD_LIBRARY_PATH=/Developer/NVIDIA/CUDA-10.2/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" >> $GITHUB_ENV
 
       - name: Build Wheels
         run: |

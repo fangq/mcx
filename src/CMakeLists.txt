@@ -108,7 +108,7 @@ if (BUILD_PYTHON)
             mcx_tictoc.h
             cjson/cJSON.c
             cjson/cJSON.h
-            pymcx.cpp
+            pmcx.cpp
             )
     target_compile_definitions(pymcx PUBLIC MCX_CONTAINER)
 
