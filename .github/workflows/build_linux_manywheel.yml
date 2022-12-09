@@ -64,7 +64,7 @@ jobs:
                 --add Microsoft.VisualStudio.Component.TextTemplating \
                 --add Microsoft.VisualStudio.Component.VC.CoreIde \
                 --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core \
-                --add Microsoft.VisualStudio.Workload.VCTools
+                --add Microsoft.VisualStudio.Workload.VCTools"
       - name: Set Environment Variables
         run: |
           $VS_INSTALL_PATH = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' -latest -products * -requires Microsoft.VisualStudio.Component.CoreBuildTools -property installationPath
