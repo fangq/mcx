@@ -75,13 +75,13 @@ jobs:
         run: |
           curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
           Expand-Archive .\zlib.zip -DestinationPath zlib\
-          echo "CMAKE_INCLUDE_PATH = $PWD\zlib\include" >> $GITHUB_ENV
-          echo "CMAKE_LIBRARY_PATH = $PWD\zlib\lib" >> $GITHUB_ENV
           rm zlib.zip
 
       - name: Build Windows Wheels
         run: |
           cd src/
+          $ENV:CMAKE_INCLUDE_PATH = "$PWD\zlib\include"
+          $ENV:CMAKE_LIBRARY_PATH = "$PWD\zlib\lib"
           pip install wheel
           python setup.py bdist_wheel
           
