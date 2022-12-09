@@ -86,7 +86,7 @@ jobs:
   
 
   upload_pypi:
-    needs: build_wheels
+    needs: build_linux_wheels, build_windows_wheels
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
