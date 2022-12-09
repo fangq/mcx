@@ -82,6 +82,7 @@ jobs:
       - name: Build Windows Wheels
         run: |
           cd src/
+          pip install wheel
           python setup.py bdist_wheel
           
   
