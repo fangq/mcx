@@ -46,11 +46,9 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install CUDA
-        run: |
-          winget install -y cuda
-#        uses: crazy-max/ghaction-chocolatey@v2
-#        with:
-#          args: install -y cuda
+        uses: crazy-max/ghaction-chocolatey@v2
+        with:
+          args: install -y cuda
 #      - name: Install VS 2022 Build Tools
 #        uses: crazy-max/ghaction-chocolatey@v2
 #        with:
