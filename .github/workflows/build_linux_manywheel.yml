@@ -67,7 +67,7 @@ jobs:
                 --add Microsoft.VisualStudio.Workload.VCTools"
       - name: Set Environment Variables
         run: |
-          $VS_INSTALL_PATH = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' -latest -products * -requires Microsoft.VisualStudio.Component.CoreBuildTools -property installationPath
+          $VS_INSTALL_PATH = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $C_VERSION = cat "$VS_INSTALL_PATH\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
           set CC $VS_INSTALL_PATH\VC\Tools\MSVC\$C_VERSION\bin\Hostx64\x64\cl.exe
           $env:Path += ";C:\Program Files\CMake\bin\"
@@ -81,6 +81,7 @@ jobs:
 
       - name: Build Windows Wheels
         run: |
+          cd src/
           python setup.py bdist_wheel
           
   
