@@ -48,8 +48,9 @@ jobs:
       - name: Install CUDA
         run: |
           choco install -y cuda
-          echo "CUDA_PATH=$env:CUDA_PATH" >> $env:GITHUB_ENV
-          echo "CUDA_TOOLKIT_ROOT_DIR=$env:CUDA_PATH" >> $env:GITHUB_ENV
+          $CUDA_PATH=Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA" -filter "v*.*" -Directory | % { $_.fullname }
+          echo "CUDA_PATH=$CUDA_PATH" >> $env:GITHUB_ENV
+          echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_PATH" >> $env:GITHUB_ENV
       - name: Install Zlib Dev
         run: |
           curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
