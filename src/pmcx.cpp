@@ -23,7 +23,7 @@
 *******************************************************************************/
 
 /***************************************************************************//**
-\file    pymcx.cpp
+\file    pmcx.cpp
 
 @brief   Python interface using Pybind11 for MCX
 *******************************************************************************/
@@ -820,7 +820,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 }
 
 /**
- * Function that's called to cleanup any memory/configs allocated by PyMCX. It is used in both normal and exceptional
+ * Function that's called to cleanup any memory/configs allocated by PMCX. It is used in both normal and exceptional
  * termination of the application
  * @param gpu_info reference to an array of MCXGPUInfo data structure
  * @param mcx_config reference to MCXConfig data structure
@@ -932,7 +932,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
 
         /** If error is detected, gracefully terminate the mex and return back to Python */
         if (!exception_msgs.empty()) {
-            throw py::runtime_error("PyMCX terminated due to an exception!");
+            throw py::runtime_error("PMCX terminated due to an exception!");
         }
 
         field_dim[4] = 1;
@@ -1112,7 +1112,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
 
 
 /**
- * @brief Error reporting function in PyMCX, equivalent to mcx_error in binary mode
+ * @brief Error reporting function in PMCX, equivalent to mcx_error in binary mode
  *
  * @param[in] id: a single integer for the types of the error
  * @param[in] msg: the error message string
@@ -1127,7 +1127,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PyMCX v2022.10\nUsage:\n    output = pymcx.mcx(cfg);\n\nRun 'help(pymcx.mcx)' for more details.\n";
+            << "PMCX v2022.10\nUsage:\n    output = pmcx.mcx(cfg);\n\nRun 'help(pmcx.mcx)' for more details.\n";
 }
 
 py::dict py_mcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
@@ -1176,8 +1176,8 @@ py::list get_GPU_info() {
     return output;
 }
 
-PYBIND11_MODULE(pymcx, m) {
-    m.doc() = "PyMCX: Monte Carlo eXtreme Python Interface, http://mcx.space";
+PYBIND11_MODULE(pmcx, m) {
+    m.doc() = "PMCX: Monte Carlo eXtreme Python Interface, http://mcx.space";
     m.def("mcx", &py_mcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
     m.def("mcx", &py_mcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,

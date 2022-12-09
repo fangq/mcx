@@ -42,9 +42,6 @@ class CMakeBuild(build_ext):
         # Can be set with Conda-Build, for example.
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
-        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
-        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
-        # from Python.
         cmake_args = [
             f"-DPython3_ROOT_DIR={sys.exec_prefix}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
@@ -119,13 +116,13 @@ class CMakeBuild(build_ext):
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="pymcx",
+    name="pmcx",
     version="0.0.2",
     author="Matin Raayai Ardakani, Qianqian Fang",
     author_email="q.fang@neu.edu",
     description="Python bindings for Monte Carlo eXtreme",
     long_description="",
-    ext_modules=[CMakeExtension("pymcx")],
+    ext_modules=[CMakeExtension("pmcx")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
