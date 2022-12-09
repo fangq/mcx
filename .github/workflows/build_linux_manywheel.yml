@@ -77,8 +77,6 @@ jobs:
           Expand-Archive .\zlib.zip -DestinationPath zlib\
           echo "CMAKE_INCLUDE_PATH = $PWD\zlib\include" >> $GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH = $PWD\zlib\lib" >> $GITHUB_ENV
-#          $ENV:CMAKE_INCLUDE_PATH = "$PWD\zlib\include"
-#          $ENV:CMAKE_LIBRARY_PATH = "$PWD\zlib\lib"
           rm zlib.zip
 
       - name: Build Windows Wheels
