@@ -65,12 +65,6 @@ jobs:
                 --add Microsoft.VisualStudio.Component.VC.CoreIde
                 --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core
                 --add Microsoft.VisualStudio.Workload.VCTools"
-      - name: Set Environment Variables
-        run: |
-          $VS_INSTALL_PATH = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          $C_VERSION = cat "$VS_INSTALL_PATH\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
-          set CC $VS_INSTALL_PATH\VC\Tools\MSVC\$C_VERSION\bin\Hostx64\x64\cl.exe
-          $env:Path += ";C:\Program Files\CMake\bin\"
       - name: Install Zlib Dev
         run: |
           curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
