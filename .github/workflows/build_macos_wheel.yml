@@ -30,7 +30,8 @@ jobs:
         run: |
           curl https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_mac.dmg -o cuda.dmg
           hdiutil attach cuda.dmg
-          /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller --no-window --toolkit --accept-eula
+          echo "end of hdiutil"
+          /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller --verbose --no-window --toolkit --accept-eula
           echo /Developer/NVIDIA/CUDA-10.2/bin >> $GITHUB_PATH
           echo "DYLD_LIBRARY_PATH=/Developer/NVIDIA/CUDA-10.2/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" >> $GITHUB_ENV
 
