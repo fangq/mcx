@@ -23,12 +23,12 @@ jobs:
         shell: bash
         run: |
           set -x
-          cd Docker/PyPI
-          docker build --tag mcx-wheel-builder --force-rm .
+          cd .github/manylinux2014_wheel_builder
+          docker build --tag manylinux2014_wheel_builder --force-rm .
       - name: Build Manylinux2014 Wheels
         shell: bash
         run: |
-          docker run -v ${GITHUB_WORKSPACE}/src/:/src/ mcx-wheel-builder
+          docker run -v ${GITHUB_WORKSPACE}/src/:/src/ manylinux2014_wheel_builder
 
 #  upload_pypi:
 #    needs: build_linux_wheels, build_windows_wheels
