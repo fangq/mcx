@@ -2,6 +2,8 @@
 
 for PYBIN in /opt/python/*/bin/; do
     "${PYBIN}/pip" wheel . -w wheels/
-    auditwheel repair wheels/pymcx*whl -w wheelhouse/
-    rm -rf wheels/
 done
+for WHEEL in wheels/*; do
+    auditwheel repair ${WHEEL} -w wheelhouse/
+done
+rm -rf wheels/
