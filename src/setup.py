@@ -110,7 +110,7 @@ class CMakeBuild(build_ext):
             os.makedirs(build_temp)
 
         subprocess.check_call(["cmake", "--fresh", ext.sourcedir] + cmake_args, cwd=build_temp)
-        subprocess.check_call(["cmake", "--build", ".", "--target", "pymcx"] + build_args, cwd=build_temp)
+        subprocess.check_call(["cmake", "--build", ".", "--target", "pmcx"] + build_args, cwd=build_temp)
 
 
 # The information here can also be placed in setup.cfg - better separation of

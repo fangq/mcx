@@ -835,7 +835,7 @@ inline void cleanup_configs(MCXGPUInfo*& gpu_info, MCXConfig& mcx_config) {
 }
 
 
-py::dict py_mcx_interface(const py::dict& user_cfg) {
+py::dict pmcx_interface(const py::dict& user_cfg) {
     unsigned int partial_data, hostdetreclen;
     Config mcx_config;  /* mcx_config: structure to store all simulation parameters */
     GPUInfo* gpu_info = nullptr;        /** gpuInfo: structure to store GPU information */
@@ -1016,7 +1016,7 @@ py::dict py_mcx_interface(const py::dict& user_cfg) {
             }
 
             field_len = field_dim[0] * field_dim[1] * field_dim[2] * field_dim[3] * field_dim[4] * field_dim[5];
-            std::initializer_list<size_t> array_dims;
+            std::vector<size_t> array_dims;
 
             if (field_dim[5] > 1)
                 array_dims = {field_dim[0], field_dim[1], field_dim[2], field_dim[3], field_dim[4], field_dim[5]};
@@ -1130,13 +1130,13 @@ void print_mcx_usage() {
             << "PMCX v2022.10\nUsage:\n    output = pmcx.mcx(cfg);\n\nRun 'help(pmcx.mcx)' for more details.\n";
 }
 
-py::dict py_mcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
+py::dict pmcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
     if (py::len(kwargs) == 0) {
         print_mcx_usage();
         return {};
     }
 
-    return py_mcx_interface(kwargs);
+    return pmcx_interface(kwargs);
 }
 
 py::list get_GPU_info() {
@@ -1178,10 +1178,10 @@ py::list get_GPU_info() {
 
 PYBIND11_MODULE(pmcx, m) {
     m.doc() = "PMCX: Monte Carlo eXtreme Python Interface, http://mcx.space";
-    m.def("mcx", &py_mcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
-          py::scoped_estream_redirect>());
-    m.def("mcx", &py_mcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
-          py::scoped_estream_redirect>());
+    m.def("mcx", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
+                                                                                    py::scoped_estream_redirect>());
+    m.def("mcx", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
+                                                                                          py::scoped_estream_redirect>());
     m.def("gpuinfo",
           &get_GPU_info,
           "Prints out the list of CUDA-capable devices attached to this system.",

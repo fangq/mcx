@@ -93,7 +93,7 @@ target_link_libraries(
     )
 
 if (BUILD_PYTHON)
-    cuda_add_library(pymcx MODULE
+    cuda_add_library(pmcx MODULE
             mcx_core.cu
             mcx_core.h
             mcx_utils.c
@@ -110,14 +110,14 @@ if (BUILD_PYTHON)
             cjson/cJSON.h
             pmcx.cpp
             )
-    target_compile_definitions(pymcx PUBLIC MCX_CONTAINER)
+    target_compile_definitions(pmcx PUBLIC MCX_CONTAINER)
 
-    target_link_libraries(pymcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras)
+    target_link_libraries(pmcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras)
 
-    pybind11_extension(pymcx)
-    pybind11_strip(pymcx)
+    pybind11_extension(pmcx)
+    pybind11_strip(pmcx)
 
-    set_target_properties(pymcx PROPERTIES CXX_VISIBILITY_PRESET "hidden"
+    set_target_properties(pmcx PROPERTIES CXX_VISIBILITY_PRESET "hidden"
             CUDA_VISIBILITY_PRESET "hidden")
 endif()
 
