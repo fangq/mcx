@@ -45,19 +45,8 @@ jobs:
           cd src/
           pip install wheel
           python setup.py bdist_wheel
-          
-  
-
-#  upload_pypi:
-#    needs: build_linux_wheels, build_windows_wheels
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/download-artifact@v3
-#        with:
-#          name: artifact
-#          path: dist
-#
-#      - uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          user: __token__
-#          password: ${{ secrets.mcx_pypi_secret }}
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
