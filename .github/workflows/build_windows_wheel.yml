@@ -46,6 +46,9 @@ jobs:
           cd src/
           pip install wheel
           python setup.py bdist_wheel
+          ls dist/
+          mv dist/ ../
+          cd ../
       - name: Check If Wheels Need to be Uploaded to PyPI
         id: perform_pypi_upload_check
         run: |
@@ -54,12 +57,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: windows-wheels
-          path: $env:GITHUB_WORKSPACE/src/dist/
+          path: $env:GITHUB_WORKSPACE/dist/
 
   upload_windows_wheels:
     needs: build_windows_wheels
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner == 'fangq' }} && ${{ needs.build_windows_wheels.outputs.perform_pypi_upload == 1}}
+    if: ${{ github.repository_owner == 'fangq' && needs.build_windows_wheels.outputs.perform_pypi_upload == 1}}
     steps:
       - name: Download Wheels from Build Job
         uses: actions/download-artifact@v3
