@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install CUDA
         run: |
-          choco install -y cuda --version=11.8.0.52206
+          choco install -y cuda --version=11.8.0.52206 --package-parameters "-s nvcc_11.8 -n"
           $CUDA_PATH=Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA" -filter "v*.*" -Directory | % { $_.fullname }
           echo "CUDA_PATH=$CUDA_PATH" >> $env:GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_PATH" >> $env:GITHUB_ENV
@@ -49,7 +49,7 @@ jobs:
       - name: Check If Wheels Need to be Uploaded to PyPI
         id: perform_pypi_upload_check
         run: |
-          bash ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
+          bash $env:{GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v3
         with:
