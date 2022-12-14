@@ -121,7 +121,6 @@ setup(
     author="Matin Raayai Ardakani, Qianqian Fang",
     author_email="q.fang@neu.edu",
     description="Python bindings for Monte Carlo eXtreme",
-    long_description="",
     ext_modules=[CMakeExtension("pmcx")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
