@@ -49,12 +49,12 @@ jobs:
       - name: Check If Wheels Need to be Uploaded to PyPI
         id: perform_pypi_upload_check
         run: |
-          bash $env:{GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
+          bash $env:GITHUB_WORKSPACE/.github/check-pypi-upload.sh
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v3
         with:
           name: windows-wheels
-          path: ${GITHUB_WORKSPACE}/src/dist/
+          path: $env:GITHUB_WORKSPACE/src/dist/
 
   upload_windows_wheels:
     needs: build_windows_wheels
