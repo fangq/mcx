@@ -30,7 +30,7 @@ jobs:
         run: |
           docker run -v ${GITHUB_WORKSPACE}/src/:/src/ manylinux2014_wheel_builder
           sudo mv ${GITHUB_WORKSPACE}/src/dist/ ${GITHUB_WORKSPACE}/dist/
-      - name: Check If Wheels Need to be Uploaded to PyPI
+      - name: Check If the Build Version Exists on PyPI
         id: perform_pypi_upload_check
         shell: bash
         run: |

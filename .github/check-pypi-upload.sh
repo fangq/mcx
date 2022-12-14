@@ -10,5 +10,5 @@ while IFS=', ' read -ra PMCX_VERSIONS_ARRAY; do
     fi
   done;
 done <<< "$PMCX_VERSIONS_STRING"
-echo "Upload to PyPI? $UPLOAD_TO_PYPI"
+echo "Wheel exists on PyPI? $UPLOAD_TO_PYPI"
 echo "perform_pypi_upload=$UPLOAD_TO_PYPI" >> $GITHUB_OUTPUT
