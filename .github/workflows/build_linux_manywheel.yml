@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           docker run -v ${GITHUB_WORKSPACE}/src/:/src/ manylinux2014_wheel_builder
-          mv ${GITHUB_WORKSPACE}/src/dist/ ${GITHUB_WORKSPACE}/dist/
+          sudo mv ${GITHUB_WORKSPACE}/src/dist/ ${GITHUB_WORKSPACE}/dist/
       - name: Check If Wheels Need to be Uploaded to PyPI
         id: perform_pypi_upload_check
         shell: bash
@@ -48,7 +48,7 @@ jobs:
           echo "perform_pypi_upload=$UPLOAD_TO_PYPI" >> $GITHUB_OUTPUT
       - name: Upload packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: github.repository_owner == 'fanq' && ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
+        if: github.repository_owner == 'fangq' && ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}

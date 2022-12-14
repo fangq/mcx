@@ -17,6 +17,8 @@ jobs:
     strategy:
       matrix:
         python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9']
+    outputs:
+      upload_to_pypi: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -64,6 +66,7 @@ jobs:
 
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v3
+        if: {{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
         with:
           name: windows-wheels
           path: ${GITHUB_WORKSPACE}/src/dist/
@@ -71,7 +74,7 @@ jobs:
   upload_windows_wheels:
     needs: build_windows_wheels
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'fanq' && ${{ jobs.build_windows_wheels.steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
+    if: github.repository_owner == 'fangq' && ${{ needs.build_windows_wheels.outputs.perform_pypi_upload }} == 1
     steps:
       - name: Download Wheels from Build Job
         uses: actions/download-artifact@v3
