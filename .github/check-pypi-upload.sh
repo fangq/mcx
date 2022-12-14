@@ -10,5 +10,9 @@ while IFS=', ' read -ra PMCX_VERSIONS_ARRAY; do
     fi
   done;
 done <<< "$PMCX_VERSIONS_STRING"
-echo "Wheel exists on PyPI? $UPLOAD_TO_PYPI"
+if [ "$UPLOAD_TO_PYPI" = 1 ]; then
+  echo "Wheel version wasn't found on PyPi.";
+else
+  echo "Wheel was found on PyPi.";
+fi
 echo "perform_pypi_upload=$UPLOAD_TO_PYPI" >> $GITHUB_OUTPUT

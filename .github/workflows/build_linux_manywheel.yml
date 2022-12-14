@@ -37,9 +37,9 @@ jobs:
           ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
       - name: Upload packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: ${{ github.repository_owner == 'fangq' && steps.perform_pypi_upload_check.outputs.perform_pypi_upload == 1 }}
+        if: ${{ github.repository_owner == 'fangq' && steps.perform_pypi_upload_check.outputs.perform_pypi_upload == 1  && github.event_name != 'pull_request'}}
         with:
-          user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
           verify_metadata: false
           verbose: true
+          skip_existing: true
