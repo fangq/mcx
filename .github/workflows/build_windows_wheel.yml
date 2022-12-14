@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
+        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9']
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -45,6 +45,39 @@ jobs:
           cd src/
           pip install wheel
           python setup.py bdist_wheel
+      - name: Check If Wheels Need to be Uploaded to PyPI
+        id: perform_pypi_upload_check
+        shell: bash
+        run: |
+          PMCX_BUILD_VERSION=awk -F"-" '{ print $2 }' <<< $(ls dist/ | head -1)
+          PMCX_VERSIONS_STRING=$(pip index versions pmcx | grep versions:)
+          PMCX_VERSIONS_STRING=${PMCX_VERSIONS_STRING#*:}
+          UPLOAD_TO_PYPI=0
+          while IFS=', ' read -ra PMCX_VERSIONS_ARRAY; do 
+            for VERSION in "${PMCX_VERSIONS_ARRAY[@]}"; do
+              if [ "$PMCX_BUILD_VERSION" = "VERSION" ]; then
+                UPLOAD_TO_PYPI=1
+              fi
+            done; 
+          done <<< "PMCX_VERSIONS_STRING"
+          echo "perform_pypi_upload=$UPLOAD_TO_PYPI" >> $GITHUB_OUTPUT
+
+      - name: Prepare Wheels for Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-wheels
+          path: ${GITHUB_WORKSPACE}/src/dist/
+
+  upload_windows_wheels:
+    needs: build_windows_wheels
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'fanq' && ${{ jobs.build_windows_wheels.steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
+    steps:
+      - name: Download Wheels from Build Job
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-wheels
+          path: dist/
       - name: Upload packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

@@ -29,8 +29,26 @@ jobs:
         shell: bash
         run: |
           docker run -v ${GITHUB_WORKSPACE}/src/:/src/ manylinux2014_wheel_builder
+          mv ${GITHUB_WORKSPACE}/src/dist/ ${GITHUB_WORKSPACE}/dist/
+      - name: Check If Wheels Need to be Uploaded to PyPI
+        id: perform_pypi_upload_check
+        shell: bash
+        run: |
+          PMCX_BUILD_VERSION=awk -F"-" '{ print $2 }' <<< $(ls dist/ | head -1)
+          PMCX_VERSIONS_STRING=$(pip index versions pmcx | grep versions:)
+          PMCX_VERSIONS_STRING=${PMCX_VERSIONS_STRING#*:}
+          UPLOAD_TO_PYPI=0
+          while IFS=', ' read -ra PMCX_VERSIONS_ARRAY; do 
+            for VERSION in "${PMCX_VERSIONS_ARRAY[@]}"; do
+              if [ "$PMCX_BUILD_VERSION" = "VERSION" ]; then
+                UPLOAD_TO_PYPI=1
+              fi
+            done; 
+          done <<< "PMCX_VERSIONS_STRING"
+          echo "perform_pypi_upload=$UPLOAD_TO_PYPI" >> $GITHUB_OUTPUT
       - name: Upload packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.repository_owner == 'fanq' && ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
