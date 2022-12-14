@@ -52,7 +52,6 @@ jobs:
         id: perform_pypi_upload_check
         run: |
           bash ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
-
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v3
         if: {{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
