@@ -18,7 +18,7 @@ jobs:
       matrix:
         python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9']
     outputs:
-      upload_to_pypi: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
+      perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -41,20 +41,17 @@ jobs:
           echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $env:GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
           rm zlib.zip
-
       - name: Build Wheels
         run: |
           cd src/
           pip install wheel
           python setup.py bdist_wheel
-
       - name: Check If Wheels Need to be Uploaded to PyPI
         id: perform_pypi_upload_check
         run: |
           bash ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v3
-        if: {{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }} == 1
         with:
           name: windows-wheels
           path: ${GITHUB_WORKSPACE}/src/dist/
@@ -62,7 +59,7 @@ jobs:
   upload_windows_wheels:
     needs: build_windows_wheels
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'fangq' && ${{ needs.build_windows_wheels.outputs.perform_pypi_upload }} == 1
+    if: ${{ github.repository_owner == 'fangq' }} && ${{ needs.build_windows_wheels.outputs.perform_pypi_upload == 1}}
     steps:
       - name: Download Wheels from Build Job
         uses: actions/download-artifact@v3
@@ -73,4 +70,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
           verbose: true
