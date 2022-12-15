@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install CUDA
         run: |
-          choco install -y cuda --version=11.8.0.52206 --package-parameters "-s nvcc_11.8 -n"
+          choco install -y cuda --version=10.1.168 --package-parameters "-s nvcc_10.1 -n"
           $CUDA_PATH=Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA" -filter "v*.*" -Directory | % { $_.fullname }
           echo "CUDA_PATH=$CUDA_PATH" >> $env:GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_PATH" >> $env:GITHUB_ENV
