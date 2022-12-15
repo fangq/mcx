@@ -16,7 +16,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
+        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9']
+    outputs:
+      perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -28,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install CUDA
         run: |
-          choco install -y cuda --version=11.8.0.52206
+          choco install -y cuda --version=11.8.0.52206 --package-parameters "-s nvcc_11.8 -n"
           $CUDA_PATH=Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA" -filter "v*.*" -Directory | % { $_.fullname }
           echo "CUDA_PATH=$CUDA_PATH" >> $env:GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_PATH" >> $env:GITHUB_ENV
@@ -39,25 +41,38 @@ jobs:
           echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $env:GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
           rm zlib.zip
-
       - name: Build Wheels
         run: |
           cd src/
           pip install wheel
           python setup.py bdist_wheel
-          
-  
+          ls dist/
+          mv dist/ ../
+          cd ../
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        run: |
+          bash $env:GITHUB_WORKSPACE/.github/check-pypi-upload.sh
+      - name: Prepare Wheels for Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-wheels
+          path: dist/
 
-#  upload_pypi:
-#    needs: build_linux_wheels, build_windows_wheels
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/download-artifact@v3
-#        with:
-#          name: artifact
-#          path: dist
-#
-#      - uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          user: __token__
-#          password: ${{ secrets.mcx_pypi_secret }}
+  upload_windows_wheels:
+    needs: build_windows_wheels
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'fangq' && needs.build_windows_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
+    steps:
+      - name: Download Wheels from Build Job
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-wheels
+          path: dist/
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true

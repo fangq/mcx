@@ -29,17 +29,17 @@ jobs:
         shell: bash
         run: |
           docker run -v ${GITHUB_WORKSPACE}/src/:/src/ manylinux2014_wheel_builder
-
-#  upload_pypi:
-#    needs: build_linux_wheels, build_windows_wheels
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/download-artifact@v3
-#        with:
-#          name: artifact
-#          path: dist
-#
-#      - uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          user: __token__
-#          password: ${{ secrets.mcx_pypi_secret }}
+          sudo mv ${GITHUB_WORKSPACE}/src/dist/ ${GITHUB_WORKSPACE}/dist/
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        shell: bash
+        run: |
+          ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ github.repository_owner == 'fangq' && steps.perform_pypi_upload_check.outputs.perform_pypi_upload == 1  && github.event_name != 'pull_request'}}
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true
