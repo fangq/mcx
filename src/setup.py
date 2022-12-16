@@ -118,6 +118,7 @@ class CMakeBuild(build_ext):
 setup(
     name="pmcx",
     version="0.0.5",
+    requires=['numpy'],
     author="Matin Raayai Ardakani, Qianqian Fang",
     author_email="q.fang@neu.edu",
     description="Python bindings for Monte Carlo eXtreme",
