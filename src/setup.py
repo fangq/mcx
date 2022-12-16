@@ -117,7 +117,8 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="pmcx",
-    version="0.0.4",
+    version="0.0.5",
+    requires=['numpy'],
     author="Matin Raayai Ardakani, Qianqian Fang",
     author_email="q.fang@neu.edu",
     description="Python bindings for Monte Carlo eXtreme",
