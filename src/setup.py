@@ -9,6 +9,9 @@ import sys
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
+with open("README.md", "r") as fh:
+    readme = fh.read()
+
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
     "win32": "Win32",
@@ -118,12 +121,34 @@ class CMakeBuild(build_ext):
 setup(
     name="pmcx",
     version="0.0.5",
+    packages=['pmcx'],
     requires=['numpy'],
+    license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",
-    author_email="q.fang@neu.edu",
-    description="Python bindings for Monte Carlo eXtreme",
+    author_email="raayaiardakani.m@northeastern.edu, q.fang@neu.edu",
+    description="Python bindings for Monte Carlo eXtreme photon transport simulator",
+    long_description=readme,
+    long_description_content_type="text/markdown",
+    maintainer= 'Qianqian Fang',
+    url = 'https://github.com/fangq/mcx',
+    download_url = 'http://mcx.space',
+    keywords = ['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
+                'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics'],
     ext_modules=[CMakeExtension("pmcx")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
+    classifiers=[
+      'Development Status :: 4 - Beta',
+      'Intended Audience :: Science/Research',
+      'Environment :: GPU :: NVIDIA CUDA',
+      'Topic :: Scientific/Engineering :: Physics',
+      'License :: OSI Approved :: Apache Software License',
+      'Programming Language :: Python :: 3.6',
+      'Programming Language :: Python :: 3.7',
+      'Programming Language :: Python :: 3.8',
+      'Programming Language :: Python :: 3.9',
+      'Programming Language :: Python :: 3.10',
+      'Programming Language :: Python :: 3.11'
+    ]
 )

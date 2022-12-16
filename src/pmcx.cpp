@@ -900,9 +900,8 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             mcx_config.seeddata = malloc(mcx_config.maxdetphoton * sizeof(float) * RAND_WORD_LEN);
         }
 
-        if (mcx_config.debuglevel != 0) {
+        if (mcx_config.debuglevel & MCX_DEBUG_MOVE) {
             mcx_config.exportdebugdata = (float*) malloc(mcx_config.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
-            mcx_config.debuglevel |= MCX_DEBUG_MOVE;
         }
 
         /** Start multiple threads, one thread to run portion of the simulation on one CUDA GPU, all in parallel */
@@ -938,7 +937,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         field_dim[4] = 1;
         field_dim[5] = 1;
 
-        if (mcx_config.debuglevel != 0) {
+        if (mcx_config.debuglevel & MCX_DEBUG_MOVE) {
             field_dim[0] = MCX_DEBUG_REC_LEN;
             field_dim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
             field_dim[2] = 0;
@@ -993,7 +992,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 auto partial_path = py::array_t<float, py::array::f_style>(std::initializer_list<size_t>({field_dim[0], mcx_config.detectedcount}));
                 memcpy(partial_path.mutable_data(), mcx_config.exportdetected,
                        field_dim[0] * field_dim[1] * sizeof(float));
-                output["detphotons"] = partial_path;
+                output["detp"] = partial_path;
             }
 
             free(mcx_config.exportdetected);
@@ -1127,7 +1126,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PMCX v2022.10\nUsage:\n    output = pmcx.mcx(cfg);\n\nRun 'help(pmcx.mcx)' for more details.\n";
+            << "PMCX v2022.10\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
 }
 
 py::dict pmcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
@@ -1177,10 +1176,10 @@ py::list get_GPU_info() {
 }
 
 PYBIND11_MODULE(pmcx, m) {
-    m.doc() = "PMCX: Monte Carlo eXtreme Python Interface, http://mcx.space";
-    m.def("mcx", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
+    m.doc() = "PMCX: Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
+    m.def("run", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
                                                                                     py::scoped_estream_redirect>());
-    m.def("mcx", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
+    m.def("run", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
                                                                                           py::scoped_estream_redirect>());
     m.def("gpuinfo",
           &get_GPU_info,
