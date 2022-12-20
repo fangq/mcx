@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd pmcx/
 for PYBIN in /opt/python/*/bin/; do
     "${PYBIN}/pip" wheel . -w wheels/
 done

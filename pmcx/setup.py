@@ -21,13 +21,11 @@ PLAT_TO_CMAKE = {
 }
 
 
-# A CMakeExtension needs a sourcedir instead of a file list.
-# The name must be the _single_ output extension from the CMake build.
-# If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=""):
+    def __init__(self, name, target, source_dir=""):
         Extension.__init__(self, name, sources=[])
-        self.sourcedir = os.path.abspath(sourcedir)
+        self.source_dir = os.path.abspath(source_dir)
+        self.target = target
 
 
 class CMakeBuild(build_ext):
@@ -112,8 +110,8 @@ class CMakeBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        subprocess.check_call(["cmake", "--fresh", ext.sourcedir] + cmake_args, cwd=build_temp)
-        subprocess.check_call(["cmake", "--build", ".", "--target", "pmcx"] + build_args, cwd=build_temp)
+        subprocess.check_call(["cmake", "--fresh", ext.source_dir] + cmake_args, cwd=build_temp)
+        subprocess.check_call(["cmake", "--build", ".", "--target", ext.target] + build_args, cwd=build_temp)
 
 
 # The information here can also be placed in setup.cfg - better separation of
@@ -121,7 +119,6 @@ class CMakeBuild(build_ext):
 setup(
     name="pmcx",
     version="0.0.5",
-    packages=['pmcx'],
     requires=['numpy'],
     license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",
@@ -130,11 +127,11 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     maintainer= 'Qianqian Fang',
-    url = 'https://github.com/fangq/mcx',
-    download_url = 'http://mcx.space',
-    keywords = ['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
+    url='https://github.com/fangq/mcx',
+    download_url='http://mcx.space',
+    keywords=['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
                 'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics'],
-    ext_modules=[CMakeExtension("pmcx")],
+    ext_modules=[CMakeExtension("pmcx", target="pmcx", source_dir="../src/")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
