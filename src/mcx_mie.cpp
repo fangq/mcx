@@ -36,7 +36,7 @@
 
 #include <vector_types.h>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__APPLE__)
     #include <complex>
     typedef std::complex<double> Dcomplex;
 #else
@@ -44,7 +44,7 @@
     typedef double _Complex Dcomplex;
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__APPLE__)
 inline Dcomplex make_Dcomplex(double re, double im) {
     return Dcomplex(re, im);
 }
