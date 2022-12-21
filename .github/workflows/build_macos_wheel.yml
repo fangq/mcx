@@ -46,7 +46,7 @@ jobs:
         run: |
           cd pmcx/
           pip install wheel
-          python wheel . -w ../dist/
+          pip wheel . -w ../dist/
           ls ../dist/
           cd ../
       - name: Check If the Build Version Exists on PyPI
