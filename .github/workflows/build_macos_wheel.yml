@@ -32,7 +32,7 @@ jobs:
           git clone --depth 1 --recursive https://github.com/kholia/OSX-KVM
           cd OSX-KVM && sed "s|/home/CHANGEME|$OSX_PATH|g" macOS-libvirt-Catalina.xml > MacOS-MCX.xml && \
             xmlstarlet ed -L -N w="http://libvirt.org/schemas/domain/qemu/1.0" -d '//disk[3]' MacOS-MCX.xml
-          sudo virsh --connect qemu:///system define  $OSX_PATH/MacOS-MCX.xml
+          sudo virsh --connect qemu:///system define  $OSX_PATH/OSX-KVM/MacOS-MCX.xml
       - name: Download the MacOS MCX Builder QCOW2 Image
         shell: bash
         run: |
