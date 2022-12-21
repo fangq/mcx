@@ -40,6 +40,7 @@ jobs:
           curl -o cuda.zip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/cuda.zip
           unzip cuda.zip
           sudo mv cuda/ /usr/local/
+          sudo chmod +x /usr/local/cuda/bin/*
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
       - name: Build Wheels
