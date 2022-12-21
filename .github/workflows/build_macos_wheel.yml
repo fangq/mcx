@@ -25,7 +25,7 @@ jobs:
       - name: Reduce XCode Version to What's Supported by CUDA
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 10.1
+          xcode-version: 10.3.0
 
       - name: Set up Python
         uses: actions/setup-python@v4
