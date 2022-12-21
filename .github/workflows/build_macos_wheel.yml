@@ -34,7 +34,7 @@ jobs:
       - name: Download the MacOS MCX Builder QCOW2 Image
         shell: bash
         run: |
-          sudo mkdir /image/
+          mkdir $GITHUB_WORKSPACE/../image/
           curl -sSOL https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/mac_hdd_ng.img
           mv mac_hdd_ng.img /image/
       - name: Start MacOS VM, Build Wheels, and Copy Them Out of the VM
