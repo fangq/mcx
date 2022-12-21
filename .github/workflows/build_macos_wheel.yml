@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           set -x
-          cd GITHUB_WORKSPACE/.github/macos_wheel_builder/qemu
+          cd $GITHUB_WORKSPACE/.github/macos_wheel_builder/qemu
           docker build --tag qemu --force-rm .
       - name: Build MacOS Runner Container Based on QEMU
         shell: bash
