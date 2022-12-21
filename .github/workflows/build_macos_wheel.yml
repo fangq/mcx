@@ -27,7 +27,8 @@ jobs:
         shell: bash
         run: |
           lsblk
-          lsmod | grep kvm
+          zgrep CONFIG_KVM /proc/config.gz
+          sudo lsmod | grep kvm
           cd $GITHUB_WORKSPACE/../
           OSX_PATH=$PWD && echo "OSX_PATH=$PWD" >> $GITHUB_ENV
           git clone --depth 1 --recursive https://github.com/kholia/OSX-KVM
