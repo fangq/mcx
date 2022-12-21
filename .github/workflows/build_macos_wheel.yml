@@ -1,0 +1,58 @@
+name: Build and Upload macOS Python Wheels
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build_windows_wheels:
+    name: Build macOS wheels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Build Qemu Container
+        shell: bash
+        run: |
+          set -x
+          cd GITHUB_WORKSPACE/.github/macos_wheel_builder/qemu
+          docker build --tag qemu --force-rm .
+      - name: Build MacOS Runner Container Based on QEMU
+        shell: bash
+        run: |
+          set -x
+          cd $GITHUB_WORKSPACE/.github/macos_wheel_builder/
+          docker build --tag macos_wheel_builder --force-rm .
+      - name: Download the MacOS MCX Builder QCOW2 Image
+        shell: bash
+        run: |
+          sudo mkdir /image/
+          curl -sSOL https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/mac_hdd_ng.img
+          mv mac_hdd_ng.img /image/
+      - name: Start MacOS VM, Build Wheels, and Copy Them Out of the VM
+        shell: bash
+        run: |
+          docker run -it  -v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket --privileged \
+          -v /image:/image --pid host -v /dev/kvm:/dev/kvm -v GITHUB_WORKSPACE:/mcx/ --cgroupns host \
+          mcx-builder
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        shell: bash
+        run: |
+          ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ github.repository_owner == 'fangq' && steps.perform_pypi_upload_check.outputs.perform_pypi_upload == 1  && github.event_name != 'pull_request'}}
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true
