@@ -24,7 +24,7 @@ jobs:
           submodules: 'recursive'
       - name: Reduce XCode Version to What's Supported by CUDA
         run: |
-          brew install robotsandpencils/made/xcodes
+          brew install --cask xcodes
           xcodes install 10.1
 
       - name: Set up Python
