@@ -42,8 +42,8 @@ jobs:
       - name: Build Wheels
         run: |
           cd pmcx/
-          CC=gcc-9
-          CXX=g++-9
+          echo "CC=gcc-9" >> $GITHUB_ENV
+          echo "CXX=g++-9" >> $GITHUB_ENV
           pip install wheel
           pip wheel . -w ../dist/
           ls ../dist/
