@@ -30,6 +30,7 @@ jobs:
       - name: Install OpenMP and ZLib
         run: |
           brew install --cc=gcc-9 libomp zlib
+          echo "CMAKE_ARGS='-DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9'" >> $GITHUB_ENV
           brew link --force libomp
       - name: Install CUDA
         run: |
@@ -42,8 +43,6 @@ jobs:
       - name: Build Wheels
         run: |
           cd pmcx/
-          echo "CMAKE_ARGS=-DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9" >> $GITHUB_ENV
-          CMAKE_ARGS="-DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9"
           pip install wheel
           pip wheel . -w ../dist/
           ls ../dist/
