@@ -176,7 +176,7 @@ function varargout=mcxlab(varargin)
 %                      'fourierx2d' [*] - a general 2D Fourier basis, parameters
 %                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
 %                               the phase shift is phi{x,y}*2*pi
-%                      'zgaussian' - an angular gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+%                      'zgaussian' - an angular gaussian beam, srcparam1(1) specifies the variance in the zenith angle
 %                      'line' - a line source, emitting from the line segment between 
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating 
 %                               uniformly in the perpendicular direction
