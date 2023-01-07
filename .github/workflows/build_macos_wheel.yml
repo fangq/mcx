@@ -32,11 +32,12 @@ jobs:
         run: |
           brew install --cc=$(brew --prefix gcc@9)/bin/gcc-9 libomp zlib
           echo "CMAKE_ARGS='-DCMAKE_C_COMPILER=$(brew --prefix gcc@9)/bin/gcc-9 -DCMAKE_CXX_COMPILER=$(brew --prefix gcc@9)/bin/g++-9'" >> $GITHUB_ENV
-          echo "CC=$(brew --prefix gcc@9)/bin/gcc-9" >>$GITHUB_ENV
-          echo "CXX=$(brew --prefix gcc@9)/bin/g++-9" >>$GITHUB_ENV
+          echo "CC=gcc-9" >>$GITHUB_ENV
+          echo "CXX=g++-9" >>$GITHUB_ENV
           brew link --force libomp
           ls $(brew --prefix gcc@9)/bin/
-          $(brew --prefix gcc@9)/bin/g++-9 --version
+          g++-9 --version
+          gcc-9 --version
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/cuda.zip
