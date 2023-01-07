@@ -33,7 +33,7 @@ jobs:
           brew install --cc=$(brew --prefix gcc@9)/bin/gcc-9 libomp zlib
           echo "CMAKE_ARGS='-DCMAKE_C_COMPILER=$(brew --prefix gcc@9)/bin/gcc-9 -DCMAKE_CXX_COMPILER=$(brew --prefix gcc@9)/bin/g++-9'" >> $GITHUB_ENV
           echo "CC=gcc-9" >>$GITHUB_ENV
-          echo "CXX=g++-9" >>$GITHUB_ENV
+          echo "CXX=gcc-9" >>$GITHUB_ENV
           brew link --force libomp
           ls $(brew --prefix gcc@9)/bin/
           g++-9 --version
