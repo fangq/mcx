@@ -30,13 +30,18 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install OpenMP and ZLib
         run: |
-          brew install llvm@9
-          brew reinstall --cc=$(brew --prefix llvm@9)/bin/clang libomp zlib
-          echo "CC=$(brew --prefix llvm@9)/bin/clang" >>$GITHUB_ENV
-          echo "CXX=$(brew --prefix llvm@9)/bin/clang" >>$GITHUB_ENV
+          curl -o Xcode.xip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/Xcode_10.1.xip
+          xar -xf Xcode.xip
+          curl -O https://gist.githubusercontent.com/pudquick/ff412bcb29c9c1fa4b8d/raw/24b25538ea8df8d0634a2a6189aa581ccc6a5b4b/parse_pbzx2.py
+          python parse_pbzx2.py Content
+          xz -d Content.partXX.cpio.xz
+          for i in *.cpio; do cat $i >> Content.cpio; done
+          sudo cpio -idm < Content.cpio
+          sudo mv "/Applications/Xcode.app" "/Applications/Xcode-old.app"
+          sudo mv ./Xcode.app /Applications/
+          ls /Applications/
           brew link --force libomp
-          ls $(brew --prefix llvm@9)/bin/
-          $(brew --prefix llvm@9)/bin/clang --version
+          clang --version
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/cuda.zip
