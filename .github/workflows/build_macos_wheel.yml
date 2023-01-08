@@ -31,7 +31,7 @@ jobs:
       - name: Install OpenMP and ZLib
         run: |
           brew install llvm@9
-          brew install --cc=$(brew --prefix llvm@9)/bin/clang libomp zlib
+          brew reinstall --cc=$(brew --prefix llvm@9)/bin/clang libomp zlib
           echo "CC=$(brew --prefix llvm@9)/bin/clang" >>$GITHUB_ENV
           echo "CXX=$(brew --prefix llvm@9)/bin/clang" >>$GITHUB_ENV
           brew link --force libomp
