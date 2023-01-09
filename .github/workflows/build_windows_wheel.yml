@@ -1,10 +1,5 @@
 name: Build and Upload Windows Python Wheels
 on:
-  push:
-    branches:
-      - master
-    tags:
-      - '*'
   pull_request:
     branches:
       - master
