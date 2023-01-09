@@ -43,7 +43,7 @@ jobs:
           rm zlib.zip
       - name: Build Wheels
         run: |
-          cd src/
+          cd pmcx/
           pip install wheel
           python setup.py bdist_wheel
           ls dist/

@@ -1,0 +1,77 @@
+name: Build and Upload macOS Python Wheels
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build_macos_wheels:
+    name: Build macOS wheels
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9' ]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Select Supported XCode Version + Link OpenMP
+        run: |
+          sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
+          echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          brew link --force libomp
+      - name: Install CUDA
+        run: |
+          curl -o cuda.zip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/cuda-10-2.zip
+          unzip cuda.zip
+          sudo mv cuda/ /usr/local/
+          sudo chmod +x /usr/local/cuda/bin/*
+          sudo chmod +x /usr/local/cuda/nvvm/bin/*
+          echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
+          echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
+      - name: Build Wheels
+        run: |
+          cd pmcx/
+          pip install wheel
+          pip wheel . -w ../dist/
+          ls ../dist/
+          cd ../
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        run: |
+          bash $GITHUB_WORKSPACE/.github/check-pypi-upload.sh
+      - name: Prepare Wheels for Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-wheels
+          path: dist/
+
+  upload_macos_wheels:
+    needs: build_macos_wheels
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'fangq' && needs.build_windows_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
+    steps:
+      - name: Download Wheels from Build Job
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-wheels
+          path: dist/
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true

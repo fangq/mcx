@@ -38,13 +38,13 @@ endif()
 set(
     CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS};
-    -g -lineinfo -Xcompiler -Wall -Xcompiler -fopenmp -O3 -arch=sm_35
+    -g -lineinfo -Xcompiler -Wall -Xcompiler -O3 -arch=sm_35
     -DMCX_TARGET_NAME="Fermi MCX" -DUSE_ATOMIC -use_fast_math
     -DSAVE_DETECTORS -Xcompiler -fPIC
     )
 
 # C Options
-set(CMAKE_C_FLAGS "-g -Wall -std=c99 -fopenmp -fPIC")
+set(CMAKE_C_FLAGS "-g -Wall -std=c99 -fPIC")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../lib)
 
@@ -86,8 +86,7 @@ set_target_properties(mcx-exe
 # Link options
 target_link_libraries(
     mcx-exe
-    mcx
-    -fopenmp
+    mcx OpenMP::OpenMP_CXX
     zmat
     ZLIB::ZLIB
     )
@@ -128,6 +127,6 @@ if(BUILD_MEX AND Matlab_FOUND)
       SRC mcxlab.cpp
       LINK_TO mex mx mcx
     )
-set_target_properties(mcxlab
-        PROPERTIES OUTPUT_NAME ${CMAKE_SOURCE_DIR}/../mcxlab/mcx)
+    set_target_properties(mcxlab
+            PROPERTIES OUTPUT_NAME ${CMAKE_SOURCE_DIR}/../mcxlab/mcx)
 endif()

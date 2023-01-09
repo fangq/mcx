@@ -28,8 +28,8 @@ jobs:
       - name: Build Manylinux2014 Wheels
         shell: bash
         run: |
-          docker run -v ${GITHUB_WORKSPACE}/src/:/src/ manylinux2014_wheel_builder
-          sudo mv ${GITHUB_WORKSPACE}/src/dist/ ${GITHUB_WORKSPACE}/dist/
+          docker run -v ${GITHUB_WORKSPACE}:/src/ manylinux2014_wheel_builder
+          sudo mv ${GITHUB_WORKSPACE}/pmcx/dist/ ${GITHUB_WORKSPACE}/dist/
       - name: Check If the Build Version Exists on PyPI
         id: perform_pypi_upload_check
         shell: bash

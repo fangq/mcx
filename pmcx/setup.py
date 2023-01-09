@@ -9,6 +9,9 @@ import sys
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
+with open("README.md", "r") as fh:
+    readme = fh.read()
+
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
     "win32": "Win32",
@@ -18,13 +21,11 @@ PLAT_TO_CMAKE = {
 }
 
 
-# A CMakeExtension needs a sourcedir instead of a file list.
-# The name must be the _single_ output extension from the CMake build.
-# If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=""):
+    def __init__(self, name, target, source_dir=""):
         Extension.__init__(self, name, sources=[])
-        self.sourcedir = os.path.abspath(sourcedir)
+        self.source_dir = os.path.abspath(source_dir)
+        self.target = target
 
 
 class CMakeBuild(build_ext):
@@ -109,8 +110,8 @@ class CMakeBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        subprocess.check_call(["cmake", "--fresh", ext.sourcedir] + cmake_args, cwd=build_temp)
-        subprocess.check_call(["cmake", "--build", ".", "--target", "pmcx"] + build_args, cwd=build_temp)
+        subprocess.check_call(["cmake", "--fresh", ext.source_dir] + cmake_args, cwd=build_temp)
+        subprocess.check_call(["cmake", "--build", ".", "--target", ext.target] + build_args, cwd=build_temp)
 
 
 # The information here can also be placed in setup.cfg - better separation of
@@ -119,11 +120,32 @@ setup(
     name="pmcx",
     version="0.0.5",
     requires=['numpy'],
+    license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",
-    author_email="q.fang@neu.edu",
-    description="Python bindings for Monte Carlo eXtreme",
-    ext_modules=[CMakeExtension("pmcx")],
+    author_email="raayaiardakani.m@northeastern.edu, q.fang@neu.edu",
+    description="Python bindings for Monte Carlo eXtreme photon transport simulator",
+    long_description=readme,
+    long_description_content_type="text/markdown",
+    maintainer= 'Qianqian Fang',
+    url='https://github.com/fangq/mcx',
+    download_url='http://mcx.space',
+    keywords=['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
+                'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics'],
+    ext_modules=[CMakeExtension("pmcx", target="pmcx", source_dir="../src/")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
+    classifiers=[
+      'Development Status :: 4 - Beta',
+      'Intended Audience :: Science/Research',
+      'Environment :: GPU :: NVIDIA CUDA',
+      'Topic :: Scientific/Engineering :: Physics',
+      'License :: OSI Approved :: Apache Software License',
+      'Programming Language :: Python :: 3.6',
+      'Programming Language :: Python :: 3.7',
+      'Programming Language :: Python :: 3.8',
+      'Programming Language :: Python :: 3.9',
+      'Programming Language :: Python :: 3.10',
+      'Programming Language :: Python :: 3.11'
+    ]
 )
