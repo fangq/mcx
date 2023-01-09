@@ -31,9 +31,6 @@ jobs:
       - name: Install OpenMP and ZLib
         run: |
           sudo xcode-select -s /Applications/Xcode_10.3.app/
-          echo "CC=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang" >> $GITHUB_ENV
-          echo "CXX=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang++" >> $GITHUB_ENV
-          echo "CUDACXX=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang++" >> $GITHUB_ENV
           brew link --force libomp
       - name: Install CUDA
         run: |
