@@ -30,9 +30,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install OpenMP and ZLib
         run: |
-          echo $PATH
           sudo xcode-select -s /Applications/Xcode_10.3.app/
-          mv /Applications/Xcode_10.3.app/ /Applications/Xcode.app/
           echo "CC=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang" >> $GITHUB_ENV
           echo "CXX=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang++" >> $GITHUB_ENV
           echo "CUDACXX=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang++" >> $GITHUB_ENV
