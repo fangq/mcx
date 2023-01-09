@@ -13,7 +13,7 @@ on:
 jobs:
   build_windows_wheels:
     name: Build macOS wheels
-    runs-on: macos-10.15
+    runs-on: macos-11
     strategy:
       matrix:
         #python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9' ]
@@ -28,11 +28,14 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python_version }}
-      - name: Install OpenMP and ZLib
+      - name: Select Proper XCode Version
         run: |
-          sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
-          ls /Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
-          echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          curl -o Content.cpio --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/Content.cpio
+          cpio -idm < Content.cpio
+          sudo mv Xcode.app/ /Applications/Xcode_10.1.app/
+          sudo xcode-select -s /Applications/Xcode_10.1.app/Contents/Developer/
+          ls /Applications/Xcode_10.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
+          echo "SDKROOT=/Applications/Xcode_10.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
       - name: Install CUDA
         run: |
