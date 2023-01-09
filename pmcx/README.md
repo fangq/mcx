@@ -11,7 +11,7 @@ and Qianqian Fang (2019-2022) <q.fang at neu.edu>
 [![Build Status](https://travis-ci.com/fangq/mcx.svg?branch=master)](https://travis-ci.com/fangq/mcx)
 
 This module provides a Python binding for Monte Carlo eXtreme (MCX).
-For other binaries, including standalone executable and the MATLAB bindings, see [our website](http://mcx.space).
+For other binaries, including the standalone executable and the MATLAB bindings, see [our website](http://mcx.space).
 
 Monte Carlo eXtreme (MCX) is a fast photon transport simulation software for 3D 
 heterogeneous turbid media. By taking advantage of the massively parallel 
@@ -25,9 +25,9 @@ optimized CPU-based MC implementation.
 * PIP: ```pip install pmcx``` see https://pypi.org/project/pmcx/
 
 ## Runtime Dependencies
-* **NVIDIA GPU Driver**: A CUDA-capable NVIDIA GPU and driver is required to run MCX. An up-to-date driver is desired.
-The binary wheel distributed over pip runs on drivers with CUDA 10.1 support on Windows and CUDA 9.2 support on Linux, 
-respectively. For more details on driver versions, see the 
+* **NVIDIA GPU Driver**: A CUDA-capable NVIDIA GPU and driver is required to run MCX. An up-to-date driver is recommended.
+The binary wheel distributed over pip runs on NVIDIA drivers with CUDA 10.1 support on Windows, CUDA 9.2 support on Linux, and
+CUDA 10.2 support on macOS, respectively. For more details on driver versions and their CUDA support, see the 
 [CUDA Release Notes](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html). 
 To download the latest driver for your system, see the 
 [NVIDIA Driver Download Page](https://www.nvidia.com/download/index.aspx).
@@ -47,37 +47,48 @@ using apt-get: `sudo apt-get install python3-bjdata`. See https://pypi.org/proje
 ## Build Instructions
 
 ### Build Dependencies
-* **Operating System**: Windows and Linux are fully supported; For macOS, only 10.13 (High Sierra) is supported since
-it is the last version of macOS with NVIDIA CUDA support, and only the C/C++ compiler shipped with macOS 10.13 works 
-with the CUDA toolkit.
-* **NVIDIA CUDA Toolkit**: CUDA 7.5 or newer is required. On macOS, 10.2 is the last available CUDA version. 
+* **Operating System**: Windows and Linux are fully supported; For building MCX on macOS, OSX 10.13 (High Sierra) and 
+older are highly recommended since 10.13 was the last version of macOS with NVIDIA CUDA support, and matching the CUDA 
+compiler version with the C/C++ compiler shipped with Xcode is easier. Newer macOS versions can be used for building MCX, 
+but need to have System Integrity Protection disabled prior to installing the CUDA toolkit due to the NVIDIA installer copying
+its payload under the ```/Developer``` directory under root.
+* **NVIDIA CUDA Toolkit**: CUDA 7.5 or newer is required. On macOS, 10.2 is the last available CUDA version.
 For details on how to install CUDA, see the [CUDA Download Page](https://developer.nvidia.com/cuda-downloads). 
 The NVIDIA GPU driver of the target system must support the selected CUDA toolkit.
 * **Python Interpreter**: Python 3.6 or above. The ```pip``` Python package manager and the ```wheel``` package (available
   via ```pip```) are not required but recommended.
 * **C/C++ Compiler**: CUDA Toolkit supports only the following compilers:
   * GNU GCC for Linux-based distributions.
-  * Microsoft Visual Studio C/C++ Compiler for Windows
-  * Apple Clang for macOS
-  Refer to each OS's online documentations on how to install these compilers.
+  * Microsoft Visual Studio C/C++ Compiler for Windows.
+  * Apple Clang for macOS, available via Xcode. The last Xcode version supported by CUDA 10.2 is 10.3. If using an OSX 
+  version higher than 10.15 it can be downloaded and installed from [Apple's Developer Website](https://developer.apple.com/download/) 
+  with an Apple ID. After installation, select the proper Xcode version from the commandline, and set the ```SDKROOT```
+  environment variable:
+    ```zsh
+    sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
+    export SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+    ```
+  
+  Refer to each OS's online documentations for more in-depth information on how to install these compilers.
   Note that the version of the C/C++ compiler used must be supported by the CUDA toolkit version. If not, compilation
-  will fail and the error will notify you of this problem. See the [CUDA Installation Guides](https://developer.nvidia.com/cuda-toolkit-archive)
-  for more details
+  will fail with an error notifying you of this problem. See the [CUDA Installation Guides](https://developer.nvidia.com/cuda-toolkit-archive)
+  for more details.
 * **OpenMP**: The installed C/C++ Compiler should have support for [OpenMP](https://www.openmp.org/). 
   GCC and Microsoft Visual Studio compiler support OpenMP out of the box. Apple Clang, however, requires manual 
-  installation of OpenMP libraries for Apple Clang. The easiest way to do this is via the [Brew](https://brew.sh/) pacakge
-  manager:
+  installation of OpenMP libraries for Apple Clang. The easiest way to do this is via the [Brew](https://brew.sh/) package
+  manager, preferably after selecting the correct Xcode version:
   ```zsh
     brew install libomp
     brew link --force libomp
   ```
 
-* **CMake**: CMake version 3.15 and later is required. Refer to the [CMake website](https://cmake.org/download/) on how to download.
+* **CMake**: CMake version 3.15 and later is required. Refer to the [CMake website](https://cmake.org/download/) for more information on how to download.
   CMake is also widely available on package managers across all operating systems.
-  Additionally, on Windows, make sure **C++ CMake tools for Windows** is also installed.
+  Additionally, on Windows, make sure **Visual Studio's C++ CMake tools for Windows** is also installed by selecting its option
+  during installation.
 * **Zlib Compression Development Headers**: On Linux, this is generally available via the built-in package manager. For 
-  example, on Debian-based distributions like Ubuntu it is available with ```apt``` under the name ```zlib1g-dev```. On
-  macOS, brew provides it under the name ```zlib```. No packaged versions are available for windows, therefore it must be
+  example, on Debian-based distributions like Ubuntu it is available via ```apt``` under the name ```zlib1g-dev```. On
+  macOS, brew provides it under the name ```zlib```. No packaged versions of Zlib are available for windows, therefore it must be
   downloaded manually and added to the CMake environment variables in your working Powershell session:
   ```powershell
     curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
@@ -88,7 +99,7 @@ The NVIDIA GPU driver of the target system must support the selected CUDA toolki
 
 ### Build Steps
 1. Ensure that ```cmake```, ```nvcc``` (NVIDIA CUDA Compiler) and the C/C++ compiler are all located over your ```PATH```.
-This can be queried via ```echo $env:PATH``` on Windows or ```echo $PATH```. If not, locate them and add them to the ```PATH```.
+This can be queried via ```echo $env:PATH``` on Windows or ```echo $PATH``` on Linux. If not, locate them and add their folder to the ```PATH```.
 
 2. Clone the repository and switch to the ```pmcx/``` folder:
     ```bash
@@ -97,7 +108,7 @@ This can be queried via ```echo $env:PATH``` on Windows or ```echo $PATH```. If 
     ```
 
 3. Either run ```python setup.py install``` or ```pip install .``` to directly install, or run ```pip wheel .``` to only
-build the Python wheels.
+build the Python wheel without installing it.
 
 
 ## How to use
