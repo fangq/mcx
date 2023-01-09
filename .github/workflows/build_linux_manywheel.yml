@@ -1,5 +1,10 @@
 name: Build and Upload Manylinux2014 Python Wheels
 on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
   pull_request:
     branches:
       - master
