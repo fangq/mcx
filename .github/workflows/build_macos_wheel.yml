@@ -37,7 +37,7 @@ jobs:
           echo "CXX=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang++" >> $GITHUB_ENV
           echo "CUDACXX=/Applications/Xcode.app/Contents/Developer/ToolChains/XcodeDefault.xctoolchain/usr/bin/clang++" >> $GITHUB_ENV
           echo "CMAKE_MAKE_PROGRAM=/Applications/Xcode.app/Contents/Developer/usr/bin/make" >> $GITHUB_ENV
-          cp -r /Applications/Xcode.app/Contents/Developer/usr/ /usr/
+          sudo cp -r /Applications/Xcode.app/Contents/Developer/usr/ /usr/
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/cuda-10-2.zip
