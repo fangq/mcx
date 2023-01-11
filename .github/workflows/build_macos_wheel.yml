@@ -61,7 +61,7 @@ jobs:
   upload_macos_wheels:
     needs: build_macos_wheels
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner == 'fangq' && needs.build_windows_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
+    if: ${{ github.repository_owner == 'fangq' && needs.build_macos_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
     steps:
       - name: Download Wheels from Build Job
         uses: actions/download-artifact@v3
