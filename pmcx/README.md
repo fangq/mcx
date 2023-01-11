@@ -5,7 +5,7 @@
 - Copyright: (C) Matin Raayai Ardakani (2022) <raayaiardakani.m@northeastern.edu> 
 and Qianqian Fang (2019-2022) <q.fang at neu.edu>
 - License: GNU Public License V3 or later
-- Version: 0.0.6
+- Version: 0.0.7
 - URL: https://github.com/fangq/mcx
 
 [![Build Status](https://travis-ci.com/fangq/mcx.svg?branch=master)](https://travis-ci.com/fangq/mcx)
