@@ -8,7 +8,7 @@ BACKEND ?= cuda
 
 ROOTDIR ?= ..
 MCXDIR  ?= $(ROOTDIR)
-MCXSRC :=$(MCXDIR)/src
+MCXSRC  :=$(MCXDIR)/src
 
 ifeq ($(BACKEND),ocelot)
   CC?=g++
@@ -61,7 +61,8 @@ DLLFLAG=-fPIC
 OMP=-fopenmp
 CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
-CPPOPT=-g -Wall -std=c99 #-DNO_LZMA # -DUSE_OS_TIMER
+CFLAGS+=-std=c99
+CPPFLAGS+=-g -Wall #-DNO_LZMA # -DUSE_OS_TIMER
 
 OBJSUFFIX=.o
 EXESUFFIX=
@@ -108,13 +109,13 @@ else
   endif
 endif
 
-ifeq ($(MAKECMDGOALS),mex)
+ifneq (,$(filter mex,$(MAKECMDGOALS)))
   FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
   ZMATLIB=
   USERLINKOPT=
 endif
 
-ifeq ($(MAKECMDGOALS),oct)
+ifneq (,$(filter oct,$(MAKECMDGOALS)))
   FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
   ZMATLIB=
   USERLINKOPT=
@@ -256,13 +257,13 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 	$(AR) $(OBJS) $(OUTPUTFLAG) $(OUTPUT_DIR)/$(BINARY) $(LINKOPT) $(USERLINKOPT)
 
 %$(OBJSUFFIX): %.c
-	$(CC) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 %$(OBJSUFFIX): %.cpp
-	$(CXX) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
+	$(CXX) $(CPPFLAGS) $(INCLUDEDIRS) $(CPPOPT) -c -o $@  $<
 
 mcx_bench$(OBJSUFFIX): mcx_bench.c
-	$(GCC) $(INCLUDEDIRS) -c -o mcx_bench$(OBJSUFFIX)  $<
+	$(GCC) $(CFLAGS) $(CPPFLAGS) $(INCLUDEDIRS) -c -o mcx_bench$(OBJSUFFIX)  $<
 
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
