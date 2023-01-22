@@ -1886,7 +1886,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
 #endif
 
-        mediaidold = mediaid | isdet;
+        mediaidold = mediaid | (isdet & DET_MASK);
         idx1dold = idx1d;
         idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
         GPUDEBUG(("idx1d [%d]->[%d] [%d %d %d %d]\n", idx1dold, idx1d, flipdir[0], flipdir[1], flipdir[2], flipdir[3]));
@@ -2019,7 +2019,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         }
 
         /** launch new photon when exceed time window or moving from non-zero voxel to zero voxel without reflection */
-        if ((mediaid == 0 && (((isdet & 0xF) == 0 && (!isreflect || (isreflect && n1 == gproperty[0].w))) || (isdet == bcAbsorb || isdet == bcCyclic) )) ||
+        if ((mediaid == 0 && ((!isreflect || (isreflect && n1 == gproperty[0].w)) || (((isdet & 0xF) == bcUnknown && !gcfg->doreflect)
+                              || (isdet & 0xF) == bcAbsorb || (isdet & 0xF) == bcCyclic)) && (isdet & 0xF) != bcMirror) ||
                 (issvmc && (idx1d != idx1dold || hitintf) && !nuvox.sv.isupper && !nuvox.sv.lower && (!isreflect || (isreflect && n1 == gproperty[0].w))) ||
                 f.t > gcfg->twin1) {
             if (isdet == bcCyclic) {
@@ -2117,7 +2118,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     *((float4*)(&prop)) = gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower];
                 }
             } else {
-                if (((isreflect && (isdet & 0xF) == 0) || (isdet & 0x1)) && ((isdet & 0xF) == bcMirror || n1 != ((gcfg->mediaformat < 100) ? (prop.n) : (gproperty[(mediaid > 0 && gcfg->mediaformat >= 100) ? 1 : mediaid].w)))) {
+                if (((mediaid && gcfg->doreflect) // if at an internal boundary, check cfg.isreflect flag
+                        || (mediaid == 0 &&  // or if out of bbx or enters 0-voxel
+                            (((isdet & 0xF) == bcUnknown && gcfg->doreflect) // if cfg.bc is "_", check cfg.isreflect
+                             || (((isdet & 0xF) == bcReflect || (isdet & 0xF) == bcMirror)))))  // or if cfg.bc is 'r' or 'm'
+                        && n1 != ((gcfg->mediaformat < 100) ? (prop.n) : (gproperty[(mediaid > 0 && gcfg->mediaformat >= 100) ? 1 : mediaid].w))) {
                     float Rtotal = 1.f;
                     float cphi, sphi, stheta, ctheta, tmp0, tmp1;
 
@@ -2142,7 +2147,9 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         GPUDEBUG(("Rtotal=%f\n", Rtotal));
                     } //< else, total internal reflection
 
-                    if (Rtotal < 1.f && (((isdet & 0xF) == 0 && ((gcfg->mediaformat < 100) ? prop.n : gproperty[mediaid].w) >= 1.f) || isdet == bcReflect) && (isdet != bcMirror) && rand_next_reflect(t) > Rtotal) { // do transmission
+                    if (Rtotal < 1.f // if total internal reflection does not happen
+                            && (!(mediaid == 0 && ((isdet & 0xF) == bcMirror))) // if out of bbx and cfg.bc is not 'm'
+                            && rand_next_reflect(t) > Rtotal) { // and if photon chooses the transmission path, then do transmission
                         transmit(&v, n1, prop.n, flipdir[3]);
 
                         if (mediaid == 0 || (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower) == 0)) { // transmission to external boundary
@@ -2205,6 +2212,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             if (issvmc) {
                 *((float4*)(&prop)) = gproperty[nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower];
             }
+        }
+
+        if (mediaid == 0 || idx1d == OUTSIDE_VOLUME_MIN || idx1d == OUTSIDE_VOLUME_MAX) {
+            printf("ERROR: should never happen! mediaid=%d idx1d=%X isreflect=%d gcfg->doreflect=%d n1=%f n2=%f isdet=%d flipdir[3]=%d p=(%f %f %f)[%d %d %d]\n", mediaid, idx1d, isreflect, gcfg->doreflect, n1, prop.n, isdet, flipdir[3], p.x, p.y, p.z, flipdir[0], flipdir[1], flipdir[2]);
+            return;
         }
     }
 

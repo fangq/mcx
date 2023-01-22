@@ -2,11 +2,12 @@
 
 # PMCX - Python bindings for Monte Carlo eXtreme photon transport simulator
 
-- Copyright: (C) Matin Raayai Ardakani (2022) <raayaiardakani.m@northeastern.edu> 
-and Qianqian Fang (2019-2022) <q.fang at neu.edu>
+- Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu> 
+and Qianqian Fang (2019-2023) <q.fang at neu.edu>
 - License: GNU Public License V3 or later
-- Version: 0.0.7
-- URL: https://github.com/fangq/mcx
+- Version: 0.0.8
+- URL: https://pypi.org/project/pmcx/
+- Github: https://github.com/fangq/mcx
 
 [![Build Status](https://travis-ci.com/fangq/mcx.svg?branch=master)](https://travis-ci.com/fangq/mcx)
 
@@ -130,7 +131,7 @@ import matplotlib.pyplot as plt
 
 res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype='uint8'), tstart=0, tend=5e-9, 
                tstep=5e-9, srcpos=[30,30,0], srcdir=[0,0,1], prop=np.array([[0, 0, 1, 1], [0.005, 1, 0.01, 1.37]]))
-print(res['flux'].shape)
+res['flux'].shape
 
 plt.imshow(np.log10(res['flux'][30,:, :]))
 plt.show()

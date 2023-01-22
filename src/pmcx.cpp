@@ -1178,9 +1178,9 @@ py::list get_GPU_info() {
 PYBIND11_MODULE(pmcx, m) {
     m.doc() = "PMCX: Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
     m.def("run", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
-                                                                                    py::scoped_estream_redirect>());
+          py::scoped_estream_redirect>());
     m.def("run", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
-                                                                                          py::scoped_estream_redirect>());
+          py::scoped_estream_redirect>());
     m.def("gpuinfo",
           &get_GPU_info,
           "Prints out the list of CUDA-capable devices attached to this system.",
