@@ -120,6 +120,7 @@ begin
     GL_LUMINANCE : Result := 1;
     GL_LUMINANCE_ALPHA : Result := 2;
     GL_RGBA16I: Result:=2;
+    GL_DOUBLE_EXT: Result:=8;
     else
       Result := 4;
   end; { Case }
@@ -225,6 +226,7 @@ var
   val, low, hi: single;
   i,nx,ny,nz,nt,sourcebyte: integer;
   pdata: pointer;
+  ddata: ^double;
   slen: Int16;
   dlen: int64;
 begin { TTexture_3D.Load_From_File_Log_Float }
@@ -279,8 +281,11 @@ begin { TTexture_3D.Load_From_File_Log_Float }
     end;
     if(skipbyte>0) then File_Stream.Seek(skipbyte,soBeginning);
     sourcebyte := Data_Type_To_Texel_Byte_Size (datatype);
-    SetLength (mybuf, nx * ny * nz * nt);
-    File_Stream.ReadBuffer (PChar (mybuf)^, Length (mybuf)*sourcebyte);
+    if(sourcebyte = 8) then
+        SetLength (mybuf, nx * ny * nz * nt * 2)
+    else
+        SetLength (mybuf, nx * ny * nz * nt);
+    File_Stream.ReadBuffer (PChar (mybuf)^, nx * ny * nz * nt * sourcebyte);
 
     DataFormat:=GL_LUMINANCE;
     TexelByte := Data_Type_To_Texel_Byte_Size (DataFormat);
@@ -289,35 +294,60 @@ begin { TTexture_3D.Load_From_File_Log_Float }
     pdata:=@mybuf[0];
     low:=1e10;
     hi:=-1e10;
-    for i:=0 to (nx * ny * nz * nt) - 1 do
-    begin
-          case datatype of
-              GL_RGBA32F:
-                if(mybuf[i]<=0) then begin
-                  val:=0./0.;
-                end else begin
-                  mybuf[i]:=log10(mybuf[i]);
-                  val:=mybuf[i];
-                end;
-              GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + i*sourcebyte))^;
-              else val:=PByte(Pointer(nativeuint(pdata) + i*sourcebyte))^;
-          end;
-          if(val<low) then low:=val;
-          if(val>hi)  then hi:=val;
-    end;
-    hi:=1.0/(hi-low)*255;
-    for i:=1 to (nx * ny * nz * nt) do
-    begin
-          case datatype of
-              GL_RGBA32F: val:=mybuf[i-1];
-              GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
-              else val:=PByte(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
-          end;
-          if(val<low) or (val=0) or (val<>val) then begin
-             M_Data[i]:=#0;
-          end else begin
-             M_Data[i]:=chr(Round((val-low)*hi));
-          end;
+    if(sourcebyte = 8) then begin
+       ddata:=@mybuf[0];
+       for i:=0 to (nx * ny * nz * nt) - 1 do
+       begin
+             if(ddata[i]<=0) then begin
+               val:=0./0.;
+             end else begin
+               ddata[i]:=log10(ddata[i]);
+               val:=ddata[i];
+             end;
+             if(val<low) then low:=val;
+             if(val>hi)  then hi:=val;
+       end;
+       hi:=1.0/(hi-low)*255;
+       for i:=1 to (nx * ny * nz * nt) do
+       begin
+             val:=ddata[i-1];
+             if(val<low) or (val=0) or (val<>val) then begin
+                M_Data[i]:=#0;
+             end else begin
+                M_Data[i]:=chr(Round((val-low)*hi));
+             end;
+       end;
+    end else begin
+        for i:=0 to (nx * ny * nz * nt) - 1 do
+        begin
+              case datatype of
+                  GL_RGBA32F:
+                    if(mybuf[i]<=0) then begin
+                      val:=0./0.;
+                    end else begin
+                      mybuf[i]:=log10(mybuf[i]);
+                      val:=mybuf[i];
+                    end;
+                  GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + i*sourcebyte))^;
+                  else val:=PByte(Pointer(nativeuint(pdata) + i*sourcebyte))^;
+              end;
+              if(val<low) then low:=val;
+              if(val>hi)  then hi:=val;
+        end;
+        hi:=1.0/(hi-low)*255;
+        for i:=1 to (nx * ny * nz * nt) do
+        begin
+              case datatype of
+                  GL_RGBA32F: val:=mybuf[i-1];
+                  GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
+                  else val:=PByte(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
+              end;
+              if(val<low) or (val=0) or (val<>val) then begin
+                 M_Data[i]:=#0;
+              end else begin
+                 M_Data[i]:=chr(Round((val-low)*hi));
+              end;
+        end;
     end;
     setLength(mybuf, 0);
   finally

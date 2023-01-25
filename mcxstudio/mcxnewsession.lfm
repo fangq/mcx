@@ -10,7 +10,7 @@ object fmNewSession: TfmNewSession
   ClientWidth = 504
   OnShow = FormShow
   Position = poMainFormCenter
-  LCLVersion = '1.8.2.0'
+  LCLVersion = '2.0.2.0'
   object grProgram: TRadioGroup
     AnchorSideLeft.Control = Owner
     AnchorSideRight.Control = Owner
@@ -32,13 +32,13 @@ object fmNewSession: TfmNewSession
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 95
+    ClientHeight = 94
     ClientWidth = 470
     ItemIndex = 0
     Items.Strings = (
-      'NVIDIA GPUs (MCX)'
-      'CPU Only (MMC)'
-      'NVIDIA/AMD/Intel CPUs/GPUs (MCX-CL)'
+      'MCX (NVIDIA GPUs)'
+      'MMC (Most CPUs/GPUs)'
+      'MCX-CL (Most CPUs/GPUs)'
     )
     ParentFont = False
     ParentColor = False
@@ -51,9 +51,9 @@ object fmNewSession: TfmNewSession
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 15
-    Height = 26
+    Height = 27
     Hint = 'Session'
-    Top = 159
+    Top = 160
     Width = 474
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 15
@@ -68,7 +68,7 @@ object fmNewSession: TfmNewSession
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 15
-    Height = 16
+    Height = 17
     Hint = '-s (--sessionid)'
     Top = 143
     Width = 489

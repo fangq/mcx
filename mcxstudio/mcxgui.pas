@@ -490,8 +490,8 @@ Const
      (-1,8,9,7,6,5,4);
   JSONTypeNames : Array[TJSONtype] of string =
      ('Unknown','Number','String','Boolean','Null','Array','Object');
-  MCProgram : Array[0..3] of string =
-     ('mcx','mmc','mcxcl','mmcl');
+  MCProgram : Array[0..2] of string =
+     ('mcx','mmc','mcxcl');
   DebugFlags: string ='RMP';
   SaveDetFlags: string ='DSPMXVW';
   BCFlags: string = 'ARMC';
@@ -891,10 +891,14 @@ begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
           sgConfig.Rows[2].CommaText:='Domain,InitElem,';
           sgConfig.Rows[3].CommaText:='Session,RayTracer,g - Dual-grid MMC';
+          rbUseBench.Enabled:=false;
+          edBenchMark.Enabled:=false;
       end else begin
           sgConfig.Rows[1].CommaText:='Domain,VolumeFile,"See Volume Designer..."';
           sgConfig.Rows[2].CommaText:='Domain,Dim,"[60,60,60]"';
           sgConfig.Rows[3].CommaText:='Domain,MediaFormat,byte - 1 byte integer';
+          rbUseBench.Enabled:=true;
+          edBenchMark.Enabled:=true;
       end;
       LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
       if not (CurrentSession = nil) then
@@ -1071,7 +1075,7 @@ begin
         tabVolumeDesigner.Enabled:=false;
         ckSpecular.Visible:=true;
         //ckSaveRef.Visible:=false;
-        edOutputFormat.ItemIndex:=6;
+        edOutputFormat.ItemIndex:=0;
         edRespin.Hint:='BasicOrder';
         lbRespin.Caption:='Element order (-C)';
         edBubble.Hint:='DebugPhoton';
@@ -1269,26 +1273,35 @@ procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
 var
     outputfile: string;
     ftype: TAction;
-    nx,ny,nz,nt: integer;
+    nx : integer = 0;
+    ny,nz,nt: integer;
     fmViewer: TfmViewer;
     cmd: TStringList;
+    singletype: LongWord;
     dref: string;
 begin
-     if(CurrentSession=nil) then exit;
-     if (grProgram.ItemIndex=1) then begin
-        MessageDlg('Warning', 'You must select an MCX or MCX-CL simulation to use this feature', mtError, [mbOK],0);
+    if(CurrentSession=nil) then exit;
+    if (grProgram.ItemIndex=1) and (sgConfig.Cells[2,3] <> 'g') then begin
+        MessageDlg('Warning', 'You must set Session::RayTracer to "g" for MMC to use this feature', mtError, [mbOK],0);
         exit;
     end;
     if not (Sender is TAction) then exit;
     ftype:=Sender as TAction;
 
-    outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+    if (grProgram.ItemIndex <> 1) then begin
+        outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+        singletype:=GL_RGBA32F;
+    end else begin
+        outputfile:=sgConfig.Cells[2,14]+DirectorySeparator+edSession.Text+ftype.Hint;
+        singletype:=GL_DOUBLE_EXT;
+    end;
+
     if(not FileExists(outputfile)) then begin
         MessageDlg('Warning', 'Specified file does not exists', mtError, [mbOK],0);
         exit;
     end;
     nt:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
-    if(sscanf(sgConfig.Cells[2,2] ,'[%d,%d,%d]',[@nx,@ny,@nz])<>3) then begin
+    if (grProgram.ItemIndex <> 1) and (sscanf(sgConfig.Cells[2,2] ,'[%d,%d,%d]',[@nx,@ny,@nz])<>3) then begin
       MessageDlg('Warning', 'Domain size specifier contains incorrect format', mtError, [mbOK],0);
       exit;
     end;
@@ -1297,6 +1310,7 @@ begin
     if(ckSaveRef.Checked) then dref:=',dref';
 
     cmd:=TStringList.Create;
+    cmd.Add(Format('%d %d %d %d',[nx,ny,nz,nt]));
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
     cmd.Add(Format('addpath(''%s'');',[GetAppRoot+
         'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
@@ -1331,7 +1345,7 @@ begin
           Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
                0:  fmViewer.LoadTexture(outputfile);
                1..2:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,0,GL_RGBA32F);
-               3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,GL_RGBA32F);
+               3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,singletype);
                4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
           else
           end;

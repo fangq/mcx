@@ -1,35 +1,34 @@
 object fmViewer: TfmViewer
   Left = 2236
-  Height = 917
+  Height = 800
   Top = 72
-  Width = 917
+  Width = 800
   ActiveControl = glCanvas
   Caption = 'MCX Studio Volume Renderer'
-  ClientHeight = 917
-  ClientWidth = 917
+  ClientHeight = 800
+  ClientWidth = 800
   Color = clBtnFace
-  DesignTimePPI = 110
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '2.0.8.0'
+  LCLVersion = '2.0.2.0'
   object Panel1: TPanel
     Left = 0
-    Height = 698
-    Top = 62
-    Width = 917
+    Height = 609
+    Top = 54
+    Width = 800
     Align = alClient
-    ClientHeight = 698
-    ClientWidth = 917
+    ClientHeight = 609
+    ClientWidth = 800
     ParentFont = False
     TabOrder = 0
     object glCanvas: TGLSceneViewer
       Left = 1
-      Height = 696
+      Height = 607
       Top = 1
-      Width = 915
+      Width = 798
       Camera = GLCamera
       Buffer.BackgroundColor = clBlack
       Buffer.AmbientColor.Red = 0.200000002980232
@@ -37,7 +36,7 @@ object fmViewer: TfmViewer
       Buffer.AmbientColor.Blue = 0.200000002980232
       Buffer.AmbientColor.Alpha = 1
       Buffer.ShadeModel = smSmooth
-      FieldOfView = 173.421508789063
+      FieldOfView = 172.459564208984
       Align = alClient
       OnMouseDown = glCanvasMouseDown
       OnMouseMove = glCanvasMouseMove
@@ -47,53 +46,53 @@ object fmViewer: TfmViewer
   end
   object Panel2: TPanel
     Left = 0
-    Height = 157
-    Top = 760
-    Width = 917
+    Height = 137
+    Top = 663
+    Width = 800
     Align = alBottom
     BevelOuter = bvNone
-    ClientHeight = 157
-    ClientWidth = 917
+    ClientHeight = 137
+    ClientWidth = 800
     ParentColor = False
     ParentFont = False
     TabOrder = 1
     object Panel3: TPanel
-      Left = 5
-      Height = 46
-      Top = 107
-      Width = 907
+      Left = 4
+      Height = 40
+      Top = 92
+      Width = 792
       Align = alTop
-      BorderSpacing.Around = 5
-      ClientHeight = 46
-      ClientWidth = 907
+      BorderSpacing.Around = 4
+      ClientHeight = 40
+      ClientWidth = 792
       ParentFont = False
       TabOrder = 0
       object Panel6: TPanel
         Left = 1
-        Height = 44
+        Height = 38
         Top = 1
-        Width = 184
+        Width = 161
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 44
-        ClientWidth = 184
+        ClientHeight = 38
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 0
         object Label1: TLabel
-          Left = 9
-          Height = 20
-          Top = 9
-          Width = 118
+          Left = 8
+          Height = 17
+          Top = 8
+          Width = 121
           Caption = 'Rendering quality'
           ParentColor = False
           ParentFont = False
         end
       end
       object tbProj: TTrackBar
-        Left = 185
-        Height = 44
+        Left = 162
+        Height = 38
         Top = 1
-        Width = 721
+        Width = 629
         Frequency = 10
         Max = 512
         Min = 1
@@ -104,42 +103,42 @@ object fmViewer: TfmViewer
       end
     end
     object Panel4: TPanel
-      Left = 5
-      Height = 46
-      Top = 5
-      Width = 907
+      Left = 4
+      Height = 40
+      Top = 4
+      Width = 792
       Align = alTop
-      BorderSpacing.Around = 5
-      ClientHeight = 46
-      ClientWidth = 907
+      BorderSpacing.Around = 4
+      ClientHeight = 40
+      ClientWidth = 792
       ParentFont = False
       TabOrder = 1
       object Panel5: TPanel
         Left = 1
-        Height = 44
+        Height = 38
         Top = 1
-        Width = 184
+        Width = 161
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 44
-        ClientWidth = 184
+        ClientHeight = 38
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 0
         object Label2: TLabel
-          Left = 9
-          Height = 20
-          Top = 9
-          Width = 151
+          Left = 8
+          Height = 17
+          Top = 8
+          Width = 157
           Caption = 'Cutting plane position:'
           ParentColor = False
           ParentFont = False
         end
       end
       object Cutting_Plane_Pos_TB: TTrackBar
-        Left = 185
-        Height = 44
+        Left = 162
+        Height = 38
         Top = 1
-        Width = 604
+        Width = 511
         Frequency = 10
         Max = 127
         OnChange = Cutting_Plane_Pos_TBChange
@@ -149,10 +148,10 @@ object fmViewer: TfmViewer
         TabOrder = 1
       end
       object grDir: TRadioGroup
-        Left = 789
-        Height = 44
+        Left = 673
+        Height = 38
         Top = 1
-        Width = 117
+        Width = 118
         HelpType = htKeyword
         Align = alRight
         AutoFill = True
@@ -165,8 +164,8 @@ object fmViewer: TfmViewer
         ChildSizing.ShrinkVertical = crsScaleChilds
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 3
-        ClientHeight = 22
-        ClientWidth = 113
+        ClientHeight = 20
+        ClientWidth = 116
         Columns = 3
         Font.Color = clGreen
         ItemIndex = 0
@@ -182,42 +181,42 @@ object fmViewer: TfmViewer
       end
     end
     object Panel8: TPanel
-      Left = 5
-      Height = 46
-      Top = 56
-      Width = 907
+      Left = 4
+      Height = 40
+      Top = 48
+      Width = 792
       Align = alTop
-      BorderSpacing.Around = 5
-      ClientHeight = 46
-      ClientWidth = 907
+      BorderSpacing.Around = 4
+      ClientHeight = 40
+      ClientWidth = 792
       ParentFont = False
       TabOrder = 2
       object Panel9: TPanel
         Left = 1
-        Height = 44
+        Height = 38
         Top = 1
-        Width = 184
+        Width = 161
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 44
-        ClientWidth = 184
+        ClientHeight = 38
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 0
         object Label3: TLabel
-          Left = 9
-          Height = 20
-          Top = 9
-          Width = 124
+          Left = 8
+          Height = 17
+          Top = 8
+          Width = 127
           Caption = 'Invisible threshold'
           ParentColor = False
           ParentFont = False
         end
       end
       object Alpha_Threshold_TB: TTrackBar
-        Left = 185
-        Height = 44
+        Left = 162
+        Height = 38
         Top = 1
-        Width = 271
+        Width = 236
         Frequency = 10
         Max = 256
         Min = 1
@@ -228,10 +227,10 @@ object fmViewer: TfmViewer
         TabOrder = 1
       end
       object ColorStep: TTrackBar
-        Left = 640
-        Height = 44
+        Left = 559
+        Height = 38
         Top = 1
-        Width = 266
+        Width = 232
         Frequency = 10
         Max = 8
         OnChange = Cutting_Plane_Pos_TBChange
@@ -241,21 +240,21 @@ object fmViewer: TfmViewer
         TabOrder = 2
       end
       object Panel10: TPanel
-        Left = 456
-        Height = 44
+        Left = 398
+        Height = 38
         Top = 1
-        Width = 184
+        Width = 161
         Align = alRight
         BevelOuter = bvNone
-        ClientHeight = 44
-        ClientWidth = 184
+        ClientHeight = 38
+        ClientWidth = 161
         ParentFont = False
         TabOrder = 3
         object Label4: TLabel
-          Left = 101
-          Height = 20
-          Top = 9
-          Width = 70
+          Left = 88
+          Height = 17
+          Top = 8
+          Width = 72
           Caption = 'Color level'
           ParentColor = False
           ParentFont = False
@@ -265,14 +264,14 @@ object fmViewer: TfmViewer
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 62
+    Height = 54
     Top = 0
-    Width = 917
-    ButtonHeight = 56
-    ButtonWidth = 56
+    Width = 800
+    ButtonHeight = 49
+    ButtonWidth = 49
     Caption = 'ToolBar1'
     Color = clWhite
-    Font.Height = -13
+    Font.Height = -11
     Font.Name = 'MS Sans Serif'
     Images = ImageList3
     ParentColor = False
@@ -282,7 +281,7 @@ object fmViewer: TfmViewer
     TabOrder = 2
     Transparent = True
     object btRefresh: TToolButton
-      Left = 113
+      Left = 105
       Top = 2
       Action = mcxplotRefresh
     end
@@ -292,20 +291,20 @@ object fmViewer: TfmViewer
       Action = mcxplotOpen
     end
     object btShowBBX: TToolButton
-      Left = 175
+      Left = 161
       Top = 2
       Action = mcxplotShowBBX
       Style = tbsCheck
     end
     object ToolButton9: TToolButton
-      Left = 169
-      Height = 56
+      Left = 157
+      Height = 49
       Top = 2
       Caption = 'ToolButton9'
       Style = tbsDivider
     end
     object btOpaque: TToolButton
-      Left = 287
+      Left = 265
       Hint = 'Show Opaque Hull'
       Top = 2
       Caption = 'btOpaque'
@@ -314,30 +313,31 @@ object fmViewer: TfmViewer
       Style = tbsCheck
     end
     object btRGB: TToolButton
-      Left = 231
+      Left = 213
       Top = 2
       Action = mcxplotUseColor
       Style = tbsCheck
     end
     object ToolButton1: TToolButton
-      Left = 493
+      Left = 428
       Top = 2
       Action = mcxplotExit
     end
     object ToolButton10: TToolButton
-      Left = 487
-      Height = 56
+      Left = 424
+      Height = 49
       Top = 2
       Caption = 'ToolButton10'
       Style = tbsDivider
     end
     object ToolButton3: TToolButton
-      Left = 57
+      Left = 53
       Top = 2
       Action = mcxplotSaveScreen
     end
     object ToolButton4: TToolButton
-      Left = 431
+      Left = 317
+      Hint = 'Reset 3D View'
       Top = 2
       Action = mcxplotResetCamera
     end
@@ -346,21 +346,21 @@ object fmViewer: TfmViewer
       Height = 50
       Hint = 'Change Background Color'
       Top = 2
-      Width = 58
+      Width = 51
       Align = alLeft
       BorderWidth = 2
       ButtonColorSize = 16
       ButtonColor = clBlack
       Flat = True
-      Font.Height = -13
+      Font.Height = -11
       Font.Name = 'MS Sans Serif'
       OnColorChanged = btBackgroundColorChanged
       ParentFont = False
     end
   end
   object GLScene: TGLScene
-    left = 547
-    top = 73
+    left = 477
+    top = 64
     object DCCoordsY: TGLDummyCube
       TagFloat = 0
       PitchAngle = 0
@@ -643,27 +643,27 @@ object fmViewer: TfmViewer
     MinDeltaTime = 0
     FixedDeltaTime = 0
     OnProgress = GLCadencerProgress
-    left = 621
-    top = 74
+    left = 542
+    top = 65
   end
   object Timer: TTimer
     OnTimer = TimerTimer
-    left = 694
-    top = 74
+    left = 606
+    top = 65
   end
   object dlOpenFile: TOpenDialog
     DefaultExt = '.tx3'
     Filter = 'MCX volume file (*.mc2;*.nii;*.tx3;*.img)|*.mc2;*.nii;*.tx3;*.img|MCX fluence file (*.mc2)|*.mc2|Texture File (*.tx3)|*.tx3|Nifti file (*.nii)|*.nii|Analyze 7.5 (*.img)|*.img|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 796
-    top = 148
+    left = 695
+    top = 129
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 787
-    top = 74
+    left = 687
+    top = 65
     Bitmap = {
       4C69090000003000000030000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -3262,13 +3262,13 @@ object fmViewer: TfmViewer
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 862
-    top = 148
+    left = 752
+    top = 129
   end
   object acMCXPlot: TActionList
     Images = ImageList3
-    left = 213
-    top = 148
+    left = 186
+    top = 129
     object mcxplotOpen: TAction
       Caption = 'Open File'
       Hint = 'Open Data File'
@@ -3317,7 +3317,7 @@ object fmViewer: TfmViewer
     Font.Color = clWhite
     Font.Height = 20
     Font.Name = 'Arial'
-    left = 559
-    top = 183
+    left = 488
+    top = 160
   end
 end
