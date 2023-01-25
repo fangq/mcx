@@ -86,6 +86,8 @@ ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
   OMP=/openmp
   MEX=cmd /c mex
   CUCCOPT+=-Xcompiler "$(OMP) /W0"
+  CFLAGS=
+  CPPFLAGS=-g
   CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
   CPPOPT+=-Xcompiler $(OMP)
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
