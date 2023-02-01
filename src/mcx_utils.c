@@ -5084,10 +5084,11 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
- -O [X|XFEJPMR] (--outputtype) X - output flux, F - fluence, E - energy density\n\
+ -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy density\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
 			       event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; R - RF/FD Jacobian\n\
+                               L - total pathlength\n\
  -d [1|0]      (--savedet)     1 to save photon info at detectors; 0 not save\n\
  -w [DP|DSPMXVW](--savedetflag)a string controlling detected photon data fields\n\
     /case insensitive/         1 D  output detector ID (1)\n\

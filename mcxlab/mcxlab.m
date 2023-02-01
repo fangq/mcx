@@ -244,6 +244,7 @@ function varargout=mcxlab(varargin)
 %                      'jacobian' or 'wl' - mua Jacobian (replay mode), 
 %                      'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
 %                      'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
+%                      'length' total pathlengths accumulated per voxel,
 %                      for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
 %                      and  <demo_replay_timedomain.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
