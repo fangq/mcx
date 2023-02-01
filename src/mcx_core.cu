@@ -1936,6 +1936,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
                                  ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
                     }
+                } else if (gcfg->outputtype == otL) {
+                    weight = w0 * f.pathlen;
                 }
 
                 GPUDEBUG(("deposit to [%d] %e, w=%f\n", idx1dold, weight, p.w));
@@ -3501,7 +3503,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 if (cfg->outputtype == otFluence) {
                     scale[0] *= cfg->tstep;
                 }
-            } else if (cfg->outputtype == otEnergy) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
+            } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
             } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF) {
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {

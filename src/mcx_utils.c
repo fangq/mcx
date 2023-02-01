@@ -130,9 +130,10 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * p: scattering counts for computing Jacobians for mus
  * m: momentum transfer in replay
  * r: frequency domain/RF mua Jacobian by replay
+ * l: total path lengths in each voxel
  */
 
-const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', '\0'};
+const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', '\0'};
 
 /**
  * Debug flags

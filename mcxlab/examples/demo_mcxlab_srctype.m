@@ -49,7 +49,7 @@ axis equal; colorbar
 title('pencil beam launched from outside the volume');
 
 % an isotropic source outside the volume
-cfg.srctype='isotropic'
+cfg.srctype='isotropic';
 cfg.srcpos=[30 30 -10];
 cfg.tend=1e-9;
 cfg.tstep=1e-9;
@@ -190,7 +190,7 @@ cfg.tstep=5e-9;
 flux=mcxlab(cfg);
 fcw=flux.data*cfg.tstep;
 subplot(222);
-hs=slice(log10(abs(double(fcw))),[],[15 45],[1]);
+hs=slice(log10(abs(double(fcw))),[],[15 45],1);
 set(hs,'linestyle','none');
 axis equal; colorbar
 title('a slit source');
