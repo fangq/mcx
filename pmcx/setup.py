@@ -110,7 +110,7 @@ class CMakeBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        subprocess.check_call(["cmake", "--fresh", ext.source_dir] + cmake_args, cwd=build_temp)
+        subprocess.check_call(["cmake", ext.source_dir] + cmake_args, cwd=build_temp)
         subprocess.check_call(["cmake", "--build", ".", "--target", ext.target] + build_args, cwd=build_temp)
 
 
@@ -118,7 +118,7 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="pmcx",
-    version="0.0.8",
+    version="0.0.9",
     requires=['numpy'],
     license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",
@@ -131,7 +131,7 @@ setup(
     download_url='http://mcx.space',
     keywords=['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
                 'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics'],
-    ext_modules=[CMakeExtension("pmcx", target="pmcx", source_dir="../src/")],
+    ext_modules=[CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",

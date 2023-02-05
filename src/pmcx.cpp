@@ -1175,7 +1175,7 @@ py::list get_GPU_info() {
     return output;
 }
 
-PYBIND11_MODULE(pmcx, m) {
+PYBIND11_MODULE(_pmcx, m) {
     m.doc() = "PMCX: Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
     m.def("run", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
