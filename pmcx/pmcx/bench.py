@@ -14,29 +14,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""PMCX - Python bindings for Monte Carlo eXtreme photon transport simulator
+"""BJData (Draft 2) and UBJSON encoder"""
 
-Example usage:
+import numpy as np
+import copy
 
-# To list available GPUs
-import pmcx
-pmcx.gpuinfo()
+bench = {}
+bench['cube60']={
+    'nphoton': 1000000,
+    'vol':np.ones([60,60,60],dtype='uint8'),
+    'tstart':0,
+    'tend':5e-9,
+    'tstep':5e-9,
+    'srcpos': [29,29,0],
+    'srcdir':[0,0,1],
+    'prop':[[0,0,1,1],[0.005,1,0.01,1.37],[0.002,5,0.9,1]],
+    'isreflect':0,
+    'seed':1648335518,
+    'session':'cube60',
+    'detpos':[[29,19,0,1],[29,39,0,1],[19,29,0,1],[39,29,0,1]],
+    'issrcfrom0':1
+}
 
-# To run a simulation
-res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype='uint8'),
-               tstart=0, tend=5e-9, tstep=5e-9, srcpos=[30,30,0],
-               srcdir=[0,0,1], prop=np.array([[0, 0, 1, 1], [0.005, 1, 0.01, 1.37]]))
-"""
+bench['cube60b']=copy.deepcopy(bench['cube60'])
+bench['cube60b']['isreflect']=1
 
-try:
-    from _pmcx import gpuinfo, run
-except ImportError:  # pragma: no cover
-    print('the pmcx binary extension (_pmcx) is not compiled! please compile first')
-
-#from .utils import detweight
-#from .files import loadmc2, loadmch, load, save
-from .bench import bench
-
-__version__ = '0.0.10'
-
-__all__ = ('gpuinfo', 'run', 'bench')
+bench['cube60planar']=copy.deepcopy(bench['cube60b'])
+bench['cube60planar']['srctype']='planar'
+bench['cube60planar']['srcpos']=[10,10,-10]
+bench['cube60planar']['srcparam1']=[40,0,0,0]
+bench['cube60planar']['srcparam2']=[0,40,0,0]
