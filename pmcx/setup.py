@@ -118,7 +118,8 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="pmcx",
-    version="0.0.9",
+    packages=['pmcx'],
+    version="0.0.10",
     requires=['numpy'],
     license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",
