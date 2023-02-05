@@ -111,7 +111,7 @@ if (BUILD_PYTHON)
             )
     target_compile_definitions(_pmcx PUBLIC MCX_CONTAINER)
 
-    target_link_libraries(_pmcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras stdc++)
+    target_link_libraries(_pmcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras)
 
     pybind11_extension(_pmcx)
     pybind11_strip(_pmcx)
