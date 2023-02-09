@@ -3337,8 +3337,9 @@ void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
             cfg->replay.detid[cfg->nphoton] = (hasdetid) ? (int) (detps[i * dimdetps[0]]) : 1;
 
             for (j = hasdetid; j < cfg->medianum - 1 + hasdetid; j++) {
-                plen = detps[i * dimdetps[0] + offset + j] * cfg->unitinmm;
+                plen = detps[i * dimdetps[0] + offset + j];
                 cfg->replay.weight[cfg->nphoton] *= expf(-cfg->prop[j - hasdetid + 1].mua * plen);
+                plen *= cfg->unitinmm;
                 cfg->replay.tof[cfg->nphoton] += plen * R_C0 * cfg->prop[j - hasdetid + 1].n;
             }
 

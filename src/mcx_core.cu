@@ -3510,15 +3510,19 @@ is more than what your have specified (%d), please use the -H option to specify 
                     int detid;
 
                     for (detid = 1; detid <= (int)cfg->detnum; detid++) {
-                        scale[0] = 0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
+                        if (cfg->isnormalized != 2) {
+                            scale[0] = 0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
 
-                        for (size_t i = 0; i < cfg->nphoton; i++)
-                            if (cfg->replay.detid[i] == detid) {
-                                scale[0] += cfg->replay.weight[i];
+                            for (size_t i = 0; i < cfg->nphoton; i++)
+                                if (cfg->replay.detid[i] == detid) {
+                                    scale[0] += cfg->replay.weight[i];
+                                }
+
+                            if (scale[0] > 0.f) {
+                                scale[0] = cfg->unitinmm / scale[0];
                             }
-
-                        if (scale[0] > 0.f) {
-                            scale[0] = cfg->unitinmm / scale[0];
+                        } else {
+                            scale[0] = cfg->unitinmm;
                         }
 
                         MCX_FPRINTF(cfg->flog, "normalization factor for detector %d alpha=%f\n", detid, scale[0]);
