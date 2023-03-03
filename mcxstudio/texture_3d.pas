@@ -36,7 +36,8 @@ uses
   GLVectorGeometry,
   GLCadencer,
   fpjson,
-  Zipper,
+  jsonparser,
+  zstream,
   base64;
 
 
@@ -50,6 +51,7 @@ Type
     TDim : Integer;
     TexelByte : Integer;
     M_Data : String;
+    JDataType: TStringList;
     function Data_Type_To_Texel_Byte_Size (F_Data_Type : Integer) : Integer;
     procedure Set_Data_Type (F_Value : Longword);
     procedure Set_X_Size (F_Value : Integer);
@@ -64,7 +66,7 @@ Type
     procedure Load_From_JNIFTI_File (const F_FileName : String);
     procedure Load_From_File_Skip_Header(const F_FileName : string; nx, ny, nz:integer; nt: integer=1; skipbyte: integer=0; datatype: LongWord=GL_RGBA32F);
     procedure Load_From_File_Log_Float (Const F_FileName : String; skipbyte: integer=0; datatype: LongWord=GL_INVALID_VALUE);
-    procedure Load_Texture_From_Stream (datastream: TStream; nx, ny, nz:integer; nt: integer=1; datatype: LongWord=GL_RGBA32F);
+    procedure Load_Texture_From_Stream (datastream: TStream; nx, ny, nz:integer; nt: integer=1; datatype: LongWord=GL_RGBA32F; colmajor: Boolean=true);
     property Data_Type : Longword read DataFormat write Set_Data_Type;
     property X_Size : Integer read XDim write Set_X_Size;
     property Y_Size : Integer read YDim write Set_Y_Size;
@@ -77,9 +79,6 @@ Type
 //============================================================
 implementation
 //============================================================
-
-var
-  JDataType: TStringList;
 
 {-------------------------------------------------------------------------------------}
 { Initializes dynamical data                                                          }
@@ -103,8 +102,8 @@ begin
   JDataType.AddObject('uint16', TObject(GL_RGBA16I));
   JDataType.AddObject('int32', TObject(GL_RGBA32I));
   JDataType.AddObject('uint32', TObject(GL_RGBA32I));
-  JDataType.AddObject('single', TObject(GL_RGBA32I));
-  JDataType.AddObject('double', TObject(GL_RGBA32I));
+  JDataType.AddObject('single', TObject(GL_RGBA32F));
+  JDataType.AddObject('double', TObject(GL_DOUBLE_EXT));
 end;
 
 
@@ -142,6 +141,7 @@ begin
     GL_RGB32UI: Result:= 4;
     GL_LUMINANCE : Result := 1;
     GL_LUMINANCE_ALPHA : Result := 2;
+    GL_RGBA32F: Result:= 4;
     GL_DOUBLE_EXT: Result:=8;
     else
       Result := 4;
@@ -223,51 +223,80 @@ begin
   end;
 end;
 
+function Base64ToStream(const ABase64: String; var AStream: TMemoryStream): Boolean;
+var
+  Str: String;
+begin
+  Result := False;
+  if Length(Trim(ABase64)) = 0 then
+    Exit;
+  try
+    Str := DecodeStringBase64(ABase64);
+    AStream.Write(Pointer(Str)^, Length(Str) div SizeOf(Char));
+    AStream.Position := 0;
+    Result := AStream.Size > 0;
+  except
+    on E: Exception do
+      ShowMessage(E.Message);
+  end;
+end;
+
 {-------------------------------------------------------------------------------------}
 { Load data from file                                                                 }
 {-------------------------------------------------------------------------------------}
 procedure TTexture_3D.Load_From_JNIFTI_File (Const F_FileName : String);
 var
+  jniiparser : TJSONParser;
+  jniifile : TFileStream;
   jnii: TJSONData;
   niidata: TJSONObject;
-  lines: TStringList;
-  bufin, bufout: TStream;
-  unzip: TInflater;
-  idx, sourcebyte: integer;
+  bufin, bufout: TMemoryStream;
+  unzip: TDecompressionStream;
+  idx: integer;
 
 begin { TTexture_3D.Load_From_File }
   Screen.Cursor := crHourGlass;
-  bufout:=TStream.Create;
+  bufout:=TMemoryStream.Create;
   try
-    lines:=TStringList.Create;
-    lines.LoadFromFile(F_FileName);
-    lines.LineBreak:='';
-    jnii:=GetJSON(lines.DelimitedText);
-    lines.Free;
+    jniifile:=TFileStream.Create(F_FileName,fmOpenRead);
+    try
+      jniiparser:=TJSONParser.Create(jniifile);
+      try
+        jnii:=jniiparser.Parse;
+      finally
+        jniiparser.Free;
+      end;
+    finally
+      jniifile.Free;
+    end;
 
     niidata:= TJSONObject(jnii.FindPath('NIFTIData'));
-    if(niidata <> nil) and (niidata.FindPath('ArrayZipData') <> nil) then begin
-        niidata.Objects['ArrayZipData'].AsString:= DecodeStringBase64(niidata.Objects['ArrayZipData'].AsString);
-        bufin:= TStringStream.Create(string(niidata.Objects['ArrayZipData'].AsString));
-        unzip:= TInflater.Create(bufin, bufout, bufin.Size);
-        unzip.DeCompress;
-        unzip.Free;
-        bufin.Free;
+    if(niidata <> nil) and (niidata.FindPath('_ArrayZipData_') <> nil) then begin
+        bufin:=TMemoryStream.Create;
+        try
+            Base64ToStream(niidata.FindPath('_ArrayZipData_').AsString, bufin);
+            unzip:= TDecompressionStream.Create(bufin);
+            bufout.CopyFrom(unzip, 0);
+        finally
+            unzip.Free;
+            bufin.Free;
+        end;
     end;
-    XDim:=niidata.Arrays['ArraySize'].Items[0].AsInteger;
-    YDim:=niidata.Arrays['ArraySize'].Items[1].AsInteger;
-    ZDim:=niidata.Arrays['ArraySize'].Items[2].AsInteger;
+    XDim:=niidata.Arrays['_ArraySize_'].Items[0].AsInteger;
+    YDim:=niidata.Arrays['_ArraySize_'].Items[1].AsInteger;
+    ZDim:=niidata.Arrays['_ArraySize_'].Items[2].AsInteger;
     TDim:=1;
-    if(niidata.Arrays['ArraySize'].Count>3) then
-         TDim:=niidata.Arrays['ArraySize'].Items[3].AsInteger;
-    idx := JDataType.IndexOf(niidata.Objects['ArrayType'].AsString);
+    if(niidata.Arrays['_ArraySize_'].Count>3) then
+         TDim:=niidata.Arrays['_ArraySize_'].Items[3].AsInteger;
+    idx := JDataType.IndexOf(niidata.FindPath('_ArrayType_').AsString);
     if idx >= 0 then
          DataFormat := PtrUInt(JDataType.Objects[idx]);
 
-    Load_Texture_From_Stream(bufout, XDim, YDim, ZDim, TDim, DataFormat);
-
+    bufout.Position:=0;
+    Load_Texture_From_Stream(bufout, XDim, YDim, ZDim, TDim, DataFormat, false);
   finally
     bufout.Free;
+    jnii.Free;
   end;
   Screen.Cursor := crDefault;
 end;
@@ -286,15 +315,13 @@ begin
      Load_From_File_Log_Float (F_FileName, skipbyte, datatype);
 end;
 
-procedure TTexture_3D.Load_Texture_From_Stream (datastream: TStream; nx, ny, nz:integer; nt: integer=1; datatype: LongWord=GL_RGBA32F);
+procedure TTexture_3D.Load_Texture_From_Stream (datastream: TStream; nx, ny, nz:integer; nt: integer=1; datatype: LongWord=GL_RGBA32F; colmajor: Boolean=true);
 var
   mybuf: array of single;
   val, low, hi: single;
   pdata: pointer;
   ddata: ^double;
-  slen: Int16;
-  dlen: int64;
-  sourcebyte, i: integer;
+  sourcebyte, i, iout, ix, iy, iz, it, nxyz, nxy, nyzt, nzt: integer;
 begin
     sourcebyte := Data_Type_To_Texel_Byte_Size (datatype);
     if(sourcebyte = 8) then
@@ -310,6 +337,11 @@ begin
     pdata:=@mybuf[0];
     low:=1e10;
     hi:=-1e10;
+    nxyz:=nx*ny*nz;
+    nxy:=nx*ny;
+    nyzt:=ny*nz*nt;
+    nzt:=nz*nt;
+
     if(sourcebyte = 8) then begin
        ddata:=@mybuf[0];
        for i:=0 to (nx * ny * nz * nt) - 1 do
@@ -324,13 +356,20 @@ begin
              if(val>hi)  then hi:=val;
        end;
        hi:=1.0/(hi-low)*255;
-       for i:=1 to (nx * ny * nz * nt) do
-       begin
-             val:=ddata[i-1];
-             if(val<low) or (val=0) or (val<>val) then begin
-                M_Data[i]:=#0;
-             end else begin
-                M_Data[i]:=chr(Round((val-low)*hi));
+       for ix:=0 to nx-1 do begin
+             for iy:=0 to ny-1 do begin
+                   for iz:=0 to nz-1 do begin
+                         for it:=0 to nt-1 do begin
+                               iout:=(it*nxyz + iz*nxy + iy*nx + ix)+1;
+                               i:=(integer(colmajor)*(iout-1) + (1-integer(colmajor))*(ix*nyzt + iy*nzt + iz*nt + it)); ;
+                               val:=ddata[i];
+                               if(val<low) or (val=0) or (val<>val) then begin
+                                  M_Data[iout]:=#0;
+                               end else begin
+                                  M_Data[iout]:=chr(Round((val-low)*hi));
+                               end;
+                         end;
+                   end;
              end;
        end;
     end else begin
@@ -351,17 +390,24 @@ begin
               if(val>hi)  then hi:=val;
         end;
         hi:=1.0/(hi-low)*255;
-        for i:=1 to (nx * ny * nz * nt) do
-        begin
-              case datatype of
-                  GL_RGBA32F: val:=mybuf[i-1];
-                  GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
-                  else val:=PByte(Pointer(nativeuint(pdata) + (i-1)*sourcebyte))^;
-              end;
-              if(val<low) or (val=0) or (val<>val) then begin
-                 M_Data[i]:=#0;
-              end else begin
-                 M_Data[i]:=chr(Round((val-low)*hi));
+        for ix:=0 to nx-1 do begin
+              for iy:=0 to ny-1 do begin
+                    for iz:=0 to nz-1 do begin
+                          for it:=0 to nt-1 do begin
+                                iout:=(it*nxyz + iz*nxy + iy*nx + ix)+1;
+                                i:=(integer(colmajor)*(iout-1) + (1-integer(colmajor))*(ix*nyzt + iy*nzt + iz*nt + it));
+                                case datatype of
+                                    GL_RGBA32F: val:=mybuf[i];
+                                    GL_RGBA16I: val:=PShortInt(Pointer(nativeuint(pdata) + (i)*sourcebyte))^;
+                                    else val:=PByte(Pointer(nativeuint(pdata) + (i)*sourcebyte))^;
+                                end;
+                                if(val<low) or (val=0) or (val<>val) then begin
+                                   M_Data[iout]:=#0;
+                                end else begin
+                                   M_Data[iout]:=chr(Round((val-low)*hi));
+                                end;
+                          end;
+                    end;
               end;
         end;
     end;

@@ -26,6 +26,7 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    mcxdoPlotJNIFTI: TAction;
     btSendCmd: TButton;
     btExpandOutput: TButton;
     Button2: TButton;
@@ -86,6 +87,7 @@ type
     MenuItem71: TMenuItem;
     MenuItem72: TMenuItem;
     MenuItem73: TMenuItem;
+    MenuItem74: TMenuItem;
     miExportJSON: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
@@ -349,6 +351,7 @@ type
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoPasteExecute(Sender: TObject);
+    procedure mcxdoPlotJNIFTIExecute(Sender: TObject);
     procedure mcxdoPlotMC2Execute(Sender: TObject);
     procedure mcxdoPlotNiftyExecute(Sender: TObject);
     procedure mcxdoPlotVolExecute(Sender: TObject);
@@ -1259,6 +1262,11 @@ begin
    mcxSetCurrentExecute(Sender);
 end;
 
+procedure TfmMCX.mcxdoPlotJNIFTIExecute(Sender: TObject);
+begin
+  mcxdoPlotVolExecute(Sender);
+end;
+
 procedure TfmMCX.mcxdoPlotMC2Execute(Sender: TObject);
 begin
   mcxdoPlotVolExecute(Sender);
@@ -1314,10 +1322,11 @@ begin
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
     cmd.Add(Format('addpath(''%s'');',[GetAppRoot+
         'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
-    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii','.jnii']) of
           0:    cmd.Add(Format('[data%s]=loadmc2(''%s'',[%d,%d,%d,%d],''float'',16);', [dref,outputfile,nx,ny,nz,nt]));
           1..2: cmd.Add(Format('[data%s]=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [dref,outputfile,nx,ny,nz,nt]));
           3..4: cmd.Add(Format('img=mcxloadnii(''%s'');data=img.img;', [outputfile]));
+          5: cmd.Add(Format('img=loadjson(''%s'');data=img.NIFTIData;', [outputfile]));
     else
     end;
     if(ckSaveDetector.Checked) then begin
@@ -1342,11 +1351,12 @@ begin
     if(miUseMatlab.Checked) then exit;
     try
           fmViewer:=TfmViewer.Create(self);
-          Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+          Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii','.jnii']) of
                0:  fmViewer.LoadTexture(outputfile);
                1..2:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,0,GL_RGBA32F);
                3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,singletype);
                4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
+               5:  fmViewer.LoadTexture(outputfile);
           else
           end;
           fmViewer.BringToFront;

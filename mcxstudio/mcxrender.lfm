@@ -1,12 +1,12 @@
 object fmDomain: TfmDomain
   Left = 430
-  Height = 732
+  Height = 705
   Top = 166
-  Width = 1201
+  Width = 1157
   Caption = 'MCX Domain Renderer'
-  ClientHeight = 732
-  ClientWidth = 1201
-  DesignTimePPI = 110
+  ClientHeight = 705
+  ClientWidth = 1157
+  DesignTimePPI = 106
   Font.Height = -13
   Font.Name = 'MS Sans Serif'
   OnCreate = FormCreate
@@ -14,12 +14,12 @@ object fmDomain: TfmDomain
   OnResize = FormResize
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '2.0.8.0'
+  LCLVersion = '2.0.2.0'
   object glCanvas: TGLSceneViewer
-    Left = 479
-    Height = 669
-    Top = 63
-    Width = 722
+    Left = 462
+    Height = 644
+    Top = 61
+    Width = 695
     Camera = glCamera
     VSync = vsmSync
     Buffer.BackgroundColor = clSilver
@@ -27,7 +27,7 @@ object fmDomain: TfmDomain
     Buffer.AmbientColor.Green = 0.200000002980232
     Buffer.AmbientColor.Blue = 0.200000002980232
     Buffer.AmbientColor.Alpha = 1
-    FieldOfView = 140.529663085938
+    FieldOfView = 139.122085571289
     Align = alClient
     OnMouseDown = glCanvasMouseDown
     OnMouseMove = glCanvasMouseMove
@@ -35,20 +35,20 @@ object fmDomain: TfmDomain
     TabOrder = 0
   end
   object Splitter1: TSplitter
-    Left = 473
-    Height = 669
-    Top = 63
+    Left = 456
+    Height = 644
+    Top = 61
     Width = 6
     OnMoved = Splitter1Moved
   end
   object plEditor: TPanel
     Left = 0
-    Height = 669
-    Top = 63
-    Width = 473
+    Height = 644
+    Top = 61
+    Width = 456
     Align = alLeft
-    ClientHeight = 669
-    ClientWidth = 473
+    ClientHeight = 644
+    ClientWidth = 456
     Font.Height = -13
     Font.Name = 'MS Sans Serif'
     ParentFont = False
@@ -57,11 +57,11 @@ object fmDomain: TfmDomain
     OnMouseLeave = plEditorMouseLeave
     inline mmShapeJSON: TSynEdit
       Left = 1
-      Height = 667
+      Height = 642
       Top = 1
-      Width = 471
+      Width = 454
       Align = alClient
-      Font.Height = -14
+      Font.Height = -13
       Font.Name = 'Courier New'
       Font.Pitch = fpFixed
       Font.Quality = fqNonAntialiased
@@ -70,7 +70,7 @@ object fmDomain: TfmDomain
       TabOrder = 0
       OnMouseEnter = plEditorMouseEnter
       OnMouseLeave = plEditorMouseLeave
-      Gutter.Width = 37
+      Gutter.Width = 36
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -559,7 +559,7 @@ object fmDomain: TfmDomain
       LineHighlightColor.Foreground = clNone
       inline SynLeftGutterPartList1: TSynGutterPartList
         object SynGutterMarks1: TSynGutterMarks
-          Width = 28
+          Width = 27
           Visible = False
           MouseActions = <>
         end
@@ -574,7 +574,7 @@ object fmDomain: TfmDomain
           LeadingZeros = False
         end
         object SynGutterChanges1: TSynGutterChanges
-          Width = 5
+          Width = 4
           MouseActions = <>
           ModifiedColor = 59900
           SavedColor = clGreen
@@ -599,11 +599,11 @@ object fmDomain: TfmDomain
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 63
+    Height = 61
     Top = 0
-    Width = 1201
-    ButtonHeight = 57
-    ButtonWidth = 57
+    Width = 1157
+    ButtonHeight = 55
+    ButtonWidth = 55
     Caption = 'ToolBar1'
     Color = clWhite
     Font.Height = -13
@@ -621,37 +621,37 @@ object fmDomain: TfmDomain
       Action = acRender
     end
     object ToolButton2: TToolButton
-      Left = 58
+      Left = 56
       Top = 2
       Action = acHideBBX
     end
     object ToolButton3: TToolButton
-      Left = 115
+      Left = 111
       Top = 2
       Action = acResetCamera
     end
     object ToolButton4: TToolButton
-      Left = 234
+      Left = 226
       Top = 2
       Action = acSaveImage
     end
     object ToolButton5: TToolButton
-      Left = 442
+      Left = 440
       Top = 2
       Action = acSaveJSON
     end
     object ToolButton6: TToolButton
-      Left = 504
+      Left = 500
       Top = 2
       Action = acExit
     end
     object ToolButton8: TToolButton
-      Left = 296
+      Left = 286
       Top = 2
       Action = acLoadJSON
     end
     object btPin: TToolButton
-      Left = 172
+      Left = 166
       Hint = 'Show editor'
       Top = 2
       Caption = 'Pin Editor'
@@ -659,22 +659,22 @@ object fmDomain: TfmDomain
       Style = tbsCheck
     end
     object ToolButton11: TToolButton
-      Left = 229
-      Height = 57
+      Left = 221
+      Height = 55
       Top = 2
       Caption = 'ToolButton11'
       Style = tbsDivider
     end
     object ToolButton7: TToolButton
-      Left = 291
-      Height = 57
+      Left = 281
+      Height = 55
       Top = 2
       Caption = 'ToolButton7'
       Style = tbsDivider
     end
     object ToolButton9: TToolButton
-      Left = 499
-      Height = 57
+      Left = 495
+      Height = 55
       Top = 2
       Caption = 'ToolButton9'
       Style = tbsDivider
@@ -684,7 +684,7 @@ object fmDomain: TfmDomain
       Height = 50
       Hint = 'Change Background Color'
       Top = 2
-      Width = 58
+      Width = 56
       Align = alLeft
       BorderWidth = 2
       ButtonColorSize = 16
@@ -697,7 +697,7 @@ object fmDomain: TfmDomain
     end
   end
   object glShape: TGLScene
-    left = 531
+    left = 512
     top = 9
     object XYGrid: TGLXYZGrid
       TagFloat = 0
@@ -913,8 +913,8 @@ object fmDomain: TfmDomain
       Up.Coordinates = {
         00000000000000000000803F00000000
       }
-      left = 276
-      top = 166
+      left = 266
+      top = 160
     end
     object DCCoordsX: TGLDummyCube
       TagFloat = 0
@@ -953,12 +953,12 @@ object fmDomain: TfmDomain
   object SynUNIXShellScriptSyn1: TSynUNIXShellScriptSyn
     DefaultFilter = 'UNIX Shell Scripts (*.sh)|*.sh'
     Enabled = False
-    left = 1100
+    left = 1060
     top = 9
   end
   object acShapeRender: TActionList
     Images = ImageList3
-    left = 614
+    left = 592
     top = 9
     object acResetCamera: TAction
       Caption = 'acResetCamera'
@@ -1005,14 +1005,14 @@ object fmDomain: TfmDomain
   end
   object dlSaveScreen: TSavePictureDialog
     Filter = 'Bitmaps (*.bmp)|*.bmp|All files (*)|*'
-    left = 724
+    left = 698
     top = 9
   end
   object ImageList3: TImageList
     Height = 48
     ImageType = itMask
     Width = 48
-    left = 826
+    left = 796
     top = 9
     Bitmap = {
       4C69080000003000000030000000000000000000000000000000000000000000
@@ -3326,20 +3326,20 @@ object fmDomain: TfmDomain
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 926
+    left = 892
     top = 9
   end
   object dlSaveFile: TSaveDialog
     DefaultExt = '.json'
     Filter = 'JSON File (*.json)|*.json|All (*.*)|*.*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 1027
+    left = 990
     top = 9
   end
   object GLWinBmpFont: TGLWindowsBitmapFont
     Font.Color = clWhite
     Font.Name = 'Arial'
-    left = 678
+    left = 653
     top = 9
   end
 end

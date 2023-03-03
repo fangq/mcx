@@ -181,9 +181,9 @@ end;
 
 procedure TfmViewer.ResetTexture;
 begin
-  if(M_3D_Texture <> nil) then M_3D_Texture.Free;
-  if(M_Input_Texture_3D <> nil) then  M_Input_Texture_3D.Free;
-  if(M_Output_Texture_3D <> nil) then  M_Output_Texture_3D.Free;
+  if(M_3D_Texture <> nil) then FreeAndNil(M_3D_Texture);
+  if(M_Input_Texture_3D <> nil) then  FreeAndNil(M_Input_Texture_3D);
+  if(M_Output_Texture_3D <> nil) then  FreeAndNil(M_Output_Texture_3D);
 end;
 
 procedure TfmViewer.glCanvasMouseDown(Sender: TObject; Button: TMouseButton;
