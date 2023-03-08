@@ -238,6 +238,10 @@ function varargout=mcxlab(varargin)
 %                      by explicitly setting cfg.issave2pt=0, this way, even the first output fluence presents
 %                      in mcxlab call, volume data will not be saved, this can speed up simulation when only 
 %                      detphoton is needed
+%      cfg.issavedet:  if the 2nd output is requested, this will be set to 1; in such case, user can force
+%                      setting it to 3 to enable early termination of simulation if the detected photon
+%                      buffer (length controlled by cfg.maxdetphoton) is filled; if the 2nd output is not
+%                      present, this will be set to 0 regardless user input.
 %      cfg.outputtype: 'flux' - fluence-rate, (default value)
 %                      'fluence' - fluence integrated over each time gate, 
 %                      'energy' - energy deposit per voxel

@@ -227,7 +227,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 cfg.issave2pt = 0;    /** issave2pt defualt is 1, but allow users to manually disable, auto disable only if there is no output */
             }
 
-            cfg.issavedet = (nlhs >= 2); /** save detected photon data to the 2nd output if present */
+            cfg.issavedet = (nlhs >= 2 && cfg.issavedet == 0) ? 1 : ((nlhs < 2) ? 0 : cfg.issavedet); /** save detected photon data to the 2nd output if present */
             cfg.issaveseed = (nlhs >= 4); /** save detected photon seeds to the 4th output if present */
 
             /** Validate all input fields, and warn incompatible inputs */
@@ -535,6 +535,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     GET_ONE_FIELD(cfg, unitinmm)
     GET_ONE_FIELD(cfg, printnum)
     GET_ONE_FIELD(cfg, voidtime)
+    GET_ONE_FIELD(cfg, issavedet)
     GET_ONE_FIELD(cfg, issaveseed)
     GET_ONE_FIELD(cfg, issaveref)
     GET_ONE_FIELD(cfg, issaveexit)

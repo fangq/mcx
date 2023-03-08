@@ -392,6 +392,8 @@ __device__ inline void savedetphoton(float n_det[], uint* detectedphoton, float*
                 n_det[baseaddr++] = s->u;
                 n_det[baseaddr++] = s->v;
             }
+        } else if (gcfg->savedet == FILL_MAXDETPHOTON) {
+            atomicSub(detectedphoton, 1);
         }
     }
 }
@@ -996,6 +998,16 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                                       float photontof[], MCXsp* nuvox) {
     *w0 = 1.f;   //< reuse to count for launchattempt
     int canfocus = 1; //< non-zero: focusable, zero: not focusable
+
+    /**
+     * Early termination of simulation when the detphoton buffer is filled if issavedet is set to 3
+     */
+    if (gcfg->savedet == FILL_MAXDETPHOTON) {
+        if (*dpnum >= gcfg->maxdetphoton) {
+            gprogress[0] = (gcfg->threadphoton >> 1) * 4.5f;
+            return 1;
+        }
+    }
 
     /**
      * First, let's terminate the current photon and perform detection calculations
@@ -3662,7 +3674,8 @@ is more than what your have specified (%d), please use the -H option to specify 
           */
         MCX_FPRINTF(cfg->flog, "simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: " S_BOLD "" S_BLUE "%.2f photon/ms\n" S_RESET,
                     (long int)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1), (long int)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1),
-                    gpu[gpuid].autothread, ABS(cfg->respin), (double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1) / max(1, cfg->runtime));
+                    gpu[gpuid].autothread, ABS(cfg->respin),
+                    ((cfg->issavedet == FILL_MAXDETPHOTON) ? cfg->energytot : ((double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1))) / max(1, cfg->runtime));
         fflush(cfg->flog);
 
         if (cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) {
