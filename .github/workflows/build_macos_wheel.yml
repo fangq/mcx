@@ -41,7 +41,7 @@ jobs:
           brew link --force libomp
       - name: Install CUDA
         run: |
-          curl -o cuda.zip --insecure https://kwafoo.coe.neu.edu/~matinraayai/macos-mcx-builder/cuda-10-2.zip
+          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
           unzip cuda.zip
           sudo mv cuda/ /usr/local/
           sudo chmod +x /usr/local/cuda/bin/*
