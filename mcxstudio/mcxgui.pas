@@ -1193,13 +1193,33 @@ procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
 var
     ret:TModalResult;
     TaskFile: string;
+    fext: string;
+    fmViewer: TfmViewer;
 begin
   ret:=mrNo;
   if(OpenProject.Execute) then begin
     TaskFile:=OpenProject.FileName;
-    if(Pos('.json',TaskFile)>0) then  // adding new session
-         LoadSessionFromJSON(TaskFile)
-    else begin
+    fext:=ExtractFileExt(TaskFile);
+    if(fext = '.json') then begin // adding new session
+         LoadSessionFromJSON(TaskFile);
+    end else if (AnsiIndexStr(fext, ['.tx3','.nii','.jnii']) >= 0) then begin
+      try
+            fmViewer:=TfmViewer.Create(self);
+            Case AnsiIndexStr(fext, ['.tx3','.nii','.jnii']) of
+                 0, 2:  fmViewer.LoadTexture(TaskFile);
+                 1:  if(Pos(TaskFile, '_vol.nii') > 0) then
+                         fmViewer.LoadTexture(TaskFile,0,0,0,2,352,GL_RGBA16I)
+                     else
+                         fmViewer.LoadTexture(TaskFile,0,0,0,0,352,GL_RGBA32F);
+            else
+            end;
+            fmViewer.BringToFront;
+            fmViewer.Show;
+      except
+          on E: Exception do
+             ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
+      end;
+    end else begin
       if(mcxdoSave.Enabled) then begin
          ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save it?',
              mtConfirmation, [mbYes, mbNo, mbCancel],0);
