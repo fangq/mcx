@@ -3238,7 +3238,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                         }
 
                         sleep_ms(100);
-                    } while (p0 < (param.threadphoton >> 1) * 4.5f);
+
+                    } while (p0 < (int)((param.threadphoton >> 1) * 4.5f));
 
                     mcx_progressbar(1.0f, cfg);
                     MCX_FPRINTF(cfg->flog, "\n");
