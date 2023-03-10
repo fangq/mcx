@@ -88,6 +88,8 @@ type
     MenuItem72: TMenuItem;
     MenuItem73: TMenuItem;
     MenuItem74: TMenuItem;
+    MenuItem75: TMenuItem;
+    MenuItem76: TMenuItem;
     miExportJSON: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
@@ -371,6 +373,7 @@ type
     procedure mcxdoWebURLExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem22Click(Sender: TObject);
+    procedure MenuItem76Click(Sender: TObject);
     procedure miExportJSONClick(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
     procedure miCopyClick(Sender: TObject);
@@ -1979,6 +1982,15 @@ procedure TfmMCX.MenuItem22Click(Sender: TObject);
 begin
   if(lvJobs.Selected <> nil) then
       RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, true)+'"');
+end;
+
+procedure TfmMCX.MenuItem76Click(Sender: TObject);
+var
+   fmViewer: TfmViewer;
+begin
+  fmViewer:=TfmViewer.Create(self);
+  fmViewer.BringToFront;
+  fmViewer.Show;
 end;
 
 procedure TfmMCX.miExportJSONClick(Sender: TObject);

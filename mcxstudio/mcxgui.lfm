@@ -4424,11 +4424,19 @@ object fmMCX: TfmMCX
         Caption = 'Volume Designer'
         OnClick = MenuItem9Click
       end
+      object MenuItem75: TMenuItem
+        Action = shapePreview
+      end
+      object MenuItem76: TMenuItem
+        Caption = 'Open Volume Viewer'
+        OnClick = MenuItem76Click
+      end
       object MenuItem10: TMenuItem
         Caption = '-'
       end
       object MenuItem11: TMenuItem
-        Caption = 'Preferences ...'
+        Action = mcxdoConfig
+        Caption = 'Settings'
       end
     end
     object MenuItem4: TMenuItem
@@ -5545,7 +5553,7 @@ object fmMCX: TfmMCX
     object mcxdoOpen: TAction
       Category = 'Files'
       Caption = 'Open'
-      Hint = 'Open an project or volume file'
+      Hint = 'Open a project or volume file'
       ImageIndex = 0
       OnExecute = mcxdoOpenExecute
       ShortCut = 16463
@@ -5735,6 +5743,7 @@ object fmMCX: TfmMCX
     object mcxdoPlotJNIFTI: TAction
       Category = 'Postproc'
       Caption = 'Plot fluence (jnii)'
+      Enabled = False
       Hint = '.jnii'
       OnExecute = mcxdoPlotJNIFTIExecute
     end
