@@ -1,0 +1,211 @@
+name: build_mcx
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build_all:
+    name: Build All
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-10.15, macos-11, windows-2019]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Install dependencies (Linux only)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus
+      - name: Install dependencies (MacOS only)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          brew install octave
+      - name: Install dependencies (Windows only)
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          choco install octave.portable --version=5.2.0
+          echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Install CUDA (Linux and Windows)
+        if: ${{ runner.os != 'macOS' }}
+        uses: Jimver/cuda-toolkit@v0.2.9
+        id: cuda-toolkit
+      - name: Install CUDA (MacOS only)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+          unzip cuda.zip
+          sudo mv cuda/ /usr/local/
+          sudo chmod +x /usr/local/cuda/bin/*
+          sudo chmod +x /usr/local/cuda/nvvm/bin/*
+          echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
+          echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
+      - name: Install Zlib Dev (Windows Only)
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
+          Expand-Archive .\zlib.zip -DestinationPath zlib\
+          echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $env:GITHUB_ENV
+          echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
+          rm zlib.zip
+      - name: Link libgomp.a (MacOS only)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          sudo ln -s /usr/local/lib/gcc/10/libgomp.a /usr/local/lib/libgomp.a
+      - name: Set up MATLAB v1 (Linux Only)
+        if: ${{ runner.os == 'Linux' }}
+        uses: matlab-actions/setup-matlab@v1
+      - name: Set up MATLAB v2 (MacOS Only)
+        if: ${{ runner.os == 'macOS' }}
+        uses: matlab-actions/setup-matlab@v2-beta
+      - name: Update RCS keywords
+        run: |
+          printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+          rm -rf src/*.c
+          git checkout src/*.c
+      - name: Build mcxlab for Octave
+        run: |
+          cd src
+          which gcc
+          gcc -v
+          mkoctfile --version
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            make oct BACKEND=cudastatic
+            ldd ../mcxlab/mcx.mex
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
+            otool -L ../mcxlab/mcx.mex
+          else
+            make oct CC=gcc CXX=g++
+            objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
+          fi
+          octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
+          octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])" >> $GITHUB_ENV
+      - name: Build mcxlab for MATLAB
+        if: ${{ runner.os != 'Windows' }}
+        run: |
+          which mex
+          cd src
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            make mex
+            objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            make mex CC=gcc-10 CXX=g++-10 MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-v -f mexopts_maci64_gcc.xml"
+            otool -L ../mcxlab/mcx.mex*
+          else
+            make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-v"
+            ldd ../mcxlab/mcx.mex*
+          fi
+      - name: Build binary
+        run: |
+          cd src
+          make clean
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -lz -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
+            ldd ../bin/mcx
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
+            otool -L ../bin/mcx
+          else
+            make static
+            ldd ../bin/mcx
+          fi
+      - name: Build mcxstudio
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          cd mcxstudio
+          lazbuild --build-mode=release mcxshow.lpi
+          lazbuild --build-mode=release mcxviewer.lpi
+          lazbuild --build-mode=release mcxstudio.lpi
+          cp debug/mcxstudio ../bin
+          cp mcxshow ../bin
+          cp mcxviewer ../bin
+          cp README.txt ../inno/MCXStudio_README.txt
+      - name: Create package folder
+        run: |
+          mkdir packages
+          mkdir -p mcxlab/octave/${{ env.OCTAVE_ARCH }}
+      - name: Create release tag
+        run: perl -e "print 'RELEASE_TAG='. lc('${{ runner.os }}-${{ runner.arch }}-github-latest')" >> $GITHUB_ENV
+      - name: Zip mcxlab
+        run: |
+          mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
+          else
+            zip -FSr --symlink packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
+          fi
+      - name: Upload mcxlab package
+        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-10.15' || matrix.os == 'windows-2019' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-mcx-packages
+          path: packages/mcxlab-${{ env.RELEASE_TAG }}.zip
+      - name: Prepare mcx package
+        run: |
+          cd src
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            cp -a debug/mcxstudio.app ../bin
+            cp -a mcxshow.app   ../bin
+            cp -a mcxviewer.app ../bin
+          fi
+          rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter
+      - name: Zip mcx
+        run: |
+          cd .. && pwd
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            rm -rf mmc/bin/mcx.exp mmc/bin/mcx.lib
+            7z a -tzip mcx/packages/mcx-${{ env.RELEASE_TAG }}.zip mcx -xr!mcx/packages
+          else
+            zip -FSr --symlink mcx/packages/mcx-${{ env.RELEASE_TAG }}.zip mcx -x 'mcx/packages*'
+          fi
+      - name: Upload mcx package
+        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-10.15' || matrix.os == 'windows-2019' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-mcx-packages
+          path: packages/mcx-${{ env.RELEASE_TAG }}.zip
+
+  upload_package:
+    name: Upload Packages
+    needs: build_all
+    runs-on: ubuntu-20.04
+    if: ${{ github.repository_owner == 'fangq' && github.event_name != 'pull_request'}}
+    steps:
+      - name: Download mcx
+        uses: actions/download-artifact@v3
+        with:
+          name: all-mcx-packages
+          path: packages
+      - name: Create all-in-one octave mcxlab
+        run: |
+          cd packages
+          unzip -n 'mcxlab*.zip'
+          tree .
+          zip -FSr --symlink mcxlab-allinone-github-latest.zip mcxlab
+          rm -rf mcxlab
+      - name: Display structure of downloaded files
+        run: ls -R packages
+      - name: Copy package to server
+        if: ${{ github.repository_owner == 'fangq' && github.event_name != 'pull_request'}}
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.MCX_SERVER }}
+          username: ${{ secrets.MCX_SERVER_USER }}
+          ssh_private_key: ${{ secrets.MCX_SERVER_SSH_KEY }}
+          local_path: "packages/*"
+          remote_path: ${{ secrets.MCX_CI_PATH }}
