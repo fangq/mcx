@@ -39,13 +39,12 @@ jobs:
           choco install octave.portable --version=5.2.0
           echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Install CUDA (Linux and Windows)
-        if: ${{ runner.os != 'macOS' }}
-        uses: fangq/cuda-toolkit@master
-        id: cuda-toolkit
-        with:
-          cuda: '10.2.89'
-          linux-local-args: '["--toolkit"]'
+      - name: Install CUDA (Linux only)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          wget https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux -o /tmp/cuda9.run
+	  sudo sh /tmp/cuda9.run --silent --toolkit
+          rm -rf /tmp/cuda9.run
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
