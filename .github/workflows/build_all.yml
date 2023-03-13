@@ -49,7 +49,7 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: '9.2.148'
-          linux-local-args: ["--toolkit"]
+          linux-local-args: "--toolkit"
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
