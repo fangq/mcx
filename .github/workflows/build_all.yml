@@ -43,6 +43,8 @@ jobs:
         if: ${{ runner.os != 'macOS' }}
         uses: Jimver/cuda-toolkit@v0.2.9
         id: cuda-toolkit
+        with:
+          cuda: '9.2.148'
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
