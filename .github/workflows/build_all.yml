@@ -41,7 +41,7 @@ jobs:
           echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install CUDA (Linux and Windows)
         if: ${{ runner.os != 'macOS' }}
-        uses: fangq/cuda-toolkit@v0.2.10
+        uses: fangq/cuda-toolkit@master
         id: cuda-toolkit
         with:
           cuda: '10.2.89'
