@@ -42,10 +42,9 @@ jobs:
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          wget https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux -o /tmp/cuda9.run
-          chmod +x /tmp/cuda9.run
-          sudo /tmp/cuda9.run --silent --toolkit --override
-          rm -rf /tmp/cuda9.run
+          cd /tmp && wget https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
+          sudo sh /tmp/cuda_9.2.148_396.37_linux.run --silent --toolkit --override
+          rm -rf /tmp/cuda_9.2.148_396.37_linux.run
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
