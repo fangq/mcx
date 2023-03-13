@@ -14,7 +14,7 @@ jobs:
     name: Build All
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04, macos-10.15, macos-11, windows-2019]
+        os: [ubuntu-20.04, macos-10.15, windows-2019]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -28,10 +28,6 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev
-          sudo apt-get -y install gcc-7 g++-7
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
-          gcc --version
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -48,7 +44,7 @@ jobs:
         uses: fangq/cuda-toolkit@v0.2.10
         id: cuda-toolkit
         with:
-          cuda: '9.2.148'
+          cuda: '10.2.89'
           linux-local-args: '["--toolkit"]'
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
