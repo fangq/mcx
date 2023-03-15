@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.145.0/three.min.js"></script>
-    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://mcx.space/cloud/js/OrbitControls.js"></script>
     <script src="https://unpkg.com/load_avg@0.16.0/build/stats.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
@@ -2062,7 +2062,11 @@ var IsoRenderShader = {
 
     if(data.options.hasOwnProperty('json')){
        outputTextarea.value = JSON.stringify(data.options.json, null, 2)
-       $("#setvalue").click();
+       if (jsoneditor) {
+         jsoneditor.on('ready',() => {
+           $("#setvalue").click();
+         });
+       }
     }
   }
 
@@ -2365,32 +2369,32 @@ script.
 */
 
 function checklimit(cfg) {
-  if(cfg.Session.hasOwnProperty('Photons') && cfg.Session.Photons>1e7)
-      throw new Error('the max photon number is limited to 1e7 in this preview version');
+  if(cfg.Session.hasOwnProperty('Photons') && cfg.Session.Photons>5e8)
+      throw new Error('the max photon number is limited to 5e8 in this preview version');
   else if(cfg.Session.hasOwnProperty('DebugFlag') && (cfg.Session.DebugFlag.includes('m')||cfg.Session.DebugFlag.includes('M')))
       throw new Error('storing photon trajectories is not supported in this preview version');
-  else if(cfg.Forward.T1/cfg.Forward.Dt>20)
-      throw new Error('the maximum time gate number is limited to 20 in this preview version');
+  else if(cfg.Forward.T1/cfg.Forward.Dt>100)
+      throw new Error('the maximum time gate number is limited to 100 in this preview version');
   else if(cfg.Domain.hasOwnProperty('Dim') && cfg.Domain.Dim.length==3){
       cfg.Domain.Dim.map(function(x) {
-         if(x>100)
-	   throw new Error('the maximum domain dimension is 100 in this preview version');
+         if(x>300)
+	   throw new Error('the maximum domain dimension is 300 in this preview version');
       });
   }
   if(cfg.hasOwnProperty('Shapes') && cfg.Shapes.length>0){
       cfg.Shapes.map(function(x) {
          if(x.hasOwnProperty('Grid')){
 	   x.Grid.Size.map(function(s) {
-             if(s>100)
-	       throw new Error('the maximum domain dimension is 100 in this preview version');
+             if(s>300)
+	       throw new Error('the maximum domain dimension is 300 in this preview version');
              });
 	 }
       });
   }
   if(cfg.Domain.hasOwnProperty('Media') && cfg.Domain.Media.length>0){
       cfg.Domain.Media.map(function(o) {
-         if(o.mus>20)
-	   throw new Error('scattering coeff (mus) is limited to 20/mm in this preview version');
+         if(o.mus>50)
+	   throw new Error('scattering coeff (mus) is limited to 50/mm in this preview version');
       });
   }
 }
@@ -2942,7 +2946,7 @@ $('#drawlastoutput').click(function () {
   }
 });
 $('#updatethumbnail').click(function () {
-  updatethumb('',300);
+  updatethumb('', 300);
 });
 
 $("#credits").hide();
@@ -3148,7 +3152,9 @@ $("#neg-z-view").on('click', function() {
 
   /* -------------------------------------------------------- main function */
 
-  parseUrl()
+$( document ).ready(function() {
+  parseUrl();
+});
 
 </script>
 </body>
