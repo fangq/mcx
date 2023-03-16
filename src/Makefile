@@ -43,7 +43,7 @@ INCLUDEDIRS=-Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo
-  CUCCOPT=-D__STRICT_ANSI__ -g #--maxrregcount 32
+  CUCCOPT+=-D__STRICT_ANSI__ -g #--maxrregcount 32
 else ifeq ($(BACKEND),cudastatic)
   ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
       CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
@@ -51,10 +51,10 @@ else ifeq ($(BACKEND),cudastatic)
       CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
   endif
   LINKOPT=-L$(CUDA_HOME)/lib -lm $(CUDART)
-  CUCCOPT=-g -lineinfo -Xcompiler -Wall#-arch compute_20 #--maxrregcount 32
+  CUCCOPT+=-g -lineinfo -Xcompiler -Wall#-arch compute_20 #--maxrregcount 32
 else
   LINKOPT=-L$(CUDA_HOME)/lib -lm $(CUDART)
-  CUCCOPT=-g -lineinfo -Xcompiler -Wall#-arch compute_20 #--maxrregcount 32
+  CUCCOPT+=-g -lineinfo -Xcompiler -Wall#-arch compute_20 #--maxrregcount 32
 endif
 
 DLLFLAG=-fPIC
