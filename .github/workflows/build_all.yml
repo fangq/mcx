@@ -27,7 +27,9 @@ jobs:
       - name: Install dependencies (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev
+          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-7
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -50,7 +52,6 @@ jobs:
           ls /usr/local/cuda/bin
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           nvcc --version
-          sudo perl -pi -e 's/^#if __GNUC__ >\s*\d+/#if __GNUC__ > 15/g' /usr/local/cuda/include/crt/host_config.h
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
