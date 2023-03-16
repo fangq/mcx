@@ -45,7 +45,7 @@ jobs:
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          cd /tmp && wget -q --show-progress https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
+          cd /tmp && wget -q https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
           sudo sh /tmp/cuda_9.2.148_396.37_linux --silent --toolkit --override
           rm -rf /tmp/cuda_9.2.148_396.37_linux
           export PATH=/usr/local/cuda/bin:$PATH
@@ -64,9 +64,7 @@ jobs:
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           mkdir -p ~/bin
-          sudo ln -s `which gcc-10` ~/bin/gcc
-          sudo ln -s `which g++-10` ~/bin/g++
-          sudo ln -s `which gcc-10` ~/bin/cc
+          echo "NVCC_PREPEND_FLAGS='-ccbin g++-10'" >> $GITHUB_ENV
       - name: Install Zlib Dev (Windows Only)
         if: ${{ runner.os == 'Windows' }}
         shell: pwsh
@@ -97,7 +95,7 @@ jobs:
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
+            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'" CUCCOPT='-ccbin'
             otool -L ../mcxlab/mcx.mex
           else
             make oct CC=gcc CXX=g++
