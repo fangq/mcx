@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-7
+          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-7 g++-7
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
       - name: Install dependencies (MacOS only)
