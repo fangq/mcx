@@ -46,6 +46,8 @@ jobs:
           cd /tmp && wget https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
           sudo sh /tmp/cuda_9.2.148_396.37_linux --silent --toolkit --override
           rm -rf /tmp/cuda_9.2.148_396.37_linux
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          nvcc --version
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -95,6 +97,7 @@ jobs:
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])" >> $GITHUB_ENV
       - name: Build mcxlab for MATLAB
+        if: ${{ runner.os == 'Linux' }}
         run: |
           cd src
           if [[ "$RUNNER_OS" == "Windows" ]]; then
