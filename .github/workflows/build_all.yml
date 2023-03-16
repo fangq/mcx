@@ -63,6 +63,10 @@ jobs:
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          mkdir -p ~/bin
+          sudo ln -s `which gcc-10` ~/bin/gcc
+          sudo ln -s `which g++-10` ~/bin/g++
+          sudo ln -s `which gcc-10` ~/bin/cc
       - name: Install Zlib Dev (Windows Only)
         if: ${{ runner.os == 'Windows' }}
         shell: pwsh
@@ -163,11 +167,10 @@ jobs:
           path: packages/mcxlab-${{ env.RELEASE_TAG }}.zip
       - name: Prepare mcx package
         run: |
-          cd src
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            cp -a debug/mcxstudio.app ../bin
-            cp -a mcxshow.app   ../bin
-            cp -a mcxviewer.app ../bin
+            cp -a mcstudio/debug/mcxstudio.app ../bin
+            cp -a mcstudio/mcxshow.app   ../bin
+            cp -a mcstudio/mcxviewer.app ../bin
           fi
           rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter
       - name: Zip mcx
