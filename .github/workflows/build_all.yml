@@ -43,9 +43,9 @@ jobs:
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          cd /tmp && curl https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux --output cuda_9_2_linux.sh
-          sudo sh /tmp/cuda_9_2_linux.sh --silent --toolkit --override
-          rm -rf /tmp/cuda_9_2_linux.sh
+          cd /tmp && wget -q --show-progress https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
+          sudo sh /tmp/cuda_9.2.148_396.37_linux --silent --toolkit --override
+          rm -rf /tmp/cuda_9.2.148_396.37_linux
           export PATH=/usr/local/cuda/bin:$PATH
           ls /usr/local/cuda/bin
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
