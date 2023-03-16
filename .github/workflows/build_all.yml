@@ -43,13 +43,14 @@ jobs:
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          cd /tmp && wget https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
-          sudo sh /tmp/cuda_9.2.148_396.37_linux --silent --toolkit --override
-          rm -rf /tmp/cuda_9.2.148_396.37_linux
+          cd /tmp && curl https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux --output cuda_9_2_linux.sh
+          sudo sh /tmp/cuda_9_2_linux.sh --silent --toolkit --override
+          rm -rf /tmp/cuda_9_2_linux.sh
           export PATH=/usr/local/cuda/bin:$PATH
           ls /usr/local/cuda/bin
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           nvcc --version
+          sudo perl -pi -e 's/^#if __GNUC__ >\s*\d+/#if __GNUC__ > 15/g' /usr/local/cuda/include/crt/host_config.h
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
