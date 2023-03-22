@@ -27,7 +27,9 @@ jobs:
       - name: Install dependencies (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev
+          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-7 g++-7
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -39,12 +41,17 @@ jobs:
           choco install octave.portable --version=5.2.0
           echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo 'MW_MINGW64_LOC=/c/ProgramData/Chocolatey/lib/mingw/tools/install/mingw64/' | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          cd /tmp && wget https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
+          cd /tmp && wget -q https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
           sudo sh /tmp/cuda_9.2.148_396.37_linux --silent --toolkit --override
           rm -rf /tmp/cuda_9.2.148_396.37_linux
+          export PATH=/usr/local/cuda/bin:$PATH
+          ls /usr/local/cuda/bin
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          nvcc --version
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -55,6 +62,8 @@ jobs:
           sudo chmod +x /usr/local/cuda/nvvm/bin/*
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          mkdir -p ~/bin
       - name: Install Zlib Dev (Windows Only)
         if: ${{ runner.os == 'Windows' }}
         shell: pwsh
@@ -68,12 +77,8 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: |
           sudo ln -s /usr/local/lib/gcc/10/libgomp.a /usr/local/lib/libgomp.a
-      - name: Set up MATLAB v1 (Linux Only)
-        if: ${{ runner.os == 'Linux' }}
+      - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v1
-      - name: Set up MATLAB v2 (MacOS Only)
-        if: ${{ runner.os == 'macOS' }}
-        uses: matlab-actions/setup-matlab@v2-beta
       - name: Update RCS keywords
         run: |
           printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
@@ -89,7 +94,7 @@ jobs:
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
+            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'" CUCCOPT='-ccbin g++-10'
             otool -L ../mcxlab/mcx.mex
           else
             make oct CC=gcc CXX=g++
@@ -98,14 +103,14 @@ jobs:
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])" >> $GITHUB_ENV
       - name: Build mcxlab for MATLAB
-        if: ${{ runner.os != 'Windows' }}
+        if: ${{ runner.os == 'Linux' }}
         run: |
-          which mex
           cd src
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             make mex
             objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            which mex
             make mex CC=gcc-10 CXX=g++-10 MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-v -f mexopts_maci64_gcc.xml"
             otool -L ../mcxlab/mcx.mex*
           else
@@ -159,11 +164,10 @@ jobs:
           path: packages/mcxlab-${{ env.RELEASE_TAG }}.zip
       - name: Prepare mcx package
         run: |
-          cd src
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            cp -a debug/mcxstudio.app ../bin
-            cp -a mcxshow.app   ../bin
-            cp -a mcxviewer.app ../bin
+            cp -a mcstudio/debug/mcxstudio.app ../bin
+            cp -a mcstudio/mcxshow.app   ../bin
+            cp -a mcstudio/mcxviewer.app ../bin
           fi
           rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter
       - name: Zip mcx
