@@ -64,6 +64,13 @@ jobs:
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           mkdir -p ~/bin
+      - name: Install CUDA (Windows only)
+        if: ${{ runner.os == 'Windows' }}
+        uses: Jimver/cuda-toolkit@v0.2.10
+        id: cuda-toolkit
+          cuda: '9.2.148'
+          method: 'network'
+          sub-packages: '["nvcc"]'
       - name: Install Zlib Dev (Windows Only)
         if: ${{ runner.os == 'Windows' }}
         shell: pwsh
@@ -94,7 +101,7 @@ jobs:
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'" CUCCOPT='-ccbin g++-10'
+            make oct CC=gcc CXX=g++ USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
             otool -L ../mcxlab/mcx.mex
           else
             make oct CC=gcc CXX=g++
