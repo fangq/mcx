@@ -81,6 +81,16 @@ jobs:
           echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $env:GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
           rm zlib.zip
+      - name: Install file search tool everything
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          choco install es
+      - name: Search cl.exe
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          es cl.exe
       - name: Link libgomp.a (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
