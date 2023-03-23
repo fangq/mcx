@@ -68,6 +68,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         uses: Jimver/cuda-toolkit@v0.2.10
         id: cuda-toolkit
+        with:
           cuda: '9.2.148'
           method: 'network'
           sub-packages: '["nvcc"]'
