@@ -143,7 +143,7 @@ as a key, and pass on the dict object to `pmcx.run()`
 ```python3
 import pmcx
 import numpy as np
-cfg = {'nphoton': 1000000, 'vol':np.ones([60,60,60],dtype='uint8'), 'tstart':0, 'tend':5e-9, 'tend':5e-9, 
+cfg = {'nphoton': 1000000, 'vol':np.ones([60,60,60],dtype='uint8'), 'tstart':0, 'tend':5e-9, 'tstep':5e-9,
        'srcpos': [30,30,0], 'srcdir':[0,0,1], 'prop':[[0,0,1,1],[0.005,1,0.01,1.37]]}
 res = pmcx.run(cfg)
 ```
