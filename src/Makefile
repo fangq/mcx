@@ -69,7 +69,7 @@ EXESUFFIX=
 
 FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
-ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
+ifneq (,$(filter $(PLATFORM),CYGWIN MINGW64 MSYS))
   CC=nvcc
   CXX=nvcc
   CUOMPLINK=-Xcompiler
