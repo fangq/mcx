@@ -1129,6 +1129,14 @@ void print_mcx_usage() {
             << "PMCX v2022.10\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
 }
 
+/**
+ * @brief Force matlab refresh the command window to print all buffered messages
+ */
+
+extern "C" void mcx_python_flush() {
+    std::cout.flush();
+}
+
 py::dict pmcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
     if (py::len(kwargs) == 0) {
         print_mcx_usage();
