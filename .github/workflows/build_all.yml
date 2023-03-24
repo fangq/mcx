@@ -98,7 +98,7 @@ jobs:
           cd src
           which gcc
           gcc -v
-          shell uname -s
+          uname -s
           mkoctfile --version
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             make oct BACKEND=cudastatic
