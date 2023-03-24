@@ -1230,10 +1230,13 @@ float mcx_updatemua(unsigned int mediaid, Config* cfg) {
 
 void mcx_flush(Config* cfg) {
 #if defined(MCX_CONTAINER) && (defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER))
+    #warning "============ calling matlab flush ============"
     mcx_matlab_flush();
 #elif defined(PYBIND11_VERSION_MAJOR)
+    #warning "============ calling Python flush ============"
     mcx_python_flush();
 #else
+    #warning "============ calling C flush ============"
     fflush(cfg->flog);
 #endif
 }

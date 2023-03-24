@@ -40,7 +40,7 @@ set(
     ${CUDA_NVCC_FLAGS};
     -g -lineinfo -Xcompiler -Wall -Xcompiler -O3 -arch=sm_35
     -DMCX_TARGET_NAME="Fermi MCX" -DUSE_ATOMIC -use_fast_math
-    -DSAVE_DETECTORS -Xcompiler -fPIC
+    -DSAVE_DETECTORS -Xcompiler -fPIC -Xcompiler -fopenmp
     )
 
 # C Options
@@ -109,7 +109,7 @@ if (BUILD_PYTHON)
             cjson/cJSON.h
             pmcx.cpp
             )
-    target_compile_definitions(_pmcx PUBLIC MCX_CONTAINER)
+    target_compile_definitions(_pmcx PUBLIC MCX_CONTAINER PYBIND11_VERSION_MAJOR)
 
     target_link_libraries(_pmcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras)
 
@@ -122,11 +122,34 @@ endif()
 
 # Build mex file
 if(BUILD_MEX AND Matlab_FOUND)
+    # Create mcx-matlab library
+    cuda_add_library(mcx-matlab STATIC
+            mcx_core.cu
+            mcx_core.h
+            mcx_utils.c
+            mcx_utils.h
+            mcx_shapes.c
+            mcx_shapes.h
+            mcx_bench.c
+            mcx_bench.h
+            mcx_mie.cpp
+            mcx_mie.h
+            mcx_tictoc.c
+            mcx_tictoc.h
+            cjson/cJSON.c
+            cjson/cJSON.h
+            )
+
+    target_compile_definitions(mcx-matlab PUBLIC MCX_CONTAINER MATLAB_MEX_FILE)
+
     matlab_add_mex(
       NAME mcxlab
       SRC mcxlab.cpp
-      LINK_TO mex mx mcx
+      LINK_TO mex mx mcx-matlab
     )
+
+    target_compile_definitions(mcxlab PUBLIC MCX_CONTAINER MATLAB_MEX_FILE)
+
     set_target_properties(mcxlab
             PROPERTIES OUTPUT_NAME ${CMAKE_SOURCE_DIR}/../mcxlab/mcx)
 endif()
