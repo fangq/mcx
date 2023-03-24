@@ -40,7 +40,7 @@ set(
     ${CUDA_NVCC_FLAGS};
     -g -lineinfo -Xcompiler -Wall -Xcompiler -O3 -arch=sm_35
     -DMCX_TARGET_NAME="Fermi MCX" -DUSE_ATOMIC -use_fast_math
-    -DSAVE_DETECTORS -Xcompiler -fPIC -Xcompiler -fopenmp
+    -DSAVE_DETECTORS -Xcompiler -fPIC -Xcompiler '${OpenMP_C_FLAGS}'
     )
 
 # C Options
