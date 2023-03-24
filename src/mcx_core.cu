@@ -1354,7 +1354,9 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                 }
 
                 case (MCX_SRC_LINE):  // uniformally emitting line source, emitting cylindrically
-                case (MCX_SRC_SLIT): { // a line source emitting only along a specified direction, like a light sheet
+                case (MCX_SRC_SLIT): // a line source emitting only along a specified direction, like a light sheet
+                case (MCX_SRC_CONELINE): // a line source emitting along a cone 
+                {
                     float r = rand_uniform01(t);
                     *((float4*)p) = float4(p->x + r * gcfg->srcparam1.x,
                                            p->y + r * gcfg->srcparam1.y,
@@ -1368,6 +1370,16 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         r = TWO_PI * rand_uniform01(t); // phi
                         sincosf(r, &sphi, &cphi); // y=sin(phi), x=cos(phi)
                         rotatevector(v, 1.f, 0.f, sphi, cphi);
+                    }
+                    if(gcfg->srctype == MCX_SRC_CONELINE)
+                    {
+                        float ang, stheta, ctheta, sphi, cphi;
+                        ang = TWO_PI * rand_uniform01(t); //next arimuth angle
+                        sincosf(ang, &sphi, &cphi);
+                        ang = cosf(gcfg->srcparam2.x);
+                        ang = (gcfg->srcparam2.y > 0.f) ? rand_uniform01(t) * gcfg->srcparam2.x : acos(rand_uniform01(t) * (1.0 - ang) + ang); //sine distribution
+                        sincosf(ang, &stheta, &ctheta);
+                        rotatevector(v, stheta, ctheta, sphi, cphi);
                     }
 
                     *rv = float3(rv->x + (gcfg->srcparam1.x) * 0.5f,
