@@ -39,7 +39,6 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
           echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
-          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
@@ -49,6 +48,7 @@ jobs:
           sudo chmod +x /usr/local/cuda/nvvm/bin/*
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
+          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
       - name: Build Wheels
         run: |
           cd pmcx/
