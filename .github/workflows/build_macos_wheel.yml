@@ -39,8 +39,8 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
           echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
-          cd src
-          ln -s /usr/local/opt/libomp/include/omp.h .
+          ls /usr/local/opt/libomp/include
+          echo "CMAKE_ARGS='-DUSERCCOPT=-I/usr/local/opt/libomp/include -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=/usr/local/opt/libomp/lib/libomp.dylib'" >> $GITHUB_ENV
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
@@ -54,7 +54,7 @@ jobs:
         run: |
           cd pmcx/
           pip install wheel
-          pip wheel . -w ../dist/
+          VERBOSE=1 pip wheel . -w ../dist/
           ls ../dist/
           cd ../
       - name: Check If the Build Version Exists on PyPI
