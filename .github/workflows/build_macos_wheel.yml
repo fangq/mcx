@@ -40,9 +40,7 @@ jobs:
           echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
           ls /usr/local/opt/libomp/include
-          echo "OpenMP_CXX_FLAGS=-Xclang -fopenmp -I/usr/local/opt/libomp/include" >> $GITHUB_ENV
-          echo "OpenMP_CXX_LIB_NAMES=omp" >> $GITHUB_ENV
-          echo "OpenMP_omp_LIBRARY=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+          echo "USERCCOPT=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip

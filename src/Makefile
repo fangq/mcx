@@ -83,9 +83,9 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
   DLLFLAG=
-  OMP=/openmp
+  OMP=-openmp
   MEX=cmd /c mex
-  CUCCOPT+=-Xcompiler '$(OMP) /W0'
+  CUCCOPT+=-Xcompiler '$(OMP)'
   CFLAGS=
   CPPFLAGS=-g
   CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
