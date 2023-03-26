@@ -39,7 +39,8 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
           echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
-          echo "CUDA_NVCC_FLAGS=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+          echo "CMAKE_CXX_FLAGS=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+          echo "CMAKE_C_FLAGS=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
       - name: Install CUDA
         run: |
           curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
