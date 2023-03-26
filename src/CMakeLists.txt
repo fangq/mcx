@@ -34,7 +34,7 @@ if(BUILD_MEX)
     find_package(Matlab)
 endif()
 
-string(REGEX REPLACE "[ \t\r\n]+" " -Xcompiler " OMPFLAG ${OpenMP_C_FLAGS})
+string(REGEX REPLACE "[ \t\r\n]+" " -Xcompiler " OMPFLAG ${OpenMP_CXX_FLAGS})
 string(PREPEND OMPFLAG "-Xcompiler ")
 
 # NVCC Options
