@@ -39,7 +39,7 @@ ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
 CUDA_HOME ?= /usr/local/cuda
 
-INCLUDEDIRS=-Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
+INCLUDEDIRS+=-Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo
