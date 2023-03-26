@@ -39,7 +39,7 @@ ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
 CUDA_HOME ?= /usr/local/cuda
 
-INCLUDEDIRS+=-Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
+INCLUDEDIRS+=${INCLUDES} -Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo
@@ -91,7 +91,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
   CPPOPT+=-Xcompiler $(OMP)
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
-  USERLINKOPT:=$(ZMATLIB) -lzlib
+  USERLINKOPT:=${LIBRARIES} $(ZMATLIB) -lzlib
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)
