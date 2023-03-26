@@ -98,7 +98,7 @@ jobs:
           cd src
           which gcc
           gcc -v
-          uname -s
+          env
           mkoctfile --version
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             make oct BACKEND=cudastatic
@@ -107,7 +107,7 @@ jobs:
             make oct CC=gcc CXX=g++ USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
             otool -L ../mcxlab/mcx.mex
           else
-            make oct
+            make oct INCLUDES='-IC:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include'
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
