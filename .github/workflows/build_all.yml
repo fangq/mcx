@@ -138,7 +138,7 @@ jobs:
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static
+            make static CC=nvcc CXX=nvcc
             ldd ../bin/mcx
           fi
       - name: Build mcxstudio
