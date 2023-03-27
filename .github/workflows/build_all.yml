@@ -95,6 +95,7 @@ jobs:
           rm -rf src/*.c
           git checkout src/*.c
       - name: Build mcxlab for Octave
+        if: ${{ runner.os != 'Windows' }}
         run: |
           cd src
           which gcc
@@ -109,7 +110,7 @@ jobs:
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
-            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"
+            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda" CXX=cl.exe CC=cl.exe
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
