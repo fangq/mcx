@@ -48,11 +48,12 @@ jobs:
           sudo chmod +x /usr/local/cuda/nvvm/bin/*
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
+          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
       - name: Build Wheels
         run: |
           cd pmcx/
           pip install wheel
-          pip wheel . -w ../dist/
+          VERBOSE=1 pip wheel . -w ../dist/
           ls ../dist/
           cd ../
       - name: Check If the Build Version Exists on PyPI

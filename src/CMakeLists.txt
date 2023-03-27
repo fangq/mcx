@@ -34,13 +34,16 @@ if(BUILD_MEX)
     find_package(Matlab)
 endif()
 
+string(REGEX REPLACE "[ \t\r\n]+" " -Xcompiler " OMPFLAG ${OpenMP_CXX_FLAGS})
+string(PREPEND OMPFLAG "-Xcompiler ")
+
 # NVCC Options
 set(
     CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS};
     -g -lineinfo -Xcompiler -Wall -Xcompiler -O3 -arch=sm_35
     -DMCX_TARGET_NAME="Fermi MCX" -DUSE_ATOMIC -use_fast_math
-    -DSAVE_DETECTORS -Xcompiler -fPIC -Xcompiler '${OpenMP_C_FLAGS}'
+    -DSAVE_DETECTORS -Xcompiler -fPIC ${OMPFLAG}
     )
 
 # C Options
