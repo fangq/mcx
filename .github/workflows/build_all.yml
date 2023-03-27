@@ -108,7 +108,8 @@ jobs:
             make oct CC=gcc CXX=g++ USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
             otool -L ../mcxlab/mcx.mex
           else
-            make oct INCLUDEDIRS="-I'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include'"
+            ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
+            make oct INCLUDEDIRS="-I./cuda/include"
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
