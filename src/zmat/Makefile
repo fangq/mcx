@@ -23,7 +23,7 @@ DOXY       := doxygen
 DOCDIR     := $(ZMATDIR)/doc
 DOXYCFG=zmat.cfg
 
-INCLUDEDIRS=-Ieasylzma -Ieasylzma/pavlov -Ilz4
+INCLUDEDIRS+=-Ieasylzma -Ieasylzma/pavlov -Ilz4
 
 CUOMPLINK=
 

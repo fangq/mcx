@@ -141,7 +141,7 @@ jobs:
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static CC=nvcc CXX=nvcc
+            make static CC=nvcc CXX=nvcc INCLUDEDIRS='${{ env.CMAKE_INCLUDE_PATH }}'
             ldd ../bin/mcx
           fi
       - name: Build mcxstudio
