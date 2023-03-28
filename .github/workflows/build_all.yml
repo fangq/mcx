@@ -76,10 +76,10 @@ jobs:
           sub-packages: '["nvcc"]'
       - name: Install Zlib Dev (Windows Only)
         if: ${{ runner.os == 'Windows' }}
-        shell: pwsh
         run: |
           curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
           unzip zlib.zip
+          pwd
           echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $GITHUB_ENV
           rm zlib.zip
@@ -141,7 +141,7 @@ jobs:
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static CC=nvcc CXX=nvcc INCLUDEDIRS='${{ env.CMAKE_INCLUDE_PATH }}'
+            make static CC=nvcc CXX=nvcc INCLUDEDIRS='-I"${{ env.CMAKE_INCLUDE_PATH }}"'
             ldd ../bin/mcx
           fi
       - name: Build mcxstudio
