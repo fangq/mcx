@@ -88,7 +88,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CUCCOPT+=-Xcompiler '$(OMP)'
   CFLAGS=
   CPPFLAGS=-g
-  CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler /MT
+  CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler -MT
   CPPOPT+=-Xcompiler $(OMP)
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) -lzlib
