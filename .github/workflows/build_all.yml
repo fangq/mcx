@@ -79,6 +79,7 @@ jobs:
         run: |
           curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
           unzip zlib.zip -d zlib
+          perl -pi -e 's/#if 1\s+.*HAVE_UNISTD_H.*/#if 0/g' zlib/zconf.h
           echo "CMAKE_INCLUDE_PATH=$PWD/zlib/include" >> $GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$PWD/zlib/lib" >> $GITHUB_ENV
           rm zlib.zip
