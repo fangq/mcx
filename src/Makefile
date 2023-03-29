@@ -91,7 +91,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler -MT
   CPPOPT+=-Xcompiler $(OMP)
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
-  USERLINKOPT:=${LIBRARIES} $(ZMATLIB) -lzlib
+  USERLINKOPT:=${LIBRARIES} $(ZMATLIB)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)

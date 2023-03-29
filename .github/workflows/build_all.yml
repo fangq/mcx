@@ -141,7 +141,7 @@ jobs:
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='--library-path="..\zlib\lib"'
+            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlib.lib'
             ldd ../bin/mcx
           fi
       - name: Build mcxstudio
