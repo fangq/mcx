@@ -70,8 +70,8 @@ EXESUFFIX=
 FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
-  CC=nvcc -v
-  CXX=nvcc -v
+  CC=nvcc
+  CXX=nvcc
   CUOMPLINK=-Xcompiler
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
       LINKOPT=-L"$(CUDA_PATH)/lib/x64" $(CUDART)
@@ -209,7 +209,7 @@ fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER -
 fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER -DMATLAB_MEX_FILE
 fermimex:   LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS -fopenmp $(MEXCCOPT) $(USERCCOPT)' LFLAGS='-fopenmp $(USERLINKOPT)' LDFLAGS='$(LFLAGS)' mkoctfile
+fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS $(OMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='$(OMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS)' mkoctfile
 fermioct:   BINARY=mcx.mex
 fermioct:   LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 

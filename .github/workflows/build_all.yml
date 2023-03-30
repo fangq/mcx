@@ -83,8 +83,8 @@ jobs:
           mv zlib/include/zlib/* zlib/include
           mv zlib/lib/zlib/* zlib/lib
           perl -pi -e 's/#if 1\s+.*HAVE_UNISTD_H.*/#if 0/g' zlib/include/zconf.h
-          echo "CMAKE_INCLUDE_PATH=$PWD/zlib/include" >> $GITHUB_ENV
-          echo "CMAKE_LIBRARY_PATH=$PWD/zlib/lib" >> $GITHUB_ENV
+          echo 'CMAKE_INCLUDE_PATH=$PWD\zlib\include' >> $GITHUB_ENV
+          echo 'CMAKE_LIBRARY_PATH=$PWD\zlib\lib' >> $GITHUB_ENV
           rm zlib.zip
       - name: Link libgomp.a (MacOS only)
         if: ${{ runner.os == 'macOS' }}
@@ -98,7 +98,6 @@ jobs:
           rm -rf src/*.c
           git checkout src/*.c
       - name: Build mcxlab for Octave
-        if: ${{ runner.os != 'Windows' }}
         run: |
           cd src
           which gcc
@@ -113,7 +112,7 @@ jobs:
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
-            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda" CXX=cl.exe CC=cl.exe
+            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
@@ -166,7 +165,7 @@ jobs:
         run: perl -e "print 'RELEASE_TAG='. lc('${{ runner.os }}-${{ runner.arch }}-github-latest')" >> $GITHUB_ENV
       - name: Zip mcxlab
         run: |
-          mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
+          [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           else
