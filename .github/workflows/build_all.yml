@@ -83,8 +83,8 @@ jobs:
           mv zlib/include/zlib/* zlib/include
           mv zlib/lib/zlib/* zlib/lib
           perl -pi -e 's/#if 1\s+.*HAVE_UNISTD_H.*/#if 0/g' zlib/include/zconf.h
-          echo 'CMAKE_INCLUDE_PATH=$PWD\zlib\include' >> $GITHUB_ENV
-          echo 'CMAKE_LIBRARY_PATH=$PWD\zlib\lib' >> $GITHUB_ENV
+          echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $GITHUB_ENV
+          echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $GITHUB_ENV
           rm zlib.zip
       - name: Link libgomp.a (MacOS only)
         if: ${{ runner.os == 'macOS' }}
@@ -103,7 +103,7 @@ jobs:
           which gcc
           gcc -v
           env
-          mkoctfile --version
+          mkoctfile -p CC
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
@@ -112,7 +112,7 @@ jobs:
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
-            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"
+            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"  EXTRALIB="-v"
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
