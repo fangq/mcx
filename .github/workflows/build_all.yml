@@ -77,8 +77,11 @@ jobs:
       - name: Install Zlib Dev (Windows Only)
         if: ${{ runner.os == 'Windows' }}
         run: |
-          curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
+          curl.exe --retry 3 -kL https://www.bruot.org/hp/media/files/libraries/zlib_1_2_11_msvc2017_64.zip --output zlib.zip
           unzip zlib.zip -d zlib
+          mv zlib/msvc2017_64/* zlib/
+          mv zlib/include/zlib/* zlib/include
+          mv zlib/lib/zlib/* zlib/lib
           perl -pi -e 's/#if 1\s+.*HAVE_UNISTD_H.*/#if 0/g' zlib/include/zconf.h
           echo "CMAKE_INCLUDE_PATH=$PWD/zlib/include" >> $GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$PWD/zlib/lib" >> $GITHUB_ENV
@@ -141,7 +144,7 @@ jobs:
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlib.lib'
+            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
             ldd ../bin/mcx
           fi
       - name: Build mcxstudio
