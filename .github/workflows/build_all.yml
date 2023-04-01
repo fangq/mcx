@@ -134,6 +134,7 @@ jobs:
             mkdir build
             cd build
             cmake ../
+            ls -l
             make
             #objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
