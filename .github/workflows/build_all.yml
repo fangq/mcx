@@ -37,13 +37,13 @@ jobs:
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
-          curl.exe --retry 3 -kL http://cdimage.debian.org/mirror/gnu.org/gnu/octave/windows/octave-5.2.0_1-w64-64.7z --output octave_5.2.7z
+          curl --retry 3 -kL http://cdimage.debian.org/mirror/gnu.org/gnu/octave/windows/octave-5.2.0_1-w64-64.7z --output octave_5.2.7z
           7z x octave_5.2.7z -ooctave -y
-          #curl.exe --retry 3 -kL https://mcx.space/dev/ci/lazarus-2.0.8-fpc-3.0.4-win32.exe --output lazarus_installer.exe
+          #curl --retry 3 -kL https://mcx.space/dev/ci/lazarus-2.0.8-fpc-3.0.4-win32.exe --output lazarus_installer.exe
           #chmod +x lazarus_installer.exe
           #./lazarus_installer.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
           #choco install octave.portable --version=5.2.0
-          choco install lazarus --version=2.0.rm -rf6
+          choco install lazarus --version=2.0.6
           echo "$PWD/octave/octave-5.2.0-w64-64/mingw64/bin" >> $GITHUB_PATH
           echo 'C:\lazarus' >> $GITHUB_PATH
           echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' >> $GITHUB_PATH
