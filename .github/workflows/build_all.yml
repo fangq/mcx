@@ -103,7 +103,7 @@ jobs:
           which gcc
           gcc -v
           env
-          mkoctfile -p CC
+          mkoctfile -p XTRA_CFLAGS
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
