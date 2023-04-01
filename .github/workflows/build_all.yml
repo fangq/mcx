@@ -112,7 +112,7 @@ jobs:
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
-            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"  EXTRALIB="-v"
+            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"  EXTRALIB="-v" XTRA_CFLAGS='-openmp' XTRA_CXXFLAGS='-openmp'
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"

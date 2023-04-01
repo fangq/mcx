@@ -59,6 +59,7 @@ endif
 
 DLLFLAG=-fPIC
 OMP=-fopenmp
+NVCCOMP=$(OMP)
 CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
 CFLAGS+=-std=c99
@@ -85,11 +86,12 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   DLLFLAG=
   OMP=-openmp
   MEX=cmd /c mex
-  CUCCOPT+=-Xcompiler '$(OMP)'
+  NVCCOMP=$(CUOMPLINK) '$(OMP)'
+  CUCCOPT+=$(NVCCOMP)
   CFLAGS=
   CPPFLAGS=-g
-  CUDA_STATIC=--cudart static -Xcompiler $(OMP) -Xcompiler -MT
-  CPPOPT+=-Xcompiler $(OMP)
+  CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler -MT
+  CPPOPT+=$(NVCCOMP)
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
@@ -209,7 +211,7 @@ fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER -
 fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER -DMATLAB_MEX_FILE
 fermimex:   LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS -Xcompiler $(OMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='-Xcompiler $(OMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS)' XTRA_CFLAGS='-Xcompiler $(OMP)' XTRA_CXXFLAGS='-Xcompiler $(OMP)'  mkoctfile -v
+fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS $(NVCCOMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='$(NVCCOMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS)' XTRA_CFLAGS='$(NVCCOMP)' XTRA_CXXFLAGS='$(NVCCOMP)'  mkoctfile -v
 fermioct:   BINARY=mcx.mex
 fermioct:   LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 
