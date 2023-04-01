@@ -71,7 +71,7 @@ jobs:
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           mkdir -p ~/bin
-      - name: Install CUDA (Windows and Linux)
+      - name: Install CUDA (Windows only)
         if: ${{ runner.os == 'Windows' }}
         uses: Jimver/cuda-toolkit@v0.2.10
         id: cuda-toolkit
@@ -103,6 +103,7 @@ jobs:
           rm -rf src/*.c
           git checkout src/*.c
       - name: Build mcxlab for Octave
+        if: ${{ runner.os != 'Windows' }}
         run: |
           cd src
           which gcc
