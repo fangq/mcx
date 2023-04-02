@@ -133,9 +133,9 @@ jobs:
             #make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
             mkdir build
             cd build
-            cmake ../ -G "Unix Makefiles"
+            cmake ../ -G "NMake Makefiles"
             ls -l
-            make
+            nmake
             #objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             which mex
