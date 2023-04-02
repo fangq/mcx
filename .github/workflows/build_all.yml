@@ -133,7 +133,7 @@ jobs:
             #make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
             mkdir build
             cd build
-            cmake ../
+            cmake ../ -G "Unix Makefiles"
             ls -l
             make
             #objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
