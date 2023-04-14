@@ -130,13 +130,8 @@ jobs:
         run: |
           cd src
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            #make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
-            mkdir build
-            cd build
-            cmake ../ -G "NMake Makefiles"
-            ls -l
-            nmake
-            #objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
+            make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
+            objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             which mex
             make mex CC=gcc-10 CXX=g++-10 MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-v -f mexopts_maci64_gcc.xml"
