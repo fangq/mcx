@@ -727,6 +727,20 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         mcx_config.bc[bc_string.size()] = '\0';
     }
 
+    if (user_cfg.contains("detphotons")) {
+        auto detphotons = py::array_t < float, py::array::f_style | py::array::forcecast >::ensure(user_cfg["detphotons"]);
+
+        if (!detphotons) {
+            throw py::value_error("Invalid detphotons field value");
+        }
+
+        auto buffer_info = detphotons.request();
+
+        det_ps = static_cast<float*>(buffer_info.ptr);
+        dim_det_ps[0] = buffer_info.shape.at(0);
+        dim_det_ps[1] = buffer_info.shape.at(1);
+    }
+
     if (user_cfg.contains("seed")) {
         auto seed_value = user_cfg["seed"];
 
@@ -826,10 +840,6 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
  * @param mcx_config reference to MCXConfig data structure
  */
 inline void cleanup_configs(MCXGPUInfo*& gpu_info, MCXConfig& mcx_config) {
-    if (det_ps) {
-        free(det_ps);
-    }
-
     mcx_cleargpuinfo(&gpu_info);
     mcx_clearcfg(&mcx_config);
 }
@@ -850,14 +860,14 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         /*
          * To start an MCX simulation, we first create a simulation configuration and set all elements to its default settings.
          */
+        det_ps = nullptr;
+
         parse_config(user_cfg, mcx_config);
 
         /** The next step, we identify gpu number and query all GPU info */
         if (!(active_dev = mcx_list_gpu(&mcx_config, &gpu_info))) {
             mcx_error(-1, "No GPU device found\n", __FILE__, __LINE__);
         }
-
-        det_ps = nullptr;
 
         mcx_flush(&mcx_config);
 
