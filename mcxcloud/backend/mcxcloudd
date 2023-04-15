@@ -51,17 +51,18 @@ $savetime=time();
 # delete all jobs running over 1 min, if --kill is attached
 
 if(grep(/--kill/,@ARGV)){
-    my @joblist=`docker service ls | grep 'fangqq/mcx:v20'| cut -f 1 -d" " | xargs docker service ps | grep 'Running [0-9]* minute' | cut -f 1,4 -d" "`;
+    my @joblist=`docker service ls | grep 'fangqq/mcx:v20'| cut -f 1 -d" " | xargs docker service ps | grep 'Running [0-9a-z ]* minute' | cut -f 1,4 -d" "`;
     chomp @joblist;
     if(@joblist>0){
         my @jobid;
         foreach my $job (@joblist){
             if($job=~/^(\w+)\s+(\w+)\./){
-                push(@jobid,$1);
+                push(@jobid,$2);
                 system("touch workspace/$2/killed");
                 print "killed overtime job: $2\n";
             }
         }
+        print "docker service rm ".join(' ',@jobid)."\n";
         system("docker service rm ".join(' ',@jobid)) if(@jobid>0);
     }
     exit;

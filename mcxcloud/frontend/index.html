@@ -2255,7 +2255,7 @@ function getdetphoton() {
 function updatestatus(data){
   let d = new Date();
   if(data.hasOwnProperty('status') && data.hasOwnProperty('dberror')){
-      if(data.status === 'invalid'){
+      if(data.status === 'invalid' || data.status === 'killed'){
          $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
          resetjob();
          return;
@@ -2291,7 +2291,7 @@ function addlog(data){
           $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status+":"+data.dberror);
       else
           $("#run-log").val($("#run-log").val()+"\n"+d.toLocaleTimeString()+" "+data.status);
-      if(data.status === 'invalid' || data.status === 'failed')
+      if(data.status === 'invalid' || data.status === 'failed' || data.status === 'killed')
           resetjob();
   }
   if(data.hasOwnProperty('log')){
