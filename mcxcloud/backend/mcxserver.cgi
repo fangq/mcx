@@ -66,7 +66,7 @@ if(&V("license") eq ''){
 
 print $q -> header( 
     -type => 'application/javascript', 
-    -access_control_allow_origin => 'http://mcx.space', 
+    -access_control_allow_origin => (($ENV{"HTTP_REFERER"} =~ /^https:/) ? 'https://mcx.space' : 'http://mcx.space'),
     -access_control_allow_headers => 'content-type,X-Requested-With', 
     -access_control_allow_methods => 'GET,POST,OPTIONS', 
     -access_control_allow_credentials => 'true', 
