@@ -645,7 +645,7 @@ void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
 
     if (cfg->outputtype >= 0) {
         const char* typestr[] = {"MCX volumetric output: Fluence rate (W/mm^2)", "MCX volumetric output: Fluence (J/mm^2)",
-                                 "MCX volumetric output: Energy density (J/mm^3)", "MCX volumetric output: Jacobian for mua (J/mm)", "MCX volumetric output: Scattering count",
+                                 "MCX volumetric output: Voxel-wise energy deposit (J)", "MCX volumetric output: Jacobian for mua (J/mm)", "MCX volumetric output: Scattering count",
                                  "MCX volumetric output: Partial momentum transfer"
                                 };
         UBJ_WRITE_KEY(root, "Description", string, typestr[(int)cfg->outputtype]);
@@ -781,7 +781,7 @@ void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
 
     if (cfg->outputtype >= 0) {
         const char* typestr[] = {"MCX volumetric output: Fluence rate (W/mm^2)", "MCX volumetric output: Fluence (J/mm^2)",
-                                 "MCX volumetric output: Energy density (J/mm^3)", "MCX volumetric output: Jacobian for mua (J/mm)", "MCX volumetric output: Scattering count",
+                                 "MCX volumetric output: Voxel-wise energy deposit (J)", "MCX volumetric output: Jacobian for mua (J/mm)", "MCX volumetric output: Scattering count",
                                  "MCX volumetric output: Partial momentum transfer"
                                 };
         cJSON_AddStringToObject(hdr, "Description", typestr[(int)cfg->outputtype]);
@@ -5087,7 +5087,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
- -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy density\n\
+ -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy deposit\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
 			       event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; R - RF/FD Jacobian\n\

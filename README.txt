@@ -556,7 +556,7 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Output options ==
  -s sessionid  (--session)     a string to label all output file names
- -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy density
+ -O [X|XFEJPM] (--outputtype)  X - output flux, F - fluence, E - energy deposit
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, 
 			       event counts at each voxel (replay mode only)
                                M - momentum transfer; 
