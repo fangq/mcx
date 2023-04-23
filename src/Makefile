@@ -30,7 +30,8 @@ DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
 DOXYCFG=mcx_doxygen.cfg
 ZMATLIB    :=libzmat.a
-USERLINKOPT?=$(ZMATLIB) -lz
+ZLIBFLAG   :=-lz
+USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
 CUDART=-lcudart
 CUOMPLINK=
@@ -92,8 +93,9 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CPPFLAGS=-g
   CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler -MT
   CPPOPT+=$(NVCCOMP)
+  ZLIBFLAG=-lzlib
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
-  USERLINKOPT:=${LIBRARIES} $(ZMATLIB)
+  USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)
@@ -117,12 +119,14 @@ ifneq (,$(filter mex,$(MAKECMDGOALS)))
   FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
   ZMATLIB=
   USERLINKOPT=
+  ZLIBFLAG=
 endif
 
 ifneq (,$(filter oct,$(MAKECMDGOALS)))
   FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
   ZMATLIB=
   USERLINKOPT=
+  ZLIBFLAG=
 endif
 
 CUGENCODE?=-arch=sm_35
