@@ -75,7 +75,7 @@
 #define MCX_SRC_PENCIL     0  /**<  default-Pencil beam src, no param */
 #define MCX_SRC_ISOTROPIC  1  /**<  isotropic source, no param */
 #define MCX_SRC_CONE       2  /**<  uniform cone, srcparam1.x=max zenith angle in rad */
-#define MCX_SRC_GAUSSIAN   3  /**<  Gaussian beam, srcparam1.x=sigma */
+#define MCX_SRC_GAUSSIAN   3  /**<  Gaussian beam, srcparam1.x=beam_waist=2*sigma */
 #define MCX_SRC_PLANAR     4  /**<  quadrilateral src, vectors spanned by srcparam{1}.{x,y,z} */
 #define MCX_SRC_PATTERN    5  /**<  same as above, load srcpattern as intensity */
 #define MCX_SRC_FOURIER    6  /**<  same as above, srcparam1.w and 2.w defines the spatial freq in x/y */
