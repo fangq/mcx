@@ -75,23 +75,24 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CC=nvcc -v
   CXX=nvcc -v
   CUOMPLINK=-Xcompiler
+  CUDART=-lcudart_static
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
       LINKOPT=-L"$(CUDA_PATH)/lib/x64" $(CUDART)
   else
       LINKOPT=-L"$(CUDA_PATH)/lib/Win32" $(CUDART)
   endif
-  INCLUDEDIRS +=-I"$(CUDA_PATH)/lib/include"
+  INCLUDEDIRS +=-I"$(CUDA_PATH)/include"
   CPPOPT =-c -D_CRT_SECURE_NO_DEPRECATE -DWIN32 #-DNO_LZMA
   OBJSUFFIX=.obj
   EXESUFFIX=.exe
   DLLFLAG=
   OMP=-openmp
-  MEX=cmd /c mex
+  MEX=cmd /c mex COMPFLAGS='-MT'
   NVCCOMP=$(CUOMPLINK) '$(OMP)'
   CUCCOPT+=$(NVCCOMP)
   CFLAGS=
   CPPFLAGS=-g
-  CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler -MT
+  CUDA_STATIC=--cuda static $(NVCCOMP) -Xcompiler -MT
   CPPOPT+=$(NVCCOMP)
   ZLIBFLAG=-lzlib
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
