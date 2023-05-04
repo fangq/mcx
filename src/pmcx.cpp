@@ -1064,7 +1064,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             stat_dict["energytot"] = mcx_config.energytot;
             stat_dict["energyabs"] = mcx_config.energyabs;
             stat_dict["normalizer"] = mcx_config.normalizer;
-            stat_dict["unitinmm"] = mcx_config.normalizer;
+            stat_dict["unitinmm"] = mcx_config.unitinmm;
             py::list workload;
 
             for (int i = 0; i < active_dev; i++) {
