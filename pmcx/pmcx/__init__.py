@@ -31,12 +31,12 @@ res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype='uint8'),
 try:
     from _pmcx import gpuinfo, run
 except ImportError:  # pragma: no cover
-    print('the pmcx binary extension (_pmcx) is not compiled! please compile first')
+    print("the pmcx binary extension (_pmcx) is not compiled! please compile first")
 
-#from .utils import detweight
-#from .files import loadmc2, loadmch, load, save
+# from .utils import detweight
+# from .files import loadmc2, loadmch, load, save
 from .bench import bench
 
-__version__ = '0.0.13'
+__version__ = "0.0.13"
 
-__all__ = ('gpuinfo', 'run', 'bench')
+__all__ = ("gpuinfo", "run", "bench")
