@@ -1,12 +1,13 @@
 import numpy as np
 
+
 def detweight(detp, prop):
     """
     Recalculate the detected photon weight using partial path data and 
     optical properties (for perturbation Monte Carlo or detector readings)
 
     author: Qianqian Fang (q.fang <at> neu.edu)
-    transated to python
+    translated to python: Kuznetsov Ilya
 
     input:
         detp: the 2nd output from mcxlab. detp must be a dict
@@ -45,3 +46,41 @@ def detweight(detp, prop):
         raise ValueError('the first input must be a dict with a key named "ppath"')
 
     return detw
+
+
+def cwdref(detp, cfg):
+    """
+    Compute CW diffuse reflectance from MC detected photon profiles.
+
+    author: Shijie Yan (yan.shiji <at> northeastern.edu)
+    translated to python: Kuznetsov Ilya
+
+    input:
+        detp: profiles of detected photons
+        cfg:  a dictionary. Each element of cfg defines
+              the parameters associated with a MC simulation.
+
+    output:
+        dref: CW diffuse reflectance at detectors
+
+    this file is part of Monte Carlo eXtreme (MCX)
+    License: GPLv3, see http://mcx.sf.net for details
+    see Yao2018
+    """
+
+    unitinmm = 1
+    if 'unitinmm' in cfg:
+        unitinmm = cfg['unitinmm']
+
+    det_weight = detweight(detp, cfg['prop'])
+    detnum = len(np.unique(detp['detid']))
+    detweightsum = np.zeros(detnum)
+
+    for i in range(len(detp['detid'])):
+        index = int(detp['detid'][i]) - 1
+        detweightsum[index] += det_weight[i]
+
+    area = np.pi * (cfg['detpos'][:, 3] * unitinmm) ** 2
+    dref = detweightsum / area / cfg['nphoton']
+
+    return dref
