@@ -2253,7 +2253,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 */
 void mcx_cu_assess(cudaError_t cuerr, const char* file, const int linenum) {
     if (cuerr != cudaSuccess) {
-        CUDA_ASSERT(cudaDeviceReset());
+        cudaDeviceReset();
         mcx_error(-(int)cuerr, (char*)cudaGetErrorString(cuerr), file, linenum);
     }
 }
