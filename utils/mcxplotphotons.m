@@ -32,8 +32,20 @@ if(~isstruct(traj) && size(traj,2)==6)
 end
 
 [newid, idx]=sort(traj.id);
-newpos=traj.pos(idx,:);
-hg=plot3(newpos(:,1),newpos(:,2),newpos(:,3),'.-',varargin{:});
+lineend=(diff(newid)>0);
+newidx=cumsum([0;lineend]+1);
+newpos=nan(length(idx)+length(lineend),4);
+newpos(newidx,1:3)=traj.pos(idx,:);
+newpos(newidx,4)=traj.data(5,:)';
 
-output={struct('id',newid, 'pos',newpos), hg};
+if(~(length(varargin)==1 && strcmp(varargin{1},'noplot')))
+    edgealpha = 1 - (1-(exist('OCTAVE_VERSION','builtin')~=0))*0.75;  % octave 6 returns empty if edgealpha<1
+    hg=patch(newpos(:,1),newpos(:,2),newpos(:,3),newpos(:,4), 'edgecolor', 'interp', 'edgealpha', edgealpha, varargin{:});
+    view(3);
+    axis equal;
+else
+    hg=[];
+end
+
+output={struct('id',newid, 'pos',traj.pos(idx,:)), hg};
 [varargout{1:nargout}]=output{1:nargout};
