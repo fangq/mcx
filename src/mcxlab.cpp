@@ -177,7 +177,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     /**
      * The function can return 1-5 outputs (i.e. the LHS)
      */
-    if (nlhs >= 1) {
+    if (nlhs >= 1 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
         plhs[0] = mxCreateStructMatrix(ncfg, 1, 4, datastruct);
     }
 
@@ -269,7 +269,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 cfg.seeddata = malloc(cfg.maxdetphoton * sizeof(float) * RAND_WORD_LEN);
             }
 
-            if (nlhs >= 5) {
+            if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
                 cfg.exportdebugdata = (float*)malloc(cfg.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
                 cfg.debuglevel |= MCX_DEBUG_MOVE;
             }
@@ -311,15 +311,16 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             fielddim[5] = 1;
 
             /** if 5th output presents, output the photon trajectory data */
-            if (nlhs >= 5) {
+            if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
+                int outputidx=(cfg.debuglevel & MCX_DEBUG_MOVE_ONLY) ? 0 : 4;
                 fielddim[0] = MCX_DEBUG_REC_LEN;
                 fielddim[1] = cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
                 fielddim[2] = 0;
                 fielddim[3] = 0;
-                mxSetFieldByNumber(plhs[4], jstruct, 0, mxCreateNumericArray(2, fielddim, mxSINGLE_CLASS, mxREAL));
+                mxSetFieldByNumber(plhs[outputidx], jstruct, 0, mxCreateNumericArray(2, fielddim, mxSINGLE_CLASS, mxREAL));
 
-                if (cfg.debuglevel & MCX_DEBUG_MOVE) {
-                    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[4], jstruct, 0)), cfg.exportdebugdata, fielddim[0]*fielddim[1]*sizeof(float));
+                if (cfg.debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
+                    memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[outputidx], jstruct, 0)), cfg.exportdebugdata, fielddim[0]*fielddim[1]*sizeof(float));
                 }
 
                 if (cfg.exportdebugdata) {
@@ -930,7 +931,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         printf("mcx.outputtype='%s';\n", outputstr);
     } else if (strcmp(name, "debuglevel") == 0) {
         int len = mxGetNumberOfElements(item);
-        const char debugflag[] = {'R', 'M', 'P', '\0'};
+        const char debugflag[] = {'R', 'M', 'P', 'T', '\0'};
         char debuglevel[MAX_SESSION_LENGTH] = {'\0'};
 
         if (!mxIsChar(item) || len == 0) {

@@ -910,7 +910,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             mcx_config.seeddata = malloc(mcx_config.maxdetphoton * sizeof(float) * RAND_WORD_LEN);
         }
 
-        if (mcx_config.debuglevel & MCX_DEBUG_MOVE) {
+        if (mcx_config.debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
             mcx_config.exportdebugdata = (float*) malloc(mcx_config.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
         }
 
@@ -947,14 +947,14 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         field_dim[4] = 1;
         field_dim[5] = 1;
 
-        if (mcx_config.debuglevel & MCX_DEBUG_MOVE) {
+        if (mcx_config.debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
             field_dim[0] = MCX_DEBUG_REC_LEN;
             field_dim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
             field_dim[2] = 0;
             field_dim[3] = 0;
             auto photon_traj_data = py::array_t<float, py::array::f_style>({field_dim[0], field_dim[1]});
 
-            if (mcx_config.debuglevel & MCX_DEBUG_MOVE) {
+            if (mcx_config.debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                 memcpy(photon_traj_data.mutable_data(), mcx_config.exportdebugdata, field_dim[0] * field_dim[1] * sizeof(float));
             }
 

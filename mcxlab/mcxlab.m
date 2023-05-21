@@ -144,7 +144,7 @@ function varargout=mcxlab(varargin)
 %                      'isotropic' - isotropic source, no param needed
 %                      'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
 %                      'gaussian' [*] - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
-%                      'hyperboloid' - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
+%                      'hyperboloid' [*] - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
 %                                radius (in voxels), srcparam1(2) specifies distance between launch plane and focus,
 %                                srcparam1(3) specifies rayleigh range
 %                      'planar' [*] - a 3D quadrilateral uniform planar source, with three corners specified 
@@ -258,6 +258,7 @@ function varargout=mcxlab(varargin)
 %                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
+%                    'T':  save photon trajectory data only, as the 1st output, disable flux/detp/seeds outputs
 %      cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output, 
 %                     use this parameter to set the maximum position stored. By default,
 %                     only the first 1e6 positions are stored.
@@ -271,6 +272,9 @@ function varargout=mcxlab(varargin)
 %                 dimensions specified by [size(vol) total-time-gates]. 
 %                 The content of the array is the normalized fluence at 
 %                 each voxel of each time-gate.
+%
+%                 when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
+%                 output, see below
 %            fluence(i).dref is a 4D array with the same dimension as fluence(i).data
 %                 if cfg.issaveref is set to 1, containing only non-zero values in the 
 %                 layer of voxels immediately next to the non-zero voxels in cfg.vol,
@@ -511,22 +515,26 @@ if(nargout>=2)
     if(exist('newdetpstruct','var'))
         varargout{2}=newdetpstruct;
     end
+end
 
-    if(nargout>=5)
-        for i=1:length(varargout{5})
-            data=varargout{5}.data;
-            if(isempty(data))
-               continue;
-            end
-            traj.pos=data(2:4,:).';
-            traj.id=typecast(data(1,:),'uint32').';
-            [traj.id,idx]=sort(traj.id);
-            traj.pos=traj.pos(idx,:);
-            traj.data=[single(traj.id)' ; data(2:end,idx)];
-            newtraj(i)=traj;
-        end
-        if(exist('newtraj','var'))
-            varargout{5}=newtraj;
-        end
+if(nargout>=5 || (~isempty(cfg) && isstruct(cfg) && isfield(cfg, 'debuglevel') && ~isempty(regexp(cfg(1).debuglevel, '[tT]', 'once'))))
+    outputid=5;
+    if((isfield(cfg, 'debuglevel') && ~isempty(regexp(cfg(1).debuglevel, '[tT]', 'once'))))
+	outputid=1;
+    end
+    for i=1:length(varargout{outputid})
+	data=varargout{outputid}.data;
+	if(isempty(data))
+	   continue;
+	end
+	traj.pos=data(2:4,:).';
+	traj.id=typecast(data(1,:),'uint32').';
+	[traj.id,idx]=sort(traj.id);
+	traj.pos=traj.pos(idx,:);
+	traj.data=[single(traj.id)' ; data(2:end,idx)];
+	newtraj(i)=traj;
+    end
+    if(exist('newtraj','var'))
+	varargout{outputid}=newtraj;
     end
 end

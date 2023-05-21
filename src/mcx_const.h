@@ -60,6 +60,7 @@
 #define MCX_DEBUG_RNG          1   /**< debug flags: 1 - run RNG testing kernel and return RNG numbers */
 #define MCX_DEBUG_MOVE         2   /**< debug flags: 2 - save and output photon trajectory data */
 #define MCX_DEBUG_PROGRESS     4   /**< debug flags: 4 - print progress bar */
+#define MCX_DEBUG_MOVE_ONLY    8   /**< debug flags: 8 - only save photon trajectory data, disable volume and detphoton output */
 
 #define MEDIA_2LABEL_SPLIT    97   /**<  media Format: 64bit:{[byte: lower label][byte: upper label][byte*3: reference point][byte*3: normal vector]} */
 #define MEDIA_2LABEL_MIX      98   /**<  media format: {[int: label1][int: label2][float32: label1 %]} -> 32bit:{[half: label1 %],[byte: label2],[byte: label1]} */

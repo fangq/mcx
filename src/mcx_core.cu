@@ -1015,7 +1015,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     if (p->w >= 0.f) {
         ppath[gcfg->partialdata] += p->w; //< sum all the remaining energy
 
-        if (gcfg->debuglevel & MCX_DEBUG_MOVE) {
+        if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
             savedebugdata(p, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata);
         }
 
@@ -1454,7 +1454,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     f->ndone++;
     updateproperty<islabel, issvmc>(prop, *mediaid, t, *idx1d, media, (float3*)p, nuvox, flipdir);
 
-    if (gcfg->debuglevel & MCX_DEBUG_MOVE) {
+    if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
         savedebugdata(p, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata);
     }
 
@@ -1801,7 +1801,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #endif
                 }
 
-                if (gcfg->debuglevel & MCX_DEBUG_MOVE) {
+                if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                     savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata);
                 }
             }
@@ -2843,7 +2843,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     CUDA_ASSERT(cudaHostGetDevicePointer((int**)&gprogress, (int*)progress, 0));
     *progress = 0;
 
-    if (cfg->debuglevel & MCX_DEBUG_MOVE) {
+    if (cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
         CUDA_ASSERT(cudaMalloc((void**) &gdebugdata, sizeof(float) * (debuglen * cfg->maxjumpdebug)));
     }
 
@@ -3055,7 +3055,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
             CUDA_ASSERT(cudaMemset(gdetected, 0, sizeof(float)));
 
-            if (cfg->debuglevel & MCX_DEBUG_MOVE) {
+            if (cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                 uint jumpcount = 0;
                 CUDA_ASSERT(cudaMemcpyToSymbol(gjumpdebug, &jumpcount, sizeof(uint), 0, cudaMemcpyHostToDevice));
             }
@@ -3279,7 +3279,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             /**
               * If '-D M' is specified, we retrieve photon trajectory data and store those to \c cfg.exportdebugdata and \c cfg.debugdatalen
               */
-            if (cfg->debuglevel & MCX_DEBUG_MOVE) {
+            if (cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                 uint debugrec = 0;
                 CUDA_ASSERT(cudaMemcpyFromSymbol(&debugrec, gjumpdebug, sizeof(uint), 0, cudaMemcpyDeviceToHost));
                 #pragma omp critical
@@ -3458,7 +3458,7 @@ is more than what your have specified (%d), please use the -H option to specify 
       */
     #pragma omp master
     {
-        if (cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
+        if (cfg->issave2pt && cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
             srcpw = (float*)calloc(cfg->srcnum, sizeof(float));
             energytot = (float*)calloc(cfg->srcnum, sizeof(float));
             energyabs = (float*)calloc(cfg->srcnum, sizeof(float));
@@ -3499,7 +3499,7 @@ is more than what your have specified (%d), please use the -H option to specify 
           * in joule when cfg.outputtype='fluence', or energy-loss multiplied by mua (1/mm) per voxel
           * (joule/mm) when cfg.outputtype='flux' (default).
           */
-        if (cfg->isnormalized) {
+        if (cfg->issave2pt && cfg->isnormalized) {
             float* scale = (float*)calloc(cfg->srcnum, sizeof(float));
             scale[0] = 1.f;
             int isnormalized = 0;
@@ -3634,7 +3634,7 @@ is more than what your have specified (%d), please use the -H option to specify 
           */
 #ifndef MCX_CONTAINER
 
-        if ((cfg->debuglevel & MCX_DEBUG_MOVE) && cfg->parentid == mpStandalone && cfg->exportdebugdata) {
+        if ((cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) && cfg->parentid == mpStandalone && cfg->exportdebugdata) {
             cfg->his.colcount = MCX_DEBUG_REC_LEN;
             cfg->his.savedphoton = cfg->debugdatalen;
             cfg->his.totalphoton = cfg->nphoton;
@@ -3717,7 +3717,7 @@ is more than what your have specified (%d), please use the -H option to specify 
         CUDA_ASSERT(cudaFree(gsmatrix));
     }
 
-    if (cfg->debuglevel & MCX_DEBUG_MOVE) {
+    if (cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
         CUDA_ASSERT(cudaFree(gdebugdata));
     }
 

@@ -27,6 +27,9 @@ function varargout=mcxplotphotons(traj,varargin)
 %    License: GPLv3, see http://mcx.sf.net for details
 %
 
+if(isstruct(traj) && ~isfield(traj, 'id') && isfield(traj, 'data'))
+    traj=struct('id',typecast(single(traj.data(1,:)'),'uint32'),'pos',traj.data(2:4,:)','weight',traj.data(5,:)', 'data', traj.data);
+end
 if(~isstruct(traj) && size(traj,2)==6)
     traj=struct('id',typecast(single(traj(:,1)),'uint32'),'pos',traj(:,2:4),'weight',traj(:,5));
 end
