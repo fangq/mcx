@@ -33,10 +33,11 @@ try:
 except ImportError:  # pragma: no cover
     print("the pmcx binary extension (_pmcx) is not compiled! please compile first")
 
-# from .utils import detweight
+from .utils import detweight, cwdref
+
 # from .files import loadmc2, loadmch, load, save
 from .bench import bench
 
 __version__ = "0.0.13"
 
-__all__ = ("gpuinfo", "run", "bench")
+__all__ = ("gpuinfo", "run", "bench", "detweight", "cwdref")
