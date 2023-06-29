@@ -87,7 +87,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   EXESUFFIX=.exe
   DLLFLAG=
   OMP=-openmp
-  MEX=cmd /c mex COMPFLAGS='-MT'
+  MEX=cmd //s //c mex COMPFLAGS='-MT'
   NVCCOMP=$(CUOMPLINK) '$(OMP)'
   CUCCOPT+=$(NVCCOMP)
   CFLAGS=
