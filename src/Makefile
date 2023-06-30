@@ -92,7 +92,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CUCCOPT+=$(NVCCOMP)
   CFLAGS=
   CPPFLAGS=-g
-  CUDA_STATIC=--cuda static $(NVCCOMP) -Xcompiler "-MT"
+  CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
   ZLIBFLAG?=-lzlib
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
