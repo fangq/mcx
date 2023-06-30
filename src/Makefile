@@ -72,8 +72,8 @@ EXESUFFIX=
 FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
-  CC=nvcc -v
-  CXX=nvcc -v
+  CC=nvcc
+  CXX=nvcc
   CUOMPLINK=-Xcompiler
   CUDART=-lcudart_static
   ifeq ($(findstring x86_64,$(ARCH)), x86_64)
@@ -94,7 +94,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CPPFLAGS=-g
   CUDA_STATIC=--cuda static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
-  ZLIBFLAG=-lzlib
+  ZLIBFLAG?=-lzlib
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
