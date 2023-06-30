@@ -88,11 +88,11 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   DLLFLAG=
   OMP=-openmp
   MEX=cmd //s //c mex COMPFLAGS='-MT'
-  NVCCOMP=$(CUOMPLINK) '$(OMP)'
+  NVCCOMP=$(CUOMPLINK) "$(OMP)"
   CUCCOPT+=$(NVCCOMP)
   CFLAGS=
   CPPFLAGS=-g
-  CUDA_STATIC=--cuda static $(NVCCOMP) -Xcompiler -MT
+  CUDA_STATIC=--cuda static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
   ZLIBFLAG=-lzlib
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
@@ -203,7 +203,7 @@ moredouble: CUCCOPT+=-DUSE_MORE_DOUBLE
 moredouble: CUGENCODE=-arch=sm_60
 
 static:     fermi
-static:     AR=nvcc -v
+static:     AR=nvcc
 static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 

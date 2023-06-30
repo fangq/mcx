@@ -120,7 +120,7 @@ jobs:
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
-            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda"  EXTRALIB="-v" XTRA_CFLAGS='-openmp' XTRA_CXXFLAGS='-openmp' INCLUDEDIR=' '
+            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda" XTRA_CFLAGS='-openmp' XTRA_CXXFLAGS='-openmp' INCLUDEDIR=' '
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
@@ -134,10 +134,10 @@ jobs:
             objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             which mex
-            make mex CC=gcc-10 CXX=g++-10 MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-v -f mexopts_maci64_gcc.xml"
+            make mex CC=gcc-10 CXX=g++-10 MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-f mexopts_maci64_gcc.xml"
             otool -L ../mcxlab/mcx.mex*
           else
-            make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-v"
+            make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp"
             ldd ../mcxlab/mcx.mex*
           fi
       - name: Build binary
@@ -145,14 +145,14 @@ jobs:
           cd src
           make clean
           if [[ "$RUNNER_OS" == "Linux" ]]; then
-            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -lz -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
+            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -lz -lpthread -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
-            ldd ../bin/mcx
+            make BACKEND=cudastatic INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
+            objdump -p ../bin/mcx | grep "DLL Name:"
           fi
       - name: Build mcxstudio
         if: ${{ runner.os != 'macOS' }}
