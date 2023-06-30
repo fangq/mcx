@@ -35,8 +35,8 @@ jobs:
         run: |
           brew install gcc@7
           echo $PATH
-          which gcc
-          brew intall octave
+          gcc -v
+          brew install octave
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
