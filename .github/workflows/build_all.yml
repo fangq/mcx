@@ -178,7 +178,7 @@ jobs:
         run: |
           [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            upx/upx mcxlab/mcx.mex*
+            upx/upx-4.0.2-win64/upx mcxlab/mcx.mex*
             7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           else
             zip -FSr --symlink packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
@@ -196,8 +196,8 @@ jobs:
             cp -a src/mcstudio/mcxshow.app   bin
             cp -a src/mcstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp
-            upx/upx -9 bin/*
+            upx/upx-4.0.2-win64/upx -9 bin/*
+            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp upx
           fi
           rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter mcxcloud pmcx pymcx winget inno
       - name: Zip mcx
