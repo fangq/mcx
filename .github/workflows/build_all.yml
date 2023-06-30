@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-7 g++-7
+          sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-7 g++-7 upx-ucl
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
       - name: Install dependencies (MacOS only)
@@ -39,11 +39,14 @@ jobs:
         run: |
           curl --retry 3 -kL http://cdimage.debian.org/mirror/gnu.org/gnu/octave/windows/octave-5.2.0_1-w64-64.7z --output octave_5.2.7z
           7z x octave_5.2.7z -ooctave -y
+          rm -rf octave_5.2.7z
           #curl --retry 3 -kL https://mcx.space/dev/ci/lazarus-2.0.8-fpc-3.0.4-win32.exe --output lazarus_installer.exe
           #chmod +x lazarus_installer.exe
           #./lazarus_installer.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
           #choco install octave.portable --version=5.2.0
           choco install lazarus --version=2.0.6
+          curl --retry 3 -kL https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-win64.zip --output upx.zip
+          7z x upx.zip -oupx -y
           echo "$PWD/octave/octave-5.2.0-w64-64/mingw64/bin" >> $GITHUB_PATH
           echo 'C:\lazarus' >> $GITHUB_PATH
           echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' >> $GITHUB_PATH
@@ -175,12 +178,13 @@ jobs:
         run: |
           [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
+            upx/upx mcxlab/mcx.mex*
             7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           else
             zip -FSr --symlink packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           fi
       - name: Upload mcxlab package
-        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-10.15' || matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-11' || matrix.os == 'windows-2019' }}
         uses: actions/upload-artifact@v3
         with:
           name: all-mcx-packages
@@ -188,16 +192,18 @@ jobs:
       - name: Prepare mcx package
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            cp -a mcstudio/debug/mcxstudio.app ../bin
-            cp -a mcstudio/mcxshow.app   ../bin
-            cp -a mcstudio/mcxviewer.app ../bin
+            cp -a src/mcstudio/debug/mcxstudio.app bin
+            cp -a src/mcstudio/mcxshow.app   bin
+            cp -a src/mcstudio/mcxviewer.app bin
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp
+            upx/upx -9 bin/*
           fi
-          rm -rf .git mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter
+          rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter mcxcloud pmcx pymcx winget inno
       - name: Zip mcx
         run: |
           cd .. && pwd
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            rm -rf mmc/bin/mcx.exp mmc/bin/mcx.lib
             7z a -tzip mcx/packages/mcx-${{ env.RELEASE_TAG }}.zip mcx -xr!mcx/packages
           else
             zip -FSr --symlink mcx/packages/mcx-${{ env.RELEASE_TAG }}.zip mcx -x 'mcx/packages*'
