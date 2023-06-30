@@ -33,7 +33,10 @@ jobs:
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          brew install octave
+          brew install gcc@7
+          echo $PATH
+          which gcc
+          brew intall octave
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
