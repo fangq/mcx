@@ -145,7 +145,7 @@ jobs:
           cd src
           make clean
           if [[ "$RUNNER_OS" == "Linux" ]]; then
-            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -lz -lpthread -Wl,-Bdynamic'
+            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -lz -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
