@@ -203,7 +203,7 @@ moredouble: CUCCOPT+=-DUSE_MORE_DOUBLE
 moredouble: CUGENCODE=-arch=sm_60
 
 static:     fermi
-static:     AR=nvcc -link
+static:     AR=nvcc -v
 static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
