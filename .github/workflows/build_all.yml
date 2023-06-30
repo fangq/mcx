@@ -111,7 +111,6 @@ jobs:
           cd src
           which gcc
           gcc -v
-          env
           mkoctfile -p ALL_CXXFLAGS
           mkoctfile -p INCLUDEDIR
           mkoctfile -p INCFLAGS
@@ -142,6 +141,7 @@ jobs:
           else
             make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp"
             ldd ../mcxlab/mcx.mex*
+            upx -9 ../mcxlab/mcx.mex*
           fi
       - name: Build binary
         run: |
@@ -198,6 +198,8 @@ jobs:
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             upx/upx-4.0.2-win64/upx -9 bin/*
             rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp upx
+          else
+            upx -9 bin/*
           fi
           rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter mcxcloud pmcx pymcx winget inno
       - name: Zip mcx
