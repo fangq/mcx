@@ -141,6 +141,7 @@ jobs:
           else
             make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp"
             ldd ../mcxlab/mcx.mex*
+            strip ../mcxlab/mcx.mex*
             upx -9 ../mcxlab/mcx.mex*
           fi
       - name: Build binary
@@ -196,9 +197,12 @@ jobs:
             cp -a src/mcstudio/mcxshow.app   bin
             cp -a src/mcstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp
+            strip -S bin/*
             upx/upx-4.0.2-win64/upx -9 bin/*
-            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp upx
+            rm -rf upx
           else
+            strip bin/*
             upx -9 bin/*
           fi
           rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* deploy icons filter mcxcloud pmcx pymcx winget inno
