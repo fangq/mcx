@@ -36,7 +36,7 @@ jobs:
           brew install octave
           GCC10=`which g++-10`
           #echo NVCC_PREPEND_FLAGS="-ccbin $GCC10" >> $GITHUB_ENV
-          sudo xcode-select /Applications/Xcode_11.7.app/Contents/Developer
+          sudo xcode-select -s /Applications/Xcode_11.7.app/Contents/Developer
           xcode-select -p
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
