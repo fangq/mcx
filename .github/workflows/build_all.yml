@@ -34,14 +34,8 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: |
           brew install octave
-          mkdir buildtool/
-          echo `which nvcc` -ccbin gcc-10 '$@' >> buildtool/nvcc
-          chmod +x buildtool/nvcc
-          ln -s `which gcc-10` buildtool/gcc
-          ln -s `which gcc-10` buildtool/cc
-          ln -s `which g++-10` buildtool/g++
-          ln -s `which gcc-ar-10` buildtool/ar
-          echo "$PWD/buildtool" >> $GITHUB_PATH
+          GCC10=`which g++-10`
+          echo NVCC_PREPEND_FLAGS="-ccbin $GCC10" >> $GITHUB_PATH
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
@@ -126,7 +120,7 @@ jobs:
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make oct CC=gcc-10 CXX=g++-10 CUDACC=`which g++-10` USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++-10 DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
+            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++-10 DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
@@ -144,7 +138,7 @@ jobs:
             objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             which mex
-            make mex CC=gcc-10 CXX=g++-10 CUDACC=`which g++-10` MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-f mexopts_maci64_gcc.xml"
+            make mex CC=gcc-10 CXX=g++-10 MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp" EXTRALIB="-f mexopts_maci64_gcc.xml"
             otool -L ../mcxlab/mcx.mex*
           else
             make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp"
@@ -160,7 +154,7 @@ jobs:
             make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -lz -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make BACKEND=cudastatic CC=gcc-10 CXX=g++-10 CUDACC=`which g++-10`
+            make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
             make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib' ZLIBFLAG=''
