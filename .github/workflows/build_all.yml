@@ -34,11 +34,12 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: |
           brew install octave
-          echo $PATH
-          sudo ln -s `which gcc-10` /usr/bin/gcc
-          sudo ln -s `which gcc-10` /usr/bin/cc
-          sudo ln -s `which g++-10` /usr/bin/g++
-          sudo ln -s `which gcc-ar-10` /usr/bin/ar
+          mkdir buildtool/
+          ln -s `which gcc-10` buildtool/gcc
+          ln -s `which gcc-10` buildtool/cc
+          ln -s `which g++-10` buildtool/g++
+          ln -s `which gcc-ar-10` buildtool/ar
+          echo "$PWD/buildtool" >> $GITHUB_PATH
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
