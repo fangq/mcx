@@ -34,7 +34,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: |
           brew install octave
-          sudo rm -rf /usr/bin/gcc /usr/bin/g++ /usr/bin/cc /usr/bin/ar
+          echo $PATH
           sudo ln -s `which gcc-10` /usr/bin/gcc
           sudo ln -s `which gcc-10` /usr/bin/cc
           sudo ln -s `which g++-10` /usr/bin/g++
