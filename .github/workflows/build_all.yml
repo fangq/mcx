@@ -35,7 +35,7 @@ jobs:
         run: |
           brew install octave
           GCC10=`which g++-10`
-          echo NVCC_PREPEND_FLAGS="-ccbin $GCC10" >> $GITHUB_PATH
+          echo NVCC_PREPEND_FLAGS="-ccbin $GCC10" >> $GITHUB_ENV
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
