@@ -39,7 +39,7 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_7.3.1.app/Contents/Developer
           xcode-select -p
           curl -o libauto.dylib --insecure https://mcx.space/dev/ci/libauto.dylib
-          sudo mv libauto.dylib /usr/bin
+          sudo mv libauto.dylib /usr/lib
           brew install octave
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
