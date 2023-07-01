@@ -34,11 +34,11 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: |
           brew install octave
-          rm -rf /usr/bin/gcc /usr/bin/g++ /usr/bin/cc /usr/bin/ar
-          ln -s `which gcc-10` /usr/bin/gcc
-          ln -s `which gcc-10` /usr/bin/cc
-          ln -s `which g++-10` /usr/bin/g++
-          ln -s `which gcc-ar-10` /usr/bin/ar
+          sudo rm -rf /usr/bin/gcc /usr/bin/g++ /usr/bin/cc /usr/bin/ar
+          sudo ln -s `which gcc-10` /usr/bin/gcc
+          sudo ln -s `which gcc-10` /usr/bin/cc
+          sudo ln -s `which g++-10` /usr/bin/g++
+          sudo ln -s `which gcc-ar-10` /usr/bin/ar
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
