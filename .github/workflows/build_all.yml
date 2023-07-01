@@ -35,6 +35,8 @@ jobs:
         run: |
           brew install octave
           mkdir buildtool/
+          echo `which nvcc` -ccbin gcc-10 '$@' >> buildtool/nvcc
+          chmod +x buildtool/nvcc
           ln -s `which gcc-10` buildtool/gcc
           ln -s `which gcc-10` buildtool/cc
           ln -s `which g++-10` buildtool/g++
