@@ -67,7 +67,7 @@ jobs:
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda_8.zip
           unzip cuda.zip
           sudo mv cuda/ /usr/local/
           sudo chmod +x /usr/local/cuda/bin/*
