@@ -35,7 +35,6 @@ jobs:
         run: |
           brew install gcc@7
           brew list gcc@7
-          echo '/usr/local/Cellar/gcc@7/7.5.0_4/bin/'  >> $GITHUB_ENV
           ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc
           ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/g++-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/g++
           ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/cc
