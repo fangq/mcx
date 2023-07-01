@@ -33,12 +33,12 @@ jobs:
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          brew install octave
           curl -o xcode.zip --insecure https://mcx.space/dev/ci/Xcode731.zip
           unzip xcode.zip
           sudo mv Xcode.app /Applications/Xcode_7.3.1.app/
           sudo xcode-select -s /Applications/Xcode_7.3.1.app/Contents/Developer
           xcode-select -p
+          brew install octave
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
