@@ -111,7 +111,7 @@ if [ -z "$temp" ]; then echo "fail to save photon seeds"; fail=$((fail+1)); else
 
 echo "test photon replay flag -E ... "
 rm -rf replaytest.*
-temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest.mch -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'detected.*[0-9.]+ photons' | sort | uniq -c | grep '^\s*2\s*detected'`
+temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest.mch -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'detected\s+[0-9]+ photons' | sort | uniq -c | grep '^\s*2\s*detected'`
 if [ -z "$temp" ]; then echo "fail to run photon replay -E"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon replay ... "
