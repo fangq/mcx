@@ -312,7 +312,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             /** if 5th output presents, output the photon trajectory data */
             if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
-                int outputidx=(cfg.debuglevel & MCX_DEBUG_MOVE_ONLY) ? 0 : 4;
+                int outputidx = (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY) ? 0 : 4;
                 fielddim[0] = MCX_DEBUG_REC_LEN;
                 fielddim[1] = cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
                 fielddim[2] = 0;
