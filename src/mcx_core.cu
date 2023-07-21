@@ -1935,7 +1935,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 if (gcfg->outputtype == otEnergy) {
                     weight = w0 - p.w;
                 } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux) {
-                    weight = (prop.mua * len < 0.001f) ? (w0 * len * (1.f - prop.mua * len * 0.5f)) : ((w0 - p.w) / (prop.mua));
+                    weight = (prop.mua * len < 0.001f) ? (w0 * len) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, take limit_{mua->0} w0*(1-exp(-mua*len))/mua yields w0*len */
                 } else if (gcfg->seed == SEED_FROM_FILE) {
                     if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF) {
                         weight = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen;
