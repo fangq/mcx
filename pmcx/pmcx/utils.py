@@ -315,7 +315,6 @@ def getdistance(srcpos, detpos):
             separation[r, s] = np.linalg.norm(srcpos[s, :] - detpos[r, :])
     return separation
 
-
 def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
     newdetp = {}
     c0 = 0
@@ -363,7 +362,6 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
         c0 = c0 + length
 
     return newdetp
-
 
 def pmcxlab(*args):
     """
