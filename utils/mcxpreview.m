@@ -32,6 +32,10 @@ if(~isstruct(cfg))
     error('cfg must be a struct or struct array');
 end
 
+if(~exist('latticegrid','file'))
+    error('cfg must be a struct or struct array');
+end
+
 len=length(cfg);
 if(nargout>0)
     hs=cell(len,1);
