@@ -7,41 +7,36 @@ compiler:
 
 matrix:
   include:
-    - os: linux
-      name: CUDA 9
-      env:
-      - CUDA=9.2.148-1
-      - CUDA_SHORT=9.2
-      - UBUNTU_VERSION=ubuntu1604
-      dist: xenial
-    - os: linux
-      name: CUDA 10
-      env:
-      - CUDA=10.1.105-1
-      - CUDA_SHORT=10.1
-      - UBUNTU_VERSION=ubuntu1804
-      dist: bionic
+    - os: osx
+      python: 3.6
 
 before_install:
-  - INSTALLER=cuda-repo-${UBUNTU_VERSION}_${CUDA}_amd64.deb
-  - wget http://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/${INSTALLER}
-  - sudo dpkg -i ${INSTALLER}
-  - wget https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/3bf863cc.pub
-  - sudo apt-key add 3bf863cc.pub
-  - sudo apt update -qq
-  - sudo apt install -y cuda-core-${CUDA_SHORT/./-} cuda-cudart-dev-${CUDA_SHORT/./-} liboctave-dev cmake
-  - sudo apt clean
-  - export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
-  - LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
-  - PATH=${CUDA_HOME}/bin:.:${PATH}
+  ### Update RCS keywords
+  - printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+  - rm -rf src/*.c
+  - git checkout src/*.c
+  ### Install libomp
+  - brew link --force libomp
+  - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
+  ### Install CUDA
+  - curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+  - unzip cuda.zip
+  - sudo mv cuda/ /usr/local/
+  - sudo chmod +x /usr/local/cuda/bin/*
+  - sudo chmod +x /usr/local/cuda/nvvm/bin/*
+  - CUDA_HOME=/usr/local/cuda
+  - CUDA_PATH=${CUDA_HOME}/bin
+  - CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
+  - PATH=${CUDA_PATH}:.:${PATH}
 
-script:
-    - cd src
-    - mkdir -p build
-    - cd build && cmake ../ && make
-    - cd ..
-    - make oct
-    - make clean
-    - make debug
-    - make clean
-    - make
+script: 
+  - cd pmcx/
+  - pip install wheel
+  - VERBOSE=1 pip wheel . -w ../dist/
+  - cd ..
+  - bash .github/check-pypi-upload.sh
+
+#deploy:
+#  provider: pypi
+#  username: "__token__"
+#  password: "Your PyPI API token, including the pypi- prefix"
