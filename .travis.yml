@@ -16,6 +16,7 @@ before_install:
   - rm -rf src/*.c
   - git checkout src/*.c
   ### Install libomp
+  - brew install libomp
   - brew link --force libomp
   - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
   ### Install CUDA
