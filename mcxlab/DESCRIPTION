@@ -1,0 +1,17 @@
+Name: mcxlab
+Version: 1.9
+Date: 2021-08-02
+Title: GPU Monte Carlo eXtreme photon transport simulator for MATLAB/Octave
+Author: Qianqian Fang <fangqq@gmail.com>
+Maintainer: Qianqian Fang <fangqq@gmail.com>
+Description:  MCXLAB is the native MEX version of MCX (http://mcx.space) 
+ for MATLAB and GNU Octave. It compiles the entire MCX code into a MEX 
+ function which can be called directly inside MATLAB or Octave. All input 
+ and output files in MCX are replaced by convenient in-memory struct 
+ variables in MCXLAB, thus, making it much easier to use and interact. 
+ MATLAB/Octave also provides convenient plotting and data analysis functions. 
+ With MCXLAB, your analysis can be streamlined and speed-up without involving 
+ accessing disk files. This toolbox requires NVIDIA GPUs and graphics drivers.
+URL: http://mcx.space
+Depends: mcxtools
+Categories: Physics

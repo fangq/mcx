@@ -1,0 +1,2 @@
+/usr/bin/ar qc /home/users/ivyyen/Project/mcx/lib/libmcx.a CMakeFiles/mcx.dir/mcx_utils.c.o CMakeFiles/mcx.dir/mcx_shapes.c.o CMakeFiles/mcx.dir/mcx_bench.c.o CMakeFiles/mcx.dir/mcx_mie.cpp.o CMakeFiles/mcx.dir/mcx_tictoc.c.o CMakeFiles/mcx.dir/cjson/cJSON.c.o CMakeFiles/mcx.dir/ubj/ubjw.c.o CMakeFiles/mcx.dir/mcx_generated_mcx_core.cu.o
+/usr/bin/ranlib /home/users/ivyyen/Project/mcx/lib/libmcx.a

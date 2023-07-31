@@ -1,0 +1,277 @@
+= Change Log =
+
+Major updates are marked with a "*"
+
+== MCX v2021.2 (Glossy Gluon - 1.9), FangQ <q.fang (a) neu.edu> ==
+
+ 2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
+ 2020-10-22 [991910e] add function comment and revert unnecessary changes
+ 2020-10-22 [3343338]*add benchmarks from SVMC paper to mcxlab
+ 2020-10-19 [de87cbf] resolve code alignment issue
+ 2020-10-18 [5acd287] fix photon detection issue for SVMC mode (by Shijie Yan)
+ 2020-10-18 [61dbf63] fix ray-tracing issue after the initial template implementation
+ 2020-10-17 [fbb4f8c] initial implementation of template for SVMC mode (by Shijie Yan)
+ 2020-10-08 [dad83c6] resolve conflict between two branches to elimate mismatch in demo_focus_mirror_bc.m
+ 2020-10-08 [fb61782]*sync master branch into nuvox(SVMC) branch (by Shijie Yan)
+ 2020-09-20 [75f08c5] remove empty depends
+ 2020-09-20 [fa98229] fix incorrect dependency
+ 2020-09-20 [d748d29] add octave package files for mcxlab and mcxtools
+ 2020-09-16 [cf3b1f0] fix typo, change default exe path
+ 2020-09-16 [15e9946]*fix warnings found by debian packaging at https://mentors.debian.net/package/mcx/
+ 2020-09-16 [04bb0e7] add man pages for other binaries
+ 2020-09-14 [aca9f97] remove additional debian packging warnings
+ 2020-09-14 [ce4e341] add desktop icon files
+ 2020-09-14 [eb0aa9f] allow new lines in string values in json
+ 2020-09-14 [4b1301a] set default exe folder to /usr/libexec, fall back to ~/bin/
+ 2020-09-14 [643e4a1]*add photon as unified cmd for mcx/mcxcl/mmc,polish for debian packaging
+ 2020-09-14 [a67bc6d] updates to ease debian packaging
+ 2020-09-08 [8983305] Inno Installer Setup paths and file details fixed
+ 2020-09-07 [a6bc5a9] another attempt to fix #105
+ 2020-09-07 [ca303dd] change default shortcut group name, fix #105
+ 2020-09-06 [0313d4c] install mcxstudio to 64bit folder, close #105
+ 2020-09-04 [37b4914] add demo script for mirror bc
+ 2020-09-04 [e561890] make mcxplotvol work in matlab 2010 or earlier
+ 2020-09-04 [9518cfa] handle mirror bc correctly, close #104
+ 2020-09-04 [64896aa]*reset pattern center position following a failed launch, fix #103
+ 2020-09-02 [5af2e76] fix -geometry 0x0 error, see https://forum.lazarus.freepascal.org/index.php?topic=40593.0
+ 2020-09-01 [dd4be78] add cubesph60b to match example/benchmark2
+ 2020-08-30 [971ffac] fix extended ascii letters
+ 2020-08-29 [6eb9596] update mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-29 [0199dad] clean up code and add comments for SVMC
+ 2020-08-29 [94d55a7]*add mcxcreate, force mcxlab return one output
+ 2020-08-28 [d917751] give an error for unsupported single dash option
+ 2020-08-28 [093c9ba]*add pre-processing for SVMC mode
+ 2020-08-28 [a79e116] add mode delphi in carbon unit
+ 2020-08-27 [63e5a5f] handle det radii less than or equal to 0.5, fix #101
+ 2020-08-27 [8f93ee2] fix make mex link error
+ 2020-08-26 [65f0fe4] fix issrcfrom0 offset
+ 2020-08-26 [79f9d70]*multiply voxelsize with det radius
+ 2020-08-26 [d5c3c11] fix mcxpreview det radis issue, require srcpos and tend in mcxlab
+ 2020-08-24 [1af5507] avoid error on mac
+ 2020-08-24 [2fce8e5] add missing carbon unit for mac
+ 2020-08-24 [6f11857] add command line option cheatsheet
+ 2020-08-24 [5046de0] fix cmake command
+ 2020-08-24 [cea663b] test cmake in travis
+ 2020-08-24 [782b4a3] massive update of documentation
+ 2020-08-24 [041e386] massive update to README to describe all output formats
+
+== MCXLAB v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
+
+ 2020-09-14 [643e4a1] add photon as unified cmd for mcx/mcxcl/mmc,polish for debian packaging
+ 2020-09-14 [a67bc6d] updates to ease debian packaging
+ 2020-09-04 [37b4914] add demo script for mirror bc
+ 2020-09-04 [e561890] make mcxplotvol work in matlab 2010 or earlier
+ 2020-08-29 [6eb9596] update mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-29 [94d55a7] add mcxcreate, force mcxlab return one output
+ 2020-08-26 [65f0fe4] fix issrcfrom0 offset
+ 2020-08-26 [79f9d70] multiply voxelsize with det radius
+ 2020-08-26 [d5c3c11] fix mcxpreview det radis issue, require srcpos and tend in mcxlab
+ 2020-08-24 [782b4a3] massive update of documentation
+ 2020-08-22 [5bd88ac] update documentation
+ 2020-08-16 [5f747b6] fix function typo
+ 2020-08-15 [2afab4a] test if media prop count is less than max label
+ 2020-08-14 [09adbd0] support --bc or cfg.bc to set an entire bounding face as detector
+ 2020-08-14 [92ba5fa] demo w0 output - pixel index - in photon sharing
+ 2020-08-04 [71d4196] fix incorrect detpt column when savedetflag/issaveexit are both set
+ 2020-07-27 [e204772] fix preview for pattern source etc.
+ 2020-07-24 [bf0840f] update README and ChangeLog
+ 2020-07-15 [b1e2dff] skip the 4th number in srcdir
+ 2020-07-09 [88e88fe] add mcxnuvxel
+ 2020-07-06 [84649dd] fix empty figures due to plotting commands
+ 2020-02-08 [41b510e] two label mix ratio support
+ 2020-01-28 [bd65f1c] reorder the hybrid label-continuous byte layout
+ 2020-01-25 [8218d51] resolve misalignments
+ 2020-01-25 [984b2a0] initial support for hybrid optical properties: tissue type label combined with continous optical properties
+ 2019-11-19 [ac5cc11] fix length bug, #83
+ 2019-11-19 [c0aad14] use detp.prop and detp.unitinmm if present, #83
+ 2019-10-27 [a743b47] resolve compiler complaint: warning: invalid suffix on literal; C++11 requires a space between literal and string macro [-Wliteral-suffix]
+ 2019-07-29 [5fbe79f] print matlab commands for plotting
+ 2019-07-25 [289b40b] update demo script to use the new detphoton format
+ 2019-07-25 [334d0a2] accept struct-based detphotons input, #76
+ 2019-07-25 [0142557] allow to run replay without giving the 2nd output, #76
+ 2019-07-23 [e3b53dc] add 2d sample script
+ 2019-07-15 [80357fc] remove volumetric mua input in the basic example
+ 2019-06-24 [d3f3922] additional changes due to flexible savedetflag detected photon data format, fix #73
+ 2019-05-25 [2b907e2] fix the unitinmm scaling for single/double FP mua/mus
+ 2019-05-24 [33df8bf] fix the missing unitinmm scaling when input is float mua/mus, half2 input still not working
+ 2019-05-24 [02efc62] bug fix for continuous varying media patch
+ 2019-05-23 [e1b50b6] convert all volume formats between mcxlab and mcx, fix #67
+ 2019-05-17 [2104f05] Merge branch 'master' of https://github.com/fangq/mcx
+ 2019-05-17 [e92d91c] avoid using string class to keep backward compatibility
+
+== MCXLAB v2019.4 and earlier (Ether Dome), FangQ <q.fang (a) neu.edu> ==
+
+ 2019-04-25 [1c0fd1f] update documentation for v2019.4 release
+ 2019-04-15 [a8fa3f5] combining partial path on the surface
+ 2019-04-14 [357ef7c] add help info for continuous media, accept string input, sanity check
+ 2019-04-13 [ac10b73] supports continuously varying media - mua/mus can vary in every voxel
+ 2019-04-11 [1c2f2e6] add help info in mcx and mcxlab on savedetflag
+ 2019-04-10 [ada0b8e] support -w / --savedetflag to specify which det photon data to output
+ 2019-03-28 [43b377a] update json2mcx, add colin27 for mcxlab
+ 2019-03-28 [b9a053f] add json2mcx, converting from json file to mcxlab cfg
+ 2019-03-20 [6b19d01] mcxstudio: merge output window back to main; update infinite slab sample
+ 2019-03-19 [ac76ff7] fix cyclic bc, add mcxlab demo
+ 2019-03-04 [b93c6c4] photon sharing with dref output
+ 2019-03-04 [fed53c8] avoid handling empty dref
+ 2019-03-04 [fa5e6c2] add photon sharing for diffuse reflectance output
+ 2019-03-03 [a3462be] add README files for all new benchmarks
+ 2019-03-02 [69a7375] use ANSI colors in the output to improve readability
+ 2019-02-28 [123d11d] add USC 19.5 atlas example, Fig9a in TranYan2019(submitted)
+ 2019-02-28 [ccdf8e3] add digimouse example
+ 2019-02-27 [6e84e26] fix mcxlab srcpattern input format bug, update mcxlab help info
+ 2019-02-26 [f1418cd] fix index mismatch between mcx_replay_prep and mcx detphotons output
+ 2019-02-23 [e89c9bb] avoid error despite pattern3d src does not work as expected
+ 2019-02-23 [f6ee293] update documentation, make autopilot default, pattern3d src demo
+ 2019-02-08 [7e16b21] update "energy" output of mcxyz skinvessel example
+ 2018-12-22 [2f8483b] clean the code and fix mcxlab 'gpuinfo' output error for multiple GPUs
+ 2018-12-22 [87cbc78] modify post-processing to support normalization of multi-pattern
+ 2018-12-03 [0ea31c6] added photon sharing examples
+ 2018-12-03 [dc594dc] initial support for photon sharing - simultaneous forward for multiple src
+ 2018-12-02 [339e2b8] update documentation, ready to release v2018.12
+ 2018-12-02 [094734e] fix bugs and make axis-based boundary condition finally work, fix #55
+ 2018-11-24 [e6d4932] use char array for boundary condition input in mcxlab
+ 2018-11-23 [817609e] test if parameter has been initialized in command line
+ 2018-11-23 [d74684f] prepare for axis-based bounary condition
+ 2018-11-21 [1e15de7] disable reflection
+ 2018-11-21 [12fdd14] output flux
+ 2018-11-21 [8c8f202] update the launch position in skinvessel benchmark
+ 2018-11-21 [d6f0f1d] launch photon at the surface of layer 2
+ 2018-11-14 [405ce9c] add benchmark from mcxyz skinvessel example
+ 2018-11-13 [9a2f696] test if gpuid is 0 to avoid mcxlab crashing
+ 2018-11-07 [5339563] add help info for the new detphoton fields
+ 2018-11-07 [7e45ec0] save initial weight and partial scattering count to match mmc output
+ 2018-11-07 [fc2cfcf] save initial weight in detphoton output
+ 2018-11-07 [01ec192] isotropic launch if srcdir(4) is -0.f, valid for all src
+ 2018-10-26 [183742d] set g to 1 when mus is 0, fix #51
+ 2018-10-13 [cfa8e31] accummulate momemtum transfer for all detected photons in replay mode
+ 2018-08-26 [79a47bf] remove outdated examples and flags, simplify Makefile for a clean start
+ 2018-08-20 [91e0de1] if no GPU detected, need to terminate
+ 2018-08-18 [ed0612e] add Yu2018 citation, minor gui update
+ 2018-08-15 [2d3ea68] update mcxlab demo script in README
+ 2018-08-15 [13ab6f2] add more demo script for advanced mc data processing
+ 2018-08-15 [0b140dc] mcx2json set issrcfrom0 default value to match mcx
+ 2018-08-14 [e99e5ef] saving photon trajectory in command line, add plotting function, bump limit to 1e7
+ 2018-07-21 [7850c32] support photon numbers over 2^31, new limit 2^63-1 after fixing #41
+ 2018-06-04 [8cd8a69] support autopilot flag in JSON, fix typo
+ 2018-06-04 [c90b8b3] add specular reflection flag, passing more session flags via the JSON file
+ 2018-06-04 [3e5a1d8] add mcxlab cfg to json input file converter
+ 2018-05-19 [7f1b574] positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
+ 2018-05-15 [a7632bc] fix bugs in checking replaydet values
+ 2018-05-15 [e5db8cd] output 5-dim fluence when replaydet=-1,two replay test script,add help for replaydet
+ 2018-05-14 [651c53f] replay for all detectors with -Y -1
+ 2018-04-07 [b537309] complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
+ 2018-03-29 [ac6c972] make mcxlab to call mcxcl without error
+ 2018-03-17 [5b083b4] make mcxlab compatible with mcxlabcl to call opencl
+ 2018-02-28 [a78999d] output trajectory photon id in interger format
+ 2018-01-31 [589ce45] support 3D pattern source
+ 2018-01-29 [1b9493b] add mcxpreview to preview the simulation domain settings
+ 2018-01-28 [b93e38d] make both src and detector on the surface
+ 2018-01-13 [105ec65] update doxygen comments to fix missing parameters
+ 2018-01-13 [f6fd6a0] rename mcxlab.mex to mcx.mex, use mcxlab.m to do pre and post processing
+ 2018-01-11 [ae8bd9a] absorption fraction changed after fixing 1st scattering handling in #4b33a6f
+ 2017-12-31 [7e6e081] add doxygen-format comments for thorough documtation of the source code
+ 2017-12-02 [b98d728] matlab fails to clear mex variable memory, force setting to NULL
+ 2017-11-27 [0a1d517] revert mcxlab demo script from mirror boundary to normal
+ 2017-10-05 [7703420] port mmc commit 07b33f3 to mcx to compile with matlab 2017
+ 2017-08-10 [cacc8ce] start adding doxyen comments in the source code
+ 2017-07-20 [6e839ef] handle progress bar for matlab 2014b or newer as the return value is now object
+ 2017-07-20 [eed619f] fix matlab2017a crash when using multiple GPUs
+ 2017-07-13 [e71659d] make output window dockable, lock GPU list when use ssh
+ 2017-07-09 [c672643] use int to represent det and media index; increase max media + max det from 128+1024 to 4000, close #21
+ 2017-07-08 [bf9aa22] mcx now supports 2D simulations, just set one dimension to a thickness of 1
+ 2017-07-05 [8d12f78] MCX v2017.7
+ 2017-06-20 [faad1a1] user specified scattering events to disable anisotropy g
+ 2017-05-29 [adddbc5] support pencil beam array
+ 2017-05-27 [cfe280b] fix matlab crash when using multiple GPUs
+ 2017-04-02 [f37c8a3] update documentation for v2017.3 release
+ 2017-01-17 [a45f90e] update documentation for MCX v2017.1 - 1.0 RC1
+ 2017-01-02 [0a28d4e] fix compilation error on windows
+ 2016-12-21 [8715a40] fix progress bar in matlab when set debuglevel=P
+ 2016-12-21 [b53d8ac] avoid hanging in mcxlab when mus=0
+ 2016-10-20 [1f5d0ef] fix Jacobian output normalization
+ 2016-10-09 [5905e0b] record diffuse reflectance on the air voxels outside of domain boundaries, close #6
+ 2016-10-09 [39038bf] save detected photon position and direction using -x 1, close #16
+ 2016-10-08 [e8b21b8] port diverging and converging widefield source beams from MMC to MCX, close #27
+ 2016-10-05 [ceb6009] fixing mcxlab crash when detps is not given in the replay mode
+ 2016-09-14 [91a9dda] save scattering event count in replay
+ 2016-07-02 [9b5ee49] elegantly terminate mcxlab when an exception is raised
+ 2016-07-02 [3463f92] polish progress bar feature, use 3 threads to report
+ 2016-06-05 [6a6fe13] update makefile for autobuild, correct mcxlab RNG seed length
+ 2016-06-02 [83481ff] add replay demo script
+ 2016-06-02 [2aed76d] fix replay seed bug for mcxlab
+ 2016-05-16 [701beec] make mcx gpu contest compatible with octave
+ 2016-05-16 [a4cb1e1] add debug option to save photon trajectory data
+ 2016-04-26 [590c596] fix workload and gpuid bug when handeling 0 mask
+ 2016-04-23 [4c37c0d] test gpu contest script in matlab 2014
+ 2016-04-22 [690406c] fix multi-GPU hanging problem for real, wrap all CUDA calls with error testing, return workload in mcxlab
+ 2016-04-15 [2891fe3] gpu benchmark matlab script updated
+ 2016-04-15 [e71f4c7] fix deviceid bug, activate GPU contest
+ 2016-04-14 [096ce82] return additional info via flux.stat in mcxlab, add speed contest scripts
+ 2016-04-12 [8e1c931] use xorshift128+ in mex, update mediaid and isdet after launchnewphoton
+ 2016-04-12 [38790e7] update documentation to prepare 2016.4 release
+ 2016-04-06 [2e80505] add rcs keyword support
+ 2016-04-06 [4291efe] add slit source demo
+ 2016-04-03 [e3a8d53] update msg header, fix widefield source bug
+ 2015-09-28 [73dd850] add uniform line source and slit source, suggested by Yu Chen
+ 2015-09-12 [9da817e] fix bug for wide field sources
+ 2015-09-11 [a1e781a] update affiliation, Qianqian now moved to Northeastern
+ 2015-09-11 [c7f9625] make precise ray-tracing default to improve accuracy
+ 2015-06-25 [60238c4] multiple GPU support! set fermi as default, set atomic as default, better mex compilation
+ 2015-06-15 [e5dfe48] mcxlab can query gpu info by mcxlab('gpuinfo')
+ 2015-06-10 [7487e4d] support saving photon seeds and replay
+ 2014-09-24 [f9db936] minor post-release updates, updating version number and copyright
+ 2014-09-23 [e00375d] fix submillimeter voxel scaling bug in the binary mode
+ 2014-07-11 [0cc66c2] a patch submitted by David Gasperino for rigirously modeling a collimated Gaussian beam
+ 2014-07-11 [1ece2eb] high priority bug fixes submitted by Kim Shultz: transmission angle and oddphoton handling
+ 2014-01-19 [b7ff249] saving detected photon seed for fast replay and pMC analysis
+ 2013-09-26 [29019c5] add the MCX dice simulation demo
+ 2013-09-25 [d688d3e] rearrange srcparam meanings for fourierx
+ 2013-09-25 [d17ef7d] support fractional kx and ky with fourierx and fourierx2d
+ 2013-09-25 [255fa89] updates for making release files
+ 2013-09-22 [d7ec8c3] fix pattern source bug, update README
+ 2013-09-20 [0240eb4] update all docs, set version to 0.9.7
+ 2013-09-19 [bd8f201] correct normalization, fix specular reflection, fix Fourier source form
+ 2013-09-17 [7d48d80] add initial transmission and specular reflection
+ 2013-09-16 [ef46272] mcxlab srctype demo, tuned RNG, correct launch photon count
+ 2013-09-15 [379d438] initial wide-field source support, 9 types of sources are implemented
+ 2013-01-20 [2443f55] update unitinmm when steps is set
+ 2012-08-24 [0960bb8] update MCXLAB for 0.8.0
+ 2012-08-24 [be5d951] update documentation for 0.8.0, tested all examples
+ 2012-08-21 [b0080e4] fix incorrect returned field and normalization when simulations is split into multiple gate groups
+ 2012-08-10 [d6b5dc7] benchmark script for reseedlimit
+ 2012-08-09 [61f5082] more updates to reseedlimit
+ 2012-08-09 [40aa2f0] automatic reseeding Logistic Latice RNG
+ 2012-08-08 [0a7ad43] backport features from mmclab: exception handling and print inside matlab
+ 2012-07-13 [af6f923] use srcfrom0 flag to set crop0 and crop1 in mcx_cached
+ 2012-07-06 [4c7deb2] minor updates to README
+ 2012-07-06 [8ea3de7] fix inconsistent descriptions regarding detphoton
+ 2012-01-11 [3a56870] fix a bug with -P option, fix a bug for mcxlab cfg.shapes
+ 2012-01-11 [8183f61] add help for using JSON input and shape files
+ 2012-01-10 [80c5425] support shapes in MCXLAB
+ 2011-12-21 [388f91a] tag for a potential release
+ 2011-09-21 [01a33f3] fix a regression in MCXLAB related to detectors, use exact exit position for radius test
+ 2011-08-10 [9e9bf51] clarify the meaning and limitation of the voxel input in cfg file
+ 2011-06-17 [2ead918] warn if users give an unreasonable incident vector
+ 2011-06-11 [edf5e33] post 0.5.1 polishing
+ 2011-04-26 [009cc5b] change printed text string
+ 2011-04-26 [221fe81] allow crop0 crop1 input for the cachebox
+ 2011-03-31 [e8c331b] correct help info for cfg.issrcfrom0
+ 2011-03-25 [681cb30] remove help text from mcxlab.cpp,add mcxlab_atom help file
+ 2011-03-20 [b446c65] more polishing of mcxlab docs
+ 2011-03-18 [a02e1bf] debugged and compiled on windows
+ 2011-03-18 [61fc79a] minor update to the documents
+ 2011-03-18 [fe8d891] massive update of documentation
+ 2011-03-18 [97a7a01] exception handling in MCXLAB
+ 2011-03-18 [672c4df] mcxlab validation debugged and polished
+ 2011-03-17 [2a0e684] minor polishing of mcxlab and mcx_core
+ 2011-03-16 [a1bfcaf] recode internal reflection, major improvement for mcxlab; new mcxlab samples
+ 2011-03-15 [9384a3a] extensive debugging with --unitinmm flag
+ 2011-03-10 [67a1bda] store MCXLAB in a top-level folder
+ 2011-03-10 [0fe30b5] mcxlab works beautifully with detected photons
+ 2011-03-10 [6312949] update usage to support octave
+ 2011-03-10 [222e579] mcxlab support output parameters, add Octave support with make oct
+ 2011-03-04 [d3dade2] use -E to set seed from command line
+ 2010-08-15 [10b3222] add make mex in the Makefile
+ 2010-08-10 [93b29b9] mcxlab succeeded in matlab, setting proper default values for cfg
+ 2010-08-09 [597b6ea] more debugging on mcxlab, not fully working yet
+ 2010-08-09 [7269c4b] initial addition of Matlab wrapper: mcxlab

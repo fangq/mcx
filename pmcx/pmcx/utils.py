@@ -77,6 +77,7 @@ def meanpath(detp, prop=None):
     output:
         avgpath: the average pathlength for each tissue type
     """
+
     if "unitinmm" in detp:
         unitinmm = detp["unitinmm"]
     else:
@@ -308,7 +309,6 @@ def getdistance(srcpos, detpos):
     srcnum = len(srcpos[:, 0])
     detnum = len(detpos[:, 0])
 
-    separation = np.zeros((detnum, srcnum))
 
     for s in range(srcnum):
         for r in range(detnum):

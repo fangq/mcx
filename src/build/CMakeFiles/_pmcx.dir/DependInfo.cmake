@@ -1,0 +1,25 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  )
+
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/users/ivyyen/Project/mcx/src/cjson/cJSON.c" "CMakeFiles/_pmcx.dir/cjson/cJSON.c.o" "gcc" "CMakeFiles/_pmcx.dir/cjson/cJSON.c.o.d"
+  "/home/users/ivyyen/Project/mcx/src/mcx_bench.c" "CMakeFiles/_pmcx.dir/mcx_bench.c.o" "gcc" "CMakeFiles/_pmcx.dir/mcx_bench.c.o.d"
+  "/home/users/ivyyen/Project/mcx/src/mcx_shapes.c" "CMakeFiles/_pmcx.dir/mcx_shapes.c.o" "gcc" "CMakeFiles/_pmcx.dir/mcx_shapes.c.o.d"
+  "/home/users/ivyyen/Project/mcx/src/mcx_tictoc.c" "CMakeFiles/_pmcx.dir/mcx_tictoc.c.o" "gcc" "CMakeFiles/_pmcx.dir/mcx_tictoc.c.o.d"
+  "/home/users/ivyyen/Project/mcx/src/mcx_utils.c" "CMakeFiles/_pmcx.dir/mcx_utils.c.o" "gcc" "CMakeFiles/_pmcx.dir/mcx_utils.c.o.d"
+  "/home/users/ivyyen/Project/mcx/src/mcx_mie.cpp" "CMakeFiles/_pmcx.dir/mcx_mie.cpp.o" "gcc" "CMakeFiles/_pmcx.dir/mcx_mie.cpp.o.d"
+  "/home/users/ivyyen/Project/mcx/src/pmcx.cpp" "CMakeFiles/_pmcx.dir/pmcx.cpp.o" "gcc" "CMakeFiles/_pmcx.dir/pmcx.cpp.o.d"
+  )
+
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")
