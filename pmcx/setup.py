@@ -28,6 +28,7 @@ class CMakeExtension(Extension):
         self.target = target
         print(self.source_dir)
         print(os.getcwd())
+        subprocess.run(["tree", os.path.abspath(os.path.dirname(__file__) + '/../')]) 
 
 
 class CMakeBuild(build_ext):
