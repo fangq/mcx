@@ -26,6 +26,8 @@ class CMakeExtension(Extension):
         Extension.__init__(self, name, sources=[])
         self.source_dir = os.path.abspath(source_dir)
         self.target = target
+        print(self.source_dir)
+        print(os.getcwd())
 
 
 class CMakeBuild(build_ext):
