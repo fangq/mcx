@@ -32,10 +32,12 @@ before_install:
   - PATH=${CUDA_PATH}:.:${PATH}
   - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
 
-script: 
+script:
+  - cp -a src pmcx
   - cd pmcx/
+  - perl -pi -e 's/..\/src\//src\//g' setup.py
   - pip3 install wheel
-  - VERBOSE=1 pip3 wheel . -w ../dist/ --verbose
+  - pip3 wheel . -w ../dist/ --verbose
   - cd ..
   - bash .github/check-pypi-upload.sh
 
