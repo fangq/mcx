@@ -3,7 +3,7 @@ function varargout=mcxlab(varargin)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2011-2022 Qianqian Fang <q.fang at neu.edu>
+%Copyright (c) 2011-2023 Qianqian Fang <q.fang at neu.edu>
 %                      URL: http://mcx.space
 %====================================================================
 %
@@ -247,6 +247,7 @@ function varargout=mcxlab(varargin)
 %                      'energy' - energy deposit per voxel
 %                      'jacobian' or 'wl' - mua Jacobian (replay mode), 
 %                      'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
+%                      'wm' - weighted momentum transfer for a source/detector pair (replay mode)
 %                      'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
 %                      'length' total pathlengths accumulated per voxel,
 %                      for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
@@ -254,7 +255,7 @@ function varargout=mcxlab(varargin)
 %      cfg.session:    a string for output file names (only used when no return variables)
 %
 %== Debug ==
-%      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P'], no space
+%      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
 %                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
