@@ -20,7 +20,6 @@ before_install:
   - export HOMEBREW_NO_INSTALL_CLEANUP=1
   - brew install libomp
   - brew link --force libomp
-  - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
   ### Install CUDA
   - curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
   - unzip cuda.zip
@@ -31,6 +30,7 @@ before_install:
   - CUDA_PATH=${CUDA_HOME}/bin
   - CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
   - PATH=${CUDA_PATH}:.:${PATH}
+  - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
 
 script: 
   - cd pmcx/
