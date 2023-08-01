@@ -35,7 +35,7 @@ before_install:
 script: 
   - cd pmcx/
   - pip3 install wheel
-  - VERBOSE=1 pip wheel . -w ../dist/
+  - VERBOSE=1 pip3 wheel . -w ../dist/
   - cd ..
   - bash .github/check-pypi-upload.sh
 
