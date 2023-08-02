@@ -8,11 +8,13 @@ compiler:
 matrix:
   include:
     - os: osx
-      python: 3.6
+      osx_image: xcode8.3
+      python: "3.6"
       env:
       - BADGE=py3.6
     - os: osx
-      python: 3.10
+      osx_image: xcode8.3
+      python: "3.7"
       env:
       - BADGE=py3.7
 
