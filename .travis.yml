@@ -22,7 +22,6 @@ before_install:
   - export HOMEBREW_NO_INSTALL_CLEANUP=1
   - brew install libomp
   - brew link --force libomp
-  - brew install python@3.6
   - brew install python@3.8
   - brew install python@3.9
   - brew install python@3.10
@@ -43,10 +42,6 @@ script:
   - mv src pmcx
   - cd pmcx/
   - perl -pi -e 's/..\/src\//src\//g' setup.py
-  - python3 --version
-  - python3 -m pip install wheel
-  - python3 -m pip wheel . -w ../dist/ --verbose
-  - PATH=$(brew --prefix python@3.6)/bin:$PATH
   - python3 --version
   - python3 -m pip install wheel
   - python3 -m pip wheel . -w ../dist/ --verbose
