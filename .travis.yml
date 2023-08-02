@@ -45,7 +45,7 @@ script:
   - cd pmcx/
   - perl -pi -e 's/..\/src\//src\//g' setup.py
   - python3 --version
-  - python3 -m pip install wheel index
+  - python3 -m pip install wheel
   - python3 -m pip wheel . --verbose
   - cd ..
   - chmod +x .github/check-pypi-upload.sh
