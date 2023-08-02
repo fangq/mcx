@@ -8,12 +8,6 @@ compiler:
 matrix:
   include:
     - os: osx
-      osx_image: xcode8.3
-      python: "3.6"
-      env:
-      - BADGE=py3.6
-    - os: osx
-      osx_image: xcode8.3
       python: "3.7"
       env:
       - BADGE=py3.7
@@ -28,6 +22,11 @@ before_install:
   - export HOMEBREW_NO_INSTALL_CLEANUP=1
   - brew install libomp
   - brew link --force libomp
+  - brew install python@3.6
+  - brew install python@3.8
+  - brew install python@3.9
+  - brew install python@3.10
+  - brew install python@3.11
   ### Install CUDA
   - curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
   - unzip cuda.zip
@@ -46,7 +45,27 @@ script:
   - perl -pi -e 's/..\/src\//src\//g' setup.py
   - python3 --version
   - python3 -m pip install wheel
-  - python3 -m pip wheel . --verbose
+  - python3 -m pip wheel . -w ../dist/ --verbose
+  - PATH=$(brew --prefix python@3.6)/bin:$PATH
+  - python3 --version
+  - python3 -m pip install wheel
+  - python3 -m pip wheel . -w ../dist/ --verbose
+  - PATH=$(brew --prefix python@3.8)/bin:$PATH
+  - python3 --version
+  - python3 -m pip install wheel
+  - python3 -m pip wheel . -w ../dist/ --verbose
+  - PATH=$(brew --prefix python@3.9)/bin:$PATH
+  - python3 --version
+  - python3 -m pip install wheel
+  - python3 -m pip wheel . -w ../dist/ --verbose
+  - PATH=$(brew --prefix python@3.10)/bin:$PATH
+  - python3 --version
+  - python3 -m pip install wheel
+  - python3 -m pip wheel . -w ../dist/ --verbose
+  - PATH=$(brew --prefix python@3.11)/bin:$PATH
+  - python3 --version
+  - python3 -m pip install wheel
+  - python3 -m pip wheel . -w ../dist/ --verbose
   - cd ..
   - chmod +x .github/check-pypi-upload.sh
   - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
