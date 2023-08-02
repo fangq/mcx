@@ -9,8 +9,12 @@ matrix:
   include:
     - os: osx
       python: 3.6
+      env:
+      - BADGE=py3.6
     - os: osx
-      python: 3.7
+      python: 3.10
+      env:
+      - BADGE=py3.7
 
 before_install:
   ### Update RCS keywords
@@ -38,8 +42,9 @@ script:
   - mv src pmcx
   - cd pmcx/
   - perl -pi -e 's/..\/src\//src\//g' setup.py
-  - python3 -m pip install wheel
-  - python3 -m pip wheel . -w ../dist/ --verbose
+  - python3 --version
+  - python3 -m pip install wheel index
+  - python3 -m pip wheel . --verbose
   - cd ..
   - chmod +x .github/check-pypi-upload.sh
   - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
@@ -47,5 +52,6 @@ script:
 deploy:
   provider: pypi
   username: "__token__"
+  distributions: "bdist_wheel"
   password:
     secure: cY74UjxKDiP3tTgQoYlAt06MlD8A1t2HPDDWqv+8UN9O0npoBZvyheXkaGRxd5Qx8CmapI12KfLCZl4wC3xEh9zUtPn20JwglKOYi6myOtnzn1QtUU9cNsP3IOFdZmDUNivaa02vyCONwg98d7nRUKaG9OoIJ7dN1zO26gT8G0cY5xnwmqw9ycwqQWb5waRFxS9Pel4QA3jm8gRC7FYezXWkvwLSCsMHPvf4ddYiMk5aTKmASAJ2gvieHzefuoswB+ujHUDt+UMwlr9iL9QgIwJtV6jO0z5aW7ruOSQa6ZvbN62Vtrd/ocY7ADx5MeOOb3S8hDsI7a1osJHGQKePzE22+dcBU92UOWfkEgefzdd2L26kyst3Qjlqh3eR4frPUTQUipeK/XIQ4o0sL4gMd4zXpXskyUXQr6Y0EsdRT5buDure2qiLBVA+3USTKCv8Gu2WJIwHwrNab0LThtAtKkgiwvebQBEbRYR2mkJicjZYJSsvEbL7aKounBxNv2lqOl+wul9sH5BEWcnBrbZ5h15BbNGJoTjmNQINTbkNSvsITHA2u3CT7aRL+WJ6XuoRSX8WNOn8+OLaOJoHSCpoDo6MR4Z+B4Q0IGvjdbOmzH3KVYopGjQb1YCu+a5m+QqRKO7SXAX6aJd9KLav9mLUIWVZCvFodvEhJwuW34RqeG8=
