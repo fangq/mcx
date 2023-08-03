@@ -458,7 +458,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     GET_SCALAR_FIELD(user_cfg, mcx_config, srcnum, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, omega, py::float_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, lambda, py::float_);
-    GET_VEC3_FIELD(user_cfg, mcx_config, srcpos, float);
+    GET_VEC34_FIELD(user_cfg, mcx_config, srcpos, float);
     GET_VEC34_FIELD(user_cfg, mcx_config, srcdir, float);
     GET_VEC3_FIELD(user_cfg, mcx_config, steps, float);
     GET_VEC3_FIELD(user_cfg, mcx_config, crop0, uint);
@@ -1037,15 +1037,29 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             auto dref_array = py::array_t<float, py::array::f_style>(array_dims);
 
             if (mcx_config.issaveref) {
+                int highdim = fielddim[3] * fielddim[4] * fielddim[5];
+                int voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
                 auto* dref = static_cast<float*>(dref_array.mutable_data());
                 memcpy(dref, mcx_config.exportfield, field_len * sizeof(float));
 
-                for (int i = 0; i < field_len; i++) {
-                    if (dref[i] < 0.f) {
-                        dref[i] = -dref[i];
-                        mcx_config.exportfield[i] = 0.f;
-                    } else {
-                        dref[i] = 0.f;
+                for (int ix = 0; ix < mcx_config.dim.x; ix++) {
+                    for (int iy = 0; iy < mcx_config.dim.y; iy++) {
+                        for (int iz = 0; iz < mcx_config.dim.z; iz++) {
+                            int voxelid = iz * (mcx_config.dim.x * mcx_config.dim.y) + iy * mcx_config.dim.x + ix;
+
+                            if (mcx_config.vol[voxelid]) {
+                                for (int gate = 0; gate < highdim; gate++)
+                                    for (int srcid = 0; srcid < mcx_config.srcnum; srcid++) {
+                                        dref[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid] = 0.f;
+                                    }
+                            } else {
+                                for (int gate = 0; gate < highdim; gate++)
+                                    for (int srcid = 0; srcid < mcx_config.srcnum; srcid++) {
+                                        dref[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid] = -dref[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid];
+                                        mcx_config.exportfield[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid] = 0.f;
+                                    }
+                            }
+                        }
                     }
                 }
 

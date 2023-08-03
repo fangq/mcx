@@ -392,15 +392,29 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
 
                 if (cfg.issaveref) {
+                    int highdim = fielddim[3] * fielddim[4] * fielddim[5];
+                    int voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
                     float* dref = (float*)malloc(fieldlen * sizeof(float));
                     memcpy(dref, cfg.exportfield, fieldlen * sizeof(float));
 
-                    for (int i = 0; i < fieldlen; i++) {
-                        if (dref[i] < 0.f) {
-                            dref[i] = -dref[i];
-                            cfg.exportfield[i] = 0.f;
-                        } else {
-                            dref[i] = 0.f;
+                    for (int ix = 0; ix < cfg.dim.x; ix++) {
+                        for (int iy = 0; iy < cfg.dim.y; iy++) {
+                            for (int iz = 0; iz < cfg.dim.z; iz++) {
+                                int voxelid = iz * (cfg.dim.x * cfg.dim.y) + iy * cfg.dim.x + ix;
+
+                                if (cfg.vol[voxelid]) {
+                                    for (int gate = 0; gate < highdim; gate++)
+                                        for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
+                                            dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
+                                        }
+                                } else {
+                                    for (int gate = 0; gate < highdim; gate++)
+                                        for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
+                                            dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = -dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid];
+                                            cfg.exportfield[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
+                                        }
+                                }
+                            }
                         }
                     }
 
@@ -551,7 +565,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     GET_ONE_FIELD(cfg, omega)
     GET_ONE_FIELD(cfg, issave2pt)
     GET_ONE_FIELD(cfg, lambda)
-    GET_VEC3_FIELD(cfg, srcpos)
+    GET_VEC34_FIELD(cfg, srcpos)
     GET_VEC34_FIELD(cfg, srcdir)
     GET_VEC3_FIELD(cfg, steps)
     GET_VEC3_FIELD(cfg, crop0)

@@ -314,6 +314,7 @@ void mcx_initcfg(Config* cfg) {
     cfg->detectedcount = 0;
     cfg->runtime = 0;
     cfg->faststep = 0;
+    cfg->srcpos.w = 1.f;
     cfg->srcdir.w = 0.f;
     cfg->issaveref = 0;
     cfg->isspecular = 0;
@@ -2479,6 +2480,8 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->srcpos.y = subitem->child->next->valuedouble;
                 cfg->srcpos.z = subitem->child->next->next->valuedouble;
             }
+
+            cfg->srcpos.w = FIND_JSON_KEY("Weight", "Optode.Source.Weight", src, 1.f, valuedouble);
 
             subitem = FIND_JSON_OBJ("Dir", "Optode.Source.Dir", src);
 
