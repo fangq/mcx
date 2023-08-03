@@ -1037,8 +1037,8 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             auto dref_array = py::array_t<float, py::array::f_style>(array_dims);
 
             if (mcx_config.issaveref) {
-                int highdim = fielddim[3] * fielddim[4] * fielddim[5];
-                int voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
+                int highdim = field_dim[3] * field_dim[4] * field_dim[5];
+                int voxellen = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
                 auto* dref = static_cast<float*>(dref_array.mutable_data());
                 memcpy(dref, mcx_config.exportfield, field_len * sizeof(float));
 
