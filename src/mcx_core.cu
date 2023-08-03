@@ -2247,8 +2247,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 }
 
 /**
-   assert cuda memory allocation result
-*/
+ *  assert cuda memory allocation result
+ */
 void mcx_cu_assess(cudaError_t cuerr, const char* file, const int linenum) {
     if (cuerr != cudaSuccess) {
         cudaDeviceReset();
@@ -2800,8 +2800,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     /**
-      * Allocate all host buffers to store input or output data
-      */
+     * Allocate all host buffers to store input or output data
+     */
 
     Ppos = (float4*)malloc(sizeof(float4) * gpu[gpuid].autothread); /** \c Ppos: host buffer for initial photon position+weight */
     Pdir = (float4*)malloc(sizeof(float4) * gpu[gpuid].autothread); /** \c Pdir: host buffer for initial photon direction */
@@ -3007,24 +3007,24 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     MCX_FPRINTF(cfg->flog, "init complete : %d ms\n", GetTimeMillis() - tic);
 
     /**
-        If one has to simulate a lot of time gates, using the GPU global memory
-    requires extra caution. If the total global memory is bigger than the total
-    memory to save all the snapshots, i.e. size(field)*(tend-tstart)/tstep, one
-    simply sets gpu[gpuid].maxgate to the total gate number; this will run GPU kernel
-    once. If the required memory is bigger than the video memory, set gpu[gpuid].maxgate
-    to a number which fits, and the snapshot will be saved with an increment of
-    gpu[gpuid].maxgate snapshots. In this case, the later simulations will restart from
-    photon launching and exhibit redundancies.
-
-    The calculation of the energy conservation will only reflect the last simulation.
-    */
+     *  If one has to simulate a lot of time gates, using the GPU global memory
+     *  requires extra caution. If the total global memory is bigger than the total
+     *  memory to save all the snapshots, i.e. size(field)*(tend-tstart)/tstep, one
+     *  simply sets gpu[gpuid].maxgate to the total gate number; this will run GPU kernel
+     *  once. If the required memory is bigger than the video memory, set gpu[gpuid].maxgate
+     *  to a number which fits, and the snapshot will be saved with an increment of
+     *  gpu[gpuid].maxgate snapshots. In this case, the later simulations will restart from
+     *  photon launching and exhibit redundancies.
+     *
+     *  The calculation of the energy conservation will only reflect the last simulation.
+     */
     sharedbuf = cfg->nphase * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF)));
 
     MCX_FPRINTF(cfg->flog, "requesting %d bytes of shared memory\n", sharedbuf);
 
     /**
-      * Outer loop: loop over each time-gate-group, determined by the capacity of the global memory to hold the output data, in most cases, \c totalgates is 1
-      */
+     * Outer loop: loop over each time-gate-group, determined by the capacity of the global memory to hold the output data, in most cases, \c totalgates is 1
+     */
     for (timegate = 0; timegate < totalgates; timegate += gpu[gpuid].maxgate) {
 
         /** Determine the start and end time of the current time-gate-group */
@@ -3038,8 +3038,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                     , param.twin0 * 1e9, param.twin1 * 1e9);
 
         /**
-          * Inner loop: loop over total number of repetitions specified by cfg.respin, results will be accumulated to \c field
-          */
+         * Inner loop: loop over total number of repetitions specified by cfg.respin, results will be accumulated to \c field
+         */
         for (iter = 0; iter < ABS(cfg->respin); iter++) {
             /**
               * Each repetition, we have to reset the output buffers, including \c gfield and \c gPdet
@@ -3071,15 +3071,15 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             }
 
             /**
-              * Start the clock for GPU-kernel only run-time here
-              */
+             * Start the clock for GPU-kernel only run-time here
+             */
             tic0 = GetTimeMillis();
 #ifdef _WIN32
             #pragma omp master
             {
                 /**
-                  * To avoid hanging, we need to use cudaEvent to force GPU to update the pinned memory for progress bar on Windows WHQL driver
-                  */
+                 * To avoid hanging, we need to use cudaEvent to force GPU to update the pinned memory for progress bar on Windows WHQL driver
+                 */
                 if (cfg->debuglevel & MCX_DEBUG_PROGRESS) {
                     CUDA_ASSERT(cudaEventCreate(&updateprogress));
                 }
@@ -3090,9 +3090,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             mcx_flush(cfg);
 
             /**
-              * Determine template constants for compilers to build specialized binary instances to reduce branching
-            * and thread-divergence. If not using template, the performance can take a 20% drop.
-              */
+             * Determine template constants for compilers to build specialized binary instances to reduce branching
+             * and thread-divergence. If not using template, the performance can take a 20% drop.
+             */
 
             /** \c ispencil: template constant, if 1, launch photon code is dramatically simplified */
             int ispencil = (cfg->srctype == MCX_SRC_PENCIL);
@@ -3113,10 +3113,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                 }
 
             /**
-              * Launch GPU kernel using template constants. Here, the compiler will create 2^4=16 individually compiled
-            * kernel PTX binaries for each combination of template variables. This creates bigger binary and slower
-            * compilation time, but brings up to 20%-30% speed improvement on certain simulations.
-              */
+             * Launch GPU kernel using template constants. Here, the compiler will create 2^4=16 individually compiled
+             * kernel PTX binaries for each combination of template variables. This creates bigger binary and slower
+             * compilation time, but brings up to 20%-30% speed improvement on certain simulations.
+             */
             switch (ispencil * 10000 + (isref > 0) * 1000 + (cfg->mediabyte <= 4) * 100 + issvmc * 10 + ispolarized) {
                 case 0:
                     mcx_main_loop<0, 0, 0, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gsmatrix, gprogress);
@@ -3218,19 +3218,19 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                         cudaEventQuery(updateprogress);
 #endif
                         /**
-                          * host variable \c progress is pinned with the GPU variable \c gprogress, and can be
-                        * updated by the GPU kernel from the device. We can read this variable to see how many
-                          * photons are simulated.
+                         * host variable \c progress is pinned with the GPU variable \c gprogress, and can be
+                         * updated by the GPU kernel from the device. We can read this variable to see how many
+                         * photons are simulated.
                                       */
                         ndone = *progress;
 
                         if (ndone > p0) {
                             /**
-                              * Here we use the below formula to compute the 0-100% completion ratio.
-                            * Only half of the threads updates the progress, and each thread only update
-                            * the counter 5 times at 0%/25%/50%/75%/100% progress to minimize overhead while
-                            * still providing a smooth progress bar.
-                              */
+                             * Here we use the below formula to compute the 0-100% completion ratio.
+                             * Only half of the threads updates the progress, and each thread only update
+                             * the counter 5 times at 0%/25%/50%/75%/100% progress to minimize overhead while
+                             * still providing a smooth progress bar.
+                             */
                             mcx_progressbar(ndone / ((param.threadphoton >> 1) * 4.5f), cfg);
                             p0 = ndone;
                         }
@@ -3245,9 +3245,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                 }
             }
             /**
-              * By calling \c cudaDeviceSynchronize, the host thread now waits for the completion of
-            * the kernel, then start retrieving all GPU output data
-              */
+             * By calling \c cudaDeviceSynchronize, the host thread now waits for the completion of
+             * the kernel, then start retrieving all GPU output data
+             */
             CUDA_ASSERT(cudaDeviceSynchronize());
             /** Here, the GPU kernel is completely executed and returned */
             CUDA_ASSERT(cudaMemcpy(&detected, gdetected, sizeof(uint), cudaMemcpyDeviceToHost));
@@ -3258,14 +3258,14 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             MCX_FPRINTF(cfg->flog, "kernel complete:  \t%d ms\nretrieving fields ... \t", tic1 - tic);
 
             /**
-              * If the GPU kernel crashed or terminated by error during execution, we need
-              * to capture it by calling \c cudaGetLastError and terminate mcx if error happens
-              */
+             * If the GPU kernel crashed or terminated by error during execution, we need
+             * to capture it by calling \c cudaGetLastError and terminate mcx if error happens
+             */
             CUDA_ASSERT(cudaGetLastError());
 
             /**
-              * Now, we start retrieving all output variables, and copy those to the corresponding host buffers
-              */
+             * Now, we start retrieving all output variables, and copy those to the corresponding host buffers
+             */
 
             /** \c photoncount returns the actual completely simulated photons returned by GPU threads, no longer used */
             CUDA_ASSERT(cudaMemcpy(Plen0,  gPlen,  sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
@@ -3275,8 +3275,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             }
 
             /**
-              * If '-D M' is specified, we retrieve photon trajectory data and store those to \c cfg.exportdebugdata and \c cfg.debugdatalen
-              */
+             * If '-D M' is specified, we retrieve photon trajectory data and store those to \c cfg.exportdebugdata and \c cfg.debugdatalen
+             */
             if (cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                 uint debugrec = 0;
                 CUDA_ASSERT(cudaMemcpyFromSymbol(&debugrec, gjumpdebug, sizeof(uint), 0, cudaMemcpyDeviceToHost));
@@ -3300,8 +3300,8 @@ are more than what your have specified (%d), please use the --maxjumpdebug optio
             }
 
             /**
-              * If photon detection is enabled and detectors are defined, we retrieve partial-path length data, among others, to \c cfg.exportdetected and \c detected
-              */
+             * If photon detection is enabled and detectors are defined, we retrieve partial-path length data, among others, to \c cfg.exportdetected and \c detected
+             */
 #ifdef SAVE_DETECTORS
 
             if (cfg->issavedet) {
@@ -3309,8 +3309,8 @@ are more than what your have specified (%d), please use the --maxjumpdebug optio
                 CUDA_ASSERT(cudaGetLastError());
 
                 /**
-                  * If photon seeds are needed for replay, here we retrieve the seed data
-                  */
+                 * If photon seeds are needed for replay, here we retrieve the seed data
+                 */
                 if (cfg->issaveseed) {
                     CUDA_ASSERT(cudaMemcpy(seeddata, gseeddata, sizeof(RandType)*cfg->maxdetphoton * RAND_BUF_LEN, cudaMemcpyDeviceToHost));
                 }
@@ -3403,7 +3403,7 @@ is more than what your have specified (%d), please use the -H option to specify 
         }
 
         /**
-        * If respin is used, copy the accumulated buffer in the 2nd half to the first half
+         * If respin is used, copy the accumulated buffer in the 2nd half to the first half
          */
         if (ABS(cfg->respin) > 1) { //copy the accumulated fields back
             memcpy(field, field + fieldlen, sizeof(float)*fieldlen);
@@ -3505,9 +3505,9 @@ is more than what your have specified (%d), please use the -H option to specify 
             cfg->energyabs += cfg->energytot - cfg->energyesc;
 
             /**
-            * If output is flux (J/(s*mm^2), default), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox*dt))
-            * If output is fluence (J/mm^2), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox))
-            */
+             * If output is flux (J/(s*mm^2), default), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox*dt))
+             * If output is fluence (J/mm^2), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox))
+             */
             if (cfg->outputtype == otFlux || cfg->outputtype == otFluence) {
                 scale[0] = cfg->unitinmm / (cfg->energytot * Vvox * cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
 
@@ -3563,8 +3563,8 @@ is more than what your have specified (%d), please use the -H option to specify 
             }
 
             /**
-            * In photon sharing mode, where multiple pattern sources are simulated, each solution is normalized separately
-            */
+             * In photon sharing mode, where multiple pattern sources are simulated, each solution is normalized separately
+             */
             if (cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
                 float scaleref = scale[0];
                 int psize = (int)cfg->srcparam1.w * (int)cfg->srcparam2.w;
@@ -3695,8 +3695,8 @@ is more than what your have specified (%d), please use the -H option to specify 
     #pragma omp barrier
 
     /**
-      * Simulation is complete, now we need clear up all GPU memory buffers
-      */
+     * Simulation is complete, now we need clear up all GPU memory buffers
+     */
     CUDA_ASSERT(cudaFree(gmedia));
     CUDA_ASSERT(cudaFree(gfield));
     CUDA_ASSERT(cudaFree(gPpos));
@@ -3739,13 +3739,13 @@ is more than what your have specified (%d), please use the -H option to specify 
     }
 
     /**
-      * The below call in theory is not needed, but it ensures the device is freed for other programs, especially on Windows
-      */
+     * The below call in theory is not needed, but it ensures the device is freed for other programs, especially on Windows
+     */
     CUDA_ASSERT(cudaDeviceReset());
 
     /**
-      * Lastly, free all host buffers, the simulation is complete.
-      */
+     * Lastly, free all host buffers, the simulation is complete.
+     */
     free(Ppos);
     free(Pdir);
     free(Plen);
