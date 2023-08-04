@@ -42,7 +42,7 @@ temp=`$MCX --bench cube60 --dumpjson - | grep '"Name":\s*"cubic60"'`
 if [ -z "$temp" ]; then echo "fail to dump json input shape from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting json input from builtin examples with volume data ... "
-temp=`$MCX --bench colin27 --dumpjson - | grep '"_ArrayZipData_":\s*"eJzs3Yl666oOBe'`
+temp=`$MCX --bench colin27 --dumpjson - | grep -o -E '"_ArrayZipData_":\s*"eAHs3YuCo7iSBNC'`
 if [ -z "$temp" ]; then echo "fail to dump json input with volume from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test default options ... "
@@ -50,7 +50,7 @@ temp=`$MCX --bench cube60 --dumpjson | sed -e 's/\n/|/g' | grep -o -E '"DoMismat
 if [ "$temp" -ne "14" ]; then echo "fail to verify default options "; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting builtin volume with gzip compression ... "
-temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA..z'`
+temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA/\+z'`
 if [ -z "$temp" ]; then echo "fail to set gzip compression for volume exporting"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test json input modifier --json ... "

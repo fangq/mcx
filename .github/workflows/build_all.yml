@@ -88,18 +88,6 @@ jobs:
           cuda: '9.2.148'
           method: 'network'
           sub-packages: '["nvcc"]'
-      - name: Install Zlib Dev (Windows Only)
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          curl.exe --retry 3 -kL https://www.bruot.org/hp/media/files/libraries/zlib_1_2_11_msvc2017_64.zip --output zlib.zip
-          unzip zlib.zip -d zlib
-          mv zlib/msvc2017_64/* zlib/
-          mv zlib/include/zlib/* zlib/include
-          mv zlib/lib/zlib/* zlib/lib
-          perl -pi -e 's/#if 1\s+.*HAVE_UNISTD_H.*/#if 0/g' zlib/include/zconf.h
-          echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $GITHUB_ENV
-          echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $GITHUB_ENV
-          rm zlib.zip
       - name: Link libgomp.a (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -138,7 +126,7 @@ jobs:
         run: |
           cd src
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
+            make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"'
             objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             which mex
@@ -155,13 +143,13 @@ jobs:
           cd src
           make clean
           if [[ "$RUNNER_OS" == "Linux" ]]; then
-            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -lz -Wl,-Bdynamic'
+            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib' ZLIBFLAG=''
+            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"'
             #objdump -p ../bin/mcx | grep "DLL Name:"
           fi
       - name: Build mcxstudio
@@ -203,7 +191,7 @@ jobs:
             cp -a src/mcstudio/mcxshow.app   bin
             cp -a src/mcstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp
+            rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/*
             upx/upx-4.0.2-win64/upx -9 bin/*
             rm -rf upx

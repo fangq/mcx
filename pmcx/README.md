@@ -5,7 +5,7 @@
 - Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu> 
 and Qianqian Fang (2019-2023) <q.fang at neu.edu>
 - License: GNU Public License V3 or later
-- Version: 0.0.14
+- Version: 0.0.15
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 
@@ -87,16 +87,6 @@ The NVIDIA GPU driver of the target system must support the selected CUDA toolki
   CMake is also widely available on package managers across all operating systems.
   Additionally, on Windows, make sure **Visual Studio's C++ CMake tools for Windows** is also installed by selecting its option
   during installation.
-* **Zlib Compression Development Headers**: On Linux, this is generally available via the built-in package manager. For 
-  example, on Debian-based distributions like Ubuntu it is available via ```apt``` under the name ```zlib1g-dev```. On
-  macOS, brew provides it under the name ```zlib```. No packaged versions of Zlib are available for windows, therefore it must be
-  downloaded manually and added to the CMake environment variables in your working Powershell session:
-  ```powershell
-    curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
-    Expand-Archive .\zlib.zip -DestinationPath zlib\
-    $env:CMAKE_INCLUDE_PATH=$PWD\zlib\include
-    $env:CMAKE_LIBRARY_PATH=$PWD\zlib\lib
-  ```
 
 ### Build Steps
 1. Ensure that ```cmake```, ```nvcc``` (NVIDIA CUDA Compiler) and the C/C++ compiler are all located over your ```PATH```.

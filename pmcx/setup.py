@@ -119,7 +119,7 @@ class CMakeBuild(build_ext):
 setup(
     name="pmcx",
     packages=['pmcx'],
-    version="0.0.14",
+    version="0.0.15",
     requires=['numpy'],
     license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",

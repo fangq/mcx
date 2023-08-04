@@ -14,12 +14,13 @@ find_package(ZLIB REQUIRED)
 option(STATIC_LIB "Build static library" ON)
 
 # C Options
-set(CMAKE_C_FLAGS "-g -Wall -O3 -fPIC")
+set(CMAKE_C_FLAGS "-g -Wall -O3 -fPIC -DNO_BLOSC2 -DNO_ZLIB -DNO_ZSTD -D_LARGEFILE64_SOURCE=1")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../)
 
 # Add include directories
 #include_directories(./)
 include_directories(lz4)
+include_directories(miniz)
 include_directories(easylzma)
 include_directories(easylzma/pavlov)
 
@@ -30,6 +31,8 @@ if(STATIC_LIB)
     zmatlib.c
     lz4/lz4.c
     lz4/lz4hc.c
+    miniz/miniz.c
+    miniz/miniz.h
     easylzma/compress.c
     easylzma/decompress.c
     easylzma/lzma_header.c
@@ -50,6 +53,8 @@ else()
     zmatlib.c
     lz4/lz4.c
     lz4/lz4hc.c
+    miniz/miniz.c
+    miniz/miniz.h
     easylzma/compress.c
     easylzma/decompress.c
     easylzma/lzma_header.c

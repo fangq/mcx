@@ -29,8 +29,8 @@ OUTPUT_DIR=$(MCXDIR)/bin
 DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
 DOXYCFG=mcx_doxygen.cfg
-ZMATLIB    :=libzmat.a
-ZLIBFLAG   :=-lz
+ZMATLIB    :=lib/libzmat.a
+ZLIBFLAG   :=
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
 CUDART=-lcudart
@@ -94,7 +94,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CPPFLAGS=-g
   CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
-  ZLIBFLAG?=-lzlib
+  ZLIBFLAG?=
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)

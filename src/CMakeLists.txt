@@ -15,7 +15,6 @@ cmake_minimum_required(VERSION 3.3)
 
 project(mcx)
 
-find_package(ZLIB REQUIRED)
 find_package(CUDA QUIET REQUIRED)
 
 find_package(OpenMP REQUIRED)
@@ -50,6 +49,7 @@ set(
 set(CMAKE_C_FLAGS "-g -Wall -std=c99 -fPIC")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../lib)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Add include directories
 include_directories(cjson ubj zmat zmat/easylzma)
@@ -91,7 +91,6 @@ target_link_libraries(
     mcx-exe
     mcx OpenMP::OpenMP_CXX
     zmat
-    ZLIB::ZLIB
     )
 
 if (BUILD_PYTHON)
