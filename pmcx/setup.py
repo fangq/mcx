@@ -119,7 +119,7 @@ class CMakeBuild(build_ext):
 setup(
     name="pmcx",
     packages=['pmcx'],
-    version="0.0.13",
+    version="0.0.14",
     requires=['numpy'],
     license='GPLv3+',
     author="Matin Raayai Ardakani, Qianqian Fang",
@@ -131,7 +131,7 @@ setup(
     url='https://github.com/fangq/mcx',
     download_url='http://mcx.space',
     keywords=['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
-                'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics'],
+                'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics', 'NVIDIA', 'CUDA'],
     ext_modules=[CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
