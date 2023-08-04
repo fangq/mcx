@@ -397,24 +397,18 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     float* dref = (float*)malloc(fieldlen * sizeof(float));
                     memcpy(dref, cfg.exportfield, fieldlen * sizeof(float));
 
-                    for (int ix = 0; ix < cfg.dim.x; ix++) {
-                        for (int iy = 0; iy < cfg.dim.y; iy++) {
-                            for (int iz = 0; iz < cfg.dim.z; iz++) {
-                                int voxelid = iz * (cfg.dim.x * cfg.dim.y) + iy * cfg.dim.x + ix;
-
-                                if (cfg.vol[voxelid]) {
-                                    for (int gate = 0; gate < highdim; gate++)
-                                        for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
-                                            dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
-                                        }
-                                } else {
-                                    for (int gate = 0; gate < highdim; gate++)
-                                        for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
-                                            dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = -dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid];
-                                            cfg.exportfield[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
-                                        }
+                    for (int voxelid = 0; voxelid < voxellen; voxelid++) {
+                        if (cfg.vol[voxelid]) {
+                            for (int gate = 0; gate < highdim; gate++)
+                                for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
+                                    dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
                                 }
-                            }
+                        } else {
+                            for (int gate = 0; gate < highdim; gate++)
+                                for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
+                                    dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = -dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid];
+                                    cfg.exportfield[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
+                                }
                         }
                     }
 
