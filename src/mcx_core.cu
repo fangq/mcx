@@ -2134,7 +2134,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         || (mediaid == 0 &&  // or if out of bbx or enters 0-voxel
                             (((isdet & 0xF) == bcUnknown && gcfg->doreflect) // if cfg.bc is "_", check cfg.isreflect
                              || (((isdet & 0xF) == bcReflect || (isdet & 0xF) == bcMirror)))))  // or if cfg.bc is 'r' or 'm'
-                        && n1 != ((gcfg->mediaformat < 100) ? (prop.n) : (gproperty[(mediaid > 0 && gcfg->mediaformat >= 100) ? 1 : mediaid].w))) {
+                        && (((isdet & 0xF) == bcMirror) || n1 != ((gcfg->mediaformat < 100) ? (prop.n) : (gproperty[(mediaid > 0 && gcfg->mediaformat >= 100) ? 1 : mediaid].w)))) {
                     float Rtotal = 1.f;
                     float cphi, sphi, stheta, ctheta, tmp0, tmp1;
 
@@ -2150,7 +2150,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     len = 1.f - tmp0 / tmp1 * sphi; //1-[n1/n2*sin(si)]^2 = cos(ti)^2
                     GPUDEBUG(("ref total ref=%f\n", len));
 
-                    if (len > 0.f) { //< if no total internal reflection
+                    if (len > 0.f && (isdet & 0xF) != bcMirror) { //< if no total internal reflection, or not mirror bc
                         ctheta = tmp0 * cphi * cphi + tmp1 * len;
                         stheta = 2.f * n1 * prop.n * cphi * sqrtf(len);
                         Rtotal = (ctheta - stheta) / (ctheta + stheta);
