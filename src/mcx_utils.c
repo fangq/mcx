@@ -3206,7 +3206,7 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
                 f2i.f = EPS;
             }
 
-            if (val[i] != val[i]) { /*if input is nan in continuous medium, convert to 0-voxel*/
+            if (val[i] != val[i] || f2i.i == SIGN_BIT) { /*if input is nan in continuous medium, convert to 0-voxel*/
                 f2i.i = 0;
             }
 
@@ -3269,6 +3269,10 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
 
             if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
                 f2h.i[0] = 0x00010000;
+            }
+
+            if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+                f2h.i[0] = 0;
             }
 
             cfg->vol[i] = f2h.i[0];
