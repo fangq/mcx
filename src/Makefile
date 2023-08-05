@@ -33,7 +33,7 @@ ZMATLIB    :=lib/libzmat.a
 ZLIBFLAG   :=
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
-CUDART=-lcudart
+CUDART=-lcudart_static
 CUOMPLINK=
 
 ARCH = $(shell uname -m)
@@ -69,6 +69,8 @@ CPPFLAGS+=-g -Wall #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
+MEXLINKLIBS=-L"\$$TMW_ROOT\$$MATLABROOT/extern/lib/\$$ARCH" -L"\$$TMW_ROOT\$$MATLABROOT/bin/\$$ARCH" -lmx -lmex -L$(CUDA_HOME)/lib $(CUDART)
+
 FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
@@ -97,6 +99,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   ZLIBFLAG?=
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
+  MEXLINKLIBS="\$$LINKLIBS"
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)
