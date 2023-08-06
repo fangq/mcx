@@ -33,8 +33,7 @@ ZMATLIB    :=lib/libzmat.a
 ZLIBFLAG   :=
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
-CUDART=-lcudart_static -ldl
-
+CUDART=-lcudart_static -ldl -lrt
 
 CUOMPLINK=
 
