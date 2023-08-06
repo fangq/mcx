@@ -33,7 +33,7 @@ ZMATLIB    :=lib/libzmat.a
 ZLIBFLAG   :=
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
-CUDART=-lcudart
+CUDART=-lcudart_static
 CUOMPLINK=
 
 ARCH = $(shell uname -m)
@@ -68,8 +68,6 @@ CPPFLAGS+=-g -Wall #-DNO_LZMA # -DUSE_OS_TIMER
 
 OBJSUFFIX=.o
 EXESUFFIX=
-
-MEXLINKLIBS=-L"\$$TMW_ROOT\$$MATLABROOT/extern/lib/\$$ARCH" -L"\$$TMW_ROOT\$$MATLABROOT/bin/\$$ARCH" -lmx -lmex -L$(CUDA_HOME)/lib $(CUDART)
 
 FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
 
@@ -118,6 +116,9 @@ else
      endif
   endif
 endif
+
+MEXLINKLIBS:=-L"\$$TMW_ROOT\$$MATLABROOT/extern/lib/\$$ARCH" -L"\$$TMW_ROOT\$$MATLABROOT/bin/\$$ARCH" -lmx -lmex $(LINKOPT)
+
 
 ifneq (,$(filter mex,$(MAKECMDGOALS)))
   FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
