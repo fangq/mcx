@@ -1986,7 +1986,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #endif
                         } else {
                             for (int i = 0; i < gcfg->srcnum; i++) {
-                                if (ppath[gcfg->w0offset + i] > 0.f) {
+                                if (fabs(ppath[gcfg->w0offset + i]) > 0.f) {
 #ifdef USE_DOUBLE
                                     atomicAdd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], weight * ppath[gcfg->w0offset + i]);
 #else
