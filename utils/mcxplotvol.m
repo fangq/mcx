@@ -107,8 +107,7 @@ switch(event.Key)
 end
 
 if(newframe>0 && newframe~=guidata.frame)
-    delete(guidata.handles);
-    guidata.handles=islicer(guidata.data(:,:,:,newframe));
+    guidata.handles=islicer(guidata.data(:,:,:,newframe), eye(4), guidata.handles, 1);
     xlabel(sprintf('x (frame=%d of %d)',newframe,size(guidata.data,4)));
     guidata.frame=newframe;
     set(gca,'UserData',guidata);
