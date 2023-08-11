@@ -635,7 +635,7 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
             unsigned int  i[2];
         } val; // c[7-6]: lower & upper label, c[5-3]: reference point, c[2-0]: normal vector
 
-        val.i[0] = media[idx1d + gcfg->dimlen.z];
+        val.i[0] = media[idx1d * 2 + 1];
         val.i[1] = mediaid & MED_MASK;
         nuvox->sv.lower = val.c[7];
         nuvox->sv.upper = val.c[6];
@@ -806,6 +806,7 @@ template <const int islabel, const int issvmc>
 __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uint media[], RandType t[RAND_BUF_LEN],
                                MCXsp* nuvox) {
     int count = 1, idx1d;
+    uint mediaid;
     short flipdir[4] = {0, 0, 0, -1};
     flipdir[0] = floorf(p->x);
     flipdir[1] = floorf(p->y);
@@ -815,7 +816,13 @@ __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uin
         if ((ushort)flipdir[0] < gcfg->maxidx.x && (ushort)flipdir[1] < gcfg->maxidx.y && (ushort)flipdir[2] < gcfg->maxidx.z) {
             idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
 
-            if (media[idx1d] & MED_MASK) { //< if enters a non-zero voxel
+            if (issvmc) {
+                mediaid = media[idx1d * 2];
+            } else {
+                mediaid = media[idx1d];
+            }
+
+            if (mediaid & MED_MASK) { //< if enters a non-zero voxel
                 GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n", p->x, p->y, p->z, v->x, v->y, v->z));
                 p->x -= v->x;
                 p->y -= v->y;
@@ -826,11 +833,16 @@ __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uin
                 f->t -= gcfg->minaccumtime;
                 idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
 
+                if (issvmc) {
+                    mediaid = media[idx1d * 2];
+                } else {
+                    mediaid = media[idx1d];
+                }
+
                 GPUDEBUG(("look for entry p0=[%f %f %f] rv=[%f %f %f]\n", p->x, p->y, p->z, rv->x, rv->y, rv->z));
                 count = 0;
-
                 while (!((ushort)flipdir[0] < gcfg->maxidx.x && (ushort)flipdir[1] < gcfg->maxidx.y
-                         && (ushort)flipdir[2] < gcfg->maxidx.z) || !(media[idx1d] & MED_MASK)) { // at most 3 times
+                         && (ushort)flipdir[2] < gcfg->maxidx.z) || !(mediaid & MED_MASK)) { // at most 3 times
                     float dist = hitgrid((float3*)p, (float3*)v, &rv->x, flipdir);
                     f->t += gcfg->minaccumtime * dist;
                     *((float3*)(p)) = float3(p->x + dist * v->x, p->y + dist * v->y, p->z + dist * v->z);
@@ -848,17 +860,25 @@ __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uin
                     }
 
                     idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
+
+                    if (issvmc) {
+                        mediaid = media[idx1d * 2];
+                    } else {
+                        mediaid = media[idx1d];
+                    }
+
                     GPUDEBUG(("entry p=[%f %f %f] flipdir=%d\n", p->x, p->y, p->z, flipdir[3]));
 
                     if (count++ > 3) {
                         GPUDEBUG(("fail to find entry point after 3 iterations, something is wrong, abort!!"));
                         break;
                     }
+
                 }
 
                 f->t = (gcfg->voidtime) ? f->t : 0.f;
                 float4 htime;
-                updateproperty<islabel, issvmc>((Medium*)&htime, media[idx1d], t, idx1d, media, (float3*)p, nuvox, flipdir);
+                updateproperty<islabel, issvmc>((Medium*)&htime, mediaid, t, idx1d, media, (float3*)p, nuvox, flipdir);
 
                 if (gcfg->isspecular && htime.w != gproperty[0].w) {
                     p->w *= 1.f - reflectcoeff(v, gproperty[0].w, htime.w, flipdir[3]);
@@ -1177,7 +1197,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        if (issvmc) {
+                            *mediaid = media[*idx1d * 2];
+                        } else {
+                            *mediaid = media[*idx1d];
+                        }
                     }
 
                     *rv = float3(rv->x + (gcfg->srcparam1.x + gcfg->srcparam2.x) * 0.5f,
@@ -1212,7 +1236,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        if (issvmc) {
+                            *mediaid = media[*idx1d * 2];
+                        } else {
+                            *mediaid = media[*idx1d];
+                        }
                     }
 
                     *rv = float3(rv->x + (gcfg->srcparam1.x + v2.x) * 0.5f,
@@ -1260,7 +1288,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        if (issvmc) {
+                            *mediaid = media[*idx1d * 2];
+                        } else {
+                            *mediaid = media[*idx1d];
+                        }
                     }
 
                     break;
@@ -1348,7 +1380,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        if (issvmc) {
+                            *mediaid = media[*idx1d * 2];
+                        } else {
+                            *mediaid = media[*idx1d];
+                        }
                     }
 
                     break;
@@ -1430,7 +1466,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
             if (idx >= 0) {
                 *idx1d = idx;
-                *mediaid = media[*idx1d];
+                if (issvmc) {
+                    *mediaid = media[*idx1d * 2];
+                } else {
+                    *mediaid = media[*idx1d];
+                }
             }
         }
 
@@ -1913,7 +1953,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             GPUDEBUG(("moving outside: [%f %f %f], idx1d [%d]->[out], bcflag %d\n", p.x, p.y, p.z, idx1d, isdet));
         } else {
             /** otherwise, read the optical property index */
-            mediaid = media[idx1d];
+            if (issvmc) {
+                mediaid = media[idx1d * 2];
+            } else {
+                mediaid = media[idx1d];
+            }
             isdet = mediaid & DET_MASK; /** upper 16bit is the mask of the covered detector */
             mediaid &= MED_MASK;       /** lower 16bit is the medium index */
         }
@@ -2053,7 +2097,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                 if ((ushort)flipdir[0] < gcfg->maxidx.x && (ushort)flipdir[1] < gcfg->maxidx.y && (ushort)flipdir[2] < gcfg->maxidx.z) {
                     idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
-                    mediaid = media[idx1d];
+                    if (issvmc) {
+                        mediaid = media[idx1d * 2];
+                    } else {
+                        mediaid = media[idx1d];
+                    }
                     isdet = mediaid & DET_MASK; /** upper 16bit is the mask of the covered detector */
                     mediaid &= MED_MASK;       /** lower 16bit is the medium index */
                     GPUDEBUG(("Cyclic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f] [%d %d %d]\n", flipdir[3], isdet, p.x, p.y, p.z, flipdir[0], flipdir[1], flipdir[2]));
@@ -2198,7 +2246,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         (flipdir[3] == 0) ? (flipdir[0] = floorf(p.x)) : ((flipdir[3] == 1) ? (flipdir[1] = floorf(p.y)) : (flipdir[2] = floorf(p.z))) ;
                         GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n", p.x, p.y, p.z, v.x, v.y, v.z));
                         idx1d = idx1dold;
-                        mediaid = (media[idx1d] & MED_MASK);
+                        if (issvmc) {
+                            mediaid = (media[idx1d * 2] & MED_MASK);
+                        } else {
+                            mediaid = (media[idx1d] & MED_MASK);
+                        }
                         updateproperty<islabel, issvmc>(&prop, mediaid, t, idx1d, media, (float3*)&p, &nuvox, flipdir); //< optical property across the interface
 
                         if (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower) == 0) { // terminate photon if photon is reflected to background medium
@@ -2935,7 +2987,12 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         param.mediaidorig = 0;
     } else {
         param.idx1dorig = (int(floorf(p0.z)) * dimlen.y + int(floorf(p0.y)) * dimlen.x + int(floorf(p0.x)));
-        param.mediaidorig = (cfg->vol[param.idx1dorig] & MED_MASK);
+        if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+            param.mediaidorig = (cfg->vol[param.idx1dorig * 2] & MED_MASK);
+            printf("param.mediaidorig = %u\n", param.mediaidorig);
+        } else {
+            param.mediaidorig = (cfg->vol[param.idx1dorig] & MED_MASK);
+        }
     }
 
     memcpy(&(param.bc), cfg->bc, 12);

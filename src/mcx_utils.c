@@ -1615,8 +1615,8 @@ void mcx_preprocess(Config* cfg) {
                 b2u.c[7] = val[(i << 3)]; // lower label and upper label
                 b2u.c[6] = val[(i << 3) + 1];
 
-                newvol[i] = b2u.i[1]; // first half: high 4 byte, second half: low 4 bytes
-                newvol[i + dimxyz] = b2u.i[0];
+                newvol[i * 2] = b2u.i[1]; // first half: high 4 byte, second half: low 4 bytes
+                newvol[i * 2 + 1] = b2u.i[0];
             }
 
             memcpy(cfg->vol, newvol, (dimxyz << 3));
