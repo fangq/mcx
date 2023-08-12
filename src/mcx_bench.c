@@ -410,7 +410,7 @@ MSTR(
 		"DoSpecular":	false,
 		"DebugFlag":	0,
 		"SaveDataMask":	0,
-		"OutputFormat":	"mc2",
+		"OutputFormat":	"jnii",
 		"OutputType":	"x"
 	},
 	"Forward":	{
