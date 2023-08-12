@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2022
+**  \copyright Qianqian Fang, 2009-2023
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -4904,7 +4904,7 @@ int mcx_lookupindex(char* key, const char* index) {
  */
 
 void mcx_version(Config* cfg) {
-    const char ver[] = "$Rev::      $v2022.10";
+    const char ver[] = "$Rev::      $ v2023";
     int v = 0;
     sscanf(ver, "$Rev::%x", &v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n", v);
@@ -4979,7 +4979,7 @@ void mcx_printheader(Config* cfg) {
     MCX_FPRINTF(cfg->flog, S_GREEN"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2022 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2023 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
@@ -4987,7 +4987,7 @@ void mcx_printheader(Config* cfg) {
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $v2022.10$Date::                       $ by $Author::             $\n\
+$Rev::      $ v2023  $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
 }
 

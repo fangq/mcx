@@ -4,7 +4,7 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9.9 (v2022.10)
+Version: 1.0 (v2023)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
