@@ -149,7 +149,7 @@ jobs:
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"'
+            make static
             #objdump -p ../bin/mcx | grep "DLL Name:"
           fi
       - name: Build mcxstudio
