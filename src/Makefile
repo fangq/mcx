@@ -118,7 +118,9 @@ else
   endif
 endif
 
-MEXLINKLIBS:=-L"\$$TMW_ROOT\$$MATLABROOT/extern/lib/\$$ARCH" -L"\$$TMW_ROOT\$$MATLABROOT/bin/\$$ARCH" -lmx -lmex $(LINKOPT)
+ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
+  MEXLINKLIBS:=-L"\$$TMW_ROOT\$$MATLABROOT/extern/lib/\$$ARCH" -L"\$$TMW_ROOT\$$MATLABROOT/bin/\$$ARCH" -lmx -lmex $(LINKOPT)
+endif
 
 
 ifneq (,$(filter mex,$(MAKECMDGOALS)))
