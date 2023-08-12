@@ -154,6 +154,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             mcx_cleargpuinfo(&gpuinfo);
             mcx_clearcfg(&cfg);
+        } else if (strcmp(shortcmd, "version") == 0) {
+            mcx_initcfg(&cfg);
+            mcx_printheader(&cfg);
+            mcx_clearcfg(&cfg);
+            plhs[0] = mxCreateString("v2023");
         }
 
         return;

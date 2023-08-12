@@ -477,11 +477,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
         auto buffer_info = f_style_volume.request();
 
-        if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) || (buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 4)) {
             throw py::value_error("the 'detpos' field must have 4 columns (x,y,z,radius)");
         }
 
-        mcx_config.detnum = buffer_info.shape.at(0);
+        mcx_config.detnum = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
 
         if (mcx_config.detpos) {
             free(mcx_config.detpos);
@@ -505,11 +505,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
         auto buffer_info = f_style_volume.request();
 
-        if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) || buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 4) {
             throw py::value_error("the 'prop' field must have 4 columns (mua,mus,g,n)");
         }
 
-        mcx_config.medianum = buffer_info.shape.at(0);
+        mcx_config.medianum = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
 
         if (mcx_config.prop) {
             free(mcx_config.prop);
@@ -537,11 +537,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             throw py::value_error("the 'polprop' field must a 2D array");
         }
 
-        if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5) || buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 5) {
             throw py::value_error("the 'polprop' field must have 5 columns (mua, radius, rho, n_sph,n_bkg)");
         }
 
-        mcx_config.polmedianum = buffer_info.shape.at(0);
+        mcx_config.polmedianum = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
 
         if (mcx_config.polprop) {
             free(mcx_config.polprop);

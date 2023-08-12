@@ -74,6 +74,7 @@ the verbose command line options in MCX.
      cfg: a struct, or struct array. Each element of cfg defines 
           the parameters associated with a simulation. 
           if cfg='gpuinfo': return the supported GPUs and their parameters,
+          if cfg='version': return the version of MCXLAB as a string,
           see sample script at the bottom
      option: (optional), options is a string, specifying additional options
           option='preview': this plots the domain configuration using mcxpreview(cfg)
