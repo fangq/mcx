@@ -1,4 +1,4 @@
 all:
 	./run_shapetest.sh
 clean:
-	rm *.mc2 *.txt *.mask *.nii
+	rm *.mc2 *.txt *.mask *.nii *.jnii *.jdat

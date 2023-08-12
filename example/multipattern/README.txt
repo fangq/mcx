@@ -10,7 +10,7 @@ count, 6x11 is the dimension for each 2D pattern. To use this feature in the com
 you must use a .json input file, like the one in this example, and set "SrcNum"  to an integer
 greater than 1, and the "SrcType" to "pattern" or "pattern3d";
 
-The output of the data in the .mc2 file is stored in a 5-D array: 3x60x60x60x1, where
+The output of the data in the .jnii file is stored in a 5-D array: 3x60x60x60x1, where
 3 is the pattern count, 60x60x60 is the 3D domain size, and 1 is the time-gate.
 
 In other words, when running multiple patterns using "Photon Sharing", one must pack the
