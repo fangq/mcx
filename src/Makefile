@@ -285,7 +285,7 @@ mcx_bench$(OBJSUFFIX): mcx_bench.c
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 $(ZMATLIB):
-	-$(MAKE) -C zmat lib AR=ar CPPOPT="$(DLLFLAG) -O3" USERLINKOPT=
+	-$(MAKE) -C zmat lib CC=nvcc AR=ar CPPOPT="$(DLLFLAG) -O3" USERLINKOPT=
 clean:
 	-$(MAKE) -C zmat clean
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)
