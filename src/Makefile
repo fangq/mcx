@@ -99,6 +99,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
   MEXLINKLIBS="\$$LINKLIBS"
+  export CC CXX
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)
@@ -285,7 +286,7 @@ mcx_bench$(OBJSUFFIX): mcx_bench.c
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
 $(ZMATLIB):
-	-$(MAKE) -C zmat lib CC=nvcc AR=ar CPPOPT="$(DLLFLAG) -O3" USERLINKOPT=
+	-$(MAKE) -C zmat lib AR=ar CPPOPT="$(DLLFLAG) -O3" USERLINKOPT=
 clean:
 	-$(MAKE) -C zmat clean
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)
