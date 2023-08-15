@@ -43,20 +43,20 @@ before_install:
   - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
 
 script:
-  - mv src pmcx
-  - cd pmcx/
-  - perl -pi -e 's/..\/src\//src\//g' setup.py
-  - python3 --version
-  - python3 -m pip install wheel
-  - python3 -m pip wheel . -w ../dist/ --verbose
-  - cd ..
-  - chmod +x .github/check-pypi-upload.sh
-  - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
-  - export UPLOAD_TO_PYPI=`cat ./pypi_upload | sed -e 's/.*=\([01]\)/\1/g'`
   - unlink $(which python)
   - ln -s $(which python3) /usr/local/bin/python
   - unlink $(which pip)
   - ln -s $(which pip3) /usr/local/bin/pip
+  - mv src pmcx
+  - cd pmcx/
+  - perl -pi -e 's/..\/src\//src\//g' setup.py
+  - python --version
+  - python -m pip install wheel
+  - python -m pip wheel . -w ../dist/ --verbose
+  - cd ..
+  - chmod +x .github/check-pypi-upload.sh
+  - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
+  - export UPLOAD_TO_PYPI=`cat ./pypi_upload | sed -e 's/.*=\([01]\)/\1/g'`
   - pip install --upgrade setuptools twine
   - mv pmcx pmcx0
   - mv pmcx0/* .
