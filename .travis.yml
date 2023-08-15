@@ -50,6 +50,9 @@ script:
   - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
   - unlink $(which python)
   - ln -s $(which python3) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(which pip3) /usr/local/bin/pip
+  - pip install --upgrade setuptools
 
 deploy:
   provider: pypi
