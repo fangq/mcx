@@ -26,6 +26,7 @@ before_install:
   - export HOMEBREW_NO_INSTALL_CLEANUP=1
   - brew install libomp
   - brew link --force libomp
+  - brew install python@3.10
   #- brew install python@3.8
   #- brew install python@3.9
   #- brew install python@3.10
@@ -54,6 +55,9 @@ script:
   - python -m pip install --upgrade pip
   - python -m pip install wheel
   - python -m pip wheel . -w ../dist/ --verbose
+  - brew install python@3.10
+  - python3 --version
+  - python3 -m pip wheel . -w ../dist/ --verbose
   - cd ..
   - chmod +x .github/check-pypi-upload.sh
   - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
