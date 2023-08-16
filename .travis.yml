@@ -51,6 +51,7 @@ script:
   - cd pmcx/
   - perl -pi -e 's/..\/src\//src\//g' setup.py
   - python --version
+  - python -m pip install --upgrade pip
   - python -m pip install wheel
   - python -m pip wheel . -w ../dist/ --verbose
   - cd ..
