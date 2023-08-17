@@ -21,10 +21,10 @@
 import numpy as np
 import re
 import sys
-
 # sys.path.insert(0, '../../src/build/')
 
 import pmcx
+
 
 
 def cwdref(detp, cfg):
@@ -77,7 +77,6 @@ def meanpath(detp, prop=None):
     output:
         avgpath: the average pathlength for each tissue type
     """
-
     if "unitinmm" in detp:
         unitinmm = detp["unitinmm"]
     else:
@@ -276,7 +275,6 @@ def tddiffusion(mua, musp, v, Reff, srcpos, detpos, t):
         ),
         detpos,
     )
-
     s = 4 * D * v * t
 
     # unit of phi:  1/(mm^2*s)
@@ -309,6 +307,7 @@ def getdistance(srcpos, detpos):
     srcnum = len(srcpos[:, 0])
     detnum = len(detpos[:, 0])
 
+    separation = np.zeros((detnum, srcnum))
 
     for s in range(srcnum):
         for r in range(detnum):
