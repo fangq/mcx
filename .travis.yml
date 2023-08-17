@@ -26,13 +26,8 @@ before_install:
   - export HOMEBREW_NO_INSTALL_CLEANUP=1
   - brew install libomp
   - brew link --force libomp
+  - pyenv update
   - pyenv install --list
-  #- brew install pyenv
-  #- brew install python@3.10
-  #- brew install python@3.8
-  #- brew install python@3.9
-  #- brew install python@3.10
-  #- brew install python@3.11
   ### Install CUDA
   - curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
   - unzip cuda.zip
@@ -56,6 +51,12 @@ script:
   - python --version
   - python -m pip install --upgrade pip
   - python -m pip install wheel
+  - python -m pip wheel . -w ../dist/ --verbose
+  - pyenv install 3.6-dev
+  - python -m pip wheel . -w ../dist/ --verbose
+  - pyenv install 3.8-dev
+  - python -m pip wheel . -w ../dist/ --verbose
+  - pyenv install 3.9-dev
   - python -m pip wheel . -w ../dist/ --verbose
   - cd ..
   - chmod +x .github/check-pypi-upload.sh
