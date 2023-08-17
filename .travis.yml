@@ -26,6 +26,7 @@ before_install:
   - export HOMEBREW_NO_INSTALL_CLEANUP=1
   - brew install libomp
   - brew link --force libomp
+  - pyenv install --list
   #- brew install pyenv
   #- brew install python@3.10
   #- brew install python@3.8
