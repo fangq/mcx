@@ -33,7 +33,7 @@ ZMATLIB    :=lib/libzmat.a
 ZLIBFLAG   :=
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
-CUDART=-lcudart_static -ldl -lrt
+CUDART?=-lcudart_static -ldl
 
 CUOMPLINK=
 
@@ -42,6 +42,10 @@ PLATFORM = $(shell uname -s)
 CUDA_HOME ?= /usr/local/cuda
 
 INCLUDEDIRS+=${INCLUDES} -Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
+
+ifneq ($(findstring Darwin,$(PLATFORM)), Darwin)
+  CUDART+=-lrt
+endif
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo

@@ -12,6 +12,7 @@ compiler:
 matrix:
   include:
     - os: osx
+      osx_image: xcode10.3
       python: "3.7"
       env:
       - BADGE=py3.7
@@ -27,6 +28,8 @@ before_install:
   - brew install libomp
   - brew link --force libomp
   - pyenv install --list
+  - pyenv install 3.6.0
+  - pyenv install 3.8.0
   ### Install CUDA
   - curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
   - unzip cuda.zip
@@ -51,11 +54,17 @@ script:
   - python -m pip install --upgrade pip
   - python -m pip install wheel
   - python -m pip wheel . -w ../dist/ --verbose
-  - pyenv install 3.6-dev
+  - pyenv global 3.6.0
+  - unlink $(which python)
+  - ln -s $(pyenv which python) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(pyenv which pip) /usr/local/bin/pip
   - python -m pip wheel . -w ../dist/ --verbose
-  - pyenv install 3.8-dev
-  - python -m pip wheel . -w ../dist/ --verbose
-  - pyenv install 3.9-dev
+  - pyenv global 3.8.0
+  - unlink $(which python)
+  - ln -s $(pyenv which python) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(pyenv which pip) /usr/local/bin/pip
   - python -m pip wheel . -w ../dist/ --verbose
   - cd ..
   - chmod +x .github/check-pypi-upload.sh
