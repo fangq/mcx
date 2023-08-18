@@ -458,7 +458,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     GET_SCALAR_FIELD(user_cfg, mcx_config, srcnum, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, omega, py::float_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, lambda, py::float_);
-    GET_VEC3_FIELD(user_cfg, mcx_config, srcpos, float);
+    GET_VEC34_FIELD(user_cfg, mcx_config, srcpos, float);
     GET_VEC34_FIELD(user_cfg, mcx_config, srcdir, float);
     GET_VEC3_FIELD(user_cfg, mcx_config, steps, float);
     GET_VEC3_FIELD(user_cfg, mcx_config, crop0, uint);
@@ -477,11 +477,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
         auto buffer_info = f_style_volume.request();
 
-        if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) || (buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 4)) {
             throw py::value_error("the 'detpos' field must have 4 columns (x,y,z,radius)");
         }
 
-        mcx_config.detnum = buffer_info.shape.at(0);
+        mcx_config.detnum = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
 
         if (mcx_config.detpos) {
             free(mcx_config.detpos);
@@ -505,11 +505,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
         auto buffer_info = f_style_volume.request();
 
-        if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) || buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 4) {
             throw py::value_error("the 'prop' field must have 4 columns (mua,mus,g,n)");
         }
 
-        mcx_config.medianum = buffer_info.shape.at(0);
+        mcx_config.medianum = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
 
         if (mcx_config.prop) {
             free(mcx_config.prop);
@@ -537,11 +537,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             throw py::value_error("the 'polprop' field must a 2D array");
         }
 
-        if (buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5) || buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 5) {
             throw py::value_error("the 'polprop' field must have 5 columns (mua, radius, rho, n_sph,n_bkg)");
         }
 
-        mcx_config.polmedianum = buffer_info.shape.at(0);
+        mcx_config.polmedianum = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
 
         if (mcx_config.polprop) {
             free(mcx_config.polprop);
@@ -1037,15 +1037,23 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             auto dref_array = py::array_t<float, py::array::f_style>(array_dims);
 
             if (mcx_config.issaveref) {
+                int highdim = field_dim[3] * field_dim[4] * field_dim[5];
+                int voxellen = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
                 auto* dref = static_cast<float*>(dref_array.mutable_data());
                 memcpy(dref, mcx_config.exportfield, field_len * sizeof(float));
 
-                for (int i = 0; i < field_len; i++) {
-                    if (dref[i] < 0.f) {
-                        dref[i] = -dref[i];
-                        mcx_config.exportfield[i] = 0.f;
+                for (int voxelid = 0; voxelid < voxellen; voxelid++) {
+                    if (mcx_config.vol[voxelid]) {
+                        for (int gate = 0; gate < highdim; gate++)
+                            for (int srcid = 0; srcid < mcx_config.srcnum; srcid++) {
+                                dref[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid] = 0.f;
+                            }
                     } else {
-                        dref[i] = 0.f;
+                        for (int gate = 0; gate < highdim; gate++)
+                            for (int srcid = 0; srcid < mcx_config.srcnum; srcid++) {
+                                dref[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid] = -dref[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid];
+                                mcx_config.exportfield[(gate * voxellen + voxelid) * mcx_config.srcnum + srcid] = 0.f;
+                            }
                     }
                 }
 
@@ -1136,7 +1144,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PMCX v2022.10\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
+            << "PMCX v2023\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
 }
 
 /**
@@ -1194,7 +1202,7 @@ py::list get_GPU_info() {
 }
 
 PYBIND11_MODULE(_pmcx, m) {
-    m.doc() = "PMCX: Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
+    m.doc() = "PMCX (v2023): Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
     m.def("run", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
     m.def("run", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,

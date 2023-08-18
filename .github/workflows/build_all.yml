@@ -14,7 +14,7 @@ jobs:
     name: Build All
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11, windows-2019]
+        os: [ubuntu-20.04, windows-2019]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -33,13 +33,13 @@ jobs:
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          brew install gcc@7
-          brew list gcc@7
-          echo '/usr/local/Cellar/gcc@7/7.5.0_4/bin/'  >> $GITHUB_ENV
-          ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc
-          ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/g++-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/g++
-          ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/cc
-          ln -s /usr/local/Cellar/gcc@7/7.5.0_4/bin/gcc-ar-7 /usr/local/Cellar/gcc@7/7.5.0_4/bin/ar
+          curl -o xcode.zip --insecure https://mcx.space/dev/ci/Xcode731.zip
+          unzip xcode.zip
+          sudo mv Xcode.app /Applications/Xcode_7.3.1.app/
+          sudo xcode-select -s /Applications/Xcode_7.3.1.app/Contents/Developer
+          xcode-select -p
+          curl -o libauto.dylib --insecure https://mcx.space/dev/ci/libauto.dylib
+          echo "DYLD_LIBRARY_PATH=$PWD:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
           brew install octave
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
@@ -72,11 +72,10 @@ jobs:
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda_8.zip
           unzip cuda.zip
           sudo mv cuda/ /usr/local/
           sudo chmod +x /usr/local/cuda/bin/*
-          sudo chmod +x /usr/local/cuda/nvvm/bin/*
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
@@ -89,18 +88,6 @@ jobs:
           cuda: '9.2.148'
           method: 'network'
           sub-packages: '["nvcc"]'
-      - name: Install Zlib Dev (Windows Only)
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          curl.exe --retry 3 -kL https://www.bruot.org/hp/media/files/libraries/zlib_1_2_11_msvc2017_64.zip --output zlib.zip
-          unzip zlib.zip -d zlib
-          mv zlib/msvc2017_64/* zlib/
-          mv zlib/include/zlib/* zlib/include
-          mv zlib/lib/zlib/* zlib/lib
-          perl -pi -e 's/#if 1\s+.*HAVE_UNISTD_H.*/#if 0/g' zlib/include/zconf.h
-          echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $GITHUB_ENV
-          echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $GITHUB_ENV
-          rm zlib.zip
       - name: Link libgomp.a (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -125,7 +112,7 @@ jobs:
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make oct CC=gcc CXX=g++ USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++ DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
+            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++-10 DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
             otool -L ../mcxlab/mcx.mex
           else
             ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
@@ -139,7 +126,7 @@ jobs:
         run: |
           cd src
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            make mex INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib'
+            make mex
             objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             which mex
@@ -156,14 +143,14 @@ jobs:
           cd src
           make clean
           if [[ "$RUNNER_OS" == "Linux" ]]; then
-            make AR=g++ BACKEND=cudastatic USERLINKOPT='libzmat.a -Wl,-Bstatic -lgomp -lz -Wl,-Bdynamic'
+            make AR=g++ BACKEND=cudastatic USERLINKOPT='lib/libzmat.a -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             make BACKEND=cudastatic CC=gcc-10 CXX=g++-10
             otool -L ../bin/mcx
           else
-            make static INCLUDES='-I"${{ env.CMAKE_INCLUDE_PATH }}"' LIBRARIES='../zlib/lib/zlibstatic.lib' ZLIBFLAG=''
-            #objdump -p ../bin/mcx | grep "DLL Name:"
+            make static
+            objdump -p ../bin/mcx.exe | grep "DLL Name:"
           fi
       - name: Build mcxstudio
         if: ${{ runner.os != 'macOS' }}
@@ -204,7 +191,7 @@ jobs:
             cp -a src/mcstudio/mcxshow.app   bin
             cp -a src/mcstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            rm -rf octave zlib cuda_installer* bin/mcx.lib bin/mcx.exp
+            rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/*
             upx/upx-4.0.2-win64/upx -9 bin/*
             rm -rf upx

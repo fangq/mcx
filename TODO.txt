@@ -2,10 +2,13 @@
 
 == Short term projects ==
 
-*. support user defined phase functions [opened by FangQ, 2018/01/28]
+*. support user-defined photon emission angular distribution [https://github.com/fangq/mcx/issues/129]
+*. support simulations of multiple sources of the same type [https://github.com/fangq/mcx/issues/163]
 *. support anisotropic voxels [opened by FangQ, 2018/01/28]
 *. support non-uniform grid [opened by FangQ, 2018/01/28]
 *. support dual-grid MMC like ray-tracing [opened by FangQ, 2018/01/28]
+*. support mua/mus/g/n 8-byte continuous media format [opened by FangQ, 2023/08/12]
+*. support TPM based continuous media [opened by FangQ, 2023/08/12]
 
 == Completed ==
 
@@ -25,8 +28,9 @@
 [done] *. OpenCL variant of MCX [2009/10/21, FangQ] [2010/02/10, FangQ]
 [dropped] *. Brook+ variant of MCX [2009/10/21, FangQ]
 [dropped] *. support ini based input file format (or perl script format) [2009/04/30, FangQ]
-[dropped] *. support NIFTI input & output [2009/04/30, FangQ]
+[done] *. support NIFTI input & output [2009/04/30, FangQ]
 [done] *. support more complicated source forms [2009/09/30, FangQ], [2013/09/18, FangQ]
 [done] *. precise ray-tracing in a grid space [2012/01/11, FangQ]
 [done] *. multiple-GPU support [2009/09/30, FangQ]
 [dropped] study the round-off errors for the two RNGs [2009/04/30, FangQ]
+[done] *. support user defined phase functions [opened by FangQ, 2018/01/28] [https://github.com/fangq/mcx/issues/13]

@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2022
+**  \copyright Qianqian Fang, 2009-2023
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
@@ -410,7 +410,7 @@ MSTR(
 		"DoSpecular":	false,
 		"DebugFlag":	0,
 		"SaveDataMask":	0,
-		"OutputFormat":	"mc2",
+		"OutputFormat":	"jnii",
 		"OutputType":	"x"
 	},
 	"Forward":	{

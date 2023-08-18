@@ -38,6 +38,6 @@ from .utils import detweight, cwdref
 # from .files import loadmc2, loadmch, load, save
 from .bench import bench
 
-__version__ = "0.0.13"
+__version__ = "0.0.15"
 
 __all__ = ("gpuinfo", "run", "bench", "detweight", "cwdref")

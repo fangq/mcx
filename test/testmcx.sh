@@ -42,15 +42,15 @@ temp=`$MCX --bench cube60 --dumpjson - | grep '"Name":\s*"cubic60"'`
 if [ -z "$temp" ]; then echo "fail to dump json input shape from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting json input from builtin examples with volume data ... "
-temp=`$MCX --bench colin27 --dumpjson - | grep '"_ArrayZipData_":\s*"eJzs3Yl666oOBe'`
+temp=`$MCX --bench colin27 --dumpjson - | grep -o -E '"_ArrayZipData_":\s*"eAHs3YuCo7iSBNC'`
 if [ -z "$temp" ]; then echo "fail to dump json input with volume from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test default options ... "
-temp=`$MCX --bench cube60 --dumpjson | sed -e 's/\n/|/g' | grep -o -E '"DoMismatch":\s*false,|\s*"DoSaveVolume":\s*true,|\s*"DoNormalize":\s*true,|\s*"DoPartialPath":\s*true,|\s*"DoSaveRef":\s*false,|\s*"DoSaveExit":\s*false,|\s*"DoSaveSeed":\s*false,|\s*"DoAutoThread":\s*true,|\s*"DoDCS":\s*false,|\s*"DoSpecular":\s*false,|\s*"DebugFlag":\s*0,|\s*"SaveDataMask":\s*5,|\s*"OutputFormat":\s*"mc2",|\s*"OutputType":\s*"x"' | wc -l`
+temp=`$MCX --bench cube60 --dumpjson | sed -e 's/\n/|/g' | grep -o -E '"DoMismatch":\s*false,|\s*"DoSaveVolume":\s*true,|\s*"DoNormalize":\s*true,|\s*"DoPartialPath":\s*true,|\s*"DoSaveRef":\s*false,|\s*"DoSaveExit":\s*false,|\s*"DoSaveSeed":\s*false,|\s*"DoAutoThread":\s*true,|\s*"DoDCS":\s*false,|\s*"DoSpecular":\s*false,|\s*"DebugFlag":\s*0,|\s*"SaveDataMask":\s*5,|\s*"OutputFormat":\s*"jnii",|\s*"OutputType":\s*"x"' | wc -l`
 if [ "$temp" -ne "14" ]; then echo "fail to verify default options "; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting builtin volume with gzip compression ... "
-temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA..z'`
+temp=`$MCX --bench colin27 --dumpjson - --zip gzip | grep -o -E '"_ArrayZipData_":\s*"H4sIAAAAAAAA/\+z'`
 if [ -z "$temp" ]; then echo "fail to set gzip compression for volume exporting"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test json input modifier --json ... "
@@ -111,12 +111,12 @@ if [ -z "$temp" ]; then echo "fail to save photon seeds"; fail=$((fail+1)); else
 
 echo "test photon replay flag -E ... "
 rm -rf replaytest.*
-temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest.mch -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'detected.*[0-9.]+ photons' | sort | uniq -c | grep '^\s*2\s*detected'`
+temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest_detp.jdat -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'detected\s+[0-9]+ photons' | sort | uniq -c | grep '^\s*2\s*detected'`
 if [ -z "$temp" ]; then echo "fail to run photon replay -E"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon replay ... "
 rm -rf replaytest.*
-temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest.mch -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'absorbed:.*3[0-8]\.[0-9]+%'`
+temp=`($MCX --bench cube60 -s replaytest -q 1 -S 0 $PARAM && $MCX --bench cube60 -E replaytest_detp.jdat -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'absorbed:.*3[0-8]\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run photon replay"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test heterogeneous domain ... "

@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2022
+**  \copyright Qianqian Fang, 2009-2023
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -163,6 +163,9 @@ const char saveflag[] = {'D', 'S', 'P', 'M', 'X', 'V', 'W', 'I', '\0'};
  * nii: output fluence in nii format
  * hdr: output volume in Analyze hdr/img format
  * ubj: output volume in unversal binary json format (not implemented)
+ * tx3: a simple 3D texture format
+ * jnii: NeuroJSON JNIfTI format (JSON compatible)
+ * bnii: NeuroJSON binary JNIfTI format (binary JSON format BJData compatible)
  */
 
 const char* outputformat[] = {"mc2", "nii", "hdr", "ubj", "tx3", "jnii", "bnii", ""};
@@ -310,10 +313,11 @@ void mcx_initcfg(Config* cfg) {
     cfg->replaydet = 0;
     cfg->seedfile[0] = '\0';
     cfg->outputtype = otFlux;
-    cfg->outputformat = ofMC2;
+    cfg->outputformat = ofJNifti;
     cfg->detectedcount = 0;
     cfg->runtime = 0;
     cfg->faststep = 0;
+    cfg->srcpos.w = 1.f;
     cfg->srcdir.w = 0.f;
     cfg->issaveref = 0;
     cfg->isspecular = 0;
@@ -2480,6 +2484,8 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->srcpos.z = subitem->child->next->next->valuedouble;
             }
 
+            cfg->srcpos.w = FIND_JSON_KEY("Weight", "Optode.Source.Weight", src, 1.f, valuedouble);
+
             subitem = FIND_JSON_OBJ("Dir", "Optode.Source.Dir", src);
 
             if (subitem) {
@@ -2758,7 +2764,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         }
 
         if (!cfg->outputformat) {
-            cfg->outputformat = mcx_keylookup((char*)FIND_JSON_KEY("OutputFormat", "Session.OutputFormat", Session, "mc2", valuestring), outputformat);
+            cfg->outputformat = mcx_keylookup((char*)FIND_JSON_KEY("OutputFormat", "Session.OutputFormat", Session, "jnii", valuestring), outputformat);
         }
 
         if (cfg->outputformat < 0) {
@@ -3203,7 +3209,7 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
                 f2i.f = EPS;
             }
 
-            if (val[i] != val[i]) { /*if input is nan in continuous medium, convert to 0-voxel*/
+            if (val[i] != val[i] || f2i.i == SIGN_BIT) { /*if input is nan in continuous medium, convert to 0-voxel*/
                 f2i.i = 0;
             }
 
@@ -3266,6 +3272,10 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
 
             if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
                 f2h.i[0] = 0x00010000;
+            }
+
+            if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+                f2h.i[0] = 0;
             }
 
             cfg->vol[i] = f2h.i[0];
@@ -4897,7 +4907,7 @@ int mcx_lookupindex(char* key, const char* index) {
  */
 
 void mcx_version(Config* cfg) {
-    const char ver[] = "$Rev::      $v2022.10";
+    const char ver[] = "$Rev::      $ v2023";
     int v = 0;
     sscanf(ver, "$Rev::%x", &v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n", v);
@@ -4972,7 +4982,7 @@ void mcx_printheader(Config* cfg) {
     MCX_FPRINTF(cfg->flog, S_GREEN"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2022 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2023 Qianqian Fang <q.fang at neu.edu>          #\n\
 #                             http://mcx.space/                               #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
@@ -4980,7 +4990,7 @@ void mcx_printheader(Config* cfg) {
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $v2022.10$Date::                       $ by $Author::             $\n\
+$Rev::      $ v2023  $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
 }
 
@@ -5122,7 +5132,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
  -H [1000000] (--maxdetphoton) max number of detected photons\n\
  -S [1|0]      (--save2pt)     1 to save the flux field; 0 do not save\n\
- -F [mc2|...] (--outputformat) fluence data output format:\n\
+ -F [jnii|...](--outputformat) fluence data output format:\n\
                                mc2 - MCX mc2 format (binary 32bit float)\n\
                                jnii - JNIfTI format (https://neurojson.org)\n\
                                bnii - Binary JNIfTI (https://neurojson.org)\n\

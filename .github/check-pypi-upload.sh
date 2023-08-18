@@ -1,6 +1,6 @@
 #!/bin/bash
 PMCX_BUILD_VERSION=$(awk -F"-" '{ print $2 }' <<< $(ls dist/ | head -1))
-PMCX_VERSIONS_STRING=$(pip index versions pmcx | grep versions:)
+PMCX_VERSIONS_STRING=$(python3 -m pip index versions pmcx | grep versions:)
 PMCX_VERSIONS_STRING=${PMCX_VERSIONS_STRING#*:}
 UPLOAD_TO_PYPI=1
 while IFS=', ' read -ra PMCX_VERSIONS_ARRAY; do

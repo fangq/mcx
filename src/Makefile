@@ -16,7 +16,7 @@ endif
 
 MKDIR      := mkdir
 
-CUDACC=nvcc
+CUDACC?=nvcc
 MEX=mex
 AR=$(CXX)
 
@@ -29,11 +29,12 @@ OUTPUT_DIR=$(MCXDIR)/bin
 DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
 DOXYCFG=mcx_doxygen.cfg
-ZMATLIB    :=libzmat.a
-ZLIBFLAG   :=-lz
+ZMATLIB    :=lib/libzmat.a
+ZLIBFLAG   :=
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
-CUDART=-lcudart
+CUDART?=-lcudart_static -ldl
+
 CUOMPLINK=
 
 ARCH = $(shell uname -m)
@@ -41,6 +42,10 @@ PLATFORM = $(shell uname -s)
 CUDA_HOME ?= /usr/local/cuda
 
 INCLUDEDIRS+=${INCLUDES} -Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
+
+ifneq ($(findstring Darwin,$(PLATFORM)), Darwin)
+  CUDART+=-lrt
+endif
 
 ifeq ($(BACKEND),ocelot)
   LINKOPT=-L/usr/local/lib `OcelotConfig -l` -ltinfo
@@ -94,9 +99,11 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CPPFLAGS=-g
   CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
-  ZLIBFLAG?=-lzlib
-  ZMATLIB    :=zmat/zmatlib.obj zmat/lz4/lz4.obj zmat/lz4/lz4hc.obj zmat/easylzma/*.obj zmat/easylzma/pavlov/*.obj
+  ZLIBFLAG?=
+  ZMATLIB    :=zmat/zmatlib.o zmat/miniz/*.o zmat/lz4/lz4.o zmat/lz4/lz4hc.o zmat/easylzma/*.o zmat/easylzma/pavlov/*.o
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
+  MEXLINKLIBS="\$$LINKLIBS"
+  export CC CXX
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
   CPPOPT+=$(OMP)
@@ -115,6 +122,11 @@ else
      endif
   endif
 endif
+
+ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
+  MEXLINKLIBS:=-L"\$$TMW_ROOT\$$MATLABROOT/extern/lib/\$$ARCH" -L"\$$TMW_ROOT\$$MATLABROOT/bin/\$$ARCH" -lmx -lmex $(LINKOPT)
+endif
+
 
 ifneq (,$(filter mex,$(MAKECMDGOALS)))
   FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx_bench mcx_mie cjson/cJSON
@@ -208,7 +220,7 @@ static:     CUOMPLINK=-Xcompiler
 static:     LINKOPT=$(CUDA_STATIC)
 
 fermimex:   AR=$(MEX)
-fermimex:   LINKOPT+= CXXFLAGS='$$CXXFLAGS -g -DSAVE_DETECTORS -DMCX_CONTAINER -DMATLAB_MEX_FILE $(OMP) $(MEXCCOPT) $(USERCCOPT)' LDFLAGS='-L$$TMW_ROOT$$MATLABROOT/sys/os/$$ARCH $$LDFLAGS $(OMP) $(USERLINKOPT)'
+fermimex:   LINKOPT+= CXXFLAGS='$$CXXFLAGS -g -DSAVE_DETECTORS -DMCX_CONTAINER -DMATLAB_MEX_FILE $(OMP) $(MEXCCOPT) $(USERCCOPT)' LINKLIBS="$(MEXLINKLIBS) $(MEXLINKOPT)" CXXLIBS='$$CXXLIBS $(MEXLINKOPT)' LDFLAGS='-L$$TMW_ROOT$$MATLABROOT/sys/os/$$ARCH $$LDFLAGS $(OMP) $(USERLINKOPT)'
 oct fermimex fermioct:    OUTPUT_DIR=../mcxlab
 fermimex:   BINARY=mcx
 fermioct:   BINARY=mcx.mex
@@ -216,7 +228,7 @@ fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER -
 fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER -DMATLAB_MEX_FILE
 fermimex:   LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS $(NVCCOMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='$(NVCCOMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS)' XTRA_CFLAGS='$(NVCCOMP)' XTRA_CXXFLAGS='$(NVCCOMP)'  mkoctfile -v
+fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS $(NVCCOMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='$(NVCCOMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS) $(MEXLINKOPT)' XTRA_CFLAGS='$(NVCCOMP)' XTRA_CXXFLAGS='$(NVCCOMP)'  mkoctfile -v
 fermioct:   BINARY=mcx.mex
 fermioct:   LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 

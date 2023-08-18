@@ -71,7 +71,7 @@ end
 cfg.prop=squeeze(cell2mat(struct2cell(json.Domain.Media)))';
 
 if(isfield(json,'Shapes'))
-    cfg.shapes=savejson('',json.Shapes);
+    cfg.shapes=savejson('Shapes',json.Shapes);
 end
 
 if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
@@ -109,7 +109,7 @@ if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
         case '.nii'
             cfg.vol=mcxloadnii(json.Domain.VolumeFile);
     end
-else
+elseif(~isfield(cfg,'shapes'))
     cfg.vol=uint8(zeros(60,60,60));
 end
 
@@ -124,6 +124,13 @@ cfg=copycfg(cfg,'issaveseed',json.Session,'DoSaveSeed');
 cfg=copycfg(cfg,'isnormalize',json.Session,'DoNormalize');
 cfg=copycfg(cfg,'outputformat',json.Session,'OutputFormat');
 cfg=copycfg(cfg,'outputtype',json.Session,'OutputType');
+if(length(cfg.outputtype)==1)
+    otypemap=struct('x', 'flux', 'f', 'fluence', 'e', 'energy', 'j', 'jacobian', 'p', 'nscat', 'm', 'wm', 'r', 'rf', 'l', 'length');
+    if(~isfield(otypemap, cfg.outputtype))
+        error('output type %s is not supported', cfg.outputtype);
+    end
+    cfg.outputtype=otypemap.(cfg.outputtype);
+end
 cfg=copycfg(cfg,'debuglevel',json.Session,'Debug');
 cfg=copycfg(cfg,'autopilot',json.Session,'DoAutoThread');
 cfg=copycfg(cfg,'autopilot',json.Session,'DoAutoThread');

@@ -32,6 +32,10 @@ if(~isstruct(cfg))
     error('cfg must be a struct or struct array');
 end
 
+if(~exist('latticegrid','file'))
+    error('you must install the iso2mesh toolbox from https://github.com/fangq/iso2mesh first');
+end
+
 len=length(cfg);
 if(nargout>0)
     hs=cell(len,1);

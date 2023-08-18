@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2022
+**  \copyright Qianqian Fang, 2009-2023
 **
 **  \section sref Reference:
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -154,6 +154,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             mcx_cleargpuinfo(&gpuinfo);
             mcx_clearcfg(&cfg);
+        } else if (strcmp(shortcmd, "version") == 0) {
+            mcx_initcfg(&cfg);
+            mcx_printheader(&cfg);
+            mcx_clearcfg(&cfg);
+            plhs[0] = mxCreateString("v2023");
         }
 
         return;
@@ -312,7 +317,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             /** if 5th output presents, output the photon trajectory data */
             if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
-                int outputidx=(cfg.debuglevel & MCX_DEBUG_MOVE_ONLY) ? 0 : 4;
+                int outputidx = (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY) ? 0 : 4;
                 fielddim[0] = MCX_DEBUG_REC_LEN;
                 fielddim[1] = cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
                 fielddim[2] = 0;
@@ -392,15 +397,23 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
 
                 if (cfg.issaveref) {
+                    int highdim = fielddim[3] * fielddim[4] * fielddim[5];
+                    int voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
                     float* dref = (float*)malloc(fieldlen * sizeof(float));
                     memcpy(dref, cfg.exportfield, fieldlen * sizeof(float));
 
-                    for (int i = 0; i < fieldlen; i++) {
-                        if (dref[i] < 0.f) {
-                            dref[i] = -dref[i];
-                            cfg.exportfield[i] = 0.f;
+                    for (int voxelid = 0; voxelid < voxellen; voxelid++) {
+                        if (cfg.vol[voxelid]) {
+                            for (int gate = 0; gate < highdim; gate++)
+                                for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
+                                    dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
+                                }
                         } else {
-                            dref[i] = 0.f;
+                            for (int gate = 0; gate < highdim; gate++)
+                                for (int srcid = 0; srcid < cfg.srcnum; srcid++) {
+                                    dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = -dref[(gate * voxellen + voxelid) * cfg.srcnum + srcid];
+                                    cfg.exportfield[(gate * voxellen + voxelid) * cfg.srcnum + srcid] = 0.f;
+                                }
                         }
                     }
 
@@ -551,7 +564,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     GET_ONE_FIELD(cfg, omega)
     GET_ONE_FIELD(cfg, issave2pt)
     GET_ONE_FIELD(cfg, lambda)
-    GET_VEC3_FIELD(cfg, srcpos)
+    GET_VEC34_FIELD(cfg, srcpos)
     GET_VEC34_FIELD(cfg, srcdir)
     GET_VEC3_FIELD(cfg, steps)
     GET_VEC3_FIELD(cfg, crop0)
@@ -657,7 +670,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                         f2i.f = EPS;
                     }
 
-                    if (val[i] != val[i]) { /*if input is nan in continuous medium, convert to 0-voxel*/
+                    if (val[i] != val[i] || f2i.i == SIGN_BIT) { /*if input is nan in continuous medium, convert to 0-voxel*/
                         f2i.i = 0;
                     }
 
@@ -720,6 +733,10 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
 
                     if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
                         f2h.i[0] = 0x00010000;
+                    }
+
+                    if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
+                        f2h.i[0] = 0;
                     }
 
                     cfg->vol[i] = f2h.i[0];
@@ -1337,7 +1354,7 @@ extern "C" int mcx_throw_exception(const int id, const char* msg, const char* fi
  */
 
 void mcxlab_usage() {
-    printf("MCXLAB v2022.10\nUsage:\n    [flux,detphoton,vol,seeds]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+    printf("MCXLAB v2023\nUsage:\n    [flux,detphoton,vol,seeds]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
 }
 
 /**
