@@ -12,7 +12,6 @@ compiler:
 matrix:
   include:
     - os: osx
-      osx_image: xcode10.3
       python: "3.7"
       env:
       - BADGE=py3.7
