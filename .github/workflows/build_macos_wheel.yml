@@ -39,9 +39,11 @@ jobs:
           curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
           tar zxf Xcode10.app.tar.gz
           rm -rf $PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift*
-          sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
-          echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
-          echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          sudo mv /Applications/Xcode.app /Applications/Xcode.app_new
+          sudo mv Xcode.app /Applications
+          #sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
+          #echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
+          #echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
       - name: Install CUDA
         run: |
