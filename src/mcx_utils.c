@@ -4907,7 +4907,7 @@ int mcx_lookupindex(char* key, const char* index) {
  */
 
 void mcx_version(Config* cfg) {
-    const char ver[] = "$Rev::      $ "MCX_VERSION;
+    const char ver[] = "$Rev::      $ " MCX_VERSION;
     int v = 0;
     sscanf(ver, "$Rev::%x", &v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n", v);
@@ -4994,7 +4994,7 @@ void mcx_printheader(Config* cfg) {
 # MCX proudly developed human-readable JSON-based data formats for easy reuse,#\n\
 #  Please consider using JSON (https://neurojson.org/) for your research data #\n\
 ###############################################################################\n\
-$Rev::      $ "MCX_VERSION"  $Date::                       $ by $Author::             $\n\
+$Rev::      $ " MCX_VERSION "  $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
 }
 

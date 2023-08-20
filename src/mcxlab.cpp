@@ -1354,7 +1354,7 @@ extern "C" int mcx_throw_exception(const int id, const char* msg, const char* fi
  */
 
 void mcxlab_usage() {
-    printf("MCXLAB ("MCX_VERSION")\nUsage:\n    [flux,detphoton,vol,seeds,traj]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+    printf("MCXLAB (" MCX_VERSION ")\nUsage:\n    [flux,detphoton,vol,seeds,traj]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
 }
 
 /**

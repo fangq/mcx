@@ -1144,7 +1144,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PMCX ("MCX_VERSION")\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
+            << "PMCX (" MCX_VERSION ")\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
 }
 
 /**
@@ -1210,7 +1210,7 @@ py::list get_GPU_info() {
 }
 
 PYBIND11_MODULE(_pmcx, m) {
-    m.doc() = "PMCX ("MCX_VERSION"): Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
+    m.doc() = "PMCX (" MCX_VERSION "): Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
     m.def("run", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
     m.def("run", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
