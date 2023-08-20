@@ -75,7 +75,12 @@ script:
   - python -m pip install wheel
   - python -m pip wheel . -w ../dist/ --verbose
   ### checking pypi upload status
+  - unlink $(which python)
+  - ln -s $(which python3) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(which pip3) /usr/local/bin/pip
   - cd ..
+  - ls -lt dist/*
   - chmod +x .github/check-pypi-upload.sh
   - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
   - export UPLOAD_TO_PYPI=`cat ./pypi_upload | sed -e 's/.*=\([01]\)/\1/g'`
