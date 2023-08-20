@@ -45,15 +45,6 @@ script:
   - mv src pmcx
   - cd pmcx/
   - perl -pi -e 's/..\/src\//src\//g' setup.py
-  ### build module with python 3.7
-  - unlink $(which python)
-  - ln -s $(which python3) /usr/local/bin/python
-  - unlink $(which pip)
-  - ln -s $(which pip3) /usr/local/bin/pip
-  - python --version
-  - python -m pip install --upgrade pip
-  - python -m pip install wheel
-  - python -m pip wheel . -w ../dist/ --verbose
   ### build module with python 3.6
   - pyenv global 3.6.0
   - unlink $(which python)
@@ -74,11 +65,16 @@ script:
   - python -m pip install --upgrade pip
   - python -m pip install wheel
   - python -m pip wheel . -w ../dist/ --verbose
-  ### checking pypi upload status
+  ### build module with python 3.7
   - unlink $(which python)
   - ln -s $(which python3) /usr/local/bin/python
   - unlink $(which pip)
   - ln -s $(which pip3) /usr/local/bin/pip
+  - python --version
+  - python -m pip install --upgrade pip
+  - python -m pip install wheel
+  - python -m pip wheel . -w ../dist/ --verbose
+  ### checking pypi upload status
   - cd ..
   - ls -lt dist/*
   - chmod +x .github/check-pypi-upload.sh

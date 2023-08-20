@@ -36,8 +36,10 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Select Supported XCode Version + Link OpenMP
         run: |
-          sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer/
-          echo "SDKROOT=/Applications/Xcode_10.3.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
+          tar zxvf Xcode10.app.tar.gz
+          sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
+          echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
       - name: Install CUDA
         run: |
