@@ -158,7 +158,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             mcx_initcfg(&cfg);
             mcx_printheader(&cfg);
             mcx_clearcfg(&cfg);
-            plhs[0] = mxCreateString("v2023");
+            plhs[0] = mxCreateString(MCX_VERSION);
         }
 
         return;
@@ -1354,7 +1354,7 @@ extern "C" int mcx_throw_exception(const int id, const char* msg, const char* fi
  */
 
 void mcxlab_usage() {
-    printf("MCXLAB v2023\nUsage:\n    [flux,detphoton,vol,seeds]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+    printf("MCXLAB ("MCX_VERSION")\nUsage:\n    [flux,detphoton,vol,seeds,traj]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
 }
 
 /**

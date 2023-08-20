@@ -31,6 +31,9 @@
 #ifndef _MCEXTREME_CONSTANT_H
 #define _MCEXTREME_CONSTANT_H
 
+#define MCX_VERSION        "v2023"
+#define MCX_VERSION_MAJOR  2
+#define MCX_VERSION_MINOR  0
 
 #define ONE_PI             3.1415926535897932f     /**< pi */
 #define TWO_PI             6.28318530717959f       /**< 2*pi */
@@ -122,8 +125,10 @@
     #define S_RED     "\x1b[31m"
     #define S_GREEN   "\x1b[32m"
     #define S_YELLOW  "\x1b[33m"
+    #define B_WHITE   "\x1b[100m"
     #define S_BLUE    "\x1b[34m"
     #define S_MAGENTA "\x1b[35m"
+    #define L_MAGENTA "\x1b[95m"
     #define S_CYAN    "\x1b[36m"
     #define S_BOLD    "\x1b[1m"
     #define S_ITALIC  "\x1b[3m"
@@ -132,8 +137,10 @@
     #define S_RED
     #define S_GREEN
     #define S_YELLOW
+    #define B_WHITE
     #define S_BLUE
     #define S_MAGENTA
+    #define L_MAGENTA
     #define S_CYAN
     #define S_BOLD
     #define S_ITALIC

@@ -1,6 +1,6 @@
 # Copyright (c) 2023 Kuznetsov Ilya
 # Copyright (c) 2023 Qianqian Fang (q.fang <at> neu.edu)
-# Copyright (c) 2023 Shijie Yan (yan.shiji <at> northeastern.edu)
+# Copyright (c) 2023 Fan-Yu (Ivy) Yen (yen.f at northeastern.edu)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +31,7 @@ def cwdref(detp, cfg):
     """
     Compute CW diffuse reflectance from MC detected photon profiles.
 
-    author: Kuznetsov Ilya
-    Python code was adapted from mcxcwdref.m MATLAB function written by Shijie Yan (yan.shiji <at> northeastern.edu)
+    (Python code was adapted from mcxcwdref.m MATLAB function, ported by Kuznetsov Ilya)
 
     input:
         detp: profiles of detected photons
@@ -70,6 +69,8 @@ def meanpath(detp, prop=None):
     """
     Calculate the average pathlengths for each tissue type for a given source-detector pair
 
+    (Python code was adapted from mcxmeanpath.m MATLAB function, ported by Fan-Yu Yen)
+
     input:
         detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
         prop: optical property list, as defined in the cfg.prop field of mcxlab's input
@@ -100,6 +101,8 @@ def detweight(detp, prop=None, unitinmm=None):
     """
     Recalculate the detected photon weight using partial path data and
     optical properties (for perturbation Monte Carlo or detector readings)
+
+    (Python code was adapted from mcxdetweight.m MATLAB function, ported by Fan-Yu Yen)
 
     input:
         detp: the 2nd output from mcxlab. detp must be a dict.
@@ -144,12 +147,16 @@ def meanscat(detp, prop):
     """
     Calculate the average scattering event counts for each tissue type for a given source-detector pair
 
+    (Python code was adapted from mcxmeanscat.m MATLAB function, ported by Fan-Yu Yen)
+
     input:
         detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
         prop: optical property list, as defined in the cfg.prop field of mcxlab's input
 
     output:
         avgnscat: the average scattering event count for each tissue type
+
+    Python code was ported from mcxmeanpath.m MATLAB function by Fan-Yu Yen
     """
     detw = detweight(detp, prop)
     avgnscat = np.sum(
@@ -163,6 +170,8 @@ def dettpsf(detp, detnum, prop, time):
     """
     Calculate the temporal point spread function curve of a specified detector
     given the partial path data, optical properties, and distribution of time bins
+
+    (Python code was adapted from mcxdettpsf.m MATLAB function, ported by Fan-Yu Yen)
 
     input:
         detp: the 2nd output from mcxlab. detp must be a struct with detid and ppath subfields
@@ -205,6 +214,8 @@ def dettime(detp, prop=None, unitinmm=None):
     Recalculate the detected photon time using partial path data and
     optical properties (for perturbation Monte Carlo or detector readings)
 
+    (Python code was adapted from mcxdettime.m MATLAB function, ported by Fan-Yu Yen)
+
     input:
         detp: the 2nd output from mcxlab. detp must be a struct
         prop: optical property list, as defined in the cfg.prop field of mcxlab's input
@@ -244,7 +255,9 @@ def dettime(detp, prop=None, unitinmm=None):
 
 def tddiffusion(mua, musp, v, Reff, srcpos, detpos, t):
     """
-    semi-infinite medium analytical solution to diffusion model
+    Semi-infinite medium analytical solution to diffusion model
+
+    (Python code was adapted from tddiffusion.m MATLAB function, ported by Fan-Yu Yen)
 
     input:
         mua:   the absorption coefficients in 1/mm
@@ -291,9 +304,11 @@ def tddiffusion(mua, musp, v, Reff, srcpos, detpos, t):
 
 def getdistance(srcpos, detpos):
     """
-     compute the source/detector separation from the positions
+    Compute the source/detector separation from the positions
 
-     input:
+    (Python code was adapted from getdistance.m MATLAB function, ported by Fan-Yu Yen)
+
+    input:
         srcpos:array for the source positions (x,y,z)
         detpos:array for the detector positions (x,y,z)
 
@@ -317,6 +332,32 @@ def getdistance(srcpos, detpos):
 
 
 def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
+    """
+    Separating combined detected photon data into easy-to-read structure based on
+    user-specified detected photon output format ("savedetflag")
+
+    (Python code was adapted from mcxdetphoton.m MATLAB function, ported by Fan-Yu Yen)
+
+    input:
+        detp: a 2-D array defining the combined detected photon data, usually
+              detp.data, where detp is the 2nd output from mcxlab
+        medianum: the total number of non-zero tissue types (row number of cfg.prop minus 1)
+        savedetflag: the cfg.savedetflag string, containing letters 'dspmxvwi' denoting different
+              output data fields, please see mcxlab's help
+        issaveref: the cfg.issaveref flag, 1 for saving diffuse reflectance, 0 not to save
+        srcnum: the cfg.srcnum flag, denoting the number of source patterns in the photon-sharing mode
+
+    output:
+        newdetp: re-organized detected photon data as a dict; the mapping of the fields are
+                 newdetp['detid']: the ID(>0) of the detector that captures the photon (1)
+                 newdetp['nscat']: cummulative scattering event counts in each medium (#medium)
+                 newdetp['ppath']: cummulative path lengths in each medium, i.e. partial pathlength (#medium)
+                      one need to multiply cfg.unitinmm with ppath to convert it to mm.
+                 newdetp['mom']: cummulative cos_theta for momentum transfer in each medium (#medium)
+                 newdetp['p'] or ['v']: exit position and direction, when cfg.issaveexit=1 (3)
+                 newdetp['w0']: photon initial weight at launch time (3)
+                 newdetp['s']: exit Stokes parameters for polarized photon (4)
+    """
     newdetp = {}
     c0 = 0
     length = 0
@@ -365,9 +406,84 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
     return newdetp
 
 
-def pmcxlab(*args):
+def mcxlab(*args):
     """
-    delete readme here for shorter code
+    Python wrapper of mcxlab - please see the help information of mcxlab.m for details
+
+    (Python code was adapted from mcxlab.m MATLAB function, ported by Fan-Yu Yen)
+
+    Format:
+       res=mcxlab(cfg);
+          or
+       res=mcxlab(cfg, option);
+
+    Input:
+       cfg: a struct, or struct array. Each element of cfg defines
+            the parameters associated with a simulation.
+            if cfg='gpuinfo': return the supported GPUs and their parameters,
+            if cfg='version': return the version of MCXLAB as a string,
+            see sample script at the bottom
+       option: (optional), options is a string, specifying additional options
+            option='opencl':  force using mcxcl.mex* instead of mcx.mex* on NVIDIA/AMD/Intel hardware
+            option='cuda':    force using mcx.mex* instead of mcxcl.mex* on NVIDIA GPUs
+
+       if one defines USE_MCXCL=1 in as Python global variable, all following
+       mcxlab and mcxlabcl calls will use mcxcl.mex; by setting option='cuda', one can
+       force both mcxlab and mcxlabcl to use mcx (cuda version). Similarly, if
+       USE_MCXCL=0, all mcxlabcl and mcxlab call will use mcx.mex by default, unless
+       one set option='opencl'.
+
+    Output:
+         fluence: a struct array, with a length equals to that of cfg.
+               For each element of fluence,
+               fluence(i).data is a 4D array with
+                    dimensions specified by [size(vol) total-time-gates].
+                    The content of the array is the normalized fluence at
+                    each voxel of each time-gate.
+
+                    when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
+                    output, see below
+               fluence(i).dref is a 4D array with the same dimension as fluence(i).data
+                    if cfg.issaveref is set to 1, containing only non-zero values in the
+                    layer of voxels immediately next to the non-zero voxels in cfg.vol,
+                    storing the normalized total diffuse reflectance (summation of the weights
+                    of all escaped photon to the background regardless of their direction);
+                    it is an empty array [] when if cfg.issaveref is 0.
+               fluence(i).stat is a structure storing additional information, including
+                    runtime: total simulation run-time in millisecond
+                    nphoton: total simulated photon number
+                    energytot: total initial weight/energy of all launched photons
+                    energyabs: total absorbed weight/energy of all photons
+                    normalizer: normalization factor
+                    unitinmm: same as cfg.unitinmm, voxel edge-length in mm
+
+         detphoton: (optional) a struct array, with a length equals to that of cfg.
+               Starting from v2018, the detphoton contains the below subfields:
+                 detphoton.detid: the ID(>0) of the detector that captures the photon
+                 detphoton.nscat: cummulative scattering event counts in each medium
+                 detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
+                      one need to multiply cfg.unitinmm with ppath to convert it to mm.
+                 detphoton.mom: cummulative cos_theta for momentum transfer in each medium
+                 detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
+                 detphoton.w0: photon initial weight at launch time
+                 detphoton.s: exit Stokes parameters for polarized photon
+                 detphoton.prop: optical properties, a copy of cfg.prop
+                 detphoton.data: a concatenated and transposed array in the order of
+                       [detid nscat ppath mom p v w0]'
+                 "data" is the is the only subfield in all MCXLAB before 2018
+         vol: (optional) a struct array, each element is a preprocessed volume
+               corresponding to each instance of cfg. Each volume is a 3D int32 array.
+         seeds: (optional), if give, mcxlab returns the seeds, in the form of
+               a byte array (uint8) for each detected photon. The column number
+               of seed equals that of detphoton.
+         trajectory: (optional), if given, mcxlab returns the trajectory data for
+               each simulated photon. The output has 6 rows, the meanings are
+                  id:  1:    index of the photon packet
+                  pos: 2-4:  x/y/z/ of each trajectory position
+                       5:    current photon packet weight
+                       6:    reserved
+               By default, mcxlab only records the first 1e7 positions along all
+               simulated photons; change cfg.maxjumpdebug to define a different limit.
     """
     try:
         defaultocl = eval("USE_MCXCL", globals())

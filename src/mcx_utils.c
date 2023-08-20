@@ -4907,7 +4907,7 @@ int mcx_lookupindex(char* key, const char* index) {
  */
 
 void mcx_version(Config* cfg) {
-    const char ver[] = "$Rev::      $ v2023";
+    const char ver[] = "$Rev::      $ "MCX_VERSION;
     int v = 0;
     sscanf(ver, "$Rev::%x", &v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n", v);
@@ -4979,18 +4979,22 @@ int mcx_run_from_json(char* jsonstr) {
  */
 
 void mcx_printheader(Config* cfg) {
-    MCX_FPRINTF(cfg->flog, S_GREEN"\
+    MCX_FPRINTF(cfg->flog, S_MAGENTA"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
 #          Copyright (c) 2009-2023 Qianqian Fang <q.fang at neu.edu>          #\n\
-#                             http://mcx.space/                               #\n\
+#                https://mcx.space/  &  https://neurojson.org/                #\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #\n\
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #\n\
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
-$Rev::      $ v2023  $Date::                       $ by $Author::             $\n\
+#  Open-source codes and reusable scientific data are essential for research, #\n\
+# MCX proudly developed human-readable JSON-based data formats for easy reuse,#\n\
+#  Please consider using JSON (https://neurojson.org/) for your research data #\n\
+###############################################################################\n\
+$Rev::      $ "MCX_VERSION"  $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
 }
 
@@ -5192,17 +5196,17 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                stored (default: 1e7)\n\
 \n"S_BOLD S_CYAN"\
 == Example ==\n" S_RESET"\
-example: (list built-in benchmarks)\n"S_GREEN"\
+example: (list built-in benchmarks)\n"S_MAGENTA"\
        %s --bench\n" S_RESET"\
-or (list supported GPUs on the system)\n"S_GREEN"\
+or (list supported GPUs on the system)\n"S_MAGENTA"\
        %s -L\n" S_RESET"\
-or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n"S_GREEN"\
+or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n"S_MAGENTA"\
        %s --bench cube60b -n 1e7 -G 1101 -W 10,10,10\n" S_RESET"\
-or (use inline domain definition)\n"S_GREEN"\
+or (use inline domain definition)\n"S_MAGENTA"\
        %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n" S_RESET"\
-or (use inline json setting modifier)\n"S_GREEN"\
+or (use inline json setting modifier)\n"S_MAGENTA"\
        %s -f input.json -j '{\"Optode\":{\"Source\":{\"Type\":\"isotropic\"}}}'\n" S_RESET"\
-or (dump simulation in a single json file)\n"S_GREEN"\
+or (dump simulation in a single json file)\n"S_MAGENTA"\
        %s --bench cube60planar --dumpjson" S_RESET"\n",
            exename, exename, exename, exename, exename, exename, exename);
 }

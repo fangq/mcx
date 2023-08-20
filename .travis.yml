@@ -81,6 +81,7 @@ script:
   - export UPLOAD_TO_PYPI=`cat ./pypi_upload | sed -e 's/.*=\([01]\)/\1/g'`
   - pip install --upgrade setuptools twine
   - mv pmcx pmcx0
+  - mv test test0
   - mv pmcx0/* .
 
 deploy:

@@ -1144,7 +1144,7 @@ int mcx_throw_exception(const int id, const char* msg, const char* filename, con
 
 void print_mcx_usage() {
     std::cout
-            << "PMCX v2023\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
+            << "PMCX ("MCX_VERSION")\nUsage:\n    output = pmcx.run(cfg);\n\nRun 'help(pmcx.run)' for more details.\n";
 }
 
 /**
@@ -1162,6 +1162,14 @@ py::dict pmcx_interface_wargs(py::args args, const py::kwargs& kwargs) {
     }
 
     return pmcx_interface(kwargs);
+}
+
+py::str print_version() {
+    Config mcx_config;            /** mcxconfig: structure to store all simulation parameters */
+    mcx_initcfg(&mcx_config);
+    mcx_printheader(&mcx_config);
+    mcx_clearcfg(&mcx_config);
+    return py::str(MCX_VERSION);
 }
 
 py::list get_GPU_info() {
@@ -1202,7 +1210,7 @@ py::list get_GPU_info() {
 }
 
 PYBIND11_MODULE(_pmcx, m) {
-    m.doc() = "PMCX (v2023): Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
+    m.doc() = "PMCX ("MCX_VERSION"): Python bindings for Monte Carlo eXtreme photon transport simulator, http://mcx.space";
     m.def("run", &pmcx_interface, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
     m.def("run", &pmcx_interface_wargs, "Runs MCX with the given config.", py::call_guard<py::scoped_ostream_redirect,
@@ -1212,5 +1220,9 @@ PYBIND11_MODULE(_pmcx, m) {
           "Prints out the list of CUDA-capable devices attached to this system.",
           py::call_guard<py::scoped_ostream_redirect,
           py::scoped_estream_redirect>());
+    m.def("version",
+          &print_version,
+          "Prints mcx version information.",
+          py::call_guard<py::scoped_ostream_redirect,
+          py::scoped_estream_redirect>());
 }
-

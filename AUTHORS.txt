@@ -8,9 +8,9 @@ Address: Dept. of Bioengineering
 URL: http://fanglab.org
 Email: <q.fang at neu.edu>
 
-MCX Website : http://mcx.space
-MCX Wiki:     http://mcx.space/wiki
-Source Code:  http://github.com/fangq/mcx
+MCX Website : https://mcx.space
+MCX Wiki:     https://mcx.space/wiki
+Source Code:  https://github.com/fangq/mcx
 
 
 
@@ -30,6 +30,10 @@ Other key contributors of MCX include
 ** Matin is a PhD student at Northeastern University, Dept of EECS, co-supervised by Dr. David Kaeli and Dr. Fang. He has made the follow major contributions
 *** development of pmcx (Python binding for MCX)
 *** development of Github action CI system
+
+* Fan-Yu (Ivy) Yen
+** Email: <fan.y at northeastern.edu>
+** Fan-Yu is a PhD student at Northeastern University, Dept of Bioengineering, under the supervision of Dr. Fang. She has ported a list of MATLAB functions to Python
 
 * Yaoshen Yuan
 ** Email: <yuan.yaos at northeastern.edu>

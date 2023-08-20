@@ -19,7 +19,7 @@ from utils import (
     tddiffusion,
     getdistance,
     detphoton,
-    pmcxlab,
+    mcxlab,
 )
 
 import numpy as np
@@ -138,7 +138,7 @@ class TestFunctions(unittest.TestCase):
             else:
                 self.assertEqual(actual_output[key], expected_output[key])
 
-    # check pmcxlab nested output
+    # check mcxlab nested output
 
     def get_first_three_digits(self, num):
         return np.array([int(digit) for digit in str(num)[:3]])
@@ -177,7 +177,7 @@ class TestFunctions(unittest.TestCase):
         # else:
         # self.assertEqual(actual, expected, f"Mismatch at path: {path}")
 
-    def test_pmcxlab_with_valid_input(self):
+    def test_mcxlab_with_valid_input(self):
         cfg = {
             "nphoton": 1e2,
             "vol": np.ones([2, 2, 2], dtype="uint8"),
@@ -243,7 +243,7 @@ class TestFunctions(unittest.TestCase):
         }
         expected_output = {"detp": detp, "flux": flux, "stat": stat}
 
-        actual_output = pmcxlab(cfg)
+        actual_output = mcxlab(cfg)
         self.check_outputs(actual_output, expected_output)
 
 
