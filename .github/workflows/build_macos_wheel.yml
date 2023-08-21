@@ -38,7 +38,6 @@ jobs:
         run: |
           curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
           tar zxf Xcode10.app.tar.gz
-          rm -rf $PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift*
           sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
@@ -51,6 +50,7 @@ jobs:
           sudo mv cuda/ /usr/local/
           sudo chmod +x /usr/local/cuda/bin/*
           sudo chmod +x /usr/local/cuda/nvvm/bin/*
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
           ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
