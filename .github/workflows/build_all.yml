@@ -149,7 +149,6 @@ jobs:
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             mkdir build && cd build && cmake .. && make
-            make BACKEND=cudastatic
             otool -L ../bin/mcx
           else
             make static

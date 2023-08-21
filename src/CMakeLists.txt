@@ -148,14 +148,14 @@ if(BUILD_MEX AND Matlab_FOUND)
             matlab_add_mex(
               NAME mcxlab
               SRC mcxlab.cpp
-              LINK_TO mcx-matlab
+              LINK_TO OpenMP::OpenMP_CXX mcx-matlab
             )
     else()
             matlab_add_mex(
               NAME mcxlab
               SRC mcxlab.cpp
               NO_IMPLICIT_LINK_TO_MATLAB_LIBRARIES
-              LINK_TO ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY} mcx-matlab
+              LINK_TO ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY} OpenMP::OpenMP_CXX mcx-matlab
             )
     endif()
 
