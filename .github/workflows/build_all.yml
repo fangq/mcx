@@ -148,7 +148,7 @@ jobs:
             make AR=g++ BACKEND=cudastatic USERLINKOPT='lib/libzmat.a -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            mkdir build && cmake .. && make
+            mkdir build && cd build && cmake .. && make
             make BACKEND=cudastatic
             otool -L ../bin/mcx
           else
