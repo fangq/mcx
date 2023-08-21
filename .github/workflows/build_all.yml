@@ -1,4 +1,4 @@
-name: build_mcx
+name: Build+Upload MCX and Octave/MATLAB mex
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ jobs:
     name: Build All
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019]
+        os: [ubuntu-20.04, macos-11, windows-2019]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -33,14 +33,14 @@ jobs:
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          curl -o xcode.zip --insecure https://mcx.space/dev/ci/Xcode731.zip
-          unzip xcode.zip
-          sudo mv Xcode.app /Applications/Xcode_7.3.1.app/
-          sudo xcode-select -s /Applications/Xcode_7.3.1.app/Contents/Developer
-          xcode-select -p
-          curl -o libauto.dylib --insecure https://mcx.space/dev/ci/libauto.dylib
-          echo "DYLD_LIBRARY_PATH=$PWD:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
+          tar zxf Xcode10.app.tar.gz
+          sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
+          echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
+          echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
+          echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew install octave
+          brew link --force libomp
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
@@ -72,13 +72,14 @@ jobs:
       - name: Install CUDA (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda_8.zip
+          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
           unzip cuda.zip
           sudo mv cuda/ /usr/local/
           sudo chmod +x /usr/local/cuda/bin/*
+          sudo chmod +x /usr/local/cuda/nvvm/bin/*
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
-          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
           mkdir -p ~/bin
       - name: Install CUDA (Windows only)
         if: ${{ runner.os == 'Windows' }}
@@ -100,7 +101,7 @@ jobs:
           rm -rf src/*.c
           git checkout src/*.c
       - name: Build mcxlab for Octave
-        if: ${{ runner.os != 'Windows' }}
+        if: ${{ runner.os == 'Linux' }}
         run: |
           cd src
           which gcc
@@ -209,7 +210,7 @@ jobs:
             zip -FSr --symlink mcx/packages/mcx-${{ env.RELEASE_TAG }}.zip mcx -x 'mcx/packages*'
           fi
       - name: Upload mcx package
-        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-10.15' || matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-11' || matrix.os == 'windows-2019' }}
         uses: actions/upload-artifact@v3
         with:
           name: all-mcx-packages
