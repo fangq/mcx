@@ -190,9 +190,9 @@ jobs:
       - name: Prepare mcx package
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            cp -a mcstudio/debug/mcxstudio.app bin
-            cp -a mcstudio/mcxshow.app   bin
-            cp -a mcstudio/mcxviewer.app bin
+            cp -a mcxstudio/debug/mcxstudio.app bin
+            #cp -a mcxstudio/mcxshow.app   bin
+            #cp -a mcxstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/*
