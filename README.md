@@ -7,7 +7,10 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 -   Version: 2.0 (v2023, Heroic Hadron)
 -   Website: <http://mcx.space>
 
-[![Build Status](https://travis-ci.com/fangq/mcx.svg?branch=master)](https://travis-ci.com/fangq/mcx)
+![Mex and Binaries](https://github.com/fangq/mcx/actions/workflows/build_all.yml/badge.svg)\
+![Linux Python Module](https://github.com/fangq/mcx/actions/workflows/build_linux_manywheel.yml/badge.svg)\
+![MacOS Python Module](https://github.com/fangq/mcx/actions/workflows/build_macos_wheel.yml/badge.svg)\
+![Windows Python Module](https://github.com/fangq/mcx/actions/workflows/build_windows_wheel.yml/badge.svg)
 
 Table of Content:
 

@@ -42,8 +42,6 @@ jobs:
           sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
-          sudo rm -rf /usr/bin/cc
-          sudo ln -s $PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc /usr/bin/cc
           echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
           brew link --force libomp
       - name: Install CUDA

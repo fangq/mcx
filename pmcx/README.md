@@ -8,7 +8,9 @@
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 
-[![Build Status](https://travis-ci.com/fangq/mcx.svg?branch=master)](https://travis-ci.com/fangq/mcx)
+![Linux Python Module](https://github.com/fangq/mcx/actions/workflows/build_linux_manywheel.yml/badge.svg)\
+![MacOS Python Module](https://github.com/fangq/mcx/actions/workflows/build_macos_wheel.yml/badge.svg)\
+![Windows Python Module](https://github.com/fangq/mcx/actions/workflows/build_windows_wheel.yml/badge.svg)
 
 This module provides a Python binding for Monte Carlo eXtreme (MCX).
 For other binaries, including the standalone executable and the MATLAB bindings, see [our website](http://mcx.space).
