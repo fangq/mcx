@@ -144,11 +144,21 @@ if(BUILD_MEX AND Matlab_FOUND)
 
     target_compile_definitions(mcx-matlab PUBLIC MCX_CONTAINER MATLAB_MEX_FILE)
 
-    matlab_add_mex(
-      NAME mcxlab
-      SRC mcxlab.cpp
-      LINK_TO mex mx mcx-matlab
-    )
+    if(${CMAKE_VERSION} VERSION_LESS "3.24.0")
+            matlab_add_mex(
+              NAME mcxlab
+              SRC mcxlab.cpp
+              LINK_TO mcx-matlab
+            )
+    else()
+            matlab_add_mex(
+              NAME mcxlab
+              SRC mcxlab.cpp
+              NO_IMPLICIT_LINK_TO_MATLAB_LIBRARIES
+              LINK_TO ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY} mcx-matlab
+            )
+    endif()
+
 
     target_compile_definitions(mcxlab PUBLIC MCX_CONTAINER MATLAB_MEX_FILE)
 
