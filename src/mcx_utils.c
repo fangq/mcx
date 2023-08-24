@@ -1201,7 +1201,7 @@ void mcx_kahanSum(float* sum, float* kahanc, float input) {
 */
 
 float mcx_updatemua(unsigned int mediaid, Config* cfg) {
-    float mua;
+    float mua = 0.f;
 
     if (cfg->mediabyte <= 4) {
         mua = cfg->prop[mediaid & MED_MASK].mua;

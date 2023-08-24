@@ -1,4 +1,4 @@
-name: Build and Upload Windows Python Wheels
+name: Build+Upload Windows Python Wheels
 on:
   push:
     branches:

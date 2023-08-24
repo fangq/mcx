@@ -1,4 +1,4 @@
-name: Build and Upload macOS Python Wheels
+name: Build+Upload MacOS Python Wheels
 on:
   push:
     branches:

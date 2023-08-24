@@ -106,7 +106,10 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   export CC CXX
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
   CUDA_STATIC=--cudart static
+  OMP=-Xclang -fopenmp
   CPPOPT+=$(OMP)
+  LINKOPT+=-L/usr/local/lib
+  INCLUDEDIRS+=-I/usr/local/include
 else
   CPPOPT+=$(OMP)
   CUCCOPT+=-Xcompiler $(OMP)

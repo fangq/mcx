@@ -1,4 +1,4 @@
-name: Build and Upload Manylinux2014 Python Wheels
+name: Build+Upload Manylinux2014 Python Wheels
 on:
   push:
     branches:

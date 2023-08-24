@@ -481,7 +481,8 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                         cfg.prop[i + 1].mus /= cfg.unitinmm;
                     }
 
-                    dimtype propdim[2] = {4, cfg.medianum};
+                    dimtype propdim[2] = {4, 0};
+                    propdim[1] = (dimtype)cfg.medianum;
                     mxSetFieldByNumber(plhs[0], jstruct, 3, mxCreateNumericArray(2, propdim, mxSINGLE_CLASS, mxREAL));
                     memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0], jstruct, 3)), cfg.prop, cfg.medianum * 4 * sizeof(float));
                 }
