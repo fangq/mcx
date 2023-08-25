@@ -4,7 +4,7 @@
 
 - Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2023) <q.fang at neu.edu>, Fan-Yu Yen (2023) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
-- Version: 0.1.0
+- Version: 0.1.1
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 
@@ -99,8 +99,13 @@ This can be queried via ```echo $env:PATH``` on Windows or ```echo $PATH``` on L
         cd mcx/pmcx
     ```
 
-3. Either run ```python setup.py install``` or ```pip install .``` to directly install, or run ```pip wheel .``` to only
-build the Python wheel without installing it.
+3. One can run `python3 setup.py install` or `python3 -m pip install .` to both locally build and install the module
+
+4. If one only wants to locally build the module, one should run `python3 -m pip wheel .`
+
+5. If the binary module is successfully built locally, you should see a binary wheel file `pmcx-X.X.X-cpXX-cpXX-*.whl`
+stored inside the `mcx/pmcx` folder. You can install this wheel package using `python3 -m pip install --force-reinstall pmcx-*.whl`
+to force installing this locally compiled `pmcx` module and overwrite any previously installed versions.
 
 
 ## How to use
