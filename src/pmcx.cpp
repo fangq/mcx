@@ -79,9 +79,8 @@ int seed_byte = 0;
         catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}}
 
 #define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
-            dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : 1}; \
-            std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z;\
-            if (list.size() == 4) std::cout << ", " << dst.prop.w; std::cout << "]\n";}                                                 \
+            dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : dst.prop.w}; \
+            std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
         catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}                                                                 \
     }
 
