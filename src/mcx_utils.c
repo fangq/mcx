@@ -3589,9 +3589,12 @@ void mcx_loadseedjdat(char* filename, Config* cfg) {
             uint dims[3] = {1, 1, 1};
             float* ppath = NULL;
             char* type;
-            History his;
+            History his = {0};
 
             cJSON* vsize = cJSON_GetObjectItem(seed, "_ArraySize_");
+
+            his.savedphoton = 0;
+            his.seedbyte = 0;
 
             if (vsize) {
                 cJSON* tmp = vsize->child;

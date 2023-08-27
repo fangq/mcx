@@ -2962,11 +2962,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         mcx_printheader(cfg);
 
 #ifdef MCX_TARGET_NAME
-        MCX_FPRINTF(cfg->flog, "- variant name: [%s] compiled by nvcc [%d.%d] with CUDA [%d]\n",
-                    "Fermi", __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, CUDART_VERSION);
+        MCX_FPRINTF(cfg->flog, "- code name: [%s] compiled by nvcc [%d.%d] for CUDA-arch [%d] on [%s]\n",
+                    MCX_TARGET_NAME, __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, __CUDA_ARCH_LIST__, __DATE__);
 #else
-        MCX_FPRINTF(cfg->flog, "- code name: [Vanilla MCX] compiled by nvcc [%d.%d] with CUDA [%d]\n",
-                    __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, CUDART_VERSION);
+        MCX_FPRINTF(cfg->flog, "- code name: [Vanilla MCX] compiled by nvcc [%d.%d] for CUDA-arch [%d] on [%s]\n",
+                    __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, __CUDA_ARCH_LIST__, __DATE__);
 #endif
         MCX_FPRINTF(cfg->flog, "- compiled with: RNG [%s] with Seed Length [%d]\n", MCX_RNG_NAME, (int)((sizeof(RandType)*RAND_BUF_LEN) >> 2));
         fflush(cfg->flog);
