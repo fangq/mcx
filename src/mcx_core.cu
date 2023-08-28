@@ -85,6 +85,14 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #define FL3(f) make_float3(f,f,f)
 #define CUDA_NAN_F    (__int_as_float(0x7fffffff)) /**< NaN constant in CUDA */
 
+#if !defined(__CUDA_ARCH_LIST__)
+    #if defined(__CUDA_ARCH__)
+        #define __CUDA_ARCH_LIST__ __CUDA_ARCH__
+    #else
+        #define __CUDA_ARCH_LIST__ 350
+    #endif
+#endif
+
 /**
  * @brief Adding two float3 vectors c=a+b
  */
