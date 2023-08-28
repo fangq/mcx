@@ -40,6 +40,7 @@ CUOMPLINK=
 ARCH = $(shell uname -m)
 PLATFORM = $(shell uname -s)
 CUDA_HOME ?= /usr/local/cuda
+ISCLANG = $(shell $(CC) --version | grep clang)
 
 INCLUDEDIRS+=${INCLUDES} -Izmat -Izmat/easylzma -I$(CUDA_HOME)/include -Iubj
 
@@ -52,7 +53,11 @@ ifeq ($(BACKEND),ocelot)
   CUCCOPT+=-D__STRICT_ANSI__ -g #--maxrregcount 32
 else ifeq ($(BACKEND),cudastatic)
   ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
-      CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
+      ifeq ($(ISCLANG),)
+          CUDART=-lcudadevrt -lcudart_static -ldl -static-libgcc -static-libstdc++
+      else
+          CUDART=-lcudadevrt -lcudart_static -ldl /usr/local/lib/libomp.a
+      endif
   else
       CUDART=-lcudadevrt -lcudart_static -ldl -lrt -static-libgcc -static-libstdc++
   endif
@@ -105,7 +110,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   MEXLINKLIBS="\$$LINKLIBS"
   export CC CXX
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
-  CUDA_STATIC=--cudart static
+  CUDA_STATIC=--cudart static /usr/local/lib/libomp.a
   OMP=-Xclang -fopenmp
   CPPOPT+=$(OMP)
   LINKOPT+=-L/usr/local/lib
@@ -192,7 +197,7 @@ log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
-log posix xoro fermi:      LINKOPT+=$(CUOMPLINK) $(OMP)
+log posix xoro fermi:      LINKOPT+=$(CUOMPLINK) "$(OMP)"
 
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
 fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
