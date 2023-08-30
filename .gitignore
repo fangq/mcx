@@ -1,1 +1,8 @@
 Rakefile
+
+# JetBrains configuration files
+.idea
+
+# compiler output
+.rpmroot
+**build

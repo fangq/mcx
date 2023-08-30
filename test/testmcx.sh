@@ -101,6 +101,10 @@ echo "test pencil array source ... "
 temp=`$MCX --bench cube60planar --json '{"Optode":{"Source":{"Type":"pencilarray","Param1":[40,0,0,4],"Param2":[0,20,0,2]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*23\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run pencil array source"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test ring light source ... "
+temp=`$MCX --bench cube60planar --json '{"Optode":{"Source":{"Pos":[29,29,60],"Dir":[0,0,-1],"Type":"ring","Param1":[7,10,45,120],"Param2":[8.86,0,0,0]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*26\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run ring light source"; fail=$((fail+1)); else echo "ok"; fi
+
 echo "test boundary detector flags ... "
 temp=`$MCX --bench cube60 --bc '______111111' $PARAM -n 1e4 | grep -o -E 'detected.*[0-9.]+ photons' | grep -o -E '[0-9.]+ photon' | grep -o -E '9[7-9][0-9.]+'`
 if [ -z "$temp" ]; then echo "fail to detect photons in the cube60b benchmark"; fail=$((fail+1)); else echo "ok"; fi

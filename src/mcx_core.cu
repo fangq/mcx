@@ -1352,6 +1352,60 @@ __device__ inline int launchnewphoton(MCXpos *p,MCXdir *v,Stokes *s,MCXtime *f,f
                       canfocus=(gcfg->srctype==MCX_SRC_SLIT);
 		      break;
 		}
+        case (MCX_SRC_RING): {
+              /* ring light source, can be a complete ring or a truncated ring. the expected parameters for definition of the
+              light source are as follows:
+              gcfg->srcparam1.x: minimum ring radius in mm
+              gcfg->srcparam1.y: maximum ring radius in mm
+              gcfg->srcparam1.z: first angular range in degrees. Defines the angular width of the first ring section
+              gcfg->srcparam1.w: second angular range in degrees. Defines the angular width of the second ring section
+              gcfg->srcparam2.x: full beam divergence in degrees. 0 means photons are launched straight down. angle greater than
+              0 means that the photons are launched with a direction sampled from a normal distribution with FWHM of half the
+              beam divergence.
+              for simulating a complete ring the parameters should be defined as: gcfg->srcparam1.z = 180 and gcfg->srcparam1.w = 180
+              */
+              float minimum_radius = gcfg->srcparam1.x;
+              float maximum_radius = gcfg->srcparam1.y;
+              float cut_angle_1 = (TWO_PI / 360.f) * gcfg->srcparam1.z;
+              float cut_angle_2 = (TWO_PI / 360.f) * gcfg->srcparam1.w;
+              float random_radius = rand_uniform01(t);
+              float random_angle = rand_uniform01(t);
+              float angle_range_1[2] = {((TWO_PI / 2.f) - cut_angle_1) / 2.f, ((TWO_PI / 2.f) + cut_angle_1) / 2.f};
+              float angle_range_2[2] = {(TWO_PI + (TWO_PI / 2.f) - cut_angle_2) / 2.f,
+                                        (TWO_PI + (TWO_PI / 2.f) + cut_angle_2) / 2.f};
+              float ring_angle = 0;
+              float angle_ratio = cut_angle_1 / (cut_angle_1 + cut_angle_2);
+              // a second random number has to be generated to compare to angle_ratio, otherwise the angular ranges are cutted
+              if (rand_uniform01(t) < angle_ratio) {
+                  ring_angle = angle_range_1[0] + random_angle * cut_angle_1;
+              } else {
+                  ring_angle = angle_range_2[0] + random_angle * cut_angle_2;
+              }
+              float radius = minimum_radius + random_radius * (maximum_radius - minimum_radius);
+              *((float4 *) p) = float4(p->x + radius * cosf(ring_angle),
+                                       p->y + radius * sinf(ring_angle),
+                                       p->z,
+                                       p->w);
+
+              float angle = gcfg->srcparam2.x;        //full beam divergence angle measured at Full Width at Half Maximum (FWHM)
+              float FWHM = 2.f * tanf(0.5f * angle * TWO_PI / 360.f);       //FWHM of beam divergence
+              float sigma = FWHM / (2.f * sqrtf(2.f * logf(2.f)));        //standard deviation of gaussian with FWHM
+              float u1 = rand_uniform01(t);
+              float u2 = rand_uniform01(t);
+              float z0 = sigma * sqrtf(-2.f * logf(u1)) *
+                         cosf(TWO_PI * u2);      //random variable 0 from gaussian with standard deviation sigma
+              float z1 = sigma * sqrtf(-2.f * logf(u1)) *
+                         sinf(TWO_PI * u2);      //random variable 0 from gaussian with standard deviation sigma
+              float incident_angle = atanf(v->y / v->z);        //incident angle given by src_dir in .json file
+              float y_width =
+                      cosf(incident_angle) * z0;        //y-distance that needs to be added to the old dir-vector
+              float z_width =
+                      sinf(incident_angle) * z0;        //z-distance that needs to be added to the old dir-vector
+              *((float3 *) v) = float3(v->x + z1, v->y + y_width, v->z + z_width);
+              float norm = rsqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+              *((float3 *) v) = float3(v->x * norm, v->y * (norm), v->z * norm);
+              break;
+        }
 	    }
 
 	    if(p->w<=gcfg->minenergy)
