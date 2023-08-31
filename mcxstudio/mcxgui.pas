@@ -26,6 +26,7 @@ type
 
   TfmMCX = class(TForm)
     acEditShape: TActionList;
+    mcxdoPlotJNIFTI: TAction;
     btSendCmd: TButton;
     btExpandOutput: TButton;
     Button2: TButton;
@@ -86,6 +87,9 @@ type
     MenuItem71: TMenuItem;
     MenuItem72: TMenuItem;
     MenuItem73: TMenuItem;
+    MenuItem74: TMenuItem;
+    MenuItem75: TMenuItem;
+    MenuItem76: TMenuItem;
     miExportJSON: TMenuItem;
     miClearLog: TMenuItem;
     miCopy: TMenuItem;
@@ -349,6 +353,7 @@ type
     procedure mcxdoHelpOptionsExecute(Sender: TObject);
     procedure mcxdoOpenExecute(Sender: TObject);
     procedure mcxdoPasteExecute(Sender: TObject);
+    procedure mcxdoPlotJNIFTIExecute(Sender: TObject);
     procedure mcxdoPlotMC2Execute(Sender: TObject);
     procedure mcxdoPlotNiftyExecute(Sender: TObject);
     procedure mcxdoPlotVolExecute(Sender: TObject);
@@ -368,6 +373,7 @@ type
     procedure mcxdoWebURLExecute(Sender: TObject);
     procedure mcxSetCurrentExecute(Sender: TObject);
     procedure MenuItem22Click(Sender: TObject);
+    procedure MenuItem76Click(Sender: TObject);
     procedure miExportJSONClick(Sender: TObject);
     procedure miClearLogClick(Sender: TObject);
     procedure miCopyClick(Sender: TObject);
@@ -490,8 +496,8 @@ Const
      (-1,8,9,7,6,5,4);
   JSONTypeNames : Array[TJSONtype] of string =
      ('Unknown','Number','String','Boolean','Null','Array','Object');
-  MCProgram : Array[0..3] of string =
-     ('mcx','mmc','mcxcl','mmcl');
+  MCProgram : Array[0..2] of string =
+     ('mcx','mmc','mcxcl');
   DebugFlags: string ='RMP';
   SaveDetFlags: string ='DSPMXVW';
   BCFlags: string = 'ARMC';
@@ -824,7 +830,7 @@ begin
       ckSaveDetector.Checked:=true;   //-d
       ckSaveRef.Checked:=false;  //-X
       ckSrcFrom0.Checked:=true;  //-z
-      ckSkipVoid.Checked:=false;  //-k
+      ckSkipVoid.Checked:=true;  //-k
       ckAutopilot.Checked:=true;
       ckSaveSeed.Checked:=false;
       ckSaveMask.Checked:=false;
@@ -891,10 +897,14 @@ begin
           sgConfig.Rows[1].CommaText:='Domain,MeshID,';
           sgConfig.Rows[2].CommaText:='Domain,InitElem,';
           sgConfig.Rows[3].CommaText:='Session,RayTracer,g - Dual-grid MMC';
+          rbUseBench.Enabled:=false;
+          edBenchMark.Enabled:=false;
       end else begin
           sgConfig.Rows[1].CommaText:='Domain,VolumeFile,"See Volume Designer..."';
           sgConfig.Rows[2].CommaText:='Domain,Dim,"[60,60,60]"';
           sgConfig.Rows[3].CommaText:='Domain,MediaFormat,byte - 1 byte integer';
+          rbUseBench.Enabled:=true;
+          edBenchMark.Enabled:=true;
       end;
       LoadJSONShapeTree('[{"Grid":{"Tag":1,"Size":[60,60,60]}}]');
       if not (CurrentSession = nil) then
@@ -1071,7 +1081,7 @@ begin
         tabVolumeDesigner.Enabled:=false;
         ckSpecular.Visible:=true;
         //ckSaveRef.Visible:=false;
-        edOutputFormat.ItemIndex:=6;
+        edOutputFormat.ItemIndex:=0;
         edRespin.Hint:='BasicOrder';
         lbRespin.Caption:='Element order (-C)';
         edBubble.Hint:='DebugPhoton';
@@ -1186,13 +1196,33 @@ procedure TfmMCX.mcxdoOpenExecute(Sender: TObject);
 var
     ret:TModalResult;
     TaskFile: string;
+    fext: string;
+    fmViewer: TfmViewer;
 begin
   ret:=mrNo;
   if(OpenProject.Execute) then begin
     TaskFile:=OpenProject.FileName;
-    if(Pos('.json',TaskFile)>0) then  // adding new session
-         LoadSessionFromJSON(TaskFile)
-    else begin
+    fext:=ExtractFileExt(TaskFile);
+    if(fext = '.json') then begin // adding new session
+         LoadSessionFromJSON(TaskFile);
+    end else if (AnsiIndexStr(fext, ['.tx3','.nii','.jnii']) >= 0) then begin
+      try
+            fmViewer:=TfmViewer.Create(self);
+            Case AnsiIndexStr(fext, ['.tx3','.nii','.jnii']) of
+                 0, 2:  fmViewer.LoadTexture(TaskFile);
+                 1:  if(Pos(TaskFile, '_vol.nii') > 0) then
+                         fmViewer.LoadTexture(TaskFile,0,0,0,2,352,GL_RGBA16I)
+                     else
+                         fmViewer.LoadTexture(TaskFile,0,0,0,0,352,GL_RGBA32F);
+            else
+            end;
+            fmViewer.BringToFront;
+            fmViewer.Show;
+      except
+          on E: Exception do
+             ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
+      end;
+    end else begin
       if(mcxdoSave.Enabled) then begin
          ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save it?',
              mtConfirmation, [mbYes, mbNo, mbCancel],0);
@@ -1255,6 +1285,11 @@ begin
    mcxSetCurrentExecute(Sender);
 end;
 
+procedure TfmMCX.mcxdoPlotJNIFTIExecute(Sender: TObject);
+begin
+  mcxdoPlotVolExecute(Sender);
+end;
+
 procedure TfmMCX.mcxdoPlotMC2Execute(Sender: TObject);
 begin
   mcxdoPlotVolExecute(Sender);
@@ -1269,26 +1304,35 @@ procedure TfmMCX.mcxdoPlotVolExecute(Sender: TObject);
 var
     outputfile: string;
     ftype: TAction;
-    nx,ny,nz,nt: integer;
+    nx : integer = 0;
+    ny,nz,nt: integer;
     fmViewer: TfmViewer;
     cmd: TStringList;
+    singletype: LongWord;
     dref: string;
 begin
-     if(CurrentSession=nil) then exit;
-     if (grProgram.ItemIndex=1) then begin
-        MessageDlg('Warning', 'You must select an MCX or MCX-CL simulation to use this feature', mtError, [mbOK],0);
+    if(CurrentSession=nil) then exit;
+    if (grProgram.ItemIndex=1) and (sgConfig.Cells[2,3] <> 'g') then begin
+        MessageDlg('Warning', 'You must set Session::RayTracer to "g" for MMC to use this feature', mtError, [mbOK],0);
         exit;
     end;
     if not (Sender is TAction) then exit;
     ftype:=Sender as TAction;
 
-    outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+    if (grProgram.ItemIndex <> 1) then begin
+        outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+        singletype:=GL_RGBA32F;
+    end else begin
+        outputfile:=sgConfig.Cells[2,14]+DirectorySeparator+edSession.Text+ftype.Hint;
+        singletype:=GL_DOUBLE_EXT;
+    end;
+
     if(not FileExists(outputfile)) then begin
         MessageDlg('Warning', 'Specified file does not exists', mtError, [mbOK],0);
         exit;
     end;
     nt:=Round((StrToFloat(sgConfig.Cells[2,5])-StrToFloat(sgConfig.Cells[2,4]))/StrToFloat(sgConfig.Cells[2,6]));
-    if(sscanf(sgConfig.Cells[2,2] ,'[%d,%d,%d]',[@nx,@ny,@nz])<>3) then begin
+    if (grProgram.ItemIndex <> 1) and (sscanf(sgConfig.Cells[2,2] ,'[%d,%d,%d]',[@nx,@ny,@nz])<>3) then begin
       MessageDlg('Warning', 'Domain size specifier contains incorrect format', mtError, [mbOK],0);
       exit;
     end;
@@ -1297,13 +1341,15 @@ begin
     if(ckSaveRef.Checked) then dref:=',dref';
 
     cmd:=TStringList.Create;
+    cmd.Add(Format('%d %d %d %d',[nx,ny,nz,nt]));
     cmd.Add('%%%%%%%%% MATLAB/OCTAVE PLOTTING SCRIPT %%%%%%%%%');
     cmd.Add(Format('addpath(''%s'');',[GetAppRoot+
         'MCXSuite'+DirectorySeparator+'mcx'+DirectorySeparator+'utils']));
-    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+    Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii','.jnii']) of
           0:    cmd.Add(Format('[data%s]=loadmc2(''%s'',[%d,%d,%d,%d],''float'',16);', [dref,outputfile,nx,ny,nz,nt]));
           1..2: cmd.Add(Format('[data%s]=loadmc2(''%s'',[%d,%d,%d,%d],''float'');', [dref,outputfile,nx,ny,nz,nt]));
           3..4: cmd.Add(Format('img=mcxloadnii(''%s'');data=img.img;', [outputfile]));
+          5: cmd.Add(Format('img=loadjson(''%s'');data=img.NIFTIData;', [outputfile]));
     else
     end;
     if(ckSaveDetector.Checked) then begin
@@ -1328,11 +1374,12 @@ begin
     if(miUseMatlab.Checked) then exit;
     try
           fmViewer:=TfmViewer.Create(self);
-          Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii']) of
+          Case AnsiIndexStr(ftype.Hint, ['.tx3','.mc2','.img','.nii','_vol.nii','.jnii']) of
                0:  fmViewer.LoadTexture(outputfile);
                1..2:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,0,GL_RGBA32F);
-               3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,GL_RGBA32F);
+               3:  fmViewer.LoadTexture(outputfile,nx,ny,nz,nt,352,singletype);
                4:  fmViewer.LoadTexture(outputfile,nx,ny,nz,2,352,GL_RGBA16I);
+               5:  fmViewer.LoadTexture(outputfile);
           else
           end;
           fmViewer.BringToFront;
@@ -1935,6 +1982,15 @@ procedure TfmMCX.MenuItem22Click(Sender: TObject);
 begin
   if(lvJobs.Selected <> nil) then
       RunExternalCmd('"'+GetFileBrowserPath + '" "'+CreateWorkFolder(lvJobs.Selected.Caption, true)+'"');
+end;
+
+procedure TfmMCX.MenuItem76Click(Sender: TObject);
+var
+   fmViewer: TfmViewer;
+begin
+  fmViewer:=TfmViewer.Create(self);
+  fmViewer.BringToFront;
+  fmViewer.Show;
 end;
 
 procedure TfmMCX.miExportJSONClick(Sender: TObject);
@@ -3173,9 +3229,9 @@ begin
             end;
         end;
     end;
-    if(ckSkipVoid.Checked) then begin
-        param.Add('--skipvoid');
-        param.Add('1');
+    if(not ckSkipVoid.Checked) then begin
+        param.Add('--voidtime');
+        param.Add('0');
     end;
     debugflag:='';
     for i:=0 to ckbDebug.Items.Count-1 do begin

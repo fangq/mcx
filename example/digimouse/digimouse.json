@@ -15,7 +15,7 @@
 		"DoSpecular":	false,
 		"DebugFlag":	4,
 		"SaveDataMask":	0,
-		"OutputFormat":	"mc2",
+		"OutputFormat":	"jnii",
 		"OutputType":	"x"
 	},
 	"Forward":	{
@@ -25,7 +25,7 @@
 	},
 	"Domain":	{
 		"MediaFormat":	"byte",
-		"LengthUnit":	0.8,
+		"LengthUnit":	0.2,
 		"Media":	[{
                                "mua": 0,
                                "mus": 0,

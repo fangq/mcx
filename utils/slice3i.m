@@ -1,4 +1,4 @@
-function h = slice3i(vol, I2X, slicedim, sliceidx, handle)
+function h = slice3i(vol, I2X, slicedim, sliceidx, handle, keepxyz)
 % Display a slice from a volume in 3-D
 % h = slice3(vol, I2X, slicedim, sliceidx, handle) 
 %
@@ -36,8 +36,12 @@ function h = slice3i(vol, I2X, slicedim, sliceidx, handle)
 %    4) support 4-D data (up/down key to change frames)
 % 
 
+if(nargin<6)
+    keepxyz=0;
+end
+
 try
-    h = update_slice(vol, I2X, slicedim, sliceidx, h);
+    h = update_slice(vol, I2X, slicedim, sliceidx, handle, keepxyz);
 catch
     h = update_slice(vol, I2X, slicedim, sliceidx);
 end
@@ -152,7 +156,11 @@ set(get(gcf,'UserData'),'UserData',gui);
 set(gcf,'UserData',[]);
 drawnow;
 
-function h = update_slice(vol, I2X, slicedim, sliceidx, handle)
+function h = update_slice(vol, I2X, slicedim, sliceidx, handle, keepxyz)
+
+if(nargin<6)
+    keepxyz=0;
+end
 
 if ndims(vol) == 3         %Scalar mode
 elseif ndims(vol) == 4     %RGB mode
@@ -191,6 +199,6 @@ end
 if nargin<5 || handle == 0
   h = image3i(sliceim,ij2xyz);
 else
-  h = image3i(sliceim,ij2xyz,handle);
+  h = image3i(sliceim,ij2xyz,handle, keepxyz);
 end
 

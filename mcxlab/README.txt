@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) v2021.2
+Version: this package is part of Monte Carlo eXtreme (MCX) v2023
 
 <toc>
 
@@ -19,7 +19,7 @@ up without involving disk files.
 
 Because MCXLAB contains the exact computational codes for the GPU calculations
 as in the MCX binaries, MCXLAB is expected to have identical performance when
-running simulations.
+running simulations compared to the standalone version of MCX.
 
 
 == # Installation ==
@@ -58,9 +58,9 @@ formats and examples. The input cfg structure has very similar field names as
 the verbose command line options in MCX.
 
 <pre> ====================================================================
-       MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
+       mcxlab - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
  --------------------------------------------------------------------
- Copyright (c) 2011-2021 Qianqian Fang <q.fang at neu.edu>
+ Copyright (c) 2011-2023 Qianqian Fang <q.fang at neu.edu>
                        URL: http://mcx.space
  ====================================================================
  
@@ -74,6 +74,7 @@ the verbose command line options in MCX.
      cfg: a struct, or struct array. Each element of cfg defines 
           the parameters associated with a simulation. 
           if cfg='gpuinfo': return the supported GPUs and their parameters,
+          if cfg='version': return the version of MCXLAB as a string,
           see sample script at the bottom
      option: (optional), options is a string, specifying additional options
           option='preview': this plots the domain configuration using mcxpreview(cfg)
@@ -99,7 +100,7 @@ the verbose command line options in MCX.
                        the 2D plane in such case.
                        for 2D simulations, Example: <demo_mcxlab_2d.m>
  
-                       MCXLAB also accepts 4D arrays to define continuously varying media. 
+                       mcxlab also accepts 4D arrays to define continuously varying media. 
                        The following formats are accepted
                          1 x Nx x Ny x Nz float32 array: mua values for each voxel (must use permute to make 1st dimension singleton)
                          2 x Nx x Ny x Nz float32 array: mua/mus values for each voxel (g/n use prop(2,:))
@@ -165,6 +166,15 @@ the verbose command line options in MCX.
                        or detphoton.data subfield (as a 2D array). cfg.detphotons can use
                        a subset of the detected photon selected by the user.
                        Example: <demo_mcxlab_replay.m>
+       cfg.polprop:    an N by 5 array, each row specifies [mua, radius(micron), volume
+                       density(1/micron^3), sphere refractive index, ambient medium
+                       refractive index] in order. The first row is type 1,
+                       and so on. The background medium (type 0) should be
+                       defined in the first row of cfg.prop. For polprop type
+                       i, if prop(i,2) is not zero: 1) if prop(i,3) == 1, the
+                       density polprop(i,3) will be adjusted to achieve the target
+                       mus prop(i,2); 2) if prop(i,3) < 1, polprop(i,3) will be
+                       adjusted to achieve the target mus' prop(i,2)*(1-prop(i,3))
  
  == GPU settings ==
        cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
@@ -192,6 +202,9 @@ the verbose command line options in MCX.
                        'isotropic' - isotropic source, no param needed
                        'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
                        'gaussian' [*] - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
+                       'hyperboloid' [*] - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
+                                 radius (in voxels), srcparam1(2) specifies distance between launch plane and focus,
+                                 srcparam1(3) specifies rayleigh range
                        'planar' [*] - a 3D quadrilateral uniform planar source, with three corners specified 
                                  by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
                        'pattern' [*] - a 3D quadrilateral pattern illumination, same as above, except
@@ -211,7 +224,9 @@ the verbose command line options in MCX.
                        'arcsine' - similar to isotropic, except the zenith angle is uniform
                                  distribution, rather than a sine distribution.
                        'disk' [*] - a uniform disk source pointing along srcdir; the radius is 
-                                set by srcparam1(1) (in grid unit)
+                                set by srcparam1(1) (in grid unit); if srcparam1(2) is set to a non-zero
+                                value, this source defines a ring (annulus) shaped source, with
+                                srcparam1(2) denoting the inner circle's radius, here srcparam1(1)>=srcparam1(2)
                        'fourierx' [*] - a general Fourier source, the parameters are 
                                 srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phi0,M]
                                 normalized vectors satisfy: srcdir cross v1=v2
@@ -219,7 +234,7 @@ the verbose command line options in MCX.
                        'fourierx2d' [*] - a general 2D Fourier basis, parameters
                                 srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
                                 the phase shift is phi{x,y}*2*pi
-                       'zgaussian' - an angular gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+                       'zgaussian' - an angular gaussian beam, srcparam1(1) specifies the variance in the zenith angle
                        'line' - a line source, emitting from the line segment between 
                                 cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating 
                                 uniformly in the perpendicular direction
@@ -239,6 +254,16 @@ the verbose command line options in MCX.
                        simultaneously simulated; only works for 'pattern'
                        source, see cfg.srctype='pattern' for details
                        Example <demo_photon_sharing.m>
+       cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
+       cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
+                    I: total light intensity (I >= 0)
+                    Q: balance between horizontal and vertical linearly
+                    polaized light (-1 <= Q <= 1)
+                    U: balance between +45° and -45° linearly polaized
+                    light (-1 <= Q <= 1)
+                    V: balance between right and left circularly polaized
+                    light (-1 <= Q <= 1)
+       cfg.lambda: source light wavelength (nm) for polarized MC
        cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
        cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
                        -1 replay all detectors and save in separate volumes (output has 5 dimensions)
@@ -256,6 +281,7 @@ the verbose command line options in MCX.
                           16 x  output exit position (3)
                           32 v  output exit direction (3)
                           64 w  output initial weight (1)
+                         128 i  output stokes vector (4)
                        combine multiple items by using a string, or add selected numbers together
                        by default, mcx only saves detector ID (d) and partial-path data (p)
        cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
@@ -266,20 +292,32 @@ the verbose command line options in MCX.
                        next to a boundary voxel. The reflectance data are stored as 
                        negative values; must pad zeros next to boundaries
                        Example: see the demo script at the bottom
+       cfg.issave2pt:  [1]-save volumetric output in the first output fluence.data; user can disable this output
+                       by explicitly setting cfg.issave2pt=0, this way, even the first output fluence presents
+                       in mcxlab call, volume data will not be saved, this can speed up simulation when only 
+                       detphoton is needed
+       cfg.issavedet:  if the 2nd output is requested, this will be set to 1; in such case, user can force
+                       setting it to 3 to enable early termination of simulation if the detected photon
+                       buffer (length controlled by cfg.maxdetphoton) is filled; if the 2nd output is not
+                       present, this will be set to 0 regardless user input.
        cfg.outputtype: 'flux' - fluence-rate, (default value)
                        'fluence' - fluence integrated over each time gate, 
                        'energy' - energy deposit per voxel
                        'jacobian' or 'wl' - mua Jacobian (replay mode), 
                        'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
+                       'wm' - weighted momentum transfer for a source/detector pair (replay mode)
+                       'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
+                       'length' total pathlengths accumulated per voxel,
                        for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
                        and  <demo_replay_timedomain.m>
        cfg.session:    a string for output file names (only used when no return variables)
  
  == Debug ==
-       cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P'], no space
+       cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
                      'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
                      'M':  return photon trajectory data as the 5th output
                      'P':  show progress bar
+                     'T':  save photon trajectory data only, as the 1st output, disable flux/detp/seeds outputs
        cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output, 
                       use this parameter to set the maximum position stored. By default,
                       only the first 1e6 positions are stored.
@@ -293,6 +331,9 @@ the verbose command line options in MCX.
                   dimensions specified by [size(vol) total-time-gates]. 
                   The content of the array is the normalized fluence at 
                   each voxel of each time-gate.
+ 
+                  when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
+                  output, see below
              fluence(i).dref is a 4D array with the same dimension as fluence(i).data
                   if cfg.issaveref is set to 1, containing only non-zero values in the 
                   layer of voxels immediately next to the non-zero voxels in cfg.vol,
@@ -316,10 +357,11 @@ the verbose command line options in MCX.
                detphoton.mom: cummulative cos_theta for momentum transfer in each medium  
                detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
                detphoton.w0: photon initial weight at launch time
+               detphoton.s: exit Stokes parameters for polarized photon
                detphoton.prop: optical properties, a copy of cfg.prop
                detphoton.data: a concatenated and transposed array in the order of
                      [detid nscat ppath mom p v w0]'
-               "data" is the is the only subfield in all MCXLAB before 2018
+               "data" is the is the only subfield in all mcxlab before 2018
        vol: (optional) a struct array, each element is a preprocessed volume
              corresponding to each instance of cfg. Each volume is a 3D int32 array.
        seeds: (optional), if give, mcxlab returns the seeds, in the form of

@@ -181,9 +181,9 @@ end;
 
 procedure TfmViewer.ResetTexture;
 begin
-  if(M_3D_Texture <> nil) then M_3D_Texture.Free;
-  if(M_Input_Texture_3D <> nil) then  M_Input_Texture_3D.Free;
-  if(M_Output_Texture_3D <> nil) then  M_Output_Texture_3D.Free;
+  if(M_3D_Texture <> nil) then FreeAndNil(M_3D_Texture);
+  if(M_Input_Texture_3D <> nil) then  FreeAndNil(M_Input_Texture_3D);
+  if(M_Output_Texture_3D <> nil) then  FreeAndNil(M_Output_Texture_3D);
 end;
 
 procedure TfmViewer.glCanvasMouseDown(Sender: TObject; Button: TMouseButton;
@@ -527,10 +527,14 @@ begin
   M_3D_Texture := TGLTextureHandle.Create;
 
   M_Input_Texture_3D := TTexture_3D.Create;
-  if(nx=0) then
-     M_Input_Texture_3D.Load_From_File_Log_Float(filename,skipbyte,datatype)
-  else
-     M_Input_Texture_3D.Load_From_File_Skip_Header(filename,nx,ny,nz,nt,skipbyte,datatype);
+  if(ExtractFileExt(filename) = '.jnii') then begin
+      M_Input_Texture_3D.Load_From_JNIFTI_File(filename);
+  end else begin
+      if(nx=0) then
+         M_Input_Texture_3D.Load_From_File_Log_Float(filename,skipbyte,datatype)
+      else
+         M_Input_Texture_3D.Load_From_File_Skip_Header(filename,nx,ny,nz,nt,skipbyte,datatype);
+  end;
 
   M_Output_Texture_3D := TTexture_3D.Create;
   M_Output_Texture_3D.Data_Type := GL_RGBA;
@@ -675,7 +679,7 @@ begin
   if(dlOpenFile.Execute) then
   begin
     fext:=ExtractFileExt(dlOpenFile.FileName);
-    if(fext <> '.tx3') then begin
+    if(fext <> '.tx3') and (fext <> '.jnii') then begin
         fm:=TfmDataFile.Create(Self);
         fm.edDataFile.FileName:=dlOpenFile.FileName;
         if(fext='.mc2') then begin
@@ -698,8 +702,10 @@ begin
         format:=dataformat[fm.edDataFormat.ItemIndex];
         fm.Free;
         LoadTexture(dlOpenFile.FileName, nx,ny,nz,nt,skipsize,format);
+    end else if(fext='.jnii') then begin
+        LoadTexture(dlOpenFile.FileName);
     end else begin
-       LoadTexture(dlOpenFile.FileName);
+        LoadTexture(dlOpenFile.FileName);
     end;
   end;
 end;

@@ -53,7 +53,10 @@ if(isfield(json,'Optode'))
     end
   end
   if(isfield(json.Optode,'Detector') && ~isempty(json.Optode.Detector))
-    cfg.detpos=cell2mat(struct2cell(cell2mat(json.Optode.Detector)')');
+      if(iscell(json.Optode.Detector))
+          json.Optode.Detector=cell2mat(json.Optode.Detector);
+      end
+      cfg.detpos=cell2mat(struct2cell(json.Optode.Detector')');
   end
 end
 
@@ -62,7 +65,10 @@ end
 cfg=copycfg(cfg,'issrcfrom0',json.Domain,'OriginType');
 cfg=copycfg(cfg,'unitinmm',json.Domain,'LengthUnit');
 
-cfg.prop=squeeze(cell2mat(struct2cell(cell2mat(json.Domain.Media))))';
+if(iscell(json.Domain.Media))
+    json.Domain.Media=cell2mat(json.Domain.Media);
+end
+cfg.prop=squeeze(cell2mat(struct2cell(json.Domain.Media)))';
 
 if(isfield(json,'Shapes'))
     cfg.shapes=savejson('Shapes',json.Shapes);
@@ -96,14 +102,14 @@ if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
             cfg.vol=typecast(cfg.vol(:),mediaclass);
             cfg.vol=reshape(cfg.vol,[length(cfg.vol)/prod(json.Domain.Dim), json.Domain.Dim]);
             if(size(cfg.vol,1)==1)
-                if(exist(idx,'var') && idx~=5)
+                if(exist('idx','var') && idx~=5)
                     cfg.vol=squeeze(cfg.vol);
                 end
             end
         case '.nii'
             cfg.vol=mcxloadnii(json.Domain.VolumeFile);
     end
-else
+elseif(~isfield(cfg,'shapes'))
     cfg.vol=uint8(zeros(60,60,60));
 end
 
@@ -118,6 +124,13 @@ cfg=copycfg(cfg,'issaveseed',json.Session,'DoSaveSeed');
 cfg=copycfg(cfg,'isnormalize',json.Session,'DoNormalize');
 cfg=copycfg(cfg,'outputformat',json.Session,'OutputFormat');
 cfg=copycfg(cfg,'outputtype',json.Session,'OutputType');
+if(length(cfg.outputtype)==1)
+    otypemap=struct('x', 'flux', 'f', 'fluence', 'e', 'energy', 'j', 'jacobian', 'p', 'nscat', 'm', 'wm', 'r', 'rf', 'l', 'length');
+    if(~isfield(otypemap, cfg.outputtype))
+        error('output type %s is not supported', cfg.outputtype);
+    end
+    cfg.outputtype=otypemap.(cfg.outputtype);
+end
 cfg=copycfg(cfg,'debuglevel',json.Session,'Debug');
 cfg=copycfg(cfg,'autopilot',json.Session,'DoAutoThread');
 cfg=copycfg(cfg,'autopilot',json.Session,'DoAutoThread');

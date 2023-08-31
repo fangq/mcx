@@ -3,7 +3,7 @@ function varargout=mcxlab(varargin)
 %====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 %--------------------------------------------------------------------
-%Copyright (c) 2011-2021 Qianqian Fang <q.fang at neu.edu>
+%Copyright (c) 2011-2023 Qianqian Fang <q.fang at neu.edu>
 %                      URL: http://mcx.space
 %====================================================================
 %
@@ -17,6 +17,7 @@ function varargout=mcxlab(varargin)
 %    cfg: a struct, or struct array. Each element of cfg defines 
 %         the parameters associated with a simulation. 
 %         if cfg='gpuinfo': return the supported GPUs and their parameters,
+%         if cfg='version': return the version of MCXLAB as a string,
 %         see sample script at the bottom
 %    option: (optional), options is a string, specifying additional options
 %         option='preview': this plots the domain configuration using mcxpreview(cfg)
@@ -144,7 +145,7 @@ function varargout=mcxlab(varargin)
 %                      'isotropic' - isotropic source, no param needed
 %                      'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
 %                      'gaussian' [*] - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
-%                      'hyperboloid' - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
+%                      'hyperboloid' [*] - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
 %                                radius (in voxels), srcparam1(2) specifies distance between launch plane and focus,
 %                                srcparam1(3) specifies rayleigh range
 %                      'planar' [*] - a 3D quadrilateral uniform planar source, with three corners specified 
@@ -176,7 +177,7 @@ function varargout=mcxlab(varargin)
 %                      'fourierx2d' [*] - a general 2D Fourier basis, parameters
 %                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
 %                               the phase shift is phi{x,y}*2*pi
-%                      'zgaussian' - an angular gaussian beam, srcparam1(0) specifies the variance in the zenith angle
+%                      'zgaussian' - an angular gaussian beam, srcparam1(1) specifies the variance in the zenith angle
 %                      'line' - a line source, emitting from the line segment between 
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating 
 %                               uniformly in the perpendicular direction
@@ -238,21 +239,28 @@ function varargout=mcxlab(varargin)
 %                      by explicitly setting cfg.issave2pt=0, this way, even the first output fluence presents
 %                      in mcxlab call, volume data will not be saved, this can speed up simulation when only 
 %                      detphoton is needed
+%      cfg.issavedet:  if the 2nd output is requested, this will be set to 1; in such case, user can force
+%                      setting it to 3 to enable early termination of simulation if the detected photon
+%                      buffer (length controlled by cfg.maxdetphoton) is filled; if the 2nd output is not
+%                      present, this will be set to 0 regardless user input.
 %      cfg.outputtype: 'flux' - fluence-rate, (default value)
 %                      'fluence' - fluence integrated over each time gate, 
 %                      'energy' - energy deposit per voxel
 %                      'jacobian' or 'wl' - mua Jacobian (replay mode), 
 %                      'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
+%                      'wm' - weighted momentum transfer for a source/detector pair (replay mode)
 %                      'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
+%                      'length' total pathlengths accumulated per voxel,
 %                      for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
 %                      and  <demo_replay_timedomain.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
 %
 %== Debug ==
-%      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P'], no space
+%      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
 %                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
+%                    'T':  save photon trajectory data only, as the 1st output, disable flux/detp/seeds outputs
 %      cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output, 
 %                     use this parameter to set the maximum position stored. By default,
 %                     only the first 1e6 positions are stored.
@@ -266,6 +274,9 @@ function varargout=mcxlab(varargin)
 %                 dimensions specified by [size(vol) total-time-gates]. 
 %                 The content of the array is the normalized fluence at 
 %                 each voxel of each time-gate.
+%
+%                 when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
+%                 output, see below
 %            fluence(i).dref is a 4D array with the same dimension as fluence(i).data
 %                 if cfg.issaveref is set to 1, containing only non-zero values in the 
 %                 layer of voxels immediately next to the non-zero voxels in cfg.vol,
@@ -506,22 +517,26 @@ if(nargout>=2)
     if(exist('newdetpstruct','var'))
         varargout{2}=newdetpstruct;
     end
+end
 
-    if(nargout>=5)
-        for i=1:length(varargout{5})
-            data=varargout{5}.data;
-            if(isempty(data))
-               continue;
-            end
-            traj.pos=data(2:4,:).';
-            traj.id=typecast(data(1,:),'uint32').';
-            [traj.id,idx]=sort(traj.id);
-            traj.pos=traj.pos(idx,:);
-            traj.data=[single(traj.id)' ; data(2:end,idx)];
-            newtraj(i)=traj;
-        end
-        if(exist('newtraj','var'))
-            varargout{5}=newtraj;
-        end
+if(nargout>=5 || (~isempty(cfg) && isstruct(cfg) && isfield(cfg, 'debuglevel') && ~isempty(regexp(cfg(1).debuglevel, '[tT]', 'once'))))
+    outputid=5;
+    if((isfield(cfg, 'debuglevel') && ~isempty(regexp(cfg(1).debuglevel, '[tT]', 'once'))))
+	outputid=1;
+    end
+    for i=1:length(varargout{outputid})
+	data=varargout{outputid}.data;
+	if(isempty(data))
+	   continue;
+	end
+	traj.pos=data(2:4,:).';
+	traj.id=typecast(data(1,:),'uint32').';
+	[traj.id,idx]=sort(traj.id);
+	traj.pos=traj.pos(idx,:);
+	traj.data=[single(traj.id)' ; data(2:end,idx)];
+	newtraj(i)=traj;
+    end
+    if(exist('newtraj','var'))
+	varargout{outputid}=newtraj;
     end
 end

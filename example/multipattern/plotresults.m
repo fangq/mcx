@@ -1,4 +1,4 @@
-dat=loadmc2('multipattern.mc2',[3 60 60 60]);
+dat=loadjson('multipattern.jnii',[3 60 60 60]);
 figure;
 subplot(131);
 imagesc(squeeze(log10(abs(dat(1,:,:,10))))')

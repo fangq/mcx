@@ -41,7 +41,7 @@ die if(not ($ENV{"HTTP_REFERER"} =~ /^https*:\/\/mcx\.space/));
 
 my ($DBName,$DBUser,$DBPass,%DBErr,$dbh,$sth,$html,$page,$jobid,$savetime,$dbname,$md5key,$callback,$jobhash);
 my $q = new CGI;
-my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output', 10=>'use cached data');
+my %jobstatus=(0=>'queued',1=>'initiated',2=>'created',3=>'running',4=>'completed',5=>'deleted',6=>'failed',7=>'invalid',8=>'cancelled', 9=>'writing output', 10=>'use cached data', 11=>'killed');
 
 # Default paths for storage of the job/simulation database and simulation work folders
 # both folders must be symbolic links pointing to network-shared folders via NSF that
@@ -66,7 +66,7 @@ if(&V("license") eq ''){
 
 print $q -> header( 
     -type => 'application/javascript', 
-    -access_control_allow_origin => 'http://mcx.space', 
+    -access_control_allow_origin => (($ENV{"HTTP_REFERER"} =~ /^https:/) ? 'https://mcx.space' : 'http://mcx.space'),
     -access_control_allow_headers => 'content-type,X-Requested-With', 
     -access_control_allow_methods => 'GET,POST,OPTIONS', 
     -access_control_allow_credentials => 'true', 
@@ -208,11 +208,17 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
         chomp(my @lines = <FF>);
         close(FF);
         $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'", "dberror": "'.join(/\n/,@lines).'"})'."\n";
-    }elsif(-e "$workspace/$jobid/input.json" && not -z "$workspace/$jobid/input.json"){ # when a job is started, the input file is written to the work folder
-        $status=2;
-        $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'"})'."\n";
+    }elsif(-e "$workspace/$jobid/killed"){ # job is killed
+        $status=11;
+        $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'", "dberror": "exceed max runtime (1 min)"})'."\n";
     }elsif($jobid ne '' && -d "$workspace/$jobid"){ # when a job folder is just created, but no input file is written
         $status=1;
+        if(-e "$workspace/$jobid/input.json" && not -z "$workspace/$jobid/input.json"){ # when a job is started, the input file is written $
+          $status=2;
+        }
+        if(not -e "$workspace/$jobid/done" && -e "$workspace/$jobid/output.log" && not -z "$workspace/$jobid/output.log"){ # job is running
+          $status=3;
+        }
         $html =$callback.'({"status":"'.$jobstatus{$status}.'","jobid":"'.$jobid.'"})'."\n";
     }else{ # use the database to inqure the last updated status
         my $cmd="select status from $dbname where jobid='$jobid';";
@@ -239,19 +245,19 @@ sub V{
 sub checklimit{
   my ($req)=@_;
   my $html;
-  if($req->{'Session'}->{'Photons'}>1e7){
-     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the max photon number is limited to 1e7 in this preview version"})'."\n";
+  if($req->{'Session'}->{'Photons'}>5e8){
+     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the max photon number is limited to 5e8 in this preview version"})'."\n";
   }
   if($html eq '' && defined($req->{'Session'}->{'DebugFlag'}) && $req->{'Session'}->{'DebugFlag'} =~ /m/i){
      $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"storing photon trajectories is not supported in this preview version"})'."\n";
   }
-  if($html eq '' && ($req->{'Forward'}->{'T1'}/$req->{'Forward'}->{'Dt'})>20){
-     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum time gate number is limited to 20 in this preview version"})'."\n";
+  if($html eq '' && ($req->{'Forward'}->{'T1'}/$req->{'Forward'}->{'Dt'})>100){
+     $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum time gate number is limited to 100 in this preview version"})'."\n";
   }
   if($html eq '' && @{$req->{'Domain'}->{'Dim'}} == 3){
      foreach my $len (@{$req->{'Domain'}->{'Dim'}}){
-       if($len>100){
-         $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum domain dimension is 100 in this preview version"})'."\n";
+       if($len>300){
+         $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum domain dimension is 300 in this preview version"})'."\n";
          last;
        }
      }
@@ -260,8 +266,8 @@ sub checklimit{
      foreach my $obj (@{$req->{'Shapes'}}){
        if(defined($obj->{'Grid'})){
          foreach my $len (@{$obj->{'Grid'}->{'Size'}}){
-            if($len>100){
-                $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum domain dimension is 100 in this preview version"})'."\n";
+            if($len>300){
+                $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"the maximum domain dimension is 300 in this preview version"})'."\n";
                 last;
             }
          }
@@ -271,8 +277,8 @@ sub checklimit{
   }
   if($html eq '' && @{$req->{'Domain'}->{'Media'}} > 1){
      foreach my $obj (@{$req->{'Domain'}->{'Media'}}){
-       if(defined($obj->{'mus'}) && $obj->{'mus'}>20){
-           $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"scattering coeff (mus) is limited to 20/mm in this preview version"})'."\n";
+       if(defined($obj->{'mus'}) && $obj->{'mus'}>50){
+           $html =$callback.'({"status":"invalid","jobid":"'.$jobid.'","dberror":"scattering coeff (mus) is limited to 50/mm in this preview version"})'."\n";
            last;
        }
      }
@@ -283,3 +289,4 @@ sub checklimit{
      exit;
   }
 }
+

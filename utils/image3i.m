@@ -1,4 +1,4 @@
-function h = image3i(im,ij2xyz,handle)
+function h = image3i(im,ij2xyz,handle, keepxyz)
 % Display a 2-D image in Matlab xyz 3-D space
 % h = image3i(C, IJ2XYZ, handle)
 %
@@ -109,6 +109,12 @@ else
   error('Only scalar and RGB images supported')
 end
 
+if(nargin>=4 && handle~=0 && keepxyz)
+   set(handle,'CData',im);
+   h = handle;
+   set(gcf,'renderer','opengl');
+   return;
+end
 
 % Create the slice
 [uu,vv] = ndgrid(0:stepsize:1, 0:stepsize:1);
@@ -125,7 +131,6 @@ jidx = jrange(1) + vv*(jrange(2)-jrange(1));
 x = ij2xyz(1,1)*iidx + ij2xyz(1,2)*jidx + + ij2xyz(1,3);
 y = ij2xyz(2,1)*iidx + ij2xyz(2,2)*jidx + + ij2xyz(2,3);
 z = ij2xyz(3,1)*iidx + ij2xyz(3,2)*jidx + + ij2xyz(3,3);
-
 
 if nargin<3 || handle == 0
   % Make a new surface

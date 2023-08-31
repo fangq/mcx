@@ -4,7 +4,7 @@
 
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: 0.9.9 (v2021.2)
+Version: 1.0 (v2023)
 Website: http://mcx.space
 
 ---------------------------------------------------------------------
@@ -84,6 +84,17 @@ and right-click on the "apply_timeout_registry_fix.bat" file and select
 
 '''You must reboot your computer for this change to be effective!'''
 
+For Mac users, when double-clicking on the mcxstudio application icon,
+if you see a popup window warning "This application 'mcxstudio' can't be opened",
+you must first remove the quarantine attribute from the unzipped files before you
+can run it. To remove the quarantine attributes from all mcx files, you should
+open a Terminal, and run the below commands
+
+  cd /path/to/MCXStudio
+  xattr -dr com.apple.quarantine .
+
+After applying the above command, you should be able to start mcxstudio
+(and mcxshow, mcxviewer applications) by double-clicking on their icons.
 
 ---------------------------------------------------------------------------
 == # Using MCX Studio GUI ==

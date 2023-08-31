@@ -2,20 +2,20 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2021
+**  \copyright Qianqian Fang, 2009-2023
 **
 **  \section sref Reference:
-**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas, 
+**  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
-**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated 
+**          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated
 **          by Graphics Processing Units,"</a> Optics Express, 17(22) 20178-20190 (2009).
 **  \li \c (\b Yu2018) Leiming Yu, Fanny Nina-Paravecino, David Kaeli, and Qianqian Fang,
 **          "Scalable and massively parallel Monte Carlo photon transport
-**           simulations for heterogeneous computing platforms," J. Biomed. Optics, 
+**           simulations for heterogeneous computing platforms," J. Biomed. Optics,
 **           23(1), 010504, 2018. https://doi.org/10.1117/1.JBO.23.1.010504
-**  \li \c (\b Yan2020) Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel 
-**          based Monte Carlo algorithm for accurate and efficient photon transport 
-**          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) 
+**  \li \c (\b Yan2020) Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel
+**          based Monte Carlo algorithm for accurate and efficient photon transport
+**          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11)
 **          pp. 6262-6270. https://doi.org/10.1364/BOE.409468
 **
 **  \section slicense License
@@ -31,6 +31,9 @@
 #ifndef _MCEXTREME_CONSTANT_H
 #define _MCEXTREME_CONSTANT_H
 
+#define MCX_VERSION        "v2023"
+#define MCX_VERSION_MAJOR  2
+#define MCX_VERSION_MINOR  0
 
 #define ONE_PI             3.1415926535897932f     /**< pi */
 #define TWO_PI             6.28318530717959f       /**< 2*pi */
@@ -43,6 +46,7 @@
 #define JUST_BELOW_ONE     0.9998f                 /**< test for boundary */
 #define SAME_VOXEL         -9999.f                 /**< scatter within a voxel */
 #define NO_LAUNCH          9999                    /**< when fail to launch, for debug */
+#define FILL_MAXDETPHOTON  3                       /**< when the detector photon buffer is filled, terminate simulation*/
 #define OUTSIDE_VOLUME_MIN 0xFFFFFFFF              /**< flag indicating the index is outside of the volume from x=xmax,y=ymax,z=zmax*/
 #define OUTSIDE_VOLUME_MAX 0x7FFFFFFF              /**< flag indicating the index is outside of the volume from x=0/y=0/z=0*/
 #define BOUNDARY_DET_MASK  0xFFFF0000              /**< flag indicating a boundary face is used as a detector*/
@@ -59,6 +63,7 @@
 #define MCX_DEBUG_RNG          1   /**< debug flags: 1 - run RNG testing kernel and return RNG numbers */
 #define MCX_DEBUG_MOVE         2   /**< debug flags: 2 - save and output photon trajectory data */
 #define MCX_DEBUG_PROGRESS     4   /**< debug flags: 4 - print progress bar */
+#define MCX_DEBUG_MOVE_ONLY    8   /**< debug flags: 8 - only save photon trajectory data, disable volume and detphoton output */
 
 #define MEDIA_2LABEL_SPLIT    97   /**<  media Format: 64bit:{[byte: lower label][byte: upper label][byte*3: reference point][byte*3: normal vector]} */
 #define MEDIA_2LABEL_MIX      98   /**<  media format: {[int: label1][int: label2][float32: label1 %]} -> 32bit:{[half: label1 %],[byte: label2],[byte: label1]} */
@@ -74,7 +79,7 @@
 #define MCX_SRC_PENCIL     0  /**<  default-Pencil beam src, no param */
 #define MCX_SRC_ISOTROPIC  1  /**<  isotropic source, no param */
 #define MCX_SRC_CONE       2  /**<  uniform cone, srcparam1.x=max zenith angle in rad */
-#define MCX_SRC_GAUSSIAN   3  /**<  Gaussian beam, srcparam1.x=sigma */
+#define MCX_SRC_GAUSSIAN   3  /**<  Gaussian beam, srcparam1.x=beam_waist=2*sigma */
 #define MCX_SRC_PLANAR     4  /**<  quadrilateral src, vectors spanned by srcparam{1}.{x,y,z} */
 #define MCX_SRC_PATTERN    5  /**<  same as above, load srcpattern as intensity */
 #define MCX_SRC_FOURIER    6  /**<  same as above, srcparam1.w and 2.w defines the spatial freq in x/y */
@@ -118,25 +123,29 @@
 #define UNSET_SAVE_IQUV(a)      ((a) & ~(0x1<<7))   /**<  unsave stokes parameters */
 
 #if !defined(MCX_CONTAINER) && !defined(_MSC_VER)
-  #define S_RED     "\x1b[31m"
-  #define S_GREEN   "\x1b[32m"
-  #define S_YELLOW  "\x1b[33m"
-  #define S_BLUE    "\x1b[34m"
-  #define S_MAGENTA "\x1b[35m"
-  #define S_CYAN    "\x1b[36m"
-  #define S_BOLD    "\x1b[1m"
-  #define S_ITALIC  "\x1b[3m"
-  #define S_RESET   "\x1b[0m"
+    #define S_RED     "\x1b[31m"
+    #define S_GREEN   "\x1b[32m"
+    #define S_YELLOW  "\x1b[33m"
+    #define B_WHITE   "\x1b[100m"
+    #define S_BLUE    "\x1b[34m"
+    #define S_MAGENTA "\x1b[35m"
+    #define L_MAGENTA "\x1b[95m"
+    #define S_CYAN    "\x1b[36m"
+    #define S_BOLD    "\x1b[1m"
+    #define S_ITALIC  "\x1b[3m"
+    #define S_RESET   "\x1b[0m"
 #else
-  #define S_RED
-  #define S_GREEN
-  #define S_YELLOW
-  #define S_BLUE
-  #define S_MAGENTA
-  #define S_CYAN
-  #define S_BOLD
-  #define S_ITALIC
-  #define S_RESET
+    #define S_RED
+    #define S_GREEN
+    #define S_YELLOW
+    #define B_WHITE
+    #define S_BLUE
+    #define S_MAGENTA
+    #define L_MAGENTA
+    #define S_CYAN
+    #define S_BOLD
+    #define S_ITALIC
+    #define S_RESET
 #endif
 
 #endif

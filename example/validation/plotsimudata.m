@@ -2,8 +2,8 @@
 %  matlab script to produce the validation plots (Fig. 4)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if(exist('loadmc2')~=2)
-	error('you need to first add path to ''<mcx>/utils'' in order to run this script');
+if(exist('loadjson')~=2)
+	error('you need to first download and add path to jsonlab (https://github.com/fangq/jsonlab) in order to run this script');
 end
 
 c0=299792458000;
@@ -18,11 +18,13 @@ twin=[5e-11:1e-10:5e-9];
 figure;
 hold on;
 
-mcx=loadmc2('semi_infinite.mc2',[60 60 60 50]);
+mcx=loadjson('semi_infinite.jnii',[60 60 60 50]);
+mcx=mcx.NIFTIData;
 semilogy((1:50)/10,tddiffusion(0.005, 1, c0, 0, srcpos, detpos,twin),'r');
 semilogy((1:50)/10,squeeze(mcx(30,14,9,:)),'o');
 
-mcxb=loadmc2('semi_infinite_b.mc2',[60 60 60 50]);
+mcxb=loadjson('semi_infinite_b.jnii',[60 60 60 50]);
+mcxb=mcxb.NIFTIData;
 semilogy((1:50)/10,tddiffusion(0.005, 1, c0/1.37, 0.493, srcpos, detpos,twin),'r--');
 semilogy((1:50)/10,squeeze(mcxb(30,14,9,:)),'+');
 

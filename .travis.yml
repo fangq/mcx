@@ -1,5 +1,9 @@
 language: cpp
 
+branches:
+  only:
+    - master
+
 sudo: enabled
 
 compiler:
@@ -7,41 +11,86 @@ compiler:
 
 matrix:
   include:
-    - os: linux
-      name: CUDA 9
+    - os: osx
+      python: "3.7"
       env:
-      - CUDA=9.2.148-1
-      - CUDA_SHORT=9.2
-      - UBUNTU_VERSION=ubuntu1604
-      dist: xenial
-    - os: linux
-      name: CUDA 10
-      env:
-      - CUDA=10.1.105-1
-      - CUDA_SHORT=10.1
-      - UBUNTU_VERSION=ubuntu1804
-      dist: bionic
+      - BADGE=py3.7
 
 before_install:
-  - INSTALLER=cuda-repo-${UBUNTU_VERSION}_${CUDA}_amd64.deb
-  - wget http://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/${INSTALLER}
-  - sudo dpkg -i ${INSTALLER}
-  - wget https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/7fa2af80.pub
-  - sudo apt-key add 7fa2af80.pub
-  - sudo apt update -qq
-  - sudo apt install -y cuda-core-${CUDA_SHORT/./-} cuda-cudart-dev-${CUDA_SHORT/./-} liboctave-dev cmake
-  - sudo apt clean
-  - export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
-  - LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
-  - PATH=${CUDA_HOME}/bin:.:${PATH}
+  ### Update RCS keywords
+  - printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+  - rm -rf src/*.c
+  - git checkout src/*.c
+  ### Install libomp
+  - export HOMEBREW_NO_AUTO_UPDATE=1
+  - export HOMEBREW_NO_INSTALL_CLEANUP=1
+  - brew install libomp
+  - brew link --force libomp
+  - pyenv install --list
+  - pyenv install 3.6.0
+  - pyenv install 3.8.0
+  ### Install CUDA
+  - curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+  - unzip cuda.zip
+  - sudo mv cuda/ /usr/local/
+  - sudo chmod +x /usr/local/cuda/bin/*
+  - sudo chmod +x /usr/local/cuda/nvvm/bin/*
+  - CUDA_HOME=/usr/local/cuda
+  - CUDA_PATH=${CUDA_HOME}/bin
+  - CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
+  - PATH=${CUDA_PATH}:.:${PATH}
+  - ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
 
 script:
-    - cd src
-    - mkdir -p build
-    - cd build && cmake ../ && make
-    - cd ..
-    - make oct
-    - make clean
-    - make debug
-    - make clean
-    - make
+  - mv src pmcx
+  - cd pmcx/
+  - perl -pi -e 's/..\/src\//src\//g' setup.py
+  ### build module with python 3.6
+  - pyenv global 3.6.0
+  - unlink $(which python)
+  - ln -s $(pyenv which python) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(pyenv which pip) /usr/local/bin/pip
+  - python --version
+  - python -m pip install --upgrade pip
+  - python -m pip install wheel
+  - python -m pip wheel . -w ../dist/ --verbose
+  ### build module with python 3.8
+  - pyenv global 3.8.0
+  - unlink $(which python)
+  - ln -s $(pyenv which python) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(pyenv which pip) /usr/local/bin/pip
+  - python --version
+  - python -m pip install --upgrade pip
+  - python -m pip install wheel
+  - python -m pip wheel . -w ../dist/ --verbose
+  ### build module with python 3.7
+  - unlink $(which python)
+  - ln -s $(which python3) /usr/local/bin/python
+  - unlink $(which pip)
+  - ln -s $(which pip3) /usr/local/bin/pip
+  - python --version
+  - python -m pip install --upgrade pip
+  - python -m pip install wheel
+  - python -m pip wheel . -w ../dist/ --verbose
+  ### checking pypi upload status
+  - cd ..
+  - ls -lt dist/*
+  - chmod +x .github/check-pypi-upload.sh
+  - GITHUB_OUTPUT=./pypi_upload .github/check-pypi-upload.sh
+  - export UPLOAD_TO_PYPI=`cat ./pypi_upload | sed -e 's/.*=\([01]\)/\1/g'`
+  - pip install --upgrade setuptools twine
+  - mv pmcx pmcx0
+  - mv test test0
+  - mv pmcx0/* .
+
+deploy:
+  provider: pypi
+  username: "__token__"
+  distributions: "bdist_wheel"
+  skip_cleanup: true
+  password:
+    secure: cY74UjxKDiP3tTgQoYlAt06MlD8A1t2HPDDWqv+8UN9O0npoBZvyheXkaGRxd5Qx8CmapI12KfLCZl4wC3xEh9zUtPn20JwglKOYi6myOtnzn1QtUU9cNsP3IOFdZmDUNivaa02vyCONwg98d7nRUKaG9OoIJ7dN1zO26gT8G0cY5xnwmqw9ycwqQWb5waRFxS9Pel4QA3jm8gRC7FYezXWkvwLSCsMHPvf4ddYiMk5aTKmASAJ2gvieHzefuoswB+ujHUDt+UMwlr9iL9QgIwJtV6jO0z5aW7ruOSQa6ZvbN62Vtrd/ocY7ADx5MeOOb3S8hDsI7a1osJHGQKePzE22+dcBU92UOWfkEgefzdd2L26kyst3Qjlqh3eR4frPUTQUipeK/XIQ4o0sL4gMd4zXpXskyUXQr6Y0EsdRT5buDure2qiLBVA+3USTKCv8Gu2WJIwHwrNab0LThtAtKkgiwvebQBEbRYR2mkJicjZYJSsvEbL7aKounBxNv2lqOl+wul9sH5BEWcnBrbZ5h15BbNGJoTjmNQINTbkNSvsITHA2u3CT7aRL+WJ6XuoRSX8WNOn8+OLaOJoHSCpoDo6MR4Z+B4Q0IGvjdbOmzH3KVYopGjQb1YCu+a5m+QqRKO7SXAX6aJd9KLav9mLUIWVZCvFodvEhJwuW34RqeG8=
+  on:
+    condition: $UPLOAD_TO_PYPI = 1

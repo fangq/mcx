@@ -59,7 +59,7 @@ cfg.tstep=5e-9;
 cfg.nphoton=1e8;
 cfg.autopilot=1;
 cfg.gpuid=1;
-cfg.unitinmm=0.4*2;
+cfg.unitinmm=0.1*2;
 cfg.debuglevel='P';
 
 flux=mcxlab(cfg);

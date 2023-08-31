@@ -1,0 +1,89 @@
+name: Build+Upload MacOS Python Wheels
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build_macos_wheels:
+    name: Build macOS wheels
+    runs-on: macos-11
+    strategy:
+      matrix:
+        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9' ]
+    outputs:
+      perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Update RCS keywords
+        shell: bash
+        run: |
+          printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+          rm -rf src/*.c
+          git checkout src/*.c
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Select Supported XCode Version + Link OpenMP
+        run: |
+          curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
+          tar zxf Xcode10.app.tar.gz
+          sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
+          echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
+          echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
+          echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          brew link --force libomp
+      - name: Install CUDA
+        run: |
+          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+          unzip cuda.zip
+          sudo mv cuda/ /usr/local/
+          sudo chmod +x /usr/local/cuda/bin/*
+          sudo chmod +x /usr/local/cuda/nvvm/bin/*
+          echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
+          echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
+          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
+      - name: Build Wheels
+        run: |
+          cd pmcx/
+          pip install wheel
+          VERBOSE=1 pip wheel . -w ../dist/
+          ls ../dist/
+          cd ../
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        run: |
+          bash $GITHUB_WORKSPACE/.github/check-pypi-upload.sh
+      - name: Prepare Wheels for Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-wheels
+          path: dist/
+
+  upload_macos_wheels:
+    needs: build_macos_wheels
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'fangq' && needs.build_macos_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
+    steps:
+      - name: Download Wheels from Build Job
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-wheels
+          path: dist/
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true

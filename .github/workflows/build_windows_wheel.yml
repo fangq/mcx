@@ -1,0 +1,90 @@
+name: Build+Upload Windows Python Wheels
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build_windows_wheels:
+    name: Build Windows wheels
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.7', 'pypy3.8', 'pypy3.9']
+    outputs:
+      perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Update RCS keywords
+        shell: bash
+        run: |
+          printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+          rm -rf src/*.c
+          git checkout src/*.c
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Install CUDA
+        uses: Jimver/cuda-toolkit@v0.2.10
+        id: cuda-toolkit
+        with:
+          cuda: '10.2.89'
+          method: 'network'
+          sub-packages: '["nvcc"]'
+      - name: Setup CUDA
+        run: |
+          $CUDA_PATH=Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA" -filter "v*.*" -Directory | % { $_.fullname }
+          echo "CUDA_PATH=$CUDA_PATH" >> $env:GITHUB_ENV
+          echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_PATH" >> $env:GITHUB_ENV
+      - name: Install Zlib Dev
+        run: |
+          curl.exe --retry 3 -kL https://cytranet.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-lib.zip --output zlib.zip
+          Expand-Archive .\zlib.zip -DestinationPath zlib\
+          echo "CMAKE_INCLUDE_PATH=$PWD\zlib\include" >> $env:GITHUB_ENV
+          echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
+          rm zlib.zip
+      - name: Build Wheels
+        run: |
+          cd pmcx/
+          pip install wheel
+          python setup.py bdist_wheel
+          ls dist/
+          mv dist/ ../
+          cd ../
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        run: |
+          bash $env:GITHUB_WORKSPACE/.github/check-pypi-upload.sh
+      - name: Prepare Wheels for Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-wheels
+          path: dist/
+
+  upload_windows_wheels:
+    needs: build_windows_wheels
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'fangq' && needs.build_windows_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
+    steps:
+      - name: Download Wheels from Build Job
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-wheels
+          path: dist/
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true

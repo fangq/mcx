@@ -1,0 +1,51 @@
+name: Build+Upload Manylinux2014 Python Wheels
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build_linux_wheels:
+    name: Build manylinux2014 Wheels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Update RCS keywords
+        shell: bash
+        run: |
+          printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+          rm -rf src/*.c
+          git checkout src/*.c
+      - name: Build Wheel Builder Container
+        shell: bash
+        run: |
+          set -x
+          cd .github/manylinux2014_wheel_builder
+          docker build --tag manylinux2014_wheel_builder --force-rm .
+      - name: Build Manylinux2014 Wheels
+        shell: bash
+        run: |
+          docker run -v ${GITHUB_WORKSPACE}:/src/ manylinux2014_wheel_builder
+          sudo mv ${GITHUB_WORKSPACE}/pmcx/dist/ ${GITHUB_WORKSPACE}/dist/
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        shell: bash
+        run: |
+          ${GITHUB_WORKSPACE}/.github/check-pypi-upload.sh
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ github.repository_owner == 'fangq' && steps.perform_pypi_upload_check.outputs.perform_pypi_upload == 1  && github.event_name != 'pull_request'}}
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true

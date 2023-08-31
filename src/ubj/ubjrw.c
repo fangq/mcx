@@ -27,7 +27,7 @@ static UBJ_TYPE compute_best_integer_type(ubjr_dynamic_t* vals, size_t sz)
 	size_t i;
 	for (i = 0; i < sz; i++)
 	{
-		typemask |= 1UL << ubjw_min_integer_type(vals[i].data.integer);
+		typemask |= 1UL << ubjw_min_integer_type(vals[i].integer);
 	}
 	return typemask2type(typemask);
 }
@@ -36,7 +36,7 @@ static uint32_t compute_best_string_type(ubjr_dynamic_t* vals, size_t sz)
 	size_t i;
 	for (i = 0; i < sz; i++)
 	{
-		if (strlen(vals[i].data.string) > 1)
+		if (strlen(vals[i].string) > 1)
 		{
 			return UBJ_STRING;
 		}
@@ -47,11 +47,10 @@ static UBJ_TYPE optimize_type(UBJ_TYPE typein,ubjr_dynamic_t* vals, size_t sz)
 {
 	static const uint32_t intmask = (1 << UBJ_INT8) | (1 << UBJ_UINT8) | (1 << UBJ_INT16) | (1 << UBJ_INT32) | (1 << UBJ_INT64);
 	static const uint32_t stringmask = (1 << UBJ_STRING) | (1 << UBJ_CHAR);
-        uint32_t tm;
 	if (typein != UBJ_MIXED)
 		return typein;
 	//integer optimization can be done here...
-	tm = compute_typemask(vals, sz);
+	uint32_t tm = compute_typemask(vals, sz);
 	if ((tm & intmask) == tm) //if all values are integers
 	{
 		return compute_best_integer_type(vals,sz);	//calculate the optimum type given the data
@@ -109,11 +108,23 @@ void ubjrw_write_dynamic(ubjw_context_t* ctx, ubjr_dynamic_t dobj,uint8_t optimi
 	case UBJ_INT16:
 		ubjw_write_int16(ctx, (int16_t)dobj.integer);
 		return;
+	case UBJ_UINT16:
+		ubjw_write_uint16(ctx, (uint16_t)dobj.integer);
+		return;
 	case UBJ_INT32:
 		ubjw_write_int32(ctx, (int32_t)dobj.integer);
 		return;
+	case UBJ_UINT32:
+		ubjw_write_uint32(ctx, (uint32_t)dobj.integer);
+		return;
 	case UBJ_INT64:
-		ubjw_write_int64(ctx, dobj.integer);
+		ubjw_write_int64(ctx, (int64_t)dobj.integer);
+		return;
+	case UBJ_UINT64:
+		ubjw_write_uint64(ctx, (uint64_t)dobj.integer);
+		return;
+	case UBJ_FLOAT16:
+		ubjw_write_float16(ctx, (uint16_t)dobj.half);
 		return;
 	case UBJ_FLOAT32:
 		ubjw_write_float32(ctx, (float)dobj.real);
@@ -151,12 +162,12 @@ void ubjrw_write_dynamic(ubjw_context_t* ctx, ubjr_dynamic_t dobj,uint8_t optimi
 			ubjw_begin_object(ctx, otyp, (dobj.container_object.originally_sized || optimize) ? csize : 0);
 			break;
 		}
+        default: {}
 	};
 	{
 		size_t i;
 		ubjr_dynamic_t scratch;
 		size_t ls = UBJR_TYPE_localsize[ctyp];
-
 		for (i = 0; i < csize; i++)
 		{
 			if (dobj.type == UBJ_OBJECT)

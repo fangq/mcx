@@ -22,6 +22,7 @@ cfg.tstep=1e-10;
 % calculate the flux distribution with the given config
 flux=mcxlab(cfg);
 
+%% define cfg as a struct array to run multiple simulations
 
 cfgs(1)=cfg;
 cfgs(2)=cfg;

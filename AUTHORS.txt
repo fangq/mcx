@@ -1,5 +1,5 @@
-Monte Carlo eXtreme (MCX) is written by Qianqian Fang.
-Qianqian is currently an Associate Professor in the 
+Monte Carlo eXtreme (MCX) is primarily developed by Qianqian Fang.
+Qianqian is currently Associate Professor in the 
 Department of Bioengineering at Northeastern University, USA.
 
 Address: Dept. of Bioengineering
@@ -8,6 +8,34 @@ Address: Dept. of Bioengineering
 URL: http://fanglab.org
 Email: <q.fang at neu.edu>
 
-MCX Website : http://mcx.space
-MCX Wiki:     http://mcx.space/wiki
-Source Code:  http://github.com/fangq/mcx
+MCX Website : https://mcx.space
+MCX Wiki:     https://mcx.space/wiki
+Source Code:  https://github.com/fangq/mcx
+
+
+
+Other key contributors of MCX include
+
+* Shijie Yan
+** Email: <yan.shiji at northeastern.edu> 
+** Shijie is a PhD student at Northeastern University, Dept of EECS, under the supervision of Dr. Fang. He has made the follow major contributions
+*** split-voxel MC (SVMC)
+*** modeling of polarized light
+*** photon-sharing
+*** MCX-Cloud server-side development
+*** numerous bug fixes and code improvement
+
+* Matin Raayai Ardakani
+** Email: <raayaiardakani.m at northeastern.edu>
+** Matin is a PhD student at Northeastern University, Dept of EECS, co-supervised by Dr. David Kaeli and Dr. Fang. He has made the follow major contributions
+*** development of pmcx (Python binding for MCX)
+*** development of Github action CI system
+
+* Fan-Yu (Ivy) Yen
+** Email: <fan.y at northeastern.edu>
+** Fan-Yu is a PhD student at Northeastern University, Dept of Bioengineering, under the supervision of Dr. Fang. She has ported a list of MATLAB functions to Python
+
+* Yaoshen Yuan
+** Email: <yuan.yaos at northeastern.edu>
+** Yaoshen was a PhD student at Northeastern University, Dept of EECS, under the supervision of Dr. Fang. He completed his PhD degree in 2020. He has made the follow major contributions
+*** GPU based Adptive non-local-means (ANLM) filter

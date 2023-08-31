@@ -32,6 +32,10 @@ if(~isstruct(cfg))
     error('cfg must be a struct or struct array');
 end
 
+if(~exist('latticegrid','file'))
+    error('you must install the iso2mesh toolbox from https://github.com/fangq/iso2mesh first');
+end
+
 len=length(cfg);
 if(nargout>0)
     hs=cell(len,1);
@@ -68,6 +72,10 @@ for i=1:len
     if(isfield(cfg(i),'vol') && ~isfield(cfg(i),'node'))
         % render mcxlab voxelated domain
         dim=size(cfg(i).vol);
+        if(ndims(cfg(i).vol)==4) % for spatially varying medium
+            dim=dim(2:end);
+            cfg(i).vol=ones(dim);
+        end
         [bbxno,bbxfc]=latticegrid(0:dim(1):dim(1),0:dim(2):dim(2),0:dim(3):dim(3));
         hbbx=plotmesh((bbxno+offset)*voxelsize,bbxfc,'facecolor','none');
 
