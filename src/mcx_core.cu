@@ -935,6 +935,11 @@ __device__ inline void rotatevector2d(MCXdir* v, float stheta, float ctheta) {
                             v->nscat
                         );
 
+    float tmp0 = rsqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+    v->x *= tmp0;
+    v->y *= tmp0;
+    v->z *= tmp0;
+
     GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
 }
 
@@ -963,6 +968,11 @@ __device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float
     } else {
         *((float4*)v) = float4(stheta * cphi, stheta * sphi, (v->z > 0.f) ? ctheta : -ctheta, v->nscat);
     }
+
+    float tmp0 = rsqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+    v->x *= tmp0;
+    v->y *= tmp0;
+    v->z *= tmp0;
 
     GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
 }
