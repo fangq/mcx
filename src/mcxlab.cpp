@@ -892,7 +892,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         int len = mxGetNumberOfElements(item);
         const char* srctypeid[] = {"pencil", "isotropic", "cone", "gaussian", "planar",
                                    "pattern", "fourier", "arcsine", "disk", "fourierx", "fourierx2d", "zgaussian",
-                                   "line", "slit", "pencilarray", "pattern3d", "hyperboloid", ""
+                                   "line", "slit", "pencilarray", "pattern3d", "hyperboloid", "ring", ""
                                   };
         char strtypestr[MAX_SESSION_LENGTH] = {'\0'};
 

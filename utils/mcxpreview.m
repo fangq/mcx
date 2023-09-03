@@ -136,12 +136,16 @@ for i=1:len
     % rendering area-source aperature
     hsrcarea=[]; 
     if(isfield(cfg(i),'srctype'))
-        if(strcmp(cfg(i).srctype,'disk') || strcmp(cfg(i).srctype,'gaussian') || strcmp(cfg(i).srctype,'zgaussian'))
+        if(strcmp(cfg(i).srctype,'disk') || strcmp(cfg(i).srctype,'gaussian') || strcmp(cfg(i).srctype,'zgaussian') || strcmp(cfg(i).srctype,'ring'))
             if(~isfield(cfg(i),'srcparam1'))
                 error('cfg.srcparam1 is missing');
             end
             [ncyl,fcyl]=meshacylinder(srcpos,srcpos+cfg(i).srcdir(1:3)*1e-5,cfg(i).srcparam1(1)*voxelsize,0,0);
             hsrcarea=plotmesh(ncyl,fcyl{end-1},'facecolor','r','linestyle','none');
+            if(cfg(1).srcparam1(2) > 0)
+                [ncyl,fcyl]=meshacylinder(srcpos,srcpos+cfg(i).srcdir(1:3)*1e-5,cfg(i).srcparam1(2)*voxelsize,0,0);
+                hsrcarea=plotmesh(ncyl,fcyl{end-1},'facecolor','k','linestyle','none');
+            end
         elseif(strcmp(cfg(i).srctype,'planar') || strcmp(cfg(i).srctype,'pattern') || strcmp(cfg(i).srctype,'fourier') || ...
                strcmp(cfg(i).srctype,'fourierx') || strcmp(cfg(i).srctype,'fourierx2d') || strcmp(cfg(i).srctype,'pencilarray'))
             if(~isfield(cfg(i),'srcparam1') || ~isfield(cfg(i),'srcparam2'))

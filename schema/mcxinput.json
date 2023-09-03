@@ -216,7 +216,9 @@
                 "zgaussian",
                 "line",
                 "slit",
-                "pencilarray"
+                "pencilarray",
+                "hyperboloid",
+                "ring"
               ]
             },
             "Pos": {

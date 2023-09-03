@@ -45,6 +45,8 @@ object fmSource: TfmSource
       'line'
       'slit'
       'pencilarray'
+      'hyperboloid'
+      'ring'
     )
     OnEditingDone = edSourceEditingDone
     ParentFont = False
