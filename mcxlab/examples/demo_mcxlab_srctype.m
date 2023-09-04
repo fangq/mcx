@@ -370,7 +370,61 @@ imagesc(log10(abs(squeeze(fcw(:,:,1)))))
 axis equal; colorbar
 title('a gaussian beam source');
 
+
 %% test group 5
+
+clear cfg;
+figure;
+cfg.nphoton=1e6;
+cfg.vol=uint8(ones(60,60,60));
+cfg.gpuid=1;
+cfg.autopilot=1;
+cfg.prop=[0 0 1 1;0.005 1 0.8 1.37];
+cfg.tstart=0;
+cfg.seed=99999;
+cfg.tend=5e-11;
+cfg.tstep=5e-11;
+
+% a ring beam
+cfg.srctype='ring';
+cfg.srcpos=[30 30 -10];
+cfg.srcdir=[0 0 1];
+cfg.srcparam1=[15 10 0 0];
+cfg.srcparam2=[0 0 0 0];
+flux=mcxlab(cfg);
+fcw=flux.data*cfg.tstep;
+subplot(221);
+imagesc(log10(abs(squeeze(fcw(:,:,1)))))
+axis equal; colorbar
+title('a ring beam');
+
+% a diverging ring sector beam
+cfg.srctype='ring';
+cfg.srcpos=[30 30 -10];
+cfg.srcdir=[0 0 1 -20];
+cfg.srcparam1=[15 10 0 2*pi/3];
+cfg.srcparam2=[0 0 0 0];
+flux=mcxlab(cfg);
+fcw=flux.data*cfg.tstep;
+subplot(222);
+imagesc(log10(abs(squeeze(fcw(:,:,1)))))
+axis equal; colorbar
+title('a ring-sector beam');
+
+% a ring beam
+cfg.srctype='pencilarray';
+cfg.srcpos=[10 10 0];
+cfg.srcdir=[0 0 1];
+cfg.srcparam1=[40 0 0 4];
+cfg.srcparam2=[0 40 0 5];
+flux=mcxlab(cfg);
+fcw=flux.data*cfg.tstep;
+subplot(223);
+imagesc(log10(abs(squeeze(fcw(:,:,1)))))
+axis equal; colorbar
+title('a pencil beam array)');
+
+%% test group 6
 
 %debug flag to retrieve/test build-in RNG
 cfg.vol=uint8(ones(100,100,100));

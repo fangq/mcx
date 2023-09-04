@@ -328,7 +328,7 @@ __device__ inline void updatestokes(Stokes* s, float theta, float phi, float3* u
     temp = (u2->z > -1.f && u2->z < 1.f) ? rsqrtf((1.f - costheta * costheta) * (1.f - u2->z * u2->z)) : 0.f;
 
     cosi = (temp == 0.f) ? 0.f : (((phi > ONE_PI && phi < TWO_PI) ? 1.f : -1.f) * (u2->z * costheta - u->z) * temp);
-    cosi = fmax(-1.f, fmin(cosi, 1.f));
+    cosi = fmaxf(-1.f, fminf(cosi, 1.f));
 
     sini = sqrtf(1.f - cosi * cosi);
     cos22 = 2.f * cosi * cosi - 1.f;
@@ -1240,15 +1240,20 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                 }
 
                 case (MCX_SRC_DISK):
+                case (MCX_SRC_RING):
                 case (MCX_SRC_GAUSSIAN): { // uniform disk distribution or collimated Gaussian-beam
                     // Uniform disk point picking
                     // http://mathworld.wolfram.com/DiskPointPicking.html
-                    float sphi, cphi;
-                    float phi = TWO_PI * rand_uniform01(t);
-                    sincosf(phi, &sphi, &cphi);
-                    float r;
+                    float phi, sphi, cphi, r;
 
-                    if (gcfg->srctype == MCX_SRC_DISK) {
+                    if (gcfg->srctype == MCX_SRC_RING && (gcfg->srcparam1.z > 0.f ||  gcfg->srcparam1.w > 0.f)) {
+                        phi = fabsf(gcfg->srcparam1.z - gcfg->srcparam1.w) * rand_uniform01(t) + fminf(gcfg->srcparam1.z, gcfg->srcparam1.w);
+                    } else {
+                        phi = TWO_PI * rand_uniform01(t);
+                    }
+                    sincosf(phi, &sphi, &cphi);
+
+                    if (gcfg->srctype == MCX_SRC_DISK || gcfg->srctype == MCX_SRC_RING) {
                         r = sqrtf(rand_uniform01(t) * fabsf(gcfg->srcparam1.x * gcfg->srcparam1.x - gcfg->srcparam1.y * gcfg->srcparam1.y) + gcfg->srcparam1.y * gcfg->srcparam1.y);
                     } else if (fabsf(gcfg->c0.w) < 1e-5f || fabsf(gcfg->srcparam1.y) < 1e-5f) {
                         r = sqrtf(0.5f * rand_next_scatlen(t)) * gcfg->srcparam1.x;
@@ -1724,7 +1729,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                             // in early CUDA, when ran=1, CUDA gives 1.000002 for tmp0 which produces nan later
                             // detected by Ocelot,thanks to Greg Diamos,see http://bit.ly/cR2NMP
-                            tmp0 = fmax(-1.f, fmin(1.f, tmp0));
+                            tmp0 = fmaxf(-1.f, fminf(1.f, tmp0));
 
                             theta = acosf(tmp0);
                             stheta = sinf(theta);
@@ -1854,7 +1859,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%d %d %d] flip=%d\n", p.x, p.y, p.z, v.x, v.y, v.z, len, flipdir[0], flipdir[1], flipdir[2], flipdir[3]));
 
         /** if the consumed unitless scat length is less than what's left in f.pscat, keep moving; otherwise, stop in this voxel */
-        slen = fmin(slen, f.pscat);
+        slen = fminf(slen, f.pscat);
 
         /** final length that the photon moves - either the length to move to the next voxel, or the remaining scattering length */
         len = ((prop.mus == 0.f) ? len : (slen / prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f)));
