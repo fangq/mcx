@@ -1251,6 +1251,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     } else {
                         phi = TWO_PI * rand_uniform01(t);
                     }
+
                     sincosf(phi, &sphi, &cphi);
 
                     if (gcfg->srctype == MCX_SRC_DISK || gcfg->srctype == MCX_SRC_RING) {
@@ -1959,7 +1960,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 if (gcfg->outputtype == otEnergy) {
                     weight = w0 - p.w;
                 } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux) {
-                    weight = (prop.mua * len < 0.001f) ? (w0 * len) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, take limit_{mua->0} w0*(1-exp(-mua*len))/mua yields w0*len */
+                    weight = (prop.mua < 0.001f) ? (w0 * len) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, take limit_{mua->0} w0*(1-exp(-mua*len))/mua yields w0*len */
                 } else if (gcfg->seed == SEED_FROM_FILE) {
                     if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF) {
                         weight = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen;
