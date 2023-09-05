@@ -1,9 +1,6 @@
 [submodule "filter"]
 	path = filter
 	url = https://github.com/fangq/GPU-ANLM.git
-[submodule "pymcx"]
-	path = pymcx
-	url = https://github.com/4D42/pymcx.git
 [submodule "src/pybind11"]
 	path = src/pybind11
 	url = https://github.com/pybind/pybind11.git
