@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <exception>
-#include <time.h>
 #include <math.h>
 
 #include "mex.h"
@@ -76,7 +75,6 @@
 typedef mwSize dimtype;
 
 void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cfg);
-void mcx_validate_config(Config* cfg);
 void mcxlab_usage();
 
 float* detps = NULL;       //! buffer to receive data from cfg.detphotons field
@@ -236,7 +234,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             cfg.issaveseed = (nlhs >= 4); /** save detected photon seeds to the 4th output if present */
 
             /** Validate all input fields, and warn incompatible inputs */
-            mcx_validate_config(&cfg);
+            mcx_validatecfg(&cfg, detps, dimdetps, seedbyte);
 
             partialdata = (cfg.medianum - 1) * (SAVE_NSCAT(cfg.savedetflag) + SAVE_PPATH(cfg.savedetflag) + SAVE_MOM(cfg.savedetflag));
             hostdetreclen = partialdata + SAVE_DETID(cfg.savedetflag) + 3 * (SAVE_PEXIT(cfg.savedetflag) + SAVE_VEXIT(cfg.savedetflag)) + SAVE_W0(cfg.savedetflag) + 4 * SAVE_IQUV(cfg.savedetflag);
@@ -1149,190 +1147,6 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     } else {
         printf(S_RED "WARNING: redundant field '%s'\n" S_RESET, name);
     }
-}
-
-/**
- * @brief Pre-computing the detected photon weight and time-of-fly from partial path input for replay
- *
- * When detected photons are replayed, this function recalculates the detected photon
- * weight and their time-of-fly for the replay calculations.
- *
- * @param[in,out] cfg: the simulation configuration structure
- */
-
-void mcx_replay_prep(Config* cfg) {
-    int i, j, hasdetid = 0, offset;
-    float plen;
-
-    if (cfg->seed == SEED_FROM_FILE && detps == NULL) {
-        mexErrMsgTxt("you give cfg.seed for replay, but did not specify cfg.detphotons.\nPlease define it as the detphoton output from the baseline simulation");
-    }
-
-    if (detps == NULL || cfg->seed != SEED_FROM_FILE) {
-        return;
-    }
-
-    if (cfg->nphoton != dimdetps[1]) {
-        mexErrMsgTxt("the column numbers of detphotons and seed do not match");
-    }
-
-    if (seedbyte == 0) {
-        mexErrMsgTxt("the seed input is empty");
-    }
-
-    hasdetid = SAVE_DETID(cfg->savedetflag);
-    offset = SAVE_NSCAT(cfg->savedetflag) * (cfg->medianum - 1);
-
-    if (((!hasdetid) && cfg->detnum > 1) || !SAVE_PPATH(cfg->savedetflag)) {
-        mexErrMsgTxt("please rerun the baseline simulation and save detector ID (D) and partial-path (P) using cfg.savedetflag='dp' ");
-    }
-
-    cfg->replay.weight = (float*)malloc(cfg->nphoton * sizeof(float));
-    cfg->replay.tof = (float*)calloc(cfg->nphoton, sizeof(float));
-    cfg->replay.detid = (int*)calloc(cfg->nphoton, sizeof(int));
-
-    cfg->nphoton = 0;
-
-    for (i = 0; i < dimdetps[1]; i++) {
-        if (cfg->replaydet <= 0 || cfg->replaydet == (int)(detps[i * dimdetps[0]])) {
-            if (i != cfg->nphoton) {
-                memcpy((char*)(cfg->replay.seed) + cfg->nphoton * seedbyte, (char*)(cfg->replay.seed) + i * seedbyte, seedbyte);
-            }
-
-            cfg->replay.weight[cfg->nphoton] = 1.f;
-            cfg->replay.tof[cfg->nphoton] = 0.f;
-            cfg->replay.detid[cfg->nphoton] = (hasdetid) ? (int)(detps[i * dimdetps[0]]) : 1;
-
-            for (j = hasdetid; j < cfg->medianum - 1 + hasdetid; j++) {
-                plen = detps[i * dimdetps[0] + offset + j];
-                cfg->replay.weight[cfg->nphoton] *= expf(-cfg->prop[j - hasdetid + 1].mua * plen);
-                plen *= cfg->unitinmm;
-                cfg->replay.tof[cfg->nphoton] += plen * R_C0 * cfg->prop[j - hasdetid + 1].n;
-            }
-
-            if (cfg->replay.tof[cfg->nphoton] < cfg->tstart || cfg->replay.tof[cfg->nphoton] > cfg->tend) { /*need to consider -g*/
-                continue;
-            }
-
-            cfg->nphoton++;
-        }
-    }
-
-    cfg->replay.weight = (float*)realloc(cfg->replay.weight, cfg->nphoton * sizeof(float));
-    cfg->replay.tof = (float*)realloc(cfg->replay.tof, cfg->nphoton * sizeof(float));
-    cfg->replay.detid = (int*)realloc(cfg->replay.detid, cfg->nphoton * sizeof(int));
-}
-
-/**
- * @brief Validate all input fields, and warn incompatible inputs
- *
- * Perform self-checking and raise exceptions or warnings when input error is detected
- *
- * @param[in,out] cfg: the simulation configuration structure
- */
-
-void mcx_validate_config(Config* cfg) {
-    int i, gates, idx1d, isbcdet = 0;
-    const char boundarycond[] = {'_', 'r', 'a', 'm', 'c', '\0'};
-    const char boundarydetflag[] = {'0', '1', '\0'};
-    unsigned int partialdata = (cfg->medianum - 1) * (SAVE_NSCAT(cfg->savedetflag) + SAVE_PPATH(cfg->savedetflag) + SAVE_MOM(cfg->savedetflag));
-    unsigned int hostdetreclen = partialdata + SAVE_DETID(cfg->savedetflag) + 3 * (SAVE_PEXIT(cfg->savedetflag) + SAVE_VEXIT(cfg->savedetflag)) + SAVE_W0(cfg->savedetflag);
-    hostdetreclen += cfg->polmedianum ? (4 * SAVE_IQUV(cfg->savedetflag)) : 0; // for polarized photon simulation
-
-    if (!cfg->issrcfrom0) {
-        cfg->srcpos.x--;
-        cfg->srcpos.y--;
-        cfg->srcpos.z--; /*convert to C index, grid center*/
-    }
-
-    if (cfg->tstart > cfg->tend || cfg->tstep == 0.f) {
-        mexErrMsgTxt("incorrect time gate settings");
-    }
-
-    if (ABS(cfg->srcdir.x * cfg->srcdir.x + cfg->srcdir.y * cfg->srcdir.y + cfg->srcdir.z * cfg->srcdir.z - 1.f) > 1e-5) {
-        mexErrMsgTxt("field 'srcdir' must be a unitary vector");
-    }
-
-    if (cfg->steps.x == 0.f || cfg->steps.y == 0.f || cfg->steps.z == 0.f) {
-        mexErrMsgTxt("field 'steps' can not have zero elements");
-    }
-
-    if (cfg->tend <= cfg->tstart) {
-        mexErrMsgTxt("field 'tend' must be greater than field 'tstart'");
-    }
-
-    gates = (int)((cfg->tend - cfg->tstart) / cfg->tstep + 0.5);
-
-    if (cfg->maxgate > gates) {
-        cfg->maxgate = gates;
-    }
-
-    if (cfg->sradius > 0.f) {
-        cfg->crop0.x = MAX((int)(cfg->srcpos.x - cfg->sradius), 0);
-        cfg->crop0.y = MAX((int)(cfg->srcpos.y - cfg->sradius), 0);
-        cfg->crop0.z = MAX((int)(cfg->srcpos.z - cfg->sradius), 0);
-        cfg->crop1.x = MIN((int)(cfg->srcpos.x + cfg->sradius), cfg->dim.x - 1);
-        cfg->crop1.y = MIN((int)(cfg->srcpos.y + cfg->sradius), cfg->dim.y - 1);
-        cfg->crop1.z = MIN((int)(cfg->srcpos.z + cfg->sradius), cfg->dim.z - 1);
-    } else if (cfg->sradius == 0.f) {
-        memset(&(cfg->crop0), 0, sizeof(uint3));
-        memset(&(cfg->crop1), 0, sizeof(uint3));
-    } else {
-        /*
-            if -R is followed by a negative radius, mcx uses crop0/crop1 to set the cachebox
-        */
-        if (!cfg->issrcfrom0) {
-            cfg->crop0.x--;
-            cfg->crop0.y--;
-            cfg->crop0.z--;  /*convert to C index*/
-            cfg->crop1.x--;
-            cfg->crop1.y--;
-            cfg->crop1.z--;
-        }
-    }
-
-    if (cfg->seed < 0 && cfg->seed != SEED_FROM_FILE) {
-        cfg->seed = time(NULL);
-    }
-
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF) && cfg->seed != SEED_FROM_FILE) {
-        mexErrMsgTxt("Jacobian output is only valid in the reply mode. Please define cfg.seed");
-    }
-
-    for (i = 0; i < cfg->detnum; i++) {
-        if (!cfg->issrcfrom0) {
-            cfg->detpos[i].x--;
-            cfg->detpos[i].y--;
-            cfg->detpos[i].z--;  /*convert to C index*/
-        }
-    }
-
-    if (cfg->shapedata && strstr(cfg->shapedata, ":") != NULL) {
-        if (cfg->mediabyte > 4) {
-            mexErrMsgTxt("rasterization of shapes must be used with label-based mediatype");
-        }
-
-        Grid3D grid = {&(cfg->vol), &(cfg->dim), {1.f, 1.f, 1.f}, 0};
-
-        if (cfg->issrcfrom0) {
-            memset(&(grid.orig.x), 0, sizeof(float3));
-        }
-
-        int status = mcx_parse_shapestring(&grid, cfg->shapedata);
-
-        if (status) {
-            mexErrMsgTxt(mcx_last_shapeerror());
-        }
-    }
-
-    mcx_preprocess(cfg);
-
-    cfg->his.maxmedia = cfg->medianum - 1; /*skip medium 0*/
-    cfg->his.detnum = cfg->detnum;
-    cfg->his.srcnum = cfg->srcnum;
-    cfg->his.colcount = hostdetreclen; /*column count=maxmedia+2*/
-    cfg->his.savedetflag = cfg->savedetflag;
-    mcx_replay_prep(cfg);
 }
 
 /**

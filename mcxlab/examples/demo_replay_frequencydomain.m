@@ -26,7 +26,7 @@ f_mod = 100e6; % 100 MHz RF modulation frequency
 
 % MCXLAB SETTINGS
 clear cfg
-cfg.nphoton=1e9;
+cfg.nphoton=3e7;
 cfg.vol=uint8(layered_model);
 cfg.prop=opt_params;
 cfg.tstart=0;

@@ -87,11 +87,11 @@ if(isfield(json,'Domain') && isfield(json.Domain,'VolumeFile'))
             mediaclass='uint8';
             if(isfield(json.Domain,'MediaFormat'))
                 idx=find(ismember({'byte','short','integer','muamus_float',...
-                    'mua_float','muamus_half','asgn_byte','muamus_short'},...
+                    'mua_float','muamus_half','asgn_byte','muamus_short','svmc'},...
                     lower(json.Domain.MediaFormat)));
                 if(idx)
-                    typebyte=[1,2,4,8,4,4,4,4];
-                    typenames={'uint8','uint16','uint32','single','single','uint16','uint8','uint16'};
+                    typebyte=[1,2,4,8,4,4,4,4,8];
+                    typenames={'uint8','uint16','uint32','single','single','uint16','uint8','uint16','uint8'};
                     bytelen=typebyte(idx);
                     mediaclass=typenames{idx};
                 else

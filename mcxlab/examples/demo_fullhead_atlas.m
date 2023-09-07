@@ -5,13 +5,14 @@
 % atlas template(USC 19.5 year group[Sanchez2012]). 
 %
 % This demo is identical to the MCX simulation used for Fig.9(a) in
-% TranYan2019(submitted).
+% TranYan2020.
 %
 % [Sanchez2012] C.E.Sanchez J.E.Richards and C.R.Almli, “Age-Specific MRI Templates
 % for Pediatric Neuroimaging,” Developmental Neuropsychology 37, 379–399 (2012).
 %
-% [TranYan2019] A.P.Tran, S.Yan and Q.Fang, "Improving model-based fNIRS 
-% analysis using mesh-based anatomical and light-transport models".
+% [TranYan2020] Tran AP+, Yan S+, Fang Q*, (2020) “Improving model-based fNIRS 
+% analysis using mesh-based anatomical and light-transport models," 
+% Neurophotonics, 7(1), 015008
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -34,6 +34,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
 
 #ifndef WIN32
     #include <sys/ioctl.h>
@@ -3344,10 +3345,11 @@ void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
 
     for (i = 0; i < dimdetps[1]; i++) {
         if (cfg->replaydet <= 0 || cfg->replaydet == (int) (detps[i * dimdetps[0]])) {
-            if (i != cfg->nphoton)
+            if (i != cfg->nphoton) {
                 memcpy((char*) (cfg->replay.seed) + cfg->nphoton * seedbyte,
                        (char*) (cfg->replay.seed) + i * seedbyte,
                        seedbyte);
+            }
 
             cfg->replay.weight[cfg->nphoton] = 1.f;
             cfg->replay.tof[cfg->nphoton] = 0.f;
@@ -3444,7 +3446,11 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
         cfg->srcpos.z--; /*convert to C index, grid center*/
     }
 
-    if (cfg->tstart > cfg->tend || cfg->tstep == 0.f) {
+    if (cfg->tstep == 0.f) {
+        cfg->tstep = cfg->tend;
+    }
+
+    if (cfg->tstart >= cfg->tend || cfg->tstep == 0.f) {
         MCX_ERROR(-6, "incorrect time gate settings");
     }
 
@@ -3454,10 +3460,6 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
 
     if (cfg->steps.x == 0.f || cfg->steps.y == 0.f || cfg->steps.z == 0.f) {
         MCX_ERROR(-6, "field 'steps' can not have zero elements");
-    }
-
-    if (cfg->tend <= cfg->tstart) {
-        MCX_ERROR(-6, "field 'tend' must be greater than field 'tstart'");
     }
 
     gates = (int) ((cfg->tend - cfg->tstart) / cfg->tstep + 0.5);
@@ -3488,6 +3490,10 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
             cfg->crop1.y--;
             cfg->crop1.z--;
         }
+    }
+
+    if (cfg->seed < 0 && cfg->seed != SEED_FROM_FILE) {
+        cfg->seed = time(NULL);
     }
 
     if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF)
