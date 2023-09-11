@@ -236,7 +236,7 @@ fermimex fermioct:    CUCCOPT+=--compiler-options "$(DLLFLAG)" -DMCX_CONTAINER -
 fermimex fermioct:    CPPOPT+=$(DLLFLAG) -DMCX_CONTAINER -DMATLAB_MEX_FILE
 fermimex:   LINKOPT+=mcxlab.cpp -outdir $(OUTPUT_DIR) $(INCLUDEDIRS)
 
-fermioct:   AR= CXXFLAGS='-DSAVE_DETECTORS $(NVCCOMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='$(NVCCOMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS) $(MEXLINKOPT)' XTRA_CFLAGS='$(NVCCOMP)' XTRA_CXXFLAGS='$(NVCCOMP)'  mkoctfile -v
+fermioct:   AR= CXXFLAGS='-std=c++11 -DSAVE_DETECTORS $(NVCCOMP) $(MEXCCOPT) $(USERCCOPT)' LFLAGS='$(NVCCOMP) $(USERLINKOPT)' CC='$(CC)' CXX='$(CXX)' LDFLAGS='$(LFLAGS) $(MEXLINKOPT)' XTRA_CFLAGS='$(NVCCOMP)' XTRA_CXXFLAGS='$(NVCCOMP)'  mkoctfile -v
 fermioct:   BINARY=mcx.mex
 fermioct:   LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 

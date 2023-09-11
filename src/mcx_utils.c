@@ -3595,7 +3595,7 @@ void mcx_loadseedjdat(char* filename, Config* cfg) {
             uint dims[3] = {1, 1, 1};
             float* ppath = NULL;
             char* type;
-            History his = {0};
+            History his = {{0}};
 
             cJSON* vsize = cJSON_GetObjectItem(seed, "_ArraySize_");
 
