@@ -14,7 +14,7 @@ jobs:
     name: Build All
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11, macos-12, windows-2019]
+        os: [ubuntu-20.04, macos-11, windows-2019]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -40,6 +40,7 @@ jobs:
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
           echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          brew install --cask lazarus
           brew install octave
           brew link --force libomp
       - name: Install dependencies (Windows only)
@@ -155,7 +156,6 @@ jobs:
             objdump -p ../bin/mcx.exe | grep "DLL Name:"
           fi
       - name: Build mcxstudio
-        if: ${{ runner.os != 'macOS' }}
         run: |
           cd mcxstudio
           lazbuild --build-mode=release mcxshow.lpi
@@ -190,8 +190,8 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             cp -a mcxstudio/debug/mcxstudio.app bin
-            #cp -a mcxstudio/mcxshow.app   bin
-            #cp -a mcxstudio/mcxviewer.app bin
+            cp -a mcxstudio/mcxshow.app   bin
+            cp -a mcxstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/*
