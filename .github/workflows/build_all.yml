@@ -43,6 +43,7 @@ jobs:
           brew install --cask lazarus
           brew install octave
           brew link --force libomp
+          echo "/Library/Lazarus/" >> $GITHUB_PATH
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
