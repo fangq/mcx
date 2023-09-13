@@ -39,6 +39,10 @@ unsigned int StartTimer ();
 unsigned int GetTimeMillis ();
 void sleep_ms(int milliseconds);
 
+#if defined(_WIN32) && defined(USE_OS_TIMER) && !defined(MCX_CONTAINER)
+int EnableVTMode();
+#endif
+
 #ifdef  __cplusplus
 }
 #endif

@@ -48,6 +48,10 @@
 #include "mcx_bench.h"
 #include "mcx_mie.h"
 
+#if defined(_WIN32) && defined(USE_OS_TIMER) && !defined(MCX_CONTAINER)
+    #include "mmc_tictoc.h"
+#endif
+
 #ifndef MCX_CONTAINER
     #include "zmat/zmatlib.h"
     #include "ubj/ubj.h"
@@ -4390,6 +4394,10 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
     char filename[MAX_PATH_LENGTH] = {0}, *jsoninput = NULL;
     char logfile[MAX_PATH_LENGTH] = {0};
     float np = 0.f;
+
+#if defined(_WIN32) && defined(USE_OS_TIMER) && !defined(MCX_CONTAINER)
+    EnableVTMode();
+#endif
 
     if (argc <= 1) {
         mcx_usage(cfg, argv[0]);
