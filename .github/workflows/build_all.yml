@@ -44,7 +44,8 @@ jobs:
           brew link --force libomp
           brew install --cask lazarus
           echo "/Lazarus/" >> $GITHUB_PATH
-          ls /
+          ls /Applications
+          ls /Library
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
