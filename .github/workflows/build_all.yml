@@ -40,10 +40,11 @@ jobs:
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
           echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
-          brew install --cask lazarus
           brew install octave
           brew link --force libomp
+          brew install --cask lazarus
           echo "/Library/Lazarus/" >> $GITHUB_PATH
+          ls /Library/Lazarus/
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
