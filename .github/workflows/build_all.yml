@@ -43,9 +43,7 @@ jobs:
           brew install octave
           brew link --force libomp
           brew install --cask lazarus
-          echo "/Lazarus/" >> $GITHUB_PATH
-          find /Applications/Lazarus -name "lazbuild"
-          find /opt -name "lazbuild"
+          echo "/Applications/Lazarus/" >> $GITHUB_PATH
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
