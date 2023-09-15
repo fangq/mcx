@@ -74,7 +74,7 @@ the verbose command line options in MCX.
      cfg: a struct, or struct array. Each element of cfg defines 
           the parameters associated with a simulation. 
           if cfg='gpuinfo': return the supported GPUs and their parameters,
-          if cfg='version': return the version of MCXLAB as a string,
+          if cfg='version': return the version of mcxlab as a string,
           see sample script at the bottom
      option: (optional), options is a string, specifying additional options
           option='preview': this plots the domain configuration using mcxpreview(cfg)
@@ -100,29 +100,39 @@ the verbose command line options in MCX.
                        the 2D plane in such case.
                        for 2D simulations, Example: <demo_mcxlab_2d.m>
  
-                       mcxlab also accepts 4D arrays to define continuously varying media. 
+                       mcxlab also accepts 4D arrays to define continuously varying media.
                        The following formats are accepted
-                         1 x Nx x Ny x Nz float32 array: mua values for each voxel (must use permute to make 1st dimension singleton)
-                         2 x Nx x Ny x Nz float32 array: mua/mus values for each voxel (g/n use prop(2,:))
-                         4 x Nx x Ny x Nz uint8 array: mua/mus/g/n gray-scale (0-255) interpolating between prop(2,:) and prop(3,:)
-                         2 x Nx x Ny x Nz uint16 array: mua/mus gray-scale (0-65535) interpolating between prop(2,:) and prop(3,:)
+                         1 x Nx x Ny x Nz float32 array: "mua_float"/101 format: mua values for each voxel (must use permute to make 1st dimension singleton)
+                         2 x Nx x Ny x Nz float32 array: "muamus_float"/100 format: mua/mus values for each voxel (g/n use prop(2,:))
+                         3 x Nx x Ny x Nz float32 array: "labelplus"/99 format: {[float32: property_value][float32: property_index i, 0-3][float32: tissue label]},
+                                          the optical properties are first read based on the label, then the i-th property is replaced by the property value
+                         3 x Nx x Ny x Nz int16/uint16 array:  "mixlabel"/98 format: {[int16 label1][uint16 label2][0-65535 label1 percentage]}
+                         4 x Nx x Ny x Nz uint8 array: "asgn_byte"/103 format: mua/mus/g/n gray-scale (0-255) interpolating between prop(2,:) and prop(3,:)
+                         2 x Nx x Ny x Nz uint16 array: "muamus_short"/104 format: mua/mus gray-scale (0-65535) interpolating between prop(2,:) and prop(3,:)
+                         8 x Nx x Ny x Nz uint8 array: "svmc"/97 format: split-voxel MC (SVMC) hybrid domain, can be created by mcxsvmc.m
                          Example: <demo_continuous_mua_mus.m>. If voxel-based media are used, partial-path/momentum outputs are disabled
+                         Example: <demo_svmc_*.m> for SVMC related examples
       *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
                        the first row corresponds to medium type 0
                        (background) which is typically [0 0 1 1]. The
                        second row is type 1, and so on. The background
-                       medium (type 0) has special meanings: a photon
-                       terminates when moving from a non-zero to zero voxel.
+                       medium (type 0) has special meanings: a photon is terminated
+                       when moving from a non-zero to zero voxel.
       *cfg.tstart:     starting time of the simulation (in seconds)
       *cfg.tstep:      time-gate width of the simulation (in seconds)
       *cfg.tend:       ending time of the simulation (in second)
-      *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit
+      *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit; if a non-zero 
+                       4th element is given, it specifies the initial weight of each photon packet
+                       (or a multiplier in the cases of pattern/pattern3d sources); this initial weight
+                       can be negative - the output fluence is expected to be linearly proportional
+                       to this initial weight (w0) before normalization.
       *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector; if srcdir
                        contains a 4th element, it specifies the focal length of
                        the source (only valid for focuable src, such as planar, disk,
                        fourier, gaussian, pattern, slit, etc); if the focal length
                        is nan, all photons will be launched isotropically regardless
-                       of the srcdir direction.
+                       of the srcdir direction; if the focal length is -inf, the launch
+                       angle will be computed based on the Lambertian (cosine) distribution.
  
  == MC simulation settings ==
        cfg.seed:       seed for the random number generator (integer) [0]
@@ -149,7 +159,9 @@ the verbose command line options in MCX.
                        '0': this face is not used to detector photons
                        '1': this face is used to capture photons (if output detphoton)
                        see <demo_bc_det.m>
-       cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection
+       cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection.
+                       setting isnormalized to 2 in the replay mode builds the Jacobian
+                       with Born approximation instead of the default Rytov approximation
        cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
        cfg.maxgate:    the num of time-gates per simulation
        cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
@@ -227,6 +239,10 @@ the verbose command line options in MCX.
                                 set by srcparam1(1) (in grid unit); if srcparam1(2) is set to a non-zero
                                 value, this source defines a ring (annulus) shaped source, with
                                 srcparam1(2) denoting the inner circle's radius, here srcparam1(1)>=srcparam1(2)
+                       'ring' [*] - a uniform ring/ring-sector source pointing along srcdir; the outer radius
+                                of the ring is srcparam1(1) (in grid unit) and the inner radius is srcparam1(2);
+                                srcparam1(3) and srcparam1(4) can optionally set the lower and upper angular
+                                bound (in positive rad) of a ring sector if at least one of those is positive.
                        'fourierx' [*] - a general Fourier source, the parameters are 
                                 srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phi0,M]
                                 normalized vectors satisfy: srcdir cross v1=v2

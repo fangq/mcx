@@ -883,7 +883,7 @@ begin
       ckbDet.Checked[0]:=true;
       ckbDet.Checked[2]:=true;
       edOutputType.ItemIndex:=0;
-      edOutputFormat.ItemIndex:=0;
+      edOutputFormat.ItemIndex:=1;
       edBenchmark.ItemIndex:=0;
       vlBC.Values['x-'] := 'absorb';
       vlBC.Values['x+'] := 'absorb';
@@ -1071,7 +1071,7 @@ begin
         //mcxdoQuery.Enabled:=true;
         ckSrcFrom0.Visible:=true;
         ckSaveMask.Visible:=true;
-        edOutputFormat.ItemIndex:=0;
+        edOutputFormat.ItemIndex:=1;
         grArray.Enabled:=true;
         edGate.Enabled:=true;
         edDetectedNum.Enabled:=true;
@@ -1081,7 +1081,7 @@ begin
         tabVolumeDesigner.Enabled:=false;
         ckSpecular.Visible:=true;
         //ckSaveRef.Visible:=false;
-        edOutputFormat.ItemIndex:=0;
+        edOutputFormat.ItemIndex:=1;
         edRespin.Hint:='BasicOrder';
         lbRespin.Caption:='Element order (-C)';
         edBubble.Hint:='DebugPhoton';
@@ -1811,6 +1811,7 @@ begin
               mcxdoPlotVol.Enabled:=Selected;
               mcxdoPlotMC2.Enabled:=Selected;
               mcxdoPlotNifty.Enabled:=Selected;
+              mcxdoPlotJNIFTI.Enabled:=Selected;
               mcxdoPlotMesh.Enabled:=Selected;
           end;
      end;

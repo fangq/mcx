@@ -614,14 +614,18 @@ supported parameters, as shown below:
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
 #          Copyright (c) 2009-2023 Qianqian Fang <q.fang at neu.edu>          #
-#                             http://mcx.space/                               #
+#                https://mcx.space/  &  https://neurojson.org/                #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
 ###############################################################################
-$Rev::e02c77$ v2023  $Date::2023-08-12 14:16:55 -04$ by $Author::Qianqian Fang$
+#  Open-source codes and reusable scientific data are essential for research, #
+# MCX proudly developed human-readable JSON-based data formats for easy reuse,#
+#  Please consider using JSON (https://neurojson.org/) for your research data #
+###############################################################################
+$Rev::ffc8ab$ v2023  $Date::2023-09-13 12:24:07 -04$ by $Author::Qianqian Fang$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...

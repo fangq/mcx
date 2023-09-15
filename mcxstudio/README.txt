@@ -97,6 +97,7 @@ After applying the above command, you should be able to start mcxstudio
 (and mcxshow, mcxviewer applications) by double-clicking on their icons.
 
 ---------------------------------------------------------------------------
+
 == # Using MCX Studio GUI ==
 
 
@@ -141,6 +142,7 @@ associated with mcxstudio executable. To load a .mcxp file, you can simply
 double-click on the file, mcxstudio will be started automatically.
 
 ---------------------------------------------------------------------------
+
 == # Remote Execution ==
 
 MCXStudio not only supports running mmc/mmc/mcxcl simulations on your local
@@ -222,13 +224,14 @@ transfer to work.
 
 
 ---------------------------------------------------------------------------
+
 == #  Acknowledgement ==
 
 The icon set was created by Qianqian Fang, with a style inspired by 
 the "Uniform" icon-set 
 URL: https://github.com/0rAX0/uniform-icon-theme
 
-The JSON shape editor uses an function "ShpwJSONData"  
+The JSON shape editor uses an function "ShowJSONData"  
 adapted from the "jsonviewer" example in Lazarus.
 URL: http://wiki.freepascal.org/fcl-json#From_JsonViewer
 
