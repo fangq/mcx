@@ -122,11 +122,7 @@ else
      CPPOPT +=-m64
      CUCCOPT +=-m64
      ifeq "$(wildcard $(CUDA_HOME)/lib64)" "$(CUDA_HOME)/lib64"
-        ifeq ($(BACKEND),cuda)
-           LINKOPT=-L$(CUDA_HOME)/lib64 $(CUDART) -lm -lstdc++
-        else ifeq ($(BACKEND),cudastatic)
-           LINKOPT=-L$(CUDA_HOME)/lib64 $(CUDART) -lm -static-libgcc -static-libstdc++
-        endif
+        LINKOPT=-L$(CUDA_HOME)/lib64 $(CUDART)
      endif
   endif
 endif
