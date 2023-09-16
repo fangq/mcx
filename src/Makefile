@@ -110,10 +110,10 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   MEXLINKLIBS="\$$LINKLIBS"
   export CC CXX
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
-  CUDA_STATIC=--cudart static /usr/local/lib/libomp.a
+  CUDA_STATIC=--cudart static
   OMP=-Xclang -fopenmp
   CPPOPT+=$(OMP)
-  LINKOPT+=-L/usr/local/lib
+  LINKOPT+=/usr/local/lib/libomp.a
   INCLUDEDIRS+=-I/usr/local/include
 else
   CPPOPT+=$(OMP)
