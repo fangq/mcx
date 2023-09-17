@@ -63,6 +63,9 @@
         </CompilerOptions>
       </Item2>
       <Item3 Name="Release">
+        <MacroValues Count="1">
+          <Macro1 Name="LCLWidgetType" Value="cocoa"/>
+        </MacroValues>
         <CompilerOptions>
           <Version Value="11"/>
           <SearchPaths>
@@ -78,6 +81,7 @@
           </Parsing>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
+            <TargetCPU Value="x86_64"/>
             <Optimizations>
               <OptimizationLevel Value="3"/>
             </Optimizations>
@@ -98,6 +102,9 @@
           </Linking>
         </CompilerOptions>
       </Item3>
+      <SharedMatrixOptions Count="1">
+        <Item1 ID="587424703749" Modes="Release" Type="IDEMacro" MacroName="LCLWidgetType" Value="cocoa"/>
+      </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -147,7 +154,7 @@
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
         <TopLine Value="1294"/>
-        <CursorPos Y="1314"/>
+        <CursorPos X="31" Y="1304"/>
         <UsageCount Value="230"/>
         <Bookmarks Count="2">
           <Item0 ID="9"/>
