@@ -24,6 +24,8 @@
 #
 ###############################################################################
 
+## setting up environment
+
 BUILD='nightly'
 LAZMAC=
 
@@ -48,12 +50,16 @@ fi
 
 TAG=${OS}-${MACHINE}-${BUILD}
 
-SERVER=
-REMOTEPATH=
-
 if [ "$BUILD" == "nightly" ]; then
 	TAG=${OS}-${MACHINE}-${BUILD}build
 fi
+
+## setting up upload server (blank if no need to upload)
+
+SERVER=
+REMOTEPATH=
+
+## checking out latest github code
 
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib
 export PATH=.:/opt/local/bin:/usr/local/cuda/bin/:$PATH
@@ -64,6 +70,8 @@ cd $BUILDROOT
 rm -rf mcx
 mkdir -p mcx/mcx
 git clone --recurse-submodules https://github.com/fangq/mcx.git mcx/mcx
+
+## automatically update revision/version number
 
 cat <<EOF >>mcx/mcx/.git/config
 [filter "rcs-keywords"]
@@ -81,6 +89,8 @@ rm -rf *
 git checkout .
 git submodule update --init --remote
 
+## zip and upload source code package
+
 rm -rf .git
 cd ..
 zip -FSr $BUILDROOT/mcx-src-${BUILD}.zip mcx
@@ -89,6 +99,8 @@ if [ "$OS" == "linux" ] && [ ! -z "$SERVER" ]; then
 fi
 cd mcx
 cd src
+
+## build matlab mex file
 
 rm -rf ../mcxlab/AUTO_BUILD_*
 make clean
@@ -100,11 +112,9 @@ elif [ "$OS" == "macos" ]; then
 	make mex MEXLINKOPT='/usr/local/lib/libomp.a' >>../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
 elif [ "$OS" == "win" ]; then
 	cmd /c mex mcx_core.obj mcx_utils.obj mcx_shapes.obj mcx_tictoc.obj mcx_mie.obj mcx_bench.obj cjson/cJSON.obj -output ../mcxlab/mcx -L"E:\Applications\CUDA7.5\CUDA7.5/lib/x64" -lcudadevrt -lcudart_static CXXFLAGS='$CXXFLAGS -g -DSAVE_DETECTORS -DUSE_CACHEBOX -DMCX_CONTAINER /openmp  ' LDFLAGS='-L$TMW_ROOT$MATLABROOT/sys/os/$ARCH $LDFLAGS /openmp ' mcxlab.cpp -outdir ../mcxlab -I/usr/local/cuda/include -I"E:\Applications\CUDA7.5\CUDA7.5/lib/include" -DUSE_XORSHIFT128P_RAND
-	echo "Windows mcx build"
-	cd ../mcxlab
-	upx -9 mcx.mexw64
-	cd ../src
 fi
+
+## build octave mex file
 
 make clean
 make oct >>../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
@@ -112,6 +122,8 @@ make oct >>../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
 if [ "$OS" == "linux" ]; then
 	make oct BACKEND=cudastatic >>../mcxlab/AUTO_BUILD_${DATE}.log 2>&1
 fi
+
+## test mex file dependencies
 
 mexfile=(../mcxlab/mcx.mex*)
 
@@ -128,14 +140,23 @@ else
 	echo "Build Failed" >>../mcxlab/AUTO_BUILD_${DATE}.log
 fi
 
+## compress mex files with upx
+
+upx -9 ../mcxlab/mcx.mex* || true
+
+## zip and upload mex package
+
 if [ "$BUILD" != "nightly" ]; then
 	rm -rf ../mcxlab/AUTO_BUILD_${DATE}.log
 fi
 
 rm -rf ../mcxlab/mcxlab.o ../mcxlab/mcxlab.obj
 
+## compile denoising filter mex for matlab
+
 cd ../filter/src
 make clean
+
 
 if [ "$OS" == "osx" ]
 then
@@ -144,6 +165,7 @@ else
     make BACKEND=cudastatic
 fi
 
+## zip and upload mex package
 
 mexfile=(../bin/mcxfilter.mex*)
 
@@ -166,6 +188,8 @@ cd src
 
 [ ! -z "$SERVER" ] && scp $BUILDROOT/mcxlab-${TAG}.zip $SERVER:$REMOTEPATH/${OS}64/
 
+## compile standalone binary/executable
+
 make clean
 
 if [ "$OS" == "linux" ]; then
@@ -175,6 +199,8 @@ elif [ "$OS" == "macos" ]; then
 else
 	make static &>$BUILDROOT/mcx_buildlog_${DATE}.log
 fi
+
+## test binary dependencies
 
 if [ -f "../bin/mcx" ]; then
 	if [ "$OS" == "macos" ]; then
@@ -190,6 +216,8 @@ else
 	exit 1
 fi
 
+## build mcxstudio GUI with lazarus-ide
+
 cd ../mcxstudio
 lazbuild --build-mode=release ${LAZMAC} mcxshow.lpi
 lazbuild --build-mode=release ${LAZMAC} mcxviewer.lpi
@@ -198,6 +226,8 @@ cp debug/mcxstudio ../bin
 cp mcxshow ../bin
 cp mcxviewer ../bin
 cp README.txt ../inno/MCXStudio_README.txt
+
+## copy MacOS app files
 
 if [ "$OS" == "macos" ]; then
 	cp -a debug/mcxstudio.app ../bin
@@ -215,13 +245,14 @@ cd ../bin
 
 cp $BUILDROOT/bindlls/*.dll .
 
+## compress binary with upx
+
+upx -9 *.exe *.dll || true
+
+## zip and upload binary package
+
 if [ "$OS" == "win" ]; then
-	upx -9 *.exe
 	rm -rf mcx.exp mcx.lib
-elif [ "$OS" == "linux" ]; then
-	upx -9 mcx*
-else
-	echo "no compression on Mac"
 fi
 
 cd ../
