@@ -247,7 +247,7 @@ cp $BUILDROOT/bindlls/*.dll .
 
 ## compress binary with upx
 
-upx -9 *.exe *.dll || true
+upx -9 mcx* || true
 
 ## zip and upload binary package
 
