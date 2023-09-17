@@ -3,13 +3,13 @@
                     version 2023
 =============================================================
 
-Copyright (c) 2010-2023  Qianqian Fang <q.fang at neu.edu>
+Copyright (c) 2009-2023  Qianqian Fang <q.fang at neu.edu>
 
 - Computational Optics & Translational Imaging (COTI) Lab (http://fanglab.org)
 - Department of Bioengineering, Northeastern University
 - 360 Huntington Ave, ISEC 206, Boston, MA 02115, USA
 - Website: http://mcx.space
-- Github: https://github.com/mcx/
+- Github: https://github.com/fangq/mcx/
 
 =============================================================
 :: Acknowledgement:

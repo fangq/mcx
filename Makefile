@@ -8,6 +8,7 @@ PKGNAME=mcx
 VERSION=2.0.0
 SOURCE=src
 GUI=mcxstudio
+COPY=cp
 
 all: bin gui mex deb rpm
 

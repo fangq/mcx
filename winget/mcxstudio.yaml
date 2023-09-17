@@ -2,7 +2,7 @@ Id: coti.mcxstudio
 Publisher: COTI Lab
 Author: Qianqian Fang
 Name: MCX Studio
-Version: 0.9.8
+Version: 1.0.0
 AppMoniker: mcxstudio
 Tags: science
 MinOSVersion: 10.0.0.0
@@ -13,6 +13,6 @@ LicenseUrl: https://github.com/fangq/mcx/blob/master/LICENSE.txt
 InstallerType: inno
 Installers:
   - Arch: x64
-    Url: http://mcx.space/nightly/release/v2020.alpha/MCXStudio-v2020_alpha-installer.exe
-    Sha256: 6a1bb0b370091eab79f83db550eb51d7e177cb211b2c5afc92b57c4af0643a61
+    Url: http://mcx.space/nightly/release/v2020/MCXStudio-v2020-installer.exe
+    Sha256: d5b3ba64632cbf92c77ac4dea9925933a25603a088bc897d07b936b650f01e12
 ManifestVersion: 0.1.0

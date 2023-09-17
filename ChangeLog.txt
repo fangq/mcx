@@ -3,16 +3,80 @@
 Major updates are marked with a "*"
 
 == MCX v2023 (Heroic Hadron - 2.0), FangQ <q.fang (a) neu.edu> ==
- 2023-08-07 [ac893cd] mcxplotvol: allow keeping x/y/z slice when switching between 4th dimension
+
+ 2023-09-17 [5b8a06f] add comments to nightly build script for deployment
+ 2023-09-16 [d2a2ae3] update deploy script after reformat
+ 2023-09-15 [387df65] link libomp.a on mac
+ 2023-09-15 [bf6843f] simplify linkopt
+ 2023-09-15 [4ee145e] update help info
+ 2023-09-13*[ffc8ab0] support ASCII escape code in Windows terminals
+ 2023-09-12 [24bb9e1] add path to lazbuild
+ 2023-09-12 [6820c04] build mcxstudio on mac
+ 2023-09-12 [9f3c3c2] print verbose info on mac
+ 2023-09-12 [48d4f2f] test macos-12 runner
+ 2023-09-11 [57519b9] force -std=c++11 to build oct on older gcc
+ 2023-09-07 [24c3533] remove redundant functions in mcxlab
+ 2023-09-05 [53e2681] update pmcx after fixing the regression due to #164
+ 2023-09-04*[0b98843] fix regression caused by #164 for mus=0 region patch in #164 breaks https://github.com/fangq/mmc/blob/master/mmclab/example/demo_dualmesh_output.m
+ 2023-09-04 [287671b] Merge pull request #182 from fangq/ringsrc
+ 2023-09-03*[ad6ff4c] compact implementation of ring source, close #181
+ 2023-09-01 [b0bad9f] renormalize dir vector after each rotation, suggested by @ShijieYan
+ 2023-09-01 [4fe8e43] highlight link and version with ascii color
+ 2023-08-28 [1a2f291] fix macos nightly build
+ 2023-08-27 [2a5f27c] fix ci build
+ 2023-08-27 [b9f22ad] print code name, print min CUDA arch support
+ 2023-08-25 [f23188b] Update pmcx jupyter notebook
+ 2023-08-25 [0be475b] bump pmcx version to 0.1.1 to fix critical bug #180
+ 2023-08-25*[eaf31de] [bug] critical! pmcx assumes incorrect default focal length, fix #180
+ 2023-08-25*[ddbbaf3] [bug]: fix default outputformat when parsing json input, fix #179
+ 2023-08-24 [acfea7d] allow to link with libomp on macos with clang
+ 2023-08-21 [88eba94] fix macos mcx package path
+ 2023-08-21 [1c9efee] adjust cmake build path
+ 2023-08-21 [a2e73b9] add openmp to matlab mex
+ 2023-08-21 [f1d3829] add NO_IMPLICIT_LINK_TO_MATLAB_LIBRARIES in cmake
+ 2023-08-20 [37952aa] try cmake on mac
+ 2023-08-20 [2fca345] add cuda to path
+ 2023-08-20 [6bb0c9a] adjust mcx macos build
+ 2023-08-20 [5c775f9] update ci badges
+ 2023-08-20 [93315dd] force overwriting system xcode
+ 2023-08-20 [41e2e21] add path to make utils
+ 2023-08-20 [3ee25a3] test macos python build
+ 2023-08-20 [8941566] fix travis build
+ 2023-08-20 [4db668a] fix python windows build error
+ 2023-08-20 [ec119b6] bump pmcx version number, rebuild python module
+ 2023-08-19*[a0a2a9b] add pmcx utility functions and its test by Ivy Yen
+ 2023-08-18 [21781cb] revert back to old osx image
+ 2023-08-18 [7e73ab4] update makefile for macos, use pyenv
+ 2023-08-17 [73f3651] try building binary wheels on multiple python versions
+ 2023-08-15 [2aa3de4] just build python3.7 module
+ 2023-08-15 [7d88d32] try brew update
+ 2023-08-15 [ba34c5c] try pyenv to install other python versions
+ 2023-08-15 [77d89e2] build multiple python versions
+ 2023-08-15 [73dae89] update pip version
+ 2023-08-15 [d2ff843] use pip3 in check-pypi-upload.sh
+ 2023-08-15 [4f9e278] use UPLOAD_TO_PYPI flag as deploy condition
+ 2023-08-15 [c6d4258] limit travis to only build on master
+ 2023-08-15 [4775c4f] rearrange folder in travis
+ 2023-08-15 [18255c7] install missing twine, move python files to top level
+ 2023-08-15 [9255345] try uploading python macos module from travis
+ 2023-08-12 [af3d386] fix remaining mc2 format flag
+ 2023-08-12*[3187ece] switch from custom mc2/mch formats to jnii and jdat as default
+ 2023-08-12 [780c7ab] support mcxlab('version'), let pmcx to read 1D detpos,prop,polprop
+ 2023-08-12 [aa9b2f4] update documentation, prepare for v2023 release
+ 2023-08-12 [e02c777] fix windows binary linking
+ 2023-08-12 [4d158b1] fix the broken linux build
+ 2023-08-12 [e7ef490] fix windows binary build error, test travis pypi upload
+ 2023-08-12 [7d24e5a] let windows ci build
+ 2023-08-07*[ac893cd] mcxplotvol: allow keeping x/y/z slice when switching between 4th dimension
  2023-08-07 [9aaba97] fix photon sharing 0 output issue in negative patterns
- 2023-08-05 [da0beda] padding -0 instead of 0 when saving dref with mua_float medium
+ 2023-08-05*[da0beda] padding -0 instead of 0 when saving dref with mua_float medium
  2023-08-04 [82367f0] simplify dref/flux separation
- 2023-08-04 [97fff3e] update zmatlib, use miniz, drop zlib for easy deployment
+ 2023-08-04*[97fff3e] update zmatlib, use miniz, drop zlib for easy deployment
  2023-08-03 [4fbb4d6] bump pmcx version to 0.0.14
- 2023-08-03 [aaedf35] handle mirror bc in the reflection code
+ 2023-08-03*[aaedf35] handle mirror bc in the reflection code
  2023-08-03*[198cd34] initial support of negative source and negative-patterns some test still fails, but feature is mostly working, need more work
  2023-07-27 [081c382] parse outputtype in json2mcx
- 2023-07-21 [87167cb] simplify mua->0 approximation, drop high order term, #164
+ 2023-07-21*[87167cb] simplify mua->0 approximation, drop high order term, #164
  2023-07-21 [f063fd6] disable macos runner, macos no longer supports CUDA see https://github.com/actions/runner-images/discussions/7838
  2023-07-21 [3067a26] fix incorrect handling of near-zero mus, fix #174, fix test
  2023-06-30 [ac06b05] CI: compress with upx on Linux
