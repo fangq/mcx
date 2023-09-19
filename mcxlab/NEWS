@@ -2,8 +2,392 @@
 
 Major updates are marked with a "*"
 
+== MCX v2023 (Heroic Hadron - 2.0), FangQ <q.fang (a) neu.edu> ==
+
+ 2023-09-17 [5b8a06f] add comments to nightly build script for deployment
+ 2023-09-16 [d2a2ae3] update deploy script after reformat
+ 2023-09-15 [387df65] link libomp.a on mac
+ 2023-09-15 [bf6843f] simplify linkopt
+ 2023-09-15 [4ee145e] update help info
+ 2023-09-13*[ffc8ab0] support ASCII escape code in Windows terminals
+ 2023-09-12 [24bb9e1] add path to lazbuild
+ 2023-09-12 [6820c04] build mcxstudio on mac
+ 2023-09-12 [9f3c3c2] print verbose info on mac
+ 2023-09-12 [48d4f2f] test macos-12 runner
+ 2023-09-11 [57519b9] force -std=c++11 to build oct on older gcc
+ 2023-09-07 [24c3533] remove redundant functions in mcxlab
+ 2023-09-05 [53e2681] update pmcx after fixing the regression due to #164
+ 2023-09-04*[0b98843] fix regression caused by #164 for mus=0 region patch in #164 breaks https://github.com/fangq/mmc/blob/master/mmclab/example/demo_dualmesh_output.m
+ 2023-09-04 [287671b] Merge pull request #182 from fangq/ringsrc
+ 2023-09-03*[ad6ff4c] compact implementation of ring source, close #181
+ 2023-09-01 [b0bad9f] renormalize dir vector after each rotation, suggested by @ShijieYan
+ 2023-09-01 [4fe8e43] highlight link and version with ascii color
+ 2023-08-28 [1a2f291] fix macos nightly build
+ 2023-08-27 [2a5f27c] fix ci build
+ 2023-08-27 [b9f22ad] print code name, print min CUDA arch support
+ 2023-08-25 [f23188b] Update pmcx jupyter notebook
+ 2023-08-25 [0be475b] bump pmcx version to 0.1.1 to fix critical bug #180
+ 2023-08-25*[eaf31de] [bug] critical! pmcx assumes incorrect default focal length, fix #180
+ 2023-08-25*[ddbbaf3] [bug]: fix default outputformat when parsing json input, fix #179
+ 2023-08-24 [acfea7d] allow to link with libomp on macos with clang
+ 2023-08-21 [88eba94] fix macos mcx package path
+ 2023-08-21 [1c9efee] adjust cmake build path
+ 2023-08-21 [a2e73b9] add openmp to matlab mex
+ 2023-08-21 [f1d3829] add NO_IMPLICIT_LINK_TO_MATLAB_LIBRARIES in cmake
+ 2023-08-20 [37952aa] try cmake on mac
+ 2023-08-20 [2fca345] add cuda to path
+ 2023-08-20 [6bb0c9a] adjust mcx macos build
+ 2023-08-20 [5c775f9] update ci badges
+ 2023-08-20 [93315dd] force overwriting system xcode
+ 2023-08-20 [41e2e21] add path to make utils
+ 2023-08-20 [3ee25a3] test macos python build
+ 2023-08-20 [8941566] fix travis build
+ 2023-08-20 [4db668a] fix python windows build error
+ 2023-08-20 [ec119b6] bump pmcx version number, rebuild python module
+ 2023-08-19*[a0a2a9b] add pmcx utility functions and its test by Ivy Yen
+ 2023-08-18 [21781cb] revert back to old osx image
+ 2023-08-18 [7e73ab4] update makefile for macos, use pyenv
+ 2023-08-17 [73f3651] try building binary wheels on multiple python versions
+ 2023-08-15 [2aa3de4] just build python3.7 module
+ 2023-08-15 [7d88d32] try brew update
+ 2023-08-15 [ba34c5c] try pyenv to install other python versions
+ 2023-08-15 [77d89e2] build multiple python versions
+ 2023-08-15 [73dae89] update pip version
+ 2023-08-15 [d2ff843] use pip3 in check-pypi-upload.sh
+ 2023-08-15 [4f9e278] use UPLOAD_TO_PYPI flag as deploy condition
+ 2023-08-15 [c6d4258] limit travis to only build on master
+ 2023-08-15 [4775c4f] rearrange folder in travis
+ 2023-08-15 [18255c7] install missing twine, move python files to top level
+ 2023-08-15 [9255345] try uploading python macos module from travis
+ 2023-08-12 [af3d386] fix remaining mc2 format flag
+ 2023-08-12*[3187ece] switch from custom mc2/mch formats to jnii and jdat as default
+ 2023-08-12 [780c7ab] support mcxlab('version'), let pmcx to read 1D detpos,prop,polprop
+ 2023-08-12 [aa9b2f4] update documentation, prepare for v2023 release
+ 2023-08-12 [e02c777] fix windows binary linking
+ 2023-08-12 [4d158b1] fix the broken linux build
+ 2023-08-12 [e7ef490] fix windows binary build error, test travis pypi upload
+ 2023-08-12 [7d24e5a] let windows ci build
+ 2023-08-07*[ac893cd] mcxplotvol: allow keeping x/y/z slice when switching between 4th dimension
+ 2023-08-07 [9aaba97] fix photon sharing 0 output issue in negative patterns
+ 2023-08-05*[da0beda] padding -0 instead of 0 when saving dref with mua_float medium
+ 2023-08-04 [82367f0] simplify dref/flux separation
+ 2023-08-04*[97fff3e] update zmatlib, use miniz, drop zlib for easy deployment
+ 2023-08-03 [4fbb4d6] bump pmcx version to 0.0.14
+ 2023-08-03*[aaedf35] handle mirror bc in the reflection code
+ 2023-08-03*[198cd34] initial support of negative source and negative-patterns some test still fails, but feature is mostly working, need more work
+ 2023-07-27 [081c382] parse outputtype in json2mcx
+ 2023-07-21*[87167cb] simplify mua->0 approximation, drop high order term, #164
+ 2023-07-21 [f063fd6] disable macos runner, macos no longer supports CUDA see https://github.com/actions/runner-images/discussions/7838
+ 2023-07-21 [3067a26] fix incorrect handling of near-zero mus, fix #174, fix test
+ 2023-06-30 [ac06b05] CI: compress with upx on Linux
+ 2023-06-29 [527a5cc] add header, format with black, update action runners, #172
+ 2023-05-21*[540931d] support trajectory-only mode with debuglevel=T
+ 2023-05-20*[0100212] mcxplotphotons: plotting photon tracks with patch and show weights
+ 2023-05-20 [615af1b] avoid recursion and segfault when resetting device
+ 2023-05-16 [c327541] add demo to build RF Jacobians using replay, by Pauliina Hirvi
+ 2023-05-05 [bd44f65] reformat pmcx python units with black
+ 2023-05-05 [c12310b] added cwdref function to compute CW diffuse reflectance
+ 2023-05-05 [0bd643e] added detweight function (using only numpy) to the utils.py in pmcx
+ 2023-05-04 [31c0fa3] fix incorrect stat.unitinmm output
+ 2023-04-29 [0c6b358] use svg vector graphs in mcxlab tutorial
+ 2023-04-29 [bed8f08] Update plots with GPU runtime outputs
+ 2023-04-29 [688ac78] Support mcxlabcl for non-GPU runtime on colab, add srctype tutorial
+ 2023-04-28 [4f53e12] add examples on getting trajectory data
+ 2023-04-27 [f271501] Update mcxlab jupyter notebook based tutorial
+ 2023-04-27*[be5a420] add jupyter-notebook based mcxlab tutorial
+ 2023-04-26 [eb68720] make static linking default on Windows
+ 2023-04-25 [e315dfe] fix incorrect comment regarding gaussian src, fix #165
+ 2023-04-16 [b78c4e3] fix inaccurate output unit for energy output time
+ 2023-04-15 [2fd3594] accept jobs submitted from https://mcx.space/cloud
+ 2023-04-15*[7515611] fix mcxcloud job max duration bug, kill runtime>1min
+ 2023-04-13 [70b3b5e] Add photon replay demo codes for pmcx in jupyter notebook
+ 2023-04-13 [855aa40] pmcx: support photon replay, accept detphotons input
+ 2023-04-13 [8a49fe3] switch from cmake back to Makefile
+ 2023-04-01 [c2591aa] ask cmake to create Makefile
+ 2023-03-22 [67d1128] add pmcx jupyter notebook tutorial
+ 2023-03-22 [291adf5] allow mus=0, avoid unnecessary casting of scalars to double
+ 2023-03-17 [3a4f7ed] fix fluence for mua -> 0
+ 2023-03-15 [46b4311] remove explicit dependency to GLScene in mcxstudio
+ 2023-03-10 [193158c] make volume rendering window available on main gui
+ 2023-03-10 [2d09e54] allow Open project dialog to also load nii and jnii files for rendering
+ 2023-03-09 [63a626d] fix progress bar stalling when setting cfg.issavedet to 3
+ 2023-03-08 [8cab50f] add descriptions on how to start mcxstudio on an Mac, fix #162
+ 2023-03-08 [da49503] allow early termination if -d 3 or cfg.issavedet=3 is set
+ 2023-03-04 [5d4d3c6] transition from openjdata.org to neurojson.org, fix #161
+ 2023-03-02*[3c29fa5] mcxstudioL: loading and rendering jnifti based volume file
+ 2023-03-01 [b99f9a9] mcxstudioL: loading portable JSON/JNIFTI based MCX output data files
+ 2023-02-09 [32e3aef] fix RF replay in mcx binary, allow tweaking replay Jacobian for Born approx
+ 2023-02-05*[9abd3f3] adding additional native python pmcx functions
+ 2023-02-05 [63b80f4] add missing pmcx file
+ 2023-02-05 [e77ff2f] allow pmcx to use mixed binary extension and native function
+ 2023-02-01*[d9b2f2b] fix unmatched unit for RF replay, thanks to Pauliina Hirvi
+ 2023-02-01 [ce2a65c] add the l/length option in help info
+ 2023-02-01 [e67feed] support outputtype=length/l for saving total path lengths per voxel
+ 2023-01-25 [4344574] fix windows compilation error
+ 2023-01-25 [a7ce222] permit 3D plotting of DMMC output double-precision nii files
+ 2023-01-22 [cdabf68] automatically replace RCS keywords in pmcx action
+ 2023-01-22 [e527f4b] fix incomplete handling bc and isreflect setting combinations, fix #160
+ 2023-01-20 [daa1dea] use standard CFLAGS and CPPFLAGS in compilation, remove --std99 error for g++
+ 2023-01-11 [def38f6] Merge pull request #159 from matinraayai/master
+ 2023-01-11 [e077f86] Bump pmcx version to 0.0.7.
+ 2023-01-10 [7af2ea2] bump pmcx version to 0.0.6
+ 2023-01-10 [820ce88] build macos binary wheels
+ 2023-01-09 [4f969d1] Removed the macOS builder VM.
+ 2023-01-09 [dd47cda] Updated README.md for pmcx.
+ 2023-01-09 [82ef430] Final version.
+ 2022-12-08 [eb9322f] Added Windows Wheel building job + fixed compilation errors for windows.
+ 2022-11-18 [d5a9beb] Update build_linux_manywheel.yml
+ 2022-11-18 [816c55f] Added Github workflow.
+ 2022-10-15 [084ffc1] update cmake file and remove zmat from pymcx and mex
+ 2022-10-14 [04000e2] remove zmatlib and ubj as dependency to mex and oct
+ 2022-10-14 [d033520] fix negative respin number bug
+ 2022-10-13 [ec4a29d] update version strings
+ 2022-10-13 [a3fe4ce] remove warning on replay output
+ 2022-10-10 [660dd31] update three.js to r145, fix volume render, fix thumbnail
+
+== MCX v2022.10 (only released to MCX'23 workshop participants), FangQ <q.fang (a) neu.edu> ==
+
+ 2022-10-08 [eaedca7] update installer to 2022.10
+ 2022-10-08 [c31a0e2] update mcx version number to v2022.10
+ 2022-10-05 [dc42951] prevent nan where log(rand) is calculated
+ 2022-10-05 [63ffc1e] fix nan in detected photon data when using hyperboloid src, see https://groups.google.com/g/mcx-users/c/vyfHbzEO-0M/m/JzlpEZ3TBwAJ
+ 2022-09-07 [e281f3e] allow to preview continuously varying medium (4D cfg.vol)
+ 2022-08-19 [10330ef] fix windows compilation error
+ 2022-08-17 [bbb4425] prevent zero-valued mus creating nan, #133
+ 2022-08-12 [51f42f5] fix mcxlab log printing caused by commit f3beb75a
+ 2022-08-12 [7058785] Lambertian launch for all focusable sources when focal-length is -inf
+ 2022-07-28 [6d64c0b] fix incorrect flag for skipvoid
+ 2022-06-27 [3d4fb26] partially fix rf replay
+ 2022-06-04 [8af3631] fix line source
+ 2022-05-22 [149b1ef] make code compile on windows
+ 2022-05-20 [e87bb49] use consistent file naming convention, remove outdated units
+ 2022-05-20 [45d84d3] complete reformat source code using astyle, always run make pretty before committing
+ 2022-05-20 [aff8ff0] add source code formatting option
+ 2022-05-20 [f3beb75] use MATLAB_MEX_FILE to determine container environment
+ 2022-05-18 [1295024] fix incorrect trajectory id, fix #147
+ 2022-05-18 [ccd2deb] fix macro condition
+ 2022-05-18 [6f4ee88] use MCX_CONTAINER and env macros to replace extra PYMCX_CONTAINER
+ 2022-05-16 [6fa1580] avoid using clear all and ~ in return value
+ 2022-05-16 [21f9bd7] merge changes with @ShijieYan's svmc fix
+ 2022-05-16 [8b2740f] debugging svmc crashes
+ 2022-05-16 [7582a6e] fix svmc issue after patch f8da832f11b751c07d33c77dd7d428a2c75a888b
+ 2022-05-15 [188ac2a] Added Pybind11's license info to README.md.
+ 2022-05-15 [86529cf] Added PYMCX_CONTAINER compilation macro. Added support for extracting MCX_ERRORs like Mex + author fix.
+ 2022-05-15 [b58ad88] Renamed gpu_info to gpuinfo for consistency.
+ 2022-05-15 [0582974] changed issaveref to accept ints.
+ 2022-05-15 [1cf1b3b] Added py::value_error handling + additional error checking for volume assurance.
+ 2022-05-15 [7df8938] Added better + more informative exception handling for pymcx.
+ 2022-05-15 [6a741e8] Changed reinterpret_casts to direct object construction + added the stat dict to the output dict + defined PYBIND11_DETAILED_ERROR_MESSAGES for easier debugging.
+ 2022-05-15 [e4547ba] add pybind11 as submodule to build pymcx
+ 2022-05-13 [f8da832] fix cyclic bc demo and srctype demo error, svmc still not working
+ 2022-05-13 [4bd3974] report register counts on sm_60 using nvcc --ptxas-options=-v
+ 2022-05-13 [e8f6a2d] fix cfg.unitinmm does not exist error
+ 2022-05-13 [447975f] complete dda ray-marching, cube60 benchmark gain 40% speed, others are similar
+ 2022-05-12 [b873f90] add integer voxel indices to avoid nextafter
+ 2022-05-11 [32d46cd] merge additional updates from mcxcl version of json2mcx, #139
+ 2022-05-11 [3d6d7df] fix bugs in json2mcx, #139
+ 2022-05-08 [3b1c320] Removed nlhs argument left from Matlab.
+ 2022-05-08 [61cc994] Fixed issue with std::cout and std::cerr flush.
+ 2022-05-06 [d9793e9] Added working setup.py.
+ 2022-05-03 [a3e47c8] Minor fix.
+ 2022-05-02 [c9bedd6] Moved validate_config.
+ 2022-05-02 [5427ece] Working prototype with different volume configs.
+ 2022-05-02 [739b7ea] Moved some stuff to interface-common.cpp.
+ 2022-05-02 [d852a87] Minor bug fixes.
+ 2022-05-01 [f4cd3c3] Added kwargs version of mcx.
+ 2022-05-01 [baa5fdd] Skeleton is done.
+ 2022-04-24 [e919716] Prints GPU info.
+ 2022-04-23 [0c7b6a7] Working interface and CMakeLists.txt file.
+ 2022-04-19 [c710c3c] update ubj parser, update jnifti metadata
+ 2022-04-15 [4033c54] mcxlab bug fix: digimouse atlas voxel size is 0.2mm, not 0.8mm
+ 2022-04-15 [9b17eee] critical bug fix: digimouse atlas voxel size is 0.2mm, not 0.8mm
+ 2022-03-31 [df6c311] Add viewing axis selection
+ 2022-03-25 [04f1565] Add optimized isosurface rendering; add the ability to view cross-sectional slices of geometry
+ 2022-03-23 [200decb] Remove testing files
+ 2022-03-23 [e434553] Remove unnecessary variable
+ 2022-03-22 [ebd5bee] update ubj to support BJData Draft 2, add JNIfTI _DataInfo_, fix #142
+ 2022-03-21 [6de0855] Enable event-based repainting; re-add shader refinement, remove animation frame bugs; remove unnecessary shader branches and discards
+ 2022-03-19 [7ef65a8] Added event-based repainting; shader optimizations
+ 2022-03-05 [a93f6fa] save user info in local storage to avoid retyping
+ 2022-03-05 [34d9afa] fix SaveDataFlag invisible bug
+ 2022-02-18 [f051314] add missing voxel unit
+ 2022-02-03 [23bf5b2] lowering default photon number so it can be launched on most gpus
+ 2022-01-31 [220d9c2] fix incorrect type for gsmatrix
+ 2022-01-31 [28e20d6] fix windows vs warning
+ 2022-01-29 [6a9ad2f] update mcx_utils to use the Mie interface
+ 2022-01-29 [13679e9] fix compilation issue of mcx_mie.cpp using MSVC, close #138
+ 2022-01-28 [d7daf57] manually resolve complaint in CUDA 9
+ 2022-01-28 [e99edb2] update .travis.yml
+ 2022-01-28 [533c8ce] manually add mcx_mie in Makefile
+ 2022-01-28 [e56b5cb] improve complex arithmetic compatablity with MSVC
+ 2022-01-27 [a0ed0e7] add Mie function modules into cmake
+ 2022-01-27 [c350c67] seperate Mie scattering functions from mcx_utils.h
+ 2022-01-27 [0d51bb7] add missing i detflag in command line
+ 2022-01-27 [9b74e4b] fix: add save detector flag for Stokes vectors
+ 2022-01-26 [077060a] use static_cast in mcxlab so that cfg.vol can be realloc in mcx_shapes
+ 2022-01-26 [8503125] do not reset cfg.vol when rasterizing cfg.shapes
+ 2022-01-26 [3f22070] fix normalization in multiple detector RF replay
+ 2022-01-26 [cdfd468] apply normalization to both real and imaginary jacobain for RF replay
+ 2022-01-26 [87a310e] one can use ~ to ignore fluence output in octave, not in matlab
+ 2022-01-26 [d45f084] allow users to explicitly disable fluence output by accepting cfg.issave2pt
+ 2022-01-25 [376a730] partial fix to RF Jacobian calculation, need verification
+ 2022-01-25 [d6e2b9e] NaN value in mua_float and muamus_float signifies a 0-value voxel
+ 2022-01-24 [c9f2ad9] force threejs version to avoid breaking update in R136
+ 2022-01-14 [51483eb] add template specialization for polarized mode
+ 2022-01-12 [3487dfe] update the example for the polarized MCX
+ 2021-12-15 [b9e046a] fix out of bounds error due to limited precision of R_PI
+ 2021-12-15 [3b10265] fix the built-in example to match the update in e5dfd78f28f31d710e02206cb2835aabcd4d5508
+ 2021-12-15 [dbe17af] no Stoke vector output for unpolarized MCX simulation
+ 2021-12-15 [99293dd] add sanity check for incident Stokes vector
+ 2021-12-13 [f1537bd] no need to check constant memory usage in polarized mode
+ 2021-12-13 [61281ae] use prop.g to return the anisotropy computed from Mie
+ 2021-12-12 [3b0ecc0] fix #133, handling underflowing denorms in float to half conversion for muamus_float
+ 2021-12-11 [979f691] Move scattering matrix from constant memory to global memory
+ 2021-11-29 [5c13f4b] avoid divided by zero on windows cygwin gcc
+ 2021-11-29 [ef57f4b] allow make double to compile
+ 2021-11-28 [0c96fe8] accept JData styled NaN in the JSON input for srcdir
+ 2021-11-26 [a4545a4] fix #131, mcxplotshapes now plots shapes with correct scale
+ 2021-11-04 [2585471] making svmc matlab demos compatible with Octave 5
+ 2021-11-03 [5976811] replace matlab-only function with more portable code
+ 2021-11-01 [37e121c] update preprint version url
+ 2021-10-21 [7a77bf7] display rendering frame rate
+ 2021-10-18 [99592c1] fix: #114 improve robustness to unknown boundry conditions
+ 2021-10-14 [1aa2922] feat: Add one-sheet hyperboloid gaussian beam
+ 2021-10-07 [86d56c2] feat: output prop. along with det. photon profile
+ 2021-10-07 [24f4698] fix: ensure the largest grid to be accumulated
+ 2021-10-06 [e5dfd78] feat: Support target mus or musp in polarized MCX
+ 2021-10-06 [ae9216d] remove old det photon data after a new simulation
+ 2021-10-05 [8cb21b5] support downloading detected photon data in mcxcloud
+ 2021-10-04 [81ff4b1] fix rf replay bugs reported by Pauliina Hirvi
+ 2021-09-24 [833bf6a] Reorganize some kernel code to optimize SVMC speed
+ 2021-09-20 [605c15f] Fix numerical error of intersection test in SVMC
+ 2021-09-20 [392ee87] Reorder code to fix photon detection for SVMC
+ 2021-09-07 [5c44c6e] fix trajectory saving buffer length bug
+ 2021-08-20 [99ea2b6] avoid continuous mua/mus inputs be treated as 0-label if mua=mus=0
+ 2021-08-01 [943197a] Reorder preprocessing code to allow detector in SVMC Mask detector voxels only after the volume has been fully prepared!
+ 2021-07-27 [65359f7] avoid extra level of square brackets for Optode.Detector
+ 2021-07-27 [6b2f074] accept 3-element param1
+ 2021-07-27 [2633bfb] avoid param1 missing error if not present
+ 2021-07-23 [192613b] fix offset of cylinder along the axis direction, close #119
+ 2021-07-17 [fc0465d] add tutorial 2 link
+ 2021-07-17 [8c72d17] restore accidentally removed analytics tag
+ 2021-07-13 [566df5e] provide flags to help access the detp.jdat file
+ 2021-07-12 [b97c0f6] return metadata when loading simulation from library
+ 2021-07-12 [3be6603] add default tab in the direct link,return mcx error if failed
+ 2021-07-12 [70fb2a7] fix mixlabel byte order
+ 2021-07-11 [24df0c3] add comment on raw voxel binary data layout
+ 2021-07-07 [53d7ac0] fix shared mem misalignment error, close #118
+ 2021-07-06 [7f8a2ac] allow ArrayZipSize to accept 1x2 array
+ 2021-07-05 [9b00fa3] fix initial tab
+ 2021-07-05 [2737853] deep copy data.options to avoid script error
+ 2021-07-05 [0398b95] fix several bug while recording utorials
+ 2021-07-04 [f5974ed] add preprint link
+ 2021-07-04 [5d21a0d] create mcx cloud tutorial, add link
+ 2021-07-03 [df0a48b] support tab param in url to open default tab
+ 2021-07-03 [4c3f240] link json in direct link, remove schema
+ 2021-07-03 [da6595e] add newline to json file download
+ 2021-07-03 [cc3c06d] fix X/Y/ZSlabs parsing, restore original schemas
+ 2021-07-03 [7c5054d] internal normalization of srcdir
+ 2021-07-02 [877e9fe] get user id and group at runtime
+ 2021-07-02 [22d6ffe] fix X/Y/ZSlabs schemas
+ 2021-07-01 [270bb7c] prepare for beta testing
+ 2021-06-30 [4b6df28] rename mcxone to mcxcloud, add help info
+ 2021-06-30 [66b77fb] partial fix of json2mcx.m conversion issues
+ 2021-06-25 [c399efa] enable negative g value support
+ 2021-06-23 [3c642ce] set maximum characters to read for fscanf, fix #117
+ 2021-06-23 [606b3d1] handle empty detector array in json2mcx
+ 2021-06-22 [b537143] give a warning if the output type is not jacobian in replay
+ 2021-06-17 [363d2d8] support reading .jdat file for replay
+ 2021-06-04 [7191ca3] make thumbnail the same size when updating
+ 2021-06-04 [5a2e13e] add tab overflow control
+ 2021-06-04 [59e6be2] layout adjustments
+ 2021-06-04 [4b55c88] minor polishing
+ 2021-06-03 [1c29578] fix regression
+ 2021-06-03 [3aedee6] add LengthUnit, MediaFormat in schema, support number and string for DebugFlag/SaveDataMask
+ 2021-06-03 [64c5dd0] fix unnecessary shared memory allocation related to invcdf
+ 2021-06-03 [ebf1ea1] support user-defined phase functions via cfg.invcdf, close #13
+ 2021-06-03 [0731511] revert back to no restarting policy so that overtime jobs can be killed
+ 2021-06-02 [4d2a891] process cache,fix fullname,fix job status,fix server-side limit,kill overtime job
+ 2021-06-02 [a08d676] update the skinvessel benchmark
+ 2021-06-02 [168db14] feat: save Mie function outputs mus, g to a file
+ 2021-06-02 [57a44c5] feat: Add anisotropy g as an output of Mie func.
+ 2021-06-02 [7387394] finally fix crossdomain post, change jsonp to json,test simu lib edit
+ 2021-06-01 [95c6e1d] test:use default BC for all polarizedMC benchmarks
+ 2021-06-01 [98697de] Add a three-layer slab demo for polarizedMC
+ 2021-06-01 [7d86804] Add visualization for polarized MC example(MATLAB)
+ 2021-05-31 [7d82a51] fix: resolve valgrind complaint: uninit. values
+ 2021-05-31 [d6c9743] Add outputs in mcx2json.m to support polarizedMC
+ 2021-05-31 [5088678] Add an example for polarized MC
+ 2021-05-31 [d3054fd] Add document for polarized MC in mcxlab
+ 2021-05-31 [44e0e9c] fea: extend loadmch.m to load output Stokes vector
+ 2021-05-31 [a51cb52] feat: support polarized MC in command line (JSON)
+ 2021-05-30 [d7921fe] skip checklimit if json is directly loaded from lib
+ 2021-05-30 [65870f5] gui fine adjustment,use hash to update runcount,enable restart on fail,permit mcxpub update
+ 2021-05-30 [692adfb] fix broken link
+ 2021-05-30 [7a159ab] merge css
+ 2021-05-30 [55bb1ea] initial drag and drop support, not working
+ 2021-05-30 [fc9ca38] add meta headers, other minor adjustments
+ 2021-05-29 [96cf071] support embedding src pattern in the all-in-one json/jdata file
+ 2021-05-28 [450462c] Add document for functions used in polarized MC
+ 2021-05-28 [cbc3340] Optimize Stokes vector computation
+ 2021-05-28 [9bd2ce0] Remove redundant code in preprocessing
+ 2021-05-28 [06a9c6b] fix: resolve nan results due to numerical error
+ 2021-05-28 [d9d1d0a] rewrite some code to save computation
+ 2021-05-28 [9195141] Add an example to show polarized photon simulation
+ 2021-05-27 [2b87275] fix: rewrite code for better readability
+ 2021-05-26 [d836c81] fix: correct formula for stokes parameter update
+ 2021-05-25 [105d5a9] feat: Add stokes parameter output in MCXLAB
+ 2021-05-25 [87d8847] feat: add polarized photon simulation
+ 2021-05-23 [d398cc9] add simulation restrictions for initial public testing of mcx cloud
+ 2021-05-23 [26536d3] feat: add preprocessing for polarized MC in mcxlab
+ 2021-05-22 [f0975c5] support ring/annulus shaped source via disk source
+ 2021-05-21 [6ed9727] support svmc in command line;add svmc example
+ 2021-05-21 [3d0a793] reading 8-byte svmc volume format from input file
+ 2021-05-20 [4010d99] move svmc repacking to mcx_preprocess
+ 2021-05-20 [3214c1b] remove duplicated preprocessing codes in mcx and mcxlab,fix detbc bug in command line
+ 2021-05-20 [54b0602] run batch of jobs in each call to fill all GPU devices
+ 2021-05-20 [de9850c] add -K short option and svmc mediatype
+ 2021-05-19 [660a8b8] relocate db and workspace folder to non www-data accessible paths
+ 2021-05-19 [64f3008] update acknowledgement list
+ 2021-05-19 [c168a87] can update thumbnail, add credit links
+ 2021-05-19 [b9361a1] update to mcxcloud scripts
+ 2021-05-15 [cef630b] save volume in jdata format by default
+ 2021-05-15 [c50f871] define Frequency in json file instead of Omega
+ 2021-05-15 [b4e7b57] initial support RF mua Jacobian in replay, thx Ilkka Nissilä, formula based on Juha Heiskala PhD thesis p45
+ 2021-05-10 [073b168] mcxcloud initial preview at JBO hot-topics
+ 2021-05-05 [5732e6a] update front and backends
+ 2021-05-01 [ee3f88d] update and rename mcxcloudd and mcxserver.cgi
+ 2021-05-01 [eac952d] fix cylinder schema, add footer
+ 2021-04-14 [aaa1eab] add download, fix jsonp callback, render output volume
+ 2021-04-10 [aaef1f3] draw 3d fluence,use orth camera,add cancel
+ 2021-04-04 [4ab8105] add src rendering, fix material color
+ 2021-04-02 [1ed5272] fix cylinder and layer object drawing bug
+ 2021-04-02 [f4ba0b4] add md5 digest for each submitted json for cache lookup
+ 2021-03-31 [2c55c3b] change basic tab name
+ 2021-03-31 [3c466a1] now mcxcloud can render 3D volumes, float32 buffer only
+ 2021-03-29 [b379b2b] initial support in rendering 3d volume, add schema to support jdata ND array
+ 2021-03-28 [31345a1] support Domain.Volume to encode JData-formatted 3D array
+ 2021-03-28 [9c2e8c7] rendering all shape types, bbx as dashed box,add tag based material color
+ 2021-03-27 [9f6e82c] avoid repainting preview
+ 2021-03-26 [5109d29] add normal material, add box, subgrid and cylinder
+ 2021-03-25 [ad0b814] draw grid from Domain.Dim
+ 2021-03-25 [9b0cf95] fine tune fonts, add big tab initial screen, add svg background, add funding info
+ 2021-03-25 [77f8f7a] add three.js for 3d preview
+ 2021-03-24 [4274c77] rename mcxcloud.txt to mcxcloud
+ 2021-03-24 [dc25a87] add mcx cloud service server and client files, partially working
+ 2021-03-22 [f9bc07c] use tabs in mcxone, add jquery by default
+ 2021-03-18 [d8b88e1] fix unwanted double-precision math functions
+ 2021-03-11 [f6ce5bd] update variable and function name to follow the convention
+ 2021-03-11 [ca2ce60] add example: comparison of surface diffuse reflectance between MC and Diffusion
+ 2021-03-05 [bcbb324] change window sizes using 96dpi default setting
+ 2021-03-05 [5c8d27f] fix Name shape object schema
+ 2021-03-03 [02add69] MCX json schema and json editor are working, added more Shapes objects
+ 2021-03-01 [940d725] wrapping up json input import feature in mcxstudio
+ 2021-02-28 [64d629c] parse src/detector, media and shape
+
 == MCX v2021.2 (Glossy Gluon - 1.9), FangQ <q.fang (a) neu.edu> ==
 
+ 2021-02-27 [a3b8457]*open/import JSON input file in MCX Studio
  2021-01-07 [9811c83] reorder the input data layout to match the change in preprocessing
  2020-10-22 [991910e] add function comment and revert unnecessary changes
  2020-10-22 [3343338]*add benchmarks from SVMC paper to mcxlab
@@ -55,223 +439,557 @@ Major updates are marked with a "*"
  2020-08-24 [782b4a3] massive update of documentation
  2020-08-24 [041e386] massive update to README to describe all output formats
 
-== MCXLAB v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
+== MCX v2020 (Furious Fermion - 1.8), FangQ <q.fang (a) neu.edu> ==
 
- 2020-09-14 [643e4a1] add photon as unified cmd for mcx/mcxcl/mmc,polish for debian packaging
- 2020-09-14 [a67bc6d] updates to ease debian packaging
- 2020-09-04 [37b4914] add demo script for mirror bc
- 2020-09-04 [e561890] make mcxplotvol work in matlab 2010 or earlier
- 2020-08-29 [6eb9596] update mcxcreate.m, add mcxplotshapes.m to render json shapes
- 2020-08-29 [94d55a7] add mcxcreate, force mcxlab return one output
- 2020-08-26 [65f0fe4] fix issrcfrom0 offset
- 2020-08-26 [79f9d70] multiply voxelsize with det radius
- 2020-08-26 [d5c3c11] fix mcxpreview det radis issue, require srcpos and tend in mcxlab
+ 2020-08-29*[6eb9596] add mcxcreate.m, add mcxplotshapes.m to render json shapes
+ 2020-08-27 [63e5a5f] handle det radii less than or equal to 0.5, fix #101
+ 2020-08-24 [6f11857] add command line option cheatsheet
+ 2020-08-24 [cea663b] test cmake in travis
  2020-08-24 [782b4a3] massive update of documentation
- 2020-08-22 [5bd88ac] update documentation
- 2020-08-16 [5f747b6] fix function typo
+ 2020-08-20 [e8e6b58] print an explicit messgae if error 30 is found
+ 2020-08-19*[883f61b] restore windows progress bar support, disabled in @ae2d60e45
+ 2020-08-17 [c47de01] allow running testing script on machines without nvidia gpu
+ 2020-08-16 [0c25958] add more tests for various mcx options
+ 2020-08-16 [ff2f68f] add sphshell benchmark - see GPU MMC paper
  2020-08-15 [2afab4a] test if media prop count is less than max label
+ 2020-08-15 [2d71eb7] accept array as Domain.Media json input
+ 2020-08-15*[433df1f] accept json modifier via --json for easy testing
  2020-08-14 [09adbd0] support --bc or cfg.bc to set an entire bounding face as detector
- 2020-08-14 [92ba5fa] demo w0 output - pixel index - in photon sharing
+ 2020-08-11*[e095dbb] speed up by 1.6x on 1080Ti by restoring source template for pencil beam only
+ 2020-08-11 [a220cc2] autoblock size no less than 64, speed up on Turing GPU by doubling threads
  2020-08-04 [71d4196] fix incorrect detpt column when savedetflag/issaveexit are both set
- 2020-07-27 [e204772] fix preview for pattern source etc.
- 2020-07-24 [bf0840f] update README and ChangeLog
- 2020-07-15 [b1e2dff] skip the 4th number in srcdir
- 2020-07-09 [88e88fe] add mcxnuvxel
- 2020-07-06 [84649dd] fix empty figures due to plotting commands
- 2020-02-08 [41b510e] two label mix ratio support
- 2020-01-28 [bd65f1c] reorder the hybrid label-continuous byte layout
- 2020-01-25 [8218d51] resolve misalignments
- 2020-01-25 [984b2a0] initial support for hybrid optical properties: tissue type label combined with continous optical properties
- 2019-11-19 [ac5cc11] fix length bug, #83
- 2019-11-19 [c0aad14] use detp.prop and detp.unitinmm if present, #83
- 2019-10-27 [a743b47] resolve compiler complaint: warning: invalid suffix on literal; C++11 requires a space between literal and string macro [-Wliteral-suffix]
- 2019-07-29 [5fbe79f] print matlab commands for plotting
- 2019-07-25 [289b40b] update demo script to use the new detphoton format
- 2019-07-25 [334d0a2] accept struct-based detphotons input, #76
- 2019-07-25 [0142557] allow to run replay without giving the 2nd output, #76
+ 2020-08-04 [20c596a] retrieve energy tot and abs regardless of isnormalized
+ 2020-08-03*[30e01a1] add standalone script to submit to mcx speed contest
+ 2020-07-31 [d9a5953] avoid autoblock is 0 when driver fails, close #99
+ 2020-07-28 [daa9d56] fix inaccurate core count on Volta, Turing and Pascal
+ 2020-07-25 [37793ae] fix -b 0 -B rrrrrr crash, thanks to @ShijieYan
+ 2020-07-22*[f844fe8] add automated building script via travis-ci
+ 2020-07-22*[cbf0225] add unit testing script
+ 2020-07-09 [5b038a7] add winget manifest
+ 2020-07-04*[4bda593] inno windows installer
+ 2020-07-02 [38529a7] accept -f in mcxshow and mcxviewer
+ 2020-07-02 [34ecf5f] add glscene directly to the source code
+ 2020-07-01*[f1828d3] add manpage for mcx
+ 2020-06-29 [cd4acb8] visual studio project file updated
+ 2020-06-29 [b22025d] update vs project file
+ 2020-06-28 [71bedc5] add benchmark options, add jnii/bnii output formats
+ 2020-05-02 [e7ce8f7] compiles lzma on windows, #94
+ 2020-05-02*[e56fa2b] add UBJ support, output .bnii files, close #95
+ 2020-05-01 [ed80ad5] now support lzma and lzip compression
+ 2020-05-01 [f136bc9] upgrade all built-in binary files to JData formatted JSON files #94
+ 2020-04-29 [0d9c162] save detected photon data in JSON/JData format, close #94
+ 2020-04-25 [045a3de] update json schema
+ 2020-04-25 [e8aae66] initialize gsrcpattern
+ 2020-04-23*[8086175] add built-in colini27 data,add --dumpjson, add -F jnii output format
+ 2020-04-19*[da73b8d] add mcx built in benchmarks
+ 2020-03-21*[b8fb79a] plot data in x/y/z slices,add axis labels and grid
+ 2020-03-20 [d7e6203] add axis lable and scaling to volume viewer
+ 2020-03-14*[b91dc5a] update mcxstudio gui to support gpu mmc
+ 2020-02-18*[8c37911] adding pymcx written by Maxime Baillot as submodule
+ 2020-02-08 [ba78df5] add template to disable continuous medium support, close #89
+ 2020-01-28 [b7c1982] speed up cone beam photon launch, fix accuracy, close #86
+ 2020-01-25*[984b2a0] initial support for hybrid optical properties: tissue type label combined with continous optical properties
+ 2019-11-19 [1c07b16] scale partial-path when getting det photon time and weight, close #83
+ 2019-08-08 [0bdbef6] allow to browse file folder on windows
+ 2019-07-26*[8a341ee] update mcxstudio to add the new flags
  2019-07-23 [e3b53dc] add 2d sample script
- 2019-07-15 [80357fc] remove volumetric mua input in the basic example
- 2019-06-24 [d3f3922] additional changes due to flexible savedetflag detected photon data format, fix #73
- 2019-05-25 [2b907e2] fix the unitinmm scaling for single/double FP mua/mus
- 2019-05-24 [33df8bf] fix the missing unitinmm scaling when input is float mua/mus, half2 input still not working
+ 2019-07-22*[c4baa84] output fluence/flux in replay, backport changes from mcxcl
  2019-05-24 [02efc62] bug fix for continuous varying media patch
- 2019-05-23 [e1b50b6] convert all volume formats between mcxlab and mcx, fix #67
- 2019-05-17 [2104f05] Merge branch 'master' of https://github.com/fangq/mcx
+
+== MCX v2019.10 (Ether Dome RC2 - 1.5.0), FangQ <q.fang (a) neu.edu> ==
+
+ 2019-10-27 [a743b47] resolve compiler complaint: warning: invalid suffix on literal; C++11 requires a space between literal and string macro [-Wliteral-suffix]
+ 2019-09-06 [f9ad72b] fix the incorrect short opt flag for savedetflag
+ 2019-08-21 [d9d5238] allow one to overwrite SaveDataMask from command line
+ 2019-08-18 [6023d51] debugged builtin ssh
+ 2019-08-17 [7f98c48] mcxstudio builtin ssh update
+ 2019-08-15 [cec9ecf] add missing windows unit
+ 2019-08-15 [1a84b9e] add runssh in a thread
+ 2019-08-15 [8cb29c4] add run external command in a thread
+ 2019-08-15 [997f986]*builtin ssh using synapse
+ 2019-08-15 [1482b0a]*use new template to speed up with specialization
+ 2019-08-08 [0bdbef6] allow to browse file folder on windows
+ 2019-08-03 [e34f9c5] change remote folder path separator
+ 2019-08-03 [1cab6ce] disable event
+ 2019-08-02 [f4ab7cf] minor gui updates
+ 2019-08-02 [e2efbf7] query gpu button status correction
+ 2019-08-02 [6520c4c] enlarge output window, more plotting scripts, fix outputformat default value
+ 2019-08-02 [3784d0a]*fix missing dosaveref field, swap incorrect short flag
+ 2019-08-01 [7ec73b7] make settings scrollable, tested remote execution on windows
+ 2019-08-01 [3bc5994] fix incorrect BC order
+ 2019-08-01 [87d0261] add user input to use ssh
+ 2019-07-30 [e3c0b58] make viewer window on top
+ 2019-07-30 [3cd64f1] show preview window on top
+ 2019-07-30 [8c902c9] print for debug
+ 2019-07-30 [74be22c] allow to load old project files
+ 2019-07-30 [3af9a1c]*fix a few mac bugs
+ 2019-07-29 [adb194d] fix rendering dimensions
+ 2019-07-29 [5fbe79f] print matlab commands for plotting
+ 2019-07-29 [0158d4d] rename macro from exe to app
+ 2019-07-29 [3e800c6] add a window to stop simulation
+ 2019-07-29 [973e83a] use DelimitedText for json storage
+ 2019-07-28 [a760432] enable manual path settings
+ 2019-07-28 [5c71f34] minor polishing of the gui
+ 2019-07-27 [39e54fb] change color
+ 2019-07-27 [cb747d3] minor update from windows
+ 2019-07-27 [99e697a] add config unit
+ 2019-07-27 [55a6b8c] add windows unit to compile
+ 2019-07-26 [8a341ee]*update mcxstudio to add the new flags
+ 2019-07-26 [f3a3345]*do not print progress bar by default, still causing hanging on certain gpu
+ 2019-07-25 [74414b3] print progress bar by default
+ 2019-07-25 [289b40b] update demo script to use the new detphoton format
+ 2019-07-25 [334d0a2]*accept struct-based detphotons input, #76
+ 2019-07-25 [5f1d965] print normalization factor in single-det replay for debugging, #76
+ 2019-07-25 [0142557]*allow to run replay without giving the 2nd output, #76
+ 2019-07-24 [337c54e] fix wrong pattern number index for single pattern illumination
+ 2019-07-23 [e3b53dc]*add 2d sample script
+ 2019-07-22 [c4baa84] output fluence/flux in replay, backport changes from mcxcl
+ 2019-07-15 [80357fc] remove volumetric mua input in the basic example
+ 2019-06-25 [4985db6] fix incorrect indexing, #73
+ 2019-06-24 [d3f3922]*additional changes due to flexible savedetflag detected photon data format, fix #73
+ 2019-06-20 [4ac001f] fix incorrect detphoton data buffer indexing, fix #73
+ 2019-05-25 [2b907e2] fix the unitinmm scaling for single/double FP mua/mus
+ 2019-05-24 [71571e6]*fix half compilation error
+ 2019-05-24 [33df8bf] fix the missing unitinmm scaling when input is float mua/mus, half2 input still not working
+ 2019-05-24 [071262b]*allow to update n in continuous media
+ 2019-05-24 [02efc62]*bug fix for continuous varying media patch
+ 2019-05-23 [e1b50b6]*convert all volume formats between mcxlab and mcx, fix #67
+ 2019-05-22 [711bf81]*allow cuda 9/10 to compile mcx
+ 2019-05-19 [72afd6a] get rid of json editor validation errors
  2019-05-17 [e92d91c] avoid using string class to keep backward compatibility
 
-== MCXLAB v2019.4 and earlier (Ether Dome), FangQ <q.fang (a) neu.edu> ==
+== MCX v2019.4 (Ether Dome RC1 - 1.4.9), FangQ <q.fang (a) neu.edu> ==
 
- 2019-04-25 [1c0fd1f] update documentation for v2019.4 release
- 2019-04-15 [a8fa3f5] combining partial path on the surface
+ 2019-04-22 [5e0f0c5] add title to mcxplotvol window
+ 2019-04-15 [a8fa3f5]*combining partial path on the surface
+ 2019-04-14 [dc5ec7c] assign -K for --mediabyte
  2019-04-14 [357ef7c] add help info for continuous media, accept string input, sanity check
- 2019-04-13 [ac10b73] supports continuously varying media - mua/mus can vary in every voxel
+ 2019-04-13 [ac10b73]*supports continuously varying media - mua/mus can vary in every voxel
+ 2019-04-13 [03228c8] add moredouble target
+ 2019-04-11 [7e31145] compile to dynamic lib, add function to enable library calls
  2019-04-11 [1c2f2e6] add help info in mcx and mcxlab on savedetflag
- 2019-04-10 [ada0b8e] support -w / --savedetflag to specify which det photon data to output
+ 2019-04-10 [ada0b8e]*support -w / --savedetflag to specify which det photon data to output
+ 2019-03-29 [825537c] fix print information for multiptle patterns when cfg.isnormalized==0
  2019-03-28 [43b377a] update json2mcx, add colin27 for mcxlab
- 2019-03-28 [b9a053f] add json2mcx, converting from json file to mcxlab cfg
+ 2019-03-28 [b9a053f]*add json2mcx, converting from json file to mcxlab cfg
+ 2019-03-23 [f71fd39] add the missing verbose flag --workload, although -W was working
+ 2019-03-20 [3cdfc54] fix empty string test
  2019-03-20 [6b19d01] mcxstudio: merge output window back to main; update infinite slab sample
- 2019-03-19 [ac76ff7] fix cyclic bc, add mcxlab demo
- 2019-03-04 [b93c6c4] photon sharing with dref output
- 2019-03-04 [fed53c8] avoid handling empty dref
- 2019-03-04 [fa5e6c2] add photon sharing for diffuse reflectance output
- 2019-03-03 [a3462be] add README files for all new benchmarks
+ 2019-03-19 [ac76ff7]*fix cyclic bc, add mcxlab demo
+
+== MCX v2019.3 (Ether Dome beta - 1.4.8), FangQ <q.fang (a) neu.edu> ==
+ 2019-03-03 [a3462be] add README files for all new benchmarks, add "What's New" in master README
  2019-03-02 [69a7375] use ANSI colors in the output to improve readability
  2019-02-28 [123d11d] add USC 19.5 atlas example, Fig9a in TranYan2019(submitted)
- 2019-02-28 [ccdf8e3] add digimouse example
+ 2019-02-28 [ccdf8e3]*add digimouse example
+ 2019-02-28 [e36efa0]*add colin27 atlas example using latest v3 segmentation, Fig6 in Fang2009
+ 2019-02-28 [ae2d60e] fix progress bar error in newer nvidia drivers
  2019-02-27 [6e84e26] fix mcxlab srcpattern input format bug, update mcxlab help info
  2019-02-26 [f1418cd] fix index mismatch between mcx_replay_prep and mcx detphotons output
- 2019-02-23 [e89c9bb] avoid error despite pattern3d src does not work as expected
- 2019-02-23 [f6ee293] update documentation, make autopilot default, pattern3d src demo
- 2019-02-08 [7e16b21] update "energy" output of mcxyz skinvessel example
- 2018-12-22 [2f8483b] clean the code and fix mcxlab 'gpuinfo' output error for multiple GPUs
- 2018-12-22 [87cbc78] modify post-processing to support normalization of multi-pattern
- 2018-12-03 [0ea31c6] added photon sharing examples
- 2018-12-03 [dc594dc] initial support for photon sharing - simultaneous forward for multiple src
- 2018-12-02 [339e2b8] update documentation, ready to release v2018.12
- 2018-12-02 [094734e] fix bugs and make axis-based boundary condition finally work, fix #55
+ 2019-02-23 [ae9443f]*copy detected photon post-processing scripts from mmc to mcx
+ 2019-02-23 [19e88b0] add function to convert fluence and energy deposition
+ 2019-02-22 [8644714] use USE_MORE_DOUBLE macro to enable additional double precision calls
+ 2019-02-22 [005ca00] disable linking with iomp5 to avoid matlab2016/2017 crashes
+ 2019-02-22 [f7be969]*use nan as srcdir.w, i.e. focal length, for isotropic launch
+ 2019-02-20 [ce1abbe] use double precision for data output,alternative to #41, for sm_60
+ 2019-02-20 [c647f18] support integer data rendering, support multiple windows
+ 2019-02-17 [3a3e72d]*mcx volume renderer is now integrated with mcxstudio
+ 2019-02-16 [70226e6] support output tx3 3D texture file
+ 2019-02-16 [b968133] add line, slit and cone sources in mcxrender, close #36
+ 2019-01-18 [335c9a0] fix mcxlab crash due to racing in multi-thread, close #60
+ 2019-01-10 [b8db72b] add photon's exiting position in the trajectory data
+ 2018-12-22 [2f8483b] fix mcxlab 'gpuinfo' output error for multiple GPUs
+ 2018-12-08 [3c8a9c3]*add gpu anlm filter as submodule, detailed in Yao2018 paper
+ 2018-12-03 [dc594dc]*initial implementation of "photon sharing" - one forward/replay for many patterns, presented in PW2019
+ 2018-12-02 [da93f29] fix a shared memory buffer length error, introduced in 9a631d15
+ 2018-11-24 [5e212a6]*setting separate boundary conditions at 6 boundary facets
  2018-11-24 [e6d4932] use char array for boundary condition input in mcxlab
  2018-11-23 [817609e] test if parameter has been initialized in command line
- 2018-11-23 [d74684f] prepare for axis-based bounary condition
- 2018-11-21 [1e15de7] disable reflection
- 2018-11-21 [12fdd14] output flux
- 2018-11-21 [8c8f202] update the launch position in skinvessel benchmark
- 2018-11-21 [d6f0f1d] launch photon at the surface of layer 2
- 2018-11-14 [405ce9c] add benchmark from mcxyz skinvessel example
+ 2018-11-23 [9a631d1] offloading photonseed to sharedmem,move v back to register
+ 2018-11-23 [e478c37] only use the sign bit to decide detector coverage, like in the old days
+ 2018-11-14 [405ce9c]*add benchmark from mcxyz skinvessel example
  2018-11-13 [9a2f696] test if gpuid is 0 to avoid mcxlab crashing
+ 2018-11-12 [3a05df8] fix shared memory allocation size bug
  2018-11-07 [5339563] add help info for the new detphoton fields
- 2018-11-07 [7e45ec0] save initial weight and partial scattering count to match mmc output
- 2018-11-07 [fc2cfcf] save initial weight in detphoton output
- 2018-11-07 [01ec192] isotropic launch if srcdir(4) is -0.f, valid for all src
- 2018-10-26 [183742d] set g to 1 when mus is 0, fix #51
- 2018-10-13 [cfa8e31] accummulate momemtum transfer for all detected photons in replay mode
- 2018-08-26 [79a47bf] remove outdated examples and flags, simplify Makefile for a clean start
- 2018-08-20 [91e0de1] if no GPU detected, need to terminate
+ 2018-11-07 [7e45ec0]*save initial weight and partial scattering count to match mmc output
+ 2018-11-07 [01ec192]*isotropic launch if srcdir(4) is -0.f, valid for all src
+ 2018-10-26 [183742d]*set g to 1 when mus is 0, fix #51
+ 2018-10-22 [0721ab4] change NULL pointer test order in reading srcpattern
+ 2018-10-21 [f37e0e2] prepare for nonuniform grid support
+ 2018-10-13 [cfa8e31]*accummulate momemtum transfer for all detected photons in replay mode
+ 2018-09-24 [d3df9b2] update Ruoyang Replay paper citation
+ 2018-09-02 [4d49f3b] add mcxstudio and mcxlab-octave deb packages
+ 2018-09-01 [75b3f7c]*add nightly build script to help people build mcx
+ 2018-08-29 [ecd4053] change deb package folder structure, handcode 1.0 keywords
+ 2018-08-26 [8c86b3e]*add cmake-styled makefile
+ 2018-08-26 [79a47bf]*remove outdated examples and flags, simplify Makefile for a clean start
+ 2018-08-20 [e3bb0e8] add README for mcxstudio
+
+== MCX v2018 (Dark Matter - 1.0 Final), FangQ <q.fang (a) neu.edu> ==
+
+ 2018-08-18 [	    ] MCX 1.0 (v2018) is fully baked! create release packages
  2018-08-18 [ed0612e] add Yu2018 citation, minor gui update
- 2018-08-15 [2d3ea68] update mcxlab demo script in README
- 2018-08-15 [13ab6f2] add more demo script for advanced mc data processing
- 2018-08-15 [0b140dc] mcx2json set issrcfrom0 default value to match mcx
- 2018-08-14 [e99e5ef] saving photon trajectory in command line, add plotting function, bump limit to 1e7
- 2018-07-21 [7850c32] support photon numbers over 2^31, new limit 2^63-1 after fixing #41
+ 2018-08-17 [eb9a2e6] fix momentum transfer saving bug, need to clear buffer for each new photon
+ 2018-08-17 [b11dae9] add help menu with papers and web resources
+ 2018-08-15 [13ab6f2] add more demo script for mc data processing showcase
+ 2018-08-14 [1e3eaa9] fix a bug in 2D simulations
+ 2018-08-14 [e99e5ef] allow saving photon trajectory in command line, add plotting function, bump limit to 1e7
+ 2018-07-21 [7850c32]*support photon numbers over 2^31, new limit 2^63-1 after fixing #41
+ 2018-07-20 [db5a349]*use extra global memory to help reduce roundoff error, fix #41
+ 2018-07-02 [8aba23b] fix a regression introduced in 29ea426, fix #40
+ 2018-06-04 [d9bdb33] fix incorrect column number when momentum transfer is recorded
+ 2018-06-04 [cf81b30] read RNGSeed field from the JSON file
  2018-06-04 [8cd8a69] support autopilot flag in JSON, fix typo
  2018-06-04 [c90b8b3] add specular reflection flag, passing more session flags via the JSON file
- 2018-06-04 [3e5a1d8] add mcxlab cfg to json input file converter
- 2018-05-19 [7f1b574] positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
+ 2018-06-04 [3e5a1d8]*add mcxlab cfg to json input file converter
+ 2018-05-19 [d28c36e] use load_nii compatible output, make sure nii is read-only
+ 2018-05-19 [78ee1ec]*add built-in loadnii support
+ 2018-05-19 [1854eee] fix normalization bug in replayall mode
+ 2018-05-19 [7f1b574]*positive respin now means repeat-to run more than 2e9 photons; negative respin means divide
  2018-05-15 [a7632bc] fix bugs in checking replaydet values
  2018-05-15 [e5db8cd] output 5-dim fluence when replaydet=-1,two replay test script,add help for replaydet
- 2018-05-14 [651c53f] replay for all detectors with -Y -1
- 2018-04-07 [b537309] complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
+ 2018-05-14 [651c53f]*replay for all detectors with -Y -1
+ 2018-05-03 [91765e1] fix issue #38, revert the regression introduced in commit 95b43708
+ 2018-05-03 [6743d25] partially fixing issue #38
+ 2018-04-07 [b537309]*complete momentum transfer feature, adapt Stefan's generate_g1 with the new output struct
+ 2018-04-07 [63bce2b] initial port of mmc momentum transfer calculations for DCS
+ 2018-04-07 [acef0cf] GUI update on high-res displays
+ 2018-04-02 [6ea1171] set default output format to mc2 again
+ 2018-03-31 [4884ab1] make mcxstudio work for mmc
+ 2018-03-30 [8af5a37] disable button event on the mac
+ 2018-03-30 [dbbe943] prevent double execution
+ 2018-03-29 [cbaaed7] fix double execution when clicking Run
  2018-03-29 [ac6c972] make mcxlab to call mcxcl without error
- 2018-03-17 [5b083b4] make mcxlab compatible with mcxlabcl to call opencl
+ 2018-03-29 [b42b51b] fix dumpmask not working on mcxcl bug
+ 2018-03-27 [13fd3f8] fix mac remote execution path
+ 2018-03-27 [4b3af81] fix mac run cmd path bug
+ 2018-03-27 [053c9b1] replace ssh with scp;debug search path on mac
+ 2018-03-27 [ccccab8] fix mac run issue
+ 2018-03-27 [1d1242b] allow both plink and sshpass to download files
+ 2018-03-26 [9b5c010] set default path for mac to home dir
+ 2018-03-26 [07de76e] replace ssh to scp in sshpass remote file download
+ 2018-03-25 [1566fb0] fix typo after replacement
+ 2018-03-25 [b90a66d] do not print password, add matlab path
+ 2018-03-25 [5d1e4ac] use parameter and executable to define command line
+ 2018-03-25 [c7c1445] add longer delay in matlab launching
+ 2018-03-25 [b2a1152] use TProcess for Mac for execution and matlab
+ 2018-03-25 [e08f041] use TProcess on mac to call external commands
+ 2018-03-25 [c633d87] give an error if the executable is not found
+ 2018-03-23 [4766639] use home dir to write output on mac
+ 2018-03-22 [5c64bfa] fix default matlab path; fix search path for mac
+ 2018-03-22 [9844842] fix minor bugs in mcxplotvol
+ 2018-03-21 [2864522] enable src editor for mcxcl
+ 2018-03-21 [cb6c185] update atomic flag
+ 2018-03-21 [9769f8a] move help info from title to a help button
+ 2018-03-21 [cb2fa99] update mcxstudio folder structure
+ 2018-03-21 [6a17a9c] change default mcxsuite folder structure
+ 2018-03-17 [5b083b4]*make mcxlab compatible with mcxlabcl to call opencl
+ 2018-03-12 [1014527] fix crash due to incorrect column number
+ 2018-03-12 [f5bf5b8] make mcxstudio compile on windows
+ 2018-03-11 [74723b1] add ID column for media and detector, addpath to matlab
+ 2018-03-11 [74b2d57] fix #32: unknown verbose option --root bug
+ 2018-03-11 [a0d445b] fix Windows low quality host RNG due to 15bit rand(), fix #31
+ 2018-03-09 [521fb85] compile on lazarus 1.8.2 with glscene svn 7114
+ 2018-03-09 [f29aa12] enable GUI scaling for high dpi displays
+ 2018-03-09 [e38bcab] remove memory leak in domain window
+ 2018-03-02 [5a43a1d] avoid casting double in xor and xoro RNGs
+ 2018-03-02 [1624105] change default RNG to xoroshiro128+, about 5% faster
+ 2018-02-28 [ae22a57] make posix RNG work again
  2018-02-28 [a78999d] output trajectory photon id in interger format
- 2018-01-31 [589ce45] support 3D pattern source
- 2018-01-29 [1b9493b] add mcxpreview to preview the simulation domain settings
- 2018-01-28 [b93e38d] make both src and detector on the surface
- 2018-01-13 [105ec65] update doxygen comments to fix missing parameters
- 2018-01-13 [f6fd6a0] rename mcxlab.mex to mcx.mex, use mcxlab.m to do pre and post processing
- 2018-01-11 [ae8bd9a] absorption fraction changed after fixing 1st scattering handling in #4b33a6f
- 2017-12-31 [7e6e081] add doxygen-format comments for thorough documtation of the source code
+ 2018-02-19 [779b27e] avoid out-of-bound error when saving diffuse reflectance
+ 2018-02-09 [95b4370] fix diffuse reflectance bug - must be performed after boundary reflection
+ 2018-02-09 [d719e78] mcxstudio update
+ 2018-01-31 [f90ee6e] support 3d pattern source in mcxstudio, automatic increase media count
+ 2018-01-31 [589ce45] support 3D pattern with type 'pattern3d'
+ 2018-01-29 [1b9493b]*add mcxpreview to preview the simulation domain settings
+ 2018-01-28 [5f748de] fix crash when saving diffuse reflectance
+ 2018-01-26 [6b55b4b] fix bug to properly scale Jacobian output with voxel size
+ 2018-01-24 [de1b62f] mcxstudio - render disk and planar source types
+ 2018-01-24 [f587194] mcxstudio - add mcxrender window to preview domain shapes
+ 2018-01-24 [b113840] mcxstudio - support displaying source and detectors
+ 2018-01-16 [6b34910]*mcxstudio - add shape visualization utility
+ 2018-01-13 [f6fd6a0]*rename mcxlab.mex to mcx.mex, use mcxlab.m to do pre and post processing
+ 2018-01-11 [ae8bd9a]*fix bug related to absorption fraction changed after fixing 1st scattering handling in #4b33a6f
+ 2017-12-31 [7e6e081]*add doxygen-format comments for thorough documtation of the source code
+ 2017-12-28 [57ccb84] allow saving large data files using 64bit size_t for buffer length
  2017-12-02 [b98d728] matlab fails to clear mex variable memory, force setting to NULL
- 2017-11-27 [0a1d517] revert mcxlab demo script from mirror boundary to normal
+ 2017-11-29 [3e25d2d] revert to the old way of finding detector id, new approach gives partially detected optodes
+ 2017-11-22 [2267ad7] need to round half coordinates before calling nextafter
+ 2017-11-18 [14bb584]*half precision ray tracer support
+ 2017-10-30 [9958e32] simplify htime update in hitgrid
+ 2017-10-26 [4b33a6f] fix 2 bugs: condition for initial scattering, and v.nscat due to focal length input
  2017-10-05 [7703420] port mmc commit 07b33f3 to mcx to compile with matlab 2017
- 2017-08-10 [cacc8ce] start adding doxyen comments in the source code
+ 2017-10-05 [c7895a6] change dir vector to transmission direction before terminating a photon
+ 2017-10-04 [ac6fa0e] print a message before exit when det mask is dumped
+ 2017-08-20 [56edc0d] mcxstudio - update app bundle icon
+ 2017-08-20 [dff89ab]*mcxstudio - mac osx app bundle for mcxstudio
+ 2017-08-10 [2fe8029]*apply mirror boundary condition when background n is less than 1
+ 2017-08-07 [53b13e5] mcxstudio - use matlab even in the desktop mode
+ 2017-08-04 [1bb1b26] avoid calling directory instead of executable under linux
+ 2017-08-03 [4779504] avoid output window no show on low-res displays
+ 2017-08-03 [85ee081] avoid output window no show
+ 2017-08-03 [485ca67] plot using matlab on windows
+ 2017-08-01 [275ff8c] mcxstudio - search mcx_core.cl dynamically
+ 2017-07-30 [2371eab] mcxstudio - tested with mcxcl
+ 2017-07-30 [eac9717] avoid windows compilation warnings from VS
+ 2017-07-30 [bd61e4f] mcxstudio - update database when config changes,add link to tutorials,accept enter in windows
+ 2017-07-30 [658906d] mcxstudio - display total frame count in mcxplotvol
+ 2017-07-27 [08014e3] mcxstudio - support multiple time gates in mcxplotvol
+ 2017-07-26 [85d6fa1] mcxstudio use mc2 as default output
+ 2017-07-26 [6d25ddb] mcxstudio - download output files using pscp and scp, help context to online documentation
+ 2017-07-25 [2ed5363] mcxstudio - add context help file for mcxstudio, support matlab for plotting
+ 2017-07-25 [0decc1c] dump mask independent of photon detection
+ 2017-07-25 [3929c80] fix volume mask saving bug
+ 2017-07-25 [44dcfb3] mcxstudio - add plotting functions for mcx
+ 2017-07-25 [7cb2015] mcxstudio - add help database and viewer, save user input history
+ 2017-07-24 [9819eda] mcxstudio - add plotting feature using octave
+ 2017-07-22 [71bbc40] make mkpath windows friendly
+ 2017-07-21 [60c971b] mcxstudio command line quotation,remote execution, user input
+ 2017-07-21 [0503732] recursively create output folder if does not exist
  2017-07-20 [6e839ef] handle progress bar for matlab 2014b or newer as the return value is now object
  2017-07-20 [eed619f] fix matlab2017a crash when using multiple GPUs
- 2017-07-13 [e71659d] make output window dockable, lock GPU list when use ssh
- 2017-07-09 [c672643] use int to represent det and media index; increase max media + max det from 128+1024 to 4000, close #21
- 2017-07-08 [bf9aa22] mcx now supports 2D simulations, just set one dimension to a thickness of 1
- 2017-07-05 [8d12f78] MCX v2017.7
+ 2017-07-20 [b4a37d2] avoid windows compilation error due to mkdir and stat
+ 2017-07-16 [8d1d9cd] mcxstudio - add remote exec tab,correct save data dialog,define current session icons,renaming conflict check,oneditdone to update
+ 2017-07-15 [0fae21a] avoid static TLS error in matlab by linking with libiomp5 instead of libgomp, like mmc commit [10c8a27]
+ 2017-07-15 [d4f2ae1] fix mcxlab for octave crash due to an octave bug #48678
+ 2017-07-14 [a97e9c5] mcxstudio - fix remote cmd changing bug
+ 2017-07-14 [7752896] mcxstudio - add middle docking site
+ 2017-07-14 [2845d7e]*make true remote execution possible by passing json input via -f
+ 2017-07-14 [2012c0a] Merge branch 'master' of https://github.com/fangq/mcx
+ 2017-07-14 [35cfcec] mcxstudio - windows browse work folder,search remote command path,robust cmd output capture
+ 2017-07-14 [3081762] mcxstudio - support inline json input with -f, create root folder if --root is given
+ 2017-07-13 [21ef382] mcxstudio - lock GPU
+ 2017-07-13 [e71659d] mcxstudio - make output window dockable, lock GPU list when use ssh
+ 2017-07-11 [c08a29a] fix mcxstudio GPU name crop bug, fix window drag problem, make media/detector editor autoaddrow
+ 2017-07-09 [c672643]*use int to represent det and media index; increase max media + max det from 128+1024 to 4000, close #21
+ 2017-07-08 [bf9aa22]*mcx now supports 2D simulations, just set one dimension to a thickness of 1
+ 2017-07-05 [dd1026c] mcxstudio - fix source editor bug
+ 2017-07-05 [d1186aa]*successfully built RPM
+
+== MCX v2017.7 (Dark Matter - 1.0-RC2), FangQ <q.fang (a) neu.edu> ==
+
+ 2017-07-05 [6144ee4] fix windows progress bar issue
+ 2017-07-05 [1319828] windows registry fix, fix memory leak, associate .mcxp, use messagedlg, fix VerifyInput bug
+ 2017-07-04 [71fa54a]*add RPM and DEB packaging scripts, add root-level makefile
+ 2017-07-03 [3406ea8] fix memory leak caused by the shape JSON editor, mmc compatible, progress bar fixed
+ 2017-07-02 [       ] automatically build mcxstudio and include the binary in the mcx nightly build
+ 2017-06-30 [ff5e25f] fix shape editor deletion handling, collapsible groupbox, allow remote execution
+ 2017-06-30 [139b50d]*unified GUI for mcx, mmc and mcxcl, ligher source designer
+ 2017-06-29 [1d0f883] initialize tty info to avoid uninitialized values
+ 2017-06-28 [950f96b]*much improved mcxstudio: simulation designer,volume designer,more options,copy and paste sessions
+ 2017-06-26 [9606e95] save mc2 file under rootpath if --root is defined
+ 2017-06-25 [1b7271d] shape editor, json input editor for advanced options, form scaling for high DPI displays
+ 2017-06-21 [325aa35] update of the GUI, more robust mcx execution, colored output, simulation designer
  2017-06-20 [faad1a1] user specified scattering events to disable anisotropy g
+ 2017-06-06 [5f42259] fix a bug when using verbose only flags
  2017-05-29 [adddbc5] support pencil beam array
+ 2017-05-28 [4ef73e1] use environment variable CUDA_PATH on windows
+ 2017-05-28 [cc22461] add registry key fix for windows
  2017-05-27 [cfe280b] fix matlab crash when using multiple GPUs
- 2017-04-02 [f37c8a3] update documentation for v2017.3 release
- 2017-01-17 [a45f90e] update documentation for MCX v2017.1 - 1.0 RC1
+ 2017-04-10 [b5170e4] fix windows compilation bug for Pascal cards
+
+
+== MCX v2017.3 (Dark Matter - 1.0-RC1), FangQ <q.fang (a) neu.edu> ==
+
+ 2017-01-16 [d5a2cbe] prevent progress bar from stalling
  2017-01-02 [0a28d4e] fix compilation error on windows
- 2016-12-21 [8715a40] fix progress bar in matlab when set debuglevel=P
+ 2016-12-21 [63e5e23] fix voxel [0 0 0] is always zero bug, regression since v2016.4
+ 2016-12-21 [1848321] refresh matlab window when running mcx
+ 2016-12-21 [8715a40]*fix progress bar in matlab when set debuglevel=P
  2016-12-21 [b53d8ac] avoid hanging in mcxlab when mus=0
+ 2016-12-11 [c93be5b] fix nan error when scattering coeff is 0
+ 2016-11-11 [024542c] fix replay bug due to f->ndone initial value as -1
+ 2016-11-05 [758b8b5]*enable autobuild in both windows and linux
+ 2016-11-05 [dac3cd0] autobuild for windows
  2016-10-20 [1f5d0ef] fix Jacobian output normalization
- 2016-10-09 [5905e0b] record diffuse reflectance on the air voxels outside of domain boundaries, close #6
- 2016-10-09 [39038bf] save detected photon position and direction using -x 1, close #16
- 2016-10-08 [e8b21b8] port diverging and converging widefield source beams from MMC to MCX, close #27
+ 2016-10-13 [84462a3] correct WP replay scaling factor
+ 2016-10-13 [16ab1c9] normalize scattering count based on total replay weight
+ 2016-10-12 [df62a0d] removing divergence inside hitgrid, thanks to njuffa
+ 2016-10-09 [5905e0b]*record diffuse reflectance on the air voxels outside of domain boundaries, close #6
+ 2016-10-09 [39038bf]*save detected photon position and direction using -x 1, close #16
+ 2016-10-08 [e8b21b8]*port diverging and converging widefield source beams from MMC to MCX, close #27
  2016-10-05 [ceb6009] fixing mcxlab crash when detps is not given in the replay mode
- 2016-09-14 [91a9dda] save scattering event count in replay
- 2016-07-02 [9b5ee49] elegantly terminate mcxlab when an exception is raised
- 2016-07-02 [3463f92] polish progress bar feature, use 3 threads to report
- 2016-06-05 [6a6fe13] update makefile for autobuild, correct mcxlab RNG seed length
+ 2016-10-04 [ead4794] fix Gaussian beam waist radius scaling issue, close #25
+ 2016-10-03 [42866fa] fix two regressions for replay, returning scattering count in replay
+ 2016-09-14 [9d70a56] fix memory out-of-bound bug in replay
+ 2016-09-11 [a6792e7] fix usleep warning
+ 2016-09-09 [6393a45] save scattering event count in replay
+ 2016-08-25 [78acd39]*compiling mcx on windows
+ 2016-08-24 [f19e3d4] update core count for GP104
+ 2016-08-22 [1c21212] fix core count in Pascal
+ 2016-08-18 [55e917c] use c++ template to avoid branching in launchnewphoton - by Gustavo Maia and Fanny Paravecino
+ 2016-08-11 [5da5466] remove -code flags to create arch independent binaries, it also produces faster binaries with cuda 7.5
+ 2016-07-24 [dbbc4c6]*support Russian roulette
+ 2016-07-22 [542223d]*compiling mcxlab mex file for Pascal
+ 2016-07-22 [88441c6] support Pascal
+ 2016-07-02 [9b5ee49]*elegantly terminate mcxlab when an exception is raised
+ 2016-07-02 [382aab1] ignore user specified nonexistent devices in workload calculations - bug reported by Nicholas Dana
+ 2016-07-02 [2b98d3e]*add progress bar when user specify -D P
+ 2016-06-05 [6a6fe13]*update makefile for autobuild, correct mcxlab RNG seed length
  2016-06-02 [83481ff] add replay demo script
  2016-06-02 [2aed76d] fix replay seed bug for mcxlab
  2016-05-16 [701beec] make mcx gpu contest compatible with octave
- 2016-05-16 [a4cb1e1] add debug option to save photon trajectory data
+ 2016-05-16*[a4cb1e1] add debug option to save photon trajectory data
  2016-04-26 [590c596] fix workload and gpuid bug when handeling 0 mask
  2016-04-23 [4c37c0d] test gpu contest script in matlab 2014
- 2016-04-22 [690406c] fix multi-GPU hanging problem for real, wrap all CUDA calls with error testing, return workload in mcxlab
- 2016-04-15 [2891fe3] gpu benchmark matlab script updated
- 2016-04-15 [e71f4c7] fix deviceid bug, activate GPU contest
- 2016-04-14 [096ce82] return additional info via flux.stat in mcxlab, add speed contest scripts
- 2016-04-12 [8e1c931] use xorshift128+ in mex, update mediaid and isdet after launchnewphoton
- 2016-04-12 [38790e7] update documentation to prepare 2016.4 release
- 2016-04-06 [2e80505] add rcs keyword support
- 2016-04-06 [4291efe] add slit source demo
- 2016-04-03 [e3a8d53] update msg header, fix widefield source bug
- 2015-09-28 [73dd850] add uniform line source and slit source, suggested by Yu Chen
+ 2016-04-22 [bc56e86] make static target on Linux and Mac
+ 2016-04-22 [f5342f0] update Linux static target command, make total photon number accurate
+ 2016-04-22*[690406c] fix multi-GPU hanging problem for real, wrap all CUDA calls with error testing, return workload in mcxlab
+
+
+== MCX v2016.4 (Dark Matter - 1.0-beta), FangQ <q.fang (a) neu.edu> ==
+
+ 2016-04-21 [release] finalize and release v2016.04
+ 2016-04-21*[2b1f22a] add Visual Studio 2013 Nsight project for easy compilation on windows
+ 2016-04-19 [3b69a1a] fix thread hanging bug when running on multiple GPUs
+ 2016-04-15*[e71f4c7] kick-off "MCX GPU Contest" for user-contributed hardware benchmarking
+ 2016-04-06 [c52b470] fix photon detection bug, fix json file crash, fix workload distribution bug, fix hitgrid inf handeling, fix energytot bug
+ 2016-04-05*[e94087f] add benchmark folder, announce "MCX Speed Challenge"
+ 2016-03-28 [76f9c5a] reduce memory dependency, yielded a 42% increase in mcx speed for the quicktest benchmark
+ 2016-03-26*[b14ccf1] simplify RNG interface, two new RNGs: POSIX erand48 and xorshift128+, retiring MT RNG
+ 2016-02-28 [29ea426] speed up ray tracer with customized nextafterf function and reciprocal of c
+ 2015-11-09 [1491f4e] Determining block size in autopilot mode using max block per SMX, by Fanny Nina Paravecino
+ 2015-11-08 [48dfb33] fix refractive index mismatch transmission bug
+ 2015-09-28*[73dd850] add uniform line source and slit source, suggested by Yu Chen
  2015-09-12 [9da817e] fix bug for wide field sources
+ 2015-09-11*[c7f9625] make precise ray-tracing default to improve accuracy
  2015-09-11 [a1e781a] update affiliation, Qianqian now moved to Northeastern
- 2015-09-11 [c7f9625] make precise ray-tracing default to improve accuracy
- 2015-06-25 [60238c4] multiple GPU support! set fermi as default, set atomic as default, better mex compilation
- 2015-06-15 [e5dfe48] mcxlab can query gpu info by mcxlab('gpuinfo')
- 2015-06-10 [7487e4d] support saving photon seeds and replay
- 2014-09-24 [f9db936] minor post-release updates, updating version number and copyright
- 2014-09-23 [e00375d] fix submillimeter voxel scaling bug in the binary mode
- 2014-07-11 [0cc66c2] a patch submitted by David Gasperino for rigirously modeling a collimated Gaussian beam
- 2014-07-11 [1ece2eb] high priority bug fixes submitted by Kim Shultz: transmission angle and oddphoton handling
- 2014-01-19 [b7ff249] saving detected photon seed for fast replay and pMC analysis
- 2013-09-26 [29019c5] add the MCX dice simulation demo
- 2013-09-25 [d688d3e] rearrange srcparam meanings for fourierx
- 2013-09-25 [d17ef7d] support fractional kx and ky with fourierx and fourierx2d
- 2013-09-25 [255fa89] updates for making release files
- 2013-09-22 [d7ec8c3] fix pattern source bug, update README
- 2013-09-20 [0240eb4] update all docs, set version to 0.9.7
- 2013-09-19 [bd8f201] correct normalization, fix specular reflection, fix Fourier source form
- 2013-09-17 [7d48d80] add initial transmission and specular reflection
- 2013-09-16 [ef46272] mcxlab srctype demo, tuned RNG, correct launch photon count
- 2013-09-15 [379d438] initial wide-field source support, 9 types of sources are implemented
- 2013-01-20 [2443f55] update unitinmm when steps is set
- 2012-08-24 [0960bb8] update MCXLAB for 0.8.0
- 2012-08-24 [be5d951] update documentation for 0.8.0, tested all examples
- 2012-08-21 [b0080e4] fix incorrect returned field and normalization when simulations is split into multiple gate groups
- 2012-08-10 [d6b5dc7] benchmark script for reseedlimit
- 2012-08-09 [61f5082] more updates to reseedlimit
- 2012-08-09 [40aa2f0] automatic reseeding Logistic Latice RNG
- 2012-08-08 [0a7ad43] backport features from mmclab: exception handling and print inside matlab
- 2012-07-13 [af6f923] use srcfrom0 flag to set crop0 and crop1 in mcx_cached
- 2012-07-06 [4c7deb2] minor updates to README
- 2012-07-06 [8ea3de7] fix inconsistent descriptions regarding detphoton
- 2012-01-11 [3a56870] fix a bug with -P option, fix a bug for mcxlab cfg.shapes
- 2012-01-11 [8183f61] add help for using JSON input and shape files
- 2012-01-10 [80c5425] support shapes in MCXLAB
- 2011-12-21 [388f91a] tag for a potential release
- 2011-09-21 [01a33f3] fix a regression in MCXLAB related to detectors, use exact exit position for radius test
- 2011-08-10 [9e9bf51] clarify the meaning and limitation of the voxel input in cfg file
- 2011-06-17 [2ead918] warn if users give an unreasonable incident vector
- 2011-06-11 [edf5e33] post 0.5.1 polishing
- 2011-04-26 [009cc5b] change printed text string
- 2011-04-26 [221fe81] allow crop0 crop1 input for the cachebox
- 2011-03-31 [e8c331b] correct help info for cfg.issrcfrom0
- 2011-03-25 [681cb30] remove help text from mcxlab.cpp,add mcxlab_atom help file
- 2011-03-20 [b446c65] more polishing of mcxlab docs
- 2011-03-18 [a02e1bf] debugged and compiled on windows
- 2011-03-18 [61fc79a] minor update to the documents
- 2011-03-18 [fe8d891] massive update of documentation
- 2011-03-18 [97a7a01] exception handling in MCXLAB
- 2011-03-18 [672c4df] mcxlab validation debugged and polished
- 2011-03-17 [2a0e684] minor polishing of mcxlab and mcx_core
- 2011-03-16 [a1bfcaf] recode internal reflection, major improvement for mcxlab; new mcxlab samples
- 2011-03-15 [9384a3a] extensive debugging with --unitinmm flag
- 2011-03-10 [67a1bda] store MCXLAB in a top-level folder
- 2011-03-10 [0fe30b5] mcxlab works beautifully with detected photons
- 2011-03-10 [6312949] update usage to support octave
- 2011-03-10 [222e579] mcxlab support output parameters, add Octave support with make oct
- 2011-03-04 [d3dade2] use -E to set seed from command line
- 2010-08-15 [10b3222] add make mex in the Makefile
- 2010-08-10 [93b29b9] mcxlab succeeded in matlab, setting proper default values for cfg
- 2010-08-09 [597b6ea] more debugging on mcxlab, not fully working yet
- 2010-08-09 [7269c4b] initial addition of Matlab wrapper: mcxlab
+ 2015-07-12 [3898b14] add nsight project files
+ 2015-07-27 [cd8f134] use proper epsilon for float roundoff tests
+ 2015-06-25 [6815577] fix address alignment error for CUDA 6 or higher
+ 2015-06-25*[60238c4] multiple GPU support!
+ 2015-06-25*[60238c4] set atomic as default, single binary now contains all features
+ 2015-06-15 [97cd3e9] return gpu info for better interfacing with matlab
+ 2015-06-10*[7487e4d] support saving photon seeds and replay
+ 2015-06-10 [3c8a116] accept endianness input
+ 2015-05-01 [funding] NIH/NIGMS R01 funding support starts
+
+== MCX 0.9.7-2 (Dark Matter - alpha update 2), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2014-09-23 [r325] fix submillimeter voxel scaling bug in the binary mode; fix total simulated photon count
+ 2014-07-11 [r324] a patch submitted by David Gasperino for rigirously modeling a collimated Gaussian beam
+ 2014-07-11 [r323] high priority bug fixes submitted by Kim Shultz: transmission angle and oddphoton handling
+ 2014-01-19 [r322] saving detected photon seed for fast replay and pMC analysis
+
+== MCX 0.9.7-1 (Dark Matter - alpha update 1), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2013-10-22 [r320] fix isotropic scattering bug at g=0, a critical bug fix
+
+== MCX 0.9.7 (Dark Matter - alpha), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2013-09-16 [r306] MCXLAB srctype demo script
+ 2013-09-15*[r305-308] wide-field source support, including 9 source types
+ 2013-09-11 [r305] random number generator performance optimization
+ 2013-08-29 [r304] loadmch supports the seed data from the latest MMC simulations
+ 2013-02-11 [r300-302] fix double correction for unitinmm
+
+== MCX 0.8.0 (Charm Quarks - final), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2012-08-24 [r297] merge all variants into a single binary for Fermi cards (make fermi)
+ 2012-08-21 [r296] fix Bug/0005, incorrect returned field and normalization for multiple gate groups (reported by Vivian Pera)
+ 2012-08-21 [r295] fix Bug/0004. incorrect detected photon buffer pointer in MCXLAB with respin>1 (Vivian Pera)
+ 2012-08-08 [r291-294] fix Bug/0001, forward scattering bias with automatic reseeding of the RNG (Matt Adams,Okito Yamashita)
+ 2012-08-08 [r290] backport features from MMCLAB: exception handling and print inside matlab
+ 2012-07-25 [r287] fix Bug/0002-2, conflict between savedet and share memory cache (Okito Yamashita)
+ 2012-07-21 [r286] change default MAX_DETECTORS from 256 t0 1024
+ 2012-07-13 [r282] fix Bug/0002. use srcfrom0 flag to set crop0 and crop1 in mcx_cached (Okito Yamashita)
+ 2012-07-06 [r280] calculate exact exit point when savedet is true (suggested by Audrey Steever)
+ 2012-07-04 [r276] fix MP core count bug (patch by Suresh Paidi)
+
+== MCX 0.7.9 (Charm Quarks - beta), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2012-01-10 fix a regression introduced in 0.5.3 for accurate exit positions
+ 2012-01-08 support 3D shape input and and run-time rasterization
+ 2012-01-07 port JSON-formatted input file support from MMC to MCX
+
+== MCX 0.5.3 (Black Hole - update 3), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2012-01-07 fix a minor bug which fails using -1 with -E
+ 2011-12-21 fix an issue causing forward scattering bias (reported by David Giraud)
+
+== MCX 0.5.2 (Black Hole - update 2), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2011-09-21 fix a regression in MCXLAB related to detectors, use exact exit position for radius test
+ 2011-09-20 add verbose warnings for launch-time-out error and non-surface detectors
+ 2011-09-19 users can specify srcfrom0 (origin setting) from the input file
+ 2011-09-19 fix a bug in detector-to-volume mapping, effects all non-integer inputs
+
+== MCX 0.5.1 (Black Hole - update 1), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2011-05-03 use the expected absorption for normalization to reduce non-atomic impact
+ 2011-04-26 fix a serious shared-mem buffer length bug (can cause crash)
+ 2011-04-26 MCXLAB now accepts crop0/crop1 fields to specify shared-mem region
+ 2011-03-25 new GPU-ocelot compilation flag
+
+== MCX 0.5.0 (Black Hole), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2011-03-18 update documents, get ready to release 0.5.0
+ 2011-03-18 gracefully handle exceptions in MCXLAB
+ 2011-03-17 add validation scripts for MCXLAB/MCX, fix a bug for saving flux
+ 2011-03-16 add MCXLAB example scripts
+ 2011-03-15 extensive debugging with the --unitinmm flag
+ 2011-03-09 MCXLAB now returns flux and detected photon in Matlab and Octave
+ 2011-03-03 add -E to seed RNG from command line
+ 2010-12-28 use negative -R to enable cachebox defined in the input file, fix time wraping
+ 2010-08-08 debug make mex option for Linux
+ 2010-08-09 first import of MCXLAB - MCX for Matlab and Octave
+ 2010-08-08 debug and test --unitinmm flag
+ 2010-08-05 initial support for reflection at internal boundaries
+ 2010-08-05 estimate maxgate when using the autopilot mode
+ 2010-08-02 fix a bug when saving multiple blocks of mch
+
+== MCX 0.4.9 (Black Hole-beta), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2010-08-01 update documentation and release v0.5 beta (aka 0.4.9)
+ 2010-08-01 fix a critical bug for pre-Fermi cards,validated MCX on CC11,13,20
+ 2010-07-31 enable -n for photon number, disable -m, report simulation speed
+ 2010-07-30 fix a bug when reading medium index with detector mask
+ 2010-07-29 use atomic with shared memory cache to improve accuracy near the source
+ 2010-07-28 add example for validation of MCX in heterogeneous media
+ 2010-07-28 use RNG for transmission/reflection test
+ 2010-07-28 use column major as the internal array format
+ 2010-07-27 support saving detected photons, but got 25% slower
+ 2010-07-15 users can use -u to specify voxel edge length in mm
+ 2010-07-12 fix a bug for indexing error in large volumes
+ 2010-07-09 fix a bug when appending data for multiple time gate groups
+ 2010-06-26 use constant memory to pass kernel param, more error info
+ 2010-06-26 use meaningful struct in the kernel to improve readability
+ 2010-05-14 allow to select which GPU to use with the -G option
+ 2010-02-04 fix a minor NaN bug detected by GPU Ocelot
+ 2010-01-26 add GPU Ocelot makefile for multicore CPU
+
+== MCX 0.2 (Aurora), FangQ <fangq (a) nmr.mgh.harvard.edu> ==
+
+ 2009-12-19 polish documentation, add svn keywords and tagged 0.2 final
+ 2009-12-10 MCX Studio GUI is tested on Linux, Windows, Mac OS X
+ 2009-12-03 add README.txt file for each example folder
+ 2009-12-02 complete "bubble" mode to reduce impact from non-atomic write
+ 2009-10-24 use cuda event timer, use VC compiler for Windows
+ 2009-10-21 paper published online, added windows support
+ 2009-10-20 set license to GPLv3, first public release (v0.2 beta)
+ 2009-10-19 fixed double-precision warning for CUDA 2.3
+ 2009-10-06 more GUI developments
+ 2009-09-25 fixed memory leakage, supported verbose options
+ 2009-09-24 major code clean-up, added GPUDEBUG macro
+ 2009-07-31 tested on GTX295 with CUDA 2.3
+ 2009-07-15 used atomicFloatAdd for atomic memory write
+ 2009-07-13 fixed half-grid shift bug in the validation script
+ 2009-07-08 reflection for a maximum of 3 interfaces
+ 2009-06-26 tested non-atomic write racing condition
+ 2009-05-19 added mcx studio: a GUI for mcx
+ 2009-05-07 query GPU info
+ 2009-05-05 added options to print to a log file
+ 2009-04-30 code clean up and paper submission, tag 0.1.9 (Aurora alpha)
+ 2009-04-26 new and more robust boundary reflection code
+ 2009-04-24 build-in fluence normalization (unitary solution)
+ 2009-04-20 added examples and validation scripts, supported respins
+ 2009-04-07 energy conservation for normalization of the solution
+ 2009-04-03 time gating support
+ 2009-04-01 split the main function to units, add utils. and config file
+ 2009-03-02 added logistic-map based random number generator
+ 2009-02-27 early support of boundary reflection
+ 2009-02-24 MT rand now working fine
+ 2009-02-21 added MT random number generator initial version
+ 2009-02-20 translated to Brook+
+ 2009-02-15 translated to CUDA
+ 2009-02-14 initial version written in BrookGPU
