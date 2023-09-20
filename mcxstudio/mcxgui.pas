@@ -9,6 +9,12 @@ unit mcxgui;
 ===============================================================================}
 {$mode objfpc}{$H+}
 
+{$IFDEF Darwin}
+  {$IFDEF LCLcocoa}
+    {$DEFINE NO_GLSCENE}
+  {$ENDIF}
+{$ENDIF}
+
 interface
 
 uses
@@ -17,8 +23,9 @@ uses
   LResources, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus, ComCtrls,
   ExtCtrls, Spin, EditBtn, Buttons, ActnList, lcltype, AsyncProcess, Grids,
   CheckLst, LazHelpHTML, ValEdit, inifiles, fpjson, jsonparser,jsonscanner {$IFDEF USE_SYNAPSE}, runssh{$ENDIF},
-  strutils, RegExpr, OpenGLTokens, mcxabout, mcxshape, mcxnewsession, mcxsource,
-  mcxrender, mcxview, mcxconfig, mcxstoprun, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
+  strutils, RegExpr, mcxabout, mcxnewsession, mcxsource
+  {$IFNDEF NO_GLSCENE}, OpenGLTokens, mcxshape, mcxrender, mcxview{$ENDIF}, mcxconfig,
+  mcxstoprun, Types {$IFDEF WINDOWS}, registry, ShlObj{$ENDIF};
 
 type
 
@@ -476,7 +483,9 @@ type
 
 var
   fmMCX: TfmMCX;
+  {$IFNDEF NO_GLSCENE}
   fmDomain: TfmDomain;
+  {$ENDIF}
   fmConfig: TfmConfig;
   fmStop: TfmStop;
   ProfileChanged: Boolean;
@@ -1197,7 +1206,9 @@ var
     ret:TModalResult;
     TaskFile: string;
     fext: string;
+    {$IFNDEF NO_GLSCENE}
     fmViewer: TfmViewer;
+    {$ENDIF}
 begin
   ret:=mrNo;
   if(OpenProject.Execute) then begin
@@ -1206,6 +1217,7 @@ begin
     if(fext = '.json') then begin // adding new session
          LoadSessionFromJSON(TaskFile);
     end else if (AnsiIndexStr(fext, ['.tx3','.nii','.jnii']) >= 0) then begin
+      {$IFNDEF NO_GLSCENE}
       try
             fmViewer:=TfmViewer.Create(self);
             Case AnsiIndexStr(fext, ['.tx3','.nii','.jnii']) of
@@ -1222,6 +1234,7 @@ begin
           on E: Exception do
              ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
       end;
+      {$ENDIF}
     end else begin
       if(mcxdoSave.Enabled) then begin
          ret:=MessageDlg('Confirmation', 'The current session has not been saved, do you want to save it?',
@@ -1306,7 +1319,9 @@ var
     ftype: TAction;
     nx : integer = 0;
     ny,nz,nt: integer;
+    {$IFNDEF NO_GLSCENE}
     fmViewer: TfmViewer;
+    {$ENDIF}
     cmd: TStringList;
     singletype: LongWord;
     dref: string;
@@ -1321,10 +1336,14 @@ begin
 
     if (grProgram.ItemIndex <> 1) then begin
         outputfile:=CreateWorkFolder(edSession.Text, false)+DirectorySeparator+edSession.Text+ftype.Hint;
+{$IFNDEF NO_GLSCENE}
         singletype:=GL_RGBA32F;
+{$ENDIF}
     end else begin
         outputfile:=sgConfig.Cells[2,14]+DirectorySeparator+edSession.Text+ftype.Hint;
+{$IFNDEF NO_GLSCENE}
         singletype:=GL_DOUBLE_EXT;
+{$ENDIF}
     end;
 
     if(not FileExists(outputfile)) then begin
@@ -1371,6 +1390,7 @@ begin
     AddMultiLineLog(cmd.DelimitedText,pMCX);
     cmd.Free;
 
+    {$IFNDEF NO_GLSCENE}
     if(miUseMatlab.Checked) then exit;
     try
           fmViewer:=TfmViewer.Create(self);
@@ -1388,6 +1408,7 @@ begin
         on E: Exception do
            ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
     end;
+    {$ENDIF}
 end;
 
 procedure TfmMCX.RunSSHCmd(Sender: TObject; cmd: string; updategpu:boolean=false; doprogress: boolean=false);
@@ -1727,11 +1748,12 @@ begin
     lvJobs.ViewStyle:=vsReport;
   {$ENDIF}
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
-
+    {$IFNDEF NO_GLSCENE}
     fmDomain:=TfmDomain.Create(Self);
+    fmDomain.FormStyle:=fsStayOnTop;
+    {$ENDIF}
     fmConfig:=TfmConfig.Create(Self);
     fmStop:=TfmStop.Create(Self);
-    fmDomain.FormStyle:=fsStayOnTop;
     fmStop.FormStyle:=fsStayOnTop;
 
     CurrentSession:=nil;
@@ -1794,7 +1816,9 @@ begin
     PassList.Free;
     BCItemProp.Free;
 
+    {$IFNDEF NO_GLSCENE}
     fmDomain.Free;
+    {$ENDIF}
     fmConfig.Free;
     fmStop.Free;
 
@@ -1986,12 +2010,16 @@ begin
 end;
 
 procedure TfmMCX.MenuItem76Click(Sender: TObject);
+{$IFNDEF NO_GLSCENE}
 var
-   fmViewer: TfmViewer;
+    fmViewer: TfmViewer;
+{$ENDIF}
 begin
+  {$IFNDEF NO_GLSCENE}
   fmViewer:=TfmViewer.Create(self);
   fmViewer.BringToFront;
   fmViewer.Show;
+  {$ENDIF}
 end;
 
 procedure TfmMCX.miExportJSONClick(Sender: TObject);
@@ -2235,7 +2263,9 @@ end;
 
 procedure TfmMCX.AddShapesWindow(shapeid: string; defaultval: TStringList; node: TTreeNode);
 var
+   {$IFNDEF NO_GLSCENE}
    fmshape:TfmShapeEditor;
+   {$ENDIF}
    ss: string;
    jdata: TJSONData;
 begin
@@ -2253,6 +2283,7 @@ begin
         exit;
    end;
 
+   {$IFNDEF NO_GLSCENE}
    fmshape:=TfmShapeEditor.Create(Application, defaultval);
    fmshape.Caption:='Add Shape: '+shapeid;
    if(Pos('Layer',shapeid)=2) or (Pos('Slab',shapeid)=2) then
@@ -2268,6 +2299,7 @@ begin
         ShowJSONData(node,jdata,true);
    end;
    fmshape.Free;
+   {$ENDIF}
 end;
 
 procedure TfmMCX.AddShapes(shapeid: string; defaultval: string);
@@ -2473,7 +2505,7 @@ begin
     cmd.Free;
 
     if(miUseMatlab.Checked) then exit;
-
+    {$IFNDEF NO_GLSCENE}
     try
         fmDomain.mmShapeJSON.Lines.Text:=shapejson.FormatJSON;
         freeandnil(shapejson);
@@ -2482,6 +2514,7 @@ begin
         on E: Exception do
            ShowMessage('OpenGL Error: '+E.ClassName+#13#10 + E.Message);
     end;
+    {$ENDIF}
 end;
 
 
