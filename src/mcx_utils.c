@@ -1758,14 +1758,14 @@ void mcx_prep_polarized(Config* cfg) {
  */
 
 void mcx_prepdomain(char* filename, Config* cfg) {
-    if (cfg->isdumpjson == 2) {
-        mcx_savejdata(cfg->jsonfile, cfg);
-        exit(0);
-    }
-
     if (filename[0] || cfg->vol) {
         if (cfg->vol == NULL) {
             mcx_loadvolume(filename, cfg, 0);
+
+            if (cfg->isdumpjson == 2) {
+                mcx_savejdata(cfg->jsonfile, cfg);
+                exit(0);
+            }
 
             if (cfg->shapedata && strstr(cfg->shapedata, ":") != NULL) {
                 int status;
@@ -2709,7 +2709,11 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         }
 
         if (!flagset['B']) {
-            strncpy(cfg->bc, FIND_JSON_KEY("BCFlags", "Session.BCFlags", Session, cfg->bc, valuestring), 12);
+            char* bc = FIND_JSON_KEY("BCFlags", "Session.BCFlags", Session, NULL, valuestring);
+
+            if (bc) {
+                strncpy(cfg->bc, bc, 12);
+            }
         }
 
         if (!flagset['b']) {
