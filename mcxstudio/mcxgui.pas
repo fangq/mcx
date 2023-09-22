@@ -1744,9 +1744,6 @@ begin
     end;
   {$ENDIF}
 
-  {$IFDEF DARWIN}
-    lvJobs.ViewStyle:=vsReport;
-  {$ENDIF}
     DockMaster.MakeDockSite(Self,[akBottom,akLeft,akRight],admrpChild);
     {$IFNDEF NO_GLSCENE}
     fmDomain:=TfmDomain.Create(Self);
