@@ -14,10 +14,11 @@
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if(exist('tddiffusion','file')~=2 | exist('cwdiffusion','file')~=2)
+if(exist('tddiffusion','file')~=2 || exist('cwdiffusion','file')~=2)
     error(sprintf('Scripts "tddiffusion.m" and "cwdiffusion.m" were not found.\nThis demo requires you to add the "mcx/utils" directory first.'));
 end
 
+% only clear cfg to avoid accidentally clearing other useful data
 clear cfg;
 
 %% preparing the input data
@@ -95,7 +96,7 @@ legend('Diffusion (no reflection)','MCX (no reflection)','Diffusion (with reflec
 legend boxoff;
 set(gca,'yscale','log');
 xlabel('time (ns)')
-ylabel('Flux in 1/(mm^2 s)')
+ylabel('Fluence rate in 1/(mm^2 s)')
 box on;
 
 %% plotting spatial decay profile along line y=30 && z=0
@@ -120,7 +121,7 @@ set(gca,'yscale','log')
 legend('Diffusion (no reflection)','MCX (no reflection)','Diffusion (with reflection)','MCX(with reflection)');
 legend boxoff;
 xlabel('x (mm)')
-ylabel('Flux in 1/(mm^2 s)')
+ylabel('Fluence rate in 1/(mm^2 s)')
 
 %% plotting the cross-cut view along y=30
 subplot(223);

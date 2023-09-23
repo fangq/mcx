@@ -8,6 +8,8 @@
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% only clear cfg to avoid accidentally clearing other useful data
 clear cfg;
 
 %% preparing the input data
@@ -69,14 +71,14 @@ subplot(221);
 contourf(log10(squeeze(sum(f1.data(:,51,:,:),4))'),1:0.5:8);
 hold on
 plot([0 100],[21 21],'--',[0 100],[26 26],'--',[0 100],[36 36],'--');
-title('flux with no reflection');
+title('Fluence rate with no reflection');
 set(gca,'clim',[1 8]);
 
 subplot(222);
 contourf(log10(squeeze(sum(f2.data(:,51,:,:),4))'),1:0.5:8);
 hold on
 plot([0 100],[21 21],'--',[0 100],[26 26],'--',[0 100],[36 36],'--');
-title('flux with reflection at boundaries');
+title('Fluence rate with reflection at boundaries');
 set(gca,'clim',[1 8]);
 
 subplot(223);
@@ -86,7 +88,7 @@ for i=31:49
     semilogy(xi,squeeze(f2.data(51,i,1,:)),'color',[1-(i-25)/25 1-(i-25)/25 1]);
 end
 xlabel('time (ns)')
-ylabel('flux (1/mm^2/s)')
+ylabel('Fluence rate (1/mm^2/s)')
 set(gca,'yscale','log');
 title('time point spread functions (TPSF)');
 

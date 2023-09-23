@@ -1,5 +1,7 @@
 
 %% case 1: homogenous media, update the refractive index from n_old to n_new for all voxels
+
+% only clear cfg to avoid accidentally clearing other useful data
 clear cfg1
 n_old=1.37; 
 n_new=1.55;

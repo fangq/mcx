@@ -9,6 +9,9 @@
 % instead of 3D, so we have to purmute it to make the 1st dimension
 % singleton.
 
+% only clear cfg to avoid accidentally clearing other useful data
+clear cfg
+
 cfg.nphoton=1e6;
 
 cfg.vol=permute(uint8(ones(100,100)), [3,1,2]); % from 2d to 3d

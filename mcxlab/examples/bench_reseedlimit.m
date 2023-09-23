@@ -1,13 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MCXLAB - Monte Carlo eXtreme for MATLAB/Octave by Qianqina Fang
 %
-% In this example, we show the most basic usage of MCXLAB.
+% In this example, we test the reduction of simulation random noise (std)
+% with increase photon numbers
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 counts=[1e5 sqrt(10)*1e5 1e6 sqrt(10)*1e6 1e7 sqrt(10)*1e7 1e8];
 nrepeat=10;
+
+clear cfg
 
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcpos=[30 30 1];
@@ -18,7 +21,7 @@ cfg.prop=[0 0 1 1;0.005 1 0 1.37];
 cfg.tstart=0;
 cfg.tend=5e-9;
 cfg.tstep=5e-9;
-cfg.reseedlimit=1e4;
+%cfg.reseedlimit=1e4;
 
 % calculate the flux distribution with the given config
 

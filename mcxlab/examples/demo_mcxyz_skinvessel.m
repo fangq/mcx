@@ -6,6 +6,7 @@
 %  higher absorption (~42%) with boundaryflag=2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% only clear cfg to avoid accidentally clearing other useful data
 clear cfg flux
 
 %load mcxyz_skinvessel.mat

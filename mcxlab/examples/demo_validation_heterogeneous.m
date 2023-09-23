@@ -95,7 +95,7 @@ toc;
 %% calculating the analytical solution from the sphere-diffusion toolbox
 fprintf('calculating the analytical solution. this may take a few minutes ...\n');
 [phi_ana,xa,ya,za]=sphdiffusionslab(0,0,dim,-22:0.8:22,0,-30:0.8:10,ana);
-save demo_sphbox.mat phi_ana xa ya za
+%save demo_sphbox.mat phi_ana xa ya za
 %load demo_sphbox.mat
 phi_ana((xa(:)<-15 | xa(:)>15) & za(:)>-10)=nan;
 phi_ana((xa(:)<-12 | xa(:)>12) & za(:)>0)=nan;

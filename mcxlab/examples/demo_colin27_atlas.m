@@ -24,6 +24,7 @@
 %   of photon migration in 3D turbid media accelerated by graphics processing
 %   units," Opt. Express 17, 20178-20190 (2009)
 
+% only clear cfg to avoid accidentally clearing other useful data
 clear cfg
 
 load colin27_v3.mat
@@ -59,4 +60,5 @@ cfg.issaveexit=1;
 [flue,detps]=mcxlab(cfg);
 mcxplotvol(log10(flue.data));
 figure;
-plotmesh(detps.p,'r.')
+plot3(detps.p(:,1), detps.p(:,2), detps.p(:,3),'r.');
+axis equal;

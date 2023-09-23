@@ -41,7 +41,10 @@ while(isempty(mcxuser{1}) || isempty(mcxuser{2}) || isempty(mcxuser{3}) || isemp
 end
 
 defaultans=mcxuser;
-save contest_info.mat defaultans;  % save the filled data to be load in the future to save time
+try
+    save contest_info.mat defaultans;  % save the filled data to be load in the future to save time
+catch
+end
 
 %%  run the built-in benchmarks
 
