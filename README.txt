@@ -63,11 +63,63 @@ In summary, v2023 is packed with exciting updates, including
 *   Fine-tuned Windows installer
 *   Extensively developed Github Action for automated building and packaging of mcx
 *   Adopted standardized NeuroJSON JNIfTI and JData formats to ease data exchange
+*   New source types: hyperboloid and ring (annulus,annulus sector)
 
 
 A detailed list of updates is summarized below (key features marked with “*”):
 
 Updates since v2022.10:
+
+* 2023-09-22 [9185b5d] fix 64bit macos gui crash, #184
+* 2023-09-21 [393c620] fix valgrind warnings
+* 2023-09-20 [1adb6c6] * disable OpenGL functionalities when building 64bit mac, fix #184
+* 2023-09-19 [9a5dd5b] update octave package files
+* 2023-09-17 [9e9e699] update mcx command cheatsheet
+* 2023-09-17 [ad5a1dd] update all documentation, bump pmcx to v0.1.3
+* 2023-09-17 [5b8a06f] add comments to nightly build script for deployment
+* 2023-09-16 [d2a2ae3] update deploy script after reformat
+* 2023-09-15 [387df65] link libomp.a on mac
+* 2023-09-15 [bf6843f] simplify linkopt
+* 2023-09-15 [4ee145e] update help info
+* 2023-09-13 [ffc8ab0] * support ASCII escape code in Windows terminals
+* 2023-09-12 [24bb9e1] add path to lazbuild
+* 2023-09-12 [6820c04] build mcxstudio on mac
+* 2023-09-12 [9f3c3c2] print verbose info on mac
+* 2023-09-12 [48d4f2f] test macos-12 runner
+* 2023-09-11 [57519b9] force -std=c++11 to build oct on older gcc
+* 2023-09-07 [24c3533] remove redundant functions in mcxlab
+* 2023-09-05 [53e2681] update pmcx after fixing the regression due to #164
+* 2023-09-04 [0b98843] * fix regression caused by #164 for mus=0 region patch in #164 breaks https://github.com/fangq/mmc/blob/master/mmclab/example/demo_dualmesh_output.m
+* 2023-09-04 [287671b] Merge pull request #182 from fangq/ringsrc
+* 2023-09-03 [ad6ff4c] * compact implementation of ring source, close #181
+* 2023-09-01 [b0bad9f] renormalize dir vector after each rotation, suggested by @ShijieYan
+* 2023-09-01 [4fe8e43] highlight link and version with ascii color
+* 2023-08-28 [1a2f291] fix macos nightly build
+* 2023-08-27 [2a5f27c] fix ci build
+* 2023-08-27 [b9f22ad] print code name, print min CUDA arch support
+* 2023-08-25 [f23188b] Update pmcx jupyter notebook
+* 2023-08-25 [0be475b] bump pmcx version to 0.1.1 to fix critical bug #180
+* 2023-08-25 [eaf31de] * [bug] critical! pmcx assumes incorrect default focal length, fix #180
+* 2023-08-25 [ddbbaf3] * [bug]: fix default outputformat when parsing json input, fix #179
+* 2023-08-24 [acfea7d] allow to link with libomp on macos with clang
+* 2023-08-21 [88eba94] fix macos mcx package path
+* 2023-08-21 [1c9efee] adjust cmake build path
+* 2023-08-21 [a2e73b9] add openmp to matlab mex
+* 2023-08-21 [f1d3829] add NO_IMPLICIT_LINK_TO_MATLAB_LIBRARIES in cmake
+* 2023-08-20 [4db668a] fix python windows build error
+* 2023-08-20 [ec119b6] bump pmcx version number, rebuild python module
+* 2023-08-19 [a0a2a9b] *add pmcx utility functions and its test by Ivy Yen
+* 2023-08-15 [73dae89] update pip version
+* 2023-08-15 [d2ff843] use pip3 in check-pypi-upload.sh
+* 2023-08-15 [4f9e278] use UPLOAD_TO_PYPI flag as deploy condition
+* 2023-08-15 [c6d4258] limit travis to only build on master
+* 2023-08-15 [4775c4f] rearrange folder in travis
+* 2023-08-15 [18255c7] install missing twine, move python files to top level
+* 2023-08-15 [9255345] try uploading python macos module from travis
+* 2023-08-12 [af3d386] fix remaining mc2 format flag
+* 2023-08-12 [3187ece] * switch from custom mc2/mch formats to jnii and jdat as default
+* 2023-08-12 [780c7ab] support mcxlab('version'), let pmcx to read 1D detpos,prop,polprop
+* 2023-08-12 [aa9b2f4] update documentation, prepare for v2023 release
 * 2023-08-07 [ac893cd] * mcxplotvol: allow keeping x/y/z slice when switching between 4th dimension
 * 2023-08-07 [9aaba97] fix photon sharing 0 output issue in negative patterns
 * 2023-08-05 [da0beda] padding -0 instead of 0 when saving dref with mua_float medium
