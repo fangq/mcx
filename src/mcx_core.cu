@@ -1863,7 +1863,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         slen = fminf(slen, f.pscat);
 
         /** final length that the photon moves - either the length to move to the next voxel, or the remaining scattering length */
-        len = ((prop.mus == 0.f) ? len : (slen / prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f)));
+        len = ((prop.mus == 0.f) ? len : (slen / (prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f))));
 
         /** perform ray-interface intersection test to consider intra-voxel curvature (SVMC mode) */
         if (issvmc) {
