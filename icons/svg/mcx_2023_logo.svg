@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg102"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="mcx_2023_logo.svg"
+   inkscape:export-filename="/home/users/fangq/mcx_2023_logo.ico.png"
+   inkscape:export-xdpi="24.950001"
+   inkscape:export-ydpi="24.950001">
+  <defs
+     id="defs96" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.9899495"
+     inkscape:cx="473.57857"
+     inkscape:cy="579.25311"
+     inkscape:document-units="mm"
+     inkscape:current-layer="g7959"
+     showgrid="false"
+     inkscape:window-width="3440"
+     inkscape:window-height="1345"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata99">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g7962"
+       transform="matrix(0.59761522,0,0,1,-3.7019641,-378.96837)"
+       style="stroke:none"
+       inkscape:export-xdpi="24.950001"
+       inkscape:export-ydpi="24.950001"
+       inkscape:export-filename="C:\Users\fangq\Gitroot\Project\github\mcx\mcxstudio\pixmap\mcxstudio_2020.png">
+      <g
+         id="g7959"
+         style="fill:none;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         transform="matrix(0.95247217,0,0,1,12.310098,0)">
+        <path
+           id="path7949"
+           d="m 259.00819,563.18972 v -81.26489 h -36 v 81.26489 z"
+           inkscape:connector-curvature="0"
+           style="fill:#742b00;fill-opacity:1;stroke:none"
+           inkscape:export-filename="/home/users/fangq/mcx_2023_logo.png"
+           inkscape:export-xdpi="24.950001"
+           inkscape:export-ydpi="24.950001" />
+        <path
+           id="path7951"
+           d="m 259.00819,481.92483 -53.53088,34.72656 h -36 l 53.53088,-34.72656 z"
+           inkscape:connector-curvature="0"
+           style="fill:#f00d24;fill-opacity:1;stroke:none"
+           inkscape:export-filename="/home/users/fangq/mcx_2023_logo.png"
+           inkscape:export-xdpi="24.950001"
+           inkscape:export-ydpi="24.950001" />
+        <path
+           id="path7953"
+           d="m 205.47731,516.65139 -53.53088,-34.82105 h -36 l 53.53088,34.82105 z"
+           inkscape:connector-curvature="0"
+           style="fill:#a63030;fill-opacity:1;stroke:none"
+           inkscape:export-filename="/home/users/fangq/mcx_2023_logo.png"
+           inkscape:export-xdpi="24.950001"
+           inkscape:export-ydpi="24.950001" />
+        <path
+           id="path7957"
+           d="m 151.94643,563.09523 34.01786,-24.56845 h -36 l -34.01786,24.56845 z"
+           inkscape:connector-curvature="0"
+           style="fill:#72a630;fill-opacity:1;stroke:none"
+           inkscape:export-filename="/home/users/fangq/mcx_2023_logo.png"
+           inkscape:export-xdpi="24.950001"
+           inkscape:export-ydpi="24.950001" />
+        <path
+           id="path7947"
+           d="m 224.99033,538.62127 34.01786,24.56845 h -36 l -34.01786,-24.56845 z"
+           inkscape:connector-curvature="0"
+           style="fill:#f00d24;fill-opacity:1;stroke:none"
+           inkscape:export-filename="/home/users/fangq/mcx_2023_logo.png"
+           inkscape:export-xdpi="24.950001"
+           inkscape:export-ydpi="24.950001" />
+        <path
+           id="path7955"
+           d="m 151.94643,481.83034 v 81.26489 h -36 v -81.26489 z"
+           inkscape:connector-curvature="0"
+           style="fill:#dfe80c;fill-opacity:1;stroke:none"
+           inkscape:export-filename="/home/users/fangq/mcx_2023_logo.png"
+           inkscape:export-xdpi="24.950001"
+           inkscape:export-ydpi="24.950001" />
+      </g>
+    </g>
+  </g>
+</svg>
