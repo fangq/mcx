@@ -586,7 +586,7 @@ def mcxlab(*args):
                     varargout["dref"], [i for i in range(1, len(dim) + 1)] + [0]
                 )
 
-    if cfg["issavedet"]:
+    if "detp" in varargout:
         #         for i in range(len(varargout.keys())): #for i in range(varargout[1]):
         if ("savedetflag" not in cfg) or (
             ("savedetflag" in cfg) and (not cfg["savedetflag"])
@@ -649,15 +649,15 @@ def mcxlab(*args):
         if "newdetpstruct" in locals():
             varargout["detp"] = newdetpstruct  # varargout = newdetpstruct
 
-        if "traj" in varargout:
-            data = varargout["traj"]["data"]
-            if data:
-                traj = {}
-                traj["pos"] = np.transpose(data[1:4, :])
-                traj["id"] = np.uint32(data[0, :])
-                traj["id"], idx = np.sort(traj["id"]), np.argsort(traj["id"])
-                traj["pos"] = traj["pos"][idx, :]
-                traj["data"] = np.vstack([np.single(traj["id"]), data[1:, idx]])
-                varargout["traj"]["data"] = traj
+    if "traj" in varargout:
+        data = varargout["traj"]
+        if len(data):
+            traj = {}
+            traj["pos"] = np.transpose(data[1:4, :])
+            traj["id"] = np.uint32(data[0, :])
+            traj["id"], idx = np.sort(traj["id"]), np.argsort(traj["id"])
+            traj["pos"] = traj["pos"][idx, :]
+            traj["data"] = np.vstack([np.single(traj["id"]), data[1:, idx]])
+            varargout["traj"] = traj
 
     return varargout
