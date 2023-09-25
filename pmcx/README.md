@@ -4,7 +4,7 @@
 
 - Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2023) <q.fang at neu.edu>, Fan-Yu Yen (2023) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
-- Version: 0.2.1
+- Version: 0.2.2
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 
@@ -134,12 +134,14 @@ plt.show()
 ```
 
 * Alternatively, one can also define a Python dict object containing each setting
-as a key, and pass on the dict object to `pmcx.run()`
+as a key, and pass on the dict object to `pmcx.run()`, or preferably, `pmcx.mcxlab()`
 
 ```python3
 import pmcx
 import numpy as np
 cfg = {'nphoton': 1000000, 'vol':np.ones([60,60,60],dtype='uint8'), 'tstart':0, 'tend':5e-9, 'tstep':5e-9,
        'srcpos': [30,30,0], 'srcdir':[0,0,1], 'prop':[[0,0,1,1],[0.005,1,0.01,1.37]]}
-res = pmcx.run(cfg)
+res = pmcx.run(cfg)      # pmcx.run returns detected photon data as a concatenated 2D array res['detp'], same for res['traj']
+# or alternatively/preferably
+res = pmcx.mcxlab(cfg)   # pmcx.mcxlab calls pmcx.run, and postprocess res['detp'] and res['traj'] raw data into dict form
 ```
