@@ -413,43 +413,40 @@ def mcxlab(*args):
     (Python code was adapted from mcxlab.m MATLAB function, ported by Fan-Yu Yen)
 
     Format:
-       res=mcxlab(cfg);
+       res = mcxlab(cfg);
           or
-       res=mcxlab(cfg, option);
+       res = mcxlab(cfg, option);
 
     Input:
-       cfg: a struct, or struct array. Each element of cfg defines
-            the parameters associated with a simulation.
+       cfg: a dictionary defining the parameters associated with a simulation.
             if cfg='gpuinfo': return the supported GPUs and their parameters,
             if cfg='version': return the version of MCXLAB as a string,
-            see sample script at the bottom
        option: (optional), options is a string, specifying additional options
             option='opencl':  force using mcxcl.mex* instead of mcx.mex* on NVIDIA/AMD/Intel hardware
             option='cuda':    force using mcx.mex* instead of mcxcl.mex* on NVIDIA GPUs
 
        if one defines USE_MCXCL=1 in as Python global variable, all following
-       mcxlab and mcxlabcl calls will use mcxcl.mex; by setting option='cuda', one can
-       force both mcxlab and mcxlabcl to use mcx (cuda version). Similarly, if
-       USE_MCXCL=0, all mcxlabcl and mcxlab call will use mcx.mex by default, unless
-       one set option='opencl'.
+       pmcx.mcxlab calls will use _pmcxcl (OpenCL version of mcx); by setting option='cuda',
+       one can force pmcx.mcxlab to use _pmcx (CUDA version). Similarly, if
+       USE_MCXCL=0, all pmcx.mcxlab calls will use _pmcx by default, unless
+       one sets option='opencl'.
 
     Output:
-         fluence: a struct array, with a length equals to that of cfg.
-               For each element of fluence,
-               fluence(i).data is a 4D array with
+         res: a dictionary containing the following subfields
+             res['flux'] is a 4D array with
                     dimensions specified by [size(vol) total-time-gates].
                     The content of the array is the normalized fluence at
                     each voxel of each time-gate.
 
                     when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
                     output, see below
-               fluence(i).dref is a 4D array with the same dimension as fluence(i).data
+             res['dref'] is a 4D array with the same dimension as fluence(i).data
                     if cfg.issaveref is set to 1, containing only non-zero values in the
                     layer of voxels immediately next to the non-zero voxels in cfg.vol,
                     storing the normalized total diffuse reflectance (summation of the weights
                     of all escaped photon to the background regardless of their direction);
                     it is an empty array [] when if cfg.issaveref is 0.
-               fluence(i).stat is a structure storing additional information, including
+             res['stat'] is a structure storing additional information, including
                     runtime: total simulation run-time in millisecond
                     nphoton: total simulated photon number
                     energytot: total initial weight/energy of all launched photons
@@ -457,33 +454,35 @@ def mcxlab(*args):
                     normalizer: normalization factor
                     unitinmm: same as cfg.unitinmm, voxel edge-length in mm
 
-         detphoton: (optional) a struct array, with a length equals to that of cfg.
-               Starting from v2018, the detphoton contains the below subfields:
-                 detphoton.detid: the ID(>0) of the detector that captures the photon
-                 detphoton.nscat: cummulative scattering event counts in each medium
-                 detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
-                      one need to multiply cfg.unitinmm with ppath to convert it to mm.
-                 detphoton.mom: cummulative cos_theta for momentum transfer in each medium
-                 detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
-                 detphoton.w0: photon initial weight at launch time
-                 detphoton.s: exit Stokes parameters for polarized photon
-                 detphoton.prop: optical properties, a copy of cfg.prop
-                 detphoton.data: a concatenated and transposed array in the order of
-                       [detid nscat ppath mom p v w0]'
-                 "data" is the is the only subfield in all MCXLAB before 2018
-         vol: (optional) a struct array, each element is a preprocessed volume
-               corresponding to each instance of cfg. Each volume is a 3D int32 array.
-         seeds: (optional), if give, mcxlab returns the seeds, in the form of
-               a byte array (uint8) for each detected photon. The column number
-               of seed equals that of detphoton.
-         trajectory: (optional), if given, mcxlab returns the trajectory data for
-               each simulated photon. The output has 6 rows, the meanings are
-                  id:  1:    index of the photon packet
-                  pos: 2-4:  x/y/z/ of each trajectory position
-                       5:    current photon packet weight
-                       6:    reserved
+             res['detp']: res['detp'] is a directionary object including the following field
+                   res['detp']['detid']: the ID(>0) of the detector that captures the photon
+                   res['detp']['nscat']: cummulative scattering event counts in each medium
+                   res['detp']['ppath']: cummulative path lengths in each medium (partial pathlength)
+                        one need to multiply cfg.unitinmm with ppath to convert it to mm.
+                   res['detp']['mom']: cummulative cos_theta for momentum transfer in each medium
+                   res['detp']['p'] or ['v']: exit position and direction, when cfg.issaveexit=1
+                   res['detp']['nscat']: photon initial weight at launch time
+                   res['detp']['s']: exit Stokes parameters for polarized photon
+                   res['detp']['prop']: optical properties, a copy of cfg.prop
+                   res['detp']['data']: a concatenated and transposed array in the order of
+                        [detid nscat ppath mom p v w0]'
+
+                   if returned by pmcx.run, res['det'] is a 2D numpy array in a format as
+                   res['detp']['data'] described above
+
+             res['vol']: (optional) a numpy array storing a preprocessed volume.
+                   Each volume is a 3D int32 array.
+             res['seeds']: (optional), if give, mcxlab returns the seeds, in the form of
+                   a byte array (uint8) for each detected photon. The column number
+                   of seed equals that of res['detp'].
+             res['traj']: if given, mcxlab returns the trajectory data for
+                   each simulated photon. The output has 6 rows, the meanings are
+                      res['traj']['id']:    1:    index of the photon packet
+                      res['traj']['pos']: 2-4:    x/y/z/ of each trajectory position
+                                            5:    current photon packet weight
+                                            6:    reserved
                By default, mcxlab only records the first 1e7 positions along all
-               simulated photons; change cfg.maxjumpdebug to define a different limit.
+               simulated photons; change cfg['maxjumpdebug'] to define a different limit.
     """
     try:
         defaultocl = eval("USE_MCXCL", globals())
@@ -491,6 +490,14 @@ def mcxlab(*args):
         defaultocl = 0
 
     useopencl = defaultocl
+
+    if len(args) == 1 and isinstance(args[0], str):
+        if args[0] == "gpuinfo":
+            varargout = pmcx.gpuinfo()
+            return varargout
+        elif args[0] == "version":
+            varargout = pmcx.version()
+            return varargout
 
     if len(args) == 2 and isinstance(args[1], str):
         if args[1] == "preview":
@@ -560,9 +567,14 @@ def mcxlab(*args):
     if useopencl == 0:
         varargout = pmcx.run(args[0])
     else:
-        varargout = pmcxcl.run(args[0])
+        try:
+            import pmcxcl
 
-    print(varargout.keys())
+            varargout = pmcxcl.run(args[0])
+        except ImportError:
+            raise ImportError(
+                'To call OpenCL based MCX, one must first run "pip install pmcxcl" to install pmcxcl'
+            )
 
     if len(args) == 0:
         return

@@ -48,7 +48,7 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            "-DBUILD_PYTHON=true"
+            "-DBUILD_PYTHON=true",
         ]
         build_args = []
         # Adding CMake arguments set as environment variable
@@ -111,42 +111,57 @@ class CMakeBuild(build_ext):
             os.makedirs(build_temp)
 
         subprocess.check_call(["cmake", ext.source_dir] + cmake_args, cwd=build_temp)
-        subprocess.check_call(["cmake", "--build", ".", "--target", ext.target] + build_args, cwd=build_temp)
+        subprocess.check_call(
+            ["cmake", "--build", ".", "--target", ext.target] + build_args,
+            cwd=build_temp,
+        )
 
 
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="pmcx",
-    packages=['pmcx'],
-    version="0.2.2",
-    requires=['numpy'],
-    license='GPLv3+',
+    packages=["pmcx"],
+    version="0.2.3",
+    requires=["numpy"],
+    license="GPLv3+",
     author="Matin Raayai Ardakani, Qianqian Fang, Fan-Yu Yen",
     author_email="raayaiardakani.m@northeastern.edu, q.fang@neu.edu, yen.f@northeastern.edu",
     description="Python bindings for Monte Carlo eXtreme photon transport simulator",
     long_description=readme,
     long_description_content_type="text/markdown",
-    maintainer= 'Qianqian Fang',
-    url='https://github.com/fangq/mcx',
-    download_url='http://mcx.space',
-    keywords=['Monte Carlo simulation', 'Biophotonics', 'Ray-tracing', 'Rendering', 'GPU', 'Modeling',
-                'Biomedical Optics', 'Tissue Optics', 'Simulator', 'Optics', 'NVIDIA', 'CUDA'],
+    maintainer="Qianqian Fang",
+    url="https://github.com/fangq/mcx",
+    download_url="http://mcx.space",
+    keywords=[
+        "Monte Carlo simulation",
+        "Biophotonics",
+        "Ray-tracing",
+        "Rendering",
+        "GPU",
+        "Modeling",
+        "Biomedical Optics",
+        "Tissue Optics",
+        "Simulator",
+        "Optics",
+        "NVIDIA",
+        "CUDA",
+    ],
     ext_modules=[CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
     classifiers=[
-      'Development Status :: 4 - Beta',
-      'Intended Audience :: Science/Research',
-      'Environment :: GPU :: NVIDIA CUDA',
-      'Topic :: Scientific/Engineering :: Physics',
-      'License :: OSI Approved :: Apache Software License',
-      'Programming Language :: Python :: 3.6',
-      'Programming Language :: Python :: 3.7',
-      'Programming Language :: Python :: 3.8',
-      'Programming Language :: Python :: 3.9',
-      'Programming Language :: Python :: 3.10',
-      'Programming Language :: Python :: 3.11'
-    ]
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Science/Research",
+        "Environment :: GPU :: NVIDIA CUDA",
+        "Topic :: Scientific/Engineering :: Physics",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+    ],
 )
