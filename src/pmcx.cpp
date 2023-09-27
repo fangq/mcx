@@ -304,8 +304,8 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     unsigned short tmp, m;
 
                     for (i = 0; i < dim_xyz; i++) {
-                        f2h.f[0] = val[i << 1];
-                        f2h.f[1] = val[(i << 1) + 1];
+                        f2h.f[0] = val[i << 1] * mcx_config.unitinmm;
+                        f2h.f[1] = val[(i << 1) + 1] * mcx_config.unitinmm;
 
                         if (f2h.f[0] != f2h.f[0]
                                 || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
@@ -369,7 +369,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     auto* val = (float*) buffer.ptr;
 
                     for (i = 0; i < dim_xyz; i++) {
-                        f2i.f = val[i];
+                        f2i.f = val[i] * mcx_config.unitinmm;
 
                         if (f2i.i == 0) { /*avoid being detected as a 0-label voxel*/
                             f2i.f = EPS;
