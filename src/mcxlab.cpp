@@ -663,7 +663,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 float* val = (float*)mxGetPr(item);
 
                 for (i = 0; i < dimxyz; i++) {
-                    f2i.f = val[i];
+                    f2i.f = val[i] * cfg->unitinmm;
 
                     if (f2i.i == 0) { /*avoid being detected as a 0-label voxel*/
                         f2i.f = EPS;
@@ -685,8 +685,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 unsigned short tmp, m;
 
                 for (i = 0; i < dimxyz; i++) {
-                    f2h.f[0] = val[i << 1];
-                    f2h.f[1] = val[(i << 1) + 1];
+                    f2h.f[0] = val[i << 1] * cfg->unitinmm;       // mua
+                    f2h.f[1] = val[(i << 1) + 1] * cfg->unitinmm; // mus
 
                     if (f2h.f[0] != f2h.f[0] || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
                         cfg->vol[i] = 0;
@@ -751,12 +751,16 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 unsigned short tmp;
 
                 for (i = 0; i < dimxyz; i++) {
-                    f2bh.f[2] = val[i * 3];
-                    f2bh.f[1] = val[i * 3 + 1];
-                    f2bh.f[0] = val[i * 3 + 2];
+                    f2bh.f[2] = val[i * 3];        // mua/mus/g or n float-value, depending on f[1]
+                    f2bh.f[1] = val[i * 3 + 1];    // if it has value 1-4, it replaces the 1st (mua), 2nd (mus), 3rd (g), 4th (n) value of the label by f[2]
+                    f2bh.f[0] = val[i * 3 + 2];    // voxel label
 
                     if (f2bh.f[1] < 0.f || f2bh.f[1] >= 4.f || f2bh.f[0] < 0.f ) {
                         mexErrMsgTxt("the 2nd volume must have an integer value between 0 and 3");
+                    }
+
+                    if (f2bh.f[1] >= 1.f && f2bh.f[1] <= 2.f) { // if the values are mua or mus, scale by cfg->unitinmm
+                        f2bh.f[2] *= cfg->unitinmm;
                     }
 
                     f2bh.h[0] = ( (((unsigned char)(f2bh.f[1]) & 0x3) << 14) | (unsigned short)(f2bh.f[0]) );
@@ -779,9 +783,9 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 unsigned short tmp;
 
                 for (i = 0; i < dimxyz; i++) {
-                    f2bh.c[0] = val[i * 3]   & 0xFF;
-                    f2bh.c[1] = val[i * 3 + 1] & 0xFF;
-                    f2bh.h[1] = val[i * 3 + 2] & 0x7FFF;
+                    f2bh.c[0] = val[i * 3]   & 0xFF;     // label 1
+                    f2bh.c[1] = val[i * 3 + 1] & 0xFF;   // label 2
+                    f2bh.h[1] = val[i * 3 + 2] & 0x7FFF; // label 1 mixing-percentage scaled to 32767 (32767 means 100%)
                     cfg->vol[i] = f2bh.i[0];
                 }
             } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {

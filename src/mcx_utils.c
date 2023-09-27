@@ -5035,7 +5035,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 == Required option ==\n" S_RESET"\
  -f config     (--input)       read an input file in .json or .inp format\n\
                                if the string starts with '{', it is parsed as\n\
-			       an inline JSON input file\n\
+                               an inline JSON input file\n\
       or\n\
  --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name\n\
                                run --bench without parameter to get a list\n\
@@ -5048,21 +5048,21 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit\n\
  -B '______'   (--bc)          per-face boundary condition (BC), 6 letters for\n\
     /case insensitive/         bounding box faces at -x,-y,-z,+x,+y,+z axes;\n\
-			       overwrite -b if given. \n\
-			       each letter can be one of the following:\n\
-			       '_': undefined, fallback to -b\n\
-			       'r': like -b 1, Fresnel reflection BC\n\
-			       'a': like -b 0, total absorption BC\n\
-			       'm': mirror or total reflection BC\n\
-			       'c': cyclic BC, enter from opposite face\n\
+                               overwrite -b if given. \n\
+                               each letter can be one of the following:\n\
+                               '_': undefined, fallback to -b\n\
+                               'r': like -b 1, Fresnel reflection BC\n\
+                               'a': like -b 0, total absorption BC\n\
+                               'm': mirror or total reflection BC\n\
+                               'c': cyclic BC, enter from opposite face\n\
 \n\
-			       if input contains additional 6 letters,\n\
-			       the 7th-12th letters can be:\n\
-			       '0': do not use this face to detect photon, or\n\
-			       '1': use this face for photon detection (-d 1)\n\
-			       the order of the faces for letters 7-12 is \n\
-			       the same as the first 6 letters\n\
-			       eg: --bc ______010 saves photons exiting at y=0\n\
+                               if input contains additional 6 letters,\n\
+                               the 7th-12th letters can be:\n\
+                               '0': do not use this face to detect photon, or\n\
+                               '1': use this face for photon detection (-d 1)\n\
+                               the order of the faces for letters 7-12 is \n\
+                               the same as the first 6 letters\n\
+                               eg: --bc ______010 saves photons exiting at y=0\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate\n\
@@ -5073,8 +5073,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void\n\
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given \n\
                                detector (det ID starts from 1), used with -E \n\
-			       if 0, replay all detectors and sum all Jacobians\n\
-			       if -1, replay all detectors and save separately\n\
+                               if 0, replay all detectors and sum all Jacobians\n\
+                               if -1, replay all detectors and save separately\n\
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh\n\
  -e [0.|float] (--minenergy)   minimum energy level to trigger Russian roulette\n\
  -g [1|int]    (--gategroup)   number of maximum time gates per run\n\
@@ -5095,41 +5095,44 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 == Input options ==\n" S_RESET"\
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid.\n\
                                only the root object named 'Shapes' is parsed \n\
-			       and added to the existing domain defined via -f \n\
-			       or --bench\n\
+                               and added to the existing domain defined via -f \n\
+                               or --bench\n\
  -j '{...}'    (--json)        a JSON string for modifying all input settings.\n\
                                this input can be used to modify all existing \n\
-			       settings defined by -f or --bench\n\
+                               settings defined by -f or --bench\n\
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str\n\
        voxel binary data layouts are shown in {...}, where [] for byte,[i:]\n\
        for 4-byte integer, [s:] for 2-byte short, [h:] for 2-byte half float,\n\
        [f:] for 4-byte float; on Little-Endian systems, least-sig. bit on left\n\
                                1 or byte: 0-128 tissue labels\n\
-			       2 or short: 0-65535 (max to 4000) tissue labels\n\
-			       4 or integer: integer tissue labels \n\
-			      97 or svmc: split-voxel MC 8-byte format\n\
-			        {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}\n\
-			      98 or mixlabel: label1+label2+label1_percentage\n\
-			        {[label1][label2][s:0-65535 label1 percentage]}\n\
-			      99 or labelplus: 32bit composite voxel format\n\
-			        {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}\n\
+                               2 or short: 0-65535 (max to 4000) tissue labels\n\
+                               4 or integer: integer tissue labels \n\
+                              97 or svmc: split-voxel MC 8-byte format\n\
+                                {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}\n\
+                              98 or mixlabel: label1+label2+label1_percentage\n\
+                                {[label1][label2][s:0-32767 label1 percentage]}\n\
+                              99 or labelplus: 32bit composite voxel format\n\
+                                {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}\n\
                              100 or muamus_float: 2x 32bit floats for mua/mus\n\
-			        {[f:mua][f:mus]}; g/n from medium type 1\n\
+                                {[f:mua][f:mus]}; g/n from medium type 1\n\
                              101 or mua_float: 1 float per voxel for mua\n\
-			        {[f:mua]}; mus/g/n from medium type 1\n\
-			     102 or muamus_half: 2x 16bit float for mua/mus\n\
-			        {[h:mua][h:mus]}; g/n from medium type 1\n\
-			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
-			        {[mua][mus][g][n]}; 0-255 mixing prop types 1&2\n\
-			     104 or muamus_short: 2x short gray-levels for mua/s\n\
-			        {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2\n\
+                                {[f:mua]}; mus/g/n from medium type 1\n\
+                             102 or muamus_half: 2x 16bit float for mua/mus\n\
+                                {[h:mua][h:mus]}; g/n from medium type 1\n\
+                             103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
+                                {[mua][mus][g][n]}; 0-255 mixing prop types 1&2\n\
+                             104 or muamus_short: 2x short gray-levels for mua/s\n\
+                                {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2\n\
+       when formats 99 or 102 is used, the mua/mus values in the input volume\n\
+       binary data must be pre-scaled by voxel size (unitinmm) if it is not 1.\n\
+       pre-scaling is not needed when using these 2 formats in mcxlab/pmcx\n\
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
  -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy deposit\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
-			       event counts at each voxel (replay mode only)\n\
+                               event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; R - RF/FD Jacobian\n\
                                L - total pathlength\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\
@@ -5139,18 +5142,18 @@ where possible parameters include (the first value in [*|*] is the default)\n\
     /case insensitive/         1 D  output detector ID (1)\n\
                                2 S  output partial scat. even counts (#media)\n\
                                4 P  output partial path-lengths (#media)\n\
-			       8 M  output momentum transfer (#media)\n\
-			      16 X  output exit position (3)\n\
-			      32 V  output exit direction (3)\n\
-			      64 W  output initial weight (1)\n\
+                               8 M  output momentum transfer (#media)\n\
+                              16 X  output exit position (3)\n\
+                              32 V  output exit direction (3)\n\
+                              64 W  output initial weight (1)\n\
       combine multiple items by using a string, or add selected numbers together\n\
       by default, mcx only saves detector ID and partial-path data\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
                                setting -x to 1 also implies setting '-d' to 1.\n\
-			       same as adding 'XV' to -w.\n\
+                               same as adding 'XV' to -w.\n\
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
                                right outside of the domain; if non-zero voxels\n\
-			       appear at the boundary, pad 0s before using -X\n\
+                               appear at the boundary, pad 0s before using -X\n\
  -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.\n\
                                same as adding 'M' to the -w flag\n\
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save\n\
@@ -5164,35 +5167,35 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                nii - NIfTI format\n\
                                hdr - Analyze 7.5 hdr/img format\n\
                                tx3 - GL texture data for rendering (GL_RGBA32F)\n\
-	the bnii/jnii formats support compression (-Z) and generate small files\n\
-	load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:\n\
-	  MATLAB/Octave: JNIfTI toolbox   https://github.com/NeuroJSON/jnifti,\n\
-	  MATLAB/Octave: JSONLab toolbox  https://github.com/NeuroJSON/jsonlab,\n\
-	  Python:        PyJData:         https://pypi.org/project/jdata\n\
-	  JavaScript:    JSData:          https://github.com/NeuroJSON/jsdata\n\
+    the bnii/jnii formats support compression (-Z) and generate small files\n\
+    load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:\n\
+      MATLAB/Octave: JNIfTI toolbox   https://github.com/NeuroJSON/jnifti,\n\
+      MATLAB/Octave: JSONLab toolbox  https://github.com/NeuroJSON/jsonlab,\n\
+      Python:        PyJData:         https://pypi.org/project/jdata\n\
+      JavaScript:    JSData:          https://github.com/NeuroJSON/jsdata\n\
  -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson\n\
                                is used (when saving data to JSON/JNIfTI format)\n\
-			       0 zlib: zip format (moderate compression,fast) \n\
-			       1 gzip: gzip format (compatible with *.gz)\n\
-			       2 base64: base64 encoding with no compression\n\
-			       3 lzip: lzip format (high compression,very slow)\n\
-			       4 lzma: lzma format (high compression,very slow)\n\
-			       5 lz4: LZ4 format (low compression,extrem. fast)\n\
-			       6 lz4hc: LZ4HC format (moderate compression,fast)\n\
+                               0 zlib: zip format (moderate compression,fast) \n\
+                               1 gzip: gzip format (compatible with *.gz)\n\
+                               2 base64: base64 encoding with no compression\n\
+                               3 lzip: lzip format (high compression,very slow)\n\
+                               4 lzma: lzma format (high compression,very slow)\n\
+                               5 lz4: LZ4 format (low compression,extrem. fast)\n\
+                               6 lz4hc: LZ4HC format (moderate compression,fast)\n\
  --dumpjson [-,0,1,'file.json']  export all settings, including volume data using\n\
                                JSON/JData (https://neurojson.org) format for\n\
-			       easy sharing; can be reused using -f\n\
-			       if followed by nothing or '-', mcx will print\n\
-			       the JSON to the console; write to a file if file\n\
-			       name is specified; by default, prints settings\n\
-			       after pre-processing; '--dumpjson 2' prints \n\
-			       raw inputs before pre-processing\n\
+                               easy sharing; can be reused using -f\n\
+                               if followed by nothing or '-', mcx will print\n\
+                               the JSON to the console; write to a file if file\n\
+                               name is specified; by default, prints settings\n\
+                               after pre-processing; '--dumpjson 2' prints \n\
+                               raw inputs before pre-processing\n\
 \n"S_BOLD S_CYAN"\
 == User IO options ==\n" S_RESET"\
  -h            (--help)        print this message\n\
  -v            (--version)     print MCX revision number\n\
  -l            (--log)         print messages to a log file instead\n\
- -i 	       (--interactive) interactive mode\n\
+ -i            (--interactive) interactive mode\n\
 \n"S_BOLD S_CYAN"\
 == Debug options ==\n" S_RESET"\
  -D [0|int]    (--debug)       print debug information (you can use an integer\n\

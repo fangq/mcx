@@ -271,12 +271,16 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     unsigned short tmp;
 
                     for (i = 0; i < dim_xyz; i++) {
-                        f2bh.f[2] = val[i * 3];
-                        f2bh.f[1] = val[i * 3 + 1];
-                        f2bh.f[0] = val[i * 3 + 2];
+                        f2bh.f[2] = val[i * 3];        // mua/mus/g or n float-value, depending on f[1]
+                        f2bh.f[1] = val[i * 3 + 1];    // if it has value 1-4, it replaces the 1st (mua), 2nd (mus), 3rd (g), 4th (n) value of the label by f[2]
+                        f2bh.f[0] = val[i * 3 + 2];    // voxel label
 
                         if (f2bh.f[1] < 0.f || f2bh.f[1] >= 4.f || f2bh.f[0] < 0.f) {
                             throw py::value_error("the 2nd volume must have an integer value between 0 and 3");
+                        }
+
+                        if (f2bh.f[1] >= 1.f && f2bh.f[1] <= 2.f) { // if the values are mua or mus, scale by cfg->unitinmm
+                            f2bh.f[2] *= mcx_config.unitinmm;
                         }
 
                         f2bh.h[0] = ((((unsigned char) (f2bh.f[1]) & 0x3) << 14) | (unsigned short) (f2bh.f[0]));
@@ -304,8 +308,8 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     unsigned short tmp, m;
 
                     for (i = 0; i < dim_xyz; i++) {
-                        f2h.f[0] = val[i << 1] * mcx_config.unitinmm;
-                        f2h.f[1] = val[(i << 1) + 1] * mcx_config.unitinmm;
+                        f2h.f[0] = val[i << 1] * mcx_config.unitinmm;        // mua
+                        f2h.f[1] = val[(i << 1) + 1] * mcx_config.unitinmm;  // mus
 
                         if (f2h.f[0] != f2h.f[0]
                                 || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
@@ -314,10 +318,10 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                         }
 
                         /**
-                        float to half conversion
-                        https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
-                        https://gamedev.stackexchange.com/a/17410  (for denorms)
-                        */
+                         * float to half conversion
+                         * https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
+                         * https://gamedev.stackexchange.com/a/17410  (for denorms)
+                         */
                         m = ((f2h.i[0] >> 13) & 0x03ff);
                         tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
                         tmp = (tmp - 0x70) & ((unsigned int) ((int) (0x70 - tmp) >> 4) >> 27);
@@ -369,7 +373,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     auto* val = (float*) buffer.ptr;
 
                     for (i = 0; i < dim_xyz; i++) {
-                        f2i.f = val[i] * mcx_config.unitinmm;
+                        f2i.f = val[i] * mcx_config.unitinmm; // mua
 
                         if (f2i.i == 0) { /*avoid being detected as a 0-label voxel*/
                             f2i.f = EPS;
