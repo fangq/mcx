@@ -3,8 +3,8 @@
 ;;
 ;; Author: Qianqian Fang <q.fang at neu.edu>
 ;; Initially added on Jun. 28, 2020
-;; URL: http://mcx.space
-;; Github: http://github.com/fangq/mcx
+;; URL: https://mcx.space
+;; Github: https://github.com/fangq/mcx
 ;;
 ;;======================================================================
 
@@ -12,7 +12,7 @@
 #define MyAppDir "MCXStudio"
 #define MyAppVersion "v2023"
 #define MyAppPublisher "COTILab"
-#define MyAppURL "http://mcx.space"
+#define MyAppURL "https://mcx.space"
 #define MyAppExeName "mcxstudio.exe"
 
 ;;----------------------------------------------------------------------
@@ -44,6 +44,7 @@ ArchitecturesInstallIn64BitMode=x64
 DefaultGroupName="{#MyAppName} {#MyAppVersion}"
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoCopyRight="(C) {#MyAppPublisher}"
+UninstallDisplayIcon={app}\{#MyAppExeName}
 
 ;;----------------------------------------------------------------------
 
@@ -82,8 +83,8 @@ Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\m
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user"; Tasks: desktopicon
-Name: "{group}\MCX Website"; Filename: "http://mcx.space/"
-Name: "{group}\MCX Wiki"; Filename: "http://mcx.space/wiki/"
+Name: "{group}\MCX Website"; Filename: "https://mcx.space/"
+Name: "{group}\MCX Wiki"; Filename: "https://mcx.space/wiki/"
 Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
 
 ;;----------------------------------------------------------------------
@@ -119,7 +120,7 @@ Root: HKLM; Subkey: "System\CurrentControlSet\Control\GraphicsDrivers"; ValueTyp
 ;;----------------------------------------------------------------------
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 ;;----------------------------------------------------------------------
 
