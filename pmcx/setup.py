@@ -49,6 +49,7 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             "-DBUILD_PYTHON=true",
+            "-DCUDA_NVCC_FLAGS=-DMCX_DISABLE_CUDA_DEVICE_RESET",
         ]
         build_args = []
         # Adding CMake arguments set as environment variable
