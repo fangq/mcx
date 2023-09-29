@@ -2772,7 +2772,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             }
         }
 
-        if (cfg->outputformat == ofJNifti) {
+        if (!flagset['F']) {
             cfg->outputformat = mcx_keylookup((char*)FIND_JSON_KEY("OutputFormat", "Session.OutputFormat", Session, "jnii", valuestring), outputformat);
         }
 
