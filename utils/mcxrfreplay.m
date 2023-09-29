@@ -1,8 +1,7 @@
-
 function [rfjac_lnA, rfjac_phase]=mcxrfreplay(cfg,f_mod,detp,seeds,detnums)
 %
 % [rfjac_lnA, rfjac_phase]=mcxrfreplay(cfg,f_mod,detp,seeds,detnums)
-% 
+%
 % Compute the frequency domain (FD) log-amplitude and phase shift Jacobians
 % with respect to voxel-wise absorption coefficients using the radio
 % frequency (RF) replay algorithm.
@@ -20,7 +19,7 @@ function [rfjac_lnA, rfjac_phase]=mcxrfreplay(cfg,f_mod,detp,seeds,detnums)
 %     detp: the 2nd output from mcxlab, must be a struct
 %     seeds: the 4th output from mcxlab
 %     detnums: row array with the indices of the detectors to replay and obtain Jacobians
-% 
+%
 % Output:
 %     rfjac_lnA: a 4D array with dimensions specified by [size(vol) numb-of-detectors];
 %                each 3D array contains the Jacobians for log-amplitude measurements
@@ -29,6 +28,14 @@ function [rfjac_lnA, rfjac_phase]=mcxrfreplay(cfg,f_mod,detp,seeds,detnums)
 %
 % License: GPLv3, see http://mcx.space/ for details
 %
+
+if(nargin<5)
+    error('you must provide all 5 required input parameters');
+end
+
+if(~isfield(cfg,'unitinmm'))
+    cfg.unitinmm = 1;
+end
 
 % Initialize the 4D arrays for collecting the Jacobians. The 4th dimension
 % corresponds to the detector index.
@@ -40,9 +47,9 @@ for d = detnums
     % MCXLAB REPLAY SETTINGS
     clear cfg_jac
     cfg_jac=cfg;
-    cfg_jac.seed=seeds.data; 
-    cfg_jac.detphotons=detp.data; 
-    cfg_jac.replaydet=d; 
+    cfg_jac.seed=seeds.data;
+    cfg_jac.detphotons=detp.data;
+    cfg_jac.replaydet=d;
     cfg_jac.outputtype='rf';
     cfg_jac.omega=2*pi*f_mod; % 100 MHz RF modulation
     cfg_jac.isnormalized=0; % !
@@ -53,8 +60,8 @@ for d = detnums
     dett=mcxdettime(detp_d,cfg_jac.prop,cfg_jac.unitinmm); % array with photon time-of-flights
 
     % FD MEASUREMENT ESTIMATES
-    X=dot(detw,cospi((2*f_mod).*dett));
-    Y=dot(detw,sinpi((2*f_mod).*dett));
+    X=dot(detw,cos((2*f_mod).*dett*pi));
+    Y=dot(detw,sin((2*f_mod).*dett*pi));
     A=sqrt(X^2 + Y^2); % amplitude [a.u.]
     phase=atan2(Y,X) + (double(atan2(Y,X)<0))*2*pi; % phase shift in [0,2*pi] [rad]
     if A==0

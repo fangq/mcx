@@ -224,7 +224,7 @@ function varargout=mcxlab(varargin)
 %                   light (-1 <= Q <= 1)
 %      cfg.lambda: source light wavelength (nm) for polarized MC
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
-%      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', or 'wp' and cfg.seed is an array
+%      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', 'wp' or 'rf' and cfg.seed is an array
 %                      -1 replay all detectors and save in separate volumes (output has 5 dimensions)
 %                       0 replay all detectors and sum all Jacobians into one volume
 %                       a positive number: the index of the detector to replay and obtain Jacobians
