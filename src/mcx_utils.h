@@ -258,7 +258,7 @@ typedef struct MCXConfig {
     float* dx;                   /**< anisotropic voxel spacing for x-axis */
     float* dy;                   /**< anisotropic voxel spacing for y-axis */
     float* dz;                   /**< anisotropic voxel spacing for z-axis */
-    char bc[12];                 /**<boundary condition flag for [-x,-y,-z,+x,+y,+z, det(-x,-y,-z,+x,+y,+z)] */
+    char bc[13];                 /**<boundary condition flag for [-x,-y,-z,+x,+y,+z, det(-x,-y,-z,+x,+y,+z)] */
     unsigned int nphase;         /**< number of samples for inverse-cdf, will be added by 2 to include -1 and 1 on the two ends */
     float* invcdf;               /**< equal-space sampled inversion of CDF(cos(theta)) for the phase function of the zenith angle */
 } Config;
