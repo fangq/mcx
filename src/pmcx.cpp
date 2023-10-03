@@ -723,11 +723,10 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         std::string bc_string = py::str(user_cfg["bc"]);
 
         if (bc_string.empty() || bc_string.size() > 12) {
-            throw py::value_error("the 'bc' field must be a non-empty string / have less than 12 characters.");
+            throw py::value_error("the 'bc' field must be a non-empty string / have no more than 12 characters.");
         }
 
-        strncpy(mcx_config.bc, bc_string.c_str(), bc_string.size() + 1);
-        mcx_config.bc[bc_string.size()] = '\0';
+        strncpy(mcx_config.bc, bc_string.c_str(), bc_string.size());
     }
 
     if (user_cfg.contains("detphotons")) {
