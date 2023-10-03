@@ -182,7 +182,7 @@ typedef struct  __align__(16) KernelParams {
     unsigned int srcnum;               /**< total number of source patterns */
     unsigned int nphase;               /**< number of samples for inverse-cdf, will be added by 2 to include -1 and 1 on the two ends */
     float omega;                       /**< modulation angular frequency (2*pi*f), in rad/s, for FD/RF replay */
-    unsigned char bc[12];              /**< boundary conditions */
+    unsigned char bc[12];              /**< boundary condition flags, copy the first 12 chars from cfg->bc without the terminating NULL */
 } MCXParam;
 
 void mcx_run_simulation(Config* cfg, GPUInfo* gpu);

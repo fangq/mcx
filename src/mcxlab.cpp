@@ -1063,8 +1063,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             mexErrMsgTxt("the 'bc' field must be a non-empty string");
         }
 
-        mxGetString(item, cfg->bc, len + 1);
-        cfg->bc[len] = '\0';
+        mxGetString(item, cfg->bc, len + 1); // copy the string, plus the ending NULL, max 13 char
         printf("mcx.bc='%s';\n", cfg->bc);
     } else if (strcmp(name, "detphotons") == 0) {
         arraydim = mxGetDimensions(item);
