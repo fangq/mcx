@@ -708,6 +708,33 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         mcx_config.invcdf[mcx_config.nphase - 1] = 1.f;
     }
 
+    if (user_cfg.contains("angleinvcdf")) {
+        auto f_style_volume = py::array_t < float, py::array::f_style | py::array::forcecast >::ensure(user_cfg["angleinvcdf"]);
+
+        if (!f_style_volume) {
+            throw py::value_error("Invalid angleinvcdf field value");
+        }
+
+        auto buffer_info = f_style_volume.request();
+        unsigned int nangle = buffer_info.shape.size();
+        float* val = static_cast<float*>(buffer_info.ptr);
+        mcx_config.nangle = nangle + 2;
+        mcx_config.nangle += (mcx_config.nangle & 0x1); // make cfg.nangle even number
+        mcx_config.angleinvcdf = (float*) calloc(mcx_config.nangle, sizeof(float));
+
+        for (int i = 0; i < nangle; i++) {
+            mcx_config.angleinvcdf[i + 1] = val[i];
+
+            if (i > 0 && (val[i] < val[i - 1] || (val[i] > 1.f || val[i] < 0.f)))
+                throw py::value_error(
+                    "cfg.angleinvcdf contains invalid data; it must be a monotonically increasing vector with all values between 0 and 1");
+        }
+
+        mcx_config.angleinvcdf[0] = 0.f;
+        mcx_config.angleinvcdf[nangle + 1] = 1.f;
+        mcx_config.angleinvcdf[mcx_config.nangle - 1] = 1.f;
+    }
+
     if (user_cfg.contains("shapes")) {
         std::string shapes_string = py::str(user_cfg["shapes"]);
 
