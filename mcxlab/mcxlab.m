@@ -112,6 +112,33 @@ function varargout=mcxlab(varargin)
 %                      Example: <demo_sphere_cube_subpixel.m>
 %      cfg.shapes:     a JSON string for additional shapes in the grid
 %                      Example: <demo_mcxyz_skinvessel.m>
+%      cfg.invcdf:     user-specified scattering phase function. To use this, one must define
+%                      a vector with monotonically increasing value between -1 and 1
+%                      defining the discretized inverse function of the cummulative density function (CDF)
+%                      of u=cos(theta), i.e. inv(CDF(u))=inv(CDF(cos(theta))), where theta [0-pi] is the
+%                      zenith angle of the scattering event, and u=cos(theta) is between -1 and 1.
+%                      Please note that the defined inv(CDF) is relative to u, not to theta. This is because
+%                      it is relatively easy to compute as P(u) is the primary form of phase function
+%                      see <demo_mcxlab_phasefun.m>
+%      cfg.angleinvcdf: user-specified launch angle distribution. To use this, one must define
+%                      a vector with monotonically increasing value between 0 and 1
+%                      defining the discretized inverse function of the
+%                      cummulative density function (CDF) of (theta/pi),
+%                      i.e. inv(CDF(theta/pi)), where theta in the range of
+%                      [0-pi] is the zenith angle of the launch angle relative to cfg.srcdir.
+%
+%                      when source focal-length, cfg.srcdir(4), is set to 0
+%                      (default), the angleinvcdf is randomly sampled with
+%                      linear interpolation, i.e. every sample uses two
+%                      elements to interpolate the desired launch angle;
+%                      this is suited when the distribution is continuous.
+%
+%                      when cfg.srcdir(4) is set to 1, the angleinvcdf
+%                      vector is randomly sampled without interpolation
+%                      (i.e. only return the theta/pi values specified
+%                      inside this array); this is best suited for discrete
+%                      angular distribution.
+%                      see <demo_mcxlab_launchangle.m>
 %      cfg.gscatter:   after a photon completes the specified number of
 %                      scattering events, mcx then ignores anisotropy g
 %                      and only performs isotropic scattering for speed [1e9]

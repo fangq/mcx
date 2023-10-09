@@ -2335,7 +2335,6 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         if (val) {
             int nphase = cJSON_GetArraySize(val);
             cfg->nphase = nphase + 2; /*left-/right-ends are excluded, so added 2*/
-            cfg->nphase += (cfg->nphase & 0x1); /* make cfg.nphase even number */
 
             if (cfg->invcdf) {
                 free(cfg->invcdf);
@@ -2349,7 +2348,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->invcdf[i] = vv->valuedouble;
                 vv = vv->next;
 
-                if (cfg->invcdf[i] < cfg->invcdf[i - 1] || (cfg->invcdf[i] > 1.f || cfg->invcdf[i] < -1.f)) {
+                if (cfg->invcdf[i] < cfg->invcdf[i - 1] || cfg->invcdf[i] > 1.f || cfg->invcdf[i] < -1.f) {
                     MCX_ERROR(-1, "Domain.InverseCDF contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
                 }
             }
@@ -2647,28 +2646,23 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
             if (subitem) {
                 int nangle = cJSON_GetArraySize(subitem);
-                cfg->nangle = nangle + 2; /*left-/right-ends are excluded, so added 2*/
-                cfg->nangle += (cfg->nangle & 0x1); /* make cfg.nangle even number */
+                cfg->nangle = nangle;
 
                 if (cfg->angleinvcdf) {
                     free(cfg->angleinvcdf);
                 }
 
                 cfg->angleinvcdf = (float*)calloc(cfg->nangle, sizeof(float));
-                cfg->angleinvcdf[0] = 0.f; /*left end is always 0.f,right-end is always 1.f*/
                 vv = subitem->child;
 
-                for (i = 1; i <= nangle; i++) {
+                for (i = 0; i < nangle; i++) {
                     cfg->angleinvcdf[i] = vv->valuedouble;
                     vv = vv->next;
 
-                    if (cfg->angleinvcdf[i] < cfg->angleinvcdf[i - 1] || (cfg->angleinvcdf[i] > 1.f || cfg->angleinvcdf[i] < 0.f)) {
-                        MCX_ERROR(-1, "Optode.Source.AngleInverseCDF contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
+                    if ((i > 0 && cfg->angleinvcdf[i] < cfg->angleinvcdf[i - 1]) || cfg->angleinvcdf[i] > 1.f || cfg->angleinvcdf[i] < 0.f) {
+                        MCX_ERROR(-1, "Optode.Source.AngleInverseCDF contains invalid data; it must be a monotonically increasing vector with all values between 0 and 1");
                     }
                 }
-
-                cfg->angleinvcdf[nangle + 1] = 1.f; /*left end is always 0.f,right-end is always 1.f*/
-                cfg->angleinvcdf[cfg->nangle - 1] = 1.f;
             }
 
         }

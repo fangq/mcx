@@ -1026,19 +1026,17 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         }
 
         cfg->nphase = (unsigned int)nphase + 2;
-        cfg->nphase += (cfg->nphase & 0x1); // make cfg.nphase even number
         cfg->invcdf = (float*)calloc(cfg->nphase, sizeof(float));
 
         for (i = 0; i < nphase; i++) {
             cfg->invcdf[i + 1] = val[i];
 
-            if (i > 0 && (val[i] < val[i - 1] || (val[i] > 1.f || val[i] < -1.f))) {
+            if ((i > 0 && val[i] < val[i - 1]) || val[i] > 1.f || val[i] < -1.f) {
                 mexErrMsgTxt("cfg.invcdf contains invalid data; it must be a monotonically increasing vector with all values between -1 and 1");
             }
         }
 
         cfg->invcdf[0] = -1.f;
-        cfg->invcdf[nphase + 1] = 1.f;
         cfg->invcdf[cfg->nphase - 1] = 1.f;
         printf("mcx.invcdf=[%ld];\n", cfg->nphase);
     } else if (strcmp(name, "angleinvcdf") == 0) {
@@ -1049,21 +1047,17 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             free(cfg->angleinvcdf);
         }
 
-        cfg->nangle = (unsigned int)nangle + 2;
-        cfg->nangle += (cfg->nangle & 0x1); // make cfg.nangle even number
+        cfg->nangle = (unsigned int)nangle;
         cfg->angleinvcdf = (float*)calloc(cfg->nangle, sizeof(float));
 
         for (i = 0; i < nangle; i++) {
-            cfg->angleinvcdf[i + 1] = val[i];
+            cfg->angleinvcdf[i] = val[i];
 
-            if (i > 0 && (val[i] < val[i - 1] || (val[i] > 1.f || val[i] < 0.f))) {
+            if ((i > 0 && val[i] < val[i - 1]) || val[i] > 1.f || val[i] < 0.f) {
                 mexErrMsgTxt("cfg.angleinvcdf contains invalid data; it must be a monotonically increasing vector with all values between 0 and 1");
             }
         }
 
-        cfg->angleinvcdf[0] = 0.f;
-        cfg->angleinvcdf[nangle + 1] = 1.f;
-        cfg->angleinvcdf[cfg->nangle - 1] = 1.f;
         printf("mcx.angleinvcdf=[%ld];\n", cfg->nangle);
     } else if (strcmp(name, "shapes") == 0) {
         int len = mxGetNumberOfElements(item);

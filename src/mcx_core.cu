@@ -1407,21 +1407,32 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                 continue;
             }
 
-            if (gcfg->nangle > 2) {
+            if (gcfg->nangle) {
                 /**
                  * If angleinvcdf is defined, use user defined launch zenith angle distribution
                  */
 
                 float ang, stheta, ctheta, sphi, cphi;
-                ang = rand_uniform01(t) * (gcfg->nangle - 2);
-                sphi = ang - ((int)ang);
-                ang = (1.f - sphi) * ((float*)(sharedmem))[((int)ang >= gcfg->nangle - 1 ? gcfg->nangle - 2 : (int)(ang)) + 1 + gcfg->nphase] +
-                      sphi * ((float*)(sharedmem))[((int)ang + 1 >= gcfg->nangle - 1 ? gcfg->nangle - 2 : (int)(ang) + 1) + 1 + gcfg->nphase];
-                ang *= ONE_PI; // next zenith angle computed based on angleinvcdf
-                sincosf(ang, &stheta, &ctheta);
+
+                if (gcfg->c0.w > 0.f) { // if focal-length > 0, no interpolation, just read the angleinvcdf value
+                    ang = fminf(rand_uniform01(t) * gcfg->nangle, gcfg->nangle - EPS);
+                    cphi = ((float*)(sharedmem))[(int)(ang) + gcfg->nphase];
+                } else { // odd number length, interpolate between neigboring values
+                    ang = fminf(rand_uniform01(t) * (gcfg->nangle - 1), gcfg->nangle - 1 - EPS);
+                    sphi = ang - ((int)ang);
+                    cphi = ((1.f - sphi) * (((float*)(sharedmem))[((int)ang >= gcfg->nangle - 1 ? gcfg->nangle - 1 : (int)(ang)) + gcfg->nphase]) +
+                            sphi * (((float*)(sharedmem))[((int)ang + 1 >= gcfg->nangle - 1 ? gcfg->nangle - 1 : (int)(ang) + 1) + gcfg->nphase]));
+                }
+
+                cphi *= ONE_PI; // next zenith angle computed based on angleinvcdf
+                sincosf(cphi, &stheta, &ctheta);
                 ang = TWO_PI * rand_uniform01(t); //next arimuth angle
                 sincosf(ang, &sphi, &cphi);
-                *((float4*)v) = gcfg->c0;
+
+                if (gcfg->c0.w < 1.5f && gcfg->c0.w >= 0.f) {
+                    *((float4*)v) = gcfg->c0;
+                }
+
                 rotatevector(v, stheta, ctheta, sphi, cphi);
             } else if (canfocus) {
                 /**
@@ -3165,7 +3176,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              */
 
             /** \c ispencil: template constant, if 1, launch photon code is dramatically simplified */
-            int ispencil = (cfg->srctype == MCX_SRC_PENCIL);
+            int ispencil = (cfg->srctype == MCX_SRC_PENCIL && cfg->nangle < 2);
 
             /** \c isref: template constant, if 1, perform boundary reflection, if 0, total-absorbion boundary, can simplify kernel */
             int isref = cfg->isreflect;
