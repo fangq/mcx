@@ -1416,12 +1416,12 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                 if (gcfg->c0.w > 0.f) { // if focal-length > 0, no interpolation, just read the angleinvcdf value
                     ang = fminf(rand_uniform01(t) * gcfg->nangle, gcfg->nangle - EPS);
-                    cphi = ((float*)(sharedmem))[(int)(ang) + gcfg->nphase];
+                    cphi = ((float*)(sharedmem))[(int)(ang) + gcfg->nphaselen];
                 } else { // odd number length, interpolate between neigboring values
                     ang = fminf(rand_uniform01(t) * (gcfg->nangle - 1), gcfg->nangle - 1 - EPS);
                     sphi = ang - ((int)ang);
-                    cphi = ((1.f - sphi) * (((float*)(sharedmem))[((int)ang >= gcfg->nangle - 1 ? gcfg->nangle - 1 : (int)(ang)) + gcfg->nphase]) +
-                            sphi * (((float*)(sharedmem))[((int)ang + 1 >= gcfg->nangle - 1 ? gcfg->nangle - 1 : (int)(ang) + 1) + gcfg->nphase]));
+                    cphi = ((1.f - sphi) * (((float*)(sharedmem))[((int)ang >= gcfg->nangle - 1 ? gcfg->nangle - 1 : (int)(ang)) + gcfg->nphaselen]) +
+                            sphi * (((float*)(sharedmem))[((int)ang + 1 >= gcfg->nangle - 1 ? gcfg->nangle - 1 : (int)(ang) + 1) + gcfg->nphaselen]));
                 }
 
                 cphi *= ONE_PI; // next zenith angle computed based on angleinvcdf
@@ -1651,12 +1651,12 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         idx1d = gcfg->nangle / blockDim.x;
 
         for (idx1dold = 0; idx1dold < idx1d; idx1dold++) {
-            ppath[threadIdx.x * idx1d + idx1dold + gcfg->nphase] = gangleinvcdf[threadIdx.x * idx1d + idx1dold];
+            ppath[threadIdx.x * idx1d + idx1dold + gcfg->nphaselen] = gangleinvcdf[threadIdx.x * idx1d + idx1dold];
         }
 
         if (gcfg->nangle - (idx1d * blockDim.x) > 0 && threadIdx.x == 0) {
             for (idx1dold = 0; idx1dold < gcfg->nangle - (idx1d * blockDim.x) ; idx1dold++) {
-                ppath[blockDim.x * idx1d + idx1dold + gcfg->nphase] = gangleinvcdf[blockDim.x * idx1d + idx1dold];
+                ppath[blockDim.x * idx1d + idx1dold + gcfg->nphaselen] = gangleinvcdf[blockDim.x * idx1d + idx1dold];
             }
         }
 
@@ -1667,7 +1667,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         return;
     }
 
-    ppath = (float*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + blockDim.x * (gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)));
+    ppath = (float*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + blockDim.x * (gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)));
     ppath += threadIdx.x * (gcfg->w0offset + gcfg->srcnum + 2 * (gcfg->outputtype == otRF)); // block#2: maxmedia*thread number to store the partial
     clearpath(ppath, gcfg->w0offset + gcfg->srcnum);
     ppath[gcfg->partialdata]  = genergy[idx << 1];
@@ -1686,7 +1686,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
      */
 
     if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, 0, ppath,
-            n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)), media, srcpattern,
+            n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)), media, srcpattern,
             idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
         GPUDEBUG(("thread %d: fail to launch photon\n", idx));
         n_pos[idx] = *((float4*)(&p));
@@ -2136,7 +2136,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
             if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0,
                     (((idx1d == OUTSIDE_VOLUME_MAX && gcfg->bc[9 + flipdir[3]]) || (idx1d == OUTSIDE_VOLUME_MIN && gcfg->bc[6 + flipdir[3]])) ? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
-                    ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
+                    ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                     media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                 break;
             }
@@ -2159,7 +2159,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n", idx1d, mediaid, gcfg->doreflect));
 
                 if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK), ppath,
-                        n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
+                        n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                         media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                     break;
                 }
@@ -2187,7 +2187,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                     if (reflectray(n1, (float3*) & (v), &rv, &nuvox, &prop, t)) { // true if photon transmits to background media
                         if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK),
-                                ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
+                                ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                                 media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                             break;
                         }
@@ -2240,7 +2240,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                             if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0,
                                     (((idx1d == OUTSIDE_VOLUME_MAX && gcfg->bc[9 + flipdir[3]]) || (idx1d == OUTSIDE_VOLUME_MIN && gcfg->bc[6 + flipdir[3]])) ? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
-                                    ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
+                                    ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                                     media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                                 break;
                             }
@@ -2274,7 +2274,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                         if (issvmc && (nuvox.sv.isupper ? nuvox.sv.upper : nuvox.sv.lower) == 0) { // terminate photon if photon is reflected to background medium
                             if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK),
-                                    ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphase + gcfg->nangle) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
+                                    ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                                     media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                                 break;
                             }
@@ -2637,7 +2637,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                       (uint)cfg->maxvoidstep, cfg->issaveseed > 0, (uint)cfg->issaveref, cfg->isspecular > 0,
                       cfg->maxdetphoton * hostdetreclen, cfg->seed, (uint)cfg->outputtype, 0, 0, cfg->faststep,
                       cfg->debuglevel, cfg->savedetflag, hostdetreclen, partialdata, w0offset, cfg->mediabyte,
-                      (uint)cfg->maxjumpdebug, cfg->gscatter, is2d, cfg->replaydet, cfg->srcnum, cfg->nphase, cfg->nangle, cfg->omega
+                      (uint)cfg->maxjumpdebug, cfg->gscatter, is2d, cfg->replaydet, cfg->srcnum,
+                      cfg->nphase, cfg->nphase + (cfg->nphase & 0x1), cfg->nangle, cfg->nangle + (cfg->nangle & 0x1), cfg->omega
                      };
 
     if (param.isatomic) {
@@ -3099,7 +3100,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      *
      *  The calculation of the energy conservation will only reflect the last simulation.
      */
-    sharedbuf = (cfg->nphase + cfg->nangle) * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF)));
+    sharedbuf = (param.nphaselen + param.nanglelen) * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF)));
 
     MCX_FPRINTF(cfg->flog, "requesting %d bytes of shared memory\n", sharedbuf);
 
@@ -3176,7 +3177,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              */
 
             /** \c ispencil: template constant, if 1, launch photon code is dramatically simplified */
-            int ispencil = (cfg->srctype == MCX_SRC_PENCIL && cfg->nangle < 2);
+            int ispencil = (cfg->srctype == MCX_SRC_PENCIL && cfg->nangle == 0);
 
             /** \c isref: template constant, if 1, perform boundary reflection, if 0, total-absorbion boundary, can simplify kernel */
             int isref = cfg->isreflect;

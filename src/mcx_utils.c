@@ -2646,12 +2646,12 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
             if (subitem) {
                 int nangle = cJSON_GetArraySize(subitem);
-                cfg->nangle = nangle;
 
                 if (cfg->angleinvcdf) {
                     free(cfg->angleinvcdf);
                 }
 
+                cfg->nangle = nangle;
                 cfg->angleinvcdf = (float*)calloc(cfg->nangle, sizeof(float));
                 vv = subitem->child;
 
