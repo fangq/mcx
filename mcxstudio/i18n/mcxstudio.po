@@ -1,6 +1,238 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+#: tfmabout.button1.caption
+msgctxt "tfmabout.button1.caption"
+msgid "OK"
+msgstr ""
+
+#: tfmabout.caption
+msgid "About Monte Carlo eXtreme Studio"
+msgstr ""
+
+#: tfmabout.image3.hint
+msgctxt "tfmabout.image3.hint"
+msgid "About MCX"
+msgstr ""
+
+#: tfmconfig.btcancel.caption
+msgctxt "tfmconfig.btcancel.caption"
+msgid "Cancel"
+msgstr ""
+
+#: tfmconfig.btok.caption
+msgctxt "tfmconfig.btok.caption"
+msgid "OK"
+msgstr ""
+
+#: tfmconfig.caption
+msgid "MCX Studio Config"
+msgstr ""
+
+#: tfmconfig.ckusemanualpath.caption
+msgid "Use Manual Paths"
+msgstr ""
+
+#: tfmconfig.edlocalpath.columns[0].title.caption
+msgctxt "tfmconfig.edlocalpath.columns[0].title.caption"
+msgid "Value"
+msgstr ""
+
+#: tfmconfig.edscppath.hint
+msgctxt "tfmconfig.edscppath.hint"
+msgid "Local SCP Executable Path"
+msgstr ""
+
+#: tfmconfig.edsshpath.hint
+msgid "Local SSH Path"
+msgstr ""
+
+#: tfmconfig.edworkpath.text
+msgid "%MCXSTUDIO%/MCXOutput"
+msgstr ""
+
+#: tfmconfig.groupbox2.caption
+msgid "MCXStudio Local Output Root Directory"
+msgstr ""
+
+#: tfmconfig.groupbox3.caption
+msgid "Remote MCX/MMC/MCXCl Executable Search Paths"
+msgstr ""
+
+#: tfmconfig.groupbox4.caption
+msgid "Local MCX/MMC/MCXCl Executable Search Paths"
+msgstr ""
+
+#: tfmconfig.groupbox5.caption
+msgid "Local SSH Executable Path"
+msgstr ""
+
+#: tfmconfig.groupbox6.caption
+msgctxt "tfmconfig.groupbox6.caption"
+msgid "Local SCP Executable Path"
+msgstr ""
+
+#: tfmconfig.groupbox7.caption
+msgid "Remote MCX/MMC/MCXCl Output Directory"
+msgstr ""
+
+#: tfmconfig.groupbox8.caption
+msgid "Remote GPU Server"
+msgstr ""
+
+#: tfmconfig.label1.caption
+msgid "Hostname or IP"
+msgstr ""
+
+#: tfmconfig.label2.caption
+msgid "Port"
+msgstr ""
+
+#: tfmconfig.label3.caption
+msgid "User name"
+msgstr ""
+
+#: tfmdatafile.btcancel.caption
+msgctxt "tfmdatafile.btcancel.caption"
+msgid "Cancel"
+msgstr ""
+
+#: tfmdatafile.btok.caption
+msgctxt "tfmdatafile.btok.caption"
+msgid "OK"
+msgstr ""
+
+#: tfmdatafile.caption
+msgid " Data File Properties"
+msgstr ""
+
+#: tfmdatafile.eddataformat.text
+msgid "Float (32bit)"
+msgstr ""
+
+#: tfmdatafile.label10.caption
+msgid "Data File"
+msgstr ""
+
+#: tfmdatafile.label4.caption
+msgid "Y Dimension"
+msgstr ""
+
+#: tfmdatafile.label5.caption
+msgid "X Dimension"
+msgstr ""
+
+#: tfmdatafile.label6.caption
+msgid "Z Dimension"
+msgstr ""
+
+#: tfmdatafile.label7.caption
+msgctxt "tfmdatafile.label7.caption"
+msgid "Time Gates"
+msgstr ""
+
+#: tfmdatafile.label8.caption
+msgctxt "tfmdatafile.label8.caption"
+msgid "Time Gates"
+msgstr ""
+
+#: tfmdatafile.label9.caption
+msgid "Header Size"
+msgstr ""
+
+#: tfmdomain.acexit.caption
+msgid "acExit"
+msgstr ""
+
+#: tfmdomain.acexit.hint
+msgctxt "tfmdomain.acexit.hint"
+msgid "Exit"
+msgstr ""
+
+#: tfmdomain.achidebbx.caption
+msgid "acHideBBX"
+msgstr ""
+
+#: tfmdomain.achidebbx.hint
+msgid "Hide Domain Box"
+msgstr ""
+
+#: tfmdomain.acloadjson.caption
+msgid "acLoadJSON"
+msgstr ""
+
+#: tfmdomain.acloadjson.hint
+msgid "Load JSON"
+msgstr ""
+
+#: tfmdomain.acrender.caption
+msgid "acRender"
+msgstr ""
+
+#: tfmdomain.acrender.hint
+msgid "Render"
+msgstr ""
+
+#: tfmdomain.acresetcamera.caption
+msgid "acResetCamera"
+msgstr ""
+
+#: tfmdomain.acresetcamera.hint
+msgid "Reset Camera"
+msgstr ""
+
+#: tfmdomain.acsaveimage.caption
+msgid "acSaveImage"
+msgstr ""
+
+#: tfmdomain.acsaveimage.hint
+msgctxt "tfmdomain.acsaveimage.hint"
+msgid "Save Screen"
+msgstr ""
+
+#: tfmdomain.acsavejson.caption
+msgid "acSaveJSON"
+msgstr ""
+
+#: tfmdomain.acsavejson.hint
+msgid "Save JSON"
+msgstr ""
+
+#: tfmdomain.btbackground.hint
+msgctxt "tfmdomain.btbackground.hint"
+msgid "Change Background Color"
+msgstr ""
+
+#: tfmdomain.btpin.caption
+msgid "Pin Editor"
+msgstr ""
+
+#: tfmdomain.btpin.hint
+msgid "Show editor"
+msgstr ""
+
+#: tfmdomain.caption
+msgid "MCX Domain Renderer"
+msgstr ""
+
+#: tfmdomain.toolbar1.caption
+msgctxt "tfmdomain.toolbar1.caption"
+msgid "ToolBar1"
+msgstr ""
+
+#: tfmdomain.toolbutton11.caption
+msgid "ToolButton11"
+msgstr ""
+
+#: tfmdomain.toolbutton7.caption
+msgid "ToolButton7"
+msgstr ""
+
+#: tfmdomain.toolbutton9.caption
+msgctxt "tfmdomain.toolbutton9.caption"
+msgid "ToolButton9"
+msgstr ""
+
 #: tfmmcx.btexpandoutput.caption
 msgid "▵"
 msgstr ""
@@ -364,7 +596,7 @@ msgstr ""
 msgid ""
 "InputFile \n"
 "\n"
-"Specify the input file in .json (preferred) or the legacy .inp format.\n"
+"Specify the input file in either .inp or .json format.\n"
 msgstr ""
 
 #: tfmmcx.eddetectednum.hint
@@ -505,8 +737,8 @@ msgid ""
 "\n"
 "If this field is a large integer number, this specifies the RNG seed; \n"
 "\n"
-"if this is a file name ending with .jdat or .mch, it loads a .jdat/.mch \n"
-"file generated from previous simulation and replays the detected photons.\n"
+"if this is a file name ending with .mch, it loads an .mch file generated \n"
+"from previous simulation and replays the detected photons.\n"
 msgstr ""
 
 #: tfmmcx.edseed.text
@@ -618,6 +850,7 @@ msgid "GPU Settings"
 msgstr ""
 
 #: tfmmcx.grprogram.caption
+msgctxt "tfmmcx.grprogram.caption"
 msgid "Run Monte Carlo simulation with"
 msgstr ""
 
@@ -641,6 +874,7 @@ msgid "Switches"
 msgstr ""
 
 #: tfmmcx.image1.hint
+msgctxt "tfmmcx.image1.hint"
 msgid "About MCX"
 msgstr ""
 
@@ -760,6 +994,7 @@ msgid "Session ID (-s)"
 msgstr ""
 
 #: tfmmcx.label4.hint
+msgctxt "tfmmcx.label4.hint"
 msgid "-s (--sessionid)"
 msgstr ""
 
@@ -826,6 +1061,7 @@ msgid "-r (--repeat)"
 msgstr ""
 
 #: tfmmcx.lvjobs.columns[0].caption
+msgctxt "tfmmcx.lvjobs.columns[0].caption"
 msgid "Session"
 msgstr ""
 
@@ -1077,6 +1313,7 @@ msgid ".mch"
 msgstr ""
 
 #: tfmmcx.mcxdoexit.caption
+msgctxt "tfmmcx.mcxdoexit.caption"
 msgid "Exit"
 msgstr ""
 
@@ -1550,6 +1787,7 @@ msgid "Status: idle"
 msgstr ""
 
 #: tfmmcx.sgconfig.columns[0].title.caption
+msgctxt "tfmmcx.sgconfig.columns[0].title.caption"
 msgid "Value"
 msgstr ""
 
@@ -1838,6 +2076,7 @@ msgid "Reset"
 msgstr ""
 
 #: tfmmcx.toolbutton8.caption
+msgctxt "tfmmcx.toolbutton8.caption"
 msgid "ToolButton8"
 msgstr ""
 
@@ -1867,5 +2106,218 @@ msgid ""
 "2. Fresnel reflection BC: perform Fresnel reflection/transmission\n"
 "3. mirror/total reflection BC: photon is 100% reflected (can run a long time)\n"
 "4. cylic BC: a photon exiting from a facet will re-enter from the opposite one\n"
+msgstr ""
+
+#: tfmnewsession.btcancel.caption
+msgctxt "tfmnewsession.btcancel.caption"
+msgid "Cancel"
+msgstr ""
+
+#: tfmnewsession.btok.caption
+msgctxt "tfmnewsession.btok.caption"
+msgid "OK"
+msgstr ""
+
+#: tfmnewsession.caption
+msgid "Create A New Simulation"
+msgstr ""
+
+#: tfmnewsession.edsession.hint
+msgctxt "tfmnewsession.edsession.hint"
+msgid "Session"
+msgstr ""
+
+#: tfmnewsession.grprogram.caption
+msgctxt "tfmnewsession.grprogram.caption"
+msgid "Run Monte Carlo simulation with"
+msgstr ""
+
+#: tfmnewsession.grprogram.hint
+msgid "Program"
+msgstr ""
+
+#: tfmnewsession.label4.caption
+msgid "Please type in a unique session name"
+msgstr ""
+
+#: tfmnewsession.label4.hint
+msgctxt "tfmnewsession.label4.hint"
+msgid "-s (--sessionid)"
+msgstr ""
+
+#: tfmshapeeditor.btcancel.caption
+msgctxt "tfmshapeeditor.btcancel.caption"
+msgid "Cancel"
+msgstr ""
+
+#: tfmshapeeditor.btok.caption
+msgctxt "tfmshapeeditor.btok.caption"
+msgid "OK"
+msgstr ""
+
+#: tfmshapeeditor.caption
+msgid "Edit Shapes"
+msgstr ""
+
+#: tfmsource.btcancel.caption
+msgctxt "tfmsource.btcancel.caption"
+msgid "Cancel"
+msgstr ""
+
+#: tfmsource.btok.caption
+msgctxt "tfmsource.btok.caption"
+msgid "OK"
+msgstr ""
+
+#: tfmsource.caption
+msgid "Light Source Settings"
+msgstr ""
+
+#: tfmsource.edsource.text
+msgid "pencil"
+msgstr ""
+
+#: tfmsource.label4.caption
+msgid "Please select a light source type:"
+msgstr ""
+
+#: tfmsource.label5.caption
+msgid "Please define source parameters:"
+msgstr ""
+
+#: tfmstop.caption
+msgid "Running ..."
+msgstr ""
+
+#: tfmstop.toolbar1.caption
+msgid "Running"
+msgstr ""
+
+#: tfmstop.toolbutton3.caption
+msgid "Hide"
+msgstr ""
+
+#: tfmstop.toolbutton3.hint
+msgid "Hide this window"
+msgstr ""
+
+#: tfmstop.toolbutton8.caption
+msgctxt "tfmstop.toolbutton8.caption"
+msgid "ToolButton8"
+msgstr ""
+
+#: tfmviewer.btbackground.hint
+msgctxt "tfmviewer.btbackground.hint"
+msgid "Change Background Color"
+msgstr ""
+
+#: tfmviewer.btopaque.caption
+msgid "btOpaque"
+msgstr ""
+
+#: tfmviewer.btopaque.hint
+msgid "Show Opaque Hull"
+msgstr ""
+
+#: tfmviewer.caption
+msgid "MCX Studio Volume Renderer"
+msgstr ""
+
+#: tfmviewer.grdir.caption
+msgid "Slicing direction"
+msgstr ""
+
+#: tfmviewer.label1.caption
+msgid "Rendering quality"
+msgstr ""
+
+#: tfmviewer.label2.caption
+msgid "Cutting plane position:"
+msgstr ""
+
+#: tfmviewer.label3.caption
+msgid "Invisible threshold"
+msgstr ""
+
+#: tfmviewer.label4.caption
+msgid "Color level"
+msgstr ""
+
+#: tfmviewer.mcxplotexit.caption
+msgctxt "tfmviewer.mcxplotexit.caption"
+msgid "Exit"
+msgstr ""
+
+#: tfmviewer.mcxplotexit.hint
+msgctxt "tfmviewer.mcxplotexit.hint"
+msgid "Exit"
+msgstr ""
+
+#: tfmviewer.mcxplotopen.caption
+msgid "Open File"
+msgstr ""
+
+#: tfmviewer.mcxplotopen.hint
+msgid "Open Data File"
+msgstr ""
+
+#: tfmviewer.mcxplotrefresh.caption
+msgctxt "tfmviewer.mcxplotrefresh.caption"
+msgid "Refresh"
+msgstr ""
+
+#: tfmviewer.mcxplotrefresh.hint
+msgctxt "tfmviewer.mcxplotrefresh.hint"
+msgid "Refresh"
+msgstr ""
+
+#: tfmviewer.mcxplotresetcamera.caption
+msgctxt "tfmviewer.mcxplotresetcamera.caption"
+msgid "Reset"
+msgstr ""
+
+#: tfmviewer.mcxplotsavescreen.caption
+msgctxt "tfmviewer.mcxplotsavescreen.caption"
+msgid "Save Screen"
+msgstr ""
+
+#: tfmviewer.mcxplotsavescreen.hint
+msgid "Save screenshot"
+msgstr ""
+
+#: tfmviewer.mcxplotshowbbx.caption
+msgctxt "tfmviewer.mcxplotshowbbx.caption"
+msgid "Show Bounding Box"
+msgstr ""
+
+#: tfmviewer.mcxplotshowbbx.hint
+msgctxt "tfmviewer.mcxplotshowbbx.hint"
+msgid "Show Bounding Box"
+msgstr ""
+
+#: tfmviewer.mcxplotusecolor.caption
+msgid "Pseudocolor"
+msgstr ""
+
+#: tfmviewer.mcxplotusecolor.hint
+msgid "Use Pseudocolor"
+msgstr ""
+
+#: tfmviewer.toolbar1.caption
+msgctxt "tfmviewer.toolbar1.caption"
+msgid "ToolBar1"
+msgstr ""
+
+#: tfmviewer.toolbutton10.caption
+msgid "ToolButton10"
+msgstr ""
+
+#: tfmviewer.toolbutton4.hint
+msgid "Reset 3D View"
+msgstr ""
+
+#: tfmviewer.toolbutton9.caption
+msgctxt "tfmviewer.toolbutton9.caption"
+msgid "ToolButton9"
 msgstr ""
 
