@@ -1,0 +1,1871 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: tfmmcx.btexpandoutput.caption
+msgid "▵"
+msgstr ""
+
+#: tfmmcx.btexpandoutput.hint
+msgid "To expand or collapse the command window."
+msgstr ""
+
+#: tfmmcx.btgbexpand.caption
+msgid "▾"
+msgstr ""
+
+#: tfmmcx.btloadseed.hint
+msgid "Load seed data from previous simulations for replay"
+msgstr ""
+
+#: tfmmcx.btsendcmd.caption
+msgid "Send"
+msgstr ""
+
+#: tfmmcx.btsendcmd.hint
+msgid ""
+"Send the user input to the input buffer of the external program \n"
+"currently being executed.\n"
+msgstr ""
+
+#: tfmmcx.button2.caption
+msgid "Clear Output"
+msgstr ""
+
+#: tfmmcx.caption
+msgid "MCX Studio"
+msgstr ""
+
+#: tfmmcx.ckautopilot.caption
+msgid "Let MCX decide thread/block size (-A)"
+msgstr ""
+
+#: tfmmcx.ckautopilot.hint
+msgid ""
+"Autopilot \n"
+"\n"
+"Checking this box tells MCX/MMC to automatically determine the \"optimal\"\n"
+"thread number and block size by using the hardware information.\n"
+"\n"
+"It is recommended to always check this box. The key to maximize simulation\n"
+"throughput is to ensure a large number of threads are launched to keep the\n"
+"hardware resources fully utilized.\n"
+msgstr ""
+
+#: tfmmcx.ckbdebug.hint
+msgctxt "tfmmcx.ckbdebug.hint"
+msgid "DebugFlags"
+msgstr ""
+
+#: tfmmcx.ckbdet.hint
+msgid ""
+"SaveDetFlag \n"
+"\n"
+"This checkbox list allows users to select the detected photon\n"
+"data items that they want to save in the .mch file.\n"
+"\n"
+"By default, only the Detector ID and Partial Pathlength are stored.\n"
+msgstr ""
+
+#: tfmmcx.ckdoremote.caption
+msgid "Run remote command:"
+msgstr ""
+
+#: tfmmcx.ckdoremote.hint
+msgid ""
+"DoRemote \n"
+"\n"
+"Check this option asks MCXStudio to call the specified ssh command \n"
+"and run mcx/mmc simulations on remote servers. \n"
+"\n"
+"Please be aware that one must prepare the server and client to enable\n"
+"remote execution, this include\n"
+"\n"
+"1. install mcx/mmc/mcxcl executable on remote server and add path to\n"
+"    the PATH environment \n"
+"2. install ssh client on the local client; for Linux/Mac, ssh/scp command is\n"
+"    typically built-in; for windows, please install plink.exe and pscp.exe and\n"
+"    ensure that their paths are on the PATH environment variable\n"
+"3. optionally, one can set the SSH key between the client and server to \n"
+"    avoid typing password, please see http://www.linuxproblem.org/art_9.html\n"
+msgstr ""
+
+#: tfmmcx.ckdoreplay.caption
+msgid "Replay"
+msgstr ""
+
+#: tfmmcx.ckdoreplay.hint
+msgid ""
+"DoReplay \n"
+"\n"
+"When selecting a .mch file as the seed, this checkbox is automatically \n"
+"checked, signifying that MCX/MMC will perform a photon replay by\n"
+"reading the RNG seeds from the .mch file and rerun the photons to produce\n"
+"the Jacobians - in such case, one can use the \"Output Type\" to select which\n"
+"metric to output.\n"
+msgstr ""
+
+#: tfmmcx.cklockgpu.caption
+msgid "Lock GPU"
+msgstr ""
+
+#: tfmmcx.cklockgpu.hint
+msgid ""
+"Checking this box prevents MCXStudio from updating the device list\n"
+"when switching between different simulation sessions.\n"
+"\n"
+"When running simulation on a remote server, it is recommended to\n"
+"lock the GPU to avoid resetting of the device list.\n"
+msgstr ""
+
+#: tfmmcx.cknormalize.caption
+msgid "Do normalization (-U)"
+msgstr ""
+
+#: tfmmcx.cknormalize.hint
+msgid ""
+"DoNormalize \n"
+"\n"
+"Check this option allows MCX/MMC to normalize the output by the \n"
+"below formula\n"
+"\n"
+"Φ(i,j,k,t)=E(i,j,k,t) / (V*E_total*dT)\n"
+"\n"
+"where E(i,j,k,t) is the raw accummuated energy at each voxel; \n"
+"V is the size of the voxel in mm^3; dT is the time-gate width in s.\n"
+"\n"
+"After normalization, the result becomes TPSF or Green's function.\n"
+"\n"
+"Unchecking this option disables normalization.\n"
+msgstr ""
+
+#: tfmmcx.ckreflect.caption
+msgid "Do reflection all boundaries (-b)"
+msgstr ""
+
+#: tfmmcx.ckreflect.hint
+msgid ""
+"DoReflect \n"
+"\n"
+"Check this option (by default) enables reflection/refrection calculations \n"
+"when  refractive index mismatch is detected at tissue boundaries.\n"
+"\n"
+"If this option is unchecked, any photon hits the boundary between a \n"
+"non-zero and zero-valued voxel will be terminated (i.e. total\n"
+"absorbtion boundary condition). \n"
+"\n"
+"The medium outside of the volume bounding box is assumed to have \n"
+"the optical properties defined as label 0 (the first row in the Media Settings\n"
+"table on the right).\n"
+msgstr ""
+
+#: tfmmcx.cksavedata.caption
+msgid "Save fluence (-S)"
+msgstr ""
+
+#: tfmmcx.cksavedata.hint
+msgid ""
+"DoSave \n"
+"\n"
+"Checking this option makes MCX/MMC outputs the volumetric fluence\n"
+"data: for MCX, it is the .mc2/.nii file; for MMC, it is a .dat file using P/H/B/S \n"
+"ray-tracers and .mc2/.nii files when using the dual-grid mode (-M G).\n"
+"\n"
+"Unchecking this option stops MCX/MMC output the .mc2/.nii file.\n"
+msgstr ""
+
+#: tfmmcx.cksavedetector.caption
+msgid "Save detected photons (-d)"
+msgstr ""
+
+#: tfmmcx.cksavedetector.hint
+msgid ""
+"SaveDetector \n"
+"\n"
+"Checking this option allows one to store detected photon \n"
+"information. The output data records can be user-defined by\n"
+"selecting the check-box list entitled \"Save detected photon\".\n"
+"The output data are stored in a .mch file.\n"
+"\n"
+"Unchecking this option disables output the .mch file (can be \n"
+"slightly faster).\n"
+msgstr ""
+
+#: tfmmcx.cksavemask.caption
+msgid "Save volume mask (-M)"
+msgstr ""
+
+#: tfmmcx.cksavemask.hint
+msgid ""
+"DoSaveMask \n"
+"\n"
+"Checking this option asks MCX to output the pre-processed volume \n"
+"masks. The preprocessed mask contains the voxels that are covered\n"
+"under detectors; these voxels are designated by setting the sign-bit \n"
+"as 1. One can visualize this dumped data mask using mcxplotvol.m\n"
+"\n"
+"Unchecking this option suppresses the output of this mask file.\n"
+msgstr ""
+
+#: tfmmcx.cksaveref.caption
+msgid "Save diffuse reflectance (-X)"
+msgstr ""
+
+#: tfmmcx.cksaveref.hint
+msgid ""
+"DoSaveRef \n"
+"\n"
+"Checking this option allows MCX/MMC to output the escaped photon\n"
+"weights on the exterior surface of the domain. For MCX, to save the \n"
+"total diffuse reflectance, one must pad a layer of zero voxels in the \n"
+"facet or full bounding box of the domain to store such data. The raw \n"
+"total diffuse reflectance are normalized and stored as negative values\n"
+"in the .mc2/.nii file. When loading such file using loadmc2.m, the diffuse\n"
+"reflectance data are extracted and converted to positive output.\n"
+"\n"
+"Unchecking this option disables saving diffuse reflectance data.\n"
+msgstr ""
+
+#: tfmmcx.cksaveseed.caption
+msgid "Save photon seeds (-q)"
+msgstr ""
+
+#: tfmmcx.cksaveseed.hint
+msgid ""
+"DoSaveSeed \n"
+"\n"
+"Checking this option allows one to save the RNG seeds of the detected\n"
+"photons in the .mch file. This makes it possible to perform photon replay\n"
+"to compute the Jacobian when feeding this output .mch file as the seed\n"
+"for the replay run.\n"
+"\n"
+"Unchecking this option disables saving photon seeds.\n"
+msgstr ""
+
+#: tfmmcx.cksharedfs.caption
+msgid "Shared file system"
+msgstr ""
+
+#: tfmmcx.cksharedfs.hint
+msgid ""
+"DoSharedFS \n"
+"\n"
+"Checking this option suggests that both the client and the server\n"
+"share the same file system, thus, no file copying is needed. In other\n"
+"word, the folder structure to read/write on both client and server\n"
+"are identical. This is the case when one uses nfs/autofs on Linux/Mac.\n"
+msgstr ""
+
+#: tfmmcx.ckshowprogress.caption
+msgid "Show progress bar"
+msgstr ""
+
+#: tfmmcx.ckshowprogress.hint
+msgid ""
+"ShowProgress \n"
+"\n"
+"(This option is highly experimental, use with caution, may cause hanging on some GPUs)\n"
+"\n"
+"Check this option to let MCX/MMC to print a progress bar during the\n"
+"GPU simulation. In some hardware, this may cause unstable behaviors\n"
+"such as stalling or never return even the simulation is complete. If such\n"
+"behavior is detected, please uncheck this option.\n"
+msgstr ""
+
+#: tfmmcx.ckskipvoid.caption
+msgid "Skip void space (-k)"
+msgstr ""
+
+#: tfmmcx.ckskipvoid.hint
+msgid ""
+"DoSkipVoid \n"
+"\n"
+"Checking this option starts photon's ellapse time when it first enters\n"
+"a non-zero voxel.\n"
+"\n"
+"Unchecking this option starts photon's ellapse time at launch time,\n"
+"regardless it is launched in the background (0-valued) voxel or non-zero\n"
+"voxel.\n"
+msgstr ""
+
+#: tfmmcx.ckspecular.caption
+msgid "Do specular reflection (-V)"
+msgstr ""
+
+#: tfmmcx.ckspecular.hint
+msgid ""
+"DoSpecular \n"
+"\n"
+"Checking this option performs a transmission calculation if a photon \n"
+"is launched in the background; this results in change of direction angle\n"
+"and loss of energy.\n"
+"\n"
+"Unchecking this option moves a photon into a non-zero voxel without\n"
+"considering the specular reflection and change of direction.\n"
+msgstr ""
+
+#: tfmmcx.cksrcfrom0.caption
+msgid "Orign from [0,0,0] (-z)"
+msgstr ""
+
+#: tfmmcx.cksrcfrom0.hint
+msgid ""
+"DoSrcFrom0 \n"
+"\n"
+"Checking this item assumes the lower-bottom corner of the voxelated \n"
+"domain is [0,0,0] mm. The definitions of source and detector positions \n"
+"are impacted by this definition.\n"
+"\n"
+"Unchecking this option assumes the  lower-bottom corner of the  \n"
+"domain is [1,1,1] mm.\n"
+msgstr ""
+
+#: tfmmcx.edbenchmark.hint
+msgid ""
+"Benchmark \n"
+"\n"
+"This option asks to run the built-in benchmark.\n"
+msgstr ""
+
+#: tfmmcx.edblocksize.hint
+msgid ""
+"ThreadBlock \n"
+"\n"
+"Specify a small integer, preferably a multiple of 32, to define \n"
+"the block size - for example, 64 means a thread block contains \n"
+"64 threads.\n"
+"\n"
+"This is only used when the -A (autopilot mode) is not enabled.\n"
+msgstr ""
+
+#: tfmmcx.edblocksize.text
+msgid "64"
+msgstr ""
+
+#: tfmmcx.edbubble.hint
+msgctxt "tfmmcx.edbubble.hint"
+msgid "BubbleSize"
+msgstr ""
+
+#: tfmmcx.edbubble.text
+msgid "-2"
+msgstr ""
+
+#: tfmmcx.edcmdinput.hint
+msgid ""
+"User Input\n"
+"\n"
+"When connecting to a remote server via ssh/scp, one may asked to type\n"
+"\"yes\" to save the ssh key or other interactive inputs. If this is the case, one\n"
+"can use this field to type user input, and click \"Send\" to pipe user input to \n"
+"the external program.\n"
+msgstr ""
+
+#: tfmmcx.edconfigfile.hint
+msgid ""
+"InputFile \n"
+"\n"
+"Specify the input file in .json (preferred) or the legacy .inp format.\n"
+msgstr ""
+
+#: tfmmcx.eddetectednum.hint
+msgid ""
+"DetectedNum \n"
+"\n"
+"This sets the maximum number of detected photons to be stored. If\n"
+"the actual detected photon number is higher than this specified number,\n"
+"mcx/mmc will generate an warning and print out the actual detected \n"
+"photon count; one can use that output in this field to allow MCX to store\n"
+"all photons.\n"
+msgstr ""
+
+#: tfmmcx.eddetectednum.text
+msgid "10000000"
+msgstr ""
+
+#: tfmmcx.edgate.hint
+msgctxt "tfmmcx.edgate.hint"
+msgid "GateNum"
+msgstr ""
+
+#: tfmmcx.edgpuid.hint
+msgid ""
+"GPUID \n"
+"\n"
+"Use this list to select the device or devices (CPU or GPU) used to\n"
+"run the simulation. For MCX, if multiple CUDA GPUs are installed, one\n"
+"can select multiple devices to speed up the calculation; for MCXCL\n"
+"and MMC, one can select OpenCL devices that include both CPU and\n"
+"GPUs. In such case, only devices of the same platform can be selected.\n"
+"For example, an NVIDIA GPU and a CPU can not be selected together.\n"
+msgstr ""
+
+#: tfmmcx.edmoreparam.hint
+msgid ""
+"MoreParam \n"
+"\n"
+"One can use this field to manually specify additional parameters that\n"
+"are not supported by this GUI tool. Any parameter set here will overwrite\n"
+"the previous setting.\n"
+msgstr ""
+
+#: tfmmcx.edoutputformat.hint
+msgid ""
+"OutputFormat \n"
+"\n"
+"This specifies the output data file format. The supported formats are\n"
+"\n"
+".mc2 - a simple binary format stores the voxel-by-voxel binary data\n"
+"    in the column-major order\n"
+".nii - the NIfTI-1 format\n"
+".tx3 - a simple 3D texture binary format.\n"
+"ascii - text-based data file\n"
+msgstr ""
+
+#: tfmmcx.edoutputtype.hint
+msgid ""
+"OutputType \n"
+"\n"
+"This option specifies the output data type. \n"
+"\n"
+"* Fluence rate [J/mm^2/s] - the default output\n"
+"* Fluence [J/mm^2] - the integration of the fluence \n"
+"   rate over each time gate\n"
+"* Energy density [J/mm^3] - can be computed by multiplying \n"
+"   fluence with absorption μa\n"
+"* Absorption Jacobian (mua) [1/mm] - in the replay mode, this\n"
+"   outputs the sensitivity matrix for μa;\n"
+"* Average scattering event count - in the replay mode, this\n"
+"   outputs the number of scattering event per voxel\n"
+"* Momentum transfer sensivity (DCS) - in the replay mode, this \n"
+"   outputs the momentum transfer contribution/sensitivity from \n"
+"   each voxel.\n"
+msgstr ""
+
+#: tfmmcx.edphoton.hint
+msgid ""
+"PhotonNum \n"
+"\n"
+"This defines the total simulated photons.\n"
+"\n"
+"Can be an integer or number in scientific form. For example\n"
+"100000 and 1e5 are both acceptable.\n"
+"\n"
+"Please be noted that we highly suggest one to start with a\n"
+"small photon number to avoid extended run time.\n"
+msgstr ""
+
+#: tfmmcx.edphoton.text
+msgid "1e6"
+msgstr ""
+
+#: tfmmcx.edphoton.texthint
+msgid "Integer"
+msgstr ""
+
+#: tfmmcx.edremote.hint
+msgid ""
+"RemoteCmd \n"
+"\n"
+"Please choose the remote connection command using the dropdown list, or\n"
+"type in this field manually. For windows, it is recommended to choose the \n"
+"plink.exe command; for Linux, it is recommended to use the ssh command.\n"
+"\n"
+"Please replace the user@server by the actual username and the server IP\n"
+"or domain name.\n"
+"\n"
+"You are highly recommended to set up key-based ssh access to avoid typing\n"
+"password. Tutorials can be found at http://www.linuxproblem.org/art_9.html\n"
+msgstr ""
+
+#: tfmmcx.edremote.text
+msgid "Built-in ssh"
+msgstr ""
+
+#: tfmmcx.edreplaydet.hint
+msgctxt "tfmmcx.edreplaydet.hint"
+msgid "ReplayDet"
+msgstr ""
+
+#: tfmmcx.edrespin.hint
+msgid ""
+"RespinNum \n"
+"\n"
+"Setting this to a positive number will repeat the simulation by the specified\n"
+"repeition count starting from different random seeds.\n"
+"\n"
+"A negative integer asks MCX to divide the total photon number by the \n"
+"absolute value of this input and run each subpart at a time. This can \n"
+"reduce the per-call run time, but may result in extensive overhead of\n"
+"running repeated simulations.\n"
+msgstr ""
+
+#: tfmmcx.edseed.hint
+msgid ""
+"Seed \n"
+"\n"
+"If this field is a large integer number, this specifies the RNG seed; \n"
+"\n"
+"if this is a file name ending with .jdat or .mch, it loads a .jdat/.mch \n"
+"file generated from previous simulation and replays the detected photons.\n"
+msgstr ""
+
+#: tfmmcx.edseed.text
+msgid "1648335518"
+msgstr ""
+
+#: tfmmcx.edseed.texthint
+msgid "A large integer or .mch file name"
+msgstr ""
+
+#: tfmmcx.edsession.hint
+msgid ""
+"Session \n"
+"\n"
+"This string will be used in all output files as part of the file names.\n"
+msgstr ""
+
+#: tfmmcx.edthread.hint
+msgid ""
+"ThreadNum \n"
+"\n"
+"Specify a large integer multiple of 32 (the warp size) to manually \n"
+"define the thread numbers.\n"
+"\n"
+"This is only used when the -A (autopilot mode) is not enabled.\n"
+msgstr ""
+
+#: tfmmcx.edthread.text
+msgid "16384"
+msgstr ""
+
+#: tfmmcx.edunitinmm.hint
+msgid ""
+"UnitInMM \n"
+"\n"
+"This defines the voxel size. By default, 1x1x1 mm^3 voxels\n"
+"are used. Has to be a positive floating point number. For example,\n"
+"0.1 defines a 0.1x0.1x0.1 mm^3 voxel.\n"
+"\n"
+"Currently, only isotropic voxels are supported.\n"
+msgstr ""
+
+#: tfmmcx.edunitinmm.text
+msgid "1"
+msgstr ""
+
+#: tfmmcx.edworkload.hint
+msgid ""
+"Workload \n"
+"\n"
+"One can specify a series of comma-separated numbers to specify the\n"
+"relative portion of workload between multiple selected devices. \n"
+"\n"
+"For example: 10,10 asks MCX to run 50% of the total photons using the\n"
+"1st device and 50% on the 2nd device. On the other hand, 10,100 splits\n"
+"the total photon 1:10 between the 1st and 2nd devices.\n"
+msgstr ""
+
+#: tfmmcx.edworkload.text
+msgid "100"
+msgstr ""
+
+#: tfmmcx.edworkload.texthint
+msgid "Comma separated numbers"
+msgstr ""
+
+#: tfmmcx.gradvsettings.caption
+msgid "Advanced Settings"
+msgstr ""
+
+#: tfmmcx.grarray.hint
+msgid ""
+"ArrayOrder \n"
+"\n"
+"Select MATLAB array order indicates that the input volume has a\n"
+"column-major order - i.e. the left-most axis is the fastest index of\n"
+"the array, like in MATLAB or FORTRAN.\n"
+"\n"
+"Select C array order indicates that the input volume uses the \n"
+"row-major order - i.e. the right-most index is the fastest index\n"
+"of the array, like in C and Python.\n"
+msgstr ""
+
+#: tfmmcx.gratomic.hint
+msgid ""
+"UseAtomic \n"
+"\n"
+"Using atomic operations avoids conflicts between multiple threads when\n"
+"writing to the same voxel, thus is highly recommended.\n"
+"\n"
+"In the very old CUDA hardware, using atomic operations has a high \n"
+"overhead, but such overhead was signficiantly less since the Fermi GPU.\n"
+msgstr ""
+
+#: tfmmcx.grbasic.caption
+msgid "Basic Settings"
+msgstr ""
+
+#: tfmmcx.grbc.caption
+msgid "Boundary cond."
+msgstr ""
+
+#: tfmmcx.grdet.caption
+msgid "Save detected photon"
+msgstr ""
+
+#: tfmmcx.grgpu.caption
+msgid "GPU Settings"
+msgstr ""
+
+#: tfmmcx.grprogram.caption
+msgid "Run Monte Carlo simulation with"
+msgstr ""
+
+#: tfmmcx.grprogram.hint
+msgid ""
+"MCProgram\n"
+"\n"
+"In this panel, you choose which simulator to use. \n"
+"Currently we support 3 simulators, \n"
+"\n"
+"* MCX: NVIDIA GPU-based simulation using voxelated domain\n"
+"* MCX-CL: OpenCL based CPU/GPU simulation using voxelated domain\n"
+"* MMC: OpenCL based CPU/GPU simulation using tetrahedral meshes\n"
+"\n"
+"The built-in domain designer only supports creating voxelated \n"
+"domains and creating meshes will be supported in the future.\n"
+msgstr ""
+
+#: tfmmcx.grswitches.caption
+msgid "Switches"
+msgstr ""
+
+#: tfmmcx.image1.hint
+msgid "About MCX"
+msgstr ""
+
+#: tfmmcx.label1.caption
+msgid "Thread number (-t)"
+msgstr ""
+
+#: tfmmcx.label1.hint
+msgid "-t (--thread)"
+msgstr ""
+
+#: tfmmcx.label10.caption
+msgctxt "tfmmcx.label10.caption"
+msgid "or"
+msgstr ""
+
+#: tfmmcx.label10.hint
+msgctxt "tfmmcx.label10.hint"
+msgid "-a (--array)"
+msgstr ""
+
+#: tfmmcx.label11.caption
+msgid "Output format"
+msgstr ""
+
+#: tfmmcx.label11.hint
+msgctxt "tfmmcx.label11.hint"
+msgid "-u (--unitinmm)"
+msgstr ""
+
+#: tfmmcx.label12.caption
+msgid "Run MCX on"
+msgstr ""
+
+#: tfmmcx.label12.hint
+msgid "-G (--gpu)"
+msgstr ""
+
+#: tfmmcx.label13.caption
+msgid "Seed (-E)"
+msgstr ""
+
+#: tfmmcx.label13.hint
+msgid "-E (--seed)"
+msgstr ""
+
+#: tfmmcx.label14.caption
+msgid "Output type (-O)"
+msgstr ""
+
+#: tfmmcx.label14.hint
+msgid "-O (--outputtype)"
+msgstr ""
+
+#: tfmmcx.label15.caption
+msgid "Workload split"
+msgstr ""
+
+#: tfmmcx.label15.hint
+msgid "-W (--workload)"
+msgstr ""
+
+#: tfmmcx.label16.caption
+msgid "Debug flags"
+msgstr ""
+
+#: tfmmcx.label16.hint
+msgid "-D (--debuglevel)"
+msgstr ""
+
+#: tfmmcx.label17.caption
+msgid "Replay detector ID (-Y)"
+msgstr ""
+
+#: tfmmcx.label17.hint
+msgctxt "tfmmcx.label17.hint"
+msgid "-Y (--replaydet)"
+msgstr ""
+
+#: tfmmcx.label18.caption
+msgid "Additional parameters"
+msgstr ""
+
+#: tfmmcx.label18.hint
+msgctxt "tfmmcx.label18.hint"
+msgid "-Y (--replaydet)"
+msgstr ""
+
+#: tfmmcx.label19.caption
+msgctxt "tfmmcx.label19.caption"
+msgid "or"
+msgstr ""
+
+#: tfmmcx.label19.hint
+msgctxt "tfmmcx.label19.hint"
+msgid "-a (--array)"
+msgstr ""
+
+#: tfmmcx.label2.caption
+msgid "Thread block size (-T)"
+msgstr ""
+
+#: tfmmcx.label2.hint
+msgid "-T (--blocksize)"
+msgstr ""
+
+#: tfmmcx.label3.caption
+msgid "Total photon number (-n)"
+msgstr ""
+
+#: tfmmcx.label3.hint
+msgid "-n (--photon)"
+msgstr ""
+
+#: tfmmcx.label4.caption
+msgid "Session ID (-s)"
+msgstr ""
+
+#: tfmmcx.label4.hint
+msgid "-s (--sessionid)"
+msgstr ""
+
+#: tfmmcx.label5.caption
+msgid "User Input>"
+msgstr ""
+
+#: tfmmcx.label6.caption
+msgid "Array order (-a)"
+msgstr ""
+
+#: tfmmcx.label6.hint
+msgctxt "tfmmcx.label6.hint"
+msgid "-a (--array)"
+msgstr ""
+
+#: tfmmcx.label7.caption
+msgid "Gate group size (-g)"
+msgstr ""
+
+#: tfmmcx.label7.hint
+msgid "-g (--gategroup)"
+msgstr ""
+
+#: tfmmcx.label8.caption
+msgid "Voxel size in mm (-u)"
+msgstr ""
+
+#: tfmmcx.label8.hint
+msgctxt "tfmmcx.label8.hint"
+msgid "-u (--unitinmm)"
+msgstr ""
+
+#: tfmmcx.label9.caption
+msgid "Max detected photons(-H)"
+msgstr ""
+
+#: tfmmcx.label9.hint
+msgid "-H (--maxdetphoton)"
+msgstr ""
+
+#: tfmmcx.lbatomic.caption
+msgid "Atomic operations"
+msgstr ""
+
+#: tfmmcx.lbatomic.hint
+msgid "(--atomic)"
+msgstr ""
+
+#: tfmmcx.lbbubble.caption
+msgid "Cache radius from src (-R)"
+msgstr ""
+
+#: tfmmcx.lbbubble.hint
+msgid "-r (--skipradius)"
+msgstr ""
+
+#: tfmmcx.lbrespin.caption
+msgid "Repetition (-r)"
+msgstr ""
+
+#: tfmmcx.lbrespin.hint
+msgid "-r (--repeat)"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[0].caption
+msgid "Session"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[10].caption
+msgid "DoSave"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[11].caption
+msgid "DoNormalize"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[12].caption
+msgid "Autopilot"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[13].caption
+msgid "SaveDetector"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[14].caption
+msgid "DetectedNum"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[15].caption
+msgid "GPUID"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[16].caption
+msgid "UnitInMM"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[17].caption
+msgid "DoSaveRef"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[18].caption
+msgid "DoSaveSeed"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[19].caption
+msgid "DoSkipVoid"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[1].caption
+msgid "InputFile"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[20].caption
+msgid "DoSrcFrom0"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[21].caption
+msgid "MediaCfg"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[22].caption
+msgid "DetectorCfg"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[23].caption
+msgid "MCXConfig"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[24].caption
+msgid "Workload"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[25].caption
+msgctxt "tfmmcx.lvjobs.columns[25].caption"
+msgid "ShapeCfg"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[26].caption
+msgid "Seed"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[27].caption
+msgid "DoSaveMask"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[28].caption
+msgctxt "tfmmcx.lvjobs.columns[28].caption"
+msgid "DebugFlags"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[29].caption
+msgctxt "tfmmcx.lvjobs.columns[29].caption"
+msgid "ReplayDet"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[2].caption
+msgid "ThreadNum"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[30].caption
+msgid "DoReplay"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[31].caption
+msgid "MCProgram"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[32].caption
+msgid "DoSpecular"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[33].caption
+msgid "UseAtomic"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[34].caption
+msgid "BasicOrder"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[35].caption
+msgid "DebugPhoton"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[36].caption
+msgid "MoreParam"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[37].caption
+msgid "RemoteCmd"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[38].caption
+msgid "DoRemote"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[39].caption
+msgid "DoSharedFS"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[3].caption
+msgid "ThreadBlock"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[40].caption
+msgid "OutputFormat"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[41].caption
+msgid "OutputType"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[42].caption
+msgid "Boundary"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[43].caption
+msgid "SaveDetFlag"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[44].caption
+msgid "Benchmark"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[4].caption
+msgid "PhotonNum"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[5].caption
+msgid "RespinNum"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[6].caption
+msgid "ArrayOrder"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[7].caption
+msgctxt "tfmmcx.lvjobs.columns[7].caption"
+msgid "BubbleSize"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[8].caption
+msgctxt "tfmmcx.lvjobs.columns[8].caption"
+msgid "GateNum"
+msgstr ""
+
+#: tfmmcx.lvjobs.columns[9].caption
+msgid "DoReflect"
+msgstr ""
+
+#: tfmmcx.mcxdoabout.caption
+msgid "About"
+msgstr ""
+
+#: tfmmcx.mcxdoabout.hint
+msgid "About the author"
+msgstr ""
+
+#: tfmmcx.mcxdoadditem.caption
+msgid "New"
+msgstr ""
+
+#: tfmmcx.mcxdoadditem.hint
+msgid "Add a new task"
+msgstr ""
+
+#: tfmmcx.mcxdoconfig.caption
+msgid "Setting"
+msgstr ""
+
+#: tfmmcx.mcxdoconfig.hint
+msgid "Modify default paths"
+msgstr ""
+
+#: tfmmcx.mcxdocopy.caption
+msgid "Copy session to clipboard"
+msgstr ""
+
+#: tfmmcx.mcxdodefault.caption
+msgid "Default"
+msgstr ""
+
+#: tfmmcx.mcxdodefault.hint
+msgid "Set default values"
+msgstr ""
+
+#: tfmmcx.mcxdodeleteitem.caption
+msgctxt "tfmmcx.mcxdodeleteitem.caption"
+msgid "Delete"
+msgstr ""
+
+#: tfmmcx.mcxdodeleteitem.hint
+msgid "Delete selected task"
+msgstr ""
+
+#: tfmmcx.mcxdodownloadmask.caption
+msgid "Download volume labels (*_vol.nii)"
+msgstr ""
+
+#: tfmmcx.mcxdodownloadmask.hint
+msgctxt "tfmmcx.mcxdodownloadmask.hint"
+msgid "_vol.nii"
+msgstr ""
+
+#: tfmmcx.mcxdodownloadmc2.caption
+msgid "Download fluence"
+msgstr ""
+
+#: tfmmcx.mcxdodownloadmch.caption
+msgid "Download detected photon data (*.mch)"
+msgstr ""
+
+#: tfmmcx.mcxdodownloadmch.hint
+msgid ".mch"
+msgstr ""
+
+#: tfmmcx.mcxdoexit.caption
+msgid "Exit"
+msgstr ""
+
+#: tfmmcx.mcxdoexit.hint
+msgid "Exit MCX Studio"
+msgstr ""
+
+#: tfmmcx.mcxdohelp.caption
+msgctxt "tfmmcx.mcxdohelp.caption"
+msgid "Help"
+msgstr ""
+
+#: tfmmcx.mcxdohelp.hint
+msgctxt "tfmmcx.mcxdohelp.hint"
+msgid "Browse help information"
+msgstr ""
+
+#: tfmmcx.mcxdohelpoptions.caption
+msgid "Options"
+msgstr ""
+
+#: tfmmcx.mcxdohelpoptions.hint
+msgid "List command line options"
+msgstr ""
+
+#: tfmmcx.mcxdoopen.caption
+msgid "Open"
+msgstr ""
+
+#: tfmmcx.mcxdoopen.hint
+msgid "Open a project or volume file"
+msgstr ""
+
+#: tfmmcx.mcxdopaste.caption
+msgid "Paste session from clipboard"
+msgstr ""
+
+#: tfmmcx.mcxdoplotjnifti.caption
+msgid "Plot fluence (jnii)"
+msgstr ""
+
+#: tfmmcx.mcxdoplotjnifti.hint
+msgid ".jnii"
+msgstr ""
+
+#: tfmmcx.mcxdoplotmc2.caption
+msgid "Plot fluence (mc2)"
+msgstr ""
+
+#: tfmmcx.mcxdoplotmc2.hint
+msgid ".mc2"
+msgstr ""
+
+#: tfmmcx.mcxdoplotmesh.caption
+msgid "Plot mesh"
+msgstr ""
+
+#: tfmmcx.mcxdoplotnifty.caption
+msgid "Plot fluence (nii)"
+msgstr ""
+
+#: tfmmcx.mcxdoplotnifty.hint
+msgid ".nii"
+msgstr ""
+
+#: tfmmcx.mcxdoplotvol.caption
+msgid "Plot Volume"
+msgstr ""
+
+#: tfmmcx.mcxdoplotvol.hint
+msgctxt "tfmmcx.mcxdoplotvol.hint"
+msgid "_vol.nii"
+msgstr ""
+
+#: tfmmcx.mcxdoquery.caption
+msgid "GPU"
+msgstr ""
+
+#: tfmmcx.mcxdoquery.hint
+msgid "List GPU Info"
+msgstr ""
+
+#: tfmmcx.mcxdorun.caption
+msgctxt "tfmmcx.mcxdorun.caption"
+msgid "Run"
+msgstr ""
+
+#: tfmmcx.mcxdorun.hint
+msgid "Run selected task"
+msgstr ""
+
+#: tfmmcx.mcxdorunall.caption
+msgid "Run All"
+msgstr ""
+
+#: tfmmcx.mcxdorunall.hint
+msgid "Run all tasks"
+msgstr ""
+
+#: tfmmcx.mcxdosave.caption
+msgid "Save"
+msgstr ""
+
+#: tfmmcx.mcxdosave.hint
+msgid "Save tasks to a project file"
+msgstr ""
+
+#: tfmmcx.mcxdostop.caption
+msgid "Stop"
+msgstr ""
+
+#: tfmmcx.mcxdostop.hint
+msgid "Terminate current task"
+msgstr ""
+
+#: tfmmcx.mcxdotoggleview.caption
+msgid "Toggle View"
+msgstr ""
+
+#: tfmmcx.mcxdoverify.caption
+msgid "Verify"
+msgstr ""
+
+#: tfmmcx.mcxdoverify.hint
+msgid "Verify parameters"
+msgstr ""
+
+#: tfmmcx.mcxdoweb.caption
+msgid "Web"
+msgstr ""
+
+#: tfmmcx.mcxdoweb.hint
+msgid "MCX homepage"
+msgstr ""
+
+#: tfmmcx.mcxsetcurrent.caption
+msgid "mcxSetCurrent"
+msgstr ""
+
+#: tfmmcx.menuitem1.caption
+msgid "File"
+msgstr ""
+
+#: tfmmcx.menuitem11.caption
+msgid "Settings"
+msgstr ""
+
+#: tfmmcx.menuitem2.caption
+msgctxt "tfmmcx.menuitem2.caption"
+msgid "Run"
+msgstr ""
+
+#: tfmmcx.menuitem22.caption
+msgid "Open output folder"
+msgstr ""
+
+#: tfmmcx.menuitem24.caption
+msgid "Plot volume (_vol.nii)"
+msgstr ""
+
+#: tfmmcx.menuitem28.caption
+msgid "Download fluence (mc2/nii/hdr/img)"
+msgstr ""
+
+#: tfmmcx.menuitem3.caption
+msgid "Tools"
+msgstr ""
+
+#: tfmmcx.menuitem31.caption
+msgid "Download detected photon data (mch)"
+msgstr ""
+
+#: tfmmcx.menuitem32.caption
+msgid "Download volume mask (_vol.nii)"
+msgstr ""
+
+#: tfmmcx.menuitem35.caption
+msgid "MCX Documentation"
+msgstr ""
+
+#: tfmmcx.menuitem35.hint
+msgid "http://mcx.space/wiki/?Learn#mcx"
+msgstr ""
+
+#: tfmmcx.menuitem36.caption
+msgid "MMC Documentation"
+msgstr ""
+
+#: tfmmcx.menuitem36.hint
+msgid "http://mcx.space/wiki/?Learn#mmc"
+msgstr ""
+
+#: tfmmcx.menuitem37.caption
+msgid "MCX-CL Documentation"
+msgstr ""
+
+#: tfmmcx.menuitem37.hint
+msgid "http://mcx.space/wiki/?Learn#mcxcl"
+msgstr ""
+
+#: tfmmcx.menuitem39.caption
+msgid "MCX/MCXCL User Forum (mcx-users)"
+msgstr ""
+
+#: tfmmcx.menuitem39.hint
+msgid "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
+msgstr ""
+
+#: tfmmcx.menuitem4.caption
+msgctxt "tfmmcx.menuitem4.caption"
+msgid "Help"
+msgstr ""
+
+#: tfmmcx.menuitem40.caption
+msgid "MMC User Forum (mmc-users)"
+msgstr ""
+
+#: tfmmcx.menuitem40.hint
+msgid "https://groups.google.com/forum/?hl=en#!forum/mmc-users"
+msgstr ""
+
+#: tfmmcx.menuitem41.caption
+msgid "Iso2Mesh User Forum (iso2mesh-users)"
+msgstr ""
+
+#: tfmmcx.menuitem41.hint
+msgid "https://groups.google.com/forum/?hl=en#!forum/iso2mesh-users"
+msgstr ""
+
+#: tfmmcx.menuitem43.caption
+msgid "Download Nightly-Build"
+msgstr ""
+
+#: tfmmcx.menuitem43.hint
+msgid "http://mcx.space/nightly/"
+msgstr ""
+
+#: tfmmcx.menuitem45.caption
+msgid "MCX Github"
+msgstr ""
+
+#: tfmmcx.menuitem45.hint
+msgid "https://github.com/fangq/mcx"
+msgstr ""
+
+#: tfmmcx.menuitem46.caption
+msgid "MMC Github"
+msgstr ""
+
+#: tfmmcx.menuitem46.hint
+msgid "https://github.com/fangq/mmc"
+msgstr ""
+
+#: tfmmcx.menuitem47.caption
+msgid "MCX-CL Github"
+msgstr ""
+
+#: tfmmcx.menuitem47.hint
+msgid "https://github.com/fangq/mcxcl"
+msgstr ""
+
+#: tfmmcx.menuitem49.caption
+msgid "Report MCX Issues"
+msgstr ""
+
+#: tfmmcx.menuitem49.hint
+msgid "https://github.com/fangq/mcx/issues"
+msgstr ""
+
+#: tfmmcx.menuitem50.caption
+msgid "Report MMC Issues"
+msgstr ""
+
+#: tfmmcx.menuitem50.hint
+msgid "https://github.com/fangq/mmc/issues"
+msgstr ""
+
+#: tfmmcx.menuitem51.caption
+msgid "Report MCX-CL Issues"
+msgstr ""
+
+#: tfmmcx.menuitem51.hint
+msgid "https://github.com/fangq/mcxcl/issues"
+msgstr ""
+
+#: tfmmcx.menuitem53.caption
+msgid "MCX GPU Speed Benchmark Database"
+msgstr ""
+
+#: tfmmcx.menuitem53.hint
+msgid "http://mcx.space/gpubench/"
+msgstr ""
+
+#: tfmmcx.menuitem55.caption
+msgid "Refereces"
+msgstr ""
+
+#: tfmmcx.menuitem56.caption
+msgid "[Fang2009] Original MCX Paper"
+msgstr ""
+
+#: tfmmcx.menuitem56.hint
+msgid "http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178"
+msgstr ""
+
+#: tfmmcx.menuitem57.caption
+msgid "[Fang2010] Original MMC Paper"
+msgstr ""
+
+#: tfmmcx.menuitem57.hint
+msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165"
+msgstr ""
+
+#: tfmmcx.menuitem58.caption
+msgid "[Yu2018] Original MCX-CL Paper"
+msgstr ""
+
+#: tfmmcx.menuitem58.hint
+msgid "https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink"
+msgstr ""
+
+#: tfmmcx.menuitem59.caption
+msgid "[Fang2011] MMC ray-tracing comparison"
+msgstr ""
+
+#: tfmmcx.menuitem59.hint
+msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258"
+msgstr ""
+
+#: tfmmcx.menuitem60.caption
+msgid "[Fang2012] SIMD MMC"
+msgstr ""
+
+#: tfmmcx.menuitem60.hint
+msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-3223"
+msgstr ""
+
+#: tfmmcx.menuitem61.caption
+msgid "[Yao2016] Widefield MMC"
+msgstr ""
+
+#: tfmmcx.menuitem61.hint
+msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171"
+msgstr ""
+
+#: tfmmcx.menuitem62.caption
+msgid "[Yao2018] Jacobians with photon replay"
+msgstr ""
+
+#: tfmmcx.menuitem62.hint
+msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588"
+msgstr ""
+
+#: tfmmcx.menuitem63.caption
+msgid "[Yan2019] Dual-grid MMC"
+msgstr ""
+
+#: tfmmcx.menuitem63.hint
+msgid "https://na01.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdx.doi.org%2F10.1117%2F1.JBO.24.2.020503&data=02%7C01%7Cq.fang%40northeastern.edu%7Cbb8daa56735543068b9c08d697592492%7Ca8eec281aaa34daeac9b9a398b9215e7%7C0%7C0%7C636862806460866013&sdata=2dWyN3eVPwwymydjXEWIHBfVZI43Fcl5zuZ8wiaJ10k%3D&reserved=0"
+msgstr ""
+
+#: tfmmcx.menuitem64.caption
+msgid "MCX Main Web"
+msgstr ""
+
+#: tfmmcx.menuitem66.caption
+msgid "Table of all input flags"
+msgstr ""
+
+#: tfmmcx.menuitem66.hint
+msgid "http://bit.ly/2K0rG4R "
+msgstr ""
+
+#: tfmmcx.menuitem69.caption
+msgid "[Fang2019] GPU MMC"
+msgstr ""
+
+#: tfmmcx.menuitem69.hint
+msgid "http://dx.doi.org/10.1117/1.JBO.24.11.115002"
+msgstr ""
+
+#: tfmmcx.menuitem70.caption
+msgid "[Brain2Mesh2020] Brain2Mesh brain meshing toolbox"
+msgstr ""
+
+#: tfmmcx.menuitem70.hint
+msgid "https://doi.org/10.1117/1.NPh.7.1.015008"
+msgstr ""
+
+#: tfmmcx.menuitem71.caption
+msgid "[Yuan2020] PBM over lifespan"
+msgstr ""
+
+#: tfmmcx.menuitem71.hint
+msgid "https://doi.org/10.1117/1.NPh.7.1.015009"
+msgstr ""
+
+#: tfmmcx.menuitem72.caption
+msgid "[Yuan2021] Implicit MMC (iMMC)"
+msgstr ""
+
+#: tfmmcx.menuitem72.hint
+msgid "https://www.osapublishing.org/boe/fulltext.cfm?uri=boe-12-1-147"
+msgstr ""
+
+#: tfmmcx.menuitem73.caption
+msgid "[Yan2020] SVMC hybrid method"
+msgstr ""
+
+#: tfmmcx.menuitem73.hint
+msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262"
+msgstr ""
+
+#: tfmmcx.menuitem76.caption
+msgid "Open Volume Viewer"
+msgstr ""
+
+#: tfmmcx.menuitem9.caption
+msgctxt "tfmmcx.menuitem9.caption"
+msgid "Volume Designer"
+msgstr ""
+
+#: tfmmcx.miclearlog.caption
+msgid "Clear Log"
+msgstr ""
+
+#: tfmmcx.micopy.caption
+msgid "Copy selected"
+msgstr ""
+
+#: tfmmcx.miexportjson.caption
+msgid "Export self-contained JSON input file"
+msgstr ""
+
+#: tfmmcx.miusematlab.caption
+msgid "Print MATLAB plotting commands only"
+msgstr ""
+
+#: tfmmcx.openhistoryfile.title
+msgctxt "tfmmcx.openhistoryfile.title"
+msgid "Open Photon History File (*.mch)"
+msgstr ""
+
+#: tfmmcx.openproject.title
+msgid "Open existing project"
+msgstr ""
+
+#: tfmmcx.openvolume.title
+msgctxt "tfmmcx.openvolume.title"
+msgid "Open Photon History File (*.mch)"
+msgstr ""
+
+#: tfmmcx.rbusebench.caption
+msgid "Built-in"
+msgstr ""
+
+#: tfmmcx.rbusedesigner.caption
+msgid "User-defined »"
+msgstr ""
+
+#: tfmmcx.rbusefile.caption
+msgid "Use Input File (-f)"
+msgstr ""
+
+#: tfmmcx.saveproject.title
+msgid "Save project as"
+msgstr ""
+
+#: tfmmcx.sbinfo.panels[0].text
+msgid "Status: idle"
+msgstr ""
+
+#: tfmmcx.sgconfig.columns[0].title.caption
+msgid "Value"
+msgstr ""
+
+#: tfmmcx.sgconfig.hint
+msgid ""
+"MCXConfig \n"
+"\n"
+"This defines the remaining key parameters used in an MCX/MMC\n"
+"simulation.\n"
+msgstr ""
+
+#: tfmmcx.sgdet.hint
+msgid ""
+"DetectorCfg \n"
+"\n"
+"This table defines all detectors in the domain. \n"
+"\n"
+"Please note that currently MCX/MMC only supports spherical detectors,\n"
+"defined by the [x,y,z] center position and radius (radius).\n"
+"\n"
+"Please also note that photon detection only happens before a photon is\n"
+"terminated, i.e. when it escapes the exterior bounding box or moving from\n"
+"a non-zero voxel to a zero voxel. Therefore, a detector's aperature is the\n"
+"actual bounding box surface or the surface of the non-zero voxels truncated\n"
+"by a sphere centered at [x,y,z] with raidus r.\n"
+"\n"
+"Detector position is sensitive to the \"Origin from [0 0 0] -z\" flag.\n"
+msgstr ""
+
+#: tfmmcx.sgmedia.columns[0].title.caption
+msgid "μa (1/mm)"
+msgstr ""
+
+#: tfmmcx.sgmedia.columns[1].title.caption
+msgid "μs (1/mm)"
+msgstr ""
+
+#: tfmmcx.sgmedia.columns[2].title.caption
+msgid "g (anisotropy)"
+msgstr ""
+
+#: tfmmcx.sgmedia.columns[3].title.caption
+msgid "n (reflective index)"
+msgstr ""
+
+#: tfmmcx.sgmedia.hint
+msgid ""
+"MediaCfg \n"
+"\n"
+"This table defines the optical properties for all needed tissue labels.\n"
+"\n"
+"The first row (label 0) is reserved for the background medium - which includes\n"
+"the space outside the bounding box of the volume, as well as any voxels with\n"
+"a zero-value.\n"
+"\n"
+"One can select a row and copy/paste to other rows.\n"
+"\n"
+"If more labels are needed, move to the bottom of the table, and press \"down\"\n"
+"arrow key to create a new row below.\n"
+msgstr ""
+
+#: tfmmcx.shapeaddbox.caption
+msgid "Box"
+msgstr ""
+
+#: tfmmcx.shapeaddbox.hint
+msgid "Add a 3D box (using the center of the voxels - i.e. add 0.5 in all directions)"
+msgstr ""
+
+#: tfmmcx.shapeaddcylinder.caption
+msgid "Cylinder"
+msgstr ""
+
+#: tfmmcx.shapeaddcylinder.hint
+msgid "Add a cylinder"
+msgstr ""
+
+#: tfmmcx.shapeaddgrid.caption
+msgid "Grid"
+msgstr ""
+
+#: tfmmcx.shapeaddgrid.hint
+msgid "Define a uniform grid as the simulation space"
+msgstr ""
+
+#: tfmmcx.shapeaddname.caption
+msgid "Name"
+msgstr ""
+
+#: tfmmcx.shapeaddname.hint
+msgid "Define a name for the domain"
+msgstr ""
+
+#: tfmmcx.shapeaddorigin.caption
+msgid "Origin"
+msgstr ""
+
+#: tfmmcx.shapeaddorigin.hint
+msgid "Define the origin for subsequent objects"
+msgstr ""
+
+#: tfmmcx.shapeaddsphere.caption
+msgid "Sphere"
+msgstr ""
+
+#: tfmmcx.shapeaddsphere.hint
+msgid "Add a 3D sphere"
+msgstr ""
+
+#: tfmmcx.shapeaddsubgrid.caption
+msgid "Subgrid"
+msgstr ""
+
+#: tfmmcx.shapeaddsubgrid.hint
+msgid "Add a 3D box (using the lower-corner of the voxel)"
+msgstr ""
+
+#: tfmmcx.shapeaddupperspace.caption
+msgid "Upper"
+msgstr ""
+
+#: tfmmcx.shapeaddupperspace.hint
+msgid "Add an upper-space defined by a linear inequality"
+msgstr ""
+
+#: tfmmcx.shapeaddxlayers.caption
+msgid "XLayers"
+msgstr ""
+
+#: tfmmcx.shapeaddxlayers.hint
+msgid "Add a layered structure along x-axis"
+msgstr ""
+
+#: tfmmcx.shapeaddxslabs.caption
+msgid "XSlabs"
+msgstr ""
+
+#: tfmmcx.shapeaddxslabs.hint
+msgid "Add a slab along x-axis"
+msgstr ""
+
+#: tfmmcx.shapeaddylayers.caption
+msgid "YLayers"
+msgstr ""
+
+#: tfmmcx.shapeaddylayers.hint
+msgid "Add a layered structure along y-axis"
+msgstr ""
+
+#: tfmmcx.shapeaddyslabs.caption
+msgid "YSlabs"
+msgstr ""
+
+#: tfmmcx.shapeaddyslabs.hint
+msgid "Add a slab along y-axis"
+msgstr ""
+
+#: tfmmcx.shapeaddzlayers.caption
+msgid "ZLayers"
+msgstr ""
+
+#: tfmmcx.shapeaddzlayers.hint
+msgid "Add a layered structure along z-axis"
+msgstr ""
+
+#: tfmmcx.shapeaddzslabs.caption
+msgid "ZSlabs"
+msgstr ""
+
+#: tfmmcx.shapeaddzslabs.hint
+msgid "Add a slab along z-axis"
+msgstr ""
+
+#: tfmmcx.shapedelete.caption
+msgctxt "tfmmcx.shapedelete.caption"
+msgid "Delete"
+msgstr ""
+
+#: tfmmcx.shapedelete.hint
+msgid "Delete selected object"
+msgstr ""
+
+#: tfmmcx.shapeedit.caption
+msgid "Edit"
+msgstr ""
+
+#: tfmmcx.shapepreview.caption
+msgctxt "tfmmcx.shapepreview.caption"
+msgid "Preview"
+msgstr ""
+
+#: tfmmcx.shapepreview.hint
+msgctxt "tfmmcx.shapepreview.hint"
+msgid "Preview"
+msgstr ""
+
+#: tfmmcx.shapeprint.caption
+msgid "Print"
+msgstr ""
+
+#: tfmmcx.shapeprint.hint
+msgid "Print selected object"
+msgstr ""
+
+#: tfmmcx.shapereset.caption
+msgctxt "tfmmcx.shapereset.caption"
+msgid "Reset"
+msgstr ""
+
+#: tfmmcx.shapereset.hint
+msgid "Reset to a 60x60x60 homogeneous cubic domain"
+msgstr ""
+
+#: tfmmcx.statictext1.caption
+msgid "Additional Settings"
+msgstr ""
+
+#: tfmmcx.statictext2.caption
+msgid "Media Settings"
+msgstr ""
+
+#: tfmmcx.statictext3.caption
+msgid "Detector Settings (in voxel unit)"
+msgstr ""
+
+#: tfmmcx.tabinputdata.caption
+msgid "Simulation Designer"
+msgstr ""
+
+#: tfmmcx.tabvolumedesigner.caption
+msgctxt "tfmmcx.tabvolumedesigner.caption"
+msgid "Volume Designer"
+msgstr ""
+
+#: tfmmcx.tbtverify.caption
+msgid "Validate"
+msgstr ""
+
+#: tfmmcx.toolbar1.caption
+msgid "MCX Ribon"
+msgstr ""
+
+#: tfmmcx.toolbar2.caption
+msgid "ToolBar2"
+msgstr ""
+
+#: tfmmcx.toolbar3.caption
+msgid "ToolBar3"
+msgstr ""
+
+#: tfmmcx.toolbutton11.caption
+msgid "Plot ▾"
+msgstr ""
+
+#: tfmmcx.toolbutton11.hint
+msgid "Plot MCX output data"
+msgstr ""
+
+#: tfmmcx.toolbutton12.caption
+msgid "ToolButton12"
+msgstr ""
+
+#: tfmmcx.toolbutton13.caption
+msgid "ToolButton13"
+msgstr ""
+
+#: tfmmcx.toolbutton17.caption
+msgid "ToolButton17"
+msgstr ""
+
+#: tfmmcx.toolbutton35.caption
+msgid "ToolButton35"
+msgstr ""
+
+#: tfmmcx.toolbutton39.hint
+msgid "Reset volume and define a different dimension"
+msgstr ""
+
+#: tfmmcx.toolbutton5.caption
+msgid "ToolButton5"
+msgstr ""
+
+#: tfmmcx.toolbutton7.caption
+msgctxt "tfmmcx.toolbutton7.caption"
+msgid "Reset"
+msgstr ""
+
+#: tfmmcx.toolbutton8.caption
+msgid "ToolButton8"
+msgstr ""
+
+#: tfmmcx.toolbutton9.caption
+msgid "Help ▾"
+msgstr ""
+
+#: tfmmcx.toolbutton9.hint
+msgctxt "tfmmcx.toolbutton9.hint"
+msgid "Browse help information"
+msgstr ""
+
+#: tfmmcx.tvshapes.hint
+msgctxt "tfmmcx.tvshapes.hint"
+msgid "ShapeCfg"
+msgstr ""
+
+#: tfmmcx.vlbc.hint
+msgid ""
+"Boundary \n"
+"\n"
+"Using this box to set the boundary condition for each one of the 6\n"
+"facets on the bounding box. A total of 4 boundary conditions are\n"
+"supported:\n"
+"\n"
+"1. total absorbing BC: photon hiting the boundary are terminated\n"
+"2. Fresnel reflection BC: perform Fresnel reflection/transmission\n"
+"3. mirror/total reflection BC: photon is 100% reflected (can run a long time)\n"
+"4. cylic BC: a photon exiting from a facet will re-enter from the opposite one\n"
+msgstr ""
+
