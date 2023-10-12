@@ -14,7 +14,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, mcxgui, lazcontrols, anchordockpkg, mcxabout
+  Forms, mcxgui, lazcontrols, anchordockpkg, DefaultTranslator, mcxabout
   {$IFNDEF NO_GLSCENE}, mcxshape, mcxview{$ENDIF}, mcxnewsession, mcxsource, mcxloadfile, mcxconfig,
   mcxstoprun, runexec{$IFDEF USE_SYNAPSE}, runssh{$ENDIF} {$IFDEF WINDOWS}, sendkeys{$ENDIF};
 
