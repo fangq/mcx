@@ -165,6 +165,7 @@ jobs:
           cp debug/mcxstudio ../bin
           cp mcxshow ../bin
           cp mcxviewer ../bin
+          cp -a locale ../bin
           cp README.txt ../inno/MCXStudio_README.txt
       - name: Create package folder
         run: |
