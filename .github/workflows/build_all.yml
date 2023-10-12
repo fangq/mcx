@@ -197,11 +197,11 @@ jobs:
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/*
-            upx/upx-4.0.2-win64/upx -9 bin/*
+            upx/upx-4.0.2-win64/upx -9 bin/* || true
             rm -rf upx
           else
-            strip bin/*
-            upx -9 bin/*
+            strip bin/mcx* || true
+            upx -9 bin/mcx* || true
           fi
           rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* .travis* deploy icons filter mcxcloud pmcx pymcx winget inno Xcode*
       - name: Zip mcx
