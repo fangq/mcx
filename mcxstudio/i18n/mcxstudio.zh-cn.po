@@ -1019,7 +1019,7 @@ msgstr "GPU设置"
 #: tfmmcx.grprogram.caption
 msgctxt "tfmmcx.grprogram.caption"
 msgid "Run Monte Carlo simulation with"
-msgstr "使用硬件"
+msgstr "仿真程序"
 
 #: tfmmcx.grprogram.hint
 msgid ""
@@ -1077,7 +1077,7 @@ msgstr ""
 
 #: tfmmcx.label12.caption
 msgid "Run MCX on"
-msgstr "运行 MCX"
+msgstr "选择 GPU"
 
 #: tfmmcx.label12.hint
 msgid "-G (--gpu)"
@@ -1085,7 +1085,7 @@ msgstr ""
 
 #: tfmmcx.label13.caption
 msgid "Seed (-E)"
-msgstr "种子（-E）"
+msgstr "随机数种子（-E）"
 
 #: tfmmcx.label13.hint
 msgid "-E (--seed)"
@@ -1117,7 +1117,7 @@ msgstr ""
 
 #: tfmmcx.label17.caption
 msgid "Replay detector ID (-Y)"
-msgstr "重播探测器ID (-Y)"
+msgstr "重播特定探测器ID (-Y)"
 
 #: tfmmcx.label17.hint
 msgctxt "tfmmcx.label17.hint"
@@ -1472,7 +1472,7 @@ msgstr ""
 
 #: tfmmcx.mcxdodownloadmc2.caption
 msgid "Download fluence"
-msgstr "下载仿真体输出"
+msgstr "下载光分布输出"
 
 #: tfmmcx.mcxdodownloadmch.caption
 msgid "Download detected photon data (*.mch)"
@@ -1519,11 +1519,11 @@ msgstr "打开项目或体文件"
 
 #: tfmmcx.mcxdopaste.caption
 msgid "Paste session from clipboard"
-msgstr "从剪贴板粘贴仿真数据"
+msgstr "从剪贴板创建新仿真"
 
 #: tfmmcx.mcxdoplotjnifti.caption
 msgid "Plot fluence (jnii)"
-msgstr "绘制三维数据（jnii）"
+msgstr "绘制光分布（jnii）"
 
 #: tfmmcx.mcxdoplotjnifti.hint
 msgid ".jnii"
@@ -1531,7 +1531,7 @@ msgstr ""
 
 #: tfmmcx.mcxdoplotmc2.caption
 msgid "Plot fluence (mc2)"
-msgstr "绘制三维数据（mc2）"
+msgstr "绘制光分布（mc2）"
 
 #: tfmmcx.mcxdoplotmc2.hint
 msgid ".mc2"
@@ -1543,7 +1543,7 @@ msgstr "绘图网格"
 
 #: tfmmcx.mcxdoplotnifty.caption
 msgid "Plot fluence (nii)"
-msgstr "绘制三维数据（nii）"
+msgstr "绘制光分布（nii）"
 
 #: tfmmcx.mcxdoplotnifty.hint
 msgid ".nii"
@@ -1904,7 +1904,7 @@ msgstr "打开三维数据绘图"
 #: tfmmcx.menuitem9.caption
 msgctxt "tfmmcx.menuitem9.caption"
 msgid "Volume Designer"
-msgstr "体积设计师"
+msgstr "仿真空间"
 
 #: tfmmcx.miclearlog.caption
 msgid "Clear Log"
@@ -1938,7 +1938,7 @@ msgstr "打开光子历史文件 (*.mch)"
 
 #: tfmmcx.rbusebench.caption
 msgid "Built-in"
-msgstr "内置"
+msgstr "内置仿真"
 
 #: tfmmcx.rbusedesigner.caption
 msgid "User-defined »"
@@ -2078,7 +2078,7 @@ msgstr "球"
 
 #: tfmmcx.shapeaddsphere.hint
 msgid "Add a 3D sphere"
-msgstr "添加 3D 球体"
+msgstr "添加球体"
 
 #: tfmmcx.shapeaddsubgrid.caption
 msgid "Subgrid"
@@ -2086,7 +2086,7 @@ msgstr "次网格"
 
 #: tfmmcx.shapeaddsubgrid.hint
 msgid "Add a 3D box (using the lower-corner of the voxel)"
-msgstr "添加3D框（使用体素的下角）"
+msgstr "添加盒子（使用体素的下角）"
 
 #: tfmmcx.shapeaddupperspace.caption
 msgid "Upper"
@@ -2094,7 +2094,7 @@ msgstr "上半空间"
 
 #: tfmmcx.shapeaddupperspace.hint
 msgid "Add an upper-space defined by a linear inequality"
-msgstr "添加由线性不等式定义的上部空间"
+msgstr "添加由线性不等式定义的上半空间"
 
 #: tfmmcx.shapeaddxlayers.caption
 msgid "XLayers"
@@ -2102,7 +2102,7 @@ msgstr "X层"
 
 #: tfmmcx.shapeaddxlayers.hint
 msgid "Add a layered structure along x-axis"
-msgstr "沿x轴添加分层结构"
+msgstr "沿 x 轴添加分层结构"
 
 #: tfmmcx.shapeaddxslabs.caption
 msgid "XSlabs"
@@ -2110,7 +2110,7 @@ msgstr "X板"
 
 #: tfmmcx.shapeaddxslabs.hint
 msgid "Add a slab along x-axis"
-msgstr "沿x轴添加一块板"
+msgstr "沿 x 轴添加一块板"
 
 #: tfmmcx.shapeaddylayers.caption
 msgid "YLayers"
@@ -2190,7 +2190,7 @@ msgstr "其他设置"
 
 #: tfmmcx.statictext2.caption
 msgid "Media Settings"
-msgstr "媒体设置"
+msgstr "介质设置"
 
 #: tfmmcx.statictext3.caption
 msgid "Detector Settings (in voxel unit)"
@@ -2198,12 +2198,12 @@ msgstr "探测器设置（以体素为单位）"
 
 #: tfmmcx.tabinputdata.caption
 msgid "Simulation Designer"
-msgstr "仿真设计"
+msgstr "仿真参数"
 
 #: tfmmcx.tabvolumedesigner.caption
 msgctxt "tfmmcx.tabvolumedesigner.caption"
 msgid "Volume Designer"
-msgstr "体积设计介面"
+msgstr "仿真空间"
 
 #: tfmmcx.tbtverify.caption
 msgid "Validate"
@@ -2307,7 +2307,7 @@ msgstr "确认"
 
 #: tfmnewsession.caption
 msgid "Create A New Simulation"
-msgstr "创建一个新的仿真"
+msgstr "创建新仿真"
 
 #: tfmnewsession.edsession.hint
 msgctxt "tfmnewsession.edsession.hint"
@@ -2317,7 +2317,7 @@ msgstr "仿真名称"
 #: tfmnewsession.grprogram.caption
 msgctxt "tfmnewsession.grprogram.caption"
 msgid "Run Monte Carlo simulation with"
-msgstr "使用硬件"
+msgstr "仿真程序"
 
 #: tfmnewsession.grprogram.hint
 msgid "Program"
