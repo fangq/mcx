@@ -867,7 +867,7 @@ img.simupreview{
               "minimum": 0
             },
             "Pattern": {
-              "title": "Source Pattern Data",
+              "title": "Source Pattern",
               "type": "object",
               "required": [
                 "_ArrayType_",
@@ -879,14 +879,8 @@ img.simupreview{
               "properties": {
                 "_ArrayType_": {
                   "type": "string",
-                  "default": "uint8",
+                  "default": "single",
                   "enum": [
-                    "uint8",
-                    "uint16",
-                    "uint32",
-                    "int8",
-                    "int16",
-                    "int32",
                     "single"
                   ]
                 },
@@ -1932,6 +1926,7 @@ var IsoRenderShader = {
     schema: defaultSchema,
     show_errors: 'interaction',
     theme: 'spectre',
+    show_opt_in: true,
     no_additional_properties: true
   }
 
