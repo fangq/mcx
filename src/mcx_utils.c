@@ -47,7 +47,6 @@
 #include "mcx_core.h"
 #include "mcx_bench.h"
 #include "mcx_mie.h"
-#include "mcx_i18n.h"
 
 #if defined(_WIN32) && defined(USE_OS_TIMER) && !defined(MCX_CONTAINER)
     #include "mcx_tictoc.h"
