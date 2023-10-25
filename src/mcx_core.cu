@@ -1924,6 +1924,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         /** if photon moves to the next voxel, use the precomputed intersection coord */
         *((float3*)(&p)) = float3(p.x + len * v.x, p.y + len * v.y, p.z + len * v.z);
 
+        if (slen != f.pscat && gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
+            savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata);
+        }
+
         /** although the below 3 lines look dumb, if you change it to flipdir[flipdir[3]] += ..., the speed drops by half, likely due to step locking */
         if (flipdir[3] == 0) {
             flipdir[0] += (slen == f.pscat || (issvmc && hitintf)) ? 0 : (v.x > 0.f ? 1 : -1);

@@ -47,9 +47,10 @@
 #include "mcx_core.h"
 #include "mcx_bench.h"
 #include "mcx_mie.h"
+#include "mcx_i18n.h"
 
 #if defined(_WIN32) && defined(USE_OS_TIMER) && !defined(MCX_CONTAINER)
-    #include "mmc_tictoc.h"
+    #include "mcx_tictoc.h"
 #endif
 
 #ifndef MCX_CONTAINER
@@ -123,7 +124,8 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
                          "--replaydet", "--outputtype", "--outputformat", "--maxjumpdebug",
                          "--maxvoidstep", "--saveexit", "--saveref", "--gscatter", "--mediabyte",
                          "--momentum", "--specular", "--bc", "--workload", "--savedetflag",
-                         "--internalsrc", "--bench", "--dumpjson", "--zip", "--json", "--atomic", ""
+                         "--internalsrc", "--bench", "--dumpjson", "--zip", "--json",
+                         "--atomic", "--lang", ""
                         };
 
 /**
