@@ -48,97 +48,97 @@
           "type": "boolean",
           "default": true
         },
-	"DoPartialPath": {
+        "DoPartialPath": {
           "title": "Save detected photons",
           "type": "boolean",
           "default": true
         },
-	"DoNormalize": {
+        "DoNormalize": {
           "title": "Do normalization",
           "type": "boolean",
           "default": true
         },
-	"DoSaveRef": {
+        "DoSaveRef": {
           "title": "Save diffuse reflectance",
           "type": "boolean",
           "default": false
         },
-	"DoSaveExit": {
+        "DoSaveExit": {
           "title": "Save exit position",
           "type": "boolean",
           "default": false
         },
-	"DoSaveSeed": {
+        "DoSaveSeed": {
           "title": "Save photon seeds",
           "type": "boolean",
           "default": false
         },
-	"DoDCS": {
+        "DoDCS": {
           "title": "Save momentum transfer",
           "type": "boolean",
           "default": false
         },
-	"DoSpecular": {
+        "DoSpecular": {
           "title": "Do specular reflection",
           "type": "boolean",
           "default": true
         },
-	"DebugFlag": {
-	  "oneOf" :[
-	   {
-            "title": "Debug flags",
-            "type": "string",
-            "default": ""
-	   },
-	   {
-            "title": "Debug flags",
-            "type": "integer",
-            "default": 0,
-	    "minimum": 0
-	   }
-	  ]
+        "DebugFlag": {
+          "oneOf": [
+            {
+              "title": "Debug flags",
+              "type": "string",
+              "default": ""
+            },
+            {
+              "title": "Debug flags",
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          ]
         },
-	"SaveDataMask": {
-	  "oneOf" :[
-	   {
-            "title": "Save detected photon flags",
-            "type": "string",
-            "default": "DP"
-	   },
-	   {
-            "title": "Save detected photon flags",
-            "type": "integer",
-            "default": 5,
-	    "minimum": 0
-	   }
-	  ]
+        "SaveDataMask": {
+          "oneOf": [
+            {
+              "title": "Save detected photon flags",
+              "type": "string",
+              "default": "DP"
+            },
+            {
+              "title": "Save detected photon flags",
+              "type": "integer",
+              "default": 5,
+              "minimum": 0
+            }
+          ]
         },
-	"OutputFormat": {
+        "OutputFormat": {
           "title": "Output file format",
           "type": "string",
-	  "default": "nii",
+          "default": "nii",
           "enum": [
-                "mc2",
-                "nii",
-		"jnii",
-		"bnii",
-                "hdr",
-		"tx3"
-              ]
+            "mc2",
+            "nii",
+            "jnii",
+            "bnii",
+            "hdr",
+            "tx3"
+          ]
         },
-	"OutputType": {
+        "OutputType": {
           "title": "Output data type",
           "type": "string",
-	  "default": "x",
+          "default": "x",
           "enum": [
-                "x",
-                "f",
-                "e",
-                "j",
-		"p",
-		"m",
-		"r"
-              ]
+            "x",
+            "f",
+            "e",
+            "j",
+            "p",
+            "m",
+            "r"
+          ]
         },
         "RNGSeed": {
           "title": "Random seed",
@@ -162,21 +162,21 @@
           "type": "number",
           "default": 0,
           "minimum": 0,
-          "maximum": 1e-7
+          "maximum": 1e-07
         },
         "T1": {
           "title": "Ending time",
           "type": "number",
-          "default": 5e-9,
+          "default": 5e-09,
           "minimum": 0,
-          "maximum": 1e-7
+          "maximum": 1e-07
         },
         "Dt": {
           "title": "Time gate width",
           "type": "number",
-          "default": 5e-9,
+          "default": 5e-09,
           "minimum": 0,
-          "maximum": 1e-7
+          "maximum": 1e-07
         }
       }
     },
@@ -255,11 +255,11 @@
               "title": "Source Parameter 1",
               "type": "array",
               "format": "table",
-	      "default": [
+              "default": [
                 0,
                 0,
                 0,
-		0
+                0
               ],
               "items": {
                 "type": "number"
@@ -271,11 +271,11 @@
               "title": "Source Parameter 2",
               "type": "array",
               "format": "table",
-	      "default": [
+              "default": [
                 0,
                 0,
                 0,
-		0
+                0
               ],
               "items": {
                 "type": "number"
@@ -288,6 +288,82 @@
               "type": "number",
               "default": 0,
               "minimum": 0
+            },
+            "Pattern": {
+              "title": "Source Pattern Data",
+              "type": "object",
+              "required": [
+                "_ArrayType_",
+                "_ArraySize_",
+                "_ArrayZipType_",
+                "_ArrayZipSize_",
+                "_ArrayZipData_"
+              ],
+              "properties": {
+                "_ArrayType_": {
+                  "type": "string",
+                  "default": "uint8",
+                  "enum": [
+                    "uint8",
+                    "uint16",
+                    "uint32",
+                    "int8",
+                    "int16",
+                    "int32",
+                    "single"
+                  ]
+                },
+                "_ArraySize_": {
+                  "type": "array",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "_ArrayZipType_": {
+                  "type": "string",
+                  "default": "zlib",
+                  "enum": [
+                    "zlib",
+                    "gzip"
+                  ]
+                },
+                "_ArrayZipSize_": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "default": 0,
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "default": [
+                        0,
+                        0
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  ]
+                },
+                "_ArrayZipData_": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
             }
           }
         },
@@ -308,7 +384,7 @@
                 "items": {
                   "type": "number"
                 },
-		"default": [
+                "default": [
                   25,
                   30,
                   0
@@ -329,514 +405,553 @@
     },
     "Shapes": {
       "title": "Shapes",
-      "oneOf" :[
-	{
-	"type": "array",
-	"format": "table",
-	"items": {
-          "anyOf": [
-            {
-              "title": "Grid",
-              "type": "object",
-              "required": ["Grid"],
-              "properties": {
-	          "Grid":{
-                     "title": "Grid",
-                     "type": "object",
-		      "required": [
-			"Tag",
-			"Size"
-		      ],
-		     "properties": {
-			  "Tag": {
-			    "title": "Tag",
-			    "type": "integer",
-			    "default": 1,
-			    "minimum": 0
-			  },
-			  "Size": {
-			    "title": "Size",
-			    "type": "array",
-			    "format": "table",
-			    "default": [
-			       60,
-			       60,
-			       60
-			    ],
-			    "items": {
-			      "type": "number"
-			    },
-			    "minItems": 3,
-			    "maxItems": 3
-			  }
-		     }
-		  }
-        	}
-            },
-            {
-              "title": "Sphere",
-              "type": "object",
-              "required": ["Sphere"],
-              "properties": {
-		"Sphere":{
+      "oneOf": [
+        {
+          "type": "array",
+          "format": "table",
+          "items": {
+            "anyOf": [
+              {
+                "title": "Grid",
+                "type": "object",
+                "required": [
+                  "Grid"
+                ],
+                "properties": {
+                  "Grid": {
+                    "title": "Grid",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "Size"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      },
+                      "Size": {
+                        "title": "Size",
+                        "type": "array",
+                        "format": "table",
+                        "default": [
+                          60,
+                          60,
+                          60
+                        ],
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Sphere",
+                "type": "object",
+                "required": [
+                  "Sphere"
+                ],
+                "properties": {
+                  "Sphere": {
                     "title": "Sphere",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "O",
-		       "R"
-		    ],
-		    "properties": {
-			  "Tag": {
-			      "title": "Tag",
-			      "type": "integer",
-			      "minimum": 0
-			    },
-			    "O": {
-			      "title": "Center",
-			      "type": "array",
-			      "format": "table",
-			      "items": {
-				"type": "number"
-			      },
-			      "default": [
-				 30,
-				 30,
-				 30
-			      ],
-			      "minItems": 3,
-			      "maxItems": 3
-			    },
-			    "R": {
-			      "title": "Radius",
-			      "type": "number",
-			      "minimum": 0
-			    }
-		     }
-		}
-              }
-            },
-            {
-              "title": "Box",
-              "type": "object",
-              "required": ["Box"],
-              "properties": {
-		"Box":{
+                    "required": [
+                      "Tag",
+                      "O",
+                      "R"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "O": {
+                        "title": "Center",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "default": [
+                          30,
+                          30,
+                          30
+                        ],
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "R": {
+                        "title": "Radius",
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Box",
+                "type": "object",
+                "required": [
+                  "Box"
+                ],
+                "properties": {
+                  "Box": {
                     "title": "Box",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "O",
-		       "Size"
-		    ],
-		    "properties": {
-			"Tag": {
-			  "title": "Tag",
-			  "type": "integer",
-			  "minimum": 0
-			},
-			"Size": {
-			  "title": "Size",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-			    "type": "integer",
-			    "minimum": 0,
-			    "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-			},
-			"O": {
-			  "title": "Origin",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-			    "type": "integer",
-			    "minimum": 0,
-			    "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-			}
-		    }
-		}
-              }
-            },
-            {
-              "title": "Subgrid",
-              "type": "object",
-              "required": ["Subgrid"],
-              "properties": {
-		"Subgrid":{
+                    "required": [
+                      "Tag",
+                      "O",
+                      "Size"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Size": {
+                        "title": "Size",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "O": {
+                        "title": "Origin",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Subgrid",
+                "type": "object",
+                "required": [
+                  "Subgrid"
+                ],
+                "properties": {
+                  "Subgrid": {
                     "title": "Subgrid",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "O",
-		       "Size"
-		    ],
-  		    "properties": {
-			"Tag": {
-			  "title": "Tag",
-			  "type": "integer",
-			  "minimum": 0
-			},
-			"Size": {
-			  "title": "Size",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-			    "type": "integer",
-			    "minimum": 0,
-			    "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-			},
-			"O": {
-			  "title": "Origin",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-			    "type": "integer",
-			    "minimum": 0,
-			    "default": 0
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-			}
-		    }
-		}
-              }
-            },
-            {
-              "title": "Cylinder",
-              "type": "object",
-              "required": ["Cylinder"],
-              "properties": {
-		"Cylinder":{
+                    "required": [
+                      "Tag",
+                      "O",
+                      "Size"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Size": {
+                        "title": "Size",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "O": {
+                        "title": "Origin",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Cylinder",
+                "type": "object",
+                "required": [
+                  "Cylinder"
+                ],
+                "properties": {
+                  "Cylinder": {
                     "title": "Cylinder",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "C0",
-		       "C1",
-		       "R"
-		    ],
-  		    "properties": {
-			"Tag": {
-			  "title": "Tag",
-			  "type": "integer",
-			  "minimum": 0
-			},
-			"C0": {
-			  "title": "Axis Center 1",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-			    "type": "number"
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-			},
-			"C1": {
-			  "title": "Axis Center 2",
-			  "type": "array",
-			  "format": "table",
-			  "items": {
-			    "type": "number"
-			  },
-			  "minItems": 3,
-			  "maxItems": 3
-			},
-			"R": {
-			  "title": "Radius",
-			  "type": "number",
-			  "minimum": 0
-			}
-		    }
-		}
-              }
-            },
-            {
-              "title": "Name",
-              "type": "object",
-              "required": ["Name"],
-              "properties": {
-		 "Name":{
-                     "type": "string",
-	             "default": ""
-		 }
-	      }
-            },
-            {
-              "title": "Origin",
-              "type": "object",
-              "required": ["Origin"],
-              "properties": {
-		"Origin":{
+                    "required": [
+                      "Tag",
+                      "C0",
+                      "C1",
+                      "R"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "C0": {
+                        "title": "Axis Center 1",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "C1": {
+                        "title": "Axis Center 2",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "R": {
+                        "title": "Radius",
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Name",
+                "type": "object",
+                "required": [
+                  "Name"
+                ],
+                "properties": {
+                  "Name": {
+                    "type": "string",
+                    "default": ""
+                  }
+                }
+              },
+              {
+                "title": "Origin",
+                "type": "object",
+                "required": [
+                  "Origin"
+                ],
+                "properties": {
+                  "Origin": {
                     "title": "Origin",
                     "type": "array",
-		    "format": "table",
-		    "items": {
-			    "type": "number",
-			    "minimum": 0,
-			    "default": 0
-		    },
-		    "minItems": 3,
-		    "maxItems": 3
-		}
-              }
-            },
-            {
-              "title": "XLayers",
-              "type": "object",
-              "required": ["XLayers"],
-              "properties": {
-		"XLayers":{
+                    "format": "table",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0,
+                      "default": 0
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              },
+              {
+                "title": "XLayers",
+                "type": "object",
+                "required": [
+                  "XLayers"
+                ],
+                "properties": {
+                  "XLayers": {
                     "title": "XLayers",
                     "type": "array",
-		    "format": "table",
-		    "items": {
-			    "type": "array",
-		            "format": "table",
-			    "items": {
-				    "type": "integer",
-				    "minimum": 0,
-				    "default": 0
-			    },
-			    "minItems": 3,
-			    "maxItems": 3
-		    }
-		}
-              }
-            },
-            {
-              "title": "YLayers",
-              "type": "object",
-              "required": ["YLayers"],
-              "properties": {
-		"YLayers":{
+                    "format": "table",
+                    "items": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              },
+              {
+                "title": "YLayers",
+                "type": "object",
+                "required": [
+                  "YLayers"
+                ],
+                "properties": {
+                  "YLayers": {
                     "title": "YLayers",
                     "type": "array",
-		    "format": "table",
-		    "items": {
-			    "type": "array",
-		            "format": "table",
-			    "items": {
-				    "type": "integer",
-				    "minimum": 0,
-				    "default": 0
-			    },
-			    "minItems": 3,
-			    "maxItems": 3
-		    }
-		}
-              }
-            },
-            {
-              "title": "ZLayers",
-              "type": "object",
-              "required": ["ZLayers"],
-              "properties": {
-		"ZLayers":{
+                    "format": "table",
+                    "items": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              },
+              {
+                "title": "ZLayers",
+                "type": "object",
+                "required": [
+                  "ZLayers"
+                ],
+                "properties": {
+                  "ZLayers": {
                     "title": "ZLayers",
                     "type": "array",
-		    "format": "table",
-		    "items": {
-			    "type": "array",
-		            "format": "table",
-			    "items": {
-				    "type": "integer",
-				    "minimum": 0,
-				    "default": 0
-			    },
-			    "minItems": 3,
-			    "maxItems": 3
-		    }
-		}
-              }
-            },
-            {
-              "title": "XSlabs",
-              "type": "object",
-              "required": ["XSlabs"],
-              "properties": {
-		"XSlabs":{
+                    "format": "table",
+                    "items": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              },
+              {
+                "title": "XSlabs",
+                "type": "object",
+                "required": [
+                  "XSlabs"
+                ],
+                "properties": {
+                  "XSlabs": {
                     "title": "XSlabs",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "Bound"
-		    ],
-  		    "properties": {
-			"Tag": {
-			  "title": "Tag",
-			  "type": "integer",
-			  "minimum": 0
-			},
-			"Bound": {
-			    "title": "Start/End Indices",
-			    "type": "array",
-			    "format": "table",
-			    "items": {
-				    "type": "array",
-				    "format": "table",
-				    "items": {
-					    "type": "integer",
-					    "minimum": 0,
-					    "default": 0
-				    },
-				    "minItems": 2,
-				    "maxItems": 2
-			    }
-			}
-		    }
-		}
-	      }
-            },
-            {
-              "title": "YSlabs",
-              "type": "object",
-              "required": ["YSlabs"],
-              "properties": {
-		"YSlabs":{
+                    "required": [
+                      "Tag",
+                      "Bound"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Bound": {
+                        "title": "Start/End Indices",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "YSlabs",
+                "type": "object",
+                "required": [
+                  "YSlabs"
+                ],
+                "properties": {
+                  "YSlabs": {
                     "title": "YSlabs",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "Bound"
-		    ],
-  		    "properties": {
-			"Tag": {
-			  "title": "Tag",
-			  "type": "integer",
-			  "minimum": 0
-			},
-			"Bound": {
-			    "title": "Start/End Indices",
-			    "type": "array",
-			    "format": "table",
-			    "items": {
-				    "type": "array",
-				    "format": "table",
-				    "items": {
-					    "type": "integer",
-					    "minimum": 0,
-					    "default": 0
-				    },
-				    "minItems": 2,
-				    "maxItems": 2
-			    }
-			}
-		    }
-		}
-	      }
-            },
-            {
-              "title": "ZSlabs",
-              "type": "object",
-              "required": ["ZSlabs"],
-              "properties": {
-		"ZSlabs":{
+                    "required": [
+                      "Tag",
+                      "Bound"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Bound": {
+                        "title": "Start/End Indices",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "ZSlabs",
+                "type": "object",
+                "required": [
+                  "ZSlabs"
+                ],
+                "properties": {
+                  "ZSlabs": {
                     "title": "ZSlabs",
                     "type": "object",
-		    "required": [
-		       "Tag",
-		       "Bound"
-		    ],
-  		    "properties": {
-			"Tag": {
-			  "title": "Tag",
-			  "type": "integer",
-			  "minimum": 0
-			},
-			"Bound": {
-			    "title": "Start/End Indices",
-			    "type": "array",
-			    "format": "table",
-			    "items": {
-				    "type": "array",
-				    "format": "table",
-				    "items": {
-					    "type": "integer",
-					    "minimum": 0,
-					    "default": 0
-				    },
-				    "minItems": 2,
-				    "maxItems": 2
-			    }
-			}
-		    }
-		}
-	      }
+                    "required": [
+                      "Tag",
+                      "Bound"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Bound": {
+                        "title": "Start/End Indices",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "_ArrayType_",
+            "_ArraySize_",
+            "_ArrayZipType_",
+            "_ArrayZipSize_",
+            "_ArrayZipData_"
+          ],
+          "properties": {
+            "_ArrayType_": {
+              "type": "string",
+              "default": "uint8",
+              "enum": [
+                "uint8",
+                "uint16",
+                "uint32",
+                "int8",
+                "int16",
+                "int32",
+                "single"
+              ]
+            },
+            "_ArraySize_": {
+              "type": "array",
+              "default": [
+                0,
+                0,
+                0
+              ],
+              "format": "table",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "_ArrayZipType_": {
+              "type": "string",
+              "default": "zlib",
+              "enum": [
+                "zlib",
+                "gzip"
+              ]
+            },
+            "_ArrayZipSize_": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "default": 0,
+                  "minimum": 0
+                },
+                {
+                  "type": "array",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ]
+            },
+            "_ArrayZipData_": {
+              "type": "string",
+              "default": ""
             }
-          ]
-	}
-      },
-      {
-            "type": "object",
-            "required": ["_ArrayType_","_ArraySize_","_ArrayZipType_","_ArrayZipSize_","_ArrayZipData_"],
-            "properties": {
-	      "_ArrayType_":{
-		  "type": "string",
-		  "default": "uint8",
-		  "enum": [
-			"uint8",
-			"uint16",
-			"uint32",
-			"int8",
-			"int16",
-			"int32",
-			"single"
-		      ]
-	      },
-	      "_ArraySize_":{
-		  "type": "array",
-		  "default": [0,0,0],
-		  "format": "table",
-		  "items": {
-		      "type": "integer",
-		      "minimum": 0
-		  },
-	          "minItems": 3,
-	          "maxItems": 3
-	      },
-	      "_ArrayZipType_":{
-		  "type": "string",
-		  "default": "zlib",
-		  "enum": [
-			"zlib",
-			"gzip"
-		      ]
-	      },
-	      "_ArrayZipSize_":{
-	          "oneOf" :[
-		      {
-			  "type": "integer",
-			  "default": 0,
-			  "minimum": 0
-		      },
-		      {
-			  "type": "array",
-			  "default": [0,0],
-			  "format": "table",
-			  "items": {
-			      "type": "integer",
-			      "minimum": 0
-			  },
-			  "minItems": 2,
-			  "maxItems": 2
-		      }
-		  ]
-	      },
-	      "_ArrayZipData_":{
-		  "type": "string",
-		  "default": ""
-	      }
-	    }
-	}
+          }
+        }
       ]
     },
     "Domain": {
@@ -868,27 +983,27 @@
           "minItems": 3,
           "maxItems": 3
         },
-	"LengthUnit": {
+        "LengthUnit": {
           "title": "Voxel Size (in mm)",
           "type": "number",
           "default": 1,
           "minimum": 0
-	},
-	"MediaFormat": {
+        },
+        "MediaFormat": {
           "title": "Binary Volume Format",
           "type": "string",
-	  "default": "byte",
+          "default": "byte",
           "enum": [
-                "byte",
-                "short",
-		"svmc",
-		"mixlabel",
-                "labelplus",
-		"muamus_float",
-		"muamus_half",
-		"asgn_byte",
-		"muamus_short"
-              ]
+            "byte",
+            "short",
+            "svmc",
+            "mixlabel",
+            "labelplus",
+            "muamus_float",
+            "muamus_half",
+            "asgn_byte",
+            "muamus_short"
+          ]
         },
         "VolumeFile": {
           "title": "Volume File",
