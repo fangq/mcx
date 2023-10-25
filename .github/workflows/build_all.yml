@@ -2,7 +2,7 @@ name: Build+Upload MCX and Octave/MATLAB mex
 on:
   push:
     branches:
-      - master
+      - morescat
     tags:
       - '*'
   pull_request:
