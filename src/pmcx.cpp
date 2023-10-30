@@ -577,7 +577,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         std::string src_type = py::str(user_cfg["srctype"]);
         const char* srctypeid[] = {"pencil", "isotropic", "cone", "gaussian", "planar",
                                    "pattern", "fourier", "arcsine", "disk", "fourierx", "fourierx2d", "zgaussian",
-                                   "line", "slit", "pencilarray", "pattern3d", "hyperboloid", "ring", ""
+                                   "line", "slit", "pencilarray", "pattern3d", "hyperboloid", "ring", "anglepattern", ""
                                   };
         char strtypestr[MAX_SESSION_LENGTH] = {'\0'};
 

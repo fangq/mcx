@@ -1291,6 +1291,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                 }
 
                 case (MCX_SRC_CONE):       // uniform cone beam
+                case (MCX_SRC_ANGLEPATTERN): // md703-defined pattern for LED
                 case (MCX_SRC_ISOTROPIC):  // isotropic source
                 case (MCX_SRC_ARCSINE): {  // uniform distribution in zenith angle, arcsine distribution if projected in orthogonal plane
                     // Uniform point picking on a sphere
@@ -1302,7 +1303,69 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (gcfg->srctype == MCX_SRC_CONE) { // a solid-angle section of a uniform sphere
                         ang = cosf(gcfg->srcparam1.x);
                         ang = (gcfg->srcparam1.y > 0.f) ? rand_uniform01(t) * gcfg->srcparam1.x : acos(rand_uniform01(t) * (1.0 - ang) + ang); //sine distribution
-                    } else {
+                    } else if(gcfg->srctype==MCX_SRC_ANGLEPATTERN){  // cone which have a user-specified angle power pattern
+                        int temp_index;
+                        float launch_x,launch_y; // launch position from LED panel
+                        ang=rand_uniform01(t); // variable ang now is not a angle, is just a random number.
+                        temp_index=(int)(floorf(ang*gcfg->srcparam1.x)); // random a point on the CDF curve
+                        ang=srcpattern[temp_index]+(srcpattern[temp_index+1]-srcpattern[temp_index])*(ang*gcfg->srcparam1.x-floorf(ang*gcfg->srcparam1.x)); // find the corresponding angle		          
+                        // if: LED is rectangle
+                        if(gcfg->srcparam1.y!=0.f){
+                            // sphi and cphi here are to determine the launched azimuth angle
+                            while(1){
+                                // sampling launched position on circle LED panel
+                                launch_x=-gcfg->srcparam1.y/2+gcfg->srcparam1.y*rand_uniform01(t); // assume LED panel center is at (0,0)
+                                launch_y=-gcfg->srcparam1.z/2+gcfg->srcparam1.z*rand_uniform01(t);
+                                // determine whether photon exceed the window. if exceed, resample the photon.        		          
+                                if(gcfg->srcparam2.x!=0.f){ // condition 1: radiated window is a rectangle.
+                                    if(fabs(gcfg->srcparam2.w*tanf(ang)*cphi+launch_x) <= gcfg->srcparam2.x/2 && fabs(gcfg->srcparam2.w*tanf(ang)*sphi+launch_y) <= gcfg->srcparam2.y/2){
+                                        break;
+                                    }        		          
+                                }else{ // condition 2: radiated window is a circle.
+                                    if(powf(fabs(gcfg->srcparam2.w*tanf(ang)*cphi+launch_x), 2.f) + powf(fabs(gcfg->srcparam2.w*tanf(ang)*sphi+launch_y), 2.f) <= powf(gcfg->srcparam2.z, 2.f)){
+                                        break;
+                                    }
+                                }
+                                // resample sphi, cphi, and then theta (cdf angle)
+                                ang=TWO_PI*rand_uniform01(t);
+                                sincosf(ang,&sphi,&cphi);
+                                ang=rand_uniform01(t);
+                                temp_index=(int)(floorf(ang*gcfg->srcparam1.x)); // random a point on the CDF curve
+                                ang=srcpattern[temp_index]+(srcpattern[temp_index+1]-srcpattern[temp_index])*(ang*gcfg->srcparam1.x-floorf(ang*gcfg->srcparam1.x)); // find the corresponding angle
+                            }		          
+                        // else: LED is circular
+                        }   else{
+                            float cir_r, cir_phi,cir_sphi,cir_cphi; // for sampling the launched position on circle LED panel
+                            while(1){
+                                // sampling the launched position on circle LED panel
+                                cir_r=gcfg->srcparam1.w*sqrtf(rand_uniform01(t));
+                                cir_phi=TWO_PI*rand_uniform01(t);
+                                sincosf(cir_phi,&cir_sphi,&cir_cphi);        		          
+                                launch_x=cir_r*cir_cphi; // assume LED panel center is (0,0)
+                                launch_y=cir_r*cir_sphi;
+                                // determine whether photon exceed the window. if exceed, resample the photon.        		          
+                                if(gcfg->srcparam2.x!=0.f){ // condition 1: radiated window is a rectangle.
+                                    if(fabs(gcfg->srcparam2.w*tanf(ang)*cphi+launch_x) <= gcfg->srcparam2.x/2 && fabs(gcfg->srcparam2.w*tanf(ang)*sphi+launch_y) <= gcfg->srcparam2.y/2){
+                                        break;
+                                    }
+                                
+                                }else{ // condition 2: radiated window is a circle.
+                                    if(powf(fabs(gcfg->srcparam2.w*tanf(ang)*cphi+launch_x), 2.f) + powf(fabs(gcfg->srcparam2.w*tanf(ang)*sphi+launch_y), 2.f) <= powf(gcfg->srcparam2.z, 2.f)){
+                                        break;
+                                    }
+                                }
+                                // resample sphi, cphi, and then theta (cdf angle)
+                                ang=TWO_PI*rand_uniform01(t);
+                                sincosf(ang,&sphi,&cphi);
+                                ang=rand_uniform01(t);
+                                temp_index=(int)(floorf(ang*gcfg->srcparam1.x)); // random a point on the CDF curve
+                                ang=srcpattern[temp_index]+(srcpattern[temp_index+1]-srcpattern[temp_index])*(ang*gcfg->srcparam1.x-floorf(ang*gcfg->srcparam1.x)); // find the corresponding angle
+                            }
+                        }
+                        // update legal p		          
+                        p->x += gcfg->srcparam2.w*tanf(ang)*cphi+launch_x;
+                        p->y += gcfg->srcparam2.w*tanf(ang)*sphi+launch_y;
+                    }   else {
                         if (gcfg->srctype == MCX_SRC_ISOTROPIC) { // uniform sphere
                             ang = acosf(2.f * rand_uniform01(t) - 1.f);    //sine distribution
                         } else {
@@ -2978,6 +3041,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         CUDA_ASSERT(cudaMalloc((void**) &gsrcpattern, sizeof(float) * (int)(cfg->srcparam1.w * cfg->srcparam2.w * cfg->srcnum)));
     } else if (cfg->srctype == MCX_SRC_PATTERN3D) {
         CUDA_ASSERT(cudaMalloc((void**) &gsrcpattern, sizeof(float) * (int)(cfg->srcparam1.x * cfg->srcparam1.y * cfg->srcparam1.z * cfg->srcnum)));
+    } else if(cfg->srctype==MCX_SRC_ANGLEPATTERN) {
+        CUDA_ASSERT(cudaMalloc((void **) &gsrcpattern, sizeof(float)*(int)(cfg->srcparam1.x+1)));
     }
 
 #ifndef SAVE_DETECTORS
@@ -3078,7 +3143,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             CUDA_ASSERT(cudaMemcpy(gsrcpattern, cfg->srcpattern, sizeof(float) * (int)(cfg->srcparam1.w * cfg->srcparam2.w * cfg->srcnum), cudaMemcpyHostToDevice));
         } else if (cfg->srctype == MCX_SRC_PATTERN3D) {
             CUDA_ASSERT(cudaMemcpy(gsrcpattern, cfg->srcpattern, sizeof(float) * (int)(cfg->srcparam1.x * cfg->srcparam1.y * cfg->srcparam1.z * cfg->srcnum), cudaMemcpyHostToDevice));
+        } else if(cfg->srctype==MCX_SRC_ANGLEPATTERN) {
+            CUDA_ASSERT(cudaMemcpy(gsrcpattern,cfg->srcpattern,sizeof(float)*(int)(cfg->srcparam1.x+1), cudaMemcpyHostToDevice)); 
         }
+            
 
     /**
       * Copy constants to the constant memory on the GPU

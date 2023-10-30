@@ -218,7 +218,8 @@
                 "slit",
                 "pencilarray",
                 "hyperboloid",
-                "ring"
+                "ring",
+                "anglepattern"
               ]
             },
             "Pos": {
