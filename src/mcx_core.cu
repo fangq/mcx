@@ -1044,7 +1044,17 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                 if (gcfg->srctype != MCX_SRC_PATTERN && gcfg->srctype != MCX_SRC_PATTERN3D) {
 #ifdef USE_ATOMIC
+#ifdef USE_DOUBLE
                     atomicAdd(& field[*idx1d + tshift * gcfg->dimlen.z], -p->w);
+#else
+                    float oldval = atomicAdd(& field[*idx1d + tshift * gcfg->dimlen.z], -p->w);
+
+                    if (fabsf(oldval) > MAX_ACCUM) {
+                        atomicadd(& field[*idx1d + tshift * gcfg->dimlen.z], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                        atomicadd(& field[*idx1d + tshift * gcfg->dimlen.z + gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                    }
+
+#endif
 #else
                     field[*idx1d + tshift * gcfg->dimlen.z] += -p->w;
 #endif
@@ -1052,7 +1062,17 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     for (int i = 0; i < gcfg->srcnum; i++) {
                         if (fabsf(ppath[gcfg->w0offset + i]) > 0.f) {
 #ifdef USE_ATOMIC
+#ifdef USE_DOUBLE
                             atomicAdd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], -((gcfg->srcnum == 1) ? p->w : p->w * ppath[gcfg->w0offset + i]));
+#else
+                            float oldval = atomicAdd(& field[(*idx1d + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], -((gcfg->srcnum == 1) ? p->w : p->w * ppath[gcfg->w0offset + i]));
+
+                            if (fabsf(oldval) > MAX_ACCUM) {
+                                atomicadd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                atomicadd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                            }
+
+#endif
 #else
                             field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i] += -((gcfg->srcnum == 1) ? p->w : p->w * ppath[gcfg->w0offset + i]);
 #endif
