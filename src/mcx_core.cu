@@ -1573,7 +1573,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
  * @param[in] n_seed: the seed to the RNG
  */
 
-__global__ void mcx_test_rng(OutputType field[], uint n_seed[]) {
+__global__ void mcx_test_rng(float field[], uint n_seed[]) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     int i;
     int len = gcfg->maxidx.x * gcfg->maxidx.y * gcfg->maxidx.z * (int)((gcfg->twin1 - gcfg->twin0) * gcfg->Rtstep + 0.5f);
@@ -2840,6 +2840,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     if (cfg->debuglevel & MCX_DEBUG_RNG) {
         #pragma omp master
         {
+            float* rngfield;
             param.twin0 = cfg->tstart;
             param.twin1 = cfg->tend;
             Pseed = (uint*)malloc(sizeof(RandType) * RAND_BUF_LEN);
@@ -2850,19 +2851,19 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
             CUDA_ASSERT(cudaMalloc((void**) &gPseed, sizeof(RandType)*RAND_BUF_LEN));
             CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*RAND_BUF_LEN,  cudaMemcpyHostToDevice));
-            CUDA_ASSERT(cudaMalloc((void**) &gfield, sizeof(OutputType)*fieldlen));
-            CUDA_ASSERT(cudaMemset(gfield, 0, sizeof(OutputType)*fieldlen)); // cost about 1 ms
+            CUDA_ASSERT(cudaMalloc((void**) &rngfield, sizeof(float)*fieldlen));
+            CUDA_ASSERT(cudaMemset(rngfield, 0, sizeof(float)*fieldlen)); // cost about 1 ms
             CUDA_ASSERT(cudaMemcpyToSymbol(gcfg,   &param, sizeof(MCXParam), 0, cudaMemcpyHostToDevice));
 
             tic = StartTimer();
             MCX_FPRINTF(cfg->flog, "generating %lu random numbers ... \t", fieldlen);
             fflush(cfg->flog);
-            mcx_test_rng <<< 1, 1>>>(gfield, gPseed);
+            mcx_test_rng <<< 1, 1>>>(rngfield, gPseed);
             tic1 = GetTimeMillis();
             MCX_FPRINTF(cfg->flog, "kernel complete:  \t%d ms\nretrieving random numbers ... \t", tic1 - tic);
             CUDA_ASSERT(cudaGetLastError());
 
-            CUDA_ASSERT(cudaMemcpy(field, gfield, sizeof(OutputType)*dimxyz* gpu[gpuid].maxgate, cudaMemcpyDeviceToHost));
+            CUDA_ASSERT(cudaMemcpy(field, rngfield, sizeof(float)*dimxyz* gpu[gpuid].maxgate, cudaMemcpyDeviceToHost));
             MCX_FPRINTF(cfg->flog, "transfer complete:\t%d ms\n\n", GetTimeMillis() - tic);
             fflush(cfg->flog);
 
@@ -2881,7 +2882,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
 #endif
 
-            CUDA_ASSERT(cudaFree(gfield));
+            CUDA_ASSERT(cudaFree(rngfield));
             CUDA_ASSERT(cudaFree(gPseed));
             free(field);
             free(Pseed);
