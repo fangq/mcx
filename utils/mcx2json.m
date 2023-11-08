@@ -95,7 +95,13 @@ if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
                 cfg.vol=single(cfg.vol);
             end
             if(all(mod(cfg.vol(:),1) == 0))
-                Domain.MediaFormat='integer';
+                if(max(cfg.vol(:))<256)
+                    Domain.MediaFormat='byte';
+                    cfg.vol=uint8(cfg.vol);
+                else
+                    Domain.MediaFormat='integer';
+                    cfg.vol=uint32(cfg.vol);
+                end
             elseif(ndims(cfg.vol)==4)
                 if(size(cfg.vol,1))==1
                     Domain.MediaFormat='mua_float';
