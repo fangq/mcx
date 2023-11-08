@@ -5044,7 +5044,7 @@ void mcx_printheader(Config* cfg) {
 # MCX proudly developed human-readable JSON-based data formats for easy reuse,#\n\
 #  Please consider using JSON (" S_BLUE "https://neurojson.org/" S_MAGENTA ") for your research data #\n\
 ###############################################################################\n\
-$Rev::      $ " S_GREEN MCX_VERSION S_MAGENTA "  $Date::                       $ by $Author::             $\n\
+$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA "$Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
 }
 

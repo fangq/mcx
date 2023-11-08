@@ -31,9 +31,9 @@
 #ifndef _MCEXTREME_CONSTANT_H
 #define _MCEXTREME_CONSTANT_H
 
-#define MCX_VERSION        "v2023"
+#define MCX_VERSION        "v2023.11"
 #define MCX_VERSION_MAJOR  2
-#define MCX_VERSION_MINOR  0
+#define MCX_VERSION_MINOR  2
 
 #define ONE_PI             3.1415926535897932f     /**< pi */
 #define TWO_PI             6.28318530717959f       /**< 2*pi */

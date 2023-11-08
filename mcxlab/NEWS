@@ -2,6 +2,34 @@
 
 Major updates are marked with a "*"
 
+== MCX v2023.11 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
+
+ 2023-11-07 [a710ab3] allow converting integer cfg.vol to json
+ 2023-10-31 [d6c64e4] [test] fix rng test after make double
+ 2023-10-30 [08361eb] [pmcx] bump pmcx to v0.2.6 with dref fix #195
+ 2023-10-30 [9220578]*[bug] apply #41 like 2xfloat-buffer for dref accumulation, fix #195
+ 2023-10-24 [961d059] pattern json data rstrict to single,set show_opt_in option
+ 2023-10-24 [5f130fc] use 2d pattern by default
+ 2023-10-24 [db608f7] use jq to format json schema; add Source.Pattern in schema
+ 2023-10-14 [4c365f9] update zh-cn translation
+ 2023-10-12 [8d23726] fix windows ci error
+ 2023-10-12 [2904cc3] avoid error when compressing binaries
+ 2023-10-12 [2ebe3de] include language locale files in github CI build
+ 2023-10-12 [5782cff] enable DefaultTranslator for i18n support in mcxstudio
+ 2023-10-11 [833d117] add compiled mo locale file
+ 2023-10-11 [ad298c1] add initial translation for simplified Chinese
+ 2023-10-11 [aa15780] add strings from additional forms
+ 2023-10-10 [14285a0]*prepare for adding i18n support
+ 2023-10-10 [c5496ac]*force invcdf/angleinvcdf even count of float, reapply 53d7ac0, fix #193
+ 2023-10-09 [ca1bf2b] use focal-length to select interpolation or discrete mode, #129
+ 2023-10-08 [be8b8c3]*support user-defined launch angle profile, fix #129
+ 2023-10-03 [2ad9307] update winget package files to the v2023 release
+ 2023-10-03 [26ede84] rename winget package file
+ 2023-10-03 [2e71a51] treat cfg->bc as a null-ending string, #191 #192
+ 2023-10-03 [68db492] make cfg->bc a null terminated string
+ 2023-10-02 [35170f9] Merge pull request #192 from lkeegan/pmcx_bc_overflow_error
+ 2023-10-02 [3c77170] Fix buffer overflow error when bc has 12 characters
+
 == MCX v2023 (Heroic Hadron - 2.0), FangQ <q.fang (a) neu.edu> ==
 
  2023-09-17 [5b8a06f] add comments to nightly build script for deployment

@@ -1,6 +1,6 @@
 =============================================================
              Monte Carlo eXtreme (MCX) Suite
-                    version 2023
+                    version 2023.11
 =============================================================
 
 Copyright (c) 2009-2023  Qianqian Fang <q.fang at neu.edu>
