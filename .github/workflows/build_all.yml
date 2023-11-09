@@ -40,9 +40,9 @@ jobs:
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
           echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
-          conda create --name octave
-          conda activate octave
-          conda install -c conda-forge octave
+          conda config --add channels conda-forge
+          conda config --set channel_priority strict
+          conda install octave
           brew link --force libomp
           brew install --cask lazarus
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
