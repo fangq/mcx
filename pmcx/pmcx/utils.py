@@ -666,7 +666,7 @@ def mcxlab(*args):
         if len(data):
             traj = {}
             traj["pos"] = np.transpose(data[1:4, :])
-            traj["id"] = np.uint32(data[0, :])
+            traj["id"] = np.frombuffer(data[0, :].tobytes(), dtype=np.uint32)
             traj["id"], idx = np.sort(traj["id"]), np.argsort(traj["id"])
             traj["pos"] = traj["pos"][idx, :]
             traj["data"] = np.vstack([np.single(traj["id"]), data[1:, idx]])
