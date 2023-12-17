@@ -4207,7 +4207,7 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
     totalbytes = datalen * byte;
 
     if (!cfg->isdumpjson) {
-        MCX_FPRINTF(stdout, "compressing data [%s] ...", zipformat[zipid]);
+        MCX_FPRINTF(cfg->flog, "compressing data [%s] ...", zipformat[zipid]);
     }
 
     /*compress data using zlib*/
@@ -4215,7 +4215,7 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
 
     if (!ret) {
         if (!cfg->isdumpjson) {
-            MCX_FPRINTF(stdout, "compression ratio: %.1f%%\t", compressedbytes * 100.f / totalbytes);
+            MCX_FPRINTF(cfg->flog, "compression ratio: %.1f%%\t", compressedbytes * 100.f / totalbytes);
         }
 
         if (isubj) {
@@ -4233,7 +4233,7 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
             ret = zmat_encode(compressedbytes, compressed, &totalbytes, (uchar**)&buf, zmBase64, &status);
 
             if (!cfg->isdumpjson) {
-                MCX_FPRINTF(stdout, "after encoding: %.1f%%\n", totalbytes * 100.f / (datalen * byte));
+                MCX_FPRINTF(cfg->flog, "after encoding: %.1f%%\n", totalbytes * 100.f / (datalen * byte));
             }
 
             if (!ret) {
