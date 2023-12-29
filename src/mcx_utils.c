@@ -2163,7 +2163,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
         val = FIND_JSON_OBJ("MediaFormat", "Domain.MediaFormat", Domain);
 
-        if (val) {
+        if (!flagset['K'] && val) {
             cfg->mediabyte = mcx_keylookup((char*)FIND_JSON_KEY("MediaFormat", "Domain.MediaFormat", Domain, "byte", valuestring), mediaformat);
 
             if (cfg->mediabyte == -1) {
@@ -2171,6 +2171,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             }
 
             cfg->mediabyte = mediaformatid[cfg->mediabyte];
+            flagset['K'] = 1;
         }
 
         if (!flagset['u']) {
@@ -2859,9 +2860,11 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
             if (FIND_JSON_OBJ("_ArrayZipData_", "Volume._ArrayZipData_", Shapes)) {
                 int ndim;
+                uint dims[4] = {1, 1, 1, 1};
                 char* type = NULL, *buf = NULL;
 
-                if (mcx_jdatadecode((void**)&buf, &ndim, &(cfg->dim.x), 3, &type, Shapes, cfg) == 0) {
+                if (mcx_jdatadecode((void**)&buf, &ndim, dims, 4, &type, Shapes, cfg) == 0) {
+                    memcpy(&(cfg->dim.x), dims, sizeof(uint) * 3);
                     mcx_loadvolume(buf, cfg, 1);
                 }
 
@@ -4120,7 +4123,7 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
         vdata = cJSON_GetObjectItem(obj, "_ArrayZipData_");
     }
 
-    if (vtype) {
+    if (!flagset['K'] && vtype) {
         *type = vtype->valuestring;
 
         if (strstr(*type, "int8")) {

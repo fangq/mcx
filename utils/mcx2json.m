@@ -125,6 +125,9 @@ if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
     else
         Domain.VolumeFile='';
         Shapes=cfg.vol;
+        if(ndims(Shapes)==4 && size(Shapes,1)>1)
+            Shapes=permute(Shapes, [2 3 4 1]);
+        end
     end
 end
 
