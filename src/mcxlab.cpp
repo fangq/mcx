@@ -505,6 +505,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     return;
 }
 
+
 /**
  * @brief Function to parse one subfield of the input structure
  *
@@ -595,6 +596,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         } else if (mxGetNumberOfDimensions(item) == 4) { // if dimension is 4D, 1st dim is the property records: mua/mus/g/n
             if ((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0] == 4) { // if 4D byte array has a 1st dim of 4
                 cfg->mediabyte = MEDIA_ASGN_BYTE;
+            } else if (mxIsSingle(item) && arraydim[0] == 4) { // if 4D float array has a 1st dim of 4
+                cfg->mediabyte = MEDIA_ASGN_F2H;
             } else if ((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0] == 8) {
                 cfg->mediabyte = MEDIA_2LABEL_SPLIT;
             } else if (mxIsSingle(item) && arraydim[0] == 3) {
@@ -675,70 +678,28 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
 
                     cfg->vol[i] = f2i.i;
                 }
-            } else if (cfg->mediabyte == MEDIA_AS_F2H) {
+            } else if (cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_ASGN_F2H) {
                 float* val = (float*)mxGetPr(item);
-                union {
-                    float f[2];
-                    unsigned int i[2];
-                    unsigned short h[2];
-                } f2h;
-                unsigned short tmp, m;
+                float f2h[2];
+                int offset = (cfg->mediabyte == MEDIA_ASGN_F2H);
 
                 for (i = 0; i < dimxyz; i++) {
-                    f2h.f[0] = val[i << 1] * cfg->unitinmm;       // mua
-                    f2h.f[1] = val[(i << 1) + 1] * cfg->unitinmm; // mus
+                    f2h[0] = val[i << (1 + offset)] * cfg->unitinmm;       // mua
+                    f2h[1] = val[(i << (1 + offset)) + 1] * cfg->unitinmm; // mus
 
-                    if (f2h.f[0] != f2h.f[0] || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
+                    if (f2h[0] != f2h[0] || f2h[1] != f2h[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
                         cfg->vol[i] = 0;
                         continue;
                     }
 
-                    /**
-                    float to half conversion
-                    https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
-                    https://gamedev.stackexchange.com/a/17410  (for denorms)
-                    */
-                    m = ((f2h.i[0] >> 13) & 0x03ff);
-                    tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
-                    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-
-                    if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-                        unsigned short sign = (f2h.i[0] >> 16) & 0x8000;
-                        tmp = ((f2h.i[0] >> 23) & 0xff);
-                        m = (f2h.i[0] >> 12) & 0x07ff;
-                        m |= 0x0800u;
-                        f2h.h[0] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+                    if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+                        cfg->vol[i] = mcx_float2half2(f2h);
+                        f2h[0] = val[(i << 2) + 2];   // g
+                        f2h[1] = val[(i << 2) + 3];   // n
+                        cfg->vol[i + dimxyz] = mcx_float2half2(f2h);
                     } else {
-                        f2h.h[0] = (f2h.i[0] >> 31) << 5;
-                        f2h.h[0] = (f2h.h[0] | tmp) << 10;
-                        f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+                        cfg->vol[i] = mcx_float2half2(f2h);
                     }
-
-                    m = ((f2h.i[1] >> 13) & 0x03ff);
-                    tmp = (f2h.i[1] >> 23) & 0xff; /*exponent*/
-                    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-
-                    if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-                        unsigned short sign = (f2h.i[1] >> 16) & 0x8000;
-                        tmp = ((f2h.i[1] >> 23) & 0xff);
-                        m = (f2h.i[1] >> 12) & 0x07ff;
-                        m |= 0x0800u;
-                        f2h.h[1] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
-                    } else {
-                        f2h.h[1] = (f2h.i[1] >> 31) << 5;
-                        f2h.h[1] = (f2h.h[1] | tmp) << 10;
-                        f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
-                    }
-
-                    if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
-                        f2h.i[0] = 0x00010000;
-                    }
-
-                    if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
-                        f2h.i[0] = 0;
-                    }
-
-                    cfg->vol[i] = f2h.i[0];
                 }
             } else if (cfg->mediabyte == MEDIA_LABEL_HALF) {
                 float* val = (float*)mxGetPr(item);

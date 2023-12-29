@@ -297,68 +297,32 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     break;
                 }
 
-                case 2: {
-                    mcx_config.mediabyte = MEDIA_AS_F2H;
+                case 2:
+                case 4: {
+                    mcx_config.mediabyte = (buffer.shape.at(0) == 2 ? MEDIA_AS_F2H : MEDIA_ASGN_F2H);
                     auto val = (float*) buffer.ptr;
-                    union {
-                        float f[2];
-                        unsigned int i[2];
-                        unsigned short h[2];
-                    } f2h;
-                    unsigned short tmp, m;
+
+                    float f2h[2];
+                    int offset = (cfg->mediabyte == MEDIA_ASGN_F2H);
 
                     for (i = 0; i < dim_xyz; i++) {
-                        f2h.f[0] = val[i << 1] * mcx_config.unitinmm;        // mua
-                        f2h.f[1] = val[(i << 1) + 1] * mcx_config.unitinmm;  // mus
+                        f2h[0] = val[i << (1 + offset)] * mcx_config.unitinmm;        // mua
+                        f2h[1] = val[(i << (1 + offset)) + 1] * mcx_config->unitinmm; // mus
 
-                        if (f2h.f[0] != f2h.f[0]
-                                || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
+                        if (f2h[0] != f2h[0]
+                                || f2h[1] != f2h[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
                             mcx_config.vol[i] = 0;
                             continue;
                         }
 
-                        /**
-                         * float to half conversion
-                         * https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
-                         * https://gamedev.stackexchange.com/a/17410  (for denorms)
-                         */
-                        m = ((f2h.i[0] >> 13) & 0x03ff);
-                        tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
-                        tmp = (tmp - 0x70) & ((unsigned int) ((int) (0x70 - tmp) >> 4) >> 27);
-
-                        if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-                            unsigned short sign = (f2h.i[0] >> 16) & 0x8000;
-                            tmp = ((f2h.i[0] >> 23) & 0xff);
-                            m = (f2h.i[0] >> 12) & 0x07ff;
-                            m |= 0x0800u;
-                            f2h.h[0] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+                        if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+                            mcx_config->vol[i] = mcx_float2half2(f2h);
+                            f2h[0] = val[(i << 2) + 2];   // g
+                            f2h[1] = val[(i << 2) + 3];   // n
+                            mcx_config->vol[i + dim_xyz] = mcx_float2half2(f2h);
                         } else {
-                            f2h.h[0] = (f2h.i[0] >> 31) << 5;
-                            f2h.h[0] = (f2h.h[0] | tmp) << 10;
-                            f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+                            mcx_config->vol[i] = mcx_float2half2(f2h);
                         }
-
-                        m = ((f2h.i[1] >> 13) & 0x03ff);
-                        tmp = (f2h.i[1] >> 23) & 0xff; /*exponent*/
-                        tmp = (tmp - 0x70) & ((unsigned int) ((int) (0x70 - tmp) >> 4) >> 27);
-
-                        if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-                            unsigned short sign = (f2h.i[1] >> 16) & 0x8000;
-                            tmp = ((f2h.i[1] >> 23) & 0xff);
-                            m = (f2h.i[1] >> 12) & 0x07ff;
-                            m |= 0x0800u;
-                            f2h.h[1] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
-                        } else {
-                            f2h.h[1] = (f2h.i[1] >> 31) << 5;
-                            f2h.h[1] = (f2h.h[1] | tmp) << 10;
-                            f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
-                        }
-
-                        if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
-                            f2h.i[0] = 0x00010000;
-                        }
-
-                        mcx_config.vol[i] = f2h.i[0];
                     }
 
                     break;

@@ -210,8 +210,8 @@ const char* srctypeid[] = {"pencil", "isotropic", "cone", "gaussian", "planar",
  * User can specify the source type using a string
  */
 
-const unsigned int mediaformatid[] = {1, 2, 4, 97, 98, 99, 100, 101, 102, 103, 104, 0};
-const char* mediaformat[] = {"byte", "short", "integer", "svmc", "mixlabel", "labelplus",
+const unsigned int mediaformatid[] = {1, 2, 4, 96, 97, 98, 99, 100, 101, 102, 103, 104, 0};
+const char* mediaformat[] = {"byte", "short", "integer", "asgn_float", "svmc", "mixlabel", "labelplus",
                              "muamus_float", "mua_float", "muamus_half", "asgn_byte", "muamus_short", ""
                             };
 
@@ -1546,7 +1546,7 @@ void mcx_preprocess(Config* cfg) {
 
     if (cfg->isrowmajor) {
         /*from here on, the array is always col-major*/
-        if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+        if (cfg->mediabyte == MEDIA_2LABEL_SPLIT || cfg->mediabyte == MEDIA_ASGN_F2H) {
             mcx_convertrow2col64((size_t**) & (cfg->vol), &(cfg->dim));
         } else {
             mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
@@ -3200,18 +3200,20 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
     }
 
     datalen = cfg->dim.x * cfg->dim.y * cfg->dim.z;
-    cfg->vol = (unsigned int*)malloc(sizeof(unsigned int) * datalen * (1 + (cfg->mediabyte == MEDIA_2LABEL_SPLIT)));
+    cfg->vol = (unsigned int*)malloc(sizeof(unsigned int) * datalen * (1 + (cfg->mediabyte == MEDIA_2LABEL_SPLIT || cfg->mediabyte == MEDIA_ASGN_F2H)));
 
     if (!isbuf) {
         if (cfg->mediabyte == MEDIA_AS_F2H) {
             inputvol = (unsigned char*)malloc(sizeof(unsigned char) * (datalen << 3));
+        } else if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+            inputvol = (unsigned char*)malloc(sizeof(unsigned char) * (datalen << 4));
         } else if (cfg->mediabyte >= 4) {
             inputvol = (unsigned char*)(cfg->vol);
         } else {
             inputvol = (unsigned char*)malloc(sizeof(unsigned char) * cfg->mediabyte * datalen);
         }
 
-        res = fread(inputvol, sizeof(unsigned char) * ((cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_2LABEL_SPLIT) ? 8 : MIN(cfg->mediabyte, 4)), datalen, fp);
+        res = fread(inputvol, sizeof(unsigned char) * ((cfg->mediabyte == MEDIA_ASGN_F2H) ? 16 : ((cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_2LABEL_SPLIT) ? 8 : MIN(cfg->mediabyte, 4))), datalen, fp);
         fclose(fp);
 
         if (res != datalen) {
@@ -3253,70 +3255,28 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
 
             cfg->vol[i] = f2i.i;
         }
-    } else if (cfg->mediabyte == MEDIA_AS_F2H) {
+    } else if (cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_ASGN_F2H) {
         float* val = (float*)inputvol;
-        union {
-            float f[2];
-            unsigned int i[2];
-            unsigned short h[2];
-        } f2h;
-        unsigned short tmp, m;
+        float f2h[2];
+        int offset = (cfg->mediabyte == MEDIA_ASGN_F2H);
 
         for (i = 0; i < datalen; i++) {
-            f2h.f[0] = val[i << 1] * cfg->unitinmm;
-            f2h.f[1] = val[(i << 1) + 1] * cfg->unitinmm;
+            f2h[0] = val[i << (1 + offset)] * cfg->unitinmm;       // mua
+            f2h[1] = val[(i << (1 + offset)) + 1] * cfg->unitinmm; // mus
 
-            if (f2h.f[0] != f2h.f[0] || f2h.f[1] != f2h.f[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
+            if (f2h[0] != f2h[0] || f2h[1] != f2h[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
                 cfg->vol[i] = 0;
                 continue;
             }
 
-            /**
-            float to half conversion
-            https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
-            https://gamedev.stackexchange.com/a/17410  (for denorms)
-                */
-            m = ((f2h.i[0] >> 13) & 0x03ff);
-            tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
-            tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-
-            if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-                unsigned short sign = (f2h.i[0] >> 16) & 0x8000;
-                tmp = ((f2h.i[0] >> 23) & 0xff);
-                m = (f2h.i[0] >> 12) & 0x07ff;
-                m |= 0x0800u;
-                f2h.h[0] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+            if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+                cfg->vol[i] = mcx_float2half2(f2h);
+                f2h[0] = val[(i << 2) + 2];   // g
+                f2h[1] = val[(i << 2) + 3];   // n
+                cfg->vol[i + datalen] = mcx_float2half2(f2h);
             } else {
-                f2h.h[0] = (f2h.i[0] >> 31) << 5;
-                f2h.h[0] = (f2h.h[0] | tmp) << 10;
-                f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+                cfg->vol[i] = mcx_float2half2(f2h);
             }
-
-            m = ((f2h.i[1] >> 13) & 0x03ff);
-            tmp = (f2h.i[1] >> 23) & 0xff; /*exponent*/
-            tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-
-            if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-                unsigned short sign = (f2h.i[1] >> 16) & 0x8000;
-                tmp = ((f2h.i[1] >> 23) & 0xff);
-                m = (f2h.i[1] >> 12) & 0x07ff;
-                m |= 0x0800u;
-                f2h.h[1] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
-            } else {
-                f2h.h[1] = (f2h.i[1] >> 31) << 5;
-                f2h.h[1] = (f2h.h[1] | tmp) << 10;
-                f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
-            }
-
-            if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
-                f2h.i[0] = 0x00010000;
-            }
-
-            if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16*/
-                f2h.i[0] = 0;
-            }
-
-            cfg->vol[i] = f2h.i[0];
         }
     } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
         memcpy(cfg->vol, inputvol, (datalen << 3));
@@ -3331,7 +3291,7 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
             }
         }
 
-    if (!isbuf && (cfg->mediabyte < 4 || cfg->mediabyte == MEDIA_AS_F2H)) {
+    if (!isbuf && (cfg->mediabyte < 4 || cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_ASGN_F2H)) {
         free(inputvol);
     }
 }
@@ -4985,6 +4945,77 @@ int mcx_isbinstr(const char* str) {
     return 1;
 }
 
+/**
+ * @brief Function to parse one subfield of the input structure
+ *
+ * This function reads in all necessary information from the cfg input structure.
+ * it can handle single scalar inputs, short vectors (3-4 elem), strings and arrays.
+ *
+ * @param[in] root: the cfg input data structure
+ * @param[in] item: the current element of the cfg input data structure
+ * @param[in] idx: the index of the current element (starting from 0)
+ * @param[out] cfg: the simulation configuration structure to store all input read from the parameters
+ */
+
+int mcx_float2half2(float input[2]) {
+    union {
+        float f[2];
+        unsigned int i[2];
+        unsigned short h[2];
+    } f2h;
+    unsigned short tmp, m;
+
+    f2h.f[0] = input[0];
+    f2h.f[1] = input[1];
+
+    /**
+    float to half conversion
+    https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
+    https://gamedev.stackexchange.com/a/17410  (for denorms)
+    */
+    m = ((f2h.i[0] >> 13) & 0x03ff);
+    tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
+    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+
+    if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
+        unsigned short sign = (f2h.i[0] >> 16) & 0x8000;
+        tmp = ((f2h.i[0] >> 23) & 0xff);
+        m = (f2h.i[0] >> 12) & 0x07ff;
+        m |= 0x0800u;
+        f2h.h[0] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+    } else {
+        f2h.h[0] = (f2h.i[0] >> 31) << 5;
+        f2h.h[0] = (f2h.h[0] | tmp) << 10;
+        f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+    }
+
+    m = ((f2h.i[1] >> 13) & 0x03ff);
+    tmp = (f2h.i[1] >> 23) & 0xff; /*exponent*/
+    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+
+    if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
+        unsigned short sign = (f2h.i[1] >> 16) & 0x8000;
+        tmp = ((f2h.i[1] >> 23) & 0xff);
+        m = (f2h.i[1] >> 12) & 0x07ff;
+        m |= 0x0800u;
+        f2h.h[1] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
+    } else {
+        f2h.h[1] = (f2h.i[1] >> 31) << 5;
+        f2h.h[1] = (f2h.h[1] | tmp) << 10;
+        f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+    }
+
+    if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16, only happens for _AS, not ASGN as n will never be 0*/
+        f2h.i[0] = 0x00010000;
+    }
+
+    if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16, , only happens for _AS, not ASGN as n will never be 0*/
+        f2h.i[0] = 0;
+    }
+
+    return f2h.i[0];
+}
+
 #ifndef MCX_CONTAINER
 
 /**
@@ -5136,6 +5167,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                1 or byte: 0-128 tissue labels\n\
                                2 or short: 0-65535 (max to 4000) tissue labels\n\
                                4 or integer: integer tissue labels \n\
+                              96 or asgn_float: mua/mus/g/n 4xfloat format\n\
+                                {[f:mua][f:mus][f:g][f:n]}\n\
                               97 or svmc: split-voxel MC 8-byte format\n\
                                 {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}\n\
                               98 or mixlabel: label1+label2+label1_percentage\n\

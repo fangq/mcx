@@ -317,6 +317,7 @@ void mcx_loadseedjdat(char* filename, Config* cfg);
 void mcx_prep_polarized(Config* cfg);
 void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
+int  mcx_float2half2(float input[2]);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

@@ -580,7 +580,7 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
     } else if (gcfg->mediaformat == MEDIA_MUA_FLOAT) { //< [f0]: single-prec mua every voxel; mus/g/n uses 2nd row in gcfg.prop
         prop->mua = fabsf(*((float*)&mediaid));
         prop->n = gproperty[!(mediaid & MED_MASK) == 0].w;
-    } else if (gcfg->mediaformat == MEDIA_AS_F2H || gcfg->mediaformat == MEDIA_AS_HALF) { //< [h1][h0]: h1/h0: single-prec mua/mus for every voxel; g/n uses those in cfg.prop(2,:)
+    } else if (gcfg->mediaformat == MEDIA_AS_F2H || gcfg->mediaformat == MEDIA_AS_HALF) { //< [h1][h0]: h1/h0: half-prec mua/mus for every voxel; g/n uses those in cfg.prop(2,:)
         union {
             unsigned int i;
 #if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
@@ -593,6 +593,21 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
         prop->mua = fabsf(__half2float(val.h[0]));
         prop->mus = fabsf(__half2float(val.h[1]));
         prop->n = gproperty[!(mediaid & MED_MASK) == 0].w;
+    } else if (gcfg->mediaformat == MEDIA_ASGN_F2H) { //< [h3][h2][h1][h0]: h3/h2/h1/h0: half-prec n/g/mus/mua for every voxel
+        union {
+            unsigned int i[2];
+#if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
+            __half_raw h[4];
+#else
+            half h[4];
+#endif
+        } val;
+        val.i[0] = mediaid & MED_MASK;
+        val.i[1] = media[idx1d + gcfg->dimlen.z];
+        prop->mua = fabsf(__half2float(val.h[0]));
+        prop->mus = fabsf(__half2float(val.h[1]));
+        prop->g = fabsf(__half2float(val.h[2]));
+        prop->n = fabsf(__half2float(val.h[3]));
     } else if (gcfg->mediaformat == MEDIA_2LABEL_MIX) { //< [s1][c1][c0]: s1: (volume fraction of tissue 1)*(2^16-1), c1: tissue 1 label, c0: tissue 0 label
         union {
             unsigned int   i;
@@ -2917,7 +2932,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /**
       * Allocate all GPU buffers to store input or output data
       */
-    if (cfg->mediabyte != MEDIA_2LABEL_SPLIT) {
+    if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
         CUDA_ASSERT(cudaMalloc((void**) &gmedia, sizeof(uint) * (cfg->dim.x * cfg->dim.y * cfg->dim.z)));
     } else {
         CUDA_ASSERT(cudaMalloc((void**) &gmedia, sizeof(uint) * (2 * cfg->dim.x * cfg->dim.y * cfg->dim.z)));
@@ -3086,7 +3101,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     mcx_flush(cfg);
 
-    if (cfg->mediabyte != MEDIA_2LABEL_SPLIT) {
+    if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
         CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uint)*cfg->dim.x * cfg->dim.y * cfg->dim.z, cudaMemcpyHostToDevice));
     } else {
         CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uint) * 2 * cfg->dim.x * cfg->dim.y * cfg->dim.z, cudaMemcpyHostToDevice));
