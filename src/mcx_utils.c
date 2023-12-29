@@ -1546,10 +1546,13 @@ void mcx_preprocess(Config* cfg) {
 
     if (cfg->isrowmajor) {
         /*from here on, the array is always col-major*/
-        if (cfg->mediabyte == MEDIA_2LABEL_SPLIT || cfg->mediabyte == MEDIA_ASGN_F2H) {
-            mcx_convertrow2col64((size_t**) & (cfg->vol), &(cfg->dim));
+        if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+            mcx_convertrow2col64((size_t*) (cfg->vol), &(cfg->dim));
+        } else if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+            mcx_convertrow2col(cfg->vol, &(cfg->dim));
+            mcx_convertrow2col(cfg->vol + cfg->dim.x * cfg->dim.y * cfg->dim.z, &(cfg->dim));
         } else {
-            mcx_convertrow2col(&(cfg->vol), &(cfg->dim));
+            mcx_convertrow2col(cfg->vol, &(cfg->dim));
         }
 
         cfg->isrowmajor = 0;
@@ -3747,12 +3750,12 @@ void mcx_loadseedfile(Config* cfg) {
  * @param[in] dim: the dimensions of the 3D array
  */
 
-void  mcx_convertrow2col(unsigned int** vol, uint3* dim) {
+void  mcx_convertrow2col(unsigned int* vol, uint3* dim) {
     uint x, y, z;
     unsigned int dimxy, dimyz;
     unsigned int* newvol = NULL;
 
-    if (*vol == NULL || dim->x == 0 || dim->y == 0 || dim->z == 0) {
+    if (vol == NULL || dim->x == 0 || dim->y == 0 || dim->z == 0) {
         return;
     }
 
@@ -3763,11 +3766,11 @@ void  mcx_convertrow2col(unsigned int** vol, uint3* dim) {
     for (x = 0; x < dim->x; x++)
         for (y = 0; y < dim->y; y++)
             for (z = 0; z < dim->z; z++) {
-                newvol[z * dimxy + y * dim->x + x] = (*vol)[x * dimyz + y * dim->z + z];
+                newvol[z * dimxy + y * dim->x + x] = vol[x * dimyz + y * dim->z + z];
             }
 
-    free(*vol);
-    *vol = newvol;
+    memcpy(vol, newvol, sizeof(unsigned int) * dim->x * dim->y * dim->z);
+    free(newvol);
 }
 
 /**
@@ -3777,12 +3780,12 @@ void  mcx_convertrow2col(unsigned int** vol, uint3* dim) {
  * @param[in] dim: the dimensions of the 3D array
  */
 
-void  mcx_convertrow2col64(size_t** vol, uint3* dim) {
+void  mcx_convertrow2col64(size_t* vol, uint3* dim) {
     uint x, y, z;
     size_t dimxy, dimyz;
     size_t* newvol = NULL;
 
-    if (*vol == NULL || dim->x == 0 || dim->y == 0 || dim->z == 0) {
+    if (vol == NULL || dim->x == 0 || dim->y == 0 || dim->z == 0) {
         return;
     }
 
@@ -3793,11 +3796,11 @@ void  mcx_convertrow2col64(size_t** vol, uint3* dim) {
     for (x = 0; x < dim->x; x++)
         for (y = 0; y < dim->y; y++)
             for (z = 0; z < dim->z; z++) {
-                newvol[z * dimxy + y * dim->x + x] = (*vol)[x * dimyz + y * dim->z + z];
+                newvol[z * dimxy + y * dim->x + x] = (vol)[x * dimyz + y * dim->z + z];
             }
 
-    free(*vol);
-    *vol = newvol;
+    memcpy(vol, newvol, sizeof(sizeof(size_t) * dim->x * dim->y * dim->z));
+    free(newvol);
 }
 
 /**
@@ -3826,8 +3829,8 @@ void  mcx_convertcol2row(unsigned int** vol, uint3* dim) {
                 newvol[x * dimyz + y * dim->z + z] = (*vol)[z * dimxy + y * dim->x + x];
             }
 
-    free(*vol);
-    *vol = newvol;
+    memcpy(*vol, newvol, sizeof(unsigned int) * dim->x * dim->y * dim->z);
+    free(newvol);
 }
 
 /**

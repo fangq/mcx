@@ -594,6 +594,11 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
         prop->mus = fabsf(__half2float(val.h[1]));
         prop->n = gproperty[!(mediaid & MED_MASK) == 0].w;
     } else if (gcfg->mediaformat == MEDIA_ASGN_F2H) { //< [h3][h2][h1][h0]: h3/h2/h1/h0: half-prec n/g/mus/mua for every voxel
+        if (idx1d == OUTSIDE_VOLUME_MIN || idx1d == OUTSIDE_VOLUME_MAX) {
+            *((float4*)(prop)) = gproperty[0]; // out-of-bounds
+            return;
+        }
+
         union {
             unsigned int i[2];
 #if ! defined(__CUDACC_VER_MAJOR__) || __CUDACC_VER_MAJOR__ >= 9
@@ -602,6 +607,7 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
             half h[4];
 #endif
         } val;
+
         val.i[0] = mediaid & MED_MASK;
         val.i[1] = media[idx1d + gcfg->dimlen.z];
         prop->mua = fabsf(__half2float(val.h[0]));

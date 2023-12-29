@@ -123,7 +123,7 @@ class CMakeBuild(build_ext):
 setup(
     name="pmcx",
     packages=["pmcx"],
-    version="0.2.7",
+    version="0.2.8",
     requires=["numpy"],
     license="GPLv3+",
     author="Matin Raayai Ardakani, Qianqian Fang, Fan-Yu Yen",
@@ -133,7 +133,7 @@ setup(
     long_description_content_type="text/markdown",
     maintainer="Qianqian Fang",
     url="https://github.com/fangq/mcx",
-    download_url="http://mcx.space",
+    download_url="https://mcx.space",
     keywords=[
         "Monte Carlo simulation",
         "Biophotonics",

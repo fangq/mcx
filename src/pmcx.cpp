@@ -303,11 +303,14 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     auto val = (float*) buffer.ptr;
 
                     float f2h[2];
-                    int offset = (cfg->mediabyte == MEDIA_ASGN_F2H);
+                    int offset = (mcx_config.mediabyte == MEDIA_ASGN_F2H);
+                    if(mcx_config.mediabyte == MEDIA_ASGN_F2H) {
+                        mcx_config.vol = static_cast<unsigned int*>(realloc(mcx_config.vol, dim_xyz * 2 * sizeof(unsigned int)));
+                    }
 
                     for (i = 0; i < dim_xyz; i++) {
                         f2h[0] = val[i << (1 + offset)] * mcx_config.unitinmm;        // mua
-                        f2h[1] = val[(i << (1 + offset)) + 1] * mcx_config->unitinmm; // mus
+                        f2h[1] = val[(i << (1 + offset)) + 1] * mcx_config.unitinmm; // mus
 
                         if (f2h[0] != f2h[0]
                                 || f2h[1] != f2h[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
@@ -315,13 +318,13 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                             continue;
                         }
 
-                        if (cfg->mediabyte == MEDIA_ASGN_F2H) {
-                            mcx_config->vol[i] = mcx_float2half2(f2h);
+                        if (mcx_config.mediabyte == MEDIA_ASGN_F2H) {
+                            mcx_config.vol[i] = mcx_float2half2(f2h);
                             f2h[0] = val[(i << 2) + 2];   // g
                             f2h[1] = val[(i << 2) + 3];   // n
-                            mcx_config->vol[i + dim_xyz] = mcx_float2half2(f2h);
+                            mcx_config.vol[i + dim_xyz] = mcx_float2half2(f2h);
                         } else {
-                            mcx_config->vol[i] = mcx_float2half2(f2h);
+                            mcx_config.vol[i] = mcx_float2half2(f2h);
                         }
                     }
 

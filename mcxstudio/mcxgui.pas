@@ -2203,6 +2203,7 @@ begin
          TCustomComboBox(Editor).Items.Add('mua_float - per voxel mua in float');
          TCustomComboBox(Editor).Items.Add('muamus_half - per voxel mua/mus in half-float');
          TCustomComboBox(Editor).Items.Add('asgn_byte - per voxel mua/mus/g/n grayscale in byte');
+         TCustomComboBox(Editor).Items.Add('asgn_float - per voxel mua/mus/g/n float values');
          TCustomComboBox(Editor).Items.Add('muamus_short - per voxel mua/mus grayscale in short');
      end;
    end;

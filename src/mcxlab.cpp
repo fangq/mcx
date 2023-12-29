@@ -683,6 +683,10 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 float f2h[2];
                 int offset = (cfg->mediabyte == MEDIA_ASGN_F2H);
 
+                if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+                    cfg->vol = static_cast<unsigned int*>(realloc(cfg->vol, dimxyz * 2 * sizeof(unsigned int)));
+                }
+
                 for (i = 0; i < dimxyz; i++) {
                     f2h[0] = val[i << (1 + offset)] * cfg->unitinmm;       // mua
                     f2h[1] = val[(i << (1 + offset)) + 1] * cfg->unitinmm; // mus

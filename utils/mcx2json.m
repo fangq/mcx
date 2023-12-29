@@ -107,6 +107,8 @@ if(isfield(cfg,'vol') && ~isempty(cfg.vol) && ~isfield(Domain,'VolumeFile'))
                     Domain.MediaFormat='mua_float';
                 elseif(size(cfg.vol,1)==2)
                     Domain.MediaFormat='muamus_float';
+                elseif(size(cfg.vol,1)==4)
+                    Domain.MediaFormat='asgn_float';
                 end
             end
         otherwise

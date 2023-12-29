@@ -51,6 +51,7 @@ function varargout=mcxlab(varargin)
 %                                         the optical properties are first read based on the label, then the i-th property is replaced by the property value
 %                        3 x Nx x Ny x Nz int16/uint16 array:  "mixlabel"/98 format: {[int16 label1][uint16 label2][0-65535 label1 percentage]}
 %                        4 x Nx x Ny x Nz uint8 array: "asgn_byte"/103 format: mua/mus/g/n gray-scale (0-255) interpolating between prop(2,:) and prop(3,:)
+%                        4 x Nx x Ny x Nz single array: "asgn_float"/96 format: per-voxel mua/mus/g/n floating point values (internally convert to half-precision)
 %                        2 x Nx x Ny x Nz uint16 array: "muamus_short"/104 format: mua/mus gray-scale (0-65535) interpolating between prop(2,:) and prop(3,:)
 %                        8 x Nx x Ny x Nz uint8 array: "svmc"/97 format: split-voxel MC (SVMC) hybrid domain, can be created by mcxsvmc.m
 %                        Example: <demo_continuous_mua_mus.m>. If voxel-based media are used, partial-path/momentum outputs are disabled

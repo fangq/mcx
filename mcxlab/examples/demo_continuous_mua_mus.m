@@ -9,7 +9,7 @@
 
 % only clear cfg to avoid accidentally clearing other useful data
 clear cfg cfgs
-cfg.nphoton=1e8;
+cfg.nphoton=1e7;
 cfg.vol=uint8(ones(60,60,60));
 cfg.srcpos=[30 30 1];
 cfg.srcdir=[0 0 1];
@@ -49,6 +49,22 @@ mus1=1.0;
 mus2=5.0;
 mus=single(reshape(repmat([mus1:(mus2-mus1)/(60-1):mus2]',60,60),60,60,60));
 cfg.vol=reshape([mua(:)'; mus(:)'],[2 60 60 60]);
+
+flux=mcxlab(cfg);
+
+mcxplotvol(squeeze(double(cfg.vol(2,:,:,:))))
+title('continuously varying scattering coeff \mu_s (1/mm)')
+view([-25.5,21.2]);
+
+mcxplotvol(log10(double(flux.data)))
+colormap(jet);
+title('fluence in continuously varying media (1/mm^2)')
+view([-25.5,21.2]);
+
+%% Approach #3: a 4 x Nx x Ny x Nz float32 array defines [mua,mus,g,n] per voxel
+
+cfg.vol(3,:,:,:)=0;
+cfg.vol(4,:,:,:)=1.37;
 
 flux=mcxlab(cfg);
 
