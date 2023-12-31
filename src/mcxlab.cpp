@@ -564,15 +564,151 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     GET_ONE_FIELD(cfg, omega)
     GET_ONE_FIELD(cfg, issave2pt)
     GET_ONE_FIELD(cfg, lambda)
-    GET_VEC34_FIELD(cfg, srcpos)
-    GET_VEC34_FIELD(cfg, srcdir)
     GET_VEC3_FIELD(cfg, steps)
     GET_VEC3_FIELD(cfg, crop0)
     GET_VEC3_FIELD(cfg, crop1)
-    GET_VEC4_FIELD(cfg, srcparam1)
-    GET_VEC4_FIELD(cfg, srcparam2)
     GET_VEC4_FIELD(cfg, srciquv)
-    else if (strcmp(name, "vol") == 0) {
+    else if (strcmp(name, "srcpos") == 0) {
+        arraydim = mxGetDimensions(item);
+
+        if (arraydim[0] == 0 || arraydim[1] < 3 || arraydim[1] > 4) {
+            mexErrMsgTxt("the 'srcpos' field must have 3 or 4 columns (x,y,z,w0)");
+        }
+
+        double* val = mxGetPr(item);
+
+        for (i = 0; i < arraydim[1]; i++) {
+            ((float*)(&cfg->srcpos.x))[i] = val[i * arraydim[0]];
+        }
+
+        printf("mcx.srcpos=[%g %g %g %g];\n", cfg->srcpos.x, cfg->srcpos.y, cfg->srcpos.z, cfg->srcpos.w);
+
+        if (arraydim[0] == 1 && cfg->extrasrclen == 0) {
+            return;
+        }
+
+        if (cfg->extrasrclen && cfg->extrasrclen != arraydim[0] - 1) {
+            mexErrMsgTxt("Length of sub-elements of srcpos/srcdir/srcparam1/srcparam2 must match");
+        } else {
+            cfg->extrasrclen = arraydim[0] - 1;
+        }
+
+        if (cfg->srcdata == NULL) {
+            cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+        }
+
+        for (j = 0; j < arraydim[1]; j++)
+            for (i = 0; i < cfg->extrasrclen; i++) {
+                ((float*)(&cfg->srcdata[i].srcpos.x))[j] = val[j * arraydim[0] + i + 1];
+            }
+
+        printf("mcx.extrasrclen=%d;\n", cfg->extrasrclen);
+    } else if (strcmp(name, "srcdir") == 0) {
+        arraydim = mxGetDimensions(item);
+
+        if (arraydim[0] == 0 || arraydim[1] < 3 || arraydim[1] > 4) {
+            mexErrMsgTxt("the 'srcdir' field must have 3 or 4 columns (vx,vy,vz,focallength)");
+        }
+
+        double* val = mxGetPr(item);
+
+        for (i = 0; i < arraydim[1]; i++) {
+            ((float*)(&cfg->srcdir.x))[i] = val[i * arraydim[0]];
+        }
+
+        printf("mcx.srcdir=[%g %g %g %g];\n", cfg->srcdir.x, cfg->srcdir.y, cfg->srcdir.z, cfg->srcdir.w);
+
+        if (arraydim[0] == 1 && cfg->extrasrclen == 0) {
+            return;
+        }
+
+        if (cfg->extrasrclen && cfg->extrasrclen != arraydim[0] - 1) {
+            mexErrMsgTxt("Length of sub-elements of srcdir/srcdir/srcparam1/srcparam2 must match");
+        } else {
+            cfg->extrasrclen = arraydim[0] - 1;
+        }
+
+        if (cfg->srcdata == NULL) {
+            cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+        }
+
+        for (j = 0; j < arraydim[1]; j++)
+            for (i = 0; i < cfg->extrasrclen; i++) {
+                ((float*)(&cfg->srcdata[i].srcdir.x))[j] = val[j * arraydim[0] + i + 1];
+            }
+
+        printf("mcx.extrasrclen=%d;\n", cfg->extrasrclen);
+    } else if (strcmp(name, "srcparam1") == 0) {
+        arraydim = mxGetDimensions(item);
+
+        if (arraydim[0] == 0 || arraydim[1] != 4) {
+            mexErrMsgTxt("the 'srcparam1' field must have 4 columns");
+        }
+
+        double* val = mxGetPr(item);
+
+        for (i = 0; i < arraydim[1]; i++) {
+            ((float*)(&cfg->srcparam1.x))[i] = val[i * arraydim[0]];
+        }
+
+        printf("mcx.srcparam1=[%g %g %g %g];\n", cfg->srcparam1.x, cfg->srcparam1.y, cfg->srcparam1.z, cfg->srcparam1.w);
+
+        if (arraydim[0] == 1 && cfg->extrasrclen == 0) {
+            return;
+        }
+
+        if (cfg->extrasrclen && cfg->extrasrclen != arraydim[0] - 1) {
+            mexErrMsgTxt("Length of sub-elements of srcparam1/srcparam1/srcparam1/srcparam2 must match");
+        } else {
+            cfg->extrasrclen = arraydim[0] - 1;
+        }
+
+        if (cfg->srcdata == NULL) {
+            cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+        }
+
+        for (j = 0; j < arraydim[1]; j++)
+            for (i = 0; i < cfg->extrasrclen; i++) {
+                ((float*)(&cfg->srcdata[i].srcparam1.x))[j] = val[j * arraydim[0] + i + 1];
+            }
+
+        printf("mcx.extrasrclen=%d;\n", cfg->extrasrclen);
+    } else if (strcmp(name, "srcparam2") == 0) {
+        arraydim = mxGetDimensions(item);
+
+        if (arraydim[0] == 0 || arraydim[1] != 4) {
+            mexErrMsgTxt("the 'srcparam2' field must have 4 columns");
+        }
+
+        double* val = mxGetPr(item);
+
+        for (i = 0; i < arraydim[1]; i++) {
+            ((float*)(&cfg->srcparam2.x))[i] = val[i * arraydim[0]];
+        }
+
+        printf("mcx.srcparam2=[%g %g %g %g];\n", cfg->srcparam2.x, cfg->srcparam2.y, cfg->srcparam2.z, cfg->srcparam2.w);
+
+        if (arraydim[0] == 1 && cfg->extrasrclen == 0) {
+            return;
+        }
+
+        if (cfg->extrasrclen && cfg->extrasrclen != arraydim[0] - 1) {
+            mexErrMsgTxt("Length of sub-elements of srcparam2/srcparam2/srcparam2/srcparam2 must match");
+        } else {
+            cfg->extrasrclen = arraydim[0] - 1;
+        }
+
+        if (cfg->srcdata == NULL) {
+            cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+        }
+
+        for (j = 0; j < arraydim[1]; j++)
+            for (i = 0; i < cfg->extrasrclen; i++) {
+                ((float*)(&cfg->srcdata[i].srcparam2.x))[j] = val[j * arraydim[0] + i + 1];
+            }
+
+        printf("mcx.extrasrclen=%d;\n", cfg->extrasrclen);
+    } else if (strcmp(name, "vol") == 0) {
         dimtype dimxyz;
         cfg->mediabyte = 0;
         arraydim = mxGetDimensions(item);

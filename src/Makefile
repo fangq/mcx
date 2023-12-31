@@ -74,7 +74,7 @@ NVCCOMP=$(OMP)
 CUDA_STATIC=--cudart static -Xcompiler "-static-libgcc -static-libstdc++"
 
 CFLAGS+=-std=c99
-CPPFLAGS+=-g -Wall #-DNO_LZMA # -DUSE_OS_TIMER
+CPPFLAGS+=-g -Wall -pedantic #-DNO_LZMA # -DUSE_OS_TIMER
 
 OBJSUFFIX=.o
 EXESUFFIX=

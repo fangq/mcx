@@ -332,6 +332,8 @@ void mcx_initcfg(Config* cfg) {
     cfg->invcdf = NULL;
     cfg->nangle = 0;
     cfg->angleinvcdf = NULL;
+    cfg->extrasrclen = 0;
+    cfg->srcdata = NULL;
     memset(cfg->jsonfile, 0, MAX_PATH_LENGTH);
     memset(cfg->bc, 0, 13);
     memset(&(cfg->srcparam1), 0, sizeof(float4));
@@ -452,6 +454,10 @@ void mcx_clearcfg(Config* cfg) {
 
     if (cfg->angleinvcdf) {
         free(cfg->angleinvcdf);
+    }
+
+    if (cfg->srcdata) {
+        free(cfg->srcdata);
     }
 
     mcx_initcfg(cfg);
@@ -1161,7 +1167,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
  */
 
 void mcx_printlog(Config* cfg, char* str) {
-    if (cfg->flog > 0) { /*stdout is 1*/
+    if (cfg->flog) { /*stdout is 1*/
         MCX_FPRINTF(cfg->flog, "%s\n", str);
     }
 }
@@ -1599,6 +1605,43 @@ void mcx_preprocess(Config* cfg) {
         }
     }
 
+    if (cfg->srcpos.w == 0.f) {
+        cfg->srcpos.w = 1.f;
+    }
+
+    if (cfg->extrasrclen) {
+        for (int i = 0; i < cfg->extrasrclen; i++) {
+            if (cfg->srcdata[i].srcpos.w == 0.f) {
+                cfg->srcdata[i].srcpos.w = 1.f;
+            }
+        }
+    }
+
+    // for all point sources, precompute launch voxel index and media value and store those in srcparam2.z/.w internally
+    if (cfg->srctype <= MCX_SRC_CONE || cfg->srctype == MCX_SRC_ARCSINE || cfg->srctype == MCX_SRC_ZGAUSSIAN) {
+        if (cfg->srcpos.x < 0.f || cfg->srcpos.y < 0.f || cfg->srcpos.z < 0.f || cfg->srcpos.x >= cfg->dim.x || cfg->srcpos.y >= cfg->dim.y || cfg->srcpos.z >= cfg->dim.z) {
+            *((uint*)&cfg->srcparam2.z) = 0;
+            *((uint*)&cfg->srcparam2.w) = 0;
+        } else {
+            uint idx1dorig = ((int)(floorf(cfg->srcpos.z)) * (cfg->dim.y * cfg->dim.x) + (int)(floorf(cfg->srcpos.y)) * cfg->dim.x + (int)(floorf(cfg->srcpos.x)));
+            *((uint*)&cfg->srcparam2.z) = idx1dorig;
+            *((uint*)&cfg->srcparam2.w) = (cfg->vol[idx1dorig] & MED_MASK);
+        }
+
+        if (cfg->extrasrclen) {
+            for (int i = 0; i < cfg->extrasrclen; i++) {
+                if (cfg->srcdata[i].srcpos.x < 0.f || cfg->srcdata[i].srcpos.y < 0.f || cfg->srcdata[i].srcpos.z < 0.f || cfg->srcdata[i].srcpos.x >= cfg->dim.x || cfg->srcdata[i].srcpos.y >= cfg->dim.y || cfg->srcdata[i].srcpos.z >= cfg->dim.z) {
+                    *((uint*)&cfg->srcdata[i].srcparam2.z) = 0;
+                    *((uint*)&cfg->srcdata[i].srcparam2.w) = 0;
+                } else {
+                    uint idx1dorig = ((int)(floorf(cfg->srcdata[i].srcpos.z)) * (cfg->dim.y * cfg->dim.x) + (int)(floorf(cfg->srcdata[i].srcpos.y)) * cfg->dim.x + (int)(floorf(cfg->srcdata[i].srcpos.x)));
+                    *((uint*)&cfg->srcdata[i].srcparam2.z) = idx1dorig;
+                    *((uint*)&cfg->srcdata[i].srcparam2.w) = (cfg->vol[idx1dorig] & MED_MASK);
+                }
+            }
+        }
+    }
+
     if (cfg->vol) {
         unsigned int dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z;
 
@@ -1850,7 +1893,7 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
     if (cfg->seed == 0) {
         MCX_ASSERT(fscanf(in, "%d", &(cfg->seed) ) == 1);
     } else {
-        MCX_ASSERT(fscanf(in, "%d", &itmp ) == 1);
+        MCX_ASSERT(fscanf(in, "%u", &itmp ) == 1);
     }
 
     comm = fgets(comment, MAX_PATH_LENGTH, in);
@@ -1862,7 +1905,7 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
     MCX_ASSERT(fscanf(in, "%f %f %f", &(cfg->srcpos.x), &(cfg->srcpos.y), &(cfg->srcpos.z) ) == 3);
     comm = fgets(comment, MAX_PATH_LENGTH, in);
 
-    if (cfg->issrcfrom0 == 0 && comm != NULL && sscanf(comm, "%d", &itmp) == 1) {
+    if (cfg->issrcfrom0 == 0 && comm != NULL && sscanf(comm, "%u", &itmp) == 1) {
         cfg->issrcfrom0 = itmp;
     }
 
@@ -1923,21 +1966,21 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
         fprintf(stdout, "%s\nPlease specify the x voxel size (in mm), x dimension, min and max x-index [1.0 100 1 100]:\n\t", filename);
     }
 
-    MCX_ASSERT(fscanf(in, "%f %d %d %d", &(cfg->steps.x), &(cfg->dim.x), &(cfg->crop0.x), &(cfg->crop1.x)) == 4);
+    MCX_ASSERT(fscanf(in, "%f %u %u %u", &(cfg->steps.x), &(cfg->dim.x), &(cfg->crop0.x), &(cfg->crop1.x)) == 4);
     comm = fgets(comment, MAX_PATH_LENGTH, in);
 
     if (in == stdin)
         fprintf(stdout, "%f %d %d %d\nPlease specify the y voxel size (in mm), y dimension, min and max y-index [1.0 100 1 100]:\n\t",
                 cfg->steps.x, cfg->dim.x, cfg->crop0.x, cfg->crop1.x);
 
-    MCX_ASSERT(fscanf(in, "%f %d %d %d", &(cfg->steps.y), &(cfg->dim.y), &(cfg->crop0.y), &(cfg->crop1.y)) == 4);
+    MCX_ASSERT(fscanf(in, "%f %u %u %u", &(cfg->steps.y), &(cfg->dim.y), &(cfg->crop0.y), &(cfg->crop1.y)) == 4);
     comm = fgets(comment, MAX_PATH_LENGTH, in);
 
     if (in == stdin)
         fprintf(stdout, "%f %d %d %d\nPlease specify the z voxel size (in mm), z dimension, min and max z-index [1.0 100 1 100]:\n\t",
                 cfg->steps.y, cfg->dim.y, cfg->crop0.y, cfg->crop1.y);
 
-    MCX_ASSERT(fscanf(in, "%f %d %d %d", &(cfg->steps.z), &(cfg->dim.z), &(cfg->crop0.z), &(cfg->crop1.z)) == 4);
+    MCX_ASSERT(fscanf(in, "%f %u %u %u", &(cfg->steps.z), &(cfg->dim.z), &(cfg->crop0.z), &(cfg->crop1.z)) == 4);
     comm = fgets(comment, MAX_PATH_LENGTH, in);
 
     if (cfg->steps.x != cfg->steps.y || cfg->steps.y != cfg->steps.z) {
@@ -1976,7 +2019,7 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
         fprintf(stdout, "%f %d %d %d\nPlease specify the total types of media:\n\t",
                 cfg->steps.z, cfg->dim.z, cfg->crop0.z, cfg->crop1.z);
 
-    MCX_ASSERT(fscanf(in, "%d", &(cfg->medianum)) == 1);
+    MCX_ASSERT(fscanf(in, "%u", &(cfg->medianum)) == 1);
     cfg->medianum++;
     comm = fgets(comment, MAX_PATH_LENGTH, in);
 
@@ -2007,15 +2050,15 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
         fprintf(stdout, "Please specify the total number of detectors and fiber diameter (in grid unit):\n\t");
     }
 
-    MCX_ASSERT(fscanf(in, "%d %f", &(cfg->detnum), &(cfg->detradius)) == 2);
+    MCX_ASSERT(fscanf(in, "%u %f", &(cfg->detnum), &(cfg->detradius)) == 2);
     comm = fgets(comment, MAX_PATH_LENGTH, in);
 
     if (in == stdin) {
         fprintf(stdout, "%d %f\n", cfg->detnum, cfg->detradius);
     }
 
-    if (cfg->medianum + cfg->detnum > MAX_PROP_AND_DETECTORS) {
-        MCX_ERROR(-4, "input media types plus detector number exceeds the maximum total (4000)");
+    if (cfg->medianum + cfg->detnum + (cfg->extrasrclen << 2) > MAX_PROP_AND_DETECTORS) {
+        MCX_ERROR(-4, "input media types plus detector number plus additional sources exceeds the maximum total (4000)");
     }
 
     cfg->detpos = (float4*)malloc(sizeof(float4) * cfg->detnum);
@@ -2492,22 +2535,77 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         if (src) {
             subitem = FIND_JSON_OBJ("Pos", "Optode.Source.Pos", src);
 
-            if (subitem) {
+            if (subitem && cJSON_IsArray(subitem)) {
+                cfg->extrasrclen = 0;
+
+                if (cJSON_IsArray(subitem->child)) {
+                    if (cfg->srcdata && cfg->extrasrclen != cJSON_GetArraySize(subitem) - 1) {
+                        MCX_ERROR(-1, "Length of sub-elements of Pos/Dir/Param1/Param2 must match");
+                    }
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->extrasrclen = cJSON_GetArraySize(subitem) - 1;
+                    }
+
+                    subitem = subitem->child;
+                }
+
                 cfg->srcpos.x = subitem->child->valuedouble;
                 cfg->srcpos.y = subitem->child->next->valuedouble;
                 cfg->srcpos.z = subitem->child->next->next->valuedouble;
+
+                if (subitem->child->next->next->next) {
+                    cfg->srcpos.w = subitem->child->next->next->next->valuedouble;
+                }
+
+                if (cfg->extrasrclen > 0) {
+                    int count = 0;
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+                    }
+
+                    while (subitem->next && count < cfg->extrasrclen) {
+
+                        subitem = subitem->next;
+                        cfg->srcdata[count].srcpos.x = subitem->child->valuedouble - (!cfg->issrcfrom0);
+                        cfg->srcdata[count].srcpos.y = subitem->child->next->valuedouble - (!cfg->issrcfrom0);
+                        cfg->srcdata[count].srcpos.z = subitem->child->next->next->valuedouble - (!cfg->issrcfrom0);
+
+                        if (subitem->child->next->next->next) {
+                            cfg->srcdata[count].srcpos.w = subitem->child->next->next->next->valuedouble;
+                        }
+
+                        count++;
+                    }
+                }
             }
 
-            cfg->srcpos.w = FIND_JSON_KEY("Weight", "Optode.Source.Weight", src, 1.f, valuedouble);
+            if (FIND_JSON_OBJ("Weight", "Optode.Source.Weight", src)) {
+                cfg->srcpos.w = FIND_JSON_KEY("Weight", "Optode.Source.Weight", src, cfg->srcpos.w, valuedouble);
+            }
 
             subitem = FIND_JSON_OBJ("Dir", "Optode.Source.Dir", src);
 
-            if (subitem) {
+            if (subitem && cJSON_IsArray(subitem)) {
+                if (cJSON_IsArray(subitem->child)) {
+                    if (cfg->srcdata && cfg->extrasrclen != cJSON_GetArraySize(subitem) - 1) {
+                        MCX_ERROR(-1, "Length of sub-elements of Pos/Dir/Param1/Param2 must match");
+                    }
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->extrasrclen = cJSON_GetArraySize(subitem) - 1;
+                    }
+
+                    subitem = subitem->child;
+                }
+
                 cfg->srcdir.x = subitem->child->valuedouble;
                 cfg->srcdir.y = subitem->child->next->valuedouble;
                 cfg->srcdir.z = subitem->child->next->next->valuedouble;
 
                 if (subitem->child->next->next->next) {
+
                     if (cJSON_IsString(subitem->child->next->next->next)) {
                         if (strcmp(subitem->child->next->next->next->valuestring, "_NaN_") == 0) {
                             cfg->srcdir.w = NAN;
@@ -2518,6 +2616,38 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         }
                     } else {
                         cfg->srcdir.w = subitem->child->next->next->next->valuedouble;
+                    }
+                }
+
+                if (cfg->extrasrclen > 0) {
+                    int count = 0;
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+                    }
+
+                    while (subitem->next && count < cfg->extrasrclen) {
+
+                        subitem = subitem->next;
+                        cfg->srcdata[count].srcdir.x = subitem->child->valuedouble;
+                        cfg->srcdata[count].srcdir.y = subitem->child->next->valuedouble;
+                        cfg->srcdata[count].srcdir.z = subitem->child->next->next->valuedouble;
+
+                        if (subitem->child->next->next->next) {
+                            if (cJSON_IsString(subitem->child->next->next->next)) {
+                                if (strcmp(subitem->child->next->next->next->valuestring, "_NaN_") == 0) {
+                                    cfg->srcdata[count].srcdir.w = NAN;
+                                } else if (strcmp(subitem->child->next->next->next->valuestring, "_Inf_") == 0) {
+                                    cfg->srcdata[count].srcdir.w = INFINITY;
+                                } else if (strcmp(subitem->child->next->next->next->valuestring, "-_Inf_") == 0) {
+                                    cfg->srcdata[count].srcdir.w = -INFINITY;
+                                }
+                            } else {
+                                cfg->srcdata[count].srcdir.w = subitem->child->next->next->next->valuedouble;
+                            }
+                        }
+
+                        count++;
                     }
                 }
             }
@@ -2540,7 +2670,19 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             cfg->srctype = mcx_keylookup((char*)FIND_JSON_KEY("Type", "Optode.Source.Type", src, "pencil", valuestring), srctypeid);
             subitem = FIND_JSON_OBJ("Param1", "Optode.Source.Param1", src);
 
-            if (subitem) {
+            if (subitem && cJSON_IsArray(subitem)) {
+                if (cJSON_IsArray(subitem->child)) {
+                    if (cfg->srcdata && cfg->extrasrclen != cJSON_GetArraySize(subitem) - 1) {
+                        MCX_ERROR(-1, "Length of sub-elements of Pos/Dir/Param1/Param2 must match");
+                    }
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->extrasrclen = cJSON_GetArraySize(subitem) - 1;
+                    }
+
+                    subitem = subitem->child;
+                }
+
                 cfg->srcparam1.x = subitem->child->valuedouble;
 
                 if (subitem->child->next) {
@@ -2554,11 +2696,51 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         }
                     }
                 }
+
+                if (cfg->extrasrclen > 0) {
+                    int count = 0;
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+                    }
+
+                    while (subitem->next && count < cfg->extrasrclen) {
+
+                        subitem = subitem->next;
+                        cfg->srcdata[count].srcparam1.x = subitem->child->valuedouble;
+
+                        if (subitem->child->next) {
+                            cfg->srcdata[count].srcparam1.y = subitem->child->next->valuedouble;
+
+                            if (subitem->child->next->next) {
+                                cfg->srcdata[count].srcparam1.z = subitem->child->next->next->valuedouble;
+
+                                if (subitem->child->next->next->next) {
+                                    cfg->srcdata[count].srcparam1.w = subitem->child->next->next->next->valuedouble;
+                                }
+                            }
+                        }
+
+                        count++;
+                    }
+                }
             }
 
             subitem = FIND_JSON_OBJ("Param2", "Optode.Source.Param2", src);
 
-            if (subitem) {
+            if (subitem && cJSON_IsArray(subitem)) {
+                if (cJSON_IsArray(subitem->child)) {
+                    if (cfg->srcdata && cfg->extrasrclen != cJSON_GetArraySize(subitem) - 1) {
+                        MCX_ERROR(-1, "Length of sub-elements of Pos/Dir/param2/Param2 must match");
+                    }
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->extrasrclen = cJSON_GetArraySize(subitem) - 1;
+                    }
+
+                    subitem = subitem->child;
+                }
+
                 cfg->srcparam2.x = subitem->child->valuedouble;
 
                 if (subitem->child->next) {
@@ -2570,6 +2752,34 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         if (subitem->child->next->next->next) {
                             cfg->srcparam2.w = subitem->child->next->next->next->valuedouble;
                         }
+                    }
+                }
+
+                if (cfg->extrasrclen > 0) {
+                    int count = 0;
+
+                    if (cfg->srcdata == NULL) {
+                        cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
+                    }
+
+                    while (subitem->next && count < cfg->extrasrclen) {
+
+                        subitem = subitem->next;
+                        cfg->srcdata[count].srcparam2.x = subitem->child->valuedouble;
+
+                        if (subitem->child->next) {
+                            cfg->srcdata[count].srcparam2.y = subitem->child->next->valuedouble;
+
+                            if (subitem->child->next->next) {
+                                cfg->srcdata[count].srcparam2.z = subitem->child->next->next->valuedouble;
+
+                                if (subitem->child->next->next->next) {
+                                    cfg->srcdata[count].srcparam2.w = subitem->child->next->next->next->valuedouble;
+                                }
+                            }
+                        }
+
+                        count++;
                     }
                 }
             }
@@ -2714,8 +2924,8 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         }
     }
 
-    if (cfg->medianum + cfg->detnum > MAX_PROP_AND_DETECTORS) {
-        MCX_ERROR(-4, "input media types plus detector number exceeds the maximum total (4000)");
+    if (cfg->medianum + cfg->detnum + (cfg->extrasrclen << 2) > MAX_PROP_AND_DETECTORS) {
+        MCX_ERROR(-4, "input media types plus detector number plus additional sources exceeds the maximum total (4000)");
     }
 
     if (Session) {
@@ -3447,6 +3657,14 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
         cfg->srcpos.x--;
         cfg->srcpos.y--;
         cfg->srcpos.z--; /*convert to C index, grid center*/
+
+        if (cfg->extrasrclen) {
+            for (int i = 0; i < cfg->extrasrclen; i++) {
+                cfg->srcdata[i].srcpos.x--;
+                cfg->srcdata[i].srcpos.y--;
+                cfg->srcdata[i].srcpos.z--;
+            }
+        }
     }
 
     if (cfg->tstep == 0.f) {
@@ -4924,7 +5142,7 @@ int mcx_lookupindex(char* key, const char* index) {
 
 void mcx_version(Config* cfg) {
     const char ver[] = "$Rev::      $ " MCX_VERSION;
-    int v = 0;
+    uint v = 0;
     sscanf(ver, "$Rev::%x", &v);
     MCX_FPRINTF(cfg->flog, "MCX Revision %x\n", v);
     exit(0);

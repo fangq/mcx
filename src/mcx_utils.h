@@ -94,6 +94,14 @@ typedef struct MCXPolarizeMedium {
     float nmed;                    /**< background medium refrative index */
 } POLMedium;
 
+typedef struct  MCXExtraSource {
+    float4 srcpos;                    /**< initial position vector + initial weight */
+    float4 srcdir;                    /**< initial directon vector + focal length */
+    float4 srcparam1;                 /**< source parameters set 1 */
+    float4 srcparam2;                 /**< source parameters set 2 */
+} ExtraSrc;
+
+
 /**
  * Header data structure in .mch/.mct files to store detected photon data
  * This header has a total of 256 bytes
@@ -263,6 +271,8 @@ typedef struct MCXConfig {
     float* invcdf;               /**< equal-space sampled inversion of CDF(cos(theta)) for the phase function of the zenith angle */
     unsigned int nangle;         /**< number of samples for inverse-cdf of launch angle, will be added by 2 to include -1 and 1 on the two ends */
     float* angleinvcdf;          /**< equal-space sampled inversion of CDF(cos(theta)) for the phase function of the zenith angle of photon launch */
+    unsigned int extrasrclen;    /**< length of additional sources */
+    ExtraSrc* srcdata;           /**< buffer to store multiple source input data */
 } Config;
 
 #ifdef  __cplusplus

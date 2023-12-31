@@ -78,6 +78,11 @@ function varargout=mcxlab(varargin)
 %                      of the srcdir direction; if the focal length is -inf, the launch
 %                      angle will be computed based on the Lambertian (cosine) distribution.
 %
+%      Starting v2024, cfg.{srcpos,srcdir,srcparam1,srcparam2} accept multiple sources,
+%      with each source corresponding to a single row of the array. For all 4 components,
+%      srcpos/srcdir support 3 or 4 columns, and srcparam1/srcparam2 support 4 columns.
+%      If any of the 4 compnents present, they should have matching row number.
+%
 %== MC simulation settings ==
 %      cfg.seed:       seed for the random number generator (integer) [0]
 %                      if set to a uint8 array, the binary data in each column is used 

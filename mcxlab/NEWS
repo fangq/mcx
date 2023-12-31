@@ -2,7 +2,7 @@
 
 Major updates are marked with a "*"
 
-== MCX v2023.11 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
+== MCX v2024.1 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
 
  2023-11-07 [a710ab3] allow converting integer cfg.vol to json
  2023-10-31 [d6c64e4] [test] fix rng test after make double

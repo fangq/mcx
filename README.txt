@@ -5,7 +5,7 @@
 
 *Author:  Qianqian Fang <q.fang at neu.edu>
 *License: GNU General Public License version 3 (GPLv3)
-*Version: 2.2.pre (v2023.11, Interstellar Ion)
+*Version: 2.2.pre (v2024.1, Interstellar Ion)
 *Website: http://mcx.space
 
 ---------------------------------------------------------------------

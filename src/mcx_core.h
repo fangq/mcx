@@ -116,6 +116,13 @@ typedef union  __align__(16) GProperty {
     float  f[4];
 } Gprop;
 
+typedef struct  __align__(16) MCXSource {
+    float4 pos;      /**< initial position vector, for pencil beam */
+    float4 dir;      /**< initial directon vector, for pencil beam */
+    float4 param1;   /**< source parameters set 1 */
+    float4 param2;   /**< source parameters set 2 */
+} MCXSrc;
+
 typedef unsigned char uchar;
 
 /**
@@ -136,8 +143,8 @@ typedef struct  __align__(16) KernelParams {
     unsigned int dorefint;             /**< flag if mcx perform reflection calculations at internal boundaries */
     unsigned int savedet;              /**< flag if mcx outputs detected photon partial length data */
     float  Rtstep;                     /**< reciprocal of the step size */
-    float4 ps;                         /**< initial position vector, for pencil beam */
-    float4 c0;                         /**< initial directon vector, for pencil beam */
+    MCXSrc src;                        /**< additional source data, including pos, dir, param1, param2 */
+    unsigned int extrasrclen;          /**< number of additional sources */
     float4 s0;                         /**< initial stokes parameters, for polarized photon simulation */
     float3 maxidx;                     /**< maximum index in x/y/z directions for out-of-bound tests */
     uint4  dimlen;                     /**< maximum index used to convert x/y/z to 1D array index */
@@ -148,16 +155,12 @@ typedef struct  __align__(16) KernelParams {
     float  skipradius2;                /**< square of the radius within which the data is cached (obsolete) */
     float  minaccumtime;               /**< time steps for tMCimg like weight accummulation (obsolete) */
     int    srctype;                    /**< type of the source */
-    float4 srcparam1;                  /**< source parameters set 1 */
-    float4 srcparam2;                  /**< source parameters set 2 */
     int voidtime;                      /**< flag if the time-of-flight in the background is counted */
     unsigned int maxdetphoton;         /**< max number of detected photons */
     unsigned int maxmedia;             /**< max number of media labels */
     unsigned int detnum;               /**< max number of detectors */
     unsigned int maxpolmedia;          /**< max number of media labels for polarized light */
     unsigned int maxgate;              /**< max number of time gates */
-    unsigned int idx1dorig;            /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
-    unsigned int mediaidorig;          /**< pre-computed media index of the photon at launch for pencil/isotropic beams */
     unsigned int isatomic;             /**< whether atomic operations are used */
     unsigned int maxvoidstep;          /**< max steps that photon can travel in the background before entering non-zero voxels */
     unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */
