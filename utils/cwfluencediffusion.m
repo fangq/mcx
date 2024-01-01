@@ -1,4 +1,4 @@
-function varargout=cwfluencediffusion(varargin)
+function varargout = cwfluencediffusion(varargin)
 %
 %  [Phi r]= cwfluencediffusion(mua, musp, Reff, srcpos,detpos)
 %
@@ -12,4 +12,4 @@ function varargout=cwfluencediffusion(varargin)
 %    License: GPLv3, see http://mcx.sf.net for details
 %    see Boas2002, Haskell1994
 %
-[varargout{1:nargout}]=cwdiffusion(varargin{:});
+[varargout{1:nargout}] = cwdiffusion(varargin{:});

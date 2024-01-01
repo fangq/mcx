@@ -1,4 +1,4 @@
-function hseg=mcxplotshapes(jsonshape,gridsize,offset,hseg,voxelsize,varargin)
+function hseg = mcxplotshapes(jsonshape, gridsize, offset, hseg, voxelsize, varargin)
 %
 % Format:
 %    mcxplotshapes(jsonshapestr)
@@ -33,119 +33,119 @@ function hseg=mcxplotshapes(jsonshape,gridsize,offset,hseg,voxelsize,varargin)
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
 
-if(nargin<4)
-    hseg=[];
+if (nargin < 4)
+    hseg = [];
 end
 
-shapes=loadjson(jsonshape);
-if(nargin<3)
-    offset=1;
-    if(nargin<2)
-        gridsize=[60 60 60];
+shapes = loadjson(jsonshape);
+if (nargin < 3)
+    offset = 1;
+    if (nargin < 2)
+        gridsize = [60 60 60];
     end
 end
 
-isholdplot=ishold;
+isholdplot = ishold;
 
-orig=[0 0 0]+offset;
-if(nargin<5)
-    voxelsize=1;
+orig = [0 0 0] + offset;
+if (nargin < 5)
+    voxelsize = 1;
 end
 
 rngstate = rand ('state');
-randseed=hex2dec('623F9A9E');
-rand('state',randseed);
-surfcolors=rand(1024,3);
+randseed = hex2dec('623F9A9E');
+rand('state', randseed);
+surfcolors = rand(1024, 3);
 
 hold on;
 
-if(isfield(shapes,'Shapes'))
-    for j=1:length(shapes.Shapes)
-        if(iscell(shapes.Shapes))
-            shp=shapes.Shapes{j};
+if (isfield(shapes, 'Shapes'))
+    for j = 1:length(shapes.Shapes)
+        if (iscell(shapes.Shapes))
+            shp = shapes.Shapes{j};
         else
-            shp=shapes.Shapes(j);
+            shp = shapes.Shapes(j);
         end
-        sname=fieldnames(shp);
-        tag=1;
-        switch(sname{1})
-            case {'Grid','Box','Subgrid'}
-                if(strcmp(sname{1},'Grid') && ~isempty(hseg))
+        sname = fieldnames(shp);
+        tag = 1;
+        switch (sname{1})
+            case {'Grid', 'Box', 'Subgrid'}
+                if (strcmp(sname{1}, 'Grid') && ~isempty(hseg))
                     delete(hseg);
-                    hseg=[];
+                    hseg = [];
                 end
-                obj=shp.(sname{1});
-                if(isfield(obj,'Tag'))
-                    tag=obj.Tag;
+                obj = shp.(sname{1});
+                if (isfield(obj, 'Tag'))
+                    tag = obj.Tag;
                 end
-                gridsize=obj.Size;
-                [no,fc]=latticegrid([0 obj.Size(1)],[0 obj.Size(2)],[0 obj.Size(3)]);
-                hseg(end+1)=plotmesh(no*voxelsize,fc,'facealpha',0.3, 'linestyle', '-', 'facecolor','none', varargin{:});
+                gridsize = obj.Size;
+                [no, fc] = latticegrid([0 obj.Size(1)], [0 obj.Size(2)], [0 obj.Size(3)]);
+                hseg(end + 1) = plotmesh(no * voxelsize, fc, 'facealpha', 0.3, 'linestyle', '-', 'facecolor', 'none', varargin{:});
             case 'Sphere'
-                obj=shp.(sname{1});
-                if(isfield(obj,'Tag'))
-                    tag=obj.Tag;
+                obj = shp.(sname{1});
+                if (isfield(obj, 'Tag'))
+                    tag = obj.Tag;
                 end
-                [sx,sy,sz]=sphere;
-                hseg(end+1)=surf(voxelsize*(sx*obj.R+(obj.O(1)+orig(1))), ...
-                     voxelsize(sy*obj.R+(obj.O(2)+orig(2))), voxelsize(sz*obj.R+(obj.O(3)+orig(3))), ...
-                     'facealpha',0.3,'facecolor',surfcolors(tag+1,:),'linestyle','none');
+                [sx, sy, sz] = sphere;
+                hseg(end + 1) = surf(voxelsize * (sx * obj.R + (obj.O(1) + orig(1))), ...
+                                     voxelsize(sy * obj.R + (obj.O(2) + orig(2))), voxelsize(sz * obj.R + (obj.O(3) + orig(3))), ...
+                                     'facealpha', 0.3, 'facecolor', surfcolors(tag + 1, :), 'linestyle', 'none');
             case 'Cylinder'
-                obj=shp.(sname{1});
-                if(isfield(obj,'Tag'))
-                    tag=obj.Tag;
+                obj = shp.(sname{1});
+                if (isfield(obj, 'Tag'))
+                    tag = obj.Tag;
                 end
-                c0=obj.C0;
-                c1=obj.C1;
-                len=norm(c0-c1);
+                c0 = obj.C0;
+                c1 = obj.C1;
+                len = norm(c0 - c1);
 
-                [sx,sy,sz]=cylinder(obj.R);
-                sz=sz*len;
-                no=rotatevec3d([sx(:),sy(:),sz(:)],c1-c0);
-                sx=reshape(no(:,1),2,size(no,1)/2);
-                sy=reshape(no(:,2),2,size(no,1)/2);
-                sz=reshape(no(:,3),2,size(no,1)/2);
-                hseg(end+1)=surf(voxelsize*(sx+(c0(1)+orig(1))), ...
-                     voxelsize*(sy+(c0(2)+orig(2))), voxelsize*(sz+(c0(3)+orig(3))), ...
-                     'facealpha',0.3,'facecolor',surfcolors(tag+1,:),'linestyle','none');
+                [sx, sy, sz] = cylinder(obj.R);
+                sz = sz * len;
+                no = rotatevec3d([sx(:), sy(:), sz(:)], c1 - c0);
+                sx = reshape(no(:, 1), 2, size(no, 1) / 2);
+                sy = reshape(no(:, 2), 2, size(no, 1) / 2);
+                sz = reshape(no(:, 3), 2, size(no, 1) / 2);
+                hseg(end + 1) = surf(voxelsize * (sx + (c0(1) + orig(1))), ...
+                                     voxelsize * (sy + (c0(2) + orig(2))), voxelsize * (sz + (c0(3) + orig(3))), ...
+                                     'facealpha', 0.3, 'facecolor', surfcolors(tag + 1, :), 'linestyle', 'none');
             case 'Origin'
-                orig=voxelsize*shp.(sname{1});
-                hseg(end+1)=plot3(orig(1),orig(2),orig(3),'m*');
-            case {'XSlabs','YSlabs','ZSlabs'}
-                obj=shp.(sname{1});
-                if(isfield(obj,'Tag'))
-                    tag=obj.Tag;
+                orig = voxelsize * shp.(sname{1});
+                hseg(end + 1) = plot3(orig(1), orig(2), orig(3), 'm*');
+            case {'XSlabs', 'YSlabs', 'ZSlabs'}
+                obj = shp.(sname{1});
+                if (isfield(obj, 'Tag'))
+                    tag = obj.Tag;
                 end
-                for k=1:size(obj.Bounds,1)
-                    switch(sname{1})
+                for k = 1:size(obj.Bounds, 1)
+                    switch (sname{1})
                         case 'XSlabs'
-                            [no,fc]=latticegrid([obj.Bounds(k,1) obj.Bounds(k,2)]+orig(1),[0 gridsize(2)],[0 gridsize(3)]);
+                            [no, fc] = latticegrid([obj.Bounds(k, 1) obj.Bounds(k, 2)] + orig(1), [0 gridsize(2)], [0 gridsize(3)]);
                         case 'YSlabs'
-                            [no,fc]=latticegrid([0 gridsize(1)],[obj.Bounds(k,1) obj.Bounds(k,2)]+orig(2),[0 gridsize(3)]);
+                            [no, fc] = latticegrid([0 gridsize(1)], [obj.Bounds(k, 1) obj.Bounds(k, 2)] + orig(2), [0 gridsize(3)]);
                         case 'ZSlabs'
-                            [no,fc]=latticegrid([0 gridsize(1)],[0 gridsize(2)],[obj.Bounds(k,1) obj.Bounds(k,2)]+orig(3));
+                            [no, fc] = latticegrid([0 gridsize(1)], [0 gridsize(2)], [obj.Bounds(k, 1) obj.Bounds(k, 2)] + orig(3));
                     end
-                    hseg(end+1)=plotmesh(voxelsize*no,fc,'facealpha',0.3, 'linestyle', 'none', 'facecolor',surfcolors(tag+1,:), varargin{:});
+                    hseg(end + 1) = plotmesh(voxelsize * no, fc, 'facealpha', 0.3, 'linestyle', 'none', 'facecolor', surfcolors(tag + 1, :), varargin{:});
                 end
-            case {'XLayers','YLayers','ZLayers'}
-                obj=shp.(sname{1});
-                if(~iscell(obj))
-                    obj=num2cell(obj,2);
+            case {'XLayers', 'YLayers', 'ZLayers'}
+                obj = shp.(sname{1});
+                if (~iscell(obj))
+                    obj = num2cell(obj, 2);
                 end
-                for k=1:length(obj)
-                    tag=1;
-                    if(length(obj{k})>=3)
-                        tag=obj{k}(3);
+                for k = 1:length(obj)
+                    tag = 1;
+                    if (length(obj{k}) >= 3)
+                        tag = obj{k}(3);
                     end
-                    switch(sname{1})
+                    switch (sname{1})
                         case 'XLayers'
-                            [no,fc]=latticegrid([obj{k}(1)-1 obj{k}(2)]+orig(1)-1,[0 gridsize(2)],[0 gridsize(3)]);
+                            [no, fc] = latticegrid([obj{k}(1) - 1 obj{k}(2)] + orig(1) - 1, [0 gridsize(2)], [0 gridsize(3)]);
                         case 'YLayers'
-                            [no,fc]=latticegrid([0 gridsize(1)],[obj{k}(1)-1 obj{k}(2)]+orig(2)-1,[0 gridsize(3)]);
+                            [no, fc] = latticegrid([0 gridsize(1)], [obj{k}(1) - 1 obj{k}(2)] + orig(2) - 1, [0 gridsize(3)]);
                         case 'ZLayers'
-                            [no,fc]=latticegrid([0 gridsize(1)],[0 gridsize(2)],[obj{k}(1)-1 obj{k}(2)]+orig(3)-1);
+                            [no, fc] = latticegrid([0 gridsize(1)], [0 gridsize(2)], [obj{k}(1) - 1 obj{k}(2)] + orig(3) - 1);
                     end
-                    hseg(end+1)=plotmesh(voxelsize*no,fc,'facealpha',0.3, 'linestyle', 'none', 'facecolor',surfcolors(tag+1,:), varargin{:});
+                    hseg(end + 1) = plotmesh(voxelsize * no, fc, 'facealpha', 0.3, 'linestyle', 'none', 'facecolor', surfcolors(tag + 1, :), varargin{:});
                 end
             otherwise
                 error('unsupported shape constructs');
@@ -153,8 +153,8 @@ if(isfield(shapes,'Shapes'))
     end
 end
 
-if(~isholdplot)
+if (~isholdplot)
     hold off;
 end
 
-rand ('state',rngstate);
+rand ('state', rngstate);

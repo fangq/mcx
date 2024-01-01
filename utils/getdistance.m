@@ -1,4 +1,4 @@
-function separation=getdistance(srcpos,detpos)
+function separation = getdistance(srcpos, detpos)
 %  separation=getdistance(srcpos,detpos)
 %
 %  compute the source/detector separation from the positions
@@ -17,10 +17,10 @@ function separation=getdistance(srcpos,detpos)
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see http://mcx.sf.net for details
 
-srcnum=length(srcpos(:,1));
-detnum=length(detpos(:,1));
-for s=1:srcnum
-	for r=1:detnum
-             separation(r,s)=norm(srcpos(s,:)-detpos(r,:),'fro');
-	end
+srcnum = length(srcpos(:, 1));
+detnum = length(detpos(:, 1));
+for s = 1:srcnum
+    for r = 1:detnum
+        separation(r, s) = norm(srcpos(s, :) - detpos(r, :), 'fro');
+    end
 end

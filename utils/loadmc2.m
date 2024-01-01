@@ -1,4 +1,4 @@
-function [data, dref]=loadmc2(fname,dim,format,offset)
+function [data, dref] = loadmc2(fname, dim, format, offset)
 %
 %    data=loadmc2(fname,dim,format)
 %       or
@@ -17,35 +17,35 @@ function [data, dref]=loadmc2(fname,dim,format,offset)
 %        data:  the output MCX solution data array, in the
 %               same dimension specified by dim
 %        dref(optional): diffuse reflectance at the surface of the domain.
-%               if this output is not given while diffuse reflectance 
-%               is recorded, dref is shown as the negative values in 
+%               if this output is not given while diffuse reflectance
+%               is recorded, dref is shown as the negative values in
 %               the data output.
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see http://mcx.sf.net for details
 %
 
-if(nargin==2)
-   format='float';
+if (nargin == 2)
+    format = 'float';
 end
 
-fid=fopen(fname,'rb');
+fid = fopen(fname, 'rb');
 
-if(fid==0)
+if (fid == 0)
     error('can not open the specified file');
 end
 
-if(nargin>3)
-    fseek(fid,offset,'bof');
+if (nargin > 3)
+    fseek(fid, offset, 'bof');
 end
 
-data=fread(fid,inf,format);
+data = fread(fid, inf, format);
 fclose(fid);
 
-data=reshape(data,dim);
+data = reshape(data, dim);
 
-if(nargout>1)
-   dref=-data;
-   dref(dref<0)=0;
-   data(data<0)=0;
+if (nargout > 1)
+    dref = -data;
+    dref(dref < 0) = 0;
+    data(data < 0) = 0;
 end

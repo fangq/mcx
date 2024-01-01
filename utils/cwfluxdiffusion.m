@@ -1,4 +1,4 @@
-function [flux]= cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
+function [flux] = cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
 %
 %  [flux] = cwfluxdiffusion(mua, musp, n, srcpos, detpos)
 %
@@ -20,13 +20,13 @@ function [flux]= cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
 %    License: GPLv3, see http://mcx.sf.net for details
 %    see Kienle1997
 %
-    D = 1 / (3 * (mua + musp));
-    z0 = 1 / (mua + musp);
-    zb = (1 + Reff) / (1 - Reff) * 2 * D;
-    mueff = sqrt(3 * mua * (mua + musp));
-    r1 = getdistance([srcpos(:,1:2) srcpos(:,3) + z0],detpos);
-    r2 = getdistance([srcpos(:,1:2) srcpos(:,3) + z0 + 2 * zb],detpos);
+D = 1 / (3 * (mua + musp));
+z0 = 1 / (mua + musp);
+zb = (1 + Reff) / (1 - Reff) * 2 * D;
+mueff = sqrt(3 * mua * (mua + musp));
+r1 = getdistance([srcpos(:, 1:2) srcpos(:, 3) + z0], detpos);
+r2 = getdistance([srcpos(:, 1:2) srcpos(:, 3) + z0 + 2 * zb], detpos);
 
-    flux = 1 / (4 * pi) * (z0 * (mueff + 1 ./ r1) .* exp(-mueff .* r1) ./ r1.^2 + ...
-        (z0 + 2 * zb) * (mueff + 1 ./ r2) .* exp(-mueff .* r2) ./ r2.^2); % Eq. 6 of Kienle1997
+flux = 1 / (4 * pi) * (z0 * (mueff + 1 ./ r1) .* exp(-mueff .* r1) ./ r1.^2 + ...
+                       (z0 + 2 * zb) * (mueff + 1 ./ r2) .* exp(-mueff .* r2) ./ r2.^2); % Eq. 6 of Kienle1997
 end

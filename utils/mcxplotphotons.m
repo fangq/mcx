@@ -1,4 +1,4 @@
-function varargout=mcxplotphotons(traj,varargin)
+function varargout = mcxplotphotons(traj, varargin)
 %
 %    mcxplotphotons(traj)
 %       or
@@ -14,7 +14,7 @@ function varargout=mcxplotphotons(traj,varargin)
 %           traj.id: the photon index being recorded
 %           traj.pos: the 3D position of the photon; for each photon, the
 %                  positions are stored in serial order
-%           traj.data: the combined output, in the form of 
+%           traj.data: the combined output, in the form of
 %                [id,pos,weight,reserved]'
 %
 %    output:
@@ -27,28 +27,28 @@ function varargout=mcxplotphotons(traj,varargin)
 %    License: GPLv3, see http://mcx.sf.net for details
 %
 
-if(isstruct(traj) && ~isfield(traj, 'id') && isfield(traj, 'data'))
-    traj=struct('id',typecast(single(traj.data(1,:)'),'uint32'),'pos',traj.data(2:4,:)','weight',traj.data(5,:)', 'data', traj.data);
+if (isstruct(traj) && ~isfield(traj, 'id') && isfield(traj, 'data'))
+    traj = struct('id', typecast(single(traj.data(1, :)'), 'uint32'), 'pos', traj.data(2:4, :)', 'weight', traj.data(5, :)', 'data', traj.data);
 end
-if(~isstruct(traj) && size(traj,2)==6)
-    traj=struct('id',typecast(single(traj(:,1)),'uint32'),'pos',traj(:,2:4),'weight',traj(:,5));
+if (~isstruct(traj) && size(traj, 2) == 6)
+    traj = struct('id', typecast(single(traj(:, 1)), 'uint32'), 'pos', traj(:, 2:4), 'weight', traj(:, 5));
 end
 
-[newid, idx]=sort(traj.id);
-lineend=(diff(newid)>0);
-newidx=cumsum([0;lineend]+1);
-newpos=nan(length(idx)+length(lineend),4);
-newpos(newidx,1:3)=traj.pos(idx,:);
-newpos(newidx,4)=traj.data(5,:)';
+[newid, idx] = sort(traj.id);
+lineend = (diff(newid) > 0);
+newidx = cumsum([0; lineend] + 1);
+newpos = nan(length(idx) + length(lineend), 4);
+newpos(newidx, 1:3) = traj.pos(idx, :);
+newpos(newidx, 4) = traj.data(5, :)';
 
-if(~(length(varargin)==1 && strcmp(varargin{1},'noplot')))
-    edgealpha = 1 - (1-(exist('OCTAVE_VERSION','builtin')~=0))*0.75;  % octave 6 returns empty if edgealpha<1
-    hg=patch(newpos(:,1),newpos(:,2),newpos(:,3),newpos(:,4), 'edgecolor', 'interp', 'edgealpha', edgealpha, varargin{:});
+if (~(length(varargin) == 1 && strcmp(varargin{1}, 'noplot')))
+    edgealpha = 1 - (1 - (exist('OCTAVE_VERSION', 'builtin') ~= 0)) * 0.75;  % octave 6 returns empty if edgealpha<1
+    hg = patch(newpos(:, 1), newpos(:, 2), newpos(:, 3), newpos(:, 4), 'edgecolor', 'interp', 'edgealpha', edgealpha, varargin{:});
     view(3);
     axis equal;
 else
-    hg=[];
+    hg = [];
 end
 
-output={struct('id',newid, 'pos',traj.pos(idx,:)), hg};
-[varargout{1:nargout}]=output{1:nargout};
+output = {struct('id', newid, 'pos', traj.pos(idx, :)), hg};
+[varargout{1:nargout}] = output{1:nargout};

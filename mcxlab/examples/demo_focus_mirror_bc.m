@@ -10,25 +10,25 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data
-clear cfg
-cfg.nphoton=1e7;
-cfg.vol=uint8(ones(60,60,60));
-cfg.srctype='pattern';
-cfg.srcpos=[-40,-40, 0];
-cfg.srcparam1=[80 0 0 100];
-cfg.srcparam2=[0 80 0 100];
-cfg.srcdir=[0 0 1 30];
-cfg.issrcfrom0=1;
-cfg.srcpattern=zeros(100,100);
-cfg.srcpattern(51:end,51:end)=1;
-cfg.gpuid=1;
-cfg.autopilot=1;
-cfg.prop=[0 0 1 1;0.005 0.1 0 1];
-cfg.tstart=0;
-cfg.tend=5e-9;
-cfg.tstep=5e-09;
-cfg.bc='mm____';
+clear cfg;
+cfg.nphoton = 1e7;
+cfg.vol = uint8(ones(60, 60, 60));
+cfg.srctype = 'pattern';
+cfg.srcpos = [-40, -40, 0];
+cfg.srcparam1 = [80 0 0 100];
+cfg.srcparam2 = [0 80 0 100];
+cfg.srcdir = [0 0 1 30];
+cfg.issrcfrom0 = 1;
+cfg.srcpattern = zeros(100, 100);
+cfg.srcpattern(51:end, 51:end) = 1;
+cfg.gpuid = 1;
+cfg.autopilot = 1;
+cfg.prop = [0 0 1 1; 0.005 0.1 0 1];
+cfg.tstart = 0;
+cfg.tend = 5e-9;
+cfg.tstep = 5e-09;
+cfg.bc = 'mm____';
 
-flux=mcxlab(cfg);
+flux = mcxlab(cfg);
 
-mcxplotvol(log10(double(flux.data)))
+mcxplotvol(log10(double(flux.data)));

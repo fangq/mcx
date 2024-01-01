@@ -1,4 +1,4 @@
-function [Phi r]= cwdiffusion(mua, musp, Reff, srcpos,detpos)
+function [Phi r] = cwdiffusion(mua, musp, Reff, srcpos, detpos)
 %
 %  [Phi r] = cwdiffusion(mua, musp, Reff, srcpos,detpos)
 %
@@ -22,14 +22,14 @@ function [Phi r]= cwdiffusion(mua, musp, Reff, srcpos,detpos)
 %    see Boas2002, Haskell1994
 %
 
-D = 1/(3*(mua+musp));
-zb = (1+Reff)/(1-Reff)*2*D;
+D = 1 / (3 * (mua + musp));
+zb = (1 + Reff) / (1 - Reff) * 2 * D;
 
-z0 = 1/(musp+mua);
-r=getdistance([srcpos(:,1:2) srcpos(:,3)+z0],detpos);
-r2=getdistance([srcpos(:,1:2) srcpos(:,3)-z0-2*zb],detpos);
+z0 = 1 / (musp + mua);
+r = getdistance([srcpos(:, 1:2) srcpos(:, 3) + z0], detpos);
+r2 = getdistance([srcpos(:, 1:2) srcpos(:, 3) - z0 - 2 * zb], detpos);
 
-b=sqrt(3*mua*musp);
+b = sqrt(3 * mua * musp);
 
 % unit of phi:  1/(mm^2)
-Phi =1./(4*pi*D).*(exp(-b*r)./r - exp(-b*r2)./r2);
+Phi = 1 ./ (4 * pi * D) .* (exp(-b * r) ./ r - exp(-b * r2) ./ r2);

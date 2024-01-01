@@ -1,4 +1,4 @@
-function [data, header]=mcxloadfile(fname,varargin)
+function [data, header] = mcxloadfile(fname, varargin)
 %
 %    [data, header]=mcxloadfile(fname)
 %       or
@@ -21,20 +21,21 @@ function [data, header]=mcxloadfile(fname,varargin)
 %    License: GPLv3, see http://mcx.sf.net for details
 %
 
-[pathstr,name,ext] = fileparts(fname);
+[pathstr, name, ext] = fileparts(fname);
 
-if(strcmpi(ext,'.nii'))
-    nii=mcxloadnii(fname,varargin{:});
-    data=nii.img;
-    header=nii.hdr;
-elseif(strcmpi(ext,'.mc2'))
-    data=loadmc2(fname,varargin{:});
-    data=log10(data);
-    header.dim=varargin{1};
-    header.format=class(data);
-    header.scale='log10';
-elseif(strcmpi(ext,'.mch'))
-    [data, header]=loadmch(fname),varargin{:};
+if (strcmpi(ext, '.nii'))
+    nii = mcxloadnii(fname, varargin{:});
+    data = nii.img;
+    header = nii.hdr;
+elseif (strcmpi(ext, '.mc2'))
+    data = loadmc2(fname, varargin{:});
+    data = log10(data);
+    header.dim = varargin{1};
+    header.format = class(data);
+    header.scale = 'log10';
+elseif (strcmpi(ext, '.mch'))
+    [data, header] = loadmch(fname);
+    varargin{:};
 else
-    data=loadmc2(fname,varargin{:});
+    data = loadmc2(fname, varargin{:});
 end

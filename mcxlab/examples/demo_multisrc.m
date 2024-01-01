@@ -28,71 +28,71 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data
-clear cfg cfgs
+clear cfg cfgs;
 
-cfg.nphoton=1e7;
-cfg.vol=uint8(ones(60,60,40));
-cfg.srctype='planar';
+cfg.nphoton = 1e7;
+cfg.vol = uint8(ones(60, 60, 40));
+cfg.srctype = 'planar';
 
-Rs=20;
-delta=pi/4;
+Rs = 20;
+delta = pi / 4;
 
-ang=0:delta:(2*pi-delta);
-rotmat2d=[cos(delta), -sin(delta); sin(delta), cos(delta)];
-offset2d=[30 30];
+ang = 0:delta:(2 * pi - delta);
+rotmat2d = [cos(delta), -sin(delta); sin(delta), cos(delta)];
+offset2d = [30 30];
 
 % first create an array of planar sources by rotating around origin
 
 % the 4th element of srcpos sets the initial weight
-cfg.srcpos=repmat([Rs, 0, 0, 1], length(ang), 1);
+cfg.srcpos = repmat([Rs, 0, 0, 1], length(ang), 1);
 
 % the 4th element of srcdir sets the focal length (positive: convergent)
-cfg.srcdir=repmat([-0.5, 0, sqrt(3)/2, 20], length(ang), 1);
-cfg.srcparam1=repmat([-8,3,0,0], length(ang), 1);
-cfg.srcparam2=repmat([3,3,0,0], length(ang), 1);
+cfg.srcdir = repmat([-0.5, 0, sqrt(3) / 2, 20], length(ang), 1);
+cfg.srcparam1 = repmat([-8, 3, 0, 0], length(ang), 1);
+cfg.srcparam2 = repmat([3, 3, 0, 0], length(ang), 1);
 
-for i=2:length(ang)
-    cfg.srcpos(i,1:2)=(rotmat2d*cfg.srcpos(i-1,1:2)')';
-    cfg.srcdir(i,1:2)=(rotmat2d*cfg.srcdir(i-1,1:2)')';
-    cfg.srcparam1(i,1:2)=(rotmat2d*cfg.srcparam1(i-1,1:2)')';
-    cfg.srcparam2(i,1:2)=(rotmat2d*cfg.srcparam2(i-1,1:2)')';
+for i = 2:length(ang)
+    cfg.srcpos(i, 1:2) = (rotmat2d * cfg.srcpos(i - 1, 1:2)')';
+    cfg.srcdir(i, 1:2) = (rotmat2d * cfg.srcdir(i - 1, 1:2)')';
+    cfg.srcparam1(i, 1:2) = (rotmat2d * cfg.srcparam1(i - 1, 1:2)')';
+    cfg.srcparam2(i, 1:2) = (rotmat2d * cfg.srcparam2(i - 1, 1:2)')';
 end
 
 % translate the circular array to the desired offset
-cfg.srcpos(:,1)=cfg.srcpos(:,1)+offset2d(1);
-cfg.srcpos(:,2)=cfg.srcpos(:,2)+offset2d(2);
+cfg.srcpos(:, 1) = cfg.srcpos(:, 1) + offset2d(1);
+cfg.srcpos(:, 2) = cfg.srcpos(:, 2) + offset2d(2);
 
 % manually add the 9th source to the center
 
-cfg.srcpos(end+1, :)=[offset2d(1)-Rs/4,offset2d(2)-Rs/4,0,4]; % initial weight is 4
-cfg.srcdir(end+1, :)=[0, 0 1 0];
-cfg.srcparam1(end+1, :)=[Rs/2,0,0,0];
-cfg.srcparam2(end+1, :)=[0,Rs/2,0,0];
+cfg.srcpos(end + 1, :) = [offset2d(1) - Rs / 4, offset2d(2) - Rs / 4, 0, 4]; % initial weight is 4
+cfg.srcdir(end + 1, :) = [0, 0 1 0];
+cfg.srcparam1(end + 1, :) = [Rs / 2, 0, 0, 0];
+cfg.srcparam2(end + 1, :) = [0, Rs / 2, 0, 0];
 
-cfg.gpuid=1;
+cfg.gpuid = 1;
 % cfg.gpuid='11'; % use two GPUs together
-cfg.autopilot=1;
-cfg.prop=[0 0 1 1;0.005 0.2 0 1.37];
-cfg.tstart=0;
-cfg.tend=5e-9;
-cfg.tstep=5e-9;
+cfg.autopilot = 1;
+cfg.prop = [0 0 1 1; 0.005 0.2 0 1.37];
+cfg.tstart = 0;
+cfg.tend = 5e-9;
+cfg.tstep = 5e-9;
 
-flux=mcxlab(cfg);
+flux = mcxlab(cfg);
 
 mcxplotvol(log10(flux.data));
 
 %% setting cfg.srcid to a positive number 1,2,3,.. specifies which src to simulate
-cfg.srcid=8;
+cfg.srcid = 8;
 
-flux=mcxlab(cfg);
+flux = mcxlab(cfg);
 
 mcxplotvol(log10(flux.data));
 
 %% setting cfg.srcid to -1, solution of each src is stored separately
 
-cfg.srcid=-1;
+cfg.srcid = -1;
 
-flux=mcxlab(cfg);
+flux = mcxlab(cfg);
 
 % use up-down button to shift between different sources, there are 9 of
 % them

@@ -1,4 +1,4 @@
-function [bmask,uniqidx,nc,nn,totalarea,iso]=mcxsvmc(vol, varargin)
+function [bmask, uniqidx, nc, nn, totalarea, iso] = mcxsvmc(vol, varargin)
 %
 % Format:
 %    newvol=mcxsvmc(vol)
@@ -34,7 +34,7 @@ function [bmask,uniqidx,nc,nn,totalarea,iso]=mcxsvmc(vol, varargin)
 %         records the higher-valued label ID in a mixed label voxel
 %    uniqidx: the 1-D index of all voxels that are made of mixed labels
 %    nc: nc is a Nx3 array, where N is the length of uniqidx, representing
-%         the reference point of the intravoxel interface in a mixed label 
+%         the reference point of the intravoxel interface in a mixed label
 %         voxel
 %    nn: nn is a Nx3 array, where N is the length of uniqidx, representing
 %         the normalized normal vector in a mixed label voxel, pointing
@@ -66,174 +66,173 @@ function [bmask,uniqidx,nc,nn,totalarea,iso]=mcxsvmc(vol, varargin)
 %
 
 %% parse user options
-opt=varargin2struct(varargin{:});
-dodebug=jsonopt('debug',0,opt);
-ksize=jsonopt('kernelsize',3,opt);
-kstd=jsonopt('kernelstd',1,opt);
-level=jsonopt('threshold',0.5,opt);
-debugpatch=jsonopt('debugpatch',1,opt);
-bmask=jsonopt('bmask',NaN(size(vol)),opt);
-dosmooth=jsonopt('smoothing',1,opt);
-curveonly=jsonopt('curveonly',1,opt);
+opt = varargin2struct(varargin{:});
+dodebug = jsonopt('debug', 0, opt);
+ksize = jsonopt('kernelsize', 3, opt);
+kstd = jsonopt('kernelstd', 1, opt);
+level = jsonopt('threshold', 0.5, opt);
+debugpatch = jsonopt('debugpatch', 1, opt);
+bmask = jsonopt('bmask', NaN(size(vol)), opt);
+dosmooth = jsonopt('smoothing', 1, opt);
+curveonly = jsonopt('curveonly', 1, opt);
 
-bmask2=zeros(size(vol));
+bmask2 = zeros(size(vol));
 
 %% read unique labels
 
-labels=sort(unique(vol(:)));
+labels = sort(unique(vol(:)));
 % labels(labels==0)=[];
 
-if(length(labels)>255)
+if (length(labels) > 255)
     error('MCX currently supports up to 255 labels for this function');
 end
 
 %% loop over unique labels in ascending order
 
-iso=struct('vertices',[],'faces',[]);
+iso = struct('vertices', [], 'faces', []);
 
-for i=1:length(labels)
+for i = 1:length(labels)
     % convert each label into a binary mask, smooth it, then extract the
     % isosurface using marching cube algorithm (matlab builtin)
-    if(dosmooth)
-        volsmooth=smooth3(double(vol==labels(i)),'g',ksize,kstd);
+    if (dosmooth)
+        volsmooth = smooth3(double(vol == labels(i)), 'g', ksize, kstd);
     else
-        volsmooth=(vol==labels(i));
+        volsmooth = (vol == labels(i));
     end
-    [xi,yi,zi]=ndgrid(1:size(volsmooth,1),1:size(volsmooth,2),1:size(volsmooth,3));
-    fv0=isosurface(xi,yi,zi,volsmooth,level);
-    if(isempty(fv0.vertices))
-        continue;
+    [xi, yi, zi] = ndgrid(1:size(volsmooth, 1), 1:size(volsmooth, 2), 1:size(volsmooth, 3));
+    fv0 = isosurface(xi, yi, zi, volsmooth, level);
+    if (isempty(fv0.vertices))
+        continue
     end
 
     % get the containing voxel linear id
-    c0=meshcentroid(fv0.vertices,fv0.faces);
-    voxid=sub2ind(size(vol),floor(c0(:,1))+1,floor(c0(:,2))+1,floor(c0(:,3))+1);
+    c0 = meshcentroid(fv0.vertices, fv0.faces);
+    voxid = sub2ind(size(vol), floor(c0(:, 1)) + 1, floor(c0(:, 2)) + 1, floor(c0(:, 3)) + 1);
     % identify unique voxels
-    uniqidx=unique(voxid);
-    bmask2(uniqidx)=labels(i);
-    
+    uniqidx = unique(voxid);
+    bmask2(uniqidx) = labels(i);
+
     % find new boundary voxels that are not covered by previous levelsets
-    uniqidx=uniqidx(isnan(bmask(uniqidx)));
-    goodpatchidx=ismember(voxid,uniqidx);
-    
+    uniqidx = uniqidx(isnan(bmask(uniqidx)));
+    goodpatchidx = ismember(voxid, uniqidx);
+
     % merge surface patches located inside new boundary voxels
-    iso.faces=[iso.faces; size(iso.vertices,1)+fv0.faces(goodpatchidx==1,:)];
-    iso.vertices=[iso.vertices; fv0.vertices];
-    
+    iso.faces = [iso.faces; size(iso.vertices, 1) + fv0.faces(goodpatchidx == 1, :)];
+    iso.vertices = [iso.vertices; fv0.vertices];
+
     % label those voxels as covered
-    bmask(uniqidx)=labels(i);
+    bmask(uniqidx) = labels(i);
 end
 
 %% handle uniform domains
-if(isempty(iso.vertices))
-    uniqidx=[];
-    nn=[];
-    totalarea=[];
-    return;
+if (isempty(iso.vertices))
+    uniqidx = [];
+    nn = [];
+    totalarea = [];
+    return
 end
 
 %% get the voxel mapping for the final combined isosurface
-[iso.vertices,iso.faces]=removeisolatednode(iso.vertices,iso.faces);
-c0=meshcentroid(iso.vertices,iso.faces);
-voxid=sub2ind(size(vol),floor(c0(:,1))+1,floor(c0(:,2))+1,floor(c0(:,3))+1);
-[uniqidx, vox2patch]=unique(voxid);
-    
-[cc1,cc2]=histc(voxid,uniqidx);
-cc=cc1(cc2);
+[iso.vertices, iso.faces] = removeisolatednode(iso.vertices, iso.faces);
+c0 = meshcentroid(iso.vertices, iso.faces);
+voxid = sub2ind(size(vol), floor(c0(:, 1)) + 1, floor(c0(:, 2)) + 1, floor(c0(:, 3)) + 1);
+[uniqidx, vox2patch] = unique(voxid);
 
-if(dodebug)
-    plotmesh(iso.vertices,iso.faces,'facealpha',0.4,'facecolor','b','edgealpha',0.2)
-    disp(max(iso.vertices)-min(iso.vertices))
+[cc1, cc2] = histc(voxid, uniqidx);
+cc = cc1(cc2);
+
+if (dodebug)
+    plotmesh(iso.vertices, iso.faces, 'facealpha', 0.4, 'facecolor', 'b', 'edgealpha', 0.2);
+    disp(max(iso.vertices) - min(iso.vertices));
 end
 
 %% obtain the low and high labels in all mix-label voxels
-bmask=[bmask(uniqidx),bmask2(uniqidx)];
-bmask(bmask(:,1)==bmask(:,2),2)=0;
+bmask = [bmask(uniqidx), bmask2(uniqidx)];
+bmask(bmask(:, 1) == bmask(:, 2), 2) = 0;
 
 %% computing total area and normal vector for each boundary voxel
-areas=elemvolume(iso.vertices,iso.faces);
-normals=surfacenorm(iso.vertices,iso.faces);
-centroids=meshcentroid(iso.vertices,iso.faces);
+areas = elemvolume(iso.vertices, iso.faces);
+normals = surfacenorm(iso.vertices, iso.faces);
+centroids = meshcentroid(iso.vertices, iso.faces);
 
-totalarea=zeros(size(vol));
-maxvid=max(voxid);
-totalarea(1:maxvid)=accumarray(voxid,areas); % total areas of cross-sections in each boundary voxel
+totalarea = zeros(size(vol));
+maxvid = max(voxid);
+totalarea(1:maxvid) = accumarray(voxid, areas); % total areas of cross-sections in each boundary voxel
 % totalarea_unique=totalarea(uniqidx);
 
 %% compute weighted average surface centroid per boundary voxel;
-nc=zeros([3 size(vol)]);
-nc(1,1:maxvid)=accumarray(voxid,centroids(:,1).*areas); % total normal_x of cross-sections in each boundary voxel
-nc(2,1:maxvid)=accumarray(voxid,centroids(:,2).*areas); % total normal_y of cross-sections in each boundary voxel
-nc(3,1:maxvid)=accumarray(voxid,centroids(:,3).*areas); % total normal_z of cross-sections in each boundary voxel
-for i=1:3
-    nc(i,uniqidx)=nc(i,uniqidx)./totalarea(uniqidx)';
+nc = zeros([3 size(vol)]);
+nc(1, 1:maxvid) = accumarray(voxid, centroids(:, 1) .* areas); % total normal_x of cross-sections in each boundary voxel
+nc(2, 1:maxvid) = accumarray(voxid, centroids(:, 2) .* areas); % total normal_y of cross-sections in each boundary voxel
+nc(3, 1:maxvid) = accumarray(voxid, centroids(:, 3) .* areas); % total normal_z of cross-sections in each boundary voxel
+for i = 1:3
+    nc(i, uniqidx) = nc(i, uniqidx) ./ totalarea(uniqidx)';
 end
-nc=nc(:,uniqidx)';
+nc = nc(:, uniqidx)';
 
 %% creating weighted average surface patch normals per boundary voxel
-nn=zeros([3 size(vol)]);
-nn(1,1:maxvid)=accumarray(voxid,normals(:,1).*areas); % total normal_x of cross-sections in each boundary voxel
-nn(2,1:maxvid)=accumarray(voxid,normals(:,2).*areas); % total normal_y of cross-sections in each boundary voxel
-nn(3,1:maxvid)=accumarray(voxid,normals(:,3).*areas); % total normal_z of cross-sections in each boundary voxel
-nnlen=sqrt(sum(nn.*nn,1));
-for i=1:3
-    nn(i,uniqidx)=nn(i,uniqidx)./nnlen(uniqidx)';
+nn = zeros([3 size(vol)]);
+nn(1, 1:maxvid) = accumarray(voxid, normals(:, 1) .* areas); % total normal_x of cross-sections in each boundary voxel
+nn(2, 1:maxvid) = accumarray(voxid, normals(:, 2) .* areas); % total normal_y of cross-sections in each boundary voxel
+nn(3, 1:maxvid) = accumarray(voxid, normals(:, 3) .* areas); % total normal_z of cross-sections in each boundary voxel
+nnlen = sqrt(sum(nn .* nn, 1));
+for i = 1:3
+    nn(i, uniqidx) = nn(i, uniqidx) ./ nnlen(uniqidx)';
 end
-nn=nn(:,uniqidx)';
+nn = nn(:, uniqidx)';
 
-%% remove x/y/z oriented 
-if(curveonly)
-    [ixc,iyc]=find((nc-floor(nc))<1e-6);
-    [ixn,iyn]=find(abs(nn)==1);
-    ix=intersect(ixc,ixn);
-    boxmask=zeros(size(vol));
-    boxmask(uniqidx(ix))=1;
-    boxmask=smooth3(boxmask,'b',3);
-    boxmask=(boxmask>0);
-    ix=find(boxmask(uniqidx)==1);
+%% remove x/y/z oriented
+if (curveonly)
+    [ixc, iyc] = find((nc - floor(nc)) < 1e-6);
+    [ixn, iyn] = find(abs(nn) == 1);
+    ix = intersect(ixc, ixn);
+    boxmask = zeros(size(vol));
+    boxmask(uniqidx(ix)) = 1;
+    boxmask = smooth3(boxmask, 'b', 3);
+    boxmask = (boxmask > 0);
+    ix = find(boxmask(uniqidx) == 1);
 
-    nn(ix,:)=[];
-    nc(ix,:)=[];
-    uniqidx(ix)=[];
-    bmask(ix,:)=[];
-    totalarea(ix)=[];
+    nn(ix, :) = [];
+    nc(ix, :) = [];
+    uniqidx(ix) = [];
+    bmask(ix, :) = [];
+    totalarea(ix) = [];
 end
 
 %% discretize nn and nc vector components to 0-255 gray-scale numbers
 
-nc=nc-floor(nc);
-nc=floor(nc*255);
-nn=min(floor((nn+1)*255/2),254);
+nc = nc - floor(nc);
+nc = floor(nc * 255);
+nn = min(floor((nn + 1) * 255 / 2), 254);
 
 %% assemble the final volume
-if(nargout==1)
-    newvol=zeros([8,size(vol)]);
-    newvol(1,:,:,:)=vol;
-    newvol(1:2,uniqidx)=bmask';
-    newvol(3:5,uniqidx)=nc';
-    newvol(6:8,uniqidx)=nn';
-    bmask=newvol;
+if (nargout == 1)
+    newvol = zeros([8, size(vol)]);
+    newvol(1, :, :, :) = vol;
+    newvol(1:2, uniqidx) = bmask';
+    newvol(3:5, uniqidx) = nc';
+    newvol(6:8, uniqidx) = nn';
+    bmask = newvol;
 end
 
 %% plotting for verification
 
-if(dodebug)
+if (dodebug)
     figure;
 
-    pcidx=find(cc>1);         % find 4-patch that blong to the same voxel (in patch idx)
-    pidx0=pcidx(debugpatch);          % pick one such patch group to debug
-    idx1=voxid(pidx0);        % find the corresponding voxel id idx1 for the patch pidx0
-    patid=voxid==idx1;  % these patches are within voxel linear id idx1
+    pcidx = find(cc > 1);         % find 4-patch that blong to the same voxel (in patch idx)
+    pidx0 = pcidx(debugpatch);          % pick one such patch group to debug
+    idx1 = voxid(pidx0);        % find the corresponding voxel id idx1 for the patch pidx0
+    patid = voxid == idx1;  % these patches are within voxel linear id idx1
 
-    testmask=zeros(size(volsmooth));
-    testmask(idx1)=1;
-    [no3,fc3]=binsurface(testmask,4);
+    testmask = zeros(size(volsmooth));
+    testmask(idx1) = 1;
+    [no3, fc3] = binsurface(testmask, 4);
 
     figure;
-    plotmesh(no3,fc3,'facealpha',0.3,'facecolor','none')
+    plotmesh(no3, fc3, 'facealpha', 0.3, 'facecolor', 'none');
     hold on;
-    plotmesh(iso.vertices,iso.faces(patid,:),'facealpha',0.3,'facecolor','b','edgealpha',0.2)
-    disp(nn(cc2(pidx0),:))           % normal in voxel id idx1
-    plotmesh([c0(pidx0,:); c0(pidx0,:)+nn(cc2(pidx0),:)],'ro-');   % plot centroid of pidx0-th patch to the normal in voxel id idx1
+    plotmesh(iso.vertices, iso.faces(patid, :), 'facealpha', 0.3, 'facecolor', 'b', 'edgealpha', 0.2);
+    disp(nn(cc2(pidx0), :));           % normal in voxel id idx1
+    plotmesh([c0(pidx0, :); c0(pidx0, :) + nn(cc2(pidx0), :)], 'ro-');   % plot centroid of pidx0-th patch to the normal in voxel id idx1
 end
-
