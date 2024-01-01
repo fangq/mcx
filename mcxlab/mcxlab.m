@@ -246,6 +246,9 @@ function varargout=mcxlab(varargin)
 %                      simultaneously simulated; only works for 'pattern'
 %                      source, see cfg.srctype='pattern' for details
 %                      Example <demo_photon_sharing.m>
+%      cfg.srcid:      when multiple sources are defined, if srcid is -1, each source is separately
+%                      simulated; if set to 0, all source solution are summed; if set to a positive
+%                      number starting from 1, only the specified source is simulated; default to 0
 %      cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
 %      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
 %                   I: total light intensity (I >= 0)

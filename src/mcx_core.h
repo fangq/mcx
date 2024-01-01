@@ -145,6 +145,7 @@ typedef struct  __align__(16) KernelParams {
     float  Rtstep;                     /**< reciprocal of the step size */
     MCXSrc src;                        /**< additional source data, including pos, dir, param1, param2 */
     unsigned int extrasrclen;          /**< number of additional sources */
+    int srcid;                         /**< 0: simulate all sources combined, -1: simulate all sources separately; >0: only simulate a single source */
     float4 s0;                         /**< initial stokes parameters, for polarized photon simulation */
     float3 maxidx;                     /**< maximum index in x/y/z directions for out-of-bound tests */
     uint4  dimlen;                     /**< maximum index used to convert x/y/z to 1D array index */

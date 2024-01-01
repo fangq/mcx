@@ -427,6 +427,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     GET_SCALAR_FIELD(user_cfg, mcx_config, maxjumpdebug, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, gscatter, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, srcnum, py::int_);
+    GET_SCALAR_FIELD(user_cfg, mcx_config, srcid, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, omega, py::float_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, lambda, py::float_);
     GET_VEC3_FIELD(user_cfg, mcx_config, steps, float);
@@ -1073,6 +1074,10 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_len *= 2;
             }
 
+            if (mcx_config.extrasrclen && mcx_config.srcid == -1) {
+                field_len *= (mcx_config.extrasrclen + 1);
+            }
+
             mcx_config.exportfield = (float*) calloc(field_len, sizeof(float));
         }
 
@@ -1196,6 +1201,10 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
 
             if (mcx_config.replay.seed != nullptr && mcx_config.outputtype == otRF) {
                 field_dim[5] = 2;
+            }
+
+            if (mcx_config.extrasrclen && mcx_config.srcid == -1) {
+                field_dim[5] *= (mcx_config.extrasrclen + 1);
             }
 
             field_len = field_dim[0] * field_dim[1] * field_dim[2] * field_dim[3] * field_dim[4] * field_dim[5];

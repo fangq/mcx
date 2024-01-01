@@ -104,7 +104,7 @@
 const char shortopt[] = {'h', 'i', 'f', 'n', 't', 'T', 's', 'a', 'g', 'b', '-', 'z', 'u', 'H', 'P',
                          'd', 'r', 'S', 'p', 'e', 'U', 'R', 'l', 'L', '-', 'I', '-', 'G', 'M', 'A', 'E', 'v', 'D',
                          'k', 'q', 'Y', 'O', 'F', '-', '-', 'x', 'X', '-', 'K', 'm', 'V', 'B', 'W', 'w', '-',
-                         '-', '-', 'Z', 'j', '-', '\0'
+                         '-', '-', 'Z', 'j', '-', '-', '\0'
                         };
 
 /**
@@ -123,7 +123,8 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
                          "--replaydet", "--outputtype", "--outputformat", "--maxjumpdebug",
                          "--maxvoidstep", "--saveexit", "--saveref", "--gscatter", "--mediabyte",
                          "--momentum", "--specular", "--bc", "--workload", "--savedetflag",
-                         "--internalsrc", "--bench", "--dumpjson", "--zip", "--json", "--atomic", ""
+                         "--internalsrc", "--bench", "--dumpjson", "--zip", "--json", "--atomic",
+                         "--srcid", ""
                         };
 
 /**
@@ -332,7 +333,9 @@ void mcx_initcfg(Config* cfg) {
     cfg->invcdf = NULL;
     cfg->nangle = 0;
     cfg->angleinvcdf = NULL;
+    cfg->srcid = 0;
     cfg->extrasrclen = 0;
+    cfg->his.totalsource = cfg->extrasrclen + 1;
     cfg->srcdata = NULL;
     memset(cfg->jsonfile, 0, MAX_PATH_LENGTH);
     memset(cfg->bc, 0, 13);
@@ -583,7 +586,7 @@ void mcx_savenii(float* dat, size_t len, char* name, int type32bit, int outputfo
  * @param[in] cfg: simulation configuration
  */
 
-void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, Config* cfg) {
+void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, int iscol, Config* cfg) {
     FILE* fp;
     char fname[MAX_FULL_PATH] = {'\0'};
     int affine[] = {0, 0, 1, 0, 0, 0};
@@ -704,7 +707,7 @@ void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     /* the "NIFTIData" section stores volumetric data */
     ubjw_begin_object(root, UBJ_MIXED, 0);
 
-    if (mcx_jdataencode(vol, ndim, dims, (isfloat ? "single" : "uint32"), 4, cfg->zipid, root, 1, cfg)) {
+    if (mcx_jdataencode(vol, ndim, dims, (isfloat ? "single" : "uint32"), 4, cfg->zipid, root, 1, iscol, cfg)) {
         MCX_ERROR(-1, "error when converting to JSON");
     }
 
@@ -746,7 +749,7 @@ void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
  * @param[in] cfg: simulation configuration
  */
 
-void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, Config* cfg) {
+void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, int iscol, Config* cfg) {
     FILE* fp;
     char fname[MAX_FULL_PATH] = {'\0'};
     int affine[] = {0, 0, 1, 0, 0, 0};
@@ -831,7 +834,7 @@ void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     /* the "NIFTIData" section stores volumetric data */
     cJSON_AddItemToObject(root, "NIFTIData",   dat = cJSON_CreateObject());
 
-    if (mcx_jdataencode(vol, ndim, dims, (isfloat ? "single" : "uint32"), 4, cfg->zipid, dat, 0, cfg)) {
+    if (mcx_jdataencode(vol, ndim, dims, (isfloat ? "single" : "uint32"), 4, cfg->zipid, dat, 0, iscol, cfg)) {
         MCX_ERROR(-1, "error when converting to JSON");
     }
 
@@ -887,48 +890,25 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
         mcx_savenii(dat, len * (1 + (cfg->outputtype == otRF)), name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
         return;
     } else if (cfg->outputformat == ofJNifti || cfg->outputformat == ofBJNifti) {
-        int d1 = (cfg->maxgate == 1);
+        uint dims[6] = {cfg->dim.x, cfg->dim.y, cfg->dim.z, cfg->maxgate, cfg->srcnum, 1};
+        float voxelsize[6] = {cfg->steps.x, cfg->steps.y, cfg->steps.z, cfg->tstep, 1, 1};
 
-        if (cfg->seed == SEED_FROM_FILE && ((cfg->replaydet == -1 && cfg->detnum > 1) || cfg->srcnum > 1 || cfg->outputtype == otRF)) {
-            if (cfg->outputtype == otRF) {
-                uint dims[6] = {2, cfg->detnum* cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
-                float voxelsize[] = {1, 1, cfg->tstep, cfg->steps.z, cfg->steps.y, cfg->steps.x};
+        if (cfg->extrasrclen && cfg->srcid == -1) {
+            dims[5] = cfg->extrasrclen + 1;
+        }
 
-                if (cfg->outputformat == ofJNifti) {
-                    mcx_savejnii(dat, 6, dims, voxelsize, name, 1, cfg);
-                } else {
-                    mcx_savebnii(dat, 6, dims, voxelsize, name, 1, cfg);
-                }
-            } else {
-                uint dims[5] = {cfg->detnum* cfg->srcnum, cfg->maxgate, cfg->dim.z, cfg->dim.y, cfg->dim.x};
-                float voxelsize[] = {1, cfg->tstep, cfg->steps.z, cfg->steps.y, cfg->steps.x};
+        if (cfg->seed == SEED_FROM_FILE && (cfg->replaydet == -1 && cfg->detnum > 1)) {
+            dims[5] *= cfg->detnum;
+        }
 
-                if (cfg->outputformat == ofJNifti) {
-                    mcx_savejnii(dat, 5, dims, voxelsize, name, 1, cfg);
-                } else {
-                    mcx_savebnii(dat, 5, dims, voxelsize, name, 1, cfg);
-                }
-            }
+        if (cfg->seed == SEED_FROM_FILE && cfg->outputtype == otRF) {
+            dims[5] *= 2;
+        }
+
+        if (cfg->outputformat == ofJNifti) {
+            mcx_savejnii(dat, 5 + (dims[5] > 1), dims, voxelsize, name, 1, 1, cfg);
         } else {
-            uint dims[] = {cfg->dim.x, cfg->dim.y, cfg->dim.z, cfg->maxgate};
-            float voxelsize[] = {cfg->steps.x, cfg->steps.y, cfg->steps.z, cfg->tstep};
-            size_t datalen = cfg->dim.x * cfg->dim.y * cfg->dim.z * cfg->maxgate;
-            uint* buf = (uint*)malloc(datalen * sizeof(float));
-            memcpy(buf, dat, datalen * sizeof(float));
-
-            if (d1) {
-                mcx_convertcol2row(&buf, (uint3*)dims);
-            } else {
-                mcx_convertcol2row4d(&buf, (uint4*)dims);
-            }
-
-            if (cfg->outputformat == ofJNifti) {
-                mcx_savejnii((float*)buf, 4 - d1, dims, voxelsize, name, 1, cfg);
-            } else {
-                mcx_savebnii((float*)buf, 4 - d1, dims, voxelsize, name, 1, cfg);
-            }
-
-            free(buf);
+            mcx_savebnii(dat, 5 + (dims[5] > 1), dims, voxelsize, name, 1, 1, cfg);
         }
 
         return;
@@ -1032,6 +1012,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
     cJSON_AddNumberToObject(hdr, "Repeat", cfg->his.respin);
     cJSON_AddNumberToObject(hdr, "SrcNum", cfg->his.srcnum);
     cJSON_AddNumberToObject(hdr, "SaveDetFlag", cfg->his.savedetflag);
+    cJSON_AddNumberToObject(hdr, "TotalSource", cfg->his.totalsource);
     cJSON_AddItemToObject(hdr, "Media", sub = cJSON_CreateArray());
 
     for (int i = 0; i < cfg->medianum; i++) {
@@ -1059,7 +1040,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
 
             cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
 
-            if (mcx_jdataencode(buf, 2, dims, dtype[id], 4, cfg->zipid, sub, 0, cfg)) {
+            if (mcx_jdataencode(buf, 2, dims, dtype[id], 4, cfg->zipid, sub, 0, 0, cfg)) {
                 MCX_ERROR(-1, "error when converting to JSON");
             }
 
@@ -1101,7 +1082,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
 
                 cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());
 
-                if (mcx_jdataencode(val, 2, dims, dtype[id], 4, cfg->zipid, sub, 0, cfg)) {
+                if (mcx_jdataencode(val, 2, dims, dtype[id], 4, cfg->zipid, sub, 0, 0, cfg)) {
                     MCX_ERROR(-1, "error when converting to JSON");
                 }
 
@@ -1115,7 +1096,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
         uint dims[2] = {count, cfg->his.seedbyte};
         cJSON_AddItemToObject(dat, "seed", sub = cJSON_CreateObject());
 
-        if (mcx_jdataencode(seeds, 2, dims, "uint8", 1, cfg->zipid, sub, 0, cfg)) {
+        if (mcx_jdataencode(seeds, 2, dims, "uint8", 1, cfg->zipid, sub, 0, 0, cfg)) {
             MCX_ERROR(-1, "error when converting to JSON");
         }
     }
@@ -1610,6 +1591,15 @@ void mcx_preprocess(Config* cfg) {
     }
 
     if (cfg->extrasrclen) {
+        if (cfg->srcnum > 1) {
+            MCX_ERROR(-4, "simulating multiple sources currently can not be used with photon-sharing");
+        }
+
+        if (cfg->srcid > (int)cfg->extrasrclen + 1) {
+            printf("cfg->srcid=%d\n", cfg->srcid);
+            MCX_ERROR(-4, "srcid exceeds total defined source count");
+        }
+
         for (int i = 0; i < cfg->extrasrclen; i++) {
             if (cfg->srcdata[i].srcpos.w == 0.f) {
                 cfg->srcdata[i].srcpos.w = 1.f;
@@ -2093,6 +2083,7 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
     cfg->his.detnum = cfg->detnum;
     cfg->his.srcnum = cfg->srcnum;
     cfg->his.savedetflag = cfg->savedetflag;
+    cfg->his.totalsource = ((cfg->srcid <= 0) ? cfg->extrasrclen + 1 : 1);
     //cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
 
     if (in == stdin) {
@@ -2667,7 +2658,12 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->srcpos.z--; /*convert to C index, grid center*/
             }
 
-            cfg->srctype = mcx_keylookup((char*)FIND_JSON_KEY("Type", "Optode.Source.Type", src, "pencil", valuestring), srctypeid);
+            subitem = FIND_JSON_OBJ("Type", "Optode.Source.Type", src);
+
+            if (subitem) {
+                cfg->srctype = mcx_keylookup((char*)FIND_JSON_KEY("Type", "Optode.Source.Type", src, "pencil", valuestring), srctypeid);
+            }
+
             subitem = FIND_JSON_OBJ("Param1", "Optode.Source.Param1", src);
 
             if (subitem && cJSON_IsArray(subitem)) {
@@ -2784,10 +2780,23 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 }
             }
 
-            cfg->omega = FIND_JSON_KEY("Frequency", "Optode.Source.Frequency", src, 0.f, valuedouble);
-            cfg->omega *= TWO_PI;
-            cfg->lambda = FIND_JSON_KEY("WaveLength", "Optode.Source.WaveLength", src, 0.f, valuedouble);
-            cfg->srcnum = FIND_JSON_KEY("SrcNum", "Optode.Source.SrcNum", src, cfg->srcnum, valueint);
+            if (FIND_JSON_OBJ("Frequency", "Optode.Source.Frequency", src)) {
+                cfg->omega = FIND_JSON_KEY("Frequency", "Optode.Source.Frequency", src, 0.f, valuedouble);
+                cfg->omega *= TWO_PI;
+            }
+
+            if (FIND_JSON_OBJ("WaveLength", "Optode.Source.WaveLength", src)) {
+                cfg->lambda = FIND_JSON_KEY("WaveLength", "Optode.Source.WaveLength", src, 0.f, valuedouble);
+            }
+
+            if (FIND_JSON_OBJ("SrcNum", "Optode.Source.SrcNum", src)) {
+                cfg->srcnum = FIND_JSON_KEY("SrcNum", "Optode.Source.SrcNum", src, cfg->srcnum, valueint);
+            }
+
+            if (FIND_JSON_OBJ("ID", "Optode.Source.ID", src)) {
+                cfg->srcid = FIND_JSON_KEY("ID", "Optode.Source.ID", src, cfg->srcid, valueint);
+            }
+
             subitem = FIND_JSON_OBJ("Pattern", "Optode.Source.Pattern", src);
 
             if (subitem) {
@@ -3110,6 +3119,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
     cfg->his.detnum = cfg->detnum;
     cfg->his.srcnum = cfg->srcnum;
     cfg->his.savedetflag = cfg->savedetflag;
+    cfg->his.totalsource = ((cfg->srcid <= 0) ? cfg->extrasrclen + 1 : 1);
     //cfg->his.colcount=2+(cfg->medianum-1)*(2+(cfg->ismomentum>0))+(cfg->issaveexit>0)*6; /*column count=maxmedia+2*/
     return 0;
 }
@@ -3259,7 +3269,7 @@ void mcx_savejdata(char* filename, Config* cfg) {
         dims[2] = cfg->srcparam2.w;
         cJSON_AddItemToObject(sub, "Pattern", tmp = cJSON_CreateObject());
 
-        int ret = mcx_jdataencode(cfg->srcpattern, 2 + (cfg->srcnum > 1), dims + (cfg->srcnum == 1), "single", dims[0] * dims[1] * dims[2], cfg->zipid, tmp, 0, cfg);
+        int ret = mcx_jdataencode(cfg->srcpattern, 2 + (cfg->srcnum > 1), dims + (cfg->srcnum == 1), "single", dims[0] * dims[1] * dims[2], cfg->zipid, tmp, 0, 0, cfg);
 
         if (ret) {
             MCX_ERROR(ret, "data compression or base64 encoding failed");
@@ -3322,7 +3332,7 @@ void mcx_savejdata(char* filename, Config* cfg) {
 
         obj = cJSON_CreateObject();
         ret = mcx_jdataencode(buf, 3, &cfg->dim.x, (cfg->mediabyte == 1 ? "uint8" : (cfg->mediabyte == 2 ? "uint16" : "uint32")),
-                              outputbytes / datalen, cfg->zipid, obj, 0, cfg);
+                              outputbytes / datalen, cfg->zipid, obj, 0, 0, cfg);
 
         if (buf) {
             free(buf);
@@ -4259,9 +4269,9 @@ void mcx_dumpmask(Config* cfg) {
         mcx_convertcol2row((uint**)(&buf), (uint3*)dims);
 
         if (cfg->outputformat == ofJNifti) {
-            mcx_savejnii((float*)buf, 3, dims, voxelsize, fname, 0, cfg);
+            mcx_savejnii((float*)buf, 3, dims, voxelsize, fname, 0, 0, cfg);
         } else {
-            mcx_savebnii((float*)buf, 3, dims, voxelsize, fname, 0, cfg);
+            mcx_savebnii((float*)buf, 3, dims, voxelsize, fname, 0, 0, cfg);
         }
 
         free(buf);
@@ -4375,10 +4385,12 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
  * @param[in] type: a string of JData data types, such as "uint8" "float32", "int32" etc
  * @param[in] byte: number of byte per voxel
  * @param[in] zipid: zip method: 0:zlib,1:gzip,2:base64,3:lzma,4:lzip,5:lz4,6:lz4hc
- * @param[in] obj: a pre-created cJSON object to store the output JData fields
+ * @param[in] obj: a pre-created cJSON or UBJ object to store the output JData fields
+ * @param[in] isubj: 1 if obj is a binary JSON (UBJ) object, 0 if obj is a cJSON object
+ * @param[in] cfg: mcx config struct
  */
 
-int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int zipid, void* obj, int isubj, Config* cfg) {
+int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int zipid, void* obj, int isubj, int iscol, Config* cfg) {
     uint datalen = 1;
     size_t compressedbytes, totalbytes;
     uchar* compressed = NULL, *buf = NULL;
@@ -4407,6 +4419,11 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
             UBJ_WRITE_KEY(item, "_ArrayType_", string, type);
             ubjw_write_key(item, "_ArraySize_");
             UBJ_WRITE_ARRAY(item, uint32, ndim, dims);
+
+            if (iscol) {
+                UBJ_WRITE_KEY(item, "_ArrayOrder_", string, "c");
+            }
+
             UBJ_WRITE_KEY(item, "_ArrayZipType_", string, zipformat[zipid]);
             UBJ_WRITE_KEY(item, "_ArrayZipSize_", uint32, datalen);
             ubjw_write_key(item, "_ArrayZipData_");
@@ -4423,6 +4440,11 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
             if (!ret) {
                 cJSON_AddStringToObject((cJSON*)obj, "_ArrayType_", type);
                 cJSON_AddItemToObject((cJSON*)obj,   "_ArraySize_", cJSON_CreateIntArray((int*)dims, ndim));
+
+                if (iscol) {
+                    cJSON_AddStringToObject((cJSON*)obj, "_ArrayOrder_", "c");
+                }
+
                 cJSON_AddStringToObject((cJSON*)obj, "_ArrayZipType_", zipformat[zipid]);
                 cJSON_AddNumberToObject((cJSON*)obj, "_ArrayZipSize_", datalen);
                 cJSON_AddStringToObject((cJSON*)obj, "_ArrayZipData_", (char*)buf);
@@ -4989,6 +5011,8 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         int isatomic = 1;
                         i = mcx_readarg(argc, argv, i, &(isatomic), "char");
                         cfg->sradius = (isatomic) ? -2.f : 0.f;
+                    } else if (strcmp(argv[i] + 2, "srcid") == 0) {
+                        i = mcx_readarg(argc, argv, i, &(cfg->srcid), "int");
                     } else if (strcmp(argv[i] + 2, "internalsrc") == 0) {
                         i = mcx_readarg(argc, argv, i, &(cfg->internalsrc), "int");
                     } else {
@@ -5299,7 +5323,7 @@ void mcx_printheader(Config* cfg) {
 # MCX proudly developed human-readable JSON-based data formats for easy reuse,#\n\
 #  Please consider using JSON (" S_BLUE "https://neurojson.org/" S_MAGENTA ") for your research data #\n\
 ###############################################################################\n\
-$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA "$Date::                       $ by $Author::             $\n\
+$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA " $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
 }
 
@@ -5497,6 +5521,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  --gscatter     [1e9|int]      after a photon completes the specified number of\n\
                                scattering events, mcx then ignores anisotropy g\n\
                                and only performs isotropic scattering for speed\n\
+ --srcid  [0|-1,0,1,2,..]      -1 simulate multi-source separately;0 all sources\n\
+                               together; a positive integer runs a single source\n\
  --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch\n\
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that\n\
                                can travel before entering the domain, if \n\

@@ -5,7 +5,8 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 -   Author: Qianqian Fang (q.fang at neu.edu)
 -   License: GNU General Public License version 3 (GPLv3)
 -   Version: 2.2.pre (v2024.1, Interstellar Ion)
--   Website: <http://mcx.space>
+-   Website: <https://mcx.space>
+-   Download: <https://mcx.space/wiki/?Get>
 
 ![Mex and Binaries](https://github.com/fangq/mcx/actions/workflows/build_all.yml/badge.svg)\
 ![Linux Python Module](https://github.com/fangq/mcx/actions/workflows/build_linux_manywheel.yml/badge.svg)\

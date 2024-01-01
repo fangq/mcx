@@ -375,6 +375,10 @@ __device__ inline void savedetphoton(float n_det[], uint* detectedphoton, float*
 
             if (SAVE_DETID(gcfg->savedetflag)) {
                 n_det[baseaddr++] = detid;
+
+                if (gcfg->extrasrclen && gcfg->srcid <= 0) {
+                    n_det[baseaddr++] = (((int)ppath[gcfg->w0offset - 1]) << 16);
+                }
             }
 
             for (i = 0; i < gcfg->partialdata; i++) {
@@ -392,7 +396,7 @@ __device__ inline void savedetphoton(float n_det[], uint* detectedphoton, float*
             }
 
             if (SAVE_W0(gcfg->savedetflag)) {
-                n_det[baseaddr++] = ppath[gcfg->w0offset - 1];
+                n_det[baseaddr++] = ppath[gcfg->w0offset - 2];
             }
 
             if (SAVE_IQUV(gcfg->savedetflag)) {
@@ -415,7 +419,7 @@ __device__ inline void savedetphoton(float n_det[], uint* detectedphoton, float*
  * @param[in] gdebugdata: pointer to the global-memory buffer to store the trajectory info
  */
 
-__device__ inline void savedebugdata(MCXpos* p, uint id, float* gdebugdata) {
+__device__ inline void savedebugdata(MCXpos* p, uint id, float* gdebugdata, int srcid) {
     uint pos = atomicAdd(gjumpdebug, 1);
 
     if (pos < gcfg->maxjumpdebug) {
@@ -425,7 +429,7 @@ __device__ inline void savedebugdata(MCXpos* p, uint id, float* gdebugdata) {
         gdebugdata[pos++] = p->y;
         gdebugdata[pos++] = p->z;
         gdebugdata[pos++] = p->w;
-        gdebugdata[pos++] = 0;
+        gdebugdata[pos++] = srcid;
     }
 }
 
@@ -1039,12 +1043,17 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     *w0 = 1.f;   //< reuse to count for launchattempt
     int canfocus = 1; //< non-zero: focusable, zero: not focusable
     MCXSrc* launchsrc = &(gcfg->src);
+    ppath[gcfg->w0offset - 1] = 0.f;
 
-    if (gcfg->extrasrclen) {
-        int srcid = rand_uniform01(t) * (gcfg->extrasrclen + 1);
+    if (gcfg->extrasrclen && gcfg->srcid != 1) {
+        if (gcfg->srcid > 1) {
+            launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((gcfg->srcid - 2) * 4));
+        } else { // gcfg->srcid = 0 or -1: simulate all sources; = 0 merge all solutions; = -1 separately store each source
+            ppath[gcfg->w0offset - 1] = (int)(rand_uniform01(t) * JUST_BELOW_ONE * (gcfg->extrasrclen + 1)) + 1; // borrow initial weight section of photon-sharing for storing launch src id
 
-        if (srcid) {
-            launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((srcid - 1) << 2));
+            if ((int)ppath[gcfg->w0offset - 1] > 1) {
+                launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((int)(ppath[gcfg->w0offset - 1] - 2) * 4));
+            }
         }
     }
 
@@ -1065,12 +1074,16 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         ppath[gcfg->partialdata] += p->w; //< sum all the remaining energy
 
         if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-            savedebugdata(p, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata);
+            savedebugdata(p, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
         }
 
         if (*mediaid == 0 && *idx1d != OUTSIDE_VOLUME_MIN && *idx1d != OUTSIDE_VOLUME_MAX && gcfg->issaveref) {
             if (gcfg->issaveref == 1) {
                 int tshift = MIN(gcfg->maxgate - 1, (int)(floorf((f->t - gcfg->twin0) * gcfg->Rtstep)));
+
+                if (gcfg->extrasrclen && gcfg->srcid < 0) {
+                    tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
+                }
 
                 if (gcfg->srctype != MCX_SRC_PATTERN && gcfg->srctype != MCX_SRC_PATTERN3D) {
 #ifdef USE_ATOMIC
@@ -1206,12 +1219,12 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (gcfg->srctype == MCX_SRC_PATTERN) { // need to prevent rx/ry=1 here
                         if (gcfg->srcnum <= 1) {
                             p->w = launchsrc->pos.w * srcpattern[(int)(ry * JUST_BELOW_ONE * launchsrc->param2.w) * (int)(launchsrc->param1.w) + (int)(rx * JUST_BELOW_ONE * launchsrc->param1.w)];
-                            ppath[3] = p->w;
+                            ppath[4] = p->w;
                         } else {
                             *((uint*)(ppath + 2)) = ((int)(ry * JUST_BELOW_ONE * launchsrc->param2.w) * (int)(launchsrc->param1.w) + (int)(rx * JUST_BELOW_ONE * launchsrc->param1.w));
 
                             for (int i = 0; i < gcfg->srcnum; i++) {
-                                ppath[i + 3] = srcpattern[(*((uint*)(ppath + 2))) * gcfg->srcnum + i];
+                                ppath[i + 4] = srcpattern[(*((uint*)(ppath + 2))) * gcfg->srcnum + i];
                             }
 
                             p->w = 1.f;
@@ -1220,13 +1233,13 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         if (gcfg->srcnum <= 1) {
                             p->w = launchsrc->pos.w * srcpattern[(int)(rz * JUST_BELOW_ONE * launchsrc->param1.z) * (int)(launchsrc->param1.y) * (int)(launchsrc->param1.x) +
                                                                           (int)(ry * JUST_BELOW_ONE * launchsrc->param1.y) * (int)(launchsrc->param1.x) + (int)(rx * JUST_BELOW_ONE * launchsrc->param1.x)];
-                            ppath[3] = p->w;
+                            ppath[4] = p->w;
                         } else {
                             *((uint*)(ppath + 2)) = ((int)(rz * JUST_BELOW_ONE * launchsrc->param1.z) * (int)(launchsrc->param1.y) * (int)(launchsrc->param1.x) +
                                                      (int)(ry * JUST_BELOW_ONE * launchsrc->param1.y) * (int)(launchsrc->param1.x) + (int)(rx * JUST_BELOW_ONE * launchsrc->param1.x));
 
                             for (int i = 0; i < gcfg->srcnum; i++) {
-                                ppath[i + 3] = srcpattern[(*((uint*)(ppath + 2))) * gcfg->srcnum + i];
+                                ppath[i + 4] = srcpattern[(*((uint*)(ppath + 2))) * gcfg->srcnum + i];
                             }
 
                             p->w = 1.f;
@@ -1558,7 +1571,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     updateproperty<islabel, issvmc>(prop, *mediaid, t, *idx1d, media, (float3*)p, nuvox, flipdir);
 
     if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-        savedebugdata(p, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata);
+        savedebugdata(p, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[3]);
     }
 
     /**
@@ -1574,7 +1587,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
     if (gcfg->outputtype == otRF) { // if run RF replay
         f->pathlen = photontof[(threadid * gcfg->threadphoton + min(threadid, gcfg->oddphotons - 1) + (int)f->ndone)];
-        sincosf(gcfg->omega * f->pathlen, ppath + 4 + gcfg->srcnum, ppath + 3 + gcfg->srcnum);
+        sincosf(gcfg->omega * f->pathlen, ppath + 5 + gcfg->srcnum, ppath + 4 + gcfg->srcnum);
     }
 
     f->pathlen = 0.f;
@@ -1896,6 +1909,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
                     tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
                              ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
+
+                    if (gcfg->extrasrclen && gcfg->srcid < 0) {
+                        tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
+                    }
+
 #ifdef USE_ATOMIC
 
                     if (!gcfg->isatomic) {
@@ -1924,7 +1942,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 }
 
                 if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-                    savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata);
+                    savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
                 }
             }
 
@@ -2072,6 +2090,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     }
                 } else if (gcfg->outputtype == otL) {
                     weight = w0 * f.pathlen;
+                }
+
+                if (gcfg->extrasrclen && gcfg->srcid < 0) {
+                    tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
                 }
 
                 GPUDEBUG(("deposit to [%d] %e, w=%f\n", idx1dold, weight, p.w));
@@ -2607,7 +2629,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     uint sharedbuf = 0;
 
     /** \c dimxyz - output volume variable \c field voxel count, Nx*Ny*Nz*Ns where Ns=cfg.srcnum is the pattern number for photon sharing */
-    int dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : 1);
+    int dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : (cfg->srcid == -1) ? (cfg->extrasrclen + 1) : 1);
 
     /** \c media - input volume representing the simulation domain, format specified in cfg.mediaformat, read-only */
     uint*  media = (uint*)(cfg->vol);
@@ -2661,15 +2683,15 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      *                            |----------------------------------------------->  hostdetreclen  <--------------------------------------|
      *                                      |------------------------>    partialdata   <-------------------|
      *host detected photon buffer: detid (1), partial_scat (#media), partial_path (#media), momontum (#media), p_exit (3), v_exit(3), w0 (1)
-     *                                      |--------------------------------------------->    w0offset   <-------------------------------------||<----- w0 (#srcnum) ----->||<- RF replay (2)->|
-     *gpu detected photon buffer:            partial_scat (#media), partial_path (#media), momontum (#media), E_escape (1), E_launch (1), w0 (1), w0_photonsharing (#srcnum)   cos(w*T),sin(w*T)
+     *                                      |--------------------------------------------->    w0offset   <-----------------------------------------------||<----- w0 (#srcnum) ----->||<- RF replay (2)->|
+     *gpu detected photon buffer:            partial_scat (#media), partial_path (#media), momontum (#media), E_escape (1), E_launch (1), w0 (1), srcid(1), w0_photonsharing (#srcnum)   cos(w*T),sin(w*T)
      */
 
     //< \c partialdata: per-photon buffer length for media-specific data, copy from GPU to host
     unsigned int partialdata = (cfg->medianum - 1) * (SAVE_NSCAT(cfg->savedetflag) + SAVE_PPATH(cfg->savedetflag) + SAVE_MOM(cfg->savedetflag));
 
     //< \c w0offset - offset in the per-photon buffer to the start of the photon sharing related data
-    unsigned int w0offset = partialdata + 3;
+    unsigned int w0offset = partialdata + 4;  //< the extra 4 numbers are total-escaped-energy, total-launched-energy, initial-weight, source_id
 
     //< \c hostdetreclen - host-side det photon data buffer per-photon length
     unsigned int hostdetreclen = partialdata + SAVE_DETID(cfg->savedetflag) + 3 * (SAVE_PEXIT(cfg->savedetflag) + SAVE_VEXIT(cfg->savedetflag)) + SAVE_W0(cfg->savedetflag) + 4 * SAVE_IQUV(cfg->savedetflag);
@@ -2680,8 +2702,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** \c param - constants to be used in the GPU, copied to GPU as \c gcfg, stored in the constant memory */
     MCXParam param = {cfg->steps, minstep, 0, 0, cfg->tend, R_C0* cfg->unitinmm,
                       (uint)cfg->issave2pt, (uint)cfg->isreflect, (uint)cfg->isrefint, (uint)cfg->issavedet, 1.f / cfg->tstep,
-                      p0, c0, cfg->srcparam1, cfg->srcparam2, cfg->extrasrclen, s0, maxidx, uint4(0, 0, 0, 0), cp0, cp1, uint2(0, 0), cfg->minenergy,
-                      cfg->sradius* cfg->sradius, minstep* R_C0* cfg->unitinmm, cfg->srctype,
+                      p0, c0, cfg->srcparam1, cfg->srcparam2, cfg->extrasrclen, cfg->srcid, s0, maxidx, uint4(0, 0, 0, 0),
+                      cp0, cp1, uint2(0, 0), cfg->minenergy, cfg->sradius* cfg->sradius, minstep* R_C0* cfg->unitinmm, cfg->srctype,
                       cfg->voidtime, cfg->maxdetphoton,
                       cfg->medianum - 1, cfg->detnum, cfg->polmedianum, cfg->maxgate, ABS(cfg->sradius + 2.f) < EPS /*isatomic*/,
                       (uint)cfg->maxvoidstep, cfg->issaveseed > 0, (uint)cfg->issaveref, cfg->isspecular > 0,
@@ -2781,6 +2803,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     param.maxgate = gpu[gpuid].maxgate;
+
+    printf("allocate %d floats [%d %d %d]\n", dimxyz * gpu[gpuid].maxgate * 2, dimxyz, gpu[gpuid].maxgate, cfg->detnum);
 
     /** If cfg.respin is positive, the output data have to be accummulated, so we use a double-buffer to retrieve and then accummulate */
     if (ABS(cfg->respin) > 1) {
@@ -3051,9 +3075,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** Inside the GPU kernel, volume is always assumbed to be col-major (like those generated by MATLAB or FORTRAN) */
     cachebox.x = (cp1.x - cp0.x + 1);
     cachebox.y = (cp1.y - cp0.y + 1) * (cp1.x - cp0.x + 1);
+
     dimlen.x = cfg->dim.x;
     dimlen.y = cfg->dim.y * cfg->dim.x;
-
     dimlen.z = cfg->dim.x * cfg->dim.y * cfg->dim.z;
     dimlen.w = fieldlen;
 
@@ -3698,6 +3722,10 @@ is more than what your have specified (%d), please use the -H option to specify 
                 for (i = 0; i < int(cfg->srcnum); i++) {
                     scale[i] = psize / srcpw[i] * scaleref;
                 }
+            }
+
+            if (cfg->extrasrclen && cfg->srcid < 0) { // when multiple sources are simulated, the total photons are evenly divided
+                scale[0] *= (cfg->extrasrclen + 1);
             }
 
             cfg->normalizer = scale[0];

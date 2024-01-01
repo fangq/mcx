@@ -121,8 +121,9 @@ typedef struct MCXHistoryHeader {
     float normalizer;              /**< what is the normalization factor */
     int respin;                    /**< if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset */
     unsigned int  srcnum;          /**< number of sources for simultaneous pattern sources */
-    unsigned int  savedetflag;     /**< number of sources for simultaneous pattern sources */
-    int reserved[2];               /**< reserved fields for future extension */
+    unsigned int  savedetflag;     /**< bit-mask for storage of different types of detected photon data */
+    unsigned int  totalsource;     /**< total source number when multiple sources are defined */
+    int reserved[1];               /**< reserved fields for future extension */
 } History;
 
 /**
@@ -271,6 +272,7 @@ typedef struct MCXConfig {
     float* invcdf;               /**< equal-space sampled inversion of CDF(cos(theta)) for the phase function of the zenith angle */
     unsigned int nangle;         /**< number of samples for inverse-cdf of launch angle, will be added by 2 to include -1 and 1 on the two ends */
     float* angleinvcdf;          /**< equal-space sampled inversion of CDF(cos(theta)) for the phase function of the zenith angle of photon launch */
+    int srcid;                   /**< flag to control the simulation of multiple sources */
     unsigned int extrasrclen;    /**< length of additional sources */
     ExtraSrc* srcdata;           /**< buffer to store multiple source input data */
 } Config;
@@ -317,10 +319,10 @@ void mcx_flush(Config* cfg);
 int  mcx_run_from_json(char* jsonstr);
 float mcx_updatemua(unsigned int mediaid, Config* cfg);
 void mcx_savejdata(char* filename, Config* cfg);
-int  mcx_jdataencode(void* vol,  int ndim, uint* dims, char* type, int byte, int zipid, void* obj, int isubj, Config* cfg);
+int  mcx_jdataencode(void* vol,  int ndim, uint* dims, char* type, int byte, int zipid, void* obj, int isubj, int iscol, Config* cfg);
 int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type, cJSON* obj, Config* cfg);
-void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, Config* cfg);
-void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, Config* cfg);
+void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, int iscol, Config* cfg);
+void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name, int isfloat, int iscol, Config* cfg);
 void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* cfg);
 int  mcx_svmc_bgvoxel(int vol);
 void mcx_loadseedjdat(char* filename, Config* cfg);

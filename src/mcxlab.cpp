@@ -261,6 +261,10 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fieldlen *= 2;
                 }
 
+                if (cfg.extrasrclen && cfg.srcid == -1) {
+                    fieldlen *= (cfg.extrasrclen + 1);
+                }
+
                 cfg.exportfield = (float*)calloc(fieldlen, sizeof(float));
             }
 
@@ -390,6 +394,10 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
                 if (cfg.replay.seed != NULL && cfg.outputtype == otRF) {
                     fielddim[5] = 2;
+                }
+
+                if (cfg.extrasrclen && cfg.srcid == -1) {
+                    fielddim[5] *= (cfg.extrasrclen + 1);
                 }
 
                 fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
@@ -561,6 +569,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     GET_ONE_FIELD(cfg, maxjumpdebug)
     GET_ONE_FIELD(cfg, gscatter)
     GET_ONE_FIELD(cfg, srcnum)
+    GET_ONE_FIELD(cfg, srcid)
     GET_ONE_FIELD(cfg, omega)
     GET_ONE_FIELD(cfg, issave2pt)
     GET_ONE_FIELD(cfg, lambda)

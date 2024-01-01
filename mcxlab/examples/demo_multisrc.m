@@ -80,3 +80,21 @@ cfg.tstep=5e-9;
 flux=mcxlab(cfg);
 
 mcxplotvol(log10(flux.data));
+
+%% setting cfg.srcid to a positive number 1,2,3,.. specifies which src to simulate
+cfg.srcid=8;
+
+flux=mcxlab(cfg);
+
+mcxplotvol(log10(flux.data));
+
+%% setting cfg.srcid to -1, solution of each src is stored separately
+
+cfg.srcid=-1;
+
+flux=mcxlab(cfg);
+
+% use up-down button to shift between different sources, there are 9 of
+% them
+
+mcxplotvol(log10(squeeze(flux.data)));
