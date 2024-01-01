@@ -53,7 +53,7 @@ jobs:
           ## 7z x octave_5.2.7z -ooctave -y
           ## rm -rf octave_5.2.7z
           #choco install octave.portable --version=5.2.0
-          choco install lazarus --version=2.0.6
+          choco install lazarus --version=2.2.6
           choco install mingw --version=8.1.0
           curl --retry 3 -kL https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-win64.zip --output upx.zip
           7z x upx.zip -oupx -y
