@@ -357,6 +357,7 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
                  newdetp['p'] or ['v']: exit position and direction, when cfg.issaveexit=1 (3)
                  newdetp['w0']: photon initial weight at launch time (3)
                  newdetp['s']: exit Stokes parameters for polarized photon (4)
+                 newdetp['srcid']: the ID of the source when multiple sources are defined (1)
     """
     newdetp = {}
     c0 = 0
@@ -367,6 +368,9 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
             newdetp["w0"] = detp[0, :].transpose()
         else:
             newdetp["detid"] = detp[0, :].astype(int).transpose()
+            if np.any(newdetp["detid"] > 65535):
+                newdetp["srcid"] = np.right_shift(newdetp["detid"], 16, dtype=np.int32)
+                newdetp["detid"] = np.bitwise_and(newdetp["detid"], 0xff, dtype=np.int32)
         c0 = 1
 
     length = medianum

@@ -1024,12 +1024,13 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
     }
 
     if (cfg->his.detected == 0  && cfg->his.savedphoton) {
-        char colnum[] = {1, 3, 1};
-        char* dtype[] = {"uint32", "single", "single"};
-        char* dname[] = {"photonid", "p", "w0"};
+        char colnum[] = {1, 3, 1, 1};
+        char* dtype[] = {"uint32", "single", "single", "uint32"};
+        char* dname[] = {"photonid", "p", "w0", "srcid"};
+        int activecol = sizeof(colnum) - (cfg->his.totalsource == 1);
         cJSON_AddItemToObject(obj, "Trajectory", dat = cJSON_CreateObject());
 
-        for (int id = 0; id < sizeof(colnum); id++) {
+        for (int id = 0; id < activecol; id++) {
             uint dims[2] = {count, colnum[id]};
             float* buf = (float*)calloc(dims[0] * dims[1], sizeof(float));
 
@@ -1048,9 +1049,9 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
             col += dims[1];
         }
     } else {
-        char colnum[] = {1, cfg->his.maxmedia, cfg->his.maxmedia, cfg->his.maxmedia, 3, 3, 1};
-        char* dtype[] = {"uint32", "uint32", "single", "single", "single", "single", "single"};
-        char* dname[] = {"detid", "nscat", "ppath", "mom", "p", "v", "w0"};
+        char colnum[] = {1, cfg->his.maxmedia, cfg->his.maxmedia, cfg->his.maxmedia, 3, 3, 1, 4};
+        char* dtype[] = {"uint32", "uint32", "single", "single", "single", "single", "single", "single"};
+        char* dname[] = {"detid", "nscat", "ppath", "mom", "p", "v", "w0", "s"};
         cJSON_AddItemToObject(obj, "PhotonData", dat = cJSON_CreateObject());
 
         for (int id = 0; id < sizeof(colnum); id++) {
@@ -1059,6 +1060,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
                 void* val = NULL;
                 float* fbuf = NULL;
                 uint*  ibuf = NULL;
+                int hassrcid = ((cfg->his.totalsource > 1) && id == 1);
 
                 if (!strcmp(dtype[id], "uint32")) {
                     ibuf = (uint*)calloc(dims[0] * dims[1], sizeof(uint));
@@ -1066,6 +1068,10 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
                     for (int i = 0; i < dims[0]; i++)
                         for (int j = 0; j < dims[1]; j++) {
                             ibuf[i * dims[1] + j] = ppath[i * cfg->his.colcount + col + j];
+
+                            if (hassrcid) {
+                                ibuf[i * dims[1] + j] &= 0xFFFF;
+                            }
                         }
 
                     val = (void*)ibuf;
@@ -1078,6 +1084,23 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
                         }
 
                     val = (void*)fbuf;
+                }
+
+                if (hassrcid) {
+                    uint* srcid = (uint*)calloc(dims[0] * dims[1], sizeof(uint));
+
+                    for (int i = 0; i < dims[0] * dims[1]; i++) {
+                        srcid[i] = ibuf[i] >> 16;
+                        ibuf[i] &= 0xFFFF;
+                    }
+
+                    cJSON_AddItemToObject(dat, "srcid", sub = cJSON_CreateObject());
+
+                    if (mcx_jdataencode((void*)srcid, 2, dims, dtype[id], 4, cfg->zipid, sub, 0, 0, cfg)) {
+                        MCX_ERROR(-1, "error when converting to JSON");
+                    }
+
+                    free(srcid);
                 }
 
                 cJSON_AddItemToObject(dat, dname[id], sub = cJSON_CreateObject());

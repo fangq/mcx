@@ -374,11 +374,11 @@ __device__ inline void savedetphoton(float n_det[], uint* detectedphoton, float*
             baseaddr *= gcfg->reclen;
 
             if (SAVE_DETID(gcfg->savedetflag)) {
-                n_det[baseaddr++] = detid;
-
                 if (gcfg->extrasrclen && gcfg->srcid <= 0) {
-                    n_det[baseaddr++] = (((int)ppath[gcfg->w0offset - 1]) << 16);
+                    detid |= (((int)ppath[gcfg->w0offset - 1]) << 16);
                 }
+
+                n_det[baseaddr++] = detid;
             }
 
             for (i = 0; i < gcfg->partialdata; i++) {

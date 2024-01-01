@@ -1337,7 +1337,7 @@ to adpot the newly implemented JSON/.jdat format for easy data sharing.
 The .mch file contains a 256 byte binary header, followed by a 2-D numerical array
 of dimensions `#savedphoton * #colcount` as recorded in the header.
 ```
- typedef struct MCXHistoryHeader{
+typedef struct MCXHistoryHeader{
 	char magic[4];                 // magic bits= 'M','C','X','H'
 	unsigned int  version;         // version of the mch file format 
 	unsigned int  maxmedia;        // number of media in the simulation 
@@ -1346,14 +1346,15 @@ of dimensions `#savedphoton * #colcount` as recorded in the header.
 	unsigned int  totalphoton;     // how many total photon simulated 
 	unsigned int  detected;        // how many photons are detected (not necessarily all saved) 
 	unsigned int  savedphoton;     // how many detected photons are saved in this file 
-	float unitinmm;                // what is the voxel size of the simulation 
+	float unitinmm;                // what is the voxel size of the simulation
 	unsigned int  seedbyte;        // how many bytes per RNG seed
-        float normalizer;              // what is the normalization factor
+	float normalizer;              // what is the normalization factor
 	int respin;                    // if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset 
 	unsigned int  srcnum;          // number of sources for simultaneous pattern sources 
 	unsigned int  savedetflag;     // number of sources for simultaneous pattern sources 
-	int reserved[2];               // reserved fields for future extension 
- } History;
+    unsigned int  totalsource;     // total source number when multiple sources are defined
+	int reserved[1];               // reserved fields for future extension 
+} History;
 ```
 When the `-q` flag is set to 1, the detected photon initial seeds are also stored
 following the detected photon data, consisting of a 2-D byte array of `#savedphoton * #seedbyte`.
@@ -1369,36 +1370,36 @@ When `-F jnii` is specified, instead of saving the detected photon into the lega
 a .jdat file is written, which is a pure JSON file. This file contains a hierachical data
 record of the following JSON structure
 ````
- {
-   "MCXData": {
+{
+   "MCXData":{
        "Info":{
            "Version":
-	   "MediaNum":
-	   "DetNum":
-	   ...
-	   "Media":{
-	      ...
-	   }
+           "MediaNum":
+           "DetNum":
+           ...
+           "Media":{
+               ...
+           }
        },
        "PhotonData":{
            "detid":
-	   "nscat":
-	   "ppath":
-	   "mom":
-	   "p":
-	   "v":
-	   "w0":
+           "nscat":
+           "ppath":
+           "mom":
+           "p":
+           "v":
+           "w0":
        },
        "Trajectory":{
            "photonid":
-	   "p":
-	   "w0":
+           "p":
+           "w0":
        },
        "Seed":[
            ...
        ]
    }
- }
+}
 ````
 where "Info" is required, and other subfields are optional depends on users' input.
 Each subfield in this file may contain JData 1-D or 2-D array constructs to allow 

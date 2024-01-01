@@ -28,7 +28,7 @@ function [data, headerstruct, photonseed]=loadmch(fname,format,endian)
 %                    [detid(1) nscat(M) ppath(M) mom(M) p(3) v(3) w0(1) s(4)]
 %        header: file header info, a structure has the following fields
 %                [version,medianum,detnum,recordnum,totalphoton,detectedphoton,
-%                 savedphoton,lengthunit,seedbyte,normalizer,respin,srcnum,savedetflag]
+%                 savedphoton,lengthunit,seedbyte,normalizer,respin,srcnum,savedetflag,totalsource]
 %        photonseed: (optional) if the mch file contains a seed section, this
 %                returns the seed data for each detected photon. Each row of 
 %                photonseed is a byte array, which can be used to initialize a  
@@ -70,7 +70,8 @@ while(~feof(fid))
 	respin=fread(fid,1,'int');
 	srcnum=fread(fid,1,'uint');
 	savedetflag=fread(fid,1,'uint');
-	junk=fread(fid,2,'uint');
+	totalsource=fread(fid,1,'uint');
+	junk=fread(fid,1,'uint');
 
     detflag=dec2bin(bitand(savedetflag,(2^8-1)))-'0';
     if(strcmp(endian,'ieee-le'))
@@ -119,5 +120,5 @@ if(nargout>=2)
                        'recordnum',header(4),'totalphoton',header(5),...
                        'detectedphoton',header(6),'savedphoton',header(7),...
                        'lengthunit',header(8),'seedbyte',seedbyte,'normalizer',normalizer,...
-		       'respin',respin,'srcnum',srcnum,'savedetflag',savedetflag);
+		       'respin',respin,'srcnum',srcnum,'savedetflag',savedetflag,'totalsource',totalsource);
 end

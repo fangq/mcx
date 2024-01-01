@@ -38,6 +38,10 @@ if(regexp(savedetflag,'[dD]'))
         newdetp.w0=detp(1,:)';
     else
         newdetp.detid=int32(detp(1,:))';
+        if(any(newdetp.detid>65535))
+            newdetp.srcid=bitshift(newdetp.detid,-16);
+            newdetp.detid=bitand(newdetp.detid,int32(hex2dec('ffff')));
+        end
     end
     c0=2;
 end
