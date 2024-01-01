@@ -5338,7 +5338,7 @@ void mcx_printheader(Config* cfg) {
     MCX_FPRINTF(cfg->flog, S_MAGENTA"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2023 Qianqian Fang <q.fang at neu.edu>          #\n\
+#          Copyright (c) 2009-2024 Qianqian Fang <q.fang at neu.edu>          #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.org/                " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
