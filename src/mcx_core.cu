@@ -2,9 +2,9 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2023
+**  \copyright Qianqian Fang, 2009-2024
 **
-**  \section sref Reference:
+**  \section sref Reference
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
 **          <a href="http://www.opticsinfobase.org/abstract.cfm?uri=oe-17-22-20178">
 **          "Monte Carlo Simulation of Photon Migration in 3D Turbid Media Accelerated
@@ -18,6 +18,10 @@
 **          modeling in complex bio-tissues," Biomed. Opt. Express, 11(11)
 **          pp. 6262-6270. https://doi.org/10.1364/BOE.409468
 **
+**  \section sformat Formatting
+**          Please always run "make pretty" inside the \c src folder before each commit.
+**          The above command rqeuires \c astyle to perform automatic formatting.
+**
 **  \section slicense License
 **          GPL v3, see LICENSE.txt for details
 *******************************************************************************/
@@ -29,7 +33,7 @@
 
 This unit contains both the GPU kernels (running on the GPU device) and host code
 (running on the host) that initializes GPU buffers, calling kernels, retrieving
-all computed results (fluence, diffuse reflectance detected photon data) from GPU,
+all computed results (fluence, diffuse reflectance, detected photon data) from GPU,
 and post processing, such as normalization, saving data to file etc. The main
 function of the GPU kernel is \c mcx_main_loop and the main function of the
 host code is \c mcx_run_simulation.
@@ -555,16 +559,16 @@ template <const int islabel, const int issvmc>
 __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[RAND_BUF_LEN], unsigned int idx1d,
                                uint media[], float3* p, MCXsp* nuvox, short flipdir[4]) {
     /**
-    * The default mcx input volume is assumed to be 4-byte per voxel
-    * (SVMC mode requires 2x 4-byte voxels for 8 data points)
-    *
-    * The data encoded in the voxel are parsed based on the gcfg->mediaformat flag.
-    * Below, we use [s*] to represent 2-byte short integers; [h*] to represent a
-    * 2-byte half-precision floating point number; [c*] to represent
-    * 1-byte unsigned char integers and [i*] to represent 4-byte integers;
-    * [f*] for 4-byte floating point number
-    * index 0 starts from the lowest (least significant bit) end
-    */
+     * The default mcx input volume is assumed to be 4-byte per voxel
+     * (SVMC mode requires 2x 4-byte voxels for 8 data points)
+     *
+     * The data encoded in the voxel are parsed based on the gcfg->mediaformat flag.
+     * Below, we use [s*] to represent 2-byte short integers; [h*] to represent a
+     * 2-byte half-precision floating point number; [c*] to represent
+     * 1-byte unsigned char integers and [i*] to represent 4-byte integers;
+     * [f*] for 4-byte floating point number
+     * index 0 starts from the lowest (least significant bit) end
+     */
     if (islabel) { //< [i0]: traditional MCX input type - voxels store integer labels, islabel is a template const for speed
         *((float4*)(prop)) = gproperty[mediaid & MED_MASK];
     } else if (gcfg->mediaformat == MEDIA_LABEL_HALF) { //< [h1][s0]: h1: half-prec property value; highest 2bit in s0: index 0-3, low 14bit: tissue label
@@ -2392,6 +2396,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 /**
  *  assert cuda memory allocation result
  */
+
 void mcx_cu_assess(cudaError_t cuerr, const char* file, const int linenum) {
     if (cuerr != cudaSuccess) {
 #ifndef MCX_DISABLE_CUDA_DEVICE_RESET
@@ -2804,8 +2809,6 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     param.maxgate = gpu[gpuid].maxgate;
 
-    printf("allocate %d floats [%d %d %d]\n", dimxyz * gpu[gpuid].maxgate * 2, dimxyz, gpu[gpuid].maxgate, cfg->detnum);
-
     /** If cfg.respin is positive, the output data have to be accummulated, so we use a double-buffer to retrieve and then accummulate */
     if (ABS(cfg->respin) > 1) {
         if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
@@ -2969,8 +2972,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     /**
-      * Allocate all GPU buffers to store input or output data
-      */
+     * Allocate all GPU buffers to store input or output data
+     */
     if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
         CUDA_ASSERT(cudaMalloc((void**) &gmedia, sizeof(uint) * (cfg->dim.x * cfg->dim.y * cfg->dim.z)));
     } else {
@@ -2987,8 +2990,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     CUDA_ASSERT(cudaMalloc((void**) &genergy, sizeof(float) * (gpu[gpuid].autothread << 1)));
 
     /**
-      * Allocate pinned memory variable, progress, for real-time update during kernel run-time
-      */
+     * Allocate pinned memory variable, progress, for real-time update during kernel run-time
+     */
     CUDA_ASSERT(cudaHostAlloc((void**)&progress, sizeof(int), cudaHostAllocMapped));
     CUDA_ASSERT(cudaHostGetDevicePointer((int**)&gprogress, (int*)progress, 0));
     *progress = 0;
@@ -3018,12 +3021,12 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     /**
-      * Allocate and copy data needed for photon replay, the needed variables include
-      * \c gPseed per-photon seed to be replayed
-      * \c greplayw per-photon initial weight
-      * \c greplaytof per-photon time-of-flight time in s
-      * \c greplaydetid per-photon index for each replayed photon
-      */
+     * Allocate and copy data needed for photon replay, the needed variables include
+     * \c gPseed per-photon seed to be replayed
+     * \c greplayw per-photon initial weight
+     * \c greplaytof per-photon time-of-flight time in s
+     * \c greplaydetid per-photon index for each replayed photon
+     */
     if (cfg->seed == SEED_FROM_FILE) {
         CUDA_ASSERT(cudaMalloc((void**) &gPseed, sizeof(RandType)*cfg->nphoton * RAND_BUF_LEN));
         CUDA_ASSERT(cudaMemcpy(gPseed, cfg->replay.seed, sizeof(RandType)*cfg->nphoton * RAND_BUF_LEN, cudaMemcpyHostToDevice));
@@ -3047,8 +3050,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     /**
-      * Allocate and copy source pattern buffer for 2D and 3D pattern sources
-      */
+     * Allocate and copy source pattern buffer for 2D and 3D pattern sources
+     */
     if (cfg->srctype == MCX_SRC_PATTERN) {
         CUDA_ASSERT(cudaMalloc((void**) &gsrcpattern, sizeof(float) * (int)(cfg->srcparam1.w * cfg->srcparam2.w * cfg->srcnum)));
     } else if (cfg->srctype == MCX_SRC_PATTERN3D) {
@@ -3059,8 +3062,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     #pragma omp master
 
     /**
-      * Saving detected photon is enabled by default, but in case if a user disabled this feature, a warning is printed
-      */
+     * Saving detected photon is enabled by default, but in case if a user disabled this feature, a warning is printed
+     */
     if (cfg->issavedet) {
         MCX_FPRINTF(stderr, S_RED "WARNING: this MCX binary can not save partial path, please recompile mcx and make sure -D SAVE_DETECTORS is used by nvcc\n" S_RESET);
         cfg->issavedet = 0;
@@ -3070,8 +3073,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 #endif
 
     /**
-      * Pre-compute array dimension strides to move in +-x/y/z dimension quickly in the GPU, stored in the constant memory
-      */
+     * Pre-compute array dimension strides to move in +-x/y/z dimension quickly in the GPU, stored in the constant memory
+     */
     /** Inside the GPU kernel, volume is always assumbed to be col-major (like those generated by MATLAB or FORTRAN) */
     cachebox.x = (cp1.x - cp0.x + 1);
     cachebox.y = (cp1.y - cp0.y + 1) * (cp1.x - cp0.x + 1);
@@ -3100,8 +3103,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     /**
-      * Get ready to start GPU simulation here, clock is now ticking ...
-      */
+     * Get ready to start GPU simulation here, clock is now ticking ...
+     */
     tic = StartTimer();
     #pragma omp master
     {
@@ -3120,8 +3123,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     #pragma omp barrier
 
     /**
-      * Copy all host buffers to the GPU
-      */
+     * Copy all host buffers to the GPU
+     */
     MCX_FPRINTF(cfg->flog, "\nGPU=%d (%s) threadph=%d extra=%d np=%ld nthread=%d maxgate=%d repetition=%d\n", gpuid + 1, gpu[gpuid].name, param.threadphoton, param.oddphotons,
                 gpuphoton, gpu[gpuid].autothread, gpu[gpuid].maxgate, ABS(cfg->respin));
     MCX_FPRINTF(cfg->flog, "initializing streams ...\t");
@@ -3145,8 +3148,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         }
 
     /**
-      * Copy constants to the constant memory on the GPU
-      */
+     * Copy constants to the constant memory on the GPU
+     */
     CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum * sizeof(Medium), 0, cudaMemcpyHostToDevice));
     CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->detpos,  cfg->detnum * sizeof(float4), cfg->medianum * sizeof(Medium), cudaMemcpyHostToDevice));
 
@@ -3192,8 +3195,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
          */
         for (iter = 0; iter < ABS(cfg->respin); iter++) {
             /**
-              * Each repetition, we have to reset the output buffers, including \c gfield and \c gPdet
-              */
+             * Each repetition, we have to reset the output buffers, including \c gfield and \c gPdet
+             */
             CUDA_ASSERT(cudaMemset(gfield, 0, sizeof(OutputType)*fieldlen * SHADOWCOUNT)); // cost about 1 ms
             CUDA_ASSERT(cudaMemset(gPdet, 0, sizeof(float)*cfg->maxdetphoton * (hostdetreclen)));
 
@@ -3352,10 +3355,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             #pragma omp master
             {
                 /**
-                  * By now, the GPU kernel has been launched asynchronously, the master thread on the host starts
-                * reading a pinned memory variable, \c gprogress, to realtimely read the completed photon count
-                * updated inside the GPU kernel while it is running.
-                  */
+                 * By now, the GPU kernel has been launched asynchronously, the master thread on the host starts
+                 * reading a pinned memory variable, \c gprogress, to realtimely read the completed photon count
+                 * updated inside the GPU kernel while it is running.
+                 */
                 if ((param.debuglevel & MCX_DEBUG_PROGRESS)) {
                     int p0 = 0, ndone = -1;
 #ifdef _WIN32
@@ -3371,7 +3374,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                          * host variable \c progress is pinned with the GPU variable \c gprogress, and can be
                          * updated by the GPU kernel from the device. We can read this variable to see how many
                          * photons are simulated.
-                                      */
+                         */
                         ndone = *progress;
 
                         if (ndone > p0) {
@@ -3474,8 +3477,8 @@ is more than what your have specified (%d), please use the -H option to specify 
                 }
 
                 /**
-                  * The detected photon dat retrieved from each thread/device are now concatenated to store in a single host buffer
-                  */
+                 * The detected photon dat retrieved from each thread/device are now concatenated to store in a single host buffer
+                 */
                 #pragma omp atomic
                 cfg->his.detected += detected;
                 detected = MIN(detected, cfg->maxdetphoton);
@@ -3504,8 +3507,8 @@ is more than what your have specified (%d), please use the -H option to specify 
             mcx_flush(cfg);
 
             /**
-              * Accumulate volumetric fluence from all threads/devices
-              */
+             * Accumulate volumetric fluence from all threads/devices
+             */
             if (cfg->issave2pt) {
                 OutputType* rawfield = (OutputType*)malloc(sizeof(OutputType) * fieldlen * SHADOWCOUNT);
                 CUDA_ASSERT(cudaMemcpy(rawfield, gfield, sizeof(OutputType)*fieldlen * SHADOWCOUNT, cudaMemcpyDeviceToHost));
@@ -3513,10 +3516,10 @@ is more than what your have specified (%d), please use the -H option to specify 
                 fflush(cfg->flog);
 
                 /**
-                  * If double-precision is used for output, we do not need two buffers; however, by default, we use
-                * single-precision output, we need to copy and accumulate two separate floating-point buffers
+                 * If double-precision is used for output, we do not need two buffers; however, by default, we use
+                 * single-precision output, we need to copy and accumulate two separate floating-point buffers
                  * to minimize round-off errors near the source
-                       */
+                 */
                 for (i = 0; i < (int)fieldlen; i++) { //accumulate field, can be done in the GPU
                     field[i] = rawfield[i];
 #ifndef USE_DOUBLE
@@ -3536,8 +3539,8 @@ is more than what your have specified (%d), please use the -H option to specify 
                 free(rawfield);
 
                 /**
-                  * If respin is used, each repeatition is accumulated to the 2nd half of the buffer
-                  */
+                 * If respin is used, each repeatition is accumulated to the 2nd half of the buffer
+                 */
                 if (ABS(cfg->respin) > 1) {
                     for (i = 0; i < (int)fieldlen; i++) { //accumulate field, can be done in the GPU
                         field[fieldlen + i] += field[i];
@@ -3576,7 +3579,7 @@ is more than what your have specified (%d), please use the -H option to specify 
         }
 
         /**
-        * For MATLAB mex file, the data is copied to a pre-allocated buffer \c cfg->export* as a return variable
+         * For MATLAB mex file, the data is copied to a pre-allocated buffer \c cfg->export* as a return variable
          */
         if (cfg->exportfield) {
             for (i = 0; i < (int)fieldlen; i++)
@@ -3601,9 +3604,9 @@ is more than what your have specified (%d), please use the -H option to specify 
     #pragma omp barrier
 
     /**
-      * Let the master thread to deal with the normalization and file IO
-      * First, if multi-pattern simulation, i.e. photon sharing, is used, we normalize each pattern first
-      */
+     * Let the master thread to deal with the normalization and file IO
+     * First, if multi-pattern simulation, i.e. photon sharing, is used, we normalize each pattern first
+     */
     #pragma omp master
     {
         if (cfg->issave2pt && cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
@@ -3640,13 +3643,13 @@ is more than what your have specified (%d), please use the -H option to specify 
         }
 
         /**
-          * Now we normalize the fluence so that the default output is fluence rate in joule/(s*mm^2)
-          * generated by a unitary source (1 joule total).
-          *
-          * The raw output directly from GPU is the accumulated energy-loss per photon moving step
-          * in joule when cfg.outputtype='fluence', or energy-loss multiplied by mua (1/mm) per voxel
-          * (joule/mm) when cfg.outputtype='flux' (default).
-          */
+         * Now we normalize the fluence so that the default output is fluence rate in joule/(s*mm^2)
+         * generated by a unitary source (1 joule total).
+         *
+         * The raw output directly from GPU is the accumulated energy-loss per photon moving step
+         * in joule when cfg.outputtype='fluence', or energy-loss multiplied by mua (1/mm) per voxel
+         * (joule/mm) when cfg.outputtype='flux' (default).
+         */
         if (cfg->issave2pt && cfg->isnormalized) {
             float* scale = (float*)calloc(cfg->srcnum, sizeof(float));
             scale[0] = 1.f;
@@ -3744,9 +3747,9 @@ is more than what your have specified (%d), please use the -H option to specify 
         }
 
         /**
-          * If not running as a mex file, we need to save volumetric output data, if enabled, as
-          * a file, with suffix specifed by cfg.outputformat (mc2,nii, or .jdat or .jbat)
-          */
+         * If not running as a mex file, we need to save volumetric output data, if enabled, as
+         * a file, with suffix specifed by cfg.outputformat (mc2,nii, or .jdat or .jbat)
+         */
 
 #ifndef MCX_CONTAINER
 
@@ -3760,9 +3763,9 @@ is more than what your have specified (%d), please use the -H option to specify 
 #endif
 
         /**
-          * If not running as a mex file, we need to save detected photon data, if enabled, as
-          * a file, either as a .mch file, or a .jdat/.jbat file
-          */
+         * If not running as a mex file, we need to save detected photon data, if enabled, as
+         * a file, either as a .mch file, or a .jdat/.jbat file
+         */
 #ifndef MCX_CONTAINER
 
         if (cfg->issavedet && cfg->parentid == mpStandalone && cfg->exportdetected) {
@@ -3781,9 +3784,9 @@ is more than what your have specified (%d), please use the -H option to specify 
 #endif
 
         /**
-          * If not running as a mex file, we need to save photon trajectory data, if enabled, as
-          * a file, either as a .mct file, or a .jdat/.jbat file
-          */
+         * If not running as a mex file, we need to save photon trajectory data, if enabled, as
+         * a file, either as a .mct file, or a .jdat/.jbat file
+         */
 #ifndef MCX_CONTAINER
 
         if ((cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) && cfg->parentid == mpStandalone && cfg->exportdebugdata) {
@@ -3798,8 +3801,8 @@ is more than what your have specified (%d), please use the -H option to specify 
     }
     #pragma omp barrier
     /**
-      * Copying GPU photon states back to host as Ppos, Pdir and Plen for debugging purpose is depreciated
-      */
+     * Copying GPU photon states back to host as Ppos, Pdir and Plen for debugging purpose is depreciated
+     */
     CUDA_ASSERT(cudaMemcpy(Ppos,  gPpos, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
     CUDA_ASSERT(cudaMemcpy(Pdir,  gPdir, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
     CUDA_ASSERT(cudaMemcpy(Plen,  gPlen, sizeof(float4)*gpu[gpuid].autothread, cudaMemcpyDeviceToHost));
@@ -3823,8 +3826,8 @@ is more than what your have specified (%d), please use the -H option to specify 
         }
 
         /**
-          * Report simulation summary, total energy here equals total simulated photons+unfinished photons for all threads
-          */
+         * Report simulation summary, total energy here equals total simulated photons+unfinished photons for all threads
+         */
         MCX_FPRINTF(cfg->flog, "simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: " S_BOLD "" S_BLUE "%.2f photon/ms\n" S_RESET,
                     (long int)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1), (long int)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1),
                     gpu[gpuid].autothread, ABS(cfg->respin),
