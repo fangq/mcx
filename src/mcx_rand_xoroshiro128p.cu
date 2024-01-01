@@ -20,7 +20,7 @@
 **
 **  \section sformat Formatting
 **          Please always run "make pretty" inside the \c src folder before each commit.
-**          The above command rqeuires \c astyle to perform automatic formatting.
+**          The above command requires \c astyle to perform automatic formatting.
 **
 **  \section slicense License
 **          GPL v3, see LICENSE.txt for details
