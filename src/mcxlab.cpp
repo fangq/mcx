@@ -654,8 +654,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     } else if (strcmp(name, "srcparam1") == 0) {
         arraydim = mxGetDimensions(item);
 
-        if (arraydim[0] == 0 || arraydim[1] != 4) {
-            mexErrMsgTxt("the 'srcparam1' field must have 4 columns");
+        if (arraydim[0] == 0 || (arraydim[1] != 3 && arraydim[1] != 4)) {
+            mexErrMsgTxt("the 'srcparam1' field must have 3-4 columns");
         }
 
         double* val = mxGetPr(item);
@@ -689,8 +689,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     } else if (strcmp(name, "srcparam2") == 0) {
         arraydim = mxGetDimensions(item);
 
-        if (arraydim[0] == 0 || arraydim[1] != 4) {
-            mexErrMsgTxt("the 'srcparam2' field must have 4 columns");
+        if (arraydim[0] == 0 || (arraydim[1] != 3 && arraydim[1] != 4)) {
+            mexErrMsgTxt("the 'srcparam2' field must have 3-4 columns");
         }
 
         double* val = mxGetPr(item);
