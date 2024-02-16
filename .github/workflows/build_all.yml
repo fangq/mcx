@@ -43,6 +43,7 @@ jobs:
           conda config --add channels conda-forge
           conda config --set channel_priority strict
           conda install octave
+          brew install libomp
           brew link --force libomp
           brew install --cask lazarus
           echo "/Applications/Lazarus/" >> $GITHUB_PATH

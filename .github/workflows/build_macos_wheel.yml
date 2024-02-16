@@ -42,6 +42,7 @@ jobs:
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
           echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
+          brew install libomp
           brew link --force libomp
       - name: Install CUDA
         run: |
