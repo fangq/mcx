@@ -33,6 +33,7 @@ jobs:
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
+          brew install libomp
           curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
           tar zxf Xcode10.app.tar.gz
           rm -rf Xcode10.app.tar.gz
@@ -43,7 +44,6 @@ jobs:
           conda config --add channels conda-forge
           conda config --set channel_priority strict
           conda install octave
-          brew install libomp
           brew link --force libomp
           brew install --cask lazarus
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
