@@ -276,12 +276,24 @@ img.simupreview{
   color: yellow;
   float: right;
 }
-
+.layersize {
+  width: 3rem;
+}
+input[type=number]::-webkit-inner-spin-button {
+  opacity: 1;
+}
+.controlrow {
+  white-space: nowrap;
+}
+#submitserver {
+  background-color: #e8efff;
+}
 </style>
 
 <section id="mcx1-title" class='current'>
         <h1>MCX Cloud</h1>
 	<h4>Scalable, cloud-based GPU Monte Carlo photon simulator based on <a href="https://mcx.space" title="Monte Carlo eXtreme">MCX</a> and <a href="https://neurojson.org" title="NeuroJSON">JData</a>. See <a href="https://youtu.be/TnfmrO12jI0" title="Video tutorial">Tutorial 1</a>,<a href="https://youtu.be/RztC-uXMqkw" title="Sharing and reuse simulations">2</a> & <a href="https://doi.org/10.1117/1.JBO.27.8.083008">Full Paper</a>.</h4>
+        <h5>Choose server:  <select id="submitserver" title="If the main server is down, please choose the backup server; this does not change how fast the job is being processed."><option value="kwafoo">Main server</option><option value="wazu">Backup server 1</option></select></h5>
 	</p>
 </section>
 
@@ -365,20 +377,27 @@ img.simupreview{
         </div>
         <div style="display:block;">
           <b>Cross Sections</b><br>
-          <div>
+          <div class="controlrow">
             X
             <label for="cross-x-low">Min </label><input style="width: 90px" id="cross-x-low" type="range" min="0" max="1" value="0" step="any">
             <label for="cross-x-hi">Max </label><input style="width: 90px" id="cross-x-hi" type="range" min="0" max="1" value="1" step="any">
+            <input id="x_thickness" class="layersize" type="number" min="0" max="1" value="0" title="set x-axis rendering thickness"/>
           </div>
-          <div>
+          <div class="controlrow">
             Y
             <label for="cross-y-low">Min </label><input style="width: 90px" id="cross-y-low" type="range" min="0" max="1" value="0" step="any">
             <label for="cross-y-hi">Max </label><input style="width: 90px" id="cross-y-hi" type="range" min="0" max="1" value="1" step="any">
+            <input id="y_thickness" class="layersize" type="number" min="0" max="1" value="0" title="set y-axis rendering thickness"/>
           </div>
-          <div>
+          <div class="controlrow">
             Z
             <label for="cross-z-low">Min </label><input style="width: 90px" id="cross-z-low" type="range" min="0" max="1" value="0" step="any">
             <label for="cross-z-hi">Max </label><input style="width: 90px" id="cross-z-hi" type="range" min="0" max="1" value="1" step="any">
+            <input id="z_thickness" class="layersize" type="number" min="0" max="1" value="0" title="set z-axis rendering thickness"/>
+          </div>
+          <div id='taxis'>
+            T
+            <label for="cross-t">Time </label><input style="width: 90px" id="cross-t" type="range" min="0" max="1" value="0" step="1">
           </div>
         </div>
         <div style="display:block;">
@@ -407,7 +426,7 @@ img.simupreview{
             <h2>Run</h2>
 	    <input id="fullname" name="fullname" type="text" value='' required minlength="3" placeholder="Full Name (required, internal use only, not be used publicly)">
 	    <input id="netname" name="netname" type="text" value='' required minlength="3" placeholder="Network Name (required, for future public use)">
-	    <input id="email" name="email" type="text" value='' required minlength="7" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Email (required, internal use only, not be used publicly)" autocomplete="off">
+	    <input id="email" name="email" type="text" value='' required minlength="7" pattern="^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$" placeholder="Email (required, internal use only, not be used publicly)" autocomplete="off">
 	    <input id="inst" name="inst" type="text" value='' required minlength="4" placeholder="Institute/Company (required, internal use only, not be used publicly)">
 	    <input id="jobid" type="hidden" name="jobid" value=''>
 	    <input id="jobhash" type="hidden" name="jobhash" value=''>
@@ -2785,10 +2804,22 @@ function drawvolume(volume){
     int32:THREE.IntType,
     float32:THREE.FloatType
   };
-  const dim=volume.shape;
-  const buf=nj.array(volume.transpose().flatten().selection.data, 'float32');
+  lastvolumedim=volume.shape;
+  const dim=lastvolumedim;
 
-  const texture = new THREE.DataTexture3D( buf.selection.data, dim[0], dim[1], dim[2]);
+  $("#cross-t").prop( "disabled", true );
+
+  if(dim.length > 3 && dim[3] > 0) {
+    $('#cross-t').prop('min', 0);
+    $('#cross-t').prop('max', dim[3]-1);
+    $('#cross-t').val(0);
+    $("#cross-t").prop( "disabled", false );
+    $("#cross-t").prop('title', ''+$("#cross-t").val()+' ['+$("#cross-t").prop('min')+','+$("#cross-t").prop('max')+']');
+  }
+
+  lastvolumedata=nj.array(volume.transpose().flatten().selection.data, 'float32');
+
+  const texture = new THREE.DataTexture3D( lastvolumedata.selection.data, dim[0], dim[1], dim[2]);
   texture.format = THREE.RedFormat;
   texture.type = THREE.FloatType;
   texture.minFilter = texture.magFilter = THREE.LinearFilter;
@@ -2826,6 +2857,10 @@ function drawvolume(volume){
   $("#clim-hi").prop('min',lastclim.x);
   $("#clim-hi").prop('max',lastclim.y);
   $("#clim-hi").val(lastclim.y);
+
+  $("#x_thickness").prop('max',dim[0]);
+  $("#y_thickness").prop('max',dim[1]);
+  $("#z_thickness").prop('max',dim[2]);
 
   const material = new THREE.ShaderMaterial( {
 	  uniforms: uniforms,
@@ -2986,7 +3021,7 @@ function searchpub(offset){
       success: function( data ){
       },
       error: function(xhr,status,error) {
-         alert("searchpub error: "+status);
+         alert("searchpub error: "+status + ". The selected server is down. Please choose an alternative server from the 'Choose server' menu.");
       }
   });
 }
@@ -3035,7 +3070,26 @@ function setuserinfo() {
   storage.userinfo = JSON.stringify({ fullname: $("#fullname").val(), inst: $("#inst").val(), email: $("#email").val(), netname: $("#netname").val()});
 }
 
-function setcrosssectionsizes() {
+function setcrosssectionsizes(e) {
+  let eid=$(e).attr('id');
+  let deltaeid=eid.replace('cross-','').replace(/-(low|hi)$/,'_thickness');
+  let dvalue=parseInt($('#'+deltaeid).val());
+
+  if(dvalue>0) {
+     let othereid='';
+     dvalue /= (eid.match(/-x-/) ? lastvolumedim[0] : (eid.match(/-y-/) ? lastvolumedim[1]: lastvolumedim[2]));
+
+     if(eid.match(/-low/)) {
+        othereid='#'+eid.replace(/-low$/, '-hi');
+        $(othereid).val(Math.min(parseFloat($(e).val())+dvalue, 1))
+     } else {
+        othereid='#'+eid.replace(/-hi$/, '-low');
+        $(othereid).val(Math.max(parseFloat($(e).val())-dvalue, 0))
+     }
+     $(othereid).prop('title', ''+$(othereid).val()+' ['+$(othereid).prop('min')+','+$(othereid).prop('max')+']');
+  }
+
+  $(e).prop('title', ''+$(e).val()+' ['+$(e).prop('min')+','+$(e).prop('max')+']');
   if(lastvolume !== null){
     lastvolume.material.uniforms[ "u_minslice" ].value.set( parseFloat($("#cross-x-low").val()), parseFloat($("#cross-y-low").val()), parseFloat($("#cross-z-low").val()) );
     lastvolume.material.uniforms[ "u_maxslice" ].value.set( parseFloat($("#cross-x-hi").val()), parseFloat($("#cross-y-hi").val()), parseFloat($("#cross-z-hi").val()) );
@@ -3138,6 +3192,8 @@ var stats = createStats();
 document.getElementById('renderpanel').appendChild( stats.domElement );
 
 var lastvolume=null;
+var lastvolumedim=[];
+var lastvolumedata=null;
 var lastloaded=null;
 var lastclim=0;
 var reqid=undefined;
@@ -3206,27 +3262,58 @@ $("#iso-radio-button").on('change', function() {
 });
 
 $("#cross-x-low").on('input', function() {
-    setcrosssectionsizes();
+    setcrosssectionsizes(this);
 });
 
 $("#cross-y-low").on('input', function() {
-    setcrosssectionsizes();
+    setcrosssectionsizes(this);
 });
 
 $("#cross-z-low").on('input', function() {
-    setcrosssectionsizes();
+    setcrosssectionsizes(this);
 });
 
 $("#cross-x-hi").on('input', function() {
-    setcrosssectionsizes();
+    setcrosssectionsizes(this);
 });
 
 $("#cross-y-hi").on('input', function() {
-    setcrosssectionsizes();
+    setcrosssectionsizes(this);
 });
 
 $("#cross-z-hi").on('input', function() {
-    setcrosssectionsizes();
+    setcrosssectionsizes(this);
+});
+
+$("#x_thickness, #y_thickness, #z_thickness").on('input', function() {
+    let eid=$(this).attr('id');
+    let linkedeid1=eid.replace(/_thickness/,'-low').replace(/^/,'cross-');
+    let linkedeid2=eid.replace(/_thickness/,'-hi').replace(/^/,'cross-');
+    if($(this).val() == 0) {
+      $('#'+linkedeid1).val(0);
+      $('#'+linkedeid2).val(1);
+    } else {
+      $('#'+linkedeid1).val(($('#'+linkedeid1).val() + $('#'+linkedeid2).val())*0.5);
+    }
+    setcrosssectionsizes($('#'+linkedeid1));
+});
+
+$('#cross-t').on('mouseup', function() {
+  $(this).prop('title', ''+$(this).val()+' ['+$(this).prop('min')+','+$(this).prop('max')+']');
+  if(lastvolume !== null && lastvolumedata !== undefined){
+    let dim = lastvolumedim;
+    let offset=$(this).val()*dim[0]*dim[1]*dim[2];
+
+    let texture = new THREE.DataTexture3D(lastvolumedata.selection.data.slice(offset, offset+dim[0]*dim[1]*dim[2]), dim[0], dim[1], dim[2]);
+    texture.format = THREE.RedFormat;
+    texture.type = THREE.FloatType;
+    texture.minFilter = texture.magFilter = THREE.LinearFilter;
+    texture.unpackAlignment = 1;
+    texture.needsUpdate = true;
+
+    lastvolume.material.uniforms[ "u_data" ].value = texture;
+    renderer.updateComplete = false;
+ }
 });
 
 function setControlAngles(polar, azimuth) {
@@ -3244,6 +3331,10 @@ function setControlAngles(polar, azimuth) {
   controls.minPolarAngle = mip;
   controls.maxPolarAngle = mxp;
 }
+
+$('#submitserver').on('change', function() {
+  serverurl="https://"+$(this).val()+".coe.neu.edu/mcxcloud/mcxserver.cgi";
+})
 
 $("#pos-x-view").on('click', function() {
   setControlAngles(Math.PI * 90 / 180, Math.PI * 90 / 180);
