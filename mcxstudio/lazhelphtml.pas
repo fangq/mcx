@@ -21,9 +21,9 @@ uses
   {$IFDEF MSWindows}Windows, ShellApi,{$ENDIF} // needed for ShellExecute, not good for WinCE, issue #36558
   Classes, SysUtils,
   // LazUtils
-  LazFileUtils, UTF8Process, LazUTF8, LazConfigStorage,
+  LazFileUtils, UTF8Process, LazStringUtils, LazConfigStorage, LazLoggerBase,
   // LCL
-  LCLProc, LCLIntf, LCLStrConsts, HelpIntfs, LazHelpIntf;
+  LCLIntf, LCLStrConsts, HelpIntfs, LazHelpIntf;
 
 type
   { THTMLHelpDatabase
@@ -193,7 +193,7 @@ begin
       if EffBaseURL<>'' then begin
         SplitURL(EffBaseURL,BaseURLType,BaseURLPath,BaseURLParams);
         if (BaseURLPath<>'') then
-          URLPath:=BaseURLPath+BaseURLParams+URLPath;
+          URLPath:=BaseURLPath+URLPath;
         URLType:=BaseURLType;
       end;
     end;
