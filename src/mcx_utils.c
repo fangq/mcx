@@ -1634,31 +1634,6 @@ void mcx_preprocess(Config* cfg) {
         }
     }
 
-    // for all point sources, precompute launch voxel index and media value and store those in srcparam2.z/.w internally
-    if (cfg->srctype <= MCX_SRC_CONE || cfg->srctype == MCX_SRC_ARCSINE || cfg->srctype == MCX_SRC_ZGAUSSIAN) {
-        if (cfg->srcpos.x < 0.f || cfg->srcpos.y < 0.f || cfg->srcpos.z < 0.f || cfg->srcpos.x >= cfg->dim.x || cfg->srcpos.y >= cfg->dim.y || cfg->srcpos.z >= cfg->dim.z) {
-            *((uint*)&cfg->srcparam2.z) = 0;
-            *((uint*)&cfg->srcparam2.w) = 0;
-        } else {
-            uint idx1dorig = ((int)(floorf(cfg->srcpos.z)) * (cfg->dim.y * cfg->dim.x) + (int)(floorf(cfg->srcpos.y)) * cfg->dim.x + (int)(floorf(cfg->srcpos.x)));
-            *((uint*)&cfg->srcparam2.z) = idx1dorig;
-            *((uint*)&cfg->srcparam2.w) = (cfg->vol[idx1dorig] & MED_MASK);
-        }
-
-        if (cfg->extrasrclen) {
-            for (int i = 0; i < cfg->extrasrclen; i++) {
-                if (cfg->srcdata[i].srcpos.x < 0.f || cfg->srcdata[i].srcpos.y < 0.f || cfg->srcdata[i].srcpos.z < 0.f || cfg->srcdata[i].srcpos.x >= cfg->dim.x || cfg->srcdata[i].srcpos.y >= cfg->dim.y || cfg->srcdata[i].srcpos.z >= cfg->dim.z) {
-                    *((uint*)&cfg->srcdata[i].srcparam2.z) = 0;
-                    *((uint*)&cfg->srcdata[i].srcparam2.w) = 0;
-                } else {
-                    uint idx1dorig = ((int)(floorf(cfg->srcdata[i].srcpos.z)) * (cfg->dim.y * cfg->dim.x) + (int)(floorf(cfg->srcdata[i].srcpos.y)) * cfg->dim.x + (int)(floorf(cfg->srcdata[i].srcpos.x)));
-                    *((uint*)&cfg->srcdata[i].srcparam2.z) = idx1dorig;
-                    *((uint*)&cfg->srcdata[i].srcparam2.w) = (cfg->vol[idx1dorig] & MED_MASK);
-                }
-            }
-        }
-    }
-
     if (cfg->vol) {
         unsigned int dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z;
 
@@ -1698,6 +1673,31 @@ void mcx_preprocess(Config* cfg) {
 
             memcpy(cfg->vol, newvol, (dimxyz << 3));
             free(newvol);
+        }
+    }
+
+    // for all point sources, precompute launch voxel index and media value and store those in srcparam2.z/.w internally
+    if (cfg->srctype <= MCX_SRC_CONE || cfg->srctype == MCX_SRC_ARCSINE || cfg->srctype == MCX_SRC_ZGAUSSIAN) {
+        if (cfg->srcpos.x < 0.f || cfg->srcpos.y < 0.f || cfg->srcpos.z < 0.f || cfg->srcpos.x >= cfg->dim.x || cfg->srcpos.y >= cfg->dim.y || cfg->srcpos.z >= cfg->dim.z) {
+            *((uint*)&cfg->srcparam2.z) = 0;
+            *((uint*)&cfg->srcparam2.w) = 0;
+        } else {
+            uint idx1dorig = ((int)(floorf(cfg->srcpos.z)) * (cfg->dim.y * cfg->dim.x) + (int)(floorf(cfg->srcpos.y)) * cfg->dim.x + (int)(floorf(cfg->srcpos.x)));
+            *((uint*)&cfg->srcparam2.z) = idx1dorig;
+            *((uint*)&cfg->srcparam2.w) = (cfg->vol[idx1dorig] & MED_MASK);
+        }
+
+        if (cfg->extrasrclen) {
+            for (int i = 0; i < cfg->extrasrclen; i++) {
+                if (cfg->srcdata[i].srcpos.x < 0.f || cfg->srcdata[i].srcpos.y < 0.f || cfg->srcdata[i].srcpos.z < 0.f || cfg->srcdata[i].srcpos.x >= cfg->dim.x || cfg->srcdata[i].srcpos.y >= cfg->dim.y || cfg->srcdata[i].srcpos.z >= cfg->dim.z) {
+                    *((uint*)&cfg->srcdata[i].srcparam2.z) = 0;
+                    *((uint*)&cfg->srcdata[i].srcparam2.w) = 0;
+                } else {
+                    uint idx1dorig = ((int)(floorf(cfg->srcdata[i].srcpos.z)) * (cfg->dim.y * cfg->dim.x) + (int)(floorf(cfg->srcdata[i].srcpos.y)) * cfg->dim.x + (int)(floorf(cfg->srcdata[i].srcpos.x)));
+                    *((uint*)&cfg->srcdata[i].srcparam2.z) = idx1dorig;
+                    *((uint*)&cfg->srcdata[i].srcparam2.w) = (cfg->vol[idx1dorig] & MED_MASK);
+                }
+            }
         }
     }
 
