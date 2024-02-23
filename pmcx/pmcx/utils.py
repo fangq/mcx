@@ -182,6 +182,8 @@ def dettpsf(detp, detnum, prop, time):
     output:
         tpsf: caculated temporal point spread function curve of the specified detector
     """
+    detp = detp.copy()
+
     # select the photon data of the specified detector
     detp["ppath"] = detp["ppath"][detp["detid"] == detnum, :]
     detp["detid"] = detp["detid"][detp["detid"] == detnum]
@@ -370,7 +372,9 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
             newdetp["detid"] = detp[0, :].astype(int).transpose()
             if np.any(newdetp["detid"] > 65535):
                 newdetp["srcid"] = np.right_shift(newdetp["detid"], 16, dtype=np.int32)
-                newdetp["detid"] = np.bitwise_and(newdetp["detid"], 0xff, dtype=np.int32)
+                newdetp["detid"] = np.bitwise_and(
+                    newdetp["detid"], 0xFF, dtype=np.int32
+                )
         c0 = 1
 
     length = medianum
