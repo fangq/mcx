@@ -373,7 +373,7 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
             if np.any(newdetp["detid"] > 65535):
                 newdetp["srcid"] = np.right_shift(newdetp["detid"], 16, dtype=np.int32)
                 newdetp["detid"] = np.bitwise_and(
-                    newdetp["detid"], 0xFF, dtype=np.int32
+                    newdetp["detid"], 0xFFFF, dtype=np.int32
                 )
         c0 = 1
 
