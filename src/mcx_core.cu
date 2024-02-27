@@ -2135,9 +2135,9 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             for (int i = 0; i < gcfg->srcnum; i++) {
                                 if (fabs(ppath[gcfg->w0offset + i]) > 0.f) {
 #ifdef USE_DOUBLE
-                                    atomicAdd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], weight * ppath[gcfg->w0offset + i]);
+                                    atomicAdd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], (gcfg->srcnum == 1 ? weight : weight * ppath[gcfg->w0offset + i]));
 #else
-                                    float oldval = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], weight * ppath[gcfg->w0offset + i]);
+                                    float oldval = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], (gcfg->srcnum == 1 ? weight : weight * ppath[gcfg->w0offset + i]));
 
                                     if (fabsf(oldval) > MAX_ACCUM && gcfg->outputtype != otRF) {
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
