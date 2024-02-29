@@ -57,7 +57,7 @@ jobs:
       - name: Build Wheels
         run: |
           cd pmcx/
-          pip install wheel
+          pip install wheel setuptools
           VERBOSE=1 pip wheel . -w ../dist/
           ls ../dist/
           cd ../
