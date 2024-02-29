@@ -57,6 +57,7 @@ jobs:
       - name: Build Wheels
         run: |
           cd pmcx/
+          python -m pip install --upgrade pip
           pip install wheel setuptools
           VERBOSE=1 pip wheel . -w ../dist/
           ls ../dist/
