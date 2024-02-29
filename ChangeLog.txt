@@ -2,8 +2,23 @@
 
 Major updates are marked with a "*"
 
-== MCX v2024.1 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
-
+== MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
+ 2024-02-27 [558dbab] [pmcx] bump pmcx to 0.2.12 after fixing critical bug #212
+ 2024-02-27 [8e03878]*[bug] critical: fix double-multiplication of pattern launched weight, fix #212
+ 2024-02-23 [61ae0b8] [bug] fix detid value #209
+ 2024-02-23 [90e2419] [bug] fix pmcx dettpsf overwrites input bug
+ 2024-02-21 [744fba2] [bug] update srcparam2 after volume preprocessing close #206
+ 2024-02-18 [dbb23be] [ci] test removing lazhelphtml.pas to avoid error on linux/macos runners
+ 2024-02-18 [4c88de2] [ci] test fix for lazarus 3.0 build error on macos action
+ 2024-02-18 [54f732e] [mcxcloud] support backup servers, support x/y/z slice view and time-gates
+ 2024-02-16 [8a8ff90] [ci] install libomp before downgrade xcode
+ 2024-02-16 [99ca38f] [ci] test libomp error on macos runners
+ 2024-02-13 [cb9b6c2] [doc] update openjdata to neurojson
+ 2024-02-04 [007ecce] [feat] accept 3-element srcparam1/srcparam2 in mcxlab/pmcx
+ 2024-01-23 [20b0aa2] [minor] debug addlog callback error
+ 2024-01-23 [f63f73b] [bug] fix chrome webpage error messages
+ 2024-01-11 [73fe834] [mcxcloud] add the missing flag to show optional json fields
+ 2024-01-01 [0eb1a48] [doc] update changelog
  2024-01-01 [4232764] [mcxlab] add speed comparison between different media formats
  2024-01-01 [3bca606] [minor] fix typo
  2024-01-01 [51003bc]*[format] automatic format all matlab script with miss_hit

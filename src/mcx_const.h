@@ -35,7 +35,7 @@
 #ifndef _MCEXTREME_CONSTANT_H
 #define _MCEXTREME_CONSTANT_H
 
-#define MCX_VERSION        "v2024.1"
+#define MCX_VERSION        "v2024.2"
 #define MCX_VERSION_MAJOR  2
 #define MCX_VERSION_MINOR  2
 

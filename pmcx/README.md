@@ -2,9 +2,9 @@
 
 # PMCX - Python bindings for Monte Carlo eXtreme photon transport simulator
 
-- Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2023) <q.fang at neu.edu>, Fan-Yu Yen (2023) <yen.f at northeastern.edu>
+- Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2024) <q.fang at neu.edu>, Fan-Yu Yen (2024) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
-- Version: 0.2.12
+- Version: 0.3.0
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 

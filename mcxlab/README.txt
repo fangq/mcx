@@ -2,7 +2,7 @@
 
 Author: Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
-Version: this package is part of Monte Carlo eXtreme (MCX) v2024.1
+Version: this package is part of Monte Carlo eXtreme (MCX) v2024.2
 
 <toc>
 

@@ -2,8 +2,45 @@
 
 Major updates are marked with a "*"
 
-== MCX v2024.1 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
+== MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
 
+ 2024-02-27 [558dbab] [pmcx] bump pmcx to 0.2.12 after fixing critical bug #212
+ 2024-02-27 [8e03878]*[bug] critical: fix double-multiplication of pattern launched weight, fix #212
+ 2024-02-23 [61ae0b8] [bug] fix detid value #209
+ 2024-02-23 [90e2419] [bug] fix pmcx dettpsf overwrites input bug
+ 2024-02-21 [744fba2] [bug] update srcparam2 after volume preprocessing close #206
+ 2024-02-18 [dbb23be] [ci] test removing lazhelphtml.pas to avoid error on linux/macos runners
+ 2024-02-18 [4c88de2] [ci] test fix for lazarus 3.0 build error on macos action
+ 2024-02-18 [54f732e] [mcxcloud] support backup servers, support x/y/z slice view and time-gates
+ 2024-02-16 [8a8ff90] [ci] install libomp before downgrade xcode
+ 2024-02-16 [99ca38f] [ci] test libomp error on macos runners
+ 2024-02-13 [cb9b6c2] [doc] update openjdata to neurojson
+ 2024-02-04 [007ecce] [feat] accept 3-element srcparam1/srcparam2 in mcxlab/pmcx
+ 2024-01-23 [20b0aa2] [minor] debug addlog callback error
+ 2024-01-23 [f63f73b] [bug] fix chrome webpage error messages
+ 2024-01-11 [73fe834] [mcxcloud] add the missing flag to show optional json fields
+ 2024-01-01 [0eb1a48] [doc] update changelog
+ 2024-01-01 [4232764] [mcxlab] add speed comparison between different media formats
+ 2024-01-01 [3bca606] [minor] fix typo
+ 2024-01-01 [51003bc]*[format] automatic format all matlab script with miss_hit
+ 2024-01-01 [9951dd8] [minor] update copyright year
+ 2024-01-01 [0f48b8f] [format] update source unit header info
+ 2024-01-01 [6707eaa] [bug] fix detp output bug after adding srcid, #163
+ 2024-01-01 [49b5cef] [ci] update lazarus on windows to avoid build crash
+ 2024-01-01 [9dc832d]*[feat] support --srcid to simulate all, one or separate sources, #163
+ 2023-12-31 [f5b4aaa] [minor] fix file name spelling
+ 2023-12-30 [7e1aec0]*[feat] simulate multiple sources, close #163
+ 2023-12-29 [59f18a7]*[feat] complete per-voxel mua/mus/g/n format support, close #203
+ 2023-12-29 [1e3b031] [feat] initial implementation of mua/mus/g/n all float format
+ 2023-12-29 [1100e36] [bug] fix mcx2json bug when exporting 4D vol, fix #200
+ 2023-12-17 [9831c7e] [debug] print jdata compression message inside matlab
+ 2023-11-27 [28e5101] [pmcx] bump pmcx version to 0.2.7
+ 2023-11-27 [fae5b72] [pmcx] typecast traj.id from float to uint32, fix #199
+ 2023-11-16 [4eec905] [mcxlab] add demo script comparing conv vs direct area src
+ 2023-11-10 [6771752] [ci] fix matlab mex error after mingw64 was removed, matlab-actions/setup-matlab#75
+ 2023-11-08 [f4aec48] [ci] test conda command to install octave on mac
+ 2023-11-08 [c976cbf] [ci] brew refuses to install octave, switch to conda
+ 2023-11-07 [325a522] [release] post v2023 release action
  2023-11-07 [a710ab3] allow converting integer cfg.vol to json
  2023-10-31 [d6c64e4] [test] fix rng test after make double
  2023-10-30 [08361eb] [pmcx] bump pmcx to v0.2.6 with dref fix #195
