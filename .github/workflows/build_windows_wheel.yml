@@ -56,7 +56,7 @@ jobs:
       - name: Build Wheels
         run: |
           cd pmcx/
-          pip install wheel
+          pip install wheel setuptools
           python setup.py bdist_wheel
           ls dist/
           mv dist/ ../
