@@ -3,6 +3,7 @@
 Major updates are marked with a "*"
 
 == MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
+
  2024-02-27 [558dbab] [pmcx] bump pmcx to 0.2.12 after fixing critical bug #212
  2024-02-27 [8e03878]*[bug] critical: fix double-multiplication of pattern launched weight, fix #212
  2024-02-23 [61ae0b8] [bug] fix detid value #209
