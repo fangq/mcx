@@ -49,7 +49,7 @@ from .utils import (
 # from .files import loadmc2, loadmch, load, save
 from .bench import bench
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = (
     "gpuinfo",

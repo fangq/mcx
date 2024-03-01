@@ -5339,7 +5339,7 @@ void mcx_printheader(Config* cfg) {
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
 #          Copyright (c) 2009-2024 Qianqian Fang <q.fang at neu.edu>          #\n\
-#" S_BLUE "                https://mcx.space/  &  https://neurojson.org/                " S_MAGENTA "#\n\
+#" S_BLUE "                https://mcx.space/  &  https://neurojson.io/                 " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #\n\
@@ -5347,8 +5347,10 @@ void mcx_printheader(Config* cfg) {
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\
 ###############################################################################\n\
 #  Open-source codes and reusable scientific data are essential for research, #\n\
-# MCX proudly developed human-readable JSON-based data formats for easy reuse,#\n\
-#  Please consider using JSON (" S_BLUE "https://neurojson.org/" S_MAGENTA ") for your research data #\n\
+# MCX proudly developed human-readable JSON-based data formats for easy reuse.#\n\
+#                                                                             #\n\
+#Please visit our free scientific data sharing portal at " S_BLUE "https://neurojson.io/" S_MAGENTA "#\n\
+# and consider sharing your public datasets in standardized JSON/JData format #\n\
 ###############################################################################\n\
 $Rev::      $" S_GREEN MCX_VERSION S_MAGENTA " $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
