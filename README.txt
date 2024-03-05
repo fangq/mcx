@@ -205,26 +205,38 @@ For MCX-CUDA, the requirements for using this software include
 * a CUDA capable NVIDIA graphics card
 * pre-installed NVIDIA graphics driver
 
-You must install a CUDA capable NVIDIA graphics card in order to use
-MCX. A list of CUDA capable cards can be found at [2]. The oldest 
-graphics card that MCX supports is the Fermi series (circa 2010).
+You must make sure that your NVIDIA graphics driver was installed properly.
+A list of CUDA capable cards can be found at [2]. The oldest 
+GPU architecture that MCX source code can be compiled is Fermi (`sm_20`).
 Using the latest NVIDIA card is expected to produce the best
-speed. You must have a fermi (GTX 4xx) or newer 
-(9xx/10xx/20xx/30xx/40xx series) graphics card. The default release 
-of MCX supports atomic operations and photon detection. 
+speed. The officially released binaries (including mex files and `pmcx` modules)
+can run on NVIDIA GPUs as old as Kepler (GTX-730, `sm_35`). All MCX binaries
+can run directly on future generations of NVIDIA GPUs without needing to
+be recompiled, therefore forward-compatible.
+
 In the below webpage, we summarized the speed differences
 between different generations of NVIDIA GPUs
 
 https://mcx.space/gpubench/
 
-For simulations with large volumes, sufficient graphics memory 
-is also required to perform the simulation. The minimum amount of 
-graphics memory required for a MC simulation is Nx*Ny*Nz
-bytes for the input tissue data plus Nx*Ny*Nz*Ng*4 bytes for 
-the output flux/fluence data - where Nx,Ny,Nz are the dimensions of the 
-tissue volume, Ng is the number of concurrent time gates, 4 is 
-the size of a single-precision floating-point number.
-MCX does not require double-precision capability in your hardware.
+For simulations with large volumes, sufficient graphics memory is also required 
+to perform the simulation. The minimum amount of graphics memory required for a 
+MC simulation is Nx*Ny*Nz bytes for the input tissue data plus 
+Nx*Ny*Nz*Ng*4*2 bytes for the output flux/fluence data - where Nx,Ny,Nz are 
+the dimensions of the tissue volume, Ng is the number of concurrent time gates, 
+4 is the size of a single-precision floating-point number, 2 is for the extra memory
+needed to ensure output accuracy (https://github.com/fangq/mcx/issues/41). MCX does not require 
+double-precision support in your hardware.
+
+MCX stores optical properties and detector positions in the constant memory.
+Usually, NVIDIA GPUs provides about 64 kB constant memory. As a result, we can only
+the total number of optical properties plus the number of detectors can not
+exceed 4000 (4000 * 4 * 4 = 64 k).
+
+In addition, MCX stores detected photon data inside the shared memory, which also ranges
+between 42 kB to 100 kB per stream processor across different GPU generations. 
+If your domain contains many medium types, it is possible that the allocation of
+the shared memory can exceed the limit. You will also receive an "out of memory" error.
 
 To install MCX, you need to download the binary executable compiled for your 
 computer architecture (32 or 64bit) and platform, extract the package 
@@ -259,6 +271,22 @@ https://forums.developer.nvidia.com/t/solved-run-cuda-on-dedicated-nvidia-gpu-wh
 or choose one of the 4 other approaches in this blog post
 
 https://nvidia.custhelp.com/app/answers/detail/a_id/3029/~/using-cuda-and-x
+
+We noticed that running Ubuntu Linux 22.04 with a 6.5 kernel on a laptop with 
+a hybrid GPU with an Intel iGPU and an NVIDIA GPU, you must configure the
+laptop to use the NVIDIA GPU as the primary GPU by choosing "NVIDIA (Performance Mode)"
+in the PRIME Profiles section of **NVIDIA X Server Settings**. You can also run 
+
+  sudo prime-select nvidia
+
+to achieve the same goal. Otherwise, the simulation may hang your system
+after running for a few seconds. A hybrid GPU laptop combing an NVIDIA GPU 
+with an AMD iGPU does not seem to have this issue if using Linux.
+
+New generations of Mac computers no longer support NVIDIA or AMD GPUs. you will
+have to use the OpenCL version of MCX, MCX-CL by downloading it from
+
+https://mcx.space/wiki/?Learn#mcxcl
 
 
 == # Running Simulations ==
