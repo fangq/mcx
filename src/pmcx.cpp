@@ -553,8 +553,8 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             arraydim[1] = buffer_info.shape.at(1);
         }
 
-        if (arraydim[0] == 0 || (arraydim[1] != 3 && arraydim[1] != 4)) {
-            throw py::value_error("the 'srcparam1' field must have 3-4 columns");
+        if (arraydim[0] == 0 || (arraydim[1] == 0 && arraydim[1] > 4)) {
+            throw py::value_error("the 'srcparam1' field must have 1-4 columns");
         }
 
         auto val = static_cast<float*>(buffer_info.ptr);
@@ -600,8 +600,8 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             arraydim[1] = buffer_info.shape.at(1);
         }
 
-        if (arraydim[0] == 0 || (arraydim[1] != 3 && arraydim[1] != 4)) {
-            throw py::value_error("the 'srcparam2' field must have 3-4 columns");
+        if (arraydim[0] == 0 || (arraydim[1] == 0 && arraydim[1] > 4)) {
+            throw py::value_error("the 'srcparam2' field must have 1-4 columns");
         }
 
         auto val = static_cast<float*>(buffer_info.ptr);
