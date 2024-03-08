@@ -239,6 +239,9 @@ fermioct:   LINKOPT+=--mex mcxlab.cpp $(INCLUDEDIRS)
 fermidebug: CUCCOPT+=-DMCX_DEBUG
 fermidebug: fermi
 
+register: fermi
+register: CUCCOPT+=-Xptxas -O3,-v
+
 all: fermi
 debug: debugxor
 mex: fermimex
