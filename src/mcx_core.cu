@@ -1468,18 +1468,18 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         sincosf(r, &sphi, &cphi);
                         r = sqrtf(2.f * rand_next_scatlen(t));
                         // gaussian broadening factor in direction perpendicular to both slit and v directions
-                        float gauss_perp = launchsrc->param2.x * r * cphi;
+                        cphi *= launchsrc->param2.x * r;
                         // gaussian broadening factor in direction of slit
-                        float gauss_parallel = launchsrc->param2.y * r * sphi;
-                        float parallel_norm = rnorm3df(launchsrc->param1.x, launchsrc->param1.y, launchsrc->param1.z);
-                        float3 perp = float3(launchsrc->param1.y * v->z - launchsrc->param1.z * v->y,
-                                             launchsrc->param1.z * v->x - launchsrc->param1.x * v->z,
-                                             launchsrc->param1.x * v->y - launchsrc->param1.y * v->x);
-                        float perp_norm = rnorm3df(perp.x, perp.y, perp.z);
-                        v->x += gauss_perp * perp.x * perp_norm + gauss_parallel * launchsrc->param1.x * parallel_norm;
-                        v->y += gauss_perp * perp.y * perp_norm + gauss_parallel * launchsrc->param1.y * parallel_norm;
-                        v->z += gauss_perp * perp.z * perp_norm + gauss_parallel * launchsrc->param1.z * parallel_norm;
-                        r = rnorm3df(v->x, v->y, v->z);
+                        sphi *= launchsrc->param2.y * r;
+                        sphi *= rnorm3df(launchsrc->param1.x, launchsrc->param1.y, launchsrc->param1.z);
+                        *rv = float3(launchsrc->param1.y * v->z - launchsrc->param1.z * v->y,
+                                     launchsrc->param1.z * v->x - launchsrc->param1.x * v->z,
+                                     launchsrc->param1.x * v->y - launchsrc->param1.y * v->x);
+                        r = rsqrt(rv->x * rv->x + rv->y * rv->y + rv->z * rv->z);
+                        v->x += cphi * rv->x * r + sphi * launchsrc->param1.x;
+                        v->y += cphi * rv->y * r + sphi * launchsrc->param1.y;
+                        v->z += cphi * rv->z * r + sphi * launchsrc->param1.z;
+                        r = rsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
                         v->x *= r;
                         v->y *= r;
                         v->z *= r;
