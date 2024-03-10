@@ -1402,7 +1402,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     r = sqrtf(0.5f * rand_next_scatlen(t)) * launchsrc->param1.x;
 
                     /** parameter to generate photon path from coordinates at focus (depends on focal distance and rayleigh range) */
-                    rv->x = -launchsrc->param1.y / launchsrc->param1.z;
+                    rv->x = __fdividef(-launchsrc->param1.y, launchsrc->param1.z);
                     rv->y = rsqrtf(r * r + launchsrc->param1.z * launchsrc->param1.z);
 
                     /** if beam direction is along +z or -z direction */
@@ -1460,34 +1460,32 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         r = TWO_PI * rand_uniform01(t); // phi
                         sincosf(r, &sphi, &cphi); // y=sin(phi), x=cos(phi)
                         rotatevector(v, 1.f, 0.f, sphi, cphi);
-                    }
-
-                    if (MCX_SRC_SLIT && (launchsrc->param2.x > 0.f || launchsrc->param2.y > 0.f)) {
+                    } else if (launchsrc->param2.x > 0.f || launchsrc->param2.y > 0.f) {
                         float sphi, cphi;
                         r = TWO_PI * rand_uniform01(t);
                         sincosf(r, &sphi, &cphi);
                         r = sqrtf(2.f * rand_next_scatlen(t));
-                        // gaussian broadening factor in direction perpendicular to both slit and v directions
+                        // gaussian broadening factor in the direction perpendicular to both slit and v directions
                         cphi *= launchsrc->param2.x * r;
-                        // gaussian broadening factor in direction of slit
+                        // gaussian broadening factor in the direction of the slit (srcparam1.x/y/z)
                         sphi *= launchsrc->param2.y * r;
-                        sphi *= rnorm3df(launchsrc->param1.x, launchsrc->param1.y, launchsrc->param1.z);
+                        sphi *= rsqrt(launchsrc->param1.x * launchsrc->param1.x + launchsrc->param1.y * launchsrc->param1.y + launchsrc->param1.z * launchsrc->param1.z);
                         *rv = float3(launchsrc->param1.y * v->z - launchsrc->param1.z * v->y,
                                      launchsrc->param1.z * v->x - launchsrc->param1.x * v->z,
                                      launchsrc->param1.x * v->y - launchsrc->param1.y * v->x);
-                        r = rsqrt(rv->x * rv->x + rv->y * rv->y + rv->z * rv->z);
-                        v->x += cphi * rv->x * r + sphi * launchsrc->param1.x;
-                        v->y += cphi * rv->y * r + sphi * launchsrc->param1.y;
-                        v->z += cphi * rv->z * r + sphi * launchsrc->param1.z;
+                        cphi *= rsqrt(rv->x * rv->x + rv->y * rv->y + rv->z * rv->z);
+                        v->x += cphi * rv->x + sphi * launchsrc->param1.x;
+                        v->y += cphi * rv->y + sphi * launchsrc->param1.y;
+                        v->z += cphi * rv->z + sphi * launchsrc->param1.z;
                         r = rsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
                         v->x *= r;
                         v->y *= r;
                         v->z *= r;
                     }
 
-                    *rv = float3(rv->x + (launchsrc->param1.x) * 0.5f,
-                                 rv->y + (launchsrc->param1.y) * 0.5f,
-                                 rv->z + (launchsrc->param1.z) * 0.5f);
+                    *rv = float3(launchsrc->pos.x + (launchsrc->param1.x) * 0.5f,
+                                 launchsrc->pos.y + (launchsrc->param1.y) * 0.5f,
+                                 launchsrc->pos.z + (launchsrc->param1.z) * 0.5f);
                     canfocus = (gcfg->srctype == MCX_SRC_SLIT);
                     break;
                 }

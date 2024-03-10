@@ -232,7 +232,10 @@ function varargout = mcxlab(varargin)
 %                               uniformly in the perpendicular direction
 %                      'slit' [*] - a colimated slit beam emitting from the line segment between
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial
-%                               dir specified by cfg.srcdir
+%                               dir specified by cfg.srcdir; when user defines positive values for srcparam2.x or .y,
+%                               the slit source is broadened in a Guassian profile controlled by
+%                               srcparam2.x: width of Gaussian broadening in the direction perpendicular to both slit and srcdir
+%                               srcparam2.y: width of Gaussian broadening in the direction of the slit line: cfg.srcparam(1:3)
 %                      'pencilarray' - a rectangular array of pencil beams. The srcparam1 and srcparam2
 %                               are defined similarly to 'fourier', except that srcparam1(4) and srcparam2(4)
 %                               are both integers, denoting the element counts in the x/y dimensions, respectively.

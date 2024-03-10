@@ -308,6 +308,30 @@ to achieve the same goal. Otherwise, the simulation may hang your system
 after running for a few seconds. A hybrid GPU laptop combing an NVIDIA GPU 
 with an AMD iGPU does not seem to have this issue if using Linux.
 
+In addition, NVIDIA drirver (520 or newer) has a known glitch running on Linux kernel
+6.x (such as those in Ubuntu 22.04). See
+
+https://forums.developer.nvidia.com/t/dev-nvidia-uvm-io-error-on-ubuntu-22-04-520-to-535-driver-versions/262153
+
+When the laptop is in the "performance" mode and wakes up from suspension, MCX or any
+CUDA program fails to run with an error
+
+
+```
+MCX ERROR(-999):unknown error in unit mcx_core.cu:2523
+```
+
+This is because the kernel module `nvida-uvm` fails to be reloaded after suspension.
+If you had an open MATLAB session, you must close MATLAB first, and
+run the below commands (if MATLAB is open, you will see `rmmod: ERROR: Module nvidia_uvm is in use`)
+
+```
+sudo rmmod /dev/nvidia-uvm
+sudo modprobe nvidia-uvm
+```
+
+after the above command, MCX should be run again.
+
 New generations of Mac computers no longer support NVIDIA or AMD GPUs. you will
 have to use the OpenCL version of MCX, MCX-CL by downloading it from
 
