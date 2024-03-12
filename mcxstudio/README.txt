@@ -5,7 +5,7 @@
 Author:  Qianqian Fang <q.fang at neu.edu>
 License: GNU General Public License version 3 (GPLv3)
 Version: 1.2 (v2024.2)
-Website: http://mcx.space
+Website: https://mcx.space
 
 ---------------------------------------------------------------------
 

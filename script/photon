@@ -128,7 +128,7 @@ sub printhelp{
     printf("=================================================================
 Photon - a unified command line interface for MCX/MMC/MCXCL
 author: Qianqian Fang <q.fang at neu.edu>
-web:    http://mcx.space
+web:    https://mcx.space
 =================================================================
 
 	Format: %s <option1> <option2> ...

@@ -80,11 +80,16 @@ It also includes a bug fix from fangq/mcx#195 regarding precision loss when
 saving diffuse reflectance.
 
 We want to thank Haohui Zhang for reporting a number of critical issues
-(fangq/mcx#195 and fangq/mcx#212). ShijieYan and fanyuyen have also contributed
+(fangq/mcx#195 and fangq/mcx#212), Liam Keegan for contributing a patch
+to extend the slit source (fangq/mcx#214). ShijieYan and fanyuyen have also contributed
 to the bug fixes and improvements.
 
 The detailed updates can be found in the below change log
 
+* 2024-03-08 [14ca45d] [feat] use 'make register' to report register counts in the Makefile
+* 2024-03-07 [411a007] [feat] add gaussian broadening to slit source (contributed by Liam Keegan, #214)
+* 2024-03-04 [1e6c403] [doc] update instructions on running mcx on hybrid GPU Linux laptops
+* 2024-03-04 [0344d84] [bug] fix cuda core count for Ada and Blackwell
 * 2024-02-27 [558dbab] [pmcx] bump pmcx to 0.2.12 after fixing critical bug #212
 * 2024-02-27 [8e03878] \*[bug] critical: fix double-multiplication of pattern launched weight, fix #212
 * 2024-02-23 [61ae0b8] [bug] fix detid value #209
