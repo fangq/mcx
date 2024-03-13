@@ -1049,17 +1049,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     MCXSrc* launchsrc = &(gcfg->src);
     ppath[gcfg->w0offset - 1] = 0.f;
 
-    if (gcfg->extrasrclen && gcfg->srcid != 1) {
-        if (gcfg->srcid > 1) {
-            launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((gcfg->srcid - 2) * 4));
-        } else { // gcfg->srcid = 0 or -1: simulate all sources; = 0 merge all solutions; = -1 separately store each source
-            ppath[gcfg->w0offset - 1] = (int)(rand_uniform01(t) * JUST_BELOW_ONE * (gcfg->extrasrclen + 1)) + 1; // borrow initial weight section of photon-sharing for storing launch src id
-
-            if ((int)ppath[gcfg->w0offset - 1] > 1) {
-                launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((int)(ppath[gcfg->w0offset - 1] - 2) * 4));
-            }
-        }
-    }
 
     /**
      * Early termination of simulation when the detphoton buffer is filled if issavedet is set to 3
@@ -1153,8 +1142,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         return 1; // all photos complete
     }
 
-    ppath += gcfg->partialdata;
-
     /**
      * If this is a replay of a detected photon, initilize the RNG with the stored seed here.
      */
@@ -1165,6 +1152,20 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
             t[i] = rngseed[seedoffset + i];
         }
     }
+
+    if (gcfg->extrasrclen && gcfg->srcid != 1) {
+        if (gcfg->srcid > 1) {
+            launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((gcfg->srcid - 2) * 4));
+        } else { // gcfg->srcid = 0 or -1: simulate all sources; = 0 merge all solutions; = -1 separately store each source
+            ppath[gcfg->w0offset - 1] = (int)(rand_uniform01(t) * JUST_BELOW_ONE * (gcfg->extrasrclen + 1)) + 1; // borrow initial weight section of photon-sharing for storing launch src id
+
+            if ((int)ppath[gcfg->w0offset - 1] > 1) {
+                launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((int)(ppath[gcfg->w0offset - 1] - 2) * 4));
+            }
+        }
+    }
+
+    ppath += gcfg->partialdata;
 
     /**
      * Attempt to launch a new photon until success
