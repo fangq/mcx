@@ -1153,6 +1153,10 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         }
     }
 
+    if (gcfg->issaveseed) {
+        copystate(t, photonseed);
+    }
+
     if (gcfg->extrasrclen && gcfg->srcid != 1) {
         if (gcfg->srcid > 1) {
             launchsrc = (MCXSrc*)(gproperty + gcfg->maxmedia + 1 + gcfg->detnum + ((gcfg->srcid - 2) * 4));
@@ -1176,10 +1180,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         *((float4*)f) = float4(0.f, 0.f, gcfg->minaccumtime, f->ndone);
         *idx1d = *((uint*)&launchsrc->param2.z);      /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
         *mediaid = *((uint*)&launchsrc->param2.w);    /**< pre-computed media index of the photon at launch for pencil/isotropic beams */
-
-        if (gcfg->issaveseed) {
-            copystate(t, photonseed);
-        }
 
         *rv = float3(launchsrc->pos.x, launchsrc->pos.y, launchsrc->pos.z); //< reuse as the origin of the src, needed for focusable sources
 
