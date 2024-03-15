@@ -1,26 +1,21 @@
 .\" Manpage for mcxcontest.
 .\" Contact fangqq@gmail.com to correct errors or typos.
-.TH man 7 "08 February 2020" "v2021.2" "mcxcontest man page"
+.TH man 7 "14 March 2024" "v2024.2" "mcxcontest man page"
 .SH NAME
 mcxcontest \- benchmark your NVIDIA GPU hardware using MCX built-in tests
 .SH SYNOPSIS
 mcxcontest <option1> <option2> ...
 .SH DESCRIPTION
-Monte Carlo eXtreme (mcx) is a CUDA-based GPU-accelerated 3D photon transport 
-simulator developed by Dr. Qianqian Fang at the Computational Optics and 
-Translational Imaging (COTI) Lab, at Northeastern University, Boston,
+Monte Carlo eXtreme (mcx) is a CUDA-based GPU-accelerated 3D photon transportsimulator developed by Dr. Qianqian Fang at the Computational Optics andTranslational Imaging (COTI) Lab, at Northeastern University, Boston,
 USA. More details regarding mcx can be found at http://mcx.space/
 
 The `mcxcontest` script benchmarks your NVIDIA GPU using 3 built-in tests
-in `mcx`, namely `cube60`, `cube60b` and `cube60planar`. By default, a total 
-of 10^8 photons will be simulated and the running speed, in photon/ms, for 
-each benchmark is reported. The final score of the GPU is the summation of
+in `mcx`, namely `cube60`, `cube60b` and `cube60planar`. By default, a totalof 10^8 photons will be simulated and the running speed, in photon/ms, foreach benchmark is reported. The final score of the GPU is the summation of
 the 3 speed readings. The higher the score, the faster the GPU hardware.
 
 This script is written in Perl. If utility `curl` is installed, it uses
 `curl` to submit the hardware score to our database, should a user choose to
-do so. If `curl` is not installed, mcxcontest requires `LWP::UserAgent` and 
-`LWP::Simple` Perl modules to submit the user data.
+do so. If `curl` is not installed, mcxcontest requires `LWP::UserAgent` and`LWP::Simple` Perl modules to submit the user data.
 
 
 .SH OPTIONS
@@ -44,9 +39,7 @@ Use `-c` to generate JSON formatted benchmark reports in the compact format.
 
 .TP
 \fB-o 'additional mcx parameters'\fR
-Using `-o`, one can attach additional command line parameters to overwrite the 
-default MCX benchmark parameters. Therefore, any standard parameters permitted by 
-MCX is allowed to be used with this command.
+Using `-o`, one can attach additional command line parameters to overwrite thedefault MCX benchmark parameters. Therefore, any standard parameters permitted byMCX is allowed to be used with this command.
 
 .TP
 \fB-L\fR
@@ -68,8 +61,7 @@ GPU database URL is http://mcx.space/gpubench/
 
 .TP
 \fB--post URL_to_post_results_to_database\fR
-Use `--post` to set the database submission URL to a different location; the 
-default MCX GPU database URL is http://mcx.space/gpubench/gpucontest.cgi
+Use `--post` to set the database submission URL to a different location; thedefault MCX GPU database URL is http://mcx.space/gpubench/gpucontest.cgi
 
 .TP
 \fB--help\fR

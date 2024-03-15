@@ -62,7 +62,13 @@ to the bug fixes and improvements.
 
 The detailed updates can be found in the below change log
 
-
+* 2024-03-13 [abdee14] [bug] fix multi-source replay bug, close #215
+* 2024-03-11 [9250a0d] [doc] make final doc update, bump pmcx to v0.3.2
+* 2024-03-10 [4e7f404] [ci] revert to windows-2019, add help info for #214, add note on nvidia-uvm
+* 2024-03-10 [2750d70] [ci] choco install is failing on Windows, see actions/runner-images#9477
+* 2024-03-10 [7b6e0e0] [optimize] cut hyperboloid gaussian register use from 15 to 3, #127,#214
+* 2024-03-10 [a2279d6] [optimize] reduce gaussian slit register use from 9 to 2, #214
+* 2024-03-08 [4708e10] [doc] Create pull_request_template.md
 * 2024-03-08 [14ca45d] [feat] use 'make register' to report register counts in the Makefile
 * 2024-03-07 [411a007] [feat] add gaussian broadening to slit source (contributed by Liam Keegan, #214)
 * 2024-03-04 [1e6c403] [doc] update instructions on running mcx on hybrid GPU Linux laptops
@@ -310,7 +316,7 @@ run the below commands (if MATLAB is open, you will see `rmmod: ERROR: Module nv
   sudo modprobe nvidia-uvm
 
 
-after the above command, MCX should be run again.
+after the above command, MCX should be able to run again.
 
 New generations of Mac computers no longer support NVIDIA or AMD GPUs. you will
 have to use the OpenCL version of MCX, MCX-CL by downloading it from
@@ -342,7 +348,7 @@ supported parameters, as shown below:
 #Please visit our free scientific data sharing portal at https://neurojson.io/#
 # and consider sharing your public datasets in standardized JSON/JData format #
 ###############################################################################
-$Rev::b7822a$v2024.2 $Date::Qianqian Fang          $ by $Author::Qianqian Fang$
+$Rev::d593a0$v2024.2 $Date::2024-03-04 00:04:10 -05$ by $Author::Qianqian Fang$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -351,7 +357,7 @@ where possible parameters include (the first value in [*|*] is the default)
 == Required option ==
  -f config     (--input)       read an input file in .json or .inp format
                                if the string starts with '{', it is parsed as
-			       an inline JSON input file
+                               an inline JSON input file
       or
  --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name
                                run --bench without parameter to get a list
@@ -364,21 +370,21 @@ where possible parameters include (the first value in [*|*] is the default)
  -b [1|0]      (--reflect)     1 to reflect photons at ext. boundary;0 to exit
  -B '______'   (--bc)          per-face boundary condition (BC), 6 letters for
     /case insensitive/         bounding box faces at -x,-y,-z,+x,+y,+z axes;
-			       overwrite -b if given. 
-			       each letter can be one of the following:
-			       '_': undefined, fallback to -b
-			       'r': like -b 1, Fresnel reflection BC
-			       'a': like -b 0, total absorption BC
-			       'm': mirror or total reflection BC
-			       'c': cyclic BC, enter from opposite face
+                               overwrite -b if given. 
+                               each letter can be one of the following:
+                               '_': undefined, fallback to -b
+                               'r': like -b 1, Fresnel reflection BC
+                               'a': like -b 0, total absorption BC
+                               'm': mirror or total reflection BC
+                               'c': cyclic BC, enter from opposite face
 
-			       if input contains additional 6 letters,
-			       the 7th-12th letters can be:
-			       '0': do not use this face to detect photon, or
-			       '1': use this face for photon detection (-d 1)
-			       the order of the faces for letters 7-12 is 
-			       the same as the first 6 letters
-			       eg: --bc ______010 saves photons exiting at y=0
+                               if input contains additional 6 letters,
+                               the 7th-12th letters can be:
+                               '0': do not use this face to detect photon, or
+                               '1': use this face for photon detection (-d 1)
+                               the order of the faces for letters 7-12 is 
+                               the same as the first 6 letters
+                               eg: --bc ______010 saves photons exiting at y=0
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
  -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate
@@ -389,8 +395,8 @@ where possible parameters include (the first value in [*|*] is the default)
  -k [1|0]      (--voidtime)    when src is outside, 1 enables timer inside void
  -Y [0|int]    (--replaydet)   replay only the detected photons from a given 
                                detector (det ID starts from 1), used with -E 
-			       if 0, replay all detectors and sum all Jacobians
-			       if -1, replay all detectors and save separately
+                               if 0, replay all detectors and sum all Jacobians
+                               if -1, replay all detectors and save separately
  -V [0|1]      (--specular)    1 source located in the background,0 inside mesh
  -e [0.|float] (--minenergy)   minimum energy level to trigger Russian roulette
  -g [1|int]    (--gategroup)   number of maximum time gates per run
@@ -411,41 +417,46 @@ where possible parameters include (the first value in [*|*] is the default)
 == Input options ==
  -P '{...}'    (--shapes)      a JSON string for additional shapes in the grid.
                                only the root object named 'Shapes' is parsed 
-			       and added to the existing domain defined via -f 
-			       or --bench
+                               and added to the existing domain defined via -f 
+                               or --bench
  -j '{...}'    (--json)        a JSON string for modifying all input settings.
                                this input can be used to modify all existing 
-			       settings defined by -f or --bench
+                               settings defined by -f or --bench
  -K [1|int|str](--mediabyte)   volume data format, use either a number or a str
        voxel binary data layouts are shown in {...}, where [] for byte,[i:]
        for 4-byte integer, [s:] for 2-byte short, [h:] for 2-byte half float,
        [f:] for 4-byte float; on Little-Endian systems, least-sig. bit on left
                                1 or byte: 0-128 tissue labels
-			       2 or short: 0-65535 (max to 4000) tissue labels
-			       4 or integer: integer tissue labels 
-			      97 or svmc: split-voxel MC 8-byte format
-			        {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}
-			      98 or mixlabel: label1+label2+label1_percentage
-			        {[label1][label2][s:0-65535 label1 percentage]}
-			      99 or labelplus: 32bit composite voxel format
-			        {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}
+                               2 or short: 0-65535 (max to 4000) tissue labels
+                               4 or integer: integer tissue labels 
+                              96 or asgn_float: mua/mus/g/n 4xfloat format
+                                {[f:mua][f:mus][f:g][f:n]}
+                              97 or svmc: split-voxel MC 8-byte format
+                                {[n.z][n.y][n.x][p.z][p.y][p.x][upper][lower]}
+                              98 or mixlabel: label1+label2+label1_percentage
+                                {[label1][label2][s:0-32767 label1 percentage]}
+                              99 or labelplus: 32bit composite voxel format
+                                {[h:mua/mus/g/n][s:(B15-16:0/1/2/3)(label)]}
                              100 or muamus_float: 2x 32bit floats for mua/mus
-			        {[f:mua][f:mus]}; g/n from medium type 1
+                                {[f:mua][f:mus]}; g/n from medium type 1
                              101 or mua_float: 1 float per voxel for mua
-			        {[f:mua]}; mus/g/n from medium type 1
-			     102 or muamus_half: 2x 16bit float for mua/mus
-			        {[h:mua][h:mus]}; g/n from medium type 1
-			     103 or asgn_byte: 4x byte gray-levels for mua/s/g/n
-			        {[mua][mus][g][n]}; 0-255 mixing prop types 1&2
-			     104 or muamus_short: 2x short gray-levels for mua/s
-			        {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2
+                                {[f:mua]}; mus/g/n from medium type 1
+                             102 or muamus_half: 2x 16bit float for mua/mus
+                                {[h:mua][h:mus]}; g/n from medium type 1
+                             103 or asgn_byte: 4x byte gray-levels for mua/s/g/n
+                                {[mua][mus][g][n]}; 0-255 mixing prop types 1&2
+                             104 or muamus_short: 2x short gray-levels for mua/s
+                                {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2
+       when formats 99 or 102 is used, the mua/mus values in the input volume
+       binary data must be pre-scaled by voxel size (unitinmm) if it is not 1.
+       pre-scaling is not needed when using these 2 formats in mcxlab/pmcx
  -a [0|1]      (--array)       1 for C array (row-major); 0 for Matlab array
 
 == Output options ==
  -s sessionid  (--session)     a string to label all output file names
  -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy deposit
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, 
-			       event counts at each voxel (replay mode only)
+                               event counts at each voxel (replay mode only)
                                M - momentum transfer; R - RF/FD Jacobian
                                L - total pathlength
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save
@@ -455,18 +466,18 @@ where possible parameters include (the first value in [*|*] is the default)
     /case insensitive/         1 D  output detector ID (1)
                                2 S  output partial scat. even counts (#media)
                                4 P  output partial path-lengths (#media)
-			       8 M  output momentum transfer (#media)
-			      16 X  output exit position (3)
-			      32 V  output exit direction (3)
-			      64 W  output initial weight (1)
+                               8 M  output momentum transfer (#media)
+                              16 X  output exit position (3)
+                              32 V  output exit direction (3)
+                              64 W  output initial weight (1)
       combine multiple items by using a string, or add selected numbers together
       by default, mcx only saves detector ID and partial-path data
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions
                                setting -x to 1 also implies setting '-d' to 1.
-			       same as adding 'XV' to -w.
+                               same as adding 'XV' to -w.
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels
                                right outside of the domain; if non-zero voxels
-			       appear at the boundary, pad 0s before using -X
+                               appear at the boundary, pad 0s before using -X
  -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.
                                same as adding 'M' to the -w flag
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save
@@ -480,35 +491,35 @@ where possible parameters include (the first value in [*|*] is the default)
                                nii - NIfTI format
                                hdr - Analyze 7.5 hdr/img format
                                tx3 - GL texture data for rendering (GL_RGBA32F)
-	the bnii/jnii formats support compression (-Z) and generate small files
-	load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
-	  MATLAB/Octave: JNIfTI toolbox   https://github.com/NeuroJSON/jnifti,
-	  MATLAB/Octave: JSONLab toolbox  https://github.com/NeuroJSON/jsonlab,
-	  Python:        PyJData:         https://pypi.org/project/jdata
-	  JavaScript:    JSData:          https://github.com/NeuroJSON/jsdata
+    the bnii/jnii formats support compression (-Z) and generate small files
+    load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
+      MATLAB/Octave: JNIfTI toolbox   https://github.com/NeuroJSON/jnifti,
+      MATLAB/Octave: JSONLab toolbox  https://github.com/NeuroJSON/jsonlab,
+      Python:        PyJData:         https://pypi.org/project/jdata
+      JavaScript:    JSData:          https://github.com/NeuroJSON/jsdata
  -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson
                                is used (when saving data to JSON/JNIfTI format)
-			       0 zlib: zip format (moderate compression,fast) 
-			       1 gzip: gzip format (compatible with *.gz)
-			       2 base64: base64 encoding with no compression
-			       3 lzip: lzip format (high compression,very slow)
-			       4 lzma: lzma format (high compression,very slow)
-			       5 lz4: LZ4 format (low compression,extrem. fast)
-			       6 lz4hc: LZ4HC format (moderate compression,fast)
+                               0 zlib: zip format (moderate compression,fast) 
+                               1 gzip: gzip format (compatible with *.gz)
+                               2 base64: base64 encoding with no compression
+                               3 lzip: lzip format (high compression,very slow)
+                               4 lzma: lzma format (high compression,very slow)
+                               5 lz4: LZ4 format (low compression,extrem. fast)
+                               6 lz4hc: LZ4HC format (moderate compression,fast)
  --dumpjson [-,0,1,'file.json']  export all settings, including volume data using
                                JSON/JData (https://neurojson.org) format for
-			       easy sharing; can be reused using -f
-			       if followed by nothing or '-', mcx will print
-			       the JSON to the console; write to a file if file
-			       name is specified; by default, prints settings
-			       after pre-processing; '--dumpjson 2' prints 
-			       raw inputs before pre-processing
+                               easy sharing; can be reused using -f
+                               if followed by nothing or '-', mcx will print
+                               the JSON to the console; write to a file if file
+                               name is specified; by default, prints settings
+                               after pre-processing; '--dumpjson 2' prints 
+                               raw inputs before pre-processing
 
 == User IO options ==
  -h            (--help)        print this message
  -v            (--version)     print MCX revision number
  -l            (--log)         print messages to a log file instead
- -i 	       (--interactive) interactive mode
+ -i            (--interactive) interactive mode
 
 == Debug options ==
  -D [0|int]    (--debug)       print debug information (you can use an integer
@@ -524,6 +535,8 @@ where possible parameters include (the first value in [*|*] is the default)
  --gscatter     [1e9|int]      after a photon completes the specified number of
                                scattering events, mcx then ignores anisotropy g
                                and only performs isotropic scattering for speed
+ --srcid  [0|-1,0,1,2,..]      -1 simulate multi-source separately;0 all sources
+                               together; a positive integer runs a single source
  --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
@@ -1106,7 +1119,7 @@ interact. MATLAB/Octave also provides convenient plotting and data analysis
 functions. With MCXLAB, your analysis can be streamlined and simplified without 
 involving disk files.
 
-Please read the mcxlab/README.txt file for more details on how to install and 
+Please read the `mcxlab/README.txt` file for more details on how to install and 
 use MCXLAB.
 
 Please also browse this interactive [https://colab.research.google.com/github/fangq/mcx/blob/master/mcxlab/tutorials/mcxlab_getting_started.ipynb Jupyter Notebook based MCXLAB tutorial]
@@ -1119,7 +1132,7 @@ PMCX is the native binary binding of MCX for Python 3.6 or newer. Similar to
 MCXLAB, PMCX can run GPU-based simulations inside Python environment with
 efficient in-memory inputs and outputs. 
 
-Please read the pmcx/README.txt file for more details on how to install and 
+Please read the `pmcx/README.txt` file for more details on how to install and 
 use PMCX.
 
 Please also browse this interactive [https://colab.research.google.com/github/fangq/mcx/blob/master/pmcx/tutorials/pmcx_getting_started.ipynb Jupyter Notebook based PMCX tutorial]

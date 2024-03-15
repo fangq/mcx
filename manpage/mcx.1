@@ -1,6 +1,6 @@
 .\" Manpage for mcx.
 .\" Contact fangqq@gmail.com to correct errors or typos.
-.TH man 7 "08 February 2020" "v2021.2" "Monte Carlo eXtreme (MCX) man page"
+.TH man 7 "14 March 2024" "v2024.2" "Monte Carlo eXtreme (MCX) man page"
 .SH NAME
 mcx \- a GPU-accelerated 3-D photon transport simulator
 .SH SYNOPSIS
@@ -16,20 +16,13 @@ implementation.
 
 The underying algorithm of this software can be found in
 
-Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, "Scalable 
-and massively parallel Monte Carlo photon transport simulations for 
-heterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).
+Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, "Scalableand massively parallel Monte Carlo photon transport simulations forheterogeneous computing platforms," J. Biomed. Opt. 23(1), 010504 (2018).
 URL: https://doi.org/10.1117/1.JBO.23.1.010504
 
-Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon Migration 
-in 3D Turbid Media Accelerated by Graphics Processing Units," Opt. Express, 
-vol. 17, issue 22, pp. 20178-20190 (2009). URL: 
-https://doi.org/10.1364/OE.17.020178
+Qianqian Fang and David Boas, "Monte Carlo Simulation of Photon Migrationin 3D Turbid Media Accelerated by Graphics Processing Units," Opt. Express,vol. 17, issue 22, pp. 20178-20190 (2009). URL:https://doi.org/10.1364/OE.17.020178
 
 Please see http://mcx.space and http://mcx.space/wiki for detailed
-documentation and examples. The MCX project is funded by the US 
-National Institute of Health (NIH)/National Institute of General Medical 
-Sciences (NIGMS) under grant R01-GM114365 (PI: Qianqian Fang). This software
+documentation and examples. The MCX project is funded by the USNational Institute of Health (NIH)/National Institute of General MedicalSciences (NIGMS) under grant R01-GM114365 (PI: Qianqian Fang). This software
 is written and maintained by Dr. Qianqian Fang (http://fanglab.org).
 
 .SH OPTIONS
@@ -40,30 +33,23 @@ settings.
 
 The accepted command line options include:
 .TP
-\fB=========== Required options =========== 
-.TP
+\fB=========== Required options ===========.TP
 \fB-f/--input  <A string>\fR
-Use -f to specify an input file.   
-    -f filename.json
+Use -f to specify an input file.    -f filename.json
 or
     -f filename.inp
 
-filename may contain absolute or relative path. If the filename has a '.json' 
-extension, this input file is in the JSON format. If the input file name ends 
-with '.inp', it is in the legacy format. If the file name contains space, one 
-must use quotation marks to quote the full file name. In Windows, the quotation 
-must be double quote (""). In Linux or Mac, either single or double quotation 
-mark works.
+filename may contain absolute or relative path. If the filename has a '.json'extension, this input file is in the JSON format. If the input file name endswith '.inp', it is in the legacy format. If the file name contains space, onemust use quotation marks to quote the full file name. In Windows, the quotationmust be double quote (""). In Linux or Mac, either single or double quotationmark works.
 
-If this flag is followed by an inline JSON string, such as -f '{...}', the 
-parameter is parsed as an "inline JSON input file".
+If this flag is followed by an inline JSON string, such as -f '{...}', theparameter is parsed as an "inline JSON input file".
 .TP
 \fB--bench  <A string>\fR
 .TP
-Use --bench to list all built-in benchmarks. As of MCX v2020, these benchmarks include
+Use --bench to list all built-in benchmarks. As of MCX v2024.2, these benchmarks include
      cube60
      cube60b
      cube60planar
+     cubesph60b
      skinvessel
      sphshell
      spherebox
@@ -71,55 +57,35 @@ Use --bench to list all built-in benchmarks. As of MCX v2020, these benchmarks i
 One can execute one of the built-in benchmarks by following the benchmark name, such as
     --bench skinvessel
 
-The default settings in each built-in benchmark can be overwritten by the additional 
-command line flags, such as --bench cube60 -n 1e8 runs 1e8 photons instead of the 
-default 1e6. Use --bench name --dumpjson to export the benchmark as a standalone JSON 
-input file.
+The default settings in each built-in benchmark can be overwritten by the additionalcommand line flags, such as --bench cube60 -n 1e8 runs 1e8 photons instead of thedefault 1e6. Use --bench name --dumpjson to export the benchmark as a standalone JSONinput file.
 
 .TP
-\fB=========== MC options =========== 
-
+\fB=========== MC options ===========
 .TP
 \fB-n/--photon  <An integer or floating point number>\fR
-This flag specifies the total number of photons to be simulated. The format is 
-    -n N 
-
-where N can be either an integer, such as 100000 or a floating point number, 
-such as 1e5. If N is a floating point number, it will be rounded to the largest 
-integer below the current value.
+This flag specifies the total number of photons to be simulated. The format is    -n N
+where N can be either an integer, such as 100000 or a floating point number,such as 1e5. If N is a floating point number, it will be rounded to the largestinteger below the current value.
 
 .TP
 \fB-r/--repeat  <A positive or negative integer>\fR
 Max Value the number can not exceed 2^32-1
-Use -r to repeat the simulation so that the total number of photon is 
-multiplied by the repetition count.
+Use -r to repeat the simulation so that the total number of photon ismultiplied by the repetition count.
     -r N
 
-where N is a positive integer. When use this option, mcx runs 'nphoton*N' 
-photons with nphoton per batch.
-If N is a negative integer, this option splits the total simulation into abs(N) 
-number of smaller batches; in each batch, only nphoton/abs(N) number of photons 
-are simulated.
-This option is useful when one does not have access to a dedicated GPU, i.e. 
-the GPU is used for both display and computation. In such case, the mcx 
-computation time is limited to only 5 to 10 seconds due to the graphics driver. 
-One can use the -r option to make the execution time per batch under the time 
-limit set by the driver.
+where N is a positive integer. When use this option, mcx runs 'nphoton*N'photons with nphoton per batch.
+If N is a negative integer, this option splits the total simulation into abs(N)number of smaller batches; in each batch, only nphoton/abs(N) number of photonsare simulated.
+This option is useful when one does not have access to a dedicated GPU, i.e.the GPU is used for both display and computation. In such case, the mcxcomputation time is limited to only 5 to 10 seconds due to the graphics driver.One can use the -r option to make the execution time per batch under the timelimit set by the driver.
 
 .TP
 \fB-b/--reflect  <0 or 1, if ignored, assumed to be 1>\fR
-Use -b to enable or disable reflections at the boundaries.   
-Use '-b' or '-b 1' to enable (default) or '-b 0' to disable
+Use -b to enable or disable reflections at the boundaries.Use '-b' or '-b 1' to enable (default) or '-b 0' to disable
 
-When enabled, mcx will either reflect or transmit the photon at the boundaries 
-based on the Fresnel's equation. 
-By default, mcx considers refractive index mismatch at the boundaries.
+When enabled, mcx will either reflect or transmit the photon at the boundariesbased on the Fresnel's equation.By default, mcx considers refractive index mismatch at the boundaries.
 
 .TP
 \fB-B/--bc  <a string up to 12 characters, default '______000000'> \fR
 
-The --bc option describes per-face boundary condition (BC). The first 6 letters 
-defines the boundary condition for bounding box faces at -x,-y,-z,+x,+y,+z axes; overwrite -b if given.
+The --bc option describes per-face boundary condition (BC). The first 6 lettersdefines the boundary condition for bounding box faces at -x,-y,-z,+x,+y,+z axes; overwrite -b if given.
 The first 6 letters can be one of the following:
     '_': undefined, fallback to -b
     'r': like -b 1, Fresnel reflection BC
@@ -135,191 +101,111 @@ the order of the faces for letters 7-12 is the same as the first 6 letters
 For example: --bc ______010 saves photons exiting at plane y=0
 .TP
 \fB-u/--unitinmm  <a floating point number>\fR
-Use -u to set the voxel size in mm.   
-    -u S 
-
-where S is a floating point number, denoting the edge length, in mm, of a voxel 
-in the volume. For example, if the volume used in the simulation is 0.1x0.1x0.1 
-mm^3, then, one should use '-u 0.1' in the command line. 
-Only isotrpic voxels are currently supported by mcx.
+Use -u to set the voxel size in mm.    -u S
+where S is a floating point number, denoting the edge length, in mm, of a voxelin the volume. For example, if the volume used in the simulation is 0.1x0.1x0.1mm^3, then, one should use '-u 0.1' in the command line.Only isotrpic voxels are currently supported by mcx.
 
 .TP
 \fB-U/--normalize  <0,1,2, if ignored, assumed to be 1>\fR
-Use -U to enable or disable solution normalization.   
-    '-U' or '-U 1' to 
-enable (default) or '-U 0' to disable
+Use -U to enable or disable solution normalization.    '-U' or '-U 1' toenable (default) or '-U 0' to disable
 
-For fluence, the normalization aims to generate a 'Green's function'. For other 
-qualities, the normalization produces a stable solution by removing the 
-dependency due to total photon numbers, voxel sizes, and time-gate settings. 
-The detailed equations are explained in the MCX paper.
+For fluence, the normalization aims to generate a 'Green's function'. For otherqualities, the normalization produces a stable solution by removing thedependency due to total photon numbers, voxel sizes, and time-gate settings.The detailed equations are explained in the MCX paper.
 
-If one sets -U 2, the normalization is only applied to the fluence in the 
-interior voxels, and does not apply to the diffuse reflectance (as negative 
-numbers in the raw output volume) along the air voxels right outside of the 
-non-zero voxels.
+If one sets -U 2, the normalization is only applied to the fluence in theinterior voxels, and does not apply to the diffuse reflectance (as negativenumbers in the raw output volume) along the air voxels right outside of thenon-zero voxels.
 
 .TP
 \fB-E/--seed  <An integer or a string>\fR
-Use -E to set the seed of the CPU random number generator (RNG). The CPU RNG in 
-turn initializes the seeds for each GPU thread.   
-    -E -1    // let MCX to automatically seed the CPU-RNG using system clock 
-    -E n     // n is a large positive integer, set the CPU-RNG's seed to n 
-    -E filename.mch // replay detected photons using the seeds saved in the mch 
-file 
-
-Setting a fixed RNG seed is expected to create reproducible results on NVIDIA 
-cards if the thread/block size are kept the same.
+Use -E to set the seed of the CPU random number generator (RNG). The CPU RNG inturn initializes the seeds for each GPU thread.    -E -1    // let MCX to automatically seed the CPU-RNG using system clock    -E n     // n is a large positive integer, set the CPU-RNG's seed to n    -E filename.mch // replay detected photons using the seeds saved in the mchfile
+Setting a fixed RNG seed is expected to create reproducible results on NVIDIAcards if the thread/block size are kept the same.
 
 .TP
 \fB-z/--srcfrom0  <0 or 1, if ignored, assumed to be 1>\fR
-Use -z to define the coordinate origin mode of the volume.   
-    -z 0 (default)// assumes the lower-bottom corner of the first voxel as [1 1 1]
-    -z or -z 1    // assumes the lower-bottom corner of the first voxel as [0 0 
-0]
+Use -z to define the coordinate origin mode of the volume.    -z 0 (default)// assumes the lower-bottom corner of the first voxel as [1 1 1]
+    -z or -z 1    // assumes the lower-bottom corner of the first voxel as [0 00]
 
-All source and detector positions are referenced from the origin, determined by 
-this flag.
+All source and detector positions are referenced from the origin, determined bythis flag.
 
 .TP
 \fB-R/--skipradius  <An integer>\fR
-Use -R to specify the scope within which to use atomic operations. The possible 
-options include 
-     -R -2  // this enables full atomic opertions in the entire volume 
-(default) 
-     -R n   // when n is a positive integer, mcx uses atomic operations in the 
-            // shared memory for a n x n x n sub-cubic domain centered at the 
-source.
-     -R 0   // disable all atomic operations, data racing may exist, 
-particularly 
-            // near the source. 
-     -R -1  //use crop0/crop1 to determine atomic zone
+Use -R to specify the scope within which to use atomic operations. The possibleoptions include     -R -2  // this enables full atomic opertions in the entire volume(default)     -R n   // when n is a positive integer, mcx uses atomic operations in the            // shared memory for a n x n x n sub-cubic domain centered at thesource.
+     -R 0   // disable all atomic operations, data racing may exist,particularly            // near the source.     -R -1  //use crop0/crop1 to determine atomic zone
 
-Using full atomic operations was very slow in very early CUDA devices, but for 
-most later NVIDIA GPUs, the use of atomic operations is as efficient as the 
-non-atomic version.
+Using full atomic operations was very slow in very early CUDA devices, but formost later NVIDIA GPUs, the use of atomic operations is as efficient as thenon-atomic version.
 
 .TP
 \fB-k/--voidtime  <0 or 1, if ignored, assumed to be 1>\fR
-Use the -k option to tell MCX whether to count the time-of-flight when a photon 
-is launched outside of the volume.   
-    -k 1 (default)  // the time-of-flight of the photon starts at the launch time 
-    -k 0            // the time-of-flight starts when a photon enters the first 
-non-zero voxel.
+Use the -k option to tell MCX whether to count the time-of-flight when a photonis launched outside of the volume.    -k 1 (default)  // the time-of-flight of the photon starts at the launch time    -k 0            // the time-of-flight starts when a photon enters the firstnon-zero voxel.
 
 
 .TP
 \fB-V/--specular  <0 or 1, if ignored, assumed to be 1>\fR
-Use -V flag to tell MCX whether to consider the specular reflection at the 
-initial entry of the photon to the domain (entry from a 0-voxel to a non-zero 
-voxel). By default, the initial specular reflection is considered (thus, photon 
-loses a small fraction of energy, but enters the domain). The reflected energy 
-is no longer modeled. Please be aware that the "absorption fraction" number 
-printed at the end of the mcx simulation session should include this energy 
-loss due to specular reflection.
-If one sets "-V 0", all launched photon energy preserves after enters the 
-domain.
+Use -V flag to tell MCX whether to consider the specular reflection at theinitial entry of the photon to the domain (entry from a 0-voxel to a non-zerovoxel). By default, the initial specular reflection is considered (thus, photonloses a small fraction of energy, but enters the domain). The reflected energyis no longer modeled. Please be aware that the "absorption fraction" numberprinted at the end of the mcx simulation session should include this energyloss due to specular reflection.
+If one sets "-V 0", all launched photon energy preserves after enters thedomain.
 
 .TP
 \fB-Y/--replaydet  <A positive integer>\fR
-Use the -Y option to specify the ID of the detector for the 'replay' 
-calculations.   
-    -Y n   // n is a positive integer, denoting the index of the detectors to be replayed 
-    -Y 0   // all detected photons will be replayed regardless of detector
+Use the -Y option to specify the ID of the detector for the 'replay'calculations.    -Y n   // n is a positive integer, denoting the index of the detectors to be replayed    -Y 0   // all detected photons will be replayed regardless of detector
 
-If -Y is not specified, MCX replays all detected photons; otherwise, MCX only 
-replays the detected photons from the specified detector. See -E for more 
-details.
+If -Y is not specified, MCX replays all detected photons; otherwise, MCX onlyreplays the detected photons from the specified detector. See -E for moredetails.
 
 .TP
 \fB-P/--shapes  <A JSON string>\fR
-Use the -P option to dynamically define heterogeneities from the command line. 
-The -P flag is followed by a JSON-formatted string. For example
-    -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}' 
-
-This defines a 3-layer medium: z slices 1-10 is filled with tissue label 1, z 
-slices 11-30 is filled with label 2, and 31-60 is filled with label 3. 
-The shape definition always starts an array object named 'Shapes'. Each element 
-in the 'Shapes' object defines a primitive object. The supported primitives 
-include 
-Name, Origin, Grid, Sphere, Box, Subgrid, {XYZ}Layers, {XYZ}Slabs, Cylinder, UpperSpace. 
-Most objects have a sub-field 'Tag', specifying the tissue label (index to the 
-property list). The details of the Shapes objects can be found in this link
+Use the -P option to dynamically define heterogeneities from the command line.The -P flag is followed by a JSON-formatted string. For example
+    -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
+This defines a 3-layer medium: z slices 1-10 is filled with tissue label 1, zslices 11-30 is filled with label 2, and 31-60 is filled with label 3.The shape definition always starts an array object named 'Shapes'. Each elementin the 'Shapes' object defines a primitive object. The supported primitivesincludeName, Origin, Grid, Sphere, Box, Subgrid, {XYZ}Layers, {XYZ}Slabs, Cylinder, UpperSpace.Most objects have a sub-field 'Tag', specifying the tissue label (index to theproperty list). The details of the Shapes objects can be found in this link
 
 .TP
 \fB-j / --json  <A JSON string>\fR
-Use the -j option to dynamically define simulation parameters to overwrite/modify 
-the default settings as specified in the .inp/.json file provided after the -f 
-flag. The -j flag is followed by a JSON-formatted string. The format of the JSON 
-construct is the same as in an MCX JSON input file. For example
+Use the -j option to dynamically define simulation parameters to overwrite/modifythe default settings as specified in the .inp/.json file provided after the -fflag. The -j flag is followed by a JSON-formatted string. The format of the JSONconstruct is the same as in an MCX JSON input file. For example
 
-    -j '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' 
+    -j '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}'
+This changes the source type, whatever it was defined in the input file, to"fourier" source, and sets the source parameter 1 to [40,0,0,2] while keepingeverything else unchanged.
 
-This changes the source type, whatever it was defined in the input file, to 
-"fourier" source, and sets the source parameter 1 to [40,0,0,2] while keeping 
-everything else unchanged.
-
-if -f, -j, -P and other parameters (such as -n, -S ...) all present in the 
-command line, the priorities are
+if -f, -j, -P and other parameters (such as -n, -S ...) all present in thecommand line, the priorities are
 
     all other command line flags > -j > -P > -f
 
-where the settings in -n/-S/-d/... overwrite the settings in -j, which also 
-overwrites the input file in -f
+where the settings in -n/-S/-d/... overwrite the settings in -j, which alsooverwrites the input file in -f
 
 .TP
 \fB-K / --mediabyte  <A number or a string>\fR
-This flag defines the volumetric input data format. Use either a number or a string 
-from below list
+This flag defines the volumetric input data format. Use either a number or a stringfrom below list
      1 or byte: 0-128 tissue labels
      2 or short: 0-65535 (max to 4000) tissue labels
      4 or integer: integer tissue labels
+     96 or asgn_float: mua/mus/g/n 4xfloat format
+     97 or svmc: split-voxel MC 8-byte format
+     98 or mixlabel: label1+label2+label1_percentage
+     99 or labelplus: 32bit composite voxel format
      100 or muamus_float: 2x 32bit floats for mua/mus
      101 or mua_float: 1 float per voxel for mua
      102 or muamus_half: 2x 16bit float for mua/mus
      103 or asgn_byte: 4x byte gray-levels for mua/s/g/n
      104 or muamus_short: 2x short gray-levels for mua/s
 
+when formats 99 or 102 is used, the mua/mus values in the input volume
+binary data must be pre-scaled by voxel size (unitinmm) if it is not 1.
+pre-scaling is not needed when using these 2 formats in mcxlab/pmcx
+
 .TP
 \fB-e/--minenergy  <A floating point number>\fR
-Use -e to set the min photon packet weight to trigger Russian Roulette.   
-    -e f    // where f is a floating point number between 0 and 1.
+Use -e to set the min photon packet weight to trigger Russian Roulette.    -e f    // where f is a floating point number between 0 and 1.
 
 .TP
 \fB-g/--gategroup  <A positive integer>\fR
-Use -g to split a simulation containing many time gates into smaller but 
-multiple sequential simulations.   
-    -g n    // n is a positive integer 
-
-Only use this option when the GPU global memory can not hold the data for all 
-required time gates, which only happens when one trys to simulate a very large 
-domain with very dense time gates (very rare). If one's GPU can only hold the 
-data for n time gates, while one has to simulate a total of N &gt; n time 
-gates, use -g n to split the total simulations into multiple runs: in the first 
-run, MCX will record the results for 1~n time gates, in the second run, MCX 
-will launch a new kernel to simulate photons for 1~2*n time gates, but only 
-records the photon fluence for n+1 ~ 2*n time gates and so on. As one can see, 
-this method introduces overhead in the later simulations. Therefore, it is 
-recommended to avoid.
+Use -g to split a simulation containing many time gates into smaller butmultiple sequential simulations.    -g n    // n is a positive integer
+Only use this option when the GPU global memory can not hold the data for allrequired time gates, which only happens when one trys to simulate a very largedomain with very dense time gates (very rare). If one's GPU can only hold thedata for n time gates, while one has to simulate a total of N &gt; n timegates, use -g n to split the total simulations into multiple runs: in the firstrun, MCX will record the results for 1~n time gates, in the second run, MCXwill launch a new kernel to simulate photons for 1~2*n time gates, but onlyrecords the photon fluence for n+1 ~ 2*n time gates and so on. As one can see,this method introduces overhead in the later simulations. Therefore, it isrecommended to avoid.
 
 .TP
 \fB-a/--array  <0 or 1, if ignored, assumed to be 1>\fR
-Use -a to tell mcx if the input volume data is a MATLAB-like data 
-(column-major) or a C-like data (row-major).Format 
-    -a 0 (default) // the input volume is a MATLAB-array 
-    -a 1           // the input volume is a C-array 
-
-If an MATLAB array is used, the fastest loop index is the left-most index of an 
-array; while for a C array, it is the right-most index.
+Use -a to tell mcx if the input volume data is a MATLAB-like data(column-major) or a C-like data (row-major).Format    -a 0 (default) // the input volume is a MATLAB-array    -a 1           // the input volume is a C-array
+If an MATLAB array is used, the fastest loop index is the left-most index of anarray; while for a C array, it is the right-most index.
 
 .TP
-\fB=========== MC options =========== 
-
+\fB=========== MC options ===========
 .TP
 \fB-L/--listgpu  <0 or 1, if ignored, assumed to be 1>\fR
-Use the -L flag to list all available GPUs on your system without running the 
-simulation. For example 
-    $mcx -L
+Use the -L flag to list all available GPUs on your system without running thesimulation. For example
+$mcx -L
     =========================   GPU Information  ============================
     Device 1 of 2:		GeForce GTX 980 Ti
     Compute Capability:	5.2
@@ -346,106 +232,55 @@ simulation. For example
 
 .TP
 \fB-t/--thread  <An integer>\fR
-Use -t to specify the number of threads.   
-    -t N 
-
-where N is a positive integer. The thread number N must be a multiple of 32 - 
-the size of a warp - on all CUDA devices. If N is not a multiple of 32, mcx 
-will round it to the nearest multiple less than N. 
- To achieve the best efficiency, it is recommended to launch a large number of 
-threads to mazimize the utility of the GPU resources; a thread number larger 
-than 10000 is generally sufficient. 
-
-You should not manually specify the thread number using this option when you 
-use the autopilot mode (-A).
+Use -t to specify the number of threads.    -t N
+where N is a positive integer. The thread number N must be a multiple of 32 -the size of a warp - on all CUDA devices. If N is not a multiple of 32, mcxwill round it to the nearest multiple less than N. To achieve the best efficiency, it is recommended to launch a large number ofthreads to mazimize the utility of the GPU resources; a thread number largerthan 10000 is generally sufficient.
+You should not manually specify the thread number using this option when youuse the autopilot mode (-A).
 
 .TP
 \fB-T/--blocksize  <An integer>\fR
-Use -T to specify the size of a block.   
-    -T N 
-
-where N is a positive integer. The block size N must be a multiple of 32 - the 
-size of a warp - on all CUDA devices. If N is not a multiple of 32, mcx will 
-round it to the nearest multiple less than N. 
- Because mcx does not need inter-thread communication, a small block size, such 
-as 32 or 64, is generally recommended. 
-
-You should not manually specify the block size using this option when you use 
-the autopilot mode (-A).
+Use -T to specify the size of a block.    -T N
+where N is a positive integer. The block size N must be a multiple of 32 - thesize of a warp - on all CUDA devices. If N is not a multiple of 32, mcx willround it to the nearest multiple less than N. Because mcx does not need inter-thread communication, a small block size, suchas 32 or 64, is generally recommended.
+You should not manually specify the block size using this option when you usethe autopilot mode (-A).
 
 .TP
 \fB-A/--autopilot  <0 or 1, if ignored, assumed to be 1>\fR
-Use -A to enable automatic thread/block configuration (i.e. autopilot).   
-    -A 1
+Use -A to enable automatic thread/block configuration (i.e. autopilot).    -A 1
 
-When the autopilot mode is enabled, mcx will compute the 'optimal' thread 
-number and block size using a heuristic algorithm.
+When the autopilot mode is enabled, mcx will compute the 'optimal' threadnumber and block size using a heuristic algorithm.
 
 .TP
 \fB-G/--gpu  <An integer or a string made of '0's and '1's>\fR
-Use -G to specify one or multiple GPUs to run the simulation. Format 
-    -G 1    // use only the first GPU device (device orders based on 'mcx -L' 
-output) 
-    -G n    // n is a positive integer, use only the n-th GPU device 
-    -G 1110 // when -G is followed by a string made of only 0s and 1s, it 
-specifies 
-            // a mask for active GPUs, for example, 1110 means to use GPU 1-3 
-            // together while the 4th GPU is not used. 
-
-When multiple GPU devices are specified, one need to use the -W/--workload flag 
-to optimally partition the total photons to be simulated. By default, photons 
-will be evenly distributed among multiple GPU devices.
+Use -G to specify one or multiple GPUs to run the simulation. Format    -G 1    // use only the first GPU device (device orders based on 'mcx -L'output)    -G n    // n is a positive integer, use only the n-th GPU device    -G 1110 // when -G is followed by a string made of only 0s and 1s, itspecifies            // a mask for active GPUs, for example, 1110 means to use GPU 1-3            // together while the 4th GPU is not used.
+When multiple GPU devices are specified, one need to use the -W/--workload flagto optimally partition the total photons to be simulated. By default, photonswill be evenly distributed among multiple GPU devices.
 
 .TP
-\fB-W/--workload  <A list of floating point/integer values, separated by 
-commas>\fR
-Use -W to partition the total simulated photon numbers between multiple 
-devices. Format 
-    -W w1,w2,w3,...  // w_i is a numerical value, corresponding to the relative 
-portions 
-                     // of the workload of the i-th GPU device. The total load 
-                     // is proportional to the sum of w_i.
+\fB-W/--workload  <A list of floating point/integer values, separated bycommas>\fR
+Use -W to partition the total simulated photon numbers between multipledevices. Format    -W w1,w2,w3,...  // w_i is a numerical value, corresponding to the relativeportions                     // of the workload of the i-th GPU device. The total load                     // is proportional to the sum of w_i.
 
-For example, -W 10,20,20 indicates a 1:2:2 workload split between 3 active 
-GPUs.If one needs to simulate 1e6 photons, the 1st GPU will run 2e5 photons, 
-while the 2nd and the 3rd GPUs will run 4e5 photons each.
+For example, -W 10,20,20 indicates a 1:2:2 workload split between 3 activeGPUs.If one needs to simulate 1e6 photons, the 1st GPU will run 2e5 photons,while the 2nd and the 3rd GPUs will run 4e5 photons each.
 
 .TP
 \fB-I/--printgpu  <0 or 1, if ignored, assumed to be 1>\fR
-The -I option lists all available GPU, same as -L, but it also run the actual 
-simulation.
+The -I option lists all available GPU, same as -L, but it also run the actualsimulation.
 
 .TP
-\fB=========== Output options =========== 
-
+\fB=========== Output options ===========
 .TP
 \fB-s/--session  <A string>\fR
-Use -s to specify a session ID for the simulation.   
-    -s session_name // session_name is a string, it can not contain &lt;&gt;:"/|?* 
-
-If -s is set, the output fluence file (.mc2), detected photon file (.mch) and 
-the log file (.log) will be named as session_name.{mc2,mch,log}. Otherwise, the 
-input file name following the -f option will be used in the place of 
-session_name.
+Use -s to specify a session ID for the simulation.    -s session_name // session_name is a string, it can not contain &lt;&gt;:"/|?*
+If -s is set, the output fluence file (.mc2), detected photon file (.mch) andthe log file (.log) will be named as session_name.{mc2,mch,log}. Otherwise, theinput file name following the -f option will be used in the place ofsession_name.
 
 .TP
 \fB-d/--savedet  <0 or 1, if ignored, assumed to be 1>\fR
-Use -d to enable or disable saving the detailed path data for all detected 
-photons.   
-    '-d' or '-d 1' to enable (default) or 
-    '-d 0' to disable
+Use -d to enable or disable saving the detailed path data for all detectedphotons.    '-d' or '-d 1' to enable (default) or    '-d 0' to disable
+    '-d 3' to terminate simulation when detected photon buffer is filled
 
-When this option is enabled, a binary file, with a suffix of .mch, will be 
-produced in additional to the '.mc2' output. The .mch file contains the partial 
-path data for all photons enters the aperatures of the detectors.
+When this option is enabled, a binary file, with a suffix of .mch, will beproduced in additional to the '.mc2' output. The .mch file contains the partialpath data for all photons enters the aperatures of the detectors.
 
 
 .TP
 \fB-w/--savedetflag <a string or number, if ignored, assumed to be 'dp'>\fR
-A case-insensitive string controlling the presence of each detected photon 
-data fields. The presence of a letter denotes that the corresponding detected 
-photon data is saved, otherwise, it is not saved. The below list shows all 
-supported data fields (the data columns of each field is shown in the parentheses)
+A case-insensitive string controlling the presence of each detected photondata fields. The presence of a letter denotes that the corresponding detectedphoton data is saved, otherwise, it is not saved. The below list shows allsupported data fields (the data columns of each field is shown in the parentheses)
 
      1 D output detector ID (1)
      2 S output partial scat. even counts (#media)
@@ -455,9 +290,7 @@ supported data fields (the data columns of each field is shown in the parenthese
      32 V output exit direction (3)
      64 W output initial weight (1)
 
-For example, -w dspmxvw asks mcx to save all supported field. If a domain 
-contains 2 tissue types (#media=2), this results in a 2D floating point array 
-made of 14 columns and #detected photon rows.
+For example, -w dspmxvw asks mcx to save all supported field. If a domaincontains 2 tissue types (#media=2), this results in a 2D floating point arraymade of 14 columns and #detected photon rows.
 
 .TP
 \fB-x/--saveexit  <0 or 1, if ignored, assumed to be 1>\fR
@@ -476,44 +309,26 @@ appear at the boundary, pad 0s before using -X
 
 .TP
 \fB-M/--dumpmask  <0 or 1, if ignored, assumed to be 1>\fR
-Use -M to dump the modified volume data for debugging purposes. The dumped 
-volume is saved in a binary file with Nx x Ny x Nz bytes, each byte contains 
-the tissue label as the input volume, and the highest bit of each byte denotes 
-whether the voxel is next to a detector.
+Use -M to dump the modified volume data for debugging purposes. The dumpedvolume is saved in a binary file with Nx x Ny x Nz bytes, each byte containsthe tissue label as the input volume, and the highest bit of each byte denoteswhether the voxel is next to a detector.
 
 .TP
 \fB-m/--momentum  <0 or 1, if ignored, assumed to be 1>\fR
-Use -m to save the momentum transfer for all detected photons. One can use this 
-output for diffuse correlation spectroscopy (DCS) simulations. This information 
-is stored in the .mch file. One can load the data using loadmch.m and process 
-the saved data using the mcxdcsg1.m script, both matlab scripts can be found 
-under mcx/utils.
+Use -m to save the momentum transfer for all detected photons. One can use thisoutput for diffuse correlation spectroscopy (DCS) simulations. This informationis stored in the .mch file. One can load the data using loadmch.m and processthe saved data using the mcxdcsg1.m script, both matlab scripts can be foundunder mcx/utils.
 
 .TP
 \fB-H/--maxdetphoton  <An integer>\fR
-Use -H to specify the maximum number of detected photons.   
-    -H n    // n 
-is a positive integer, signifying mcx to allocate a buffer to hold n detected 
-photons 
-
-By default, mcx can save up to 1e6 detected photons. If the detected photons 
-exceed this limit, mcx will show a warning. Users may use the -H option to 
-rerun the simulation and use the number in the warning to reallocate the buffer.
+Use -H to specify the maximum number of detected photons.    -H n    // nis a positive integer, signifying mcx to allocate a buffer to hold n detectedphotons
+By default, mcx can save up to 1e6 detected photons. If the detected photonsexceed this limit, mcx will show a warning. Users may use the -H option torerun the simulation and use the number in the warning to reallocate the buffer.
 
 .TP
 \fB-S/--save2pt  <0 or 1, if ignored, assumed to be 1>\fR
-Use -S to enable or disable saving volumetric fluence distributions (or the 
-requested output specified by the -X flag). 
-
+Use -S to enable or disable saving volumetric fluence distributions (or therequested output specified by the -X flag).
 .TP
 \fB-O/--outputtype  <A single character (case insensitive)>\fR
-Use -O to specify the type of data to be saved in the volumetric output. The 
-supported formats include
+Use -O to specify the type of data to be saved in the volumetric output. Thesupported formats include
  'X' - output time-resolved fluence rate (1/mm^2), i.e. TPSF
- 'F' - output time-resolved fluence rate integrated in each time-gate, 
- 'E' - energy deposit at each voxel (normalized or unnormalized, depends on -n)
- 'J' - Jacobian (replay mode),  
- 'P' - scattering event counts at each voxel (replay mode only)
+ 'F' - output time-resolved fluence rate integrated in each time-gate, 'E' - energy deposit at each voxel (normalized or unnormalized, depends on -n)
+ 'J' - Jacobian (replay mode), 'P' - scattering event counts at each voxel (replay mode only)
 
 
 .TP
@@ -521,17 +336,17 @@ supported formats include
 Use -F to specify the volumetric data output format:
     mc2 - MCX mc2 format (binary 32bit float) (default)
     nii - Nifti format (fluence after taking log10())
-    jnii - JNIfTI format (http://openjdata.org)
-    bnii - Binary JNIfTI (http://openjdata.org)
+    jnii - JNIfTI format (https://neurojson.org)
+    bnii - Binary JNIfTI (https://neurojson.org)
     hdr - Analyze 7.5 hdr/img format
     tx3 - GL texture data for rendering (GL_RGBA32F)
 
 the bnii/jnii formats support compression (-Z) and generate small files
 load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
-    MATLAB/Octave: JNIfTI toolbox https://github.com/fangq/jnifti,
+    MATLAB/Octave: JNIfTI toolbox https://github.com/NeuroJSON/jnifti,
     MATLAB/Octave: JSONLab toolbox https://github.com/fangq/jsonlab,
     Python: PyJData: https://pypi.org/project/jdata
-    JavaScript: JSData: https://github.com/fangq/jsdata
+    JavaScript: JSData: https://github.com/NeuroJSON/jsdata
 
 .TP
 \fB-Z/--zip  <A string, if ignored, assume to be 'zlib'>\fR
@@ -548,21 +363,16 @@ must be 0-6 or one of 'zlib', 'gzip','base64','lzip','lzma','lz4' or 'lz4hc', ca
 .TP
 \fB--dumpjson  <A file name or number, if ignored, assume to be '-'>\fR
 Must be a number (1-3), empty, '-' or a file name
-Export all settings,including volume data using JSON/JData (http://openjdata.org) 
-format for easy sharing; can be reused using -f
+Export all settings,including volume data using JSON/JData (https://neurojson.org)format for easy sharing; can be reused using -f
 
-if followed by nothing or '-', mcx will print the JSON to the console; 
-write to a file if file name is specified; 
-by default, prints settings after pre-processing; 
---dumpjson 2 prints raw inputs before pre-processing
+if followed by nothing or '-', mcx will print the JSON to the console;write to a file if file name is specified;by default, prints settings after pre-processing;--dumpjson 2 prints raw inputs before pre-processing
 --dumpjson 3 prints raw inputs after pre-processing
 
 .TP
-\fB=========== User IO options =========== 
-
+\fB=========== User IO options ===========
 .TP
 \fB-h/--help\fR
-Use the -h flag to print the built-in help of all supported command line flags
+se the -h flag to print the built-in help of all supported command line flags
 
 .TP
 \fB-v/--version\fR
@@ -571,41 +381,29 @@ Use the -v flag to print the version of MCX
 
 .TP
 \fB-l/--log  <0 or 1, if ignored, assumed to be 1>\fR
-Use the -l flag to save the MCX's command line output into a log file. Format 
-    '-l' or '-l 1' to enable (default) or 
-    '-l 0' to disable
+Use the -l flag to save the MCX's command line output into a log file. Format    '-l' or '-l 1' to enable (default) or    '-l 0' to disable
 
-The output file name is 'session_name.log' where 'session_name' is the string 
-specified by the -s flag. If -l is used, no message will be printed in the 
-command line.
+The output file name is 'session_name.log' where 'session_name' is the stringspecified by the -s flag. If -l is used, no message will be printed in thecommand line.
 
 .TP
 \fB-i/--interactive  <0 or 1, if ignored, assumed to be 1>\fR
-Use -i when one wants to type in the domain settings in an item-by-item prompt 
-mode. The -i option can not be used together with -f. When -i is used, one can 
-use the redirect operator to include an input file, i.e. 
-    mcx -i &lt; input.inp 
-    mcx -f input.inp 
-
+Use -i when one wants to type in the domain settings in an item-by-item promptmode. The -i option can not be used together with -f. When -i is used, one canuse the redirect operator to include an input file, i.e.    mcx -i &lt; input.inp    mcx -f input.inp
 can produce the same answer.
 
 .TP
-\fB=========== Debug options =========== 
-
+\fB=========== Debug options ===========
 .TP
 \fB-D/--debug  <An integer or a string>\fR
-Use -D to print debug information (you can use an integer or a string by 
-combining the following flags)
+Use -D to print debug information (you can use an integer or a string bycombining the following flags)
   1 R  debug RNG
-  2 M  store photon trajectory info (saved in a .mct file, can be loaded with 
-loadmch.m)
+  2 M  store photon trajectory info (saved in a .mct file, can be loaded withloadmch.m)
   4 P  print progress bar
+  8 T  save trajectory data only, disable flux/detp
 
 combine multiple items by using a string, or add selected numbers together
 
 .TP
-\fB=========== Additional options =========== 
-
+\fB=========== Additional options ===========
 .TP
 \fB--gscatter  <An integer>\fR
 after a photon completes the specified number of
@@ -615,8 +413,7 @@ and only performs isotropic scattering for speed
 .TP
 \fB--maxvoidstep  <An integer>\fR
 maximum distance (in voxel unit) of a photon that
-can travel before entering the domain, if 
-launched outside (i.e. a widefield source)
+can travel before entering the domain, iflaunched outside (i.e. a widefield source)
 
 .TP
 \fB--maxjumpdebug  <An integer>\fR
@@ -640,14 +437,14 @@ stored (default: 1e7)
 \fBRunning mcx using autopilot mode\fR
     mcx -A 1 -n 1e7 --bench cube60b -G 1 -D P
 
-\fBRunning mcx using manual mode\fR
-    mcx -t 16384 -T 64 -n 1e7 -f input.inp -s test -r 2 -g 10 -d 1 -w dpx -b 1 -G 1
-
 \fBUsing multiple devices (1st,2nd and 4th GPUs) with equal load\fR
     mcx -A -n 1e7 --bench cube60 -G 1101 -W 10,10,10
 
 \fBUsing JSON-based inline domain definition\fR
     mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
+
+\fBUsing inline JSON setting modifier\fR
+    mcx -f input.json -j '{"Optode":{"Source":{"Type":"isotropic"}}}'
 
 .SH SEE ALSO
 mmc(7), mcxcl(7)

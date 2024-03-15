@@ -4,6 +4,10 @@ Major updates are marked with a "*"
 
 == MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
 
+ 2024-03-13 [abdee14] [bug] fix multi-source replay bug, close #215
+ 2024-03-11 [9250a0d] [doc] make final doc update, bump pmcx to v0.3.2
+ 2024-03-10 [4e7f404] [ci] revert to windows-2019, add help info for #214, add note on nvidia-uvm
+ 2024-03-10 [2750d70] [ci] choco install is failing on Windows, see actions/runner-images#9477
  2024-03-10 [7b6e0e0] [optimize] cut hyperboloid gaussian register use from 15 to 3, #127,#214
  2024-03-10 [a2279d6] [optimize] reduce gaussian slit register use from 9 to 2, #214
  2024-03-08 [4708e10] [doc] Create pull_request_template.md
