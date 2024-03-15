@@ -3107,7 +3107,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->shapedata = cJSON_Print(Shapes);
             }
 
-            if (FIND_JSON_OBJ("_ArrayZipData_", "Volume._ArrayZipData_", Shapes)) {
+            if (FIND_JSON_OBJ("_ArraySize_", "Volume._ArraySize_", Shapes)) {
                 int ndim;
                 uint dims[4] = {1, 1, 1, 1};
                 char* type = NULL, *buf = NULL;
@@ -4358,12 +4358,16 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
     }
 
     if (vdata) {
+        size_t elemnum = 0;
+
         if (vsize) {
             cJSON* tmp = vsize->child;
             *ndim = cJSON_GetArraySize(vsize);
+            elemnum = 1;
 
             for (int i = 0; i < MIN(maxdim, *ndim); i++) {
                 dims[i] = tmp->valueint;
+                elemnum *= dims[i];
                 tmp = tmp->next;
             }
         }
@@ -4388,11 +4392,49 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
             }
 
             cfg->isrowmajor = 1;
+        } else if (cJSON_IsArray(vdata)) {
+            size_t arraylen = cJSON_GetArraySize(vdata);
+            int i;
+            cJSON* tmp = vdata->child;
+
+            if (!cJSON_IsNumber(tmp)) {
+                MCX_ERROR(-1, "JData array constructs are not supported");
+            }
+
+            if (*vol) {
+                free(*vol);
+            }
+
+            *vol = calloc(cfg->mediabyte == MEDIA_2LABEL_SPLIT ? 8 : cfg->mediabyte, elemnum);
+
+            if (cfg->mediabyte == 1) {
+                for (i = 0; i < arraylen; i++) {
+                    ((char*)(*vol))[i] = tmp->valueint;
+                    tmp = tmp->next;
+                }
+            } else if (cfg->mediabyte == 2) {
+                for (i = 0; i < arraylen; i++) {
+                    ((short*)(*vol))[i] = tmp->valueint;
+                    tmp = tmp->next;
+                }
+            } else if (cfg->mediabyte == 4) {
+                for (i = 0; i < arraylen; i++) {
+                    ((int*)(*vol))[i] = tmp->valueint;
+                    tmp = tmp->next;
+                }
+            } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+                for (i = 0; i < arraylen; i++) {
+                    ((int64_t*)(*vol))[i] = *((int64_t*)&tmp->valuedouble);
+                    tmp = tmp->next;
+                }
+            }
+
+            cfg->isrowmajor = 1;
         } else {
-            MCX_ERROR(-1, "Only compressed JData array constructs are supported");
+            MCX_ERROR(-1, "JData array constructs are not supported");
         }
     } else {
-        MCX_ERROR(-1, "No _ArrayZipData_ field is found");
+        MCX_ERROR(-1, "No _ArrayZipData_ or _ArrayData_ field is found");
     }
 
     return ret;
