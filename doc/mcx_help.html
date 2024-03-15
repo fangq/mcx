@@ -92,6 +92,7 @@ Use --bench to list all built-in benchmarks. As of MCX v2020, these benchmarks i
 <li> cube60
 <li> cube60b
 <li> cube60planar
+<li> cubesph60b
 <li> skinvessel
 <li> sphshell
 <li> spherebox
@@ -398,6 +399,10 @@ This flag defines the volumetric input data format. Use either a number or a str
 <li>   1 or <code>byte</code>: 0-128 tissue labels
 <li>   2 or <code>short</code>: 0-65535 (max to 4000) tissue labels
 <li>   4 or <code>integer</code>: integer tissue labels
+<li>  96 or <code>asgn_float</code>: mua/mus/g/n 4xfloat format
+<li>  97 or <code>svmc</code>: split-voxel MC 8-byte format
+<li>  98 or <code>mixlabel</code>: label1+label2+label1_percentage
+<li>  99 or <code>labelplus</code>: 32bit composite voxel format
 <li> 100 or <code>muamus_float</code>: 2x 32bit floats for mua/mus
 <li> 101 or <code>mua_float</code>: 1 float per voxel for mua
 <li> 102 or <code>muamus_half</code>: 2x 16bit float for mua/mus
@@ -641,6 +646,7 @@ Use -d to enable or disable saving the detailed path data for all detected photo
 <pre >
     '-d' or '-d 1' to enable (default) or 
     '-d 0' to disable
+    '-d 3' terminate simulation when detected
 </pre>
 <p>
 When this option is enabled, a binary file, with a suffix of <code>.mch</code>, will be produced in additional to the '.mc2' output. The <code>.mch</code> file contains the partial path data for all photons enters the apertures of the detectors.
@@ -804,10 +810,10 @@ Use -F to specify the volumetric data output format:
 the bnii/jnii formats support compression (-Z) and generate small files
 load jnii (JSON) and bnii (UBJSON) files using below lightweight libraries in MATLAB or Python:
 <ul class='wikiullevel1'>
-<li>  MATLAB/Octave: JNIfTI toolbox   <a href="https://github.com/fangq/jnifti">https://github.com/fangq/jnifti</a>
+<li>  MATLAB/Octave: JNIfTI toolbox   <a href="https://github.com/NeuroJSON/jnifti">https://github.com/NeuroJSON/jnifti</a>
 <li>  MATLAB/Octave: JSONLab toolbox  <a href="https://github.com/fangq/jsonlab">https://github.com/fangq/jsonlab</a>
 <li>  Python:        PyJData:         <a href="https://pypi.org/project/jdata">https://pypi.org/project/jdata</a>
-<li>  JavaScript:    JSData:          <a href="https://github.com/fangq/jsdata">https://github.com/fangq/jsdata</a>
+<li>  JavaScript:    JSData:          <a href="https://github.com/NeuroJSON/jsdata">https://github.com/NeuroJSON/jsdata</a>
 </ul>
 <p>
 <a name="zip"></a>
@@ -930,7 +936,8 @@ Use -D to print debug information (you can use an integer or a string by combini
 <pre >
   1 R  debug RNG
   2 M  store photon trajectory info (saved in a <code>.mct</code> file, can be loaded with <code>loadmch.m</code>)
-  4 P  print progress bar
+  4 P  print progress bar 
+  8 T  save trajectory data only, disable flux/detp
 </pre>
 <p>
 combine multiple items by using a string, or add selected numbers together
@@ -1002,7 +1009,7 @@ folder. The same file, qtest.json, is also shown below:
         "Domain::VolumeFile": "file full path to the volume description file, can be a binary or JSON file",
         "Domain::Dim": "dimension of the data array stored in the volume file",
         "Domain::OriginType": "similar to --srcfrom0, 1 if the origin is [0 0 0], 0 if it is [1.0,1.0,1.0]",
-	"Domain::LengthUnit": "define the voxel length in mm, similar to --unitinmm",
+	    "Domain::LengthUnit": "define the voxel length in mm, similar to --unitinmm",
         "Domain::Media": "the first medium is always assigned to voxels with a value of 0 or outside of
                          the volume, the second row is for medium type 1, and so on. mua and mus must 
                          be in 1/mm unit",
@@ -1021,38 +1028,38 @@ folder. The same file, qtest.json, is also shown below:
       }
     },
     "Domain": {
-	"VolumeFile": "semi60x60x60.bin",
+        "VolumeFile": "semi60x60x60.bin",
         "Dim":    [60,60,60],
         "OriginType": 1,
-	"LengthUnit": 1,
+        "LengthUnit": 1,
         "Media": [
              {"mua": 0.00, "mus": 0.0, "g": 1.00, "n": 1.0},
              {"mua": 0.005,"mus": 1.0, "g": 0.01, "n": 1.0}
         ]
     },
     "Session": {
-	"Photons":  1000000,
-	"RNGSeed":  29012392,
-	"ID":       "qtest"
+        "Photons":  1000000,
+        "RNGSeed":  29012392,
+        "ID":       "qtest"
     },
     "Forward": {
-	"T0": 0.0e+00,
-	"T1": 5.0e-09,
-	"Dt": 5.0e-09
+        "T0": 0.0e+00,
+        "T1": 5.0e-09,
+        "Dt": 5.0e-09
     },
     "Optode": {
-	"Source": {
-	    "Pos": [29.0, 29.0, 0.0],
-	    "Dir": [0.0, 0.0, 1.0],
-	    "Type": "pencil",
-	    "Param1": [0.0, 0.0, 0.0, 0.0],
-	    "Param2": [0.0, 0.0, 0.0, 0.0]
-	},
-	"Detector": [
-	    {
-		"Pos": [29.0,  19.0,  0.0],
-		"R": 1.0
-	    },
+        "Source": {
+            "Pos": [29.0, 29.0, 0.0],
+            "Dir": [0.0, 0.0, 1.0],
+            "Type": "pencil",
+            "Param1": [0.0, 0.0, 0.0, 0.0],
+            "Param2": [0.0, 0.0, 0.0, 0.0]
+        },
+        "Detector": [
+            {
+                "Pos": [29.0,  19.0,  0.0],
+                "R": 1.0
+            },
             {
                 "Pos": [29.0,  39.0,  0.0],
                 "R": 1.0
@@ -1065,7 +1072,7 @@ folder. The same file, qtest.json, is also shown below:
                 "Pos": [39.0,  29.0,  0.0],
                 "R": 1.0
             }
-	]
+        ]
     }
  }
 </pre>
