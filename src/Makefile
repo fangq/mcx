@@ -197,7 +197,7 @@ log posix xoro fermi:      LINKOPT+=$(CUOMPLINK) "$(OMP)"
 
 debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
 fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
-fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Interstellar Ion"'
+fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Jumbo Jolt"'
 xorfermi:   xor
 xorofermi:  xoro
 posixfermi: posix

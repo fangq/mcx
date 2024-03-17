@@ -2,6 +2,11 @@
 
 Major updates are marked with a "*"
 
+== MCX v2024.6.pre (Jumbo Jolt - 2.6), FangQ <q.fang (a) neu.edu> ==
+
+ 2024-03-17 [7902a4e] [mcxcloud] update docker image to v2024.2
+ 2024-03-15 [08bfe11] [feat] support _ArrayData_ in Shapes volume input
+
 == MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
 
  2024-03-13 [abdee14] [bug] fix multi-source replay bug, close #215

@@ -2,8 +2,28 @@
 
 Major updates are marked with a "*"
 
+== MCX v2024.6.pre (Jumbo Jolt - 2.6), FangQ <q.fang (a) neu.edu> ==
+
+ 2024-03-17 [7902a4e] [mcxcloud] update docker image to v2024.2
+ 2024-03-15 [08bfe11] [feat] support _ArrayData_ in Shapes volume input
+
 == MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
 
+ 2024-03-13 [abdee14] [bug] fix multi-source replay bug, close #215
+ 2024-03-11 [9250a0d] [doc] make final doc update, bump pmcx to v0.3.2
+ 2024-03-10 [4e7f404] [ci] revert to windows-2019, add help info for #214, add note on nvidia-uvm
+ 2024-03-10 [2750d70] [ci] choco install is failing on Windows, see actions/runner-images#9477
+ 2024-03-10 [7b6e0e0] [optimize] cut hyperboloid gaussian register use from 15 to 3, #127,#214
+ 2024-03-10 [a2279d6] [optimize] reduce gaussian slit register use from 9 to 2, #214
+ 2024-03-08 [4708e10] [doc] Create pull_request_template.md
+ 2024-03-08 [14ca45d] [feat] use 'make register' to report register counts in the Makefile
+ 2024-03-07 [3c7ac2a] [feat] allow users to type 1-3 numbers for srcparam1/srcparam2
+ 2024-03-07 [411a007] [feat] add gaussian broadening to slit source (contributed by Liam Keegan, #214)
+ 2024-03-04 [1e6c403] [doc] update instructions on running mcx on hybrid GPU Linux laptops
+ 2024-03-04 [0344d84] [bug] fix cuda core count for Ada and Blackwell
+ 2024-03-01 [4dd076e] [doc] update documentation for v2024.2
+ 2024-03-01 [875a357] [doc] update neurojson website url to https://neurojson.io
+ 2024-02-29 [c151e10] [ci] add setuptools for python 3.12 on macos
  2024-02-27 [558dbab] [pmcx] bump pmcx to 0.2.12 after fixing critical bug #212
  2024-02-27 [8e03878]*[bug] critical: fix double-multiplication of pattern launched weight, fix #212
  2024-02-23 [61ae0b8] [bug] fix detid value #209

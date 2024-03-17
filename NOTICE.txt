@@ -1,6 +1,6 @@
 =============================================================
              Monte Carlo eXtreme (MCX) Suite
-                    version 2024.2
+                    version 2024.6
 =============================================================
 
 Copyright (c) 2009-2024  Qianqian Fang <q.fang at neu.edu>
