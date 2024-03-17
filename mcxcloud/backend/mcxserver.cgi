@@ -132,14 +132,22 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
     # if you are building a private mcx cloud, please disable the below if-block 
     # by adding "&& false" in the condition
 
-    if(&V('json') =~/"Photons"/){
-       if($dbh->selectrow_array("select count(*) from mcxpub where hash = '".$md5key."'")==0){
-          checklimit(decode_json(&V('json')));
-       }
+#    if(&V('json') =~/"Photons"/){
+#       if($dbh->selectrow_array("select count(*) from mcxpub where hash = '".$md5key."'")==0){
+#          checklimit(decode_json(&V('json')));
+#       }
+#    }
+
+    $sth=$dbh->selectall_arrayref("select json from $dbname where hash='$md5key' and json <> '' limit 1;");
+
+    if(defined $sth->[0]){
+        $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,jobid,hash,status,priority,ip) values (?,?,?,?,?,?,?,?,?,?,?)");
+        $sth->execute($savetime,&V("fullname"),&V("inst"),&V("email"),&V("netname"),'',$jobid,$md5key,0,50,$ENV{"REMOTE_ADDR"});
+    } else {
+        $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,jobid,hash,status,priority,ip) values (?,?,?,?,?,?,?,?,?,?,?)");
+        $sth->execute($savetime,&V("fullname"),&V("inst"),&V("email"),&V("netname"),&V("json"),$jobid,$md5key,0,50,$ENV{"REMOTE_ADDR"});
     }
 
-    $sth=$dbh->prepare("insert into $dbname (time,name,inst,email,netname,json,jobid,hash,status,priority,ip) values (?,?,?,?,?,?,?,?,?,?,?)");
-    $sth->execute($savetime,&V("fullname"),&V("inst"),&V("email"),&V("netname"),&V("json"),$jobid,$md5key,0,50,$ENV{"REMOTE_ADDR"});
     $html =$callback.'({"status":"success","jobid":"'.$jobid.'","hash":"'.$md5key.'","dberror":"'.$DBI::errstr.'"})'."\n";
 
     # update library
@@ -202,7 +210,7 @@ if(&V("hash") ne '' && &V("id") ne ''){  # loading simulation JSON when one clic
           my %response=('status'=>$jobstatus{$status}, 'jobid'=>$jobid);
           $html =$callback.'('.JSON::PP->new->utf8->encode(\%response).")\n";
         }
-    }elsif(-e "$workspace/$jobid/done" && not -z "$workspace/$jobid/error.txt"){ # MCX encountered an error
+    }elsif(-e "$workspace/$jobid/done" && not -s "$workspace/$jobid/error.txt"){ # MCX encountered an error
         $status=6;
         open FF, "<$workspace/$jobid/error.txt" || die("can not open error file");
         chomp(my @lines = <FF>);

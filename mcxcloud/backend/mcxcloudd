@@ -51,8 +51,17 @@ $savetime=time();
 # delete all jobs running over 1 min, if --kill is attached
 
 if(grep(/--kill/,@ARGV)){
-    my @joblist=`docker service ls | grep 'fangqq/mcx:v20'| cut -f 1 -d" " | xargs docker service ps | grep 'Running [0-9a-z ]* minute' | cut -f 1,4 -d" "`;
+    my @alljobs=`docker service ls | grep 'fangqq/mcx:v20'| cut -f 1 -d" "`;
+    chomp @alljobs;
+
+    if(@alljobs==0){
+       exit;
+    }
+    my $jobid=join(" ", @alljobs);
+
+    my @joblist=`docker service ps $jobid | grep 'Running [0-9a-z ]* minute' | cut -f 1,4 -d" "`;
     chomp @joblist;
+
     if(@joblist>0){
         my @jobid;
         foreach my $job (@joblist){
@@ -123,6 +132,13 @@ if(defined $sth->[0]){
     my ($savetime,$jobid,$json,$jobhash)=@$rec;
     tprint("updating job $jobid");
 
+    if(length($json) < 3) {
+        my $jsonsth=$dbh->selectall_arrayref("select json from $dbname where hash='$jobhash' and json<>'' limit 1;");
+        if(defined $jsonsth->[0]){
+            ($json)=@{$jsonsth->[0]};
+        }
+    }
+
     if(-d "workspace/_${jobhash}" && not -d "workspace/$jobid"){
         tprint("cached job found $jobhash $jobid, skip");
         $status=10;
@@ -154,9 +170,9 @@ if(defined $sth->[0]){
     my $seedflag='';
     $seedflag=' --seed -1 ' if $jobid =~/_\d+$/;
     $dockercmd='docker service create --user "$(id -u):$(id -g)" --restart-condition=none --mount '
-               .'type=bind,src=/space/kwafoo/2/users/mcxone/workspace/'.$jobid.',dst=/data '
+               .'type=bind,src=/space/wazu/1/users/mcxone/workspace/'.$jobid.',dst=/data '
                .'--update-monitor 1s '
-               .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2020" '
+               .'--name '.$jobid.' --generic-resource "NVIDIA_GPU=1" "fangqq/mcx:v2024.2" '
                ."/bin/bash -c 'sleep 1; CUDA_VISIBLE_DEVICES=\$DOCKER_RESOURCE_NVIDIA_GPU mcx -f /data/input.json -s output -F jnii --log $seedflag &> /data/error.txt; touch /data/done' "
                .'> workspace/'.$jobid.'/docker.txt';
     system($dockercmd);

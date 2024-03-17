@@ -2472,7 +2472,9 @@ function jobstatus() {
       jsonpCallback: 'addlog',
       success: function( data ){},
       error: function(xhr,status,error) {
-          $("#run-log").val($("#run-log").val()+"\n"+"jobstatus error: "+status);
+          if(xhr.getResponseHeader("Content-Length") != null) {
+              $("#run-log").val($("#run-log").val()+"\n"+"jobstatus error: "+status);
+          }
       }
   });
 }
@@ -2888,6 +2890,9 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.Shapes,{});
        let vol=jd.decode().data;
+       if(cfg.Shapes.hasOwnProperty('_ArrayOrder_') && cfg.Shapes._ArrayOrder_.match(/^[cC]/)) {
+          vol.colmajor=1;
+       }
        lastvolume=drawvolume(vol);
        boundingbox.add( lastvolume );
      }
@@ -2912,6 +2917,9 @@ function drawpreview(cfg){
      if(isWebGL2Available()){
        let jd=new jdata(cfg.NIFTIData,{});
        let vol=jd.decode().data;
+       if(cfg.NIFTIData.hasOwnProperty('_ArrayOrder_') && cfg.NIFTIData._ArrayOrder_.match(/^[cC]/)) {
+          vol.colmajor=1;
+       }
        lastvolume=drawvolume(nj.log(nj.clip(vol, 1e-16, 1/0)) );
        boundingbox.add( lastvolume );
      }
