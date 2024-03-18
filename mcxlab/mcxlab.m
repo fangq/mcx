@@ -349,6 +349,7 @@ function varargout = mcxlab(varargin)
 %      detphoton: (optional) a struct array, with a length equals to that of cfg.
 %            Starting from v2018, the detphoton contains the below subfields:
 %              detphoton.detid: the ID(>0) of the detector that captures the photon
+%              detphoton.srcid: the ID(>0) of the source in a multi-source simulation
 %              detphoton.nscat: cummulative scattering event counts in each medium
 %              detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
 %                   one need to multiply cfg.unitinmm with ppath to convert it to mm.
@@ -370,7 +371,7 @@ function varargout = mcxlab(varargin)
 %               id:  1:    index of the photon packet
 %               pos: 2-4:  x/y/z/ of each trajectory position
 %                    5:    current photon packet weight
-%                    6:    reserved
+%             srcid: 6:    source ID (>0) of the photon
 %            By default, mcxlab only records the first 1e7 positions along all
 %            simulated photons; change cfg.maxjumpdebug to define a different limit.
 %
@@ -587,6 +588,7 @@ if (nargout >= 5 || (~isempty(cfg) && isstruct(cfg) && isfield(cfg, 'debuglevel'
         traj.id = typecast(data(1, :), 'uint32').';
         [traj.id, idx] = sort(traj.id);
         traj.pos = traj.pos(idx, :);
+        traj.srcid = int32(data(end, :)');
         traj.data = [single(traj.id)'; data(2:end, idx)];
         newtraj(i) = traj;
     end
