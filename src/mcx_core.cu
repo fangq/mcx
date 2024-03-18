@@ -1047,7 +1047,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     *w0 = 1.f;   //< reuse to count for launchattempt
     int canfocus = 1; //< non-zero: focusable, zero: not focusable
     MCXSrc* launchsrc = &(gcfg->src);
-    ppath[gcfg->w0offset - 1] = 0.f;
 
 
     /**
