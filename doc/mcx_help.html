@@ -949,13 +949,15 @@ combine multiple items by using a string, or add selected numbers together
 
 <dl class='wikiddllevel1'>
 <dt><strong>Format</strong><dd> An integer
-<dt><strong>Default value</strong><dd> -1
-<dt><strong>Restriction</strong><dd> 1e9
+<dt><strong>Default value</strong><dd> 1e9
+<dt><strong>Restriction</strong><dd> can not be negative
 <dt><strong>Description</strong><dd>
 </dl>
 after a photon completes the specified number of
 scattering events, mcx then ignores anisotropy g
-and only performs isotropic scattering for speed
+and only performs isotropic scattering using mus' = mus*(1-g)
+for speed. Setting gscatter to 0 to completely ignore
+g in all scatterign events (and use mus' instead of mus).
 <p>
 <p>
 <a name="maxvoidstep"></a>
