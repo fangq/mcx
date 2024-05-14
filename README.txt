@@ -493,10 +493,10 @@ where possible parameters include (the first value in [*|*] is the default)
                                tx3 - GL texture data for rendering (GL_RGBA32F)
     the bnii/jnii formats support compression (-Z) and generate small files
     load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
-      MATLAB/Octave: JNIfTI toolbox   https://github.com/NeuroJSON/jnifti,
-      MATLAB/Octave: JSONLab toolbox  https://github.com/NeuroJSON/jsonlab,
-      Python:        PyJData:         https://pypi.org/project/jdata
-      JavaScript:    JSData:          https://github.com/NeuroJSON/jsdata
+      MATLAB/Octave: JNIfTI toolbox   https://neurojson.org/download/jnifti
+      MATLAB/Octave: JSONLab toolbox  https://neurojson.org/download/jsonlab
+      Python:        PyJData:         https://neurojson.org/download/pyjdata
+      JavaScript:    JSData:          https://neurojson.org/download/jsdata
  -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson
                                is used (when saving data to JSON/JNIfTI format)
                                0 zlib: zip format (moderate compression,fast) 
@@ -950,11 +950,11 @@ the ND array with built-in compression, one should call JData compatible
 libraries, which can be found at https://neurojson.org/#software
 
 Specifically, to parse/save .jnii files in MATLAB, you should use
-* JSONLab for MATLAB (https://github.com/fangq/jsonlab) or install `octave-jsonlab` on Fedora/Debian/Ubuntu
-* `jsonencode/jsondecode` in MATLAB + `jdataencode/jdatadecode` from JSONLab (https://github.com/fangq/jsonlab)
+* JSONLab for MATLAB (https://neurojson.org/download/jsonlab) or install `octave-jsonlab` on Fedora/Debian/Ubuntu
+* `jsonencode/jsondecode` in MATLAB + `jdataencode/jdatadecode` from JSONLab (https://neurojson.org/download/jsonlab)
 
 To parse/save .jnii files in Python, you should use
-* PyJData module (https://pypi.org/project/jdata/) or install `python3-jdata` on Debian/Ubuntu
+* PyJData module (https://neurojson.org/download/pyjdata) or install `python3-jdata` on Debian/Ubuntu
 
 In Python, the volumetric data is loaded as a `dict` object where `data['NIFTIData']` 
 is a NumPy `ndarray` object storing the volumetric data.
@@ -977,11 +977,11 @@ the ND array with built-in compression, one should call JData compatible
 libraries, which can be found at https://neurojson.org/#software
 
 Specifically, to parse/save .jnii files in MATLAB, you should use one of
-* JSONLab for MATLAB (https://github.com/fangq/jsonlab) or install `octave-jsonlab` on Fedora/Debian/Ubuntu
-* `jsonencode/jsondecode` in MATLAB + `jdataencode/jdatadecode` from JSONLab (https://github.com/fangq/jsonlab)
+* JSONLab for MATLAB (https://neurojson.org/download/jsonlab) or install `octave-jsonlab` on Fedora/Debian/Ubuntu
+* `jsonencode/jsondecode` in MATLAB + `jdataencode/jdatadecode` from JSONLab (https://neurojson.org/download/jsonlab)
 
 To parse/save .jnii files in Python, you should use
-* PyJData module (https://pypi.org/project/jdata/) or install `python3-jdata` on Debian/Ubuntu
+* PyJData module (https://neurojson.org/download/pyjdata) or install `python3-jdata` on Debian/Ubuntu
 
 In Python, the volumetric data is loaded as a `dict` object where `data['NIFTIData']` 
 is a NumPy `ndarray` object storing the volumetric data.
@@ -1077,11 +1077,11 @@ Although .jdat and .jnii have different suffix, they are both JSON/JData files a
 can be opened/written by the same JData compatible libraries mentioned above, i.e.
 
 For MATLAB
-* JSONLab for MATLAB (https://github.com/fangq/jsonlab) or install `octave-jsonlab` on Fedora/Debian/Ubuntu
-* `jsonencode/jsondecode` in MATLAB + `jdataencode/jdatadecode` from JSONLab (https://github.com/fangq/jsonlab)
+* JSONLab for MATLAB (https://neurojson.org/download/jsonlab) or install `octave-jsonlab` on Fedora/Debian/Ubuntu
+* `jsonencode/jsondecode` in MATLAB + `jdataencode/jdatadecode` from JSONLab (https://neurojson.org/download/jsonlab)
 
 For Python
-* PyJData module (https://pypi.org/project/jdata/) or install `python3-jdata` on Debian/Ubuntu
+* PyJData module (https://neurojson.org/download/pyjdata) or install `python3-jdata` on Debian/Ubuntu
 
 In Python, the volumetric data is loaded as a `dict` object where `data['MCXData']['PhotonData']` 
 stores the photon data, `data['MCXData']['Trajectory']` stores the trajectory data etc.
@@ -1302,19 +1302,16 @@ MCX or MCXLAB prints a progress bar showing the percentage of completition.
 To maximize MCX's performance on your hardware, you should follow the
 best practices guide listed below:
 
-=== Use dedicated GPUs ===
-A dedicated GPU is a GPU that is not connected to a monitor. If you use
-a non-dedicated GPU, any kernel (GPU function) can not run more than a
-few seconds. This greatly limits the efficiency of MCX. To set up a 
-dedicated GPU, it is suggested to install two graphics cards on your 
-computer, one is set up for displays, the other one is used for GPU 
-computation only. If you have a dual-GPU card, you can also connect 
-one GPU to a single monitor, and use the other GPU for computation
-(selected by -G in mcx). If you have to use a non-dedicated GPU, you
-can either use the pure command-line mode (for Linux, you need to 
-stop X server), or use the "-r" flag to divide the total simulation 
-into a set of simulations with less photons, so that each simulation 
-only lasts a few seconds.
+=== Use a middle-range or enthusiastic-grade GPU, use multiple of them if possible ===
+MCX is highly scalable, providing linear-speedup as long as you provide the
+GPU cores it can use. As a result, the better the GPU you use, the higher the speed
+you can get. An enthusiastic-grade GPU, such as RTX 4070Ti (~$700), can be 12x
+faster than an low-end laptop RTX 4050 GPU even within the same generation.
+
+MCX can readily take advantage of multiple GPUs if you have it installed. The
+MCX simulation speed scales nearly linearly as the number of GPUs increases.
+So, to maximize MCX performance, get at least a middle-level or high-end consumer
+grade GPU; if you need more speed, throw in more GPUs will cut down the runtime.
 
 === Launch as many threads as possible ===
 It has been shown that MCX's speed is related to the thread number (-t).
@@ -1368,7 +1365,7 @@ the "optimal" thread number when you are not sure what to use.
 === ZMat data compression unit ===
 
 * Files: src/zmat/*
-* Copyright: 2019-2020 Qianqian Fang
+* Copyright: 2019-2023 Qianqian Fang
 * URL: https://github.com/fangq/zmat
 * License: GPL version 3 or later, https://github.com/fangq/zmat/blob/master/LICENSE.txt
 
@@ -1435,6 +1432,6 @@ Links:
 [1] http://developer.nvidia.com/cuda-downloads
 [2] http://www.nvidia.com/object/cuda_gpus.html
 [3] http://en.wikipedia.org/wiki/Row-major_order
-[4] http://iso2mesh.sourceforge.net/cgi-bin/index.cgi?jsonlab
+[4] https://neurojson.org/jsonlab
 [5] http://science.jrank.org/pages/60024/particle-fluence.html
 [6] http://www.opticsinfobase.org/oe/abstract.cfm?uri=oe-17-22-20178

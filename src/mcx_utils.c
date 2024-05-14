@@ -618,13 +618,13 @@ void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     ubjw_begin_object(root, UBJ_MIXED, 0);
     ubjw_write_key(root, "Python");
     ubjw_begin_array(root, UBJ_STRING, 2);
-    ubjw_write_string(root, "https://pypi.org/project/jdata");
-    ubjw_write_string(root, "https://pypi.org/project/bjdata");
+    ubjw_write_string(root, "https://neurojson.org/download/pyjdata");
+    ubjw_write_string(root, "https://neurojson.org/download/pybjdata");
     ubjw_end(root);
     ubjw_write_key(root, "MATLAB");
     ubjw_begin_array(root, UBJ_STRING, 2);
-    ubjw_write_string(root, "https://github.com/NeuroJSON/jnifty");
-    ubjw_write_string(root, "https://github.com/NeuroJSON/jsonlab");
+    ubjw_write_string(root, "https://neurojson.org/download/jnifty");
+    ubjw_write_string(root, "https://neurojson.org/download/jsonlab");
     ubjw_end(root);
     ubjw_write_key(root, "JavaScript");
     ubjw_begin_array(root, UBJ_STRING, 2);
@@ -757,8 +757,8 @@ void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     FILE* fp;
     char fname[MAX_FULL_PATH] = {'\0'};
     int affine[] = {0, 0, 1, 0, 0, 0};
-    const char* libpy[] = {"https://pypi.org/project/jdata", "https://pypi.org/project/bjdata"};
-    const char* libmat[] = {"https://github.com/NeuroJSON/jnifty", "https://github.com/NeuroJSON/jsonlab"};
+    const char* libpy[] = {"https://neurojson.org/download/pyjdata", "https://neurojson.org/download/pybjdata"};
+    const char* libmat[] = {"https://neurojson.org/download/jnifty", "https://neurojson.org/download/jsonlab"};
     const char* libjs[] = {"https://www.npmjs.com/package/jda", "https://www.npmjs.com/package/bjd"};
     const char* libc[]  = {"https://github.com/DaveGamble/cJSON", "https://github.com/NeuroJSON/ubj"};
 
@@ -5555,10 +5555,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                tx3 - GL texture data for rendering (GL_RGBA32F)\n\
     the bnii/jnii formats support compression (-Z) and generate small files\n\
     load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:\n\
-      MATLAB/Octave: JNIfTI toolbox   https://github.com/NeuroJSON/jnifti,\n\
-      MATLAB/Octave: JSONLab toolbox  https://github.com/NeuroJSON/jsonlab,\n\
-      Python:        PyJData:         https://pypi.org/project/jdata\n\
-      JavaScript:    JSData:          https://github.com/NeuroJSON/jsdata\n\
+      MATLAB/Octave: JNIfTI toolbox   https://neurojson.org/download/jnifty\n\
+      MATLAB/Octave: JSONLab toolbox  https://neurojson.org/download/jsonlab\n\
+      Python:        PyJData:         https://neurojson.org/download/pyjdata\n\
+      JavaScript:    JSData:          https://neurojson.org/download/jsdata\n\
  -Z [zlib|...] (--zip)         set compression method if -F jnii or --dumpjson\n\
                                is used (when saving data to JSON/JNIfTI format)\n\
                                0 zlib: zip format (moderate compression,fast) \n\
