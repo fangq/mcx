@@ -171,6 +171,7 @@ typedef struct  __align__(16) KernelParams {
     unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */
     unsigned int issaveref;            /**< flag if one need to save diffuse reflectance data in the 0-voxel layer next to the boundary */
     unsigned int isspecular;           /**< 0 do not perform specular reflection at launch, 1 do specular reflection */
+    unsigned int istrajstokes;         /**<1 to save Stoke's vector for trajectory data only */
     unsigned int seedoffset;           /**< offset of the seed, not used */
     int seed;                          /**< RNG seed passted from the host */
     unsigned int outputtype;           /**< Type of output to be accummulated */

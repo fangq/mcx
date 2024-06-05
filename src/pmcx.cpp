@@ -425,6 +425,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     GET_SCALAR_FIELD(user_cfg, mcx_config, issaveexit, py::bool_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, ismomentum, py::bool_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, isspecular, py::bool_);
+    GET_SCALAR_FIELD(user_cfg, mcx_config, istrajstokes, py::bool_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, replaydet, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, faststep, py::bool_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, maxvoidstep, py::int_);
@@ -1034,6 +1035,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
     int thread_id = 0;
     size_t field_dim[6];
     py::dict output;
+    unsigned int debuglen = 0;  /** number of float numbers per photon trajectory position */
 
     try {
         /*
@@ -1042,6 +1044,8 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         det_ps = nullptr;
 
         parse_config(user_cfg, mcx_config);
+
+        debuglen = MCX_DEBUG_REC_LEN + (mcx_config.istrajstokes << 2);
 
         /** The next step, we identify gpu number and query all GPU info */
         if (!(active_dev = mcx_list_gpu(&mcx_config, &gpu_info))) {
@@ -1094,7 +1098,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         }
 
         if (mcx_config.debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-            mcx_config.exportdebugdata = (float*) malloc(mcx_config.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
+            mcx_config.exportdebugdata = (float*) malloc(mcx_config.maxjumpdebug * sizeof(float) * debuglen);
         }
 
         /** Start multiple threads, one thread to run portion of the simulation on one CUDA GPU, all in parallel */
@@ -1131,7 +1135,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         field_dim[5] = 1;
 
         if (mcx_config.debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-            field_dim[0] = MCX_DEBUG_REC_LEN;
+            field_dim[0] = debuglen;
             field_dim[1] = mcx_config.debugdatalen; // his.savedphoton is for one repetition, should correct
             field_dim[2] = 0;
             field_dim[3] = 0;

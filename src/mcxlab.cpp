@@ -209,7 +209,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
      */
     for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
         try {
-            unsigned int partialdata, hostdetreclen;
+            unsigned int partialdata, hostdetreclen, debuglen;
             printf("Running simulations for configuration #%d ...\n", jstruct + 1);
 
             /** Initialize cfg with default values first */
@@ -237,8 +237,14 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             cfg.issavedet = (nlhs >= 2 && cfg.issavedet == 0) ? 1 : ((nlhs < 2) ? 0 : cfg.issavedet); /** save detected photon data to the 2nd output if present */
             cfg.issaveseed = (nlhs >= 4); /** save detected photon seeds to the 4th output if present */
 
+            if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
+                cfg.debuglevel |= MCX_DEBUG_MOVE;
+            }
+
             /** Validate all input fields, and warn incompatible inputs */
             mcx_validatecfg(&cfg, detps, dimdetps, seedbyte);
+
+            debuglen = MCX_DEBUG_REC_LEN + (cfg.istrajstokes << 2);
 
             partialdata = (cfg.medianum - 1) * (SAVE_NSCAT(cfg.savedetflag) + SAVE_PPATH(cfg.savedetflag) + SAVE_MOM(cfg.savedetflag));
             hostdetreclen = partialdata + SAVE_DETID(cfg.savedetflag) + 3 * (SAVE_PEXIT(cfg.savedetflag) + SAVE_VEXIT(cfg.savedetflag)) + SAVE_W0(cfg.savedetflag) + 4 * SAVE_IQUV(cfg.savedetflag);
@@ -281,7 +287,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             }
 
             if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
-                cfg.exportdebugdata = (float*)malloc(cfg.maxjumpdebug * sizeof(float) * MCX_DEBUG_REC_LEN);
+                cfg.exportdebugdata = (float*)malloc(cfg.maxjumpdebug * sizeof(float) * debuglen);
                 cfg.debuglevel |= MCX_DEBUG_MOVE;
             }
 
@@ -324,7 +330,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             /** if 5th output presents, output the photon trajectory data */
             if (nlhs >= 5 || (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY)) {
                 int outputidx = (cfg.debuglevel & MCX_DEBUG_MOVE_ONLY) ? 0 : 4;
-                fielddim[0] = MCX_DEBUG_REC_LEN;
+                fielddim[0] = debuglen;
                 fielddim[1] = cfg.debugdatalen; // his.savedphoton is for one repetition, should correct
                 fielddim[2] = 0;
                 fielddim[3] = 0;
@@ -567,6 +573,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     GET_ONE_FIELD(cfg, issaveexit)
     GET_ONE_FIELD(cfg, ismomentum)
     GET_ONE_FIELD(cfg, isspecular)
+    GET_ONE_FIELD(cfg, istrajstokes)
     GET_ONE_FIELD(cfg, replaydet)
     GET_ONE_FIELD(cfg, faststep)
     GET_ONE_FIELD(cfg, maxvoidstep)

@@ -220,6 +220,7 @@ typedef struct MCXConfig {
     char issaveexit;             /**<1 save the exit position and dir of a detected photon, 0 do not save*/
     char issaveref;              /**<1 save diffuse reflectance at the boundary voxels, 0 do not save*/
     char ismomentum;             /**<1 to save momentum transfer for detected photons, implies issavedet=1*/
+    char istrajstokes;           /**<1 to save Stokes vector for trajectory data only */
     char isdumpjson;             /**<1 to save json */
     char internalsrc;            /**<1 all photons launch positions are inside non-zero voxels, 0 let mcx search entry point*/
     int  zipid;                  /**<data zip method "zlib","gzip","base64","lzip","lzma","lz4","lz4hc"*/

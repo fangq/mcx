@@ -423,17 +423,40 @@ __device__ inline void savedetphoton(float n_det[], uint* detectedphoton, float*
  * @param[in] gdebugdata: pointer to the global-memory buffer to store the trajectory info
  */
 
-__device__ inline void savedebugdata(MCXpos* p, uint id, float* gdebugdata, int srcid) {
+__device__ inline uint savedebugdata(MCXpos* p, uint id, float* gdebugdata, int srcid) {
     uint pos = atomicAdd(gjumpdebug, 1);
 
     if (pos < gcfg->maxjumpdebug) {
-        pos *= MCX_DEBUG_REC_LEN;
+        pos *= MCX_DEBUG_REC_LEN + (gcfg->istrajstokes << 2);
         ((uint*)gdebugdata)[pos++] = id;
         gdebugdata[pos++] = p->x;
         gdebugdata[pos++] = p->y;
         gdebugdata[pos++] = p->z;
         gdebugdata[pos++] = p->w;
         gdebugdata[pos++] = srcid;
+        return pos;
+    }
+
+    return 0;
+}
+
+
+/**
+ * @brief Saving photon trajectory data for debugging purposes
+ * @param[in] p: the position/weight of the current photon packet
+ * @param[in] s: the Stokes vector for polarized light simulation
+ * @param[in] id: the global index of the photon
+ * @param[in] gdebugdata: pointer to the global-memory buffer to store the trajectory info
+ */
+
+__device__ inline void savedebugstokes(MCXpos* p, Stokes* s, uint id, float* gdebugdata, int srcid) {
+    uint pos = savedebugdata(p, id, gdebugdata, srcid);
+
+    if (pos > 0 && gcfg->istrajstokes) {
+        gdebugdata[pos++] = s->i;
+        gdebugdata[pos++] = s->q;
+        gdebugdata[pos++] = s->u;
+        gdebugdata[pos++] = s->v;
     }
 }
 
@@ -1066,7 +1089,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         ppath[gcfg->partialdata] += p->w; //< sum all the remaining energy
 
         if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-            savedebugdata(p, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+            if (ispolarized && gcfg->istrajstokes) {
+                savedebugstokes(p, s, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+            } else {
+                savedebugdata(p, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+            }
         }
 
         if (*mediaid == 0 && *idx1d != OUTSIDE_VOLUME_MIN && *idx1d != OUTSIDE_VOLUME_MAX && gcfg->issaveref) {
@@ -1596,7 +1623,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     updateproperty<islabel, issvmc>(prop, *mediaid, t, *idx1d, media, (float3*)p, nuvox, flipdir);
 
     if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-        savedebugdata(p, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[3]);
+        if (ispolarized && gcfg->istrajstokes) {
+            savedebugstokes(p, s, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[3]);
+        } else {
+            savedebugdata(p, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[3]);
+        }
     }
 
     /**
@@ -1967,7 +1998,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 }
 
                 if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
-                    savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                    if (ispolarized && gcfg->istrajstokes) {
+                        savedebugstokes(&p, &s, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                    } else {
+                        savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                    }
                 }
             }
 
@@ -2638,7 +2673,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     size_t photoncount = 0;
 
     unsigned int printnum;
-    unsigned int tic, tic0, tic1, toc = 0, debuglen = MCX_DEBUG_REC_LEN;
+    unsigned int tic, tic0, tic1, toc = 0, debuglen = MCX_DEBUG_REC_LEN + (cfg->istrajstokes << 2);
     size_t fieldlen;
     uint3 cp0 = cfg->crop0, cp1 = cfg->crop1;
     uint2 cachebox;
@@ -2732,7 +2767,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                       cp0, cp1, uint2(0, 0), cfg->minenergy, cfg->sradius* cfg->sradius, minstep* R_C0* cfg->unitinmm, cfg->srctype,
                       cfg->voidtime, cfg->maxdetphoton,
                       cfg->medianum - 1, cfg->detnum, cfg->polmedianum, cfg->maxgate, ABS(cfg->sradius + 2.f) < EPS /*isatomic*/,
-                      (uint)cfg->maxvoidstep, cfg->issaveseed > 0, (uint)cfg->issaveref, cfg->isspecular > 0,
+                      (uint)cfg->maxvoidstep, cfg->issaveseed > 0, (uint)cfg->issaveref, cfg->isspecular > 0, (uint)cfg->istrajstokes,
                       cfg->maxdetphoton * hostdetreclen, cfg->seed, (uint)cfg->outputtype, 0, 0, cfg->faststep,
                       cfg->debuglevel, cfg->savedetflag, hostdetreclen, partialdata, w0offset, cfg->mediabyte,
                       (uint)cfg->maxjumpdebug, cfg->gscatter, is2d, cfg->replaydet, cfg->srcnum,
@@ -3811,7 +3846,7 @@ is more than what your have specified (%d), please use the -H option to specify 
 #ifndef MCX_CONTAINER
 
         if ((cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) && cfg->parentid == mpStandalone && cfg->exportdebugdata) {
-            cfg->his.colcount = MCX_DEBUG_REC_LEN;
+            cfg->his.colcount = debuglen;
             cfg->his.savedphoton = cfg->debugdatalen;
             cfg->his.totalphoton = cfg->nphoton;
             cfg->his.detected = 0;
