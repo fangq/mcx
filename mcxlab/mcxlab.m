@@ -591,7 +591,7 @@ if (nargout >= 5 || (~isempty(cfg) && isstruct(cfg) && isfield(cfg, 'debuglevel'
         [traj.id, idx] = sort(traj.id);
         traj.pos = traj.pos(idx, :);
         traj.srcid = int32(data(6, :)');
-        if(size(data, 1) >= 10)
+        if (size(data, 1) >= 10)
             traj.iquv = data(7:10, :)';
         end
         traj.data = [single(traj.id)'; data(2:end, idx)];

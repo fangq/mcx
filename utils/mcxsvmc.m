@@ -153,7 +153,7 @@ bmask(bmask(:, 1) == bmask(:, 2), 2) = 0;
 %% computing total area and normal vector for each boundary voxel
 areas = elemvolume(iso.vertices, iso.faces);
 normals = surfacenorm(iso.vertices, iso.faces);
-if(isoctavemesh)
+if (isoctavemesh)
     normals = -normals;
 end
 centroids = meshcentroid(iso.vertices, iso.faces);
