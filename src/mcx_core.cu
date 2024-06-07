@@ -1085,7 +1085,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     /**
      * First, let's terminate the current photon and perform detection calculations
      */
-    if (fabsf(p->w) > 0.f) {
+    if (fabsf(p->w) >= 0.f) {
         ppath[gcfg->partialdata] += p->w; //< sum all the remaining energy
 
         if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
