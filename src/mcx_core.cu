@@ -1096,7 +1096,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
             }
         }
 
-        if (*mediaid == 0 && *idx1d != OUTSIDE_VOLUME_MIN && *idx1d != OUTSIDE_VOLUME_MAX && gcfg->issaveref) {
+        if (*mediaid == 0 && *idx1d != OUTSIDE_VOLUME_MIN && *idx1d != OUTSIDE_VOLUME_MAX && gcfg->issaveref && p->w > 0.f) {
             if (gcfg->issaveref == 1) {
                 int tshift = MIN(gcfg->maxgate - 1, (int)(floorf((f->t - gcfg->twin0) * gcfg->Rtstep)));
 
@@ -1154,12 +1154,18 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                                                    (nuvox->sv.isupper ? nuvox->sv.upper : nuvox->sv.lower) == 0)) && gcfg->issaveref < 2) {
                 savedetphoton(n_det, dpnum, ppath, p, v, s, photonseed, seeddata, isdet);
             }
-
-            clearpath(ppath, gcfg->partialdata);
         }
 
 #endif
     }
+
+#ifdef SAVE_DETECTORS
+
+    if (gcfg->savedet) {
+        clearpath(ppath, gcfg->partialdata);
+    }
+
+#endif
 
     /**
      * If the thread completes all assigned photons, terminate this thread.
