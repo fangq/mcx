@@ -74,7 +74,7 @@ temp=`"$MCX" --bench cube60 -b 0 -B aarraa -S 0 $PARAM | grep -o -E 'absorbed:.*
 if [ -z "$temp" ]; then echo "fail to use -B flag to set facet based boundary condition"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test cyclic boundary condition ... "
-temp=`"$MCX" --bench cube60 --bc 'cccccc' $PARAM -n 1e3 | grep -o -E 'absorbed:.*99\.[0-9]+%'`
+temp=`"$MCX" --bench cube60 --bc 'cccccc' $PARAM -n 1e3 -d 0 -S 0 | grep -o -E 'absorbed:.*99\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to apply the cylic boundary condition"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon detection ... "
@@ -109,13 +109,17 @@ echo "test 2d simulation ... "
 temp=`"$MCX" --bench cube60b --json '{"Shapes":[{"Grid":{"Tag":1,"Size":[1,100,100]}},{"Box":{"Tag":2,"O":[0,30,10],"Size":[1,40,40]}}],"Domain":{"Media":[[0,0,1,1],[0.02,0.1,0.9,1.37],[0.02,10,0.9,6.85]]},"Optode":{"Source":{"Pos":[0,50,0],"Dir":[0,0,1]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*6[0-9]\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run 2d simulation"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test unitinmm ... "
+temp=`"$MCX" --bench skinvessel -S 0 -n 1e5 $PARAM | grep -o -E 'absorbed:.*39\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run skinvessel benchmark"; fail=$((fail+1)); else echo "ok"; fi
+
 echo "test saving photon seeds ... "
 temp=`"$MCX" --bench cube60 -q 1 -F jnii -S 0 $PARAM | grep -o -E 'after encoding: 13[0-9]\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to save photon seeds"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon replay flag -E ... "
 rm -rf replaytest.*
-temp=`("$MCX" --bench cube60 -s replaytest -q 1 -S 0 $PARAM && "$MCX" --bench cube60 -E replaytest_detp.jdat -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E 'detected\s+[0-9]+ photons' | sort | uniq -c | grep '^\s*2\s*detected'`
+temp=`("$MCX" --bench cube60 -s replaytest -q 1 -S 0 $PARAM && "$MCX" --bench cube60 -E replaytest_detp.jdat -S 0 $PARAM) | sed 's/\x1b\[[0-9;]*m//g' | grep -o -E '(simulated|detected)\s+[0-9.]+ photons' | tail -2 | sed -e 's/^[a-z ]*//g' | sort | uniq -c | grep '^\s*2\s*\d*'`
 if [ -z "$temp" ]; then echo "fail to run photon replay -E"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test photon replay ... "
