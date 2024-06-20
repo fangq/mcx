@@ -3187,8 +3187,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /**
      * Copy all host buffers to the GPU
      */
-    MCX_FPRINTF(cfg->flog, "\nGPU=%d (%s) threadph=%d extra=%d np=%ld nthread=%d maxgate=%d repetition=%d\n", gpuid + 1, gpu[gpuid].name, param.threadphoton, param.oddphotons,
-                gpuphoton, gpu[gpuid].autothread, gpu[gpuid].maxgate, ABS(cfg->respin));
+    MCX_FPRINTF(cfg->flog, "\nGPU=%d (%s) threadph=%d extra=%d np=%.0f nthread=%d maxgate=%d repetition=%d\n", gpuid + 1, gpu[gpuid].name, param.threadphoton, param.oddphotons,
+                (double)gpuphoton, gpu[gpuid].autothread, gpu[gpuid].maxgate, ABS(cfg->respin));
     MCX_FPRINTF(cfg->flog, "initializing streams ...\t");
     fflush(cfg->flog);
 
@@ -3535,7 +3535,7 @@ are more than what your have specified (%d), please use the --maxjumpdebug optio
 is more than what your have specified (%d), please use the -H option to specify a greater number\t" S_RESET
                                 , detected, cfg->maxdetphoton);
                 } else {
-                    MCX_FPRINTF(cfg->flog, "detected " S_BOLD "" S_BLUE "%d photons" S_RESET", total: " S_BOLD "" S_BLUE "%ld" S_RESET"\t", detected, cfg->detectedcount + detected);
+                    MCX_FPRINTF(cfg->flog, "detected " S_BOLD "" S_BLUE "%d photons" S_RESET", total: " S_BOLD "" S_BLUE "%.0f" S_RESET"\t", detected, (double)cfg->detectedcount + detected);
                 }
 
                 /**
@@ -3890,8 +3890,8 @@ is more than what your have specified (%d), please use the -H option to specify 
         /**
          * Report simulation summary, total energy here equals total simulated photons+unfinished photons for all threads
          */
-        MCX_FPRINTF(cfg->flog, "simulated %ld photons (%ld) with %d threads (repeat x%d)\nMCX simulation speed: " S_BOLD "" S_BLUE "%.2f photon/ms\n" S_RESET,
-                    (long int)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1), (long int)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1),
+        MCX_FPRINTF(cfg->flog, "simulated %.0f photons (%.0f) with %d threads (repeat x%d)\nMCX simulation speed: " S_BOLD "" S_BLUE "%.2f photon/ms\n" S_RESET,
+                    (double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1), (double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1),
                     gpu[gpuid].autothread, ABS(cfg->respin),
                     ((cfg->issavedet == FILL_MAXDETPHOTON) ? cfg->energytot : ((double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1))) / max(1, cfg->runtime));
         fflush(cfg->flog);
