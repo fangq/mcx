@@ -2368,6 +2368,14 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         GPUDEBUG(("Rtotal=%f\n", Rtotal));
                     } //< else, total internal reflection
 
+                    if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
+                        if (ispolarized && gcfg->istrajstokes) {
+                            savedebugstokes(&p, &s, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                        } else {
+                            savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                        }
+                    }
+
                     if (Rtotal < 1.f // if total internal reflection does not happen
                             && (!(mediaid == 0 && ((isdet & 0xF) == bcMirror))) // if out of bbx and cfg.bc is not 'm'
                             && rand_next_reflect(t) > Rtotal) { // and if photon chooses the transmission path, then do transmission
