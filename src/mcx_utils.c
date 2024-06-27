@@ -3525,16 +3525,14 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
 
             if (f2h[0] != f2h[0] || f2h[1] != f2h[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
                 cfg->vol[i] = 0;
-                continue;
+            } else {
+                cfg->vol[i] = mcx_float2half2(f2h);
             }
 
             if (cfg->mediabyte == MEDIA_ASGN_F2H) {
-                cfg->vol[i] = mcx_float2half2(f2h);
                 f2h[0] = val[(i << 2) + 2];   // g
                 f2h[1] = val[(i << 2) + 3];   // n
                 cfg->vol[i + datalen] = mcx_float2half2(f2h);
-            } else {
-                cfg->vol[i] = mcx_float2half2(f2h);
             }
         }
     } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
