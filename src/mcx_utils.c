@@ -3525,7 +3525,10 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
 
             if (f2h[0] != f2h[0] || f2h[1] != f2h[1]) { /*if one of mua/mus is nan in continuous medium, convert to 0-voxel*/
                 cfg->vol[i] = 0;
-                continue;
+
+                if (cfg->mediabyte == MEDIA_AS_F2H) {
+                    continue;
+                }
             }
 
             if (cfg->mediabyte == MEDIA_ASGN_F2H) {
