@@ -79,7 +79,11 @@ if (isfield(shapes, 'Shapes'))
                     tag = obj.Tag;
                 end
                 gridsize = obj.Size;
-                [no, fc] = latticegrid([0 obj.Size(1)], [0 obj.Size(2)], [0 obj.Size(3)]);
+                if (isfield(obj, 'O'))
+                    [no, fc] = latticegrid([0 obj.Size(1)] + obj.O(1), [0 obj.Size(2)] + obj.O(2), [0 obj.Size(3)] + obj.O(3));
+                else
+                    [no, fc] = latticegrid([0 obj.Size(1)], [0 obj.Size(2)], [0 obj.Size(3)]);
+                end
                 hseg(end + 1) = plotmesh(no * voxelsize, fc, 'facealpha', 0.3, 'linestyle', '-', 'facecolor', 'none', varargin{:});
             case 'Sphere'
                 obj = shp.(sname{1});
