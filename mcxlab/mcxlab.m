@@ -84,7 +84,8 @@ function varargout = mcxlab(varargin)
 %      If any of the 4 compnents present, they should have matching row number.
 %
 % == MC simulation settings ==
-%      cfg.seed:       seed for the random number generator (integer) [0]
+%      cfg.seed:       seed for the random number generator (integer) [default 1648335518]
+%                      setting seed to a negative integer or 0 uses system clock as seed;
 %                      if set to a uint8 array, the binary data in each column is used
 %                      to seed a photon (i.e. the "replay" mode)
 %                      Example: <demo_mcxlab_replay.m>

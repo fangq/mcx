@@ -415,7 +415,7 @@ where possible parameters include (the first value in [*|*] is the default)
                                eg: --bc ______010 saves photons exiting at y=0
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge
  -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw
- -E [0|int|mch](--seed)        set random-number-generator seed, -1 to generate
+ -E [1648335518|int|mch](--seed) set rand-number-generator seed, -1 to generate
                                if an mch file is followed, MCX "replays" 
                                the detected photon; the replay mode can be used
                                to calculate the mua/mus Jacobian matrices
