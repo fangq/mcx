@@ -3163,7 +3163,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     if (cfg->seed > 0) {
         srand(cfg->seed + threadid);
     } else {
-        srand(time(0));
+        srand(time(0) + threadid);
     }
 
     for (i = 0; i < gpu[gpuid].autothread; i++) {
