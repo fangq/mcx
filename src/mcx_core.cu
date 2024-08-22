@@ -2573,14 +2573,14 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
     }
 
     if (deviceCount == 0) {
-        MCX_FPRINTF(stderr, S_RED "ERROR: No CUDA-capable GPU device found\n" S_RESET);
+        MCX_FPRINTF(cfg->flog, S_RED "ERROR: No CUDA-capable GPU device found\n" S_RESET);
         return 0;
     }
 
     *info = (GPUInfo*)calloc(deviceCount, sizeof(GPUInfo));
 
     if (cfg->gpuid && cfg->gpuid > deviceCount) {
-        MCX_FPRINTF(stderr, S_RED "ERROR: Specified GPU ID is out of range\n" S_RESET);
+        MCX_FPRINTF(cfg->flog, S_RED "ERROR: Specified GPU ID is out of range\n" S_RESET);
         return 0;
     }
 
@@ -2614,7 +2614,7 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
         (*info)[dev].autoblock = MAX((*info)[dev].maxmpthread / mcx_smxblock(dp.major, dp.minor), 64);
 
         if ((*info)[dev].autoblock == 0) {
-            MCX_FPRINTF(stderr, S_RED "WARNING: maxThreadsPerMultiProcessor can not be detected\n" S_RESET);
+            MCX_FPRINTF(cfg->flog, S_RED "WARNING: maxThreadsPerMultiProcessor can not be detected\n" S_RESET);
             (*info)[dev].autoblock = 64;
         }
 
@@ -2944,7 +2944,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     /** Here we determine if the GPU memory of the current device can store all time gates, if not, disabling normalization */
     if (totalgates > gpu[gpuid].maxgate && cfg->isnormalized) {
-        MCX_FPRINTF(stderr, S_RED "WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n" S_RESET);
+        MCX_FPRINTF(cfg->flog, S_RED "WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n" S_RESET);
         cfg->isnormalized = 0;
     }
 
@@ -3135,7 +3135,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      * Saving detected photon is enabled by default, but in case if a user disabled this feature, a warning is printed
      */
     if (cfg->issavedet) {
-        MCX_FPRINTF(stderr, S_RED "WARNING: this MCX binary can not save partial path, please recompile mcx and make sure -D SAVE_DETECTORS is used by nvcc\n" S_RESET);
+        MCX_FPRINTF(cfg->flog, S_RED "WARNING: this MCX binary can not save partial path, please recompile mcx and make sure -D SAVE_DETECTORS is used by nvcc\n" S_RESET);
         cfg->issavedet = 0;
     }
 
@@ -3177,7 +3177,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      */
     tic = StartTimer();
     #pragma omp master
-    {
+
+    if (cfg->printnum >= 0) {
         mcx_printheader(cfg);
 
 #ifdef MCX_TARGET_NAME
@@ -3190,6 +3191,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         MCX_FPRINTF(cfg->flog, "- compiled with: RNG [%s] with Seed Length [%d]\n", MCX_RNG_NAME, (int)((sizeof(RandType)*RAND_BUF_LEN) >> 2));
         fflush(cfg->flog);
     }
+
     #pragma omp barrier
 
     /**

@@ -1286,6 +1286,30 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         }
 
         printf("mcx.workload=<<%ld>>;\n", arraydim[0]*arraydim[1]);
+    } else if (strcmp(name, "flog") == 0) {
+        int len = mxGetNumberOfElements(item);
+        char logfile[MAX_SESSION_LENGTH] = {'\0'};
+
+        if (mxIsChar(item)) {
+            if (len > 0) {
+                mxGetString(item, logfile, MAX_SESSION_LENGTH);
+                cfg->flog = fopen(logfile, "a+");
+
+                if (cfg->flog == NULL) {
+                    mexErrMsgTxt("Log output file can not be written");
+                }
+            } else {
+                cfg->flog = stdout;
+            }
+        } else {
+            double* val = mxGetPr(item);
+
+            if (len > 0 && val[0] <= 2) {
+                cfg->flog = ((int)val[0] == 2 ? stderr : ((int)val[0] == 1 ? stdout : (cfg->printnum = -1, stdout)));
+            }
+        }
+
+        printf("mcx.flog=%d;\n", cfg->flog);
     } else {
         printf(S_RED "WARNING: redundant field '%s'\n" S_RESET, name);
     }

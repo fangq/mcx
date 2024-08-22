@@ -199,7 +199,7 @@ typedef struct MCXConfig {
 
     unsigned int maxgate;         /**<simultaneous recording gates*/
     int respin;                   /**<number of repeatitions (if positive), or number of divisions (if negative)*/
-    unsigned int printnum;        /**<number of printed threads (for debugging)*/
+    int printnum;                 /**<number of printed threads (for debugging)*/
     int gpuid;                    /**<the ID of the GPU to use, starting from 1, 0 for auto*/
 
     unsigned int* vol;            /**<pointer to the volume*/
@@ -347,9 +347,9 @@ void mcx_python_flush(void);
 
 #if defined(MCX_CONTAINER) && (defined(MATLAB_MEX_FILE) || defined(OCTAVE_API_VERSION_NUMBER))
 #ifdef _OPENMP
-#define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) mexPrintf(__VA_ARGS__);}  /**< macro to print messages, calls mexPrint if inside MATLAB */
+#define MCX_FPRINTF(fp,...) {if(omp_get_thread_num()==0) {(fp==stderr) ? mexPrintf(__VA_ARGS__) : fprintf(fp,__VA_ARGS__);}}  /**< macro to print messages, calls mexPrint if inside MATLAB */
 #else
-#define MCX_FPRINTF(fp,...) mexPrintf(__VA_ARGS__) /**< macro to print messages, calls mexPrint in MATLAB */
+#define MCX_FPRINTF(fp,...) {(fp==stderr) ? mexPrintf(__VA_ARGS__) : fprintf(fp,__VA_ARGS__);} /**< macro to print messages, calls mexPrint in MATLAB */
 #endif
 #else
 #define MCX_FPRINTF(fp,...) fprintf(fp,__VA_ARGS__) /**< macro to print messages, calls fprintf in command line mode */

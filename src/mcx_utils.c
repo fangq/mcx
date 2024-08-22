@@ -5393,7 +5393,8 @@ int mcx_run_from_json(char* jsonstr) {
  */
 
 void mcx_printheader(Config* cfg) {
-    MCX_FPRINTF(cfg->flog, S_MAGENTA"\
+    if (cfg->printnum >= 0 ) {
+        MCX_FPRINTF(cfg->flog, S_MAGENTA"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
 #          Copyright (c) 2009-2024 Qianqian Fang <q.fang at neu.edu>          #\n\
@@ -5412,6 +5413,7 @@ void mcx_printheader(Config* cfg) {
 ###############################################################################\n\
 $Rev::      $" S_GREEN MCX_VERSION S_MAGENTA " $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
+    }
 }
 
 /**

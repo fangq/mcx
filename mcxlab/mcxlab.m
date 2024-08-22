@@ -317,6 +317,12 @@ function varargout = mcxlab(varargin)
 %                    'M':  return photon trajectory data as the 5th output
 %                    'P':  show progress bar
 %                    'T':  save photon trajectory data only, as the 1st output, disable flux/detp/seeds outputs
+%      cfg.flog: [2]  log printing control; if set to a string, it defines a file path
+%                     at which location the log will be printed in append mode; on Linux and Mac OS,
+%                     one can use special paths such as /dev/null; if set to an integer,
+%                     2 (default): stderr
+%                     1: stdout
+%                     0: stdout but suppress printing MCX banner
 %      cfg.istrajstokes [0]: if set to 1, traj.iquv output contains the Stokes IQUV vector along trajectories
 %      cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output,
 %                     use this parameter to set the maximum position stored. By default,

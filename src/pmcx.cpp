@@ -399,7 +399,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
 void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     mcx_initcfg(&mcx_config);
 
-    mcx_config.flog = stdout;
+    mcx_config.flog = stderr;
     GET_SCALAR_FIELD(user_cfg, mcx_config, nphoton, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, nblocksize, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, nthread, py::int_);
@@ -1000,6 +1000,27 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
         for (int i = 0; i < buffer_info.size; i++) {
             mcx_config.workload[i] = static_cast<float*>(buffer_info.ptr)[i];
+        }
+    }
+
+    if (user_cfg.contains("flog")) {
+        auto logfile_id_value = user_cfg["flog"];
+
+        if (py::int_::check_(logfile_id_value)) {
+            auto logid = py::int_(logfile_id_value);
+            mcx_config.flog = (logid >= 2 ? stderr : (logid == 1 ? stdout : (mcx_config.printnum = -1, stdout)));
+        } else if (py::str::check_(logfile_id_value)) {
+            std::string logfile_id_string_value = py::str(logfile_id_value);
+
+            if (logfile_id_string_value.empty()) {
+                throw py::value_error("the 'flog' field must be an integer or non-empty string");
+            }
+
+            mcx_config.flog = fopen(logfile_id_string_value.c_str(), "a+");
+
+            if (mcx_config.flog == NULL) {
+                throw py::value_error("Log output file can not be written");
+            }
         }
     }
 
