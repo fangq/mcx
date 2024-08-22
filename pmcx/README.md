@@ -4,7 +4,7 @@
 
 - Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2024) <q.fang at neu.edu>, Fan-Yu Yen (2023-2024) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
-- Version: 0.3.3
+- Version: 0.3.4
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 

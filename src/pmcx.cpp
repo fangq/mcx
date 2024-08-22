@@ -698,7 +698,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             throw py::value_error("the 'polprop' field must a 2D array");
         }
 
-        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5) || buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 5) {
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 5) || (buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 5)) {
             throw py::value_error("the 'polprop' field must have 5 columns (mua, radius, rho, n_sph,n_bkg)");
         }
 
@@ -1007,7 +1007,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         auto logfile_id_value = user_cfg["flog"];
 
         if (py::int_::check_(logfile_id_value)) {
-            auto logid = py::int_(logfile_id_value);
+            int logid = py::int_(logfile_id_value);
             mcx_config.flog = (logid >= 2 ? stderr : (logid == 1 ? stdout : (mcx_config.printnum = -1, stdout)));
         } else if (py::str::check_(logfile_id_value)) {
             std::string logfile_id_string_value = py::str(logfile_id_value);
