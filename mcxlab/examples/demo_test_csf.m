@@ -30,7 +30,7 @@ cfg.srcdir = [0 0 1];
 cfg.prop = [0 0 1 1            % medium 0: the environment
             0.019 7.8   0.89 1.37     % medium 1: scalp
             0.019 7.8   0.89 1.37     % medium 2: skull
-            0.004 0.009 0.89 1.37     % medium 3: CSF
+            0.0004 0.009 0.89 1.37    % medium 3: CSF
             0.02  9.0   0.89 1.37     % medium 4: gray matter
             0.08 40.9   0.84 1.37];   % medium 5: white matter (not used)
 
