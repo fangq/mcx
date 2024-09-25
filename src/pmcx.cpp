@@ -847,7 +847,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         }
 
         auto buffer_info = f_style_volume.request();
-        unsigned int nphase = buffer_info.shape.size();
+        unsigned int nphase = buffer_info.size;
         float* val = static_cast<float*>(buffer_info.ptr);
         mcx_config.nphase = nphase + 2;
         mcx_config.invcdf = (float*) calloc(mcx_config.nphase, sizeof(float));
@@ -872,7 +872,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         }
 
         auto buffer_info = f_style_volume.request();
-        unsigned int nangle = buffer_info.shape.size();
+        unsigned int nangle = buffer_info.size;
         float* val = static_cast<float*>(buffer_info.ptr);
         mcx_config.nangle = nangle;
         mcx_config.angleinvcdf = (float*) calloc(mcx_config.nangle, sizeof(float));
