@@ -600,6 +600,7 @@ if (nargout >= 5 || (~isempty(cfg) && isstruct(cfg) && isfield(cfg, 'debuglevel'
         traj.srcid = int32(data(6, :)');
         if (size(data, 1) >= 10)
             traj.iquv = data(7:10, :)';
+            traj.iquv = traj.iquv(idx, :);
         end
         traj.data = [single(traj.id)'; data(2:end, idx)];
         newtraj(i) = traj;
