@@ -260,7 +260,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             }
 
             /** Initialize all buffers necessary to store the output variables */
-            if (nlhs >= 1) {
+            if (nlhs >= 1 && cfg.issave2pt) {
                 int fieldlen = cfg.dim.x * cfg.dim.y * cfg.dim.z * (int)((cfg.tend - cfg.tstart) / cfg.tstep + 0.5) * cfg.srcnum;
 
                 if (cfg.replay.seed != NULL && cfg.replaydet == -1) {
@@ -412,10 +412,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
                 fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
 
-                if (cfg.issaveref) {
+                if (cfg.issaveref && cfg.exportfield) {
                     int highdim = fielddim[3] * fielddim[4] * fielddim[5];
                     int voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
                     float* dref = (float*)malloc(fieldlen * sizeof(float));
+
                     memcpy(dref, cfg.exportfield, fieldlen * sizeof(float));
 
                     for (int voxelid = 0; voxelid < voxellen; voxelid++) {
@@ -438,13 +439,16 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     free(dref);
                 }
 
-                if (cfg.issave2pt) {
+                if (cfg.issave2pt && cfg.exportfield) {
                     mxSetFieldByNumber(plhs[0], jstruct, 0, mxCreateNumericArray(((fielddim[5] > 1) ? 6 : (4 + (fielddim[4] > 1))), fielddim, mxSINGLE_CLASS, mxREAL));
                     memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0], jstruct, 0)), cfg.exportfield,
                            fieldlen * sizeof(float));
                 }
 
-                free(cfg.exportfield);
+                if (cfg.exportfield) {
+                    free(cfg.exportfield);
+                }
+
                 cfg.exportfield = NULL;
 
                 /** also return the run-time info in outut.runtime */

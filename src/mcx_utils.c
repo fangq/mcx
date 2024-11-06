@@ -3698,6 +3698,10 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
         + SAVE_W0(cfg->savedetflag);
     hostdetreclen += cfg->polmedianum ? (4 * SAVE_IQUV(cfg->savedetflag)) : 0; // for polarized photon simulation
 
+    if (!cfg->issave2pt && cfg->issaveref) {
+        cfg->issaveref = 0;
+    }
+
     if (!cfg->issrcfrom0) {
         cfg->srcpos.x--;
         cfg->srcpos.y--;

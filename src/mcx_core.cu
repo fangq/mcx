@@ -2821,7 +2821,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** Updating host simulation configuration \c cfg, only allow the master thread to modify cfg, others are read-only */
     #pragma omp master
     {
-        if (cfg->exportfield == NULL) {
+        if (cfg->exportfield == NULL && cfg->issave2pt) {
             if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                 cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF)) * cfg->detnum);
             } else {
