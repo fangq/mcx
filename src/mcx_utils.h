@@ -160,7 +160,7 @@ typedef struct MCXGPUInfo {
     int core;                     /**< number of stream processors */
     int autoblock;                /**< optimized number of blocks to launch */
     int autothread;               /**< optimized number of threads to launch */
-    int maxgate;                  /**< max number of time gates that can be saved in one call */
+    unsigned int maxgate;         /**< max number of time gates that can be saved in one call */
     int maxmpthread;              /**< maximum thread number per multi-processor */
 } GPUInfo;
 

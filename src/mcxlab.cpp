@@ -737,7 +737,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         cfg->mediabyte = 0;
         arraydim = mxGetDimensions(item);
 
-        if (mxGetNumberOfDimensions(item) == 3) {
+        if (mxGetNumberOfDimensions(item) <= 3) {
             if (mxIsUint8(item) || mxIsInt8(item)) { // input is a 3D byte array
                 cfg->mediabyte = 1;
             } else if (mxIsUint16(item) || mxIsInt16(item)) { // input is a 3D short array
@@ -750,9 +750,14 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 cfg->mediabyte = 14;
             }
 
-            for (i = 0; i < 3; i++) {
+            for (i = 0; i < mxGetNumberOfDimensions(item); i++) {
                 ((unsigned int*)(&cfg->dim))[i] = arraydim[i];
             }
+
+            if (i < 3) {
+                cfg->dim.z = 1;
+            }
+
         } else if (mxGetNumberOfDimensions(item) == 4) { // if dimension is 4D, 1st dim is the property records: mua/mus/g/n
             if ((mxIsUint8(item) || mxIsInt8(item)) && arraydim[0] == 4) { // if 4D byte array has a 1st dim of 4
                 cfg->mediabyte = MEDIA_ASGN_BYTE;

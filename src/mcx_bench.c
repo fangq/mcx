@@ -36,7 +36,7 @@
 
 #define MSTR(...) #__VA_ARGS__
 
-const char *benchname[MAX_MCX_BENCH]={"cube60","cube60b","cube60planar","cubesph60b","skinvessel","sphshells","spherebox",
+const char *benchname[MAX_MCX_BENCH]={"cube60","cube60b","cube60planar","cubesph60b","onecube","twocube","skinvessel","sphshells","spherebox",
 #ifndef _MSC_VER
 			 "colin27",""};
 #else
@@ -262,6 +262,114 @@ MSTR(
                 "R": 1.0
             }
 	]
+    }
+}),
+
+
+MSTR(
+{
+    "Session":{
+        "ID":"onecube",
+        "DoSaveVolume":0,
+        "DoAutoThread":1,
+        "SaveDataMask":"xv",
+        "Photons":1000000
+    },
+    "Forward":{
+        "T0":0,
+        "T1":5e-09,
+        "Dt":5e-09
+    },
+    "Optode":{
+        "Source":{
+            "Pos":[0.5,0.5,0],
+            "Dir":[0,0,1]
+        },
+        "Detector":[
+            {
+                "Pos":[0.5,0.45,1],
+                "R":0.016667
+            }
+        ]
+    },
+    "Domain":{
+        "OriginType":1,
+        "LengthUnit":60,
+        "Media":[
+            {
+                "mua":0,
+                "mus":0,
+                "g":1,
+                "n":1
+            },
+            {
+                "mua":0.005,
+                "mus":1,
+                "g":0,
+                "n":1.37
+            }
+        ],
+        "MediaFormat":"byte",
+        "Dim":[1,1,1]
+    },
+    "Shapes": {
+        "_ArraySize_": [1,1,1],
+        "_ArrayType_": "uint8",
+        "_ArrayData_": [1]
+    }
+}),
+
+
+MSTR(
+{
+    "Session":{
+        "ID":"twocube",
+        "DoSaveVolume":0,
+        "DoAutoThread":1,
+        "SaveDataMask":"xv",
+        "Photons":1000000
+    },
+    "Forward":{
+        "T0":0,
+        "T1":5e-09,
+        "Dt":5e-09
+    },
+    "Optode":{
+        "Source":{
+            "Pos":[1,1,0],
+            "Dir":[0,0,1]
+        },
+        "Detector":[
+            {
+                "Pos":[1,0.9,1],
+                "R":0.0333333
+            }
+        ]
+    },
+    "Domain":{
+        "OriginType":1,
+        "LengthUnit":30,
+        "Media":[
+            {
+                "mua":0,
+                "mus":0,
+                "g":1,
+                "n":1
+            },
+            {
+                "mua":0.005,
+                "mus":1,
+                "g":0,
+                "n":1.37
+            }
+        ],
+        "MediaFormat":"byte",
+        "Dim":[2,2,2]
+    },
+    "Shapes": {
+        "_ArraySize_": [2,2,2],
+        "_ArrayType_": "uint8",
+        "_ArrayData_": [1,1,1,1,1,1,1,1]
     }
 }),
 

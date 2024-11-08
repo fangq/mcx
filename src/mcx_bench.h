@@ -35,7 +35,7 @@
 #ifndef _MCEXTREME_BENCHMARK_H
 #define _MCEXTREME_BENCHMARK_H
 
-#define MAX_MCX_BENCH  9                           /**< Total number of built-in benchmarks */
+#define MAX_MCX_BENCH  11                          /**< Total number of built-in benchmarks */
 extern const char* benchname[MAX_MCX_BENCH];       /**< String list defining the names of each built-in benchmark */
 extern const char* benchjson[MAX_MCX_BENCH];       /**< JSON-formatted input configuration for each built-in benchmark */
 

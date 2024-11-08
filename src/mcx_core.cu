@@ -2678,7 +2678,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     float4 s0 = (float4)cfg->srciquv;
 
     float3 maxidx = float3(cfg->dim.x, cfg->dim.y, cfg->dim.z);
-    int timegate = 0, totalgates, gpuid, threadid = 0;
+    uint timegate = 0, totalgates, threadid = 0;
+    int gpuid;
 
     /** \c gpuphoton - number of photons to be simulated per thread, determined by total workload and thread number */
     size_t gpuphoton = 0;
@@ -2790,6 +2791,14 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     if (param.isatomic) {
         param.skipradius2 = 0.f;
+    }
+
+    if (is2d) {
+        /**
+         *  is2d is only turn 1 if only 1 of the 3 dimension has a length of 1; if 2x or 3x of the dimension have a length of 1, use 3D mode
+         */
+        is2d = is2d * ((cfg->dim.x > 1) + (cfg->dim.y > 1) + (cfg->dim.z > 1) == 2);
+        param.is2d = is2d;
     }
 
     /** Start multiple CPU threads using OpenMP, one thread for each GPU device to run simultaneously, \c threadid returns the current thread ID */
@@ -2944,7 +2953,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     /** Here we determine if the GPU memory of the current device can store all time gates, if not, disabling normalization */
     if (totalgates > gpu[gpuid].maxgate && cfg->isnormalized) {
-        MCX_FPRINTF(cfg->flog, S_RED "WARNING: GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n" S_RESET);
+        MCX_FPRINTF(cfg->flog, S_RED "WARNING: %d %d %d [%d %d %d] GPU memory can not hold all time gates, disabling normalization to allow multiple runs\n" S_RESET, totalgates, gpu[gpuid].maxgate, cfg->isnormalized, cfg->dim.x, cfg->dim.y, cfg->dim.z);
         cfg->isnormalized = 0;
     }
 
@@ -3706,7 +3715,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 } else {
                     int j;
 
-                    for (iter = 0; iter < gpu[gpuid].maxgate; iter++)
+                    for (iter = 0; iter < (int)gpu[gpuid].maxgate; iter++)
                         for (j = 0; j < (int)dimlen.z; j++) {
                             mcx_kahanSum(&energyabs[i], &kahanc, cfg->exportfield[iter * dimxyz + (j * cfg->srcnum + i)]*mcx_updatemua((uint)cfg->vol[j], cfg));
                         }
