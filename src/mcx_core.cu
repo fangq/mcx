@@ -62,6 +62,7 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
     #define ZERO        0.f
 #endif
 
+
 #if defined(USE_XOROSHIRO128P_RAND)
     #include "mcx_rand_xoroshiro128p.cu" //< Use USE_XOROSHIRO128P_RAND macro to enable xoroshiro128p+ RNG (XORSHIFT128P)
 #elif defined(USE_POSIX_RAND)

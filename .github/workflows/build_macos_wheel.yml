@@ -59,7 +59,7 @@ jobs:
           cd pmcx/
           python -m pip install --upgrade pip
           pip install wheel setuptools
-          VERBOSE=1 pip wheel . -w ../dist/
+          VERBOSE=1 pip wheel . -w ../dist/ --verbose
           ls ../dist/
           cd ../
       - name: Check If the Build Version Exists on PyPI
