@@ -4172,7 +4172,7 @@ void  mcx_maskdet(Config* cfg) {
     dy = cfg->dim.y + 2;
     dz = cfg->dim.z + 2;
 
-    isonecube = (cfg->dim.x == 1) && (cfg->dim.x == 1) && (cfg->dim.x == 1);
+    isonecube = (cfg->dim.x == 1) && (cfg->dim.y == 1) && (cfg->dim.z == 1);
 
     /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
       then I don't need to worry about boundaries any more*/
