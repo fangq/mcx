@@ -111,6 +111,9 @@ class CMakeBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
+        print(" ".join(["cmake", ext.source_dir] + cmake_args))
+        print(" ".join(["cmake", "--build", ".", "--target", ext.target] + build_args))
+
         subprocess.check_call(["cmake", ext.source_dir] + cmake_args, cwd=build_temp)
         subprocess.check_call(
             ["cmake", "--build", ".", "--target", ext.target] + build_args,
