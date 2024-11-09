@@ -156,8 +156,8 @@ jobs:
             make AR=g++ BACKEND=cudastatic USERLINKOPT='lib/libzmat.a -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            ar --version
-            ranlib --version
+            which ranlib
+            ranlib
             ls -l `which ranlib`
             ls -l `which ar`
             mkdir build && cd build && cmake .. && make VERBOSE=1 && cd ..
