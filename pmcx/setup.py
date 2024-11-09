@@ -116,6 +116,14 @@ class CMakeBuild(build_ext):
 
         subprocess.check_call(["cmake", ext.source_dir] + cmake_args, cwd=build_temp)
         subprocess.check_call(
+            ["cmake", "--build", ".", "--target", "mcx"] + build_args,
+            cwd=build_temp,
+        )
+        subprocess.check_call(
+            ["cmake", "--build", ".", "--target", "mcxlab"] + build_args,
+            cwd=build_temp,
+        )
+        subprocess.check_call(
             ["cmake", "--build", ".", "--target", ext.target] + build_args,
             cwd=build_temp,
         )
