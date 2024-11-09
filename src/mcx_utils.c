@@ -4161,7 +4161,7 @@ int mcx_svmc_bgvoxel(int vol) {
  */
 
 void  mcx_maskdet(Config* cfg) {
-    uint d, dx, dy, dz, idx1d, zi, yi, c, count;
+    uint d, dx, dy, dz, idx1d, zi, yi, c, count, isonecube;
     float x, y, z, ix, iy, iz, rx, ry, rz, d2, mind2, d2max;
     unsigned int* padvol;
     const float corners[8][3] = {{0.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 1.f},
@@ -4171,6 +4171,8 @@ void  mcx_maskdet(Config* cfg) {
     dx = cfg->dim.x + 2;
     dy = cfg->dim.y + 2;
     dz = cfg->dim.z + 2;
+
+    isonecube = (cfg->dim.x == 1) && (cfg->dim.x == 1) && (cfg->dim.x == 1);
 
     /*handling boundaries in a volume search is tedious, I first pad vol by a layer of zeros,
       then I don't need to worry about boundaries any more*/
@@ -4183,11 +4185,11 @@ void  mcx_maskdet(Config* cfg) {
         }
 
     /**
-       The goal here is to find a set of voxels for each
-    detector so that the intersection between a sphere
-    of R=cfg->detradius,c0=cfg->detpos[d] and the object
-    surface (or bounding box) is fully covered.
-        */
+     * The goal here is to find a set of voxels for each
+     * detector so that the intersection between a sphere
+     * of R=cfg->detradius,c0=cfg->detpos[d] and the object
+     * surface (or bounding box) is fully covered.
+     */
     for (d = 0; d < cfg->detnum; d++) {                     /*loop over each detector*/
         count = 0;
         d2max = (cfg->detpos[d].w + 1.7321f) * (cfg->detpos[d].w + 1.7321f);
@@ -4224,7 +4226,7 @@ void  mcx_maskdet(Config* cfg) {
                         }
                     }
 
-                    if (mind2 == VERY_BIG || mind2 >= (cfg->detpos[d].w + 0.5f) * (cfg->detpos[d].w + 0.5f)) {
+                    if (mind2 == VERY_BIG || mind2 >= (cfg->detpos[d].w + 0.5f * (1.f + isonecube)) * (cfg->detpos[d].w + 0.5f * (1.f + isonecube))) {
                         continue;
                     }
 
@@ -4275,6 +4277,14 @@ void  mcx_maskdet(Config* cfg) {
     }
 
     free(padvol);
+
+#ifndef MCX_CONTAINER
+
+    if (cfg->isdumpmask) {
+        mcx_dumpmask(cfg);
+    }
+
+#endif
 }
 
 /**
@@ -4321,6 +4331,7 @@ void mcx_dumpmask(Config* cfg) {
 
     if (cfg->isdumpmask == 1 && cfg->isdumpjson == 0) { /*if dumpmask>1, simulation will also run*/
         MCX_FPRINTF(cfg->flog, "volume mask is saved in %s\n", fname);
+        mcx_clearcfg(cfg);
         exit(0);
     }
 }
