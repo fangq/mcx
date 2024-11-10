@@ -3916,7 +3916,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                     ((cfg->issavedet == FILL_MAXDETPHOTON) ? cfg->energytot : ((double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1))) / max(1, cfg->runtime));
         fflush(cfg->flog);
 
-        if (cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) {
+        if (cfg->issave2pt && cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) {
             for (i = 0; i < (int)cfg->srcnum; i++) {
                 MCX_FPRINTF(cfg->flog, "source #%d total simulated energy: %.2f\tabsorbed: " S_BOLD "" S_BLUE "%5.5f%%" S_RESET"\n(loss due to initial specular reflection is excluded in the total)\n",
                             i + 1, energytot[i], energyabs[i] / energytot[i] * 100.f);
@@ -4000,6 +4000,13 @@ is more than what your have specified (%d), please use the -H option to specify 
     free(energy);
     free(field);
     free(srcpw);
-    free(energytot);
-    free(energyabs);
+
+    if (energytot) {
+        free(energytot);
+    }
+
+    if (energyabs) {
+        free(energyabs);
+    }
+
 }
