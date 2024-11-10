@@ -160,7 +160,7 @@ jobs:
             ranlib
             ls -l `which ranlib`
             ls -l `which ar`
-            mkdir build && cd build && cmake .. && make VERBOSE=1 && cd ..
+            mkdir build && cd build && cmake .. -DCMAKE_CXX_ARCHIVE_CREATE="<CMAKE_AR> cr <TARGET> <LINK_FLAGS> <OBJECTS>" -DCMAKE_RANLIB="" && make VERBOSE=1 && cd ..
             otool -L ../bin/mcx
             otool -L ../mcxlab/mcx.mex*
           else
