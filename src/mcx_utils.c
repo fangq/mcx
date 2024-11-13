@@ -4162,7 +4162,7 @@ int mcx_svmc_bgvoxel(int vol) {
 
 void  mcx_maskdet(Config* cfg) {
     uint d, dx, dy, dz, idx1d, zi, yi, c, count, isonecube;
-    float x, y, z, ix, iy, iz, rx, ry, rz, d2, mind2, d2max;
+    float x, y, z, ix, iy, iz, rx, ry, rz, d2, mind2, d2max, radius;
     unsigned int* padvol;
     const float corners[8][3] = {{0.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 1.f},
         {1.f, 1.f, 0.f}, {1.f, 0.f, 1.f}, {0.f, 1.f, 1.f}, {1.f, 1.f, 1.f}
@@ -4192,19 +4192,20 @@ void  mcx_maskdet(Config* cfg) {
      */
     for (d = 0; d < cfg->detnum; d++) {                     /*loop over each detector*/
         count = 0;
-        d2max = (cfg->detpos[d].w + 1.7321f) * (cfg->detpos[d].w + 1.7321f);
+        radius = ABS(cfg->detpos[d].w);
+        d2max = (radius + 1.7321f) * (radius + 1.7321f);
 
-        for (z = -cfg->detpos[d].w - 1.f; z <= cfg->detpos[d].w + 1.f; z += 0.5f) { /*search in a cube with edge length 2*R+3*/
+        for (z = -radius - 1.f; z <= radius + 1.f; z += 0.5f) { /*search in a cube with edge length 2*R+3*/
             iz = z + cfg->detpos[d].z;
 
-            for (y = -cfg->detpos[d].w - 1.f; y <= cfg->detpos[d].w + 1.f; y += 0.5f) {
+            for (y = -radius - 1.f; y <= radius + 1.f; y += 0.5f) {
                 iy = y + cfg->detpos[d].y;
 
-                for (x = -cfg->detpos[d].w - 1.f; x <= cfg->detpos[d].w + 1.f; x += 0.5f) {
+                for (x = -radius - 1.f; x <= radius + 1.f; x += 0.5f) {
                     ix = x + cfg->detpos[d].x;
 
                     if (iz < 0 || ix < 0 || iy < 0 || ix >= cfg->dim.x || iy >= cfg->dim.y || iz >= cfg->dim.z ||
-                            x * x + y * y + z * z > (cfg->detpos[d].w + 1.f) * (cfg->detpos[d].w + 1.f)) {
+                            x * x + y * y + z * z > (radius + 1.f) * (radius + 1.f)) {
                         continue;
                     }
 
@@ -4226,7 +4227,7 @@ void  mcx_maskdet(Config* cfg) {
                         }
                     }
 
-                    if (mind2 == VERY_BIG || mind2 >= (cfg->detpos[d].w + 0.5f * (1.f + isonecube)) * (cfg->detpos[d].w + 0.5f * (1.f + isonecube))) {
+                    if (mind2 == VERY_BIG || mind2 >= (radius + 0.5f * (1.f + isonecube)) * (radius + 0.5f * (1.f + isonecube))) {
                         continue;
                     }
 
