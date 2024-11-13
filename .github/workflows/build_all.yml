@@ -45,7 +45,7 @@ jobs:
           #conda config --add channels conda-forge
           #conda config --set channel_priority strict
           #conda install octave
-          curl -o Octave-9.2-Intel.dmg --insecure https://github.com/octave-app/octave-app/releases/download/v9.2/Octave-9.2-Intel.dmg
+          curl -L -o Octave-9.2-Intel.dmg --insecure https://github.com/octave-app/octave-app/releases/download/v9.2/Octave-9.2-Intel.dmg
           xattr -c Octave-*.dmg
           sudo hdiutil attach Octave-9.2-Intel.dmg
           sudo cp -a /Volumes/Octave\ 9.2/Octave-9.2.app /Applications
