@@ -42,9 +42,14 @@ jobs:
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
           echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
           echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
-          conda config --add channels conda-forge
-          conda config --set channel_priority strict
-          conda install octave
+          #conda config --add channels conda-forge
+          #conda config --set channel_priority strict
+          #conda install octave
+          curl -o Octave-9.2-Intel.dmg --insecure https://github.com/octave-app/octave-app/releases/download/v9.2/Octave-9.2-Intel.dmg
+          xattr -c Octave-*.dmg
+          sudo hdiutil attach Octave-9.2-Intel.dmg
+          sudo cp -a /Volumes/Octave\ 9.2/Octave-9.2.app /Applications
+          echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
           brew link --force libomp
           brew install --cask lazarus
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
