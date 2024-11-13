@@ -233,7 +233,7 @@ jobs:
     if: ${{ github.repository_owner == 'fangq' && github.event_name != 'pull_request'}}
     steps:
       - name: Download mcx
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v3
         with:
           name: all-mcx-packages
           path: packages
