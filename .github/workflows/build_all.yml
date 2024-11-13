@@ -203,6 +203,7 @@ jobs:
       - name: Prepare mcx package
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
+            strip bin/mcx* || true
             cp -a mcxstudio/debug/mcxstudio.app bin
             cp -a mcxstudio/mcxshow.app   bin
             cp -a mcxstudio/mcxviewer.app bin
