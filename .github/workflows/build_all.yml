@@ -220,7 +220,7 @@ jobs:
             zip -FSr --symlink mcx/packages/mcx-${{ env.RELEASE_TAG }}.zip mcx -x 'mcx/packages*'
           fi
       - name: Upload mcx package
-        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-11' || matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-12' || matrix.os == 'windows-2019' }}
         uses: actions/upload-artifact@v3
         with:
           name: all-mcx-packages
