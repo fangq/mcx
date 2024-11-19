@@ -1114,7 +1114,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                     if (fabsf(oldval) > MAX_ACCUM) {
                         atomicadd(& field[*idx1d + tshift * gcfg->dimlen.z], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                        atomicadd(& field[*idx1d + tshift * gcfg->dimlen.z + gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                        atomicadd(& field[*idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                     }
 
 #endif
@@ -1132,7 +1132,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                             if (fabsf(oldval) > MAX_ACCUM) {
                                 atomicadd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                                atomicadd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                                atomicadd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                             }
 
 #endif
@@ -1993,7 +1993,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             if (atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], -oldval) < 0.f) {
                                 atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], oldval);
                             } else {
-                                atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + gcfg->dimlen.w], oldval);
+                                atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
                             }
                         }
 
@@ -2142,7 +2142,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 if (gcfg->outputtype == otEnergy) {
                     weight = w0 - p.w;
                 } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux) {
-                    weight = (prop.mua < 0.001f) ? (w0 * len) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, take limit_{mua->0} w0*(1-exp(-mua*len))/mua yields w0*len */
+                    weight = (prop.mua < EPS) ? (w0 * len) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, the first two terms of Taylor expansion of w0*(1-exp(-mua*len))/mua = w0*len - mua*len^2*w0/2 */
                 } else if (gcfg->seed == SEED_FROM_FILE) {
                     if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF) {
                         weight = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen;
@@ -2186,11 +2186,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                             if (fabsf(oldval) > MAX_ACCUM && gcfg->outputtype != otRF) {
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                                atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
-                                GPUDEBUG(("reducing float round-off error by moving %e to [%d], oldval=%f\n", MAX_ACCUM, idx1dold + tshift * gcfg->dimlen.z + gcfg->dimlen.w, oldval));
+                                atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                                GPUDEBUG(("reducing float round-off error by moving %e to [%d], oldval=%f\n", MAX_ACCUM, idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w, oldval));
                             } else if (gcfg->outputtype == otRF && gcfg->omega > 0.f) {
                                 oldval = -replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                                atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + gcfg->dimlen.w], oldval);
+                                atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
                             }
 
 #endif
@@ -2204,10 +2204,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                                     if (fabsf(oldval) > MAX_ACCUM && gcfg->outputtype != otRF) {
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                                     } else if (gcfg->outputtype == otRF) {
                                         oldval = p.w * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + gcfg->dimlen.w], oldval);
+                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
                                     }
 
 #endif
@@ -2706,7 +2706,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     uint sharedbuf = 0;
 
     /** \c dimxyz - output volume variable \c field voxel count, Nx*Ny*Nz*Ns where Ns=cfg.srcnum is the pattern number for photon sharing */
-    int dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : (cfg->srcid == -1) ? (cfg->extrasrclen + 1) : 1);
+    size_t dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : (cfg->srcid == -1) ? (cfg->extrasrclen + 1) : 1);
 
     /** \c media - input volume representing the simulation domain, format specified in cfg.mediaformat, read-only */
     uint*  media = (uint*)(cfg->vol);
@@ -2823,7 +2823,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     /** Use the specified GPU's parameters, stored in gpu[gpuid] to determine the maximum time gates that it can hold */
     if (gpu[gpuid].maxgate == 0 && dimxyz > 0) {
-        int needmem = dimxyz + cfg->nthread * sizeof(float4) * 4 + sizeof(float) * cfg->maxdetphoton * hostdetreclen + 10 * 1024 * 1024; /*keep 10M for other things*/
+        size_t needmem = dimxyz + cfg->nthread * sizeof(float4) * 4 + sizeof(float) * cfg->maxdetphoton * hostdetreclen + 10 * 1024 * 1024; /*keep 10M for other things*/
         gpu[gpuid].maxgate = (gpu[gpuid].globalmem - needmem) / (cfg->dim.x * cfg->dim.y * cfg->dim.z);
         gpu[gpuid].maxgate = MIN(((cfg->tend - cfg->tstart) / cfg->tstep + 0.5), gpu[gpuid].maxgate);
     }
@@ -2960,11 +2960,17 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     #pragma omp barrier
 
+    dimlen.x = cfg->dim.x;
+    dimlen.y = cfg->dim.y * cfg->dim.x;
+    dimlen.z = cfg->dim.x * cfg->dim.y * cfg->dim.z;
+    dimlen.w = gpu[gpuid].maxgate * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : (cfg->srcid == -1) ? (cfg->extrasrclen + 1) : 1);
+
     /** Here we decide the total output buffer, field's length. it is Nx*Ny*Nz*Nt*Ns */
     if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
-        fieldlen = dimxyz * gpu[gpuid].maxgate * cfg->detnum;
+        dimlen.w *= cfg->detnum;
+        fieldlen = dimlen.z * dimlen.w;
     } else {
-        fieldlen = dimxyz * gpu[gpuid].maxgate;
+        fieldlen = dimlen.z * dimlen.w;
     }
 
     /** A 1D grid is determined by the total thread number and block size */
@@ -3158,11 +3164,6 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** Inside the GPU kernel, volume is always assumbed to be col-major (like those generated by MATLAB or FORTRAN) */
     cachebox.x = (cp1.x - cp0.x + 1);
     cachebox.y = (cp1.y - cp0.y + 1) * (cp1.x - cp0.x + 1);
-
-    dimlen.x = cfg->dim.x;
-    dimlen.y = cfg->dim.y * cfg->dim.x;
-    dimlen.z = cfg->dim.x * cfg->dim.y * cfg->dim.z;
-    dimlen.w = fieldlen;
 
     param.dimlen = dimlen;
     param.cachebox = cachebox;
@@ -3592,6 +3593,7 @@ is more than what your have specified (%d), please use the -H option to specify 
              * Accumulate volumetric fluence from all threads/devices
              */
             if (cfg->issave2pt) {
+                size_t i;
                 OutputType* rawfield = (OutputType*)malloc(sizeof(OutputType) * fieldlen * SHADOWCOUNT);
                 CUDA_ASSERT(cudaMemcpy(rawfield, gfield, sizeof(OutputType)*fieldlen * SHADOWCOUNT, cudaMemcpyDeviceToHost));
                 MCX_FPRINTF(cfg->flog, "transfer complete:\t%d ms\n", GetTimeMillis() - tic);
@@ -3602,7 +3604,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                  * single-precision output, we need to copy and accumulate two separate floating-point buffers
                  * to minimize round-off errors near the source
                  */
-                for (i = 0; i < (int)fieldlen; i++) { //accumulate field, can be done in the GPU
+                for (i = 0; i < fieldlen; i++) { //accumulate field, can be done in the GPU
                     field[i] = rawfield[i];
 #ifndef USE_DOUBLE
 
@@ -3624,7 +3626,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                  * If respin is used, each repeatition is accumulated to the 2nd half of the buffer
                  */
                 if (ABS(cfg->respin) > 1) {
-                    for (i = 0; i < (int)fieldlen; i++) { //accumulate field, can be done in the GPU
+                    for (i = 0; i < fieldlen; i++) { //accumulate field, can be done in the GPU
                         field[fieldlen + i] += field[i];
                     }
                 }
@@ -3664,12 +3666,14 @@ is more than what your have specified (%d), please use the -H option to specify 
          * For MATLAB mex file, the data is copied to a pre-allocated buffer \c cfg->export* as a return variable
          */
         if (cfg->exportfield) {
-            for (i = 0; i < (int)fieldlen; i++)
+            size_t i;
+
+            for (i = 0; i < fieldlen; i++)
                 #pragma omp atomic
                 cfg->exportfield[i] += field[i];
 
             if (cfg->outputtype == otRF && rfimag) {
-                for (i = 0; i < (int)fieldlen; i++)
+                for (i = 0; i < fieldlen; i++)
                     #pragma omp atomic
                     cfg->exportfield[i + fieldlen] += rfimag[i];
             }
@@ -3708,16 +3712,16 @@ is more than what your have specified (%d), please use the -H option to specify 
                 kahanc = 0.f;
 
                 if (cfg->outputtype == otEnergy) {
-                    int fieldlenPsrc = fieldlen / cfg->srcnum;
+                    size_t j, fieldlenPsrc = fieldlen / cfg->srcnum;
 
-                    for (iter = 0; iter < fieldlenPsrc; iter++) {
-                        mcx_kahanSum(&energyabs[i], &kahanc, cfg->exportfield[iter * cfg->srcnum + i]);
+                    for (j = 0; j < fieldlenPsrc; j++) {
+                        mcx_kahanSum(&energyabs[i], &kahanc, cfg->exportfield[j * cfg->srcnum + i]);
                     }
                 } else {
-                    int j;
+                    size_t j;
 
                     for (iter = 0; iter < (int)gpu[gpuid].maxgate; iter++)
-                        for (j = 0; j < (int)dimlen.z; j++) {
+                        for (j = 0; j < dimlen.z; j++) {
                             mcx_kahanSum(&energyabs[i], &kahanc, cfg->exportfield[iter * dimxyz + (j * cfg->srcnum + i)]*mcx_updatemua((uint)cfg->vol[j], cfg));
                         }
                 }

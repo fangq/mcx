@@ -299,7 +299,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg);
 void mcx_usage(Config* cfg, char* exename);
 void mcx_printheader(Config* cfg);
 void mcx_loadvolume(char* filename, Config* cfg, int isbuf);
-void mcx_normalize(float field[], float scale, int fieldlen, int option, int pidx, int srcnum);
+void mcx_normalize(float field[], float scale, size_t fieldlen, int option, int pidx, int srcnum);
 void mcx_kahanSum(float* sum, float* kahanc, float input);
 int  mcx_readarg(int argc, char* argv[], int id, void* output, const char* type);
 void mcx_printlog(Config* cfg, char* str);

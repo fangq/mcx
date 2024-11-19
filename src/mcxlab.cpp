@@ -261,7 +261,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             /** Initialize all buffers necessary to store the output variables */
             if (nlhs >= 1 && cfg.issave2pt) {
-                int fieldlen = cfg.dim.x * cfg.dim.y * cfg.dim.z * (int)((cfg.tend - cfg.tstart) / cfg.tstep + 0.5) * cfg.srcnum;
+                size_t fieldlen = cfg.dim.x * cfg.dim.y * cfg.dim.z * (int)((cfg.tend - cfg.tstart) / cfg.tstep + 0.5) * cfg.srcnum;
 
                 if (cfg.replay.seed != NULL && cfg.replaydet == -1) {
                     fieldlen *= cfg.detnum;
@@ -392,7 +392,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             /** if the 1st output presents, output the fluence/energy-deposit volume data */
             if (nlhs >= 1) {
-                int fieldlen;
+                size_t fieldlen;
                 fielddim[0] = cfg.srcnum * cfg.dim.x;
                 fielddim[1] = cfg.dim.y;
                 fielddim[2] = cfg.dim.z;
@@ -410,16 +410,16 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[5] *= (cfg.extrasrclen + 1);
                 }
 
-                fieldlen = fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
+                fieldlen = (size_t)fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
 
                 if (cfg.issaveref && cfg.exportfield) {
                     int highdim = fielddim[3] * fielddim[4] * fielddim[5];
-                    int voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
+                    size_t voxellen = cfg.dim.x * cfg.dim.y * cfg.dim.z;
                     float* dref = (float*)malloc(fieldlen * sizeof(float));
 
                     memcpy(dref, cfg.exportfield, fieldlen * sizeof(float));
 
-                    for (int voxelid = 0; voxelid < voxellen; voxelid++) {
+                    for (size_t voxelid = 0; voxelid < voxellen; voxelid++) {
                         if (cfg.vol[voxelid]) {
                             for (int gate = 0; gate < highdim; gate++)
                                 for (int srcid = 0; srcid < cfg.srcnum; srcid++) {

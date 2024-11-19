@@ -1190,7 +1190,7 @@ void mcx_printlog(Config* cfg, char* str) {
  * @param[in] option: if set to 2, only normalize positive values (negative values for diffuse reflectance calculations)
  */
 
-void mcx_normalize(float field[], float scale, int fieldlen, int option, int pidx, int srcnum) {
+void mcx_normalize(float field[], float scale, size_t fieldlen, int option, int pidx, int srcnum) {
     int i;
 
     for (i = 0; i < fieldlen; i++) {
