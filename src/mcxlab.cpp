@@ -1130,8 +1130,12 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         arraydim = mxGetDimensions(item);
         dimtype dimz = 1;
 
-        if (mxGetNumberOfDimensions(item) == 3) {
+        if (mxGetNumberOfDimensions(item) >= 3) {
             dimz = arraydim[2];
+        }
+
+        if (mxGetNumberOfDimensions(item) == 4) {
+            dimz *= arraydim[3];
         }
 
         double* val = mxGetPr(item);

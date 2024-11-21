@@ -2852,7 +2852,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         MCX_ERROR(-1, "Optode.Source.Pattern JData-annotated array must be in the 'single' format");
                     }
 
-                    if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && cfg->srctype == MCX_SRC_PATTERN) {
+                    if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) {
                         cfg->srcnum = dims[0];
                     }
                 } else {

@@ -1282,10 +1282,10 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                             p->w = 1.f;
                         }
-                    } else if (gcfg->srctype == MCX_SRC_FOURIER)
+                    } else if (gcfg->srctype == MCX_SRC_FOURIER) {
                         p->w = launchsrc->pos.w * (cosf((floorf(launchsrc->param1.w) * rx + floorf(launchsrc->param2.w) * ry
                                                          + launchsrc->param1.w - floorf(launchsrc->param1.w)) * TWO_PI) * (1.f - launchsrc->param2.w + floorf(launchsrc->param2.w)) + 1.f) * 0.5f; //between 0 and 1
-                    else if (gcfg->srctype == MCX_SRC_PENCILARRAY) {
+                    } else if (gcfg->srctype == MCX_SRC_PENCILARRAY) {
                         p->x = launchsrc->pos.x + floorf(rx * launchsrc->param1.w) * launchsrc->param1.x / (launchsrc->param1.w - 1.f) + floorf(ry * launchsrc->param2.w) * launchsrc->param2.x / (launchsrc->param2.w - 1.f);
                         p->y = launchsrc->pos.y + floorf(rx * launchsrc->param1.w) * launchsrc->param1.y / (launchsrc->param1.w - 1.f) + floorf(ry * launchsrc->param2.w) * launchsrc->param2.y / (launchsrc->param2.w - 1.f);
                         p->z = launchsrc->pos.z + floorf(rx * launchsrc->param1.w) * launchsrc->param1.z / (launchsrc->param1.w - 1.f) + floorf(ry * launchsrc->param2.w) * launchsrc->param2.z / (launchsrc->param2.w - 1.f);
@@ -3223,12 +3223,13 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     CUDA_ASSERT(cudaMemcpy(genergy, energy, sizeof(float) * (gpu[gpuid].autothread << 1), cudaMemcpyHostToDevice));
 
-    if (cfg->srcpattern)
+    if (cfg->srcpattern) {
         if (cfg->srctype == MCX_SRC_PATTERN) {
             CUDA_ASSERT(cudaMemcpy(gsrcpattern, cfg->srcpattern, sizeof(float) * (int)(cfg->srcparam1.w * cfg->srcparam2.w * cfg->srcnum), cudaMemcpyHostToDevice));
         } else if (cfg->srctype == MCX_SRC_PATTERN3D) {
             CUDA_ASSERT(cudaMemcpy(gsrcpattern, cfg->srcpattern, sizeof(float) * (int)(cfg->srcparam1.x * cfg->srcparam1.y * cfg->srcparam1.z * cfg->srcnum), cudaMemcpyHostToDevice));
         }
+    }
 
     /**
      * Copy constants to the constant memory on the GPU
@@ -3695,11 +3696,15 @@ is more than what your have specified (%d), please use the -H option to specify 
      */
     #pragma omp master
     {
-        if (cfg->issave2pt && cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
+        if (cfg->issave2pt && (cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
             srcpw = (float*)calloc(cfg->srcnum, sizeof(float));
             energytot = (float*)calloc(cfg->srcnum, sizeof(float));
             energyabs = (float*)calloc(cfg->srcnum, sizeof(float));
             int psize = (int)cfg->srcparam1.w * (int)cfg->srcparam2.w;
+
+            if (cfg->srctype == MCX_SRC_PATTERN3D) {
+                psize = (int)cfg->srcparam1.x * (int)cfg->srcparam1.y * (int)cfg->srcparam1.z;
+            }
 
             for (i = 0; i < int(cfg->srcnum); i++) {
                 float kahanc = 0.f;
@@ -3804,9 +3809,13 @@ is more than what your have specified (%d), please use the -H option to specify 
             /**
              * In photon sharing mode, where multiple pattern sources are simulated, each solution is normalized separately
              */
-            if (cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
+            if ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) && cfg->srcnum > 1) { // post-processing only for multi-srcpattern
                 float scaleref = scale[0];
                 int psize = (int)cfg->srcparam1.w * (int)cfg->srcparam2.w;
+
+                if (cfg->srctype == MCX_SRC_PATTERN3D) {
+                    psize = (int)cfg->srcparam1.x * (int)cfg->srcparam1.y * (int)cfg->srcparam1.z;
+                }
 
                 for (i = 0; i < int(cfg->srcnum); i++) {
                     scale[i] = psize / srcpw[i] * scaleref;
@@ -3920,7 +3929,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                     ((cfg->issavedet == FILL_MAXDETPHOTON) ? cfg->energytot : ((double)cfg->nphoton * ((cfg->respin > 1) ? (cfg->respin) : 1))) / max(1, cfg->runtime));
         fflush(cfg->flog);
 
-        if (cfg->issave2pt && cfg->srctype == MCX_SRC_PATTERN && cfg->srcnum > 1) {
+        if (cfg->issave2pt && (cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) && cfg->srcnum > 1) {
             for (i = 0; i < (int)cfg->srcnum; i++) {
                 MCX_FPRINTF(cfg->flog, "source #%d total simulated energy: %.2f\tabsorbed: " S_BOLD "" S_BLUE "%5.5f%%" S_RESET"\n(loss due to initial specular reflection is excluded in the total)\n",
                             i + 1, energytot[i], energyabs[i] / energytot[i] * 100.f);
