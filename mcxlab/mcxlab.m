@@ -560,6 +560,8 @@ if (nargout >= 2)
             flags = {cfg(i).savedetflag};
             if (isfield(cfg(i), 'issaveref'))
                 flags{end + 1} = cfg(i).issaveref;
+            else
+                flags{end + 1} = 0;
             end
             if (isfield(cfg(i), 'srcnum'))
                 flags{end + 1} = cfg(i).srcnum;
