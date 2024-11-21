@@ -105,7 +105,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         free(mcx_config.vol);
     }
 
-    unsigned int dim_xyz = 0;
+    size_t dim_xyz = 0;
 
     // Data type-specific logic
     if (py::array_t<int8_t>::check_(volume_handle)) {
@@ -1091,9 +1091,9 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
 
         /** Initialize all buffers necessary to store the output variables */
         if (mcx_config.issave2pt == 1) {
-            int field_len =
+            size_t field_len =
                 static_cast<int>(mcx_config.dim.x) * static_cast<int>(mcx_config.dim.y) * static_cast<int>(mcx_config.dim.z) *
-                (int) ((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5) * mcx_config.srcnum;
+                (size_t) ((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5) * mcx_config.srcnum;
 
             if (mcx_config.replay.seed != nullptr && mcx_config.replaydet == -1) {
                 field_len *= mcx_config.detnum;
@@ -1218,7 +1218,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         }
 
         if (mcx_config.issave2pt) {
-            int field_len;
+            size_t field_len;
             field_dim[0] = mcx_config.srcnum * mcx_config.dim.x;
             field_dim[1] = mcx_config.dim.y;
             field_dim[2] = mcx_config.dim.z;
