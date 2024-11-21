@@ -189,6 +189,7 @@ jobs:
         run: |
           [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ls '/c/Windows/System32/vcomp1*.dll'
             upx/upx-4.0.2-win64/upx mcxlab/mcx.mex*
             7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           else
