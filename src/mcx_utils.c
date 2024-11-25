@@ -1493,6 +1493,11 @@ void mcx_preprocess(Config* cfg) {
         cfg->issavedet = 0;
     }
 
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF)
+            && cfg->seed != SEED_FROM_FILE) {
+        MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
+    }
+
     // if neither trajectory or polarization is enabled, disable istrajstokes flag
     if (!(cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) || !((cfg->mediabyte <= 4) && (cfg->polmedianum > 0))) {
         cfg->istrajstokes = 0;
@@ -2852,7 +2857,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         MCX_ERROR(-1, "Optode.Source.Pattern JData-annotated array must be in the 'single' format");
                     }
 
-                    if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) {
+                    if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && (cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D)) {
                         cfg->srcnum = dims[0];
                     }
                 } else {
@@ -3764,11 +3769,6 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
 
     if (cfg->seed < 0 && cfg->seed != SEED_FROM_FILE) {
         cfg->seed = time(NULL);
-    }
-
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF)
-            && cfg->seed != SEED_FROM_FILE) {
-        MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
     }
 
     for (i = 0; i < cfg->detnum; i++) {
