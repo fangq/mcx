@@ -52,7 +52,12 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #include <cuda.h>
 #include "cuda_fp16.h"
 
-#ifdef USE_DOUBLE
+#if defined(USE_FREQUENCY_DOMAIN)
+    #include "mcx_cucomplex.cu"
+    typedef cuFloatComplex OutputType;
+    #define SHADOWCOUNT 1
+    #define ZERO        0.f
+#elif defined(USE_DOUBLE)
     typedef double OutputType;
     #define SHADOWCOUNT 1
     #define ZERO        0.0
