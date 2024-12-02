@@ -69,6 +69,7 @@ for i = 1:len
     end
 
     hseg = [];
+    hbbx = [];
     if (isfield(cfg(i), 'vol') && ~isfield(cfg(i), 'node'))
         % render mcxlab voxelated domain
         dim = size(cfg(i).vol);
@@ -106,7 +107,7 @@ for i = 1:len
         no = cfg(i).node * voxelsize;
         hseg = zeros(length(etypes), 1);
         for id = 1:size(etypes, 1)
-            hseg(id) = plotmesh(no, [], cfg(i).elem(elemtype == etypes(id), :), 'facealpha', 0.3, 'linestyle', 'none', 'facecolor', surfcolors(etypes(id) + 1, :), varargin{:});
+            hseg(id) = plotmesh(no, [], cfg(i).elem(elemtype == etypes(id), :), 'facealpha', 0.3, 'linestyle', ':', 'facecolor', surfcolors(etypes(id) + 1, :), varargin{:});
         end
     end
 
@@ -126,7 +127,11 @@ for i = 1:len
     cfg(i).srcpos = cfg(i).srcpos;
     srcpos = cfg(i).srcpos * voxelsize;
     hsrc = plotmesh(srcpos, 'r*');
-    srcvec = cfg(i).srcdir * 10 * voxelsize;
+    if (isfield(cfg(i), 'steps'))
+        srcvec = cfg(i).srcdir * 10 * cfg(i).steps(1);
+    else
+        srcvec = cfg(i).srcdir * 10 * voxelsize;
+    end
     headsize = 1e2;
     if (isoctavemesh)
         headsize = 0.5;
@@ -189,9 +194,27 @@ for i = 1:len
         end
     end
 
+    % rendering detectors
+    hnoderoi = [];
+    if (isfield(cfg(i), 'noderoi') && isfield(cfg(i), 'node'))
+        for id = 1:size(cfg(i).noderoi, 1)
+            if (cfg(i).noderoi(id) > 0)
+                noderoi = cfg(i).noderoi(id) * voxelsize;
+                [sx, sy, sz] = sphere;
+                hnoderoi(id) = surf(sx * noderoi + (cfg(i).node(id, 1)), ...
+                                    sy * noderoi + (cfg(i).node(id, 2)), ...
+                                    sz * noderoi + (cfg(i).node(id, 3)), ...
+                                    'facealpha', 0.3, 'facecolor', 'm', 'linestyle', 'none');
+            end
+        end
+    end
+
+    hlight = light;
+    hcamlight = camlight;
+
     % combining all handles
     if (nargout > 0)
-        hs{i} = struct('bbx', hbbx, 'seg', hseg, 'src', hsrc, 'srcarrow', hdir, 'srcarea', hsrcarea, 'det', hdet);
+        hs{i} = struct('bbx', hbbx, 'seg', hseg, 'src', hsrc, 'srcarrow', hdir, 'srcarea', hsrcarea, 'det', hdet, 'noderoi', hnoderoi, 'light', hlight, 'camlight', hcamlight);
     end
 end
 
