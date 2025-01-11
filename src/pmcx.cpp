@@ -1026,7 +1026,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
     // Output arguments parsing
     GET_SCALAR_FIELD(user_cfg, mcx_config, issave2pt, py::bool_);
-    GET_SCALAR_FIELD(user_cfg, mcx_config, issavedet, py::bool_);
+    GET_SCALAR_FIELD(user_cfg, mcx_config, issavedet, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, issaveseed, py::bool_);
 
     // Flush the std::cout and std::cerr
@@ -1110,7 +1110,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             mcx_config.exportfield = (float*) calloc(field_len, sizeof(float));
         }
 
-        if (mcx_config.issavedet == 1) {
+        if (mcx_config.issavedet >= 1) {
             mcx_config.exportdetected = (float*) malloc(hostdetreclen * mcx_config.maxdetphoton * sizeof(float));
         }
 
@@ -1200,7 +1200,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             }
         }
 
-        if (mcx_config.issavedet == 1) {
+        if (mcx_config.issavedet >= 1) {
             field_dim[0] = hostdetreclen;
             field_dim[1] = mcx_config.detectedcount;
             field_dim[2] = 0;
