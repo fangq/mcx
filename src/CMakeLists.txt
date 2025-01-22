@@ -71,6 +71,8 @@ cuda_add_library(mcx STATIC
     mcx_mie.h
     mcx_tictoc.c
     mcx_tictoc.h
+    mcx_neurojson.cpp
+    mcx_neurojson.h
     cjson/cJSON.c
     cjson/cJSON.h
     ubj/ubj.h
