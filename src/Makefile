@@ -79,7 +79,7 @@ CPPFLAGS+=-g -Wall #-pedantic #-DNO_LZMA # -DUSE_OS_TIMER
 OBJSUFFIX=.o
 EXESUFFIX=
 
-FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_mie cjson/cJSON ubj/ubjw
+FILES=mcx_core mcx_utils mcx_shapes mcx_tictoc mcx mcx_bench mcx_neurojson mcx_mie cjson/cJSON ubj/ubjw
 
 ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CC=nvcc
