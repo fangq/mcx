@@ -36,6 +36,11 @@
 
 #define ALLOC_CHUNK  4096
 
+#ifdef _WIN32
+    #define popen   _popen
+    #define pclose  _pclose
+#endif
+
 int runcommand(char* cmd, char* param, char** output) {
     int len = ALLOC_CHUNK, pos = 0;
     char buffer[256] = {'\0'}, fullcmd[ALLOC_CHUNK] = {'\0'};
