@@ -18,7 +18,43 @@ Table of Content:
 
 == #  What's New ==
 
-MCX v2025 main features.
+MCX v2025 is a maintenance release with multiple bug fixes and minor new features. It is highly
+recommended to upgrade for all users.
+
+Notable major bug fixes include
+* a high priority bug #222, introduced in 198cd34, was fixed. this bug affects all simulations \
+  since v2023. Particularly, when a photon has a long pathlength, with weight drops to numerical 0, \
+  its pathlength data is carried in the immediately launched new photon, causing skews in the \
+  detected photon pathlength distributions
+* further updates to the handling of low absorption medium (#164), previously affect not-so-low mua values
+* a bug fix related to multi-source simulation to properly return the source ID (#217)
+* fix angleinvcdf and invcdf in pmcx that was previously not enabled (#233)
+* fix svmc flipped normal direction only in mcxlab for Octave (#221)
+* fix continuous media nan handling (#224, #225)
+* fix the bug that prevents the use of photon-sharing with pattern3d source
+* correctly store detector ID and initial launch pixel index in pattern3d photon-sharing simulations
+* for all brain related simulations, we have updated the CSF mua value of 0.004/mm that was \
+  previously used in Custo et al. 2006 paper to 0.0004/mm, matching its upstream reference Strangman et al. 2003. \
+  However, we want to highlight that both literature may not provide the best mua value for CSF - as such low \
+  mua/mus CSF properties are mostly for CSF in the inner part of the brain, but not representiative to those in \
+  the subarachnoid space. A few literature have shown that CSF in the subarachnoid space may have a higher \
+  mus' value, in the range between 0.16/mm to 0.32/mm, as shown in Okada et al. 2003
+
+* [Okada_2003] E. Okada and D. T. Delpy, “Near-infrared light propagation in an adult head model. I. Modeling of low-level scattering in the cerebrospinal fluid layer,” Applied Optics 42, 2906–2914 (2003)
+* [Custo_2006] A. Custo, W. M. Wells III., A. H. Barnett, et al., “Effective scattering coefficient of the cerebral spinal fluid in adult head models for diffuse optical imaging,” Applied Optics 45, 4747 (2006)
+* [Strangman_2003] G. Strangman, M. A. Franceschini, and D. A. Boas, “Factors affecting the accuracy of near-infrared spectroscopy concentration calculations for focal changes in oxygenation parameters,” NeuroImage 18, 865–879 (2003)
+
+
+In addition, in this release, we also added the following key new features
+
+* the new `-N/--net` command line flag allows one to browse and run growing number of community-contributed \
+  simulations hosted on https://neurojson.io (one can browse the list at https://neurojson.org/db/mcx)
+* mcx can read stdin (standard input) using pipe, allow one to use advanced text processing utilities in the shell, \
+  such as `sed, perl, jq` to modify JSON inputs at runtime. For example `mcx -N cube60 | jq '.Forward.Dt=1e-10' | mcx -f`
+* a new shortcut option `-Q` for `--bench` to conveniently browse and run built-in benchmarks
+* a new demo script `demo_mcxlab_replay_traj.m` to show how to use replay to produce trajectories between source/detector
+* mcxlab and pmcx cam set cfg.flog=1 or 0 to disable printing of mcx banner
+* setting a negative detector radius creates excluded detection areas, making it possible to create ring-shaped detectors
 
 The detailed updates can be found in the below change log
 
