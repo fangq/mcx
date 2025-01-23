@@ -4,7 +4,7 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 
 -   Author: Qianqian Fang (q.fang at neu.edu)
 -   License: GNU General Public License version 3 (GPLv3)
--   Version: 2.6.pre (v2024.6, Jumbo Jolt)
+-   Version: 2.6 (v2025, Jumbo Jolt)
 -   Website: <https://mcx.space>
 -   Download: <https://mcx.space/wiki/?Get>
 
@@ -42,123 +42,81 @@ Table of Content:
 What's New
 -------------
 
-MCX v2024.2 contains both major new features and critical bug fixes.
-It is a strongly recommended upgrade for all users.
-
-Specifically, MCX v2024.2 received three important new features:
-
-* user-defined photon launch angle distribution (fangq/mcx#13)
-* simulate multiple sources in a single session (fangq/mcx#163)
-* per-voxel mua/mus/g/n format support (fangq/mcx#203)
-
-Similar to the user-defined phase-function feature included in
-MCX v2023, the first feature allows users to define the zenith angle distribution for
-launching a photon, relative to the source-direction vector, also via
-a discretized inverse CDF (cumulative distribution function).
-In MATLAB/Octave, they can be set as `cfg.invcdf` or `cfg.angleinvcdf`, 
-respectively. We provided ready-to-use demo scripts in 
-`mcxlab/examples/demo_mcxlab_phasefun.m` and `demo_mcxlab_launchangle.m`.
-
-The second feature allow users to specify more then one sources of the
-same type when defining `srcpos`, `srcdir`, `srcparam1` and `srcparam2`.
-Each source can have independent weight controled by the 4th element of srcpos.
-
-Aside from new features, a severe bug was discovered that affects all 
-`pattern` and `pattern3d` simulations that do not use photon-sharing, 
-please see
-
-https://github.com/fangq/mcx/issues/212
-
-Because of this bug, MCX/MCX-CL in older releases has been simulating squared
-pattern/pattern3d data instead of the pattern itself. If your simulation
-uses these two source types and you do not use photon-sharing (i.e. simulating
-multiple patterns together), please upgrade your MCX/MCX-CL and rerun your
-simulations. This bug only affect volumetric fluence/flux outputs; it does not
-affect diffuse reflectance outputs or binary patterns.
-
-It also includes a bug fix from fangq/mcx#195 regarding precision loss when
-saving diffuse reflectance.
-
-We want to thank Haohui Zhang for reporting a number of critical issues
-(fangq/mcx#195 and fangq/mcx#212), Liam Keegan for contributing a patch
-to extend the slit source (fangq/mcx#214). ShijieYan and fanyuyen have also contributed
-to the bug fixes and improvements.
+MCX v2025 main features.
 
 The detailed updates can be found in the below change log
 
-* 2024-03-13 [abdee14] [bug] fix multi-source replay bug, close #215
-* 2024-03-11 [9250a0d] [doc] make final doc update, bump pmcx to v0.3.2
-* 2024-03-10 [4e7f404] [ci] revert to windows-2019, add help info for #214, add note on nvidia-uvm
-* 2024-03-10 [2750d70] [ci] choco install is failing on Windows, see actions/runner-images#9477
-* 2024-03-10 [7b6e0e0] [optimize] cut hyperboloid gaussian register use from 15 to 3, #127,#214
-* 2024-03-10 [a2279d6] [optimize] reduce gaussian slit register use from 9 to 2, #214
-* 2024-03-08 [4708e10] [doc] Create pull_request_template.md
-* 2024-03-08 [14ca45d] [feat] use 'make register' to report register counts in the Makefile
-* 2024-03-07 [411a007] [feat] add gaussian broadening to slit source (contributed by Liam Keegan, #214)
-* 2024-03-04 [1e6c403] [doc] update instructions on running mcx on hybrid GPU Linux laptops
-* 2024-03-04 [0344d84] [bug] fix cuda core count for Ada and Blackwell
-* 2024-02-27 [558dbab] [pmcx] bump pmcx to 0.2.12 after fixing critical bug #212
-* 2024-02-27 [8e03878] \*[bug] critical: fix double-multiplication of pattern launched weight, fix #212
-* 2024-02-23 [61ae0b8] [bug] fix detid value #209
-* 2024-02-23 [90e2419] [bug] fix pmcx dettpsf overwrites input bug
-* 2024-02-21 [744fba2] [bug] update srcparam2 after volume preprocessing close #206
-* 2024-02-18 [dbb23be] [ci] test removing lazhelphtml.pas to avoid error on linux/macos runners
-* 2024-02-18 [4c88de2] [ci] test fix for lazarus 3.0 build error on macos action
-* 2024-02-18 [54f732e] [mcxcloud] support backup servers, support x/y/z slice view and time-gates
-* 2024-02-16 [8a8ff90] [ci] install libomp before downgrade xcode
-* 2024-02-16 [99ca38f] [ci] test libomp error on macos runners
-* 2024-02-13 [cb9b6c2] [doc] update openjdata to neurojson
-* 2024-02-04 [007ecce] [feat] accept 3-element srcparam1/srcparam2 in mcxlab/pmcx
-* 2024-01-23 [20b0aa2] [minor] debug addlog callback error
-* 2024-01-23 [f63f73b] [bug] fix chrome webpage error messages
-* 2024-01-11 [73fe834] [mcxcloud] add the missing flag to show optional json fields
-* 2024-01-01 [0eb1a48] [doc] update changelog
-* 2024-01-01 [4232764] [mcxlab] add speed comparison between different media formats
-* 2024-01-01 [3bca606] [minor] fix typo
-* 2024-01-01 [51003bc] \*[format] automatic format all matlab script with miss_hit
-* 2024-01-01 [9951dd8] [minor] update copyright year
-* 2024-01-01 [0f48b8f] [format] update source unit header info
-* 2024-01-01 [6707eaa] [bug] fix detp output bug after adding srcid, #163
-* 2024-01-01 [49b5cef] [ci] update lazarus on windows to avoid build crash
-* 2024-01-01 [9dc832d] \*[feat] support --srcid to simulate all, one or separate sources, #163
-* 2023-12-31 [f5b4aaa] [minor] fix file name spelling
-* 2023-12-30 [7e1aec0] \*[feat] simulate multiple sources, close #163
-* 2023-12-29 [59f18a7] \*[feat] complete per-voxel mua/mus/g/n format support, close #203
-* 2023-12-29 [1e3b031] [feat] initial implementation of mua/mus/g/n all float format
-* 2023-12-29 [1100e36] [bug] fix mcx2json bug when exporting 4D vol, fix #200
-* 2023-12-17 [9831c7e] [debug] print jdata compression message inside matlab
-* 2023-11-27 [28e5101] [pmcx] bump pmcx version to 0.2.7
-* 2023-11-27 [fae5b72] [pmcx] typecast traj.id from float to uint32, fix #199
-* 2023-11-16 [4eec905] [mcxlab] add demo script comparing conv vs direct area src
-* 2023-11-10 [6771752] [ci] fix matlab mex error after mingw64 was removed, matlab-actions/setup-matlab#75
-* 2023-11-08 [f4aec48] [ci] test conda command to install octave on mac
-* 2023-11-08 [c976cbf] [ci] brew refuses to install octave, switch to conda
-* 2023-11-07 [325a522] [release] post v2023 release action
-* 2023-11-07 [a710ab3] allow converting integer cfg.vol to json
-* 2023-10-31 [d6c64e4] [test] fix rng test after make double
-* 2023-10-30 [08361eb] [pmcx] bump pmcx to v0.2.6 with dref fix #195
-* 2023-10-30 [9220578] \*[bug] apply #41 like 2xfloat-buffer for dref accumulation, fix #195
-* 2023-10-24 [961d059] pattern json data rstrict to single,set show_opt_in option
-* 2023-10-24 [5f130fc] use 2d pattern by default
-* 2023-10-24 [db608f7] use jq to format json schema; add Source.Pattern in schema
-* 2023-10-14 [4c365f9] update zh-cn translation
-* 2023-10-12 [8d23726] fix windows ci error
-* 2023-10-12 [2904cc3] avoid error when compressing binaries
-* 2023-10-12 [2ebe3de] include language locale files in github CI build
-* 2023-10-12 [5782cff] enable DefaultTranslator for i18n support in mcxstudio
-* 2023-10-11 [833d117] add compiled mo locale file
-* 2023-10-11 [ad298c1] add initial translation for simplified Chinese
-* 2023-10-11 [aa15780] add strings from additional forms
-* 2023-10-10 [14285a0] \*prepare for adding i18n support
-* 2023-10-10 [c5496ac] \*force invcdf/angleinvcdf even count of float, reapply 53d7ac0, fix #193
-* 2023-10-09 [ca1bf2b] use focal-length to select interpolation or discrete mode, #129
-* 2023-10-08 [be8b8c3] \*support user-defined launch angle profile, fix #129
-* 2023-10-03 [2ad9307] update winget package files to the v2023 release
-* 2023-10-03 [26ede84] rename winget package file
-* 2023-10-03 [2e71a51] treat cfg->bc as a null-ending string, #191 #192
-* 2023-10-03 [68db492] make cfg->bc a null terminated string
-* 2023-10-02 [35170f9] Merge pull request #192 from lkeegan/pmcx_bc_overflow_error
-* 2023-10-02 [3c77170] Fix buffer overflow error when bc has 12 characters
+* 2025-01-22 [24b445e] [bug] fix incorrect per-voxel pathlength when mua->0, #164
+* 2025-01-21 [1f536ba] [bug] fix windows -N error
+* 2025-01-21 [aeca212] [cmake] update cmake to add -N support
+* 2025-01-21 [134ab82] [ci] fix windows msvc compilation error
+* 2025-01-21 [12071fd] [feat] add -N/--net to download simulations from NeuroJSON.io, add -Q
+* 2025-01-10 [cf10d5f] [pmcx] Parse issavedet field of the cfg dict as an int instead of a bool.
+* 2025-01-03 [8f433e9] [feat] allow plotting logical arrays in mcxplotvol
+* 2024-12-15 [eafea84] [feat] polish and miss_hit format of `demo_mcxlab_replay_traj.m`
+* 2024-12-15 [82e100b] [feat] add missing demo_mcxlab_replay_traj.m script
+* 2024-12-11 [22bf12a] [bug] fix mcxlab castlist
+* 2024-12-04 [86dcba9] [bug] force most scalar inputs to be double to avoid incorrect typecasting
+* 2024-11-25 [4b7020d] [ci] upgrade pmcx macos build to macos-13
+* 2024-11-25 [51e9970] [bug] fix mcx crash when replay is requested without seed file
+* 2024-11-22 [e8907db] [ci] include vcomp140.dll in windows binary
+* 2024-11-22 [2902119] [ci] further test vcomp140
+* 2024-11-22 [c3d413d] [ci] find vcomp140.dll
+* 2024-11-21 [4f1335c] [ci] print vcomp1xx.dll path
+* 2024-11-21 [d033755] [bug] apply patch in #235 to pmcx, bump pmcx to v0.3.6
+* 2024-11-21 [744c088] [bug] correctly return integer based w0 and detid in pattern3d
+* 2024-11-21 [dcf11c4] [bug] enable photon sharing for pattern3d source
+* 2024-11-18 [bd62362] [bug] fix mcxlab crash with >2^31-1 voxels, fix #235, revert #164
+* 2024-11-13 [188338b] [feat] negative detector radius captures but does not save photons
+* 2024-11-12 [dfc704f] [ci] reduce macos binary size using strip
+* 2024-11-12 [7d33c14] [ci] disable octave download on macos
+* 2024-11-12 [43e7416] [ci] download octave app with -L
+* 2024-11-12 [c978a3e] [ci] use octave app on macos
+* 2024-11-12 [30cc3cb] [ci] upload macos mcx package
+* 2024-11-12 [24d1257] [ci] downgrade download-artifact as it does not support multiple jobs
+* 2024-11-10 [f17dcc6] [bug] fix mcxlab crash when using issave2pt=0 with photonsharing
+* 2024-11-09 [8c69db3] [ci] update setup.py for pmcx
+* 2024-11-09 [fd83829] [ci] disable CMAKE_RANLIB
+* 2024-11-09 [dbada19] [ci] debug ranlib
+* 2024-11-09 [208c31d] [ci] use verbose option to debug macos build flags
+* 2024-11-09 [4e0c672] [bug] fix maskdet 1cube test
+* 2024-11-08 [ee5be15] [feat] make onecube benchmark maskdet work, fix --dumpmask
+* 2024-11-08 [f2d3bc4] [feat] support 1x1x1 volume, add onecube/twocube benchmarks, det not working
+* 2024-11-06 [eaafb0b] [feat] disabling issaveref if issave2pt is false
+* 2024-10-09 [0411ec6] Fix data ordering in traj.iquv
+* 2024-09-25 [8c0cfec] [pmcx] bump up pmcx version to 0.3.5 after fixing #233
+* 2024-09-25 [58dec12] [bug] angleinvcdf and invcdf are not read in full in pmcx, fix #233
+* 2024-09-14 [7b8ecb6] [ci] restore macos-12
+* 2024-09-13 [6fbf3db] [bug] fix the potential typo in Custo et al for CSF mua, fix #232
+* 2024-09-03 [c9456a7] [ci] fix action alert related to download-artifact
+* 2024-08-22 [70f95ba] [pmcx] fix CI error for pmcx
+* 2024-08-22 [82fb8f1] [feat] allow mcxlab and pmcx to use cfg.flog to control log printing
+* 2024-08-18 [17e347c] [bug] fix lzma memory leakage, NeuroJSON/zmat#11, lloyd/easylzma#4
+* 2024-08-06 [5cc92ab] [bug] avoid using the same RNG seed when -E -1 on multiple GPUs
+* 2024-08-06 [3c480b6] [doc] clarify the default RNG seed (1648335518) in html doc
+* 2024-07-22 [d8959eb] [ci] update macos-11 to 12 as 11 no longer works
+* 2024-07-14 [b17cb1a] [bug] mcxplotshapes patch by ChenJY-L to plot Box, close #227
+* 2024-07-14 [78716e4] [bug] avoid overwriting mua/mus when one is nan, fix #224, fix #225
+* 2024-07-04 [80b5794] [bug] read g and n when mua or mus=nan in asgn_float, close #225, close #224
+* 2024-06-22 [f959c71] [bug] store reflection position in trajectory
+* 2024-06-19 [4ff5b60] [bug] print large photon numbers without overflow
+* 2024-06-11 [d66a0a3] [test] sync test script between mcx and mcxcl after fangq/mcxcl#57
+* 2024-06-11 [1e7d0f1] [bug] reset replay.tof when tof exceeds tend, like fangq/mcxcl#57
+* 2024-06-07 [026eebf] [bug] ensure to clear shared mem buffer regardless of weight, #222
+* 2024-06-06 [b41c915] [bug] fix skewed nscat distribution, fix #222
+* 2024-06-05 [654dff1] [bug] fix outputtype error in json2mcx, reformat with miss_hit
+* 2024-06-05 [25b0268] [feat] export iquv in trajectory data when cfg.istrajstokes=1
+* 2024-05-18 [0a76d17] [bug] fix mcxsvmc flipped normal direction in octave, fix #221
+* 2024-05-18 [2f42524] [ci] downgrade matlab from v2024a to v2022a
+* 2024-05-14 [56aa355] [doc] update jsonlan and neurojson toolbox download links
+* 2024-04-25 [ea67ea9] [bug] avoid double-base64-encoding when -Z 2 is used, fix #219
+* 2024-03-28 [3b7e11c] [doc] fix incorrect default value for gscatter
+* 2024-03-25 [b4706ae] [release] update winget mcxstudio package
+* 2024-03-18 [2953735] [doc] add documentation on the srcid output in detp and traj
+* 2024-03-18 [94961f3] [bug] return source ID in multi-source simulation, fix #217
+* 2024-03-17 [3c3d755] [release] post v2024.2 release action, close #216
+* 2024-03-17 [7902a4e] [mcxcloud] update docker image to v2024.2
+* 2024-03-15 [08bfe11] [feat] support `_ArrayData_` in Shapes volume input
 
 
 Introduction
@@ -362,8 +320,8 @@ supported parameters, as shown below:
 ```
 ###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2024 Qianqian Fang <q.fang at neu.edu>          #
-#                https://mcx.space/  &  https://neurojson.io/                 #
+#          Copyright (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>          #
+#                https://mcx.space/  &  https://neurojson.io                  #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #
@@ -373,22 +331,26 @@ supported parameters, as shown below:
 #  Open-source codes and reusable scientific data are essential for research, #
 # MCX proudly developed human-readable JSON-based data formats for easy reuse.#
 #                                                                             #
-#Please visit our free scientific data sharing portal at https://neurojson.io/#
+#Please visit our free scientific data sharing portal at https://neurojson.io #
 # and consider sharing your public datasets in standardized JSON/JData format #
 ###############################################################################
-$Rev::d593a0$v2024.2 $Date::2024-03-04 00:04:10 -05$ by $Author::Qianqian Fang$
+$Rev::aeca21 $ v2025 $Date::2025-01-21 22:37:34 -05$ by $Author::Qianqian Fang$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
 where possible parameters include (the first value in [*|*] is the default)
 
 == Required option ==
- -f config     (--input)       read an input file in .json or .inp format
-                               if the string starts with '{', it is parsed as
-                               an inline JSON input file
+ -f config     (--input)       read an input file in the .json format,if config
+                               string starts with '{',it is parsed as an inline
+                               JSON input file; if -f is followed by nothing or
+                               a single '-', it reads input from stdin via pipe
       or
- --bench ['cube60','skinvessel',..] run a buint-in benchmark specified by name
-                               run --bench without parameter to get a list
+ -Q/--bench [cube60, skinvessel,...] run a buint-in benchmark specified by name
+                               run -Q without parameter to get a list
+ -N benchmark  (--net)         get benchmark from NeuroJSON.io, -N only to list
+                               benchmark can be dataset URL,or dbname/benchname
+                               requires 'curl', install from https://curl.se/
 
 == MC options ==
  -n [0|int]    (--photon)      total photon number (exponential form accepted)
@@ -521,7 +483,7 @@ where possible parameters include (the first value in [*|*] is the default)
                                tx3 - GL texture data for rendering (GL_RGBA32F)
     the bnii/jnii formats support compression (-Z) and generate small files
     load jnii (JSON) and bnii (UBJSON) files using below lightweight libs:
-      MATLAB/Octave: JNIfTI toolbox   https://neurojson.org/download/jnifti
+      MATLAB/Octave: JNIfTI toolbox   https://neurojson.org/download/jnifty
       MATLAB/Octave: JSONLab toolbox  https://neurojson.org/download/jsonlab
       Python:        PyJData:         https://neurojson.org/download/pyjdata
       JavaScript:    JSData:          https://neurojson.org/download/jsdata
@@ -566,6 +528,7 @@ where possible parameters include (the first value in [*|*] is the default)
  --srcid  [0|-1,0,1,2,..]      -1 simulate multi-source separately;0 all sources
                                together; a positive integer runs a single source
  --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch
+ --trajstokes   [0|1]          set to 1 to save Stokes IQUV in trajectory data
  --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
                                launched outside (i.e. a widefield source)
@@ -574,18 +537,26 @@ where possible parameters include (the first value in [*|*] is the default)
                                stored (default: 1e7)
 
 == Example ==
-example: (list built-in benchmarks)
-       mcx --bench
-or (list supported GPUs on the system)
+example: (list built-in benchmarks: -Q/--net)
+       mcx -Q
+or (list supported GPUs on the system: -L/--listgpu)
        mcx -L
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)
-       mcx --bench cube60b -n 1e7 -G 1101 -W 10,10,10
+       mcx -Q cube60b -n 1e7 -G 1101 -W 10,10,10
 or (use inline domain definition)
        mcx -f input.json -P '{"Shapes":[{"ZLayers":[[1,10,1],[11,30,2],[31,60,3]]}]}'
 or (use inline json setting modifier)
        mcx -f input.json -j '{"Optode":{"Source":{"Type":"isotropic"}}}'
 or (dump simulation in a single json file)
-       mcx --bench cube60planar --dumpjson
+       mcx -Q cube60planar --dumpjson
+or (use -N/--net to browse community-contributed mcx simulations at https://neurojson.io)
+       mcx -N
+or (run user-shared mcx simulations, see full list at https://neurojson.org/db/mcx)
+       mcx -N aircube60
+or (use -f - to read piped input file modified by shell text processing utilities)
+       mcx -Q cube60 --dumpjson | sed -e 's/pencil/cone/g' | mcx -f -
+or (download/modify simulations from NeuroJSON.io and run with mcx -f)
+       curl -s -X GET https://neurojson.io:7777/mcx/aircube60 | jq '.Forward.Dt = 1e-9' | mcx -f
 ```
 
 To further illustrate the command line options, below one can find a sample command

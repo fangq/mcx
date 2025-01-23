@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2024
+**  \copyright Qianqian Fang, 2009-2025
 **
 **  \section sref Reference
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -3500,6 +3500,8 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
         for (i = 0; i < datalen; i++) {
             cfg->vol[i] = val[i];
         }
+    } else if (cfg->mediabyte == 4) {
+        memcpy(cfg->vol, inputvol, (datalen << 2));
     } else if (cfg->mediabyte == MEDIA_MUA_FLOAT) {
         union {
             float f;
@@ -4729,8 +4731,8 @@ int mcx_remap(char* opt) {
  */
 
 void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
-    int i = 1, isinteractive = 1, issavelog = 0, len;
-    char filename[MAX_PATH_LENGTH] = {0}, *jsoninput = NULL;
+    int i = 1, isinteractive = 1, len;
+    char filename[MAX_PATH_LENGTH] = {0}, *jsoninput = NULL, issavelog = -1;
     char logfile[MAX_PATH_LENGTH] = {0};
     float np = 0.f;
 
@@ -4778,6 +4780,10 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     if (i < argc - 1 && argv[i + 1][0] == '{') {
                         jsoninput = argv[i + 1];
                         i++;
+                    } else if (i == argc - 1 || argv[i + 1][0] == '-') {
+                        runcommand("", "", &jsoninput);
+                        isinteractive = 2;
+                        i += (i < argc - 1);
                     } else {
                         i = mcx_readarg(argc, argv, i, filename, "string");
                     }
@@ -4868,7 +4874,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     break;
 
                 case 'l':
-                    issavelog = 1;
+                    i = mcx_readarg(argc, argv, i, &issavelog, "char");
                     break;
 
                 case 'L':
@@ -5171,8 +5177,12 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
         i++;
     }
 
-    if (issavelog && cfg->session[0]) {
-        sprintf(logfile, "%s.log", cfg->session);
+    if (issavelog == 0) {
+        cfg->printnum = -1;
+    }
+
+    if (issavelog > 0) {
+        sprintf(logfile, "%s.log", (strlen(cfg->session) ? cfg->session : "unnamed"));
         cfg->flog = fopen(logfile, "wt");
 
         if (cfg->flog == NULL) {
@@ -5455,8 +5465,8 @@ void mcx_printheader(Config* cfg) {
         MCX_FPRINTF(cfg->flog, S_MAGENTA"\
 ###############################################################################\n\
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #\n\
-#          Copyright (c) 2009-2024 Qianqian Fang <q.fang at neu.edu>          #\n\
-#" S_BLUE "                https://mcx.space/  &  https://neurojson.io/                 " S_MAGENTA "#\n\
+#          Copyright (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>          #\n\
+#" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #\n\
@@ -5466,10 +5476,10 @@ void mcx_printheader(Config* cfg) {
 #  Open-source codes and reusable scientific data are essential for research, #\n\
 # MCX proudly developed human-readable JSON-based data formats for easy reuse.#\n\
 #                                                                             #\n\
-#Please visit our free scientific data sharing portal at " S_BLUE "https://neurojson.io/" S_MAGENTA "#\n\
+#Please visit our free scientific data sharing portal at " S_BLUE "https://neurojson.io " S_MAGENTA "#\n\
 # and consider sharing your public datasets in standardized JSON/JData format #\n\
 ###############################################################################\n\
-$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA " $Date::                       $ by $Author::             $\n\
+$Rev::       $ " S_GREEN MCX_VERSION S_MAGENTA  " $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
     }
 }
@@ -5488,9 +5498,10 @@ usage: %s <param1> <param2> ...\n\
 where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Required option ==\n" S_RESET"\
- -f config     (--input)       read an input file in .json or .inp format\n\
-                               if the string starts with '{', it is parsed as\n\
-                               an inline JSON input file\n\
+ -f config     (--input)       read an input file in the .json format,if config\n\
+                               string starts with '{',it is parsed as an inline\n\
+                               JSON input file; if -f is followed by nothing or\n\
+                               a single '-', it reads input from stdin via pipe\n\
       or\n\
  -Q/--bench [cube60, skinvessel,...] run a buint-in benchmark specified by name\n\
                                run -Q without parameter to get a list\n\
@@ -5683,17 +5694,25 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                stored (default: 1e7)\n\
 \n"S_BOLD S_CYAN"\
 == Example ==\n" S_RESET"\
-example: (list built-in benchmarks)\n"S_MAGENTA"\
-       %s --bench\n" S_RESET"\
-or (list supported GPUs on the system)\n"S_MAGENTA"\
+example: (list built-in benchmarks: -Q/--net)\n"S_MAGENTA"\
+       %s -Q\n" S_RESET"\
+or (list supported GPUs on the system: -L/--listgpu)\n"S_MAGENTA"\
        %s -L\n" S_RESET"\
 or (use multiple devices - 1st,2nd and 4th GPUs - together with equal load)\n"S_MAGENTA"\
-       %s --bench cube60b -n 1e7 -G 1101 -W 10,10,10\n" S_RESET"\
+       %s -Q cube60b -n 1e7 -G 1101 -W 10,10,10\n" S_RESET"\
 or (use inline domain definition)\n"S_MAGENTA"\
        %s -f input.json -P '{\"Shapes\":[{\"ZLayers\":[[1,10,1],[11,30,2],[31,60,3]]}]}'\n" S_RESET"\
 or (use inline json setting modifier)\n"S_MAGENTA"\
        %s -f input.json -j '{\"Optode\":{\"Source\":{\"Type\":\"isotropic\"}}}'\n" S_RESET"\
 or (dump simulation in a single json file)\n"S_MAGENTA"\
-       %s --bench cube60planar --dumpjson" S_RESET"\n",
-           exename, exename, exename, exename, exename, exename, exename);
+       %s -Q cube60planar --dumpjson\n" S_RESET"\
+or (use -N/--net to browse community-contributed mcx simulations at https://neurojson.io)\n"S_MAGENTA"\
+       %s -N\n" S_RESET"\
+or (run user-shared mcx simulations, see full list at https://neurojson.org/db/mcx)\n"S_MAGENTA"\
+       %s -N aircube60\n" S_RESET"\
+or (use -f - to read piped input file modified by shell text processing utilities)\n"S_MAGENTA"\
+       %s -Q cube60 --dumpjson | sed -e 's/pencil/cone/g' | %s -f -\n" S_RESET"\
+or (download/modify simulations from NeuroJSON.io and run with mcx -f)\n"S_MAGENTA"\
+       curl -s -X GET https://neurojson.io:7777/mcx/aircube60 | jq '.Forward.Dt = 1e-9' | %s -f" S_RESET"\n",
+           exename, exename, exename, exename, exename, exename, exename, exename, exename, exename, exename, exename);
 }

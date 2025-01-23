@@ -3,7 +3,7 @@ function varargout = mcxlab(varargin)
 % ====================================================================
 %      MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
 % --------------------------------------------------------------------
-% Copyright (c) 2011-2024 Qianqian Fang <q.fang at neu.edu>
+% Copyright (c) 2011-2025 Qianqian Fang <q.fang at neu.edu>
 %                      URL: https://mcx.space
 % ====================================================================
 %

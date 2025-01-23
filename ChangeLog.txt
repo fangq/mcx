@@ -2,8 +2,78 @@
 
 Major updates are marked with a "*"
 
-== MCX v2024.6.pre (Jumbo Jolt - 2.6), FangQ <q.fang (a) neu.edu> ==
+== MCX v2025 (Jumbo Jolt - 2.6), FangQ <q.fang (a) neu.edu> ==
 
+ 2025-01-22 [24b445e] [bug] fix incorrect per-voxel pathlength when mua->0, #164
+ 2025-01-21 [1f536ba] [bug] fix windows -N error
+ 2025-01-21 [aeca212] [cmake] update cmake to add -N support
+ 2025-01-21 [134ab82] [ci] fix windows msvc compilation error
+ 2025-01-21 [12071fd] [feat] add -N/--net to download simulations from NeuroJSON.io, add -Q
+ 2025-01-10 [cf10d5f] [pmcx] Parse issavedet field of the cfg dict as an int instead of a bool.
+ 2025-01-03 [8f433e9] [feat] allow plotting logical arrays in mcxplotvol
+ 2024-12-15 [eafea84] [feat] polish and miss_hit format of demo_mcxlab_replay_traj.m
+ 2024-12-15 [82e100b] [feat] add missing demo_mcxlab_replay_traj.m script
+ 2024-12-11 [22bf12a] [bug] fix mcxlab castlist
+ 2024-12-04 [86dcba9] [bug] force most scalar inputs to be double to avoid incorrect typecasting
+ 2024-11-25 [4b7020d] [ci] upgrade pmcx macos build to macos-13
+ 2024-11-25 [51e9970] [bug] fix mcx crash when replay is requested without seed file
+ 2024-11-22 [e8907db] [ci] include vcomp140.dll in windows binary
+ 2024-11-22 [2902119] [ci] further test vcomp140
+ 2024-11-22 [c3d413d] [ci] find vcomp140.dll
+ 2024-11-21 [4f1335c] [ci] print vcomp1xx.dll path
+ 2024-11-21 [d033755] [bug] apply patch in #235 to pmcx, bump pmcx to v0.3.6
+ 2024-11-21 [744c088] [bug] correctly return integer based w0 and detid in pattern3d
+ 2024-11-21 [dcf11c4] [bug] enable photon sharing for pattern3d source
+ 2024-11-18 [bd62362] [bug] fix mcxlab crash with >2^31-1 voxels, fix #235, revert #164
+ 2024-11-13 [188338b] [feat] negative detector radius captures but does not save photons
+ 2024-11-12 [dfc704f] [ci] reduce macos binary size using strip
+ 2024-11-12 [7d33c14] [ci] disable octave download on macos
+ 2024-11-12 [43e7416] [ci] download octave app with -L
+ 2024-11-12 [c978a3e] [ci] use octave app on macos
+ 2024-11-12 [30cc3cb] [ci] upload macos mcx package
+ 2024-11-12 [24d1257] [ci] downgrade download-artifact as it does not support multiple jobs
+ 2024-11-10 [f17dcc6] [bug] fix mcxlab crash when using issave2pt=0 with photonsharing
+ 2024-11-09 [8c69db3] [ci] update setup.py for pmcx
+ 2024-11-09 [fd83829] [ci] disable CMAKE_RANLIB
+ 2024-11-09 [dbada19] [ci] debug ranlib
+ 2024-11-09 [208c31d] [ci] use verbose option to debug macos build flags
+ 2024-11-09 [4e0c672] [bug] fix maskdet 1cube test
+ 2024-11-08 [ee5be15] [feat] make onecube benchmark maskdet work, fix --dumpmask
+ 2024-11-08 [f2d3bc4] [feat] support 1x1x1 volume, add onecube/twocube benchmarks, det not working
+ 2024-11-06 [eaafb0b] [feat] disabling issaveref if issave2pt is false
+ 2024-10-14 [6dbcc0f] Merge pull request #234 from epini/epini-patch-1
+ 2024-10-09 [0411ec6] Fix data ordering in traj.iquv
+ 2024-09-25 [8c0cfec] [pmcx] bump up pmcx version to 0.3.5 after fixing #233
+ 2024-09-25 [58dec12] [bug] angleinvcdf and invcdf are not read in full in pmcx, fix #233
+ 2024-09-14 [7b8ecb6] [ci] restore macos-12
+ 2024-09-13 [6fbf3db] [bug] fix the potential typo in Custo et al for CSF mua, fix #232
+ 2024-09-03 [c9456a7] [ci] fix action alert related to download-artifact
+ 2024-08-22 [70f95ba] [pmcx] fix CI error for pmcx
+ 2024-08-22 [82fb8f1] [feat] allow mcxlab and pmcx to use cfg.flog to control log printing
+ 2024-08-18 [17e347c] [bug] fix lzma memory leakage, NeuroJSON/zmat#11, lloyd/easylzma#4
+ 2024-08-06 [5cc92ab] [bug] avoid using the same RNG seed when -E -1 on multiple GPUs
+ 2024-08-06 [3c480b6] [doc] clarify the default RNG seed (1648335518) in html doc
+ 2024-07-22 [d8959eb] [ci] update macos-11 to 12 as 11 no longer works
+ 2024-07-14 [b17cb1a] [bug] mcxplotshapes patch by ChenJY-L to plot Box, close #227
+ 2024-07-14 [78716e4] [bug] avoid overwriting mua/mus when one is nan, fix #224, fix #225
+ 2024-07-04 [80b5794] [bug] read g and n when mua or mus=nan in asgn_float, close #225, close #224
+ 2024-06-22 [f959c71] [bug] store reflection position in trajectory
+ 2024-06-19 [4ff5b60] [bug] print large photon numbers without overflow
+ 2024-06-11 [d66a0a3] [test] sync test script between mcx and mcxcl after fangq/mcxcl#57
+ 2024-06-11 [1e7d0f1] [bug] reset replay.tof when tof exceeds tend, like fangq/mcxcl#57
+ 2024-06-07 [026eebf] [bug] ensure to clear shared mem buffer regardless of weight, #222
+ 2024-06-06 [b41c915] [bug] fix skewed nscat distribution, fix #222
+ 2024-06-05 [654dff1] [bug] fix outputtype error in json2mcx, reformat with miss_hit
+ 2024-06-05 [25b0268] [feat] export iquv in trajectory data when cfg.istrajstokes=1
+ 2024-05-18 [0a76d17] [bug] fix mcxsvmc flipped normal direction in octave, fix #221
+ 2024-05-18 [2f42524] [ci] downgrade matlab from v2024a to v2022a
+ 2024-05-14 [56aa355] [doc] update jsonlan and neurojson toolbox download links
+ 2024-04-25 [ea67ea9] [bug] avoid double-base64-encoding when -Z 2 is used, fix #219
+ 2024-03-28 [3b7e11c] [doc] fix incorrect default value for gscatter
+ 2024-03-25 [b4706ae] [release] update winget mcxstudio package
+ 2024-03-18 [2953735] [doc] add documentation on the srcid output in detp and traj
+ 2024-03-18 [94961f3] [bug] return source ID in multi-source simulation, fix #217
+ 2024-03-17 [3c3d755] [release] post v2024.2 release action, close #216
  2024-03-17 [7902a4e] [mcxcloud] update docker image to v2024.2
  2024-03-15 [08bfe11] [feat] support _ArrayData_ in Shapes volume input
 

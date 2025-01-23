@@ -1,9 +1,9 @@
 =============================================================
              Monte Carlo eXtreme (MCX) Suite
-                    version 2024.6
+                    version 2025
 =============================================================
 
-Copyright (c) 2009-2024  Qianqian Fang <q.fang at neu.edu>
+Copyright (c) 2009-2025  Qianqian Fang <q.fang at neu.edu>
 
 - Computational Optics & Translational Imaging (COTI) Lab (http://fanglab.org)
 - Department of Bioengineering, Northeastern University
