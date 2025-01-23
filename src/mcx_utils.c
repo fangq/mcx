@@ -5694,7 +5694,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                stored (default: 1e7)\n\
 \n"S_BOLD S_CYAN"\
 == Example ==\n" S_RESET"\
-example: (list built-in benchmarks: -Q/--net)\n"S_MAGENTA"\
+example: (list built-in benchmarks: -Q/--bench)\n"S_MAGENTA"\
        %s -Q\n" S_RESET"\
 or (list supported GPUs on the system: -L/--listgpu)\n"S_MAGENTA"\
        %s -L\n" S_RESET"\

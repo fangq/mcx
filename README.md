@@ -370,7 +370,7 @@ supported parameters, as shown below:
 #Please visit our free scientific data sharing portal at https://neurojson.io #
 # and consider sharing your public datasets in standardized JSON/JData format #
 ###############################################################################
-$Rev::aeca21 $ v2025 $Date::2025-01-21 22:37:34 -05$ by $Author::Qianqian Fang$
+$Rev::9c446e $ v2025 $Date::2025-01-23 17:18:06 -05$ by $Author::Qianqian Fang$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -573,7 +573,7 @@ where possible parameters include (the first value in [*|*] is the default)
                                stored (default: 1e7)
 
 == Example ==
-example: (list built-in benchmarks: -Q/--net)
+example: (list built-in benchmarks: -Q/--bench)
        mcx -Q
 or (list supported GPUs on the system: -L/--listgpu)
        mcx -L
