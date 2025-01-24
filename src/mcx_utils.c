@@ -5590,9 +5590,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                 {[f:mua]}; mus/g/n from medium type 1\n\
                              102 or muamus_half: 2x 16bit float for mua/mus\n\
                                 {[h:mua][h:mus]}; g/n from medium type 1\n\
-                             103 or asgn_byte: 4x byte gray-levels for mua/s/g/n\n\
+                             103 or asgn_byte: 4-byte gray-levels for mua/s/g/n\n\
                                 {[mua][mus][g][n]}; 0-255 mixing prop types 1&2\n\
-                             104 or muamus_short: 2x short gray-levels for mua/s\n\
+                             104 or muamus_short: 2-short gray-levels for mua/s\n\
                                 {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2\n\
        when formats 99 or 102 is used, the mua/mus values in the input volume\n\
        binary data must be pre-scaled by voxel size (unitinmm) if it is not 1.\n\
@@ -5617,7 +5617,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                               16 X  output exit position (3)\n\
                               32 V  output exit direction (3)\n\
                               64 W  output initial weight (1)\n\
-      combine multiple items by using a string, or add selected numbers together\n\
+      combine multiple items by using a string,or add selected numbers together\n\
       by default, mcx only saves detector ID and partial-path data\n\
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions\n\
                                setting -x to 1 also implies setting '-d' to 1.\n\
@@ -5625,7 +5625,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels\n\
                                right outside of the domain; if non-zero voxels\n\
                                appear at the boundary, pad 0s before using -X\n\
- -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.\n\
+ -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save\n\
                                same as adding 'M' to the -w flag\n\
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save\n\
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save\n\
@@ -5652,8 +5652,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                3 lzip: lzip format (high compression,very slow)\n\
                                4 lzma: lzma format (high compression,very slow)\n\
                                5 lz4: LZ4 format (low compression,extrem. fast)\n\
-                               6 lz4hc: LZ4HC format (moderate compression,fast)\n\
- --dumpjson [-,0,1,'file.json']  export all settings, including volume data using\n\
+                               6 lz4hc: LZ4HC format(moderate compression,fast)\n\
+ --dumpjson [-,0,1,'file.json'] export all settings,including volume data using\n\
                                JSON/JData (https://neurojson.org) format for\n\
                                easy sharing; can be reused using -f\n\
                                if followed by nothing or '-', mcx will print\n\
@@ -5671,22 +5671,22 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 == Debug options ==\n" S_RESET"\
  -D [0|int]    (--debug)       print debug information (you can use an integer\n\
   or                           or a string by combining the following flags)\n\
- -D [''|RMPT]                  1 R  debug RNG\n\
-    /case insensitive/         2 M  store photon trajectory info\n\
-                               4 P  print progress bar\n\
-                               8 T  save trajectory data only, disable flux/detp\n\
-      combine multiple items by using a string, or add selected numbers together\n\
+ -D [''|RMPT]                  1 R debug RNG\n\
+    /case insensitive/         2 M store photon trajectory info\n\
+                               4 P print progress bar\n\
+                               8 T save trajectory data only, disable flux/detp\n\
+      combine multiple items by using a string,or add selected numbers together\n\
 \n"S_BOLD S_CYAN"\
 == Additional options ==\n" S_RESET"\
  --root         [''|string]    full path to the folder storing the input files\n\
  --gscatter     [1e9|int]      after a photon completes the specified number of\n\
                                scattering events, mcx then ignores anisotropy g\n\
                                and only performs isotropic scattering for speed\n\
- --srcid  [0|-1,0,1,2,..]      -1 simulate multi-source separately;0 all sources\n\
-                               together; a positive integer runs a single source\n\
+ --srcid  [0|-1,0,1,2,..]     -1 simulate multi-source separately;0 all sources\n\
+                               together;a positive integer runs a single source\n\
  --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch\n\
  --trajstokes   [0|1]          set to 1 to save Stokes IQUV in trajectory data\n\
- --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that\n\
+ --maxvoidstep  [1000|int]     max distance (in voxel unit) of a photon that\n\
                                can travel before entering the domain, if \n\
                                launched outside (i.e. a widefield source)\n\
  --maxjumpdebug [10000000|int] when trajectory is requested (i.e. -D M),\n\
