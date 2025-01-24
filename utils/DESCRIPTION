@@ -1,6 +1,6 @@
 Name: mcxtools
-Version: 1.9
-Date: 2021-08-02
+Version: 2.6
+Date: 2025-26-01
 Title: MCX photon transport simulator for MATLAB/Octave helper functions
 Author: Qianqian Fang <fangqq@gmail.com>
 Maintainer: Qianqian Fang <fangqq@gmail.com>
@@ -10,5 +10,5 @@ Description:  mcxtools toolbox provides helper functions, such as creating
  simulation domains (mcxpreview), plotting simulation outputs (mcxplotvol)
  and more. This toolbox can be used both with mcx executables as well as
  mcxlab. 
-URL: http://mcx.space
+URL: https://mcx.space
 Categories: Physics

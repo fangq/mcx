@@ -7,6 +7,7 @@ Detected photon processing
  mcxmeanpath.m
  mcxmeanscat.m
  mcxdcsg1.m
+ mcxrfreplay.m
 Loading simulation output files
  mcxloadfile.m
  mcxloadnii.m
@@ -15,6 +16,9 @@ Loading simulation output files
 Analytical solutions
  cwdiffusion.m
  tddiffusion.m
+ cwfluencediffusion.m
+ cwfluxdiffusion.m
+ rbgetreff.m
 JSON to MCXLAB conversion
  mcxcreate.m
  json2mcx.m
@@ -22,6 +26,7 @@ JSON to MCXLAB conversion
 Pre and post processing
  mcxfluence2energy.m
  mcxnuvoxel.m
+ mcxsvmc.m
  normalizemcx.m
  serialcorr.m
  getdistance.m
