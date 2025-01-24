@@ -34,8 +34,9 @@
 #define ALLOC_CHUNK  4096
 
 #ifdef _WIN32
-    #define popen   _popen
-    #define pclose  _pclose
+    #define popen     _popen
+    #define pclose    _pclose
+    #define snprintf  _snprintf
 #endif
 
 int runcommand(char* cmd, char* param, char** output) {
