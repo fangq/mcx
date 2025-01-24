@@ -217,7 +217,7 @@ jobs:
             strip bin/mcx* || true
             upx -9 bin/mcx* || true
           fi
-          rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* .travis* deploy icons filter mcxcloud pmcx pymcx winget inno Xcode*
+          rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* .travis* deploy icons filter mcxcloud pmcx pymcx winget Xcode*
       - name: Zip mcx
         run: |
           cd .. && pwd
