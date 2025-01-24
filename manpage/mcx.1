@@ -1,6 +1,6 @@
 .\" Manpage for mcx.
 .\" Contact fangqq@gmail.com to correct errors or typos.
-.TH man 7 "14 March 2024" "v2024.2" "Monte Carlo eXtreme (MCX) man page"
+.TH man 7 "26 January 2025" "v2025" "Monte Carlo eXtreme (MCX) man page"
 .SH NAME
 mcx \- a GPU-accelerated 3-D photon transport simulator
 .SH SYNOPSIS
@@ -35,29 +35,38 @@ The accepted command line options include:
 .TP
 \fB=========== Required options ===========.TP
 \fB-f/--input  <A string>\fR
-Use -f to specify an input file.    -f filename.json
-or
-    -f filename.inp
-
+Use -f to specify an input file. -f filename.json
 filename may contain absolute or relative path. If the filename has a '.json'extension, this input file is in the JSON format. If the input file name endswith '.inp', it is in the legacy format. If the file name contains space, onemust use quotation marks to quote the full file name. In Windows, the quotationmust be double quote (""). In Linux or Mac, either single or double quotationmark works.
 
 If this flag is followed by an inline JSON string, such as -f '{...}', theparameter is parsed as an "inline JSON input file".
-.TP
-\fB--bench  <A string>\fR
-.TP
-Use --bench to list all built-in benchmarks. As of MCX v2024.2, these benchmarks include
-     cube60
-     cube60b
-     cube60planar
-     cubesph60b
-     skinvessel
-     sphshell
-     spherebox
-     colin27
-One can execute one of the built-in benchmarks by following the benchmark name, such as
-    --bench skinvessel
 
-The default settings in each built-in benchmark can be overwritten by the additionalcommand line flags, such as --bench cube60 -n 1e8 runs 1e8 photons instead of thedefault 1e6. Use --bench name --dumpjson to export the benchmark as a standalone JSONinput file.
+if -f is followed by nothing or a single '-', it reads input from stdin via pipe.
+
+.TP
+\fB-Q/--bench  <A string>\fR
+.TP
+Use -Q or --bench to list all built-in benchmarks. As of MCX v2025, these benchmarks include
+	cube60
+	cube60b
+	cube60planar
+	cubesph60b
+	onecube
+	twocube
+	skinvessel
+	sphshells
+	spherebox
+	colin27
+One can execute one of the built-in benchmarks by following the benchmark name, such as
+    -Q skinvessel
+
+The default settings in each built-in benchmark can be overwritten by the additionalcommand line flags, such as -Q cube60 -n 1e8 runs 1e8 photons instead of thedefault 1e6. Use --bench name --dumpjson to export the benchmark as a standalone JSONinput file.
+
+.TP
+\fB-N/--net  <A string>\fR
+Download benchmark simulations from NeuroJSON.io, -N only to list benchmark; the
+input can be a dataset REST-API URL starting with http, or in the format of "databasename/benchmarkname"
+This function requires 'curl', install from https://curl.se/
+
 
 .TP
 \fB=========== MC options ===========
@@ -116,6 +125,7 @@ If one sets -U 2, the normalization is only applied to the fluence in theinterio
 \fB-E/--seed  <An integer or a string>\fR
 Use -E to set the seed of the CPU random number generator (RNG). The CPU RNG inturn initializes the seeds for each GPU thread.    -E -1    // let MCX to automatically seed the CPU-RNG using system clock    -E n     // n is a large positive integer, set the CPU-RNG's seed to n    -E filename.mch // replay detected photons using the seeds saved in the mchfile
 Setting a fixed RNG seed is expected to create reproducible results on NVIDIAcards if the thread/block size are kept the same.
+If not specified, a default seed 1648335518 will be used.
 
 .TP
 \fB-z/--srcfrom0  <0 or 1, if ignored, assumed to be 1>\fR
@@ -154,7 +164,7 @@ Use the -P option to dynamically define heterogeneities from the command line.Th
 This defines a 3-layer medium: z slices 1-10 is filled with tissue label 1, zslices 11-30 is filled with label 2, and 31-60 is filled with label 3.The shape definition always starts an array object named 'Shapes'. Each elementin the 'Shapes' object defines a primitive object. The supported primitivesincludeName, Origin, Grid, Sphere, Box, Subgrid, {XYZ}Layers, {XYZ}Slabs, Cylinder, UpperSpace.Most objects have a sub-field 'Tag', specifying the tissue label (index to theproperty list). The details of the Shapes objects can be found in this link
 
 .TP
-\fB-j / --json  <A JSON string>\fR
+\fB-j/--json  <A JSON string>\fR
 Use the -j option to dynamically define simulation parameters to overwrite/modifythe default settings as specified in the .inp/.json file provided after the -fflag. The -j flag is followed by a JSON-formatted string. The format of the JSONconstruct is the same as in an MCX JSON input file. For example
 
     -j '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}'
@@ -327,8 +337,13 @@ Use -S to enable or disable saving volumetric fluence distributions (or thereque
 \fB-O/--outputtype  <A single character (case insensitive)>\fR
 Use -O to specify the type of data to be saved in the volumetric output. Thesupported formats include
  'X' - output time-resolved fluence rate (1/mm^2), i.e. TPSF
- 'F' - output time-resolved fluence rate integrated in each time-gate, 'E' - energy deposit at each voxel (normalized or unnormalized, depends on -n)
- 'J' - Jacobian (replay mode), 'P' - scattering event counts at each voxel (replay mode only)
+ 'F' - output time-resolved fluence rate integrated in each time-gate, 
+ 'E' - energy deposit at each voxel (normalized or unnormalized, depends on -n)
+ 'J' - Jacobian (replay mode), 
+ 'P' - scattering event counts at each voxel (replay mode only)
+ 'M' - momentum transfer replay
+ 'R' - RF/FD Jacobian
+ 'L' - total pathlength per voxel
 
 
 .TP
@@ -363,7 +378,13 @@ must be 0-6 or one of 'zlib', 'gzip','base64','lzip','lzma','lz4' or 'lz4hc', ca
 .TP
 \fB--dumpjson  <A file name or number, if ignored, assume to be '-'>\fR
 Must be a number (1-3), empty, '-' or a file name
-Export all settings,including volume data using JSON/JData (https://neurojson.org)format for easy sharing; can be reused using -f
+Export all settings,including volume data using JSON/JData 
+(https://neurojson.org)format for easy sharing; can be reused using -f
+if followed by nothing or '-', mcx will print
+the JSON to the console; write to a file if file
+name is specified; by default, prints settings
+after pre-processing; '--dumpjson 2' prints 
+raw inputs before pre-processing
 
 if followed by nothing or '-', mcx will print the JSON to the console;write to a file if file name is specified;by default, prints settings after pre-processing;--dumpjson 2 prints raw inputs before pre-processing
 --dumpjson 3 prints raw inputs after pre-processing
@@ -411,6 +432,17 @@ scattering events, mcx then ignores anisotropy g
 and only performs isotropic scattering for speed
 
 .TP
+\fB--srcid  <-1, 0, 1, 2, ...>\fR
+-1 simulate multi-source separately;0 all sources
+together; a positive integer runs a single source
+
+.TP
+\fB--maxjumpdebug  <An integer>\fR
+when trajectory is requested (i.e. -D M),
+use this parameter to set the maximum positions
+stored (default: 1e7)
+
+.TP
 \fB--maxvoidstep  <An integer>\fR
 maximum distance (in voxel unit) of a photon that
 can travel before entering the domain, iflaunched outside (i.e. a widefield source)
@@ -426,13 +458,13 @@ stored (default: 1e7)
     mcx -L
 
 \fBListing built-in benchmarks\fR
-    mcx --bench
+    mcx -Q
 
 \fBRunning built-in benchmarks\fR
-    mcx --bench cube60
+    mcx -Q cube60
 
 \fBDump JSON configuration file for the built-in benchmark\fR
-    mcx --bench cube60 --dumpjson
+    mcx -Q cube60 --dumpjson
 
 \fBRunning mcx using autopilot mode\fR
     mcx -A 1 -n 1e7 --bench cube60b -G 1 -D P
@@ -445,6 +477,18 @@ stored (default: 1e7)
 
 \fBUsing inline JSON setting modifier\fR
     mcx -f input.json -j '{"Optode":{"Source":{"Type":"isotropic"}}}'
+
+\fBUse -N/--net to browse community-contributed mcx simulations at https://neurojson.io\fR
+    mcx -N
+
+\fBRun user-shared mcx simulations, see full list at https://neurojson.org/db/mcx\fR
+    mcx -N aircube60
+
+\fBUse -f - to read piped input file modified by shell text processing utilities\fR
+    mcx -Q cube60 --dumpjson | sed -e 's/pencil/cone/g' | mcx -f -
+
+\fBor (download/modify simulations from NeuroJSON.io and run with mcx -f)
+    curl -s -X GET https://neurojson.io:7777/mcx/aircube60 | jq '.Forward.Dt = 1e-9' | mcx -f
 
 .SH SEE ALSO
 mmc(7), mcxcl(7)
