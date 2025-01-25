@@ -120,10 +120,12 @@ if (isfield(cfg, 'vol') && ~isempty(cfg.vol) && ~isfield(Domain, 'VolumeFile'))
         Domain.Dim(1) = [];
     end
     if (exist('Shapes', 'var'))
-        Domain.VolumeFile = [filestub '_vol.bin'];
-        fid = fopen(Domain.VolumeFile, 'wb');
-        fwrite(fid, cfg.vol, class(cfg.vol));
-        fclose(fid);
+        if (isempty(regexp(savejson('', Shapes, 'compact', 1), '"Grid"', 'once')))
+            Domain.VolumeFile = [filestub '_vol.bin'];
+            fid = fopen(Domain.VolumeFile, 'wb');
+            fwrite(fid, cfg.vol, class(cfg.vol));
+            fclose(fid);
+        end
     else
         Domain.VolumeFile = '';
         Shapes = cfg.vol;

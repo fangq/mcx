@@ -46,10 +46,14 @@ if (isfield(json, 'Optode'))
         cfg = copycfg(cfg, 'srcparam2', json.Optode.Source, 'Param2');
         cfg = copycfg(cfg, 'srctype', json.Optode.Source, 'Type');
         cfg = copycfg(cfg, 'srcnum', json.Optode.Source, 'SrcNum');
-        if (isfield(json.Optode.Source, 'Pattern'))
-            nz = jsonopt('Nz', 1, Optode.Source.Pattern);
-            cfg.srcpattern = reshape(Optode.Source.Pattern.Data, ...
-                                     [Optode.Source.Pattern.Nx, Optode.Source.Pattern.Ny, nz]);
+        if (isfield(json.Optode.Source, 'Pattern') && isstruct(json.Optode.Source.Pattern))
+            nz = jsonopt('Nz', 1, json.Optode.Source.Pattern);
+            if (ischar(json.Optode.Source.Pattern.Data))
+                fid = fopen(json.Optode.Source.Pattern.Data, 'rb');
+                json.Optode.Source.Pattern.Data = fread(fid, inf, 'single=>single');
+            end
+            cfg.srcpattern = reshape(json.Optode.Source.Pattern.Data, ...
+                                     [json.Optode.Source.Pattern.Nx, json.Optode.Source.Pattern.Ny, nz]);
         end
     end
     if (isfield(json.Optode, 'Detector') && ~isempty(json.Optode.Detector))
