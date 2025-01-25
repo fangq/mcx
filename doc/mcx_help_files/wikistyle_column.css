@@ -47,9 +47,9 @@ h1 {
 h2 { 
 	font-size: 150%; 
         font-weight: bold;
-        /*font-variant: small-caps;*/
+        /*font-variant: small-caps;
 	border-bottom : 1px dashed #aaaaaa;
-        border-left : 5px solid green;
+        border-left : 5px solid green;*/
 	padding: 5px 15px 5px 5px;
 	padding-left: 10pt;
 	margin-bottom: 10pt;
@@ -126,7 +126,7 @@ div.wikipreview {
 }
 div.wikilogo {
 	/*width:1024px;*/
-	height:250px;
+	height:150px;
 }
 
 div.wikitree{
@@ -285,7 +285,7 @@ div.fontpreview {
         border-style:solid;
 }
 
-div.wikitext table
+div.wikiwrapper table
 {
         font-size: 10pt;
         border-collapse: collapse;
@@ -294,13 +294,13 @@ div.wikitext table
 	background-color:transparent;
         margin-left: 12px;
 }
-div.wikitext td
+div.wikiwrapper td
 {
 	text-align:left;
 	border: 1px solid #444444;
 	padding:2px;
 }
-div.wikitext th
+div.wikiwrapper th
 {
 	text-align:left;
 	font-variant: small-caps;
@@ -485,4 +485,46 @@ tt{
 }
 #logoimg{
 	z-index:2;
+}
+span.span_prefinfo label.formlabel{
+	display: inline-block;
+	width: 12em;
+}
+label.formlabel{
+	display: inline-block;
+	width: 6em;
+}
+div.wikipreview {
+ 	width: 100%;
+}
+
+@media(-webkit-max-device-pixel-ratio: 2.5){
+    html,body{
+        font-size: 0.96rem;
+    }
+}
+@media(-webkit-max-device-pixel-ratio: 3){
+    html,body{
+        font-size: 0.9rem;
+    }
+}
+
+@media(min-width: 1400px){
+    html,body{
+        font-size: 100%;
+    }
+}
+@media(min-width: 1800px){
+    html,body{
+        font-size: 105%;
+    }
+}
+input[type="submit"] {
+    color: #fff;
+    height: 40px;
+    line-height: 0;
+    padding: 0 6%;
+    float: right;
+    background-color: orange;
+    border-radius:5px;
 }
