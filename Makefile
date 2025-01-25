@@ -5,7 +5,7 @@
 ############################################################
 
 PKGNAME=mcx
-VERSION=2.0.0
+VERSION=2.6.0
 SOURCE=src
 GUI=mcxstudio
 COPY=cp
