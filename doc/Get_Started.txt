@@ -62,10 +62,10 @@ Getting Started with MCX
 References
 
    1. http://mcx.space/wiki/index.cgi?action=rss
-   2. http://mcx.space/wiki/index.cgi?Doc/Basics#example_quicktest
-   3. http://mcx.space/wiki/index.cgi?Doc/Basics#example_validation
-   4. http://mcx.space/wiki/index.cgi?Doc/Examples
-   5. http://mcx.space/wiki/index.cgi?Doc/Installation
-   6. http://mcx.space/wiki/index.cgi?Doc/Reference
-   7. http://mcx.space/wiki/index.cgi?Doc/Reference
+   2. https://mcx.space/wiki/index.cgi?Doc/Basics#example_quicktest
+   3. https://mcx.space/wiki/index.cgi?Doc/Basics#example_validation
+   4. https://mcx.space/wiki/index.cgi?Doc/Examples
+   5. https://mcx.space/wiki/index.cgi?Doc/Installation
+   6. https://mcx.space/wiki/index.cgi?Doc/Reference
+   7. https://mcx.space/wiki/index.cgi?Doc/Reference
    8. http://www.gnu.org/software/octave/

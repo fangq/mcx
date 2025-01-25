@@ -64,20 +64,23 @@ Notable major bug fixes include
   the subarachnoid space. A few literature have shown that CSF in the subarachnoid space may have a higher
   mus' value, in the range between 0.16/mm to 0.32/mm, as shown in Okada et al. 2003
 
-- [Okada_2003] E. Okada and D. T. Delpy, “Near-infrared light propagation in an adult head model. I. Modeling of low-level scattering in the cerebrospinal fluid layer,” Applied Optics 42, 2906–2914 (2003)
-- [Custo_2006] A. Custo, W. M. Wells III., A. H. Barnett, et al., “Effective scattering coefficient of the cerebral spinal fluid in adult head models for diffuse optical imaging,” Applied Optics 45, 4747 (2006)
-- [Strangman_2003] G. Strangman, M. A. Franceschini, and D. A. Boas, “Factors affecting the accuracy of near-infrared spectroscopy concentration calculations for focal changes in oxygenation parameters,” NeuroImage 18, 865–879 (2003)
+1. [Okada_2003]
+E. Okada and D. T. Delpy, "Near-infrared light propagation in an adult head model. I. Modeling of low-level scattering in the cerebrospinal fluid layer," Applied Optics 42, 2906–2914 (2003)
+2. [Custo_2006]
+A. Custo, W. M. Wells III., A. H. Barnett, et al., "Effective scattering coefficient of the cerebral spinal fluid in adult head models for diffuse optical imaging," Applied Optics 45, 4747 (2006)
+3. [Strangman_2003]
+G. Strangman, M. A. Franceschini, and D. A. Boas, "Factors affecting the accuracy of near-infrared spectroscopy concentration calculations for focal changes in oxygenation parameters," NeuroImage 18, 865–879 (2003)
 
 
 In addition, in this release, we also added the following key new features
 
 - the new `-N/--net` command line flag allows one to browse and run growing number of community-contributed
   simulations hosted on https://neurojson.io (one can browse the list at https://neurojson.org/db/mcx)
-- mcx can read stdin (standard input) using pipe, allow one to use advanced text processing utilities in the shell,
-  such as `sed, perl, jq` to modify JSON inputs at runtime. For example `mcx -N cube60 | jq '.Forward.Dt=1e-10' | mcx -f`
+- mcx can read JSON input file from `stdin` (standard input) using pipe, allow one to use advanced text processing utilities in the shell,
+  such as `sed, perl, jq` to modify JSON inputs at runtime. For example `mcx -N cube60 --dumpjson | jq '.Forward.Dt=1e-10' | mcx -f`
 - a new shortcut option `-Q` for `--bench` to conveniently browse and run built-in benchmarks
 - a new demo script `demo_mcxlab_replay_traj.m` to show how to use replay to produce trajectories between source/detector
-- mcxlab and pmcx cam set cfg.flog=1 or 0 to disable printing of mcx banner
+- mcxlab and pmcx cam set `cfg.flog=1` or 0 to disable printing of mcx banner
 - setting a negative detector radius creates excluded detection areas, making it possible to create ring-shaped detectors
 
 The detailed updates can be found in the below change log

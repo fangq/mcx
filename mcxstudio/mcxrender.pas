@@ -5,7 +5,7 @@ unit mcxrender;
 -------------------------------------------------------------------------------
     Author: Qianqian Fang
     Email : q.fang at neu.edu
-    Web   : http://mcx.space
+    Web   : https://mcx.space
     License: GNU General Public License version 3 (GPLv3)
 ===============================================================================}
 

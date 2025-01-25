@@ -1495,7 +1495,7 @@ msgid "MCX Documentation"
 msgstr ""
 
 #: tfmmcx.menuitem35.hint
-msgid "http://mcx.space/wiki/?Learn#mcx"
+msgid "https://mcx.space/wiki/?Learn#mcx"
 msgstr ""
 
 #: tfmmcx.menuitem36.caption
@@ -1503,7 +1503,7 @@ msgid "MMC Documentation"
 msgstr ""
 
 #: tfmmcx.menuitem36.hint
-msgid "http://mcx.space/wiki/?Learn#mmc"
+msgid "https://mcx.space/wiki/?Learn#mmc"
 msgstr ""
 
 #: tfmmcx.menuitem37.caption
@@ -1511,7 +1511,7 @@ msgid "MCX-CL Documentation"
 msgstr ""
 
 #: tfmmcx.menuitem37.hint
-msgid "http://mcx.space/wiki/?Learn#mcxcl"
+msgid "https://mcx.space/wiki/?Learn#mcxcl"
 msgstr ""
 
 #: tfmmcx.menuitem39.caption
@@ -1548,7 +1548,7 @@ msgid "Download Nightly-Build"
 msgstr ""
 
 #: tfmmcx.menuitem43.hint
-msgid "http://mcx.space/nightly/"
+msgid "https://mcx.space/nightly/"
 msgstr ""
 
 #: tfmmcx.menuitem45.caption
@@ -1604,7 +1604,7 @@ msgid "MCX GPU Speed Benchmark Database"
 msgstr ""
 
 #: tfmmcx.menuitem53.hint
-msgid "http://mcx.space/gpubench/"
+msgid "https://mcx.space/gpubench/"
 msgstr ""
 
 #: tfmmcx.menuitem55.caption

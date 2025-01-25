@@ -230,27 +230,27 @@ su -c 'yum groupinstall "Development Tools"'
 References
 
    1. http://mcx.space/wiki/index.cgi?action=rss
-   2. http://mcx.space/wiki/index.cgi?Doc/Installation#System_Requirements
-   3. http://mcx.space/wiki/index.cgi?Doc/Installation#Download_and_Install
-   4. http://mcx.space/wiki/index.cgi?Doc/Installation#Testing_hardware_support
-   5. http://mcx.space/wiki/index.cgi?Doc/Installation#Testing_hardware_support_for_MCXLAB
-   6. http://mcx.space/wiki/index.cgi?Doc/Installation#Running_MCX_with_GUI
-   7. http://mcx.space/wiki/index.cgi?Doc/Installation#Compiling_MCX_from_source_code
-   8. http://mcx.space/wiki/index.cgi?Doc/Installation#Download_the_source_code
-   9. http://mcx.space/wiki/index.cgi?Doc/Installation#Install_the_compilers
-  10. http://mcx.space/wiki/index.cgi?Doc/Installation#Setup_paths
-  11. http://mcx.space/wiki/index.cgi?Doc/Installation#make_your_binary
-  12. http://mcx.space/wiki/index.cgi?MCXCL
+   2. https://mcx.space/wiki/index.cgi?Doc/Installation#System_Requirements
+   3. https://mcx.space/wiki/index.cgi?Doc/Installation#Download_and_Install
+   4. https://mcx.space/wiki/index.cgi?Doc/Installation#Testing_hardware_support
+   5. https://mcx.space/wiki/index.cgi?Doc/Installation#Testing_hardware_support_for_MCXLAB
+   6. https://mcx.space/wiki/index.cgi?Doc/Installation#Running_MCX_with_GUI
+   7. https://mcx.space/wiki/index.cgi?Doc/Installation#Compiling_MCX_from_source_code
+   8. https://mcx.space/wiki/index.cgi?Doc/Installation#Download_the_source_code
+   9. https://mcx.space/wiki/index.cgi?Doc/Installation#Install_the_compilers
+  10. https://mcx.space/wiki/index.cgi?Doc/Installation#Setup_paths
+  11. https://mcx.space/wiki/index.cgi?Doc/Installation#make_your_binary
+  12. https://mcx.space/wiki/index.cgi?MCXCL
   13. https://www.nvidia.com/Download/index.aspx
   14. https://developer.nvidia.com/cuda-gpus
   15. http://mcx.space/gpubench/
-  16. http://mcx.space/wiki/index.cgi?Learn#mcxstudio
+  16. https://mcx.space/wiki/index.cgi?Learn#mcxstudio
   17. http://mcx.space/wiki/index.cgi/wiki/index.cgi?Demo/MCXStudio#Lesson_6_Fix_Unspecified_launch_failure_error_on_Windows_11_minutes
-  18. http://mcx.space/wiki/index.cgi?MCXCL
-  19. http://mcx.space/wiki/index.cgi?Doc/MCXStudio
-  20. http://mcx.space/wiki/index.cgi?Doc/README
+  18. https://mcx.space/wiki/index.cgi?MCXCL
+  19. https://mcx.space/wiki/index.cgi?Doc/MCXStudio
+  20. https://mcx.space/wiki/index.cgi?Doc/README
   21. https://developer.nvidia.com/cuda-toolkit
-  22. http://mcx.space/wiki/index.cgi?Download
+  22. https://mcx.space/wiki/index.cgi?Download
   23. http://www.nvidia.com/object/cuda_get.html
   24. http://www.mingw.org/
   25. http://sourceforge.net/projects/mingw/files/

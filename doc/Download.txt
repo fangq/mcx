@@ -82,21 +82,21 @@ Current Release: [7]MCX and [8]MCXLAB v2020 (1.8 - Furious Fermion), released on
 References
 
    1. http://mcx.space/wiki/index.cgi?action=rss
-   2. http://mcx.space/wiki/index.cgi?Download#Download_the_Latest_Release
-   3. http://mcx.space/wiki/index.cgi?Download#Test_the_nightly_build_packages
-   4. http://mcx.space/wiki/index.cgi?Download#Get_the_latest_source_code
-   5. http://mcx.space/wiki/index.cgi?Download#Contribute_to_MCX
-   6. http://mcx.space/wiki/index.cgi?Download#References
-   7. http://mcx.space/wiki/index.cgi?Doc/README
-   8. http://mcx.space/wiki/index.cgi?Doc/MCXLAB
-   9. http://mcx.space/wiki/index.cgi?Doc/ReleaseNotes/v2020
-  10. http://mcx.space/wiki/index.cgi?keywords=register&tool=mcx&ref=wikidl
-  11. http://mcx.space/wiki/index.cgi?keywords=register&tool=mcx&ref=wikidl
+   2. https://mcx.space/wiki/index.cgi?Download#Download_the_Latest_Release
+   3. https://mcx.space/wiki/index.cgi?Download#Test_the_nightly_build_packages
+   4. https://mcx.space/wiki/index.cgi?Download#Get_the_latest_source_code
+   5. https://mcx.space/wiki/index.cgi?Download#Contribute_to_MCX
+   6. https://mcx.space/wiki/index.cgi?Download#References
+   7. https://mcx.space/wiki/index.cgi?Doc/README
+   8. https://mcx.space/wiki/index.cgi?Doc/MCXLAB
+   9. https://mcx.space/wiki/index.cgi?Doc/ReleaseNotes/v2020
+  10. https://mcx.space/wiki/index.cgi?keywords=register&tool=mcx&ref=wikidl
+  11. https://mcx.space/wiki/index.cgi?keywords=register&tool=mcx&ref=wikidl
   12. http://mcx.space/nightly/
   13. http://mcx.space/nightly/
   14. https://github.com/fangq/mcx
-  15. http://mcx.space/wiki/index.cgi?Doc/Installation
-  16. http://mcx.space/wiki/index.cgi?Doc/NSightCompilation
+  15. https://mcx.space/wiki/index.cgi?Doc/Installation
+  16. https://mcx.space/wiki/index.cgi?Doc/NSightCompilation
   17. https://github.com/fangq/mcx#fork-destination-box
   18. https://yangsu.github.io/pull-request-tutorial/
   19. https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink

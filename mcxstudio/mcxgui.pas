@@ -4,7 +4,7 @@ unit mcxgui;
 -------------------------------------------------------------------------------
     Author: Qianqian Fang
     Email : q.fang at neu.edu
-    Web   : http://mcx.space
+    Web   : https://mcx.space
     License: GNU General Public License version 3 (GPLv3)
 ===============================================================================}
 {$mode objfpc}{$H+}
@@ -1973,7 +1973,7 @@ end;
 
 procedure TfmMCX.mcxdoWebExecute(Sender: TObject);
 begin
-  OpenURL('http://mcx.space');
+  OpenURL('https://mcx.space');
 end;
 
 procedure TfmMCX.mcxdoWebURLExecute(Sender: TObject);

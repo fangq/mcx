@@ -150,7 +150,7 @@ computer, but also running those remotely on a more powerful server/cluster.
 Additional information and video tutorial regarding remote execution can be 
 found at
 
-http://mcx.space/wiki/index.cgi?Workshop/MCX18Preparation/MethodB
+https://mcx.space/wiki/index.cgi?Workshop/MCX18Preparation/MethodB
 
 To use the remote execution feature, one must download and install the 
 needed MC simulator (mcx/mmc/mcxcl) in the remote server first, and make sure

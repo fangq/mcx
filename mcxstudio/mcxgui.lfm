@@ -2380,7 +2380,7 @@ object fmMCX: TfmMCX
         ' -- "Applications" --'
         ''
         '# [Brain2Mesh2020] Anh Phong Tran† , Shijie Yan† , Qianqian Fang*, (2020) "Improving model-based fNIRS analysis using mesh-based anatomical and light-transport models," Neurophotonics, 7(1), 015008, URL: https://doi.org/10.1117/1.NPh.7.1.015008'
-        '$Summary: Brain2Mesh - a one-liner for brain mesh generator (http://mcx.space/brain2mesh)'
+        '$Summary: Brain2Mesh - a one-liner for brain mesh generator (https://mcx.space/brain2mesh)'
         '$Download: https://doi.org/10.1117/1.NPh.7.1.015008'
         ''
         '# [Yuan2020] Yaoshen Yuan, Paolo Cassano, Matthew Pias, Qianqian Fang*, (2020) "Transcranial photobiomodulation with near-infrared light from childhood to elderliness: simulation of dosimetry,", Neurophotonics, 7(1), 015009, URL: https://doi.org/10.1117/1.NPh.7.1.015009'
@@ -30776,7 +30776,7 @@ object fmMCX: TfmMCX
     end
   end
   object htmlHelpDatabase: THTMLHelpDatabase
-    BaseURL = 'http://mcx.space/wiki/index.cgi?Doc/'
+    BaseURL = 'https://mcx.space/wiki/index.cgi?Doc/'
     AutoRegister = True
     KeywordPrefix = 'HTML/'
     left = 102
@@ -30800,17 +30800,17 @@ object fmMCX: TfmMCX
     end
     object MenuItem35: TMenuItem
       Caption = 'MCX Documentation'
-      Hint = 'http://mcx.space/wiki/?Learn#mcx'
+      Hint = 'https://mcx.space/wiki/?Learn#mcx'
       OnClick = mcxdoWebURLExecute
     end
     object MenuItem36: TMenuItem
       Caption = 'MMC Documentation'
-      Hint = 'http://mcx.space/wiki/?Learn#mmc'
+      Hint = 'https://mcx.space/wiki/?Learn#mmc'
       OnClick = mcxdoWebURLExecute
     end
     object MenuItem37: TMenuItem
       Caption = 'MCX-CL Documentation'
-      Hint = 'http://mcx.space/wiki/?Learn#mcxcl'
+      Hint = 'https://mcx.space/wiki/?Learn#mcxcl'
       OnClick = mcxdoWebURLExecute
     end
     object MenuItem67: TMenuItem
@@ -30844,7 +30844,7 @@ object fmMCX: TfmMCX
     end
     object MenuItem43: TMenuItem
       Caption = 'Download Nightly-Build'
-      Hint = 'http://mcx.space/nightly/'
+      Hint = 'https://mcx.space/nightly/'
       OnClick = mcxdoWebURLExecute
     end
     object MenuItem44: TMenuItem
@@ -30888,7 +30888,7 @@ object fmMCX: TfmMCX
     end
     object MenuItem53: TMenuItem
       Caption = 'MCX GPU Speed Benchmark Database'
-      Hint = 'http://mcx.space/gpubench/'
+      Hint = 'https://mcx.space/gpubench/'
       OnClick = mcxdoWebURLExecute
     end
     object MenuItem54: TMenuItem

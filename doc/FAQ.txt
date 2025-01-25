@@ -187,27 +187,27 @@ Frequently Asked Questions about MCX
 References
 
    1. http://mcx.space/wiki/index.cgi?action=rss
-   2. http://mcx.space/wiki/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_error_what_is_that
-   3. http://mcx.space/wiki/index.cgi?Doc/FAQ#When_should_I_use_the_atomic_version_of_MCX
-   4. http://mcx.space/wiki/index.cgi?Doc/FAQ#How_do_I_interpret_MCX_s_output_data
-   5. http://mcx.space/wiki/index.cgi?Doc/FAQ#Does_MCX_support_multiple_GPUs_in_a_single_computer
-   6. http://mcx.space/wiki/index.cgi?Doc/FAQ#Will_you_consider_porting_MCX_to_MPI_to_run_on_my_cluster
-   7. http://mcx.space/wiki/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_media_types_that_MCX_can_handle
-   8. http://mcx.space/wiki/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_detectors_in_MCX
-   9. http://mcx.space/wiki/index.cgi?Doc/FAQ#My_simulation_created_an_empty_history_file_why_is_that
+   2. https://mcx.space/wiki/index.cgi?Doc/FAQ#I_am_getting_a_kernel_launch_timed_out_error_what_is_that
+   3. https://mcx.space/wiki/index.cgi?Doc/FAQ#When_should_I_use_the_atomic_version_of_MCX
+   4. https://mcx.space/wiki/index.cgi?Doc/FAQ#How_do_I_interpret_MCX_s_output_data
+   5. https://mcx.space/wiki/index.cgi?Doc/FAQ#Does_MCX_support_multiple_GPUs_in_a_single_computer
+   6. https://mcx.space/wiki/index.cgi?Doc/FAQ#Will_you_consider_porting_MCX_to_MPI_to_run_on_my_cluster
+   7. https://mcx.space/wiki/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_media_types_that_MCX_can_handle
+   8. https://mcx.space/wiki/index.cgi?Doc/FAQ#What_is_the_maximum_number_of_detectors_in_MCX
+   9. https://mcx.space/wiki/index.cgi?Doc/FAQ#My_simulation_created_an_empty_history_file_why_is_that
   10. http://stackoverflow.com/questions/17186638/modifying-registry-to-increase-gpu-timeout-windows-7
   11. https://github.com/fangq/mcx/tree/master/setup/win64
-  12. http://mcx.space/wiki/index.cgi?Learn#mcxstudio
+  12. https://mcx.space/wiki/index.cgi?Learn#mcxstudio
   13. http://mcx.space/wiki/index.cgi/wiki/index.cgi?Demo/MCXStudio#Lesson_6_Fix_Unspecified_launch_failure_error_on_Windows_11_minutes
   14. http://askubuntu.com/questions/281858/boot-to-command-line-12-04-grub-options-not-working
   15. http://askubuntu.com/questions/148321/how-do-i-stop-gui
-  16. http://mcx.space/wiki/index.cgi?Doc/Reference
-  17. http://mcx.space/wiki/index.cgi?Doc/ReleaseNotes/0.8.0
+  16. https://mcx.space/wiki/index.cgi?Doc/Reference
+  17. https://mcx.space/wiki/index.cgi?Doc/ReleaseNotes/0.8.0
   18. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
-  19. http://mcx.space/wiki/index.cgi?Doc/ReleaseNotes/v2016.4
+  19. https://mcx.space/wiki/index.cgi?Doc/ReleaseNotes/v2016.4
   20. http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#Will_you_consider_porting_MMC_to_MPI_to_run_on_my_cluster
   21. http://www.gnu.org/software/parallel/
-  22. http://mcx.space/wiki/index.cgi?MMC/Doc/MMCCluster
+  22. https://mcx.space/wiki/index.cgi?MMC/Doc/MMCCluster
   23. http://mcx.space/wiki/upload/detmask_coordinates.png
   24. http://mcx.space/wiki/upload/detmask_coordinates_srcfrom0.png
   25. http://groups.google.com/group/mcx-users/browse_thread/thread/e5e0140d7e73e4bf?hl=en
