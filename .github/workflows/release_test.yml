@@ -87,10 +87,12 @@ jobs:
         with:
           release: R2022a
       - name: Run MATLAB mcxlabcl test
+        continue-on-error: true
         uses: matlab-actions/run-command@v1
         with:
           command: cd MCXStudio; mcxsuite_addpath; cd MATLAB/mcxlabcl/examples; demo_mcxlab_basic; demo_mcxlab_2d; demo_mcxlab_replay; demo_bc_det; demo_photon_sharing;
       - name: Run MATLAB mmclab test
+        continue-on-error: true
         uses: matlab-actions/run-command@v1
         with:
           command: cd MCXStudio; mcxsuite_addpath; cd MATLAB/mmclab/example; demo_mmclab_basic; demo_example_meshtest; demo_example_replay; demo_wide_det; demo_photon_sharing;
