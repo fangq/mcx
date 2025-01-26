@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # @brief  Git filter to implement rcs keyword expansion as seen in cvs and svn.
 # @author Martin Turon
