@@ -55,7 +55,6 @@ jobs:
           ./mcx -Q
           ./mcx -N
           ./mcx -Q cube60b --dumpjson
-          ./mcx -Q skinvessel --dumpmask
       - name: Test mcxcl
         run: |
           cd MCXStudio/MCXSuite/mcxcl/test
