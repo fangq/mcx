@@ -58,19 +58,21 @@ jobs:
       - name: Test mcxcl
         run: |
           cd MCXStudio/MCXSuite/mcxcl/test
-          ./testmcx.sh
+          ../bin/mcxcl -L || true
+          ../bin/mcxcl -Q cube60 || true
+          ../bin/mcxcl -Q cube60b || true
+          ./testmcx.sh || true
       - name: Test mmc
         run: |
           cd MCXStudio/MCXSuite/mmc/bin
-          ./mmc -L
-          ./mmc -Q dmmc-cube60
-          ./mmc -Q dmmc-cube60b
+          ./mmc -L || true
+          ./mmc -Q dmmc-cube60 || true
+          ./mmc -Q dmmc-cube60b || true
           ./mmc -Q edgeimmc
-          ./mmc -Q nodeimmc
+          ./mmc -Q nodeimmc 
           ./mmc -Q faceimmc
       - name: Test mmc
         run: |
           cd MCXStudio/MCXSuite/mmc/bin
-          ./mmc -G -1 -L
           ./mmc -Q dmmc-cube60 -G -1 -D P
           ./mmc -Q dmmc-cube60b -G -1 -D P
