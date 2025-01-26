@@ -9,7 +9,7 @@ jobs:
     name: Release package tests
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-13, windows-2019, windows-2022]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-13, macos-14, windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -34,8 +34,14 @@ jobs:
           sudo hdiutil detach /Volumes/Octave\ 9.2
           rm -rf Octave-9.2-Intel.dmg
           echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
-          curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos64-${{ env.RELEASE_TAG }}.zip
-          unzip -o MCXStudio-macos64-${{ env.RELEASE_TAG }}.zip
+          curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos-x86_64-${{ env.RELEASE_TAG }}.zip
+          unzip -o MCXStudio-macos-x86_64-${{ env.RELEASE_TAG }}.zip
+      - name: Install dependencies (MacOS only)
+        if: ${{ runner.os == 'macOS' && matrix.os == 'macos-14' }}
+        run: |
+          brew install octave
+          curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos-arm64-${{ env.RELEASE_TAG }}.zip
+          unzip -o MCXStudio-macos-arm64-${{ env.RELEASE_TAG }}.zip
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
@@ -49,11 +55,12 @@ jobs:
           vcpkg --triplet=x64-windows install opencl
           cp 'c:\vcpkg\packages\opencl_x64-windows\bin\OpenCL.dll' 'c:\Windows\System32'
       - name: Test mcx
+        if: ${{ matrix.os != 'macos-14' }}
         run: |
           cd MCXStudio/MCXSuite/mcx/bin
           ./mcx -L || true
           ./mcx -Q || true
-          ./mcx -N || ture
+          ./mcx -N || true
           ./mcx -Q cube60b --dumpjson || true
       - name: Test mcxcl
         run: |
