@@ -83,16 +83,16 @@ jobs:
           ./mmc -Q nodeimmc -G -1 || true
           ./mmc -Q faceimmc -G -1 || true
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v1
+        uses: matlab-actions/setup-matlab@v4
         with:
-          release: R2022a
+          release: R2023b
       - name: Run MATLAB mcxlabcl test
         continue-on-error: true
-        uses: matlab-actions/run-command@v1
+        uses: matlab-actions/run-command@v2
         with:
           command: cd MCXStudio; mcxsuite_addpath; cd MATLAB/mcxlabcl/examples; demo_mcxlab_basic; demo_mcxlab_2d; demo_mcxlab_replay; demo_bc_det; demo_photon_sharing;
       - name: Run MATLAB mmclab test
         continue-on-error: true
-        uses: matlab-actions/run-command@v1
+        uses: matlab-actions/run-command@v2
         with:
           command: cd MCXStudio; mcxsuite_addpath; cd MATLAB/mmclab/example; demo_mmclab_basic; demo_example_meshtest; demo_example_replay; demo_wide_det; demo_photon_sharing;
