@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y octave ocl-icd-opencl-dev libpocl2 pocl-opencl-icd
           curl -s -L -O https://mcx.space/nightly/linux64/MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
-          unzip MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
+          unzip -o MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' && matrix.os != 'macos-14' }}
         run: |
@@ -48,7 +48,7 @@ jobs:
           choco install octave.portable --version=9.2.0
           echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' >> $GITHUB_PATH
           curl -s -L -O https://mcx.space/nightly/win64/MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
-          unzip MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+          unzip -o MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
       - name: Install OpenCL.dll and static libraries (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
