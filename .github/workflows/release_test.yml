@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y octave ocl-icd-libopencl1
           curl -s -L -O https://mcx.space/nightly/linux64/MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
-          unzip MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+          unzip MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' && matrix.os != 'macos-14' }}
         run: |
@@ -35,7 +35,7 @@ jobs:
           rm -rf Octave-9.2-Intel.dmg
           echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
           curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos64-${{ env.RELEASE_TAG }}.zip
-          unzip MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+          unzip MCXStudio-macos64-${{ env.RELEASE_TAG }}.zip
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
