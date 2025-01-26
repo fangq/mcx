@@ -83,7 +83,7 @@ jobs:
           ./mmc -Q nodeimmc -G -1 || true
           ./mmc -Q faceimmc -G -1 || true
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v4
+        uses: matlab-actions/setup-matlab@v2
         with:
           release: R2023b
       - name: Run MATLAB mcxlabcl test
