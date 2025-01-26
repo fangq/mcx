@@ -21,7 +21,7 @@ jobs:
       - name: Download release package
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt-get update && sudo apt-get install -y octave ocl-icd-libopencl1
+          sudo apt-get update && sudo apt-get install -y octave ocl-icd-opencl-dev
           curl -s -L -O https://mcx.space/nightly/linux64/MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
           unzip MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
       - name: Install dependencies (MacOS only)
