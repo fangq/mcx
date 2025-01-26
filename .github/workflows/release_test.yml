@@ -1,0 +1,73 @@
+name: Release package quality test
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release_test:
+    name: Release package tests
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-13, windows-2019, windows-2022]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set env
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Download release package
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y octave ocl-icd-libopencl1
+          curl -s -L -O https://mcx.space/nightly/linux64/MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
+          unzip MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+      - name: Install dependencies (MacOS only)
+        if: ${{ runner.os == 'macOS' && matrix.os != 'macos-14' }}
+        run: |
+          curl -L -o Octave-9.2-Intel.dmg --insecure https://github.com/octave-app/octave-app/releases/download/v9.2/Octave-9.2-Intel.dmg
+          xattr -c Octave-*.dmg
+          sudo hdiutil attach Octave-9.2-Intel.dmg
+          sudo cp -a /Volumes/Octave\ 9.2/Octave-9.2.app /Applications
+          sudo hdiutil detach /Volumes/Octave\ 9.2
+          rm -rf Octave-9.2-Intel.dmg
+          echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
+          curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos64-${{ env.RELEASE_TAG }}.zip
+          unzip MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+      - name: Install dependencies (Windows only)
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          choco install octave.portable --version=9.2.0
+          echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' >> $GITHUB_PATH
+          curl -s -L -O https://mcx.space/nightly/win64/MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+          unzip MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
+      - name: Install OpenCL.dll and static libraries (Windows only)
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          vcpkg --triplet=x64-windows install opencl
+          cp 'c:\vcpkg\packages\opencl_x64-windows\bin\OpenCL.dll' 'c:\Windows\System32'
+      - name: Test mcx
+        run: |
+          cd MCXStudio/MCXSuite/mcx/bin
+          ./mcx -L
+      - name: Test mcxcl
+        run: |
+          cd MCXStudio/MCXSuite/mcxcl/test
+          ./testmcx.sh
+      - name: Test mmc
+        run: |
+          cd MCXStudio/MCXSuite/mmc/bin
+          ./mmc -L
+          ./mmc -Q dmmc-cube60
+          ./mmc -Q dmmc-cube60b
+          ./mmc -Q edgeimmc
+          ./mmc -Q nodeimmc
+          ./mmc -Q faceimmc
+      - name: Test mmc
+        run: |
+          cd MCXStudio/MCXSuite/mmc/bin
+          ./mmc -G -1 -L
+          ./mmc -Q dmmc-cube60 -G -1 -D P
+          ./mmc -Q dmmc-cube60b -G -1 -D P
