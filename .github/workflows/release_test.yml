@@ -68,11 +68,8 @@ jobs:
           ./mmc -L || true
           ./mmc -Q dmmc-cube60 || true
           ./mmc -Q dmmc-cube60b || true
-          ./mmc -Q edgeimmc
-          ./mmc -Q nodeimmc 
-          ./mmc -Q faceimmc
-      - name: Test mmc
-        run: |
-          cd MCXStudio/MCXSuite/mmc/bin
           ./mmc -Q dmmc-cube60 -G -1 -D P
           ./mmc -Q dmmc-cube60b -G -1 -D P
+          ./mmc -Q edgeimmc -G -1
+          ./mmc -Q nodeimmc -G -1
+          ./mmc -Q faceimmc -G -1
