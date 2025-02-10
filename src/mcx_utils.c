@@ -5087,14 +5087,30 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     break;
 
                 case 'N':
-                    if (i == argc - 1 || argv[i + 1][0] == '-') {
+                    if (i == argc - 1 || argv[i + 1][0] == '-' || argv[i + 1][0] == '{' || strchr(argv[i + 1], '=')) {
                         int j, doclen;
                         char* jbuf = NULL;
-                        runcommand("curl -s -X GET \"https://neurojson.io:7777/mcx/_all_docs\"", "", &jbuf);
-                        cJSON* root = cJSON_Parse(jbuf), *docs = cJSON_GetObjectItem(root, "rows"), *subitem, *tmp;
+
+                        if (i < argc - 1 && argv[i + 1][0] == '{') {
+                            char cmd[MAX_PATH_LENGTH] = "curl -s -X POST -H 'Content-Type: application/json' -d ";
+                            sprintf(cmd + strlen(cmd), "'%s' \"https://neurojson.io:7777/mcx/_find\"", argv[i + 1]);
+                            runcommand(cmd, "", &jbuf);
+                        } else if (i < argc - 1 && strchr(argv[i + 1], '=')) {
+                            char cmd[MAX_PATH_LENGTH] = "curl -s -X GET 'https://neurojson.io:7777/mcx/_all_docs?";
+                            sprintf(cmd + strlen(cmd), "%s'", argv[i + 1]);
+                            runcommand(cmd, "", &jbuf);
+                        } else {
+                            runcommand("curl -s -X POST -H 'Content-Type: application/json' -d '{\"selector\": {\"Session\": {\"$gt\": null}},\"fields\": [\"_id\"],\"limit\":50}' \"https://neurojson.io:7777/mcx/_find\"", "", &jbuf);
+                        }
+
+                        cJSON* root = cJSON_Parse(jbuf), *docs = cJSON_GetObjectItem(root, "docs"), *subitem, *tmp;
 
                         if (!docs) {
-                            MCX_ERROR(-1, jbuf);
+                            docs = cJSON_GetObjectItem(root, "rows");
+
+                            if (!docs || !root) {
+                                MCX_ERROR(-1, jbuf);
+                            }
                         }
 
                         doclen = cJSON_GetArraySize(docs);
@@ -5102,13 +5118,17 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         printf("Downloading %d simulations from NeuroJSON.io (https://neurojson.org/db/mcx)\n", doclen - 1);
 
                         for (j = 0; j < doclen; j++) {
-                            if (strchr(FIND_JSON_KEY("id", "id", subitem, "", valuestring), '_') == NULL) {
-                                printf("\t%s\n", FIND_JSON_KEY("id", "id", subitem, "", valuestring));
+                            root = subitem;
+                            char* docid = (cJSON_GetObjectItem(subitem, "_id") ? FIND_JSON_KEY("_id", "id", subitem, "", valuestring) : FIND_JSON_KEY("id", "id", subitem, "", valuestring));
+
+                            if (docid && docid[0] != '_' && docid[0] != '.') {
+                                printf("\t%s\n", docid);
                             }
 
                             subitem = subitem->next;
                         }
 
+                        cJSON_Delete(root);
                         free(jbuf);
                         exit(0);
                     } else {
