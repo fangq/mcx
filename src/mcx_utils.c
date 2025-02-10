@@ -5118,7 +5118,6 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         printf("Downloading %d simulations from NeuroJSON.io (https://neurojson.org/db/mcx)\n", doclen - 1);
 
                         for (j = 0; j < doclen; j++) {
-                            root = subitem;
                             char* docid = (cJSON_GetObjectItem(subitem, "_id") ? FIND_JSON_KEY("_id", "id", subitem, "", valuestring) : FIND_JSON_KEY("id", "id", subitem, "", valuestring));
 
                             if (docid && docid[0] != '_' && docid[0] != '.') {
