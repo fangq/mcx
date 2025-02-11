@@ -25,6 +25,9 @@ function tpsf = mcxdettpsf(detp, detnum, prop, time)
 % select the photon data of the specified detector
 detp.ppath = detp.ppath(detp.detid == detnum, :);
 detp.detid = detp.detid(detp.detid == detnum);
+if (isfield(detp, 'w0'))
+    detp.w0 = detp.w0(detp.detid == detnum);
+end
 
 % calculate the detected photon weight and arrival time
 replayweight = mcxdetweight(detp, prop);
