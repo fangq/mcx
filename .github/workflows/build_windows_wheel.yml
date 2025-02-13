@@ -68,7 +68,7 @@ jobs:
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v4
         with:
-          name: windows-wheels
+          name: windows-wheels-${{ matrix.python_version }}
           path: dist/
 
   upload_windows_wheels:
@@ -79,7 +79,8 @@ jobs:
       - name: Download Wheels from Build Job
         uses: actions/download-artifact@v4
         with:
-          name: windows-wheels
+          pattern: windows-wheels-*
+          merge-multiple: true
           path: dist/
       - name: Upload packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

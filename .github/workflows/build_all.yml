@@ -243,7 +243,8 @@ jobs:
       - name: Download mcx
         uses: actions/download-artifact@v4
         with:
-          name: all-mcxlab-packages-*
+          pattern: all-mcxlab-packages-*
+          merge-multiple: true
           path: packages
       - name: Create all-in-one octave mcxlab
         run: |
