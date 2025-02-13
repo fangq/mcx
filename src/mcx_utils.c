@@ -613,7 +613,7 @@ void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     ubjw_write_key(root, "_DataInfo_");
     ubjw_begin_object(root, UBJ_MIXED, 0);
     UBJ_WRITE_KEY(root, "JNIFTIVersion", string, "0.5");
-    UBJ_WRITE_KEY(root, "Comment", string, "Created by MCX (http://mcx.space)");
+    UBJ_WRITE_KEY(root, "Comment", string, "Created by MCX (https://mcx.space)");
     UBJ_WRITE_KEY(root, "AnnotationFormat", string, "https://neurojson.org/jnifti/draft1");
     UBJ_WRITE_KEY(root, "SerialFormat", string, "https://neurojson.org/bjdata/draft2");
     ubjw_write_key(root, "Parser");
@@ -771,7 +771,7 @@ void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     /* the "_DataInfo_" section */
     cJSON_AddItemToObject(root, "_DataInfo_", info = cJSON_CreateObject());
     cJSON_AddStringToObject(info, "JNIFTIVersion", "0.5");
-    cJSON_AddStringToObject(info, "Comment", "Created by MCX (http://mcx.space)");
+    cJSON_AddStringToObject(info, "Comment", "Created by MCX (https://mcx.space)");
     cJSON_AddStringToObject(info, "AnnotationFormat", "https://neurojson.org/jnifti/draft1");
     cJSON_AddStringToObject(info, "SerialFormat", "https://json.org");
     cJSON_AddItemToObject(info, "Parser", parser = cJSON_CreateObject());
@@ -1287,7 +1287,7 @@ void mcx_error(const int id, const char* msg, const char* file, const int linenu
     if (id == -MCX_CUDA_ERROR_LAUNCH_FAILED) {
         MCX_FPRINTF(stdout, S_RED "MCX is terminated by your graphics driver. If you use windows, \n\
 please modify TdrDelay value in the registry. Please checkout FAQ #1 for more details:\n\
-URL: http://mcx.space/wiki/index.cgi?Doc/FAQ\n" S_RESET);
+URL: https://mcx.space/wiki/index.cgi?Doc/FAQ\n" S_RESET);
     }
 
     exit(id);
