@@ -197,9 +197,9 @@ jobs:
           fi
       - name: Upload mcxlab package
         if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-13' || matrix.os == 'windows-2019' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: all-mcx-packages
+          name: all-mcxlab-packages-${{ env.RELEASE_TAG }}
           path: packages/mcxlab-${{ env.RELEASE_TAG }}.zip
       - name: Prepare mcx package
         run: |
@@ -229,9 +229,9 @@ jobs:
           fi
       - name: Upload mcx package
         if: ${{ matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-13' || matrix.os == 'windows-2019' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: all-mcx-packages
+          name: all-mcx-packages-${{ env.RELEASE_TAG }}
           path: packages/mcx-${{ env.RELEASE_TAG }}.zip
 
   upload_package:
@@ -241,9 +241,9 @@ jobs:
     if: ${{ github.repository_owner == 'fangq' && github.event_name != 'pull_request'}}
     steps:
       - name: Download mcx
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: all-mcx-packages
+          name: all-mcxlab-packages-${{ env.RELEASE_TAG }}
           path: packages
       - name: Create all-in-one octave mcxlab
         run: |
