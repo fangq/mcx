@@ -9,6 +9,6 @@ Scope: machine
 Installers:
 - Architecture: x64
   InstallerUrl: https://mcx.space/nightly/release/v2025/MCXStudio-v2025-installer.exe
-  InstallerSha256: ce5fa53bb753e8719fd4de3af0da9245c96c3c63a712b405ccde1540d5948551
+  InstallerSha256: 2e48cf40473c5601fff8f6fdc22734f83d5e4b935298a6c184468bb96b23fc2b
 ManifestType: installer
 ManifestVersion: 1.1.0
