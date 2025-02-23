@@ -2,6 +2,9 @@
 
 Major updates are marked with a "*"
 
+== MCX v2025.6.pre (Kilo-Kelvin - 2.8), FangQ <q.fang (a) neu.edu> ==
+
+
 == MCX v2025 (Jumbo Jolt - 2.6), FangQ <q.fang (a) neu.edu> ==
 
  2025-01-22 [24b445e] [bug] fix incorrect per-voxel pathlength when mua->0, #164
