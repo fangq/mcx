@@ -364,6 +364,7 @@ the verbose command line options in MCX.
                        'wm' - weighted momentum transfer for a source/detector pair (replay mode)
                        'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
                        'length' total pathlengths accumulated per voxel,
+                       'rfmus' frequency-domain (FD/RF) mus Jacobian (replay mode),
                        for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
                        and  <demo_replay_timedomain.m>
        cfg.session:    a string for output file names (only used when no return variables)

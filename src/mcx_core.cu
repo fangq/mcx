@@ -1648,7 +1648,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     ppath[2] = ((gcfg->srcnum > 1) ? ppath[2] : p->w); // store initial weight
     v->nscat = EPS;
 
-    if (gcfg->outputtype == otRF) { // if run RF replay
+    if (gcfg->outputtype == otRF  || gcfg->outputtype == otRFmus) { // if run RF replay
         f->pathlen = photontof[(threadid * gcfg->threadphoton + min(threadid, gcfg->oddphotons - 1) + (int)f->ndone)];
         sincosf(gcfg->omega * f->pathlen, ppath + 5 + gcfg->srcnum, ppath + 4 + gcfg->srcnum);
     }
@@ -1794,7 +1794,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
     }
 
     ppath = (float*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + blockDim.x * (gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)));
-    ppath += threadIdx.x * (gcfg->w0offset + gcfg->srcnum + 2 * (gcfg->outputtype == otRF)); // block#2: maxmedia*thread number to store the partial
+    uint RF_size = 2 * (gcfg->outputtype == otRF || gcfg->outputtype == otRFmus)
+    ppath += threadIdx.x * (gcfg->w0offset + gcfg->srcnum + RF_size); // block#2: maxmedia*thread number to store the partial
     clearpath(ppath, gcfg->w0offset + gcfg->srcnum);
     ppath[gcfg->partialdata]  = genergy[idx << 1];
     ppath[gcfg->partialdata + 1] = genergy[(idx << 1) + 1];
@@ -1981,13 +1982,13 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                     if (!gcfg->isatomic) {
 #endif
-                        field[idx1d + tshift * gcfg->dimlen.z] += tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
+                        field[idx1d + tshift * gcfg->dimlen.z] += accumval;
 #ifdef USE_ATOMIC
                     } else {
 #ifdef USE_DOUBLE
-                        atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)]);
+                        atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], accumval);
 #else
-                        float oldval = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)]);
+                        float oldval = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], accumval);
 
                         if (fabsf(oldval) > MAX_ACCUM) {
                             if (atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], -oldval) < 0.f) {
@@ -1998,10 +1999,26 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         }
 
 #endif
-                        GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)], p.w));
+                        GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, accumval, p.w));
                     }
 
 #endif
+                }
+
+                if (gcfg->outputtype == otRFmus) {
+                    outputtype w_N_scatt = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
+                    outputtype cos_omega_t = ppath[gcfg->w0offset + gcfg->srcnum];
+                    outputtype sin_omega_t = ppath[gcfg->w0offset + gcfg->srcnum + 1];
+                    outputtype RFmus_re = w_N_scatt * cos_omega_t;
+                    outputtype RFmus_im = w_N_scatt * sin_omega_t;
+
+#ifdef USE_ATOMIC
+                    if (!gcfg->isatomic) {
+#endif
+                        field[idx1d + tshift * gcfg->dimlen.z] += RFmus_re;
+                        field[idx1d + tshift * gcfg->dimlen.z] += RFmus_im;
+#ifdef USE_ATOMIC
+
                 }
 
                 if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
