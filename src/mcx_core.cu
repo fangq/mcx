@@ -2034,13 +2034,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         } else {
                             for (int i = 0; i < gcfg->srcnum; i++) {
                                 if (fabs(ppath[gcfg->w0offset + i]) > 0.f) {
-#ifdef USE_DOUBLE
                                     atomicAdd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], (gcfg->srcnum == 1 ? RFmus_re : RFmus_re * ppath[gcfg->w0offset + i]));
                                     atomicAdd(& field[(idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w)*gcfg->srcnum + i], (gcfg->srcnum == 1 ? RFmus_im : RFmus_im * ppath[gcfg->w0offset + i]));
-#else
-                                    atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], (gcfg->srcnum == 1 ? RFmus_re : RFmus_re * ppath[gcfg->w0offset + i]));
-                                    atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w)*gcfg->srcnum + i], (gcfg->srcnum == 1 ? RFmus_im : RFmus_im * ppath[gcfg->w0offset + i]));
-#endif
                                 }
                             }
                         }
