@@ -16,4 +16,4 @@ nvcc --version
 module list
 
 ## Run GPU accelerated executable(, note the --gres).
-srun matlab -nodisplay -batch "demo_replay_FD_mus_PH();"
+srun matlab -nodisplay -batch "demo_replay_FD_mus();"
