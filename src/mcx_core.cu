@@ -1648,7 +1648,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     ppath[2] = ((gcfg->srcnum > 1) ? ppath[2] : p->w); // store initial weight
     v->nscat = EPS;
 
-    if (gcfg->outputtype == otRF  || gcfg->outputtype == otRFmus) { // if run RF replay
+    if (gcfg->outputtype == otRF || gcfg->outputtype == otRFmus) { // if run RF replay
         f->pathlen = photontof[(threadid * gcfg->threadphoton + min(threadid, gcfg->oddphotons - 1) + (int)f->ndone)];
         sincosf(gcfg->omega * f->pathlen, ppath + 5 + gcfg->srcnum, ppath + 4 + gcfg->srcnum);
     }
@@ -2007,7 +2007,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #endif
                 }
 
-                if (gcfg->outputtype == otRFmus) {
+                if (gcfg->seed == SEED_FROM_FILE && gcfg->outputtype == otRFmus) {
                     OutputType w_N_scatt = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
                     OutputType cos_omega_t = ppath[gcfg->w0offset + gcfg->srcnum];
                     OutputType sin_omega_t = ppath[gcfg->w0offset + gcfg->srcnum + 1];
@@ -2880,9 +2880,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     {
         if (cfg->exportfield == NULL && cfg->issave2pt) {
             if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
-                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF)) * cfg->detnum);
+                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)) * cfg->detnum);
             } else {
-                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF)));
+                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)));
             }
         }
 
@@ -3302,7 +3302,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      *
      *  The calculation of the energy conservation will only reflect the last simulation.
      */
-    sharedbuf = (param.nphaselen + param.nanglelen) * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF)));
+    sharedbuf = (param.nphaselen + param.nanglelen) * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF || cfg->outputtype == otRFmus)));
 
     MCX_FPRINTF(cfg->flog, "requesting %d bytes of shared memory\n", sharedbuf);
 
@@ -3656,14 +3656,14 @@ is more than what your have specified (%d), please use the -H option to specify 
                     field[i] = rawfield[i];
 #ifndef USE_DOUBLE
 
-                    if (cfg->outputtype != otRF) {
+                    if (cfg->outputtype != otRF && cfg->outputtype != otRFmus) {
                         field[i] += rawfield[i + fieldlen];
                     }
 
 #endif
                 }
 
-                if (cfg->outputtype == otRF && cfg->omega > 0.f && SHADOWCOUNT == 2) {
+                if ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) && cfg->omega > 0.f && SHADOWCOUNT == 2) {
                     rfimag = (OutputType*)malloc(fieldlen * sizeof(OutputType));
                     memcpy(rfimag, rawfield + fieldlen, fieldlen * sizeof(OutputType));
                 }
@@ -3720,7 +3720,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 #pragma omp atomic
                 cfg->exportfield[i] += field[i];
 
-            if (cfg->outputtype == otRF && rfimag) {
+            if ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) && rfimag) {
                 for (i = 0; i < fieldlen; i++)
                     #pragma omp atomic
                     cfg->exportfield[i + fieldlen] += rfimag[i];
@@ -3807,7 +3807,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 }
             } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
-            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF) {
+            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus) {
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                     int detid;
 
@@ -3831,7 +3831,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                         fflush(cfg->flog);
                         mcx_normalize(cfg->exportfield + (detid - 1)*dimxyz * gpu[gpuid].maxgate, scale[0], dimxyz * gpu[gpuid].maxgate, cfg->isnormalized, 0, 1);
 
-                        if (cfg->outputtype == otRF) {
+                        if (cfg->outputtype == otRF || cfg->outputtype == otRFmus) {
                             mcx_normalize(cfg->exportfield + fieldlen + (detid - 1)*dimxyz * gpu[gpuid].maxgate, scale[0], dimxyz * gpu[gpuid].maxgate, cfg->isnormalized, 0, 1);
                         }
                     }
@@ -3880,7 +3880,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 for (i = 0; i < (int)cfg->srcnum; i++) {
                     MCX_FPRINTF(cfg->flog, "source %d, normalization factor alpha=%f\n", (i + 1), scale[i]);
                     fflush(cfg->flog);
-                    mcx_normalize(cfg->exportfield, scale[i], fieldlen / cfg->srcnum * ((cfg->outputtype == otRF) + 1), cfg->isnormalized, i, cfg->srcnum);
+                    mcx_normalize(cfg->exportfield, scale[i], fieldlen / cfg->srcnum * ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) + 1), cfg->isnormalized, i, cfg->srcnum);
                 }
             }
 

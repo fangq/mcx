@@ -893,7 +893,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
     }
 
     if (cfg->outputformat == ofNifti || cfg->outputformat == ofAnalyze) {
-        mcx_savenii(dat, len * (1 + (cfg->outputtype == otRF)), name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
+        mcx_savenii(dat, len * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)), name, NIFTI_TYPE_FLOAT32, cfg->outputformat, cfg);
         return;
     } else if (cfg->outputformat == ofJNifti || cfg->outputformat == ofBJNifti) {
         uint dims[6] = {cfg->dim.x, cfg->dim.y, cfg->dim.z, cfg->maxgate, cfg->srcnum, 1};
@@ -907,7 +907,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
             dims[5] *= cfg->detnum;
         }
 
-        if (cfg->seed == SEED_FROM_FILE && cfg->outputtype == otRF) {
+        if (cfg->seed == SEED_FROM_FILE && (cfg->outputtype == otRF || cfg->outputtype == otRFmus )) {
             dims[5] *= 2;
         }
 
@@ -932,7 +932,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
         fwrite(&(cfg->dim.x), sizeof(int), 3, fp);
     }
 
-    fwrite(dat, sizeof(float), len * (1 + (cfg->outputtype == otRF)), fp);
+    fwrite(dat, sizeof(float), len * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)), fp);
     fclose(fp);
 }
 
@@ -1494,7 +1494,7 @@ void mcx_preprocess(Config* cfg) {
         cfg->issavedet = 0;
     }
 
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF)
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus)
             && cfg->seed != SEED_FROM_FILE) {
         MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
     }
@@ -3956,7 +3956,7 @@ void mcx_loadseedfile(Config* cfg) {
     cfg->seed = SEED_FROM_FILE;
     cfg->nphoton = his.savedphoton;
 
-    if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF) { //cfg->replaydet>0
+    if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus) { //cfg->replaydet>0
         int i, j, hasdetid = 0, offset;
         float plen, *ppath;
         hasdetid = SAVE_DETID(his.savedetflag);
@@ -5210,7 +5210,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
         }
     }
 
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF) && cfg->seed != SEED_FROM_FILE) {
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype ==  || cfg->outputtype == otRFmus) && cfg->seed != SEED_FROM_FILE) {
         MCX_ERROR(-1, "Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.");
     }
 

@@ -267,7 +267,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fieldlen *= cfg.detnum;
                 }
 
-                if (cfg.replay.seed != NULL && cfg.outputtype == otRF) {
+                if (cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) {
                     fieldlen *= 2;
                 }
 
@@ -402,7 +402,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[4] = cfg.detnum;
                 }
 
-                if (cfg.replay.seed != NULL && cfg.outputtype == otRF) {
+                if (cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) {
                     fielddim[5] = 2;
                 }
 
