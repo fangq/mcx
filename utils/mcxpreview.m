@@ -86,8 +86,14 @@ for i = 1:len
 
         if (length(val) > 1)
             hseg = zeros(length(val), 1);
+            [isoct, octver] = isoctavemesh;
             for id = 1:length(val)
-                [no, fc] = binsurface(padvol == val(id));
+                if (~isoct || sscanf(octver, '%d') > 5)
+                    [no, fc] = binsurface(int8(padvol == val(id)), 0.5);
+                else
+                    [fc, no] = isosurface(int8(padvol == val(id)), 0.5);
+                    no = no(:,[2 1 3]) - 0.5;
+                end
                 hseg(id) = plotmesh((no - 1) * voxelsize, fc, 'facealpha', 0.3, 'linestyle', 'none', 'facecolor', surfcolors(val(id) + 1, :), varargin{:});
             end
         end
