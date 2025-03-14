@@ -109,7 +109,7 @@ function varargout = mcxlab(varargin)
 %                      '0': this face is not used to detector photons
 %                      '1': this face is used to capture photons (if output detphoton)
 %                      see <demo_bc_det.m>
-%      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection.
+%      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no normalization.
 %                      setting isnormalized to 2 in the replay mode builds the Jacobian
 %                      with Born approximation instead of the default Rytov approximation
 %      cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
