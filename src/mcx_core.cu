@@ -1967,10 +1967,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                 rv = float3(__fdividef(1.f, v.x), __fdividef(1.f, v.y), __fdividef(1.f, v.z));
 
-                if (gcfg->outputtype == otWP || gcfg->outputtype == otDCS) {
+                if (gcfg->outputtype == otWP || gcfg->outputtype == otDCS || gcfg->outputtype == otWPTOF) {
                     //< photontof[] and replayweight[] should be cached using local mem to avoid global read
                     int tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                     tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
+                    tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[tshift] : tmp0;
                     tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
                              ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
 
@@ -3811,7 +3812,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 }
             } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
-            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF) {
+            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) {
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                     int detid;
 
@@ -3825,10 +3826,15 @@ is more than what your have specified (%d), please use the -H option to specify 
                                 }
 
                             if (scale[0] > 0.f) {
-                                scale[0] = cfg->unitinmm / scale[0];
+                                scale[0] = 1.0f / scale[0];
+                                if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF){
+                                    scale[0] = cfg->unitinmm * scale[0]; // only paths in voxel units need scaling
+                                }    
                             }
+                        } else if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF){
+                            scale[0] = cfg->unitinmm; 
                         } else {
-                            scale[0] = cfg->unitinmm;
+                            scale[0] = 1.0f;
                         }
 
                         MCX_FPRINTF(cfg->flog, "normalization factor for detector %d alpha=%f\n", detid, scale[0]);
