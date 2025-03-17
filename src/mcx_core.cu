@@ -2191,11 +2191,15 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux) {
                     weight = (prop.mua < EPS) ? (w0 * f.pathlen) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, the first two terms of Taylor expansion of w0*(1-exp(-mua*len))/mua = w0*len - mua*len^2*w0/2 */
                 } else if (gcfg->seed == SEED_FROM_FILE) {
-                    if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF) {
+                    if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF || gcfg->outputtype == otWLTOF) {
                         weight = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen;
 
                         if (gcfg->outputtype == otRF) {
                             weight = -weight * ppath[gcfg->w0offset + gcfg->srcnum];
+                        }
+
+                        if (gcfg->outputtype == otWLTOF) {
+                            weight = weight * photontof[idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone];
                         }
 
                         tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
@@ -3807,7 +3811,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 }
             } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
-            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus) {
+            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF) {
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                     int detid;
 

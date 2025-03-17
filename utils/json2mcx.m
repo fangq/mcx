@@ -129,7 +129,7 @@ cfg = copycfg(cfg, 'isnormalize', json.Session, 'DoNormalize');
 cfg = copycfg(cfg, 'outputformat', json.Session, 'OutputFormat');
 cfg = copycfg(cfg, 'outputtype', json.Session, 'OutputType');
 if (isfield(cfg, 'outputtype') && length(cfg.outputtype) == 1)
-    otypemap = struct('x', 'flux', 'f', 'fluence', 'e', 'energy', 'j', 'jacobian', 'p', 'nscat', 'm', 'wm', 'r', 'rf', 'l', 'length', 'rfmus');
+    otypemap = struct('x', 'flux', 'f', 'fluence', 'e', 'energy', 'j', 'jacobian', 'p', 'nscat', 'm', 'wm', 'r', 'rf', 'l', 'length', 'rfmus','wltof');
     if (~isfield(otypemap, cfg.outputtype))
         error('output type %s is not supported', cfg.outputtype);
     end
