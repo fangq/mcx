@@ -1494,7 +1494,7 @@ void mcx_preprocess(Config* cfg) {
         cfg->issavedet = 0;
     }
 
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || gcfg->outputtype == otWLTOF || gcfg->outputtype == otWPTOF)
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF)
             && cfg->seed != SEED_FROM_FILE) {
         MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
     }
@@ -3956,7 +3956,7 @@ void mcx_loadseedfile(Config* cfg) {
     cfg->seed = SEED_FROM_FILE;
     cfg->nphoton = his.savedphoton;
 
-    if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || gcfg->outputtype == otWLTOF || gcfg->outputtype == otWPTOF) { //cfg->replaydet>0
+    if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) { //cfg->replaydet>0
         int i, j, hasdetid = 0, offset;
         float plen, *ppath;
         hasdetid = SAVE_DETID(his.savedetflag);
@@ -5210,7 +5210,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
         }
     }
 
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || gcfg->outputtype == otWLTOF || gcfg->outputtype == otWPTOF) && cfg->seed != SEED_FROM_FILE) {
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) && cfg->seed != SEED_FROM_FILE) {
         MCX_ERROR(-1, "Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.");
     }
 
