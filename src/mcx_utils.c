@@ -142,9 +142,12 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * m: momentum transfer in replay
  * r: frequency domain/RF mua Jacobian by replay
  * l: total path lengths in each voxel
+ * s : frequency domain/RF mus Jacobian by replay
+ * t : weighted average of time-of-flight x total path length in each voxel
+ * b : weighted average of time-of-flight x total scattering count in each voxel
  */
 
-const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', '\0'};
+const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', '\0'};
 
 /**
  * Debug flags
