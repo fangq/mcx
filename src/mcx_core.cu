@@ -2018,9 +2018,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     int tshift = (int)(floorf((f.t - gcfg->twin0) * gcfg->Rtstep));
                     tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                     tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
-                                ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
+                             ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
 
 #ifdef USE_ATOMIC
+
                     if (!gcfg->isatomic) {
 #endif
                         field[idx1d + tshift * gcfg->dimlen.z] += RFmus_re;
@@ -2047,6 +2048,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                                 }
                             }
                         }
+
 #endif
                     }
 
@@ -3827,12 +3829,13 @@ is more than what your have specified (%d), please use the -H option to specify 
 
                             if (scale[0] > 0.f) {
                                 scale[0] = 1.0f / scale[0];
-                                if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF){
+
+                                if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) {
                                     scale[0] = cfg->unitinmm * scale[0]; // only paths in voxel units need scaling
-                                }    
+                                }
                             }
-                        } else if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF){
-                            scale[0] = cfg->unitinmm; 
+                        } else if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) {
+                            scale[0] = cfg->unitinmm;
                         } else {
                             scale[0] = 1.0f;
                         }

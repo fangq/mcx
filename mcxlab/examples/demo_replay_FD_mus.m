@@ -3,24 +3,20 @@
 %
 % In this example, we show how to compute the
 % Jacobians for log-amplitude and phase shift in the
-% frequency domain (FD)/radio frequency (RF) mode.
+% frequency domain (FD)/radio frequency (RF) mode with
+% respect to scattering.
 %
 % NOTE: Requires (nightly-build) version from 15 May 2023 or later!
 % Add the path to the MCXLAB-files.
 %
-% Ref.: Hirvi et al. (2023). Effects of atlas-based anatomy on modelled
-% light transport in the neonatal head. Phys. Med. Biol.
-% https://doi.org/10.1088/1361-6560/acd48c
-%
 % This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
 %
-% Modified by Pauliina Hirvi 27.2.2025
+% Modified by Pauliina Hirvi 3/2025
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Add path to downloaded MCXLAB readily -build binary files.
 % addpath(genpath('mcxlab-binary'))
 % addpath(genpath('mcx-binary/mcx/utils')) % !
-addpath(genpath('../../'))
 
 % FORM TARGET MODEL
 % Here we consider a simple layered slab model with brain-like optical parameters.
@@ -65,13 +61,6 @@ rfjac_lnA_det1 = rfjac_lnA(:, :, :, 1); % det 1
 rfjac_lnA_det2 = rfjac_lnA(:, :, :, 2); % det 2
 rfjac_phase_det1 = rfjac_phase(:, :, :, 1); % det 1
 rfjac_phase_det2 = rfjac_phase(:, :, :, 2); % det 2
-
-% Save, report and exit Triton.
-fprintf('Whos rfjac_phase_det2?\n')
-whos rfjac_phase_det2
-fprintf('RF replay simulations done -leaving!\n')
-exit;
-
 
 % Visualize Jacobian slices for both data types and source-detector pairs.
 set(figure, 'Position', [0 0 900 400]);
