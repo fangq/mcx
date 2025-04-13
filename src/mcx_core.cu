@@ -1977,6 +1977,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
                     }
 
+                    tshift = MIN(gcfg->maxgate - 1, tshift);
+
 #ifdef USE_ATOMIC
 
                     if (!gcfg->isatomic) {
@@ -2136,7 +2138,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #else
                 float weight = 0.f;
 #endif
-                int tshift = (int)(floorf((f.t - gcfg->twin0) * gcfg->Rtstep));
+                int tshift = MIN(gcfg->maxgate - 1, (int)(floorf((f.t - gcfg->twin0) * gcfg->Rtstep)));
 
                 /** calculate the quality to be accummulated */
                 if (gcfg->outputtype == otEnergy) {
@@ -2154,6 +2156,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                         tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
                                  ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
+                        tshift = MIN(gcfg->maxgate - 1, tshift);
                     }
                 } else if (gcfg->outputtype == otL) {
                     weight = w0 * f.pathlen;
