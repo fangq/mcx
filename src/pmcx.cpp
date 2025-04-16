@@ -1228,7 +1228,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[4] = mcx_config.detnum;
             }
 
-            if (mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.utputtype == otRFmus)) {
+            if (mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) {
                 field_dim[5] = 2;
             }
 
