@@ -633,7 +633,7 @@ def mcxlab(*args):
             ) and "unitinmm" in cfg:  # if((isa(cfg(i).vol,'single') || isa(cfg(i).vol,'double')) && isfield(cfg(i),'unitinmm'))
                 cfg["vol"] = cfg["vol"] * cfg["unitinmm"]
 
-        if "issaveexit" not in cfg or cfg.issaveexit != 2:
+        if "issaveexit" not in cfg or cfg["issaveexit"] != 2:
             medianum = np.shape(cfg["prop"])[0] - 1
             detp = varargout["detp"]  # detp = varargout[1]['data']
             #             if not detp:
