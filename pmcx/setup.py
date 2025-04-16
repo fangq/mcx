@@ -49,6 +49,7 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             "-DBUILD_PYTHON=true",
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             "-DCUDA_NVCC_FLAGS=-DMCX_DISABLE_CUDA_DEVICE_RESET",
         ]
         build_args = []
@@ -157,7 +158,6 @@ setup(
         "Intended Audience :: Science/Research",
         "Environment :: GPU :: NVIDIA CUDA",
         "Topic :: Scientific/Engineering :: Physics",
-        "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
