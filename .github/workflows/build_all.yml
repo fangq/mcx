@@ -77,7 +77,7 @@ jobs:
           rm -rf /tmp/cuda_9.2.148_396.37_linux
           export PATH=/usr/local/cuda/bin:$PATH
           ls /usr/local/cuda/bin
-          sudo perl -pi -e 's/\#if\s+__GNUC_\s+ >\s+7/\#if __GNUC__ > 30/g' /usr/local/cuda/include/crt/host_config.h
+          sudo perl -pi -e 's/\#if\s+__GNUC_\s+>\s+7/\#if __GNUC__ > 30/g' /usr/local/cuda/include/crt/host_config.h
           cat /usr/local/cuda/include/crt/host_config.h
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           nvcc --version
