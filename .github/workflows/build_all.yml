@@ -77,8 +77,8 @@ jobs:
           rm -rf /tmp/cuda_9.2.148_396.37_linux
           export PATH=/usr/local/cuda/bin:$PATH
           ls /usr/local/cuda/bin
-          perl -pi -e 's/^#if __GNUC__ > \d+$/#if __GNUC__ > 23/g' /usr/local/cuda/targets/x86_64-linux/include/crt/host_config.h
-          cat /usr/local/cuda/targets/x86_64-linux/include/crt/host_config.h
+          perl -pi -e 's/^#if __GNUC__ > \d+$/#if __GNUC__ > 23/g' /usr/local/cuda/include/crt/host_config.h
+          cat /usr/local/cuda/include/crt/host_config.h
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           nvcc --version
       - name: Install CUDA (MacOS only)
