@@ -28,8 +28,8 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-9 g++-9 upx-ucl
-          #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
-          #sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
@@ -72,9 +72,9 @@ jobs:
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          cd /tmp && wget -q https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux
-          sudo sh /tmp/cuda_9.2.148_396.37_linux --silent --toolkit --override
-          rm -rf /tmp/cuda_9.2.148_396.37_linux
+          cd /tmp && wget -q https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_440.33.01_linux.run
+          sudo sh /tmp/cuda_10.2.89_440.33.01_linux.run --silent --toolkit --override
+          rm -rf /tmp/cuda_10.2.89_440.33.01_linux.run
           export PATH=/usr/local/cuda/bin:$PATH
           ls /usr/local/cuda/bin
           sudo perl -pi -e 's/#if\s+__GNUC__\s+>\s+\d+/#if __GNUC__ > 30/g' /usr/local/cuda/include/crt/host_config.h
