@@ -1,6 +1,6 @@
 function [rfjac_lnA, rfjac_phase] = mcxrfreplay(cfg, f_mod, detp, seeds, detnums)
 %
-% [rfjac_lnA, rfjac_phase]=mcxrfreplay(cfg,f_mod,detp,seeds,detnums)
+% [rfjac_lnA, rfjac_phase] = mcxrfreplay(cfg, f_mod, detp, seeds, detnums)
 %
 % Compute the frequency domain (FD) log-amplitude and phase shift Jacobians
 % with respect to voxel-wise absorption coefficients using the radio
@@ -15,7 +15,7 @@ function [rfjac_lnA, rfjac_phase] = mcxrfreplay(cfg, f_mod, detp, seeds, detnums
 %
 % Input:
 %     cfg: struct used in the main forward simulation
-%     f_mod: RF modulation frequency
+%     f_mod: RF modulation frequency in Hz
 %     detp: the 2nd output from mcxlab, must be a struct
 %     seeds: the 4th output from mcxlab
 %     detnums: row array with the indices of the detectors to replay and obtain Jacobians
@@ -53,6 +53,7 @@ for d = detnums
     cfg_jac.outputtype = 'rf';
     cfg_jac.omega = 2 * pi * f_mod; % 100 MHz RF modulation
     cfg_jac.isnormalized = 0; % !
+    cfg_jac.issave2pt = 1;
 
     % REPLAY SIMULATION
     [rfjac_d, detp_d, vol_d, seeds_d] = mcxlab(cfg_jac);

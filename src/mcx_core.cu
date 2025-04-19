@@ -1648,7 +1648,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     ppath[2] = ((gcfg->srcnum > 1) ? ppath[2] : p->w); // store initial weight
     v->nscat = EPS;
 
-    if (gcfg->outputtype == otRF) { // if run RF replay
+    if (gcfg->outputtype == otRF || gcfg->outputtype == otRFmus) { // if run RF replay
         f->pathlen = photontof[(threadid * gcfg->threadphoton + min(threadid, gcfg->oddphotons - 1) + (int)f->ndone)];
         sincosf(gcfg->omega * f->pathlen, ppath + 5 + gcfg->srcnum, ppath + 4 + gcfg->srcnum);
     }
@@ -1794,7 +1794,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
     }
 
     ppath = (float*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + blockDim.x * (gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)));
-    ppath += threadIdx.x * (gcfg->w0offset + gcfg->srcnum + 2 * (gcfg->outputtype == otRF)); // block#2: maxmedia*thread number to store the partial
+    uint RF_size = 2 * (gcfg->outputtype == otRF || gcfg->outputtype == otRFmus);
+    ppath += threadIdx.x * (gcfg->w0offset + gcfg->srcnum + RF_size); // block#2: maxmedia*thread number to store the partial
     clearpath(ppath, gcfg->w0offset + gcfg->srcnum);
     ppath[gcfg->partialdata]  = genergy[idx << 1];
     ppath[gcfg->partialdata + 1] = genergy[(idx << 1) + 1];
@@ -1966,10 +1967,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 /** Only compute the reciprocal vector when v is changed, this saves division calculations, which are very expensive on the GPU */
                 rv = float3(__fdividef(1.f, v.x), __fdividef(1.f, v.y), __fdividef(1.f, v.z));
 
-                if (gcfg->outputtype == otWP || gcfg->outputtype == otDCS) {
+                if (gcfg->outputtype == otWP || gcfg->outputtype == otDCS || gcfg->outputtype == otWPTOF) {
                     //< photontof[] and replayweight[] should be cached using local mem to avoid global read
                     int tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                     tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
+                    tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[tshift] : tmp0;
                     tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
                              ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
 
@@ -1977,19 +1979,20 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
                     }
 
+                    OutputType accumval = tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
                     tshift = MIN(gcfg->maxgate - 1, tshift);
 
 #ifdef USE_ATOMIC
 
                     if (!gcfg->isatomic) {
 #endif
-                        field[idx1d + tshift * gcfg->dimlen.z] += tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
+                        field[idx1d + tshift * gcfg->dimlen.z] += accumval;
 #ifdef USE_ATOMIC
                     } else {
 #ifdef USE_DOUBLE
-                        atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)]);
+                        atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], accumval);
 #else
-                        float oldval = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)]);
+                        float oldval = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], accumval);
 
                         if (fabsf(oldval) > MAX_ACCUM) {
                             if (atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], -oldval) < 0.f) {
@@ -2000,10 +2003,56 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         }
 
 #endif
-                        GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, tmp0 * replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)], p.w));
+                        GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, accumval, p.w));
                     }
 
 #endif
+                }
+
+                if (gcfg->seed == SEED_FROM_FILE && gcfg->outputtype == otRFmus) {
+                    OutputType w_N_scatt = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
+                    OutputType cos_omega_t = ppath[gcfg->w0offset + gcfg->srcnum];
+                    OutputType sin_omega_t = ppath[gcfg->w0offset + gcfg->srcnum + 1];
+                    OutputType RFmus_re = w_N_scatt * cos_omega_t;
+                    OutputType RFmus_im = w_N_scatt * sin_omega_t;
+
+                    int tshift = (int)(floorf((f.t - gcfg->twin0) * gcfg->Rtstep));
+                    tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
+                    tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
+                             ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
+
+#ifdef USE_ATOMIC
+
+                    if (!gcfg->isatomic) {
+#endif
+                        field[idx1d + tshift * gcfg->dimlen.z] += RFmus_re;
+                        field[idx1d + tshift * gcfg->dimlen.z] += RFmus_im;
+#ifdef USE_ATOMIC
+                    } else {
+                        if (gcfg->srctype != MCX_SRC_PATTERN && gcfg->srctype != MCX_SRC_PATTERN3D) {
+#ifdef USE_DOUBLE
+                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], RFmus_re);
+                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], RFmus_im);
+#else
+                            // NOTE: MAX_ACCUM ignored, following otRF implementation
+                            float oldval = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], RFmus_re);
+                            GPUDEBUG(("atomic writing to [%d] %e, oldval=%f\n", idx1d, RFmus_re, oldval));
+
+                            oldval = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], RFmus_im);
+                            GPUDEBUG(("atomic writing to [%d] %e, oldval=%f\n", idx1d, RFmus_im, oldval));
+#endif
+                        } else {
+                            for (int i = 0; i < gcfg->srcnum; i++) {
+                                if (fabs(ppath[gcfg->w0offset + i]) > 0.f) {
+                                    atomicAdd(& field[(idx1d + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], (gcfg->srcnum == 1 ? RFmus_re : RFmus_re * ppath[gcfg->w0offset + i]));
+                                    atomicAdd(& field[(idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w)*gcfg->srcnum + i], (gcfg->srcnum == 1 ? RFmus_im : RFmus_im * ppath[gcfg->w0offset + i]));
+                                }
+                            }
+                        }
+
+#endif
+                    }
+
                 }
 
                 if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
@@ -2146,11 +2195,15 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux) {
                     weight = (prop.mua < EPS) ? (w0 * f.pathlen) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, the first two terms of Taylor expansion of w0*(1-exp(-mua*len))/mua = w0*len - mua*len^2*w0/2 */
                 } else if (gcfg->seed == SEED_FROM_FILE) {
-                    if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF) {
+                    if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF || gcfg->outputtype == otWLTOF) {
                         weight = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen;
 
                         if (gcfg->outputtype == otRF) {
                             weight = -weight * ppath[gcfg->w0offset + gcfg->srcnum];
+                        }
+
+                        if (gcfg->outputtype == otWLTOF) {
+                            weight = weight * photontof[idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone];
                         }
 
                         tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
@@ -2836,9 +2889,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     {
         if (cfg->exportfield == NULL && cfg->issave2pt) {
             if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
-                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF)) * cfg->detnum);
+                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)) * cfg->detnum);
             } else {
-                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF)));
+                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)));
             }
         }
 
@@ -3258,7 +3311,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      *
      *  The calculation of the energy conservation will only reflect the last simulation.
      */
-    sharedbuf = (param.nphaselen + param.nanglelen) * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF)));
+    sharedbuf = (param.nphaselen + param.nanglelen) * sizeof(float) + gpu[gpuid].autoblock * (cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF || cfg->outputtype == otRFmus)));
 
     MCX_FPRINTF(cfg->flog, "requesting %d bytes of shared memory\n", sharedbuf);
 
@@ -3612,14 +3665,14 @@ is more than what your have specified (%d), please use the -H option to specify 
                     field[i] = rawfield[i];
 #ifndef USE_DOUBLE
 
-                    if (cfg->outputtype != otRF) {
+                    if (cfg->outputtype != otRF && cfg->outputtype != otRFmus) {
                         field[i] += rawfield[i + fieldlen];
                     }
 
 #endif
                 }
 
-                if (cfg->outputtype == otRF && cfg->omega > 0.f && SHADOWCOUNT == 2) {
+                if ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) && cfg->omega > 0.f && SHADOWCOUNT == 2) {
                     rfimag = (OutputType*)malloc(fieldlen * sizeof(OutputType));
                     memcpy(rfimag, rawfield + fieldlen, fieldlen * sizeof(OutputType));
                 }
@@ -3676,7 +3729,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 #pragma omp atomic
                 cfg->exportfield[i] += field[i];
 
-            if (cfg->outputtype == otRF && rfimag) {
+            if ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) && rfimag) {
                 for (i = 0; i < fieldlen; i++)
                     #pragma omp atomic
                     cfg->exportfield[i + fieldlen] += rfimag[i];
@@ -3763,7 +3816,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 }
             } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
-            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF) {
+            } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) {
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                     int detid;
 
@@ -3777,17 +3830,23 @@ is more than what your have specified (%d), please use the -H option to specify 
                                 }
 
                             if (scale[0] > 0.f) {
-                                scale[0] = cfg->unitinmm / scale[0];
+                                scale[0] = 1.0f / scale[0];
+
+                                if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) {
+                                    scale[0] = cfg->unitinmm * scale[0]; // only paths in voxel units need scaling
+                                }
                             }
-                        } else {
+                        } else if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) {
                             scale[0] = cfg->unitinmm;
+                        } else {
+                            scale[0] = 1.0f;
                         }
 
                         MCX_FPRINTF(cfg->flog, "normalization factor for detector %d alpha=%f\n", detid, scale[0]);
                         fflush(cfg->flog);
                         mcx_normalize(cfg->exportfield + (detid - 1)*dimxyz * gpu[gpuid].maxgate, scale[0], dimxyz * gpu[gpuid].maxgate, cfg->isnormalized, 0, 1);
 
-                        if (cfg->outputtype == otRF) {
+                        if (cfg->outputtype == otRF || cfg->outputtype == otRFmus) {
                             mcx_normalize(cfg->exportfield + fieldlen + (detid - 1)*dimxyz * gpu[gpuid].maxgate, scale[0], dimxyz * gpu[gpuid].maxgate, cfg->isnormalized, 0, 1);
                         }
                     }
@@ -3836,7 +3895,7 @@ is more than what your have specified (%d), please use the -H option to specify 
                 for (i = 0; i < (int)cfg->srcnum; i++) {
                     MCX_FPRINTF(cfg->flog, "source %d, normalization factor alpha=%f\n", (i + 1), scale[i]);
                     fflush(cfg->flog);
-                    mcx_normalize(cfg->exportfield, scale[i], fieldlen / cfg->srcnum * ((cfg->outputtype == otRF) + 1), cfg->isnormalized, i, cfg->srcnum);
+                    mcx_normalize(cfg->exportfield, scale[i], fieldlen / cfg->srcnum * ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) + 1), cfg->isnormalized, i, cfg->srcnum);
                 }
             }
 
