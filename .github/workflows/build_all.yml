@@ -28,8 +28,8 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-9 g++-9 upx-ucl
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+          #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+          #sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
