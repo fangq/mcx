@@ -150,7 +150,13 @@ ifneq (,$(filter oct,$(MAKECMDGOALS)))
   ZLIBFLAG=
 endif
 
-CUGENCODE?=-arch=sm_35
+GPUARCH := $(shell $(CUDACC) --list-gpu-code  2> /dev/null | head -1)
+ifeq ($(GPUARCH),)
+    CUGENCODE?=-arch=sm_35
+else
+    CUGENCODE?=-arch=$(GPUARCH)
+endif
+
 OUTPUTFLAG:=-o
 
 ##  Target section  ##
