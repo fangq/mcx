@@ -143,8 +143,8 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * r: frequency domain/RF mua Jacobian by replay
  * l: total path lengths in each voxel
  * s : frequency domain/RF mus Jacobian by replay
- * t : weighted average of time-of-flight x total path length in each voxel
- * b : weighted average of time-of-flight x total scattering count in each voxel
+ * t : weighted average of time-of-flight x total scattering count in each voxel
+ * b : weighted average of time-of-flight x total path length in each voxel
  */
 
 const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', '\0'};
@@ -5623,11 +5623,12 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
- -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy deposit\n\
+ -O [X|XFEJPMRLSTB](--outputtype) X - output flux, F - fluence, E - energy\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
                                event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; R - RF/FD Jacobian\n\
-                               L - total pathlength\n\
+                               L - total pathlength; S - RF/FD mus Jacobian\n\
+                               T - time-of-flight*nscat;B - time-of-flight*path\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\
                                2 reserved, 3 terminate simulation when detected\n\
                                photon buffer is filled\n\

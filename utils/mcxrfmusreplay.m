@@ -42,16 +42,16 @@ rfmusjac_lnA = zeros([size(cfg.vol), length(detnums)]);
 rfmusjac_phase = zeros([size(cfg.vol), length(detnums)]);
 % Return if no photons detected.
 if (isempty(detp) || isempty(seeds))
-    fprintf('MCX WARNING: No detected photons for replay.\n')
-    return;
+    fprintf('MCX WARNING: No detected photons for replay.\n');
+    return
 end
 
 % Form matrix with mus for each nonzero voxel, and 1 in 0 type or mus=0.
-nonzero_ind = find(cfg.vol(:)>0);
+nonzero_ind = find(cfg.vol(:) > 0);
 nonzero_prop_row = double(cfg.vol(nonzero_ind)) + ones(size(nonzero_ind));
 mus_matrix = ones(size(cfg.vol));
-mus_matrix(nonzero_ind) = cfg.prop(nonzero_prop_row,2);
-mus_matrix = mus_matrix + double(mus_matrix==0); % avoid division by zero if mus=0
+mus_matrix(nonzero_ind) = cfg.prop(nonzero_prop_row, 2);
+mus_matrix = mus_matrix + double(mus_matrix == 0); % avoid division by zero if mus=0
 
 % General replay settings.
 clear cfg_jac;
@@ -64,14 +64,14 @@ cfg_jac.issave2pt = 1;
 
 % Collect Jacobians one detector index at a time.
 for d = detnums
-    if ~ismember(d,detp.detid)
+    if ~ismember(d, detp.detid)
         fprintf('MCX WARNING: No detected photons for detector %d.\n', d);
-        continue;
+        continue
     end
 
     % REPLAY SIMULATION 1
     cfg_jac.replaydet = d;
-    cfg_jac.outputtype = 'rf'; % FD absorption Jacobians 
+    cfg_jac.outputtype = 'rf'; % FD absorption Jacobians
     rfjac_d = mcxlab(cfg_jac);
     rfjac_d = sum(rfjac_d.data, 4); % sum over time instances
     if cfg_jac.isnormalized == 0
@@ -80,21 +80,23 @@ for d = detnums
     % Jacobians for X and Y wrt mua:
     rfjac_X = rfjac_d(:, :, :, :, :, 1); % (-1*)cos-weighted paths
     rfjac_Y = rfjac_d(:, :, :, :, :, 2); % (-1*)sine-weighted paths
-    clear rfjac_d
+    clear rfjac_d;
 
     % REPLAY SIMULATION 2
-    cfg_jac.outputtype = 'rfmus'; % FD scattering Jacobians 
+    cfg_jac.outputtype = 'rfmus'; % FD scattering Jacobians
     [rfmusjac_d, detp_d, vol_d, seeds_d] = mcxlab(cfg_jac);
     rfmusjac_d = sum(rfmusjac_d.data, 4); % sum over time instances
     % Jacobians for X and Y wrt mus:
     rfmusjac_X = rfmusjac_d(:, :, :, :, :, 1); % cos-weighted nscatt
-    rfmusjac_X = rfmusjac_X./mus_matrix + rfjac_X; clear rfjac_X
+    rfmusjac_X = rfmusjac_X ./ mus_matrix + rfjac_X;
+    clear rfjac_X;
     rfmusjac_Y = rfmusjac_d(:, :, :, :, :, 2); % sine-weighted nscatt
-    rfmusjac_Y = rfmusjac_Y./mus_matrix + rfjac_Y; clear rfjac_Y rfmusjac_d
+    rfmusjac_Y = rfmusjac_Y ./ mus_matrix + rfjac_Y;
+    clear rfjac_Y rfmusjac_d;
 
     % FD MEASUREMENT ESTIMATES
     detw = mcxdetweight(detp_d, cfg_jac.prop, cfg_jac.unitinmm); % array with detected photon weights
-    dett = mcxdettime(detp_d, cfg_jac.prop, cfg_jac.unitinmm); % array with photon time-of-flights    
+    dett = mcxdettime(detp_d, cfg_jac.prop, cfg_jac.unitinmm); % array with photon time-of-flights
     X = dot(detw, cos((cfg_jac.omega) .* dett));
     Y = dot(detw, sin((cfg_jac.omega) .* dett));
     A = sqrt(X^2 + Y^2); % amplitude [a.u.]

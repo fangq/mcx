@@ -307,8 +307,14 @@ function varargout = mcxlab(varargin)
 %                      'wm' - weighted momentum transfer for a source/detector pair (replay mode)
 %                      'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
 %                      'length' total pathlengths accumulated per voxel,
-%                      for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
-%                      and  <demo_replay_timedomain.m>
+%                      'rfmus' frequency domain/RF mus Jacobian by replay,
+%                      'wltof' weighted average of time-of-flight x total path length in each voxel,
+%                      'wptof' weighted average of time-of-flight x total scattering count in each voxel
+%
+%                      for types jacobian/wl/wp, example: <demo_mcxlab_replay.m>
+%                          and  <demo_replay_timedomain.m>
+%                      for types rf, example: <demo_replay_frequencydomain.m>
+%                      for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
 %
 % == Debug ==
