@@ -267,7 +267,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fieldlen *= cfg.detnum;
                 }
 
-                if (cfg.replay.seed != NULL && cfg.outputtype == otRF) {
+                if (cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) {
                     fieldlen *= 2;
                 }
 
@@ -402,7 +402,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[4] = cfg.detnum;
                 }
 
-                if (cfg.replay.seed != NULL && cfg.outputtype == otRF) {
+                if (cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) {
                     fielddim[5] = 2;
                 }
 
@@ -1051,7 +1051,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         printf("mcx.srctype='%s';\n", strtypestr);
     } else if (strcmp(name, "outputtype") == 0) {
         int len = mxGetNumberOfElements(item);
-        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", ""};
+        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", ""};
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
         if (!mxIsChar(item) || len == 0) {

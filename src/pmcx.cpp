@@ -757,7 +757,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
     if (user_cfg.contains("outputtype")) {
         std::string output_type_str = py::str(user_cfg["outputtype"]);
-        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", ""};
+        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "rfmus", "wltof", "wptof"};
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
         if (output_type_str.empty()) {
@@ -1099,7 +1099,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_len *= mcx_config.detnum;
             }
 
-            if (mcx_config.replay.seed != nullptr && mcx_config.outputtype == otRF) {
+            if (mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) {
                 field_len *= 2;
             }
 
@@ -1228,7 +1228,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[4] = mcx_config.detnum;
             }
 
-            if (mcx_config.replay.seed != nullptr && mcx_config.outputtype == otRF) {
+            if (mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) {
                 field_dim[5] = 2;
             }
 
