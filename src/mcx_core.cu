@@ -1988,7 +1988,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         sphi = theta * stheta;
                     } else {
                         tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
-                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[tshift] : tmp0;
+                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] : tmp0;
                         tmp0 *= theta;
                     }
 
