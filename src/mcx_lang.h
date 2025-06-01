@@ -36,7 +36,16 @@
 #define _MCEXTREME_I18N_H
 
 #define MAX_MCX_LANG  11                         /**< Total number of translations */
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 extern const char* languagename[MAX_MCX_LANG];   /**< translation langauge names */
 extern const char* translations[MAX_MCX_LANG];   /**< JSON-formatted input configuration for each built-in benchmark */
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif
