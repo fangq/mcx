@@ -86,7 +86,7 @@ MSTR(
 #                                                                             #\n\
 # 请访问我们的开放数据门户网站 NeuroJSON.io(" S_BLUE "https://neurojson.io" S_MAGENTA ")，并诚挚邀请 #\n\
 # 用户一道使用简单，可重用的 JSON 格式以及我们的免费网站来共享您的科研数据。  #\n" S_RESET "\"," MSTR(
-    "absorbed":  "总吸收比例",
+    "absorbed":  "总吸收率",
     "after encoding": "编码后压缩比",
     "A CUDA-capable GPU is not found or configured":  "找不到支持 CUDA 的 GPU",
     "Built-in benchmarks":  "内置仿真",
@@ -96,7 +96,7 @@ MSTR(
     "compiled by nvcc":  "nvcc 版本",
     "compiled with": "编译设置",
     "compressing data": "压缩数据",
-    "compression ratio": "压缩比例",
+    "compression ratio": "压缩比",
     "data normalization complete":  "数据归一化完成",
     "detected": "探测到",
     "Downloading simulations from NeuroJSON.io (https://neurojson.org/db/mcx)":  "从 NeuroJSON.io (https://neurojson.org/db/mcx) 下载仿真数据",
@@ -178,7 +178,7 @@ MSTR(
 #                                                                             #\n\
 # 請造訪我們的開放數據入口網站 NeuroJSON.io(" S_BLUE "https://neurojson.io" S_MAGENTA ")，誠摯邀請您 #\n\
 # 一同使用簡單、可重複使用的 JSON 格式與我們的免費網站來分享您的科研數據。    #\n" S_RESET "\"," MSTR(
-    "absorbed": "總吸收比例",
+    "absorbed": "總吸收率",
     "after encoding": "編碼後壓縮比",
     "A CUDA-capable GPU is not found or configured": "找不到支援 CUDA 的 GPU",
     "Built-in benchmarks": "內建模擬",
@@ -188,7 +188,7 @@ MSTR(
     "compiled by nvcc": "nvcc 編譯版本",
     "compiled with": "編譯設定",
     "compressing data": "壓縮資料",
-    "compression ratio": "壓縮比例",
+    "compression ratio": "壓縮比",
     "data normalization complete": "資料正規化完成",
     "detected": "偵測到",
     "Downloading simulations from NeuroJSON.io (https://neurojson.org/db/mcx)": "從 NeuroJSON.io (https://neurojson.org/db/mcx) 下載模擬資料",

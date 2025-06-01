@@ -1176,7 +1176,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
 
         cfg->invcdf[0] = -1.f;
         cfg->invcdf[cfg->nphase - 1] = 1.f;
-        printf("mcx.invcdf=[%ld];\n", cfg->nphase);
+        printf("mcx.invcdf=[%d];\n", cfg->nphase);
     } else if (strcmp(name, "angleinvcdf") == 0) {
         dimtype nangle = mxGetNumberOfElements(item);
         double* val = mxGetPr(item);
@@ -1196,7 +1196,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             }
         }
 
-        printf("mcx.angleinvcdf=[%ld];\n", cfg->nangle);
+        printf("mcx.angleinvcdf=[%d];\n", cfg->nangle);
     } else if (strcmp(name, "shapes") == 0) {
         int len = mxGetNumberOfElements(item);
 
