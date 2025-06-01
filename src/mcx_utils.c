@@ -5104,10 +5104,13 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
 
                         mcx_lang = mcx_parsejson(translations[idx]);
                     } else {
-                        MCX_FPRINTF(cfg->flog, "%s: \n", T_("Built-in benchmarks"));
+                        MCX_FPRINTF(cfg->flog, "%s: \n", T_("Built-in languages"));
 
                         for (int i = 0; i < sizeof(benchname) / sizeof(char*) - 1; i++) {
-                            MCX_FPRINTF(cfg->flog, "\t%s\n", languagename[i]);
+                            cJSON* tmp = NULL, *root = NULL;
+                            mcx_lang = mcx_parsejson(translations[i]);
+                            MCX_FPRINTF(cfg->flog, "\t%s\t%s\n", languagename[i], FIND_JSON_KEY("_LANG_", NULL, mcx_lang, "English", valuestring));
+                            cJSON_Delete(mcx_lang);
                         }
 
                         exit(0);
