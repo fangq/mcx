@@ -370,6 +370,23 @@ void mcx_initcfg(Config* cfg) {
 #else
     cfg->parentid = mpStandalone;
 #endif
+
+    if (!mcx_lang) {
+        char* envlocale = getenv( "MCX_LANG" );
+
+        if (envlocale) {
+            int idx;
+            char langid[6] = {'\0'};
+            strncpy(langid, envlocale, 5);
+            idx = mcx_keylookup(langid, languagename);
+
+            if (idx == -1) {
+                MCX_FPRINTF(cfg->flog, "Unsupported language ID (%s), fallback to default\n", langid);
+            } else {
+                mcx_lang = mcx_parsejson(translations[idx]);
+            }
+        }
+    }
 }
 
 /**
@@ -5099,10 +5116,11 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         int idx = mcx_keylookup(argv[++i], languagename);
 
                         if (idx == -1) {
-                            MCX_ERROR(-1, T_("Unsupported language"));
+                            MCX_FPRINTF(cfg->flog, "Unsupported language (%s) fallback to default\n", argv[i]);
+                        } else {
+                            mcx_lang = mcx_parsejson(translations[idx]);
                         }
 
-                        mcx_lang = mcx_parsejson(translations[idx]);
                     } else {
                         MCX_FPRINTF(cfg->flog, "%s: \n", T_("Built-in languages"));
 
