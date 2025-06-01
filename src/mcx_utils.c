@@ -5116,7 +5116,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         int idx = mcx_keylookup(argv[++i], languagename);
 
                         if (idx == -1) {
-                            MCX_FPRINTF(cfg->flog, "Unsupported language (%s) fallback to default\n", argv[i]);
+                            MCX_FPRINTF(cfg->flog, "Unsupported language ID (%s), fallback to default\n", argv[i]);
                         } else {
                             mcx_lang = mcx_parsejson(translations[idx]);
                         }
