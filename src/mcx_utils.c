@@ -1355,6 +1355,40 @@ void mcx_assert(int ret) {
     }
 }
 
+
+/**
+ * @brief Function to parse a JSON string using cJSON and print errors if detected
+ *
+ * @param[in] jbuf: a JSON string
+ * @param[out] output: the parsed cJSON* object; if error is detected, it returns NULL
+ */
+
+cJSON* mcx_parsejson(const char* jbuf) {
+    cJSON* jroot = cJSON_Parse(jbuf);
+
+    if (!jroot) {
+        char* ptrold, *ptr = (char*)cJSON_GetErrorPtr();
+
+        if (ptr) {
+            ptrold = strstr(jbuf, ptr);
+        }
+
+        if (ptr && ptrold) {
+            char* offs = (ptrold - jbuf >= 50) ? ptrold - 50 : (char*)jbuf;
+
+            while (offs < ptrold) {
+                MCX_FPRINTF(stderr, "%c", *offs);
+                offs++;
+            }
+
+            MCX_FPRINTF(stderr, "<error>%.50s\n", ptrold);
+        }
+    }
+
+    return jroot;
+}
+
+
 #ifndef MCX_CONTAINER
 
 /**
@@ -1396,34 +1430,14 @@ void mcx_readconfig(char* fname, Config* cfg) {
                 jbuf = fname;
             }
 
-            jroot = cJSON_Parse(jbuf);
+            jroot = mcx_parsejson(jbuf);
 
             if (jroot) {
                 mcx_loadjson(jroot, cfg);
                 cJSON_Delete(jroot);
             } else {
-                char* ptrold, *ptr = (char*)cJSON_GetErrorPtr();
-
-                if (ptr) {
-                    ptrold = strstr(jbuf, ptr);
-                }
-
                 if (fp != NULL) {
                     fclose(fp);
-                }
-
-                if (ptr && ptrold) {
-                    char* offs = (ptrold - jbuf >= 50) ? ptrold - 50 : jbuf;
-
-                    while (offs < ptrold) {
-                        MCX_FPRINTF(stderr, "%c", *offs);
-                        offs++;
-                    }
-
-                    MCX_FPRINTF(stderr, "<error>%.50s\n", ptrold);
-                }
-
-                if (fp != NULL) {
                     free(jbuf);
                 }
 
@@ -3341,7 +3355,7 @@ void mcx_savejdata(char* filename, Config* cfg) {
 
     /* save "Shapes" constructs, prioritize over saving volume for smaller size */
     if (cfg->shapedata) {
-        cJSON* shape = cJSON_Parse(cfg->shapedata), *sp;
+        cJSON* shape = mcx_parsejson(cfg->shapedata), *sp;
 
         if (shape == NULL) {
             MCX_ERROR(-1, "the input shape construct is not a valid JSON object");
@@ -3857,7 +3871,7 @@ void mcx_loadseedjdat(char* filename, Config* cfg) {
     jbuf[len - 1] = '\0';
     fclose(fp);
 
-    cJSON* root = cJSON_Parse(jbuf);
+    cJSON* root = mcx_parsejson(jbuf);
     free(jbuf);
 
     if (root) {
@@ -5088,7 +5102,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                             MCX_ERROR(-1, T_("Unsupported language"));
                         }
 
-                        mcx_lang = cJSON_Parse(translations[idx]);
+                        mcx_lang = mcx_parsejson(translations[idx]);
                     } else {
                         MCX_FPRINTF(cfg->flog, "%s: \n", T_("Built-in benchmarks"));
 
@@ -5140,7 +5154,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                             runcommand("curl -s -X POST -H 'Content-Type: application/json' -d '{\"selector\": {\"Session\": {\"$gt\": null}},\"fields\": [\"_id\"],\"limit\":50}' \"https://neurojson.io:7777/mcx/_find\"", "", &jbuf);
                         }
 
-                        cJSON* root = cJSON_Parse(jbuf), *docs = cJSON_GetObjectItem(root, "docs"), *subitem, *tmp;
+                        cJSON* root = mcx_parsejson(jbuf), *docs = cJSON_GetObjectItem(root, "docs"), *subitem, *tmp;
 
                         if (!docs) {
                             docs = cJSON_GetObjectItem(root, "rows");
@@ -5264,7 +5278,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
         }
 
         if (cfg->extrajson) {
-            cJSON* jroot = cJSON_Parse(cfg->extrajson);
+            cJSON* jroot = mcx_parsejson(cfg->extrajson);
 
             if (jroot) {
                 cfg->extrajson[0] = '_';

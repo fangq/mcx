@@ -40,6 +40,7 @@
 #include "mcx_core.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
+#include "mcx_lang.h"
 #include <pybind11/iostream.h>
 
 // Python binding for runtime_error exception in Python.
@@ -1022,6 +1023,22 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
                 throw py::value_error("Log output file can not be written");
             }
         }
+    }
+
+    if (user_cfg.contains("lang")) {
+        std::string langid = py::str(user_cfg["lang"]);
+
+        if (langid.empty()) {
+            throw py::value_error("the 'lang' field must be a non-empty string");
+        }
+
+        int idx = mcx_keylookup((char*)langid.c_str(), languagename);
+
+        if (idx == -1) {
+            throw py::value_error("Unsupported language");
+        }
+
+        mcx_lang = cJSON_Parse(translations[idx]);
     }
 
     // Output arguments parsing

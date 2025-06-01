@@ -3540,7 +3540,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                                         T_("WARNING: the saved trajectory positions are more than what your have specified"), debugrec, cfg->maxjumpdebug,
                                         T_("please use the --maxjumpdebug option to specify a greater number"));
                         } else {
-                            MCX_FPRINTF(cfg->flog, "%s, %u total: %d\t", T_("saved trajectory positions"), debugrec, cfg->debugdatalen + debugrec);
+                            MCX_FPRINTF(cfg->flog, "%s: %u, total: %d\t", T_("saved trajectory positions"), debugrec, cfg->debugdatalen + debugrec);
                         }
 
                         debugrec = min(debugrec, cfg->maxjumpdebug);

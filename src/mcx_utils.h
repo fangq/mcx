@@ -338,7 +338,8 @@ void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 int  mcx_float2half2(float input[2]);
 
-char* T_(const char* str);
+extern cJSON* mcx_lang;       /**< JSON object holding the translations of the specified language */
+char* T_(const char* str);    /**< string translation function */
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

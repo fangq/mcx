@@ -30,6 +30,32 @@
 \file    mcx_lang.c
 
 @brief   MCX language support
+
+How to add a new translation:
+First, decide the new language's ID - must be in the format of "aa_bb", where "aa"
+must be the two-letter ISO 639 langauge code (https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes),
+and "bb" must be the two-letter region code (https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes).
+This code should be append to the below string array languagename[], and increase
+the value of macro MAX_MCX_LANG defined in mcx_lang.h by 1.
+
+Next, copy any one of the translation section below, starting from "MSTR(" and
+ending with "})" and append to the end of the array translations[], right before
+the last line "};" , add comma to separate this new translation JSON string with
+its previous translations. The index of the translation strings must match
+the location language ID in the languagename array.
+
+Next, update the translation strings - the second string to the right of ":" on
+each line to the desired language. DO NOT modify the English key names on the left,
+because it could result in mismatch when performing the look-up. For "_MCX_BANNER_",
+the translation is a multi-line string, please only modify the string content, and do not
+remove or alter double-quotes/newlines or spaces after the content string in order
+for this string to conform to JSON syntax while still be able to embed ASCII color
+codes.
+
+Once completed, plese compile MCX using make/make mex or cmake, and test your new
+translation by adding "--lang/-y aa_BB" command line option, or setting cfg.lang in
+mcxlab. Please also adjust the white-spaces in the printed _MCX_BANNER_ strings
+to equalize the lengths of each line.
 *******************************************************************************/
 
 #include "mcx_lang.h"
@@ -51,7 +77,7 @@ MSTR(
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
-#             美国东北大学生物工程系，马萨诸塞州，波士顿                    #\n\
+#               美国东北大学生物工程系，马萨诸塞州，波士顿                    #\n\
 ###############################################################################\n\
 #   MCX 软件开发是在美国 NIH/NIGMS 经费(R01-GM114365)资助下完成的，特此致谢   #\n\
 ###############################################################################\n\
