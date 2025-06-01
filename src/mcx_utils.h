@@ -52,6 +52,7 @@
 #define MAX_PATH_LENGTH     1024                         /**< max characters in a full file name string */
 #define MAX_SESSION_LENGTH  256                          /**< max session name length */
 #define MAX_DEVICE          256                          /**< max number of GPUs to be used */
+#define MAX_LANG_ID         32                           /**< max number of characters in the language code */
 
 #define MCX_CUDA_ERROR_LAUNCH_FAILED    719              /**< CUDA kernel launch error code */
 
@@ -259,6 +260,7 @@ typedef struct MCXConfig {
     float workload[MAX_DEVICE];  /**<an array storing the relative weight when distributing photons between multiple GPUs*/
     int parentid;                /**<flag for testing if mcx is executed inside matlab*/
     unsigned int runtime;        /**<variable to store the total kernel simulation time in ms*/
+    char langid[MAX_LANG_ID];    /**<lanage id, a string*/
 
     double energytot;            /**<total launched photon packet weights*/
     double energyabs;            /**<total absorbed photon packet weights*/
@@ -335,6 +337,8 @@ void mcx_prep_polarized(Config* cfg);
 void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 int  mcx_float2half2(float input[2]);
+
+char* T_(const char* str);
 
 #ifdef MCX_CONTAINER
 #ifdef __cplusplus

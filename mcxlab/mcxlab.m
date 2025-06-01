@@ -316,6 +316,8 @@ function varargout = mcxlab(varargin)
 %                      for types rf, example: <demo_replay_frequencydomain.m>
 %                      for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
+%      cfg.lang:       specify the language code for printing, supported languages include
+%                      zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, ru_RU, pt_BR
 %
 % == Debug ==
 %      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
