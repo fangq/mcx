@@ -5109,7 +5109,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         for (int i = 0; i < sizeof(benchname) / sizeof(char*) - 1; i++) {
                             cJSON* tmp = NULL, *root = NULL;
                             mcx_lang = mcx_parsejson(translations[i]);
-                            MCX_FPRINTF(cfg->flog, "\t%s\t%s\n", languagename[i], FIND_JSON_KEY("_LANG_", NULL, mcx_lang, "English", valuestring));
+                            MCX_FPRINTF(cfg->flog, "\t%s\t%s\n", languagename[i], FIND_JSON_KEY("_LANG_", NULL, mcx_lang, "(Invalid JSON, see error above)", valuestring));
                             cJSON_Delete(mcx_lang);
                         }
 
