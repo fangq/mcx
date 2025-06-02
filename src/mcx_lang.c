@@ -449,7 +449,7 @@ MSTR(
 #     Derechos de autor (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>       #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Laboratorio de Óptica Computacional e Imágenes Traslacionales (COTI) - " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
+# Laboratorio de Óptica Computacional e Imagenología Traslacional (COTI)-" S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
 # Departamento de Bioingeniería, Universidad de Northeastern, Boston, MA, EE. UU. #\n\
 ###############################################################################\n\
 #   El desarrollo del software MCX fue financiado por el NIH/NIGMS de EE. UU. (R01-GM114365) #\n\
@@ -483,12 +483,12 @@ MSTR(
     "initializing streams": "inicializando flujos",
     "input domain is 2D, the initial direction can not have non-zero value in the singular dimension": "el dominio de entrada es 2D, la dirección inicial no puede tener un valor distinto de cero en la dimensión singular",
     "invalid json fragment following --json": "fragmento JSON inválido después de --json",
-    "Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.": "La salida Jacobiana solo es válida en el modo de respuesta. Por favor, proporciona un archivo .mch después de '-E'.",
+    "Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.": "El Jacobiano de salida solo es válido en el modo de respuesta. Por favor, proporciona un archivo .mch después de '-E'.",
     "json fragment is expected after --json": "se espera un fragmento JSON después de --json",
     "json shape constructs are expected after -P": "se esperan construcciones de forma JSON después de -P",
     "kernel complete": "núcleo completado",
     "launching MCX simulation for time window": "iniciando simulación MCX para la ventana de tiempo",
-    "loss due to initial specular reflection is excluded in the total": "la pérdida debido a la reflexión especular inicial está excluida del total",
+    "loss due to initial specular reflection is excluded in the total": "la pérdida debido a la reflexión especular inicial se excluye del total",
     "MCX Revision": "Revisión de MCX",
     "MCX simulation speed": "velocidad de simulación MCX",
     "No GPU device found": "No se encontró ningún dispositivo GPU",
