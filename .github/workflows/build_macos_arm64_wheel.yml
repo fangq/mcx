@@ -1,0 +1,73 @@
+name: Build+Upload MacOS Apple Silicon Python Wheels
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build_macos_wheels:
+    name: Build macOS wheels
+    runs-on: macos-14
+    strategy:
+      matrix:
+        python_version: [ '3.12' ]
+    outputs:
+      perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Update RCS keywords
+        shell: bash
+        run: |
+          printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
+          rm -rf src/*.c
+          git checkout src/*.c
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Build Wheels
+        run: |
+          cd pmcx/
+          perl -pi -e 's/^\s+(ext_modules|cmdclass)/#$1/g' setup.py
+          python -m pip install --upgrade pip
+          pip install wheel setuptools
+          pip wheel . -w ../dist/ --verbose
+          ls ../dist/
+          cd ../
+      - name: Check If the Build Version Exists on PyPI
+        id: perform_pypi_upload_check
+        run: |
+          bash $GITHUB_WORKSPACE/.github/check-pypi-upload.sh
+      - name: Prepare Wheels for Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-wheels-${{ matrix.os }}-${{ matrix.python_version }}
+          path: dist/
+
+  upload_macos_wheels:
+    needs: build_macos_wheels
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'fangq' && needs.build_macos_wheels.outputs.perform_pypi_upload == 1 && github.event_name != 'pull_request'}}
+    steps:
+      - name: Download Wheels from Build Job
+        uses: actions/download-artifact@v4
+        with:
+          pattern: macos-wheels-*
+          merge-multiple: true
+          path: dist/
+      - name: Upload packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verify_metadata: false
+          verbose: true
+          skip_existing: true
