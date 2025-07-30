@@ -69,6 +69,10 @@ jobs:
           echo 'C:\ProgramData\Chocolatey\lib\mingw\tools\install\mingw64\bin\' >> $GITHUB_PATH
           echo 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\' >> $GITHUB_PATH
           echo 'MW_MINGW64_LOC=/c/ProgramData/Chocolatey/lib/mingw/tools/install/mingw64/' >> $GITHUB_ENV
+      - name: Install Visual Studio 2019 Build Tools (for cuda 10)
+        if: ${{ matrix.os == 'windows-2022' }}
+        run: |
+          choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
