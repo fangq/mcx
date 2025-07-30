@@ -13,7 +13,7 @@ on:
 jobs:
   build_windows_wheels:
     name: Build Windows wheels
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       matrix:
         python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.7', 'pypy3.8', 'pypy3.9', 'pypy3.10']
