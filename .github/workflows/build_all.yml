@@ -74,20 +74,18 @@ jobs:
         run: |
           choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
       - name: Setup MSVC environment (Windows only)
-        shell: cmd
         if: ${{ runner.os == 'Windows' }}
         run: |
-          for /f "delims=" %%i in ('dir "C:\Program Files*\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" /s /b 2^>nul') do set VCVARS=%%i
-          if defined VCVARS (
-            call "%VCVARS%"
-            echo PATH=%PATH% >> %GITHUB_ENV%
-            echo INCLUDE=%INCLUDE% >> %GITHUB_ENV%
-            echo LIB=%LIB% >> %GITHUB_ENV%
-            echo LIBPATH=%LIBPATH% >> %GITHUB_ENV%
-            echo WindowsSdkDir=%WindowsSdkDir% >> %GITHUB_ENV%
-            echo VCINSTALLDIR=%VCINSTALLDIR% >> %GITHUB_ENV%
-            echo VCToolsInstallDir=%VCToolsInstallDir% >> %GITHUB_ENV%
+          if exist "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" (
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          ) else if exist "C:\Program Files\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" (
+            call "C:\Program Files\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
           )
+          echo PATH=%PATH% >> %GITHUB_ENV%
+          echo INCLUDE=%INCLUDE% >> %GITHUB_ENV%
+          echo LIB=%LIB% >> %GITHUB_ENV%
+          echo VCINSTALLDIR=%VCINSTALLDIR% >> %GITHUB_ENV%
+        shell: cmd
       - name: Install CUDA (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
