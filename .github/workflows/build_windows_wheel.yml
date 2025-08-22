@@ -39,6 +39,7 @@ jobs:
         run: |
           choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
       - name: Setup MSVC environment (Windows only)
+        shell: cmd
         if: ${{ runner.os == 'Windows' }}
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
