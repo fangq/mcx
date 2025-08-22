@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.7', 'pypy3.8', 'pypy3.9', 'pypy3.10']
+        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', 'pypy3.7', 'pypy3.8', 'pypy3.9', 'pypy3.10']
     outputs:
       perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
     steps:
@@ -38,6 +38,14 @@ jobs:
         if: ${{ matrix.os == 'windows-2022' }}
         run: |
           choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
+      - name: Setup MSVC environment (Windows only)
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          echo PATH=%PATH% >> %GITHUB_ENV%
+          echo INCLUDE=%INCLUDE% >> %GITHUB_ENV%
+          echo LIB=%LIB% >> %GITHUB_ENV%
+          echo VCINSTALLDIR=%VCINSTALLDIR% >> %GITHUB_ENV%
       - name: Install CUDA
         uses: Jimver/cuda-toolkit@v0.2.10
         id: cuda-toolkit

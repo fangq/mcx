@@ -76,11 +76,7 @@ jobs:
       - name: Setup MSVC environment (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
-          if exist "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" (
-            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          ) else if exist "C:\Program Files\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat" (
-            call "C:\Program Files\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          )
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
           echo PATH=%PATH% >> %GITHUB_ENV%
           echo INCLUDE=%INCLUDE% >> %GITHUB_ENV%
           echo LIB=%LIB% >> %GITHUB_ENV%
@@ -117,7 +113,7 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.10
         id: cuda-toolkit
         with:
-          cuda: '9.2.148'
+          cuda: '10.2.89'
           method: 'network'
           sub-packages: '["nvcc"]'
       - name: Link libgomp.a (MacOS only)
@@ -149,7 +145,7 @@ jobs:
             make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++-10 DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
             otool -L ../mcxlab/mcx.mex
           else
-            ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2" cuda
+            ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2" cuda
             make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda" XTRA_CFLAGS='-openmp' XTRA_CXXFLAGS='-openmp' INCLUDEDIR=' '
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
           fi
