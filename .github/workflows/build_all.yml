@@ -72,7 +72,7 @@ jobs:
       - name: Install Visual Studio 2019 Build Tools (for cuda 10)
         if: ${{ matrix.os == 'windows-2022' }}
         run: |
-          choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
+          choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK"
       - name: Setup MSVC environment (Windows only)
         shell: cmd
         if: ${{ runner.os == 'Windows' }}
