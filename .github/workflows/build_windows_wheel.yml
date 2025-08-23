@@ -66,9 +66,11 @@ jobs:
           echo "CMAKE_LIBRARY_PATH=$PWD\zlib\lib" >> $env:GITHUB_ENV
           rm zlib.zip
       - name: Build Wheels
+        env:
+          CMAKE_GENERATOR: "Visual Studio 16 2019"
+          CMAKE_GENERATOR_PLATFORM: "x64"
         run: |
           cd pmcx/
-          cl
           pip install wheel setuptools
           python setup.py bdist_wheel
           ls dist/
