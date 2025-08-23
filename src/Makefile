@@ -100,7 +100,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   ifeq ($(findstring CYGWIN,$(PLATFORM)), CYGWIN)
       MEX=cmd /c mex COMPFLAGS='-MT'
   else
-      MEX=cmd //s //c mex COMPFLAGS='-MT'
+      MEX=cmd /s /c mex -v COMPFLAGS='-MT'
   endif
   NVCCOMP=$(CUOMPLINK) "$(OMP)"
   CUCCOPT+=$(NVCCOMP)
