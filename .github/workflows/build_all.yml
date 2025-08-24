@@ -77,7 +77,7 @@ jobs:
         shell: cmd
         if: ${{ runner.os == 'Windows' }}
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
           echo PATH=%PATH% >> %GITHUB_ENV%
           echo INCLUDE=%INCLUDE% >> %GITHUB_ENV%
           echo LIB=%LIB% >> %GITHUB_ENV%
