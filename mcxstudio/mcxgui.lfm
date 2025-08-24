@@ -2981,7 +2981,7 @@ object fmMCX: TfmMCX
         AnchorSideRight.Side = asrBottom
         Left = 150
         Height = 33
-        Hint = 'OutputType '#10#10'This option specifies the output data type. '#10#10'* Fluence rate [J/mm^2/s] - the default output'#10'* Fluence [J/mm^2] - the integration of the fluence '#10'   rate over each time gate'#10'* Energy density [J/mm^3] - can be computed by multiplying '#10'   fluence with absorption μa'#10'* Absorption Jacobian (mua) [1/mm] - in the replay mode, this'#10'   outputs the sensitivity matrix for μa;'#10'* Average scattering event count - in the replay mode, this'#10'   outputs the number of scattering event per voxel'#10'* Momentum transfer sensivity (DCS) - in the replay mode, this '#10'   outputs the momentum transfer contribution/sensitivity from '#10'   each voxel.'
+        Hint = 'OutputType '#10#10'This option specifies the output data type. '#10#10'* Fluence rate [J/mm^2/s] - the default output'#10'* Fluence [J/mm^2] - the integration of the fluence '#10'   rate over each time gate'#10'* Energy deposition [J] - can be computed by multiplying '#10'   fluence with absorption μa and voxel volume [mm^3]'#10'* Absorption Jacobian (mua) [1/mm] - in the replay mode, this'#10'   outputs the sensitivity matrix for μa;'#10'* Average scattering event count - in the replay mode, this'#10'   outputs the number of scattering event per voxel'#10'* Momentum transfer sensivity (DCS) - in the replay mode, this '#10'   outputs the momentum transfer contribution/sensitivity from '#10'   each voxel.'
         Top = 79
         Width = 117
         Anchors = [akTop, akLeft, akRight]
@@ -2989,7 +2989,7 @@ object fmMCX: TfmMCX
         Items.Strings = (
           'X - fluence rate in [J/(mm^2s)]'
           'F - fluence [J/mm^2]'
-          'E - energy density [J/mm^3]'
+          'E - per-voxel energy deposition [J]'
           'J - jacobian (mua) [1/mm]'
           'P - jacobian (scat) [1/mm]'
           'M - jacobian (dcs)'
