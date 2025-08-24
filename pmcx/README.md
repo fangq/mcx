@@ -4,7 +4,7 @@
 
 - Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2025) <q.fang at neu.edu>, Fan-Yu Yen (2023-2024) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
-- Version: 0.4.2
+- Version: 0.4.3
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 
@@ -13,7 +13,7 @@
 ![Windows Python Module](https://github.com/fangq/mcx/actions/workflows/build_windows_wheel.yml/badge.svg)
 
 This module provides a Python binding for Monte Carlo eXtreme (MCX).
-For other binaries, including the standalone executable and the MATLAB bindings, see [our website](http://mcx.space).
+For other binaries, including the standalone executable and the MATLAB bindings, see [our website](https://mcx.space).
 
 Monte Carlo eXtreme (MCX) is a fast photon transport simulation software for 3D 
 heterogeneous turbid media. By taking advantage of the massively parallel 
@@ -94,10 +94,10 @@ The NVIDIA GPU driver of the target system must support the selected CUDA toolki
 This can be queried via ```echo $env:PATH``` on Windows or ```echo $PATH``` on Linux. If not, locate them and add their folder to the ```PATH```.
 
 2. Clone the repository and switch to the ```pmcx/``` folder:
-    ```bash
-        git clone --recursive https://github.com/fangq/mcx.git
-        cd mcx/pmcx
-    ```
+```bash
+git clone --recursive https://github.com/fangq/mcx.git
+cd mcx/pmcx
+```
 
 3. One can run `python3 setup.py install` or `python3 -m pip install .` to both locally build and install the module
 
