@@ -12,6 +12,7 @@ on:
 
 jobs:
   build_macos_wheels:
+    if: false
     name: Build macOS wheels
     runs-on: macos-14
     strategy:
