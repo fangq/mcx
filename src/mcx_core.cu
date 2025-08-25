@@ -2622,7 +2622,11 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
         (*info)[dev].constmem = dp.totalConstMem;
         (*info)[dev].sharedmem = dp.sharedMemPerBlock;
         (*info)[dev].regcount = dp.regsPerBlock;
+#if CUDA_VERSION >= 13000
+        cudaDeviceGetAttribute(&((*info)[dev].clock), cudaDevAttrClockRate, dev);
+#else
         (*info)[dev].clock = dp.clockRate;
+#endif
         (*info)[dev].sm = dp.multiProcessorCount;
         (*info)[dev].core = dp.multiProcessorCount * mcx_corecount(dp.major, dp.minor);
         (*info)[dev].maxmpthread = dp.maxThreadsPerMultiProcessor;

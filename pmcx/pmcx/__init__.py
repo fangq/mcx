@@ -1,5 +1,5 @@
 # Copyright (c) 2022-2023 Matin Raayai Ardakani <raayaiardakani.m at northeastern.edu>. All rights reserved.
-# Copyright (c) 2022-2023 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
+# Copyright (c) 2022-2025 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 Example usage:
 
 # To list available GPUs
+import numpy as np
 import pmcx
 pmcx.gpuinfo()
 
@@ -44,12 +45,34 @@ from .utils import (
     getdistance,
     detphoton,
     mcxlab,
+    cwdiffusion,
+    cwfluxdiffusion,
+    cwfluencediffusion,
+    dcsg1,
+    mcxcreate,
+    rfreplay,
+    rfmusreplay,
 )
 
-# from .files import loadmc2, loadmch, load, save
+from .io import (
+    loadmc2,
+    loadmch,
+    loadfile,
+    mcx2json,
+    json2mcx,
+    loadnii,
+)
+
+from .plot import (
+    preview,
+    plotshapes,
+    plotphotons,
+    plotvol,
+)
+
 from .bench import bench
 
-__version__ = "0.4.4"
+__version__ = "0.4.5"
 
 __all__ = (
     "gpuinfo",
@@ -66,4 +89,21 @@ __all__ = (
     "getdistance",
     "detphoton",
     "mcxlab",
+    "cwdiffusion",
+    "cwfluxdiffusion",
+    "cwfluencediffusion",
+    "dcsg1",
+    "mcxcreate",
+    "rfreplay",
+    "rfmusreplay",
+    "loadmc2",
+    "loadmch",
+    "loadfile",
+    "mcx2json",
+    "json2mcx",
+    "loadnii",
+    "preview",
+    "plotshapes",
+    "plotphotons",
+    "plotvol",
 )

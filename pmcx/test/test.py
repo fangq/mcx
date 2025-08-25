@@ -8,10 +8,11 @@ Created on Fri Jul 28 15:44:04 2023
 
 import unittest
 import sys
+import os
 
-sys.path.append("../pmcx/")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils import (
+from pmcx.utils import (
     detweight,
     meanpath,
     dettpsf,
