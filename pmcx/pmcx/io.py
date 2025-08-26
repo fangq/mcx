@@ -95,7 +95,7 @@ def loadmc2(fname, dim, dataformat="float", offset=None):
     }
 
     # Handle MATLAB-style format strings (e.g., 'uchar=>uchar', 'float=>float')
-    if "=>" in format:
+    if "=>" in dataformat:
         dataformat = dataformat.split("=>")[0]  # Use the input format part
 
     if dataformat not in format_map:
@@ -189,7 +189,7 @@ def loadmch(fname, dataformat="float32", endian="little"):
         "char": np.int8,
     }
 
-    if format not in format_map:
+    if dataformat not in format_map:
         raise ValueError(f"Unsupported format: {dataformat}")
 
     dtype = format_map[dataformat]
@@ -283,7 +283,7 @@ def loadmch(fname, dataformat="float32", endian="little"):
             if len(dat_bytes) < total_elements * np.dtype(dtype).itemsize:
                 break
 
-            dat = np.frombuffer(dat_bytes, dtype=dtype)
+            dat = np.frombuffer(dat_bytes, dtype=dtype).copy()
             dat = dat.reshape((hd[6], hd[3]))  # reshape to [savedphoton, colcount]
 
             # Apply unit conversion for path lengths
@@ -484,10 +484,6 @@ def mcx2json(cfg, filestub):
         (http://iso2mesh.sf.net/jsonlab)
     """
 
-    fpath, fname = os.path.split(filestub)
-    fname, fext = os.path.splitext(fname)
-    filestub = os.path.join(fpath, fname)
-
     # Define the optodes: sources and detectors
     Optode = {}
     Optode["Source"] = {}
@@ -665,15 +661,9 @@ def mcx2json(cfg, filestub):
         else:
             mcxsession["Shapes"] = Shapes
 
-    if fext == ".ubj":
-        # For UBJSON format, would need additional library like ubjson
-        # For now, save as JSON with warning
-        print("Warning: UBJSON format not implemented, saving as JSON instead")
-        with open(filestub + ".json", "w") as f:
-            json.dump(mcxsession, f, indent=2)
-    else:
-        with open(filestub + ".json", "w") as f:
-            json.dump(mcxsession, f, indent=2)
+    from jdata import savejd
+
+    savejd(mcxsession, filestub + ".json")
 
 
 def copycfg(cfg, name, outroot, outfield, defaultval=None):
@@ -731,7 +721,7 @@ def json2mcx(filename):
         (https://pypi.org/project/jdata/)
 
     """
-    from jdata import load as jload, loadjd
+    from jdata import loadjd, load as jload
 
     if isinstance(filename, str):
         json_data = jload(filename)
@@ -745,15 +735,15 @@ def json2mcx(filename):
 
     if "Optode" in json_data:
         if "Source" in json_data["Optode"]:
-            cfg = copycfg(cfg, "srcpos", json_data["Optode"]["Source"], "Pos")
-            cfg = copycfg(cfg, "srcdir", json_data["Optode"]["Source"], "Dir")
+            cfg = icopycfg(cfg, "srcpos", json_data["Optode"]["Source"], "Pos")
+            cfg = icopycfg(cfg, "srcdir", json_data["Optode"]["Source"], "Dir")
             if "srcdir" in cfg:
                 srcdir = np.array(cfg["srcdir"][:3])
                 cfg["srcdir"][:3] = (srcdir / np.linalg.norm(srcdir)).tolist()
-            cfg = copycfg(cfg, "srcparam1", json_data["Optode"]["Source"], "Param1")
-            cfg = copycfg(cfg, "srcparam2", json_data["Optode"]["Source"], "Param2")
-            cfg = copycfg(cfg, "srctype", json_data["Optode"]["Source"], "Type")
-            cfg = copycfg(cfg, "srcnum", json_data["Optode"]["Source"], "SrcNum")
+            cfg = icopycfg(cfg, "srcparam1", json_data["Optode"]["Source"], "Param1")
+            cfg = icopycfg(cfg, "srcparam2", json_data["Optode"]["Source"], "Param2")
+            cfg = icopycfg(cfg, "srctype", json_data["Optode"]["Source"], "Type")
+            cfg = icopycfg(cfg, "srcnum", json_data["Optode"]["Source"], "SrcNum")
 
             if "Pattern" in json_data["Optode"]["Source"] and isinstance(
                 json_data["Optode"]["Source"]["Pattern"], dict
@@ -797,8 +787,8 @@ def json2mcx(filename):
 
     # Define the domain and optical properties
     if "Domain" in json_data:
-        cfg = copycfg(cfg, "issrcfrom0", json_data["Domain"], "OriginType")
-        cfg = copycfg(cfg, "unitinmm", json_data["Domain"], "LengthUnit")
+        cfg = icopycfg(cfg, "issrcfrom0", json_data["Domain"], "OriginType")
+        cfg = icopycfg(cfg, "unitinmm", json_data["Domain"], "LengthUnit")
 
         if "Media" in json_data["Domain"]:
             media = json_data["Domain"]["Media"]
@@ -886,15 +876,15 @@ def json2mcx(filename):
 
     # Define the simulation session flags
     if "Session" in json_data:
-        cfg = copycfg(cfg, "session", json_data["Session"], "ID")
-        cfg = copycfg(cfg, "isreflect", json_data["Session"], "DoMismatch")
-        cfg = copycfg(cfg, "issave2pt", json_data["Session"], "DoSaveVolume")
-        cfg = copycfg(cfg, "issavedet", json_data["Session"], "DoPartialPath")
-        cfg = copycfg(cfg, "issaveexit", json_data["Session"], "DoSaveExit")
-        cfg = copycfg(cfg, "issaveseed", json_data["Session"], "DoSaveSeed")
-        cfg = copycfg(cfg, "isnormalize", json_data["Session"], "DoNormalize")
-        cfg = copycfg(cfg, "outputformat", json_data["Session"], "OutputFormat")
-        cfg = copycfg(cfg, "outputtype", json_data["Session"], "OutputType")
+        cfg = icopycfg(cfg, "session", json_data["Session"], "ID")
+        cfg = icopycfg(cfg, "isreflect", json_data["Session"], "DoMismatch")
+        cfg = icopycfg(cfg, "issave2pt", json_data["Session"], "DoSaveVolume")
+        cfg = icopycfg(cfg, "issavedet", json_data["Session"], "DoPartialPath")
+        cfg = icopycfg(cfg, "issaveexit", json_data["Session"], "DoSaveExit")
+        cfg = icopycfg(cfg, "issaveseed", json_data["Session"], "DoSaveSeed")
+        cfg = icopycfg(cfg, "isnormalize", json_data["Session"], "DoNormalize")
+        cfg = icopycfg(cfg, "outputformat", json_data["Session"], "OutputFormat")
+        cfg = icopycfg(cfg, "outputtype", json_data["Session"], "OutputType")
 
         if "outputtype" in cfg and len(str(cfg["outputtype"])) == 1:
             otypemap = {
@@ -915,9 +905,9 @@ def json2mcx(filename):
                 raise ValueError(f"output type {cfg['outputtype']} is not supported")
             cfg["outputtype"] = otypemap[cfg["outputtype"]]
 
-        cfg = copycfg(cfg, "debuglevel", json_data["Session"], "Debug")
-        cfg = copycfg(cfg, "autopilot", json_data["Session"], "DoAutoThread")
-        cfg = copycfg(cfg, "seed", json_data["Session"], "RNGSeed")
+        cfg = icopycfg(cfg, "debuglevel", json_data["Session"], "Debug")
+        cfg = icopycfg(cfg, "autopilot", json_data["Session"], "DoAutoThread")
+        cfg = icopycfg(cfg, "seed", json_data["Session"], "RNGSeed")
 
         if (
             "seed" in cfg
@@ -929,18 +919,47 @@ def json2mcx(filename):
                 "MCH file format not implemented - requires loadmch function"
             )
 
-        cfg = copycfg(cfg, "nphoton", json_data["Session"], "Photons")
-        cfg = copycfg(cfg, "rootpath", json_data["Session"], "RootPath")
+        cfg = icopycfg(cfg, "nphoton", json_data["Session"], "Photons")
+        cfg = icopycfg(cfg, "rootpath", json_data["Session"], "RootPath")
 
     # Define the forward simulation settings
     if "Forward" in json_data:
         forward = json_data["Forward"]
         if "T0" in forward:
             cfg["tstart"] = forward["T0"]
-        cfg = copycfg(cfg, "tstart", forward, "T0")
-        cfg = copycfg(cfg, "tend", forward, "T1")
-        cfg = copycfg(cfg, "tstep", forward, "Dt")
+        cfg = icopycfg(cfg, "tstart", forward, "T0")
+        cfg = icopycfg(cfg, "tend", forward, "T1")
+        cfg = icopycfg(cfg, "tstep", forward, "Dt")
 
+    return cfg
+
+
+def icopycfg(cfg, name, outroot, outfield, defaultval=None):
+    """
+    Copy configuration field from outroot to cfg with field name mapping
+
+    Parameters:
+    -----------
+    cfg : dict
+        Target configuration dictionary
+    name : str
+        Field name in target dictionary
+    outroot : dict
+        Source dictionary
+    outfield : str
+        Field name in source dictionary
+    defaultval : any, optional
+        Default value if field doesn't exist in outroot
+
+    Returns:
+    --------
+    cfg : dict
+        Updated target configuration dictionary
+    """
+    if defaultval is not None and outfield not in outroot:
+        outroot[outfield] = defaultval
+    if outfield in outroot:
+        cfg[name] = outroot[outfield]
     return cfg
 
 

@@ -214,6 +214,8 @@ def dettpsf(detp, detnum, prop, time):
     detp = detp.copy()
 
     # select the photon data of the specified detector
+    if "w0" in detp:
+        detp["w0"] = detp["w0"][detp["detid"] == detnum]
     detp["ppath"] = detp["ppath"][detp["detid"] == detnum, :]
     detp["detid"] = detp["detid"][detp["detid"] == detnum]
 
