@@ -1088,12 +1088,12 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
             col += dims[1];
         }
     } else {
-        char colnum[] = {1, cfg->his.maxmedia, cfg->his.maxmedia, cfg->his.maxmedia, 3, 3, 1, 4};
+        int colnum[] = {1, cfg->his.maxmedia, cfg->his.maxmedia, cfg->his.maxmedia, 3, 3, 1, 4};
         char* dtype[] = {"uint32", "uint32", "single", "single", "single", "single", "single", "single"};
         char* dname[] = {"detid", "nscat", "ppath", "mom", "p", "v", "w0", "s"};
         cJSON_AddItemToObject(obj, "PhotonData", dat = cJSON_CreateObject());
 
-        for (int id = 0; id < sizeof(colnum); id++) {
+        for (int id = 0; id < sizeof(colnum) / sizeof(int); id++) {
             if ((cfg->savedetflag >> id) & 0x1) {
                 uint dims[2] = {count, colnum[id]};
                 void* val = NULL;
