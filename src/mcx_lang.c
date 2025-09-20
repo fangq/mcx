@@ -63,7 +63,7 @@ to equalize the lengths of each line.
 
 #define MSTR(...) #__VA_ARGS__
 
-const char *languagename[MAX_MCX_LANG] = {"zh_cn", "zh_tw", "ja_jp", "fr_ca", "es_mx", "de_de", "ko_kr", "hi_in", "ru_ru", "pt_br", ""};
+const char *languagename[MAX_MCX_LANG] = {"zh_cn", "zh_tw", "ja_jp", "fr_ca", "es_mx", "de_de", "ko_kr", "hi_in", "pt_br", ""};
 
 const char* translations[MAX_MCX_LANG] = {
 MSTR(
@@ -808,101 +808,6 @@ MSTR(
     "WARNING: this MCX binary can not save partial path, please recompile mcx and make sure -D SAVE_DETECTORS is used by nvcc": "चेतावनी: यह MCX बाइनरी आंशिक पथ सहेज नहीं सकती, कृपया mcx को पुनः संकलित करें और सुनिश्चित करें कि nvcc द्वारा -D SAVE_DETECTORS का उपयोग किया गया है",
     "workload was unspecified for an active device": "सक्रिय डिवाइस के लिए कार्यभार निर्दिष्ट नहीं किया गया था",
     "you can not specify both interactive mode and config file": "आप इंटरैक्टिव मोड और कॉन्फ़िग फ़ाइल दोनों को एक साथ निर्दिष्ट नहीं कर सकते"
-}),
-
-MSTR(
-{
-    "_LANG_": "Русский",
-    "_LOCALE_": "ru_RU",
-    "_MCX_BANNER_":
-) "\"" S_MAGENTA "###############################################################################\n\
-#                    MCX (Monte Carlo eXtreme) -- CUDA                        #\n\
-#    Авторское право (c) 2009–2025 Цяньцянь Фан <q.fang at neu.edu>           #\n\
-#" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
-#                                                                             #\n\
-# Лаборатория вычислительной оптики и трансляционной визуализации (COTI) —    #\n\
-#            " S_BLUE "http://fanglab.org " S_MAGENTA ", Биоинженерный факультет,                    #\n\
-#  Северо-Восточный университет, Бостон, Массачусетс, США                     #\n\
-###############################################################################\n\
-# Разработка программного обеспечения MCX была поддержана NIH/NIGMS США       #\n\
-# (грант R01-GM114365). Мы выражаем благодарность за поддержку.               #\n\
-###############################################################################\n\
-# Открытый научный код и переиспользуемые научные данные критически важны для #\n\
-# современного научного прогресса. Команда MCX активно поддерживает открытую  #\n\
-# науку, разработав JSON-формат ввода/вывода с поддержкой NIH.                #\n\
-#                                                                             #\n\
-# Посетите наш портал открытых данных NeuroJSON.io (" S_BLUE "https://neurojson.io" S_MAGENTA "),    #\n\
-# и делитесь своими научными данными в удобном и переиспользуемом формате JSON#\n" S_RESET "\"," MSTR(
-    "absorbed": "Общая доля поглощения",
-    "after encoding": "Коэффициент сжатия после кодирования",
-    "A CUDA-capable GPU is not found or configured": "Не найдено или не настроено GPU с поддержкой CUDA",
-    "Built-in benchmarks": "Встроенные тесты",
-    "Built-in languages":  "Встроенные языки",
-    "code name": "Кодовое имя",
-    "Command option": "Параметр команды",
-    "compiled by nvcc": "Скомпилировано с помощью nvcc",
-    "compiled with": "Скомпилировано с",
-    "compressing data": "Сжатие данных",
-    "compression ratio": "Коэффициент сжатия",
-    "data normalization complete": "Нормализация данных завершена",
-    "detected": "Обнаружено",
-    "Downloading simulations from NeuroJSON.io (https://neurojson.org/db/mcx)": "Загрузка симуляций с NeuroJSON.io (https://neurojson.org/db/mcx)",
-    "ERROR: No CUDA-capable GPU device found": "ОШИБКА: не найдено устройство GPU с поддержкой CUDA",
-    "ERROR: Specified GPU ID is out of range": "ОШИБКА: Указанный идентификатор GPU вне допустимого диапазона",
-    "generating": "Генерация",
-    "GPU ID can not be more than 256": "Идентификатор GPU не может превышать 256",
-    "GPU ID must be non-zero": "Идентификатор GPU не может быть нулевым",
-    "GPU Information": "Информация о GPU",
-    "GPU memory can not hold all time gates, disabling normalization to allow multiple runs": "Память GPU не может вместить все временные окна, нормализация отключена для многократного запуска",
-    "incomplete input": "Неполный ввод",
-    "init complete": "Инициализация завершена",
-    "initializing streams": "Инициализация потоков",
-    "input domain is 2D, the initial direction can not have non-zero value in the singular dimension": "В 2D-вводе начальное направление не может иметь ненулевое значение в одномерном измерении",
-    "invalid json fragment following --json": "Неверный JSON-фрагмент после --json",
-    "Jacobian output is only valid in the reply mode. Please give an mch file after '-E'.": "Вывод Якобиана доступен только в режиме воспроизведения. Укажите файл .mch после '-E'.",
-    "json fragment is expected after --json": "После --json ожидается JSON-фрагмент",
-    "json shape constructs are expected after -P": "После -P ожидаются JSON-описания формы",
-    "kernel complete": "Ядро завершено",
-    "launching MCX simulation for time window": "Запуск симуляции MCX для временного окна",
-    "loss due to initial specular reflection is excluded in the total": "Потери из-за начального зеркального отражения не учитываются в общем результате",
-    "MCX Revision": "Версия MCX",
-    "MCX simulation speed": "Скорость симуляции MCX",
-    "No GPU device found": "GPU устройство не найдено",
-    "normalization factor": "Коэффициент нормализации",
-    "normalization factor for detector": "Коэффициент нормализации для детектора",
-    "normalizing raw data ...": "Нормализация необработанных данных ...",
-    "photons": "Фотоны",
-    "please use the -H option to specify a greater number": "Пожалуйста, используйте параметр -H для указания большего значения",
-    "please use the --maxjumpdebug option to specify a greater number": "Пожалуйста, используйте параметр --maxjumpdebug для указания большего значения",
-    "random numbers": "Случайные числа",
-    "requesting shared memory": "Запрос общей памяти",
-    "respin number can not be 0, check your -r/--repeat input or cfg.respin value": "Число повторов не может быть 0. Проверьте параметры -r/--repeat или значение cfg.respin",
-    "retrieving fields": "Получение полей",
-    "retrieving random numbers": "Получение случайных чисел",
-    "saved trajectory positions": "Сохранённые позиции траекторий",
-    "saving data complete": "Сохранение данных завершено",
-    "saving data to file": "Сохранение данных в файл",
-    "seed length": "Длина зерна (seed)",
-    "seeding file is not supported in this binary": "Файл инициализации не поддерживается в данной версии",
-    "simulated":  "Смоделировано",
-    "simulation run#": "Запуск симуляции #",
-    "source": "Источник",
-    "the specified output data format is not recognized": "Указанный формат выходных данных не поддерживается",
-    "the specified output data type is not recognized": "Указанный тип выходных данных не поддерживается",
-    "total simulated energy": "Общая энергия симуляции",
-    "transfer complete": "Передача завершена",
-    "unable to save to log file, will print from stdout": "Не удалось сохранить в лог-файл, вывод будет через стандартный поток",
-    "unknown short option": "Неизвестный короткий параметр",
-    "unknown verbose option": "Неизвестный длинный параметр",
-    "unnamed": "Безымянный",
-    "Unsupported bechmark": "Неподдерживаемый тест",
-    "Unsupported media format": "Неподдерживаемый формат среды",
-    "WARNING: maxThreadsPerMultiProcessor can not be detected": "ПРЕДУПРЕЖДЕНИЕ: maxThreadsPerMultiProcessor не может быть определён",
-    "WARNING: the detected photon number is more than what your have specified": "ПРЕДУПРЕЖДЕНИЕ: обнаружено больше фотонов, чем было указано",
-    "WARNING: the saved trajectory positions are more than what your have specified": "ПРЕДУПРЕЖДЕНИЕ: количество сохранённых траекторий превышает указанное значение",
-    "WARNING: this MCX binary can not save partial path, please recompile mcx and make sure -D SAVE_DETECTORS is used by nvcc": "ПРЕДУПРЕЖДЕНИЕ: данная версия MCX не поддерживает сохранение частичных путей. Пожалуйста, перекомпилируйте с флагом -D SAVE_DETECTORS",
-    "workload was unspecified for an active device": "Нагрузка не была указана для активного устройства",
-    "you can not specify both interactive mode and config file": "Нельзя одновременно указать интерактивный режим и конфигурационный файл"
 }),
 
 MSTR(

@@ -2,7 +2,53 @@
 
 Major updates are marked with a "*"
 
-== MCX v2025.6.pre (Kilo-Kelvin - 2.8), FangQ <q.fang (a) neu.edu> ==
+== MCX v2025.9 (Kilo-Kelvin - 2.8), FangQ <q.fang (a) neu.edu> ==
+
+ 2025-08-26 [84adbfc] [pmcx] bump version to 0.5.1, some fixes after new unit tests
+ 2025-08-26 [e12bbef]*[pmcx] add additional unit tests
+ 2025-08-25 [521fcf0] [pmcx] pmcx v0.5.0
+ 2025-08-25 [501d6b3] [pmcx] bump version 0.4.6 to update macos apple silicon src
+ 2025-08-24 [37c1205]*[pmcx] initial port of all remaining utils matlab functions to python
+ 2025-08-24 [101f3c7] [doc] fix inaccurate descrption of the 'energy' output type
+ 2025-08-24 [196d1de] [pmcx] bump pmcx version to 0.4.3
+ 2025-07-20 [fbf5942]*[ci] build none-any pmcx package for Apple silicon macos
+ 2025-06-01 [6752c76] [i18n] updated es_MX translations verified by Edgar Guevara
+ 2025-06-01 [bdc9a79] [lang] fix some octave warnings, improve translations
+ 2025-06-01 [3ebff5b] [bug] use consistent message
+ 2025-06-01 [8097604] [feat] read env variable MCX_LANG to set language
+ 2025-06-01 [a2c8ef5] [bug] fix typos in translations, there could be more
+ 2025-06-01 [fc7c1cf] [pmcx] bump version to 0.4.2 to support cfg['lang'], print lang name
+ 2025-06-01 [8ece5d6] [pmcx] fix ci error for windows, support locale in pmcx, pass test
+ 2025-06-01 [70958b9] [ci] fix windows vs error, make mcx_lang const visible in c++
+ 2025-06-01 [b99a33f] [ci] fix macos build error, add missing new unit in cmake
+ 2025-06-01 [729fc37]*[feat] initial i18n support for international languages
+ 2025-05-12 [8663b80] Fix photontof index in WPTOF calculation
+ 2025-04-21 [174e35c]*[feat] further polish rf replay for mus Jacobian, close #241
+ 2025-04-21 [346a638] [feat] dynamically detect the lowest supported gpu arch by nvcc
+ 2025-04-18 [0b3c364] Create demo script for computing any or all of the available Jacobian types in replay mode
+ 2025-04-16 [512ea26] [pmcx] fix ci build errors
+ 2025-04-16 [9ec9be1] Fix typo in pmcx.cpp
+ 2025-04-15 [3e8b730] fix typo cfg.issaveexit to cfg["issaveexit"]
+ 2025-04-12 [0bf148c]*[bug] ensure tshift can not exceed gcfg->maxgate, fix #242
+ 2025-03-18 [98c92ea] Fix undefined variable cfg, should be mcx_config.
+ 2025-03-18 [c1bc350] Format updated code and simplify example
+ 2025-03-18 [d94e4f4] Add terminal output types for new features.
+ 2025-03-17 [0d4c892] Fix typo in cfg struct name.
+ 2025-03-17 [ded9aba]*Implement computation of the total time-of-flight (TOF) and final detected weight
+ 2025-03-17 [eb4b171] Implement computation of total time-of-flight (TOF)- and final detected weight
+ 2025-03-14 [aa7bbdd] [doc] fix typo in mcxlab, fix mcxpreview format
+ 2025-03-12 [6d60f81]*[feat] accelerate mcxpreview using isosurface, must transpose
+ 2025-03-10 [2eacfb8] [example] fix rf replay script to use .jdat output, fix #239
+ 2025-03-06 [4e02a5b] Add object files to gitignore
+ 2025-03-06 [c7df8d9] Fix memory error by unifying handling of otRF and otRFmus
+ 2025-03-06 [7e7d88b] Fix function name
+ 2025-03-06 [5f7d9c6] Fix compliation errors
+ 2025-02-27 [7f05c3b] Remove redundant ifdef
+ 2025-02-27 [c1b7c3c] Implement RFmus calculation
+ 2025-02-27 [40882be] Add RFmus output type and start implementing calculation
+ 2025-02-27 [7f09134] rename new example
+ 2025-02-27 [6599a1c] Added new example functions for RF scattering Jacobians.
+ 2025-02-23 [986ec46] [doc] post v2025 release action, close #238
 
 
 == MCX v2025 (Jumbo Jolt - 2.6), FangQ <q.fang (a) neu.edu> ==
@@ -44,7 +90,6 @@ Major updates are marked with a "*"
  2024-11-08 [ee5be15] [feat] make onecube benchmark maskdet work, fix --dumpmask
  2024-11-08 [f2d3bc4] [feat] support 1x1x1 volume, add onecube/twocube benchmarks, det not working
  2024-11-06 [eaafb0b] [feat] disabling issaveref if issave2pt is false
- 2024-10-14 [6dbcc0f] Merge pull request #234 from epini/epini-patch-1
  2024-10-09 [0411ec6] Fix data ordering in traj.iquv
  2024-09-25 [8c0cfec] [pmcx] bump up pmcx version to 0.3.5 after fixing #233
  2024-09-25 [58dec12] [bug] angleinvcdf and invcdf are not read in full in pmcx, fix #233
@@ -78,7 +123,7 @@ Major updates are marked with a "*"
  2024-03-18 [94961f3] [bug] return source ID in multi-source simulation, fix #217
  2024-03-17 [3c3d755] [release] post v2024.2 release action, close #216
  2024-03-17 [7902a4e] [mcxcloud] update docker image to v2024.2
- 2024-03-15 [08bfe11] [feat] support _ArrayData_ in Shapes volume input
+ 2024-03-15 [08bfe11]*[feat] support _ArrayData_ in Shapes volume input
 
 == MCX v2024.2 (Interstellar Ion - 2.2), FangQ <q.fang (a) neu.edu> ==
 

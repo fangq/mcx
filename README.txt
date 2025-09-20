@@ -5,7 +5,7 @@
 
 *Author:  Qianqian Fang <q.fang at neu.edu>
 *License: GNU General Public License version 3 (GPLv3)
-*Version: 2.8 (v2025.6.pre, Kilo-Kelvin)
+*Version: 2.8 (v2025.9, Kilo-Kelvin)
 *Website: https://mcx.space
 *Download: https://mcx.space/wiki/?Get
 ---------------------------------------------------------------------
