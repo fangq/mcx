@@ -66,6 +66,7 @@ This release also contains a few bug fixes, including
 
 The detailed updates can be found in the below change log
 
+* 2025-09-25 [e230514] [bug] when srctype is unknown, the program can run successfully
 * 2025-08-26 [84adbfc] [pmcx] bump version to 0.5.1, some fixes after new unit tests
 * 2025-08-26 [e12bbef]*[pmcx] add additional unit tests
 * 2025-08-25 [521fcf0] [pmcx] pmcx v0.5.0
