@@ -3218,6 +3218,12 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         MCX_FPRINTF(cfg->flog, "- %s: [Vanilla MCX] %s [%d.%d] for CUDA-arch [%d] on [%s]\n",
                     T_("code name"), T_("compiled by nvcc"), __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, __CUDA_ARCH_LIST__, __DATE__);
 #endif
+
+        // Validate source type
+        if (cfg->srctype == -1) {
+            MCX_ERROR(-1, "the specified source type is not supported");
+        }
+
         MCX_FPRINTF(cfg->flog, "- %s: RNG [%s] %s [%d]\n", T_("compiled with"), MCX_RNG_NAME, T_("seed length"), (int)((sizeof(RandType)*RAND_BUF_LEN) >> 2));
         fflush(cfg->flog);
     }
