@@ -89,6 +89,7 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 
 #define FL3(f) make_float3(f,f,f)
 #define CUDA_NAN_F    (__int_as_float(0x7fffffff)) /**< NaN constant in CUDA */
+#define CUDA_INF_F    (__int_as_float(0x7f800000)) /**< INF constant in CUDA */
 
 #if !defined(__CUDA_ARCH_LIST__)
     #if defined(__CUDA_ARCH__)
@@ -1031,6 +1032,93 @@ __device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float
 }
 
 /**
+ * @brief Ray-bounding-box intersection
+ *
+ * This function returns 0 if ray does not intersect with the bbx, 1 if it does, and returns the hit-position as p0
+ *
+ * @param[in,out] p0: the current position; if intersect, update to the intersection point
+ * @param[in] v0: the ray direction
+ * @param[in] bbxmax: the bbx max dimension size {Nx, Ny, Nz}
+ * @param[in] rv: the reciprocal of v0 rv = {1/vx, 1/vy, 1/vz}
+ */
+
+__device__ inline unsigned char hitbbx(float3* p0, float3* v0, float3& bbxmax, float3* rv) {
+    float htime[3];
+
+    GPUDEBUG(("p = [%f %f %f] dir: %f %f %f\n", p0->x, p0->y, p0->z, v0->x, v0->y, v0->z));
+
+    //< time-of-flight to hit the wall in each direction
+    htime[0] = ((v0->x > 0.f) * (p0->x >= 0.f) + (v0->x < 0.f) * (p0->x > bbxmax.x)) * bbxmax.x - p0->x; //< first hit in x
+    htime[0] *= ((v0->x > 0.f) - (v0->x < 0.f));
+    GPUDEBUG(("htime.x=%f\n", htime[0]));
+
+    if (htime[0] < 0.f) {
+        return 0;
+    }
+
+    htime[0] = (v0->x == 0.f) ? CUDA_INF_F : fabsf(htime[0] * rv->x);
+
+    htime[1] = ((v0->y > 0.f) * (p0->y >= 0.f) + (v0->y < 0.f) * (p0->y > bbxmax.y)) * bbxmax.y - p0->y; //< first hit in y
+    htime[1] *= ((v0->y > 0.f) - (v0->y < 0.f));
+    GPUDEBUG(("htime.y=%f\n", htime[1]));
+
+    if (htime[1] < 0.f) {
+        return 0;
+    }
+
+    htime[1] = (v0->y == 0.f) ? CUDA_INF_F : fabsf(htime[1] * rv->y);
+
+    htime[2] = ((v0->z > 0.f) * (p0->z >= 0.f) + (v0->z < 0.f) * (p0->z > bbxmax.z)) * bbxmax.z - p0->z; //< first hit in z
+    htime[2] *= ((v0->z > 0.f) - (v0->z < 0.f));
+    GPUDEBUG(("htime.z=%f\n", htime[2]));
+
+    if (htime[2] < 0.f) {
+        return 0;
+    }
+
+    htime[2] = (v0->z == 0.f) ? CUDA_INF_F : fabsf (htime[2] * rv->z);
+
+    //< get the direction with the smallest time-of-flight
+
+    for (int i = 0; i < 3; i++) {
+        float dist = fminf(fminf(htime[0], htime[1]), htime[2]);
+
+        if (dist == CUDA_INF_F) {
+            GPUDEBUG(("relaunch, no intersection after %d search\n", i));
+            return 0;
+        }
+
+        unsigned char id = (dist == htime[0] ? 0 : (dist == htime[1] ? 1 : 2));
+
+        GPUDEBUG(("htime: [%f %f %f] dist=%f id=%d\n", htime[0], htime[1], htime[2], dist, id));
+
+        (*p0) = (*p0) + (*v0) * dist;
+
+        if (id == 0) {
+            p0->x = mcx_nextafterf(roundf(p0->x), (v0->x > 0.f) - (v0->x < 0.f));
+        } else if (id == 1) {
+            p0->y = mcx_nextafterf(roundf(p0->y), (v0->y > 0.f) - (v0->y < 0.f));
+        } else {
+            p0->z = mcx_nextafterf(roundf(p0->z), (v0->z > 0.f) - (v0->z < 0.f));
+        }
+
+        GPUDEBUG(("p0: [%f %f %f]\n", p0->x, p0->y, p0->z));
+
+        if (!(p0->x < 0.f || p0->y < 0.f || p0->z < 0.f || p0->x >= bbxmax.x || p0->y >= bbxmax.y || p0->z >= bbxmax.z)) {
+            return id;
+        }
+
+        htime[0] -= dist;
+        htime[1] -= dist;
+        htime[2] -= dist;
+        htime[id] = CUDA_INF_F;
+    }
+
+    return 0;
+}
+
+
+/**
  * @brief Terminate a photon and launch a new photon according to specified source form
  *
  * This function terminates the current photon and launches a new photon according
@@ -1063,14 +1151,15 @@ __device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float
  */
 
 template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized>
-__device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* f, float3* rv, short flipdir[4], Medium* prop, uint* idx1d, OutputType* field,
-                                      uint* mediaid, OutputType* w0, uint isdet, float ppath[], float n_det[], uint* dpnum,
-                                      RandType t[RAND_BUF_LEN], RandType photonseed[RAND_BUF_LEN],
-                                      uint media[], float srcpattern[], int threadid, RandType rngseed[], RandType seeddata[], float gdebugdata[], volatile int gprogress[],
-                                      float photontof[], MCXsp* nuvox) {
-    *w0 = 1.f;   //< reuse to count for launchattempt
-    int canfocus = 1; //< non-zero: focusable, zero: not focusable
+__device__ int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* f, float3* rv, short flipdir[4], Medium* prop, uint* idx1d, OutputType* field,
+                               uint* mediaid, OutputType* w0, uint isdet, float ppath[], float n_det[], uint* dpnum,
+                               RandType t[RAND_BUF_LEN], RandType photonseed[RAND_BUF_LEN],
+                               uint media[], float srcpattern[], int threadid, RandType rngseed[], RandType seeddata[], float gdebugdata[], volatile int gprogress[],
+                               float photontof[], MCXsp* nuvox) {
     MCXSrc* launchsrc = &(gcfg->src);
+
+    flipdir[0] = 1; //< reuse flipdir[0] to denote canfocus: non-zero: focusable, zero: not focusable
+    flipdir[3] = 1; //< reuse flipdir[1] to count for launchattempt
 
 
     /**
@@ -1213,6 +1302,8 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         *((float4*)f) = float4(0.f, 0.f, gcfg->minaccumtime, f->ndone);
         *idx1d = *((uint*)&launchsrc->param2.z);      /**< pre-computed 1D index of the photon at launch for pencil/isotropic beams */
         *mediaid = *((uint*)&launchsrc->param2.w);    /**< pre-computed media index of the photon at launch for pencil/isotropic beams */
+        flipdir[1] = !(*idx1d == 0);  //< reuse flipdir[1] to decide if launch pos is in bbx
+        flipdir[2] = 0;  //< reuse flipdir[2] to decide if launch pos has changed
 
         *rv = float3(launchsrc->pos.x, launchsrc->pos.y, launchsrc->pos.z); //< reuse as the origin of the src, needed for focusable sources
 
@@ -1291,13 +1382,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         p->z = launchsrc->pos.z + floorf(rx * launchsrc->param1.w) * launchsrc->param1.z / (launchsrc->param1.w - 1.f) + floorf(ry * launchsrc->param2.w) * launchsrc->param2.z / (launchsrc->param2.w - 1.f);
                     }
 
-                    *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
-
-                    if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
-                        *mediaid = 0;
-                    } else {
-                        *mediaid = media[*idx1d];
-                    }
+                    flipdir[2] = 1;  //< source position has changed
 
                     *rv = float3(rv->x + (launchsrc->param1.x + launchsrc->param2.x) * 0.5f,
                                  rv->y + (launchsrc->param1.y + launchsrc->param2.y) * 0.5f,
@@ -1326,13 +1411,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         p->w = launchsrc->pos.w * (cosf((launchsrc->param2.x * rx + launchsrc->param2.y * ry + launchsrc->param2.z) * TWO_PI) * (1.f - launchsrc->param2.w) + 1.f) * 0.5f;    //between 0 and 1
                     }
 
-                    *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
-
-                    if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
-                        *mediaid = 0;
-                    } else {
-                        *mediaid = media[*idx1d];
-                    }
+                    flipdir[2] = 1;  //< source position has changed
 
                     *rv = float3(rv->x + (launchsrc->param1.x + v2.x) * 0.5f,
                                  rv->y + (launchsrc->param1.y + v2.y) * 0.5f,
@@ -1380,13 +1459,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
                     }
 
-                    *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
-
-                    if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
-                        *mediaid = 0;
-                    } else {
-                        *mediaid = media[*idx1d];
-                    }
+                    flipdir[2] = 1;  //< source position has changed
 
                     break;
                 }
@@ -1413,7 +1486,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                     sincosf(ang, &stheta, &ctheta);
                     rotatevector(v, stheta, ctheta, sphi, cphi);
-                    canfocus = 0;
+                    flipdir[0] = 0;
                     break;
                 }
 
@@ -1424,7 +1497,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     ang = sqrtf(2.f * rand_next_scatlen(t)) * (1.f - 2.f * rand_uniform01(t)) * launchsrc->param1.x;
                     sincosf(ang, &stheta, &ctheta);
                     rotatevector(v, stheta, ctheta, sphi, cphi);
-                    canfocus = 0;
+                    flipdir[0] = 0;
                     break;
                 }
 
@@ -1467,15 +1540,9 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                     /** compute final launch position and update medium label */
                     *((float4*)p) = float4(p->x + launchsrc->pos.x, p->y + launchsrc->pos.y, p->z + launchsrc->pos.z, p->w);
-                    *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
 
-                    if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
-                        *mediaid = 0;
-                    } else {
-                        *mediaid = media[*idx1d];
-                    }
-
-                    canfocus = 0;
+                    flipdir[2] = 1;  //< source position has changed
+                    flipdir[0] = 0;  //< can not be focused
                     break;
                 }
 
@@ -1520,13 +1587,27 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     *rv = float3(launchsrc->pos.x + (launchsrc->param1.x) * 0.5f,
                                  launchsrc->pos.y + (launchsrc->param1.y) * 0.5f,
                                  launchsrc->pos.z + (launchsrc->param1.z) * 0.5f);
-                    canfocus = (gcfg->srctype == MCX_SRC_SLIT);
+
+                    flipdir[2] = 1;  //< source position has changed
+                    flipdir[0] = (gcfg->srctype == MCX_SRC_SLIT);
                     break;
                 }
             }
 
             if (fabsf(p->w) <= gcfg->minenergy) {
                 continue;
+            }
+
+            if (flipdir[2]) { // if position has changed
+                *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
+
+                if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
+                    *mediaid = 0;
+                    flipdir[1] = 0;  // outside of bounding box
+                } else {
+                    *mediaid = media[*idx1d];
+                    flipdir[1] = 1;  // inside bounding box
+                }
             }
 
             if (gcfg->nangle) {
@@ -1556,7 +1637,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                 }
 
                 rotatevector(v, stheta, ctheta, sphi, cphi);
-            } else if (canfocus) {
+            } else if (flipdir[0]) {
                 /**
                  * If beam focus is set, determine the incident angle
                  */
@@ -1591,10 +1672,45 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
             }
         }
 
+        flipdir[3] += 1;
+        GPUDEBUG(("retry %d: mediaid=%d idx=%d w0=%e\n", flipdir[3], *mediaid, *idx1d, p->w));
+
+        /**
+         * if launch attempted for over 1000 times, stop trying and return
+         */
+        if (flipdir[3] > gcfg->maxvoidstep) {
+            return -1;    // launch failed
+        }
+
+        /**
+         * if the the center of the bbx has a distance > sqrt(Nx^2 + Ny^2 + Nz^2)/2 to the ray, then ray-box won't intersect, relaunch
+         */
+        rv->x = dot((gcfg->maxidx * 0.5f) - float3(p->x, p->y, p->z), float3(v->x, v->y, v->z));
+
+        if (rv->x * rv->x > dot(gcfg->maxidx, gcfg->maxidx) * 0.5f) {
+            GPUDEBUG(("relaunch: launch dir too far from bbx center: %f, tried %d\n", rv->x, flipdir[3]));
+            continue;
+        }
+
+
         /**
          * Compute the reciprocal of the velocity vector
          */
         *rv = float3(__fdividef(1.f, v->x), __fdividef(1.f, v->y), __fdividef(1.f, v->z));
+
+        /**
+         * if the launch position is outside of bbx
+         */
+        if (!flipdir[1]) {
+            if (hitbbx((float3*)p, (float3*)v, gcfg->maxidx, rv) == 0) {
+                GPUDEBUG(("relaunch: ray do not intersect: p=[%f %f %f] v=[%f %f %f], tried %d\n", p->x, p->y, p->z, v->x, v->y, v->z, flipdir[3]));
+                continue;  // relaunch ray if the ray do not intersection with the bbx
+            } else {
+                *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
+                *mediaid = media[*idx1d];
+                GPUDEBUG(("hitbbx: p=[%f %f %f] v=[%f %f %f] idx1d=%d, mediaid=%d\n", p->x, p->y, p->z, v->x, v->y, v->z, *idx1d, *mediaid));
+            }
+        }
 
         /**
          * If a photon is launched outside of the box, or inside a zero-voxel, move it until it hits a non-zero voxel
@@ -1611,16 +1727,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         flipdir[0] = floorf(p->x);
         flipdir[1] = floorf(p->y);
         flipdir[2] = floorf(p->z);
-
-        *w0 += 1.f;
-        GPUDEBUG(("retry %f: mediaid=%d idx=%d w0=%e\n", *w0, *mediaid, *idx1d, p->w));
-
-        /**
-         * if launch attempted for over 1000 times, stop trying and return
-         */
-        if (*w0 > gcfg->maxvoidstep) {
-            return -1;    // launch failed
-        }
     } while ((*mediaid & MED_MASK) == 0 || fabsf(p->w) <= gcfg->minenergy);
 
     /**
@@ -2202,7 +2308,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             if (fabsf(oldval) > MAX_ACCUM && gcfg->outputtype != otRF) {
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
-                                GPUDEBUG(("reducing float round-off error by moving %e to [%d], oldval=%f\n", MAX_ACCUM, idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w, oldval));
+                                GPUDEBUG(("reducing float round-off error by moving %e to [%llu], oldval=%f\n", MAX_ACCUM, idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w, oldval));
                             } else if (gcfg->outputtype == otRF && gcfg->omega > 0.f) {
                                 oldval = -replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
