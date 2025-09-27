@@ -40,6 +40,7 @@ SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=true
 SetupIconFile=mcxstudio_2023.ico
+ShowLanguageDialog=yes
 ArchitecturesInstallIn64BitMode=x64
 DefaultGroupName="{#MyAppName} {#MyAppVersion}"
 VersionInfoCompany={#MyAppPublisher}
@@ -382,3 +383,4 @@ begin
            );
     end;
 end;
+
