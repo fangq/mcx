@@ -190,7 +190,7 @@ const char* outputformat[] = {"mc2", "nii", "hdr", "ubj", "tx3", "jnii", "bnii",
  * r: Fresnel boundary
  * a: total absorption BC
  * m: total reflection (mirror) BC
- * c: cylic BC
+ * c: cyclic BC
  */
 
 const char boundarycond[] = {'_', 'r', 'a', 'm', 'c', '\0'};
@@ -1473,7 +1473,7 @@ void mcx_readconfig(char* fname, Config* cfg) {
         }
 
         if (cfg->session[0] == '\0') {
-            strncpy(cfg->session, fname, MAX_SESSION_LENGTH);
+            strncpy(cfg->session, fname, MAX_SESSION_LENGTH - 1);
         }
     }
 
@@ -1682,7 +1682,6 @@ void mcx_preprocess(Config* cfg) {
         }
 
         if (cfg->srcid > (int)cfg->extrasrclen + 1) {
-            printf("cfg->srcid=%d\n", cfg->srcid);
             MCX_ERROR(-4, "srcid exceeds total defined source count");
         }
 
@@ -2033,7 +2032,7 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
 #else
         sprintf(comment, "%s/%s", cfg->rootpath, filename);
 #endif
-        strncpy(filename, comment, MAX_FULL_PATH);
+        strncpy(filename, comment, MAX_FULL_PATH - 1);
     }
 
     comm = fgets(comment, MAX_PATH_LENGTH, in);
@@ -2271,7 +2270,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         val = FIND_JSON_OBJ("VolumeFile", "Domain.VolumeFile", Domain);
 
         if (val) {
-            strncpy(volfile, val->valuestring, MAX_PATH_LENGTH);
+            strncpy(volfile, val->valuestring, MAX_PATH_LENGTH - 1);
 
             if (cfg->rootpath[0]) {
 #ifdef WIN32
@@ -2280,7 +2279,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 sprintf(filename, "%s/%s", cfg->rootpath, volfile);
 #endif
             } else {
-                strncpy(filename, volfile, MAX_PATH_LENGTH);
+                strncpy(filename, volfile, MAX_PATH_LENGTH - 1);
             }
         }
 
@@ -2592,9 +2591,9 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             memset(&(cfg->crop0), 0, sizeof(uint3));
             memset(&(cfg->crop1), 0, sizeof(uint3));
         } else {
-            /*
-               if -R is followed by a negative radius, mcx uses crop0/crop1 to set the cachebox
-            */
+            /**
+             *  if -R is followed by a negative radius, mcx uses crop0/crop1 to set the cachebox
+             */
             if (!cfg->issrcfrom0) {
                 cfg->crop0.x--;
                 cfg->crop0.y--;
@@ -3039,11 +3038,11 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         }
 
         if (cfg->session[0] == '\0') {
-            strncpy(cfg->session, FIND_JSON_KEY("ID", "Session.ID", Session, "default", valuestring), MAX_SESSION_LENGTH);
+            strncpy(cfg->session, FIND_JSON_KEY("ID", "Session.ID", Session, "default", valuestring), MAX_SESSION_LENGTH - 1);
         }
 
         if (cfg->rootpath[0] == '\0') {
-            strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath", "Session.RootPath", Session, "", valuestring), MAX_PATH_LENGTH);
+            strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath", "Session.RootPath", Session, "", valuestring), MAX_PATH_LENGTH - 1);
         }
 
         if (!flagset['B']) {

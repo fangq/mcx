@@ -50,6 +50,17 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "frenchcanadian"; MessagesFile: "compiler:Languages\French.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "spanishmexican"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
+Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
+Name: "hindi"; MessagesFile: "compiler:Languages\Hindi.isl"
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "chinesetraditional"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
 
 ;;----------------------------------------------------------------------
 
@@ -81,8 +92,8 @@ Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\m
 ;;----------------------------------------------------------------------
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user"; Tasks: desktopicon
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang {code:GetLanguageCode}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user --lang {code:GetLanguageCode}"; Tasks: desktopicon
 Name: "{group}\MCX Website"; Filename: "https://mcx.space/"
 Name: "{group}\MCX Wiki"; Filename: "https://mcx.space/wiki/"
 Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
@@ -97,12 +108,13 @@ Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!fo
 Root: HKA; Subkey: "Software\COTILab"; Flags: uninsdeletekeyifempty
 Root: HKA; Subkey: "Software\COTILab\MCXStudio"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\COTILab\MCXStudio\Settings"; ValueType: string; ValueName: "Language"; ValueData: "{language}"
+Root: HKA; Subkey: "Software\COTILab\MCXStudio\Settings"; ValueType: string; ValueName: "LanguageCode"; ValueData: "{code:GetLanguageCode}"
 ; Associate .mcxp files with My Program (requires ChangesAssociations=yes)
 Root: HKA; Subkey: "Software\Classes\.mcxp"; ValueType: string; ValueName: ""; ValueData: "MCXStudio.mcxp"; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\.mcxp\OpenWithProgids"; ValueType: string; ValueName: "MCXStudio.mcxp"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp"; ValueType: string; ValueName: ""; ValueData: "MCXStudio"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\mcxstudio.exe,0"
-Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""%1"""
+Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""--user"" ""--lang"" ""{code:GetLanguageCode}"" ""%1"""
 ; HKA (and HKCU) should only be used for settings which are compatible with
 ; roaming profiles so settings like paths should be written to HKLM, which
 ; is only possible in administrative install mode.
@@ -120,7 +132,7 @@ Root: HKLM; Subkey: "System\CurrentControlSet\Control\GraphicsDrivers"; ValueTyp
 ;;----------------------------------------------------------------------
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang {code:GetLanguageCode}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 ;;----------------------------------------------------------------------
 
@@ -142,6 +154,28 @@ begin
     Result := ExpandConstant('{app}') + '\MATLAB';
   end;
   Log(Format('MCX Toolbox Path found at %s', [Result]));
+end;
+
+// Function to convert installer language to application language code
+function GetLanguageCode(Param: string): string;
+begin
+  case ActiveLanguage of
+    'english': Result := 'en_US';
+    'frenchcanadian': Result := 'fr_CA';
+    'german': Result := 'de_DE';
+    'spanish': Result := 'es_ES';
+    'spanishmexican': Result := 'es_MX';
+    'italian': Result := 'it_IT';
+    'japanese': Result := 'ja_JP';
+    'korean': Result := 'ko_KR';
+    'portuguese': Result := 'pt_BR';
+    'hindi': Result := 'hi_IN';
+    'chinesesimplified': Result := 'zh_CN';
+    'chinesetraditional': Result := 'zh_TW';
+  else
+    Result := 'en_US'; // Default fallback
+  end;
+  Log(Format('Language code selected: %s', [Result]));
 end;
 
 function InitializeSetup(): Boolean;
