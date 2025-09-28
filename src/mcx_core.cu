@@ -2597,8 +2597,12 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
 
     if (cfg->gpuid && cfg->gpuid > deviceCount) {
         MCX_FPRINTF(cfg->flog, S_RED "%s\n" S_RESET, T_("ERROR: Specified GPU ID is out of range"));
-        free(*info)
-        *info = NULL;
+
+        if (*info) {
+            free(*info);
+            *info = NULL;
+        }
+
         return 0;
     }
 
