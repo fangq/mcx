@@ -849,8 +849,9 @@ begin
       ckSpecular.Checked:=false;
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
-      if(Length(DefaultLang) > 0) then
+      if(Length(DefaultLang) > 0) then begin
           edMoreParam.Text:='--lang ' + DefaultLang;
+      end;
 
       edUnitInMM.Text:='1';
       ckSharedFS.Checked:=false;
@@ -1808,7 +1809,7 @@ begin
     if(not DirectoryExists(workdir)) then
         UseUserFolder:=true;
 
-    DefaultLang := '';
+    DefaultLang := 'en';
     if(Application.HasOption('l','lang')) then
         DefaultLang := Application.GetOptionValue('l', 'lang');
 end;
