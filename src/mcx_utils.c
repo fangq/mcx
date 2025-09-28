@@ -5112,7 +5112,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
 
                 case 'y':
                     if (i + 1 < argc && isalpha((int)argv[i + 1][0]) ) {
-                        int idx = mcx_keylookup(argv[++i], languagename);
+                        int idx = mcx_keystartwith(argv[++i], languagename);
 
                         if (idx == -1) {
                             MCX_FPRINTF(cfg->flog, "Unsupported language ID (%s), fallback to default\n", argv[i]);
@@ -5367,6 +5367,43 @@ int mcx_keylookup(char* origkey, const char* table[]) {
 
     while (table[i] && table[i][0] != '\0') {
         if (strcmp(key, table[i]) == 0) {
+            free(key);
+            return i;
+        }
+
+        i++;
+    }
+
+    free(key);
+    return -1;
+}
+
+/**
+ * @brief Look up a string in a string list and return the index
+ *
+ * @param[in] origkey: string to be looked up
+ * @param[out] table: the dictionary where the string is searched
+ * @return if found, return the index of the string in the dictionary, otherwise -1.
+ */
+
+int mcx_keystartwith(char* origkey, const char* table[]) {
+    int i = 0;
+    char* key = malloc(strlen(origkey) + 1);
+    memcpy(key, origkey, strlen(origkey) + 1);
+
+    if (strlen(origkey) > 2 && key[2] == '-') {
+        key[2] = '_';
+    }
+
+    while (key[i]) {
+        key[i] = tolower(key[i]);
+        i++;
+    }
+
+    i = 0;
+
+    while (table[i] && table[i][0] != '\0') {
+        if (strstr(table[i], key)) {
             free(key);
             return i;
         }

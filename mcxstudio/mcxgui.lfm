@@ -3961,7 +3961,7 @@ object fmMCX: TfmMCX
         ShowHint = True
       end
       object edWorkload: TEdit
-        AnchorSideLeft.Control = edGPUID
+        AnchorSideLeft.Control = ckLockGPU
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = Label15
         AnchorSideTop.Side = asrBottom

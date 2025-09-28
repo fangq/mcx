@@ -315,6 +315,7 @@ void mcx_convertcol2row(unsigned int** vol, uint3* dim);
 void mcx_convertcol2row4d(unsigned int** vol, uint4* dim);
 int  mcx_loadjson(cJSON* root, Config* cfg);
 int  mcx_keylookup(char* key, const char* table[]);
+int  mcx_keystartwith(char* key, const char* table[]);
 int  mcx_lookupindex(char* key, const char* index);
 int  mcx_parsedebugopt(char* debugopt, const char* debugflag);
 void mcx_savedetphoton(float* ppath, void* seeds, int count, int seedbyte, Config* cfg);

@@ -51,14 +51,14 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "frenchcanadian"; MessagesFile: "compiler:Languages\French.isl"
+Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
-Name: "spanishmexican"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
-Name: "portuguesebrazilian"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
+Name: "portuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 ;Name: "hindi"; MessagesFile: "compiler:Languages\Hindi.isl"
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "chinesetraditional"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
@@ -162,15 +162,14 @@ function GetLanguageCode(Param: string): string;
 begin
   case ActiveLanguage of
     'english': Result := 'en_US';
-    'frenchcanadian': Result := 'fr_CA';
-    'german': Result := 'de_DE';
-    'spanish': Result := 'es_ES';
-    'spanishmexican': Result := 'es_MX';
-    'italian': Result := 'it_IT';
-    'japanese': Result := 'ja_JP';
-    'korean': Result := 'ko_KR';
-    'portuguese': Result := 'pt_BR';
-    'hindi': Result := 'hi_IN';
+    'french': Result := 'fr';
+    'german': Result := 'de';
+    'spanish': Result := 'es';
+    'italian': Result := 'it';
+    'japanese': Result := 'ja';
+    'korean': Result := 'ko';
+    'portuguese': Result := 'pt';
+    'hindi': Result := 'hi';
     'chinesesimplified': Result := 'zh_CN';
     'chinesetraditional': Result := 'zh_TW';
   else

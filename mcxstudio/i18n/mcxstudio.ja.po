@@ -5,57 +5,58 @@ msgstr ""
 "PO-Revision-Date: 2025-09-27\n"
 "Last-Translator: Qianqian Fang\n"
 "Language-Team: MCX Developers\n"
-"Language: zh_TW\n"
+"Language: ja_JP\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.0.1\n"
 
+
 #: tfmabout.button1.caption
 msgctxt "tfmabout.button1.caption"
 msgid "OK"
-msgstr "確定"
+msgstr "OK"
 
 #: tfmabout.caption
 msgid "About Monte Carlo eXtreme Studio"
-msgstr "關於蒙地卡羅極限工作室"
+msgstr "モンテカルロエクストリームスタジオについて"
 
 #: tfmabout.image3.hint
 msgctxt "tfmabout.image3.hint"
 msgid "About MCX"
-msgstr "關於MCX"
+msgstr "MCXについて"
 
 #: tfmconfig.btcancel.caption
 msgctxt "tfmconfig.btcancel.caption"
 msgid "Cancel"
-msgstr "取消"
+msgstr "キャンセル"
 
 #: tfmconfig.btok.caption
 msgctxt "tfmconfig.btok.caption"
 msgid "OK"
-msgstr "確定"
+msgstr "OK"
 
 #: tfmconfig.caption
 msgid "MCX Studio Config"
-msgstr "光子工作室設定"
+msgstr "MCXスタジオ設定"
 
 #: tfmconfig.ckusemanualpath.caption
 msgid "Use Manual Paths"
-msgstr "使用手動路徑"
+msgstr "手動パスを使用"
 
 #: tfmconfig.edlocalpath.columns[0].title.caption
 msgctxt "tfmconfig.edlocalpath.columns[0].title.caption"
 msgid "Value"
-msgstr "值"
+msgstr "値"
 
 #: tfmconfig.edscppath.hint
 msgctxt "tfmconfig.edscppath.hint"
 msgid "Local SCP Executable Path"
-msgstr "本機SCP可執行檔路徑"
+msgstr "ローカルSCP実行ファイルパス"
 
 #: tfmconfig.edsshpath.hint
 msgid "Local SSH Path"
-msgstr "本機SSH路徑"
+msgstr "ローカルSSHパス"
 
 #: tfmconfig.edworkpath.text
 msgid "%MCXSTUDIO%/MCXOutput"
@@ -63,92 +64,92 @@ msgstr "%MCXSTUDIO%/MCXOutput"
 
 #: tfmconfig.groupbox2.caption
 msgid "MCXStudio Local Output Root Directory"
-msgstr "光子工作室本機輸出根目錄"
+msgstr "MCXスタジオローカル出力ルートディレクトリ"
 
 #: tfmconfig.groupbox3.caption
 msgid "Remote MCX/MMC/MCXCl Executable Search Paths"
-msgstr "遠端MCX/MMC/MCXCl可執行檔搜尋路徑"
+msgstr "リモートMCX/MMC/MCXCl実行ファイル検索パス"
 
 #: tfmconfig.groupbox4.caption
 msgid "Local MCX/MMC/MCXCl Executable Search Paths"
-msgstr "本機MCX/MMC/MCXCl可執行檔搜尋路徑"
+msgstr "ローカルMCX/MMC/MCXCl実行ファイル検索パス"
 
 #: tfmconfig.groupbox5.caption
 msgid "Local SSH Executable Path"
-msgstr "本機SSH可執行檔路徑"
+msgstr "ローカルSSH実行ファイルパス"
 
 #: tfmconfig.groupbox6.caption
 msgctxt "tfmconfig.groupbox6.caption"
 msgid "Local SCP Executable Path"
-msgstr "本機SCP可執行檔路徑"
+msgstr "ローカルSCP実行ファイルパス"
 
 #: tfmconfig.groupbox7.caption
 msgid "Remote MCX/MMC/MCXCl Output Directory"
-msgstr "遠端MCX/MMC/MCXCl輸出目錄"
+msgstr "リモートMCX/MMC/MCXCl出力ディレクトリ"
 
 #: tfmconfig.groupbox8.caption
 msgid "Remote GPU Server"
-msgstr "遠端GPU伺服器"
+msgstr "リモートGPUサーバー"
 
 #: tfmconfig.label1.caption
 msgid "Hostname or IP"
-msgstr "主機名稱或IP"
+msgstr "ホスト名またはIP"
 
 #: tfmconfig.label2.caption
 msgid "Port"
-msgstr "連接埠"
+msgstr "ポート"
 
 #: tfmconfig.label3.caption
 msgid "User name"
-msgstr "使用者名稱"
+msgstr "ユーザー名"
 
 #: tfmdatafile.btcancel.caption
 msgctxt "tfmdatafile.btcancel.caption"
 msgid "Cancel"
-msgstr "取消"
+msgstr "キャンセル"
 
 #: tfmdatafile.btok.caption
 msgctxt "tfmdatafile.btok.caption"
 msgid "OK"
-msgstr "確定"
+msgstr "OK"
 
 #: tfmdatafile.caption
 msgid " Data File Properties"
-msgstr "資料檔案屬性"
+msgstr "データファイルプロパティ"
 
 #: tfmdatafile.eddataformat.text
 msgid "Float (32bit)"
-msgstr "浮點數（32位元）"
+msgstr "浮動小数点 (32ビット)"
 
 #: tfmdatafile.label10.caption
 msgid "Data File"
-msgstr "資料檔案"
+msgstr "データファイル"
 
 #: tfmdatafile.label4.caption
 msgid "Y Dimension"
-msgstr "Y維度"
+msgstr "Y次元"
 
 #: tfmdatafile.label5.caption
 msgid "X Dimension"
-msgstr "X維度"
+msgstr "X次元"
 
 #: tfmdatafile.label6.caption
 msgid "Z Dimension"
-msgstr "Z維度"
+msgstr "Z次元"
 
 #: tfmdatafile.label7.caption
 msgctxt "tfmdatafile.label7.caption"
 msgid "Time Gates"
-msgstr "時間窗"
+msgstr "タイムゲート"
 
 #: tfmdatafile.label8.caption
 msgctxt "tfmdatafile.label8.caption"
 msgid "Time Gates"
-msgstr "時間窗"
+msgstr "タイムゲート"
 
 #: tfmdatafile.label9.caption
 msgid "Header Size"
-msgstr "標頭大小"
+msgstr "ヘッダーサイズ"
 
 #: tfmdomain.acexit.caption
 msgid "acExit"
@@ -157,7 +158,7 @@ msgstr "acExit"
 #: tfmdomain.acexit.hint
 msgctxt "tfmdomain.acexit.hint"
 msgid "Exit"
-msgstr "結束"
+msgstr "終了"
 
 #: tfmdomain.achidebbx.caption
 msgid "acHideBBX"
@@ -165,7 +166,7 @@ msgstr "acHideBBX"
 
 #: tfmdomain.achidebbx.hint
 msgid "Hide Domain Box"
-msgstr "隱藏域邊界框"
+msgstr "ドメインボックスを非表示"
 
 #: tfmdomain.acloadjson.caption
 msgid "acLoadJSON"
@@ -173,7 +174,7 @@ msgstr "acLoadJSON"
 
 #: tfmdomain.acloadjson.hint
 msgid "Load JSON"
-msgstr "載入JSON"
+msgstr "JSON読み込み"
 
 #: tfmdomain.acrender.caption
 msgid "acRender"
@@ -181,7 +182,7 @@ msgstr "acRender"
 
 #: tfmdomain.acrender.hint
 msgid "Render"
-msgstr "算繪"
+msgstr "レンダリング"
 
 #: tfmdomain.acresetcamera.caption
 msgid "acResetCamera"
@@ -189,7 +190,7 @@ msgstr "acResetCamera"
 
 #: tfmdomain.acresetcamera.hint
 msgid "Reset Camera"
-msgstr "重設相機"
+msgstr "カメラリセット"
 
 #: tfmdomain.acsaveimage.caption
 msgid "acSaveImage"
@@ -198,7 +199,7 @@ msgstr "acSaveImage"
 #: tfmdomain.acsaveimage.hint
 msgctxt "tfmdomain.acsaveimage.hint"
 msgid "Save Screen"
-msgstr "儲存螢幕"
+msgstr "画面保存"
 
 #: tfmdomain.acsavejson.caption
 msgid "acSaveJSON"
@@ -206,24 +207,24 @@ msgstr "acSaveJSON"
 
 #: tfmdomain.acsavejson.hint
 msgid "Save JSON"
-msgstr "儲存JSON"
+msgstr "JSON保存"
 
 #: tfmdomain.btbackground.hint
 msgctxt "tfmdomain.btbackground.hint"
 msgid "Change Background Color"
-msgstr "變更背景顏色"
+msgstr "背景色変更"
 
 #: tfmdomain.btpin.caption
 msgid "Pin Editor"
-msgstr "固定編輯器"
+msgstr "エディター固定"
 
 #: tfmdomain.btpin.hint
 msgid "Show editor"
-msgstr "顯示編輯器"
+msgstr "エディター表示"
 
 #: tfmdomain.caption
 msgid "MCX Domain Renderer"
-msgstr "MCX域算繪器"
+msgstr "MCXドメインレンダラー"
 
 #: tfmdomain.toolbar1.caption
 msgctxt "tfmdomain.toolbar1.caption"
@@ -249,39 +250,39 @@ msgstr "â–µ"
 
 #: tfmmcx.btexpandoutput.hint
 msgid "To expand or collapse the command window."
-msgstr "展開或摺疊命令視窗。"
+msgstr "コマンドウィンドウを展開または縮小します。"
 
 #: tfmmcx.btgbexpand.caption
-msgid "â–¾"
-msgstr "â–¾"
+msgid "▾"
+msgstr "▾"
 
 #: tfmmcx.btloadseed.hint
 msgid "Load seed data from previous simulations for replay"
-msgstr "從先前的模擬載入種子資料進行重播"
+msgstr "再現のため以前のシミュレーションからシードデータを読み込み"
 
 #: tfmmcx.btsendcmd.caption
 msgid "Send"
-msgstr "傳送"
+msgstr "送信"
 
 #: tfmmcx.btsendcmd.hint
 msgid "Send the user input to the input buffer of the external program \ncurrently being executed.\n"
-msgstr "將使用者輸入傳送到目前執行的外部程式的輸入緩衝區。\n"
+msgstr "現在実行中の外部プログラムの入力バッファにユーザー入力を送信します。\n"
 
 #: tfmmcx.button2.caption
 msgid "Clear Output"
-msgstr "清除輸出"
+msgstr "出力クリア"
 
 #: tfmmcx.caption
 msgid "MCX Studio"
-msgstr "光子工作室"
+msgstr "MCXスタジオ"
 
 #: tfmmcx.ckautopilot.caption
 msgid "Let MCX decide thread/block size (-A)"
-msgstr "讓MCX決定執行緒/區塊大小 (-A)"
+msgstr "MCXにスレッド/ブロックサイズを決定させる (-A)"
 
 #: tfmmcx.ckautopilot.hint
 msgid "Autopilot \n\nChecking this box tells MCX/MMC to automatically determine the \"optimal\"\nthread number and block size by using the hardware information.\n\nIt is recommended to always check this box. The key to maximize simulation\nthroughput is to ensure a large number of threads are launched to keep the\nhardware resources fully utilized.\n"
-msgstr "自動駕駛\n\n勾選此框告訴MCX/MMC根據硬體資訊自動決定\"最佳\"的執行緒數和區塊大小。\n\n建議始終勾選此框。最大化模擬輸送量的關鍵是確保啟動大量執行緒以充分利用硬體資源。\n"
+msgstr "オートパイロット\n\nこのボックスをチェックすると、MCX/MMCにハードウェア情報を使用して「最適な」スレッド数とブロックサイズを自動的に決定するよう指示します。\n\n常にこのボックスをチェックすることが推奨されます。シミュレーションスループットを最大化する鍵は、ハードウェアリソースを完全に活用するために大量のスレッドが起動されることを確実にすることです。\n"
 
 #: tfmmcx.ckbdebug.hint
 msgctxt "tfmmcx.ckbdebug.hint"
@@ -290,135 +291,135 @@ msgstr "DebugFlags"
 
 #: tfmmcx.ckbdet.hint
 msgid "SaveDetFlag \n\nThis checkbox list allows users to select the detected photon\ndata items that they want to save in the .mch file.\n\nBy default, only the Detector ID and Partial Pathlength are stored.\n"
-msgstr "SaveDetFlag\n\n此核取方塊清單允許使用者選擇要在.mch檔案中儲存的檢測光子資料項目。\n\n預設情況下，只儲存檢測器ID和部分路徑長度。\n"
+msgstr "SaveDetFlag\n\nこのチェックボックスリストは、ユーザーが.mchファイルに保存したい検出光子データ項目を選択できます。\n\nデフォルトでは、検出器IDと部分パス長のみが保存されます。\n"
 
 #: tfmmcx.ckdoremote.caption
 msgid "Run remote command:"
-msgstr "執行遠端指令："
+msgstr "リモートコマンド実行:"
 
 #: tfmmcx.ckdoremote.hint
 msgid "DoRemote \n\nCheck this option asks MCXStudio to call the specified ssh command \nand run mcx/mmc simulations on remote servers. \n\nPlease be aware that one must prepare the server and client to enable\nremote execution, this include\n\n1. install mcx/mmc/mcxcl executable on remote server and add path to\n    the PATH environment \n2. install ssh client on the local client; for Linux/Mac, ssh/scp command is\n    typically built-in; for windows, please install plink.exe and pscp.exe and\n    ensure that their paths are on the PATH environment variable\n3. optionally, one can set the SSH key between the client and server to \n    avoid typing password, please see http://www.linuxproblem.org/art_9.html\n"
-msgstr "DoRemote\n\n選取此選項要求光子工作室呼叫指定的ssh指令並在遠端伺服器上執行mcx/mmc模擬。\n\n請注意，必須準備伺服器和用戶端以啟用遠端執行，這包括：\n\n1. 在遠端伺服器上安裝mcx/mmc/mcxcl可執行檔並將路徑新增到PATH環境變數\n2. 在本機用戶端安裝ssh用戶端；對於Linux/Mac，ssh/scp指令通常內建；對於Windows，請安裝plink.exe和pscp.exe並確保它們的路徑在PATH環境變數中\n3. 可選地，可以在用戶端和伺服器之間設定SSH金鑰以避免輸入密碼，請參見http://www.linuxproblem.org/art_9.html\n"
+msgstr "DoRemote\n\nこのオプションをチェックすると、MCXスタジオに指定されたsshコマンドを呼び出し、リモートサーバーでmcx/mmcシミュレーションを実行するよう要求します。\n\nリモート実行を有効にするには、サーバーとクライアントを準備する必要があることにご注意ください。これには以下が含まれます：\n\n1. リモートサーバーにmcx/mmc/mcxcl実行ファイルをインストールし、PATH環境変数にパスを追加\n2. ローカルクライアントにsshクライアントをインストール；Linux/Macの場合、ssh/scpコマンドは通常組み込まれています；Windowsの場合、plink.exeとpscp.exeをインストールし、それらのパスがPATH環境変数にあることを確認してください\n3. オプションで、パスワード入力を避けるためにクライアントとサーバー間でSSHキーを設定できます。http://www.linuxproblem.org/art_9.html を参照してください\n"
 
 #: tfmmcx.ckdoreplay.caption
 msgid "Replay"
-msgstr "重播"
+msgstr "リプレイ"
 
 #: tfmmcx.ckdoreplay.hint
 msgid "DoReplay \n\nWhen selecting a .mch file as the seed, this checkbox is automatically \nchecked, signifying that MCX/MMC will perform a photon replay by\nreading the RNG seeds from the .mch file and rerun the photons to produce\nthe Jacobians - in such case, one can use the \"Output Type\" to select which\nmetric to output.\n"
-msgstr "DoReplay\n\n當選擇.mch檔案作為種子時，此核取方塊自動被選取，表示MCX/MMC將通過從.mch檔案讀取RNG種子並重新執行光子來執行光子重播以產生雅可比矩陣 - 在這種情況下，可以使用\"輸出類型\"來選擇要輸出的度量。\n"
+msgstr "DoReplay\n\nシードとして.mchファイルを選択すると、このチェックボックスが自動的にチェックされ、MCX/MMCが.mchファイルからRNGシードを読み取り、光子を再実行してヤコビアンを生成する光子リプレイを実行することを示します - この場合、「出力タイプ」を使用してどのメトリックを出力するかを選択できます。\n"
 
 #: tfmmcx.cklockgpu.caption
 msgid "Lock GPU"
-msgstr "鎖定GPU"
+msgstr "GPUロック"
 
 #: tfmmcx.cklockgpu.hint
 msgid "Checking this box prevents MCXStudio from updating the device list\nwhen switching between different simulation sessions.\n\nWhen running simulation on a remote server, it is recommended to\nlock the GPU to avoid resetting of the device list.\n"
-msgstr "勾選此框可防止光子工作室在不同模擬工作階段之間切換時更新裝置清單。\n\n在遠端伺服器上執行模擬時，建議鎖定GPU以避免重設裝置清單。\n"
+msgstr "このボックスをチェックすると、異なるシミュレーションセッション間を切り替える際にMCXスタジオがデバイスリストを更新するのを防ぎます。\n\nリモートサーバーでシミュレーションを実行する場合、デバイスリストのリセットを避けるためにGPUをロックすることが推奨されます。\n"
 
 #: tfmmcx.cknormalize.caption
 msgid "Do normalization (-U)"
-msgstr "執行正規化 (-U)"
+msgstr "正規化実行 (-U)"
 
 #: tfmmcx.cknormalize.hint
 msgid "DoNormalize \n\nCheck this option allows MCX/MMC to normalize the output by the \nbelow formula\n\nÎ¦(i,j,k,t)=E(i,j,k,t) / (V*E_total*dT)\n\nwhere E(i,j,k,t) is the raw accummuated energy at each voxel; \nV is the size of the voxel in mm^3; dT is the time-gate width in s.\n\nAfter normalization, the result becomes TPSF or Green's function.\n\nUnchecking this option disables normalization.\n"
-msgstr "DoNormalize\n\n選取此選項允許MCX/MMC通過以下公式對輸出進行正規化：\n\nÎ¦(i,j,k,t)=E(i,j,k,t) / (V*E_total*dT)\n\n其中E(i,j,k,t)是每個體素的原始累積能量；V是體素的大小（mm^3）；dT是時間窗寬度（s）。\n\n正規化後，結果變為TPSF或格林函數。\n\n取消選取此選項將停用正規化。\n"
+msgstr "DoNormalize\n\nこのオプションをチェックすると、MCX/MMCが以下の式で出力を正規化できます：\n\nΦ(i,j,k,t)=E(i,j,k,t) / (V*E_total*dT)\n\nここで E(i,j,k,t) は各ボクセルでの生の蓄積エネルギー；V はボクセルのサイズ（mm^3）；dT はタイムゲート幅（s）です。\n\n正規化後、結果はTPSFまたはグリーン関数になります。\n\nこのオプションのチェックを外すと正規化が無効になります。\n"
 
 #: tfmmcx.ckreflect.caption
 msgid "Do reflection all boundaries (-b)"
-msgstr "在所有邊界執行反射 (-b)"
+msgstr "すべての境界で反射実行 (-b)"
 
 #: tfmmcx.ckreflect.hint
 msgid "DoReflect \n\nCheck this option (by default) enables reflection/refrection calculations \nwhen  refractive index mismatch is detected at tissue boundaries.\n\nIf this option is unchecked, any photon hits the boundary between a \nnon-zero and zero-valued voxel will be terminated (i.e. total\nabsorbtion boundary condition). \n\nThe medium outside of the volume bounding box is assumed to have \nthe optical properties defined as label 0 (the first row in the Media Settings\ntable on the right).\n"
-msgstr "DoReflect\n\n選取此選項（預設）在組織邊界檢測到折射率不匹配時啟用反射/折射計算。\n\n如果取消選取此選項，任何撞擊非零值和零值體素之間邊界的光子將被終止（即全吸收邊界條件）。\n\n體積邊界框外的介質假定具有標籤0定義的光學特性（右側介質設定表中的第一列）。\n"
+msgstr "DoReflect\n\nこのオプション（デフォルト）をチェックすると、組織境界で屈折率の不一致が検出されたときに反射/屈折計算が有効になります。\n\nこのオプションがチェックされていない場合、非ゼロとゼロ値ボクセル間の境界に当たる光子は終了されます（つまり、全吸収境界条件）。\n\nボリューム境界ボックス外の媒質は、ラベル0として定義された光学特性を持つと仮定されます（右側の媒質設定テーブルの最初の行）。\n"
 
 #: tfmmcx.cksavedata.caption
 msgid "Save fluence (-S)"
-msgstr "儲存通量 (-S)"
+msgstr "フルエンス保存 (-S)"
 
 #: tfmmcx.cksavedata.hint
 msgid "DoSave \n\nChecking this option makes MCX/MMC outputs the volumetric fluence\ndata: for MCX, it is the .mc2/.nii file; for MMC, it is a .dat file using P/H/B/S \nray-tracers and .mc2/.nii files when using the dual-grid mode (-M G).\n\nUnchecking this option stops MCX/MMC output the .mc2/.nii file.\n"
-msgstr "DoSave\n\n選取此選項使MCX/MMC輸出體積通量資料：對於MCX，這是.mc2/.nii檔案；對於MMC，使用P/H/B/S射線追蹤器時是.dat檔案，使用雙網格模式(-M G)時是.mc2/.nii檔案。\n\n取消選取此選項將阻止MCX/MMC輸出.mc2/.nii檔案。\n"
+msgstr "DoSave\n\nこのオプションをチェックすると、MCX/MMCが体積フルエンスデータを出力します：MCXの場合は.mc2/.niiファイル；MMCの場合、P/H/B/Sレイトレーサーを使用する場合は.datファイル、デュアルグリッドモード（-M G）を使用する場合は.mc2/.niiファイルです。\n\nこのオプションのチェックを外すと、MCX/MMCの.mc2/.niiファイル出力が停止します。\n"
 
 #: tfmmcx.cksavedetector.caption
 msgid "Save detected photons (-d)"
-msgstr "儲存檢測到的光子 (-d)"
+msgstr "検出光子保存 (-d)"
 
 #: tfmmcx.cksavedetector.hint
 msgid "SaveDetector \n\nChecking this option allows one to store detected photon \ninformation. The output data records can be user-defined by\nselecting the check-box list entitled \"Save detected photon\".\nThe output data are stored in a .mch file.\n\nUnchecking this option disables output the .mch file (can be \nslightly faster).\n"
-msgstr "SaveDetector\n\n選取此選項允許儲存檢測到的光子資訊。輸出資料記錄可以通過選擇名為\"儲存檢測到的光子\"的核取方塊清單來使用者定義。輸出資料儲存在.mch檔案中。\n\n取消選取此選項將停用.mch檔案的輸出（可能稍快一些）。\n"
+msgstr "SaveDetector\n\nこのオプションをチェックすると、検出光子情報を保存できます。出力データレコードは、「検出光子保存」というタイトルのチェックボックスリストを選択することでユーザー定義できます。出力データは.mchファイルに保存されます。\n\nこのオプションのチェックを外すと.mchファイルの出力が無効になります（わずかに高速になる可能性があります）。\n"
 
 #: tfmmcx.cksavemask.caption
 msgid "Save volume mask (-M)"
-msgstr "儲存體積遮罩 (-M)"
+msgstr "ボリュームマスク保存 (-M)"
 
 #: tfmmcx.cksavemask.hint
 msgid "DoSaveMask \n\nChecking this option asks MCX to output the pre-processed volume \nmasks. The preprocessed mask contains the voxels that are covered\nunder detectors; these voxels are designated by setting the sign-bit \nas 1. One can visualize this dumped data mask using mcxplotvol.m\n\nUnchecking this option suppresses the output of this mask file.\n"
-msgstr "DoSaveMask\n\n選取此選項要求MCX輸出預處理的體積遮罩。預處理遮罩包含被檢測器覆蓋的體素；這些體素通過設定符號位為1來指定。可以使用mcxplotvol.m來視覺化這些匯出的資料遮罩。\n\n取消選取此選項將抑制此遮罩檔案的輸出。\n"
+msgstr "DoSaveMask\n\nこのオプションをチェックすると、MCXに前処理されたボリュームマスクを出力するよう要求します。前処理マスクには検出器の下でカバーされるボクセルが含まれており；これらのボクセルは符号ビットを1に設定することで指定されます。mcxplotvol.mを使用してこのダンプされたデータマスクを可視化できます。\n\nこのオプションのチェックを外すと、このマスクファイルの出力が抑制されます。\n"
 
 #: tfmmcx.cksaveref.caption
 msgid "Save diffuse reflectance (-X)"
-msgstr "儲存漫反射 (-X)"
+msgstr "拡散反射率保存 (-X)"
 
 #: tfmmcx.cksaveref.hint
 msgid "DoSaveRef \n\nChecking this option allows MCX/MMC to output the escaped photon\nweights on the exterior surface of the domain. For MCX, to save the \ntotal diffuse reflectance, one must pad a layer of zero voxels in the \nfacet or full bounding box of the domain to store such data. The raw \ntotal diffuse reflectance are normalized and stored as negative values\nin the .mc2/.nii file. When loading such file using loadmc2.m, the diffuse\nreflectance data are extracted and converted to positive output.\n\nUnchecking this option disables saving diffuse reflectance data.\n"
-msgstr "DoSaveRef\n\n選取此選項允許MCX/MMC在域的外表面輸出逸出光子權重。對於MCX，要儲存總漫反射，必須在域的面或完整邊界框中填充一層零體素來儲存此類資料。原始總漫反射被正規化並作為負值儲存在.mc2/.nii檔案中。使用loadmc2.m載入此類檔案時，漫反射資料被萃取並轉換為正值輸出。\n\n取消選取此選項將停用儲存漫反射資料。\n"
+msgstr "DoSaveRef\n\nこのオプションをチェックすると、MCX/MMCがドメインの外表面で逃げた光子の重みを出力できます。MCXでは、総拡散反射率を保存するために、そのようなデータを保存するためにドメインの面または完全な境界ボックスにゼロボクセルの層をパッドする必要があります。生の総拡散反射率は正規化され、.mc2/.niiファイルに負の値として保存されます。loadmc2.mを使用してそのようなファイルを読み込むと、拡散反射率データが抽出され、正の出力に変換されます。\n\nこのオプションのチェックを外すと、拡散反射率データの保存が無効になります。\n"
 
 #: tfmmcx.cksaveseed.caption
 msgid "Save photon seeds (-q)"
-msgstr "儲存光子種子 (-q)"
+msgstr "光子シード保存 (-q)"
 
 #: tfmmcx.cksaveseed.hint
 msgid "DoSaveSeed \n\nChecking this option allows one to save the RNG seeds of the detected\nphotons in the .mch file. This makes it possible to perform photon replay\nto compute the Jacobian when feeding this output .mch file as the seed\nfor the replay run.\n\nUnchecking this option disables saving photon seeds.\n"
-msgstr "DoSaveSeed\n\n選取此選項允許在.mch檔案中儲存檢測到的光子的RNG種子。這使得在將此輸出.mch檔案作為重播執行的種子時能夠執行光子重播以計算雅可比矩陣。\n\n取消選取此選項將停用儲存光子種子。\n"
+msgstr "DoSaveSeed\n\nこのオプションをチェックすると、検出光子のRNGシードを.mchファイルに保存できます。これにより、この出力.mchファイルをリプレイ実行のシードとして供給する際に、ヤコビアンを計算するための光子リプレイを実行できます。\n\nこのオプションのチェックを外すと、光子シードの保存が無効になります。\n"
 
 #: tfmmcx.cksharedfs.caption
 msgid "Shared file system"
-msgstr "共用檔案系統"
+msgstr "共有ファイルシステム"
 
 #: tfmmcx.cksharedfs.hint
 msgid "DoSharedFS \n\nChecking this option suggests that both the client and the server\nshare the same file system, thus, no file copying is needed. In other\nword, the folder structure to read/write on both client and server\nare identical. This is the case when one uses nfs/autofs on Linux/Mac.\n"
-msgstr "DoSharedFS\n\n選取此選項表明用戶端和伺服器共用相同的檔案系統，因此不需要檔案複製。換句話說，用戶端和伺服器上的讀/寫資料夾結構是相同的。在Linux/Mac上使用nfs/autofs時就是這種情況。\n"
+msgstr "DoSharedFS\n\nこのオプションをチェックすると、クライアントとサーバーが同じファイルシステムを共有しているため、ファイルコピーが不要であることを示します。つまり、クライアントとサーバー両方での読み書きのフォルダー構造が同一です。これはLinux/Macでnfs/autofsを使用する場合です。\n"
 
 #: tfmmcx.ckshowprogress.caption
 msgid "Show progress bar"
-msgstr "顯示進度列"
+msgstr "プログレスバー表示"
 
 #: tfmmcx.ckshowprogress.hint
 msgid "ShowProgress \n\n(This option is highly experimental, use with caution, may cause hanging on some GPUs)\n\nCheck this option to let MCX/MMC to print a progress bar during the\nGPU simulation. In some hardware, this may cause unstable behaviors\nsuch as stalling or never return even the simulation is complete. If such\nbehavior is detected, please uncheck this option.\n"
-msgstr "ShowProgress\n\n（此選項高度實驗性，請謹慎使用，在某些GPU上可能導致當機）\n\n選取此選項讓MCX/MMC在GPU模擬期間列印進度列。在某些硬體上，這可能導致不穩定行為，如停滯或即使模擬完成也不返回。如果檢測到此類行為，請取消選取此選項。\n"
+msgstr "ShowProgress\n\n（このオプションは高度に実験的であり、注意して使用してください。一部のGPUでハングを引き起こす可能性があります）\n\nこのオプションをチェックして、MCX/MMCがGPUシミュレーション中にプログレスバーを印刷できるようにします。一部のハードウェアでは、シミュレーションが完了しても停止したり戻らないなどの不安定な動作を引き起こす可能性があります。そのような動作が検出された場合は、このオプションのチェックを外してください。\n"
 
 #: tfmmcx.ckskipvoid.caption
 msgid "Skip void space (-k)"
-msgstr "跳過空隙空間 (-k)"
+msgstr "空隙スペーススキップ (-k)"
 
 #: tfmmcx.ckskipvoid.hint
 msgid "DoSkipVoid \n\nChecking this option starts photon's ellapse time when it first enters\na non-zero voxel.\n\nUnchecking this option starts photon's ellapse time at launch time,\nregardless it is launched in the background (0-valued) voxel or non-zero\nvoxel.\n"
-msgstr "DoSkipVoid\n\n選取此選項在光子首次進入非零體素時開始光子的經過時間。\n\n取消選取此選項在發射時開始光子的經過時間，無論它是在背景（0值）體素還是非零體素中發射。\n"
+msgstr "DoSkipVoid\n\nこのオプションをチェックすると、光子が最初に非ゼロボクセルに入ったときに光子の経過時間が開始されます。\n\nこのオプションのチェックを外すと、背景（0値）ボクセルまたは非ゼロボクセルのどちらで起動されるかに関係なく、起動時に光子の経過時間が開始されます。\n"
 
 #: tfmmcx.ckspecular.caption
 msgid "Do specular reflection (-V)"
-msgstr "執行鏡面反射 (-V)"
+msgstr "鏡面反射実行 (-V)"
 
 #: tfmmcx.ckspecular.hint
 msgid "DoSpecular \n\nChecking this option performs a transmission calculation if a photon \nis launched in the background; this results in change of direction angle\nand loss of energy.\n\nUnchecking this option moves a photon into a non-zero voxel without\nconsidering the specular reflection and change of direction.\n"
-msgstr "DoSpecular\n\n選取此選項在光子在背景中發射時執行透射計算；這會導致方向角的改變和能量損失。\n\n取消選取此選項將光子移動到非零體素中而不考慮鏡面反射和方向改變。\n"
+msgstr "DoSpecular\n\nこのオプションをチェックすると、光子が背景で起動された場合に透過計算を実行します；これにより方向角の変化とエネルギーの損失が発生します。\n\nこのオプションのチェックを外すと、鏡面反射と方向変化を考慮せずに光子を非ゼロボクセルに移動させます。\n"
 
 #: tfmmcx.cksrcfrom0.caption
 msgid "Orign from [0,0,0] (-z)"
-msgstr "原點從[0,0,0]開始 (-z)"
+msgstr "[0,0,0]からの原点 (-z)"
 
 #: tfmmcx.cksrcfrom0.hint
 msgid "DoSrcFrom0 \n\nChecking this item assumes the lower-bottom corner of the voxelated \ndomain is [0,0,0] mm. The definitions of source and detector positions \nare impacted by this definition.\n\nUnchecking this option assumes the  lower-bottom corner of the  \ndomain is [1,1,1] mm.\n"
-msgstr "DoSrcFrom0\n\n選取此項假定體素化域的左下角為[0,0,0] mm。源和檢測器位置的定義受此定義影響。\n\n取消選取此選項假定域的左下角為[1,1,1] mm。\n"
+msgstr "DoSrcFrom0\n\nこの項目をチェックすると、ボクセル化ドメインの左下角が[0,0,0] mmであると仮定します。ソースと検出器位置の定義がこの定義に影響されます。\n\nこのオプションのチェックを外すと、ドメインの左下角が[1,1,1] mmであると仮定します。\n"
 
 #: tfmmcx.edbenchmark.hint
 msgid "Benchmark \n\nThis option asks to run the built-in benchmark.\n"
-msgstr "Benchmark\n\n此選項要求執行內建基準測試。\n"
+msgstr "Benchmark\n\nこのオプションは内蔵ベンチマークの実行を要求します。\n"
 
 #: tfmmcx.edblocksize.hint
 msgid "ThreadBlock \n\nSpecify a small integer, preferably a multiple of 32, to define \nthe block size - for example, 64 means a thread block contains \n64 threads.\n\nThis is only used when the -A (autopilot mode) is not enabled.\n"
-msgstr "ThreadBlock\n\n指定一個小整數，最好是32的倍數，以定義區塊大小 - 例如，64表示一個執行緒區塊包含64個執行緒。\n\n這僅在未啟用-A（自動駕駛模式）時使用。\n"
+msgstr "ThreadBlock\n\nブロックサイズを定義するために小さな整数、できれば32の倍数を指定します - 例えば、64はスレッドブロックが64個のスレッドを含むことを意味します。\n\nこれは-A（オートパイロットモード）が有効でない場合のみ使用されます。\n"
 
 #: tfmmcx.edblocksize.text
 msgid "64"
@@ -435,15 +436,15 @@ msgstr "-2"
 
 #: tfmmcx.edcmdinput.hint
 msgid "User Input\n\nWhen connecting to a remote server via ssh/scp, one may asked to type\n\"yes\" to save the ssh key or other interactive inputs. If this is the case, one\ncan use this field to type user input, and click \"Send\" to pipe user input to \nthe external program.\n"
-msgstr "使用者輸入\n\n通過ssh/scp連接到遠端伺服器時，可能會要求輸入\"yes\"來儲存ssh金鑰或其他互動式輸入。如果是這種情況，可以使用此欄位輸入使用者輸入，並點擊\"傳送\"將使用者輸入傳遞給外部程式。\n"
+msgstr "ユーザー入力\n\nssh/scpを介してリモートサーバーに接続する際、sshキーを保存するために「yes」を入力するか、その他のインタラクティブ入力を求められる場合があります。その場合、このフィールドを使用してユーザー入力を入力し、「送信」をクリックしてユーザー入力を外部プログラムにパイプできます。\n"
 
 #: tfmmcx.edconfigfile.hint
 msgid "InputFile \n\nSpecify the input file in either .inp or .json format.\n"
-msgstr "InputFile\n\n指定.inp或.json格式的輸入檔案。\n"
+msgstr "InputFile\n\n.inpまたは.json形式の入力ファイルを指定します。\n"
 
 #: tfmmcx.eddetectednum.hint
 msgid "DetectedNum \n\nThis sets the maximum number of detected photons to be stored. If\nthe actual detected photon number is higher than this specified number,\nmcx/mmc will generate an warning and print out the actual detected \nphoton count; one can use that output in this field to allow MCX to store\nall photons.\n"
-msgstr "DetectedNum\n\n這設定要儲存的檢測光子的最大數量。如果實際檢測的光子數量高於此指定數量，mcx/mmc將產生警告並印出實際檢測的光子計數；可以在此欄位中使用該輸出以允許MCX儲存所有光子。\n"
+msgstr "DetectedNum\n\nこれは保存される検出光子の最大数を設定します。実際の検出光子数がこの指定数より高い場合、mcx/mmcは警告を生成し、実際の検出光子数を出力します；MCXがすべての光子を保存できるようにするために、このフィールドでその出力を使用できます。\n"
 
 #: tfmmcx.eddetectednum.text
 msgid "10000000"
@@ -456,23 +457,23 @@ msgstr "GateNum"
 
 #: tfmmcx.edgpuid.hint
 msgid "GPUID \n\nUse this list to select the device or devices (CPU or GPU) used to\nrun the simulation. For MCX, if multiple CUDA GPUs are installed, one\ncan select multiple devices to speed up the calculation; for MCXCL\nand MMC, one can select OpenCL devices that include both CPU and\nGPUs. In such case, only devices of the same platform can be selected.\nFor example, an NVIDIA GPU and a CPU can not be selected together.\n"
-msgstr "GPUID\n\n使用此清單選擇用於執行模擬的裝置（CPU或GPU）。對於MCX，如果安裝了多個CUDA GPU，可以選擇多個裝置來加速計算；對於MCXCL和MMC，可以選擇包括CPU和GPU在內的OpenCL裝置。在這種情況下，只能選擇同一平台的裝置。例如，NVIDIA GPU和CPU不能一起選擇。\n"
+msgstr "GPUID\n\nこのリストを使用して、シミュレーション実行に使用するデバイス（CPUまたはGPU）を選択します。MCXでは、複数のCUDA GPUがインストールされている場合、計算を高速化するために複数のデバイスを選択できます；MCXCLとMMCでは、CPUとGPUの両方を含むOpenCLデバイスを選択できます。この場合、同じプラットフォームのデバイスのみを選択できます。例えば、NVIDIA GPUとCPUを一緒に選択することはできません。\n"
 
 #: tfmmcx.edmoreparam.hint
 msgid "MoreParam \n\nOne can use this field to manually specify additional parameters that\nare not supported by this GUI tool. Any parameter set here will overwrite\nthe previous setting.\n"
-msgstr "MoreParam\n\n可以使用此欄位手動指定此GUI工具不支援的附加參數。在此處設定的任何參數將覆寫之前的設定。\n"
+msgstr "MoreParam\n\nこのフィールドを使用して、このGUIツールでサポートされていない追加パラメータを手動で指定できます。ここで設定されたパラメータは以前の設定を上書きします。\n"
 
 #: tfmmcx.edoutputformat.hint
 msgid "OutputFormat \n\nThis specifies the output data file format. The supported formats are\n\n.mc2 - a simple binary format stores the voxel-by-voxel binary data\n    in the column-major order\n.nii - the NIfTI-1 format\n.tx3 - a simple 3D texture binary format.\nascii - text-based data file\n"
-msgstr "OutputFormat\n\n這指定輸出資料檔案格式。支援的格式有：\n\n.mc2 - 一種簡單的二進位格式，以欄主序儲存逐體素二進位資料\n.nii - NIfTI-1格式\n.tx3 - 一種簡單的3D紋理二進位格式\nascii - 基於文字的資料檔案\n"
+msgstr "OutputFormat\n\nこれは出力データファイル形式を指定します。サポートされる形式は：\n\n.mc2 - ボクセル単位のバイナリデータを列主順序で格納するシンプルなバイナリ形式\n.nii - NIfTI-1形式\n.tx3 - シンプルな3Dテクスチャバイナリ形式\nascii - テキストベースのデータファイル\n"
 
 #: tfmmcx.edoutputtype.hint
 msgid "OutputType \n\nThis option specifies the output data type. \n\n* Fluence rate [J/mm^2/s] - the default output\n* Fluence [J/mm^2] - the integration of the fluence \n   rate over each time gate\n* Energy deposition [J] - can be computed by multiplying \n   fluence with absorption Î¼a and voxel volume [mm^3]\n* Absorption Jacobian (mua) [1/mm] - in the replay mode, this\n   outputs the sensitivity matrix for Î¼a;\n* Average scattering event count - in the replay mode, this\n   outputs the number of scattering event per voxel\n* Momentum transfer sensivity (DCS) - in the replay mode, this \n   outputs the momentum transfer contribution/sensitivity from \n   each voxel.\n"
-msgstr "OutputType\n\n此選項指定輸出資料類型。\n\n* 通量率 [J/mm^2/s] - 預設輸出\n* 通量 [J/mm^2] - 每個時間窗內通量率的積分\n* 能量沉積 [J] - 可通過將通量與吸收係數μa和體素體積 [mm^3] 相乘計算得出\n* 吸收雅可比矩陣 (mua) [1/mm] - 在重播模式下，輸出μa的敏感度矩陣\n* 平均散射事件計數 - 在重播模式下，輸出每個體素的散射事件數\n* 動量傳輸敏感度 (DCS) - 在重播模式下，輸出每個體素的動量傳輸貢獻/敏感度\n"
+msgstr "OutputType\n\nこのオプションは出力データタイプを指定します。\n\n* フルエンス率 [J/mm^2/s] - デフォルト出力\n* フルエンス [J/mm^2] - 各タイムゲートでのフルエンス率の積分\n* エネルギー沈着 [J] - フルエンスに吸収μaとボクセル体積 [mm^3] を掛けて計算可能\n* 吸収ヤコビアン (mua) [1/mm] - リプレイモードで、μaの感度行列を出力\n* 平均散乱イベント数 - リプレイモードで、ボクセル当たりの散乱イベント数を出力\n* 運動量転送感度 (DCS) - リプレイモードで、各ボクセルからの運動量転送寄与/感度を出力\n"
 
 #: tfmmcx.edphoton.hint
 msgid "PhotonNum \n\nThis defines the total simulated photons.\n\nCan be an integer or number in scientific form. For example\n100000 and 1e5 are both acceptable.\n\nPlease be noted that we highly suggest one to start with a\nsmall photon number to avoid extended run time.\n"
-msgstr "PhotonNum\n\n這定義了總模擬光子數。\n\n可以是整數或科學記號形式的數字。例如100000和1e5都是可接受的。\n\n請注意，我們強烈建議從較小的光子數開始以避免延長執行時間。\n"
+msgstr "PhotonNum\n\nこれは総シミュレーション光子数を定義します。\n\n整数または科学記法の数値が可能です。例えば、100000と1e5の両方が受け入れられます。\n\n実行時間の延長を避けるため、小さな光子数から始めることを強くお勧めします。\n"
 
 #: tfmmcx.edphoton.text
 msgid "1e6"
@@ -480,15 +481,15 @@ msgstr "1e6"
 
 #: tfmmcx.edphoton.texthint
 msgid "Integer"
-msgstr "整數"
+msgstr "整数"
 
 #: tfmmcx.edremote.hint
 msgid "RemoteCmd \n\nPlease choose the remote connection command using the dropdown list, or\ntype in this field manually. For windows, it is recommended to choose the \nplink.exe command; for Linux, it is recommended to use the ssh command.\n\nPlease replace the user@server by the actual username and the server IP\nor domain name.\n\nYou are highly recommended to set up key-based ssh access to avoid typing\npassword. Tutorials can be found at http://www.linuxproblem.org/art_9.html\n"
-msgstr "RemoteCmd\n\n請使用下拉清單選擇遠端連接指令，或在此欄位中手動輸入。對於Windows，建議選擇plink.exe指令；對於Linux，建議使用ssh指令。\n\n請將user@server替換為實際的使用者名稱和伺服器IP或網域名稱。\n\n強烈建議設定基於金鑰的ssh存取以避免輸入密碼。教學課程可在http://www.linuxproblem.org/art_9.html找到。\n"
+msgstr "RemoteCmd\n\nドロップダウンリストを使用してリモート接続コマンドを選択するか、このフィールドに手動で入力してください。Windowsの場合、plink.exeコマンドを選択することが推奨されます；Linuxの場合、sshコマンドを使用することが推奨されます。\n\nuser@serverを実際のユーザー名とサーバーIPまたはドメイン名に置き換えてください。\n\nパスワード入力を避けるために、キーベースのsshアクセスを設定することを強くお勧めします。チュートリアルは http://www.linuxproblem.org/art_9.html で見つけることができます。\n"
 
 #: tfmmcx.edremote.text
 msgid "Built-in ssh"
-msgstr "內建ssh"
+msgstr "内蔵ssh"
 
 #: tfmmcx.edreplaydet.hint
 msgctxt "tfmmcx.edreplaydet.hint"
@@ -497,11 +498,11 @@ msgstr "ReplayDet"
 
 #: tfmmcx.edrespin.hint
 msgid "RespinNum \n\nSetting this to a positive number will repeat the simulation by the specified\nrepeition count starting from different random seeds.\n\nA negative integer asks MCX to divide the total photon number by the \nabsolute value of this input and run each subpart at a time. This can \nreduce the per-call run time, but may result in extensive overhead of\nrunning repeated simulations.\n"
-msgstr "RespinNum\n\n將此設定為正數將從不同的隨機種子開始重複指定重複次數的模擬。\n\n負整數要求MCX將總光子數除以此輸入的絕對值並一次執行每個子部分。這可以減少每次呼叫的執行時間，但可能導致執行重複模擬的大量負荷。\n"
+msgstr "RespinNum\n\nこれを正の数に設定すると、異なるランダムシードから開始して指定された繰り返し回数だけシミュレーションを繰り返します。\n\n負の整数は、MCXに総光子数をこの入力の絶対値で除算し、各サブパートを一度に実行するよう要求します。これによりコール当たりの実行時間を短縮できますが、繰り返しシミュレーション実行の広範囲なオーバーヘッドが発生する可能性があります。\n"
 
 #: tfmmcx.edseed.hint
 msgid "Seed \n\nIf this field is a large integer number, this specifies the RNG seed; \n\nif this is a file name ending with .mch, it loads an .mch file generated \nfrom previous simulation and replays the detected photons.\n"
-msgstr "Seed\n\n如果此欄位是一個大整數，這指定RNG種子；\n\n如果這是以.mch結尾的檔案名稱，它載入從先前模擬產生的.mch檔案並重播檢測到的光子。\n"
+msgstr "Seed\n\nこのフィールドが大きな整数の場合、これはRNGシードを指定します；\n\nこれが.mchで終わるファイル名の場合、以前のシミュレーションから生成された.mchファイルを読み込み、検出された光子をリプレイします。\n"
 
 #: tfmmcx.edseed.text
 msgid "1648335518"
@@ -509,15 +510,15 @@ msgstr "1648335518"
 
 #: tfmmcx.edseed.texthint
 msgid "A large integer or .mch file name"
-msgstr "大整數或.mch檔案名稱"
+msgstr "大きな整数または.mchファイル名"
 
 #: tfmmcx.edsession.hint
 msgid "Session \n\nThis string will be used in all output files as part of the file names.\n"
-msgstr "Session\n\n此字串將用作所有輸出檔案檔案名稱的一部分。\n"
+msgstr "Session\n\nこの文字列はすべての出力ファイルでファイル名の一部として使用されます。\n"
 
 #: tfmmcx.edthread.hint
 msgid "ThreadNum \n\nSpecify a large integer multiple of 32 (the warp size) to manually \ndefine the thread numbers.\n\nThis is only used when the -A (autopilot mode) is not enabled.\n"
-msgstr "ThreadNum\n\n指定32（warp大小）的大整數倍數以手動定義執行緒數。\n\n這僅在未啟用-A（自動駕駛模式）時使用。\n"
+msgstr "ThreadNum\n\nスレッド数を手動で定義するために32（ワープサイズ）の大きな整数倍を指定します。\n\nこれは-A（オートパイロットモード）が有効でない場合のみ使用されます。\n"
 
 #: tfmmcx.edthread.text
 msgid "16384"
@@ -525,7 +526,7 @@ msgstr "16384"
 
 #: tfmmcx.edunitinmm.hint
 msgid "UnitInMM \n\nThis defines the voxel size. By default, 1x1x1 mm^3 voxels\nare used. Has to be a positive floating point number. For example,\n0.1 defines a 0.1x0.1x0.1 mm^3 voxel.\n\nCurrently, only isotropic voxels are supported.\n"
-msgstr "UnitInMM\n\n這定義體素大小。預設使用1x1x1 mm^3體素。必須是正浮點數。例如，0.1定義一個0.1x0.1x0.1 mm^3的體素。\n\n目前只支援各向同性體素。\n"
+msgstr "UnitInMM\n\nこれはボクセルサイズを定義します。デフォルトでは1x1x1 mm^3ボクセルが使用されます。正の浮動小数点数である必要があります。例えば、0.1は0.1x0.1x0.1 mm^3ボクセルを定義します。\n\n現在、等方性ボクセルのみサポートされています。\n"
 
 #: tfmmcx.edunitinmm.text
 msgid "1"
@@ -533,7 +534,7 @@ msgstr "1"
 
 #: tfmmcx.edworkload.hint
 msgid "Workload \n\nOne can specify a series of comma-separated numbers to specify the\nrelative portion of workload between multiple selected devices. \n\nFor example: 10,10 asks MCX to run 50% of the total photons using the\n1st device and 50% on the 2nd device. On the other hand, 10,100 splits\nthe total photon 1:10 between the 1st and 2nd devices.\n"
-msgstr "Workload\n\n可以指定一系列逗號分隔的數字來指定多個選定裝置之間工作負載的相對比例。\n\n例如：10,10要求MCX使用第1個裝置執行50%的總光子，在第2個裝置上執行50%。另一方面，10,100將總光子在第1和第2裝置之間按1:10分割。\n"
+msgstr "Workload\n\n複数の選択されたデバイス間のワークロードの相対的な部分を指定するために、カンマ区切りの数値シリーズを指定できます。\n\n例：10,10はMCXに1番目のデバイスを使用して総光子の50%、2番目のデバイスで50%を実行するよう要求します。一方、10,100は1番目と2番目のデバイス間で総光子を1:10に分割します。\n"
 
 #: tfmmcx.edworkload.text
 msgid "100"
@@ -541,19 +542,19 @@ msgstr "100"
 
 #: tfmmcx.edworkload.texthint
 msgid "Comma separated numbers"
-msgstr "逗號分隔的數字"
+msgstr "カンマ区切りの数値"
 
 #: tfmmcx.gradvsettings.caption
 msgid "Advanced Settings"
-msgstr "進階設定"
+msgstr "詳細設定"
 
 #: tfmmcx.grarray.hint
 msgid "ArrayOrder \n\nSelect MATLAB array order indicates that the input volume has a\ncolumn-major order - i.e. the left-most axis is the fastest index of\nthe array, like in MATLAB or FORTRAN.\n\nSelect C array order indicates that the input volume uses the \nrow-major order - i.e. the right-most index is the fastest index\nof the array, like in C and Python.\n"
-msgstr "ArrayOrder\n\n選擇MATLAB陣列順序表示輸入體積具有欄主序 - 即最左軸是陣列的最快索引，如MATLAB或FORTRAN。\n\n選擇C陣列順序表示輸入體積使用列主序 - 即最右索引是陣列的最快索引，如C和Python。\n"
+msgstr "ArrayOrder\n\nMATLAB配列順序を選択すると、入力ボリュームが列主順序を持つことを示します - つまり、最左軸がMATLABやFORTRANのように配列の最速インデックスです。\n\nC配列順序を選択すると、入力ボリュームがCやPythonのように行主順序を使用することを示します - つまり、最右インデックスが配列の最速インデックスです。\n"
 
 #: tfmmcx.gratomic.hint
 msgid "UseAtomic \n\nUsing atomic operations avoids conflicts between multiple threads when\nwriting to the same voxel, thus is highly recommended.\n\nIn the very old CUDA hardware, using atomic operations has a high \noverhead, but such overhead was signficiantly less since the Fermi GPU.\n"
-msgstr "UseAtomic\n\n使用原子操作避免多個執行緒寫入相同體素時的衝突，因此強烈推薦。\n\n在非常舊的CUDA硬體中，使用原子操作有很高的負荷，但從Fermi GPU開始這種負荷顯著減少。\n"
+msgstr "UseAtomic\n\nアトミック操作を使用すると、同じボクセルに書き込む際の複数スレッド間の競合を回避できるため、強く推奨されます。\n\n非常に古いCUDAハードウェアでは、アトミック操作の使用は高いオーバーヘッドがありますが、Fermi GPU以降はそのようなオーバーヘッドは大幅に減少しました。\n"
 
 #: tfmmcx.grbasic.caption
 msgid "Basic Settings"
@@ -561,11 +562,11 @@ msgstr "基本設定"
 
 #: tfmmcx.grbc.caption
 msgid "Boundary cond."
-msgstr "邊界條件"
+msgstr "境界条件"
 
 #: tfmmcx.grdet.caption
 msgid "Save detected photon"
-msgstr "儲存檢測到的光子"
+msgstr "検出光子保存"
 
 #: tfmmcx.grgpu.caption
 msgid "GPU Settings"
@@ -574,24 +575,24 @@ msgstr "GPU設定"
 #: tfmmcx.grprogram.caption
 msgctxt "tfmmcx.grprogram.caption"
 msgid "Run Monte Carlo simulation with"
-msgstr "執行蒙地卡羅模擬使用"
+msgstr "モンテカルロシミュレーション実行ツール"
 
 #: tfmmcx.grprogram.hint
 msgid "MCProgram\n\nIn this panel, you choose which simulator to use. \nCurrently we support 3 simulators, \n\n* MCX: NVIDIA GPU-based simulation using voxelated domain\n* MCX-CL: OpenCL based CPU/GPU simulation using voxelated domain\n* MMC: OpenCL based CPU/GPU simulation using tetrahedral meshes\n\nThe built-in domain designer only supports creating voxelated \ndomains and creating meshes will be supported in the future.\n"
-msgstr "MCProgram\n\n在此面板中，選擇要使用的模擬器。\n目前我們支援3種模擬器：\n\n* MCX：使用體素化域的NVIDIA GPU模擬\n* MCX-CL：使用體素化域的基於OpenCL的CPU/GPU模擬\n* MMC：使用四面體網格的基於OpenCL的CPU/GPU模擬\n\n內建域設計器只支援建立體素化域，將來會支援建立網格。\n"
+msgstr "MCProgram\n\nこのパネルで使用するシミュレーターを選択します。\n現在3つのシミュレーターをサポートしています：\n\n* MCX: ボクセル化ドメインを使用するNVIDIA GPUベースのシミュレーション\n* MCX-CL: ボクセル化ドメインを使用するOpenCLベースのCPU/GPUシミュレーション\n* MMC: 四面体メッシュを使用するOpenCLベースのCPU/GPUシミュレーション\n\n内蔵ドメインデザイナーはボクセル化ドメインの作成のみをサポートし、メッシュ作成は将来サポートされる予定です。\n"
 
 #: tfmmcx.grswitches.caption
 msgid "Switches"
-msgstr "開關"
+msgstr "スイッチ"
 
 #: tfmmcx.image1.hint
 msgctxt "tfmmcx.image1.hint"
 msgid "About MCX"
-msgstr "關於MCX"
+msgstr "MCXについて"
 
 #: tfmmcx.label1.caption
 msgid "Thread number (-t)"
-msgstr "執行緒數 (-t)"
+msgstr "スレッド数 (-t)"
 
 #: tfmmcx.label1.hint
 msgid "-t (--thread)"
@@ -600,7 +601,7 @@ msgstr "-t (--thread)"
 #: tfmmcx.label10.caption
 msgctxt "tfmmcx.label10.caption"
 msgid "or"
-msgstr "或"
+msgstr "または"
 
 #: tfmmcx.label10.hint
 msgctxt "tfmmcx.label10.hint"
@@ -609,7 +610,7 @@ msgstr "-a (--array)"
 
 #: tfmmcx.label11.caption
 msgid "Output format"
-msgstr "輸出格式"
+msgstr "出力形式"
 
 #: tfmmcx.label11.hint
 msgctxt "tfmmcx.label11.hint"
@@ -618,7 +619,7 @@ msgstr "-u (--unitinmm)"
 
 #: tfmmcx.label12.caption
 msgid "Run MCX on"
-msgstr "在以下裝置執行MCX"
+msgstr "MCX実行デバイス"
 
 #: tfmmcx.label12.hint
 msgid "-G (--gpu)"
@@ -626,7 +627,7 @@ msgstr "-G (--gpu)"
 
 #: tfmmcx.label13.caption
 msgid "Seed (-E)"
-msgstr "種子 (-E)"
+msgstr "シード (-E)"
 
 #: tfmmcx.label13.hint
 msgid "-E (--seed)"
@@ -634,7 +635,7 @@ msgstr "-E (--seed)"
 
 #: tfmmcx.label14.caption
 msgid "Output type (-O)"
-msgstr "輸出類型 (-O)"
+msgstr "出力タイプ (-O)"
 
 #: tfmmcx.label14.hint
 msgid "-O (--outputtype)"
@@ -642,7 +643,7 @@ msgstr "-O (--outputtype)"
 
 #: tfmmcx.label15.caption
 msgid "Workload split"
-msgstr "工作負載分配"
+msgstr "ワークロード分割"
 
 #: tfmmcx.label15.hint
 msgid "-W (--workload)"
@@ -650,7 +651,7 @@ msgstr "-W (--workload)"
 
 #: tfmmcx.label16.caption
 msgid "Debug flags"
-msgstr "除錯旗標"
+msgstr "デバッグフラグ"
 
 #: tfmmcx.label16.hint
 msgid "-D (--debuglevel)"
@@ -658,7 +659,7 @@ msgstr "-D (--debuglevel)"
 
 #: tfmmcx.label17.caption
 msgid "Replay detector ID (-Y)"
-msgstr "重播檢測器ID (-Y)"
+msgstr "リプレイ検出器ID (-Y)"
 
 #: tfmmcx.label17.hint
 msgctxt "tfmmcx.label17.hint"
@@ -667,7 +668,7 @@ msgstr "-Y (--replaydet)"
 
 #: tfmmcx.label18.caption
 msgid "Additional parameters"
-msgstr "附加參數"
+msgstr "追加パラメータ"
 
 #: tfmmcx.label18.hint
 msgctxt "tfmmcx.label18.hint"
@@ -677,7 +678,7 @@ msgstr "-Y (--replaydet)"
 #: tfmmcx.label19.caption
 msgctxt "tfmmcx.label19.caption"
 msgid "or"
-msgstr "或"
+msgstr "または"
 
 #: tfmmcx.label19.hint
 msgctxt "tfmmcx.label19.hint"
@@ -686,7 +687,7 @@ msgstr "-a (--array)"
 
 #: tfmmcx.label2.caption
 msgid "Thread block size (-T)"
-msgstr "執行緒區塊大小 (-T)"
+msgstr "スレッドブロックサイズ (-T)"
 
 #: tfmmcx.label2.hint
 msgid "-T (--blocksize)"
@@ -694,7 +695,7 @@ msgstr "-T (--blocksize)"
 
 #: tfmmcx.label3.caption
 msgid "Total photon number (-n)"
-msgstr "總光子數 (-n)"
+msgstr "総光子数 (-n)"
 
 #: tfmmcx.label3.hint
 msgid "-n (--photon)"
@@ -702,7 +703,7 @@ msgstr "-n (--photon)"
 
 #: tfmmcx.label4.caption
 msgid "Session ID (-s)"
-msgstr "工作階段ID (-s)"
+msgstr "セッションID (-s)"
 
 #: tfmmcx.label4.hint
 msgctxt "tfmmcx.label4.hint"
@@ -711,11 +712,11 @@ msgstr "-s (--sessionid)"
 
 #: tfmmcx.label5.caption
 msgid "User Input>"
-msgstr "使用者輸入>"
+msgstr "ユーザー入力>"
 
 #: tfmmcx.label6.caption
 msgid "Array order (-a)"
-msgstr "陣列順序 (-a)"
+msgstr "配列順序 (-a)"
 
 #: tfmmcx.label6.hint
 msgctxt "tfmmcx.label6.hint"
@@ -724,7 +725,7 @@ msgstr "-a (--array)"
 
 #: tfmmcx.label7.caption
 msgid "Gate group size (-g)"
-msgstr "閘群組大小 (-g)"
+msgstr "ゲートグループサイズ (-g)"
 
 #: tfmmcx.label7.hint
 msgid "-g (--gategroup)"
@@ -732,7 +733,7 @@ msgstr "-g (--gategroup)"
 
 #: tfmmcx.label8.caption
 msgid "Voxel size in mm (-u)"
-msgstr "體素大小（毫米）(-u)"
+msgstr "ボクセルサイズ(mm) (-u)"
 
 #: tfmmcx.label8.hint
 msgctxt "tfmmcx.label8.hint"
@@ -741,7 +742,7 @@ msgstr "-u (--unitinmm)"
 
 #: tfmmcx.label9.caption
 msgid "Max detected photons(-H)"
-msgstr "最大檢測光子數(-H)"
+msgstr "最大検出光子数 (-H)"
 
 #: tfmmcx.label9.hint
 msgid "-H (--maxdetphoton)"
@@ -749,7 +750,7 @@ msgstr "-H (--maxdetphoton)"
 
 #: tfmmcx.lbatomic.caption
 msgid "Atomic operations"
-msgstr "原子操作"
+msgstr "アトミック操作"
 
 #: tfmmcx.lbatomic.hint
 msgid "(--atomic)"
@@ -757,7 +758,7 @@ msgstr "(--atomic)"
 
 #: tfmmcx.lbbubble.caption
 msgid "Cache radius from src (-R)"
-msgstr "從源的快取半徑 (-R)"
+msgstr "ソースからのキャッシュ半径 (-R)"
 
 #: tfmmcx.lbbubble.hint
 msgid "-r (--skipradius)"
@@ -765,7 +766,7 @@ msgstr "-r (--skipradius)"
 
 #: tfmmcx.lbrespin.caption
 msgid "Repetition (-r)"
-msgstr "重複 (-r)"
+msgstr "繰り返し (-r)"
 
 #: tfmmcx.lbrespin.hint
 msgid "-r (--repeat)"
@@ -774,7 +775,7 @@ msgstr "-r (--repeat)"
 #: tfmmcx.lvjobs.columns[0].caption
 msgctxt "tfmmcx.lvjobs.columns[0].caption"
 msgid "Session"
-msgstr "工作階段"
+msgstr "セッション"
 
 #: tfmmcx.lvjobs.columns[10].caption
 msgid "DoSave"
@@ -959,19 +960,19 @@ msgstr "DoReflect"
 
 #: tfmmcx.mcxdoabout.caption
 msgid "About"
-msgstr "關於"
+msgstr "情報"
 
 #: tfmmcx.mcxdoabout.hint
 msgid "About the author"
-msgstr "關於作者"
+msgstr "開発者について"
 
 #: tfmmcx.mcxdoadditem.caption
 msgid "New"
-msgstr "新增"
+msgstr "新規"
 
 #: tfmmcx.mcxdoadditem.hint
 msgid "Add a new task"
-msgstr "新增新任務"
+msgstr "新しいタスクを追加"
 
 #: tfmmcx.mcxdoconfig.caption
 msgid "Setting"
@@ -979,32 +980,32 @@ msgstr "設定"
 
 #: tfmmcx.mcxdoconfig.hint
 msgid "Modify default paths"
-msgstr "修改預設路徑"
+msgstr "デフォルトパスを変更"
 
 #: tfmmcx.mcxdocopy.caption
 msgid "Copy session to clipboard"
-msgstr "複製工作階段到剪貼簿"
+msgstr "セッションをクリップボードにコピー"
 
 #: tfmmcx.mcxdodefault.caption
 msgid "Default"
-msgstr "預設"
+msgstr "デフォルト"
 
 #: tfmmcx.mcxdodefault.hint
 msgid "Set default values"
-msgstr "設定預設值"
+msgstr "デフォルト値を設定"
 
 #: tfmmcx.mcxdodeleteitem.caption
 msgctxt "tfmmcx.mcxdodeleteitem.caption"
 msgid "Delete"
-msgstr "刪除"
+msgstr "削除"
 
 #: tfmmcx.mcxdodeleteitem.hint
 msgid "Delete selected task"
-msgstr "刪除選定任務"
+msgstr "選択されたタスクを削除"
 
 #: tfmmcx.mcxdodownloadmask.caption
 msgid "Download volume labels (*_vol.nii)"
-msgstr "下載體積標籤 (*_vol.nii)"
+msgstr "ボリュームラベルダウンロード (*_vol.nii)"
 
 #: tfmmcx.mcxdodownloadmask.hint
 msgctxt "tfmmcx.mcxdodownloadmask.hint"
@@ -1013,11 +1014,11 @@ msgstr "_vol.nii"
 
 #: tfmmcx.mcxdodownloadmc2.caption
 msgid "Download fluence"
-msgstr "下載通量"
+msgstr "フルエンスダウンロード"
 
 #: tfmmcx.mcxdodownloadmch.caption
 msgid "Download detected photon data (*.mch)"
-msgstr "下載檢測光子資料 (*.mch)"
+msgstr "検出光子データダウンロード (*.mch)"
 
 #: tfmmcx.mcxdodownloadmch.hint
 msgid ".mch"
@@ -1026,45 +1027,45 @@ msgstr ".mch"
 #: tfmmcx.mcxdoexit.caption
 msgctxt "tfmmcx.mcxdoexit.caption"
 msgid "Exit"
-msgstr "結束"
+msgstr "終了"
 
 #: tfmmcx.mcxdoexit.hint
 msgid "Exit MCX Studio"
-msgstr "結束光子工作室"
+msgstr "MCXスタジオを終了"
 
 #: tfmmcx.mcxdohelp.caption
 msgctxt "tfmmcx.mcxdohelp.caption"
 msgid "Help"
-msgstr "說明"
+msgstr "ヘルプ"
 
 #: tfmmcx.mcxdohelp.hint
 msgctxt "tfmmcx.mcxdohelp.hint"
 msgid "Browse help information"
-msgstr "瀏覽說明資訊"
+msgstr "ヘルプ情報を参照"
 
 #: tfmmcx.mcxdohelpoptions.caption
 msgid "Options"
-msgstr "選項"
+msgstr "オプション"
 
 #: tfmmcx.mcxdohelpoptions.hint
 msgid "List command line options"
-msgstr "列出命令列選項"
+msgstr "コマンドラインオプション一覧"
 
 #: tfmmcx.mcxdoopen.caption
 msgid "Open"
-msgstr "開啟"
+msgstr "開く"
 
 #: tfmmcx.mcxdoopen.hint
 msgid "Open a project or volume file"
-msgstr "開啟專案或體積檔案"
+msgstr "プロジェクトまたはボリュームファイルを開く"
 
 #: tfmmcx.mcxdopaste.caption
 msgid "Paste session from clipboard"
-msgstr "從剪貼簿貼上工作階段"
+msgstr "クリップボードからセッションを貼り付け"
 
 #: tfmmcx.mcxdoplotjnifti.caption
 msgid "Plot fluence (jnii)"
-msgstr "繪製通量 (jnii)"
+msgstr "フルエンスプロット (jnii)"
 
 #: tfmmcx.mcxdoplotjnifti.hint
 msgid ".jnii"
@@ -1072,7 +1073,7 @@ msgstr ".jnii"
 
 #: tfmmcx.mcxdoplotmc2.caption
 msgid "Plot fluence (mc2)"
-msgstr "繪製通量 (mc2)"
+msgstr "フルエンスプロット (mc2)"
 
 #: tfmmcx.mcxdoplotmc2.hint
 msgid ".mc2"
@@ -1080,11 +1081,11 @@ msgstr ".mc2"
 
 #: tfmmcx.mcxdoplotmesh.caption
 msgid "Plot mesh"
-msgstr "繪製網格"
+msgstr "メッシュプロット"
 
 #: tfmmcx.mcxdoplotnifty.caption
 msgid "Plot fluence (nii)"
-msgstr "繪製通量 (nii)"
+msgstr "フルエンスプロット (nii)"
 
 #: tfmmcx.mcxdoplotnifty.hint
 msgid ".nii"
@@ -1092,7 +1093,7 @@ msgstr ".nii"
 
 #: tfmmcx.mcxdoplotvol.caption
 msgid "Plot Volume"
-msgstr "繪製體積"
+msgstr "ボリュームプロット"
 
 #: tfmmcx.mcxdoplotvol.hint
 msgctxt "tfmmcx.mcxdoplotvol.hint"
@@ -1105,32 +1106,32 @@ msgstr "GPU"
 
 #: tfmmcx.mcxdoquery.hint
 msgid "List GPU Info"
-msgstr "列出GPU資訊"
+msgstr "GPU情報一覧"
 
 #: tfmmcx.mcxdorun.caption
 msgctxt "tfmmcx.mcxdorun.caption"
 msgid "Run"
-msgstr "執行"
+msgstr "実行"
 
 #: tfmmcx.mcxdorun.hint
 msgid "Run selected task"
-msgstr "執行選定任務"
+msgstr "選択されたタスクを実行"
 
 #: tfmmcx.mcxdorunall.caption
 msgid "Run All"
-msgstr "全部執行"
+msgstr "すべて実行"
 
 #: tfmmcx.mcxdorunall.hint
 msgid "Run all tasks"
-msgstr "執行所有任務"
+msgstr "すべてのタスクを実行"
 
 #: tfmmcx.mcxdosave.caption
 msgid "Save"
-msgstr "儲存"
+msgstr "保存"
 
 #: tfmmcx.mcxdosave.hint
 msgid "Save tasks to a project file"
-msgstr "將任務儲存到專案檔案"
+msgstr "タスクをプロジェクトファイルに保存"
 
 #: tfmmcx.mcxdostop.caption
 msgid "Stop"
@@ -1138,27 +1139,27 @@ msgstr "停止"
 
 #: tfmmcx.mcxdostop.hint
 msgid "Terminate current task"
-msgstr "終止目前任務"
+msgstr "現在のタスクを終了"
 
 #: tfmmcx.mcxdotoggleview.caption
 msgid "Toggle View"
-msgstr "切換檢視"
+msgstr "ビュー切り替え"
 
 #: tfmmcx.mcxdoverify.caption
 msgid "Verify"
-msgstr "驗證"
+msgstr "検証"
 
 #: tfmmcx.mcxdoverify.hint
 msgid "Verify parameters"
-msgstr "驗證參數"
+msgstr "パラメータを検証"
 
 #: tfmmcx.mcxdoweb.caption
 msgid "Web"
-msgstr "網頁"
+msgstr "ウェブ"
 
 #: tfmmcx.mcxdoweb.hint
 msgid "MCX homepage"
-msgstr "MCX首頁"
+msgstr "MCXホームページ"
 
 #: tfmmcx.mcxsetcurrent.caption
 msgid "mcxSetCurrent"
@@ -1166,7 +1167,7 @@ msgstr "mcxSetCurrent"
 
 #: tfmmcx.menuitem1.caption
 msgid "File"
-msgstr "檔案"
+msgstr "ファイル"
 
 #: tfmmcx.menuitem11.caption
 msgid "Settings"
@@ -1175,35 +1176,35 @@ msgstr "設定"
 #: tfmmcx.menuitem2.caption
 msgctxt "tfmmcx.menuitem2.caption"
 msgid "Run"
-msgstr "執行"
+msgstr "実行"
 
 #: tfmmcx.menuitem22.caption
 msgid "Open output folder"
-msgstr "開啟輸出資料夾"
+msgstr "出力フォルダーを開く"
 
 #: tfmmcx.menuitem24.caption
 msgid "Plot volume (_vol.nii)"
-msgstr "繪製體積 (_vol.nii)"
+msgstr "ボリュームプロット (_vol.nii)"
 
 #: tfmmcx.menuitem28.caption
 msgid "Download fluence (mc2/nii/hdr/img)"
-msgstr "下載通量 (mc2/nii/hdr/img)"
+msgstr "フルエンスダウンロード (mc2/nii/hdr/img)"
 
 #: tfmmcx.menuitem3.caption
 msgid "Tools"
-msgstr "工具"
+msgstr "ツール"
 
 #: tfmmcx.menuitem31.caption
 msgid "Download detected photon data (mch)"
-msgstr "下載檢測光子資料 (mch)"
+msgstr "検出光子データダウンロード (mch)"
 
 #: tfmmcx.menuitem32.caption
 msgid "Download volume mask (_vol.nii)"
-msgstr "下載體積遮罩 (_vol.nii)"
+msgstr "ボリュームマスクダウンロード (_vol.nii)"
 
 #: tfmmcx.menuitem35.caption
 msgid "MCX Documentation"
-msgstr "MCX文件"
+msgstr "MCXドキュメント"
 
 #: tfmmcx.menuitem35.hint
 msgid "https://mcx.space/wiki/?Learn#mcx"
@@ -1211,7 +1212,7 @@ msgstr "https://mcx.space/wiki/?Learn#mcx"
 
 #: tfmmcx.menuitem36.caption
 msgid "MMC Documentation"
-msgstr "MMC文件"
+msgstr "MMCドキュメント"
 
 #: tfmmcx.menuitem36.hint
 msgid "https://mcx.space/wiki/?Learn#mmc"
@@ -1219,7 +1220,7 @@ msgstr "https://mcx.space/wiki/?Learn#mmc"
 
 #: tfmmcx.menuitem37.caption
 msgid "MCX-CL Documentation"
-msgstr "MCX-CL文件"
+msgstr "MCX-CLドキュメント"
 
 #: tfmmcx.menuitem37.hint
 msgid "https://mcx.space/wiki/?Learn#mcxcl"
@@ -1227,7 +1228,7 @@ msgstr "https://mcx.space/wiki/?Learn#mcxcl"
 
 #: tfmmcx.menuitem39.caption
 msgid "MCX/MCXCL User Forum (mcx-users)"
-msgstr "MCX/MCXCL使用者論壇 (mcx-users)"
+msgstr "MCX/MCXCLユーザーフォーラム (mcx-users)"
 
 #: tfmmcx.menuitem39.hint
 msgid "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
@@ -1236,11 +1237,11 @@ msgstr "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
 #: tfmmcx.menuitem4.caption
 msgctxt "tfmmcx.menuitem4.caption"
 msgid "Help"
-msgstr "說明"
+msgstr "ヘルプ"
 
 #: tfmmcx.menuitem40.caption
 msgid "MMC User Forum (mmc-users)"
-msgstr "MMC使用者論壇 (mmc-users)"
+msgstr "MMCユーザーフォーラム (mmc-users)"
 
 #: tfmmcx.menuitem40.hint
 msgid "https://groups.google.com/forum/?hl=en#!forum/mmc-users"
@@ -1248,7 +1249,7 @@ msgstr "https://groups.google.com/forum/?hl=en#!forum/mmc-users"
 
 #: tfmmcx.menuitem41.caption
 msgid "Iso2Mesh User Forum (iso2mesh-users)"
-msgstr "Iso2Mesh使用者論壇 (iso2mesh-users)"
+msgstr "Iso2Meshユーザーフォーラム (iso2mesh-users)"
 
 #: tfmmcx.menuitem41.hint
 msgid "https://groups.google.com/forum/?hl=en#!forum/iso2mesh-users"
@@ -1256,7 +1257,7 @@ msgstr "https://groups.google.com/forum/?hl=en#!forum/iso2mesh-users"
 
 #: tfmmcx.menuitem43.caption
 msgid "Download Nightly-Build"
-msgstr "下載夜間建置"
+msgstr "ナイトリービルドダウンロード"
 
 #: tfmmcx.menuitem43.hint
 msgid "https://mcx.space/nightly/"
@@ -1288,7 +1289,7 @@ msgstr "https://github.com/fangq/mcxcl"
 
 #: tfmmcx.menuitem49.caption
 msgid "Report MCX Issues"
-msgstr "回報MCX問題"
+msgstr "MCX問題報告"
 
 #: tfmmcx.menuitem49.hint
 msgid "https://github.com/fangq/mcx/issues"
@@ -1296,7 +1297,7 @@ msgstr "https://github.com/fangq/mcx/issues"
 
 #: tfmmcx.menuitem50.caption
 msgid "Report MMC Issues"
-msgstr "回報MMC問題"
+msgstr "MMC問題報告"
 
 #: tfmmcx.menuitem50.hint
 msgid "https://github.com/fangq/mmc/issues"
@@ -1304,7 +1305,7 @@ msgstr "https://github.com/fangq/mmc/issues"
 
 #: tfmmcx.menuitem51.caption
 msgid "Report MCX-CL Issues"
-msgstr "回報MCX-CL問題"
+msgstr "MCX-CL問題報告"
 
 #: tfmmcx.menuitem51.hint
 msgid "https://github.com/fangq/mcxcl/issues"
@@ -1312,7 +1313,7 @@ msgstr "https://github.com/fangq/mcxcl/issues"
 
 #: tfmmcx.menuitem53.caption
 msgid "MCX GPU Speed Benchmark Database"
-msgstr "MCX GPU速度基準資料庫"
+msgstr "MCX GPU速度ベンチマークデータベース"
 
 #: tfmmcx.menuitem53.hint
 msgid "https://mcx.space/gpubench/"
@@ -1320,11 +1321,11 @@ msgstr "https://mcx.space/gpubench/"
 
 #: tfmmcx.menuitem55.caption
 msgid "Refereces"
-msgstr "參考資料"
+msgstr "参考文献"
 
 #: tfmmcx.menuitem56.caption
 msgid "[Fang2009] Original MCX Paper"
-msgstr "[Fang2009] 原始MCX論文"
+msgstr "[Fang2009] 原典MCX論文"
 
 #: tfmmcx.menuitem56.hint
 msgid "http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178"
@@ -1332,7 +1333,7 @@ msgstr "http://www.osapublishing.org/oe/abstract.cfm?uri=oe-17-22-20178"
 
 #: tfmmcx.menuitem57.caption
 msgid "[Fang2010] Original MMC Paper"
-msgstr "[Fang2010] 原始MMC論文"
+msgstr "[Fang2010] 原典MMC論文"
 
 #: tfmmcx.menuitem57.hint
 msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165"
@@ -1340,7 +1341,7 @@ msgstr "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-1-1-165"
 
 #: tfmmcx.menuitem58.caption
 msgid "[Yu2018] Original MCX-CL Paper"
-msgstr "[Yu2018] 原始MCX-CL論文"
+msgstr "[Yu2018] 原典MCX-CL論文"
 
 #: tfmmcx.menuitem58.hint
 msgid "https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-01/010504/Scalable-and-massively-parallel-Monte-Carlo-photon-transport-simulations-for/10.1117/1.JBO.23.1.010504.full?SSO=1#ArticleLink"
@@ -1348,7 +1349,7 @@ msgstr "https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics
 
 #: tfmmcx.menuitem59.caption
 msgid "[Fang2011] MMC ray-tracing comparison"
-msgstr "[Fang2011] MMC射線追蹤比較"
+msgstr "[Fang2011] MMCレイトレーシング比較"
 
 #: tfmmcx.menuitem59.hint
 msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-2-5-1258"
@@ -1364,7 +1365,7 @@ msgstr "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-3-12-3223"
 
 #: tfmmcx.menuitem61.caption
 msgid "[Yao2016] Widefield MMC"
-msgstr "[Yao2016] 寬場MMC"
+msgstr "[Yao2016] 広視野MMC"
 
 #: tfmmcx.menuitem61.hint
 msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171"
@@ -1372,7 +1373,7 @@ msgstr "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171"
 
 #: tfmmcx.menuitem62.caption
 msgid "[Yao2018] Jacobians with photon replay"
-msgstr "[Yao2018] 光子重播雅可比矩陣"
+msgstr "[Yao2018] 光子リプレイによるヤコビアン"
 
 #: tfmmcx.menuitem62.hint
 msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588"
@@ -1380,7 +1381,7 @@ msgstr "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-9-10-4588"
 
 #: tfmmcx.menuitem63.caption
 msgid "[Yan2019] Dual-grid MMC"
-msgstr "[Yan2019] 雙網格MMC"
+msgstr "[Yan2019] デュアルグリッドMMC"
 
 #: tfmmcx.menuitem63.hint
 msgid "https://na01.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdx.doi.org%2F10.1117%2F1.JBO.24.2.020503&data=02%7C01%7Cq.fang%40northeastern.edu%7Cbb8daa56735543068b9c08d697592492%7Ca8eec281aaa34daeac9b9a398b9215e7%7C0%7C0%7C636862806460866013&sdata=2dWyN3eVPwwymydjXEWIHBfVZI43Fcl5zuZ8wiaJ10k%3D&reserved=0"
@@ -1388,11 +1389,11 @@ msgstr "https://na01.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdx.doi.o
 
 #: tfmmcx.menuitem64.caption
 msgid "MCX Main Web"
-msgstr "MCX主網站"
+msgstr "MCXメインウェブサイト"
 
 #: tfmmcx.menuitem66.caption
 msgid "Table of all input flags"
-msgstr "所有輸入旗標表"
+msgstr "すべての入力フラグ一覧表"
 
 #: tfmmcx.menuitem66.hint
 msgid "http://bit.ly/2K0rG4R "
@@ -1408,7 +1409,7 @@ msgstr "http://dx.doi.org/10.1117/1.JBO.24.11.115002"
 
 #: tfmmcx.menuitem70.caption
 msgid "[Brain2Mesh2020] Brain2Mesh brain meshing toolbox"
-msgstr "[Brain2Mesh2020] Brain2Mesh腦網格化工具箱"
+msgstr "[Brain2Mesh2020] Brain2Mesh脳メッシュ化ツールボックス"
 
 #: tfmmcx.menuitem70.hint
 msgid "https://doi.org/10.1117/1.NPh.7.1.015008"
@@ -1416,7 +1417,7 @@ msgstr "https://doi.org/10.1117/1.NPh.7.1.015008"
 
 #: tfmmcx.menuitem71.caption
 msgid "[Yuan2020] PBM over lifespan"
-msgstr "[Yuan2020] 生命週期PBM"
+msgstr "[Yuan2020] 生涯にわたるPBM"
 
 #: tfmmcx.menuitem71.hint
 msgid "https://doi.org/10.1117/1.NPh.7.1.015009"
@@ -1424,7 +1425,7 @@ msgstr "https://doi.org/10.1117/1.NPh.7.1.015009"
 
 #: tfmmcx.menuitem72.caption
 msgid "[Yuan2021] Implicit MMC (iMMC)"
-msgstr "[Yuan2021] 隱式MMC (iMMC)"
+msgstr "[Yuan2021] 暗黙MMC (iMMC)"
 
 #: tfmmcx.menuitem72.hint
 msgid "https://www.osapublishing.org/boe/fulltext.cfm?uri=boe-12-1-147"
@@ -1432,7 +1433,7 @@ msgstr "https://www.osapublishing.org/boe/fulltext.cfm?uri=boe-12-1-147"
 
 #: tfmmcx.menuitem73.caption
 msgid "[Yan2020] SVMC hybrid method"
-msgstr "[Yan2020] SVMC混合方法"
+msgstr "[Yan2020] SVMCハイブリッド方法"
 
 #: tfmmcx.menuitem73.hint
 msgid "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262"
@@ -1440,75 +1441,75 @@ msgstr "https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262"
 
 #: tfmmcx.menuitem76.caption
 msgid "Open Volume Viewer"
-msgstr "開啟體積檢視器"
+msgstr "ボリュームビューアーを開く"
 
 #: tfmmcx.menuitem9.caption
 msgctxt "tfmmcx.menuitem9.caption"
 msgid "Volume Designer"
-msgstr "體積設計器"
+msgstr "ボリュームデザイナー"
 
 #: tfmmcx.miclearlog.caption
 msgid "Clear Log"
-msgstr "清除記錄"
+msgstr "ログクリア"
 
 #: tfmmcx.micopy.caption
 msgid "Copy selected"
-msgstr "複製選定"
+msgstr "選択項目をコピー"
 
 #: tfmmcx.miexportjson.caption
 msgid "Export self-contained JSON input file"
-msgstr "匯出獨立的JSON輸入檔案"
+msgstr "自己完結型JSON入力ファイルをエクスポート"
 
 #: tfmmcx.miusematlab.caption
 msgid "Print MATLAB plotting commands only"
-msgstr "僅列印MATLAB繪圖指令"
+msgstr "MATLABプロットコマンドのみ出力"
 
 #: tfmmcx.openhistoryfile.title
 msgctxt "tfmmcx.openhistoryfile.title"
 msgid "Open Photon History File (*.mch)"
-msgstr "開啟光子歷史檔案 (*.mch)"
+msgstr "光子履歴ファイルを開く (*.mch)"
 
 #: tfmmcx.openproject.title
 msgid "Open existing project"
-msgstr "開啟現有專案"
+msgstr "既存プロジェクトを開く"
 
 #: tfmmcx.openvolume.title
 msgctxt "tfmmcx.openvolume.title"
 msgid "Open Photon History File (*.mch)"
-msgstr "開啟光子歷史檔案 (*.mch)"
+msgstr "光子履歴ファイルを開く (*.mch)"
 
 #: tfmmcx.rbusebench.caption
 msgid "Built-in"
-msgstr "內建"
+msgstr "内蔵"
 
 #: tfmmcx.rbusedesigner.caption
 msgid "User-defined Â»"
-msgstr "使用者定義 »"
+msgstr "ユーザー定義 »"
 
 #: tfmmcx.rbusefile.caption
 msgid "Use Input File (-f)"
-msgstr "使用輸入檔案 (-f)"
+msgstr "入力ファイル使用 (-f)"
 
 #: tfmmcx.saveproject.title
 msgid "Save project as"
-msgstr "另存專案為"
+msgstr "プロジェクトに名前を付けて保存"
 
 #: tfmmcx.sbinfo.panels[0].text
 msgid "Status: idle"
-msgstr "狀態：閒置"
+msgstr "ステータス: アイドル"
 
 #: tfmmcx.sgconfig.columns[0].title.caption
 msgctxt "tfmmcx.sgconfig.columns[0].title.caption"
 msgid "Value"
-msgstr "值"
+msgstr "値"
 
 #: tfmmcx.sgconfig.hint
 msgid "MCXConfig \n\nThis defines the remaining key parameters used in an MCX/MMC\nsimulation.\n"
-msgstr "MCXConfig\n\n這定義了MCX/MMC模擬中使用的其餘關鍵參數。\n"
+msgstr "MCXConfig\n\nこれはMCX/MMCシミュレーションで使用される残りのキーパラメータを定義します。\n"
 
 #: tfmmcx.sgdet.hint
 msgid "DetectorCfg \n\nThis table defines all detectors in the domain. \n\nPlease note that currently MCX/MMC only supports spherical detectors,\ndefined by the [x,y,z] center position and radius (radius).\n\nPlease also note that photon detection only happens before a photon is\nterminated, i.e. when it escapes the exterior bounding box or moving from\na non-zero voxel to a zero voxel. Therefore, a detector's aperature is the\nactual bounding box surface or the surface of the non-zero voxels truncated\nby a sphere centered at [x,y,z] with raidus r.\n\nDetector position is sensitive to the \"Origin from [0 0 0] -z\" flag.\n"
-msgstr "DetectorCfg\n\n此表定義域中的所有檢測器。\n\n請注意，目前MCX/MMC僅支援球形檢測器，由[x,y,z]中心位置和半徑定義。\n\n還請注意，光子檢測僅在光子終止之前發生，即當它逸出外部邊界框或從非零體素移動到零體素時。因此，檢測器的孔徑是實際邊界框表面或被以[x,y,z]為中心、半徑為r的球體截斷的非零體素表面。\n\n檢測器位置對\"原點從[0 0 0] -z\"旗標敏感。\n"
+msgstr "DetectorCfg\n\nこのテーブルはドメイン内のすべての検出器を定義します。\n\n現在MCX/MMCは[x,y,z]中心位置と半径で定義される球形検出器のみをサポートしていることにご注意ください。\n\nまた、光子検出は光子が終了する前にのみ発生することにご注意ください。つまり、外部境界ボックスから脱出するか、非ゼロボクセルからゼロボクセルに移動するときです。したがって、検出器の開口は実際の境界ボックス表面、または[x,y,z]を中心とし半径rの球によって切り詰められた非ゼロボクセルの表面です。\n\n検出器位置は「[0 0 0]からの原点 -z」フラグに敏感です。\n"
 
 #: tfmmcx.sgmedia.columns[0].title.caption
 msgid "Î¼a (1/mm)"
@@ -1520,71 +1521,71 @@ msgstr "μs (1/mm)"
 
 #: tfmmcx.sgmedia.columns[2].title.caption
 msgid "g (anisotropy)"
-msgstr "g (各向異性)"
+msgstr "g (異方性)"
 
 #: tfmmcx.sgmedia.columns[3].title.caption
 msgid "n (reflective index)"
-msgstr "n (折射率)"
+msgstr "n (屈折率)"
 
 #: tfmmcx.sgmedia.hint
 msgid "MediaCfg \n\nThis table defines the optical properties for all needed tissue labels.\n\nThe first row (label 0) is reserved for the background medium - which includes\nthe space outside the bounding box of the volume, as well as any voxels with\na zero-value.\n\nOne can select a row and copy/paste to other rows.\n\nIf more labels are needed, move to the bottom of the table, and press \"down\"\narrow key to create a new row below.\n"
-msgstr "MediaCfg\n\n此表定義所有所需組織標籤的光學特性。\n\n第一列（標籤0）保留給背景介質 - 包括體積邊界框外的空間，以及任何零值體素。\n\n可以選擇一列並複製/貼上到其他列。\n\n如果需要更多標籤，移動到表格的底部，按\"向下\"箭頭鍵在下方建立新列。\n"
+msgstr "MediaCfg\n\nこのテーブルは必要なすべての組織ラベルの光学特性を定義します。\n\n最初の行（ラベル0）は背景媒質用に予約されています - これにはボリュームの境界ボックス外の空間と、ゼロ値を持つすべてのボクセルが含まれます。\n\n行を選択して他の行にコピー/ペーストできます。\n\nより多くのラベルが必要な場合は、テーブルの下部に移動し、「下」矢印キーを押して下に新しい行を作成してください。\n"
 
 #: tfmmcx.shapeaddbox.caption
 msgid "Box"
-msgstr "盒子"
+msgstr "ボックス"
 
 #: tfmmcx.shapeaddbox.hint
 msgid "Add a 3D box (using the center of the voxels - i.e. add 0.5 in all directions)"
-msgstr "新增3D盒子（使用體素的中心 - 即在所有方向上加0.5）"
+msgstr "3Dボックスを追加 (ボクセルの中心を使用 - つまり、すべての方向に0.5を追加)"
 
 #: tfmmcx.shapeaddcylinder.caption
 msgid "Cylinder"
-msgstr "圓柱"
+msgstr "円柱"
 
 #: tfmmcx.shapeaddcylinder.hint
 msgid "Add a cylinder"
-msgstr "新增圓柱"
+msgstr "円柱を追加"
 
 #: tfmmcx.shapeaddgrid.caption
 msgid "Grid"
-msgstr "網格"
+msgstr "グリッド"
 
 #: tfmmcx.shapeaddgrid.hint
 msgid "Define a uniform grid as the simulation space"
-msgstr "定義均勻網格作為模擬空間"
+msgstr "シミュレーション空間として均一グリッドを定義"
 
 #: tfmmcx.shapeaddname.caption
 msgid "Name"
-msgstr "名稱"
+msgstr "名前"
 
 #: tfmmcx.shapeaddname.hint
 msgid "Define a name for the domain"
-msgstr "為域定義名稱"
+msgstr "ドメインの名前を定義"
 
 #: tfmmcx.shapeaddorigin.caption
 msgid "Origin"
-msgstr "原點"
+msgstr "原点"
 
 #: tfmmcx.shapeaddorigin.hint
 msgid "Define the origin for subsequent objects"
-msgstr "為後續物件定義原點"
+msgstr "後続オブジェクトの原点を定義"
 
 #: tfmmcx.shapeaddsphere.caption
 msgid "Sphere"
-msgstr "球體"
+msgstr "球体"
 
 #: tfmmcx.shapeaddsphere.hint
 msgid "Add a 3D sphere"
-msgstr "新增3D球體"
+msgstr "3D球体を追加"
 
 #: tfmmcx.shapeaddsubgrid.caption
 msgid "Subgrid"
-msgstr "子網格"
+msgstr "サブグリッド"
 
 #: tfmmcx.shapeaddsubgrid.hint
 msgid "Add a 3D box (using the lower-corner of the voxel)"
-msgstr "新增3D盒子（使用體素的下角）"
+msgstr "3Dボックスを追加 (ボクセルの下角を使用)"
 
 #: tfmmcx.shapeaddupperspace.caption
 msgid "Upper"
@@ -1592,7 +1593,7 @@ msgstr "上部"
 
 #: tfmmcx.shapeaddupperspace.hint
 msgid "Add an upper-space defined by a linear inequality"
-msgstr "新增由線性不等式定義的上部空間"
+msgstr "線形不等式で定義された上部空間を追加"
 
 #: tfmmcx.shapeaddxlayers.caption
 msgid "XLayers"
@@ -1600,15 +1601,15 @@ msgstr "X層"
 
 #: tfmmcx.shapeaddxlayers.hint
 msgid "Add a layered structure along x-axis"
-msgstr "沿x軸新增分層結構"
+msgstr "x軸に沿った層状構造を追加"
 
 #: tfmmcx.shapeaddxslabs.caption
 msgid "XSlabs"
-msgstr "X板"
+msgstr "Xスラブ"
 
 #: tfmmcx.shapeaddxslabs.hint
 msgid "Add a slab along x-axis"
-msgstr "沿x軸新增板"
+msgstr "x軸に沿ったスラブを追加"
 
 #: tfmmcx.shapeaddylayers.caption
 msgid "YLayers"
@@ -1616,15 +1617,15 @@ msgstr "Y層"
 
 #: tfmmcx.shapeaddylayers.hint
 msgid "Add a layered structure along y-axis"
-msgstr "沿y軸新增分層結構"
+msgstr "y軸に沿った層状構造を追加"
 
 #: tfmmcx.shapeaddyslabs.caption
 msgid "YSlabs"
-msgstr "Y板"
+msgstr "Yスラブ"
 
 #: tfmmcx.shapeaddyslabs.hint
 msgid "Add a slab along y-axis"
-msgstr "沿y軸新增板"
+msgstr "y軸に沿ったスラブを追加"
 
 #: tfmmcx.shapeaddzlayers.caption
 msgid "ZLayers"
@@ -1632,84 +1633,84 @@ msgstr "Z層"
 
 #: tfmmcx.shapeaddzlayers.hint
 msgid "Add a layered structure along z-axis"
-msgstr "沿z軸新增分層結構"
+msgstr "z軸に沿った層状構造を追加"
 
 #: tfmmcx.shapeaddzslabs.caption
 msgid "ZSlabs"
-msgstr "Z板"
+msgstr "Zスラブ"
 
 #: tfmmcx.shapeaddzslabs.hint
 msgid "Add a slab along z-axis"
-msgstr "沿z軸新增板"
+msgstr "z軸に沿ったスラブを追加"
 
 #: tfmmcx.shapedelete.caption
 msgctxt "tfmmcx.shapedelete.caption"
 msgid "Delete"
-msgstr "刪除"
+msgstr "削除"
 
 #: tfmmcx.shapedelete.hint
 msgid "Delete selected object"
-msgstr "刪除選定物件"
+msgstr "選択されたオブジェクトを削除"
 
 #: tfmmcx.shapeedit.caption
 msgid "Edit"
-msgstr "編輯"
+msgstr "編集"
 
 #: tfmmcx.shapepreview.caption
 msgctxt "tfmmcx.shapepreview.caption"
 msgid "Preview"
-msgstr "預覽"
+msgstr "プレビュー"
 
 #: tfmmcx.shapepreview.hint
 msgctxt "tfmmcx.shapepreview.hint"
 msgid "Preview"
-msgstr "預覽"
+msgstr "プレビュー"
 
 #: tfmmcx.shapeprint.caption
 msgid "Print"
-msgstr "列印"
+msgstr "印刷"
 
 #: tfmmcx.shapeprint.hint
 msgid "Print selected object"
-msgstr "列印選定物件"
+msgstr "選択されたオブジェクトを印刷"
 
 #: tfmmcx.shapereset.caption
 msgctxt "tfmmcx.shapereset.caption"
 msgid "Reset"
-msgstr "重設"
+msgstr "リセット"
 
 #: tfmmcx.shapereset.hint
 msgid "Reset to a 60x60x60 homogeneous cubic domain"
-msgstr "重設為60x60x60均勻立方域"
+msgstr "60x60x60均質立方ドメインにリセット"
 
 #: tfmmcx.statictext1.caption
 msgid "Additional Settings"
-msgstr "附加設定"
+msgstr "追加設定"
 
 #: tfmmcx.statictext2.caption
 msgid "Media Settings"
-msgstr "介質設定"
+msgstr "媒質設定"
 
 #: tfmmcx.statictext3.caption
 msgid "Detector Settings (in voxel unit)"
-msgstr "檢測器設定（以體素為單位）"
+msgstr "検出器設定 (ボクセル単位)"
 
 #: tfmmcx.tabinputdata.caption
 msgid "Simulation Designer"
-msgstr "模擬設計器"
+msgstr "シミュレーションデザイナー"
 
 #: tfmmcx.tabvolumedesigner.caption
 msgctxt "tfmmcx.tabvolumedesigner.caption"
 msgid "Volume Designer"
-msgstr "體積設計器"
+msgstr "ボリュームデザイナー"
 
 #: tfmmcx.tbtverify.caption
 msgid "Validate"
-msgstr "驗證"
+msgstr "検証"
 
 #: tfmmcx.toolbar1.caption
 msgid "MCX Ribon"
-msgstr "MCX功能區"
+msgstr "MCXリボン"
 
 #: tfmmcx.toolbar2.caption
 msgid "ToolBar2"
@@ -1720,12 +1721,12 @@ msgid "ToolBar3"
 msgstr "ToolBar3"
 
 #: tfmmcx.toolbutton11.caption
-msgid "Plot â–¾"
-msgstr "繪製 ▾"
+msgid "Plot ▾"
+msgstr "プロット ▾"
 
 #: tfmmcx.toolbutton11.hint
 msgid "Plot MCX output data"
-msgstr "繪製MCX輸出資料"
+msgstr "MCX出力データをプロット"
 
 #: tfmmcx.toolbutton12.caption
 msgid "ToolButton12"
@@ -1745,7 +1746,7 @@ msgstr "ToolButton35"
 
 #: tfmmcx.toolbutton39.hint
 msgid "Reset volume and define a different dimension"
-msgstr "重設體積並定義不同的維度"
+msgstr "ボリュームをリセットして異なる次元を定義"
 
 #: tfmmcx.toolbutton5.caption
 msgid "ToolButton5"
@@ -1754,7 +1755,7 @@ msgstr "ToolButton5"
 #: tfmmcx.toolbutton7.caption
 msgctxt "tfmmcx.toolbutton7.caption"
 msgid "Reset"
-msgstr "重設"
+msgstr "リセット"
 
 #: tfmmcx.toolbutton8.caption
 msgctxt "tfmmcx.toolbutton8.caption"
@@ -1762,13 +1763,13 @@ msgid "ToolButton8"
 msgstr "ToolButton8"
 
 #: tfmmcx.toolbutton9.caption
-msgid "Help â–¾"
-msgstr "說明 ▾"
+msgid "Help ▾"
+msgstr "ヘルプ ▾"
 
 #: tfmmcx.toolbutton9.hint
 msgctxt "tfmmcx.toolbutton9.hint"
 msgid "Browse help information"
-msgstr "瀏覽說明資訊"
+msgstr "ヘルプ情報を参照"
 
 #: tfmmcx.tvshapes.hint
 msgctxt "tfmmcx.tvshapes.hint"
@@ -1777,21 +1778,21 @@ msgstr "ShapeCfg"
 
 #: tfmmcx.vlbc.hint
 msgid "Boundary \n\nUsing this box to set the boundary condition for each one of the 6\nfacets on the bounding box. A total of 4 boundary conditions are\nsupported:\n\n1. total absorbing BC: photon hiting the boundary are terminated\n2. Fresnel reflection BC: perform Fresnel reflection/transmission\n3. mirror/total reflection BC: photon is 100% reflected (can run a long time)\n4. cylic BC: a photon exiting from a facet will re-enter from the opposite one\n"
-msgstr "Boundary\n\n使用此框為邊界框上6個面中的每一個設定邊界條件。總共支援4種邊界條件：\n\n1. 全吸收BC：撞擊邊界的光子被終止\n2. 菲涅爾反射BC：執行菲涅爾反射/透射\n3. 鏡面/全反射BC：光子100%反射（可能執行很長時間）\n4. 循環BC：從一個面退出的光子將從相對面重新進入\n"
+msgstr "Boundary\n\nこのボックスを使用して、境界ボックスの6つの面それぞれに対する境界条件を設定します。合計4つの境界条件がサポートされています：\n\n1. 全吸収BC: 境界に当たる光子が終了される\n2. フレネル反射BC: フレネル反射/透過を実行\n3. ミラー/全反射BC: 光子が100%反射される（長時間実行される可能性）\n4. 循環BC: ある面から出る光子が反対側から再入する\n"
 
 #: tfmnewsession.btcancel.caption
 msgctxt "tfmnewsession.btcancel.caption"
 msgid "Cancel"
-msgstr "取消"
+msgstr "キャンセル"
 
 #: tfmnewsession.btok.caption
 msgctxt "tfmnewsession.btok.caption"
 msgid "OK"
-msgstr "確定"
+msgstr "OK"
 
 #: tfmnewsession.caption
 msgid "Create A New Simulation"
-msgstr "建立新模擬"
+msgstr "新しいシミュレーションを作成"
 
 #: tfmnewsession.edsession.hint
 msgctxt "tfmnewsession.edsession.hint"
@@ -1801,15 +1802,15 @@ msgstr "Session"
 #: tfmnewsession.grprogram.caption
 msgctxt "tfmnewsession.grprogram.caption"
 msgid "Run Monte Carlo simulation with"
-msgstr "執行蒙地卡羅模擬使用"
+msgstr "モンテカルロシミュレーション実行ツール"
 
 #: tfmnewsession.grprogram.hint
 msgid "Program"
-msgstr "程式"
+msgstr "プログラム"
 
 #: tfmnewsession.label4.caption
 msgid "Please type in a unique session name"
-msgstr "請輸入唯一的工作階段名稱"
+msgstr "一意のセッション名を入力してください"
 
 #: tfmnewsession.label4.hint
 msgctxt "tfmnewsession.label4.hint"
@@ -1819,26 +1820,26 @@ msgstr "-s (--sessionid)"
 #: tfmshapeeditor.btcancel.caption
 msgctxt "tfmshapeeditor.btcancel.caption"
 msgid "Cancel"
-msgstr "取消"
+msgstr "キャンセル"
 
 #: tfmshapeeditor.btok.caption
 msgctxt "tfmshapeeditor.btok.caption"
 msgid "OK"
-msgstr "確定"
+msgstr "OK"
 
 #: tfmshapeeditor.caption
 msgid "Edit Shapes"
-msgstr "編輯形狀"
+msgstr "形状編集"
 
 #: tfmsource.btcancel.caption
 msgctxt "tfmsource.btcancel.caption"
 msgid "Cancel"
-msgstr "取消"
+msgstr "キャンセル"
 
 #: tfmsource.btok.caption
 msgctxt "tfmsource.btok.caption"
 msgid "OK"
-msgstr "確定"
+msgstr "OK"
 
 #: tfmsource.caption
 msgid "Light Source Settings"
@@ -1850,27 +1851,27 @@ msgstr "鉛筆"
 
 #: tfmsource.label4.caption
 msgid "Please select a light source type:"
-msgstr "請選擇光源類型："
+msgstr "光源タイプを選択してください："
 
 #: tfmsource.label5.caption
 msgid "Please define source parameters:"
-msgstr "請定義源參數："
+msgstr "ソースパラメータを定義してください："
 
 #: tfmstop.caption
 msgid "Running ..."
-msgstr "執行中..."
+msgstr "実行中..."
 
 #: tfmstop.toolbar1.caption
 msgid "Running"
-msgstr "執行中"
+msgstr "実行中"
 
 #: tfmstop.toolbutton3.caption
 msgid "Hide"
-msgstr "隱藏"
+msgstr "非表示"
 
 #: tfmstop.toolbutton3.hint
 msgid "Hide this window"
-msgstr "隱藏此視窗"
+msgstr "このウィンドウを非表示"
 
 #: tfmstop.toolbutton8.caption
 msgctxt "tfmstop.toolbutton8.caption"
@@ -1880,7 +1881,7 @@ msgstr "ToolButton8"
 #: tfmviewer.btbackground.hint
 msgctxt "tfmviewer.btbackground.hint"
 msgid "Change Background Color"
-msgstr "變更背景顏色"
+msgstr "背景色変更"
 
 #: tfmviewer.btopaque.caption
 msgid "btOpaque"
@@ -1888,91 +1889,91 @@ msgstr "btOpaque"
 
 #: tfmviewer.btopaque.hint
 msgid "Show Opaque Hull"
-msgstr "顯示不透明外殼"
+msgstr "不透明ハル表示"
 
 #: tfmviewer.caption
 msgid "MCX Studio Volume Renderer"
-msgstr "光子工作室體積算繪器"
+msgstr "MCXスタジオボリュームレンダラー"
 
 #: tfmviewer.grdir.caption
 msgid "Slicing direction"
-msgstr "切片方向"
+msgstr "スライス方向"
 
 #: tfmviewer.label1.caption
 msgid "Rendering quality"
-msgstr "算繪品質"
+msgstr "レンダリング品質"
 
 #: tfmviewer.label2.caption
 msgid "Cutting plane position:"
-msgstr "切割平面位置："
+msgstr "切断面位置："
 
 #: tfmviewer.label3.caption
 msgid "Invisible threshold"
-msgstr "不可見閾值"
+msgstr "非表示閾値"
 
 #: tfmviewer.label4.caption
 msgid "Color level"
-msgstr "顏色層級"
+msgstr "カラーレベル"
 
 #: tfmviewer.mcxplotexit.caption
 msgctxt "tfmviewer.mcxplotexit.caption"
 msgid "Exit"
-msgstr "結束"
+msgstr "終了"
 
 #: tfmviewer.mcxplotexit.hint
 msgctxt "tfmviewer.mcxplotexit.hint"
 msgid "Exit"
-msgstr "結束"
+msgstr "終了"
 
 #: tfmviewer.mcxplotopen.caption
 msgid "Open File"
-msgstr "開啟檔案"
+msgstr "ファイルを開く"
 
 #: tfmviewer.mcxplotopen.hint
 msgid "Open Data File"
-msgstr "開啟資料檔案"
+msgstr "データファイルを開く"
 
 #: tfmviewer.mcxplotrefresh.caption
 msgctxt "tfmviewer.mcxplotrefresh.caption"
 msgid "Refresh"
-msgstr "重新整理"
+msgstr "更新"
 
 #: tfmviewer.mcxplotrefresh.hint
 msgctxt "tfmviewer.mcxplotrefresh.hint"
 msgid "Refresh"
-msgstr "重新整理"
+msgstr "更新"
 
 #: tfmviewer.mcxplotresetcamera.caption
 msgctxt "tfmviewer.mcxplotresetcamera.caption"
 msgid "Reset"
-msgstr "重設"
+msgstr "リセット"
 
 #: tfmviewer.mcxplotsavescreen.caption
 msgctxt "tfmviewer.mcxplotsavescreen.caption"
 msgid "Save Screen"
-msgstr "儲存螢幕"
+msgstr "画面保存"
 
 #: tfmviewer.mcxplotsavescreen.hint
 msgid "Save screenshot"
-msgstr "儲存螢幕截圖"
+msgstr "スクリーンショット保存"
 
 #: tfmviewer.mcxplotshowbbx.caption
 msgctxt "tfmviewer.mcxplotshowbbx.caption"
 msgid "Show Bounding Box"
-msgstr "顯示邊界框"
+msgstr "境界ボックス表示"
 
 #: tfmviewer.mcxplotshowbbx.hint
 msgctxt "tfmviewer.mcxplotshowbbx.hint"
 msgid "Show Bounding Box"
-msgstr "顯示邊界框"
+msgstr "境界ボックス表示"
 
 #: tfmviewer.mcxplotusecolor.caption
 msgid "Pseudocolor"
-msgstr "偽彩色"
+msgstr "疑似カラー"
 
 #: tfmviewer.mcxplotusecolor.hint
 msgid "Use Pseudocolor"
-msgstr "使用偽彩色"
+msgstr "疑似カラー使用"
 
 #: tfmviewer.toolbar1.caption
 msgctxt "tfmviewer.toolbar1.caption"
@@ -1985,7 +1986,7 @@ msgstr "ToolButton10"
 
 #: tfmviewer.toolbutton4.hint
 msgid "Reset 3D View"
-msgstr "重設3D檢視"
+msgstr "3Dビューリセット"
 
 #: tfmviewer.toolbutton9.caption
 msgctxt "tfmviewer.toolbutton9.caption"

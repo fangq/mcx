@@ -496,6 +496,7 @@ var
   CurrentSession: TListItem;
   BCItemProp: TItemProp;
   UseUserFolder: Boolean;
+  DefaultLang: string;
 
 implementation
 
@@ -848,6 +849,9 @@ begin
       ckSpecular.Checked:=false;
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
+      if(Length(DefaultLang) > 0) and (Pos(DefaultLang, 'en') <> 1) then
+          edMoreParam.Text:='--lang ' + DefaultLang;
+
       edUnitInMM.Text:='1';
       ckSharedFS.Checked:=false;
       if not (ckLockGPU.Checked) then begin
@@ -1803,6 +1807,10 @@ begin
         ForceDirectories(workdir);
     if(not DirectoryExists(workdir)) then
         UseUserFolder:=true;
+
+    DefaultLang := '';
+    if(Application.HasOption('l','lang')) then
+        DefaultLang := Application.GetOptionValue('l', 'lang');
 end;
 
 procedure TfmMCX.FormDestroy(Sender: TObject);

@@ -1,0 +1,1 @@
+mcxstudio.zh-cn.mo
