@@ -43,7 +43,6 @@
 #include "mcx_core.h"
 #include "mcx_shapes.h"
 #include "mcx_lang.h"
-#include "mcx_lang.h"
 
 #ifdef _OPENMP
     #include <omp.h>
