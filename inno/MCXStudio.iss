@@ -81,6 +81,7 @@ Name: "{app}\MCXSuite"
 Source: "..\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MCXSuite\mcx\bin\mcxshow.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MCXSuite\mcx\bin\mcxviewer.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MCXSuite\mcx\bin\locale\*"; DestDir: "{app}\locale"; Flags: ignoreversion
 Source: "..\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
