@@ -162,7 +162,7 @@ end;
 function GetLanguageCode(Param: string): string;
 begin
   case ActiveLanguage of
-    'english': Result := 'en_US';
+    'english': Result := 'en-us';
     'french': Result := 'fr';
     'german': Result := 'de';
     'spanish': Result := 'es';
@@ -171,10 +171,10 @@ begin
     'korean': Result := 'ko';
     'portuguese': Result := 'pt';
     'hindi': Result := 'hi';
-    'chinesesimplified': Result := 'zh_CN';
-    'chinesetraditional': Result := 'zh_TW';
+    'chinesesimplified': Result := 'zh-cn';
+    'chinesetraditional': Result := 'zh-tw';
   else
-    Result := 'en_US'; // Default fallback
+    Result := 'en-us'; // Default fallback
   end;
   Log(Format('Language code selected: %s', [Result]));
 end;

@@ -849,7 +849,7 @@ begin
       ckSpecular.Checked:=false;
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
-      if(Length(DefaultLang) > 0) and (Pos(DefaultLang, 'en') <> 1) then
+      if(Length(DefaultLang) > 0) then
           edMoreParam.Text:='--lang ' + DefaultLang;
 
       edUnitInMM.Text:='1';
