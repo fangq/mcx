@@ -94,8 +94,8 @@ Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\m
 ;;----------------------------------------------------------------------
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang {code:GetLanguageCode}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user --lang {code:GetLanguageCode}"; Tasks: desktopicon
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang={code:GetLanguageCode}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user --lang={code:GetLanguageCode}"; Tasks: desktopicon
 Name: "{group}\MCX Website"; Filename: "https://mcx.space/"
 Name: "{group}\MCX Wiki"; Filename: "https://mcx.space/wiki/"
 Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
@@ -116,7 +116,7 @@ Root: HKA; Subkey: "Software\Classes\.mcxp"; ValueType: string; ValueName: ""; V
 Root: HKA; Subkey: "Software\Classes\.mcxp\OpenWithProgids"; ValueType: string; ValueName: "MCXStudio.mcxp"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp"; ValueType: string; ValueName: ""; ValueData: "MCXStudio"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\mcxstudio.exe,0"
-Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""--user"" ""--lang"" ""{code:GetLanguageCode}"" ""%1"""
+Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""--user"" ""--lang={code:GetLanguageCode}"" ""%1"""
 ; HKA (and HKCU) should only be used for settings which are compatible with
 ; roaming profiles so settings like paths should be written to HKLM, which
 ; is only possible in administrative install mode.
@@ -134,7 +134,7 @@ Root: HKLM; Subkey: "System\CurrentControlSet\Control\GraphicsDrivers"; ValueTyp
 ;;----------------------------------------------------------------------
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang {code:GetLanguageCode}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang={code:GetLanguageCode}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 ;;----------------------------------------------------------------------
 
