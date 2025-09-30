@@ -3655,7 +3655,7 @@ void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
     cfg->nphoton = 0;
 
     for (i = 0; i < dimdetps[1]; i++) {
-        if (cfg->replaydet <= 0 || cfg->replaydet == (int) (detps[i * dimdetps[0]])) {
+        if (cfg->replaydet <= 0 || cfg->replaydet == ((int) (detps[i * dimdetps[0]]) & 0xFFFF)) {
             if (i != cfg->nphoton) {
                 memcpy((char*) (cfg->replay.seed) + cfg->nphoton * seedbyte,
                        (char*) (cfg->replay.seed) + i * seedbyte,

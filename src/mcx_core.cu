@@ -1974,7 +1974,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                              ( (gcfg->replaydet == -1) ? (((photondetid[tshift] & 0xFFFF) - 1) * gcfg->maxgate) : 0);
 
                     if (gcfg->extrasrclen && gcfg->srcid < 0) {
-                        tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
+                        tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * ((gcfg->replaydet == -1) ? gcfg->detnum : 1) * gcfg->maxgate;
                     }
 
                     tshift = MIN(gcfg->maxgate - 1, tshift);
@@ -2168,14 +2168,13 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                         tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
                                  ( (gcfg->replaydet == -1) ? (((photondetid[tshift] & 0xFFFF) - 1) * gcfg->maxgate) : 0);
-                        tshift = MIN(gcfg->maxgate - 1, tshift);
                     }
                 } else if (gcfg->outputtype == otL) {
                     weight = w0 * f.pathlen;
                 }
 
                 if (gcfg->extrasrclen && gcfg->srcid < 0) {
-                    tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
+                    tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * ((gcfg->replaydet == -1) ? gcfg->detnum : 1) * gcfg->maxgate;
                 }
 
                 GPUDEBUG(("deposit to [%d] %e, w=%f\n", idx1dold, weight, p.w));
