@@ -1971,7 +1971,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     //< photontof[] and replayweight[] should be cached using local mem to avoid global read
                     int tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                     tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
-                             ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
+                             ( (gcfg->replaydet == -1) ? (((photondetid[tshift] & 0xFFFF) - 1) * gcfg->maxgate) : 0);
 
                     if (gcfg->extrasrclen && gcfg->srcid < 0) {
                         tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * gcfg->maxgate;
@@ -2167,7 +2167,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                         tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
                         tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
-                                 ( (gcfg->replaydet == -1) ? ((photondetid[tshift] - 1) * gcfg->maxgate) : 0);
+                                 ( (gcfg->replaydet == -1) ? (((photondetid[tshift] & 0xFFFF) - 1) * gcfg->maxgate) : 0);
                         tshift = MIN(gcfg->maxgate - 1, tshift);
                     }
                 } else if (gcfg->outputtype == otL) {
@@ -3800,7 +3800,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                             scale[0] = 0.f; // the cfg->normalizer and cfg.his.normalizer are inaccurate in this case, but this is ok
 
                             for (size_t i = 0; i < cfg->nphoton; i++)
-                                if (cfg->replay.detid[i] == detid) {
+                                if ((cfg->replay.detid[i] & 0xFFFF) == detid) {
                                     scale[0] += cfg->replay.weight[i];
                                 }
 

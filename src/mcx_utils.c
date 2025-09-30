@@ -3702,7 +3702,7 @@ void mcx_replayprep(int* detid, float* ppath, History* his, Config* cfg) {
     cfg->nphoton = 0;
 
     for (i = 0; i < his->savedphoton; i++) {
-        if (cfg->replaydet <= 0 || (detid && cfg->replaydet == detid[i])) {
+        if (cfg->replaydet <= 0 || (detid && cfg->replaydet == (detid[i] & 0xFFFF))) {
             if (i != cfg->nphoton) {
                 memcpy((char*)(cfg->replay.seed) + cfg->nphoton * his->seedbyte, (char*)(cfg->replay.seed) + i * his->seedbyte, his->seedbyte);
             }
