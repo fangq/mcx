@@ -24,7 +24,7 @@
 % Worth to mention that we also set the 4th element of cfg.srcdir, i.e. the
 % focal length, to create a convergent beam for each planar source.
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data

@@ -12,7 +12,7 @@
 % for efficient photon transport simulations in complex three-dimensional
 % media. J Biomed Opt. 2019 Feb;24(2):1-4.
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg cfg_svmc;

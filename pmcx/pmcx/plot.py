@@ -660,7 +660,7 @@ def plotphotons(traj, *varargin, **kwargs):
         Handle to the plotted lines (when plotting is enabled)
 
     This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see http://mcx.sf.net for details
+    License: GPLv3, see https://mcx.space for details
     """
 
     try:

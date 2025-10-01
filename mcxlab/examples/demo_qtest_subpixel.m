@@ -5,7 +5,7 @@
 % the settings in examples/quicktest (i.e. comparing run_qtest.sh and
 % run_grid2x.sh)
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data

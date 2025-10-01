@@ -17,7 +17,7 @@ function [flux] = cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
 %        flux:  the diffuse reflectance for all source/detector pairs
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %    see Kienle1997
 %
 D = 1 / (3 * (mua + musp));

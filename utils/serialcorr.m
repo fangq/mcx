@@ -14,7 +14,7 @@ function report = serialcorr(randomseq, maxshift)
 %            and randomseq(i:end) where i<=maxshift
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %    see Boas2002, Heskell1996
 
 report = zeros(maxshift, 2);

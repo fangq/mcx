@@ -15,7 +15,7 @@ function separation = getdistance(srcpos, detpos)
 %              of source rows, and number of detector of columns.
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 
 srcnum = length(srcpos(:, 1));
 detnum = length(detpos(:, 1));

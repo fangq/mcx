@@ -18,7 +18,7 @@ function h = islicer(vol, T, handles, keepxyz, varargin)
 %           planes
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %
 
 if nargin < 2

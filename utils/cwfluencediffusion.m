@@ -9,7 +9,7 @@ function varargout = cwfluencediffusion(varargin)
 %    input/output: please see details in the help for cwdiffusion
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %    see Boas2002, Haskell1994
 %
 [varargout{1:nargout}] = cwdiffusion(varargin{:});

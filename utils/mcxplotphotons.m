@@ -24,7 +24,7 @@ function varargout = mcxplotphotons(traj, varargin)
 %                 recording the scattering sites.
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %
 
 if (isstruct(traj) && ~isfield(traj, 'id') && isfield(traj, 'data'))

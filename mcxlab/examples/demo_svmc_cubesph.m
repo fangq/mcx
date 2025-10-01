@@ -8,7 +8,7 @@
 % Carlo algorithm for accurate and efficient photon transport modeling in
 % complex bio-tissues," Biomed. Opt. Express 11, 6262-6270 (2020)
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg cfg_svmc;

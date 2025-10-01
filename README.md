@@ -1237,7 +1237,7 @@ example, if the simulation time window setting is
 the solution file is located at `[t0+dt/2, t0+3*dt/2, t0+5*dt/2, ... ,t1-dt/2]`
 
 A more detailed interpretation of the output data can be found at 
-http://mcx.sf.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
+https://mcx.space/wiki/?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
 
 MCX can also output “current density” (J(r,t), unit W/m^2, same as 
 Phi(r,t)) - referring to the expected number of photons or Joule of energy 

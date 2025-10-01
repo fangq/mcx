@@ -4,7 +4,7 @@
 % In this example, we show how to handle photon trajectories and their
 % index mapping to the detected photon data in a replay simulation.
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg cfgs;

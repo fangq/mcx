@@ -4,7 +4,7 @@
 % In this example, we test the reduction of simulation random noise (std)
 % with increase photon numbers
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 counts = [1e5 sqrt(10) * 1e5 1e6 sqrt(10) * 1e6 1e7 sqrt(10) * 1e7 1e8];

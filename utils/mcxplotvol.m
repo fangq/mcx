@@ -23,7 +23,7 @@ function [dat, filename, handles, hfig] = mcxplotvol(varargin)
 %        handles:(optional) the handles to the slice surface object
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %
 
 if (nargin >= 1)

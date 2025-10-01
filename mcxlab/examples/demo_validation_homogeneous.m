@@ -11,7 +11,7 @@
 % of photon migration in 3D turbid media accelerated by graphics processing
 % units," Opt. Express 17, 20178-20190 (2009)
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if (exist('tddiffusion', 'file') ~= 2 || exist('cwdiffusion', 'file') ~= 2)

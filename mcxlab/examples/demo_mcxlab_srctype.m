@@ -439,9 +439,85 @@ subplot(223);
 imagesc(log10(abs(squeeze(fcw(:, :, 1)))));
 axis equal;
 colorbar;
-title('a pencil beam array)');
+title('a pencil beam array');
 
 %% test group 6
+
+clear cfg;
+figure;
+cfg.nphoton = 1e7;
+cfg.vol = uint8(ones(60, 60, 60));
+cfg.gpuid = 1;
+cfg.autopilot = 1;
+cfg.prop = [0 0 1 1; 0.005 0.01 1 1.37];
+cfg.tstart = 0;
+cfg.seed = 99999;
+
+% a ring beam
+cfg.srctype = 'disk';
+cfg.srcpos = [30 30 -10];
+cfg.srcdir = [0 0 1];
+cfg.tend = 5e-11;
+cfg.tstep = 5e-11;
+cfg.srcparam1 = [20 15 0 0];
+cfg.srcparam2 = [0 0 0 0];
+flux = mcxlabcl(cfg);
+fcw = flux.data * cfg.tstep;
+subplot(221);
+imagesc(log10(abs(squeeze(fcw(:, :, 1)))));
+axis equal;
+colorbar;
+title('a disk/ring source');
+
+% a hyperboloid source
+cfg.srctype = 'hyperboloid';
+cfg.srcpos = [30 30 5];
+cfg.srcparam1 = [2 20 4 0];
+cfg.srcparam2 = [0 0 0 0];
+cfg.tend = 5e-9;
+cfg.tstep = 5e-9;
+flux = mcxlabcl(cfg);
+fcw = flux.data * cfg.tstep;
+subplot(222);
+imagesc(log10(abs(squeeze(fcw(:, 30, :)))));
+axis equal;
+colorbar;
+title('a hyperboloid source');
+
+% x-direction broadened slit source
+cfg.srctype = 'slit';
+cfg.srcpos = [10 30 0];
+cfg.srcdir = [0 1 1] / sqrt(2);
+cfg.srcparam1 = [40 0 0 0];
+cfg.srcparam2 = [0.2 0 0 0];
+cfg.prop = [0 0 1 1; 0.005 0.01 0.9 1.37];
+cfg.tend = 5e-9;
+cfg.tstep = 5e-9;
+flux = mcxlabcl(cfg);
+fcw = flux.data * cfg.tstep;
+subplot(223);
+hs = slice(log10(abs(double(fcw))), [], [15 45], 1);
+set(hs, 'linestyle', 'none');
+axis equal;
+colorbar;
+title('x-axis brodened slit source');
+
+% x/y-direction broadened slit source
+cfg.srctype = 'slit';
+cfg.srcpos = [10 30 0];
+cfg.srcdir = [0 1 1] / sqrt(2);
+cfg.srcparam1 = [40 0 0 0];
+cfg.srcparam2 = [0.1 0.3 0 0];
+flux = mcxlabcl(cfg);
+fcw = flux.data * cfg.tstep;
+subplot(224);
+hs = slice(log10(abs(double(fcw))), [], [15 45], 1);
+set(hs, 'linestyle', 'none');
+axis equal;
+colorbar;
+title('x/y brodened slit source');
+
+%% test group 7
 
 % debug flag to retrieve/test build-in RNG
 cfg.vol = uint8(ones(100, 100, 100));

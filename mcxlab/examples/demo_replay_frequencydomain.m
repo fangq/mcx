@@ -12,7 +12,7 @@
 % light transport in the neonatal head. Phys. Med. Biol.
 % https://doi.org/10.1088/1361-6560/acd48c
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % FORM TARGET MODEL

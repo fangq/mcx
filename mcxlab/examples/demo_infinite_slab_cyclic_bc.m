@@ -4,7 +4,7 @@
 % In this example, we show how to simulate an infinite slab using cyclic
 % boundary condition
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data

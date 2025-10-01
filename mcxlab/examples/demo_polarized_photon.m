@@ -4,7 +4,7 @@
 % In this example, we model propagation of polarized light inside a
 % heterogeneous media.
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data

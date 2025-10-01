@@ -20,7 +20,7 @@ function Phi = tddiffusion(mua, musp, v, Reff, srcpos, detpos, t)
 %        Phi:  the output fluence for all time points
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %    see Boas2002
 %
 

@@ -2,7 +2,7 @@
 % Error evaluation when assuming musp(CSF) with 1/average(thickness)
 %    from Custo Applied Optics 2006
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clear cfg;
 

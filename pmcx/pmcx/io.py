@@ -75,7 +75,7 @@ def loadmc2(fname, dim, dataformat="float", offset=None):
         the data output.
 
     This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see http://mcx.sf.net for details
+    License: GPLv3, see https://mcx.space for details
     """
 
     # Map MATLAB format strings to NumPy dtypes
@@ -170,7 +170,7 @@ def loadmch(fname, dataformat="float32", endian="little"):
         an identical RNG to utilize these seeds for a new simulation.
 
     This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see http://mcx.sf.net for details
+    License: GPLv3, see https://mcx.space for details
     """
 
     # Handle format string (remove '=>' part if present)
@@ -419,7 +419,7 @@ def loadfile(fname, *varargin):
         A dict recording the metadata of the file
 
     This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see http://mcx.sf.net for details
+    License: GPLv3, see https://mcx.space for details
     """
 
     # Parse file path and extension

@@ -18,7 +18,7 @@ function [data, header] = mcxloadfile(fname, varargin)
 %        header: a structure recording the metadata of the file
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %
 
 [pathstr, name, ext] = fileparts(fname);

@@ -28,7 +28,9 @@ function varargout = mcxlab(varargin)
 %    mcxlab and mcxlabcl calls will use mcxcl.mex; by setting option='cuda', one can
 %    force both mcxlab and mcxlabcl to use mcx (cuda version). Similarly, if
 %    USE_MCXCL=0, all mcxlabcl and mcxlab call will use mcx.mex by default, unless
-%    one set option='opencl'.
+%    one sets option='opencl'. When USE_MCXCL is set to a positive integer
+%    or a string, it overwrites cfg.gpuid in mcxlabcl to specify the device
+%    to run the simulation.
 %
 %    cfg may contain the following fields:
 %
@@ -317,7 +319,7 @@ function varargout = mcxlab(varargin)
 %                      for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
 %      cfg.lang:       specify the language code for printing, supported languages include
-%                      zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, ru_RU, pt_BR
+%                      zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, pt_BR
 %
 % == Debug ==
 %      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
@@ -457,6 +459,11 @@ end
 
 if (isstruct(varargin{1}))
     for i = 1:length(varargin{1})
+        if (ischar(useopencl) || useopencl > 0)
+            varargin{1}(i).gpuid = useopencl;
+        elseif (useopencl < 0)
+            varargin{1}(i).gpuid = -useopencl;
+        end
         castlist = {'srcpattern', 'srcpos', 'detpos', 'prop', 'workload', 'srcdir', 'srciquv', 'isnormalized', ...
                     'isreflect', 'nphoton', 'nblocksize', 'nthread', 'tstart', 'tend', 'maxdetphoton', 'maxgate', ...
                     'respin', 'isref3', 'isrefint', 'isgpuinfo', 'issrcfrom0', 'autopilot', 'minenergy', 'unitinmm', ...
@@ -513,7 +520,7 @@ if (nargout >= 1 && exist('isargout', 'builtin') && isargout(1) == 0)
     end
 end
 
-if (useopencl == 0)
+if (useopencl <= 0)
     [varargout{1:max(1, nargout)}] = mcx(varargin{1});
 else
     [varargout{1:max(1, nargout)}] = mcxcl(varargin{1});

@@ -7,8 +7,8 @@
 % This demo is similar to the MCX simulation used for Fig. 3(c) in [Yan2020]
 % and Fig. 9(a) in [TranYan2019].
 %
-% [Sanchez2012] C.E.Sanchez J.E.Richards and C.R.Almli, “Age-Specific MRI Templates
-% for Pediatric Neuroimaging,” Developmental Neuropsychology 37, 379–399 (2012).
+% [Sanchez2012] C.E.Sanchez J.E.Richards and C.R.Almli, "Age-Specific MRI Templates
+% for Pediatric Neuroimaging," Developmental Neuropsychology 37, 379–399 (2012).
 %
 % [Yan2020] Shijie Yan and Qianqian Fang, "Hybrid mesh and voxel based Monte
 % Carlo algorithm for accurate and efficient photon transport modeling in
@@ -18,7 +18,7 @@
 % functional near-infrared spectroscopy analysis using mesh-based anatomical and
 % light-transport models," Neurophoton. 7(1) 015008 (22 February 2020)
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg cfg_svmc;

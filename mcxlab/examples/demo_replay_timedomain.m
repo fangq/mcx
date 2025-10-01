@@ -4,7 +4,7 @@
 % In this example, we show how to use replay to obtain time-resolved
 % Jacobians - setting cfg.replaydet to -1 to replay all detectors
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear cfg cfgs;

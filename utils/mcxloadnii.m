@@ -27,7 +27,7 @@ function nii = mcxloadnii(filename)
 %              https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %
 
 header = memmapfile(filename,                ...

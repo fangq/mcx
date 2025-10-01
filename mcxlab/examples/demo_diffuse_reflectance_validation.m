@@ -7,13 +7,13 @@
 %
 % [Yao2018] Ruoyang Yao, Xavier Intes, and Qianqian Fang, "Direct approach
 % to compute Jacobians for diffuse optical tomography using perturbation Monte
-% Carlo-based photon “replay”," Biomed. Opt. Express 9, 4588-4603 (2018)
+% Carlo-based photon 'replay'," Biomed. Opt. Express 9, 4588-4603 (2018)
 %
 % [Kienle1997] Alwin Kienle and Michael S. Patterson, "Improved solutions
 % of the steady-state and the time-resolved diffusion equations for reflectance
 % from a semi-infinite turbid medium," J. Opt. Soc. Am. A 14, 246-254 (1997)
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.sf.net
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % only clear cfg to avoid accidentally clearing other useful data

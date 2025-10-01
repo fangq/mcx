@@ -18,7 +18,7 @@ function [Phi r] = cwdiffusion(mua, musp, Reff, srcpos, detpos)
 %        r: (optional) source detector separations
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %    see Boas2002, Haskell1994
 %
 

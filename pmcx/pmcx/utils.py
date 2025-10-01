@@ -1084,7 +1084,7 @@ def cwdiffusion(mua, musp, Reff, srcpos, detpos):
         Source detector separations
 
     This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see http://mcx.sf.net for details
+    License: GPLv3, see https://mcx.space for details
     See Boas2002, Haskell1994
     """
 
@@ -1156,7 +1156,7 @@ def cwfluxdiffusion(mua, musp, Reff, srcpos, detpos):
         The diffuse reflectance for all source/detector pairs
 
     This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see http://mcx.sf.net for details
+    License: GPLv3, see https://mcx.space for details
     See Kienle1997
     """
 

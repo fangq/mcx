@@ -15,7 +15,7 @@ function [dref] = mcxcwdref(detp, cfg)
 %    dref: CW diffuse reflectance at detectors
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
-%    License: GPLv3, see http://mcx.sf.net for details
+%    License: GPLv3, see https://mcx.space for details
 %    see Yao2018
 %
 unitinmm = 1;
