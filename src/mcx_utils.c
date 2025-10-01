@@ -3656,29 +3656,31 @@ void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
 
     for (i = 0; i < dimdetps[1]; i++) {
         if (cfg->replaydet <= 0 || cfg->replaydet == ((int) (detps[i * dimdetps[0]]) & 0xFFFF)) {
-            if (i != cfg->nphoton) {
-                memcpy((char*) (cfg->replay.seed) + cfg->nphoton * seedbyte,
-                       (char*) (cfg->replay.seed) + i * seedbyte,
-                       seedbyte);
+            if (cfg->srcid <= 0 || (((int) (detps[i * dimdetps[0]]) & 0xFFFF0000) && cfg->srcid == (((int) (detps[i * dimdetps[0]]) & 0xFFFF0000) >> 16))) {
+                if (i != cfg->nphoton) {
+                    memcpy((char*) (cfg->replay.seed) + cfg->nphoton * seedbyte,
+                           (char*) (cfg->replay.seed) + i * seedbyte,
+                           seedbyte);
+                }
+
+                cfg->replay.weight[cfg->nphoton] = 1.f;
+                cfg->replay.tof[cfg->nphoton] = 0.f;
+                cfg->replay.detid[cfg->nphoton] = (hasdetid) ? (int) (detps[i * dimdetps[0]]) : 1;
+
+                for (j = hasdetid; j < cfg->medianum - 1 + hasdetid; j++) {
+                    plen = detps[i * dimdetps[0] + offset + j];
+                    cfg->replay.weight[cfg->nphoton] *= expf(-cfg->prop[j - hasdetid + 1].mua * plen);
+                    plen *= cfg->unitinmm;
+                    cfg->replay.tof[cfg->nphoton] += plen * R_C0 * cfg->prop[j - hasdetid + 1].n;
+                }
+
+                if (cfg->replay.tof[cfg->nphoton] < cfg->tstart
+                        || cfg->replay.tof[cfg->nphoton] > cfg->tend) { /*need to consider -g*/
+                    continue;
+                }
+
+                cfg->nphoton++;
             }
-
-            cfg->replay.weight[cfg->nphoton] = 1.f;
-            cfg->replay.tof[cfg->nphoton] = 0.f;
-            cfg->replay.detid[cfg->nphoton] = (hasdetid) ? (int) (detps[i * dimdetps[0]]) : 1;
-
-            for (j = hasdetid; j < cfg->medianum - 1 + hasdetid; j++) {
-                plen = detps[i * dimdetps[0] + offset + j];
-                cfg->replay.weight[cfg->nphoton] *= expf(-cfg->prop[j - hasdetid + 1].mua * plen);
-                plen *= cfg->unitinmm;
-                cfg->replay.tof[cfg->nphoton] += plen * R_C0 * cfg->prop[j - hasdetid + 1].n;
-            }
-
-            if (cfg->replay.tof[cfg->nphoton] < cfg->tstart
-                    || cfg->replay.tof[cfg->nphoton] > cfg->tend) { /*need to consider -g*/
-                continue;
-            }
-
-            cfg->nphoton++;
         }
     }
 

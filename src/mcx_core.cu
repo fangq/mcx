@@ -1202,6 +1202,10 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         }
     }
 
+    if (gcfg->seed == SEED_FROM_FILE && gcfg->srcid >= 1) {
+        rand_uniform01(t);
+    }
+
     ppath += gcfg->partialdata;
 
     /**
