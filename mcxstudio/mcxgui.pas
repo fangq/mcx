@@ -849,9 +849,6 @@ begin
       ckSpecular.Checked:=false;
       edWorkLoad.Text:='100';
       edMoreParam.Text:='';
-      if(Length(DefaultLang) > 0) then begin
-          edMoreParam.Text:='--lang ' + DefaultLang;
-      end;
 
       edUnitInMM.Text:='1';
       ckSharedFS.Checked:=false;
@@ -1809,7 +1806,7 @@ begin
     if(not DirectoryExists(workdir)) then
         UseUserFolder:=true;
 
-    DefaultLang := 'en';
+    DefaultLang := '';
     if(Application.HasOption('l','lang')) then
         DefaultLang := Application.GetOptionValue('l', 'lang');
 end;
@@ -3284,6 +3281,11 @@ begin
         param.Add(debugflag);
     end;
 
+    if (Length(DefaultLang) > 0) and (grProgram.ItemIndex = 0) then begin
+        param.Add('--lang');
+        param.Add(DefaultLang);
+    end;
+
     if(Length(edMoreParam.Text)>0) then begin
         shellscript:=TStringList.Create;
         shellscript.StrictDelimiter:=true;
@@ -3292,6 +3294,7 @@ begin
         param.AddStrings(shellscript);
         shellscript.Free;
     end;
+
 
     AddLog('"-- Command: --"');
     AddLog(cmd+' '+param.DelimitedText);

@@ -609,7 +609,7 @@ begin
   XZGrid.Position.Y:=-M_Output_Texture_3D.Y_Size/2;
   XZGrid.Position.Z:=-M_Output_Texture_3D.Z_Size/2;
 
-  GLCamera.DepthOfView:=2.0*sqrt(Frame.Scale.X*Frame.Scale.X+Frame.Scale.Y*Frame.Scale.Y+Frame.Scale.Z*Frame.Scale.Z);
+  GLCamera.DepthOfView:=2.5*sqrt(Frame.Scale.X*Frame.Scale.X+Frame.Scale.Y*Frame.Scale.Y+Frame.Scale.Z*Frame.Scale.Z);
   GLCamera.Position.X:=M_Output_Texture_3D.X_Size;
   GLCamera.Position.Y:=M_Output_Texture_3D.Y_Size*0.7;
   GLCamera.Position.Z:=M_Output_Texture_3D.Z_Size;

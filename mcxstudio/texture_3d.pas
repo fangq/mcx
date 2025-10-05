@@ -253,6 +253,7 @@ var
   bufin, bufout: TMemoryStream;
   unzip: TDecompressionStream;
   idx: integer;
+  columnmajor: boolean=false;
 
 begin { TTexture_3D.Load_From_File }
   Screen.Cursor := crHourGlass;
@@ -291,9 +292,11 @@ begin { TTexture_3D.Load_From_File }
     idx := JDataType.IndexOf(niidata.FindPath('_ArrayType_').AsString);
     if idx >= 0 then
          DataFormat := PtrUInt(JDataType.Objects[idx]);
+    if (niidata.FindPath('_ArrayOrder_') <> nil) and (Pos(niidata.FindPath('_ArrayOrder_').AsString, 'c') = 1) then
+         columnmajor := true;
 
     bufout.Position:=0;
-    Load_Texture_From_Stream(bufout, XDim, YDim, ZDim, TDim, DataFormat, false);
+    Load_Texture_From_Stream(bufout, XDim, YDim, ZDim, TDim, DataFormat, columnmajor);
   finally
     bufout.Free;
     jnii.Free;
