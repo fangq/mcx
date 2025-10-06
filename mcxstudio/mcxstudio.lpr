@@ -10,9 +10,9 @@ program mcxstudio;
 {$ENDIF}
 
 uses
-  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  {$IFDEF UNIX}
   cthreads,
-  {$ENDIF}{$ENDIF}
+  {$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, mcxgui, lazcontrols, anchordockpkg, DefaultTranslator, mcxabout
   {$IFNDEF NO_GLSCENE}, mcxshape, mcxview{$ENDIF}, mcxnewsession, mcxsource, mcxloadfile, mcxconfig,
