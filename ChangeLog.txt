@@ -2,7 +2,25 @@
 
 Major updates are marked with a "*"
 
-== MCX v2025.9 (Kilo-Kelvin - 2.8), FangQ <q.fang (a) neu.edu> ==
+== MCX v2025.10 (Kilo-Kelvin - 2.8), FangQ <q.fang (a) neu.edu> ==
+ 2025-10-05 [334ca2a] [mcxstudio] force enabling cthreads in linux
+ 2025-10-05 [7bd0c04]*[mcxstudio] correctly handle _ArrayOrder_=c, fix --lang for mcxcl/mmc
+ 2025-10-01 [e4ed8f0] [feat] use USE_MCXCL>0 to set OpenCL device, negative to set CUDA device
+ 2025-09-30 [da51af2] [bug] fix bug when individually specifying srcid>0 and replaydet>0, #250
+ 2025-09-30 [96a728d] [bug] output 6D array when replaying multi-src w/ srcid=-1,replaydet=-1, fix #250
+ 2025-09-30 [037366e]*[feat] multiple source replay
+ 2025-09-28 [76f8b4d] [i18n] use --lang=ID instead of --lang
+ 2025-09-28 [c9b1439] [i18n] set default lang to en
+ 2025-09-28 [5adace3] [i18n] set installer language tag
+ 2025-09-28 [9fa04fd] [i18n] use locale folder that is already at root
+ 2025-09-28 [66afb5c] [i18n] installer also setup locale files
+ 2025-09-28 [4bab8ba] [typo] fix typo
+ 2025-09-28 [975329c]*[i18n] support French, German, Spanish, Italian, Japanese, Korean, Portuguese and Chinese
+ 2025-09-28 [dbca123] [i18n] add GUI translations
+ 2025-09-27 [fda913a] [bug] support more than 256 media count in output JSON file
+ 2025-09-27 [2489d22] [inno] remove unsupported language
+ 2025-09-27 [0756947] [inno] enable language selection
+ 2025-09-26 [3d67580] [lang] support lang in the inno installer
  2025-09-25 [e230514] [bug] when srctype is unknown, the program can run successfully
  2025-08-26 [84adbfc] [pmcx] bump version to 0.5.1, some fixes after new unit tests
  2025-08-26 [e12bbef]*[pmcx] add additional unit tests

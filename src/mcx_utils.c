@@ -5635,7 +5635,7 @@ void mcx_printheader(Config* cfg) {
 
         MCX_FPRINTF(cfg->flog, S_MAGENTA"\
 ###############################################################################\n\
-$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA  " $Date::                       $ by $Author::             $\n\
+$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA  "$Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
     }
 }

@@ -4,7 +4,7 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 
 -   Author: Qianqian Fang (q.fang at neu.edu)
 -   License: GNU General Public License version 3 (GPLv3)
--   Version: 2.8 (v2025.9, Kilo-Kelvin)
+-   Version: 2.8 (v2025.10, Kilo-Kelvin)
 -   Website: <https://mcx.space>
 -   Download: <https://mcx.space/wiki/?Get>
 
@@ -42,7 +42,7 @@ Table of Content:
 What's New
 -------------
 
-MCX v2025.9 is a maintenance release with multiple bug fixes and minor new features. It is highly
+MCX v2025.10 is a maintenance release with multiple bug fixes and minor new features. It is highly
 recommended to upgrade for all users.
 
 Notable new features include:
