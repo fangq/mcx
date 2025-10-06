@@ -4,7 +4,7 @@
 
 - Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2025) <q.fang at neu.edu>, Fan-Yu Yen (2023-2024) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
-- Version: 0.5.2
+- Version: 0.6.0
 - URL: https://pypi.org/project/pmcx/
 - Github: https://github.com/fangq/mcx
 
@@ -80,8 +80,8 @@ The NVIDIA GPU driver of the target system must support the selected CUDA toolki
   installation of OpenMP libraries for Apple Clang. The easiest way to do this is via the [Brew](https://brew.sh/) package
   manager, preferably after selecting the correct Xcode version:
   ```zsh
-    brew install libomp
-    brew link --force libomp
+  brew install libomp
+  brew link --force libomp
   ```
 
 * **CMake**: CMake version 3.15 and later is required. Refer to the [CMake website](https://cmake.org/download/) for more information on how to download.
@@ -112,7 +112,7 @@ to force installing this locally compiled `pmcx` module and overwrite any previo
 
 The PMCX module is easy to use. You can use the `pmcx.gpuinfo()` function to first verify
 if you have NVIDIA/CUDA compatible GPUs installed; if there are NVIDIA GPUs detected,
-you can then call the `run()` function to launch a photon simulation.
+you can then call the `mcxlab()` function, or `run()`, to launch a photon simulation.
 
 A simulation can be defined conveniently in two approaches - a one-liner and a two-liner:
 
