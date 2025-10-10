@@ -9,7 +9,7 @@ jobs:
     name: Release package tests
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, macos-13, macos-14, windows-2022, windows-2022]
+        os: [ubuntu-22.04, ubuntu-24.04, macos-13, macos-14, windows-2022]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -45,8 +45,12 @@ jobs:
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
-          choco install octave.portable --version=9.2.0
-          echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' >> $GITHUB_PATH
+          #choco install octave.portable --version=9.2.0
+          #echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' >> $GITHUB_PATH
+          curl --retry 3 -kL https://ftpmirror.gnu.org/octave/windows/octave-9.2.0-w64.7z --output octave_9.2.7z
+          7z x octave_9.2.7z -ooctave -y
+          rm -rf octave_9.2.7z
+          echo "$PWD/octave/octave-9.2.0-w64/mingw64/bin" >> $GITHUB_PATH
           curl -s -L -O https://mcx.space/nightly/win64/MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
           unzip -o MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
       - name: Install OpenCL.dll and static libraries (Windows only)
