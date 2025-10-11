@@ -362,6 +362,8 @@ begin
               'matlabroot,''\toolbox\mcx\mcxlab;'','+
               'matlabroot,''\toolbox\mcx\mmclab;'','+
               'matlabroot,''\toolbox\mcx\mcxlabcl;'','+
+              'matlabroot,''\toolbox\mcx\iso2mesh;'','+
+              'matlabroot,''\toolbox\mcx\redbird\matlab;'','+
               'matlabroot,''\toolbox\mcx\mcxtools;'','+
               'matlabroot,''\toolbox\mcx\mmctools;'','+' ... %%% MCX PATHS %%%'
            );
