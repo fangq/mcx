@@ -329,7 +329,7 @@ supported parameters, as shown below:
 #Please visit our free scientific data sharing portal at https://neurojson.io #
 # and consider sharing your public datasets in standardized JSON/JData format #
 ###############################################################################
-$Rev::9c446e $ v2025 $Date::2025-01-23 17:18:06 -05$ by $Author::Qianqian Fang$
+$Rev::d20953$v2025.10$Date::2025-10-10 23:08:18 -04$ by $Author::Qianqian Fang$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
@@ -428,9 +428,9 @@ where possible parameters include (the first value in [*|*] is the default)
                                 {[f:mua]}; mus/g/n from medium type 1
                              102 or muamus_half: 2x 16bit float for mua/mus
                                 {[h:mua][h:mus]}; g/n from medium type 1
-                             103 or asgn_byte: 4x byte gray-levels for mua/s/g/n
+                             103 or asgn_byte: 4-byte gray-levels for mua/s/g/n
                                 {[mua][mus][g][n]}; 0-255 mixing prop types 1&2
-                             104 or muamus_short: 2x short gray-levels for mua/s
+                             104 or muamus_short: 2-short gray-levels for mua/s
                                 {[s:mua][s:mus]}; 0-65535 mixing prop types 1&2
        when formats 99 or 102 is used, the mua/mus values in the input volume
        binary data must be pre-scaled by voxel size (unitinmm) if it is not 1.
@@ -439,11 +439,12 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == Output options ==
  -s sessionid  (--session)     a string to label all output file names
- -O [X|XFEJPMRL](--outputtype) X - output flux, F - fluence, E - energy deposit
+ -O [X|XFEJPMRLSTB](--outputtype) X - output flux, F - fluence, E - energy
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, 
                                event counts at each voxel (replay mode only)
                                M - momentum transfer; R - RF/FD Jacobian
-                               L - total pathlength
+                               L - total pathlength; S - RF/FD mus Jacobian
+                               T - time-of-flight*nscat;B - time-of-flight*path
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save
                                2 reserved, 3 terminate simulation when detected
                                photon buffer is filled
@@ -455,7 +456,7 @@ where possible parameters include (the first value in [*|*] is the default)
                               16 X  output exit position (3)
                               32 V  output exit direction (3)
                               64 W  output initial weight (1)
-      combine multiple items by using a string, or add selected numbers together
+      combine multiple items by using a string,or add selected numbers together
       by default, mcx only saves detector ID and partial-path data
  -x [0|1]      (--saveexit)    1 to save photon exit positions and directions
                                setting -x to 1 also implies setting '-d' to 1.
@@ -463,7 +464,7 @@ where possible parameters include (the first value in [*|*] is the default)
  -X [0|1]      (--saveref)     1 to save diffuse reflectance at the air-voxels
                                right outside of the domain; if non-zero voxels
                                appear at the boundary, pad 0s before using -X
- -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save.
+ -m [0|1]      (--momentum)    1 to save photon momentum transfer,0 not to save
                                same as adding 'M' to the -w flag
  -q [0|1]      (--saveseed)    1 to save photon RNG seed for replay; 0 not save
  -M [0|1]      (--dumpmask)    1 to dump detector volume masks; 0 do not save
@@ -490,8 +491,8 @@ where possible parameters include (the first value in [*|*] is the default)
                                3 lzip: lzip format (high compression,very slow)
                                4 lzma: lzma format (high compression,very slow)
                                5 lz4: LZ4 format (low compression,extrem. fast)
-                               6 lz4hc: LZ4HC format (moderate compression,fast)
- --dumpjson [-,0,1,'file.json']  export all settings, including volume data using
+                               6 lz4hc: LZ4HC format(moderate compression,fast)
+ --dumpjson [-,0,1,'file.json'] export all settings,including volume data using
                                JSON/JData (https://neurojson.org) format for
                                easy sharing; can be reused using -f
                                if followed by nothing or '-', mcx will print
@@ -502,6 +503,7 @@ where possible parameters include (the first value in [*|*] is the default)
 
 == User IO options ==
  -h            (--help)        print this message
+ -y [zh_CN,..] (--lang)        select language, followed by nothing to print
  -v            (--version)     print MCX revision number
  -l            (--log)         print messages to a log file instead
  -i            (--interactive) interactive mode
@@ -509,22 +511,22 @@ where possible parameters include (the first value in [*|*] is the default)
 == Debug options ==
  -D [0|int]    (--debug)       print debug information (you can use an integer
   or                           or a string by combining the following flags)
- -D [''|RMPT]                  1 R  debug RNG
-    /case insensitive/         2 M  store photon trajectory info
-                               4 P  print progress bar
-                               8 T  save trajectory data only, disable flux/detp
-      combine multiple items by using a string, or add selected numbers together
+ -D [''|RMPT]                  1 R debug RNG
+    /case insensitive/         2 M store photon trajectory info
+                               4 P print progress bar
+                               8 T save trajectory data only, disable flux/detp
+      combine multiple items by using a string,or add selected numbers together
 
 == Additional options ==
  --root         [''|string]    full path to the folder storing the input files
  --gscatter     [1e9|int]      after a photon completes the specified number of
                                scattering events, mcx then ignores anisotropy g
                                and only performs isotropic scattering for speed
- --srcid  [0|-1,0,1,2,..]      -1 simulate multi-source separately;0 all sources
-                               together; a positive integer runs a single source
+ --srcid  [0|-1,0,1,2,..]     -1 simulate multi-source separately;0 all sources
+                               together;a positive integer runs a single source
  --internalsrc  [0|1]          set to 1 to skip entry search to speedup launch
  --trajstokes   [0|1]          set to 1 to save Stokes IQUV in trajectory data
- --maxvoidstep  [1000|int]     maximum distance (in voxel unit) of a photon that
+ --maxvoidstep  [1000|int]     max distance (in voxel unit) of a photon that
                                can travel before entering the domain, if 
                                launched outside (i.e. a widefield source)
  --maxjumpdebug [10000000|int] when trajectory is requested (i.e. -D M),
@@ -548,6 +550,8 @@ or (use -N/--net to browse community-contributed mcx simulations at https://neur
        mcx -N
 or (run user-shared mcx simulations, see full list at https://neurojson.org/db/mcx)
        mcx -N aircube60
+or (print in simplified Chinese using -y/--lang)
+       mcx -y zh_CN -Q cube60
 or (use -f - to read piped input file modified by shell text processing utilities)
        mcx -Q cube60 --dumpjson | sed -e 's/pencil/cone/g' | mcx -f -
 or (download/modify simulations from NeuroJSON.io and run with mcx -f)
@@ -986,22 +990,22 @@ The .mch file contains a 256 byte binary header, followed by a 2-D numerical arr
 of dimensions `#savedphoton * #colcount` as recorded in the header.
 ```
 typedef struct MCXHistoryHeader{
-	char magic[4];                 // magic bits= 'M','C','X','H'
-	unsigned int  version;         // version of the mch file format 
-	unsigned int  maxmedia;        // number of media in the simulation 
-	unsigned int  detnum;          // number of detectors in the simulation 
-	unsigned int  colcount;        // how many output files per detected photon 
-	unsigned int  totalphoton;     // how many total photon simulated 
-	unsigned int  detected;        // how many photons are detected (not necessarily all saved) 
-	unsigned int  savedphoton;     // how many detected photons are saved in this file 
-	float unitinmm;                // what is the voxel size of the simulation
-	unsigned int  seedbyte;        // how many bytes per RNG seed
-	float normalizer;              // what is the normalization factor
-	int respin;                    // if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset 
-	unsigned int  srcnum;          // number of sources for simultaneous pattern sources 
-	unsigned int  savedetflag;     // number of sources for simultaneous pattern sources 
+    char magic[4];                 // magic bits= 'M','C','X','H'
+    unsigned int  version;         // version of the mch file format 
+    unsigned int  maxmedia;        // number of media in the simulation 
+    unsigned int  detnum;          // number of detectors in the simulation 
+    unsigned int  colcount;        // how many output files per detected photon 
+    unsigned int  totalphoton;     // how many total photon simulated 
+    unsigned int  detected;        // how many photons are detected (not necessarily all saved) 
+    unsigned int  savedphoton;     // how many detected photons are saved in this file 
+    float unitinmm;                // what is the voxel size of the simulation
+    unsigned int  seedbyte;        // how many bytes per RNG seed
+    float normalizer;              // what is the normalization factor
+    int respin;                    // if positive, repeat count so total photon=totalphoton*respin; if negative, total number is processed in respin subset 
+    unsigned int  srcnum;          // number of sources for simultaneous pattern sources 
+    unsigned int  savedetflag;     // number of sources for simultaneous pattern sources 
     unsigned int  totalsource;     // total source number when multiple sources are defined
-	int reserved[1];               // reserved fields for future extension 
+    int reserved[1];               // reserved fields for future extension 
 } History;
 ```
 When the `-q` flag is set to 1, the detected photon initial seeds are also stored
