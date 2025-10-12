@@ -24,6 +24,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y octave ocl-icd-opencl-dev libpocl2 pocl-opencl-icd
           curl -s -L -O https://mcx.space/nightly/linux64/MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
           unzip -o MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
+          echo "POCL_EXTRA_BUILD_FLAGS=-cl-std=CL1.2" >> $GITHUB_ENV
+          echo "POCL_KERNEL_CACHE=0" >> $GITHUB_ENV
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' && matrix.os != 'macos-14' }}
         run: |
