@@ -46,26 +46,55 @@ MCX v2025.10 is a maintenance release with multiple bug fixes and minor new feat
 recommended to upgrade for all users.
 
 Notable new features include:
-- initial international language support (i18n), including Chinese (zh_CN and zh_TW),
-  French (fr_CA), Spanish (es_MX), Germany (de_DE), Japanese (ja_JP), Korean (ko_KR),
-  Hindi (hi_IN) and Portugues (pt_BR); use `--lang` in the command line or `cfg.lang`
+* initial international language support (i18n), including Chinese (`zh_CN` and `zh_TW`),
+  French (`fr_CA`), Spanish (`es_MX`), Germany (`de_DE`), Japanese (`ja_JP`), Korean (`ko_KR`),
+  Hindi (`hi_IN`) and Portuguese (`pt_BR`); use `--lang` in the command line or `cfg.lang`
   or `cfg['lang']`, or use environment variable `MCX_LANG` to set output language;
-- ported additional mcx utility functions from mcxlab to pmcx, including `cwdiffusion`,
+* ported additional mcx utility functions from mcxlab to pmcx, including `cwdiffusion`,
   `cwfluxdiffusion`, `cwfluencediffusion`, `dcsg1`, `mcxcreate`, `rfreplay`, `rfmusreplay`,
   `loadmc2`, `loadmch`, `loadfile`, `mcx2json`, `json2mcx`, `loadnii`, `preview`,
   `plotshapes`, `plotphotons`, `plotvol`; all new functions are unit-tested
-- make mcx data processing functions in `pmcx` Python module pip-installable for Mac 
+* make mcx data processing functions in `pmcx` Python module pip-installable for Mac 
   users running on Apple silicon. The GPU simulation binary module (`_pmcx`) is not
   supported on Apple silicon as it does not support CUDA.
-- use replay to produce frequency-domain Jacobians - contributed by Paulliina 
+* use replay to produce frequency-domain Jacobians - contributed by Paulliina 
 
 This release also contains a few bug fixes, including
-- ensure time gate can not exceed gcfg->maxgate, fix #242 
-- fix typos in pmcx functions
-- package DLL files in the github action build script for mcxlab
+* ensure time gate can not exceed gcfg->maxgate, fix #242 
+* fix typos in pmcx functions
+* package DLL files in the github action build script for mcxlab
+
+We would like to give our special thank the following contributors
+* @HirviP and @rantahar for their contributions of the new RF-replay feature added in this release (#241, #245)
+* @ShawnSun1031 and @kuilef for the typo fixes
 
 The detailed updates can be found in the below change log
 
+* 2025-10-12 [4d6ca7f] [doc] update README, tag v2025.10
+* 2025-10-12 [66128fd] [ci] fix opencl generic cpu error when testing packages
+* 2025-10-11 [aa62f2b] [pmcx] bump pmcx to 0.6.1
+* 2025-10-10 [d20953c] [inno] installer adds paths for iso2mesh or redbird
+* 2025-10-10 [02f1b75] [ci] update release test actions
+* 2025-10-06 [c285125] [pmcx] bump version to 0.6.0
+* 2025-10-06 [b1bd7a8] [release] update release version to v2025.10
+* 2025-10-05 [334ca2a] [mcxstudio] force enabling cthreads in linux
+* 2025-10-05 [7bd0c04] [mcxstudio] correctly handle _ArrayOrder_=c, fix --lang for mcxcl/mmc
+* 2025-10-01 [e4ed8f0] [feat] use USE_MCXCL>0 to set OpenCL device, negative to set CUDA device
+* 2025-09-30 [da51af2] [bug] fix bug when individually specifying srcid>0 and replaydet>0, #250
+* 2025-09-30 [96a728d] [bug] output 6D array when replaying multi-src w/ srcid=-1,replaydet=-1, fix #250
+* 2025-09-30 [037366e] [feat] multiple source replay
+* 2025-09-28 [76f8b4d] [i18n] use --lang=ID instead of --lang
+* 2025-09-28 [c9b1439] [i18n] set default lang to en
+* 2025-09-28 [5adace3] [i18n] set installer language tag
+* 2025-09-28 [9fa04fd] [i18n] use locale folder that is already at root
+* 2025-09-28 [66afb5c] [i18n] installer also setup locale files
+* 2025-09-28 [4bab8ba] [typo] fix typo
+* 2025-09-28 [975329c] [i18n] support French, German, Spanish, Italian, Japanese, Korean, Portuguese and Chinese
+* 2025-09-28 [dbca123] [i18n] add GUI translations
+* 2025-09-27 [fda913a] [bug] support more than 256 media count in output JSON file
+* 2025-09-27 [2489d22] [inno] remove unsupported language
+* 2025-09-27 [0756947] [inno] enable language selection
+* 2025-09-26 [3d67580] [lang] support lang in the inno installer
 * 2025-09-25 [e230514] [bug] when srctype is unknown, the program can run successfully
 * 2025-08-26 [84adbfc] [pmcx] bump version to 0.5.1, some fixes after new unit tests
 * 2025-08-26 [e12bbef]*[pmcx] add additional unit tests
@@ -291,7 +320,7 @@ If you had an open MATLAB session, you must close MATLAB first, and
 run the below commands (if MATLAB is open, you will see `rmmod: ERROR: Module nvidia_uvm is in use`)
 
 ```
-sudo rmmod /dev/nvidia-uvm
+sudo rmmod nvidia-uvm
 sudo modprobe nvidia-uvm
 ```
 
