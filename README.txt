@@ -20,7 +20,7 @@ recommended to upgrade for all users.
 
 Notable new features include:
 * initial international language support (i18n), including Chinese (`zh_CN` and `zh_TW`),\
-  French (`fr_CA`), Spanish (`es_MX`), Germany (`de_DE`), Japanese (`ja_JP`), Korean (`ko_KR`),\
+  French (`fr_CA`), Spanish (`es_MX`), German (`de_DE`), Japanese (`ja_JP`), Korean (`ko_KR`),\
   Hindi (`hi_IN`) and Portugues (`pt_BR`); use `--lang` in the command line or `cfg.lang`\
   or `cfg['lang']`, or use environment variable `MCX_LANG` to set output language;
 * ported additional mcx utility functions from mcxlab to pmcx, including `cwdiffusion`,\
@@ -30,7 +30,7 @@ Notable new features include:
 * make mcx data processing functions in `pmcx` Python module pip-installable for Mac \
   users running on Apple silicon. The GPU simulation binary module (`_pmcx`) is not\
   supported on Apple silicon as it does not support CUDA.
-* use replay to produce frequency-domain Jacobians - contributed by Paulliina 
+* use replay to produce frequency-domain Jacobians - contributed by Paulliina Hirvi and Jarno Rantaharju
 
 This release also contains a few bug fixes, including
 * ensure time gate can not exceed gcfg->maxgate, fix #242 
