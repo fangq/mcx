@@ -530,23 +530,20 @@ def mcxlab(*args):
 
     useopencl = defaultocl
 
-    try:
-        if sys.platform.startswith("win"):
-            import os, sparse_numba, ctypes
-
-            ctypes.CDLL(
-                os.path.join(
-                    os.path.dirname(sparse_numba.__file__),
-                    "vendor",
-                    "superlu",
-                    "bin",
-                    "libgomp-1.dll",
-                )
+    if useopencl == 0:
+        try:
+            from _pmcx import gpuinfo, run, version
+        except ImportError:
+            print(
+                "the pmcx binary extension (_pmcx) is not compiled! please compile first"
             )
-
-        from _pmcx import gpuinfo, run, version
-    except ImportError:  # pragma: no cover
-        print("the pmcx binary extension (_pmcx) is not compiled! please compile first")
+    else:
+        try:
+            from _pmcxcl import gpuinfo, run, version
+        except ImportError:
+            raise ImportError(
+                'To call OpenCL based MCX, one must first run "pip install pmcxcl" to install pmcxcl'
+            )
 
     if len(args) == 1 and isinstance(args[0], str):
         if args[0] == "gpuinfo":
@@ -621,17 +618,7 @@ def mcxlab(*args):
                 args[0]["savedetflag"] = "dspmxvw"
                 args[0]["savedetflag"][detfields == 0] = []
 
-    if useopencl == 0:
-        varargout = run(args[0])
-    else:
-        try:
-            import _pmcxcl
-
-            varargout = _pmcxcl.run(args[0])
-        except ImportError:
-            raise ImportError(
-                'To call OpenCL based MCX, one must first run "pip install pmcxcl" to install pmcxcl'
-            )
+    varargout = run(args[0])
 
     if len(args) == 0:
         return

@@ -72,7 +72,7 @@ from .plot import (
 
 from .bench import bench
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 __all__ = (
     "gpuinfo",
