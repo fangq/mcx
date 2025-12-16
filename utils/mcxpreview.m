@@ -110,9 +110,19 @@ for i = 1:len
         end
         etypes = unique(elemtype);
         no = cfg(i).node * voxelsize;
+        mindim = min(max(no) - min(no));
         hseg = zeros(length(etypes), 1);
         for id = 1:size(etypes, 1)
             hseg(id) = plotmesh(no, [], cfg(i).elem(elemtype == etypes(id), :), 'facealpha', 0.3, 'linestyle', 'none', 'facecolor', surfcolors(etypes(id) + 1, :), varargin{:});
+        end
+        if (isfield(cfg(i), 'noderoi'))
+            [xsp, ysp, zsp] = sphere;
+            idx = find(cfg(i).noderoi);
+            for id = 1:length(idx)
+                hseg(end + id) = surf(xsp * cfg(i).noderoi(idx(id)) + cfg(i).node(idx(id), 1), ...
+                                      ysp * cfg(i).noderoi(idx(id)) + cfg(i).node(idx(id), 2), ...
+                                      zsp * cfg(i).noderoi(idx(id)) + cfg(i).node(idx(id), 3), 'linestyle', 'none', 'facecolor', 'm', 'facealpha', 0.5);
+            end
         end
     end
 
@@ -132,7 +142,11 @@ for i = 1:len
     cfg(i).srcpos = cfg(i).srcpos;
     srcpos = cfg(i).srcpos * voxelsize;
     hsrc = plotmesh(srcpos, 'r*');
-    srcvec = cfg(i).srcdir * 10 * voxelsize;
+    if (exist('mindim', 'var'))
+        srcvec = cfg(i).srcdir * mindim * 0.05;
+    else
+        srcvec = cfg(i).srcdir * 10 * voxelsize;
+    end
     headsize = 1e2;
     if (isoctavemesh)
         headsize = 0.5;
