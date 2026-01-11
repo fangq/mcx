@@ -1002,10 +1002,10 @@ __device__ inline void rotatevector2d(MCXdir* v, float stheta, float ctheta) {
  * This function updates the direction vector after a 3D scattering event
  *
  * @param[in,out] v: the direction vector of the photon
- * @param[in] stheta: the sine of the azimuthal angle
- * @param[in] ctheta: the cosine of the azimuthal angle
- * @param[in] sphi: the sine of the zenith angle
- * @param[in] cphi: the cosine of the zenith angle
+ * @param[in] stheta: the sine of the zenith/pole angle
+ * @param[in] ctheta: the cosine of the zenith/pole angle
+ * @param[in] sphi: the sine of the azimuthal angle
+ * @param[in] cphi: the cosine of the azimuthal angle
  */
 
 __device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float sphi, float cphi) {
@@ -1028,6 +1028,30 @@ __device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float
     v->z *= tmp0;
 
     GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
+}
+
+/**
+ * @brief Rotate photon direction around an axis (perpendicular case)
+ *
+ * Assumes photon_dir is perpendicular to axis (dot product = 0)
+ *
+ * @param[in,out] photon_dir: the photon direction to rotate (perpendicular to axis)
+ * @param[in] axis: normalized rotation axis
+ * @param[in] stheta: sine of rotation angle
+ * @param[in] ctheta: cosine of rotation angle
+ */
+__device__ inline void rotate_perpendicular_vector(MCXdir* photon_dir, const float3* axis, float stheta, float ctheta) {
+    // Compute cross product: axis × photon_dir
+    float3 cross;
+    cross.x = axis->y * photon_dir->z - axis->z * photon_dir->y;
+    cross.y = axis->z * photon_dir->x - axis->x * photon_dir->z;
+    cross.z = axis->x * photon_dir->y - axis->y * photon_dir->x;
+
+    // Apply Rodrigues' formula (simplified for perpendicular case):
+    // v_rot = v * cos(theta) + (axis × v) * sin(theta)
+    photon_dir->x = photon_dir->x * ctheta + cross.x * stheta;
+    photon_dir->y = photon_dir->y * ctheta + cross.y * stheta;
+    photon_dir->z = photon_dir->z * ctheta + cross.z * stheta;
 }
 
 /**
@@ -1494,10 +1518,22 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (gcfg->srctype == MCX_SRC_LINE) {
                         float sphi, cphi;
                         r = rsqrtf(launchsrc->param1.x * launchsrc->param1.x + launchsrc->param1.y * launchsrc->param1.y + launchsrc->param1.z * launchsrc->param1.z);
-                        *((float4*)v) = float4(launchsrc->param1.x * r, launchsrc->param1.y * r, launchsrc->param1.z * r, v->nscat);
-                        r = TWO_PI * rand_uniform01(t); // phi
-                        sincosf(r, &sphi, &cphi); // y=sin(phi), x=cos(phi)
-                        rotatevector(v, 1.f, 0.f, sphi, cphi);
+
+                        if (launchsrc->param2.x > 0.f) {
+                            *rv = float3(launchsrc->param1.x * r, launchsrc->param1.y * r, launchsrc->param1.z * r);
+                            r = v->x * rv->x + v->y * rv->y + v->z * rv->z;
+                            *((float4*)v) = float4(v->x - r * rv->x, v->y - r * rv->y, v->z - r * rv->z, v->nscat);
+                            r = rsqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+                            *((float4*)v) = float4(v->x * r, v->y * r, v->z * r, v->nscat);
+                            r = launchsrc->param2.x * (2.f * rand_uniform01(t) - 1.f); // azimuthal angle
+                            sincosf(r, &sphi, &cphi); // y=sin(phi), x=cos(phi)
+                            rotate_perpendicular_vector(v, rv, sphi, cphi);
+                        } else {
+                            *((float4*)v) = float4(launchsrc->param1.x * r, launchsrc->param1.y * r, launchsrc->param1.z * r, v->nscat);
+                            r = TWO_PI * rand_uniform01(t); // azimuthal angle
+                            sincosf(r, &sphi, &cphi); // y=sin(phi), x=cos(phi)
+                            rotatevector(v, 1.f, 0.f, sphi, cphi);
+                        }
                     } else if (launchsrc->param2.x > 0.f || launchsrc->param2.y > 0.f) {
                         float sphi, cphi;
                         r = TWO_PI * rand_uniform01(t);
@@ -1519,6 +1555,15 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                         v->x *= r;
                         v->y *= r;
                         v->z *= r;
+                    }
+
+
+                    *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
+
+                    if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
+                        *mediaid = 0;
+                    } else {
+                        *mediaid = media[*idx1d];
                     }
 
                     *rv = float3(launchsrc->pos.x + (launchsrc->param1.x) * 0.5f,

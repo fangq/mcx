@@ -232,7 +232,14 @@ function varargout = mcxlab(varargin)
 %                      'zgaussian' - an angular gaussian beam, srcparam1(1) specifies the variance in the zenith angle
 %                      'line' - a line source, emitting from the line segment between
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating
-%                               uniformly in the perpendicular direction
+%                               uniformly in the perpendicular direction;
+%                               when cfg.srcparam2.x is non-zero, it
+%                               creates a wedge-source (or fan-beam), where
+%                               the launch directions are still
+%                               perpendicular to the source line segment,
+%                               but rotated by the wedge half-angle
+%                               cfg.srcparam2.x (in radian) from the plane
+%                               spanned by cfg.srcdir and the source line
 %                      'slit' [*] - a colimated slit beam emitting from the line segment between
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial
 %                               dir specified by cfg.srcdir; when user defines positive values for srcparam2.x or .y,
