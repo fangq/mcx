@@ -1926,9 +1926,8 @@ void mcx_prepdomain(char* filename, Config* cfg) {
         }
     }
 
-    mcx_preprocess(cfg);
-
     if (cfg->isdumpjson == 3) {
+        mcx_preprocess(cfg);
         mcx_savejdata(cfg->jsonfile, cfg);
         exit(0);
     }
@@ -5310,6 +5309,8 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                 MCX_ERROR(-1, T_("invalid json fragment following --json"));
             }
         }
+
+        mcx_preprocess(cfg);
     }
 
     if (cfg->isdumpjson == 1) {
