@@ -27,6 +27,8 @@ cfg.prop = [0.0   0.0 1.0  1.0    % background (air, void)
             0.005 1.0 0.89 1.37]; % spherical inclusion
 
 % time-domain simulation parameters
+cfg.srctype='disk';
+cfg.srcparam1=[3,0,0,0];
 cfg.tstart = 0;
 cfg.tend = 5e-9;
 cfg.tstep = 5e-10;

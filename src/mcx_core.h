@@ -60,14 +60,24 @@ extern "C" {
 #define GPUDEBUG(x)                             /**< printing commands are ignored if MCX_DEBUG macro is not defined */
 #endif
 
-typedef float4 MCXpos; /**< x,y,z: position of the photon, w: weight of the photon*/
 
-typedef struct __align__(16) SplitVoxel {
-    unsigned char issplit; /**< flag if a photon is inside a mixed voxel*/
-    unsigned char lower;   /**< label of the tissue type at -nv direction (lower region)*/
-    unsigned char upper;   /**< label of the tissue type at +nv direction (upper region)*/
-    unsigned char isupper; /**< flag if a photon is in the upper region*/
-} SVox;
+/**
+ * Packed split-voxel flags stored as a single unsigned int for efficient GPU register use.
+ * bits [0-7]: lower label, [8-15]: upper label, [16]: issplit, [17]: isupper
+ */
+#define SV_LOWER(sv)    ((unsigned char)((sv) & 0xFF))
+#define SV_UPPER(sv)    ((unsigned char)(((sv) >> 8) & 0xFF))
+#define SV_ISSPLIT(sv)  (((sv) >> 16) & 1u)
+#define SV_ISUPPER(sv)  (((sv) >> 17) & 1u)
+#define SV_SET_LOWER(sv, v)    ((sv) = ((sv) & ~0xFFu) | ((unsigned int)(v) & 0xFF))
+#define SV_SET_UPPER(sv, v)    ((sv) = ((sv) & ~0xFF00u) | (((unsigned int)(v) & 0xFF) << 8))
+#define SV_SET_ISSPLIT(sv, v)  ((sv) = ((sv) & ~0x10000u) | (((unsigned int)(!!(v))) << 16))
+#define SV_SET_ISUPPER(sv, v)  ((sv) = ((sv) & ~0x20000u) | (((unsigned int)(!!(v))) << 17))
+#define SV_FLIP_ISUPPER(sv)    ((sv) ^= 0x20000u)
+#define SV_CLEAR(sv)           ((sv) = 0u)
+#define SV_CURLABEL(sv) (SV_ISUPPER(sv) ? SV_UPPER(sv) : SV_LOWER(sv))
+
+typedef float4 MCXpos; /**< x,y,z: position of the photon, w: weight of the photon*/
 
 typedef struct __align__(16) StokesVector {
     float i; /**< total light intensity: IH + IV */
@@ -76,10 +86,10 @@ typedef struct __align__(16) StokesVector {
     float v; /**< IR - IL */
 } Stokes;
 
-typedef struct __align__(16) MCXSplit {
-    SVox   sv; /**< indicator of tissue type under split-voxel MC (SVMC) mode*/
-    float3 rp; /**< reference point of the intra-voxel interface*/
+typedef struct MCXSplit {
     float3 nv; /**< normal vector of the intra-voxel interafece (direction: lower -> upper)*/
+    float  pd; /**< plane_d = dot(rp, nv), signed distance from origin to plane along nv*/
+    unsigned int sv; /**< packed split-voxel flags: [0-7]=lower, [8-15]=upper, [16]=issplit, [17]=isupper */
 } MCXsp;
 
 typedef struct  __align__(16) MCXDir {
