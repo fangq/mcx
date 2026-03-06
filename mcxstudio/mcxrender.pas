@@ -17,7 +17,7 @@ uses
   SynHighlighterJScript, synhighlighterunixshellscript, GLBehaviours, GLTexture,
   GLVectorGeometry, GLLCLViewer, GLGeomObjects, GLCoordinates, GLCrossPlatform,
   GLGraphics, GLMaterial, GLColor, GLState, GLSkydome, GLMesh, Types, strutils,
-  fpjson, jsonparser, GLWindowsFont, GLBitmapFont, GLGraph, OpenGLTokens;
+  fpjson, jsonparser, LCLType, GLWindowsFont, GLBitmapFont, GLGraph, OpenGLTokens;
 
 type
 
@@ -32,6 +32,7 @@ type
     acExit: TAction;
     acLoadJSON: TAction;
     acSaveJSON: TAction;
+    btTogglePersp: TToolButton;
     btBackground: TColorButton;
     glCanvas: TGLSceneViewer;
     glDomain: TGLCube;
@@ -82,6 +83,8 @@ type
     procedure FormShow(Sender: TObject);
     procedure glCanvasMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure glCanvasMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure glCanvasMouseMove(Sender: TObject; Shift: TShiftState; X,
       Y: Integer);
     procedure glCanvasMouseWheel(Sender: TObject; Shift: TShiftState;
@@ -107,11 +110,32 @@ type
     procedure LoadJSONShape(shapejson: AnsiString);
     procedure Splitter1Moved(Sender: TObject);
     procedure DrawAxis(Sender : TObject);
+    procedure SelectObject(obj: TGLBaseSceneObject);
+    procedure DeselectObject;
+    procedure CreateWireOverlay(src: TGLBaseSceneObject);
+    procedure CreateAxisGizmo(src: TGLBaseSceneObject);
+    procedure UpdateGizmoPosition;
+    procedure DeleteSelectedObject;
+    procedure UpdateJSONFromScene;
+    procedure glCanvasKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    function PickObjectAt(mx, my: integer): TGLBaseSceneObject;
+    function PickAxisAt(mx, my: integer): integer;
+    procedure acTogglePerspExecute(Sender: TObject);
   private
     mdx, mdy : Integer;
     editorwidth: integer;
     JSONdata : TJSONData;
     colormap: array [0..1023,0..2] of extended;
+    FSelectedObj: TGLBaseSceneObject;
+    FWireOverlay: TGLBaseSceneObject;
+    FAxisGizmo: array[0..2] of TGLArrowLine;
+    FDragging: Boolean;
+    FResizing: Boolean;
+    FClickedOnObj: Boolean;
+    FDragAxis: Integer;  { -1=none, 0=X, 1=Y, 2=Z }
+    FLastPickX, FLastPickY: Integer;
+    FPickCycleIdx: Integer;
+    acTogglePersp: TAction;
   public
 
   end;
@@ -128,13 +152,27 @@ const
 
 procedure TfmDomain.glCanvasMouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+var
+  f: single;
 begin
-  glCamera.AdjustDistanceToTarget(Power(1.1, WheelDelta/1200.0));
+  f := Power(1.1, WheelDelta/200.0);
+  if glCamera.CameraStyle = csOrthogonal then begin
+    glCamera.DepthOfView := glCamera.DepthOfView / f;
+    glCamera.FocalLength := glCamera.FocalLength * f;
+  end else begin
+    glCamera.AdjustDistanceToTarget(f);
+  end;
 end;
 
 procedure TfmDomain.LoadJSONShape(shapejson: AnsiString);
 begin
     FreeAndNil(JSONData);
+    FWireOverlay := nil;
+    FSelectedObj := nil;
+    FAxisGizmo[0] := nil;
+    FAxisGizmo[1] := nil;
+    FAxisGizmo[2] := nil;
+    FDragAxis := -1;
     glSpace.DeleteChildren;
     glCamera.TargetObject:=glDomain;
     JSONData:=GetJSON(shapejson);
@@ -162,9 +200,6 @@ begin
      glDomain.DeleteChildren; // grid object reset the domain
 
      objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
-
-     //obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
 
      data:=TJSONArray(jobj.FindPath('Size'));
      glDomain.CubeWidth:=data.Items[0].AsFloat;
@@ -227,9 +262,6 @@ begin
         exit;
      end;
 
-     //obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-
      data:=TJSONArray(jobj);
 
      obj:=TGLPoints.Create(Self);
@@ -261,8 +293,10 @@ begin
 
      objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
      obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     obj.Material.FrontProperties.Specular.SetColor(0.8,0.8,0.8,1.0);
+     obj.Material.FrontProperties.Shininess:=64;
      obj.Material.BlendingMode:=bmTransparency;
+     obj.Material.DepthProperties.DepthWrite := False;
 
      data:=TJSONArray(jobj.FindPath('Size'));
      obj.CubeWidth:=data.Items[0].AsFloat;
@@ -274,6 +308,7 @@ begin
      obj.Position.Y:=data.Items[1].AsFloat+obj.CubeDepth*0.5+Integer(isbox)*0.5;
      obj.Position.Z:=data.Items[2].AsFloat+obj.CubeHeight*0.5+Integer(isbox)*0.5;
 
+     obj.TagFloat := glSpace.Count;  { track index for JSON sync }
      glSpace.AddChild(obj);
 end;
 
@@ -295,8 +330,10 @@ begin
 
      objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
      obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     obj.Material.FrontProperties.Specular.SetColor(0.8,0.8,0.8,1.0);
+     obj.Material.FrontProperties.Shininess:=64;
      obj.Material.BlendingMode:=bmTransparency;
+     obj.Material.DepthProperties.DepthWrite := False;
 
      obj.Radius:=jobj.FindPath('R').AsFloat;
 
@@ -306,6 +343,7 @@ begin
      obj.Position.Z:=data.Items[2].AsFloat;
      obj.Slices:=64;
 
+     obj.TagFloat := glSpace.Count;
      glSpace.AddChild(obj);
 end;
 
@@ -329,8 +367,10 @@ begin
 
      objtag:=jobj.FindPath('Tag').AsInteger mod 1024;
      obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-     //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+     obj.Material.FrontProperties.Specular.SetColor(0.8,0.8,0.8,1.0);
+     obj.Material.FrontProperties.Shininess:=64;
      obj.Material.BlendingMode:=bmTransparency;
+     obj.Material.DepthProperties.DepthWrite := False;
 
      data:=TJSONArray(jobj.FindPath('C0'));
      obj.Position.X:=data.Items[0].AsFloat;
@@ -355,8 +395,10 @@ begin
 
      obj.Slices:=64;
 
+     obj.TagFloat := glSpace.Count;
      glSpace.AddChild(obj);
 end;
+
 procedure TfmDomain.AddLayers(jobj: TJSONData; dim: integer);
 var
      objtag, i: integer;
@@ -387,8 +429,10 @@ begin
        objtag:=elem.Items[2].AsInteger mod 1024;
 
        obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-       //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+       obj.Material.FrontProperties.Specular.SetColor(0.8,0.8,0.8,1.0);
+       obj.Material.FrontProperties.Shininess:=64;
        obj.Material.BlendingMode:=bmTransparency;
+       obj.Material.DepthProperties.DepthWrite := False;
 
        data:=TJSONArray(jobj);
 
@@ -458,8 +502,10 @@ begin
        end;
 
        obj.Material.FrontProperties.Diffuse.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
-       //obj.Material.FrontProperties.Emission.SetColor(colormap[objtag][0],colormap[objtag][1],colormap[objtag][2],0.5);
+       obj.Material.FrontProperties.Specular.SetColor(0.8,0.8,0.8,1.0);
+       obj.Material.FrontProperties.Shininess:=64;
        obj.Material.BlendingMode:=bmTransparency;
+       obj.Material.DepthProperties.DepthWrite := False;
 
        obj.Up.SetVector(0,0,1);
        obj.Direction.SetVector(0,1,0);
@@ -538,6 +584,7 @@ begin
 
      glSpace.AddChild(obj);
 end;
+
 procedure TfmDomain.AddDiskSource(jobj: TJSONData);
 var
      objtag: integer;
@@ -560,7 +607,6 @@ begin
      obj.Position.Z:=data.Items[2].AsFloat;
      obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,1);
      obj.Material.BackProperties.Diffuse.SetColor(1.0,1.0,0.0,1);
-     //obj.NormalDirection:=ndInside;
 
      data:=TJSONArray(jobj.FindPath('Param1'));
      obj.OuterRadius:=data.Items[0].AsFloat;
@@ -589,6 +635,7 @@ begin
 
      obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,0.5);
      obj.Material.BlendingMode:=bmTransparency;
+     obj.Material.DepthProperties.DepthWrite := False;
 
      data:=TJSONArray(jobj.FindPath('Param1'));
      obj.CubeWidth:=data.Items[0].AsFloat;
@@ -648,6 +695,7 @@ begin
 
      obj.Material.FrontProperties.Diffuse.SetColor(1.0,1.0,0.0,0.5);
      obj.Material.BlendingMode:=bmTransparency;
+     obj.Material.DepthProperties.DepthWrite := False;
 
      param:=TJSONArray(jobj.FindPath('Param1'));
      obj.Height:=20;
@@ -712,12 +760,12 @@ begin
      if(jobj.FindPath('Type') <> nil) then begin
          Case AnsiIndexStr(jobj.FindPath('Type').AsString, ['gaussian','disk','zgaussian', 'planar', 'pattern', 'fourier',
             'fourierx', 'fourierx2d','pattern3d','line','slit','cone']) of
-              0..2:  AddDiskSource(jobj);      //Origin
-              3..5:  AddPlanarSource(jobj, false);    //Planar Source
-              6..7:  AddPlanarSource(jobj, true);    //Planar Source
-              8:     AddPattern3DSource(jobj); //Pattern3D source
-              9..10: AddLineSource(jobj); //Line and slit sources
-              11:    AddConeSource(jobj); //Cone source
+              0..2:  AddDiskSource(jobj);
+              3..5:  AddPlanarSource(jobj, false);
+              6..7:  AddPlanarSource(jobj, true);
+              8:     AddPattern3DSource(jobj);
+              9..10: AddLineSource(jobj);
+              11:    AddConeSource(jobj);
            else
            end;
      end;
@@ -773,6 +821,393 @@ begin
     end;
 end;
 
+{ === Selection, picking, wireframe overlay, delete === }
+
+function TfmDomain.PickObjectAt(mx, my: integer): TGLBaseSceneObject;
+var
+  objWorldPos: TVector;
+  i, hitCount: integer;
+  child: TGLBaseSceneObject;
+  radius, halfW, halfD, halfH, t: single;
+  hits: array[0..63] of record
+    obj: TGLBaseSceneObject;
+    dist: single;
+  end;
+  tmp: TGLBaseSceneObject;
+  tmpDist: single;
+  j: integer;
+  objScreen, edgeScreen: TAffineVector;
+  camRight: TVector;
+  edgeWorld: TAffineVector;
+  sx, sy, dx2, dy2, scrRadius: single;
+begin
+  Result := nil;
+  hitCount := 0;
+
+  for i := 0 to glSpace.Count - 1 do begin
+    child := glSpace.Children[i];
+    if child = FWireOverlay then continue;
+    if not (child is TGLCustomSceneObject) then continue;
+    { skip axis gizmo arrows }
+    if (child = FAxisGizmo[0]) or (child = FAxisGizmo[1]) or (child = FAxisGizmo[2]) then continue;
+
+    objWorldPos := child.AbsolutePosition;
+
+    { determine bounding radius }
+    radius := 0;
+    if child is TGLSphere then
+      radius := TGLSphere(child).Radius
+    else if child is TGLCylinder then begin
+      radius := TGLCylinder(child).BottomRadius;
+      if TGLCylinder(child).Height * 0.5 > radius then
+        radius := TGLCylinder(child).Height * 0.5;
+    end else if child is TGLCube then begin
+      halfW := TGLCube(child).CubeWidth * 0.5;
+      halfD := TGLCube(child).CubeDepth * 0.5;
+      halfH := TGLCube(child).CubeHeight * 0.5;
+      radius := sqrt(halfW*halfW + halfD*halfD + halfH*halfH);
+    end else
+      continue;
+
+    { project center to screen }
+    objScreen := glCanvas.Buffer.WorldToScreen(
+      AffineVectorMake(objWorldPos.V[0], objWorldPos.V[1], objWorldPos.V[2]));
+
+    { skip behind camera }
+    if (objScreen.V[2] < 0) or (objScreen.V[2] > 1) then continue;
+
+    { convert GL coords (origin bottom-left) to widget coords (origin top-left) }
+    sx := objScreen.V[0];
+    sy := glCanvas.Height - objScreen.V[1];
+
+    { project edge point to get pixel radius }
+    camRight := glCamera.AbsoluteRight;
+    edgeWorld := AffineVectorMake(
+      objWorldPos.V[0] + camRight.V[0] * radius,
+      objWorldPos.V[1] + camRight.V[1] * radius,
+      objWorldPos.V[2] + camRight.V[2] * radius);
+    edgeScreen := glCanvas.Buffer.WorldToScreen(edgeWorld);
+
+    scrRadius := sqrt(
+      (edgeScreen.V[0] - objScreen.V[0]) * (edgeScreen.V[0] - objScreen.V[0]) +
+      (edgeScreen.V[1] - objScreen.V[1]) * (edgeScreen.V[1] - objScreen.V[1]));
+    if scrRadius < 5 then scrRadius := 5;
+
+    dx2 := mx - sx;
+    dy2 := my - sy;
+    if (dx2*dx2 + dy2*dy2) <= (scrRadius * scrRadius) then begin
+      t := VectorLength(VectorSubtract(objWorldPos, glCamera.AbsolutePosition));
+      if hitCount < 64 then begin
+        hits[hitCount].obj := child;
+        hits[hitCount].dist := t;
+        Inc(hitCount);
+      end;
+    end;
+  end;
+
+  if hitCount = 0 then exit;
+
+  { sort by distance, nearest first }
+  for i := 0 to hitCount - 2 do
+    for j := i + 1 to hitCount - 1 do
+      if hits[j].dist < hits[i].dist then begin
+        tmp := hits[i].obj; tmpDist := hits[i].dist;
+        hits[i].obj := hits[j].obj; hits[i].dist := hits[j].dist;
+        hits[j].obj := tmp; hits[j].dist := tmpDist;
+      end;
+
+  { cycle through hits on repeated clicks at same position }
+  if (abs(mx - FLastPickX) < 3) and (abs(my - FLastPickY) < 3) then
+    FPickCycleIdx := (FPickCycleIdx + 1) mod hitCount
+  else
+    FPickCycleIdx := 0;
+
+  FLastPickX := mx;
+  FLastPickY := my;
+  Result := hits[FPickCycleIdx].obj;
+end;
+
+procedure TfmDomain.SelectObject(obj: TGLBaseSceneObject);
+begin
+     if obj = FSelectedObj then exit;
+     DeselectObject;
+     FSelectedObj := obj;
+     CreateWireOverlay(obj);
+     CreateAxisGizmo(obj);
+     Caption := 'MCX Domain Renderer - Selected: ' + obj.ClassName;
+end;
+
+procedure TfmDomain.DeselectObject;
+var
+     i: integer;
+begin
+     if FWireOverlay <> nil then begin
+        FWireOverlay.Free;
+        FWireOverlay := nil;
+     end;
+     for i := 0 to 2 do begin
+        if FAxisGizmo[i] <> nil then begin
+           FAxisGizmo[i].Free;
+           FAxisGizmo[i] := nil;
+        end;
+     end;
+     FSelectedObj := nil;
+     FDragging := False;
+     FResizing := False;
+     FDragAxis := -1;
+     Caption := 'MCX Domain Renderer';
+end;
+
+procedure TfmDomain.CreateWireOverlay(src: TGLBaseSceneObject);
+var
+     wire: TGLSceneObject;
+begin
+     if FWireOverlay <> nil then begin
+        FWireOverlay.Free;
+        FWireOverlay := nil;
+     end;
+
+     if src is TGLSphere then begin
+        wire := TGLSphere.Create(Self);
+        TGLSphere(wire).Radius := TGLSphere(src).Radius * 1.01;
+        TGLSphere(wire).Slices := TGLSphere(src).Slices;
+        TGLSphere(wire).Stacks := TGLSphere(src).Stacks;
+     end else if src is TGLCylinder then begin
+        wire := TGLCylinder.Create(Self);
+        TGLCylinder(wire).TopRadius := TGLCylinder(src).TopRadius * 1.01;
+        TGLCylinder(wire).BottomRadius := TGLCylinder(src).BottomRadius * 1.01;
+        TGLCylinder(wire).Height := TGLCylinder(src).Height;
+        TGLCylinder(wire).Slices := TGLCylinder(src).Slices;
+        TGLCylinder(wire).Alignment := TGLCylinder(src).Alignment;
+     end else if src is TGLCube then begin
+        wire := TGLCube.Create(Self);
+        TGLCube(wire).CubeWidth := TGLCube(src).CubeWidth * 1.01;
+        TGLCube(wire).CubeDepth := TGLCube(src).CubeDepth * 1.01;
+        TGLCube(wire).CubeHeight := TGLCube(src).CubeHeight * 1.01;
+     end else
+        exit;
+
+     wire.Position.AsVector := src.Position.AsVector;
+     wire.Up.AsVector := src.Up.AsVector;
+     wire.Direction.AsVector := src.Direction.AsVector;
+     wire.Material.FrontProperties.Diffuse.SetColor(1.0, 1.0, 0.0, 1.0);
+     wire.Material.FrontProperties.Emission.SetColor(1.0, 1.0, 0.0, 1.0);
+     wire.Material.PolygonMode := pmLines;
+     wire.Material.FrontProperties.Ambient.SetColor(1.0, 1.0, 0.0, 1.0);
+     glSpace.AddChild(wire);
+     FWireOverlay := wire;
+end;
+
+procedure TfmDomain.CreateAxisGizmo(src: TGLBaseSceneObject);
+const
+     ArrowLen = 8;
+     ArrowRad = 0.3;
+     HeadRad = 1.0;
+     HeadLen = 2.0;
+     Colors: array[0..2,0..2] of single = (
+       (1.0, 0.0, 0.0),   { X = Red }
+       (0.0, 1.0, 0.0),   { Y = Green }
+       (0.0, 0.0, 1.0)    { Z = Blue }
+     );
+var
+     i: integer;
+     a: TGLArrowLine;
+begin
+     for i := 0 to 2 do begin
+        if FAxisGizmo[i] <> nil then begin
+           FAxisGizmo[i].Free;
+           FAxisGizmo[i] := nil;
+        end;
+
+        a := TGLArrowLine.Create(Self);
+        a.Position.AsVector := src.Position.AsVector;
+        a.Height := ArrowLen;
+        a.TopRadius := ArrowRad;
+        a.BottomRadius := ArrowRad;
+        a.TopArrowHeadRadius := HeadRad;
+        a.TopArrowHeadHeight := HeadLen;
+        a.BottomArrowHeadHeight := 0;
+        a.Material.FrontProperties.Diffuse.SetColor(Colors[i][0], Colors[i][1], Colors[i][2], 1.0);
+        a.Material.FrontProperties.Emission.SetColor(Colors[i][0]*0.3, Colors[i][1]*0.3, Colors[i][2]*0.3, 1.0);
+
+        case i of
+          0: begin { X axis }
+            a.Direction.SetVector(1, 0, 0);
+            a.Up.SetVector(0, 0, 1);
+            a.Position.X := a.Position.X + ArrowLen * 0.5;
+          end;
+          1: begin { Y axis }
+            a.Direction.SetVector(0, 1, 0);
+            a.Up.SetVector(0, 0, 1);
+            a.Position.Y := a.Position.Y + ArrowLen * 0.5;
+          end;
+          2: begin { Z axis }
+            a.Direction.SetVector(0, 0, 1);
+            a.Up.SetVector(1, 0, 0);
+            a.Position.Z := a.Position.Z + ArrowLen * 0.5;
+          end;
+        end;
+
+        glSpace.AddChild(a);
+        FAxisGizmo[i] := a;
+     end;
+end;
+
+procedure TfmDomain.UpdateGizmoPosition;
+const
+     ArrowLen = 8;
+var
+     i: integer;
+begin
+     if FSelectedObj = nil then exit;
+     for i := 0 to 2 do begin
+        if FAxisGizmo[i] = nil then continue;
+        FAxisGizmo[i].Position.AsVector := FSelectedObj.Position.AsVector;
+        case i of
+          0: FAxisGizmo[i].Position.X := FAxisGizmo[i].Position.X + ArrowLen * 0.5;
+          1: FAxisGizmo[i].Position.Y := FAxisGizmo[i].Position.Y + ArrowLen * 0.5;
+          2: FAxisGizmo[i].Position.Z := FAxisGizmo[i].Position.Z + ArrowLen * 0.5;
+        end;
+     end;
+end;
+
+function TfmDomain.PickAxisAt(mx, my: integer): integer;
+var
+     i: integer;
+     arrowPos: TVector;
+     arrowScreen: TAffineVector;
+     sx, sy, dx2, dy2, dist, bestDist: single;
+begin
+     Result := -1;
+     bestDist := 900;
+
+     for i := 0 to 2 do begin
+        if FAxisGizmo[i] = nil then continue;
+        arrowPos := FAxisGizmo[i].AbsolutePosition;
+        arrowScreen := glCanvas.Buffer.WorldToScreen(
+          AffineVectorMake(arrowPos.V[0], arrowPos.V[1], arrowPos.V[2]));
+
+        if (arrowScreen.V[2] < 0) or (arrowScreen.V[2] > 1) then continue;
+
+        sx := arrowScreen.V[0];
+        sy := glCanvas.Height - arrowScreen.V[1];
+        dx2 := mx - sx;
+        dy2 := my - sy;
+        dist := dx2*dx2 + dy2*dy2;
+        if (dist < bestDist) then begin
+           bestDist := dist;
+           Result := i;
+        end;
+     end;
+end;
+
+procedure TfmDomain.DeleteSelectedObject;
+var
+     idx: integer;
+begin
+     if FSelectedObj = nil then exit;
+     idx := glSpace.IndexOfChild(FSelectedObj);
+     DeselectObject;
+     if idx >= 0 then
+        glSpace.Children[idx].Free;
+     UpdateJSONFromScene;
+end;
+
+procedure TfmDomain.UpdateJSONFromScene;
+var
+     shapes, jobj, inner: TJSONData;
+     oarr: TJSONArray;
+     objname: string;
+     i, idx: integer;
+     child: TGLBaseSceneObject;
+begin
+     if JSONData = nil then exit;
+     if FSelectedObj = nil then exit;
+
+     child := FSelectedObj;
+     shapes := JSONData.FindPath('Shapes');
+     if shapes = nil then exit;
+
+     { find the JSON entry by scanning shapes for matching type and approximate position }
+     for i := 0 to shapes.Count - 1 do begin
+       jobj := shapes.Items[i];
+       if jobj.Count = 0 then continue;
+       objname := TJSONObject(jobj).Names[0];
+       inner := TJSONObject(jobj).Items[0];
+
+       if (child is TGLSphere) and (objname = 'Sphere') and (inner.FindPath('O') <> nil) then begin
+         oarr := TJSONArray(inner.FindPath('O'));
+         oarr.Items[0] := TJSONFloatNumber.Create(TGLSphere(child).Position.X);
+         oarr.Items[1] := TJSONFloatNumber.Create(TGLSphere(child).Position.Y);
+         oarr.Items[2] := TJSONFloatNumber.Create(TGLSphere(child).Position.Z);
+         if inner.FindPath('R') <> nil then
+           TJSONObject(inner).Delete('R');
+         TJSONObject(inner).Add('R', TJSONFloatNumber.Create(TGLSphere(child).Radius));
+         break;
+       end else if (child is TGLCylinder) and (objname = 'Cylinder') and (inner.FindPath('C0') <> nil) then begin
+         oarr := TJSONArray(inner.FindPath('C0'));
+         oarr.Items[0] := TJSONFloatNumber.Create(TGLCylinder(child).Position.X);
+         oarr.Items[1] := TJSONFloatNumber.Create(TGLCylinder(child).Position.Y);
+         oarr.Items[2] := TJSONFloatNumber.Create(TGLCylinder(child).Position.Z);
+         oarr := TJSONArray(inner.FindPath('C1'));
+         oarr.Items[0] := TJSONFloatNumber.Create(
+           TGLCylinder(child).Position.X + TGLCylinder(child).Up.X * TGLCylinder(child).Height);
+         oarr.Items[1] := TJSONFloatNumber.Create(
+           TGLCylinder(child).Position.Y + TGLCylinder(child).Up.Y * TGLCylinder(child).Height);
+         oarr.Items[2] := TJSONFloatNumber.Create(
+           TGLCylinder(child).Position.Z + TGLCylinder(child).Up.Z * TGLCylinder(child).Height);
+         if inner.FindPath('R') <> nil then
+           TJSONObject(inner).Delete('R');
+         TJSONObject(inner).Add('R', TJSONFloatNumber.Create(TGLCylinder(child).BottomRadius));
+         break;
+       end else if (child is TGLCube) and ((objname = 'Box') or (objname = 'Subgrid')) and (inner.FindPath('O') <> nil) then begin
+         oarr := TJSONArray(inner.FindPath('O'));
+         oarr.Items[0] := TJSONFloatNumber.Create(TGLCube(child).Position.X - TGLCube(child).CubeWidth * 0.5);
+         oarr.Items[1] := TJSONFloatNumber.Create(TGLCube(child).Position.Y - TGLCube(child).CubeDepth * 0.5);
+         oarr.Items[2] := TJSONFloatNumber.Create(TGLCube(child).Position.Z - TGLCube(child).CubeHeight * 0.5);
+         oarr := TJSONArray(inner.FindPath('Size'));
+         oarr.Items[0] := TJSONFloatNumber.Create(TGLCube(child).CubeWidth);
+         oarr.Items[1] := TJSONFloatNumber.Create(TGLCube(child).CubeDepth);
+         oarr.Items[2] := TJSONFloatNumber.Create(TGLCube(child).CubeHeight);
+         break;
+       end;
+     end;
+
+     mmShapeJSON.Lines.Text := JSONData.FormatJSON;
+     Caption := 'MCX Domain Renderer - JSON updated';
+end;
+
+procedure TfmDomain.glCanvasKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+     case Key of
+       46: begin DeleteSelectedObject; Key := 0; end;
+       27: begin DeselectObject; Key := 0; end;
+     end;
+end;
+
+procedure TfmDomain.acTogglePerspExecute(Sender: TObject);
+var
+     dist: single;
+begin
+     if glCamera.CameraStyle = csPerspective then begin
+        { save current distance, switch to ortho, set appropriate view width }
+        dist := glCamera.DistanceToTarget;
+        glCamera.CameraStyle := csOrthogonal;
+        { in ortho mode, DepthOfView controls the visible width }
+        glCamera.DepthOfView := dist * 2;
+        btTogglePersp.Caption := 'Persp';
+        Caption := 'MCX Domain Renderer [Orthographic]';
+     end else begin
+        glCamera.CameraStyle := csPerspective;
+        glCamera.DepthOfView := 1000;
+        btTogglePersp.Caption := 'Ortho';
+        Caption := 'MCX Domain Renderer [Perspective]';
+     end;
+end;
+
+{ === End selection code === }
+
 procedure TfmDomain.ShowJSON(root: TJSONData; rootstr: string);
 var
      i: integer;
@@ -798,24 +1233,24 @@ begin
        Case AnsiIndexStr(objname, ['Origin','Grid', 'Box', 'Subgrid', 'Sphere',
           'Cylinder', 'XLayers','YLayers','ZLayers','XSlabs','YSlabs','ZSlabs',
           'Name','Source','Detector']) of
-          0: AddOrigin(jobj);      //Origin
-          1: AddGrid(jobj);        //Grid
-          2: AddBox(jobj, objname<>'Box');    //box
-          3: AddBox(jobj, objname<>'Box');    //Subgrid
-          4: AddSphere(jobj);      //Sphere
-          5: AddCylinder(jobj);    //Cylinder
-          6: AddLayers(jobj,1);    //XLayers
-          7: AddLayers(jobj,2);    //YLayers
-          8: AddLayers(jobj,3);    //ZLayers
-          9: AddSlabs(jobj,1);     //XLayers
-          10: AddSlabs(jobj,2);    //YLayers
-          11: AddSlabs(jobj,3);    //ZLayers
-          12: AddName(TJSONObject(jobj));       //Name
-          13: AddSource(jobj);     //Source
-          14: AddDetector(jobj);   //Detector
-         -1: ShowMessage('Unsupported Shape Keyword'); // not present in array
+          0: AddOrigin(jobj);
+          1: AddGrid(jobj);
+          2: AddBox(jobj, objname<>'Box');
+          3: AddBox(jobj, objname<>'Box');
+          4: AddSphere(jobj);
+          5: AddCylinder(jobj);
+          6: AddLayers(jobj,1);
+          7: AddLayers(jobj,2);
+          8: AddLayers(jobj,3);
+          9: AddSlabs(jobj,1);
+          10: AddSlabs(jobj,2);
+          11: AddSlabs(jobj,3);
+          12: AddName(TJSONObject(jobj));
+          13: AddSource(jobj);
+          14: AddDetector(jobj);
+         -1: ShowMessage('Unsupported Shape Keyword');
        else
-          ShowMessage('Shape keyword '+ objname+' is not supported'); // present, but not handled above
+          ShowMessage('Shape keyword '+ objname+' is not supported');
        end;
      end;
 end;
@@ -825,35 +1260,95 @@ procedure TfmDomain.glCanvasMouseMove(Sender: TObject; Shift: TShiftState;
 var
 	dx, dy : Integer;
 	v : TVector;
+	scaleFactor, moveAmt : Single;
 begin
-	// calculate delta since last move or last mousedown
 	dx:=(mdx-x); dy:=(mdy-y);
 	mdx:=x; mdy:=y;
 	if ssLeft in Shift then begin
-        if ssShift in Shift then begin
-                // right button with shift rotates the teapot
-                // (rotation happens around camera's axis)
-	   	glCamera.RotateObject(glSpace, dy, dx);
-        end else begin
-   		// right button without shift changes camera angle
-	   	// (we're moving around the parent and target dummycube)
-		glCamera.MoveAroundTarget(dy, dx)
-        end;
+		if ssShift in Shift then begin
+			glCamera.RotateObject(glSpace, dy, dx);
+		end else if (ssCtrl in Shift) and (FSelectedObj <> nil) then begin
+			{ Ctrl+drag = resize }
+			FResizing := True;
+			scaleFactor := 1.0 + dy * 0.01;
+			if FSelectedObj is TGLSphere then
+				TGLSphere(FSelectedObj).Radius := TGLSphere(FSelectedObj).Radius * scaleFactor
+			else if FSelectedObj is TGLCylinder then begin
+				TGLCylinder(FSelectedObj).TopRadius := TGLCylinder(FSelectedObj).TopRadius * scaleFactor;
+				TGLCylinder(FSelectedObj).BottomRadius := TGLCylinder(FSelectedObj).BottomRadius * scaleFactor;
+			end else if FSelectedObj is TGLCube then begin
+				TGLCube(FSelectedObj).CubeWidth := TGLCube(FSelectedObj).CubeWidth * scaleFactor;
+				TGLCube(FSelectedObj).CubeDepth := TGLCube(FSelectedObj).CubeDepth * scaleFactor;
+				TGLCube(FSelectedObj).CubeHeight := TGLCube(FSelectedObj).CubeHeight * scaleFactor;
+			end;
+			CreateWireOverlay(FSelectedObj);
+			UpdateGizmoPosition;
+		end else if (FDragAxis >= 0) and (FSelectedObj <> nil) then begin
+			{ dragging along a specific axis }
+			FDragging := True;
+			moveAmt := (-dx + dy) * 0.12 * glCamera.DistanceToTarget / glCamera.FocalLength;
+			case FDragAxis of
+				0: FSelectedObj.Position.X := FSelectedObj.Position.X + moveAmt;
+				1: FSelectedObj.Position.Y := FSelectedObj.Position.Y + moveAmt;
+				2: FSelectedObj.Position.Z := FSelectedObj.Position.Z + moveAmt;
+			end;
+			UpdateGizmoPosition;
+			if FWireOverlay <> nil then
+				FWireOverlay.Position.AsVector := FSelectedObj.Position.AsVector;
+		end else begin
+			{ default: orbit camera }
+			glCamera.MoveAroundTarget(dy, dx);
+		end;
 	end else if Shift=[ssRight] then begin
-		// left button moves our target and parent dummycube
 		v:=glCamera.ScreenDeltaToVectorXY(dx, -dy,
 		  0.12*glCamera.DistanceToTarget/glCamera.FocalLength);
 		glSpace.Position.Translate(v);
-		// notify camera that its position/target has been changed
 		glCamera.TransformationChanged;
 	end;
 end;
 
 procedure TfmDomain.glCanvasMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+var
+  pick: TGLBaseSceneObject;
+  axis: Integer;
 begin
-	// store mouse coordinates when a button went down
 	mdx:=x; mdy:=y;
+	FDragging := False;
+	FResizing := False;
+	FClickedOnObj := False;
+	FDragAxis := -1;
+	if (Button = TMouseButton(0)) and not (ssShift in Shift) then begin
+		{ first check if clicking on an axis arrow of selected object }
+		if FSelectedObj <> nil then begin
+			axis := PickAxisAt(x, y);
+			if axis >= 0 then begin
+				FDragAxis := axis;
+				FClickedOnObj := True;
+				exit;
+			end;
+		end;
+		{ check if clicking on a shape body }
+		if not (ssCtrl in Shift) then begin
+			pick := PickObjectAt(x, y);
+			if (pick <> nil) then begin
+				SelectObject(pick);
+				FClickedOnObj := True;
+			end else begin
+				DeselectObject;
+			end;
+		end;
+	end;
+end;
+
+procedure TfmDomain.glCanvasMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+	if FDragging or FResizing then begin
+		UpdateJSONFromScene;
+	end;
+	FDragging := False;
+	FResizing := False;
 end;
 
 procedure TfmDomain.FormShow(Sender: TObject);
@@ -861,6 +1356,7 @@ begin
     glCanvas.Invalidate;
     plEditor.Width:=40;
     acRenderExecute(Sender);
+    glDomain.Material.DepthProperties.DepthWrite := False;
 end;
 
 procedure TfmDomain.FormCreate(Sender: TObject);
@@ -876,6 +1372,28 @@ begin
    if(Application.HasOption('f','json')) then begin
       mmShapeJSON.Lines.LoadFromFile(Application.GetOptionValue('f', 'json'));
    end;
+   glCanvas.OnKeyDown := glCanvasKeyDown;
+   glCanvas.OnMouseUp := glCanvasMouseUp;
+   glCanvas.TabStop := True;
+   FSelectedObj := nil;
+   FWireOverlay := nil;
+   FAxisGizmo[0] := nil;
+   FAxisGizmo[1] := nil;
+   FAxisGizmo[2] := nil;
+   FDragging := False;
+   FResizing := False;
+   FDragAxis := -1;
+   FLastPickX := -1;
+   FLastPickY := -1;
+   FPickCycleIdx := 0;
+   acTogglePersp := TAction.Create(Self);
+   acTogglePersp.Caption := 'Ortho';
+   acTogglePersp.Hint := 'Toggle Orthographic/Perspective';
+   acTogglePersp.OnExecute := acTogglePerspExecute;
+   btTogglePersp := TToolButton.Create(Self);
+   btTogglePersp.Parent := ToolBar1;
+   btTogglePersp.Action := acTogglePersp;
+   btTogglePersp.Caption := 'Ortho';
 end;
 
 procedure TfmDomain.FormDestroy(Sender: TObject);
@@ -988,8 +1506,7 @@ Begin
         BitmapFont := GLWinBmpFont;
         Direction.AsVector := VectorMake(0, -1, 0);
         Up.AsVector := VectorMake(0, 0, 1);
-        Layout := tlBottom; { locate at z maximum }
-        //Layout := tlTop; { or tlBottom, tlCenter }
+        Layout := tlBottom;
         ModulateColor.AsWinColor := clRed;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
@@ -1010,8 +1527,7 @@ Begin
         BitmapFont := GLWinBmpFont;
         Direction.AsVector := VectorMake(0, 1, 0);
         Up.AsVector := VectorMake(0, 0, 1);
-        Layout := tlBottom; { locate at z maximum }
-        // Layout := tlTop; { or tlBottom, tlCenter }
+        Layout := tlBottom;
         ModulateColor.AsWinColor := clRed;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
@@ -1036,8 +1552,7 @@ Begin
         BitmapFont := GLWinBmpFont;
         Direction.AsVector := VectorMake(1, 0, 0);
         Up.AsVector := VectorMake(0, 0, 1);
-        Layout := tlBottom; { locate at z maximum }
-        // Layout := tlTop; { or tlBottom, tlCenter }
+        Layout := tlBottom;
         ModulateColor.AsWinColor := clLime;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
@@ -1058,8 +1573,7 @@ Begin
         BitmapFont := GLWinBmpFont;
         Direction.AsVector := VectorMake(-1, 0, 0);
         Up.AsVector := VectorMake(0, 0, 1);
-        Layout := tlBottom; { locate at z maximum }
-        // Layout := tlTop; { or tlBottom, tlCenter }
+        Layout := tlBottom;
         ModulateColor.AsWinColor := clLime;
         Position.AsVector := VectorMake(CurrentXCoord, CurrentYCoord, CurrentZCoord);
         Scale.AsVector := VectorMake(ScaleFactor, ScaleFactor, 0);
