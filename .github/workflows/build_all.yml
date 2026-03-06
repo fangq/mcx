@@ -51,7 +51,16 @@ jobs:
           #sudo cp -a /Volumes/Octave\ 9.2/Octave-9.2.app /Applications
           #echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
           brew link --force libomp
-          brew install fpc
+          # Install fpc compiler (cask version matched to Lazarus)
+          brew install --cask fpc-laz
+
+          # Skip fpc-src-laz — it's only for IDE code browsing, not compilation.
+          # Its .pkg installer is broken on macOS 15 (incompatible version check).
+          # Create a fake Caskroom marker so Homebrew thinks it's installed.
+          FPC_SRC_VERSION=$(brew info --cask fpc-src-laz --json=v2 | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
+          mkdir -p "$(brew --caskroom)/fpc-src-laz/${FPC_SRC_VERSION}"
+
+          # Now install Lazarus (its dependency check is satisfied)
           brew install --cask lazarus
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
       - name: Install dependencies (Windows only)
