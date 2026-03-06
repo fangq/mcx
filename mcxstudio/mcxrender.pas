@@ -1352,11 +1352,27 @@ begin
 end;
 
 procedure TfmDomain.FormShow(Sender: TObject);
+var
+  m: TMethod;
 begin
     glCanvas.Invalidate;
     plEditor.Width:=40;
     acRenderExecute(Sender);
     glDomain.Material.DepthProperties.DepthWrite := False;
+    { assign event handlers using TMethod to avoid @ operator issues }
+    m.Code := MethodAddress('glCanvasKeyDown');
+    m.Data := Self;
+    glCanvas.OnKeyDown := TKeyEvent(m);
+    m.Code := MethodAddress('glCanvasMouseUp');
+    m.Data := Self;
+    glCanvas.OnMouseUp := TMouseEvent(m);
+    m.Code := MethodAddress('acTogglePerspExecute');
+    m.Data := Self;
+    acTogglePersp.OnExecute := TNotifyEvent(m);
+    btTogglePersp := TToolButton.Create(Self);
+    btTogglePersp.Parent := ToolBar1;
+    btTogglePersp.Action := acTogglePersp;
+    btTogglePersp.Caption := 'Ortho';
 end;
 
 procedure TfmDomain.FormCreate(Sender: TObject);
@@ -1372,8 +1388,6 @@ begin
    if(Application.HasOption('f','json')) then begin
       mmShapeJSON.Lines.LoadFromFile(Application.GetOptionValue('f', 'json'));
    end;
-   glCanvas.OnKeyDown := {$IFDEF FPC}@{$ENDIF}glCanvasKeyDown;
-   glCanvas.OnMouseUp := {$IFDEF FPC}@{$ENDIF}glCanvasMouseUp;
    glCanvas.TabStop := True;
    FSelectedObj := nil;
    FWireOverlay := nil;
@@ -1389,11 +1403,6 @@ begin
    acTogglePersp := TAction.Create(Self);
    acTogglePersp.Caption := 'Ortho';
    acTogglePersp.Hint := 'Toggle Orthographic/Perspective';
-   acTogglePersp.OnExecute := {$IFDEF FPC}@{$ENDIF}acTogglePerspExecute;
-   btTogglePersp := TToolButton.Create(Self);
-   btTogglePersp.Parent := ToolBar1;
-   btTogglePersp.Action := acTogglePersp;
-   btTogglePersp.Caption := 'Ortho';
 end;
 
 procedure TfmDomain.FormDestroy(Sender: TObject);
