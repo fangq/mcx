@@ -33,6 +33,8 @@ jobs:
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
+          set -ex
+
           brew install libomp
           curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
           tar zxf Xcode10.app.tar.gz
@@ -58,7 +60,7 @@ jobs:
           # Its .pkg installer is broken on macOS 15 (incompatible version check).
           # Create a fake Caskroom marker so Homebrew thinks it's installed.
           brew fetch --cask fpc-src-laz
-          FPC_SRC_VER=$(brew info --cask fpc-src-laz | head -1 | awk '{print $2}')
+          FPC_SRC_VER=$(brew info --cask fpc-src-laz 2>/dev/null | awk 'NR==1{print $2}')
           mkdir -p "$(brew --caskroom)/fpc-src-laz/${FPC_SRC_VER}"
 
           # Now install Lazarus (its dependency check is satisfied)
