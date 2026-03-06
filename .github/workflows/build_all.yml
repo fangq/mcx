@@ -57,8 +57,9 @@ jobs:
           # Skip fpc-src-laz — it's only for IDE code browsing, not compilation.
           # Its .pkg installer is broken on macOS 15 (incompatible version check).
           # Create a fake Caskroom marker so Homebrew thinks it's installed.
-          FPC_SRC_VERSION=$(brew info --cask fpc-src-laz --json=v2 | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
-          mkdir -p "$(brew --caskroom)/fpc-src-laz/${FPC_SRC_VERSION}"
+          brew fetch --cask fpc-src-laz
+          FPC_SRC_VER=$(brew info --cask fpc-src-laz | head -1 | awk '{print $2}')
+          mkdir -p "$(brew --caskroom)/fpc-src-laz/${FPC_SRC_VER}"
 
           # Now install Lazarus (its dependency check is satisfied)
           brew install --cask lazarus
