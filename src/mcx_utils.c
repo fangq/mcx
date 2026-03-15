@@ -940,7 +940,8 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
             dims[5] *= cfg->detnum;
         }
 
-        if (cfg->seed == SEED_FROM_FILE && (cfg->outputtype == otRF || cfg->outputtype == otRFmus )) {
+        if ((cfg->seed == SEED_FROM_FILE && (cfg->outputtype == otRF || cfg->outputtype == otRFmus)) ||
+                (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega > 0.f)) {
             dims[5] *= 2;
         }
 
@@ -1542,9 +1543,14 @@ void mcx_preprocess(Config* cfg) {
     }
 
     if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF)
-            && cfg->seed != SEED_FROM_FILE) {
+            && cfg->seed != SEED_FROM_FILE && !(cfg->outputtype == otRF && cfg->omega > 0.f)) {
         MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
     }
+
+    if (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega == 0.f) {
+        MCX_ERROR(-6, "You must set cfg.omega (=2*pi*freq) to use outputtype 'rf' in forward mode");
+    }
+
 
     // if neither trajectory or polarization is enabled, disable istrajstokes flag
     if (!(cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) || !((cfg->mediabyte <= 4) && (cfg->polmedianum > 0))) {
@@ -5282,7 +5288,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
         }
     }
 
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) && cfg->seed != SEED_FROM_FILE) {
+    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) && cfg->seed != SEED_FROM_FILE && !(cfg->outputtype == otRF && cfg->omega > 0.f)) {
         MCX_ERROR(-1, T_("Jacobian output is only valid in the reply mode. Please give an mch file after '-E'."));
     }
 
@@ -5761,8 +5767,11 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -O [X|XFEJPMRLSTB](--outputtype) X - output flux, F - fluence, E - energy\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
                                event counts at each voxel (replay mode only)\n\
-                               M - momentum transfer; R - RF/FD Jacobian\n\
-                               L - total pathlength; S - RF/FD mus Jacobian\n\
+                               M - momentum transfer; L - total pathlength\n\
+                               R - RF/FD mua Jacobian (replay, needs -E)\n\
+                                   or RF forward complex fluence (forward,\n\
+                                   without -E, needs omega); output is complex\n\
+                               S - RF/FD mus Jacobian (replay mode only)\n\
                                T - time-of-flight*nscat;B - time-of-flight*path\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\
                                2 reserved, 3 terminate simulation when detected\n\

@@ -270,7 +270,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fieldlen *= cfg.detnum;
                 }
 
-                if (cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) {
+                if (((cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) || (cfg.outputtype == otRF && cfg.seed != SEED_FROM_FILE && cfg.omega > 0.f))) {
                     fieldlen *= 2;
                 }
 
@@ -405,7 +405,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[4] = cfg.detnum;
                 }
 
-                if (cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) {
+                if (((cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) || (cfg.outputtype == otRF && cfg.seed != SEED_FROM_FILE && cfg.omega > 0.f))) {
                     fielddim[5] = 2;
                 }
 
@@ -446,6 +446,23 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     mxSetFieldByNumber(plhs[0], jstruct, 0, mxCreateNumericArray(((fielddim[5] > 1) ? 6 : (4 + (fielddim[4] > 1))), fielddim, mxSINGLE_CLASS, mxREAL));
                     memcpy((float*)mxGetPr(mxGetFieldByNumber(plhs[0], jstruct, 0)), cfg.exportfield,
                            fieldlen * sizeof(float));
+                }
+
+                /** RF forward: convert [Re_vol, Im_vol] (dim5=2) to MATLAB complex */
+                if (cfg.outputtype == otRF && cfg.seed != SEED_FROM_FILE && cfg.omega > 0.f && cfg.exportfield && cfg.issave2pt) {
+                    size_t halflen = (size_t)fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4];
+                    dimtype cdim[5] = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4]};
+                    int ndim = 4 + (fielddim[4] > 1);
+                    mxArray* carr = mxCreateNumericArray(ndim, cdim, mxSINGLE_CLASS, mxCOMPLEX);
+                    float* pr = (float*)mxGetData(carr);
+                    float* pi = (float*)mxGetImagData(carr);
+
+                    if (pr && pi) {
+                        memcpy(pr, cfg.exportfield, halflen * sizeof(float));
+                        memcpy(pi, cfg.exportfield + halflen, halflen * sizeof(float));
+                    }
+
+                    mxSetFieldByNumber(plhs[0], jstruct, 0, carr);
                 }
 
                 if (cfg.exportfield) {

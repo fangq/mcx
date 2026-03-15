@@ -1698,7 +1698,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     ppath[2] = ((gcfg->srcnum > 1) ? ppath[2] : p->w); // store initial weight
     v->nscat = EPS;
 
-    if (gcfg->outputtype == otRF || gcfg->outputtype == otRFmus) { // if run RF replay
+    if ((gcfg->outputtype == otRF || gcfg->outputtype == otRFmus) && !gcfg->isrfforward) { // RF replay only (not RF forward)
         f->pathlen = photontof[(threadid * gcfg->threadphoton + min(threadid, gcfg->oddphotons - 1) + (int)f->ndone)];
         sincosf(gcfg->omega * f->pathlen, ppath + 5 + gcfg->srcnum, ppath + 4 + gcfg->srcnum);
     }
@@ -1797,6 +1797,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
     float len, slen;
     OutputType w0;
+    float w_re = 0.f, w_im = 0.f;    /**< complex photon weight for RF forward */
+    float w0_re = 0.f, w0_im = 0.f;  /**< complex weight at start of current voxel segment */
     short flipdir[4] = {0, 0, 0, -1};
 
     float* ppath = (float*)(sharedmem);
@@ -1876,6 +1878,12 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
      * The following lines initialize photon state variables, RNG states and
      */
     rv = float3(__fdividef(1.f, v.x), __fdividef(1.f, v.y), __fdividef(1.f, v.z));
+
+    if (gcfg->isrfforward) {
+        w_re = w0_re = p.w;
+        w_im = w0_im = 0.f;
+    }
+
     isdet = mediaid & DET_MASK;
     mediaid &= MED_MASK; // keep isdet to 0 to avoid launching photon ina
 
@@ -2135,11 +2143,23 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         }
 
         /** calculate photon energy loss */
+        if (gcfg->isrfforward) {
+            /* Eq.9: w <- w * exp[-(mua + i*omega*n/c0) * ds]
+             * exp(-(a+ib)) = exp(-a)*(cos(b) - i*sin(b)) */
+            float rf_atten = expf(-prop.mua * len);
+            float rf_cos, rf_sin;
+            sincosf(gcfg->omega * prop.n * gcfg->oneoverc0 * len, &rf_sin, &rf_cos);
+            float tmp = w_re;
+            w_re = rf_atten * ( tmp  * rf_cos + w_im * rf_sin);
+            w_im = rf_atten * (-tmp  * rf_sin + w_im * rf_cos);
+            p.w = sqrtf(w_re * w_re + w_im * w_im); /**< magnitude for Russian roulette threshold */
+        } else {
 #ifdef USE_MORE_DOUBLE
-        p.w *= exp(-(OutputType)prop.mua * len);
+            p.w *= exp(-(OutputType)prop.mua * len);
 #else
-        p.w *= expf(-prop.mua * len);
+            p.w *= expf(-prop.mua * len);
 #endif
+        }
 
         /** remaining unitless scattering length: sum(s_i*mus_i), unit-less */
         f.pscat -= slen;
@@ -2198,10 +2218,21 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #else
                 float weight = 0.f;
 #endif
+                float weight_im = 0.f; /**< imaginary fluence deposit for RF forward, computed alongside weight */
                 int tshift = MIN(gcfg->maxgate - 1, (int)(floorf((f.t - gcfg->twin0) * gcfg->Rtstep)));
 
                 /** calculate the quality to be accummulated */
-                if (gcfg->outputtype == otEnergy) {
+                if (gcfg->isrfforward) {
+                    /** RF forward: deposit = (w0-w) / (mua + i*omega*n/c0), real and imag parts */
+                    float dw_re_rf = w0_re - w_re;
+                    float dw_im_rf = w0_im - w_im;
+                    float a_im_rf = gcfg->omega * prop.n * gcfg->oneoverc0;
+                    float a_mag2_rf = prop.mua * prop.mua + a_im_rf * a_im_rf;
+                    weight    = (a_mag2_rf < EPS) ? (w0_re * f.pathlen) :
+                                __fdividef(dw_re_rf * prop.mua + dw_im_rf * a_im_rf, a_mag2_rf);
+                    weight_im = (a_mag2_rf < EPS) ? (w0_im * f.pathlen) :
+                                __fdividef(dw_im_rf * prop.mua - dw_re_rf * a_im_rf, a_mag2_rf);
+                } else if (gcfg->outputtype == otEnergy) {
                     weight = w0 - p.w;
                 } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux) {
                     weight = (prop.mua < EPS) ? (w0 * f.pathlen) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, the first two terms of Taylor expansion of w0*(1-exp(-mua*len))/mua = w0*len - mua*len^2*w0/2 */
@@ -2248,13 +2279,23 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                             GPUDEBUG(("atomic writing to [%d] %e, oldval=%f\n", idx1dold, weight, oldval));
 
-                            if (fabsf(oldval) > MAX_ACCUM && gcfg->outputtype != otRF) {
+                            if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || gcfg->isrfforward)) {
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                                 GPUDEBUG(("reducing float round-off error by moving %e to [%d], oldval=%f\n", MAX_ACCUM, idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w, oldval));
                             } else if (gcfg->outputtype == otRF && gcfg->omega > 0.f) {
-                                oldval = -replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                                atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
+                                if (gcfg->isrfforward) {
+                                    /** RF forward: deposit Im to 3rd quarter [2F..3F), with double-buf in 4th quarter [3F..4F) */
+                                    float oldval_im = atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], weight_im);
+
+                                    if (fabsf(oldval_im) > MAX_ACCUM) {
+                                        atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((oldval_im > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                        atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((oldval_im > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                                    }
+                                } else {
+                                    oldval = -replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
+                                    atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
+                                }
                             }
 
 #endif
@@ -2266,12 +2307,21 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #else
                                     float oldval = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], (gcfg->srcnum == 1 ? weight : weight * ppath[gcfg->w0offset + i]));
 
-                                    if (fabsf(oldval) > MAX_ACCUM && gcfg->outputtype != otRF) {
+                                    if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || gcfg->isrfforward)) {
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                                     } else if (gcfg->outputtype == otRF) {
-                                        oldval = p.w * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
+                                        if (gcfg->isrfforward) {
+                                            float ov_im_pp = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], (gcfg->srcnum == 1 ? weight_im : weight_im * ppath[gcfg->w0offset + i]));
+
+                                            if (fabsf(ov_im_pp) > MAX_ACCUM) {
+                                                atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((ov_im_pp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                                atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((ov_im_pp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                                            }
+                                        } else {
+                                            oldval = p.w * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
+                                            atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
+                                        }
                                     }
 
 #endif
@@ -2287,6 +2337,12 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             }
 
             w0 = p.w;
+
+            if (gcfg->isrfforward) {
+                w0_re = w_re;
+                w0_im = w_im;
+            }
+
             f.pathlen = 0.f;
         } else {
             mediaid = mediaidold;
@@ -2348,6 +2404,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             isdet = mediaid & DET_MASK;
             mediaid &= MED_MASK;
 
+            if (gcfg->isrfforward) {
+                w_re = w0_re = p.w;
+                w_im = w0_im = 0.f;
+            }
+
             if (issvmc) {
                 testint = 1;    // re-enable ray-interface intesection test after launching a new photon under SVMC mode
             }
@@ -2359,6 +2420,13 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         if (fabsf(p.w) < gcfg->minenergy) {
             if (rand_do_roulette(t)*ROULETTE_SIZE <= 1.f) {
                 p.w *= ROULETTE_SIZE;
+
+                if (gcfg->isrfforward) {
+                    w_re *= ROULETTE_SIZE;
+                    w_im *= ROULETTE_SIZE;
+                    w0_re *= ROULETTE_SIZE;
+                    w0_im *= ROULETTE_SIZE;
+                }
             } else {
                 GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n", idx1d, mediaid, gcfg->doreflect));
 
@@ -2370,6 +2438,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                 isdet = mediaid & DET_MASK;
                 mediaid &= MED_MASK;
+
+                if (gcfg->isrfforward) {
+                    w_re = w0_re = p.w;
+                    w_im = w0_im = 0.f;
+                }
 
                 if (issvmc) {
                     testint = 1;
@@ -2399,6 +2472,12 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                         isdet = mediaid & DET_MASK;
                         mediaid &= MED_MASK;
+
+                        if (gcfg->isrfforward) {
+                            w_re = w0_re = p.w;
+                            w_im = w0_im = 0.f;
+                        }
+
                         testint = 1; //< launch new photon, enable ray-interafece inter. test for next step
                         continue;
                     }
@@ -2461,6 +2540,11 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             isdet = mediaid & DET_MASK;
                             mediaid &= MED_MASK;
 
+                            if (gcfg->isrfforward) {
+                                w_re = w0_re = p.w;
+                                w_im = w0_im = 0.f;
+                            }
+
                             if (issvmc) {
                                 testint = 1;
                             }
@@ -2494,6 +2578,12 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                             isdet = mediaid & DET_MASK;
                             mediaid &= MED_MASK;
+
+                            if (gcfg->isrfforward) {
+                                w_re = w0_re = p.w;
+                                w_im = w0_im = 0.f;
+                            }
+
                             testint = 1;
                             continue;
                         }
@@ -2863,7 +2953,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                       cfg->maxdetphoton * hostdetreclen, cfg->seed, (uint)cfg->outputtype, 0, 0, cfg->faststep,
                       cfg->debuglevel, cfg->savedetflag, hostdetreclen, partialdata, w0offset, cfg->mediabyte,
                       (uint)cfg->maxjumpdebug, cfg->gscatter, is2d, cfg->replaydet, cfg->srcnum,
-                      cfg->nphase, cfg->nphase + (cfg->nphase & 0x1), cfg->nangle, cfg->nangle + (cfg->nangle & 0x1), cfg->omega
+                      cfg->nphase, cfg->nphase + (cfg->nphase & 0x1), cfg->nangle, cfg->nangle + (cfg->nangle & 0x1), cfg->omega,
+                      (cfg->outputtype == otRF&& cfg->seed != SEED_FROM_FILE&& cfg->omega > 0.f) ? 1u : 0u   /*isrfforward*/
                      };
 
     if (param.isatomic) {
@@ -2911,7 +3002,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                 cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)) * cfg->detnum);
             } else {
-                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)));
+                cfg->exportfield = (float*)calloc(sizeof(float) * dimxyz, gpu[gpuid].maxgate * (1 + (cfg->outputtype == otRF || cfg->outputtype == otRFmus)));  /**< RF replay: 2x; RF forward also uses 2x via same otRF check */
             }
         }
 
@@ -3143,7 +3234,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     //CUDA_ASSERT(cudaBindTexture(0, texmedia, gmedia));
-    CUDA_ASSERT(cudaMalloc((void**) &gfield, sizeof(OutputType)*fieldlen * SHADOWCOUNT));
+    CUDA_ASSERT(cudaMalloc((void**) &gfield, sizeof(OutputType)*fieldlen * (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega > 0.f ? 4 : SHADOWCOUNT)));
     CUDA_ASSERT(cudaMalloc((void**) &gPpos, sizeof(float4)*gpu[gpuid].autothread));
     CUDA_ASSERT(cudaMalloc((void**) &gPdir, sizeof(float4)*gpu[gpuid].autothread));
     CUDA_ASSERT(cudaMalloc((void**) &gPlen, sizeof(float4)*gpu[gpuid].autothread));
@@ -3363,7 +3454,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             /**
              * Each repetition, we have to reset the output buffers, including \c gfield and \c gPdet
              */
-            CUDA_ASSERT(cudaMemset(gfield, 0, sizeof(OutputType)*fieldlen * SHADOWCOUNT)); // cost about 1 ms
+            CUDA_ASSERT(cudaMemset(gfield, 0, sizeof(OutputType)*fieldlen * (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega > 0.f ? 4 : SHADOWCOUNT))); // cost about 1 ms
             CUDA_ASSERT(cudaMemset(gPdet, 0, sizeof(float)*cfg->maxdetphoton * (hostdetreclen)));
 
             if (cfg->issaveseed) {
@@ -3677,8 +3768,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              */
             if (cfg->issave2pt) {
                 size_t i;
-                OutputType* rawfield = (OutputType*)malloc(sizeof(OutputType) * fieldlen * SHADOWCOUNT);
-                CUDA_ASSERT(cudaMemcpy(rawfield, gfield, sizeof(OutputType)*fieldlen * SHADOWCOUNT, cudaMemcpyDeviceToHost));
+                int rffw = (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega > 0.f) ? 1 : 0;
+                OutputType* rawfield = (OutputType*)malloc(sizeof(OutputType) * fieldlen * (rffw ? 4 : SHADOWCOUNT));
+                CUDA_ASSERT(cudaMemcpy(rawfield, gfield, sizeof(OutputType)*fieldlen * (rffw ? 4 : SHADOWCOUNT), cudaMemcpyDeviceToHost));
                 MCX_FPRINTF(cfg->flog, "%s:\t%d ms\n", T_("transfer complete"), GetTimeMillis() - tic);
                 fflush(cfg->flog);
 
@@ -3687,20 +3779,33 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                  * single-precision output, we need to copy and accumulate two separate floating-point buffers
                  * to minimize round-off errors near the source
                  */
-                for (i = 0; i < fieldlen; i++) { //accumulate field, can be done in the GPU
-                    field[i] = rawfield[i];
-#ifndef USE_DOUBLE
-
-                    if (cfg->outputtype != otRF && cfg->outputtype != otRFmus) {
-                        field[i] += rawfield[i + fieldlen];
+                if (rffw) {
+                    /** RF forward: 4-quarter layout [Re, Re_db, Im, Im_db] */
+                    for (i = 0; i < fieldlen; i++) {
+                        field[i] = rawfield[i] + rawfield[i + fieldlen]; /**< Re = primary + double-buf */
                     }
 
-#endif
-                }
-
-                if ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) && cfg->omega > 0.f && SHADOWCOUNT == 2) {
                     rfimag = (OutputType*)malloc(fieldlen * sizeof(OutputType));
-                    memcpy(rfimag, rawfield + fieldlen, fieldlen * sizeof(OutputType));
+
+                    for (i = 0; i < fieldlen; i++) {
+                        rfimag[i] = rawfield[i + 2 * fieldlen] + rawfield[i + 3 * fieldlen]; /**< Im = primary + double-buf */
+                    }
+                } else {
+                    for (i = 0; i < fieldlen; i++) {
+                        field[i] = rawfield[i];
+#ifndef USE_DOUBLE
+
+                        if (cfg->outputtype != otRF && cfg->outputtype != otRFmus) {
+                            field[i] += rawfield[i + fieldlen];
+                        }
+
+#endif
+                    }
+
+                    if ((cfg->outputtype == otRF || cfg->outputtype == otRFmus) && cfg->omega > 0.f && SHADOWCOUNT == 2) {
+                        rfimag = (OutputType*)malloc(fieldlen * sizeof(OutputType));
+                        memcpy(rfimag, rawfield + fieldlen, fieldlen * sizeof(OutputType));
+                    }
                 }
 
                 free(rawfield);
@@ -3834,12 +3939,14 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              * If output is flux (J/(s*mm^2), default), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox*dt))
              * If output is fluence (J/mm^2), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox))
              */
-            if (cfg->outputtype == otFlux || cfg->outputtype == otFluence) {
+            if (cfg->outputtype == otFlux || cfg->outputtype == otFluence || (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE)) {
                 scale[0] = cfg->unitinmm / (cfg->energytot * Vvox * cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
 
                 if (cfg->outputtype == otFluence) {
                     scale[0] *= cfg->tstep;
                 }
+
+                /* RF forward: normalize as flux rate (same as otFlux), user applies *tstep for fluence */
             } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
             } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) {

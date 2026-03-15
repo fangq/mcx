@@ -35,6 +35,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <iostream>
+#include <complex>
 #include <string>
 #include "mcx_utils.h"
 #include "mcx_core.h"
@@ -1116,7 +1117,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_len *= mcx_config.detnum;
             }
 
-            if (mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) {
+            if (((mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) || (mcx_config.outputtype == otRF && mcx_config.seed != SEED_FROM_FILE && mcx_config.omega > 0.f))) {
                 field_len *= 2;
             }
 
@@ -1245,7 +1246,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[4] = mcx_config.detnum;
             }
 
-            if (mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) {
+            if (((mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) || (mcx_config.outputtype == otRF && mcx_config.seed != SEED_FROM_FILE && mcx_config.omega > 0.f))) {
                 field_dim[5] = 2;
             }
 
@@ -1289,9 +1290,27 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 output["dref"] = dref_array;
             }
 
-            auto data = py::array_t<float, py::array::f_style>(array_dims);
-            memcpy(data.mutable_data(), mcx_config.exportfield, field_len * sizeof(float));
-            output["flux"] = data;
+            if (mcx_config.outputtype == otRF && mcx_config.seed != SEED_FROM_FILE && mcx_config.omega > 0.f && mcx_config.exportfield) {
+                /** RF forward: convert [Re, Im] halves to complex numpy array */
+                size_t halflen = field_len / 2;
+                std::vector<size_t> cdims = {(size_t)(mcx_config.srcnum * mcx_config.dim.x),
+                                             (size_t)mcx_config.dim.y, (size_t)mcx_config.dim.z,
+                                             (size_t)((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5)
+                                            };
+                auto cdata = py::array_t<std::complex<float>, py::array::f_style>(cdims);
+                auto* cptr = (std::complex<float>*)cdata.mutable_data();
+
+                for (size_t i = 0; i < halflen; i++) {
+                    cptr[i] = std::complex<float>(mcx_config.exportfield[i], mcx_config.exportfield[i + halflen]);
+                }
+
+                output["flux"] = cdata;
+            } else {
+                auto data = py::array_t<float, py::array::f_style>(array_dims);
+                memcpy(data.mutable_data(), mcx_config.exportfield, field_len * sizeof(float));
+                output["flux"] = data;
+            }
+
             free(mcx_config.exportfield);
             mcx_config.exportfield = nullptr;
             // Stat dictionary output

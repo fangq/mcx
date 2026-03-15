@@ -522,6 +522,20 @@ def mcxlab(*args):
                                             6:    reserved
                By default, mcxlab only records the first 1e7 positions along all
                simulated photons; change cfg['maxjumpdebug'] to define a different limit.
+
+    Key cfg fields for frequency-domain (RF/FD) simulations:
+        cfg['outputtype']: controls output quantity; RF-relevant values:
+             'flux'     - (default) CW fluence rate
+             'rf'       - dual-mode:
+                          forward mode: complex frequency-domain fluence rate
+                            when cfg['omega'] is set and cfg['seed'] is NOT from
+                            an .mch file; res['flux'] is a complex numpy array
+                            (dtype complex64); multiply by tstep for fluence
+                          replay mode: FD mua Jacobian when cfg['seed'] is from
+                            a prior .mch file and cfg['omega'] is set
+             'rfmus'    - FD mus Jacobian (replay mode only)
+        cfg['omega']:    source modulation angular frequency in rad/s (2*pi*f);
+                          required for RF forward and RF replay modes
     """
     try:
         defaultocl = eval("USE_MCXCL", globals())
@@ -1205,7 +1219,9 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
 
     Compute the frequency domain (FD) log-amplitude and phase shift Jacobians
     with respect to voxel-wise absorption coefficients using the radio
-    frequency (RF) replay algorithm.
+    frequency (RF) replay algorithm (requires a prior baseline simulation with
+    saved seeds).  For direct FD forward simulation (no seed file), use
+    mcxlab with cfg['outputtype']='rf' and cfg['omega']=2*pi*f instead.
 
     Authors: Pauliina Hirvi (pauliina.hirvi <at> aalto.fi)
              Qianqian Fang (q.fang <at> neu.edu)

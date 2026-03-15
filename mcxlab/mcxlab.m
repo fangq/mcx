@@ -262,7 +262,9 @@ function varargout = mcxlab(varargin)
 %      cfg.srcid:      when multiple sources are defined, if srcid is -1, each source is separately
 %                      simulated; if set to 0, all source solution are summed; if set to a positive
 %                      number starting from 1, only the specified source is simulated; default to 0
-%      cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
+%      cfg.omega: source modulation angular frequency (rad/s), i.e. 2*pi*f; used for
+%                      both RF replay (cfg.seed from file, outputtype 'rf'/'rfmus') and
+%                      RF forward (no cfg.seed, outputtype 'rf'); required for RF forward
 %      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
 %                   I: total light intensity (I >= 0)
 %                   Q: balance between horizontal and vertical linearly
@@ -314,15 +316,23 @@ function varargout = mcxlab(varargin)
 %                      'jacobian' or 'wl' - mua Jacobian (replay mode),
 %                      'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
 %                      'wm' - weighted momentum transfer for a source/detector pair (replay mode)
-%                      'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
+%                      'rf' - dual-mode depending on cfg.seed:
+%                           replay mode (cfg.seed from .mch file, cfg.omega set):
+%                             frequency-domain mua Jacobian; output has dim6=2
+%                             ([real; imag] of complex Jacobian)
+%                           forward mode (no cfg.seed file, cfg.omega set):
+%                             complex frequency-domain fluence rate; output is
+%                             complex-valued (same size as 'flux'); multiply by
+%                             tstep to convert to complex fluence
 %                      'length' total pathlengths accumulated per voxel,
-%                      'rfmus' frequency domain/RF mus Jacobian by replay,
+%                      'rfmus' frequency domain/RF mus Jacobian (replay mode only),
 %                      'wltof' weighted average of time-of-flight x total path length in each voxel,
 %                      'wptof' weighted average of time-of-flight x total scattering count in each voxel
 %
 %                      for types jacobian/wl/wp, example: <demo_mcxlab_replay.m>
 %                          and  <demo_replay_timedomain.m>
-%                      for types rf, example: <demo_replay_frequencydomain.m>
+%                      for types rf (replay), example: <demo_replay_frequencydomain.m>
+%                      for types rf (forward), example: <compare_redbird_mcx_rf.m>
 %                      for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
 %      cfg.lang:       specify the language code for printing, supported languages include
