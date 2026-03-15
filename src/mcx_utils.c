@@ -1563,6 +1563,13 @@ void mcx_preprocess(Config* cfg) {
         MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
     }
 
+    /**
+     * Append detectors as reversed sources for adjoint/srcid=-2 mode.
+     * In the mex container (mcxlab/pmcx), this is handled in the host wrapper
+     * before mcx_validatecfg is called, so we skip it here to avoid double-appending.
+     */
+#ifndef MCX_CONTAINER
+
     if ((cfg->outputtype == otAdjoint || cfg->srcid == -2) && cfg->seed != SEED_FROM_FILE && cfg->detnum > 0 && cfg->detdir != NULL) {
         unsigned int origextrasrclen = cfg->extrasrclen;
 
@@ -1588,6 +1595,8 @@ void mcx_preprocess(Config* cfg) {
             cfg->srcid = -1;
         }
     }
+
+#endif
 
     if (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega == 0.f) {
         MCX_ERROR(-6, "You must set cfg.omega (=2*pi*freq) to use outputtype 'rf' in forward mode");

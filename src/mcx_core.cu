@@ -4035,11 +4035,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              * If output is flux (J/(s*mm^2), default), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox*dt))
              * If output is fluence (J/mm^2), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox))
              */
-            if (cfg->outputtype == otFlux || cfg->outputtype == otFluence || (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE)) {
+            if (cfg->outputtype == otFlux || cfg->outputtype == otFluence || cfg->outputtype == otAdjoint || (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE)) {
                 scale[0] = cfg->unitinmm / (cfg->energytot * Vvox * cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
 
-                if (cfg->outputtype == otFluence) {
-                    scale[0] *= cfg->tstep;
+                if (cfg->outputtype == otFluence || cfg->outputtype == otAdjoint) {
+                    scale[0] *= cfg->tstep; /**< adjoint fields normalized as fluence (flux*tstep) so kernel sum gives total fluence */
                 }
 
                 /* RF forward: normalize as flux rate (same as otFlux), user applies *tstep for fluence */
@@ -4168,6 +4168,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
             CUDA_ASSERT(cudaFree(gfield_tmp));
             CUDA_ASSERT(cudaFree(gadjoint_tmp));
+
+            /** Scale adjoint output by voxel volume: J = phi_fluence_src * phi_fluence_det * dV */
+            for (size_t k = 0; k < exportlen; k++) {
+                cfg->exportfield[k] *= -Vvox;
+            }
 
             fieldlen = exportlen;
             MCX_FPRINTF(cfg->flog, "%s : %d ms\n", T_("adjoint Jacobian computation complete"), GetTimeMillis() - tic);

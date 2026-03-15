@@ -54,13 +54,13 @@ colorbar;
 
 subplot(1, 3, 2);
 imagesc(log10(max(amp(:, :, z), 1e-12)));
-title('FD log10(amplitude)');
+title('log10-amp of J_FD(mua)');
 axis image;
 colorbar;
 
 subplot(1, 3, 3);
 imagesc(phs(:, :, z));
-title('FD phase (deg)');
+title('Phase of J_FD(mua) (deg)');
 axis image;
 colorbar;
 

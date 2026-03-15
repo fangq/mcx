@@ -29,7 +29,7 @@ nmed = 1.37;               % refractive index
 %%   Redbird FEM setup (frequency domain)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[cfg.node, cfg.elem] = meshgrid6(0:2:60, 0:2:60, 0:2:30);
+[cfg.node, cfg.elem] = meshgrid6(0:1:60, 0:1:60, 0:1:30);
 cfg.elem(:, 1:4) = meshreorient(cfg.node(:, 1:3), cfg.elem(:, 1:4));
 cfg.face = volface(cfg.elem);
 
@@ -43,7 +43,7 @@ cfg.prop = [0 0 1 1; mua musp g nmed];
 cfg.omega = omega;             %% <-- KEY: non-zero omega for FD
 
 cfg.detpos = [40 30 0];
-cfg.detdir = [0 0 -1];
+cfg.detdir = [0 0 1];
 
 cfg = rbmeshprep(cfg);
 
@@ -57,7 +57,7 @@ fprintf('Building Redbird FD system (f = %.0f MHz) ...\n', freq / 1e6);
 
 tic;
 fprintf('Solving Redbird FD ...\n');
-phi_rb = rbfemsolve(Amat, rhs);
+phi_rb = rbfemsolve(Amat, rhs, 'qmr', 1e-7, 1000);
 toc;
 
 fprintf('Redbird output is complex: %d\n', ~isreal(phi_rb));
@@ -71,7 +71,7 @@ cfg0.omega = 0;
 cfg0 = rbmeshprep(cfg0);
 [Amat0] = rbfemlhs(cfg0);
 [rhs0] = rbfemrhs(cfg0);
-phi_rb0 = rbfemsolve(Amat0, rhs0);
+phi_rb0 = rbfemsolve(Amat0, rhs0, 'qmr', 1e-8, 1000);
 phi_rb0(phi_rb0 < 0) = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -11,10 +11,12 @@
 %   D1 at x=38, D2 at x=62  (disk r=3 mm, same orientation)
 %   Cross-section to plot: y = Ny/2, showing the x-z plane.
 
-clear; clc;
+clear cfg cfg_adj cfg_rf cfg_fwd;
 
 %% ---- Common geometry ------------------------------------------------
-Nx = 100;  Ny = 60;  Nz = 50;
+Nx = 100;
+Ny = 60;
+Nz = 50;
 ym  = round(Ny / 2);          % mid-plane y position (0-based), use ym+1 for MATLAB indexing
 
 cfg.nphoton    = 3e7;
@@ -32,15 +34,15 @@ cfg.prop       = [0 0 1 1; 0.005 1.0 0.9 1.37];
 % Primary source S1 -- start at z=0.5 to be clearly inside voxel 0
 cfg.srctype = 'pencil';
 % Two pencil sources as rows: S1 (row 1) and S2 (row 2)
-cfg.srcpos  = [20  ym  0.5;
+cfg.srcpos  = [20  ym  0.5
                80  ym  0.5];
-cfg.srcdir  = [0   0   1   0;
+cfg.srcdir  = [0   0   1   0
                0   0   1   0];
 
 % Detectors: [x  y  z  radius_mm]  and matching directions
-cfg.detpos = [38  ym  0.5  3;
+cfg.detpos = [38  ym  0.5  3
               62  ym  0.5  3];
-cfg.detdir = [0  0  1  0;
+cfg.detdir = [0  0  1  0
               0  0  1  0];
 
 %% ---- Part 1: CW Adjoint Jacobian ------------------------------------
@@ -98,7 +100,7 @@ for k = 1:4
     s = floor((k - 1) / 2) + 1;   % 1 or 2
     d = mod(k - 1, 2)   + 1;
     subplot(2, 2, k);
-    plot_xz_slice(J_cw(:,:,:,k), ym+1, pair_labels{k}, clim_log, sx(s), dx(d));
+    plot_xz_slice(J_cw(:, :, :, k), ym + 1, pair_labels{k}, clim_log, sx(s), dx(d));
 end
 sgtitle('CW Adjoint Jacobians  (log_{10})   \color{red}\triangledown S   \color{blue}\squareD');
 
@@ -107,20 +109,23 @@ figure('Name', 'CW vs RF Adjoint -- S1-D1', 'Position', [50 50 1300 380]);
 colormap hot;
 
 subplot(1, 3, 1);
-plot_xz_slice(J_cw(:,:,:,1), ym+1, 'CW  J(S_1,D_1)', clim_log, sx(1), dx(1));
+plot_xz_slice(J_cw(:, :, :, 1), ym + 1, 'CW  J(S_1,D_1)', clim_log, sx(1), dx(1));
 
 subplot(1, 3, 2);
-plot_xz_slice(abs(J_rf(:,:,:,1)), ym+1, '|RF J(S_1,D_1)|  100 MHz', clim_log, sx(1), dx(1));
+plot_xz_slice(abs(J_rf(:, :, :, 1)), ym + 1, '|RF J(S_1,D_1)|  100 MHz', clim_log, sx(1), dx(1));
 
 subplot(1, 3, 3);
-ph = squeeze(angle(J_rf(:, ym+1, :, 1)))' * 180 / pi;
-imagesc(0:Nx-1, 0:Nz-1, ph);
+ph = squeeze(angle(J_rf(:, ym + 1, :, 1)))' * 180 / pi;
+imagesc(0:Nx - 1, 0:Nz - 1, ph);
 hold on;
 plot(sx(1), 0, 'r^', 'MarkerSize', 9, 'MarkerFaceColor', 'r');
 plot(dx(1), 0, 'bs', 'MarkerSize', 9, 'MarkerFaceColor', 'b');
-xlabel('x (mm)'); ylabel('z (mm)');
+xlabel('x (mm)');
+ylabel('z (mm)');
 title('Phase RF J(S_1,D_1)  (deg)');
-colorbar; colormap(gca, hsv); set(gca, 'YDir', 'normal');
+colorbar;
+colormap(gca, hsv);
+set(gca, 'YDir', 'normal');
 
 sgtitle('CW vs RF (100 MHz) Adjoint Jacobian -- Pair S_1-D_1');
 
@@ -133,12 +138,15 @@ marker_x   = {sx(1), sx(2), dx(1), dx(2)};
 marker_sym = {'r^',  'r^',  'bs',  'bs'};
 for k = 1:4
     subplot(2, 2, k);
-    slice = squeeze(phi(:, ym+1, :, k))';
-    imagesc(0:Nx-1, 0:Nz-1, log10(max(slice, 10^clim_log(1))));
+    slice = squeeze(phi(:, ym + 1, :, k))';
+    imagesc(0:Nx - 1, 0:Nz - 1, log10(max(slice, 10^clim_log(1))));
     hold on;
     plot(marker_x{k}, 0, marker_sym{k}, 'MarkerSize', 9, 'MarkerFaceColor', marker_sym{k}(1));
-    xlabel('x (mm)'); ylabel('z (mm)');
-    title(vol_labels{k}); colorbar; set(gca, 'YDir', 'normal');
+    xlabel('x (mm)');
+    ylabel('z (mm)');
+    title(vol_labels{k});
+    colorbar;
+    set(gca, 'YDir', 'normal');
 end
 sgtitle('srcid=-2: Forward fluence for each merged source/detector');
 
@@ -146,23 +154,13 @@ sgtitle('srcid=-2: Forward fluence for each merged source/detector');
 figure('Name', 'Consistency: J vs phi_S * phi_D', 'Position', [50 50 1200 380]);
 colormap hot;
 
-Jprod = phi(:,:,:,1) .* phi(:,:,:,3);   % S1 × D1 direct product
+Jprod = phi(:, :, :, 1) .* phi(:, :, :, 3);   % S1 × D1 direct product
 
-subplot(1, 3, 1);
-plot_xz_slice(J_cw(:,:,:,1), ym+1, 'J(S_1,D_1)  adjoint mode', clim_log, sx(1), dx(1));
+subplot(1, 2, 1);
+plot_xz_slice(J_cw(:, :, :, 1), ym + 1, 'J(S_1,D_1)  adjoint mode', clim_log, sx(1), dx(1));
 
-subplot(1, 3, 2);
-plot_xz_slice(Jprod, ym+1, '\phi_{S1}\cdot\phi_{D1}  srcid=-2 product', clim_log, sx(1), dx(1));
-
-subplot(1, 3, 3);
-ratio = squeeze(J_cw(:, ym+1, :, 1) ./ (Jprod(:, ym+1, :) + eps))';
-imagesc(0:Nx-1, 0:Nz-1, ratio, [0 2]);
-hold on;
-plot(sx(1), 0, 'r^', 'MarkerSize', 9, 'MarkerFaceColor', 'r');
-plot(dx(1), 0, 'bs', 'MarkerSize', 9, 'MarkerFaceColor', 'b');
-xlabel('x (mm)'); ylabel('z (mm)');
-title('J / (\phi_{S1}\cdot\phi_{D1})  (should be \approx1)');
-colorbar; colormap(gca, parula); set(gca, 'YDir', 'normal');
+subplot(1, 2, 2);
+plot_xz_slice(Jprod, ym + 1, '\phi_{S1}\cdot\phi_{D1}  srcid=-2 product', clim_log, sx(1), dx(1));
 
 sgtitle('Adjoint consistency: J(S_1,D_1) vs \phi_{S1}\cdot\phi_{D1}');
 fprintf('\nDone.\n');
@@ -172,8 +170,8 @@ function plot_xz_slice(vol3d, ys, ttl, clim_log, src_x, det_x)
     Nx_  = size(vol3d, 1);
     Nz_  = size(vol3d, 3);
     sl   = squeeze(vol3d(:, ys, :))';   % [Nz, Nx]
-    imagesc(0:Nx_-1, 0:Nz_-1, log10(max(double(abs(sl)), 10^clim_log(1))));
-    %clim(clim_log);
+    imagesc(0:Nx_ - 1, 0:Nz_ - 1, log10(max(double(abs(sl)), 10^clim_log(1))));
+    % clim(clim_log);
     hold on;
     for k = 1:numel(src_x)
         plot(src_x(k), 0, 'r^', 'MarkerSize', 9, 'MarkerFaceColor', 'r');
@@ -181,6 +179,9 @@ function plot_xz_slice(vol3d, ys, ttl, clim_log, src_x, det_x)
     for k = 1:numel(det_x)
         plot(det_x(k), 0, 'bs', 'MarkerSize', 9, 'MarkerFaceColor', 'b');
     end
-    xlabel('x (mm)'); ylabel('z (mm)');
-    title(ttl); colorbar; set(gca, 'YDir', 'normal');
+    xlabel('x (mm)');
+    ylabel('z (mm)');
+    title(ttl);
+    colorbar;
+    set(gca, 'YDir', 'normal');
 end
