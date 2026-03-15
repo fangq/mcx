@@ -1,10 +1,10 @@
 %% demo_mcxlab_rfforward.m - Frequency-domain forward MC with MCX
 %
 % Eq.9: w <- w * exp[-(mu_a + i*omega*n/c0) * ds]
-% Leung & Jacques, OSA Continuum 2(3), 957-965 (2019)
+% Leino, Pulkkinen, and Tarvainen, OSA Continuum 2(3), 957-965 (2019)
 %
-% Key settings: cfg.outputtype = 'rf'; cfg.omega = 2*pi*freq;
-% When seed is NOT from file and omega > 0, MCX runs RF forward mode.
+% Key setting: cfg.omega = 2*pi*freq  (no special outputtype needed for forward mode)
+% When seed is NOT from file and omega > 0, MCX automatically runs RF forward mode.
 % The output is a complex-valued fluence volume.
 
 clear;
@@ -32,7 +32,6 @@ fluence_cw = mcxlab(cfg_cw);
 %% RF forward at 100 MHz
 cfg_rf = cfg;
 cfg_rf.omega = 2 * pi * 100e6;
-cfg_rf.outputtype = 'rf';
 fprintf('Running RF forward at %.0f MHz ...\n', cfg_rf.omega / (2 * pi) / 1e6);
 fluence_rf = mcxlab(cfg_rf);
 

@@ -67,7 +67,7 @@
 typedef unsigned int   uint;                             /**< use uint for unsigned int */
 typedef unsigned short ushort;                           /**< use ushort for unsigned short */
 
-enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF, otL, otRFmus, otWLTOF, otWPTOF};   /**< types of output */
+enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF, otL, otRFmus, otWLTOF, otWPTOF, otAdjoint};   /**< types of output */
 enum TMCXParent  {mpStandalone, mpMATLAB, mpPython};                   /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3, ofJNifti, ofBJNifti};           /**< output data format */
 enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCyclic};            /**< boundary conditions */
@@ -196,6 +196,7 @@ typedef struct MCXConfig {
     Medium* prop;                 /**<optical property mapping table*/
     POLMedium* polprop;           /**<absorption and scatterer mapping table for polarized photon simulation*/
     float4* detpos;               /**<detector positions and radius, overwrite detradius*/
+    float4* detdir;               /**<detector normal direction and focal length (for adjoint output type)*/
     float4* smatrix;              /**<scattering Mueller matrix */
 
     unsigned int maxgate;         /**<simultaneous recording gates*/

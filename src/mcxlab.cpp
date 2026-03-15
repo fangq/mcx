@@ -262,6 +262,28 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 mexErrMsgTxt("No active GPU device found");
             }
 
+            /** For adjoint mode: append detectors as disk-shaped extra sources before exportfield allocation */
+            if ((cfg.outputtype == otAdjoint || cfg.srcid == -2) && cfg.seed != SEED_FROM_FILE && cfg.detnum > 0 && cfg.detdir != NULL) {
+                unsigned int origextrasrclen = cfg.extrasrclen;
+                cfg.srcdata = (ExtraSrc*)realloc(cfg.srcdata, (cfg.extrasrclen + cfg.detnum) * sizeof(ExtraSrc));
+                memset(cfg.srcdata + cfg.extrasrclen, 0, cfg.detnum * sizeof(ExtraSrc));
+
+                for (unsigned int adi = 0; adi < cfg.detnum; adi++) {
+                    cfg.srcdata[origextrasrclen + adi].srcpos.x = cfg.detpos[adi].x;
+                    cfg.srcdata[origextrasrclen + adi].srcpos.y = cfg.detpos[adi].y;
+                    cfg.srcdata[origextrasrclen + adi].srcpos.z = cfg.detpos[adi].z;
+                    cfg.srcdata[origextrasrclen + adi].srcpos.w = 1.f;
+                    cfg.srcdata[origextrasrclen + adi].srcdir   = cfg.detdir[adi];
+                    cfg.srcdata[origextrasrclen + adi].srcparam1.x = cfg.detpos[adi].w;
+                }
+
+                cfg.extrasrclen += cfg.detnum;
+
+                if (cfg.outputtype == otAdjoint) {
+                    cfg.srcid = -1;
+                }
+            }
+
             /** Initialize all buffers necessary to store the output variables */
             if (nlhs >= 1 && cfg.issave2pt) {
                 size_t fieldlen = cfg.dim.x * cfg.dim.y * cfg.dim.z * (int)((cfg.tend - cfg.tstart) / cfg.tstep + 0.5) * cfg.srcnum;
@@ -270,11 +292,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fieldlen *= cfg.detnum;
                 }
 
-                if (((cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) || (cfg.outputtype == otRF && cfg.seed != SEED_FROM_FILE && cfg.omega > 0.f))) {
+                if (((cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) || (cfg.omega > 0.f && cfg.seed != SEED_FROM_FILE))) {
                     fieldlen *= 2;
                 }
 
-                if (cfg.extrasrclen && cfg.srcid == -1) {
+                if (cfg.extrasrclen && cfg.srcid < 0) {
                     fieldlen *= (cfg.extrasrclen + 1);
                 }
 
@@ -405,12 +427,25 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[4] = cfg.detnum;
                 }
 
-                if (((cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) || (cfg.outputtype == otRF && cfg.seed != SEED_FROM_FILE && cfg.omega > 0.f))) {
+                if (((cfg.replay.seed != NULL && (cfg.outputtype == otRF || cfg.outputtype == otRFmus)) || (cfg.omega > 0.f && cfg.seed != SEED_FROM_FILE))) {
                     fielddim[5] = 2;
                 }
 
-                if (cfg.extrasrclen && cfg.srcid == -1) {
+                if (cfg.extrasrclen && cfg.srcid < 0) {
                     fielddim[5] *= (cfg.extrasrclen + 1);
+                }
+
+                /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] */
+                if (cfg.outputtype == otAdjoint && cfg.seed != SEED_FROM_FILE && cfg.detdir != NULL) {
+                    unsigned int Ns = cfg.extrasrclen + 1 - cfg.detnum;
+                    unsigned int Nd = cfg.detnum;
+                    int isrf = (cfg.omega > 0.f) ? 1 : 0;
+                    fielddim[0] = cfg.dim.x;
+                    fielddim[1] = cfg.dim.y;
+                    fielddim[2] = cfg.dim.z;
+                    fielddim[3] = Ns * Nd;
+                    fielddim[4] = 1;
+                    fielddim[5] = isrf ? 2 : 1;
                 }
 
                 fieldlen = (size_t)fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4] * fielddim[5];
@@ -449,7 +484,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 }
 
                 /** RF forward: convert [Re_vol, Im_vol] (dim5=2) to MATLAB complex */
-                if (cfg.outputtype == otRF && cfg.seed != SEED_FROM_FILE && cfg.omega > 0.f && cfg.exportfield && cfg.issave2pt) {
+                if (cfg.omega > 0.f && cfg.seed != SEED_FROM_FILE && cfg.exportfield && cfg.issave2pt) {
                     size_t halflen = (size_t)fielddim[0] * fielddim[1] * fielddim[2] * fielddim[3] * fielddim[4];
                     dimtype cdim[5] = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4]};
                     int ndim = 4 + (fielddim[4] > 1);
@@ -974,6 +1009,32 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             }
 
         printf("mcx.detnum=%d;\n", cfg->detnum);
+    } else if (strcmp(name, "detdir") == 0) {
+        arraydim = mxGetDimensions(item);
+
+        if (arraydim[0] > 0 && arraydim[1] != 4) {
+            mexErrMsgTxt("the 'detdir' field must have 4 columns (vx,vy,vz,focallength)");
+        }
+
+        if (arraydim[0] > 0 && cfg->detnum > 0 && arraydim[0] != cfg->detnum) {
+            mexErrMsgTxt("the number of rows in 'detdir' must match 'detpos'");
+        }
+
+        double* val = mxGetPr(item);
+
+        if (cfg->detdir) {
+            free(cfg->detdir);
+        }
+
+        cfg->detdir = (float4*)malloc(arraydim[0] * sizeof(float4));
+        memset(cfg->detdir, 0, arraydim[0] * sizeof(float4));
+
+        for (int j = 0; j < (int)arraydim[1]; j++)
+            for (int ii = 0; ii < (int)arraydim[0]; ii++) {
+                ((float*)(&cfg->detdir[ii]))[j] = val[j * arraydim[0] + ii];
+            }
+
+        printf("mcx.detdir=[%d rows];\n", (int)arraydim[0]);
     } else if (strcmp(name, "prop") == 0) {
         arraydim = mxGetDimensions(item);
 
@@ -1071,7 +1132,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         printf("mcx.srctype='%s';\n", strtypestr);
     } else if (strcmp(name, "outputtype") == 0) {
         int len = mxGetNumberOfElements(item);
-        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", ""};
+        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint", ""};
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
         if (!mxIsChar(item) || len == 0) {

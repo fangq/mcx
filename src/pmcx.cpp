@@ -659,6 +659,39 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             }
     }
 
+    if (user_cfg.contains("detdir")) {
+        auto f_style_volume = py::array_t < float, py::array::f_style | py::array::forcecast >::ensure(user_cfg["detdir"]);
+
+        if (!f_style_volume) {
+            throw py::value_error("Invalid detdir field value");
+        }
+
+        auto buffer_info = f_style_volume.request();
+
+        if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(0) > 0 && buffer_info.shape.at(1) != 4) || (buffer_info.shape.size() == 1 && buffer_info.shape.at(0) != 4)) {
+            throw py::value_error("the 'detdir' field must have 4 columns (vx,vy,vz,focallength)");
+        }
+
+        int detdir_count = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
+
+        if (mcx_config.detnum > 0 && detdir_count != mcx_config.detnum) {
+            throw py::value_error("the number of rows in 'detdir' must match 'detpos'");
+        }
+
+        if (mcx_config.detdir) {
+            free(mcx_config.detdir);
+        }
+
+        mcx_config.detdir = (float4*) malloc(detdir_count * sizeof(float4));
+        memset(mcx_config.detdir, 0, detdir_count * sizeof(float4));
+        auto val = static_cast<float*>(buffer_info.ptr);
+
+        for (int j = 0; j < 4; j++)
+            for (int ii = 0; ii < detdir_count; ii++) {
+                ((float*) (&mcx_config.detdir[ii]))[j] = val[j * detdir_count + ii];
+            }
+    }
+
     if (user_cfg.contains("prop")) {
         auto f_style_volume = py::array_t < float, py::array::f_style | py::array::forcecast >::ensure(user_cfg["prop"]);
 
@@ -759,7 +792,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
     if (user_cfg.contains("outputtype")) {
         std::string output_type_str = py::str(user_cfg["outputtype"]);
-        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof"};
+        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint"};
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
         if (output_type_str.empty()) {
@@ -1107,6 +1140,28 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             throw py::value_error("You must define 'vol' and 'prop' field.");
         }
 
+        /** For adjoint mode: append detectors as disk-shaped extra sources before exportfield allocation */
+        if ((mcx_config.outputtype == otAdjoint || mcx_config.srcid == -2) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detnum > 0 && mcx_config.detdir != nullptr) {
+            unsigned int origextrasrclen = mcx_config.extrasrclen;
+            mcx_config.srcdata = (ExtraSrc*)realloc(mcx_config.srcdata, (mcx_config.extrasrclen + mcx_config.detnum) * sizeof(ExtraSrc));
+            memset(mcx_config.srcdata + mcx_config.extrasrclen, 0, mcx_config.detnum * sizeof(ExtraSrc));
+
+            for (unsigned int adi = 0; adi < mcx_config.detnum; adi++) {
+                mcx_config.srcdata[origextrasrclen + adi].srcpos.x = mcx_config.detpos[adi].x;
+                mcx_config.srcdata[origextrasrclen + adi].srcpos.y = mcx_config.detpos[adi].y;
+                mcx_config.srcdata[origextrasrclen + adi].srcpos.z = mcx_config.detpos[adi].z;
+                mcx_config.srcdata[origextrasrclen + adi].srcpos.w = 1.f;
+                mcx_config.srcdata[origextrasrclen + adi].srcdir   = mcx_config.detdir[adi];
+                mcx_config.srcdata[origextrasrclen + adi].srcparam1.x = mcx_config.detpos[adi].w;
+            }
+
+            mcx_config.extrasrclen += mcx_config.detnum;
+
+            if (mcx_config.outputtype == otAdjoint) {
+                mcx_config.srcid = -1;
+            }
+        }
+
         /** Initialize all buffers necessary to store the output variables */
         if (mcx_config.issave2pt == 1) {
             size_t field_len =
@@ -1117,11 +1172,11 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_len *= mcx_config.detnum;
             }
 
-            if (((mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) || (mcx_config.outputtype == otRF && mcx_config.seed != SEED_FROM_FILE && mcx_config.omega > 0.f))) {
+            if (((mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) || (mcx_config.omega > 0.f && mcx_config.seed != SEED_FROM_FILE))) {
                 field_len *= 2;
             }
 
-            if (mcx_config.extrasrclen && mcx_config.srcid == -1) {
+            if (mcx_config.extrasrclen && mcx_config.srcid < 0) {
                 field_len *= (mcx_config.extrasrclen + 1);
             }
 
@@ -1246,12 +1301,24 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[4] = mcx_config.detnum;
             }
 
-            if (((mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) || (mcx_config.outputtype == otRF && mcx_config.seed != SEED_FROM_FILE && mcx_config.omega > 0.f))) {
+            if (((mcx_config.replay.seed != nullptr && (mcx_config.outputtype == otRF || mcx_config.outputtype == otRFmus)) || (mcx_config.omega > 0.f && mcx_config.seed != SEED_FROM_FILE))) {
                 field_dim[5] = 2;
             }
 
-            if (mcx_config.extrasrclen && mcx_config.srcid == -1) {
+            if (mcx_config.extrasrclen && mcx_config.srcid < 0) {
                 field_dim[5] *= (mcx_config.extrasrclen + 1);
+            }
+
+            /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] */
+            if (mcx_config.outputtype == otAdjoint && mcx_config.seed != SEED_FROM_FILE && mcx_config.detdir != nullptr) {
+                unsigned int Ns = mcx_config.extrasrclen + 1 - mcx_config.detnum;
+                unsigned int Nd = mcx_config.detnum;
+                field_dim[0] = mcx_config.dim.x;
+                field_dim[1] = mcx_config.dim.y;
+                field_dim[2] = mcx_config.dim.z;
+                field_dim[3] = Ns * Nd;
+                field_dim[4] = 1;
+                field_dim[5] = (mcx_config.omega > 0.f) ? 2 : 1;
             }
 
             field_len = field_dim[0] * field_dim[1] * field_dim[2] * field_dim[3] * field_dim[4] * field_dim[5];
@@ -1290,13 +1357,19 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 output["dref"] = dref_array;
             }
 
-            if (mcx_config.outputtype == otRF && mcx_config.seed != SEED_FROM_FILE && mcx_config.omega > 0.f && mcx_config.exportfield) {
-                /** RF forward: convert [Re, Im] halves to complex numpy array */
+            if (mcx_config.omega > 0.f && mcx_config.seed != SEED_FROM_FILE && mcx_config.exportfield) {
+                /** RF forward/adjoint: convert [Re, Im] halves to complex numpy array */
                 size_t halflen = field_len / 2;
-                std::vector<size_t> cdims = {(size_t)(mcx_config.srcnum * mcx_config.dim.x),
-                                             (size_t)mcx_config.dim.y, (size_t)mcx_config.dim.z,
-                                             (size_t)((mcx_config.tend - mcx_config.tstart) / mcx_config.tstep + 0.5)
-                                            };
+                std::vector<size_t> cdims;
+
+                for (int i = 0; i < 4; i++) {
+                    cdims.push_back(field_dim[i]);
+                }
+
+                if (field_dim[4] > 1) {
+                    cdims.push_back(field_dim[4]);
+                }
+
                 auto cdata = py::array_t<std::complex<float>, py::array::f_style>(cdims);
                 auto* cptr = (std::complex<float>*)cdata.mutable_data();
 

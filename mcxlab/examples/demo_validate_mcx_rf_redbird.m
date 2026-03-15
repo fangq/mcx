@@ -104,8 +104,7 @@ xcfg.isreflect = 1;
 xcfg.srctype = 'pencil';
 xcfg.srcpos = [29.5 29.5 0];  % match Redbird source; issrcfrom0=1 so coords are physical mm
 
-xcfg.omega = omega;            %% <-- KEY: modulation angular frequency
-xcfg.outputtype = 'rf';        %% <-- KEY: RF forward mode (non-replay)
+xcfg.omega = omega;            %% <-- KEY: modulation angular frequency (omega>0 triggers RF forward)
 
 fprintf('Running MCX RF forward (f = %.0f MHz, %.0e photons) ...\n', freq / 1e6, xcfg.nphoton);
 tic;

@@ -147,7 +147,7 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * b : weighted average of time-of-flight x total path length in each voxel
  */
 
-const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', '\0'};
+const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', 'a', '\0'};
 
 /**
  * Debug flags
@@ -272,6 +272,7 @@ void mcx_initcfg(Config* cfg) {
     cfg->prop = NULL;
     cfg->polprop = NULL;
     cfg->detpos = NULL;
+    cfg->detdir = NULL;
     cfg->smatrix = NULL;
     cfg->vol = NULL;
     cfg->session[0] = '\0';
@@ -423,6 +424,10 @@ void mcx_clearcfg(Config* cfg) {
 
     if (cfg->detnum) {
         free(cfg->detpos);
+
+        if (cfg->detdir) {
+            free(cfg->detdir);
+        }
     }
 
     if (cfg->dim.x && cfg->dim.y && cfg->dim.z) {
@@ -932,7 +937,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
         uint dims[6] = {cfg->dim.x, cfg->dim.y, cfg->dim.z, cfg->maxgate, cfg->srcnum, 1};
         float voxelsize[6] = {cfg->steps.x, cfg->steps.y, cfg->steps.z, cfg->tstep, 1, 1};
 
-        if (cfg->extrasrclen && cfg->srcid == -1) {
+        if (cfg->extrasrclen && cfg->srcid < 0) {
             dims[5] = cfg->extrasrclen + 1;
         }
 
@@ -943,6 +948,17 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
         if ((cfg->seed == SEED_FROM_FILE && (cfg->outputtype == otRF || cfg->outputtype == otRFmus)) ||
                 (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega > 0.f)) {
             dims[5] *= 2;
+        }
+
+        if (cfg->outputtype == otAdjoint && cfg->seed != SEED_FROM_FILE && cfg->detdir != NULL) {
+            unsigned int Ns = cfg->extrasrclen + 1 - cfg->detnum;
+            unsigned int Nd = cfg->detnum;
+            dims[0] = cfg->dim.x;
+            dims[1] = cfg->dim.y;
+            dims[2] = cfg->dim.z;
+            dims[3] = Ns * Nd;
+            dims[4] = 1;
+            dims[5] = 1;
         }
 
         if (cfg->outputformat == ofJNifti) {
@@ -1545,6 +1561,32 @@ void mcx_preprocess(Config* cfg) {
     if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF)
             && cfg->seed != SEED_FROM_FILE && !(cfg->outputtype == otRF && cfg->omega > 0.f)) {
         MCX_ERROR(-6, "Jacobian output is only valid in the reply mode. Please define cfg.seed");
+    }
+
+    if ((cfg->outputtype == otAdjoint || cfg->srcid == -2) && cfg->seed != SEED_FROM_FILE && cfg->detnum > 0 && cfg->detdir != NULL) {
+        unsigned int origextrasrclen = cfg->extrasrclen;
+
+        cfg->srcdata = (ExtraSrc*)realloc(cfg->srcdata, (cfg->extrasrclen + cfg->detnum) * sizeof(ExtraSrc));
+        memset(cfg->srcdata + cfg->extrasrclen, 0, cfg->detnum * sizeof(ExtraSrc));
+
+        for (unsigned int i = 0; i < cfg->detnum; i++) {
+            cfg->srcdata[origextrasrclen + i].srcpos.x = cfg->detpos[i].x;
+            cfg->srcdata[origextrasrclen + i].srcpos.y = cfg->detpos[i].y;
+            cfg->srcdata[origextrasrclen + i].srcpos.z = cfg->detpos[i].z;
+            cfg->srcdata[origextrasrclen + i].srcpos.w = 1.f;
+            cfg->srcdata[origextrasrclen + i].srcdir   = cfg->detdir[i];
+            cfg->srcdata[origextrasrclen + i].srcparam1.x = cfg->detpos[i].w; /**< detector radius stored in srcparam1.x for disk source */
+            cfg->srcdata[origextrasrclen + i].srcparam1.y = 0.f;
+            cfg->srcdata[origextrasrclen + i].srcparam1.z = 0.f;
+            cfg->srcdata[origextrasrclen + i].srcparam1.w = 0.f;
+            /* srcparam2 is left zeroed; .z/.w used for precomputed voxel idx, filled later */
+        }
+
+        cfg->extrasrclen += cfg->detnum;
+
+        if (cfg->outputtype == otAdjoint) {
+            cfg->srcid = -1;
+        }
     }
 
     if (cfg->outputtype == otRF && cfg->seed != SEED_FROM_FILE && cfg->omega == 0.f) {
@@ -2990,8 +3032,9 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->detpos = (float4*)malloc(sizeof(float4) * cfg->detnum);
 
                 for (i = 0; i < cfg->detnum; i++) {
-                    cJSON* pos = dets, *rad = NULL;
+                    cJSON* pos = dets, *rad = NULL, *dir = NULL;
                     rad = FIND_JSON_OBJ("R", "Optode.Detector.R", det);
+                    dir = FIND_JSON_OBJ("Dir", "Optode.Detector.Dir", det);
 
                     if (cJSON_GetArraySize(det) == 2) {
                         pos = FIND_JSON_OBJ("Pos", "Optode.Detector.Pos", det);
@@ -3005,6 +3048,17 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
                     if (rad) {
                         cfg->detpos[i].w = rad->valuedouble;
+                    }
+
+                    if (dir && cJSON_IsArray(dir)) {
+                        if (cfg->detdir == NULL) {
+                            cfg->detdir = (float4*)calloc(cfg->detnum, sizeof(float4));
+                        }
+
+                        cfg->detdir[i].x = dir->child->valuedouble;
+                        cfg->detdir[i].y = dir->child->next->valuedouble;
+                        cfg->detdir[i].z = dir->child->next->next->valuedouble;
+                        cfg->detdir[i].w = (dir->child->next->next->next) ? dir->child->next->next->next->valuedouble : 0.f;
                     }
 
                     if (!cfg->issrcfrom0) {
@@ -5773,6 +5827,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                    without -E, needs omega); output is complex\n\
                                S - RF/FD mus Jacobian (replay mode only)\n\
                                T - time-of-flight*nscat;B - time-of-flight*path\n\
+                               A - adjoint Jacobian (forward, needs detpos+detdir)\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\
                                2 reserved, 3 terminate simulation when detected\n\
                                photon buffer is filled\n\

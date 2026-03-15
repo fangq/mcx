@@ -263,8 +263,8 @@ function varargout = mcxlab(varargin)
 %                      simulated; if set to 0, all source solution are summed; if set to a positive
 %                      number starting from 1, only the specified source is simulated; default to 0
 %      cfg.omega: source modulation angular frequency (rad/s), i.e. 2*pi*f; used for
-%                      both RF replay (cfg.seed from file, outputtype 'rf'/'rfmus') and
-%                      RF forward (no cfg.seed, outputtype 'rf'); required for RF forward
+%                      RF replay (cfg.seed from file, outputtype 'rf'/'rfmus') and
+%                      RF forward (no cfg.seed, omega>0 triggers RF forward automatically)
 %      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
 %                   I: total light intensity (I >= 0)
 %                   Q: balance between horizontal and vertical linearly
