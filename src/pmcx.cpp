@@ -792,7 +792,9 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
     if (user_cfg.contains("outputtype")) {
         std::string output_type_str = py::str(user_cfg["outputtype"]);
-        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint"};
+        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint",
+                                    "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", nullptr
+                                   };
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
         if (output_type_str.empty()) {
@@ -1141,7 +1143,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
         }
 
         /** For adjoint mode: append detectors as disk-shaped extra sources before exportfield allocation */
-        if ((mcx_config.outputtype == otAdjoint || mcx_config.srcid == -2) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detnum > 0 && mcx_config.detdir != nullptr) {
+        if ((MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) || mcx_config.srcid == -2) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detnum > 0 && mcx_config.detdir != nullptr) {
             unsigned int origextrasrclen = mcx_config.extrasrclen;
             mcx_config.srcdata = (ExtraSrc*)realloc(mcx_config.srcdata, (mcx_config.extrasrclen + mcx_config.detnum) * sizeof(ExtraSrc));
             memset(mcx_config.srcdata + mcx_config.extrasrclen, 0, mcx_config.detnum * sizeof(ExtraSrc));
@@ -1157,7 +1159,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
 
             mcx_config.extrasrclen += mcx_config.detnum;
 
-            if (mcx_config.outputtype == otAdjoint) {
+            if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype)) {
                 mcx_config.srcid = -1;
             }
         }
@@ -1310,7 +1312,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             }
 
             /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] */
-            if (mcx_config.outputtype == otAdjoint && mcx_config.seed != SEED_FROM_FILE && mcx_config.detdir != nullptr) {
+            if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detdir != nullptr) {
                 unsigned int Ns = mcx_config.extrasrclen + 1 - mcx_config.detnum;
                 unsigned int Nd = mcx_config.detnum;
                 field_dim[0] = mcx_config.dim.x;

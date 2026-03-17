@@ -147,7 +147,8 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * b : weighted average of time-of-flight x total path length in each voxel
  */
 
-const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', 'a', '\0'};
+const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', 'a', 'd', 'u', 'v', '\0'};
+/*                          flux flnc enrg jcbn wp  dcs  rf  plen rfms wltof wptof adj  D   mus  musp */
 
 /**
  * Debug flags
@@ -950,7 +951,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
             dims[5] *= 2;
         }
 
-        if (cfg->outputtype == otAdjoint && cfg->seed != SEED_FROM_FILE && cfg->detdir != NULL) {
+        if (MCX_IS_ADJOINT_TYPE(cfg->outputtype) && cfg->seed != SEED_FROM_FILE && cfg->detdir != NULL) {
             unsigned int Ns = cfg->extrasrclen + 1 - cfg->detnum;
             unsigned int Nd = cfg->detnum;
             dims[0] = cfg->dim.x;
@@ -1570,7 +1571,7 @@ void mcx_preprocess(Config* cfg) {
      */
 #ifndef MCX_CONTAINER
 
-    if ((cfg->outputtype == otAdjoint || cfg->srcid == -2) && cfg->seed != SEED_FROM_FILE && cfg->detnum > 0 && cfg->detdir != NULL) {
+    if ((MCX_IS_ADJOINT_TYPE(cfg->outputtype) || cfg->srcid == -2) && cfg->seed != SEED_FROM_FILE && cfg->detnum > 0 && cfg->detdir != NULL) {
         unsigned int origextrasrclen = cfg->extrasrclen;
 
         cfg->srcdata = (ExtraSrc*)realloc(cfg->srcdata, (cfg->extrasrclen + cfg->detnum) * sizeof(ExtraSrc));
@@ -1591,7 +1592,7 @@ void mcx_preprocess(Config* cfg) {
 
         cfg->extrasrclen += cfg->detnum;
 
-        if (cfg->outputtype == otAdjoint) {
+        if (MCX_IS_ADJOINT_TYPE(cfg->outputtype)) {
             cfg->srcid = -1;
         }
     }
@@ -5836,7 +5837,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                    without -E, needs omega); output is complex\n\
                                S - RF/FD mus Jacobian (replay mode only)\n\
                                T - time-of-flight*nscat;B - time-of-flight*path\n\
-                               A - adjoint Jacobian (forward, needs detpos+detdir)\n\
+                               A - adjoint mua Jacobian (forward, needs detpos+detdir)\n\
+                               D - adjoint D-coeff Jacobian (grad*grad, needs detpos+detdir)\n\
+                               U - adjoint mus Jacobian (grad*grad*3*D^2*(1-g))\n\
+                               V - adjoint mus' Jacobian (grad*grad*3*D^2)\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\
                                2 reserved, 3 terminate simulation when detected\n\
                                photon buffer is filled\n\

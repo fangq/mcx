@@ -1648,7 +1648,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
          * In adjoint mode, detector sources are launched as disk sources, overriding position.
          * Condition: current source ID exceeds the count of original (non-detector) sources.
          */
-        if ((gcfg->outputtype == otAdjoint || gcfg->srcid == -2) &&
+        if ((MCX_IS_ADJOINT_TYPE(gcfg->outputtype) || gcfg->srcid == -2) &&
                 cur_src_id > (int)(gcfg->extrasrclen + 1 - (int)gcfg->detnum)) {
             float phi = TWO_PI * rand_uniform01(t);
             float sphi, cphi;
@@ -1773,6 +1773,145 @@ __global__ void mcx_test_rng(float field[], uint n_seed[]) {
 
     for (i = 0; i < len; i++) {
         field[i] = rand_uniform01(t);
+    }
+}
+
+/**
+ * @brief Device helper: compute CW (time-integrated) fluence sum for one voxel and one source/detector slot.
+ *
+ * Sums all time-gate contributions for voxel index @p vox and slot index @p slot.
+ * Layout: field[vox + (t + slot*maxgate)*dimxyz].
+ */
+__device__ static inline float mcx_cw_sum(const OutputType* field, unsigned int vox, unsigned int slot,
+        unsigned int maxgate, unsigned int dimxyz) {
+    float sum = 0.f;
+
+    for (unsigned int t = 0; t < maxgate; t++) {
+        sum += (float)field[vox + (size_t)(t + slot * maxgate) * dimxyz];
+    }
+
+    return sum;
+}
+
+/**
+ * @brief Device helper: 2nd-order finite-difference gradient in one direction (in voxel units, no 1/h factor).
+ *
+ * Uses 2nd-order central differences at interior points, and 2nd-order forward/backward
+ * one-sided differences at the domain edges (i==0 or i==N-1).
+ * For N==1 returns 0; for N==2 falls back to 1st-order differences.
+ * The caller must scale by 1/unitinmm to convert from voxel units to physical units.
+ *
+ * @param field     field array (real or imag part)
+ * @param vox       flat voxel index (ix + iy*Nx + iz*Nx*Ny)
+ * @param slot      source/detector slot index
+ * @param maxgate   number of time gates
+ * @param dimxyz    Nx*Ny*Nz
+ * @param i         coordinate of vox in direction dir (0-based)
+ * @param N         domain size in direction dir
+ * @param stride    voxel stride in direction dir (1, Nx, or Nx*Ny)
+ */
+__device__ static inline float mcx_fd_grad(const OutputType* field, unsigned int vox, unsigned int slot,
+        unsigned int maxgate, unsigned int dimxyz,
+        unsigned int i, unsigned int N, unsigned int stride) {
+    if (N <= 1) {
+        return 0.f;
+    }
+
+    float f0 = mcx_cw_sum(field, vox, slot, maxgate, dimxyz);
+
+    if (i == 0) {
+        float fp1 = mcx_cw_sum(field, vox + stride, slot, maxgate, dimxyz);
+
+        if (N == 2) {
+            return fp1 - f0;
+        }
+
+        float fp2 = mcx_cw_sum(field, vox + 2 * stride, slot, maxgate, dimxyz);
+        return (-3.f * f0 + 4.f * fp1 - fp2) * 0.5f;
+    } else if (i == N - 1) {
+        float fm1 = mcx_cw_sum(field, vox - stride, slot, maxgate, dimxyz);
+
+        if (N == 2) {
+            return f0 - fm1;
+        }
+
+        float fm2 = mcx_cw_sum(field, vox - 2 * stride, slot, maxgate, dimxyz);
+        return (fm2 - 4.f * fm1 + 3.f * f0) * 0.5f;
+    } else {
+        float fp1 = mcx_cw_sum(field, vox + stride, slot, maxgate, dimxyz);
+        float fm1 = mcx_cw_sum(field, vox - stride, slot, maxgate, dimxyz);
+        return (fp1 - fm1) * 0.5f;
+    }
+}
+
+/**
+ * @brief Adjoint D-coefficient Jacobian kernel: dot product of gradients of source and detector fluences.
+ *
+ * For each voxel, computes J_D(s,d) = ∇φ_src · ∇φ_det, where gradients are in voxel units
+ * (caller must multiply by unitinmm to convert: J_D_physical = J_D_kernel * unitinmm).
+ * For RF (complex) fields the complex dot product is computed:
+ *   Re(J_D) = ∇Re(φ_src)·∇Re(φ_det) − ∇Im(φ_src)·∇Im(φ_det)
+ *   Im(J_D) = ∇Re(φ_src)·∇Im(φ_det) + ∇Im(φ_src)·∇Re(φ_det)
+ *
+ * @param[in]  gfield_re  real field [dimxyz * maxgate * (Ns+Nd)]
+ * @param[in]  gfield_im  imag field same layout, or NULL for CW
+ * @param[out] gadjoint   output: real [0..adjointlen), imag [adjointlen..2*adjointlen) when RF
+ * @param[in]  dimxyz     Nx*Ny*Nz
+ * @param[in]  maxgate    number of time gates
+ * @param[in]  Ns         number of original sources
+ * @param[in]  Nd         number of detectors
+ * @param[in]  Nx         domain size in x
+ * @param[in]  Ny         domain size in y
+ */
+__global__ void mcx_adjoint_dcoeff_kernel(OutputType* gfield_re, OutputType* gfield_im,
+        float* gadjoint,
+        unsigned int dimxyz, unsigned int maxgate,
+        unsigned int Ns, unsigned int Nd,
+        unsigned int Nx, unsigned int Ny) {
+    unsigned int vox = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (vox >= dimxyz) {
+        return;
+    }
+
+    unsigned int Nxy = Nx * Ny;
+    unsigned int Nz  = dimxyz / Nxy;
+    unsigned int ix  = vox % Nx;
+    unsigned int iy  = (vox / Nx) % Ny;
+    unsigned int iz  = vox / Nxy;
+
+    size_t adjointlen = (size_t)dimxyz * Ns * Nd;
+
+    for (unsigned int s = 0; s < Ns; s++) {
+        float gsx_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, ix, Nx, 1);
+        float gsy_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, iy, Ny, Nx);
+        float gsz_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, iz, Nz, Nxy);
+        float gsx_im = 0.f, gsy_im = 0.f, gsz_im = 0.f;
+
+        if (gfield_im) {
+            gsx_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, ix, Nx, 1);
+            gsy_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, iy, Ny, Nx);
+            gsz_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, iz, Nz, Nxy);
+        }
+
+        for (unsigned int d = 0; d < Nd; d++) {
+            float gdx_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, ix, Nx, 1);
+            float gdy_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, iy, Ny, Nx);
+            float gdz_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, iz, Nz, Nxy);
+
+            unsigned int out_idx = vox + (s * Nd + d) * dimxyz;
+            gadjoint[out_idx] = gsx_re * gdx_re + gsy_re * gdy_re + gsz_re * gdz_re;
+
+            if (gfield_im) {
+                float gdx_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, ix, Nx, 1);
+                float gdy_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, iy, Ny, Nx);
+                float gdz_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, iz, Nz, Nxy);
+
+                gadjoint[out_idx] -= gsx_im * gdx_im + gsy_im * gdy_im + gsz_im * gdz_im;
+                gadjoint[out_idx + adjointlen] = gsx_re * gdx_im + gsy_re * gdy_im + gsz_re * gdz_im
+                                                 + gsx_im * gdx_re + gsy_im * gdy_re + gsz_im * gdz_re;
+            }
+        }
     }
 }
 
@@ -2329,7 +2468,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                                 __fdividef(dw_im_rf * prop.mua - dw_re_rf * a_im_rf, a_mag2_rf);
                 } else if (gcfg->outputtype == otEnergy) {
                     weight = w0 - p.w;
-                } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux || gcfg->outputtype == otAdjoint) {
+                } else if (gcfg->outputtype == otFluence || gcfg->outputtype == otFlux || MCX_IS_ADJOINT_TYPE(gcfg->outputtype)) {
                     weight = (prop.mua < EPS) ? (w0 * f.pathlen) : __fdividef(w0 - p.w, prop.mua);   /** when mua->0, the first two terms of Taylor expansion of w0*(1-exp(-mua*len))/mua = w0*len - mua*len^2*w0/2 */
                 } else if (gcfg->seed == SEED_FROM_FILE) {
                     if (gcfg->outputtype == otJacobian || gcfg->outputtype == otRF || gcfg->outputtype == otWLTOF) {
@@ -4035,10 +4174,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              * If output is flux (J/(s*mm^2), default), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox*dt))
              * If output is fluence (J/mm^2), raw data (joule*mm) is multiplied by (1/(Nphoton*Vvox))
              */
-            if (cfg->outputtype == otFlux || cfg->outputtype == otFluence || cfg->outputtype == otAdjoint || (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE)) {
+            if (cfg->outputtype == otFlux || cfg->outputtype == otFluence || MCX_IS_ADJOINT_TYPE(cfg->outputtype) || (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE)) {
                 scale[0] = cfg->unitinmm / (cfg->energytot * Vvox * cfg->tstep); /* Vvox (in mm^3 already) * (Tstep) * (Eabsorp/U) */
 
-                if (cfg->outputtype == otFluence || cfg->outputtype == otAdjoint) {
+                if (cfg->outputtype == otFluence || MCX_IS_ADJOINT_TYPE(cfg->outputtype)) {
                     scale[0] *= cfg->tstep; /**< adjoint fields normalized as fluence (flux*tstep) so kernel sum gives total fluence */
                 }
 
@@ -4131,13 +4270,14 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         }
 
         /**
-         * In adjoint mode: compute the adjoint (Jacobian) output by multiplying the CW fluence
-         * of each original source with that of each detector, per voxel.
-         * Runs after normalization; for RF adjoint (omega>0) the complex fluences are multiplied.
-         * The accumulated cfg->exportfield is uploaded to GPU, the adjoint kernel runs in-place,
-         * and the result is downloaded back directly into cfg->exportfield (resized via realloc).
+         * In adjoint mode: compute the adjoint (Jacobian) output.
+         *   otAdjoint:       J_mua(s,d)[vox] = -φ_src · φ_det * dV  (point product)
+         *   otAdjointDcoeff: J_D(s,d)[vox]   =  ∇φ_src · ∇φ_det * unitinmm  (dot product of gradients in voxel units)
+         *   otAdjointMus:    J_mus = J_D * 3*D²*(1-g) per voxel  (where D = 1/(3*(1-g)*mus))
+         *   otAdjointMusp:   J_musp= J_D * 3*D²       per voxel
+         * Runs after normalization; for RF adjoint (omega>0) the complex fields are used.
          */
-        if (cfg->issave2pt && cfg->outputtype == otAdjoint && cfg->exportfield) {
+        if (cfg->issave2pt && MCX_IS_ADJOINT_TYPE(cfg->outputtype) && cfg->exportfield) {
             int isrf = (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) ? 1 : 0;
             unsigned int Ns = cfg->extrasrclen + 1 - cfg->detnum; /**< count of original sources */
             unsigned int Nd = cfg->detnum;
@@ -4155,10 +4295,22 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
             unsigned int adjblocksize = 256;
             unsigned int adjgridsize = (pure_voxels + adjblocksize - 1) / adjblocksize;
-            mcx_adjoint_kernel <<< adjgridsize, adjblocksize>>>(
-                gfield_tmp,
-                isrf ? gfield_tmp + fieldlen : NULL,
-                gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
+
+            if (cfg->outputtype == otAdjoint) {
+                /** mua Jacobian: point-product of CW fluences */
+                mcx_adjoint_kernel <<< adjgridsize, adjblocksize>>>(
+                    gfield_tmp,
+                    isrf ? gfield_tmp + fieldlen : NULL,
+                    gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
+            } else {
+                /** D/mus/musp Jacobian: dot-product of fluence gradients (in voxel units) */
+                mcx_adjoint_dcoeff_kernel <<< adjgridsize, adjblocksize>>>(
+                    gfield_tmp,
+                    isrf ? gfield_tmp + fieldlen : NULL,
+                    gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd,
+                    cfg->dim.x, cfg->dim.y);
+            }
+
             CUDA_ASSERT(cudaGetLastError());
             CUDA_ASSERT(cudaDeviceSynchronize());
 
@@ -4169,9 +4321,53 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             CUDA_ASSERT(cudaFree(gfield_tmp));
             CUDA_ASSERT(cudaFree(gadjoint_tmp));
 
-            /** Scale adjoint output by voxel volume: J = phi_fluence_src * phi_fluence_det * dV */
+            /**
+             * Scale the adjoint output (isotropic voxels assumed; spacing = unitinmm [mm/voxel]):
+             *
+             *   otAdjoint: J_mua = -phi_src * phi_det * dV  =>  scale = -Vvox = -unitinmm^3
+             *
+             *   otAdjointDcoeff/Mus/Musp: kernel computes grad_vox·grad_vox (in voxel units).
+             *     Physical gradient: grad_mm = grad_vox / unitinmm
+             *     J_D = (grad_vox_src/unitinmm) · (grad_vox_det/unitinmm) * Vvox
+             *         = kernel_output * Vvox / unitinmm^2
+             *         = kernel_output * unitinmm^3 / unitinmm^2
+             *         = kernel_output * unitinmm    =>  scale = unitinmm
+             *
+             *   For otAdjointMus/Musp, an additional per-voxel factor is applied below.
+             */
+            float adj_scale = (cfg->outputtype == otAdjoint) ? -Vvox : cfg->unitinmm;
+
             for (size_t k = 0; k < exportlen; k++) {
-                cfg->exportfield[k] *= -Vvox;
+                cfg->exportfield[k] *= adj_scale;
+            }
+
+            /** For mus/musp: additionally multiply each voxel by the optical-property-derived factor */
+            if (cfg->outputtype == otAdjointMus || cfg->outputtype == otAdjointMusp) {
+                for (size_t vox = 0; vox < (size_t)pure_voxels; vox++) {
+                    unsigned int medid = cfg->vol[vox] & 0xFF;  /**< medium index (8-bit, common case) */
+                    float opscale = 0.f;
+
+                    if (medid < cfg->medianum) {
+                        float mus   = cfg->prop[medid].mus;
+                        float onemg = 1.f - cfg->prop[medid].g;
+
+                        if (mus > 0.f && onemg > 0.f) {
+                            /** D = 1/(3*(1-g)*mus).  adjoint_mus:  J * 3*D^2*(1-g) = J / (3*(1-g)*mus^2)
+                             *                         adjoint_musp: J * 3*D^2        = J / (3*(1-g)^2*mus^2) */
+                            opscale = (cfg->outputtype == otAdjointMus)
+                                      ? 1.f / (3.f * onemg * mus * mus)
+                                      : 1.f / (3.f * onemg * onemg * mus * mus);
+                        }
+                    }
+
+                    for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
+                        cfg->exportfield[vox + (size_t)sd * pure_voxels] *= opscale;
+
+                        if (isrf) {
+                            cfg->exportfield[vox + (size_t)sd * pure_voxels + adjointlen] *= opscale;
+                        }
+                    }
+                }
             }
 
             fieldlen = exportlen;

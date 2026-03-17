@@ -263,7 +263,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             }
 
             /** For adjoint mode: append detectors as disk-shaped extra sources before exportfield allocation */
-            if ((cfg.outputtype == otAdjoint || cfg.srcid == -2) && cfg.seed != SEED_FROM_FILE && cfg.detnum > 0 && cfg.detdir != NULL) {
+            if ((MCX_IS_ADJOINT_TYPE(cfg.outputtype) || cfg.srcid == -2) && cfg.seed != SEED_FROM_FILE && cfg.detnum > 0 && cfg.detdir != NULL) {
                 unsigned int origextrasrclen = cfg.extrasrclen;
                 cfg.srcdata = (ExtraSrc*)realloc(cfg.srcdata, (cfg.extrasrclen + cfg.detnum) * sizeof(ExtraSrc));
                 memset(cfg.srcdata + cfg.extrasrclen, 0, cfg.detnum * sizeof(ExtraSrc));
@@ -279,7 +279,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
                 cfg.extrasrclen += cfg.detnum;
 
-                if (cfg.outputtype == otAdjoint) {
+                if (MCX_IS_ADJOINT_TYPE(cfg.outputtype)) {
                     cfg.srcid = -1;
                 }
             }
@@ -436,7 +436,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 }
 
                 /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] */
-                if (cfg.outputtype == otAdjoint && cfg.seed != SEED_FROM_FILE && cfg.detdir != NULL) {
+                if (MCX_IS_ADJOINT_TYPE(cfg.outputtype) && cfg.seed != SEED_FROM_FILE && cfg.detdir != NULL) {
                     unsigned int Ns = cfg.extrasrclen + 1 - cfg.detnum;
                     unsigned int Nd = cfg.detnum;
                     int isrf = (cfg.omega > 0.f) ? 1 : 0;
@@ -1132,7 +1132,9 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         printf("mcx.srctype='%s';\n", strtypestr);
     } else if (strcmp(name, "outputtype") == 0) {
         int len = mxGetNumberOfElements(item);
-        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint", ""};
+        const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint",
+                                    "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", ""
+                                   };
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
         if (!mxIsChar(item) || len == 0) {

@@ -329,11 +329,29 @@ function varargout = mcxlab(varargin)
 %                      'wltof' weighted average of time-of-flight x total path length in each voxel,
 %                      'wptof' weighted average of time-of-flight x total scattering count in each voxel
 %
+%                      == Adjoint (forward-mode) Jacobians - requires cfg.detpos and cfg.detdir ==
+%                      'adjoint' - mua Jacobian (forward mode, no replay):
+%                             J_mua[r] = -phi_src[r]*phi_det[r]*dV [mm^-1]
+%                             output: real array [Nx,Ny,Nz,Ns*Nd] (CW) or
+%                             complex [Nx,Ny,Nz,Ns*Nd] (RF, when cfg.omega>0)
+%                      'adjoint_dcoeff' - diffusion coefficient D=1/(3*mus') Jacobian:
+%                             J_D[r] = grad(phi_src)[r] . grad(phi_det)[r] * dV [mm^-3]
+%                             gradients computed via 2nd-order finite differences
+%                             (central at interior, one-sided at edges) with spacing
+%                             cfg.unitinmm; normalization: kernel*unitinmm
+%                      'adjoint_mus' - scattering coeff mus Jacobian (D=1/(3*(1-g)*mus)):
+%                             J_mus[r] = J_D[r] * 3*D^2*(1-g) = J_D[r]/(3*(1-g)*mus^2)
+%                             uses each voxel's own mus and g from cfg.prop
+%                      'adjoint_musp' - reduced scattering coeff mus'=(1-g)*mus Jacobian:
+%                             J_musp[r] = J_D[r] * 3*D^2 = J_D[r]/(3*(1-g)^2*mus^2)
+%                             uses each voxel's own mus and g from cfg.prop
+%
 %                      for types jacobian/wl/wp, example: <demo_mcxlab_replay.m>
 %                          and  <demo_replay_timedomain.m>
 %                      for types rf (replay), example: <demo_replay_frequencydomain.m>
 %                      for types rf (forward), example: <compare_redbird_mcx_rf.m>
 %                      for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
+%                      for adjoint types, example: <demo_mcx_adjoint_jacobian.m>
 %      cfg.session:    a string for output file names (only used when no return variables)
 %      cfg.lang:       specify the language code for printing, supported languages include
 %                      zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, pt_BR

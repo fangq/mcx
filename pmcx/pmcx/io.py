@@ -899,6 +899,10 @@ def json2mcx(filename):
                 "s": "rfmus",
                 "t": "wltof",
                 "b": "wptof",
+                "a": "adjoint",
+                "d": "adjoint_dcoeff",
+                "u": "adjoint_mus",
+                "v": "adjoint_musp",
             }
 
             if cfg["outputtype"] not in otypemap:

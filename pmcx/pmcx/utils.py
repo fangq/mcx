@@ -534,6 +534,16 @@ def mcxlab(*args):
                           replay mode: FD mua Jacobian when cfg['seed'] is from
                             a prior .mch file and cfg['omega'] is set
              'rfmus'    - FD mus Jacobian (replay mode only)
+
+        Adjoint (forward-mode) Jacobians - requires cfg['detpos'] and cfg['detdir']:
+             'adjoint'        - mua Jacobian: J_mua[r]=-phi_src[r]*phi_det[r]*dV [mm^-1]
+                                output: real [Nx,Ny,Nz,Ns*Nd] (CW) or complex (RF)
+             'adjoint_dcoeff' - D=1/(3*mus') Jacobian via gradient dot-product:
+                                J_D[r] = grad(phi_src).grad(phi_det)*dV [mm^-3]
+                                2nd-order FD gradients; normalization: kernel*unitinmm
+             'adjoint_mus'    - mus Jacobian: J_mus = J_D/(3*(1-g)*mus^2) per voxel
+             'adjoint_musp'   - mus' Jacobian: J_musp = J_D/(3*(1-g)^2*mus^2) per voxel
+
         cfg['omega']:    source modulation angular frequency in rad/s (2*pi*f);
                           required for RF forward and RF replay modes
     """
