@@ -474,10 +474,10 @@ where possible parameters include (the first value in [*|*] is the default)
                                M - momentum transfer; R - RF/FD Jacobian
                                L - total pathlength; S - RF/FD mus Jacobian
                                T - time-of-flight*nscat;B - time-of-flight*path
-                               A - adjoint mua Jacobian (forward, needs detpos+detdir)
-                               D - adjoint D-coeff Jacobian (grad.grad, forward)
-                               U - adjoint mus Jacobian (J_D*3*D^2*(1-g), forward)
-                               V - adjoint mus' Jacobian (J_D*3*D^2, forward)
+                               A - adjoint mua Jacobian (needs detpos+detdir)
+                               D - adjoint D-coeff Jacobian (grad.grad)
+                               U - adjoint mus Jacobian (J_D*3*D^2*(1-g))
+                               V - adjoint mus' Jacobian (J_D*3*D^2)
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save
                                2 reserved, 3 terminate simulation when detected
                                photon buffer is filled

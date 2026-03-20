@@ -5837,8 +5837,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                    without -E, needs omega); output is complex\n\
                                S - RF/FD mus Jacobian (replay mode only)\n\
                                T - time-of-flight*nscat;B - time-of-flight*path\n\
-                               A - adjoint mua Jacobian (forward, needs detpos+detdir)\n\
-                               D - adjoint D-coeff Jacobian (grad*grad, needs detpos+detdir)\n\
+                               A - adjoint mua Jacobian (needs detpos+detdir)\n\
+                               D - adjoint D-coeff Jacobian (needs detpos+dir)\n\
                                U - adjoint mus Jacobian (grad*grad*3*D^2*(1-g))\n\
                                V - adjoint mus' Jacobian (grad*grad*3*D^2)\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\

@@ -4328,14 +4328,14 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              *
              *   otAdjointDcoeff/Mus/Musp: kernel computes grad_vox·grad_vox (in voxel units).
              *     Physical gradient: grad_mm = grad_vox / unitinmm
-             *     J_D = (grad_vox_src/unitinmm) · (grad_vox_det/unitinmm) * Vvox
-             *         = kernel_output * Vvox / unitinmm^2
-             *         = kernel_output * unitinmm^3 / unitinmm^2
-             *         = kernel_output * unitinmm    =>  scale = unitinmm
+             *     J_D = - (grad_vox_src/unitinmm) · (grad_vox_det/unitinmm) * Vvox
+             *         = - kernel_output * Vvox / unitinmm^2
+             *         = - kernel_output * unitinmm^3 / unitinmm^2
+             *         = - kernel_output * unitinmm    =>  scale = -unitinmm
              *
              *   For otAdjointMus/Musp, an additional per-voxel factor is applied below.
              */
-            float adj_scale = (cfg->outputtype == otAdjoint) ? -Vvox : cfg->unitinmm;
+            float adj_scale = (cfg->outputtype == otAdjoint) ? -Vvox : -cfg->unitinmm;
 
             for (size_t k = 0; k < exportlen; k++) {
                 cfg->exportfield[k] *= adj_scale;
