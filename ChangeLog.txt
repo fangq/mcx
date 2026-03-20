@@ -2,6 +2,30 @@
 
 Major updates are marked with a "*"
 
+== MCX v2025.10 (3.0), FangQ <q.fang (a) neu.edu> ==
+
+ 2026-03-20 [ff1cc2a] [doc] update help info regarding adjoint normalization
+ 2026-03-17 [f54d448]*[feat] add adjoint_dcoeff, adjoint_mus and adjoint_musp Jacobian outputs
+ 2026-03-15 [8c248b7] [pmcx] bump pmcx version to 0.7.0 for newly added rf-forward and adjoint output
+ 2026-03-15 [fb15b1a] [bug] fix adjoint output normalization, sign, and test script bugs
+ 2026-03-15 [8dc6071]*[feat] support adjoint output type, build adjoint jacobian, srcid=-2 solves src+det
+ 2026-03-14 [b22534c]*[feat] support RF forward, use Eq 9 in Leino/Pulkkinen/Tarvainen 2019
+ 2026-03-05 [22a058d] [ci] fix mcxshow build error
+ 2026-03-05 [c911f5d] [ci] fix mcxstudio build error
+ 2026-03-05 [e001ef5] [ci] fix lazarus installation on macos
+ 2026-03-05 [12cf789] [ci] debug lazarus installation on macos
+ 2026-03-05 [8074f5d] [ci] try again to fix macos-15 lazarus installation error
+ 2026-03-05 [11ccc9c] [ci] fix macos-15 lazarus installation error
+ 2026-03-05 [8a7731f]*[feat] improve shape editor to allow select and scale shapes
+ 2026-02-17 [857b26d] [svmc] svmc optimization, reduces 2 regigsters, 10% speed gain
+ 2026-02-16 [71b3d6c] [bug] fix double pre-processing when using -j/--json flag
+ 2026-01-11 [89627a7] [feat/bug] extends line src for wedge/fan beam, fix #253 for line/slit
+ 2025-12-16 [2fdd3d8] [ci] test solution to macos-15
+ 2025-12-15 [bff56e7] [preview] render noderoi
+ 2025-12-10 [cc756d7] [ci] remove retired macos-13 runner, use macos-15-intel
+ 2025-12-10 [b6b8573] [pmcx] remove sparse_numba as a dependency on windows
+ 2025-10-21 [fbe3de0] [winget] update installer after fixing mmc bug
+
 == MCX v2025.10 (Kilo-Kelvin - 2.8), FangQ <q.fang (a) neu.edu> ==
  2025-10-05 [334ca2a] [mcxstudio] force enabling cthreads in linux
  2025-10-05 [7bd0c04]*[mcxstudio] correctly handle _ArrayOrder_=c, fix --lang for mcxcl/mmc
