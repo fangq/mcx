@@ -435,7 +435,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[5] *= (cfg.extrasrclen + 1);
                 }
 
-                /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] */
+                /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] or [Nx, Ny, Nz, Ns*Nd, 2] for dual */
                 if (MCX_IS_ADJOINT_TYPE(cfg.outputtype) && cfg.seed != SEED_FROM_FILE && cfg.detdir != NULL) {
                     unsigned int Ns = cfg.extrasrclen + 1 - cfg.detnum;
                     unsigned int Nd = cfg.detnum;
@@ -444,7 +444,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     fielddim[1] = cfg.dim.y;
                     fielddim[2] = cfg.dim.z;
                     fielddim[3] = Ns * Nd;
-                    fielddim[4] = 1;
+                    fielddim[4] = MCX_IS_DUAL_ADJOINT_TYPE(cfg.outputtype) ? 2 : 1;
                     fielddim[5] = isrf ? 2 : 1;
                 }
 
@@ -1133,7 +1133,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     } else if (strcmp(name, "outputtype") == 0) {
         int len = mxGetNumberOfElements(item);
         const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint",
-                                    "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", ""
+                                    "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", "adjoint_mua_d", "adjoint_mua_musp", ""
                                    };
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 

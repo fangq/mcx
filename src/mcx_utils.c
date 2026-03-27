@@ -147,8 +147,8 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * b : weighted average of time-of-flight x total path length in each voxel
  */
 
-const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', 'a', 'd', 'u', 'v', '\0'};
-/*                          flux flnc enrg jcbn wp  dcs  rf  plen rfms wltof wptof adj  D   mus  musp */
+const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', 'a', 'd', 'u', 'v', 'w', 'q', '\0'};
+/*                          flux flnc enrg jcbn wp  dcs  rf  plen rfms wltof wptof adj  D   mus  musp muad mamp */
 
 /**
  * Debug flags
@@ -958,7 +958,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
             dims[1] = cfg->dim.y;
             dims[2] = cfg->dim.z;
             dims[3] = Ns * Nd;
-            dims[4] = 1;
+            dims[4] = MCX_IS_DUAL_ADJOINT_TYPE(cfg->outputtype) ? 2 : 1;
             dims[5] = 1;
         }
 
@@ -5828,7 +5828,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
 \n"S_BOLD S_CYAN"\
 == Output options ==\n" S_RESET"\
  -s sessionid  (--session)     a string to label all output file names\n\
- -O [X|XFEJPMRLSTB](--outputtype) X - output flux, F - fluence, E - energy\n\
+ -O [X|XFEJPMRLSTBADCUVWQ](--outputtype) X - output flux, F - fluence, E - energy\n\
     /case insensitive/         J - Jacobian (replay mode),   P - scattering, \n\
                                event counts at each voxel (replay mode only)\n\
                                M - momentum transfer; L - total pathlength\n\
@@ -5841,6 +5841,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                D - adjoint D-coeff Jacobian (needs detpos+dir)\n\
                                U - adjoint mus Jacobian (grad*grad*3*D^2*(1-g))\n\
                                V - adjoint mus' Jacobian (grad*grad*3*D^2)\n\
+                               W - dual adjoint [J_mua,J_D] pair in 1 session\n\
+                               Q - dual adjoint [J_mua,J_mus'] pair in 1 session\n\
  -d [1|0-3]    (--savedet)     1 to save photon info at detectors; 0 not save\n\
                                2 reserved, 3 terminate simulation when detected\n\
                                photon buffer is filled\n\

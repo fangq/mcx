@@ -793,7 +793,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     if (user_cfg.contains("outputtype")) {
         std::string output_type_str = py::str(user_cfg["outputtype"]);
         const char* outputtype[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof", "adjoint",
-                                    "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", nullptr
+                                    "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", "adjoint_mua_d", "adjoint_mua_musp", nullptr
                                    };
         char outputstr[MAX_SESSION_LENGTH] = {'\0'};
 
@@ -1311,7 +1311,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[5] *= (mcx_config.extrasrclen + 1);
             }
 
-            /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] */
+            /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] or [Nx, Ny, Nz, Ns*Nd, 2] for dual */
             if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detdir != nullptr) {
                 unsigned int Ns = mcx_config.extrasrclen + 1 - mcx_config.detnum;
                 unsigned int Nd = mcx_config.detnum;
@@ -1319,7 +1319,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[1] = mcx_config.dim.y;
                 field_dim[2] = mcx_config.dim.z;
                 field_dim[3] = Ns * Nd;
-                field_dim[4] = 1;
+                field_dim[4] = MCX_IS_DUAL_ADJOINT_TYPE(mcx_config.outputtype) ? 2 : 1;
                 field_dim[5] = (mcx_config.omega > 0.f) ? 2 : 1;
             }
 

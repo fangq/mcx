@@ -68,9 +68,10 @@ typedef unsigned int   uint;                             /**< use uint for unsig
 typedef unsigned short ushort;                           /**< use ushort for unsigned short */
 
 enum TOutputType {otFlux, otFluence, otEnergy, otJacobian, otWP, otDCS, otRF, otL, otRFmus, otWLTOF, otWPTOF, otAdjoint,
-                  otAdjointDcoeff, otAdjointMus, otAdjointMusp
+                  otAdjointDcoeff, otAdjointMus, otAdjointMusp, otAdjointMuaD, otAdjointMuaMusp
                  };   /**< types of output */
-#define MCX_IS_ADJOINT_TYPE(t) ((int)(t) >= (int)otAdjoint)  /**< true for all adjoint-family output types */
+#define MCX_IS_ADJOINT_TYPE(t)      ((int)(t) >= (int)otAdjoint)      /**< true for all adjoint-family output types */
+#define MCX_IS_DUAL_ADJOINT_TYPE(t) ((int)(t) >= (int)otAdjointMuaD)  /**< true for dual-Jacobian output types */
 enum TMCXParent  {mpStandalone, mpMATLAB, mpPython};                   /**< whether MCX is run in binary or mex mode */
 enum TOutputFormat {ofMC2, ofNifti, ofAnalyze, ofUBJSON, ofTX3, ofJNifti, ofBJNifti};           /**< output data format */
 enum TBoundary {bcUnknown, bcReflect, bcAbsorb, bcMirror, bcCyclic};            /**< boundary conditions */

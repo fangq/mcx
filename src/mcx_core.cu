@@ -4271,103 +4271,187 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
         /**
          * In adjoint mode: compute the adjoint (Jacobian) output.
-         *   otAdjoint:       J_mua(s,d)[vox] = -φ_src · φ_det * dV  (point product)
-         *   otAdjointDcoeff: J_D(s,d)[vox]   =  ∇φ_src · ∇φ_det * unitinmm  (dot product of gradients in voxel units)
-         *   otAdjointMus:    J_mus = J_D * 3*D²*(1-g) per voxel  (where D = 1/(3*(1-g)*mus))
-         *   otAdjointMusp:   J_musp= J_D * 3*D²       per voxel
+         *   otAdjoint:         J_mua(s,d)[vox] = -φ_src · φ_det * dV  (point product)
+         *   otAdjointDcoeff:   J_D(s,d)[vox]   =  ∇φ_src · ∇φ_det * unitinmm
+         *   otAdjointMus:      J_mus = J_D * 3*D²*(1-g) per voxel
+         *   otAdjointMusp:     J_musp= J_D * 3*D²       per voxel
+         *   otAdjointMuaD:     [J_mua, J_D]   paired output, size [Nx,Ny,Nz,Ns*Nd,2]
+         *   otAdjointMuaMusp:  [J_mua, J_musp] paired output, size [Nx,Ny,Nz,Ns*Nd,2]
          * Runs after normalization; for RF adjoint (omega>0) the complex fields are used.
          */
         if (cfg->issave2pt && MCX_IS_ADJOINT_TYPE(cfg->outputtype) && cfg->exportfield) {
             int isrf = (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) ? 1 : 0;
+            int isdual = MCX_IS_DUAL_ADJOINT_TYPE(cfg->outputtype);
             unsigned int Ns = cfg->extrasrclen + 1 - cfg->detnum; /**< count of original sources */
             unsigned int Nd = cfg->detnum;
             unsigned int pure_voxels = (unsigned int)dimlen.z; /**< Nx*Ny*Nz, without multi-source multiplier */
             size_t adjointlen = (size_t)pure_voxels * Ns * Nd;
-            size_t exportlen = adjointlen * (isrf ? 2 : 1);
+            size_t single_exportlen = adjointlen * (isrf ? 2 : 1);
+            size_t exportlen = single_exportlen * (isdual ? 2 : 1);
             OutputType* gfield_tmp = NULL;
             float* gadjoint_tmp = NULL;
+            float* gadjoint_mua = NULL;  /**< first Jacobian (mua) for dual output */
 
-            /** Upload the merged (shadow-summed) exportfield directly — no extra host buffer needed */
+            /** Upload the merged (shadow-summed) exportfield to the GPU */
             CUDA_ASSERT(cudaMalloc((void**)&gfield_tmp, sizeof(OutputType) * fieldlen * (isrf ? 2 : 1)));
             CUDA_ASSERT(cudaMemcpy(gfield_tmp, cfg->exportfield, sizeof(float) * fieldlen * (isrf ? 2 : 1), cudaMemcpyHostToDevice));
-            CUDA_ASSERT(cudaMalloc((void**)&gadjoint_tmp, sizeof(float) * exportlen));
-            CUDA_ASSERT(cudaMemset(gadjoint_tmp, 0, sizeof(float) * exportlen));
 
             unsigned int adjblocksize = 256;
             unsigned int adjgridsize = (pure_voxels + adjblocksize - 1) / adjblocksize;
 
-            if (cfg->outputtype == otAdjoint) {
-                /** mua Jacobian: point-product of CW fluences */
+            if (isdual) {
+                /** Dual output: run mua kernel first, then the D-coeff kernel, interleave results */
+                CUDA_ASSERT(cudaMalloc((void**)&gadjoint_mua, sizeof(float) * single_exportlen));
+                CUDA_ASSERT(cudaMemset(gadjoint_mua, 0, sizeof(float) * single_exportlen));
+                CUDA_ASSERT(cudaMalloc((void**)&gadjoint_tmp, sizeof(float) * single_exportlen));
+                CUDA_ASSERT(cudaMemset(gadjoint_tmp, 0, sizeof(float) * single_exportlen));
+
                 mcx_adjoint_kernel <<< adjgridsize, adjblocksize>>>(
                     gfield_tmp,
                     isrf ? gfield_tmp + fieldlen : NULL,
-                    gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
-            } else {
-                /** D/mus/musp Jacobian: dot-product of fluence gradients (in voxel units) */
+                    gadjoint_mua, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
+
                 mcx_adjoint_dcoeff_kernel <<< adjgridsize, adjblocksize>>>(
                     gfield_tmp,
                     isrf ? gfield_tmp + fieldlen : NULL,
                     gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd,
                     cfg->dim.x, cfg->dim.y);
+            } else {
+                CUDA_ASSERT(cudaMalloc((void**)&gadjoint_tmp, sizeof(float) * single_exportlen));
+                CUDA_ASSERT(cudaMemset(gadjoint_tmp, 0, sizeof(float) * single_exportlen));
+
+                if (cfg->outputtype == otAdjoint) {
+                    /** mua Jacobian: point-product of CW fluences */
+                    mcx_adjoint_kernel <<< adjgridsize, adjblocksize>>>(
+                        gfield_tmp,
+                        isrf ? gfield_tmp + fieldlen : NULL,
+                        gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
+                } else {
+                    /** D/mus/musp Jacobian: dot-product of fluence gradients (in voxel units) */
+                    mcx_adjoint_dcoeff_kernel <<< adjgridsize, adjblocksize>>>(
+                        gfield_tmp,
+                        isrf ? gfield_tmp + fieldlen : NULL,
+                        gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd,
+                        cfg->dim.x, cfg->dim.y);
+                }
             }
 
             CUDA_ASSERT(cudaGetLastError());
             CUDA_ASSERT(cudaDeviceSynchronize());
-
-            /** Download result in-place: realloc exportfield to adjoint size, then fill directly */
-            cfg->exportfield = (float*)realloc(cfg->exportfield, sizeof(float) * exportlen);
-            CUDA_ASSERT(cudaMemcpy(cfg->exportfield, gadjoint_tmp, sizeof(float) * exportlen, cudaMemcpyDeviceToHost));
-
             CUDA_ASSERT(cudaFree(gfield_tmp));
-            CUDA_ASSERT(cudaFree(gadjoint_tmp));
 
-            /**
-             * Scale the adjoint output (isotropic voxels assumed; spacing = unitinmm [mm/voxel]):
-             *
-             *   otAdjoint: J_mua = -phi_src * phi_det * dV  =>  scale = -Vvox = -unitinmm^3
-             *
-             *   otAdjointDcoeff/Mus/Musp: kernel computes grad_vox·grad_vox (in voxel units).
-             *     Physical gradient: grad_mm = grad_vox / unitinmm
-             *     J_D = - (grad_vox_src/unitinmm) · (grad_vox_det/unitinmm) * Vvox
-             *         = - kernel_output * Vvox / unitinmm^2
-             *         = - kernel_output * unitinmm^3 / unitinmm^2
-             *         = - kernel_output * unitinmm    =>  scale = -unitinmm
-             *
-             *   For otAdjointMus/Musp, an additional per-voxel factor is applied below.
-             */
-            float adj_scale = (cfg->outputtype == otAdjoint) ? -Vvox : -cfg->unitinmm;
+            if (isdual) {
+                /**
+                 * Build dual-output exportfield layout (fielddim[4]=2):
+                 *   CW:  [J_mua (adjointlen), J_second (adjointlen)]
+                 *   RF:  [Re(J_mua)(adjointlen), Re(J_second)(adjointlen),
+                 *          Im(J_mua)(adjointlen), Im(J_second)(adjointlen)]
+                 * This layout lets the existing MATLAB/Python complex conversion produce
+                 * a [Nx,Ny,Nz,Ns*Nd,2] complex array where [:,:,:,:,1]=J_mua, [:,:,:,:,2]=J_second.
+                 */
+                float* hmua    = (float*)malloc(single_exportlen * sizeof(float));
+                float* hsecond = (float*)malloc(single_exportlen * sizeof(float));
+                CUDA_ASSERT(cudaMemcpy(hmua, gadjoint_mua, single_exportlen * sizeof(float), cudaMemcpyDeviceToHost));
+                CUDA_ASSERT(cudaMemcpy(hsecond, gadjoint_tmp, single_exportlen * sizeof(float), cudaMemcpyDeviceToHost));
+                CUDA_ASSERT(cudaFree(gadjoint_mua));
+                CUDA_ASSERT(cudaFree(gadjoint_tmp));
 
-            for (size_t k = 0; k < exportlen; k++) {
-                cfg->exportfield[k] *= adj_scale;
-            }
+                /** Scale J_mua: -Vvox */
+                for (size_t k = 0; k < single_exportlen; k++) {
+                    hmua[k] *= -Vvox;
+                }
 
-            /** For mus/musp: additionally multiply each voxel by the optical-property-derived factor */
-            if (cfg->outputtype == otAdjointMus || cfg->outputtype == otAdjointMusp) {
-                for (size_t vox = 0; vox < (size_t)pure_voxels; vox++) {
-                    unsigned int medid = cfg->vol[vox] & 0xFF;  /**< medium index (8-bit, common case) */
-                    float opscale = 0.f;
+                /** Scale J_D: -unitinmm, then optionally apply musp per-voxel factor */
+                for (size_t k = 0; k < single_exportlen; k++) {
+                    hsecond[k] *= -cfg->unitinmm;
+                }
 
-                    if (medid < cfg->medianum) {
-                        float mus   = cfg->prop[medid].mus;
-                        float onemg = 1.f - cfg->prop[medid].g;
+                if (cfg->outputtype == otAdjointMuaMusp) {
+                    for (size_t vox = 0; vox < (size_t)pure_voxels; vox++) {
+                        unsigned int medid = cfg->vol[vox] & 0xFF;
+                        float opscale = 0.f;
 
-                        if (mus > 0.f && onemg > 0.f) {
-                            /** D = 1/(3*(1-g)*mus).  adjoint_mus:  J * 3*D^2*(1-g) = J / (3*(1-g)*mus^2)
-                             *                         adjoint_musp: J * 3*D^2        = J / (3*(1-g)^2*mus^2) */
-                            opscale = (cfg->outputtype == otAdjointMus)
-                                      ? 1.f / (3.f * onemg * mus * mus)
-                                      : 1.f / (3.f * onemg * onemg * mus * mus);
+                        if (medid < cfg->medianum) {
+                            float mus   = cfg->prop[medid].mus;
+                            float onemg = 1.f - cfg->prop[medid].g;
+
+                            if (mus > 0.f && onemg > 0.f) {
+                                /** adjoint_musp: J_D * 3*D^2 = J_D / (3*(1-g)^2*mus^2) */
+                                opscale = 1.f / (3.f * onemg * onemg * mus * mus);
+                            }
                         }
-                    }
 
-                    for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
-                        cfg->exportfield[vox + (size_t)sd * pure_voxels] *= opscale;
+                        for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
+                            hsecond[vox + (size_t)sd * pure_voxels] *= opscale;
 
-                        if (isrf) {
-                            cfg->exportfield[vox + (size_t)sd * pure_voxels + adjointlen] *= opscale;
+                            if (isrf) {
+                                hsecond[vox + (size_t)sd * pure_voxels + adjointlen] *= opscale;
+                            }
                         }
                     }
                 }
+
+                cfg->exportfield = (float*)realloc(cfg->exportfield, sizeof(float) * exportlen);
+
+                if (!isrf) {
+                    memcpy(cfg->exportfield,               hmua,    adjointlen * sizeof(float));
+                    memcpy(cfg->exportfield + adjointlen,  hsecond, adjointlen * sizeof(float));
+                } else {
+                    memcpy(cfg->exportfield,                   hmua,                adjointlen * sizeof(float));
+                    memcpy(cfg->exportfield + adjointlen,      hsecond,             adjointlen * sizeof(float));
+                    memcpy(cfg->exportfield + 2 * adjointlen,  hmua + adjointlen,   adjointlen * sizeof(float));
+                    memcpy(cfg->exportfield + 3 * adjointlen,  hsecond + adjointlen, adjointlen * sizeof(float));
+                }
+
+                free(hmua);
+                free(hsecond);
+            } else {
+                /** Single output: download result, scale, apply per-voxel factor */
+                cfg->exportfield = (float*)realloc(cfg->exportfield, sizeof(float) * single_exportlen);
+                CUDA_ASSERT(cudaMemcpy(cfg->exportfield, gadjoint_tmp, sizeof(float) * single_exportlen, cudaMemcpyDeviceToHost));
+                CUDA_ASSERT(cudaFree(gadjoint_tmp));
+
+                /**
+                 * Scale the adjoint output:
+                 *   otAdjoint:            scale = -Vvox = -unitinmm^3
+                 *   otAdjointDcoeff/Mus/Musp: scale = -unitinmm
+                 */
+                float adj_scale = (cfg->outputtype == otAdjoint) ? -Vvox : -cfg->unitinmm;
+
+                for (size_t k = 0; k < single_exportlen; k++) {
+                    cfg->exportfield[k] *= adj_scale;
+                }
+
+                /** For mus/musp: additionally multiply each voxel by the optical-property-derived factor */
+                if (cfg->outputtype == otAdjointMus || cfg->outputtype == otAdjointMusp) {
+                    for (size_t vox = 0; vox < (size_t)pure_voxels; vox++) {
+                        unsigned int medid = cfg->vol[vox] & 0xFF;
+                        float opscale = 0.f;
+
+                        if (medid < cfg->medianum) {
+                            float mus   = cfg->prop[medid].mus;
+                            float onemg = 1.f - cfg->prop[medid].g;
+
+                            if (mus > 0.f && onemg > 0.f) {
+                                /** D = 1/(3*(1-g)*mus).  adjoint_mus:  J * 3*D^2*(1-g) = J / (3*(1-g)*mus^2)
+                                 *                         adjoint_musp: J * 3*D^2        = J / (3*(1-g)^2*mus^2) */
+                                opscale = (cfg->outputtype == otAdjointMus)
+                                          ? 1.f / (3.f * onemg * mus * mus)
+                                          : 1.f / (3.f * onemg * onemg * mus * mus);
+                            }
+                        }
+
+                        for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
+                            cfg->exportfield[vox + (size_t)sd * pure_voxels] *= opscale;
+
+                            if (isrf) {
+                                cfg->exportfield[vox + (size_t)sd * pure_voxels + adjointlen] *= opscale;
+                            }
+                        }
+                    }
+                }
+
+                exportlen = single_exportlen;
             }
 
             fieldlen = exportlen;
