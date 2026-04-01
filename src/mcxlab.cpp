@@ -489,6 +489,17 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     dimtype cdim[5] = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4]};
                     int ndim = 4 + (fielddim[4] > 1);
                     mxArray* carr = mxCreateNumericArray(ndim, cdim, mxSINGLE_CLASS, mxCOMPLEX);
+#ifdef MX_HAS_INTERLEAVED_COMPLEX
+                    mxComplexSingle* cptr = mxGetComplexSingles(carr);
+
+                    if (cptr) {
+                        for (size_t kk = 0; kk < halflen; kk++) {
+                            cptr[kk].real = cfg.exportfield[kk];
+                            cptr[kk].imag = cfg.exportfield[halflen + kk];
+                        }
+                    }
+
+#else
                     float* pr = (float*)mxGetData(carr);
                     float* pi = (float*)mxGetImagData(carr);
 
@@ -497,6 +508,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                         memcpy(pi, cfg.exportfield + halflen, halflen * sizeof(float));
                     }
 
+#endif
                     mxSetFieldByNumber(plhs[0], jstruct, 0, carr);
                 }
 
