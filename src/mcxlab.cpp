@@ -489,7 +489,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                     dimtype cdim[5] = {fielddim[0], fielddim[1], fielddim[2], fielddim[3], fielddim[4]};
                     int ndim = 4 + (fielddim[4] > 1);
                     mxArray* carr = mxCreateNumericArray(ndim, cdim, mxSINGLE_CLASS, mxCOMPLEX);
-#ifdef MX_HAS_INTERLEAVED_COMPLEX
+#if MX_HAS_INTERLEAVED_COMPLEX
                     mxComplexSingle* cptr = mxGetComplexSingles(carr);
 
                     if (cptr) {
