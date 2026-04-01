@@ -2216,10 +2216,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     if (SAVE_NSCAT(gcfg->savedetflag)) {
                         if (issvmc) { //< SVMC mode
                             if (SV_CURLABEL(nuvox.sv) > 0) {
-                                ppath[SV_CURLABEL(nuvox.sv) - 1]++;
+                                ((uint*)ppath)[SV_CURLABEL(nuvox.sv) - 1]++;
                             }
                         } else {
-                            ppath[(mediaid & MED_MASK) - 1]++;
+                            ((uint*)ppath)[(mediaid & MED_MASK) - 1]++;
                         }
                     }
 

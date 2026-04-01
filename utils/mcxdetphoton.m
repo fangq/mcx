@@ -47,7 +47,7 @@ if (regexp(savedetflag, '[dD]'))
 end
 len = medianum;
 if (regexp(savedetflag, '[sS]'))
-    newdetp.nscat = int32(detp(c0:(c0 + len - 1), :))';    % 1st medianum block is num of scattering
+    newdetp.nscat = reshape(typecast(reshape(single(detp(c0:(c0 + len - 1), :)), 1, []), 'uint32'), len, [])';    % 1st medianum block is num of scattering
     c0 = c0 + len;
 end
 if (regexp(savedetflag, '[pP]'))
