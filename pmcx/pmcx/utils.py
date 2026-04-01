@@ -410,7 +410,7 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
 
     length = medianum
     if re.search("[sS]", savedetflag):
-        newdetp["nscat"] = detp[c0 : c0 + length, :].astype(int).transpose()
+        newdetp["nscat"] = np.ascontiguousarray(detp[c0 : c0 + length, :]).view(np.uint32).transpose()
         c0 = c0 + length
 
     if re.search("[pP]", savedetflag):
