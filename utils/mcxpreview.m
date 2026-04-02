@@ -186,7 +186,7 @@ for i = 1:len
             if (~isfield(cfg(i), 'srcparam1'))
                 error('cfg.srcparam1 is missing');
             end
-            hsrcarea = plotmesh([srcpos(1:3); cfg(i).srcparam1(1:3) * voxelsize], [1 2], 'linewidth', 3, 'color', 'r');
+            hsrcarea = plotmesh([srcpos(1:3); srcpos(1:3) + cfg(i).srcparam1(1:3) * voxelsize], [1 2], 'linewidth', 3, 'color', 'r');
         end
     end
 
