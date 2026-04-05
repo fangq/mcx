@@ -2261,17 +2261,15 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                 if (gcfg->outputtype == otWP || gcfg->outputtype == otDCS || gcfg->outputtype == otWPTOF || (gcfg->seed == SEED_FROM_FILE && gcfg->outputtype == otRFmus)) {
                     //< photontof[] and replayweight[] should be cached using local mem to avoid global read
-                    int tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
-                    tshift = (int)(floorf((photontof[tshift] - gcfg->twin0) * gcfg->Rtstep)) +
-                             ( (gcfg->replaydet == -1) ? (((photondetid[tshift] & 0xFFFF) - 1) * gcfg->maxgate) : 0);
+                    int photonidx = idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone;
+                    int tshift = MIN(gcfg->maxgate - 1, (int)(floorf((photontof[photonidx] - gcfg->twin0) * gcfg->Rtstep)));
+                    tshift += (gcfg->replaydet == -1) ? (((photondetid[photonidx] & 0xFFFF) - 1) * gcfg->maxgate) : 0;
 
                     if (gcfg->extrasrclen && gcfg->srcid < 0) {
                         tshift += ((int)ppath[gcfg->w0offset - 1] - 1) * ((gcfg->replaydet == -1) ? gcfg->detnum : 1) * gcfg->maxgate;
                     }
 
-                    tshift = MIN(gcfg->maxgate - 1, tshift);
-
-                    theta = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
+                    theta = replayweight[photonidx];
 
                     if (gcfg->outputtype == otRFmus || gcfg->outputtype == otWP) {
                         if (issvmc) {
@@ -2289,7 +2287,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         }
                     } else {
                         tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
-                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] : tmp0;
+                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[photonidx] : tmp0;
                         tmp0 *= theta;
                     }
 
