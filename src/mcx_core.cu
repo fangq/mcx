@@ -4391,24 +4391,33 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                     }
                 }
 
-                cfg->exportfield = (float*)realloc(cfg->exportfield, sizeof(float) * exportlen);
+                /** Allocate separate Jacobian buffer; exportfield retains the normalized forward fluence */
+                if (cfg->exportjacob) {
+                    free(cfg->exportjacob);
+                }
+
+                cfg->exportjacob = (float*)malloc(sizeof(float) * exportlen);
 
                 if (!isrf) {
-                    memcpy(cfg->exportfield,               hmua,    adjointlen * sizeof(float));
-                    memcpy(cfg->exportfield + adjointlen,  hsecond, adjointlen * sizeof(float));
+                    memcpy(cfg->exportjacob,               hmua,    adjointlen * sizeof(float));
+                    memcpy(cfg->exportjacob + adjointlen,  hsecond, adjointlen * sizeof(float));
                 } else {
-                    memcpy(cfg->exportfield,                   hmua,                adjointlen * sizeof(float));
-                    memcpy(cfg->exportfield + adjointlen,      hsecond,             adjointlen * sizeof(float));
-                    memcpy(cfg->exportfield + 2 * adjointlen,  hmua + adjointlen,   adjointlen * sizeof(float));
-                    memcpy(cfg->exportfield + 3 * adjointlen,  hsecond + adjointlen, adjointlen * sizeof(float));
+                    memcpy(cfg->exportjacob,                   hmua,                adjointlen * sizeof(float));
+                    memcpy(cfg->exportjacob + adjointlen,      hsecond,             adjointlen * sizeof(float));
+                    memcpy(cfg->exportjacob + 2 * adjointlen,  hmua + adjointlen,   adjointlen * sizeof(float));
+                    memcpy(cfg->exportjacob + 3 * adjointlen,  hsecond + adjointlen, adjointlen * sizeof(float));
                 }
 
                 free(hmua);
                 free(hsecond);
             } else {
                 /** Single output: download result, scale, apply per-voxel factor */
-                cfg->exportfield = (float*)realloc(cfg->exportfield, sizeof(float) * single_exportlen);
-                CUDA_ASSERT(cudaMemcpy(cfg->exportfield, gadjoint_tmp, sizeof(float) * single_exportlen, cudaMemcpyDeviceToHost));
+                if (cfg->exportjacob) {
+                    free(cfg->exportjacob);
+                }
+
+                cfg->exportjacob = (float*)malloc(sizeof(float) * single_exportlen);
+                CUDA_ASSERT(cudaMemcpy(cfg->exportjacob, gadjoint_tmp, sizeof(float) * single_exportlen, cudaMemcpyDeviceToHost));
                 CUDA_ASSERT(cudaFree(gadjoint_tmp));
 
                 /**
@@ -4419,7 +4428,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                 float adj_scale = (cfg->outputtype == otAdjoint) ? -Vvox : -cfg->unitinmm;
 
                 for (size_t k = 0; k < single_exportlen; k++) {
-                    cfg->exportfield[k] *= adj_scale;
+                    cfg->exportjacob[k] *= adj_scale;
                 }
 
                 /** For mus/musp: additionally multiply each voxel by the optical-property-derived factor */
@@ -4442,19 +4451,16 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                         }
 
                         for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
-                            cfg->exportfield[vox + (size_t)sd * pure_voxels] *= opscale;
+                            cfg->exportjacob[vox + (size_t)sd * pure_voxels] *= opscale;
 
                             if (isrf) {
-                                cfg->exportfield[vox + (size_t)sd * pure_voxels + adjointlen] *= opscale;
+                                cfg->exportjacob[vox + (size_t)sd * pure_voxels + adjointlen] *= opscale;
                             }
                         }
                     }
                 }
-
-                exportlen = single_exportlen;
             }
 
-            fieldlen = exportlen;
             MCX_FPRINTF(cfg->flog, "%s : %d ms\n", T_("adjoint Jacobian computation complete"), GetTimeMillis() - tic);
         }
 

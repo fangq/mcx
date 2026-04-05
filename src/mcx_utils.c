@@ -298,6 +298,7 @@ void mcx_initcfg(Config* cfg) {
     cfg->autopilot = 1;
     cfg->seed = 0x623F9A9E;  /** default RNG seed, a big integer, with a hidden meaning :) */
     cfg->exportfield = NULL;
+    cfg->exportjacob = NULL;
     cfg->exportdetected = NULL;
     cfg->energytot = 0.f;
     cfg->energyabs = 0.f;
@@ -469,6 +470,11 @@ void mcx_clearcfg(Config* cfg) {
 
     if (cfg->exportfield) {
         free(cfg->exportfield);
+    }
+
+    if (cfg->exportjacob) {
+        free(cfg->exportjacob);
+        cfg->exportjacob = NULL;
     }
 
     if (cfg->exportdetected) {

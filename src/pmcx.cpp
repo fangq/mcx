@@ -1311,16 +1311,13 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 field_dim[5] *= (mcx_config.extrasrclen + 1);
             }
 
-            /** adjoint output: override dims to [Nx, Ny, Nz, Ns*Nd] or [Nx, Ny, Nz, Ns*Nd, 2] for dual */
+            /** adjoint forward fluence: reshape to [Nx, Ny, Nz, maxgate, Ns+Nd] (5D) */
             if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detdir != nullptr) {
-                unsigned int Ns = mcx_config.extrasrclen + 1 - mcx_config.detnum;
-                unsigned int Nd = mcx_config.detnum;
+                int nsrcslots = mcx_config.extrasrclen + 1;
+                int isrf = (mcx_config.omega > 0.f) ? 1 : 0;
                 field_dim[0] = mcx_config.dim.x;
-                field_dim[1] = mcx_config.dim.y;
-                field_dim[2] = mcx_config.dim.z;
-                field_dim[3] = Ns * Nd;
-                field_dim[4] = MCX_IS_DUAL_ADJOINT_TYPE(mcx_config.outputtype) ? 2 : 1;
-                field_dim[5] = (mcx_config.omega > 0.f) ? 2 : 1;
+                field_dim[4] = nsrcslots;
+                field_dim[5] = isrf ? 2 : 1;
             }
 
             field_len = field_dim[0] * field_dim[1] * field_dim[2] * field_dim[3] * field_dim[4] * field_dim[5];
@@ -1388,6 +1385,87 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
 
             free(mcx_config.exportfield);
             mcx_config.exportfield = nullptr;
+
+            /** adjoint Jacobian: return in separate named output keys (jmua, jd, jmus, etc.) */
+            if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) && mcx_config.exportjacob) {
+                unsigned int Ns = mcx_config.extrasrclen + 1 - mcx_config.detnum;
+                unsigned int Nd = mcx_config.detnum;
+                int nsrcpairs = (int)(Ns * Nd);
+                int isdual    = MCX_IS_DUAL_ADJOINT_TYPE(mcx_config.outputtype);
+                int isrf      = (mcx_config.omega > 0.f) ? 1 : 0;
+                size_t adjlen = (size_t)mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z * nsrcpairs;
+                std::vector<size_t> jdims = {(size_t)mcx_config.dim.x, (size_t)mcx_config.dim.y,
+                                             (size_t)mcx_config.dim.z, (size_t)nsrcpairs
+                                            };
+
+                const char* jname1 = "jmua";
+                const char* jname2 = "jd";
+
+                switch (mcx_config.outputtype) {
+                    case otAdjoint:
+                        jname1 = "jmua";
+                        break;
+
+                    case otAdjointDcoeff:
+                        jname1 = "jd";
+                        break;
+
+                    case otAdjointMus:
+                        jname1 = "jmus";
+                        break;
+
+                    case otAdjointMusp:
+                        jname1 = "jmusp";
+                        break;
+
+                    case otAdjointMuaD:
+                        jname1 = "jmua";
+                        jname2 = "jd";
+                        break;
+
+                    case otAdjointMuaMusp:
+                        jname1 = "jmua";
+                        jname2 = "jmusp";
+                        break;
+
+                    default:
+                        break;
+                }
+
+                /* exportjacob layout: CW non-dual:[re1]; RF non-dual:[re1,im1];
+                 * CW dual:[re1,re2]; RF dual:[re1,re2,im1,im2] each of size adjlen */
+                float* re1 = mcx_config.exportjacob;
+                float* re2 = isdual           ? mcx_config.exportjacob + adjlen             : NULL;
+                float* im1 = isrf             ? mcx_config.exportjacob + (isdual ? 2 : 1) * adjlen : NULL;
+                float* im2 = (isrf && isdual) ? mcx_config.exportjacob + 3 * adjlen         : NULL;
+
+                auto add_jac_field = [&](const char* fname, float * re_data, float * im_data) {
+                    if (!isrf) {
+                        auto jfield = py::array_t<float, py::array::f_style>(jdims);
+                        memcpy(jfield.mutable_data(), re_data, adjlen * sizeof(float));
+                        output[fname] = jfield;
+                    } else {
+                        auto jfield = py::array_t<std::complex<float>, py::array::f_style>(jdims);
+                        auto* cptr = static_cast<std::complex<float>*>(jfield.mutable_data());
+
+                        for (size_t ii = 0; ii < adjlen; ii++) {
+                            cptr[ii] = std::complex<float>(re_data[ii], im_data[ii]);
+                        }
+
+                        output[fname] = jfield;
+                    }
+                };
+
+                add_jac_field(jname1, re1, im1);
+
+                if (isdual) {
+                    add_jac_field(jname2, re2, im2);
+                }
+
+                free(mcx_config.exportjacob);
+                mcx_config.exportjacob = nullptr;
+            }
+
             // Stat dictionary output
             auto stat_dict = py::dict();
             stat_dict["runtime"] = mcx_config.runtime;

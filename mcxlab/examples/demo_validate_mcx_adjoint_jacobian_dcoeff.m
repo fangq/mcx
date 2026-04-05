@@ -106,10 +106,11 @@ tic;
 flux_adj = mcxlab(xcfg);
 toc;
 
-% flux_adj.data is complex [60, 60, 30, 1]:
+% flux_adj.jd is complex [60, 60, 30, 1] (Ns*Nd=1 source-detector pair):
 %   real part = Re(J) = Re(phi_src)*Re(phi_det) - Im(phi_src)*Im(phi_det)
 %   imag part = Im(J) = Re(phi_src)*Im(phi_det) + Im(phi_src)*Re(phi_det)
-J_mcx = squeeze(flux_adj.data);   % [60, 60, 30] complex
+% flux_adj.data contains the forward fluence [Nx, Ny, Nz, maxgate, Ns+Nd]
+J_mcx = squeeze(flux_adj.jd);   % [60, 60, 30] complex
 fprintf('J_mcx size: %s,  complex: %d\n', mat2str(size(J_mcx)), ~isreal(J_mcx));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

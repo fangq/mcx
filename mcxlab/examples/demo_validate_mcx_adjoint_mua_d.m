@@ -7,9 +7,10 @@
 %   J_mua(r) = -phi_src(r) * phi_det(r) * dV      [mua sensitivity]
 %   J_D(r)   = -grad(phi_src) . grad(phi_det) * dV [diffusion-coeff sensitivity]
 %
-% Output: flux.data is complex [Nx, Ny, Nz, Ns*Nd, 2]
-%   flux.data(:,:,:,:,1)  ->  J_mua  (same as outputtype='adjoint')
-%   flux.data(:,:,:,:,2)  ->  J_D    (same as outputtype='adjoint_dcoeff')
+% Output: flux.jmua and flux.jd are each complex [Nx, Ny, Nz, Ns*Nd]
+%   flux.jmua  ->  J_mua  (same as outputtype='adjoint')
+%   flux.jd    ->  J_D    (same as outputtype='adjoint_dcoeff')
+% flux.data contains the forward fluence [Nx, Ny, Nz, maxgate, Ns+Nd]
 %
 % Both are validated against Redbird FEM diffusion.  Agreement is expected in
 % the diffusive regime (away from source/boundary).
@@ -85,9 +86,10 @@ fprintf('J_D_rb   size: %s,  complex: %d\n', mat2str(size(J_D_rb)),   ~isreal(J_
 %%   MCX: single session with outputtype='adjoint_mua_d'
 %%
 %%  One photon run computes both J_mua and J_D simultaneously.
-%%  Output flux.data is complex [Nx, Ny, Nz, Ns*Nd, 2]:
-%%    flux.data(:,:,:,:,1)  ->  J_mua   (point product of fluences)
-%%    flux.data(:,:,:,:,2)  ->  J_D     (dot product of fluence gradients)
+%%  Output flux.jmua and flux.jd are each complex [Nx, Ny, Nz, Ns*Nd]:
+%%    flux.jmua  ->  J_mua   (point product of fluences)
+%%    flux.jd    ->  J_D     (dot product of fluence gradients)
+%%  flux.data contains the forward fluence [Nx, Ny, Nz, maxgate, Ns+Nd]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~exist('mcxlab', 'file')
@@ -116,11 +118,12 @@ tic;
 flux = mcxlab(xcfg);
 toc;
 
-% flux.data is complex [60, 60, 30, 1, 2]
-fprintf('flux.data size: %s,  complex: %d\n', mat2str(size(flux.data)), ~isreal(flux.data));
+% flux.jmua and flux.jd are each complex [60, 60, 30, 1] (Ns*Nd=1 pair)
+% flux.data contains forward fluence [Nx, Ny, Nz, maxgate, Ns+Nd]
+fprintf('flux.jmua size: %s,  complex: %d\n', mat2str(size(flux.jmua)), ~isreal(flux.jmua));
 
-J_mua_mcx = squeeze(flux.data(:, :, :, :, 1));  % [60, 60, 30] complex  -- J_mua
-J_D_mcx   = squeeze(flux.data(:, :, :, :, 2));  % [60, 60, 30] complex  -- J_D
+J_mua_mcx = squeeze(flux.jmua);  % [60, 60, 30] complex  -- J_mua
+J_D_mcx   = squeeze(flux.jd);    % [60, 60, 30] complex  -- J_D
 
 fprintf('J_mua_mcx sum(real) = %.4e\n', sum(real(J_mua_mcx(:))));
 fprintf('J_D_mcx   sum(real) = %.4e\n', sum(real(J_D_mcx(:))));
@@ -357,7 +360,7 @@ fprintf('================================\n');
 fprintf('Note: MCX (transport, RTE) and Redbird (diffusion equation)\n');
 fprintf('agree well in the diffusive regime (far from source/boundary).\n');
 fprintf('Both Jacobians were computed from a SINGLE MCX session using\n');
-fprintf('outputtype=''adjoint_mua_d'' (flux.data size: [Nx,Ny,Nz,Ns*Nd,2]).\n');
+fprintf('outputtype=''adjoint_mua_d'' (flux.jmua and flux.jd each [Nx,Ny,Nz,Ns*Nd]).\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%   Helper function

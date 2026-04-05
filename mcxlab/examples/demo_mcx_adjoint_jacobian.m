@@ -52,10 +52,11 @@ cfg_adj.outputtype = 'adjoint';
 fprintf('Running CW adjoint (Ns=2, Nd=2 -> 4 Jacobians) ...\n');
 f_cw = mcxlab(cfg_adj);
 
-% Output: real single [Nx, Ny, Nz, Ns*Nd]
+% Output: f_cw.jmua is real single [Nx, Ny, Nz, Ns*Nd]
 %   (:,:,:,1) = J(S1,D1)   (:,:,:,2) = J(S1,D2)
 %   (:,:,:,3) = J(S2,D1)   (:,:,:,4) = J(S2,D2)
-J_cw = double(f_cw.data);
+% f_cw.data contains forward fluence [Nx, Ny, Nz, maxgate, Ns+Nd]
+J_cw = double(f_cw.jmua);
 fprintf('  CW adjoint size: %s   range: [%.2e, %.2e]\n', ...
         mat2str(size(J_cw)), min(J_cw(:)), max(J_cw(:)));
 
@@ -67,8 +68,8 @@ cfg_rf.omega      = 2 * pi * 100e6;   % 100 MHz
 fprintf('Running RF adjoint at 100 MHz ...\n');
 f_rf = mcxlab(cfg_rf);
 
-% Output: complex single [Nx, Ny, Nz, Ns*Nd]
-J_rf = double(f_rf.data);
+% Output: f_rf.jmua is complex single [Nx, Ny, Nz, Ns*Nd]
+J_rf = double(f_rf.jmua);
 fprintf('  RF adjoint size: %s   complex: %d   |range|: [%.2e, %.2e]\n', ...
         mat2str(size(J_rf)), ~isreal(J_rf), min(abs(J_rf(:))), max(abs(J_rf(:))));
 

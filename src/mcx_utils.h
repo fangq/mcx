@@ -243,6 +243,7 @@ typedef struct MCXConfig {
     FILE* flog;                  /**<stream handle to print log information*/
     History his;                 /**<header info of the history file*/
     float* exportfield;          /**<memory buffer when returning the flux to external programs such as matlab*/
+    float* exportjacob;          /**<memory buffer for adjoint Jacobian output (separate from forward fluence in exportfield)*/
     float* exportdetected;       /**<memory buffer when returning the partial length info to external programs such as matlab*/
     unsigned long int detectedcount;  /**<total number of detected photons*/
     char rootpath[MAX_PATH_LENGTH]; /**<sets the input and output root folder*/
