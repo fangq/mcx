@@ -2296,12 +2296,27 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
 #ifdef USE_ATOMIC
                     } else {
+#ifdef USE_DOUBLE
                         atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0);
 
                         if (gcfg->outputtype == otRFmus) {
                             atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], sphi);
                         }
 
+#else
+                        /** apply double-buffer to prevent float round-off when voxel count exceeds 2^24 */
+                        float oldval_wp = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0);
+
+                        if (fabsf(oldval_wp) > MAX_ACCUM && gcfg->outputtype != otRFmus) {
+                            atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], ((oldval_wp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                            atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval_wp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                        }
+
+                        if (gcfg->outputtype == otRFmus) {
+                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], sphi);
+                        }
+
+#endif
                         GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, tmp0, p.w));
                     }
 
