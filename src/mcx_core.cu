@@ -2566,18 +2566,16 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                                     if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || gcfg->isrfforward)) {
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
-                                    } else if (gcfg->isrfforward || gcfg->outputtype == otRF) {
-                                        if (gcfg->isrfforward) {
-                                            float ov_im_pp = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], (gcfg->srcnum == 1 ? weight_im : weight_im * ppath[gcfg->w0offset + i]));
+                                    } else if (gcfg->isrfforward) {
+                                        float ov_im_pp = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], (gcfg->srcnum == 1 ? weight_im : weight_im * ppath[gcfg->w0offset + i]));
 
-                                            if (fabsf(ov_im_pp) > MAX_ACCUM) {
-                                                atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((ov_im_pp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                                                atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((ov_im_pp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
-                                            }
-                                        } else {
-                                            oldval = p.w * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                                            atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
+                                        if (fabsf(ov_im_pp) > MAX_ACCUM) {
+                                            atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((ov_im_pp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                            atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((ov_im_pp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                                         }
+                                    } else if (gcfg->outputtype == otRF) {
+                                        oldval = -replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
+                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
                                     }
 
 #endif
