@@ -2273,11 +2273,20 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                     theta = replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)];
 
-                    if (gcfg->outputtype == otRFmus) {
-                        ctheta = ppath[gcfg->w0offset + gcfg->srcnum];
-                        stheta = ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                        tmp0 = theta * ctheta;
-                        sphi = theta * stheta;
+                    if (gcfg->outputtype == otRFmus || gcfg->outputtype == otWP) {
+                        if (issvmc) {
+                            theta = (prop.mus == 0.f) ? 1.f : __fdividef(theta, prop.mus);
+                        }
+
+                        if (gcfg->outputtype == otWP) {
+                            tmp0 = theta;
+                        } else {
+                            ctheta = ppath[gcfg->w0offset + gcfg->srcnum];
+                            stheta = ppath[gcfg->w0offset + gcfg->srcnum + 1];
+
+                            tmp0 = theta * ctheta;
+                            sphi = theta * stheta;
+                        }
                     } else {
                         tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
                         tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] : tmp0;
