@@ -1237,6 +1237,14 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     /** save current source ID before ppath pointer is shifted; used for adjoint detector-source identification */
     int cur_src_id = (gcfg->extrasrclen && gcfg->srcid < 0) ? (int)ppath[gcfg->w0offset - 1] : 0;
 
+    /**
+     * In adjoint mode, detector sources are launched as disk sources, overriding position.
+     * Condition: current source ID exceeds the count of original (non-detector) sources.
+     * cur_src_id = 1 when simulating the source, and = 0 when simulating an adjoint src at detectors
+     */
+    cur_src_id = !((MCX_IS_ADJOINT_TYPE(gcfg->outputtype) || gcfg->srcid == -2) &&
+                   cur_src_id > (int)(gcfg->extrasrclen + 1 - (int)gcfg->detnum));
+
     ppath += gcfg->partialdata;
 
     /**
@@ -1262,8 +1270,9 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
         /**
          * Only one branch is taken because of template, this can reduce thread divergence
          */
+
         if (!ispencil) {
-            switch (gcfg->srctype) {
+            switch (gcfg->srctype * cur_src_id) {
                 case (MCX_SRC_PLANAR):       // a uniform square/rectangular/quadrilateral shaped area light source
                 case (MCX_SRC_PATTERN):      // a square/rectangular/quadrilateral shaped area light source with intensity determined by a 2D array (0-1)
                 case (MCX_SRC_PATTERN3D):    // a cubic/brick shaped 3D volumetric light source with intensity determined by a 3D array (0-1)
@@ -1372,6 +1381,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     break;
                 }
 
+                case (MCX_SRC_ADJOINT):  // special flag: when simulating an adjoint src at detector, cur_src_id=0, gcfg->srctype*cur_src_id = 0, triggers this block
                 case (MCX_SRC_DISK):
                 case (MCX_SRC_RING):
                 case (MCX_SRC_GAUSSIAN): { // uniform disk distribution or collimated Gaussian-beam
@@ -1387,7 +1397,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
                     sincosf(phi, &sphi, &cphi);
 
-                    if (gcfg->srctype == MCX_SRC_DISK || gcfg->srctype == MCX_SRC_RING) {
+                    if (gcfg->srctype == MCX_SRC_DISK || cur_src_id == 0 || gcfg->srctype == MCX_SRC_RING) {
                         r = sqrtf(rand_uniform01(t) * fabsf(launchsrc->param1.x * launchsrc->param1.x - launchsrc->param1.y * launchsrc->param1.y) + launchsrc->param1.y * launchsrc->param1.y);
                     } else if (fabsf(launchsrc->dir.w) < 1e-5f || fabsf(launchsrc->param1.y) < 1e-5f) {
                         r = sqrtf(0.5f * rand_next_scatlen(t)) * launchsrc->param1.x;
@@ -1641,37 +1651,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     v->y *= Rn2;
                     v->z *= Rn2;
                 }
-            }
-        }
-
-        /**
-         * In adjoint mode, detector sources are launched as disk sources, overriding position.
-         * Condition: current source ID exceeds the count of original (non-detector) sources.
-         */
-        if ((MCX_IS_ADJOINT_TYPE(gcfg->outputtype) || gcfg->srcid == -2) &&
-                cur_src_id > (int)(gcfg->extrasrclen + 1 - (int)gcfg->detnum)) {
-            float phi = TWO_PI * rand_uniform01(t);
-            float sphi, cphi;
-            sincosf(phi, &sphi, &cphi);
-            float r = sqrtf(rand_uniform01(t)) * launchsrc->param1.x;
-
-            if (v->z > -1.f + EPS && v->z < 1.f - EPS) {
-                float tmp0 = 1.f - v->z * v->z;
-                float tmp1 = r * rsqrtf(tmp0);
-                p->x += tmp1 * (v->x * v->z * cphi - v->y * sphi);
-                p->y += tmp1 * (v->y * v->z * cphi + v->x * sphi);
-                p->z -= tmp1 * tmp0 * cphi;
-            } else {
-                p->x += r * cphi;
-                p->y += r * sphi;
-            }
-
-            *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
-
-            if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
-                *mediaid = 0;
-            } else {
-                *mediaid = media[*idx1d];
             }
         }
 
@@ -3760,7 +3739,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              */
 
             /** \c ispencil: template constant, if 1, launch photon code is dramatically simplified */
-            int ispencil = (cfg->srctype == MCX_SRC_PENCIL && cfg->nangle == 0);
+            int ispencil = (cfg->srctype == MCX_SRC_PENCIL && cfg->nangle == 0 && !(MCX_IS_ADJOINT_TYPE(cfg->outputtype) || cfg->srcid == -2));
 
             /** \c isref: template constant, if 1, perform boundary reflection, if 0, total-absorbion boundary, can simplify kernel */
             int isref = cfg->isreflect;

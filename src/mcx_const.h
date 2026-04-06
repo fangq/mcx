@@ -100,6 +100,8 @@
 #define MCX_SRC_HYPERBOLOID_GAUSSIAN 16 /**<  Gaussian-beam with spot focus, scrparam1.{x,y,z} define beam waist, distance from source to focus, rayleigh range */
 #define MCX_SRC_RING       17 /**<  ring/ring-sector source, scrparam1.{x,y} defines the outer/inner radius, srcparam1.{z,w} defines start/end angle*/
 
+#define MCX_SRC_ADJOINT    0  /**<  special tag when doing simulations over the adjoint source at detectors (use disk srctype for detectors) */
+
 #define SAVE_DETID(a)         ((a)    & 0x1)   /**<  mask to save detector ID*/
 #define SAVE_NSCAT(a)         ((a)>>1 & 0x1)   /**<  output partial scattering counts */
 #define SAVE_PPATH(a)         ((a)>>2 & 0x1)   /**<  output partial path */
