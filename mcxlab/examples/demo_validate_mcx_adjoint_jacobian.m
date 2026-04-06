@@ -96,7 +96,9 @@ xcfg.srctype    = 'pencil';
 xcfg.srcpos     = [20  29.5  0];    % matches Redbird srcpos
 xcfg.srcdir     = [0     0     1  0]; % +z direction, focallength=0
 xcfg.detpos     = [40    30    0  1]; % matches Redbird detpos, radius=1 mm
-xcfg.detdir     = [0     0     1  0]; % +z (reversed photons enter medium)
+xcfg.detdir     = [0     0     1  0]; % +z (reversed photons enter medium), focal-length similar to srcdir(4)
+% xcfg.detdir(4) = -inf    % if setting det focal-length to -inf, det launches photon in a Lambertian profile, more realistic
+% xcfg.detdir(4) = nan     % if setting det focal-length to nan, det launches photon isotropically, simulating a detector receiving from all angles
 xcfg.omega      = omega;              % RF modulation frequency
 xcfg.outputtype = 'adjoint';          % compute J = phi_src * phi_det per voxel
 
