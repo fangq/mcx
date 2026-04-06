@@ -2277,7 +2277,8 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         field[idx1d + tshift * gcfg->dimlen.z] += tmp0;
 
                         if (gcfg->outputtype == otRFmus) {
-                            field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w] += sphi;
+                            /** rfmus: imaginary stored in 3rd quarter [2F..3F) to allow double-buffer in [F..2F) for real and [3F..4F) for imag */
+                            field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2] += sphi;
                         }
 
 #ifdef USE_ATOMIC
@@ -2286,20 +2287,26 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0);
 
                         if (gcfg->outputtype == otRFmus) {
-                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], sphi);
+                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], sphi);
                         }
 
 #else
                         /** apply double-buffer to prevent float round-off when voxel count exceeds 2^24 */
                         float oldval_wp = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0);
 
-                        if (fabsf(oldval_wp) > MAX_ACCUM && gcfg->outputtype != otRFmus) {
+                        if (fabsf(oldval_wp) > MAX_ACCUM) {
                             atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], ((oldval_wp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                             atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval_wp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                         }
 
                         if (gcfg->outputtype == otRFmus) {
-                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], sphi);
+                            /** rfmus: imaginary in 3rd quarter [2F..3F), double-buffer in 4th quarter [3F..4F) */
+                            float oldval_im = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], sphi);
+
+                            if (fabsf(oldval_im) > MAX_ACCUM) {
+                                atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((oldval_im > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((oldval_im > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                            }
                         }
 
 #endif
@@ -3468,7 +3475,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     }
 
     //CUDA_ASSERT(cudaBindTexture(0, texmedia, gmedia));
-    CUDA_ASSERT(cudaMalloc((void**) &gfield, sizeof(OutputType)*fieldlen * (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE ? 4 : SHADOWCOUNT)));
+    CUDA_ASSERT(cudaMalloc((void**) &gfield, sizeof(OutputType)*fieldlen * ((cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) || cfg->outputtype == otRFmus ? 4 : SHADOWCOUNT)));
     CUDA_ASSERT(cudaMalloc((void**) &gPpos, sizeof(float4)*gpu[gpuid].autothread));
     CUDA_ASSERT(cudaMalloc((void**) &gPdir, sizeof(float4)*gpu[gpuid].autothread));
     CUDA_ASSERT(cudaMalloc((void**) &gPlen, sizeof(float4)*gpu[gpuid].autothread));
@@ -3688,7 +3695,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             /**
              * Each repetition, we have to reset the output buffers, including \c gfield and \c gPdet
              */
-            CUDA_ASSERT(cudaMemset(gfield, 0, sizeof(OutputType)*fieldlen * (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE ? 4 : SHADOWCOUNT))); // cost about 1 ms
+            CUDA_ASSERT(cudaMemset(gfield, 0, sizeof(OutputType)*fieldlen * ((cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) || cfg->outputtype == otRFmus ? 4 : SHADOWCOUNT))); // cost about 1 ms
             CUDA_ASSERT(cudaMemset(gPdet, 0, sizeof(float)*cfg->maxdetphoton * (hostdetreclen)));
 
             if (cfg->issaveseed) {
@@ -4002,7 +4009,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              */
             if (cfg->issave2pt) {
                 size_t i;
-                int rffw = (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) ? 1 : 0;
+                int rffw = ((cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) || cfg->outputtype == otRFmus) ? 1 : 0;
                 OutputType* rawfield = (OutputType*)malloc(sizeof(OutputType) * fieldlen * (rffw ? 4 : SHADOWCOUNT));
                 CUDA_ASSERT(cudaMemcpy(rawfield, gfield, sizeof(OutputType)*fieldlen * (rffw ? 4 : SHADOWCOUNT), cudaMemcpyDeviceToHost));
                 MCX_FPRINTF(cfg->flog, "%s:\t%d ms\n", T_("transfer complete"), GetTimeMillis() - tic);
@@ -4014,7 +4021,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                  * to minimize round-off errors near the source
                  */
                 if (rffw) {
-                    /** RF forward: 4-quarter layout [Re, Re_db, Im, Im_db] */
+                    /** RF forward / rfmus: 4-quarter layout [Re, Re_db, Im, Im_db] */
                     for (i = 0; i < fieldlen; i++) {
                         field[i] = rawfield[i] + rawfield[i + fieldlen]; /**< Re = primary + double-buf */
                     }
