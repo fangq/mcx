@@ -94,6 +94,47 @@ int    seedbyte = 0;
  *  simuation parameters and data.
  */
 
+static void mcxlab_add_jac_field(mxArray** plhs, int jstruct, const char* fname,
+                                 const dimtype* jdim, mxComplexity jcplx,
+                                 int isrf, size_t adjlen,
+                                 float* re_data, float* im_data) {
+    mxArray* jfield;
+
+    if (mxGetFieldNumber(plhs[0], fname) < 0) {
+        mxAddField(plhs[0], fname);
+    }
+
+    jfield = mxCreateNumericArray(4, jdim, mxSINGLE_CLASS, jcplx);
+
+    if (!isrf) {
+        memcpy((float*)mxGetData(jfield), re_data, adjlen * sizeof(float));
+    } else {
+#if MX_HAS_INTERLEAVED_COMPLEX
+        mxComplexSingle* cptr = mxGetComplexSingles(jfield);
+        size_t ii;
+
+        if (cptr) {
+            for (ii = 0; ii < adjlen; ii++) {
+                cptr[ii].real = re_data[ii];
+                cptr[ii].imag = im_data[ii];
+            }
+        }
+
+#else
+        float* jpi;
+        memcpy((float*)mxGetData(jfield), re_data, adjlen * sizeof(float));
+        jpi = (float*)mxGetImagData(jfield);
+
+        if (jpi) {
+            memcpy(jpi, im_data, adjlen * sizeof(float));
+        }
+
+#endif
+    }
+
+    mxSetField(plhs[0], jstruct, fname, jfield);
+}
+
 void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     Config cfg;
     GPUInfo* gpuinfo = NULL;
@@ -560,51 +601,17 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                             break;
                     }
 
-                    auto add_jac_field = [&](const char* fname, float * re_data, float * im_data) {
-                        if (mxGetFieldNumber(plhs[0], fname) < 0) {
-                            mxAddField(plhs[0], fname);
-                        }
-
-                        mxArray* jfield = mxCreateNumericArray(4, jdim, mxSINGLE_CLASS, jcplx);
-
-                        if (!isrf) {
-                            memcpy((float*)mxGetData(jfield), re_data, adjlen * sizeof(float));
-                        } else {
-#if MX_HAS_INTERLEAVED_COMPLEX
-                            mxComplexSingle* cptr = mxGetComplexSingles(jfield);
-
-                            if (cptr) {
-                                for (size_t ii = 0; ii < adjlen; ii++) {
-                                    cptr[ii].real = re_data[ii];
-                                    cptr[ii].imag = im_data[ii];
-                                }
-                            }
-
-#else
-                            memcpy((float*)mxGetData(jfield), re_data, adjlen * sizeof(float));
-                            float* jpi = (float*)mxGetImagData(jfield);
-
-                            if (jpi) {
-                                memcpy(jpi, im_data, adjlen * sizeof(float));
-                            }
-
-#endif
-                        }
-
-                        mxSetField(plhs[0], jstruct, fname, jfield);
-                    };
-
                     /* exportjacob layout: CW non-dual:[re1]; RF non-dual:[re1,im1];
                      * CW dual:[re1,re2]; RF dual:[re1,re2,im1,im2] each of size adjlen */
                     float* re1 = cfg.exportjacob;
-                    float* re2 = isdual               ? cfg.exportjacob + adjlen             : NULL;
+                    float* re2 = isdual               ? cfg.exportjacob + adjlen                    : NULL;
                     float* im1 = isrf                 ? cfg.exportjacob + (isdual ? 2 : 1) * adjlen : NULL;
-                    float* im2 = (isrf && isdual)     ? cfg.exportjacob + 3 * adjlen         : NULL;
+                    float* im2 = (isrf && isdual)     ? cfg.exportjacob + 3 * adjlen                : NULL;
 
-                    add_jac_field(jname1, re1, im1);
+                    mcxlab_add_jac_field(plhs, jstruct, jname1, jdim, jcplx, isrf, adjlen, re1, im1);
 
                     if (isdual) {
-                        add_jac_field(jname2, re2, im2);
+                        mcxlab_add_jac_field(plhs, jstruct, jname2, jdim, jcplx, isrf, adjlen, re2, im2);
                     }
 
                     free(cfg.exportjacob);
