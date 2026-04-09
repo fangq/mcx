@@ -2250,13 +2250,16 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                     theta = replayweight[photonidx];
 
-                    if (gcfg->outputtype == otRFmus || gcfg->outputtype == otWP) {
+                    if (gcfg->outputtype == otRFmus || gcfg->outputtype == otWP || gcfg->outputtype == otWPTOF) {
                         if (issvmc) {
-                            theta = (prop.mus == 0.f) ? 1.f : __fdividef(theta, prop.mus);
+                            theta = (prop.mus == 0.f) ? 0.f : __fdividef(cfg->unitinmm * theta, prop.mus);
                         }
 
                         if (gcfg->outputtype == otWP) {
                             tmp0 = theta;
+                        } else if (gcfg->outputtype == otWPTOF) {
+                            tmp0 = photontof[photonidx];
+                            tmp0 *= theta;   
                         } else {
                             ctheta = ppath[gcfg->w0offset + gcfg->srcnum];
                             stheta = ppath[gcfg->w0offset + gcfg->srcnum + 1];
@@ -2266,7 +2269,6 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         }
                     } else {
                         tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
-                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[photonidx] : tmp0;
                         tmp0 *= theta;
                     }
 
@@ -4382,8 +4384,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                             float onemg = 1.f - cfg->prop[medid].g;
 
                             if (mus > 0.f && onemg > 0.f) {
-                                /** adjoint_musp: J_D * 3*D^2 = J_D / (3*(1-g)^2*mus^2) */
-                                opscale = 1.f / (3.f * onemg * onemg * mus * mus);
+                                /** adjoint_musp: J_D * (-3*D^2) = -J_D / (3*(1-g)^2*mus^2) */
+                                opscale = -1.f / (3.f * onemg * onemg * mus * mus);
                             }
                         }
 
@@ -4448,11 +4450,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                             float onemg = 1.f - cfg->prop[medid].g;
 
                             if (mus > 0.f && onemg > 0.f) {
-                                /** D = 1/(3*(1-g)*mus).  adjoint_mus:  J * 3*D^2*(1-g) = J / (3*(1-g)*mus^2)
-                                 *                         adjoint_musp: J * 3*D^2        = J / (3*(1-g)^2*mus^2) */
+                                /** D = 1/(3*(1-g)*mus).  adjoint_mus:  J * (-3*D^2*(1-g)) = - J / (3*(1-g)*mus^2)
+                                 *                         adjoint_musp: J * (-3*D^2)        = - J / (3*(1-g)^2*mus^2) */
                                 opscale = (cfg->outputtype == otAdjointMus)
-                                          ? 1.f / (3.f * onemg * mus * mus)
-                                          : 1.f / (3.f * onemg * onemg * mus * mus);
+                                          ? -1.f / (3.f * onemg * mus * mus)
+                                          : -1.f / (3.f * onemg * onemg * mus * mus);
                             }
                         }
 
