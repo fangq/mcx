@@ -117,15 +117,25 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
     int use4bytedim = 0;
 
-    union cflag {
-        int iscompress;
-        struct settings {
-            char clevel;
-            char nthread;
-            char shuffle;
-            char typesize;
-        } param;
-    } flags = {0};
+    /**
+     * The TZMatFlags union data structure is defined in zmatlib.h
+     * it allows users to set advanced parameters to be used for
+     * blosc2 meta-compressor, including number of threads,
+     * byte-shuffle and element byte size; the iscompress element is
+     * used to pass on to zmat_run
+     *
+     * union TZMatFlags {
+     *     int iscompress;      // combined flag used to pass on to zmat_run
+     *     struct settings {    // unpacked flags
+     *         char clevel;     // compression level, 0: decompression, 1: use default level; negative: set compression level (-1 to -19)
+     *         char nthread;    // number of compression/decompression threads
+     *         char shuffle;    // byte shuffle length
+     *         char typesize;   // for ND-array, the byte-size for each array element
+     *     } param;
+     * };
+     */
+
+    union TZMatFlags flags = {0};
 
     /**
      * If no input is given for this function, it prints help information and return.
@@ -199,10 +209,12 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             unsigned char* inputstr = (mxIsChar(prhs[0]) ? (unsigned char*)mxArrayToString(prhs[0]) : (unsigned char*)mxGetData(prhs[0]));
             int errcode = 0;
 
+            // if input buffer is not empty, run main function zmat_run
             if (inputsize > 0) {
                 errcode = zmat_run(inputsize, inputstr, &outputsize, &outputbuf, zipid, &ret, flags.iscompress);
             }
 
+            // test error code
             if (errcode < 0) {
                 if (outputbuf) {
                     free(outputbuf);
@@ -215,6 +227,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             buflen[0] = 1;
             buflen[1] = outputsize;
 
+            // if running on octave 4/matlab R2015 or older, dimensions are stored as 4-byte integers, determine this at runtime
             if (use4bytedim) {
                 unsigned int intdims[4] = {0};
                 intdims[0] = 1;
@@ -224,40 +237,48 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 plhs[0] = mxCreateNumericArray(2, buflen, mxUINT8_CLASS, mxREAL);
             }
 
+            // return the compressed/decompressed buffer to plhs[0]
             if (outputbuf) {
                 memcpy((unsigned char*)mxGetPr(plhs[0]), outputbuf, buflen[1]);
                 free(outputbuf);
             }
 
+            // return info struct
             if (nlhs > 1) {
                 mwSize inputdim[2] = {1, 0}, *dims = (mwSize*)mxGetDimensions(prhs[0]);
-                unsigned int* inputsize = NULL;
+                unsigned int* int64inputdim = NULL;
                 plhs[1] = mxCreateStructMatrix(1, 1, 6, metadata);
                 mxArray* val = mxCreateString(mxGetClassName(prhs[0]));
                 mxSetFieldByNumber(plhs[1], 0, 0, val);
 
                 inputdim[1] = mxGetNumberOfDimensions(prhs[0]);
-                inputsize = (unsigned int*)malloc(inputdim[1] * sizeof(unsigned int));
+                int64inputdim = (unsigned int*)malloc(inputdim[1] * sizeof(unsigned int));
 
                 if (use4bytedim) {
-                    unsigned int intinputdim[4] = {0}, *intdims = (unsigned int*)(mxGetDimensions(prhs[0]));
+                    unsigned int intinputdim[4] = {0};
+                    unsigned int* intdims = (unsigned int*)(mxGetDimensions(prhs[0]));
                     intinputdim[0] = 1;
                     intinputdim[1] = (unsigned int)inputdim[1];
                     val = mxCreateNumericArray(2, (mwSize*)intinputdim, mxUINT32_CLASS, mxREAL);
 
                     for (int i = 0; i < intinputdim[1]; i++) {
-                        inputsize[i] = intdims[i];
+                        int64inputdim[i] = intdims[i];
                     }
 
-                    memcpy(mxGetPr(val), inputsize, intinputdim[1]*sizeof(unsigned int));
+                    memcpy(mxGetPr(val), int64inputdim, intinputdim[1]*sizeof(unsigned int));
                 } else {
-                    val = mxCreateNumericArray(2, inputdim, mxUINT32_CLASS, mxREAL);
+                    if (sizeof(mwSize) == 8) {
+                        val = mxCreateNumericArray(2, inputdim, mxUINT64_CLASS, mxREAL);
+                        memcpy(mxGetPr(val), dims, inputdim[1]*sizeof(mwSize));
+                    } else {
+                        val = mxCreateNumericArray(2, inputdim, mxUINT32_CLASS, mxREAL);
 
-                    for (int i = 0; i < inputdim[1]; i++) {
-                        inputsize[i] = dims[i];
+                        for (int i = 0; i < inputdim[1]; i++) {
+                            int64inputdim[i] = dims[i];
+                        }
+
+                        memcpy(mxGetPr(val), int64inputdim, inputdim[1]*sizeof(unsigned int));
                     }
-
-                    memcpy(mxGetPr(val), inputsize, inputdim[1]*sizeof(mwSize));
                 }
 
                 mxSetFieldByNumber(plhs[1], 0, 1, val);
@@ -300,5 +321,5 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
  */
 
 void zmat_usage() {
-    mexPrintf("ZMat (v0.9.9)\nUsage:\n\t[output,info]=zmat(input,iscompress,method);\n\nPlease run 'help zmat' for more details.\n");
+    mexPrintf("ZMat (v1.0.0)\nUsage:\n\t[output,info]=zmat(input,iscompress,method);\n\nPlease run 'help zmat' for more details.\n");
 }

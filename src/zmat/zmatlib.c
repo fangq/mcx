@@ -76,6 +76,21 @@
     unsigned long long ZSTD_decompressBound(const void* src, size_t srcSize);
 #endif
 
+/**
+ * @brief Maximum single allocation size (1 GB) to prevent runaway growth
+ */
+#define ZMAT_MAX_ALLOC  ((size_t)1 << 30)
+
+/**
+ * @brief Maximum number of realloc rounds during decompression
+ */
+#define ZMAT_MAX_DECOMPRESS_ROUNDS 20
+
+/**
+ * @brief Minimum decompression output buffer size
+ */
+#define ZMAT_MIN_OUTBUF 1024
+
 #ifdef NO_ZLIB
 int miniz_gzip_uncompress(void* in_data, size_t in_len,
                           void** out_data, size_t* out_len);
@@ -147,10 +162,97 @@ const char* zmat_errcode[] = {
  */
 
 char* zmat_error(int id) {
-    if (id >= 0 && id < (sizeof(zmat_errcode) / sizeof(zmat_errcode[0]))) {
+    if (id >= 0 && id < (int)(sizeof(zmat_errcode) / sizeof(zmat_errcode[0]))) {
         return (char*)(zmat_errcode[id]);
     } else {
         return "zmatlib: unknown error";
+    }
+}
+
+/**
+ * @brief Safely compute initial decompression buffer size (inputsize * multiplier),
+ *        with overflow protection and floor/ceiling clamping.
+ *
+ * @param[in] inputsize: the compressed input size
+ * @param[in] multiplier: initial growth multiplier (e.g. 4)
+ * @return a safe allocation size
+ */
+
+static size_t zmat_initial_outbuf(size_t inputsize, size_t multiplier) {
+    size_t outalloc = inputsize * multiplier;
+
+    /* check for overflow */
+    if (multiplier != 0 && outalloc / multiplier != inputsize) {
+        outalloc = ZMAT_MAX_ALLOC;
+    }
+
+    if (outalloc < ZMAT_MIN_OUTBUF) {
+        outalloc = ZMAT_MIN_OUTBUF;
+    }
+
+    if (outalloc > ZMAT_MAX_ALLOC) {
+        outalloc = ZMAT_MAX_ALLOC;
+    }
+
+    return outalloc;
+}
+
+/**
+ * @brief Safely grow a buffer by doubling, with overflow and cap checks.
+ *
+ * @param[in,out] buf: pointer to the buffer pointer (updated on success)
+ * @param[in,out] alloc: pointer to current allocation size (updated on success)
+ * @return 0 on success, -5 on failure (*buf is freed and set to NULL)
+ */
+
+static int zmat_grow_buf(unsigned char** buf, size_t* alloc) {
+    size_t newalloc = (*alloc) * 2;
+
+    /* overflow or exceeds cap */
+    if (newalloc <= *alloc) {
+        newalloc = (*alloc < ZMAT_MAX_ALLOC) ? ZMAT_MAX_ALLOC : 0;
+    }
+
+    if (newalloc > ZMAT_MAX_ALLOC) {
+        newalloc = ZMAT_MAX_ALLOC;
+    }
+
+    /* if we can't actually grow, fail */
+    if (newalloc <= *alloc) {
+        free(*buf);
+        *buf = NULL;
+        return -5;
+    }
+
+    unsigned char* tmp = (unsigned char*)realloc(*buf, newalloc);
+
+    if (tmp == NULL) {
+        free(*buf);
+        *buf = NULL;
+        return -5;
+    }
+
+    *buf = tmp;
+    *alloc = newalloc;
+    return 0;
+}
+
+/**
+ * @brief Shrink buffer to actual used size to free excess memory.
+ *
+ * @param[in,out] buf: pointer to the buffer pointer
+ * @param[in] used: actual bytes used
+ */
+
+static void zmat_shrink_buf(unsigned char** buf, size_t used) {
+    if (*buf != NULL && used > 0) {
+        unsigned char* tmp = (unsigned char*)realloc(*buf, used);
+
+        if (tmp != NULL) {
+            *buf = tmp;
+        }
+
+        /* if shrink fails, the original pointer is still valid */
     }
 }
 
@@ -165,11 +267,12 @@ char* zmat_error(int id) {
  * @param[in] iscompress: 0: decompression, 1: use default compression level;
  *             negative interger: set compression level (-1, less, to -9, more compression)
  * @return return the coarse grained zmat error code; detailed error code is in ret.
+ *
+ * On error, *outputbuf is guaranteed to be NULL and *outputsize is 0.
  */
 
 int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize, unsigned char** outputbuf, const int zipid, int* ret, const int iscompress) {
     z_stream zs;
-    size_t buflen[2] = {0};
     int clevel;
     union cflag {
         int iscompress;
@@ -180,7 +283,9 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             char typesize;
         } param;
     } flags;
+
     *outputbuf = NULL;
+    *outputsize = 0;
 
     flags.iscompress = iscompress;
 
@@ -192,7 +297,7 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
         return -1;
     }
 
-    clevel = (flags.param.clevel == 0) ? 0 : flags.param.clevel;
+    clevel = flags.param.clevel;
 
     if (clevel) {
         /**
@@ -203,6 +308,11 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
               * base64 encoding
               */
             *outputbuf = base64_encode((const unsigned char*)inputstr, inputsize, outputsize, clevel);
+
+            if (*outputbuf == NULL) {
+                *outputsize = 0;
+                return -5;
+            }
         } else if (zipid == zmZlib || zipid == zmGzip) {
             /**
               * zlib (.zip) or gzip (.gz) compression
@@ -245,17 +355,26 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                  */
                 int flush = Z_NO_FLUSH;
                 void* out_buf;
-                size_t out_size = inputsize + 32;
+                size_t out_size;
                 unsigned char* pb;
                 const unsigned char gzip_magic_header [] = {0x1F, 0x8B, 8, 0, 0, 0, 0, 0, 0, 0xFF};
 
+                /* use deflateBound for safe sizing, plus header + footer */
+                out_size = deflateBound(&zs, inputsize) + GZIP_HEADER_SIZE + 8;
+
                 out_buf = (unsigned char*)malloc(out_size);
+
+                if (out_buf == NULL) {
+                    deflateEnd(&zs);
+                    return -5;
+                }
+
                 memcpy(out_buf, gzip_magic_header, GZIP_HEADER_SIZE);
                 pb = (unsigned char*) out_buf + GZIP_HEADER_SIZE;
 
                 while (1) {
                     zs.next_out  = pb + zs.total_out;
-                    zs.avail_out = out_size - (pb - (unsigned char*) out_buf);
+                    zs.avail_out = out_size - GZIP_HEADER_SIZE - 8 - zs.total_out;
 
                     if (zs.avail_in == 0) {
                         flush = Z_FINISH;
@@ -267,6 +386,7 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                         break;
                     } else if (*ret != Z_OK) {
                         deflateEnd(&zs);
+                        free(out_buf);
                         return -3;
                     }
                 }
@@ -294,27 +414,40 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
 
                 /* update the final output buffer size */
                 *outputsize += GZIP_HEADER_SIZE + 8;
-                *outputbuf = out_buf;
+                *outputbuf = (unsigned char*)out_buf;
+
+                /* shrink to actual size */
+                zmat_shrink_buf(outputbuf, *outputsize);
             } else {
 #endif
+                size_t bound = deflateBound(&zs, inputsize);
+                *outputbuf = (unsigned char*)malloc(bound);
 
-                buflen[0] = deflateBound(&zs, inputsize);
-                *outputbuf = (unsigned char*)malloc(buflen[0]);
-                zs.avail_in = inputsize; /* size of input, string + terminator*/
-                zs.next_in = (Bytef*)inputstr;  /* input char array*/
-                zs.avail_out = buflen[0]; /* size of output*/
+                if (*outputbuf == NULL) {
+                    deflateEnd(&zs);
+                    return -5;
+                }
 
-                zs.next_out =  (Bytef*)(*outputbuf);  /*(Bytef *)(); // output char array*/
+                zs.avail_in = inputsize;
+                zs.next_in = (Bytef*)inputstr;
+                zs.avail_out = bound;
+                zs.next_out =  (Bytef*)(*outputbuf);
 
                 *ret = deflate(&zs, Z_FINISH);
                 *outputsize = zs.total_out;
 
                 if (*ret != Z_STREAM_END && *ret != Z_OK) {
                     deflateEnd(&zs);
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                    *outputsize = 0;
                     return -3;
                 }
 
                 deflateEnd(&zs);
+
+                /* shrink to actual size */
+                zmat_shrink_buf(outputbuf, *outputsize);
 #ifdef NO_ZLIB
             }
 
@@ -328,6 +461,12 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                                   inputsize, outputbuf, outputsize, clevel);
 
             if (*ret != ELZMA_E_OK) {
+                if (*outputbuf) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                }
+
+                *outputsize = 0;
                 return -4;
             }
 
@@ -339,7 +478,12 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
               */
             *outputsize = LZ4_compressBound(inputsize);
 
+            if (*outputsize == 0) {
+                return -6;
+            }
+
             if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
+                *outputsize = 0;
                 return -5;
             }
 
@@ -352,8 +496,13 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             *ret = *outputsize;
 
             if (*outputsize == 0) {
+                free(*outputbuf);
+                *outputbuf = NULL;
                 return -6;
             }
+
+            /* shrink to actual size */
+            zmat_shrink_buf(outputbuf, *outputsize);
 
 #endif
 #ifndef NO_ZSTD
@@ -364,20 +513,23 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             *outputsize = ZSTD_compressBound(inputsize);
 
             if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
+                *outputsize = 0;
                 return -5;
             }
 
             *ret = ZSTD_compress((char*)(*outputbuf), *outputsize, (const char*)inputstr, inputsize, (clevel > 0) ? ZSTD_CLEVEL_DEFAULT : (-clevel));
 
             if (ZSTD_isError(*ret)) {
+                free(*outputbuf);
+                *outputbuf = NULL;
+                *outputsize = 0;
                 return -9;
             }
 
             *outputsize = *ret;
 
-            if (!(*outputbuf = (unsigned char*)realloc(*outputbuf, *outputsize))) {
-                return -5;
-            }
+            /* shrink to actual size */
+            zmat_shrink_buf(outputbuf, *outputsize);
 
 #endif
 #ifndef NO_BLOSC2
@@ -398,23 +550,26 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
 
             blosc2_set_nthreads(nthread);
 
-            *outputsize = inputsize + BLOSC2_MAX_OVERHEAD;  /* blosc2 guarantees the compression will always succeed at this size */
+            *outputsize = inputsize + BLOSC2_MAX_OVERHEAD;
 
             if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
+                *outputsize = 0;
                 return -5;
             }
 
             *ret = blosc1_compress((clevel > 0) ? 5 : (-clevel), shuffle, typesize, inputsize, (const void*)inputstr, (void*)(*outputbuf), *outputsize);
 
             if (*ret < 0) {
+                free(*outputbuf);
+                *outputbuf = NULL;
+                *outputsize = 0;
                 return -8;
             }
 
             *outputsize = *ret;
 
-            if (!(*outputbuf = (unsigned char*)realloc(*outputbuf, *outputsize))) {
-                return -5;
-            }
+            /* shrink to actual size */
+            zmat_shrink_buf(outputbuf, *outputsize);
 
 #endif
         } else {
@@ -429,12 +584,15 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
               * base64 decoding
               */
             *outputbuf = base64_decode((const unsigned char*)inputstr, inputsize, outputsize);
+
+            if (*outputbuf == NULL) {
+                *outputsize = 0;
+                return -5;
+            }
         } else if (zipid == zmZlib || zipid == zmGzip) {
             /**
               * zlib (.zip) or gzip (.gz) decompression
               */
-            int count = 1;
-
             if (zipid == zmZlib) {
                 if (inflateInit(&zs) != Z_OK) {
                     return -2;
@@ -449,41 +607,88 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
 #endif
             }
 
-            buflen[0] = inputsize * 4;
-            *outputbuf = (unsigned char*)malloc(buflen[0]);
-
-            zs.avail_in = inputsize; /* size of input, string + terminator*/
-            zs.next_in = inputstr; /* input char array*/
-            zs.avail_out = buflen[0]; /* size of output*/
-
-            zs.next_out =  (Bytef*)(*outputbuf);  /* output char array*/
-
 #ifdef NO_ZLIB
 
             if (zipid == zmZlib) {
 #endif
+                size_t outalloc = zmat_initial_outbuf(inputsize, 4);
+                *outputbuf = (unsigned char*)malloc(outalloc);
 
-                while ((*ret = inflate(&zs, Z_SYNC_FLUSH)) != Z_STREAM_END && *ret != Z_DATA_ERROR && count <= 12) {
-                    *outputbuf = (unsigned char*)realloc(*outputbuf, (buflen[0] << count));
-                    zs.next_out =  (Bytef*)(*outputbuf + zs.total_out);
-                    zs.avail_out = (buflen[0] << count) - zs.total_out; /* size of output*/
-                    count++;
+                if (*outputbuf == NULL) {
+                    inflateEnd(&zs);
+                    return -5;
+                }
+
+                zs.avail_in = inputsize;
+                zs.next_in = inputstr;
+                zs.avail_out = outalloc;
+                zs.next_out =  (Bytef*)(*outputbuf);
+
+                int rounds = 0;
+
+                while (1) {
+                    *ret = inflate(&zs, Z_SYNC_FLUSH);
+
+                    if (*ret == Z_STREAM_END) {
+                        break;
+                    }
+
+                    if (*ret != Z_OK && *ret != Z_BUF_ERROR) {
+                        inflateEnd(&zs);
+                        free(*outputbuf);
+                        *outputbuf = NULL;
+                        return -3;
+                    }
+
+                    /* output buffer full — need to grow */
+                    if (zs.avail_out == 0) {
+                        rounds++;
+
+                        if (rounds > ZMAT_MAX_DECOMPRESS_ROUNDS) {
+                            inflateEnd(&zs);
+                            free(*outputbuf);
+                            *outputbuf = NULL;
+                            return -5;
+                        }
+
+                        if (zmat_grow_buf(outputbuf, &outalloc) != 0) {
+                            inflateEnd(&zs);
+                            /* outputbuf already freed and set to NULL by zmat_grow_buf */
+                            return -5;
+                        }
+
+                        zs.next_out = (Bytef*)(*outputbuf + zs.total_out);
+                        zs.avail_out = outalloc - zs.total_out;
+                    }
                 }
 
                 *outputsize = zs.total_out;
 
                 if (*ret != Z_STREAM_END && *ret != Z_OK) {
                     inflateEnd(&zs);
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                    *outputsize = 0;
                     return -3;
                 }
 
                 inflateEnd(&zs);
+
+                /* shrink to actual size */
+                zmat_shrink_buf(outputbuf, *outputsize);
+
 #ifdef NO_ZLIB
             } else {
 
                 *ret = miniz_gzip_uncompress(inputstr, inputsize, (void**)outputbuf, outputsize);
 
                 if (*ret != 0) {
+                    if (*outputbuf) {
+                        free(*outputbuf);
+                        *outputbuf = NULL;
+                    }
+
+                    *outputsize = 0;
                     return -10;
                 }
             }
@@ -499,6 +704,12 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                                     inputsize, outputbuf, outputsize);
 
             if (*ret != ELZMA_E_OK) {
+                if (*outputbuf) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                }
+
+                *outputsize = 0;
                 return -4;
             }
 
@@ -508,30 +719,41 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             /**
               * lz4 or lz4hc decompression
               */
-            int count = 2;
-            *outputsize = (inputsize << count);
+            size_t outalloc = zmat_initial_outbuf(inputsize, 4);
+            int rounds = 0;
 
-            if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
-                *ret = -5;
-                return *ret;
+            if (!(*outputbuf = (unsigned char*)malloc(outalloc))) {
+                return -5;
             }
 
-            while ((*ret = LZ4_decompress_safe((const char*)inputstr, (char*)(*outputbuf), inputsize, *outputsize)) <= 0 && count <= 10) {
-                *outputsize = (inputsize << count);
+            while ((*ret = LZ4_decompress_safe((const char*)inputstr, (char*)(*outputbuf), inputsize, outalloc)) < 0) {
+                rounds++;
 
-                if (!(*outputbuf = (unsigned char*)realloc(*outputbuf, *outputsize))) {
-                    *ret = -5;
-                    return *ret;
+                if (rounds > ZMAT_MAX_DECOMPRESS_ROUNDS) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                    *outputsize = 0;
+                    return -6;
                 }
 
-                count++;
+                if (zmat_grow_buf(outputbuf, &outalloc) != 0) {
+                    /* outputbuf already freed and set to NULL by zmat_grow_buf */
+                    *outputsize = 0;
+                    return -5;
+                }
             }
 
             *outputsize = *ret;
 
             if (*ret < 0) {
+                free(*outputbuf);
+                *outputbuf = NULL;
+                *outputsize = 0;
                 return -6;
             }
+
+            /* shrink to actual size */
+            zmat_shrink_buf(outputbuf, *outputsize);
 
 #endif
 #ifndef NO_ZSTD
@@ -541,18 +763,31 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
               */
             *outputsize = ZSTD_decompressBound(inputstr, inputsize);
 
-            if (*outputsize == ZSTD_CONTENTSIZE_ERROR || !(*outputbuf = (unsigned char*)malloc(*outputsize))) {
-                *ret = (*outputsize == ZSTD_CONTENTSIZE_ERROR) ? -9 : -5;
-                return *ret;
+            if (*outputsize == ZSTD_CONTENTSIZE_ERROR) {
+                *ret = -9;
+                *outputsize = 0;
+                return -9;
+            }
+
+            if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
+                *ret = -5;
+                *outputsize = 0;
+                return -5;
             }
 
             *ret = ZSTD_decompress((void*)(*outputbuf), *outputsize, (const void*)inputstr, inputsize);
 
-            *outputsize = *ret;
-
             if (ZSTD_isError(*ret)) {
+                free(*outputbuf);
+                *outputbuf = NULL;
+                *outputsize = 0;
                 return -9;
             }
+
+            *outputsize = *ret;
+
+            /* shrink to actual size */
+            zmat_shrink_buf(outputbuf, *outputsize);
 
 #endif
 #ifndef NO_BLOSC2
@@ -560,30 +795,41 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             /**
               * blosc2 meta-compressor (support various filters and compression codecs)
               */
-            int count = 2;
-            *outputsize = (inputsize << count);
+            size_t outalloc = zmat_initial_outbuf(inputsize, 4);
+            int rounds = 0;
 
-            if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
-                *ret = -5;
-                return *ret;
+            if (!(*outputbuf = (unsigned char*)malloc(outalloc))) {
+                return -5;
             }
 
-            while ((*ret = blosc1_decompress((const char*)inputstr, (char*)(*outputbuf), *outputsize)) <= 0 && count <= 16) {
-                *outputsize = (inputsize << count);
+            while ((*ret = blosc1_decompress((const char*)inputstr, (char*)(*outputbuf), outalloc)) <= 0) {
+                rounds++;
 
-                if (!(*outputbuf = (unsigned char*)realloc(*outputbuf, *outputsize))) {
-                    *ret = -5;
-                    return *ret;
+                if (rounds > ZMAT_MAX_DECOMPRESS_ROUNDS) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                    *outputsize = 0;
+                    return -8;
                 }
 
-                count++;
+                if (zmat_grow_buf(outputbuf, &outalloc) != 0) {
+                    /* outputbuf already freed and set to NULL by zmat_grow_buf */
+                    *outputsize = 0;
+                    return -5;
+                }
             }
 
             *outputsize = *ret;
 
             if (*ret < 0) {
+                free(*outputbuf);
+                *outputbuf = NULL;
+                *outputsize = 0;
                 return -8;
             }
+
+            /* shrink to actual size */
+            zmat_shrink_buf(outputbuf, *outputsize);
 
 #endif
         } else {
@@ -635,6 +881,11 @@ int zmat_decode(const size_t inputsize, unsigned char* inputstr, size_t* outputs
 int zmat_keylookup(char* origkey, const char* table[]) {
     int i = 0;
     char* key = (char*)malloc(strlen(origkey) + 1);
+
+    if (key == NULL) {
+        return -1;
+    }
+
     memcpy(key, origkey, strlen(origkey) + 1);
 
     while (key[i]) {
@@ -703,6 +954,11 @@ unsigned char* base64_encode(const unsigned char* src, size_t len,
     size_t line_len;
 
     olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
+
+    if (olen < len) {
+        return NULL;    /* integer overflow */
+    }
+
     olen += olen / 72; /* line feeds */
     olen++; /* nul termination */
 
@@ -898,7 +1154,14 @@ outputCallback(void* ctx, const void* buf, size_t size) {
     assert(ds != NULL);
 
     if (size > 0) {
-        ds->outData = (unsigned char*)realloc(ds->outData, ds->outLen + size);
+        unsigned char* tmp = (unsigned char*)realloc(ds->outData, ds->outLen + size);
+
+        if (tmp == NULL) {
+            /* realloc failed — preserve existing data pointer for caller to free */
+            return 0;
+        }
+
+        ds->outData = tmp;
         memcpy((void*) (ds->outData + ds->outLen), buf, size);
         ds->outLen += size;
     }
@@ -991,7 +1254,7 @@ simpleDecompress(elzma_file_format format, const unsigned char* inData,
 
     hand = elzma_decompress_alloc();
 
-    /* now run the compression */
+    /* now run the decompression */
     {
         struct dataStream ds;
         ds.inData = inData;
@@ -1019,6 +1282,8 @@ simpleDecompress(elzma_file_format format, const unsigned char* inData,
 
     return rc;
 }
+
+#endif
 
 #ifdef NO_ZLIB
 /*
@@ -1079,13 +1344,16 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
     mz_stream stream;
     const unsigned char* start;
 
+    *out_data = NULL;
+    *out_len = 0;
+
     /* Minimal length: header + crc32 */
     if (in_len < 18) {
         return -1;
     }
 
     /* Magic bytes */
-    p = in_data;
+    p = (unsigned char*)in_data;
 
     if (p[0] != 0x1F || p[1] != 0x8B) {
         return -2;
@@ -1108,9 +1376,13 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
 
     /* Skip extra data if present */
     if (flg & FEXTRA) {
+        if (start + 2 > p + in_len) {
+            return -5;
+        }
+
         xlen = read_le16(start);
 
-        if (xlen > in_len - 12) {
+        if (xlen > in_len - (start - p) - 2) {
             return -5;
         }
 
@@ -1120,7 +1392,7 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
     /* Skip file name if present */
     if (flg & FNAME) {
         do {
-            if (start - p >= in_len) {
+            if (start - p >= (ptrdiff_t)in_len) {
                 return -6;
             }
         } while (*start++);
@@ -1129,7 +1401,7 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
     /* Skip file comment if present */
     if (flg & FCOMMENT) {
         do {
-            if (start - p >= in_len) {
+            if (start - p >= (ptrdiff_t)in_len) {
                 return -6;
             }
         } while (*start++);
@@ -1137,7 +1409,7 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
 
     /* Check header crc if present */
     if (flg & FHCRC) {
-        if (start - p > in_len - 2) {
+        if (start - p > (ptrdiff_t)(in_len - 2)) {
             return -7;
         }
 
@@ -1158,7 +1430,7 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
     crc = read_le32(&p[in_len - 8]);
 
     /* Decompress data */
-    if ((p + in_len) - p < 8) {
+    if ((p + in_len) - start < 8) {
         return -9;
     }
 
@@ -1176,9 +1448,9 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
     zip_len = (p + in_len) - start - 8;
 
     memset(&stream, 0, sizeof(stream));
-    stream.next_in = zip_data;
+    stream.next_in = (unsigned char*)zip_data;
     stream.avail_in = zip_len;
-    stream.next_out = out_buf;
+    stream.next_out = (unsigned char*)out_buf;
     stream.avail_out = out_size;
 
     status = mz_inflateInit2(&stream, -Z_DEFAULT_WINDOW_BITS);
@@ -1206,7 +1478,7 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
     mz_inflateEnd(&stream);
 
     /* Validate message CRC vs inflated data CRC */
-    crc_out = mz_crc32(MZ_CRC32_INIT, out_buf, dlen);
+    crc_out = mz_crc32(MZ_CRC32_INIT, (unsigned char*)out_buf, dlen);
 
     if (crc_out != crc) {
         free(out_buf);
@@ -1219,6 +1491,4 @@ int miniz_gzip_uncompress(void* in_data, size_t in_len,
 
     return 0;
 }
-#endif
-
 #endif
