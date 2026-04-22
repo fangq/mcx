@@ -52,7 +52,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../lib)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Add include directories
-include_directories(cjson ubj zmat zmat/easylzma)
+include_directories(cjson ubj zmat zmat/easylzma zmat/easylzma/lzma)
 
 # Add link directories
 link_directories(zmat)
@@ -119,7 +119,7 @@ if (BUILD_PYTHON)
             )
     target_compile_definitions(_pmcx PUBLIC MCX_CONTAINER PYBIND11_VERSION_MAJOR)
 
-    target_link_libraries(_pmcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras)
+    target_link_libraries(_pmcx OpenMP::OpenMP_CXX pybind11::module pybind11::lto pybind11::windows_extras zmat Threads::Threads)
 
     pybind11_extension(_pmcx)
     pybind11_strip(_pmcx)
