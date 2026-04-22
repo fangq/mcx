@@ -60,6 +60,14 @@
 #ifndef NO_LZMA
     #include "easylzma/compress.h"
     #include "easylzma/decompress.h"
+    #ifdef ZMAT_USE_LZMA_SDK
+        #include "easylzma/lzma/XzEnc.h"
+        #include "easylzma/lzma/Xz.h"
+        #include "easylzma/lzma/Alloc.h"
+        #ifndef _WIN32
+            #include <pthread.h>
+        #endif
+    #endif
 #endif
 
 #ifndef NO_LZ4
@@ -115,7 +123,8 @@ int simpleCompress(elzma_file_format format,
                    size_t inLen,
                    unsigned char** outData,
                    size_t* outLen,
-                   int level);
+                   int level,
+                   int nthread);
 
 /**
  * @brief Easylzma interface to perform decompression
@@ -132,7 +141,21 @@ int simpleDecompress(elzma_file_format format,
                      const unsigned char* inData,
                      size_t inLen,
                      unsigned char** outData,
-                     size_t* outLen);
+                     size_t* outLen,
+                     size_t* consumed);
+
+#ifdef ZMAT_USE_LZMA_SDK
+int xzCompress(const unsigned char* inData, size_t inLen,
+               unsigned char** outData, size_t* outLen,
+               int level, int nthread);
+int xzDecompress(const unsigned char* inData, size_t inLen,
+                 unsigned char** outData, size_t* outLen);
+#ifndef _WIN32
+int simpleCompressLzipMT(const unsigned char* inData, size_t inLen,
+                         unsigned char** outData, size_t* outLen,
+                         int level, int nthread);
+#endif
+#endif
 #endif
 
 /**
@@ -298,6 +321,7 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
     }
 
     clevel = flags.param.clevel;
+    unsigned int nthread = (flags.param.nthread <= 0) ? 1 : (unsigned int)flags.param.nthread;
 
     if (clevel) {
         /**
@@ -323,14 +347,10 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                 }
             } else {
 #ifdef NO_ZLIB
-                /* Initialize streaming buffer context */
+                /* Initialize streaming buffer context (memset clears all fields) */
                 memset(&zs, '\0', sizeof(zs));
-                zs.zalloc    = Z_NULL;
-                zs.zfree     = Z_NULL;
-                zs.opaque    = Z_NULL;
-                zs.next_in   = inputstr;
-                zs.avail_in  = inputsize;
-                zs.total_out = 0;
+                zs.next_in  = inputstr;
+                zs.avail_in = inputsize;
 
                 if (deflateInit2(&zs, (clevel > 0) ? Z_DEFAULT_COMPRESSION : (-clevel), Z_DEFLATED, -Z_DEFAULT_WINDOW_BITS, 9, Z_DEFAULT_STRATEGY) != Z_OK) {
                     return -2;
@@ -456,11 +476,39 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
         } else if (zipid == zmLzma || zipid == zmLzip) {
             /**
               * lzma (.lzma) or lzip (.lzip) compression
+              * for lzip with nthread>1: compress chunks in parallel (Option 3)
               */
-            *ret = simpleCompress((elzma_file_format)(zipid - 3), (unsigned char*)inputstr,
-                                  inputsize, outputbuf, outputsize, clevel);
+#if defined(ZMAT_USE_LZMA_SDK) && !defined(_WIN32)
+            if (zipid == zmLzip && nthread > 1) {
+                *ret = simpleCompressLzipMT((unsigned char*)inputstr, inputsize,
+                                            outputbuf, outputsize, clevel, nthread);
+            } else
+#endif
+            {
+                *ret = simpleCompress((elzma_file_format)(zipid - 3), (unsigned char*)inputstr,
+                                      inputsize, outputbuf, outputsize, clevel, nthread);
+            }
 
             if (*ret != ELZMA_E_OK) {
+                if (*outputbuf) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                }
+
+                *outputsize = 0;
+                return -4;
+            }
+
+#endif
+#if defined(ZMAT_USE_LZMA_SDK) && !defined(NO_LZMA)
+        } else if (zipid == zmXz) {
+            /**
+              * XZ (.xz) compression using LZMA2 with native multi-thread block encoding
+              */
+            *ret = xzCompress((unsigned char*)inputstr, inputsize, outputbuf, outputsize,
+                              clevel, nthread);
+
+            if (*ret != SZ_OK) {
                 if (*outputbuf) {
                     free(*outputbuf);
                     *outputbuf = NULL;
@@ -508,7 +556,8 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
 #ifndef NO_ZSTD
         } else if (zipid == zmZstd) {
             /**
-              * zstd compression
+              * zstd compression — uses MT worker threads when nthread > 1
+              * (ZSTD_MULTITHREAD is compiled into the bundled zstd)
               */
             *outputsize = ZSTD_compressBound(inputsize);
 
@@ -517,9 +566,27 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                 return -5;
             }
 
-            *ret = ZSTD_compress((char*)(*outputbuf), *outputsize, (const char*)inputstr, inputsize, (clevel > 0) ? ZSTD_CLEVEL_DEFAULT : (-clevel));
+            {
+                ZSTD_CCtx* zctx = ZSTD_createCCtx();
 
-            if (ZSTD_isError(*ret)) {
+                if (!zctx) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                    *outputsize = 0;
+                    return -5;
+                }
+
+                ZSTD_CCtx_setParameter(zctx, ZSTD_c_compressionLevel,
+                                       (clevel > 0) ? ZSTD_CLEVEL_DEFAULT : (-clevel));
+                /* nbWorkers=0 → single-thread (no overhead); >=1 → MT worker threads */
+                ZSTD_CCtx_setParameter(zctx, ZSTD_c_nbWorkers, (int)nthread > 1 ? (int)nthread : 0);
+
+                *ret = (int)ZSTD_compress2(zctx, (char*)(*outputbuf), *outputsize,
+                                           (const char*)inputstr, inputsize);
+                ZSTD_freeCCtx(zctx);
+            }
+
+            if (ZSTD_isError((size_t)*ret)) {
                 free(*outputbuf);
                 *outputbuf = NULL;
                 *outputsize = 0;
@@ -537,10 +604,8 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             /**
               * blosc2 meta-compressor (support various filters and compression codecs)
               */
-            unsigned int nthread = 1, shuffle = 1, typesize = 4;
+            unsigned int shuffle = 1, typesize = 4;
             const char* codecs[] = {"blosclz", "lz4", "lz4hc", "zlib", "zstd"};
-
-            nthread = (flags.param.nthread == 0 || flags.param.nthread == -1) ? 1 : flags.param.nthread;
             shuffle = (flags.param.shuffle == 0 || flags.param.shuffle == -1) ? 1 : flags.param.shuffle;
             typesize = (flags.param.typesize == 0 || flags.param.typesize == -1) ? 4 : flags.param.typesize;
 
@@ -699,11 +764,195 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
         } else if (zipid == zmLzma || zipid == zmLzip) {
             /**
               * lzma (.lzma) or lzip (.lzip) decompression
+              * lzip supports multi-member streams: loop over members
               */
-            *ret = simpleDecompress((elzma_file_format)(zipid - 3), (unsigned char*)inputstr,
-                                    inputsize, outputbuf, outputsize);
+            if (zipid == zmLzip) {
+#if defined(ZMAT_USE_LZMA_SDK) && !defined(_WIN32)
+                /* Attempt v1 backward-scan to locate multi-member boundaries.
+                 * simpleCompressLzipMT() produces lzip v1 members: the version
+                 * byte is 1 and an 8-byte member_size (little-endian uint64)
+                 * is appended after the standard 12-byte footer.  Walking
+                 * backward from the end of the stream using member_size gives
+                 * exact per-member byte ranges.  Passing exact sizes to
+                 * simpleDecompress avoids the consumed-overshoot bug where the
+                 * decompressor reads ahead into subsequent members.
+                 * The v0 decompressor ignores both the version byte and the
+                 * trailing 8 bytes (it reads only the 12-byte footer).
+                 */
+                size_t n_members = 0;
+                size_t* member_starts = NULL;
+                size_t* member_sizes  = NULL;
+
+                {
+                    size_t end  = inputsize;
+                    size_t cap  = 0;
+                    int scan_ok = 1;
+
+                    /* minimum v1 member: 6 header + some LZMA + 12 footer + 8 member_size */
+                    while (end >= 40 && scan_ok) {
+                        /* read 8-byte member_size as little-endian uint64 */
+                        const unsigned char* ms_ptr = inputstr + end - 8;
+                        unsigned long long ms64 = 0;
+                        int k;
+
+                        for (k = 0; k < 8; k++) {
+                            ms64 |= ((unsigned long long)ms_ptr[k]) << (8 * k);
+                        }
+
+                        if (ms64 < 40 || ms64 > (unsigned long long)end) {
+                            scan_ok = 0;
+                            break;
+                        }
+
+                        size_t ms     = (size_t)ms64;
+                        size_t mstart = end - ms;
+
+                        /* verify lzip magic "LZIP" and version == 1 */
+                        if (mstart + 5 > inputsize ||
+                                inputstr[mstart]     != 'L' ||
+                                inputstr[mstart + 1] != 'Z' ||
+                                inputstr[mstart + 2] != 'I' ||
+                                inputstr[mstart + 3] != 'P' ||
+                                inputstr[mstart + 4] != 1) {
+                            scan_ok = 0;
+                            break;
+                        }
+
+                        /* grow member arrays if needed (appending in reverse order) */
+                        if (n_members >= cap) {
+                            size_t newcap = (cap == 0) ? 8 : cap * 2;
+                            size_t* ts = (size_t*)realloc(member_starts, newcap * sizeof(size_t));
+                            size_t* tz = (size_t*)realloc(member_sizes,  newcap * sizeof(size_t));
+
+                            if (!ts || !tz) {
+                                free(ts ? ts : member_starts);
+                                free(tz ? tz : member_sizes);
+                                member_starts = NULL;
+                                member_sizes  = NULL;
+                                n_members     = 0;
+                                scan_ok       = 0;
+                                break;
+                            }
+
+                            member_starts = ts;
+                            member_sizes  = tz;
+                            cap           = newcap;
+                        }
+
+                        member_starts[n_members] = mstart;  /* stored in reverse order */
+                        member_sizes [n_members] = ms;
+                        n_members++;
+                        end = mstart;
+                    }
+
+                    /* scan succeeds when we consumed ALL input and found >= 2 members */
+                    if (!scan_ok || end != 0 || n_members < 2) {
+                        free(member_starts);
+                        free(member_sizes);
+                        member_starts = NULL;
+                        member_sizes  = NULL;
+                        n_members     = 0;
+                    } else {
+                        /* reverse arrays to restore forward order */
+                        size_t lo = 0, hi = n_members - 1;
+
+                        while (lo < hi) {
+                            size_t ts = member_starts[lo];
+                            member_starts[lo] = member_starts[hi];
+                            member_starts[hi] = ts;
+                            size_t tz = member_sizes[lo];
+                            member_sizes[lo]  = member_sizes[hi];
+                            member_sizes[hi]  = tz;
+                            lo++;
+                            hi--;
+                        }
+                    }
+                }
+
+                if (n_members >= 2) {
+                    /* multi-member v1 path: decompress each member with exact byte range */
+                    size_t total = 0;
+                    unsigned char* accum = NULL;
+                    size_t mi;
+                    *ret = ELZMA_E_OK;
+
+                    for (mi = 0; mi < n_members && *ret == ELZMA_E_OK; mi++) {
+                        unsigned char* chunk = NULL;
+                        size_t chunk_len = 0;
+                        *ret = simpleDecompress(ELZMA_lzip,
+                                                inputstr + member_starts[mi],
+                                                member_sizes[mi],
+                                                &chunk, &chunk_len, NULL);
+
+                        if (*ret == ELZMA_E_OK) {
+                            if (chunk_len > ZMAT_MAX_ALLOC - total) {
+                                free(chunk);
+                                free(accum);
+                                free(member_starts);
+                                free(member_sizes);
+                                *outputsize = 0;
+                                return -5;
+                            }
+
+                            unsigned char* tmp = (unsigned char*)realloc(accum, total + chunk_len);
+
+                            if (!tmp) {
+                                free(chunk);
+                                free(accum);
+                                free(member_starts);
+                                free(member_sizes);
+                                *outputsize = 0;
+                                return -5;
+                            }
+
+                            accum = tmp;
+                            memcpy(accum + total, chunk, chunk_len);
+                            free(chunk);
+                            total += chunk_len;
+                        } else {
+                            free(chunk);
+                        }
+                    }
+
+                    free(member_starts);
+                    free(member_sizes);
+                    *outputbuf  = accum;
+                    *outputsize = total;
+                } else {
+                    /* single-member or non-v1 stream: decompress directly */
+                    *ret = simpleDecompress(ELZMA_lzip, (unsigned char*)inputstr,
+                                            inputsize, outputbuf, outputsize, NULL);
+                }
+
+#else
+                /* without ZMAT_USE_LZMA_SDK, always single-member */
+                *ret = simpleDecompress(ELZMA_lzip, (unsigned char*)inputstr,
+                                        inputsize, outputbuf, outputsize, NULL);
+#endif
+            } else {
+                *ret = simpleDecompress(ELZMA_lzma, (unsigned char*)inputstr,
+                                        inputsize, outputbuf, outputsize, NULL);
+            }
 
             if (*ret != ELZMA_E_OK) {
+                if (*outputbuf) {
+                    free(*outputbuf);
+                    *outputbuf = NULL;
+                }
+
+                *outputsize = 0;
+                return -4;
+            }
+
+#endif
+#if defined(ZMAT_USE_LZMA_SDK) && !defined(NO_LZMA)
+        } else if (zipid == zmXz) {
+            /**
+              * XZ (.xz) decompression
+              */
+            *ret = xzDecompress((unsigned char*)inputstr, inputsize, outputbuf, outputsize);
+
+            if (*ret != SZ_OK) {
                 if (*outputbuf) {
                     free(*outputbuf);
                     *outputbuf = NULL;
@@ -745,13 +994,6 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
 
             *outputsize = *ret;
 
-            if (*ret < 0) {
-                free(*outputbuf);
-                *outputbuf = NULL;
-                *outputsize = 0;
-                return -6;
-            }
-
             /* shrink to actual size */
             zmat_shrink_buf(outputbuf, *outputsize);
 
@@ -761,12 +1003,16 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             /**
               * zstd decompression
               */
-            *outputsize = ZSTD_decompressBound(inputstr, inputsize);
+            {
+                unsigned long long zstd_bound = ZSTD_decompressBound(inputstr, inputsize);
 
-            if (*outputsize == ZSTD_CONTENTSIZE_ERROR) {
-                *ret = -9;
-                *outputsize = 0;
-                return -9;
+                if (zstd_bound == ZSTD_CONTENTSIZE_ERROR || zstd_bound > ZMAT_MAX_ALLOC) {
+                    *ret = -9;
+                    *outputsize = 0;
+                    return -9;
+                }
+
+                *outputsize = (size_t)zstd_bound;
             }
 
             if (!(*outputbuf = (unsigned char*)malloc(*outputsize))) {
@@ -820,13 +1066,6 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
             }
 
             *outputsize = *ret;
-
-            if (*ret < 0) {
-                free(*outputbuf);
-                *outputbuf = NULL;
-                *outputsize = 0;
-                return -8;
-            }
 
             /* shrink to actual size */
             zmat_shrink_buf(outputbuf, *outputsize);
@@ -1116,6 +1355,7 @@ unsigned char* base64_decode(const unsigned char* src, size_t len,
 struct dataStream {
     const unsigned char* inData;
     size_t inLen;
+    size_t consumed;    /* tracks how many input bytes were read (for multi-member lzip) */
 
     unsigned char* outData;
     size_t outLen;
@@ -1137,6 +1377,7 @@ inputCallback(void* ctx, void* buf, size_t* size) {
         memcpy(buf, (void*) ds->inData, rd);
         ds->inData += rd;
         ds->inLen -= rd;
+        ds->consumed += rd;
     }
 
     *size = rd;
@@ -1185,13 +1426,19 @@ outputCallback(void* ctx, const void* buf, size_t size) {
 int
 simpleCompress(elzma_file_format format, const unsigned char* inData,
                size_t inLen, unsigned char** outData,
-               size_t* outLen, int level) {
+               size_t* outLen, int level, int nthread) {
     int rc;
     elzma_compress_handle hand;
 
     /* allocate compression handle */
     hand = elzma_compress_alloc();
-    assert(hand != NULL);
+
+    if (hand == NULL) {
+        return ELZMA_E_COMPRESS_ERROR;
+    }
+
+    /* set thread count (clamped to 1–2 by SDK; effective only with COMPRESS_MF_MT) */
+    elzma_compress_set_numthreads(hand, nthread);
 
     rc = elzma_compress_config(hand, ELZMA_LC_DEFAULT,
                                ELZMA_LP_DEFAULT, ELZMA_PB_DEFAULT,
@@ -1208,6 +1455,7 @@ simpleCompress(elzma_file_format format, const unsigned char* inData,
         struct dataStream ds;
         ds.inData = inData;
         ds.inLen = inLen;
+        ds.consumed = 0;
         ds.outData = NULL;
         ds.outLen = 0;
 
@@ -1248,22 +1496,31 @@ simpleCompress(elzma_file_format format, const unsigned char* inData,
 int
 simpleDecompress(elzma_file_format format, const unsigned char* inData,
                  size_t inLen, unsigned char** outData,
-                 size_t* outLen) {
+                 size_t* outLen, size_t* consumed) {
     int rc;
     elzma_decompress_handle hand;
 
     hand = elzma_decompress_alloc();
+
+    if (hand == NULL) {
+        return ELZMA_E_DECOMPRESS_ERROR;
+    }
 
     /* now run the decompression */
     {
         struct dataStream ds;
         ds.inData = inData;
         ds.inLen = inLen;
+        ds.consumed = 0;
         ds.outData = NULL;
         ds.outLen = 0;
 
         rc = elzma_decompress_run(hand, inputCallback, (void*) &ds,
                                   outputCallback, (void*) &ds, format);
+
+        if (consumed != NULL) {
+            *consumed = ds.consumed;
+        }
 
         if (rc != ELZMA_E_OK) {
             if (ds.outData != NULL) {
@@ -1282,6 +1539,331 @@ simpleDecompress(elzma_file_format format, const unsigned char* inData,
 
     return rc;
 }
+
+#ifdef ZMAT_USE_LZMA_SDK
+
+/* -----------------------------------------------------------------------
+ * XZ stream wrappers — ISeqOutStream / ISeqInStream must have the
+ * vtable function pointer as their FIRST field (C-style interface).
+ * ----------------------------------------------------------------------- */
+
+typedef struct {
+    ISeqOutStream   vt;  /* first field — SDK casts the pointer to ISeqOutStreamPtr */
+    struct dataStream* ds;
+} ZmatXzOutStream;
+
+typedef struct {
+    ISeqInStream    vt;  /* first field */
+    struct dataStream* ds;
+} ZmatXzInStream;
+
+static size_t zmat_xz_write(ISeqOutStreamPtr p, const void* buf, size_t size) {
+    ZmatXzOutStream* s = (ZmatXzOutStream*)(void*)p;
+    return outputCallback(s->ds, buf, size);
+}
+
+static SRes zmat_xz_read(ISeqInStreamPtr p, void* buf, size_t* size) {
+    ZmatXzInStream* s = (ZmatXzInStream*)(void*)p;
+    return (SRes)inputCallback(s->ds, buf, size);
+}
+
+/**
+ * @brief XZ compression using LZMA2 with native multi-thread block encoding
+ */
+int
+xzCompress(const unsigned char* inData, size_t inLen,
+           unsigned char** outData, size_t* outLen,
+           int level, int nthread) {
+    CXzProps props;
+    CXzEncHandle enc;
+    SRes rc;
+    struct dataStream ds;
+    ZmatXzOutStream outStream;
+    ZmatXzInStream  inStream;
+
+    XzProps_Init(&props);
+    props.lzma2Props.lzmaProps.level      = (level > 0) ? 5 : (-level);
+    props.lzma2Props.lzmaProps.numThreads = 1;              /* no match-finder MT: all parallelism at block level */
+    props.lzma2Props.numBlockThreads_Max  = (int)nthread;   /* block-level MT */
+    /* explicit block size: split input evenly across threads, 1 MB minimum.
+     * avoids the default 128 MB auto block size (dictSize*4 at level 5)
+     * which leaves small inputs as a single solid block with zero parallelism. */
+    {
+        size_t blk = (inLen + (size_t)nthread - 1) / (size_t)nthread;
+
+        if (blk < (1u << 20)) {
+            blk = (1u << 20);
+        }
+
+        props.lzma2Props.blockSize = (UInt64)blk;
+    }
+    props.checkId = XZ_CHECK_CRC32;
+
+    ds.inData   = inData;
+    ds.inLen    = inLen;
+    ds.consumed = 0;
+    ds.outData  = NULL;
+    ds.outLen   = 0;
+
+    outStream.vt.Write = zmat_xz_write;
+    outStream.ds       = &ds;
+    inStream.vt.Read   = zmat_xz_read;
+    inStream.ds        = &ds;
+
+    enc = XzEnc_Create(&g_Alloc, &g_BigAlloc);
+
+    if (!enc) {
+        return SZ_ERROR_MEM;
+    }
+
+    rc = XzEnc_SetProps(enc, &props);
+
+    if (rc == SZ_OK) {
+        XzEnc_SetDataSize(enc, (UInt64)inLen);
+        rc = XzEnc_Encode(enc, &outStream.vt, &inStream.vt, NULL);
+    }
+
+    XzEnc_Destroy(enc);
+
+    if (rc != SZ_OK) {
+        free(ds.outData);
+        return rc;
+    }
+
+    *outData = ds.outData;
+    *outLen  = ds.outLen;
+    return SZ_OK;
+}
+
+/**
+ * @brief XZ decompression using XzUnpacker streaming decoder
+ */
+int
+xzDecompress(const unsigned char* inData, size_t inLen,
+             unsigned char** outData, size_t* outLen) {
+    CXzUnpacker xz;
+    ECoderStatus status = CODER_STATUS_NOT_SPECIFIED;
+    SRes rc = SZ_OK;
+    unsigned char* accum = NULL;
+    size_t total = 0;
+    const Byte* src = (const Byte*)inData;
+    SizeT srcLeft = (SizeT)inLen;
+
+#define XZ_DECODE_BUF 65536
+    Byte outBuf[XZ_DECODE_BUF];
+
+    XzUnpacker_Construct(&xz, &g_Alloc);
+    XzUnpacker_Init(&xz);
+
+    while (srcLeft > 0 || status == CODER_STATUS_NOT_FINISHED) {
+        SizeT destLen = XZ_DECODE_BUF;
+        SizeT srcUsed = srcLeft;
+
+        rc = XzUnpacker_Code(&xz, outBuf, &destLen, src, &srcUsed,
+                             (srcLeft == 0) ? 1 : 0,
+                             CODER_FINISH_ANY, &status);
+
+        if (rc != SZ_OK) {
+            break;
+        }
+
+        if (destLen > 0) {
+            if (destLen > ZMAT_MAX_ALLOC - total) {
+                rc = SZ_ERROR_MEM;
+                break;
+            }
+
+            unsigned char* tmp = (unsigned char*)realloc(accum, total + destLen);
+
+            if (!tmp) {
+                rc = SZ_ERROR_MEM;
+                break;
+            }
+
+            accum = tmp;
+            memcpy(accum + total, outBuf, destLen);
+            total += destLen;
+        }
+
+        src     += srcUsed;
+        srcLeft -= srcUsed;
+
+        if (status == CODER_STATUS_FINISHED_WITH_MARK) {
+            break;
+        }
+
+        if (srcUsed == 0 && destLen == 0) {
+            break;    /* no progress — avoid infinite loop */
+        }
+    }
+
+    if (rc == SZ_OK && !XzUnpacker_IsStreamWasFinished(&xz)) {
+        rc = SZ_ERROR_DATA;
+    }
+
+    XzUnpacker_Free(&xz);
+
+    if (rc != SZ_OK) {
+        free(accum);
+        return rc;
+    }
+
+    *outData = accum;
+    *outLen  = total;
+    return SZ_OK;
+}
+
+/* -----------------------------------------------------------------------
+ * Option 3: parallel lzip — compress chunks independently, concatenate
+ * ----------------------------------------------------------------------- */
+
+#ifndef _WIN32
+
+typedef struct {
+    const unsigned char* in;
+    size_t               inLen;
+    unsigned char*       out;
+    size_t               outLen;
+    int                  level;
+    int                  rc;
+} LzipChunk;
+
+static void* lzip_compress_chunk(void* arg) {
+    LzipChunk* c = (LzipChunk*)arg;
+    c->rc = simpleCompress(ELZMA_lzip, c->in, c->inLen,
+                           &c->out, &c->outLen, c->level, 1);
+
+    /* Upgrade v0 → lzip v1: patch version byte (byte[4]) and append an
+     * 8-byte member_size field after the standard 12-byte footer.
+     * The v0 decompressor ignores the version byte and reads only 12 footer
+     * bytes, so v1 members are backward-compatible with the existing code.
+     * Backward-scanning the member_size fields lets the decompressor locate
+     * each member boundary precisely, fixing the consumed-overshoot bug. */
+    if (c->rc == ELZMA_E_OK && c->out != NULL && c->outLen > 18) {
+        size_t v1_size = c->outLen + 8;
+        unsigned char* tmp = (unsigned char*)realloc(c->out, v1_size);
+
+        if (tmp) {
+            int k;
+            c->out    = tmp;
+            c->out[4] = 1;    /* version 1 */
+
+            /* write member_size as little-endian uint64 */
+            for (k = 0; k < 8; k++) {
+                c->out[c->outLen + k] = (unsigned char)(v1_size >> (8 * k));
+            }
+
+            c->outLen = v1_size;
+        }
+
+        /* if realloc fails, leave as v0 — single-member fallback still works */
+    }
+
+    return NULL;
+}
+
+int
+simpleCompressLzipMT(const unsigned char* inData, size_t inLen,
+                     unsigned char** outData, size_t* outLen,
+                     int level, int nthread) {
+    if (nthread <= 1 || inLen == 0) {
+        return simpleCompress(ELZMA_lzip, inData, inLen,
+                              outData, outLen, level, 1);
+    }
+
+    size_t chunk = (inLen + (size_t)nthread - 1) / (size_t)nthread;
+
+    /* Require at least 1 KB per chunk to make parallelism worthwhile.
+     * For small inputs, fall back to single-thread (produces standard v0). */
+    if (chunk < 1024) {
+        return simpleCompress(ELZMA_lzip, inData, inLen,
+                              outData, outLen, level, 1);
+    }
+
+    LzipChunk*  chunks  = (LzipChunk*)calloc((size_t)nthread, sizeof(LzipChunk));
+    pthread_t*  threads = (pthread_t*)calloc((size_t)nthread, sizeof(pthread_t));
+
+    if (!chunks || !threads) {
+        free(chunks);
+        free(threads);
+        return ELZMA_E_COMPRESS_ERROR;
+    }
+
+    int i;
+
+    for (i = 0; i < nthread; i++) {
+        chunks[i].in    = inData + (size_t)i * chunk;
+        chunks[i].inLen = ((size_t)i == (size_t)nthread - 1)
+                          ? (inLen - (size_t)i * chunk) : chunk;
+        chunks[i].level = level;
+
+        if (pthread_create(&threads[i], NULL, lzip_compress_chunk, &chunks[i]) != 0) {
+            /* join already-started threads and clean up */
+            int j;
+
+            for (j = 0; j < i; j++) {
+                pthread_join(threads[j], NULL);
+                free(chunks[j].out);
+            }
+
+            free(chunks);
+            free(threads);
+            return ELZMA_E_COMPRESS_ERROR;
+        }
+    }
+
+    size_t total = 0;
+    int rc = ELZMA_E_OK;
+
+    for (i = 0; i < nthread; i++) {
+        pthread_join(threads[i], NULL);
+
+        if (chunks[i].rc != ELZMA_E_OK) {
+            rc = chunks[i].rc;
+        }
+
+        total += chunks[i].outLen;
+    }
+
+    if (rc != ELZMA_E_OK) {
+        for (i = 0; i < nthread; i++) {
+            free(chunks[i].out);
+        }
+
+        free(chunks);
+        free(threads);
+        return rc;
+    }
+
+    unsigned char* buf = (unsigned char*)malloc(total);
+
+    if (!buf) {
+        for (i = 0; i < nthread; i++) {
+            free(chunks[i].out);
+        }
+
+        free(chunks);
+        free(threads);
+        return ELZMA_E_COMPRESS_ERROR;
+    }
+
+    size_t pos = 0;
+
+    for (i = 0; i < nthread; i++) {
+        memcpy(buf + pos, chunks[i].out, chunks[i].outLen);
+        free(chunks[i].out);
+        pos += chunks[i].outLen;
+    }
+
+    free(chunks);
+    free(threads);
+    *outData = buf;
+    *outLen  = total;
+    return ELZMA_E_OK;
+}
+
+#endif  /* !_WIN32 */
+#endif  /* ZMAT_USE_LZMA_SDK */
 
 #endif
 

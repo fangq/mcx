@@ -9,8 +9,13 @@
  */
 
 #include "easylzma/decompress.h"
-#include "pavlov/LzmaDec.h"
-#include "pavlov/7zCrc.h"
+#ifdef ZMAT_USE_LZMA_SDK
+    #include "lzma/LzmaDec.h"
+    #include "lzma/7zCrc.h"
+#else
+    #include "pavlov/LzmaDec.h"
+    #include "pavlov/7zCrc.h"
+#endif
 #include "common_internal.h"
 #include "lzma_header.h"
 #include "lzip_header.h"

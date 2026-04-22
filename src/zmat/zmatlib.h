@@ -2,7 +2,7 @@
 **  \mainpage ZMat - A portable C-library and MATLAB/Octave toolbox for inline data compression
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2019,2020,2022
+**  \copyright Qianqian Fang, 2019-2023
 **
 **  ZMat provides an easy-to-use interface for stream compression and decompression.
 **
@@ -11,29 +11,42 @@
 **  C-library (libzmat.a/libzmat.so) that can be called in C/C++/FORTRAN etc to
 **  provide stream-level compression and decompression.
 **
-**  Currently, zmat/libzmat supports 6 different compression algorthms, including
+**  Currently, zmat/libzmat supports a list of different compression algorthms, including
 **     - zlib and gzip : the most widely used algorithm algorithms for .zip and .gz files
 **     - lzma and lzip : high compression ratio LZMA based algorithms for .lzma and .lzip files
 **     - lz4 and lz4hc : real-time compression based on LZ4 and LZ4HC algorithms
+**     - zstd : ZStandard compression algorithm
+**     - blosc2{blosclz,lz4,lz4hc,zlib,zstd}: blosc2 multi-threading meta-compressor/decompressors
 **     - base64        : base64 encoding and decoding
 **
 **  ZMat is part of the NeuroJSON project (https://neurojson.org)
 **  More information can be found at https://github.com/NeuroJSON/zmat
 **
 **  Depencency: ZLib library: https://www.zlib.net/
-**  author: (C) 1995-2017 Jean-loup Gailly and Mark Adler
+**  \copyright (c) 1995-2017 Jean-loup Gailly and Mark Adler
 **
 **  Depencency: LZ4 library: https://lz4.github.io/lz4/
-**  author: (C) 2011-2019, Yann Collet,
+**  \copyright (c) 2011-2019, Yann Collet,
 **
 **  Depencency: Original LZMA library
-**  author: Igor Pavlov
+**  \copyright Igor Pavlov
 **
 **  Depencency: Eazylzma: https://github.com/lloyd/easylzma
-**  author: Lloyd Hilaiel (lloyd)
+**  \copyright Lloyd Hilaiel (lloyd)
 **
 **  Depencency: base64_encode()/base64_decode()
-**  \copyright 2005-2011, Jouni Malinen <j@w1.fi>
+**  \copyright (c) 2005-2011, Jouni Malinen <j@w1.fi>
+**
+**  Depencency: C-blosc2
+**  \copyright (c) 2019-present The Blosc Development Team <blosc@blosc.org>
+**  \copyright (c) 2009-2018 Francesc Alted <francesc@blosc.org>
+**
+**  Depencency: ZStandard
+**  \copyright (c) Meta Platforms, Inc. and affiliates.
+**
+**  Depencency: miniz
+**  \copyright (c) 2013-2014 RAD Game Tools and Valve Software
+**  \copyright (c) 2010-2014 Rich Geldreich and Tenacious Software LLC
 **
 **  \section slicense License
 **          GPL v3, see LICENSE.txt for details
@@ -72,7 +85,21 @@ extern "C"
  * -1: unknown
  */
 
-enum TZipMethod {zmZlib, zmGzip, zmBase64, zmLzip, zmLzma, zmLz4, zmLz4hc, zmZstd, zmBlosc2Blosclz, zmBlosc2Lz4, zmBlosc2Lz4hc, zmBlosc2Zlib, zmBlosc2Zstd, zmUnknown = -1};
+typedef enum TZipMethod {zmZlib, zmGzip, zmBase64, zmLzip, zmLzma, zmLz4, zmLz4hc, zmZstd, zmBlosc2Blosclz, zmBlosc2Lz4, zmBlosc2Lz4hc, zmBlosc2Zlib, zmBlosc2Zstd, zmXz, zmUnknown = -1} TZipMethod;
+
+/**
+ * @brief advanced ZMat parameters needed for blosc2 metacompressor
+ */
+
+typedef union TZMatFlags {
+    int iscompress;      /**< combined flag used to pass on to zmat_run */
+    struct settings {    /**< unpacked flags */
+        char clevel;     /**< compression level, 0: decompression, 1: use default level; negative: set compression level (-1 to -19) */
+        char nthread;    /**< number of compression/decompression threads */
+        char shuffle;    /**< byte shuffle length */
+        char typesize;   /**< for ND-array, the byte-size for each array element */
+    } param;
+} TZMatFlags;
 
 /**
  * @brief Main interface to perform compression/decompression
@@ -83,7 +110,7 @@ enum TZipMethod {zmZlib, zmGzip, zmBase64, zmLzip, zmLzma, zmLz4, zmLz4hc, zmZst
  * @param[in] outputbuf: output stream buffer pointer
  * @param[in] ret: encoder/decoder specific detailed error code (if error occurs)
  * @param[in] iscompress: 0: decompression, 1: use default compression level;
- *             negative interger: set compression level (-1, less, to -9, more compression)
+ *            negative interger: set compression level (-1, less, to -9, more compression).
  * @return return the coarse grained zmat error code; detailed error code is in ret.
  */
 

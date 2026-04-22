@@ -42,7 +42,7 @@ PLATFORM = $(shell uname -s)
 DLLFLAG=-fPIC
 OMP=-fopenmp
 
-CPPOPT=-g -Wall -O3 -fPIC #-g -Wall -std=c99 # -DUSE_OS_TIMER
+CPPOPT=-g -Wall -O3 -fPIC # -g -Wall -std=c99 # -DUSE_OS_TIMER
 
 OUTPUTFLAG:=-o
 OBJSUFFIX=.o
@@ -55,8 +55,9 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   EXESUFFIX=
   DLLFLAG=
   MEXLINKLIBS="\$$LINKLIBS"
+  STATICLIBFLAGS=
 else ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
-
+  STATICLIBFLAGS=
 else
   CPPOPT+=
   CUCCOPT+=-Xcompiler $(OMP)
@@ -64,9 +65,10 @@ else
      CPPOPT +=
      CUCCOPT +=-m64
   endif
+  STATICLIBFLAGS=-static-libgcc -static-libstdc++
 endif
 
-ifeq ($(HAVE_ZLIB),no)
+ifneq ($(HAVE_ZLIB),yes)
   CFLAGS+=-DNO_ZLIB -D_LARGEFILE64_SOURCE=1
   INCLUDEDIRS+=-Iminiz
   FILES+=miniz/miniz
@@ -76,26 +78,68 @@ endif
 ifeq ($(HAVE_LZMA),no)
   CFLAGS+=-DNO_LZMA
 else
-  INCLUDEDIRS+=-Ieasylzma -Ieasylzma/pavlov
-  FILES+=easylzma/compress easylzma/decompress \
-         easylzma/lzma_header easylzma/lzip_header easylzma/common_internal \
-         easylzma/pavlov/LzmaEnc easylzma/pavlov/LzmaDec easylzma/pavlov/LzmaLib \
-         easylzma/pavlov/LzFind easylzma/pavlov/Bra easylzma/pavlov/BraIA64 \
-         easylzma/pavlov/Alloc easylzma/pavlov/7zCrc
+  LZMA_SDK_DIR:=easylzma/lzma
+  LZMA_LEGACY_DIR:=easylzma/pavlov
+  ifneq ($(wildcard $(LZMA_SDK_DIR)/LzmaEnc.c),)
+    ## new self-contained LZMA SDK found — use it
+    CFLAGS+=-DZMAT_USE_LZMA_SDK
+    INCLUDEDIRS+=-Ieasylzma -I$(LZMA_SDK_DIR)
+    FILES+=easylzma/compress easylzma/decompress \
+           easylzma/lzma_header easylzma/lzip_header easylzma/common_internal \
+           $(LZMA_SDK_DIR)/LzmaEnc $(LZMA_SDK_DIR)/LzmaDec $(LZMA_SDK_DIR)/LzmaLib \
+           $(LZMA_SDK_DIR)/LzFind $(LZMA_SDK_DIR)/Bra $(LZMA_SDK_DIR)/BraIA64 \
+           $(LZMA_SDK_DIR)/Alloc $(LZMA_SDK_DIR)/7zCrc $(LZMA_SDK_DIR)/7zCrcOpt $(LZMA_SDK_DIR)/CpuArch \
+           $(LZMA_SDK_DIR)/Lzma2Dec $(LZMA_SDK_DIR)/Lzma2DecMt $(LZMA_SDK_DIR)/Lzma2Enc \
+           $(LZMA_SDK_DIR)/MtCoder $(LZMA_SDK_DIR)/MtDec \
+           $(LZMA_SDK_DIR)/Xz $(LZMA_SDK_DIR)/XzCrc64 $(LZMA_SDK_DIR)/XzCrc64Opt \
+           $(LZMA_SDK_DIR)/XzEnc $(LZMA_SDK_DIR)/XzDec \
+           $(LZMA_SDK_DIR)/Sha256 $(LZMA_SDK_DIR)/Sha256Opt $(LZMA_SDK_DIR)/Delta \
+           $(LZMA_SDK_DIR)/Bra86 $(LZMA_SDK_DIR)/7zStream \
+           $(LZMA_SDK_DIR)/LzFindMt $(LZMA_SDK_DIR)/LzFindOpt $(LZMA_SDK_DIR)/Threads
+    ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
+      CFLAGS+=-DCOMPRESS_MF_MT
+    endif
+  else
+    ## fall back to legacy pavlov subset
+    INCLUDEDIRS+=-Ieasylzma -I$(LZMA_LEGACY_DIR)
+    FILES+=easylzma/compress easylzma/decompress \
+           easylzma/lzma_header easylzma/lzip_header easylzma/common_internal \
+           $(LZMA_LEGACY_DIR)/LzmaEnc $(LZMA_LEGACY_DIR)/LzmaDec $(LZMA_LEGACY_DIR)/LzmaLib \
+           $(LZMA_LEGACY_DIR)/LzFind $(LZMA_LEGACY_DIR)/Bra $(LZMA_LEGACY_DIR)/BraIA64 \
+           $(LZMA_LEGACY_DIR)/Alloc $(LZMA_LEGACY_DIR)/7zCrc
+    ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
+      ifeq ($(HAVE_LZMA_MT),yes)
+        CFLAGS+=-DCOMPRESS_MF_MT
+        FILES+=$(LZMA_LEGACY_DIR)/LzFindMt $(LZMA_LEGACY_DIR)/Threads
+      endif
+    endif
+  endif
 endif
 
 ifeq ($(HAVE_BLOSC2),no)
   CFLAGS+=-DNO_BLOSC2
+  ## lzip/xz MT uses pthreads even without blosc2 (non-Windows only)
+  ifneq ($(HAVE_LZMA),no)
+    ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
+      LIBZLIB+=-pthread
+    endif
+  endif
 else
   ifeq ($(HAVE_LZ4),no)
     INCLUDEDIRS+=-Ilz4
     FILES+= lz4/lz4 lz4/lz4hc
   endif
   ifeq ($(HAVE_ZSTD),no)
-    INCLUDEDIRS+=-Iblosc2/internal-complibs/zstd-1.5.2
-    LIBZLIB+=-Lblosc2/internal-complibs/zstd-1.5.2 -lzstd
+    INCLUDEDIRS+=-Iblosc2/internal-complibs/zstd
+    LIBZLIB+=-Lblosc2/internal-complibs/zstd -lzstd
   endif
-  LIBZLIB+=-Lblosc2/lib -lblosc2 -pthread -lz
+  LIBZLIB+=-Lblosc2/lib -lblosc2 -pthread
+  ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
+    LIBZLIB+=-ldl
+  endif
+  ifeq ($(HAVE_ZLIB),yes)
+     LIBZLIB+=-lz
+  endif
   INCLUDEDIRS+=-Iblosc2/include
 endif
 
@@ -109,8 +153,8 @@ endif
 ifeq ($(HAVE_ZSTD),no)
   CFLAGS+=-DNO_ZSTD
 else
-  INCLUDEDIRS+=-Iblosc2/internal-complibs/zstd-1.5.2
-  LIBZLIB+=-Lblosc2/internal-complibs/zstd-1.5.2 -lzstd
+  INCLUDEDIRS+=-Iblosc2/internal-complibs/zstd
+  LIBZLIB+=-Lblosc2/internal-complibs/zstd -lzstd
 endif
 
 
@@ -119,11 +163,11 @@ ifeq ($(MAKECMDGOALS),lib)
    ARFLAGS    :=cr
    BINARY     :=libzmat.a
    AROUTPUT   :=
-   ifneq ($(HAVE_BLOSC2),no)
-      LINKOPT    :=blosc2/blosc/*$(OBJSUFFIX)
-   endif
-   ifneq ($(HAVE_ZSTD),no)
-      LINKOPT    +=blosc2/internal-complibs/zstd-1.5.2/obj/*/static/*$(OBJSUFFIX)
+   ifeq ($(HAVE_BLOSC2),yes)
+     LINKOPT    :=blosc2/blosc/*$(OBJSUFFIX) blosc2/internal-complibs/zstd/obj/*/static/*$(OBJSUFFIX)
+     ifneq ($(findstring _NT-,$(PLATFORM)),)
+       LINKOPT  +=blosc2/blosc/win32/*$(OBJSUFFIX)
+     endif
    endif
    OUTPUT_DIR :=$(LIBDIR)
    ifeq ($(findstring Darwin,$(PLATFORM)), Darwin)
@@ -152,15 +196,15 @@ dll:   AROUTPUT   :=-o
 
 oct mex: CPPOPT+= $(DLLFLAG)
 oct:   OUTPUT_DIR=..
-oct:   AR= CXXFLAGS='-O3' LDFLAGS='$(MEXLINKOPT)' mkoctfile zmat.cpp
+oct:   AR= XTRA_CXXFLAGS='$(CFLAGS)' LDFLAGS='$(MEXLINKOPT) $(STATICLIBFLAGS)' mkoctfile zmat.cpp
 oct:   BINARY=zmat.mex
 oct:   ARFLAGS    :=
 oct:   LINKOPT+=--mex $(INCLUDEDIRS) $(LIBZLIB)
 
 mex:   CXX=$(MEX)
 mex:   OUTPUTFLAG:=-output
-mex:   AR=$(MEX) zmat.cpp $(INCLUDEDIRS)
-mex:   LINKOPT+=-cxx LINKLIBS="$(MEXLINKLIBS) $(MEXLINKOPT) $(LIBZLIB)" CXXLIBS="\$$CXXLIBS $(MEXLINKOPT) $(LIBZLIB)" -outdir $(ZMATDIR)
+mex:   AR=$(MEX) zmat.cpp $(INCLUDEDIRS) $(CFLAGS)
+mex:   LINKOPT+=-cxx LINKLIBS="$(MEXLINKLIBS) $(MEXLINKOPT) $(LIBZLIB) $(STATICLIBFLAGS)" CXXLIBS="\$$CXXLIBS $(MEXLINKOPT) $(LIBZLIB) $(STATICLIBFLAGS)" -outdir $(ZMATDIR)
 mex:   ARFLAGS    :=
 mex:   OUTPUT_DIR=..
 
@@ -209,7 +253,7 @@ $(OUTPUT_DIR)/$(BINARY): $(OBJS)
 
 clean:
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) zmat$(OBJSUFFIX) $(LIBDIR)/*
-#	-$(MAKE) -C blosc2 clean
+	-$(MAKE) -C blosc2 clean
 
 pretty:
 	astyle \

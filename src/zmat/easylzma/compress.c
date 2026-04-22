@@ -13,9 +13,18 @@
 #include "lzip_header.h"
 #include "common_internal.h"
 
-#include "pavlov/Types.h"
-#include "pavlov/LzmaEnc.h"
-#include "pavlov/7zCrc.h"
+#ifdef ZMAT_USE_LZMA_SDK
+    #include "lzma/LzmaEnc.h"
+    #include "lzma/7zCrc.h"
+    /* new SDK ships 7zTypes.h; provide Types.h compat via the same include */
+    #ifndef _7Z_TYPES_H
+        #include "lzma/7zTypes.h"
+    #endif
+#else
+    #include "pavlov/Types.h"
+    #include "pavlov/LzmaEnc.h"
+    #include "pavlov/7zCrc.h"
+#endif
 
 #include <string.h>
 
@@ -40,13 +49,13 @@ elzma_compress_alloc()
     hand->props.lp = 0;    
     hand->props.pb = 2;    
     hand->props.level = 5;
-    hand->props.algo = 1;
+    hand->props.algo = 0;        /* 0=fast hash-chain (HC4), 1=binary-tree (BT4) */
     hand->props.fb = 32;
     hand->props.dictSize = 1 << 24;
-    hand->props.btMode = 1;
+    hand->props.btMode = 0;      /* 0=hash-chain mode (matches algo=0) */
     hand->props.numHashBytes = 4;
     hand->props.mc = 32;
-    hand->props.numThreads = 1;
+    hand->props.numThreads = 2;  /* request 2 threads; effective when COMPRESS_MF_MT is enabled */
     hand->props.writeEndMark = 1;
 
     init_alloc_struct(&(hand->allocStruct), NULL, NULL, NULL, NULL);
@@ -55,6 +64,29 @@ elzma_compress_alloc()
     initializeLZMAFormatHandler(&(hand->formatHandler));
 
     return hand;
+}
+
+void
+elzma_compress_set_numthreads(elzma_compress_handle hand, int n)
+{
+    /* LZMA SDK internal MT pipeline supports 1 or 2 threads (match finder + encoder).
+     * Values > 2 are clamped; effective only when compiled with COMPRESS_MF_MT.
+     *
+     * Critical: the MT pipeline requires binary-tree mode (algo=1, btMode=1).
+     * With algo=0 (fast hash-chain), LzmaEnc sets fastMode=true which forces
+     * mtMode=false regardless of numThreads.  So we switch modes based on nthread:
+     *   nthread == 1 → algo=0 (HC4, fast, single-thread)
+     *   nthread  > 1 → algo=1 + btMode=1 (BT4, enables MT pipeline)
+     */
+    if (n > 1) {
+        hand->props.numThreads = 2;
+        hand->props.algo   = 1;  /* binary-tree — required for MT pipeline */
+        hand->props.btMode = 1;
+    } else {
+        hand->props.numThreads = 1;
+        hand->props.algo   = 0;  /* hash-chain — fastest single-thread */
+        hand->props.btMode = 0;
+    }
 }
 
 void

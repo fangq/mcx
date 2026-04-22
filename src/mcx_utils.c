@@ -4528,14 +4528,20 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
             int status = 0;
             char* buf = NULL;
             int zipid = mcx_keylookup((char*)(ztype->valuestring), zipformat);
-            ret = zmat_decode(strlen(vdata->valuestring), (uchar*)vdata->valuestring, &len, (uchar**)&buf, zmBase64, &status);
+            ret = zmat_run(strlen(vdata->valuestring), (uchar*)vdata->valuestring, &len, (uchar**)&buf, zmBase64, &status,
+            ((TZMatFlags) {
+                .param = {.nthread = 2}
+            }).iscompress);
 
             if (!ret && vsize) {
                 if (*vol) {
                     free(*vol);
                 }
 
-                ret = zmat_decode(len, (uchar*)buf, &newlen, (uchar**)(vol), zipid, &status);
+                ret = zmat_run(len, (uchar*)buf, &newlen, (uchar**)(vol), zipid, &status,
+                ((TZMatFlags) {
+                    .param = {.nthread = 2}
+                }).iscompress);
             }
 
             if (buf) {
@@ -4628,7 +4634,10 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
 
     /*compress data using zlib*/
     if (zipid != zmBase64) {
-        ret = zmat_encode(totalbytes, (uchar*)vol, &compressedbytes, (uchar**)&compressed, zipid, &status);
+        ret = zmat_run(totalbytes, (uchar*)vol, &compressedbytes, (uchar**)&compressed, zipid, &status,
+        ((TZMatFlags) {
+            .param = {.clevel = 1, .nthread = 2}
+        }).iscompress);
     } else {
         compressed = (uchar*)vol;
         compressedbytes = totalbytes;
@@ -4656,7 +4665,10 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
         } else {
             totalbytes = 0;
             /*encode data using base64*/
-            ret = zmat_encode(compressedbytes, compressed, &totalbytes, (uchar**)&buf, zmBase64, &status);
+            ret = zmat_run(compressedbytes, compressed, &totalbytes, (uchar**)&buf, zmBase64, &status,
+            ((TZMatFlags) {
+                .param = {.clevel = 1, .nthread = 2}
+            }).iscompress);
 
             if (!cfg->isdumpjson) {
                 MCX_FPRINTF(cfg->flog, "%s: %.1f%%\n", T_("after encoding"), totalbytes * 100.f / (datalen * byte));

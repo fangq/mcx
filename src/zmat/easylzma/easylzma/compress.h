@@ -44,8 +44,16 @@ void EASYLZMA_API elzma_compress_set_allocation_callbacks(
     elzma_free freeFunc, void * freeFuncContext);
 
 /**
+ * Set the number of compression threads (1 or 2).
+ * Values > 2 are clamped to 2.  The 2-thread mode (match finder + encoder
+ * pipeline) is only effective when the library is compiled with
+ * -DCOMPRESS_MF_MT; otherwise the setting is stored but has no effect.
+ */
+void EASYLZMA_API elzma_compress_set_numthreads(elzma_compress_handle hand, int n);
+
+/**
  * Free all data associated with an LZMA compressor object.
- */ 
+ */
 void EASYLZMA_API elzma_compress_free(elzma_compress_handle * hand);
 
 /**
