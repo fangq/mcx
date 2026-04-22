@@ -478,7 +478,7 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
               * lzma (.lzma) or lzip (.lzip) compression
               * for lzip with nthread>1: compress chunks in parallel (Option 3)
               */
-#if defined(ZMAT_USE_LZMA_SDK) && !defined(_WIN32)
+#if defined(ZMAT_USE_LZMA_SDK) && !defined(_WIN32) && !defined(_7ZIP_ST)
             if (zipid == zmLzip && nthread > 1) {
                 *ret = simpleCompressLzipMT((unsigned char*)inputstr, inputsize,
                                             outputbuf, outputsize, clevel, nthread);
@@ -1717,7 +1717,7 @@ xzDecompress(const unsigned char* inData, size_t inLen,
  * Option 3: parallel lzip — compress chunks independently, concatenate
  * ----------------------------------------------------------------------- */
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(_7ZIP_ST)
 
 typedef struct {
     const unsigned char* in;
@@ -1862,7 +1862,7 @@ simpleCompressLzipMT(const unsigned char* inData, size_t inLen,
     return ELZMA_E_OK;
 }
 
-#endif  /* !_WIN32 */
+#endif  /* !_WIN32 && !_7ZIP_ST */
 #endif  /* ZMAT_USE_LZMA_SDK */
 
 #endif

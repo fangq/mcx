@@ -82,23 +82,19 @@ else
   LZMA_LEGACY_DIR:=easylzma/pavlov
   ifneq ($(wildcard $(LZMA_SDK_DIR)/LzmaEnc.c),)
     ## new self-contained LZMA SDK found — use it
-    CFLAGS+=-DZMAT_USE_LZMA_SDK
+    CFLAGS+=-DZMAT_USE_LZMA_SDK -D_7ZIP_ST
     INCLUDEDIRS+=-Ieasylzma -I$(LZMA_SDK_DIR)
     FILES+=easylzma/compress easylzma/decompress \
            easylzma/lzma_header easylzma/lzip_header easylzma/common_internal \
            $(LZMA_SDK_DIR)/LzmaEnc $(LZMA_SDK_DIR)/LzmaDec $(LZMA_SDK_DIR)/LzmaLib \
            $(LZMA_SDK_DIR)/LzFind $(LZMA_SDK_DIR)/Bra $(LZMA_SDK_DIR)/BraIA64 \
            $(LZMA_SDK_DIR)/Alloc $(LZMA_SDK_DIR)/7zCrc $(LZMA_SDK_DIR)/7zCrcOpt $(LZMA_SDK_DIR)/CpuArch \
-           $(LZMA_SDK_DIR)/Lzma2Dec $(LZMA_SDK_DIR)/Lzma2DecMt $(LZMA_SDK_DIR)/Lzma2Enc \
-           $(LZMA_SDK_DIR)/MtCoder $(LZMA_SDK_DIR)/MtDec \
+           $(LZMA_SDK_DIR)/Lzma2Dec \
            $(LZMA_SDK_DIR)/Xz $(LZMA_SDK_DIR)/XzCrc64 $(LZMA_SDK_DIR)/XzCrc64Opt \
            $(LZMA_SDK_DIR)/XzEnc $(LZMA_SDK_DIR)/XzDec \
            $(LZMA_SDK_DIR)/Sha256 $(LZMA_SDK_DIR)/Sha256Opt $(LZMA_SDK_DIR)/Delta \
            $(LZMA_SDK_DIR)/Bra86 $(LZMA_SDK_DIR)/7zStream \
-           $(LZMA_SDK_DIR)/LzFindMt $(LZMA_SDK_DIR)/LzFindOpt $(LZMA_SDK_DIR)/Threads
-    ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
-      CFLAGS+=-DCOMPRESS_MF_MT
-    endif
+           $(LZMA_SDK_DIR)/LzFindOpt
   else
     ## fall back to legacy pavlov subset
     INCLUDEDIRS+=-Ieasylzma -I$(LZMA_LEGACY_DIR)
@@ -118,12 +114,6 @@ endif
 
 ifeq ($(HAVE_BLOSC2),no)
   CFLAGS+=-DNO_BLOSC2
-  ## lzip/xz MT uses pthreads even without blosc2 (non-Windows only)
-  ifneq ($(HAVE_LZMA),no)
-    ifneq ($(findstring _NT-,$(PLATFORM)), _NT-)
-      LIBZLIB+=-pthread
-    endif
-  endif
 else
   ifeq ($(HAVE_LZ4),no)
     INCLUDEDIRS+=-Ilz4
