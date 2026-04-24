@@ -109,7 +109,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
   ZLIBFLAG?=
-  ZMATLIB    :=zmat/zmatlib.o zmat/miniz/*.o zmat/lz4/lz4.o zmat/lz4/lz4hc.o zmat/easylzma/*.o zmat/easylzma/pavlov/*.o
+  ZMATLIB    :=lib/libzmat.a
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
   MEXLINKLIBS="\$$LINKLIBS"
   export CC CXX
