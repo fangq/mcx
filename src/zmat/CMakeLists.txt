@@ -37,7 +37,7 @@ set(LZMA_SDK_SOURCES
     easylzma/lzma/7zCrcOpt.c
     easylzma/lzma/CpuArch.c
     easylzma/lzma/Lzma2Dec.c
-    easylzma/lzma/Lzma2Dec.c
+    easylzma/lzma/Lzma2Enc.c
     easylzma/lzma/Xz.c
     easylzma/lzma/XzCrc64.c
     easylzma/lzma/XzCrc64Opt.c
@@ -68,7 +68,7 @@ endif()
 
 target_compile_definitions(zmat PRIVATE
     ZMAT_USE_LZMA_SDK
-    _7ZIP_ST
+    Z7_ST
     NO_BLOSC2
     NO_ZLIB
     NO_ZSTD
