@@ -95,7 +95,7 @@ jobs:
           ## rm -rf octave_5.2.7z
           #choco install octave.portable --version=5.2.0
           if [[ "${{ steps.cache-lazarus.outputs.cache-hit }}" != "true" ]]; then
-            choco install lazarus --version=2.2.6
+            choco install lazarus --version=2.2.6 --ignore-checksums
           fi
           if [[ "${{ steps.cache-upx.outputs.cache-hit }}" != "true" ]]; then
             curl --retry 3 -kL https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-win64.zip --output upx.zip
