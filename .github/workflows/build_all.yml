@@ -30,15 +30,24 @@ jobs:
           sudo apt-get update && sudo apt-get install -y liboctave-dev lazarus libxmu-dev gcc-9 g++-9 upx-ucl
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+      - name: Cache Xcode10 tarball (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        id: cache-xcode10
+        uses: actions/cache@v4
+        with:
+          path: /tmp/Xcode10.app.tar.gz
+          key: xcode10-app-tarball-v1
+      - name: Download Xcode10 (macOS, if not cached)
+        if: ${{ runner.os == 'macOS' && steps.cache-xcode10.outputs.cache-hit != 'true' }}
+        run: |
+          curl -o /tmp/Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
       - name: Install dependencies (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
           set -ex
 
           brew install libomp
-          curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
-          tar zxf Xcode10.app.tar.gz
-          rm -rf Xcode10.app.tar.gz
+          tar zxf /tmp/Xcode10.app.tar.gz
           sudo xcode-select --print-path
           sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
           echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
@@ -64,6 +73,20 @@ jobs:
           sudo installer -pkg "$LAZ_PKG" -target /
 
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
+      - name: Cache Lazarus (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        id: cache-lazarus
+        uses: actions/cache@v4
+        with:
+          path: 'C:\lazarus'
+          key: lazarus-2.2.6-${{ matrix.os }}-v1
+      - name: Cache UPX (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        id: cache-upx
+        uses: actions/cache@v4
+        with:
+          path: upx
+          key: upx-4.0.2-${{ matrix.os }}-v1
       - name: Install dependencies (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
@@ -71,16 +94,28 @@ jobs:
           ## 7z x octave_5.2.7z -ooctave -y
           ## rm -rf octave_5.2.7z
           #choco install octave.portable --version=5.2.0
-          choco install lazarus --version=2.2.6
-          curl --retry 3 -kL https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-win64.zip --output upx.zip
-          7z x upx.zip -oupx -y
+          if [[ "${{ steps.cache-lazarus.outputs.cache-hit }}" != "true" ]]; then
+            choco install lazarus --version=2.2.6
+          fi
+          if [[ "${{ steps.cache-upx.outputs.cache-hit }}" != "true" ]]; then
+            curl --retry 3 -kL https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-win64.zip --output upx.zip
+            7z x upx.zip -oupx -y
+            rm -f upx.zip
+          fi
           ## echo "$PWD/octave/octave-5.2.0-w64-64/mingw64/bin" >> $GITHUB_PATH
           echo 'C:\lazarus' >> $GITHUB_PATH
           echo 'C:\msys64\mingw64\bin' >> $GITHUB_PATH
           echo 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\' >> $GITHUB_PATH
           echo 'MW_MINGW64_LOC=/c/msys64/mingw64' >> $GITHUB_ENV
-      - name: Install Visual Studio 2019 Build Tools (for cuda 10)
+      - name: Cache Visual Studio 2019 BT (Windows)
         if: ${{ matrix.os == 'windows-2022' }}
+        id: cache-vs2019
+        uses: actions/cache@v4
+        with:
+          path: 'C:\Program Files (x86)\Microsoft Visual Studio\2019'
+          key: vs2019-bt-${{ matrix.os }}-v1
+      - name: Install Visual Studio 2019 Build Tools (for cuda 10, if not cached)
+        if: ${{ matrix.os == 'windows-2022' && steps.cache-vs2019.outputs.cache-hit != 'true' }}
         run: |
           choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK"
       - name: Setup MSVC environment (Windows only)
@@ -92,31 +127,51 @@ jobs:
           echo INCLUDE=%INCLUDE% >> %GITHUB_ENV%
           echo LIB=%LIB% >> %GITHUB_ENV%
           echo VCINSTALLDIR=%VCINSTALLDIR% >> %GITHUB_ENV%
-      - name: Install CUDA (Linux only)
+      - name: Cache CUDA toolkit (Linux)
         if: ${{ runner.os == 'Linux' }}
+        id: cache-cuda-linux
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/cuda
+          key: cuda-10.2.89-${{ matrix.os }}-v1
+      - name: Install CUDA (Linux, if not cached)
+        if: ${{ runner.os == 'Linux' && steps.cache-cuda-linux.outputs.cache-hit != 'true' }}
         run: |
           cd /tmp && wget -q https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_440.33.01_linux.run
           sudo sh /tmp/cuda_10.2.89_440.33.01_linux.run --silent --toolkit --override
           rm -rf /tmp/cuda_10.2.89_440.33.01_linux.run
-          export PATH=/usr/local/cuda/bin:$PATH
-          ls /usr/local/cuda/bin
           sudo perl -pi -e 's/#if\s+__GNUC__\s+>\s+\d+/#if __GNUC__ > 30/g' /usr/local/cuda/include/crt/host_config.h
-          cat /usr/local/cuda/include/crt/host_config.h
-          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
-          nvcc --version
-      - name: Install CUDA (MacOS only)
-        if: ${{ runner.os == 'macOS' }}
+      - name: Set up CUDA env (Linux)
+        if: ${{ runner.os == 'Linux' }}
         run: |
-          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
-          unzip cuda.zip
-          rm -rf cuda.zip
-          sudo mv cuda/ /usr/local/
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          ls /usr/local/cuda/bin
+          cat /usr/local/cuda/include/crt/host_config.h
+          /usr/local/cuda/bin/nvcc --version
+      - name: Cache CUDA toolkit (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        id: cache-cuda-macos
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/cuda
+          key: cuda-10.2-mac-${{ matrix.os }}-v1
+      - name: Install CUDA (macOS, if not cached)
+        if: ${{ runner.os == 'macOS' && steps.cache-cuda-macos.outputs.cache-hit != 'true' }}
+        run: |
+          curl -o /tmp/cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
+          unzip /tmp/cuda.zip -d /tmp/
+          rm -rf /tmp/cuda.zip
+          sudo mv /tmp/cuda/ /usr/local/
           sudo chmod +x /usr/local/cuda/bin/*
           sudo chmod +x /usr/local/cuda/nvvm/bin/*
+      - name: Set up CUDA env (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
           echo "/usr/local/cuda/bin" >> $GITHUB_PATH
           echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
           echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
-          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
+          # symlink libomp headers — re-do every run since /usr/local/opt/libomp may be at a different version
+          sudo ln -sf /usr/local/opt/libomp/include/*.h /usr/local/cuda/include/ 2>/dev/null || true
           mkdir -p ~/bin
       - name: Install CUDA (Windows only)
         if: ${{ runner.os == 'Windows' }}
