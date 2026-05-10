@@ -1,7 +1,9 @@
-function mcx2json(cfg, filestub)
+function varargout = mcx2json(cfg, filestub, varargin)
 %
 % Format:
 %    mcx2json(cfg,filestub)
+%    jsonstr =  mcx2json(cfg, '.json')
+%    bjsonstr =  mcx2json(cfg, '.jdb')
 %
 % Save MCXLAB simulation configuration to a JSON file for MCX binary
 %
@@ -11,14 +13,17 @@ function mcx2json(cfg, filestub)
 %    cfg: a struct defining the parameters associated with a simulation.
 %         Please run 'help mcxlab' or 'help mmclab' to see the details.
 %         mcxpreview supports the cfg input for both mcxlab and mmclab.
-%    filestub: the filestub is the name stub for all output files,including
+%    filestub: (optional) the filestub is the name stub for all output files,including
 %         filestub.json: the JSON input file
 %         filestub_vol.bin: the volume file if cfg.vol is defined
 %         filestub_shapes.json: the domain shape file if cfg.shapes is defined
 %         filestub_pattern.bin: the domain shape file if cfg.pattern is defined
 %
+% Output:
+%    jsonstr, bjsonstr: a string buffer containing the seralized JSON or binary JSON
+%
 % Dependency:
-%    this function depends on the savejson/saveubjson functions from the
+%    this function depends on the savejson/savebj functions from the
 %    Iso2Mesh toolbox (http://iso2mesh.sf.net) or JSONlab toolbox
 %    (http://iso2mesh.sf.net/jsonlab)
 %
@@ -138,7 +143,10 @@ end
 %% define the simulation session flags
 
 Session.ID = filestub;
-Session = copycfg(cfg, 'isreflect', Session, 'DoMismatch');
+if (isempty(filestub))
+    Session.ID = fullfile(fpath, fname, fext);
+end
+Session = copycfg(cfg, 'isreflect', Session, 'DoMismatch', 1);
 Session = copycfg(cfg, 'issave2pt', Session, 'DoSaveVolume');
 Session = copycfg(cfg, 'issavedet', Session, 'DoPartialPath');
 Session = copycfg(cfg, 'issaveexit', Session, 'DoSaveExit');
@@ -175,10 +183,18 @@ mcxsession = struct('Session', Session, 'Forward', Forward, 'Optode', Optode, 'D
 if (exist('Shapes', 'var'))
     mcxsession.Shapes = Shapes;
 end
-if (strcmp(fext, 'ubj'))
-    saveubjson('', mcxsession, [filestub, '.ubj']);
+if (strcmp(fext, '.jdb'))
+    if (isempty(filestub))
+        [varargout{1:nargout}] = savebj('', mcxsession, varargin{:});
+    else
+        [varargout{1:nargout}] = savebj('', mcxsession, 'filename', [filestub, '.jdb'], varargin{:});
+    end
 else
-    savejson('', mcxsession, 'filename', [filestub, '.json'], 'compression', 'zlib');
+    if (isempty(filestub))
+        [varargout{1:nargout}] = savejson('', mcxsession, 'compression', 'zlib', varargin{:});
+    else
+        [varargout{1:nargout}] = savejson('', mcxsession, 'filename', [filestub, '.json'], 'compression', 'zlib', varargin{:});
+    end
 end
 
 function outdata = copycfg(cfg, name, outroot, outfield, defaultval)
