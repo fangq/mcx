@@ -4472,7 +4472,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
         /**
          * If not running as a mex file, we need to save volumetric output data, if enabled, as
-         * a file, with suffix specifed by cfg.outputformat (mc2,nii, or .jdat or .jbat)
+         * a file, with suffix specifed by cfg.outputformat (mc2, nii, jnii, or bnii)
          */
 
 #ifndef MCX_CONTAINER
@@ -4488,7 +4488,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
         /**
          * If not running as a mex file, we need to save detected photon data, if enabled, as
-         * a file, either as a .mch file, or a .jdat/.jbat file
+         * a file, either as a .mch file, or a .jdt/.jdb file
          */
 #ifndef MCX_CONTAINER
 
@@ -4509,7 +4509,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
         /**
          * If not running as a mex file, we need to save photon trajectory data, if enabled, as
-         * a file, either as a .mct file, or a .jdat/.jbat file
+         * a file, either as a .mct file, or a .jdt/.jdb file
          */
 #ifndef MCX_CONTAINER
 
