@@ -35,7 +35,7 @@
 #ifndef _MCEXTREME_RASTERIZER_H
 #define _MCEXTREME_RASTERIZER_H
 
-#include <vector_types.h>
+#include "mcx_vector_types.h"
 
 #ifdef  __cplusplus
 extern "C" {

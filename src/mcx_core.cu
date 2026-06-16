@@ -49,8 +49,11 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #include "mcx_tictoc.h"
 #include "mcx_const.h"
 
+#include "cuda_to_hip.h"
+
+#if !defined(USE_HIP) && !defined(__HIP_PLATFORM_AMD__)
 #include <cuda.h>
-#include "cuda_fp16.h"
+#endif
 
 #ifdef USE_DOUBLE
     typedef double OutputType;
@@ -97,6 +100,9 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
         #define __CUDA_ARCH_LIST__ 350
     #endif
 #endif
+
+// HIP provides float3 operators via HIP_vector_type; CUDA does not
+#if !defined(USE_HIP) && !defined(__HIP_PLATFORM_AMD__)
 
 /**
  * @brief Adding two float3 vectors c=a+b
@@ -156,6 +162,8 @@ __device__ float3 operator *(const float3& a, const float& b) {
 __device__ float3 operator *(const float3& a, const float3& b) {
     return make_float3(a.x * b.x, a.y * b.y, a.z * b.z);
 }
+
+#endif // !USE_HIP
 
 /**
  * @brief Dot-product of two float3 vectors c=a*b
@@ -2796,7 +2804,17 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         rv = float3(__fdividef(1.f, v.x), __fdividef(1.f, v.y), __fdividef(1.f, v.z));
                     } else { //< do reflection
                         GPUDEBUG(("ref faceid=%d p=[%f %f %f] v_old=[%f %f %f]\n", flipdir[3], p.x, p.y, p.z, v.x, v.y, v.z));
-                        (flipdir[3] == 0) ? (v.x = -v.x) : ((flipdir[3] == 1) ? (v.y = -v.y) : (v.z = -v.z)) ;
+                        /* Flip the velocity component normal to the reflecting face. The branchless
+                         * form is required for correctness on ROCm: at -O1 and above, the AMDGPU
+                         * backend miscompiles a runtime-branch-selected in-place float negation
+                         * (the equivalent ternary/if-else that negates only v.x, v.y, or v.z based
+                         * on flipdir[3]) and drops the negation, leaving the reflected photon
+                         * heading back out of the volume. That silently broke boundary reflection
+                         * (cube60b absorbed ~18% instead of ~27%). Multiplying every component by a
+                         * per-component sign compiles correctly and is arithmetically identical. */
+                        v.x *= (flipdir[3] == 0) ? -1.f : 1.f;
+                        v.y *= (flipdir[3] == 1) ? -1.f : 1.f;
+                        v.z *= (flipdir[3] == 2) ? -1.f : 1.f;
                         rv = float3(__fdividef(1.f, v.x), __fdividef(1.f, v.y), __fdividef(1.f, v.z));
                         (flipdir[3] == 0) ?
                         (p.x = mcx_nextafterf(__float2int_rn(p.x), (v.x > 0.f) - (v.x < 0.f))) :
@@ -3487,7 +3505,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      * Allocate pinned memory variable, progress, for real-time update during kernel run-time
      */
     CUDA_ASSERT(cudaHostAlloc((void**)&progress, sizeof(int), cudaHostAllocMapped));
-    CUDA_ASSERT(cudaHostGetDevicePointer((int**)&gprogress, (int*)progress, 0));
+    CUDA_ASSERT(cudaHostGetDevicePointer((void**)&gprogress, (void*)progress, 0));
     *progress = 0;
 
     if (cfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
@@ -3600,7 +3618,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     if (cfg->printnum >= 0) {
         mcx_printheader(cfg);
 
-#ifdef MCX_TARGET_NAME
+#if defined(USE_HIP) || defined(__HIP_PLATFORM_AMD__)
+        MCX_FPRINTF(cfg->flog, "- %s: [AMD MCX] %s [%d.%d] on [%s]\n",
+                    T_("code name"), T_("compiled by hipcc"), HIP_VERSION_MAJOR, HIP_VERSION_MINOR, __DATE__);
+#elif defined(MCX_TARGET_NAME)
         MCX_FPRINTF(cfg->flog, "- %s: [%s] %s [%d.%d] for CUDA-arch [%d] on [%s]\n",
                     T_("code name"), MCX_TARGET_NAME, T_("compiled by nvcc"), __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, __CUDA_ARCH_LIST__, __DATE__);
 #else

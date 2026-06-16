@@ -45,6 +45,10 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef WIN32
+    #include <direct.h>
+    #define mkdir(path, mode) _mkdir(path)
+#endif
 #include "mcx_utils.h"
 #include "mcx_const.h"
 #include "mcx_shapes.h"
@@ -4178,7 +4182,7 @@ void mcx_loadseedjdat(char* filename, Config* cfg) {
     char* jbuf;
     int len;
 
-    FILE* fp = fopen(filename, "rt");
+    FILE* fp = fopen(filename, "rb");
 
     if (fp == NULL) {
         MCX_ERROR(-6, "fail to open the specified seed jdata file");

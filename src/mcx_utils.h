@@ -36,7 +36,7 @@
 #define _MCEXTREME_UTILITIES_H
 
 #include <stdio.h>
-#include <vector_types.h>
+#include "mcx_vector_types.h"
 #include "cjson/cJSON.h"
 #include "float.h"
 #include "nifti1.h"

@@ -153,10 +153,12 @@ modern graphics processing unit (GPU), this program is able to perform Monte
 Carlo (MC) simulations at a blazing speed, typically hundreds to
 a thousand times faster than a single-threaded CPU-based MC implementation.
 
-MCX is written in C and NVIDIA CUDA. It only be executed on NVIDIA GPUs.
-If you want to run hardware-accelerated MCX simulations on AMD/Intel GPUs
-or CPUs, please download MCX-CL (MCX for OpenCL), which is written in OpenCL.
-MCX and MCX-CL are highly compatible.
+MCX is written in C and NVIDIA CUDA, and runs on NVIDIA GPUs. The same CUDA
+source can also be compiled for AMD GPUs through HIP/ROCm by configuring with
+`-DUSE_HIP=ON` (see Requirement and Installation below). If you want to run
+hardware-accelerated MCX simulations on Intel GPUs or CPUs, please download
+MCX-CL (MCX for OpenCL), which is written in OpenCL. MCX and MCX-CL are highly
+compatible.
 
 Due to the nature of the underlying MC algorithms, MCX and MCX-CL are
 ray-tracing/ray-casting software under-the-hood. Compared to commonly
@@ -222,6 +224,24 @@ For MCX-CUDA, the requirements for using this software include
 
 -   a CUDA capable NVIDIA graphics card
 -   pre-installed NVIDIA graphics driver
+
+MCX can also be built for AMD GPUs using HIP/ROCm. In that case the
+requirements are
+
+-   a ROCm capable AMD graphics card
+-   a pre-installed AMD ROCm toolkit (including HIP)
+
+To compile the AMD build from source, configure the CMake project with HIP
+enabled and select the target GPU architecture, for example
+
+```
+cmake -S src -B build -DUSE_HIP=ON -DCMAKE_HIP_ARCHITECTURES=gfx90a
+cmake --build build
+```
+
+`CMAKE_HIP_ARCHITECTURES` accepts any ROCm GPU target (for example `gfx90a`
+or `gfx1100`); if omitted it defaults to `gfx90a`. The default NVIDIA build
+(`USE_HIP=OFF`) is unchanged.
 
 You must make sure that your NVIDIA graphics driver was installed properly.
 A list of CUDA capable cards can be found at [2]. The oldest 
