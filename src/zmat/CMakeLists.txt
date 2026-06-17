@@ -11,7 +11,11 @@ project(zmat)
 option(STATIC_LIB "Build static library" ON)
 
 # C Options
-set(CMAKE_C_FLAGS "-g -Wall -O3 -fPIC")
+if(WIN32)
+    set(CMAKE_C_FLAGS "-g -Wall -O3")
+else()
+    set(CMAKE_C_FLAGS "-g -Wall -O3 -fPIC")
+endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../)
 
 # Add include directories

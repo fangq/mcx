@@ -38,7 +38,7 @@
 #include "mcx_mie.h"
 #include "mcx_const.h"
 
-#include <vector_types.h>
+#include "mcx_vector_types.h"
 
 #if defined(_MSC_VER) || defined(__APPLE__)
     #include <complex>

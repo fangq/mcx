@@ -37,18 +37,28 @@
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 
-#ifndef USE_OS_TIMER          /**< use CUDA event for time estimation */
+#ifndef USE_OS_TIMER          /**< use CUDA/HIP event for time estimation */
+#if defined(USE_HIP) || defined(__HIP_PLATFORM_AMD__)
+#include <hip/hip_runtime.h>
+#define cudaEvent_t                     hipEvent_t
+#define cudaGetDevice                   hipGetDevice
+#define cudaEventRecord                 hipEventRecord
+#define cudaEventSynchronize            hipEventSynchronize
+#define cudaEventElapsedTime            hipEventElapsedTime
+#define cudaEventCreate                 hipEventCreate
+#else
 #include <cuda.h>
 #include <driver_types.h>
 #include <cuda_runtime_api.h>
+#endif
 #define MAX_DEVICE 256
 
 static cudaEvent_t timerStart[MAX_DEVICE], timerStop[MAX_DEVICE];
 
 /**
- * @brief CUDA timing function using cudaEventElapsedTime
+ * @brief CUDA/HIP timing function using cudaEventElapsedTime
  *
- * Use CUDA events to query elapsed time in ms between two events
+ * Use CUDA/HIP events to query elapsed time in ms between two events
  */
 
 unsigned int GetTimeMillis () {
@@ -62,7 +72,7 @@ unsigned int GetTimeMillis () {
 }
 
 /**
- * @brief Start CUDA timer
+ * @brief Start CUDA/HIP timer
  */
 
 unsigned int StartTimer () {
