@@ -45,8 +45,12 @@ if(USE_HIP)
     # Mark .cu files as HIP language
     set_source_files_properties(${MCX_GPU_SOURCES} PROPERTIES LANGUAGE HIP)
 
-    # HIP compile flags for .cu files
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DUSE_ATOMIC -DSAVE_DETECTORS")
+    # HIP compile flags for .cu files.
+    # -munsafe-fp-atomics lets clang emit the native global_atomic_add_f32 on
+    # CDNA/RDNA instead of a compare-and-swap retry loop; the fluence grid is
+    # accumulated with float atomicAdd, so this is the dominant performance flag.
+    # -ffast-math is the HIP counterpart of the CUDA build's -use_fast_math.
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DUSE_ATOMIC -DSAVE_DETECTORS -munsafe-fp-atomics -ffast-math")
 
     # Add USE_HIP define to C and C++ files as well (for header guards)
     add_compile_definitions(USE_HIP)
