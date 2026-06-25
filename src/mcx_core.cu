@@ -2859,7 +2859,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         }
 
         if (mediaid == 0 || idx1d == OUTSIDE_VOLUME_MIN || idx1d == OUTSIDE_VOLUME_MAX) {
-            printf("ERROR: should never happen! mediaid=%d idx1d=%X isreflect=%d gcfg->doreflect=%d n1=%f n2=%f isdet=%d flipdir[3]=%d p=(%f %f %f)[%d %d %d]\n", mediaid, idx1d, isreflect, gcfg->doreflect, n1, prop.n, isdet, flipdir[3], p.x, p.y, p.z, flipdir[0], flipdir[1], flipdir[2]);
+            GPUDEBUG(("ERROR: should never happen! mediaid=%d idx1d=%X isreflect=%d gcfg->doreflect=%d n1=%f n2=%f isdet=%d flipdir[3]=%d p=(%f %f %f)[%d %d %d]\n", mediaid, idx1d, isreflect, gcfg->doreflect, n1, prop.n, isdet, flipdir[3], p.x, p.y, p.z, flipdir[0], flipdir[1], flipdir[2]));
             return;
         }
     }
