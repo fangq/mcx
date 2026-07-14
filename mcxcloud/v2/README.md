@@ -40,6 +40,10 @@ consume them. The v2 `frontend/`+`backend/` split mirrors `../v1/`.
   content-addressed normalization/reassembly (verified), Ajv validation + preview limits,
   capability tokens, SSE plumbing, worker completion callback. Not yet run on the Node 22+
   target (dev sandbox is Node 12); SQLite→Postgres data migration still to do.
-- [ ] Phase 3 — pg-boss event scheduler replacing `mcxcloudd` (Swarm dispatch unchanged)
+- [x] **Phase 3 — Event scheduler + worker protocol** (`backend/scheduler.js`, `backend/docker.js`,
+  `backend/worker/mcx-run.sh`): pg-boss consumer claims queued jobs → `docker service create
+  --generic-resource NVIDIA_GPU=1` → holds slot until done (caps at GPU count) → kill on
+  timeout → cleanup. Worker fetches input + pushes output/detphoton over HTTP (no NFS).
+  Not yet run against a live swarm (dev sandbox has no Docker/GPU/Node 20).
 - [ ] Phase 4 — Frontend rebuild (ESM modules, reactive store, three.js port, SSE client)
 - [ ] Phase 5 — Cutover + "private MCX cloud" docs

@@ -21,6 +21,24 @@ export async function putBlob(client, canon, encoding, size) {
 }
 
 /**
+ * Store raw bytes as a blob (idempotent by content hash). Used for worker-uploaded
+ * outputs, which are already-serialized JData/JNIfTI and need no canonicalization.
+ * @param {import('pg').PoolClient} client
+ * @param {Buffer} buf
+ * @returns {Promise<string>}
+ */
+export async function putBlobRaw(client, buf) {
+  const hash = 'sha256/' + sha256hex(buf);
+  await client.query(
+    `insert into blobs (hash, size, encoding, refcount, data)
+     values ($1, $2, null, 0, $3)
+     on conflict (hash) do nothing`,
+    [hash, buf.length, buf],
+  );
+  return hash;
+}
+
+/**
  * @param {import('pg').PoolClient} client
  * @param {string} hash
  * @returns {Promise<string>}

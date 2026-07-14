@@ -1,9 +1,8 @@
 // @ts-check
 import { config } from '../config.js';
 import { pool, withTx } from '../db.js';
-import { attachRefs, getBlob, putBlob } from '../blobs.js';
-import { normalize } from '../jdata.js';
-import { stableStringify } from '../hash.js';
+import { attachRefs, getBlob, putBlob, putBlobRaw } from '../blobs.js';
+import { normalize, reassemble } from '../jdata.js';
 import { mintToken, tokenHash } from '../tokens.js';
 import { validateInput, checkLimits } from '../schema.js';
 import { enqueueJob } from '../queue.js';
@@ -197,42 +196,82 @@ export async function jobRoutes(app) {
   app.get('/jobs/:id/output', (req, reply) => serveBlob(req, reply, 'output_hash'));
   app.get('/jobs/:id/detphoton', (req, reply) => serveBlob(req, reply, 'detp_hash'));
 
-  // ---- worker completion callback (internal) ----------------------------------
-  app.post('/jobs/:id/complete', async (req, reply) => {
-    if (req.headers['x-worker-secret'] !== config.workerSecret) {
-      return reply.code(403).send({ status: 'error', message: 'forbidden' });
-    }
+  // ---- worker protocol (internal, x-worker-secret) ----------------------------
+  // The mcx container: GET input -> run -> PUT output [+ detphoton] -> POST complete.
+  // This keeps NFS out of the loop (results are pushed, not discovered).
+
+  /** @param {import('fastify').FastifyRequest} req @returns {boolean} */
+  const isWorker = (req) => req.headers['x-worker-secret'] === config.workerSecret;
+
+  // fetch the fully-reassembled MCX input
+  app.get('/jobs/:id/input', async (req, reply) => {
+    if (!isWorker(req)) return reply.code(403).send({ status: 'error', message: 'forbidden' });
     const { id } = /** @type {{ id: string }} */ (req.params);
     if (!UUID.test(id)) return reply.code(404).send({ status: 'error', message: 'not found' });
-    const body = /** @type {{ output?: unknown, detphoton?: unknown, log?: string, runtime?: number, error?: string | null }} */ (req.body);
+    const r = await pool.query('select input_doc from jobs where id = $1', [id]);
+    if (r.rowCount === 0) return reply.code(404).send({ status: 'error', message: 'not found' });
+    const client = await pool.connect();
+    try {
+      const doc = await reassemble(r.rows[0].input_doc, (h) => getBlob(client, h));
+      return reply.type('application/json').send(doc);
+    } finally {
+      client.release();
+    }
+  });
 
-    if (body.error) {
+  /**
+   * @param {import('fastify').FastifyRequest} req
+   * @param {import('fastify').FastifyReply} reply
+   * @param {'output_hash' | 'detp_hash'} column
+   */
+  const uploadArtifact = async (req, reply, column) => {
+    if (!isWorker(req)) return reply.code(403).send({ status: 'error', message: 'forbidden' });
+    const { id } = /** @type {{ id: string }} */ (req.params);
+    if (!UUID.test(id)) return reply.code(404).send({ status: 'error', message: 'not found' });
+    const buf = req.body;
+    if (!Buffer.isBuffer(buf) || buf.length === 0) {
+      return reply.code(400).send({ status: 'error', message: 'empty body' });
+    }
+    await withTx(async (client) => {
+      const hash = await putBlobRaw(client, buf);
+      await client.query(`update jobs set ${column} = $2 where id = $1`, [id, hash]);
+      await attachRefs(client, [hash], 'job', id);
+    });
+    return reply.code(204).send();
+  };
+  // raw bytes (application/octet-stream); output.jnii / detphoton are already JData JSON
+  app.put('/jobs/:id/output', (req, reply) => uploadArtifact(req, reply, 'output_hash'));
+  app.put('/jobs/:id/detphoton', (req, reply) => uploadArtifact(req, reply, 'detp_hash'));
+
+  // finalize: ?error=1 -> failed; else mark completed (requires output already uploaded).
+  // request body (text/plain) is the mcx log.
+  app.post('/jobs/:id/complete', async (req, reply) => {
+    if (!isWorker(req)) return reply.code(403).send({ status: 'error', message: 'forbidden' });
+    const { id } = /** @type {{ id: string }} */ (req.params);
+    if (!UUID.test(id)) return reply.code(404).send({ status: 'error', message: 'not found' });
+    const q = /** @type {{ error?: string, runtime?: string }} */ (req.query);
+    const log = typeof req.body === 'string' ? req.body : Buffer.isBuffer(req.body) ? req.body.toString('utf8') : null;
+    const runtime = q.runtime ? Number(q.runtime) : null;
+
+    if (q.error) {
       await pool.query(
         `update jobs set status = 'failed', error = $2, log = $3, ended_at = now() where id = $1`,
-        [id, body.error, body.log ?? null],
+        [id, (log || 'simulation error').slice(0, 4000), log],
       );
-      publish(id, 'error', { status: 'failed', message: body.error });
+      publish(id, 'error', { status: 'failed', message: 'simulation error' });
       return reply.code(204).send();
     }
 
-    await withTx(async (client) => {
-      const outCanon = stableStringify(body.output);
-      const outHash = await putBlob(client, outCanon, null, Buffer.byteLength(outCanon, 'utf8'));
-      const owned = [outHash];
-      /** @type {string | null} */
-      let detpHash = null;
-      if (body.detphoton !== undefined && body.detphoton !== null) {
-        const dCanon = stableStringify(body.detphoton);
-        detpHash = await putBlob(client, dCanon, null, Buffer.byteLength(dCanon, 'utf8'));
-        owned.push(detpHash);
-      }
-      await client.query(
-        `update jobs set status = 'completed', output_hash = $2, detp_hash = $3,
-         log = $4, runtime = $5, ended_at = now() where id = $1`,
-        [id, outHash, detpHash, body.log ?? null, body.runtime ?? null],
-      );
-      await attachRefs(client, owned, 'job', id);
-      publish(id, 'complete', { outputHash: outHash, hasDetphoton: !!detpHash, runtime: body.runtime ?? null });
+    const r = await pool.query(
+      `update jobs set status = 'completed', log = $2, runtime = $3, ended_at = now()
+       where id = $1 and output_hash is not null returning output_hash, detp_hash`,
+      [id, log, runtime],
+    );
+    if (r.rowCount === 0) return reply.code(409).send({ status: 'error', message: 'no output uploaded' });
+    publish(id, 'complete', {
+      outputHash: r.rows[0].output_hash,
+      hasDetphoton: !!r.rows[0].detp_hash,
+      runtime,
     });
     return reply.code(204).send();
   });

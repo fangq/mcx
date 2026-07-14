@@ -21,6 +21,24 @@ export async function initQueue() {
  * @returns {Promise<void>}
  */
 export async function enqueueJob(jobId, priority) {
-  if (!boss) return; // queue not initialized (e.g. DB down) — Phase 3 owns dispatch
+  if (!boss) return; // queue not initialized (e.g. DB down)
   await boss.send(RUN_QUEUE, { jobId }, { priority });
+}
+
+/**
+ * Register the scheduler consumer. pg-boss delivers up to `capacity` jobs per batch and
+ * holds them active until the handler resolves (crash-safe redelivery). Processing the
+ * batch concurrently caps in-flight simulations at `capacity` (= free GPU count).
+ * NOTE: verify the pg-boss v10 work() options (`batchSize`, array handler) against the
+ * installed version on the target.
+ * @param {number} capacity
+ * @param {(jobId: string) => Promise<void>} handle
+ * @returns {Promise<void>}
+ */
+export async function startWork(capacity, handle) {
+  if (!boss) throw new Error('queue not initialized');
+  await boss.work(RUN_QUEUE, { batchSize: Math.max(1, capacity) }, async (jobs) => {
+    const list = Array.isArray(jobs) ? jobs : [jobs];
+    await Promise.all(list.map((j) => handle(j.data.jobId)));
+  });
 }

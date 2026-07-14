@@ -97,48 +97,78 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
 
   /jobs/{id}/output:
-    parameters: [{ $ref: '#/components/parameters/JobId' }, { $ref: '#/components/parameters/Token' }]
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
     get:
       tags: [jobs]
-      summary: Completed output volume (JNIfTI/JData), reassembled from blobs
+      summary: Completed output volume (JNIfTI/JData) — client download
+      parameters: [{ $ref: '#/components/parameters/Token' }]
       responses:
         '200': { description: output, content: { application/json: {} } }
         '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [internal]
+      summary: Upload output (worker only) — raw bytes, stored as a content-addressed blob
+      description: Requires `x-worker-secret`.
+      requestBody:
+        required: true
+        content: { application/octet-stream: {} }
+      responses:
+        '204': { description: stored }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   /jobs/{id}/detphoton:
-    parameters: [{ $ref: '#/components/parameters/JobId' }, { $ref: '#/components/parameters/Token' }]
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
     get:
       tags: [jobs]
-      summary: Detected-photon data (JData), if present
+      summary: Detected-photon data (JData), if present — client download
+      parameters: [{ $ref: '#/components/parameters/Token' }]
       responses:
         '200': { description: detphoton data, content: { application/json: {} } }
         '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [internal]
+      summary: Upload detected-photon data (worker only) — raw bytes
+      description: Requires `x-worker-secret`.
+      requestBody:
+        required: true
+        content: { application/octet-stream: {} }
+      responses:
+        '204': { description: stored }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ---- worker protocol (internal; auth via x-worker-secret header) --------------
+  # Sequence run by the mcx container: GET input -> PUT output [+ detphoton] -> POST
+  # complete. Results are pushed (raw bytes), never discovered on NFS.
+  /jobs/{id}/input:
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
+    get:
+      tags: [internal]
+      summary: Fetch the reassembled MCX input (worker only)
+      description: Requires the `x-worker-secret` header. `_DataLink_` refs are resolved.
+      responses:
+        '200': { description: MCX input (JData), content: { application/json: {} } }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   /jobs/{id}/complete:
     parameters: [{ $ref: '#/components/parameters/JobId' }]
     post:
       tags: [internal]
-      summary: Worker callback — upload output on completion (replaces NFS discovery)
+      summary: Finalize a job (worker only) — fires the SSE 'complete'/'error' event
       description: >
-        Called by the MCX container (with a worker credential) when the run finishes.
-        The API stores the bytes in blobs and marks the job done, which fires the SSE
-        'complete' event. This is what removes the filesystem from the signaling path.
+        Requires `x-worker-secret`. `?error=1` marks the job failed; otherwise it is
+        marked completed (the output must already have been PUT). The request body
+        (text/plain) is the mcx log.
+      parameters:
+        - { name: error,   in: query, schema: { type: string }, description: any value -> failed }
+        - { name: runtime, in: query, schema: { type: number }, description: seconds }
       requestBody:
-        required: true
+        required: false
         content:
-          application/json:
-            schema:
-              type: object
-              required: [output]
-              properties:
-                output:    { type: object, description: JNIfTI output (JData) }
-                detphoton: { type: object, nullable: true }
-                log:       { type: string }
-                runtime:   { type: number }
-                error:     { type: string, nullable: true }
+          text/plain: { schema: { type: string, description: mcx run log } }
       responses:
         '204': { description: recorded }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: no output uploaded }
 
   /library:
     get:
