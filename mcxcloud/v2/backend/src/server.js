@@ -1,11 +1,12 @@
+// @ts-check
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { config } from './config.ts';
-import { initQueue } from './queue.ts';
-import { schemaRoutes } from './routes/schema.ts';
-import { jobRoutes } from './routes/jobs.ts';
-import { libraryRoutes } from './routes/library.ts';
-import { blobRoutes } from './routes/blobs.ts';
+import { config } from './config.js';
+import { initQueue } from './queue.js';
+import { schemaRoutes } from './routes/schema.js';
+import { jobRoutes } from './routes/jobs.js';
+import { libraryRoutes } from './routes/library.js';
+import { blobRoutes } from './routes/blobs.js';
 
 const app = Fastify({ logger: true, bodyLimit: 64 * 1024 * 1024 });
 
@@ -26,7 +27,7 @@ try {
   await initQueue();
   app.log.info('job queue ready (pg-boss)');
 } catch (err) {
-  app.log.warn(`queue init failed — submit still works, dispatch is Phase 3: ${(err as Error).message}`);
+  app.log.warn(`queue init failed — submit still works, dispatch is Phase 3: ${(/** @type {Error} */ (err)).message}`);
 }
 
 await app.listen({ port: config.port, host: config.host });

@@ -19,7 +19,7 @@ mechanism changes.
 | Concern | v1 | v2 |
 |---|---|---|
 | Database | SQLite, 2 tables, `varchar(1024)` JSON | **PostgreSQL** (JSONB metadata + `blobs` bytea CAS table) |
-| API / scheduler | Perl CGI + Perl cron | **Node.js + TypeScript + Fastify** service + reactive worker (no build — native TS type-strip) |
+| API / scheduler | Perl CGI + Perl cron | **Node.js + Fastify** service + reactive worker (plain ESM JS + JSDoc, no build; Node 20+) |
 | Client↔server | JSONP + `setInterval` polling | **REST + SSE** (WebSocket only if bidirectional control needed) |
 | Job queue | `status=0` rows polled every 20 s | **Event-driven queue — `pg-boss` (in Postgres, no Redis)**; BullMQ/Redis optional |
 | Orchestration | Docker Swarm (`docker service create`) | **Docker Swarm, unchanged** — dispatched from the queue |
@@ -176,13 +176,16 @@ REST (JSON, CORS, no JSONP):
 SSE:
 - `GET /jobs/:id/stream` → status transitions + live mcx log lines + progress.
 
-## 7.5 Backend runtime & dependencies (Node.js + TypeScript + Fastify)
+## 7.5 Backend runtime & dependencies (Node.js + Fastify)
+
+**Language: plain ESM JavaScript + JSDoc `// @ts-check`** — no compile, no transpile, and
+still fully type-checkable with `tsc --noEmit` (a check, not a build). Same no-build
+philosophy as the frontend; runs on any Node ≥ 20 (not just bleeding-edge). Files ship and
+run exactly as written (`node src/server.js`).
 
 **System-level (on kwafoo):**
-- **Node.js LTS (22/24)** — npm ships with it. Node 22.18+/24 runs `.ts` directly via
-  native type-stripping → **no build step** (`node server.ts`); `tsc --noEmit` is only an
-  optional CI type-check.
-- **PostgreSQL** — DB + (via pg-boss) the job queue.
+- **Node.js ≥ 20 LTS** — npm ships with it. (Node 20 is Fastify 5 / pg-boss 10's floor.)
+- **PostgreSQL 13+** — DB + (via pg-boss) the job queue.
 - **Docker / Swarm** — already present from v1; invoked as a subprocess.
 - **Redis** — *not needed* (pg-boss keeps the queue in Postgres).
 
@@ -191,18 +194,20 @@ SSE:
 # runtime
 fastify              # web framework; JSON-Schema validation + serialization built in
 @fastify/cors
-pg                   # Postgres driver (or kysely/drizzle for typed queries)
+pg                   # Postgres driver
 pg-boss              # event-driven job queue inside Postgres (no Redis)
-# dev only
-typescript  @types/node
+ajv                  # validates submissions against schema/mcx-input.v1.json
+# dev only (type-check + editor types; not needed at runtime)
+typescript  @types/node  @types/pg
 ```
 - SSE needs no package (native `text/event-stream`). WebSocket would add
   `@fastify/websocket` — only if bidirectional control is later required.
 - JData/JNIfTI handling on the server reuses the first-party JS codec (`jsdata`),
   self-hosted/pinned like the frontend `vendor/` copy.
-- Rationale: Fastify validates *and* serializes routes with the **same JSON Schema** the
-  frontend editor uses (one authoritative file); pg-boss removes Redis; native TS
-  type-stripping removes the build. Minimal moving parts, one language front-to-back.
+- Rationale: Fastify validates *and* serializes routes against the **same JSON Schema** the
+  frontend editor uses (one authoritative file); pg-boss removes Redis; plain JS + JSDoc
+  removes the build while keeping type-checking. Minimal moving parts, one language
+  front-to-back, portable across Node ≥ 20.
 
 ## 8. Frontend plan — no-build, native ESM + import maps
 
@@ -342,7 +347,7 @@ export function streamJob(id, token, onEvent) {
 ## Resolved decisions
 
 - DB: **PostgreSQL** (JSONB metadata + `blobs` bytea CAS table).
-- Backend: **Node.js + TypeScript + Fastify**, no build (native TS type-strip); queue =
+- Backend: **Node.js + Fastify**, plain ESM JS + JSDoc (no build, Node 20+); queue =
   **pg-boss** (in Postgres, no Redis); transport = **REST + SSE**.
 - Orchestration: **Docker Swarm kept**, driven by the event queue (no 20 s cron).
 - Frontend: **no-build, framework-free** — native ES modules + import maps, JSDoc/@ts-check

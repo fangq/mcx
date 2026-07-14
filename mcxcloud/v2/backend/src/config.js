@@ -1,13 +1,17 @@
-export interface Config {
-  port: number;
-  host: string;
-  databaseUrl: string;
-  corsOrigin: string;
-  threshold: number;
-  workerSecret: string;
-}
+// @ts-check
 
-export const config: Config = {
+/**
+ * @typedef {Object} Config
+ * @property {number} port
+ * @property {string} host
+ * @property {string} databaseUrl
+ * @property {string} corsOrigin
+ * @property {number} threshold
+ * @property {string} workerSecret
+ */
+
+/** @type {Config} */
+export const config = {
   port: Number(process.env.PORT ?? 8080),
   host: process.env.HOST ?? '0.0.0.0',
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://mcxcloud@localhost/mcxcloud',

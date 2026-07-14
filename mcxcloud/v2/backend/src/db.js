@@ -1,10 +1,16 @@
+// @ts-check
 import pg from 'pg';
-import { config } from './config.ts';
+import { config } from './config.js';
 
 export const pool = new pg.Pool({ connectionString: config.databaseUrl });
 
-/** Run fn inside a transaction; commit on success, rollback on throw. */
-export async function withTx<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+/**
+ * Run fn inside a transaction; commit on success, rollback on throw.
+ * @template T
+ * @param {(client: import('pg').PoolClient) => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export async function withTx(fn) {
   const client = await pool.connect();
   try {
     await client.query('begin');

@@ -5,11 +5,11 @@
   "type": "module",
   "description": "MCX Cloud v2 API (Fastify) — implements v2/contracts/openapi.yaml",
   "engines": {
-    "node": ">=22.18"
+    "node": ">=20"
   },
   "scripts": {
-    "start": "node src/server.ts",
-    "migrate": "node src/migrate.ts",
+    "start": "node src/server.js",
+    "migrate": "node src/migrate.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -22,6 +22,6 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
-    "typescript": "^5.8.0"
+    "typescript": "^5.6.0"
   }
 }

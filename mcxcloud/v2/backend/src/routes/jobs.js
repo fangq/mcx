@@ -1,43 +1,49 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { config } from '../config.ts';
-import { pool, withTx } from '../db.ts';
-import { attachRefs, getBlob, putBlob } from '../blobs.ts';
-import { normalize } from '../jdata.ts';
-import { stableStringify } from '../hash.ts';
-import { mintToken, tokenHash } from '../tokens.ts';
-import { validateInput, checkLimits } from '../schema.ts';
-import { enqueueJob } from '../queue.ts';
-import { publish, subscribe } from '../sse.ts';
+// @ts-check
+import { config } from '../config.js';
+import { pool, withTx } from '../db.js';
+import { attachRefs, getBlob, putBlob } from '../blobs.js';
+import { normalize } from '../jdata.js';
+import { stableStringify } from '../hash.js';
+import { mintToken, tokenHash } from '../tokens.js';
+import { validateInput, checkLimits } from '../schema.js';
+import { enqueueJob } from '../queue.js';
+import { publish, subscribe } from '../sse.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const TERMINAL = new Set(['completed', 'cached', 'failed', 'cancelled', 'killed', 'invalid']);
 
-interface JobRow {
-  id: string;
-  status: string;
-  token_hash: string;
-  output_hash: string | null;
-  detp_hash: string | null;
-  error: string | null;
-}
+/**
+ * @typedef {Object} JobRow
+ * @property {string} id
+ * @property {string} status
+ * @property {string} token_hash
+ * @property {string | null} output_hash
+ * @property {string | null} detp_hash
+ * @property {string | null} error
+ */
 
-/** Returns {row} on match, {status:404|403} otherwise. */
-async function authJob(id: string, token: string | undefined): Promise<{ row?: JobRow; code?: number }> {
+/**
+ * Returns { row } on match, { code: 404|403 } otherwise.
+ * @param {string} id
+ * @param {string | undefined} token
+ * @returns {Promise<{ row?: JobRow, code?: number }>}
+ */
+async function authJob(id, token) {
   if (!UUID.test(id)) return { code: 404 };
   const r = await pool.query(
     'select id, status, token_hash, output_hash, detp_hash, error from jobs where id = $1',
     [id],
   );
   if (r.rowCount === 0) return { code: 404 };
-  const row = r.rows[0] as JobRow;
+  const row = /** @type {JobRow} */ (r.rows[0]);
   if (!token || row.token_hash !== tokenHash(token)) return { code: 403 };
   return { row };
 }
 
-export async function jobRoutes(app: FastifyInstance): Promise<void> {
+/** @param {import('fastify').FastifyInstance} app */
+export async function jobRoutes(app) {
   // ---- submit -----------------------------------------------------------------
   app.post('/jobs', async (req, reply) => {
-    const body = req.body as { doc?: unknown; user?: Record<string, unknown> };
+    const body = /** @type {{ doc?: unknown, user?: Record<string, unknown> }} */ (req.body);
     if (!body?.doc || typeof body.doc !== 'object') {
       return reply.code(422).send({ status: 'invalid', message: 'missing doc' });
     }
@@ -46,7 +52,7 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
         .code(422)
         .send({ status: 'invalid', message: 'schema validation failed', errors: validateInput.errors });
     }
-    const limit = checkLimits(body.doc as Record<string, unknown>);
+    const limit = checkLimits(/** @type {Record<string, any>} */ (body.doc));
     if (limit) return reply.code(422).send({ status: 'invalid', message: limit });
 
     const { token, tokenHash: th } = mintToken();
@@ -72,7 +78,7 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
            values ($1,$2,'cached',$3,$4,$5,$6, now()) returning id`,
           [doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash],
         );
-        const id = ins.rows[0].id as string;
+        const id = /** @type {string} */ (ins.rows[0].id);
         const owned = [...refs, cached.rows[0].output_hash];
         if (cached.rows[0].detp_hash) owned.push(cached.rows[0].detp_hash);
         await attachRefs(client, owned, 'job', id);
@@ -84,7 +90,7 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
          values ($1,$2,'queued',$3,$4) returning id`,
         [doc, docHash, body.user ?? null, th],
       );
-      const id = ins.rows[0].id as string;
+      const id = /** @type {string} */ (ins.rows[0].id);
       await attachRefs(client, refs, 'job', id);
       return { id, status: 'queued', cached: false };
     });
@@ -98,12 +104,13 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
 
   // ---- status -----------------------------------------------------------------
   app.get('/jobs/:id', async (req, reply) => {
-    const { id } = req.params as { id: string };
+    const { id } = /** @type {{ id: string }} */ (req.params);
     if (!UUID.test(id)) return reply.code(404).send({ status: 'error', message: 'not found' });
     const r = await pool.query('select id, status, error, priority, created_at from jobs where id = $1', [id]);
     if (r.rowCount === 0) return reply.code(404).send({ status: 'error', message: 'not found' });
     const job = r.rows[0];
-    let queuePos: number | null = null;
+    /** @type {number | null} */
+    let queuePos = null;
     if (job.status === 'queued') {
       const q = await pool.query(
         `select count(*)::int as n from jobs
@@ -117,8 +124,8 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
 
   // ---- cancel -----------------------------------------------------------------
   app.delete('/jobs/:id', async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const { token } = req.query as { token?: string };
+    const { id } = /** @type {{ id: string }} */ (req.params);
+    const { token } = /** @type {{ token?: string }} */ (req.query);
     const auth = await authJob(id, token);
     if (auth.code) return reply.code(auth.code).send({ status: 'error', message: auth.code === 404 ? 'not found' : 'forbidden' });
     await pool.query(
@@ -131,9 +138,9 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ---- live SSE stream --------------------------------------------------------
-  app.get('/jobs/:id/stream', async (req: FastifyRequest, reply: FastifyReply) => {
-    const { id } = req.params as { id: string };
-    const { token } = req.query as { token?: string };
+  app.get('/jobs/:id/stream', async (req, reply) => {
+    const { id } = /** @type {{ id: string }} */ (req.params);
+    const { token } = /** @type {{ token?: string }} */ (req.query);
     const auth = await authJob(id, token);
     if (auth.code) return reply.code(auth.code).send({ status: 'error', message: auth.code === 404 ? 'not found' : 'forbidden' });
 
@@ -146,11 +153,11 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
       'Access-Control-Allow-Origin': config.corsOrigin,
     });
     raw.write(': connected\n\n');
-    const write = (event: string, data: Record<string, unknown>) =>
-      raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    /** @param {string} event @param {Record<string, unknown>} data */
+    const write = (event, data) => raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
     // initial snapshot so a late/reconnecting subscriber gets terminal state immediately
-    const job = auth.row!;
+    const job = /** @type {JobRow} */ (auth.row);
     write('status', { jobid: id, status: job.status });
     if ((job.status === 'completed' || job.status === 'cached') && job.output_hash) {
       write('complete', { jobid: id, outputHash: job.output_hash, hasDetphoton: !!job.detp_hash });
@@ -167,16 +174,17 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ---- output / detected photons ---------------------------------------------
-  const serveBlob = async (
-    req: FastifyRequest,
-    reply: FastifyReply,
-    column: 'output_hash' | 'detp_hash',
-  ) => {
-    const { id } = req.params as { id: string };
-    const { token } = req.query as { token?: string };
+  /**
+   * @param {import('fastify').FastifyRequest} req
+   * @param {import('fastify').FastifyReply} reply
+   * @param {'output_hash' | 'detp_hash'} column
+   */
+  const serveBlob = async (req, reply, column) => {
+    const { id } = /** @type {{ id: string }} */ (req.params);
+    const { token } = /** @type {{ token?: string }} */ (req.query);
     const auth = await authJob(id, token);
     if (auth.code) return reply.code(auth.code).send({ status: 'error', message: auth.code === 404 ? 'not found' : 'forbidden' });
-    const hash = auth.row![column];
+    const hash = (/** @type {JobRow} */ (auth.row))[column];
     if (!hash) return reply.code(404).send({ status: 'error', message: 'not available' });
     const client = await pool.connect();
     try {
@@ -194,15 +202,9 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
     if (req.headers['x-worker-secret'] !== config.workerSecret) {
       return reply.code(403).send({ status: 'error', message: 'forbidden' });
     }
-    const { id } = req.params as { id: string };
+    const { id } = /** @type {{ id: string }} */ (req.params);
     if (!UUID.test(id)) return reply.code(404).send({ status: 'error', message: 'not found' });
-    const body = req.body as {
-      output?: unknown;
-      detphoton?: unknown;
-      log?: string;
-      runtime?: number;
-      error?: string | null;
-    };
+    const body = /** @type {{ output?: unknown, detphoton?: unknown, log?: string, runtime?: number, error?: string | null }} */ (req.body);
 
     if (body.error) {
       await pool.query(
@@ -217,7 +219,8 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
       const outCanon = stableStringify(body.output);
       const outHash = await putBlob(client, outCanon, null, Buffer.byteLength(outCanon, 'utf8'));
       const owned = [outHash];
-      let detpHash: string | null = null;
+      /** @type {string | null} */
+      let detpHash = null;
       if (body.detphoton !== undefined && body.detphoton !== null) {
         const dCanon = stableStringify(body.detphoton);
         detpHash = await putBlob(client, dCanon, null, Buffer.byteLength(dCanon, 'utf8'));

@@ -7,7 +7,7 @@ v2 runs in parallel with the untouched v1 (`../v1/frontend`, `../v1/backend`) un
 ## Stack (decided)
 
 - **DB:** PostgreSQL — JSONB metadata + a `blobs` `bytea` content-addressed table.
-- **Backend:** Node.js + TypeScript + Fastify, **no build** (native TS type-strip);
+- **Backend:** Node.js (≥20 LTS) + Fastify, **plain ESM JS + JSDoc, no build**;
   queue = **pg-boss** (in Postgres, no Redis); transport = **REST + SSE**.
 - **Frontend:** no-build native ES modules + import maps; three.js ported.
 - **Orchestration:** Docker Swarm kept, driven by an event queue (no 20 s cron).

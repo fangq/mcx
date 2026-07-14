@@ -1,18 +1,20 @@
-import type { FastifyInstance } from 'fastify';
-import { config } from '../config.ts';
-import { pool, withTx } from '../db.ts';
-import { attachRefs, getBlob, putBlob } from '../blobs.ts';
-import { normalize, reassemble } from '../jdata.ts';
-import { validateInput } from '../schema.ts';
+// @ts-check
+import { config } from '../config.js';
+import { pool, withTx } from '../db.js';
+import { attachRefs, getBlob, putBlob } from '../blobs.js';
+import { normalize, reassemble } from '../jdata.js';
+import { validateInput } from '../schema.js';
 
 const LICENSES = new Set(['CC0', 'CC-BY', 'CC-BY-SA']);
-const blobUrl = (hash: string | null): string | null =>
-  hash ? '/blobs/' + hash : null; // hash is 'sha256/<hex>'
 
-export async function libraryRoutes(app: FastifyInstance): Promise<void> {
+/** @param {string | null} hash @returns {string | null} */
+const blobUrl = (hash) => (hash ? '/blobs/' + hash : null); // hash is 'sha256/<hex>'
+
+/** @param {import('fastify').FastifyInstance} app */
+export async function libraryRoutes(app) {
   // ---- browse / search --------------------------------------------------------
   app.get('/library', async (req, reply) => {
-    const { q, limit, offset } = req.query as { q?: string; limit?: string; offset?: string };
+    const { q, limit, offset } = /** @type {{ q?: string, limit?: string, offset?: string }} */ (req.query);
     const lim = Math.min(Number(limit ?? 20) || 20, 100);
     const off = Number(offset ?? 0) || 0;
     const rows = q
@@ -42,7 +44,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
   // ---- load one ---------------------------------------------------------------
   app.get('/library/:id', async (req, reply) => {
-    const { id } = req.params as { id: string };
+    const { id } = /** @type {{ id: string }} */ (req.params);
     const r = await pool.query(
       'select id, title, description, license, input_doc from library where id = $1',
       [id],
@@ -50,7 +52,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     if (r.rowCount === 0) return reply.code(404).send({ status: 'error', message: 'not found' });
     const row = r.rows[0];
     const client = await pool.connect();
-    let doc: unknown;
+    let doc;
     try {
       doc = await reassemble(row.input_doc, (h) => getBlob(client, h));
     } finally {
@@ -62,14 +64,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
   // ---- share ------------------------------------------------------------------
   app.post('/library', async (req, reply) => {
-    const body = req.body as {
-      title?: string;
-      description?: string;
-      license?: string;
-      thumbnail?: string;
-      doc?: unknown;
-      user?: Record<string, unknown>;
-    };
+    const body = /** @type {{ title?: string, description?: string, license?: string, thumbnail?: string, doc?: unknown, user?: Record<string, unknown> }} */ (req.body);
     if (!body?.title || !body?.description || !body?.license || !body?.doc) {
       return reply.code(422).send({ status: 'invalid', message: 'missing required fields' });
     }
@@ -89,7 +84,8 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
         config.threshold,
       );
       const owned = [...refs];
-      let thumbHash: string | null = null;
+      /** @type {string | null} */
+      let thumbHash = null;
       if (body.thumbnail) {
         thumbHash = await putBlob(client, body.thumbnail, null, Buffer.byteLength(body.thumbnail, 'utf8'));
         owned.push(thumbHash);
@@ -99,7 +95,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
          values ($1,$2,$3,$4,$5,$6,$7) returning id`,
         [body.title, body.description, body.license, body.user ?? null, doc, docHash, thumbHash],
       );
-      const id = ins.rows[0].id as string;
+      const id = /** @type {string} */ (ins.rows[0].id);
       await attachRefs(client, owned, 'library', id);
       return { id, hash: docHash };
     });

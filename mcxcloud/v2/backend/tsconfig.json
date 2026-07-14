@@ -3,15 +3,14 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "checkJs": false,
     "esModuleInterop": true,
-    "erasableSyntaxOnly": true,
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
     "lib": ["esnext"],
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.js"]
 }

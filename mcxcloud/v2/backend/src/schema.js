@@ -1,23 +1,25 @@
+// @ts-check
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
-import type { ValidateFunction } from 'ajv';
 
 // The authoritative MCX input schema (shared with the frontend editor).
 const schemaPath = fileURLToPath(new URL('../../schema/mcx-input.v1.json', import.meta.url));
-export const mcxSchema: unknown = JSON.parse(readFileSync(schemaPath, 'utf8'));
+export const mcxSchema = JSON.parse(readFileSync(schemaPath, 'utf8'));
 
-// strict:false → tolerate JSON-Editor-only keywords (options, propertyOrder, format:"table"…);
-// validateFormats:false → don't fail on non-standard formats. Structural validation
+// strict:false -> tolerate JSON-Editor-only keywords (options, propertyOrder, format:"table"…);
+// validateFormats:false -> don't fail on non-standard formats. Structural validation
 // (type/required/min/max/enum/oneOf) is what we rely on.
 const ajv = new Ajv({ strict: false, allErrors: true, validateFormats: false });
-export const validateInput: ValidateFunction = ajv.compile(mcxSchema as object);
+export const validateInput = ajv.compile(mcxSchema);
 
 /**
  * Preview-mode resource caps (ported from v1 mcxserver.cgi checklimit / index.html
  * checklimit). Returns an error message, or null if within limits.
+ * @param {Record<string, any>} cfg
+ * @returns {string | null}
  */
-export function checkLimits(cfg: Record<string, any>): string | null {
+export function checkLimits(cfg) {
   const S = cfg?.Session ?? {};
   const F = cfg?.Forward ?? {};
   const D = cfg?.Domain ?? {};
@@ -26,9 +28,9 @@ export function checkLimits(cfg: Record<string, any>): string | null {
     return 'storing photon trajectories is not supported in this preview version';
   if (F.T1 && F.Dt && F.T1 / F.Dt > 100)
     return 'the maximum time gate number is limited to 100 in this preview version';
-  if (Array.isArray(D.Dim) && D.Dim.length === 3 && D.Dim.some((x: number) => x > 300))
+  if (Array.isArray(D.Dim) && D.Dim.length === 3 && D.Dim.some((/** @type {number} */ x) => x > 300))
     return 'the maximum domain dimension is 300 in this preview version';
-  if (Array.isArray(D.Media) && D.Media.some((m: any) => m?.mus > 50))
+  if (Array.isArray(D.Media) && D.Media.some((/** @type {any} */ m) => m?.mus > 50))
     return 'scattering coeff (mus) is limited to 50/mm in this preview version';
   return null;
 }

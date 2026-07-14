@@ -1,6 +1,7 @@
+// @ts-check
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { pool } from './db.ts';
+import { pool } from './db.js';
 
 // Apply db/migrations/*.sql in filename order. Idempotent (migrations use IF NOT EXISTS).
 const dir = fileURLToPath(new URL('../db/migrations/', import.meta.url));
