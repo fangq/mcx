@@ -1,0 +1,351 @@
+# MCX Cloud v2 — Design & Modernization Plan
+
+> Status: draft roadmap (2026-07-13). Supersedes the v1 system described in
+> Fang & Yan, *JBO* **27**(8), 083008 (2022).
+
+## 1. Goals
+
+Modernize the ~5-year-old v1 platform along three axes the maintainer prioritized:
+
+1. **More efficient database structure** — replace SQLite + NFS-file coordination.
+2. **Better JavaScript** — replace the monolithic 3,379-line `index.html`.
+3. **Faster front/back communication** — replace JSONP + dual polling.
+
+Non-goal: re-platform the GPU cluster. Docker Swarm stays; only the *scheduling*
+mechanism changes.
+
+## 2. Chosen stack (decided)
+
+| Concern | v1 | v2 |
+|---|---|---|
+| Database | SQLite, 2 tables, `varchar(1024)` JSON | **PostgreSQL** (JSONB metadata + `blobs` bytea CAS table) |
+| API / scheduler | Perl CGI + Perl cron | **Node.js + TypeScript + Fastify** service + reactive worker (no build — native TS type-strip) |
+| Client↔server | JSONP + `setInterval` polling | **REST + SSE** (WebSocket only if bidirectional control needed) |
+| Job queue | `status=0` rows polled every 20 s | **Event-driven queue — `pg-boss` (in Postgres, no Redis)**; BullMQ/Redis optional |
+| Orchestration | Docker Swarm (`docker service create`) | **Docker Swarm, unchanged** — dispatched from the queue |
+| Frontend | 1 monolithic HTML file, jQuery, `@latest` CDN | **Compact, framework-free, no-build**: native ES modules + import maps |
+| 3D render | three.js r145 (removed APIs) | **three.js ported to current release** |
+| Auth | `HTTP_REFERER` regex + email string | Capability tokens (+ optional accounts) |
+
+Frontend guidance: **keep it small and no-build** — preserve v1's small-download
+ethos (v1 loaded ~570 kB). Framework-free, native ES modules + import maps, no bundler
+(see §8).
+
+## 2.5 Deployment topology & concrete v1 problems
+
+**v1 topology (two network domains):**
+- **mcx.space** — front-end static hosting on **IONOS**. IONOS also offers a MariaDB,
+  but it is reachable **only from IONOS servers**, not from kwafoo → cannot be the queue DB.
+- **kwafoo** — Apache + Perl CGI + SQLite queue + `mcxcloud` cron → Docker Swarm.
+- **NFS** syncs simulation output back to kwafoo; on file appearance, JSONP returns results.
+
+**Three measured problems and their v2 fixes:**
+
+1. **NFS visibility latency (~60 s even for a 5 s sim).** Root cause is NFS
+   attribute/dir caching (`acregmax`/`acdirmax`/negative-lookup ≈ 60 s), so kwafoo's
+   `-e output.jnii` check stays stale. **Fix: remove the filesystem from the signaling
+   path.** The worker container, on completion, **POSTs its output bytes to the API**,
+   which inserts them into the Postgres `blobs` table (§6) and marks the job complete.
+   The manager never `stat()`s NFS.
+
+2. **IONOS MariaDB unreachable from kwafoo.** **Fix: authoritative Postgres + API +
+   queue all live on kwafoo (co-located with compute); mcx.space stays static-only** and
+   calls the kwafoo API over HTTPS/WSS (cross-origin, as today). IONOS MariaDB is not in
+   the queue path. *Optional:* a read-only public-library mirror on IONOS, fed by a
+   kwafoo→IONOS **push** (kwafoo can't connect in) — skip unless browse latency demands it.
+
+3. **DB bloat from duplicated Shapes (>1 GB).** Large JData `Shapes`/volume blobs
+   (0.5–1 MB) are stored inline and re-stored on every copy. **Fix: content-addressed
+   sub-document dedup** — extract heavy fields (`Shapes`, `Domain.VolumeFile`/`NIFTIData`,
+   large packed arrays), hash each (SHA-256), store once in a `blobs` store, and replace
+   inline with a `{"_DataLink_":"sha256:<hash>"}` reference; reassemble on read. Extends
+   v1's whole-record `md5_hex` dedup to the field level. Same store also holds job
+   outputs and unifies the `workspace/_<hash>` result cache. Refcount/GC unreferenced blobs.
+
+## 3. Current (v1) architecture — reference
+
+### Backend (now under `v1/backend/`)
+- `v1/backend/mcxserver.cgi` (Perl, 300 lines): all HTTP handling via JSONP. Routes by
+  presence of params: `hash+id` → load library entry; `limit` → search library;
+  `license` → share submit; `email+json` → enqueue job; `action=cancel|detphoton`;
+  else → **status poll** by `stat`-ing `workspace/<jobid>/{output.jnii,done,killed,error.txt}`
+  on NFS. Job dedup via `md5_hex(json)`; cached results reused under `workspace/_<hash>`.
+- `v1/backend/mcxcloudd` (Perl cron, 200 lines): every 20 s counts GPUs
+  (`docker node ... inspect | grep GPU-`), finds `status=0` rows up to free-GPU count,
+  writes `input.json`, runs `docker service create --generic-resource NVIDIA_GPU=1
+  fangqq/mcx:v2024.2 ...`. `--kill` removes jobs running >1 min; `--clean` removes
+  folders/services >1 hr.
+- `v1/backend/createdb.sql`: `mcxcloud` (job queue) + `mcxpub` (shared library).
+
+### Frontend (`v1/frontend/index.html`)
+- Tabs: Browse, Create (JSON-Editor form), JSON, Preview (three.js), Run, Share,
+  Schema, Options. `showtab()` toggles sections.
+- Input form auto-generated by `@json-editor/json-editor` from a **~1,056-line inline
+  JSON schema** (`var defaultSchema`, lines 596–1648).
+- three.js volume raycaster: `createFragmentShader` (GLSL-in-string-array), `drawvolume`
+  (`DataTexture3D`/`RedFormat` — **removed in modern three.js**), `drawpreview`,
+  `drawshape/drawsrc/drawdet`.
+- State: global vars + hidden DOM inputs + textarea string flags; user info in
+  `localStorage`. URL sharing via `LZString` base64 of options/JSON.
+- Comms: `runsimulation` (POST) → `updatestatus` → `setInterval(jobstatus,5000)`
+  (JSONP→`addlog`), 60-tick (~5 min) expiry; `canceljob`, `getdetphoton`, `searchpub`,
+  `loadsimulib`.
+
+## 4. Known problems v2 must fix
+
+- **Scheduling latency**: 20 s cron tick is the dispatch floor.
+- **Double polling**: 5 s client poll + 20 s server cron; both wasteful.
+- **SQL injection**: `mcxserver.cgi` interpolates user params into SQL
+  (lines 84, 100, 103, 232). Must use parameterized queries everywhere.
+- **XSS**: `loadpubdata`/`showsimudata` build `innerHTML` from server strings.
+- **No auth**: only a referer check; email is a plaintext identifier.
+- **NFS-file coordination**: sentinel files (`done`/`killed`/`error.txt`) are race-prone.
+- **`varchar(1024)` JSON cap** in the schema vs 188 kB+ real inputs (digimouse).
+- **Monolithic frontend / `@latest` pins**: no build, no modules, fragile deps,
+  live fetches from `mcx.space`, `neurojson.org`, `threejs.org`.
+- **Dead three.js APIs**: `drawvolume` must be rewritten for a current release.
+
+## 5. Target v2 architecture
+
+```
+mcx.space (IONOS, static)            kwafoo / manager node
+┌───────────────────────┐           ┌──────────────────────────────────────┐
+│ Browser (ESM modules   │  REST     │ Node/TS + Fastify API service          │
+│ served static)         │──────────►│   ├─ Postgres: metadata, queue, lib,   │
+│                        │◄──SSE─────│   │    + blobs (CAS by sha256, bytea)   │
+└───────────────────────┘           │   └─ Job queue: pg-boss (in Postgres)  │
+                                     │            │ event: new job             │
+                                     │            ▼                            │
+                                     │   Reactive scheduler/worker             │
+                                     │            │ docker service create      │
+                                     │            │   --generic-resource GPU=1 │
+                                     │            ▼                            │
+                                     │   Docker Swarm ─► mcx container         │
+                                     │        │ streams log; on done:          │
+                                     │        └─ POST output bytes → API        │
+                                     │           → blobs table + mark complete  │
+                                     └──────────────────────────────────────┘
+```
+
+- **Co-location**: Postgres (incl. the blobs table) + API + queue all run on kwafoo (with
+  the compute); mcx.space is static-only and calls the kwafoo API. Solves the isolated-
+  IONOS-MariaDB constraint (§2.5-2).
+- **Push, not poll (both ends)**: the mcx container streams log/progress and, on
+  completion, **POSTs its output bytes to the API**, which stores them in the Postgres
+  blobs table and marks the job done — the manager never `stat()`s NFS, eliminating the
+  ~60 s NFS visibility lag (§2.5-1). The API pushes status/log/completion to the browser
+  over SSE (no `setInterval`).
+- **Reactive scheduling**: submit → enqueue → worker wakes on the event, checks cached
+  free-GPU inventory, dispatches immediately. No 20 s tick. Kill/cleanup are timed queue
+  jobs, not cron lines.
+- **Content-addressed data (§2.5-3)**: Postgres stores metadata + status + a *normalized*
+  input JSON whose heavy fields are JData `_DataLink_` refs (spec-valid, resolvable); the
+  actual Shapes/volume/output blobs live once in the Postgres `blobs` table keyed by
+  sha256. Kills the duplicated-Shapes bloat and unifies the `workspace/_<hash>` result cache.
+- **Security**: parameterized SQL, server-side JSON-Schema validation (shared schema
+  file), per-job capability tokens, and the `checklimit` resource caps enforced server-side.
+
+## 6. Data model (v2, Postgres)
+
+- `blobs` (**the dedup core**): `hash` (sha256, PK), `size`, `encoding` (e.g. zlib),
+  `refcount`, `created_at`, `data bytea`. Postgres auto-**TOASTs** large `bytea` out-of-line
+  (values up to ~1 GB; store JData's already-zlib bytes and disable double-compression).
+  Every heavy field (Shapes, volume, output) is stored here exactly once; identical content
+  across any number of jobs/library entries shares one row. GC when `refcount` hits 0.
+  (Single-system choice: one DB to back up; watch table size and consider a dedicated
+  tablespace as it grows.)
+- `jobs`: id (uuid), input_doc (JSONB — *normalized*: heavy fields replaced by JData
+  `_DataLink_` sha256 refs), doc_hash, status (enum), priority, submitter (fk/nullable),
+  output_hash (→blobs), detp_hash, log_ref, token, created/started/ended_at, gpu/node,
+  error. Index on (status, priority, created_at) for the scheduler; index on doc_hash for
+  whole-record dedup/cache reuse.
+- `library`: id, title, description, license, author fields, input_doc (JSONB, normalized),
+  doc_hash, thumbnail_hash (→blobs), upvotes, downvotes, read_count, run_count, created_at.
+  **Postgres full-text index** on title/description (replaces `LIKE '%...%'`).
+- `users` (optional phase): id, email, name, institution, token/keys.
+- Rule: the JSONB columns stay small (refs only); all bulk bytes live in `blobs`. This is
+  what stops the >1 GB growth from cloned simulations. Consider a NeuroJSON-compatible
+  export path for the public library.
+
+## 7. API surface (v2, sketch)
+
+REST (JSON, CORS, no JSONP):
+- `POST /jobs` → submit (returns id + token) · `GET /jobs/:id` → status
+- `DELETE /jobs/:id` → cancel · `GET /jobs/:id/output`, `/detphoton`
+- `GET /library?q=&limit=&offset=` · `GET /library/:id` · `POST /library` (share)
+SSE:
+- `GET /jobs/:id/stream` → status transitions + live mcx log lines + progress.
+
+## 7.5 Backend runtime & dependencies (Node.js + TypeScript + Fastify)
+
+**System-level (on kwafoo):**
+- **Node.js LTS (22/24)** — npm ships with it. Node 22.18+/24 runs `.ts` directly via
+  native type-stripping → **no build step** (`node server.ts`); `tsc --noEmit` is only an
+  optional CI type-check.
+- **PostgreSQL** — DB + (via pg-boss) the job queue.
+- **Docker / Swarm** — already present from v1; invoked as a subprocess.
+- **Redis** — *not needed* (pg-boss keeps the queue in Postgres).
+
+**npm packages (local `node_modules`, no system pollution):**
+```
+# runtime
+fastify              # web framework; JSON-Schema validation + serialization built in
+@fastify/cors
+pg                   # Postgres driver (or kysely/drizzle for typed queries)
+pg-boss              # event-driven job queue inside Postgres (no Redis)
+# dev only
+typescript  @types/node
+```
+- SSE needs no package (native `text/event-stream`). WebSocket would add
+  `@fastify/websocket` — only if bidirectional control is later required.
+- JData/JNIfTI handling on the server reuses the first-party JS codec (`jsdata`),
+  self-hosted/pinned like the frontend `vendor/` copy.
+- Rationale: Fastify validates *and* serializes routes with the **same JSON Schema** the
+  frontend editor uses (one authoritative file); pg-boss removes Redis; native TS
+  type-stripping removes the build. Minimal moving parts, one language front-to-back.
+
+## 8. Frontend plan — no-build, native ESM + import maps
+
+Principle: **no compile step, no `npm install`, no bundler.** The files edited are the
+files the browser runs. Modernize using browser-native capabilities only. Compact,
+portable (drop onto IONOS/mcx.space static hosting), easy to maintain.
+
+### 8.1 Layout (thin shell + local ES modules under `js/`)
+
+```
+v2/frontend/
+  index.html      ← thin shell: markup + <importmap> + <script type="module" src="js/app.js">
+  style.css       ← plain modern CSS (custom properties + native nesting)
+  js/
+    app.js        ← entry: tab wiring, boot; imports the modules below
+    state.js      ← one small reactive store (replaces globals + hidden inputs + flags)
+    api.js        ← fetch (REST) + EventSource (SSE) calls to the kwafoo API
+    editor.js     ← JSON-Editor setup; fetches schema from API (single source of truth)
+    preview.js    ← three.js render (imported via import map); drawvolume port
+    library.js    ← browse/share
+  vendor/         ← self-hosted, pinned first-party assets (jdata.js, OrbitControls, colormaps)
+```
+
+App modules live in `js/` and import each other with relative specifiers
+(`import { state } from './state.js'`). The **deliverable is one small folder** copied
+anywhere. Import maps + native ESM mean no build.
+
+Note: these are same-origin imports — **no CORS involved** when the folder is served over
+http(s) (IONOS static hosting, or any web server). The only limitation is the `file://`
+protocol (browsers won't load local module files from a `null` origin), i.e. you can't
+just double-click `index.html` off disk — serve it (`python3 -m http.server` for local
+dev). Irrelevant in deployment since the app is always hosted + API-backed.
+
+### 8.2 Dependency pinning via import map (fixes the `@latest` problem)
+
+One `<script type="importmap">` in `index.html` pins every external lib in a single place;
+code imports clean bare specifiers (`import * as THREE from 'three'`). CDN ESM providers
+(esm.sh, jsDelivr `/+esm`) serve npm packages as modules — no `node_modules`.
+
+```html
+<script type="importmap">
+{ "imports": {
+    "three":          "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "pako":           "https://esm.sh/pako@2.1.0",
+    "lz-string":      "https://esm.sh/lz-string@1.5.0",
+    "@json-editor/json-editor": "https://esm.sh/@json-editor/json-editor@2.15.2",
+    "jdata":          "./vendor/jdata.js"   // first-party: self-hosted & pinned
+}}
+</script>
+```
+(versions illustrative — pin exact ones). First-party assets that v1 live-fetched
+cross-site — `OrbitControls`, `jdata.js`, three.js colormap PNGs — are **self-hosted**
+under `vendor/` so there are no fragile cross-origin runtime fetches.
+
+### 8.3 Type safety without compiling
+
+Each module starts with `// @ts-check` and uses JSDoc types. Full checking + autocomplete
+in the editor; optional CI gate `npx tsc --noEmit --checkJs` (a *check*, not a build — the
+app ships uncompiled). This is why app code lives in `.js` files, not inline in HTML.
+
+### 8.4 Reactive store (replaces globals + hidden `<input>`s + textarea flags)
+
+A ~30-line `Proxy`-based store is the single source of truth; views subscribe and re-render
+on change. No framework.
+
+```js
+// js/state.js  — // @ts-check
+const listeners = new Set();
+/** @type {{jobId?:string, token?:string, status?:string, log:string,
+ *          output?:object, valid:boolean, user:object}} */
+const initial = { log: '', valid: false, user: {} };
+export const state = new Proxy(initial, {
+  set(o, k, v) { o[k] = v; listeners.forEach(fn => fn(k, v)); return true; }
+});
+/** @param {(key:string, val:any)=>void} fn */
+export const subscribe = fn => (listeners.add(fn), () => listeners.delete(fn));
+```
+
+### 8.5 Communication (drops jQuery, JSONP, setInterval)
+
+`fetch`/`async` for REST; `EventSource` for the live job stream (SSE) — server pushes
+status + mcx log lines + completion; no polling.
+
+```js
+// js/api.js  — // @ts-check
+const API = 'https://kwafoo.coe.neu.edu/api';   // v2 REST/SSE base
+export async function submitJob(doc, user) {
+  const r = await fetch(`${API}/jobs`, { method:'POST',
+    headers:{'content-type':'application/json'}, body:JSON.stringify({doc, user}) });
+  if (!r.ok) throw new Error(`submit failed: ${r.status}`);
+  return r.json();                              // { id, token }
+}
+/** live status/log/progress; returns an unsubscribe fn */
+export function streamJob(id, token, onEvent) {
+  const es = new EventSource(`${API}/jobs/${id}/stream?token=${token}`);
+  es.onmessage = e => onEvent(JSON.parse(e.data));
+  es.onerror  = () => es.close();
+  return () => es.close();
+}
+```
+
+### 8.6 Other modernizations
+
+- Native DOM everywhere (`querySelector`, `classList`, `addEventListener`, template
+  literals + `<template>` cloning) — jQuery removed entirely.
+- Safe DOM construction / `textContent` for server-derived strings (fixes v1 XSS in
+  `loadpubdata`/`showsimudata`).
+- **Schema fetched from the API** (`GET /schema/mcx-input.vN`) — same file the backend
+  validates against; no 1,056-line inline blob.
+- **three.js port**: current release; rewrite `drawvolume` (`DataTexture3D` →
+  `Data3DTexture`, `RedFormat`/`RedFormat`+`LinearFilter`), re-verify MIP/Iso shaders and
+  cross-section uniforms; import `OrbitControls` via `three/addons/`.
+- CSS: custom properties + native nesting; no Sass/preprocessor.
+- Optional (still no-build): if declarative templating is ever wanted, `lit` /
+  `preact`+`htm` / `Alpine.js` load straight from an ESM CDN — not needed for this size.
+
+## 9. Phased roadmap
+
+1. **Contracts** — extract schema to a versioned file; define OpenAPI + SSE message
+   schema. v1 keeps running unchanged in parallel.
+2. **DB + API** — Postgres schema + migration from SQLite; Node/TS + Fastify API with
+   parameterized queries, server-side JSON-Schema validation, capability tokens.
+3. **Event scheduler** — pg-boss queue + reactive worker replacing `mcxcloudd`; keep Swarm
+   dispatch verbatim; kill/cleanup as queued timers.
+4. **Frontend rebuild** — no-build native-ESM modules + import map, reactive store,
+   three.js port, fetch/SSE client (see §8).
+5. **Cutover + docs** — migrate `mcxpub` library data; write the "private MCX cloud"
+   setup guide the paper promised.
+
+## 10. Open questions (later)
+
+- User accounts vs anonymous capability tokens only? (auth depth)
+- Keep `mcx2json`/umcx input compatibility as-is? MMC (mesh) online support timing?
+- Optional NeuroJSON-compatible export/mirror of the public library (not the storage layer).
+
+## Resolved decisions
+
+- DB: **PostgreSQL** (JSONB metadata + `blobs` bytea CAS table).
+- Backend: **Node.js + TypeScript + Fastify**, no build (native TS type-strip); queue =
+  **pg-boss** (in Postgres, no Redis); transport = **REST + SSE**.
+- Orchestration: **Docker Swarm kept**, driven by the event queue (no 20 s cron).
+- Frontend: **no-build, framework-free** — native ES modules + import maps, JSDoc/@ts-check
+  (no compile, no npm install); **three.js ported**. Ships as a small folder (§8).
+- Blob store: **Postgres `bytea`** (single-system). Refs: **JData `_DataLink_`** (spec-valid).
+- Result return: **worker POSTs output to API** (no NFS in the signaling path).

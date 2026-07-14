@@ -1,0 +1,1053 @@
+{
+  "title": "MCX JSON Input",
+  "type": "object",
+  "required": [
+    "Session",
+    "Forward",
+    "Optode",
+    "Shapes",
+    "Domain"
+  ],
+  "format": "categories",
+  "basicCategoryTitle": "Shapes",
+  "properties": {
+    "Session": {
+      "type": "object",
+      "title": "Session",
+      "format": "grid",
+      "required": [
+        "ID",
+        "Photons",
+        "DoMismatch",
+        "DoAutoThread"
+      ],
+      "properties": {
+        "ID": {
+          "title": "Session Name",
+          "type": "string",
+          "default": "mcx"
+        },
+        "Photons": {
+          "title": "Photon number",
+          "type": "integer",
+          "default": 100000,
+          "maximum": 1000000000
+        },
+        "DoMismatch": {
+          "title": "Do reflection",
+          "type": "boolean",
+          "default": true
+        },
+        "DoAutoThread": {
+          "title": "Let MCX decide thread/block size",
+          "type": "boolean",
+          "default": true
+        },
+        "DoSaveVolume": {
+          "title": "Save fluence",
+          "type": "boolean",
+          "default": true
+        },
+        "DoPartialPath": {
+          "title": "Save detected photons",
+          "type": "boolean",
+          "default": true
+        },
+        "DoNormalize": {
+          "title": "Do normalization",
+          "type": "boolean",
+          "default": true
+        },
+        "DoSaveRef": {
+          "title": "Save diffuse reflectance",
+          "type": "boolean",
+          "default": false
+        },
+        "DoSaveExit": {
+          "title": "Save exit position",
+          "type": "boolean",
+          "default": false
+        },
+        "DoSaveSeed": {
+          "title": "Save photon seeds",
+          "type": "boolean",
+          "default": false
+        },
+        "DoDCS": {
+          "title": "Save momentum transfer",
+          "type": "boolean",
+          "default": false
+        },
+        "DoSpecular": {
+          "title": "Do specular reflection",
+          "type": "boolean",
+          "default": true
+        },
+        "DebugFlag": {
+          "oneOf": [
+            {
+              "title": "Debug flags",
+              "type": "string",
+              "default": ""
+            },
+            {
+              "title": "Debug flags",
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          ]
+        },
+        "SaveDataMask": {
+          "oneOf": [
+            {
+              "title": "Save detected photon flags",
+              "type": "string",
+              "default": "DP"
+            },
+            {
+              "title": "Save detected photon flags",
+              "type": "integer",
+              "default": 5,
+              "minimum": 0
+            }
+          ]
+        },
+        "OutputFormat": {
+          "title": "Output file format",
+          "type": "string",
+          "default": "nii",
+          "enum": [
+            "mc2",
+            "nii",
+            "jnii",
+            "bnii",
+            "hdr",
+            "tx3"
+          ]
+        },
+        "OutputType": {
+          "title": "Output data type",
+          "type": "string",
+          "default": "x",
+          "enum": [
+            "x",
+            "f",
+            "e",
+            "j",
+            "p",
+            "m",
+            "r"
+          ]
+        },
+        "RNGSeed": {
+          "title": "Random seed",
+          "type": "number",
+          "default": 1648335518
+        }
+      }
+    },
+    "Forward": {
+      "type": "object",
+      "title": "Forward",
+      "format": "grid",
+      "required": [
+        "T0",
+        "T1",
+        "Dt"
+      ],
+      "properties": {
+        "T0": {
+          "title": "Starting time",
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1e-07
+        },
+        "T1": {
+          "title": "Ending time",
+          "type": "number",
+          "default": 5e-09,
+          "minimum": 0,
+          "maximum": 1e-07
+        },
+        "Dt": {
+          "title": "Time gate width",
+          "type": "number",
+          "default": 5e-09,
+          "minimum": 0,
+          "maximum": 1e-07
+        }
+      }
+    },
+    "Optode": {
+      "type": "object",
+      "title": "Optode",
+      "required": [
+        "Source"
+      ],
+      "properties": {
+        "Source": {
+          "title": "Source",
+          "type": "object",
+          "required": [
+            "Type",
+            "Pos",
+            "Dir"
+          ],
+          "properties": {
+            "Type": {
+              "title": "Type",
+              "type": "string",
+              "default": "pencil",
+              "enum": [
+                "pencil",
+                "isotropic",
+                "cone",
+                "gaussian",
+                "planar",
+                "pattern",
+                "pattern3d",
+                "fourier",
+                "arcsine",
+                "disk",
+                "fourierx",
+                "fourierx2d",
+                "zgaussian",
+                "line",
+                "slit",
+                "pencilarray",
+                "hyperboloid",
+                "ring"
+              ]
+            },
+            "Pos": {
+              "title": "Position",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "type": "number"
+              },
+              "default": [
+                30,
+                30,
+                0
+              ],
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "Dir": {
+              "title": "Launch Direction",
+              "type": "array",
+              "format": "table",
+              "default": [
+                0,
+                0,
+                1
+              ],
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 4
+            },
+            "Param1": {
+              "title": "Source Parameter 1",
+              "type": "array",
+              "format": "table",
+              "default": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "Param2": {
+              "title": "Source Parameter 2",
+              "type": "array",
+              "format": "table",
+              "default": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "Frequency": {
+              "title": "Modulation Frequency in Hz",
+              "type": "number",
+              "default": 0,
+              "minimum": 0
+            },
+            "Pattern": {
+              "title": "Source Pattern",
+              "type": "object",
+              "required": [
+                "_ArrayType_",
+                "_ArraySize_",
+                "_ArrayZipType_",
+                "_ArrayZipSize_",
+                "_ArrayZipData_"
+              ],
+              "properties": {
+                "_ArrayType_": {
+                  "type": "string",
+                  "default": "single",
+                  "enum": [
+                    "single"
+                  ]
+                },
+                "_ArraySize_": {
+                  "type": "array",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 3
+                },
+                "_ArrayZipType_": {
+                  "type": "string",
+                  "default": "zlib",
+                  "enum": [
+                    "zlib",
+                    "gzip"
+                  ]
+                },
+                "_ArrayZipSize_": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "default": 0,
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "default": [
+                        0,
+                        0
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  ]
+                },
+                "_ArrayZipData_": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            }
+          }
+        },
+        "Detector": {
+          "title": "Detector",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "object",
+            "required": [
+              "Pos",
+              "R"
+            ],
+            "properties": {
+              "Pos": {
+                "title": "Position",
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "default": [
+                  25,
+                  30,
+                  0
+                ],
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "R": {
+                "title": "Radius",
+                "type": "number",
+                "default": 1,
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "Shapes": {
+      "title": "Shapes",
+      "oneOf": [
+        {
+          "type": "array",
+          "format": "table",
+          "items": {
+            "anyOf": [
+              {
+                "title": "Grid",
+                "type": "object",
+                "required": [
+                  "Grid"
+                ],
+                "properties": {
+                  "Grid": {
+                    "title": "Grid",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "Size"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      },
+                      "Size": {
+                        "title": "Size",
+                        "type": "array",
+                        "format": "table",
+                        "default": [
+                          60,
+                          60,
+                          60
+                        ],
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Sphere",
+                "type": "object",
+                "required": [
+                  "Sphere"
+                ],
+                "properties": {
+                  "Sphere": {
+                    "title": "Sphere",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "O",
+                      "R"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "O": {
+                        "title": "Center",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "default": [
+                          30,
+                          30,
+                          30
+                        ],
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "R": {
+                        "title": "Radius",
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Box",
+                "type": "object",
+                "required": [
+                  "Box"
+                ],
+                "properties": {
+                  "Box": {
+                    "title": "Box",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "O",
+                      "Size"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Size": {
+                        "title": "Size",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "O": {
+                        "title": "Origin",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Subgrid",
+                "type": "object",
+                "required": [
+                  "Subgrid"
+                ],
+                "properties": {
+                  "Subgrid": {
+                    "title": "Subgrid",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "O",
+                      "Size"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Size": {
+                        "title": "Size",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "O": {
+                        "title": "Origin",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "default": 0
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Cylinder",
+                "type": "object",
+                "required": [
+                  "Cylinder"
+                ],
+                "properties": {
+                  "Cylinder": {
+                    "title": "Cylinder",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "C0",
+                      "C1",
+                      "R"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "C0": {
+                        "title": "Axis Center 1",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "C1": {
+                        "title": "Axis Center 2",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "R": {
+                        "title": "Radius",
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "Name",
+                "type": "object",
+                "required": [
+                  "Name"
+                ],
+                "properties": {
+                  "Name": {
+                    "type": "string",
+                    "default": ""
+                  }
+                }
+              },
+              {
+                "title": "Origin",
+                "type": "object",
+                "required": [
+                  "Origin"
+                ],
+                "properties": {
+                  "Origin": {
+                    "title": "Origin",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0,
+                      "default": 0
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              },
+              {
+                "title": "XLayers",
+                "type": "object",
+                "required": [
+                  "XLayers"
+                ],
+                "properties": {
+                  "XLayers": {
+                    "title": "XLayers",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              },
+              {
+                "title": "YLayers",
+                "type": "object",
+                "required": [
+                  "YLayers"
+                ],
+                "properties": {
+                  "YLayers": {
+                    "title": "YLayers",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              },
+              {
+                "title": "ZLayers",
+                "type": "object",
+                "required": [
+                  "ZLayers"
+                ],
+                "properties": {
+                  "ZLayers": {
+                    "title": "ZLayers",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              },
+              {
+                "title": "XSlabs",
+                "type": "object",
+                "required": [
+                  "XSlabs"
+                ],
+                "properties": {
+                  "XSlabs": {
+                    "title": "XSlabs",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "Bound"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Bound": {
+                        "title": "Start/End Indices",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "YSlabs",
+                "type": "object",
+                "required": [
+                  "YSlabs"
+                ],
+                "properties": {
+                  "YSlabs": {
+                    "title": "YSlabs",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "Bound"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Bound": {
+                        "title": "Start/End Indices",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "ZSlabs",
+                "type": "object",
+                "required": [
+                  "ZSlabs"
+                ],
+                "properties": {
+                  "ZSlabs": {
+                    "title": "ZSlabs",
+                    "type": "object",
+                    "required": [
+                      "Tag",
+                      "Bound"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "Bound": {
+                        "title": "Start/End Indices",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "_ArrayType_",
+            "_ArraySize_",
+            "_ArrayZipType_",
+            "_ArrayZipSize_",
+            "_ArrayZipData_"
+          ],
+          "properties": {
+            "_ArrayType_": {
+              "type": "string",
+              "default": "uint8",
+              "enum": [
+                "uint8",
+                "uint16",
+                "uint32",
+                "int8",
+                "int16",
+                "int32",
+                "single"
+              ]
+            },
+            "_ArraySize_": {
+              "type": "array",
+              "default": [
+                0,
+                0,
+                0
+              ],
+              "format": "table",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "_ArrayZipType_": {
+              "type": "string",
+              "default": "zlib",
+              "enum": [
+                "zlib",
+                "gzip"
+              ]
+            },
+            "_ArrayZipSize_": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "default": 0,
+                  "minimum": 0
+                },
+                {
+                  "type": "array",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ]
+            },
+            "_ArrayZipData_": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      ]
+    },
+    "Domain": {
+      "type": "object",
+      "title": "Domain",
+      "required": [
+        "Media",
+        "Dim",
+        "OriginType"
+      ],
+      "properties": {
+        "OriginType": {
+          "title": "Origin at [0,0,0]",
+          "type": "boolean",
+          "default": true
+        },
+        "Dim": {
+          "title": "Dimensions",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer"
+          },
+          "default": [
+            60,
+            60,
+            60
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "LengthUnit": {
+          "title": "Voxel Size (in mm)",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+        },
+        "MediaFormat": {
+          "title": "Binary Volume Format",
+          "type": "string",
+          "default": "byte",
+          "enum": [
+            "byte",
+            "short",
+            "integer",
+            "asgn_float",
+            "svmc",
+            "mixlabel",
+            "labelplus",
+            "muamus_float",
+            "muamus_half",
+            "asgn_byte",
+            "muamus_short"
+          ]
+        },
+        "VolumeFile": {
+          "title": "Volume File",
+          "type": "string",
+          "default": ""
+        },
+        "Media": {
+          "title": "Media",
+          "type": "array",
+          "format": "table",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "mua",
+              "mus",
+              "g",
+              "n"
+            ],
+            "properties": {
+              "mua": {
+                "title": "Absorption (μa 1/mm)",
+                "type": "number",
+                "default": 0,
+                "minimum": 0
+              },
+              "mus": {
+                "title": "Scattering (μs 1/mm)",
+                "type": "number",
+                "default": 0,
+                "minimum": 0
+              },
+              "g": {
+                "title": "Anisotropy (g)",
+                "type": "number",
+                "default": 1,
+                "minimum": -1,
+                "maximum": 1
+              },
+              "n": {
+                "title": "Refractive Index (n)",
+                "type": "number",
+                "default": 1,
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

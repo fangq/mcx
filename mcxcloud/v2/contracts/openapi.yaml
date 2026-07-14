@@ -1,0 +1,250 @@
+openapi: 3.1.0
+info:
+  title: MCX Cloud v2 API
+  version: 0.1.0
+  description: >
+    REST + SSE API for MCX Cloud v2. Replaces the v1 Perl CGI (JSONP) endpoint.
+    Runs on the manager node (kwafoo); the static frontend on mcx.space calls it
+    cross-origin over HTTPS. Job progress streams over SSE (see sse-events.md).
+    Simulation documents are stored content-addressed & normalized (see normalization.md).
+servers:
+  - url: https://kwafoo.coe.neu.edu/api
+    description: primary manager node
+tags:
+  - name: jobs
+  - name: library
+  - name: schema
+  - name: blobs
+  - name: internal
+
+paths:
+  /schema/mcx-input.v1:
+    get:
+      tags: [schema]
+      summary: The authoritative MCX input JSON Schema (drives the editor and server validation)
+      responses:
+        '200':
+          description: JSON Schema document
+          content: { application/schema+json: {} }
+
+  /jobs:
+    post:
+      tags: [jobs]
+      summary: Submit a simulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [doc, user]
+              properties:
+                doc:  { type: object, description: MCX input (JData); validated against mcx-input.v1, then normalized }
+                user: { $ref: '#/components/schemas/Submitter' }
+      responses:
+        '201':
+          description: Accepted & queued (or a cache hit returning a completed job)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, token, status]
+                properties:
+                  id:     { type: string, description: job id (uuid/hex) }
+                  token:  { type: string, description: per-job capability token (needed for stream/cancel/output) }
+                  status: { $ref: '#/components/schemas/JobStatus' }
+                  cached: { type: boolean, description: true if an identical doc_hash already had a result }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /jobs/{id}:
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
+    get:
+      tags: [jobs]
+      summary: Current job status (point-in-time; prefer the SSE stream for live updates)
+      responses:
+        '200':
+          description: status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:       { type: string }
+                  status:   { $ref: '#/components/schemas/JobStatus' }
+                  queuePos: { type: integer, nullable: true }
+                  error:    { type: string, nullable: true }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [jobs]
+      summary: Cancel a queued or running job
+      parameters: [{ $ref: '#/components/parameters/Token' }]
+      responses:
+        '200':
+          description: cancelled
+          content: { application/json: { schema: { type: object, properties: { id: {type: string}, status: {$ref: '#/components/schemas/JobStatus'} } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /jobs/{id}/stream:
+    parameters: [{ $ref: '#/components/parameters/JobId' }, { $ref: '#/components/parameters/Token' }]
+    get:
+      tags: [jobs]
+      summary: Live progress stream (SSE)
+      description: See sse-events.md for the event/message contract.
+      responses:
+        '200':
+          description: text/event-stream of status/log/progress/complete/error events
+          content: { text/event-stream: {} }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /jobs/{id}/output:
+    parameters: [{ $ref: '#/components/parameters/JobId' }, { $ref: '#/components/parameters/Token' }]
+    get:
+      tags: [jobs]
+      summary: Completed output volume (JNIfTI/JData), reassembled from blobs
+      responses:
+        '200': { description: output, content: { application/json: {} } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /jobs/{id}/detphoton:
+    parameters: [{ $ref: '#/components/parameters/JobId' }, { $ref: '#/components/parameters/Token' }]
+    get:
+      tags: [jobs]
+      summary: Detected-photon data (JData), if present
+      responses:
+        '200': { description: detphoton data, content: { application/json: {} } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /jobs/{id}/complete:
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
+    post:
+      tags: [internal]
+      summary: Worker callback — upload output on completion (replaces NFS discovery)
+      description: >
+        Called by the MCX container (with a worker credential) when the run finishes.
+        The API stores the bytes in blobs and marks the job done, which fires the SSE
+        'complete' event. This is what removes the filesystem from the signaling path.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [output]
+              properties:
+                output:    { type: object, description: JNIfTI output (JData) }
+                detphoton: { type: object, nullable: true }
+                log:       { type: string }
+                runtime:   { type: number }
+                error:     { type: string, nullable: true }
+      responses:
+        '204': { description: recorded }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /library:
+    get:
+      tags: [library]
+      summary: Browse/search the public simulation library
+      parameters:
+        - { name: q,      in: query, schema: { type: string },  description: full-text query over title/description }
+        - { name: limit,  in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: page of library entries
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/LibraryCard' } }
+    post:
+      tags: [library]
+      summary: Share a simulation to the public library
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, license, doc, user]
+              properties:
+                title:       { type: string, maxLength: 120 }
+                description: { type: string }
+                license:     { type: string, enum: [CC0, CC-BY, CC-BY-SA] }
+                thumbnail:   { type: string, description: data URL PNG (stored in blobs) }
+                doc:         { type: object }
+                user:        { $ref: '#/components/schemas/Submitter' }
+      responses:
+        '201':
+          description: shared
+          content: { application/json: { schema: { type: object, properties: { id: {type: string}, hash: {type: string} } } } }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /library/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [library]
+      summary: Load one library entry (reassembled document)
+      responses:
+        '200':
+          description: entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:          { type: string }
+                  title:       { type: string }
+                  description: { type: string }
+                  license:     { type: string }
+                  doc:         { type: object, description: reassembled MCX input }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /blobs/sha256/{hex}:
+    parameters: [{ name: hex, in: path, required: true, schema: { type: string, pattern: '^[0-9a-f]{64}$' } }]
+    get:
+      tags: [blobs]
+      summary: Resolve a content-addressed blob (canonical JData array JSON)
+      description: Target of exported `_DataLink_` refs so external JData tools can resolve them.
+      responses:
+        '200': { description: blob, content: { application/json: {} } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  parameters:
+    JobId: { name: id, in: path, required: true, schema: { type: string } }
+    Token: { name: token, in: query, required: true, schema: { type: string }, description: per-job capability token }
+  schemas:
+    JobStatus:
+      type: string
+      enum: [queued, initiated, created, running, writing, completed, cached, failed, invalid, cancelled, killed]
+    Submitter:
+      type: object
+      required: [fullname, email, inst, netname]
+      properties:
+        fullname: { type: string, description: private }
+        email:    { type: string, format: email, description: private }
+        inst:     { type: string, description: private }
+        netname:  { type: string, description: public display name }
+    LibraryCard:
+      type: object
+      properties:
+        id:          { type: string }
+        title:       { type: string }
+        description: { type: string }
+        license:     { type: string }
+        thumbnail:   { type: string, description: data URL or /blobs ref }
+        runCount:    { type: integer }
+    Error:
+      type: object
+      required: [status, message]
+      properties:
+        status:  { type: string }
+        message: { type: string }
+  responses:
+    NotFound:
+      description: not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: bad/absent capability token
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    ValidationError:
+      description: document failed JSON-Schema validation or resource-limit checks
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
