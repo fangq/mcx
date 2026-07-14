@@ -45,5 +45,9 @@ consume them. The v2 `frontend/`+`backend/` split mirrors `../v1/`.
   --generic-resource NVIDIA_GPU=1` → holds slot until done (caps at GPU count) → kill on
   timeout → cleanup. Worker fetches input + pushes output/detphoton over HTTP (no NFS).
   Not yet run against a live swarm (dev sandbox has no Docker/GPU/Node 20).
-- [ ] Phase 4 — Frontend rebuild (ESM modules, reactive store, three.js port, SSE client)
-- [ ] Phase 5 — Cutover + "private MCX cloud" docs
+- [x] **Phase 4 — Frontend rebuild** (`frontend/`): no-build native-ESM app + import map
+  (three, @json-editor, pako). Reactive store, fetch + SSE client, JSON-Editor from the
+  API schema, Browse/Share library, and a three.js volume raycaster ported to modern
+  three (GLSL3 + `Data3DTexture`) with a self-contained pako volume decode (no jdata/numjs).
+  Parses clean; not yet run in a browser against a live API.
+- [ ] Phase 5 — Cutover + SQLite→Postgres library migration + "private MCX cloud" docs

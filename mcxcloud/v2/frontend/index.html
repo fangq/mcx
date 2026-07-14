@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MCX Cloud</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Pin every external dependency in one place (no npm, no bundler). -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "@json-editor/json-editor": "https://esm.sh/@json-editor/json-editor@2.15.2",
+      "pako": "https://esm.sh/pako@2.1.0"
+    }
+  }
+  </script>
+
+  <!-- Optional: override the API base (default targets the kwafoo manager). -->
+  <script>window.MCX_API_BASE = window.MCX_API_BASE || 'https://kwafoo.coe.neu.edu/api';</script>
+
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header>
+    <h1>MCX&nbsp;Cloud <small>v2</small></h1>
+    <nav id="tabs">
+      <button data-tab="browse">Browse</button>
+      <button data-tab="create" class="active">Create</button>
+      <button data-tab="json">JSON</button>
+      <button data-tab="preview">Preview</button>
+      <button data-tab="run">Run</button>
+      <button data-tab="share">Share</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Browse -->
+    <section id="tab-browse" class="tab">
+      <div class="row">
+        <input id="browse-q" type="search" placeholder="search the public library…" />
+        <button id="browse-go">Search</button>
+      </div>
+      <div id="browse-results" class="cards"></div>
+    </section>
+
+    <!-- Create (schema-driven form) -->
+    <section id="tab-create" class="tab active">
+      <div id="editor-form"></div>
+    </section>
+
+    <!-- JSON -->
+    <section id="tab-json" class="tab">
+      <p>Edit the raw MCX input JSON, then update the form. <span id="json-valid" class="badge"></span></p>
+      <textarea id="json-text" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="json-update">Update Form</button>
+        <a id="json-download" class="btn" download="mcxinput.json">Download</a>
+      </div>
+    </section>
+
+    <!-- Preview (three.js) -->
+    <section id="tab-preview" class="tab">
+      <div id="renderpanel"><div id="canvas"></div></div>
+      <div class="controls">
+        <div class="row">
+          <label><input type="radio" name="renderstyle" id="mip-radio" checked /> MIP</label>
+          <label><input type="radio" name="renderstyle" id="iso-radio" /> Iso</label>
+          <button id="draw-input">Draw Input</button>
+          <button id="draw-output" disabled>Draw Output</button>
+        </div>
+        <div class="row">
+          <label>clim <input type="range" id="clim-low" min="0" max="1" step="0.0001" disabled /></label>
+          <label><input type="range" id="clim-hi" min="0" max="1" step="0.0001" disabled /></label>
+        </div>
+        <div class="grid3">
+          <label>X <input type="range" id="cross-x-low" min="0" max="1" step="0.001" value="0" />
+                    <input type="range" id="cross-x-hi" min="0" max="1" step="0.001" value="1" /></label>
+          <label>Y <input type="range" id="cross-y-low" min="0" max="1" step="0.001" value="0" />
+                    <input type="range" id="cross-y-hi" min="0" max="1" step="0.001" value="1" /></label>
+          <label>Z <input type="range" id="cross-z-low" min="0" max="1" step="0.001" value="0" />
+                    <input type="range" id="cross-z-hi" min="0" max="1" step="0.001" value="1" /></label>
+        </div>
+        <div class="row" id="views">
+          <button data-view="pos-x">+X</button><button data-view="neg-x">−X</button>
+          <button data-view="pos-y">+Y</button><button data-view="neg-y">−Y</button>
+          <button data-view="pos-z">+Z</button><button data-view="neg-z">−Z</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Run -->
+    <section id="tab-run" class="tab">
+      <div class="grid2">
+        <label>Full name <input id="fullname" /></label>
+        <label>Email <input id="email" type="email" /></label>
+        <label>Institution <input id="inst" /></label>
+        <label>Net-name (public) <input id="netname" /></label>
+      </div>
+      <div class="row">
+        <button id="run-btn">Submit</button>
+        <a id="run-output" class="btn" download="output.jnii" hidden>Download output</a>
+        <a id="run-detp" class="btn" download="detphoton.jdt" hidden>Download detected photons</a>
+      </div>
+      <textarea id="run-log" readonly></textarea>
+    </section>
+
+    <!-- Share -->
+    <section id="tab-share" class="tab">
+      <div class="grid2">
+        <label>Title <input id="s-title" /></label>
+        <label>License
+          <select id="s-license"><option>CC0</option><option>CC-BY</option><option>CC-BY-SA</option></select>
+        </label>
+      </div>
+      <label>Description <textarea id="s-desc"></textarea></label>
+      <button id="s-submit">Share to library</button>
+    </section>
+  </main>
+</body>
+</html>
