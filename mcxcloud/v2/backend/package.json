@@ -1,0 +1,27 @@
+{
+  "name": "mcxcloud-v2-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCX Cloud v2 API (Fastify) — implements v2/contracts/openapi.yaml",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "migrate": "node src/migrate.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "ajv": "^8.17.1",
+    "fastify": "^5.1.0",
+    "pg": "^8.13.1",
+    "pg-boss": "^10.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "typescript": "^5.8.0"
+  }
+}

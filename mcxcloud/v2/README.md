@@ -36,7 +36,10 @@ consume them. The v2 `frontend/`+`backend/` split mirrors `../v1/`.
 
 - [x] **Phase 1 — Contracts**: schema extracted & versioned; REST (OpenAPI) + SSE + the
   `_DataLink_` normalization spec defined.
-- [ ] Phase 2 — DB + Fastify API (Postgres schema, migration from SQLite, validation, tokens)
+- [x] **Phase 2 — DB + Fastify API** (`backend/`): Postgres schema (`blobs`/`jobs`/`library`),
+  content-addressed normalization/reassembly (verified), Ajv validation + preview limits,
+  capability tokens, SSE plumbing, worker completion callback. Not yet run on the Node 22+
+  target (dev sandbox is Node 12); SQLite→Postgres data migration still to do.
 - [ ] Phase 3 — pg-boss event scheduler replacing `mcxcloudd` (Swarm dispatch unchanged)
 - [ ] Phase 4 — Frontend rebuild (ESM modules, reactive store, three.js port, SSE client)
 - [ ] Phase 5 — Cutover + "private MCX cloud" docs
