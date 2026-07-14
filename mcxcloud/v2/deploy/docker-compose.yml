@@ -1,0 +1,50 @@
+# Local bring-up for development / integration testing.
+#
+# This runs Postgres + the API with the scheduler DISABLED (RUN_SCHEDULER=0) — jobs are
+# accepted, validated, normalized, deduped and queued, and SSE works, but nothing is
+# dispatched (that needs a real Docker Swarm with GPUs; see ../DEPLOY.md). Good for
+# exercising the whole submit/library/preview flow end-to-end without GPUs.
+#
+#   cd v2/deploy && docker compose up -d
+#   docker compose run --rm api npm run migrate         # create tables
+#   open http://localhost:8000   (set window.MCX_API_BASE in the frontend to :8080)
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: mcxcloud
+      POSTGRES_PASSWORD: mcxcloud
+      POSTGRES_DB: mcxcloud
+    ports: ['5432:5432']
+    volumes: ['pgdata:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mcxcloud']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: node:20-alpine
+    working_dir: /v2/backend
+    # mount the whole v2 dir so src can reach ../../schema/mcx-input.v1.json
+    volumes: ['..:/v2']
+    command: sh -c "npm install --no-audit --no-fund && node src/server.js"
+    environment:
+      PORT: '8080'
+      DATABASE_URL: postgres://mcxcloud:mcxcloud@db/mcxcloud
+      CORS_ORIGIN: http://localhost:8000
+      RUN_SCHEDULER: '0'
+      WORKER_SECRET: dev-secret
+    ports: ['8080:8080']
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: nginx:alpine
+    volumes: ['../frontend:/usr/share/nginx/html:ro']
+    ports: ['8000:80']
+
+volumes:
+  pgdata:
