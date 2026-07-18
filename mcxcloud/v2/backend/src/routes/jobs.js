@@ -1,4 +1,5 @@
 // @ts-check
+import { randomUUID } from 'node:crypto';
 import { config } from '../config.js';
 import { pool, withTx } from '../db.js';
 import { attachRefs, getBlob, putBlob, putBlobRaw } from '../blobs.js';
@@ -38,10 +39,39 @@ async function authJob(id, token) {
   return { row };
 }
 
+/** in-memory per-client submit throttle: client IP -> last submit ms */
+const lastSubmit = new Map();
+
+/** @param {import('fastify').FastifyRequest} req @returns {string} client IP */
+function clientIp(req) {
+  // Apache appends the connecting client's IP to X-Forwarded-For, so the LAST entry is the
+  // real client (a client-supplied X-Forwarded-For only adds spoofed entries before it).
+  const xff = /** @type {string} */ (req.headers['x-forwarded-for'] || '');
+  const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);
+  return parts[parts.length - 1] || req.ip || 'unknown';
+}
+
 /** @param {import('fastify').FastifyInstance} app */
 export async function jobRoutes(app) {
+  // prune the throttle map periodically so it doesn't grow unbounded
+  const prune = setInterval(() => {
+    const cut = Date.now() - config.minSubmitGapMs * 10;
+    for (const [k, v] of lastSubmit) if (v < cut) lastSubmit.delete(k);
+  }, 60000);
+  if (typeof prune.unref === 'function') prune.unref();
+
   // ---- submit -----------------------------------------------------------------
   app.post('/jobs', async (req, reply) => {
+    // rate-limit: enforce a minimum gap between submissions from the same client (guards
+    // against accidental bursts / double-clicks)
+    const ip = clientIp(req);
+    const now = Date.now();
+    const wait = config.minSubmitGapMs - (now - (lastSubmit.get(ip) || 0));
+    if (wait > 0) {
+      return reply.code(429).send({ status: 'invalid', message: `too many submissions — please wait ${Math.ceil(wait / 1000)}s` });
+    }
+    lastSubmit.set(ip, now);
+
     const body = /** @type {{ doc?: unknown, user?: Record<string, unknown> }} */ (req.body);
     if (!body?.doc || typeof body.doc !== 'object') {
       return reply.code(422).send({ status: 'invalid', message: 'missing doc' });
@@ -73,9 +103,9 @@ export async function jobRoutes(app) {
 
       if (cached.rowCount && cached.rows[0].output_hash) {
         const ins = await client.query(
-          `insert into jobs (input_doc, doc_hash, status, submitter, token_hash, output_hash, detp_hash, ended_at)
-           values ($1,$2,'cached',$3,$4,$5,$6, now()) returning id`,
-          [doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash],
+          `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, output_hash, detp_hash, ended_at)
+           values ($1,$2,$3,'cached',$4,$5,$6,$7, now()) returning id`,
+          [randomUUID(), doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash],
         );
         const id = /** @type {string} */ (ins.rows[0].id);
         const owned = [...refs, cached.rows[0].output_hash];
@@ -85,9 +115,9 @@ export async function jobRoutes(app) {
       }
 
       const ins = await client.query(
-        `insert into jobs (input_doc, doc_hash, status, submitter, token_hash)
-         values ($1,$2,'queued',$3,$4) returning id`,
-        [doc, docHash, body.user ?? null, th],
+        `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash)
+         values ($1,$2,$3,'queued',$4,$5) returning id`,
+        [randomUUID(), doc, docHash, body.user ?? null, th],
       );
       const id = /** @type {string} */ (ins.rows[0].id);
       await attachRefs(client, refs, 'job', id);
@@ -258,7 +288,7 @@ export async function jobRoutes(app) {
         `update jobs set status = 'failed', error = $2, log = $3, ended_at = now() where id = $1`,
         [id, (log || 'simulation error').slice(0, 4000), log],
       );
-      publish(id, 'error', { status: 'failed', message: 'simulation error' });
+      publish(id, 'error', { status: 'failed', message: 'simulation error', log });
       return reply.code(204).send();
     }
 
@@ -272,6 +302,7 @@ export async function jobRoutes(app) {
       outputHash: r.rows[0].output_hash,
       hasDetphoton: !!r.rows[0].detp_hash,
       runtime,
+      log, // the mcx run log (shown in the client, like v1)
     });
     return reply.code(204).send();
   });

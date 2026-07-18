@@ -1,0 +1,3 @@
+# local-only deploy notes holding real hostnames/users/paths — never commit
+deploy-values.local.md
+*.local.md

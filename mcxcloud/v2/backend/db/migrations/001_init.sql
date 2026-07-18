@@ -1,7 +1,7 @@
 -- MCX Cloud v2 — initial schema (see ../../V2_DESIGN.md §6, ../../contracts/normalization.md)
--- Postgres 13+ (gen_random_uuid is core; pgcrypto guard kept for older installs).
-
-create extension if not exists pgcrypto;
+-- Portable to Postgres 9.5+ : primary-key UUIDs are minted in the application (Node's
+-- crypto.randomUUID()) and passed on INSERT, so no gen_random_uuid()/pgcrypto is needed
+-- and no minimum Postgres major is imposed by the schema.
 
 -- Content-addressed blob store: the dedup core. Every heavy JData array (and every
 -- output) is stored here exactly once, keyed by sha256; clones share one row.
@@ -24,7 +24,7 @@ create table if not exists blob_refs (
 
 -- Job queue + results. input_doc is the NORMALIZED (small) document.
 create table if not exists jobs (
-  id          uuid primary key default gen_random_uuid(),
+  id          uuid primary key,
   input_doc   jsonb not null,                 -- heavy fields replaced by {"_DataLink_":"cas:sha256/…"}
   doc_hash    text not null,                  -- 'sha256/<hex>' over the normalized doc (whole-record cache key)
   status      text not null default 'queued',
@@ -47,7 +47,7 @@ create index if not exists jobs_dochash on jobs (doc_hash);
 
 -- Public shared-simulation library (v1 mcxpub). input_doc is normalized.
 create table if not exists library (
-  id             uuid primary key default gen_random_uuid(),
+  id             uuid primary key,
   title          text not null,
   description    text not null,
   license        text not null,

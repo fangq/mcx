@@ -46,41 +46,44 @@ export function decodeJDataArray(node) {
   }
   // the shader samples a FloatType texture; convert once
   const data = typed instanceof Float32Array ? typed : Float32Array.from(typed);
-  return { data, size };
+  const order = String(node._ArrayOrder_ || '').toLowerCase(); // 'c' = row-major (e.g. MCX output)
+  return { data, size, order };
 }
 
-// --- viridis colormap as a 256x1 RGBA DataTexture-ready Uint8Array ---------------
-// anchor stops (r,g,b in 0..1) sampled from matplotlib viridis
-const VIRIDIS = [
-  [0.267, 0.005, 0.329], [0.283, 0.141, 0.458], [0.254, 0.265, 0.53],
-  [0.207, 0.372, 0.553], [0.164, 0.471, 0.558], [0.128, 0.567, 0.551],
-  [0.135, 0.659, 0.518], [0.267, 0.749, 0.441], [0.478, 0.821, 0.318],
-  [0.741, 0.873, 0.15], [0.993, 0.906, 0.144],
-];
+// --- named colormaps (anchor stops r,g,b in 0..1) -> 256x1 RGBA Uint8Array ---------
+const COLORMAPS = {
+  viridis: [
+    [0.267, 0.005, 0.329], [0.283, 0.141, 0.458], [0.254, 0.265, 0.53],
+    [0.207, 0.372, 0.553], [0.164, 0.471, 0.558], [0.128, 0.567, 0.551],
+    [0.135, 0.659, 0.518], [0.267, 0.749, 0.441], [0.478, 0.821, 0.318],
+    [0.741, 0.873, 0.15], [0.993, 0.906, 0.144],
+  ],
+  jet: [[0, 0, 0.5], [0, 0, 1], [0, 1, 1], [0.5, 1, 0.5], [1, 1, 0], [1, 0, 0], [0.5, 0, 0]],
+  hot: [[0, 0, 0], [0.9, 0, 0], [1, 0.8, 0], [1, 1, 1]],
+  plasma: [[0.05, 0.03, 0.53], [0.4, 0.0, 0.66], [0.69, 0.17, 0.5], [0.9, 0.36, 0.29],
+    [0.99, 0.65, 0.13], [0.94, 0.98, 0.13]],
+  gray: [[0, 0, 0], [1, 1, 1]],
+  bone: [[0, 0, 0], [0.32, 0.34, 0.44], [0.65, 0.66, 0.73], [1, 1, 1]],
+};
+
+/** names available for the colormap picker */
+export const COLORMAP_NAMES = Object.keys(COLORMAPS);
 
 /**
  * Build an RGBA colormap lookup as a Uint8Array (n*4).
- * @param {'viridis'|'gray'} [name] @param {number} [n]
+ * @param {string} [name] @param {number} [n]
  * @returns {Uint8Array}
  */
 export function colormapRGBA(name = 'viridis', n = 256) {
+  const stops = COLORMAPS[name] || COLORMAPS.viridis;
   const out = new Uint8Array(n * 4);
   for (let i = 0; i < n; i++) {
-    const t = i / (n - 1);
-    let r, g, b;
-    if (name === 'gray') {
-      r = g = b = t;
-    } else {
-      const x = t * (VIRIDIS.length - 1);
-      const j = Math.min(VIRIDIS.length - 2, Math.floor(x));
-      const f = x - j;
-      r = VIRIDIS[j][0] * (1 - f) + VIRIDIS[j + 1][0] * f;
-      g = VIRIDIS[j][1] * (1 - f) + VIRIDIS[j + 1][1] * f;
-      b = VIRIDIS[j][2] * (1 - f) + VIRIDIS[j + 1][2] * f;
-    }
-    out[i * 4 + 0] = Math.round(r * 255);
-    out[i * 4 + 1] = Math.round(g * 255);
-    out[i * 4 + 2] = Math.round(b * 255);
+    const x = (i / (n - 1)) * (stops.length - 1);
+    const j = Math.min(stops.length - 2, Math.floor(x));
+    const f = x - j;
+    out[i * 4 + 0] = Math.round((stops[j][0] * (1 - f) + stops[j + 1][0] * f) * 255);
+    out[i * 4 + 1] = Math.round((stops[j][1] * (1 - f) + stops[j + 1][1] * f) * 255);
+    out[i * 4 + 2] = Math.round((stops[j][2] * (1 - f) + stops[j + 1][2] * f) * 255);
     out[i * 4 + 3] = 255;
   }
   return out;
@@ -92,4 +95,19 @@ export function downloadLink(anchor, text, filename) {
   anchor.href = URL.createObjectURL(new Blob([text], { type }));
   anchor.download = filename;
   anchor.hidden = false;
+}
+
+/** compress a JS object to a base64 string for a shareable URL (gzip via pako) */
+export function encodeStateToUrl(obj) {
+  const gz = pako.gzip(JSON.stringify(obj));
+  let bin = '';
+  for (let i = 0; i < gz.length; i++) bin += String.fromCharCode(gz[i]);
+  return btoa(bin);
+}
+/** inverse of encodeStateToUrl */
+export function decodeStateFromUrl(s) {
+  const bin = atob(s);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return JSON.parse(pako.ungzip(bytes, { to: 'string' }));
 }

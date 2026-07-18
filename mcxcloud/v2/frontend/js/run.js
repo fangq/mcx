@@ -32,6 +32,13 @@ function log(line) {
   box.scrollTop = box.scrollHeight;
 }
 
+/** append the mcx run log, stripping ANSI color escapes (like v1) */
+function showMcxLog(text) {
+  if (!text) return;
+  const clean = String(text).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').trimEnd();
+  log('––––– mcx log –––––\n' + clean);
+}
+
 function resetButton() {
   const btn = $('#run-btn');
   btn.textContent = 'Submit';
@@ -42,6 +49,10 @@ async function submit() {
   if (!state.doc || !state.valid) { alert('input JSON is not valid'); return; }
   const user = saveUser();
   if (USER_FIELDS.some((f) => !user[f])) { alert('all identity fields are required'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(user.email || ''))) {
+    alert('please enter a valid email address');
+    return;
+  }
 
   state.log = '';
   log('submitting…');
@@ -67,25 +78,32 @@ async function onEvent(event, data) {
   if (event === 'status') { state.status = data.status; log('status: ' + data.status + (data.queuePos != null ? ` (queue #${data.queuePos})` : '')); }
   else if (event === 'log' && data.line) log(data.line);
   else if (event === 'progress') log(`progress: ${data.percent ?? '?'}%`);
-  else if (event === 'error') { log(`${data.status || 'error'}: ${data.message || ''}`); resetButton(); }
+  else if (event === 'error') { log(`${data.status || 'error'}: ${data.message || ''}`); showMcxLog(data.log); resetButton(); }
   else if (event === 'complete') { await onComplete(data); }
 }
 
 /** @param {any} data */
 async function onComplete(data) {
   log(`completed (${data.runtime ?? '?'} s)`);
+  showMcxLog(data.log);
   resetButton();
   try {
     const out = await fetchOutput(state.jobId, state.token);
-    state.output = out;
-    downloadLink($('#run-output'), JSON.stringify(out), 'output.jnii');
+    const outStr = JSON.stringify(out);
+    downloadLink($('#run-output'), outStr, 'output.jnii');
+    downloadLink($('#pv-output'), outStr, 'output.jnii'); // Preview-panel copy
     $('#draw-output').removeAttribute('disabled');
     if (data.hasDetphoton) {
       state.hasDetphoton = true;
       const detp = await fetchDetphoton(state.jobId, state.token);
-      downloadLink($('#run-detp'), JSON.stringify(detp), 'detphoton.jdt');
+      const detpStr = JSON.stringify(detp);
+      downloadLink($('#run-detp'), detpStr, 'detphoton.jdt');
+      downloadLink($('#pv-detp'), detpStr, 'detphoton.jdt'); // Preview-panel copy
     }
-    log('output received — see Preview / Download');
+    // set state.output LAST so the app's subscriber auto-renders + downloads with the
+    // download links already populated
+    state.output = out;
+    log('output received — rendering (use the Download links to save)');
   } catch (err) {
     log('failed to fetch output: ' + (/** @type {Error} */ (err)).message);
   }

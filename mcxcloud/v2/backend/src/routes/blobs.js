@@ -12,6 +12,21 @@ export async function blobRoutes(app) {
     }
     const r = await pool.query('select data from blobs where hash = $1', ['sha256/' + hex]);
     if (r.rowCount === 0) return reply.code(404).send({ status: 'error', message: 'not found' });
-    return reply.type('application/json').send((/** @type {Buffer} */ (r.rows[0].data)).toString('utf8'));
+    const buf = /** @type {Buffer} */ (r.rows[0].data);
+    // content-addressed blobs are immutable -> cache hard
+    reply.header('cache-control', 'public, max-age=31536000, immutable');
+    // thumbnails are stored as `data:<type>;base64,...` URIs; decode to real image bytes
+    // so an <img src> pointing here renders (rather than getting the URI as text).
+    if (buf.slice(0, 5).toString('latin1') === 'data:') {
+      const text = buf.toString('utf8');
+      const m = /^data:([\w.+-]+\/[\w.+-]+)?(;base64)?,/.exec(text);
+      if (m) {
+        const payload = text.slice(m[0].length);
+        const body = m[2] ? Buffer.from(payload, 'base64') : Buffer.from(decodeURIComponent(payload), 'utf8');
+        return reply.type(m[1] || 'application/octet-stream').send(body);
+      }
+    }
+    // otherwise it's JData/JSON array content (the target of a `_DataLink_` ref)
+    return reply.type('application/json').send(buf.toString('utf8'));
   });
 }

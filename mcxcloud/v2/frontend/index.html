@@ -19,35 +19,81 @@
   </script>
 
   <!-- Optional: override the API base (default targets the kwafoo manager). -->
-  <script>window.MCX_API_BASE = window.MCX_API_BASE || 'https://kwafoo.coe.neu.edu/api';</script>
+  <script>window.MCX_API_BASE = window.MCX_API_BASE || 'https://zodiac.coe.neu.edu/api';</script>
 
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
   <header>
-    <h1>MCX&nbsp;Cloud <small>v2</small></h1>
+    <h1 data-tab="home" title="home"><span class="mcxlogo">MCX&nbsp;Cloud</span> <small>v2</small></h1>
     <nav id="tabs">
-      <button data-tab="browse">Browse</button>
-      <button data-tab="create" class="active">Create</button>
-      <button data-tab="json">JSON</button>
-      <button data-tab="preview">Preview</button>
-      <button data-tab="run">Run</button>
-      <button data-tab="share">Share</button>
+      <button data-tab="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Browse</span></button>
+      <button data-tab="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Create</span></button>
+      <button data-tab="json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>JSON</span></button>
+      <button data-tab="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Preview</span></button>
+      <button data-tab="run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Run</span></button>
+      <button data-tab="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Share</span></button>
+      <span class="nav-spacer"></span>
+      <button id="btn-link" type="button" title="copy a shareable link that preserves the current input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Link</span></button>
+      <button id="btn-reset" type="button" title="reload with the default example"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg><span>Reset</span></button>
+      <div id="themes" title="color theme">
+        <button class="theme-btn" data-theme="ocean" title="Ocean (dark)" style="--sw:#2f81f7"></button>
+        <button class="theme-btn" data-theme="light" title="Light" style="--sw:#e6edf3"></button>
+        <button class="theme-btn" data-theme="nord" title="Nord" style="--sw:#88c0d0"></button>
+      </div>
     </nav>
   </header>
 
   <main>
+    <!-- Home / landing: large icon tiles for every tab -->
+    <section id="tab-home" class="tab active">
+      <div class="home-grid">
+        <button class="tile" data-tab="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Browse</span><small>load a shared simulation</small></button>
+        <button class="tile" data-tab="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Create</span><small>build an MCX input</small></button>
+        <button class="tile" data-tab="json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>JSON</span><small>edit the raw JSON</small></button>
+        <button class="tile" data-tab="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Preview</span><small>3-D domain &amp; output</small></button>
+        <button class="tile" data-tab="run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Run</span><small>run on the GPU cloud</small></button>
+        <button class="tile" data-tab="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Share</span><small>publish to the library</small></button>
+      </div>
+    </section>
+
     <!-- Browse -->
     <section id="tab-browse" class="tab">
       <div class="row">
         <input id="browse-q" type="search" placeholder="search the public library…" />
         <button id="browse-go">Search</button>
       </div>
-      <div id="browse-results" class="cards"></div>
+      <!-- Library review (admin). Revealed by typing !review in the search box. The secret is
+           entered here (masked, autocomplete off) and exchanged for a short-lived session
+           token; it is never stored in the box, URL, or browser history. -->
+      <div id="admin-bar" class="row" hidden>
+        <span id="admin-login">
+          <input id="admin-secret" type="password" placeholder="admin secret" autocomplete="off"
+                 autocapitalize="off" autocorrect="off" spellcheck="false" />
+          <button id="admin-unlock" type="button">Unlock</button>
+        </span>
+        <span id="admin-review-controls" class="row" hidden>
+          <strong>Review mode</strong>
+          <label class="inline">show
+            <select id="admin-status">
+              <option value="pending">pending</option>
+              <option value="approved">approved</option>
+            </select>
+          </label>
+          <button id="admin-exit" class="ghost" type="button">Exit</button>
+        </span>
+        <span id="admin-msg" class="muted"></span>
+      </div>
+      <div class="browse-layout">
+        <div class="browse-main">
+          <div id="browse-results" class="cards"></div>
+        </div>
+        <aside id="browse-detail" hidden></aside>
+      </div>
     </section>
 
     <!-- Create (schema-driven form) -->
-    <section id="tab-create" class="tab active">
+    <section id="tab-create" class="tab">
       <div id="editor-form"></div>
     </section>
 
@@ -63,11 +109,14 @@
 
     <!-- Preview (three.js) -->
     <section id="tab-preview" class="tab">
-      <div id="renderpanel"><div id="canvas"></div></div>
+      <div class="preview-layout">
+      <div id="renderpanel"><div id="canvas"></div><div id="fps" title="render rate"></div></div>
+      <div id="preview-splitter" title="drag to resize"></div>
       <div class="controls">
         <div class="row">
           <label><input type="radio" name="renderstyle" id="mip-radio" checked /> MIP</label>
           <label><input type="radio" name="renderstyle" id="iso-radio" /> Iso</label>
+          <label class="inline">Colormap <select id="cmap"></select></label>
           <button id="draw-input">Draw Input</button>
           <button id="draw-output" disabled>Draw Output</button>
         </div>
@@ -75,19 +124,32 @@
           <label>clim <input type="range" id="clim-low" min="0" max="1" step="0.0001" disabled /></label>
           <label><input type="range" id="clim-hi" min="0" max="1" step="0.0001" disabled /></label>
         </div>
+        <div class="row">
+          <label class="inline">opacity <input type="range" id="iso-alpha" min="0.05" max="1" step="0.05" value="1" title="isosurface opacity" /></label>
+        </div>
         <div class="grid3">
           <label>X <input type="range" id="cross-x-low" min="0" max="1" step="0.001" value="0" />
-                    <input type="range" id="cross-x-hi" min="0" max="1" step="0.001" value="1" /></label>
+                    <input type="range" id="cross-x-hi" min="0" max="1" step="0.001" value="1" />
+                    <input type="number" id="thick-x" class="thick" min="0" value="0" step="1" title="fixed slab thickness in x (voxels; 0 = off)" /></label>
           <label>Y <input type="range" id="cross-y-low" min="0" max="1" step="0.001" value="0" />
-                    <input type="range" id="cross-y-hi" min="0" max="1" step="0.001" value="1" /></label>
+                    <input type="range" id="cross-y-hi" min="0" max="1" step="0.001" value="1" />
+                    <input type="number" id="thick-y" class="thick" min="0" value="0" step="1" title="fixed slab thickness in y (voxels; 0 = off)" /></label>
           <label>Z <input type="range" id="cross-z-low" min="0" max="1" step="0.001" value="0" />
-                    <input type="range" id="cross-z-hi" min="0" max="1" step="0.001" value="1" /></label>
+                    <input type="range" id="cross-z-hi" min="0" max="1" step="0.001" value="1" />
+                    <input type="number" id="thick-z" class="thick" min="0" value="0" step="1" title="fixed slab thickness in z (voxels; 0 = off)" /></label>
         </div>
         <div class="row" id="views">
           <button data-view="pos-x">+X</button><button data-view="neg-x">−X</button>
           <button data-view="pos-y">+Y</button><button data-view="neg-y">−Y</button>
           <button data-view="pos-z">+Z</button><button data-view="neg-z">−Z</button>
         </div>
+        <div class="row">
+          <button id="update-thumb" title="capture the current view as the share thumbnail">Update thumbnail</button>
+          <img id="thumb-preview" class="thumb-view" alt="preview thumbnail" hidden />
+          <a id="pv-output" class="btn" download="output.jnii" hidden>Download output</a>
+          <a id="pv-detp" class="btn" download="detphoton.jdt" hidden>Download detected photons</a>
+        </div>
+      </div>
       </div>
     </section>
 
@@ -109,6 +171,10 @@
 
     <!-- Share -->
     <section id="tab-share" class="tab">
+      <div id="s-edit-banner" class="row" hidden>
+        <span id="s-edit-info"></span>
+        <button id="s-edit-cancel" class="ghost" type="button">Cancel edit</button>
+      </div>
       <div class="grid2">
         <label>Title <input id="s-title" /></label>
         <label>License
@@ -116,6 +182,11 @@
         </label>
       </div>
       <label>Description <textarea id="s-desc"></textarea></label>
+      <label>Thumbnail — the image shown in Browse (a snapshot of the Preview)</label>
+      <div class="row">
+        <img id="s-thumb" class="thumb-view" alt="preview thumbnail" hidden />
+        <button id="s-update-thumb" type="button" title="capture the current Preview view">Update thumbnail</button>
+      </div>
       <button id="s-submit">Share to library</button>
     </section>
   </main>

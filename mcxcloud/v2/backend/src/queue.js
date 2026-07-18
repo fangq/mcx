@@ -1,44 +1,96 @@
 // @ts-check
-import PgBoss from 'pg-boss';
+import pg from 'pg';
+import { pool } from './db.js';
 import { config } from './config.js';
 
-// pg-boss keeps the job queue inside Postgres (no Redis). Phase 2 only enqueues on
-// submit; the consumer/scheduler that dispatches to Docker Swarm is Phase 3.
-export const RUN_QUEUE = 'run-mcx';
+// Native Postgres job queue — no external queue library, so no minimum Postgres major
+// beyond `FOR UPDATE SKIP LOCKED` (PG 9.5+). The `jobs` table IS the queue: submit
+// inserts a row with status='queued'; the consumer atomically claims the highest-priority
+// queued row with SKIP LOCKED and holds a slot until it finishes. A NOTIFY on submit wakes
+// the consumer instantly (LISTEN/NOTIFY); a periodic poll is the safety net for any missed
+// signal or crash-requeued job.
 
-/** @type {PgBoss | null} */
-let boss = null;
+const CHANNEL = 'mcx_job_submitted';
+
+/** @type {pg.Client | null} dedicated long-lived connection for LISTEN */
+let listener = null;
+/** @type {(() => void) | null} */
+let onNotify = null;
 
 export async function initQueue() {
-  boss = new PgBoss(config.databaseUrl);
-  await boss.start();
-  await boss.createQueue(RUN_QUEUE);
+  // A pooled connection can't reliably hold a persistent LISTEN, so use a dedicated client.
+  listener = new pg.Client({ connectionString: config.databaseUrl });
+  await listener.connect();
+  listener.on('notification', () => onNotify && onNotify());
+  listener.on('error', (err) => {
+    // Connection dropped; the periodic poll keeps things moving until it is re-established.
+    console.error('queue listener error:', err.message);
+  });
+  await listener.query(`LISTEN ${CHANNEL}`);
 }
 
 /**
- * @param {string} jobId
- * @param {number} priority
+ * Signal that a new job is queued. The row is already inserted (status='queued') by the
+ * caller inside its transaction; this just wakes the consumer.
+ * @param {string} _jobId
+ * @param {number} _priority
  * @returns {Promise<void>}
  */
-export async function enqueueJob(jobId, priority) {
-  if (!boss) return; // queue not initialized (e.g. DB down)
-  await boss.send(RUN_QUEUE, { jobId }, { priority });
+export async function enqueueJob(_jobId, _priority) {
+  await pool.query('select pg_notify($1, $2)', [CHANNEL, '']);
 }
 
 /**
- * Register the scheduler consumer. pg-boss delivers up to `capacity` jobs per batch and
- * holds them active until the handler resolves (crash-safe redelivery). Processing the
- * batch concurrently caps in-flight simulations at `capacity` (= free GPU count).
- * NOTE: verify the pg-boss v10 work() options (`batchSize`, array handler) against the
- * installed version on the target.
+ * Run the consumer loop, keeping up to `capacity` jobs in flight (= free GPU count).
+ * Each iteration atomically claims one queued job (status queued -> running) using
+ * FOR UPDATE SKIP LOCKED so concurrent/parallel API processes never grab the same row,
+ * then invokes `handle` without awaiting and frees the slot when it settles.
  * @param {number} capacity
  * @param {(jobId: string) => Promise<void>} handle
  * @returns {Promise<void>}
  */
 export async function startWork(capacity, handle) {
-  if (!boss) throw new Error('queue not initialized');
-  await boss.work(RUN_QUEUE, { batchSize: Math.max(1, capacity) }, async (jobs) => {
-    const list = Array.isArray(jobs) ? jobs : [jobs];
-    await Promise.all(list.map((j) => handle(j.data.jobId)));
-  });
+  const cap = Math.max(1, capacity);
+  let active = 0;
+  let pumping = false;
+  let rerun = false;
+
+  async function claimOne() {
+    const r = await pool.query(
+      `update jobs set status = 'running', started_at = now()
+       where id = (
+         select id from jobs where status = 'queued'
+         order by priority desc, created_at
+         for update skip locked limit 1
+       )
+       returning id`,
+    );
+    return r.rows[0]?.id ?? null;
+  }
+
+  async function pump() {
+    if (pumping) { rerun = true; return; }
+    pumping = true;
+    try {
+      do {
+        rerun = false;
+        while (active < cap) {
+          const id = await claimOne();
+          if (!id) break;
+          active++;
+          Promise.resolve()
+            .then(() => handle(id))
+            .catch((err) => console.error(`job ${id} handler error:`, err))
+            .finally(() => { active--; pump(); });
+        }
+      } while (rerun);
+    } finally {
+      pumping = false;
+    }
+  }
+
+  onNotify = () => { pump(); };
+  const poll = setInterval(() => pump(), 5000);
+  if (typeof poll.unref === 'function') poll.unref();
+  await pump();
 }

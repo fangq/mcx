@@ -40,6 +40,7 @@ export async function createMcxService({ name, jobId, seed, script }) {
     'service', 'create', '--detach',
     '--restart-condition', 'none',
     '--generic-resource', 'NVIDIA_GPU=1',
+    ...(config.workerConstraint ? ['--constraint', config.workerConstraint] : []),
     '--name', name,
     '-e', `API_URL=${config.workerApiUrl}`,
     '-e', `JOB_ID=${jobId}`,

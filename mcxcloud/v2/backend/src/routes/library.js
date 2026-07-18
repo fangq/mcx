@@ -1,4 +1,5 @@
 // @ts-check
+import { randomUUID } from 'node:crypto';
 import { config } from '../config.js';
 import { pool, withTx } from '../db.js';
 import { attachRefs, getBlob, putBlob } from '../blobs.js';
@@ -19,14 +20,20 @@ export async function libraryRoutes(app) {
     const off = Number(offset ?? 0) || 0;
     const rows = q
       ? await pool.query(
+          // word-ranked full-text OR substring match (restores v1's LIKE behaviour, so
+          // e.g. "colin" still finds "colin27"). Only approved entries are public.
           `select id, title, description, license, thumbnail_hash, run_count from library
-           where to_tsvector('english', coalesce(title,'') || ' ' || coalesce(description,''))
-                 @@ plainto_tsquery('english', $1)
+           where status = 'approved'
+             and (to_tsvector('english', coalesce(title,'') || ' ' || coalesce(description,''))
+                    @@ plainto_tsquery('english', $1)
+                  or title ilike '%' || $1 || '%'
+                  or description ilike '%' || $1 || '%')
            order by run_count desc limit $2 offset $3`,
           [q, lim, off],
         )
       : await pool.query(
           `select id, title, description, license, thumbnail_hash, run_count from library
+           where status = 'approved'
            order by run_count desc limit $1 offset $2`,
           [lim, off],
         );
@@ -46,7 +53,7 @@ export async function libraryRoutes(app) {
   app.get('/library/:id', async (req, reply) => {
     const { id } = /** @type {{ id: string }} */ (req.params);
     const r = await pool.query(
-      'select id, title, description, license, input_doc from library where id = $1',
+      "select id, title, description, license, input_doc from library where id = $1 and status = 'approved'",
       [id],
     );
     if (r.rowCount === 0) return reply.code(404).send({ status: 'error', message: 'not found' });
@@ -91,9 +98,9 @@ export async function libraryRoutes(app) {
         owned.push(thumbHash);
       }
       const ins = await client.query(
-        `insert into library (title, description, license, submitter, input_doc, doc_hash, thumbnail_hash)
-         values ($1,$2,$3,$4,$5,$6,$7) returning id`,
-        [body.title, body.description, body.license, body.user ?? null, doc, docHash, thumbHash],
+        `insert into library (id, title, description, license, submitter, input_doc, doc_hash, thumbnail_hash)
+         values ($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
+        [randomUUID(), body.title, body.description, body.license, body.user ?? null, doc, docHash, thumbHash],
       );
       const id = /** @type {string} */ (ins.rows[0].id);
       await attachRefs(client, owned, 'library', id);

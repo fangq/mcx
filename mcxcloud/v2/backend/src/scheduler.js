@@ -24,13 +24,8 @@ function serviceName(jobId) {
  * @returns {Promise<void>}
  */
 async function handle(jobId) {
-  // claim the job (skip if cancelled/handled elsewhere)
-  const claim = await pool.query(
-    `update jobs set status = 'running', started_at = now()
-     where id = $1 and status = 'queued' returning id`,
-    [jobId],
-  );
-  if (claim.rowCount === 0) return;
+  // The queue already atomically claimed this job (status queued -> running) before
+  // handing it to us; just announce it and dispatch.
   publish(jobId, 'status', { status: 'running' });
 
   const name = serviceName(jobId);

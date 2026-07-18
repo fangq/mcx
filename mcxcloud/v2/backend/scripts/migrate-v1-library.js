@@ -12,6 +12,7 @@
 // Idempotent-ish: skips rows whose doc_hash already exists in `library`.
 
 import { readFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { pool, withTx } from '../src/db.js';
 import { normalize } from '../src/jdata.js';
 import { putBlob, putBlobRaw, attachRefs } from '../src/blobs.js';
@@ -55,11 +56,11 @@ for (const row of rows) {
       const created = row.createtime ? new Date(Number(row.createtime) * 1000) : new Date();
       const ins = await client.query(
         `insert into library
-           (title, description, license, submitter, input_doc, doc_hash, thumbnail_hash,
+           (id, title, description, license, submitter, input_doc, doc_hash, thumbnail_hash,
             upvotes, downvotes, read_count, run_count, created_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id`,
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning id`,
         [
-          row.title || '(untitled)', row.comment || '', row.license || 'CC0', submitter,
+          randomUUID(), row.title || '(untitled)', row.comment || '', row.license || 'CC0', submitter,
           norm.doc, norm.docHash, thumbHash,
           row.upvote || 0, row.downvote || 0, row.readcount || 0, row.runcount || 0, created,
         ],

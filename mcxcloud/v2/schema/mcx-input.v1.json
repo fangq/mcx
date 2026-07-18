@@ -116,7 +116,7 @@
         "OutputFormat": {
           "title": "Output file format",
           "type": "string",
-          "default": "nii",
+          "default": "jnii",
           "enum": [
             "mc2",
             "nii",
