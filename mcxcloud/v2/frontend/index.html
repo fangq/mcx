@@ -116,6 +116,7 @@
         <div class="row">
           <label><input type="radio" name="renderstyle" id="mip-radio" checked /> MIP</label>
           <label><input type="radio" name="renderstyle" id="iso-radio" /> Iso</label>
+          <label title="direct volume rendering (alpha compositing)"><input type="radio" name="renderstyle" id="dvr-radio" /> DVR</label>
           <label class="inline">Colormap <select id="cmap"></select></label>
           <button id="draw-input">Draw Input</button>
           <button id="draw-output" disabled>Draw Output</button>
@@ -125,7 +126,9 @@
           <label><input type="range" id="clim-hi" min="0" max="1" step="0.0001" disabled /></label>
         </div>
         <div class="row">
-          <label class="inline">opacity <input type="range" id="iso-alpha" min="0.05" max="1" step="0.05" value="1" title="isosurface opacity" /></label>
+          <label class="inline">opacity <input type="range" id="iso-alpha" min="0.05" max="1" step="0.05" value="1" title="isosurface opacity / DVR density" /></label>
+          <label class="inline" title="color contrast (gamma) — higher spreads out the lower values">contrast <input type="range" id="contrast" min="0.5" max="3" step="0.1" value="1" /></label>
+          <label class="inline" title="gradient shading in DVR mode"><input type="checkbox" id="dvr-shade" /> shade</label>
         </div>
         <div class="grid3">
           <label>X <input type="range" id="cross-x-low" min="0" max="1" step="0.001" value="0" />

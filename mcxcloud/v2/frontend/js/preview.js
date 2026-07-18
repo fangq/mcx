@@ -33,7 +33,7 @@ const VERT = /* glsl */ `
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;
   }`;
 
-function fragment(isMip) {
+function fragment(mode) {
   return /* glsl */ `
   precision highp float;
   precision mediump sampler3D;
@@ -41,7 +41,9 @@ function fragment(isMip) {
   uniform float u_renderthreshold;
   uniform vec2 u_clim;
   uniform float u_empty;      // samples <= this are "empty" (0-fluence) -> transparent
-  uniform float u_alpha;      // isosurface opacity (0..1)
+  uniform float u_alpha;      // isosurface opacity / DVR density (0..1)
+  uniform float u_shade;      // DVR gradient shading on/off (1/0)
+  uniform float u_gamma;      // colormap contrast (gamma); >1 expands the lower values
   uniform sampler3D u_data;
   uniform sampler2D u_cmdata;
   uniform vec3 u_minslice;
@@ -55,7 +57,10 @@ function fragment(isMip) {
   const float relative_step_size = 1.0;
 
   float sample1(vec3 texcoords){ return texture(u_data, texcoords.xyz).r; }
-  vec4 apply_colormap(float val){ val=(val-u_clim.x)/(u_clim.y-u_clim.x); return texture(u_cmdata, vec2(val,0.5)); }
+  // normalize into the clim window, then apply the contrast (gamma) curve. u_gamma>1 pushes
+  // the mapped position down, so mid/low values spread across more of the colormap.
+  float cmap_pos(float val){ return pow(clamp((val-u_clim.x)/(u_clim.y-u_clim.x),0.0,1.0), u_gamma); }
+  vec4 apply_colormap(float val){ return texture(u_cmdata, vec2(cmap_pos(val),0.5)); }
 
   vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray){
     vec3 V = normalize(view_ray);
@@ -96,6 +101,31 @@ function fragment(isMip) {
     if(acc.a<=0.004) discard; // nothing in range -> transparent
     fragColor=vec4(acc.rgb/acc.a, acc.a);
   }
+  void cast_dvr(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray){
+    // MIDA (Maximum Intensity Difference Accumulation, Bruckner & Groller 2009): front-to-back
+    // compositing that, on reaching a NEW maximum along the ray, attenuates the accumulated
+    // color by beta=1-delta so the brighter interior shows through — MIP-like peak visibility
+    // with DVR depth/opacity + optional gradient shading. Big intensity jumps -> MIP-like;
+    // gentle regions -> DVR-like. The smoothstep floor keeps the dim, noisy outer halo clear.
+    vec3 dstep=1.5/u_size; vec3 loc=start_loc; vec4 acc=vec4(0.0); float maxt=0.0;
+    for(int iter=0; iter<=MAX_STEPS; iter++){
+      if(iter>=nsteps) break;
+      float val=sample1(loc);
+      if(val>u_empty){
+        float t=clamp((val-u_clim.x)/(u_clim.y-u_clim.x), 0.0, 1.0);
+        vec4 col=texture(u_cmdata, vec2(pow(t,u_gamma),0.5)); // contrast-mapped color
+        if(u_shade>0.5){ col.rgb=add_lighting(val, loc, dstep, view_ray).rgb; }
+        float a=u_alpha*smoothstep(0.2, 1.0, t)*col.a; // opacity ramp with transparent low-end
+        float beta=1.0;
+        if(t>maxt){ beta=1.0-(t-maxt); maxt=t; }       // new max -> reveal it (toward MIP)
+        acc.rgb=beta*acc.rgb + (1.0-beta*acc.a)*a*col.rgb;
+        acc.a  =beta*acc.a   + (1.0-beta*acc.a)*a;
+      }
+      loc+=step;
+    }
+    if(acc.a<=0.004) discard;                  // ray hit only empty voxels -> transparent
+    fragColor=vec4(acc.rgb/acc.a, acc.a);
+  }
 
   void main(){
     vec3 farpos=v_farpos.xyz/v_farpos.w; vec3 nearpos=v_nearpos.xyz/v_nearpos.w;
@@ -119,8 +149,15 @@ function fragment(isMip) {
     vec3 hi=mix(vec3(float(nsteps)), ceil((u_maxslice-start_loc)/step), greaterThan((start_loc+float(nsteps)*step), u_maxslice));
     hi=min(hi, mix(vec3(float(nsteps)), ceil((u_minslice-start_loc)/step), lessThan((start_loc+float(nsteps)*step), u_minslice)));
     nsteps=int(min(hi.x, min(hi.y, hi.z))+0.5);
-    ${isMip ? 'cast_mip' : 'cast_iso'}(start_loc, step, nsteps, view_ray);
+    ${mode === 'mip' ? 'cast_mip' : mode === 'dvr' ? 'cast_dvr' : 'cast_iso'}(start_loc, step, nsteps, view_ray);
   }`;
+}
+
+/** current render mode from the radio buttons: 'mip' | 'iso' | 'dvr' */
+function currentRenderMode() {
+  if (/** @type {HTMLInputElement} */ ($('#dvr-radio'))?.checked) return 'dvr';
+  if (/** @type {HTMLInputElement} */ ($('#mip-radio')).checked) return 'mip';
+  return 'iso';
 }
 
 const baseUniforms = () => ({
@@ -129,6 +166,8 @@ const baseUniforms = () => ({
   u_clim: { value: new THREE.Vector2(0, 1) },
   u_empty: { value: -1e30 },
   u_alpha: { value: 1 },
+  u_shade: { value: 0 },
+  u_gamma: { value: 1 },
   u_data: { value: null },
   u_cmdata: { value: null },
   u_minslice: { value: new THREE.Vector3(0, 0, 0) },
@@ -453,7 +492,7 @@ function drawvolume(vol, isLog = false) {
   tex.minFilter = tex.magFilter = floatLinear ? THREE.LinearFilter : THREE.NearestFilter;
   tex.unpackAlignment = 1; tex.needsUpdate = true;
 
-  const isMip = /** @type {HTMLInputElement} */ ($('#mip-radio')).checked;
+  const mode = currentRenderMode();
   const uniforms = baseUniforms();
   uniforms.u_data.value = tex;
   uniforms.u_cmdata.value = cmTexture;
@@ -467,10 +506,18 @@ function drawvolume(vol, isLog = false) {
   uniforms.u_renderthreshold.value = isLog ? cLow + 0.2 * (cHigh - cLow) : 0.5;
   const alphaEl = /** @type {HTMLInputElement} */ ($('#iso-alpha'));
   uniforms.u_alpha.value = alphaEl ? (parseFloat(alphaEl.value) || 1) : 1;
+  const shadeEl = /** @type {HTMLInputElement} */ ($('#dvr-shade'));
+  uniforms.u_shade.value = shadeEl && shadeEl.checked ? 1 : 0;
+  // Contrast (gamma): log fluence spans the upper band of the window and reads flat, so boost
+  // it by default; segmentation/linear data stays linear (1). The slider can fine-tune.
+  const defGamma = isLog ? 2.0 : 1.0;
+  const contrastEl = /** @type {HTMLInputElement} */ ($('#contrast'));
+  if (contrastEl) contrastEl.value = String(defGamma);
+  uniforms.u_gamma.value = defGamma;
   readCrossInto(uniforms);
 
   const material = new THREE.RawShaderMaterial({
-    uniforms, vertexShader: VERT, fragmentShader: fragment(isMip), side: THREE.BackSide,
+    uniforms, vertexShader: VERT, fragmentShader: fragment(mode), side: THREE.BackSide,
     glslVersion: THREE.GLSL3, transparent: true, depthWrite: false,
   });
   const geometry = new THREE.BoxGeometry(dim[0], dim[1], dim[2]);
@@ -590,13 +637,30 @@ function wireControls() {
   });
   const swap = () => {
     if (!lastVolume) return;
-    const isMip = /** @type {HTMLInputElement} */ ($('#mip-radio')).checked;
-    lastVolume.material.fragmentShader = fragment(isMip);
+    const mode = currentRenderMode();
+    if (mode === 'dvr') { // DVR reads best semi-transparent
+      const a = /** @type {HTMLInputElement} */ ($('#iso-alpha'));
+      a.value = '0.5'; lastVolume.material.uniforms.u_alpha.value = 0.5;
+    }
+    lastVolume.material.fragmentShader = fragment(mode);
     lastVolume.material.needsUpdate = true;
     dirty = true;
   };
   $('#mip-radio').addEventListener('change', swap);
   $('#iso-radio').addEventListener('change', swap);
+  $('#dvr-radio').addEventListener('change', swap);
+  // contrast (gamma) slider
+  $('#contrast').addEventListener('input', (e) => {
+    if (!lastVolume) return;
+    lastVolume.material.uniforms.u_gamma.value = parseFloat(/** @type {HTMLInputElement} */ (e.target).value) || 1;
+    dirty = true;
+  });
+  // DVR gradient-shading toggle
+  $('#dvr-shade').addEventListener('change', (e) => {
+    if (!lastVolume) return;
+    lastVolume.material.uniforms.u_shade.value = /** @type {HTMLInputElement} */ (e.target).checked ? 1 : 0;
+    dirty = true;
+  });
 
   const angles = { 'pos-x': [Math.PI / 2, Math.PI / 2], 'neg-x': [Math.PI / 2, 3 * Math.PI / 2], 'pos-y': [Math.PI / 2, Math.PI], 'neg-y': [Math.PI / 2, 0], 'pos-z': [0, 0], 'neg-z': [Math.PI, 0] };
   $('#views').addEventListener('click', (e) => {
