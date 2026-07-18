@@ -96,12 +96,16 @@ function wireActions() {
 function parseUrl() {
   const p = new URLSearchParams(window.location.search);
   const d = p.get('data');
+  let doc = null;
   if (d) {
-    try { setEditorValue(decodeStateFromUrl(d)); }
+    try { doc = decodeStateFromUrl(d); setEditorValue(doc); }
     catch (err) { console.error('could not decode ?data= link:', err); }
   }
   const t = p.get('tab');
   if (t) showTab(t);
+  // Render the shared domain right away. showTab's auto-draw relies on state.doc, which the
+  // editor only populates via its async change event — so draw the decoded doc directly.
+  if (doc && t === 'preview') drawPreview(doc);
 }
 
 // Draggable splitter between the render canvas (left) and controls (right).

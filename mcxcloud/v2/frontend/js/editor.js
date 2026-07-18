@@ -6,6 +6,8 @@ const JSONEditor = /** @type {any} */ (JE).JSONEditor || /** @type {any} */ (JE)
 
 /** @type {any} */
 let editor = null;
+/** value requested before the editor finished its async build; applied on 'ready' */
+let pendingValue = null;
 
 /**
  * (Re)build the schema-driven form.
@@ -16,6 +18,7 @@ let editor = null;
  */
 export function initEditor(container, schema, onChange, startval) {
   if (editor) editor.destroy();
+  pendingValue = null;
   editor = new JSONEditor(container, {
     schema,
     theme: 'html',
@@ -27,6 +30,9 @@ export function initEditor(container, schema, onChange, startval) {
     no_additional_properties: true,
     startval,
   });
+  editor.on('ready', () => {
+    if (pendingValue !== null) { editor.setValue(pendingValue); pendingValue = null; }
+  });
   editor.on('change', () => {
     const errors = editor.validate();
     onChange(editor.getValue(), errors.length === 0);
@@ -36,7 +42,11 @@ export function initEditor(container, schema, onChange, startval) {
 
 /** @param {object} value */
 export function setEditorValue(value) {
-  if (editor) editor.setValue(value);
+  if (!editor) return;
+  // json-editor throws ("not ready yet") if setValue runs before the async build completes
+  // (e.g. a ?data= link applied during boot) — queue it and let the 'ready' handler apply it.
+  if (editor.ready) editor.setValue(value);
+  else pendingValue = value;
 }
 
 export function getEditor() {
