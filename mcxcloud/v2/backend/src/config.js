@@ -11,11 +11,13 @@
  * @property {boolean} runScheduler
  * @property {string} workerApiUrl     API base URL reachable from inside the swarm container
  * @property {string} workerImage      docker image for the mcx worker
+ * @property {string} workerImageMmc   docker image for mesh (mmc) jobs; future engines (redbird) get their own image + env
  * @property {number} maxRuntimeMs      hard cap per simulation before kill
  * @property {number} maxConcurrent     0 = auto-detect from swarm GPU count
  * @property {string} workerConstraint  optional swarm placement constraint (e.g. 'node.hostname==neza'); '' = any node
  * @property {number} jobTtlMs          purge non-library jobs older than this (ms)
  * @property {number} minSubmitGapMs    minimum gap between submissions from one client (ms)
+ * @property {string} adminSecret       shared secret for the library review/admin API ('' disables it)
  */
 
 /** @type {Config} */
@@ -29,6 +31,7 @@ export const config = {
   runScheduler: process.env.RUN_SCHEDULER !== '0',
   workerApiUrl: process.env.WORKER_API_URL ?? 'http://localhost:8080',
   workerImage: process.env.WORKER_IMAGE ?? 'fangqq/mcx:v2024.2',
+  workerImageMmc: process.env.WORKER_IMAGE_MMC ?? 'fangqq/mmc:v2025.10',
   maxRuntimeMs: Number(process.env.MAX_RUNTIME_MS ?? 60000),
   maxConcurrent: Number(process.env.MAX_CONCURRENT ?? 0),
   workerConstraint: process.env.WORKER_NODE_CONSTRAINT ?? '',

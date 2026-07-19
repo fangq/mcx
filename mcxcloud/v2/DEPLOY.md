@@ -49,6 +49,12 @@ HTTP client, and uses **`wget`** (GNU wget) — present in the stock `fangqq/mcx
 **no augmented image is required**; set `WORKER_IMAGE` to your mcx image (e.g.
 `fangqq/mcx:v2025.10`). Verified on `fangqq/mcx:v2025.10`: bash + GNU wget 1.17.1, no curl.
 
+Mesh (mmc) jobs — inputs whose `Shapes` carries `MeshNode`/`MeshElem` — are dispatched to
+a separate image set by `WORKER_IMAGE_MMC` (default `fangqq/mmc:v2025.10`). The same
+`mcx-run.sh` runs in both: the scheduler passes `ENGINE=mcx|mmc` and the script picks the
+matching binary. Future engines (e.g. redbird) follow the same pattern with their own
+image env.
+
 Only if your mcx image lacks both curl and wget, build the optional augmented image:
 
 ```sh
@@ -80,7 +86,7 @@ docker run -d --name mcxcloud-db --restart unless-stopped \
 cd v2/backend
 cp .env.example .env
 chmod 600 .env             # it holds DATABASE_URL (with password) + WORKER_SECRET
-# set: DATABASE_URL, CORS_ORIGIN=<frontend origin>, WORKER_API_URL, WORKER_IMAGE,
+# set: DATABASE_URL, CORS_ORIGIN=<frontend origin>, WORKER_API_URL, WORKER_IMAGE, WORKER_IMAGE_MMC,
 #      and a STRONG secret:  WORKER_SECRET=$(openssl rand -hex 32)
 npm install                # no build; installs fastify, pg, ajv, @fastify/cors
 npm run migrate            # applies db/migrations/*.sql

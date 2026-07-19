@@ -28,9 +28,14 @@ async function handle(jobId) {
   // handing it to us; just announce it and dispatch.
   publish(jobId, 'status', { status: 'running' });
 
+  // engine (mcx|mmc) was detected from the input at submit time; it selects the worker
+  // image and the simulator binary inside the shared run script
+  const er = await pool.query('select engine from jobs where id = $1', [jobId]);
+  const engine = er.rows[0]?.engine || 'mcx';
+
   const name = serviceName(jobId);
   try {
-    await createMcxService({ name, jobId, seed: false, script: RUN_SCRIPT });
+    await createMcxService({ name, jobId, seed: false, script: RUN_SCRIPT, engine });
   } catch (err) {
     await pool.query(
       `update jobs set status = 'failed', error = $2, ended_at = now() where id = $1`,

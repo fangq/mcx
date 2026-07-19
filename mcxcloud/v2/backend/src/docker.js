@@ -29,13 +29,19 @@ export async function countGpus() {
   return count;
 }
 
+/** engine -> worker docker image; future engines (e.g. redbird) add an entry here
+ *  @returns {Record<string, string>} */
+const engineImage = () => ({ mcx: config.workerImage, mmc: config.workerImageMmc });
+
 /**
- * Launch one mcx job as a swarm service, one GPU, no restart. `script` runs as the
- * container command (bash -c); it fetches input from and pushes results to the API.
- * @param {{ name: string, jobId: string, seed: boolean, script: string }} opts
+ * Launch one simulation job as a swarm service, one GPU, no restart. `script` runs as
+ * the container command (bash -c); it fetches input from and pushes results to the API.
+ * The `engine` selects the worker image and is exported so the script picks the matching
+ * simulator binary.
+ * @param {{ name: string, jobId: string, seed: boolean, script: string, engine?: string }} opts
  * @returns {Promise<void>}
  */
-export async function createMcxService({ name, jobId, seed, script }) {
+export async function createMcxService({ name, jobId, seed, script, engine = 'mcx' }) {
   const args = [
     'service', 'create', '--detach',
     '--restart-condition', 'none',
@@ -46,7 +52,8 @@ export async function createMcxService({ name, jobId, seed, script }) {
     '-e', `JOB_ID=${jobId}`,
     '-e', `WORKER_SECRET=${config.workerSecret}`,
     '-e', `SEEDFLAG=${seed ? '--seed -1' : ''}`,
-    config.workerImage,
+    '-e', `ENGINE=${engine}`,
+    engineImage()[engine] ?? config.workerImage,
     '/bin/bash', '-c', script,
   ];
   await run('docker', args, { maxBuffer: 16 * 1024 * 1024 });

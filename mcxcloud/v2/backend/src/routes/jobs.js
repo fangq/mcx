@@ -5,7 +5,7 @@ import { pool, withTx } from '../db.js';
 import { attachRefs, getBlob, putBlob, putBlobRaw } from '../blobs.js';
 import { normalize, reassemble } from '../jdata.js';
 import { mintToken, tokenHash } from '../tokens.js';
-import { validateInput, checkLimits } from '../schema.js';
+import { validateInput, checkLimits, detectEngine } from '../schema.js';
 import { enqueueJob } from '../queue.js';
 import { publish, subscribe } from '../sse.js';
 
@@ -84,6 +84,9 @@ export async function jobRoutes(app) {
     const limit = checkLimits(/** @type {Record<string, any>} */ (body.doc));
     if (limit) return reply.code(422).send({ status: 'invalid', message: limit });
 
+    // mesh domains (Shapes.MeshNode) run mmc; voxel domains run mcx
+    const engine = detectEngine(/** @type {Record<string, any>} */ (body.doc));
+
     const { token, tokenHash: th } = mintToken();
 
     const result = await withTx(async (client) => {
@@ -103,9 +106,9 @@ export async function jobRoutes(app) {
 
       if (cached.rowCount && cached.rows[0].output_hash) {
         const ins = await client.query(
-          `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, output_hash, detp_hash, ended_at)
-           values ($1,$2,$3,'cached',$4,$5,$6,$7, now()) returning id`,
-          [randomUUID(), doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash],
+          `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, output_hash, detp_hash, ended_at, engine)
+           values ($1,$2,$3,'cached',$4,$5,$6,$7, now(), $8) returning id`,
+          [randomUUID(), doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash, engine],
         );
         const id = /** @type {string} */ (ins.rows[0].id);
         const owned = [...refs, cached.rows[0].output_hash];
@@ -115,9 +118,9 @@ export async function jobRoutes(app) {
       }
 
       const ins = await client.query(
-        `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash)
-         values ($1,$2,$3,'queued',$4,$5) returning id`,
-        [randomUUID(), doc, docHash, body.user ?? null, th],
+        `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, engine)
+         values ($1,$2,$3,'queued',$4,$5,$6) returning id`,
+        [randomUUID(), doc, docHash, body.user ?? null, th, engine],
       );
       const id = /** @type {string} */ (ins.rows[0].id);
       await attachRefs(client, refs, 'job', id);
