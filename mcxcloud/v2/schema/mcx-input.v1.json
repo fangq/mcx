@@ -119,6 +119,7 @@
         },
         "OutputFormat": {
           "title": "Output file format",
+          "description": "ascii and bin are accepted by mmc (mesh domains) only",
           "type": "string",
           "default": "jnii",
           "enum": [
@@ -127,7 +128,9 @@
             "jnii",
             "bnii",
             "hdr",
-            "tx3"
+            "tx3",
+            "ascii",
+            "bin"
           ]
         },
         "OutputType": {
@@ -178,6 +181,29 @@
           "type": "string",
           "default": "",
           "pattern": "^[_ramc]{0,6}[01]{0,6}$"
+        },
+        "RayTracer": {
+          "title": "Ray tracer (MMC mesh domains only)",
+          "description": "g: dual-grid DMMC (voxel output, recommended), p: Plucker, h: Havel, b: Badouel, s: branchless Badouel",
+          "type": "string",
+          "default": "g",
+          "enum": [
+            "g",
+            "p",
+            "h",
+            "b",
+            "s"
+          ]
+        },
+        "BasisOrder": {
+          "title": "Fluence basis order (MMC mesh domains only)",
+          "description": "0: piecewise-constant (per-element), 1: piecewise-linear (per-node)",
+          "type": "integer",
+          "default": 1,
+          "enum": [
+            0,
+            1
+          ]
         }
       }
     },
@@ -211,6 +237,20 @@
           "default": 5e-09,
           "minimum": 0,
           "maximum": 1e-07
+        },
+        "N0": {
+          "title": "Exterior refractive index (MMC mesh domains only)",
+          "description": "Refractive index of the medium outside the mesh",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+        },
+        "Omega": {
+          "title": "RF modulation angular frequency (MMC mesh domains only)",
+          "description": "Angular frequency in rad/s for RF (frequency-domain) forward simulations; 0 = CW. MCX expresses this as Optode.Source.Frequency in Hz instead",
+          "type": "number",
+          "default": 0,
+          "minimum": 0
         }
       }
     },
@@ -1222,6 +1262,210 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "title": "Tetrahedral mesh (MMC)",
+          "type": "object",
+          "required": [
+            "MeshNode",
+            "MeshElem",
+            "InitElem"
+          ],
+          "properties": {
+            "MeshNode": {
+              "title": "Mesh nodes",
+              "description": "Tetrahedral mesh vertices, one [x,y,z] coordinate per node",
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
+                  ],
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "single",
+                      "enum": [
+                        "single"
+                      ]
+                    },
+                    "_ArraySize_": {
+                      "title": "[node count, 3]",
+                      "type": "array",
+                      "default": [
+                        0,
+                        3
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "default": 0,
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "default": [
+                            0,
+                            0
+                          ],
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  }
+                },
+                {
+                  "title": "Node list",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[x,y,z]",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              ]
+            },
+            "MeshElem": {
+              "title": "Mesh elements",
+              "description": "Tetrahedra as [n1,n2,n3,n4,tag] rows: four 1-based node indices plus a region tag indexing Domain.Media",
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
+                  ],
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "int32",
+                      "enum": [
+                        "int32",
+                        "uint32"
+                      ]
+                    },
+                    "_ArraySize_": {
+                      "title": "[element count, 5]",
+                      "type": "array",
+                      "default": [
+                        0,
+                        5
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "default": 0,
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "default": [
+                            0,
+                            0
+                          ],
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  }
+                },
+                {
+                  "title": "Element list",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[n1,n2,n3,n4,tag]",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "minItems": 5,
+                    "maxItems": 5
+                  }
+                }
+              ]
+            },
+            "InitElem": {
+              "title": "Initial element (1-based tet enclosing the source; -1: auto-detect)",
+              "type": "integer",
+              "default": -1,
+              "minimum": -1,
+              "not": {
+                "const": 0
+              }
+            }
           }
         },
         {
