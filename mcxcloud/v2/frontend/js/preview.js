@@ -177,6 +177,8 @@ const baseUniforms = () => ({
 // ---- scene state ---------------------------------------------------------------
 let scene, camera, renderer, controls, cmTexture;
 let boundingbox, bbxsize = [1, 1, 1], lastVolume = null, lastDim = [];
+// 4D+ volume support: keep the full decoded array and render one 3D frame at a time
+let fullVol = null, volIsLog = false, curFrame = 0, numFrames = 1;
 let dirty = true;
 let fpsDiv = null, frames = 0, fpsLast = 0;
 let lastThumbnail = null;
@@ -550,6 +552,53 @@ function drawvolume(vol, isLog = false) {
   return mesh;
 }
 
+/**
+ * Extract one 3D frame from an N-D volume, flattening every dimension above 3 (time
+ * gates, photon-sharing patterns, multi-src/RF/replay-detector blocks) into a single
+ * frame counter. MCX outputs (_ArrayOrder_ 'c') store [nx,ny,nz,nt,ns,nr] with memory
+ * layout (fastest->slowest) [pattern(ns), x, y, z, gate(nt), rep(nr)] — the pattern dim
+ * is interleaved BELOW x (mcx_core.cu: field[(idx1d+tshift*dimlen.z)*srcnum+i]) — so a
+ * frame is a strided gather when ns>1. Arrays without the 'c' tag treat the extra
+ * dimensions as slowest (contiguous frame blocks).
+ * @param {{data: Float32Array, size: number[], order: string}} vol
+ * @param {number} f frame index in [0, numFrames)
+ */
+function extractFrame(vol, f) {
+  const [nx = 1, ny = 1, nz = 1, nt = 1, ns = 1] = vol.size;
+  const flen = nx * ny * nz;
+  const size3 = [nx, ny, nz];
+  const nfr = vol.size.slice(3).reduce((a, b) => a * (b || 1), 1);
+  if (nfr <= 1 || vol.data.length < flen * nfr) return { data: vol.data, size: size3, order: vol.order };
+  f = Math.min(Math.max(f, 0), nfr - 1);
+  if (String(vol.order || '').startsWith('c') && ns > 1) {
+    // frame f -> (gate t, pattern s, rep r), stepping through time gates first
+    const t = f % nt, s = Math.floor(f / nt) % ns, r = Math.floor(f / (nt * ns));
+    const out = new Float32Array(flen);
+    const base = (r * nt + t) * flen;
+    for (let v = 0; v < flen; v++) out[v] = vol.data[(base + v) * ns + s];
+    return { data: out, size: size3, order: vol.order };
+  }
+  // ns==1 'c' frames and untagged arrays are contiguous [flen] blocks in frame order
+  return { data: vol.data.subarray(f * flen, (f + 1) * flen), size: size3, order: vol.order };
+}
+
+/** show/hide + sync the 4D frame spinner with the current volume */
+function syncFrameUI() {
+  const wrap = $('#frame-ctl');
+  if (!wrap) return;
+  wrap.hidden = numFrames <= 1;
+  const num = /** @type {HTMLInputElement} */ ($('#frame-num'));
+  num.max = String(numFrames);
+  num.value = String(curFrame + 1);
+  $('#frame-total').textContent = String(numFrames);
+}
+
+/** build the renderable 3D mesh for frame f of the current fullVol */
+function frameMesh(f) {
+  const frame = extractFrame(fullVol, f);
+  return drawvolume(volIsLog ? logscale(frame) : frame, volIsLog);
+}
+
 /** apply log10 scaling (for fluence output) in place -> new Float32Array */
 function logscale(vol) {
   // Take log only of POSITIVE fluence; 0 (and negatives) are marked empty (a sentinel just
@@ -574,11 +623,11 @@ export function drawPreview(cfg) {
   if (!scene) return;
   scene.clear();
   lastVolume = null;
+  fullVol = null; volIsLog = false; curFrame = 0; numFrames = 1;
   if (cfg && cfg.Shapes) {
     if (cfg.Shapes.constructor === Object && cfg.Shapes._ArraySize_) {
-      drawshape({ Grid: { Size: cfg.Shapes._ArraySize_, Tag: 1 } });
-      lastVolume = drawvolume(decodeJDataArray(cfg.Shapes));
-      boundingbox.add(lastVolume);
+      drawshape({ Grid: { Size: cfg.Shapes._ArraySize_.slice(0, 3), Tag: 1 } });
+      fullVol = decodeJDataArray(cfg.Shapes);
     } else {
       if (cfg.Domain && cfg.Domain.Dim) drawshape({ Grid: { Size: cfg.Domain.Dim, Tag: 1 } });
       if (Array.isArray(cfg.Shapes)) cfg.Shapes.forEach(drawshape);
@@ -590,9 +639,15 @@ export function drawPreview(cfg) {
   } else if (cfg && cfg.NIFTIData) {
     const dim = (cfg.NIFTIHeader && cfg.NIFTIHeader.Dim) || cfg.NIFTIData._ArraySize_;
     if (dim) drawshape({ Grid: { Size: dim.slice(0, 3), Tag: 1 } });
-    lastVolume = drawvolume(logscale(decodeJDataArray(cfg.NIFTIData)), true);
+    fullVol = decodeJDataArray(cfg.NIFTIData);
+    volIsLog = true; // fluence-like output -> log scale
+  }
+  if (fullVol) {
+    numFrames = fullVol.size.slice(3).reduce((a, b) => a * (b || 1), 1);
+    lastVolume = frameMesh(curFrame);
     boundingbox.add(lastVolume);
   }
+  syncFrameUI();
   dirty = true;
 }
 
@@ -626,6 +681,24 @@ function wireControls() {
     $('#cross-' + axis + '-hi').addEventListener('input', () => applyCross(axis, 'hi'));
     $('#thick-' + axis).addEventListener('input', () => applyCross(axis, 'low'));
   }
+
+  // 4D frame spinner: re-render the selected 3D frame of a 4D+ volume
+  const frameEl = /** @type {HTMLInputElement} */ ($('#frame-num'));
+  if (frameEl) frameEl.addEventListener('input', () => {
+    if (!fullVol || numFrames <= 1) return;
+    const f = Math.min(Math.max((parseInt(frameEl.value, 10) || 1) - 1, 0), numFrames - 1);
+    if (f === curFrame) return;
+    curFrame = f;
+    if (lastVolume) { // free the old frame's GPU texture before building the next
+      if (lastVolume.parent) lastVolume.parent.remove(lastVolume);
+      lastVolume.material.uniforms.u_data.value.dispose();
+      lastVolume.material.dispose();
+      lastVolume.geometry.dispose();
+    }
+    lastVolume = frameMesh(curFrame);
+    boundingbox.add(lastVolume);
+    dirty = true;
+  });
 
   // capture-thumbnail button (updates every .thumb-view, incl. the Share tab)
   $('#update-thumb').addEventListener('click', () => { captureThumbnail(); });

@@ -129,6 +129,8 @@
           <label class="inline">opacity <input type="range" id="iso-alpha" min="0.05" max="1" step="0.05" value="1" title="isosurface opacity / DVR density" /></label>
           <label class="inline" title="color contrast (gamma) — higher spreads out the lower values">contrast <input type="range" id="contrast" min="0.5" max="3" step="0.1" value="1" /></label>
           <label class="inline" title="gradient shading in DVR mode"><input type="checkbox" id="dvr-shade" /> shade</label>
+          <label class="inline" id="frame-ctl" hidden title="4-D frame selector — dimensions above 3 (time gates, patterns, sources) are flattened into one frame counter">frame
+            <input type="number" id="frame-num" class="thick" min="1" value="1" step="1" /> / <span id="frame-total">1</span></label>
         </div>
         <div class="grid3">
           <label>X <input type="range" id="cross-x-low" min="0" max="1" step="0.001" value="0" />
