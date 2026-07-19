@@ -109,6 +109,16 @@ node scripts/migrate-v1-library.js mcxpub.json
 Each entry is normalized (heavy Shapes → content-addressed `blobs`), so duplicated volumes
 across entries are stored once — the fix for the v1 >1 GB bloat.
 
+### Seed the curated builtin examples
+
+Maintainer-curated demos live in `db/seeds/*.json` (e.g. the multi-source examples
+`multisrc`/`eachsrc`). Seeding is idempotent (existing `doc_hash` entries are skipped) and
+entries are inserted pre-approved:
+
+```sh
+node --env-file=.env scripts/seed-library.js db/seeds/*.json
+```
+
 ## 6. Run the API + scheduler (manager)
 
 For a quick foreground run: `node --env-file=.env src/server.js`. For production, use the

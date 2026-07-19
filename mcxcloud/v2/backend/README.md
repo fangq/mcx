@@ -41,6 +41,9 @@ src/
   docker.js     swarm helpers (GPU count, service create/rm)
   migrate.js    migration runner
   routes/       schema · jobs · library · blobs
+scripts/
+  migrate-v1-library.js  one-time v1 (sqlite mcxpub) -> v2 library import
+  seed-library.js        seed curated builtin examples from db/seeds/*.json (idempotent)
 worker/
   mcx-run.sh    container entrypoint: GET input -> run mcx -> PUT output -> POST complete
 ```

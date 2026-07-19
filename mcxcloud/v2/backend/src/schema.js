@@ -12,6 +12,7 @@ export const mcxSchema = JSON.parse(readFileSync(schemaPath, 'utf8'));
 // via cJSON valueint, i.e. 0/1 integers are equally valid (and are what the official
 // examples and mcxlab-exported files use), and every flag has a built-in default. For
 // server-side validation, relax a clone of the schema accordingly.
+/** @param {any} node */
 function relaxBooleans(node) {
   if (Array.isArray(node)) {
     node.forEach(relaxBooleans);
