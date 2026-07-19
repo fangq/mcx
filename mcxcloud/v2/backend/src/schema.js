@@ -7,11 +7,34 @@ import Ajv from 'ajv';
 const schemaPath = fileURLToPath(new URL('../../schema/mcx-input.v1.json', import.meta.url));
 export const mcxSchema = JSON.parse(readFileSync(schemaPath, 'utf8'));
 
+// The editor schema is stricter than mcx itself: it marks the Session Do* flags required
+// and types them as booleans so json-editor renders checkboxes. mcx reads all of these
+// via cJSON valueint, i.e. 0/1 integers are equally valid (and are what the official
+// examples and mcxlab-exported files use), and every flag has a built-in default. For
+// server-side validation, relax a clone of the schema accordingly.
+function relaxBooleans(node) {
+  if (Array.isArray(node)) {
+    node.forEach(relaxBooleans);
+  } else if (node && typeof node === 'object') {
+    if (node.type === 'boolean') node.type = ['boolean', 'integer'];
+    Object.values(node).forEach(relaxBooleans);
+  }
+}
+const relaxedSchema = structuredClone(mcxSchema);
+relaxBooleans(relaxedSchema);
+relaxedSchema.properties.Session.required = ['ID', 'Photons'];
+// mcx only reads the first letter of OutputType (e.g. "flux" == "f"), so accept any
+// string starting with a valid type letter; the editor keeps the single-letter dropdown.
+relaxedSchema.properties.Session.properties.OutputType = {
+  type: 'string',
+  pattern: '^[xfejpmrlstbaduvwq]',
+};
+
 // strict:false -> tolerate JSON-Editor-only keywords (options, propertyOrder, format:"table"…);
 // validateFormats:false -> don't fail on non-standard formats. Structural validation
 // (type/required/min/max/enum/oneOf) is what we rely on.
 const ajv = new Ajv({ strict: false, allErrors: true, validateFormats: false });
-export const validateInput = ajv.compile(mcxSchema);
+export const validateInput = ajv.compile(relaxedSchema);
 
 /**
  * Preview-mode resource caps (ported from v1 mcxserver.cgi checklimit / index.html

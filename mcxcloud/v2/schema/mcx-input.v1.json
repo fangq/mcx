@@ -87,8 +87,10 @@
           "oneOf": [
             {
               "title": "Debug flags",
+              "description": "R: debug RNG, M: store photon trajectories, P: progress bar, T: save trajectory-only data",
               "type": "string",
-              "default": ""
+              "default": "",
+              "pattern": "^[RMPTrmpt]*$"
             },
             {
               "title": "Debug flags",
@@ -102,8 +104,10 @@
           "oneOf": [
             {
               "title": "Save detected photon flags",
+              "description": "D: detector ID, S: scattering counts, P: partial paths, M: momentum transfer, X: exit position, V: exit direction, W: initial weight, I: Stokes vector",
               "type": "string",
-              "default": "DP"
+              "default": "DP",
+              "pattern": "^[DSPMXVWIdspmxvwi]*$"
             },
             {
               "title": "Save detected photon flags",
@@ -128,6 +132,7 @@
         },
         "OutputType": {
           "title": "Output data type",
+          "description": "x: flux, f: fluence, e: energy deposit, j: mua Jacobian, p: scattering counts, m: momentum transfer (replay), r: RF mua Jacobian (replay), l: path length, s: RF mus Jacobian (replay), t: time-of-flight x scattering count, b: time-of-flight x path length",
           "type": "string",
           "default": "x",
           "enum": [
@@ -137,13 +142,42 @@
             "j",
             "p",
             "m",
-            "r"
+            "r",
+            "l",
+            "s",
+            "t",
+            "b",
+            "a",
+            "d",
+            "u",
+            "v",
+            "w",
+            "q"
           ]
         },
         "RNGSeed": {
           "title": "Random seed",
           "type": "number",
           "default": 1648335518
+        },
+        "MaxDetPhoton": {
+          "title": "Max detected photons",
+          "type": "integer",
+          "default": 1000000,
+          "minimum": 1
+        },
+        "MinEnergy": {
+          "title": "Photon termination energy threshold",
+          "type": "number",
+          "default": 0,
+          "minimum": 0
+        },
+        "BCFlags": {
+          "title": "Boundary conditions",
+          "description": "Up to 6 letters for the -x/-y/-z/+x/+y/+z facets (_: default, r: Fresnel, a: absorbing, m: mirror, c: cyclic), optionally followed by 6 digits (0/1) to enable photon detection at each facet",
+          "type": "string",
+          "default": "",
+          "pattern": "^[_ramc]{0,6}[01]{0,6}$"
         }
       }
     },
@@ -223,65 +257,288 @@
             },
             "Pos": {
               "title": "Position",
-              "type": "array",
-              "format": "table",
-              "items": {
-                "type": "number"
-              },
-              "default": [
-                30,
-                30,
-                0
-              ],
-              "minItems": 3,
-              "maxItems": 3
+              "description": "A single [x,y,z] or [x,y,z,weight] vector, or an array of such vectors to launch multiple sources simultaneously; Pos/Dir/Param1/Param2 arrays must have matching lengths",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "type": "number"
+                  },
+                  "default": [
+                    30,
+                    30,
+                    0
+                  ],
+                  "minItems": 3,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[x,y,z,weight]",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "number"
+                    },
+                    "default": [
+                      30,
+                      30,
+                      0,
+                      1
+                    ],
+                    "minItems": 3,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      30,
+                      30,
+                      0,
+                      1
+                    ]
+                  ]
+                }
+              ]
             },
             "Dir": {
               "title": "Launch Direction",
-              "type": "array",
-              "format": "table",
-              "default": [
-                0,
-                0,
-                1
-              ],
-              "items": {
-                "type": "number"
-              },
-              "minItems": 3,
-              "maxItems": 4
+              "description": "A single unitary vector [vx,vy,vz] with an optional 4th element (focal length; \"_NaN_\" enables launch-angle mode), or an array of such vectors for multiple sources",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "default": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "items": {
+                    "oneOf": [
+                      {
+                        "title": "number",
+                        "type": "number"
+                      },
+                      {
+                        "title": "special value",
+                        "type": "string",
+                        "enum": [
+                          "_NaN_",
+                          "_Inf_",
+                          "-_Inf_"
+                        ]
+                      }
+                    ]
+                  },
+                  "minItems": 3,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[vx,vy,vz,focal-length]",
+                    "type": "array",
+                    "format": "table",
+                    "default": [
+                      0,
+                      0,
+                      1,
+                      0
+                    ],
+                    "items": {
+                      "oneOf": [
+                        {
+                          "title": "number",
+                          "type": "number"
+                        },
+                        {
+                          "title": "special value",
+                          "type": "string",
+                          "enum": [
+                            "_NaN_",
+                            "_Inf_",
+                            "-_Inf_"
+                          ]
+                        }
+                      ]
+                    },
+                    "minItems": 3,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      0,
+                      0,
+                      1,
+                      0
+                    ]
+                  ]
+                }
+              ]
             },
             "Param1": {
               "title": "Source Parameter 1",
-              "type": "array",
-              "format": "table",
-              "default": [
-                0,
-                0,
-                0,
-                0
-              ],
-              "items": {
-                "type": "number"
-              },
-              "minItems": 4,
-              "maxItems": 4
+              "description": "Source-type-specific parameters [p1,p2,p3,p4]; an array of such vectors sets per-source parameters when launching multiple sources",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "default": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[p1,p2,p3,p4]",
+                    "type": "array",
+                    "format": "table",
+                    "default": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  ]
+                }
+              ]
             },
             "Param2": {
               "title": "Source Parameter 2",
+              "description": "Additional source-type-specific parameters [p1,p2,p3,p4]; an array of such vectors sets per-source parameters when launching multiple sources",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "default": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[p1,p2,p3,p4]",
+                    "type": "array",
+                    "format": "table",
+                    "default": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  ]
+                }
+              ]
+            },
+            "Weight": {
+              "title": "Initial photon weight",
+              "type": "number",
+              "minimum": 0
+            },
+            "SrcNum": {
+              "title": "Pattern count (photon sharing)",
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "ID": {
+              "title": "Source ID (0: launch all together, -1: save each source separately, >0: launch a single source)",
+              "type": "integer",
+              "default": 0,
+              "minimum": -1
+            },
+            "WaveLength": {
+              "title": "Wavelength (nm, for polarized MC)",
+              "type": "number",
+              "minimum": 0
+            },
+            "IQUV": {
+              "title": "Initial Stokes vector [I,Q,U,V]",
               "type": "array",
               "format": "table",
+              "items": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
               "default": [
-                0,
+                1,
                 0,
                 0,
                 0
               ],
-              "items": {
-                "type": "number"
-              },
               "minItems": 4,
               "maxItems": 4
+            },
+            "AngleInverseCDF": {
+              "title": "Launch-angle inverse CDF",
+              "description": "A monotonically increasing vector with values between 0 and 1, defining the inverse CDF of the launch zenith angle (x1 in x1*pi)",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
             },
             "Frequency": {
               "title": "Modulation Frequency in Hz",
@@ -291,52 +548,26 @@
             },
             "Pattern": {
               "title": "Source Pattern",
-              "type": "object",
-              "required": [
-                "_ArrayType_",
-                "_ArraySize_",
-                "_ArrayZipType_",
-                "_ArrayZipSize_",
-                "_ArrayZipData_"
-              ],
-              "properties": {
-                "_ArrayType_": {
-                  "type": "string",
-                  "default": "single",
-                  "enum": [
-                    "single"
-                  ]
-                },
-                "_ArraySize_": {
-                  "type": "array",
-                  "default": [
-                    0,
-                    0
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
                   ],
-                  "format": "table",
-                  "items": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "minItems": 2,
-                  "maxItems": 3
-                },
-                "_ArrayZipType_": {
-                  "type": "string",
-                  "default": "zlib",
-                  "enum": [
-                    "zlib",
-                    "gzip"
-                  ]
-                },
-                "_ArrayZipSize_": {
-                  "oneOf": [
-                    {
-                      "type": "integer",
-                      "default": 0,
-                      "minimum": 0
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "single",
+                      "enum": [
+                        "single"
+                      ]
                     },
-                    {
+                    "_ArraySize_": {
                       "type": "array",
                       "default": [
                         0,
@@ -348,15 +579,93 @@
                         "minimum": 0
                       },
                       "minItems": 2,
-                      "maxItems": 2
+                      "maxItems": 3
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "default": 0,
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "default": [
+                            0,
+                            0
+                          ],
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
                     }
-                  ]
+                  }
                 },
-                "_ArrayZipData_": {
-                  "type": "string",
-                  "default": ""
+                {
+                  "title": "Plain array",
+                  "type": "object",
+                  "required": [
+                    "Nx",
+                    "Ny",
+                    "Data"
+                  ],
+                  "properties": {
+                    "Nx": {
+                      "title": "Columns (Nx)",
+                      "type": "integer",
+                      "default": 1,
+                      "minimum": 1
+                    },
+                    "Ny": {
+                      "title": "Rows (Ny)",
+                      "type": "integer",
+                      "default": 1,
+                      "minimum": 1
+                    },
+                    "Nz": {
+                      "title": "Layers (Nz)",
+                      "type": "integer",
+                      "default": 1,
+                      "minimum": 1
+                    },
+                    "Data": {
+                      "title": "Pattern data",
+                      "oneOf": [
+                        {
+                          "title": "Flattened array (row-major, Nx*Ny*Nz*SrcNum values)",
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        {
+                          "title": "Binary file path (single-precision)",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
                 }
-              }
+              ]
             }
           }
         },
@@ -390,6 +699,17 @@
                 "type": "number",
                 "default": 1,
                 "minimum": 0
+              },
+              "Dir": {
+                "title": "Orientation",
+                "description": "Detector pointing vector [vx,vy,vz] with an optional 4th element (acceptance angle in x1*pi)",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 4
               }
             }
           }
@@ -633,6 +953,40 @@
                         "title": "Radius",
                         "type": "number",
                         "minimum": 0
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "title": "UpperSpace",
+                "type": "object",
+                "required": [
+                  "UpperSpace"
+                ],
+                "properties": {
+                  "UpperSpace": {
+                    "title": "UpperSpace",
+                    "type": "object",
+                    "required": [
+                      "Coef"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      },
+                      "Coef": {
+                        "title": "Half-space [a,b,c,d] (fills a*x+b*y+c*z>d)",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 4,
+                        "maxItems": 4
                       }
                     }
                   }
@@ -995,6 +1349,7 @@
             "mixlabel",
             "labelplus",
             "muamus_float",
+            "mua_float",
             "muamus_half",
             "asgn_byte",
             "muamus_short"
@@ -1011,41 +1366,168 @@
           "format": "table",
           "minItems": 2,
           "items": {
-            "type": "object",
-            "required": [
-              "mua",
-              "mus",
-              "g",
-              "n"
-            ],
-            "properties": {
-              "mua": {
-                "title": "Absorption (μa 1/mm)",
-                "type": "number",
-                "default": 0,
-                "minimum": 0
+            "anyOf": [
+              {
+                "title": "Medium",
+                "type": "object",
+                "required": [
+                  "mua",
+                  "mus",
+                  "g",
+                  "n"
+                ],
+                "properties": {
+                  "mua": {
+                    "title": "Absorption (μa 1/mm)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "mus": {
+                    "title": "Scattering (μs 1/mm)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "g": {
+                    "title": "Anisotropy (g)",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": -1,
+                    "maximum": 1
+                  },
+                  "n": {
+                    "title": "Refractive Index (n)",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0
+                  }
+                }
               },
-              "mus": {
-                "title": "Scattering (μs 1/mm)",
-                "type": "number",
-                "default": 0,
-                "minimum": 0
-              },
-              "g": {
-                "title": "Anisotropy (g)",
-                "type": "number",
-                "default": 1,
-                "minimum": -1,
-                "maximum": 1
-              },
-              "n": {
-                "title": "Refractive Index (n)",
-                "type": "number",
-                "default": 1,
-                "minimum": 0
+              {
+                "title": "Medium [mua,mus,g,n]",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
               }
-            }
+            ]
           }
+        },
+        "MieScatter": {
+          "title": "Mie scatterers (polarized MC)",
+          "description": "Per-medium spherical-particle properties for polarized photon simulations; requires Optode.Source.WaveLength",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "anyOf": [
+              {
+                "title": "Scatterer",
+                "type": "object",
+                "required": [
+                  "mua",
+                  "radius",
+                  "rho",
+                  "nsph",
+                  "nmed"
+                ],
+                "properties": {
+                  "mua": {
+                    "title": "Absorption (μa 1/mm)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "radius": {
+                    "title": "Particle radius (micron)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "rho": {
+                    "title": "Volume density (1/micron^3)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "nsph": {
+                    "title": "Particle refractive index",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0
+                  },
+                  "nmed": {
+                    "title": "Background refractive index",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "title": "Scatterer [mua,radius,rho,nsph,nmed]",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 5,
+                "maxItems": 5
+              }
+            ]
+          }
+        },
+        "Step": {
+          "title": "Voxel size [dx,dy,dz] (mm, must be isotropic)",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "default": [
+            1,
+            1,
+            1
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "InverseCDF": {
+          "title": "Scattering-angle inverse CDF",
+          "description": "A monotonically increasing vector with values between -1 and 1, defining the inverse CDF of a user-specified scattering phase function (cosine of the scattering angle)",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1
+          }
+        },
+        "CacheBoxP0": {
+          "title": "Cache box lower corner [x,y,z]",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "CacheBoxP1": {
+          "title": "Cache box upper corner [x,y,z]",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
         }
       }
     }

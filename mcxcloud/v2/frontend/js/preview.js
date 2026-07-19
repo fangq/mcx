@@ -407,11 +407,28 @@ function createpoly(points) {
   return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, depthWrite: false }));
 }
 
-// Render the source: always an arrow for direction, plus a shape per Source.Type
+// Multi-src inputs store Pos/Dir/Param1/Param2 as arrays of vectors (one row per
+// source); expand them and draw each source with the shared Type/Frequency/etc.
+function drawsrc(src) {
+  if (Array.isArray(src.Pos) && Array.isArray(src.Pos[0])) {
+    const pick = (v, i) => (Array.isArray(v) && Array.isArray(v[0]) ? v[i] : v);
+    src.Pos.forEach((_, i) => drawonesrc({
+      ...src,
+      Pos: pick(src.Pos, i),
+      Dir: pick(src.Dir, i),
+      Param1: pick(src.Param1, i),
+      Param2: pick(src.Param2, i),
+    }));
+    return;
+  }
+  drawonesrc(src);
+}
+
+// Render one source: always an arrow for direction, plus a shape per Source.Type
 // (disk/gaussian -> disk; planar/pattern/fourier[x] -> quad from Param1/Param2; line/slit
 // -> a segment). Mirrors v1's drawsrc so all MCX source types preview correctly.
-function drawsrc(src) {
-  const dir = new THREE.Vector3(...src.Dir).normalize();
+function drawonesrc(src) {
+  const dir = new THREE.Vector3(...src.Dir.slice(0, 3).map(Number)).normalize();
   const orig = new THREE.Vector3(...src.Pos);
   const len = Math.max(...bbxsize) * 0.2;
   boundingbox.add(new THREE.ArrowHelper(dir, orig, len, 0xffffff, 0.3 * len, 0.15 * len));
