@@ -739,17 +739,6 @@
                 "type": "number",
                 "default": 1,
                 "minimum": 0
-              },
-              "Dir": {
-                "title": "Orientation",
-                "description": "Detector pointing vector [vx,vy,vz] with an optional 4th element (acceptance angle in x1*pi)",
-                "type": "array",
-                "format": "table",
-                "items": {
-                  "type": "number"
-                },
-                "minItems": 3,
-                "maxItems": 4
               }
             }
           }

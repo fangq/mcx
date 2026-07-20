@@ -100,6 +100,17 @@ export function checkLimits(cfg) {
       return `source type "${src.Type}" is not supported for mesh (mmc) simulations`;
     if (typeof S.OutputType === 'string' && /^[mtb]/.test(S.OutputType))
       return `output type "${S.OutputType}" is not supported for mesh (mmc) simulations`;
+    // mmc's detector parser assumes each entry is exactly {Pos, R}: any other member
+    // count derails it into a NULL dereference (mmc_utils.c:2171 GetArraySize(det)==2),
+    // segfaulting the worker with an empty log — reject such docs up front
+    const dets = cfg?.Optode?.Detector;
+    if (Array.isArray(dets)) {
+      for (const det of dets) {
+        const keys = Object.keys(det ?? {}).sort();
+        if (keys.join() !== 'Pos,R')
+          return `mesh (mmc) detectors must contain exactly Pos and R (found: ${keys.join(', ') || 'none'})`;
+      }
+    }
     // physics settings mmc's JSON parser does not read — reject rather than silently drop
     for (const [ok, what] of [
       [!('IQUV' in src) && !('WaveLength' in src) && !D.MieScatter, 'polarized MC (IQUV/WaveLength/MieScatter)'],
