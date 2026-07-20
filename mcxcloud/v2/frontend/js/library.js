@@ -72,14 +72,24 @@ export function initLibrary(showTab) {
     try {
       const cards = await searchLibrary(currentQ, PAGE, offset);
       if (!append) results.textContent = '';
-      if (!append && !cards.length) { results.textContent = 'no matches'; return; }
-      for (const c of cards) results.appendChild(card(c));
+      const shown = cards.filter((c) => !isMeshTitle(c.title));
+      if (!append && !shown.length && cards.length !== PAGE) { results.textContent = 'no matches'; return; }
+      for (const c of shown) results.appendChild(card(c));
       offset += cards.length;
       btn.style.display = cards.length === PAGE ? '' : 'none'; // maybe more to fetch
     } catch (err) {
       if (!append) results.textContent = 'search failed: ' + (/** @type {Error} */ (err)).message;
     }
   }
+
+  // This frontend targets mcx (voxel) simulations only, but the shared backend/library
+  // also serves tetrahedral-mesh (MMC) entries. The Browse list payload carries no doc,
+  // so curated mesh demos are hidden by their title convention, and everything else is
+  // guarded at load time by inspecting the fetched doc (Shapes/Mesh with MeshNode).
+  /** @param {string} t */
+  const isMeshTitle = (t) => String(t || '').startsWith('MMC_BUILTIN:');
+  /** @param {any} d */
+  const isMeshDoc = (d) => !!(d && ((d.Shapes && d.Shapes.MeshNode) || (d.Mesh && d.Mesh.MeshNode)));
 
   // A card is thumbnail-only (hover shows the title); clicking opens the side detail panel
   // so the grid layout isn't disturbed.
@@ -121,6 +131,10 @@ export function initLibrary(showTab) {
     if (!confirm('Replace the current simulation with the selected one?')) return;
     try {
       const entry = await loadLibraryEntry(id);
+      if (isMeshDoc(entry.doc)) {
+        alert('This is a tetrahedral-mesh (MMC) simulation, which this frontend does not support — please use the MMC-enabled MCX Cloud interface to run it.');
+        return;
+      }
       setEditorValue(entry.doc); // editor 'change' pushes doc/valid into state
       showTab('preview');        // makes the canvas visible + inits it once
       drawPreview(entry.doc);    // render now — no need to click "Draw Input"
