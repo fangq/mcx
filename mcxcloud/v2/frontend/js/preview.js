@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { $ } from './util.js';
 import { decodeJDataArray, colormapRGBA, COLORMAP_NAMES } from './util.js';
+import { volface, qmeshcut, meshBBox } from './mesh.js';
+import { state } from './state.js';
 
 // ---- GLSL volume raycaster (ported from MCX Cloud v1 / three.js VolumeShader) ----
 // Written as explicit GLSL ES 3.00 for a RawShaderMaterial: we declare the three.js
@@ -179,6 +181,8 @@ let scene, camera, renderer, controls, cmTexture;
 let boundingbox, bbxsize = [1, 1, 1], lastVolume = null, lastDim = [];
 // 4D+ volume support: keep the full decoded array and render one 3D frame at a time
 let fullVol = null, volIsLog = false, curFrame = 0, numFrames = 1;
+// tetrahedral mesh (MMC) support: decoded mesh + its surface and cross-section meshes
+let meshState = null;
 let dirty = true;
 let fpsDiv = null, frames = 0, fpsLast = 0;
 let lastThumbnail = null;
@@ -192,6 +196,7 @@ function setColormap(name) {
   cmTexture.minFilter = cmTexture.magFilter = THREE.LinearFilter;
   cmTexture.needsUpdate = true;
   if (lastVolume) { lastVolume.material.uniforms.u_cmdata.value = cmTexture; dirty = true; }
+  if (meshState && meshState.outVol) setMeshFrame(curFrame); // recolor mesh-valued output
 }
 const materialcolor = [];
 (function seedColors() {
@@ -215,6 +220,7 @@ export function initPreview() {
   camera.position.set(200, 150, 150);
   camera.lookAt(0, 0, 0);
   renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
+  renderer.localClippingEnabled = true; // mesh cross-sections clip per-material
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(w, h);
   host.appendChild(renderer.domElement);
@@ -328,10 +334,10 @@ function createlayer(s, dim) {
   return createbox(size, orig);
 }
 
-function resetscene(s) {
+function resetscene(s, orig = [0, 0, 0]) {
   scene.clear();
   scene.add(new THREE.AmbientLight(0xffffff));
-  const cx = s[0] / 2, cy = s[1] / 2, cz = s[2] / 2;
+  const cx = orig[0] + s[0] / 2, cy = orig[1] + s[1] / 2, cz = orig[2] + s[2] / 2;
   const diag = Math.hypot(s[0], s[1], s[2]) || 1; // bounding-sphere diameter
   camera.up.set(0, 0, 1);
   camera.position.set(cx + s[0] * 1.2, cy + s[1] * 0.8, cz + s[2]);
@@ -466,6 +472,225 @@ function drawdet(det) {
   const g = new THREE.SphereGeometry(det.R, 24, 24);
   g.translate(...det.Pos);
   boundingbox.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })));
+}
+
+// ---- tetrahedral mesh (MMC) rendering --------------------------------------------
+// Follows iso2mesh's approach: render only the exterior surface (volface) instead of
+// all tets, and reveal the interior regions with qmeshcut planar cross-sections driven
+// by the existing X/Y/Z crop sliders (surface clipped + cut patches at the crop planes).
+
+/** decode MeshNode/MeshElem in either plain array-of-rows or JData-annotated form
+ *  @param {any} spec @param {number} cols */
+function meshArray(spec, cols) {
+  if (Array.isArray(spec)) {
+    const rows = spec.length;
+    const out = new Float32Array(rows * cols);
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) out[i * cols + j] = spec[i][j];
+    return { data: out, rows, cols };
+  }
+  const v = decodeJDataArray(spec);
+  const c = (v.size && v.size[1]) || cols;
+  return { data: v.data, rows: (v.size && v.size[0]) || Math.floor(v.data.length / c), cols: c };
+}
+
+/** region tag -> [r,g,b] floats from the shared label palette
+ *  @param {number} tag */
+function tagRGB(tag) {
+  const h = materialcolor[Math.abs(tag | 0) % materialcolor.length] || 0xff0000;
+  return [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+}
+
+/** map an (already log-scaled) output value to [r,g,b] via the active colormap LUT
+ *  @param {number} v */
+function lutRGB(v) {
+  const { vmin, vmax, lut } = meshState;
+  let x = (v - vmin) / (vmax - vmin || 1);
+  x = x < 0 ? 0 : x > 1 ? 1 : x;
+  const k = ((x * 255) | 0) * 4;
+  return [lut[k] / 255, lut[k + 1] / 255, lut[k + 2] / 255];
+}
+
+/** triangle soup + per-vertex colors -> renderable geometry
+ *  @param {number[] | Float32Array} positions @param {Float32Array} colors */
+function soupGeometry(positions, colors) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return g;
+}
+
+/** per-vertex surface colors for the current mode: region tags (input preview),
+ *  per-element values (BasisOrder 0), or per-node values (BasisOrder 1) */
+function surfColors() {
+  const { faces, owner, mode, elem, stride, frameVals } = meshState;
+  const col = new Float32Array(faces.length * 3);
+  for (let f = 0; f < owner.length; f++) {
+    for (let v = 0; v < 3; v++) {
+      const rgb = mode === 'node' ? lutRGB(frameVals[faces[f * 3 + v] - 1])
+        : mode === 'elem' ? lutRGB(frameVals[owner[f]])
+          : tagRGB(elem[owner[f] * stride + stride - 1]);
+      const k = (f * 3 + v) * 3;
+      col[k] = rgb[0]; col[k + 1] = rgb[1]; col[k + 2] = rgb[2];
+    }
+  }
+  return col;
+}
+
+/** per-vertex colors for one qmeshcut result under the current mode
+ *  @param {{ positions: number[], elemid: number[], values: number[] | null }} cut */
+function cutColors(cut) {
+  const { mode, elem, stride, frameVals } = meshState;
+  const col = new Float32Array(cut.positions.length);
+  for (let t = 0; t < cut.elemid.length; t++) {
+    for (let v = 0; v < 3; v++) {
+      const rgb = mode === 'node' && cut.values ? lutRGB(cut.values[t * 3 + v])
+        : mode === 'elem' ? lutRGB(frameVals[cut.elemid[t]])
+          : tagRGB(elem[cut.elemid[t] * stride + stride - 1]);
+      const k = (t * 3 + v) * 3;
+      col[k] = rgb[0]; col[k + 1] = rgb[1]; col[k + 2] = rgb[2];
+    }
+  }
+  return col;
+}
+
+/** load frame f of a mesh-valued (node/elem basis) output: log-scale the slice,
+ *  refresh the colormap LUT, then recolor the surface and rebuild the cuts
+ *  @param {number} f */
+function setMeshFrame(f) {
+  const { outVol, frameLen } = meshState;
+  const raw = outVol.data.subarray(f * frameLen, (f + 1) * frameLen);
+  const vals = new Float32Array(frameLen);
+  let vmin = Infinity, vmax = -Infinity;
+  for (let i = 0; i < frameLen; i++) {
+    const v = raw[i];
+    if (v > 0) { const l = Math.log(v); vals[i] = l; if (l < vmin) vmin = l; if (l > vmax) vmax = l; }
+    else vals[i] = NaN;
+  }
+  if (!isFinite(vmin)) { vmin = 0; vmax = 1; }
+  for (let i = 0; i < frameLen; i++) if (Number.isNaN(vals[i])) vals[i] = vmin; // 0-fluence -> colormap floor
+  meshState.frameVals = vals;
+  meshState.vmin = vmin; meshState.vmax = vmax;
+  meshState.lut = colormapRGBA(currentCmap);
+  meshState.surf.geometry.setAttribute('color', new THREE.BufferAttribute(surfColors(), 3));
+  updateMeshCross();
+  dirty = true;
+}
+
+/**
+ * Shared mesh renderer: dashed bbox + exterior surface (volface) + slider-driven cuts.
+ * mode 'tag' colors by region label (input preview); 'node'/'elem' color by an
+ * mmc mesh-valued output (BasisOrder 1/0) through the active colormap.
+ * @param {{data: Float32Array, rows: number, cols: number}} nd decoded MeshNode
+ * @param {{data: Float32Array, rows: number, cols: number}} el decoded MeshElem
+ * @param {'tag'|'node'|'elem'} mode
+ * @param {{data: Float32Array}|null} outVol decoded output array (value modes)
+ * @param {number} frameLen values per frame (nn or ne)  @param {number} nframes
+ */
+function drawmeshCore(nd, el, mode, outVol, frameLen, nframes) {
+  const bbox = meshBBox(nd.data, nd.rows);
+  const ext = [0, 1, 2].map((a) => Math.max(bbox.max[a] - bbox.min[a], 1e-6));
+
+  // dashed domain box spanning the mesh bounding box (meshes need not start at 0)
+  resetscene(ext, bbox.min);
+  const box = createbox(ext, bbox.min);
+  boundingbox = new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry), new THREE.LineDashedMaterial({ color: 0xffff00, dashSize: 3, gapSize: 1 }));
+  boundingbox.computeLineDistances();
+  scene.add(boundingbox);
+  bbxsize = ext;
+  lastDim = ext; // slab-thickness boxes act in mesh (world) units
+
+  meshState = {
+    node: nd.data, elem: el.data, ne: el.rows, stride: el.cols, bbox, ext,
+    faces: null, owner: null, surf: null, cuts: null,
+    mode, outVol, frameLen, frameVals: null, vmin: 0, vmax: 1, lut: null,
+  };
+
+  // exterior surface (iso2mesh volface), one flat triangle per boundary face
+  const { faces, owner } = volface(el.data, el.rows, el.cols);
+  meshState.faces = faces; meshState.owner = owner;
+  const pos = new Float32Array(faces.length * 3);
+  for (let i = 0; i < faces.length; i++) {
+    const n = (faces[i] - 1) * 3;
+    pos[i * 3] = nd.data[n]; pos[i * 3 + 1] = nd.data[n + 1]; pos[i * 3 + 2] = nd.data[n + 2];
+  }
+  meshState.surf = new THREE.Mesh(soupGeometry(pos, new Float32Array(pos.length)), new THREE.MeshBasicMaterial({
+    vertexColors: true, transparent: true, opacity: mode === 'tag' ? 0.4 : 0.75,
+    side: THREE.DoubleSide, depthWrite: false,
+  }));
+  boundingbox.add(meshState.surf);
+  meshState.cuts = new THREE.Group();
+  boundingbox.add(meshState.cuts);
+
+  numFrames = nframes; curFrame = 0;
+  if (mode === 'tag') {
+    meshState.surf.geometry.setAttribute('color', new THREE.BufferAttribute(surfColors(), 3));
+    updateMeshCross();
+  } else {
+    setMeshFrame(0); // computes colors + cuts for the first gate/source frame
+  }
+}
+
+/** input-domain preview: mesh colored by region tags
+ *  @param {any} shapes the Shapes object carrying MeshNode/MeshElem */
+function drawmesh(shapes) {
+  drawmeshCore(meshArray(shapes.MeshNode, 3), meshArray(shapes.MeshElem, 5), 'tag', null, 0, 1);
+}
+
+/**
+ * mmc mesh-valued output (RayTracer != 'g'): values live on nodes (BasisOrder 1) or
+ * elements (BasisOrder 0). The basis is detected from the decoded DATA LENGTH against
+ * the input mesh — the jnii header is not trusted because mmc writes Dim[0]=nodenum
+ * even for element-basis output (mmc_utils.c mcx_savedata).
+ * @param {any} shapes input Shapes with the mesh @param {{data: Float32Array}} vol
+ * @param {number[]|undefined} dim NIFTIHeader.Dim (frames = product of dims 1+)
+ * @returns {boolean} true when rendered as a mesh-valued output
+ */
+function drawmeshOutput(shapes, vol, dim) {
+  const nd = meshArray(shapes.MeshNode, 3);
+  const el = meshArray(shapes.MeshElem, 5);
+  const nfr = (Array.isArray(dim) && dim.length > 1)
+    ? dim.slice(1).reduce((a, b) => a * (b || 1), 1) : 1;
+  const frameLen = vol.data.length / nfr;
+  const mode = frameLen === nd.rows ? 'node' : frameLen === el.rows ? 'elem' : null;
+  if (!mode) return false; // not a per-node/per-elem array for this mesh
+  drawmeshCore(nd, el, mode, vol, frameLen, nfr);
+  return true;
+}
+
+/** re-apply the X/Y/Z crop sliders to a mesh: clip the exterior surface and rebuild
+ *  qmeshcut cross-section patches at each active crop plane */
+function updateMeshCross() {
+  if (!meshState || !meshState.surf) return;
+  const g = (id) => parseFloat(/** @type {HTMLInputElement} */ ($(id)).value);
+  const { bbox, ext } = meshState;
+  const AXIS = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+  /** @type {THREE.Plane[][]} */
+  const perAxis = [[], [], []];
+  /** @type {[number, number][]} */
+  const cutsAt = [];
+  ['x', 'y', 'z'].forEach((ax, a) => {
+    const lo = g('#cross-' + ax + '-low'), hi = g('#cross-' + ax + '-hi');
+    const loW = bbox.min[a] + lo * ext[a], hiW = bbox.min[a] + hi * ext[a];
+    // THREE clips fragments with negative signed distance (n·p + c < 0)
+    if (lo > 0) { perAxis[a].push(new THREE.Plane(AXIS[a].clone(), -loW)); cutsAt.push([a, loW]); }
+    if (hi < 1) { perAxis[a].push(new THREE.Plane(AXIS[a].clone().negate(), hiW)); cutsAt.push([a, hiW]); }
+  });
+  const all = perAxis.flat();
+  meshState.surf.material.clippingPlanes = all.length ? all : null;
+
+  for (const m of meshState.cuts.children) { m.geometry.dispose(); m.material.dispose(); }
+  meshState.cuts.clear();
+  for (const [a, w] of cutsAt) {
+    const cut = qmeshcut(meshState.node, meshState.elem, meshState.ne, meshState.stride, /** @type {0|1|2} */ (a), w,
+      meshState.mode === 'node' ? meshState.frameVals : undefined);
+    if (!cut.elemid.length) continue;
+    const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    // crop the patch by the OTHER axes' planes only (its own plane would z-fight it away)
+    const other = [0, 1, 2].filter((x) => x !== a).flatMap((x) => perAxis[x]);
+    if (other.length) mat.clippingPlanes = other;
+    meshState.cuts.add(new THREE.Mesh(soupGeometry(cut.positions, cutColors(cut)), mat));
+  }
+  dirty = true;
 }
 
 /**
@@ -624,10 +849,13 @@ export function drawPreview(cfg) {
   scene.clear();
   lastVolume = null;
   fullVol = null; volIsLog = false; curFrame = 0; numFrames = 1;
+  meshState = null;
   if (cfg && cfg.Shapes) {
     if (cfg.Shapes.constructor === Object && cfg.Shapes._ArraySize_) {
       drawshape({ Grid: { Size: cfg.Shapes._ArraySize_.slice(0, 3), Tag: 1 } });
       fullVol = decodeJDataArray(cfg.Shapes);
+    } else if (cfg.Shapes.constructor === Object && cfg.Shapes.MeshNode) {
+      drawmesh(cfg.Shapes); // tetrahedral mesh (MMC) domain
     } else {
       if (cfg.Domain && cfg.Domain.Dim) drawshape({ Grid: { Size: cfg.Domain.Dim, Tag: 1 } });
       if (Array.isArray(cfg.Shapes)) cfg.Shapes.forEach(drawshape);
@@ -638,9 +866,16 @@ export function drawPreview(cfg) {
     }
   } else if (cfg && cfg.NIFTIData) {
     const dim = (cfg.NIFTIHeader && cfg.NIFTIHeader.Dim) || cfg.NIFTIData._ArraySize_;
-    if (dim) drawshape({ Grid: { Size: dim.slice(0, 3), Tag: 1 } });
-    fullVol = decodeJDataArray(cfg.NIFTIData);
-    volIsLog = true; // fluence-like output -> log scale
+    const vol = decodeJDataArray(cfg.NIFTIData);
+    // mmc mesh-valued output (per-node/per-elem, no 'c' order tag): render on the input
+    // mesh from the editor doc; grid outputs (mcx and DMMC alike) use the voxel path
+    const meshdoc = state.doc && state.doc.Shapes && state.doc.Shapes.MeshNode ? state.doc.Shapes : null;
+    const meshed = meshdoc && !String(vol.order || '').startsWith('c') && drawmeshOutput(meshdoc, vol, dim);
+    if (!meshed) {
+      if (dim) drawshape({ Grid: { Size: dim.slice(0, 3), Tag: 1 } });
+      fullVol = vol;
+      volIsLog = true; // fluence-like output -> log scale
+    }
   }
   if (fullVol) {
     numFrames = fullVol.size.slice(3).reduce((a, b) => a * (b || 1), 1);
@@ -675,6 +910,7 @@ function wireControls() {
       else hi.value = String(Math.min(parseFloat(low.value) + tn, 1));
     }
     if (lastVolume) { readCrossInto(lastVolume.material.uniforms); dirty = true; }
+    if (meshState) updateMeshCross();
   };
   for (const axis of /** @type {const} */ (['x', 'y', 'z'])) {
     $('#cross-' + axis + '-low').addEventListener('input', () => applyCross(axis, 'low'));
@@ -682,11 +918,18 @@ function wireControls() {
     $('#thick-' + axis).addEventListener('input', () => applyCross(axis, 'low'));
   }
 
-  // 4D frame spinner: re-render the selected 3D frame of a 4D+ volume
+  // 4D frame spinner: re-render the selected 3D frame of a 4D+ volume (or recolor a
+  // mesh-valued mmc output for the selected gate/source frame)
   const frameEl = /** @type {HTMLInputElement} */ ($('#frame-num'));
   if (frameEl) frameEl.addEventListener('input', () => {
-    if (!fullVol || numFrames <= 1) return;
-    const f = Math.min(Math.max((parseInt(frameEl.value, 10) || 1) - 1, 0), numFrames - 1);
+    if (numFrames <= 1) return;
+    const fm = Math.min(Math.max((parseInt(frameEl.value, 10) || 1) - 1, 0), numFrames - 1);
+    if (meshState && meshState.outVol) {
+      if (fm !== curFrame) { curFrame = fm; setMeshFrame(fm); }
+      return;
+    }
+    if (!fullVol) return;
+    const f = fm;
     if (f === curFrame) return;
     curFrame = f;
     if (lastVolume) { // free the old frame's GPU texture before building the next

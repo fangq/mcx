@@ -103,10 +103,16 @@ and parse identically in mmc.
   integer form for mesh docs, or per-engine patterns.
 - **`LengthUnit`** exists under both `Mesh` and `Domain` in mmc, and `Domain` wins (parsed
   later). Standardize on `Domain.LengthUnit`.
-- **mmc jnii output shape** depends on the ray tracer (mmc_utils.c:941): with `-M g`
-  (DMMC dual-grid) it is a voxel grid `[nx,ny,nz,nt,srcnum]` with `_ArrayOrder_:"c"` —
-  **the existing v2 preview + 4D frame selector render it unchanged**. All other tracers
-  emit per-node fluence `[nodenum,nt,srcnum]`, which the voxel raycaster cannot display.
+- **mmc jnii output shape** depends on the ray tracer and basis (mmc_utils.c:941,
+  mmc_mesh.c:1728): `RayTracer g` (dual-grid DMMC, forces `BasisOrder 0`) writes a voxel
+  grid `[nx,ny,nz,nt,srcnum]` with `_ArrayOrder_:"c"` — the existing voxel preview + 4D
+  frame selector render it unchanged. Mesh-mode tracers write per-NODE values
+  (`BasisOrder 1`, `nn` per gate) or per-ELEMENT values (`BasisOrder 0`, `ne` per gate),
+  frames laid out `[slot][gate][vox]` with vox fastest. On GPU (OpenCL/CUDA) workers,
+  non-`g` tracers silently promote to `s` (mmc_utils.c:3542). ⚠ upstream: for
+  element-basis output `mcx_savedata` writes `Dim[0]=nodenum` although the data holds
+  `ne` values per gate (mmc_utils.c:945) — the frontend therefore detects the basis from
+  the decoded data length, not the header.
 
 ## 5. Implementation phases
 
@@ -137,19 +143,36 @@ and parse identically in mmc.
    Verified locally: mesh/voxel submissions store `engine` = `mmc`/`mcx`; swarm
    end-to-end pending a deploy with the new code (the currently running API predates it).
 
-**Phase C — frontend (moderate)**
-5. Editor: comes free from the schema (`oneOf` switcher), same as Shapes-vs-volume today.
-6. Preview input rendering: decode `MeshNode`/`MeshElem`, extract *boundary faces* (faces
-   appearing exactly once among all tets, grouped per region tag), render as wireframe/
-   semi-transparent `THREE.Mesh` per tag (reuse `materialcolor`); sources/detectors draw
-   with the existing code. Output rendering: nothing to do (DMMC grid, §4).
-7. Seed 1–2 mmc demos into the library (e.g. `mmc/examples/validation/cube1_mesh.json`
-   with embedded mesh; colin27-mesh later — its MeshNode/MeshElem blobs dedupe via the
-   content-addressed store).
+**Phase C — frontend (moderate) — DONE**
+5. ✅ Editor: comes free from the schema (`oneOf` switcher), same as Shapes-vs-volume.
+6. ✅ Preview: new dependency-free `js/mesh.js` ports iso2mesh's `volface` (exterior
+   surface = faces referenced by exactly one tet, outward winding) and `qmeshcut`
+   (axis-aligned planar cuts; tri for 3 cut edges, quad cycle `[0,1,3,2]` for 4),
+   node-tested against a 6-tet cube (12 boundary tris, exact cut areas on all axes)
+   and the real skinvessel/sfdi2layer meshes (130k tets: surface 0.8 s once, 61 ms per
+   cut). `preview.js` renders the tag-colored exterior surface and drives cross-sections
+   from the existing X/Y/Z crop sliders: the surface is clipped by `clippingPlanes` and
+   qmeshcut patches at each active crop plane reveal the interior regions. Output
+   rendering: nothing to do (DMMC grid, §4).
+7. ✅ Seeded `MMC_BUILTIN:skinvessel` (1.1k nodes/6.4k tets, 4 regions, disk src) and
+   `MMC_BUILTIN:sfdi2layer` (21.7k nodes/130k tets, fourier SFDI src, InitElem −1
+   auto-search) into the library (`db/seeds/mmc-*.json`); MeshNode/MeshElem JData blobs
+   round-trip through the content-addressed store. (colin27_lzma cannot be seeded as-is:
+   `lzma` is outside the schema's zlib/gzip `_ArrayZipType_` — re-export with zlib.)
+
+**Mesh-valued output rendering (was Phase D) — DONE**
+- The preview now renders per-node and per-element mmc outputs on the input mesh:
+  `drawPreview` detects a mesh-valued output (input doc has `Shapes.MeshNode`, output
+  lacks the `'c'` order tag, decoded length per frame equals `nn` → node basis or `ne`
+  → element basis), log-scales each frame, and colors the volface surface + qmeshcut
+  cross-sections through the active colormap (per-vertex interpolated values for node
+  basis — qmeshcut's `cutvalue`; flat per-patch values for element basis). The 4D frame
+  spinner steps gates/sources (recolor-only, no geometry rebuild) and the colormap
+  picker re-luts live. Verified: qmeshcut reproduces linear fields exactly at cut
+  points; basis detection is immune to the upstream `Dim[0]` bug.
 
 **Phase D — later / out of scope now**
-- `MeshROI` (iMMC), adjoint detectors, per-node (non-DMMC) output rendering
-  (needs a vertex-colored mesh renderer), replay.
+- `MeshROI` (iMMC), adjoint detectors, replay.
 
 ## 6. Open questions
 

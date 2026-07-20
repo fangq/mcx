@@ -90,7 +90,7 @@
               "description": "R: debug RNG, M: store photon trajectories, P: progress bar, T: save trajectory-only data",
               "type": "string",
               "default": "",
-              "pattern": "^[RMPTrmpt]*$"
+              "pattern": "^([RMPTrmpt]*|[0-9]+)$"
             },
             {
               "title": "Debug flags",
@@ -107,7 +107,7 @@
               "description": "D: detector ID, S: scattering counts, P: partial paths, M: momentum transfer, X: exit position, V: exit direction, W: initial weight, I: Stokes vector",
               "type": "string",
               "default": "DP",
-              "pattern": "^[DSPMXVWIdspmxvwi]*$"
+              "pattern": "^([DSPMXVWIdspmxvwi]*|[0-9]+)$"
             },
             {
               "title": "Save detected photon flags",
@@ -184,15 +184,15 @@
         },
         "RayTracer": {
           "title": "Ray tracer (MMC mesh domains only)",
-          "description": "g: dual-grid DMMC (voxel output, recommended), p: Plucker, h: Havel, b: Badouel, s: branchless Badouel",
+          "description": "g: dual-grid DMMC (default; voxel volume output like MCX, forces BasisOrder 0), s: branchless Badouel (mesh output: values on nodes when BasisOrder=1, on elements when BasisOrder=0). On GPU workers p/h/b silently fall back to s",
           "type": "string",
           "default": "g",
           "enum": [
             "g",
+            "s",
             "p",
             "h",
-            "b",
-            "s"
+            "b"
           ]
         },
         "BasisOrder": {

@@ -117,9 +117,9 @@ across entries are stored once — the fix for the v1 >1 GB bloat.
 
 ### Seed the curated builtin examples
 
-Maintainer-curated demos live in `db/seeds/*.json` (e.g. the multi-source examples
-`multisrc`/`eachsrc`). Seeding is idempotent (existing `doc_hash` entries are skipped) and
-entries are inserted pre-approved:
+Maintainer-curated demos live in `db/seeds/*.json` (the multi-source examples
+`multisrc`/`eachsrc` and the mesh/MMC demos `mmc-skinvessel`/`mmc-sfdi2layer`). Seeding is
+idempotent (existing `doc_hash` entries are skipped) and entries are inserted pre-approved:
 
 ```sh
 node --env-file=.env scripts/seed-library.js db/seeds/*.json

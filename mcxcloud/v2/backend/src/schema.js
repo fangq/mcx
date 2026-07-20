@@ -32,6 +32,11 @@ relaxedSchema.properties.Session.properties.OutputType = {
   type: 'string',
   pattern: '^[xfejpmrlstbaduvwq]',
 };
+// DebugFlag/SaveDataMask letter sets differ per engine (mcx RMPT vs mmc SCBWDIOXATRPEM),
+// both engines silently skip unknown letters, and v1-era docs carry numeric strings
+// ("2560") — accept any string or integer here; the editor keeps the letter-pattern hint.
+relaxedSchema.properties.Session.properties.DebugFlag = { type: ['string', 'integer'] };
+relaxedSchema.properties.Session.properties.SaveDataMask = { type: ['string', 'integer'] };
 
 // strict:false -> tolerate JSON-Editor-only keywords (options, propertyOrder, format:"table"…);
 // validateFormats:false -> don't fail on non-standard formats. Structural validation
