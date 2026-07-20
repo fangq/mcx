@@ -55,6 +55,24 @@ a separate image set by `WORKER_IMAGE_MMC` (default `fangqq/mmc:v2025.10`). The 
 matching binary. Future engines (e.g. redbird) follow the same pattern with their own
 image env.
 
+Two mmc-specific operational requirements (learned in production, 2026-07-19):
+
+1. **Pre-pull the mmc image on every GPU node** — a cold first pull runs inside the job's
+   `MAX_RUNTIME_MS`+15 s window and gets the job killed:
+   `docker service create --restart-condition none --mode global fangqq/mmc:v2025.10 true`
+   (or ssh each node and `docker pull`).
+2. **Pin mmc jobs to driver-verified nodes.** mmc's OpenCL kernel JIT is
+   driver-sensitive: verified working on driver 470.239 (kylin), *kernel build fails* on
+   530.30 (neza, both GPUs), and 470.182 (erlang) intermittently reports
+   `CL_PLATFORM_NOT_FOUND` on cold start. Label good nodes and set the mmc-only
+   constraint (falls back to `WORKER_NODE_CONSTRAINT` when unset):
+
+   ```sh
+   docker node update --label-add mmc=1 kylin        # per verified node
+   # in backend/.env:
+   WORKER_NODE_CONSTRAINT_MMC=node.labels.mmc==1
+   ```
+
 Only if your mcx image lacks both curl and wget, build the optional augmented image:
 
 ```sh

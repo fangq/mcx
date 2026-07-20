@@ -42,11 +42,13 @@ const engineImage = () => ({ mcx: config.workerImage, mmc: config.workerImageMmc
  * @returns {Promise<void>}
  */
 export async function createMcxService({ name, jobId, seed, script, engine = 'mcx' }) {
+  // mmc (OpenCL JIT) is driver-sensitive; when set, pin mesh jobs to verified nodes
+  const constraint = (engine === 'mmc' && config.workerConstraintMmc) || config.workerConstraint;
   const args = [
     'service', 'create', '--detach',
     '--restart-condition', 'none',
     '--generic-resource', 'NVIDIA_GPU=1',
-    ...(config.workerConstraint ? ['--constraint', config.workerConstraint] : []),
+    ...(constraint ? ['--constraint', constraint] : []),
     '--name', name,
     '-e', `API_URL=${config.workerApiUrl}`,
     '-e', `JOB_ID=${jobId}`,

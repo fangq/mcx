@@ -15,6 +15,7 @@
  * @property {number} maxRuntimeMs      hard cap per simulation before kill
  * @property {number} maxConcurrent     0 = auto-detect from swarm GPU count
  * @property {string} workerConstraint  optional swarm placement constraint (e.g. 'node.hostname==neza'); '' = any node
+ * @property {string} workerConstraintMmc  placement constraint for mesh (mmc) jobs only — mmc-OpenCL kernel JIT is driver-sensitive (e.g. fails on 530.30, flaky on 470.182), so pin mmc to verified nodes via e.g. 'node.labels.mmc==1'; '' = fall back to workerConstraint
  * @property {number} jobTtlMs          purge non-library jobs older than this (ms)
  * @property {number} minSubmitGapMs    minimum gap between submissions from one client (ms)
  * @property {string} adminSecret       shared secret for the library review/admin API ('' disables it)
@@ -35,6 +36,7 @@ export const config = {
   maxRuntimeMs: Number(process.env.MAX_RUNTIME_MS ?? 60000),
   maxConcurrent: Number(process.env.MAX_CONCURRENT ?? 0),
   workerConstraint: process.env.WORKER_NODE_CONSTRAINT ?? '',
+  workerConstraintMmc: process.env.WORKER_NODE_CONSTRAINT_MMC ?? '',
   jobTtlMs: Number(process.env.JOB_TTL_MS ?? 3600000), // 1 hour
   minSubmitGapMs: Number(process.env.MIN_SUBMIT_GAP_MS ?? 5000), // 5 s
   adminSecret: process.env.ADMIN_SECRET ?? '', // '' disables the library review/admin API

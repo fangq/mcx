@@ -1438,7 +1438,7 @@
                     "format": "table",
                     "items": {
                       "type": "integer",
-                      "minimum": 0
+                      "minimum": -2
                     },
                     "minItems": 5,
                     "maxItems": 5

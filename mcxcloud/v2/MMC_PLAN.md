@@ -175,6 +175,26 @@ and parse identically in mmc.
 **Phase D — later / out of scope now**
 - `MeshROI` (iMMC), adjoint detectors, replay.
 
+## 5b. Production shakeout findings (2026-07-19/20)
+
+- **Per-node mmc-OpenCL matrix** (fangqq/mmc:v2025.10, same sfdi control input):
+  kylin (GTX 980 Ti/1080, driver 470.239) ✅; erlang (GTX 1080 ×2, 470.182) ⚠ works but
+  intermittently fails `clGetPlatformIDs` with `CL_PLATFORM_NOT_FOUND` (-1001) on cold
+  start; neza (RTX 2080 + GTX 1050, 530.30) ❌ `clBuildProgram` fails on BOTH GPUs
+  (`-c cuda` reports the same error from mmc_cl_host.c — the CUDA flag does not bypass
+  the OpenCL host in this build); mobi unverified (image pull > 150 s). Mitigations:
+  `WORKER_NODE_CONSTRAINT_MMC` + `node.labels.mmc==1` (kylin labeled), image pre-pull.
+- **`mmc/examples` docs are not all CLI/GPU-ready** (both were withdrawn from the
+  public library and replaced by the generated `MMC_BUILTIN:twolayerslab`):
+  - `sfdi2layer/t1.json`: wide-field (fourier) sources need source-cap elements tagged
+    **−1** (`mesh_srcdetelem`, mmc_mesh.c:397) but the embedded mesh only has tag-0
+    void elements spanning z=9–33.7 → `srcelemlen=0`, photons launch dead, 0 % absorbed.
+  - `skinvessel/skinvessel_1.json`: GPU kernel **hangs indefinitely** (even 1e4 photons
+    exceed 40 s on the working kylin node) — disk source *outside* the mesh
+    (z=−0.005) + tag-0 void elements apparently traps the OpenCL void-entry search.
+  - schema note: MeshElem plain-array items now allow ≥ −2 so −1/−2 wide-field
+    source/detector tags can be expressed once supported.
+
 ## 6. Open questions
 
 1. Worker image: publish `fangqq/mmc` with CUDA/OpenCL support, or fold the mmc binary
