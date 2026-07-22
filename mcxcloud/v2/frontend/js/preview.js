@@ -601,7 +601,7 @@ function drawmeshCore(nd, el, mode, outVol, frameLen, nframes) {
 
   meshState = {
     node: nd.data, elem: el.data, ne: el.rows, stride: el.cols, bbox, ext,
-    faces: null, owner: null, surf: null, cuts: null,
+    faces: null, owner: null, surf: null, wire: null, cuts: null,
     mode, outVol, frameLen, frameVals: null, vmin: 0, vmax: 1, lut: null,
   };
 
@@ -614,10 +614,18 @@ function drawmeshCore(nd, el, mode, outVol, frameLen, nframes) {
     pos[i * 3] = nd.data[n]; pos[i * 3 + 1] = nd.data[n + 1]; pos[i * 3 + 2] = nd.data[n + 2];
   }
   meshState.surf = new THREE.Mesh(soupGeometry(pos, new Float32Array(pos.length)), new THREE.MeshBasicMaterial({
-    vertexColors: true, transparent: true, opacity: mode === 'tag' ? 0.4 : 0.75,
+    vertexColors: true, transparent: true, opacity: mode === 'tag' ? 0.35 : 0.75,
     side: THREE.DoubleSide, depthWrite: false,
   }));
   boundingbox.add(meshState.surf);
+  // triangulation edges (iso2mesh plotmesh look): a wireframe sibling sharing the same
+  // geometry — without it the coarse boundary triangles merge into flat unreadable fills.
+  // Full-strength region colors for the input preview; subtle over fluence maps.
+  meshState.wire = new THREE.Mesh(meshState.surf.geometry, new THREE.MeshBasicMaterial({
+    wireframe: true, vertexColors: true, transparent: true,
+    opacity: mode === 'tag' ? 0.9 : 0.3, depthWrite: false,
+  }));
+  boundingbox.add(meshState.wire);
   meshState.cuts = new THREE.Group();
   boundingbox.add(meshState.cuts);
 
@@ -677,6 +685,7 @@ function updateMeshCross() {
   });
   const all = perAxis.flat();
   meshState.surf.material.clippingPlanes = all.length ? all : null;
+  if (meshState.wire) meshState.wire.material.clippingPlanes = all.length ? all : null;
 
   for (const m of meshState.cuts.children) { m.geometry.dispose(); m.material.dispose(); }
   meshState.cuts.clear();
@@ -688,7 +697,15 @@ function updateMeshCross() {
     // crop the patch by the OTHER axes' planes only (its own plane would z-fight it away)
     const other = [0, 1, 2].filter((x) => x !== a).flatMap((x) => perAxis[x]);
     if (other.length) mat.clippingPlanes = other;
-    meshState.cuts.add(new THREE.Mesh(soupGeometry(cut.positions, cutColors(cut)), mat));
+    const gm = soupGeometry(cut.positions, cutColors(cut));
+    meshState.cuts.add(new THREE.Mesh(gm, mat));
+    // edge overlay on the cut too, so the sliced tets read as a mesh (qmeshcut style)
+    const wmat = new THREE.MeshBasicMaterial({
+      wireframe: true, color: 0x000000, transparent: true,
+      opacity: meshState.mode === 'tag' ? 0.35 : 0.15, depthWrite: false,
+    });
+    if (other.length) wmat.clippingPlanes = other;
+    meshState.cuts.add(new THREE.Mesh(gm, wmat));
   }
   dirty = true;
 }

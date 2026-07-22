@@ -13,17 +13,21 @@ const TET_FACES = [[0, 2, 1], [1, 3, 0], [0, 3, 2], [1, 2, 3]];
 const TET_EDGES = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
 
 /**
- * Extract the exterior surface of a tet mesh (iso2mesh volface): faces referenced by
- * exactly one tetrahedron. Rendering only this surface (instead of all tets) is what
- * keeps large meshes fast.
+ * Extract the renderable surface of a tet mesh: the EXTERIOR faces (referenced by
+ * exactly one tetrahedron — iso2mesh volface) plus the REGION INTERFACES (faces shared
+ * by two tets carrying different region tags), so interior inclusions and layer
+ * boundaries are visible through a semi-transparent exterior. Rendering only these
+ * faces (instead of all tets) is what keeps large meshes fast.
  * @param {ArrayLike<number>} elem flattened element rows (1-based node ids, tag last)
  * @param {number} ne  element count
  * @param {number} stride row length (5 for [n1..n4,tag]; 11 for tet10 — corners first)
  * @returns {{ faces: number[], owner: number[] }} faces = flattened [a,b,c] node-id
- *   triples (1-based, outward winding); owner = owning element index per face
+ *   triples (1-based, outward winding); owner = owning element index per face —
+ *   interface faces are owned by the HIGHER-tagged neighbor (usually the inclusion)
  */
 export function volface(elem, ne, stride) {
-  /** @type {Map<string, { n: number, a: number, b: number, c: number, e: number }>} */
+  const tag = (/** @type {number} */ e) => elem[e * stride + stride - 1];
+  /** @type {Map<string, { n: number, a: number, b: number, c: number, e: number, iface: boolean }>} */
   const seen = new Map();
   for (let e = 0; e < ne; e++) {
     const o = e * stride;
@@ -33,13 +37,18 @@ export function volface(elem, ne, stride) {
       const lo = Math.min(a, b, c), hi = Math.max(a, b, c);
       const key = lo + ',' + (a + b + c - lo - hi) + ',' + hi;
       const hit = seen.get(key);
-      if (hit) hit.n++;
-      else seen.set(key, { n: 1, a, b, c, e });
+      if (hit) {
+        hit.n++;
+        if (hit.n === 2 && tag(e) !== tag(hit.e)) {
+          hit.iface = true;
+          if (tag(e) > tag(hit.e)) hit.e = e; // color by the inclusion side
+        }
+      } else seen.set(key, { n: 1, a, b, c, e, iface: false });
     }
   }
   const faces = [], owner = [];
   for (const f of seen.values()) {
-    if (f.n === 1) { faces.push(f.a, f.b, f.c); owner.push(f.e); }
+    if (f.n === 1 || f.iface) { faces.push(f.a, f.b, f.c); owner.push(f.e); }
   }
   return { faces, owner };
 }
