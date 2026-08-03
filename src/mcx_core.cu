@@ -2016,7 +2016,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
     RandType t[RAND_BUF_LEN];
     Medium prop;
 
-    float len, slen;
+    float len;
     OutputType w0;
     float w_re = 0.f, w_im = 0.f;    /**< complex photon weight for RF forward */
     float w0_re = 0.f, w0_im = 0.f;  /**< complex weight at start of current voxel segment */
@@ -2357,7 +2357,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         len = hitgrid((float3*)&p, (float3*)&v, &rv.x, flipdir); // propagate the photon to the first intersection to the grid
 
         /** convert photon movement length to unitless scattering length by multiplying with mus */
-        slen = len * prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f); //unitless (minstep=grid, mus=1/grid)
+        float slen = len * prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f); //unitless (minstep=grid, mus=1/grid)
 
         GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%d %d %d] flip=%d\n", p.x, p.y, p.z, v.x, v.y, v.z, len, flipdir[0], flipdir[1], flipdir[2], flipdir[3]));
 
