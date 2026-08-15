@@ -623,7 +623,7 @@ def mcxlab(*args):
 
         if "detphotons" in args[0] and isinstance(args[0]["detphotons"], dict):
             if "data" in args[0]["detphotons"]:
-                args[0]["detphotons"] = args[0]["dephotons"]["data"]
+                args[0]["detphotons"] = args[0]["detphotons"]["data"]
             else:
                 fulldetdata = ["detid", "nscat", "ppath", "mom", "p", "v", "w0"]
                 detfields = [x in args[0]["detphotons"] for x in fulldetdata]
