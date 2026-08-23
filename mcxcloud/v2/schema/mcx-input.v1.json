@@ -29,7 +29,7 @@
         },
         "Engine": {
           "title": "Solver (mesh domains only)",
-          "description": "Voxel (Shapes with a Grid) domains always run mcx. Mesh (Shapes with MeshNode) domains run mmc by default; set this to redbird to run an FEM diffusion forward solve on the same mesh instead. Ignored for voxel domains.",
+          "description": "Voxel (Shapes with a Grid) domains always run MCX. Mesh (Shapes with MeshNode) domains run MMC by default; set this to redbird to run a Redbird FEM diffusion forward solve on the same mesh instead. Ignored for voxel domains.",
           "type": "string",
           "enum": ["mmc", "redbird"],
           "default": "mmc"

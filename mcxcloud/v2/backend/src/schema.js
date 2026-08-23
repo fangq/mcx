@@ -104,7 +104,7 @@ export function checkLimits(cfg) {
   // redbird stays off until the operator has built/pushed its worker image and labelled the
   // CPU nodes it is constrained to; without that, a submission would dispatch and then fail
   if (engine === 'redbird' && !config.redbirdEnabled)
-    return 'the redbird (FEM diffusion) engine is not enabled on this server';
+    return 'the Redbird (FEM diffusion) engine is not enabled on this server';
   if (S.Photons > 5e8) return 'the max photon number is limited to 5e8 in this preview version';
   if (typeof S.DebugFlag === 'string' && /m/i.test(S.DebugFlag))
     return 'storing photon trajectories is not supported in this preview version';
@@ -124,13 +124,13 @@ export function checkLimits(cfg) {
     // FEM assembly + a direct sparse solve grow superlinearly in time AND memory, so the
     // cap sits far below mmc's 300k: a mesh mmc handles fine would hang or OOM this path
     if (meshRows(M.MeshNode) > config.redbirdMaxNodes)
-      return `the mesh node count is limited to ${config.redbirdMaxNodes} for redbird (FEM diffusion) simulations`;
+      return `the mesh node count is limited to ${config.redbirdMaxNodes} for Redbird (FEM diffusion) simulations`;
     // redbird solves the diffusion equation — it has no photons, no time gates, and no
     // MC-specific outputs. Reject those rather than silently ignoring them.
     if (typeof S.OutputType === 'string' && !/^f/.test(S.OutputType))
-      return `output type "${S.OutputType}" is not supported for redbird (only fluence)`;
+      return `output type "${S.OutputType}" is not supported for Redbird (only fluence)`;
     if (typeof src.Type === 'string' && src.Type !== 'pencil' && src.Type !== 'isotropic')
-      return `source type "${src.Type}" is not supported for redbird (only pencil/isotropic)`;
+      return `source type "${src.Type}" is not supported for Redbird (only pencil/isotropic)`;
   } else if (engine === 'mmc') {
     const M = cfg?.Shapes ?? cfg?.Mesh ?? {};
     if (meshRows(M.MeshNode) > 300000)
