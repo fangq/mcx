@@ -118,6 +118,23 @@ textarea { width: 100%; min-height: 220px; font-family: ui-monospace, monospace;
 #browse-more { display: block; margin: 0.9rem auto 0; }
 .card { cursor: pointer; }
 .card.selected { outline: 2px solid var(--accent); }
+/* Curated builtin demos are tinted by the solver they run on, so the three engines are
+   distinguishable at a glance in a grid of otherwise unlabelled thumbnails. Keyed off the
+   TITLE prefix (MCX_/MMC_/REDBIRD_BUILTIN:) — the Browse list payload carries no doc to
+   inspect. User-shared entries keep the neutral --panel background. Colour is a redundant
+   cue only: the legend below the search box names each one, and the hover tooltip spells
+   out the engine, so nothing is conveyed by hue alone. */
+.card.eng-mcx { background: #16273b; border-color: #2f5f8f; }
+.card.eng-mmc { background: #142b28; border-color: #2c6b5f; }
+.card.eng-redbird { background: #2b1a20; border-color: #7a3646; }
+/* legend swatches above the grid */
+.eng-key { display: flex; gap: 0.9rem; align-items: center; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
+.eng-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.eng-key i { width: 0.8rem; height: 0.8rem; border-radius: 3px; border: 1px solid var(--line); }
+.eng-key i.eng-mcx { background: #16273b; border-color: #2f5f8f; }
+.eng-key i.eng-mmc { background: #142b28; border-color: #2c6b5f; }
+.eng-key i.eng-redbird { background: #2b1a20; border-color: #7a3646; }
+
 /* library-review cards: amber dashed border = pending (not approved); green = approved */
 .card.review { border: 2px dashed var(--warn); }
 .card.review.ok { border: 2px solid var(--ok); border-style: solid; }

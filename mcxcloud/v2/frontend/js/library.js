@@ -84,10 +84,27 @@ export function initLibrary(showTab) {
   // A card is thumbnail-only (hover shows the title); clicking opens the side detail panel
   // so the grid layout isn't disturbed.
   /** @param {any} c @param {boolean} [review] render as a review card (distinct border) */
+  // Curated builtin demos are tinted per solver (see .card.eng-* / .eng-key in style.css).
+  // The Browse payload carries no doc, so the engine comes from the title prefix; anything
+  // else (user-shared entries) stays neutral.
+  const ENGINE_BY_PREFIX = [
+    ['MCX_BUILTIN:', 'mcx', 'MCX — voxel Monte Carlo'],
+    ['MMC_BUILTIN:', 'mmc', 'MMC — mesh Monte Carlo'],
+    ['REDBIRD_BUILTIN:', 'redbird', 'Redbird — FEM diffusion'],
+  ];
+  /** @param {string} t @returns {[string, string]|null} [cssSuffix, label] */
+  const engineOf = (t) => {
+    const hit = ENGINE_BY_PREFIX.find(([p]) => String(t || '').startsWith(p));
+    return hit ? [hit[1], hit[2]] : null;
+  };
+
   function card(c, review) {
     const el = document.createElement('div');
     el.className = review ? 'card review' + (c.status === 'approved' ? ' ok' : '') : 'card';
-    el.title = c.title; // hover tooltip
+    const eng = engineOf(c.title);
+    if (eng) el.classList.add('eng-' + eng[0]);
+    // spell the engine out in the tooltip too, so the tint is never the only cue
+    el.title = eng ? `${c.title}\n${eng[1]}` : c.title;
     const img = document.createElement('img');
     if (c.thumbnail) img.src = assetUrl(c.thumbnail);
     img.alt = c.title;
