@@ -585,9 +585,10 @@ function setMeshFrame(f) {
 }
 
 /**
- * Shared mesh renderer: dashed bbox + exterior surface (volface) + slider-driven cuts.
- * mode 'tag' colors by region label (input preview); 'node'/'elem' color by an
- * mmc mesh-valued output (BasisOrder 1/0) through the active colormap.
+ * Shared mesh renderer: exterior surface (volface) + region interfaces + slider-driven
+ * cuts. mode 'tag' colors by region label (input preview); 'node'/'elem' color by a
+ * mesh-valued output through the active colormap — mmc (BasisOrder 1/0) or redbird
+ * (nodal FEM fluence).
  * @param {{data: Float32Array, rows: number, cols: number}} nd decoded MeshNode
  * @param {{data: Float32Array, rows: number, cols: number}} el decoded MeshElem
  * @param {'tag'|'node'|'elem'} mode

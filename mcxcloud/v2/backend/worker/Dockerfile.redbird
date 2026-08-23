@@ -1,0 +1,28 @@
+# MCX Cloud v2 redbird worker image (CPU-only FEM diffusion forward solve).
+#
+# Why a dedicated image instead of reusing fangqq/mcxstudio (which does bundle
+# redbird-matlab): that image's Octave is 4.0.0, which has no containers.Map at all,
+# while redbird's FEM path uses containers.Map unconditionally (rbrunforward.m) -- so it
+# simply cannot run there. Its bundled redbird is also an older snapshot missing
+# rbgetdetdir.m, and its zmat is incomplete, so loadjson could not unpack the
+# zlib-packed mesh arrays mcxcloud actually sends. redbirdpy sidesteps all three: it is
+# a versioned PyPI package, and zlib/base64 are Python stdlib.
+#
+# Build + push (the tag must match config.js workerImageRedbird):
+#   docker build -f Dockerfile.redbird -t fangqq/redbird:v0.4.1 .
+#   docker push fangqq/redbird:v0.4.1
+# The image must be present on (or pullable by) every node that
+# WORKER_NODE_CONSTRAINT_REDBIRD selects.
+FROM python:3.11-slim
+
+# wget only: it keeps the worker's HTTP protocol byte-for-byte identical to mcx-run.sh
+# (GNU wget --method/--body-file), so all three engines speak to the API the same way.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pinned for reproducibility: an unpinned solver could silently change numerical output
+# between job dispatches. numpy/scipy/iso2mesh come in as redbirdpy dependencies.
+RUN pip install --no-cache-dir redbirdpy==0.4.1
+
+WORKDIR /tmp

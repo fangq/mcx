@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
+import { config } from './config.js';
 
 // The authoritative MCX input schema (shared with the frontend editor).
 const schemaPath = fileURLToPath(new URL('../../schema/mcx-input.v1.json', import.meta.url));
@@ -61,17 +62,17 @@ export function detectEngine(cfg) {
 
 /**
  * mcx reads RF modulation as Optode.Source.Frequency (Hz, converted internally to
- * omega=2*pi*f); mmc reads it pre-converted as Forward.Omega (rad/s). Rather than make
- * users know the per-engine field name/units, Frequency is the one canonical, schema-facing
- * field for both — this derives mmc's Forward.Omega from it right before dispatch. A no-op
- * for engine!=='mmc' (mcx already reads Frequency natively), so it stays inert/backportable
- * on branches without mmc support at all.
- * @param {Record<string, any>} doc @param {'mcx' | 'mmc'} engine
+ * omega=2*pi*f); the mesh engines (mmc, redbird) read it pre-converted as Forward.Omega
+ * (rad/s). Rather than make users know the per-engine field name/units, Frequency is the
+ * one canonical, schema-facing field for all of them — this derives Forward.Omega from it
+ * right before dispatch. A no-op for mcx (which reads Frequency natively), so it stays
+ * inert/backportable on branches without mesh-engine support at all.
+ * @param {Record<string, any>} doc @param {'mcx' | 'mmc' | 'redbird'} engine
  * @returns {Record<string, any>}
  */
 export function applyFrequency(doc, engine) {
   const freq = doc?.Optode?.Source?.Frequency;
-  if (engine !== 'mmc' || !freq) return doc;
+  if (engine === 'mcx' || !freq) return doc;
   return { ...doc, Forward: { ...doc.Forward, Omega: freq * 2 * Math.PI } };
 }
 
@@ -100,10 +101,10 @@ export function checkLimits(cfg) {
   const D = cfg?.Domain ?? {};
   const src = cfg?.Optode?.Source ?? {};
   const engine = detectEngine(cfg);
-  // redbird is schema-recognized (Session.Engine) but not yet dispatchable: docker.js has no
-  // worker image/CPU routing for it and would silently misdirect it to the mcx GPU image.
-  // Reject up front until that backend wiring (swarm CPU dispatch + cfg-builder) lands.
-  if (engine === 'redbird') return 'the redbird (FEM diffusion) engine is not yet available in this preview version';
+  // redbird stays off until the operator has built/pushed its worker image and labelled the
+  // CPU nodes it is constrained to; without that, a submission would dispatch and then fail
+  if (engine === 'redbird' && !config.redbirdEnabled)
+    return 'the redbird (FEM diffusion) engine is not enabled on this server';
   if (S.Photons > 5e8) return 'the max photon number is limited to 5e8 in this preview version';
   if (typeof S.DebugFlag === 'string' && /m/i.test(S.DebugFlag))
     return 'storing photon trajectories is not supported in this preview version';
@@ -118,7 +119,19 @@ export function checkLimits(cfg) {
   // reject it here so it can never silently diverge from Frequency
   if (F.Omega) return 'Forward.Omega is set automatically from Optode.Source.Frequency (Hz) — set Frequency instead';
 
-  if (engine === 'mmc') {
+  if (engine === 'redbird') {
+    const M = cfg?.Shapes ?? cfg?.Mesh ?? {};
+    // FEM assembly + a direct sparse solve grow superlinearly in time AND memory, so the
+    // cap sits far below mmc's 300k: a mesh mmc handles fine would hang or OOM this path
+    if (meshRows(M.MeshNode) > config.redbirdMaxNodes)
+      return `the mesh node count is limited to ${config.redbirdMaxNodes} for redbird (FEM diffusion) simulations`;
+    // redbird solves the diffusion equation — it has no photons, no time gates, and no
+    // MC-specific outputs. Reject those rather than silently ignoring them.
+    if (typeof S.OutputType === 'string' && !/^f/.test(S.OutputType))
+      return `output type "${S.OutputType}" is not supported for redbird (only fluence)`;
+    if (typeof src.Type === 'string' && src.Type !== 'pencil' && src.Type !== 'isotropic')
+      return `source type "${src.Type}" is not supported for redbird (only pencil/isotropic)`;
+  } else if (engine === 'mmc') {
     const M = cfg?.Shapes ?? cfg?.Mesh ?? {};
     if (meshRows(M.MeshNode) > 300000)
       return 'the mesh node count is limited to 300000 in this preview version';

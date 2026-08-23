@@ -9,6 +9,22 @@ import { startWork } from './queue.js';
 import { countGpus, createMcxService, removeService } from './docker.js';
 
 const RUN_SCRIPT = readFileSync(fileURLToPath(new URL('../worker/mcx-run.sh', import.meta.url)), 'utf8');
+// redbird runs a Python driver that the worker image does not ship (only redbirdpy
+// itself), so splice our redbird_fwd.py into the run script's heredoc placeholder (see
+// redbird-run.sh). Keeping the driver a separate .py file means it stays
+// runnable/testable outside the container.
+// A function replacer (not a string) so any $-sequence in the Python source is inserted
+// literally rather than being read as a replacement pattern.
+const REDBIRD_SCRIPT = (() => {
+  const sh = readFileSync(fileURLToPath(new URL('../worker/redbird-run.sh', import.meta.url)), 'utf8');
+  const py = readFileSync(fileURLToPath(new URL('../worker/redbird_fwd.py', import.meta.url)), 'utf8').trimEnd();
+  const TOKEN = '@REDBIRD_FWD_PY@';
+  const DELIM = 'REDBIRD_FWD_PY_EOF';
+  // fail loudly at startup rather than dispatching a silently-broken worker script
+  if (sh.split(TOKEN).length - 1 !== 1) throw new Error(`redbird-run.sh must contain ${TOKEN} exactly once`);
+  if (py.includes(DELIM)) throw new Error(`redbird_fwd.py must not contain the heredoc delimiter ${DELIM}`);
+  return sh.replace(TOKEN, () => py);
+})();
 // SUCCESS is checked every poll tick and always stops the wait immediately. 'failed' is
 // deliberately NOT here: with --restart-max-attempts > 1 (docker.js), a container failure
 // (bad GPU, phantom resource, transient driver error) may still be retried by swarm as a
@@ -35,14 +51,16 @@ async function handle(jobId) {
   // handing it to us; just announce it and dispatch.
   publish(jobId, 'status', { status: 'running' });
 
-  // engine (mcx|mmc) was detected from the input at submit time; it selects the worker
-  // image and the simulator binary inside the shared run script
+  // engine (mcx|mmc|redbird) was detected from the input at submit time; it selects the
+  // worker image and the simulator binary inside the shared run script
   const er = await pool.query('select engine from jobs where id = $1', [jobId]);
   const engine = er.rows[0]?.engine || 'mcx';
+  // redbird is a CPU/Python FEM solve, not a GPU MC binary — it needs its own entrypoint
+  const script = engine === 'redbird' ? REDBIRD_SCRIPT : RUN_SCRIPT;
 
   const name = serviceName(jobId);
   try {
-    await createMcxService({ name, jobId, seed: false, script: RUN_SCRIPT, engine });
+    await createMcxService({ name, jobId, seed: false, script, engine });
   } catch (err) {
     await pool.query(
       `update jobs set status = 'failed', error = $2, ended_at = now() where id = $1`,
@@ -60,7 +78,10 @@ async function handle(jobId) {
   // each) so we don't removeService() out from under a swarm-driven retry that's still in
   // flight; see the SUCCESS comment above for why 'failed' alone doesn't stop the wait.
   const attempts = Math.max(1, config.restartMaxAttempts);
-  const deadline = Date.now() + attempts * config.maxRuntimeMs + (attempts - 1) * config.restartDelayMs + 15000;
+  // redbird gets its own (much larger) per-attempt budget: a direct sparse FEM solve is far
+  // slower than a GPU MC run, and its JSON parse/serialize in Python adds to that
+  const perAttemptMs = engine === 'redbird' ? config.redbirdMaxRuntimeMs : config.maxRuntimeMs;
+  const deadline = Date.now() + attempts * perAttemptMs + (attempts - 1) * config.restartDelayMs + 15000;
   let done = false;
   while (Date.now() < deadline) {
     await sleep(1000);

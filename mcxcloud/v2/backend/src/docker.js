@@ -29,21 +29,31 @@ export async function countGpus() {
   return count;
 }
 
-/** engine -> worker docker image; future engines (e.g. redbird) add an entry here
+/** engine -> worker docker image
  *  @returns {Record<string, string>} */
-const engineImage = () => ({ mcx: config.workerImage, mmc: config.workerImageMmc });
+const engineImage = () => ({
+  mcx: config.workerImage,
+  mmc: config.workerImageMmc,
+  redbird: config.workerImageRedbird,
+});
 
 /**
- * Launch one simulation job as a swarm service, one GPU, no restart. `script` runs as
- * the container command (bash -c); it fetches input from and pushes results to the API.
- * The `engine` selects the worker image and is exported so the script picks the matching
- * simulator binary.
+ * Launch one simulation job as a swarm service. `script` runs as the container command
+ * (bash -c); it fetches input from and pushes results to the API. The `engine` selects the
+ * worker image and is exported so the script picks the matching simulator binary — and it
+ * also selects the resource claim: the MC engines (mcx/mmc) take one GPU generic-resource,
+ * while redbird is a CPU-only FEM solve and reserves cores instead.
  * @param {{ name: string, jobId: string, seed: boolean, script: string, engine?: string }} opts
  * @returns {Promise<void>}
  */
 export async function createMcxService({ name, jobId, seed, script, engine = 'mcx' }) {
-  // mmc (OpenCL JIT) is driver-sensitive; when set, pin mesh jobs to verified nodes
-  const constraint = (engine === 'mmc' && config.workerConstraintMmc) || config.workerConstraint;
+  const isRedbird = engine === 'redbird';
+  // mmc (OpenCL JIT) is driver-sensitive; when set, pin mesh jobs to verified nodes.
+  // redbird is CPU-only FEM assembly/solve — pin to high-core-count nodes instead, via
+  // its own constraint (never falls back to the GPU-oriented workerConstraint).
+  const constraint = isRedbird
+    ? config.workerConstraintRedbird
+    : (engine === 'mmc' && config.workerConstraintMmc) || config.workerConstraint;
   const args = [
     'service', 'create', '--detach',
     // on-failure (not none): a container exiting non-zero (bad GPU, phantom generic-resource
@@ -54,7 +64,11 @@ export async function createMcxService({ name, jobId, seed, script, engine = 'mc
     '--restart-condition', 'on-failure',
     '--restart-max-attempts', String(config.restartMaxAttempts),
     '--restart-delay', `${config.restartDelayMs}ms`,
-    '--generic-resource', 'NVIDIA_GPU=1',
+    // redbird's forward solve is CPU-bound, not GPU-bound: claim CPU cores instead of a
+    // GPU generic-resource, so it doesn't compete with mcx/mmc for the (scarce) GPU pool
+    ...(isRedbird
+      ? ['--reserve-cpu', String(config.redbirdCpuReserve), '--limit-cpu', String(config.redbirdCpuLimit)]
+      : ['--generic-resource', 'NVIDIA_GPU=1']),
     ...(constraint ? ['--constraint', constraint] : []),
     '--name', name,
     '-e', `API_URL=${config.workerApiUrl}`,
@@ -63,8 +77,9 @@ export async function createMcxService({ name, jobId, seed, script, engine = 'mc
     '-e', `SEEDFLAG=${seed ? '--seed -1' : ''}`,
     '-e', `ENGINE=${engine}`,
     // persist the CUDA/OpenCL JIT cache across ephemeral containers on this node — avoids
-    // re-paying a ~10s PTX recompile on every job (see config.js nvCachePath)
-    ...(config.nvCachePath
+    // re-paying a ~10s PTX recompile on every job (see config.js nvCachePath). Meaningless
+    // for redbird (no GPU kernel involved), so skip the mount/env entirely for it.
+    ...(!isRedbird && config.nvCachePath
       ? ['--mount', `type=bind,source=${config.nvCachePath},destination=${config.nvCachePath}`,
         '-e', `CUDA_CACHE_PATH=${config.nvCachePath}`]
       : []),
