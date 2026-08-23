@@ -54,6 +54,11 @@ async function submit() {
     return;
   }
 
+  // A previous job's stream may still be open (a non-final error keeps listening in case
+  // swarm retries it — see api.js streamJob); detach it before this job takes over state.jobId,
+  // so its eventual outcome can't fire onEvent/onComplete against what is now a different job.
+  if (closeStream) { closeStream(); closeStream = null; }
+
   state.log = '';
   log('submitting…');
   try {
@@ -67,7 +72,9 @@ async function submit() {
     btn.textContent = 'Cancel';
     btn.onclick = cancel;
 
-    closeStream = streamJob(id, token, onEvent);
+    // guard against a stale, superseded stream's events (belt-and-suspenders alongside the
+    // explicit closeStream() above)
+    closeStream = streamJob(id, token, (event, data) => { if (state.jobId === id) onEvent(event, data); });
   } catch (err) {
     log('submit failed: ' + (/** @type {Error} */ (err)).message);
   }
