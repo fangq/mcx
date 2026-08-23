@@ -65,7 +65,12 @@ export function streamJob(id, token, onEvent) {
       let data = {};
       try { data = JSON.parse(e.data); } catch { /* ignore */ }
       onEvent(type, data);
-      if (type === 'complete' || type === 'error') es.close();
+      // A container failure (bad GPU, phantom resource, ...) may still be retried by swarm
+      // as a fresh scheduling attempt (see backend scheduler.js) — only close the stream on
+      // real success, or an error the backend has flagged final (dispatch failure, or the
+      // full retry budget exhausted). A non-final 'error' just means "this attempt failed,
+      // possibly retrying" — keep listening so a later successful retry still reaches us.
+      if (type === 'complete' || (type === 'error' && data.final)) es.close();
     });
   }
   es.onerror = () => {}; // browser auto-reconnects; terminal events already close it

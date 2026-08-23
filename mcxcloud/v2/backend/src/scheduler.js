@@ -9,7 +9,14 @@ import { startWork } from './queue.js';
 import { countGpus, createMcxService, removeService } from './docker.js';
 
 const RUN_SCRIPT = readFileSync(fileURLToPath(new URL('../worker/mcx-run.sh', import.meta.url)), 'utf8');
-const TERMINAL = new Set(['completed', 'cached', 'failed', 'cancelled', 'killed']);
+// SUCCESS is checked every poll tick and always stops the wait immediately. 'failed' is
+// deliberately NOT here: with --restart-max-attempts > 1 (docker.js), a container failure
+// (bad GPU, phantom resource, transient driver error) may still be retried by swarm as a
+// fresh scheduling attempt — if we stopped and removeService()'d on the first 'failed', we'd
+// delete the service (and any retry swarm was about to run) out from under it. So 'failed'
+// is left to ride out the full deadline below, which is sized for the whole retry budget;
+// a later successful retry can still overwrite it to 'completed' before that deadline hits.
+const SUCCESS = new Set(['completed', 'cached', 'cancelled']);
 
 /** @param {string} jobId @returns {string} */
 function serviceName(jobId) {
@@ -41,31 +48,51 @@ async function handle(jobId) {
       `update jobs set status = 'failed', error = $2, ended_at = now() where id = $1`,
       [jobId, 'dispatch failed: ' + (/** @type {Error} */ (err)).message],
     );
-    publish(jobId, 'error', { status: 'failed', message: 'dispatch failed' });
+    // dispatch itself failed (no service was ever created) -> nothing can retry this;
+    // final=true tells the frontend to stop listening (see api.js streamJob)
+    publish(jobId, 'error', { status: 'failed', message: 'dispatch failed', final: true });
     await removeService(name);
     return;
   }
 
-  // wait for the container's completion callback to flip the status (grace beyond the
-  // hard runtime cap for network/upload time)
-  const deadline = Date.now() + config.maxRuntimeMs + 15000;
+  // Wait for a completion callback to flip the status. The deadline covers the WHOLE
+  // retry budget (every attempt gets its own maxRuntimeMs, plus a restart-delay between
+  // each) so we don't removeService() out from under a swarm-driven retry that's still in
+  // flight; see the SUCCESS comment above for why 'failed' alone doesn't stop the wait.
+  const attempts = Math.max(1, config.restartMaxAttempts);
+  const deadline = Date.now() + attempts * config.maxRuntimeMs + (attempts - 1) * config.restartDelayMs + 15000;
   let done = false;
   while (Date.now() < deadline) {
     await sleep(1000);
     const r = await pool.query('select status from jobs where id = $1', [jobId]);
     const st = r.rows[0]?.status;
-    if (st && TERMINAL.has(st)) {
+    if (st && SUCCESS.has(st)) {
       done = true;
       break;
     }
   }
   if (!done) {
-    await pool.query(
+    // Exhausted the full retry budget. If a container attempt at least ran and reported
+    // (status='failed', with a real mcx log+error already stored), that's more useful to
+    // the user than overwriting it — leave it. Only jobs that never got ANY callback across
+    // every attempt (status still 'running' — e.g. every attempt failed at the container/
+    // GPU-injection level before the script could even start) get the generic timeout.
+    const r = await pool.query(
       `update jobs set status = 'killed', error = 'exceeded max runtime', ended_at = now()
-       where id = $1 and status not in ('completed','cached','failed')`,
+       where id = $1 and status = 'running' returning status`,
       [jobId],
     );
-    publish(jobId, 'error', { status: 'killed', message: 'exceeded max runtime' });
+    if (r.rowCount) {
+      publish(jobId, 'error', { status: 'killed', message: 'exceeded max runtime', final: true });
+    } else {
+      // a real attempt already reported via /complete?error=1 (log/error already stored);
+      // forward it so the now-reconnecting frontend can still show what actually happened
+      const last = await pool.query('select log, error from jobs where id = $1', [jobId]);
+      publish(jobId, 'error', {
+        status: 'failed', message: 'simulation error', final: true,
+        log: last.rows[0]?.log, error: last.rows[0]?.error,
+      });
+    }
   }
   await removeService(name);
 }

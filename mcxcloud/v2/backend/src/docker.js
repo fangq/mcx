@@ -46,7 +46,14 @@ export async function createMcxService({ name, jobId, seed, script, engine = 'mc
   const constraint = (engine === 'mmc' && config.workerConstraintMmc) || config.workerConstraint;
   const args = [
     'service', 'create', '--detach',
-    '--restart-condition', 'none',
+    // on-failure (not none): a container exiting non-zero (bad GPU, phantom generic-resource
+    // UUID, transient driver error, ...) gets a fresh scheduling attempt — new task, empty
+    // NodeID, full node reselection — rather than leaving the job permanently failed for what
+    // may be a one-off resource glitch. See config.js restartMaxAttempts for why this doesn't
+    // deterministically loop back onto the same broken GPU.
+    '--restart-condition', 'on-failure',
+    '--restart-max-attempts', String(config.restartMaxAttempts),
+    '--restart-delay', `${config.restartDelayMs}ms`,
     '--generic-resource', 'NVIDIA_GPU=1',
     ...(constraint ? ['--constraint', constraint] : []),
     '--name', name,
@@ -55,6 +62,12 @@ export async function createMcxService({ name, jobId, seed, script, engine = 'mc
     '-e', `WORKER_SECRET=${config.workerSecret}`,
     '-e', `SEEDFLAG=${seed ? '--seed -1' : ''}`,
     '-e', `ENGINE=${engine}`,
+    // persist the CUDA/OpenCL JIT cache across ephemeral containers on this node — avoids
+    // re-paying a ~10s PTX recompile on every job (see config.js nvCachePath)
+    ...(config.nvCachePath
+      ? ['--mount', `type=bind,source=${config.nvCachePath},destination=${config.nvCachePath}`,
+        '-e', `CUDA_CACHE_PATH=${config.nvCachePath}`]
+      : []),
     engineImage()[engine] ?? config.workerImage,
     '/bin/bash', '-c', script,
   ];
