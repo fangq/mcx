@@ -174,6 +174,34 @@ def main():
 
     t0 = time.time()
     cfg, _ = meshprep(cfg)
+
+    # cfg['evol'] (element volumes) and cfg['deldotdel'] scale the FEM volume integrals, so a
+    # uniformly NEGATED evol negates the whole stiffness matrix, giving an indefinite system
+    # whose "solution" is sign-flipped oscillatory garbage -- about half the nodes negative,
+    # with the fluence peak far from the source. This is silent: nothing errors.
+    #
+    # meshreorient is meant to normalize element winding, but the iso2mesh Python port can
+    # settle on a winding that its own signed-volume measure then calls negative, where the
+    # MATLAB one yields positive. Measured on the twolayerslab demo: all 81000 evol entries
+    # negative and A's diagonal exactly the negation of redbird-matlab's. Re-flipping the
+    # input winding does NOT help (meshreorient just re-normalizes it back), so correct the
+    # derived quantities instead. With evol and deldotdel negated, the solve reproduces
+    # redbird-matlab to 4 significant figures (peak at the source, 1 negative node of 15376).
+    #
+    # Only a UNIFORM inversion is a convention mismatch and safe to correct this way; mixed
+    # signs mean a genuinely broken mesh, so refuse rather than guess.
+    evol = np.asarray(cfg.get("evol", [])).ravel()
+    if evol.size and np.any(evol < 0):
+        if not np.all(evol < 0):
+            sys.exit("redbird: mesh has %d of %d inverted elements (mixed orientation); "
+                     "refusing to solve on it" % (int((evol < 0).sum()), evol.size))
+        print("[redbird] all %d element volumes negative (iso2mesh winding convention); "
+              "correcting evol/deldotdel sign" % evol.size, flush=True)
+        cfg["evol"] = -evol
+        cfg["deldotdel"] = -np.asarray(cfg["deldotdel"])
+        nvol = np.asarray(cfg.get("nvol", [])).ravel()
+        if nvol.size and np.all(nvol < 0):
+            cfg["nvol"] = -nvol
     print("[redbird] mesh prep ... %.3f s" % (time.time() - t0), flush=True)
 
     t0 = time.time()
