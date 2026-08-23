@@ -46,13 +46,17 @@ export const validateInput = ajv.compile(relaxedSchema);
 
 /**
  * Detect which simulator a validated input targets: a Shapes (or Mesh) object carrying
- * MeshNode is a tetrahedral-mesh domain and runs mmc; everything else runs mcx.
+ * MeshNode is a tetrahedral-mesh domain — mmc by default, or redbird (an FEM diffusion
+ * solver sharing the same mesh/optode/property schema) if Session.Engine says so.
+ * Everything else (voxel Grid domains) runs mcx.
  * @param {Record<string, any>} cfg
- * @returns {'mcx' | 'mmc'}
+ * @returns {'mcx' | 'mmc' | 'redbird'}
  */
 export function detectEngine(cfg) {
   const S = cfg?.Shapes ?? cfg?.Mesh;
-  return S && typeof S === 'object' && !Array.isArray(S) && 'MeshNode' in S ? 'mmc' : 'mcx';
+  const isMesh = S && typeof S === 'object' && !Array.isArray(S) && 'MeshNode' in S;
+  if (!isMesh) return 'mcx';
+  return cfg?.Session?.Engine === 'redbird' ? 'redbird' : 'mmc';
 }
 
 /**
@@ -96,6 +100,10 @@ export function checkLimits(cfg) {
   const D = cfg?.Domain ?? {};
   const src = cfg?.Optode?.Source ?? {};
   const engine = detectEngine(cfg);
+  // redbird is schema-recognized (Session.Engine) but not yet dispatchable: docker.js has no
+  // worker image/CPU routing for it and would silently misdirect it to the mcx GPU image.
+  // Reject up front until that backend wiring (swarm CPU dispatch + cfg-builder) lands.
+  if (engine === 'redbird') return 'the redbird (FEM diffusion) engine is not yet available in this preview version';
   if (S.Photons > 5e8) return 'the max photon number is limited to 5e8 in this preview version';
   if (typeof S.DebugFlag === 'string' && /m/i.test(S.DebugFlag))
     return 'storing photon trajectories is not supported in this preview version';
