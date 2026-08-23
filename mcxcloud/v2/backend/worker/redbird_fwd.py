@@ -192,6 +192,27 @@ def main():
         # preview renders. The complex detector readings are preserved in detphi below.
         print("[redbird] complex (RF) field: saving amplitude", flush=True)
         phi = np.abs(phi)
+
+    # Sanity-check the solution before publishing it. A diffusion fluence is physically
+    # non-negative; a converged FEM solve shows only tiny numerical undershoot near zero
+    # (measured min/max ratios of -2e-6 .. -1.6e-8 on known-good solves). A failed/singular
+    # solve instead oscillates, with ~50% of nodes negative and |min| comparable to (or
+    # wildly exceeding) max. Without this check such a solve is published as a normal
+    # "completed" job and the garbage is indistinguishable from a real result in the UI.
+    fmax = float(np.max(phi)) if phi.size else 0.0
+    if not np.all(np.isfinite(phi)):
+        sys.exit("redbird: solution contains non-finite values (failed linear solve)")
+    if fmax <= 0:
+        sys.exit("redbird: solution has no positive fluence (failed linear solve)")
+    fmin = float(np.min(phi))
+    negfrac = float(np.mean(phi < -1e-6 * fmax))
+    if fmin < -1e-2 * fmax or negfrac > 0.05:
+        sys.exit(
+            "redbird: solution is not a valid fluence field -- min=%.3e max=%.3e "
+            "(%.1f%% of nodes negative). This indicates the linear solve did not converge; "
+            "refusing to publish it." % (fmin, fmax, 100 * negfrac)
+        )
+
     phi = phi.astype(np.float32)
 
     jnii = {
