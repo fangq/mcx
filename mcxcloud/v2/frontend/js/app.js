@@ -9,6 +9,27 @@ import { initLibrary } from './library.js';
 
 let previewReady = false;
 
+/**
+ * Drop fields that only mean something to the mesh engines from the schema this
+ * MCX-only frontend renders.
+ *
+ * The schema is fetched from the API at runtime, and that backend is shared with the
+ * mesh-enabled deployment — so it advertises Session.Engine, the MMC/Redbird solver
+ * selector. Rendering it here would offer a "Solver" dropdown that does nothing useful:
+ * this UI cannot build a tetrahedral-mesh domain, and detectEngine only reads Engine when
+ * the doc actually carries one. Strip it rather than confuse people with a dead control.
+ *
+ * Deliberately narrow: mutating a copy, and only removing keys we know are mesh-only, so a
+ * schema change on the backend can add fields here without this quietly swallowing them.
+ * @param {any} schema @returns {any}
+ */
+function stripMeshOnly(schema) {
+  const s = JSON.parse(JSON.stringify(schema));
+  const ses = s?.properties?.Session?.properties;
+  if (ses) delete ses.Engine;
+  return s;
+}
+
 /** @param {string} name */
 function showTab(name) {
   $$('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
@@ -148,7 +169,7 @@ async function boot() {
   initLibrary(showTab);
 
   try {
-    const schema = await fetchSchema();
+    const schema = stripMeshOnly(await fetchSchema());
     state.schema = schema;
     initEditor($('#editor-form'), schema, (doc, valid) => {
       state.doc = doc;

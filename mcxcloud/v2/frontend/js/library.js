@@ -82,12 +82,14 @@ export function initLibrary(showTab) {
     }
   }
 
-  // This frontend targets mcx (voxel) simulations only, but the shared backend/library
-  // also serves tetrahedral-mesh (MMC) entries. The Browse list payload carries no doc,
-  // so curated mesh demos are hidden by their title convention, and everything else is
-  // guarded at load time by inspecting the fetched doc (Shapes/Mesh with MeshNode).
+  // This frontend targets MCX (voxel) simulations only, but the shared backend/library also
+  // serves tetrahedral-mesh entries for the other engines — MMC (mesh Monte Carlo) and
+  // Redbird (FEM diffusion). The Browse list payload carries no doc, so curated mesh demos
+  // are hidden by their title convention, and everything else is guarded at load time by
+  // inspecting the fetched doc (Shapes/Mesh with MeshNode).
+  const MESH_BUILTIN_PREFIXES = ['MMC_BUILTIN:', 'REDBIRD_BUILTIN:'];
   /** @param {string} t */
-  const isMeshTitle = (t) => String(t || '').startsWith('MMC_BUILTIN:');
+  const isMeshTitle = (t) => MESH_BUILTIN_PREFIXES.some((p) => String(t || '').startsWith(p));
   /** @param {any} d */
   const isMeshDoc = (d) => !!(d && ((d.Shapes && d.Shapes.MeshNode) || (d.Mesh && d.Mesh.MeshNode)));
 
@@ -132,7 +134,7 @@ export function initLibrary(showTab) {
     try {
       const entry = await loadLibraryEntry(id);
       if (isMeshDoc(entry.doc)) {
-        alert('This is a tetrahedral-mesh (MMC) simulation, which this frontend does not support — please use the MMC-enabled MCX Cloud interface to run it.');
+        alert('This is a tetrahedral-mesh simulation (MMC or Redbird), which this frontend does not support — please use the mesh-enabled MCX Cloud interface to run it.');
         return;
       }
       setEditorValue(entry.doc); // editor 'change' pushes doc/valid into state
