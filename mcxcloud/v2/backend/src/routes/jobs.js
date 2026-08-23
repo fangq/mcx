@@ -5,7 +5,7 @@ import { pool, withTx } from '../db.js';
 import { attachRefs, getBlob, putBlob, putBlobRaw } from '../blobs.js';
 import { normalize, reassemble } from '../jdata.js';
 import { mintToken, tokenHash } from '../tokens.js';
-import { validateInput, checkLimits, detectEngine } from '../schema.js';
+import { validateInput, checkLimits, detectEngine, applyFrequency } from '../schema.js';
 import { enqueueJob } from '../queue.js';
 import { publish, subscribe } from '../sse.js';
 
@@ -241,12 +241,14 @@ export async function jobRoutes(app) {
     if (!isWorker(req)) return reply.code(403).send({ status: 'error', message: 'forbidden' });
     const { id } = /** @type {{ id: string }} */ (req.params);
     if (!UUID.test(id)) return reply.code(404).send({ status: 'error', message: 'not found' });
-    const r = await pool.query('select input_doc from jobs where id = $1', [id]);
+    const r = await pool.query('select input_doc, engine from jobs where id = $1', [id]);
     if (r.rowCount === 0) return reply.code(404).send({ status: 'error', message: 'not found' });
     const client = await pool.connect();
     try {
       const doc = await reassemble(r.rows[0].input_doc, (h) => getBlob(client, h));
-      return reply.type('application/json').send(doc);
+      // input_doc stored as submitted (Frequency, Hz) — derive the engine-native field
+      // (mmc's Forward.Omega, rad/s) only for the worker's copy, not the stored record
+      return reply.type('application/json').send(applyFrequency(doc, r.rows[0].engine));
     } finally {
       client.release();
     }

@@ -55,6 +55,22 @@ export function detectEngine(cfg) {
   return S && typeof S === 'object' && !Array.isArray(S) && 'MeshNode' in S ? 'mmc' : 'mcx';
 }
 
+/**
+ * mcx reads RF modulation as Optode.Source.Frequency (Hz, converted internally to
+ * omega=2*pi*f); mmc reads it pre-converted as Forward.Omega (rad/s). Rather than make
+ * users know the per-engine field name/units, Frequency is the one canonical, schema-facing
+ * field for both — this derives mmc's Forward.Omega from it right before dispatch. A no-op
+ * for engine!=='mmc' (mcx already reads Frequency natively), so it stays inert/backportable
+ * on branches without mmc support at all.
+ * @param {Record<string, any>} doc @param {'mcx' | 'mmc'} engine
+ * @returns {Record<string, any>}
+ */
+export function applyFrequency(doc, engine) {
+  const freq = doc?.Optode?.Source?.Frequency;
+  if (engine !== 'mmc' || !freq) return doc;
+  return { ...doc, Forward: { ...doc.Forward, Omega: freq * 2 * Math.PI } };
+}
+
 // mmc supports a subset of mcx's source types (mmc_utils.c srctypeid[])
 const MMC_SRC_TYPES = new Set([
   'pencil', 'isotropic', 'cone', 'gaussian', 'planar', 'pattern', 'fourier',
@@ -89,6 +105,10 @@ export function checkLimits(cfg) {
     return 'the maximum domain dimension is 300 in this preview version';
   if (Array.isArray(D.Media) && D.Media.some((/** @type {any} */ m) => m?.mus > 50))
     return 'scattering coeff (mus) is limited to 50/mm in this preview version';
+  // Optode.Source.Frequency (Hz) is the one canonical RF field across engines; Forward.Omega
+  // (rad/s) is derived from it server-side just before dispatch (see applyFrequency below) —
+  // reject it here so it can never silently diverge from Frequency
+  if (F.Omega) return 'Forward.Omega is set automatically from Optode.Source.Frequency (Hz) — set Frequency instead';
 
   if (engine === 'mmc') {
     const M = cfg?.Shapes ?? cfg?.Mesh ?? {};
@@ -114,7 +134,6 @@ export function checkLimits(cfg) {
     // physics settings mmc's JSON parser does not read — reject rather than silently drop
     for (const [ok, what] of [
       [!('IQUV' in src) && !('WaveLength' in src) && !D.MieScatter, 'polarized MC (IQUV/WaveLength/MieScatter)'],
-      [!('Frequency' in src), 'Optode.Source.Frequency (mesh simulations take Forward.Omega in rad/s instead)'],
       [!('AngleInverseCDF' in src), 'Optode.Source.AngleInverseCDF'],
       [!D.InverseCDF, 'Domain.InverseCDF'],
       [!S.BCFlags, 'Session.BCFlags'],
@@ -125,7 +144,6 @@ export function checkLimits(cfg) {
     // mcx cannot produce ascii/bin output and ignores mmc's RF key
     if (S.OutputFormat === 'ascii' || S.OutputFormat === 'bin')
       return `output format "${S.OutputFormat}" is only supported for mesh (mmc) simulations`;
-    if (F.Omega) return 'Forward.Omega is only read by mmc; use Optode.Source.Frequency (Hz) for voxel (mcx) simulations';
     if (F.N0 !== undefined && F.N0 !== 1)
       return 'Forward.N0 is only supported for mesh (mmc) simulations';
   }

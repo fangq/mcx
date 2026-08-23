@@ -244,13 +244,6 @@
           "type": "number",
           "default": 1,
           "minimum": 0
-        },
-        "Omega": {
-          "title": "RF modulation angular frequency (MMC mesh domains only)",
-          "description": "Angular frequency in rad/s for RF (frequency-domain) forward simulations; 0 = CW. MCX expresses this as Optode.Source.Frequency in Hz instead",
-          "type": "number",
-          "default": 0,
-          "minimum": 0
         }
       }
     },
@@ -581,7 +574,8 @@
               }
             },
             "Frequency": {
-              "title": "Modulation Frequency in Hz",
+              "title": "RF Modulation Frequency (Hz)",
+              "description": "0 = CW. The single canonical RF field for both voxel (mcx) and mesh (mmc) domains; mmc's native Forward.Omega (rad/s) is derived from this automatically",
               "type": "number",
               "default": 0,
               "minimum": 0
