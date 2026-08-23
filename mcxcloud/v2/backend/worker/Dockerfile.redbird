@@ -9,8 +9,8 @@
 # a versioned PyPI package, and zlib/base64 are Python stdlib.
 #
 # Build + push (the tag must match config.js workerImageRedbird):
-#   docker build -f Dockerfile.redbird -t fangqq/redbird:v0.4.1 .
-#   docker push fangqq/redbird:v0.4.1
+#   docker build -f Dockerfile.redbird -t fangqq/redbird:v0.4.2 .
+#   docker push fangqq/redbird:v0.4.2
 # The image must be present on (or pullable by) every node that
 # WORKER_NODE_CONSTRAINT_REDBIRD selects.
 FROM python:3.11-slim
@@ -21,8 +21,17 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Pinned for reproducibility: an unpinned solver could silently change numerical output
-# between job dispatches. numpy/scipy/iso2mesh come in as redbirdpy dependencies.
-RUN pip install --no-cache-dir redbirdpy==0.4.1
+# >=0.4.2 is a correctness floor, not a preference: 0.4.1's meshprep stored the SIGNED
+# element volume, so on a mesh iso2mesh considers already-oriented the whole FEM stiffness
+# matrix came out negated and the solve silently returned a sign-flipped oscillatory field
+# instead of a fluence (fixed upstream in redbirdpy 0.4.2). redbird_fwd.py still corrects
+# that itself, so results are right either way -- this keeps the workaround a belt rather
+# than the only thing holding the trousers up.
+#
+# A floor rather than an exact pin means the build resolves whatever is current, so a
+# rebuild can move the solver version: the image tag records what was actually installed
+# (verify with `pip show redbirdpy` in the built image) and the built image is immutable
+# once distributed. numpy/scipy/iso2mesh come in as redbirdpy dependencies.
+RUN pip install --no-cache-dir "redbirdpy>=0.4.2"
 
 WORKDIR /tmp

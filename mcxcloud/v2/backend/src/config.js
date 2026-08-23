@@ -11,7 +11,7 @@
  * @property {boolean} runScheduler
  * @property {string} workerApiUrl     API base URL reachable from inside the swarm container
  * @property {string} workerImage      docker image for the mcx worker
- * @property {string} workerImageMmc   docker image for mesh (mmc) jobs; future engines (redbird) get their own image + env
+ * @property {string} workerImageMmc   docker image for mesh (mmc) jobs
  * @property {string} workerImageRedbird  docker image for redbird (FEM diffusion) jobs: a
  *   Python base + `pip install redbirdpy`, no GPU needed. NOT fangqq/mcxstudio — that image
  *   does ship redbird-matlab, but its Octave is 4.0.0, which has no containers.Map at all,
@@ -22,8 +22,8 @@
  * @property {number} redbirdCpuReserve  swarm --reserve-cpu (core count) per redbird job
  * @property {number} redbirdCpuLimit    swarm --limit-cpu (core count) per redbird job
  * @property {boolean} redbirdEnabled  master switch for the redbird engine (default OFF).
- *   Requires, on every eligible node: the worker image actually carrying octave +
- *   redbird-matlab + jsonlab/iso2mesh on the load path, and the placement label that
+ *   Requires, on every eligible node: the workerImageRedbird image actually present (it is
+ *   distributed by hand, not pulled from a registry) and the placement label that
  *   workerConstraintRedbird selects. Until those are verified, submissions naming
  *   Session.Engine=redbird are rejected up front rather than dispatched and left to fail.
  * @property {number} redbirdMaxRuntimeMs  per-attempt runtime cap for redbird jobs. Much
@@ -68,7 +68,7 @@ export const config = {
   workerApiUrl: process.env.WORKER_API_URL ?? 'http://localhost:8080',
   workerImage: process.env.WORKER_IMAGE ?? 'fangqq/mcx:v2024.2',
   workerImageMmc: process.env.WORKER_IMAGE_MMC ?? 'fangqq/mmc:v2025.10',
-  workerImageRedbird: process.env.WORKER_IMAGE_REDBIRD ?? 'fangqq/redbird:v0.4.1',
+  workerImageRedbird: process.env.WORKER_IMAGE_REDBIRD ?? 'fangqq/redbird:v0.4.2',
   workerConstraintRedbird: process.env.WORKER_NODE_CONSTRAINT_REDBIRD ?? '',
   redbirdCpuReserve: Number(process.env.REDBIRD_CPU_RESERVE ?? 8),
   redbirdCpuLimit: Number(process.env.REDBIRD_CPU_LIMIT ?? 16),
