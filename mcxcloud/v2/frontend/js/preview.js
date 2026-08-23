@@ -225,7 +225,7 @@ export function initPreview() {
   renderer.setSize(w, h);
   host.appendChild(renderer.domElement);
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.minZoom = 0.02; controls.maxZoom = 200; // allow fitting very large/small volumes
+  controls.minZoom = 0.02; controls.maxZoom = 200; // placeholder; resetscene() sets the real, scale-adaptive bounds once a domain is loaded
   controls.addEventListener('change', () => { dirty = true; });
 
   setColormap(currentCmap);
@@ -346,8 +346,16 @@ function resetscene(s, orig = [0, 0, 0]) {
   // Fit the bounding sphere to the ORTHO FRUSTUM (in CSS units, so it's independent of the
   // device pixel ratio and adapts to any volume size — a 496-long digimouse and a 60³ cube
   // both fill ~90% of the view).
+  // minZoom/maxZoom scale off this fit zoom rather than being fixed constants — a
+  // millimeter-scale mesh (diag ~1-2) needs a fit zoom far above the old fixed maxZoom=200,
+  // which silently clamped it down and capped any further magnification at that same
+  // ceiling. Scaling both bounds keeps the same RELATIVE zoom range regardless of the
+  // domain's absolute scale (mm mesh vs hundred-voxel grid).
   const fw = camera.right - camera.left, fh = camera.top - camera.bottom;
-  camera.zoom = 0.9 * Math.min(fw, fh) / diag;
+  const fitZoom = 0.9 * Math.min(fw, fh) / diag;
+  controls.minZoom = fitZoom * 0.02;
+  controls.maxZoom = fitZoom * 200;
+  camera.zoom = fitZoom;
   camera.updateProjectionMatrix();
   controls.update();
 }
@@ -590,11 +598,13 @@ function drawmeshCore(nd, el, mode, outVol, frameLen, nframes) {
   const bbox = meshBBox(nd.data, nd.rows);
   const ext = [0, 1, 2].map((a) => Math.max(bbox.max[a] - bbox.min[a], 1e-6));
 
-  // dashed domain box spanning the mesh bounding box (meshes need not start at 0)
+  // No dashed bbox for mesh domains: unlike a voxel Grid (which IS an axis-aligned box),
+  // an arbitrary tet mesh's own exterior surface already conveys its true shape, and a
+  // rectangular outline around a non-box mesh would just be misleading. `boundingbox` is
+  // still the shared parent group everything below (surface/wire/cuts/sources/detectors)
+  // gets added to, so it just becomes a plain empty container here.
   resetscene(ext, bbox.min);
-  const box = createbox(ext, bbox.min);
-  boundingbox = new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry), new THREE.LineDashedMaterial({ color: 0xffff00, dashSize: 3, gapSize: 1 }));
-  boundingbox.computeLineDistances();
+  boundingbox = new THREE.Group();
   scene.add(boundingbox);
   bbxsize = ext;
   lastDim = ext; // slab-thickness boxes act in mesh (world) units
