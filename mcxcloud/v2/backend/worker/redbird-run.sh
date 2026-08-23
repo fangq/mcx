@@ -49,13 +49,13 @@ if ! python3 redbird_fwd.py > output.log 2>&1; then
   fail
 fi
 # belt-and-suspenders: require the output file as the real success signal
-if [ ! -s output.jnii ]; then
-  echo 'redbird produced no output.jnii' >> output.log
+if [ ! -s output.jmsh ]; then
+  echo 'redbird produced no output.jmsh' >> output.log
   fail
 fi
 
 # 4) push outputs (raw bytes; already JData/JNIfTI JSON)
-wget_send PUT "${BASE}/output" output.jnii 'application/octet-stream' || fail
+wget_send PUT "${BASE}/output" output.jmsh 'application/octet-stream' || fail
 if [ -s output_detp.jdat ]; then
   wget_send PUT "${BASE}/detphoton" output_detp.jdat 'application/octet-stream' || true
 fi

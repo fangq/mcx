@@ -103,24 +103,33 @@ def media_to_prop(media):
     return np.asarray(out, dtype=float)
 
 
+#: numpy dtype -> JData _ArrayType_ name
+JD_NAMES = {
+    "float32": "single", "float64": "double",
+    "int8": "int8", "uint8": "uint8", "int16": "int16", "uint16": "uint16",
+    "int32": "int32", "uint32": "uint32", "int64": "int64", "uint64": "uint64",
+}
+
+
 def annotate(arr):
     """Wrap a numpy array as an uncompressed JData-annotated node.
 
-    Uncompressed _ArrayData_ on purpose: the frontend decodes that form natively
-    (util.js decodeJDataArray) and it keeps the output dependency-free.
+    Flattened ROW-MAJOR, which is what the JData spec means by the flattened form and
+    what jsonlab's loadjson/jdatadecode assumes (verified by decoding a jsonlab-written
+    mesh: read row-major it reproduces the true node coordinates, read column-major the
+    coordinates scramble). Getting this wrong would silently corrupt the mesh for anyone
+    opening the file with loadjmesh, so the wire format follows the spec and the frontend
+    adapts at its own boundary instead.
 
-    Flattened in FORTRAN order so that each source's field is a CONTIGUOUS block: the
-    frontend's mesh renderer slices frames with a plain subarray(f*frameLen, ...) and
-    does no strided/row-major handling on the mesh path (preview.js setMeshFrame), so
-    per-source blocks must be contiguous. _ArrayOrder_ is deliberately left off — the
-    mesh-output path is gated on the order tag NOT being 'c' (preview.js drawPreview).
+    Integer arrays keep an integer _ArrayType_ and integer values -- element connectivity
+    and tissue labels are indices, not measurements. Uncompressed _ArrayData_ keeps the
+    file readable and needs no zmat/zlib on either side.
     """
-    flat = np.asarray(arr).ravel(order="F")
-    return {
-        "_ArrayType_": "single" if flat.dtype == np.float32 else "double",
-        "_ArraySize_": list(np.shape(arr)),
-        "_ArrayData_": [float(x) for x in flat],
-    }
+    a = np.asarray(arr)
+    flat = a.ravel(order="C")
+    name = JD_NAMES.get(str(a.dtype), "double")
+    vals = [int(x) for x in flat] if np.issubdtype(a.dtype, np.integer) else [float(x) for x in flat]
+    return {"_ArrayType_": name, "_ArraySize_": list(a.shape), "_ArrayData_": vals}
 
 
 def main():
@@ -243,31 +252,64 @@ def main():
 
     phi = phi.astype(np.float32)
 
-    jnii = {
-        "NIFTIHeader": {
-            # plain JSON list on purpose: the frontend reads Dim to count frames and
-            # requires a real array (preview.js drawmeshOutput)
-            "Dim": list(phi.shape),
-            "DataType": "single",
-            "BitDepth": 32,
-            "Name": "redbird nodal fluence",
+    # ---- the fluence field, as JMesh (.jmsh) ---------------------------------
+    # NOT JNIfTI: .jnii describes a NIfTI-like voxel volume, and this field lives on the
+    # nodes of a tetrahedral mesh. JMesh is the mesh-native container (JMesh spec /
+    # iso2mesh savejmesh.m): a mesh container may be a bare array or a structure with a
+    # required "Data" plus optional "Properties", where vertex objects carry per-vertex
+    # values under Properties.Value. Writing the mesh alongside the values also makes the
+    # output self-contained -- readable and renderable without the original input file.
+    elem_out = np.asarray(cfg["elem"])
+    jmsh = {
+        "_DataInfo_": {
+            "JMeshVersion": "0.5",
+            "Comment": "Redbird FEM diffusion forward solution (nodal fluence)",
+            "Engine": "redbird",
+            "SrcNum": int(nsrc),
+            "Omega": float(cfg["omega"]),
         },
-        "NIFTIData": annotate(phi),
+        # Nn x 3 coordinates + Nn x Nsrc nodal fluence (one column per source)
+        "MeshVertex3": {
+            "Data": annotate(np.asarray(cfg["node"], dtype=np.float32)),
+            "Properties": {"Value": annotate(phi)},
+        },
+        # Ne x 4 connectivity (1-based) + the per-element tissue label
+        "MeshTet4": {
+            "Data": annotate(elem_out[:, :4].astype(np.int32)),
+            "Properties": {"Value": annotate(np.asarray(cfg["seg"]).reshape(-1, 1).astype(np.int32))},
+        },
     }
-    with open("output.jnii", "w") as fp:
-        json.dump(jnii, fp)
+    with open("output.jmsh", "w") as fp:
+        json.dump(jmsh, fp)
 
+    # ---- the detector readings ------------------------------------------------
+    # Mirrors the MCXData/Info/PhotonData shape mcx and mmc emit, but this is NOT a
+    # detected-photon list: Redbird traces no photons. detphi is the deterministic
+    # Ndet x Nsrc forward measurement matrix, so it goes under "Measurement" with an Info
+    # header that says how to read it (complex when Omega > 0, split into real/imag parts
+    # since JSON has no complex scalar).
     dp = np.asarray(detphi)
-    detout = {"DetPhi": annotate(np.abs(dp) if np.iscomplexobj(dp) else dp)}
+    if dp.ndim == 1:
+        dp = dp.reshape(-1, 1)
+    info = {
+        "Version": 1,
+        "Engine": "redbird",
+        "SrcNum": int(nsrc),
+        "DetNum": int(dp.shape[0]),
+        "Omega": float(cfg["omega"]),
+        "IsComplex": bool(np.iscomplexobj(dp)),
+        "Unit": "1/mm^2",
+    }
+    meas = {"detphi": annotate(np.abs(dp) if np.iscomplexobj(dp) else dp)}
     if np.iscomplexobj(dp):
-        detout["DetPhiReal"] = annotate(np.real(dp))
-        detout["DetPhiImag"] = annotate(np.imag(dp))
+        meas["detphi_real"] = annotate(np.real(dp))
+        meas["detphi_imag"] = annotate(np.imag(dp))
     with open("output_detp.jdat", "w") as fp:
-        json.dump(detout, fp)
+        json.dump({"RedbirdData": {"Info": info, "Measurement": meas}}, fp)
 
     print(
-        "[redbird] wrote output.jnii (%d nodes x %d src) + output_detp.jdat"
-        % (phi.shape[0], phi.shape[1]),
+        "[redbird] wrote output.jmsh (%d nodes x %d src) + output_detp.jdat (%d det x %d src)"
+        % (phi.shape[0], phi.shape[1], dp.shape[0], dp.shape[1]),
         flush=True,
     )
 

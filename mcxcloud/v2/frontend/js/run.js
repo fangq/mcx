@@ -97,8 +97,12 @@ async function onComplete(data) {
   try {
     const out = await fetchOutput(state.jobId, state.token);
     const outStr = JSON.stringify(out);
-    downloadLink($('#run-output'), outStr, 'output.jnii');
-    downloadLink($('#pv-output'), outStr, 'output.jnii'); // Preview-panel copy
+    // name by what the file actually is: Redbird returns JMesh (mesh + nodal values),
+    // mcx/mmc return JNIfTI (a NIfTI-like voxel volume)
+    const isJMesh = !!(out && (out.MeshVertex3 || out.MeshNode) && (out.MeshTet4 || out.MeshElem));
+    const outName = isJMesh ? 'output.jmsh' : 'output.jnii';
+    downloadLink($('#run-output'), outStr, outName);
+    downloadLink($('#pv-output'), outStr, outName); // Preview-panel copy
     $('#draw-output').removeAttribute('disabled');
     if (data.hasDetphoton) {
       state.hasDetphoton = true;

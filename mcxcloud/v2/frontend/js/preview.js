@@ -656,6 +656,53 @@ function drawmesh(shapes) {
 }
 
 /**
+ * Redbird JMesh output (.jmsh). Unlike the mmc path this is SELF-CONTAINED — the file
+ * carries the mesh alongside the nodal values, so nothing is borrowed from the editor doc.
+ *
+ * JMesh allows a container to be a bare array or a {Data, Properties} structure, and in
+ * either the strict (MeshVertex3/MeshTet4) or flexible (MeshNode/MeshElem) spelling; accept
+ * all four. Per-vertex values live in Properties.Value, and the per-element tissue label
+ * likewise — see the JMesh spec / iso2mesh savejmesh.m.
+ * @param {any} cfg a parsed .jmsh document
+ * @returns {boolean} true when rendered
+ */
+function drawJMeshOutput(cfg) {
+  const V = cfg.MeshVertex3 || cfg.MeshNode;
+  const E = cfg.MeshTet4 || cfg.MeshElem;
+  if (!V || !E) return false;
+  const unwrap = (c) => (c && c.Data !== undefined ? c.Data : c);
+  const nd = meshArray(unwrap(V), 3);
+  const conn = meshArray(unwrap(E), 4);
+  if (!nd.rows || !conn.rows) return false;
+
+  // drawmeshCore/surfColors read an element's region tag from the LAST column of its row,
+  // so splice the label back on as a 5th column and the mmc rendering path applies as-is.
+  const tag = E.Properties && E.Properties.Value ? decodeJDataArray(E.Properties.Value).data : null;
+  const el = { data: new Float32Array(conn.rows * 5), rows: conn.rows, cols: 5 };
+  for (let i = 0; i < conn.rows; i++) {
+    for (let j = 0; j < 4; j++) el.data[i * 5 + j] = conn.data[i * conn.cols + j];
+    el.data[i * 5 + 4] = tag ? tag[i] : 1;
+  }
+
+  const valNode = V.Properties && V.Properties.Value;
+  if (!valNode) { drawmeshCore(nd, el, 'tag', null, 0, 1); return true; } // mesh only, no values
+  const val = decodeJDataArray(valNode);
+  const nn = nd.rows;
+  const nfr = Math.max(1, Math.floor(val.data.length / nn));
+  // JData flattens ROW-MAJOR, so an Nn-by-Nsrc value array arrives node-major
+  // (node0_src0, node0_src1, ...). setMeshFrame slices frames as contiguous blocks, so
+  // transpose into source-major here. A no-op when there is a single source.
+  let data = val.data;
+  if (nfr > 1) {
+    const t = new Float32Array(nn * nfr);
+    for (let f = 0; f < nfr; f++) for (let i = 0; i < nn; i++) t[f * nn + i] = val.data[i * nfr + f];
+    data = t;
+  }
+  drawmeshCore(nd, el, 'node', { data }, nn, nfr);
+  return true;
+}
+
+/**
  * mmc mesh-valued output (RayTracer != 'g'): values live on nodes (BasisOrder 1) or
  * elements (BasisOrder 0). The basis is detected from the decoded DATA LENGTH against
  * the input mesh — the jnii header is not trusted because mmc writes Dim[0]=nodenum
@@ -892,6 +939,11 @@ export function drawPreview(cfg) {
       if (cfg.Optode.Source) drawsrc(cfg.Optode.Source);
       if (Array.isArray(cfg.Optode.Detector)) cfg.Optode.Detector.forEach(drawdet);
     }
+  } else if (cfg && (cfg.MeshVertex3 || cfg.MeshNode) && (cfg.MeshTet4 || cfg.MeshElem)) {
+    // Redbird writes JMesh (.jmsh), not JNIfTI: its field lives on mesh nodes, not a voxel
+    // grid. Checked before NIFTIData and after Shapes, so it cannot collide with either an
+    // input doc (mesh is nested under Shapes) or an mcx/mmc volume output.
+    drawJMeshOutput(cfg);
   } else if (cfg && cfg.NIFTIData) {
     const dim = (cfg.NIFTIHeader && cfg.NIFTIHeader.Dim) || cfg.NIFTIData._ArraySize_;
     const vol = decodeJDataArray(cfg.NIFTIData);
