@@ -147,8 +147,8 @@ const char* fullopt[] = {"--help", "--interactive", "--input", "--photon",
  * r: frequency domain/RF mua Jacobian by replay
  * l: total path lengths in each voxel
  * s : frequency domain/RF mus Jacobian by replay
- * t : weighted average of time-of-flight x total scattering count in each voxel
- * b : weighted average of time-of-flight x total path length in each voxel
+ * t : weighted average of time-of-flight x total path length in each voxel
+ * b : weighted average of time-of-flight x total scattering count in each voxel
  */
 
 const char outputtype[] = {'x', 'f', 'e', 'j', 'p', 'm', 'r', 'l', 's', 't', 'b', 'a', 'd', 'u', 'v', 'w', 'q', '\0'};
@@ -6144,7 +6144,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                    or RF forward complex fluence (forward,\n\
                                    without -E, needs omega); output is complex\n\
                                S - RF/FD mus Jacobian (replay mode only)\n\
-                               T - time-of-flight*nscat;B - time-of-flight*path\n\
+                               T - time-of-flight*path;B - time-of-flight*nscat\n\
                                A - adjoint mua Jacobian (needs detpos+detdir)\n\
                                D - adjoint D-coeff Jacobian (needs detpos+dir)\n\
                                U - adjoint mus Jacobian (grad*grad*3*D^2*(1-g))\n\
