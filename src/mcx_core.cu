@@ -2280,50 +2280,69 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tmp0 *= theta;
                     }
 
+                    /** with a pattern/pattern3d source, photon sharing gives every pattern an interleaved
+                        slot in the field and each deposit must carry that pattern's launch weight, the same
+                        way the propagation-step deposit below handles srcnum>1 */
+                    int ispattern = (gcfg->srctype == MCX_SRC_PATTERN || gcfg->srctype == MCX_SRC_PATTERN3D);
+
+                    for (int isrc = 0; isrc < (ispattern ? gcfg->srcnum : 1); isrc++) {
+                        float wsrc = 1.f;
+                        uint64_t fieldid = idx1d + tshift * gcfg->dimlen.z;
+
+                        if (ispattern) {
+                            if (fabsf(ppath[gcfg->w0offset + isrc]) == 0.f) {
+                                continue;
+                            }
+
+                            wsrc = (gcfg->srcnum == 1) ? 1.f : ppath[gcfg->w0offset + isrc];
+                            fieldid = fieldid * gcfg->srcnum + isrc;
+                        }
+
 #ifdef USE_ATOMIC
 
-                    if (!gcfg->isatomic) {
+                        if (!gcfg->isatomic) {
 #endif
-                        field[idx1d + tshift * gcfg->dimlen.z] += tmp0;
+                            field[fieldid] += tmp0 * wsrc;
 
-                        if (gcfg->outputtype == otRFmus) {
-                            /** rfmus: imaginary stored in 3rd quarter [2F..3F) to allow double-buffer in [F..2F) for real and [3F..4F) for imag */
-                            field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2] += sphi;
-                        }
+                            if (gcfg->outputtype == otRFmus) {
+                                /** rfmus: imaginary stored in 3rd quarter [2F..3F) to allow double-buffer in [F..2F) for real and [3F..4F) for imag */
+                                field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2] += sphi * wsrc;
+                            }
 
 #ifdef USE_ATOMIC
-                    } else {
+                        } else {
 #ifdef USE_DOUBLE
-                        atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0);
+                            atomicAdd(& field[fieldid], tmp0 * wsrc);
 
-                        if (gcfg->outputtype == otRFmus) {
-                            atomicAdd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], sphi);
-                        }
+                            if (gcfg->outputtype == otRFmus) {
+                                atomicAdd(& field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], sphi * wsrc);
+                            }
 
 #else
-                        /** apply double-buffer to prevent float round-off when voxel count exceeds 2^24 */
-                        float oldval_wp = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], tmp0);
+                            /** apply double-buffer to prevent float round-off when voxel count exceeds 2^24 */
+                            float oldval_wp = atomicadd(& field[fieldid], tmp0 * wsrc);
 
-                        if (fabsf(oldval_wp) > MAX_ACCUM) {
-                            atomicadd(& field[idx1d + tshift * gcfg->dimlen.z], ((oldval_wp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                            atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval_wp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
-                        }
-
-                        if (gcfg->outputtype == otRFmus) {
-                            /** rfmus: imaginary in 3rd quarter [2F..3F), double-buffer in 4th quarter [3F..4F) */
-                            float oldval_im = atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], sphi);
-
-                            if (fabsf(oldval_im) > MAX_ACCUM) {
-                                atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((oldval_im > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
-                                atomicadd(& field[idx1d + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((oldval_im > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                            if (fabsf(oldval_wp) > MAX_ACCUM) {
+                                atomicadd(& field[fieldid], ((oldval_wp > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                atomicadd(& field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval_wp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                             }
+
+                            if (gcfg->outputtype == otRFmus) {
+                                /** rfmus: imaginary in 3rd quarter [2F..3F), double-buffer in 4th quarter [3F..4F) */
+                                float oldval_im = atomicadd(& field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], sphi * wsrc);
+
+                                if (fabsf(oldval_im) > MAX_ACCUM) {
+                                    atomicadd(& field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], ((oldval_im > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
+                                    atomicadd(& field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((oldval_im > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
+                                }
+                            }
+
+#endif
+                            GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, tmp0, p.w));
                         }
 
 #endif
-                        GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, tmp0, p.w));
                     }
-
-#endif
                 }
 
                 if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
