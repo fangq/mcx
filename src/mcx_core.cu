@@ -2258,20 +2258,22 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                     theta = replayweight[photonidx];
 
-                    if (gcfg->outputtype == otRFmus || gcfg->outputtype == otWP) {
-                        if (issvmc) {
-                            theta = (prop.mus == 0.f) ? 1.f : __fdividef(theta, prop.mus);
-                        }
+                    /** in SVMC, a voxel may contain two media, thus the mus at the scattering site is only
+                        known inside the kernel and must be divided here; \c gproperty stores mus in voxel
+                        unit (pre-scaled by unitinmm in mcx_prep), so the resulting 1/mus is converted back
+                        to mm by the single \c cfg->unitinmm factor applied in the normalization step below */
+                    if (issvmc && (gcfg->outputtype == otRFmus || gcfg->outputtype == otWP || gcfg->outputtype == otWPTOF)) {
+                        theta = (prop.mus == 0.f) ? 0.f : __fdividef(theta, prop.mus);
+                    }
 
-                        if (gcfg->outputtype == otWP) {
-                            tmp0 = theta;
-                        } else {
-                            ctheta = ppath[gcfg->w0offset + gcfg->srcnum];
-                            stheta = ppath[gcfg->w0offset + gcfg->srcnum + 1];
+                    if (gcfg->outputtype == otRFmus) {
+                        ctheta = ppath[gcfg->w0offset + gcfg->srcnum];
+                        stheta = ppath[gcfg->w0offset + gcfg->srcnum + 1];
 
-                            tmp0 = theta * ctheta;
-                            sphi = theta * stheta;
-                        }
+                        tmp0 = theta * ctheta;
+                        sphi = theta * stheta;
+                    } else if (gcfg->outputtype == otWP) {
+                        tmp0 = theta;
                     } else {
                         tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
                         tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[photonidx] : tmp0;
@@ -4212,6 +4214,16 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             } else if (cfg->outputtype == otEnergy || cfg->outputtype == otL) { /** If output is energy (joule), raw data is simply multiplied by 1/Nphoton */
                 scale[0] = 1.f / cfg->energytot;
             } else if (cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) {
+                /**
+                 * \c isvoxelunit flags the replay outputs whose raw data carries a length in voxel unit and
+                 * thus needs a single \c cfg->unitinmm scaling: either an accumulated path length
+                 * (jacobian/rf/wltof), or the 1/mus divided inside the kernel in SVMC mode (wp/wptof/rfmus),
+                 * as \c cfg->prop is pre-scaled by unitinmm in mcx_prep(). Voxel-based wp/wptof/dcs/rfmus
+                 * accumulate unitless scattering counts and must not be scaled.
+                 */
+                int isvoxelunit = (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) ||
+                                  (cfg->mediabyte == MEDIA_2LABEL_SPLIT && (cfg->outputtype == otWP || cfg->outputtype == otWPTOF || cfg->outputtype == otRFmus));
+
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                     int detid;
 
@@ -4227,12 +4239,12 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                             if (scale[0] > 0.f) {
                                 scale[0] = 1.0f / scale[0];
 
-                                if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) {
+                                if (isvoxelunit) {
                                     scale[0] = cfg->unitinmm * scale[0]; // only paths in voxel units need scaling
                                 }
                             }
-                        } else if (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) {
-                            scale[0] = cfg->unitinmm;
+                        } else {
+                            scale[0] = (isvoxelunit) ? cfg->unitinmm : 1.f;
                         }
 
                         MCX_FPRINTF(cfg->flog, "%s %d alpha=%f\n", T_("normalization factor for detector"), detid, scale[0]);
@@ -4253,7 +4265,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                     }
 
                     if (scale[0] > 0.f) {
-                        scale[0] = cfg->unitinmm / scale[0];
+                        scale[0] = ((isvoxelunit) ? cfg->unitinmm : 1.f) / scale[0];
                     }
 
                     MCX_FPRINTF(cfg->flog, "%s %d alpha=%f\n", T_("normalization factor for detector"), cfg->replaydet, scale[0]);
