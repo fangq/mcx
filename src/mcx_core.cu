@@ -2570,8 +2570,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                                             atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 3], ((ov_im_pp > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                                         }
                                     } else if (gcfg->outputtype == otRF) {
+                                        /** the sine-weighted (imaginary) part must carry the same per-pattern
+                                            weight ppath[w0offset+i] as the cosine-weighted part deposited above */
                                         oldval = -replayweight[(idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone)] * f.pathlen * ppath[gcfg->w0offset + gcfg->srcnum + 1];
-                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], oldval);
+                                        atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], (gcfg->srcnum == 1 ? oldval : oldval * ppath[gcfg->w0offset + i]));
                                     }
 
 #endif
