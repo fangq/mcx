@@ -214,7 +214,7 @@ typedef struct MCXConfig {
     char isreflect;              /**<1 for reflecting photons at boundary,0 for exiting*/
     char isref3;                 /**<1 considering maximum 3 ref. interfaces; 0 max 2 ref*/
     char isrefint;               /**<1 to consider reflections at internal boundaries; 0 do not*/
-    char isnormalized;           /**<1 to normalize the fluence, 0 for raw fluence*/
+    char isnormalized;           /**<1 to normalize the fluence, 0 for raw fluence, 2 to skip the detected-weight normalization in replay*/
     char issavedet;              /**<1 to count all photons hits the detectors*/
     char issave2pt;              /**<1 to save the 2-point distribution, 0 do not save*/
     char isgpuinfo;              /**<1 to print gpu info when attach, 0 do not print*/
@@ -307,7 +307,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg);
 void mcx_usage(Config* cfg, char* exename);
 void mcx_printheader(Config* cfg);
 void mcx_loadvolume(char* filename, Config* cfg, int isbuf);
-void mcx_normalize(float field[], float scale, size_t fieldlen, int option, int pidx, int srcnum);
+void mcx_normalize(float field[], float scale, size_t fieldlen, int pidx, int srcnum);
 void mcx_kahanSum(float* sum, float* kahanc, float input);
 int  mcx_readarg(int argc, char* argv[], int id, void* output, const char* type);
 void mcx_printlog(Config* cfg, char* str);

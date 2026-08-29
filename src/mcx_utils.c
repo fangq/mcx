@@ -1481,17 +1481,14 @@ void mcx_printlog(Config* cfg, char* str) {
  * @param[in,out] field: volumetric data before normalization
  * @param[in] scale: the scaling factor (or normalization factor) to be applied
  * @param[in] fieldlen: the length (floating point) of elements in the volume
- * @param[in] option: if set to 2, only normalize positive values (negative values for diffuse reflectance calculations)
+ * @param[in] pidx: the index of the pattern to normalize when photon sharing is used
+ * @param[in] srcnum: the stride between consecutive voxels when photon sharing is used
  */
 
-void mcx_normalize(float field[], float scale, size_t fieldlen, int option, int pidx, int srcnum) {
+void mcx_normalize(float field[], float scale, size_t fieldlen, int pidx, int srcnum) {
     int i;
 
     for (i = 0; i < fieldlen; i++) {
-        if (option == 2 && field[i * srcnum + pidx] < 0.f) {
-            continue;
-        }
-
         field[i * srcnum + pidx] *= scale;
     }
 }
@@ -6068,7 +6065,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                the same as the first 6 letters\n\
                                eg: --bc ______010 saves photons exiting at y=0\n\
  -u [1.|float] (--unitinmm)    defines the length unit for the grid edge\n\
- -U [1|0]      (--normalize)   1 to normalize flux to unitary; 0 save raw\n\
+ -U [1|0|2]    (--normalize)   1 to normalize flux to unitary; 0 save raw;\n\
+                               2 behaves as 1, except in replay mode, where\n\
+                               the normalization by the total detected weight\n\
+                               is skipped and only the unit conversion applies\n\
  -E [1648335518|int|mch](--seed) set rand-number-generator seed, -1 to generate\n\
                                if an mch file is followed, MCX \"replays\" \n\
                                the detected photon; the replay mode can be used\n\
