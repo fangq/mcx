@@ -63,7 +63,8 @@ cfg_jac.isnormalized = 0; % !
 cfg_jac.issave2pt = 1;
 
 % Collect Jacobians one detector index at a time.
-for d = detnums
+for idx = 1:length(detnums)
+    d = detnums(idx);
     if ~ismember(d, detp.detid)
         fprintf('MCX WARNING: No detected photons for detector %d.\n', d);
         continue
@@ -103,6 +104,6 @@ for d = detnums
     phase = atan2(Y, X) + (double(atan2(Y, X) < 0)) * 2 * pi; % phase shift in [0,2*pi] [rad]
 
     % FINAL SCATTERING JACOBIANS
-    rfmusjac_lnA(:, :, :, d) = (1 / (A^2)) .* (X .* rfmusjac_X + Y .* rfmusjac_Y);
-    rfmusjac_phase(:, :, :, d) = (1 / (A^2)) .* (X .* rfmusjac_Y - Y .* rfmusjac_X);
+    rfmusjac_lnA(:, :, :, idx) = (1 / (A^2)) .* (X .* rfmusjac_X + Y .* rfmusjac_Y);
+    rfmusjac_phase(:, :, :, idx) = (1 / (A^2)) .* (X .* rfmusjac_Y - Y .* rfmusjac_X);
 end

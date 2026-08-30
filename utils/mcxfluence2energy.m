@@ -38,12 +38,12 @@ if (nargin == 2 && isstruct(vol) && isfield(vol, 'vol') && isfield(vol, 'prop'))
     if (isfield(cfg, 'outputtype') && strcmp(cfg.outputtype, 'fluence'))
         data = data ./ tstep;
     end
-else
-    error('must provide cfg, or vol/prop as inputs');
+elseif (nargin < 4)
+    error('must provide cfg, or vol/prop/tstep as inputs');
 end
 
 mua = prop(:, 1);
-mua = repmat(mua(vol + 1), 1, 1, 1, size(flux.data, 4));
+mua = repmat(mua(vol + 1), 1, 1, 1, size(data, 4));
 if (exist('cfg', 'var') && isfield(cfg, 'outputtype') && strcmp(cfg.outputtype, 'energy'))
     data(mua == 0) = 0;
     mua(mua == 0) = 1;

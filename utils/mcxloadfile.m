@@ -2,7 +2,7 @@ function [data, header] = mcxloadfile(fname, varargin)
 %
 %    [data, header]=mcxloadfile(fname)
 %       or
-%    [data, header]=mcxplotvol(fname,dim,format)
+%    [data, header]=mcxloadfile(fname,dim,format)
 %
 %    author: Qianqian Fang (q.fang <at> neu.edu)
 %
@@ -14,7 +14,9 @@ function [data, header] = mcxloadfile(fname, varargin)
 %               the .mc2 file; if omitted, it is set to 'float'
 %
 %    output:
-%        data:  the 3-D or 4-D data being loaded
+%        data:  the 3-D or 4-D data being loaded; for a .mc2 input the
+%               data is returned as log10 of the raw values, and
+%               header.scale is set to 'log10'
 %        header: a structure recording the metadata of the file
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
@@ -35,7 +37,6 @@ elseif (strcmpi(ext, '.mc2'))
     header.scale = 'log10';
 elseif (strcmpi(ext, '.mch'))
     [data, header] = loadmch(fname);
-    varargin{:};
 else
     data = loadmc2(fname, varargin{:});
 end

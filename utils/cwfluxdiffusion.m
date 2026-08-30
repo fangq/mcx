@@ -1,6 +1,6 @@
 function [flux] = cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
 %
-%  [flux] = cwfluxdiffusion(mua, musp, n, srcpos, detpos)
+%  [flux] = cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
 %
 %  compute surface flux for a semi-infinite medium
 %

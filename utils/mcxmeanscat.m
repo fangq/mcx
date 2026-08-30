@@ -7,7 +7,7 @@ function avgnscat = mcxmeanscat(detp, prop)
 % author: Qianqian Fang (q.fang <at> neu.edu)
 %
 % input:
-%     detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
+%     detp: the 2nd output from mcxlab. detp must be a struct with an nscat subfield
 %     prop: optical property list, as defined in the cfg.prop field of mcxlab's input
 %
 % output:
@@ -19,4 +19,4 @@ function avgnscat = mcxmeanscat(detp, prop)
 %
 
 detw = mcxdetweight(detp, prop);
-avgnscat = sum(double(detp.nscat) .* repmat(detw(:), 1, size(detp.nscat, 2))) / sum(detw(:));
+avgnscat = sum(double(detp.nscat) .* repmat(detw(:), 1, size(detp.nscat, 2)), 1) / sum(detw(:));

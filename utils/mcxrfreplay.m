@@ -43,7 +43,8 @@ rfjac_lnA = zeros([size(cfg.vol), length(detnums)]);
 rfjac_phase = zeros([size(cfg.vol), length(detnums)]);
 
 % Collect Jacobians one detector index at a time.
-for d = detnums
+for idx = 1:length(detnums)
+    d = detnums(idx);
     % MCXLAB REPLAY SETTINGS
     clear cfg_jac;
     cfg_jac = cfg;
@@ -80,6 +81,6 @@ for d = detnums
     rfjac_X = rfjac_d(:, :, :, :, :, 1);
     rfjac_Y = rfjac_d(:, :, :, :, :, 2);
     % Jacobians for log-amplitude and phase shift wrt mua:
-    rfjac_lnA(:, :, :, d) = (1 / (A^2)) .* (X .* rfjac_X + Y .* rfjac_Y);
-    rfjac_phase(:, :, :, d) = (1 / (A^2)) .* (X .* rfjac_Y - Y .* rfjac_X);
+    rfjac_lnA(:, :, :, idx) = (1 / (A^2)) .* (X .* rfjac_X + Y .* rfjac_Y);
+    rfjac_phase(:, :, :, idx) = (1 / (A^2)) .* (X .* rfjac_Y - Y .* rfjac_X);
 end

@@ -7,7 +7,7 @@ function avgpath = mcxmeanpath(detp, prop)
 % author: Qianqian Fang (q.fang <at> neu.edu)
 %
 % input:
-%     detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
+%     detp: the 2nd output from mcxlab. detp must be a struct with a ppath subfield
 %     prop: optical property list, as defined in the cfg.prop field of mcxlab's input
 %
 % output:
@@ -24,4 +24,4 @@ else
 end
 
 detw = mcxdetweight(detp, prop);
-avgpath = sum(detp.ppath .* unitinmm .* repmat(detw(:), 1, size(detp.ppath, 2))) / sum(detw(:));
+avgpath = sum(detp.ppath .* unitinmm .* repmat(detw(:), 1, size(detp.ppath, 2)), 1) / sum(detw(:));

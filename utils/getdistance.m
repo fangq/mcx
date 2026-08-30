@@ -11,8 +11,8 @@ function separation = getdistance(srcpos, detpos)
 %
 %    output:
 %        separation:  the distance matrix between all combinations
-%              of sources and detectors. separation has the number
-%              of source rows, and number of detector of columns.
+%              of sources and detectors. separation has one row per
+%              detector and one column per source.
 %
 %    this file is part of Monte Carlo eXtreme (MCX)
 %    License: GPLv3, see https://mcx.space for details

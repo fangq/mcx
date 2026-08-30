@@ -31,7 +31,7 @@ end
 
 fid = fopen(fname, 'rb');
 
-if (fid == 0)
+if (fid == -1)
     error('can not open the specified file');
 end
 
