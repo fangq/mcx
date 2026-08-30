@@ -2276,7 +2276,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         tmp0 = theta;
                     } else {
                         tmp0 = (gcfg->outputtype == otDCS) ? (1.f - ctheta) : 1.f;
-                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[photonidx] : tmp0;
+                        tmp0 = (gcfg->outputtype == otWPTOF) ? photontof[photonidx] * 1e9f : tmp0;
                         tmp0 *= theta;
                     }
 
@@ -2514,7 +2514,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         if (gcfg->outputtype == otRF) {
                             weight = -weight * ppath[gcfg->w0offset + gcfg->srcnum];
                         } else if (gcfg->outputtype == otWLTOF) {
-                            weight = weight * photontof[idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone];
+                            weight = weight * photontof[idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone] * 1e9f;
                         }
 
                         tshift = (idx * gcfg->threadphoton + min(idx, gcfg->oddphotons - 1) + (int)f.ndone);
@@ -4245,6 +4245,16 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                 int isvoxelunit = (cfg->outputtype == otJacobian || cfg->outputtype == otRF || cfg->outputtype == otWLTOF) ||
                                   (cfg->mediabyte == MEDIA_2LABEL_SPLIT && (cfg->outputtype == otWP || cfg->outputtype == otWPTOF || cfg->outputtype == otRFmus));
 
+                /**
+                 * \c unitscale gathers the constant unit conversions the replay outputs need: the voxel
+                 * unit above, and for wltof/wptof the time-of-flight, which the kernel accumulates in
+                 * nanoseconds rather than seconds. In seconds those deposits are ~1e-9 of weight scale,
+                 * so they never reach MAX_ACCUM and the double-buffer never drains; in nanoseconds they
+                 * sit near the weight-scale deposits the buffer was tuned for.
+                 */
+                float unitscale = ((isvoxelunit) ? cfg->unitinmm : 1.f) *
+                                  ((cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) ? 1e-9f : 1.f);
+
                 if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
                     int detid;
 
@@ -4258,14 +4268,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                                 }
 
                             if (scale[0] > 0.f) {
-                                scale[0] = 1.0f / scale[0];
-
-                                if (isvoxelunit) {
-                                    scale[0] = cfg->unitinmm * scale[0]; // only paths in voxel units need scaling
-                                }
+                                scale[0] = unitscale / scale[0];
                             }
                         } else {
-                            scale[0] = (isvoxelunit) ? cfg->unitinmm : 1.f;
+                            scale[0] = unitscale;
                         }
 
                         MCX_FPRINTF(cfg->flog, "%s %d alpha=%f\n", T_("normalization factor for detector"), detid, scale[0]);
@@ -4287,10 +4293,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                         }
 
                         if (scale[0] > 0.f) {
-                            scale[0] = ((isvoxelunit) ? cfg->unitinmm : 1.f) / scale[0];
+                            scale[0] = unitscale / scale[0];
                         }
                     } else {
-                        scale[0] = (isvoxelunit) ? cfg->unitinmm : 1.f;
+                        scale[0] = unitscale;
                     }
 
                     MCX_FPRINTF(cfg->flog, "%s %d alpha=%f\n", T_("normalization factor for detector"), cfg->replaydet, scale[0]);
