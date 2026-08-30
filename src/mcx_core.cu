@@ -1083,7 +1083,7 @@ __device__ inline void rotate_perpendicular_vector(MCXdir* photon_dir, const flo
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized>
+template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized, const int isrfforward>
 __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* f, float3* rv, short flipdir[4], Medium* prop, uint* idx1d, OutputType* field,
                                       uint* mediaid, OutputType* w0, uint isdet, float ppath[], float n_det[], uint* dpnum,
                                       RandType t[RAND_BUF_LEN], RandType photonseed[RAND_BUF_LEN],
@@ -1696,7 +1696,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     ppath[2] = ((gcfg->srcnum > 1) ? ppath[2] : p->w); // store initial weight
     v->nscat = EPS;
 
-    if ((gcfg->outputtype == otRF || gcfg->outputtype == otRFmus) && !gcfg->isrfforward) { // RF replay only (not RF forward)
+    if ((gcfg->outputtype == otRF || gcfg->outputtype == otRFmus) && !isrfforward) { // RF replay only (not RF forward)
         f->pathlen = photontof[(threadid * gcfg->threadphoton + min(threadid, gcfg->oddphotons - 1) + (int)f->ndone)];
         sincosf(gcfg->omega * f->pathlen, ppath + 5 + gcfg->srcnum, ppath + 4 + gcfg->srcnum);
     }
@@ -1963,7 +1963,7 @@ __global__ void mcx_adjoint_kernel(OutputType* gfield_re, OutputType* gfield_im,
  * @param[in,out] gprogress: pointer to the host variable to update progress bar
  */
 
-template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized>
+template <const int ispencil, const int isreflect, const int islabel, const int issvmc, const int ispolarized, const int isrfforward>
 __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[], uint n_seed[],
                               float4 n_pos[], float4 n_dir[], float4 n_len[], float n_det[], uint detectedphoton[],
                               float srcpattern[], float replayweight[], float photontof[], int photondetid[],
@@ -2062,7 +2062,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
      * Launch the first photon
      */
 
-    if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, 0, ppath,
+    if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized, isrfforward>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, 0, ppath,
             n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)), media, srcpattern,
             idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
         GPUDEBUG(("thread %d: fail to launch photon\n", idx));
@@ -2077,7 +2077,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
      */
     rv = float3(__fdividef(1.f, v.x), __fdividef(1.f, v.y), __fdividef(1.f, v.z));
 
-    if (gcfg->isrfforward) {
+    if (isrfforward) {
         w_re = w0_re = p.w;
         w_im = w0_im = 0.f;
     }
@@ -2375,7 +2375,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         }
 
         /** calculate photon energy loss */
-        if (gcfg->isrfforward) {
+        if (isrfforward) {
             /* Eq.9: w <- w * exp[-(mua + i*omega*n/c0) * ds]
              * exp(-(a+ib)) = exp(-a)*(cos(b) - i*sin(b)) */
             float rf_atten = expf(-prop.mua * len);
@@ -2454,7 +2454,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 int tshift = MIN(gcfg->maxgate - 1, (int)(floorf((f.t - gcfg->twin0) * gcfg->Rtstep)));
 
                 /** calculate the quality to be accummulated */
-                if (gcfg->isrfforward) {
+                if (isrfforward) {
                     /** RF forward: deposit = (w0-w) / (mua + i*omega*n/c0), real and imag parts */
                     float dw_re_rf = w0_re - w_re;
                     float dw_im_rf = w0_im - w_im;
@@ -2501,12 +2501,12 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                             GPUDEBUG(("atomic writing to [%d] %e, oldval=%f\n", idx1dold, weight, oldval));
 
-                            if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || gcfg->isrfforward)) {
+                            if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || isrfforward)) {
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                                 atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                                 GPUDEBUG(("reducing float round-off error by moving %e to [%d], oldval=%f\n", MAX_ACCUM, idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w, oldval));
-                            } else if (gcfg->isrfforward || (gcfg->outputtype == otRF && gcfg->omega > 0.f)) {
-                                if (gcfg->isrfforward) {
+                            } else if (isrfforward || (gcfg->outputtype == otRF && gcfg->omega > 0.f)) {
+                                if (isrfforward) {
                                     /** RF forward: deposit Im to 3rd quarter [2F..3F), with double-buf in 4th quarter [3F..4F) */
                                     float oldval_im = atomicadd(& field[idx1dold + tshift * gcfg->dimlen.z + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], weight_im);
 
@@ -2529,10 +2529,10 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 #else
                                     float oldval = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i], (gcfg->srcnum == 1 ? weight : weight * ppath[gcfg->w0offset + i]));
 
-                                    if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || gcfg->isrfforward)) {
+                                    if (fabsf(oldval) > MAX_ACCUM && (gcfg->outputtype != otRF || isrfforward)) {
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], ((oldval > 0.f) ? -MAX_ACCUM : MAX_ACCUM));
                                         atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
-                                    } else if (gcfg->isrfforward) {
+                                    } else if (isrfforward) {
                                         float ov_im_pp = atomicadd(& field[(idx1dold + tshift * gcfg->dimlen.z) * gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2], (gcfg->srcnum == 1 ? weight_im : weight_im * ppath[gcfg->w0offset + i]));
 
                                         if (fabsf(ov_im_pp) > MAX_ACCUM) {
@@ -2557,7 +2557,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
             w0 = p.w;
 
-            if (gcfg->isrfforward) {
+            if (isrfforward) {
                 w0_re = w_re;
                 w0_im = w_im;
             }
@@ -2613,7 +2613,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
             GPUDEBUG(("direct relaunch at idx=[%d] mediaid=[%d], ref=[%d] bcflag=%d timegate=%d\n", idx1d, mediaid, gcfg->doreflect, isdet, f.t > gcfg->twin1));
 
-            if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0,
+            if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized, isrfforward>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0,
                     (((idx1d == OUTSIDE_VOLUME_MAX && gcfg->bc[9 + flipdir[3]]) || (idx1d == OUTSIDE_VOLUME_MIN && gcfg->bc[6 + flipdir[3]])) ? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
                     ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                     media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
@@ -2623,7 +2623,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             isdet = mediaid & DET_MASK;
             mediaid &= MED_MASK;
 
-            if (gcfg->isrfforward) {
+            if (isrfforward) {
                 w_re = w0_re = p.w;
                 w_im = w0_im = 0.f;
             }
@@ -2640,7 +2640,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             if (rand_do_roulette(t)*ROULETTE_SIZE <= 1.f) {
                 p.w *= ROULETTE_SIZE;
 
-                if (gcfg->isrfforward) {
+                if (isrfforward) {
                     w_re *= ROULETTE_SIZE;
                     w_im *= ROULETTE_SIZE;
                     w0_re *= ROULETTE_SIZE;
@@ -2649,7 +2649,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             } else {
                 GPUDEBUG(("relaunch after Russian roulette at idx=[%d] mediaid=[%d], ref=[%d]\n", idx1d, mediaid, gcfg->doreflect));
 
-                if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK), ppath,
+                if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized, isrfforward>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK), ppath,
                         n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                         media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                     break;
@@ -2658,7 +2658,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 isdet = mediaid & DET_MASK;
                 mediaid &= MED_MASK;
 
-                if (gcfg->isrfforward) {
+                if (isrfforward) {
                     w_re = w0_re = p.w;
                     w_im = w0_im = 0.f;
                 }
@@ -2683,7 +2683,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                     nuvox.pd = -nuvox.pd;
 
                     if (reflectray(n1, (float3*) & (v), &rv, &nuvox, &prop, t)) { // true if photon transmits to background media
-                        if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK),
+                        if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized, isrfforward>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK),
                                 ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                                 media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                             break;
@@ -2692,7 +2692,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         isdet = mediaid & DET_MASK;
                         mediaid &= MED_MASK;
 
-                        if (gcfg->isrfforward) {
+                        if (isrfforward) {
                             w_re = w0_re = p.w;
                             w_im = w0_im = 0.f;
                         }
@@ -2749,7 +2749,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         if (mediaid == 0 || (issvmc && SV_CURLABEL(nuvox.sv) == 0)) {
                             GPUDEBUG(("transmit to air, relaunch\n"));
 
-                            if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0,
+                            if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized, isrfforward>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0,
                                     (((idx1d == OUTSIDE_VOLUME_MAX && gcfg->bc[9 + flipdir[3]]) || (idx1d == OUTSIDE_VOLUME_MIN && gcfg->bc[6 + flipdir[3]])) ? OUTSIDE_VOLUME_MIN : (mediaidold & DET_MASK)),
                                     ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                                     media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
@@ -2759,7 +2759,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             isdet = mediaid & DET_MASK;
                             mediaid &= MED_MASK;
 
-                            if (gcfg->isrfforward) {
+                            if (isrfforward) {
                                 w_re = w0_re = p.w;
                                 w_im = w0_im = 0.f;
                             }
@@ -2799,7 +2799,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         updateproperty<islabel, issvmc>(&prop, mediaid, t, idx1d, media, (float3*)&p, &nuvox, flipdir); //< optical property across the interface
 
                         if (issvmc && SV_CURLABEL(nuvox.sv) == 0) { // terminate photon if photon is reflected to background medium
-                            if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK),
+                            if (launchnewphoton<ispencil, isreflect, islabel, issvmc, ispolarized, isrfforward>(&p, &v, &s, &f, &rv, flipdir, &prop, &idx1d, field, &mediaid, &w0, (mediaidold & DET_MASK),
                                     ppath, n_det, detectedphoton, t, (RandType*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + threadIdx.x * gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)),
                                     media, srcpattern, idx, (RandType*)n_seed, seeddata, gdebugdata, gprogress, photontof, &nuvox)) {
                                 break;
@@ -2808,7 +2808,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             isdet = mediaid & DET_MASK;
                             mediaid &= MED_MASK;
 
-                            if (gcfg->isrfforward) {
+                            if (isrfforward) {
                                 w_re = w0_re = p.w;
                                 w_im = w0_im = 0.f;
                             }
@@ -3758,84 +3758,91 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              * kernel PTX binaries for each combination of template variables. This creates bigger binary and slower
              * compilation time, but brings up to 20%-30% speed improvement on certain simulations.
              */
+#define MCX_LAUNCH_MAIN_LOOP(a, b, c, d, e)                                                                     \
+    if (param.isrfforward) {                                                                                    \
+        mcx_main_loop<a, b, c, d, e, 1> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);  \
+    } else {                                                                                                    \
+        mcx_main_loop<a, b, c, d, e, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);  \
+    }
+
             switch (ispencil * 10000 + (isref > 0) * 1000 + (cfg->mediabyte <= 4) * 100 + issvmc * 10 + ispolarized) {
                 case 0:
-                    mcx_main_loop<0, 0, 0, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 0, 0, 0, 0);
                     break;
 
                 // Used 88 registers, 464 bytes cmem[0], 320 bytes cmem[2]
                 case 10:
-                    mcx_main_loop<0, 0, 0, 1, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 0, 0, 1, 0);
                     break;
 
                 // Used 112 registers, 464 bytes cmem[0], 348 bytes cmem[2]
                 case 100:
-                    mcx_main_loop<0, 0, 1, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 0, 1, 0, 0);
                     break;
 
                 // Used 92 registers, 464 bytes cmem[0], 320 bytes cmem[2]
                 case 101:
-                    mcx_main_loop<0, 0, 1, 0, 1> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 0, 1, 0, 1);
                     break;
 
                 // Used 96 registers, 464 bytes cmem[0], 328 bytes cmem[2]
                 case 1000:
-                    mcx_main_loop<0, 1, 0, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 1, 0, 0, 0);
                     break;
 
                 // Used 96 registers, 464 bytes cmem[0], 320 bytes cmem[2]
                 case 1010:
-                    mcx_main_loop<0, 1, 0, 1, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 1, 0, 1, 0);
                     break;
 
                 // Used 130 registers, 464 bytes cmem[0], 432 bytes cmem[2]
                 case 1100:
-                    mcx_main_loop<0, 1, 1, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 1, 1, 0, 0);
                     break;
 
                 // Used 96 registers, 464 bytes cmem[0], 320 bytes cmem[2]
                 case 1101:
-                    mcx_main_loop<0, 1, 1, 0, 1> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(0, 1, 1, 0, 1);
                     break;
 
                 // Used 96 registers, 464 bytes cmem[0], 328 bytes cmem[2]
                 case 10000:
-                    mcx_main_loop<1, 0, 0, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 0, 0, 0, 0);
                     break;
 
                 // Used 70 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                 case 10010:
-                    mcx_main_loop<1, 0, 0, 1, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 0, 0, 1, 0);
                     break;
 
                 // Used 80 registers, 464 bytes cmem[0], 68 bytes cmem[2]
                 case 10100:
-                    mcx_main_loop<1, 0, 1, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 0, 1, 0, 0);
                     break;
 
                 // Used 64 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                 case 10101:
-                    mcx_main_loop<1, 0, 1, 0, 1> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 0, 1, 0, 1);
                     break;
 
                 // Used 72 registers, 464 bytes cmem[0], 52 bytes cmem[2]
                 case 11000:
-                    mcx_main_loop<1, 1, 0, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 1, 0, 0, 0);
                     break;
 
                 // Used 72 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                 case 11010:
-                    mcx_main_loop<1, 1, 0, 1, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 1, 0, 1, 0);
                     break;
 
                 // Used 80 registers, 464 bytes cmem[0], 152 bytes cmem[2]
                 case 11100:
-                    mcx_main_loop<1, 1, 1, 0, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 1, 1, 0, 0);
                     break;
 
                 // Used 72 registers, 464 bytes cmem[0], 40 bytes cmem[2]
                 case 11101:
-                    mcx_main_loop<1, 1, 1, 0, 1> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);
+                    MCX_LAUNCH_MAIN_LOOP(1, 1, 1, 0, 1);
                     break;
                     // Used 78 registers, 464 bytes cmem[0], 52 bytes cmem[2]
             }
