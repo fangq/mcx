@@ -50,7 +50,7 @@ if(USE_HIP)
     # CDNA/RDNA instead of a compare-and-swap retry loop; the fluence grid is
     # accumulated with float atomicAdd, so this is the dominant performance flag.
     # -ffast-math is the HIP counterpart of the CUDA build's -use_fast_math.
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DUSE_ATOMIC -DSAVE_DETECTORS -munsafe-fp-atomics -ffast-math")
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DSAVE_DETECTORS -munsafe-fp-atomics -ffast-math")
 
     # Add USE_HIP define to C and C++ files as well (for header guards)
     add_compile_definitions(USE_HIP)
@@ -151,7 +151,7 @@ else()
         CUDA_NVCC_FLAGS
         ${CUDA_NVCC_FLAGS};
         -g -lineinfo -Xcompiler -Wall -Xcompiler -O3 -arch=sm_50
-        -DMCX_TARGET_NAME="Fermi MCX" -DUSE_ATOMIC -use_fast_math
+        -DMCX_TARGET_NAME="Fermi MCX" -use_fast_math
         -DSAVE_DETECTORS -Xcompiler -fPIC ${OMPFLAG}
     )
 

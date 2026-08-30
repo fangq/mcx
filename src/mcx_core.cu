@@ -223,22 +223,7 @@ extern __shared__ char sharedmem[];
  */
 
 __device__ inline OutputType atomicadd(OutputType* address, OutputType value) {
-
-#if ! defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 200 //< for Fermi, atomicAdd supports floats
-
     return atomicAdd(address, value);
-
-#else
-
-    // float-atomic-add from
-    // http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561
-    float old = value;
-
-    while ((old = atomicExch(address, atomicExch(address, 0.0f) + old)) != 0.0f);
-
-    return old;
-#endif
-
 }
 
 /**
@@ -1142,7 +1127,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                 }
 
                 if (gcfg->srctype != MCX_SRC_PATTERN && gcfg->srctype != MCX_SRC_PATTERN3D) {
-#ifdef USE_ATOMIC
 #ifdef USE_DOUBLE
                     atomicAdd(& field[*idx1d + tshift * gcfg->dimlen.z], -p->w);
 #else
@@ -1154,13 +1138,9 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     }
 
 #endif
-#else
-                    field[*idx1d + tshift * gcfg->dimlen.z] += -p->w;
-#endif
                 } else {
                     for (int i = 0; i < gcfg->srcnum; i++) {
                         if (fabsf(ppath[gcfg->w0offset + i]) > 0.f) {
-#ifdef USE_ATOMIC
 #ifdef USE_DOUBLE
                             atomicAdd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i], -((gcfg->srcnum == 1) ? p->w : p->w * ppath[gcfg->w0offset + i]));
 #else
@@ -1171,9 +1151,6 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                                 atomicadd(& field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w], ((oldval > 0.f) ? MAX_ACCUM : -MAX_ACCUM));
                             }
 
-#endif
-#else
-                            field[(*idx1d + tshift * gcfg->dimlen.z)*gcfg->srcnum + i] += -((gcfg->srcnum == 1) ? p->w : p->w * ppath[gcfg->w0offset + i]);
 #endif
                         }
                     }
@@ -2298,19 +2275,6 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                             fieldid = fieldid * gcfg->srcnum + isrc;
                         }
 
-#ifdef USE_ATOMIC
-
-                        if (!gcfg->isatomic) {
-#endif
-                            field[fieldid] += tmp0 * wsrc;
-
-                            if (gcfg->outputtype == otRFmus) {
-                                /** rfmus: imaginary stored in 3rd quarter [2F..3F) to allow double-buffer in [F..2F) for real and [3F..4F) for imag */
-                                field[fieldid + (uint64_t)gcfg->dimlen.z * gcfg->dimlen.w * 2] += sphi * wsrc;
-                            }
-
-#ifdef USE_ATOMIC
-                        } else {
 #ifdef USE_DOUBLE
                             atomicAdd(& field[fieldid], tmp0 * wsrc);
 
@@ -2339,9 +2303,6 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
 #endif
                             GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1d, tmp0, p.w));
-                        }
-
-#endif
                     }
                 }
 
@@ -2532,16 +2493,6 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                 GPUDEBUG(("deposit to [%d] %e, w=%f\n", idx1dold, weight, p.w));
 
                 if (fabsf(weight) > 0.f || gcfg->outputtype == otRF) {
-#ifdef USE_ATOMIC
-
-                    if (!gcfg->isatomic) {
-#endif
-                        /** accummulate the quality to the volume using non-atomic operations  */
-                        field[idx1dold + tshift * gcfg->dimlen.z] += weight;
-#ifdef USE_ATOMIC
-                    } else {
-                        /** accummulate the quality to the volume using atomic operations  */
-                        // ifndef CUDA_NO_SM_11_ATOMIC_INTRINSICS
                         if (gcfg->srctype != MCX_SRC_PATTERN && gcfg->srctype != MCX_SRC_PATTERN3D) {
 #ifdef USE_DOUBLE
                             atomicAdd(& field[idx1dold + tshift * gcfg->dimlen.z], weight);
@@ -2601,9 +2552,6 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         }
 
                         GPUDEBUG(("atomic write to [%d] %e, w=%f\n", idx1dold, weight, p.w));
-                    }
-
-#endif
                 }
             }
 
@@ -3230,7 +3178,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                       p0, c0, cfg->srcparam1, cfg->srcparam2, cfg->extrasrclen, cfg->srcid, s0, maxidx, uint4(0, 0, 0, 0),
                       cp0, cp1, uint2(0, 0), cfg->minenergy, cfg->sradius* cfg->sradius, minstep* R_C0* cfg->unitinmm, cfg->srctype,
                       cfg->voidtime, cfg->maxdetphoton,
-                      cfg->medianum - 1, cfg->detnum, cfg->polmedianum, cfg->maxgate, ABS(cfg->sradius + 2.f) < EPS /*isatomic*/,
+                      cfg->medianum - 1, cfg->detnum, cfg->polmedianum, cfg->maxgate,
                       (uint)cfg->maxvoidstep, cfg->issaveseed > 0, (uint)cfg->issaveref, cfg->isspecular > 0, (uint)cfg->istrajstokes,
                       cfg->maxdetphoton * hostdetreclen, cfg->seed, (uint)cfg->outputtype, 0, 0, cfg->faststep,
                       cfg->debuglevel, cfg->savedetflag, hostdetreclen, partialdata, w0offset, cfg->mediabyte,
@@ -3239,9 +3187,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                       (cfg->omega > 0.f&& cfg->seed != SEED_FROM_FILE) ? 1u : 0u    /*isrfforward*/
                      };
 
-    if (param.isatomic) {
-        param.skipradius2 = 0.f;
-    }
+    param.skipradius2 = 0.f;
 
     if (is2d) {
         /**

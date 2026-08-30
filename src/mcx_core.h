@@ -176,7 +176,6 @@ typedef struct  __align__(16) KernelParams {
     unsigned int detnum;               /**< max number of detectors */
     unsigned int maxpolmedia;          /**< max number of media labels for polarized light */
     unsigned int maxgate;              /**< max number of time gates */
-    unsigned int isatomic;             /**< whether atomic operations are used */
     unsigned int maxvoidstep;          /**< max steps that photon can travel in the background before entering non-zero voxels */
     unsigned int issaveseed;           /**< flag if one need to save the detected photon seeds for replay */
     unsigned int issaveref;            /**< flag if one need to save diffuse reflectance data in the 0-voxel layer next to the boundary */

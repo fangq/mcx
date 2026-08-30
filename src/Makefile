@@ -191,7 +191,7 @@ amperemex: turingmex
 ampereoct: turingoct
 ampere amperemex ampereoct: CUGENCODE:=-arch=sm_80
 
-log xor xoro posix:  CUCCOPT+=-DUSE_ATOMIC -use_fast_math -DSAVE_DETECTORS
+log xor xoro posix:  CUCCOPT+=-use_fast_math -DSAVE_DETECTORS
 xor:        LINKOPT+=
 xoro:       CUCCOPT+=-DUSE_XOROSHIRO128P_RAND
 xoro:       LINKOPT+=-DUSE_XOROSHIRO128P_RAND
