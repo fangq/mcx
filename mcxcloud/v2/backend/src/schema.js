@@ -110,8 +110,8 @@ export function checkLimits(cfg) {
     return 'storing photon trajectories is not supported in this preview version';
   if (F.T1 && F.Dt && F.T1 / F.Dt > 100)
     return 'the maximum time gate number is limited to 100 in this preview version';
-  if (Array.isArray(D.Dim) && D.Dim.length === 3 && D.Dim.some((/** @type {number} */ x) => x > 300))
-    return 'the maximum domain dimension is 300 in this preview version';
+  if (Array.isArray(D.Dim) && D.Dim.length === 3 && D.Dim.some((/** @type {number} */ x) => x > 400))
+    return 'the maximum domain dimension is 400 in this preview version';
   if (Array.isArray(D.Media) && D.Media.some((/** @type {any} */ m) => m?.mus > 50))
     return 'scattering coeff (mus) is limited to 50/mm in this preview version';
   // Optode.Source.Frequency (Hz) is the one canonical RF field across engines; Forward.Omega
