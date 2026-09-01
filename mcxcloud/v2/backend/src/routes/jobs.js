@@ -1,5 +1,6 @@
 // @ts-check
 import { randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
 import { config } from '../config.js';
 import { pool, withTx } from '../db.js';
 import { attachRefs, getBlob, putBlob, putBlobRaw } from '../blobs.js';
@@ -87,6 +88,11 @@ export async function jobRoutes(app) {
     // mesh domains (Shapes.MeshNode) run mmc; voxel domains run mcx
     const engine = detectEngine(/** @type {Record<string, any>} */ (body.doc));
 
+    // Persist the origin alongside the (free-text, unverified) submitter fields. NULL
+    // unless it parses as an address: `ip` is inet, so a spoofed or malformed
+    // X-Forwarded-For must never be able to fail the INSERT and reject a valid job.
+    const originIp = isIP(ip) ? ip : null;
+
     const { token, tokenHash: th } = mintToken();
 
     const result = await withTx(async (client) => {
@@ -106,9 +112,9 @@ export async function jobRoutes(app) {
 
       if (cached.rowCount && cached.rows[0].output_hash) {
         const ins = await client.query(
-          `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, output_hash, detp_hash, ended_at, engine)
-           values ($1,$2,$3,'cached',$4,$5,$6,$7, now(), $8) returning id`,
-          [randomUUID(), doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash, engine],
+          `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, output_hash, detp_hash, ended_at, engine, ip)
+           values ($1,$2,$3,'cached',$4,$5,$6,$7, now(), $8, $9) returning id`,
+          [randomUUID(), doc, docHash, body.user ?? null, th, cached.rows[0].output_hash, cached.rows[0].detp_hash, engine, originIp],
         );
         const id = /** @type {string} */ (ins.rows[0].id);
         const owned = [...refs, cached.rows[0].output_hash];
@@ -118,9 +124,9 @@ export async function jobRoutes(app) {
       }
 
       const ins = await client.query(
-        `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, engine)
-         values ($1,$2,$3,'queued',$4,$5,$6) returning id`,
-        [randomUUID(), doc, docHash, body.user ?? null, th, engine],
+        `insert into jobs (id, input_doc, doc_hash, status, submitter, token_hash, engine, ip)
+         values ($1,$2,$3,'queued',$4,$5,$6,$7) returning id`,
+        [randomUUID(), doc, docHash, body.user ?? null, th, engine, originIp],
       );
       const id = /** @type {string} */ (ins.rows[0].id);
       await attachRefs(client, refs, 'job', id);
