@@ -1118,7 +1118,7 @@ object fmMain: TfmMain
               Layout = tlCenter
               ParentColor = False
             end
-            object edSrcNum: TEdit
+            object edSrcNum: TSpinEdit
               Left = 158
               Height = 23
               Top = 2
@@ -1757,7 +1757,7 @@ object fmMain: TfmMain
               Layout = tlCenter
               ParentColor = False
             end
-            object edThread: TEdit
+            object edThread: TSpinEdit
               Left = 158
               Height = 23
               Top = 2
@@ -1787,7 +1787,7 @@ object fmMain: TfmMain
               Layout = tlCenter
               ParentColor = False
             end
-            object edBlock: TEdit
+            object edBlock: TSpinEdit
               Left = 158
               Height = 23
               Top = 2

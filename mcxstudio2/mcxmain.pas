@@ -20,7 +20,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
-  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
+  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, Math, fpjson,
   mcxdpi, mcxicons, mcxdoc;
 
 type
@@ -199,7 +199,7 @@ type
     lbSrcFreq: TLabel;
     edSrcFreq: TEdit;
     lbSrcNum: TLabel;
-    edSrcNum: TEdit;
+    edSrcNum: TSpinEdit;
     lbSrcWavelen: TLabel;
     edSrcWavelen: TEdit;
     lbSessionID: TLabel;
@@ -233,9 +233,9 @@ type
     edMaxDetp: TEdit;
     ckAutoThread: TCheckBox;
     lbThread: TLabel;
-    edThread: TEdit;
+    edThread: TSpinEdit;
     lbBlock: TLabel;
-    edBlock: TEdit;
+    edBlock: TSpinEdit;
     lbWorkload: TLabel;
     edWorkload: TEdit;
     lbBC: TLabel;
@@ -277,6 +277,9 @@ type
       box the wizard has emptied has to take its heading and its navigator
       entry with it rather than stand there as an empty frame. }
     FRows: array of TPanel;
+    { The slider beside a bounded value's edit box, or nil.  Parallel to
+      Binds, like everything else here. }
+    FSliders: array of TTrackBar;
     FGroups: array of TPanel;
     FRowList: array of TPanel;
     FLoading: Integer;
@@ -301,6 +304,10 @@ type
     procedure CollectSections;
     procedure BuildNav;
     procedure BindControls;
+    procedure BuildSlider(AIndex: Integer);
+    procedure SliderChanged(Sender: TObject);
+    procedure ShowSlider(AIndex: Integer);
+    procedure CommitBinding(AIndex: Integer);
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
     function  DocFor(const APath: string): TMcxDoc;
@@ -310,6 +317,8 @@ type
     procedure ApplyBindingStates;
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
+    procedure CardPaint(Sender: TObject);
+    procedure SetCard(ACard: TPanel; AColor: TColor);
     procedure ScrollToGroup(ABox: TPanel);
     function  FirstSubOf(ASection: Integer): Integer;
     procedure SelectSub(AIndex: Integer);
@@ -361,6 +370,13 @@ const
     Seven per-section accents were prettier and worse.  A colour that means
     identity cannot also mean selection, so nothing on a page could be
     highlighted without arguing with the section it sat on. }
+  { Corner radius on the design grid, scaled with everything else. }
+  CardRadius = 8;
+
+  { A thousand notches: finer than the values anyone types into these fields,
+    so dragging is not the coarse option. }
+  SliderSteps = 1000;
+
   BandLevel  = 14;   { a closed section heading }
   CardLevel  =  7;   { a card nobody has picked }
   BandActive = 58;   { the open section }
@@ -513,6 +529,52 @@ begin
       PaintCard(TWinControl(C.Controls[i]), AColor);
 end;
 
+{ Draws a card as a rounded rectangle.
+
+  This is the other half of why a card had to stop being a TGroupBox: a
+  TPanel is a TCustomControl, so it has a Paint of its own to hook, and a
+  group box -- being a TWinControl wrapping a native widget -- has none.
+
+  The panel itself is painted in the page's colour so the four corners show
+  the background through, and the card is the rounded shape drawn on top.
+  Nothing inside reaches the corners: ChildSizing insets every row by ten
+  pixels, which is wider than the radius. }
+{ Gives a card its colour.  The card itself is painted in the page's own
+  colour so the corners stay transparent to it, the fill rides in Tag for
+  CardPaint to pick up, and everything inside is filled solid -- nothing in
+  there comes near a corner. }
+procedure TfmMain.SetCard(ACard: TPanel; AColor: TColor);
+var
+  i: Integer;
+  W: TWinControl;
+begin
+  if ACard = nil then Exit;
+  ACard.Tag := AColor;
+  W := ACard;
+  TColourAccess(W).ParentColor := False;
+  TColourAccess(W).Color := clBtnFace;
+  for i := 0 to ACard.ControlCount - 1 do
+    if (ACard.Controls[i] is TPanel) or (ACard.Controls[i] is TCustomGroupBox) then
+      PaintCard(TWinControl(ACard.Controls[i]), AColor);
+  ACard.Invalidate;
+end;
+
+procedure TfmMain.CardPaint(Sender: TObject);
+var
+  P: TPanel;
+  R: Integer;
+begin
+  if not (Sender is TPanel) then Exit;
+  P := TPanel(Sender);
+  R := McxScale96(CardRadius);
+  P.Canvas.AntialiasingMode := amOn;
+  P.Canvas.Brush.Style := bsSolid;
+  P.Canvas.Brush.Color := TColor(P.Tag);
+  P.Canvas.Pen.Style := psSolid;
+  P.Canvas.Pen.Color := TColor(P.Tag);
+  P.Canvas.RoundRect(0, 0, P.Width, P.Height, R, R);
+end;
+
 procedure TfmMain.CollectSections;
 var
   i: Integer;
@@ -632,6 +694,7 @@ begin
         Cap.ParentFont := False;
         Cap.Font.Style := [fsBold];
         Card.Caption := '';
+        Card.OnPaint := @CardPaint;
         FSubs[High(FSubs)].Cap := Cap;
       end;
     end;
@@ -765,12 +828,12 @@ begin
       the selected one, and its own heading goes with it. }
     if i = FSub then
     begin
-      PaintCard(FSubs[i].Box, McxBlend(clBtnFace, clHighlight, CardActive));
+      SetCard(FSubs[i].Box, McxBlend(clBtnFace, clHighlight, CardActive));
       FSubs[i].Cap.Font.Color := McxBlend(clWindowText, clHighlight, 80);
     end
     else
     begin
-      PaintCard(FSubs[i].Box, McxBlend(clBtnFace, clWindowText, CardLevel));
+      SetCard(FSubs[i].Box, McxBlend(clBtnFace, clWindowText, CardLevel));
       FSubs[i].Cap.Font.Color := clDefault;
     end;
   end;
@@ -1152,6 +1215,7 @@ begin
   SetLength(FLabels, Length(Binds));
   SetLength(FLoaded, Length(Binds));
   SetLength(FRows, Length(Binds));
+  SetLength(FSliders, Length(Binds));
   SetLength(FGroups, Length(Binds));
   SetLength(FRowList, 0);
   for i := 0 to High(Binds) do
@@ -1221,12 +1285,58 @@ begin
       TComboBox(C).OnChange := @BindChanged;
     end
     else if C is TSpinEdit then
-      TSpinEdit(C).OnChange := @BindChanged
+    begin
+      { LCL clamps only when MaxValue is greater than MinValue
+        (spinedit.inc:228), so a floor cannot be set without a ceiling.  A row
+        that gives a floor and no ceiling gets the largest one there is --
+        which enforces the floor and refuses nothing a file could hold. }
+      TSpinEdit(C).MinValue := Round(Binds[i].Min);
+      if Binds[i].Max > Binds[i].Min then
+        TSpinEdit(C).MaxValue := Round(Binds[i].Max)
+      else if Binds[i].Min > 0 then
+        TSpinEdit(C).MaxValue := High(LongInt)
+      else
+        TSpinEdit(C).MaxValue := 0;
+      TSpinEdit(C).OnChange := @BindChanged;
+    end
     else if C is TEdit then
       { On editing done rather than on change: reformatting a number while it
         is still half-typed fights the person typing it. }
       TEdit(C).OnEditingDone := @BindChanged;
+
+    if Binds[i].Kind = mkRange then BuildSlider(i);
   end;
+end;
+
+{ Puts a slider on the right of a bounded value's row.
+
+  The slider is not itself a binding -- the edit box still owns the path, and
+  the self-test still sees one control per path.  It writes into the edit and
+  commits through the same route a typed value takes, which is what keeps the
+  two from having separate ideas about what the value is.
+
+  An edit box alone cannot say "this is a fifth of the way up"; a slider alone
+  cannot take 5e-09.  A setting with both ends known deserves both. }
+procedure TfmMain.BuildSlider(AIndex: Integer);
+var
+  T: TTrackBar;
+begin
+  if not (FBound[AIndex].Parent is TPanel) then Exit;
+  T := TTrackBar.Create(Self);
+  T.Parent := FBound[AIndex].Parent;
+  T.Align := alRight;
+  T.Width := 200;
+  T.BorderSpacing.Left := 8;
+  T.Min := 0;
+  T.Max := SliderSteps;
+  T.Frequency := SliderSteps div 10;
+  T.TickStyle := tsNone;
+  T.ShowSelRange := False;
+  T.Tag := AIndex;
+  T.OnChange := @SliderChanged;
+  T.Hint := Format('%g to %g', [Binds[AIndex].Min, Binds[AIndex].Max]);
+  T.ShowHint := True;
+  FSliders[AIndex] := T;
 end;
 
 
@@ -1302,7 +1412,7 @@ begin
     mkInt:
       if C is TSpinEdit then TSpinEdit(C).Value := D.AsInt(B.Path)
       else if C is TEdit then TEdit(C).Text := IntToStr(D.AsInt(B.Path));
-    mkFloat:
+    mkFloat, mkRange:
       if C is TEdit then
       begin
         { A scalar field may meet an array -- some files give DebugFlag or a
@@ -1321,6 +1431,7 @@ begin
   end;
 
   FLoaded[AIndex] := ControlText(C);
+  ShowSlider(AIndex);
 end;
 
 procedure TfmMain.SaveBinding(AIndex: Integer);
@@ -1378,7 +1489,7 @@ begin
         else if TryStrToFloat(Trim(TEdit(C).Text), V, Fs) then
           D.SetInt(B.Path, Round(V));
       end;
-    mkFloat:
+    mkFloat, mkRange:
       if C is TEdit then
       begin
         { An emptied field removes the key rather than writing a zero, because
@@ -1454,6 +1565,11 @@ begin
     C.Visible := InMode;
     if InMode then
       C.Enabled := ConditionHolds(DocFor(B.EnableIf), B.EnableIf);
+    if FSliders[i] <> nil then
+    begin
+      FSliders[i].Visible := InMode;
+      FSliders[i].Enabled := C.Enabled;
+    end;
     if FLabels[i] <> nil then
     begin
       FLabels[i].Visible := InMode;
@@ -1531,6 +1647,64 @@ begin
   BindChanged(Sender);
 end;
 
+{ Slider to edit.  The value is quantised to the notch, which is the point:
+  what the slider shows and what the edit says are the same number. }
+procedure TfmMain.SliderChanged(Sender: TObject);
+var
+  i: Integer;
+  B: TMcxBind;
+  V: Double;
+  Fs: TFormatSettings;
+begin
+  if FLoading > 0 then Exit;
+  if not (Sender is TTrackBar) then Exit;
+  i := TTrackBar(Sender).Tag;
+  if (i < 0) or (i > High(Binds)) then Exit;
+  if FSliders[i] <> Sender then Exit;
+
+  B := Binds[i];
+  V := B.Min + (B.Max - B.Min) * TTrackBar(Sender).Position / SliderSteps;
+  Fs := DefaultFormatSettings;
+  Fs.DecimalSeparator := '.';
+  if FBound[i] is TEdit then
+    TEdit(FBound[i]).Text := FloatToStrF(V, ffGeneral, 6, 0, Fs);
+  CommitBinding(i);
+end;
+
+{ Edit to slider.  Called after a load and after a typed value, so dragging
+  never starts from a stale position.  Out-of-range values park the slider at
+  the near end rather than being clamped: the file said what it said, and the
+  edit box is still showing it. }
+procedure TfmMain.ShowSlider(AIndex: Integer);
+var
+  B: TMcxBind;
+  V: Double;
+  P: Integer;
+  Fs: TFormatSettings;
+begin
+  if FSliders[AIndex] = nil then Exit;
+  B := Binds[AIndex];
+  if B.Max <= B.Min then Exit;
+  Fs := DefaultFormatSettings;
+  Fs.DecimalSeparator := '.';
+  if not ((FBound[AIndex] is TEdit) and
+          TryStrToFloat(Trim(TEdit(FBound[AIndex]).Text), V, Fs)) then
+    V := B.Min;
+  P := Round((V - B.Min) / (B.Max - B.Min) * SliderSteps);
+  FSliders[AIndex].Position := EnsureRange(P, 0, SliderSteps);
+end;
+
+{ What every edit to a setting has to do, whoever made it. }
+procedure TfmMain.CommitBinding(AIndex: Integer);
+begin
+  SaveBinding(AIndex);
+  { One sweep handles every dependent: cheap at forty rows, and it means a
+    dependency is a table entry rather than another branch in a handler. }
+  ApplyBindingStates;
+  UpdateTitle;
+  SchedulePreview;
+end;
+
 procedure TfmMain.BindChanged(Sender: TObject);
 var
   i: Integer;
@@ -1541,12 +1715,14 @@ begin
   if (i < 0) or (i > High(Binds)) then Exit;
   if FBound[i] <> Sender then Exit;
 
-  SaveBinding(i);
-  { One sweep handles every dependent: cheap at forty rows, and it means a
-    dependency is a table entry rather than another branch in a handler. }
-  ApplyBindingStates;
-  UpdateTitle;
-  SchedulePreview;
+  { A typed value moves the slider, not the other way round. }
+  Inc(FLoading);
+  try
+    ShowSlider(i);
+  finally
+    Dec(FLoading);
+  end;
+  CommitBinding(i);
 end;
 
 { --------------------------------------------------------------- preview -- }

@@ -26,7 +26,13 @@ uses
 
 type
   { Which editor a setting gets, and how its text is turned back into JSON. }
-  TMcxKind = (mkBool, mkInt, mkFloat, mkText, mkChoice, mkFlags,
+  { mkRange is mkFloat with both ends known, and the only difference it makes
+    is in the form: the binder puts a slider beside the edit box.  It is a
+    kind of its own rather than "mkFloat that happens to have Min and Max"
+    because Min and Max already mean something else for mkVec -- how many
+    elements -- and because a bound is not the same claim as a bound worth
+    dragging.  Photons stops at a billion and would be useless on a slider. }
+  TMcxKind = (mkBool, mkInt, mkFloat, mkRange, mkText, mkChoice, mkFlags,
               mkVec, mkTable, mkFile, mkCustom);
 
   { The wizard shows a strict subset of the expert form, so a field carries the
@@ -116,12 +122,12 @@ const
      Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:ChoiceMediaFormat; EnableIf:''),
 
     { -- Forward ----------------------------------------------------------- }
-    (Ctl:'edT0'; Path:'Forward.T0'; Kind:mkFloat; Level:mlWizard;
-     Backends:[]; Domains:[]; Min:0; Max:1; Choices:''; EnableIf:''),
-    (Ctl:'edT1'; Path:'Forward.T1'; Kind:mkFloat; Level:mlWizard;
-     Backends:[]; Domains:[]; Min:0; Max:1; Choices:''; EnableIf:''),
-    (Ctl:'edDt'; Path:'Forward.Dt'; Kind:mkFloat; Level:mlWizard;
-     Backends:[]; Domains:[]; Min:0; Max:1; Choices:''; EnableIf:''),
+    (Ctl:'edT0'; Path:'Forward.T0'; Kind:mkRange; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:1e-7; Choices:''; EnableIf:''),
+    (Ctl:'edT1'; Path:'Forward.T1'; Kind:mkRange; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:1e-7; Choices:''; EnableIf:''),
+    (Ctl:'edDt'; Path:'Forward.Dt'; Kind:mkRange; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:1e-7; Choices:''; EnableIf:''),
 
     { -- Session ----------------------------------------------------------- }
     (Ctl:'edSessionID'; Path:'Session.ID'; Kind:mkText; Level:mlWizard;
@@ -177,7 +183,7 @@ const
     (Ctl:'edSrcFreq'; Path:'Optode.Source.Frequency'; Kind:mkFloat; Level:mlExpert;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
     (Ctl:'edSrcNum'; Path:'Optode.Source.SrcNum'; Kind:mkInt; Level:mlExpert;
-     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+     Backends:[]; Domains:[]; Min:1; Max:0; Choices:''; EnableIf:''),
     (Ctl:'edSrcWavelen'; Path:'Optode.Source.WaveLength'; Kind:mkFloat; Level:mlExpert;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
 
@@ -188,7 +194,7 @@ const
      Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:1; Max:0; Choices:'';
      EnableIf:'Session.DoAutoThread=0'),
     (Ctl:'edBlock'; Path:'@run.nblock'; Kind:mkInt; Level:mlExpert;
-     Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:1; Max:0; Choices:'';
+     Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:1; Max:1024; Choices:'';
      EnableIf:'Session.DoAutoThread=0'),
     (Ctl:'edWorkload'; Path:'@run.workload'; Kind:mkText; Level:mlExpert;
      Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
