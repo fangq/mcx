@@ -1,0 +1,52 @@
+object fmMain: TfmMain
+  Left = 300
+  Height = 700
+  Top = 150
+  Width = 1060
+  Caption = 'MCX Studio'
+  OnCreate = FormCreate
+  Position = poScreenCenter
+  LCLVersion = '2.2.0.4'
+  object tbMain: TToolBar
+    Left = 0
+    Height = 26
+    Top = 0
+    Width = 1060
+    AutoSize = True
+    ButtonHeight = 24
+    ButtonWidth = 24
+    Caption = 'tbMain'
+    EdgeBorders = [ebBottom]
+    Images = ilIcons
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 0
+  end
+  object sbMain: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 677
+    Width = 1060
+    Panels = <    
+      item
+        Text = 'Ready'
+        Width = 260
+      end    
+      item
+        Width = 200
+      end    
+      item
+        Width = 200
+      end>
+    SimplePanel = False
+  end
+  object ilIcons: TImageList
+    left = 40
+    top = 64
+  end
+  object alMain: TActionList
+    Images = ilIcons
+    left = 104
+    top = 64
+  end
+end
