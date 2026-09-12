@@ -29,8 +29,12 @@ type
     Sections table rather than placed, so the two cannot drift apart. }
   TMcxNavItem = record
     Section: Integer;
-    Box: TGroupBox;
+    Box: TPanel;
     Btn: TSpeedButton;
+    { The card's own caption.  A card is a panel, so the heading is a label
+      the navigator puts there rather than a frame property -- which is also
+      why colouring it no longer touches anything else on the card. }
+    Cap: TLabel;
   end;
 
   { TfmMain }
@@ -102,23 +106,23 @@ type
     pgCompute: TPanel;
     pgAdvanced: TPanel;
 
-    gbEngine: TGroupBox;
-    gbGrid: TGroupBox;
-    gbVolume: TGroupBox;
-    gbMedia: TGroupBox;
-    gbShapeList: TGroupBox;
-    gbSource: TGroupBox;
-    gbSrcAdv: TGroupBox;
-    gbDetector: TGroupBox;
-    gbBasic: TGroupBox;
-    gbTime: TGroupBox;
-    gbOutput: TGroupBox;
-    gbSwitches: TGroupBox;
-    gbDetPhoton: TGroupBox;
-    gbGPU: TGroupBox;
-    gbDevices: TGroupBox;
-    gbBoundary: TGroupBox;
-    gbFlags: TGroupBox;
+    gbEngine: TPanel;
+    gbGrid: TPanel;
+    gbVolume: TPanel;
+    gbMedia: TPanel;
+    gbShapeList: TPanel;
+    gbSource: TPanel;
+    gbSrcAdv: TPanel;
+    gbDetector: TPanel;
+    gbBasic: TPanel;
+    gbTime: TPanel;
+    gbOutput: TPanel;
+    gbSwitches: TPanel;
+    gbDetPhoton: TPanel;
+    gbGPU: TPanel;
+    gbDevices: TPanel;
+    gbBoundary: TPanel;
+    gbFlags: TPanel;
 
     { The editors that are not written yet say so, rather than leaving a
       group box that looks broken. }
@@ -273,7 +277,7 @@ type
       box the wizard has emptied has to take its heading and its navigator
       entry with it rather than stand there as an empty frame. }
     FRows: array of TPanel;
-    FGroups: array of TGroupBox;
+    FGroups: array of TPanel;
     FRowList: array of TPanel;
     FLoading: Integer;
     FMissing: TStringList;
@@ -306,7 +310,7 @@ type
     procedure ApplyBindingStates;
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
-    procedure ScrollToGroup(ABox: TGroupBox);
+    procedure ScrollToGroup(ABox: TPanel);
     function  FirstSubOf(ASection: Integer): Integer;
     procedure SelectSub(AIndex: Integer);
     procedure UpdateNavState;
@@ -497,34 +501,6 @@ type
   ParentColor: a TPanel honours ParentColor, but a radio or check group asks
   the widget set for its own background whatever ParentColor says, and left
   alone the two of them sat on a tinted card as pale rectangles. }
-type
-  { ParentFont is protected in TControl, like Color and ParentColor. }
-  TFontAccess = class(TControl);
-
-{ Stops a card's children inheriting its font, so the caption can be coloured
-  on its own.
-
-  It has to be ParentFont rather than a colour: setting Font.Color to
-  clDefault leaves ParentFont alone, and a label with ParentFont still takes
-  the group box's colour -- which put every caption on the highlighted card
-  in the selection colour along with its title.
-
-  Clearing ParentFont copies the font the child has right now, and at the
-  moment this runs that is the default one, Height and Size still zero.  That
-  matters because zero is what mcxdpi's startup sweep keys on when it decides
-  a font must not be scaled twice. }
-procedure PinFontColour(C: TWinControl);
-var
-  i: Integer;
-begin
-  for i := 0 to C.ControlCount - 1 do
-  begin
-    TFontAccess(C.Controls[i]).ParentFont := False;
-    if C.Controls[i] is TWinControl then
-      PinFontColour(TWinControl(C.Controls[i]));
-  end;
-end;
-
 procedure PaintCard(C: TWinControl; AColor: TColor);
 var
   i: Integer;
@@ -576,6 +552,8 @@ var
   s, g: Integer;
   Names: TStringList;
   C: TComponent;
+  Card: TPanel;
+  Cap: TLabel;
   B: TSpeedButton;
 begin
   SetLength(FSubs, 0);
@@ -589,14 +567,15 @@ begin
       for g := 0 to Names.Count - 1 do
       begin
         C := FindComponent(Names[g]);
-        if not (C is TGroupBox) then
+        if not (C is TPanel) then
         begin
-          { The table naming a group box the form does not have is the same
-            kind of drift the binding table guards against, so it is reported
-            the same way rather than silently skipped. }
-          FMissing.Add(Names[g] + '  ->  no group box on ' + FPages[s].Name);
+          { The table naming a card the form does not have is the same kind
+            of drift the binding table guards against, so it is reported the
+            same way rather than silently skipped. }
+          FMissing.Add(Names[g] + '  ->  no card on ' + FPages[s].Name);
           Continue;
         end;
+        Card := TPanel(C);
 
         B := TSpeedButton.Create(Self);
         B.Parent := FBodies[s];
@@ -612,7 +591,7 @@ begin
           set, and Margin is also what indents a subsection under its section. }
         B.Alignment := taLeftJustify;
         B.AllowAllUp := True;
-        B.Caption := TGroupBox(C).Caption;
+        B.Caption := Card.Caption;
         B.Flat := True;
         B.GroupIndex := 2;
         B.Layout := blGlyphLeft;
@@ -627,18 +606,33 @@ begin
 
         SetLength(FSubs, Length(FSubs) + 1);
         FSubs[High(FSubs)].Section := s;
-        FSubs[High(FSubs)].Box := TGroupBox(C);
+        FSubs[High(FSubs)].Box := Card;
         FSubs[High(FSubs)].Btn := B;
 
-        { A card: flat, filled, no bevel of its own -- the frame the widget
-          set draws is a hairline, and the fill is what separates one group
-          of settings from the next.  UpdateNavState gives it its colour.
+        { The heading moves off the panel and onto a label of its own.
 
-          Pinning each control's font colour here is what lets the card's
-          caption be coloured later: a group box hands its font down to every
-          child that still has ParentFont, so colouring the caption would
-          otherwise colour every label and check box on the card with it. }
-        PinFontColour(TGroupBox(C));
+          A card is a flat filled surface, and TGroupBox cannot be one: on
+          gtk2 it is a GtkFrame, so the etched line around it comes from the
+          widget set rather than from any property.  A TPanel with BevelOuter
+          off has no line -- but it centres its Caption, and a caption that
+          belongs to the panel is also inherited by every control on it, so
+          colouring it would colour the whole card's text.  A label answers
+          both: it sits at the top left and it is the only thing that
+          changes when the card is selected.
+
+          Top before Align, for the same reason the navigator's buttons need
+          it: alTop children are ordered by the Top they have when they are
+          aligned, and every row on the card already starts at zero. }
+        Cap := TLabel.Create(Self);
+        Cap.Parent := Card;
+        Cap.Top := -1;
+        Cap.Align := alTop;
+        Cap.BorderSpacing.Bottom := 4;
+        Cap.Caption := Card.Caption;
+        Cap.ParentFont := False;
+        Cap.Font.Style := [fsBold];
+        Card.Caption := '';
+        FSubs[High(FSubs)].Cap := Cap;
       end;
     end;
   finally
@@ -677,7 +671,7 @@ end;
 { Scrolls ABox to the top of the detail pane.  The offset is summed up the
   parent chain rather than read from ABox.Top, because a group box's Top is
   relative to its page, not to the scroll box. }
-procedure TfmMain.ScrollToGroup(ABox: TGroupBox);
+procedure TfmMain.ScrollToGroup(ABox: TPanel);
 var
   C: TControl;
   Offset: Integer;
@@ -768,18 +762,16 @@ begin
       FSubs[i].Btn.Font.Color := clDefault;
 
     { The card the title points at is held highlighted for as long as it is
-      the selected one, and its own caption goes with it.  Every control on
-      the card had its colour pinned when the navigator was built, so this
-      reaches the caption and nothing else. }
+      the selected one, and its own heading goes with it. }
     if i = FSub then
     begin
       PaintCard(FSubs[i].Box, McxBlend(clBtnFace, clHighlight, CardActive));
-      FSubs[i].Box.Font.Color := McxBlend(clWindowText, clHighlight, 80);
+      FSubs[i].Cap.Font.Color := McxBlend(clWindowText, clHighlight, 80);
     end
     else
     begin
       PaintCard(FSubs[i].Box, McxBlend(clBtnFace, clWindowText, CardLevel));
-      FSubs[i].Box.Font.Color := clDefault;
+      FSubs[i].Cap.Font.Color := clDefault;
     end;
   end;
 end;
@@ -1180,8 +1172,9 @@ begin
     P := FBound[i].Parent;
     while (P <> nil) and (FGroups[i] = nil) do
     begin
-      { A row panel is recognised by its name rather than by a flag, which
-        keeps the designer the only place a row is declared. }
+      { A row panel and the card around it are both plain panels, so each is
+        recognised by its name prefix rather than by its class -- which keeps
+        the designer the only place either one is declared. }
       if (FRows[i] = nil) and (P is TPanel) and
          (Copy(P.Name, 1, 2) = 'rw') then
       begin
@@ -1193,7 +1186,8 @@ begin
           FRowList[High(FRowList)] := FRows[i];
         end;
       end;
-      if P is TGroupBox then FGroups[i] := TGroupBox(P);
+      if (P is TPanel) and (Copy(P.Name, 1, 2) = 'gb') then
+        FGroups[i] := TPanel(P);
       P := P.Parent;
     end;
     { Tag carries the row index, so the shared handler resolves its binding in

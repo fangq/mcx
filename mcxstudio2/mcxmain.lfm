@@ -588,12 +588,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbEngine: TGroupBox
+        object gbEngine: TPanel
           Left = 8
           Height = 114
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Engine and domain'
@@ -648,12 +649,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbGrid: TGroupBox
+        object gbGrid: TPanel
           Left = 8
           Height = 114
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Volume grid'
@@ -731,12 +733,13 @@ object fmMain: TfmMain
             TabOrder = 2
           end
         end
-        object gbVolume: TGroupBox
+        object gbVolume: TPanel
           Left = 8
           Height = 90
           Top = 130
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Volume data'
@@ -806,12 +809,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbMedia: TGroupBox
+        object gbMedia: TPanel
           Left = 8
           Height = 64
           Top = 236
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Optical properties'
@@ -845,12 +849,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbShapeList: TGroupBox
+        object gbShapeList: TPanel
           Left = 8
           Height = 64
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Shape list'
@@ -884,12 +889,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbSource: TGroupBox
+        object gbSource: TPanel
           Left = 8
           Height = 180
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Light source'
@@ -1049,12 +1055,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbSrcAdv: TGroupBox
+        object gbSrcAdv: TPanel
           Left = 8
           Height = 120
           Top = 196
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Modulation and multi-source'
@@ -1152,12 +1159,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbDetector: TGroupBox
+        object gbDetector: TPanel
           Left = 8
           Height = 64
           Top = 332
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Detectors'
@@ -1191,12 +1199,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbBasic: TGroupBox
+        object gbBasic: TPanel
           Left = 8
           Height = 120
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Basic settings'
@@ -1294,12 +1303,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbTime: TGroupBox
+        object gbTime: TPanel
           Left = 8
           Height = 120
           Top = 136
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Time gates'
@@ -1397,12 +1407,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbOutput: TGroupBox
+        object gbOutput: TPanel
           Left = 8
           Height = 132
           Top = 272
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Output'
@@ -1489,12 +1500,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbSwitches: TGroupBox
+        object gbSwitches: TPanel
           Left = 8
           Height = 102
           Top = 420
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Switches'
@@ -1589,12 +1601,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbDetPhoton: TGroupBox
+        object gbDetPhoton: TPanel
           Left = 8
           Height = 216
           Top = 538
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Save detected photon'
@@ -1701,12 +1714,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbGPU: TGroupBox
+        object gbGPU: TPanel
           Left = 8
           Height = 144
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'GPU configuration'
@@ -1814,12 +1828,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbDevices: TGroupBox
+        object gbDevices: TPanel
           Left = 8
           Height = 64
           Top = 160
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Devices'
@@ -1853,12 +1868,13 @@ object fmMain: TfmMain
         ClientWidth = 542
         TabOrder = 0
         Visible = False
-        object gbBoundary: TGroupBox
+        object gbBoundary: TPanel
           Left = 8
           Height = 60
           Top = 0
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Boundary conditions'
@@ -1896,12 +1912,13 @@ object fmMain: TfmMain
             end
           end
         end
-        object gbFlags: TGroupBox
+        object gbFlags: TPanel
           Left = 8
           Height = 124
           Top = 76
           Width = 526
           Align = alTop
+          BevelOuter = bvNone
           AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Additional flags'
