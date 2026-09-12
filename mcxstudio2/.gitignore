@@ -5,3 +5,4 @@
 *.lps
 *.compiled
 *.or
+/tests/mcxdoctest

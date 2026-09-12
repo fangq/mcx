@@ -12,7 +12,7 @@ PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
 LAZFLAGS   = --pcp=$(PCP) --ws=$(WIDGETSET)
 
-.PHONY: all debug icons clean distclean res
+.PHONY: all debug icons test clean distclean res
 
 all:
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(BINARY).lpi
@@ -29,8 +29,14 @@ res:
 icons: all
 	./bin/$(BINARY) --dump-icons icons.png
 
+# The document tests link mcxdoc alone -- no LCL, no widgetset, no display --
+# so they run anywhere, including CI without an X server.
+test:
+	fpc -Mobjfpc -Fu. -FEtests -otests/mcxdoctest tests/mcxdoctest.lpr
+	./tests/mcxdoctest ../example
+
 clean:
-	rm -rf lib bin
+	rm -rf lib bin tests/*.o tests/*.ppu tests/mcxdoctest
 
 distclean: clean
 	rm -rf $(PCP) icons.png
