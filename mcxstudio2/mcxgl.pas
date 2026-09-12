@@ -99,6 +99,12 @@ type
     procedure Clear;
     procedure Add(const A, B, AColour: TMcxVec3);
     procedure AddBox(const AMin, AMax, AColour: TMcxVec3);
+    procedure AddCircle(const ACentre, AU, AV: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3);
+    procedure AddSphere(const ACentre: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3);
+    procedure AddCylinder(const AC0, AC1: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3);
     procedure Draw;
     property Count: Integer read FCount;
   end;
@@ -471,6 +477,77 @@ begin
   Edge(AMax.x, AMin.y, AMin.z, AMax.x, AMin.y, AMax.z);
   Edge(AMin.x, AMax.y, AMin.z, AMin.x, AMax.y, AMax.z);
   Edge(AMax.x, AMax.y, AMin.z, AMax.x, AMax.y, AMax.z);
+end;
+
+{ A circle in the plane spanned by AU and AV, which are assumed unit and
+  perpendicular. }
+procedure TMcxLines.AddCircle(const ACentre, AU, AV: TMcxVec3;
+  ARadius: Single; const AColour: TMcxVec3);
+const
+  Segments = 48;
+var
+  i: Integer;
+  a, b: Single;
+  P, Q: TMcxVec3;
+begin
+  for i := 0 to Segments - 1 do
+  begin
+    a := 2 * Pi * i / Segments;
+    b := 2 * Pi * (i + 1) / Segments;
+    P := McxVec3(ACentre.x + ARadius * (Cos(a) * AU.x + Sin(a) * AV.x),
+                 ACentre.y + ARadius * (Cos(a) * AU.y + Sin(a) * AV.y),
+                 ACentre.z + ARadius * (Cos(a) * AU.z + Sin(a) * AV.z));
+    Q := McxVec3(ACentre.x + ARadius * (Cos(b) * AU.x + Sin(b) * AV.x),
+                 ACentre.y + ARadius * (Cos(b) * AU.y + Sin(b) * AV.y),
+                 ACentre.z + ARadius * (Cos(b) * AU.z + Sin(b) * AV.z));
+    Add(P, Q, AColour);
+  end;
+end;
+
+{ Three great circles.  A wireframe sphere rather than a tessellated one:
+  what a preview has to answer is where it is and how big, and three rings
+  say that with 144 segments instead of a few thousand triangles. }
+procedure TMcxLines.AddSphere(const ACentre: TMcxVec3; ARadius: Single;
+  const AColour: TMcxVec3);
+begin
+  AddCircle(ACentre, McxVec3(1, 0, 0), McxVec3(0, 1, 0), ARadius, AColour);
+  AddCircle(ACentre, McxVec3(1, 0, 0), McxVec3(0, 0, 1), ARadius, AColour);
+  AddCircle(ACentre, McxVec3(0, 1, 0), McxVec3(0, 0, 1), ARadius, AColour);
+end;
+
+procedure TMcxLines.AddCylinder(const AC0, AC1: TMcxVec3; ARadius: Single;
+  const AColour: TMcxVec3);
+var
+  Axis, U, V, Ref: TMcxVec3;
+  i: Integer;
+  a: Single;
+  P, Q: TMcxVec3;
+begin
+  Axis := McxVec3Norm(McxVec3Sub(AC1, AC0));
+  if (Axis.x = 0) and (Axis.y = 0) and (Axis.z = 0) then Exit;
+
+  { Any vector not parallel to the axis will do to start the basis off; x
+    unless the axis is x, in which case z. }
+  if Abs(Axis.x) > 0.9 then Ref := McxVec3(0, 0, 1) else Ref := McxVec3(1, 0, 0);
+  U := McxVec3Norm(McxVec3Cross(Axis, Ref));
+  V := McxVec3Cross(Axis, U);
+
+  AddCircle(AC0, U, V, ARadius, AColour);
+  AddCircle(AC1, U, V, ARadius, AColour);
+
+  { Four rules along the side, so the shape reads as a tube rather than as
+    two loose rings. }
+  for i := 0 to 3 do
+  begin
+    a := Pi * i / 2;
+    P := McxVec3(AC0.x + ARadius * (Cos(a) * U.x + Sin(a) * V.x),
+                 AC0.y + ARadius * (Cos(a) * U.y + Sin(a) * V.y),
+                 AC0.z + ARadius * (Cos(a) * U.z + Sin(a) * V.z));
+    Q := McxVec3(AC1.x + ARadius * (Cos(a) * U.x + Sin(a) * V.x),
+                 AC1.y + ARadius * (Cos(a) * U.y + Sin(a) * V.y),
+                 AC1.z + ARadius * (Cos(a) * U.z + Sin(a) * V.z));
+    Add(P, Q, AColour);
+  end;
 end;
 
 procedure TMcxLines.Draw;

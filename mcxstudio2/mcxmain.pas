@@ -359,6 +359,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure GLMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure AddShapes;
     procedure RebuildScene;
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
@@ -1293,6 +1294,181 @@ begin
   Handled := True;
 end;
 
+{ Draws the Shapes list.
+
+  Shapes is a sequence of commands rather than a set of objects: each one
+  paints into the grid over whatever came before, and an Origin command moves
+  the frame for everything after it.  So this walks the array in order and
+  keeps the running origin, which is also why the drawing has to be in the
+  same order -- two boxes at the same place are the second one.
+
+  Colour comes from Tag, the medium a shape assigns, so two regions of the
+  same material look the same.  UpperSpace is deliberately absent: a
+  half-space has no outline to draw, and a big translucent plane across the
+  domain would hide what it is meant to explain. }
+procedure TfmMain.AddShapes;
+const
+  { One colour per medium, wrapping.  Distinct at a glance rather than a
+    gradient: the tags are names, not amounts. }
+  TagColours: array[0..7] of array[0..2] of Single = (
+    (0.60, 0.62, 0.66), (0.35, 0.70, 0.95), (0.95, 0.55, 0.30),
+    (0.45, 0.85, 0.45), (0.90, 0.45, 0.75), (0.95, 0.85, 0.35),
+    (0.55, 0.50, 0.90), (0.40, 0.85, 0.80));
+var
+  Shapes: TJSONData;
+  i: Integer;
+  Origin: TMcxVec3;
+
+  function Colour(ATag: Integer): TMcxVec3;
+  begin
+    if ATag < 0 then ATag := 0;
+    ATag := ATag mod Length(TagColours);
+    Result := McxVec3(TagColours[ATag][0], TagColours[ATag][1],
+      TagColours[ATag][2]);
+  end;
+
+  { A triplet from a shape's field, offset by the running origin. }
+  function Triplet(AObj: TJSONData; const AName: string;
+    AOffset: Boolean = True): TMcxVec3;
+  var
+    A: TJSONData;
+  begin
+    Result := McxVec3(0, 0, 0);
+    if AObj = nil then Exit;
+    A := AObj.FindPath(AName);
+    if (A = nil) or (A.JSONType <> jtArray) or (A.Count < 3) then Exit;
+    Result := McxVec3(A.Items[0].AsFloat, A.Items[1].AsFloat,
+      A.Items[2].AsFloat);
+    if AOffset then
+      Result := McxVec3(Result.x + Origin.x, Result.y + Origin.y,
+        Result.z + Origin.z);
+  end;
+
+  function Number(AObj: TJSONData; const AName: string; ADef: Single): Single;
+  var
+    V: TJSONData;
+  begin
+    Result := ADef;
+    if AObj = nil then Exit;
+    V := AObj.FindPath(AName);
+    if (V <> nil) and (V.JSONType = jtNumber) then Result := V.AsFloat;
+  end;
+
+  function Tag(AObj: TJSONData): Integer;
+  begin
+    Result := Round(Number(AObj, 'Tag', 1));
+  end;
+
+  { A slab or layer is a pair or triple of bounds along one axis; it is drawn
+    as the two faces it cuts the domain with. }
+  procedure Slab(AAxis: Integer; ALo, AHi: Single; const AColour: TMcxVec3);
+  var
+    Lo, Hi: TMcxVec3;
+    dx, dy, dz: Single;
+  begin
+    dx := FDoc.AsInt('Domain.Dim[0]', 60);
+    dy := FDoc.AsInt('Domain.Dim[1]', 60);
+    dz := FDoc.AsInt('Domain.Dim[2]', 60);
+    case AAxis of
+      0: begin Lo := McxVec3(ALo, 0, 0); Hi := McxVec3(AHi, dy, dz); end;
+      1: begin Lo := McxVec3(0, ALo, 0); Hi := McxVec3(dx, AHi, dz); end;
+    else
+      begin Lo := McxVec3(0, 0, ALo); Hi := McxVec3(dx, dy, AHi); end;
+    end;
+    FLines.AddBox(Lo, Hi, AColour);
+  end;
+
+  procedure Bands(AObj: TJSONData; AAxis: Integer; AWithTag: Boolean;
+    ADefTag: Integer);
+  var
+    j: Integer;
+    Row: TJSONData;
+    T: Integer;
+  begin
+    if (AObj = nil) or (AObj.JSONType <> jtArray) then Exit;
+    for j := 0 to AObj.Count - 1 do
+    begin
+      Row := AObj.Items[j];
+      if (Row = nil) or (Row.JSONType <> jtArray) or (Row.Count < 2) then Continue;
+      T := ADefTag;
+      if AWithTag and (Row.Count >= 3) then T := Round(Row.Items[2].AsFloat);
+      Slab(AAxis, Row.Items[0].AsFloat + Origin.x, Row.Items[1].AsFloat + Origin.x,
+        Colour(T));
+    end;
+  end;
+
+var
+  Cmd, Obj, Bound: TJSONData;
+  Verb: string;
+  O, Size, C0, C1: TMcxVec3;
+begin
+  Shapes := FDoc.Find('Shapes');
+  if (Shapes = nil) or (Shapes.JSONType <> jtArray) then Exit;
+  Origin := McxVec3(0, 0, 0);
+
+  for i := 0 to Shapes.Count - 1 do
+  begin
+    Cmd := Shapes.Items[i];
+    if (Cmd = nil) or (Cmd.JSONType <> jtObject) or (Cmd.Count < 1) then Continue;
+    Verb := TJSONObject(Cmd).Names[0];
+    Obj := TJSONObject(Cmd).Items[0];
+
+    if SameText(Verb, 'Origin') then
+    begin
+      Origin := Triplet(Cmd, 'Origin', False);
+      Continue;
+    end;
+    if SameText(Verb, 'Name') then Continue;
+
+    if SameText(Verb, 'Grid') or SameText(Verb, 'Subgrid') or
+       SameText(Verb, 'SubGrid') then
+    begin
+      O := Triplet(Obj, 'O');
+      Size := Triplet(Obj, 'Size', False);
+      { A Grid has no O: it replaces the whole background. }
+      if SameText(Verb, 'Grid') then O := Origin;
+      FLines.AddBox(O, McxVec3(O.x + Size.x, O.y + Size.y, O.z + Size.z),
+        Colour(Tag(Obj)));
+    end
+    else if SameText(Verb, 'Box') then
+    begin
+      O := Triplet(Obj, 'O');
+      Size := Triplet(Obj, 'Size', False);
+      FLines.AddBox(O, McxVec3(O.x + Size.x, O.y + Size.y, O.z + Size.z),
+        Colour(Tag(Obj)));
+    end
+    else if SameText(Verb, 'Sphere') then
+    begin
+      { The documentation calls the centre C0 and the schema calls it O, and
+        real files use both. }
+      O := Triplet(Obj, 'O');
+      if (Obj <> nil) and (Obj.FindPath('O') = nil) then O := Triplet(Obj, 'C0');
+      FLines.AddSphere(O, Number(Obj, 'R', 1), Colour(Tag(Obj)));
+    end
+    else if SameText(Verb, 'Cylinder') then
+    begin
+      C0 := Triplet(Obj, 'C0');
+      C1 := Triplet(Obj, 'C1');
+      FLines.AddCylinder(C0, C1, Number(Obj, 'R', 1), Colour(Tag(Obj)));
+    end
+    else if SameText(Verb, 'XLayers') then Bands(Obj, 0, True, 1)
+    else if SameText(Verb, 'YLayers') then Bands(Obj, 1, True, 1)
+    else if SameText(Verb, 'ZLayers') then Bands(Obj, 2, True, 1)
+    else if SameText(Verb, 'XSlabs') or SameText(Verb, 'YSlabs') or
+            SameText(Verb, 'ZSlabs') then
+    begin
+      Bound := nil;
+      if Obj <> nil then Bound := Obj.FindPath('Bound');
+      case UpCase(Verb[1]) of
+        'X': Bands(Bound, 0, False, Tag(Obj));
+        'Y': Bands(Bound, 1, False, Tag(Obj));
+      else
+        Bands(Bound, 2, False, Tag(Obj));
+      end;
+    end;
+  end;
+end;
+
 { Builds the wireframe from the document: the domain box, a floor grid, the
   three axes and where the source sits.
 
@@ -1349,6 +1525,8 @@ begin
   FLines.Add(McxVec3(0, 0, 0), McxVec3(Axis, 0, 0), McxVec3(0.90, 0.30, 0.25));
   FLines.Add(McxVec3(0, 0, 0), McxVec3(0, Axis, 0), McxVec3(0.35, 0.75, 0.35));
   FLines.Add(McxVec3(0, 0, 0), McxVec3(0, 0, Axis), McxVec3(0.35, 0.55, 0.95));
+
+  AddShapes;
 
   { The source, as a cross at its position.  Drawn from the document rather
     than from the form, so it is right whether the value was typed or came
