@@ -55,6 +55,9 @@
     </RunParams>
     <RequiredPackages>
       <Item>
+        <PackageName Value="anchordocking"/>
+      </Item>
+      <Item>
         <PackageName Value="LazOpenGLContext"/>
       </Item>
       <Item>

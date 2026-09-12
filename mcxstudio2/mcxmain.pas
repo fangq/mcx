@@ -21,16 +21,13 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
+  AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
   mcxdpi, mcxicons, mcxdoc;
 
 type
   { One navigator entry below a section header: the group box on the detail
     page it points at, and the button that points there.  Built from the
     Sections table rather than placed, so the two cannot drift apart. }
-  { Where the preview panel lives.  Right and bottom are both inside the main
-    window; float is a window of its own. }
-  TMcxDockSite = (dsRight, dsBottom, dsFloat);
-
   { One set of alTop siblings and the order they belong in. }
   TMcxStack = record
     Parent: TWinControl;
@@ -59,10 +56,7 @@ type
     acDevices: TAction;
     acToggleMode: TAction;
     acQuit: TAction;
-    acDock: TAction;
-    acDockRight: TAction;
-    acDockBottom: TAction;
-    acDockFloat: TAction;
+    acResetLayout: TAction;
     acAbout: TAction;
     alMain: TActionList;
     dlgOpen: TOpenDialog;
@@ -73,10 +67,6 @@ type
     mmJSON: TMemo;
     mmLog: TMemo;
     pcView: TPageControl;
-    pmDock: TPopupMenu;
-    miDockRight: TMenuItem;
-    miDockBottom: TMenuItem;
-    miDockFloat: TMenuItem;
     pnGL: TPanel;
     pnMain: TPanel;
     pnPreview: TPanel;
@@ -265,6 +255,7 @@ type
     edMinEnergy: TEdit;
 
     procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure acNewExecute(Sender: TObject);
@@ -272,8 +263,7 @@ type
     procedure acSaveExecute(Sender: TObject);
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
-    procedure acDockExecute(Sender: TObject);
-    procedure acDockSiteExecute(Sender: TObject);
+    procedure acResetLayoutExecute(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
@@ -321,19 +311,27 @@ type
     { Every set of alTop siblings the wizard filter can hide something from,
       each in the order it is meant to appear.  See Restack. }
     FStacks: array of TMcxStack;
-    { Where the preview is, where it was last docked so floating it can be
-      undone, the window it floats in, and the size it had at each site so
-      moving away and back does not forget how wide it was. }
-    FDock: TMcxDockSite;
-    FLastDock: TMcxDockSite;
-    FDockHost: TForm;
-    FDockW, FDockH: Integer;
+    { The dock site and the three panes in it.  See BuildDock. }
+    FDockSite: TAnchorDockPanel;
+    FPaneSettings: TForm;
+    FPaneNav: TForm;
+    FPaneView: TForm;
+    FDockRestored: Boolean;
+    FDockSized: Boolean;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
     procedure BuildNav;
-    procedure SetDockSite(ASite: TMcxDockSite);
-    procedure DockHostClose(Sender: TObject; var CloseAction: TCloseAction);
+    function  MakePane(const AName, ACaption: string; AControl: TControl;
+      AWidth, AHeight: Integer): TForm;
+    procedure BuildDock;
+    procedure SizePane(APane: TForm; AAlign: TAlign; AWanted: Integer);
+    procedure ApplyPaneSizes(Data: PtrInt);
+    procedure GuardCentreHeader;
+    procedure DockCreateControl(Sender: TObject; aName: string;
+      var AControl: TControl; DoDisableAutoSizing: boolean);
+    procedure SaveDockLayout;
+    function  LoadDockLayout: Boolean;
     procedure CaptureStacks;
     procedure Restack;
     procedure BindControls;
@@ -458,12 +456,8 @@ begin
   mmCommand.Font.Assign(mmJSON.Font);
   mmLog.Font.Assign(mmJSON.Font);
 
-  { The sizes the designer gave the panel are the ones it goes back to. }
-  FDockW := pnPreview.Width;
-  FDockH := McxScale96(260);
-  FDock := dsRight;
-  FLastDock := dsRight;
-  acDockRight.Checked := True;
+  BuildDock;
+  LoadDockLayout;
 
   NewDocument;
   SelectSection(0);
@@ -488,9 +482,7 @@ end;
 procedure TfmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   CanClose := ConfirmDiscard;
-  { The preview comes home first.  Its window is owned by this form, so
-    closing without docking would free a window still holding the panel. }
-  if CanClose and (FDock = dsFloat) then SetDockSite(FLastDock);
+  if CanClose then SaveDockLayout;
 end;
 
 { The image list ships empty and is drawn here, once, at the display's scale
@@ -515,7 +507,7 @@ begin
   acStop.ImageIndex := McxIconIndex('stop');
   acDevices.ImageIndex := McxIconIndex('gpu');
   acToggleMode.ImageIndex := McxIconIndex('wizard');
-  acDock.ImageIndex := McxIconIndex('fit');
+  acResetLayout.ImageIndex := McxIconIndex('reset');
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
@@ -1114,115 +1106,247 @@ end;
 
 { ------------------------------------------------------------- docking ---- }
 
-{ The preview -- all four pages of it, as one object -- lives in one of three
-  places: down the right, across the bottom, or in a window of its own.
+{ Docking is AnchorDocking's, the package the Lazarus IDE docks itself with
+  and the one led uses.  Drag a pane by its header onto any edge of any other
+  pane, drop it on a tab strip to join that group, drag it to open screen to
+  float it.  None of that is written here; what is written here is where the
+  three panes start and how they come back.
 
-  Moving it is re-parenting and an Align, not LCL docking.  TDockTree and
-  DragKind exist, but they are driven by dragging, which is the part that
-  behaves differently on every widget set, and they dock one control at a
-  time; what wants to move here is the whole notebook.
+  The site is a TAnchorDockPanel filling pnMain rather than the form itself.
+  MakeDockSite(Form) is the other way round and is the wrong one here: it
+  docks panes around whatever the form already contains, so the settings
+  would not be a pane and could never be moved.  With a panel every pane is
+  equal, the middle one included.
 
-  The splitter goes wherever the panel goes.  Its Left or Top has to be set
-  as well as its Align, because aligned siblings are ordered by position:
-  alRight by Left descending, alBottom by Top descending.  Without that, the
-  splitter and the panel swap sides -- and the splitter ends up resizing the
-  wrong neighbour. }
-procedure TfmMain.SetDockSite(ASite: TMcxDockSite);
-var
-  Host: TForm;
+  AnchorDocking docks forms, so each of the three controls is re-parented
+  into a plain host form.  Everything that refers to sbNav, sbDetail or
+  pnPreview elsewhere keeps working: re-parenting changes which control owns
+  the pixels, not which component owns the reference. }
+
+function TfmMain.MakePane(const AName, ACaption: string; AControl: TControl;
+  AWidth, AHeight: Integer): TForm;
 begin
-  { Remember how big it was here before leaving. }
-  if pnPreview.Parent = pnMain then
-    case FDock of
-      dsRight:  FDockW := pnPreview.Width;
-      dsBottom: FDockH := pnPreview.Height;
-    end;
+  Result := TForm.CreateNew(Self);
+  { The Name is how a saved layout finds its pane again, so it has to stay
+    stable across versions -- see DockCreateControl. }
+  Result.Name := AName;
+  Result.Caption := ACaption;
+  { Raw 96-dpi sizes: mcxdpi's form scaler runs over every form as it becomes
+    visible, so scaling here would scale it twice. }
+  Result.Width := AWidth;
+  Result.Height := AHeight;
+  AControl.Parent := Result;
+  AControl.Align := alClient;
+end;
 
-  if (FDock = dsFloat) and (ASite <> dsFloat) and (FDockHost <> nil) then
+procedure TfmMain.BuildDock;
+begin
+  { AnchorDocking brings its own splitters, so the designer's two go. }
+  FreeAndNil(spNav);
+  FreeAndNil(spPreview);
+
+  FDockSite := TAnchorDockPanel.Create(Self);
+  FDockSite.Name := 'McxDockSite';
+  FDockSite.Parent := pnMain;
+  FDockSite.Align := alClient;
+
+  FPaneSettings := MakePane('PaneSettings', 'Settings', sbDetail, 560, 640);
+  FPaneNav := MakePane('PaneSections', 'Sections', sbNav, 340, 640);
+  FPaneView := MakePane('PanePreview', 'Preview', pnPreview, 430, 640);
+
+  DockMaster.OnCreateControl := @DockCreateControl;
+  DockMaster.MakeDockPanel(FDockSite, admrpChild);
+
+  { The middle goes in first, because the other two dock against it. }
+  DockMaster.MakeDockable(FPaneSettings, True, True, False);
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneSettings), FDockSite,
+    alClient);
+
+  DockMaster.MakeDockable(FPaneNav, False, True, True);
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
+  DockMaster.ShowControl(FPaneNav.Name, False);
+
+  DockMaster.MakeDockable(FPaneView, False, True, True);
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite, alRight);
+  DockMaster.ShowControl(FPaneView.Name, False);
+
+  GuardCentreHeader;
+end;
+
+{ The default sizes cannot be applied in FormCreate.
+
+  Nothing is laid out yet at that point -- the dock site measures 170 by 50 --
+  so a splitter has nothing to move and every pane comes out whatever
+  DockAnotherControl guessed.  This runs once the window has been shown and
+  the real geometry exists, and only when no saved layout was restored, since
+  a restored one already carries the sizes the user chose. }
+procedure TfmMain.ApplyPaneSizes(Data: PtrInt);
+begin
+  if FDockRestored then Exit;
+  SizePane(FPaneNav, alLeft, McxScale96(340));
+  SizePane(FPaneView, alRight, McxScale96(430));
+  GuardCentreHeader;
+end;
+
+procedure TfmMain.FormShow(Sender: TObject);
+begin
+  if FDockSized then Exit;
+  FDockSized := True;
+  { After this message, not during it: the form is shown but its children are
+    still settling while OnShow runs. }
+  Application.QueueAsyncCall(@ApplyPaneSizes, 0);
+end;
+
+{ Gives a docked pane the size it should have.
+
+  AnchorDocking sizes a newly docked pane as Min(its own width, half its
+  neighbour's) -- DockAnotherControl -- which on this window means half of
+  everything, so Sections opened 900 pixels wide.  The size is not a property
+  it exposes: a docked site is anchored to a splitter and recomputes its own
+  bounds, so the way to resize it is to move that splitter.
+
+  led hit the same thing and needed 140 lines, because it has several panes on
+  an edge and they have to be fixed outside-in or each takes the space
+  straight back off the last.  With one pane an edge, this is the same idea
+  without the ordering. }
+procedure TfmMain.SizePane(APane: TForm; AAlign: TAlign; AWanted: Integer);
+var
+  Site: TAnchorDockHostSite;
+  Split: TAnchorDockSplitter;
+  Side: TAnchorKind;
+  Have, Delta, Pass: Integer;
+begin
+  if APane = nil then Exit;
+  Site := DockMaster.GetAnchorSite(APane);
+  if (Site = nil) or (Site.Parent = nil) then Exit;
+
+  { Which side the splitter is on: a left pane is anchored to the splitter on
+    its right, a right pane to the one on its left. }
+  case AAlign of
+    alLeft:  Side := akRight;
+    alRight: Side := akLeft;
+    alTop:   Side := akBottom;
+  else
+    Side := akTop;
+  end;
+  if not (Site.AnchorSide[Side].Control is TAnchorDockSplitter) then Exit;
+  Split := TAnchorDockSplitter(Site.AnchorSide[Side].Control);
+
+  { Twice: a splitter only moves as far as the control on its far side will
+    give up at that moment, so the first pass is often short. }
+  for Pass := 1 to 2 do
   begin
-    { Take the panel back before the window that was holding it goes. }
-    Host := FDockHost;
-    FDockHost := nil;
-    pnPreview.Parent := pnMain;
-    spPreview.Visible := True;
-    Host.Close;
+    if AAlign in [alLeft, alRight] then Have := Site.Width else Have := Site.Height;
+    Delta := AWanted - Have;
+    if Delta = 0 then Break;
+    { A left or top pane grows when its splitter moves away from the edge; a
+      right or bottom pane grows when it moves towards it. }
+    if AAlign in [alLeft, alTop] then Split.MoveSplitter(Delta)
+    else Split.MoveSplitter(-Delta);
   end;
-
-  pnMain.DisableAlign;
-  try
-    case ASite of
-      dsRight:
-        begin
-          pnPreview.Align := alRight;
-          pnPreview.Width := FDockW;
-          spPreview.Align := alRight;
-          spPreview.ResizeAnchor := akRight;
-          spPreview.Left := pnMain.ClientWidth - FDockW - spPreview.Width;
-          pnPreview.Left := pnMain.ClientWidth - FDockW;
-        end;
-      dsBottom:
-        begin
-          pnPreview.Align := alBottom;
-          pnPreview.Height := FDockH;
-          spPreview.Align := alBottom;
-          spPreview.ResizeAnchor := akBottom;
-          spPreview.Top := pnMain.ClientHeight - FDockH - spPreview.Height;
-          pnPreview.Top := pnMain.ClientHeight - FDockH;
-        end;
-      dsFloat:
-        if FDockHost = nil then
-        begin
-          FDockHost := TForm.CreateNew(Self);
-          FDockHost.Caption := 'Preview - ' + Caption;
-          { Raw 96-dpi numbers: mcxdpi's form scaler runs over every form as
-            it becomes visible, so scaling here would scale it twice. }
-          FDockHost.Width := 560;
-          FDockHost.Height := 460;
-          FDockHost.Position := poMainFormCenter;
-          FDockHost.OnClose := @DockHostClose;
-          spPreview.Visible := False;
-          pnPreview.Parent := FDockHost;
-          pnPreview.Align := alClient;
-          FDockHost.Show;
-        end;
-    end;
-  finally
-    pnMain.EnableAlign;
-  end;
-
-  if ASite <> dsFloat then FLastDock := ASite;
-  FDock := ASite;
-  acDockRight.Checked := ASite = dsRight;
-  acDockBottom.Checked := ASite = dsBottom;
-  acDockFloat.Checked := ASite = dsFloat;
 end;
 
-{ Closing the preview's own window puts it back where it last was docked,
-  rather than leaving nowhere to see the JSON. }
-procedure TfmMain.DockHostClose(Sender: TObject; var CloseAction: TCloseAction);
-begin
-  CloseAction := caFree;
-  if FDockHost <> Sender then Exit;      { already taken back }
-  FDockHost := nil;
-  pnPreview.Parent := pnMain;
-  spPreview.Visible := True;
-  SetDockSite(FLastDock);
-end;
+{ The settings pane keeps no header.  MakeDockable is asked for none, but
+  AnchorDocking puts one back every time it rebuilds the site, so this is
+  re-asserted rather than done once.
 
-procedure TfmMain.acDockExecute(Sender: TObject);
+  A header there would be a drag handle for the one pane with nowhere to go,
+  and a close button for the one pane that must not close. }
+procedure TfmMain.GuardCentreHeader;
 var
-  P: TPoint;
+  Site: TAnchorDockHostSite;
 begin
-  { Under the button rather than under the pointer, so the menu is in the
-    same place whether the button was clicked or reached by its shortcut. }
-  P := tbMain.ClientToScreen(Point(tbDock.Left, tbDock.Top + tbDock.Height));
-  pmDock.PopUp(P.X, P.Y);
+  if FPaneSettings = nil then Exit;
+  Site := DockMaster.GetAnchorSite(FPaneSettings);
+  if (Site = nil) or (Site.Header = nil) then Exit;
+  Site.Header.Visible := False;
+  if Site.Header.CloseButton <> nil then
+    Site.Header.CloseButton.Visible := False;
 end;
 
-procedure TfmMain.acDockSiteExecute(Sender: TObject);
+{ Restoring a layout asks for each pane by the Name it was saved under.  All
+  three already exist, so this is a lookup rather than a factory -- and a name
+  it does not recognise has to come back nil, or AnchorDocking keeps a hole in
+  the layout that it cannot fill. }
+procedure TfmMain.DockCreateControl(Sender: TObject; aName: string;
+  var AControl: TControl; DoDisableAutoSizing: boolean);
 begin
-  if Sender is TAction then
-    SetDockSite(TMcxDockSite(TAction(Sender).Tag));
+  AControl := nil;
+  if SameText(aName, 'PaneSettings') then AControl := FPaneSettings
+  else if SameText(aName, 'PaneSections') then AControl := FPaneNav
+  else if SameText(aName, 'PanePreview') then AControl := FPaneView;
+  if (AControl <> nil) and DoDisableAutoSizing then
+    TWinControl(AControl).DisableAutoSizing;
+end;
+
+{ Where the layout is kept.  Beside the preferences rather than beside the
+  simulation: which pane sits where is a property of this installation, not
+  of the file being edited. }
+function McxLayoutFile: string;
+begin
+  Result := IncludeTrailingPathDelimiter(GetAppConfigDir(False)) + 'layout.xml';
+end;
+
+procedure TfmMain.SaveDockLayout;
+var
+  Cfg: TXMLConfigStorage;
+begin
+  if FDockSite = nil then Exit;
+  try
+    ForceDirectories(ExtractFilePath(McxLayoutFile));
+    Cfg := TXMLConfigStorage.Create(McxLayoutFile, False);
+    try
+      DockMaster.SaveLayoutToConfig(Cfg);
+      DockMaster.SaveSettingsToConfig(Cfg);
+      Cfg.WriteToDisk;
+    finally
+      Cfg.Free;
+    end;
+  except
+    { Where the panes sit is not worth refusing to close over. }
+  end;
+end;
+
+function TfmMain.LoadDockLayout: Boolean;
+var
+  Cfg: TXMLConfigStorage;
+begin
+  Result := False;
+  if not FileExists(McxLayoutFile) then Exit;
+  try
+    Cfg := TXMLConfigStorage.Create(McxLayoutFile, True);
+    try
+      DockMaster.LoadSettingsFromConfig(Cfg);
+      Result := DockMaster.LoadLayoutFromConfig(Cfg, True);
+    finally
+      Cfg.Free;
+    end;
+  except
+    { A layout written by an older build is not worth refusing to start
+      over; the panes simply stay where BuildDock put them. }
+    Result := False;
+  end;
+  FDockRestored := Result;
+  GuardCentreHeader;
+end;
+
+{ AnchorDocking will happily leave a pane somewhere with no route back -- off
+  the edge of the screen, or closed -- so there has to be a way home. }
+procedure TfmMain.acResetLayoutExecute(Sender: TObject);
+begin
+  if MessageDlg('MCX Studio',
+       'Put the panes back where they started?',
+       mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
+
+  DeleteFile(McxLayoutFile);
+  FDockRestored := False;
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneSettings), FDockSite,
+    alClient);
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
+  DockMaster.ShowControl(FPaneNav.Name, False);
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite, alRight);
+  DockMaster.ShowControl(FPaneView.Name, False);
+  ApplyPaneSizes(0);
 end;
 
 { ------------------------------------------------------------- stacking --- }
