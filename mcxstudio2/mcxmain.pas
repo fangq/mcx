@@ -22,7 +22,8 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc, mcxrun;
+  OpenGLContext, GL,
+  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxgl;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -323,6 +324,17 @@ type
       write over the first one's output files. }
     FRunner: TMcxRunner;
     FDevices: TMcxDevices;
+    { The 3-D view.  FGLFailed latches, so a driver that cannot give us a
+      core profile is reported once rather than on every repaint. }
+    FGL: TOpenGLControl;
+    FShader: TMcxShader;
+    FLines: TMcxLines;
+    FCamera: TMcxCamera;
+    FGLReady: Boolean;
+    FGLFailed: Boolean;
+    FDragging: Boolean;
+    FDragX, FDragY: Integer;
+    FSceneKey: string;
     FDockRestored: Boolean;
     FDockSized: Boolean;
     FWizard: Boolean;
@@ -337,6 +349,17 @@ type
     procedure GuardCentreHeader;
     procedure DockCreateControl(Sender: TObject; aName: string;
       var AControl: TControl; DoDisableAutoSizing: boolean);
+    procedure BuildView;
+    function  GLStart: Boolean;
+    procedure GLPaint(Sender: TObject);
+    procedure GLMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure GLMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure GLMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure GLMouseWheel(Sender: TObject; Shift: TShiftState;
+      WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure RebuildScene;
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
     procedure UpdateRunActions;
@@ -474,6 +497,7 @@ begin
   mmLog.Font.Assign(mmJSON.Font);
 
   BuildDock;
+  BuildView;
   LoadDockLayout;
 
   NewDocument;
@@ -491,6 +515,9 @@ end;
 
 procedure TfmMain.FormDestroy(Sender: TObject);
 begin
+  FreeAndNil(FShader);
+  FreeAndNil(FLines);
+  FreeAndNil(FCamera);
   FreeAndNil(FMissing);
   FreeAndNil(FRun);
   FreeAndNil(FDoc);
@@ -1124,6 +1151,235 @@ begin
     Before.Free;
     Files.Free;
   end;
+end;
+
+{ ------------------------------------------------------------- 3-D view --- }
+
+{ The OpenGL control is created here rather than placed in the designer.
+
+  Either works -- lazbuild compiles LazOpenGLContext from the project's
+  RequiredPackages whether or not the IDE has it installed -- but a
+  designer-placed TOpenGLControl makes mcxmain.lfm unopenable for anyone who
+  has not installed that package into their Lazarus, and the .lfm staying
+  editable by anyone is the point of building the form in the designer at all.
+  So the designer holds an ordinary TPanel and the control goes into it here,
+  which is what MRIcroGL does for the same reason. }
+procedure TfmMain.BuildView;
+begin
+  FCamera := TMcxCamera.Create;
+  FLines := TMcxLines.Create;
+
+  FGL := TOpenGLControl.Create(Self);
+  FGL.Parent := pnGL;
+  FGL.Align := alClient;
+  FGL.DepthBits := 24;
+  FGL.MultiSampling := 4;
+  { Ask for 3.3 core.  On Cocoa this is honoured strictly; on GLX it is a
+    request the driver may answer with more, which is why what arrived is
+    logged rather than assumed. }
+  FGL.OpenGLMajorVersion := 3;
+  FGL.OpenGLMinorVersion := 3;
+  FGL.OnPaint := @GLPaint;
+  FGL.OnMouseDown := @GLMouseDown;
+  FGL.OnMouseMove := @GLMouseMove;
+  FGL.OnMouseUp := @GLMouseUp;
+  FGL.OnMouseWheel := @GLMouseWheel;
+  lbTodoGL.Visible := False;
+end;
+
+{ First paint: the context only exists once the control has been realised, so
+  everything that needs one waits until here. }
+function TfmMain.GLStart: Boolean;
+begin
+  Result := FGLReady;
+  if FGLReady or FGLFailed then Exit;
+
+  if not McxGLLoad then
+  begin
+    FGLFailed := True;
+    Log('OpenGL 3.3 is not available: ' + McxGLDescribe);
+    Exit(False);
+  end;
+
+  FShader := TMcxShader.Create;
+  if not FShader.Build(McxLineVertexShader, McxLineFragmentShader) then
+  begin
+    FGLFailed := True;
+    Log('shader: ' + FShader.Error);
+    FreeAndNil(FShader);
+    Exit(False);
+  end;
+
+  Log('OpenGL: ' + McxGLDescribe);
+  FGLReady := True;
+  Result := True;
+  RebuildScene;
+end;
+
+procedure TfmMain.GLPaint(Sender: TObject);
+var
+  MVP: TMcxMat4;
+  W, H: Integer;
+begin
+  if not FGL.MakeCurrent then Exit;
+  if not GLStart then
+  begin
+    { Nothing can be drawn, but the buffer still has to be cleared and shown
+      or the control keeps whatever was behind it. }
+    glClearColor(0.16, 0.16, 0.17, 1);
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+    FGL.SwapBuffers;
+    Exit;
+  end;
+
+  W := FGL.Width;
+  H := FGL.Height;
+  if H < 1 then H := 1;
+  glViewport(0, 0, W, H);
+
+  glClearColor(0.16, 0.16, 0.17, 1);
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  { Near and far follow the camera distance rather than being fixed, so a
+    domain of sixty voxels and one of six hundred both keep their depth
+    precision. }
+  MVP := McxMat4Mul(
+    McxMat4Perspective(45, W / H, FCamera.Distance * 0.01,
+      FCamera.Distance * 10),
+    FCamera.View);
+
+  FShader.Use;
+  FShader.SetMat4('uMVP', MVP);
+  FLines.Draw;
+
+  FGL.SwapBuffers;
+end;
+
+procedure TfmMain.GLMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  FDragging := Button = mbLeft;
+  FDragX := X;
+  FDragY := Y;
+end;
+
+procedure TfmMain.GLMouseMove(Sender: TObject; Shift: TShiftState;
+  X, Y: Integer);
+begin
+  if not FDragging then Exit;
+  { A quarter of a degree a pixel, which makes a full turn about the width of
+    the pane whatever size it is. }
+  FCamera.Orbit((FDragX - X) * 0.008, (Y - FDragY) * 0.008);
+  FDragX := X;
+  FDragY := Y;
+  FGL.Invalidate;
+end;
+
+procedure TfmMain.GLMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  FDragging := False;
+end;
+
+procedure TfmMain.GLMouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+begin
+  FCamera.Zoom(WheelDelta / 120);
+  FGL.Invalidate;
+  Handled := True;
+end;
+
+{ Builds the wireframe from the document: the domain box, a floor grid, the
+  three axes and where the source sits.
+
+  Rebuilt whole on every change, which is cheap because it is a few hundred
+  line segments in one buffer -- and is the opposite of the old renderer,
+  which created a scene-graph object per axis label and rebuilt some seven
+  hundred of them on every repaint. }
+procedure TfmMain.RebuildScene;
+var
+  dx, dy, dz, Step, Axis, t: Single;
+  Grey, Faint: TMcxVec3;
+  Key: string;
+  i: Integer;
+  P: TJSONData;
+
+  function Dim(AIndex: Integer): Single;
+  begin
+    Result := FDoc.AsInt('Domain.Dim[' + IntToStr(AIndex) + ']', 60);
+    if Result < 1 then Result := 1;
+  end;
+
+begin
+  if FLines = nil then Exit;
+  dx := Dim(0);
+  dy := Dim(1);
+  dz := Dim(2);
+
+  Grey := McxVec3(0.75, 0.78, 0.82);
+  Faint := McxVec3(0.30, 0.32, 0.35);
+
+  FLines.Clear;
+  FLines.AddBox(McxVec3(0, 0, 0), McxVec3(dx, dy, dz), Grey);
+
+  { A grid on the z = 0 face, ten lines each way whatever the size, so it
+    reads as a floor rather than as a solid block of lines on a big domain. }
+  Step := dx / 10;
+  for i := 1 to 9 do
+  begin
+    t := i * Step;
+    FLines.Add(McxVec3(t, 0, 0), McxVec3(t, dy, 0), Faint);
+  end;
+  Step := dy / 10;
+  for i := 1 to 9 do
+  begin
+    t := i * Step;
+    FLines.Add(McxVec3(0, t, 0), McxVec3(dx, t, 0), Faint);
+  end;
+
+  { Axes at the origin corner, in the usual three colours. }
+  Axis := dx;
+  if dy > Axis then Axis := dy;
+  if dz > Axis then Axis := dz;
+  Axis := Axis * 0.25;
+  FLines.Add(McxVec3(0, 0, 0), McxVec3(Axis, 0, 0), McxVec3(0.90, 0.30, 0.25));
+  FLines.Add(McxVec3(0, 0, 0), McxVec3(0, Axis, 0), McxVec3(0.35, 0.75, 0.35));
+  FLines.Add(McxVec3(0, 0, 0), McxVec3(0, 0, Axis), McxVec3(0.35, 0.55, 0.95));
+
+  { The source, as a cross at its position.  Drawn from the document rather
+    than from the form, so it is right whether the value was typed or came
+    out of a file. }
+  P := FDoc.Find('Optode.Source.Pos');
+  if (P <> nil) and (P.JSONType = jtArray) and (P.Count >= 3) then
+  begin
+    t := Axis * 0.15;
+    dx := P.Items[0].AsFloat;
+    dy := P.Items[1].AsFloat;
+    dz := P.Items[2].AsFloat;
+    FLines.Add(McxVec3(dx - t, dy, dz), McxVec3(dx + t, dy, dz),
+      McxVec3(1.0, 0.85, 0.25));
+    FLines.Add(McxVec3(dx, dy - t, dz), McxVec3(dx, dy + t, dz),
+      McxVec3(1.0, 0.85, 0.25));
+    FLines.Add(McxVec3(dx, dy, dz - t), McxVec3(dx, dy, dz + t),
+      McxVec3(1.0, 0.85, 0.25));
+  end;
+
+  { Only re-aim the camera when the domain itself changed size.  Doing it on
+    every edit would throw the view away every time a photon count was
+    typed. }
+  Key := Format('%g %g %g', [Dim(0), Dim(1), Dim(2)]);
+  if Key <> FSceneKey then
+  begin
+    FSceneKey := Key;
+    FCamera.Frame(McxVec3(Dim(0) / 2, Dim(1) / 2, Dim(2) / 2),
+      Sqrt(Dim(0) * Dim(0) + Dim(1) * Dim(1) + Dim(2) * Dim(2)) / 2);
+  end;
+
+  if FGL <> nil then FGL.Invalidate;
 end;
 
 { ------------------------------------------------------------- running ---- }
@@ -2192,6 +2448,7 @@ begin
   else
     Input := FDoc.AsStr('Session.ID', 'mcx') + '.json';
   mmCommand.Text := McxCommandLine(CurrentExe, Input, FDoc, FRun);
+  RebuildScene;
 
   UpdateStatus;
 end;
