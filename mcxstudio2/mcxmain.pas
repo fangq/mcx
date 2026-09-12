@@ -317,6 +317,10 @@ type
       each in the order it is meant to appear.  See Restack. }
     FStacks: array of TMcxStack;
     FFloats: array of TMcxFloat;
+    { The tab the mouse went down on and where, so a drag off the strip can
+      be told from a click that selects it.  -1 when nothing is held. }
+    FTabGrab: Integer;
+    FTabFrom: TPoint;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
@@ -326,6 +330,11 @@ type
     procedure FloatPage(APage: TTabSheet);
     procedure DockPage(AIndex: Integer);
     procedure FloatClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure TabMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure TabMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure TabMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure BindControls;
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
@@ -443,6 +452,11 @@ begin
   BuildNav;
   BindControls;
   CaptureStacks;
+
+  FTabGrab := -1;
+  pcView.OnMouseDown := @TabMouseDown;
+  pcView.OnMouseMove := @TabMouseMove;
+  pcView.OnMouseUp := @TabMouseUp;
 
   SetLength(FFloats, 4);
   FFloats[0].Page := tsPreview;
@@ -1158,6 +1172,11 @@ begin
     F.Height := 460;
     F.Position := poMainFormCenter;
     F.OnClose := @FloatClose;
+    { Where the mouse is, so a torn-off page appears under the cursor that
+      pulled it rather than in the middle of the screen. }
+    F.Position := poDesigned;
+    F.Left := Mouse.CursorPos.X - 60;
+    F.Top := Mouse.CursorPos.Y - 20;
     { Owned by the main form so it cannot outlive the controls it borrowed,
       and closed rather than freed by the window manager, so the contents get
       handed back before anything is destroyed. }
@@ -1197,6 +1216,64 @@ begin
       Break;
     end;
   CloseAction := caFree;
+end;
+
+{ Dragging a tab off the strip tears the page off, which is the gesture
+  anyone tries first; double-clicking one does the same for anyone who does
+  not try dragging.  Both end in FloatPage, and the toolbar button is the
+  third way to the same place -- it was the only way at first, which made a
+  feature nobody could find.
+
+  This is a gesture rather than LCL docking: the page control reports which
+  tab is under a point, and how far the mouse has come since it went down is
+  all a tear-off needs to know.  Nothing here depends on the widget set
+  agreeing about drag-and-drop. }
+procedure TfmMain.TabMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  Tab: Integer;
+begin
+  FTabGrab := -1;
+  if Button <> mbLeft then Exit;
+  Tab := pcView.IndexOfPageAt(X, Y);
+  if Tab < 0 then Exit;
+
+  { The second click of a double arrives here with ssDouble set, which is
+    the only way to get one: TPageControl does not publish OnDblClick. }
+  if ssDouble in Shift then
+  begin
+    FloatPage(pcView.Pages[Tab]);
+    Exit;
+  end;
+
+  FTabGrab := Tab;
+  FTabFrom := Point(X, Y);
+end;
+
+procedure TfmMain.TabMouseMove(Sender: TObject; Shift: TShiftState;
+  X, Y: Integer);
+var
+  Page: TTabSheet;
+begin
+  if (FTabGrab < 0) or not (ssLeft in Shift) then Exit;
+  { Far enough that it cannot be the wobble in a click.  Measured in both
+    directions: the strip is horizontal, so a tear-off is usually downwards,
+    but pulling sideways past the end of the strip means the same thing. }
+  if (Abs(Y - FTabFrom.Y) < McxScale96(24)) and
+     (Abs(X - FTabFrom.X) < McxScale96(48)) then Exit;
+
+  if (FTabGrab >= 0) and (FTabGrab < pcView.PageCount) then
+  begin
+    Page := pcView.Pages[FTabGrab];
+    FTabGrab := -1;
+    FloatPage(Page);
+  end;
+end;
+
+procedure TfmMain.TabMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  FTabGrab := -1;
 end;
 
 procedure TfmMain.acFloatExecute(Sender: TObject);
