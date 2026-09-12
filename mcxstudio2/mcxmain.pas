@@ -31,6 +31,9 @@ type
     Section: Integer;
     Box: TGroupBox;
     Btn: TSpeedButton;
+    { The card's resting colour, so the flash knows what to fade back to
+      rather than guessing at the theme's default. }
+    Tint: TColor;
   end;
 
   { TfmMain }
@@ -308,6 +311,8 @@ type
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
     procedure ScrollToGroup(ABox: TGroupBox);
+    function  AccentOf(ABox: TGroupBox): TColor;
+    function  CardBase(ABox: TGroupBox): TColor;
     procedure FlashGroup(ABox: TGroupBox);
     procedure UpdateNavState;
     procedure NewDocument;
@@ -347,6 +352,29 @@ const
     designer shows it, and the existing .po extraction keeps working.
 
     The order here matches CollectSections. }
+  { One accent per section, in the order CollectSections uses, picked from
+    the icon set's own palette so the navigator band and the cards on the
+    page agree with the badges on the toolbar.
+
+    TColor is $00BBGGRR, so these read backwards against the SVG: $D9904A is
+    the #4a90d9 of the blue badges. }
+  SectionAccent: array[0..6] of TColor = (
+    { Simulator } TColor($D9904A),   { blue   }
+    { Domain    } TColor($288BD7),   { amber  }
+    { Shapes    } TColor($D35F8D),   { violet }
+    { Optode    } TColor($4A57E0),   { coral  }
+    { Session   } TColor($4AA05A),   { green  }
+    { Compute   } TColor($9E9E1F),   { teal   }
+    { Advanced  } TColor($9B47B5));  { plum   }
+
+  { How far each surface is mixed towards its section's accent.  A card is a
+    tint rather than a fill: the settings on it have to stay readable, and at
+    much past this the check boxes start to swim. }
+  CardTint     = 18;
+  BandTint     = 16;
+  BandSelected = 62;
+  FlashTint    = 45;
+
   SectionGroups: array[0..6] of string = (
     { Simulator } 'gbEngine',
     { Domain    } 'gbGrid,gbVolume,gbMedia',
@@ -469,6 +497,30 @@ end;
   page.  Nothing is edited in the navigator itself -- it exists to keep forty
   settings from arriving as one long column. }
 
+type
+  { Color and ParentColor are protected in TControl and only published by the
+    concrete classes; a descendant declared in this unit reaches them without
+    caring which class it was handed. }
+  TColourAccess = class(TWinControl);
+
+{ Paints a card and everything nested in it.
+
+  Recursive, and it sets the colour on each control rather than relying on
+  ParentColor: a TPanel honours ParentColor, but a radio or check group asks
+  the widget set for its own background whatever ParentColor says, and left
+  alone the two of them sat on a tinted card as pale rectangles. }
+procedure PaintCard(C: TWinControl; AColor: TColor);
+var
+  i: Integer;
+begin
+  if C = nil then Exit;
+  TColourAccess(C).ParentColor := False;
+  TColourAccess(C).Color := AColor;
+  for i := 0 to C.ControlCount - 1 do
+    if (C.Controls[i] is TPanel) or (C.Controls[i] is TCustomGroupBox) then
+      PaintCard(TWinControl(C.Controls[i]), AColor);
+end;
+
 procedure TfmMain.CollectSections;
 var
   i: Integer;
@@ -561,6 +613,13 @@ begin
         FSubs[High(FSubs)].Section := s;
         FSubs[High(FSubs)].Box := TGroupBox(C);
         FSubs[High(FSubs)].Btn := B;
+        FSubs[High(FSubs)].Tint :=
+          McxBlend(clBtnFace, SectionAccent[s], CardTint);
+
+        { A card: flat, filled, no bevel of its own -- the frame the widget
+          set draws is a hairline, and the fill is what separates one group
+          of settings from the next. }
+        PaintCard(TGroupBox(C), FSubs[High(FSubs)].Tint);
       end;
     end;
   finally
@@ -617,31 +676,27 @@ begin
   sbDetail.VertScrollBar.Position := Offset;
 end;
 
-type
-  { Color and ParentColor are protected in TControl and only published by the
-    concrete classes; a descendant declared in this unit reaches them without
-    caring which class it was handed. }
-  TColourAccess = class(TWinControl);
-
-{ Paints ABox and the row panels inside it, so the whole group tints rather
-  than just the strip of frame around the rows. }
-procedure TintGroup(C: TWinControl; AColor: TColor; AOn: Boolean);
+{ The accent and the resting colour of the card ABox is, by looking it up in
+  the navigator rather than walking back up to the page it sits on. }
+function TfmMain.AccentOf(ABox: TGroupBox): TColor;
 var
   i: Integer;
 begin
-  if AOn then
-  begin
-    TColourAccess(C).ParentColor := False;
-    TColourAccess(C).Color := AColor;
-  end
-  else
-    TColourAccess(C).ParentColor := True;
-  for i := 0 to C.ControlCount - 1 do
-    if C.Controls[i] is TPanel then
-      TintGroup(TWinControl(C.Controls[i]), AColor, AOn);
+  Result := clHighlight;
+  for i := 0 to High(FSubs) do
+    if FSubs[i].Box = ABox then Exit(SectionAccent[FSubs[i].Section]);
 end;
 
-{ Tints a group box towards the selection colour and fades it out again.
+function TfmMain.CardBase(ABox: TGroupBox): TColor;
+var
+  i: Integer;
+begin
+  Result := clBtnFace;
+  for i := 0 to High(FSubs) do
+    if FSubs[i].Box = ABox then Exit(FSubs[i].Tint);
+end;
+
+{ Tints a group box towards its section's accent and fades it out again.
 
   Scrolling is the obvious answer to "which one did I just pick", but a
   section with two short groups does not scroll at all, so clicking its
@@ -650,7 +705,7 @@ end;
 procedure TfmMain.FlashGroup(ABox: TGroupBox);
 begin
   if (FFlashBox <> nil) and (FFlashBox <> ABox) then
-    TintGroup(FFlashBox, clNone, False);
+    PaintCard(FFlashBox, CardBase(FFlashBox));
   FFlashBox := ABox;
   FFlashStep := 0;
   tmFlash.Enabled := False;
@@ -662,7 +717,8 @@ procedure TfmMain.tmFlashTimer(Sender: TObject);
 const
   { Three frames of about 90 ms: visible without being a blink, gone before
     it becomes a distraction. }
-  Fade: array[0..2] of Integer = (32, 18, 8);
+  Fade: array[0..2] of Integer = (FlashTint, FlashTint * 5 div 9,
+                                  FlashTint * 2 div 9);
 begin
   if FFlashBox = nil then
   begin
@@ -671,12 +727,15 @@ begin
   end;
   if FFlashStep > High(Fade) then
   begin
-    TintGroup(FFlashBox, clNone, False);
+    PaintCard(FFlashBox, CardBase(FFlashBox));
     FFlashBox := nil;
     tmFlash.Enabled := False;
     Exit;
   end;
-  TintGroup(FFlashBox, McxBlend(clBtnFace, clHighlight, Fade[FFlashStep]), True);
+  { Towards the section's own accent, not a generic highlight, so the flash
+    reads as "this card" rather than as a selection. }
+  PaintCard(FFlashBox,
+    McxBlend(CardBase(FFlashBox), AccentOf(FFlashBox), Fade[FFlashStep]));
   Inc(FFlashStep);
 end;
 
@@ -712,13 +771,14 @@ begin
     if i = FSection then FHeads[i].ImageIndex := Open
     else FHeads[i].ImageIndex := Closed;
     FHeads[i].Down := (i = FSection);
-    { The open section is tinted towards the selection colour and the closed
-      ones sit on a band just off the background: enough to read as headings
-      against the plain list of subsections beneath them. }
+    { Each section carries its own accent: the open one filled with it, the
+      closed ones a wash of it.  That makes the band say which section as
+      well as whether it is open, and ties the heading to the cards on its
+      page and to the badges on the toolbar. }
     if i = FSection then
-      FPanes[i].Color := McxBlend(clBtnFace, clHighlight, 30)
+      FPanes[i].Color := McxBlend(clBtnFace, SectionAccent[i], BandSelected)
     else
-      FPanes[i].Color := McxBlend(clBtnFace, clWindowText, 10);
+      FPanes[i].Color := McxBlend(clBtnFace, SectionAccent[i], BandTint);
   end;
   for i := 0 to High(FSubs) do
     FSubs[i].Btn.Down := False;
