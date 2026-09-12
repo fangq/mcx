@@ -5,4 +5,6 @@
 *.lps
 *.compiled
 *.or
+*.o
+*.ppu
 /tests/mcxdoctest
