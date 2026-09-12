@@ -71,6 +71,18 @@ object fmMain: TfmMain
       Caption = 'tbSep2'
       Style = tbsDivider
     end
+    object tbSep3: TToolButton
+      Left = 1
+      Height = 32
+      Top = 1
+      Caption = 'tbSep3'
+      Style = tbsDivider
+    end
+    object tbFloat: TToolButton
+      Left = 1
+      Top = 1
+      Action = acFloat
+    end
     object tbMode: TToolButton
       Left = 1
       Top = 1
@@ -2027,6 +2039,11 @@ object fmMain: TfmMain
       Caption = 'Wizard'
       Hint = 'Showing key settings only. Click for every setting.'
       OnExecute = acToggleModeExecute
+    end
+    object acFloat: TAction
+      Caption = 'Float'
+      Hint = 'Show this view in its own window. Close it to put it back.'
+      OnExecute = acFloatExecute
     end
     object acAbout: TAction
       Caption = 'About'

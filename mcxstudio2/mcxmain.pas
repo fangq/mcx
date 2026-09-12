@@ -27,6 +27,13 @@ type
   { One navigator entry below a section header: the group box on the detail
     page it points at, and the button that points there.  Built from the
     Sections table rather than placed, so the two cannot drift apart. }
+  { A preview page and the window it is showing in while it is torn off.
+    Host is nil while the page is where it started. }
+  TMcxFloat = record
+    Page: TTabSheet;
+    Host: TForm;
+  end;
+
   { One set of alTop siblings and the order they belong in. }
   TMcxStack = record
     Parent: TWinControl;
@@ -55,6 +62,7 @@ type
     acDevices: TAction;
     acToggleMode: TAction;
     acQuit: TAction;
+    acFloat: TAction;
     acAbout: TAction;
     alMain: TActionList;
     dlgOpen: TOpenDialog;
@@ -82,6 +90,8 @@ type
     tbStop: TToolButton;
     tbDevices: TToolButton;
     tbSep2: TToolButton;
+    tbSep3: TToolButton;
+    tbFloat: TToolButton;
     tbMode: TToolButton;
     tmRefresh: TTimer;
     tsCommand: TTabSheet;
@@ -258,6 +268,7 @@ type
     procedure acSaveExecute(Sender: TObject);
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
+    procedure acFloatExecute(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
@@ -305,12 +316,16 @@ type
     { Every set of alTop siblings the wizard filter can hide something from,
       each in the order it is meant to appear.  See Restack. }
     FStacks: array of TMcxStack;
+    FFloats: array of TMcxFloat;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
     procedure BuildNav;
     procedure CaptureStacks;
     procedure Restack;
+    procedure FloatPage(APage: TTabSheet);
+    procedure DockPage(AIndex: Integer);
+    procedure FloatClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure BindControls;
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
@@ -429,6 +444,12 @@ begin
   BindControls;
   CaptureStacks;
 
+  SetLength(FFloats, 4);
+  FFloats[0].Page := tsPreview;
+  FFloats[1].Page := tsJSON;
+  FFloats[2].Page := tsCommand;
+  FFloats[3].Page := tsLog;
+
   mmJSON.Font.Name := McxDefaultFontName;
   mmCommand.Font.Assign(mmJSON.Font);
   mmLog.Font.Assign(mmJSON.Font);
@@ -454,8 +475,20 @@ begin
 end;
 
 procedure TfmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  i: Integer;
 begin
   CanClose := ConfirmDiscard;
+  { Every torn-off page comes home first.  The windows are owned by this form,
+    so closing without docking would free a window that is still holding the
+    log memo. }
+  if CanClose then
+    for i := 0 to High(FFloats) do
+      if FFloats[i].Host <> nil then
+      begin
+        DockPage(i);
+        FFloats[i].Host := nil;
+      end;
 end;
 
 { The image list ships empty and is drawn here, once, at the display's scale
@@ -480,6 +513,7 @@ begin
   acStop.ImageIndex := McxIconIndex('stop');
   acDevices.ImageIndex := McxIconIndex('gpu');
   acToggleMode.ImageIndex := McxIconIndex('wizard');
+  acFloat.ImageIndex := McxIconIndex('fit');
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
@@ -1074,6 +1108,100 @@ begin
     Before.Free;
     Files.Free;
   end;
+end;
+
+{ ---------------------------------------------------------- tear-off ------ }
+
+{ A preview page can be shown in a window of its own, and closing that window
+  puts it back.
+
+  What moves is the page's contents, not the page: the memo or the GL panel is
+  re-parented into a plain form and the tab is hidden, and on the way back the
+  reverse.  LCL does have real docking -- ManualFloat, TDockTree, DragKind --
+  but it is driven by dragging, and dragging is the part that behaves
+  differently on every widget set.  Re-parenting one control is the same
+  everywhere and is a dozen lines.
+
+  What this is not is drag-to-rearrange: a page cannot be dropped back as a
+  split beside another. }
+
+{ Each preview page holds exactly one alClient child -- a memo, or the panel
+  the GL view will be built into -- and so does a window it has been torn off
+  into, which is why this takes the parent rather than the page. }
+function PageContent(AParent: TWinControl): TControl;
+begin
+  if (AParent <> nil) and (AParent.ControlCount = 1) then
+    Result := AParent.Controls[0]
+  else
+    Result := nil;
+end;
+
+procedure TfmMain.FloatPage(APage: TTabSheet);
+var
+  i: Integer;
+  C: TControl;
+  F: TForm;
+begin
+  C := PageContent(APage);
+  if C = nil then Exit;
+  for i := 0 to High(FFloats) do
+  begin
+    if FFloats[i].Page <> APage then Continue;
+    if FFloats[i].Host <> nil then Exit;          { already out }
+
+    F := TForm.CreateNew(Self);
+    F.Caption := APage.Caption + ' - ' + Caption;
+    { Raw 96-dpi numbers: mcxdpi's form scaler runs over every form as it
+      becomes visible, so scaling here would scale it twice -- 560 came out
+      1026 pixels wide before this comment existed. }
+    F.Width := 560;
+    F.Height := 460;
+    F.Position := poMainFormCenter;
+    F.OnClose := @FloatClose;
+    { Owned by the main form so it cannot outlive the controls it borrowed,
+      and closed rather than freed by the window manager, so the contents get
+      handed back before anything is destroyed. }
+    C.Parent := F;
+    C.Align := alClient;
+    FFloats[i].Host := F;
+    APage.TabVisible := False;
+    F.Show;
+    Exit;
+  end;
+end;
+
+procedure TfmMain.DockPage(AIndex: Integer);
+var
+  C: TControl;
+begin
+  if (AIndex < 0) or (AIndex > High(FFloats)) then Exit;
+  if FFloats[AIndex].Host = nil then Exit;
+  C := PageContent(FFloats[AIndex].Host);
+  if C <> nil then
+  begin
+    C.Parent := FFloats[AIndex].Page;
+    C.Align := alClient;
+  end;
+  FFloats[AIndex].Page.TabVisible := True;
+  FFloats[AIndex].Host := nil;
+end;
+
+procedure TfmMain.FloatClose(Sender: TObject; var CloseAction: TCloseAction);
+var
+  i: Integer;
+begin
+  for i := 0 to High(FFloats) do
+    if FFloats[i].Host = Sender then
+    begin
+      DockPage(i);
+      Break;
+    end;
+  CloseAction := caFree;
+end;
+
+procedure TfmMain.acFloatExecute(Sender: TObject);
+begin
+  FloatPage(pcView.ActivePage);
 end;
 
 { ------------------------------------------------------------- stacking --- }
