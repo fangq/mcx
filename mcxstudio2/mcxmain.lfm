@@ -2,10 +2,10 @@ object fmMain: TfmMain
   Left = 240
   Height = 760
   Top = 130
-  Width = 1210
+  Width = 1340
   Caption = 'MCX Studio'
   ClientHeight = 760
-  ClientWidth = 1210
+  ClientWidth = 1340
   Constraints.MinHeight = 520
   Constraints.MinWidth = 760
   OnCloseQuery = FormCloseQuery
@@ -15,12 +15,12 @@ object fmMain: TfmMain
   LCLVersion = '2.2.0.4'
   object tbMain: TToolBar
     Left = 0
-    Height = 26
+    Height = 34
     Top = 0
-    Width = 1210
+    Width = 1340
     AutoSize = True
-    ButtonHeight = 24
-    ButtonWidth = 24
+    ButtonHeight = 32
+    ButtonWidth = 32
     Caption = 'tbMain'
     EdgeBorders = [ebBottom]
     Flat = True
@@ -81,7 +81,7 @@ object fmMain: TfmMain
     Left = 0
     Height = 24
     Top = 736
-    Width = 1210
+    Width = 1340
     Panels = <
       item
         Text = 'Ready'
@@ -101,47 +101,47 @@ object fmMain: TfmMain
     Left = 0
     Height = 710
     Top = 26
-    Width = 1210
+    Width = 1340
     Align = alClient
     BevelOuter = bvNone
     ClientHeight = 710
-    ClientWidth = 1210
+    ClientWidth = 1340
     TabOrder = 1
     object sbNav: TScrollBox
       Left = 0
       Height = 710
       Top = 0
-      Width = 210
+      Width = 340
       HorzScrollBar.Visible = False
       VertScrollBar.Page = 710
       Align = alLeft
       BorderStyle = bsNone
       ClientHeight = 710
-      ClientWidth = 210
+      ClientWidth = 340
       TabOrder = 0
       object pnSimulator: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 0
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdSimulator: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Simulator'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -154,40 +154,40 @@ object fmMain: TfmMain
         object bdSimulator: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
       object pnDomain: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 28
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdDomain: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Domain'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -200,40 +200,40 @@ object fmMain: TfmMain
         object bdDomain: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
       object pnShapes: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 56
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdShapes: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Shapes'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -246,40 +246,40 @@ object fmMain: TfmMain
         object bdShapes: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
       object pnOptode: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 84
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdOptode: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Source and detectors'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -292,40 +292,40 @@ object fmMain: TfmMain
         object bdOptode: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
       object pnSession: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 112
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdSession: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Session and output'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -338,40 +338,40 @@ object fmMain: TfmMain
         object bdSession: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
       object pnCompute: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 140
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdCompute: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Compute'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -384,40 +384,40 @@ object fmMain: TfmMain
         object bdCompute: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
       object pnAdvanced: TPanel
         Left = 0
-        Height = 32
+        Height = 52
         Top = 168
-        Width = 210
+        Width = 340
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 32
-        ClientWidth = 210
+        ClientHeight = 52
+        ClientWidth = 340
         TabOrder = 0
         object hdAdvanced: TSpeedButton
           Left = 0
-          Height = 30
+          Height = 50
           Top = 0
-          Width = 210
+          Width = 340
           Align = alTop
           Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Advanced'
           Flat = True
-          Font.Height = -15
+          Font.Height = -30
           Font.Style = [fsBold]
           GroupIndex = 1
           Images = ilIcons
@@ -430,27 +430,27 @@ object fmMain: TfmMain
         object bdAdvanced: TPanel
           Left = 0
           Height = 2
-          Top = 30
-          Width = 210
+          Top = 50
+          Width = 340
           Align = alTop
           AutoSize = True
           BevelOuter = bvNone
           ClientHeight = 2
-          ClientWidth = 210
+          ClientWidth = 340
           TabOrder = 0
           Visible = False
         end
       end
     end
     object spNav: TSplitter
-      Left = 210
+      Left = 340
       Height = 710
       Top = 0
       Width = 5
       ResizeStyle = rsPattern
     end
     object pnPreview: TPanel
-      Left = 780
+      Left = 910
       Height = 710
       Top = 0
       Width = 430
@@ -556,7 +556,7 @@ object fmMain: TfmMain
       end
     end
     object spPreview: TSplitter
-      Left = 775
+      Left = 905
       Height = 710
       Top = 0
       Width = 5
@@ -565,7 +565,7 @@ object fmMain: TfmMain
       ResizeStyle = rsPattern
     end
     object sbDetail: TScrollBox
-      Left = 215
+      Left = 345
       Height = 710
       Top = 0
       Width = 560

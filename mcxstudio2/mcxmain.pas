@@ -428,7 +428,9 @@ procedure TfmMain.BuildIcons;
 var
   Size: Integer;
 begin
-  Size := McxScale96(16);
+  { 24 rather than 16 on the design grid: the artwork is a coloured badge
+    rather than a line glyph, and a badge needs the pixels to read as one. }
+  Size := McxScale96(24);
   ilIcons.Width := Size;
   ilIcons.Height := Size;
   McxBuildIconList(ilIcons, McxIconNames, clBtnText);
@@ -530,11 +532,11 @@ begin
 
         B := TSpeedButton.Create(Self);
         B.Parent := FBodies[s];
-        B.Height := 26;
+        B.Height := 44;
         { Top before Align: alTop children are ordered by the Top they have
           when they are aligned, so leaving them all at zero lists the
           subsections in reverse. }
-        B.Top := g * 26;
+        B.Top := g * 44;
         B.Align := alTop;
         { Left-justified rather than centred: a column of centred titles under
           a centred heading reads as a poster, not as a list to scan.  A
@@ -548,10 +550,10 @@ begin
         B.Layout := blGlyphLeft;
         { Indented past where a section heading's own text starts, so the
           hierarchy is visible without a second glyph column. }
-        B.Margin := 34;
+        B.Margin := 40;
         B.Spacing := 6;
         B.ParentFont := False;
-        B.Font.Height := -14;
+        B.Font.Height := -28;
         B.Tag := Length(FSubs);
         B.OnClick := @SubClick;
 
