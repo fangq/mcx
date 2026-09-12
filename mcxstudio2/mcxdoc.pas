@@ -26,13 +26,7 @@ uses
 
 type
   { Which editor a setting gets, and how its text is turned back into JSON. }
-  { mkRange is mkFloat with both ends known, and the only difference it makes
-    is in the form: the binder puts a slider beside the edit box.  It is a
-    kind of its own rather than "mkFloat that happens to have Min and Max"
-    because Min and Max already mean something else for mkVec -- how many
-    elements -- and because a bound is not the same claim as a bound worth
-    dragging.  Photons stops at a billion and would be useless on a slider. }
-  TMcxKind = (mkBool, mkInt, mkFloat, mkRange, mkText, mkChoice, mkFlags,
+  TMcxKind = (mkBool, mkInt, mkFloat, mkText, mkChoice, mkFlags,
               mkVec, mkTable, mkFile, mkCustom);
 
   { The wizard shows a strict subset of the expert form, so a field carries the
@@ -122,11 +116,11 @@ const
      Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:ChoiceMediaFormat; EnableIf:''),
 
     { -- Forward ----------------------------------------------------------- }
-    (Ctl:'edT0'; Path:'Forward.T0'; Kind:mkRange; Level:mlWizard;
+    (Ctl:'edT0'; Path:'Forward.T0'; Kind:mkFloat; Level:mlWizard;
      Backends:[]; Domains:[]; Min:0; Max:1e-7; Choices:''; EnableIf:''),
-    (Ctl:'edT1'; Path:'Forward.T1'; Kind:mkRange; Level:mlWizard;
+    (Ctl:'edT1'; Path:'Forward.T1'; Kind:mkFloat; Level:mlWizard;
      Backends:[]; Domains:[]; Min:0; Max:1e-7; Choices:''; EnableIf:''),
-    (Ctl:'edDt'; Path:'Forward.Dt'; Kind:mkRange; Level:mlWizard;
+    (Ctl:'edDt'; Path:'Forward.Dt'; Kind:mkFloat; Level:mlWizard;
      Backends:[]; Domains:[]; Min:0; Max:1e-7; Choices:''; EnableIf:''),
 
     { -- Session ----------------------------------------------------------- }
@@ -216,6 +210,28 @@ const
   );
 
 type
+  { fpjson prints a float with Str (fpjson.pp:2033), which asks for every
+    digit a double can carry -- seventeen significant ones.  That is why a
+    file saying 5e-09 comes back as 5.0000000000000001E-009, and 0.3 as
+    2.9999999999999999E-001.
+
+    Nothing is wrong with the value.  Those digits are the exact decimal
+    expansion of the nearest double to the number that was written: 5e-09 and
+    0.3 are not representable in binary, so the stored value really is a
+    hair off, and seventeen digits is enough to show it.  Fifteen is not,
+    which is why the same number looks clean almost everywhere else.
+
+    So print the shortest form that reads back as the identical double.  It
+    is exact -- nothing is rounded away, because a form that did not restore
+    the value is rejected -- and it gives 5E-9 and 0.3.  Registered as the
+    class the parser builds, and TJSONFloatNumber.GetAsJSON is just AsString
+    (fpjson.pp:2026), so this fixes what is displayed and what is written to
+    the file in one place. }
+  TMcxFloat = class(TJSONFloatNumber)
+  protected
+    function GetAsString: TJSONStringType; override;
+  end;
+
   { Raised only for programming errors -- a malformed path literal.  Bad input
     files come back as a False from LoadFromFile with LastError set. }
   EMcxPath = class(Exception);
@@ -713,6 +729,27 @@ begin
   FModified := True;
 end;
 
+function TMcxFloat.GetAsString: TJSONStringType;
+var
+  P: Integer;
+  V, Mine: Double;
+  Fs: TFormatSettings;
+begin
+  Fs := DefaultFormatSettings;
+  Fs.DecimalSeparator := '.';
+  Fs.ThousandSeparator := #0;
+  Mine := AsFloat;
+  for P := 1 to 16 do
+  begin
+    Result := FloatToStrF(Mine, ffGeneral, P, 0, Fs);
+    if TryStrToFloat(Result, V, Fs) and (V = Mine) then Exit;
+  end;
+  { Seventeen digits, for the values that genuinely need them -- and for the
+    ones no decimal form describes at all. }
+  Str(Mine, Result);
+  if (Result <> '') and (Result[1] = ' ') then Delete(Result, 1, 1);
+end;
+
 procedure TMcxDoc.SetNum(const APath: string; AValue: Double);
 var
   P, D: TJSONData;
@@ -751,7 +788,7 @@ begin
   if Whole and ((D = nil) or (D.JSONType <> jtNumber)) then
     Replace(P, K, I, TJSONInt64Number.Create(Round(AValue)))
   else
-    Replace(P, K, I, TJSONFloatNumber.Create(AValue));
+    Replace(P, K, I, TMcxFloat.Create(AValue));
   FModified := True;
 end;
 
@@ -914,5 +951,11 @@ function McxJSONSame(A, B: TJSONData; out ADiff: string; ATol: Double): Boolean;
 begin
   Result := SameNode(A, B, '', ADiff, ATol);
 end;
+
+initialization
+  { Makes the parser build TMcxFloat for every number with a fractional part
+    or an exponent, so a document read from disk prints the same way as one
+    the form built. }
+  SetJSONInstanceType(jitNumberFloat, TMcxFloat);
 
 end.

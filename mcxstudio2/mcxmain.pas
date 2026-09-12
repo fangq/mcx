@@ -20,7 +20,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
-  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, Math, fpjson,
+  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
   mcxdpi, mcxicons, mcxdoc;
 
 type
@@ -277,9 +277,6 @@ type
       box the wizard has emptied has to take its heading and its navigator
       entry with it rather than stand there as an empty frame. }
     FRows: array of TPanel;
-    { The slider beside a bounded value's edit box, or nil.  Parallel to
-      Binds, like everything else here. }
-    FSliders: array of TTrackBar;
     FGroups: array of TPanel;
     FRowList: array of TPanel;
     FLoading: Integer;
@@ -304,10 +301,6 @@ type
     procedure CollectSections;
     procedure BuildNav;
     procedure BindControls;
-    procedure BuildSlider(AIndex: Integer);
-    procedure SliderChanged(Sender: TObject);
-    procedure ShowSlider(AIndex: Integer);
-    procedure CommitBinding(AIndex: Integer);
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
     function  DocFor(const APath: string): TMcxDoc;
@@ -372,10 +365,6 @@ const
     highlighted without arguing with the section it sat on. }
   { Corner radius on the design grid, scaled with everything else. }
   CardRadius = 8;
-
-  { A thousand notches: finer than the values anyone types into these fields,
-    so dragging is not the coarse option. }
-  SliderSteps = 1000;
 
   BandLevel  = 14;   { a closed section heading }
   CardLevel  =  7;   { a card nobody has picked }
@@ -1215,7 +1204,6 @@ begin
   SetLength(FLabels, Length(Binds));
   SetLength(FLoaded, Length(Binds));
   SetLength(FRows, Length(Binds));
-  SetLength(FSliders, Length(Binds));
   SetLength(FGroups, Length(Binds));
   SetLength(FRowList, 0);
   for i := 0 to High(Binds) do
@@ -1304,41 +1292,8 @@ begin
         is still half-typed fights the person typing it. }
       TEdit(C).OnEditingDone := @BindChanged;
 
-    if Binds[i].Kind = mkRange then BuildSlider(i);
   end;
 end;
-
-{ Puts a slider on the right of a bounded value's row.
-
-  The slider is not itself a binding -- the edit box still owns the path, and
-  the self-test still sees one control per path.  It writes into the edit and
-  commits through the same route a typed value takes, which is what keeps the
-  two from having separate ideas about what the value is.
-
-  An edit box alone cannot say "this is a fifth of the way up"; a slider alone
-  cannot take 5e-09.  A setting with both ends known deserves both. }
-procedure TfmMain.BuildSlider(AIndex: Integer);
-var
-  T: TTrackBar;
-begin
-  if not (FBound[AIndex].Parent is TPanel) then Exit;
-  T := TTrackBar.Create(Self);
-  T.Parent := FBound[AIndex].Parent;
-  T.Align := alRight;
-  T.Width := 200;
-  T.BorderSpacing.Left := 8;
-  T.Min := 0;
-  T.Max := SliderSteps;
-  T.Frequency := SliderSteps div 10;
-  T.TickStyle := tsNone;
-  T.ShowSelRange := False;
-  T.Tag := AIndex;
-  T.OnChange := @SliderChanged;
-  T.Hint := Format('%g to %g', [Binds[AIndex].Min, Binds[AIndex].Max]);
-  T.ShowHint := True;
-  FSliders[AIndex] := T;
-end;
-
 
 { The control's value as text, used both to detect "nobody touched this" and to
   keep the comparison in one place. }
@@ -1412,7 +1367,7 @@ begin
     mkInt:
       if C is TSpinEdit then TSpinEdit(C).Value := D.AsInt(B.Path)
       else if C is TEdit then TEdit(C).Text := IntToStr(D.AsInt(B.Path));
-    mkFloat, mkRange:
+    mkFloat:
       if C is TEdit then
       begin
         { A scalar field may meet an array -- some files give DebugFlag or a
@@ -1431,7 +1386,6 @@ begin
   end;
 
   FLoaded[AIndex] := ControlText(C);
-  ShowSlider(AIndex);
 end;
 
 procedure TfmMain.SaveBinding(AIndex: Integer);
@@ -1489,7 +1443,7 @@ begin
         else if TryStrToFloat(Trim(TEdit(C).Text), V, Fs) then
           D.SetInt(B.Path, Round(V));
       end;
-    mkFloat, mkRange:
+    mkFloat:
       if C is TEdit then
       begin
         { An emptied field removes the key rather than writing a zero, because
@@ -1565,11 +1519,6 @@ begin
     C.Visible := InMode;
     if InMode then
       C.Enabled := ConditionHolds(DocFor(B.EnableIf), B.EnableIf);
-    if FSliders[i] <> nil then
-    begin
-      FSliders[i].Visible := InMode;
-      FSliders[i].Enabled := C.Enabled;
-    end;
     if FLabels[i] <> nil then
     begin
       FLabels[i].Visible := InMode;
@@ -1647,64 +1596,6 @@ begin
   BindChanged(Sender);
 end;
 
-{ Slider to edit.  The value is quantised to the notch, which is the point:
-  what the slider shows and what the edit says are the same number. }
-procedure TfmMain.SliderChanged(Sender: TObject);
-var
-  i: Integer;
-  B: TMcxBind;
-  V: Double;
-  Fs: TFormatSettings;
-begin
-  if FLoading > 0 then Exit;
-  if not (Sender is TTrackBar) then Exit;
-  i := TTrackBar(Sender).Tag;
-  if (i < 0) or (i > High(Binds)) then Exit;
-  if FSliders[i] <> Sender then Exit;
-
-  B := Binds[i];
-  V := B.Min + (B.Max - B.Min) * TTrackBar(Sender).Position / SliderSteps;
-  Fs := DefaultFormatSettings;
-  Fs.DecimalSeparator := '.';
-  if FBound[i] is TEdit then
-    TEdit(FBound[i]).Text := FloatToStrF(V, ffGeneral, 6, 0, Fs);
-  CommitBinding(i);
-end;
-
-{ Edit to slider.  Called after a load and after a typed value, so dragging
-  never starts from a stale position.  Out-of-range values park the slider at
-  the near end rather than being clamped: the file said what it said, and the
-  edit box is still showing it. }
-procedure TfmMain.ShowSlider(AIndex: Integer);
-var
-  B: TMcxBind;
-  V: Double;
-  P: Integer;
-  Fs: TFormatSettings;
-begin
-  if FSliders[AIndex] = nil then Exit;
-  B := Binds[AIndex];
-  if B.Max <= B.Min then Exit;
-  Fs := DefaultFormatSettings;
-  Fs.DecimalSeparator := '.';
-  if not ((FBound[AIndex] is TEdit) and
-          TryStrToFloat(Trim(TEdit(FBound[AIndex]).Text), V, Fs)) then
-    V := B.Min;
-  P := Round((V - B.Min) / (B.Max - B.Min) * SliderSteps);
-  FSliders[AIndex].Position := EnsureRange(P, 0, SliderSteps);
-end;
-
-{ What every edit to a setting has to do, whoever made it. }
-procedure TfmMain.CommitBinding(AIndex: Integer);
-begin
-  SaveBinding(AIndex);
-  { One sweep handles every dependent: cheap at forty rows, and it means a
-    dependency is a table entry rather than another branch in a handler. }
-  ApplyBindingStates;
-  UpdateTitle;
-  SchedulePreview;
-end;
-
 procedure TfmMain.BindChanged(Sender: TObject);
 var
   i: Integer;
@@ -1715,14 +1606,12 @@ begin
   if (i < 0) or (i > High(Binds)) then Exit;
   if FBound[i] <> Sender then Exit;
 
-  { A typed value moves the slider, not the other way round. }
-  Inc(FLoading);
-  try
-    ShowSlider(i);
-  finally
-    Dec(FLoading);
-  end;
-  CommitBinding(i);
+  SaveBinding(i);
+  { One sweep handles every dependent: cheap at forty rows, and it means a
+    dependency is a table entry rather than another branch in a handler. }
+  ApplyBindingStates;
+  UpdateTitle;
+  SchedulePreview;
 end;
 
 { --------------------------------------------------------------- preview -- }
