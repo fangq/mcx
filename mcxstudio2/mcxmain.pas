@@ -24,6 +24,14 @@ uses
   mcxdpi, mcxicons, mcxdoc;
 
 type
+  { One navigator entry below a section header: the group box on the detail
+    page it points at, and the button that points there.  Built from the
+    Sections table rather than placed, so the two cannot drift apart. }
+  TMcxNavItem = record
+    Section: Integer;
+    Box: TGroupBox;
+    Btn: TSpeedButton;
+  end;
 
   { TfmMain }
 
@@ -42,15 +50,19 @@ type
     dlgOpen: TOpenDialog;
     dlgSave: TSaveDialog;
     ilIcons: TImageList;
+    lbTodoGL: TLabel;
     mmCommand: TMemo;
     mmJSON: TMemo;
     mmLog: TMemo;
     pcView: TPageControl;
+    pnGL: TPanel;
     pnMain: TPanel;
     pnPreview: TPanel;
+    sbDetail: TScrollBox;
     sbMain: TStatusBar;
-    sbSections: TScrollBox;
-    spMain: TSplitter;
+    sbNav: TScrollBox;
+    spNav: TSplitter;
+    spPreview: TSplitter;
     tbMain: TToolBar;
     tbNew: TToolButton;
     tbOpen: TToolButton;
@@ -66,59 +78,110 @@ type
     tsJSON: TTabSheet;
     tsLog: TTabSheet;
     tsPreview: TTabSheet;
+
+    { The navigator, on the left: one header button and one body panel per
+      section.  The bodies are empty in the designer on purpose -- their
+      contents are one button per group box, built from the Sections table
+      below, so a group box cannot be added to a page and forgotten here. }
+    pnSimulator: TPanel;  hdSimulator: TSpeedButton;  bdSimulator: TPanel;
+    pnDomain: TPanel;     hdDomain: TSpeedButton;     bdDomain: TPanel;
+    pnShapes: TPanel;     hdShapes: TSpeedButton;     bdShapes: TPanel;
+    pnOptode: TPanel;     hdOptode: TSpeedButton;     bdOptode: TPanel;
+    pnSession: TPanel;    hdSession: TSpeedButton;    bdSession: TPanel;
+    pnCompute: TPanel;    hdCompute: TSpeedButton;    bdCompute: TPanel;
+    pnAdvanced: TPanel;   hdAdvanced: TSpeedButton;   bdAdvanced: TPanel;
+
+    { The detail pane, in the middle: one page per section, and on each page
+      the group boxes the navigator lists.  Selecting a section shows its
+      page; selecting a subsection scrolls its group box to the top. }
+    pgSimulator: TPanel;
+    pgDomain: TPanel;
+    pgShapes: TPanel;
+    pgOptode: TPanel;
+    pgSession: TPanel;
+    pgCompute: TPanel;
+    pgAdvanced: TPanel;
+
+    gbEngine: TGroupBox;
+    gbGrid: TGroupBox;
+    gbVolume: TGroupBox;
+    gbMedia: TGroupBox;
+    gbShapeList: TGroupBox;
+    gbSource: TGroupBox;
+    gbSrcAdv: TGroupBox;
+    gbDetector: TGroupBox;
+    gbBasic: TGroupBox;
+    gbTime: TGroupBox;
+    gbOutput: TGroupBox;
+    gbSwitches: TGroupBox;
+    gbDetPhoton: TGroupBox;
+    gbGPU: TGroupBox;
+    gbDevices: TGroupBox;
+    gbBoundary: TGroupBox;
+    gbFlags: TGroupBox;
+
+    { The editors that are not written yet say so, rather than leaving a
+      group box that looks broken. }
+    lbTodoMedia: TLabel;
+    lbTodoShapes: TLabel;
+    lbTodoDet: TLabel;
+    lbTodoDevices: TLabel;
+
+    { One panel per label-and-control row.  A row is a panel rather than two
+      controls at hand-picked coordinates so that every width comes from
+      Align: the label is alLeft at a fixed width, the control alClient.  It
+      also gives the wizard something to hide -- hiding an edit on its own
+      would leave its caption behind and a 27-pixel hole where the row was. }
+    rwDim: TPanel;
+    rwUnit: TPanel;
+    rwMediaFormat: TPanel;
+    rwVolumeFile: TPanel;
+    rwSrcType: TPanel;
+    rwSrcPos: TPanel;
+    rwSrcDir: TPanel;
+    rwSrcParam1: TPanel;
+    rwSrcParam2: TPanel;
+    rwSrcFreq: TPanel;
+    rwSrcNum: TPanel;
+    rwSrcWavelen: TPanel;
+    rwSessionID: TPanel;
+    rwPhotons: TPanel;
+    rwSeed: TPanel;
+    rwT0: TPanel;
+    rwT1: TPanel;
+    rwDt: TPanel;
+    rwOutType: TPanel;
+    rwRootPath: TPanel;
+    rwMismatch: TPanel;
+    rwSaveVolume: TPanel;
+    rwSpecular: TPanel;
+    rwSaveDetp: TPanel;
+    rwMaxDetp: TPanel;
+    rwThread: TPanel;
+    rwBlock: TPanel;
+    rwWorkload: TPanel;
+    rwBC: TPanel;
+    rwMinEnergy: TPanel;
+
     { Every setting control the designer placed, paired with the caption that
-      belongs to it: edPhotons with lbPhotons, ckMismatch with lbMismatch.  The
-      binder finds each one by name through mcxdoc's table, so nothing here is
-      referenced by the code directly -- they are declared because a form field
-      is how the designer round-trips a control, and because a class only the
-      .lfm mentions is otherwise smart-linked away. }
-    gbSimulator: TGroupBox;
+      belongs to it: edPhotons with lbPhotons, cbSrcType with lbSrcType.  A
+      control that carries its own caption -- a check box, a radio group --
+      has no label, and the binder is happy to find none.
+
+      Nothing here is referenced by the code directly; they are declared
+      because a form field is how the designer round-trips a control, and
+      because a class only the .lfm mentions is otherwise smart-linked away. }
     rgBackend: TRadioGroup;
     rgDomainKind: TRadioGroup;
-    lbMediaFormat: TLabel;
-    cbMediaFormat: TComboBox;
-    lbT0: TLabel;
-    edT0: TEdit;
-    lbT1: TLabel;
-    edT1: TEdit;
-    lbDt: TLabel;
-    edDt: TEdit;
-    lbSessionID: TLabel;
-    edSessionID: TEdit;
-    lbPhotons: TLabel;
-    edPhotons: TEdit;
-    lbOutFormat: TLabel;
-    rgOutFormat: TRadioGroup;
-    lbOutType: TLabel;
-    cbOutType: TComboBox;
-    lbSeed: TLabel;
-    edSeed: TEdit;
-    lbMismatch: TLabel;
-    ckMismatch: TCheckBox;
-    lbNormalize: TLabel;
-    ckNormalize: TCheckBox;
-    lbSaveVolume: TLabel;
-    ckSaveVolume: TCheckBox;
-    lbSaveDetp: TLabel;
-    ckSaveDetp: TCheckBox;
-    lbSaveExit: TLabel;
-    ckSaveExit: TCheckBox;
-    lbSaveSeed: TLabel;
-    ckSaveSeed: TCheckBox;
-    lbSaveRef: TLabel;
-    ckSaveRef: TCheckBox;
-    lbSpecular: TLabel;
-    ckSpecular: TCheckBox;
-    lbDCS: TLabel;
-    ckDCS: TCheckBox;
     lbDim: TLabel;
     edDim: TEdit;
     lbUnit: TLabel;
     edUnit: TEdit;
+    ckOriginType: TCheckBox;
+    lbMediaFormat: TLabel;
+    cbMediaFormat: TComboBox;
     lbVolumeFile: TLabel;
     edVolumeFile: TEdit;
-    lbOriginType: TLabel;
-    ckOriginType: TCheckBox;
     lbSrcType: TLabel;
     cbSrcType: TComboBox;
     lbSrcPos: TLabel;
@@ -135,7 +198,35 @@ type
     edSrcNum: TEdit;
     lbSrcWavelen: TLabel;
     edSrcWavelen: TEdit;
-    lbAutoThread: TLabel;
+    lbSessionID: TLabel;
+    edSessionID: TEdit;
+    lbPhotons: TLabel;
+    edPhotons: TEdit;
+    lbSeed: TLabel;
+    edSeed: TEdit;
+    lbT0: TLabel;
+    edT0: TEdit;
+    lbT1: TLabel;
+    edT1: TEdit;
+    lbDt: TLabel;
+    edDt: TEdit;
+    rgOutFormat: TRadioGroup;
+    lbOutType: TLabel;
+    cbOutType: TComboBox;
+    lbRootPath: TLabel;
+    edRootPath: TEdit;
+    ckMismatch: TCheckBox;
+    ckNormalize: TCheckBox;
+    ckSaveVolume: TCheckBox;
+    ckSaveRef: TCheckBox;
+    ckSpecular: TCheckBox;
+    ckDCS: TCheckBox;
+    ckSaveDetp: TCheckBox;
+    ckSaveExit: TCheckBox;
+    ckSaveSeed: TCheckBox;
+    cgSaveMask: TCheckGroup;
+    lbMaxDetp: TLabel;
+    edMaxDetp: TEdit;
     ckAutoThread: TCheckBox;
     lbThread: TLabel;
     edThread: TEdit;
@@ -145,28 +236,9 @@ type
     edWorkload: TEdit;
     lbBC: TLabel;
     edBC: TEdit;
-    lbDebug: TLabel;
     cgDebug: TCheckGroup;
-    lbSaveMask: TLabel;
-    cgSaveMask: TCheckGroup;
-    lbMaxDetp: TLabel;
-    edMaxDetp: TEdit;
     lbMinEnergy: TLabel;
     edMinEnergy: TEdit;
-    lbRootPath: TLabel;
-    edRootPath: TEdit;
-
-    { The eight accordion sections.  Each is a plain TPanel holding a header
-      button and a body panel, so the whole thing stays editable in the
-      designer -- Lazarus 2.2 has no TCategoryPanel to place instead. }
-    pnTypes: TPanel;     hdTypes: TSpeedButton;     bdTypes: TPanel;
-    pnForward: TPanel;   hdForward: TSpeedButton;   bdForward: TPanel;
-    pnSession: TPanel;   hdSession: TSpeedButton;   bdSession: TPanel;
-    pnMedia: TPanel;     hdMedia: TSpeedButton;     bdMedia: TPanel;
-    pnShapes: TPanel;    hdShapes: TSpeedButton;    bdShapes: TPanel;
-    pnOptode: TPanel;    hdOptode: TSpeedButton;    bdOptode: TPanel;
-    pnCompute: TPanel;   hdCompute: TSpeedButton;   bdCompute: TPanel;
-    pnAdvanced: TPanel;  hdAdvanced: TSpeedButton;  bdAdvanced: TPanel;
 
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -195,15 +267,30 @@ type
       write anything, or merely opening a document would add every key the form
       knows about -- turning a three-key Session into a thirteen-key one. }
     FLoaded: array of string;
+    { The row panel and the group box each control sits in.  Hiding a control
+      is not enough on its own: the row it shares with its caption has to go
+      too, or the wizard leaves a caption with nothing beside it, and a group
+      box the wizard has emptied has to take its heading and its navigator
+      entry with it rather than stand there as an empty frame. }
+    FRows: array of TPanel;
+    FGroups: array of TGroupBox;
+    FRowList: array of TPanel;
     FLoading: Integer;
     FMissing: TStringList;
+    { The navigator: one pane, header and body per section, plus one entry
+      per subsection.  FSection is the section whose page the detail pane is
+      showing -- always a real one, because an empty detail pane is not a
+      state worth having. }
     FPanes: array of TPanel;
     FHeads: array of TSpeedButton;
     FBodies: array of TPanel;
-    FExpanded: Integer;
+    FPages: array of TPanel;
+    FSubs: array of TMcxNavItem;
+    FSection: Integer;
     FWizard: Boolean;
     procedure BuildIcons;
-    procedure CollectPanes;
+    procedure CollectSections;
+    procedure BuildNav;
     procedure BindControls;
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
@@ -212,8 +299,10 @@ type
     procedure SaveBinding(AIndex: Integer);
     procedure LoadAllBindings;
     procedure ApplyBindingStates;
-    procedure SetExpanded(AIndex: Integer);
-    procedure UpdateHeaderCaptions;
+    procedure SelectSection(AIndex: Integer);
+    procedure SubClick(Sender: TObject);
+    procedure ScrollToGroup(ABox: TGroupBox);
+    procedure UpdateNavState;
     procedure NewDocument;
     function  SaveAs: Boolean;
     function  ConfirmDiscard: Boolean;
@@ -244,9 +333,21 @@ implementation
 {$R *.lfm}
 
 const
-  SectionCaptions: array[0..7] of string = (
-    'Types', 'Forward', 'Session', 'Properties',
-    'Shapes', 'Optode', 'Compute', 'Advanced');
+  { Which group boxes belong to which section, in the order they appear on the
+    page.  This is the whole of the navigator's content: the section captions
+    are on the header buttons in the .lfm and the subsection captions are on
+    the group boxes, so every string a reader sees is written once, where the
+    designer shows it, and the existing .po extraction keeps working.
+
+    The order here matches CollectSections. }
+  SectionGroups: array[0..6] of string = (
+    { Simulator } 'gbEngine',
+    { Domain    } 'gbGrid,gbVolume,gbMedia',
+    { Shapes    } 'gbShapeList',
+    { Optode    } 'gbSource,gbSrcAdv,gbDetector',
+    { Session   } 'gbBasic,gbTime,gbOutput,gbSwitches,gbDetPhoton',
+    { Compute   } 'gbGPU,gbDevices',
+    { Advanced  } 'gbBoundary,gbFlags');
 
 { A minimal document: enough for mcx to run, and the same 60-cube every
   tutorial starts from. }
@@ -274,13 +375,14 @@ procedure TfmMain.FormCreate(Sender: TObject);
 begin
   FDoc := TMcxDoc.Create;
   FRun := TMcxDoc.Create;
-  FExpanded := -1;
+  FSection := -1;
   FWizard := True;
 
   FMissing := TStringList.Create;
 
   BuildIcons;
-  CollectPanes;
+  CollectSections;
+  BuildNav;
   BindControls;
 
   mmJSON.Font.Name := McxDefaultFontName;
@@ -288,14 +390,13 @@ begin
   mmLog.Font.Assign(mmJSON.Font);
 
   NewDocument;
-  SetExpanded(0);
-  UpdateHeaderCaptions;
+  SelectSection(0);
 
   if FMissing.Count > 0 then
   begin
     { Not fatal: the table is allowed to run ahead of the form while sections
       are still being built out.  Reported so it cannot go unnoticed. }
-    mmLog.Lines.Add(Format('%d binding(s) have no control on the form yet:',
+    mmLog.Lines.Add(Format('%d table entr(ies) have no control on the form yet:',
       [FMissing.Count]));
     mmLog.Lines.AddStrings(FMissing);
   end;
@@ -336,54 +437,175 @@ begin
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
-{ ------------------------------------------------------------ accordion --- }
+{ ------------------------------------------------------------ navigator --- }
 
-procedure TfmMain.CollectPanes;
+{ Selecting a section shows its page and lists its subsections underneath the
+  header; selecting a subsection scrolls that group box to the top of the
+  page.  Nothing is edited in the navigator itself -- it exists to keep forty
+  settings from arriving as one long column. }
+
+procedure TfmMain.CollectSections;
 begin
-  FPanes := [pnTypes, pnForward, pnSession, pnMedia,
-             pnShapes, pnOptode, pnCompute, pnAdvanced];
-  FHeads := [hdTypes, hdForward, hdSession, hdMedia,
-             hdShapes, hdOptode, hdCompute, hdAdvanced];
-  FBodies := [bdTypes, bdForward, bdSession, bdMedia,
-              bdShapes, bdOptode, bdCompute, bdAdvanced];
+  FPanes := [pnSimulator, pnDomain, pnShapes, pnOptode,
+             pnSession, pnCompute, pnAdvanced];
+  FHeads := [hdSimulator, hdDomain, hdShapes, hdOptode,
+             hdSession, hdCompute, hdAdvanced];
+  FBodies := [bdSimulator, bdDomain, bdShapes, bdOptode,
+              bdSession, bdCompute, bdAdvanced];
+  FPages := [pgSimulator, pgDomain, pgShapes, pgOptode,
+             pgSession, pgCompute, pgAdvanced];
 end;
 
-{ One section open at a time, which is what the expert form is meant to feel
-  like.  Clicking the open one closes it, so everything can be collapsed. }
-procedure TfmMain.SetExpanded(AIndex: Integer);
+{ One button per group box, captioned from the group box itself so a title is
+  written -- and translated -- once, in the .lfm.
+
+  Built in FormCreate, which is before mcxdpi's startup sweep, so the sizes
+  here are plain 96-dpi numbers and the sweep scales them with the rest of the
+  form.  Anything built after the sweep would have to call McxScale96 itself. }
+procedure TfmMain.BuildNav;
+var
+  s, g: Integer;
+  Names: TStringList;
+  C: TComponent;
+  B: TSpeedButton;
+begin
+  SetLength(FSubs, 0);
+  Names := TStringList.Create;
+  try
+    Names.Delimiter := ',';
+    Names.StrictDelimiter := True;
+    for s := 0 to High(SectionGroups) do
+    begin
+      Names.DelimitedText := SectionGroups[s];
+      for g := 0 to Names.Count - 1 do
+      begin
+        C := FindComponent(Names[g]);
+        if not (C is TGroupBox) then
+        begin
+          { The table naming a group box the form does not have is the same
+            kind of drift the binding table guards against, so it is reported
+            the same way rather than silently skipped. }
+          FMissing.Add(Names[g] + '  ->  no group box on ' + FPages[s].Name);
+          Continue;
+        end;
+
+        B := TSpeedButton.Create(Self);
+        B.Parent := FBodies[s];
+        B.Height := 22;
+        { Top before Align: alTop children are ordered by the Top they have
+          when they are aligned, so leaving them all at zero lists the
+          subsections in reverse. }
+        B.Top := g * 22;
+        B.Align := alTop;
+        { Left-justified rather than centred: a column of centred titles under
+          a centred heading reads as a poster, not as a list to scan.  A
+          TSpeedButton honours Alignment only when Margin and Spacing are both
+          set, and Margin is also what indents a subsection under its section. }
+        B.Alignment := taLeftJustify;
+        B.AllowAllUp := True;
+        B.Caption := TGroupBox(C).Caption;
+        B.Flat := True;
+        B.GroupIndex := 2;
+        B.Layout := blGlyphLeft;
+        B.Margin := 22;
+        B.Spacing := 6;
+        B.Tag := Length(FSubs);
+        B.OnClick := @SubClick;
+
+        SetLength(FSubs, Length(FSubs) + 1);
+        FSubs[High(FSubs)].Section := s;
+        FSubs[High(FSubs)].Box := TGroupBox(C);
+        FSubs[High(FSubs)].Btn := B;
+      end;
+    end;
+  finally
+    Names.Free;
+  end;
+end;
+
+procedure TfmMain.SelectSection(AIndex: Integer);
 var
   i: Integer;
 begin
-  if AIndex >= Length(FPanes) then AIndex := -1;
-  sbSections.DisableAlign;
+  if (AIndex < 0) or (AIndex > High(FPanes)) then Exit;
+
+  { Both panes move together: the navigator opens one section's subsection
+    list, the detail pane shows that section's page.  Alignment is frozen
+    while eight panels change visibility, or the scroll box relayouts once
+    per panel. }
+  sbNav.DisableAlign;
+  sbDetail.DisableAlign;
   try
     for i := 0 to High(FPanes) do
+    begin
       FBodies[i].Visible := (i = AIndex);
+      FPages[i].Visible := (i = AIndex);
+    end;
   finally
-    sbSections.EnableAlign;
+    sbDetail.EnableAlign;
+    sbNav.EnableAlign;
   end;
-  FExpanded := AIndex;
-  UpdateHeaderCaptions;
-  if AIndex >= 0 then sbSections.ScrollInView(FPanes[AIndex]);
+
+  FSection := AIndex;
+  sbDetail.VertScrollBar.Position := 0;
+  UpdateNavState;
 end;
 
-{ The chevron is a glyph rather than a caption prefix because TSpeedButton
-  centres its caption and has no Alignment -- but it does place a glyph at
-  Margin, and the caption follows the glyph, which left-aligns the header. }
-procedure TfmMain.UpdateHeaderCaptions;
+{ Scrolls ABox to the top of the detail pane.  The offset is summed up the
+  parent chain rather than read from ABox.Top, because a group box's Top is
+  relative to its page, not to the scroll box. }
+procedure TfmMain.ScrollToGroup(ABox: TGroupBox);
 var
-  i, Closed, Open: Integer;
+  C: TControl;
+  Offset: Integer;
+begin
+  if ABox = nil then Exit;
+  Offset := 0;
+  C := ABox;
+  while (C <> nil) and (C <> sbDetail) do
+  begin
+    Inc(Offset, C.Top);
+    C := C.Parent;
+  end;
+  Dec(Offset, 6);
+  if Offset < 0 then Offset := 0;
+  sbDetail.VertScrollBar.Position := Offset;
+end;
+
+procedure TfmMain.SubClick(Sender: TObject);
+var
+  i: Integer;
+begin
+  if not (Sender is TSpeedButton) then Exit;
+  i := TSpeedButton(Sender).Tag;
+  if (i < 0) or (i > High(FSubs)) then Exit;
+
+  if FSubs[i].Section <> FSection then SelectSection(FSubs[i].Section);
+  ScrollToGroup(FSubs[i].Box);
+  { Set after SelectSection, which repaints the whole navigator and would
+    otherwise clear it. }
+  TSpeedButton(Sender).Down := True;
+end;
+
+{ The chevron on a header says whether that section's subsections are showing.
+  It is a glyph rather than a caption prefix because TSpeedButton centres its
+  caption and has no Alignment -- but it does place a glyph at Margin, and the
+  caption follows the glyph, which left-aligns the header. }
+procedure TfmMain.UpdateNavState;
+var
+  i: Integer;
+  Closed, Open: Integer;
 begin
   Closed := McxIconIndex('collapsed');
   Open := McxIconIndex('expanded');
   for i := 0 to High(FHeads) do
   begin
-    FHeads[i].Caption := SectionCaptions[i];
-    if i = FExpanded then
-      FHeads[i].ImageIndex := Open
-    else
-      FHeads[i].ImageIndex := Closed;
+    if i = FSection then FHeads[i].ImageIndex := Open
+    else FHeads[i].ImageIndex := Closed;
+    FHeads[i].Down := (i = FSection);
   end;
+  for i := 0 to High(FSubs) do
+    FSubs[i].Btn.Down := False;
 end;
 
 procedure TfmMain.HeaderClick(Sender: TObject);
@@ -393,7 +615,7 @@ begin
   for i := 0 to High(FHeads) do
     if FHeads[i] = Sender then
     begin
-      if FExpanded = i then SetExpanded(-1) else SetExpanded(i);
+      SelectSection(i);
       Exit;
     end;
 end;
@@ -745,13 +967,25 @@ end;
   breaking the file format. }
 procedure TfmMain.BindControls;
 var
-  i: Integer;
+  i, N: Integer;
   C: TComponent;
+  P: TWinControl;
   Letters: string;
+
+  function IndexOfRow(APanel: TPanel): Integer;
+  begin
+    for Result := 0 to High(FRowList) do
+      if FRowList[Result] = APanel then Exit;
+    Result := -1;
+  end;
+
 begin
   SetLength(FBound, Length(Binds));
   SetLength(FLabels, Length(Binds));
   SetLength(FLoaded, Length(Binds));
+  SetLength(FRows, Length(Binds));
+  SetLength(FGroups, Length(Binds));
+  SetLength(FRowList, 0);
   for i := 0 to High(Binds) do
   begin
     C := FindComponent('lb' + Copy(Binds[i].Ctl, 3, MaxInt));
@@ -765,6 +999,27 @@ begin
       Continue;
     end;
     FBound[i] := TControl(C);
+    FRows[i] := nil;
+    FGroups[i] := nil;
+    P := FBound[i].Parent;
+    while (P <> nil) and (FGroups[i] = nil) do
+    begin
+      { A row panel is recognised by its name rather than by a flag, which
+        keeps the designer the only place a row is declared. }
+      if (FRows[i] = nil) and (P is TPanel) and
+         (Copy(P.Name, 1, 2) = 'rw') then
+      begin
+        FRows[i] := TPanel(P);
+        N := IndexOfRow(FRows[i]);
+        if N < 0 then
+        begin
+          SetLength(FRowList, Length(FRowList) + 1);
+          FRowList[High(FRowList)] := FRows[i];
+        end;
+      end;
+      if P is TGroupBox then FGroups[i] := TGroupBox(P);
+      P := P.Parent;
+    end;
     { Tag carries the row index, so the shared handler resolves its binding in
       one indirection.  Safe because the binder owns every control it wires. }
     FBound[i].Tag := i;
@@ -1011,10 +1266,11 @@ end;
 
 procedure TfmMain.ApplyBindingStates;
 var
-  i: Integer;
+  i, j, s, First, NBound, NShown: Integer;
   B: TMcxBind;
   C: TControl;
-  InMode: Boolean;
+  InMode, Shown: Boolean;
+  Live: array of Boolean;
 begin
   for i := 0 to High(Binds) do
   begin
@@ -1034,6 +1290,63 @@ begin
       FLabels[i].Enabled := C.Enabled;
     end;
   end;
+
+  { A row whose every control the wizard hid goes with them, or its caption
+    is left standing beside nothing.  A row shared by two check boxes stays
+    as long as one of them is showing. }
+  for j := 0 to High(FRowList) do
+  begin
+    NBound := 0;
+    NShown := 0;
+    for i := 0 to High(Binds) do
+      if (FBound[i] <> nil) and (FRows[i] = FRowList[j]) then
+      begin
+        Inc(NBound);
+        if FBound[i].Visible then Inc(NShown);
+      end;
+    if NBound > 0 then FRowList[j].Visible := NShown > 0;
+  end;
+
+  { A group box the wizard has emptied hides, and so does its entry in the
+    navigator: an empty frame under a heading reads as something broken.
+
+    A group holding no bound control at all -- the media table, the shape
+    list, the device list -- always stays, because what it will hold is a key
+    setting in either mode. }
+  SetLength(Live, Length(FSubs));
+  for j := 0 to High(FSubs) do
+  begin
+    NBound := 0;
+    NShown := 0;
+    for i := 0 to High(Binds) do
+      if (FBound[i] <> nil) and (FGroups[i] = FSubs[j].Box) then
+      begin
+        Inc(NBound);
+        if FBound[i].Visible then Inc(NShown);
+      end;
+    Live[j] := (NBound = 0) or (NShown > 0);
+  end;
+
+  for j := 0 to High(FSubs) do
+  begin
+    FSubs[j].Box.Visible := Live[j];
+    FSubs[j].Btn.Visible := Live[j];
+  end;
+
+  { A section whose every group went away would leave a header that opens on
+    nothing, so it goes too -- and if it was the one being shown, the first
+    surviving section takes over. }
+  First := -1;
+  for s := 0 to High(FPanes) do
+  begin
+    Shown := False;
+    for j := 0 to High(FSubs) do
+      if (FSubs[j].Section = s) and Live[j] then Shown := True;
+    FPanes[s].Visible := Shown;
+    if Shown and (First < 0) then First := s;
+  end;
+  if (FSection >= 0) and (not FPanes[FSection].Visible) then
+    SelectSection(First);
 end;
 
 { TCheckGroup reports which box moved; the binding does not care, so this just

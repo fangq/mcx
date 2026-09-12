@@ -12,13 +12,23 @@ PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
 LAZFLAGS   = --pcp=$(PCP) --ws=$(WIDGETSET)
 
-.PHONY: all debug icons test clean distclean res
+.PHONY: all debug forms icons test clean distclean res
 
-all:
+all: forms
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(BINARY).lpi
 
-debug:
+debug: forms
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Debug $(BINARY).lpi
+
+# lazbuild decides what to recompile from the .pas timestamps alone, so a form
+# edited on its own relinks the binary without rebuilding the resource that
+# holds it -- the old layout ships and nothing says so.  Touching the unit that
+# owns a newer .lfm is enough to make the dependency real.
+forms:
+	@for f in *.lfm; do \
+	    u=$${f%.lfm}.pas; \
+	    if [ -f "$$u" ] && [ "$$f" -nt "$$u" ]; then touch "$$u"; fi; \
+	done
 
 # Regenerates the Windows manifest resource.  Committed, so a fresh clone
 # builds without fpcres on PATH.
