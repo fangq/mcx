@@ -1,0 +1,52 @@
+# icon name  <-  file in ../icons/svg
+#
+# The left column is the name the code asks for (mcxicons.IconNames); the
+# right is the artwork it comes from.  Rasterised by "make icons" into
+# icons/<name>.png and embedded in mcxstudio2.res, so a normal build needs
+# neither inkscape nor fpcres.
+#
+# collapsed and expanded are deliberately absent: the navigator's chevrons
+# are drawn in code, because a two-tone badge is the wrong thing next to a
+# heading and a drawn chevron follows the theme's text colour.
+
+# session and files
+new         new
+open        open
+save        save
+saveas      savefile
+
+# running
+run         run
+stop        stop
+gpu         gpu
+bench       bench
+
+# modes and view
+wizard      wizard
+expert      options
+preview     preview
+reset       reset
+fit         fit
+
+# shape primitives, which double as the shape-tree node glyphs
+grid        grid
+box         box
+subgrid     subgrid
+sphere      sphere
+cylinder    cylinder
+xlayers     xlayers
+ylayers     ylayers
+zlayers     zlayers
+xslabs      xslabs
+yslabs      yslabs
+zslabs      zslabs
+
+# optodes and media
+source      source
+detector    detector
+media       media
+
+# editing
+add         add
+delete      delete
+about       about

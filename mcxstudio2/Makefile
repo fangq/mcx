@@ -12,7 +12,7 @@ PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
 LAZFLAGS   = --pcp=$(PCP) --ws=$(WIDGETSET)
 
-.PHONY: all debug forms icons test clean distclean res
+.PHONY: all debug forms icons sheet test clean distclean res
 
 all: forms
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(BINARY).lpi
@@ -30,13 +30,41 @@ forms:
 	    if [ -f "$$u" ] && [ "$$f" -nt "$$u" ]; then touch "$$u"; fi; \
 	done
 
-# Regenerates the Windows manifest resource.  Committed, so a fresh clone
-# builds without fpcres on PATH.
+# Rebuilds the embedded resource: the manifest plus one PNG per icon.  Both
+# icons/*.png and $(BINARY).res are committed, so a fresh clone builds with
+# neither inkscape nor fpcres on PATH; this runs only when the artwork moves.
 res:
 	cd packaging/windows && fpcres -of res -o ../../$(BINARY).res $(BINARY).rc
 
-# A contact sheet of every toolbar glyph, for reviewing the artwork.
-icons: all
+# Rasterises icons/svg into icons/*.png and regenerates the resource script.
+#
+# The masters are 96 pixels rather than the 16 or 24 a toolbar asks for: the
+# display scale is not known until the program runs, so mcxicons area-averages
+# each one down to whatever size the image list turns out to want.
+SVGDIR ?= ../icons/svg
+SVGSIZE ?= 96
+RASTER ?= inkscape
+
+icons:
+	@mkdir -p icons
+	@sed 's/#.*//' packaging/icons.map | while read -r name svg; do \
+	    [ -n "$$name" ] || continue; \
+	    echo "  $$svg.svg -> icons/$$name.png"; \
+	    $(RASTER) -w $(SVGSIZE) -h $(SVGSIZE) -o icons/$$name.png \
+	        $(SVGDIR)/$$svg.svg >/dev/null 2>&1 || exit 1; \
+	done
+	@$(RASTER) -w 256 -h 256 -o icons/mcxstudio2.png ../mcxstudio/mcx.svg \
+	    >/dev/null 2>&1 || true
+	@{ echo '1 24 "mcxstudio2.manifest"'; \
+	   echo 'MCXICONPNG 10 "../../icons/mcxstudio2.png"'; \
+	   sed 's/#.*//' packaging/icons.map | while read -r name svg; do \
+	       [ -n "$$name" ] || continue; \
+	       echo "MCXICON_$$(echo $$name | tr a-z A-Z) 10 \"../../icons/$$name.png\""; \
+	   done; } > packaging/windows/$(BINARY).rc
+	@$(MAKE) res
+
+# A contact sheet of every icon, for reviewing the artwork.
+sheet: all
 	./bin/$(BINARY) --dump-icons icons.png
 
 # The document tests link mcxdoc alone -- no LCL, no widgetset, no display --

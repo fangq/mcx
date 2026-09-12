@@ -1,16 +1,24 @@
-{ mcxstudio2 - Toolbar, menu and shape-tree icons, drawn rather than shipped.
+{ mcxstudio2 - Toolbar, menu and shape-tree icons.
 
-  Ported from the sibling Lazarus project led, whose header explains the
-  reasoning: bundling a PNG set means artwork to license, to scale for HiDPI
-  and to keep in step with the actions.  Drawing the icons from a handful of
-  primitives instead means nothing to install, they follow the requested size
-  exactly, and adding one is a short case branch rather than a trip to an
-  image editor.
+  The artwork is MCX Studio's own icon set, icons/svg in this repository --
+  the flat coloured badges the Lazarus GUI has used since 2017.  "make icons"
+  rasterises each one to a 96-pixel PNG and embeds it in mcxstudio2.res; both
+  the PNGs and the .res are committed, so an ordinary build needs neither
+  inkscape nor fpcres.
 
-  Every icon is designed on a nominal 16x16 grid and scaled to the size the
-  image list asks for, so the same code serves 16, 24 and 32 pixel toolbars.
-  Call McxBuildIconList once the display scale is known -- see McxScale96 in
-  mcxdpi -- and again if it changes. }
+  The masters are 96 pixels because the display scale is not known until the
+  program runs: this unit area-averages each badge down to whatever size the
+  image list asks for, which on a 130-dpi screen is 22 and on a 192-dpi one
+  is 32.  Resampling thirty icons at startup costs a few milliseconds.
+
+  Seven glyphs the old set never had -- new, wizard, bench, fit, source,
+  detector, media -- were drawn for mcxstudio2 in the same style, reusing the
+  set's own badge outline, and live alongside the originals in icons/svg.
+
+  Two icons are still drawn rather than rasterised: the navigator's collapsed
+  and expanded chevrons.  A coloured badge is the wrong thing beside a
+  heading, and a drawn chevron takes the theme's text colour, so it stays
+  legible when the rest of the window turns dark. }
 unit mcxicons;
 
 {$mode objfpc}{$H+}
@@ -18,10 +26,16 @@ unit mcxicons;
 interface
 
 uses
-  Classes, SysUtils, Graphics, Controls, ImgList;
+  Classes, SysUtils, Graphics, Controls, ImgList,
+  FPImage, FPReadPNG, FPWritePNG;
 
 const
-  McxWindowIconRes = 'MCXICONPNG';   { see packaging/windows/led.rc }
+  McxWindowIconRes = 'MCXICONPNG';   { see packaging/windows/mcxstudio2.rc }
+
+  { Every badge is embedded under this prefix plus its upper-cased name, so
+    the resource script is generated from the same packaging/icons.map the
+    rasteriser reads and nothing has to be listed twice. }
+  McxIconResPrefix = 'MCXICON_';
 
 type
   { The names are the action ids they belong to, lower-cased, so a caller can
@@ -52,7 +66,14 @@ function McxIconNames: TStringArray;
   it should start with no icon rather than not start. }
 procedure McxApplyWindowIcon;
 
-{ Draws one icon into ABitmap, which must already be sized. }
+{ One icon as a PNG at ASize pixels, area-averaged from the embedded 96-pixel
+  master, or nil when this build has no artwork under that name -- which is
+  the normal answer for the two drawn chevrons.  The caller owns the result. }
+function McxIconPng(const AName: string; ASize: Integer): TPortableNetworkGraphic;
+
+{ Draws one icon into ABitmap, which must already be sized.  Only the drawn
+  glyphs -- the chevrons -- have anything to draw; everything else is
+  artwork and comes back from McxIconPng. }
 procedure McxDrawIcon(ABitmap: TBitmap; const AName: string; AColour: TColor);
 
 { One icon as a 16x16 bitmap with a transparent background, for the controls
@@ -144,19 +165,18 @@ end;
 
 type
   { A tiny drawing context that takes coordinates on the 16x16 design grid and
-    puts them where they belong at the real size.  Everything below is written
-    against this, so no icon has to know how big it is being drawn. }
+    puts them where they belong at the real size, so a drawn glyph does not
+    have to know how big it is being drawn.
+
+    Line, Box and Ellipse went with the rest of the drawn set when the SVG
+    artwork took over; the chevrons need a filled polygon and nothing else.
+    Put them back from git if another glyph ever has to be drawn. }
   TPen16 = object
     C: TCanvas;
     S: Double;          // pixels per design unit
     procedure Init(ACanvas: TCanvas; ASize: Integer; AColour: TColor);
     function X(V: Double): Integer;
-    procedure Line(X1, Y1, X2, Y2: Double);
-    procedure Box(X1, Y1, X2, Y2: Double; AFill: Boolean = False);
-    procedure Ellipse(X1, Y1, X2, Y2: Double; AFill: Boolean = False);
     procedure Poly(const APts: array of Double; AFill: Boolean = False);
-    procedure Colour(AColour: TColor);
-    procedure Width(AUnits: Double);
   end;
 
 procedure TPen16.Init(ACanvas: TCanvas; ASize: Integer; AColour: TColor);
@@ -174,37 +194,6 @@ end;
 function TPen16.X(V: Double): Integer;
 begin
   Result := Round(V * S);
-end;
-
-procedure TPen16.Colour(AColour: TColor);
-begin
-  C.Pen.Color := AColour;
-  C.Brush.Color := AColour;
-end;
-
-procedure TPen16.Width(AUnits: Double);
-begin
-  C.Pen.Width := Round(AUnits * S);
-  if C.Pen.Width < 1 then C.Pen.Width := 1;
-end;
-
-procedure TPen16.Line(X1, Y1, X2, Y2: Double);
-begin
-  C.Line(X(X1), X(Y1), X(X2), X(Y2));
-end;
-
-procedure TPen16.Box(X1, Y1, X2, Y2: Double; AFill: Boolean);
-begin
-  if AFill then C.Brush.Style := bsSolid else C.Brush.Style := bsClear;
-  C.Rectangle(X(X1), X(Y1), X(X2), X(Y2));
-  C.Brush.Style := bsClear;
-end;
-
-procedure TPen16.Ellipse(X1, Y1, X2, Y2: Double; AFill: Boolean);
-begin
-  if AFill then C.Brush.Style := bsSolid else C.Brush.Style := bsClear;
-  C.Ellipse(X(X1), X(Y1), X(X2), X(Y2));
-  C.Brush.Style := bsClear;
 end;
 
 procedure TPen16.Poly(const APts: array of Double; AFill: Boolean);
@@ -225,238 +214,131 @@ begin
     C.Polyline(P);
 end;
 
-{ A cube drawn in oblique projection: the shared base of every domain glyph.
-  AFront fills the near face so that a solid shape reads differently from a
-  region marker at 16 pixels, where shading is the only cue that survives. }
-procedure DrawCube(var P: TPen16; AFill: Boolean = False);
-begin
-  P.Poly([2, 6, 2, 13.5, 9.5, 13.5, 9.5, 6, 2, 6], AFill);
-  P.Poly([2, 6, 6.5, 2.5, 14, 2.5, 9.5, 6]);
-  P.Line(14, 2.5, 14, 10);
-  P.Line(9.5, 13.5, 14, 10);
-end;
-
-{ A stack of three slabs, rotated by the caller to mean X, Y or Z. }
-procedure DrawStack(var P: TPen16; AVertical: Boolean);
-var
-  i: Integer;
-begin
-  for i := 0 to 2 do
-    if AVertical then
-      P.Box(2.5, 2.5 + i * 4, 13.5, 5.5 + i * 4)
-    else
-      P.Box(2.5 + i * 4, 2.5, 5.5 + i * 4, 13.5);
-end;
-
+{ Only the navigator's two chevrons are drawn.  Everything else is the SVG
+  artwork, resampled by McxIconPng; a name that reaches here and matches
+  nothing leaves the bitmap as the caller prepared it, which is a blank slot
+  in the image list and a blank cell on the contact sheet. }
 procedure McxDrawIcon(ABitmap: TBitmap; const AName: string; AColour: TColor);
 var
   P: TPen16;
-  N: string;
 begin
   P.Init(ABitmap.Canvas, ABitmap.Width, AColour);
-  N := LowerCase(AName);
+  case LowerCase(AName) of
+    'collapsed': P.Poly([6, 3.5, 11, 8, 6, 12.5], True);
+    'expanded':  P.Poly([3.5, 6, 12.5, 6, 8, 11], True);
+  end;
+end;
 
-  case N of
-    { ---- session and files ---------------------------------------------- }
-    'new':
-      begin
-        P.Poly([3.5, 1.5, 3.5, 14.5, 12.5, 14.5, 12.5, 5, 9, 1.5, 3.5, 1.5]);
-        P.Poly([9, 1.5, 9, 5, 12.5, 5]);
-      end;
-    'open':
-      begin
-        P.Poly([1.5, 13.5, 1.5, 3.5, 6, 3.5, 7.5, 5.5, 12.5, 5.5, 12.5, 7.5]);
-        P.Poly([1.5, 13.5, 4.5, 7.5, 15, 7.5, 12, 13.5, 1.5, 13.5]);
-      end;
-    'save':
-      begin
-        { A floppy disk: still the only universally read save glyph. }
-        P.Box(2, 2, 14, 14);
-        P.Box(5, 2, 11, 6, True);
-        P.Box(4, 9, 12, 14);
-      end;
-    'saveas':
-      begin
-        P.Box(2, 2, 11, 11);
-        P.Box(4.5, 2, 8.5, 5, True);
-        P.Line(11, 14, 14.5, 10.5);
-        P.Line(14.5, 10.5, 12.5, 14.5);
-      end;
+{ ---------------------------------------------------------- artwork ------- }
 
-    { ---- running --------------------------------------------------------- }
-    'run':
-      P.Poly([4, 2.5, 13.5, 8, 4, 13.5, 4, 2.5], True);
-    'stop':
-      P.Box(3.5, 3.5, 12.5, 12.5, True);
-    'gpu':
-      begin
-        { A die with pins: the board, not a monitor, so it is not confused
-          with the preview glyph. }
-        P.Box(3.5, 3.5, 12.5, 12.5);
-        P.Box(6, 6, 10, 10, True);
-        P.Line(6, 1.5, 6, 3.5);
-        P.Line(10, 1.5, 10, 3.5);
-        P.Line(6, 12.5, 6, 14.5);
-        P.Line(10, 12.5, 10, 14.5);
-        P.Line(1.5, 6, 3.5, 6);
-        P.Line(1.5, 10, 3.5, 10);
-        P.Line(12.5, 6, 14.5, 6);
-        P.Line(12.5, 10, 14.5, 10);
-      end;
-    'bench':
-      begin
-        { A bar chart: the built-in benchmark list. }
-        P.Line(2, 14, 14, 14);
-        P.Box(3, 9, 5.5, 14, True);
-        P.Box(6.75, 5, 9.25, 14, True);
-        P.Box(10.5, 2.5, 13, 14, True);
-      end;
+{ Area-averages ASrc down to ASize x ASize.
 
-    { ---- modes and view -------------------------------------------------- }
-    'wizard':
-      begin
-        { A wand with a spark: the guided path. }
-        P.Line(2.5, 13.5, 10.5, 5.5);
-        P.Line(12.5, 1.5, 12.5, 5);
-        P.Line(10.75, 3.25, 14.25, 3.25);
-        P.Line(11.3, 2.05, 13.7, 4.45);
-        P.Line(13.7, 2.05, 11.3, 4.45);
-      end;
-    'expert':
-      begin
-        { Sliders: every setting at once. }
-        P.Line(2, 4, 14, 4);
-        P.Line(2, 8, 14, 8);
-        P.Line(2, 12, 14, 12);
-        P.Ellipse(4, 2.5, 6.5, 5.5, True);
-        P.Ellipse(9, 6.5, 11.5, 9.5, True);
-        P.Ellipse(5.5, 10.5, 8, 13.5, True);
-      end;
-    'preview':
-      begin
-        DrawCube(P);
-        P.Ellipse(6.5, 7, 8.5, 9, True);
-      end;
-    'reset':
-      begin
-        { An open circular arrow. }
-        P.Poly([12.5, 5, 12.5, 8, 10, 10.5, 6, 10.5, 3.5, 8, 3.5, 5, 6, 2.5, 10, 2.5]);
-        P.Poly([10, 0.5, 12.5, 2.5, 10, 4.5]);
-      end;
-    'fit':
-      begin
-        { Corner brackets: zoom to extents. }
-        P.Poly([2, 5.5, 2, 2, 5.5, 2]);
-        P.Poly([10.5, 2, 14, 2, 14, 5.5]);
-        P.Poly([14, 10.5, 14, 14, 10.5, 14]);
-        P.Poly([5.5, 14, 2, 14, 2, 10.5]);
-        P.Box(5.5, 5.5, 10.5, 10.5);
-      end;
+  The averaging is alpha-weighted.  A PNG writer leaves the colour of a fully
+  transparent pixel undefined -- usually black -- so averaging colour and
+  alpha independently drags that black into every partly covered pixel and
+  rings each badge with a dark halo.  Weighting colour by alpha and dividing
+  by the alpha that was actually there is what removes it. }
+function ResampleImage(ASrc: TFPCustomImage; ASize: Integer): TFPMemoryImage;
+var
+  dx, dy, sx, sy, x0, x1, y0, y1, n: Integer;
+  sr, sg, sb, sa: Int64;
+  C: TFPColor;
+begin
+  Result := TFPMemoryImage.Create(ASize, ASize);
+  Result.UsePalette := False;
+  for dy := 0 to ASize - 1 do
+  begin
+    y0 := dy * ASrc.Height div ASize;
+    y1 := (dy + 1) * ASrc.Height div ASize;
+    if y1 <= y0 then y1 := y0 + 1;
+    for dx := 0 to ASize - 1 do
+    begin
+      x0 := dx * ASrc.Width div ASize;
+      x1 := (dx + 1) * ASrc.Width div ASize;
+      if x1 <= x0 then x1 := x0 + 1;
 
-    { ---- shape primitives ------------------------------------------------ }
-    'grid':
-      begin
-        P.Box(2, 2, 14, 14);
-        P.Line(6, 2, 6, 14);
-        P.Line(10, 2, 10, 14);
-        P.Line(2, 6, 14, 6);
-        P.Line(2, 10, 14, 10);
-      end;
-    'box':
-      DrawCube(P);
-    'subgrid':
-      begin
-        DrawCube(P);
-        P.Box(4, 8, 7.5, 11.5, True);
-      end;
-    'sphere':
-      begin
-        P.Ellipse(2, 2, 14, 14);
-        { Two ellipses turn a flat disc into a sphere. }
-        P.Ellipse(2, 6, 14, 10);
-        P.Line(8, 2, 8, 14);
-      end;
-    'cylinder':
-      begin
-        P.Ellipse(3.5, 1.5, 12.5, 5);
-        P.Line(3.5, 3.25, 3.5, 12.75);
-        P.Line(12.5, 3.25, 12.5, 12.75);
-        P.Ellipse(3.5, 11, 12.5, 14.5);
-      end;
-    'xlayers':
-      DrawStack(P, False);
-    'ylayers':
-      DrawStack(P, True);
-    'zlayers':
-      begin
-        { Depth reads as an oblique stack rather than a flat one. }
-        P.Poly([2, 9, 6, 5.5, 14, 5.5, 10, 9, 2, 9]);
-        P.Poly([2, 12.5, 6, 9, 14, 9, 10, 12.5, 2, 12.5]);
-      end;
-    'xslabs':
-      begin
-        P.Box(2.5, 2.5, 5.5, 13.5, True);
-        P.Box(9, 2.5, 12, 13.5);
-      end;
-    'yslabs':
-      begin
-        P.Box(2.5, 2.5, 13.5, 5.5, True);
-        P.Box(2.5, 9, 13.5, 12);
-      end;
-    'zslabs':
-      begin
-        P.Poly([2, 8, 6, 4.5, 14, 4.5, 10, 8, 2, 8], True);
-        P.Poly([2, 13, 6, 9.5, 14, 9.5, 10, 13, 2, 13]);
-      end;
+      sr := 0; sg := 0; sb := 0; sa := 0; n := 0;
+      for sy := y0 to y1 - 1 do
+        for sx := x0 to x1 - 1 do
+        begin
+          C := ASrc.Colors[sx, sy];
+          Inc(sr, Int64(C.Red) * C.Alpha div alphaOpaque);
+          Inc(sg, Int64(C.Green) * C.Alpha div alphaOpaque);
+          Inc(sb, Int64(C.Blue) * C.Alpha div alphaOpaque);
+          Inc(sa, C.Alpha);
+          Inc(n);
+        end;
 
-    { ---- optodes and media ----------------------------------------------- }
-    'source':
+      if sa = 0 then
+        C := colTransparent
+      else
       begin
-        { A point with rays leaving it, pointing the way the launch does. }
-        P.Ellipse(6, 1.5, 10, 5.5, True);
-        P.Line(8, 5.5, 8, 14);
-        P.Line(8, 14, 5, 10.5);
-        P.Line(8, 14, 11, 10.5);
+        C.Red := sr * alphaOpaque div sa;
+        C.Green := sg * alphaOpaque div sa;
+        C.Blue := sb * alphaOpaque div sa;
+        C.Alpha := sa div n;
       end;
-    'detector':
-      begin
-        { An open half-shell facing the surface. }
-        P.Poly([2.5, 5, 2.5, 8, 8, 13.5, 13.5, 8, 13.5, 5]);
-        P.Line(2.5, 5, 13.5, 5);
-        P.Ellipse(6.5, 6, 9.5, 9);
-      end;
-    'media':
-      begin
-        { Stacked property rows: the media table. }
-        P.Box(2, 3, 14, 13);
-        P.Line(2, 6.5, 14, 6.5);
-        P.Line(2, 9.75, 14, 9.75);
-        P.Line(6, 3, 6, 13);
-      end;
+      Result.Colors[dx, dy] := C;
+    end;
+  end;
+end;
 
-    { ---- editing --------------------------------------------------------- }
-    'add':
-      begin
-        P.Line(8, 3, 8, 13);
-        P.Line(3, 8, 13, 8);
-      end;
-    'delete':
-      begin
-        P.Line(4, 4, 12, 12);
-        P.Line(12, 4, 4, 12);
-      end;
-    'about':
-      begin
-        P.Ellipse(2, 2, 14, 14);
-        P.Line(8, 6.5, 8, 11.5);
-        P.Line(8, 4.25, 8, 4.75);
-      end;
+function McxIconPng(const AName: string; ASize: Integer): TPortableNetworkGraphic;
+var
+  Res: TResourceStream;
+  Raw, Small: TFPMemoryImage;
+  Reader: TFPReaderPNG;
+  Writer: TFPWriterPNG;
+  Mem: TMemoryStream;
+begin
+  Result := nil;
+  if ASize < 1 then ASize := 16;
+  Res := nil;
+  Raw := nil;
+  Small := nil;
+  Reader := nil;
+  Writer := nil;
+  Mem := nil;
+  try
+    try
+      { A name with no artwork is an ordinary answer, not an error: the
+        chevrons are drawn, and a half-built resource should degrade to a
+        blank slot rather than stop the program. }
+      Res := TResourceStream.Create(HInstance,
+        McxIconResPrefix + UpperCase(AName), RT_RCDATA);
+    except
+      Exit;
+    end;
 
-    { ---- accordion headers ----------------------------------------------- }
-    'collapsed':
-      P.Poly([6, 3.5, 11, 8, 6, 12.5], True);
-    'expanded':
-      P.Poly([3.5, 6, 12.5, 6, 8, 11], True);
+    Raw := TFPMemoryImage.Create(0, 0);
+    Reader := TFPReaderPNG.Create;
+    Raw.LoadFromStream(Res, Reader);
+
+    Small := ResampleImage(Raw, ASize);
+
+    { Back out through a PNG rather than poking at a TBitmap: the LCL reads a
+      PNG'"'"'s alpha correctly on every widget set, whereas assembling a 32-bit
+      TBitmap by hand means caring which byte order the current one uses. }
+    Mem := TMemoryStream.Create;
+    Writer := TFPWriterPNG.Create;
+    Writer.UseAlpha := True;
+    Writer.WordSized := False;
+    Small.SaveToStream(Mem, Writer);
+    Mem.Position := 0;
+
+    Result := TPortableNetworkGraphic.Create;
+    try
+      Result.LoadFromStream(Mem);
+    except
+      FreeAndNil(Result);
+    end;
+  finally
+    Mem.Free;
+    Writer.Free;
+    Small.Free;
+    Reader.Free;
+    Raw.Free;
+    Res.Free;
   end;
 end;
 
@@ -493,6 +375,7 @@ end;
 function McxBuildIconList(AImages: TImageList; const ANames: array of string;
   AColour: TColor): TImageList;
 var
+  Png: TPortableNetworkGraphic;
   Bmp: TBitmap;
   i: Integer;
 begin
@@ -500,6 +383,16 @@ begin
   AImages.Clear;
   for i := 0 to High(ANames) do
   begin
+    Png := McxIconPng(ANames[i], AImages.Width);
+    if Png <> nil then
+      try
+        AImages.Add(Png, nil);
+        Continue;
+      finally
+        Png.Free;
+      end;
+
+    { No artwork under that name, so it is one of the drawn glyphs. }
     Bmp := TBitmap.Create;
     try
       { 24-bit, not 32.  AddMasked compares whole pixels, and a 32-bit
@@ -514,9 +407,8 @@ begin
 
       { Antialiasing has to stay off for the same reason.  A masked bitmap
         is transparent only where the pixel matches exactly, so smoothed
-        edges would blend the icon into the mask colour and leave a magenta
-        fringe around every glyph.  At 16 pixels crisp is the better
-        trade anyway. }
+        edges would blend the glyph into the mask colour and leave a magenta
+        fringe around it. }
       Bmp.Canvas.AntialiasingMode := amOff;
 
       McxDrawIcon(Bmp, ANames[i], AColour);
@@ -536,7 +428,7 @@ const
 var
   Names: TStringArray;
   Sheet, Glyph: TBitmap;
-  Png: TPortableNetworkGraphic;
+  Png, Art: TPortableNetworkGraphic;
   i, Rows, Cell, X, Y: Integer;
 begin
   Result := False;
@@ -557,24 +449,38 @@ begin
 
     for i := 0 to High(Names) do
     begin
-      { A bitmap per cell, not McxIconBitmap's shared one: that caches a
+      { Artwork where there is artwork, the drawn glyph otherwise, so the
+        sheet shows exactly what the toolbar will show -- including a blank
+        cell if a name has neither, which is the point of looking at it.
+
+        A bitmap per cell, not McxIconBitmap's shared one: that caches a
         transparency mask on first use, so reusing it drew glyph zero in every
         cell.  Painted on white rather than the mask colour, because a contact
         sheet is looked at rather than masked. }
-      Glyph := TBitmap.Create;
-      try
-        Glyph.PixelFormat := pf24bit;
-        Glyph.SetSize(ASize, ASize);
-        Glyph.Canvas.Brush.Color := clWhite;
-        Glyph.Canvas.Brush.Style := bsSolid;
-        Glyph.Canvas.FillRect(0, 0, ASize, ASize);
-        Glyph.Canvas.AntialiasingMode := amOff;
-        McxDrawIcon(Glyph, Names[i], AColour);
-        X := (i mod Cols) * Cell + Pad;
-        Y := (i div Cols) * Cell + Pad;
-        Sheet.Canvas.Draw(X, Y, Glyph);
-      finally
-        Glyph.Free;
+      X := (i mod Cols) * Cell + Pad;
+      Y := (i div Cols) * Cell + Pad;
+      Art := McxIconPng(Names[i], ASize);
+      if Art <> nil then
+        try
+          Sheet.Canvas.Draw(X, Y, Art);
+        finally
+          Art.Free;
+        end
+      else
+      begin
+        Glyph := TBitmap.Create;
+        try
+          Glyph.PixelFormat := pf24bit;
+          Glyph.SetSize(ASize, ASize);
+          Glyph.Canvas.Brush.Color := clWhite;
+          Glyph.Canvas.Brush.Style := bsSolid;
+          Glyph.Canvas.FillRect(0, 0, ASize, ASize);
+          Glyph.Canvas.AntialiasingMode := amOff;
+          McxDrawIcon(Glyph, Names[i], AColour);
+          Sheet.Canvas.Draw(X, Y, Glyph);
+        finally
+          Glyph.Free;
+        end;
       end;
     end;
 

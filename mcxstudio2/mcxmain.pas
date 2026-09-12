@@ -73,6 +73,7 @@ type
     tbDevices: TToolButton;
     tbSep2: TToolButton;
     tbMode: TToolButton;
+    tmFlash: TTimer;
     tmRefresh: TTimer;
     tsCommand: TTabSheet;
     tsJSON: TTabSheet;
@@ -251,6 +252,7 @@ type
     procedure acAboutExecute(Sender: TObject);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
+    procedure tmFlashTimer(Sender: TObject);
     procedure tmRefreshTimer(Sender: TObject);
   private
     FDoc: TMcxDoc;
@@ -287,6 +289,10 @@ type
     FPages: array of TPanel;
     FSubs: array of TMcxNavItem;
     FSection: Integer;
+    { The group box currently being flashed, and how far through the fade it
+      is.  Only ever one at a time: a second click cancels the first. }
+    FFlashBox: TGroupBox;
+    FFlashStep: Integer;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
@@ -302,6 +308,7 @@ type
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
     procedure ScrollToGroup(ABox: TGroupBox);
+    procedure FlashGroup(ABox: TGroupBox);
     procedure UpdateNavState;
     procedure NewDocument;
     function  SaveAs: Boolean;
@@ -439,12 +446,30 @@ end;
 
 { ------------------------------------------------------------ navigator --- }
 
+{ A colour APercent of the way from A to B.  Every shade the navigator uses is
+  mixed from the theme's own clBtnFace / clWindowText / clHighlight rather than
+  written down as a grey, so the bands stay legible under a dark theme -- which
+  is where the old GUI's hard-coded colours failed. }
+function McxBlend(A, B: TColor; APercent: Integer): TColor;
+var
+  ra, ga, ba, rb, gb, bb: Byte;
+begin
+  RedGreenBlue(ColorToRGB(A), ra, ga, ba);
+  RedGreenBlue(ColorToRGB(B), rb, gb, bb);
+  Result := RGBToColor(
+    ra + (Integer(rb) - ra) * APercent div 100,
+    ga + (Integer(gb) - ga) * APercent div 100,
+    ba + (Integer(bb) - ba) * APercent div 100);
+end;
+
 { Selecting a section shows its page and lists its subsections underneath the
   header; selecting a subsection scrolls that group box to the top of the
   page.  Nothing is edited in the navigator itself -- it exists to keep forty
   settings from arriving as one long column. }
 
 procedure TfmMain.CollectSections;
+var
+  i: Integer;
 begin
   FPanes := [pnSimulator, pnDomain, pnShapes, pnOptode,
              pnSession, pnCompute, pnAdvanced];
@@ -454,6 +479,20 @@ begin
               bdSession, bdCompute, bdAdvanced];
   FPages := [pgSimulator, pgDomain, pgShapes, pgOptode,
              pgSession, pgCompute, pgAdvanced];
+
+  { A flat TSpeedButton paints nothing of its own until it is hovered, so the
+    band behind a section heading is the section panel's colour showing
+    through.  The body panel underneath is painted back to the navigator's
+    own background, which is what separates a heading from the subsections
+    listed below it. }
+  for i := 0 to High(FPanes) do
+  begin
+    FPanes[i].ParentColor := False;
+    FBodies[i].ParentColor := False;
+    FBodies[i].Color := clBtnFace;
+  end;
+  sbNav.ParentColor := False;
+  sbNav.Color := clBtnFace;
 end;
 
 { One button per group box, captioned from the group box itself so a title is
@@ -491,11 +530,11 @@ begin
 
         B := TSpeedButton.Create(Self);
         B.Parent := FBodies[s];
-        B.Height := 22;
+        B.Height := 26;
         { Top before Align: alTop children are ordered by the Top they have
           when they are aligned, so leaving them all at zero lists the
           subsections in reverse. }
-        B.Top := g * 22;
+        B.Top := g * 26;
         B.Align := alTop;
         { Left-justified rather than centred: a column of centred titles under
           a centred heading reads as a poster, not as a list to scan.  A
@@ -507,8 +546,12 @@ begin
         B.Flat := True;
         B.GroupIndex := 2;
         B.Layout := blGlyphLeft;
-        B.Margin := 22;
+        { Indented past where a section heading's own text starts, so the
+          hierarchy is visible without a second glyph column. }
+        B.Margin := 34;
         B.Spacing := 6;
+        B.ParentFont := False;
+        B.Font.Height := -14;
         B.Tag := Length(FSubs);
         B.OnClick := @SubClick;
 
@@ -572,6 +615,69 @@ begin
   sbDetail.VertScrollBar.Position := Offset;
 end;
 
+type
+  { Color and ParentColor are protected in TControl and only published by the
+    concrete classes; a descendant declared in this unit reaches them without
+    caring which class it was handed. }
+  TColourAccess = class(TWinControl);
+
+{ Paints ABox and the row panels inside it, so the whole group tints rather
+  than just the strip of frame around the rows. }
+procedure TintGroup(C: TWinControl; AColor: TColor; AOn: Boolean);
+var
+  i: Integer;
+begin
+  if AOn then
+  begin
+    TColourAccess(C).ParentColor := False;
+    TColourAccess(C).Color := AColor;
+  end
+  else
+    TColourAccess(C).ParentColor := True;
+  for i := 0 to C.ControlCount - 1 do
+    if C.Controls[i] is TPanel then
+      TintGroup(TWinControl(C.Controls[i]), AColor, AOn);
+end;
+
+{ Tints a group box towards the selection colour and fades it out again.
+
+  Scrolling is the obvious answer to "which one did I just pick", but a
+  section with two short groups does not scroll at all, so clicking its
+  subsections looked like clicking nothing.  The flash says which group the
+  click meant whether the pane moved or not. }
+procedure TfmMain.FlashGroup(ABox: TGroupBox);
+begin
+  if (FFlashBox <> nil) and (FFlashBox <> ABox) then
+    TintGroup(FFlashBox, clNone, False);
+  FFlashBox := ABox;
+  FFlashStep := 0;
+  tmFlash.Enabled := False;
+  tmFlashTimer(nil);           { the first frame now, not in 90 ms }
+  tmFlash.Enabled := True;
+end;
+
+procedure TfmMain.tmFlashTimer(Sender: TObject);
+const
+  { Three frames of about 90 ms: visible without being a blink, gone before
+    it becomes a distraction. }
+  Fade: array[0..2] of Integer = (32, 18, 8);
+begin
+  if FFlashBox = nil then
+  begin
+    tmFlash.Enabled := False;
+    Exit;
+  end;
+  if FFlashStep > High(Fade) then
+  begin
+    TintGroup(FFlashBox, clNone, False);
+    FFlashBox := nil;
+    tmFlash.Enabled := False;
+    Exit;
+  end;
+  TintGroup(FFlashBox, McxBlend(clBtnFace, clHighlight, Fade[FFlashStep]), True);
+  Inc(FFlashStep);
+end;
+
 procedure TfmMain.SubClick(Sender: TObject);
 var
   i: Integer;
@@ -582,6 +688,7 @@ begin
 
   if FSubs[i].Section <> FSection then SelectSection(FSubs[i].Section);
   ScrollToGroup(FSubs[i].Box);
+  FlashGroup(FSubs[i].Box);
   { Set after SelectSection, which repaints the whole navigator and would
     otherwise clear it. }
   TSpeedButton(Sender).Down := True;
@@ -603,6 +710,13 @@ begin
     if i = FSection then FHeads[i].ImageIndex := Open
     else FHeads[i].ImageIndex := Closed;
     FHeads[i].Down := (i = FSection);
+    { The open section is tinted towards the selection colour and the closed
+      ones sit on a band just off the background: enough to read as headings
+      against the plain list of subsections beneath them. }
+    if i = FSection then
+      FPanes[i].Color := McxBlend(clBtnFace, clHighlight, 30)
+    else
+      FPanes[i].Color := McxBlend(clBtnFace, clWindowText, 10);
   end;
   for i := 0 to High(FSubs) do
     FSubs[i].Btn.Down := False;
