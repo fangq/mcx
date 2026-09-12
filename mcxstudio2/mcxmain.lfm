@@ -2039,13 +2039,6 @@ object fmMain: TfmMain
     left = 496
     top = 128
   end
-  object tmFlash: TTimer
-    Enabled = False
-    Interval = 90
-    OnTimer = tmFlashTimer
-    left = 568
-    top = 128
-  end
   object tmRefresh: TTimer
     Enabled = False
     Interval = 250

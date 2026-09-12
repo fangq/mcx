@@ -31,9 +31,6 @@ type
     Section: Integer;
     Box: TGroupBox;
     Btn: TSpeedButton;
-    { The card's resting colour, so the flash knows what to fade back to
-      rather than guessing at the theme's default. }
-    Tint: TColor;
   end;
 
   { TfmMain }
@@ -76,7 +73,6 @@ type
     tbDevices: TToolButton;
     tbSep2: TToolButton;
     tbMode: TToolButton;
-    tmFlash: TTimer;
     tmRefresh: TTimer;
     tsCommand: TTabSheet;
     tsJSON: TTabSheet;
@@ -255,7 +251,6 @@ type
     procedure acAboutExecute(Sender: TObject);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
-    procedure tmFlashTimer(Sender: TObject);
     procedure tmRefreshTimer(Sender: TObject);
   private
     FDoc: TMcxDoc;
@@ -291,11 +286,12 @@ type
     FBodies: array of TPanel;
     FPages: array of TPanel;
     FSubs: array of TMcxNavItem;
+    { The section whose page is showing, and the subsection whose card is
+      highlighted on it.  There is always one of each: an empty detail pane
+      is not a state worth having, and neither is a page where nothing says
+      where you are. }
     FSection: Integer;
-    { The group box currently being flashed, and how far through the fade it
-      is.  Only ever one at a time: a second click cancels the first. }
-    FFlashBox: TGroupBox;
-    FFlashStep: Integer;
+    FSub: Integer;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
@@ -311,9 +307,8 @@ type
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
     procedure ScrollToGroup(ABox: TGroupBox);
-    function  AccentOf(ABox: TGroupBox): TColor;
-    function  CardBase(ABox: TGroupBox): TColor;
-    procedure FlashGroup(ABox: TGroupBox);
+    function  FirstSubOf(ASection: Integer): Integer;
+    procedure SelectSub(AIndex: Integer);
     procedure UpdateNavState;
     procedure NewDocument;
     function  SaveAs: Boolean;
@@ -352,28 +347,20 @@ const
     designer shows it, and the existing .po extraction keeps working.
 
     The order here matches CollectSections. }
-  { One accent per section, in the order CollectSections uses, picked from
-    the icon set's own palette so the navigator band and the cards on the
-    page agree with the badges on the toolbar.
+  { Three colours do the whole window.
 
-    TColor is $00BBGGRR, so these read backwards against the SVG: $D9904A is
-    the #4a90d9 of the blue badges. }
-  SectionAccent: array[0..6] of TColor = (
-    { Simulator } TColor($D9904A),   { blue   }
-    { Domain    } TColor($288BD7),   { amber  }
-    { Shapes    } TColor($D35F8D),   { violet }
-    { Optode    } TColor($4A57E0),   { coral  }
-    { Session   } TColor($4AA05A),   { green  }
-    { Compute   } TColor($9E9E1F),   { teal   }
-    { Advanced  } TColor($9B47B5));  { plum   }
+    Two of them are the same neutral at two strengths and say what level a
+    surface is: the band behind a section heading, the fill of a card.  The
+    third is the theme's own selection colour, and it is the only thing that
+    ever says "this one".
 
-  { How far each surface is mixed towards its section's accent.  A card is a
-    tint rather than a fill: the settings on it have to stay readable, and at
-    much past this the check boxes start to swim. }
-  CardTint     = 18;
-  BandTint     = 16;
-  BandSelected = 62;
-  FlashTint    = 45;
+    Seven per-section accents were prettier and worse.  A colour that means
+    identity cannot also mean selection, so nothing on a page could be
+    highlighted without arguing with the section it sat on. }
+  BandLevel  = 14;   { a closed section heading }
+  CardLevel  =  7;   { a card nobody has picked }
+  BandActive = 58;   { the open section }
+  CardActive = 22;   { the card of the selected subsection }
 
   SectionGroups: array[0..6] of string = (
     { Simulator } 'gbEngine',
@@ -411,6 +398,7 @@ begin
   FDoc := TMcxDoc.Create;
   FRun := TMcxDoc.Create;
   FSection := -1;
+  FSub := -1;
   FWizard := True;
 
   FMissing := TStringList.Create;
@@ -509,6 +497,34 @@ type
   ParentColor: a TPanel honours ParentColor, but a radio or check group asks
   the widget set for its own background whatever ParentColor says, and left
   alone the two of them sat on a tinted card as pale rectangles. }
+type
+  { ParentFont is protected in TControl, like Color and ParentColor. }
+  TFontAccess = class(TControl);
+
+{ Stops a card's children inheriting its font, so the caption can be coloured
+  on its own.
+
+  It has to be ParentFont rather than a colour: setting Font.Color to
+  clDefault leaves ParentFont alone, and a label with ParentFont still takes
+  the group box's colour -- which put every caption on the highlighted card
+  in the selection colour along with its title.
+
+  Clearing ParentFont copies the font the child has right now, and at the
+  moment this runs that is the default one, Height and Size still zero.  That
+  matters because zero is what mcxdpi's startup sweep keys on when it decides
+  a font must not be scaled twice. }
+procedure PinFontColour(C: TWinControl);
+var
+  i: Integer;
+begin
+  for i := 0 to C.ControlCount - 1 do
+  begin
+    TFontAccess(C.Controls[i]).ParentFont := False;
+    if C.Controls[i] is TWinControl then
+      PinFontColour(TWinControl(C.Controls[i]));
+  end;
+end;
+
 procedure PaintCard(C: TWinControl; AColor: TColor);
 var
   i: Integer;
@@ -613,13 +629,16 @@ begin
         FSubs[High(FSubs)].Section := s;
         FSubs[High(FSubs)].Box := TGroupBox(C);
         FSubs[High(FSubs)].Btn := B;
-        FSubs[High(FSubs)].Tint :=
-          McxBlend(clBtnFace, SectionAccent[s], CardTint);
 
         { A card: flat, filled, no bevel of its own -- the frame the widget
           set draws is a hairline, and the fill is what separates one group
-          of settings from the next. }
-        PaintCard(TGroupBox(C), FSubs[High(FSubs)].Tint);
+          of settings from the next.  UpdateNavState gives it its colour.
+
+          Pinning each control's font colour here is what lets the card's
+          caption be coloured later: a group box hands its font down to every
+          child that still has ParentFont, so colouring the caption would
+          otherwise colour every label and check box on the card with it. }
+        PinFontColour(TGroupBox(C));
       end;
     end;
   finally
@@ -652,7 +671,7 @@ begin
 
   FSection := AIndex;
   sbDetail.VertScrollBar.Position := 0;
-  UpdateNavState;
+  SelectSub(FirstSubOf(AIndex));
 end;
 
 { Scrolls ABox to the top of the detail pane.  The offset is summed up the
@@ -676,67 +695,30 @@ begin
   sbDetail.VertScrollBar.Position := Offset;
 end;
 
-{ The accent and the resting colour of the card ABox is, by looking it up in
-  the navigator rather than walking back up to the page it sits on. }
-function TfmMain.AccentOf(ABox: TGroupBox): TColor;
+{ The first subsection of a section that the current mode still shows, so
+  opening a section always lands somewhere real. }
+function TfmMain.FirstSubOf(ASection: Integer): Integer;
 var
   i: Integer;
 begin
-  Result := clHighlight;
+  Result := -1;
   for i := 0 to High(FSubs) do
-    if FSubs[i].Box = ABox then Exit(SectionAccent[FSubs[i].Section]);
+    if (FSubs[i].Section = ASection) and FSubs[i].Btn.Visible then
+      Exit(i);
 end;
 
-function TfmMain.CardBase(ABox: TGroupBox): TColor;
-var
-  i: Integer;
-begin
-  Result := clBtnFace;
-  for i := 0 to High(FSubs) do
-    if FSubs[i].Box = ABox then Exit(FSubs[i].Tint);
-end;
+{ Highlights one card and scrolls it to the top.
 
-{ Tints a group box towards its section's accent and fades it out again.
-
-  Scrolling is the obvious answer to "which one did I just pick", but a
-  section with two short groups does not scroll at all, so clicking its
-  subsections looked like clicking nothing.  The flash says which group the
-  click meant whether the pane moved or not. }
-procedure TfmMain.FlashGroup(ABox: TGroupBox);
+  This used to be a flash that faded out over a third of a second, which
+  answered "did my click do anything" but not "where am I now" -- and on a
+  section whose groups all fit, the scroll said nothing either.  Holding the
+  highlight answers both, and costs one repaint instead of four. }
+procedure TfmMain.SelectSub(AIndex: Integer);
 begin
-  if (FFlashBox <> nil) and (FFlashBox <> ABox) then
-    PaintCard(FFlashBox, CardBase(FFlashBox));
-  FFlashBox := ABox;
-  FFlashStep := 0;
-  tmFlash.Enabled := False;
-  tmFlashTimer(nil);           { the first frame now, not in 90 ms }
-  tmFlash.Enabled := True;
-end;
-
-procedure TfmMain.tmFlashTimer(Sender: TObject);
-const
-  { Three frames of about 90 ms: visible without being a blink, gone before
-    it becomes a distraction. }
-  Fade: array[0..2] of Integer = (FlashTint, FlashTint * 5 div 9,
-                                  FlashTint * 2 div 9);
-begin
-  if FFlashBox = nil then
-  begin
-    tmFlash.Enabled := False;
-    Exit;
-  end;
-  if FFlashStep > High(Fade) then
-  begin
-    PaintCard(FFlashBox, CardBase(FFlashBox));
-    FFlashBox := nil;
-    tmFlash.Enabled := False;
-    Exit;
-  end;
-  { Towards the section's own accent, not a generic highlight, so the flash
-    reads as "this card" rather than as a selection. }
-  PaintCard(FFlashBox,
-    McxBlend(CardBase(FFlashBox), AccentOf(FFlashBox), Fade[FFlashStep]));
-  Inc(FFlashStep);
+  FSub := AIndex;
+  UpdateNavState;
+  if (AIndex >= 0) and (AIndex <= High(FSubs)) then
+    ScrollToGroup(FSubs[AIndex].Box);
 end;
 
 procedure TfmMain.SubClick(Sender: TObject);
@@ -748,11 +730,7 @@ begin
   if (i < 0) or (i > High(FSubs)) then Exit;
 
   if FSubs[i].Section <> FSection then SelectSection(FSubs[i].Section);
-  ScrollToGroup(FSubs[i].Box);
-  FlashGroup(FSubs[i].Box);
-  { Set after SelectSection, which repaints the whole navigator and would
-    otherwise clear it. }
-  TSpeedButton(Sender).Down := True;
+  SelectSub(i);
 end;
 
 { The chevron on a header says whether that section's subsections are showing.
@@ -771,17 +749,39 @@ begin
     if i = FSection then FHeads[i].ImageIndex := Open
     else FHeads[i].ImageIndex := Closed;
     FHeads[i].Down := (i = FSection);
-    { Each section carries its own accent: the open one filled with it, the
-      closed ones a wash of it.  That makes the band say which section as
-      well as whether it is open, and ties the heading to the cards on its
-      page and to the badges on the toolbar. }
+    { The open section is filled with the selection colour, the closed ones
+      sit on a neutral band: level, then state, and nothing else. }
     if i = FSection then
-      FPanes[i].Color := McxBlend(clBtnFace, SectionAccent[i], BandSelected)
+      FPanes[i].Color := McxBlend(clBtnFace, clHighlight, BandActive)
     else
-      FPanes[i].Color := McxBlend(clBtnFace, SectionAccent[i], BandTint);
+      FPanes[i].Color := McxBlend(clBtnFace, clWindowText, BandLevel);
   end;
+
   for i := 0 to High(FSubs) do
-    FSubs[i].Btn.Down := False;
+  begin
+    FSubs[i].Btn.Down := (i = FSub);
+    { The title takes the selection colour rather than a background, because
+      a filled row under a filled heading reads as a second heading. }
+    if i = FSub then
+      FSubs[i].Btn.Font.Color := McxBlend(clWindowText, clHighlight, 80)
+    else
+      FSubs[i].Btn.Font.Color := clDefault;
+
+    { The card the title points at is held highlighted for as long as it is
+      the selected one, and its own caption goes with it.  Every control on
+      the card had its colour pinned when the navigator was built, so this
+      reaches the caption and nothing else. }
+    if i = FSub then
+    begin
+      PaintCard(FSubs[i].Box, McxBlend(clBtnFace, clHighlight, CardActive));
+      FSubs[i].Box.Font.Color := McxBlend(clWindowText, clHighlight, 80);
+    end
+    else
+    begin
+      PaintCard(FSubs[i].Box, McxBlend(clBtnFace, clWindowText, CardLevel));
+      FSubs[i].Box.Font.Color := clDefault;
+    end;
+  end;
 end;
 
 procedure TfmMain.HeaderClick(Sender: TObject);
@@ -1522,7 +1522,12 @@ begin
     if Shown and (First < 0) then First := s;
   end;
   if (FSection >= 0) and (not FPanes[FSection].Visible) then
-    SelectSection(First);
+    SelectSection(First)
+  else if (FSub < 0) or (FSub > High(FSubs)) or (not FSubs[FSub].Btn.Visible) then
+    { The wizard took away the card that was highlighted, so the highlight
+      moves to the first one the section still has rather than pointing at
+      something nobody can see. }
+    SelectSub(FirstSubOf(FSection));
 end;
 
 { TCheckGroup reports which box moved; the binding does not care, so this just
