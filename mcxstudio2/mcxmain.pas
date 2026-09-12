@@ -22,7 +22,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc;
+  mcxdpi, mcxicons, mcxdoc, mcxrun;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -265,6 +265,9 @@ type
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
     procedure acResetLayoutExecute(Sender: TObject);
+    procedure acRunExecute(Sender: TObject);
+    procedure acStopExecute(Sender: TObject);
+    procedure acDevicesExecute(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
@@ -316,6 +319,10 @@ type
     FDockSite: TAnchorDockPanel;
     FPaneNav: TForm;
     FPaneView: TForm;
+    { The simulation in flight, or nil.  One at a time: a second run would
+      write over the first one's output files. }
+    FRunner: TMcxRunner;
+    FDevices: TMcxDevices;
     FDockRestored: Boolean;
     FDockSized: Boolean;
     FWizard: Boolean;
@@ -330,6 +337,13 @@ type
     procedure GuardCentreHeader;
     procedure DockCreateControl(Sender: TObject; aName: string;
       var AControl: TControl; DoDisableAutoSizing: boolean);
+    function  CurrentBackend: TMcxBackend;
+    function  CurrentExe: string;
+    procedure UpdateRunActions;
+    procedure RunLine(Sender: TObject; const ALine: string);
+    procedure RunProgress(Sender: TObject; APercent: Integer);
+    procedure RunDone(Sender: TObject; AExitCode: Integer);
+    procedure Log(const AText: string);
     procedure SaveDockLayout;
     function  LoadDockLayout: Boolean;
     procedure CaptureStacks;
@@ -368,6 +382,9 @@ type
       This is the test the old architecture could not pass: it rebuilt the file
       from 46 stringified columns, so every key without a column -- Help, the
       JData volumes, anything a newer mcx had grown -- was dropped on save. }
+    { Loads a simulation, reporting any trouble the way the Open action does.
+      Public because the program opens a file named on the command line. }
+    procedure OpenDocument(const AFileName: string);
     function  RunSelfTest(const ADir: string): Integer;
     property Doc: TMcxDoc read FDoc;
   end;
@@ -941,20 +958,25 @@ begin
   NewDocument;
 end;
 
-procedure TfmMain.acOpenExecute(Sender: TObject);
+procedure TfmMain.OpenDocument(const AFileName: string);
 begin
-  if not ConfirmDiscard then Exit;
-  if not dlgOpen.Execute then Exit;
-  if not FDoc.LoadFromFile(dlgOpen.FileName) then
+  if not FDoc.LoadFromFile(AFileName) then
   begin
     MessageDlg('MCX Studio',
-      'Could not read ' + ExtractFileName(dlgOpen.FileName) + ':'#10#10 +
+      'Could not read ' + ExtractFileName(AFileName) + ':'#10#10 +
       FDoc.LastError, mtError, [mbOK], 0);
     Exit;
   end;
   LoadAllBindings;
   UpdateTitle;
   RefreshPreview;
+end;
+
+procedure TfmMain.acOpenExecute(Sender: TObject);
+begin
+  if not ConfirmDiscard then Exit;
+  if not dlgOpen.Execute then Exit;
+  OpenDocument(dlgOpen.FileName);
 end;
 
 function TfmMain.SaveAs: Boolean;
@@ -1102,6 +1124,150 @@ begin
     Before.Free;
     Files.Free;
   end;
+end;
+
+{ ------------------------------------------------------------- running ---- }
+
+function TfmMain.CurrentBackend: TMcxBackend;
+var
+  S: string;
+begin
+  S := LowerCase(FRun.AsStr('@run.backend', 'mcx'));
+  if S = 'mcxcl' then Result := mbMCXCL
+  else if S = 'mmc' then Result := mbMMC
+  else if S = 'mcx-hip' then Result := mbHIP
+  else Result := mbMCX;
+end;
+
+function TfmMain.CurrentExe: string;
+begin
+  Result := McxFindExe(CurrentBackend);
+end;
+
+{ Run and Devices depend on a backend being installed, and which backend is
+  asked for is itself a setting -- so this is re-checked whenever a setting
+  changes rather than once at startup. }
+procedure TfmMain.UpdateRunActions;
+begin
+  acRun.Enabled := (FRunner = nil) and (CurrentExe <> '');
+  acStop.Enabled := FRunner <> nil;
+  acDevices.Enabled := (CurrentExe <> '') and (CurrentBackend <> mbMMC);
+end;
+
+procedure TfmMain.Log(const AText: string);
+begin
+  mmLog.Lines.Add(AText);
+  { Follow the tail, which is where a running simulation writes. }
+  mmLog.SelStart := Length(mmLog.Text);
+end;
+
+procedure TfmMain.RunLine(Sender: TObject; const ALine: string);
+begin
+  Log(ALine);
+end;
+
+procedure TfmMain.RunProgress(Sender: TObject; APercent: Integer);
+begin
+  sbMain.Panels[0].Text := Format('Running  %d%%', [APercent]);
+end;
+
+procedure TfmMain.RunDone(Sender: TObject; AExitCode: Integer);
+begin
+  if AExitCode = 0 then
+    Log('-- finished')
+  else
+    Log(Format('-- stopped, exit code %d', [AExitCode]));
+  { The thread is not FreeOnTerminate, so that this can read ExitStatus off
+    it; it is released here instead. }
+  FreeAndNil(FRunner);
+  UpdateRunActions;
+  UpdateStatus;
+end;
+
+procedure TfmMain.acRunExecute(Sender: TObject);
+var
+  Exe: string;
+  Args: TStringList;
+begin
+  if FRunner <> nil then Exit;
+
+  Exe := CurrentExe;
+  if Exe = '' then
+  begin
+    MessageDlg('MCX Studio',
+      'Could not find ' + McxExeName(CurrentBackend) + '.'#10#10 +
+      'It is looked for beside this program, in an MCXStudio folder, and on '
+      + 'PATH.', mtError, [mbOK], 0);
+    Exit;
+  end;
+
+  { A run needs a file on disk: the simulation is the JSON, and paths inside
+    it -- a volume file, an mmc mesh -- resolve against where it sits. }
+  if FDoc.FileName = '' then
+    if not SaveAs then Exit;
+  if not FDoc.SaveToFile(FDoc.FileName) then
+  begin
+    MessageDlg('MCX Studio', 'Could not write the file:'#10#10 + FDoc.LastError,
+      mtError, [mbOK], 0);
+    Exit;
+  end;
+  UpdateTitle;
+
+  pcView.ActivePage := tsLog;
+  mmLog.Clear;
+  Log(McxCommandLine(Exe, FDoc.FileName, FDoc, FRun));
+  Log('');
+
+  Args := McxBuildArgs(FDoc.FileName, FDoc, FRun);
+  try
+    FRunner := TMcxRunner.Create(Exe, Args, ExtractFilePath(FDoc.FileName));
+  finally
+    Args.Free;
+  end;
+  FRunner.OnLine := @RunLine;
+  FRunner.OnProgress := @RunProgress;
+  FRunner.OnDone := @RunDone;
+
+  UpdateRunActions;
+  sbMain.Panels[0].Text := 'Running';
+  FRunner.Start;
+end;
+
+procedure TfmMain.acStopExecute(Sender: TObject);
+begin
+  if FRunner = nil then Exit;
+  Log('-- stopping');
+  FRunner.Stop;
+end;
+
+procedure TfmMain.acDevicesExecute(Sender: TObject);
+var
+  Exe, Listing: string;
+  i: Integer;
+begin
+  Exe := CurrentExe;
+  pcView.ActivePage := tsLog;
+  if Exe = '' then
+  begin
+    Log('No ' + McxExeName(CurrentBackend) + ' found.');
+    Exit;
+  end;
+
+  if not McxQueryDevices(Exe, Listing) then
+  begin
+    Log(Exe + ' -L: could not be run.');
+    Exit;
+  end;
+
+  FDevices := McxParseDevices(Listing);
+  Log(Exe + ' -L');
+  if Length(FDevices) = 0 then
+    Log('  no devices reported')
+  else
+    for i := 0 to High(FDevices) do
+      Log(Format('  #%d  %s  (auto-thread %d, auto-block %d)',
+        [FDevices[i].Id, FDevices[i].Name,
+         FDevices[i].AutoThread, FDevices[i].AutoBlock]));
 end;
 
 { ------------------------------------------------------------- docking ---- }
@@ -1959,6 +2125,7 @@ begin
     if Shown and (First < 0) then First := s;
   end;
   if Moved then Restack;
+  UpdateRunActions;
 
   if (FSection >= 0) and (not FPanes[FSection].Visible) then
     SelectSection(First)
@@ -2021,11 +2188,10 @@ begin
     this stays short -- which is the whole reason the old CreateCmd's 230
     lines of flag assembly are not being ported. }
   if FDoc.FileName <> '' then
-    Input := ExtractFileName(FDoc.FileName)
+    Input := FDoc.FileName
   else
     Input := FDoc.AsStr('Session.ID', 'mcx') + '.json';
-  mmCommand.Text := Format('mcx -f %s -s %s',
-    [Input, FDoc.AsStr('Session.ID', 'mcx')]);
+  mmCommand.Text := McxCommandLine(CurrentExe, Input, FDoc, FRun);
 
   UpdateStatus;
 end;

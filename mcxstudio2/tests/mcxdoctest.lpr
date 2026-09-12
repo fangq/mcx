@@ -15,7 +15,11 @@ program mcxdoctest;
 {$mode objfpc}{$H+}
 
 uses
-  SysUtils, Classes, fpjson, mcxdoc;
+  { First, and before anything that starts a thread: without it the runner
+    test dies with "This binary has no thread support compiled in".  The GUI
+    gets this from the LCL; a console program has to ask. }
+  {$IFDEF UNIX}cthreads,{$ENDIF}
+  SysUtils, Classes, fpjson, mcxdoc, mcxrun;
 
 var
   Checks, Failures: Integer;
@@ -218,6 +222,324 @@ begin
   end;
 end;
 
+
+{ ---------------------------------------------------------------- mcxrun -- }
+
+procedure TestPlainText;
+begin
+  WriteLn('terminal text');
+  Ok(McxPlain('plain') = 'plain', 'text with nothing in it is unchanged');
+  Ok(McxPlain(#27'[33mProgress'#27'[0m') = 'Progress', 'colour codes removed');
+  Ok(McxPlain('abc'#8#8'X') = 'aX', 'backspaces rub out what came before');
+  Ok(McxPlain('ab'#13'cd') = 'abcd', 'carriage returns dropped');
+  Ok(McxPlain(#8#8'ab') = 'ab', 'a backspace at the start has nothing to eat');
+  Ok(McxPlain(#27'[') = '', 'a truncated escape does not run off the end');
+end;
+
+procedure TestProgress;
+var
+  P: Integer;
+begin
+  WriteLn('progress bar');
+  Ok(McxProgressOf('Progress: [======   ]  62%', P) and (P = 62),
+     'a percentage after a bracket is progress');
+  Ok(McxProgressOf('Progress: [=========] 100%', P) and (P = 100),
+     'the last tick reads 100');
+  Ok(McxProgressOf('Progress: [] 0%', P) and (P = 0), 'the first tick reads 0');
+
+  { The line mcx prints when it is done: a percentage with no bracket before
+    it.  Reading this as progress is exactly the mistake the bracket rule is
+    there to prevent. }
+  Ok(not McxProgressOf('absorbed: 52.61382%', P),
+     'an absorption fraction is not progress');
+  Ok(not McxProgressOf('nothing here', P), 'text with no percentage is not progress');
+  Ok(not McxProgressOf('] %', P), 'a bracket and a bare percent is not progress');
+  Ok(not McxProgressOf('62%', P), 'a percentage with no bracket is not progress');
+end;
+
+{ Replays a captured run at several read sizes and checks the percentages
+  that come out.
+
+  A chunk boundary can land mid-escape, mid-number or mid-backspace, and each
+  of those broke a different draft of this.
+
+  The invariant is not "every step is seen": at a large read size a whole run
+  can arrive in one go, and the only percentage still on screen is the last
+  one, which is what a terminal would show too.  What has to hold is that the
+  readings never go backwards, never leave 0..100, and end at 100.  Only the
+  byte-at-a-time replay sees every step, because there every redraw is its own
+  read.
+
+  The fixture writes the backspaces before each bar rather than after it,
+  which is the order mcx_utils.c:5031 uses -- it backs over the previous bar
+  and then draws the new one.  Written the other way round the run ends with
+  the bar rubbed out and no percentage anywhere, which is how this test first
+  failed. }
+procedure TestProgressStream;
+const
+  Widths: array[0..5] of Integer = (1, 2, 3, 7, 64, 4096);
+var
+  Raw: string;
+  w, i, j, n, Last, Steps: Integer;
+  Buf, Seen: string;
+  P: Integer;
+  Good: Boolean;
+  Lines: TStringList;
+begin
+  WriteLn('progress stream, chopped');
+  Lines := TStringList.Create;
+  try
+  Raw := '';
+  for i := 0 to 10 do
+    Raw := Raw + StringOfChar(#8, 40) + #27'[33mProgress: [' +
+      StringOfChar('=', i) + StringOfChar(' ', 10 - i) + ']' +
+      Format('%3d', [i * 10]) + '%' + #27'[0m';
+  Raw := Raw + #10'absorbed: 52.61382%'#10;
+
+  for w := 0 to High(Widths) do
+  begin
+    Buf := '';
+    Seen := '';
+    Last := -1;
+    Steps := 0;
+    Good := True;
+    i := 1;
+    while i <= Length(Raw) do
+    begin
+      n := Widths[w];
+      if i + n - 1 > Length(Raw) then n := Length(Raw) - i + 1;
+      Buf := Buf + Copy(Raw, i, n);
+      Inc(i, n);
+      { Exactly what the runner does with a chunk: take the finished lines
+        out of the way, then read the tail. }
+      Lines.Clear;
+      McxSplitOutput(Buf, Lines);
+      { A finished line can be a bar too -- see Feed. }
+      for j := 0 to Lines.Count - 1 do
+        if McxProgressOf(Lines[j], P) and (P <> Last) then
+        begin
+          if (P < Last) or (P < 0) or (P > 100) then Good := False;
+          Last := P;
+          Inc(Steps);
+          Seen := Seen + IntToStr(P) + ' ';
+        end;
+      if McxProgressOf(Buf, P) and (P <> Last) then
+      begin
+        if (P < Last) or (P < 0) or (P > 100) then Good := False;
+        Last := P;
+        Inc(Steps);
+        Seen := Seen + IntToStr(P) + ' ';
+      end;
+    end;
+    Ok(Good, Format('reads of %d bytes: never backwards, never out of range',
+      [Widths[w]]));
+    Ok(Last = 100, Format('reads of %d bytes: ends at 100 (%s)',
+      [Widths[w], Seen]));
+    if Widths[w] = 1 then
+      Ok(Steps = 11, 'a byte at a time sees all eleven steps');
+  end;
+  finally
+    Lines.Free;
+  end;
+end;
+
+procedure TestDevices;
+const
+  Listing =
+    '=============   GPU Infomation  ================'#10 +
+    'Device 1 of 2:'#9#9'NVIDIA GeForce RTX 4090'#10 +
+    'Compute Capability:'#9'8.9'#10 +
+    'Global Memory:'#9#9'25393692672 B'#10 +
+    'Number of Cores:'#9'16384'#10 +
+    'Auto-thread:'#9#9'1048576'#10 +
+    'Auto-block:'#9#9'64'#10 +
+    'Device 2 of 2:'#9#9'NVIDIA GeForce RTX 3090'#10 +
+    'Auto-thread:'#9#9'524288'#10 +
+    'Auto-block:'#9#9'64'#10;
+var
+  D: TMcxDevices;
+begin
+  WriteLn('device listing');
+  D := McxParseDevices(Listing);
+  Ok(Length(D) = 2, 'both devices found');
+  if Length(D) < 2 then Exit;
+  Ok(D[0].Id = 1, 'the first is device 1');
+  Ok(D[0].Name = 'NVIDIA GeForce RTX 4090', 'the name is what followed the tab');
+  Ok(D[0].AutoThread = 1048576, 'auto-thread read');
+  Ok(D[0].AutoBlock = 64, 'auto-block read');
+  Ok(D[1].Id = 2, 'the second is device 2');
+  Ok(D[1].Name = 'NVIDIA GeForce RTX 3090', 'and keeps its own name');
+
+  { The point of a key/value parser rather than one sscanf: a field this
+    program has never heard of still reaches the person reading the list. }
+  Ok(Pos('Compute Capability: 8.9', D[0].Detail) > 0,
+     'fields with no record member of their own are kept as detail');
+  Ok(Pos('Number of Cores: 16384', D[0].Detail) > 0, 'and so are the rest');
+
+  Ok(Length(McxParseDevices('')) = 0, 'nothing in, nothing out');
+  Ok(Length(McxParseDevices('no devices here'#10)) = 0,
+     'text that is not a listing yields no devices');
+end;
+
+procedure TestArgs;
+var
+  D, R: TMcxDoc;
+  Cmd: string;
+begin
+  WriteLn('command line');
+  D := TMcxDoc.Create;
+  R := TMcxDoc.Create;
+  try
+    D.LoadFromString('{"Session":{"ID":"box","DoAutoThread":1}}');
+    R.SetStr('@run.backend', 'mcx');
+    Cmd := McxCommandLine('/opt/mcx/bin/mcx', '/tmp/box.json', D, R);
+    Ok(Pos('-f box.json', Cmd) > 0, 'the input is passed by name');
+    Ok(Pos('-s box', Cmd) > 0, 'the session id is passed');
+    Ok(Pos('-D P', Cmd) > 0, 'the progress bar is always asked for');
+    Ok(Pos('-A 0', Cmd) = 0, 'autopilot on means no thread flags');
+
+    D.SetBool('Session.DoAutoThread', False);
+    R.SetInt('@run.nthread', 65536);
+    R.SetInt('@run.nblock', 64);
+    R.SetStr('@run.device', '11');
+    Cmd := McxCommandLine('/opt/mcx/bin/mcx', '/tmp/box.json', D, R);
+    Ok(Pos('-A 0', Cmd) > 0, 'autopilot off is stated explicitly');
+    Ok(Pos('-t 65536', Cmd) > 0, 'the thread count is passed');
+    Ok(Pos('-T 64', Cmd) > 0, 'the block size is passed');
+    Ok(Pos('-G 11', Cmd) > 0, 'the device mask is passed');
+  finally
+    R.Free;
+    D.Free;
+  end;
+end;
+
+
+{ Runs a real process through TMcxRunner and checks that the whole chain
+  works: a thread, a pipe read that blocks, Synchronize back to the main
+  thread, and a process that ends.
+
+  Unix only, because it needs a shell to play the part of mcx.  Everything
+  else in this file is portable; this is the one test that has to start
+  something.
+
+  Synchronize parks the worker until the main thread calls CheckSynchronize,
+  which a console program has to do for itself -- there is no message loop
+  here to do it. }
+{$IFDEF UNIX}
+type
+  TRunSpy = class
+  public
+    Lines: TStringList;
+    Percents: TStringList;
+    Code: Integer;
+    Finished: Boolean;
+    constructor Create;
+    destructor Destroy; override;
+    procedure Line(Sender: TObject; const AText: string);
+    procedure Progress(Sender: TObject; APercent: Integer);
+    procedure Done(Sender: TObject; AExitCode: Integer);
+  end;
+
+constructor TRunSpy.Create;
+begin
+  Lines := TStringList.Create;
+  Percents := TStringList.Create;
+  Code := -999;
+end;
+
+destructor TRunSpy.Destroy;
+begin
+  Percents.Free;
+  Lines.Free;
+  inherited Destroy;
+end;
+
+procedure TRunSpy.Line(Sender: TObject; const AText: string);
+begin
+  Lines.Add(AText);
+end;
+
+procedure TRunSpy.Progress(Sender: TObject; APercent: Integer);
+begin
+  Percents.Add(IntToStr(APercent));
+end;
+
+procedure TRunSpy.Done(Sender: TObject; AExitCode: Integer);
+begin
+  Code := AExitCode;
+  Finished := True;
+end;
+
+procedure TestRunner;
+var
+  Script: string;
+  F: TStringList;
+  Spy: TRunSpy;
+  R: TMcxRunner;
+  Args: TStringList;
+  Waited: Integer;
+begin
+  WriteLn('running a process');
+  Script := GetTempDir(False) + 'mcxstudio2-runner-test.sh';
+  F := TStringList.Create;
+  try
+    F.Add('#!/bin/sh');
+    F.Add('echo "MCX Revision stand-in"');
+    F.Add('i=0');
+    F.Add('while [ $i -le 10 ]; do');
+    { \b eight times, then the bar: the order mcx uses. }
+    F.Add('  printf "\b\b\b\b\b\b\b\bProgress: [] %3d%%" $((i * 10))');
+    F.Add('  i=$((i + 1))');
+    F.Add('done');
+    F.Add('echo ""');
+    F.Add('echo "absorbed: 52.61382%"');
+    F.Add('exit 0');
+    F.SaveToFile(Script);
+  finally
+    F.Free;
+  end;
+
+  Spy := TRunSpy.Create;
+  Args := TStringList.Create;
+  try
+    Args.Add(Script);
+    R := TMcxRunner.Create('/bin/sh', Args, '');
+    R.OnLine := @Spy.Line;
+    R.OnProgress := @Spy.Progress;
+    R.OnDone := @Spy.Done;
+    R.Start;
+
+    { A bounded wait: a hang here would otherwise stop the whole suite with
+      no output at all. }
+    Waited := 0;
+    while (not Spy.Finished) and (Waited < 1000) do
+    begin
+      CheckSynchronize(10);
+      Inc(Waited);
+    end;
+    R.WaitFor;
+    R.Free;
+
+    Ok(Spy.Finished, 'the run reported that it finished');
+    Ok(Spy.Code = 0, 'and passed on the exit code');
+    Ok(Spy.Lines.IndexOf('MCX Revision stand-in') >= 0,
+       'a line of output arrived intact');
+    Ok(Spy.Lines.IndexOf('absorbed: 52.61382%') >= 0,
+       'a percentage that is not progress stayed in the log');
+    Ok(Spy.Percents.Count > 0, 'progress was reported at least once');
+    if Spy.Percents.Count > 0 then
+      Ok(Spy.Percents[Spy.Percents.Count - 1] = '100',
+         'and the last reading is 100');
+    Ok(Spy.Lines.IndexOf('Progress: [] 100%') < 0,
+       'the bar itself did not end up in the log');
+  finally
+    Args.Free;
+    Spy.Free;
+    DeleteFile(Script);
+  end;
+end;
+{$ENDIF}
+
 var
   Dir: string;
 begin
@@ -229,6 +551,14 @@ begin
   TestPaths;
   TestTypePreservation;
   TestCompare;
+  TestPlainText;
+  TestProgress;
+  TestProgressStream;
+  TestDevices;
+  TestArgs;
+  {$IFDEF UNIX}
+  TestRunner;
+  {$ENDIF}
   TestCorpus(Dir);
 
   WriteLn;

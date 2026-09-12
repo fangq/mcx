@@ -79,6 +79,12 @@ begin
 
   Application.CreateForm(TfmMain, fmMain);
 
+  { A file named on the command line opens instead of the blank cube -- so
+    that a simulation can be handed over by a file manager, a shell, or a
+    desktop entry's %f. }
+  if (ParamCount >= 1) and FileExists(ParamStr(1)) then
+    fmMain.OpenDocument(ParamStr(1));
+
   { Reaches the forms that already exist; the scaler above handles the rest. }
   McxApplyAdaptiveScale;
 

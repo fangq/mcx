@@ -2029,17 +2029,17 @@ object fmMain: TfmMain
     object acRun: TAction
       Caption = 'Run'
       Hint = 'Run this simulation'
-      Enabled = False
+      OnExecute = acRunExecute
     end
     object acStop: TAction
       Caption = 'Stop'
       Hint = 'Stop the running simulation'
-      Enabled = False
+      OnExecute = acStopExecute
     end
     object acDevices: TAction
       Caption = 'Devices'
       Hint = 'List the compute devices on this system'
-      Enabled = False
+      OnExecute = acDevicesExecute
     end
     object acToggleMode: TAction
       Caption = 'Wizard'
