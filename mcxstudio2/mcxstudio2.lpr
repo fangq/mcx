@@ -16,6 +16,9 @@ uses
 
 { Renders the icon sheet and exits.  A GUI still has to be initialised for it,
   because the glyphs are drawn on an LCL canvas. }
+var
+  Failures: Integer;
+
 function DumpIcons: Boolean;
 var
   Target: string;
@@ -46,6 +49,21 @@ begin
   {$ENDIF}
 
   if DumpIcons then Exit;
+
+  { --self-test builds the form, drives every binding over a corpus of real
+    input files and exits with the failure count.  It needs a widgetset, so it
+    is not as portable as the mcxdoc tests, but it is the only way to prove the
+    binding table and the form agree. }
+  if (ParamCount >= 1) and (ParamStr(1) = '--self-test') then
+  begin
+    Application.Initialize;
+    Application.CreateForm(TfmMain, fmMain);
+    if ParamCount >= 2 then Failures := fmMain.RunSelfTest(ParamStr(2))
+    else Failures := fmMain.RunSelfTest('../example');
+    WriteLn(Format('%d failure(s)', [Failures]));
+    if Failures > 0 then Halt(1);
+    Halt(0);
+  end;
 
   Application.Initialize;
 

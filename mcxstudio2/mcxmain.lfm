@@ -138,11 +138,83 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 1
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object gbSimulator: TGroupBox
+          Left = 8
+          Height = 150
+          Top = 6
+          Width = 344
+          Caption = 'Simulator'
+          ChildSizing.LeftRightSpacing = 8
+          ChildSizing.TopBottomSpacing = 6
+          ChildSizing.HorizontalSpacing = 8
+          ChildSizing.VerticalSpacing = 6
+          ChildSizing.Layout = cclLeftToRightThenTopToBottom
+          ChildSizing.ControlsPerLine = 2
+          ClientHeight = 130
+          ClientWidth = 340
+          TabOrder = 0
+          object rgBackend: TRadioGroup
+            Left = 8
+            Height = 100
+            Top = 6
+            Width = 160
+            AutoFill = True
+            Caption = 'Engine'
+            ChildSizing.LeftRightSpacing = 6
+            ChildSizing.TopBottomSpacing = 4
+            ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+            ChildSizing.EnlargeVertical = crsHomogenousChildResize
+            ChildSizing.ShrinkHorizontal = crsScaleChilds
+            ChildSizing.ShrinkVertical = crsScaleChilds
+            ChildSizing.Layout = cclLeftToRightThenTopToBottom
+            ChildSizing.ControlsPerLine = 1
+            ClientHeight = 80
+            ClientWidth = 156
+            TabOrder = 0
+          end
+          object rgDomainKind: TRadioGroup
+            Left = 176
+            Height = 100
+            Top = 6
+            Width = 160
+            AutoFill = True
+            Caption = 'Domain data'
+            ChildSizing.LeftRightSpacing = 6
+            ChildSizing.TopBottomSpacing = 4
+            ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+            ChildSizing.EnlargeVertical = crsHomogenousChildResize
+            ChildSizing.ShrinkHorizontal = crsScaleChilds
+            ChildSizing.ShrinkVertical = crsScaleChilds
+            ChildSizing.Layout = cclLeftToRightThenTopToBottom
+            ChildSizing.ControlsPerLine = 1
+            ClientHeight = 80
+            ClientWidth = 156
+            TabOrder = 1
+          end
+          object lbMediaFormat: TLabel
+            Left = 8
+            Height = 15
+            Top = 112
+            Width = 100
+            Caption = 'Volume format:'
+            Layout = tlCenter
+            ParentColor = False
+          end
+          object cbMediaFormat: TComboBox
+            Left = 176
+            Height = 25
+            Top = 112
+            Width = 160
+            ItemHeight = 15
+            Style = csDropDownList
+            TabOrder = 2
+          end
+        end
       end
     end
     object pnForward: TPanel
@@ -186,11 +258,59 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object lbT0: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Start time (s):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edT0: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 0
+        end
+        object lbT1: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'End time (s):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edT1: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 1
+        end
+        object lbDt: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Time gate (s):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edDt: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 2
+        end
       end
     end
     object pnSession: TPanel
@@ -234,11 +354,257 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object lbSessionID: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Session name:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSessionID: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 0
+        end
+        object lbPhotons: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Photons:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edPhotons: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 1
+        end
+        object lbOutFormat: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Output format:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object rgOutFormat: TRadioGroup
+          Left = 116
+          Height = 64
+          Top = 0
+          Width = 200
+          AutoFill = True
+          ChildSizing.LeftRightSpacing = 6
+          ChildSizing.TopBottomSpacing = 4
+          ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+          ChildSizing.EnlargeVertical = crsHomogenousChildResize
+          ChildSizing.ShrinkHorizontal = crsScaleChilds
+          ChildSizing.ShrinkVertical = crsScaleChilds
+          ChildSizing.Layout = cclLeftToRightThenTopToBottom
+          ChildSizing.ControlsPerLine = 3
+          ClientHeight = 44
+          ClientWidth = 196
+          TabOrder = 2
+        end
+        object lbOutType: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Output type:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object cbOutType: TComboBox
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          ItemHeight = 15
+          Style = csDropDownList
+          TabOrder = 3
+        end
+        object lbSeed: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Random seed:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSeed: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 4
+        end
+        object lbMismatch: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckMismatch: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Match refractive index at boundaries'
+          TabOrder = 5
+        end
+        object lbNormalize: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckNormalize: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Normalise the output'
+          TabOrder = 6
+        end
+        object lbSaveVolume: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckSaveVolume: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Save the fluence volume'
+          TabOrder = 7
+        end
+        object lbSaveDetp: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckSaveDetp: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Save detected photons'
+          TabOrder = 8
+        end
+        object lbSaveExit: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckSaveExit: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Save exit position and direction'
+          TabOrder = 9
+        end
+        object lbSaveSeed: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckSaveSeed: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Save photon seeds for replay'
+          TabOrder = 10
+        end
+        object lbSaveRef: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckSaveRef: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Save diffuse reflectance'
+          TabOrder = 11
+        end
+        object lbSpecular: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckSpecular: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Include specular reflection'
+          TabOrder = 12
+        end
+        object lbDCS: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckDCS: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Save momentum transfer'
+          TabOrder = 13
+        end
       end
     end
     object pnMedia: TPanel
@@ -282,11 +648,76 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object lbDim: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Dimensions (x, y, z):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edDim: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 0
+        end
+        object lbUnit: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Voxel size (mm):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edUnit: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 1
+        end
+        object lbVolumeFile: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Volume file:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edVolumeFile: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 2
+        end
+        object lbOriginType: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckOriginType: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Origin at [0, 0, 0]'
+          TabOrder = 3
+        end
       end
     end
     object pnShapes: TPanel
@@ -330,7 +761,7 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
@@ -378,11 +809,141 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object lbSrcType: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Source type:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object cbSrcType: TComboBox
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          ItemHeight = 15
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object lbSrcPos: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Position (x, y, z):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcPos: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 1
+        end
+        object lbSrcDir: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Direction (x, y, z):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcDir: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 2
+        end
+        object lbSrcParam1: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Parameter 1:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcParam1: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 3
+        end
+        object lbSrcParam2: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Parameter 2:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcParam2: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 4
+        end
+        object lbSrcFreq: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'RF modulation (Hz):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcFreq: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 5
+        end
+        object lbSrcNum: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Number of sources:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcNum: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 6
+        end
+        object lbSrcWavelen: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Wavelength (nm):'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edSrcWavelen: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 7
+        end
       end
     end
     object pnCompute: TPanel
@@ -426,11 +987,76 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object lbAutoThread: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = ''
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object ckAutoThread: TCheckBox
+          Left = 116
+          Height = 19
+          Top = 0
+          Width = 200
+          Caption = 'Let MCX choose the thread and block size'
+          TabOrder = 0
+        end
+        object lbThread: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Threads:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edThread: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 1
+        end
+        object lbBlock: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Block size:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edBlock: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 2
+        end
+        object lbWorkload: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Workload split:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edWorkload: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 3
+        end
       end
     end
     object pnAdvanced: TPanel
@@ -474,11 +1100,129 @@ object fmMain: TfmMain
         ChildSizing.HorizontalSpacing = 8
         ChildSizing.VerticalSpacing = 6
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 4
+        ChildSizing.ControlsPerLine = 2
         ClientHeight = 2
         ClientWidth = 360
         TabOrder = 0
         Visible = False
+        object lbBC: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Boundary conditions:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edBC: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 0
+        end
+        object lbDebug: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Debug flags:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object cgDebug: TCheckGroup
+          Left = 116
+          Height = 64
+          Top = 0
+          Width = 200
+          AutoFill = True
+          ChildSizing.LeftRightSpacing = 6
+          ChildSizing.TopBottomSpacing = 4
+          ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+          ChildSizing.EnlargeVertical = crsHomogenousChildResize
+          ChildSizing.ShrinkHorizontal = crsScaleChilds
+          ChildSizing.ShrinkVertical = crsScaleChilds
+          ChildSizing.Layout = cclLeftToRightThenTopToBottom
+          ChildSizing.ControlsPerLine = 2
+          ClientHeight = 44
+          ClientWidth = 196
+          TabOrder = 1
+        end
+        object lbSaveMask: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Detected photon fields:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object cgSaveMask: TCheckGroup
+          Left = 116
+          Height = 90
+          Top = 0
+          Width = 200
+          AutoFill = True
+          ChildSizing.LeftRightSpacing = 6
+          ChildSizing.TopBottomSpacing = 4
+          ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+          ChildSizing.EnlargeVertical = crsHomogenousChildResize
+          ChildSizing.ShrinkHorizontal = crsScaleChilds
+          ChildSizing.ShrinkVertical = crsScaleChilds
+          ChildSizing.Layout = cclLeftToRightThenTopToBottom
+          ChildSizing.ControlsPerLine = 2
+          ClientHeight = 70
+          ClientWidth = 196
+          TabOrder = 2
+        end
+        object lbMaxDetp: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Maximum detected photons:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edMaxDetp: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 3
+        end
+        object lbMinEnergy: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Minimum energy:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edMinEnergy: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 4
+        end
+        object lbRootPath: TLabel
+          Left = 8
+          Height = 15
+          Top = 0
+          Width = 100
+          Caption = 'Output folder:'
+          Layout = tlCenter
+          ParentColor = False
+        end
+        object edRootPath: TEdit
+          Left = 116
+          Height = 25
+          Top = 0
+          Width = 200
+          TabOrder = 5
+        end
       end
     end
     end

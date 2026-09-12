@@ -61,6 +61,154 @@ type
     EnableIf : string;
   end;
 
+const
+  { Enumerations, kept next to the table that uses them.  tx3 is deliberately
+    absent from OutputFormat: it is a bespoke GL texture dump that only the old
+    viewer read, and mcxstudio2 renders from jnii and bnii instead.  jnii leads
+    because it is what mcx itself defaults to. }
+  ChoiceBackend     = 'mcx,mcxcl,mmc,mcx-hip';
+  ChoiceDomainKind  = 'voxel,shapes,mesh';
+  ChoiceOutFormat   = 'jnii,bnii,nii,mc2,hdr';
+
+  { A flag set is a string of letters -- "DP", "RM" -- or the equivalent
+    bitmask.  Each entry is the letter, a colon, and what it means, so the
+    check group can be captioned without a second table. }
+  FlagsDebug   = 'R:RNG,M:Photon trajectory,P:Progress bar,T:Trajectory only';
+  FlagsSaveData= 'D:Detector ID,S:Scattering counts,P:Partial path lengths,' +
+                 'M:Momentum transfer,X:Exit position,V:Exit direction,' +
+                 'W:Initial weight';
+  ChoiceOutType     = 'x,f,e,j,p,m,r';
+  ChoiceMediaFormat = 'byte,short,integer,asgn_float,svmc,mixlabel,labelplus,' +
+                      'muamus_float,muamus_half,asgn_byte,muamus_short';
+  ChoiceSrcType     = 'pencil,isotropic,cone,gaussian,planar,pattern,pattern3d,' +
+                      'fourier,arcsine,disk,fourierx,fourierx2d,zgaussian,line,' +
+                      'slit,pencilarray,hyperboloid,ring';
+
+  { The binding table.  One row per setting: the control the designer placed on
+    the left, the path it writes on the right.  This is the only place a
+    setting is declared -- there is no argv builder, no INI writer and no
+    JSON-to-widget reader to keep in step with it.
+
+    The paths were not transcribed by hand.  mcx tags every key it reads with
+    its full dotted path as the second argument of FIND_JSON_KEY/FIND_JSON_OBJ,
+    so the authoritative list comes straight out of the parser:
+
+      grep -oE 'FIND_JSON_(KEY|OBJ)\("[A-Za-z0-9_]+", *"[A-Za-z0-9_.]+"' \
+        src/mcx_utils.c | sed 's/.*, *"//;s/"$//' | sort -u
+
+    Running that in CI and diffing it against this table turns the silent drift
+    that left the old GUI years behind the engine into a build failure.
+
+    Which is how Frequency, SrcNum and WaveLength come to be here: mcx has read
+    them for years and the old GUI never grew a field for any of them, because
+    doing so meant four coordinated edits and a form-designer session.
+
+    A path beginning @run is not part of the simulation at all -- it is a
+    runtime choice such as which device to use -- and is routed to a second
+    document that is saved with the preferences rather than with the file. }
+  Binds: array[0..41] of TMcxBind = (
+    { -- Types ------------------------------------------------------------- }
+    (Ctl:'rgBackend';    Path:'@run.backend';     Kind:mkChoice; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceBackend;    EnableIf:''),
+    (Ctl:'rgDomainKind'; Path:'@run.domainkind';  Kind:mkChoice; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceDomainKind; EnableIf:''),
+    (Ctl:'cbMediaFormat';Path:'Domain.MediaFormat';Kind:mkChoice; Level:mlExpert;
+     Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:ChoiceMediaFormat; EnableIf:''),
+
+    { -- Forward ----------------------------------------------------------- }
+    (Ctl:'edT0'; Path:'Forward.T0'; Kind:mkFloat; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:1; Choices:''; EnableIf:''),
+    (Ctl:'edT1'; Path:'Forward.T1'; Kind:mkFloat; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:1; Choices:''; EnableIf:''),
+    (Ctl:'edDt'; Path:'Forward.Dt'; Kind:mkFloat; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:1; Choices:''; EnableIf:''),
+
+    { -- Session ----------------------------------------------------------- }
+    (Ctl:'edSessionID'; Path:'Session.ID'; Kind:mkText; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edPhotons'; Path:'Session.Photons'; Kind:mkFloat; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:1; Max:9.2e18; Choices:''; EnableIf:''),
+    (Ctl:'rgOutFormat'; Path:'Session.OutputFormat'; Kind:mkChoice; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceOutFormat; EnableIf:''),
+    (Ctl:'edSeed'; Path:'Session.RNGSeed'; Kind:mkFloat; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'cbOutType'; Path:'Session.OutputType'; Kind:mkChoice; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceOutType; EnableIf:''),
+    (Ctl:'ckMismatch'; Path:'Session.DoMismatch'; Kind:mkBool; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckNormalize'; Path:'Session.DoNormalize'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckSaveVolume'; Path:'Session.DoSaveVolume'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckSaveDetp'; Path:'Session.DoPartialPath'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckSaveRef'; Path:'Session.DoSaveRef'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckSaveExit'; Path:'Session.DoSaveExit'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:'Session.DoPartialPath=1'),
+    (Ctl:'ckSaveSeed'; Path:'Session.DoSaveSeed'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:'Session.DoPartialPath=1'),
+    (Ctl:'ckSpecular'; Path:'Session.DoSpecular'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckDCS'; Path:'Session.DoDCS'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+
+    { -- Properties -------------------------------------------------------- }
+    (Ctl:'edDim'; Path:'Domain.Dim'; Kind:mkVec; Level:mlWizard;
+     Backends:[]; Domains:[mdVoxel,mdShapes]; Min:3; Max:3; Choices:''; EnableIf:''),
+    (Ctl:'edUnit'; Path:'Domain.LengthUnit'; Kind:mkFloat; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'ckOriginType'; Path:'Domain.OriginType'; Kind:mkBool; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edVolumeFile'; Path:'Domain.VolumeFile'; Kind:mkFile; Level:mlExpert;
+     Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:''; EnableIf:''),
+
+    { -- Optode ------------------------------------------------------------ }
+    (Ctl:'cbSrcType'; Path:'Optode.Source.Type'; Kind:mkChoice; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceSrcType; EnableIf:''),
+    (Ctl:'edSrcPos'; Path:'Optode.Source.Pos'; Kind:mkVec; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:3; Max:3; Choices:''; EnableIf:''),
+    (Ctl:'edSrcDir'; Path:'Optode.Source.Dir'; Kind:mkVec; Level:mlWizard;
+     Backends:[]; Domains:[]; Min:3; Max:4; Choices:''; EnableIf:''),
+    (Ctl:'edSrcParam1'; Path:'Optode.Source.Param1'; Kind:mkVec; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:4; Max:4; Choices:''; EnableIf:''),
+    (Ctl:'edSrcParam2'; Path:'Optode.Source.Param2'; Kind:mkVec; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:4; Max:4; Choices:''; EnableIf:''),
+    (Ctl:'edSrcFreq'; Path:'Optode.Source.Frequency'; Kind:mkFloat; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edSrcNum'; Path:'Optode.Source.SrcNum'; Kind:mkInt; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edSrcWavelen'; Path:'Optode.Source.WaveLength'; Kind:mkFloat; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+
+    { -- Compute ----------------------------------------------------------- }
+    (Ctl:'ckAutoThread'; Path:'Session.DoAutoThread'; Kind:mkBool; Level:mlWizard;
+     Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edThread'; Path:'@run.nthread'; Kind:mkInt; Level:mlExpert;
+     Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:1; Max:0; Choices:'';
+     EnableIf:'Session.DoAutoThread=0'),
+    (Ctl:'edBlock'; Path:'@run.nblock'; Kind:mkInt; Level:mlExpert;
+     Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:1; Max:0; Choices:'';
+     EnableIf:'Session.DoAutoThread=0'),
+    (Ctl:'edWorkload'; Path:'@run.workload'; Kind:mkText; Level:mlExpert;
+     Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+
+    { -- Advanced ---------------------------------------------------------- }
+    (Ctl:'edBC'; Path:'Session.BCFlags'; Kind:mkText; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'cgDebug'; Path:'Session.DebugFlag'; Kind:mkFlags; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:FlagsDebug; EnableIf:''),
+    (Ctl:'cgSaveMask'; Path:'Session.SaveDataMask'; Kind:mkFlags; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:FlagsSaveData;
+     EnableIf:'Session.DoPartialPath=1'),
+    (Ctl:'edMaxDetp'; Path:'Session.MaxDetPhoton'; Kind:mkFloat; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edMinEnergy'; Path:'Session.MinEnergy'; Kind:mkFloat; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edRootPath'; Path:'Session.RootPath'; Kind:mkText; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:'')
+  );
+
 type
   { Raised only for programming errors -- a malformed path literal.  Bad input
     files come back as a False from LoadFromFile with LastError set. }
@@ -538,9 +686,23 @@ var
   P, D: TJSONData;
   K: string;
   I: Integer;
+  V: Double;
+  Fs: TFormatSettings;
 begin
   D := Walk(APath, True, jtString, P, K, I);
   if (D <> nil) and (D.JSONType = jtString) and (D.AsString = AValue) then Exit;
+
+  { Several settings are spelled either way by different files -- DebugFlag is
+    "RM" in one example and 2 in another -- so a numeric key whose text still
+    reads as the same number keeps its type.  Without this, showing a file in
+    the form and saving it again would rewrite 2 as "2". }
+  if (D <> nil) and (D.JSONType = jtNumber) then
+  begin
+    Fs := DefaultFormatSettings;
+    Fs.DecimalSeparator := '.';
+    if TryStrToFloat(Trim(AValue), V, Fs) and (V = D.AsFloat) then Exit;
+  end;
+
   Replace(P, K, I, TJSONString.Create(AValue));
   FModified := True;
 end;
