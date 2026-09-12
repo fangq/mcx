@@ -27,12 +27,9 @@ type
   { One navigator entry below a section header: the group box on the detail
     page it points at, and the button that points there.  Built from the
     Sections table rather than placed, so the two cannot drift apart. }
-  { A preview page and the window it is showing in while it is torn off.
-    Host is nil while the page is where it started. }
-  TMcxFloat = record
-    Page: TTabSheet;
-    Host: TForm;
-  end;
+  { Where the preview panel lives.  Right and bottom are both inside the main
+    window; float is a window of its own. }
+  TMcxDockSite = (dsRight, dsBottom, dsFloat);
 
   { One set of alTop siblings and the order they belong in. }
   TMcxStack = record
@@ -62,7 +59,10 @@ type
     acDevices: TAction;
     acToggleMode: TAction;
     acQuit: TAction;
-    acFloat: TAction;
+    acDock: TAction;
+    acDockRight: TAction;
+    acDockBottom: TAction;
+    acDockFloat: TAction;
     acAbout: TAction;
     alMain: TActionList;
     dlgOpen: TOpenDialog;
@@ -73,6 +73,10 @@ type
     mmJSON: TMemo;
     mmLog: TMemo;
     pcView: TPageControl;
+    pmDock: TPopupMenu;
+    miDockRight: TMenuItem;
+    miDockBottom: TMenuItem;
+    miDockFloat: TMenuItem;
     pnGL: TPanel;
     pnMain: TPanel;
     pnPreview: TPanel;
@@ -91,7 +95,7 @@ type
     tbDevices: TToolButton;
     tbSep2: TToolButton;
     tbSep3: TToolButton;
-    tbFloat: TToolButton;
+    tbDock: TToolButton;
     tbMode: TToolButton;
     tmRefresh: TTimer;
     tsCommand: TTabSheet;
@@ -268,7 +272,8 @@ type
     procedure acSaveExecute(Sender: TObject);
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
-    procedure acFloatExecute(Sender: TObject);
+    procedure acDockExecute(Sender: TObject);
+    procedure acDockSiteExecute(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
@@ -316,25 +321,21 @@ type
     { Every set of alTop siblings the wizard filter can hide something from,
       each in the order it is meant to appear.  See Restack. }
     FStacks: array of TMcxStack;
-    FFloats: array of TMcxFloat;
-    { The tab the mouse went down on and where, so a drag off the strip can
-      be told from a click that selects it.  -1 when nothing is held. }
-    FTabGrab: Integer;
-    FTabFrom: TPoint;
+    { Where the preview is, where it was last docked so floating it can be
+      undone, the window it floats in, and the size it had at each site so
+      moving away and back does not forget how wide it was. }
+    FDock: TMcxDockSite;
+    FLastDock: TMcxDockSite;
+    FDockHost: TForm;
+    FDockW, FDockH: Integer;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
     procedure BuildNav;
+    procedure SetDockSite(ASite: TMcxDockSite);
+    procedure DockHostClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure CaptureStacks;
     procedure Restack;
-    procedure FloatPage(APage: TTabSheet);
-    procedure DockPage(AIndex: Integer);
-    procedure FloatClose(Sender: TObject; var CloseAction: TCloseAction);
-    procedure TabMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure TabMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-    procedure TabMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
     procedure BindControls;
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
@@ -453,20 +454,16 @@ begin
   BindControls;
   CaptureStacks;
 
-  FTabGrab := -1;
-  pcView.OnMouseDown := @TabMouseDown;
-  pcView.OnMouseMove := @TabMouseMove;
-  pcView.OnMouseUp := @TabMouseUp;
-
-  SetLength(FFloats, 4);
-  FFloats[0].Page := tsPreview;
-  FFloats[1].Page := tsJSON;
-  FFloats[2].Page := tsCommand;
-  FFloats[3].Page := tsLog;
-
   mmJSON.Font.Name := McxDefaultFontName;
   mmCommand.Font.Assign(mmJSON.Font);
   mmLog.Font.Assign(mmJSON.Font);
+
+  { The sizes the designer gave the panel are the ones it goes back to. }
+  FDockW := pnPreview.Width;
+  FDockH := McxScale96(260);
+  FDock := dsRight;
+  FLastDock := dsRight;
+  acDockRight.Checked := True;
 
   NewDocument;
   SelectSection(0);
@@ -489,20 +486,11 @@ begin
 end;
 
 procedure TfmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-var
-  i: Integer;
 begin
   CanClose := ConfirmDiscard;
-  { Every torn-off page comes home first.  The windows are owned by this form,
-    so closing without docking would free a window that is still holding the
-    log memo. }
-  if CanClose then
-    for i := 0 to High(FFloats) do
-      if FFloats[i].Host <> nil then
-      begin
-        DockPage(i);
-        FFloats[i].Host := nil;
-      end;
+  { The preview comes home first.  Its window is owned by this form, so
+    closing without docking would free a window still holding the panel. }
+  if CanClose and (FDock = dsFloat) then SetDockSite(FLastDock);
 end;
 
 { The image list ships empty and is drawn here, once, at the display's scale
@@ -527,7 +515,7 @@ begin
   acStop.ImageIndex := McxIconIndex('stop');
   acDevices.ImageIndex := McxIconIndex('gpu');
   acToggleMode.ImageIndex := McxIconIndex('wizard');
-  acFloat.ImageIndex := McxIconIndex('fit');
+  acDock.ImageIndex := McxIconIndex('fit');
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
@@ -1124,161 +1112,117 @@ begin
   end;
 end;
 
-{ ---------------------------------------------------------- tear-off ------ }
+{ ------------------------------------------------------------- docking ---- }
 
-{ A preview page can be shown in a window of its own, and closing that window
-  puts it back.
+{ The preview -- all four pages of it, as one object -- lives in one of three
+  places: down the right, across the bottom, or in a window of its own.
 
-  What moves is the page's contents, not the page: the memo or the GL panel is
-  re-parented into a plain form and the tab is hidden, and on the way back the
-  reverse.  LCL does have real docking -- ManualFloat, TDockTree, DragKind --
-  but it is driven by dragging, and dragging is the part that behaves
-  differently on every widget set.  Re-parenting one control is the same
-  everywhere and is a dozen lines.
+  Moving it is re-parenting and an Align, not LCL docking.  TDockTree and
+  DragKind exist, but they are driven by dragging, which is the part that
+  behaves differently on every widget set, and they dock one control at a
+  time; what wants to move here is the whole notebook.
 
-  What this is not is drag-to-rearrange: a page cannot be dropped back as a
-  split beside another. }
-
-{ Each preview page holds exactly one alClient child -- a memo, or the panel
-  the GL view will be built into -- and so does a window it has been torn off
-  into, which is why this takes the parent rather than the page. }
-function PageContent(AParent: TWinControl): TControl;
-begin
-  if (AParent <> nil) and (AParent.ControlCount = 1) then
-    Result := AParent.Controls[0]
-  else
-    Result := nil;
-end;
-
-procedure TfmMain.FloatPage(APage: TTabSheet);
+  The splitter goes wherever the panel goes.  Its Left or Top has to be set
+  as well as its Align, because aligned siblings are ordered by position:
+  alRight by Left descending, alBottom by Top descending.  Without that, the
+  splitter and the panel swap sides -- and the splitter ends up resizing the
+  wrong neighbour. }
+procedure TfmMain.SetDockSite(ASite: TMcxDockSite);
 var
-  i: Integer;
-  C: TControl;
-  F: TForm;
+  Host: TForm;
 begin
-  C := PageContent(APage);
-  if C = nil then Exit;
-  for i := 0 to High(FFloats) do
-  begin
-    if FFloats[i].Page <> APage then Continue;
-    if FFloats[i].Host <> nil then Exit;          { already out }
-
-    F := TForm.CreateNew(Self);
-    F.Caption := APage.Caption + ' - ' + Caption;
-    { Raw 96-dpi numbers: mcxdpi's form scaler runs over every form as it
-      becomes visible, so scaling here would scale it twice -- 560 came out
-      1026 pixels wide before this comment existed. }
-    F.Width := 560;
-    F.Height := 460;
-    F.Position := poMainFormCenter;
-    F.OnClose := @FloatClose;
-    { Where the mouse is, so a torn-off page appears under the cursor that
-      pulled it rather than in the middle of the screen. }
-    F.Position := poDesigned;
-    F.Left := Mouse.CursorPos.X - 60;
-    F.Top := Mouse.CursorPos.Y - 20;
-    { Owned by the main form so it cannot outlive the controls it borrowed,
-      and closed rather than freed by the window manager, so the contents get
-      handed back before anything is destroyed. }
-    C.Parent := F;
-    C.Align := alClient;
-    FFloats[i].Host := F;
-    APage.TabVisible := False;
-    F.Show;
-    Exit;
-  end;
-end;
-
-procedure TfmMain.DockPage(AIndex: Integer);
-var
-  C: TControl;
-begin
-  if (AIndex < 0) or (AIndex > High(FFloats)) then Exit;
-  if FFloats[AIndex].Host = nil then Exit;
-  C := PageContent(FFloats[AIndex].Host);
-  if C <> nil then
-  begin
-    C.Parent := FFloats[AIndex].Page;
-    C.Align := alClient;
-  end;
-  FFloats[AIndex].Page.TabVisible := True;
-  FFloats[AIndex].Host := nil;
-end;
-
-procedure TfmMain.FloatClose(Sender: TObject; var CloseAction: TCloseAction);
-var
-  i: Integer;
-begin
-  for i := 0 to High(FFloats) do
-    if FFloats[i].Host = Sender then
-    begin
-      DockPage(i);
-      Break;
+  { Remember how big it was here before leaving. }
+  if pnPreview.Parent = pnMain then
+    case FDock of
+      dsRight:  FDockW := pnPreview.Width;
+      dsBottom: FDockH := pnPreview.Height;
     end;
+
+  if (FDock = dsFloat) and (ASite <> dsFloat) and (FDockHost <> nil) then
+  begin
+    { Take the panel back before the window that was holding it goes. }
+    Host := FDockHost;
+    FDockHost := nil;
+    pnPreview.Parent := pnMain;
+    spPreview.Visible := True;
+    Host.Close;
+  end;
+
+  pnMain.DisableAlign;
+  try
+    case ASite of
+      dsRight:
+        begin
+          pnPreview.Align := alRight;
+          pnPreview.Width := FDockW;
+          spPreview.Align := alRight;
+          spPreview.ResizeAnchor := akRight;
+          spPreview.Left := pnMain.ClientWidth - FDockW - spPreview.Width;
+          pnPreview.Left := pnMain.ClientWidth - FDockW;
+        end;
+      dsBottom:
+        begin
+          pnPreview.Align := alBottom;
+          pnPreview.Height := FDockH;
+          spPreview.Align := alBottom;
+          spPreview.ResizeAnchor := akBottom;
+          spPreview.Top := pnMain.ClientHeight - FDockH - spPreview.Height;
+          pnPreview.Top := pnMain.ClientHeight - FDockH;
+        end;
+      dsFloat:
+        if FDockHost = nil then
+        begin
+          FDockHost := TForm.CreateNew(Self);
+          FDockHost.Caption := 'Preview - ' + Caption;
+          { Raw 96-dpi numbers: mcxdpi's form scaler runs over every form as
+            it becomes visible, so scaling here would scale it twice. }
+          FDockHost.Width := 560;
+          FDockHost.Height := 460;
+          FDockHost.Position := poMainFormCenter;
+          FDockHost.OnClose := @DockHostClose;
+          spPreview.Visible := False;
+          pnPreview.Parent := FDockHost;
+          pnPreview.Align := alClient;
+          FDockHost.Show;
+        end;
+    end;
+  finally
+    pnMain.EnableAlign;
+  end;
+
+  if ASite <> dsFloat then FLastDock := ASite;
+  FDock := ASite;
+  acDockRight.Checked := ASite = dsRight;
+  acDockBottom.Checked := ASite = dsBottom;
+  acDockFloat.Checked := ASite = dsFloat;
+end;
+
+{ Closing the preview's own window puts it back where it last was docked,
+  rather than leaving nowhere to see the JSON. }
+procedure TfmMain.DockHostClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
   CloseAction := caFree;
+  if FDockHost <> Sender then Exit;      { already taken back }
+  FDockHost := nil;
+  pnPreview.Parent := pnMain;
+  spPreview.Visible := True;
+  SetDockSite(FLastDock);
 end;
 
-{ Dragging a tab off the strip tears the page off, which is the gesture
-  anyone tries first; double-clicking one does the same for anyone who does
-  not try dragging.  Both end in FloatPage, and the toolbar button is the
-  third way to the same place -- it was the only way at first, which made a
-  feature nobody could find.
-
-  This is a gesture rather than LCL docking: the page control reports which
-  tab is under a point, and how far the mouse has come since it went down is
-  all a tear-off needs to know.  Nothing here depends on the widget set
-  agreeing about drag-and-drop. }
-procedure TfmMain.TabMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TfmMain.acDockExecute(Sender: TObject);
 var
-  Tab: Integer;
+  P: TPoint;
 begin
-  FTabGrab := -1;
-  if Button <> mbLeft then Exit;
-  Tab := pcView.IndexOfPageAt(X, Y);
-  if Tab < 0 then Exit;
-
-  { The second click of a double arrives here with ssDouble set, which is
-    the only way to get one: TPageControl does not publish OnDblClick. }
-  if ssDouble in Shift then
-  begin
-    FloatPage(pcView.Pages[Tab]);
-    Exit;
-  end;
-
-  FTabGrab := Tab;
-  FTabFrom := Point(X, Y);
+  { Under the button rather than under the pointer, so the menu is in the
+    same place whether the button was clicked or reached by its shortcut. }
+  P := tbMain.ClientToScreen(Point(tbDock.Left, tbDock.Top + tbDock.Height));
+  pmDock.PopUp(P.X, P.Y);
 end;
 
-procedure TfmMain.TabMouseMove(Sender: TObject; Shift: TShiftState;
-  X, Y: Integer);
-var
-  Page: TTabSheet;
+procedure TfmMain.acDockSiteExecute(Sender: TObject);
 begin
-  if (FTabGrab < 0) or not (ssLeft in Shift) then Exit;
-  { Far enough that it cannot be the wobble in a click.  Measured in both
-    directions: the strip is horizontal, so a tear-off is usually downwards,
-    but pulling sideways past the end of the strip means the same thing. }
-  if (Abs(Y - FTabFrom.Y) < McxScale96(24)) and
-     (Abs(X - FTabFrom.X) < McxScale96(48)) then Exit;
-
-  if (FTabGrab >= 0) and (FTabGrab < pcView.PageCount) then
-  begin
-    Page := pcView.Pages[FTabGrab];
-    FTabGrab := -1;
-    FloatPage(Page);
-  end;
-end;
-
-procedure TfmMain.TabMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  FTabGrab := -1;
-end;
-
-procedure TfmMain.acFloatExecute(Sender: TObject);
-begin
-  FloatPage(pcView.ActivePage);
+  if Sender is TAction then
+    SetDockSite(TMcxDockSite(TAction(Sender).Tag));
 end;
 
 { ------------------------------------------------------------- stacking --- }

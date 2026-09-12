@@ -78,10 +78,10 @@ object fmMain: TfmMain
       Caption = 'tbSep3'
       Style = tbsDivider
     end
-    object tbFloat: TToolButton
+    object tbDock: TToolButton
       Left = 1
       Top = 1
-      Action = acFloat
+      Action = acDock
     end
     object tbMode: TToolButton
       Left = 1
@@ -2040,10 +2040,34 @@ object fmMain: TfmMain
       Hint = 'Showing key settings only. Click for every setting.'
       OnExecute = acToggleModeExecute
     end
-    object acFloat: TAction
-      Caption = 'Float'
-      Hint = 'Show this view in its own window. Close it to put it back.'
-      OnExecute = acFloatExecute
+    object acDock: TAction
+      Caption = 'Dock'
+      Hint = 'Where the preview lives: right, bottom, or its own window'
+      OnExecute = acDockExecute
+    end
+    object acDockRight: TAction
+      AutoCheck = True
+      Caption = 'Dock &right'
+      GroupIndex = 1
+      Hint = 'Put the preview down the right-hand side'
+      OnExecute = acDockSiteExecute
+      Tag = 0
+    end
+    object acDockBottom: TAction
+      AutoCheck = True
+      Caption = 'Dock &bottom'
+      GroupIndex = 1
+      Hint = 'Put the preview across the bottom'
+      OnExecute = acDockSiteExecute
+      Tag = 1
+    end
+    object acDockFloat: TAction
+      AutoCheck = True
+      Caption = '&Float'
+      GroupIndex = 1
+      Hint = 'Put the preview in a window of its own'
+      OnExecute = acDockSiteExecute
+      Tag = 2
     end
     object acAbout: TAction
       Caption = 'About'
@@ -2072,6 +2096,28 @@ object fmMain: TfmMain
     Options = [ofOverwritePrompt, ofPathMustExist, ofEnableSizing, ofViewDetail]
     left = 496
     top = 128
+  end
+  object pmDock: TPopupMenu
+    left = 640
+    top = 64
+    object miDockRight: TMenuItem
+      Action = acDockRight
+      AutoCheck = True
+      GroupIndex = 1
+      RadioItem = True
+    end
+    object miDockBottom: TMenuItem
+      Action = acDockBottom
+      AutoCheck = True
+      GroupIndex = 1
+      RadioItem = True
+    end
+    object miDockFloat: TMenuItem
+      Action = acDockFloat
+      AutoCheck = True
+      GroupIndex = 1
+      RadioItem = True
+    end
   end
   object tmRefresh: TTimer
     Enabled = False
