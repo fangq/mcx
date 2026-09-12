@@ -27,6 +27,12 @@ type
   { One navigator entry below a section header: the group box on the detail
     page it points at, and the button that points there.  Built from the
     Sections table rather than placed, so the two cannot drift apart. }
+  { One set of alTop siblings and the order they belong in. }
+  TMcxStack = record
+    Parent: TWinControl;
+    Items: array of TControl;
+  end;
+
   TMcxNavItem = record
     Section: Integer;
     Box: TPanel;
@@ -296,10 +302,15 @@ type
       where you are. }
     FSection: Integer;
     FSub: Integer;
+    { Every set of alTop siblings the wizard filter can hide something from,
+      each in the order it is meant to appear.  See Restack. }
+    FStacks: array of TMcxStack;
     FWizard: Boolean;
     procedure BuildIcons;
     procedure CollectSections;
     procedure BuildNav;
+    procedure CaptureStacks;
+    procedure Restack;
     procedure BindControls;
     procedure BindChanged(Sender: TObject);
     procedure CheckGroupClick(Sender: TObject; Index: Integer);
@@ -364,7 +375,7 @@ const
     identity cannot also mean selection, so nothing on a page could be
     highlighted without arguing with the section it sat on. }
   { Corner radius on the design grid, scaled with everything else. }
-  CardRadius = 8;
+  CardRadius = 14;
 
   BandLevel  = 14;   { a closed section heading }
   CardLevel  =  7;   { a card nobody has picked }
@@ -416,6 +427,7 @@ begin
   CollectSections;
   BuildNav;
   BindControls;
+  CaptureStacks;
 
   mmJSON.Font.Name := McxDefaultFontName;
   mmCommand.Font.Assign(mmJSON.Font);
@@ -681,6 +693,7 @@ begin
         Cap.BorderSpacing.Bottom := 4;
         Cap.Caption := Card.Caption;
         Cap.ParentFont := False;
+        Cap.Font.Height := -18;
         Cap.Font.Style := [fsBold];
         Card.Caption := '';
         Card.OnPaint := @CardPaint;
@@ -1060,6 +1073,87 @@ begin
   finally
     Before.Free;
     Files.Free;
+  end;
+end;
+
+{ ------------------------------------------------------------- stacking --- }
+
+{ Records the order a set of alTop siblings is meant to appear in, while every
+  one of them is still showing.
+
+  A hidden control keeps whatever Top it had when it went away, and the
+  aligner orders alTop siblings by Top -- so when the wizard filter puts one
+  back, its stale Top decides where it lands.  That is how Advanced arrived
+  third in the navigator: it starts hidden, so it still carried the 168 the
+  designer gave it, while the sections around it had been re-laid out at a
+  display scale that put Domain at 131 and Shapes at 202.
+
+  Capturing has to happen while nothing is hidden yet, which is why this runs
+  from FormCreate before the first ApplyBindingStates. }
+procedure TfmMain.CaptureStacks;
+
+  procedure Capture(P: TWinControl);
+  var
+    i, j, n: Integer;
+    C: TControl;
+    S: TMcxStack;
+  begin
+    if P = nil then Exit;
+    S.Parent := P;
+    SetLength(S.Items, 0);
+    for i := 0 to P.ControlCount - 1 do
+      if P.Controls[i].Align = alTop then
+      begin
+        SetLength(S.Items, Length(S.Items) + 1);
+        S.Items[High(S.Items)] := P.Controls[i];
+      end;
+    if Length(S.Items) < 2 then Exit;
+
+    { Insertion sort on Top: the list is short, and the order the children
+      happen to be in is the designer's, not the layout's. }
+    for i := 1 to High(S.Items) do
+    begin
+      C := S.Items[i];
+      j := i - 1;
+      while (j >= 0) and (S.Items[j].Top > C.Top) do
+      begin
+        S.Items[j + 1] := S.Items[j];
+        Dec(j);
+      end;
+      S.Items[j + 1] := C;
+    end;
+
+    n := Length(FStacks);
+    SetLength(FStacks, n + 1);
+    FStacks[n] := S;
+  end;
+
+var
+  i: Integer;
+begin
+  SetLength(FStacks, 0);
+  Capture(sbNav);
+  for i := 0 to High(FPanes) do Capture(FBodies[i]);
+  for i := 0 to High(FPages) do Capture(FPages[i]);
+  for i := 0 to High(FSubs) do Capture(FSubs[i].Box);
+end;
+
+{ Writes the captured order back as Tops, so the next align packs them in it
+  whatever was hidden in between.  The values only have to be increasing --
+  the aligner overwrites every visible one with its packed position. }
+procedure TfmMain.Restack;
+var
+  i, j: Integer;
+begin
+  for i := 0 to High(FStacks) do
+  begin
+    FStacks[i].Parent.DisableAlign;
+    try
+      for j := 0 to High(FStacks[i].Items) do
+        FStacks[i].Items[j].Top := j * 1000;
+    finally
+      FStacks[i].Parent.EnableAlign;
+    end;
   end;
 end;
 
@@ -1504,9 +1598,20 @@ var
   i, j, s, First, NBound, NShown: Integer;
   B: TMcxBind;
   C: TControl;
-  InMode, Shown: Boolean;
+  InMode, Shown, Moved: Boolean;
   Live: array of Boolean;
+
+  { Restacking is only needed when something appeared or disappeared, and
+    this runs on every keystroke that commits, so it is worth knowing. }
+  procedure Show(AControl: TControl; AVisible: Boolean);
+  begin
+    if AControl = nil then Exit;
+    if AControl.Visible <> AVisible then Moved := True;
+    AControl.Visible := AVisible;
+  end;
+
 begin
+  Moved := False;
   for i := 0 to High(Binds) do
   begin
     C := FBound[i];
@@ -1516,12 +1621,12 @@ begin
     { The wizard is a strict subset of the expert form, so one filter serves
       both modes and there is no second layout to keep in step. }
     InMode := (not FWizard) or (B.Level = mlWizard);
-    C.Visible := InMode;
+    Show(C, InMode);
     if InMode then
       C.Enabled := ConditionHolds(DocFor(B.EnableIf), B.EnableIf);
     if FLabels[i] <> nil then
     begin
-      FLabels[i].Visible := InMode;
+      Show(FLabels[i], InMode);
       FLabels[i].Enabled := C.Enabled;
     end;
   end;
@@ -1539,7 +1644,7 @@ begin
         Inc(NBound);
         if FBound[i].Visible then Inc(NShown);
       end;
-    if NBound > 0 then FRowList[j].Visible := NShown > 0;
+    if NBound > 0 then Show(FRowList[j], NShown > 0);
   end;
 
   { A group box the wizard has emptied hides, and so does its entry in the
@@ -1564,8 +1669,8 @@ begin
 
   for j := 0 to High(FSubs) do
   begin
-    FSubs[j].Box.Visible := Live[j];
-    FSubs[j].Btn.Visible := Live[j];
+    Show(FSubs[j].Box, Live[j]);
+    Show(FSubs[j].Btn, Live[j]);
   end;
 
   { A section whose every group went away would leave a header that opens on
@@ -1577,9 +1682,11 @@ begin
     Shown := False;
     for j := 0 to High(FSubs) do
       if (FSubs[j].Section = s) and Live[j] then Shown := True;
-    FPanes[s].Visible := Shown;
+    Show(FPanes[s], Shown);
     if Shown and (First < 0) then First := s;
   end;
+  if Moved then Restack;
+
   if (FSection >= 0) and (not FPanes[FSection].Visible) then
     SelectSection(First)
   else if (FSub < 0) or (FSub > High(FSubs)) or (not FSubs[FSub].Btn.Visible) then
