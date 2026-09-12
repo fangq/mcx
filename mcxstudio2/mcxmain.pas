@@ -88,6 +88,7 @@ type
     tbDock: TToolButton;
     tbMode: TToolButton;
     tmRefresh: TTimer;
+    tsSettings: TTabSheet;
     tsCommand: TTabSheet;
     tsJSON: TTabSheet;
     tsLog: TTabSheet;
@@ -313,7 +314,6 @@ type
     FStacks: array of TMcxStack;
     { The dock site and the three panes in it.  See BuildDock. }
     FDockSite: TAnchorDockPanel;
-    FPaneSettings: TForm;
     FPaneNav: TForm;
     FPaneView: TForm;
     FDockRestored: Boolean;
@@ -1150,25 +1150,29 @@ begin
   FDockSite.Parent := pnMain;
   FDockSite.Align := alClient;
 
-  FPaneSettings := MakePane('PaneSettings', 'Settings', sbDetail, 560, 640);
+  { The settings are a page of the notebook rather than a pane of their own.
+    Two columns instead of three: the navigator says what you are editing and
+    everything else -- the form, the 3-D view, the JSON, the log -- shares one
+    large area, which is the only way the renderer gets room to be worth
+    looking at. }
+  sbDetail.Parent := tsSettings;
+  sbDetail.Align := alClient;
+  pcView.ActivePage := tsSettings;
+
   FPaneNav := MakePane('PaneSections', 'Sections', sbNav, 340, 640);
-  FPaneView := MakePane('PanePreview', 'Preview', pnPreview, 430, 640);
+  FPaneView := MakePane('PaneMain', 'Views', pnPreview, 900, 640);
 
   DockMaster.OnCreateControl := @DockCreateControl;
   DockMaster.MakeDockPanel(FDockSite, admrpChild);
 
-  { The middle goes in first, because the other two dock against it. }
-  DockMaster.MakeDockable(FPaneSettings, True, True, False);
-  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneSettings), FDockSite,
+  { The middle goes in first, because the navigator docks against it. }
+  DockMaster.MakeDockable(FPaneView, True, True, False);
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite,
     alClient);
 
   DockMaster.MakeDockable(FPaneNav, False, True, True);
   DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
   DockMaster.ShowControl(FPaneNav.Name, False);
-
-  DockMaster.MakeDockable(FPaneView, False, True, True);
-  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite, alRight);
-  DockMaster.ShowControl(FPaneView.Name, False);
 
   GuardCentreHeader;
 end;
@@ -1184,7 +1188,6 @@ procedure TfmMain.ApplyPaneSizes(Data: PtrInt);
 begin
   if FDockRestored then Exit;
   SizePane(FPaneNav, alLeft, McxScale96(340));
-  SizePane(FPaneView, alRight, McxScale96(430));
   GuardCentreHeader;
 end;
 
@@ -1256,8 +1259,8 @@ procedure TfmMain.GuardCentreHeader;
 var
   Site: TAnchorDockHostSite;
 begin
-  if FPaneSettings = nil then Exit;
-  Site := DockMaster.GetAnchorSite(FPaneSettings);
+  if FPaneView = nil then Exit;
+  Site := DockMaster.GetAnchorSite(FPaneView);
   if (Site = nil) or (Site.Header = nil) then Exit;
   Site.Header.Visible := False;
   if Site.Header.CloseButton <> nil then
@@ -1272,9 +1275,8 @@ procedure TfmMain.DockCreateControl(Sender: TObject; aName: string;
   var AControl: TControl; DoDisableAutoSizing: boolean);
 begin
   AControl := nil;
-  if SameText(aName, 'PaneSettings') then AControl := FPaneSettings
-  else if SameText(aName, 'PaneSections') then AControl := FPaneNav
-  else if SameText(aName, 'PanePreview') then AControl := FPaneView;
+  if SameText(aName, 'PaneSections') then AControl := FPaneNav
+  else if SameText(aName, 'PaneMain') then AControl := FPaneView;
   if (AControl <> nil) and DoDisableAutoSizing then
     TWinControl(AControl).DisableAutoSizing;
 end;
@@ -1340,12 +1342,10 @@ begin
 
   DeleteFile(McxLayoutFile);
   FDockRestored := False;
-  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneSettings), FDockSite,
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite,
     alClient);
   DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
   DockMaster.ShowControl(FPaneNav.Name, False);
-  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite, alRight);
-  DockMaster.ShowControl(FPaneView.Name, False);
   ApplyPaneSizes(0);
 end;
 
