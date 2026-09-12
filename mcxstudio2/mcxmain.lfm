@@ -1,17 +1,19 @@
 object fmMain: TfmMain
   Left = 300
-  Height = 700
-  Top = 150
-  Width = 1060
+  Height = 720
+  Top = 140
+  Width = 1120
   Caption = 'MCX Studio'
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   Position = poScreenCenter
   LCLVersion = '2.2.0.4'
   object tbMain: TToolBar
     Left = 0
     Height = 26
     Top = 0
-    Width = 1060
+    Width = 1120
     AutoSize = True
     ButtonHeight = 24
     ButtonWidth = 24
@@ -21,19 +23,566 @@ object fmMain: TfmMain
     ParentShowHint = False
     ShowHint = True
     TabOrder = 0
+    object tbNew: TToolButton
+      Left = 1
+      Top = 0
+      Action = acNew
+    end
+    object tbOpen: TToolButton
+      Left = 25
+      Top = 0
+      Action = acOpen
+    end
+    object tbSave: TToolButton
+      Left = 49
+      Top = 0
+      Action = acSave
+    end
+    object tbSep1: TToolButton
+      Left = 73
+      Height = 24
+      Top = 0
+      Width = 8
+      Caption = 'tbSep1'
+      Style = tbsDivider
+    end
+    object tbRun: TToolButton
+      Left = 81
+      Top = 0
+      Action = acRun
+    end
+    object tbStop: TToolButton
+      Left = 105
+      Top = 0
+      Action = acStop
+    end
+    object tbDevices: TToolButton
+      Left = 129
+      Top = 0
+      Action = acDevices
+    end
+    object tbSep2: TToolButton
+      Left = 153
+      Height = 24
+      Top = 0
+      Width = 8
+      Caption = 'tbSep2'
+      Style = tbsDivider
+    end
+    object tbMode: TToolButton
+      Left = 161
+      Top = 0
+      Action = acToggleMode
+    end
+  end
+  object pnMain: TPanel
+    Left = 0
+    Height = 671
+    Top = 26
+    Width = 1120
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 671
+    ClientWidth = 1120
+    TabOrder = 1
+    object sbSections: TScrollBox
+      Left = 0
+      Height = 671
+      Top = 0
+      Width = 380
+      HorzScrollBar.Visible = False
+      VertScrollBar.Page = 240
+      Align = alLeft
+      BorderStyle = bsNone
+      ClientHeight = 671
+      ClientWidth = 363
+      TabOrder = 0
+    object pnTypes: TPanel
+      Left = 0
+      Height = 30
+      Top = 0
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 0
+      object hdTypes: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Types'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdTypes: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnForward: TPanel
+      Left = 0
+      Height = 30
+      Top = 30
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 1
+      object hdForward: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Forward'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdForward: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnSession: TPanel
+      Left = 0
+      Height = 30
+      Top = 60
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 2
+      object hdSession: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Session'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdSession: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnMedia: TPanel
+      Left = 0
+      Height = 30
+      Top = 90
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 3
+      object hdMedia: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Properties'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdMedia: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnShapes: TPanel
+      Left = 0
+      Height = 30
+      Top = 120
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 4
+      object hdShapes: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Shapes'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdShapes: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnOptode: TPanel
+      Left = 0
+      Height = 30
+      Top = 150
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 5
+      object hdOptode: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Optode'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdOptode: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnCompute: TPanel
+      Left = 0
+      Height = 30
+      Top = 180
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 6
+      object hdCompute: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Compute'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdCompute: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    object pnAdvanced: TPanel
+      Left = 0
+      Height = 30
+      Top = 210
+      Width = 360
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 30
+      ClientWidth = 360
+      TabOrder = 7
+      object hdAdvanced: TSpeedButton
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 360
+        Align = alTop
+        BorderSpacing.Bottom = 2
+        Caption = 'Advanced'
+        Flat = True
+        Font.Style = [fsBold]
+        Images = ilIcons
+        Layout = blGlyphLeft
+        Margin = 6
+        ParentFont = False
+        Spacing = 8
+        OnClick = HeaderClick
+      end
+      object bdAdvanced: TPanel
+        Left = 0
+        Height = 2
+        Top = 28
+        Width = 360
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ChildSizing.LeftRightSpacing = 8
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.HorizontalSpacing = 8
+        ChildSizing.VerticalSpacing = 6
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 4
+        ClientHeight = 2
+        ClientWidth = 360
+        TabOrder = 0
+        Visible = False
+      end
+    end
+    end
+    object spMain: TSplitter
+      Left = 380
+      Height = 671
+      Top = 0
+      Width = 5
+    end
+    object pnPreview: TPanel
+      Left = 385
+      Height = 671
+      Top = 0
+      Width = 735
+      Align = alClient
+      BevelOuter = bvNone
+      ClientHeight = 671
+      ClientWidth = 735
+      TabOrder = 1
+      object pcView: TPageControl
+        Left = 0
+        Height = 671
+        Top = 0
+        Width = 735
+        ActivePage = tsPreview
+        Align = alClient
+        TabIndex = 0
+        TabOrder = 0
+        object tsPreview: TTabSheet
+          Caption = 'Preview'
+        end
+        object tsJSON: TTabSheet
+          Caption = 'JSON'
+          ClientHeight = 643
+          ClientWidth = 727
+          object mmJSON: TMemo
+            Left = 0
+            Height = 643
+            Top = 0
+            Width = 727
+            Align = alClient
+            BorderStyle = bsNone
+            Font.Pitch = fpFixed
+            ParentFont = False
+            ReadOnly = True
+            ScrollBars = ssAutoBoth
+            TabOrder = 0
+            WordWrap = False
+          end
+        end
+        object tsCommand: TTabSheet
+          Caption = 'Command'
+          ClientHeight = 643
+          ClientWidth = 727
+          object mmCommand: TMemo
+            Left = 0
+            Height = 643
+            Top = 0
+            Width = 727
+            Align = alClient
+            BorderStyle = bsNone
+            Font.Pitch = fpFixed
+            ParentFont = False
+            ReadOnly = True
+            ScrollBars = ssAutoBoth
+            TabOrder = 0
+            WordWrap = False
+          end
+        end
+        object tsLog: TTabSheet
+          Caption = 'Log'
+          ClientHeight = 643
+          ClientWidth = 727
+          object mmLog: TMemo
+            Left = 0
+            Height = 643
+            Top = 0
+            Width = 727
+            Align = alClient
+            BorderStyle = bsNone
+            Font.Pitch = fpFixed
+            ParentFont = False
+            ReadOnly = True
+            ScrollBars = ssAutoBoth
+            TabOrder = 0
+            WordWrap = False
+          end
+        end
+      end
+    end
   end
   object sbMain: TStatusBar
     Left = 0
     Height = 23
-    Top = 677
-    Width = 1060
+    Top = 697
+    Width = 1120
     Panels = <    
       item
         Text = 'Ready'
-        Width = 260
+        Width = 160
       end    
       item
-        Width = 200
+        Text = 'Wizard'
+        Width = 110
       end    
       item
         Width = 200
@@ -41,12 +590,90 @@ object fmMain: TfmMain
     SimplePanel = False
   end
   object ilIcons: TImageList
-    left = 40
+    left = 424
     top = 64
   end
   object alMain: TActionList
     Images = ilIcons
-    left = 104
+    left = 496
+    top = 64
+    object acNew: TAction
+      Caption = 'New'
+      Hint = 'Start a new simulation'
+      OnExecute = acNewExecute
+      ShortCut = 16462
+    end
+    object acOpen: TAction
+      Caption = 'Open'
+      Hint = 'Open a simulation file'
+      OnExecute = acOpenExecute
+      ShortCut = 16463
+    end
+    object acSave: TAction
+      Caption = 'Save'
+      Hint = 'Save this simulation'
+      OnExecute = acSaveExecute
+      ShortCut = 16467
+    end
+    object acSaveAs: TAction
+      Caption = 'Save As'
+      Hint = 'Save this simulation under a new name'
+      OnExecute = acSaveAsExecute
+      ShortCut = 24659
+    end
+    object acRun: TAction
+      Caption = 'Run'
+      Hint = 'Run this simulation'
+      Enabled = False
+    end
+    object acStop: TAction
+      Caption = 'Stop'
+      Hint = 'Stop the running simulation'
+      Enabled = False
+    end
+    object acDevices: TAction
+      Caption = 'Devices'
+      Hint = 'List the compute devices on this system'
+      Enabled = False
+    end
+    object acToggleMode: TAction
+      Caption = 'Wizard'
+      Hint = 'Showing key settings only. Click for every setting.'
+      OnExecute = acToggleModeExecute
+    end
+    object acAbout: TAction
+      Caption = 'About'
+      Hint = 'About MCX Studio'
+      OnExecute = acAboutExecute
+    end
+    object acQuit: TAction
+      Caption = 'Quit'
+      Hint = 'Close MCX Studio'
+      OnExecute = acQuitExecute
+      ShortCut = 16465
+    end
+  end
+  object dlgOpen: TOpenDialog
+    Title = 'Open a simulation'
+    DefaultExt = '.json'
+    Filter = 'MCX simulations|*.json;*.jnii|All files|*'
+    Options = [ofPathMustExist, ofFileMustExist, ofEnableSizing, ofViewDetail]
+    left = 424
+    top = 128
+  end
+  object dlgSave: TSaveDialog
+    Title = 'Save the simulation'
+    DefaultExt = '.json'
+    Filter = 'MCX simulations|*.json|All files|*'
+    Options = [ofOverwritePrompt, ofPathMustExist, ofEnableSizing, ofViewDetail]
+    left = 496
+    top = 128
+  end
+  object tmRefresh: TTimer
+    Enabled = False
+    Interval = 250
+    OnTimer = tmRefreshTimer
+    left = 568
     top = 64
   end
 end
