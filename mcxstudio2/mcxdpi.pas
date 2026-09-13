@@ -59,6 +59,20 @@ procedure McxApplyAdaptiveScale;
   re-styling is all that is wanted. }
 procedure McxInstallChromeStyle;
 
+{ Hands a colour theme to the widget set itself.
+
+  There is a layer of the window the LCL cannot reach.  A notebook's tab
+  strip, a status bar's face, the header of a docked pane, the field behind
+  selected text -- gtk2 draws all of those from its own resource style, and
+  setting Color on the LCL control in front of them changes nothing.  So the
+  theme is also expressed as a gtk resource style, which is the mechanism
+  those widgets actually read.
+
+  Passing clNone for all three puts the desktop's own theme back: an empty
+  style contributes nothing and gtk falls through to what it had. }
+procedure McxApplyChromeColours(ABase, AText, AAccent, AField,
+  ASelText: TColor);
+
 { Scale every form from the moment it is first shown, for the rest of the
   session.  Call once at startup.
 
@@ -395,6 +409,68 @@ end;
   of the three pattern forms.  So a check box is still a 16-pixel box beside
   40-pixel text, and the cause is not yet understood.  Left out rather than
   left in and not working. }
+{ "#rrggbb" as gtk wants it, from a TColor, which is stored the other way
+  round. }
+function HtmlColour(AColour: TColor): string;
+var
+  r, g, b: Byte;
+begin
+  RedGreenBlue(ColorToRGB(AColour), r, g, b);
+  Result := Format('"#%.2x%.2x%.2x"', [r, g, b]);
+end;
+
+procedure McxApplyChromeColours(ABase, AText, AAccent, AField,
+  ASelText: TColor);
+{$IFDEF MCX_GTK2_CHROME}
+var
+  Body: string;
+begin
+  if ABase = clNone then
+    Body := ''
+  else
+    { bg is the face of a widget, base the field inside one, fg and text the
+      writing on each.  PRELIGHT is hover and ACTIVE is pressed; INSENSITIVE
+      is greyed out, and is given a washed-out version of the ink rather than
+      left behind on the desktop's palette. }
+    Body :=
+      '  bg[NORMAL] = ' + HtmlColour(ABase) + #10 +
+      '  bg[ACTIVE] = ' + HtmlColour(ABase) + #10 +
+      '  bg[PRELIGHT] = ' + HtmlColour(ABase) + #10 +
+      '  bg[INSENSITIVE] = ' + HtmlColour(ABase) + #10 +
+      '  bg[SELECTED] = ' + HtmlColour(AAccent) + #10 +
+      '  fg[NORMAL] = ' + HtmlColour(AText) + #10 +
+      '  fg[ACTIVE] = ' + HtmlColour(AText) + #10 +
+      '  fg[PRELIGHT] = ' + HtmlColour(AText) + #10 +
+      '  fg[INSENSITIVE] = ' + HtmlColour(AField) + #10 +
+      '  fg[SELECTED] = ' + HtmlColour(ASelText) + #10 +
+      '  base[NORMAL] = ' + HtmlColour(AField) + #10 +
+      '  base[ACTIVE] = ' + HtmlColour(AAccent) + #10 +
+      '  base[PRELIGHT] = ' + HtmlColour(AField) + #10 +
+      '  base[INSENSITIVE] = ' + HtmlColour(ABase) + #10 +
+      '  base[SELECTED] = ' + HtmlColour(AAccent) + #10 +
+      '  text[NORMAL] = ' + HtmlColour(AText) + #10 +
+      '  text[ACTIVE] = ' + HtmlColour(ASelText) + #10 +
+      '  text[PRELIGHT] = ' + HtmlColour(AText) + #10 +
+      '  text[INSENSITIVE] = ' + HtmlColour(AText) + #10 +
+      '  text[SELECTED] = ' + HtmlColour(ASelText) + #10;
+
+  gtk_rc_parse_string(PChar(
+    'style "mcx_theme_colours"'#10 +
+    '{'#10 + Body + '}'#10 +
+    'class "*" style "mcx_theme_colours"'#10 +
+    { Widgets built by a container -- a notebook's tab labels, a menu's
+      items -- take their style from the container's name rather than from
+      the class list, so they need saying twice. }
+    'widget "*" style "mcx_theme_colours"'#10));
+  gtk_rc_reset_styles(gtk_settings_get_default);
+end;
+{$ELSE}
+begin
+  { Windows and macOS draw their own chrome and have no such mechanism; the
+    LCL colours already set are all there is. }
+end;
+{$ENDIF}
+
 procedure McxInstallChromeStyle;
 {$IFDEF MCX_GTK2_CHROME}
 var

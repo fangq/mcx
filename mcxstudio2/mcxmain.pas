@@ -581,10 +581,14 @@ begin
   OnKeyDown := @FormKeyDown;
   Screen.AddHandlerActiveControlChanged(@FocusChanged);
 
+  LoadDockLayout;
+
+  { After the layout, not before: restoring it hands the dock manager its
+    saved settings, and the header style is one of them -- so a theme applied
+    first had its header drawer quietly replaced by the one in the file. }
   McxLoadTheme;
   BuildThemeMenu;
   ApplyTheme;
-  LoadDockLayout;
 
   NewDocument;
   SelectSection(0);
@@ -949,6 +953,61 @@ end;
   It is a glyph rather than a caption prefix because TSpeedButton centres its
   caption and has no Alignment -- but it does place a glyph at Margin, and the
   caption follows the glyph, which left-aligns the header. }
+{ The header of a docked pane, drawn in the theme's colours.
+
+  AnchorDocking's own styles fill the header with clForm and outline the grip
+  with DrawEdge -- both system colours, so under a light theme on a dark
+  desktop the one black bar left in the window was the pane header.  A style
+  registered here paints the whole thing instead: registered with
+  NeedDrawHeaderAfterText false, which is what stops the dock manager filling
+  it with clForm first.
+
+  The grip is worth keeping.  It is the only thing on a pane that says it can
+  be dragged somewhere else. }
+procedure DrawMcxDockHeader(Canvas: TCanvas; Style: TADHeaderStyleDesc;
+  r: TRect; Horizontal: Boolean; Focused: Boolean);
+var
+  Face, Ink: TColor;
+  i, x, y: Integer;
+begin
+  if Focused then Face := McxBlend(McxBase, McxAccent, 26)
+  else Face := McxBlend(McxBase, McxText, 9);
+  Ink := McxBlend(Face, McxText, 38);
+
+  Canvas.Brush.Style := bsSolid;
+  Canvas.Brush.Color := Face;
+  Canvas.FillRect(r);
+
+  { A hairline along the edge the pane's contents start at, so the header
+    reads as a band rather than as a gap. }
+  Canvas.Pen.Color := McxBlend(Face, McxText, 18);
+  if Horizontal then
+  begin
+    Canvas.MoveTo(r.Left, r.Bottom - 1);
+    Canvas.LineTo(r.Right, r.Bottom - 1);
+  end
+  else
+  begin
+    Canvas.MoveTo(r.Right - 1, r.Top);
+    Canvas.LineTo(r.Right - 1, r.Bottom);
+  end;
+
+  Canvas.Pen.Color := Ink;
+  for i := 0 to 2 do
+    if Horizontal then
+    begin
+      y := (r.Top + r.Bottom) div 2 - 3 + i * 3;
+      Canvas.MoveTo(r.Left + 6, y);
+      Canvas.LineTo(r.Left + 22, y);
+    end
+    else
+    begin
+      x := (r.Left + r.Right) div 2 - 3 + i * 3;
+      Canvas.MoveTo(x, r.Top + 6);
+      Canvas.LineTo(x, r.Top + 22);
+    end;
+end;
+
 { Repaints the window in the current theme.
 
   Only the surfaces the program paints itself are touched.  The widgets --
@@ -981,7 +1040,7 @@ procedure TfmMain.ApplyTheme;
        (AControl is TPanel) or (AControl is TCustomGroupBox) or
        (AControl is TTabSheet) or (AControl is TPageControl) or
        (AControl is TToolBar) or (AControl is TStatusBar) or
-       (AControl is TScrollBox) then
+       (AControl is TScrollBox) or (AControl is TAnchorDockHeader) then
       SetInk(AControl, McxText)
     else if (AControl is TCustomEdit) or (AControl is TCustomListBox) or
             (AControl is TStringGrid) then
@@ -1023,6 +1082,23 @@ var
   i: Integer;
   r, g, b: Byte;
 begin
+  { The dock manager's headers are painted by a procedure of ours rather than
+    by one of its own; registering is idempotent, and the drawer reads the
+    theme when it paints, so this only has to be asked for once. }
+  DockMaster.RegisterHeaderStyle('MCX', @DrawMcxDockHeader, False, False);
+  DockMaster.HeaderStyle := 'MCX';
+
+  { First: the widget set's own resource style.  There is a layer of the
+    window the LCL cannot colour -- a notebook's tab strip, the status bar's
+    face, a docked pane's header, the field behind selected text -- and gtk2
+    draws all of it from its own style whatever we set on the control in
+    front.  Handing it the same three roles is the only way those follow. }
+  if McxCurrentTheme = mtSystem then
+    McxApplyChromeColours(clNone, clNone, clNone, clNone, clNone)
+  else
+    McxApplyChromeColours(McxBase, McxText, McxAccent,
+      McxBlend(McxBase, McxText, 4), McxReadable(McxAccent));
+
   Color := McxBase;
   Font.Color := McxText;
 
@@ -1049,7 +1125,16 @@ begin
     sbDetail.Color := McxBase;
   end;
 
-  Ink(Self);
+  { Every form, not just this one.  AnchorDocking puts each pane in a form of
+    its own and re-parents our panels into it, so half the window -- the pane
+    headers, the notebook, the splitters -- is not in this form's control
+    tree at all, and a walk from Self stops at the dock site. }
+  for i := 0 to Screen.FormCount - 1 do
+  begin
+    Ink(Screen.Forms[i]);
+    TColourAccess(Screen.Forms[i]).Color := McxBase;
+    Screen.Forms[i].Font.Color := McxText;
+  end;
 
   { The text panes read as paper: a shade off the surface, so a block of JSON
     is a thing on the window rather than the window itself. }
