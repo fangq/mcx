@@ -66,23 +66,97 @@ const
     absent from OutputFormat: it is a bespoke GL texture dump that only the old
     viewer read, and mcxstudio2 renders from jnii and bnii instead.  jnii leads
     because it is what mcx itself defaults to. }
-  ChoiceBackend     = 'mcx,mcxcl,mmc,mcx-hip';
-  ChoiceDomainKind  = 'voxel,shapes,mesh';
-  ChoiceOutFormat   = 'jnii,bnii,nii,mc2,hdr';
+  { Every choice list is now value=label: the left side is what goes into the
+    file and the right is what the person reads.  mcx's own spellings are
+    terse by necessity -- "f", "muamus_half" -- and a form that shows them
+    raw is a form you need the manual beside.
+
+    An entry with no equals sign is its own label, which keeps the simple
+    lists simple. }
+  ChoiceBackend =
+    'mcx=MCX  (NVIDIA CUDA),' +
+    'mcxcl=MCX-CL  (OpenCL: any GPU or CPU),' +
+    'mmc=MMC  (mesh-based),' +
+    'mcx-hip=MCX  (AMD ROCm)';
+
+  ChoiceDomainKind =
+    'voxel=Voxelated volume from a file,' +
+    'shapes=Shapes built in this file,' +
+    'mesh=Tetrahedral mesh  (MMC)';
+
+  ChoiceOutFormat =
+    'jnii=JNIfTI  (.jnii, text JSON),' +
+    'bnii=BNIfTI  (.bnii, binary),' +
+    'nii=NIfTI  (.nii),' +
+    'mc2=Raw floats  (.mc2),' +
+    'hdr=Analyze  (.hdr/.img)';
+
+  { The letters mcx takes for -O, spelled out.  These are the quantity the
+    simulation reports, and nobody remembers which letter is which. }
+  ChoiceOutType =
+    'x=Fluence rate  (1/mm" + #178 + "/s),' +
+    'f=Fluence  (1/mm" + #178 + "),' +
+    'e=Energy deposit  (1/mm" + #179 + "),' +
+    'j=Jacobian  (for mua),' +
+    'p=Scattering count,' +
+    'm=Momentum transfer,' +
+    'r=RF Jacobian';
+
+  ChoiceMediaFormat =
+    'byte=One label a voxel  (uint8),' +
+    'short=One label a voxel  (uint16),' +
+    'integer=One label a voxel  (int32),' +
+    'asgn_byte=Two labels a voxel  (uint8),' +
+    'muamus_short=Scaled mua and mus  (uint16),' +
+    'asgn_float=mua, mus, g and n a voxel  (float),' +
+    'muamus_float=mua and mus a voxel  (float),' +
+    'muamus_half=mua and mus a voxel  (half),' +
+    'svmc=Split-voxel  (SVMC),' +
+    'mixlabel=Two labels and a fraction,' +
+    'labelplus=Label with a continuous part';
 
   { A flag set is a string of letters -- "DP", "RM" -- or the equivalent
     bitmask.  Each entry is the letter, a colon, and what it means, so the
-    check group can be captioned without a second table. }
-  FlagsDebug   = 'R:RNG,M:Photon trajectory,P:Progress bar,T:Trajectory only';
-  FlagsSaveData= 'D:Detector ID,S:Scattering counts,P:Partial path lengths,' +
-                 'M:Momentum transfer,X:Exit position,V:Exit direction,' +
-                 'W:Initial weight';
-  ChoiceOutType     = 'x,f,e,j,p,m,r';
-  ChoiceMediaFormat = 'byte,short,integer,asgn_float,svmc,mixlabel,labelplus,' +
-                      'muamus_float,muamus_half,asgn_byte,muamus_short';
-  ChoiceSrcType     = 'pencil,isotropic,cone,gaussian,planar,pattern,pattern3d,' +
-                      'fourier,arcsine,disk,fourierx,fourierx2d,zgaussian,line,' +
-                      'slit,pencilarray,hyperboloid,ring';
+    check group can be captioned without a second table.  A colon here rather
+    than the equals sign the choice lists use, because a caption may contain
+    an equals sign and a letter never contains a colon. }
+  FlagsDebug =
+    'R:Print the random number seed,' +
+    'M:Record photon trajectories  (writes <session>_traj.jdat),' +
+    'P:Show a progress bar,' +
+    'T:Record trajectories only, do not accumulate';
+
+  FlagsSaveData =
+    'D:Which detector caught it,' +
+    'S:How many times it scattered,' +
+    'P:Path length in each medium,' +
+    'M:Momentum transfer,' +
+    'X:Where it left the domain,' +
+    'V:Which way it was going,' +
+    'W:The weight it launched with';
+
+  { The eighteen source types, with what each one is.  Param1 and Param2 mean
+    something different for every one of them, which is exactly why the name
+    alone is not enough. }
+  ChoiceSrcType =
+    'pencil=Pencil beam  (a single ray),' +
+    'isotropic=Isotropic point,' +
+    'cone=Cone beam  (Param1: half angle),' +
+    'gaussian=Gaussian beam  (Param1: waist),' +
+    'planar=Planar patch  (Param1, Param2: edges),' +
+    'pattern=2-D pattern on a patch,' +
+    'pattern3d=3-D pattern in a box,' +
+    'fourier=Fourier pattern on a patch,' +
+    'arcsine=Arcsine  (Lambertian-like),' +
+    'disk=Disk  (Param1: radius),' +
+    'fourierx=Fourier, 2-vector form,' +
+    'fourierx2d=Fourier, two frequencies,' +
+    'zgaussian=Gaussian in angle,' +
+    'line=Line source  (Param1: end),' +
+    'slit=Slit  (Param1: end),' +
+    'pencilarray=Array of pencil beams,' +
+    'hyperboloid=Hyperboloid  (focused Gaussian),' +
+    'ring=Ring  (Param1: outer, inner radius)';
 
   { The binding table.  One row per setting: the control the designer placed on
     the left, the path it writes on the right.  This is the only place a

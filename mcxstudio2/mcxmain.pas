@@ -306,6 +306,9 @@ type
       entry with it rather than stand there as an empty frame. }
     FRows: array of TPanel;
     FGroups: array of TPanel;
+    { What each item of a choice control actually writes.  Parallel to the
+      control's own Items, which hold what the person reads. }
+    FValues: array of TStringList;
     FRowList: array of TPanel;
     FLoading: Integer;
     FMissing: TStringList;
@@ -1971,11 +1974,41 @@ begin
   end;
 end;
 
-procedure SetChoices(AItems: TStrings; const AList: string);
+{ 'x=Fluence rate,f=Fluence' -> the values in AValues and what the person
+  reads in AItems.  An entry with no equals sign is its own label, so a plain
+  list still works.
+
+  Splitting here rather than storing two tables means a value and its label
+  cannot drift apart: they are one string in one place. }
+procedure SetChoices(AItems, AValues: TStrings; const AList: string);
+var
+  Parts: TStringList;
+  i, e: Integer;
 begin
-  AItems.Delimiter := ',';
-  AItems.StrictDelimiter := True;
-  AItems.DelimitedText := AList;
+  AItems.Clear;
+  AValues.Clear;
+  Parts := TStringList.Create;
+  try
+    Parts.Delimiter := ',';
+    Parts.StrictDelimiter := True;
+    Parts.DelimitedText := AList;
+    for i := 0 to Parts.Count - 1 do
+    begin
+      e := Pos('=', Parts[i]);
+      if e > 1 then
+      begin
+        AValues.Add(Copy(Parts[i], 1, e - 1));
+        AItems.Add(Copy(Parts[i], e + 1, MaxInt));
+      end
+      else
+      begin
+        AValues.Add(Parts[i]);
+        AItems.Add(Parts[i]);
+      end;
+    end;
+  finally
+    Parts.Free;
+  end;
 end;
 
 { 'D:Detector ID,S:Scattering counts' -> the letters DS and the captions.  One
@@ -1991,7 +2024,11 @@ begin
   ACaptions.Clear;
   Parts := TStringList.Create;
   try
-    SetChoices(Parts, AList);
+    { A plain comma split: a flag entry is letter:caption, which SetChoices'
+      value=label form does not apply to. }
+    Parts.Delimiter := ',';
+    Parts.StrictDelimiter := True;
+    Parts.DelimitedText := AList;
     for i := 0 to Parts.Count - 1 do
     begin
       C := Pos(':', Parts[i]);
@@ -2047,6 +2084,7 @@ begin
   SetLength(FLoaded, Length(Binds));
   SetLength(FRows, Length(Binds));
   SetLength(FGroups, Length(Binds));
+  SetLength(FValues, Length(Binds));
   SetLength(FRowList, 0);
   for i := 0 to High(Binds) do
   begin
@@ -2093,7 +2131,10 @@ begin
     else if C is TRadioGroup then
     begin
       if Binds[i].Choices <> '' then
-        SetChoices(TRadioGroup(C).Items, Binds[i].Choices);
+      begin
+        FValues[i] := TStringList.Create;
+        SetChoices(TRadioGroup(C).Items, FValues[i], Binds[i].Choices);
+      end;
       TRadioGroup(C).OnClick := @BindChanged;
     end
     else if C is TCheckGroup then
@@ -2110,7 +2151,10 @@ begin
     else if C is TComboBox then
     begin
       if Binds[i].Choices <> '' then
-        SetChoices(TComboBox(C).Items, Binds[i].Choices);
+      begin
+        FValues[i] := TStringList.Create;
+        SetChoices(TComboBox(C).Items, FValues[i], Binds[i].Choices);
+      end;
       TComboBox(C).Style := csDropDownList;
       TComboBox(C).OnChange := @BindChanged;
     end
@@ -2182,18 +2226,29 @@ begin
     mkChoice:
       begin
         S := D.AsStr(B.Path);
+        { Matched on the value in the file, not on what is displayed: the
+          file says "f" and the form says "Fluence". }
+        N := -1;
+        if FValues[AIndex] <> nil then N := FValues[AIndex].IndexOf(S);
         if C is TRadioGroup then
         begin
-          { An unknown value is added rather than silently dropped, so opening
-            a file written by a newer mcx does not quietly rewrite it. }
-          N := TRadioGroup(C).Items.IndexOf(S);
-          if (N < 0) and (S <> '') then N := TRadioGroup(C).Items.Add(S);
+          { A value this build has never heard of is added rather than
+            silently dropped, so opening a file from a newer mcx does not
+            quietly rewrite it. }
+          if (N < 0) and (S <> '') then
+          begin
+            N := TRadioGroup(C).Items.Add(S);
+            if FValues[AIndex] <> nil then FValues[AIndex].Add(S);
+          end;
           TRadioGroup(C).ItemIndex := N;
         end
         else if C is TComboBox then
         begin
-          N := TComboBox(C).Items.IndexOf(S);
-          if (N < 0) and (S <> '') then N := TComboBox(C).Items.Add(S);
+          if (N < 0) and (S <> '') then
+          begin
+            N := TComboBox(C).Items.Add(S);
+            if FValues[AIndex] <> nil then FValues[AIndex].Add(S);
+          end;
           TComboBox(C).ItemIndex := N;
         end;
       end;
@@ -2260,10 +2315,14 @@ begin
       if C is TCheckBox then D.SetBool(B.Path, TCheckBox(C).Checked);
     mkChoice:
       begin
-        if (C is TRadioGroup) and (TRadioGroup(C).ItemIndex >= 0) then
-          D.SetStr(B.Path, TRadioGroup(C).Items[TRadioGroup(C).ItemIndex])
-        else if (C is TComboBox) and (TComboBox(C).ItemIndex >= 0) then
-          D.SetStr(B.Path, TComboBox(C).Items[TComboBox(C).ItemIndex]);
+        N := -1;
+        if C is TRadioGroup then N := TRadioGroup(C).ItemIndex
+        else if C is TComboBox then N := TComboBox(C).ItemIndex;
+        { The value, never the label.  mcx reads "f"; "Fluence" would be a
+          setting it has never heard of. }
+        if (N >= 0) and (FValues[AIndex] <> nil) and
+           (N < FValues[AIndex].Count) then
+          D.SetStr(B.Path, FValues[AIndex][N]);
       end;
     mkFlags:
       if C is TCheckGroup then
