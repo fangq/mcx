@@ -112,6 +112,33 @@ type
   end;
 
 type
+  { Solid geometry: triangles with a normal and a colour each.
+
+    The shapes are drawn as surfaces rather than as outlines, which is what
+    mcxstudio has always shown and what makes a sphere inside a box read as
+    a sphere inside a box.  Everything goes into one buffer, so a domain with
+    twenty shapes is still one draw call. }
+  TMcxMesh = class
+  private
+    FData: array of Single;
+    FCount: Integer;
+    FVAO, FVBO: GLuint;
+    FDirty: Boolean;
+    procedure Put(const P, N, C: TMcxVec3; AAlpha: Single);
+  public
+    destructor Destroy; override;
+    procedure Clear;
+    procedure AddTri(const A, B, C, AColour: TMcxVec3; AAlpha: Single);
+    procedure AddQuad(const A, B, C, D, AColour: TMcxVec3; AAlpha: Single);
+    procedure AddBox(const AMin, AMax, AColour: TMcxVec3; AAlpha: Single);
+    procedure AddSphere(const ACentre: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3; AAlpha: Single);
+    procedure AddCylinder(const AC0, AC1: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3; AAlpha: Single);
+    procedure Draw;
+    property Count: Integer read FCount;
+  end;
+
   { A scalar volume on the card, as one GL_R32F 3-D texture.
 
     The CPU touches the volume once, at upload.  Everything after -- the
@@ -165,6 +192,38 @@ const
     '{'#10 +
     '    vColour = aColour;'#10 +
     '    gl_Position = uMVP * vec4(aPos, 1.0);'#10 +
+    '}'#10;
+
+  { Lit, two-sided, and translucent.  Two-sided because a cut through a
+    shape shows its inside, and a black interior looks like a hole rather
+    than like the inside of a sphere. }
+  McxSolidVertexShader =
+    '#version 330 core'#10 +
+    'layout(location = 0) in vec3 aPos;'#10 +
+    'layout(location = 1) in vec3 aNormal;'#10 +
+    'layout(location = 2) in vec4 aColour;'#10 +
+    'uniform mat4 uMVP;'#10 +
+    'out vec3 vNormal;'#10 +
+    'out vec4 vColour;'#10 +
+    'void main()'#10 +
+    '{'#10 +
+    '    vNormal = aNormal;'#10 +
+    '    vColour = aColour;'#10 +
+    '    gl_Position = uMVP * vec4(aPos, 1.0);'#10 +
+    '}'#10;
+
+  McxSolidFragmentShader =
+    '#version 330 core'#10 +
+    'in vec3 vNormal;'#10 +
+    'in vec4 vColour;'#10 +
+    'out vec4 oColour;'#10 +
+    'uniform vec3 uLight;'#10 +
+    'void main()'#10 +
+    '{'#10 +
+    { abs, not max: the light should fall on whichever face is turned
+      towards it, and a preview has no shadows to be wrong about. }
+    '    float d = abs(dot(normalize(vNormal), normalize(uLight)));'#10 +
+    '    oColour = vec4(vColour.rgb * (0.38 + 0.62 * d), vColour.a);'#10 +
     '}'#10;
 
   McxLineFragmentShader =
@@ -419,6 +478,205 @@ function McxGLDescribe: string;
 begin
   Result := Ask(GL_RENDERER) + ' -- OpenGL ' + Ask(GL_VERSION) +
     ', GLSL ' + Ask(GL_SHADING_LANGUAGE_VERSION);
+end;
+
+{ TMcxMesh }
+
+destructor TMcxMesh.Destroy;
+begin
+  if FVBO <> 0 then glDeleteBuffers(1, @FVBO);
+  if FVAO <> 0 then glDeleteVertexArrays(1, @FVAO);
+  inherited Destroy;
+end;
+
+procedure TMcxMesh.Clear;
+begin
+  SetLength(FData, 0);
+  FCount := 0;
+  FDirty := True;
+end;
+
+procedure TMcxMesh.Put(const P, N, C: TMcxVec3; AAlpha: Single);
+var
+  { Not n: Pascal does not distinguish it from the normal parameter N. }
+  At: Integer;
+begin
+  At := Length(FData);
+  SetLength(FData, At + 10);
+  FData[At] := P.x;      FData[At + 1] := P.y; FData[At + 2] := P.z;
+  FData[At + 3] := N.x;  FData[At + 4] := N.y; FData[At + 5] := N.z;
+  FData[At + 6] := C.x;  FData[At + 7] := C.y; FData[At + 8] := C.z;
+  FData[At + 9] := AAlpha;
+  Inc(FCount);
+  FDirty := True;
+end;
+
+{ A flat triangle: the normal comes from the winding, so a caller building a
+  box does not have to know which way each face points. }
+procedure TMcxMesh.AddTri(const A, B, C, AColour: TMcxVec3; AAlpha: Single);
+var
+  N: TMcxVec3;
+begin
+  N := McxVec3Norm(McxVec3Cross(McxVec3Sub(B, A), McxVec3Sub(C, A)));
+  Put(A, N, AColour, AAlpha);
+  Put(B, N, AColour, AAlpha);
+  Put(C, N, AColour, AAlpha);
+end;
+
+procedure TMcxMesh.AddQuad(const A, B, C, D, AColour: TMcxVec3; AAlpha: Single);
+begin
+  AddTri(A, B, C, AColour, AAlpha);
+  AddTri(A, C, D, AColour, AAlpha);
+end;
+
+procedure TMcxMesh.AddBox(const AMin, AMax, AColour: TMcxVec3; AAlpha: Single);
+
+  function V(x, y, z: Single): TMcxVec3;
+  begin
+    Result := McxVec3(x, y, z);
+  end;
+
+begin
+  { Six faces, each wound outwards. }
+  AddQuad(V(AMin.x, AMin.y, AMin.z), V(AMin.x, AMax.y, AMin.z),
+          V(AMax.x, AMax.y, AMin.z), V(AMax.x, AMin.y, AMin.z), AColour, AAlpha);
+  AddQuad(V(AMin.x, AMin.y, AMax.z), V(AMax.x, AMin.y, AMax.z),
+          V(AMax.x, AMax.y, AMax.z), V(AMin.x, AMax.y, AMax.z), AColour, AAlpha);
+  AddQuad(V(AMin.x, AMin.y, AMin.z), V(AMax.x, AMin.y, AMin.z),
+          V(AMax.x, AMin.y, AMax.z), V(AMin.x, AMin.y, AMax.z), AColour, AAlpha);
+  AddQuad(V(AMin.x, AMax.y, AMin.z), V(AMin.x, AMax.y, AMax.z),
+          V(AMax.x, AMax.y, AMax.z), V(AMax.x, AMax.y, AMin.z), AColour, AAlpha);
+  AddQuad(V(AMin.x, AMin.y, AMin.z), V(AMin.x, AMin.y, AMax.z),
+          V(AMin.x, AMax.y, AMax.z), V(AMin.x, AMax.y, AMin.z), AColour, AAlpha);
+  AddQuad(V(AMax.x, AMin.y, AMin.z), V(AMax.x, AMax.y, AMin.z),
+          V(AMax.x, AMax.y, AMax.z), V(AMax.x, AMin.y, AMax.z), AColour, AAlpha);
+end;
+
+{ Latitude and longitude, with the normal taken from the surface rather than
+  from the winding, so the facets read as a curve. }
+procedure TMcxMesh.AddSphere(const ACentre: TMcxVec3; ARadius: Single;
+  const AColour: TMcxVec3; AAlpha: Single);
+const
+  Lon = 28;
+  Lat = 18;
+var
+  i, j: Integer;
+  a0, a1, b0, b1: Single;
+
+  function OnSphere(ALonAngle, ALatAngle: Single): TMcxVec3;
+  begin
+    Result := McxVec3(Cos(ALatAngle) * Cos(ALonAngle),
+                      Cos(ALatAngle) * Sin(ALonAngle),
+                      Sin(ALatAngle));
+  end;
+
+  procedure Corner(ALonAngle, ALatAngle: Single);
+  var
+    Nrm: TMcxVec3;
+  begin
+    Nrm := OnSphere(ALonAngle, ALatAngle);
+    Put(McxVec3(ACentre.x + ARadius * Nrm.x, ACentre.y + ARadius * Nrm.y,
+                ACentre.z + ARadius * Nrm.z), Nrm, AColour, AAlpha);
+  end;
+
+begin
+  for j := 0 to Lat - 1 do
+  begin
+    b0 := -Pi / 2 + Pi * j / Lat;
+    b1 := -Pi / 2 + Pi * (j + 1) / Lat;
+    for i := 0 to Lon - 1 do
+    begin
+      a0 := 2 * Pi * i / Lon;
+      a1 := 2 * Pi * (i + 1) / Lon;
+      Corner(a0, b0); Corner(a1, b0); Corner(a1, b1);
+      Corner(a0, b0); Corner(a1, b1); Corner(a0, b1);
+    end;
+  end;
+end;
+
+procedure TMcxMesh.AddCylinder(const AC0, AC1: TMcxVec3; ARadius: Single;
+  const AColour: TMcxVec3; AAlpha: Single);
+const
+  Seg = 32;
+var
+  Axis, U, V, Ref, N0, N1: TMcxVec3;
+  i: Integer;
+  a0, a1: Single;
+
+  function Rim(const ABase: TMcxVec3; AAngle: Single): TMcxVec3;
+  begin
+    Result := McxVec3(
+      ABase.x + ARadius * (Cos(AAngle) * U.x + Sin(AAngle) * V.x),
+      ABase.y + ARadius * (Cos(AAngle) * U.y + Sin(AAngle) * V.y),
+      ABase.z + ARadius * (Cos(AAngle) * U.z + Sin(AAngle) * V.z));
+  end;
+
+  function Normal(AAngle: Single): TMcxVec3;
+  begin
+    Result := McxVec3(Cos(AAngle) * U.x + Sin(AAngle) * V.x,
+                      Cos(AAngle) * U.y + Sin(AAngle) * V.y,
+                      Cos(AAngle) * U.z + Sin(AAngle) * V.z);
+  end;
+
+begin
+  Axis := McxVec3Norm(McxVec3Sub(AC1, AC0));
+  if (Axis.x = 0) and (Axis.y = 0) and (Axis.z = 0) then Exit;
+  if Abs(Axis.x) > 0.9 then Ref := McxVec3(0, 0, 1) else Ref := McxVec3(1, 0, 0);
+  U := McxVec3Norm(McxVec3Cross(Axis, Ref));
+  V := McxVec3Cross(Axis, U);
+
+  for i := 0 to Seg - 1 do
+  begin
+    a0 := 2 * Pi * i / Seg;
+    a1 := 2 * Pi * (i + 1) / Seg;
+    N0 := Normal(a0);
+    N1 := Normal(a1);
+
+    { The side, with the normals pointing out of the curve. }
+    Put(Rim(AC0, a0), N0, AColour, AAlpha);
+    Put(Rim(AC1, a0), N0, AColour, AAlpha);
+    Put(Rim(AC1, a1), N1, AColour, AAlpha);
+    Put(Rim(AC0, a0), N0, AColour, AAlpha);
+    Put(Rim(AC1, a1), N1, AColour, AAlpha);
+    Put(Rim(AC0, a1), N1, AColour, AAlpha);
+
+    { The two end caps, flat. }
+    Put(AC0, McxVec3(-Axis.x, -Axis.y, -Axis.z), AColour, AAlpha);
+    Put(Rim(AC0, a1), McxVec3(-Axis.x, -Axis.y, -Axis.z), AColour, AAlpha);
+    Put(Rim(AC0, a0), McxVec3(-Axis.x, -Axis.y, -Axis.z), AColour, AAlpha);
+
+    Put(AC1, Axis, AColour, AAlpha);
+    Put(Rim(AC1, a0), Axis, AColour, AAlpha);
+    Put(Rim(AC1, a1), Axis, AColour, AAlpha);
+  end;
+end;
+
+procedure TMcxMesh.Draw;
+begin
+  if FCount = 0 then Exit;
+  if FVAO = 0 then
+  begin
+    glGenVertexArrays(1, @FVAO);
+    glGenBuffers(1, @FVBO);
+  end;
+  glBindVertexArray(FVAO);
+  if FDirty then
+  begin
+    glBindBuffer(GL_ARRAY_BUFFER, FVBO);
+    glBufferData(GL_ARRAY_BUFFER, Length(FData) * SizeOf(Single), @FData[0],
+      GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * SizeOf(Single), nil);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * SizeOf(Single),
+      Pointer(3 * SizeOf(Single)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 10 * SizeOf(Single),
+      Pointer(6 * SizeOf(Single)));
+    glEnableVertexAttribArray(2);
+    FDirty := False;
+  end;
+  glDrawArrays(GL_TRIANGLES, 0, FCount);
+  glBindVertexArray(0);
 end;
 
 { TMcxVolume }

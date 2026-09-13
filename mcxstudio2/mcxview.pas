@@ -35,7 +35,9 @@ type
     FGL: TOpenGLControl;
     FShader: TMcxShader;
     FVolShader: TMcxShader;
+    FSolidShader: TMcxShader;
     FLines: TMcxLines;
+    FMesh: TMcxMesh;
     FVolume: TMcxVolume;
     FCube: TMcxCube;
     { What the volume is drawn as and through.  All uniforms: changing any of
@@ -109,6 +111,8 @@ destructor TMcxView.Destroy;
 begin
   FVolume.Free;
   FCube.Free;
+  FMesh.Free;
+  FSolidShader.Free;
   FVolShader.Free;
   FShader.Free;
   FLines.Free;
@@ -135,6 +139,7 @@ procedure TMcxView.Build;
 begin
   FCamera := TMcxCamera.Create;
   FLines := TMcxLines.Create;
+  FMesh := TMcxMesh.Create;
 
   { Owned by the host panel, so the control goes when the form does and
     this class does not have to be a TComponent to own it. }
@@ -176,6 +181,13 @@ begin
     Say('shader: ' + FShader.Error);
     FreeAndNil(FShader);
     Exit(False);
+  end;
+
+  FSolidShader := TMcxShader.Create;
+  if not FSolidShader.Build(McxSolidVertexShader, McxSolidFragmentShader) then
+  begin
+    Say('solid shader: ' + FSolidShader.Error);
+    FreeAndNil(FSolidShader);
   end;
 
   { A second program for the raycaster.  If it will not build the wireframe
@@ -354,6 +366,31 @@ begin
       FCamera.Distance * 10),
     FCamera.View);
 
+  { Solids first, translucent, and drawn twice: the far side of everything,
+    then the near side.
+
+    Blending depends on the order things arrive in, and triangles in one
+    buffer arrive in whatever order they were built.  Sorting them per frame
+    is what a renderer does; culling one way and then the other gets the same
+    answer for any convex shape -- which every shape mcx has is -- for the
+    price of a second draw call and no sorting at all.  Depth writes stay off
+    so that a nearer shape does not hide the one it encloses. }
+  if FSolidShader <> nil then
+  begin
+    FSolidShader.Use;
+    FSolidShader.SetMat4('uMVP', MVP);
+    FSolidShader.SetVec3('uLight', McxVec3Norm(McxVec3Sub(FCamera.Eye,
+      FCamera.Target)));
+    glDepthMask(GL_FALSE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    FMesh.Draw;
+    glCullFace(GL_BACK);
+    FMesh.Draw;
+    glDisable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
+  end;
+
   FShader.Use;
   FShader.SetMat4('uMVP', MVP);
   FLines.Draw;
@@ -413,6 +450,10 @@ end;
   domain would hide what it is meant to explain. }
 procedure TMcxView.AddShapes;
 const
+  { Translucent, because a domain is nested: a sphere inside a box inside a
+    grid, and an opaque outer shape hides everything the simulation is
+    actually about. }
+  ShapeAlpha = 0.55;
   { One colour per medium, wrapping.  Distinct at a glance rather than a
     gradient: the tags are names, not amounts. }
   TagColours: array[0..7] of array[0..2] of Single = (
@@ -464,8 +505,16 @@ var
     Result := Round(Number(AObj, 'Tag', 1));
   end;
 
+  { A box, filled and outlined: the fill says what it is and the outline
+    keeps the edges readable where two shapes of similar colour meet. }
+  procedure Solid(const ALo, AHi: TMcxVec3; ATag: Integer);
+  begin
+    FMesh.AddBox(ALo, AHi, Colour(ATag), ShapeAlpha);
+    FLines.AddBox(ALo, AHi, Colour(ATag));
+  end;
+
   { A slab or layer is a pair or triple of bounds along one axis; it is drawn
-    as the two faces it cuts the domain with. }
+    as the slice of the domain it claims. }
   procedure Slab(AAxis: Integer; ALo, AHi: Single; const AColour: TMcxVec3);
   var
     Lo, Hi: TMcxVec3;
@@ -480,6 +529,7 @@ var
     else
       begin Lo := McxVec3(0, 0, ALo); Hi := McxVec3(dx, dy, AHi); end;
     end;
+    FMesh.AddBox(Lo, Hi, AColour, ShapeAlpha);
     FLines.AddBox(Lo, Hi, AColour);
   end;
 
@@ -532,15 +582,13 @@ begin
       Size := Triplet(Obj, 'Size', False);
       { A Grid has no O: it replaces the whole background. }
       if SameText(Verb, 'Grid') then O := Origin;
-      FLines.AddBox(O, McxVec3(O.x + Size.x, O.y + Size.y, O.z + Size.z),
-        Colour(Tag(Obj)));
+      Solid(O, McxVec3(O.x + Size.x, O.y + Size.y, O.z + Size.z), Tag(Obj));
     end
     else if SameText(Verb, 'Box') then
     begin
       O := Triplet(Obj, 'O');
       Size := Triplet(Obj, 'Size', False);
-      FLines.AddBox(O, McxVec3(O.x + Size.x, O.y + Size.y, O.z + Size.z),
-        Colour(Tag(Obj)));
+      Solid(O, McxVec3(O.x + Size.x, O.y + Size.y, O.z + Size.z), Tag(Obj));
     end
     else if SameText(Verb, 'Sphere') then
     begin
@@ -548,13 +596,14 @@ begin
         real files use both. }
       O := Triplet(Obj, 'O');
       if (Obj <> nil) and (Obj.FindPath('O') = nil) then O := Triplet(Obj, 'C0');
-      FLines.AddSphere(O, Number(Obj, 'R', 1), Colour(Tag(Obj)));
+      FMesh.AddSphere(O, Number(Obj, 'R', 1), Colour(Tag(Obj)), ShapeAlpha);
     end
     else if SameText(Verb, 'Cylinder') then
     begin
       C0 := Triplet(Obj, 'C0');
       C1 := Triplet(Obj, 'C1');
-      FLines.AddCylinder(C0, C1, Number(Obj, 'R', 1), Colour(Tag(Obj)));
+      FMesh.AddCylinder(C0, C1, Number(Obj, 'R', 1), Colour(Tag(Obj)),
+        ShapeAlpha);
     end
     else if SameText(Verb, 'XLayers') then Bands(Obj, 0, True, 1)
     else if SameText(Verb, 'YLayers') then Bands(Obj, 1, True, 1)
@@ -605,6 +654,7 @@ begin
   Faint := McxVec3(0.30, 0.32, 0.35);
 
   FLines.Clear;
+  FMesh.Clear;
   FLines.AddBox(McxVec3(0, 0, 0), McxVec3(dx, dy, dz), Grey);
 
   { A grid on the z = 0 face, ten lines each way whatever the size, so it
