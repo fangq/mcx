@@ -323,6 +323,8 @@ type
     { The flag letters of a check group, one string per binding.  They used to
       ride on the control's Hint; a hint is a thing the person reads. }
     FFlags: array of string;
+    { Which debug-flag list the check group is currently showing. }
+    FDebugList: string;
     FRowList: array of TPanel;
     FLoading: Integer;
     FMissing: TStringList;
@@ -2891,7 +2893,7 @@ var
   B: TMcxBind;
   C: TControl;
   InMode, Shown, Moved: Boolean;
-  Cap1, Cap2: string;
+  Cap1, Cap2, Flags, Letters: string;
   Live: array of Boolean;
 
   { Restacking is only needed when something appeared or disappeared, and
@@ -2922,6 +2924,25 @@ begin
       Show(FLabels[i], InMode);
       FLabels[i].Enabled := C.Enabled;
     end;
+  end;
+
+  { The debug flags are the one setting whose meaning changes with the
+    simulator: mmc shares only M and P with mcx.  Re-split rather than given
+    a control of its own, so the letters that are ticked survive the switch
+    -- they are stored as letters, and the two that matter mean the same in
+    both. }
+  Flags := FlagsDebug;
+  if CurrentBackend = mbMMC then Flags := FlagsDebugMMC;
+  if Flags <> FDebugList then
+  begin
+    FDebugList := Flags;
+    for i := 0 to High(Binds) do
+      if (FBound[i] is TCheckGroup) and (Binds[i].Path = 'Session.DebugFlag') then
+      begin
+        SplitFlags(Flags, Letters, TCheckGroup(FBound[i]).Items);
+        FFlags[i] := Letters;
+        LoadBinding(i);
+      end;
   end;
 
   { Param1 and Param2 hold up to four numbers each, and which numbers they

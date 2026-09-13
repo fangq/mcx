@@ -120,6 +120,19 @@ const
     check group can be captioned without a second table.  A colon here rather
     than the equals sign the choice lists use, because a caption may contain
     an equals sign and a letter never contains a colon. }
+  { mmc's debug letters are its own: they share M and P with mcx and nothing
+    else -- mmc's R is reflection tracing where mcx's is the RNG seed, and
+    its T is timing where mcx's is trajectories-without-accumulating.  Two
+    lists rather than one, because a check box that lies about what it does
+    is worse than one that is missing. }
+  FlagsDebugMMC =
+    'M:Record photon trajectories  (writes a <session>_traj file),' +
+    'P:Show a progress bar,' +
+    'S:Print every photon move,' +
+    'E:Print where each photon left,' +
+    'R:Trace reflection and refraction,' +
+    'T:Print timing information';
+
   FlagsDebug =
     'R:Print the random number seed,' +
     'M:Record photon trajectories  (writes a <session>_traj file),' +

@@ -143,6 +143,17 @@ function McxProgressOf(const ATail: string; out APercent: Integer): Boolean;
   JSON need a working directory to resolve against. }
 function McxBuildArgs(const AInputFile: string; ADoc, ARun: TMcxDoc): TStringList;
 
+{ What to pass to -D, given whatever the file has in Session.DebugFlag.
+
+  Always asks for the progress bar, because that is how the window knows how
+  far along a run is -- added to what the file asked for rather than instead
+  of it, since -D replaces the JSON's value outright.
+
+  A file may hold the flags as letters or as a bit mask, and the two
+  simulators number the bits differently, so a mask is kept a mask and the
+  right progress bit is set in it. }
+function McxDebugArg(const AFlags: string; ABackend: TMcxBackend): string;
+
 { The same thing as one string, for the Command pane and for a bug report. }
 function McxCommandLine(const AExe, AInputFile: string;
   ADoc, ARun: TMcxDoc): string;
@@ -424,6 +435,40 @@ begin
   if Result then AJSON := Copy(Text, p, MaxInt);
 end;
 
+function McxDebugArg(const AFlags: string; ABackend: TMcxBackend): string;
+const
+  { mcx: debugflag[] = R M P T, one bit each, in that order.
+    mmc: S C B W D I O X A T R P E M -- so its progress bit is 2048. }
+  ProgressBit: array[TMcxBackend] of Integer = (4, 4, 2048, 4);
+var
+  i, Mask: Integer;
+  Numeric: Boolean;
+begin
+  Result := Trim(AFlags);
+  Numeric := Result <> '';
+  for i := 1 to Length(Result) do
+    if not (Result[i] in ['0'..'9']) then Numeric := False;
+
+  if Numeric then
+  begin
+    Mask := StrToIntDef(Result, 0) or ProgressBit[ABackend];
+    Result := IntToStr(Mask);
+    Exit;
+  end;
+  if Pos('P', UpperCase(Result)) = 0 then Result := Result + 'P';
+end;
+
+function BackendOf(ARun: TMcxDoc): TMcxBackend;
+var
+  S: string;
+begin
+  S := LowerCase(ARun.AsStr('@run.backend', 'mcx'));
+  if S = 'mcxcl' then Result := mbMCXCL
+  else if S = 'mmc' then Result := mbMMC
+  else if S = 'mcx-hip' then Result := mbHIP
+  else Result := mbMCX;
+end;
+
 function McxBuildArgs(const AInputFile: string; ADoc, ARun: TMcxDoc): TStringList;
 var
   S: string;
@@ -476,8 +521,7 @@ begin
     instead of it.  mcx's -D replaces the JSON's DebugFlag outright, so
     passing a bare P silently turned off the trajectory recording the person
     had just ticked, and no file appeared. }
-  S := ADoc.AsStr('Session.DebugFlag', '');
-  if Pos('P', UpperCase(S)) = 0 then S := S + 'P';
+  S := McxDebugArg(ADoc.AsStr('Session.DebugFlag', ''), BackendOf(ARun));
   Result.Add('-D');
   Result.Add(S);
 

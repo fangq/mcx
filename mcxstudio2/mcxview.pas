@@ -485,7 +485,17 @@ var
   i, n, a, b, Ends, Cut: Integer;
   HaveW: Boolean;
   w, wLo, wHi, t, t2: Double;
-  P0, P1, C, C2: TMcxVec3;
+  P0, P1, C, C2, Lo, Hi: TMcxVec3;
+  Edge: Single;
+
+  { Within a couple of percent of any face of the domain. }
+  function AtEdge(const P: TMcxVec3): Boolean;
+  begin
+    Result := (P.x - Lo.x < Edge) or (Hi.x - P.x < Edge) or
+              (P.y - Lo.y < Edge) or (Hi.y - P.y < Edge) or
+              (P.z - Lo.z < Edge) or (Hi.z - P.z < Edge);
+  end;
+
 begin
   Result := False;
   { All three out of one parse.  Asked for separately they cost three reads
@@ -501,6 +511,21 @@ begin
 
   n := McxArrayCount(Ids);
   if (n < 2) or (McxArrayCount(Pts) < Int64(n) * 3) then Exit;
+
+  { The domain's own edges, for telling a photon that left from one that was
+    cut off.  A mesh knows its bounds; a voxel grid is zero to Dim. }
+  if Length(FMeshFaces) > 0 then
+  begin
+    Lo := McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z);
+    Hi := McxVec3(FMeshHi.x, FMeshHi.y, FMeshHi.z);
+  end
+  else
+  begin
+    Lo := McxVec3(0, 0, 0);
+    Hi := McxVec3(FDoc.AsInt('Domain.Dim[0]', 60), FDoc.AsInt('Domain.Dim[1]', 60),
+                  FDoc.AsInt('Domain.Dim[2]', 60));
+  end;
+  Edge := 0.02 * Max(Hi.x - Lo.x, Max(Hi.y - Lo.y, Hi.z - Lo.z));
 
   { Sorted by photon, because mcx's threads append to one buffer through an
     atomic counter: in this file the identifier changes on nearly every row.
@@ -570,7 +595,15 @@ begin
        (Round(McxArrayValue(Ids, Order[i + 2])) <> Round(McxArrayValue(Ids, b))) then
     begin
       Inc(Ends);
-      if HaveW and (t2 > 0.5) then Inc(Cut);
+      { A path ends for one of two reasons: the photon left the domain, or
+        the roulette killed it once its weight got small.  Anything else --
+        stopping in open tissue still carrying weight -- is not an ending but
+        a recording that ran out of room.
+
+        Both tests are needed.  Weight alone is not enough: in a weakly
+        absorbing mesh a photon leaves the boundary with 96% of its launch
+        weight, and calling that truncated is how this first cried wolf. }
+      if (not AtEdge(P1)) and (HaveW and (t2 > 0.02)) then Inc(Cut);
     end;
     if FTrajCount > High(FTrajIds) then
       SetLength(FTrajIds, (FTrajCount + 1) * 2);
