@@ -63,6 +63,10 @@ type
     FMeshFaces: TMcxFaces;
     FMeshKey: string;
     FMeshLo, FMeshHi: TMcxNode;
+    { Photon paths, in their own buffer: they are loaded separately from the
+      scene and would otherwise be rebuilt with it on every keystroke. }
+    FTraj: TMcxLines;
+    FTrajCount: Integer;
     { How big the scene is, so the source glyph can be sized against it. }
     FSceneSpan: Single;
     FVolume: TMcxVolume;
@@ -124,6 +128,9 @@ type
     property HasVolume: Boolean read GetHasVolume;
     property Document: TMcxDoc read FDoc write FDoc;
     { Renders at any size into an offscreen target and writes a PNG. }
+    { Loads the photon paths mcx writes with -D M, as <session>_traj.jdat. }
+    function ShowTrajectory(const AFileName: string): Boolean;
+    procedure ClearTrajectory;
     function SaveImage(const AFileName: string; AWidth, AHeight: Integer): Boolean;
     property OnLog: TMcxViewLog read FOnLog write FOnLog;
     property OnPick: TMcxPickEvent read FOnPick write FOnPick;
@@ -149,6 +156,7 @@ begin
   FCube.Free;
   FMesh.Free;
   FPick.Free;
+  FTraj.Free;
   FTarget.Free;
   FSolidShader.Free;
   FVolShader.Free;
@@ -179,6 +187,7 @@ begin
   FLines := TMcxLines.Create;
   FMesh := TMcxMesh.Create;
   FPick := TMcxMesh.Create;
+  FTraj := TMcxLines.Create;
   FSelected := -1;
 
   { Owned by the host panel, so the control goes when the form does and
@@ -372,6 +381,93 @@ end;
 
 { Draws the scene at a given size, into whatever target is bound.  Shared by
   the on-screen paint and by the offscreen one that saves a picture. }
+{ --------------------------------------------------------- trajectories --- }
+
+procedure TMcxView.ClearTrajectory;
+begin
+  FTraj.Clear;
+  FTrajCount := 0;
+  if FGL <> nil then FGL.Invalidate;
+end;
+
+function TMcxView.ShowTrajectory(const AFileName: string): Boolean;
+var
+  Ids, Pts, Ws: TMcxArray;
+  Order: TMcxOrder;
+  i, n, a, b: Integer;
+  HaveW: Boolean;
+  w, wLo, wHi, t: Double;
+  P0, P1, C: TMcxVec3;
+begin
+  Result := False;
+  if not McxLoadArray(AFileName, 'MCXData.Trajectory.photonid', Ids) then Exit;
+  if not McxLoadArray(AFileName, 'MCXData.Trajectory.p', Pts) then Exit;
+  HaveW := McxLoadArray(AFileName, 'MCXData.Trajectory.w0', Ws);
+
+  n := McxArrayCount(Ids);
+  if (n < 2) or (McxArrayCount(Pts) < Int64(n) * 3) then Exit;
+
+  { Sorted by photon, because mcx's threads append to one buffer through an
+    atomic counter: in this file the identifier changes on nearly every row.
+    Drawn in file order it is a spray of lines between unrelated points. }
+  Order := McxSortTrajectory(Ids);
+
+  { Weight spans decades, so the colour is on its logarithm, like the
+    fluence. }
+  wLo := 0;
+  wHi := 1;
+  if HaveW and (McxArrayCount(Ws) >= n) then
+  begin
+    wLo := 1e30;
+    wHi := -1e30;
+    for i := 0 to n - 1 do
+    begin
+      w := McxArrayValue(Ws, i);
+      if w <= 0 then Continue;
+      w := Ln(w);
+      if w < wLo then wLo := w;
+      if w > wHi then wHi := w;
+    end;
+    if wHi <= wLo then HaveW := False;
+  end;
+
+  FTraj.Clear;
+  FTrajCount := 0;
+  for i := 0 to n - 2 do
+  begin
+    a := Order[i];
+    b := Order[i + 1];
+    { A pair only makes a segment when both ends are the same photon.  Line
+      segments rather than strips: no restart index to get wrong, at the
+      price of writing each interior point twice. }
+    if Round(McxArrayValue(Ids, a)) <> Round(McxArrayValue(Ids, b)) then Continue;
+
+    P0 := McxVec3(McxArrayValue(Pts, Int64(a) * 3),
+                  McxArrayValue(Pts, Int64(a) * 3 + 1),
+                  McxArrayValue(Pts, Int64(a) * 3 + 2));
+    P1 := McxVec3(McxArrayValue(Pts, Int64(b) * 3),
+                  McxArrayValue(Pts, Int64(b) * 3 + 1),
+                  McxArrayValue(Pts, Int64(b) * 3 + 2));
+
+    t := 1;
+    if HaveW then
+    begin
+      w := McxArrayValue(Ws, a);
+      if w > 0 then t := (Ln(w) - wLo) / (wHi - wLo) else t := 0;
+    end;
+    { Bright where the photon still carries weight, dim where it has been
+      absorbed away. }
+    C := McxVec3(1.0, 0.35 + 0.55 * t, 0.10 + 0.25 * t);
+    FTraj.Add(P0, P1, C);
+    Inc(FTrajCount);
+  end;
+
+  Say(Format('%s: %d events, %d path segments',
+    [ExtractFileName(AFileName), n, FTrajCount]));
+  Result := FTrajCount > 0;
+  if FGL <> nil then FGL.Invalidate;
+end;
+
 { ------------------------------------------------------------ picking ----- }
 
 { Which shape is under a point, or -1.
@@ -535,6 +631,11 @@ begin
   FShader.Use;
   FShader.SetMat4('uMVP', MVP);
   FLines.Draw;
+
+  { Paths after the translucent solids and with depth writes on, so they read
+    as being inside the domain rather than painted over it.  Line width stays
+    at one: anything wider is not guaranteed in a core profile. }
+  FTraj.Draw;
 
   { The volume last: it is translucent, so it has to go over the wireframe
     rather than under it. }

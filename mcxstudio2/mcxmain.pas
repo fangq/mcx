@@ -351,6 +351,7 @@ type
       opened, so these are the only editors built in code. }
     FMedia: TMcxTable;
     FDetectors: TMcxTable;
+    FPendingResult: string;
     FDockRestored: Boolean;
     FDockSized: Boolean;
     FWizard: Boolean;
@@ -421,6 +422,10 @@ type
     { Loads a simulation, reporting any trouble the way the Open action does.
       Public because the program opens a file named on the command line. }
     procedure OpenDocument(const AFileName: string);
+    { Shows a result once the window is up.  Not at once: the GL context does
+      not exist until the control has been realised, and a volume cannot be
+      uploaded before there is somewhere to upload it to. }
+    procedure ShowResultLater(const AFileName: string);
     function  RunSelfTest(const ADir: string): Integer;
     property Doc: TMcxDoc read FDoc;
   end;
@@ -1340,14 +1345,12 @@ begin
     Log('-- finished');
     { A run that worked has written its result beside the input, named after
       the session.  Showing it is the whole point of having run it. }
-    Guess := ExtractFilePath(FDoc.FileName) +
-      FDoc.AsStr('Session.ID', 'mcx') + '.jnii';
-    if FileExists(Guess) then ShowResult(Guess)
-    else
-    begin
-      Guess := ChangeFileExt(Guess, '.bnii');
-      if FileExists(Guess) then ShowResult(Guess);
-    end;
+    Guess := ExtractFilePath(FDoc.FileName) + FDoc.AsStr('Session.ID', 'mcx');
+    if FileExists(Guess + '.jnii') then ShowResult(Guess + '.jnii')
+    else if FileExists(Guess + '.bnii') then ShowResult(Guess + '.bnii');
+    { And the paths, when the run was asked for them. }
+    if FileExists(Guess + '_traj.jdat') then
+      ShowResult(Guess + '_traj.jdat');
   end
   else
     Log(Format('-- stopped, exit code %d', [AExitCode]));
@@ -1526,9 +1529,19 @@ end;
   a restored one already carries the sizes the user chose. }
 procedure TfmMain.ApplyPaneSizes(Data: PtrInt);
 begin
+  if FPendingResult <> '' then
+  begin
+    ShowResult(FPendingResult);
+    FPendingResult := '';
+  end;
   if FDockRestored then Exit;
   SizePane(FPaneNav, alLeft, McxScale96(340));
   GuardCentreHeader;
+end;
+
+procedure TfmMain.ShowResultLater(const AFileName: string);
+begin
+  FPendingResult := AFileName;
 end;
 
 procedure TfmMain.FormShow(Sender: TObject);
@@ -1683,6 +1696,18 @@ var
   i: Integer;
   Shape: string;
 begin
+  { A trajectory file is a different thing from a fluence map -- paths rather
+    than a volume -- and it is told apart by its name, which is how mcx
+    names it. }
+  if (Pos('_traj.', LowerCase(ExtractFileName(AFileName))) > 0) then
+  begin
+    if FView.ShowTrajectory(AFileName) then
+      pcView.ActivePage := tsPreview
+    else
+      Log('no photon paths in ' + ExtractFileName(AFileName));
+    Exit;
+  end;
+
   if not McxLoadArray(AFileName, '', A) then
   begin
     Log('could not read an array out of ' + ExtractFileName(AFileName));

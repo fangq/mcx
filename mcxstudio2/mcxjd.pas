@@ -98,6 +98,22 @@ type
     property Error: string read FError;
   end;
 
+type
+  TMcxOrder = array of Integer;
+
+{ An ordering of trajectory events that puts each photon's path together and
+  keeps its events in the order they were written.
+
+  mcx's threads append to one buffer through an atomic counter, so a photon's
+  events are scattered through the file: in a real run of two hundred photons
+  the identifier changes nearly nine hundred times.  Drawn in file order that
+  is a spray of lines between unrelated points.
+
+  The tie on the original position is what makes it a path rather than a set
+  of points: sorted by identifier alone, a photon's events could come back in
+  any order and the line would zigzag through them. }
+function McxSortTrajectory(const AIds: TMcxArray): TMcxOrder;
+
 { Opens a .jnii, .bnii or .jdb and hands back the array at APath -- or the
   first one it can find, when APath is empty. }
 function McxLoadArray(const AFileName, APath: string;
@@ -647,6 +663,52 @@ begin
   D := FRoot.FindPath(APath);
   if (D = nil) or (D.JSONType <> jtObject) then Exit;
   Result := GetArrayOf(TJSONObject(D), AArray);
+end;
+
+{ ---------------------------------------------------------- trajectory ---- }
+
+procedure SortOrder(var AOrder: TMcxOrder; const AIds: TMcxArray;
+  L, R: Integer);
+var
+  i, j, T, PivId, PivIdx: Integer;
+
+  { True when the event at index A comes before the one at index B. }
+  function Less(A, B, BId: Integer): Boolean;
+  var
+    AId: Integer;
+  begin
+    AId := Round(McxArrayValue(AIds, A));
+    if AId <> BId then Exit(AId < BId);
+    Result := A < B;
+  end;
+
+begin
+  i := L;
+  j := R;
+  PivIdx := AOrder[(L + R) div 2];
+  PivId := Round(McxArrayValue(AIds, PivIdx));
+  repeat
+    while Less(AOrder[i], PivIdx, PivId) do Inc(i);
+    while Less(PivIdx, AOrder[j], Round(McxArrayValue(AIds, AOrder[j]))) do Dec(j);
+    if i <= j then
+    begin
+      T := AOrder[i]; AOrder[i] := AOrder[j]; AOrder[j] := T;
+      Inc(i);
+      Dec(j);
+    end;
+  until i > j;
+  if L < j then SortOrder(AOrder, AIds, L, j);
+  if i < R then SortOrder(AOrder, AIds, i, R);
+end;
+
+function McxSortTrajectory(const AIds: TMcxArray): TMcxOrder;
+var
+  i, n: Integer;
+begin
+  n := McxArrayCount(AIds);
+  SetLength(Result, n);
+  for i := 0 to n - 1 do Result[i] := i;
+  if n > 1 then SortOrder(Result, AIds, 0, n - 1);
 end;
 
 { ------------------------------------------------------------ loading ----- }

@@ -85,6 +85,11 @@ begin
   if (ParamCount >= 1) and FileExists(ParamStr(1)) then
     fmMain.OpenDocument(ParamStr(1));
 
+  { A second file is a result to show -- a .jnii, .bnii or a _traj.jdat --
+    so that a simulation and what it produced can be opened together. }
+  if (ParamCount >= 2) and FileExists(ParamStr(2)) then
+    fmMain.ShowResultLater(ParamStr(2));
+
   { Reaches the forms that already exist; the scaler above handles the rest. }
   McxApplyAdaptiveScale;
 
