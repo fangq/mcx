@@ -334,6 +334,9 @@ type
       showing -- always a real one, because an empty detail pane is not a
       state worth having. }
     FPanes: array of TPanel;
+    { One per section, between the section panel and its heading: the band
+      behind the heading is painted on this.  See CollectSections. }
+    FBands: array of TPanel;
     FHeads: array of TSpeedButton;
     FBodies: array of TPanel;
     FPages: array of TPanel;
@@ -443,6 +446,8 @@ type
     function  FirstSubOf(ASection: Integer): Integer;
     procedure SelectSub(AIndex: Integer);
     procedure UpdateNavState;
+
+    procedure NavSubPaint(Sender: TObject);
     procedure NewDocument;
     function  SaveAs: Boolean;
     function  ConfirmDiscard: Boolean;
@@ -514,6 +519,11 @@ const
   CardLevel  =  7;   { a card nobody has picked }
   BandActive = 58;   { the open section }
   CardActive = 22;   { the card of the selected subsection }
+  SubActive  = 32;   { the selected subsection's own band }
+  { Tighter than a card's.  A card is a surface a group of settings sits on;
+    a navigator band is a label around one line of text, and at a card's
+    radius a 50-pixel band reads as a lozenge. }
+  NavRadius  = 10;
 
   SectionGroups: array[0..6] of string = (
     { Simulator } 'gbEngine',
@@ -765,6 +775,35 @@ begin
   P.Canvas.RoundRect(0, 0, P.Width, P.Height, R, R);
 end;
 
+{ The same again for the subsection that is selected, on the body panel its
+  buttons sit on.
+
+  Which button it is comes from the button's own parent rather than from
+  working out which section this body belongs to: there is one selection in
+  the whole navigator, so either it is on this panel or there is nothing to
+  draw. }
+procedure TfmMain.NavSubPaint(Sender: TObject);
+var
+  P: TPanel;
+  B: TSpeedButton;
+  R, Pad: Integer;
+begin
+  if not (Sender is TPanel) then Exit;
+  if (FSub < 0) or (FSub > High(FSubs)) then Exit;
+  B := FSubs[FSub].Btn;
+  if (B = nil) or (B.Parent <> Sender) then Exit;
+
+  P := TPanel(Sender);
+  R := McxScale96(NavRadius);
+  Pad := McxScale96(4);
+  P.Canvas.AntialiasingMode := amOn;
+  P.Canvas.Brush.Style := bsSolid;
+  P.Canvas.Brush.Color := McxBlend(McxBase, McxAccent, SubActive);
+  P.Canvas.Pen.Style := psSolid;
+  P.Canvas.Pen.Color := P.Canvas.Brush.Color;
+  P.Canvas.RoundRect(Pad, B.Top, P.Width - Pad, B.Top + B.Height, R, R);
+end;
+
 procedure TfmMain.CollectSections;
 var
   i: Integer;
@@ -783,11 +822,60 @@ begin
     through.  The body panel underneath is painted back to the navigator's
     own background, which is what separates a heading from the subsections
     listed below it. }
+  SetLength(FBands, Length(FPanes));
   for i := 0 to High(FPanes) do
   begin
     FPanes[i].ParentColor := False;
+    FPanes[i].AutoSize := False;
+
+    { The heading moves onto a panel of its own, above the body, and the band
+      is painted on that.  AutoSize, so the strip is whatever the heading
+      turns out to be at this display's scale. }
+    FBands[i] := TPanel.Create(FPanes[i]);
+    FBands[i].Parent := FPanes[i];
+    FBands[i].Top := 0;
+    FBands[i].Align := alTop;
+    { Not AutoSize: the band is measured from its heading once, here, and
+      the DPI sweep scales it with everything else afterwards.  With AutoSize
+      on, setting the paint box below to the band's size fed straight back
+      into the band's size, and the LCL caught it as a ChangeBounds loop. }
+    FBands[i].AutoSize := False;
+    FBands[i].Height := FHeads[i].Height + FHeads[i].BorderSpacing.Bottom;
+    FBands[i].BevelOuter := bvNone;
+    { Inset from the edge by the same margin the subsection band below is
+      drawn at, so the two read as one idea at two levels even though one is
+      a fill and the other is painted. }
+    FBands[i].BorderSpacing.Left := McxScale96(4);
+    FBands[i].BorderSpacing.Right := McxScale96(4);
+    FBands[i].ParentColor := False;
+    { The band is the panel's own fill.
+
+      It was meant to be a rounded shape painted on top of it, and that is
+      still what the closed sections would get -- but not the open one, and
+      the open one is the whole point.  The face of the band panel is filled
+      by the widget set after the LCL has drawn on it and before the heading
+      is drawn over it, on the one section whose height just changed: which
+      is why a caption survived there and a band never did.  Painting it on
+      the section panel, on a panel of its own, and on a paint box inside
+      that all lost to the same fill, as did invalidating from
+      UpdateNavState, from the message queue, from the resize itself, and
+      with FullRepaint off.  A fill is the one thing that always arrives, so
+      the band is a fill, and square. }
+    FHeads[i].Parent := FBands[i];
+
     FBodies[i].ParentColor := False;
     FBodies[i].Color := McxBase;
+    FBodies[i].OnPaint := @NavSubPaint;
+    { A heading is a thing you click, and nothing else about it says so:
+      it has no frame, no arrow but the chevron, and it does not depress. }
+    FHeads[i].Cursor := crHandPoint;
+    { And it must not depress, which is the whole reason the open section
+      was a square.  A grouped TSpeedButton latches Down when it is clicked
+      and the widget set then fills its whole rectangle with the pressed
+      face -- square, edge to edge, over the top of the band painted behind
+      it.  With no group there is no latch, nothing reads Down, and the band
+      is the only thing saying which section is open. }
+    FHeads[i].GroupIndex := 0;
   end;
   sbNav.ParentColor := False;
   sbNav.Color := McxBase;
@@ -840,7 +928,9 @@ begin
         B.AllowAllUp := True;
         B.Caption := Card.Caption;
         B.Flat := True;
-        B.GroupIndex := 2;
+        { No group, so it cannot latch: see the headings above -- a pressed
+          TSpeedButton paints a square face over the band behind it. }
+        B.GroupIndex := 0;
         B.Layout := blGlyphLeft;
         { Indented past where a section heading's own text starts, so the
           hierarchy is visible without a second glyph column -- and the indent
@@ -1230,26 +1320,34 @@ begin
   begin
     if i = FSection then FHeads[i].ImageIndex := Open
     else FHeads[i].ImageIndex := Closed;
-    FHeads[i].Down := (i = FSection);
     { The open section is filled with the selection colour, the closed ones
-      sit on a neutral band: level, then state, and nothing else. }
+      sit on a neutral band: level, then state, and nothing else.  The colour
+      goes into Tag rather than into Color, because NavBandPaint draws the
+      band and Color is what shows around its corners. }
     if i = FSection then
-      FPanes[i].Color := McxBlend(McxBase, McxAccent, BandActive)
+      FBands[i].Color := McxBlend(McxBase, McxAccent, BandActive)
     else
-      FPanes[i].Color := McxBlend(McxBase, McxText, BandLevel);
+      FBands[i].Color := McxBlend(McxBase, McxText, BandLevel);
+    { Re-asserted here rather than once at startup: CollectSections runs
+      before McxLoadTheme, so a colour read there is the desktop's rather
+      than the theme's -- which left a pale gap between the bands. }
+    FPanes[i].Color := McxBase;
     { The heading sits on the band, and the open band is the accent -- a
       fixed colour, where the surface is not.  So what can be read on it is
       decided from the band and not from the theme's text colour. }
-    FHeads[i].Font.Color := McxReadable(FPanes[i].Color);
+    FHeads[i].Font.Color := McxReadable(FBands[i].Color);
+    FBands[i].Invalidate;
   end;
 
   for i := 0 to High(FSubs) do
   begin
-    FSubs[i].Btn.Down := (i = FSub);
-    { The title takes the selection colour rather than a background, because
-      a filled row under a filled heading reads as a second heading. }
+    FSubs[i].Btn.Cursor := crHandPoint;
+    { The selected title sits on a band of its own -- weaker than the
+      section's above it, so the two read as two levels rather than as two
+      headings -- and takes whatever ink can be read on that. }
     if i = FSub then
-      FSubs[i].Btn.Font.Color := McxBlend(McxText, McxAccent, 80)
+      FSubs[i].Btn.Font.Color :=
+        McxReadable(McxBlend(McxBase, McxAccent, SubActive))
     else
       FSubs[i].Btn.Font.Color := McxText;
 
@@ -1266,6 +1364,37 @@ begin
       FSubs[i].Cap.Font.Color := McxText;
     end;
   end;
+
+  { The band under a title is painted by the body panel, so the panel is what
+    has to be told the selection moved. }
+  for i := 0 to High(FBodies) do FBodies[i].Invalidate;
+
+  { The section panel is sized here rather than by AutoSize.
+
+    AutoSize is what was resizing it, and the widget set repaints the
+    background of a panel it has just resized over whatever the LCL drew on
+    it -- which is why the band of the one open section was the only one that
+    never appeared, however late it was asked to repaint.  Setting the height
+    from the parts is the same arithmetic without the resize. }
+  for i := 0 to High(FPanes) do
+  begin
+    if FBodies[i].Visible then
+      FPanes[i].Height := FBands[i].Height + FBodies[i].Height
+    else
+      FPanes[i].Height := FBands[i].Height;
+  end;
+
+
+  { And the repaint is asked for again once the layout has settled.
+
+    Opening a section shows its body, which changes the section panel's
+    AutoSize height -- and a resize has the widget set fill the new extent
+    with the panel's own background, after the band has been drawn on it and
+    without an LCL Paint to draw it again.  Invalidating here is too early:
+    the resize has not happened yet.  So the band of the one section that
+    just changed size came out as the panel's plain colour, which is what an
+    open section looked like whatever colour it was given. }
+
 end;
 
 { Picking a section in the navigator brings the settings forward with it.
