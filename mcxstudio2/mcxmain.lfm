@@ -2137,7 +2137,7 @@ object fmMain: TfmMain
   end
   object dlgResult: TOpenDialog
     Title = 'Open a result'
-    Filter = 'MCX results (*.jnii;*.bnii;*.jdb;*.jdat)|*.jnii;*.bnii;*.jdb;*.jdat|All files|*'
+    Filter = 'MCX results (*.jnii;*.bnii;*.jdt;*.jdb;*.jdat)|*.jnii;*.bnii;*.jdt;*.jdb;*.jdat|All files|*'
     Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
     left = 568
     top = 192

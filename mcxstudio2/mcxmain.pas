@@ -384,6 +384,7 @@ type
       var AControl: TControl; DoDisableAutoSizing: boolean);
     procedure ViewLog(Sender: TObject; const AText: string);
     procedure ShowResult(const AFileName: string);
+    procedure LogDetected(const AFileName: string);
     procedure BenchmarkClick(Sender: TObject);
     procedure ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
     procedure TableChanged(Sender: TObject);
@@ -1635,9 +1636,50 @@ begin
   sbMain.Panels[0].Text := Format('Running  %d%%', [APercent]);
 end;
 
+{ A line in the log saying how many photons each detector caught.
+
+  The detected-photon file is the point of half the runs there are, and
+  until now the only sign it had been written was the file appearing.  The
+  counts are also the quickest way to see that a detector is in the wrong
+  place: a zero next to three hundreds is a typo in a coordinate, and that
+  is worth finding before the fitting rather than after. }
+procedure TfmMain.LogDetected(const AFileName: string);
+var
+  Ids: TMcxArray;
+  Counts: array of Int64;
+  i, Det: Integer;
+  n: Int64;
+  Line: string;
+begin
+  if not McxLoadArray(AFileName, 'MCXData.PhotonData.detid', Ids) then Exit;
+  n := McxArrayCount(Ids);
+  if n <= 0 then Exit;
+  SetLength(Counts, 1);
+  for i := 0 to n - 1 do
+  begin
+    Det := Round(McxArrayValue(Ids, i));
+    if Det < 0 then Continue;
+    if Det > High(Counts) then SetLength(Counts, Det + 1);
+    Inc(Counts[Det]);
+  end;
+  Line := '';
+  { Detector numbers start at one in this file; a zero would mean a photon
+    that reached no detector, which should not be in it at all. }
+  for Det := 1 to High(Counts) do
+  begin
+    if Line <> '' then Line := Line + ', ';
+    Line := Line + Format('%d: %d', [Det, Counts[Det]]);
+  end;
+  Log(Format('%s: %d detected photons (%s)',
+    [ExtractFileName(AFileName), n, Line]));
+end;
+
 procedure TfmMain.RunDone(Sender: TObject; AExitCode: Integer);
+const
+  TrajExts: array[0..2] of string = ('.jdt', '.jdb', '.jdat');
 var
   Guess: string;
+  i: Integer;
 begin
   if AExitCode = 0 then
   begin
@@ -1647,9 +1689,22 @@ begin
     Guess := ExtractFilePath(FDoc.FileName) + FDoc.AsStr('Session.ID', 'mcx');
     if FileExists(Guess + '.jnii') then ShowResult(Guess + '.jnii')
     else if FileExists(Guess + '.bnii') then ShowResult(Guess + '.bnii');
+    { What each detector caught, when the run was asked for that. }
+    for i := 0 to High(TrajExts) do
+      if FileExists(Guess + '_detp' + TrajExts[i]) then
+      begin
+        LogDetected(Guess + '_detp' + TrajExts[i]);
+        Break;
+      end;
     { And the paths, when the run was asked for them. }
-    if FileExists(Guess + '_traj.jdat') then
-      ShowResult(Guess + '_traj.jdat');
+    { Three spellings, all current: mcx writes .jdt for text JData and .jdb
+      for binary, and mcxcl still writes the older .jdat. }
+    for i := 0 to High(TrajExts) do
+      if FileExists(Guess + '_traj' + TrajExts[i]) then
+      begin
+        ShowResult(Guess + '_traj' + TrajExts[i]);
+        Break;
+      end;
   end
   else
     Log(Format('-- stopped, exit code %d', [AExitCode]));
