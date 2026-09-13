@@ -196,13 +196,21 @@ begin
   Base := ExtractFilePath(ParamStr(0));
 
   { Beside the binary, in the bin/ of a release tree, and beside the source
-    tree a developer built in -- then whatever PATH says. }
+    tree a developer built in -- then whatever PATH says.
+
+    Two levels of "beside the source tree", because mcxstudio2 lives inside
+    the mcx checkout: from its bin/, mcxcl's own checkout is three levels up,
+    not two.  A developer with mcx, mcxcl and mmc cloned next to each other is
+    the normal case and was not being found. }
   Paths :=
     Base + PathSeparator +
     Base + ExeNames[ABackend] + PathDelim + 'bin' + PathSeparator +
     Base + '..' + PathDelim + 'bin' + PathSeparator +
+    Base + '..' + PathDelim + '..' + PathDelim + 'bin' + PathSeparator +
     Base + '..' + PathDelim + '..' + PathDelim + ExeNames[ABackend] +
       PathDelim + 'bin' + PathSeparator +
+    Base + '..' + PathDelim + '..' + PathDelim + '..' + PathDelim +
+      ExeNames[ABackend] + PathDelim + 'bin' + PathSeparator +
     IncludeTrailingPathDelimiter(GetUserDir) + 'MCXStudio' + PathSeparator +
     GetEnvironmentVariable('PATH');
 
