@@ -340,6 +340,11 @@ type
       state worth having. }
     { Whether the selected section's subsection list is showing. }
     FOpen: Boolean;
+    { The section heading the pointer is over, or -1. }
+    FHeadHot: Integer;
+    { The subsection the pointer is over, or -1.  The band behind it is the
+      hover, since the button no longer paints one. }
+    FSubHot: Integer;
     { Which source the four source vectors are showing, when the file has
       more than one.  See SourceRows. }
     FSource: Integer;
@@ -454,6 +459,11 @@ type
     procedure StepClick(Sender: TObject);
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
+    procedure UpdateHeadBands;
+    procedure HeadEnter(Sender: TObject);
+    procedure HeadLeave(Sender: TObject);
+    procedure SubEnter(Sender: TObject);
+    procedure SubLeave(Sender: TObject);
     procedure CardPaint(Sender: TObject);
     procedure SetCard(ACard: TPanel; AColor: TColor);
     procedure ScrollToGroup(ABox: TPanel);
@@ -462,6 +472,7 @@ type
     procedure UpdateNavState;
 
     procedure NavSubPaint(Sender: TObject);
+    function  SwapHeading(AOld: TSpeedButton; AParent: TWinControl): TSpeedButton;
     procedure NavBandCut(Sender: TObject);
     procedure NewDocument;
     function  SaveAs: Boolean;
@@ -498,6 +509,28 @@ var
 implementation
 
 {$R *.lfm}
+
+type
+  { A flat TSpeedButton that does not paint its own background.
+
+    A flat one still asks ThemeServices for the toolbar-button "hot" element
+    when the pointer is over it (speedbutton.inc:798), and on gtk2 that is a
+    pale fill from the desktop's theme -- white on the ones here.  It landed
+    on top of the band painted behind the title and lost it, which is the
+    opposite of a highlight.
+
+    Nothing replaces it here because the band underneath is where the hover
+    belongs: it is the shape the selection uses, so the two agree.  See
+    NavSubPaint. }
+  TMcxNavButton = class(TSpeedButton)
+  protected
+    procedure PaintBackground(var PaintRect: TRect); override;
+  end;
+
+procedure TMcxNavButton.PaintBackground(var PaintRect: TRect);
+begin
+  { Deliberately nothing: the caption and the glyph still draw. }
+end;
 
 { Forward, because FormCreate has to register it before the saved layout is
   read and it is defined with the rest of the painting further down. }
@@ -540,6 +573,8 @@ const
   BandActive = 58;   { the open section }
   CardActive = 22;   { the card of the selected subsection }
   SubActive  = 32;   { the selected subsection's own band }
+  SubHover   = 14;   { and the one the pointer is over }
+  HeadHover  = 12;   { how far a hovered section band lifts towards the ink }
   { Tighter than a card's.  A card is a surface a group of settings sits on;
     a navigator band is a label around one line of text, and at a card's
     radius a 50-pixel band reads as a lozenge. }
@@ -707,7 +742,13 @@ begin
   Size := McxScale96(36);
   ilIcons.Width := Size;
   ilIcons.Height := Size;
-  McxBuildIconList(ilIcons, McxIconNames, clBtnText);
+  { The theme's ink, not the desktop's button colour.  Only the two chevrons
+    are drawn rather than rasterised, so they are the only ones this reaches
+    -- and they are the ones that need it: a chevron in the desktop's colour
+    on a light theme over a dark desktop is pale grey on pale grey.  Called
+    again from ApplyTheme, which is why it reads the theme rather than being
+    told a colour. }
+  McxBuildIconList(ilIcons, McxIconNames, McxText);
 
   { The buttons are sized from the glyph rather than from the designer.
 
@@ -888,27 +929,65 @@ end;
 procedure TfmMain.NavSubPaint(Sender: TObject);
 var
   P: TPanel;
-  B: TSpeedButton;
   R, Pad: Integer;
+
+  { One band, in ATint per cent of the accent. }
+  procedure Band(AIndex, ATint: Integer);
+  var
+    B: TSpeedButton;
+  begin
+    if (AIndex < 0) or (AIndex > High(FSubs)) then Exit;
+    B := FSubs[AIndex].Btn;
+    if (B = nil) or (B.Parent <> Sender) then Exit;
+    P.Canvas.Brush.Style := bsSolid;
+    P.Canvas.Brush.Color := McxBlend(McxBase, McxAccent, ATint);
+    P.Canvas.Pen.Style := psSolid;
+    P.Canvas.Pen.Color := P.Canvas.Brush.Color;
+    { Indented past the section band above it, so the band says what the
+      indent of the title already says: this one is under that one.  A band
+      starting where its parent's starts reads as a second section. }
+    P.Canvas.RoundRect(Pad + McxScale96(18), B.Top, P.Width - Pad,
+      B.Top + B.Height, R, R);
+  end;
+
 begin
   if not (Sender is TPanel) then Exit;
-  if (FSub < 0) or (FSub > High(FSubs)) then Exit;
-  B := FSubs[FSub].Btn;
-  if (B = nil) or (B.Parent <> Sender) then Exit;
-
   P := TPanel(Sender);
   R := McxScale96(NavRadius);
   Pad := McxScale96(4);
   P.Canvas.AntialiasingMode := amOn;
-  P.Canvas.Brush.Style := bsSolid;
-  P.Canvas.Brush.Color := McxBlend(McxBase, McxAccent, SubActive);
-  P.Canvas.Pen.Style := psSolid;
-  P.Canvas.Pen.Color := P.Canvas.Brush.Color;
-  { Indented past the section band above it, so the band says what the
-    indent of the title already says: this one is under that one.  A band
-    starting where its parent's starts reads as a second section. }
-  P.Canvas.RoundRect(Pad + McxScale96(18), B.Top, P.Width - Pad,
-    B.Top + B.Height, R, R);
+
+  { The pointer first, so that the selected one wins where they are the same
+    title: a selection is a stronger statement than a pointer resting. }
+  if FSubHot <> FSub then Band(FSubHot, SubHover);
+  Band(FSub, SubActive);
+end;
+
+{ Replaces a designer-placed heading with one of ours on AParent, carrying
+  over everything the .lfm set on it, and frees the original. }
+function TfmMain.SwapHeading(AOld: TSpeedButton; AParent: TWinControl): TSpeedButton;
+var
+  B: TMcxNavButton;
+begin
+  B := TMcxNavButton.Create(Self);
+  B.Parent := AParent;
+  B.Align := AOld.Align;
+  B.Height := AOld.Height;
+  B.BorderSpacing.Bottom := AOld.BorderSpacing.Bottom;
+  B.Caption := AOld.Caption;
+  B.Flat := AOld.Flat;
+  B.Images := AOld.Images;
+  B.ImageIndex := AOld.ImageIndex;
+  B.Layout := AOld.Layout;
+  B.Margin := AOld.Margin;
+  B.Spacing := AOld.Spacing;
+  B.ParentFont := False;
+  B.Font.Assign(AOld.Font);
+  B.Hint := AOld.Hint;
+  B.ShowHint := AOld.ShowHint;
+  B.OnClick := AOld.OnClick;
+  AOld.Free;
+  Result := B;
 end;
 
 procedure TfmMain.CollectSections;
@@ -930,6 +1009,8 @@ begin
     own background, which is what separates a heading from the subsections
     listed below it. }
   FOpen := True;
+  FSubHot := -1;
+  FHeadHot := -1;
   SetLength(FBands, Length(FPanes));
   SetLength(FBandCut, Length(FPanes));
   for i := 0 to High(FPanes) do
@@ -964,7 +1045,6 @@ begin
       UpdateNavState, from the message queue, from the resize itself, and
       with FullRepaint off.  A fill is the one thing that always arrives, so
       the band is a fill, and square. }
-    FHeads[i].Parent := FBands[i];
 
     FBandCut[i] := TPaintBox.Create(FBands[i]);
     FBandCut[i].Parent := FBands[i];
@@ -974,6 +1054,17 @@ begin
       A disabled graphic control is passed over by the hit test and still
       paints whatever its OnPaint draws, which is all this one is for. }
     FBandCut[i].Enabled := False;
+
+    { The heading is swapped for one that does not paint its own background,
+      for the reason TMcxNavButton gives: a flat TSpeedButton asks the widget
+      set for a "hot" face when the pointer is over it, and that face lands on
+      top of the band.  The designer cannot place a class of ours -- it would
+      have to be registered in a package, which is the trap the whole project
+      avoids -- so the one it placed is copied and dropped.  Everything after
+      this point knows it only through FHeads. }
+    FHeads[i] := SwapHeading(FHeads[i], FBands[i]);
+    FHeads[i].OnMouseEnter := @HeadEnter;
+    FHeads[i].OnMouseLeave := @HeadLeave;
     FBandCut[i].OnPaint := @NavBandCut;
 
     FBodies[i].ParentColor := False;
@@ -1030,7 +1121,7 @@ begin
         end;
         Card := TPanel(C);
 
-        B := TSpeedButton.Create(Self);
+        B := TMcxNavButton.Create(Self);
         B.Parent := FBodies[s];
         B.Height := 44;
         { Top before Align: alTop children are ordered by the Top they have
@@ -1058,6 +1149,8 @@ begin
         B.Font.Height := -28;
         B.Tag := Length(FSubs);
         B.OnClick := @SubClick;
+        B.OnMouseEnter := @SubEnter;
+        B.OnMouseLeave := @SubLeave;
 
         SetLength(FSubs, Length(FSubs) + 1);
         FSubs[High(FSubs)].Section := s;
@@ -1171,6 +1264,26 @@ begin
   UpdateNavState;
   if (AIndex >= 0) and (AIndex <= High(FSubs)) then
     ScrollToGroup(FSubs[AIndex].Box);
+end;
+
+{ The pointer arriving over a subsection title, and leaving it.  Only the
+  body panel it sits on has to be told: the band is painted there. }
+procedure TfmMain.SubEnter(Sender: TObject);
+begin
+  if not (Sender is TSpeedButton) then Exit;
+  FSubHot := TSpeedButton(Sender).Tag;
+  if (FSubHot >= 0) and (FSubHot <= High(FSubs)) then
+    FSubs[FSubHot].Btn.Parent.Invalidate;
+end;
+
+procedure TfmMain.SubLeave(Sender: TObject);
+var
+  Was: Integer;
+begin
+  Was := FSubHot;
+  FSubHot := -1;
+  if (Was >= 0) and (Was <= High(FSubs)) then
+    FSubs[Was].Btn.Parent.Invalidate;
 end;
 
 procedure TfmMain.SubClick(Sender: TObject);
@@ -1393,6 +1506,9 @@ begin
     FView.Redraw;
   end;
 
+  { The drawn glyphs carry the theme's ink, so they are rebuilt with it. }
+  BuildIcons;
+
   UpdateNavState;
   Invalidate;
 end;
@@ -1425,25 +1541,26 @@ begin
   end;
 end;
 
-procedure TfmMain.UpdateNavState;
+{ The colour of every section band, which is level, then state, and nothing
+  else -- plus a lift for the one the pointer is over.
+
+  Its own procedure because hovering has to redo it and nothing else, and
+  because the band is the only hover a heading has: the button under the
+  pointer no longer paints one.  See TMcxNavButton. }
+procedure TfmMain.UpdateHeadBands;
 var
   i: Integer;
-  Closed, Open: Integer;
 begin
-  Closed := McxIconIndex('collapsed');
-  Open := McxIconIndex('expanded');
-  for i := 0 to High(FHeads) do
+  for i := 0 to High(FBands) do
   begin
-    if (i = FSection) and FOpen then FHeads[i].ImageIndex := Open
-    else FHeads[i].ImageIndex := Closed;
-    { The open section is filled with the selection colour, the closed ones
-      sit on a neutral band: level, then state, and nothing else.  The colour
-      goes into Tag rather than into Color, because NavBandPaint draws the
-      band and Color is what shows around its corners. }
     if i = FSection then
       FBands[i].Color := McxBlend(McxBase, McxAccent, BandActive)
     else
       FBands[i].Color := McxBlend(McxBase, McxText, BandLevel);
+    { A lift towards the ink, so it reads the same way on the accent band and
+      on a neutral one: brighter than it was, whatever it was. }
+    if i = FHeadHot then
+      FBands[i].Color := McxBlend(FBands[i].Color, McxText, HeadHover);
     { Re-asserted here rather than once at startup: CollectSections runs
       before McxLoadTheme, so a colour read there is the desktop's rather
       than the theme's -- which left a pale gap between the bands. }
@@ -1455,6 +1572,41 @@ begin
     FBands[i].Invalidate;
     FBandCut[i].Invalidate;
   end;
+end;
+
+procedure TfmMain.HeadEnter(Sender: TObject);
+var
+  i: Integer;
+begin
+  for i := 0 to High(FHeads) do
+    if FHeads[i] = Sender then
+    begin
+      FHeadHot := i;
+      UpdateHeadBands;
+      Exit;
+    end;
+end;
+
+procedure TfmMain.HeadLeave(Sender: TObject);
+begin
+  if FHeadHot < 0 then Exit;
+  FHeadHot := -1;
+  UpdateHeadBands;
+end;
+
+procedure TfmMain.UpdateNavState;
+var
+  i: Integer;
+  Closed, Open: Integer;
+begin
+  Closed := McxIconIndex('collapsed');
+  Open := McxIconIndex('expanded');
+  for i := 0 to High(FHeads) do
+  begin
+    if (i = FSection) and FOpen then FHeads[i].ImageIndex := Open
+    else FHeads[i].ImageIndex := Closed;
+  end;
+  UpdateHeadBands;
 
   for i := 0 to High(FSubs) do
   begin
