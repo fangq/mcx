@@ -92,6 +92,9 @@ type
       one light rectangle in a dark window or the reverse. }
     FBack: TMcxVec3;
     FDragging: Boolean;
+    { Set for one frame after a zoom, the way FDragging is set for the length
+      of a rotate: both mean "another one of these is coming". }
+    FCoarse: Boolean;
     FDidDrag: Boolean;
     FDragX, FDragY: Integer;
     FSceneKey: string;
@@ -396,7 +399,19 @@ begin
   FVolShader.SetFloat('uOpacity', FOpacity);
   FVolShader.SetFloat('uFloor', FFloor);
   FVolShader.SetInt('uMap', FMap);
-  FVolShader.SetFloat('uSteps', FSteps);
+  { Fewer samples along each ray while the view is being moved.
+
+    The raycast is the whole cost of a frame: on an Intel iGPU a 181-cube
+    head at 192 steps takes 25-55 ms, which is a picture that lags behind
+    the mouse.  A third of the steps is a third of the work, and the
+    difference is invisible on a moving image -- the opacity correction
+    already keeps the brightness the same at any step count, so what changes
+    is the fine structure, and that is exactly what cannot be read while the
+    thing is turning.  The still frame that follows is at full quality. }
+  if FDragging or FCoarse then
+    FVolShader.SetFloat('uSteps', Max(48, FSteps / 3))
+  else
+    FVolShader.SetFloat('uSteps', FSteps);
   FVolShader.SetVec2('uClim', FVolLow, FVolHigh);
   FVolShader.SetInt('uStyle', FStyle);
   FVolShader.SetInt('uLog', Ord(FLogScale));
@@ -687,6 +702,13 @@ begin
   end;
   RenderScene(FGL.Width, FGL.Height, False);
   FGL.SwapBuffers;
+  { A zoom has no end event to hang the full-quality frame off, so the coarse
+    frame asks for it itself. }
+  if FCoarse then
+  begin
+    FCoarse := False;
+    FGL.Invalidate;
+  end;
 end;
 
 procedure TMcxView.GLMouseDown(Sender: TObject; Button: TMouseButton;
@@ -715,7 +737,12 @@ procedure TMcxView.GLMouseUp(Sender: TObject; Button: TMouseButton;
 var
   Id: Integer;
 begin
-  FDragging := False;
+  if FDragging then
+  begin
+    FDragging := False;
+    { The full-quality frame, now that the picture has stopped. }
+    FGL.Invalidate;
+  end;
   { A click, not the end of a drag: the camera moved is not a selection. }
   if (Button <> mbLeft) or FDidDrag then
   begin
@@ -734,6 +761,7 @@ procedure TMcxView.GLMouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
   FCamera.Zoom(WheelDelta / 120);
+  FCoarse := True;
   FGL.Invalidate;
   Handled := True;
 end;
