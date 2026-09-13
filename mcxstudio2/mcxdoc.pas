@@ -122,7 +122,7 @@ const
     an equals sign and a letter never contains a colon. }
   FlagsDebug =
     'R:Print the random number seed,' +
-    'M:Record photon trajectories  (writes <session>_traj.jdat),' +
+    'M:Record photon trajectories  (writes a <session>_traj file),' +
     'P:Show a progress bar,' +
     'T:Record trajectories without accumulating';
 
@@ -180,7 +180,7 @@ const
     A path beginning @run is not part of the simulation at all -- it is a
     runtime choice such as which device to use -- and is routed to a second
     document that is saved with the preferences rather than with the file. }
-  Binds: array[0..41] of TMcxBind = (
+  Binds: array[0..42] of TMcxBind = (
     { -- Types ------------------------------------------------------------- }
     (Ctl:'rgBackend';    Path:'@run.backend';     Kind:mkChoice; Level:mlWizard;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceBackend;    EnableIf:''),
@@ -277,6 +277,9 @@ const
      EnableIf:'Session.DoPartialPath=1'),
     (Ctl:'edMaxDetp'; Path:'Session.MaxDetPhoton'; Kind:mkFloat; Level:mlExpert;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edMaxJump';  Path:'@run.maxjumpdebug'; Kind:mkInt; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:1; Max:0; Choices:'';
+     EnableIf:'Session.DebugFlag~M'),
     (Ctl:'edMinEnergy'; Path:'Session.MinEnergy'; Kind:mkFloat; Level:mlExpert;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
     (Ctl:'edRootPath'; Path:'Session.RootPath'; Kind:mkText; Level:mlExpert;

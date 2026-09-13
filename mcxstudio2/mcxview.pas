@@ -438,6 +438,7 @@ end;
 function TMcxView.ShowTrajectory(const AFileName: string): Boolean;
 var
   Ids, Pts, Ws: TMcxArray;
+  Got: TMcxArrayList;
   Order: TMcxOrder;
   i, n, a, b: Integer;
   HaveW: Boolean;
@@ -445,9 +446,16 @@ var
   P0, P1, C: TMcxVec3;
 begin
   Result := False;
-  if not McxLoadArray(AFileName, 'MCXData.Trajectory.photonid', Ids) then Exit;
-  if not McxLoadArray(AFileName, 'MCXData.Trajectory.p', Pts) then Exit;
-  HaveW := McxLoadArray(AFileName, 'MCXData.Trajectory.w0', Ws);
+  { All three out of one parse.  Asked for separately they cost three reads
+    of the whole file, which for a text .jdt is the whole cost of loading it. }
+  if not McxLoadArrays(AFileName, ['MCXData.Trajectory.photonid',
+                                   'MCXData.Trajectory.p',
+                                   'MCXData.Trajectory.w0'], Got) then Exit;
+  Ids := Got[0];
+  Pts := Got[1];
+  Ws := Got[2];
+  HaveW := McxArrayCount(Ws) > 0;
+  if (McxArrayCount(Ids) = 0) or (McxArrayCount(Pts) = 0) then Exit;
 
   n := McxArrayCount(Ids);
   if (n < 2) or (McxArrayCount(Pts) < Int64(n) * 3) then Exit;

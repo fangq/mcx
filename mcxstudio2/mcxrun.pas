@@ -471,9 +471,25 @@ begin
     end;
   end;
 
-  { Always: the progress bar is how the window knows how far along it is. }
+  { The progress bar is how the window knows how far along a run is, so P is
+    always asked for -- but added to whatever the file asked for rather than
+    instead of it.  mcx's -D replaces the JSON's DebugFlag outright, so
+    passing a bare P silently turned off the trajectory recording the person
+    had just ticked, and no file appeared. }
+  S := ADoc.AsStr('Session.DebugFlag', '');
+  if Pos('P', UpperCase(S)) = 0 then S := S + 'P';
   Result.Add('-D');
-  Result.Add('P');
+  Result.Add(S);
+
+  { How many trajectory positions to keep.  Command line only -- mcx's parser
+    has no JSON key for it -- and it matters: the default is ten million, and
+    ten million positions is a 200 MB text file that takes longer to write
+    than the simulation took to run and longer again to read back. }
+  if (Pos('M', UpperCase(S)) > 0) and (ARun.AsInt('@run.maxjumpdebug') > 0) then
+  begin
+    Result.Add('--maxjumpdebug');
+    Result.Add(IntToStr(ARun.AsInt('@run.maxjumpdebug')));
+  end;
 end;
 
 function McxCommandLine(const AExe, AInputFile: string;

@@ -42,6 +42,8 @@ type
     Data: TBytes;
   end;
 
+  TMcxArrayList = array of TMcxArray;
+
 function McxArrayKindOf(const AName: string): TMcxArrayKind;
 function McxArrayKindName(AKind: TMcxArrayKind): string;
 function McxElemSize(AKind: TMcxArrayKind): Integer;
@@ -118,6 +120,17 @@ function McxSortTrajectory(const AIds: TMcxArray): TMcxOrder;
   first one it can find, when APath is empty. }
 function McxLoadArray(const AFileName, APath: string;
   out AArray: TMcxArray): Boolean;
+
+{ Several arrays out of one file, read once.
+
+  The trajectory reader wants three -- the photon ids, the positions and the
+  weights -- and asking for them one at a time parses the whole file three
+  times.  For a text .jdt that is the whole cost of loading it.
+
+  A path that is not there gets an empty array rather than failing the lot:
+  w0 is optional, and a file without it is still a set of paths. }
+function McxLoadArrays(const AFileName: string; const APaths: array of string;
+  out AArrays: TMcxArrayList): Boolean;
 
 implementation
 
@@ -736,6 +749,54 @@ begin
   else if AData.JSONType = jtArray then
     for i := 0 to AData.Count - 1 do
       if FindFirstArray(TJSONArray(AData).Items[i], AObj) then Exit(True);
+end;
+
+function McxLoadArrays(const AFileName: string; const APaths: array of string;
+  out AArrays: TMcxArrayList): Boolean;
+var
+  Ext: string;
+  BJ: TMcxBJData;
+  Text: TStringList;
+  Root: TJSONData;
+  Obj: TJSONObject;
+  i: Integer;
+begin
+  Result := False;
+  SetLength(AArrays, Length(APaths));
+  Ext := LowerCase(ExtractFileExt(AFileName));
+
+  if (Ext = '.bnii') or (Ext = '.jdb') or (Ext = '.bjd') then
+  begin
+    BJ := TMcxBJData.Create;
+    try
+      if not BJ.LoadFromFile(AFileName) then Exit;
+      for i := 0 to High(APaths) do
+        if BJ.GetArray(APaths[i], AArrays[i]) then Result := True;
+    finally
+      BJ.Free;
+    end;
+    Exit;
+  end;
+
+  Text := TStringList.Create;
+  Root := nil;
+  try
+    try
+      Text.LoadFromFile(AFileName);
+      Root := GetJSON(Text.Text);
+    except
+      Exit(False);
+    end;
+    for i := 0 to High(APaths) do
+      if Root.FindPath(APaths[i]) is TJSONObject then
+      begin
+        Obj := TJSONObject(Root.FindPath(APaths[i]));
+        if McxDecodeJData(Obj, AArrays[i]) then Result := True;
+      end;
+  finally
+    Root.Free;
+    Text.Free;
+  end;
 end;
 
 function McxLoadArray(const AFileName, APath: string;

@@ -53,7 +53,7 @@ type
   end;
 
 const
-  Helps: array[0..41] of TMcxHelpEntry = (
+  Helps: array[0..42] of TMcxHelpEntry = (
     (Ctl:'rgBackend'; Text:'Which simulator runs. MCX needs an NVIDIA card; ' +
       'MCX-CL runs the same simulation on any OpenCL device, including the ' +
       'CPU; MMC works on a tetrahedral mesh instead of voxels. The choice ' +
@@ -174,9 +174,16 @@ const
       '(-B/--bc): six letters in the order -x +x -y +y -z +z, then six more ' +
       'saying which faces detect. _ absorbs, r reflects, c is cyclic, m is a ' +
       'mirror.'),
-    (Ctl:'cgDebug'; Text:'Extra output from the run (-D/--debug). "Photon ' +
-      'movement" writes <id>_traj.jdat, which this window can draw; it can ' +
-      'be very large, so --maxjumpdebug caps it.'),
+    (Ctl:'cgDebug'; Text:'Extra output from the run (-D/--debug). "Record ' +
+      'photon trajectories" writes <id>_traj.jdt, which this window draws ' +
+      'when the run finishes. A progress bar is always asked for, whatever ' +
+      'is ticked here, because it is how the window knows how far along a ' +
+      'run is.'),
+    (Ctl:'edMaxJump'; Text:'How many photon positions to keep when ' +
+      'trajectories are recorded (--maxjumpdebug). mcx''s own default is ' +
+      'ten million, which is a 200 MB file that takes longer to write than ' +
+      'the simulation took to run. Half a million is about ten megabytes ' +
+      'and already more paths than can be told apart on screen.'),
     (Ctl:'cgSaveMask'; Text:'Which fields each detected photon carries ' +
       '(-w/--savedetflag). Every one you add multiplies the size of the ' +
       'detected-photon file by roughly the number of media.'),

@@ -72,6 +72,9 @@ type
     dlgImage: TSaveDialog;
     dlgSave: TSaveDialog;
     ilIcons: TImageList;
+    lbMaxJump: TLabel;
+    edMaxJump: TSpinEdit;
+    rwMaxJump: TPanel;
     lbTodoGL: TLabel;
     mmCommand: TMemo;
     mmJSON: TMemo;
@@ -479,6 +482,12 @@ const
     Seven per-section accents were prettier and worse.  A colour that means
     identity cannot also mean selection, so nothing on a page could be
     highlighted without arguing with the section it sat on. }
+  { How many photon positions to keep when trajectories are recorded.  mcx's
+    own default is ten million, which is a 200 MB file; half a million is
+    about ten megabytes, reads back in a moment, and is already more paths
+    than can be told apart on screen. }
+  DefaultMaxJump = 500000;
+
   { Corner radius on the design grid, scaled with everything else. }
   CardRadius = 14;
 
@@ -1263,6 +1272,7 @@ begin
   FRun.Clear;
   FRun.SetStr('@run.backend', 'mcx');
   FRun.SetStr('@run.domainkind', 'shapes');
+  FRun.SetNum('@run.maxjumpdebug', DefaultMaxJump);
   FRun.Modified := False;
   LoadAllBindings;
   UpdateTitle;
@@ -1300,6 +1310,11 @@ end;
   would fail. }
 procedure TfmMain.GuessRunSettings;
 begin
+  { Seeded on every open, because it is a run setting and a document does not
+    carry one; without it the first run after opening a file would take mcx's
+    ten-million default. }
+  if FRun.AsInt('@run.maxjumpdebug') <= 0 then
+    FRun.SetNum('@run.maxjumpdebug', DefaultMaxJump);
   if (FDoc.Find('Mesh') <> nil) or (FDoc.Find('Shapes.MeshNode') <> nil) then
   begin
     FRun.SetStr('@run.backend', 'mmc');
@@ -2817,6 +2832,18 @@ var
 begin
   Result := True;
   if ACond = '' then Exit;
+
+  { '~' asks whether the value contains the text rather than equals it.  The
+    flag settings are sets written as letters -- DebugFlag is 'MP' -- so "is
+    M on" is not a comparison. }
+  E := Pos('~', ACond);
+  if E > 1 then
+  begin
+    Path := Copy(ACond, 1, E - 1);
+    Want := Copy(ACond, E + 1, MaxInt);
+    Exit(Pos(UpperCase(Want), UpperCase(D.AsStr(Path))) > 0);
+  end;
+
   E := Pos('=', ACond);
   if E < 1 then Exit;
   Path := Copy(ACond, 1, E - 1);
@@ -2826,6 +2853,7 @@ begin
   else
     Result := SameText(D.AsStr(Path), Want);
 end;
+
 
 procedure TfmMain.ApplyBindingStates;
 var
