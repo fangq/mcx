@@ -235,12 +235,24 @@ begin
   end;
   n := A.Count;
 
-  { Writing a zero into each of the new row's cells is what creates the row:
-    the document builds whatever a path needs on the way to its leaf, arrays
+  { Writing into each of the new row's cells is what creates the row: the
+    document builds whatever a path needs on the way to its leaf, arrays
     included.  A row carrying every column is editable straight away rather
-    than only once something has been typed into it. }
+    than only once something has been typed into it.
+
+    What is written is the row above, not zeros.  A new medium is nearly
+    always a variation on the last one -- the same n, a scattering
+    coefficient in the same decade -- and a row of zeros is not a medium at
+    all: mua and mus of nought with a refractive index of nought is a
+    material light does not propagate in.  The first Studio did the same and
+    said so in its log (mcxgui.pas:2469).  The first row of all has nothing
+    to copy and still gets zeros. }
   for c := 0 to FKeys.Count - 1 do
-    FDoc.SetNum(Format('%s[%d].%s', [FPath, n, FKeys[c]]), 0);
+    if n > 0 then
+      FDoc.SetNum(Format('%s[%d].%s', [FPath, n, FKeys[c]]),
+                  FDoc.AsNum(Format('%s[%d].%s', [FPath, n - 1, FKeys[c]]), 0))
+    else
+      FDoc.SetNum(Format('%s[%d].%s', [FPath, n, FKeys[c]]), 0);
 
   Reload;
   FGrid.Row := FGrid.RowCount - 1;

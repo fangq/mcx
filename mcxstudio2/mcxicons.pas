@@ -251,9 +251,18 @@ var
   P: TPen16;
 begin
   P.Init(ABitmap.Canvas, ABitmap.Width, AColour);
+  { A chevron: two strokes, not a filled triangle.  A solid arrowhead beside
+    a heading is heavier than the heading, and at the size the navigator
+    draws it -- as tall as a capital -- it read as a bullet rather than as a
+    direction.  Round ends and a round join so the corner is a corner and not
+    a notch. }
+  ABitmap.Canvas.Pen.Width := Round(ABitmap.Width / 16 * 1.6);
+  if ABitmap.Canvas.Pen.Width < 1 then ABitmap.Canvas.Pen.Width := 1;
+  ABitmap.Canvas.Pen.EndCap := pecRound;
+  ABitmap.Canvas.Pen.JoinStyle := pjsRound;
   case LowerCase(AName) of
-    'collapsed': P.Poly([6, 3.5, 11, 8, 6, 12.5], True);
-    'expanded':  P.Poly([3.5, 6, 12.5, 6, 8, 11], True);
+    'collapsed': P.Poly([6.5, 4, 10.5, 8, 6.5, 12]);
+    'expanded':  P.Poly([4, 6.5, 8, 10.5, 12, 6.5]);
   end;
 end;
 

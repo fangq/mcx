@@ -333,10 +333,13 @@ type
       per subsection.  FSection is the section whose page the detail pane is
       showing -- always a real one, because an empty detail pane is not a
       state worth having. }
+    { Whether the selected section's subsection list is showing. }
+    FOpen: Boolean;
     FPanes: array of TPanel;
     { One per section, between the section panel and its heading: the band
       behind the heading is painted on this.  See CollectSections. }
     FBands: array of TPanel;
+    FBandCut: array of TPaintBox;
     FHeads: array of TSpeedButton;
     FBodies: array of TPanel;
     FPages: array of TPanel;
@@ -448,6 +451,7 @@ type
     procedure UpdateNavState;
 
     procedure NavSubPaint(Sender: TObject);
+    procedure NavBandCut(Sender: TObject);
     procedure NewDocument;
     function  SaveAs: Boolean;
     function  ConfirmDiscard: Boolean;
@@ -638,6 +642,13 @@ begin
   { Screen outlives the form, so the handler has to come off it. }
   Screen.RemoveHandlerActiveControlChanged(@FocusChanged);
   FreeAndNil(FView);
+  { The choosers own a pair of bitmaps per tile -- the artwork and a faded
+    copy of it -- and ten tiles across the three of them is twenty, which is
+    most of the thirty gdiBitmaps the widget set reported unreleased on the
+    way out.  They were built and never freed. }
+  FreeAndNil(FProcessor);
+  FreeAndNil(FDomainKind);
+  FreeAndNil(FMedium);
   FreeAndNil(FMedia);
   FreeAndNil(FDetectors);
   FreeAndNil(FShapes);
@@ -782,6 +793,66 @@ end;
   working out which section this body belongs to: there is one selection in
   the whole navigator, so either it is on this panel or there is nothing to
   draw. }
+{ Rounds the section band by taking its corners away again.
+
+  The band itself is the band panel's fill, because a fill is the one thing
+  that always reaches the screen: everything drawn on that panel is erased by
+  it on the section that was just opened, which is the section whose band
+  matters.  What survives the fill is whatever is drawn after it, and the
+  heading's caption always did -- so this is a second child, created after
+  the heading, and it is the last thing to touch the band.
+
+  It cannot simply draw the rounded shape, because it would draw over the
+  caption.  So it paints only what is outside that shape, in the navigator's
+  own colour: a margin down each side, and a quarter disc at each corner,
+  worked out a row at a time.  Nothing it touches is anywhere a caption
+  reaches. }
+procedure TfmMain.NavBandCut(Sender: TObject);
+var
+  B: TPaintBox;
+  R, Pad, y, dx: Integer;
+  C: TCanvas;
+
+  { The rows of one corner, as the horizontal distance from the band's edge
+    to the arc.  ATop and ALeft say which corner. }
+  procedure Corner(ATop, ALeft: Boolean);
+  var
+    i, dy, x0: Integer;
+  begin
+    for i := 0 to R - 1 do
+    begin
+      { Distance of this row's centre from the centre of the arc. }
+      dy := R - i;
+      if R * R - dy * dy > 0 then
+        dx := R - Round(Sqrt(R * R - dy * dy))
+      else
+        dx := R;
+      if dx <= 0 then Continue;
+      if ATop then y := i else y := B.Height - 1 - i;
+      if ALeft then x0 := Pad else x0 := B.Width - Pad - dx;
+      C.FillRect(x0, y, x0 + dx, y + 1);
+    end;
+  end;
+
+begin
+  if not (Sender is TPaintBox) then Exit;
+  B := TPaintBox(Sender);
+  C := B.Canvas;
+  R := McxScale96(NavRadius);
+  Pad := McxScale96(4);
+
+  C.Brush.Style := bsSolid;
+  C.Brush.Color := McxBase;
+  { The margin either side, so the band is a band and not the whole column. }
+  C.FillRect(0, 0, Pad, B.Height);
+  C.FillRect(B.Width - Pad, 0, B.Width, B.Height);
+
+  Corner(True, True);
+  Corner(True, False);
+  Corner(False, True);
+  Corner(False, False);
+end;
+
 procedure TfmMain.NavSubPaint(Sender: TObject);
 var
   P: TPanel;
@@ -822,11 +893,12 @@ begin
     through.  The body panel underneath is painted back to the navigator's
     own background, which is what separates a heading from the subsections
     listed below it. }
+  FOpen := True;
   SetLength(FBands, Length(FPanes));
+  SetLength(FBandCut, Length(FPanes));
   for i := 0 to High(FPanes) do
   begin
     FPanes[i].ParentColor := False;
-    FPanes[i].AutoSize := False;
 
     { The heading moves onto a panel of its own, above the body, and the band
       is painted on that.  AutoSize, so the strip is whatever the heading
@@ -842,11 +914,6 @@ begin
     FBands[i].AutoSize := False;
     FBands[i].Height := FHeads[i].Height + FHeads[i].BorderSpacing.Bottom;
     FBands[i].BevelOuter := bvNone;
-    { Inset from the edge by the same margin the subsection band below is
-      drawn at, so the two read as one idea at two levels even though one is
-      a fill and the other is painted. }
-    FBands[i].BorderSpacing.Left := McxScale96(4);
-    FBands[i].BorderSpacing.Right := McxScale96(4);
     FBands[i].ParentColor := False;
     { The band is the panel's own fill.
 
@@ -862,6 +929,16 @@ begin
       with FullRepaint off.  A fill is the one thing that always arrives, so
       the band is a fill, and square. }
     FHeads[i].Parent := FBands[i];
+
+    FBandCut[i] := TPaintBox.Create(FBands[i]);
+    FBandCut[i].Parent := FBands[i];
+    FBandCut[i].SetBounds(0, 0, FBands[i].Width, FBands[i].Height);
+    FBandCut[i].Anchors := [akLeft, akTop, akRight, akBottom];
+    { It lies over the heading, so it must not take the heading's clicks.
+      A disabled graphic control is passed over by the hit test and still
+      paints whatever its OnPaint draws, which is all this one is for. }
+    FBandCut[i].Enabled := False;
+    FBandCut[i].OnPaint := @NavBandCut;
 
     FBodies[i].ParentColor := False;
     FBodies[i].Color := McxBase;
@@ -999,7 +1076,7 @@ begin
   try
     for i := 0 to High(FPanes) do
     begin
-      FBodies[i].Visible := (i = AIndex);
+      FBodies[i].Visible := (i = AIndex) and FOpen;
       FPages[i].Visible := (i = AIndex);
     end;
   finally
@@ -1318,7 +1395,7 @@ begin
   Open := McxIconIndex('expanded');
   for i := 0 to High(FHeads) do
   begin
-    if i = FSection then FHeads[i].ImageIndex := Open
+    if (i = FSection) and FOpen then FHeads[i].ImageIndex := Open
     else FHeads[i].ImageIndex := Closed;
     { The open section is filled with the selection colour, the closed ones
       sit on a neutral band: level, then state, and nothing else.  The colour
@@ -1337,6 +1414,7 @@ begin
       decided from the band and not from the theme's text colour. }
     FHeads[i].Font.Color := McxReadable(FBands[i].Color);
     FBands[i].Invalidate;
+    FBandCut[i].Invalidate;
   end;
 
   for i := 0 to High(FSubs) do
@@ -1369,20 +1447,6 @@ begin
     has to be told the selection moved. }
   for i := 0 to High(FBodies) do FBodies[i].Invalidate;
 
-  { The section panel is sized here rather than by AutoSize.
-
-    AutoSize is what was resizing it, and the widget set repaints the
-    background of a panel it has just resized over whatever the LCL drew on
-    it -- which is why the band of the one open section was the only one that
-    never appeared, however late it was asked to repaint.  Setting the height
-    from the parts is the same arithmetic without the resize. }
-  for i := 0 to High(FPanes) do
-  begin
-    if FBodies[i].Visible then
-      FPanes[i].Height := FBands[i].Height + FBodies[i].Height
-    else
-      FPanes[i].Height := FBands[i].Height;
-  end;
 
 
   { And the repaint is asked for again once the layout has settled.
@@ -1409,6 +1473,18 @@ begin
   if pcView.ActivePage <> tsSettings then pcView.ActivePage := tsSettings;
 end;
 
+{ Clicking the open section closes it again.
+
+  The grouped TSpeedButton used to do this on its own -- AllowAllUp let the
+  latched one come back up -- and it went when the group did, taking the
+  chevron with it: a section opened once stayed open and kept pointing down
+  however often it was clicked.  Two lines of state instead, which is also
+  the only reader of the chevron's direction.
+
+  Only the subsection list closes.  The page stays where it is, because a
+  detail pane showing nothing is not a state worth having, and because the
+  section is still the one being edited whether or not its subsections are
+  listed. }
 procedure TfmMain.HeaderClick(Sender: TObject);
 var
   i: Integer;
@@ -1416,6 +1492,7 @@ begin
   for i := 0 to High(FHeads) do
     if FHeads[i] = Sender then
     begin
+      if i = FSection then FOpen := not FOpen else FOpen := True;
       SelectSection(i);
       ShowSettingsPage;
       Exit;
@@ -2845,11 +2922,13 @@ begin
   for i := 0 to TJSONArray(A).Count - 1 do
   begin
     E := TJSONArray(A).Items[i];
-    { A multi-source input gives Pos and Dir a row per source, so the elements
-      are arrays rather than numbers.  One edit box cannot show that, and
-      flattening it would destroy the file -- so show nothing, and because the
-      box then matches what it was loaded with, the save path leaves the value
-      alone. }
+    { A multi-source input gives a row per source, and not only to Pos and
+      Dir: Param1 and Param2 take the same shape, one equal-length row each
+      (example/multisrc/multisrc.json has all four).  All four are mkVec, so
+      all four come through here.  One edit box cannot show a table, and
+      flattening it would destroy the file -- so show nothing, and because
+      the box then matches what it was loaded with, the save path leaves the
+      value alone. }
     if not (E.JSONType in [jtNumber, jtString, jtBoolean]) then Exit('');
     if i > 0 then Result := Result + ', ';
     Result := Result + E.AsString;
