@@ -12,7 +12,7 @@ PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
 LAZFLAGS   = --pcp=$(PCP) --ws=$(WIDGETSET)
 
-.PHONY: all debug forms icons sheet test clean distclean res
+.PHONY: all debug forms icons sheet test clean distclean res install uninstall
 
 all: forms
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(BINARY).lpi
@@ -98,3 +98,28 @@ clean:
 
 distclean: clean
 	rm -rf $(PCP) icons.png
+
+# Installs into a prefix, for a distribution package or a local ~/.local.
+#
+#     make install PREFIX=$HOME/.local
+#
+# The icon goes in as a PNG at the size it was rasterised, because the
+# hicolor theme wants a size in the path and the SVG masters live in the
+# source tree rather than in the package.
+PREFIX  ?= /usr/local
+DESTDIR ?=
+
+install: all
+	install -Dm755 bin/$(BINARY) $(DESTDIR)$(PREFIX)/bin/$(BINARY)
+	install -Dm644 packaging/linux/$(BINARY).desktop \
+	    $(DESTDIR)$(PREFIX)/share/applications/$(BINARY).desktop
+	install -Dm644 icons/$(BINARY).png \
+	    $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(BINARY).png
+	install -Dm755 ../utils/mcxp2json.py \
+	    $(DESTDIR)$(PREFIX)/bin/mcxp2json
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(BINARY)
+	rm -f $(DESTDIR)$(PREFIX)/bin/mcxp2json
+	rm -f $(DESTDIR)$(PREFIX)/share/applications/$(BINARY).desktop
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(BINARY).png

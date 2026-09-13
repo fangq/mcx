@@ -1,0 +1,55 @@
+# Builds MCX Studio 2 and runs its tests.
+#
+# Separate from build_all.yml, which builds the first Studio and the mex
+# files and takes the better part of an hour: this one needs only Lazarus,
+# runs in a couple of minutes, and is the thing that has to stay green while
+# the GUI is being worked on.
+name: MCX Studio 2
+
+on:
+  push:
+    branches: [master, mcxstudio2]
+    paths: ['mcxstudio2/**', 'icons/svg/**', '.github/workflows/mcxstudio2.yml']
+  pull_request:
+    branches: [master]
+    paths: ['mcxstudio2/**', 'icons/svg/**', '.github/workflows/mcxstudio2.yml']
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+        working-directory: mcxstudio2
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Lazarus
+        run: sudo apt-get update && sudo apt-get install -y lazarus xvfb
+
+      - name: Build
+        run: make
+
+      # Layer one links mcxdoc alone: no LCL, no widgetset, no display.
+      - name: Document tests
+        run: make test-doc
+
+      # Layer two drives the real form, so it needs a display -- but not a
+      # desktop: xvfb is enough, and the form is never shown.
+      - name: Binding tests
+        run: xvfb-run -a make test-bind
+
+      # A path mcx reads that nothing on the form reaches is how the first
+      # Studio fell years behind.  Reported, not enforced: mcx grows keys
+      # faster than a GUI can grow controls, and a red build for that would
+      # only teach people to ignore it.
+      - name: Coverage of mcx's own keys
+        run: make check-paths
+
+      - name: Upload the binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcxstudio2-linux
+          path: mcxstudio2/bin/mcxstudio2

@@ -2981,9 +2981,14 @@ begin
     sbMain.Panels[1].Text := 'Wizard'
   else
     sbMain.Panels[1].Text := 'Expert';
-  sbMain.Panels[2].Text := Format('%d x %d x %d',
-    [FDoc.AsInt('Domain.Dim[0]'), FDoc.AsInt('Domain.Dim[1]'),
-     FDoc.AsInt('Domain.Dim[2]')]);
+  { A mesh has no Dim, and "0 x 0 x 0" reads as a broken file rather than as
+    a different kind of domain. }
+  if FRun.AsStr('@run.domainkind', 'shapes') = 'mesh' then
+    sbMain.Panels[2].Text := 'mesh ' + FDoc.AsStr('Mesh.MeshID', '(embedded)')
+  else
+    sbMain.Panels[2].Text := Format('%d x %d x %d',
+      [FDoc.AsInt('Domain.Dim[0]'), FDoc.AsInt('Domain.Dim[1]'),
+       FDoc.AsInt('Domain.Dim[2]')]);
 end;
 
 end.
