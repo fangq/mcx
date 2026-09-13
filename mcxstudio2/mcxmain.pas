@@ -639,12 +639,24 @@ procedure TfmMain.BuildIcons;
 var
   Size: Integer;
 begin
-  { 24 rather than 16 on the design grid: the artwork is a coloured badge
+  { 36 rather than 16 on the design grid: the artwork is a coloured badge
     rather than a line glyph, and a badge needs the pixels to read as one. }
-  Size := McxScale96(24);
+  Size := McxScale96(36);
   ilIcons.Width := Size;
   ilIcons.Height := Size;
   McxBuildIconList(ilIcons, McxIconNames, clBtnText);
+
+  { The buttons are sized from the glyph rather than from the designer.
+
+    ButtonWidth and ButtonHeight are not among the properties the DPI sweep
+    touches -- nothing in the LCL claims them -- so the 32 the .lfm carried
+    stayed 32 whatever the display did, while the icons above grew with it.
+    On this 130-dpi screen that was a 32-pixel badge in a 32-pixel button,
+    with no room left for the frame around it.  Tying the two together is
+    also the whole of making the bar bigger: one number, and the padding
+    keeps its proportion. }
+  tbMain.ButtonWidth := Size + McxScale96(12);
+  tbMain.ButtonHeight := Size + McxScale96(12);
 
   acNew.ImageIndex := McxIconIndex('new');
   acOpen.ImageIndex := McxIconIndex('open');
