@@ -85,8 +85,8 @@ const
     'mesh=Tetrahedral mesh  (MMC)';
 
   ChoiceOutFormat =
-    'jnii=JNIfTI  (.jnii, text JSON),' +
-    'bnii=BNIfTI  (.bnii, binary),' +
+    'jnii=JNIfTI text  (.jnii),' +
+    'bnii=JNIfTI binary  (.bnii),' +
     'nii=NIfTI  (.nii),' +
     'mc2=Raw floats  (.mc2),' +
     'hdr=Analyze  (.hdr/.img)';
@@ -108,7 +108,7 @@ const
     'integer=One label a voxel  (int32),' +
     'asgn_byte=Two labels a voxel  (uint8),' +
     'muamus_short=Scaled mua and mus  (uint16),' +
-    'asgn_float=mua, mus, g and n a voxel  (float),' +
+    'asgn_float=mua/mus/g/n a voxel  (float),' +
     'muamus_float=mua and mus a voxel  (float),' +
     'muamus_half=mua and mus a voxel  (half),' +
     'svmc=Split-voxel  (SVMC),' +
@@ -124,7 +124,7 @@ const
     'R:Print the random number seed,' +
     'M:Record photon trajectories  (writes <session>_traj.jdat),' +
     'P:Show a progress bar,' +
-    'T:Record trajectories only, do not accumulate';
+    'T:Record trajectories without accumulating';
 
   FlagsSaveData =
     'D:Which detector caught it,' +
@@ -141,22 +141,22 @@ const
   ChoiceSrcType =
     'pencil=Pencil beam  (a single ray),' +
     'isotropic=Isotropic point,' +
-    'cone=Cone beam  (Param1: half angle),' +
-    'gaussian=Gaussian beam  (Param1: waist),' +
-    'planar=Planar patch  (Param1, Param2: edges),' +
+    'cone=Cone beam,' +
+    'gaussian=Gaussian beam,' +
+    'planar=Planar patch,' +
     'pattern=2-D pattern on a patch,' +
     'pattern3d=3-D pattern in a box,' +
     'fourier=Fourier pattern on a patch,' +
     'arcsine=Arcsine  (Lambertian-like),' +
-    'disk=Disk  (Param1: radius),' +
-    'fourierx=Fourier, 2-vector form,' +
-    'fourierx2d=Fourier, two frequencies,' +
+    'disk=Disk,' +
+    'fourierx=Fourier with edge lengths,' +
+    'fourierx2d=Fourier in two directions,' +
     'zgaussian=Gaussian in angle,' +
-    'line=Line source  (Param1: end),' +
-    'slit=Slit  (Param1: end),' +
+    'line=Line source,' +
+    'slit=Slit,' +
     'pencilarray=Array of pencil beams,' +
     'hyperboloid=Hyperboloid  (focused Gaussian),' +
-    'ring=Ring  (Param1: outer, inner radius)';
+    'ring=Ring';
 
   { The binding table.  One row per setting: the control the designer placed on
     the left, the path it writes on the right.  This is the only place a

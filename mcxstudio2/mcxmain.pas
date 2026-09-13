@@ -2746,6 +2746,7 @@ var
   B: TMcxBind;
   C: TControl;
   InMode, Shown, Moved: Boolean;
+  Cap1, Cap2: string;
   Live: array of Boolean;
 
   { Restacking is only needed when something appeared or disappeared, and
@@ -2777,6 +2778,28 @@ begin
       FLabels[i].Enabled := C.Enabled;
     end;
   end;
+
+  { Param1 and Param2 hold up to four numbers each, and which numbers they
+    are is decided entirely by the source type -- so the caption is too, and
+    a type that takes none loses the row rather than offering an empty box
+    nobody can fill.  This is the one place the form is not a fixed picture
+    of the binding table, and it is worth it: "Parameter 1" is a box you
+    need the manual open to use. }
+  McxSrcParams(FDoc.AsStr('Optode.Source.Type', 'pencil'), Cap1, Cap2);
+  if Cap1 = '' then
+  begin
+    Show(edSrcParam1, False);
+    Show(lbSrcParam1, False);
+  end
+  else
+    lbSrcParam1.Caption := Cap1;
+  if Cap2 = '' then
+  begin
+    Show(edSrcParam2, False);
+    Show(lbSrcParam2, False);
+  end
+  else
+    lbSrcParam2.Caption := Cap2;
 
   { A row whose every control the wizard hid goes with them, or its caption
     is left standing beside nothing.  A row shared by two check boxes stays

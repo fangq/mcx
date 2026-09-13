@@ -32,6 +32,15 @@ function McxHelpText(const ACtl, ACaption: string): string;
   one line running off the edge of the screen. }
 function McxWrap(const AText: string; AColumns: Integer = 68): string;
 
+{ What Param1 and Param2 hold for one source type.  Empty when that type
+  takes no parameters, which is the signal to hide the row entirely.
+
+  mcx packs up to four numbers into each, and what they mean is decided
+  entirely by the type -- "Param1" on its own is a box you have to read the
+  manual to fill in.  The meanings are read off mcx_core.cu's launch
+  switch, not off the old GUI, because two of the types are newer than it. }
+procedure McxSrcParams(const AType: string; out ALabel1, ALabel2: string);
+
 { What F1 shows when nothing in particular is focused. }
 function McxHelpOverview: string;
 
@@ -230,6 +239,59 @@ begin
   if Result = '' then Exit(McxHelpOverview);
   if ACaption <> '' then
     Result := ACaption + LineEnding + LineEnding + Result;
+end;
+
+procedure McxSrcParams(const AType: string; out ALabel1, ALabel2: string);
+begin
+  ALabel1 := '';
+  ALabel2 := '';
+  { pencil, isotropic and arcsine take none and fall through to ''. }
+  if AType = 'cone' then
+    ALabel1 := 'Half angle (rad):'
+  else if AType = 'gaussian' then
+    ALabel1 := 'Waist radius, wavelength:'
+  else if AType = 'zgaussian' then
+    ALabel1 := 'Angular variance (rad):'
+  else if AType = 'disk' then
+    ALabel1 := 'Radius, inner radius:'
+  else if AType = 'ring' then
+    ALabel1 := 'Outer, inner radius, start, end angle:'
+  else if AType = 'hyperboloid' then
+    ALabel1 := 'Waist radius, focal distance, Rayleigh range:'
+  else if (AType = 'line') or (AType = 'slit') then
+    ALabel1 := 'Far end (x, y, z):'
+  else if AType = 'planar' then
+  begin
+    ALabel1 := 'First edge vector Vx:';
+    ALabel2 := 'Second edge vector Vy:';
+  end
+  else if AType = 'pattern' then
+  begin
+    ALabel1 := 'Edge vector Vx, then Nx:';
+    ALabel2 := 'Edge vector Vy, then Ny:';
+  end
+  else if AType = 'pattern3d' then
+    ALabel1 := 'Pattern size (Nx, Ny, Nz):'
+  else if AType = 'fourier' then
+  begin
+    ALabel1 := 'Edge vector Vx, then kx:';
+    ALabel2 := 'Edge vector Vy, then ky:';
+  end
+  else if AType = 'fourierx' then
+  begin
+    ALabel1 := 'Edge vector Vx, then |Vy|:';
+    ALabel2 := 'kx, ky, phase shift, depth:';
+  end
+  else if AType = 'fourierx2d' then
+  begin
+    ALabel1 := 'Edge vector Vx, then |Vy|:';
+    ALabel2 := 'kx, ky, x phase, y phase:';
+  end
+  else if AType = 'pencilarray' then
+  begin
+    ALabel1 := 'Edge vector Vx, then count:';
+    ALabel2 := 'Edge vector Vy, then count:';
+  end;
 end;
 
 function McxHelpOverview: string;
