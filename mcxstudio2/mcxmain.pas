@@ -393,6 +393,7 @@ type
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
+    procedure GuessRunSettings;
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
     procedure UpdateRunActions;
@@ -1289,6 +1290,27 @@ begin
   NewDocument;
 end;
 
+{ Which simulator and which kind of domain a file is for.
+
+  Neither is written in the file -- they are how it is run, not what it says
+  -- so they are read off its shape.  A file with a Mesh block is an MMC
+  input and nothing else: no other backend has one, and opening it as a
+  voxel simulation shows an empty 0 x 0 x 0 domain and a Run button that
+  would fail. }
+procedure TfmMain.GuessRunSettings;
+begin
+  if (FDoc.Find('Mesh') <> nil) or (FDoc.Find('Shapes.MeshNode') <> nil) then
+  begin
+    FRun.SetStr('@run.backend', 'mmc');
+    FRun.SetStr('@run.domainkind', 'mesh');
+  end
+  else if FDoc.AsStr('Domain.VolumeFile', '') <> '' then
+    FRun.SetStr('@run.domainkind', 'voxel')
+  else
+    FRun.SetStr('@run.domainkind', 'shapes');
+  FRun.Modified := False;
+end;
+
 procedure TfmMain.OpenDocument(const AFileName: string);
 begin
   if not FDoc.LoadFromFile(AFileName) then
@@ -1298,6 +1320,7 @@ begin
       FDoc.LastError, mtError, [mbOK], 0);
     Exit;
   end;
+  GuessRunSettings;
   LoadAllBindings;
   UpdateTitle;
   RefreshPreview;
@@ -1655,16 +1678,25 @@ begin
   end;
 
   { A run needs a file on disk: the simulation is the JSON, and paths inside
-    it -- a volume file, an mmc mesh -- resolve against where it sits. }
+    it -- a volume file, an mmc mesh -- resolve against where it sits.
+
+    Written only if it has been edited.  Saving unconditionally meant that
+    opening someone's example and pressing Run rewrote their file: same
+    simulation, but reindented, arrays exploded a number to a line, 5.0e-09
+    become 5E-9.  Nobody asked for that, and in a checkout it shows up as a
+    modified file. }
   if FDoc.FileName = '' then
     if not SaveAs then Exit;
-  if not FDoc.SaveToFile(FDoc.FileName) then
+  if FDoc.Modified then
   begin
-    MessageDlg('MCX Studio', 'Could not write the file:'#10#10 + FDoc.LastError,
-      mtError, [mbOK], 0);
-    Exit;
+    if not FDoc.SaveToFile(FDoc.FileName) then
+    begin
+      MessageDlg('MCX Studio', 'Could not write the file:'#10#10 +
+        FDoc.LastError, mtError, [mbOK], 0);
+      Exit;
+    end;
+    UpdateTitle;
   end;
-  UpdateTitle;
 
   pcView.ActivePage := tsLog;
   mmLog.Clear;
