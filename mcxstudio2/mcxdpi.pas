@@ -71,7 +71,7 @@ procedure McxInstallChromeStyle;
   Passing clNone for all three puts the desktop's own theme back: an empty
   style contributes nothing and gtk falls through to what it had. }
 procedure McxApplyChromeColours(ABase, AText, AAccent, AField,
-  ASelText: TColor);
+  ASelText, AHover: TColor);
 
 { Scale every form from the moment it is first shown, for the rest of the
   session.  Call once at startup.
@@ -420,7 +420,7 @@ begin
 end;
 
 procedure McxApplyChromeColours(ABase, AText, AAccent, AField,
-  ASelText: TColor);
+  ASelText, AHover: TColor);
 {$IFDEF MCX_GTK2_CHROME}
 var
   Body: string;
@@ -431,11 +431,17 @@ begin
     { bg is the face of a widget, base the field inside one, fg and text the
       writing on each.  PRELIGHT is hover and ACTIVE is pressed; INSENSITIVE
       is greyed out, and is given a washed-out version of the ink rather than
-      left behind on the desktop's palette. }
+      left behind on the desktop's palette.
+
+      Hover is a colour of its own rather than the face again.  Left as the
+      face there is no feedback at all, and left to the desktop it is
+      whatever that theme uses -- which on a dark desktop under a light theme
+      was white, so anything already highlighted went white under the
+      pointer. }
     Body :=
       '  bg[NORMAL] = ' + HtmlColour(ABase) + #10 +
       '  bg[ACTIVE] = ' + HtmlColour(ABase) + #10 +
-      '  bg[PRELIGHT] = ' + HtmlColour(ABase) + #10 +
+      '  bg[PRELIGHT] = ' + HtmlColour(AHover) + #10 +
       '  bg[INSENSITIVE] = ' + HtmlColour(ABase) + #10 +
       '  bg[SELECTED] = ' + HtmlColour(AAccent) + #10 +
       '  fg[NORMAL] = ' + HtmlColour(AText) + #10 +
@@ -452,16 +458,38 @@ begin
       '  text[ACTIVE] = ' + HtmlColour(ASelText) + #10 +
       '  text[PRELIGHT] = ' + HtmlColour(AText) + #10 +
       '  text[INSENSITIVE] = ' + HtmlColour(AText) + #10 +
-      '  text[SELECTED] = ' + HtmlColour(ASelText) + #10;
+      '  text[SELECTED] = ' + HtmlColour(ASelText) + #10 +
+      { And the default drawing engine, which is what makes the colours
+        above count for anything.
 
+        A themed desktop does not paint a button from bg[NORMAL]; it hands
+        the widget to its engine, which draws a face of its own from images
+        or from code and never reads the colour.  Adwaita-dark does exactly
+        that, which is why a light theme on that desktop came up light
+        everywhere except the buttons and the notebook's tab strip -- and
+        why the one button that did go light was the disabled one, its
+        INSENSITIVE state being the one the engine leaves alone.  An empty
+        engine name puts the default back for this style only. }
+      '  engine "" { }'#10;
+
+  { At the highest priority, not the default one.
+
+    A desktop theme's own rc matches with selectors far more specific than
+    "*" -- widget_class "*<GtkButton>*" and the like -- and at equal priority
+    the more specific match wins.  So on a dark desktop the buttons and the
+    notebook kept the desktop's dark face whatever theme was chosen here,
+    which is only visible if the two disagree: a light theme on a dark
+    desktop, where the window went light around a handful of black holes.
+    "highest" is above the theme's priority and settles it whatever the
+    selector. }
   gtk_rc_parse_string(PChar(
     'style "mcx_theme_colours"'#10 +
     '{'#10 + Body + '}'#10 +
-    'class "*" style "mcx_theme_colours"'#10 +
+    'class "*" style : highest "mcx_theme_colours"'#10 +
     { Widgets built by a container -- a notebook's tab labels, a menu's
       items -- take their style from the container's name rather than from
       the class list, so they need saying twice. }
-    'widget "*" style "mcx_theme_colours"'#10));
+    'widget "*" style : highest "mcx_theme_colours"'#10));
   gtk_rc_reset_styles(gtk_settings_get_default);
 end;
 {$ELSE}

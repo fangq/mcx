@@ -892,7 +892,11 @@ begin
   P.Canvas.Brush.Color := McxBlend(McxBase, McxAccent, SubActive);
   P.Canvas.Pen.Style := psSolid;
   P.Canvas.Pen.Color := P.Canvas.Brush.Color;
-  P.Canvas.RoundRect(Pad, B.Top, P.Width - Pad, B.Top + B.Height, R, R);
+  { Indented past the section band above it, so the band says what the
+    indent of the title already says: this one is under that one.  A band
+    starting where its parent's starts reads as a second section. }
+  P.Canvas.RoundRect(Pad + McxScale96(18), B.Top, P.Width - Pad,
+    B.Top + B.Height, R, R);
 end;
 
 procedure TfmMain.CollectSections;
@@ -1315,10 +1319,13 @@ begin
     draws all of it from its own style whatever we set on the control in
     front.  Handing it the same three roles is the only way those follow. }
   if McxCurrentTheme = mtSystem then
-    McxApplyChromeColours(clNone, clNone, clNone, clNone, clNone)
+    McxApplyChromeColours(clNone, clNone, clNone, clNone, clNone, clNone)
   else
     McxApplyChromeColours(McxBase, McxText, McxAccent,
-      McxBlend(McxBase, McxText, 4), McxReadable(McxAccent));
+      McxBlend(McxBase, McxText, 4), McxReadable(McxAccent),
+      { A lift towards the accent: enough to say the pointer is here, not so
+        much that it competes with what is actually selected. }
+      McxBlend(McxBase, McxAccent, 22));
 
   Color := McxBase;
   Font.Color := McxText;
