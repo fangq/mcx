@@ -576,9 +576,12 @@ const
   SubHover   = 14;   { and the one the pointer is over }
   HeadHover  = 12;   { how far a hovered section band lifts towards the ink }
   { Tighter than a card's.  A card is a surface a group of settings sits on;
-    a navigator band is a label around one line of text, and at a card's
-    radius a 50-pixel band reads as a lozenge. }
-  NavRadius  = 10;
+    a navigator band is a label around one line of text. }
+  NavRadius  = 10;   { a subsection band }
+  BandRadius = 16;   { a section band, which is taller and carries more }
+  { A gap between one section and the next, so the bands read as a list of
+    separate things rather than as a column divided into stripes. }
+  BandGap    = 5;
 
   SectionGroups: array[0..6] of string = (
     { Simulator } 'gbEngine',
@@ -911,7 +914,7 @@ begin
   if not (Sender is TPaintBox) then Exit;
   B := TPaintBox(Sender);
   C := B.Canvas;
-  R := McxScale96(NavRadius);
+  R := McxScale96(BandRadius);
   Pad := McxScale96(4);
 
   C.Brush.Style := bsSolid;
@@ -1016,6 +1019,7 @@ begin
   for i := 0 to High(FPanes) do
   begin
     FPanes[i].ParentColor := False;
+    FPanes[i].BorderSpacing.Bottom := BandGap;
 
     { The heading moves onto a panel of its own, above the body, and the band
       is painted on that.  AutoSize, so the strip is whatever the heading
