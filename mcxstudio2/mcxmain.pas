@@ -56,6 +56,7 @@ type
     acDevices: TAction;
     acToggleMode: TAction;
     acQuit: TAction;
+    acSaveImage: TAction;
     acBenchmark: TAction;
     acLoadResult: TAction;
     acResetLayout: TAction;
@@ -63,6 +64,7 @@ type
     alMain: TActionList;
     dlgOpen: TOpenDialog;
     dlgResult: TOpenDialog;
+    dlgImage: TSaveDialog;
     dlgSave: TSaveDialog;
     ilIcons: TImageList;
     lbTodoGL: TLabel;
@@ -89,6 +91,7 @@ type
     tbDevices: TToolButton;
     tbSep2: TToolButton;
     tbSep3: TToolButton;
+    tbImage: TToolButton;
     tbBench: TToolButton;
     tbResult: TToolButton;
     tbDock: TToolButton;
@@ -270,6 +273,7 @@ type
     procedure acSaveExecute(Sender: TObject);
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
+    procedure acSaveImageExecute(Sender: TObject);
     procedure acBenchmarkExecute(Sender: TObject);
     procedure acLoadResultExecute(Sender: TObject);
     procedure acResetLayoutExecute(Sender: TObject);
@@ -361,6 +365,7 @@ type
     procedure ViewLog(Sender: TObject; const AText: string);
     procedure ShowResult(const AFileName: string);
     procedure BenchmarkClick(Sender: TObject);
+    procedure ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
     procedure TableChanged(Sender: TObject);
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
@@ -515,6 +520,7 @@ begin
 
   FView := TMcxView.Create(pnGL);
   FView.OnLog := @ViewLog;
+  FView.OnPick := @ViewPick;
   FView.Document := FDoc;
   lbTodoGL.Visible := False;
   LoadDockLayout;
@@ -573,6 +579,7 @@ begin
   acResetLayout.ImageIndex := McxIconIndex('reset');
   acLoadResult.ImageIndex := McxIconIndex('preview');
   acBenchmark.ImageIndex := McxIconIndex('bench');
+  acSaveImage.ImageIndex := McxIconIndex('saveas');
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
@@ -1700,6 +1707,29 @@ end;
   Three steps and no parsing of our own: ask for the list, ask for the one
   picked, load it as a document.  The benchmark is printed by --dumpjson 2,
   which stops before any GPU work, so this costs nothing and needs no card. }
+{ Twice the size of the pane, because a picture that goes into a paper or a
+  bug report wants more pixels than the window happened to have. }
+procedure TfmMain.acSaveImageExecute(Sender: TObject);
+begin
+  if FDoc.FileName <> '' then
+    dlgImage.FileName := ChangeFileExt(FDoc.FileName, '.png')
+  else
+    dlgImage.FileName := FDoc.AsStr('Session.ID', 'mcx') + '.png';
+  if not dlgImage.Execute then Exit;
+  if FView.SaveImage(dlgImage.FileName, pnGL.Width * 2, pnGL.Height * 2) then
+    Log('wrote ' + dlgImage.FileName)
+  else
+    Log('could not write ' + dlgImage.FileName);
+end;
+
+{ What a click in the 3-D view landed on.  The status bar rather than a
+  dialog: it answers a question nobody asked out loud. }
+procedure TfmMain.ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
+begin
+  sbMain.Panels[0].Text := Format('Shapes[%d] %s, tag %d',
+    [AInfo.Index, AInfo.Verb, AInfo.Tag]);
+end;
+
 procedure TfmMain.acBenchmarkExecute(Sender: TObject);
 var
   Names: TStringList;

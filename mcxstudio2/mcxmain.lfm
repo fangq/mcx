@@ -79,6 +79,11 @@ object fmMain: TfmMain
       Caption = 'tbSep3'
       Style = tbsDivider
     end
+    object tbImage: TToolButton
+      Left = 1
+      Top = 1
+      Action = acSaveImage
+    end
     object tbBench: TToolButton
       Left = 1
       Top = 1
@@ -2056,6 +2061,11 @@ object fmMain: TfmMain
       Hint = 'Showing key settings only. Click for every setting.'
       OnExecute = acToggleModeExecute
     end
+    object acSaveImage: TAction
+      Caption = 'Save image...'
+      Hint = 'Write the 3-D view to a PNG'
+      OnExecute = acSaveImageExecute
+    end
     object acBenchmark: TAction
       Caption = 'Benchmarks'
       Hint = 'Start from one of mcx'#39's built-in benchmarks'
@@ -2082,6 +2092,14 @@ object fmMain: TfmMain
       OnExecute = acQuitExecute
       ShortCut = 16465
     end
+  end
+  object dlgImage: TSaveDialog
+    Title = 'Save the view'
+    DefaultExt = '.png'
+    Filter = 'PNG image (*.png)|*.png|All files|*'
+    Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
+    left = 640
+    top = 192
   end
   object dlgResult: TOpenDialog
     Title = 'Open a result'

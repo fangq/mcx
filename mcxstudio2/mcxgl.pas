@@ -168,6 +168,29 @@ type
     property Handle: GLuint read FTex;
   end;
 
+  { An offscreen colour and depth target.
+
+    Picking needs a pass nobody sees, and saving a picture wants one larger
+    than the window; both are the same object.  The old renderer had neither:
+    it picked by walking its scene graph, which capped at sixty-four hits,
+    bubble-sorted them, and could not pick a mesh, a disk, a cone or a line
+    at all. }
+  TMcxTarget = class
+  private
+    FFBO, FTex, FDepth: GLuint;
+    FWidth, FHeight: Integer;
+  public
+    destructor Destroy; override;
+    function Bind(AWidth, AHeight: Integer): Boolean;
+    procedure Unbind;
+    { The pixel at AX, AY counting from the bottom, as r, g, b. }
+    procedure ReadPixel(AX, AY: Integer; out AR, AG, AB: Byte);
+    { Every pixel, bottom row first, three bytes each. }
+    function ReadAll: TBytes;
+    property Width: Integer read FWidth;
+    property Height: Integer read FHeight;
+  end;
+
   { The unit cube the raycaster marches through: twelve triangles, back faces
     only, so that the fragment exists even when the camera is inside. }
   TMcxCube = class
@@ -218,8 +241,12 @@ const
     'in vec4 vColour;'#10 +
     'out vec4 oColour;'#10 +
     'uniform vec3 uLight;'#10 +
+    'uniform int uFlat;'#10 +
     'void main()'#10 +
     '{'#10 +
+    { Flat is the picking pass: the colour is an identifier, so shading it
+      would change the number that gets read back. }
+    '    if (uFlat != 0) { oColour = vec4(vColour.rgb, 1.0); return; }'#10 +
     { abs, not max: the light should fall on whichever face is turned
       towards it, and a preview has no shadows to be wrong about. }
     '    float d = abs(dot(normalize(vNormal), normalize(uLight)));'#10 +
@@ -358,6 +385,14 @@ const
     here.  Both are fixed by the specification and have been since 3.0. }
   GL_RED  = $1903;
   GL_R32F = $822E;
+  { Also absent from FPC's headers, and also fixed by the specification. }
+  GL_RGBA8              = $8058;
+  GL_DEPTH_COMPONENT24  = $81A6;
+  GL_FRAMEBUFFER        = $8D40;
+  GL_RENDERBUFFER       = $8D41;
+  GL_COLOR_ATTACHMENT0  = $8CE0;
+  GL_DEPTH_ATTACHMENT   = $8D00;
+  GL_FRAMEBUFFER_COMPLETE = $8CD5;
 
 
 function McxVec3(x, y, z: Single): TMcxVec3;
@@ -478,6 +513,80 @@ function McxGLDescribe: string;
 begin
   Result := Ask(GL_RENDERER) + ' -- OpenGL ' + Ask(GL_VERSION) +
     ', GLSL ' + Ask(GL_SHADING_LANGUAGE_VERSION);
+end;
+
+{ TMcxTarget }
+
+destructor TMcxTarget.Destroy;
+begin
+  if FDepth <> 0 then glDeleteRenderbuffers(1, @FDepth);
+  if FTex <> 0 then glDeleteTextures(1, @FTex);
+  if FFBO <> 0 then glDeleteFramebuffers(1, @FFBO);
+  inherited Destroy;
+end;
+
+function TMcxTarget.Bind(AWidth, AHeight: Integer): Boolean;
+begin
+  Result := False;
+  if (AWidth < 1) or (AHeight < 1) then Exit;
+
+  if FFBO = 0 then
+  begin
+    glGenFramebuffers(1, @FFBO);
+    glGenTextures(1, @FTex);
+    glGenRenderbuffers(1, @FDepth);
+  end;
+
+  if (AWidth <> FWidth) or (AHeight <> FHeight) then
+  begin
+    FWidth := AWidth;
+    FHeight := AHeight;
+    glBindTexture(GL_TEXTURE_2D, FTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, FWidth, FHeight, 0, GL_RGBA,
+      GL_UNSIGNED_BYTE, nil);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindRenderbuffer(GL_RENDERBUFFER, FDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, FWidth,
+      FHeight);
+  end;
+
+  glBindFramebuffer(GL_FRAMEBUFFER, FFBO);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+    FTex, 0);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+    GL_RENDERBUFFER, FDepth);
+  Result := glCheckFramebufferStatus(GL_FRAMEBUFFER) = GL_FRAMEBUFFER_COMPLETE;
+  if Result then glViewport(0, 0, FWidth, FHeight);
+end;
+
+procedure TMcxTarget.Unbind;
+begin
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+end;
+
+procedure TMcxTarget.ReadPixel(AX, AY: Integer; out AR, AG, AB: Byte);
+var
+  Px: array[0..3] of Byte;
+begin
+  AR := 0; AG := 0; AB := 0;
+  if (AX < 0) or (AY < 0) or (AX >= FWidth) or (AY >= FHeight) then Exit;
+  glBindFramebuffer(GL_FRAMEBUFFER, FFBO);
+  glReadPixels(AX, AY, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, @Px[0]);
+  AR := Px[0];
+  AG := Px[1];
+  AB := Px[2];
+end;
+
+function TMcxTarget.ReadAll: TBytes;
+begin
+  SetLength(Result, FWidth * FHeight * 3);
+  if Length(Result) = 0 then Exit;
+  glBindFramebuffer(GL_FRAMEBUFFER, FFBO);
+  { One byte alignment, or a width that is not a multiple of four comes back
+    with a gap at the end of every row. }
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glReadPixels(0, 0, FWidth, FHeight, GL_RGB, GL_UNSIGNED_BYTE, @Result[0]);
 end;
 
 { TMcxMesh }
