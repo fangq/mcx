@@ -68,8 +68,8 @@ type
     { The three axis letters, in their own batch: they are rebuilt every
       frame to face the camera, and the rest of the wireframe is not. }
     FAxisText: TMcxLines;
-    FAxisAt: TMcxVec3;
-    FAxisLen: Single;
+    FAxisLo, FAxisHi: TMcxVec3;
+    FAxisStep: array[0..2] of Single;
     FTraj: TMcxLines;
     FTrajCount: Integer;
     { The photon each segment belongs to, in buffer order -- which is photon
@@ -122,7 +122,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure GLMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
-    procedure AddAxes(const AOrigin: TMcxVec3; ALength: Single);
+    procedure AddAxes(const ALo, AHi: TMcxVec3);
     procedure BuildAxisLabels;
     procedure AddShapes;
     procedure AddMesh;
@@ -961,77 +961,282 @@ end;
   same material look the same.  UpperSpace is deliberately absent: a
   half-space has no outline to draw, and a big translucent plane across the
   domain would hide what it is meant to explain. }
-{ The three axes, and a letter at the end of each.
+{ A rounded spacing for graduations across a span.
 
-  The letters are drawn as strokes rather than as text: a core profile has no
-  text of any kind, and three glyphs do not justify a font atlas and a second
-  shader.
-
-  They go in a batch of their own because they are rebuilt on every frame,
-  turned to face the camera.  Fixed in world space they are unreadable from
-  half the angles you would look from -- a letter in the y-z plane seen down
-  the x axis is a line.  Eight segments a frame is nothing. }
-procedure TMcxView.AddAxes(const AOrigin: TMcxVec3; ALength: Single);
+  Aims for five to ten divisions and picks the largest round number that
+  stays inside that: 1, 2 or 5 times a power of ten.  A 60-unit domain gets
+  10, a 181-unit head gets 20, a 10-unit cube gets 2 -- all numbers a person
+  reads without having to work them out, which is the whole point of putting
+  them on an axis. }
+function McxNiceStep(ASpan: Single): Single;
+const
+  Nice: array[0..2] of Single = (1, 2, 5);
+var
+  k, i: Integer;
+  Mag, Step, n: Double;
 begin
-  FAxisAt := AOrigin;
-  FAxisLen := ALength;
-  FLines.Add(AOrigin, McxVec3(AOrigin.x + ALength, AOrigin.y, AOrigin.z),
-    McxVec3(0.90, 0.30, 0.25));
-  FLines.Add(AOrigin, McxVec3(AOrigin.x, AOrigin.y + ALength, AOrigin.z),
-    McxVec3(0.35, 0.75, 0.35));
-  FLines.Add(AOrigin, McxVec3(AOrigin.x, AOrigin.y, AOrigin.z + ALength),
-    McxVec3(0.35, 0.55, 0.95));
+  Result := 1;
+  if ASpan <= 0 then Exit;
+  Result := 0;
+  for k := -4 to 8 do
+  begin
+    Mag := Power(10, k);
+    for i := 0 to 2 do
+    begin
+      Step := Nice[i] * Mag;
+      n := ASpan / Step;
+      { Largest step that still leaves at least five divisions. }
+      if (n >= 5) and (n <= 10.5) and (Step > Result) then Result := Step;
+    end;
+  end;
+  { Nothing fitted -- a span of an odd size.  Eight divisions of whatever it
+    takes is better than no graduations at all. }
+  if Result = 0 then Result := ASpan / 8;
 end;
 
+{ The three axes, each graduated and labelled.
+
+  The axes run the whole length of the domain rather than a quarter of it:
+  they are a ruler, and a ruler that stops short of what is being measured
+  cannot be read against it.  The tick marks are where the numbers go, and
+  the numbers are what say how big the thing on screen actually is.
+
+  The lines and ticks go into the scene, which is rebuilt when the document
+  changes.  The letters and numbers go in a batch of their own, rebuilt every
+  frame to face the camera: fixed in world space a digit is a vertical line
+  from half the angles you would look from. }
+procedure TMcxView.AddAxes(const ALo, AHi: TMcxVec3);
+var
+  Red, Green, Blue: TMcxVec3;
+  Tick: Single;
+
+  procedure Graduate(AAxis: Integer; const AColour: TMcxVec3);
+  var
+    Lo, Hi, Step, t: Single;
+    A, B: TMcxVec3;
+    i: Integer;
+  begin
+    case AAxis of
+      0: begin Lo := ALo.x; Hi := AHi.x; end;
+      1: begin Lo := ALo.y; Hi := AHi.y; end;
+    else begin Lo := ALo.z; Hi := AHi.z; end;
+    end;
+    Step := McxNiceStep(Hi - Lo);
+    FAxisStep[AAxis] := Step;
+
+    A := ALo;
+    B := ALo;
+    case AAxis of
+      0: B.x := Hi;
+      1: B.y := Hi;
+    else B.z := Hi;
+    end;
+    FLines.Add(A, B, AColour);
+
+    { Ticks at every round multiple inside the span, drawn into the two
+      directions the axis is not, so one of them faces the camera whichever
+      way the scene is turned. }
+    i := Trunc(Lo / Step);
+    while i * Step <= Hi + Step * 0.001 do
+    begin
+      t := i * Step;
+      if t >= Lo - Step * 0.001 then
+      begin
+        A := ALo;
+        B := ALo;
+        case AAxis of
+          0: begin
+               A.x := t; B.x := t;
+               B.y := ALo.y - Tick; FLines.Add(A, B, AColour);
+               B.y := ALo.y; B.z := ALo.z - Tick; FLines.Add(A, B, AColour);
+             end;
+          1: begin
+               A.y := t; B.y := t;
+               B.x := ALo.x - Tick; FLines.Add(A, B, AColour);
+               B.x := ALo.x; B.z := ALo.z - Tick; FLines.Add(A, B, AColour);
+             end;
+        else begin
+               A.z := t; B.z := t;
+               B.x := ALo.x - Tick; FLines.Add(A, B, AColour);
+               B.x := ALo.x; B.y := ALo.y - Tick; FLines.Add(A, B, AColour);
+             end;
+        end;
+      end;
+      Inc(i);
+    end;
+  end;
+
+begin
+  FAxisLo := ALo;
+  FAxisHi := AHi;
+  Red := McxVec3(0.90, 0.30, 0.25);
+  Green := McxVec3(0.35, 0.75, 0.35);
+  Blue := McxVec3(0.35, 0.55, 0.95);
+  Tick := Max(AHi.x - ALo.x, Max(AHi.y - ALo.y, AHi.z - ALo.z)) * 0.025;
+  Graduate(0, Red);
+  Graduate(1, Green);
+  Graduate(2, Blue);
+end;
+
+{ The letters and the numbers, turned to face the camera.
+
+  Stroked rather than typeset: a core profile has no text of any kind, and a
+  dozen glyphs do not justify a font atlas and a second shader.  The digits
+  are the seven segments of a calculator display, which is the shortest
+  description of a digit there is and reads cleanly at any size. }
 procedure TMcxView.BuildAxisLabels;
 const
-  { u, v pairs in a unit square, two per stroke. }
+  { u, v pairs in a unit box, two per stroke. }
   GlyphX: array[0..7] of Single = (0, 0, 1, 1,  0, 1, 1, 0);
   GlyphY: array[0..11] of Single =
     (0, 1, 0.5, 0.5,  1, 1, 0.5, 0.5,  0.5, 0.5, 0.5, 0);
   GlyphZ: array[0..11] of Single = (0, 1, 1, 1,  1, 1, 0, 0,  0, 0, 1, 0);
+  { a b c d e f g, in the usual order. }
+  { Narrower than they are tall -- 0.55 by 1 -- so a two-digit number is a
+    number and not a box. }
+  Seg: array[0..6, 0..3] of Single = (
+    (0, 1, 0.55, 1), (0.55, 1, 0.55, 0.5), (0.55, 0.5, 0.55, 0),
+    (0, 0, 0.55, 0), (0, 0.5, 0, 0), (0, 1, 0, 0.5), (0, 0.5, 0.55, 0.5));
+  { Which segments each digit lights. }
+  Digits: array[0..9] of array[0..6] of Boolean = (
+    (True,  True,  True,  True,  True,  True,  False),
+    (False, True,  True,  False, False, False, False),
+    (True,  True,  False, True,  True,  False, True),
+    (True,  True,  True,  True,  False, False, True),
+    (False, True,  True,  False, False, True,  True),
+    (True,  False, True,  True,  False, True,  True),
+    (True,  False, True,  True,  True,  True,  True),
+    (True,  True,  True,  False, False, False, False),
+    (True,  True,  True,  True,  True,  True,  True),
+    (True,  True,  True,  True,  False, True,  True));
 var
   R, U: TMcxVec3;
-  s: Single;
+  Big, Small, Tick: Single;
+  Red, Green, Blue: TMcxVec3;
 
-  procedure Glyph(const ATip: TMcxVec3; const AStrokes: array of Single;
-    const AColour: TMcxVec3);
+  { One stroke of a glyph, in the plane the camera faces. }
+  procedure Stroke(const ACorner: TMcxVec3; AScale: Single;
+    u0, v0, u1, v1: Single; const AColour: TMcxVec3);
+  begin
+    FAxisText.Add(
+      McxVec3(ACorner.x + (R.x * u0 + U.x * v0) * AScale,
+              ACorner.y + (R.y * u0 + U.y * v0) * AScale,
+              ACorner.z + (R.z * u0 + U.z * v0) * AScale),
+      McxVec3(ACorner.x + (R.x * u1 + U.x * v1) * AScale,
+              ACorner.y + (R.y * u1 + U.y * v1) * AScale,
+              ACorner.z + (R.z * u1 + U.z * v1) * AScale),
+      AColour);
+  end;
+
+  procedure Glyph(const ACentre: TMcxVec3; AScale: Single;
+    const AStrokes: array of Single; const AColour: TMcxVec3);
   var
     k: Integer;
     Corner: TMcxVec3;
   begin
-    { Centred on the tip, so the letter sits on the end of its axis however
-      the view is turned. }
-    Corner := McxVec3(ATip.x - (R.x + U.x) * s * 0.5,
-                      ATip.y - (R.y + U.y) * s * 0.5,
-                      ATip.z - (R.z + U.z) * s * 0.5);
+    Corner := McxVec3(ACentre.x - (R.x + U.x) * AScale * 0.5,
+                      ACentre.y - (R.y + U.y) * AScale * 0.5,
+                      ACentre.z - (R.z + U.z) * AScale * 0.5);
     k := 0;
     while k + 3 <= High(AStrokes) do
     begin
-      FAxisText.Add(
-        McxVec3(Corner.x + (R.x * AStrokes[k] + U.x * AStrokes[k + 1]) * s,
-                Corner.y + (R.y * AStrokes[k] + U.y * AStrokes[k + 1]) * s,
-                Corner.z + (R.z * AStrokes[k] + U.z * AStrokes[k + 1]) * s),
-        McxVec3(Corner.x + (R.x * AStrokes[k + 2] + U.x * AStrokes[k + 3]) * s,
-                Corner.y + (R.y * AStrokes[k + 2] + U.y * AStrokes[k + 3]) * s,
-                Corner.z + (R.z * AStrokes[k + 2] + U.z * AStrokes[k + 3]) * s),
-        AColour);
+      Stroke(Corner, AScale, AStrokes[k], AStrokes[k + 1],
+             AStrokes[k + 2], AStrokes[k + 3], AColour);
       Inc(k, 4);
+    end;
+  end;
+
+  { A number, centred on APos.  Each digit is 0.6 of the cell wide, so the
+    string is laid out on that pitch. }
+  procedure Number(const APos: TMcxVec3; AValue: Double; AScale: Single;
+    const AColour: TMcxVec3);
+  var
+    S: string;
+    i, k, d: Integer;
+    Corner: TMcxVec3;
+    Pitch, Left: Single;
+  begin
+    if Abs(AValue) < 1e-9 then AValue := 0;
+    if Abs(AValue - Round(AValue)) < 1e-6 then S := IntToStr(Round(AValue))
+    else S := FormatFloat('0.##', AValue);
+    Pitch := AScale * 0.72;
+    Left := -Pitch * (Length(S) - 1) * 0.5 - AScale * 0.275;
+    for i := 1 to Length(S) do
+    begin
+      Corner := McxVec3(
+        APos.x + R.x * (Left + (i - 1) * Pitch) - U.x * AScale * 0.5,
+        APos.y + R.y * (Left + (i - 1) * Pitch) - U.y * AScale * 0.5,
+        APos.z + R.z * (Left + (i - 1) * Pitch) - U.z * AScale * 0.5);
+      if S[i] = '-' then
+        Stroke(Corner, AScale, Seg[6][0], Seg[6][1], Seg[6][2], Seg[6][3], AColour)
+      else if S[i] = '.' then
+        Stroke(Corner, AScale, 0.2, 0, 0.35, 0, AColour)
+      else if S[i] in ['0'..'9'] then
+      begin
+        d := Ord(S[i]) - Ord('0');
+        for k := 0 to 6 do
+          if Digits[d][k] then
+            Stroke(Corner, AScale, Seg[k][0], Seg[k][1], Seg[k][2], Seg[k][3],
+                   AColour);
+      end;
+    end;
+  end;
+
+  { The graduations of one axis. }
+  procedure Numbers(AAxis: Integer; const AColour: TMcxVec3);
+  var
+    Lo, Hi, Step, t: Single;
+    P: TMcxVec3;
+    i: Integer;
+  begin
+    case AAxis of
+      0: begin Lo := FAxisLo.x; Hi := FAxisHi.x; end;
+      1: begin Lo := FAxisLo.y; Hi := FAxisHi.y; end;
+    else begin Lo := FAxisLo.z; Hi := FAxisHi.z; end;
+    end;
+    Step := FAxisStep[AAxis];
+    if Step <= 0 then Exit;
+    i := Trunc(Lo / Step);
+    while i * Step <= Hi + Step * 0.001 do
+    begin
+      t := i * Step;
+      { The far end carries the axis letter, so its number would sit on top
+        of it; and zero is the corner all three share. }
+      if (t >= Lo - Step * 0.001) and (t < Hi - Step * 0.5) and (i <> 0) then
+      begin
+        P := FAxisLo;
+        case AAxis of
+          0: begin P.x := t; P.y := P.y - Tick * 3.0; end;
+          1: begin P.y := t; P.x := P.x - Tick * 3.0; end;
+        else begin P.z := t; P.x := P.x - Tick * 3.0; end;
+        end;
+        Number(P, t, Small, AColour);
+      end;
+      Inc(i);
     end;
   end;
 
 begin
   FAxisText.Clear;
-  if FAxisLen <= 0 then Exit;
+  if (FAxisHi.x <= FAxisLo.x) and (FAxisHi.y <= FAxisLo.y) then Exit;
   R := FCamera.ScreenRight;
   U := FCamera.ScreenUp;
-  s := FAxisLen * 0.22;
-  Glyph(McxVec3(FAxisAt.x + FAxisLen + s, FAxisAt.y, FAxisAt.z),
-        GlyphX, McxVec3(0.90, 0.30, 0.25));
-  Glyph(McxVec3(FAxisAt.x, FAxisAt.y + FAxisLen + s, FAxisAt.z),
-        GlyphY, McxVec3(0.35, 0.75, 0.35));
-  Glyph(McxVec3(FAxisAt.x, FAxisAt.y, FAxisAt.z + FAxisLen + s),
-        GlyphZ, McxVec3(0.35, 0.55, 0.95));
+  Red := McxVec3(0.90, 0.30, 0.25);
+  Green := McxVec3(0.35, 0.75, 0.35);
+  Blue := McxVec3(0.35, 0.55, 0.95);
+
+  Tick := Max(FAxisHi.x - FAxisLo.x,
+              Max(FAxisHi.y - FAxisLo.y, FAxisHi.z - FAxisLo.z)) * 0.025;
+  Big := Tick * 2.6;
+  Small := Tick * 2.0;
+
+  Glyph(McxVec3(FAxisHi.x + Big, FAxisLo.y, FAxisLo.z), Big, GlyphX, Red);
+  Glyph(McxVec3(FAxisLo.x, FAxisHi.y + Big, FAxisLo.z), Big, GlyphY, Green);
+  Glyph(McxVec3(FAxisLo.x, FAxisLo.y, FAxisHi.z + Big), Big, GlyphZ, Blue);
+
+  Numbers(0, Red);
+  Numbers(1, Green);
+  Numbers(2, Blue);
 end;
 
 procedure TMcxView.AddShapes;
@@ -1499,19 +1704,24 @@ begin
   SetLength(FPicks, 0);
   FLines.AddBox(McxVec3(0, 0, 0), McxVec3(dx, dy, dz), Grey);
 
-  { A grid on the z = 0 face, ten lines each way whatever the size, so it
-    reads as a floor rather than as a solid block of lines on a big domain. }
-  Step := dx / 10;
-  for i := 1 to 9 do
+  { A grid on the z = 0 face, on the same rounded spacing the axes are
+    graduated with -- so a line on the floor is a line you can read a number
+    off, rather than a tenth of whatever the domain happens to be. }
+  Step := McxNiceStep(dx);
+  i := 1;
+  while i * Step < dx do
   begin
     t := i * Step;
     FLines.Add(McxVec3(t, 0, 0), McxVec3(t, dy, 0), Faint);
+    Inc(i);
   end;
-  Step := dy / 10;
-  for i := 1 to 9 do
+  Step := McxNiceStep(dy);
+  i := 1;
+  while i * Step < dy do
   begin
     t := i * Step;
     FLines.Add(McxVec3(0, t, 0), McxVec3(dx, t, 0), Faint);
+    Inc(i);
   end;
 
   { Axes at the origin corner, in the usual three colours, each labelled. }
@@ -1519,7 +1729,7 @@ begin
   if dy > Axis then Axis := dy;
   if dz > Axis then Axis := dz;
   FSceneSpan := Axis;
-  AddAxes(McxVec3(0, 0, 0), Axis * 0.25);
+  AddAxes(McxVec3(0, 0, 0), McxVec3(dx, dy, dz));
 
   AddShapes;
   AddMesh;
@@ -1541,7 +1751,8 @@ begin
     if dy > Axis then Axis := dy;
     if dz > Axis then Axis := dz;
     FSceneSpan := Axis;
-    AddAxes(McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z), Axis * 0.25);
+    AddAxes(McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z),
+            McxVec3(FMeshHi.x, FMeshHi.y, FMeshHi.z));
     Key := Format('mesh %g %g %g', [dx, dy, dz]);
     if Key <> FSceneKey then
     begin
