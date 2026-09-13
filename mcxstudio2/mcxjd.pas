@@ -90,6 +90,10 @@ type
     function  ReadObject: TJSONData;
     function  MakeBlob(AKind: TMcxArrayKind; const ADims: array of Integer;
       ADimCount: Integer; ACount: Int64): TJSONData;
+    { The bytes behind a placeholder, when the node is one. }
+    function  BlobOf(AData: TJSONData; out AArray: TMcxArray): Boolean;
+    { The same bytes, whether the reader kept them or expanded them. }
+    function  BytesOf(AData: TJSONData; out ABytes: TBytes): Boolean;
   public
     destructor Destroy; override;
     function LoadFromStream(AStream: TStream): Boolean;
@@ -275,12 +279,14 @@ begin
   Src.Free;
 end;
 
-function McxDecodeJData(AObj: TJSONObject; out AArray: TMcxArray): Boolean;
+{ What an annotated array says it is -- the element type and the shape --
+  without touching the payload.  Split out because a binary file carries the
+  same two annotations as a text one and differs only in what the payload is
+  made of: base64 in a string there, bytes already read here. }
+function DecodeShape(AObj: TJSONObject; out AArray: TMcxArray): Boolean;
 var
-  T, S, Z, D: TJSONData;
+  T, S: TJSONData;
   i: Integer;
-  Raw: TBytes;
-  Text: string;
 begin
   Result := False;
   AArray.Kind := akNone;
@@ -304,6 +310,18 @@ begin
     SetLength(AArray.Dims, 1);
     AArray.Dims[0] := S.AsInteger;
   end;
+  Result := True;
+end;
+
+function McxDecodeJData(AObj: TJSONObject; out AArray: TMcxArray): Boolean;
+var
+  Z, D: TJSONData;
+  i: Integer;
+  Raw: TBytes;
+  Text: string;
+begin
+  Result := False;
+  if not DecodeShape(AObj, AArray) then Exit;
 
   Z := AObj.Find('_ArrayZipData_');
   D := AObj.Find('_ArrayData_');
@@ -522,6 +540,30 @@ begin
       Exit(Arr);
     end;
 
+    { A container of strings, which is not a bulk array of anything: its
+      elements are their own lengths.  The type marker is not repeated on
+      each one -- the container already gave it -- so an element is what
+      follows an S rather than an S, exactly as an object key is.
+
+      This is not a corner of the format.  Every .bnii and .jdb mcx writes
+      opens with _DataInfo_, and _DataInfo_.Parser lists three of these
+      (mcx_utils.c:673) before the file says anything else, so refusing them
+      refused every binary result mcx has ever produced.  C is one byte and
+      H is a decimal written as text; both arrive the same way. }
+    if Chr(T) in ['S', 'H', 'C'] then
+    begin
+      Arr := TJSONArray.Create;
+      for i := 0 to n - 1 do
+        if Chr(T) = 'C' then
+        begin
+          B := ReadRaw(1);
+          Arr.Add(Chr(B[0]));
+        end
+        else
+          Arr.Add(ReadString);
+      Exit(Arr);
+    end;
+
     Kind := akNone;
     case Chr(T) of
       'i': Kind := akInt8;   'U': Kind := akUInt8;
@@ -673,18 +715,82 @@ begin
   end;
 end;
 
-function TMcxBJData.GetArrayOf(AObj: TJSONObject; out AArray: TMcxArray): Boolean;
+function TMcxBJData.BlobOf(AData: TJSONData; out AArray: TMcxArray): Boolean;
 var
   Idx: TJSONData;
 begin
   Result := False;
-  if AObj = nil then Exit;
-  Idx := AObj.Find('_ArrayIndex_');
-  if (Idx <> nil) and (Idx.AsInteger >= 0) and (Idx.AsInteger <= High(FBlobs)) then
+  if not (AData is TJSONObject) then Exit;
+  Idx := TJSONObject(AData).Find('_ArrayIndex_');
+  if Idx = nil then Exit;
+  if (Idx.AsInteger < 0) or (Idx.AsInteger > High(FBlobs)) then Exit;
+  AArray := FBlobs[Idx.AsInteger];
+  Result := True;
+end;
+
+{ A compressed payload is a run of bytes whichever way it came back: kept as
+  a blob when it is long, and expanded into numbers when it is shorter than
+  the threshold -- which a small array in a binary file is, and which is the
+  one shape of this that no real result file happens to have. }
+function TMcxBJData.BytesOf(AData: TJSONData; out ABytes: TBytes): Boolean;
+var
+  Blob: TMcxArray;
+  i: Integer;
+begin
+  Result := False;
+  SetLength(ABytes, 0);
+  if BlobOf(AData, Blob) then
   begin
-    AArray := FBlobs[Idx.AsInteger];
+    ABytes := Blob.Data;
     Exit(True);
   end;
+  if AData is TJSONArray then
+  begin
+    SetLength(ABytes, AData.Count);
+    for i := 0 to AData.Count - 1 do ABytes[i] := Byte(AData.Items[i].AsInt64);
+    Exit(True);
+  end;
+end;
+
+function TMcxBJData.GetArrayOf(AObj: TJSONObject; out AArray: TMcxArray): Boolean;
+var
+  Z, D: TJSONData;
+  Payload: TMcxArray;
+  Raw: TBytes;
+begin
+  Result := False;
+  if AObj = nil then Exit;
+
+  { The object is a bulk array we lifted out of the tree on the way past. }
+  if BlobOf(AObj, AArray) then Exit(True);
+
+  { Otherwise it is an annotated array, and the payload is one.  A text file
+    holds that payload as base64 inside a string, which McxDecodeJData has;
+    a binary one has it as bytes already, so the base64 stage does not exist
+    and reading it as a string is what raised "cannot convert data from
+    object value" on every compressed .bnii mcx writes.
+
+    The shape comes from the annotations around it either way: the blob was
+    read as the uint8 the container said it was, and what it holds is a
+    volume of singles. }
+  if not DecodeShape(AObj, AArray) then Exit;
+
+  Z := AObj.Find('_ArrayZipData_');
+  if (Z <> nil) and BytesOf(Z, Raw) then
+  begin
+    AArray.Data := Inflate(Raw);
+    Exit(Length(AArray.Data) > 0);
+  end;
+
+  D := AObj.Find('_ArrayData_');
+  if (D <> nil) and BlobOf(D, Payload) then
+  begin
+    AArray.Data := Payload.Data;
+    Exit(Length(AArray.Data) > 0);
+  end;
+
+  { Neither payload is a blob: a small array that was expanded into numbers,
+    or a text-shaped object that found its way in here. }
   Result := McxDecodeJData(AObj, AArray);
 end;
 

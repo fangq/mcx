@@ -19,7 +19,7 @@ uses
     test dies with "This binary has no thread support compiled in".  The GUI
     gets this from the LCL; a console program has to ask. }
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  SysUtils, Classes, fpjson, mcxdoc, mcxrun, mcxjd, mcxmesh;
+  SysUtils, Classes, zstream, fpjson, mcxdoc, mcxrun, mcxjd, mcxmesh;
 
 var
   Checks, Failures: Integer;
@@ -633,6 +633,7 @@ var
   i: Integer;
   f: Single;
   d: TJSONData;
+  Parsed: Boolean;
 
   procedure PutByte(B: Byte);
   begin
@@ -645,7 +646,8 @@ var
   end;
 
   { A key: an integer marker, a length, the text.  No S marker -- that is
-    the one place BJData leaves it out. }
+    the one place BJData leaves it out.  An element of a container whose
+    type is already S is written the same way, and for the same reason. }
   procedure PutKey(const S: string);
   var
     j: Integer;
@@ -653,6 +655,70 @@ var
     PutMark('U');
     PutByte(Length(S));
     for j := 1 to Length(S) do PutByte(Ord(S[j]));
+  end;
+
+  { A string value: the marker the container did not supply, then the key
+    form above. }
+  procedure PutText(const S: string);
+  begin
+    PutMark('S');
+    PutKey(S);
+  end;
+
+  { Deflates a run of singles, the way mcx compresses a volume before
+    writing it as _ArrayZipData_. }
+  function Zip(ACount: Integer; AScale: Single): TBytes;
+  var
+    Src, Dst: TMemoryStream;
+    C: TCompressionStream;
+    j: Integer;
+    v: Single;
+  begin
+    Src := TMemoryStream.Create;
+    Dst := TMemoryStream.Create;
+    try
+      for j := 0 to ACount - 1 do
+      begin
+        v := j * AScale;
+        Src.Write(v, 4);
+      end;
+      Src.Position := 0;
+      C := TCompressionStream.Create(clDefault, Dst);
+      try
+        C.CopyFrom(Src, Src.Size);
+      finally
+        C.Free;
+      end;
+      SetLength(Result, Dst.Size);
+      Move(Dst.Memory^, Result[0], Dst.Size);
+    finally
+      Dst.Free;
+      Src.Free;
+    end;
+  end;
+
+  { An annotated array whose payload is the deflated bytes, which is the
+    shape of every result mcx writes as .bnii or .jdb. }
+  procedure PutZipped(const AKey: string; ACount: Integer; AScale: Single);
+  var
+    Z: TBytes;
+    j, k: Integer;
+  begin
+    Z := Zip(ACount, AScale);
+    PutKey(AKey);
+    PutMark('{');
+    PutKey('_ArrayType_'); PutText('single');
+    PutKey('_ArraySize_');
+    PutMark('['); PutMark('$'); PutMark('l'); PutMark('#');
+    PutMark('U'); PutByte(1);
+    k := ACount; M.Write(k, 4);
+    PutKey('_ArrayZipType_'); PutText('zlib');
+    PutKey('_ArrayZipSize_'); PutMark('l'); k := ACount; M.Write(k, 4);
+    PutKey('_ArrayZipData_');
+    PutMark('['); PutMark('$'); PutMark('U'); PutMark('#');
+    PutMark('l'); k := Length(Z); M.Write(k, 4);
+    for j := 0 to High(Z) do PutByte(Z[j]);
+    PutMark('}');
   end;
 
 begin
@@ -695,10 +761,32 @@ begin
     PutMark('['); PutMark('$'); PutMark('T'); PutMark('#');
     PutMark('U'); PutByte(4);
 
+    { A container of strings.  The type is on the container, so an element is
+      a length and its bytes with no S of its own.  This is not an exotic
+      corner: mcx opens every .bnii and .jdb with _DataInfo_, and
+      _DataInfo_.Parser holds three of these (mcx_utils.c:673) before the
+      file says anything else. }
+    PutKey('Parser');
+    PutMark('['); PutMark('$'); PutMark('S'); PutMark('#');
+    PutMark('U'); PutByte(2);
+    PutKey('https://neurojson.org/download/pyjdata');
+    PutKey('https://neurojson.org/download/pybjdata');
+
+    { Compressed payloads, either side of the threshold at which the reader
+      stops expanding a container into numbers: the long one comes back as a
+      blob and the short one as a list, and both have to inflate. }
+    PutZipped('NIFTIData', 2000, 0.25);
+    PutZipped('Small', 5, 1.5);
+
     PutMark('}');
 
     M.Position := 0;
-    Ok(BJ.LoadFromStream(M), 'the document parses: ' + BJ.Error);
+    { Loaded first, and into a variable, because the two arguments of Ok are
+      not evaluated in the order they are written -- so reading BJ.Error in
+      the second one reported the error from before the parse, which is to
+      say nothing at all, exactly when there was something to say. }
+    Parsed := BJ.LoadFromStream(M);
+    Ok(Parsed, 'the document parses: ' + BJ.Error);
     if BJ.Root = nil then Exit;
 
     Ok(BJ.Root.FindPath('name').AsString = 'box', 'a string survives');
@@ -724,6 +812,24 @@ begin
     Ok(Abs(McxArrayValue(A, 99) - 49.5) < 1e-6, 'last value');
     Ok(BJ.Root.FindPath('Data._ArrayType_').AsString = 'single',
        'and it is annotated the way a text file would be');
+
+    d := BJ.Root.FindPath('Parser');
+    Ok((d <> nil) and (d.JSONType = jtArray) and (d.Count = 2),
+       'a typed container of strings has both of them');
+    Ok((d <> nil) and (d.Count = 2) and
+       (d.Items[1].AsString = 'https://neurojson.org/download/pybjdata'),
+       'and each one reads back whole');
+
+    { The compressed payload: bytes in a binary file rather than base64 in a
+      string, which is what reading it as a string used to raise on. }
+    Ok(BJ.GetArray('NIFTIData', A), 'a deflated blob inflates');
+    Ok(A.Kind = akSingle, 'to the type the annotations gave it');
+    Ok(McxArrayCount(A) = 2000, 'with every element');
+    Ok(Abs(McxArrayValue(A, 1999) - 499.75) < 1e-4, 'and the values are right');
+
+    Ok(BJ.GetArray('Small', A), 'so does one the reader expanded into numbers');
+    Ok(McxArrayCount(A) = 5, 'with every element');
+    Ok(Abs(McxArrayValue(A, 4) - 6.0) < 1e-6, 'and the values are right');
   finally
     BJ.Free;
     M.Free;
