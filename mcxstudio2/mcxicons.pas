@@ -345,10 +345,37 @@ end;
 var
   FGlyph: TBitmap = nil;
 
+{ Copies artwork into the shared glyph bitmap.  A TPortableNetworkGraphic is
+  a TCustomBitmap but not a TBitmap, and TSpeedButton.Glyph wants the
+  latter. }
+function GlyphFromArt(AArt: TPortableNetworkGraphic; ASize: Integer): TBitmap;
+begin
+  if FGlyph = nil then FGlyph := TBitmap.Create;
+  FGlyph.SetSize(ASize, ASize);
+  FGlyph.Assign(AArt);
+  Result := FGlyph;
+end;
+
 function McxIconBitmap(const AName: string; AColour: TColor;
   ASize: Integer): TBitmap;
+var
+  Art: TPortableNetworkGraphic;
 begin
   if ASize < 1 then ASize := 16;
+
+  { Artwork first, for the same reason the image list takes it first: since
+    the SVG set arrived McxDrawIcon knows only the two chevrons, so a caller
+    asking here for "add" got a blank bitmap and a button with nothing on
+    it. }
+  Art := McxIconPng(AName, ASize);
+  if Art <> nil then
+    try
+      Result := GlyphFromArt(Art, ASize);
+      Exit;
+    finally
+      Art.Free;
+    end;
+
   { One bitmap reused for every call: Glyph.Assign copies, so nothing outside
     keeps a reference, and this avoids leaking one per button.  Resized when
     the caller asks for a different size, which on a scaled display it does.

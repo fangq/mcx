@@ -22,7 +22,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview;
+  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview, mcxtable;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -325,6 +325,11 @@ type
     FDevices: TMcxDevices;
     { The 3-D preview, which owns its own GL control, camera and geometry. }
     FView: TMcxView;
+    { The two settings that are lists rather than values.  How many media a
+      simulation has, and how many detectors, is not known until a file is
+      opened, so these are the only editors built in code. }
+    FMedia: TMcxTable;
+    FDetectors: TMcxTable;
     FDockRestored: Boolean;
     FDockSized: Boolean;
     FWizard: Boolean;
@@ -340,6 +345,7 @@ type
     procedure DockCreateControl(Sender: TObject; aName: string;
       var AControl: TControl; DoDisableAutoSizing: boolean);
     procedure ViewLog(Sender: TObject; const AText: string);
+    procedure TableChanged(Sender: TObject);
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
     procedure UpdateRunActions;
@@ -477,6 +483,16 @@ begin
   mmLog.Font.Assign(mmJSON.Font);
 
   BuildDock;
+  { The placeholders these replace go with them. }
+  lbTodoMedia.Visible := False;
+  lbTodoDet.Visible := False;
+  FMedia := TMcxTable.Create(gbMedia, 'mua (1/mm),mus (1/mm),g,n',
+    'mua,mus,g,n', 6);
+  FMedia.OnChange := @TableChanged;
+  FDetectors := TMcxTable.Create(gbDetector, 'x,y,z,radius',
+    'Pos[0],Pos[1],Pos[2],R', 4);
+  FDetectors.OnChange := @TableChanged;
+
   FView := TMcxView.Create(pnGL);
   FView.OnLog := @ViewLog;
   FView.Document := FDoc;
@@ -499,6 +515,8 @@ end;
 procedure TfmMain.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(FView);
+  FreeAndNil(FMedia);
+  FreeAndNil(FDetectors);
   FreeAndNil(FMissing);
   FreeAndNil(FRun);
   FreeAndNil(FDoc);
@@ -1166,6 +1184,15 @@ end;
 procedure TfmMain.ViewLog(Sender: TObject; const AText: string);
 begin
   Log(AText);
+end;
+
+{ A table writes into the document itself, so there is nothing to save here --
+  only the same tail every other edit runs: mark it modified, redraw the
+  preview, and let the sections that depend on it catch up. }
+procedure TfmMain.TableChanged(Sender: TObject);
+begin
+  UpdateTitle;
+  SchedulePreview;
 end;
 
 procedure TfmMain.Log(const AText: string);
@@ -2014,6 +2041,10 @@ procedure TfmMain.LoadAllBindings;
 var
   i: Integer;
 begin
+  { The tables read the document directly, so they are refreshed here rather
+    than bound: there is no control-to-path row that could describe them. }
+  if FMedia <> nil then FMedia.Attach(FDoc, 'Domain.Media');
+  if FDetectors <> nil then FDetectors.Attach(FDoc, 'Optode.Detector');
   Inc(FLoading);
   try
     for i := 0 to High(Binds) do LoadBinding(i);
