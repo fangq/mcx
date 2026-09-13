@@ -135,6 +135,12 @@ type
       const AColour: TMcxVec3; AAlpha: Single);
     procedure AddCylinder(const AC0, AC1: TMcxVec3; ARadius: Single;
       const AColour: TMcxVec3; AAlpha: Single);
+    procedure AddCone(const ABase, ATip: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3; AAlpha: Single);
+    procedure AddDisk(const ACentre, ANormal: TMcxVec3; ARadius: Single;
+      const AColour: TMcxVec3; AAlpha: Single);
+    procedure AddArrow(const AFrom, ADir: TMcxVec3; ALength: Single;
+      const AColour: TMcxVec3; AAlpha: Single);
     procedure Draw;
     property Count: Integer read FCount;
   end;
@@ -758,6 +764,97 @@ begin
     Put(Rim(AC1, a0), Axis, AColour, AAlpha);
     Put(Rim(AC1, a1), Axis, AColour, AAlpha);
   end;
+end;
+
+{ An orthonormal pair perpendicular to AAxis, for anything built around a
+  direction. }
+procedure BasisFor(const AAxis: TMcxVec3; out AU, AV: TMcxVec3);
+var
+  Ref: TMcxVec3;
+begin
+  if Abs(AAxis.x) > 0.9 then Ref := McxVec3(0, 0, 1) else Ref := McxVec3(1, 0, 0);
+  AU := McxVec3Norm(McxVec3Cross(AAxis, Ref));
+  AV := McxVec3Cross(AAxis, AU);
+end;
+
+procedure TMcxMesh.AddCone(const ABase, ATip: TMcxVec3; ARadius: Single;
+  const AColour: TMcxVec3; AAlpha: Single);
+const
+  Seg = 28;
+var
+  Axis, U, V: TMcxVec3;
+  i: Integer;
+  a0, a1: Single;
+
+  function Rim(AAngle: Single): TMcxVec3;
+  begin
+    Result := McxVec3(
+      ABase.x + ARadius * (Cos(AAngle) * U.x + Sin(AAngle) * V.x),
+      ABase.y + ARadius * (Cos(AAngle) * U.y + Sin(AAngle) * V.y),
+      ABase.z + ARadius * (Cos(AAngle) * U.z + Sin(AAngle) * V.z));
+  end;
+
+begin
+  Axis := McxVec3Norm(McxVec3Sub(ATip, ABase));
+  if (Axis.x = 0) and (Axis.y = 0) and (Axis.z = 0) then Exit;
+  BasisFor(Axis, U, V);
+  for i := 0 to Seg - 1 do
+  begin
+    a0 := 2 * Pi * i / Seg;
+    a1 := 2 * Pi * (i + 1) / Seg;
+    { The side, wound so the outside faces out, and the base to close it. }
+    AddTri(Rim(a0), Rim(a1), ATip, AColour, AAlpha);
+    AddTri(ABase, Rim(a1), Rim(a0), AColour, AAlpha);
+  end;
+end;
+
+procedure TMcxMesh.AddDisk(const ACentre, ANormal: TMcxVec3; ARadius: Single;
+  const AColour: TMcxVec3; AAlpha: Single);
+const
+  Seg = 36;
+var
+  N, U, V: TMcxVec3;
+  i: Integer;
+  a0, a1: Single;
+
+  function Rim(AAngle: Single): TMcxVec3;
+  begin
+    Result := McxVec3(
+      ACentre.x + ARadius * (Cos(AAngle) * U.x + Sin(AAngle) * V.x),
+      ACentre.y + ARadius * (Cos(AAngle) * U.y + Sin(AAngle) * V.y),
+      ACentre.z + ARadius * (Cos(AAngle) * U.z + Sin(AAngle) * V.z));
+  end;
+
+begin
+  N := McxVec3Norm(ANormal);
+  if (N.x = 0) and (N.y = 0) and (N.z = 0) then Exit;
+  BasisFor(N, U, V);
+  for i := 0 to Seg - 1 do
+  begin
+    a0 := 2 * Pi * i / Seg;
+    a1 := 2 * Pi * (i + 1) / Seg;
+    AddTri(ACentre, Rim(a0), Rim(a1), AColour, AAlpha);
+  end;
+end;
+
+{ A shaft and a head, pointing the way the source emits.  The head is a fifth
+  of the length, which keeps it readable whether the arrow is four voxels
+  long or forty. }
+procedure TMcxMesh.AddArrow(const AFrom, ADir: TMcxVec3; ALength: Single;
+  const AColour: TMcxVec3; AAlpha: Single);
+var
+  D, Neck, Tip: TMcxVec3;
+begin
+  D := McxVec3Norm(ADir);
+  if (D.x = 0) and (D.y = 0) and (D.z = 0) then Exit;
+  Neck := McxVec3(AFrom.x + D.x * ALength * 0.8,
+                  AFrom.y + D.y * ALength * 0.8,
+                  AFrom.z + D.z * ALength * 0.8);
+  Tip := McxVec3(AFrom.x + D.x * ALength,
+                 AFrom.y + D.y * ALength,
+                 AFrom.z + D.z * ALength);
+  AddCylinder(AFrom, Neck, ALength * 0.035, AColour, AAlpha);
+  AddCone(Neck, Tip, ALength * 0.10, AColour, AAlpha);
 end;
 
 procedure TMcxMesh.Draw;

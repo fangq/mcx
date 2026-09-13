@@ -19,7 +19,7 @@ unit mcxview;
 interface
 
 uses
-  Classes, SysUtils, Controls, ExtCtrls, Graphics, fpjson,
+  Classes, SysUtils, Math, Controls, ExtCtrls, Graphics, fpjson,
   FPImage, FPWritePNG,
   OpenGLContext, GL, mcxdoc, mcxgl, mcxjd, mcxmesh;
 
@@ -63,6 +63,8 @@ type
     FMeshFaces: TMcxFaces;
     FMeshKey: string;
     FMeshLo, FMeshHi: TMcxNode;
+    { How big the scene is, so the source glyph can be sized against it. }
+    FSceneSpan: Single;
     FVolume: TMcxVolume;
     FCube: TMcxCube;
     { What the volume is drawn as and through.  All uniforms: changing any of
@@ -97,6 +99,7 @@ type
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     procedure AddShapes;
     procedure AddMesh;
+    procedure AddSource;
     procedure RenderScene(AWidth, AHeight: Integer; AFlat: Boolean);
     function  PickAt(AX, AY: Integer): Integer;
     function  GetHasVolume: Boolean;
@@ -916,6 +919,129 @@ begin
   end;
 end;
 
+{ The source, drawn as what it actually is.
+
+  Every source gets an arrow showing where it points, because direction is
+  the thing a position alone does not say.  On top of that each type gets the
+  shape it emits from, taken from mcx's own meaning for Param1 and Param2
+  (mcx_utils.c, the srctype table): a cone opens to its half-angle, a disk is
+  a disk of its radius, a planar source is the quad its two vectors span.
+
+  The old GUI drew twelve of the eighteen types and mcxcloud drew ten;
+  neither drew pencilarray, hyperboloid or ring.  This draws what it can and
+  falls back to the arrow alone for the rest, which is honest -- an arrow is
+  true of every source. }
+procedure TMcxView.AddSource;
+const
+  Amber: array[0..2] of Single = (1.0, 0.80, 0.25);
+  SrcAlpha = 0.75;
+var
+  Pos, Dir, P1, P2, C: TMcxVec3;
+  Kind: string;
+  Scale, R: Single;
+  i, j, n: Integer;
+
+  function Vec(const APath: string; ADefZ: Single): TMcxVec3;
+  var
+    A: TJSONData;
+  begin
+    Result := McxVec3(0, 0, ADefZ);
+    A := FDoc.Find(APath);
+    if (A = nil) or (A.JSONType <> jtArray) or (A.Count < 3) then Exit;
+    if not (A.Items[0].JSONType in [jtNumber, jtString]) then Exit;
+    Result := McxVec3(A.Items[0].AsFloat, A.Items[1].AsFloat,
+                      A.Items[2].AsFloat);
+  end;
+
+  function Param(const APath: string; AIndex: Integer): Single;
+  var
+    A: TJSONData;
+  begin
+    Result := 0;
+    A := FDoc.Find(APath);
+    if (A = nil) or (A.JSONType <> jtArray) or (A.Count <= AIndex) then Exit;
+    if A.Items[AIndex].JSONType = jtNumber then
+      Result := A.Items[AIndex].AsFloat;
+  end;
+
+begin
+  Pos := Vec('Optode.Source.Pos', 0);
+  Dir := Vec('Optode.Source.Dir', 1);
+  C := McxVec3(Amber[0], Amber[1], Amber[2]);
+  Kind := LowerCase(FDoc.AsStr('Optode.Source.Type', 'pencil'));
+
+  { Sized against the domain, so the glyph is legible on a sixty-voxel cube
+    and on a six-hundred-voxel one. }
+  Scale := FSceneSpan * 0.18;
+  if Scale <= 0 then Scale := 5;
+
+  FMesh.AddArrow(Pos, Dir, Scale, C, SrcAlpha);
+
+  P1 := McxVec3(Param('Optode.Source.Param1', 0),
+                Param('Optode.Source.Param1', 1),
+                Param('Optode.Source.Param1', 2));
+  P2 := McxVec3(Param('Optode.Source.Param2', 0),
+                Param('Optode.Source.Param2', 1),
+                Param('Optode.Source.Param2', 2));
+
+  if Kind = 'isotropic' then
+    { No direction to speak of: a ball, and the arrow above is the only hint
+      of the axis the file happens to name. }
+    FMesh.AddSphere(Pos, Scale * 0.12, C, SrcAlpha)
+  else if Kind = 'cone' then
+  begin
+    { Param1[0] is the half-angle in radians. }
+    R := Scale * Tan(Param('Optode.Source.Param1', 0));
+    if R <= 0 then R := Scale * 0.2;
+    FMesh.AddCone(Pos, McxVec3(Pos.x + Dir.x * Scale, Pos.y + Dir.y * Scale,
+      Pos.z + Dir.z * Scale), R, C, SrcAlpha * 0.5);
+  end
+  else if (Kind = 'disk') or (Kind = 'gaussian') or (Kind = 'zgaussian') then
+  begin
+    R := Param('Optode.Source.Param1', 0);
+    if R <= 0 then R := Scale * 0.15;
+    FMesh.AddDisk(Pos, Dir, R, C, SrcAlpha);
+  end
+  else if Kind = 'ring' then
+  begin
+    { Two radii: the outer as a disk, the inner drawn in the background
+      colour would need a second pass, so the inner edge is a ring of line. }
+    R := Param('Optode.Source.Param1', 0);
+    if R <= 0 then R := Scale * 0.15;
+    FMesh.AddDisk(Pos, Dir, R, C, SrcAlpha * 0.6);
+    FLines.AddCircle(Pos, McxVec3Norm(McxVec3Cross(Dir, McxVec3(1, 0, 0))),
+      McxVec3Norm(McxVec3Cross(Dir, McxVec3(0, 1, 0))),
+      Param('Optode.Source.Param1', 1), C);
+  end
+  else if (Kind = 'planar') or (Kind = 'pattern') or (Kind = 'pattern3d') or
+          (Kind = 'fourier') or (Kind = 'fourierx') or (Kind = 'fourierx2d') then
+    { Param1 and Param2 are the two edge vectors from Pos. }
+    FMesh.AddQuad(Pos,
+      McxVec3(Pos.x + P1.x, Pos.y + P1.y, Pos.z + P1.z),
+      McxVec3(Pos.x + P1.x + P2.x, Pos.y + P1.y + P2.y, Pos.z + P1.z + P2.z),
+      McxVec3(Pos.x + P2.x, Pos.y + P2.y, Pos.z + P2.z), C, SrcAlpha * 0.7)
+  else if (Kind = 'slit') or (Kind = 'line') then
+    { A segment from Pos along Param1, drawn with enough body to see. }
+    FMesh.AddCylinder(Pos,
+      McxVec3(Pos.x + P1.x, Pos.y + P1.y, Pos.z + P1.z),
+      Scale * 0.03, C, SrcAlpha)
+  else if Kind = 'pencilarray' then
+  begin
+    { Param1 and Param2 are the two edge vectors, and Param1[3], Param2[3]
+      how many pencils along each. }
+    n := Round(Param('Optode.Source.Param1', 3));
+    if n < 1 then n := 1;
+    j := Round(Param('Optode.Source.Param2', 3));
+    if j < 1 then j := 1;
+    for i := 0 to n - 1 do
+      for j := 0 to Round(Param('Optode.Source.Param2', 3)) - 1 do
+        FMesh.AddSphere(McxVec3(
+          Pos.x + P1.x * i / n + P2.x * j / n,
+          Pos.y + P1.y * i / n + P2.y * j / n,
+          Pos.z + P1.z * i / n + P2.z * j / n), Scale * 0.03, C, SrcAlpha);
+  end;
+end;
+
 { Builds the wireframe from the document: the domain box, a floor grid, the
   three axes and where the source sits.
 
@@ -971,6 +1097,7 @@ begin
   Axis := dx;
   if dy > Axis then Axis := dy;
   if dz > Axis then Axis := dz;
+  FSceneSpan := Axis;
   Axis := Axis * 0.25;
   FLines.Add(McxVec3(0, 0, 0), McxVec3(Axis, 0, 0), McxVec3(0.90, 0.30, 0.25));
   FLines.Add(McxVec3(0, 0, 0), McxVec3(0, Axis, 0), McxVec3(0.35, 0.75, 0.35));
@@ -1002,23 +1129,7 @@ begin
     Exit;
   end;
 
-  { The source, as a cross at its position.  Drawn from the document rather
-    than from the form, so it is right whether the value was typed or came
-    out of a file. }
-  P := FDoc.Find('Optode.Source.Pos');
-  if (P <> nil) and (P.JSONType = jtArray) and (P.Count >= 3) then
-  begin
-    t := Axis * 0.15;
-    dx := P.Items[0].AsFloat;
-    dy := P.Items[1].AsFloat;
-    dz := P.Items[2].AsFloat;
-    FLines.Add(McxVec3(dx - t, dy, dz), McxVec3(dx + t, dy, dz),
-      McxVec3(1.0, 0.85, 0.25));
-    FLines.Add(McxVec3(dx, dy - t, dz), McxVec3(dx, dy + t, dz),
-      McxVec3(1.0, 0.85, 0.25));
-    FLines.Add(McxVec3(dx, dy, dz - t), McxVec3(dx, dy, dz + t),
-      McxVec3(1.0, 0.85, 0.25));
-  end;
+  AddSource;
 
   { Only re-aim the camera when the domain itself changed size.  Doing it on
     every edit would throw the view away every time a photon count was
