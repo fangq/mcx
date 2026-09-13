@@ -79,7 +79,33 @@ type
 { The executable for a backend, or '' if it is not installed.  Looks beside
   mcxstudio2 first, then in the layout an MCXStudio release unpacks to, then
   on PATH. }
+type
+  { What the three choices add up to.  The person picks a processor, a kind
+    of domain and a kind of medium; which program runs is a consequence, not
+    a fourth question. }
+  TMcxPlan = record
+    Backend: TMcxBackend;
+    { mmc's -c: 'opencl', 'cuda', 'sse' or 'optix'.  Empty for mcx, which has
+      only one. }
+    Compute: string;
+    { A low-scattering medium on a voxel grid has to be run as split-voxel,
+      or the curved boundaries it is about are lost to the staircase. }
+    Svmc: Boolean;
+    { False when the combination has no solver at all. }
+    Ok: Boolean;
+    Why: string;
+    { What to call it in the status bar. }
+    Name: string;
+  end;
+
+{ The solver for a combination, and why there is none when there is none. }
+function McxPlanFor(const AProcessor, ADomain, AMedia: string): TMcxPlan;
+
 function McxFindExe(ABackend: TMcxBackend): string;
+
+{ The name the run document stores a backend under, which is also what mcx's
+  own examples call it. }
+function McxBackendName(ABackend: TMcxBackend): string;
 
 { The name a backend's binary goes by.  The ROCm port renamed nothing, so HIP
   and CUDA are both "mcx" (src/Makefile:25) -- which is why a build cannot be
@@ -162,6 +188,78 @@ implementation
 
 const
   ExeNames: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx');
+
+function McxPlanFor(const AProcessor, ADomain, AMedia: string): TMcxPlan;
+begin
+  Result.Backend := mbMCX;
+  Result.Compute := '';
+  Result.Svmc := False;
+  Result.Ok := True;
+  Result.Why := '';
+
+  if (ADomain = 'mesh') or (ADomain = 'surface') then
+  begin
+    { Both mesh kinds are MMC's; they differ in how the rays are traced. }
+    Result.Backend := mbMMC;
+    if ADomain = 'surface' then
+    begin
+      { OptiX traces against the triangles themselves rather than walking a
+        tetrahedron at a time, and OptiX is NVIDIA's. }
+      Result.Compute := 'optix';
+      Result.Name := 'MMC, OptiX ray tracing';
+      if AProcessor <> 'nvidia' then
+      begin
+        Result.Ok := False;
+        Result.Why := 'A surface mesh is traced with OptiX, which needs an ' +
+          'NVIDIA card.';
+      end;
+    end
+    else if AProcessor = 'nvidia' then
+    begin
+      Result.Compute := 'cuda';
+      Result.Name := 'MMC on CUDA';
+    end
+    else if AProcessor = 'cpu' then
+    begin
+      Result.Compute := 'sse';
+      Result.Name := 'MMC on the CPU';
+    end
+    else
+    begin
+      Result.Compute := 'opencl';
+      Result.Name := 'MMC on OpenCL';
+    end;
+    Exit;
+  end;
+
+  { Everything else is a voxel grid, whether the voxels come from a file or
+    from shapes rasterised into one. }
+  Result.Svmc := AMedia = 'lowscatter';
+  if AProcessor = 'nvidia' then
+  begin
+    Result.Backend := mbMCX;
+    Result.Name := 'MCX on CUDA';
+  end
+  else if AProcessor = 'amd' then
+  begin
+    Result.Backend := mbHIP;
+    Result.Name := 'MCX on ROCm';
+  end
+  else
+  begin
+    Result.Backend := mbMCXCL;
+    if AProcessor = 'cpu' then Result.Name := 'MCX-CL on the CPU'
+    else Result.Name := 'MCX-CL on OpenCL';
+  end;
+  if Result.Svmc then Result.Name := Result.Name + ', split-voxel';
+end;
+
+function McxBackendName(ABackend: TMcxBackend): string;
+const
+  Names: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx-hip');
+begin
+  Result := Names[ABackend];
+end;
 
 function McxExeName(ABackend: TMcxBackend): string;
 begin
@@ -514,6 +612,15 @@ begin
       Result.Add('-T');
       Result.Add(IntToStr(ARun.AsInt('@run.nblock')));
     end;
+  end;
+
+  { mmc traces with whichever backend the domain and the processor call for;
+    mcx has only one and does not take -c. }
+  S := ARun.AsStr('@run.compute', '');
+  if (S <> '') and (BackendOf(ARun) = mbMMC) then
+  begin
+    Result.Add('-c');
+    Result.Add(S);
   end;
 
   { The progress bar is how the window knows how far along a run is, so P is

@@ -50,6 +50,16 @@ media       media
 add         add
 delete      delete
 
+# the chooser tiles: processor, domain kind, medium
+cpu         cpu
+gpunvidia   gpunvidia
+gpuamd      gpuamd
+gpuintel    gpuintel
+tetmesh     tetmesh
+surfmesh    surfmesh
+diffusive   diffusive
+lowscatter  lowscatter
+
 # help and appearance
 about       about
 help        question

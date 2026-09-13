@@ -24,7 +24,7 @@ uses
   fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
   mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview,
-  mcxdisp, mcxtable, mcxjd;
+  mcxdisp, mcxchoose, mcxtable, mcxjd;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -369,6 +369,10 @@ type
     FMedia: TMcxTable;
     FDetectors: TMcxTable;
     FDisplay: TMcxDisplayBar;
+    { The three picture choosers on the first card.  Which simulator runs is
+      worked out from them rather than asked as a fourth question. }
+    FProcessor, FDomainKind, FMedium: TMcxChooser;
+    FPlanText: TLabel;
     { The last focused control the help table knows about.  Kept because the
       Help button is on the toolbar: pressing it takes the focus off the
       setting whose help was wanted. }
@@ -400,6 +404,10 @@ type
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
+    procedure BuildChoosers;
+    procedure ChoiceChanged(Sender: TObject);
+    procedure ApplyPlan;
+    procedure LoadChoosers;
     procedure DropResult;
     procedure GuessRunSettings;
     function  CurrentBackend: TMcxBackend;
@@ -559,6 +567,7 @@ begin
   { The placeholders these replace go with them. }
   lbTodoMedia.Visible := False;
   lbTodoDet.Visible := False;
+  BuildChoosers;
   BuildStepBar;
   FMedia := TMcxTable.Create(gbMedia, 'mua (1/mm),mus (1/mm),g,n',
     'mua,mus,g,n', 6);
@@ -1256,6 +1265,134 @@ end;
   and that is what it is: the buttons move the same selection the navigator
   moves, and hiding the bar is the whole of turning the wizard off.  There is
   no wizard state to keep -- where you are is which section is open. }
+
+{ The first card: three rows of picture tiles.
+
+  Built in code rather than in the designer because a tile is a picture and a
+  caption, not a widget, and because the three rows are the same thing three
+  times -- one declaration each is shorter than three panels of controls and
+  cannot drift out of step with the rule that reads them. }
+procedure TfmMain.BuildChoosers;
+begin
+  FMedium := TMcxChooser.Create(gbEngine, 'What kind of medium');
+  FMedium.Add('diffusive', 'Diffusive media', 'diffusive',
+    'Ordinary scattering tissue.  Any solver can do this.');
+  FMedium.Add('lowscatter', 'Low-scattering, curved boundaries', 'lowscatter',
+    'Light travels a long way between scattering events, so where the ' +
+    'boundaries are matters more than what is between them.  On a voxel ' +
+    'grid this needs split-voxel mode; a mesh describes the boundaries ' +
+    'exactly and needs nothing extra.');
+  FMedium.OnChange := @ChoiceChanged;
+
+  FDomainKind := TMcxChooser.Create(gbEngine, 'How the domain is described');
+  FDomainKind.Add('voxel', 'Voxel grid', 'grid',
+    'A volume of labelled voxels, read from a file.');
+  FDomainKind.Add('shapes', 'Primitive shapes', 'sphere',
+    'Boxes, spheres, cylinders and layers, listed in this file and ' +
+    'rasterised onto a grid when the run starts.');
+  FDomainKind.Add('mesh', 'Tetrahedral mesh', 'tetmesh',
+    'A volume filled with tetrahedra.  Boundaries are exact rather than ' +
+    'stepped, which is what MMC is for.');
+  FDomainKind.Add('surface', 'Surface mesh', 'surfmesh',
+    'Closed triangulated surfaces with the medium between them, traced ' +
+    'with OptiX instead of walked tetrahedron by tetrahedron.');
+  FDomainKind.OnChange := @ChoiceChanged;
+
+  FProcessor := TMcxChooser.Create(gbEngine, 'What to run it on');
+  FProcessor.Add('nvidia', 'NVIDIA GPU', 'gpunvidia',
+    'CUDA, and the only thing that can trace a surface mesh.');
+  FProcessor.Add('amd', 'AMD GPU', 'gpuamd', 'ROCm, through the HIP build.');
+  FProcessor.Add('intel', 'Intel GPU', 'gpuintel', 'OpenCL.');
+  FProcessor.Add('cpu', 'CPU', 'cpu',
+    'No graphics card needed.  Slower by a hundredfold or so, and always ' +
+    'available.');
+  FProcessor.OnChange := @ChoiceChanged;
+
+  { Rising Top before Align: alTop siblings are ordered by the Top they have
+    when they are aligned, not by the order they were created in. }
+  FProcessor.Panel.Top := 100;
+  FDomainKind.Panel.Top := 200;
+  FMedium.Panel.Top := 300;
+
+  { What the three of them add up to, said in words underneath.  The point of
+    deriving the solver is that nobody has to choose it; the point of showing
+    it is that nobody has to wonder what got chosen. }
+  FPlanText := TLabel.Create(gbEngine);
+  FPlanText.Parent := gbEngine;
+  FPlanText.Top := 400;
+  FPlanText.Align := alTop;
+  FPlanText.BorderSpacing.Around := McxScale96(4);
+  FPlanText.BorderSpacing.Left := McxScale96(6);
+  FPlanText.WordWrap := True;
+end;
+
+{ A tile was pressed.  Everything downstream of the three choices is redone
+  from them: which combinations are still possible, which solver runs, and
+  what the rest of the form should be showing. }
+procedure TfmMain.ChoiceChanged(Sender: TObject);
+begin
+  FRun.SetStr('@run.processor', FProcessor.Value);
+  FRun.SetStr('@run.domainkind', FDomainKind.Value);
+  FRun.SetStr('@run.media', FMedium.Value);
+  ApplyPlan;
+  ApplyBindingStates;
+  UpdateTitle;
+  UpdateStatus;
+  SchedulePreview;
+end;
+
+{ Works the solver out from the three choices, greys out the tiles that would
+  not lead to one, and writes down what the run will actually be. }
+procedure TfmMain.ApplyPlan;
+var
+  Plan: TMcxPlan;
+  Exe: string;
+begin
+  if FProcessor = nil then Exit;
+
+  { A surface mesh is OptiX's and OptiX is NVIDIA's, so the tile says so
+    rather than failing at the Run button. }
+  FDomainKind.Allow('surface', FProcessor.Value = 'nvidia',
+    'A surface mesh is traced with OptiX, which needs an NVIDIA card.');
+  if not FDomainKind.IsAllowed(FDomainKind.Value) then
+  begin
+    FDomainKind.Value := FDomainKind.FirstAllowed;
+    FRun.SetStr('@run.domainkind', FDomainKind.Value);
+  end;
+
+  Plan := McxPlanFor(FProcessor.Value, FDomainKind.Value, FMedium.Value);
+  FRun.SetStr('@run.backend', McxBackendName(Plan.Backend));
+  FRun.SetStr('@run.compute', Plan.Compute);
+
+  { The one place a choice reaches into the document: a low-scattering
+    medium on a grid is a split-voxel run, and that is a field mcx reads. }
+  if Plan.Svmc then FDoc.SetStr('Domain.MediaFormat', 'svmc')
+  else if FDoc.AsStr('Domain.MediaFormat', '') = 'svmc' then
+    FDoc.Delete('Domain.MediaFormat');
+
+  Exe := McxFindExe(Plan.Backend);
+  if not Plan.Ok then
+    FPlanText.Caption := 'No solver for this combination.  ' + Plan.Why
+  else if Exe = '' then
+    FPlanText.Caption := Plan.Name + ' -- but ' +
+      McxExeName(Plan.Backend) + ' was not found beside this program or on PATH.'
+  else
+    FPlanText.Caption := 'Runs as: ' + Plan.Name;
+  FPlanText.Font.Color := McxText;
+
+  UpdateRunActions;
+end;
+
+{ Puts the tiles where the run settings say, after a file has been opened. }
+procedure TfmMain.LoadChoosers;
+begin
+  if FProcessor = nil then Exit;
+  FProcessor.Value := FRun.AsStr('@run.processor', 'nvidia');
+  FDomainKind.Value := FRun.AsStr('@run.domainkind', 'shapes');
+  FMedium.Value := FRun.AsStr('@run.media', 'diffusive');
+  ApplyPlan;
+end;
+
 procedure TfmMain.BuildStepBar;
 begin
   FStepBar := TPanel.Create(Self);
@@ -1413,10 +1550,12 @@ procedure TfmMain.NewDocument;
 begin
   SeedDocument(FDoc);
   FRun.Clear;
-  FRun.SetStr('@run.backend', 'mcx');
+  FRun.SetStr('@run.processor', 'nvidia');
   FRun.SetStr('@run.domainkind', 'shapes');
+  FRun.SetStr('@run.media', 'diffusive');
   FRun.SetNum('@run.maxjumpdebug', DefaultMaxJump);
   FRun.Modified := False;
+  LoadChoosers;
   DropResult;
   LoadAllBindings;
   UpdateTitle;
@@ -1473,16 +1612,34 @@ begin
     ten-million default. }
   if FRun.AsInt('@run.maxjumpdebug') <= 0 then
     FRun.SetNum('@run.maxjumpdebug', DefaultMaxJump);
+
+  { How the domain is described is written all over the file, so it is read
+    off rather than asked.  A Mesh block is MMC's and nothing else's; a
+    VolumeFile is a grid of voxels; anything else is shapes to rasterise.
+
+    Tetrahedral rather than surface, always: both are stored as nodes and
+    elements, and the file does not say which kind of tracing was meant.  It
+    is one tile away if the answer is the other one.
+
+    What to run it on is not read off, because it is not in the file at all
+    -- it is a property of this machine, and keeping the last answer is
+    better than guessing a new one. }
   if (FDoc.Find('Mesh') <> nil) or (FDoc.Find('Shapes.MeshNode') <> nil) then
-  begin
-    FRun.SetStr('@run.backend', 'mmc');
-    FRun.SetStr('@run.domainkind', 'mesh');
-  end
+    FRun.SetStr('@run.domainkind', 'mesh')
   else if FDoc.AsStr('Domain.VolumeFile', '') <> '' then
     FRun.SetStr('@run.domainkind', 'voxel')
   else
     FRun.SetStr('@run.domainkind', 'shapes');
+
+  { Split-voxel is how a low-scattering medium is run on a grid, so a file
+    that asks for it is telling us which kind of medium it holds. }
+  if FDoc.AsStr('Domain.MediaFormat', '') = 'svmc' then
+    FRun.SetStr('@run.media', 'lowscatter')
+  else
+    FRun.SetStr('@run.media', 'diffusive');
+
   FRun.Modified := False;
+  LoadChoosers;
 end;
 
 procedure TfmMain.OpenDocument(const AFileName: string);

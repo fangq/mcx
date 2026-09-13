@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: a scattering random walk, for ordinary diffusive tissue. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1">
+  <circle cx="128" cy="128" r="124" fill="#e08a3c"/>
+  <g fill="#ffffff" opacity="0.45">
+    <circle cx="74" cy="90" r="11"/><circle cx="176" cy="78" r="11"/>
+    <circle cx="196" cy="152" r="11"/><circle cx="70" cy="176" r="11"/>
+    <circle cx="128" cy="196" r="11"/>
+  </g>
+  <path d="M40 196 L92 132 L64 84 L136 108 L120 168 L188 126 L214 186"
+        stroke="#ffffff" stroke-width="13" fill="none"
+        stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

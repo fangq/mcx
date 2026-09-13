@@ -658,40 +658,6 @@ object fmMain: TfmMain
           ChildSizing.LeftRightSpacing = 10
           ChildSizing.TopBottomSpacing = 8
           TabOrder = 0
-          object rgBackend: TRadioGroup
-            Left = 10
-            Height = 36
-            Top = 0
-            Width = 488
-            Align = alTop
-            AutoFill = True
-            BorderSpacing.Bottom = 6
-            Caption = 'Compute engine'
-            ChildSizing.LeftRightSpacing = 6
-            ChildSizing.TopBottomSpacing = 4
-            ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-            ChildSizing.Layout = cclLeftToRightThenTopToBottom
-            ChildSizing.ControlsPerLine = 4
-            Columns = 4
-            TabOrder = 0
-          end
-          object rgDomainKind: TRadioGroup
-            Left = 10
-            Height = 36
-            Top = 42
-            Width = 488
-            Align = alTop
-            AutoFill = True
-            BorderSpacing.Bottom = 6
-            Caption = 'Domain data'
-            ChildSizing.LeftRightSpacing = 6
-            ChildSizing.TopBottomSpacing = 4
-            ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
-            ChildSizing.Layout = cclLeftToRightThenTopToBottom
-            ChildSizing.ControlsPerLine = 3
-            Columns = 3
-            TabOrder = 1
-          end
         end
       end
       object pgDomain: TPanel

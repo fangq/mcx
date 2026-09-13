@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: a tetrahedron, for a mesh-based domain. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1">
+  <circle cx="128" cy="128" r="124" fill="#8e7cc3"/>
+  <path d="M128 56 L206 190 L50 190 Z" fill="#ffffff" opacity="0.55"/>
+  <g stroke="#ffffff" stroke-width="9" fill="none" stroke-linejoin="round">
+    <path d="M128 56 L206 190 L50 190 Z"/>
+    <path d="M128 56 L150 146 L50 190"/>
+    <path d="M150 146 L206 190"/>
+  </g>
+  <g fill="#ffffff">
+    <circle cx="128" cy="56" r="12"/><circle cx="206" cy="190" r="12"/>
+    <circle cx="50" cy="190" r="12"/><circle cx="150" cy="146" r="12"/>
+  </g>
+</svg>

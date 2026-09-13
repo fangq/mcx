@@ -73,6 +73,10 @@ const
 
     An entry with no equals sign is its own label, which keeps the simple
     lists simple. }
+  { Kept for the command line and the log, where a backend still has to be
+    named.  The form no longer offers this as a question: which simulator
+    runs follows from the processor, the domain and the medium, and is shown
+    rather than asked.  See mcxrun's McxPlanFor. }
   ChoiceBackend =
     'mcx=MCX  (NVIDIA CUDA),' +
     'mcxcl=MCX-CL  (OpenCL: any GPU or CPU),' +
@@ -193,12 +197,8 @@ const
     A path beginning @run is not part of the simulation at all -- it is a
     runtime choice such as which device to use -- and is routed to a second
     document that is saved with the preferences rather than with the file. }
-  Binds: array[0..42] of TMcxBind = (
+  Binds: array[0..40] of TMcxBind = (
     { -- Types ------------------------------------------------------------- }
-    (Ctl:'rgBackend';    Path:'@run.backend';     Kind:mkChoice; Level:mlWizard;
-     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceBackend;    EnableIf:''),
-    (Ctl:'rgDomainKind'; Path:'@run.domainkind';  Kind:mkChoice; Level:mlWizard;
-     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceDomainKind; EnableIf:''),
     (Ctl:'cbMediaFormat';Path:'Domain.MediaFormat';Kind:mkChoice; Level:mlExpert;
      Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:ChoiceMediaFormat; EnableIf:''),
 

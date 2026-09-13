@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: a graphics card, one colour per vendor.  No logos: the
+     colour is the only thing that distinguishes them, which is enough on a
+     chooser where all three sit side by side, and is nobody's trademark. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1">
+  <circle cx="128" cy="128" r="124" fill="#4a77b5"/>
+  <rect x="54" y="92" width="148" height="82" rx="8" fill="#ffffff"/><rect x="54" y="174" width="148" height="16" fill="#e2e2e2"/><rect x="70" y="178" width="22" height="12" fill="#9aa0a6"/><rect x="102" y="178" width="22" height="12" fill="#9aa0a6"/><circle cx="128" cy="131" r="30" fill="#cfd4d9"/><circle cx="128" cy="131" r="10" fill="#ffffff"/><path d="M128 101 L140 125 L116 125 Z" fill="#ffffff"/><path d="M158 131 L134 143 L134 119 Z" fill="#ffffff"/><path d="M128 161 L116 137 L140 137 Z" fill="#ffffff"/><path d="M98 131 L122 119 L122 143 Z" fill="#ffffff"/>
+</svg>
