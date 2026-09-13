@@ -10,7 +10,19 @@ BINARY    ?= mcxstudio2
 WIDGETSET ?= gtk2
 PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
-LAZFLAGS   = --pcp=$(PCP) --ws=$(WIDGETSET)
+
+# Where lazbuild's own LCL lives.  It normally learns this from the config the
+# distribution ships in /etc/lazarus, and a machine missing that file -- a
+# partial install, or a Lazarus that has never been run -- gets
+# "invalid Lazarus directory": the empty string, because there was nowhere to
+# read one from.  Naming it here is what an IDE would have written into the
+# config.  Left empty where no such directory is found, which is every
+# platform that installs Lazarus somewhere else, and then lazbuild is asked
+# nothing it was not asked before.
+LAZDIR ?= $(firstword $(wildcard /usr/lib/lazarus/default /usr/share/lazarus \
+                                 /usr/lib/lazarus/*))
+LAZFLAGS = --pcp=$(PCP) --ws=$(WIDGETSET) \
+           $(if $(LAZDIR),--lazarusdir=$(LAZDIR))
 
 .PHONY: all debug forms icons sheet test clean distclean res install uninstall
 

@@ -27,7 +27,7 @@ unit mcxjd;
 interface
 
 uses
-  Classes, SysUtils, base64, zstream, fpjson, jsonparser;
+  Classes, SysUtils, Math, base64, zstream, fpjson, jsonparser;
 
 type
   TMcxArrayKind = (akNone, akUInt8, akInt8, akUInt16, akInt16, akUInt32,
@@ -51,8 +51,10 @@ function McxArrayCount(const AArray: TMcxArray): Int64;
 { One element, as a double whatever it was stored as.  The raycaster wants
   floats and the media table wants integers; neither should care. }
 function McxArrayValue(const AArray: TMcxArray; AIndex: Int64): Double;
-{ The smallest and largest values present, for scaling a colour map. }
-procedure McxArrayRange(const AArray: TMcxArray; out ALow, AHigh: Double);
+{ The smallest and largest values present, for scaling a colour map.  False
+  when nothing in the array is a finite number, which is a whole result that
+  cannot be scaled rather than a range of zero. }
+function McxArrayRange(const AArray: TMcxArray; out ALow, AHigh: Double): Boolean;
 
 { Decodes the JData annotations on an object: _ArrayType_, _ArraySize_ and
   either _ArrayData_ or a base64 _ArrayZipData_ to be inflated first.
@@ -200,22 +202,41 @@ begin
   end;
 end;
 
-procedure McxArrayRange(const AArray: TMcxArray; out ALow, AHigh: Double);
+{ Non-finite values are stepped over rather than compared.
+
+  A run that diverges writes a volume of NaN -- mcx's own bin/example_session
+  .jnii is 216000 of them and nothing else -- and NaN is unordered, so "V <
+  ALow" is not false, it is an invalid operation.  FPC leaves that unmasked on
+  x86_64, so the comparison raises EInvalidOp and reading the file becomes a
+  crash rather than a result with nothing in it.
+
+  Skipping them is also the right answer for a volume that is only partly
+  spoiled: the colour map is scaled by the values that are numbers, and the
+  ones that are not are no more a minimum than an empty voxel is. }
+function McxArrayRange(const AArray: TMcxArray; out ALow, AHigh: Double): Boolean;
 var
   i, n: Int64;
   V: Double;
 begin
+  Result := False;
   ALow := 0;
   AHigh := 0;
   n := McxArrayCount(AArray);
-  if n = 0 then Exit;
-  ALow := McxArrayValue(AArray, 0);
-  AHigh := ALow;
-  for i := 1 to n - 1 do
+  for i := 0 to n - 1 do
   begin
     V := McxArrayValue(AArray, i);
-    if V < ALow then ALow := V;
-    if V > AHigh then AHigh := V;
+    if IsNan(V) or IsInfinite(V) then Continue;
+    if not Result then
+    begin
+      ALow := V;
+      AHigh := V;
+      Result := True;
+    end
+    else
+    begin
+      if V < ALow then ALow := V;
+      if V > AHigh then AHigh := V;
+    end;
   end;
 end;
 

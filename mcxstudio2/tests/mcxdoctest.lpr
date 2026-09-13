@@ -603,8 +603,16 @@ begin
         Ok(Total = McxArrayCount(A),
            ExtractFileName(Files[i]) + ': shape matches the data length');
       end;
-      McxArrayRange(A, Lo, Hi);
-      Ok(Hi > Lo, ExtractFileName(Files[i]) + ': the values are not all one');
+      { A file of NaN throughout is a run that diverged rather than a decode
+        that went wrong, so it is reported and not counted against the reader.
+        What is asserted either way is that asking for the range of one does
+        not raise -- which, before McxArrayRange stepped over the non-finite,
+        is exactly what it did. }
+      if McxArrayRange(A, Lo, Hi) then
+        Ok(Hi > Lo, ExtractFileName(Files[i]) + ': the values are not all one')
+      else
+        WriteLn('  note  ', ExtractFileName(Files[i]),
+                ': no finite values -- the run that wrote it did not converge');
     end;
     WriteLn(Format('  %d file(s) decoded', [Found]));
   finally

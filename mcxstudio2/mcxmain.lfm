@@ -188,7 +188,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Simulator'
@@ -234,7 +233,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Domain'
@@ -280,7 +278,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Shapes'
@@ -326,7 +323,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Source and detectors'
@@ -372,7 +368,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Session and output'
@@ -418,7 +413,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Compute'
@@ -464,7 +458,6 @@ object fmMain: TfmMain
           Top = 0
           Width = 340
           Align = alTop
-          Alignment = taLeftJustify
           AllowAllUp = True
           BorderSpacing.Bottom = 2
           Caption = 'Advanced'

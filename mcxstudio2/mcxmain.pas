@@ -814,18 +814,18 @@ begin
           subsections in reverse. }
         B.Top := g * 44;
         B.Align := alTop;
-        { Left-justified rather than centred: a column of centred titles under
-          a centred heading reads as a poster, not as a list to scan.  A
-          TSpeedButton honours Alignment only when Margin and Spacing are both
-          set, and Margin is also what indents a subsection under its section. }
-        B.Alignment := taLeftJustify;
         B.AllowAllUp := True;
         B.Caption := Card.Caption;
         B.Flat := True;
         B.GroupIndex := 2;
         B.Layout := blGlyphLeft;
         { Indented past where a section heading's own text starts, so the
-          hierarchy is visible without a second glyph column. }
+          hierarchy is visible without a second glyph column -- and the indent
+          is also what left-justifies the caption, which a TSpeedButton has no
+          Alignment for.  With blGlyphLeft the caption is drawn at
+          Margin + GlyphWidth + Spacing (speedbutton.inc:707), and a button
+          carrying no glyph contributes zero for both of those, so a column of
+          titles starts at 40 rather than centring itself into a poster. }
         B.Margin := 40;
         B.Spacing := 6;
         B.ParentFont := False;

@@ -325,9 +325,10 @@ end;
 function TMcxView.ShowVolume(const AArray: TMcxArray): Boolean;
 var
   nx, ny, nz: Integer;
-  i, n: Int64;
+  i, n, Spoiled: Int64;
   Buf: array of Single;
   V, Lo, Hi: Double;
+  Any: Boolean;
 begin
   Result := False;
   if (FGL = nil) or not FGL.MakeCurrent then Exit;
@@ -348,20 +349,59 @@ begin
   SetLength(Buf, n);
   Lo := 0;
   Hi := 0;
+  Any := False;
+  Spoiled := 0;
   for i := 0 to n - 1 do
   begin
     V := McxArrayValue(AArray, i);
     Buf[i] := V;
-    if i = 0 then
+    { A voxel that is not a number is not a value to scale against, and it
+      cannot be compared either: NaN is unordered, so "V < Lo" is not false,
+      it is an invalid operation, and FPC leaves that unmasked on x86_64.
+      Opening a result that diverged used to raise EInvalidOp here. }
+    if IsNan(V) or IsInfinite(V) then
+    begin
+      Inc(Spoiled);
+      Continue;
+    end;
+    if not Any then
     begin
       Lo := V;
       Hi := V;
+      Any := True;
     end
     else
     begin
       if V < Lo then Lo := V;
       if V > Hi then Hi := V;
     end;
+  end;
+
+  { Nothing to draw and nothing to scale it by.  Worth naming rather than
+    showing an empty box: a result that is NaN throughout is a simulation that
+    diverged -- an optical property that is not a number, a refractive index
+    of zero, a time gate of no width -- and the file is the only place that
+    shows.  mcx's own bin/example_session.jnii is one. }
+  if not Any then
+  begin
+    Say(Format('every one of the %d values in this result is not a number -- '
+      + 'the run that wrote it did not converge', [n]));
+    Exit;
+  end;
+
+  { The ones that are not numbers are held down to the floor of the window,
+    which is where the transparency threshold drops them: an unknown voxel
+    should read as empty rather than as the brightest thing in the picture,
+    which is what a NaN interpolated through GL_LINEAR does to the eight
+    texels around it.  Zero would do for a fluence map and not for a Jacobian,
+    whose minimum is negative -- so it is the floor itself, found above, and
+    a second pass over the floats rather than a guess during the first. }
+  if Spoiled > 0 then
+  begin
+    for i := 0 to n - 1 do
+      if IsNan(Buf[i]) or IsInfinite(Buf[i]) then Buf[i] := Lo;
+    Say(Format('%d of %d values are not numbers, and are drawn as empty',
+      [Spoiled, n]));
   end;
 
   { Fluence spans many decades, so the window is set on the log of it and

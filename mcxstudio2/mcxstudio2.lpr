@@ -14,11 +14,36 @@ uses
 
 {$R *.res}
 
-{ Renders the icon sheet and exits.  A GUI still has to be initialised for it,
-  because the glyphs are drawn on an LCL canvas. }
 var
   Failures: Integer;
 
+{ A headless run has nobody to press OK.
+
+  Anything the LCL does not handle itself ends in TApplication.HandleException,
+  which puts up a modal and waits for a click (application.inc:1546) -- so a
+  fault in a batch run does not fail it, it stops it, and there is nothing on
+  stdout to say why, because the dialog was the whole of the report.  That is
+  a CI job hanging until its timeout rather than turning red in a minute.
+
+  HandleException calls this instead of the dialog when it is assigned, so the
+  same fault becomes a line on stderr and an exit code.  RunSelfTest already
+  catches what a file can raise; what this adds is everything before the first
+  file, while the form itself is still being built -- an .lfm carrying a
+  property this Lazarus does not have is exactly that. }
+type
+  TMcxHeadless = class
+    class procedure Report(Sender: TObject; E: Exception);
+  end;
+
+class procedure TMcxHeadless.Report(Sender: TObject; E: Exception);
+begin
+  WriteLn(StdErr, E.ClassName, ': ', E.Message);
+  Flush(StdErr);
+  Halt(2);
+end;
+
+{ Renders the icon sheet and exits.  A GUI still has to be initialised for it,
+  because the glyphs are drawn on an LCL canvas. }
 function DumpIcons: Boolean;
 var
   Target: string;
@@ -26,6 +51,7 @@ begin
   Result := (ParamCount >= 1) and (ParamStr(1) = '--dump-icons');
   if not Result then Exit;
   if ParamCount >= 2 then Target := ParamStr(2) else Target := 'icons.png';
+  Application.OnException := @TMcxHeadless.Report;
   Application.Initialize;
   if McxSaveIconSheet(Target, 32, clBlack) then
     WriteLn('wrote ', Target)
@@ -56,6 +82,7 @@ begin
     binding table and the form agree. }
   if (ParamCount >= 1) and (ParamStr(1) = '--self-test') then
   begin
+    Application.OnException := @TMcxHeadless.Report;
     Application.Initialize;
     Application.CreateForm(TfmMain, fmMain);
     if ParamCount >= 2 then Failures := fmMain.RunSelfTest(ParamStr(2))
