@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: colour theme.  The half-filled disc is the usual glyph for
+     "appearance"; the badge follows the rest of this set - one flat colour
+     circle with a white symbol on it. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1" id="svg-theme">
+  <circle cx="128" cy="128" r="124" fill="#4f5b93" id="badge" />
+  <path d="M 128,36 A 92,92 0 0 0 128,220 Z" fill="#ffffff" id="half" />
+  <circle cx="128" cy="128" r="92" fill="none" stroke="#ffffff"
+          stroke-width="16" id="ring" />
+</svg>

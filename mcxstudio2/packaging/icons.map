@@ -50,6 +50,7 @@ media       media
 add         add
 delete      delete
 
-# help
+# help and appearance
 about       about
 help        question
+theme       theme

@@ -111,6 +111,13 @@ object fmMain: TfmMain
       Caption = 'tbSep4'
       Style = tbsDivider
     end
+    object tbTheme: TToolButton
+      Left = 1
+      Top = 1
+      Action = acTheme
+      DropdownMenu = pmTheme
+      Style = tbsDropDown
+    end
     object tbHelp: TToolButton
       Left = 1
       Top = 1
@@ -2098,6 +2105,11 @@ object fmMain: TfmMain
       Hint = 'Put the panes back where they started'
       OnExecute = acResetLayoutExecute
     end
+    object acTheme: TAction
+      Caption = 'Theme'
+      Hint = 'The window'#39's colours'
+      OnExecute = acThemeExecute
+    end
     object acHelp: TAction
       Caption = 'Help'
       Hint = 'What the setting you are on does  (F1)'
@@ -2149,6 +2161,10 @@ object fmMain: TfmMain
   object pmBench: TPopupMenu
     left = 640
     top = 128
+  end
+  object pmTheme: TPopupMenu
+    left = 640
+    top = 184
   end
   object tmRefresh: TTimer
     Enabled = False

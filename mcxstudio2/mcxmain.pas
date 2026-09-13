@@ -20,10 +20,11 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
-  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, LCLType, fpjson,
+  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, Grids, LCLType,
+  fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxview, mcxdisp,
-  mcxtable, mcxjd;
+  mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview,
+  mcxdisp, mcxtable, mcxjd;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -63,6 +64,8 @@ type
     acResetLayout: TAction;
     acAbout: TAction;
     acHelp: TAction;
+    acTheme: TAction;
+    pmTheme: TPopupMenu;
     alMain: TActionList;
     dlgOpen: TOpenDialog;
     dlgResult: TOpenDialog;
@@ -284,6 +287,7 @@ type
     procedure acDevicesExecute(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
     procedure acHelpExecute(Sender: TObject);
+    procedure acThemeExecute(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
@@ -385,6 +389,9 @@ type
     procedure TableChanged(Sender: TObject);
     function  Environment: string;
     procedure ShowHelpForFocus;
+    procedure ApplyTheme;
+    procedure BuildThemeMenu;
+    procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
@@ -555,6 +562,10 @@ begin
   KeyPreview := True;
   OnKeyDown := @FormKeyDown;
   Screen.AddHandlerActiveControlChanged(@FocusChanged);
+
+  McxLoadTheme;
+  BuildThemeMenu;
+  ApplyTheme;
   LoadDockLayout;
 
   NewDocument;
@@ -616,25 +627,10 @@ begin
   acSaveImage.ImageIndex := McxIconIndex('saveas');
   acAbout.ImageIndex := McxIconIndex('about');
   acHelp.ImageIndex := McxIconIndex('help');
+  acTheme.ImageIndex := McxIconIndex('theme');
 end;
 
 { ------------------------------------------------------------ navigator --- }
-
-{ A colour APercent of the way from A to B.  Every shade the navigator uses is
-  mixed from the theme's own clBtnFace / clWindowText / clHighlight rather than
-  written down as a grey, so the bands stay legible under a dark theme -- which
-  is where the old GUI's hard-coded colours failed. }
-function McxBlend(A, B: TColor; APercent: Integer): TColor;
-var
-  ra, ga, ba, rb, gb, bb: Byte;
-begin
-  RedGreenBlue(ColorToRGB(A), ra, ga, ba);
-  RedGreenBlue(ColorToRGB(B), rb, gb, bb);
-  Result := RGBToColor(
-    ra + (Integer(rb) - ra) * APercent div 100,
-    ga + (Integer(gb) - ga) * APercent div 100,
-    ba + (Integer(bb) - ba) * APercent div 100);
-end;
 
 { Selecting a section shows its page and lists its subsections underneath the
   header; selecting a subsection scrolls that group box to the top of the
@@ -646,6 +642,9 @@ type
     concrete classes; a descendant declared in this unit reaches them without
     caring which class it was handed. }
   TColourAccess = class(TWinControl);
+  { The same trick for Font and ParentFont, which TControl also keeps
+    protected. }
+  TFontAccess = class(TControl);
 
 { Paints a card and everything nested in it.
 
@@ -688,7 +687,7 @@ begin
   ACard.Tag := AColor;
   W := ACard;
   TColourAccess(W).ParentColor := False;
-  TColourAccess(W).Color := clBtnFace;
+  TColourAccess(W).Color := McxBase;
   for i := 0 to ACard.ControlCount - 1 do
     if (ACard.Controls[i] is TPanel) or (ACard.Controls[i] is TCustomGroupBox) then
       PaintCard(TWinControl(ACard.Controls[i]), AColor);
@@ -733,10 +732,10 @@ begin
   begin
     FPanes[i].ParentColor := False;
     FBodies[i].ParentColor := False;
-    FBodies[i].Color := clBtnFace;
+    FBodies[i].Color := McxBase;
   end;
   sbNav.ParentColor := False;
-  sbNav.Color := clBtnFace;
+  sbNav.Color := McxBase;
 end;
 
 { One button per group box, captioned from the group box itself so a title is
@@ -932,6 +931,157 @@ end;
   It is a glyph rather than a caption prefix because TSpeedButton centres its
   caption and has no Alignment -- but it does place a glyph at Margin, and the
   caption follows the glyph, which left-aligns the header. }
+{ Repaints the window in the current theme.
+
+  Only the surfaces the program paints itself are touched.  The widgets --
+  edit boxes, combo boxes, the scroll bars -- are the widget set's and are
+  left alone deliberately: on gtk2 half of them ignore Color anyway, and a
+  window with hand-painted panels and native controls looks better than one
+  where every second control has missed the change. }
+procedure TfmMain.ApplyTheme;
+
+  { The text colour, on everything that draws its caption straight onto the
+    surface behind it.
+
+    Not on the native widgets -- an edit box, a combo box, a grid keep their
+    own background from the widget set whatever we ask, and giving one of
+    those the theme's ink is how you get dark text on a dark field.  The two
+    memos are handled below, where their background is set as well. }
+  procedure SetInk(AControl: TControl; AColor: TColor);
+  begin
+    TFontAccess(AControl).ParentFont := False;
+    TFontAccess(AControl).Font.Color := AColor;
+  end;
+
+  procedure Ink(AControl: TControl);
+  var
+    k: Integer;
+  begin
+    if AControl = nil then Exit;
+    if (AControl is TLabel) or (AControl is TSpeedButton) or
+       (AControl is TCheckBox) or (AControl is TRadioButton) or
+       (AControl is TPanel) or (AControl is TCustomGroupBox) or
+       (AControl is TTabSheet) or (AControl is TPageControl) or
+       (AControl is TToolBar) or (AControl is TStatusBar) or
+       (AControl is TScrollBox) then
+      SetInk(AControl, McxText)
+    else if (AControl is TCustomEdit) or (AControl is TCustomListBox) or
+            (AControl is TStringGrid) then
+    begin
+      { A field carries its own background, so it gets both halves: the paper
+        colour and the ink to go on it.  Giving it only the ink -- which is
+        what inheriting the form's font does -- is how a window ends up with
+        the theme's dark text on the desktop's dark field. }
+      SetInk(AControl, McxText);
+      TColourAccess(AControl).ParentColor := False;
+      TColourAccess(AControl).Color := McxBlend(McxBase, McxText, 4);
+      { A grid's fixed cells have a colour of their own, and left behind they
+        are a dark header over a light table. }
+      if AControl is TStringGrid then
+        TStringGrid(AControl).FixedColor := McxBlend(McxBase, McxText, 14);
+    end
+    else if (AControl is TCustomButton) or (AControl is TCustomComboBox) then
+      { Drawn by the widget set, frame and face together -- a push button
+        entirely, and a drop-down list's closed face -- so there is no way to
+        give either half a palette.  clDefault hands the pairing back to the
+        only thing that knows both halves of it. }
+      SetInk(AControl, clDefault);
+    if AControl is TWinControl then
+      for k := 0 to TWinControl(AControl).ControlCount - 1 do
+        Ink(TWinControl(AControl).Controls[k]);
+  end;
+
+  { Everything that inherits its colours does so from the form; the ones that
+    were given their own in the designer are named below. }
+  procedure Paper(AControl: TWinControl);
+  begin
+    if AControl = nil then Exit;
+    TColourAccess(AControl).ParentColor := False;
+    TColourAccess(AControl).Color := McxBlend(McxBase, McxText, 4);
+    TColourAccess(AControl).Font.Color := McxText;
+  end;
+
+var
+  i: Integer;
+  r, g, b: Byte;
+begin
+  Color := McxBase;
+  Font.Color := McxText;
+
+  sbNav.Color := McxBase;
+  for i := 0 to High(FBodies) do FBodies[i].Color := McxBase;
+
+  { The bars and the notebook too, where the widget set lets them be told.
+    Where it does not -- gtk2 draws a tab strip itself -- the request is
+    harmless and the strip stays the desktop's. }
+  tbMain.ParentColor := False;
+  tbMain.Color := McxBlend(McxBase, McxText, 6);
+  sbMain.ParentColor := False;
+  sbMain.Color := McxBlend(McxBase, McxText, 6);
+  TColourAccess(pcView).ParentColor := False;
+  TColourAccess(pcView).Color := McxBase;
+  for i := 0 to pcView.PageCount - 1 do
+  begin
+    TColourAccess(pcView.Pages[i]).ParentColor := False;
+    TColourAccess(pcView.Pages[i]).Color := McxBase;
+  end;
+  if sbDetail <> nil then
+  begin
+    sbDetail.ParentColor := False;
+    sbDetail.Color := McxBase;
+  end;
+
+  Ink(Self);
+
+  { The text panes read as paper: a shade off the surface, so a block of JSON
+    is a thing on the window rather than the window itself. }
+  Paper(mmJSON);
+  Paper(mmCommand);
+  Paper(mmLog);
+
+  if FView <> nil then
+  begin
+    { Dark in every theme, only tinted by the surface.  The wireframe, the
+      grid and the axis labels are drawn light, and a light background would
+      lose all three -- and a 3-D view is read against its own contents, not
+      against the window it sits in. }
+    RedGreenBlue(ColorToRGB(McxBlend(clBlack, McxBase, 22)), r, g, b);
+    FView.Background := McxVec3(r / 255, g / 255, b / 255);
+    FView.Redraw;
+  end;
+
+  UpdateNavState;
+  Invalidate;
+end;
+
+procedure TfmMain.ThemeClick(Sender: TObject);
+begin
+  McxSetTheme(TMcxTheme(TMenuItem(Sender).Tag));
+  McxSaveTheme;
+  BuildThemeMenu;
+  ApplyTheme;
+end;
+
+{ Rebuilt rather than ticked in place, because it is short and because the
+  check mark is the only state it has. }
+procedure TfmMain.BuildThemeMenu;
+var
+  T: TMcxTheme;
+  Item: TMenuItem;
+begin
+  pmTheme.Items.Clear;
+  for T := Low(TMcxTheme) to High(TMcxTheme) do
+  begin
+    Item := TMenuItem.Create(pmTheme);
+    Item.Caption := McxThemeNames[T];
+    Item.Tag := Ord(T);
+    Item.RadioItem := True;
+    Item.Checked := (T = McxCurrentTheme);
+    Item.OnClick := @ThemeClick;
+    pmTheme.Items.Add(Item);
+  end;
+end;
+
 procedure TfmMain.UpdateNavState;
 var
   i: Integer;
@@ -947,9 +1097,13 @@ begin
     { The open section is filled with the selection colour, the closed ones
       sit on a neutral band: level, then state, and nothing else. }
     if i = FSection then
-      FPanes[i].Color := McxBlend(clBtnFace, clHighlight, BandActive)
+      FPanes[i].Color := McxBlend(McxBase, McxAccent, BandActive)
     else
-      FPanes[i].Color := McxBlend(clBtnFace, clWindowText, BandLevel);
+      FPanes[i].Color := McxBlend(McxBase, McxText, BandLevel);
+    { The heading sits on the band, and the open band is the accent -- a
+      fixed colour, where the surface is not.  So what can be read on it is
+      decided from the band and not from the theme's text colour. }
+    FHeads[i].Font.Color := McxReadable(FPanes[i].Color);
   end;
 
   for i := 0 to High(FSubs) do
@@ -958,21 +1112,21 @@ begin
     { The title takes the selection colour rather than a background, because
       a filled row under a filled heading reads as a second heading. }
     if i = FSub then
-      FSubs[i].Btn.Font.Color := McxBlend(clWindowText, clHighlight, 80)
+      FSubs[i].Btn.Font.Color := McxBlend(McxText, McxAccent, 80)
     else
-      FSubs[i].Btn.Font.Color := clDefault;
+      FSubs[i].Btn.Font.Color := McxText;
 
     { The card the title points at is held highlighted for as long as it is
       the selected one, and its own heading goes with it. }
     if i = FSub then
     begin
-      SetCard(FSubs[i].Box, McxBlend(clBtnFace, clHighlight, CardActive));
-      FSubs[i].Cap.Font.Color := McxBlend(clWindowText, clHighlight, 80);
+      SetCard(FSubs[i].Box, McxBlend(McxBase, McxAccent, CardActive));
+      FSubs[i].Cap.Font.Color := McxBlend(McxText, McxAccent, 80);
     end
     else
     begin
-      SetCard(FSubs[i].Box, McxBlend(clBtnFace, clWindowText, CardLevel));
-      FSubs[i].Cap.Font.Color := clDefault;
+      SetCard(FSubs[i].Box, McxBlend(McxBase, McxText, CardLevel));
+      FSubs[i].Cap.Font.Color := McxText;
     end;
   end;
 end;
@@ -1232,6 +1386,13 @@ end;
 procedure TfmMain.acHelpExecute(Sender: TObject);
 begin
   ShowHelpForFocus;
+end;
+
+{ The button itself drops the menu: a theme is a list to pick from, and there
+  is nothing sensible for a plain click to do. }
+procedure TfmMain.acThemeExecute(Sender: TObject);
+begin
+  pmTheme.PopUp;
 end;
 
 { Remembered as the focus moves rather than read when help is asked for: by

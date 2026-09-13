@@ -88,6 +88,9 @@ type
     FFailed: Boolean;
     { Filled on the first paint; the About box may ask before there is one. }
     FDescription: string;
+    { What the picture is cleared to.  A theme colour, so the view is not the
+      one light rectangle in a dark window or the reverse. }
+    FBack: TMcxVec3;
     FDragging: Boolean;
     FDidDrag: Boolean;
     FDragX, FDragY: Integer;
@@ -143,6 +146,8 @@ type
     procedure Redraw;
     { What the driver calls itself, once there has been a context to ask. }
     property Description: string read FDescription;
+    { The clear colour, 0..1 per channel. }
+    property Background: TMcxVec3 read FBack write FBack;
     property HasVolume: Boolean read GetHasVolume;
     property Document: TMcxDoc read FDoc write FDoc;
     { Renders at any size into an offscreen target and writes a PNG. }
@@ -160,6 +165,7 @@ constructor TMcxView.Create(AHost: TWinControl);
 begin
   FHost := AHost;
   FDescription := '(no context yet)';
+  FBack := McxVec3(0.16, 0.16, 0.17);
   FStyle := 0;
   FMap := 0;
   FFloor := 0;
@@ -598,7 +604,8 @@ begin
   if AHeight < 1 then AHeight := 1;
   glViewport(0, 0, AWidth, AHeight);
 
-  if AFlat then glClearColor(0, 0, 0, 1) else glClearColor(0.16, 0.16, 0.17, 1);
+  if AFlat then glClearColor(0, 0, 0, 1)
+  else glClearColor(FBack.x, FBack.y, FBack.z, 1);
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
 
@@ -673,7 +680,7 @@ begin
   begin
     { Nothing can be drawn, but the buffer still has to be cleared and shown
       or the control keeps whatever was behind it. }
-    glClearColor(0.16, 0.16, 0.17, 1);
+    glClearColor(FBack.x, FBack.y, FBack.z, 1);
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
     FGL.SwapBuffers;
     Exit;

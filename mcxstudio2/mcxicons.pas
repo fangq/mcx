@@ -106,7 +106,7 @@ const
   { Kept in one place so the toolbar, the menus and the shape tree all agree on
     what index means what.  Appending is safe; inserting is not, because an
     ImageIndex in a form file is an absolute position. }
-  IconNames: array[0..32] of string = (
+  IconNames: array[0..33] of string = (
     { Session and files. }
     'new', 'open', 'save', 'saveas',
     { Running. }
@@ -120,8 +120,8 @@ const
     'source', 'detector', 'media',
     { Editing. }
     'add', 'delete',
-    { Help. }
-    'about', 'help',
+    { Help and appearance. }
+    'about', 'help', 'theme',
     { Accordion headers.  A glyph rather than a caption prefix, because
       TSpeedButton centres its caption and has no Alignment -- but it does
       place a glyph at Margin, and the caption then follows it, which is what
