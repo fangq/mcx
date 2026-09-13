@@ -340,6 +340,8 @@ type
       state worth having. }
     { Whether the selected section's subsection list is showing. }
     FOpen: Boolean;
+    FTabBar: TPanel;
+    FTabs: array of TSpeedButton;
     { The section heading the pointer is over, or -1. }
     FHeadHot: Integer;
     { The subsection the pointer is over, or -1.  The band behind it is the
@@ -369,9 +371,9 @@ type
     { The wizard's step bar, built rather than placed: it belongs to a mode
       rather than to the form, and in expert mode it is not there at all. }
     FStepBar: TPanel;
-    FStepBack: TButton;
-    FStepMode: TButton;
-    FStepNext: TButton;
+    FStepBack: TSpeedButton;
+    FStepMode: TSpeedButton;
+    FStepNext: TSpeedButton;
     FStepText: TLabel;
     { Every set of alTop siblings the wizard filter can hide something from,
       each in the order it is meant to appear.  See Restack. }
@@ -459,6 +461,10 @@ type
     procedure StepClick(Sender: TObject);
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
+    procedure BuildTabBar;
+    procedure TabClick(Sender: TObject);
+    procedure TabChanged(Sender: TObject);
+    procedure UpdateTabBar;
     procedure UpdateHeadBands;
     procedure HeadEnter(Sender: TObject);
     procedure HeadLeave(Sender: TObject);
@@ -522,6 +528,23 @@ type
     Nothing replaces it here because the band underneath is where the hover
     belongs: it is the shape the selection uses, so the two agree.  See
     NavSubPaint. }
+  { A push button drawn as a filled rounded shape rather than as a bevel.
+
+    The rest of the window is flat surfaces -- a card is a fill and a
+    hairline, a navigator band is a fill -- and a widget-set button in the
+    middle of that is the one thing with a raised edge on it.  Flat here
+    means the same thing it means for a card: a fill that says where the
+    thing is, a stronger fill when the pointer is on it, and the accent when
+    it is pressed.
+
+    TSpeedButton rather than TButton because only a TSpeedButton lets the
+    background be painted: PaintBackground is virtual on it and there is no
+    equivalent on a native button, which the widget set draws whole. }
+  TMcxFlatButton = class(TSpeedButton)
+  protected
+    procedure PaintBackground(var PaintRect: TRect); override;
+  end;
+
   TMcxNavButton = class(TSpeedButton)
   protected
     procedure PaintBackground(var PaintRect: TRect); override;
@@ -530,6 +553,30 @@ type
 procedure TMcxNavButton.PaintBackground(var PaintRect: TRect);
 begin
   { Deliberately nothing: the caption and the glyph still draw. }
+end;
+
+procedure TMcxFlatButton.PaintBackground(var PaintRect: TRect);
+var
+  Face: TColor;
+  R: Integer;
+begin
+  if not Enabled then Face := McxBlend(McxBase, McxText, 6)
+  else if FState in [bsDown, bsExclusive] then
+    Face := McxBlend(McxBase, McxAccent, 62)
+  else if MouseInClient then Face := McxBlend(McxBase, McxAccent, 26)
+  else Face := McxBlend(McxBase, McxText, 12);
+
+  R := McxScale96(8);
+  Canvas.AntialiasingMode := amOn;
+  Canvas.Brush.Style := bsSolid;
+  Canvas.Brush.Color := Face;
+  Canvas.Pen.Style := psSolid;
+  Canvas.Pen.Color := Face;
+  Canvas.RoundRect(0, 0, Width, Height, R, R);
+  { The caption is drawn after this, onto this canvas, so what can be read on
+    the face is decided here where the face is known. }
+  if Enabled then Canvas.Font.Color := McxReadable(Face)
+  else Canvas.Font.Color := McxBlend(Face, McxText, 40);
 end;
 
 { Forward, because FormCreate has to register it before the saved layout is
@@ -650,6 +697,7 @@ begin
   { The Shapes editor, like the two tables, reads the document directly:
     how many commands a domain is built from is not known until a file is
     open, so there is no control-to-path row that could describe it. }
+  BuildTabBar;
   BuildSourceBar;
   FShapes := TMcxShapes.Create(pnShapeEdit);
   FShapes.OnChange := @TableChanged;
@@ -1406,6 +1454,17 @@ procedure TfmMain.ApplyTheme;
       SetInk(AControl, McxText);
       TColourAccess(AControl).ParentColor := False;
       TColourAccess(AControl).Color := McxBlend(McxBase, McxText, 4);
+      { And no sunken frame around it.  The field is told apart from the card
+        it sits on by being a shade off it, which is the same way a card is
+        told from the page; a bevel as well is the widget set's idea of a
+        field rather than this window's.  BorderStyle is published on every
+        one of these, and bsNone is the only thing it has to say. }
+      if AControl is TCustomEdit then
+        TCustomEdit(AControl).BorderStyle := bsNone
+      else if AControl is TCustomListBox then
+        TCustomListBox(AControl).BorderStyle := bsNone
+      else if AControl is TCustomDrawGrid then
+        TCustomDrawGrid(AControl).BorderStyle := bsNone;
       { A grid's fixed cells have a colour of their own, and left behind they
         are a dark header over a light table. }
       if AControl is TStringGrid then
@@ -1471,6 +1530,7 @@ begin
   sbMain.Color := McxBlend(McxBase, McxText, 6);
   TColourAccess(pcView).ParentColor := False;
   TColourAccess(pcView).Color := McxBase;
+  if FTabBar <> nil then FTabBar.Color := McxBase;
   for i := 0 to pcView.PageCount - 1 do
   begin
     TColourAccess(pcView.Pages[i]).ParentColor := False;
@@ -1551,6 +1611,87 @@ end;
   Its own procedure because hovering has to redo it and nothing else, and
   because the band is the only hover a heading has: the button under the
   pointer no longer paints one.  See TMcxNavButton. }
+{ The notebook's own tab strip, replaced by a row of flat buttons.
+
+  A TPageControl's tabs are the widget set's, drawn with its notches and its
+  edges, and there is no way to ask for anything else: the LCL offers no
+  owner drawing for them.  What it does offer is ShowTabs, and with the tabs
+  off the notebook is a stack of pages and the strip can be anything.  Here
+  it is the same flat button the wizard bar uses, which is the point -- one
+  idea of what a button looks like, in both places.
+
+  Grouped, so that exactly one is down and the down one is drawn in the
+  accent by TMcxFlatButton, which is the whole of showing which page is
+  showing. }
+procedure TfmMain.BuildTabBar;
+var
+  i: Integer;
+  B: TMcxFlatButton;
+begin
+  pcView.ShowTabs := False;
+
+  FTabBar := TPanel.Create(pnPreview);
+  FTabBar.Parent := pnPreview;
+  { Above the notebook, which is alClient and takes what is left. }
+  FTabBar.Top := -1;
+  FTabBar.Align := alTop;
+  FTabBar.AutoSize := True;
+  FTabBar.Canvas.Font.Assign(Font);
+  FTabBar.BevelOuter := bvNone;
+  FTabBar.ParentColor := False;
+
+  SetLength(FTabs, pcView.PageCount);
+  for i := 0 to pcView.PageCount - 1 do
+  begin
+    B := TMcxFlatButton.Create(FTabBar);
+    B.Parent := FTabBar;
+    { Numbered, for the reason every other row of aligned siblings here is:
+      left at zero they come out in whatever order the control list holds. }
+    B.Left := i * 1000;
+    B.Align := alLeft;
+    B.BorderSpacing.Around := 3;
+    B.Caption := pcView.Pages[i].Caption;
+    { Measured rather than AutoSized: a TSpeedButton sized to its caption is
+      sized to exactly its caption, and a word touching both ends of the
+      shape it sits in does not read as a button.  Raw 96-dpi here, because
+      the startup sweep scales it with everything else. }
+    B.Height := 26;
+    B.Width := FTabBar.Canvas.TextWidth(B.Caption) + 24;
+    B.GroupIndex := 3;
+    B.AllowAllUp := False;
+    B.Tag := i;
+    B.Cursor := crHandPoint;
+    B.OnClick := @TabClick;
+    FTabs[i] := B;
+  end;
+
+  pcView.OnChange := @TabChanged;
+  UpdateTabBar;
+end;
+
+procedure TfmMain.TabClick(Sender: TObject);
+begin
+  if not (Sender is TSpeedButton) then Exit;
+  pcView.ActivePageIndex := TSpeedButton(Sender).Tag;
+  UpdateTabBar;
+end;
+
+procedure TfmMain.TabChanged(Sender: TObject);
+begin
+  UpdateTabBar;
+end;
+
+{ The page can be changed from anywhere -- a run switches to the log, a
+  result to the preview -- so which button is down follows the notebook
+  rather than the other way about. }
+procedure TfmMain.UpdateTabBar;
+var
+  i: Integer;
+begin
+  for i := 0 to High(FTabs) do
+    FTabs[i].Down := (i = pcView.ActivePageIndex);
+end;
+
 procedure TfmMain.UpdateHeadBands;
 var
   i: Integer;
@@ -1987,7 +2128,7 @@ begin
     are aligned, so these are numbered to fix the order: the mode switch on
     the outside, then Back, then Next, which is the one the eye should land
     on last. }
-  FStepNext := TButton.Create(FStepBar);
+  FStepNext := TMcxFlatButton.Create(FStepBar);
   FStepNext.Parent := FStepBar;
   FStepNext.Left := 3000;
   FStepNext.Align := alRight;
@@ -1996,7 +2137,7 @@ begin
   FStepNext.Caption := 'Next >';
   FStepNext.OnClick := @StepClick;
 
-  FStepBack := TButton.Create(FStepBar);
+  FStepBack := TMcxFlatButton.Create(FStepBar);
   FStepBack.Parent := FStepBar;
   FStepBack.Left := 2000;
   FStepBack.Align := alRight;
@@ -2017,7 +2158,7 @@ begin
 
     Captioned with the mode it goes to, because a button says what pressing
     it does. }
-  FStepMode := TButton.Create(FStepBar);
+  FStepMode := TMcxFlatButton.Create(FStepBar);
   FStepMode.Parent := FStepBar;
   FStepMode.Left := 0;
   FStepMode.Align := alLeft;
