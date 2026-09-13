@@ -347,6 +347,7 @@ type
       rather than to the form, and in expert mode it is not there at all. }
     FStepBar: TPanel;
     FStepBack: TButton;
+    FStepMode: TButton;
     FStepNext: TButton;
     FStepText: TLabel;
     { Every set of alTop siblings the wizard filter can hide something from,
@@ -1267,12 +1268,18 @@ begin
 
   FStepText := TLabel.Create(FStepBar);
   FStepText.Parent := FStepBar;
+  FStepText.Left := 1000;
   FStepText.Align := alLeft;
   FStepText.Layout := tlCenter;
-  FStepText.BorderSpacing.Left := 10;
+  FStepText.BorderSpacing.Left := 14;
 
+  { alRight siblings are laid out in order of the Left they have when they
+    are aligned, so these are numbered to fix the order: the mode switch on
+    the outside, then Back, then Next, which is the one the eye should land
+    on last. }
   FStepNext := TButton.Create(FStepBar);
   FStepNext.Parent := FStepBar;
+  FStepNext.Left := 3000;
   FStepNext.Align := alRight;
   FStepNext.Width := 90;
   FStepNext.BorderSpacing.Around := 6;
@@ -1281,11 +1288,37 @@ begin
 
   FStepBack := TButton.Create(FStepBar);
   FStepBack.Parent := FStepBar;
+  FStepBack.Left := 2000;
   FStepBack.Align := alRight;
   FStepBack.Width := 90;
   FStepBack.BorderSpacing.Around := 6;
   FStepBack.Caption := '< Back';
   FStepBack.OnClick := @StepClick;
+
+  { The mode switch, on the settings page itself rather than only as an icon
+    on the toolbar.  Whichever section is showing, the question "is there
+    more than this?" is asked here, and the answer should be next to the
+    settings rather than up among the file buttons.
+
+    On the left, away from Back and Next: it is not a step in the wizard, and
+    those two come and go with the mode -- when they are hidden and shown
+    again the aligner re-sorts that side of the bar, and a button that moves
+    when you are not looking is a button you have to find twice.
+
+    Captioned with the mode it goes to, because a button says what pressing
+    it does. }
+  FStepMode := TButton.Create(FStepBar);
+  FStepMode.Parent := FStepBar;
+  FStepMode.Left := 0;
+  FStepMode.Align := alLeft;
+  FStepMode.Width := 90;
+  FStepMode.BorderSpacing.Around := 6;
+  FStepMode.OnClick := @acToggleModeExecute;
+  { The window opens in the simple mode, so the way out of it is what the
+    button offers.  Kept in step with the toolbar action from here on. }
+  FStepMode.Caption := 'Expert';
+  FStepMode.Hint := 'Show every setting, not only the key ones';
+  FStepMode.ShowHint := True;
 end;
 
 procedure TfmMain.UpdateStepBar;
@@ -1293,7 +1326,13 @@ var
   i, Shown, At: Integer;
 begin
   if FStepBar = nil then Exit;
-  FStepBar.Visible := FWizard;
+  { The bar stays whatever the mode is, because the mode switch lives on it:
+    hiding the bar in expert mode took the only way back with it.  What goes
+    is the wizard's own part of it -- the step count and Back and Next, which
+    mean nothing when every section is showing at once. }
+  FStepText.Visible := FWizard;
+  FStepBack.Visible := FWizard;
+  FStepNext.Visible := FWizard;
   { The binding sweep runs once before any section has been chosen -- from
     NewDocument, which FormCreate calls before SelectSection -- so there is a
     moment when there is no step to name. }
@@ -1346,12 +1385,24 @@ begin
     acToggleMode.Caption := 'Wizard';
     acToggleMode.ImageIndex := McxIconIndex('wizard');
     acToggleMode.Hint := 'Showing key settings only. Click for every setting.';
+    if FStepMode <> nil then
+    begin
+      FStepMode.Caption := 'Expert';
+      FStepMode.Hint := 'Show every setting, not only the key ones';
+      FStepMode.ShowHint := True;
+    end;
   end
   else
   begin
     acToggleMode.Caption := 'Expert';
     acToggleMode.ImageIndex := McxIconIndex('expert');
     acToggleMode.Hint := 'Showing every setting. Click for key settings only.';
+    if FStepMode <> nil then
+    begin
+      FStepMode.Caption := 'Simple';
+      FStepMode.Hint := 'Show only the settings a simulation usually needs';
+      FStepMode.ShowHint := True;
+    end;
   end;
   UpdateStatus;
 end;
