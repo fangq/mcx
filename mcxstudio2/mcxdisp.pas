@@ -41,7 +41,8 @@ type
       number each for naming one exactly -- a bar over ten thousand
       identifiers cannot land on a chosen one, and "show me ray 4237" is the
       question this row exists to answer. }
-    FIdRow: TPanel;
+    FIdRow, FIdBars: TPanel;
+    FIdSpan: TCheckBox;
     FIdLoBar, FIdHiBar: TTrackBar;
     FIdLoNum, FIdHiNum: TSpinEdit;
     FIdFirst, FIdLast: Integer;
@@ -87,6 +88,10 @@ const
     direction in it; past about this many there is nothing to see that the
     unfiltered picture did not already show. }
   MaxPhotonId = 10000;
+
+  { mcx numbers its photons from zero; the row shows them from one, because a
+    person counting paths starts at the first one. }
+  IdOffset = 1;
 
 constructor TMcxDisplayBar.Create(AHost: TWinControl; AView: TMcxView);
 var
@@ -187,25 +192,57 @@ begin
 
   { The photon range, above the slab rows: it belongs with the paths rather
     than with the volume, and it is the one row that is not always there. }
+  { Laid out by hand rather than by ChildSizing: the two numbers and the
+    check box want a fixed width and only the two bars should take up the
+    slack, which is one rule ChildSizing's equal shares cannot express. }
   FIdRow := AddRow('Photon IDs');
-  FIdRow.ChildSizing.Layout := cclLeftToRightThenTopToBottom;
-  FIdRow.ChildSizing.ControlsPerLine := 4;
-  FIdRow.ChildSizing.EnlargeHorizontal := crsScaleChilds;
-  FIdRow.ChildSizing.HorizontalSpacing := McxScale96(6);
 
   FIdLoNum := AddNumber(FIdRow, 1);
+  FIdLoNum.Align := alLeft;
+  FIdLoNum.Width := McxScale96(82);
+  FIdLoNum.BorderSpacing.Right := McxScale96(6);
   FIdLoNum.OnChange := @IdChanged;
-  FIdLoNum.Hint := 'The first photon to draw.  Set this and the last one to ' +
-    'the same number to follow a single path.';
-  FIdLoBar := AddSlider(FIdRow, 0);
+  FIdLoNum.Hint := 'The photon to draw.  With "to" ticked this is the first ' +
+    'of a range; without it, the only one.';
+
+  FIdHiNum := AddNumber(FIdRow, 1);
+  FIdHiNum.Left := 10000;
+  FIdHiNum.Align := alRight;
+  FIdHiNum.Width := McxScale96(82);
+  FIdHiNum.BorderSpacing.Left := McxScale96(6);
+  FIdHiNum.OnChange := @IdChanged;
+  FIdHiNum.Hint := 'The last photon to draw.';
+
+  FIdSpan := TCheckBox.Create(FIdRow);
+  FIdSpan.Parent := FIdRow;
+  FIdSpan.Left := 9000;
+  FIdSpan.Align := alRight;
+  FIdSpan.AutoSize := False;
+  FIdSpan.Width := McxScale96(42);
+  FIdSpan.BorderSpacing.Left := McxScale96(6);
+  FIdSpan.Caption := 'to';
+  FIdSpan.Checked := True;
+  FIdSpan.ShowHint := True;
+  FIdSpan.Hint := 'Off draws the one photon named on the left, which is the ' +
+    'only way to see where a single path went.';
+  FIdSpan.OnChange := @IdChanged;
+
+  FIdBars := TPanel.Create(FIdRow);
+  FIdBars.Parent := FIdRow;
+  FIdBars.Align := alClient;
+  FIdBars.BevelOuter := bvNone;
+  FIdBars.Caption := '';
+  FIdBars.ChildSizing.Layout := cclLeftToRightThenTopToBottom;
+  FIdBars.ChildSizing.ControlsPerLine := 2;
+  FIdBars.ChildSizing.EnlargeHorizontal := crsScaleChilds;
+  FIdBars.ChildSizing.HorizontalSpacing := McxScale96(6);
+
+  FIdLoBar := AddSlider(FIdBars, 0);
   FIdLoBar.OnChange := @IdChanged;
   FIdLoBar.Hint := FIdLoNum.Hint;
-  FIdHiBar := AddSlider(FIdRow, 100);
+  FIdHiBar := AddSlider(FIdBars, 100);
   FIdHiBar.OnChange := @IdChanged;
-  FIdHiBar.Hint := 'The last photon to draw.';
-  FIdHiNum := AddNumber(FIdRow, 1);
-  FIdHiNum.OnChange := @IdChanged;
-  FIdHiNum.Hint := FIdHiBar.Hint;
+  FIdHiBar.Hint := FIdHiNum.Hint;
 
   { Hidden until there is a trajectory; the row above it is the volume's. }
   FIdRow.Parent.Visible := False;
@@ -380,23 +417,41 @@ end;
 procedure TMcxDisplayBar.PushIds(ALo, AHi: Integer);
 begin
   if ALo < FIdFirst then ALo := FIdFirst;
-  if AHi > FIdLast then AHi := FIdLast;
-  { At most ten thousand paths at once.  The cap is on the width of the
-    window rather than on where it sits, so every photon in the file can
-    still be reached by moving the lower bound -- pinning the cap to the
-    start of the file would have made everything past the ten-thousandth
-    unselectable. }
-  if AHi > ALo + MaxPhotonId - 1 then AHi := ALo + MaxPhotonId - 1;
+  if ALo > FIdLast then ALo := FIdLast;
+
+  { Without "to" there is no upper bound: the row names one photon, which is
+    the only way to see where a single path actually went. }
+  if not FIdSpan.Checked then
+    AHi := ALo
+  else
+  begin
+    if AHi > FIdLast then AHi := FIdLast;
+    if AHi < ALo then AHi := ALo;
+    { At most ten thousand paths at once.  The cap is on the width of the
+      window rather than on where it sits, so every photon in the file can
+      still be reached by moving the lower bound -- pinning the cap to the
+      start of the file would have made everything past the ten-thousandth
+      unselectable. }
+    if AHi > ALo + MaxPhotonId - 1 then AHi := ALo + MaxPhotonId - 1;
+  end;
+
   Inc(FIdSyncing);
   try
     FIdLoBar.Position := ALo;
     FIdHiBar.Position := AHi;
     FIdLoNum.Value := ALo;
     FIdHiNum.Value := AHi;
+    { Hidden rather than disabled: a disabled spin edit on gtk2 draws as a
+      filled block with its number gone, which reads as damage rather than as
+      "not in use".  Going away also gives the remaining bar the full width. }
+    FIdHiBar.Visible := FIdSpan.Checked;
+    FIdHiNum.Visible := FIdSpan.Checked;
   finally
     Dec(FIdSyncing);
   end;
-  if FView <> nil then FView.SetPhotonRange(ALo, AHi);
+  { The controls count from one and mcx counts from zero. }
+  if FView <> nil then
+    FView.SetPhotonRange(ALo - IdOffset, AHi - IdOffset);
 end;
 
 procedure TMcxDisplayBar.SetTrajectory(AFirst, ALast: Integer);
@@ -407,8 +462,8 @@ var
 begin
   FIdRow.Parent.Visible := AFirst <= ALast;
   if AFirst > ALast then Exit;
-  FIdFirst := AFirst;
-  FIdLast := ALast;
+  FIdFirst := AFirst + IdOffset;
+  FIdLast := ALast + IdOffset;
 
   Inc(FIdSyncing);
   try

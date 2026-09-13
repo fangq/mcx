@@ -60,6 +60,10 @@ type
     procedure Zoom(ASteps: Single);
     function View: TMcxMat4;
     function Eye: TMcxVec3;
+    { The screen's own axes in world space, for anything that has to face the
+      camera: an axis label is unreadable edge-on. }
+    function ScreenRight: TMcxVec3;
+    function ScreenUp: TMcxVec3;
     property Target: TMcxVec3 read FTarget write FTarget;
     property Distance: Single read FDistance write FDistance;
   end;
@@ -100,6 +104,10 @@ type
     destructor Destroy; override;
     procedure Clear;
     procedure Add(const A, B, AColour: TMcxVec3);
+    { A segment whose two ends are different colours.  The line shader
+      interpolates between them, which is what draws a photon's weight
+      falling off along its own path rather than in steps. }
+    procedure Add2(const A, B, AColourA, AColourB: TMcxVec3);
     procedure AddBox(const AMin, AMax, AColour: TMcxVec3);
     procedure AddCircle(const ACentre, AU, AV: TMcxVec3; ARadius: Single;
       const AColour: TMcxVec3);
@@ -1066,6 +1074,21 @@ begin
   Result.z := FTarget.z + FDistance * Sin(FElevation);
 end;
 
+{ Screen right and screen up, in world space.  Derived from the two angles
+  rather than read back out of the view matrix: the orbit camera is defined
+  by them, and z is always up, so both fall out in one line each. }
+function TMcxCamera.ScreenRight: TMcxVec3;
+begin
+  Result := McxVec3(-Sin(FAzimuth), Cos(FAzimuth), 0);
+end;
+
+function TMcxCamera.ScreenUp: TMcxVec3;
+begin
+  Result := McxVec3(-Sin(FElevation) * Cos(FAzimuth),
+                    -Sin(FElevation) * Sin(FAzimuth),
+                     Cos(FElevation));
+end;
+
 function TMcxCamera.View: TMcxMat4;
 begin
   { Z is up, because that is the axis mcx's domains are described along. }
@@ -1213,6 +1236,25 @@ procedure TMcxLines.Add(const A, B, AColour: TMcxVec3);
 begin
   Put(A);
   Put(B);
+  Inc(FCount, 2);
+  FDirty := True;
+end;
+
+procedure TMcxLines.Add2(const A, B, AColourA, AColourB: TMcxVec3);
+
+  procedure Put(const P, C: TMcxVec3);
+  var
+    n: Integer;
+  begin
+    n := Length(FData);
+    SetLength(FData, n + 6);
+    FData[n] := P.x;     FData[n + 1] := P.y;     FData[n + 2] := P.z;
+    FData[n + 3] := C.x; FData[n + 4] := C.y;     FData[n + 5] := C.z;
+  end;
+
+begin
+  Put(A, AColourA);
+  Put(B, AColourB);
   Inc(FCount, 2);
   FDirty := True;
 end;

@@ -483,11 +483,15 @@ const
     Seven per-section accents were prettier and worse.  A colour that means
     identity cannot also mean selection, so nothing on a page could be
     highlighted without arguing with the section it sat on. }
-  { How many photon positions to keep when trajectories are recorded.  mcx's
-    own default is ten million, which is a 200 MB file; half a million is
-    about ten megabytes, reads back in a moment, and is already more paths
-    than can be told apart on screen. }
-  DefaultMaxJump = 500000;
+  { How many photon positions to keep when trajectories are recorded.
+
+    The number that matters is photons x path length: a photon in tissue
+    scatters a few tens of times before it leaves, so a buffer smaller than
+    that does not record fewer paths -- it records every path and cuts all of
+    them off in mid-flight, which looks like photons dying in open tissue.
+    Two million covers a few tens of thousands of photons, which is what you
+    would launch if you wanted to look at the paths at all. }
+  DefaultMaxJump = 2000000;
 
   { Corner radius on the design grid, scaled with everything else. }
   CardRadius = 14;

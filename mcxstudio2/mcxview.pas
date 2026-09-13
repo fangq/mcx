@@ -65,6 +65,11 @@ type
     FMeshLo, FMeshHi: TMcxNode;
     { Photon paths, in their own buffer: they are loaded separately from the
       scene and would otherwise be rebuilt with it on every keystroke. }
+    { The three axis letters, in their own batch: they are rebuilt every
+      frame to face the camera, and the rest of the wireframe is not. }
+    FAxisText: TMcxLines;
+    FAxisAt: TMcxVec3;
+    FAxisLen: Single;
     FTraj: TMcxLines;
     FTrajCount: Integer;
     { The photon each segment belongs to, in buffer order -- which is photon
@@ -117,6 +122,8 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure GLMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure AddAxes(const AOrigin: TMcxVec3; ALength: Single);
+    procedure BuildAxisLabels;
     procedure AddShapes;
     procedure AddMesh;
     procedure AddSource;
@@ -204,6 +211,7 @@ begin
   FMesh.Free;
   FPick.Free;
   FTraj.Free;
+  FAxisText.Free;
   FTarget.Free;
   FSolidShader.Free;
   FVolShader.Free;
@@ -235,6 +243,7 @@ begin
   FMesh := TMcxMesh.Create;
   FPick := TMcxMesh.Create;
   FTraj := TMcxLines.Create;
+  FAxisText := TMcxLines.Create;
   FSelected := -1;
 
   { Owned by the host panel, so the control goes when the form does and
@@ -455,15 +464,28 @@ begin
   if FGL <> nil then FGL.Invalidate;
 end;
 
+{ The ramp a photon's weight is drawn on: dark red where almost nothing is
+  left, through orange, to white where it still carries its launch weight.
+  Light-on-dark in the same family as the fluence map's hot end, so paths and
+  fluence can be read in one picture. }
+function TrajColour(t: Double): TMcxVec3;
+begin
+  if t < 0 then t := 0;
+  if t > 1 then t := 1;
+  Result := McxVec3(0.45 + 0.55 * t,
+                    0.08 + 0.82 * t * t,
+                    0.05 + 0.80 * t * t * t * t);
+end;
+
 function TMcxView.ShowTrajectory(const AFileName: string): Boolean;
 var
   Ids, Pts, Ws: TMcxArray;
   Got: TMcxArrayList;
   Order: TMcxOrder;
-  i, n, a, b: Integer;
+  i, n, a, b, Ends, Cut: Integer;
   HaveW: Boolean;
-  w, wLo, wHi, t: Double;
-  P0, P1, C: TMcxVec3;
+  w, wLo, wHi, t, t2: Double;
+  P0, P1, C, C2: TMcxVec3;
 begin
   Result := False;
   { All three out of one parse.  Asked for separately they cost three reads
@@ -485,8 +507,13 @@ begin
     Drawn in file order it is a spray of lines between unrelated points. }
   Order := McxSortTrajectory(Ids);
 
-  { Weight spans decades, so the colour is on its logarithm, like the
-    fluence. }
+  { The weight itself, on a linear scale -- not its logarithm.
+
+    A photon's weight decays exponentially along its own path, so a linear
+    ramp over the raw weight is what shows that decay as a decay; taking the
+    log first straightens it out and throws away the very thing the colour is
+    there to say.  This is what utils/mcxplotphotons.m does: it hands the
+    weight column straight to patch() with 'edgecolor','interp'. }
   wLo := 0;
   wHi := 1;
   if HaveW and (McxArrayCount(Ws) >= n) then
@@ -496,8 +523,6 @@ begin
     for i := 0 to n - 1 do
     begin
       w := McxArrayValue(Ws, i);
-      if w <= 0 then Continue;
-      w := Ln(w);
       if w < wLo then wLo := w;
       if w > wHi then wHi := w;
     end;
@@ -506,6 +531,8 @@ begin
 
   FTraj.Clear;
   FTrajCount := 0;
+  Ends := 0;
+  Cut := 0;
   for i := 0 to n - 2 do
   begin
     a := Order[i];
@@ -522,16 +549,29 @@ begin
                   McxArrayValue(Pts, Int64(b) * 3 + 1),
                   McxArrayValue(Pts, Int64(b) * 3 + 2));
 
+    { A colour at each end rather than one for the segment, so the shader
+      interpolates along it: the weight changes between two scattering
+      sites, and a flat segment draws that change as a step. }
     t := 1;
+    t2 := 1;
     if HaveW then
     begin
-      w := McxArrayValue(Ws, a);
-      if w > 0 then t := (Ln(w) - wLo) / (wHi - wLo) else t := 0;
+      t := (McxArrayValue(Ws, a) - wLo) / (wHi - wLo);
+      t2 := (McxArrayValue(Ws, b) - wLo) / (wHi - wLo);
     end;
-    { Bright where the photon still carries weight, dim where it has been
-      absorbed away. }
-    C := McxVec3(1.0, 0.35 + 0.55 * t, 0.10 + 0.25 * t);
-    FTraj.Add(P0, P1, C);
+    C := TrajColour(t);
+    C2 := TrajColour(t2);
+    FTraj.Add2(P0, P1, C, C2);
+
+    { The far end of this segment is the photon's last event when the next
+      event belongs to someone else.  Counted here rather than in a second
+      pass, which would mean keeping a weight per segment. }
+    if (i + 2 > n - 1) or
+       (Round(McxArrayValue(Ids, Order[i + 2])) <> Round(McxArrayValue(Ids, b))) then
+    begin
+      Inc(Ends);
+      if HaveW and (t2 > 0.5) then Inc(Cut);
+    end;
     if FTrajCount > High(FTrajIds) then
       SetLength(FTrajIds, (FTrajCount + 1) * 2);
     FTrajIds[FTrajCount] := Round(McxArrayValue(Ids, a));
@@ -551,7 +591,21 @@ begin
   FIdHi := FTrajLast;
 
   Say(Format('%s: %d events, %d path segments, photons %d to %d',
-    [ExtractFileName(AFileName), n, FTrajCount, FTrajFirst, FTrajLast]));
+    [ExtractFileName(AFileName), n, FTrajCount, FTrajFirst + 1,
+     FTrajLast + 1]));
+
+  { A photon's path ends when it leaves the domain or the roulette kills it,
+    and either way its last position is at a face or its last weight is
+    tiny.  A path that stops in open tissue still carrying most of its weight
+    did not end -- the recording did, because mcx's jump buffer filled.
+
+    Worth saying out loud: the picture looks like a plausible cloud either
+    way, and the only sign is that nothing reaches the far side. }
+  if (Ends > 0) and (Cut * 3 > Ends) then
+    Say(Format('  %d of %d paths stop with most of their weight still on ' +
+      'them: the jump buffer filled before they finished.  Raise "Positions ' +
+      'to keep", or run fewer photons.', [Cut, Ends]));
+
   Result := FTrajCount > 0;
   if FGL <> nil then FGL.Invalidate;
 end;
@@ -772,6 +826,16 @@ begin
   { The volume last: it is translucent, so it has to go over the wireframe
     rather than under it. }
   DrawVolume(MVP);
+
+  { The axis letters after everything and without depth testing.  They are an
+    annotation on the picture rather than an object in it: a Y hidden behind
+    the back edge of the domain box is a Y nobody can read. }
+  FShader.Use;
+  FShader.SetMat4('uMVP', MVP);
+  glDisable(GL_DEPTH_TEST);
+  BuildAxisLabels;
+  FAxisText.Draw;
+  glEnable(GL_DEPTH_TEST);
 end;
 
 procedure TMcxView.GLPaint(Sender: TObject);
@@ -864,6 +928,79 @@ end;
   same material look the same.  UpperSpace is deliberately absent: a
   half-space has no outline to draw, and a big translucent plane across the
   domain would hide what it is meant to explain. }
+{ The three axes, and a letter at the end of each.
+
+  The letters are drawn as strokes rather than as text: a core profile has no
+  text of any kind, and three glyphs do not justify a font atlas and a second
+  shader.
+
+  They go in a batch of their own because they are rebuilt on every frame,
+  turned to face the camera.  Fixed in world space they are unreadable from
+  half the angles you would look from -- a letter in the y-z plane seen down
+  the x axis is a line.  Eight segments a frame is nothing. }
+procedure TMcxView.AddAxes(const AOrigin: TMcxVec3; ALength: Single);
+begin
+  FAxisAt := AOrigin;
+  FAxisLen := ALength;
+  FLines.Add(AOrigin, McxVec3(AOrigin.x + ALength, AOrigin.y, AOrigin.z),
+    McxVec3(0.90, 0.30, 0.25));
+  FLines.Add(AOrigin, McxVec3(AOrigin.x, AOrigin.y + ALength, AOrigin.z),
+    McxVec3(0.35, 0.75, 0.35));
+  FLines.Add(AOrigin, McxVec3(AOrigin.x, AOrigin.y, AOrigin.z + ALength),
+    McxVec3(0.35, 0.55, 0.95));
+end;
+
+procedure TMcxView.BuildAxisLabels;
+const
+  { u, v pairs in a unit square, two per stroke. }
+  GlyphX: array[0..7] of Single = (0, 0, 1, 1,  0, 1, 1, 0);
+  GlyphY: array[0..11] of Single =
+    (0, 1, 0.5, 0.5,  1, 1, 0.5, 0.5,  0.5, 0.5, 0.5, 0);
+  GlyphZ: array[0..11] of Single = (0, 1, 1, 1,  1, 1, 0, 0,  0, 0, 1, 0);
+var
+  R, U: TMcxVec3;
+  s: Single;
+
+  procedure Glyph(const ATip: TMcxVec3; const AStrokes: array of Single;
+    const AColour: TMcxVec3);
+  var
+    k: Integer;
+    Corner: TMcxVec3;
+  begin
+    { Centred on the tip, so the letter sits on the end of its axis however
+      the view is turned. }
+    Corner := McxVec3(ATip.x - (R.x + U.x) * s * 0.5,
+                      ATip.y - (R.y + U.y) * s * 0.5,
+                      ATip.z - (R.z + U.z) * s * 0.5);
+    k := 0;
+    while k + 3 <= High(AStrokes) do
+    begin
+      FAxisText.Add(
+        McxVec3(Corner.x + (R.x * AStrokes[k] + U.x * AStrokes[k + 1]) * s,
+                Corner.y + (R.y * AStrokes[k] + U.y * AStrokes[k + 1]) * s,
+                Corner.z + (R.z * AStrokes[k] + U.z * AStrokes[k + 1]) * s),
+        McxVec3(Corner.x + (R.x * AStrokes[k + 2] + U.x * AStrokes[k + 3]) * s,
+                Corner.y + (R.y * AStrokes[k + 2] + U.y * AStrokes[k + 3]) * s,
+                Corner.z + (R.z * AStrokes[k + 2] + U.z * AStrokes[k + 3]) * s),
+        AColour);
+      Inc(k, 4);
+    end;
+  end;
+
+begin
+  FAxisText.Clear;
+  if FAxisLen <= 0 then Exit;
+  R := FCamera.ScreenRight;
+  U := FCamera.ScreenUp;
+  s := FAxisLen * 0.22;
+  Glyph(McxVec3(FAxisAt.x + FAxisLen + s, FAxisAt.y, FAxisAt.z),
+        GlyphX, McxVec3(0.90, 0.30, 0.25));
+  Glyph(McxVec3(FAxisAt.x, FAxisAt.y + FAxisLen + s, FAxisAt.z),
+        GlyphY, McxVec3(0.35, 0.75, 0.35));
+  Glyph(McxVec3(FAxisAt.x, FAxisAt.y, FAxisAt.z + FAxisLen + s),
+        GlyphZ, McxVec3(0.35, 0.55, 0.95));
+end;
+
 procedure TMcxView.AddShapes;
 const
   { Translucent, because a domain is nested: a sphere inside a box inside a
@@ -1344,15 +1481,12 @@ begin
     FLines.Add(McxVec3(0, t, 0), McxVec3(dx, t, 0), Faint);
   end;
 
-  { Axes at the origin corner, in the usual three colours. }
+  { Axes at the origin corner, in the usual three colours, each labelled. }
   Axis := dx;
   if dy > Axis then Axis := dy;
   if dz > Axis then Axis := dz;
   FSceneSpan := Axis;
-  Axis := Axis * 0.25;
-  FLines.Add(McxVec3(0, 0, 0), McxVec3(Axis, 0, 0), McxVec3(0.90, 0.30, 0.25));
-  FLines.Add(McxVec3(0, 0, 0), McxVec3(0, Axis, 0), McxVec3(0.35, 0.75, 0.35));
-  FLines.Add(McxVec3(0, 0, 0), McxVec3(0, 0, Axis), McxVec3(0.35, 0.55, 0.95));
+  AddAxes(McxVec3(0, 0, 0), Axis * 0.25);
 
   AddShapes;
   AddMesh;
@@ -1367,6 +1501,14 @@ begin
     dx := FMeshHi.x - FMeshLo.x;
     dy := FMeshHi.y - FMeshLo.y;
     dz := FMeshHi.z - FMeshLo.z;
+    { A mesh has no grid to hang them on, and it needs them more: its
+      coordinates are whatever the mesh file says rather than a voxel count
+      starting at zero. }
+    Axis := dx;
+    if dy > Axis then Axis := dy;
+    if dz > Axis then Axis := dz;
+    FSceneSpan := Axis;
+    AddAxes(McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z), Axis * 0.25);
     Key := Format('mesh %g %g %g', [dx, dy, dz]);
     if Key <> FSceneKey then
     begin
