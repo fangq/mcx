@@ -21,7 +21,7 @@ interface
 uses
   Classes, SysUtils, Controls, ExtCtrls, Graphics, fpjson,
   FPImage, FPWritePNG,
-  OpenGLContext, GL, mcxdoc, mcxgl, mcxjd;
+  OpenGLContext, GL, mcxdoc, mcxgl, mcxjd, mcxmesh;
 
 type
   { Somewhere to put a line that has nowhere else to go -- the GL version at
@@ -57,6 +57,12 @@ type
     FTarget: TMcxTarget;
     FPicks: array of TMcxPickInfo;
     FSelected: Integer;
+    { The mmc mesh, and what it was loaded from.  Cached on the pair, because
+      pulling the surface out of a head mesh is the better part of a second
+      and the scene is rebuilt on every keystroke. }
+    FMeshFaces: TMcxFaces;
+    FMeshKey: string;
+    FMeshLo, FMeshHi: TMcxNode;
     FVolume: TMcxVolume;
     FCube: TMcxCube;
     { What the volume is drawn as and through.  All uniforms: changing any of
@@ -90,6 +96,7 @@ type
     procedure GLMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     procedure AddShapes;
+    procedure AddMesh;
     procedure RenderScene(AWidth, AHeight: Integer; AFlat: Boolean);
     function  PickAt(AX, AY: Integer): Integer;
     function  GetHasVolume: Boolean;
@@ -825,6 +832,90 @@ begin
   end;
 end;
 
+{ Draws the mmc mesh, if this is an mmc simulation.
+
+  mmc does not have a grid: the domain is a mesh of tetrahedra that lives
+  beside the input file, named by Mesh.MeshID.  What a preview shows is the
+  outside of it -- a hundred thousand tetrahedra drawn as tetrahedra is a
+  solid block of edges -- so mcxmesh pulls out the boundary and this draws
+  that, coloured by the medium each face belongs to.
+
+  Loaded at most once per mesh: the surface of a head mesh takes most of a
+  second to find, and Rebuild runs on every edit. }
+procedure TMcxView.AddMesh;
+const
+  ShapeAlpha = 0.55;
+  TagColours: array[0..7] of array[0..2] of Single = (
+    (0.60, 0.62, 0.66), (0.35, 0.70, 0.95), (0.95, 0.55, 0.30),
+    (0.45, 0.85, 0.45), (0.90, 0.45, 0.75), (0.95, 0.85, 0.35),
+    (0.55, 0.50, 0.90), (0.40, 0.85, 0.80));
+var
+  Id, Dir, Key: string;
+  Mesh: TMcxTetMesh;
+  i, t: Integer;
+  C: TMcxVec3;
+  Embedded, Got: Boolean;
+  Nodes, Elems: TMcxArray;
+begin
+  { Two ways a mesh arrives, and both are in use: named by Mesh.MeshID as a
+    pair of .dat tables beside the input file, or embedded in the input under
+    Shapes as two JData arrays.  onecube is the first, colin27 the second. }
+  Embedded := (FDoc.Find('Shapes.MeshNode') <> nil) and
+              (FDoc.Find('Shapes.MeshElem') <> nil);
+  Id := FDoc.AsStr('Mesh.MeshID', '');
+  Dir := ExtractFilePath(FDoc.FileName);
+  if (not Embedded) and ((Id = '') or (Dir = '')) then
+  begin
+    SetLength(FMeshFaces, 0);
+    FMeshKey := '';
+    Exit;
+  end;
+
+  if Embedded then Key := FDoc.FileName + '|embedded'
+  else Key := Dir + '|' + Id;
+  if Key <> FMeshKey then
+  begin
+    FMeshKey := Key;
+    SetLength(FMeshFaces, 0);
+    Mesh := TMcxTetMesh.Create;
+    try
+      if Embedded then
+      begin
+        Got := McxDecodeJData(TJSONObject(FDoc.Find('Shapes.MeshNode')), Nodes)
+           and McxDecodeJData(TJSONObject(FDoc.Find('Shapes.MeshElem')), Elems)
+           and Mesh.LoadFromArrays(Nodes, Elems);
+        Id := 'in the input file';
+      end
+      else
+        Got := Mesh.LoadFromDir(Dir, Id);
+
+      if Got then
+      begin
+        FMeshFaces := Mesh.Surface;
+        Mesh.Bounds(FMeshLo, FMeshHi);
+        Say(Format('mesh %s: %d nodes, %d elements, %d surface triangles',
+          [Id, Mesh.NodeCount, Mesh.ElemCount, Length(FMeshFaces)]));
+      end
+      else
+        Say('mesh ' + Id + ': ' + Mesh.Error);
+    finally
+      Mesh.Free;
+    end;
+  end;
+
+  for i := 0 to High(FMeshFaces) do
+  begin
+    t := FMeshFaces[i].Tag;
+    if t < 0 then t := 0;
+    t := t mod Length(TagColours);
+    C := McxVec3(TagColours[t][0], TagColours[t][1], TagColours[t][2]);
+    FMesh.AddTri(McxVec3(FMeshFaces[i].A.x, FMeshFaces[i].A.y, FMeshFaces[i].A.z),
+                 McxVec3(FMeshFaces[i].B.x, FMeshFaces[i].B.y, FMeshFaces[i].B.z),
+                 McxVec3(FMeshFaces[i].C.x, FMeshFaces[i].C.y, FMeshFaces[i].C.z),
+                 C, ShapeAlpha);
+  end;
+end;
+
 { Builds the wireframe from the document: the domain box, a floor grid, the
   three axes and where the source sits.
 
@@ -886,6 +977,30 @@ begin
   FLines.Add(McxVec3(0, 0, 0), McxVec3(0, 0, Axis), McxVec3(0.35, 0.55, 0.95));
 
   AddShapes;
+  AddMesh;
+
+  { A mesh document has no grid, so the box and the camera come from where
+    the mesh actually is rather than from a Dim that is not there. }
+  if Length(FMeshFaces) > 0 then
+  begin
+    FLines.Clear;
+    FLines.AddBox(McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z),
+                  McxVec3(FMeshHi.x, FMeshHi.y, FMeshHi.z), Grey);
+    dx := FMeshHi.x - FMeshLo.x;
+    dy := FMeshHi.y - FMeshLo.y;
+    dz := FMeshHi.z - FMeshLo.z;
+    Key := Format('mesh %g %g %g', [dx, dy, dz]);
+    if Key <> FSceneKey then
+    begin
+      FSceneKey := Key;
+      FCamera.Frame(McxVec3((FMeshLo.x + FMeshHi.x) / 2,
+                            (FMeshLo.y + FMeshHi.y) / 2,
+                            (FMeshLo.z + FMeshHi.z) / 2),
+        Sqrt(dx * dx + dy * dy + dz * dz) / 2);
+    end;
+    if FGL <> nil then FGL.Invalidate;
+    Exit;
+  end;
 
   { The source, as a cross at its position.  Drawn from the document rather
     than from the form, so it is right whether the value was typed or came

@@ -19,7 +19,7 @@ uses
     test dies with "This binary has no thread support compiled in".  The GUI
     gets this from the LCL; a console program has to ask. }
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  SysUtils, Classes, fpjson, mcxdoc, mcxrun, mcxjd;
+  SysUtils, Classes, fpjson, mcxdoc, mcxrun, mcxjd, mcxmesh;
 
 var
   Checks, Failures: Integer;
@@ -755,6 +755,70 @@ begin
   end;
 end;
 
+
+{ ---------------------------------------------------------------- mcxmesh -- }
+
+{ A cube cut into six tetrahedra: the smallest mesh with a real surface, and
+  one whose answer is known without computing it.  Eight nodes, six elements,
+  and a surface of twelve triangles -- two per face of the cube -- because
+  every interior face is shared by two tetrahedra and every boundary face by
+  one.  Written here rather than read from mmc's examples so the test travels
+  with the repository. }
+procedure TestMesh;
+var
+  Dir: string;
+  F: TStringList;
+  M: TMcxTetMesh;
+  Faces: TMcxFaces;
+  Lo, Hi: TMcxNode;
+begin
+  WriteLn('tetrahedral mesh');
+  Dir := GetTempDir(False);
+  F := TStringList.Create;
+  try
+    F.Add('1	8');
+    F.Add('1	  0.0	  0.0	  0.0');
+    F.Add('2	 10.0	  0.0	  0.0');
+    F.Add('3	 10.0	 10.0	  0.0');
+    F.Add('4	  0.0	 10.0	  0.0');
+    F.Add('5	  0.0	  0.0	 10.0');
+    F.Add('6	 10.0	  0.0	 10.0');
+    F.Add('7	 10.0	 10.0	 10.0');
+    F.Add('8	  0.0	 10.0	 10.0');
+    F.SaveToFile(Dir + 'node_mcxtest.dat');
+
+    F.Clear;
+    F.Add('1	6');
+    F.Add('1	1	2	8	4	1');
+    F.Add('2	1	2	6	8	1');
+    F.Add('3	2	3	4	8	1');
+    F.Add('4	2	3	7	8	1');
+    F.Add('5	2	6	7	8	1');
+    F.Add('6	1	5	6	8	1');
+    F.SaveToFile(Dir + 'elem_mcxtest.dat');
+  finally
+    F.Free;
+  end;
+
+  M := TMcxTetMesh.Create;
+  try
+    Ok(M.LoadFromDir(Dir, 'mcxtest'), 'the mesh loads: ' + M.Error);
+    Ok(M.NodeCount = 8, 'eight nodes');
+    Ok(M.ElemCount = 6, 'six elements');
+    M.Bounds(Lo, Hi);
+    Ok((Lo.x = 0) and (Hi.x = 10) and (Hi.z = 10), 'the bounds are the cube');
+    Faces := M.Surface;
+    Ok(Length(Faces) = 12,
+       Format('twelve surface triangles, two a face (got %d)', [Length(Faces)]));
+    Ok(M.LoadFromDir(Dir, 'nosuchmesh') = False, 'a missing mesh is refused');
+    Ok(M.Error <> '', 'and says why');
+  finally
+    M.Free;
+    DeleteFile(Dir + 'node_mcxtest.dat');
+    DeleteFile(Dir + 'elem_mcxtest.dat');
+  end;
+end;
+
 var
   Dir: string;
 begin
@@ -777,6 +841,7 @@ begin
   TestJData;
   TestBJData;
   TestBJDataRefuses;
+  TestMesh;
   TestCorpus(Dir);
 
   WriteLn;
