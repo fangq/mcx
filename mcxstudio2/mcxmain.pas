@@ -23,7 +23,7 @@ uses
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, Grids, LCLType,
   fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview,
+  mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview, mcxshapes,
   mcxdisp, mcxchoose, mcxtable, mcxjd;
 
 type
@@ -139,6 +139,7 @@ type
     gbVolume: TPanel;
     gbMedia: TPanel;
     gbShapeList: TPanel;
+    pnShapeEdit: TPanel;
     gbSource: TPanel;
     gbSrcAdv: TPanel;
     gbDetector: TPanel;
@@ -155,7 +156,6 @@ type
     { The editors that are not written yet say so, rather than leaving a
       group box that looks broken. }
     lbTodoMedia: TLabel;
-    lbTodoShapes: TLabel;
     lbTodoDet: TLabel;
     lbTodoDevices: TLabel;
 
@@ -369,6 +369,7 @@ type
       opened, so these are the only editors built in code. }
     FMedia: TMcxTable;
     FDetectors: TMcxTable;
+    FShapes: TMcxShapes;
     FDisplay: TMcxDisplayBar;
     { The three picture choosers on the first card.  Which simulator runs is
       worked out from them rather than asked as a fourth question. }
@@ -398,6 +399,7 @@ type
     procedure LogDetected(const AFileName: string);
     procedure BenchmarkClick(Sender: TObject);
     procedure ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
+    procedure ShapeSelected(Sender: TObject; AIndex: Integer);
     procedure TableChanged(Sender: TObject);
     function  Environment: string;
     procedure ShowHelpForFocus;
@@ -577,6 +579,13 @@ begin
     'Pos[0],Pos[1],Pos[2],R', 4);
   FDetectors.OnChange := @TableChanged;
 
+  { The Shapes editor, like the two tables, reads the document directly:
+    how many commands a domain is built from is not known until a file is
+    open, so there is no control-to-path row that could describe it. }
+  FShapes := TMcxShapes.Create(pnShapeEdit);
+  FShapes.OnChange := @TableChanged;
+  FShapes.OnSelect := @ShapeSelected;
+
   FView := TMcxView.Create(pnGL);
   FView.OnLog := @ViewLog;
   FView.OnPick := @ViewPick;
@@ -621,6 +630,7 @@ begin
   FreeAndNil(FView);
   FreeAndNil(FMedia);
   FreeAndNil(FDetectors);
+  FreeAndNil(FShapes);
   FreeAndNil(FMissing);
   FreeAndNil(FRun);
   FreeAndNil(FDoc);
@@ -2492,10 +2502,21 @@ end;
 
 { What a click in the 3-D view landed on.  The status bar rather than a
   dialog: it answers a question nobody asked out loud. }
+{ Clicking a solid in the 3-D view selects its command in the editor, which
+  is the other half of clicking a row and having it light up: the picture and
+  the list are two views of one sequence, and picking in either should say
+  the same thing. }
 procedure TfmMain.ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
 begin
   sbMain.Panels[0].Text := Format('Shapes[%d] %s, tag %d',
     [AInfo.Index, AInfo.Verb, AInfo.Tag]);
+  if FShapes <> nil then FShapes.SelectIndex(AInfo.Index);
+end;
+
+{ And the other way: a row selected in the list is drawn nearly solid. }
+procedure TfmMain.ShapeSelected(Sender: TObject; AIndex: Integer);
+begin
+  if FView <> nil then FView.SelectShape(AIndex);
 end;
 
 procedure TfmMain.acBenchmarkExecute(Sender: TObject);
@@ -3168,6 +3189,7 @@ begin
     than bound: there is no control-to-path row that could describe them. }
   if FMedia <> nil then FMedia.Attach(FDoc, 'Domain.Media');
   if FDetectors <> nil then FDetectors.Attach(FDoc, 'Optode.Detector');
+  if FShapes <> nil then FShapes.Attach(FDoc);
   Inc(FLoading);
   try
     for i := 0 to High(Binds) do LoadBinding(i);

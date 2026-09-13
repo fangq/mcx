@@ -867,29 +867,24 @@ object fmMain: TfmMain
         Visible = False
         object gbShapeList: TPanel
           Left = 8
-          Height = 64
+          Height = 380
           Top = 0
           Width = 526
           Align = alTop
           BevelOuter = bvNone
-          AutoSize = True
           BorderSpacing.Around = 8
           Caption = 'Shape list'
           ChildSizing.LeftRightSpacing = 10
           ChildSizing.TopBottomSpacing = 8
           TabOrder = 0
-          object lbTodoShapes: TLabel
+          object pnShapeEdit: TPanel
             Left = 10
-            Height = 30
-            Top = 0
-            Width = 488
-            Align = alTop
-            BorderSpacing.Bottom = 6
-            Caption = 'The shape tree and its property editor land with the 3-D view.'
-            Font.Color = clGrayText
-            ParentColor = False
-            ParentFont = False
-            WordWrap = True
+            Height = 364
+            Top = 8
+            Width = 506
+            Align = alClient
+            BevelOuter = bvNone
+            TabOrder = 0
           end
         end
       end

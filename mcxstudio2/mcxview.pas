@@ -147,6 +147,9 @@ type
     procedure Rebuild;
     { Aims the camera so that what is on the card fills the pane. }
     procedure FitView;
+    { Highlights one Shapes command, by its index in the array. }
+    procedure SelectShape(AIndex: Integer);
+    property SelectedShape: Integer read FSelected;
     { Puts a result on the card.  AArray is whatever mcxjd read out of a
       .jnii or .bnii; anything past the third dimension -- time gates, or
       the several outputs of one run -- is dropped to the first slice, which
@@ -1044,10 +1047,30 @@ begin
   end;
 
   Id := PickAt(X, Y);
-  FSelected := Id;
+  { What is selected is the command, not the solid that was clicked.  One
+    command can draw several -- a ZLayers is a slab per row -- and
+    highlighting only the one under the cursor said the others belonged to
+    something else. }
+  if (Id >= 0) and (Id < Length(FPicks)) then
+  begin
+    FSelected := FPicks[Id].Index;
+    Rebuild;
+    if Assigned(FOnPick) then FOnPick(Self, FPicks[Id]);
+  end
+  else
+  begin
+    FSelected := -1;
+    Rebuild;
+  end;
+end;
+
+{ Selects a command from outside -- the list in the Shapes editor -- by the
+  place it has in the array, which is what a pick reports back. }
+procedure TMcxView.SelectShape(AIndex: Integer);
+begin
+  if FSelected = AIndex then Exit;
+  FSelected := AIndex;
   Rebuild;
-  if Assigned(FOnPick) and (Id >= 0) and (Id < Length(FPicks)) then
-    FOnPick(Self, FPicks[Id]);
 end;
 
 procedure TMcxView.GLMouseWheel(Sender: TObject; Shift: TShiftState;
@@ -1385,7 +1408,7 @@ var
 
   function Alpha: Single;
   begin
-    if Length(FPicks) - 1 = FSelected then Result := SelectedAlpha
+    if i = FSelected then Result := SelectedAlpha
     else Result := ShapeAlpha;
   end;
 
