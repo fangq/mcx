@@ -80,6 +80,10 @@ type
     FIdLo, FIdHi: Integer;
     { How big the scene is, so the source glyph can be sized against it. }
     FSceneSpan: Single;
+    { The corners of whatever the scene was built around -- zero to Dim for a
+      grid, the mesh's own extent for a mesh.  Kept so that a fit has
+      something to fit to without working it out again. }
+    FSceneLo, FSceneHi: TMcxVec3;
     FVolume: TMcxVolume;
     FCube: TMcxCube;
     { What the volume is drawn as and through.  All uniforms: changing any of
@@ -141,6 +145,8 @@ type
     { Draws ADoc.  Cheap enough to call on every edit: it is a few hundred
       line segments in one buffer. }
     procedure Rebuild;
+    { Aims the camera so that what is on the card fills the pane. }
+    procedure FitView;
     { Puts a result on the card.  AArray is whatever mcxjd read out of a
       .jnii or .bnii; anything past the third dimension -- time gates, or
       the several outputs of one run -- is dropped to the first slice, which
@@ -430,6 +436,61 @@ begin
     Say(Format('the card would not take a %dx%dx%d volume', [nx, ny, nz]));
     FreeAndNil(FVolume);
   end;
+
+  { The camera is aimed at the result rather than left wherever the document
+    put it.  A result is drawn in its own voxels -- the shader marches a unit
+    cube scaled by nx, ny, nz -- and those need not be Domain.Dim at all: a
+    181-cube head opened over a blank 60-cube document was drawn a third off
+    the side of the pane, and nothing had asked the camera to look at it.
+
+    This is also the only place a fit belongs.  Rebuild re-aims only when the
+    domain changes size, deliberately, so that typing a photon count does not
+    throw the view away -- and opening a result is exactly the event that
+    should. }
+  if Result then
+  begin
+    FSceneKey := Format('volume %d %d %d', [nx, ny, nz]);
+    FitView;
+  end;
+
+  if FGL <> nil then FGL.Invalidate;
+end;
+
+{ Puts whatever is on the card inside the pane: the volume if there is one,
+  otherwise the domain the scene was built around. }
+procedure TMcxView.FitView;
+var
+  Aspect, Pad: Single;
+  Lo, Hi: TMcxVec3;
+begin
+  Aspect := 1;
+  if (FGL <> nil) and (FGL.Height > 0) then Aspect := FGL.Width / FGL.Height;
+
+  Lo := FSceneLo;
+  Hi := FSceneHi;
+
+  { A result is drawn in its own voxels and the axes around the domain's, and
+    the two need not agree -- a 181-cube head over a blank 60-cube document
+    is the case that showed it -- so what has to fit is both. }
+  if GetHasVolume then
+  begin
+    if 0 < Lo.x then Lo.x := 0;
+    if 0 < Lo.y then Lo.y := 0;
+    if 0 < Lo.z then Lo.z := 0;
+    if FVolume.Nx > Hi.x then Hi.x := FVolume.Nx;
+    if FVolume.Ny > Hi.y then Hi.y := FVolume.Ny;
+    if FVolume.Nz > Hi.z then Hi.z := FVolume.Nz;
+  end;
+
+  { Room for the ruler.  The numbers hang three ticks outside the low corner
+    and the letters a little past the high one, and a tick is 0.025 of the
+    span -- so fitting the box alone puts the graduations off the edge of the
+    pane, which is a fit that loses the thing you fitted it to read. }
+  Pad := Max(Hi.x - Lo.x, Max(Hi.y - Lo.y, Hi.z - Lo.z)) * 0.1;
+  Lo := McxVec3(Lo.x - Pad, Lo.y - Pad, Lo.z - Pad);
+  Hi := McxVec3(Hi.x + Pad, Hi.y + Pad, Hi.z + Pad);
+
+  FCamera.FrameBox(Lo, Hi, 45, Aspect);
   if FGL <> nil then FGL.Invalidate;
 end;
 
@@ -896,19 +957,28 @@ begin
     at one: anything wider is not guaranteed in a core profile. }
   DrawTrajectory;
 
+  { The letters and the tick numbers before the volume, and depth-tested.
+
+    They used to be drawn last with the test off, on the grounds that they
+    annotate the picture rather than sit in it -- which was true when the
+    only thing that could hide one was the back edge of the box.  With a
+    fluence cloud in the box it stopped being true: every number on the far
+    side floated in front of the data at every angle, so the ruler read as
+    being nearer than the thing it measures.
+
+    Drawing them here fixes both halves at once, because the volume neither
+    tests nor writes depth against what came before it: a number on the near
+    side writes depth and the cloud does not paint over it, and one on the
+    far side is painted over and dimmed by exactly the amount of cloud in
+    front of it. }
+  FShader.Use;
+  FShader.SetMat4('uMVP', MVP);
+  BuildAxisLabels;
+  FAxisText.Draw;
+
   { The volume last: it is translucent, so it has to go over the wireframe
     rather than under it. }
   DrawVolume(MVP);
-
-  { The axis letters after everything and without depth testing.  They are an
-    annotation on the picture rather than an object in it: a Y hidden behind
-    the back edge of the domain box is a Y nobody can read. }
-  FShader.Use;
-  FShader.SetMat4('uMVP', MVP);
-  glDisable(GL_DEPTH_TEST);
-  BuildAxisLabels;
-  FAxisText.Draw;
-  glEnable(GL_DEPTH_TEST);
 end;
 
 procedure TMcxView.GLPaint(Sender: TObject);
@@ -1073,9 +1143,15 @@ var
     end;
     FLines.Add(A, B, AColour);
 
-    { Ticks at every round multiple inside the span, drawn into the two
-      directions the axis is not, so one of them faces the camera whichever
-      way the scene is turned. }
+    { A tick at every round multiple inside the span, and one tick, not two.
+
+      There were two -- one into each of the directions the axis is not -- so
+      that whichever way the scene was turned, one of them faced the camera.
+      But only one of the pair ever had a number on the end of it, so the
+      other was a stroke pointing at nothing, and on three axes at once that
+      is a thicket around the origin corner.  What is left is the one that
+      points at its own number, which is the direction Numbers offsets in:
+      -y for x, and -x for both y and z. }
     i := Trunc(Lo / Step);
     while i * Step <= Hi + Step * 0.001 do
     begin
@@ -1085,22 +1161,11 @@ var
         A := ALo;
         B := ALo;
         case AAxis of
-          0: begin
-               A.x := t; B.x := t;
-               B.y := ALo.y - Tick; FLines.Add(A, B, AColour);
-               B.y := ALo.y; B.z := ALo.z - Tick; FLines.Add(A, B, AColour);
-             end;
-          1: begin
-               A.y := t; B.y := t;
-               B.x := ALo.x - Tick; FLines.Add(A, B, AColour);
-               B.x := ALo.x; B.z := ALo.z - Tick; FLines.Add(A, B, AColour);
-             end;
-        else begin
-               A.z := t; B.z := t;
-               B.x := ALo.x - Tick; FLines.Add(A, B, AColour);
-               B.x := ALo.x; B.y := ALo.y - Tick; FLines.Add(A, B, AColour);
-             end;
+          0: begin A.x := t; B.x := t; B.y := ALo.y - Tick; end;
+          1: begin A.y := t; B.y := t; B.x := ALo.x - Tick; end;
+        else begin A.z := t; B.z := t; B.x := ALo.x - Tick; end;
         end;
+        FLines.Add(A, B, AColour);
       end;
       Inc(i);
     end;
@@ -1769,7 +1834,9 @@ begin
   if dy > Axis then Axis := dy;
   if dz > Axis then Axis := dz;
   FSceneSpan := Axis;
-  AddAxes(McxVec3(0, 0, 0), McxVec3(dx, dy, dz));
+  FSceneLo := McxVec3(0, 0, 0);
+  FSceneHi := McxVec3(dx, dy, dz);
+  AddAxes(FSceneLo, FSceneHi);
 
   AddShapes;
   AddMesh;
@@ -1791,16 +1858,14 @@ begin
     if dy > Axis then Axis := dy;
     if dz > Axis then Axis := dz;
     FSceneSpan := Axis;
-    AddAxes(McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z),
-            McxVec3(FMeshHi.x, FMeshHi.y, FMeshHi.z));
+    FSceneLo := McxVec3(FMeshLo.x, FMeshLo.y, FMeshLo.z);
+    FSceneHi := McxVec3(FMeshHi.x, FMeshHi.y, FMeshHi.z);
+    AddAxes(FSceneLo, FSceneHi);
     Key := Format('mesh %g %g %g', [dx, dy, dz]);
     if Key <> FSceneKey then
     begin
       FSceneKey := Key;
-      FCamera.Frame(McxVec3((FMeshLo.x + FMeshHi.x) / 2,
-                            (FMeshLo.y + FMeshHi.y) / 2,
-                            (FMeshLo.z + FMeshHi.z) / 2),
-        Sqrt(dx * dx + dy * dy + dz * dz) / 2);
+      FitView;
     end;
     if FGL <> nil then FGL.Invalidate;
     Exit;
@@ -1815,8 +1880,7 @@ begin
   if Key <> FSceneKey then
   begin
     FSceneKey := Key;
-    FCamera.Frame(McxVec3(Dim(0) / 2, Dim(1) / 2, Dim(2) / 2),
-      Sqrt(Dim(0) * Dim(0) + Dim(1) * Dim(1) + Dim(2) * Dim(2)) / 2);
+    FitView;
   end;
 
   if FGL <> nil then FGL.Invalidate;

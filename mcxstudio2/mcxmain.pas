@@ -294,6 +294,7 @@ type
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
+    procedure ShowSettingsPage;
     procedure tmRefreshTimer(Sender: TObject);
   private
     FDoc: TMcxDoc;
@@ -957,6 +958,7 @@ begin
 
   if FSubs[i].Section <> FSection then SelectSection(FSubs[i].Section);
   SelectSub(i);
+  ShowSettingsPage;
 end;
 
 { The chevron on a header says whether that section's subsections are showing.
@@ -1244,6 +1246,18 @@ begin
   end;
 end;
 
+{ Picking a section in the navigator brings the settings forward with it.
+
+  The navigator names what you are editing and the notebook holds what you
+  edit it in, so a click on one that leaves the other showing the log or the
+  3-D view answers a question nobody asked.  It is most of the way to a dead
+  control: after a run the notebook sits on the log, and from there every
+  section in the list looked like it did nothing. }
+procedure TfmMain.ShowSettingsPage;
+begin
+  if pcView.ActivePage <> tsSettings then pcView.ActivePage := tsSettings;
+end;
+
 procedure TfmMain.HeaderClick(Sender: TObject);
 var
   i: Integer;
@@ -1252,6 +1266,7 @@ begin
     if FHeads[i] = Sender then
     begin
       SelectSection(i);
+      ShowSettingsPage;
       Exit;
     end;
 end;
@@ -1504,7 +1519,13 @@ begin
     section with nothing in it. }
   while (i >= 0) and (i <= High(FPanes)) and (not FPanes[i].Visible) do
     Inc(i, Dir);
-  if (i >= 0) and (i <= High(FPanes)) then SelectSection(i);
+  if (i >= 0) and (i <= High(FPanes)) then
+  begin
+    SelectSection(i);
+    { Back and Next are the navigator by another route, so they bring the
+      settings forward the same way a click on a section does. }
+    ShowSettingsPage;
+  end;
 end;
 
 { --------------------------------------------------------------- modes ---- }

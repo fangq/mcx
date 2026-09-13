@@ -56,6 +56,10 @@ type
   public
     constructor Create;
     procedure Frame(const ACentre: TMcxVec3; ARadius: Single);
+    { Fills the view with a box rather than with the sphere around it.
+      AFovY is the vertical field of view in degrees and AAspect the pane's
+      width over its height. }
+    procedure FrameBox(const ALo, AHi: TMcxVec3; AFovY, AAspect: Single);
     procedure Orbit(ADx, ADy: Single);
     procedure Zoom(ASteps: Single);
     function View: TMcxMat4;
@@ -1043,6 +1047,68 @@ begin
   FTarget := ACentre;
   if ARadius <= 0 then ARadius := 1;
   FDistance := ARadius * 2.8;
+end;
+
+{ The sphere around a box is a poor fit for the box.  A 60-cube's bounding
+  sphere has a radius of 52 against a half-width of 30, so framing the sphere
+  leaves the cube filling about a third of the height it could -- which is
+  what a freshly opened volume looked like.
+
+  So the eight corners are placed in the camera's own frame instead.  For a
+  corner at world offset c from the centre, the camera at distance d sees it
+  at depth d + c.F and at c.R across and c.U up, so it is inside the frustum
+  when |c.R| <= (d + c.F) * tanX and likewise for U.  Solving each for d and
+  taking the largest is the distance that just contains every corner: exact
+  for the orientation it is called at, and eight dot products.
+
+  It is a fit at the angle you are looking from, not one that survives any
+  rotation -- that would be the bounding sphere again.  The default view is
+  already an oblique one, which is near the widest a box ever looks, so
+  turning it from there mostly makes the silhouette smaller. }
+procedure TMcxCamera.FrameBox(const ALo, AHi: TMcxVec3; AFovY, AAspect: Single);
+var
+  R, U, F: TMcxVec3;
+  TanY, TanX, d, Need, cr, cu, cf: Single;
+  i: Integer;
+  c: TMcxVec3;
+begin
+  FTarget := McxVec3((ALo.x + AHi.x) / 2, (ALo.y + AHi.y) / 2,
+                     (ALo.z + AHi.z) / 2);
+
+  TanY := Tan(AFovY * Pi / 360);
+  if TanY <= 0 then TanY := 0.4142;
+  if AAspect <= 0 then AAspect := 1;
+  TanX := TanY * AAspect;
+
+  R := ScreenRight;
+  U := ScreenUp;
+  { Into the screen: from the eye towards the target, which is the opposite
+    of the direction Eye offsets along. }
+  F := McxVec3(-Cos(FElevation) * Cos(FAzimuth),
+               -Cos(FElevation) * Sin(FAzimuth),
+               -Sin(FElevation));
+
+  d := 0;
+  for i := 0 to 7 do
+  begin
+    if (i and 1) <> 0 then c.x := AHi.x - FTarget.x else c.x := ALo.x - FTarget.x;
+    if (i and 2) <> 0 then c.y := AHi.y - FTarget.y else c.y := ALo.y - FTarget.y;
+    if (i and 4) <> 0 then c.z := AHi.z - FTarget.z else c.z := ALo.z - FTarget.z;
+
+    cr := c.x * R.x + c.y * R.y + c.z * R.z;
+    cu := c.x * U.x + c.y * U.y + c.z * U.z;
+    cf := c.x * F.x + c.y * F.y + c.z * F.z;
+
+    Need := Abs(cr) / TanX - cf;
+    if Need > d then d := Need;
+    Need := Abs(cu) / TanY - cf;
+    if Need > d then d := Need;
+  end;
+
+  { A little air, so the corner that decided the distance is not touching
+    the edge of the pane. }
+  FDistance := d * 1.06;
+  if FDistance < 0.05 then FDistance := 0.05;
 end;
 
 procedure TMcxCamera.Orbit(ADx, ADy: Single);
