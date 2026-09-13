@@ -104,6 +104,23 @@ object fmMain: TfmMain
       Top = 1
       Action = acToggleMode
     end
+    object tbSep4: TToolButton
+      Left = 1
+      Height = 32
+      Top = 1
+      Caption = 'tbSep4'
+      Style = tbsDivider
+    end
+    object tbHelp: TToolButton
+      Left = 1
+      Top = 1
+      Action = acHelp
+    end
+    object tbAbout: TToolButton
+      Left = 1
+      Top = 1
+      Action = acAbout
+    end
   end
   object sbMain: TStatusBar
     Left = 0
@@ -2081,6 +2098,11 @@ object fmMain: TfmMain
       Hint = 'Put the panes back where they started'
       OnExecute = acResetLayoutExecute
     end
+    object acHelp: TAction
+      Caption = 'Help'
+      Hint = 'What the setting you are on does  (F1)'
+      OnExecute = acHelpExecute
+    end
     object acAbout: TAction
       Caption = 'About'
       Hint = 'About MCX Studio'
@@ -2103,7 +2125,7 @@ object fmMain: TfmMain
   end
   object dlgResult: TOpenDialog
     Title = 'Open a result'
-    Filter = 'MCX results (*.jnii;*.bnii;*.jdb)|*.jnii;*.bnii;*.jdb|All files|*'
+    Filter = 'MCX results (*.jnii;*.bnii;*.jdb;*.jdat)|*.jnii;*.bnii;*.jdb;*.jdat|All files|*'
     Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
     left = 568
     top = 192

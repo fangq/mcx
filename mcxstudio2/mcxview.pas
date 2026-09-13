@@ -86,6 +86,8 @@ type
       once rather than on every repaint. }
     FReady: Boolean;
     FFailed: Boolean;
+    { Filled on the first paint; the About box may ask before there is one. }
+    FDescription: string;
     FDragging: Boolean;
     FDidDrag: Boolean;
     FDragX, FDragY: Integer;
@@ -139,6 +141,8 @@ type
     property ClipHi: TMcxVec3 read FClipHi write FClipHi;
     { Asks for a repaint without rebuilding the scene. }
     procedure Redraw;
+    { What the driver calls itself, once there has been a context to ask. }
+    property Description: string read FDescription;
     property HasVolume: Boolean read GetHasVolume;
     property Document: TMcxDoc read FDoc write FDoc;
     { Renders at any size into an offscreen target and writes a PNG. }
@@ -155,6 +159,7 @@ implementation
 constructor TMcxView.Create(AHost: TWinControl);
 begin
   FHost := AHost;
+  FDescription := '(no context yet)';
   FStyle := 0;
   FMap := 0;
   FFloor := 0;
@@ -264,7 +269,8 @@ begin
     FreeAndNil(FVolShader);
   end;
 
-  Say('OpenGL: ' + McxGLDescribe);
+  FDescription := McxGLDescribe;
+  Say('OpenGL: ' + FDescription);
   FReady := True;
   Result := True;
   Rebuild;

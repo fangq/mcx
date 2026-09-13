@@ -66,6 +66,10 @@ function McxIconNames: TStringArray;
   it should start with no icon rather than not start. }
 procedure McxApplyWindowIcon;
 
+{ The application's own logo, at whatever size the resource holds, or nil when
+  this build has no artwork.  The caller owns the result. }
+function McxAppLogo: TPortableNetworkGraphic;
+
 { One icon as a PNG at ASize pixels, area-averaged from the embedded 96-pixel
   master, or nil when this build has no artwork under that name -- which is
   the normal answer for the two drawn chevrons.  The caller owns the result. }
@@ -102,7 +106,7 @@ const
   { Kept in one place so the toolbar, the menus and the shape tree all agree on
     what index means what.  Appending is safe; inserting is not, because an
     ImageIndex in a form file is an absolute position. }
-  IconNames: array[0..31] of string = (
+  IconNames: array[0..32] of string = (
     { Session and files. }
     'new', 'open', 'save', 'saveas',
     { Running. }
@@ -115,7 +119,9 @@ const
     { Optodes and media. }
     'source', 'detector', 'media',
     { Editing. }
-    'add', 'delete', 'about',
+    'add', 'delete',
+    { Help. }
+    'about', 'help',
     { Accordion headers.  A glyph rather than a caption prefix, because
       TSpeedButton centres its caption and has no Alignment -- but it does
       place a glyph at Margin, and the caption then follows it, which is what
@@ -141,6 +147,25 @@ begin
     end;
   finally
     Png.Free;
+    Stream.Free;
+  end;
+end;
+
+function McxAppLogo: TPortableNetworkGraphic;
+var
+  Stream: TResourceStream;
+begin
+  Result := nil;
+  Stream := nil;
+  try
+    try
+      Stream := TResourceStream.Create(HInstance, McxWindowIconRes, RT_RCDATA);
+      Result := TPortableNetworkGraphic.Create;
+      Result.LoadFromStream(Stream);
+    except
+      FreeAndNil(Result);
+    end;
+  finally
     Stream.Free;
   end;
 end;

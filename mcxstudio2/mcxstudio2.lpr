@@ -67,6 +67,11 @@ begin
 
   Application.Initialize;
 
+  { mcx's own logo, so a window in the task bar is recognisably this program
+    and not a generic form.  After Initialize, because it needs a widgetset to
+    hold the bitmap. }
+  McxApplyWindowIcon;
+
   { Before the first widget of all: a widget is measured as it is built, and
     one measured with the theme's own font keeps that size for the rest of the
     session, however the style changes afterwards. }

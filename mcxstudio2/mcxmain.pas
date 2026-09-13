@@ -20,9 +20,10 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
-  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
+  StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, LCLType, fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview, mcxdisp, mcxtable, mcxjd;
+  mcxdpi, mcxicons, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxview, mcxdisp,
+  mcxtable, mcxjd;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -61,6 +62,7 @@ type
     acLoadResult: TAction;
     acResetLayout: TAction;
     acAbout: TAction;
+    acHelp: TAction;
     alMain: TActionList;
     dlgOpen: TOpenDialog;
     dlgResult: TOpenDialog;
@@ -281,6 +283,8 @@ type
     procedure acStopExecute(Sender: TObject);
     procedure acDevicesExecute(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
+    procedure acHelpExecute(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
     procedure tmRefreshTimer(Sender: TObject);
@@ -309,6 +313,9 @@ type
     { What each item of a choice control actually writes.  Parallel to the
       control's own Items, which hold what the person reads. }
     FValues: array of TStringList;
+    { The flag letters of a check group, one string per binding.  They used to
+      ride on the control's Hint; a hint is a thing the person reads. }
+    FFlags: array of string;
     FRowList: array of TPanel;
     FLoading: Integer;
     FMissing: TStringList;
@@ -352,6 +359,10 @@ type
     FMedia: TMcxTable;
     FDetectors: TMcxTable;
     FDisplay: TMcxDisplayBar;
+    { The last focused control the help table knows about.  Kept because the
+      Help button is on the toolbar: pressing it takes the focus off the
+      setting whose help was wanted. }
+    FLastHelp: TControl;
     FPendingResult: string;
     FDockRestored: Boolean;
     FDockSized: Boolean;
@@ -372,6 +383,9 @@ type
     procedure BenchmarkClick(Sender: TObject);
     procedure ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
     procedure TableChanged(Sender: TObject);
+    function  Environment: string;
+    procedure ShowHelpForFocus;
+    procedure FocusChanged(Sender: TObject; LastControl: TControl);
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
     procedure UpdateRunActions;
@@ -535,6 +549,12 @@ begin
   { On the page, not on pnGL: pnGL is the GL control's host and the control
     fills it. }
   FDisplay := TMcxDisplayBar.Create(tsPreview, FView);
+
+  { F1 is answered by the form, not by each control: the keys reach here
+    first, and the control that has focus is the question. }
+  KeyPreview := True;
+  OnKeyDown := @FormKeyDown;
+  Screen.AddHandlerActiveControlChanged(@FocusChanged);
   LoadDockLayout;
 
   NewDocument;
@@ -552,6 +572,8 @@ end;
 
 procedure TfmMain.FormDestroy(Sender: TObject);
 begin
+  { Screen outlives the form, so the handler has to come off it. }
+  Screen.RemoveHandlerActiveControlChanged(@FocusChanged);
   FreeAndNil(FView);
   FreeAndNil(FMedia);
   FreeAndNil(FDetectors);
@@ -593,6 +615,7 @@ begin
   acBenchmark.ImageIndex := McxIconIndex('bench');
   acSaveImage.ImageIndex := McxIconIndex('saveas');
   acAbout.ImageIndex := McxIconIndex('about');
+  acHelp.ImageIndex := McxIconIndex('help');
 end;
 
 { ------------------------------------------------------------ navigator --- }
@@ -1166,14 +1189,102 @@ begin
   Close;
 end;
 
+{ The machine-specific half of the About box: which binaries this copy found
+  and what the driver calls itself.  Collected here because only the form
+  knows where the view is. }
+function TfmMain.Environment: string;
+const
+  BackendNames: array[TMcxBackend] of string =
+    ('mcx', 'mcxcl', 'mmc', 'mcx-hip');
+var
+  B: TMcxBackend;
+  Exe: string;
+begin
+  Result := '';
+  for B := Low(TMcxBackend) to High(TMcxBackend) do
+  begin
+    Exe := McxFindExe(B);
+    if Exe = '' then Exe := '(not found)';
+    { The backend's label, not its file name: the CUDA and the ROCm build are
+      both called mcx, and two lines reading "mcx:" say nothing. }
+    Result := Result + Format('%-9s %s'#10, [BackendNames[B] + ':', Exe]);
+  end;
+  if FView <> nil then Result := Result + 'OpenGL:  ' + FView.Description + #10;
+end;
+
 procedure TfmMain.acAboutExecute(Sender: TObject);
 begin
-  MessageDlg('MCX Studio',
-    'MCX Studio' + #10#10 +
-    'A graphical front end for MCX, MMC and MCX-CL.'#10 +
-    'https://mcx.space'#10#10 +
-    Format('Display scale: %d dpi', [McxDesiredPPI]),
-    mtInformation, [mbOK], 0);
+  McxShowAbout(Self, Environment);
+end;
+
+{ F1 answers for whatever has the keyboard, which is the setting the person is
+  looking at.  A control the help table does not know is walked up from --
+  a spin edit's inner edit, a radio group's button -- and only when nothing on
+  the way up is known does the overview come back. }
+procedure TfmMain.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key <> VK_F1 then Exit;
+  Key := 0;
+  ShowHelpForFocus;
+end;
+
+procedure TfmMain.acHelpExecute(Sender: TObject);
+begin
+  ShowHelpForFocus;
+end;
+
+{ Remembered as the focus moves rather than read when help is asked for: by
+  then the Help button has the focus and the setting has lost it. }
+procedure TfmMain.FocusChanged(Sender: TObject; LastControl: TControl);
+var
+  C: TControl;
+begin
+  C := Screen.ActiveControl;
+  while C <> nil do
+  begin
+    if McxHelpFor(C.Name) <> '' then
+    begin
+      FLastHelp := C;
+      Exit;
+    end;
+    C := C.Parent;
+  end;
+end;
+
+procedure TfmMain.ShowHelpForFocus;
+var
+  C: TControl;
+  Body, Title: string;
+begin
+  Body := '';
+  Title := '';
+  C := ActiveControl;
+  if (C = nil) or (McxHelpFor(C.Name) = '') then C := FLastHelp;
+  while (C <> nil) and (Body = '') do
+  begin
+    Body := McxHelpFor(C.Name);
+    if Body <> '' then
+    begin
+      { What the setting is called on screen, never the control's name: a
+        person who needed to be told it was rgBackend would not have pressed
+        F1 over it. }
+      Title := '';
+      if (C.Tag >= 0) and (C.Tag <= High(Binds)) and (FBound[C.Tag] = C) and
+         (FLabels[C.Tag] <> nil) then
+        Title := FLabels[C.Tag].Caption;
+      if (Title = '') and ((C is TRadioGroup) or (C is TCheckGroup)) then
+        Title := TCustomGroupBox(C).Caption;
+      if Title = '' then Title := 'This setting';
+    end;
+    C := C.Parent;
+  end;
+  if Body = '' then
+  begin
+    McxShowHelp(Self, 'MCX Studio help', McxHelpOverview);
+    Exit;
+  end;
+  McxShowHelp(Self, Title, Title + LineEnding + LineEnding + Body);
 end;
 
 
@@ -2102,13 +2213,29 @@ var
   i, N: Integer;
   C: TComponent;
   P: TWinControl;
-  Letters: string;
+  Letters, Help: string;
 
   function IndexOfRow(APanel: TPanel): Integer;
   begin
     for Result := 0 to High(FRowList) do
       if FRowList[Result] = APanel then Exit;
     Result := -1;
+  end;
+
+  { The control and whatever it is built out of.  A TRadioGroup's radio
+    buttons are real windows in front of it, so the hint has to be on them
+    too, and a child that already has one of its own keeps it. }
+  procedure SetHint(AControl: TControl; const AText: string);
+  var
+    k: Integer;
+  begin
+    if AControl = nil then Exit;
+    AControl.Hint := AText;
+    AControl.ShowHint := True;
+    if AControl is TWinControl then
+      for k := 0 to TWinControl(AControl).ControlCount - 1 do
+        if TWinControl(AControl).Controls[k].Hint = '' then
+          SetHint(TWinControl(AControl).Controls[k], AText);
   end;
 
 begin
@@ -2118,6 +2245,7 @@ begin
   SetLength(FRows, Length(Binds));
   SetLength(FGroups, Length(Binds));
   SetLength(FValues, Length(Binds));
+  SetLength(FFlags, Length(Binds));
   SetLength(FRowList, 0);
   for i := 0 to High(Binds) do
   begin
@@ -2175,9 +2303,7 @@ begin
       if Binds[i].Choices <> '' then
       begin
         SplitFlags(Binds[i].Choices, Letters, TCheckGroup(C).Items);
-        { The letters ride on the group's Hint, so the load and save paths do
-          not each have to re-split the table entry. }
-        TCheckGroup(C).Hint := Letters;
+        FFlags[i] := Letters;
       end;
       TCheckGroup(C).OnItemClick := @CheckGroupClick;
     end
@@ -2210,6 +2336,22 @@ begin
       { On editing done rather than on change: reformatting a number while it
         is still half-typed fights the person typing it. }
       TEdit(C).OnEditingDone := @BindChanged;
+
+    { The same sentence hovers and answers F1.  Last, because a radio group's
+      buttons do not exist until its Items have been set, and they are what
+      the pointer is actually over: a hint on the group alone shows only in
+      the gaps between them.
+
+      On the caption and the row as well, so that a setting whose control is
+      a 16-pixel checkbox still has somewhere to hover. }
+    Help := McxHelpFor(Binds[i].Ctl);
+    if Help <> '' then
+    begin
+      Help := McxWrap(Help);
+      SetHint(FBound[i], Help);
+      SetHint(FLabels[i], Help);
+      SetHint(FRows[i], Help);
+    end;
 
   end;
 end;
@@ -2288,11 +2430,11 @@ begin
     mkFlags:
       if C is TCheckGroup then
       begin
-        S := FlagsOf(D, B.Path, TCheckGroup(C).Hint);
+        S := FlagsOf(D, B.Path, FFlags[AIndex]);
         for N := 0 to TCheckGroup(C).Items.Count - 1 do
           TCheckGroup(C).Checked[N] :=
-            (N < Length(TCheckGroup(C).Hint)) and
-            (Pos(TCheckGroup(C).Hint[N + 1], S) > 0);
+            (N < Length(FFlags[AIndex])) and
+            (Pos(FFlags[AIndex][N + 1], S) > 0);
       end;
     mkInt:
       if C is TSpinEdit then TSpinEdit(C).Value := D.AsInt(B.Path)
@@ -2362,8 +2504,8 @@ begin
       begin
         S := '';
         for N := 0 to TCheckGroup(C).Items.Count - 1 do
-          if TCheckGroup(C).Checked[N] and (N < Length(TCheckGroup(C).Hint)) then
-            S := S + TCheckGroup(C).Hint[N + 1];
+          if TCheckGroup(C).Checked[N] and (N < Length(FFlags[AIndex])) then
+            S := S + FFlags[AIndex][N + 1];
         { Written as letters, which is what mcx's own help and most of the
           examples use; a file that spelled it as a bitmask keeps that shape
           only until the flags are actually changed. }
