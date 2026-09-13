@@ -74,6 +74,8 @@ type
     { What the volume is drawn as and through.  All uniforms: changing any of
       them is a repaint, not an upload. }
     FStyle: Integer;
+    FMap: Integer;
+    FFloor: Single;
     FOpacity: Single;
     FSteps: Single;
     FLogScale: Boolean;
@@ -123,8 +125,20 @@ type
     function ShowVolume(const AArray: TMcxArray): Boolean;
     procedure ClearVolume;
     { 0 for maximum intensity, 1 for accumulation. }
+    { Everything below is a uniform: setting one is a repaint, not an upload,
+      which is why the display controls can be dragged live. }
     property Style: Integer read FStyle write FStyle;
     property LogScale: Boolean read FLogScale write FLogScale;
+    { 0 jet, 1 hot, 2 viridis, 3 cool, 4 grey -- see the shader's ramp(). }
+    property Colormap: Integer read FMap write FMap;
+    { Fraction of the displayed range below which a voxel is not drawn. }
+    property Threshold: Single read FFloor write FFloor;
+    property Opacity: Single read FOpacity write FOpacity;
+    { The visible slab, each component 0..1 across that axis of the volume. }
+    property ClipLo: TMcxVec3 read FClipLo write FClipLo;
+    property ClipHi: TMcxVec3 read FClipHi write FClipHi;
+    { Asks for a repaint without rebuilding the scene. }
+    procedure Redraw;
     property HasVolume: Boolean read GetHasVolume;
     property Document: TMcxDoc read FDoc write FDoc;
     { Renders at any size into an offscreen target and writes a PNG. }
@@ -142,6 +156,8 @@ constructor TMcxView.Create(AHost: TWinControl);
 begin
   FHost := AHost;
   FStyle := 0;
+  FMap := 0;
+  FFloor := 0;
   FOpacity := 0.25;
   FSteps := 192;
   FLogScale := True;
@@ -366,6 +382,8 @@ begin
   FVolShader.SetVec3('uMinSlice', FClipLo);
   FVolShader.SetVec3('uMaxSlice', FClipHi);
   FVolShader.SetFloat('uOpacity', FOpacity);
+  FVolShader.SetFloat('uFloor', FFloor);
+  FVolShader.SetInt('uMap', FMap);
   FVolShader.SetFloat('uSteps', FSteps);
   FVolShader.SetVec2('uClim', FVolLow, FVolHigh);
   FVolShader.SetInt('uStyle', FStyle);
@@ -1150,6 +1168,11 @@ end;
   line segments in one buffer -- and is the opposite of the old renderer,
   which created a scene-graph object per axis label and rebuilt some seven
   hundred of them on every repaint. }
+procedure TMcxView.Redraw;
+begin
+  if FGL <> nil then FGL.Invalidate;
+end;
+
 procedure TMcxView.Rebuild;
 var
   dx, dy, dz, Step, Axis, t: Single;

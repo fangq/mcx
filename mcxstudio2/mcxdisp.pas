@@ -1,0 +1,313 @@
+{ mcxstudio2 - the controls over how a result is displayed.
+
+  These are not settings.  Nothing here is written to the .json, nothing here
+  changes what a simulation computes; every one of them is a uniform in the
+  volume shader, so moving one is a repaint and nothing more.  That is why
+  they live beside the picture rather than in the settings pane, and why they
+  are sliders when the settings deliberately are not: a threshold is found by
+  dragging until the picture reads, not by knowing the number.
+
+  The set is the one mcxcloud offers -- a colour map, a transparency
+  threshold, and an x/y/z slab -- because someone arriving from the web
+  viewer should not have to look for them. }
+unit mcxdisp;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, Controls, StdCtrls, ExtCtrls, ComCtrls, Graphics,
+  mcxgl, mcxview, mcxdpi;
+
+type
+  { The strip under the 3-D view.  Owns its controls, drives one TMcxView. }
+  TMcxDisplayBar = class
+  private
+    FView: TMcxView;
+    FRoot: TPanel;
+    FHead: TPanel;
+    FTitle: TLabel;
+    FBody: TPanel;
+    FMap: TComboBox;
+    FStyle: TComboBox;
+    FLog: TCheckBox;
+    FOpacity: TTrackBar;
+    FFloor: TTrackBar;
+    { Two per axis, low then high. }
+    FLo: array[0..2] of TTrackBar;
+    FHi: array[0..2] of TTrackBar;
+    FOpen: Boolean;
+    FRows: Integer;
+    function  AddRow(const ACaption: string): TPanel;
+    function  AddSlider(AParent: TWinControl; APosition: Integer): TTrackBar;
+    procedure HeadClick(Sender: TObject);
+    procedure Changed(Sender: TObject);
+    procedure SlabChanged(Sender: TObject);
+    procedure Layout;
+  public
+    constructor Create(AHost: TWinControl; AView: TMcxView);
+    { Shown only when there is a volume: with no data loaded every control
+      here does nothing, and a row of dead sliders reads as a broken window. }
+    procedure SetHasVolume(AValue: Boolean);
+    { Puts the slab back to the whole volume. }
+    procedure ResetSlab;
+    property Panel: TPanel read FRoot;
+  end;
+
+implementation
+
+const
+  { What the shader's ramp() knows, in its order. }
+  MapNames = 'Jet (blue to red)'#10'Hot (black to white)'#10'Viridis'#10 +
+    'Cool (cyan to magenta)'#10'Greyscale';
+  StyleNames = 'Maximum intensity'#10'Accumulated (translucent)';
+  AxisNames: array[0..2] of string = ('X range', 'Y range', 'Z range');
+  RowHeight = 26;
+  RowGap = 2;
+
+constructor TMcxDisplayBar.Create(AHost: TWinControl; AView: TMcxView);
+var
+  Row: TPanel;
+  i: Integer;
+begin
+  FView := AView;
+  FOpen := True;
+
+  FRoot := TPanel.Create(AHost);
+  FRoot.Parent := AHost;
+  FRoot.Align := alBottom;
+  FRoot.BevelOuter := bvNone;
+  FRoot.Caption := '';
+  FRoot.Visible := False;
+
+  { The header is the whole of the collapse control: a title that is also a
+    button, because a separate button next to a title is two things saying
+    one thing. }
+  FHead := TPanel.Create(FRoot);
+  FHead.Parent := FRoot;
+  FHead.Top := 0;
+  FHead.Align := alTop;
+  FHead.Height := McxScale96(22);
+  FHead.BevelOuter := bvNone;
+  FHead.Caption := '';
+  FHead.Cursor := crHandPoint;
+  FHead.OnClick := @HeadClick;
+
+  FTitle := TLabel.Create(FHead);
+  FTitle.Parent := FHead;
+  FTitle.Align := alClient;
+  FTitle.Layout := tlCenter;
+  FTitle.BorderSpacing.Left := McxScale96(6);
+  FTitle.Font.Style := [fsBold];
+  FTitle.Cursor := crHandPoint;
+  FTitle.OnClick := @HeadClick;
+
+  FBody := TPanel.Create(FRoot);
+  FBody.Parent := FRoot;
+  FBody.Top := 100;
+  FBody.Align := alTop;
+  FBody.BevelOuter := bvNone;
+  FBody.Caption := '';
+
+  Row := AddRow('Colour map');
+  FMap := TComboBox.Create(Row);
+  FMap.Parent := Row;
+  FMap.Align := alClient;
+  FMap.Style := csDropDownList;
+  FMap.Text := '';
+  FMap.Items.Text := MapNames;
+  FMap.ItemIndex := 0;
+  FMap.OnChange := @Changed;
+  FMap.Hint := 'How values are coloured.  Viridis keeps its lightness even, ' +
+    'so it does not invent an edge where the data has none.';
+  FMap.ShowHint := True;
+
+  Row := AddRow('Rendering');
+  { Log first on the right, so the combo gets what is left. }
+  FLog := TCheckBox.Create(Row);
+  FLog.Parent := Row;
+  FLog.Align := alRight;
+  FLog.AutoSize := False;
+  FLog.Width := McxScale96(86);
+  FLog.Caption := 'Log scale';
+  FLog.Checked := True;
+  FLog.OnChange := @Changed;
+  FLog.Hint := 'Fluence spans several decades; on a linear scale everything ' +
+    'but the source is black.';
+  FLog.ShowHint := True;
+
+  FStyle := TComboBox.Create(Row);
+  FStyle.Parent := Row;
+  FStyle.Align := alClient;
+  FStyle.Style := csDropDownList;
+  FStyle.Items.Text := StyleNames;
+  FStyle.ItemIndex := 0;
+  FStyle.OnChange := @Changed;
+  FStyle.Hint := 'Maximum intensity shows the brightest voxel along each ray; ' +
+    'accumulated builds the ray up and needs the opacity below.';
+  FStyle.ShowHint := True;
+
+  Row := AddRow('Threshold');
+  FFloor := AddSlider(Row, 0);
+  FFloor.Align := alClient;
+  FFloor.OnChange := @Changed;
+  FFloor.Hint := 'Voxels below this fraction of the displayed range are not ' +
+    'drawn at all.  A fluence map is mostly its own faint tail, and the tail ' +
+    'hides what is behind it.';
+
+  Row := AddRow('Opacity');
+  FOpacity := AddSlider(Row, 25);
+  FOpacity.Align := alClient;
+  FOpacity.OnChange := @Changed;
+  FOpacity.Hint := 'How much each sample along a ray contributes.  Only used ' +
+    'by the accumulated rendering.';
+
+  for i := 0 to 2 do
+  begin
+    Row := AddRow(AxisNames[i]);
+    { Two sliders sharing the row, left half and right half, without either
+      of them having to know how wide the row is. }
+    Row.ChildSizing.Layout := cclLeftToRightThenTopToBottom;
+    Row.ChildSizing.ControlsPerLine := 2;
+    Row.ChildSizing.EnlargeHorizontal := crsScaleChilds;
+    Row.ChildSizing.HorizontalSpacing := McxScale96(6);
+    FLo[i] := AddSlider(Row, 0);
+    FLo[i].Tag := i;
+    FLo[i].OnChange := @SlabChanged;
+    FLo[i].Hint := 'The near face of the visible slab along ' +
+      Copy(AxisNames[i], 1, 1) + '.';
+    FHi[i] := AddSlider(Row, 100);
+    FHi[i].Tag := i;
+    FHi[i].OnChange := @SlabChanged;
+    FHi[i].Hint := 'The far face of the visible slab along ' +
+      Copy(AxisNames[i], 1, 1) + '.';
+  end;
+
+  Layout;
+end;
+
+{ A row of the body: a caption down the left at a fixed width, and whatever
+  the caller adds filling the rest.  The same shape as a settings card's row,
+  so the two read as one window. }
+function TMcxDisplayBar.AddRow(const ACaption: string): TPanel;
+var
+  L: TLabel;
+  Host: TPanel;
+begin
+  Result := TPanel.Create(FBody);
+  Result.Parent := FBody;
+  { Rising Top before Align: alTop siblings are ordered by the Top they have
+    when they are aligned, not by the order they were created in. }
+  Inc(FRows);
+  Result.Top := FRows * 100;
+  Result.Align := alTop;
+  Result.Height := McxScale96(RowHeight);
+  Result.BevelOuter := bvNone;
+  Result.Caption := '';
+  Result.BorderSpacing.Around := McxScale96(RowGap);
+
+  L := TLabel.Create(Result);
+  L.Parent := Result;
+  L.Align := alLeft;
+  L.Layout := tlCenter;
+  L.AutoSize := False;
+  L.Width := McxScale96(86);
+  L.BorderSpacing.Left := McxScale96(6);
+  L.Caption := ACaption;
+
+  { The label is a sibling of whatever comes next, and ChildSizing on the row
+    would lay it out too; so rows that use ChildSizing get a second panel to
+    put their controls in.  Cheaper to always have one than to special-case. }
+  Host := TPanel.Create(Result);
+  Host.Parent := Result;
+  Host.Align := alClient;
+  Host.BevelOuter := bvNone;
+  Host.Caption := '';
+  Result := Host;
+end;
+
+function TMcxDisplayBar.AddSlider(AParent: TWinControl;
+  APosition: Integer): TTrackBar;
+begin
+  Result := TTrackBar.Create(AParent);
+  Result.Parent := AParent;
+  Result.Min := 0;
+  Result.Max := 100;
+  Result.Position := APosition;
+  Result.TickStyle := tsNone;
+  Result.ShowSelRange := False;
+  Result.Height := McxScale96(22);
+  Result.ShowHint := True;
+end;
+
+{ The body's height is counted rather than taken from AutoSize: the rows are
+  added before anything has been laid out, so at this point AutoSize has
+  nothing to measure. }
+procedure TMcxDisplayBar.Layout;
+begin
+  if FOpen then FTitle.Caption := '- Display'
+  else FTitle.Caption := '+ Display';
+  FBody.Height := FRows * McxScale96(RowHeight + 2 * RowGap);
+  FBody.Visible := FOpen;
+  if FOpen then FRoot.Height := FHead.Height + FBody.Height
+  else FRoot.Height := FHead.Height;
+end;
+
+procedure TMcxDisplayBar.HeadClick(Sender: TObject);
+begin
+  FOpen := not FOpen;
+  Layout;
+end;
+
+procedure TMcxDisplayBar.Changed(Sender: TObject);
+begin
+  if FView = nil then Exit;
+  FView.Colormap := FMap.ItemIndex;
+  FView.Style := FStyle.ItemIndex;
+  FView.LogScale := FLog.Checked;
+  FView.Threshold := FFloor.Position / 100;
+  FView.Opacity := FOpacity.Position / 100;
+  FView.Redraw;
+end;
+
+procedure TMcxDisplayBar.SlabChanged(Sender: TObject);
+var
+  i: Integer;
+  Lo, Hi: TMcxVec3;
+begin
+  if FView = nil then Exit;
+  { A slab with no thickness shows nothing, so the two sliders push each
+    other rather than crossing. }
+  i := TTrackBar(Sender).Tag;
+  if FLo[i].Position > FHi[i].Position then
+  begin
+    if Sender = FLo[i] then FHi[i].Position := FLo[i].Position
+    else FLo[i].Position := FHi[i].Position;
+  end;
+  Lo := McxVec3(FLo[0].Position / 100, FLo[1].Position / 100,
+                FLo[2].Position / 100);
+  Hi := McxVec3(FHi[0].Position / 100, FHi[1].Position / 100,
+                FHi[2].Position / 100);
+  FView.ClipLo := Lo;
+  FView.ClipHi := Hi;
+  FView.Redraw;
+end;
+
+procedure TMcxDisplayBar.ResetSlab;
+var
+  i: Integer;
+begin
+  for i := 0 to 2 do
+  begin
+    FLo[i].Position := 0;
+    FHi[i].Position := 100;
+  end;
+end;
+
+procedure TMcxDisplayBar.SetHasVolume(AValue: Boolean);
+begin
+  FRoot.Visible := AValue;
+end;
+
+end.

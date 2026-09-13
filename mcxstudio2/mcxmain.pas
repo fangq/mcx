@@ -22,7 +22,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview, mcxtable, mcxjd;
+  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview, mcxdisp, mcxtable, mcxjd;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -351,6 +351,7 @@ type
       opened, so these are the only editors built in code. }
     FMedia: TMcxTable;
     FDetectors: TMcxTable;
+    FDisplay: TMcxDisplayBar;
     FPendingResult: string;
     FDockRestored: Boolean;
     FDockSized: Boolean;
@@ -531,6 +532,9 @@ begin
   FView.OnPick := @ViewPick;
   FView.Document := FDoc;
   lbTodoGL.Visible := False;
+  { On the page, not on pnGL: pnGL is the GL control's host and the control
+    fills it. }
+  FDisplay := TMcxDisplayBar.Create(tsPreview, FView);
   LoadDockLayout;
 
   NewDocument;
@@ -1724,7 +1728,11 @@ begin
     Shape, McxArrayKindName(A.Kind), McxArrayCount(A)]));
 
   if FView.ShowVolume(A) then
-    pcView.ActivePage := tsPreview
+  begin
+    FDisplay.ResetSlab;
+    FDisplay.SetHasVolume(True);
+    pcView.ActivePage := tsPreview;
+  end
   else
     Log('  the 3-D view would not take it');
 end;

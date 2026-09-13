@@ -303,17 +303,52 @@ const
     'uniform vec3 uMaxSlice;'#10 +
     'uniform int  uStyle;'#10 +        { 0 maximum intensity, 1 accumulate }
     'uniform float uOpacity;'#10 +
+    'uniform float uFloor;'#10 +     { below this fraction of the range, nothing }
+    'uniform int  uMap;'#10 +
     'uniform float uSteps;'#10 +
     'uniform int  uLog;'#10 +
     ''#10 +
-    { A ramp with enough hue change to read small differences: blue through
-      cyan and yellow to red, which is what mcxcloud shows. }
-    'vec3 ramp(float t)'#10 +
+    { The colour maps.  Jet first because it is what mcxcloud shows and what
+      most published fluence figures use; viridis because jet's yellow band
+      invents an edge that is not in the data, and someone comparing two
+      results should be able to switch to a map that does not. }
+    'vec3 mapJet(float t)'#10 +
     '{'#10 +
-    '    t = clamp(t, 0.0, 1.0);'#10 +
     '    return clamp(vec3(1.5 - abs(4.0 * t - 3.0),'#10 +
     '                      1.5 - abs(4.0 * t - 2.0),'#10 +
     '                      1.5 - abs(4.0 * t - 1.0)), 0.0, 1.0);'#10 +
+    '}'#10 +
+    ''#10 +
+    { Matlab's hot: red over the first three eighths, then green, then blue. }
+    'vec3 mapHot(float t)'#10 +
+    '{'#10 +
+    '    return clamp(vec3(t / 0.375, (t - 0.375) / 0.375,'#10 +
+    '                      (t - 0.75) / 0.25), 0.0, 1.0);'#10 +
+    '}'#10 +
+    ''#10 +
+    { A sixth-order fit of viridis; within a couple of levels of the real
+      table everywhere, and a table would mean another texture unit. }
+    'vec3 mapViridis(float t)'#10 +
+    '{'#10 +
+    '    const vec3 c0 = vec3(0.2777, 0.0054, 0.3341);'#10 +
+    '    const vec3 c1 = vec3(0.1051, 1.4046, 1.3846);'#10 +
+    '    const vec3 c2 = vec3(-0.3309, 0.2148, 0.0951);'#10 +
+    '    const vec3 c3 = vec3(-4.6342, -5.7991, -19.3324);'#10 +
+    '    const vec3 c4 = vec3(6.2283, 14.1799, 56.6906);'#10 +
+    '    const vec3 c5 = vec3(4.7764, -13.7451, -65.3530);'#10 +
+    '    const vec3 c6 = vec3(-5.4355, 4.6459, 26.3124);'#10 +
+    '    return clamp(c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t *'#10 +
+    '                 (c5 + t * c6))))), 0.0, 1.0);'#10 +
+    '}'#10 +
+    ''#10 +
+    'vec3 ramp(float t)'#10 +
+    '{'#10 +
+    '    t = clamp(t, 0.0, 1.0);'#10 +
+    '    if (uMap == 1) return mapHot(t);'#10 +
+    '    if (uMap == 2) return mapViridis(t);'#10 +
+    '    if (uMap == 3) return mix(vec3(0.0, 1.0, 1.0), vec3(1.0, 0.0, 1.0), t);'#10 +
+    '    if (uMap == 4) return vec3(t);'#10 +
+    '    return mapJet(t);'#10 +
     '}'#10 +
     ''#10 +
     'float sample1(vec3 p)'#10 +
@@ -322,7 +357,11 @@ const
     '        return 0.0;'#10 +
     '    float v = texture(uVolume, p).r;'#10 +
     '    if (uLog != 0) v = log(max(v, 1e-12));'#10 +
-    '    return clamp((v - uClim.x) / max(uClim.y - uClim.x, 1e-12), 0.0, 1.0);'#10 +
+    '    v = clamp((v - uClim.x) / max(uClim.y - uClim.x, 1e-12), 0.0, 1.0);'#10 +
+    { The threshold drops the sample rather than dimming it: a fluence map is
+      mostly its own faint tail, and a tail drawn at low alpha still hides
+      everything behind it. }
+    '    return v < uFloor ? 0.0 : v;'#10 +
     '}'#10 +
     ''#10 +
     'void main()'#10 +
