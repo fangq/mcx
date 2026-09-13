@@ -488,6 +488,11 @@ implementation
 
 {$R *.lfm}
 
+{ Forward, because FormCreate has to register it before the saved layout is
+  read and it is defined with the rest of the painting further down. }
+procedure DrawMcxDockHeader(Canvas: TCanvas; Style: TADHeaderStyleDesc;
+  r: TRect; Horizontal: Boolean; Focused: Boolean); forward;
+
 const
   { Which group boxes belong to which section, in the order they appear on the
     page.  This is the whole of the navigator's content: the section captions
@@ -614,6 +619,21 @@ begin
   KeyPreview := True;
   OnKeyDown := @FormKeyDown;
   Screen.AddHandlerActiveControlChanged(@FocusChanged);
+
+  { Registered before the layout is read, not with the rest of the theme.
+
+    A saved layout carries the header style's name in it -- HeaderStyle="MCX"
+    -- and restoring it hands that name back to the dock manager.  If nothing
+    has registered a drawer under it by then, the manager is left holding a
+    style with no procedure behind it, and the first header to paint calls
+    through a nil pointer: an access violation at startup, on the second run
+    and every run after, with both the window and the dialog reporting it
+    coming up blank.  A clean profile started fine, which is what made it
+    look like anything but this.
+
+    Registering is idempotent and the drawer reads the theme when it paints,
+    so doing it here costs nothing and ApplyTheme still asks for it again. }
+  DockMaster.RegisterHeaderStyle('MCX', @DrawMcxDockHeader, False, False);
 
   LoadDockLayout;
 
