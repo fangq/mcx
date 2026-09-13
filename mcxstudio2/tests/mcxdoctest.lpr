@@ -19,7 +19,7 @@ uses
     test dies with "This binary has no thread support compiled in".  The GUI
     gets this from the LCL; a console program has to ask. }
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  SysUtils, Classes, fpjson, mcxdoc, mcxrun;
+  SysUtils, Classes, fpjson, mcxdoc, mcxrun, mcxjd;
 
 var
   Checks, Failures: Integer;
@@ -540,6 +540,221 @@ begin
 end;
 {$ENDIF}
 
+
+{ ----------------------------------------------------------------- mcxjd -- }
+
+{ Every file with this extension in one directory, no recursion. }
+procedure CollectExt(const ADir, AExt: string; AList: TStrings);
+var
+  R: TSearchRec;
+begin
+  if FindFirst(IncludeTrailingPathDelimiter(ADir) + '*' + AExt, faAnyFile, R) <> 0 then
+    Exit;
+  try
+    repeat
+      if (R.Attr and faDirectory) = 0 then
+        AList.Add(IncludeTrailingPathDelimiter(ADir) + R.Name);
+    until FindNext(R) <> 0;
+  finally
+    FindClose(R);
+  end;
+end;
+
+procedure TestJData;
+var
+  A: TMcxArray;
+  Files: TStringList;
+  i, j, Found: Integer;
+  Total: Int64;
+  Lo, Hi: Double;
+  Dir: string;
+begin
+  WriteLn('JNIfTI arrays');
+  { mcx's own output, if any is lying about -- these are results, not inputs,
+    so they are not in the repository and the test says so rather than
+    failing when they are absent. }
+  Dir := '../bin/';
+  Files := TStringList.Create;
+  try
+    CollectExt(Dir, '.jnii', Files);
+    if Files.Count = 0 then
+    begin
+      WriteLn('  no .jnii files in ', Dir, ' -- run a simulation to make some');
+      Exit;
+    end;
+    Found := 0;
+    for i := 0 to Files.Count - 1 do
+    begin
+      if not McxLoadArray(Files[i], '', A) then
+      begin
+        WriteLn('  FAIL  could not read ', ExtractFileName(Files[i]));
+        Inc(Failures);
+        Continue;
+      end;
+      Inc(Found);
+      Ok(A.Kind <> akNone, ExtractFileName(Files[i]) + ': knows its type');
+      Ok(McxArrayCount(A) > 0, ExtractFileName(Files[i]) + ': has elements');
+      { The shape and the payload have to agree, which is the one thing a
+        wrong element size or a short inflate would break. }
+      if Length(A.Dims) > 0 then
+      begin
+        Total := 1;
+        for j := 0 to Length(A.Dims) - 1 do Total := Total * A.Dims[j];
+        Ok(Total = McxArrayCount(A),
+           ExtractFileName(Files[i]) + ': shape matches the data length');
+      end;
+      McxArrayRange(A, Lo, Hi);
+      Ok(Hi > Lo, ExtractFileName(Files[i]) + ': the values are not all one');
+    end;
+    WriteLn(Format('  %d file(s) decoded', [Found]));
+  finally
+    Files.Free;
+  end;
+end;
+
+{ Builds a BJData document byte by byte and reads it back.
+
+  A fixture rather than a file, because there is no .bnii in the repository
+  and a test that skips when its input is missing is a test that never runs.
+  Every byte here is what src/ubj/ubjw.c would emit. }
+procedure TestBJData;
+var
+  M: TMemoryStream;
+  BJ: TMcxBJData;
+  A: TMcxArray;
+  i: Integer;
+  f: Single;
+  d: TJSONData;
+
+  procedure PutByte(B: Byte);
+  begin
+    M.Write(B, 1);
+  end;
+
+  procedure PutMark(C: Char);
+  begin
+    PutByte(Ord(C));
+  end;
+
+  { A key: an integer marker, a length, the text.  No S marker -- that is
+    the one place BJData leaves it out. }
+  procedure PutKey(const S: string);
+  var
+    j: Integer;
+  begin
+    PutMark('U');
+    PutByte(Length(S));
+    for j := 1 to Length(S) do PutByte(Ord(S[j]));
+  end;
+
+begin
+  WriteLn('BJData');
+  M := TMemoryStream.Create;
+  BJ := TMcxBJData.Create;
+  try
+    PutMark('{');
+
+    PutKey('name');
+    PutMark('S'); PutMark('U'); PutByte(3);
+    PutByte(Ord('b')); PutByte(Ord('o')); PutByte(Ord('x'));
+
+    PutKey('count');
+    PutMark('l');
+    i := 216000;
+    M.Write(i, 4);                      { little-endian, as mcx writes it }
+
+    PutKey('flag');
+    PutMark('T');
+
+    { Small typed array: expanded, because a shape has to read as a list. }
+    PutKey('Dim');
+    PutMark('['); PutMark('$'); PutMark('U'); PutMark('#');
+    PutMark('U'); PutByte(3);
+    PutByte(60); PutByte(60); PutByte(60);
+
+    { Large typed array: kept as bytes. }
+    PutKey('Data');
+    PutMark('['); PutMark('$'); PutMark('d'); PutMark('#');
+    PutMark('u'); i := 100; M.Write(i, 2);
+    for i := 0 to 99 do
+    begin
+      f := i * 0.5;
+      M.Write(f, 4);
+    end;
+
+    { A container of a marker-only type carries no payload at all. }
+    PutKey('Empties');
+    PutMark('['); PutMark('$'); PutMark('T'); PutMark('#');
+    PutMark('U'); PutByte(4);
+
+    PutMark('}');
+
+    M.Position := 0;
+    Ok(BJ.LoadFromStream(M), 'the document parses: ' + BJ.Error);
+    if BJ.Root = nil then Exit;
+
+    Ok(BJ.Root.FindPath('name').AsString = 'box', 'a string survives');
+    Ok(BJ.Root.FindPath('count').AsInt64 = 216000,
+       'a little-endian int32 reads back');
+    Ok(BJ.Root.FindPath('flag').AsBoolean, 'a marker-only true reads back');
+
+    d := BJ.Root.FindPath('Dim');
+    Ok((d <> nil) and (d.JSONType = jtArray) and (d.Count = 3) and
+       (d.Items[2].AsInteger = 60), 'a small typed array became numbers');
+
+    { The marker-only container is what would run off the end if its type
+      were assumed to have a payload -- so everything after it reading
+      correctly is the real assertion here. }
+    d := BJ.Root.FindPath('Empties');
+    Ok((d <> nil) and (d.JSONType = jtArray) and (d.Count = 4),
+       'a container of markers has a count but no bytes');
+
+    Ok(BJ.GetArray('Data', A), 'the big array comes back as a blob');
+    Ok(A.Kind = akSingle, 'as the type it was written in');
+    Ok(McxArrayCount(A) = 100, 'with every element');
+    Ok(Abs(McxArrayValue(A, 0) - 0) < 1e-6, 'first value');
+    Ok(Abs(McxArrayValue(A, 99) - 49.5) < 1e-6, 'last value');
+    Ok(BJ.Root.FindPath('Data._ArrayType_').AsString = 'single',
+       'and it is annotated the way a text file would be');
+  finally
+    BJ.Free;
+    M.Free;
+  end;
+end;
+
+procedure TestBJDataRefuses;
+var
+  M: TMemoryStream;
+  BJ: TMcxBJData;
+  B: Byte;
+begin
+  WriteLn('BJData, malformed');
+  M := TMemoryStream.Create;
+  BJ := TMcxBJData.Create;
+  try
+    { An unknown marker, and then nothing. }
+    B := Ord('Q');
+    M.Write(B, 1);
+    M.Position := 0;
+    Ok(not BJ.LoadFromStream(M), 'an unknown marker is refused');
+    Ok(BJ.Error <> '', 'and says why: ' + BJ.Error);
+
+    { A container that claims more elements than it carries. }
+    M.Clear;
+    B := Ord('['); M.Write(B, 1);
+    B := Ord('$'); M.Write(B, 1);
+    B := Ord('d'); M.Write(B, 1);
+    B := Ord('#'); M.Write(B, 1);
+    B := Ord('U'); M.Write(B, 1);
+    B := 200;      M.Write(B, 1);
+    M.Position := 0;
+    Ok(not BJ.LoadFromStream(M), 'a truncated container is refused');
+  finally
+    BJ.Free;
+    M.Free;
+  end;
+end;
+
 var
   Dir: string;
 begin
@@ -559,6 +774,9 @@ begin
   {$IFDEF UNIX}
   TestRunner;
   {$ENDIF}
+  TestJData;
+  TestBJData;
+  TestBJDataRefuses;
   TestCorpus(Dir);
 
   WriteLn;
