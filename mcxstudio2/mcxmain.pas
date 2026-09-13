@@ -56,6 +56,7 @@ type
     acDevices: TAction;
     acToggleMode: TAction;
     acQuit: TAction;
+    acBenchmark: TAction;
     acLoadResult: TAction;
     acResetLayout: TAction;
     acAbout: TAction;
@@ -69,6 +70,7 @@ type
     mmJSON: TMemo;
     mmLog: TMemo;
     pcView: TPageControl;
+    pmBench: TPopupMenu;
     pnGL: TPanel;
     pnMain: TPanel;
     pnPreview: TPanel;
@@ -87,6 +89,7 @@ type
     tbDevices: TToolButton;
     tbSep2: TToolButton;
     tbSep3: TToolButton;
+    tbBench: TToolButton;
     tbResult: TToolButton;
     tbDock: TToolButton;
     tbMode: TToolButton;
@@ -267,6 +270,7 @@ type
     procedure acSaveExecute(Sender: TObject);
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
+    procedure acBenchmarkExecute(Sender: TObject);
     procedure acLoadResultExecute(Sender: TObject);
     procedure acResetLayoutExecute(Sender: TObject);
     procedure acRunExecute(Sender: TObject);
@@ -316,6 +320,12 @@ type
       where you are. }
     FSection: Integer;
     FSub: Integer;
+    { The wizard's step bar, built rather than placed: it belongs to a mode
+      rather than to the form, and in expert mode it is not there at all. }
+    FStepBar: TPanel;
+    FStepBack: TButton;
+    FStepNext: TButton;
+    FStepText: TLabel;
     { Every set of alTop siblings the wizard filter can hide something from,
       each in the order it is meant to appear.  See Restack. }
     FStacks: array of TMcxStack;
@@ -350,6 +360,7 @@ type
       var AControl: TControl; DoDisableAutoSizing: boolean);
     procedure ViewLog(Sender: TObject; const AText: string);
     procedure ShowResult(const AFileName: string);
+    procedure BenchmarkClick(Sender: TObject);
     procedure TableChanged(Sender: TObject);
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
@@ -370,6 +381,9 @@ type
     procedure SaveBinding(AIndex: Integer);
     procedure LoadAllBindings;
     procedure ApplyBindingStates;
+    procedure BuildStepBar;
+    procedure UpdateStepBar;
+    procedure StepClick(Sender: TObject);
     procedure SelectSection(AIndex: Integer);
     procedure SubClick(Sender: TObject);
     procedure CardPaint(Sender: TObject);
@@ -491,6 +505,7 @@ begin
   { The placeholders these replace go with them. }
   lbTodoMedia.Visible := False;
   lbTodoDet.Visible := False;
+  BuildStepBar;
   FMedia := TMcxTable.Create(gbMedia, 'mua (1/mm),mus (1/mm),g,n',
     'mua,mus,g,n', 6);
   FMedia.OnChange := @TableChanged;
@@ -557,6 +572,7 @@ begin
   acToggleMode.ImageIndex := McxIconIndex('wizard');
   acResetLayout.ImageIndex := McxIconIndex('reset');
   acLoadResult.ImageIndex := McxIconIndex('preview');
+  acBenchmark.ImageIndex := McxIconIndex('bench');
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
@@ -808,6 +824,7 @@ begin
   FSection := AIndex;
   sbDetail.VertScrollBar.Position := 0;
   SelectSub(FirstSubOf(AIndex));
+  UpdateStepBar;
 end;
 
 { Scrolls ABox to the top of the detail pane.  The offset is summed up the
@@ -930,12 +947,98 @@ begin
     end;
 end;
 
+{ --------------------------------------------------------------- wizard --- }
+
+{ Back and Next across the sections, for the mode that is meant to be walked
+  rather than browsed.
+
+  The plan called for this over the same panels rather than a second layout,
+  and that is what it is: the buttons move the same selection the navigator
+  moves, and hiding the bar is the whole of turning the wizard off.  There is
+  no wizard state to keep -- where you are is which section is open. }
+procedure TfmMain.BuildStepBar;
+begin
+  FStepBar := TPanel.Create(Self);
+  FStepBar.Parent := tsSettings;
+  FStepBar.Align := alBottom;
+  { Raw 96-dpi numbers: built in FormCreate, so the startup sweep scales it. }
+  FStepBar.Height := 40;
+  FStepBar.BevelOuter := bvNone;
+  FStepBar.Caption := '';
+
+  FStepText := TLabel.Create(FStepBar);
+  FStepText.Parent := FStepBar;
+  FStepText.Align := alLeft;
+  FStepText.Layout := tlCenter;
+  FStepText.BorderSpacing.Left := 10;
+
+  FStepNext := TButton.Create(FStepBar);
+  FStepNext.Parent := FStepBar;
+  FStepNext.Align := alRight;
+  FStepNext.Width := 90;
+  FStepNext.BorderSpacing.Around := 6;
+  FStepNext.Caption := 'Next >';
+  FStepNext.OnClick := @StepClick;
+
+  FStepBack := TButton.Create(FStepBar);
+  FStepBack.Parent := FStepBar;
+  FStepBack.Align := alRight;
+  FStepBack.Width := 90;
+  FStepBack.BorderSpacing.Around := 6;
+  FStepBack.Caption := '< Back';
+  FStepBack.OnClick := @StepClick;
+end;
+
+procedure TfmMain.UpdateStepBar;
+var
+  i, Shown, At: Integer;
+begin
+  if FStepBar = nil then Exit;
+  FStepBar.Visible := FWizard;
+  { The binding sweep runs once before any section has been chosen -- from
+    NewDocument, which FormCreate calls before SelectSection -- so there is a
+    moment when there is no step to name. }
+  if (not FWizard) or (FSection < 0) or (FSection > High(FHeads)) then Exit;
+
+  { Counted rather than remembered, because the wizard filter can take a
+    whole section away and the step numbers have to follow. }
+  Shown := 0;
+  At := 0;
+  for i := 0 to High(FPanes) do
+    if FPanes[i].Visible then
+    begin
+      Inc(Shown);
+      if i = FSection then At := Shown;
+    end;
+
+  if Shown = 0 then FStepText.Caption := ''
+  else FStepText.Caption := Format('Step %d of %d:  %s',
+    [At, Shown, FHeads[FSection].Caption]);
+
+  FStepBack.Enabled := At > 1;
+  FStepNext.Enabled := (At > 0) and (At < Shown);
+end;
+
+procedure TfmMain.StepClick(Sender: TObject);
+var
+  Dir, i: Integer;
+begin
+  if Sender = FStepBack then Dir := -1 else Dir := 1;
+  i := FSection + Dir;
+  { Straight past anything the filter has hidden, so Next never lands on a
+    section with nothing in it. }
+  while (i >= 0) and (i <= High(FPanes)) and (not FPanes[i].Visible) do
+    Inc(i, Dir);
+  if (i >= 0) and (i <= High(FPanes)) then SelectSection(i);
+end;
+
 { --------------------------------------------------------------- modes ---- }
 
 procedure TfmMain.acToggleModeExecute(Sender: TObject);
 begin
   FWizard := not FWizard;
   ApplyBindingStates;
+  UpdateStepBar;
   { Wizard mode is the same panels with the expert-only controls hidden, so
     there is one layout and no second form to keep in step.  The filtering
     itself arrives with the binding table. }
@@ -1591,6 +1694,83 @@ begin
     Log('  the 3-D view would not take it');
 end;
 
+{ mcx carries a set of standard simulations and will print any of them as
+  JSON, so a new user has somewhere to start that is not a blank cube.
+
+  Three steps and no parsing of our own: ask for the list, ask for the one
+  picked, load it as a document.  The benchmark is printed by --dumpjson 2,
+  which stops before any GPU work, so this costs nothing and needs no card. }
+procedure TfmMain.acBenchmarkExecute(Sender: TObject);
+var
+  Names: TStringList;
+  Item: TMenuItem;
+  P: TPoint;
+  i: Integer;
+begin
+  if CurrentExe = '' then
+  begin
+    Log('No ' + McxExeName(CurrentBackend) + ' found, so no benchmarks.');
+    pcView.ActivePage := tsLog;
+    Exit;
+  end;
+
+  Names := TStringList.Create;
+  try
+    if not McxBenchmarks(CurrentExe, Names) then
+    begin
+      Log(CurrentExe + ' -Q: no benchmarks reported.');
+      pcView.ActivePage := tsLog;
+      Exit;
+    end;
+    pmBench.Items.Clear;
+    for i := 0 to Names.Count - 1 do
+    begin
+      Item := TMenuItem.Create(pmBench);
+      Item.Caption := Names[i];
+      Item.OnClick := @BenchmarkClick;
+      pmBench.Items.Add(Item);
+    end;
+  finally
+    Names.Free;
+  end;
+
+  P := tbMain.ClientToScreen(Point(tbBench.Left,
+    tbBench.Top + tbBench.Height));
+  pmBench.PopUp(P.X, P.Y);
+end;
+
+procedure TfmMain.BenchmarkClick(Sender: TObject);
+var
+  JSON, Bench: string;
+begin
+  if not (Sender is TMenuItem) then Exit;
+  if not ConfirmDiscard then Exit;
+  Bench := TMenuItem(Sender).Caption;
+
+  if not McxBenchmarkJSON(CurrentExe, Bench, JSON) then
+  begin
+    Log('could not read the benchmark ' + Bench);
+    pcView.ActivePage := tsLog;
+    Exit;
+  end;
+  if not FDoc.LoadFromString(JSON) then
+  begin
+    Log(Bench + ': ' + FDoc.LastError);
+    pcView.ActivePage := tsLog;
+    Exit;
+  end;
+
+  { A benchmark arrives with no file of its own, so it behaves like a new
+    document: Save asks where to put it. }
+  FDoc.FileName := '';
+  FDoc.Modified := False;
+  LoadAllBindings;
+  UpdateTitle;
+  RefreshPreview;
+  pcView.ActivePage := tsSettings;
+  Log('loaded the ' + Bench + ' benchmark');
+end;
+
 procedure TfmMain.acLoadResultExecute(Sender: TObject);
 begin
   if FDoc.FileName <> '' then
@@ -2229,6 +2409,7 @@ begin
   end;
   if Moved then Restack;
   UpdateRunActions;
+  UpdateStepBar;
 
   if (FSection >= 0) and (not FPanes[FSection].Visible) then
     SelectSection(First)

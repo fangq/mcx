@@ -86,9 +86,22 @@ function McxFindExe(ABackend: TMcxBackend): string;
   told apart by its file name and has to be asked with -L. }
 function McxExeName(ABackend: TMcxBackend): string;
 
-{ Runs <exe> -L and returns what it printed.  Blocking, but listing devices
-  takes a moment and happens on demand. }
+{ Runs a backend with the given arguments and returns everything it printed.
+  Blocking, for the short questions -- what devices are there, what
+  benchmarks are there, what is this benchmark -- that happen on demand and
+  answer at once.  A simulation goes through TMcxRunner instead. }
+function McxAsk(const AExe: string; const AArgs: array of string;
+  out AText: string): Boolean;
+
+{ Runs <exe> -L and returns what it printed. }
 function McxQueryDevices(const AExe: string; out AText: string): Boolean;
+
+{ The names of mcx's built-in benchmarks, from -Q with no name. }
+function McxBenchmarks(const AExe: string; AList: TStrings): Boolean;
+
+{ The input JSON of one benchmark, from -Q <name> --dumpjson 2, which prints
+  the simulation and exits before any GPU work. }
+function McxBenchmarkJSON(const AExe, AName: string; out AJSON: string): Boolean;
 
 { The devices in a -L listing.
 
@@ -321,11 +334,12 @@ begin
   end;
 end;
 
-function McxQueryDevices(const AExe: string; out AText: string): Boolean;
+function McxAsk(const AExe: string; const AArgs: array of string;
+  out AText: string): Boolean;
 var
   P: TProcess;
   Buf: array[0..4095] of Char;
-  n: Integer;
+  n, i: Integer;
 begin
   Result := False;
   AText := '';
@@ -333,7 +347,7 @@ begin
   P := TProcess.Create(nil);
   try
     P.Executable := AExe;
-    P.Parameters.Add('-L');
+    for i := 0 to High(AArgs) do P.Parameters.Add(AArgs[i]);
     P.Options := [poUsePipes, poStderrToOutPut, poNoConsole];
     try
       P.Execute;
@@ -345,13 +359,61 @@ begin
       Result := True;
     except
       { A backend that will not start is not an error worth raising: the
-        caller wants an empty list, not an exception. }
+        caller wants an empty answer, not an exception. }
       Result := False;
     end;
   finally
     P.Free;
   end;
   AText := McxPlain(AText);
+end;
+
+function McxQueryDevices(const AExe: string; out AText: string): Boolean;
+begin
+  Result := McxAsk(AExe, ['-L'], AText);
+end;
+
+function McxBenchmarks(const AExe: string; AList: TStrings): Boolean;
+var
+  Text: string;
+  Lines: TStringList;
+  i: Integer;
+  S: string;
+begin
+  AList.Clear;
+  Result := McxAsk(AExe, ['-Q'], Text);
+  if not Result then Exit;
+  Lines := TStringList.Create;
+  try
+    Lines.Text := Text;
+    { The listing is a heading and then one tab-indented name a line
+      (mcx_utils.c:5528).  Taking only the indented lines skips the heading
+      without matching its wording, which is translated. }
+    for i := 0 to Lines.Count - 1 do
+    begin
+      S := Lines[i];
+      if (S = '') or (S[1] <> #9) then Continue;
+      S := Trim(S);
+      if S <> '' then AList.Add(S);
+    end;
+  finally
+    Lines.Free;
+  end;
+  Result := AList.Count > 0;
+end;
+
+function McxBenchmarkJSON(const AExe, AName: string; out AJSON: string): Boolean;
+var
+  Text: string;
+  p: Integer;
+begin
+  AJSON := '';
+  Result := McxAsk(AExe, ['-Q', AName, '--dumpjson', '2', '-n', '0'], Text);
+  if not Result then Exit;
+  { mcx prints its banner first, so the document starts at the first brace. }
+  p := Pos('{', Text);
+  Result := p > 0;
+  if Result then AJSON := Copy(Text, p, MaxInt);
 end;
 
 function McxBuildArgs(const AInputFile: string; ADoc, ARun: TMcxDoc): TStringList;

@@ -79,6 +79,11 @@ object fmMain: TfmMain
       Caption = 'tbSep3'
       Style = tbsDivider
     end
+    object tbBench: TToolButton
+      Left = 1
+      Top = 1
+      Action = acBenchmark
+    end
     object tbResult: TToolButton
       Left = 1
       Top = 1
@@ -2051,6 +2056,11 @@ object fmMain: TfmMain
       Hint = 'Showing key settings only. Click for every setting.'
       OnExecute = acToggleModeExecute
     end
+    object acBenchmark: TAction
+      Caption = 'Benchmarks'
+      Hint = 'Start from one of mcx'#39's built-in benchmarks'
+      OnExecute = acBenchmarkExecute
+    end
     object acLoadResult: TAction
       Caption = 'Open result...'
       Hint = 'Show a .jnii or .bnii result in the 3-D view'
@@ -2094,6 +2104,10 @@ object fmMain: TfmMain
     Filter = 'MCX simulations|*.json|All files|*'
     Options = [ofOverwritePrompt, ofPathMustExist, ofEnableSizing, ofViewDetail]
     left = 496
+    top = 128
+  end
+  object pmBench: TPopupMenu
+    left = 640
     top = 128
   end
   object tmRefresh: TTimer
