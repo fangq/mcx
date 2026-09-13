@@ -20,7 +20,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, ExtCtrls, Graphics, fpjson,
-  OpenGLContext, GL, mcxdoc, mcxgl;
+  OpenGLContext, GL, mcxdoc, mcxgl, mcxjd;
 
 type
   { Somewhere to put a line that has nowhere else to go -- the GL version at
@@ -34,7 +34,18 @@ type
     FDoc: TMcxDoc;
     FGL: TOpenGLControl;
     FShader: TMcxShader;
+    FVolShader: TMcxShader;
     FLines: TMcxLines;
+    FVolume: TMcxVolume;
+    FCube: TMcxCube;
+    { What the volume is drawn as and through.  All uniforms: changing any of
+      them is a repaint, not an upload. }
+    FStyle: Integer;
+    FOpacity: Single;
+    FSteps: Single;
+    FLogScale: Boolean;
+    FClipLo, FClipHi: TMcxVec3;
+    FVolLow, FVolHigh: Single;
     FCamera: TMcxCamera;
     { Latches, so a driver that cannot give us a core profile is reported
       once rather than on every repaint. }
@@ -56,6 +67,8 @@ type
     procedure GLMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     procedure AddShapes;
+    function  GetHasVolume: Boolean;
+    procedure DrawVolume(const AMVP: TMcxMat4);
   public
     { AHost is a panel the designer placed; the GL control is created into it.
       See Build for why it is not placed there directly. }
@@ -64,6 +77,16 @@ type
     { Draws ADoc.  Cheap enough to call on every edit: it is a few hundred
       line segments in one buffer. }
     procedure Rebuild;
+    { Puts a result on the card.  AArray is whatever mcxjd read out of a
+      .jnii or .bnii; anything past the third dimension -- time gates, or
+      the several outputs of one run -- is dropped to the first slice, which
+      is what the old viewer showed too. }
+    function ShowVolume(const AArray: TMcxArray): Boolean;
+    procedure ClearVolume;
+    { 0 for maximum intensity, 1 for accumulation. }
+    property Style: Integer read FStyle write FStyle;
+    property LogScale: Boolean read FLogScale write FLogScale;
+    property HasVolume: Boolean read GetHasVolume;
     property Document: TMcxDoc read FDoc write FDoc;
     property OnLog: TMcxViewLog read FOnLog write FOnLog;
   end;
@@ -73,11 +96,20 @@ implementation
 constructor TMcxView.Create(AHost: TWinControl);
 begin
   FHost := AHost;
+  FStyle := 0;
+  FOpacity := 0.25;
+  FSteps := 192;
+  FLogScale := True;
+  FClipLo := McxVec3(0, 0, 0);
+  FClipHi := McxVec3(1, 1, 1);
   Build;
 end;
 
 destructor TMcxView.Destroy;
 begin
+  FVolume.Free;
+  FCube.Free;
+  FVolShader.Free;
   FShader.Free;
   FLines.Free;
   FCamera.Free;
@@ -146,10 +178,144 @@ begin
     Exit(False);
   end;
 
+  { A second program for the raycaster.  If it will not build the wireframe
+    still works, which is worth more than refusing to draw anything. }
+  FVolShader := TMcxShader.Create;
+  if not FVolShader.Build(McxVolumeVertexShader, McxVolumeFragmentShader) then
+  begin
+    Say('volume shader: ' + FVolShader.Error);
+    FreeAndNil(FVolShader);
+  end;
+
   Say('OpenGL: ' + McxGLDescribe);
   FReady := True;
   Result := True;
   Rebuild;
+end;
+
+function TMcxView.GetHasVolume: Boolean;
+begin
+  Result := (FVolume <> nil) and FVolume.Loaded;
+end;
+
+procedure TMcxView.ClearVolume;
+begin
+  FreeAndNil(FVolume);
+  if FGL <> nil then FGL.Invalidate;
+end;
+
+function TMcxView.ShowVolume(const AArray: TMcxArray): Boolean;
+var
+  nx, ny, nz: Integer;
+  i, n: Int64;
+  Buf: array of Single;
+  V, Lo, Hi: Double;
+begin
+  Result := False;
+  if (FGL = nil) or not FGL.MakeCurrent then Exit;
+  if not Start then Exit;
+
+  nx := 1; ny := 1; nz := 1;
+  if Length(AArray.Dims) > 0 then nx := AArray.Dims[0];
+  if Length(AArray.Dims) > 1 then ny := AArray.Dims[1];
+  if Length(AArray.Dims) > 2 then nz := AArray.Dims[2];
+  if (nx < 1) or (ny < 1) or (nz < 1) then Exit;
+
+  n := Int64(nx) * ny * nz;
+  if n > McxArrayCount(AArray) then Exit;
+
+  { Converted to float once, here, whatever it was stored as: the texture is
+    GL_R32F and the shader should not have to know that a fluence map is
+    single and a label volume is uint8. }
+  SetLength(Buf, n);
+  Lo := 0;
+  Hi := 0;
+  for i := 0 to n - 1 do
+  begin
+    V := McxArrayValue(AArray, i);
+    Buf[i] := V;
+    if i = 0 then
+    begin
+      Lo := V;
+      Hi := V;
+    end
+    else
+    begin
+      if V < Lo then Lo := V;
+      if V > Hi then Hi := V;
+    end;
+  end;
+
+  { Fluence spans many decades, so the window is set on the log of it and
+    the shader takes the log too.  A flat volume falls back to its own
+    range, which at least shows something. }
+  if FLogScale and (Hi > 0) then
+  begin
+    FVolHigh := Ln(Hi);
+    if Lo > 0 then FVolLow := Ln(Lo) else FVolLow := FVolHigh - 12;
+    { Twelve decades of e is about five of ten, which is the span mcxcloud
+      shows by default and about where a fluence map stops being noise. }
+    if FVolHigh - FVolLow > 12 then FVolLow := FVolHigh - 12;
+  end
+  else
+  begin
+    FLogScale := False;
+    FVolLow := Lo;
+    FVolHigh := Hi;
+    if FVolHigh <= FVolLow then FVolHigh := FVolLow + 1;
+  end;
+
+  if FVolume = nil then FVolume := TMcxVolume.Create;
+  Result := FVolume.Upload(@Buf[0], nx, ny, nz, FVolLow, FVolHigh);
+  if not Result then
+  begin
+    Say(Format('the card would not take a %dx%dx%d volume', [nx, ny, nz]));
+    FreeAndNil(FVolume);
+  end;
+  if FGL <> nil then FGL.Invalidate;
+end;
+
+{ Draws the volume inside the domain box.
+
+  Back faces only, so the ray has a fragment to start from even when the
+  camera is inside; depth writes off, because a translucent thing does not
+  occlude what is drawn after it. }
+procedure TMcxView.DrawVolume(const AMVP: TMcxMat4);
+var
+  Eye, Centre, Scale: TMcxVec3;
+begin
+  if not GetHasVolume then Exit;
+  if FVolShader = nil then Exit;
+
+  Scale := McxVec3(FVolume.Nx, FVolume.Ny, FVolume.Nz);
+  Eye := FCamera.Eye;
+  { The eye in volume coordinates: the shader marches through a unit cube. }
+  Centre := McxVec3(Eye.x / Scale.x, Eye.y / Scale.y, Eye.z / Scale.z);
+
+  if FCube = nil then FCube := TMcxCube.Create;
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+  glDepthMask(GL_FALSE);
+
+  FVolShader.Use;
+  FVolShader.SetMat4('uMVP', AMVP);
+  FVolShader.SetVec3('uScale', Scale);
+  FVolShader.SetVec3('uEye', Centre);
+  FVolShader.SetVec3('uMinSlice', FClipLo);
+  FVolShader.SetVec3('uMaxSlice', FClipHi);
+  FVolShader.SetFloat('uOpacity', FOpacity);
+  FVolShader.SetFloat('uSteps', FSteps);
+  FVolShader.SetVec2('uClim', FVolLow, FVolHigh);
+  FVolShader.SetInt('uStyle', FStyle);
+  FVolShader.SetInt('uLog', Ord(FLogScale));
+  FVolShader.SetInt('uVolume', 0);
+
+  FVolume.Bind(0);
+  FCube.Draw;
+
+  glDepthMask(GL_TRUE);
+  glDisable(GL_CULL_FACE);
 end;
 
 procedure TMcxView.GLPaint(Sender: TObject);
@@ -191,6 +357,10 @@ begin
   FShader.Use;
   FShader.SetMat4('uMVP', MVP);
   FLines.Draw;
+
+  { The volume last: it is translucent, so it has to go over the wireframe
+    rather than under it. }
+  DrawVolume(MVP);
 
   FGL.SwapBuffers;
 end;

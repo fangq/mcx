@@ -78,6 +78,8 @@ type
     procedure SetMat4(const AName: string; const AValue: TMcxMat4);
     procedure SetVec3(const AName: string; const AValue: TMcxVec3);
     procedure SetFloat(const AName: string; AValue: Single);
+    procedure SetVec2(const AName: string; A, B: Single);
+    procedure SetInt(const AName: string; AValue: Integer);
     property Handle: GLuint read FProgram;
     property Error: string read FError;
   end;
@@ -109,6 +111,46 @@ type
     property Count: Integer read FCount;
   end;
 
+type
+  { A scalar volume on the card, as one GL_R32F 3-D texture.
+
+    The CPU touches the volume once, at upload.  Everything after -- the
+    window on the values, the colour map, the clip planes, whether it is
+    drawn as a maximum or as a surface -- is a uniform.  The old viewer
+    re-uploaded on every tick of a cut-plane slider, after running a transfer
+    function over the whole array in Pascal. }
+  TMcxVolume = class
+  private
+    FTex: GLuint;
+    FNx, FNy, FNz: Integer;
+    FLow, FHigh: Single;
+    FSmooth: Boolean;
+  public
+    destructor Destroy; override;
+    { ADepth is x fastest, as mcx writes it.  ALow and AHigh are the range to
+      map onto the colour scale. }
+    function Upload(AData: PSingle; ANx, ANy, ANz: Integer;
+      ALow, AHigh: Single): Boolean;
+    procedure Bind(AUnit: Integer);
+    property Loaded: Boolean read FSmooth write FSmooth;
+    property Nx: Integer read FNx;
+    property Ny: Integer read FNy;
+    property Nz: Integer read FNz;
+    property Low: Single read FLow;
+    property High: Single read FHigh;
+    property Handle: GLuint read FTex;
+  end;
+
+  { The unit cube the raycaster marches through: twelve triangles, back faces
+    only, so that the fragment exists even when the camera is inside. }
+  TMcxCube = class
+  private
+    FVAO, FVBO: GLuint;
+  public
+    destructor Destroy; override;
+    procedure Draw;
+  end;
+
 const
   { The pair that draws TMcxLines.  Kept beside it, because the attribute
     locations here and the glVertexAttribPointer calls there have to agree and
@@ -134,6 +176,113 @@ const
     '    oColour = vec4(vColour, 1.0);'#10 +
     '}'#10;
 
+  { Single-pass volume ray casting.
+
+    The back faces are drawn and the entry point is worked out analytically,
+    by intersecting the ray with the box.  The usual alternative renders the
+    front faces into an FBO first and reads the entry point back from it;
+    this needs no second pass and no attachment, and it keeps working when
+    the camera is inside the volume, where the front faces are behind it.
+
+    Borrowed from MRIcroGL's shader, which is BSD-2: the ray-start jitter
+    that breaks up wood-grain banding, the opacity correction that keeps the
+    apparent density the same when the step count changes, and stopping once
+    the ray is opaque. }
+  McxVolumeVertexShader =
+    '#version 330 core'#10 +
+    'layout(location = 0) in vec3 aPos;'#10 +
+    'uniform mat4 uMVP;'#10 +
+    'uniform vec3 uScale;'#10 +
+    'out vec3 vPos;'#10 +
+    'void main()'#10 +
+    '{'#10 +
+    '    vPos = aPos;'#10 +
+    '    gl_Position = uMVP * vec4(aPos * uScale, 1.0);'#10 +
+    '}'#10;
+
+  McxVolumeFragmentShader =
+    '#version 330 core'#10 +
+    'in vec3 vPos;'#10 +
+    'out vec4 oColour;'#10 +
+    'uniform sampler3D uVolume;'#10 +
+    'uniform vec3 uEye;'#10 +          { camera in volume coordinates }
+    'uniform vec2 uClim;'#10 +
+    'uniform vec3 uMinSlice;'#10 +
+    'uniform vec3 uMaxSlice;'#10 +
+    'uniform int  uStyle;'#10 +        { 0 maximum intensity, 1 accumulate }
+    'uniform float uOpacity;'#10 +
+    'uniform float uSteps;'#10 +
+    'uniform int  uLog;'#10 +
+    ''#10 +
+    { A ramp with enough hue change to read small differences: blue through
+      cyan and yellow to red, which is what mcxcloud shows. }
+    'vec3 ramp(float t)'#10 +
+    '{'#10 +
+    '    t = clamp(t, 0.0, 1.0);'#10 +
+    '    return clamp(vec3(1.5 - abs(4.0 * t - 3.0),'#10 +
+    '                      1.5 - abs(4.0 * t - 2.0),'#10 +
+    '                      1.5 - abs(4.0 * t - 1.0)), 0.0, 1.0);'#10 +
+    '}'#10 +
+    ''#10 +
+    'float sample1(vec3 p)'#10 +
+    '{'#10 +
+    '    if (any(lessThan(p, uMinSlice)) || any(greaterThan(p, uMaxSlice)))'#10 +
+    '        return 0.0;'#10 +
+    '    float v = texture(uVolume, p).r;'#10 +
+    '    if (uLog != 0) v = log(max(v, 1e-12));'#10 +
+    '    return clamp((v - uClim.x) / max(uClim.y - uClim.x, 1e-12), 0.0, 1.0);'#10 +
+    '}'#10 +
+    ''#10 +
+    'void main()'#10 +
+    '{'#10 +
+    '    vec3 dir = normalize(vPos - uEye);'#10 +
+    { Slab intersection with the unit cube, so the ray starts at the face it
+      actually enters through rather than at the camera. }
+    '    vec3 inv = 1.0 / dir;'#10 +
+    '    vec3 t0 = (vec3(0.0) - uEye) * inv;'#10 +
+    '    vec3 t1 = (vec3(1.0) - uEye) * inv;'#10 +
+    '    vec3 lo = min(t0, t1);'#10 +
+    '    vec3 hi = max(t0, t1);'#10 +
+    '    float tnear = max(max(lo.x, lo.y), lo.z);'#10 +
+    '    float tfar  = min(min(hi.x, hi.y), hi.z);'#10 +
+    '    tnear = max(tnear, 0.0);'#10 +
+    '    if (tfar <= tnear) discard;'#10 +
+    ''#10 +
+    '    float step = (tfar - tnear) / uSteps;'#10 +
+    { Start each ray a random fraction of a step in.  Without it the sample
+      planes line up across the image and show as wood grain. }
+    '    float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))'#10 +
+    '                         * 43758.5453);'#10 +
+    '    float t = tnear + step * jitter;'#10 +
+    ''#10 +
+    '    if (uStyle == 0) {'#10 +
+    '        float best = 0.0;'#10 +
+    '        for (int i = 0; i < 512; i++) {'#10 +
+    '            if (t > tfar) break;'#10 +
+    '            best = max(best, sample1(uEye + dir * t));'#10 +
+    '            t += step;'#10 +
+    '        }'#10 +
+    '        if (best <= 0.0) discard;'#10 +
+    '        oColour = vec4(ramp(best), 1.0);'#10 +
+    '        return;'#10 +
+    '    }'#10 +
+    ''#10 +
+    '    vec3 acc = vec3(0.0);'#10 +
+    '    float alpha = 0.0;'#10 +
+    '    for (int i = 0; i < 512; i++) {'#10 +
+    '        if (t > tfar || alpha > 0.95) break;'#10 +
+    '        float s = sample1(uEye + dir * t);'#10 +
+    { Opacity correction: without it, asking for more steps makes the same
+      volume look denser. }
+    '        float a = 1.0 - pow(1.0 - s * uOpacity, 512.0 / uSteps);'#10 +
+    '        acc += (1.0 - alpha) * a * ramp(s);'#10 +
+    '        alpha += (1.0 - alpha) * a;'#10 +
+    '        t += step;'#10 +
+    '    }'#10 +
+    '    if (alpha <= 0.001) discard;'#10 +
+    '    oColour = vec4(acc, alpha);'#10 +
+    '}'#10;
+
 { Loads the entry points for the context that is current now.  Must be called
   with a context bound; returns False when the driver granted something older
   than 3.3, which is worth saying out loud rather than crashing later on a nil
@@ -144,6 +293,13 @@ function McxGLLoad: Boolean;
 function McxGLDescribe: string;
 
 implementation
+
+const
+  { FPC's OpenGL headers stop short of these two, so they are spelled out
+    here.  Both are fixed by the specification and have been since 3.0. }
+  GL_RED  = $1903;
+  GL_R32F = $822E;
+
 
 function McxVec3(x, y, z: Single): TMcxVec3;
 begin
@@ -263,6 +419,95 @@ function McxGLDescribe: string;
 begin
   Result := Ask(GL_RENDERER) + ' -- OpenGL ' + Ask(GL_VERSION) +
     ', GLSL ' + Ask(GL_SHADING_LANGUAGE_VERSION);
+end;
+
+{ TMcxVolume }
+
+destructor TMcxVolume.Destroy;
+begin
+  if FTex <> 0 then glDeleteTextures(1, @FTex);
+  inherited Destroy;
+end;
+
+function TMcxVolume.Upload(AData: PSingle; ANx, ANy, ANz: Integer;
+  ALow, AHigh: Single): Boolean;
+var
+  Err: GLenum;
+begin
+  Result := False;
+  if (AData = nil) or (ANx < 1) or (ANy < 1) or (ANz < 1) then Exit;
+  FNx := ANx;
+  FNy := ANy;
+  FNz := ANz;
+  FLow := ALow;
+  FHigh := AHigh;
+
+  if FTex = 0 then glGenTextures(1, @FTex);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_3D, FTex);
+
+  { Clamp to edge: a ray that steps a hair outside should see the face, not
+    wrap round to the other side of the volume. }
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  { Rows are not padded: a volume whose x is not a multiple of four would
+    otherwise be read with a gap at the end of every row. }
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  while glGetError() <> GL_NO_ERROR do ;          { clear anything stale }
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, ANx, ANy, ANz, 0, GL_RED,
+    GL_FLOAT, AData);
+  Err := glGetError();
+  if Err <> GL_NO_ERROR then Exit;
+
+  FSmooth := True;
+  Result := True;
+end;
+
+procedure TMcxVolume.Bind(AUnit: Integer);
+begin
+  glActiveTexture(GL_TEXTURE0 + AUnit);
+  glBindTexture(GL_TEXTURE_3D, FTex);
+end;
+
+{ TMcxCube }
+
+destructor TMcxCube.Destroy;
+begin
+  if FVBO <> 0 then glDeleteBuffers(1, @FVBO);
+  if FVAO <> 0 then glDeleteVertexArrays(1, @FVAO);
+  inherited Destroy;
+end;
+
+procedure TMcxCube.Draw;
+const
+  { Twelve triangles over the unit cube, wound so the outside is
+    counter-clockwise. }
+  Verts: array[0..107] of Single = (
+    0,0,0, 1,0,0, 1,1,0,  0,0,0, 1,1,0, 0,1,0,
+    0,0,1, 1,1,1, 1,0,1,  0,0,1, 0,1,1, 1,1,1,
+    0,0,0, 0,1,1, 0,0,1,  0,0,0, 0,1,0, 0,1,1,
+    1,0,0, 1,0,1, 1,1,1,  1,0,0, 1,1,1, 1,1,0,
+    0,0,0, 0,0,1, 1,0,1,  0,0,0, 1,0,1, 1,0,0,
+    0,1,0, 1,1,1, 0,1,1,  0,1,0, 1,1,0, 1,1,1);
+begin
+  if FVAO = 0 then
+  begin
+    glGenVertexArrays(1, @FVAO);
+    glGenBuffers(1, @FVBO);
+    glBindVertexArray(FVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, FVBO);
+    glBufferData(GL_ARRAY_BUFFER, SizeOf(Verts), @Verts[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * SizeOf(Single), nil);
+    glEnableVertexAttribArray(0);
+  end;
+  glBindVertexArray(FVAO);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  glBindVertexArray(0);
 end;
 
 { TMcxCamera }
@@ -417,6 +662,16 @@ end;
 procedure TMcxShader.SetFloat(const AName: string; AValue: Single);
 begin
   glUniform1f(glGetUniformLocation(FProgram, PChar(AName)), AValue);
+end;
+
+procedure TMcxShader.SetVec2(const AName: string; A, B: Single);
+begin
+  glUniform2f(glGetUniformLocation(FProgram, PChar(AName)), A, B);
+end;
+
+procedure TMcxShader.SetInt(const AName: string; AValue: Integer);
+begin
+  glUniform1i(glGetUniformLocation(FProgram, PChar(AName)), AValue);
 end;
 
 { TMcxLines }

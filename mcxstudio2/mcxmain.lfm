@@ -79,6 +79,11 @@ object fmMain: TfmMain
       Caption = 'tbSep3'
       Style = tbsDivider
     end
+    object tbResult: TToolButton
+      Left = 1
+      Top = 1
+      Action = acLoadResult
+    end
     object tbDock: TToolButton
       Left = 1
       Top = 1
@@ -2046,6 +2051,11 @@ object fmMain: TfmMain
       Hint = 'Showing key settings only. Click for every setting.'
       OnExecute = acToggleModeExecute
     end
+    object acLoadResult: TAction
+      Caption = 'Open result...'
+      Hint = 'Show a .jnii or .bnii result in the 3-D view'
+      OnExecute = acLoadResultExecute
+    end
     object acResetLayout: TAction
       Caption = 'Reset layout'
       Hint = 'Put the panes back where they started'
@@ -2062,6 +2072,13 @@ object fmMain: TfmMain
       OnExecute = acQuitExecute
       ShortCut = 16465
     end
+  end
+  object dlgResult: TOpenDialog
+    Title = 'Open a result'
+    Filter = 'MCX results (*.jnii;*.bnii;*.jdb)|*.jnii;*.bnii;*.jdb|All files|*'
+    Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
+    left = 568
+    top = 192
   end
   object dlgOpen: TOpenDialog
     Title = 'Open a simulation'

@@ -22,7 +22,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, ExtCtrls,
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview, mcxtable;
+  mcxdpi, mcxicons, mcxdoc, mcxrun, mcxview, mcxtable, mcxjd;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -56,10 +56,12 @@ type
     acDevices: TAction;
     acToggleMode: TAction;
     acQuit: TAction;
+    acLoadResult: TAction;
     acResetLayout: TAction;
     acAbout: TAction;
     alMain: TActionList;
     dlgOpen: TOpenDialog;
+    dlgResult: TOpenDialog;
     dlgSave: TSaveDialog;
     ilIcons: TImageList;
     lbTodoGL: TLabel;
@@ -85,6 +87,7 @@ type
     tbDevices: TToolButton;
     tbSep2: TToolButton;
     tbSep3: TToolButton;
+    tbResult: TToolButton;
     tbDock: TToolButton;
     tbMode: TToolButton;
     tmRefresh: TTimer;
@@ -264,6 +267,7 @@ type
     procedure acSaveExecute(Sender: TObject);
     procedure acSaveAsExecute(Sender: TObject);
     procedure acToggleModeExecute(Sender: TObject);
+    procedure acLoadResultExecute(Sender: TObject);
     procedure acResetLayoutExecute(Sender: TObject);
     procedure acRunExecute(Sender: TObject);
     procedure acStopExecute(Sender: TObject);
@@ -345,6 +349,7 @@ type
     procedure DockCreateControl(Sender: TObject; aName: string;
       var AControl: TControl; DoDisableAutoSizing: boolean);
     procedure ViewLog(Sender: TObject; const AText: string);
+    procedure ShowResult(const AFileName: string);
     procedure TableChanged(Sender: TObject);
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
@@ -551,6 +556,7 @@ begin
   acDevices.ImageIndex := McxIconIndex('gpu');
   acToggleMode.ImageIndex := McxIconIndex('wizard');
   acResetLayout.ImageIndex := McxIconIndex('reset');
+  acLoadResult.ImageIndex := McxIconIndex('preview');
   acAbout.ImageIndex := McxIconIndex('about');
 end;
 
@@ -1213,9 +1219,23 @@ begin
 end;
 
 procedure TfmMain.RunDone(Sender: TObject; AExitCode: Integer);
+var
+  Guess: string;
 begin
   if AExitCode = 0 then
-    Log('-- finished')
+  begin
+    Log('-- finished');
+    { A run that worked has written its result beside the input, named after
+      the session.  Showing it is the whole point of having run it. }
+    Guess := ExtractFilePath(FDoc.FileName) +
+      FDoc.AsStr('Session.ID', 'mcx') + '.jnii';
+    if FileExists(Guess) then ShowResult(Guess)
+    else
+    begin
+      Guess := ChangeFileExt(Guess, '.bnii');
+      if FileExists(Guess) then ShowResult(Guess);
+    end;
+  end
   else
     Log(Format('-- stopped, exit code %d', [AExitCode]));
   { The thread is not FreeOnTerminate, so that this can read ExitStatus off
@@ -1541,6 +1561,44 @@ end;
 
 { AnchorDocking will happily leave a pane somewhere with no route back -- off
   the edge of the screen, or closed -- so there has to be a way home. }
+{ Puts a result into the 3-D view.  Reported rather than silent when it will
+  not read: a file that turns out not to hold an array is the usual way this
+  goes wrong, and an unchanged picture says nothing about why. }
+procedure TfmMain.ShowResult(const AFileName: string);
+var
+  A: TMcxArray;
+  i: Integer;
+  Shape: string;
+begin
+  if not McxLoadArray(AFileName, '', A) then
+  begin
+    Log('could not read an array out of ' + ExtractFileName(AFileName));
+    Exit;
+  end;
+
+  Shape := '';
+  for i := 0 to High(A.Dims) do
+  begin
+    if i > 0 then Shape := Shape + ' x ';
+    Shape := Shape + IntToStr(A.Dims[i]);
+  end;
+  Log(Format('%s: %s %s, %d values', [ExtractFileName(AFileName),
+    Shape, McxArrayKindName(A.Kind), McxArrayCount(A)]));
+
+  if FView.ShowVolume(A) then
+    pcView.ActivePage := tsPreview
+  else
+    Log('  the 3-D view would not take it');
+end;
+
+procedure TfmMain.acLoadResultExecute(Sender: TObject);
+begin
+  if FDoc.FileName <> '' then
+    dlgResult.InitialDir := ExtractFilePath(FDoc.FileName);
+  if not dlgResult.Execute then Exit;
+  ShowResult(dlgResult.FileName);
+end;
+
 procedure TfmMain.acResetLayoutExecute(Sender: TObject);
 begin
   if MessageDlg('MCX Studio',
