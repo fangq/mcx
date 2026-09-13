@@ -295,6 +295,11 @@ type
     procedure acQuitExecute(Sender: TObject);
     procedure HeaderClick(Sender: TObject);
     procedure ShowSettingsPage;
+    procedure BuildSourceBar;
+    function  SourceRows: Integer;
+    function  VecPath(const APath: string): string;
+    procedure SourceChanged(Sender: TObject);
+    procedure UpdateSourceBar;
     procedure tmRefreshTimer(Sender: TObject);
   private
     FDoc: TMcxDoc;
@@ -335,6 +340,12 @@ type
       state worth having. }
     { Whether the selected section's subsection list is showing. }
     FOpen: Boolean;
+    { Which source the four source vectors are showing, when the file has
+      more than one.  See SourceRows. }
+    FSource: Integer;
+    FSrcRow: TPanel;
+    FSrcSpin: TSpinEdit;
+    FSrcOf: TLabel;
     FPanes: array of TPanel;
     { One per section, between the section panel and its heading: the band
       behind the heading is painted on this.  See CollectSections. }
@@ -601,6 +612,7 @@ begin
   { The Shapes editor, like the two tables, reads the document directly:
     how many commands a domain is built from is not known until a file is
     open, so there is no control-to-path row that could describe it. }
+  BuildSourceBar;
   FShapes := TMcxShapes.Create(pnShapeEdit);
   FShapes.OnChange := @TableChanged;
   FShapes.OnSelect := @ShapeSelected;
@@ -1495,6 +1507,141 @@ end;
   3-D view answers a question nobody asked.  It is most of the way to a dead
   control: after a run the notebook sits on the log, and from there every
   section in the list looked like it did nothing. }
+{ How many sources the file describes, or nought when it describes one.
+
+  mcx takes Pos, Dir, Param1 and Param2 either as one vector or as a list of
+  equal-length vectors, a row per source (mcx_utils.c reads both, and
+  example/multisrc/multisrc.json is the second).  Pos decides, because a file
+  with several sources has to give each one a position; the others follow it
+  or are absent. }
+function TfmMain.SourceRows: Integer;
+var
+  A: TJSONData;
+begin
+  Result := 0;
+  if FDoc = nil then Exit;
+  A := FDoc.Find('Optode.Source.Pos');
+  if not (A is TJSONArray) then Exit;
+  if TJSONArray(A).Count = 0 then Exit;
+  if TJSONArray(A).Items[0].JSONType <> jtArray then Exit;
+  Result := TJSONArray(A).Count;
+end;
+
+{ Where a vector binding actually reads and writes.
+
+  One rule for every mkVec rather than four special cases: a vector that
+  turns out to be a table of vectors is edited a row at a time, and which
+  row is the source bar's business.  A vector that is a vector is untouched,
+  which is every other one on the form. }
+function TfmMain.VecPath(const APath: string): string;
+var
+  A: TJSONData;
+begin
+  Result := APath;
+  if FDoc = nil then Exit;
+  A := FDoc.Find(APath);
+  if not (A is TJSONArray) then Exit;
+  if TJSONArray(A).Count = 0 then Exit;
+  if TJSONArray(A).Items[0].JSONType <> jtArray then Exit;
+  if FSource >= TJSONArray(A).Count then Exit;
+  Result := Format('%s[%d]', [APath, FSource]);
+end;
+
+{ The row that says which source is being shown.  Built here rather than in
+  the designer because it is not a setting: nothing in the file says which
+  source you are looking at. }
+procedure TfmMain.BuildSourceBar;
+var
+  Lbl: TLabel;
+begin
+  FSrcRow := TPanel.Create(gbSource);
+  FSrcRow.Parent := gbSource;
+  FSrcRow.Top := -1;
+  FSrcRow.Align := alTop;
+  FSrcRow.Height := 27;
+  FSrcRow.BevelOuter := bvNone;
+  FSrcRow.BorderSpacing.Bottom := 3;
+  FSrcRow.Visible := False;
+
+  Lbl := TLabel.Create(FSrcRow);
+  Lbl.Parent := FSrcRow;
+  Lbl.Align := alLeft;
+  Lbl.Layout := tlCenter;
+  Lbl.BorderSpacing.Right := 8;
+  Lbl.Constraints.MinWidth := 150;
+  Lbl.Caption := 'Showing source:';
+
+  FSrcSpin := TSpinEdit.Create(FSrcRow);
+  FSrcSpin.Parent := FSrcRow;
+  FSrcSpin.Left := 158;
+  FSrcSpin.Align := alLeft;
+  FSrcSpin.Width := 90;
+  FSrcSpin.MinValue := 1;
+  FSrcSpin.MaxValue := 1;
+  FSrcSpin.Value := 1;
+  FSrcSpin.OnChange := @SourceChanged;
+
+  FSrcOf := TLabel.Create(FSrcRow);
+  FSrcOf.Parent := FSrcRow;
+  FSrcOf.Left := 260;
+  FSrcOf.Align := alLeft;
+  FSrcOf.Layout := tlCenter;
+  FSrcOf.BorderSpacing.Left := 8;
+  FSrcOf.Caption := '';
+end;
+
+{ Counts from one, because mcx counting its sources from zero is mcx's
+  business and not the reader's. }
+procedure TfmMain.UpdateSourceBar;
+var
+  n, i: Integer;
+begin
+  if FSrcRow = nil then Exit;
+  n := SourceRows;
+  if n < 2 then
+  begin
+    FSource := 0;
+    FSrcRow.Visible := False;
+    Exit;
+  end;
+  if FSource >= n then FSource := n - 1;
+  Inc(FLoading);
+  try
+    FSrcSpin.MaxValue := n;
+    FSrcSpin.Value := FSource + 1;
+  finally
+    Dec(FLoading);
+  end;
+  FSrcOf.Caption := Format('of %d', [n]);
+
+  { Between the card's title and the rows the designer placed, and both ends
+    of that have to be said here rather than once at build time.  The title
+    sits at -1 so it sorts above rows that all start at zero, and there is no
+    integer between the two -- so the title moves up by one and this takes
+    the place it had.  Asserted now because the aligner overwrites the Top of
+    everything it packs, so a number chosen while the card was being built is
+    not the number either of them is holding by the time this row appears.
+
+    And the row before the title, not after.  Each assignment re-packs the
+    other, so whichever is written second wins -- written the other way round
+    the row came out above the heading, but only after the first time it was
+    changed, which is the sort of thing that looks like a different bug. }
+  FSrcRow.Top := -1;
+  for i := 0 to High(FSubs) do
+    if FSubs[i].Box = gbSource then FSubs[i].Cap.Top := -2;
+  FSrcRow.Visible := True;
+end;
+
+procedure TfmMain.SourceChanged(Sender: TObject);
+begin
+  if FLoading > 0 then Exit;
+  FSource := FSrcSpin.Value - 1;
+  if FSource < 0 then FSource := 0;
+  { Only the four vectors move, but reloading the lot is one call and costs
+    nothing anybody can see. }
+  LoadAllBindings;
+end;
+
 procedure TfmMain.ShowSettingsPage;
 begin
   if pcView.ActivePage <> tsSettings then pcView.ActivePage := tsSettings;
@@ -3329,7 +3476,7 @@ begin
           TEdit(C).Text := '';
       end;
     mkVec:
-      if C is TEdit then TEdit(C).Text := VecToText(D.Find(B.Path));
+      if C is TEdit then TEdit(C).Text := VecToText(D.Find(VecPath(B.Path)));
     mkText, mkFile:
       if C is TEdit then TEdit(C).Text := D.AsStr(B.Path);
   end;
@@ -3406,7 +3553,7 @@ begin
           D.SetNum(B.Path, V);
       end;
     mkVec:
-      if C is TEdit then TextToVec(D, B.Path, TEdit(C).Text);
+      if C is TEdit then TextToVec(D, VecPath(B.Path), TEdit(C).Text);
     mkText, mkFile:
       if C is TEdit then
       begin
@@ -3425,6 +3572,7 @@ begin
   if FMedia <> nil then FMedia.Attach(FDoc, 'Domain.Media');
   if FDetectors <> nil then FDetectors.Attach(FDoc, 'Optode.Detector');
   if FShapes <> nil then FShapes.Attach(FDoc);
+  UpdateSourceBar;
   Inc(FLoading);
   try
     for i := 0 to High(Binds) do LoadBinding(i);
