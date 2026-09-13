@@ -67,6 +67,12 @@ type
       scene and would otherwise be rebuilt with it on every keystroke. }
     FTraj: TMcxLines;
     FTrajCount: Integer;
+    { The photon each segment belongs to, in buffer order -- which is photon
+      order, so this is non-decreasing and a range of photons is a contiguous
+      run that can be found by bisection. }
+    FTrajIds: array of Integer;
+    FTrajFirst, FTrajLast: Integer;
+    FIdLo, FIdHi: Integer;
     { How big the scene is, so the source glyph can be sized against it. }
     FSceneSpan: Single;
     FVolume: TMcxVolume;
@@ -118,6 +124,8 @@ type
     function  PickAt(AX, AY: Integer): Integer;
     function  GetHasVolume: Boolean;
     procedure DrawVolume(const AMVP: TMcxMat4);
+    procedure DrawTrajectory;
+    function  FirstSegmentOf(AId: Integer): Integer;
   public
     { AHost is a panel the designer placed; the GL control is created into it.
       See Build for why it is not placed there directly. }
@@ -154,9 +162,18 @@ type
     property HasVolume: Boolean read GetHasVolume;
     property Document: TMcxDoc read FDoc write FDoc;
     { Renders at any size into an offscreen target and writes a PNG. }
-    { Loads the photon paths mcx writes with -D M, as <session>_traj.jdat. }
+    { Loads the photon paths mcx writes with -D M, as <session>_traj.jdt. }
     function ShowTrajectory(const AFileName: string): Boolean;
     procedure ClearTrajectory;
+    { Which photons to draw, by the identifier mcx gave them.  Drawing one
+      path is what makes a path legible: half a million segments on top of
+      each other is a cloud, and a cloud has no direction in it. }
+    procedure SetPhotonRange(ALo, AHi: Integer);
+    { The identifiers actually present, so the controls can be scaled to the
+      file rather than to a guess. }
+    property PhotonFirst: Integer read FTrajFirst;
+    property PhotonLast: Integer read FTrajLast;
+    property PhotonCount: Integer read FTrajCount;
     function SaveImage(const AFileName: string; AWidth, AHeight: Integer): Boolean;
     property OnLog: TMcxViewLog read FOnLog write FOnLog;
     property OnPick: TMcxPickEvent read FOnPick write FOnPick;
@@ -432,6 +449,9 @@ procedure TMcxView.ClearTrajectory;
 begin
   FTraj.Clear;
   FTrajCount := 0;
+  SetLength(FTrajIds, 0);
+  FTrajFirst := 0;
+  FTrajLast := 0;
   if FGL <> nil then FGL.Invalidate;
 end;
 
@@ -512,12 +532,70 @@ begin
       absorbed away. }
     C := McxVec3(1.0, 0.35 + 0.55 * t, 0.10 + 0.25 * t);
     FTraj.Add(P0, P1, C);
+    if FTrajCount > High(FTrajIds) then
+      SetLength(FTrajIds, (FTrajCount + 1) * 2);
+    FTrajIds[FTrajCount] := Round(McxArrayValue(Ids, a));
     Inc(FTrajCount);
   end;
+  SetLength(FTrajIds, FTrajCount);
 
-  Say(Format('%s: %d events, %d path segments',
-    [ExtractFileName(AFileName), n, FTrajCount]));
+  FTrajFirst := 0;
+  FTrajLast := 0;
+  if FTrajCount > 0 then
+  begin
+    FTrajFirst := FTrajIds[0];
+    FTrajLast := FTrajIds[FTrajCount - 1];
+  end;
+  { Everything, until something narrows it. }
+  FIdLo := FTrajFirst;
+  FIdHi := FTrajLast;
+
+  Say(Format('%s: %d events, %d path segments, photons %d to %d',
+    [ExtractFileName(AFileName), n, FTrajCount, FTrajFirst, FTrajLast]));
   Result := FTrajCount > 0;
+  if FGL <> nil then FGL.Invalidate;
+end;
+
+{ The first segment belonging to photon AId or later.  Bisection, because the
+  identifiers are in order: the alternative is a scan of half a million
+  segments on every frame. }
+function TMcxView.FirstSegmentOf(AId: Integer): Integer;
+var
+  Lo, Hi, Mid: Integer;
+begin
+  Lo := 0;
+  Hi := FTrajCount;
+  while Lo < Hi do
+  begin
+    Mid := (Lo + Hi) div 2;
+    if FTrajIds[Mid] < AId then Lo := Mid + 1 else Hi := Mid;
+  end;
+  Result := Lo;
+end;
+
+{ Only the photons asked for.  One glDrawArrays over a span of the buffer
+  rather than a rebuild of it, which is what makes dragging the range bar
+  feel like moving a slider instead of reloading a file. }
+procedure TMcxView.DrawTrajectory;
+var
+  First, Last: Integer;
+begin
+  if FTrajCount = 0 then Exit;
+  if (FIdLo <= FTrajFirst) and (FIdHi >= FTrajLast) then
+  begin
+    FTraj.Draw;
+    Exit;
+  end;
+  First := FirstSegmentOf(FIdLo);
+  Last := FirstSegmentOf(FIdHi + 1);
+  { Two vertices a segment. }
+  FTraj.DrawRange(First * 2, (Last - First) * 2);
+end;
+
+procedure TMcxView.SetPhotonRange(ALo, AHi: Integer);
+begin
+  FIdLo := ALo;
+  FIdHi := AHi;
   if FGL <> nil then FGL.Invalidate;
 end;
 
@@ -689,7 +767,7 @@ begin
   { Paths after the translucent solids and with depth writes on, so they read
     as being inside the domain rather than painted over it.  Line width stays
     at one: anything wider is not guaranteed in a core profile. }
-  FTraj.Draw;
+  DrawTrajectory;
 
   { The volume last: it is translucent, so it has to go over the wireframe
     rather than under it. }

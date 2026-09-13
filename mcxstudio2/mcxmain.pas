@@ -397,6 +397,7 @@ type
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
+    procedure DropResult;
     procedure GuessRunSettings;
     function  CurrentBackend: TMcxBackend;
     function  CurrentExe: string;
@@ -1274,6 +1275,7 @@ begin
   FRun.SetStr('@run.domainkind', 'shapes');
   FRun.SetNum('@run.maxjumpdebug', DefaultMaxJump);
   FRun.Modified := False;
+  DropResult;
   LoadAllBindings;
   UpdateTitle;
   RefreshPreview;
@@ -1308,6 +1310,20 @@ end;
   input and nothing else: no other backend has one, and opening it as a
   voxel simulation shows an empty 0 x 0 x 0 domain and a Run button that
   would fail. }
+{ Forgets whatever result is on the card. }
+procedure TfmMain.DropResult;
+begin
+  if FView = nil then Exit;
+  FView.ClearVolume;
+  FView.ClearTrajectory;
+  if FDisplay <> nil then
+  begin
+    FDisplay.SetHasVolume(False);
+    { An empty range hides the photon row. }
+    FDisplay.SetTrajectory(1, 0);
+  end;
+end;
+
 procedure TfmMain.GuessRunSettings;
 begin
   { Seeded on every open, because it is a run setting and a document does not
@@ -1337,6 +1353,10 @@ begin
     Exit;
   end;
   GuessRunSettings;
+  { The old file's result is not this file's.  Nothing cleared it before, so
+    opening a second simulation left the first one's fluence hanging in the
+    view with the new domain drawn around it. }
+  DropResult;
   LoadAllBindings;
   UpdateTitle;
   RefreshPreview;
@@ -2080,7 +2100,13 @@ begin
   if (Pos('_traj.', LowerCase(ExtractFileName(AFileName))) > 0) then
   begin
     if FView.ShowTrajectory(AFileName) then
-      pcView.ActivePage := tsPreview
+    begin
+      { The range row is scaled to the file that was just read, so the bar
+        covers the photons that are actually in it. }
+      FDisplay.SetTrajectory(FView.PhotonFirst, FView.PhotonLast);
+      FDisplay.SetHasVolume(True);
+      pcView.ActivePage := tsPreview;
+    end
     else
       Log('no photon paths in ' + ExtractFileName(AFileName));
     Exit;

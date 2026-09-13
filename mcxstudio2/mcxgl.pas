@@ -108,6 +108,11 @@ type
     procedure AddCylinder(const AC0, AC1: TMcxVec3; ARadius: Single;
       const AColour: TMcxVec3);
     procedure Draw;
+    { A span of the batch, by vertex.  Used to draw a range of photons out of
+      a trajectory: the segments are already in photon order, so one photon's
+      -- or ten thousand's -- are a contiguous run and picking them costs a
+      pair of offsets rather than a rebuild of the buffer. }
+    procedure DrawRange(AFirst, ACount: Integer);
     property Count: Integer read FCount;
   end;
 
@@ -1310,7 +1315,15 @@ end;
 
 procedure TMcxLines.Draw;
 begin
+  DrawRange(0, FCount);
+end;
+
+procedure TMcxLines.DrawRange(AFirst, ACount: Integer);
+begin
   if FCount = 0 then Exit;
+  if AFirst < 0 then AFirst := 0;
+  if AFirst + ACount > FCount then ACount := FCount - AFirst;
+  if ACount <= 0 then Exit;
   if FVAO = 0 then
   begin
     glGenVertexArrays(1, @FVAO);
@@ -1332,7 +1345,7 @@ begin
     glEnableVertexAttribArray(1);
     FDirty := False;
   end;
-  glDrawArrays(GL_LINES, 0, FCount);
+  glDrawArrays(GL_LINES, AFirst, ACount);
   glBindVertexArray(0);
 end;
 

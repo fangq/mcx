@@ -17,7 +17,7 @@ unit mcxdisp;
 interface
 
 uses
-  Classes, SysUtils, Controls, StdCtrls, ExtCtrls, ComCtrls, Graphics,
+  Classes, SysUtils, Controls, StdCtrls, ExtCtrls, ComCtrls, Graphics, Spin,
   mcxgl, mcxview, mcxdpi;
 
 type
@@ -37,11 +37,23 @@ type
     { Two per axis, low then high. }
     FLo: array[0..2] of TTrackBar;
     FHi: array[0..2] of TTrackBar;
+    { Which photons of a trajectory to draw.  A bar each for sweeping and a
+      number each for naming one exactly -- a bar over ten thousand
+      identifiers cannot land on a chosen one, and "show me ray 4237" is the
+      question this row exists to answer. }
+    FIdRow: TPanel;
+    FIdLoBar, FIdHiBar: TTrackBar;
+    FIdLoNum, FIdHiNum: TSpinEdit;
+    FIdFirst, FIdLast: Integer;
+    FIdSyncing: Integer;
     FOpen: Boolean;
     FRows: Integer;
     function  AddRow(const ACaption: string): TPanel;
     function  AddSlider(AParent: TWinControl; APosition: Integer): TTrackBar;
+    function  AddNumber(AParent: TWinControl; AValue: Integer): TSpinEdit;
     procedure HeadClick(Sender: TObject);
+    procedure IdChanged(Sender: TObject);
+    procedure PushIds(ALo, AHi: Integer);
     procedure Changed(Sender: TObject);
     procedure SlabChanged(Sender: TObject);
     procedure Layout;
@@ -52,6 +64,11 @@ type
     procedure SetHasVolume(AValue: Boolean);
     { Puts the slab back to the whole volume. }
     procedure ResetSlab;
+    { Shows the photon range row and scales it to the file just loaded.
+      ALast is capped at MaxPhotonId, so a run with a hundred thousand
+      photons in it does not give a bar with a hundred thousand steps that
+      moves a thousand at a time. }
+    procedure SetTrajectory(AFirst, ALast: Integer);
     property Panel: TPanel read FRoot;
   end;
 
@@ -65,6 +82,11 @@ const
   AxisNames: array[0..2] of string = ('X range', 'Y range', 'Z range');
   RowHeight = 26;
   RowGap = 2;
+  { How many paths may be drawn at once.  The point of the row is to pull one
+    path, or a handful, out of a cloud of half a million segments that has no
+    direction in it; past about this many there is nothing to see that the
+    unfiltered picture did not already show. }
+  MaxPhotonId = 10000;
 
 constructor TMcxDisplayBar.Create(AHost: TWinControl; AView: TMcxView);
 var
@@ -163,6 +185,31 @@ begin
   FOpacity.Hint := 'How much each sample along a ray contributes.  Only used ' +
     'by the accumulated rendering.';
 
+  { The photon range, above the slab rows: it belongs with the paths rather
+    than with the volume, and it is the one row that is not always there. }
+  FIdRow := AddRow('Photon IDs');
+  FIdRow.ChildSizing.Layout := cclLeftToRightThenTopToBottom;
+  FIdRow.ChildSizing.ControlsPerLine := 4;
+  FIdRow.ChildSizing.EnlargeHorizontal := crsScaleChilds;
+  FIdRow.ChildSizing.HorizontalSpacing := McxScale96(6);
+
+  FIdLoNum := AddNumber(FIdRow, 1);
+  FIdLoNum.OnChange := @IdChanged;
+  FIdLoNum.Hint := 'The first photon to draw.  Set this and the last one to ' +
+    'the same number to follow a single path.';
+  FIdLoBar := AddSlider(FIdRow, 0);
+  FIdLoBar.OnChange := @IdChanged;
+  FIdLoBar.Hint := FIdLoNum.Hint;
+  FIdHiBar := AddSlider(FIdRow, 100);
+  FIdHiBar.OnChange := @IdChanged;
+  FIdHiBar.Hint := 'The last photon to draw.';
+  FIdHiNum := AddNumber(FIdRow, 1);
+  FIdHiNum.OnChange := @IdChanged;
+  FIdHiNum.Hint := FIdHiBar.Hint;
+
+  { Hidden until there is a trajectory; the row above it is the volume's. }
+  FIdRow.Parent.Visible := False;
+
   for i := 0 to 2 do
   begin
     Row := AddRow(AxisNames[i]);
@@ -225,6 +272,19 @@ begin
   Host.BevelOuter := bvNone;
   Host.Caption := '';
   Result := Host;
+end;
+
+{ A number box, for the identifier a bar cannot land on. }
+function TMcxDisplayBar.AddNumber(AParent: TWinControl;
+  AValue: Integer): TSpinEdit;
+begin
+  Result := TSpinEdit.Create(AParent);
+  Result.Parent := AParent;
+  Result.MinValue := 1;
+  Result.MaxValue := MaxPhotonId;
+  Result.Value := AValue;
+  Result.Height := McxScale96(22);
+  Result.ShowHint := True;
 end;
 
 function TMcxDisplayBar.AddSlider(AParent: TWinControl;
@@ -292,6 +352,79 @@ begin
   FView.ClipLo := Lo;
   FView.ClipHi := Hi;
   FView.Redraw;
+end;
+
+{ One of the four moved; the other three follow it.
+
+  Bar and number are the same value at different resolutions -- the bar to
+  sweep with, the number to name one with -- so whichever was touched is the
+  truth and the rest are written from it. }
+procedure TMcxDisplayBar.IdChanged(Sender: TObject);
+var
+  Lo, Hi: Integer;
+begin
+  if FIdSyncing > 0 then Exit;
+  Lo := FIdLoBar.Position;
+  Hi := FIdHiBar.Position;
+  if Sender = FIdLoNum then Lo := FIdLoNum.Value;
+  if Sender = FIdHiNum then Hi := FIdHiNum.Value;
+
+  { A range that has crossed itself shows nothing, so the bounds push each
+    other rather than passing. }
+  if Lo > Hi then
+    if (Sender = FIdLoBar) or (Sender = FIdLoNum) then Hi := Lo else Lo := Hi;
+
+  PushIds(Lo, Hi);
+end;
+
+procedure TMcxDisplayBar.PushIds(ALo, AHi: Integer);
+begin
+  if ALo < FIdFirst then ALo := FIdFirst;
+  if AHi > FIdLast then AHi := FIdLast;
+  { At most ten thousand paths at once.  The cap is on the width of the
+    window rather than on where it sits, so every photon in the file can
+    still be reached by moving the lower bound -- pinning the cap to the
+    start of the file would have made everything past the ten-thousandth
+    unselectable. }
+  if AHi > ALo + MaxPhotonId - 1 then AHi := ALo + MaxPhotonId - 1;
+  Inc(FIdSyncing);
+  try
+    FIdLoBar.Position := ALo;
+    FIdHiBar.Position := AHi;
+    FIdLoNum.Value := ALo;
+    FIdHiNum.Value := AHi;
+  finally
+    Dec(FIdSyncing);
+  end;
+  if FView <> nil then FView.SetPhotonRange(ALo, AHi);
+end;
+
+procedure TMcxDisplayBar.SetTrajectory(AFirst, ALast: Integer);
+var
+  Bar: TTrackBar;
+  Num: TSpinEdit;
+  i: Integer;
+begin
+  FIdRow.Parent.Visible := AFirst <= ALast;
+  if AFirst > ALast then Exit;
+  FIdFirst := AFirst;
+  FIdLast := ALast;
+
+  Inc(FIdSyncing);
+  try
+    for i := 0 to 1 do
+    begin
+      if i = 0 then begin Bar := FIdLoBar; Num := FIdLoNum; end
+      else begin Bar := FIdHiBar; Num := FIdHiNum; end;
+      Bar.Min := FIdFirst;
+      Bar.Max := FIdLast;
+      Num.MinValue := FIdFirst;
+      Num.MaxValue := FIdLast;
+    end;
+  finally
+    Dec(FIdSyncing);
+  end;
+  PushIds(FIdFirst, FIdLast);
 end;
 
 procedure TMcxDisplayBar.ResetSlab;
