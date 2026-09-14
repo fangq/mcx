@@ -114,6 +114,38 @@ end;
 
 { ------------------------------------------------------------- compare ---- }
 
+{ What the JSON pane leans on when someone pastes into it: a refusal has to
+  be a refusal, with something to show for it, and must leave the document
+  it was asked to replace alone. }
+procedure TestParseFailure;
+var
+  D: TMcxDoc;
+begin
+  WriteLn('parsing what is pasted');
+  D := TMcxDoc.Create;
+  try
+    Ok(D.LoadFromString('{"Session":{"ID":"keep"}}'), 'a good document loads');
+
+    Ok(not D.LoadFromString('{"Session": '), 'a truncated document is refused');
+    Ok(D.LastError <> '', '  and says why');
+    Ok(D.AsStr('Session.ID', '') = 'keep',
+       '  and leaves the one it was replacing alone');
+
+    Ok(not D.LoadFromString('[1, 2, 3]'),
+       'a document whose root is an array is refused');
+    Ok(not D.LoadFromString('the cat sat on the mat'),
+       'a document that is not JSON at all is refused');
+    Ok(D.AsStr('Session.ID', '') = 'keep', '  still leaves it alone');
+
+    { The parser is deliberately lenient, and the pane inherits that: a file
+      hand-edited with a trailing comma or a comment still loads. }
+    Ok(D.LoadFromString('{"a":1, /* note */ "b":2,}'),
+       'a comment and a trailing comma are tolerated');
+  finally
+    D.Free;
+  end;
+end;
+
 procedure TestCompare;
 var
   A, B: TMcxDoc;
@@ -943,6 +975,7 @@ begin
 
   TestPaths;
   TestTypePreservation;
+  TestParseFailure;
   TestCompare;
   TestPlainText;
   TestProgress;

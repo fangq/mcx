@@ -23,7 +23,7 @@ uses
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, Grids, LCLType,
   fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
-  SynEdit, SynEditTypes, mcxjsonsyn,
+  SynEdit, SynEditTypes, SynGutterLineNumber, mcxjsonsyn,
   mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview, mcxshapes,
   mcxdisp, mcxchoose, mcxtable, mcxjd;
 
@@ -373,6 +373,7 @@ type
     FStepBar: TPanel;
     FStepBack: TSpeedButton;
     FStepMode: TSpeedButton;
+    FStepReset: TSpeedButton;
     FStepNext: TSpeedButton;
     FStepText: TLabel;
     { Every set of alTop siblings the wizard filter can hide something from,
@@ -398,6 +399,18 @@ type
       read as a structure instead of as a wall of quotation marks. }
     FJson: TSynEdit;
     FJsonSyn: TMcxJsonSyn;
+    FJsonBar: TPanel;
+    FJsonApply, FJsonRevert: TSpeedButton;
+    FJsonNote: TLabel;
+    { Raised while the pane is being written from the document, so that doing
+      so does not look like the person typing in it. }
+    FJsonLoading: Integer;
+    { Set when it does.  While it is set the document stops writing to the
+      pane: the text on screen is the person's, not ours. }
+    FJsonEdited: Boolean;
+    { Set while the note is reporting a parse failure, so that the ordinary
+      messages do not write over it. }
+    FJsonFault: Boolean;
     FDisplay: TMcxDisplayBar;
     { The three picture choosers on the first card.  Which simulator runs is
       worked out from them rather than asked as a fourth question. }
@@ -432,11 +445,17 @@ type
     procedure TableChanged(Sender: TObject);
     function  Environment: string;
     procedure ShowHelpForFocus;
+    procedure ResetSettings(Sender: TObject);
     procedure ApplyTheme;
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
     procedure BuildJsonPane;
+    procedure JsonChanged(Sender: TObject);
+    procedure JsonApply(Sender: TObject);
+    procedure JsonRevert(Sender: TObject);
+    procedure ShowJson;
+    procedure UpdateJsonBar;
     procedure BuildChoosers;
     procedure ChoiceChanged(Sender: TObject);
     procedure ApplyPlan;
@@ -1642,8 +1661,19 @@ begin
     FJson.Font.Color := McxText;
     FJson.SelectedColor.Background := McxAccent;
     FJson.SelectedColor.Foreground := McxReadable(McxAccent);
+    { The gutter is a margin rather than a second surface: the page's own
+      colour, with the numbers faded enough to be countable and not read. }
+    FJson.Gutter.Color := McxBase;
+    for i := 0 to FJson.Gutter.Parts.Count - 1 do
+      if FJson.Gutter.Parts[i] is TSynGutterLineNumber then
+        with TSynGutterLineNumber(FJson.Gutter.Parts[i]) do
+        begin
+          MarkupInfo.Background := McxBase;
+          MarkupInfo.Foreground := McxBlend(McxBase, McxText, 45);
+        end;
     FJsonSyn.Recolour(FJson.Color, McxText, McxAccent);
     FJson.Invalidate;
+    if FJsonNote <> nil then FJsonNote.Font.Color := McxText;
   end;
   Paper(mmCommand);
   Paper(mmLog);
@@ -1664,6 +1694,37 @@ begin
 
   UpdateNavState;
   Invalidate;
+end;
+
+{ Every setting back to what a blank simulation opens with.
+
+  Asked first, because it cannot be undone and the button is next to two that
+  can.  The file name is kept: this is the same document with its contents
+  reset, so Save still knows where it goes, and nothing on disk changes until
+  it is saved. }
+procedure TfmMain.ResetSettings(Sender: TObject);
+var
+  Keep: string;
+begin
+  if MessageDlg('MCX Studio',
+       'Put every setting back to what a new simulation starts with?' +
+       LineEnding + LineEnding +
+       'Nothing on disk changes until this is saved.',
+       mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
+
+  Keep := FDoc.FileName;
+  SeedDocument(FDoc);
+  FDoc.FileName := Keep;
+  FDoc.Modified := True;
+
+  FJsonEdited := False;
+  FJsonFault := False;
+  DropResult;
+  GuessRunSettings;
+  LoadAllBindings;
+  UpdateTitle;
+  RefreshPreview;
+  Log('settings reset');
 end;
 
 procedure TfmMain.ThemeClick(Sender: TObject);
@@ -2087,23 +2148,174 @@ end;
   page, and two ways to change one value is one way too many.  Selecting and
   copying still work, which is what it is actually used for. }
 procedure TfmMain.BuildJsonPane;
+var
+  i: Integer;
 begin
   FJsonSyn := TMcxJsonSyn.Create(Self);
+
+  { The bar first, so that alBottom takes its space before the editor claims
+    what is left. }
+  FJsonBar := TPanel.Create(Self);
+  FJsonBar.Parent := tsJSON;
+  FJsonBar.Align := alBottom;
+  FJsonBar.Height := 40;
+  FJsonBar.BevelOuter := bvNone;
+  FJsonBar.Caption := '';
+
+  FJsonApply := TMcxFlatButton.Create(FJsonBar);
+  FJsonApply.Parent := FJsonBar;
+  { alRight siblings are ordered by the Left they hold when they are aligned,
+    so a larger one is further right. }
+  FJsonApply.Left := 2000;
+  FJsonApply.Align := alRight;
+  FJsonApply.Width := 130;
+  FJsonApply.BorderSpacing.Around := 6;
+  FJsonApply.Caption := 'Use this JSON';
+  FJsonApply.Cursor := crHandPoint;
+  FJsonApply.ShowHint := True;
+  FJsonApply.Hint := 'Read what is in this pane and rebuild the whole ' +
+    'simulation from it, replacing every setting on the Settings page.';
+  FJsonApply.OnClick := @JsonApply;
+
+  FJsonRevert := TMcxFlatButton.Create(FJsonBar);
+  FJsonRevert.Parent := FJsonBar;
+  FJsonRevert.Left := 1000;
+  FJsonRevert.Align := alRight;
+  FJsonRevert.Width := 90;
+  FJsonRevert.BorderSpacing.Around := 6;
+  FJsonRevert.Caption := 'Revert';
+  FJsonRevert.Cursor := crHandPoint;
+  FJsonRevert.ShowHint := True;
+  FJsonRevert.Hint := 'Throw away the edits in this pane and show the ' +
+    'simulation as it stands.';
+  FJsonRevert.OnClick := @JsonRevert;
+
+  FJsonNote := TLabel.Create(FJsonBar);
+  FJsonNote.Parent := FJsonBar;
+  FJsonNote.Align := alClient;
+  FJsonNote.Layout := tlCenter;
+  FJsonNote.BorderSpacing.Left := 10;
+  FJsonNote.WordWrap := True;
 
   FJson := TSynEdit.Create(Self);
   FJson.Parent := tsJSON;
   FJson.Align := alClient;
   FJson.Highlighter := FJsonSyn;
-  FJson.ReadOnly := True;
   FJson.Font.Name := McxDefaultFontName;
   FJson.Font.Size := McxScalePointSize(McxDefaultFontSize);
-  { No gutter and no right edge: neither has anything to say about a file
-    nothing reports a line number for. }
-  FJson.Gutter.Visible := False;
   FJson.RightEdge := 0;
   FJson.BorderStyle := bsNone;
-  { A caret in something that cannot be typed into says it can be. }
-  FJson.Options := FJson.Options - [eoScrollPastEol] + [eoNoCaret];
+  FJson.Options := FJson.Options - [eoScrollPastEol];
+  FJson.OnChange := @JsonChanged;
+
+  { Line numbers and nothing else.  A gutter that also carries bookmarks,
+    a fold tree and a change bar is four columns of furniture for a pane
+    where only one of them means anything. }
+  FJson.Gutter.Visible := True;
+  for i := 0 to FJson.Gutter.Parts.Count - 1 do
+    FJson.Gutter.Parts[i].Visible :=
+      FJson.Gutter.Parts[i] is TSynGutterLineNumber;
+
+  UpdateJsonBar;
+end;
+
+{ Writes the document into the pane.
+
+  Not while it is being edited: the text on screen is then the person's
+  rather than ours, and replacing it as they type is the one thing that
+  makes an editable pane useless.  Where it is scrolled to survives the
+  rewrite, or reading the file while changing a number on the settings page
+  is impossible. }
+procedure TfmMain.ShowJson;
+var
+  JsonTop: Integer;
+begin
+  if (FJson = nil) or FJsonEdited then Exit;
+  JsonTop := FJson.TopLine;
+  Inc(FJsonLoading);
+  try
+    FJson.Text := FDoc.ToJSON(True);
+    FJson.Modified := False;
+  finally
+    Dec(FJsonLoading);
+  end;
+  FJson.TopLine := JsonTop;
+  UpdateJsonBar;
+end;
+
+procedure TfmMain.JsonChanged(Sender: TObject);
+begin
+  if FJsonLoading > 0 then Exit;
+  { The fault goes as soon as the text moves: it was about the old text. }
+  FJsonFault := False;
+  if FJsonEdited then
+  begin
+    UpdateJsonBar;
+    Exit;
+  end;
+  FJsonEdited := True;
+  UpdateJsonBar;
+end;
+
+procedure TfmMain.UpdateJsonBar;
+begin
+  if FJsonApply = nil then Exit;
+  FJsonApply.Enabled := FJsonEdited;
+  FJsonRevert.Enabled := FJsonEdited;
+  { A parse failure has the floor until the text changes again. }
+  if FJsonFault then Exit;
+  FJsonNote.Font.Color := McxText;
+  if FJsonEdited then
+    FJsonNote.Caption := 'Edited here.  "Use this JSON" rebuilds the ' +
+      'simulation from it.'
+  else
+    FJsonNote.Caption := 'The simulation as it stands.  Paste a file over it ' +
+      'to start from that instead.';
+end;
+
+{ Rebuilds the whole simulation from what is in the pane.
+
+  This is the point of the pane being editable: a simulation arrives as a
+  file far more often than it is built a control at a time, and pasting one
+  in should be the same as opening it.  So the document is replaced outright
+  -- every setting on the settings page is reset from this text, and any that
+  the text does not mention goes back to nothing. }
+procedure TfmMain.JsonApply(Sender: TObject);
+var
+  Keep: string;
+begin
+  { The file name survives: this is new contents for the same document, in
+    the same folder, which is what relative paths inside it resolve against. }
+  Keep := FDoc.FileName;
+  if not FDoc.LoadFromString(FJson.Text) then
+  begin
+    FJsonFault := True;
+    FJsonNote.Caption := 'Not read: ' + FDoc.LastError;
+    FJsonNote.Font.Color := clRed;
+    Exit;
+  end;
+  FDoc.FileName := Keep;
+  FDoc.Modified := True;
+
+  FJsonEdited := False;
+  FJsonFault := False;
+
+  { The same sequence opening a file runs, and for the same reason: which
+    simulator and which kind of domain are read off the new contents, every
+    control is loaded from it, and the preview is redrawn. }
+  DropResult;
+  GuessRunSettings;
+  LoadAllBindings;
+  UpdateTitle;
+  RefreshPreview;
+  Log('rebuilt the simulation from the JSON pane');
+end;
+
+procedure TfmMain.JsonRevert(Sender: TObject);
+begin
+  FJsonEdited := False;
+  FJsonFault := False;
+  ShowJson;
 end;
 
 procedure TfmMain.BuildChoosers;
@@ -2290,6 +2502,24 @@ begin
   FStepMode.Caption := 'Expert';
   FStepMode.Hint := 'Show every setting, not only the key ones';
   FStepMode.ShowHint := True;
+
+  { Back to the settings a blank simulation opens with.  Beside the mode
+    switch because it is the other thing that acts on the whole page rather
+    than on one value, and away from Back and Next, which it is not a step
+    in. }
+  FStepReset := TMcxFlatButton.Create(FStepBar);
+  FStepReset.Parent := FStepBar;
+  FStepReset.Left := 1;
+  FStepReset.Align := alLeft;
+  FStepReset.Width := 90;
+  FStepReset.BorderSpacing.Around := 6;
+  FStepReset.Caption := 'Reset';
+  FStepReset.Cursor := crHandPoint;
+  FStepReset.ShowHint := True;
+  FStepReset.Hint := 'Put every setting back to what a new simulation ' +
+    'starts with.  The file this was opened from is not touched until it is ' +
+    'saved.';
+  FStepReset.OnClick := @ResetSettings;
 end;
 
 procedure TfmMain.UpdateStepBar;
@@ -4263,17 +4493,11 @@ end;
 procedure TfmMain.RefreshPreview;
 var
   Input: string;
-  { Named for the pane, not "Top": a bare Top in a method of a form is the
-    form's own Top, which the compiler accepts and which scrolls the window
-    to the first visible line of JSON. }
-  JsonTop: Integer;
 begin
   { The pane is rewritten on every edit that commits, so where it was
     scrolled to has to survive that -- otherwise reading the file while
     changing a number is impossible. }
-  JsonTop := FJson.TopLine;
-  FJson.Text := FDoc.ToJSON(True);
-  FJson.TopLine := JsonTop;
+  ShowJson;
 
   { The command the Run action will issue, shown so it can be copied, re-run
     and pasted into a bug report.  Almost everything lives in the JSON, so
