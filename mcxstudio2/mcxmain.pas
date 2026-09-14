@@ -23,6 +23,7 @@ uses
   StdCtrls, Buttons, ActnList, Menus, ImgList, ClipBrd, Spin, Grids, LCLType,
   fpjson,
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
+  SynEdit, SynEditTypes, mcxjsonsyn,
   mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview, mcxshapes,
   mcxdisp, mcxchoose, mcxtable, mcxjd;
 
@@ -77,7 +78,6 @@ type
     rwMaxJump: TPanel;
     lbTodoGL: TLabel;
     mmCommand: TMemo;
-    mmJSON: TMemo;
     mmLog: TMemo;
     pcView: TPageControl;
     pmBench: TPopupMenu;
@@ -394,6 +394,10 @@ type
     FMedia: TMcxTable;
     FDetectors: TMcxTable;
     FShapes: TMcxShapes;
+    { The JSON pane: a code editor rather than a memo, so the file can be
+      read as a structure instead of as a wall of quotation marks. }
+    FJson: TSynEdit;
+    FJsonSyn: TMcxJsonSyn;
     FDisplay: TMcxDisplayBar;
     { The three picture choosers on the first card.  Which simulator runs is
       worked out from them rather than asked as a fourth question. }
@@ -432,6 +436,7 @@ type
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
+    procedure BuildJsonPane;
     procedure BuildChoosers;
     procedure ChoiceChanged(Sender: TObject);
     procedure ApplyPlan;
@@ -729,9 +734,9 @@ begin
   BindControls;
   CaptureStacks;
 
-  mmJSON.Font.Name := McxDefaultFontName;
-  mmCommand.Font.Assign(mmJSON.Font);
-  mmLog.Font.Assign(mmJSON.Font);
+  mmCommand.Font.Name := McxDefaultFontName;
+  mmLog.Font.Name := McxDefaultFontName;
+  BuildJsonPane;
 
   BuildDock;
   { The placeholders these replace go with them. }
@@ -1627,7 +1632,19 @@ begin
 
   { The text panes read as paper: a shade off the surface, so a block of JSON
     is a thing on the window rather than the window itself. }
-  Paper(mmJSON);
+  { The pane and the colours the highlighter paints on it, together: the
+    tokens are mixed from the same three roles as everything else, so the
+    JSON belongs to whichever theme is on rather than to a palette of its
+    own. }
+  if FJson <> nil then
+  begin
+    FJson.Color := McxBlend(McxBase, McxText, 4);
+    FJson.Font.Color := McxText;
+    FJson.SelectedColor.Background := McxAccent;
+    FJson.SelectedColor.Foreground := McxReadable(McxAccent);
+    FJsonSyn.Recolour(FJson.Color, McxText, McxAccent);
+    FJson.Invalidate;
+  end;
   Paper(mmCommand);
   Paper(mmLog);
 
@@ -2058,6 +2075,37 @@ end;
   caption, not a widget, and because the three rows are the same thing three
   times -- one declaration each is shorter than three panels of controls and
   cannot drift out of step with the rule that reads them. }
+
+{ The JSON pane.
+
+  Built in code for the reason the 3-D view is: the designer cannot place a
+  class that is not registered in a package it knows, and registering one is
+  the trap this project avoids.  The .lfm stays a form anybody can open.
+
+  Read-only, because this pane is the document rendered rather than a second
+  place to edit it -- everything here is written by a control on the settings
+  page, and two ways to change one value is one way too many.  Selecting and
+  copying still work, which is what it is actually used for. }
+procedure TfmMain.BuildJsonPane;
+begin
+  FJsonSyn := TMcxJsonSyn.Create(Self);
+
+  FJson := TSynEdit.Create(Self);
+  FJson.Parent := tsJSON;
+  FJson.Align := alClient;
+  FJson.Highlighter := FJsonSyn;
+  FJson.ReadOnly := True;
+  FJson.Font.Name := McxDefaultFontName;
+  FJson.Font.Size := McxScalePointSize(McxDefaultFontSize);
+  { No gutter and no right edge: neither has anything to say about a file
+    nothing reports a line number for. }
+  FJson.Gutter.Visible := False;
+  FJson.RightEdge := 0;
+  FJson.BorderStyle := bsNone;
+  { A caret in something that cannot be typed into says it can be. }
+  FJson.Options := FJson.Options - [eoScrollPastEol] + [eoNoCaret];
+end;
+
 procedure TfmMain.BuildChoosers;
 begin
   FMedium := TMcxChooser.Create(gbEngine, 'What kind of medium');
@@ -4215,8 +4263,17 @@ end;
 procedure TfmMain.RefreshPreview;
 var
   Input: string;
+  { Named for the pane, not "Top": a bare Top in a method of a form is the
+    form's own Top, which the compiler accepts and which scrolls the window
+    to the first visible line of JSON. }
+  JsonTop: Integer;
 begin
-  mmJSON.Text := FDoc.ToJSON(True);
+  { The pane is rewritten on every edit that commits, so where it was
+    scrolled to has to survive that -- otherwise reading the file while
+    changing a number is impossible. }
+  JsonTop := FJson.TopLine;
+  FJson.Text := FDoc.ToJSON(True);
+  FJson.TopLine := JsonTop;
 
   { The command the Run action will issue, shown so it can be copied, re-run
     and pasted into a bug report.  Almost everything lives in the JSON, so

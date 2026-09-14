@@ -550,20 +550,6 @@ object fmMain: TfmMain
           Caption = 'JSON'
           ClientHeight = 682
           ClientWidth = 426
-          object mmJSON: TMemo
-            Left = 0
-            Height = 682
-            Top = 0
-            Width = 426
-            Align = alClient
-            BorderStyle = bsNone
-            Font.Pitch = fpFixed
-            ParentFont = False
-            ReadOnly = True
-            ScrollBars = ssAutoBoth
-            TabOrder = 0
-            WordWrap = False
-          end
         end
         object tsCommand: TTabSheet
           Caption = 'Command'
