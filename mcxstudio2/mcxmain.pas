@@ -415,6 +415,7 @@ type
     procedure BuildDock;
     procedure SizePane(APane: TForm; AAlign: TAlign; AWanted: Integer);
     procedure ApplyPaneSizes(Data: PtrInt);
+    procedure CentreOnLaunchScreen;
     procedure GuardCentreHeader;
     procedure DockCreateControl(Sender: TObject; aName: string;
       var AControl: TControl; DoDisableAutoSizing: boolean);
@@ -622,15 +623,20 @@ const
   SubActive  = 32;   { the selected subsection's own band }
   SubHover   = 14;   { and the one the pointer is over }
   HeadHover  = 12;   { how far a hovered section band lifts towards the ink }
-  { Tighter than a card's.  A card is a surface a group of settings sits on;
-    a navigator band is a label around one line of text. }
-  NavRadius  = 10;   { a subsection band }
-  { A section band has no radius of its own: it is a pill, rounded by half
-    its own height, which is the one radius that does not have to be chosen
-    again when the heading font or the display scale moves. }
+  { Neither navigator band has a radius of its own: both are pills, rounded
+    by half their own height, which is the one radius that does not have to
+    be chosen again when the heading font or the display scale moves -- and
+    which makes the two look equally round without being the same number. }
   { A gap between one section and the next, so the bands read as a list of
     separate things rather than as a column divided into stripes. }
   BandGap    = 5;
+  { The same between one subsection band and the next.  Smaller, because they
+    are a list inside a section rather than the sections themselves. }
+  SubGap     = 4;
+  { Air between one card and the next on the settings page.  A card is told
+    from the page by a shade, which is a quiet difference; the gap is what
+    makes a group of settings look like a group at a glance. }
+  CardGap    = 18;
 
   SectionGroups: array[0..6] of string = (
     { Simulator } 'gbEngine',
@@ -999,9 +1005,14 @@ var
     P.Canvas.Brush.Color := McxBlend(McxBase, McxAccent, ATint);
     P.Canvas.Pen.Style := psSolid;
     P.Canvas.Pen.Color := P.Canvas.Brush.Color;
-    { Indented past the section band above it, so the band says what the
-      indent of the title already says: this one is under that one.  A band
-      starting where its parent's starts reads as a second section. }
+    { Rounded by half its own height, so it is a pill like the section band
+      above it -- the two are then the same amount of round without either
+      having to be given a number.
+
+      Indented past that band, so the shape says what the indent of the title
+      already says: this one is under that one.  A band starting where its
+      parent's starts reads as a second section. }
+    R := B.Height div 2;
     P.Canvas.RoundRect(Pad + McxScale96(18), B.Top, P.Width - Pad,
       B.Top + B.Height, R, R);
   end;
@@ -1009,7 +1020,6 @@ var
 begin
   if not (Sender is TPanel) then Exit;
   P := TPanel(Sender);
-  R := McxScale96(NavRadius);
   Pad := McxScale96(4);
   P.Canvas.AntialiasingMode := amOn;
 
@@ -1178,13 +1188,23 @@ begin
         end;
         Card := TPanel(C);
 
+        { Air under each card.  The designer gives every one the same margin
+          all round, which leaves adjacent cards nearly touching; a group of
+          settings that has to be told from the next one by a shade alone is
+          a group you have to look for. }
+        Card.BorderSpacing.Bottom := CardGap;
+
         B := TMcxNavButton.Create(Self);
         B.Parent := FBodies[s];
         B.Height := 44;
+        { The gap the band is drawn with room for.  Real spacing rather than
+          an inset on the paint, so the pill is the button's own rectangle
+          and the two cannot drift apart. }
+        B.BorderSpacing.Bottom := SubGap;
         { Top before Align: alTop children are ordered by the Top they have
           when they are aligned, so leaving them all at zero lists the
           subsections in reverse. }
-        B.Top := g * 44;
+        B.Top := g * (44 + SubGap);
         B.Align := alTop;
         B.AllowAllUp := True;
         B.Caption := Card.Caption;
@@ -2949,8 +2969,45 @@ end;
   DockAnotherControl guessed.  This runs once the window has been shown and
   the real geometry exists, and only when no saved layout was restored, since
   a restored one already carries the sizes the user chose. }
+{ Opens on the screen the program was launched from.
+
+  poScreenCenter is the centre of the primary monitor, which on a two-screen
+  desk is the wrong screen whenever the work is on the other one -- the
+  window arrives where nobody is looking.  The pointer is where the person
+  just was, since something had to be clicked or typed to start this, so the
+  monitor under it is the one to open on.
+
+  Its work area rather than its bounds, so a panel or a dock does not get
+  half the title bar.  And clamped, because a window can be taller than the
+  space it is being centred in, and half of a negative overhang is a title
+  bar off the top of the screen. }
+procedure TfmMain.CentreOnLaunchScreen;
+var
+  M: TMonitor;
+  R: TRect;
+  x, y: Integer;
+begin
+  M := Screen.MonitorFromPoint(Mouse.CursorPos);
+  if M = nil then M := Screen.PrimaryMonitor;
+  if M = nil then Exit;
+  R := M.WorkareaRect;
+  x := R.Left + (R.Right - R.Left - Width) div 2;
+  y := R.Top + (R.Bottom - R.Top - Height) div 2;
+  if x < R.Left then x := R.Left;
+  if y < R.Top then y := R.Top;
+  { Off the designed position first, or the LCL puts the window back on the
+    primary monitor the next time it thinks about it. }
+  Position := poDesigned;
+  SetBounds(x, y, Width, Height);
+end;
+
 procedure TfmMain.ApplyPaneSizes(Data: PtrInt);
 begin
+  { After the window has been shown and scaled, not before: the DPI sweep
+    resizes it on the way up, and a centre worked out from the designed size
+    centres the wrong rectangle. }
+  CentreOnLaunchScreen;
+
   if FPendingResult <> '' then
   begin
     ShowResult(FPendingResult);
