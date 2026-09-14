@@ -549,11 +549,55 @@ type
   TMcxNavButton = class(TSpeedButton)
   protected
     procedure PaintBackground(var PaintRect: TRect); override;
+    procedure Paint; override;
   end;
 
 procedure TMcxNavButton.PaintBackground(var PaintRect: TRect);
 begin
   { Deliberately nothing: the caption and the glyph still draw. }
+end;
+
+{ Draws the caption itself, hard against the margin.
+
+  A TSpeedButton cannot be told to left-justify one.  Margin does set where
+  the text starts -- but for blGlyphLeft with a margin and a spacing the text
+  rectangle is then stretched to the full width of the button
+  (speedbutton.inc:803) and the text drawn into it with DT_CENTER, taken from
+  Alignment, which defaults to taCenter and is not published before Lazarus
+  2.3.  So the indent is real and then centred away, which is why a margin of
+  40 still produced a column of centred titles.
+
+  The stock painter still draws the glyph; the caption is switched off at the
+  button and put back here. }
+procedure TMcxNavButton.Paint;
+var
+  R: TRect;
+  x: Integer;
+  Style: TTextStyle;
+begin
+  inherited Paint;
+  if Caption = '' then Exit;
+
+  x := Margin;
+  if x < 0 then x := 0;
+  { Past the glyph, when there is one.  The subsections carry none, so their
+    whole indent is the margin. }
+  if (Images <> nil) and (ImageIndex >= 0) then
+  begin
+    Inc(x, Images.Width);
+    if Spacing > 0 then Inc(x, Spacing);
+  end;
+
+  R := Rect(x, 0, Width, Height);
+  FillChar(Style, SizeOf(Style), 0);
+  Style.Alignment := taLeftJustify;
+  Style.Layout := tlCenter;
+  Style.SingleLine := True;
+  Style.Clipping := True;
+
+  Canvas.Font := Font;
+  Canvas.Brush.Style := bsClear;
+  Canvas.TextRect(R, R.Left, R.Top, Caption, Style);
 end;
 
 procedure TMcxFlatButton.PaintBackground(var PaintRect: TRect);
@@ -1005,14 +1049,15 @@ var
     P.Canvas.Brush.Color := McxBlend(McxBase, McxAccent, ATint);
     P.Canvas.Pen.Style := psSolid;
     P.Canvas.Pen.Color := P.Canvas.Brush.Color;
-    { Rounded by half its own height, so it is a pill like the section band
-      above it -- the two are then the same amount of round without either
-      having to be given a number.
+    { A pill.  RoundRect's last two arguments are the width and height of the
+      ellipse the corners are cut from, not a radius -- so a pill wants the
+      band's whole height, and half of it, which is what a radius would be,
+      gives corners half as round as they should be.
 
-      Indented past that band, so the shape says what the indent of the title
-      already says: this one is under that one.  A band starting where its
-      parent's starts reads as a second section. }
-    R := B.Height div 2;
+      Indented past the band above, so the shape says what the indent of the
+      title already says: this one is under that one.  A band starting where
+      its parent's starts reads as a second section. }
+    R := B.Height;
     P.Canvas.RoundRect(Pad + McxScale96(18), B.Top, P.Width - Pad,
       B.Top + B.Height, R, R);
   end;
@@ -1041,6 +1086,9 @@ begin
   B.Height := AOld.Height;
   B.BorderSpacing.Bottom := AOld.BorderSpacing.Bottom;
   B.Caption := AOld.Caption;
+  { The stock painter centres a caption whatever the margin says, so ours
+    draws it; this stops it being drawn twice.  See TMcxNavButton.Paint. }
+  B.ShowCaption := False;
   B.Flat := AOld.Flat;
   B.Images := AOld.Images;
   B.ImageIndex := AOld.ImageIndex;
@@ -1208,18 +1256,17 @@ begin
         B.Align := alTop;
         B.AllowAllUp := True;
         B.Caption := Card.Caption;
+        { Drawn by TMcxNavButton.Paint, left-aligned, rather than by the
+          stock painter, which centres it. }
+        B.ShowCaption := False;
         B.Flat := True;
         { No group, so it cannot latch: see the headings above -- a pressed
           TSpeedButton paints a square face over the band behind it. }
         B.GroupIndex := 0;
         B.Layout := blGlyphLeft;
         { Indented past where a section heading's own text starts, so the
-          hierarchy is visible without a second glyph column -- and the indent
-          is also what left-justifies the caption, which a TSpeedButton has no
-          Alignment for.  With blGlyphLeft the caption is drawn at
-          Margin + GlyphWidth + Spacing (speedbutton.inc:707), and a button
-          carrying no glyph contributes zero for both of those, so a column of
-          titles starts at 40 rather than centring itself into a poster. }
+          hierarchy is visible without a second glyph column.  The button
+          carries no glyph, so this margin is the whole of the indent. }
         B.Margin := 40;
         B.Spacing := 6;
         B.ParentFont := False;
