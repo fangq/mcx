@@ -625,7 +625,9 @@ const
   { Tighter than a card's.  A card is a surface a group of settings sits on;
     a navigator band is a label around one line of text. }
   NavRadius  = 10;   { a subsection band }
-  BandRadius = 16;   { a section band, which is taller and carries more }
+  { A section band has no radius of its own: it is a pill, rounded by half
+    its own height, which is the one radius that does not have to be chosen
+    again when the heading font or the display scale moves. }
   { A gap between one section and the next, so the bands read as a list of
     separate things rather than as a column divided into stripes. }
   BandGap    = 5;
@@ -962,7 +964,10 @@ begin
   if not (Sender is TPaintBox) then Exit;
   B := TPaintBox(Sender);
   C := B.Canvas;
-  R := McxScale96(BandRadius);
+  { Half the band's height, which makes each end a semicircle: a pill.  Taken
+    from the band rather than written down, so it stays a pill when the
+    heading font or the display scale changes the height. }
+  R := B.Height div 2;
   Pad := McxScale96(4);
 
   C.Brush.Style := bsSolid;
