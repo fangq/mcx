@@ -55,6 +55,19 @@ works for an unprivileged user and in CI.
     make test       # both layers of tests, below
     make install PREFIX=$HOME/.local
 
+The Lazarus directory is found from whichever `lazbuild` is on PATH, so the
+LCL always matches the tool about to use it. On a machine with more than one
+version, name the one you want:
+
+    make LAZBUILD=/usr/lib/lazarus/2.2.0/lazbuild
+
+and on a layout this does not know about, name the directory outright:
+
+    make LAZDIR=/opt/lazarus       # or export LAZARUSDIR
+
+If nothing is found, nothing is passed and lazbuild uses its own config,
+which is what a normally installed Lazarus wants anyway.
+
 
 Tests
 -----
