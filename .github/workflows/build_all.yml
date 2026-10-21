@@ -18,6 +18,7 @@ jobs:
   build_all:
     name: Build All
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-22.04, macos-15-intel, windows-2022]
     runs-on: ${{ matrix.os }}
@@ -72,11 +73,11 @@ jobs:
           # fpc-laz and lazarus casks on 2026-09-01 (they fail the Gatekeeper check),
           # which does not apply to packages installed with installer(8)
           LAZ_URL=https://downloads.sourceforge.net/lazarus/Lazarus%20macOS%20x86-64
-          curl -L --retry 3 -o fpc.dmg "$LAZ_URL/Lazarus%204.4/fpc-3.2.2.intelarm64-macosx.dmg"
+          curl -L --retry 5 --retry-all-errors --retry-delay 10 -C - -o fpc.dmg "$LAZ_URL/Lazarus%204.4/fpc-3.2.2.intelarm64-macosx.dmg"
           FPC_VOL=$(hdiutil attach -nobrowse fpc.dmg | grep -o '/Volumes/.*' | head -1)
           sudo installer -pkg "$FPC_VOL/fpc-3.2.2-intelarm64-macosx.mpkg/Contents/Packages/fpc-3.2.2-intelarm64-macosx.pkg" -target /
           hdiutil detach "$FPC_VOL"
-          curl -L --retry 3 -o lazarus.pkg "$LAZ_URL/Lazarus%203.6/Lazarus-3.6-macosx-x86_64.pkg"
+          curl -L --retry 5 --retry-all-errors --retry-delay 10 -C - -o lazarus.pkg "$LAZ_URL/Lazarus%203.6/Lazarus-3.6-macosx-x86_64.pkg"
           sudo installer -pkg lazarus.pkg -target /
 
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
