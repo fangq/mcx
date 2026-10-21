@@ -4,7 +4,7 @@ trajtest.py - verify MCX/MCX-CL/MMC photon trajectories step by step
 
 Usage:
     trajtest.py TRAJ --case CASE.json [--ref GOLDEN.json] [--tol 1e-4]
-                [--wtol 1e-4] [--save GOLDEN.json] [--solver mcx]
+                [--wtol 1e-4] [--min-match 1.0] [--save GOLDEN.json] [--solver mcx]
 
 TRAJ is either a trajectory file saved by "-D M" (session_traj.jdt, text
 JData, any _ArrayZipType_ supported by the python stdlib) or a solver-neutral
@@ -98,7 +98,7 @@ def save_golden(fname, photons, solver, casename):
         "case": casename,
         "solver": solver,
         "format": "per-photon list of [x,y,z,w] steps, sorted by photon id",
-        "photons": [[[round(float(v), 6) for v in step] for step in ph] for ph in photons],
+        "photons": [[[float("%.8g" % v) for v in step] for step in ph] for ph in photons],
     }
     with open(fname, "w") as fp:
         json.dump(out, fp, separators=(",", ":"))
@@ -145,9 +145,14 @@ def check_invariants(photons, case, tol, wtol):
     return errors
 
 
-def compare(photons, ref, tol, wtol):
-    """Compare two trajectory sets; return (errors, number of matching steps)"""
+def compare(photons, ref, tol, wtol, minmatch=1.0):
+    """Compare two trajectory sets; return (errors, number of matching steps)
+
+    a photon diverging from the reference is reported as an error unless the
+    fraction of matching steps over all photons is at least minmatch
+    """
     errors = []
+    diverged = []
     matched = 0
 
     if len(photons) != len(ref):
@@ -161,9 +166,17 @@ def compare(photons, ref, tol, wtol):
         matched += int(bad[0]) if len(bad) else n
         if len(bad):
             k = int(bad[0])
-            errors.append("photon %d: diverges at step %d/%d, |dp|=%g, |dw|/w=%g" % (i, k, n, dp[k], dw[k]))
+            diverged.append("photon %d: diverges at step %d/%d, |dp|=%g, |dw|/w=%g" % (i, k, n, dp[k], dw[k]))
         elif len(a) != len(b):
-            errors.append("photon %d: step count differs: %d vs reference %d" % (i, len(a), len(b)))
+            diverged.append("photon %d: step count differs: %d vs reference %d" % (i, len(a), len(b)))
+
+    total = sum(len(a) for a in photons)
+
+    if diverged and matched < minmatch * total:
+        errors += diverged
+    else:
+        for d in diverged:
+            print("  (tolerated) " + d)
 
     return errors, matched
 
@@ -175,6 +188,8 @@ def main():
     ap.add_argument("--ref", help="golden .json (any solver) to compare against")
     ap.add_argument("--tol", type=float, default=1e-4, help="position tolerance (default 1e-4)")
     ap.add_argument("--wtol", type=float, default=1e-4, help="relative weight tolerance (default 1e-4)")
+    ap.add_argument("--min-match", type=float, default=1.0, dest="minmatch",
+                    help="minimum fraction of steps matching --ref to pass (default 1.0)")
     ap.add_argument("--save", help="write the trajectories to a solver-neutral golden .json")
     ap.add_argument("--solver", default="mcx", help="solver name stored with --save")
     opt = ap.parse_args()
@@ -188,7 +203,7 @@ def main():
     print("%s: %d photons, %d steps, invariants %s" % (opt.traj, len(photons), nstep, "FAILED" if errors else "ok"))
 
     if opt.ref:
-        cerr, matched = compare(photons, load_traj(opt.ref), opt.tol, opt.wtol)
+        cerr, matched = compare(photons, load_traj(opt.ref), opt.tol, opt.wtol, opt.minmatch)
         print("compared with %s: %d/%d steps match %s" % (opt.ref, matched, nstep, "FAILED" if cerr else "ok"))
         errors += cerr
 

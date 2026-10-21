@@ -5,20 +5,24 @@
 # usage: ./testtraj.sh [-u] [extra mcx parameters]
 #    -u: regenerate the golden trajectories under golden/
 #
-# each case under traj_cases/ is simulated by a single GPU thread
-# (-A 0 -t 1 -T 1) with a fixed seed, so that the saved trajectory (-D M)
-# is reproducible; it is then checked against physical invariants and
-# compared to the solver-neutral golden file golden/<case>.json
+# each case under traj_cases/ is simulated with a fixed seed and one photon
+# per GPU thread (-A 0 -t <photons> -T 1), so that every photon draws from its
+# own reproducible random number stream and the saved trajectory (-D M) is
+# deterministic; it is then checked against physical invariants and compared
+# to the solver-neutral golden file golden/<case>.json. MCX-CL derives the
+# per-thread seeds the same way, so the same golden data apply to both.
 #
 # environment variables:
 #    MCX:    path to the mcx binary (default ../bin/mcx)
 #    PYTHON: python interpreter with numpy (default python3)
 #    REF:    an extra golden folder from another solver (mcxcl, mmc) to
-#            compare against, using REFTOL as the position tolerance
+#            compare against, using REFTOL as the position tolerance and
+#            REFMATCH as the minimum fraction of matching steps
 
 MCX=${MCX:-$(dirname "$0")/../bin/mcx}
 PYTHON=${PYTHON:-python3}
 REFTOL=${REFTOL:-1e-3}
+REFMATCH=${REFMATCH:-0.8}
 UPDATE=0
 
 if [ "$1" = "-u" ]; then
@@ -46,7 +50,8 @@ for casefile in "$TESTDIR"/traj_cases/*.json; do
     case=$(basename "$casefile" .json)
     echo "test trajectory of case '$case' ... "
 
-    (cd "$WORKDIR" && "$MCX" -f "$casefile" -A 0 -t 1 -T 1 -D M -F jnii -s "$case" $PARAM > "$case.log" 2>&1)
+    nphoton=$("$PYTHON" -c "import json,sys; print(int(json.load(open(sys.argv[1]))['Session']['Photons']))" "$casefile")
+    (cd "$WORKDIR" && "$MCX" -f "$casefile" -A 0 -t "$nphoton" -T 1 -D M -F jnii -s "$case" $PARAM > "$case.log" 2>&1)
 
     if [ ! -f "$WORKDIR/${case}_traj.jdt" ]; then
         echo "fail to save trajectory, see log below"
@@ -65,7 +70,7 @@ for casefile in "$TESTDIR"/traj_cases/*.json; do
     fi
 
     if [ -n "$REF" ] && [ -f "$REF/$case.json" ]; then
-        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$REF/$case.json" --tol "$REFTOL" --wtol "$REFTOL" || fail=$((fail + 1))
+        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$REF/$case.json" --tol "$REFTOL" --wtol "$REFTOL" --min-match "$REFMATCH" || fail=$((fail + 1))
     fi
 done
 

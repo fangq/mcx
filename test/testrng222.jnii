@@ -1,0 +1,69 @@
+{
+	"_DataInfo_":	{
+		"JNIFTIVersion":	"0.5",
+		"Comment":	"Created by MCX (https://mcx.space)",
+		"AnnotationFormat":	"https://neurojson.org/jnifti/draft1",
+		"SerialFormat":	"https://json.org",
+		"Parser":	{
+			"Python":	["https://neurojson.org/download/pyjdata", "https://neurojson.org/download/pybjdata"],
+			"MATLAB":	["https://neurojson.org/download/jnifty", "https://neurojson.org/download/jsonlab"],
+			"JavaScript":	["https://www.npmjs.com/package/jda", "https://www.npmjs.com/package/bjd"],
+			"CPP":	"https://github.com/NeuroJSON/json",
+			"C":	["https://github.com/DaveGamble/cJSON", "https://github.com/NeuroJSON/ubj"]
+		}
+	},
+	"NIFTIHeader":	{
+		"NIIHeaderSize":	348,
+		"Dim":	[2, 2, 2, 1, 1],
+		"Param1":	0,
+		"Param2":	0,
+		"Param3":	0,
+		"Intent":	0,
+		"DataType":	"single",
+		"BitDepth":	32,
+		"FirstSliceID":	0,
+		"VoxelSize":	[1, 1, 1, 4.99999996961265e-09, 1],
+		"Orientation":	{
+			"x":	"r",
+			"y":	"a",
+			"z":	"s"
+		},
+		"ScaleSlope":	1,
+		"ScaleOffset":	0,
+		"LastSliceID":	1,
+		"SliceType":	1,
+		"Unit":	{
+			"L":	"mm",
+			"T":	"s"
+		},
+		"MaxIntensity":	1,
+		"MinIntensity":	0,
+		"SliceTime":	0,
+		"TimeOffset":	0,
+		"Description":	"MCX volumetric output: Fluence rate (W/mm^2)",
+		"AuxFile":	"",
+		"QForm":	0,
+		"SForm":	1,
+		"Quatern":	{
+			"b":	0,
+			"c":	0,
+			"d":	0
+		},
+		"QuaternOffset":	{
+			"x":	0,
+			"y":	0,
+			"z":	0
+		},
+		"Affine":	[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]],
+		"Name":	"testrng222",
+		"NIIFormat":	"jnifti"
+	},
+	"NIFTIData":	{
+		"_ArrayType_":	"single",
+		"_ArraySize_":	[2, 2, 2, 1, 1],
+		"_ArrayOrder_":	"c",
+		"_ArrayZipType_":	"zlib",
+		"_ArrayZipSize_":	8,
+		"_ArrayZipData_":	"eJwBIADf/+57Wz/wY3Q/Pl19P96bbz+StwI/3FV6PzikDT/S2UQ/9pUOUg=="
+	}
+}

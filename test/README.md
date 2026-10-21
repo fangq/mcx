@@ -21,9 +21,11 @@ cd test
 ./testtraj.sh [-u] [extra mcx options]
 ```
 
-Each box-shaped case under `traj_cases/` runs with one GPU thread and a fixed
-seed (`-A 0 -t 1 -T 1 -E 12345 -D M`), so the saved photon trajectory is
-reproducible. `trajtest.py` then checks every recorded step against physical
+Each box-shaped case under `traj_cases/` runs with a fixed seed and one photon
+per GPU thread (`-A 0 -t <photons> -T 1 -D M`), so every photon draws from its
+own reproducible random number stream and the saved trajectory is
+deterministic. MCX-CL derives the per-thread seeds in the same way.
+`trajtest.py` then checks every recorded step against physical
 invariants:
 
 - every step is inside the domain box
@@ -43,8 +45,12 @@ domain. To compare mcx with golden data from another solver, set `REF` to its
 golden folder:
 
 ```
-REF=../../mcxcl/test/golden REFTOL=1e-3 ./testtraj.sh
+REF=../../mcxcl/test/golden REFTOL=1e-3 REFMATCH=0.8 ./testtraj.sh
 ```
+
+Single-precision round-off differs slightly between solvers and devices and
+accumulates along long paths. `REFMATCH` (`--min-match` of `trajtest.py`) sets
+the fraction of all steps that must still agree within `REFTOL`.
 
 `trajtest.py` needs only python3 and numpy. It reads the `*_traj.jdt` files
 written with `-F jnii`:

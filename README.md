@@ -73,7 +73,7 @@ Notable new features include:
 * Redbird (MATLAB) and Redbirdpy (Python) image reconstruction toolboxes, which can use
   mcx/mmc as the forward solver, are now bundled with the release packages
 * new deterministic tests: `make unittest` checks the ray-tracing helpers on the CPU
-  without a GPU, and `test/testtraj.sh` compares single-thread photon trajectories
+  without a GPU, and `test/testtraj.sh` compares deterministic photon trajectories
   step by step against solver-neutral golden data shared with mcxcl and mmc
 
 This release also contains a number of bug fixes, including
