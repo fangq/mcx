@@ -53,7 +53,7 @@ typedef uint64_t  RandType;
  * We only use the 1st 32 random bits of the 64bit state for random number generation
  */
 
-__device__ float xorshift128p_nextf(RandType t[RAND_BUF_LEN]) {
+MCX_HD float xorshift128p_nextf(RandType t[RAND_BUF_LEN]) {
     union {
         uint64_t i;
         float f[2];
@@ -76,7 +76,7 @@ __device__ float xorshift128p_nextf(RandType t[RAND_BUF_LEN]) {
  * 64bit host seeds are computed by the host and are different for each thread
  */
 
-__device__ void xorshift128p_seed (uint seed[4], RandType t[RAND_BUF_LEN]) {
+MCX_HD void xorshift128p_seed (uint seed[4], RandType t[RAND_BUF_LEN]) {
     t[0] = (uint64_t)seed[0] << 32 | seed[1];
     t[1] = (uint64_t)seed[2] << 32 | seed[3];
 }
@@ -85,7 +85,7 @@ __device__ void xorshift128p_seed (uint seed[4], RandType t[RAND_BUF_LEN]) {
  * @brief Copy the RNG state
  */
 
-__device__ void copystate(RandType* t, RandType* tnew) {
+MCX_HD void copystate(RandType* t, RandType* tnew) {
     tnew[0] = t[0];
     tnew[1] = t[1];
 }
@@ -99,7 +99,7 @@ __device__ void rand_need_more(RandType t[RAND_BUF_LEN]) {
 /**
  * @brief Generate random floating point between 0 and 1
  */
-__device__ float rand_uniform01(RandType t[RAND_BUF_LEN]) {
+MCX_HD float rand_uniform01(RandType t[RAND_BUF_LEN]) {
     return xorshift128p_nextf(t);
 }
 
@@ -119,7 +119,7 @@ __device__ void gpu_rng_reseed(RandType t[RAND_BUF_LEN], uint cpuseed[], uint id
 /**
  * @brief Generate exponentially distributed unitless scattering length
  */
-__device__ float rand_next_scatlen(RandType t[RAND_BUF_LEN]) {
+MCX_HD float rand_next_scatlen(RandType t[RAND_BUF_LEN]) {
     return -logf(rand_uniform01(t) + EPS);
 }
 

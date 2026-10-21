@@ -262,6 +262,14 @@ oct: fermioct
 doc: makedocdir
 	$(DOXY) $(DOXYCFG)
 
+# host-only unit tests of the ray-tracing helpers in mcx_core.cu, no GPU is needed to run
+UNITTEST_OBJS=$(filter-out mcx_core$(OBJSUFFIX) mcx$(OBJSUFFIX),$(OBJS))
+
+unittest: makedirs $(ZMATLIB) $(UNITTEST_OBJS)
+	$(CUDACC) $(CUCCOPT) -DSAVE_DETECTORS $(CUGENCODE) -o $(OUTPUT_DIR)/mcx_unittest$(EXESUFFIX) ../test/unit/test_raytrace.cu \
+	    $(UNITTEST_OBJS) $(ZMATLIB) -Xcompiler "$(OMP)" $(ZLIBFLAG)
+	$(OUTPUT_DIR)/mcx_unittest$(EXESUFFIX)
+
 OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
 TARGETSUFFIX:=$(suffix $(BINARY))

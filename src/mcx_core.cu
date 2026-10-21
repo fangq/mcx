@@ -55,6 +55,10 @@ This unit is written with CUDA-C and shall be compiled using nvcc in cuda-toolki
 #include <cuda.h>
 #endif
 
+#ifndef MCX_HD
+    #define MCX_HD __host__ __device__  /**< pure ray-tracing helpers, also callable from host unit tests (test/unit) */
+#endif
+
 #ifdef USE_DOUBLE
     typedef double OutputType;
     #define SHADOWCOUNT 1
@@ -483,7 +487,7 @@ __device__ inline float mcx_nextafterf(float a, int dir) {
  * @return the distance to the intersection to the voxel bounding box
  */
 
-__device__ inline float hitgrid(float3* p0, float3* v, float* rv, short id[4]) {
+MCX_HD inline float hitgrid(float3* p0, float3* v, float* rv, short id[4]) {
     float dist;
     float htime[3];
 
@@ -513,7 +517,7 @@ __device__ inline float hitgrid(float3* p0, float3* v, float* rv, short id[4]) {
  * @param[in] flipdir: 0: transmit through x=x0 plane; 1: through y=y0 plane; 2: through z=z0 plane
  */
 
-__device__ inline void transmit(MCXdir* v, float n1, float n2, int flipdir) {
+MCX_HD inline void transmit(MCXdir* v, float n1, float n2, int flipdir) {
     float tmp0 = n1 / n2;
     v->x *= tmp0;
     v->y *= tmp0;
@@ -542,7 +546,7 @@ __device__ inline void transmit(MCXdir* v, float n1, float n2, int flipdir) {
  * @return the reflection coefficient R=(Rs+Rp)/2, Rs: R of the perpendicularly polarized light, Rp: parallelly polarized light
  */
 
-__device__ inline float reflectcoeff(MCXdir* v, float n1, float n2, int flipdir) {
+MCX_HD inline float reflectcoeff(MCXdir* v, float n1, float n2, int flipdir) {
     float Icos = fabsf((flipdir == 0) ? v->x : (flipdir == 1 ? v->y : v->z));
     float tmp0 = n1 * n1;
     float tmp1 = n2 * n2;
@@ -1005,7 +1009,7 @@ __device__ inline void rotatevector2d(MCXdir* v, float stheta, float ctheta) {
  * @param[in] cphi: the cosine of the azimuthal angle
  */
 
-__device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float sphi, float cphi) {
+MCX_HD inline void rotatevector(MCXdir* v, float stheta, float ctheta, float sphi, float cphi) {
     if ( v->z > -1.f + EPS && v->z < 1.f - EPS ) {
         float tmp0 = 1.f - v->z * v->z;
         float tmp1 = stheta * rsqrtf(tmp0);
@@ -1037,7 +1041,7 @@ __device__ inline void rotatevector(MCXdir* v, float stheta, float ctheta, float
  * @param[in] stheta: sine of rotation angle
  * @param[in] ctheta: cosine of rotation angle
  */
-__device__ inline void rotate_perpendicular_vector(MCXdir* photon_dir, const float3* axis, float stheta, float ctheta) {
+MCX_HD inline void rotate_perpendicular_vector(MCXdir* photon_dir, const float3* axis, float stheta, float ctheta) {
     // Compute cross product: axis × photon_dir
     float3 cross;
     cross.x = axis->y * photon_dir->z - axis->z * photon_dir->y;
