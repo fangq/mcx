@@ -410,7 +410,11 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
 
     length = medianum
     if re.search("[sS]", savedetflag):
-        newdetp["nscat"] = np.ascontiguousarray(detp[c0 : c0 + length, :]).view(np.uint32).transpose()
+        nscat = np.ascontiguousarray(detp[c0 : c0 + length, :])
+        # the kernel stores nscat as uint32 bits inside the float32 detp buffer; other
+        # dtypes (e.g. user-assembled float64 arrays) hold the counts as values
+        nscat = nscat.view(np.uint32) if nscat.dtype == np.float32 else nscat.astype(np.uint32)
+        newdetp["nscat"] = nscat.transpose()
         c0 = c0 + length
 
     if re.search("[pP]", savedetflag):
