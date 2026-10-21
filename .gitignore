@@ -1,2 +1,2 @@
 Rakefile
-*.o
+*.o__pycache__/
