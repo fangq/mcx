@@ -45,12 +45,23 @@ domain. To compare mcx with golden data from another solver, set `REF` to its
 golden folder:
 
 ```
-REF=../../mcxcl/test/golden REFTOL=1e-3 REFMATCH=0.8 ./testtraj.sh
+REF=../../mcxcl/test/golden REFTOL=5e-2 MAXFORK=0.1 ./testtraj.sh
 ```
 
 Single-precision round-off differs slightly between solvers and devices and
-accumulates along long paths. `REFMATCH` (`--min-match` of `trajtest.py`) sets
-the fraction of all steps that must still agree within `REFTOL`.
+accumulates along long paths, so the comparison is done per photon:
+
+- a photon with the same number of steps as the reference must match every
+  step within `REFTOL` (`--tol`/`--wtol` of `trajtest.py`, 5e-2 mm by default)
+- a photon reaching a reflect/escape decision with a ~1e-7 difference can take
+  the other branch, after which the two random walks are unrelated; such
+  forked photons are tolerated if they match the reference up to the fork and
+  make up at most `MAXFORK` (`--max-fork`, 10% by default) of all photons.
+  Each fork is printed with the distance of its last matched step to the
+  nearest domain face.
+
+The comparison with a solver's own golden files stays strict (`--tol 1e-4
+--max-fork 0` for mcx).
 
 `trajtest.py` needs only python3 and numpy. It reads the `*_traj.jdt` files
 written with `-F jnii`:

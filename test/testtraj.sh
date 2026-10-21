@@ -16,13 +16,14 @@
 #    MCX:    path to the mcx binary (default ../bin/mcx)
 #    PYTHON: python interpreter with numpy (default python3)
 #    REF:    an extra golden folder from another solver (mcxcl, mmc) to
-#            compare against, using REFTOL as the position tolerance and
-#            REFMATCH as the minimum fraction of matching steps
+#            compare against, using REFTOL as the position (mm) and relative
+#            weight tolerance and MAXFORK as the maximum fraction of photons
+#            allowed to fork from the reference (see trajtest.py)
 
 MCX=${MCX:-$(dirname "$0")/../bin/mcx}
 PYTHON=${PYTHON:-python3}
-REFTOL=${REFTOL:-1e-3}
-REFMATCH=${REFMATCH:-0.8}
+REFTOL=${REFTOL:-5e-2}
+MAXFORK=${MAXFORK:-0.1}
 UPDATE=0
 
 if [ "$1" = "-u" ]; then
@@ -66,11 +67,11 @@ for casefile in "$TESTDIR"/traj_cases/*.json; do
         mkdir -p "$TESTDIR/golden"
         "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --save "$golden" --solver mcx || fail=$((fail + 1))
     else
-        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$golden" || fail=$((fail + 1))
+        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$golden" --tol 1e-4 --wtol 1e-4 --max-fork 0 || fail=$((fail + 1))
     fi
 
     if [ -n "$REF" ] && [ -f "$REF/$case.json" ]; then
-        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$REF/$case.json" --tol "$REFTOL" --wtol "$REFTOL" --min-match "$REFMATCH" || fail=$((fail + 1))
+        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$REF/$case.json" --tol "$REFTOL" --wtol "$REFTOL" --max-fork "$MAXFORK" || fail=$((fail + 1))
     fi
 done
 

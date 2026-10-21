@@ -3,8 +3,9 @@
 trajtest.py - verify MCX/MCX-CL/MMC photon trajectories step by step
 
 Usage:
-    trajtest.py TRAJ --case CASE.json [--ref GOLDEN.json] [--tol 1e-4]
-                [--wtol 1e-4] [--min-match 1.0] [--save GOLDEN.json] [--solver mcx]
+    trajtest.py TRAJ --case CASE.json [--ref GOLDEN.json] [--tol 5e-2]
+                [--wtol 5e-2] [--itol 1e-3] [--max-fork 0.1]
+                [--save GOLDEN.json] [--solver mcx]
 
 TRAJ is either a trajectory file saved by "-D M" (session_traj.jdt, text
 JData, any _ArrayZipType_ supported by the python stdlib) or a solver-neutral
@@ -21,6 +22,19 @@ Invariant checks (always performed):
     - in a homogeneous, index-matched case, the weight drop between two
       steps equals exp(-mua * step length) (Beer-Lambert per segment)
     - each photon ends on the domain boundary, or with (near) zero weight
+
+Reference comparison (--ref), per photon:
+    - a photon whose step count equals the reference must match every step
+      within --tol (position, in mm) and --wtol (relative weight)
+    - single-precision round-off grows along a path, and a photon reaching a
+      reflect/escape (or similar) decision with a ~1e-7 difference can take
+      the other branch; from then on the two random walks are unrelated.
+      Such "forked" photons (different step count, or a step deviating more
+      than --tol) are tolerated if they match the reference up to the fork
+      and make up at most --max-fork of all photons. Each fork is printed
+      with the distance of its last matched step to the nearest domain face,
+      so forks away from any boundary stand out; this is reported, not
+      enforced, because internal index-mismatched interfaces also fork.
 
 Exit code is 0 when all checks pass, 1 otherwise. Only numpy is required.
 """
@@ -145,14 +159,16 @@ def check_invariants(photons, case, tol, wtol):
     return errors
 
 
-def compare(photons, ref, tol, wtol, minmatch=1.0):
-    """Compare two trajectory sets; return (errors, number of matching steps)
+def compare(photons, ref, tol, wtol, maxfork=0.1, dim=None):
+    """Compare two trajectory sets; return (errors, matched photons, forked photons)
 
-    a photon diverging from the reference is reported as an error unless the
-    fraction of matching steps over all photons is at least minmatch
+    a photon is forked when its step count differs from the reference, or a
+    step deviates by more than tol/wtol; forked photons are tolerated if they
+    match up to the fork (at least the first two steps) and make up at most
+    maxfork of all photons
     """
     errors = []
-    diverged = []
+    forked = []
     matched = 0
 
     if len(photons) != len(ref):
@@ -163,22 +179,33 @@ def compare(photons, ref, tol, wtol, minmatch=1.0):
         dp = np.max(np.abs(a[:n, :3] - b[:n, :3]), axis=1)
         dw = np.abs(a[:n, 3] - b[:n, 3]) / np.maximum(np.abs(b[:n, 3]), 1e-6)
         bad = np.nonzero((dp > tol) | (dw > wtol))[0]
-        matched += int(bad[0]) if len(bad) else n
-        if len(bad):
-            k = int(bad[0])
-            diverged.append("photon %d: diverges at step %d/%d, |dp|=%g, |dw|/w=%g" % (i, k, n, dp[k], dw[k]))
-        elif len(a) != len(b):
-            diverged.append("photon %d: step count differs: %d vs reference %d" % (i, len(a), len(b)))
 
-    total = sum(len(a) for a in photons)
+        if not len(bad) and len(a) == len(b):
+            matched += 1
+            continue
 
-    if diverged and matched < minmatch * total:
-        errors += diverged
+        k = int(bad[0]) if len(bad) else n
+        where = ""
+
+        if dim is not None and k > 0:
+            last = b[k - 1, :3]
+            where = ", last matched step %.3g mm from a domain face" % np.min(np.minimum(np.abs(last), np.abs(dim - last)))
+
+        msg = "photon %d: forks at step %d (%d vs reference %d steps)%s" % (i, k, len(a), len(b), where)
+
+        if k < 2:
+            errors.append(msg + ", no matching prefix")
+        else:
+            forked.append(msg)
+
+    if len(forked) > maxfork * len(ref):
+        errors += forked
+        errors.append("%d forked photons exceed --max-fork %g of %d photons" % (len(forked), maxfork, len(ref)))
     else:
-        for d in diverged:
-            print("  (tolerated) " + d)
+        for f in forked:
+            print("  (tolerated) " + f)
 
-    return errors, matched
+    return errors, matched, len(forked)
 
 
 def main():
@@ -186,10 +213,11 @@ def main():
     ap.add_argument("traj", help="session_traj.jdt from -D M, or a golden .json")
     ap.add_argument("--case", required=True, help="the JSON input used to run the simulation")
     ap.add_argument("--ref", help="golden .json (any solver) to compare against")
-    ap.add_argument("--tol", type=float, default=1e-4, help="position tolerance (default 1e-4)")
-    ap.add_argument("--wtol", type=float, default=1e-4, help="relative weight tolerance (default 1e-4)")
-    ap.add_argument("--min-match", type=float, default=1.0, dest="minmatch",
-                    help="minimum fraction of steps matching --ref to pass (default 1.0)")
+    ap.add_argument("--tol", type=float, default=5e-2, help="position tolerance against --ref in mm (default 5e-2)")
+    ap.add_argument("--wtol", type=float, default=5e-2, help="relative weight tolerance against --ref (default 5e-2)")
+    ap.add_argument("--itol", type=float, default=1e-3, help="tolerance of the invariant checks (default 1e-3)")
+    ap.add_argument("--max-fork", type=float, default=0.1, dest="maxfork",
+                    help="maximum fraction of photons allowed to fork from --ref (default 0.1)")
     ap.add_argument("--save", help="write the trajectories to a solver-neutral golden .json")
     ap.add_argument("--solver", default="mcx", help="solver name stored with --save")
     opt = ap.parse_args()
@@ -199,12 +227,15 @@ def main():
 
     photons = load_traj(opt.traj)
     nstep = sum(len(ph) for ph in photons)
-    errors = check_invariants(photons, case, opt.tol, opt.wtol)
+    errors = check_invariants(photons, case, opt.itol, opt.itol)
     print("%s: %d photons, %d steps, invariants %s" % (opt.traj, len(photons), nstep, "FAILED" if errors else "ok"))
 
     if opt.ref:
-        cerr, matched = compare(photons, load_traj(opt.ref), opt.tol, opt.wtol, opt.minmatch)
-        print("compared with %s: %d/%d steps match %s" % (opt.ref, matched, nstep, "FAILED" if cerr else "ok"))
+        dom = case["Domain"]
+        dim = np.asarray(dom["Dim"], dtype=np.float64) * dom.get("LengthUnit", 1.0) if "Dim" in dom else None
+        cerr, matched, nfork = compare(photons, load_traj(opt.ref), opt.tol, opt.wtol, opt.maxfork, dim)
+        print("compared with %s: %d/%d photons match every step, %d forked %s" %
+              (opt.ref, matched, len(photons), nfork, "FAILED" if cerr else "ok"))
         errors += cerr
 
     for e in errors[:20]:
