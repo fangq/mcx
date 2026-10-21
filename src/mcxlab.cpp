@@ -990,6 +990,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
                 for (i = 0; i < dimxyz; i++) {
                     cfg->vol[i] = val[i];
                 }
+
+                cfg->mediabyte = 4;
             } else if (cfg->mediabyte == MEDIA_MUA_FLOAT) {
                 union {
                     float f;

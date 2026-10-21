@@ -238,7 +238,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         }
     } else if (py::array_t<uint32_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<uint32_t, py::array::f_style>::ensure(volume_handle);
-        mcx_config.mediabyte = 8;
+        mcx_config.mediabyte = 4;
         auto buffer = f_style_volume.request();
 
         if (buffer.shape.size() == 4) {
@@ -367,8 +367,7 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
                     throw py::value_error("Invalid array for vol array.");
             }
         } else {
-            mcx_config.mediabyte = 14;
-            mcx_config.vol = static_cast<unsigned int*>(malloc(buffer.size * sizeof(unsigned int)));
+            mcx_config.mediabyte = 4;  /* float32 3D labels are stored as 32bit integer labels */
 
             for (i = 0; i < buffer.size; i++) {
                 mcx_config.vol[i] = static_cast<float*>(buffer.ptr)[i];

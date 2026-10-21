@@ -4062,6 +4062,11 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
         + SAVE_W0(cfg->savedetflag);
     hostdetreclen += cfg->polmedianum ? (4 * SAVE_IQUV(cfg->savedetflag)) : 0; // for polarized photon simulation
 
+    if (!(cfg->mediabyte == 1 || cfg->mediabyte == 2 || cfg->mediabyte == 4
+            || (cfg->mediabyte >= MEDIA_ASGN_F2H && cfg->mediabyte <= MEDIA_AS_SHORT))) {
+        MCX_ERROR(-1, "Unsupported media format");
+    }
+
     if (!cfg->issave2pt && cfg->issaveref) {
         cfg->issaveref = 0;
     }
