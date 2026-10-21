@@ -4,7 +4,7 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 
 -   Author: Qianqian Fang (q.fang at neu.edu)
 -   License: GNU General Public License version 3 (GPLv3)
--   Version: 2.8 (v2025.10, Kilo-Kelvin)
+-   Version: 3.0 (v2026, CODENAME_TBD)
 -   Website: <https://mcx.space>
 -   Download: <https://mcx.space/wiki/?Get>
 
@@ -42,106 +42,237 @@ Table of Content:
 What's New
 -------------
 
-MCX v2025.10 is a maintenance release with multiple bug fixes and minor new features. It is highly
+MCX v2026 (3.0) is a milestone release. It brings MCX to AMD GPUs, adds adjoint and
+frequency-domain (RF) Jacobians for image reconstruction, ships a redesigned GUI and
+web service, and adds CPU-verifiable, step-by-step ray-tracing tests. It is highly
 recommended to upgrade for all users.
 
 Notable new features include:
-* initial international language support (i18n), including Chinese (`zh_CN` and `zh_TW`),
-  French (`fr_CA`), Spanish (`es_MX`), German (`de_DE`), Japanese (`ja_JP`), Korean (`ko_KR`),
-  Hindi (`hi_IN`) and Portuguese (`pt_BR`); use `--lang` in the command line or `cfg.lang`
-  or `cfg['lang']`, or use environment variable `MCX_LANG` to set output language;
-* ported additional mcx utility functions from mcxlab to pmcx, including `cwdiffusion`,
-  `cwfluxdiffusion`, `cwfluencediffusion`, `dcsg1`, `mcxcreate`, `rfreplay`, `rfmusreplay`,
-  `loadmc2`, `loadmch`, `loadfile`, `mcx2json`, `json2mcx`, `loadnii`, `preview`,
-  `plotshapes`, `plotphotons`, `plotvol`; all new functions are unit-tested
-* make mcx data processing functions in `pmcx` Python module pip-installable for Mac 
-  users running on Apple silicon. The GPU simulation binary module (`_pmcx`) is not
-  supported on Apple silicon as it does not support CUDA.
-* use replay to produce frequency-domain Jacobians - contributed by Paulliina Hirvi and Jarno Rantaharju
+* AMD GPU support via ROCm/HIP; build with `cmake -DUSE_HIP=ON` (default arch `gfx90a`),
+  contributed by Jeff Daily (AMD) (#264)
+* RF (frequency-domain) forward simulation with complex photon weights, set `cfg.omega`
+  and use output type `rf` without replay
+* adjoint-method Jacobians computed directly from forward simulations of sources and
+  detectors (`-O A/D/U/V/W/Q`, or `cfg.outputtype='adjoint'`, `'adjoint_dcoeff'`,
+  `'adjoint_mus'`, `'adjoint_musp'`, `'adjoint_mua_d'`, `'adjoint_mua_musp'`); detectors
+  need a direction (`Optode.Detector.Dir` or `cfg.detdir`); both the forward fluence and
+  the Jacobians are returned, supporting CW and RF
+* pattern sources are supported in `wp`/`dcs`/`wptof`/`rfmus` replay; rfmus replay
+  uses a double-precision buffer to reduce round-off errors
+* `-F bnii` saves binary JData (BJData) volumes, and detected photon/trajectory files
+  are now saved as `.jdt` (text JSON) or `.jdb` (binary); `.jdat` files can still be
+  loaded for replay
+* atomic accumulation is always used; `--atomic 0` is deprecated as it lost energy on
+  modern GPUs at no speed benefit
+* extended line sources for wedge/fan beams; detected photon scattering counts are
+  now saved as unsigned integers to remove the 16777216 cap
+* about 10% speed gain in split-voxel MC (SVMC) by reducing register use
+* MCXStudio2: a new cross-platform GUI with live JSON preview, shape editor,
+  and high-DPI support, to replace MCXStudio
+* MCXCloud v2: a redesigned web simulation service supporting both mcx and mmc
+* Redbird (MATLAB) and Redbirdpy (Python) image reconstruction toolboxes, which can use
+  mcx/mmc as the forward solver, are now bundled with the release packages
+* new deterministic tests: `make unittest` checks the ray-tracing helpers on the CPU
+  without a GPU, and `test/testtraj.sh` compares single-thread photon trajectories
+  step by step against solver-neutral golden data shared with mcxcl and mmc
 
-This release also contains a few bug fixes, including
-* ensure time gate can not exceed gcfg->maxgate, fix #242 
-* fix typos in pmcx functions
-* package DLL files in the github action build script for mcxlab
+This release also contains a number of bug fixes, including
+* multiple fixes in the replay normalization, including `-U 2` to skip the detected
+  weight normalization in replay
+* srcid is now separated from detid in `.jdt`/`.jdb` detected photon outputs of
+  multi-source simulations
+* fixed double pre-processing of the input when using `-j`, and the 2^24 cap in
+  `wp`/`dcs`/`wptof` replay outputs (reported by Pauliina Hirvi)
+* fixed `make volta`/`make ampere` etc. compiling for sm_30
 
 We would like to give our special thank the following contributors
-* @HirviP and @rantahar for their contributions of the new RF-replay feature added in this release (#241, #245)
-* @ShawnSun1031 and @kuilef for the typo fixes
+* @jeffdaily (AMD) for the ROCm/HIP port (#264)
+* @PrasoonMishra for the HIP photon-loop optimization (#267)
+* @jolkkonen and @Jah-yee for pmcx fixes (#269, #270)
 
 The detailed updates can be found in the below change log
 
-* 2025-10-12 [4d6ca7f] [doc] update README, tag v2025.10
-* 2025-10-12 [66128fd] [ci] fix opencl generic cpu error when testing packages
-* 2025-10-11 [aa62f2b] [pmcx] bump pmcx to 0.6.1
-* 2025-10-10 [d20953c] [inno] installer adds paths for iso2mesh or redbird
-* 2025-10-10 [02f1b75] [ci] update release test actions
-* 2025-10-06 [c285125] [pmcx] bump version to 0.6.0
-* 2025-10-06 [b1bd7a8] [release] update release version to v2025.10
-* 2025-10-05 [334ca2a] [mcxstudio] force enabling cthreads in linux
-* 2025-10-05 [7bd0c04] [mcxstudio] correctly handle _ArrayOrder_=c, fix --lang for mcxcl/mmc
-* 2025-10-01 [e4ed8f0] [feat] use USE_MCXCL>0 to set OpenCL device, negative to set CUDA device
-* 2025-09-30 [da51af2] [bug] fix bug when individually specifying srcid>0 and replaydet>0, #250
-* 2025-09-30 [96a728d] [bug] output 6D array when replaying multi-src w/ srcid=-1,replaydet=-1, fix #250
-* 2025-09-30 [037366e] [feat] multiple source replay
-* 2025-09-28 [76f8b4d] [i18n] use --lang=ID instead of --lang
-* 2025-09-28 [c9b1439] [i18n] set default lang to en
-* 2025-09-28 [5adace3] [i18n] set installer language tag
-* 2025-09-28 [9fa04fd] [i18n] use locale folder that is already at root
-* 2025-09-28 [66afb5c] [i18n] installer also setup locale files
-* 2025-09-28 [4bab8ba] [typo] fix typo
-* 2025-09-28 [975329c] [i18n] support French, German, Spanish, Italian, Japanese, Korean, Portuguese and Chinese
-* 2025-09-28 [dbca123] [i18n] add GUI translations
-* 2025-09-27 [fda913a] [bug] support more than 256 media count in output JSON file
-* 2025-09-27 [2489d22] [inno] remove unsupported language
-* 2025-09-27 [0756947] [inno] enable language selection
-* 2025-09-26 [3d67580] [lang] support lang in the inno installer
-* 2025-09-25 [e230514] [bug] when srctype is unknown, the program can run successfully
-* 2025-08-26 [84adbfc] [pmcx] bump version to 0.5.1, some fixes after new unit tests
-* 2025-08-26 [e12bbef]*[pmcx] add additional unit tests
-* 2025-08-25 [521fcf0] [pmcx] pmcx v0.5.0
-* 2025-08-25 [501d6b3] [pmcx] bump version 0.4.6 to update macos apple silicon src
-* 2025-08-24 [37c1205]*[pmcx] initial port of all remaining utils matlab functions to python
-* 2025-08-24 [101f3c7] [doc] fix inaccurate descrption of the 'energy' output type
-* 2025-08-24 [196d1de] [pmcx] bump pmcx version to 0.4.3
-* 2025-07-20 [fbf5942]*[ci] build none-any pmcx package for Apple silicon macos
-* 2025-06-01 [6752c76] [i18n] updated es_MX translations verified by Edgar Guevara
-* 2025-06-01 [bdc9a79] [lang] fix some octave warnings, improve translations
-* 2025-06-01 [3ebff5b] [bug] use consistent message
-* 2025-06-01 [8097604] [feat] read env variable MCX_LANG to set language
-* 2025-06-01 [a2c8ef5] [bug] fix typos in translations, there could be more
-* 2025-06-01 [fc7c1cf] [pmcx] bump version to 0.4.2 to support cfg['lang'], print lang name
-* 2025-06-01 [8ece5d6] [pmcx] fix ci error for windows, support locale in pmcx, pass test
-* 2025-06-01 [70958b9] [ci] fix windows vs error, make mcx_lang const visible in c++
-* 2025-06-01 [b99a33f] [ci] fix macos build error, add missing new unit in cmake
-* 2025-06-01 [729fc37]*[feat] initial i18n support for international languages
-* 2025-05-12 [8663b80] Fix photontof index in WPTOF calculation
-* 2025-04-21 [174e35c]*[feat] further polish rf replay for mus Jacobian, close #241
-* 2025-04-21 [346a638] [feat] dynamically detect the lowest supported gpu arch by nvcc
-* 2025-04-18 [0b3c364] Create demo script for computing any or all of the available Jacobian types in replay mode
-* 2025-04-16 [512ea26] [pmcx] fix ci build errors
-* 2025-04-16 [9ec9be1] Fix typo in pmcx.cpp
-* 2025-04-15 [3e8b730] fix typo cfg.issaveexit to cfg["issaveexit"]
-* 2025-04-12 [0bf148c]*[bug] ensure tshift can not exceed gcfg->maxgate, fix #242
-* 2025-03-18 [98c92ea] Fix undefined variable cfg, should be mcx_config.
-* 2025-03-18 [c1bc350] Format updated code and simplify example
-* 2025-03-18 [d94e4f4] Add terminal output types for new features.
-* 2025-03-17 [0d4c892] Fix typo in cfg struct name.
-* 2025-03-17 [ded9aba]*Implement computation of the total time-of-flight (TOF) and final detected weight
-* 2025-03-17 [eb4b171] Implement computation of total time-of-flight (TOF)- and final detected weight
-* 2025-03-14 [aa7bbdd] [doc] fix typo in mcxlab, fix mcxpreview format
-* 2025-03-12 [6d60f81]*[feat] accelerate mcxpreview using isosurface, must transpose
-* 2025-03-10 [2eacfb8] [example] fix rf replay script to use .jdat output, fix #239
-* 2025-03-06 [4e02a5b] Add object files to gitignore
-* 2025-03-06 [c7df8d9] Fix memory error by unifying handling of otRF and otRFmus
-* 2025-03-06 [7e7d88b] Fix function name
-* 2025-03-06 [5f7d9c6] Fix compliation errors
-* 2025-02-27 [7f05c3b] Remove redundant ifdef
-* 2025-02-27 [c1b7c3c] Implement RFmus calculation
-* 2025-02-27 [40882be] Add RFmus output type and start implementing calculation
-* 2025-02-27 [7f09134] rename new example
-* 2025-02-27 [6599a1c] Added new example functions for RF scattering Jacobians.
-* 2025-02-23 [986ec46] [doc] post v2025 release action, close #238
-
+* 2026-10-21 [5df0751] [release] bump version to v2026 (3.0), pmcx to 0.8.0, update copyright years
+* 2026-10-21 [8ed7c2e] [ci] run host unit tests, build mcxstudio2, bundle redbird/redbirdpy
+* 2026-10-21 [e9736d8]*[test] host unit tests of ray-tracing helpers, mark pure helpers MCX_HD
+* 2026-10-21 [d410478]*[test] add step-by-step photon trajectory tests with solver-neutral golden data
+* 2026-10-21 [6444821]*[bug] split srcid from detid in .jdt/.jdb detected photon output
+* 2026-10-21 [bec9b10] [build] make arch aliases (volta, ampere, ...) depend on fermi directly
+* 2026-10-21 [5333d1e] [test] use compute-sanitizer when available, do not hard-code zlib stream header
+* 2026-09-13 [83c828f] [mcxstudio2] paste a simulation into the JSON pane
+* 2026-09-13 [87d0406] [mcxstudio2] the JSON pane, coloured
+* 2026-09-13 [a915dda] [mcxstudio2] left-aligned titles, and a subsection band that is really a pill
+* 2026-09-13 [009b021] [mcxstudio2] open where you are, and give the groups room
+* 2026-09-13 [c2d0b7f] [mcxstudio2] the section band is a pill
+* 2026-09-13 [6087899] [mcxstudio2] find Lazarus wherever it is, whichever version
+* 2026-09-13 [745c1c8] [mcxstudio2] flat: the fields, the buttons and the tab strip
+* 2026-09-13 [85f3064] [mcxstudio2] rounder section bands, and air between them
+* 2026-09-13 [b8b820b] [mcxstudio2] the hover is the band, not the widget set's idea of one
+* 2026-09-13 [ef98727] [mcxstudio2] edit a simulation that has more than one source
+* 2026-09-13 [1c3be24] [mcxstudio2] a theme that reaches the buttons, and a band that says which level
+* 2026-09-13 [5f2f5dc] [mcxstudio2] start a second time
+* 2026-09-13 [37d54c1] [mcxstudio2] the section band is rounded after all, and the chevron comes back up
+* 2026-09-13 [facff2a] [mcxstudio2] a band for the selected subsection, and a pointer that says click
+* 2026-09-13 [3898f9d] [mcxstudio2] the Shapes editor: a list of commands, and the one selected
+* 2026-09-13 [8ae02e1] [mcxstudio2] a toolbar you can hit, at any display scale
+* 2026-09-13 [ae5f4eb] [mcxstudio2] fit the result, and a ruler that is behind what it measures
+* 2026-09-13 [8513b02] [mcxstudio2] open the binary results mcx actually writes
+* 2026-09-13 [d6e3476] [mcxstudio2] build on the Lazarus the README says it needs
+* 2026-09-13 [05f20d4] [mcxstudio2] pick the problem, not the program
+* 2026-09-13 [5bb7939] [mcxstudio2] a mode switch where the settings are
+* 2026-09-13 [5d82797] [mcxstudio2] axes that can be read a number off
+* 2026-09-13 [2253a8c] [mcxstudio2] the parts of the window the LCL cannot colour
+* 2026-09-13 [63fec5b] [mcxstudio2] mmc, end to end: mesh, fluence and paths
+* 2026-09-13 [ce0bb0e] [mcxstudio2] paths that finish, weight that decays, axes that are labelled
+* 2026-09-13 [19c74e6] [mcxstudio2] pick which photons to draw
+* 2026-09-13 [687881d] [mcxstudio2] make the trajectory checkbox actually produce trajectories
+* 2026-09-12 [de8249b] [mcxstudio2] the other two spellings, and what each detector caught
+* 2026-09-12 [bd0d0ce] [mcxstudio2] fewer samples while the picture is moving
+* 2026-09-12 [f0da10e] [mcxstudio2] packaging: a README, an install, a CI job, and a way in from the old projects
+* 2026-09-12 [16750df] [mcxstudio2] open an mmc file as an mmc file, and stop rewriting it
+* 2026-09-12 [762f2c7] [mcxstudio2] the source parameters, named for the source
+* 2026-09-12 [489309e] [mcxstudio2] colour themes
+* 2026-09-12 [f652b62] [mcxstudio2] what each setting does: hints, F1 and About
+* 2026-09-12 [50e0fd4] [mcxstudio2] find a backend cloned next to this one
+* 2026-09-12 [9fd4529] [mcxstudio2] display controls under the picture
+* 2026-09-12 [b604521] [mcxstudio2] photon paths, drawn
+* 2026-09-12 [1e210f6] [mcxstudio2] what the options mean, not what they are called
+* 2026-09-12 [ea45348] [mcxstudio2] the source is an arrow, and the shape it emits from
+* 2026-09-12 [423a7e8] [mcxstudio2] mmc meshes, drawn as surfaces
+* 2026-09-12 [6c490f4] [mcxstudio2] picking, and a picture at any size
+* 2026-09-12 [790ea80] [mcxstudio2] benchmarks to start from, and Back/Next for the wizard
+* 2026-09-12 [87106ef] [mcxstudio2] shapes are surfaces, not outlines
+* 2026-09-12 [42cd608] [mcxstudio2] the volume view: a result on the card, everything else a uniform
+* 2026-09-12 [c281555] [mcxstudio2] mcxjd: read an array out of JData or BJData
+* 2026-09-12 [2229551] [mcxstudio2] the two tables: optical properties and detectors
+* 2026-09-12 [391f2ec] [mcxstudio2] mcxview: the 3-D preview moves out of the main form
+* 2026-09-12 [d450b6a] [mcxstudio2] draw the Shapes list
+* 2026-09-12 [92766df] [mcxstudio2] mcxgl: a 3.3 core context, and the domain drawn in it
+* 2026-09-12 [b92f107] [mcxstudio2] mcxrun: find a backend, ask it what it has, run it
+* 2026-09-12 [105584b] [mcxstudio2] the settings are a page of the notebook, not a pane of their own
+* 2026-09-12 [fb5e50e] [mcxstudio2] real docking, the way led does it: AnchorDocking
+* 2026-09-12 [e0f32fa] [mcxstudio2] the preview is one dockable object: right, bottom, or its own window
+* 2026-09-12 [195cd0c] [mcxstudio2] tear a page off by dragging its tab, or double-clicking it
+* 2026-09-12 [0ff4100] [mcxstudio2] a preview page can be torn off into a window of its own
+* 2026-09-12 [7dc6043] [mcxstudio2] Advanced was arriving third, and it was its own stale Top
+* 2026-09-12 [5adf3a8] [mcxstudio2] drop the slider; print a float as short as it can be
+* 2026-09-12 [5996c5b] [mcxstudio2] spin edits for counts, a slider where both ends are known
+* 2026-09-12 [734a2ca] [mcxstudio2] a card is a panel, because a group box cannot lose its frame
+* 2026-09-12 [698be5e] [mcxstudio2] three colours, and a selection that stays put
+* 2026-09-12 [e5a80d8] [mcxstudio2] flat surfaces and a colour per section
+* 2026-09-12 [6ee93f9] [mcxstudio2] bigger icons, and twice the type in the navigator
+* 2026-09-12 [c2ff716] [mcxstudio2] the icon set goes back to the original artwork
+* 2026-09-12 [3143ee3] [mcxstudio2] the accordion navigates, the detail pane holds the settings
+* 2026-09-12 [be48a89] [mcxstudio2] do not track build artifacts from the test build
+* 2026-09-12 [869f463] [mcxstudio2] the binding table: one row per setting, no serialisers
+* 2026-09-12 [d7fecd4] [mcxstudio2] main window: accordion sections and live preview panes
+* 2026-09-12 [a14c087] [mcxstudio2] the simulation document and its round-trip tests
+* 2026-09-12 [ad17282]*[mcxstudio2] skeleton: project, high-DPI scaling and drawn icons
+* 2026-09-01 [8a224ca] [mcxcloud] v2: record the submitting client's IP
+* 2026-08-31 [9102cfa] [mcxcloud] v2: raise the preview domain-dimension cap from 300 to 400
+* 2026-08-30 [4fd5c3d] [feat] make isrfforward a template constant to recover the lean-kernel register budget
+* 2026-08-30 [4e2fd41]*[feat] always use atomic accumulation, drop the non-atomic and pre-Fermi paths
+* 2026-08-30 [959109a] [bug] fix correctness bugs and doc drift in the utils MATLAB functions
+* 2026-08-30 [585f607] [bug] accumulate wltof/wptof time-of-flight in nanoseconds so the double-buffer engages
+* 2026-08-29 [1be8bad] [bug] make -U 2 mean only "skip the detected-weight normalization in replay", #263
+* 2026-08-29 [39c026e] [test] add pattern-source photon-sharing replay regression tests
+* 2026-08-27 [ba36c98]*[feat] support pattern/pattern3d sources in wp/dcs/wptof/rfmus replay, #259
+* 2026-08-27 [8781d36] [bug] apply per-pattern weight to the sine-weighted RF mua Jacobian, #259
+* 2026-08-27 [8d571b6] [doc] swap mistakenly reversed descriptions of outputtype t and b
+* 2026-08-27 [1877f40] [bug] divide mus in otWPTOF SVMC replay, scale unitinmm in normalization, #263
+* 2026-08-23 [3e05491] [mcxcloud] v2 redbird: emit JMesh (.jmsh) + a self-describing measurement file
+* 2026-08-23 [651dc45] [mcxcloud] v2: capitalize Redbird (and MCX/MMC) in user-facing text
+* 2026-08-23 [de68770] [mcxcloud] v2 redbird: require redbirdpy >= 0.4.2
+* 2026-08-23 [4d1a4c7] [mcxcloud] v2 frontend: tint builtin library cards by solver
+* 2026-08-23 [bbfe60c] [mcxcloud] v2 redbird: correct inverted element volumes from meshprep
+* 2026-08-23 [789cd6b] [mcxcloud] v2 redbird: refuse to publish a non-converged FEM solve
+* 2026-08-23 [23f6130] [mcxcloud] v2: purge blanks job content in place instead of deleting rows
+* 2026-08-23 [25bc3e4] [mcxcloud] v2: redbird FEM diffusion engine (CPU), disabled by default
+* 2026-08-23 [16e1dd6] [mcxcloud] v2 schema: add redbird engine discriminator (rejected for now)
+* 2026-08-23 [d53b076] [mcxcloud] v2 schema: unify RF frequency field across mcx/mmc
+* 2026-08-22 [e1f6b8f] [mcxcloud] v2 preview: adaptive mesh zoom range + drop misleading mesh bbox
+* 2026-08-22 [5521c25] [mcxcloud] v2 backend: GPU dispatch cold-start fix + swarm retry-on-failure
+* 2026-08-20 [5576ee0] Revert "fix: correct dephotons to detphotons typo in pmcx/utils.py (closes #268)"
+* 2026-08-15 [a375004] fix: correct dephotons to detphotons typo in pmcx/utils.py (closes #268)
+* 2026-08-14 [182f233] Update utils.py
+* 2026-08-03 [7e53b92] [perf] scope slen to loop body to keep HIP photon loop flat
+* 2026-07-22 [145c717] [mcxcloud] v2 preview: mesh edges + interior region-interface surfaces
+* 2026-07-20 [1413b51] [mcxcloud] v2: per-node mmc placement + replace mmc demos with a verified slab
+* 2026-07-19 [9eb8702] [mcxcloud] v2: fix mmc worker segfault on editor-emitted Detector.Dir
+* 2026-07-19 [5a6285c] [mcxcloud] v2 preview: render tet meshes + cross-sections + mmc outputs (Phase C)
+* 2026-07-19 [60cf0f1] [mcxcloud] v2 backend: mmc job routing + worker (Phase B)
+* 2026-07-19 [aed0069] [mcxcloud] v2 schema: mmc (mesh) support — plan + Phase A validation
+* 2026-07-19 [f8daf12] [mcxcloud] v2 library: seed builtin multi-source examples
+* 2026-07-19 [21b2cee] [mcxcloud] v2 preview: render 4D+ volumes with a frame selector
+* 2026-07-19 [1881132] [mcxcloud] v2 schema: multi-src support + missing mcx json constructs
+* 2026-07-18 [1bf46f1] [mcxcloud] v2 frontend: fix shared-link (?data=) load + auto-render
+* 2026-07-18 [6ea36b4] [mcxcloud] v2 preview: DVR (MIDA) render mode + contrast control
+* 2026-07-18 [00e1f7b] [mcxcloud] v2 Phase 6: library review, purge/rate-limit, preview UX, deploy tooling
+* 2026-07-14 [7c09a0e] [mcxcloud] v2 Phase 5: v1 library migration, deploy tooling, private-cloud docs
+* 2026-07-14 [5acf578] [mcxcloud] v2 Phase 4: no-build ESM frontend
+* 2026-07-14 [1fe3be1] [mcxcloud] v2 Phase 3: event-driven scheduler + push-based worker protocol
+* 2026-07-14 [3032cab] [mcxcloud] v2: port backend to plain ESM JS + JSDoc (Node 20+)
+* 2026-07-14 [c8879c4] [mcxcloud] v2 Phase 2: Postgres schema + Fastify API (no-build TS)
+* 2026-07-14 [277ae10]*[mcxcloud] v2 Phase 1: design doc + data/API contracts
+* 2026-07-14 [ebdf88b] [mcxcloud] relocate v1 frontend/backend into v1/ subfolder
+* 2026-06-17 [d38c7aa] [ROCm] Enable native FP atomics and fast-math for the HIP build
+* 2026-06-16 [a7ecad7]*[ROCm] Add HIP/ROCm support for AMD GPUs
+* 2026-05-10 [6d7a81a]*[feat] port -F bnii support from mmc to mcx, rename .jdat to .jdt
+* 2026-05-10 [bc5148f] [utils] update mcx2json to match umcxlab
+* 2026-05-09 [c24b8bd] [ci] prevent choco checksum error
+* 2026-05-09 [d750374] [ci] use cache to optimize ci runtime
+* 2026-04-23 [1d44d85] [ci] fix windows binary build
+* 2026-04-23 [8c348b0] [ci] fix macos bug
+* 2026-04-22 [53dddfc] [ci] fix link error for lzma sdk
+* 2026-04-22 [e71c1d6] [ci] fix choco mingw installation error
+* 2026-04-22 [ba5491d] [ci] disable multi-threading lzma
+* 2026-04-22 [387c7c9] [ci] fix cmake and pmcx build
+* 2026-04-22 [da5ad22] [zmat] update zmat to 1.2.preview to use parallel lzma/lzip
+* 2026-04-15 [d18407f] [zmat] sync bundled zmat lib to 1.0 release
+* 2026-04-06 [f82c0dd] [feat] migrate rfmus replay output to double-buffer to minimize round-off error
+* 2026-04-06 [f4836d0] [pmcx] bump version to 0.7.1 to support detdir(4) in adjoint output
+* 2026-04-06 [7aaeb06] [demo] mcxlab demo script update for how to set detdir(4)
+* 2026-04-06 [9ec176e] [bug] fix unable to use detdir(4) to set detector beam profile
+* 2026-04-05 [7483c66] [bug] remove c++11 feature in mcxlab.cpp to allow ci build
+* 2026-04-05 [ad0f881] [bug] fix pattern3d in rf-replay, fix #259, ref #255
+* 2026-04-05 [06212d2] [bug] fix replaydet=-1 fails to replay in nscat, wp, wptof and rfmus, #255
+* 2026-04-05 [74f4790] [bug] divide mus during ray-tracing in otRFmus and otWP in replay
+* 2026-04-05 [5eea2af] [bug] fix 2^24 cap in otWP/otDCS/otWPTOF output, reported by Pauliina Hirvi
+* 2026-04-05 [2b7f5d4]*[feat] save/export both forward and Jacobians in the adjoint mode
+* 2026-04-02 [0426e28] [bug] fix mcxplotshapes bug for spheres
+* 2026-04-02 [4b349cf] [bug] fix line/slit source preview
+* 2026-04-01 [537ce24] [bug] update pmcx to corectly cast detp.nscat to uint32 to keep precision
+* 2026-04-01 [46aa8a7] [feat] make detp.nscat buffer unsigned integer to avoid float 16777216 cap
+* 2026-04-01 [dffe4ff] [bug] fix matlab compilation error for MX_HAS_INTERLEAVED_COMPLEX
+* 2026-04-01 [6863caa] [mex] support interleaved complex number output in matlab r2018+
+* 2026-03-31 [d802d78] [feat] make mcxplotphotons support traj output data
+* 2026-03-27 [08b1d45]*[feat] export dual Jacobians for mua and D or musp
+* 2026-03-20 [53e3895] [doc] partial update of the changelog
+* 2026-03-20 [ff1cc2a] [doc] update help info regarding adjoint normalization
+* 2026-03-17 [f54d448]*[feat] add adjoint_dcoeff, adjoint_mus and adjoint_musp Jacobian outputs
+* 2026-03-15 [8c248b7] [pmcx] bump pmcx version to 0.7.0 for newly added rf-forward and adjoint output
+* 2026-03-15 [fb15b1a] [bug] fix adjoint output normalization, sign, and test script bugs
+* 2026-03-15 [8dc6071]*[feat] support adjoint output type, build adjoint jacobian, srcid=-2 solves src+det
+* 2026-03-14 [b22534c]*[feat] support RF forward, use Eq 9 in Leino/Pulkkinen/Tarvainen 2019
+* 2026-03-05 [22a058d] [ci] fix mcxshow build error
+* 2026-03-05 [c911f5d] [ci] fix mcxstudio build error
+* 2026-03-05 [e001ef5] [ci] fix lazarus installation on macos
+* 2026-03-05 [12cf789] [ci] debug lazarus installation on macos
+* 2026-03-05 [8074f5d] [ci] try again to fix macos-15 lazarus installation error
+* 2026-03-05 [11ccc9c] [ci] fix macos-15 lazarus installation error
+* 2026-03-05 [8a7731f]*[feat] improve shape editor to allow select and scale shapes
+* 2026-02-17 [857b26d] [svmc] svmc optimization, reduces 2 regigsters, 10% speed gain
+* 2026-02-16 [71b3d6c] [bug] fix double pre-processing when using -j/--json flag
+* 2026-01-11 [89627a7] [feat/bug] extends line src for wedge/fan beam, fix #253 for line/slit
+* 2025-12-16 [2fdd3d8] [ci] test solution to macos-15
+* 2025-12-15 [bff56e7] [preview] render noderoi
+* 2025-12-10 [cc756d7] [ci] remove retired macos-13 runner, use macos-15-intel
+* 2025-12-10 [b6b8573] [pmcx] remove sparse_numba as a dependency on windows
+* 2025-10-21 [fbe3de0] [winget] update installer after fixing mmc bug
+* 2025-10-14 [4f953aa] [doc] fix typos
+* 2025-10-13 [5715c2b] [winget] fix mismatch of schema version
+* 2025-10-13 [6c4f29f] [winget] update installer hash
+* 2025-10-13 [14b933f] [doc] update README
 
 Introduction
 ---------------
@@ -378,7 +509,7 @@ supported parameters, as shown below:
 #Please visit our free scientific data sharing portal at https://neurojson.io #
 # and consider sharing your public datasets in standardized JSON/JData format #
 ###############################################################################
-$Rev::d20953$v2025.10$Date::2025-10-10 23:08:18 -04$ by $Author::Qianqian Fang$
+$Rev::d20953$v2026$Date::2025-10-10 23:08:18 -04$ by $Author::Qianqian Fang$
 ###############################################################################
 
 usage: mcx <param1> <param2> ...
