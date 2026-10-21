@@ -1,0 +1,10 @@
+/bin/
+/lib/
+/.lazpcp/
+/icons.png
+*.lps
+*.compiled
+*.or
+*.o
+*.ppu
+/tests/mcxdoctest

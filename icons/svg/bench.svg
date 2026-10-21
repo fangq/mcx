@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- MCX Studio icon set.  Same badge as the rest of icons/svg; drawn for
+     mcxstudio2, which needed glyphs the original set did not have. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" version="1.1"
+     id="svg-bench">
+  <g transform="matrix(-1,0,0,-1,256,1052.36222)">
+    <path id="badge-bench" d="M 231.02503,999.58771 C 339.78529,791.97573 37.399073,700.20703 0,937.38546 c -4.9576479,97.76824 172.34751,165.21544 231.02503,62.20225 z"
+          style="fill:#1f9e9e;fill-opacity:1;stroke:none" />
+  </g>
+  <g id="glyph-bench" style="fill:#ffffff;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round">
+    <circle cx="128" cy="146" r="64" style="fill:none;stroke-width:18" />
+    <path d="M 128,146 V 106" style="fill:none;stroke-width:14" />
+    <rect x="108" y="46" width="40" height="22" rx="8" style="stroke-width:8" />
+    <path d="M 128,68 V 82" style="stroke-width:14" />
+  </g>
+</svg>

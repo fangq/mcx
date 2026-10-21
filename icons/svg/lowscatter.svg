@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: a ray bending at a curved boundary, for media that scatter
+     little and are shaped rather than blocky -- where the surface matters
+     more than what is inside it. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1">
+  <defs>
+    <clipPath id="disc">
+      <circle cx="128" cy="128" r="124"/>
+    </clipPath>
+  </defs>
+  <circle cx="128" cy="128" r="124" fill="#6fb3d9"/>
+  <g clip-path="url(#disc)">
+    <path d="M104 -10 C 200 60, 200 196, 104 266 L 266 266 L 266 -10 Z"
+          fill="#ffffff"/>
+    <path d="M10 84 L152 126 L64 212" stroke="#2f4f6b" stroke-width="14"
+          fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="152" cy="126" r="15" fill="#2f4f6b"/>
+  </g>
+</svg>

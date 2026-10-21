@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: a triangulated shell, for a surface-mesh domain. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1">
+  <circle cx="128" cy="128" r="124" fill="#48a9a6"/>
+  <path d="M44 168 C 60 92, 196 92, 212 168 C 196 206, 60 206, 44 168 Z"
+        fill="#ffffff" opacity="0.55"/>
+  <g stroke="#ffffff" stroke-width="8" fill="none" stroke-linejoin="round">
+    <path d="M44 168 C 60 92, 196 92, 212 168 C 196 206, 60 206, 44 168 Z"/>
+    <path d="M44 168 L104 108 L128 186 L188 106 L212 168"/>
+    <path d="M104 108 L188 106"/>
+  </g>
+</svg>

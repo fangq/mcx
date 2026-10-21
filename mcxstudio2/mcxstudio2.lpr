@@ -1,0 +1,129 @@
+{ mcxstudio2 - a graphical front end for MCX, MMC and MCX-CL.
+
+  The order of the calls in Main is load-bearing; each one says why. }
+program mcxstudio2;
+
+{$mode objfpc}{$H+}
+
+uses
+  {$IFDEF UNIX}
+  cthreads,
+  {$ENDIF}
+  Interfaces, Forms, SysUtils, Graphics,
+  mcxdpi, mcxicons, mcxmain;
+
+{$R *.res}
+
+var
+  Failures: Integer;
+
+{ A headless run has nobody to press OK.
+
+  Anything the LCL does not handle itself ends in TApplication.HandleException,
+  which puts up a modal and waits for a click (application.inc:1546) -- so a
+  fault in a batch run does not fail it, it stops it, and there is nothing on
+  stdout to say why, because the dialog was the whole of the report.  That is
+  a CI job hanging until its timeout rather than turning red in a minute.
+
+  HandleException calls this instead of the dialog when it is assigned, so the
+  same fault becomes a line on stderr and an exit code.  RunSelfTest already
+  catches what a file can raise; what this adds is everything before the first
+  file, while the form itself is still being built -- an .lfm carrying a
+  property this Lazarus does not have is exactly that. }
+type
+  TMcxHeadless = class
+    class procedure Report(Sender: TObject; E: Exception);
+  end;
+
+class procedure TMcxHeadless.Report(Sender: TObject; E: Exception);
+begin
+  WriteLn(StdErr, E.ClassName, ': ', E.Message);
+  Flush(StdErr);
+  Halt(2);
+end;
+
+{ Renders the icon sheet and exits.  A GUI still has to be initialised for it,
+  because the glyphs are drawn on an LCL canvas. }
+function DumpIcons: Boolean;
+var
+  Target: string;
+begin
+  Result := (ParamCount >= 1) and (ParamStr(1) = '--dump-icons');
+  if not Result then Exit;
+  if ParamCount >= 2 then Target := ParamStr(2) else Target := 'icons.png';
+  Application.OnException := @TMcxHeadless.Report;
+  Application.Initialize;
+  if McxSaveIconSheet(Target, 32, clBlack) then
+    WriteLn('wrote ', Target)
+  else
+    WriteLn('failed to write ', Target);
+end;
+
+begin
+  RequireDerivedFormResource := True;
+  Application.Title := 'MCX Studio';
+
+  {$IFDEF LINUX}
+  { gtk2 caps Application.Scaled at the Xft DPI and reverts a manual bump on
+    Show, so it cannot honour the desktop's integer window-scaling factor.
+    Leave LCL auto-scaling off and scale the forms ourselves below.  See
+    mcxdpi, ported from the sibling led and GotBox projects. }
+  Application.Scaled := False;
+  {$ELSE}
+  { Windows and macOS report a true per-monitor DPI; LCL is right there. }
+  Application.Scaled := True;
+  {$ENDIF}
+
+  if DumpIcons then Exit;
+
+  { --self-test builds the form, drives every binding over a corpus of real
+    input files and exits with the failure count.  It needs a widgetset, so it
+    is not as portable as the mcxdoc tests, but it is the only way to prove the
+    binding table and the form agree. }
+  if (ParamCount >= 1) and (ParamStr(1) = '--self-test') then
+  begin
+    Application.OnException := @TMcxHeadless.Report;
+    Application.Initialize;
+    Application.CreateForm(TfmMain, fmMain);
+    if ParamCount >= 2 then Failures := fmMain.RunSelfTest(ParamStr(2))
+    else Failures := fmMain.RunSelfTest('../example');
+    WriteLn(Format('%d failure(s)', [Failures]));
+    if Failures > 0 then Halt(1);
+    Halt(0);
+  end;
+
+  Application.Initialize;
+
+  { mcx's own logo, so a window in the task bar is recognisably this program
+    and not a generic form.  After Initialize, because it needs a widgetset to
+    hold the bitmap. }
+  McxApplyWindowIcon;
+
+  { Before the first widget of all: a widget is measured as it is built, and
+    one measured with the theme's own font keeps that size for the rest of the
+    session, however the style changes afterwards. }
+  McxInstallChromeStyle;
+
+  { Before the first form, so that every form there will ever be is scaled as
+    it is shown -- including the message boxes and the unhandled-exception
+    dialog the LCL builds where we cannot reach them. }
+  McxInstallFormScaler;
+
+  Application.CreateForm(TfmMain, fmMain);
+
+  { A file named on the command line opens instead of the blank cube -- so
+    that a simulation can be handed over by a file manager, a shell, or a
+    desktop entry's %f. }
+  if (ParamCount >= 1) and FileExists(ParamStr(1)) then
+    fmMain.OpenDocument(ParamStr(1));
+
+  { A second file is a result to show -- a .jnii, .bnii or a _traj.jdat --
+    so that a simulation and what it produced can be opened together. }
+  if (ParamCount >= 2) and FileExists(ParamStr(2)) then
+    fmMain.ShowResultLater(ParamStr(2));
+
+  { Reaches the forms that already exist; the scaler above handles the rest. }
+  McxApplyAdaptiveScale;
+
+  Application.Run;
+end.

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- mcxstudio2: a processor die with its pins, for running on the CPU. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"
+     viewBox="0 0 256 256" version="1.1">
+  <circle cx="128" cy="128" r="124" fill="#5b6b8c"/>
+  <g fill="#ffffff">
+    <rect x="96" y="46" width="12" height="30"/><rect x="122" y="46" width="12" height="30"/><rect x="148" y="46" width="12" height="30"/>
+    <rect x="96" y="180" width="12" height="30"/><rect x="122" y="180" width="12" height="30"/><rect x="148" y="180" width="12" height="30"/>
+    <rect x="46" y="96" width="30" height="12"/><rect x="46" y="122" width="30" height="12"/><rect x="46" y="148" width="30" height="12"/>
+    <rect x="180" y="96" width="30" height="12"/><rect x="180" y="122" width="30" height="12"/><rect x="180" y="148" width="30" height="12"/>
+    <rect x="72" y="72" width="112" height="112" rx="10"/>
+  </g>
+  <rect x="100" y="100" width="56" height="56" rx="6" fill="#5b6b8c"/>
+</svg>

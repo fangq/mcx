@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=MCX Studio
+GenericName=Monte Carlo photon simulator
+Comment=Set up, run and view Monte Carlo photon transport simulations
+Exec=mcxstudio2 %f
+Icon=mcxstudio2
+Terminal=false
+Categories=Science;Physics;Education;
+Keywords=monte carlo;photon;optics;tissue;fluence;mcx;mmc;
+# Both spellings are in the wild: mcx's own examples are .json, and the
+# registry entry the first Studio installed on Windows claimed .mcxp.  A
+# .mcxp is a project rather than a simulation and has to be converted --
+# utils/mcxp2json.py does that -- so only JSON is claimed here.
+MimeType=application/json;
+StartupNotify=true
+StartupWMClass=mcxstudio2
