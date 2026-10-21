@@ -92,6 +92,10 @@ We would like to give our special thank the following contributors
 
 The detailed updates can be found in the below change log
 
+* 2026-10-21 [0bd0a73]*[bug] save nscat in .jdt/.jdb by reinterpreting the uint bits written by the kernel
+* 2026-10-21 [4dca9f6] [test] untrack python bytecode cache
+* 2026-10-21 [e0c948d] [test] one photon per thread in trajectory tests, tolerate round-off drift across solvers
+* 2026-10-21 [99cd680] [doc] v2026 What's New, ChangeLog/NEWS entries, document the test suites
 * 2026-10-21 [5df0751] [release] bump version to v2026 (3.0), pmcx to 0.8.0, update copyright years
 * 2026-10-21 [8ed7c2e] [ci] run host unit tests, build mcxstudio2, bundle redbird/redbirdpy
 * 2026-10-21 [e9736d8]*[test] host unit tests of ray-tracing helpers, mark pure helpers MCX_HD
