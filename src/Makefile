@@ -166,29 +166,29 @@ keplermex: fermimex
 kepleroct: fermioct
 kepler keplermex kepleroct: CUGENCODE:=-arch=sm_30
 
-maxwell: kepler
-maxwellmex: keplermex
-maxwelloct: kepleroct
+maxwell: fermi
+maxwellmex: fermimex
+maxwelloct: fermioct
 maxwell maxwellmex maxwelloct: CUGENCODE:=-arch=sm_50
 
-pascal: maxwell
-pascalmex: maxwellmex
-pascaloct: maxwelloct
+pascal: fermi
+pascalmex: fermimex
+pascaloct: fermioct
 pascal pascalmex pascaloct: CUGENCODE:=-arch=sm_60
 
-volta: pascal
-voltamex: pascalmex
-voltaoct: pascaloct
+volta: fermi
+voltamex: fermimex
+voltaoct: fermioct
 volta voltamex voltaoct: CUGENCODE:=-arch=sm_70
 
-turing: volta
-turingmex: voltamex
-turingoct: voltaoct
+turing: fermi
+turingmex: fermimex
+turingoct: fermioct
 turing turingmex turingoct: CUGENCODE:=-arch=sm_75
 
-ampere: turing
-amperemex: turingmex
-ampereoct: turingoct
+ampere: fermi
+amperemex: fermimex
+ampereoct: fermioct
 ampere amperemex ampereoct: CUGENCODE:=-arch=sm_80
 
 log xor xoro posix:  CUCCOPT+=-use_fast_math -DSAVE_DETECTORS
