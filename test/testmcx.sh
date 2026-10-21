@@ -2,9 +2,15 @@
 
 fail=0
 EXE=mcx
-MCX=../bin/$EXE
+TESTDIR=$(cd "$(dirname "$0")" && pwd)
+MCX=$TESTDIR/../bin/$EXE
 if [ ! -f "$MCX" ]; then MCX=`which $EXE`; fi
 if [ -z "$MCX" ]; then echo "can not find $EXE"; exit 100; fi
+
+# run in a scratch folder so the outputs do not overwrite the files tracked in test/
+WORKDIR=$(mktemp -d)
+trap 'rm -rf "$WORKDIR"' EXIT
+cd "$WORKDIR"
 
 PARAM=$@
 LDD=`which ldd`
@@ -196,7 +202,7 @@ fi
 temp=`which python3 2> /dev/null`
 if [ ! -z "$temp" ] && python3 -c "import numpy" 2> /dev/null; then
     echo "test step-by-step photon trajectories against golden data ... "
-    temp=`MCX="$MCX" ./testtraj.sh $PARAM 2>&1`
+    temp=`MCX="$MCX" "$TESTDIR/testtraj.sh" $PARAM 2>&1`
     if [ $? -ne 0 ]; then echo "$temp" | grep -E 'FAILED|diverges|fail' | head -10; echo "fail to reproduce golden trajectories"; fail=$((fail+1)); else echo "ok"; fi
 fi
 
