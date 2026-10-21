@@ -65,6 +65,8 @@ We would like to give our special thank the following contributors
 
 The detailed updates can be found in the below change log
 
+* 2026-10-21 [45fc209] [bug] fix segfault reading a JSON detector object that has a Dir field
+* 2026-10-21 [73b2d79] [doc] refresh v2026 change lists
 * 2026-10-21 [0bd0a73]*[bug] save nscat in .jdt/.jdb by reinterpreting the uint bits written by the kernel
 * 2026-10-21 [4dca9f6] [test] untrack python bytecode cache
 * 2026-10-21 [e0c948d] [test] one photon per thread in trajectory tests, tolerate round-off drift across solvers
