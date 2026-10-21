@@ -92,6 +92,8 @@ We would like to give our special thank the following contributors
 
 The detailed updates can be found in the below change log
 
+* 2026-10-21 [d502ece] [perf] port mcxcl speedopt to CUDA: dynamic photon dispatch, 1-byte label volume; 1.07-1.51x
+* 2026-10-21 [16f3df9] [doc] refresh the v2026 ChangeLog, NEWS and README change lists
 * 2026-10-21 [c368809] [test] compare trajectories per photon: 5e-2 mm tolerance, tolerate up to 10% forked photons
 * 2026-10-21 [4b063f2] [test] build host unit tests in ~2s by not instantiating the kernel templates
 * 2026-10-21 [fa736fc] [release] set the v2026 (3.0) codename to Lucky Lux
