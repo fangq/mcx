@@ -3762,12 +3762,16 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
              * kernel PTX binaries for each combination of template variables. This creates bigger binary and slower
              * compilation time, but brings up to 20%-30% speed improvement on certain simulations.
              */
+#ifdef MCX_UNITTEST
+#define MCX_LAUNCH_MAIN_LOOP(a, b, c, d, e)  /**< host unit tests (test/unit) never launch the kernel, skip instantiating its template variants */
+#else
 #define MCX_LAUNCH_MAIN_LOOP(a, b, c, d, e)                                                                     \
     if (param.isrfforward) {                                                                                    \
         mcx_main_loop<a, b, c, d, e, 1> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);  \
     } else {                                                                                                    \
         mcx_main_loop<a, b, c, d, e, 0> <<< mcgrid, mcblock, sharedbuf>>>(gmedia, gfield, genergy, gPseed, gPpos, gPdir, gPlen, gPdet, gdetected, gsrcpattern, greplayw, greplaytof, greplaydetid, gseeddata, gdebugdata, ginvcdf, gangleinvcdf, gsmatrix, gprogress);  \
     }
+#endif
 
             switch (ispencil * 10000 + (isref > 0) * 1000 + (cfg->mediabyte <= 4) * 100 + issvmc * 10 + ispolarized) {
                 case 0:
