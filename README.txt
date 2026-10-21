@@ -65,6 +65,10 @@ We would like to give our special thank the following contributors
 
 The detailed updates can be found in the below change log
 
+* 2026-10-21 [5013494] [bug] shrink the block when the per-photon shared memory exceeds the device limit
+* 2026-10-21 [0d17987] [test] run testmcx.sh in a scratch folder instead of overwriting the files tracked in test/
+* 2026-10-21 [7031386] [bug] fix crash saving detected photons with asgn_float, mixlabel and labelplus volumes
+* 2026-10-21 [45bc438] [doc] refresh the v2026 ChangeLog, NEWS and README change lists
 * 2026-10-21 [a26c733] [pmcx] detphoton: read nscat as uint32 bits only from float32 detp buffers
 * 2026-10-21 [7dc7cd1] [bug] pass uint32 and float32 label volumes as 32bit labels in pmcx/mcxlab, reject unknown media formats
 * 2026-10-21 [8d03dd3] [doc] refresh the v2026 ChangeLog, NEWS and README change lists
