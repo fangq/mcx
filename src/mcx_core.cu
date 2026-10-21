@@ -201,6 +201,55 @@ __constant__ float4 gproperty[MAX_PROP_AND_DETECTORS];
 __constant__ MCXParam gcfg[1];
 
 /**
+ * @brief Per-block photon counter for the dynamic photon dispatch (gcfg->dynload)
+ *
+ * Photon lifetimes span orders of magnitude, so splitting the photons evenly over threads
+ * up front makes every warp wait for its unluckiest lane. With gcfg->dynload set, the threads
+ * of a block instead draw photons from this shared counter until it runs out. Replay indexes
+ * the saved seeds/weights by thread id, and -A 0 is used for reproducible per-thread photon
+ * streams, so both keep the static split.
+ */
+__shared__ int gblockphoton;
+
+/**
+ * @brief Photon id saved with each trajectory record (-D M/T)
+ *
+ * The static split gives thread tid the photons starting at tid*threadphoton+min(tid,oddphotons);
+ * under dynamic dispatch the ids are interleaved over all threads instead - unique, not contiguous.
+ */
+#define MCX_TRAJ_ID(ndone, tid)  (gcfg->dynload ? ((uint)(ndone) * (blockDim.x * gridDim.x) + (uint)(tid)) \
+                                                : ((uint)(ndone) + (uint)(tid) * gcfg->threadphoton + umin((uint)(tid), gcfg->oddphotons)))
+
+/**
+ * @brief Read one voxel label from the packed (1 byte/voxel) or the unpacked (uint) media buffer
+ *
+ * Plain label volumes with at most 127 tissue types are uploaded as one byte per voxel
+ * (gcfg->bytemedia), which shrinks the random-access per-step label lookup 4x. Bit 7 carries
+ * the DET_MASK detector flag. The index is clamped because skipvoid() can give up with the
+ * index still outside the domain, which would run off the end of the smaller buffer.
+ */
+__device__ inline uint mcx_media_load(const uint media[], uint idx) {
+    uint vox = (idx < gcfg->dimlen.z) ? idx : 0;
+
+    if (gcfg->bytemedia) {
+        uint v = (uint)(((const unsigned char*)media)[vox]);
+        return (v & 0x7FU) | ((v & 0x80U) << 24);
+    }
+
+    return media[vox];
+}
+
+/**
+ * @brief Read the upper half of the doubled media buffer (MEDIA_ASGN_F2H / MEDIA_2LABEL_SPLIT)
+ *
+ * Those formats are never packed, but the compiler may issue this load for a packed volume
+ * too, where the doubled index runs past the 4x smaller buffer; fold it to 0 in that case.
+ */
+__device__ inline uint mcx_media_load_hi(const uint media[], uint idx) {
+    return media[gcfg->bytemedia ? 0 : (idx + gcfg->dimlen.z)];
+}
+
+/**
  * @brief Global variable to store the number of photon movements for debugging purposes
  */
 
@@ -638,7 +687,7 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
         } val;
 
         val.i[0] = mediaid & MED_MASK;
-        val.i[1] = media[idx1d + gcfg->dimlen.z];
+        val.i[1] = mcx_media_load_hi(media, idx1d);
         prop->mua = fabsf(__half2float(val.h[0]));
         prop->mus = fabsf(__half2float(val.h[1]));
         prop->g = fabsf(__half2float(val.h[2]));
@@ -693,7 +742,7 @@ __device__ void updateproperty(Medium* prop, unsigned int& mediaid, RandType t[R
             unsigned int  i[2];
         } val; // c[7-6]: lower & upper label, c[5-3]: reference point, c[2-0]: normal vector
 
-        val.i[0] = media[idx1d + gcfg->dimlen.z];
+        val.i[0] = mcx_media_load_hi(media, idx1d);
         val.i[1] = mediaid & MED_MASK;
         unsigned int svpacked = (unsigned int)val.c[7] | ((unsigned int)val.c[6] << 8);
 
@@ -877,7 +926,7 @@ __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uin
         if ((ushort)flipdir[0] < gcfg->maxidx.x && (ushort)flipdir[1] < gcfg->maxidx.y && (ushort)flipdir[2] < gcfg->maxidx.z) {
             idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
 
-            if (media[idx1d] & MED_MASK) { //< if enters a non-zero voxel
+            if (mcx_media_load(media, idx1d) & MED_MASK) { //< if enters a non-zero voxel
                 GPUDEBUG(("inside volume [%f %f %f] v=<%f %f %f>\n", p->x, p->y, p->z, v->x, v->y, v->z));
                 p->x -= v->x;
                 p->y -= v->y;
@@ -892,7 +941,7 @@ __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uin
                 count = 0;
 
                 while (!((ushort)flipdir[0] < gcfg->maxidx.x && (ushort)flipdir[1] < gcfg->maxidx.y
-                         && (ushort)flipdir[2] < gcfg->maxidx.z) || !(media[idx1d] & MED_MASK)) { // at most 3 times
+                         && (ushort)flipdir[2] < gcfg->maxidx.z) || !(mcx_media_load(media, idx1d) & MED_MASK)) { // at most 3 times
                     float dist = hitgrid((float3*)p, (float3*)v, &rv->x, flipdir);
                     f->t += gcfg->minaccumtime * dist;
                     *((float3*)(p)) = float3(p->x + dist * v->x, p->y + dist * v->y, p->z + dist * v->z);
@@ -920,7 +969,8 @@ __device__ inline int skipvoid(MCXpos* p, MCXdir* v, MCXtime* f, float3* rv, uin
 
                 f->t = (gcfg->voidtime) ? f->t : 0.f;
                 float4 htime;
-                updateproperty<islabel, issvmc>((Medium*)&htime, media[idx1d], t, idx1d, media, (float3*)p, nuvox, flipdir);
+                uint vmedia = mcx_media_load(media, idx1d);
+                updateproperty<islabel, issvmc>((Medium*)&htime, vmedia, t, idx1d, media, (float3*)p, nuvox, flipdir);
 
                 if (gcfg->isspecular && htime.w != gproperty[0].w) {
                     p->w *= 1.f - reflectcoeff(v, gproperty[0].w, htime.w, flipdir[3]);
@@ -1116,9 +1166,9 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
         if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
             if (ispolarized && gcfg->istrajstokes) {
-                savedebugstokes(p, s, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                savedebugstokes(p, s, MCX_TRAJ_ID(f->ndone, threadid), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
             } else {
-                savedebugdata(p, ((uint)f->ndone) + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                savedebugdata(p, MCX_TRAJ_ID(f->ndone, threadid), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
             }
         }
 
@@ -1188,7 +1238,11 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     /**
      * If the thread completes all assigned photons, terminate this thread.
      */
-    if ((int)(f->ndone) >= (gcfg->threadphoton + (threadid < gcfg->oddphotons)) - 1) {
+    if (gcfg->dynload) {
+        if (atomicSub(&gblockphoton, 1) < 1) {
+            return 1; // the block has used up its photons
+        }
+    } else if ((int)(f->ndone) >= (gcfg->threadphoton + (threadid < gcfg->oddphotons)) - 1) {
         return 1; // all photos complete
     }
 
@@ -1326,7 +1380,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        *mediaid = mcx_media_load(media, *idx1d);
                     }
 
                     *rv = float3(rv->x + (launchsrc->param1.x + launchsrc->param2.x) * 0.5f,
@@ -1361,7 +1415,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        *mediaid = mcx_media_load(media, *idx1d);
                     }
 
                     *rv = float3(rv->x + (launchsrc->param1.x + v2.x) * 0.5f,
@@ -1416,7 +1470,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        *mediaid = mcx_media_load(media, *idx1d);
                     }
 
                     break;
@@ -1503,7 +1557,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        *mediaid = mcx_media_load(media, *idx1d);
                     }
 
                     canfocus = 0;
@@ -1566,7 +1620,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
                         *mediaid = 0;
                     } else {
-                        *mediaid = media[*idx1d];
+                        *mediaid = mcx_media_load(media, *idx1d);
                     }
 
                     *rv = float3(launchsrc->pos.x + (launchsrc->param1.x) * 0.5f,
@@ -1656,7 +1710,7 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
             if (idx >= 0) {
                 *idx1d = idx;
-                *mediaid = media[*idx1d];
+                *mediaid = mcx_media_load(media, *idx1d);
             }
         }
 
@@ -1683,9 +1737,9 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
 
     if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
         if (ispolarized && gcfg->istrajstokes) {
-            savedebugstokes(p, s, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[3]);
+            savedebugstokes(p, s, MCX_TRAJ_ID(f->ndone, threadid), gdebugdata, (int)ppath[3]);
         } else {
-            savedebugdata(p, (uint)f->ndone + threadid * gcfg->threadphoton + umin(threadid, gcfg->oddphotons), gdebugdata, (int)ppath[3]);
+            savedebugdata(p, MCX_TRAJ_ID(f->ndone, threadid), gdebugdata, (int)ppath[3]);
         }
     }
 
@@ -2043,8 +2097,18 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         __threadfence_block();
     }
 
-    if (idx >= gcfg->threadphoton * (blockDim.x * gridDim.x) + gcfg->oddphotons) {
+    /** Threads beyond the static photon split have nothing to do. With dynamic dispatch every thread
+     *  must instead reach the barrier below and draw from the block counter. */
+    if (!gcfg->dynload && idx >= gcfg->threadphoton * (blockDim.x * gridDim.x) + gcfg->oddphotons) {
         return;
+    }
+
+    if (gcfg->dynload) {
+        if (threadIdx.x == 0) {
+            gblockphoton = gcfg->blockphoton + ((int)blockIdx.x < gcfg->blockextra);
+        }
+
+        __syncthreads();
     }
 
     ppath = (float*)(sharedmem + sizeof(float) * (gcfg->nphaselen + gcfg->nanglelen) + blockDim.x * (gcfg->issaveseed * RAND_BUF_LEN * sizeof(RandType)));
@@ -2096,7 +2160,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
      *   or moved to the end of the scattering path if it ends within the current voxel.
      */
 
-    while (f.ndone < (gcfg->threadphoton + (idx < gcfg->oddphotons))) {
+    while (gcfg->dynload || f.ndone < (gcfg->threadphoton + (idx < gcfg->oddphotons))) {
 
         GPUDEBUG(("photonid [%d] L=%f w=%e medium=%d\n", (int)f.ndone, f.pscat, p.w, mediaid));
 
@@ -2312,9 +2376,9 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                 if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                     if (ispolarized && gcfg->istrajstokes) {
-                        savedebugstokes(&p, &s, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                        savedebugstokes(&p, &s, MCX_TRAJ_ID(f.ndone, idx), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
                     } else {
-                        savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                        savedebugdata(&p, MCX_TRAJ_ID(f.ndone, idx), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
                     }
                 }
             }
@@ -2437,7 +2501,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
             GPUDEBUG(("moving outside: [%f %f %f], idx1d [%d]->[out], bcflag %d\n", p.x, p.y, p.z, idx1d, isdet));
         } else {
             /** otherwise, read the optical property index */
-            mediaid = media[idx1d];
+            mediaid = mcx_media_load(media, idx1d);
             isdet = mediaid & DET_MASK; /** upper 16bit is the mask of the covered detector */
             mediaid &= MED_MASK;       /** lower 16bit is the medium index */
         }
@@ -2607,7 +2671,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                 if ((ushort)flipdir[0] < gcfg->maxidx.x && (ushort)flipdir[1] < gcfg->maxidx.y && (ushort)flipdir[2] < gcfg->maxidx.z) {
                     idx1d = (flipdir[2] * gcfg->dimlen.y + flipdir[1] * gcfg->dimlen.x + flipdir[0]);
-                    mediaid = media[idx1d];
+                    mediaid = mcx_media_load(media, idx1d);
                     isdet = mediaid & DET_MASK; /** upper 16bit is the mask of the covered detector */
                     mediaid &= MED_MASK;       /** lower 16bit is the medium index */
                     GPUDEBUG(("Cyclic boundary condition, moving photon in dir %d at %d flag, new pos=[%f %f %f] [%d %d %d]\n", flipdir[3], isdet, p.x, p.y, p.z, flipdir[0], flipdir[1], flipdir[2]));
@@ -2739,9 +2803,9 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
 
                     if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {
                         if (ispolarized && gcfg->istrajstokes) {
-                            savedebugstokes(&p, &s, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                            savedebugstokes(&p, &s, MCX_TRAJ_ID(f.ndone, idx), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
                         } else {
-                            savedebugdata(&p, (uint)f.ndone + idx * gcfg->threadphoton + umin(idx, gcfg->oddphotons), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
+                            savedebugdata(&p, MCX_TRAJ_ID(f.ndone, idx), gdebugdata, (int)ppath[gcfg->w0offset - 1]);
                         }
                     }
 
@@ -2799,7 +2863,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         (flipdir[3] == 0) ? (flipdir[0] = floorf(p.x)) : ((flipdir[3] == 1) ? (flipdir[1] = floorf(p.y)) : (flipdir[2] = floorf(p.z))) ;
                         GPUDEBUG(("ref p_new=[%f %f %f] v_new=[%f %f %f]\n", p.x, p.y, p.z, v.x, v.y, v.z));
                         idx1d = idx1dold;
-                        mediaid = (media[idx1d] & MED_MASK);
+                        mediaid = (mcx_media_load(media, idx1d) & MED_MASK);
                         updateproperty<islabel, issvmc>(&prop, mediaid, t, idx1d, media, (float3*)&p, &nuvox, flipdir); //< optical property across the interface
 
                         if (issvmc && SV_CURLABEL(nuvox.sv) == 0) { // terminate photon if photon is reflected to background medium
@@ -3347,6 +3411,30 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         mcx_error(-1, T_("respin number can not be 0, check your -r/--repeat input or cfg.respin value"), __FILE__, __LINE__);
     }
 
+    /** Per-block photon quota for the dynamic photon dispatch, used unless -A 0 or replay asks for the static split */
+    {
+        int nblock = gpu[gpuid].autothread / gpu[gpuid].autoblock;
+        int launchphoton = (int)(gpuphoton / ABS(cfg->respin));
+        param.blockphoton = launchphoton / nblock;
+        param.blockextra = launchphoton - param.blockphoton * nblock;
+        param.dynload = (cfg->autopilot && cfg->seed != SEED_FROM_FILE);
+    }
+
+    /** Plain label volumes with at most 127 tissue types are uploaded as 1 byte/voxel; bit 7 carries DET_MASK */
+    param.bytemedia = 0;
+
+    if (cfg->mediabyte <= 4) { // label formats: 1, 2 or 4 bytes per voxel
+        size_t nvox = (size_t)cfg->dim.x * cfg->dim.y * cfg->dim.z;
+        param.bytemedia = 1;
+
+        for (size_t v = 0; v < nvox; v++) {
+            if ((media[v] & MED_MASK) > 127) {
+                param.bytemedia = 0;
+                break;
+            }
+        }
+    }
+
     /** Total time gate number is computed */
     totalgates = (int)((cfg->tend - cfg->tstart) / cfg->tstep + 0.5);
     #pragma omp master
@@ -3459,7 +3547,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /**
      * Allocate all GPU buffers to store input or output data
      */
-    if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
+    if (param.bytemedia) {
+        CUDA_ASSERT(cudaMalloc((void**) &gmedia, (size_t)cfg->dim.x * cfg->dim.y * cfg->dim.z));
+    } else if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
         CUDA_ASSERT(cudaMalloc((void**) &gmedia, sizeof(uint) * (cfg->dim.x * cfg->dim.y * cfg->dim.z)));
     } else {
         CUDA_ASSERT(cudaMalloc((void**) &gmedia, sizeof(uint) * (2 * cfg->dim.x * cfg->dim.y * cfg->dim.z)));
@@ -3623,7 +3713,17 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
     mcx_flush(cfg);
 
-    if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
+    if (param.bytemedia) {
+        size_t nvox = (size_t)cfg->dim.x * cfg->dim.y * cfg->dim.z;
+        unsigned char* bytemedia = (unsigned char*)malloc(nvox);
+
+        for (size_t v = 0; v < nvox; v++) {
+            bytemedia[v] = (unsigned char)((media[v] & 0x7FU) | ((media[v] & DET_MASK) >> 24));
+        }
+
+        CUDA_ASSERT(cudaMemcpy(gmedia, bytemedia, nvox, cudaMemcpyHostToDevice));
+        free(bytemedia);
+    } else if (cfg->mediabyte != MEDIA_2LABEL_SPLIT && cfg->mediabyte != MEDIA_ASGN_F2H) {
         CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uint)*cfg->dim.x * cfg->dim.y * cfg->dim.z, cudaMemcpyHostToDevice));
     } else {
         CUDA_ASSERT(cudaMemcpy(gmedia, media, sizeof(uint) * 2 * cfg->dim.x * cfg->dim.y * cfg->dim.z, cudaMemcpyHostToDevice));
@@ -3893,7 +3993,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
                         sleep_ms(100);
 
-                    } while (p0 < (int)((param.threadphoton >> 1) * 4.5f));
+                    } while (p0 < (int)((param.threadphoton >> 1) * 4.5f) && (!param.dynload || cudaStreamQuery(0) == cudaErrorNotReady));
+                    /** with dynamic dispatch the monitored threads may finish fewer photons than the static
+                     *  estimate above, so also stop polling once the kernel has completed */
 
                     mcx_progressbar(1.0f, cfg);
                     MCX_FPRINTF(cfg->flog, "\n");

@@ -204,6 +204,10 @@ typedef struct  __align__(16) KernelParams {
     unsigned int nanglelen;            /**< even-rounded nangle so that shared memory buffer won't give an error */
     float omega;                       /**< modulation angular frequency (2*pi*f), in rad/s, for FD/RF replay */
     unsigned int isrfforward;           /**< 1 when running RF forward (non-replay) FD simulation with complex weight; uses 4x field buffer */
+    int blockphoton;                   /**< photons per block for the dynamic photon dispatch */
+    int blockextra;                    /**< how many blocks simulate 1 more photon above blockphoton */
+    unsigned int dynload;              /**< 1: threads draw photons from a per-block counter, 0: static photons-per-thread split */
+    unsigned int bytemedia;            /**< 1: the label volume is uploaded as 1 byte/voxel */
     unsigned char bc[12];              /**< boundary condition flags, copy the first 12 chars from cfg->bc without the terminating NULL */
 } MCXParam;
 

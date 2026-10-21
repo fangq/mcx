@@ -45,6 +45,8 @@
 #define cudaEventCreate                 hipEventCreate
 #define cudaEventRecord                 hipEventRecord
 #define cudaEventQuery                  hipEventQuery
+#define cudaStreamQuery                 hipStreamQuery
+#define cudaErrorNotReady               hipErrorNotReady
 #define cudaEventDestroy                hipEventDestroy
 
 // Device reset
