@@ -72,13 +72,20 @@ jobs:
           # Install fpc and Lazarus from the upstream installers: Homebrew disabled the
           # fpc-laz and lazarus casks on 2026-09-01 (they fail the Gatekeeper check),
           # which does not apply to packages installed with installer(8)
-          LAZ_URL=https://downloads.sourceforge.net/lazarus/Lazarus%20macOS%20x86-64
-          curl -L --retry 5 --retry-all-errors --retry-delay 10 -C - -o fpc.dmg "$LAZ_URL/Lazarus%204.4/fpc-3.2.2.intelarm64-macosx.dmg"
-          FPC_VOL=$(hdiutil attach -nobrowse fpc.dmg | grep -o '/Volumes/.*' | head -1)
+          # fetch <file> <sourceforge subfolder> <sha256>: mcx.space mirror first, SourceForge as fallback
+          fetch() {
+            for url in "https://mcx.space/dev/ci/$1" "https://downloads.sourceforge.net/lazarus/Lazarus%20macOS%20x86-64/$2/$1"; do
+              rm -f "$1"
+              curl -L --retry 5 --retry-all-errors --retry-delay 10 -o "$1" "$url" && echo "$3  $1" | shasum -a 256 -c - && return 0
+            done
+            return 1
+          }
+          fetch fpc-3.2.2.intelarm64-macosx.dmg "Lazarus%204.4" 05d4510c8c887e3c68de20272abf62171aa5b2ef1eba6bce25e4c0bc41ba8b7d
+          FPC_VOL=$(hdiutil attach -nobrowse fpc-3.2.2.intelarm64-macosx.dmg | grep -o '/Volumes/.*' | head -1)
           sudo installer -pkg "$FPC_VOL/fpc-3.2.2-intelarm64-macosx.mpkg/Contents/Packages/fpc-3.2.2-intelarm64-macosx.pkg" -target /
           hdiutil detach "$FPC_VOL"
-          curl -L --retry 5 --retry-all-errors --retry-delay 10 -C - -o lazarus.pkg "$LAZ_URL/Lazarus%203.6/Lazarus-3.6-macosx-x86_64.pkg"
-          sudo installer -pkg lazarus.pkg -target /
+          fetch Lazarus-3.6-macosx-x86_64.pkg "Lazarus%203.6" c32f1fcfb16a969153d660a92e2200f32f5e40ec65d42bbd6af829cd9fe74afb
+          sudo installer -pkg Lazarus-3.6-macosx-x86_64.pkg -target /
 
           echo "/Applications/Lazarus/" >> $GITHUB_PATH
       - name: Cache Lazarus (Windows)
