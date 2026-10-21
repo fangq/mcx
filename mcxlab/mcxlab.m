@@ -78,7 +78,9 @@ function varargout = mcxlab(varargin)
 %                      fourier, gaussian, pattern, slit, etc); if the focal length
 %                      is nan, all photons will be launched isotropically regardless
 %                      of the srcdir direction; if the focal length is -inf, the launch
-%                      angle will be computed based on the Lambertian (cosine) distribution.
+%                      angle will be computed based on the Lambertian (cosine) distribution,
+%                      over a hemisphere in 3D, or over a semicircle within the simulation
+%                      plane in 2D (when one dimension of cfg.vol is 1).
 %
 %      Starting v2024, cfg.{srcpos,srcdir,srcparam1,srcparam2} accept multiple sources,
 %      with each source corresponding to a single row of the array. For all 4 components,
@@ -218,6 +220,9 @@ function varargout = mcxlab(varargin)
 %                               set by srcparam1(1) (in grid unit); if srcparam1(2) is set to a non-zero
 %                               value, this source defines a ring (annulus) shaped source, with
 %                               srcparam1(2) denoting the inner circle's radius, here srcparam1(1)>=srcparam1(2)
+%                               in 2D (one dimension of cfg.vol is 1), the disk becomes a line segment
+%                               of half-length srcparam1(1) centered at srcpos, perpendicular to srcdir
+%                               within the simulation plane (srcparam1(2) is not used)
 %                      'ring' [*] - a uniform ring/ring-sector source pointing along srcdir; the outer radius
 %                               of the ring is srcparam1(1) (in grid unit) and the inner radius is srcparam1(2);
 %                               srcparam1(3) and srcparam1(4) can optionally set the lower and upper angular

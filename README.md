@@ -788,7 +788,7 @@ A legacy .inp MCX input file looks like this:
 1000000              # total photon, use -n to overwrite in the command line
 29012392             # RNG seed, negative to generate, use -E to overwrite
 30.0 30.0 0.0 1      # source position (in grid unit), the last num (optional) sets --srcfrom0 (-z)
-0 0 1 0              # initial directional vector, 4th number is the focal-length, 0 for collimated beam, nan for isotropic
+0 0 1 0              # initial directional vector, 4th number is the focal-length, 0 for collimated beam, nan for isotropic, -inf for Lambertian
 0.e+00 1.e-09 1.e-10 # time-gates(s): start, end, step
 semi60x60x60.bin     # volume ('unsigned char' binary format, or specified by -K/--mediabyte)
 1 60 1 60            # x voxel size in mm (isotropic only), dim, start/end indices
@@ -870,7 +870,8 @@ same file, `qtest.json`, is also shown below:
         "Optode::Source::Dir": "the unitary directional vector of the photon at launch",
         "Optode::Source::Type": "source types, must be one of the following: 
                    pencil,isotropic,cone,gaussian,planar,pattern,fourier,arcsine,disk,fourierx,fourierx2d,
-		   zgaussian,line,slit,pencilarray,pattern3d",
+		   zgaussian,line,slit,pencilarray,pattern3d; in 2D domains (one Dim is 1), disk is a line
+		   segment of half-length Param1[0] perpendicular to Dir in the simulation plane",
         "Optode::Source::Param1": "source parameters, 4 floating-point numbers",
         "Optode::Source::Param2": "additional source parameters, 4 floating-point numbers"
       }
