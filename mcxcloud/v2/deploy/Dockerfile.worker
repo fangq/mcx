@@ -1,0 +1,11 @@
+# v2 mcx worker image. The scheduler's entrypoint (worker/mcx-run.sh) needs bash + curl
+# to fetch input and push results back to the API. Extend the published mcx image.
+#
+#   docker build -f Dockerfile.worker -t mcxcloud/mcx-worker:v2024.2 .
+#   docker push mcxcloud/mcx-worker:v2024.2      # so all swarm nodes can pull it
+# then set WORKER_IMAGE=mcxcloud/mcx-worker:v2024.2 in the API .env.
+ARG BASE=fangqq/mcx:v2024.2
+FROM ${BASE}
+RUN (command -v curl && command -v bash) >/dev/null 2>&1 || \
+    (apt-get update && apt-get install -y --no-install-recommends bash curl ca-certificates \
+     && rm -rf /var/lib/apt/lists/*)

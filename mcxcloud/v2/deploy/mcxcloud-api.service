@@ -1,0 +1,34 @@
+# MCX Cloud v2 API + scheduler — systemd unit (manager node)
+#
+# Install (needs sudo):
+#   sudo cp v2/deploy/mcxcloud-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now mcxcloud-api
+#   systemctl status mcxcloud-api ; journalctl -u mcxcloud-api -f
+#
+# Set User= and WorkingDirectory= below to your service account and install path
+# (the <...> placeholders). See your local deploy-values note for the real values.
+# Config (DATABASE_URL, WORKER_SECRET, RUN_SCHEDULER, …) is read from .env in
+# WorkingDirectory via node --env-file; keep that file mode 600.
+
+[Unit]
+Description=MCX Cloud v2 API + scheduler
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+# Dedicated unprivileged service account (in the `docker` group, no sudo).
+User=<service-user>
+WorkingDirectory=<install-dir>/backend
+# scheduler shells out to `docker`; keep it on PATH
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/node --env-file=.env src/server.js
+# If the DB container isn't up yet at boot, the API tolerates it and Restart retries.
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
