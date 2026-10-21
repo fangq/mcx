@@ -52,6 +52,24 @@ class TestFunctions(unittest.TestCase):
         actual_output = detweight(detp)
         np.testing.assert_array_almost_equal(actual_output, expected_output)
 
+    def test_detweight_with_w0(self):
+        ppath = np.array([[4.0361433, 0], [40.828487, 0], [47.87069, 0]])
+        prop = np.array([[0, 0, 1, 1], [0.005, 1, 0, 1.37], [0.1, 10, 0.9, 1]])
+        atten = np.array([0.9800216, 0.81534624, 0.78713661])
+        w0 = np.array([0.5, 1.0, 0.25])
+
+        # w0 as returned by pmcx, a (nphoton, 1) column, and as a 1-D array
+        for w in (w0[:, np.newaxis], w0):
+            actual_output = detweight({"ppath": ppath, "prop": prop, "w0": w})
+            self.assertEqual(actual_output.shape, (3,))
+            np.testing.assert_array_almost_equal(actual_output, w0 * atten)
+
+        # one initial weight column per source (pattern sources)
+        w2 = np.stack([w0, 2 * w0], axis=1)
+        actual_output = detweight({"ppath": ppath, "prop": prop, "w0": w2})
+        self.assertEqual(actual_output.shape, (3, 2))
+        np.testing.assert_array_almost_equal(actual_output, w2 * atten[:, np.newaxis])
+
     def test_detweight_with_missing_prop(self):
         detp = {
             "ppath": np.array([[4.0361433, 0], [40.828487, 0], [47.87069, 0]]),

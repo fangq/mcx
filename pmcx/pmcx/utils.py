@@ -159,13 +159,22 @@ def detweight(detp, prop=None, unitinmm=None):
             unitinmm = 1
 
     if isinstance(detp, dict):
-        if "w0" not in detp:
-            detw = np.ones(detp["ppath"].shape[0])
-        else:
-            detw = detp["w0"]
+        ppath = np.asarray(detp["ppath"])
+        prop = np.asarray(prop)
 
+        # attenuation of each photon along its partial paths, shape (nphoton,)
+        detw = np.ones(ppath.shape[0])
         for i in range(medianum - 1):
-            detw = detw * np.exp(-prop[i + 1, 0] * detp["ppath"][:, i] * unitinmm)
+            detw = detw * np.exp(-prop[i + 1, 0] * ppath[:, i] * unitinmm)
+
+        if "w0" in detp:
+            # pmcx returns w0 as a (nphoton, 1) column, or one column per source
+            # for pattern sources; multiplying it by the 1-D attenuation directly
+            # broadcast to (nphoton, nphoton), see issue #254
+            w0 = np.asarray(detp["w0"]).reshape(ppath.shape[0], -1)
+            detw = w0 * detw[:, np.newaxis]
+            if detw.shape[1] == 1:
+                detw = detw[:, 0]
     else:
         raise ValueError('The first input must be a dict with a key named "ppath"')
 
@@ -413,7 +422,11 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
         nscat = np.ascontiguousarray(detp[c0 : c0 + length, :])
         # the kernel stores nscat as uint32 bits inside the float32 detp buffer; other
         # dtypes (e.g. user-assembled float64 arrays) hold the counts as values
-        nscat = nscat.view(np.uint32) if nscat.dtype == np.float32 else nscat.astype(np.uint32)
+        nscat = (
+            nscat.view(np.uint32)
+            if nscat.dtype == np.float32
+            else nscat.astype(np.uint32)
+        )
         newdetp["nscat"] = nscat.transpose()
         c0 = c0 + length
 
