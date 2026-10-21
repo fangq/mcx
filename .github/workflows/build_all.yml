@@ -9,6 +9,11 @@ on:
     branches:
       - master
 
+env:
+  # redbird/redbirdpy revisions bundled with the release, pin to tags when releasing
+  REDBIRD_REF: master
+  REDBIRDPY_REF: main
+
 jobs:
   build_all:
     name: Build All
@@ -248,6 +253,12 @@ jobs:
             make static
             objdump -p ../bin/mcx.exe | grep "DLL Name:"
           fi
+      - name: Run host unit tests (Linux only)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          cd src
+          make unittest
+          rm -f ../bin/mcx_unittest
       - name: Build mcxstudio
         run: |
           cd mcxstudio
@@ -259,6 +270,13 @@ jobs:
           cp mcxviewer ../bin
           cp -a locale ../bin
           cp README.txt ../inno/MCXStudio_README.txt
+      - name: Build mcxstudio2
+        if: ${{ runner.os != 'macOS' }}
+        continue-on-error: true
+        run: |
+          cd mcxstudio2
+          make
+          cp bin/mcxstudio2* ../bin
       - name: Create package folder
         run: |
           mkdir packages
@@ -275,6 +293,21 @@ jobs:
           else
             zip -FSr --symlink packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           fi
+      - name: Zip redbird
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          mkdir -p redbird-pkg
+          git clone --depth 1 --branch ${{ env.REDBIRD_REF }} https://github.com/fangq/redbird.git redbird-pkg/redbird
+          git clone --depth 1 --branch ${{ env.REDBIRDPY_REF }} https://github.com/fangq/redbirdpy.git redbird-pkg/redbirdpy
+          rm -rf redbird-pkg/*/.git redbird-pkg/*/.github
+          (cd redbird-pkg && zip -FSr --symlink ../packages/redbird-github-latest.zip redbird redbirdpy)
+          rm -rf redbird-pkg
+      - name: Upload redbird package
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-mcx-redbird-package
+          path: packages/redbird-github-latest.zip
       - name: Upload mcxlab package
         if: ${{ matrix.os == 'ubuntu-22.04' || matrix.os == 'macos-15-intel' || matrix.os == 'windows-2022' }}
         uses: actions/upload-artifact@v4
@@ -297,7 +330,7 @@ jobs:
             strip bin/mcx* || true
             upx -9 bin/mcx* || true
           fi
-          rm -rf .git .github mcxlab vsproj nsight mcxstudio src Makefile package icons genlog.sh .git* .travis* deploy icons filter mcxcloud pmcx pymcx winget Xcode*
+          rm -rf .git .github mcxlab vsproj nsight mcxstudio mcxstudio2 src Makefile package icons genlog.sh .git* .travis* deploy icons filter mcxcloud pmcx pymcx winget Xcode*
       - name: Zip mcx
         run: |
           cd .. && pwd
