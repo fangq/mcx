@@ -122,6 +122,10 @@ echo "test 2d simulation ... "
 temp=`"$MCX" --bench cube60b --json '{"Shapes":[{"Grid":{"Tag":1,"Size":[1,100,100]}},{"Box":{"Tag":2,"O":[0,30,10],"Size":[1,40,40]}}],"Domain":{"Media":[[0,0,1,1],[0.02,0.1,0.9,1.37],[0.02,10,0.9,6.85]]},"Optode":{"Source":{"Pos":[0,50,0],"Dir":[0,0,1]}}}' -d 0 -S 0 $PARAM | grep -o -E 'absorbed:.*6[0-9]\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run 2d simulation"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test 2d disk source with Lambertian direction ... "
+temp=`"$MCX" --bench cube60b --json '{"Shapes":[{"Grid":{"Tag":1,"Size":[1,100,100]}},{"Box":{"Tag":2,"O":[0,30,10],"Size":[1,40,40]}}],"Domain":{"Media":[[0,0,1,1],[0.02,0.1,0.9,1.37],[0.02,10,0.9,6.85]]},"Optode":{"Source":{"Type":"disk","Pos":[0,50,0],"Dir":[0,0,1,"-_Inf_"],"Param1":[20,0,0,0]}}}' -d 0 -S 0 -n 1e5 $PARAM | grep -o -E 'absorbed:.*7[0-9]\.[0-9]+%'`
+if [ -z "$temp" ]; then echo "fail to run 2d disk source with Lambertian direction"; fail=$((fail+1)); else echo "ok"; fi
+
 echo "test unitinmm ... "
 temp=`"$MCX" --bench skinvessel -S 0 -n 1e5 $PARAM | grep -o -E 'absorbed:.*39\.[0-9]+%'`
 if [ -z "$temp" ]; then echo "fail to run skinvessel benchmark"; fail=$((fail+1)); else echo "ok"; fi

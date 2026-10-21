@@ -1449,34 +1449,49 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     } else {
                         phi = TWO_PI * rand_uniform01(t);
                     }
+                    // In 2D, the disk source reduces to a line segment centered at srcpos.
+                    if (gcfg->srctype == MCX_SRC_DISK && gcfg->is2d) {
+                        r = (2.f * rand_uniform01(t) - 1.f) * launchsrc->param1.x;
 
-                    sincosf(phi, &sphi, &cphi);
-
-                    if (gcfg->srctype == MCX_SRC_DISK || cur_src_id == 0 || gcfg->srctype == MCX_SRC_RING) {
-                        r = sqrtf(rand_uniform01(t) * fabsf(launchsrc->param1.x * launchsrc->param1.x - launchsrc->param1.y * launchsrc->param1.y) + launchsrc->param1.y * launchsrc->param1.y);
-                    } else if (fabsf(launchsrc->dir.w) < 1e-5f || fabsf(launchsrc->param1.y) < 1e-5f) {
-                        r = sqrtf(0.5f * rand_next_scatlen(t)) * launchsrc->param1.x;
+                        if (gcfg->is2d == 1) {
+                            p->y += -r * v->z;
+                            p->z +=  r * v->y;
+                        } else if (gcfg->is2d == 2) {
+                            p->x += -r * v->z;
+                            p->z +=  r * v->x;
+                        } else {
+                            p->x += -r * v->y;
+                            p->y +=  r * v->x;
+                        }
                     } else {
-                        r = launchsrc->param1.x * launchsrc->param1.x * M_PI / launchsrc->param1.y; //Rayleigh range
-                        r = sqrtf(0.5f * rand_next_scatlen(t) * (1.f + (launchsrc->dir.w * launchsrc->dir.w / (r * r)))) * launchsrc->param1.x;
-                    }
 
-                    if ( v->z > -1.f + EPS && v->z < 1.f - EPS ) {
-                        float tmp0 = 1.f - v->z * v->z;
-                        float tmp1 = r * rsqrtf(tmp0);
-                        *((float4*)p) = float4(
-                                            p->x + tmp1 * (v->x * v->z * cphi - v->y * sphi),
-                                            p->y + tmp1 * (v->y * v->z * cphi + v->x * sphi),
-                                            p->z - tmp1 * tmp0 * cphi,
-                                            p->w
-                                        );
-                        GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
-                    } else {
-                        p->x += r * cphi;
-                        p->y += r * sphi;
-                        GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
-                    }
+                        sincosf(phi, &sphi, &cphi);
 
+                        if (gcfg->srctype == MCX_SRC_DISK || cur_src_id == 0 || gcfg->srctype == MCX_SRC_RING) {
+                            r = sqrtf(rand_uniform01(t) * fabsf(launchsrc->param1.x * launchsrc->param1.x - launchsrc->param1.y * launchsrc->param1.y) + launchsrc->param1.y * launchsrc->param1.y);
+                        } else if (fabsf(launchsrc->dir.w) < 1e-5f || fabsf(launchsrc->param1.y) < 1e-5f) {
+                            r = sqrtf(0.5f * rand_next_scatlen(t)) * launchsrc->param1.x;
+                        } else {
+                            r = launchsrc->param1.x * launchsrc->param1.x * M_PI / launchsrc->param1.y; //Rayleigh range
+                            r = sqrtf(0.5f * rand_next_scatlen(t) * (1.f + (launchsrc->dir.w * launchsrc->dir.w / (r * r)))) * launchsrc->param1.x;
+                        }
+
+                        if ( v->z > -1.f + EPS && v->z < 1.f - EPS ) {
+                            float tmp0 = 1.f - v->z * v->z;
+                            float tmp1 = r * rsqrtf(tmp0);
+                            *((float4*)p) = float4(
+                                                p->x + tmp1 * (v->x * v->z * cphi - v->y * sphi),
+                                                p->y + tmp1 * (v->y * v->z * cphi + v->x * sphi),
+                                                p->z - tmp1 * tmp0 * cphi,
+                                                p->w
+                                            );
+                            GPUDEBUG(("new dir: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
+                        } else {
+                            p->x += r * cphi;
+                            p->y += r * sphi;
+                            GPUDEBUG(("new dir-z: %10.5e %10.5e %10.5e\n", v->x, v->y, v->z));
+                        }
+                    }
                     *idx1d = (int(floorf(p->z)) * gcfg->dimlen.y + int(floorf(p->y)) * gcfg->dimlen.x + int(floorf(p->x)));
 
                     if (p->x < 0.f || p->y < 0.f || p->z < 0.f || p->x >= gcfg->maxidx.x || p->y >= gcfg->maxidx.y || p->z >= gcfg->maxidx.z) {
@@ -1688,11 +1703,19 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
                     rotatevector(v, stheta, ctheta, sphi, cphi);
                 } else if (launchsrc->dir.w < 0.f && isinf(launchsrc->dir.w)) { // lambertian (cosine distribution) if focal length is -inf
                     float ang, stheta, ctheta, sphi, cphi;
-                    ang = TWO_PI * rand_uniform01(t); //next arimuth angle
-                    sincosf(ang, &sphi, &cphi);
-                    stheta = sqrtf(rand_uniform01(t));
-                    ctheta = sqrtf(1.f - stheta * stheta);
-                    rotatevector(v, stheta, ctheta, sphi, cphi);
+
+                    if (gcfg->is2d) {
+                        // Cosine-weighted sampling over a semicircle.
+                        ang = asinf(2.f * rand_uniform01(t) - 1.f);
+                        sincosf(ang, &stheta, &ctheta);
+                        rotatevector2d(v, stheta, ctheta);
+                    } else {
+                        ang = TWO_PI * rand_uniform01(t); //next arimuth angle
+                        sincosf(ang, &sphi, &cphi);
+                        stheta = sqrtf(rand_uniform01(t));
+                        ctheta = sqrtf(1.f - stheta * stheta);
+                        rotatevector(v, stheta, ctheta, sphi, cphi);
+                    }
                 } else if (launchsrc->dir.w != 0.f) {
                     float Rn2 = (launchsrc->dir.w > 0.f) - (launchsrc->dir.w < 0.f);
                     rv->x += launchsrc->dir.w * v->x;
