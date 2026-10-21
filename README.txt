@@ -65,6 +65,9 @@ We would like to give our special thank the following contributors
 
 The detailed updates can be found in the below change log
 
+* 2026-10-21 [a26c733] [pmcx] detphoton: read nscat as uint32 bits only from float32 detp buffers
+* 2026-10-21 [7dc7cd1] [bug] pass uint32 and float32 label volumes as 32bit labels in pmcx/mcxlab, reject unknown media formats
+* 2026-10-21 [8d03dd3] [doc] refresh the v2026 ChangeLog, NEWS and README change lists
 * 2026-10-21 [d502ece] [perf] port mcxcl speedopt to CUDA: dynamic photon dispatch, 1-byte label volume; 1.07-1.51x
 * 2026-10-21 [16f3df9] [doc] refresh the v2026 ChangeLog, NEWS and README change lists
 * 2026-10-21 [c368809] [test] compare trajectories per photon: 5e-2 mm tolerance, tolerate up to 10% forked photons
