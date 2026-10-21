@@ -4,7 +4,7 @@ Monte Carlo eXtreme (MCX) - CUDA Edition
 
 -   Author: Qianqian Fang (q.fang at neu.edu)
 -   License: GNU General Public License version 3 (GPLv3)
--   Version: 3.0 (v2026, CODENAME_TBD)
+-   Version: 3.0 (v2026, Lucky Lux)
 -   Website: <https://mcx.space>
 -   Download: <https://mcx.space/wiki/?Get>
 
