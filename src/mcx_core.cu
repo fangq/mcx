@@ -3362,6 +3362,29 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         gpu[gpuid].autothread = (gpu[gpuid].autothread / gpu[gpuid].autoblock) * gpu[gpuid].autoblock;
     }
 
+    /**
+     * The per-thread photon data lives in shared memory and grows with the number of media when
+     * the per-medium detected photon data is saved; with ~200 media it exceeded the per-block limit
+     * and the kernel launch failed with "invalid argument". Halve the block size until it fits.
+     */
+    {
+        size_t fixedbuf = (param.nphaselen + param.nanglelen) * sizeof(float);
+        size_t threadbuf = cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF || cfg->outputtype == otRFmus));
+        uint oldblock = gpu[gpuid].autoblock;
+
+        while (gpu[gpuid].autoblock > 1 && !(gpu[gpuid].autoblock & 1) && fixedbuf + gpu[gpuid].autoblock * threadbuf > gpu[gpuid].sharedmem) {
+            gpu[gpuid].autoblock >>= 1;
+        }
+
+        if (fixedbuf + gpu[gpuid].autoblock * threadbuf > gpu[gpuid].sharedmem) {
+            mcx_error(-1, T_("the per-photon data does not fit in the GPU shared memory, reduce the number of media, the saved detected photon data (-w) or the block size (-T)"), __FILE__, __LINE__);
+        }
+
+        if (gpu[gpuid].autoblock != oldblock) {
+            MCX_FPRINTF(cfg->flog, "%s: %d -> %d\n", T_("reduce block size to fit the shared memory"), oldblock, gpu[gpuid].autoblock);
+        }
+    }
+
     param.maxgate = gpu[gpuid].maxgate;
 
     /** If cfg.respin is positive, the output data have to be accummulated, so we use a double-buffer to retrieve and then accummulate */
