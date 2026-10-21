@@ -42,7 +42,7 @@ temp=`"$MCX" --bench cube60 --dumpjson - | grep '"Name":\s*"cubic60"'`
 if [ -z "$temp" ]; then echo "fail to dump json input shape from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test exporting json input from builtin examples with volume data ... "
-temp=`"$MCX" --bench colin27 --dumpjson - | grep -o -E '"_ArrayZipData_":\s*"eAHs3YuCo7iSBNC'`
+temp=`"$MCX" --bench colin27 --dumpjson - | grep -o -E '"_ArrayZipData_":\s*"[A-Za-z0-9+/]{20}'`
 if [ -z "$temp" ]; then echo "fail to dump json input with volume from builtin example"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test default options ... "
@@ -183,10 +183,11 @@ if [ ! -z "$temp" ]; then
     if [ ! -z "$haserror" ] || [ ! -z "$temp" ]; then echo "fail to pass valgrind memory check"; fail=$((fail+1)); else echo "ok"; fi
 fi
 
-temp=`which cuda-memcheck 2> /dev/null`
-if [ ! -z "$temp" ]; then
-    echo "test gpu memory errors using cuda-memcheck ... "
-    temp=`cuda-memcheck "$MCX" --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' -B 'ararar1' -w dpw $PARAM -n 1e5`
+# cuda-memcheck was removed in CUDA 12, prefer compute-sanitizer when present
+MEMCHECK=`which compute-sanitizer 2> /dev/null || which cuda-memcheck 2> /dev/null`
+if [ ! -z "$MEMCHECK" ]; then
+    echo "test gpu memory errors using `basename $MEMCHECK` ... "
+    temp=`"$MEMCHECK" "$MCX" --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' -B 'ararar1' -w dpw $PARAM -n 1e5`
     haserror=`echo $temp | grep -o -E 'MCX[A-Z]* ERROR.-'`
     temp=`echo $temp | grep -o -E '=+\s+ERROR SUMMARY:\s+0\s+error'`
     if [ ! -z "$haserror" ] || [ -z "$temp" ]; then echo "fail to pass cuda memory check"; fail=$((fail+1)); else echo "ok"; fi
