@@ -2095,7 +2095,8 @@ void mcx_preprocess(Config* cfg) {
         cfg->savedetflag = 0x5;
     }
 
-    if (cfg->mediabyte >= 100 && cfg->savedetflag) {
+    /** the continuous-property formats have no tissue label to sort the per-medium data by */
+    if ((cfg->mediabyte >= 100 || cfg->mediabyte == MEDIA_ASGN_F2H) && cfg->savedetflag) {
         cfg->savedetflag = UNSET_SAVE_NSCAT(cfg->savedetflag);
         cfg->savedetflag = UNSET_SAVE_PPATH(cfg->savedetflag);
         cfg->savedetflag = UNSET_SAVE_MOM(cfg->savedetflag);

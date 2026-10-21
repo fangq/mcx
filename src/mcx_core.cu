@@ -250,6 +250,18 @@ __device__ inline uint mcx_media_load_hi(const uint media[], uint idx) {
 }
 
 /**
+ * @brief Tissue label of the current voxel, indexing the per-medium detected photon data (nscat/ppath/mom)
+ *
+ * Besides the label formats, MEDIA_LABEL_HALF stores the label in the low 14 bits next to a half
+ * float, and MEDIA_2LABEL_MIX keeps the label picked by updateproperty() in the low byte; using
+ * the whole voxel value as the index wrote far outside the ppath[] buffer for these two formats.
+ */
+__device__ inline uint mcx_detlabel(uint mediaid) {
+    return (gcfg->mediaformat == MEDIA_LABEL_HALF) ? (mediaid & 0x3FFF) :
+           ((gcfg->mediaformat == MEDIA_2LABEL_MIX) ? (mediaid & 0xFF) : (mediaid & MED_MASK));
+}
+
+/**
  * @brief Global variable to store the number of photon movements for debugging purposes
  */
 
@@ -2251,7 +2263,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                                 ((uint*)ppath)[SV_CURLABEL(nuvox.sv) - 1]++;
                             }
                         } else {
-                            ((uint*)ppath)[(mediaid & MED_MASK) - 1]++;
+                            ((uint*)ppath)[mcx_detlabel(mediaid) - 1]++;
                         }
                     }
 
@@ -2263,7 +2275,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                                                      SV_CURLABEL(nuvox.sv) - 1] += 1.f - ctheta;
                         } else
                             ppath[gcfg->maxmedia * (SAVE_NSCAT(gcfg->savedetflag) + SAVE_PPATH(gcfg->savedetflag)) +
-                                                 (mediaid & MED_MASK) - 1] += 1.f - ctheta;
+                                                 mcx_detlabel(mediaid) - 1] += 1.f - ctheta;
                     }
                 }
 
@@ -2480,7 +2492,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
                         ppath[gcfg->maxmedia * (SAVE_NSCAT(gcfg->savedetflag)) + SV_CURLABEL(nuvox.sv) - 1] += len;    //(unit=grid)
                     }
                 } else {
-                    ppath[gcfg->maxmedia * (SAVE_NSCAT(gcfg->savedetflag)) + (mediaid & MED_MASK) - 1] += len; //(unit=grid)
+                    ppath[gcfg->maxmedia * (SAVE_NSCAT(gcfg->savedetflag)) + mcx_detlabel(mediaid) - 1] += len; //(unit=grid)
                 }
             }
         }
