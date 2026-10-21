@@ -1134,7 +1134,7 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
                 void* val = NULL;
                 float* fbuf = NULL;
                 uint*  ibuf = NULL;
-                int hassrcid = ((cfg->his.totalsource > 1) && id == 1);
+                int hassrcid = ((cfg->his.totalsource > 1) && id == 0); /* srcid is packed in the upper 16 bits of detid */
 
                 if (!strcmp(dtype[id], "uint32")) {
                     ibuf = (uint*)calloc(dims[0] * dims[1], sizeof(uint));
@@ -1142,10 +1142,6 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
                     for (int i = 0; i < dims[0]; i++)
                         for (int j = 0; j < dims[1]; j++) {
                             ibuf[i * dims[1] + j] = ppath[i * cfg->his.colcount + col + j];
-
-                            if (hassrcid) {
-                                ibuf[i * dims[1] + j] &= 0xFFFF;
-                            }
                         }
 
                     val = (void*)ibuf;
@@ -1352,7 +1348,7 @@ void mcx_savejdb(float* ppath, void* seeds, uint count, int doappend, Config* cf
                 void* val = NULL;
                 float* fbuf = NULL;
                 uint*  ibuf = NULL;
-                int hassrcid = ((cfg->his.totalsource > 1) && id == 1);
+                int hassrcid = ((cfg->his.totalsource > 1) && id == 0); /* srcid is packed in the upper 16 bits of detid */
 
                 if (!strcmp(dtype[id], "uint32")) {
                     ibuf = (uint*)calloc(dims[0] * dims[1], sizeof(uint));
@@ -1360,10 +1356,6 @@ void mcx_savejdb(float* ppath, void* seeds, uint count, int doappend, Config* cf
                     for (int i = 0; i < (int)dims[0]; i++)
                         for (int j = 0; j < (int)dims[1]; j++) {
                             ibuf[i * dims[1] + j] = ppath[i * cfg->his.colcount + col + j];
-
-                            if (hassrcid) {
-                                ibuf[i * dims[1] + j] &= 0xFFFF;
-                            }
                         }
 
                     val = (void*)ibuf;
