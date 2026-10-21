@@ -1,6 +1,6 @@
 Name: mcxtools
-Version: 2.6
-Date: 2025-26-01
+Version: 3.0
+Date: 2026-10-21
 Title: MCX photon transport simulator for MATLAB/Octave helper functions
 Author: Qianqian Fang <fangqq@gmail.com>
 Maintainer: Qianqian Fang <fangqq@gmail.com>

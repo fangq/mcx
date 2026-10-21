@@ -314,7 +314,7 @@ supported parameters, as shown below:
 
 <pre>###############################################################################
 #                      Monte Carlo eXtreme (MCX) -- CUDA                      #
-#          Copyright (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>          #
+#          Copyright (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>          #
 #                https://mcx.space/  &  https://neurojson.io                  #
 #                                                                             #
 # Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #

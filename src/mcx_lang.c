@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2025
+**  \copyright Qianqian Fang, 2009-2026
 **
 **  \section sref Reference
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -73,7 +73,7 @@ MSTR(
     "_MCX_BANNER_": 
 ) "\"" S_MAGENTA "###############################################################################\n\
 #                           极限蒙卡 (MCX) -- CUDA                            #\n\
-#         作者版权 (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>            #\n\
+#         作者版权 (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>            #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
@@ -165,7 +165,7 @@ MSTR(
     "_MCX_BANNER_": 
 ) "\"" S_MAGENTA "###############################################################################\n\
 #                           極限蒙卡 (MCX) -- CUDA                            #\n\
-#          作者版權 (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>           #\n\
+#          作者版權 (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>           #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 #         計算光學與轉譯影像實驗室 (COTI Lab) - " S_BLUE "http://fanglab.org " S_MAGENTA "           #\n\
@@ -257,7 +257,7 @@ MSTR(
     "_MCX_BANNER_": 
 ) "\"" S_MAGENTA "###############################################################################\n\
 #                           極限モンテカルロ (MCX) -- CUDA                    #\n\
-#         著作権 (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>              #\n\
+#         著作権 (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>              #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
@@ -351,7 +351,7 @@ MSTR(
     "_MCX_BANNER_": 
 ) "\"" S_MAGENTA "###############################################################################\n\
 #                      Monte Carlo Extrême (MCX) -- CUDA                      #\n\
-#     Droits d’auteur (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>         #\n\
+#     Droits d’auteur (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>         #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 #Optique computationnelle et imagerie translationnelle(COTI)-" S_BLUE "http://fanglab.org" S_MAGENTA "#\n\
@@ -446,7 +446,7 @@ MSTR(
     "_MCX_BANNER_": 
 ) "\"" S_MAGENTA "###############################################################################\n\
 #                  Monte Carlo Extremo (MCX) -- CUDA                          #\n\
-#     Derechos de autor (c) 2009-2025 Qianqian Fang <q.fang at neu.edu>       #\n\
+#     Derechos de autor (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>       #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Laboratorio de Óptica Computacional e Imagenología Traslacional (COTI)-" S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
@@ -817,7 +817,7 @@ MSTR(
     "_MCX_BANNER_": 
 ) "\"" S_MAGENTA "###############################################################################\n\
 #                          Monte Carlo Extremo (MCX) -- CUDA                  #\n\
-#           Direitos autorais (c) 2009-2025 Qianqian Fang <q.fang at neu.edu> #\n\
+#           Direitos autorais (c) 2009-2026 Qianqian Fang <q.fang at neu.edu> #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
 # Laboratório de Óptica Computacional e Imagem Translacional (COTI) - " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\

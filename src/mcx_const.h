@@ -2,7 +2,7 @@
 **  \mainpage Monte Carlo eXtreme - GPU accelerated Monte Carlo Photon Migration
 **
 **  \author Qianqian Fang <q.fang at neu.edu>
-**  \copyright Qianqian Fang, 2009-2025
+**  \copyright Qianqian Fang, 2009-2026
 **
 **  \section sref Reference
 **  \li \c (\b Fang2009) Qianqian Fang and David A. Boas,
@@ -35,9 +35,9 @@
 #ifndef _MCEXTREME_CONSTANT_H
 #define _MCEXTREME_CONSTANT_H
 
-#define MCX_VERSION        "v2025.10"
-#define MCX_VERSION_MAJOR  2
-#define MCX_VERSION_MINOR  8
+#define MCX_VERSION        "v2026"
+#define MCX_VERSION_MAJOR  3
+#define MCX_VERSION_MINOR  0
 
 #define ONE_PI             3.1415926535897932f     /**< pi */
 #define TWO_PI             6.28318530717959f       /**< 2*pi */
