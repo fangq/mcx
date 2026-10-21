@@ -193,6 +193,12 @@ if [ ! -z "$MEMCHECK" ]; then
     if [ ! -z "$haserror" ] || [ -z "$temp" ]; then echo "fail to pass cuda memory check"; fail=$((fail+1)); else echo "ok"; fi
 fi
 
+temp=`which python3 2> /dev/null`
+if [ ! -z "$temp" ] && python3 -c "import numpy" 2> /dev/null; then
+    echo "test step-by-step photon trajectories against golden data ... "
+    temp=`MCX="$MCX" ./testtraj.sh $PARAM 2>&1`
+    if [ $? -ne 0 ]; then echo "$temp" | grep -E 'FAILED|diverges|fail' | head -10; echo "fail to reproduce golden trajectories"; fail=$((fail+1)); else echo "ok"; fi
+fi
 
 if [ "$fail" -gt "0" ];  then
     echo "failed $fail tests";

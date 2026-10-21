@@ -1,0 +1,15 @@
+{
+    "Session": {"ID": "homogeneous", "Photons": 20, "RNGSeed": 12345, "DoMismatch": 0},
+    "Forward": {"T0": 0, "T1": 5e-9, "Dt": 5e-9},
+    "Domain": {
+        "Dim": [20, 20, 20],
+        "OriginType": 1,
+        "LengthUnit": 1,
+        "Media": [
+            {"mua": 0, "mus": 0, "g": 1, "n": 1},
+            {"mua": 0.05, "mus": 2, "g": 0.8, "n": 1}
+        ]
+    },
+    "Shapes": [{"Grid": {"Tag": 1, "Size": [20, 20, 20]}}],
+    "Optode": {"Source": {"Type": "pencil", "Pos": [10, 10, 0], "Dir": [0, 0, 1]}}
+}
