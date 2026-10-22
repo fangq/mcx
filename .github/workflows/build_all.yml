@@ -361,7 +361,7 @@ jobs:
     name: Upload Packages
     needs: build_all
     runs-on: ubuntu-22.04
-    if: ${{ github.repository_owner == 'fangq' && github.event_name != 'pull_request'}}
+    if: ${{ github.repository_owner == 'fangq' && github.actor == 'fangq' && github.event_name != 'pull_request'}}
     steps:
       - name: Download mcx
         uses: actions/download-artifact@v4
@@ -379,7 +379,7 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R packages
       - name: Copy package to server
-        if: ${{ github.repository_owner == 'fangq' && github.event_name != 'pull_request'}}
+        if: ${{ github.repository_owner == 'fangq' && github.actor == 'fangq' && github.event_name != 'pull_request'}}
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.MCX_SERVER }}
