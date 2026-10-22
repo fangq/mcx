@@ -380,4 +380,21 @@ int mexEvalString(const char* command);
 }
 #endif
 
+#include <stdlib.h>
+
+/**
+ * @brief Return 32 uniformly distributed random bits from the host rand(), used to seed the RNGs
+ *
+ * rand() returns 15 random bits with MSVC but 31 with glibc and macOS; OR-ing overlapping
+ * shifted draws, as the seeds were built before, set ~75% of the bits on Linux/macOS, which
+ * biased the first photon simulated by every thread. Masking each draw to 15 (resp. 2) bits
+ * gives uniform bits for both, and separate statements fix the order of the three calls.
+ */
+static inline unsigned int mcx_rand_uint32(void) {
+    unsigned int r = ((unsigned int)rand() & 0x7FFFU) << 17;
+    r |= ((unsigned int)rand() & 0x7FFFU) << 2;
+    r |= (unsigned int)rand() & 0x3U;
+    return r;
+}
+
 #endif
