@@ -1101,7 +1101,9 @@ void mcx_savejdet(float* ppath, void* seeds, uint count, int doappend, Config* c
         char colnum[] = {1, 3, 1, 1, 4};
         char* dtype[] = {"uint32", "single", "single", "uint32", "single"};
         char* dname[] = {"photonid", "p", "w0", "srcid", "iquv"};
-        int activecol = sizeof(colnum) - (cfg->his.totalsource == 1);
+        /* srcid is always written (the released layout); iquv only exists when
+           istrajstokes extends each record to MCX_DEBUG_REC_LEN + 4 floats */
+        int activecol = sizeof(colnum) - (cfg->his.colcount < MCX_DEBUG_REC_LEN + 4);
         cJSON_AddItemToObject(obj, "Trajectory", dat = cJSON_CreateObject());
 
         for (int id = 0; id < activecol; id++) {
@@ -1299,7 +1301,9 @@ void mcx_savejdb(float* ppath, void* seeds, uint count, int doappend, Config* cf
         char colnum[] = {1, 3, 1, 1, 4};
         char* dtype[] = {"uint32", "single", "single", "uint32", "single"};
         char* dname[] = {"photonid", "p", "w0", "srcid", "iquv"};
-        int activecol = sizeof(colnum) - (cfg->his.totalsource == 1);
+        /* srcid is always written (the released layout); iquv only exists when
+           istrajstokes extends each record to MCX_DEBUG_REC_LEN + 4 floats */
+        int activecol = sizeof(colnum) - (cfg->his.colcount < MCX_DEBUG_REC_LEN + 4);
 
         ubjw_write_key(root, "Trajectory");
         ubjw_begin_object(root, UBJ_MIXED, 0);
