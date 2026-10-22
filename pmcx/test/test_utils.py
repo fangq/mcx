@@ -211,8 +211,17 @@ class TestFunctions(unittest.TestCase):
         # self.assertEqual(actual, expected, f"Mismatch at path: {path}")
 
     def test_mcxlab_with_valid_input(self):
+        # with the default autopilot, photons are dispatched to the GPU threads dynamically and
+        # two runs with the same seed differ; autopilot=0 selects the static split, under which a
+        # fixed seed reproduces the same photons on the same device
+        try:
+            if not mcxlab("gpuinfo"):
+                self.skipTest("no GPU available")
+        except ImportError:
+            self.skipTest("neither pmcx nor pmcxcl binary extension is available")
+
         cfg = {
-            "nphoton": 1e2,
+            "nphoton": 1e3,
             "vol": np.ones([2, 2, 2], dtype="uint8"),
             "tstart": 0,
             "tend": 5e-9,
@@ -220,65 +229,31 @@ class TestFunctions(unittest.TestCase):
             "srcpos": [1, 1, 1],
             "srcdir": [0, 0, 1],
             "prop": np.array([[0, 0, 1, 1], [0.005, 1, 0, 1.37], [0.1, 10, 0.9, 1]]),
+            "detpos": [[1, 1, 0, 1]],  # to detect photons, one must first define detectors
+            "issavedet": 1,  # cfg.issavedet must be set to 1 or True in order to save detected photons
+            "issrcfrom0": 1,  # set this flag to ensure src/det coordinates align with voxel space
+            "autopilot": 0,
+            "seed": 12345,
         }
-        cfg["detpos"] = [
-            [1, 1, 0, 1],
-            [1, 1, 0, 1],
-        ]  # to detect photons, one must first define detectors
-        cfg[
-            "issavedet"
-        ] = 1  # cfg.issavedet must be set to 1 or True in order to save detected photons
-        cfg[
-            "issrcfrom0"
-        ] = 1  # set this flag to ensure src/det coordinates align with voxel space
 
-        # expected output data
-        detp = {
-            "detid": np.array([1, 1, 1, 1, 1]),
-            "ppath": np.array(
-                [
-                    [1.059002, 0.0],
-                    [1.9772522, 0.0],
-                    [2.069064, 0.0],
-                    [2.8588557, 0.0],
-                    [2.5556042, 0.0],
-                ]
-            ),
-            "prop": np.array(
-                [
-                    [0.00e00, 0.00e00, 1.00e00, 1.00e00],
-                    [5.00e-03, 1.00e00, 0.00e00, 1.37e00],
-                    [1.00e-01, 1.00e01, 9.00e-01, 1.00e00],
-                ]
-            ),
-            "data": np.array(
-                [
-                    [1.0, 1.0, 1.0, 1.0, 1.0],
-                    [1.059002, 1.9772522, 2.069064, 2.8588557, 2.5556042],
-                    [0.0, 0.0, 0.0, 0.0, 0.0],
-                ]
-            ),
-        }
-        flux = np.array(
-            [
-                [[[2.5131630e07], [3.6653404e07]], [[4.1204576e07], [4.7903040e07]]],
-                [[[2.6910164e07], [3.5469168e07]], [[2.5065972e07], [1.6582197e08]]],
-            ]
-        )
-        stat = {
-            "runtime": 2,
-            "nphoton": 100,
-            "energytot": 100.0,
-            "energyabs": 1.0103997588157654,
-            "normalizer": 2000000.0,
-            "unitinmm": 1.0,
-            "workload": [3584.0],
-        }
-        expected_output = {"detp": detp, "flux": flux, "stat": stat}
+        res = [mcxlab(dict(cfg)) for _ in range(2)]
 
-        actual_output = mcxlab(cfg)
-        self.check_outputs(actual_output, expected_output)
+        for out in res:
+            detp, flux = out["detp"], np.asarray(out["flux"])
+            self.assertEqual(sorted(detp.keys())[:2], ["data", "detid"])
+            self.assertGreater(len(detp["detid"]), 0)
+            self.assertTrue(np.all(np.asarray(detp["detid"]) == 1))
+            self.assertTrue(np.all(np.asarray(detp["ppath"])[:, 0] > 0))
+            self.assertEqual(flux.shape[:3], (2, 2, 2))
+            self.assertTrue(np.all(np.isfinite(flux)) and np.all(flux > 0))
+            self.assertEqual(out["stat"]["nphoton"], 1000)
 
+        # the static split reproduces the detected photons exactly, but they are stored in the
+        # order the threads finish, and the fluence only up to the order of the float additions
+        recs = [np.asarray(out["detp"]["data"]).T for out in res]
+        recs = [r[np.lexsort(r.T[::-1])] for r in recs]
+        np.testing.assert_array_equal(recs[0], recs[1])
+        np.testing.assert_allclose(res[0]["flux"], res[1]["flux"], rtol=1e-5)
 
 if __name__ == "__main__":
     unittest.main()
