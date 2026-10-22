@@ -12,56 +12,33 @@ on:
 
 jobs:
   build_macos_wheels:
-    name: Build macOS wheels
-    runs-on: macos-15-intel
-    strategy:
-      matrix:
-        python_version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', 'pypy3.7', 'pypy3.8', 'pypy3.9', 'pypy3.10']
+    name: Build the macOS noarch wheel
+    # macOS has no CUDA, so pmcx ships only its python utilities there (pmcxcl borrows them);
+    # pip falls back to this py3-none-any wheel on any platform without a native pmcx wheel
+    runs-on: macos-14
     outputs:
       perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Update RCS keywords
-        shell: bash
-        run: |
-          printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
-          rm -rf src/*.c
-          git checkout src/*.c
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python_version }}
-      - name: Select Supported XCode Version + Link OpenMP
-        run: |
-          brew install libomp
-          curl -o Xcode10.app.tar.gz --insecure https://mcx.space/dev/ci/Xcode10.app.tar.gz
-          tar zxf Xcode10.app.tar.gz
-          sudo xcode-select -s $PWD/Xcode.app/Contents/Developer/
-          echo "$PWD/Xcode.app/Contents/Developer/usr/bin" >> $GITHUB_PATH
-          echo "$PWD/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/" >> $GITHUB_PATH
-          echo "SDKROOT=$PWD/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" >> $GITHUB_ENV
-          brew link --force libomp
-      - name: Install CUDA
-        run: |
-          curl -o cuda.zip --insecure https://mcx.space/dev/ci/cuda-10-2-0.zip
-          unzip cuda.zip
-          sudo mv cuda/ /usr/local/
-          sudo chmod +x /usr/local/cuda/bin/*
-          sudo chmod +x /usr/local/cuda/nvvm/bin/*
-          echo "CUDA_PATH=/usr/local/cuda/bin" >> $GITHUB_ENV
-          echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/" >> $GITHUB_ENV
-          ln -s /usr/local/opt/libomp/include/*.h /usr/local/cuda/include
-      - name: Build Wheels
+          python-version: '3.12'
+      - name: Build Wheel
         run: |
           cd pmcx/
           python -m pip install --upgrade pip
           pip install wheel setuptools
-          VERBOSE=1 pip wheel . -w ../dist/ --verbose
+          PMCX_PURE_PYTHON=1 pip wheel . --no-deps -w ../dist/
           ls ../dist/
           cd ../
+      - name: Check the wheel is noarch and the utilities import
+        run: |
+          ls dist/pmcx-*-py3-none-any.whl
+          [ $(ls dist/ | wc -l) -eq 1 ] || { echo "expected one noarch wheel"; exit 1; }
+          pip install numpy dist/pmcx-*-py3-none-any.whl
+          (cd /tmp && python -c "import pmcx; print(pmcx.detweight, pmcx.loadmc2)")
       - name: Check If the Build Version Exists on PyPI
         id: perform_pypi_upload_check
         run: |
@@ -69,7 +46,7 @@ jobs:
       - name: Prepare Wheels for Upload
         uses: actions/upload-artifact@v4
         with:
-          name: macos-wheels-${{ matrix.python_version }}
+          name: macos-wheels-noarch
           path: dist/
 
   upload_macos_wheels:

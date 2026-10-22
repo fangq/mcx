@@ -118,6 +118,10 @@ class CMakeBuild(build_ext):
         )
 
 
+# PMCX_PURE_PYTHON=1 builds a py3-none-any wheel holding only the python utilities
+# (detweight, loadmc2, ...), for platforms without CUDA such as macOS; pmcxcl borrows them
+purepython = os.environ.get("PMCX_PURE_PYTHON", "0") == "1"
+
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
@@ -148,8 +152,8 @@ setup(
         "NVIDIA",
         "CUDA",
     ],
-    ext_modules=[CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
-    cmdclass={"build_ext": CMakeBuild},
+    ext_modules=[] if purepython else [CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
+    cmdclass={} if purepython else {"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
     classifiers=[

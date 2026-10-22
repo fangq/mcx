@@ -32,7 +32,16 @@ res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype='uint8'),
 try:
     from _pmcx import gpuinfo, run, version
 except ImportError:  # pragma: no cover
-    print("the pmcx binary extension (_pmcx) is not compiled! please compile first")
+    # the noarch wheel (e.g. on macOS, which has no CUDA) ships only the python utilities,
+    # which pmcxcl also borrows; report the missing simulator only when it is called
+
+    def _nobinary(*args, **kwargs):
+        raise ImportError(
+            "the pmcx binary extension (_pmcx) is not available on this platform; this "
+            "installation only provides the utility functions - use pmcxcl to run simulations"
+        )
+
+    gpuinfo = run = version = _nobinary
 
 from .utils import (
     detweight,
