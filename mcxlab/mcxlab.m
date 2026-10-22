@@ -90,6 +90,7 @@ function varargout = mcxlab(varargin)
 % == MC simulation settings ==
 %      cfg.seed:       seed for the random number generator (integer) [default 1648335518]
 %                      setting seed to a negative integer or 0 uses system clock as seed;
+%                      a fixed seed reproduces a run only with cfg.autopilot=0;
 %                      if set to a uint8 array, the binary data in each column is used
 %                      to seed a photon (i.e. the "replay" mode)
 %                      Example: <demo_mcxlab_replay.m>
@@ -171,6 +172,9 @@ function varargout = mcxlab(varargin)
 %
 % == GPU settings ==
 %      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
+%                      with 1, photons are also dispatched to the threads dynamically,
+%                      so runs with the same cfg.seed agree statistically but not
+%                      bit-wise; set 0 to reproduce a run exactly
 %      cfg.nblocksize: how many CUDA thread blocks to be used [64]
 %      cfg.nthread:    the total CUDA thread number [2048]
 %      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]

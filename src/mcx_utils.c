@@ -6101,6 +6101,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -t [16384|int](--thread)      total thread number\n\
  -T [64|int]   (--blocksize)   thread number per block\n\
  -A [1|int]    (--autopilot)   1 let mcx decide thread/block size, 0 use -T/-t\n\
+                               autopilot also dispatches photons dynamically,\n\
+                               so runs with the same seed agree statistically\n\
+                               but not bit-wise; use -A 0 to reproduce a run\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
       or\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
