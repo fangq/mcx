@@ -1,18 +1,21 @@
 #!/bin/bash
-PMCX_BUILD_VERSION=$(awk -F"-" '{ print $2 }' <<< $(ls dist/ | head -1))
-PMCX_VERSIONS_STRING=$(python3 -m pip index versions pmcx | grep versions:)
-PMCX_VERSIONS_STRING=${PMCX_VERSIONS_STRING#*:}
-UPLOAD_TO_PYPI=1
-while IFS=', ' read -ra PMCX_VERSIONS_ARRAY; do
-  for VERSION in "${PMCX_VERSIONS_ARRAY[@]}"; do
-    if [ "$PMCX_BUILD_VERSION" = "$VERSION" ]; then
-      UPLOAD_TO_PYPI=0
-    fi
-  done;
-done <<< "$PMCX_VERSIONS_STRING"
-if [ "$UPLOAD_TO_PYPI" = 1 ]; then
-  echo "Wheel version wasn't found on PyPi.";
+# set perform_pypi_upload=1 only when PyPI answers and does not yet list the version of the
+# package in dist/; if PyPI cannot be queried, do not upload (pip index was unreliable on some
+# runners and its empty output used to be taken as "not published yet")
+PKG=pmcx
+BUILD_VERSION=$(ls dist/ | head -1 | awk -F"-" '{ print $2 }')
+UPLOAD_TO_PYPI=0
+if [ -z "$BUILD_VERSION" ]; then
+  echo "No package found in dist/, not uploading."
+elif RELEASES=$(curl -sfL --retry 3 "https://pypi.org/pypi/$PKG/json"); then
+  # release versions are keys of the "releases" object, e.g. "0.7.3":[
+  if grep -q "\"$BUILD_VERSION\": *\[" <<< "$RELEASES"; then
+    echo "$PKG $BUILD_VERSION was found on PyPI, not uploading."
+  else
+    echo "$PKG $BUILD_VERSION wasn't found on PyPI."
+    UPLOAD_TO_PYPI=1
+  fi
 else
-  echo "Wheel was found on PyPi.";
+  echo "Could not query PyPI for $PKG, not uploading."
 fi
 echo "perform_pypi_upload=$UPLOAD_TO_PYPI" >> $GITHUB_OUTPUT
