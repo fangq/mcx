@@ -567,17 +567,29 @@ def mcxlab(*args):
     try:
         defaultocl = eval("USE_MCXCL", globals())
     except:
-        defaultocl = 0
+        # USE_MCXCL set in the user's session lives in __main__, not in this module
+        import __main__
+
+        defaultocl = getattr(__main__, "USE_MCXCL", 0)
 
     useopencl = defaultocl
+
+    # the backend must be chosen before importing run(), so read option='opencl' first
+    if len(args) == 2 and isinstance(args[1], str) and args[1] == "opencl":
+        useopencl = 1
 
     if useopencl == 0:
         try:
             from _pmcx import gpuinfo, run, version
         except ImportError:
-            print(
-                "the pmcx binary extension (_pmcx) is not compiled! please compile first"
-            )
+            # no CUDA build of pmcx (e.g. the pure-python wheel on macOS): use pmcxcl if present
+            try:
+                from _pmcxcl import gpuinfo, run, version
+            except ImportError:
+                raise ImportError(
+                    "neither the pmcx (CUDA) nor the pmcxcl (OpenCL) binary extension is "
+                    'available; run "pip install pmcxcl" to simulate on this platform'
+                )
     else:
         try:
             from _pmcxcl import gpuinfo, run, version
@@ -631,7 +643,7 @@ def mcxlab(*args):
             )
 
         if "tstep" not in args[0]:
-            args[0]["tsetp"] = args[0]["tend"]
+            args[0]["tstep"] = args[0]["tend"]
 
         if "srcpos" not in args[0]:
             raise ValueError(
