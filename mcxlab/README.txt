@@ -14,7 +14,7 @@ the entire MCX code into a MEX function which can be called directly inside
 MATLAB or Octave. The input and output files in MCX are replaced by convenient
 in-memory struct variables in MCXLAB, thus, making it much easier to use 
 and interact. MATLAB/Octave also provides convenient plotting and data
-analysis functions. With MCXLAB, your analysis can be streamlined and speed-
+analysis functions. With MCXLAB, your analysis can be streamlined and sped
 up without involving disk files.
 
 Because MCXLAB contains the exact computational codes for the GPU calculations
@@ -24,9 +24,9 @@ running simulations compared to the standalone version of MCX.
 
 == # Installation ==
 
-To download MCXLAB, please visit [http://mcx.space/wiki/index.cgi?Download#Download_the_Latest_Release this link]. 
-If you choose to [http://mcx.sourceforge.net/cgi-bin/index.cgi?register/mcx register], 
-you will have an option to be notified for any future updates including 
+To download MCXLAB, please visit [https://mcx.space/wiki/index.cgi?Download#Download_the_Latest_Release this link]. 
+If you choose to [https://mcx.space/wiki/index.cgi?register/mcx register],
+you will have an option to be notified for any future updates including
 critical bug fixes and new milestone releases.
 
 The system requirements for MCXLAB are the same as MCX: you have to make
@@ -57,8 +57,9 @@ function. The help information is listed below. You can find the input/output
 formats and examples. The input cfg structure has very similar field names as
 the verbose command line options in MCX.
 
-<pre>  ====================================================================
-       mcxlab - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
+<pre> 
+  ====================================================================
+       MCXLAB - Monte Carlo eXtreme (MCX) for MATLAB/GNU Octave
   --------------------------------------------------------------------
   Copyright (c) 2011-2026 Qianqian Fang <q.fang at neu.edu>
                        URL: https://mcx.space
@@ -74,7 +75,7 @@ the verbose command line options in MCX.
      cfg: a struct, or struct array. Each element of cfg defines
           the parameters associated with a simulation.
           if cfg='gpuinfo': return the supported GPUs and their parameters,
-          if cfg='version': return the version of mcxlab as a string,
+          if cfg='version': return the version of MCXLAB as a string,
           see sample script at the bottom
      option: (optional), options is a string, specifying additional options
           option='preview': this plots the domain configuration using mcxpreview(cfg)
@@ -85,7 +86,9 @@ the verbose command line options in MCX.
      mcxlab and mcxlabcl calls will use mcxcl.mex; by setting option='cuda', one can
      force both mcxlab and mcxlabcl to use mcx (cuda version). Similarly, if
      USE_MCXCL=0, all mcxlabcl and mcxlab call will use mcx.mex by default, unless
-     one set option='opencl'.
+     one sets option='opencl'. When USE_MCXCL is set to a positive integer
+     or a string, it overwrites cfg.gpuid in mcxlabcl to specify the device
+     to run the simulation.
  
      cfg may contain the following fields:
  
@@ -100,7 +103,7 @@ the verbose command line options in MCX.
                        the 2D plane in such case.
                        for 2D simulations, Example: <demo_mcxlab_2d.m>
  
-                       mcxlab also accepts 4D arrays to define continuously varying media.
+                       MCXLAB also accepts 4D arrays to define continuously varying media.
                        The following formats are accepted
                          1 x Nx x Ny x Nz float32 array: "mua_float"/101 format: mua values for each voxel (must use permute to make 1st dimension singleton)
                          2 x Nx x Ny x Nz float32 array: "muamus_float"/100 format: mua/mus values for each voxel (g/n use prop(2,:))
@@ -129,7 +132,7 @@ the verbose command line options in MCX.
                        to this initial weight (w0) before normalization.
       *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector; if srcdir
                        contains a 4th element, it specifies the focal length of
-                       the source (only valid for focuable src, such as planar, disk,
+                       the source (only valid for focusable src, such as planar, disk,
                        fourier, gaussian, pattern, slit, etc); if the focal length
                        is nan, all photons will be launched isotropically regardless
                        of the srcdir direction; if the focal length is -inf, the launch
@@ -140,18 +143,19 @@ the verbose command line options in MCX.
        Starting v2024, cfg.{srcpos,srcdir,srcparam1,srcparam2} accept multiple sources,
        with each source corresponding to a single row of the array. For all 4 components,
        srcpos/srcdir support 3 or 4 columns, and srcparam1/srcparam2 support 4 columns.
-       If any of the 4 compnents present, they should have matching row number.
+       If any of the 4 components are present, they should have the same number of rows.
  
   == MC simulation settings ==
        cfg.seed:       seed for the random number generator (integer) [default 1648335518]
                        setting seed to a negative integer or 0 uses system clock as seed;
+                       a fixed seed reproduces a run only with cfg.autopilot=0;
                        if set to a uint8 array, the binary data in each column is used
                        to seed a photon (i.e. the "replay" mode)
                        Example: <demo_mcxlab_replay.m>
        cfg.respin:     repeat simulation for the given time (integer) [1]
                        if negative, divide the total photon number into respin subsets
        cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-       cfg.bc          per-face boundary condition (BC), a strig of 6 letters (case insensitive) for
+       cfg.bc          per-face boundary condition (BC), a string of 6 letters (case insensitive) for
                        bounding box faces at -x,-y,-z,+x,+y,+z axes;
                        overwrite cfg.isreflect if given.
                        each letter can be one of the following:
@@ -168,7 +172,7 @@ the verbose command line options in MCX.
                        '0': this face is not used to detector photons
                        '1': this face is used to capture photons (if output detphoton)
                        see <demo_bc_det.m>
-       cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no reflection.
+       cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no normalization.
                        setting isnormalized to 2 in the replay mode builds the Jacobian
                        with Born approximation instead of the default Rytov approximation
        cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
@@ -180,7 +184,7 @@ the verbose command line options in MCX.
                        Example: <demo_mcxyz_skinvessel.m>
        cfg.invcdf:     user-specified scattering phase function. To use this, one must define
                        a vector with monotonically increasing value between -1 and 1
-                       defining the discretized inverse function of the cummulative density function (CDF)
+                       defining the discretized inverse function of the cumulative density function (CDF)
                        of u=cos(theta), i.e. inv(CDF(u))=inv(CDF(cos(theta))), where theta [0-pi] is the
                        zenith angle of the scattering event, and u=cos(theta) is between -1 and 1.
                        Please note that the defined inv(CDF) is relative to u, not to theta. This is because
@@ -189,7 +193,7 @@ the verbose command line options in MCX.
        cfg.angleinvcdf: user-specified launch angle distribution. To use this, one must define
                        a vector with monotonically increasing value between 0 and 1
                        defining the discretized inverse function of the
-                       cummulative density function (CDF) of (theta/pi),
+                       cumulative density function (CDF) of (theta/pi),
                        i.e. inv(CDF(theta/pi)), where theta in the range of
                        [0-pi] is the zenith angle of the launch angle relative to cfg.srcdir.
  
@@ -226,6 +230,9 @@ the verbose command line options in MCX.
  
   == GPU settings ==
        cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
+                       with 1, photons are also dispatched to the threads dynamically,
+                       so runs with the same cfg.seed agree statistically but not
+                       bit-wise; set 0 to reproduce a run exactly
        cfg.nblocksize: how many CUDA thread blocks to be used [64]
        cfg.nthread:    the total CUDA thread number [2048]
        cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
@@ -292,8 +299,15 @@ the verbose command line options in MCX.
                        'zgaussian' - an angular gaussian beam, srcparam1(1) specifies the variance in the zenith angle
                        'line' - a line source, emitting from the line segment between
                                 cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating
-                                uniformly in the perpendicular direction
-                       'slit' [*] - a colimated slit beam emitting from the line segment between
+                                uniformly in the perpendicular direction;
+                                when cfg.srcparam2.x is non-zero, it
+                                creates a wedge-source (or fan-beam), where
+                                the launch directions are still
+                                perpendicular to the source line segment,
+                                but rotated by the wedge half-angle
+                                cfg.srcparam2.x (in radian) from the plane
+                                spanned by cfg.srcdir and the source line
+                       'slit' [*] - a collimated slit beam emitting from the line segment between
                                 cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial
                                 dir specified by cfg.srcdir; when user defines positive values for srcparam2.x or .y,
                                 the slit source is broadened in a Guassian profile controlled by
@@ -315,14 +329,16 @@ the verbose command line options in MCX.
        cfg.srcid:      when multiple sources are defined, if srcid is -1, each source is separately
                        simulated; if set to 0, all source solution are summed; if set to a positive
                        number starting from 1, only the specified source is simulated; default to 0
-       cfg.omega: source modulation frequency (rad/s) for RF replay, 2*pi*f
+       cfg.omega: source modulation angular frequency (rad/s), i.e. 2*pi*f; used for
+                       RF replay (cfg.seed from file, outputtype 'rf'/'rfmus') and
+                       RF forward (no cfg.seed, omega>0 triggers RF forward automatically)
        cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
                     I: total light intensity (I >= 0)
                     Q: balance between horizontal and vertical linearly
-                    polaized light (-1 <= Q <= 1)
-                    U: balance between +45° and -45° linearly polaized
+                    polarized light (-1 <= Q <= 1)
+                    U: balance between +45° and -45° linearly polarized
                     light (-1 <= Q <= 1)
-                    V: balance between right and left circularly polaized
+                    V: balance between right and left circularly polarized
                     light (-1 <= Q <= 1)
        cfg.lambda: source light wavelength (nm) for polarized MC
        cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
@@ -367,12 +383,45 @@ the verbose command line options in MCX.
                        'jacobian' or 'wl' - mua Jacobian (replay mode),
                        'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
                        'wm' - weighted momentum transfer for a source/detector pair (replay mode)
-                       'rf' frequency-domain (FD/RF) mua Jacobian (replay mode),
+                       'rf' - dual-mode depending on cfg.seed:
+                            replay mode (cfg.seed from .mch file, cfg.omega set):
+                              frequency-domain mua Jacobian; output has dim6=2
+                              ([real; imag] of complex Jacobian)
+                            forward mode (no cfg.seed file, cfg.omega set):
+                              complex frequency-domain fluence rate; output is
+                              complex-valued (same size as 'flux'); multiply by
+                              tstep to convert to complex fluence
                        'length' total pathlengths accumulated per voxel,
-                       'rfmus' frequency-domain (FD/RF) mus Jacobian (replay mode),
-                       for type jacobian/wl/wp, example: <demo_mcxlab_replay.m>
-                       and  <demo_replay_timedomain.m>
+                       'rfmus' frequency domain/RF mus Jacobian (replay mode only),
+                       'wltof' weighted average of time-of-flight x total path length in each voxel,
+                       'wptof' weighted average of time-of-flight x total scattering count in each voxel
+ 
+                       == Adjoint (forward-mode) Jacobians - requires cfg.detpos and cfg.detdir ==
+                       'adjoint' - mua Jacobian (forward mode, no replay):
+                              J_mua[r] = -phi_src[r]*phi_det[r]*dV [mm^-1]
+                              output: real array [Nx,Ny,Nz,Ns*Nd] (CW) or
+                              complex [Nx,Ny,Nz,Ns*Nd] (RF, when cfg.omega>0)
+                       'adjoint_dcoeff' - diffusion coefficient D=1/(3*mus') Jacobian:
+                              J_D[r] = grad(phi_src)[r] . grad(phi_det)[r] * dV [mm^-3]
+                              gradients computed via 2nd-order finite differences
+                              (central at interior, one-sided at edges) with spacing
+                              cfg.unitinmm; normalization: kernel*unitinmm
+                       'adjoint_mus' - scattering coeff mus Jacobian (D=1/(3*(1-g)*mus)):
+                              J_mus[r] = J_D[r] * 3*D^2*(1-g) = J_D[r]/(3*(1-g)*mus^2)
+                              uses each voxel's own mus and g from cfg.prop
+                       'adjoint_musp' - reduced scattering coeff mus'=(1-g)*mus Jacobian:
+                              J_musp[r] = J_D[r] * 3*D^2 = J_D[r]/(3*(1-g)^2*mus^2)
+                              uses each voxel's own mus and g from cfg.prop
+ 
+                       for types jacobian/wl/wp, example: <demo_mcxlab_replay.m>
+                           and  <demo_replay_timedomain.m>
+                       for types rf (replay), example: <demo_replay_frequencydomain.m>
+                       for types rf (forward), example: <compare_redbird_mcx_rf.m>
+                       for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
+                       for adjoint types, example: <demo_mcx_adjoint_jacobian.m>
        cfg.session:    a string for output file names (only used when no return variables)
+       cfg.lang:       specify the language code for printing, supported languages include
+                       zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, pt_BR
  
   == Debug ==
        cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
@@ -421,17 +470,17 @@ the verbose command line options in MCX.
              Starting from v2018, the detphoton contains the below subfields:
                detphoton.detid: the ID(>0) of the detector that captures the photon
                detphoton.srcid: the ID(>0) of the source in a multi-source simulation
-               detphoton.nscat: cummulative scattering event counts in each medium
-               detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
+               detphoton.nscat: cumulative scattering event counts in each medium
+               detphoton.ppath: cumulative path lengths in each medium (partial pathlength)
                     one need to multiply cfg.unitinmm with ppath to convert it to mm.
-               detphoton.mom: cummulative cos_theta for momentum transfer in each medium
+               detphoton.mom: cumulative cos_theta for momentum transfer in each medium
                detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
                detphoton.w0: photon initial weight at launch time
                detphoton.s: exit Stokes parameters for polarized photon
                detphoton.prop: optical properties, a copy of cfg.prop
                detphoton.data: a concatenated and transposed array in the order of
                      [detid nscat ppath mom p v w0]'
-               "data" is the is the only subfield in all mcxlab before 2018
+               "data" is the is the only subfield in all MCXLAB before 2018
        vol: (optional) a struct array, each element is a preprocessed volume
              corresponding to each instance of cfg. Each volume is a 3D int32 array.
        seeds: (optional), if give, mcxlab returns the seeds, in the form of
@@ -541,14 +590,14 @@ This simulates a widefield SFDI source using the Digimouse atlas. There are
 
 In this example, we simulate a 4-layer brain model using MCXLAB.
 We will investigate the differences between the solutions with and 
-witout boundary reflections (both external and internal) and show
+without boundary reflections (both external and internal) and show
 you how to display and analyze the resulting data.
 
 ==== demo_mcxlab_srctype.m ====
 This demo script shows how to use 9 different types sources in your
 simulations. These 9 source types include pencil beam, isotropic source,
-Gaussian beam, uniform plannar source, uniform disk source, Fourier 
-pattern illumuniation (spatial frequency domain sources), arcsine 
+Gaussian beam, uniform planar source, uniform disk source, Fourier 
+pattern illumination (spatial frequency domain sources), arcsine 
 distribution beam, uniform cone beam, and an arbitrary light pattern 
 (defined by a 2D image).
 
@@ -556,7 +605,7 @@ distribution beam, uniform cone beam, and an arbitrary light pattern
 In this example, we show how to use MCX to run a 2D simulation.
 You must define a 3D array with one singleton dimension (with length 1).
 unfortunately if you define z as singleton, matlab will make the array 2D
-instead of 3D, so we have to purmute it to make the 1st dimension
+instead of 3D, so we have to permute it to make the 1st dimension
 singleton.
 
 ==== demo_photon_sharing.m ====
@@ -591,13 +640,13 @@ to compile MCXLAB for Octave, you type
 
  make oct
 
-The command <tt>mkoctfile</tt> must be accessible from your command line
-and it is provided in a package named "octave3.x-headers" in Ubuntu (3.x
-can be 3.2 or 3.4 etc).
+The command <tt>mkoctfile</tt> must be accessible from your command line;
+on Ubuntu/Debian, it is provided by the package <tt>liboctave-dev</tt>.
 
-If your graphics card is a Fermi-class or newer, you can compile MCXLAB
-with make fermimex or fermioct. The output mex file can determine the
-level of atomic operations using the cfg.sradius settings.
+The default targets compile for the oldest supported GPU architecture. To
+compile for a specific GPU generation, use the corresponding target, such as
+<tt>make turingmex</tt>, <tt>make ampereoct</tt> etc. MCXLAB can also be built with
+CMake, see <tt>src/CMakeLists.txt</tt>.
 
 == # Screenshots ==
 

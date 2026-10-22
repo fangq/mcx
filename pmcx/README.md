@@ -2,7 +2,7 @@
 
 # PMCX - Python bindings for Monte Carlo eXtreme photon transport simulator
 
-- Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2025) <q.fang at neu.edu>, Fan-Yu Yen (2023-2024) <yen.f at northeastern.edu>
+- Copyright: (C) Matin Raayai Ardakani (2022-2023) <raayaiardakani.m at northeastern.edu>, Qianqian Fang (2019-2026) <q.fang at neu.edu>, Fan-Yu Yen (2023-2024) <yen.f at northeastern.edu>
 - License: GNU Public License V3 or later
 - Version: 0.7.3
 - URL: https://pypi.org/project/pmcx/
@@ -26,10 +26,18 @@ optimized CPU-based MC implementation.
 
 * PIP: ```pip install pmcx``` see https://pypi.org/project/pmcx/
 
+Binary wheels with the CUDA simulator are available for Linux (x86_64) and Windows.
+On macOS, where CUDA is not available, pip installs a pure-python `pmcx` that only
+provides the utility functions (`detweight`, `meanpath`, `loadmc2`, `mcxcreate`
+etc.); to run simulations on a Mac, or on AMD/Intel GPUs, install
+[`pmcxcl`](https://pypi.org/project/pmcxcl/), the OpenCL version, which uses these
+utilities; `pmcx.mcxlab()` also runs the simulation with `pmcxcl` when the CUDA
+module is not available.
+
 ## Runtime Dependencies
 * **NVIDIA GPU Driver**: A CUDA-capable NVIDIA GPU and driver is required to run MCX. An up-to-date driver is recommended.
-The binary wheel distributed over pip runs on NVIDIA drivers with CUDA 10.1 support on Windows, CUDA 9.2 support on Linux, and
-CUDA 10.2 support on macOS, respectively. For more details on driver versions and their CUDA support, see the 
+The binary wheel distributed over pip runs on NVIDIA drivers with CUDA 10.1 support on Windows and CUDA 9.2 support
+on Linux, respectively. For more details on driver versions and their CUDA support, see the 
 [CUDA Release Notes](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html). 
 To download the latest driver for your system, see the 
 [NVIDIA Driver Download Page](https://www.nvidia.com/download/index.aspx).
@@ -107,6 +115,9 @@ cd mcx/pmcx
 stored inside the `mcx/pmcx` folder. You can install this wheel package using `python3 -m pip install --force-reinstall pmcx-*.whl`
 to force installing this locally compiled `pmcx` module and overwrite any previously installed versions.
 
+6. To build only the pure-python package with the utility functions, without CUDA, set the environment
+variable `PMCX_PURE_PYTHON=1` before running `python3 -m pip wheel .`; this produces a `pmcx-X.X.X-py3-none-any.whl`.
+
 
 ## How to use
 
@@ -116,9 +127,9 @@ you can then call the `mcxlab()` function, or `run()`, to launch a photon simula
 
 A simulation can be defined conveniently in two approaches - a one-liner and a two-liner:
 
-* For the one-liner, one simply pass on each MCX simulation setting as positional
-argument. The supported setting names are compatible to nearly all the input fields
-for the MATLAB version of MCX - [MCXLAB](https://github.com/fangq/mcx/blob/master/mcxlab/mcxlab.m))
+* For the one-liner, one simply passes each MCX simulation setting as a keyword
+argument. The supported setting names are compatible with nearly all the input fields
+of the MATLAB version of MCX - [MCXLAB](https://github.com/fangq/mcx/blob/master/mcxlab/mcxlab.m)
 
 ```python3
 import pmcx
@@ -145,3 +156,15 @@ res = pmcx.run(cfg)      # pmcx.run returns detected photon data as a concatenat
 # or alternatively/preferably
 res = pmcx.mcxlab(cfg)   # pmcx.mcxlab calls pmcx.run, and postprocess res['detp'] and res['traj'] raw data into dict form
 ```
+
+The detected photon data returned by `pmcx.mcxlab()` can be post-processed with the utility
+functions included in this module, for example, `pmcx.detweight(res['detp'], cfg['prop'])` computes the
+detected photon weights, and `pmcx.meanpath(res['detp'], cfg['prop'])` the mean partial path lengths.
+
+### Reproducible simulations
+
+By default, `pmcx` runs in the autopilot mode (`cfg['autopilot']=1`), where photons are dispatched to the
+GPU threads dynamically for speed. As a result, two runs with the same `cfg['seed']` agree statistically,
+but do not simulate the identical set of photons. To reproduce a simulation exactly, set
+`cfg['autopilot']=0` together with a fixed `cfg['seed']`, and keep the thread settings (`cfg['nthread']`,
+`cfg['nblocksize']`) unchanged.

@@ -6048,7 +6048,7 @@ where possible parameters include (the first value in [*|*] is the default)\n\
                                JSON input file; if -f is followed by nothing or\n\
                                a single '-', it reads input from stdin via pipe\n\
       or\n\
- -Q/--bench [cube60, skinvessel,...] run a buint-in benchmark specified by name\n\
+ -Q/--bench [cube60, skinvessel,...] run a built-in benchmark specified by name\n\
                                run -Q without parameter to get a list\n\
  -N benchmark  (--net)         get benchmark from NeuroJSON.io, -N only to list\n\
                                benchmark can be dataset URL,or dbname/benchname\n\

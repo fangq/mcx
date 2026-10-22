@@ -17,8 +17,14 @@ Table of Content:
 
 == # Introduction ==
 
-MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL. 
-It gives user an intuitive environment to browse and set parameters for a wide range
+Starting from MCX v2026, a rewritten GUI, MCX Studio 2, is included in the
+`mcxstudio2/` folder of MCX; it adds a live JSON preview, a shape editor and
+built-in visualization of fluence and photon paths. Please see
+`mcxstudio2/README.md`. This README describes the original MCXStudio, which is
+still distributed.
+
+MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL.
+It gives users an intuitive environment to browse and set parameters for a wide range
 of simulations. It also provides functionalities to save, edit and reopen a set of
 pre-defined simulations and share among users.
 
@@ -51,7 +57,7 @@ one of the following methods
 # place mcx/mmc/mcxcl executables side-by-side with the mcxstudio executable
 # modify system environment variable and add the full paths to mcx/mmc/mcxcl to the PATH variable
 # create a MCXSuite/ subfolder in the same directory storing mcxstudio, and \
-extract mcx/mmc/mcxcl binary packags inside MCXSuite/ folder, so that one has \
+extract mcx/mmc/mcxcl binary packages inside MCXSuite/ folder, so that one has \
 the following folder structure
 
 
@@ -110,7 +116,7 @@ After selecting "OK", and if mcxcl binary presents in your folders,
 the GPU button will also become active.
 
 It is recommended to click on the GPU button once, and verify if you have
-compatible GPUs or processors suitables to run MCX or MCXCL simulations.
+compatible GPUs or processors suitable to run MCX or MCXCL simulations.
 If you are able to see printed information in a message window, your system 
 is ready to run MCX (or mcxcl). If you get an error message or not able
 to see any usable GPU, please check the drivers and the binary files.
@@ -132,7 +138,7 @@ be saved as a project file (with a ".mcxp" file extension) by clicking the
 "Save" button. You can load a previously saved project, containing multiple
 simulation sessions, back to MCX Studio by clicking the "Load" button.
 
-In both the unzipped binary packags of mcx and mcxcl, under the folder named
+In both the unzipped binary packages of mcx and mcxcl, under the folder named
 "examples", one can find a pre-created project file (*_examples.mcxp) 
 for MCXStudio. Loading these files using the "Load" button allows you to
 see these preconfigured simulation.
@@ -218,7 +224,7 @@ system". This way, MCXStudio will send all needed setting info via ssh command a
 the output in the ~/Output directory of the server.
 
 In order for a user to plot the output data, one must click on the Plot button in MCXStudio
-toolboar, and select one of the Download ... menus to retrieve the file back to your client
+toolbar, and select one of the Download ... menus to retrieve the file back to your client
 drive in order to visualize the results. You must have scp commands available for the file 
 transfer to work.
 

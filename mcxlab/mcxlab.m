@@ -74,7 +74,7 @@ function varargout = mcxlab(varargin)
 %                      to this initial weight (w0) before normalization.
 %     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector; if srcdir
 %                      contains a 4th element, it specifies the focal length of
-%                      the source (only valid for focuable src, such as planar, disk,
+%                      the source (only valid for focusable src, such as planar, disk,
 %                      fourier, gaussian, pattern, slit, etc); if the focal length
 %                      is nan, all photons will be launched isotropically regardless
 %                      of the srcdir direction; if the focal length is -inf, the launch
@@ -85,7 +85,7 @@ function varargout = mcxlab(varargin)
 %      Starting v2024, cfg.{srcpos,srcdir,srcparam1,srcparam2} accept multiple sources,
 %      with each source corresponding to a single row of the array. For all 4 components,
 %      srcpos/srcdir support 3 or 4 columns, and srcparam1/srcparam2 support 4 columns.
-%      If any of the 4 compnents present, they should have matching row number.
+%      If any of the 4 components are present, they should have the same number of rows.
 %
 % == MC simulation settings ==
 %      cfg.seed:       seed for the random number generator (integer) [default 1648335518]
@@ -97,7 +97,7 @@ function varargout = mcxlab(varargin)
 %      cfg.respin:     repeat simulation for the given time (integer) [1]
 %                      if negative, divide the total photon number into respin subsets
 %      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-%      cfg.bc          per-face boundary condition (BC), a strig of 6 letters (case insensitive) for
+%      cfg.bc          per-face boundary condition (BC), a string of 6 letters (case insensitive) for
 %                      bounding box faces at -x,-y,-z,+x,+y,+z axes;
 %                      overwrite cfg.isreflect if given.
 %                      each letter can be one of the following:
@@ -126,7 +126,7 @@ function varargout = mcxlab(varargin)
 %                      Example: <demo_mcxyz_skinvessel.m>
 %      cfg.invcdf:     user-specified scattering phase function. To use this, one must define
 %                      a vector with monotonically increasing value between -1 and 1
-%                      defining the discretized inverse function of the cummulative density function (CDF)
+%                      defining the discretized inverse function of the cumulative density function (CDF)
 %                      of u=cos(theta), i.e. inv(CDF(u))=inv(CDF(cos(theta))), where theta [0-pi] is the
 %                      zenith angle of the scattering event, and u=cos(theta) is between -1 and 1.
 %                      Please note that the defined inv(CDF) is relative to u, not to theta. This is because
@@ -135,7 +135,7 @@ function varargout = mcxlab(varargin)
 %      cfg.angleinvcdf: user-specified launch angle distribution. To use this, one must define
 %                      a vector with monotonically increasing value between 0 and 1
 %                      defining the discretized inverse function of the
-%                      cummulative density function (CDF) of (theta/pi),
+%                      cumulative density function (CDF) of (theta/pi),
 %                      i.e. inv(CDF(theta/pi)), where theta in the range of
 %                      [0-pi] is the zenith angle of the launch angle relative to cfg.srcdir.
 %
@@ -249,7 +249,7 @@ function varargout = mcxlab(varargin)
 %                               but rotated by the wedge half-angle
 %                               cfg.srcparam2.x (in radian) from the plane
 %                               spanned by cfg.srcdir and the source line
-%                      'slit' [*] - a colimated slit beam emitting from the line segment between
+%                      'slit' [*] - a collimated slit beam emitting from the line segment between
 %                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial
 %                               dir specified by cfg.srcdir; when user defines positive values for srcparam2.x or .y,
 %                               the slit source is broadened in a Guassian profile controlled by
@@ -277,10 +277,10 @@ function varargout = mcxlab(varargin)
 %      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
 %                   I: total light intensity (I >= 0)
 %                   Q: balance between horizontal and vertical linearly
-%                   polaized light (-1 <= Q <= 1)
-%                   U: balance between +45° and -45° linearly polaized
+%                   polarized light (-1 <= Q <= 1)
+%                   U: balance between +45° and -45° linearly polarized
 %                   light (-1 <= Q <= 1)
-%                   V: balance between right and left circularly polaized
+%                   V: balance between right and left circularly polarized
 %                   light (-1 <= Q <= 1)
 %      cfg.lambda: source light wavelength (nm) for polarized MC
 %      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
@@ -412,10 +412,10 @@ function varargout = mcxlab(varargin)
 %            Starting from v2018, the detphoton contains the below subfields:
 %              detphoton.detid: the ID(>0) of the detector that captures the photon
 %              detphoton.srcid: the ID(>0) of the source in a multi-source simulation
-%              detphoton.nscat: cummulative scattering event counts in each medium
-%              detphoton.ppath: cummulative path lengths in each medium (partial pathlength)
+%              detphoton.nscat: cumulative scattering event counts in each medium
+%              detphoton.ppath: cumulative path lengths in each medium (partial pathlength)
 %                   one need to multiply cfg.unitinmm with ppath to convert it to mm.
-%              detphoton.mom: cummulative cos_theta for momentum transfer in each medium
+%              detphoton.mom: cumulative cos_theta for momentum transfer in each medium
 %              detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
 %              detphoton.w0: photon initial weight at launch time
 %              detphoton.s: exit Stokes parameters for polarized photon
