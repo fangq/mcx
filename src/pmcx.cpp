@@ -202,20 +202,30 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
         auto f_style_volume = py::array_t<uint8_t, py::array::f_style>::ensure(volume_handle);
         mcx_config.mediabyte = 1;
         auto buffer = f_style_volume.request();
+        int i = buffer.shape.size() == 4;
 
-        if (buffer.shape.size() == 4) {
-            throw py::value_error("Invalid volume dims for uint8_t volume.");
+        /* a 4-D uint8 array is a 4-byte (asgn_byte) or 8-byte (svmc, e.g. from pmcx.svmc) record per
+           voxel, the same as an int8 array and as uint8 arrays in mcxlab */
+        if (i == 1 && buffer.shape.at(0) != 4 && buffer.shape.at(0) != 8) {
+            throw py::value_error("Invalid volume dims for uint8_t volume: the 1st dimension of a 4-D array must be 4 or 8.");
         }
 
-        mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(0)),
-                          static_cast<unsigned int>(buffer.shape.at(1)),
-                          static_cast<unsigned int>(buffer.shape.at(2))
+        mcx_config.dim = {static_cast<unsigned int>(buffer.shape.at(i)),
+                          static_cast<unsigned int>(buffer.shape.at(i + 1)),
+                          static_cast<unsigned int>(buffer.shape.at(i + 2))
                          };
         dim_xyz = mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z;
-        mcx_config.vol = static_cast<unsigned int*>(malloc(dim_xyz * sizeof(unsigned int)));
 
-        for (int i = 0; i < buffer.size; i++) {
-            mcx_config.vol[i] = static_cast<unsigned char*>(buffer.ptr)[i];
+        if (i == 1) {
+            mcx_config.mediabyte = (buffer.shape.at(0) == 4) ? MEDIA_ASGN_BYTE : MEDIA_2LABEL_SPLIT;
+            mcx_config.vol = static_cast<unsigned int*>(malloc(dim_xyz * buffer.shape.at(0)));
+            memcpy(mcx_config.vol, buffer.ptr, dim_xyz * buffer.shape.at(0));
+        } else {
+            mcx_config.vol = static_cast<unsigned int*>(malloc(dim_xyz * sizeof(unsigned int)));
+
+            for (size_t k = 0; k < (size_t)buffer.size; k++) {
+                mcx_config.vol[k] = static_cast<unsigned char*>(buffer.ptr)[k];
+            }
         }
     } else if (py::array_t<uint16_t>::check_(volume_handle)) {
         auto f_style_volume = py::array_t<uint16_t, py::array::f_style>::ensure(volume_handle);
@@ -1465,23 +1475,6 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 mcx_config.exportjacob = nullptr;
             }
 
-            // Stat dictionary output
-            auto stat_dict = py::dict();
-            stat_dict["runtime"] = mcx_config.runtime;
-            stat_dict["nphoton"] = mcx_config.nphoton * ((mcx_config.respin > 1) ? (mcx_config.respin) : 1);
-            stat_dict["energytot"] = mcx_config.energytot;
-            stat_dict["energyabs"] = mcx_config.energyabs;
-            stat_dict["normalizer"] = mcx_config.normalizer;
-            stat_dict["unitinmm"] = mcx_config.unitinmm;
-            py::list workload;
-
-            for (int i = 0; i < active_dev; i++) {
-                workload.append(mcx_config.workload[i]);
-            }
-
-            stat_dict["workload"] = workload;
-            output["stat"] = stat_dict;
-
             /** return the final optical properties for polarized MCX simulation */
             if (mcx_config.polprop) {
                 for (int i = 0; i < mcx_config.polmedianum; i++) {
@@ -1495,6 +1488,23 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
                 output["prop"] = opt_properties;
             }
         }
+
+        // Stat dictionary output, returned even when the fluence is not saved (issave2pt=0), as mcxlab does
+        auto stat_dict = py::dict();
+        stat_dict["runtime"] = mcx_config.runtime;
+        stat_dict["nphoton"] = mcx_config.nphoton * ((mcx_config.respin > 1) ? (mcx_config.respin) : 1);
+        stat_dict["energytot"] = mcx_config.energytot;
+        stat_dict["energyabs"] = mcx_config.energyabs;
+        stat_dict["normalizer"] = mcx_config.normalizer;
+        stat_dict["unitinmm"] = mcx_config.unitinmm;
+        py::list workload;
+
+        for (int i = 0; i < active_dev; i++) {
+            workload.append(mcx_config.workload[i]);
+        }
+
+        stat_dict["workload"] = workload;
+        output["stat"] = stat_dict;
     } catch (const char* err) {
         cleanup_configs(gpu_info, mcx_config);
         throw py::runtime_error(err);
