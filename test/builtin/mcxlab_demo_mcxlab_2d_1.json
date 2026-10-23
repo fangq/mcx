@@ -1,0 +1,97 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_mcxlab_2d_1",
+  "Photons": 1000000,
+  "RNGSeed": 4294967295,
+  "DoMismatch": true,
+  "DoSaveVolume": true,
+  "DoNormalize": true,
+  "DoPartialPath": false,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 0,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 9.99999993922529e-09,
+  "Dt": 9.99999993922529e-09
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.0199999995529652,
+    "mus": 0.10000000149011612,
+    "g": 0.8999999761581421,
+    "n": 1.3700000047683716
+   },
+   {
+    "mua": 0.0199999995529652,
+    "mus": 10,
+    "g": 0.8999999761581421,
+    "n": 6.849999904632568
+   }
+  ],
+  "Dim": [
+   1,
+   100,
+   100
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "pencil",
+   "Pos": [
+    0,
+    50,
+    0
+   ],
+   "Dir": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "Param1": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "Param2": [
+    0,
+    0,
+    7.00649232162409e-44,
+    1.40129846432482e-45
+   ],
+   "SrcNum": 1
+  },
+  "Detector": []
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   1,
+   100,
+   100
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 10000,
+  "_ArrayZipData_": "eJztzTENAAAIxMCAf9FYgIThhzsBbRUAAPCit05VDw8PDw8PDw8PDw8PDw+PtAcAABBrAHGqLaI="
+ }
+}

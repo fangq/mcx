@@ -1,0 +1,107 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_mcxlab_srctype_13",
+  "Photons": 10000000,
+  "RNGSeed": 99999,
+  "DoMismatch": true,
+  "DoSaveVolume": true,
+  "DoNormalize": true,
+  "DoPartialPath": false,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 0,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 2.99999997066536e-10,
+  "Dt": 9.99999996004197e-12
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.00499999988824129,
+    "mus": 0.00999999977648258,
+    "g": 0.800000011920929,
+    "n": 1.3700000047683716
+   },
+   {
+    "mua": 0.00999999977648258,
+    "mus": 1,
+    "g": 0.800000011920929,
+    "n": 1.3700000047683716
+   }
+  ],
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "pattern",
+   "Pos": [
+    44,
+    -2,
+    44
+   ],
+   "Dir": [
+    0,
+    1,
+    0,
+    0
+   ],
+   "Param1": [
+    -30,
+    0,
+    0,
+    7
+   ],
+   "Param2": [
+    0,
+    0,
+    -30,
+    11
+   ],
+   "SrcNum": 1,
+   "Pattern": {
+    "_ArrayType_": "single",
+    "_ArraySize_": [
+     7,
+     11
+    ],
+    "_ArrayZipType_": "zlib",
+    "_ArrayZipSize_": 77,
+    "_ArrayZipData_": "eJydjsEJAAAIAt2s1Rq9VyBRGPpROR8CShl3V6w7Z95N/zLni8N2FUSYEGs="
+   }
+  },
+  "Detector": []
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   60,
+   60,
+   60
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 216000,
+  "_ArrayZipData_": "eJzt16ERwDAAxLBL9x+6sLggfwYS9wA+BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKDl+fzqtNpbLQAAsOFTtLUWAADY8CnaWgsAAGz4FG2tBQAANnyKttYCAAAbPkVbawEAgA2foq21AADAhk/R1loAAGDDp2hrLQAAsOFTtLUWAADY8CnaWgsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANS+Vo1Eh"
+ }
+}

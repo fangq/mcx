@@ -1,0 +1,101 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_focus_mirror_bc_1",
+  "Photons": 10000000,
+  "RNGSeed": 4294967295,
+  "DoMismatch": true,
+  "DoSaveVolume": true,
+  "DoNormalize": true,
+  "DoPartialPath": false,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 0,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 4.99999996961265e-09,
+  "Dt": 4.99999996961265e-09
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.00499999988824129,
+    "mus": 0.10000000149011612,
+    "g": 0,
+    "n": 1
+   }
+  ],
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "pattern",
+   "Pos": [
+    -40,
+    -40,
+    0
+   ],
+   "Dir": [
+    0,
+    0,
+    1,
+    30
+   ],
+   "Param1": [
+    80,
+    0,
+    0,
+    100
+   ],
+   "Param2": [
+    0,
+    80,
+    0,
+    100
+   ],
+   "SrcNum": 1,
+   "Pattern": {
+    "_ArrayType_": "single",
+    "_ArraySize_": [
+     100,
+     100
+    ],
+    "_ArrayZipType_": "zlib",
+    "_ArrayZipSize_": 10000,
+    "_ArrayZipData_": "eJzt0TENwDAAA8EwK7VCL4JuWd66k56AfQ4AAAAAAAAAAAAAAAAAAAAAAAAA3PQ+G60obe6PTitKm/uj04rS5v7otKK0uT86rSht7o9OK0qb+6PTitLm/ui0orS5PzqtKG3uj04rSpv7o9OK0ub+6LSitLk/Oq0obe6PTitKm/uj04rS5v7otKK0uT86rSht7o9OK0qb+6PTitLm/ui0orS5PzqtKG3uj04rSpv7o9OK0ub+6LSitLk/Oq0obf7fB9SiSaY="
+   }
+  },
+  "Detector": []
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   60,
+   60,
+   60
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 216000,
+  "_ArrayZipData_": "eJztwDENAAAAwrDMv2k8cLcFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBjd4VL7g=="
+ }
+}

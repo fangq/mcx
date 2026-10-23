@@ -1,0 +1,97 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_sphere_cube_subpixel_1",
+  "Photons": 10000000,
+  "RNGSeed": 1648335518,
+  "DoMismatch": true,
+  "DoSaveVolume": true,
+  "DoNormalize": true,
+  "DoPartialPath": false,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 0,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 4.99999996961265e-09,
+  "Dt": 4.99999985859034e-10
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.0020000000949949,
+    "mus": 1,
+    "g": 0.00999999977648258,
+    "n": 1.3700000047683716
+   },
+   {
+    "mua": 0.0500000007450581,
+    "mus": 0.5,
+    "g": 0.00999999977648258,
+    "n": 1.3700000047683716
+   }
+  ],
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "pencil",
+   "Pos": [
+    30,
+    30,
+    0
+   ],
+   "Dir": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "Param1": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "Param2": [
+    0,
+    0,
+    2.56437618971442e-42,
+    1.40129846432482e-45
+   ],
+   "SrcNum": 1
+  },
+  "Detector": []
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   60,
+   60,
+   60
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 216000,
+  "_ArrayZipData_": "eJzt3MFq60AMhlHs93/oUhLaOiFQSYPl8Zyz9rcxd6Ef33TbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADWtu976PlD+S3UDGifaSruarve1aMOPQ8AAMykZ1v9pIlYe07bt2EBAGA9pa841c9W526NP2k4LrSHNBh3tV3vqnGH+qYJAMByytdz8eS3y7Sf41DZuEN9lwQAoE/5ii2ez5Psspc0FGvPaefcobYkAABl6YuwcIqOOYFP3IMv6Qwb5y0NxF3teluycQ8W0mceeh4AgCvKn4Rjztj7b7q3dIJdtlprSybrUAMAwPWUL8LiKWoPavtbezBZhxoAAC6ncBLm78nKDTzu9LbptCPaSX+32Pp/TQEAuIgRJ6E9qF24tQcBAJjWiJPQHtQu3NqDAADMK3/WFe7Jwhk77vT2+0Ht5/j/qd8PAgAwr/JFWDxF7UFtf2sPJutQAwDAFaWvusI5OeaMvf+WXG2Hzviep910hfSZh54HAOBu8ufkmBP4xD242JZcru36t+EbHwAASypfscXzufZHcEJl29bQZuNQadMBAEBY/ootX8+pev8V6o6pHRqJQ2XjLqu01U2XLwEAYDWF27tw8ndtDW0mDlXHONQAAAAzKX3FSe+F+kypfUwNVfW261096tDzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAtn0BjjhcGQ=="
+ }
+}

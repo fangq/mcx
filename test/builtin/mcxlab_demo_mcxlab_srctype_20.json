@@ -1,0 +1,91 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_mcxlab_srctype_20",
+  "Photons": 1000000,
+  "RNGSeed": 99999,
+  "DoMismatch": true,
+  "DoSaveVolume": true,
+  "DoNormalize": true,
+  "DoPartialPath": false,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 0,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 5.00000006675716e-11,
+  "Dt": 5.00000006675716e-11
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.00499999988824129,
+    "mus": 1,
+    "g": 0.800000011920929,
+    "n": 1.3700000047683716
+   }
+  ],
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "ring",
+   "Pos": [
+    29,
+    29,
+    -11
+   ],
+   "Dir": [
+    0,
+    0,
+    1,
+    -20
+   ],
+   "Param1": [
+    15,
+    10,
+    0,
+    2.094395160675049
+   ],
+   "Param2": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "SrcNum": 1
+  },
+  "Detector": []
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   60,
+   60,
+   60
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 216000,
+  "_ArrayZipData_": "eJztwDENAAAAwrDMv2k8cLcFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBjd4VL7g=="
+ }
+}

@@ -1,0 +1,91 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_mcxlab_srctype_24",
+  "Photons": 10000000,
+  "RNGSeed": 99999,
+  "DoMismatch": true,
+  "DoSaveVolume": true,
+  "DoNormalize": true,
+  "DoPartialPath": false,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 0,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 4.99999996961265e-09,
+  "Dt": 4.99999996961265e-09
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.00499999988824129,
+    "mus": 0.00999999977648258,
+    "g": 0.8999999761581421,
+    "n": 1.3700000047683716
+   }
+  ],
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "slit",
+   "Pos": [
+    9,
+    29,
+    -1
+   ],
+   "Dir": [
+    0,
+    0.7071067690849304,
+    0.7071067690849304,
+    0
+   ],
+   "Param1": [
+    40,
+    0,
+    0,
+    0
+   ],
+   "Param2": [
+    0.20000000298023224,
+    0,
+    0,
+    0
+   ],
+   "SrcNum": 1
+  },
+  "Detector": []
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   60,
+   60,
+   60
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 216000,
+  "_ArrayZipData_": "eJztwDENAAAAwrDMv2k8cLcFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBjd4VL7g=="
+ }
+}

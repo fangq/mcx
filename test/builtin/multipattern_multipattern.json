@@ -1,0 +1,68 @@
+{
+	"Session":	{
+		"ID":	"multipattern",
+		"Photons":	10000000,
+		"RNGSeed":	99999,
+		"DoMismatch":	true,
+		"DoSaveVolume":	true,
+		"DoNormalize":	true,
+		"DoPartialPath":	false,
+		"DoSaveRef":	false,
+		"DoSaveExit":	false,
+		"DoSaveSeed":	false,
+		"DoAutoThread":	true,
+		"DoDCS":	false,
+		"DoSpecular":	false,
+		"DebugFlag":	0,
+		"SaveDataMask":	0,
+		"OutputFormat":	"jnii",
+		"OutputType":	"x"
+	},
+	"Forward":	{
+		"T0":	0,
+		"T1":	4.99999996961265e-09,
+		"Dt":	4.99999996961265e-09
+	},
+	"Domain":	{
+		"MediaFormat":	"byte",
+		"LengthUnit":	1,
+		"Media":	[{
+				"mua":	0,
+				"mus":	1.19209289550781e-07,
+				"g":	1,
+				"n":	1
+			}, {
+				"mua":	0.00499999988824129,
+				"mus":	1,
+				"g":	0.800000011920929,
+				"n":	1.3700000047683716
+			}],
+		"Dim":	[60, 60, 60],
+		"OriginType":	1
+	},
+	"Optode":	{
+		"Source":	{
+			"Type":	"pattern",
+			"Pos":	[0, 0, 0],
+			"Dir":	[0, 0, 1, 0],
+			"Param1":	[60, 0, 0, 6],
+			"Param2":	[0, 60, 0, 11],
+			"SrcNum":	3,
+			"Pattern":	{
+				"_ArrayType_":	"single",
+				"_ArraySize_":	[3, 6, 11],
+				"_ArrayZipType_":	"zlib",
+				"_ArrayZipSize_":	198,
+				"_ArrayZipData_":	"eJy1UUEKACAI82d9radHRBChcwwdeFC3KWq2MccJD1HvrSP9r2E4ma+yLwvky/C8fhf35lGoQJ7oJ8oMhsd61d1iAa/yKEs="
+			}
+		},
+		"Detector":	[]
+	},
+	"Shapes":	{
+		"_ArrayType_":	"uint8",
+		"_ArraySize_":	[60, 60, 60],
+		"_ArrayZipType_":	"zlib",
+		"_ArrayZipSize_":	216000,
+		"_ArrayZipData_":	"eJztwDENAAAAwrDMv2k8cLcFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBjd4VL7g=="
+	}
+}

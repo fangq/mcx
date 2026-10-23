@@ -1,0 +1,118 @@
+{
+ "Session": {
+  "ID": "mcxlab_demo_replay_all_jacobian_1",
+  "Photons": 50000000,
+  "RNGSeed": 4294967295,
+  "DoMismatch": true,
+  "DoSaveVolume": false,
+  "DoNormalize": true,
+  "DoPartialPath": true,
+  "DoSaveRef": false,
+  "DoSaveExit": false,
+  "DoSaveSeed": false,
+  "DoAutoThread": true,
+  "DoDCS": false,
+  "DoSpecular": false,
+  "DebugFlag": 0,
+  "SaveDataMask": 5,
+  "OutputFormat": "jnii",
+  "OutputType": "x"
+ },
+ "Forward": {
+  "T0": 0,
+  "T1": 9.99999993922529e-09,
+  "Dt": 9.99999993922529e-09
+ },
+ "Domain": {
+  "MediaFormat": "byte",
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 1.19209289550781e-07,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.0149999996647239,
+    "mus": 14,
+    "g": 0.8999999761581421,
+    "n": 1.399999976158142
+   },
+   {
+    "mua": 0.00400000018998981,
+    "mus": 1.600000023841858,
+    "g": 0.8999999761581421,
+    "n": 1.399999976158142
+   },
+   {
+    "mua": 0.0480000004172325,
+    "mus": 5,
+    "g": 0.8999999761581421,
+    "n": 1.399999976158142
+   },
+   {
+    "mua": 0.0370000004768372,
+    "mus": 10,
+    "g": 0.8999999761581421,
+    "n": 1.399999976158142
+   }
+  ],
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "OriginType": 1
+ },
+ "Optode": {
+  "Source": {
+   "Type": "pencil",
+   "Pos": [
+    29,
+    29,
+    0
+   ],
+   "Dir": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "Param1": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "Param2": [
+    0,
+    0,
+    2.4788969833906e-42,
+    1.40129846432482e-45
+   ],
+   "SrcNum": 1
+  },
+  "Detector": [
+   {
+    "Pos": [
+     44,
+     29,
+     0
+    ],
+    "R": 2
+   }
+  ]
+ },
+ "Shapes": {
+  "_ArrayType_": "uint8",
+  "_ArraySize_": [
+   60,
+   60,
+   60
+  ],
+  "_ArrayZipType_": "zlib",
+  "_ArrayZipSize_": 216000,
+  "_ArrayZipData_": "eJzty7ERACAIBLB7df+ZZQUouaRPknPLG4jruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7rNrmu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67rupvsBp8VcxQ=="
+ }
+}

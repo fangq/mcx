@@ -1,0 +1,61 @@
+{
+	"Session":	{
+		"ID":	"mua_mus_g_n",
+		"Photons":	1000000,
+		"RNGSeed":	4294967295,
+		"DoMismatch":	true,
+		"DoSaveVolume":	true,
+		"DoNormalize":	true,
+		"DoPartialPath":	false,
+		"DoSaveRef":	false,
+		"DoSaveExit":	false,
+		"DoSaveSeed":	false,
+		"DoAutoThread":	true,
+		"DoDCS":	false,
+		"DoSpecular":	false,
+		"DebugFlag":	4,
+		"SaveDataMask":	0,
+		"OutputFormat":	"jnii",
+		"OutputType":	"x"
+	},
+	"Forward":	{
+		"T0":	0,
+		"T1":	4.99999996961265e-09,
+		"Dt":	4.99999996961265e-09
+	},
+	"Domain":	{
+		"MediaFormat":	"asgn_float",
+		"LengthUnit":	1,
+		"Media":	[{
+				"mua":	0,
+				"mus":	1.19209289550781e-07,
+				"g":	1,
+				"n":	1
+			}, {
+				"mua":	0.00499999988824129,
+				"mus":	1,
+				"g":	0,
+				"n":	1.3700000047683716
+			}],
+		"Dim":	[60, 40, 20],
+		"OriginType":	1
+	},
+	"Optode":	{
+		"Source":	{
+			"Type":	"pencil",
+			"Pos":	[29, 29, 0],
+			"Dir":	[0, 0, 1, 0],
+			"Param1":	[0, 0, 0, 0],
+			"Param2":	[0, 0, 2.4788969833906e-42, 29.77269172668457],
+			"SrcNum":	1
+		},
+		"Detector":	[]
+	},
+	"Shapes":	{
+		"_ArrayType_":	"single",
+		"_ArraySize_":	[60, 40, 20, 4],
+		"_ArrayZipType_":	"zlib",
+		"_ArrayZipSize_":	192000,
+		"_ArrayZipData_":	"eJztx70LlWUch/FvUYEQ0QtIFOETBQVJ1CBUnvv24GAUUUNES8NDtDQIujgIyhERRERUEPENDi4OIi6Cgw4PouCk4OAmHnARQdBJXET9L37D51ouPsn1jcliU143v/jqzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMXMrDx7Ms9zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM3NZ/z7L/AgzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzOX9Z5ZcpKZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZnL+vQsy7PMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMxc1pdnGc8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzNzWd+ZJZeYmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm5rB/PsrzKzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMZf1Wy3iDmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZy/qDltxiZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmbmsl7XMt1lZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmbmsl7fMt5nZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmbmsv6pZXjIzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMZf1zy/SEmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZy/qvlvE5MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzl/W/LXljzszMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzFW9rWV8m5mZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmct6V8u0hpmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmct6X0veY2ZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm5rI+2DJ+yMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzGV9tGVay8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzGV9oiWfMjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc1kvW8Z1zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMXNbnWqYvmJmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZuawvtAxfMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc1lfahnXMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc1lfaZm+Y2ZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm5rK+1jJsYGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm5rK+2TL+yMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzGV9u2VqzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMXNZ3W4bNzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMXNb3WhZbmJmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZuawftEy/MjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc1k/ahn+YGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm5rJ+2rL4k5mZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmcv6Wcv0NzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM5f1i5bhH2ZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZi7rN3sWIzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM5f1Oz2r/5iZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmbms1/QM/zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM3NZv9uz2MrMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMxl/X7PajszMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzOX9Uc9ww5mZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmYu67U9i53MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMxc1p/0rHYzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzNzWX/Ws9zDzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMZf15z7SXmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZy/rLntU+ZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmLuuveob9zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMXNbf9MwPMDMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc1l/2zMeZGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm5rL+vmd5iJmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmct6Q890mJmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmcv6h57VUWZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZi7rjT3DMWZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZi7rTT3z48zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzFzWm3vGE8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzFzWW3qWp5iZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmbmsf+mZzjAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM3NZ/9aTJTMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMxf1SzQNIu4="
+	}
+}
