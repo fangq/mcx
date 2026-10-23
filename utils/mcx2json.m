@@ -17,7 +17,6 @@ function varargout = mcx2json(cfg, filestub, varargin)
 %         filestub.json: the JSON input file
 %         filestub_vol.bin: the volume file if cfg.vol is defined
 %         filestub_shapes.json: the domain shape file if cfg.shapes is defined
-%         filestub_pattern.bin: the domain shape file if cfg.pattern is defined
 %
 % Output:
 %    jsonstr, bjsonstr: a string buffer containing the seralized JSON or binary JSON
@@ -45,6 +44,7 @@ Optode.Source = copycfg(cfg, 'srcparam1', Optode.Source, 'Param1');
 Optode.Source = copycfg(cfg, 'srcparam2', Optode.Source, 'Param2');
 Optode.Source = copycfg(cfg, 'srctype', Optode.Source, 'Type');
 Optode.Source = copycfg(cfg, 'srcnum', Optode.Source, 'SrcNum');
+Optode.Source = copycfg(cfg, 'srcid', Optode.Source, 'ID');
 Optode.Source = copycfg(cfg, 'lambda', Optode.Source, 'WaveLength');
 
 if (isfield(cfg, 'detpos') && ~isempty(cfg.detpos))
@@ -56,7 +56,9 @@ if (isfield(cfg, 'detpos') && ~isempty(cfg.detpos))
     end
 end
 if (isfield(cfg, 'srcpattern') && ~isempty(cfg.srcpattern))
-    Optode.Source.Pattern = single(cfg.srcpattern);
+    % a row-major JData array, [srcnum, Nx, Ny] for multiple patterns; compressed so that
+    % even a small pattern is not saved as a plain nested array, which mcx can not read
+    Optode.Source.Pattern = jdataencode(single(cfg.srcpattern), 'Compression', 'zlib', 'CompressArraySize', 0, 'Base64', 1);
 end
 
 %% define the domain and optical properties
@@ -76,6 +78,9 @@ end
 if (isfield(cfg, 'shapes') && ischar(cfg.shapes))
     Shapes = loadjson(cfg.shapes);
     Shapes = Shapes.Shapes;
+    if (isstruct(Shapes))
+        Shapes = num2cell(Shapes);  % keep a single shape object in a JSON array
+    end
 end
 
 if (isfield(cfg, 'vol') && ~isempty(cfg.vol) && ~isfield(Domain, 'VolumeFile'))
@@ -85,7 +90,8 @@ if (isfield(cfg, 'vol') && ~isempty(cfg.vol) && ~isfield(Domain, 'VolumeFile'))
             if (ndims(cfg.vol) == 4 && size(cfg.vol, 1) == 4)
                 Domain.MediaFormat = 'asgn_byte';
             elseif (ndims(cfg.vol) == 4 && size(cfg.vol, 1) == 8)
-                cfg.vol = reshape(typecast(uint8(cfg.vol(:)), 'uint64'), size(cfg.vol, 2, 3, 4));
+                volsize = size(cfg.vol);  % size(x, 2, 3, 4) needs MATLAB R2019b, not available in Octave
+                cfg.vol = reshape(typecast(uint8(cfg.vol(:)), 'uint64'), volsize(2:4));
                 Domain.MediaFormat = 'svmc';
             end
         case {'uint16', 'int16'}
@@ -99,7 +105,10 @@ if (isfield(cfg, 'vol') && ~isempty(cfg.vol) && ~isfield(Domain, 'VolumeFile'))
             if (isa(cfg.vol, 'double'))
                 cfg.vol = single(cfg.vol);
             end
-            if (all(mod(cfg.vol(:), 1) == 0))
+            if (ndims(cfg.vol) == 4 && size(cfg.vol, 1) == 3)
+                Domain.MediaFormat = 'labelplus';
+                cfg.vol = packlabelplus(cfg.vol, Domain);
+            elseif (all(mod(cfg.vol(:), 1) == 0))
                 if (max(cfg.vol(:)) < 256)
                     Domain.MediaFormat = 'byte';
                     cfg.vol = uint8(cfg.vol);
@@ -134,7 +143,7 @@ if (isfield(cfg, 'vol') && ~isempty(cfg.vol) && ~isfield(Domain, 'VolumeFile'))
     else
         Domain.VolumeFile = '';
         Shapes = cfg.vol;
-        if (ndims(Shapes) == 4 && size(Shapes, 1) > 1)
+        if (ndims(Shapes) == 4)  % also drops the leading singleton of a [1 Nx Ny Nz] mua_float volume
             Shapes = permute(Shapes, [2 3 4 1]);
         end
     end
@@ -205,3 +214,20 @@ if (isfield(cfg, name))
     outroot.(outfield) = cfg.(name);
 end
 outdata = outroot;
+
+function packed = packlabelplus(vol, Domain)
+% pack the [value; property index; label] records of a 4-D float volume into the
+% 32-bit labelplus format, {[half: value][2-bit property index][14-bit label]}, as mcxlab does
+volsize = size(vol);
+val = single(vol(1, :));
+idx = vol(2, :);
+if (isfield(Domain, 'LengthUnit'))
+    isscaled = (idx >= 1 & idx <= 2);  % the same rule that mcxlab uses to scale the value by unitinmm
+    val(isscaled) = val(isscaled) * Domain.LengthUnit;
+end
+bits = typecast(val, 'uint32');
+expo = double(bitand(bitshift(bits, -23), 255));
+expo = (expo > 112) .* bitand(expo - 112, 31);
+half = bitor(bitshift(bitor(bitshift(bitshift(bits, -31), 5), uint32(expo)), 10), bitand(bitshift(bits, -13), 1023));
+label = bitor(bitshift(bitand(uint32(fix(idx)), 3), 14), uint32(fix(vol(3, :))));
+packed = reshape(bitor(label, bitshift(half, 16)), volsize(2:4));

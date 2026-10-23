@@ -3197,7 +3197,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
                     mcx_jdatadecode((void**)&cfg->srcpattern, &ndim, dims, 3, &type, subitem, cfg);
 
-                    if (strcmp(type, "single")) {
+                    if (type == NULL || strcmp(type, "single")) {
                         if (cfg->srcpattern) {
                             free(cfg->srcpattern);
                         }
@@ -3205,9 +3205,12 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         MCX_ERROR(-1, "Optode.Source.Pattern JData-annotated array must be in the 'single' format");
                     }
 
-                    if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && (cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D)) {
+                    if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && cfg->srctype == MCX_SRC_PATTERN) { /* a 3-D pattern3d array is a single pattern */
                         cfg->srcnum = dims[0];
                     }
+
+                    /* the JData array is row-major, the source patterns are used in column-major order */
+                    mcx_convertrow2col((unsigned int*)cfg->srcpattern, (uint3*)dims);
                 } else {
                     int nx = FIND_JSON_KEY("Nx", "Optode.Source.Pattern.Nx", subitem, 0, valueint);
                     int ny = FIND_JSON_KEY("Ny", "Optode.Source.Pattern.Ny", subitem, 0, valueint);
@@ -3509,7 +3512,18 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             MCX_ERROR(-1, "You must either define Domain.VolumeFile, or define a Shapes section");
         }
     } else if (Shapes) {
-        MCX_ERROR(-1, "You can not specify both Domain.VolumeFile and Shapes sections");
+        /* shape objects next to Domain.VolumeFile (mcx2json writes them for cfg.vol plus cfg.shapes)
+           are rasterized over the loaded volume, the same way as -P/--shapes */
+        cJSON* shaperoot;
+
+        if (FIND_JSON_OBJ("_ArraySize_", "Volume._ArraySize_", Shapes) || cfg->shapedata) {
+            MCX_ERROR(-1, "You can not specify both Domain.VolumeFile and Shapes sections");
+        }
+
+        shaperoot = cJSON_CreateObject();
+        cJSON_AddItemReferenceToObject(shaperoot, "Shapes", Shapes);
+        cfg->shapedata = cJSON_PrintUnformatted(shaperoot);
+        cJSON_Delete(shaperoot);
     }
 
     mcx_prepdomain(filename, cfg);
@@ -3551,6 +3565,28 @@ void mcx_saveconfig(FILE* out, Config* cfg) {
     for (i = 0; i < cfg->detnum; i++) {
         fprintf(out, "%f %f %f %f\n", (cfg->detpos[i].x), (cfg->detpos[i].y), (cfg->detpos[i].z), (cfg->detpos[i].w));
     }
+}
+
+/**
+ * @brief Create the JSON array of a source direction, writing a NaN or Inf focal length as "_NaN_"/"_Inf_"
+ *
+ * cJSON prints a non-finite number as null; the "Dir" reader of mcx_loadjson accepts these strings
+ *
+ * @param[in] dir: the 4-element source direction vector
+ */
+
+static cJSON* mcx_dirtojson(const float* dir) {
+    cJSON* arr = cJSON_CreateFloatArray(dir, 3);
+
+    if (isnan(dir[3])) {
+        cJSON_AddItemToArray(arr, cJSON_CreateString("_NaN_"));
+    } else if (isinf(dir[3])) {
+        cJSON_AddItemToArray(arr, cJSON_CreateString(dir[3] > 0.f ? "_Inf_" : "-_Inf_"));
+    } else {
+        cJSON_AddItemToArray(arr, cJSON_CreateNumber(dir[3]));
+    }
+
+    return arr;
 }
 
 /**
@@ -3654,20 +3690,80 @@ void mcx_savejdata(char* filename, Config* cfg) {
         cJSON_AddStringToObject(sub, "Type", srctypeid[(int)cfg->srctype]);
     }
 
-    cJSON_AddItemToObject(sub, "Pos", cJSON_CreateFloatArray(&(cfg->srcpos.x), 3));
-    cJSON_AddItemToObject(sub, "Dir", cJSON_CreateFloatArray(&(cfg->srcdir.x), 4));
-    cJSON_AddItemToObject(sub, "Param1", cJSON_CreateFloatArray(&(cfg->srcparam1.x), 4));
-    cJSON_AddItemToObject(sub, "Param2", cJSON_CreateFloatArray(&(cfg->srcparam2.x), 4));
+    {
+        /* additional sources are written as Nsrc x 4 Pos/Dir/Param1/Param2 arrays, with the source
+           weight in Pos(:,4); detectors that mcx_preprocess appended as adjoint sources are left
+           out, as they are appended again when the file is loaded */
+        int nextra = cfg->extrasrclen;
+
+#ifndef MCX_CONTAINER
+
+        if ((MCX_IS_ADJOINT_TYPE(cfg->outputtype) || cfg->srcid == -2) && cfg->seed != SEED_FROM_FILE && cfg->detnum > 0 && cfg->detdir != NULL) {
+            nextra -= cfg->detnum;
+        }
+
+#endif
+
+        if (nextra > 0 && cfg->srcdata) {
+            cJSON* srcfield[4];
+            const char* fieldname[4] = {"Pos", "Dir", "Param1", "Param2"};
+
+            const float* first[4] = {&(cfg->srcpos.x), &(cfg->srcdir.x), &(cfg->srcparam1.x), &(cfg->srcparam2.x)};
+
+            for (int j = 0; j < 4; j++) {
+                srcfield[j] = cJSON_CreateArray();
+                cJSON_AddItemToArray(srcfield[j], (j == 1) ? mcx_dirtojson(first[j]) : cJSON_CreateFloatArray(first[j], 4));
+            }
+
+            for (int i = 0; i < nextra; i++) {
+                cJSON_AddItemToArray(srcfield[0], cJSON_CreateFloatArray(&(cfg->srcdata[i].srcpos.x), 4));
+                cJSON_AddItemToArray(srcfield[1], mcx_dirtojson(&(cfg->srcdata[i].srcdir.x)));
+                cJSON_AddItemToArray(srcfield[2], cJSON_CreateFloatArray(&(cfg->srcdata[i].srcparam1.x), 4));
+                cJSON_AddItemToArray(srcfield[3], cJSON_CreateFloatArray(&(cfg->srcdata[i].srcparam2.x), 4));
+            }
+
+            for (int j = 0; j < 4; j++) {
+                cJSON_AddItemToObject(sub, fieldname[j], srcfield[j]);
+            }
+        } else {
+            cJSON_AddItemToObject(sub, "Pos", cJSON_CreateFloatArray(&(cfg->srcpos.x), 3));
+            cJSON_AddItemToObject(sub, "Dir", mcx_dirtojson(&(cfg->srcdir.x)));
+            cJSON_AddItemToObject(sub, "Param1", cJSON_CreateFloatArray(&(cfg->srcparam1.x), 4));
+            cJSON_AddItemToObject(sub, "Param2", cJSON_CreateFloatArray(&(cfg->srcparam2.x), 4));
+        }
+    }
     cJSON_AddNumberToObject(sub, "SrcNum", cfg->srcnum);
 
+    if (cfg->srcid) {
+        cJSON_AddNumberToObject(sub, "ID", cfg->srcid);
+    }
+
     if (cfg->srcpattern) {
-        uint dims[3];
-        dims[0] = cfg->srcnum;
-        dims[1] = cfg->srcparam1.w;
-        dims[2] = cfg->srcparam2.w;
+        uint dims[3] = {cfg->srcnum, (uint)cfg->srcparam1.w, (uint)cfg->srcparam2.w}, ndim = 2 + (cfg->srcnum > 1);
+        uint* pdims = dims + (cfg->srcnum == 1);
+
+        if (cfg->srctype == MCX_SRC_PATTERN3D) { /* a volumetric pattern of srcparam1.{x,y,z} voxels */
+            dims[0] = (uint)cfg->srcparam1.x;
+            dims[1] = (uint)cfg->srcparam1.y;
+            dims[2] = (uint)cfg->srcparam1.z;
+            ndim = 3;
+            pdims = dims;
+        }
+
+        uint nx = pdims[0], ny = (ndim > 1) ? pdims[1] : 1, nz = (ndim > 2) ? pdims[2] : 1;
+        float* rowpat = (float*)malloc(sizeof(float) * nx * ny * nz);
+
+        /* the JData array is row-major, the reader converts it back with mcx_convertrow2col */
+        for (uint x = 0; x < nx; x++)
+            for (uint y = 0; y < ny; y++)
+                for (uint z = 0; z < nz; z++) {
+                    rowpat[(x * ny + y) * nz + z] = cfg->srcpattern[(z * ny + y) * nx + x];
+                }
+
         cJSON_AddItemToObject(sub, "Pattern", tmp = cJSON_CreateObject());
 
-        int ret = mcx_jdataencode(cfg->srcpattern, 2 + (cfg->srcnum > 1), dims + (cfg->srcnum == 1), "single", dims[0] * dims[1] * dims[2], cfg->zipid, tmp, 0, 0, cfg);
+        int ret = mcx_jdataencode(rowpat, ndim, pdims, "single", sizeof(float), cfg->zipid, tmp, 0, 0, cfg);
+        free(rowpat);
 
         if (ret) {
             MCX_ERROR(ret, "data compression or base64 encoding failed");
@@ -3682,8 +3778,10 @@ void mcx_savejdata(char* filename, Config* cfg) {
         cJSON_AddNumberToObject(tmp, "R", cfg->detpos[i].w);
     }
 
-    /* save "Shapes" constructs, prioritize over saving volume for smaller size */
-    if (cfg->shapedata) {
+    /* save the shape constructs when they define the whole domain (with a Grid object, such as the
+       built-in benchmarks); a -P/--shapes overlay applied over the volume or shapes of the input file
+       does not, and saving it alone loses the base domain, so the rasterized volume is saved instead */
+    if (cfg->shapedata && (cfg->vol == NULL || strstr(cfg->shapedata, "\"Grid\"") != NULL)) {
         cJSON* shape = mcx_parsejson(cfg->shapedata), *sp;
 
         if (shape == NULL) {
@@ -3697,6 +3795,66 @@ void mcx_savejdata(char* filename, Config* cfg) {
         }
 
         cJSON_AddItemToObject(root, "Shapes", sp);
+    } else if (cfg->mediabyte == MEDIA_MUA_FLOAT || cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_ASGN_F2H || cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+        /* continuous and split-voxel media: undo the conversions in mcx_loadvolume/mcx_preprocess
+           and save the file representation (floats in 1/mm, or the 8-byte svmc records as
+           uint64), row-major with the per-voxel components in the last dimension */
+        uint dimxy = cfg->dim.x * cfg->dim.y, dimyz = cfg->dim.y * cfg->dim.z;
+        uint ncomp = (cfg->mediabyte == MEDIA_MUA_FLOAT || cfg->mediabyte == MEDIA_2LABEL_SPLIT) ? 1 : ((cfg->mediabyte == MEDIA_AS_F2H) ? 2 : 4);
+        uint datalen = dimxy * cfg->dim.z, dims4[4] = {cfg->dim.x, cfg->dim.y, cfg->dim.z, ncomp};
+        int elembytes = (cfg->mediabyte == MEDIA_2LABEL_SPLIT) ? 8 : sizeof(float);
+        uchar* buf = (uchar*)calloc((size_t)datalen * ncomp, elembytes);
+        float* fbuf = (float*)buf;
+        int ret = 0;
+
+        for (uint z = 0; z < cfg->dim.z; z++)
+            for (uint y = 0; y < cfg->dim.y; y++)
+                for (uint x = 0; x < cfg->dim.x; x++) {
+                    size_t col = (size_t)z * dimxy + y * cfg->dim.x + x, row = (size_t)x * dimyz + y * cfg->dim.z + z;
+                    unsigned int v = cfg->vol[col];
+
+                    if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+                        /* mcx_preprocess split each 8-byte svmc record into two 32-bit planes
+                           with the byte order reversed; rebuild the record in file order */
+                        union {
+                            unsigned char c[8];
+                            unsigned int  i[2];
+                        } b2u;
+                        b2u.i[1] = v;
+                        b2u.i[0] = cfg->vol[col + datalen];
+
+                        for (int k = 0; k < 8; k++) {
+                            buf[row * 8 + k] = b2u.c[7 - k];
+                        }
+                    } else if (cfg->mediabyte == MEDIA_MUA_FLOAT) {
+                        union {
+                            unsigned int i;
+                            float f;
+                        } u;
+                        u.i = v;
+                        fbuf[row] = (v == 0) ? NAN : u.f / cfg->unitinmm;
+                    } else {
+                        float* f = fbuf + row * ncomp;
+                        f[0] = (v == 0) ? NAN : mcx_half2float(v & 0xFFFF) / cfg->unitinmm;
+                        f[1] = (v == 0) ? NAN : mcx_half2float(v >> 16) / cfg->unitinmm;
+
+                        if (cfg->mediabyte == MEDIA_ASGN_F2H) {
+                            unsigned int gn = cfg->vol[col + datalen];
+                            f[2] = mcx_half2float(gn & 0xFFFF);
+                            f[3] = mcx_half2float(gn >> 16);
+                        }
+                    }
+                }
+
+        obj = cJSON_CreateObject();
+        ret = mcx_jdataencode(buf, (ncomp > 1 ? 4 : 3), dims4, (cfg->mediabyte == MEDIA_2LABEL_SPLIT ? "uint64" : "single"), elembytes, cfg->zipid, obj, 0, 0, cfg);
+        free(buf);
+
+        if (ret) {
+            MCX_ERROR(ret, "data compression or base64 encoding failed");
+        } else {
+            cJSON_AddItemToObject(root, "Shapes", obj);
+        }
     } else { /* if shape info is not available, save volume to JData constructs */
         uint datalen = cfg->dim.x * cfg->dim.y * cfg->dim.z;
         size_t outputbytes = datalen * sizeof(int);
@@ -3722,7 +3880,7 @@ void mcx_savejdata(char* filename, Config* cfg) {
             for (int i = 0; i < datalen; i++) {
                 p[i] = vol[i] & 0xFFFF;
             }
-        } else {
+        } else if (cfg->mediabyte <= 4) { /* packed 32-bit formats, such as labelplus, are saved as is */
             for (int i = 0; i < datalen; i++) {
                 vol[i] = vol[i] & MED_MASK;
             }
@@ -3907,6 +4065,8 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
         }
     } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
         memcpy(cfg->vol, inputvol, (datalen << 3));
+    } else if (isbuf) { /* other 4-byte packed formats, such as labelplus; a file is read into cfg->vol directly */
+        memcpy(cfg->vol, inputvol, (datalen << 2));
     }
 
     int medianum = MAX(cfg->medianum, cfg->polmedianum + 1);
@@ -4735,9 +4895,13 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
         vdata = cJSON_GetObjectItem(obj, "_ArrayZipData_");
     }
 
-    if (!flagset['K'] && vtype) {
+    if (vtype) {
         *type = vtype->valuestring;
+    }
 
+    /* only infer the media format from the array type if the input did not set it; the
+       array type is returned regardless, as the callers check it (e.g. the source pattern) */
+    if (!flagset['K'] && vtype) {
         if (strstr(*type, "int8")) {
             cfg->mediabyte = 1;
         } else if (strstr(*type, "int16")) {
@@ -5615,10 +5779,12 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     } else if (strcmp(argv[i] + 2, "dumpjson") == 0) {
                         cfg->jsonfile[0] = '-';
 
-                        if (i + 1 >= argc) {
+                        /* --dumpjson followed by nothing or another option prints to stdout, by a number
+                           selects the dump mode, and by anything else (including an absolute or ./ path,
+                           which used to be read as a number and silently ignored) names the output file */
+                        if (i + 1 >= argc || (argv[i + 1][0] == '-' && argv[i + 1][1] != '\0')) {
                             cfg->isdumpjson = 1;
-                            i++;
-                        } else if (i + 1 < argc && (isalpha(argv[i + 1][0]) || argv[i + 1][0] == '-')) {
+                        } else if (!isdigit((int)(argv[i + 1][0]))) {
                             cfg->isdumpjson = 1;
                             memcpy(cfg->jsonfile, argv[i + 1], MIN(strlen(argv[i + 1]), MAX_PATH_LENGTH));
                             i++;
@@ -5933,6 +6099,41 @@ int mcx_float2half2(float input[2]) {
     }
 
     return f2h.i[0];
+}
+
+/**
+ * @brief Convert an IEEE 754 half-precision number to a float, the inverse of mcx_float2half2
+ *
+ * @param[in] h: the 16-bit half-precision number
+ */
+
+float mcx_half2float(unsigned short h) {
+    union {
+        unsigned int i;
+        float f;
+    } u;
+    unsigned int sign = ((unsigned int)(h & 0x8000u)) << 16, expo = (h >> 10) & 0x1f, mant = h & 0x3ff;
+
+    if (expo == 0) {
+        if (mant == 0) {
+            u.i = sign;
+            return u.f;
+        }
+
+        while (!(mant & 0x400)) { /* normalize a denormal */
+            mant <<= 1;
+            expo--;
+        }
+
+        expo++;
+        mant &= 0x3ff;
+    } else if (expo == 31) {
+        u.i = sign | 0x7f800000u | (mant << 13);
+        return u.f;
+    }
+
+    u.i = sign | ((expo + 112) << 23) | (mant << 13);
+    return u.f;
 }
 
 /**

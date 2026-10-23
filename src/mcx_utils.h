@@ -345,6 +345,7 @@ void mcx_prep_polarized(Config* cfg);
 void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 int  mcx_float2half2(float input[2]);
+float mcx_half2float(unsigned short h);
 cJSON* mcx_parsejson(const char* jbuf);
 
 extern cJSON* mcx_lang;       /**< JSON object holding the translations of the specified language */
