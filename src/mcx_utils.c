@@ -4436,7 +4436,7 @@ void  mcx_convertrow2col64(size_t* vol, uint3* dim) {
                 newvol[z * dimxy + y * dim->x + x] = (vol)[x * dimyz + y * dim->z + z];
             }
 
-    memcpy(vol, newvol, sizeof(sizeof(size_t) * dim->x * dim->y * dim->z));
+    memcpy(vol, newvol, sizeof(size_t) * dim->x * dim->y * dim->z);
     free(newvol);
 }
 
