@@ -136,13 +136,13 @@ def preview(cfg, **kwargs):
                 vol = np.ones(dim)
 
             # Create lattice grid for bounding box
-            bbxno, bbxfc = latticegrid(
+            bbxno, bbxfc, *_ = latticegrid(
                 np.arange(0, dim[0] + 1, dim[0]),
                 np.arange(0, dim[1] + 1, dim[1]),
                 np.arange(0, dim[2] + 1, dim[2]),
             )
             hbbx = plotmesh(
-                (bbxno + offset) * voxelsize, bbxfc, facecolor="none", **kwargs
+                (bbxno + offset) * voxelsize, bbxfc, facecolor=(1, 1, 1, 0), **kwargs
             )
 
             # Get unique values (excluding 0)
@@ -162,8 +162,8 @@ def preview(cfg, **kwargs):
                     hseg[id_idx] = plotmesh(
                         (no - 1) * voxelsize,
                         fc,
-                        facealpha=0.3,
-                        linestyle="none",
+                        alpha=0.3,
+                        linewidth=0,
                         facecolor=surfcolors[int(id_val), :],
                         **kwargs
                     )
@@ -189,8 +189,8 @@ def preview(cfg, **kwargs):
                     no,
                     [],
                     elem_subset,
-                    facealpha=0.3,
-                    linestyle="none",
+                    alpha=0.3,
+                    linewidth=0,
                     facecolor=surfcolors[int(id_val), :],
                     **kwargs
                 )
@@ -209,13 +209,13 @@ def preview(cfg, **kwargs):
             raise ValueError("cfg.srcpos or cfg.srcdir is missing")
 
         srcpos = np.array(cfg[i]["srcpos"]) * voxelsize
-        hsrc = plotmesh(srcpos, "r*")
+        hsrc = plotmesh(np.atleast_2d(srcpos[:3]), "r*")  # plotmesh takes one node per row
 
         srcvec = np.array(cfg[i]["srcdir"]) * 10 * voxelsize
         headsize = 1e2
 
         # Use matplotlib's quiver for 3D arrow
-        ax = plt.gca(projection="3d")
+        ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
         hdir = ax.quiver(
             srcpos[0],
             srcpos[1],
@@ -243,7 +243,7 @@ def preview(cfg, **kwargs):
                     0,
                     0,
                 )
-                hsrcarea = plotmesh(ncyl, fcyl[-1], facecolor="r", linestyle="none")
+                hsrcarea = plotmesh(ncyl, fcyl[-1], facecolor="r", linewidth=0)
 
                 if len(cfg[i]["srcparam1"]) > 1 and cfg[i]["srcparam1"][1] > 0:
                     ncyl, fcyl = meshacylinder(
@@ -253,7 +253,7 @@ def preview(cfg, **kwargs):
                         0,
                         0,
                     )
-                    hsrcarea = plotmesh(ncyl, fcyl[-1], facecolor="k", linestyle="none")
+                    hsrcarea = plotmesh(ncyl, fcyl[-1], facecolor="k", linewidth=0)
 
             elif cfg[i]["srctype"] in [
                 "planar",
@@ -284,7 +284,7 @@ def preview(cfg, **kwargs):
 
             elif cfg[i]["srctype"] == "pattern3d":
                 dim = cfg[i]["srcparam1"][:3]
-                bbxno, bbxfc = latticegrid(
+                bbxno, bbxfc, *_ = latticegrid(
                     np.arange(0, dim[0] + 1, dim[0]),
                     np.arange(0, dim[1] + 1, dim[1]),
                     np.arange(0, dim[2] + 1, dim[2]),
@@ -294,7 +294,7 @@ def preview(cfg, **kwargs):
                     ((bbxno + srcpos_tiled) + offset) * voxelsize,
                     bbxfc,
                     facecolor="y",
-                    facealpha=0.3,
+                    alpha=0.3,
                 )
 
             elif cfg[i]["srctype"] in ["slit", "line"]:
@@ -449,22 +449,22 @@ def plotshapes(
                 gridsize = obj["Size"]
 
                 if "O" in obj:
-                    no, fc = latticegrid(
+                    no, fc, *_ = latticegrid(
                         [0, obj["Size"][0]] + obj["O"][0],
                         [0, obj["Size"][1]] + obj["O"][1],
                         [0, obj["Size"][2]] + obj["O"][2],
                     )
                 else:
-                    no, fc = latticegrid(
+                    no, fc, *_ = latticegrid(
                         [0, obj["Size"][0]], [0, obj["Size"][1]], [0, obj["Size"][2]]
                     )
 
                 handle = plotmesh(
                     no * voxelsize,
                     fc,
-                    facealpha=0.3,
+                    alpha=0.3,
                     linestyle="-",
-                    facecolor="none",
+                    facecolor=(1, 1, 1, 0),
                     **kwargs
                 )
                 hseg.append(handle)
@@ -481,7 +481,7 @@ def plotshapes(
                 sy = np.outer(np.sin(u), np.sin(v))
                 sz = np.outer(np.ones(np.size(u)), np.cos(v))
 
-                ax = plt.gca(projection="3d")
+                ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
                 handle = ax.plot_surface(
                     voxelsize * (sx * obj["R"] + (obj["O"][0] + orig[0])),
                     voxelsize * (sy * obj["R"] + (obj["O"][1] + orig[1])),
@@ -520,7 +520,7 @@ def plotshapes(
                 sy = no[:, 1].reshape(sy.shape)
                 sz = no[:, 2].reshape(sz.shape)
 
-                ax = plt.gca(projection="3d")
+                ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
                 handle = ax.plot_surface(
                     voxelsize * (sx + (c0[0] + orig[0])),
                     voxelsize * (sy + (c0[1] + orig[1])),
@@ -533,7 +533,7 @@ def plotshapes(
 
             elif sname == "Origin":
                 orig = voxelsize * np.array(shp[sname])
-                ax = plt.gca(projection="3d")
+                ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
                 handle = ax.scatter(orig[0], orig[1], orig[2], c="m", marker="*", s=100)
                 hseg.append(handle)
 
@@ -545,19 +545,19 @@ def plotshapes(
                 bounds = np.array(obj["Bounds"])
                 for k in range(bounds.shape[0]):
                     if sname == "XSlabs":
-                        no, fc = latticegrid(
+                        no, fc, *_ = latticegrid(
                             [bounds[k, 0], bounds[k, 1]] + orig[0],
                             [0, gridsize[1]],
                             [0, gridsize[2]],
                         )
                     elif sname == "YSlabs":
-                        no, fc = latticegrid(
+                        no, fc, *_ = latticegrid(
                             [0, gridsize[0]],
                             [bounds[k, 0], bounds[k, 1]] + orig[1],
                             [0, gridsize[2]],
                         )
                     elif sname == "ZSlabs":
-                        no, fc = latticegrid(
+                        no, fc, *_ = latticegrid(
                             [0, gridsize[0]],
                             [0, gridsize[1]],
                             [bounds[k, 0], bounds[k, 1]] + orig[2],
@@ -566,8 +566,8 @@ def plotshapes(
                     handle = plotmesh(
                         voxelsize * no,
                         fc,
-                        facealpha=0.3,
-                        linestyle="none",
+                        alpha=0.3,
+                        linewidth=0,
                         facecolor=surfcolors[tag, :],
                         **kwargs
                     )
@@ -586,19 +586,19 @@ def plotshapes(
                         tag = layer[2]
 
                     if sname == "XLayers":
-                        no, fc = latticegrid(
+                        no, fc, *_ = latticegrid(
                             [layer[0] - 1, layer[1]] + orig[0] - 1,
                             [0, gridsize[1]],
                             [0, gridsize[2]],
                         )
                     elif sname == "YLayers":
-                        no, fc = latticegrid(
+                        no, fc, *_ = latticegrid(
                             [0, gridsize[0]],
                             [layer[0] - 1, layer[1]] + orig[1] - 1,
                             [0, gridsize[2]],
                         )
                     elif sname == "ZLayers":
-                        no, fc = latticegrid(
+                        no, fc, *_ = latticegrid(
                             [0, gridsize[0]],
                             [0, gridsize[1]],
                             [layer[0] - 1, layer[1]] + orig[2] - 1,
@@ -607,8 +607,8 @@ def plotshapes(
                     handle = plotmesh(
                         voxelsize * no,
                         fc,
-                        facealpha=0.3,
-                        linestyle="none",
+                        alpha=0.3,
+                        linewidth=0,
                         facecolor=surfcolors[tag, :],
                         **kwargs
                     )
