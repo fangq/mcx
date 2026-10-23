@@ -80,14 +80,12 @@ def cwdref(detp, cfg):
         unitinmm = cfg["unitinmm"]
 
     det_weight = detweight(detp, cfg["prop"])
-    detnum = len(np.unique(detp["detid"]))
-    detweightsum = np.zeros(detnum)
+    detpos = np.atleast_2d(np.asarray(cfg["detpos"], dtype=float))
+    detnum = detpos.shape[0]  # all detectors, including those that captured no photon
+    detid = np.asarray(detp["detid"]).astype(int).ravel() - 1
+    detweightsum = np.bincount(detid, weights=np.ravel(det_weight), minlength=detnum)[:detnum]
 
-    for i in range(len(detp["detid"])):
-        index = int(detp["detid"][i]) - 1
-        detweightsum[index] += det_weight[i]
-
-    area = np.pi * (cfg["detpos"][:, 3] * unitinmm) ** 2
+    area = np.pi * (detpos[:, 3] * unitinmm) ** 2
     dref = detweightsum / area / cfg["nphoton"]
 
     return dref
