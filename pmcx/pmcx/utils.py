@@ -1250,6 +1250,20 @@ def cwfluencediffusion(*args, **kwargs):
     return cwdiffusion(*args, **kwargs)
 
 
+def _replaydata(x):
+    """the raw array of a detected photon/seed output of pmcx.mcxlab, or of a MATLAB-style dict"""
+    return x["data"] if isinstance(x, dict) and "data" in x else x
+
+
+def _rfparts(flux, vol_shape, unitinmm=None):
+    """sum an RF replay output over time and split it into its cos (X) and sin (Y) weighted parts"""
+    jac = np.sum(np.asarray(flux), axis=3)  # [Nx, Ny, Nz, 1, 2] after summing the time gates
+    if unitinmm is not None:
+        jac = unitinmm * jac  # correct units to [mm] when the output is not normalized
+    jac = np.reshape(jac, list(vol_shape) + [-1])
+    return jac[..., 0], jac[..., -1]
+
+
 def rfreplay(cfg, f_mod, detp, seeds, detnums):
     """
     rfjac_lnA, rfjac_phase = mcxrfreplay(cfg, f_mod, detp, seeds, detnums)
@@ -1312,8 +1326,8 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
     for idx, d in enumerate(detnums):
         # MCXLAB REPLAY SETTINGS
         cfg_jac = copy.deepcopy(cfg)
-        cfg_jac["seed"] = seeds["data"]
-        cfg_jac["detphotons"] = detp["data"]
+        cfg_jac["seed"] = _replaydata(seeds)
+        cfg_jac["detphotons"] = _replaydata(detp)
         cfg_jac["replaydet"] = d
         cfg_jac["outputtype"] = "rf"
         cfg_jac["omega"] = 2 * np.pi * f_mod  # RF modulation frequency
@@ -1321,13 +1335,14 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
         cfg_jac["issave2pt"] = 1
 
         # REPLAY SIMULATION
-        rfjac_d, detp_d, vol_d, seeds_d = mcxlab(cfg_jac)
+        res = mcxlab(cfg_jac)
+        rfjac_d, detp_d = res["flux"], res["detp"]
 
         # Array with detected photon weights
-        detw = detweight(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"])
+        detw = np.ravel(detweight(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"]))
 
         # Array with photon time-of-flights
-        dett = dettime(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"])
+        dett = np.ravel(dettime(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"]))
 
         # FD MEASUREMENT ESTIMATES
         X = np.dot(detw, np.cos((2 * f_mod) * dett * np.pi))
@@ -1343,15 +1358,8 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
 
         # FD JACOBIANS
         # Compute the Jacobians with the rf replay feature.
-        rfjac_d_data = rfjac_d["data"]
-        rfjac_d_sum = np.sum(rfjac_d_data, axis=3)  # sum over time instances (axis 3)
-
-        if cfg_jac["isnormalized"] == 0:
-            rfjac_d_sum = cfg_jac["unitinmm"] * rfjac_d_sum  # correct units to [mm]
-
-        # Jacobians for X and Y wrt mua:
-        rfjac_X = rfjac_d_sum[:, :, :, 0]  # First component
-        rfjac_Y = rfjac_d_sum[:, :, :, 1]  # Second component
+        # Jacobians for X and Y wrt mua, summed over time instances
+        rfjac_X, rfjac_Y = _rfparts(rfjac_d, vol_shape, cfg_jac["unitinmm"] if cfg_jac["isnormalized"] == 0 else None)
 
         # Jacobians for log-amplitude and phase shift wrt mua:
         rfjac_lnA[:, :, :, idx] = (1 / (A**2)) * (X * rfjac_X + Y * rfjac_Y)
@@ -1417,32 +1425,22 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
     rfmusjac_phase = np.zeros(list(vol_shape) + [len(detnums)])
 
     # Return if no photons detected.
-    if not detp or not seeds or len(detp) == 0 or len(seeds) == 0:
+    if detp is None or seeds is None or np.size(_replaydata(detp)) == 0 or np.size(_replaydata(seeds)) == 0:
         print("MCX WARNING: No detected photons for replay.")
         return rfmusjac_lnA, rfmusjac_phase
 
     # Form matrix with mus for each nonzero voxel, and 1 in 0 type or mus=0.
-    vol_array = np.array(cfg["vol"])
-    nonzero_ind = np.where(vol_array.flatten() > 0)[0]
-    nonzero_prop_row = (
-        vol_array.flatten()[nonzero_ind].astype(int) + 1
-    )  # +1 for 0-based to 1-based indexing
-
-    mus_matrix = np.ones(vol_shape)
-    prop_array = np.array(cfg["prop"])
-
-    # Extract mus values (column 2, which is index 1 in Python)
-    for i, idx in enumerate(nonzero_ind):
-        flat_idx = np.unravel_index(idx, vol_shape)
-        mus_matrix[flat_idx] = prop_array[nonzero_prop_row[i], 1]  # Column 2 is index 1
+    vol_array = np.asarray(cfg["vol"]).astype(int)
+    prop_array = np.asarray(cfg["prop"], dtype=float)
+    mus_matrix = np.where(vol_array > 0, prop_array[vol_array, 1], 1.0)  # labels index prop rows directly
 
     # Avoid division by zero if mus=0
     mus_matrix = mus_matrix + (mus_matrix == 0).astype(float)
 
     # General replay settings.
     cfg_jac = copy.deepcopy(cfg)
-    cfg_jac["seed"] = seeds["data"]
-    cfg_jac["detphotons"] = detp["data"]
+    cfg_jac["seed"] = _replaydata(seeds)
+    cfg_jac["detphotons"] = _replaydata(detp)
     cfg_jac["omega"] = 2 * np.pi * f_mod  # RF modulation angular frequency
     cfg_jac["isnormalized"] = 0  # Important!
     cfg_jac["issave2pt"] = 1
@@ -1457,41 +1455,30 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
         # REPLAY SIMULATION 1
         cfg_jac["replaydet"] = d
         cfg_jac["outputtype"] = "rf"  # FD absorption Jacobians
-        rfjac_d = mcxlab(cfg_jac)
+        cfg_rf = dict(cfg_jac, issavedet=0)  # only the Jacobian is needed, as in mcxrfmusreplay.m
+        rfjac_d = mcxlab(cfg_rf)["flux"]
 
-        rfjac_d_data = rfjac_d["data"]
-        rfjac_d_sum = np.sum(rfjac_d_data, axis=3)  # sum over time instances (axis 3)
-
-        if cfg_jac["isnormalized"] == 0:
-            rfjac_d_sum = cfg_jac["unitinmm"] * rfjac_d_sum  # correct units to [mm]
-
-        # Jacobians for X and Y wrt mua:
-        rfjac_X = rfjac_d_sum[:, :, :, 0]  # (-1*)cos-weighted paths
-        rfjac_Y = rfjac_d_sum[:, :, :, 1]  # (-1*)sine-weighted paths
-        del rfjac_d, rfjac_d_data, rfjac_d_sum  # Clear memory
+        # Jacobians for X and Y wrt mua: (-1*)cos/sine-weighted paths
+        rfjac_X, rfjac_Y = _rfparts(rfjac_d, vol_shape, cfg_jac["unitinmm"] if cfg_jac["isnormalized"] == 0 else None)
+        del rfjac_d  # Clear memory
 
         # REPLAY SIMULATION 2
         cfg_jac["outputtype"] = "rfmus"  # FD scattering Jacobians
-        rfmusjac_d, detp_d, vol_d, seeds_d = mcxlab(cfg_jac)
+        res = mcxlab(cfg_jac)
+        detp_d = res["detp"]
 
-        rfmusjac_d_data = rfmusjac_d["data"]
-        rfmusjac_d_sum = np.sum(rfmusjac_d_data, axis=3)  # sum over time instances
-
-        # Jacobians for X and Y wrt mus:
-        rfmusjac_X = rfmusjac_d_sum[:, :, :, 0]  # cos-weighted nscatt
+        # Jacobians for X and Y wrt mus: cos/sine-weighted nscatt, summed over time instances
+        rfmusjac_X, rfmusjac_Y = _rfparts(res["flux"], vol_shape)
         rfmusjac_X = rfmusjac_X / mus_matrix + rfjac_X
-        del rfjac_X  # Clear memory
-
-        rfmusjac_Y = rfmusjac_d_sum[:, :, :, 1]  # sine-weighted nscatt
         rfmusjac_Y = rfmusjac_Y / mus_matrix + rfjac_Y
-        del rfjac_Y, rfmusjac_d, rfmusjac_d_data, rfmusjac_d_sum  # Clear memory
+        del rfjac_X, rfjac_Y, res  # Clear memory
 
         # FD MEASUREMENT ESTIMATES
         # Array with detected photon weights
-        detw = detweight(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"])
+        detw = np.ravel(detweight(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"]))
 
         # Array with photon time-of-flights
-        dett = dettime(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"])
+        dett = np.ravel(dettime(detp_d, cfg_jac["prop"], cfg_jac["unitinmm"]))
 
         X = np.dot(detw, np.cos(cfg_jac["omega"] * dett))
         Y = np.dot(detw, np.sin(cfg_jac["omega"] * dett))
