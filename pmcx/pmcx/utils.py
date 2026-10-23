@@ -1501,3 +1501,128 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
             rfmusjac_phase[:, :, :, idx] = 0
 
     return rfmusjac_lnA, rfmusjac_phase
+
+
+def svmc(vol, smoothing=1, kernelsize=3, kernelstd=1, threshold=0.5, curveonly=1):
+    """
+    newvol = svmc(vol, smoothing=1)
+
+    Convert a label volume into the split-voxel (SVMC) format, a port of utils/mcxsvmc.m
+
+    The boundary of each tissue label is extracted with marching cubes (after an optional
+    Gaussian smoothing); every voxel cut by a boundary is then represented by the two labels
+    on either side of a planar interface, defined by a reference point and a normal vector.
+
+    input:
+        vol: a 3-D integer label volume (up to 255 labels)
+        smoothing: 1 to smooth each label mask with a Gaussian kernel before the isosurface
+        kernelsize, kernelstd: size and standard deviation of the Gaussian smoothing kernel
+        threshold: isosurface level
+        curveonly: 1 to only keep curved interfaces, leaving voxel-aligned flat boundaries
+                   as plain label voxels
+
+    output:
+        newvol: an [8, Nx, Ny, Nz] uint8 array, which can be passed to cfg['vol'] directly:
+           newvol[0]: the label of the voxel (lower label of a split voxel)
+           newvol[1]: the upper label of a split voxel, 0 otherwise
+           newvol[2:5]: the reference point of the interface within the voxel (scaled by 255)
+           newvol[5:8]: the normal vector of the interface ((n+1)*255/2)
+
+    Ref.: Yan S, Fang Q, "Hybrid mesh and voxel based Monte Carlo algorithm for accurate and
+    efficient photon transport modeling in complex bio-tissues," BOE 11, 6262-6270 (2020)
+
+    this file is part of Monte Carlo eXtreme (MCX)
+    License: GPLv3, see https://mcx.space for details
+    """
+    from scipy.ndimage import convolve
+    from skimage.measure import marching_cubes
+
+    vol = np.asarray(vol)
+    dim = vol.shape
+    labels = np.unique(vol)
+    if len(labels) > 255:
+        raise ValueError("MCX currently supports up to 255 labels for this function")
+
+    if smoothing:
+        x = np.arange(kernelsize) - (kernelsize - 1) / 2
+        g = np.exp(-(x**2) / (2 * kernelstd**2))
+        kernel = g[:, None, None] * g[None, :, None] * g[None, None, :]
+        kernel /= kernel.sum()
+
+    def voxelid(points):
+        # linear (column-major) index of the voxel containing each point; points use 1-based
+        # voxel coordinates as MATLAB's isosurface over ndgrid(1:N)
+        sub = np.floor(points).astype(int)  # = floor(p - 1) + 1 - 1, 0-based
+        return np.ravel_multi_index((sub[:, 0], sub[:, 1], sub[:, 2]), dim, order="F")
+
+    bmask = np.full(int(np.prod(dim)), np.nan)
+    bmask2 = np.zeros(int(np.prod(dim)))
+    verts, faces = [], []
+    nvert = 0
+    for lab in labels:
+        mask = (vol == lab).astype(np.float64)
+        volsmooth = convolve(mask, kernel, mode="nearest") if smoothing else mask
+        if volsmooth.min() > threshold or volsmooth.max() < threshold:
+            continue
+        v, f, _, _ = marching_cubes(volsmooth, threshold)
+        if len(v) == 0:
+            continue
+        v = v + 1  # 1-based grid coordinates
+        voxid = voxelid(v[f].mean(axis=1))
+        uniqidx = np.unique(voxid)
+        bmask2[uniqidx] = lab
+        uniqidx = uniqidx[np.isnan(bmask[uniqidx])]
+        good = np.isin(voxid, uniqidx)
+        faces.append(f[good] + nvert)
+        verts.append(v)
+        nvert += len(v)
+        bmask[uniqidx] = lab
+
+    newvol = np.zeros([8] + list(dim), dtype=np.uint8)
+    newvol[0] = vol
+    if not verts:
+        return newvol
+
+    # remove isolated nodes
+    verts, faces = np.vstack(verts), np.vstack(faces)
+    used, faces = np.unique(faces, return_inverse=True)
+    faces = faces.reshape(-1, 3)
+    verts = verts[used]
+
+    tri = verts[faces]
+    centroids = tri.mean(axis=1)
+    voxid = voxelid(centroids)
+    uniqidx = np.unique(voxid)
+
+    labpair = np.column_stack([bmask[uniqidx], bmask2[uniqidx]])
+    labpair[labpair[:, 0] == labpair[:, 1], 1] = 0
+
+    cross = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+    areas = 0.5 * np.linalg.norm(cross, axis=1)
+    normals = -cross / np.maximum(2 * areas, 1e-30)[:, None]  # orientation of MATLAB's isosurface normals
+
+    nvox = int(np.prod(dim))
+    totalarea = np.bincount(voxid, weights=areas, minlength=nvox)
+    nc = np.stack([np.bincount(voxid, weights=centroids[:, i] * areas, minlength=nvox) for i in range(3)])
+    nn = np.stack([np.bincount(voxid, weights=normals[:, i] * areas, minlength=nvox) for i in range(3)])
+    nc = (nc[:, uniqidx] / totalarea[uniqidx]).T
+    nn = nn[:, uniqidx]
+    nn = (nn / np.sqrt((nn * nn).sum(axis=0))).T
+
+    if curveonly:
+        # drop voxel-aligned flat interfaces, and their neighbors
+        flat = np.any(nc - np.floor(nc) < 1e-6, axis=1) & np.any(np.abs(nn) == 1, axis=1)
+        boxmask = np.zeros(nvox)
+        boxmask[uniqidx[flat]] = 1
+        boxmask = convolve(boxmask.reshape(dim, order="F"), np.ones([3, 3, 3]) / 27, mode="nearest") > 0
+        keep = ~boxmask.ravel(order="F")[uniqidx]
+        nn, nc, uniqidx, labpair = nn[keep], nc[keep], uniqidx[keep], labpair[keep]
+
+    nc = np.floor((nc - np.floor(nc)) * 255)
+    nn = np.minimum(np.floor((nn + 1) * 255 / 2), 254)
+
+    flat = newvol.reshape(8, -1, order="F")
+    flat[0:2, uniqidx] = labpair.T
+    flat[2:5, uniqidx] = nc.T
+    flat[5:8, uniqidx] = nn.T
+    return flat.reshape([8] + list(dim), order="F")

@@ -61,6 +61,7 @@ from .utils import (
     mcxcreate,
     rfreplay,
     rfmusreplay,
+    svmc,
 )
 
 from .io import (
@@ -105,6 +106,7 @@ __all__ = (
     "mcxcreate",
     "rfreplay",
     "rfmusreplay",
+    "svmc",
     "loadmc2",
     "loadmch",
     "loadfile",
