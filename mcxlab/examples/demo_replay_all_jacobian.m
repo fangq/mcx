@@ -5,12 +5,12 @@
 % Jacobians for the continuous wave (CW), time (TD) and frequency domain (FD)
 % measurements with respect to voxel-wise absorption and scattering coefficients.
 %
-% NOTE: Requires (nightly-build) version from May 2025 or later!
+% NOTE: Requires (nightly-build) version from September 2026 or later!
 % Remember to add path to /mcx/mcxlab and /mcx/utils.
 %
 % This file is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
 %
-% Created by Pauliina Hirvi 4/2025
+% Created by Pauliina Hirvi 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% FORM TARGET MODEL
@@ -24,6 +24,7 @@ layered_model(:, :, 9:end) = 4;
 % Brain-like optical parameters.
 % mua = absorption coeff, mus = scattering coeff, g = anisotropy coeff,
 % n = index of refraction.
+% Setting g=0 can converge faster.
 opt_params = [0, 0, 1, 1; 0.0150, 14, 0.9, 1.4; 0.004, 1.6, 0.9, 1.4; ...
               0.048, 5, 0.9, 1.4; 0.037, 10, 0.9, 1.4]; % [mua,mus,g,n]
 mus_matrix = ones(size(layered_model)); % matrix with mus value for each non-zero voxel
@@ -103,7 +104,8 @@ dlogIdmus = meanP ./ mus_matrix + dlogIdmua;
 cfg_dTOFdmua = cfg_jacobian;
 cfg_dTOFdmua.outputtype = 'wltof';
 meanLTOF = mcxlab(cfg_dTOFdmua);
-meanLTOF = cfg_dTOFdmua.unitinmm .* (meanLTOF.data) ./ I; % correct units to [mm]
+meanLTOF = ((1e-9) * cfg_dTOFdmua.unitinmm) .* (meanLTOF.data); % manual normalization, correct units to [mm] and [s]
+meanLTOF = meanLTOF ./ I; 
 dTOFdmua = -meanLTOF - meanTOF .* dlogIdmua;
 
 %% REPLAY JACOBIAN: TD MEAN TIME-OF-FLIGHT VERSUS SCATTERING
@@ -112,7 +114,8 @@ dTOFdmua = -meanLTOF - meanTOF .* dlogIdmua;
 cfg_dTOFdmus = cfg_jacobian;
 cfg_dTOFdmus.outputtype = 'wptof';
 meanPTOF = mcxlab(cfg_dTOFdmus);
-meanPTOF = meanPTOF.data ./ I;
+meanPTOF = (1e-9) .* (meanPTOF.data); % manual normalization, correct unit to [s]
+meanPTOF = meanPTOF ./ I;
 dTOFdmus = (meanPTOF - meanTOF .* meanP) ./ mus_matrix + dTOFdmua;
 
 %% REPLAY JACOBIAN: FD LOG-AMPLITUDE VERSUS ABSORPTION
