@@ -24,6 +24,7 @@ read back from a temporary folder. The same file is used by mcx and mcx-cl.
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "unittest.h"
 #include "mcx_utils.h"
@@ -36,6 +37,11 @@ read back from a temporary folder. The same file is used by mcx and mcx-cl.
 void Mie(double x, double mx, const double* mu, float4* smatrix, double* qsca, double* g);
 void mcx_preprocess(Config* cfg);
 void mcx_loadseedjdat(char* filename, Config* cfg);
+int mcx_readarg(int argc, char* argv[], int id, void* output, const char* type);
+void mcx_loadbenchmark(char* key, Config* cfg);
+#ifdef MCX_OPENCL
+void mcx_run_simulation(Config* cfg, float* fluence, float* totalenergy);
+#endif
 
 #ifndef MAX_PROP_AND_DETECTORS
     #define MAX_PROP_AND_DETECTORS (MAX_PROP + MAX_DETECTORS)  /* the total limit of mcx-cl */
@@ -664,10 +670,30 @@ static void test_detphoton(void) {
     free(buf);
 
     cfg.outputformat = ofBJNifti;
+    cfg.issaveseed = 1;  /* cleared by mcx_loadseedfile above */
     mcx_savedetphoton(ppath, seeds, count, 0, &cfg);
     len = read_file("ut_detp.jdb", &buf);
-    EXPECT_TRUE(len > 0 && has_key(buf, len, "ppath") && has_key(buf, len, "seed"), "jdb detected photon output");
+    EXPECT_TRUE(len > 0 && has_key(buf, len, "ppath") && has_key(buf, len, "seed") && has_key(buf, len, "_ArrayZipData_"),
+                "jdb detected photon output with the seeds");
     free(buf);
+
+    /* trajectory records (detected 0) with the seeds, in a .jdb file */
+    {
+        float traj[2 * MCX_DEBUG_REC_LEN];
+
+        for (int i = 0; i < 2 * MCX_DEBUG_REC_LEN; i++) {
+            traj[i] = (float)(i % MCX_DEBUG_REC_LEN);
+        }
+
+        cfg.his.detected = 0;
+        cfg.his.savedphoton = 2;
+        cfg.his.colcount = MCX_DEBUG_REC_LEN;
+        strcpy(cfg.session, "uttraj");
+        mcx_savedetphoton(traj, seeds, 2, 0, &cfg);
+        len = read_file("uttraj_traj.jdb", &buf);
+        EXPECT_TRUE(len > 0 && has_key(buf, len, "Trajectory") && has_key(buf, len, "seed"), "jdb trajectory output with the seeds");
+        free(buf);
+    }
 
     clear_cfg(&cfg);
 }
@@ -1851,6 +1877,394 @@ static void test_more_inputs(void) {
     clear_cfg(&cfg);
 }
 
+
+/*-----------------------------------------------------------------------------
+ *  NeuroJSON.io downloads (-N, answered offline by a stand-in curl), inline JSON
+ *  input, option parsing helpers and less common branches of the JSON writer
+ *---------------------------------------------------------------------------*/
+
+static void test_net_and_branches(void) {
+    Config cfg;
+    char opts[2048], cwd[4096], path[8192];
+    char* json = jq("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}");
+
+    /* -f with the JSON input given inline */
+    write_file("utnetdoc.json", json, strlen(json));
+    snprintf(opts, sizeof(opts), "-f %s", json);
+    EXPECT_EXIT_OK(parse_raw(opts), "-f with an inline JSON input");
+    free(json);
+
+    /* -N with a stand-in curl on the PATH */
+    {
+        const char* curl = "#!/bin/sh\n"
+                           "case \"$*\" in\n"
+                           "  *nosuchdb*) echo '{\"error\":\"not_found\"}';;\n"
+                           "  *_find*) echo '{\"docs\":[{\"_id\":\"_design\"},{\"_id\":\"utdoc1\"},{\"_id\":\"utdoc2\"}]}';;\n"
+                           "  *_all_docs*) echo '{\"rows\":[{\"id\":\"utdoc1\"},{\"id\":\".hidden\"}]}';;\n"
+                           "  *) cat utnetdoc.json;;\n"
+                           "esac\n";
+        const char* oldpath = getenv("PATH");
+
+        if (mkdir("utbin", 0755) == 0 && getcwd(cwd, sizeof(cwd))) {
+            char* savedpath = strdup(oldpath ? oldpath : "/usr/bin:/bin");
+
+            write_file("utbin/curl", curl, strlen(curl));
+            chmod("utbin/curl", 0755);
+            snprintf(path, sizeof(path), "%s/utbin:%s", cwd, savedpath);
+            setenv("PATH", path, 1);
+
+            EXPECT_EXIT_OK(parse_raw("-N"), "-N lists the simulations of the database");
+            EXPECT_EXIT_OK(parse_raw("-N {\"selector\":{}}"), "-N with a query selector");
+            EXPECT_EXIT_OK(parse_raw("-N limit=2"), "-N with a query string");
+            EXPECT_EXIT(parse_raw("-N nosuchdb=1"), "-N with a failed query");
+            EXPECT_EXIT_OK(parse_raw("-N utdoc1"), "-N downloads a simulation by name");
+            EXPECT_EXIT_OK(parse_raw("-N mcx/utdoc1"), "-N downloads a simulation by path");
+            EXPECT_EXIT_OK(parse_raw("-N https://neurojson.io:7777/mcx/utdoc1"), "-N downloads a simulation by URL");
+
+            setenv("PATH", savedpath, 1);
+            free(savedpath);
+        }
+    }
+
+    EXPECT_EXIT(parse_raw("--bench cube60 -xy"), "an unknown short option");
+    parse_opts(&cfg, "--atomic 0");
+    EXPECT_TRUE(1, "--atomic 0 is accepted with a warning");
+    clear_cfg(&cfg);
+
+    /* Mie scattering of an invalid sphere size */
+    {
+        double mu[NANGLES] = {0.}, qsca, g;
+        float4* sm = (float4*)calloc(NANGLES, sizeof(float4));
+        EXPECT_EXIT(Mie(0., 1.2, mu, sm, &qsca, &g), "Mie with a sphere size of 0");
+        EXPECT_EXIT(Mie(30000., 1.2, mu, sm, &qsca, &g), "Mie with a sphere size beyond 20000");
+        free(sm);
+    }
+
+    /* shape errors: coincident cylinder ends, slab bounds that are not pairs, and a JSON
+       shape file without a background grid */
+    {
+        unsigned int* vol = NULL;
+        GridDim dim = {0};
+        Grid3D g = {&vol, &dim, {0.f, 0.f, 0.f}, 0};
+        const char* grid = "{\"Shapes\":[{\"Grid\":{\"Tag\":1,\"Size\":[4,4,4]}},";
+        char buf[512];
+
+        snprintf(buf, sizeof(buf), "%s{\"Cylinder\":{\"C0\":[1,1,1],\"C1\":[1,1,1],\"R\":1,\"Tag\":2}}]}", grid);
+        EXPECT_TRUE(mcx_parse_shapestring(&g, buf) != 0, "a cylinder with coincident end points");
+        free(vol);
+        vol = NULL;
+        snprintf(buf, sizeof(buf), "%s{\"XSlabs\":{\"Tag\":2,\"Bound\":[[1,2,3]]}}]}", grid);
+        EXPECT_TRUE(mcx_parse_shapestring(&g, buf) != 0, "slab bounds that are not number pairs");
+        free(vol);
+        write_file("utshape.json", grid, strlen(grid));
+        EXPECT_TRUE(mcx_load_jsonshapes(NULL, (char*)"utshape.json") != 0, "a JSON shape file without a background grid");
+    }
+
+    /* values given in the command line before an .inp file: the voxel size, the length
+       unit and a negative cache-box radius, which keeps the 1-based crop0/crop1 given */
+    {
+        /* the x/y/z lines of an .inp file give the voxel size, the dimension and the 1-based
+           cache box range */
+        char* inp;
+        long len = read_file("ut.inp", &inp);
+
+        for (char* p = inp; len > 0 && (p = strstr(p, "1 4 1 4")) != NULL; p++) {
+            *p = '2';
+        }
+
+        write_file("utstep.inp", inp, strlen(inp));
+        free(inp);
+    }
+    init_cfg(&cfg);
+    cfg.sradius = -1.f;
+    mcx_readconfig((char*)"utstep.inp", &cfg);
+    EXPECT_NEAR(cfg.unitinmm, 2.f, 1e-6, ".inp: the voxel size sets the length unit");
+    EXPECT_TRUE(cfg.crop0.x == 0 && cfg.crop1.x == 3, ".inp: a negative radius converts the cache box to 0-based");
+    clear_cfg(&cfg);
+#ifdef MCX_OPENCL
+    init_cfg(&cfg);
+    cfg.unitinmm = 0.5f;
+    mcx_readconfig((char*)"ut.inp", &cfg);
+    EXPECT_NEAR(cfg.steps.x, 0.5f, 1e-6, ".inp: the length unit sets the voxel size");
+    clear_cfg(&cfg);
+#endif
+
+    /* mcx_validatecfg with a negative cache-box radius, and a reversed time window */
+    json = jq("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}");
+    init_cfg(&cfg);
+    mcx_readconfig(json, &cfg);
+    cfg.issrcfrom0 = 0;
+    cfg.sradius = -1.f;
+    cfg.crop0.x = cfg.crop0.y = cfg.crop0.z = 2;
+    cfg.crop1.x = cfg.crop1.y = cfg.crop1.z = 3;
+    mcx_validatecfg(&cfg, NULL, NULL, 0);
+    EXPECT_TRUE(cfg.crop0.x == 1 && cfg.crop1.x == 2, "mcx_validatecfg converts a given cache box to 0-based");
+    clear_cfg(&cfg);
+    init_cfg(&cfg);
+    mcx_readconfig(json, &cfg);
+    cfg.tstart = 2e-9f;
+    EXPECT_EXIT(mcx_validatecfg(&cfg, NULL, NULL, 0), "mcx_validatecfg with a reversed time window");
+    clear_cfg(&cfg);
+    free(json);
+
+    /* a cache box in the JSON input, and a voxel size that sets the length unit */
+    load_json(&cfg, "{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,4],'Step':[2,2,2],"
+              "'CacheBoxP0':[2,2,2],'CacheBoxP1':[3,3,3]}," JBASE_SHAPES "," JBASE_OPTODE "}", 1);
+    EXPECT_NEAR(cfg.unitinmm, 2.f, 1e-6, "Domain.Step sets the length unit");
+    clear_cfg(&cfg);
+
+    /* a cache box in the JSON input with a negative radius given before it (-R -1) */
+    json = jq("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,4],"
+              "'CacheBoxP0':[2,2,2],'CacheBoxP1':[3,3,3]}," JBASE_SHAPES "," JBASE_OPTODE "}");
+    init_cfg(&cfg);
+    cfg.sradius = -1.f;
+    mcx_readconfig(json, &cfg);
+    EXPECT_TRUE(cfg.crop0.x == 1 && cfg.crop1.x == 2, "a JSON cache box is converted to 0-based");
+    clear_cfg(&cfg);
+    free(json);
+
+    /* JData arrays decoded into an existing buffer: compressed, base64 and numeric data */
+    {
+        const char* arr[] = {
+            "{\"_ArrayType_\":\"uint8\",\"_ArraySize_\":[2,2],\"_ArrayZipType_\":\"zlib\",\"_ArrayZipSize_\":4,\"_ArrayZipData_\":\"eJxjZGBgBAAACQAD\"}",
+            "{\"_ArrayType_\":\"uint8\",\"_ArraySize_\":[4],\"_ArrayData_\":\"AQIDBA==\"}",
+            "{\"_ArrayType_\":\"uint8\",\"_ArraySize_\":[4],\"_ArrayData_\":[1,2,3,4]}",
+        };
+
+        for (int i = 0; i < 3; i++) {
+            cJSON* obj = cJSON_Parse(arr[i]);
+            void* vol = malloc(16);
+            int ndim = 0;
+            uint dims[3] = {1, 1, 1};
+            char* type = NULL;
+
+            init_cfg(&cfg);
+            mcx_jdatadecode(&vol, &ndim, dims, 3, &type, obj, &cfg);
+            EXPECT_TRUE(vol != NULL, "mcx_jdatadecode replaces an existing buffer");
+            free(vol);
+            cJSON_Delete(obj);
+            clear_cfg(&cfg);
+        }
+    }
+
+    /* an .inp file with a missing source pattern file */
+    {
+        char* inp;
+        long len = read_file("ut.inp", &inp);
+        char* pat = (len > 0) ? strstr(inp, "inp_pat.bin") : NULL;
+
+        if (pat) {
+            memcpy(pat, "inp_nop.bin", 11);
+            write_file("utnopat.inp", inp, strlen(inp));
+            init_cfg(&cfg);
+            EXPECT_EXIT(mcx_readconfig((char*)"utnopat.inp", &cfg), "an .inp file with a missing pattern file");
+            cfg.srcpattern = (float*)malloc(4);  /* an earlier pattern is replaced */
+            mcx_readconfig((char*)"ut.inp", &cfg);
+            EXPECT_TRUE(cfg.srcpattern && cfg.srcpattern[1] == 0.5f, "an .inp pattern replaces an earlier one");
+            clear_cfg(&cfg);
+        }
+
+        free(inp);
+    }
+
+#ifdef MCX_OPENCL
+    /* a device number that does not exist */
+    {
+        char a0[] = "mcxcl", a1[] = "--bench", a2[] = "cube60", a3[] = "-G", a4[] = "9", a5[] = "-n", a6[] = "100";
+        char* argv[] = {a0, a1, a2, a3, a4, a5, a6, NULL};
+
+        init_cfg(&cfg);
+        mcx_parsecmd(7, argv, &cfg);
+        cfg.flog = devnull;
+        EXPECT_EXIT(mcx_run_simulation(&cfg, NULL, NULL), "a device number that does not exist");
+        clear_cfg(&cfg);
+    }
+
+    /* a user kernel (-k) that fails to build, and a 2-D domain with a source direction along
+       its singular dimension */
+    {
+        const char* badkernel = "__kernel void mcx_main_loop(__global float* a) { this does not compile; }\n";
+        char a0[] = "mcxcl", a1[] = "--bench", a2[] = "cube60", a3[] = "-k", a4[] = "utbad.cl", a5[] = "-n", a6[] = "100";
+        char* argv[] = {a0, a1, a2, a3, a4, a5, a6, NULL};
+
+        write_file("utbad.cl", badkernel, strlen(badkernel));
+        init_cfg(&cfg);
+        mcx_parsecmd(7, argv, &cfg);
+        cfg.flog = devnull;
+        EXPECT_EXIT(mcx_run_simulation(&cfg, NULL, NULL), "a user kernel that fails to build");
+        clear_cfg(&cfg);
+
+        json = jq("{'Session':{'Photons':100,'ID':'utrun2d','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9},"
+                  "'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,1]},'Shapes':[{'Grid':{'Tag':1,'Size':[4,4,1]}}],"
+                  "'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,1]}}}");
+        init_cfg(&cfg);
+        mcx_readconfig(json, &cfg);
+        cfg.flog = devnull;
+        EXPECT_EXIT(mcx_run_simulation(&cfg, NULL, NULL), "a 2-D domain with a source direction along the singular dimension");
+        clear_cfg(&cfg);
+        free(json);
+    }
+#endif
+
+    /* --dumpjson of an adjoint input leaves out the detectors appended as sources */
+    load_json(&cfg, "{'Session':{'Photons':10,'ID':'utadj','OutputType':'a'},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9},"
+              JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,1]},"
+              "'Detector':[{'Pos':[1,2,0],'R':1,'Dir':[0,0,1]},{'Pos':[3,2,0],'R':1,'Dir':[0,0,1]}]}}", 1);
+    mcx_savejdata((char*)"utadjdump.json", &cfg);
+    {
+        char* buf;
+        long len = read_file("utadjdump.json", &buf);
+        EXPECT_TRUE(len > 0 && has_key(buf, len, "\"Detector\""), "--dumpjson of an adjoint input");
+        free(buf);
+    }
+    clear_cfg(&cfg);
+
+    /* JData arrays of arrays, source rows of different counts, and an unknown .inp source type */
+    {
+        cJSON* obj = cJSON_Parse("{\"_ArrayType_\":\"uint8\",\"_ArraySize_\":[2],\"_ArrayData_\":[[1],[2]]}");
+        void* vol = NULL;
+        int ndim = 0;
+        uint dims[3] = {1, 1, 1};
+        char* type = NULL;
+
+        init_cfg(&cfg);
+        EXPECT_EXIT(mcx_jdatadecode(&vol, &ndim, dims, 3, &type, obj, &cfg), "a JData array of arrays");
+        clear_cfg(&cfg);
+        cJSON_Delete(obj);
+    }
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[[2,2,0,1],[3,3,0,1]],"
+                      "'Dir':[[0,0,1],[0,0,1],[0,0,1]]}}}", "source Dir rows that do not match Pos");
+    {
+        char* inp;
+        long len = read_file("ut.inp", &inp);
+        char* hit = (len > 0) ? strstr(inp, "pattern   # source type") : NULL;
+
+        if (hit) {
+            memcpy(hit, "nosuchsrc", 9);
+            write_file("utbadsrc.inp", inp, strlen(inp));
+            init_cfg(&cfg);
+            EXPECT_EXIT(mcx_readconfig((char*)"utbadsrc.inp", &cfg), "an .inp file with an unknown source type");
+            clear_cfg(&cfg);
+        }
+
+        free(inp);
+    }
+
+    /* the GPU list is freed and cleared */
+    {
+        GPUInfo* info = (GPUInfo*)calloc(2, sizeof(GPUInfo));
+        mcx_cleargpuinfo(&info);
+        EXPECT_TRUE(info == NULL, "mcx_cleargpuinfo frees the GPU list");
+    }
+
+#ifdef MCX_OPENCL
+    /* the built-in benchmarks by name */
+    init_cfg(&cfg);
+    mcx_loadbenchmark((char*)"cube60", &cfg);
+    EXPECT_EQ(cfg.dim.x, 60, "mcx_loadbenchmark loads cube60");
+    clear_cfg(&cfg);
+    EXPECT_EXIT(mcx_loadbenchmark((char*)"nosuchbench", &cfg), "an unknown benchmark name");
+#endif
+
+    /* mcx_readarg: a flag without a value, and a list of unique byte-sized numbers */
+    {
+        char flag = 0, list[8] = {0};
+        char a0[] = "mcx", a1[] = "-x", a2[] = "-G", a3[] = "1,2;1 3";
+        char* argv1[] = {a0, a1, NULL};
+        char* argv2[] = {a0, a2, a3, NULL};
+
+        mcx_readarg(2, argv1, 1, &flag, "char");
+        EXPECT_EQ(flag, 1, "mcx_readarg: a flag without a value is set to 1");
+        mcx_readarg(3, argv2, 1, list, "bytenumlist");
+        EXPECT_TRUE(list[0] == 1 && list[1] == 2 && list[2] == 3 && list[3] == 0, "mcx_readarg: bytenumlist drops repeated numbers");
+    }
+
+    /* the JSON writer: -b 2, a source weight, a 3D pattern and a packed 32-bit volume */
+    json = jq("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,4],'MediaFormat':'integer'},"
+              JBASE_SHAPES ",'Optode':{'Source':{'Type':'pattern3d','Pos':[1,1,1],'Dir':[0,0,1],'Param1':[2,2,2,0],"
+              "'Pattern':{'Nx':2,'Ny':2,'Nz':2,'Data':[1,0,1,0,1,0,1,0]}}}}");
+    init_cfg(&cfg);
+    mcx_readconfig(json, &cfg);
+    mcx_preprocess(&cfg);
+    cfg.isreflect = 2;
+    cfg.srcpos.w = 0.5f;
+    cfg.isdumpjson = 2;
+    mcx_savejdata((char*)"utbr.json", &cfg);
+    {
+        char* buf;
+        long len = read_file("utbr.json", &buf);
+        EXPECT_TRUE(len > 0 && has_key(buf, len, "\"DoMismatch\":\t2") + has_key(buf, len, "\"DoMismatch\": 2") + has_key(buf, len, "\"DoMismatch\":2") > 0,
+                    "--dumpjson saves -b 2 as a number");
+        EXPECT_TRUE(len > 0 && has_key(buf, len, "\"Weight\""), "--dumpjson saves the source weight");
+        free(buf);
+    }
+    clear_cfg(&cfg);
+    free(json);
+
+    /* mcx_validatecfg: several sources with 1-based positions, a time step of 0, too many
+       gates, and no cache box */
+    json = jq("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[[2,2,1,1],[3,3,1,1]],'Dir':[[0,0,1],[0,0,1]]}}}");
+    init_cfg(&cfg);
+    mcx_readconfig(json, &cfg);
+    cfg.issrcfrom0 = 0;
+    cfg.tstep = 0.f;
+    cfg.maxgate = 10;
+    cfg.sradius = 0.f;
+    {
+        float x0 = (cfg.extrasrclen > 0 && cfg.srcdata) ? cfg.srcdata[0].srcpos.x : 0.f;
+        mcx_validatecfg(&cfg, NULL, NULL, 0);
+        EXPECT_TRUE(cfg.extrasrclen == 0 || fabs(cfg.srcdata[0].srcpos.x - (x0 - 1.f)) < 1e-6, "mcx_validatecfg converts the 1-based extra source positions");
+    }
+    EXPECT_NEAR(cfg.tstep, cfg.tend, 1e-15, "mcx_validatecfg: a time step of 0 is one gate");
+    EXPECT_EQ(cfg.maxgate, 1, "mcx_validatecfg caps maxgate by the gates");
+    EXPECT_TRUE(cfg.crop0.x == 0 && cfg.crop1.x == 0, "mcx_validatecfg: no cache box without sradius");
+    clear_cfg(&cfg);
+    free(json);
+
+    /* the volume file with a shape string, which -P rasterizes into it (-z 1: 0-based origin) */
+    {
+        unsigned char vol[64];
+        memset(vol, 1, sizeof(vol));
+        write_file("utvf.bin", vol, sizeof(vol));
+        json = jq("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37],[0.02,1,0.9,1.37]],'Dim':[4,4,4],'VolumeFile':'utvf.bin'},"
+                  JBASE_OPTODE "}");
+        write_file("utvf.json", json, strlen(json));
+        free(json);
+        json = jq("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,4],'VolumeFile':'utvf.bin','MediaFormat':'muamus_float'},"
+                  JBASE_OPTODE "}");
+        write_file("utvff.json", json, strlen(json));
+        free(json);
+
+        EXPECT_EXIT_OK(parse_raw("-f utvf.json -z 1 -P {\"Shapes\":[{\"Sphere\":{\"O\":[2,2,2],\"R\":1,\"Tag\":2}}]}"), "-P rasterizes shapes into a volume file");
+        EXPECT_EXIT(parse_raw("-f utvf.json -P {\"Shapes\":[{\"Sphere\":{\"O\":[2,2,2],\"Tag\":2}}]}"), "-P with an incomplete shape");
+        EXPECT_EXIT(parse_raw("-f utvff.json -P {\"Shapes\":[{\"Sphere\":{\"O\":[2,2,2],\"R\":1,\"Tag\":2}}]}"), "-P with a non-label volume");
+        EXPECT_EXIT_OK(parse_raw("-f utvf.json --dumpjson 2"), "--dumpjson 2 of a volume file input");
+    }
+
+    /* JSON input errors: a medium that is neither an object nor an array, a pattern that is
+       not single precision, and an RF output without a modulation frequency */
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],1],'Dim':[4,4,4]}," JBASE_SHAPES "," JBASE_OPTODE "}", "a medium given as a number");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Type':'pattern','Pos':[1,1,0],'Dir':[0,0,1],"
+                      "'Param1':[2,0,0,2],'Param2':[0,2,0,2],'Pattern':{'_ArrayType_':'uint8','_ArraySize_':[2,2],'_ArrayZipType_':'zlib',"
+                      "'_ArrayZipSize_':4,'_ArrayZipData_':'eJxjZGBgBAAACQAD'}}}}", "a pattern that is not single precision");
+    EXPECT_JSON_ERROR("{'Session':{'Photons':10,'ID':'e','OutputType':'rf'},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}",
+                      "an RF output without a modulation frequency");
+
+#ifndef MCX_OPENCL
+    /* the library entry point that runs a JSON input on the GPU */
+    json = jq("{'Session':{'Photons':1000,'ID':'utrun','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}");
+    EXPECT_EXIT_OK(mcx_run_from_json(json), "mcx_run_from_json runs a JSON input");
+    free(json);
+
+    /* a 2-D domain can not have a source direction along its singular dimension */
+    json = jq("{'Session':{'Photons':1000,'ID':'utrun2d','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9},"
+              "'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,1]},'Shapes':[{'Grid':{'Tag':1,'Size':[4,4,1]}}],"
+              "'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,1]}}}");
+    EXPECT_EXIT(mcx_run_from_json(json), "a 2-D domain with a source direction along the singular dimension");
+    free(json);
+#endif
+}
+
 /*-----------------------------------------------------------------------------
  *  entry point, called by the main() of each repository's unit test binary
  *---------------------------------------------------------------------------*/
@@ -1888,6 +2302,7 @@ void run_utils_tests(void) {
     test_rich_dump();
     test_clerrors();
     test_more_inputs();
+    test_net_and_branches();
 
     if (chdir(cwd) == 0) {
         char cmd[4200];

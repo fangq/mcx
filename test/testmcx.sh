@@ -195,6 +195,14 @@ runok "continuous media, wide-field source, no reflection" cont0.jnii -f "$TESTD
 runok "continuous media, wide-field source, with reflection" cont1.jnii -f "$TESTDIR/builtin/mcxlab_demo_continuous_mua_mus_1.json" -n 1e5 -b 1 -s cont1 --json '{"Optode":{"Source":{"Type":"disk","Param1":[5,0,0,0]}}}'
 runok "polarized light with reflection, wide-field source" pol1.jnii -f "$TESTDIR/builtin/mcxlab_demo_polarized_photon_1.json" -n 1e5 -b 1 -s pol1
 runok "polarized light with reflection, pencil beam" pol2.jnii -f "$TESTDIR/builtin/mcxlab_demo_polarized_photon_1.json" -n 1e5 -b 1 -s pol2 --json '{"Optode":{"Source":{"Type":"pencil"}}}'
+runok "split-voxel MC, wide-field source, no reflection" svmc0.jnii -f "$TESTDIR/builtin/mcxlab_demo_svmc_cubesph_2.json" -n 1e5 -b 0 -s svmc0
+runok "split-voxel MC, pencil beam, no reflection" svmc1.jnii -f "$TESTDIR/builtin/svmcsphshells_svmc_sphshells.json" -n 1e5 -b 0 -s svmc1
+runok "continuous media, pencil beam, no reflection" cont2.jnii -f "$TESTDIR/builtin/mcxlab_demo_continuous_mua_mus_1.json" -n 1e5 -b 0 -s cont2 --json '{"Optode":{"Source":{"Type":"pencil"}}}'
+runok "repeated runs accumulated (-r 2)" resp2.jnii --bench cube60 -n 1e5 -r 2 -s resp2
+runok "photons split over repeated runs (-r -2)" respm2.jnii --bench cube60 -n 1e5 -r -2 -s respm2
+runok "manual thread and block sizes (-A 0)" manual.jnii --bench cube60 -n 1e5 -A 0 -t 16384 -T 64 -g 10 -s manual
+runok "3-D pattern source shared by two patterns" pat3d2.jnii --bench cube60 -n 1e5 -s pat3d2 --json '{"Optode":{"Source":{"Type":"pattern3d","Pos":[20,20,20],"Param1":[2,2,2,0],"SrcNum":2,"Pattern":{"Nx":2,"Ny":2,"Nz":2,"Data":[1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1]}}}}'
+runok "energy deposit of two simultaneous patterns" pat2e.jnii --bench cube60planar -n 1e5 -O e -s pat2e --json '{"Optode":{"Source":{"Type":"pattern","Pos":[10,10,-10],"Param1":[40,0,0,2],"Param2":[0,40,0,2],"SrcNum":2,"Pattern":{"Nx":2,"Ny":2,"Data":[1,0,0,1,0,1,1,0]}}}}'
 
 echo "test heterogeneous domain ... "
 temp=`"$MCX" --bench spherebox -S 0 $PARAM | grep -o -E 'absorbed:.*1[01]\.[0-9]+%'`
