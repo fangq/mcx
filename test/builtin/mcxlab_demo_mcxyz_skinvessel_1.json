@@ -13,8 +13,9 @@
   "DoAutoThread": true,
   "DoDCS": false,
   "DoSpecular": false,
-  "DebugFlag": 0,
+  "DebugFlag": 4,
   "SaveDataMask": 0,
+  "MaxDetPhoton": 1000000,
   "OutputFormat": "jnii",
   "OutputType": "f"
  },

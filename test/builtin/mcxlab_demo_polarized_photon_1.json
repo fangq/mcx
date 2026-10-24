@@ -1,61 +1,20 @@
 {
  "Session": {
   "ID": "mcxlab_demo_polarized_photon_1",
-  "Photons": 10000000,
-  "RNGSeed": 4294967295,
-  "DoMismatch": false,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": true,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 244,
-  "OutputFormat": "jnii",
-  "OutputType": "x"
+  "DoMismatch": 0,
+  "DoAutoThread": 1,
+  "MaxDetPhoton": 10000000,
+  "BCFlags": "cc_cc_001000",
+  "SaveDataMask": "IXVW",
+  "Photons": 10000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 5.00000005843049e-08,
-  "Dt": 5.00000005843049e-08
- },
- "Domain": {
-  "MediaFormat": "byte",
-  "LengthUnit": 0.10000000149011612,
-  "Media": [
-   {
-    "mua": 0,
-    "mus": 1.19209289550781e-06,
-    "g": 1,
-    "n": 1
-   },
-   {
-    "mua": 0.00500000035390258,
-    "mus": 1.0816651582717896,
-    "g": 0.0754974707961082,
-    "n": 1.3300000429153442
-   },
-   {
-    "mua": 0.00500000035390258,
-    "mus": 11.150351524353027,
-    "g": 0.9103164672851562,
-    "n": 1.3300000429153442
-   }
-  ],
-  "Dim": [
-   100,
-   100,
-   12
-  ],
-  "OriginType": 1
+  "T1": 5e-08,
+  "Dt": 5e-08
  },
  "Optode": {
   "Source": {
-   "Type": "planar",
    "Pos": [
     0,
     0,
@@ -64,24 +23,74 @@
    "Dir": [
     0,
     0,
+    1
+   ],
+   "IQUV": [
     1,
+    1,
+    0,
     0
    ],
    "Param1": [
     100,
-    0,
     0,
     0
    ],
    "Param2": [
     0,
     100,
-    0,
     0
    ],
-   "SrcNum": 1
-  },
-  "Detector": []
+   "Type": "planar",
+   "WaveLength": 632.8
+  }
+ },
+ "Domain": {
+  "OriginType": 1,
+  "LengthUnit": 0.1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 0,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0,
+    "mus": 0,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0,
+    "mus": 0,
+    "g": 1,
+    "n": 1
+   }
+  ],
+  "MieScatter": [
+   {
+    "mua": 0.005,
+    "radius": 0.05,
+    "rho": 19.1142,
+    "nsph": 1.59,
+    "nmed": 1.33
+   },
+   {
+    "mua": 0.005,
+    "radius": 1,
+    "rho": 0.00111078,
+    "nsph": 1.59,
+    "nmed": 1.33
+   }
+  ],
+  "MediaFormat": "byte",
+  "Dim": [
+   100,
+   100,
+   12
+  ],
+  "VolumeFile": ""
  },
  "Shapes": {
   "_ArrayType_": "uint8",
@@ -91,7 +100,10 @@
    12
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 120000,
-  "_ArrayZipData_": "eJzt2ksKgDAMQEH0/odWESHxh9IWWphZJSAuH1Y6TQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADQh3n1ZwZoLufn2MK8j/sS56fn0zsBavnQpb/zqV0ABUJO7nt1jNvyZX7plXQBJc7HuMs3UlGvUrv0CiiSa6JXQL9CQ0JaavXKeRBo4r5X/rcDPXKfARhczo/7ogAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAWBaP/tb4"
+  "_ArrayZipSize_": [
+   1,
+   120000
+  ],
+  "_ArrayZipData_": "eJzt2ssKgCAQQFGc///o2oSPHigWJJyzGiFaXpowJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4h9iNzACfq/NznIo5Ih/K+e756p0Ab+no0ujctAtgQpGT615F5EPP/NAr6QJmtGvc6RtpqldVu/QKmKJXwCqadc0+CKzgulf+twN/5D4DsLg6P+6LAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABr2QCP/tb4"
  }
 }

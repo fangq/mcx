@@ -1,87 +1,59 @@
 {
  "Session": {
   "ID": "mcxlab_demo_validation_heterogeneous_1",
-  "Photons": 30000000,
+  "DoMismatch": 0,
+  "DoAutoThread": 1,
   "RNGSeed": 1648335518,
-  "DoMismatch": false,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": false,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 0,
-  "OutputFormat": "jnii",
-  "OutputType": "x"
+  "Photons": 30000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 4.99999996961265e-09,
-  "Dt": 4.99999985859034e-10
+  "T1": 5e-09,
+  "Dt": 5e-10
+ },
+ "Optode": {
+  "Source": {
+   "Pos": [
+    31,
+    31,
+    1
+   ],
+   "Dir": [
+    0,
+    0,
+    1
+   ]
+  }
  },
  "Domain": {
-  "MediaFormat": "byte",
-  "LengthUnit": 1,
+  "OriginType": 0,
   "Media": [
    {
     "mua": 0,
-    "mus": 1.19209289550781e-07,
+    "mus": 0,
     "g": 1,
     "n": 1
    },
    {
-    "mua": 0.0020000000949949,
-    "mus": 1.0101009607315063,
-    "g": 0.00999999977648258,
-    "n": 1.3700000047683716
+    "mua": 0.002,
+    "mus": 1.01010101010101,
+    "g": 0.01,
+    "n": 1.37
    },
    {
-    "mua": 0.0500000007450581,
-    "mus": 0.5050504803657532,
-    "g": 0.00999999977648258,
-    "n": 1.3700000047683716
+    "mua": 0.05,
+    "mus": 0.5050505050505051,
+    "g": 0.01,
+    "n": 1.37
    }
   ],
+  "MediaFormat": "byte",
   "Dim": [
    60,
    60,
    60
   ],
-  "OriginType": 1
- },
- "Optode": {
-  "Source": {
-   "Type": "pencil",
-   "Pos": [
-    30,
-    30,
-    0
-   ],
-   "Dir": [
-    0,
-    0,
-    1,
-    0
-   ],
-   "Param1": [
-    0,
-    0,
-    0,
-    0
-   ],
-   "Param2": [
-    0,
-    0,
-    2.56437618971442e-42,
-    1.40129846432482e-45
-   ],
-   "SrcNum": 1
-  },
-  "Detector": []
+  "VolumeFile": ""
  },
  "Shapes": {
   "_ArrayType_": "uint8",
@@ -91,7 +63,10 @@
    60
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 216000,
-  "_ArrayZipData_": "eJzt3NFqwkAQhlHs+z90C0U0iuLMbLJO9pz77yZQmZ+EXi4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMzw8ycUbNNs3LGtPCsAAIBXCjvlP03F1zQTaxNxKNrGoQQAAEgpvi47epfd0ng8qb1Po3Gl7fisZu7Qwt8CAABMtM6mm7WtCu02jcWVtuOzsiUBACBmwAncZtNt0+O2lfaYdtEtCQDA6vLn5JATeIFN95hGYu3nrS2Zq0MJAADnkj8nB53ANp12frvilvRuEQDgNNJXXeGcHHTGHrcHH9MGO+U5/Tzu2K63Jdu+W8z/5gAAMFr+qhtyTtqDsfTcm25Waw+m41C2qUMJAAA7qV51mXrYCXz2bz6fU5tuj9a3pkH58laHEgAAdlK96mrXZPGMtQe1I1p7MChf3upQAgDATqpXXaounKLDTmB7UPsm/jj1vWiyDiUAAOwlfZoNOSftwb3a59Sm+7p2zT2Y/80BAOCL5E/CQWesb02189um33wW0rs6FAEAcC75k7Bwig46gW1J7Zs4kPrmEwAAggqn6JATeIEtqT2o7brpCikAAFSlD9EBJ3CbLTmr3aZNttWstu+mMwYBAOhonS05q225rWa1Nh0AAJxe4WwfMBdq/7gnlC3Z1nZZadIBAAC8Unp7lI87tpVnBQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA0S8Hwlxu"
+  "_ArrayZipSize_": [
+   1,
+   216000
+  ],
+  "_ArrayZipData_": "eJzt3UFOw1AQREH53//QsEFIRKB4esjP2FX7t0kUNC0HOA4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHZYn4K0Gk9sk9cKAADgN8FOWascr1WPtYW4kIYbFgAAOCF8XPbqXbZWPd7UrlWPk3bia7VzhwafBQAA2Og+m27Xtgratepx0k58rWxJAAA4p+EEHrPpdm0r7Wvam25JAADurn5OtpzAN9h0P9Mzsfb51pas1ZUSAICLqJ+TTSewTafd395xS3q2CABwGeWrLjgnm87Y1+3BZC9sah/T5+OJ7cT3aOweDNKvvBQCANCtftW1nJP24Ln0/XfZxNYeLMen0yP5mQMAQLf0qqvUbSfw1b/z+Zi+/7aa2M7cg0mbbUl7EADgMtKrLrsmwzPWHtR2tPbgSfXyu66UAAB0S6+6Uh2com0nsD2o/SN+OvV90WJdKQEAaFc+zVrOSXvwv9rH9P13WdJOfI9uugf9PRkAgEuon4RNZ6zvmmr3t0O/8xmkR/LZBwDgMuonYXCKNp3AtqT2j/hEOnXTBemRfPYBACB5vtByAt9gS2pf1E7ddEEKAACp8iHacAKP2ZK72pHbalc7d9MZgwAATHSfLbmrHbmtdrU2HQAAXF5wtu/ZodpKXEj9Ph0AAPBPoqdH9Xhi638ZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABs9AEHwlxu"
  }
 }

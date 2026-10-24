@@ -1,68 +1,30 @@
 {
  "Session": {
   "ID": "mcxlab_demo_mcxlab_srctype_16",
-  "Photons": 10000000,
+  "DoMismatch": 1,
+  "DoAutoThread": 1,
   "RNGSeed": 99999,
-  "DoMismatch": true,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": false,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 0,
-  "OutputFormat": "jnii",
-  "OutputType": "x"
+  "Photons": 10000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 5.00000006675716e-11,
-  "Dt": 5.00000006675716e-11
- },
- "Domain": {
-  "MediaFormat": "byte",
-  "LengthUnit": 1,
-  "Media": [
-   {
-    "mua": 0,
-    "mus": 1.19209289550781e-07,
-    "g": 1,
-    "n": 1
-   },
-   {
-    "mua": 0.00499999988824129,
-    "mus": 1,
-    "g": 0.800000011920929,
-    "n": 1.3700000047683716
-   }
-  ],
-  "Dim": [
-   60,
-   60,
-   60
-  ],
-  "OriginType": 1
+  "T1": 5e-11,
+  "Dt": 5e-11
  },
  "Optode": {
   "Source": {
-   "Type": "arcsine",
    "Pos": [
-    29,
-    29,
-    -11
+    30,
+    30,
+    -10
    ],
    "Dir": [
     0,
     0,
-    1,
-    0
+    1
    ],
    "Param1": [
-    0.5235987901687622,
+    0.5235987755982988,
     0,
     0,
     0
@@ -73,9 +35,32 @@
     0,
     0
    ],
-   "SrcNum": 1
-  },
-  "Detector": []
+   "Type": "arcsine"
+  }
+ },
+ "Domain": {
+  "OriginType": 0,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 0,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.005,
+    "mus": 1,
+    "g": 0.8,
+    "n": 1.37
+   }
+  ],
+  "MediaFormat": "byte",
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "VolumeFile": ""
  },
  "Shapes": {
   "_ArrayType_": "uint8",
@@ -85,7 +70,10 @@
    60
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 216000,
-  "_ArrayZipData_": "eJztwDENAAAAwrDMv2k8cLcFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBjd4VL7g=="
+  "_ArrayZipSize_": [
+   1,
+   216000
+  ],
+  "_ArrayZipData_": "eJztwTENAAAAw6DUv+l52A0UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACPAXeFS+4="
  }
 }

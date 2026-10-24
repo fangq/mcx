@@ -1,116 +1,93 @@
 {
  "Session": {
   "ID": "mcxlab_demo_replay_frequencydomain_1",
-  "Photons": 30000000,
-  "RNGSeed": 4294967295,
-  "DoMismatch": true,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": true,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 5,
-  "OutputFormat": "jnii",
-  "OutputType": "x"
+  "DoMismatch": 1,
+  "DoNormalize": 0,
+  "DoSpecular": 0,
+  "DoAutoThread": 1,
+  "MaxDetPhoton": 50000000,
+  "SaveDataMask": "DP",
+  "Photons": 30000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 9.99999993922529e-09,
-  "Dt": 9.99999993922529e-09
+  "T1": 1e-08,
+  "Dt": 1e-08
+ },
+ "Optode": {
+  "Source": {
+   "Pos": [
+    30,
+    30,
+    1
+   ],
+   "Dir": [
+    0,
+    0,
+    1
+   ]
+  },
+  "Detector": [
+   {
+    "Pos": [
+     45,
+     30,
+     1
+    ],
+    "R": 2
+   },
+   {
+    "Pos": [
+     60,
+     30,
+     1
+    ],
+    "R": 2
+   }
+  ]
  },
  "Domain": {
-  "MediaFormat": "byte",
+  "OriginType": 0,
   "LengthUnit": 1,
   "Media": [
    {
     "mua": 0,
-    "mus": 1.19209289550781e-07,
+    "mus": 0,
     "g": 1,
     "n": 1
    },
    {
-    "mua": 0.0149999996647239,
+    "mua": 0.015,
     "mus": 16,
-    "g": 0.8999999761581421,
-    "n": 1.399999976158142
+    "g": 0.9,
+    "n": 1.4
    },
    {
-    "mua": 0.00400000018998981,
-    "mus": 1.600000023841858,
-    "g": 0.8999999761581421,
-    "n": 1.399999976158142
+    "mua": 0.004,
+    "mus": 1.6,
+    "g": 0.9,
+    "n": 1.4
    },
    {
-    "mua": 0.0480000004172325,
+    "mua": 0.048,
     "mus": 5,
-    "g": 0.8999999761581421,
-    "n": 1.399999976158142
+    "g": 0.9,
+    "n": 1.4
    },
    {
-    "mua": 0.0370000004768372,
+    "mua": 0.037,
     "mus": 10,
-    "g": 0.8999999761581421,
-    "n": 1.399999976158142
+    "g": 0.9,
+    "n": 1.4
    }
   ],
+  "MediaFormat": "byte",
   "Dim": [
    90,
    60,
    60
   ],
-  "OriginType": 1
- },
- "Optode": {
-  "Source": {
-   "Type": "pencil",
-   "Pos": [
-    29,
-    29,
-    0
-   ],
-   "Dir": [
-    0,
-    0,
-    1,
-    0
-   ],
-   "Param1": [
-    0,
-    0,
-    0,
-    0
-   ],
-   "Param2": [
-    0,
-    0,
-    3.69802664735319e-42,
-    1.40129846432482e-45
-   ],
-   "SrcNum": 1
-  },
-  "Detector": [
-   {
-    "Pos": [
-     44,
-     29,
-     0
-    ],
-    "R": 2
-   },
-   {
-    "Pos": [
-     59,
-     29,
-     0
-    ],
-    "R": 2
-   }
-  ]
+  "VolumeFile": ""
  },
  "Shapes": {
   "_ArrayType_": "uint8",
@@ -120,7 +97,10 @@
    60
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 324000,
-  "_ArrayZipData_": "eJzty7ERACAIBLB7df+ZZQUoqJI+Sc4tbyCu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu67qu2+S6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruvu3A/TgYsn"
+  "_ArrayZipSize_": [
+   1,
+   324000
+  ],
+  "_ArrayZipData_": "eJzty6ERADAIBLB7yv4zwwxViMQnSb3VH+K6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu6ruu67sk704GLJw=="
  }
 }

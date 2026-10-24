@@ -1,55 +1,20 @@
 {
  "Session": {
   "ID": "mcxlab_demo_photon_sharing_1",
-  "Photons": 10000000,
+  "DoMismatch": 1,
+  "DoSaveRef": 1,
+  "DoAutoThread": 1,
+  "SaveDataMask": "DPW",
   "RNGSeed": 99999,
-  "DoMismatch": true,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": true,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 69,
-  "OutputFormat": "jnii",
-  "OutputType": "x"
+  "Photons": 10000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 4.99999996961265e-09,
-  "Dt": 4.99999996961265e-09
- },
- "Domain": {
-  "MediaFormat": "byte",
-  "LengthUnit": 1,
-  "Media": [
-   {
-    "mua": 0,
-    "mus": 1.19209289550781e-07,
-    "g": 1,
-    "n": 1
-   },
-   {
-    "mua": 0.00499999988824129,
-    "mus": 1,
-    "g": 0.800000011920929,
-    "n": 1.3700000047683716
-   }
-  ],
-  "Dim": [
-   60,
-   60,
-   60
-  ],
-  "OriginType": 1
+  "T1": 5e-09,
+  "Dt": 5e-09
  },
  "Optode": {
   "Source": {
-   "Type": "pattern",
    "Pos": [
     0,
     0,
@@ -58,8 +23,7 @@
    "Dir": [
     0,
     0,
-    1,
-    0
+    1
    ],
    "Param1": [
     60,
@@ -73,6 +37,7 @@
     0,
     11
    ],
+   "Type": "pattern",
    "SrcNum": 3,
    "Pattern": {
     "_ArrayType_": "single",
@@ -82,8 +47,11 @@
      11
     ],
     "_ArrayZipType_": "zlib",
-    "_ArrayZipSize_": 198,
-    "_ArrayZipData_": "eJy1UUEKACAI82d9radHRBChcwwdeFC3KWq2MccJD1HvrSP9r2E4ma+yLwvky/C8fhf35lGoQJ7oJ8oMhsd61d1iAa/yKEs="
+    "_ArrayZipSize_": [
+     1,
+     198
+    ],
+    "_ArrayZipData_": "eJxjYACBBnsIxgZwySGL49OProcYNYTMJce9xAJ85hKjDps8rdTC+LgwuQCfmfjihBw7iFFHC/fiBwCv8ihL"
    }
   },
   "Detector": [
@@ -97,6 +65,30 @@
    }
   ]
  },
+ "Domain": {
+  "OriginType": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 0,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.005,
+    "mus": 1,
+    "g": 0.8,
+    "n": 1.37
+   }
+  ],
+  "MediaFormat": "byte",
+  "Dim": [
+   60,
+   60,
+   60
+  ],
+  "VolumeFile": ""
+ },
  "Shapes": {
   "_ArrayType_": "uint8",
   "_ArraySize_": [
@@ -105,7 +97,10 @@
    60
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 216000,
-  "_ArrayZipData_": "eJzty7ENAAAIw7Dy/9PcAGPlzHHmX043y7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Jsl13X1T3e"
+  "_ArrayZipSize_": [
+   1,
+   216000
+  ],
+  "_ArrayZipData_": "eJztyzEBAAAMAiDtX9oOewc/6V1c13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Vd13Uf3wHX1T3e"
  }
 }

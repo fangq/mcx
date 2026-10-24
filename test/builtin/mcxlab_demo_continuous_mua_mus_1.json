@@ -1,81 +1,52 @@
 {
  "Session": {
   "ID": "mcxlab_demo_continuous_mua_mus_1",
-  "Photons": 10000000,
-  "RNGSeed": 4294967295,
-  "DoMismatch": true,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": false,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 0,
-  "OutputFormat": "jnii",
-  "OutputType": "x"
+  "DoMismatch": 1,
+  "DoAutoThread": 1,
+  "Photons": 10000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 4.99999996961265e-09,
-  "Dt": 4.99999996961265e-09
+  "T1": 5e-09,
+  "Dt": 5e-09
+ },
+ "Optode": {
+  "Source": {
+   "Pos": [
+    30,
+    30,
+    1
+   ],
+   "Dir": [
+    0,
+    0,
+    1
+   ]
+  }
  },
  "Domain": {
-  "MediaFormat": "mua_float",
-  "LengthUnit": 1,
+  "OriginType": 0,
   "Media": [
    {
     "mua": 0,
-    "mus": 1.19209289550781e-07,
+    "mus": 0,
     "g": 1,
     "n": 1
    },
    {
-    "mua": 0.00499999988824129,
+    "mua": 0.005,
     "mus": 1,
     "g": 0,
-    "n": 1.3700000047683716
+    "n": 1.37
    }
   ],
+  "MediaFormat": "mua_float",
   "Dim": [
    60,
    60,
    60
   ],
-  "OriginType": 1
- },
- "Optode": {
-  "Source": {
-   "Type": "pencil",
-   "Pos": [
-    29,
-    29,
-    0
-   ],
-   "Dir": [
-    0,
-    0,
-    1,
-    0
-   ],
-   "Param1": [
-    0,
-    0,
-    0,
-    0
-   ],
-   "Param2": [
-    0,
-    0,
-    2.4788969833906e-42,
-    0.0506779663264751
-   ],
-   "SrcNum": 1
-  },
-  "Detector": []
+  "VolumeFile": ""
  },
  "Shapes": {
   "_ArrayType_": "single",
@@ -85,7 +56,10 @@
    60
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 216000,
-  "_ArrayZipData_": "eJztw89rDQAAB/AkOeyVXyvJj+zCxWISq/ckrxVxWM1aCTloDmRx0FzYMqlXaljJSFrTtEjhiXFQNC+Mi2YnKaUmKUpLlvJ/fPscPiPXW4ojAAAAAAAAAAAAAAAAAECUlsarAAAAAAAAAAAAAAAAAECYauE9AAAAAAAAAAAAAAAAABBmycycEgAAAAAAAAAAAAAAAACQ5e3XFQAAAAAAAAAAAAAAAABAmL7JLQAAAAAAAAAAAAAAAABAmNJ4GwAAAAAAAAAAAAAAAAAQ5nf1GAAAAAAAAAAAAAAAAAAQpqPtHAAAAAAAAAAAAAAAAAAQZuObSwAAAAAAAAAAAAAAAABAmAXlmwAAAAAAAAAAAAAAAABAmO9jdwEAAAAAAAAAAAAAAACAMLWmpwAAAAAAAAAAAAAAAABAmOHRGgAAAAAAAAAAAAAAAAAQpqdhEgAAAAAAAAAAAAAAAAAIs2/wCwAAAAAAAAAAAAAAAAAQpnnRTwAAAAAAAAAAAAAAAAAgTH3lHwAAAAAAAAAAAAAAAAAQ5lTvvK0AAAAAAAAAAAAAAAAAQJbDpQIAAAAAAAAAAAAAAAAAEKb9z2IAAAAAAAAAAAAAAAAAIEy5ugwAAAAAAAAAAAAAAAAACLPh+GoAAAAAAAAAAAAAAAAAIMyqdWsBAAAAAAAAAAAAAAAAgDCF6UYAAAAAAAAAAAAAAAAAIMzs8CYAAAAAAAAAAAAAAAAAIMy3g0UAAAAAAAAAAAAAAAAAIMzU8jIAAAAAAAAAAAAAAAAAEGZ8aicAAAAAAAAAAAAAAAAAEObhQCsAAAAAAAAAAAAAAAAAEGaotQMAAAAAAAAAAAAAAAAACNNfdwAAAAAAAAAAAAAAAAAACHO6dggAAAAAAAAAAAAAAAAACHO07wgAAAAAAAAAAAAAAAAAEGbvthMAAAAAAAAAAAAAAAAAQJgds90AAAAAAAAAAAAAAAAAQJjNj88AAAAAAAAAAAAAAAAAAGEuj50FAAAAAAAAAAAAAAAAAMJUlp4HAAAAAAAAAAAAAAAAAML0nqwAAAAAAAAAAAAAAAAAAGG6P1wAAAAAAAAAAAAAAAAAAMJ0NV0EAAAAAAAAAAAAAAAAAMJ09g8AAAAAAAAAAAAAAAAAAGH2/7gCAAAAAAAAAAAAAAAAAITZs/saAAAAAAAAAAAAAAAAABBm1+gNAAAAAAAAAAAAAAAAACDM9vlDAAAAAAAAAAAAAAAAAECY5s5bAAAAAAAAAAAAAAAAAECY9S9vAwAAAAAAAAAAAAAAAABh1jTcAQAAAAAAAAAAAAAAAADCrOy5BwAAAAAAAAAAAAAAAACEqf90HwAAAAAAAAAAAAAAAAAIU1d8BAAAAAAAAAAAAAAAAACEmTv4BAAAAAAAAAAAAAAAAAAI83fmGQAAAAAAAAAAAAAAAAAQ5lf7cwAAAAAAAAAAAAAAAAAgzPSDFwAAAAAAAAAAAAAAAABAmM8LXwEAAAAAAAAAAAAAAAAAYT52vQYAAAAAAAAAAAAAAAAAwrybmAAAAAAAAAAAAAAAAAAAwvwH3bb/7w=="
+  "_ArrayZipSize_": [
+   1,
+   216000
+  ],
+  "_ArrayZipData_": "eJztw89rDQAAB/AkOeyVXyvJj+zCxWISq/ckrxVxWM1aCTloDmRx0FzYMqlXaljJSFrTtEjhiXFQNC+Mi2YnKaUmKUpLlvJ/fPt86jNyvaU4oqqqqqqqqqqqqqqqqqpGbWm8qqqqqqqqqqqqqqqqqqqGrRbeq6qqqqqqqqqqqqqqqqphl8zMKamqqqqqqqqqqqqqqqqqWd9+XaGqqqqqqqqqqqqqqqqqhu2b3KKqqqqqqqqqqqqqqqqqhi2Nt6mqqqqqqqqqqqqqqqqqYX9Xj6mqqqqqqqqqqqqqqqqqYTvazqmqqqqqqqqqqqqqqqqqYTe+uaSqqqqqqqqqqqqqqqqqhl1Qvqmqqqqqqqqqqqqqqqqqhv0+dldVVVVVVVVVVVVVVVVVDVtreqqqqqqqqqqqqqqqqqqqhh0eramqqqqqqqqqqqqqqqqqYXsaJlVVVVVVVVVVVVVVVVXVsPsGv6iqqqqqqqqqqqqqqqqqYZsX/VRVVVVVVVVVVVVVVVVVw9ZX/qmqqqqqqqqqqqqqqqqqYU/1ztuqqqqqqqqqqqqqqqqqqmY9XCqoqqqqqqqqqqqqqqqqqmHb/yxWVVVVVVVVVVVVVVVVVcOWq8tUVVVVVVVVVVVVVVVV1bAbjq9WVVVVVVVVVVVVVVVVVcOuWrdWVVVVVVVVVVVVVVVVVQ1bmG5UVVVVVVVVVVVVVVVVVcPODm9SVVVVVVVVVVVVVVVVVcN+O1hUVVVVVVVVVVVVVVVVVcNOLS+rqqqqqqqqqqqqqqqqqmHHp3aqqqqqqqqqqqqqqqqqqmEfDrSqqqqqqqqqqqqqqqqqqmGHWjtUVVVVVVVVVVVVVVVV1bD9dQdUVVVVVVVVVVVVVVVV1bCna4dUVVVVVVVVVVVVVVVV1bBH+46oqqqqqqqqqqqqqqqqqmH3bjuhqqqqqqqqqqqqqqqqqobdMdutqqqqqqqqqqqqqqqqqobd/PiMqqqqqqqqqqqqqqqqqhr28thZVVVVVVVVVVVVVVVVVTVsZel5VVVVVVVVVVVVVVVVVTVs78mKqqqqqqqqqqqqqqqqqhq2+8MFVVVVVVVVVVVVVVVVVTVsV9NFVVVVVVVVVVVVVVVVVTVsZ/+Aqqqqqqqqqqqqqqqqqhp2/48rqqqqqqqqqqqqqqqqqmrYPbuvqaqqqqqqqqqqqqqqqqphd43eUFVVVVVVVVVVVVVVVVXDbp8/pKqqqqqqqqqqqqqqqqqGbe68paqqqqqqqqqqqqqqqqqGXf/ytqqqqqqqqqqqqqqqqqoadk3DHVVVVVVVVVVVVVVVVVU17Mqee6qqqqqqqqqqqqqqqqpq2PpP91VVVVVVVVVVVVVVVVXVsHXFR6qqqqqqqqqqqqqqqqpq2LmDT1RVVVVVVVVVVVVVVVXVsH9nnqmqqqqqqqqqqqqqqqqqYX+1P1dVVVVVVVVVVVVVVVVVw04/eKGqqqqqqqqqqqqqqqqqhv288JWqqqqqqqqqqqqqqqqqGvZj12tVVVVVVVVVVVVVVVVVNey7iQlVVVVVVVVVVVVVVVVVNex/3bb/7w=="
  }
 }

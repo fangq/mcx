@@ -74,6 +74,8 @@ for json in "$BUILTIN"/*.json; do
         echo "$name: no absorbed fraction reported ${reason:+($reason)}"
         if [ "$UPDATE" = "1" ]; then
             printf "%s %s none %s\n" "$name" "$NPHOTON" "$detected" >> "$GOLDEN"
+        elif [ -z "$reason" ] && [ "$(awk -v n="$name" '$1==n {print $3; exit}' "$GOLDEN")" = "none" ]; then
+            pass=$((pass + 1))  # a run that reports no absorption, such as the RNG test mode (-D R)
         else
             fail=$((fail + 1))
         fi

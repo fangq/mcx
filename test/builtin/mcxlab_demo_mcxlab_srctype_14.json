@@ -15,6 +15,7 @@
   "DoSpecular": false,
   "DebugFlag": 0,
   "SaveDataMask": 0,
+  "MaxDetPhoton": 1000000,
   "OutputFormat": "jnii",
   "OutputType": "e"
  },

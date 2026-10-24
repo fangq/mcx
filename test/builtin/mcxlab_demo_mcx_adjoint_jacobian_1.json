@@ -1,67 +1,28 @@
 {
  "Session": {
   "ID": "mcxlab_demo_mcx_adjoint_jacobian_1",
-  "Photons": 30000000,
-  "RNGSeed": 4294967295,
-  "DoMismatch": true,
-  "DoSaveVolume": true,
-  "DoNormalize": true,
-  "DoPartialPath": true,
-  "DoSaveRef": false,
-  "DoSaveExit": false,
-  "DoSaveSeed": false,
-  "DoAutoThread": true,
-  "DoDCS": false,
-  "DoSpecular": false,
-  "DebugFlag": 0,
-  "SaveDataMask": 5,
-  "OutputFormat": "jnii",
-  "OutputType": "a"
+  "DoMismatch": 1,
+  "OutputType": "adjoint",
+  "DoAutoThread": 1,
+  "Photons": 30000000
  },
  "Forward": {
   "T0": 0,
-  "T1": 4.99999996961265e-09,
-  "Dt": 4.99999996961265e-09
- },
- "Domain": {
-  "MediaFormat": "byte",
-  "LengthUnit": 1,
-  "Media": [
-   {
-    "mua": 0,
-    "mus": 1.19209289550781e-07,
-    "g": 1,
-    "n": 1
-   },
-   {
-    "mua": 0.00499999988824129,
-    "mus": 1,
-    "g": 0.8999999761581421,
-    "n": 1.3700000047683716
-   }
-  ],
-  "Dim": [
-   100,
-   60,
-   50
-  ],
-  "OriginType": 1
+  "T1": 5e-09,
+  "Dt": 5e-09
  },
  "Optode": {
   "Source": {
-   "Type": "pencil",
    "Pos": [
     [
      20,
      30,
-     0.5,
-     1
+     0.5
     ],
     [
      80,
      30,
-     0.5,
-     1
+     0.5
     ]
    ],
    "Dir": [
@@ -78,35 +39,7 @@
      0
     ]
    ],
-   "Param1": [
-    [
-     0,
-     0,
-     0,
-     0
-    ],
-    [
-     0,
-     0,
-     0,
-     0
-    ]
-   ],
-   "Param2": [
-    [
-     0,
-     0,
-     4.23192136226095e-42,
-     1.40129846432482e-45
-    ],
-    [
-     0,
-     0,
-     4.31599927012044e-42,
-     1.40129846432482e-45
-    ]
-   ],
-   "SrcNum": 1
+   "Type": "pencil"
   },
   "Detector": [
    {
@@ -127,6 +60,31 @@
    }
   ]
  },
+ "Domain": {
+  "OriginType": 1,
+  "LengthUnit": 1,
+  "Media": [
+   {
+    "mua": 0,
+    "mus": 0,
+    "g": 1,
+    "n": 1
+   },
+   {
+    "mua": 0.005,
+    "mus": 1,
+    "g": 0.9,
+    "n": 1.37
+   }
+  ],
+  "MediaFormat": "byte",
+  "Dim": [
+   100,
+   60,
+   50
+  ],
+  "VolumeFile": ""
+ },
  "Shapes": {
   "_ArrayType_": "uint8",
   "_ArraySize_": [
@@ -135,7 +93,10 @@
    50
   ],
   "_ArrayZipType_": "zlib",
-  "_ArrayZipSize_": 300000,
-  "_ArrayZipData_": "eJztwAENAAAAwqC9f2l7OCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPgxkoeUHQ=="
+  "_ArrayZipSize_": [
+   1,
+   300000
+  ],
+  "_ArrayZipData_": "eJztwQENAAAAwqC9f2l7OKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAODHAJKHlB0="
  }
 }
