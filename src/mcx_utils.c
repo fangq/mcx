@@ -3256,6 +3256,10 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
             subitem = FIND_JSON_OBJ("AngleInverseCDF", "Optode.Source.AngleInverseCDF", src);
 
+            if (!subitem && Domain) { /* older mcx2json/pmcx versions saved it in Domain */
+                subitem = FIND_JSON_OBJ("AngleInverseCDF", "Domain.AngleInverseCDF", Domain);
+            }
+
             if (subitem) {
                 int nangle = cJSON_GetArraySize(subitem);
 
@@ -3641,6 +3645,30 @@ void mcx_savejdata(char* filename, Config* cfg) {
 
     cJSON_AddNumberToObject(obj, "DebugFlag", cfg->debuglevel);
     cJSON_AddNumberToObject(obj, "SaveDataMask", cfg->savedetflag);
+    cJSON_AddNumberToObject(obj, "MaxDetPhoton", cfg->maxdetphoton);
+
+    if (cfg->minenergy > 0.f) {
+        cJSON_AddNumberToObject(obj, "MinEnergy", cfg->minenergy);
+    }
+
+    {
+        /* mcx_preprocess converts the boundary flags to indices of boundarycond/boundarydetflag */
+        char bcstr[13] = {'\0'};
+        int hasbc = 0;
+
+        for (int i = 0; i < 12; i++) {
+            char c = cfg->bc[i];
+            const char* table = (i < 6) ? boundarycond : boundarydetflag;
+            int nentry = (int)strlen(table);
+
+            bcstr[i] = (c >= 0 && c < nentry) ? table[(int)c] : c;
+            hasbc |= (c != 0 && bcstr[i] != table[0]);
+        }
+
+        if (hasbc) {
+            cJSON_AddStringToObject(obj, "BCFlags", bcstr);
+        }
+    }
 
     if (cfg->outputformat >= 0) {
         cJSON_AddStringToObject(obj, "OutputFormat", outputformat[(int)cfg->outputformat]);
@@ -3677,6 +3705,23 @@ void mcx_savejdata(char* filename, Config* cfg) {
         cJSON_AddNumberToObject(tmp, "mus", cfg->prop[i].mus / cfg->unitinmm);
         cJSON_AddNumberToObject(tmp, "g",   cfg->prop[i].g);
         cJSON_AddNumberToObject(tmp, "n",   cfg->prop[i].n);
+    }
+
+    if (cfg->polmedianum > 0 && cfg->polprop) {
+        cJSON_AddItemToObject(obj, "MieScatter", sub = cJSON_CreateArray());
+
+        for (int i = 0; i < cfg->polmedianum; i++) {
+            cJSON_AddItemToArray(sub, tmp = cJSON_CreateObject());
+            cJSON_AddNumberToObject(tmp, "mua", cfg->polprop[i].mua);
+            cJSON_AddNumberToObject(tmp, "radius", cfg->polprop[i].r);
+            cJSON_AddNumberToObject(tmp, "rho", cfg->polprop[i].rho);
+            cJSON_AddNumberToObject(tmp, "nsph", cfg->polprop[i].nsph);
+            cJSON_AddNumberToObject(tmp, "nmed", cfg->polprop[i].nmed);
+        }
+    }
+
+    if (cfg->nphase > 2 && cfg->invcdf) { /* the reader adds the -1 and 1 end points */
+        cJSON_AddItemToObject(obj, "InverseCDF", cJSON_CreateFloatArray(cfg->invcdf + 1, cfg->nphase - 2));
     }
 
     cJSON_AddItemToObject(obj, "Dim", cJSON_CreateIntArray((int*) & (cfg->dim.x), 3));
@@ -3727,12 +3772,32 @@ void mcx_savejdata(char* filename, Config* cfg) {
             }
         } else {
             cJSON_AddItemToObject(sub, "Pos", cJSON_CreateFloatArray(&(cfg->srcpos.x), 3));
+
+            if (cfg->srcpos.w != 1.f) {
+                cJSON_AddNumberToObject(sub, "Weight", cfg->srcpos.w);
+            }
             cJSON_AddItemToObject(sub, "Dir", mcx_dirtojson(&(cfg->srcdir.x)));
             cJSON_AddItemToObject(sub, "Param1", cJSON_CreateFloatArray(&(cfg->srcparam1.x), 4));
             cJSON_AddItemToObject(sub, "Param2", cJSON_CreateFloatArray(&(cfg->srcparam2.x), 4));
         }
     }
     cJSON_AddNumberToObject(sub, "SrcNum", cfg->srcnum);
+
+    if (cfg->lambda > 0.f) {
+        cJSON_AddNumberToObject(sub, "WaveLength", cfg->lambda);
+    }
+
+    if (cfg->polmedianum > 0) {
+        cJSON_AddItemToObject(sub, "IQUV", cJSON_CreateFloatArray(&(cfg->srciquv.x), 4));
+    }
+
+    if (cfg->omega > 0.f) { /* the file stores the frequency in Hz, cfg->omega is 2*pi*f */
+        cJSON_AddNumberToObject(sub, "Frequency", cfg->omega / TWO_PI);
+    }
+
+    if (cfg->nangle > 0 && cfg->angleinvcdf) {
+        cJSON_AddItemToObject(sub, "AngleInverseCDF", cJSON_CreateFloatArray(cfg->angleinvcdf, cfg->nangle));
+    }
 
     if (cfg->srcid) {
         cJSON_AddNumberToObject(sub, "ID", cfg->srcid);
