@@ -16,8 +16,8 @@
 The pure helpers in mcx_core.cu (hitgrid, transmit, reflectcoeff, rotatevector)
 and the xorshift128+ RNG are marked MCX_HD (__host__ __device__), so this file
 includes mcx_core.cu and calls them directly on the CPU, comparing against
-analytic results. No GPU is needed to run the resulting binary; build it with
-"make unittest" under src/.
+analytic results. The same binary runs the host tests of test_utils.c. No GPU
+is needed to run it; build it with "make unittest" under src/.
 *******************************************************************************/
 
 #include "../../src/mcx_core.cu"
@@ -25,19 +25,12 @@ analytic results. No GPU is needed to run the resulting binary; build it with
 #include <cstdio>
 #include <cstdint>
 
-static int ntest = 0, nfail = 0;
+#include "unittest.h"
 
-#define EXPECT_NEAR(a, b, tol, msg) do {                                         \
-        double va_ = (double)(a), vb_ = (double)(b);                             \
-        ntest++;                                                                 \
-        if (!(fabs(va_ - vb_) <= (tol))) {                                       \
-            nfail++;                                                             \
-            printf("FAIL %s:%d %s: %.9g != %.9g (tol %g)\n", __FILE__, __LINE__, \
-                   msg, va_, vb_, (double)(tol));                                \
-        }                                                                        \
-    } while (0)
-
-#define EXPECT_EQ(a, b, msg) EXPECT_NEAR(a, b, 0, msg)
+extern "C" {
+    int ntest = 0, nfail = 0;
+    void run_utils_tests(void);  /* host tests of mcx_utils/mcx_shapes/mcx_mie in test_utils.c */
+}
 
 /** the textbook unpolarized Fresnel reflectance, computed in double precision */
 static double fresnel(double n1, double n2, double cosi) {
@@ -228,6 +221,7 @@ int main(void) {
     test_transmit();
     test_rotatevector();
     test_rng();
+    run_utils_tests();
 
     printf("%d checks, %d failures\n", ntest, nfail);
     return nfail > 0;

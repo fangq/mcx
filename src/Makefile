@@ -263,14 +263,16 @@ doc: makedocdir
 	$(DOXY) $(DOXYCFG)
 
 # host-only unit tests of the ray-tracing helpers in mcx_core.cu, no GPU is needed to run
+OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
+
 UNITTEST_OBJS=$(filter-out mcx_core$(OBJSUFFIX) mcx$(OBJSUFFIX),$(OBJS))
 
 unittest: makedirs $(ZMATLIB) $(UNITTEST_OBJS)
-	$(CUDACC) $(CUCCOPT) -DSAVE_DETECTORS -DMCX_UNITTEST -Xcudafe --diag_suppress=550 $(CUGENCODE) -o $(OUTPUT_DIR)/mcx_unittest$(EXESUFFIX) ../test/unit/test_raytrace.cu \
-	    $(UNITTEST_OBJS) $(ZMATLIB) -Xcompiler "$(OMP)" $(ZLIBFLAG)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(INCLUDEDIRS) $(CPPOPT) -I. -c -o test_utils$(OBJSUFFIX) ../test/unit/test_utils.c
+	$(CUDACC) -c $(CUCCOPT) -DSAVE_DETECTORS -DMCX_UNITTEST -Xcudafe --diag_suppress=550 $(CUGENCODE) -o test_raytrace$(OBJSUFFIX) ../test/unit/test_raytrace.cu
+	$(CUDACC) $(CUCCOPT) $(CUGENCODE) -o $(OUTPUT_DIR)/mcx_unittest$(EXESUFFIX) test_raytrace$(OBJSUFFIX) \
+	    test_utils$(OBJSUFFIX) $(UNITTEST_OBJS) $(ZMATLIB) -Xcompiler "$(OMP)" $(ZLIBFLAG)
 	$(OUTPUT_DIR)/mcx_unittest$(EXESUFFIX)
-
-OBJS      := $(addsuffix $(OBJSUFFIX), $(FILES))
 
 TARGETSUFFIX:=$(suffix $(BINARY))
 
@@ -319,6 +321,7 @@ $(ZMATLIB):
 clean:
 	-$(MAKE) -C zmat clean
 	-rm -f $(OBJS) $(OUTPUT_DIR)/$(BINARY)$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_atomic$(EXESUFFIX) $(OUTPUT_DIR)/$(BINARY)_det$(EXESUFFIX) $(ZMATLIB)
+	-rm -f test_utils$(OBJSUFFIX) test_raytrace$(OBJSUFFIX) $(OUTPUT_DIR)/mcx_unittest$(EXESUFFIX)
 cudasdk:
 	@if [ -z `which ${CUDACC}` ]; then \
 	   echo "Please first install CUDA SDK and add the path to nvcc to your PATH environment variable."; exit 1;\
