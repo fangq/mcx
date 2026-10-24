@@ -1000,7 +1000,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
             dims[2] = cfg->dim.z;
             dims[3] = Ns * Nd;
             dims[4] = MCX_IS_DUAL_ADJOINT_TYPE(cfg->outputtype) ? 2 : 1;
-            dims[5] = 1;
+            dims[5] = (cfg->omega > 0.f) ? 2 : 1;  /* RF: the real and imaginary parts */
         }
 
         if (cfg->outputformat == ofJNifti) {
