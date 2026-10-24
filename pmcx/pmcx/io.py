@@ -494,7 +494,12 @@ def mcx2json(cfg, filestub):
     Optode["Source"] = copycfg(cfg, "srcparam2", Optode["Source"], "Param2")
     Optode["Source"] = copycfg(cfg, "srctype", Optode["Source"], "Type")
     Optode["Source"] = copycfg(cfg, "srcnum", Optode["Source"], "SrcNum")
+    Optode["Source"] = copycfg(cfg, "srcid", Optode["Source"], "ID")
     Optode["Source"] = copycfg(cfg, "lambda", Optode["Source"], "WaveLength")
+    Optode["Source"] = copycfg(cfg, "angleinvcdf", Optode["Source"], "AngleInverseCDF")
+    if "omega" in cfg and cfg["omega"] is not None and float(cfg["omega"]) > 0:
+        # the JSON input stores the frequency in Hz, cfg['omega'] is 2*pi*f
+        Optode["Source"]["Frequency"] = float(cfg["omega"]) / (2 * np.pi)
 
     if "detpos" in cfg and cfg["detpos"] is not None and len(cfg["detpos"]) > 0:
         Optode["Detector"] = []
@@ -510,16 +515,16 @@ def mcx2json(cfg, filestub):
             Optode["Detector"] = [Optode["Detector"][0]]
 
     if "srcpattern" in cfg and cfg["srcpattern"] is not None:
-        Optode["Source"]["Pattern"] = np.array(
-            cfg["srcpattern"], dtype=np.float32
-        ).tolist()
+        # a compressed JData array; mcx can not read a plain nested list
+        Optode["Source"]["Pattern"] = jdataarray(
+            np.array(cfg["srcpattern"], dtype=np.float32)
+        )
 
     # Define the domain and optical properties
     Domain = {}
     Domain = copycfg(cfg, "issrcfrom0", Domain, "OriginType", 0)
     Domain = copycfg(cfg, "unitinmm", Domain, "LengthUnit")
     Domain = copycfg(cfg, "invcdf", Domain, "InverseCDF")
-    Domain = copycfg(cfg, "angleinvcdf", Domain, "AngleInverseCDF")
 
     # Convert prop matrix to Media list
     prop = np.array(cfg["prop"])
@@ -561,8 +566,9 @@ def mcx2json(cfg, filestub):
             if vol.ndim == 4 and vol.shape[0] == 4:
                 Domain["MediaFormat"] = "asgn_byte"
             elif vol.ndim == 4 and vol.shape[0] == 8:
-                # Reshape and convert to uint64 equivalent
-                vol = vol.reshape(-1).view(np.uint64).reshape(vol.shape[1:])
+                # the 8 bytes of each voxel, along the 1st axis, form one uint64
+                vol = np.ascontiguousarray(np.moveaxis(vol.astype(np.uint8), 0, -1))
+                vol = vol.view(np.uint64)[..., 0]
                 cfg["vol"] = vol
                 Domain["MediaFormat"] = "svmc"
         elif vol_dtype in [np.uint16, np.int16]:
@@ -576,7 +582,11 @@ def mcx2json(cfg, filestub):
                 vol = vol.astype(np.float32)
                 cfg["vol"] = vol
 
-            if np.all(np.mod(vol.flatten(), 1) == 0):
+            if vol.ndim == 4 and vol.shape[0] == 3:
+                Domain["MediaFormat"] = "labelplus"
+                vol = packlabelplus(vol, Domain.get("LengthUnit", 1))
+                cfg["vol"] = vol
+            elif np.all(np.mod(vol.flatten(), 1) == 0):
                 if np.max(vol) < 256:
                     Domain["MediaFormat"] = "byte"
                     cfg["vol"] = vol.astype(np.uint8)
@@ -607,9 +617,12 @@ def mcx2json(cfg, filestub):
                     fid.write(cfg["vol"].tobytes())
         else:
             Domain["VolumeFile"] = ""
-            Shapes = cfg["vol"]
-            if Shapes.ndim == 4 and Shapes.shape[0] > 1:
-                Shapes = np.transpose(Shapes, (1, 2, 3, 0))
+            Shapes = np.asarray(cfg["vol"])
+            # move the record axis last; also drops the singleton of a [1,Nx,Ny,Nz] mua_float volume
+            if Shapes.ndim == 4:
+                Shapes = np.moveaxis(Shapes, 0, -1)
+                if Shapes.shape[-1] == 1:
+                    Shapes = Shapes[..., 0]
 
     # Define the simulation session flags
     Session = {}
@@ -619,10 +632,13 @@ def mcx2json(cfg, filestub):
     Session = copycfg(cfg, "issavedet", Session, "DoPartialPath")
     Session = copycfg(cfg, "issaveexit", Session, "DoSaveExit")
     Session = copycfg(cfg, "issaveseed", Session, "DoSaveSeed")
-    Session = copycfg(cfg, "isnormalize", Session, "DoNormalize")
+    Session = copycfg(cfg, "isnormalized", Session, "DoNormalize")
+    Session = copycfg(cfg, "issaveref", Session, "DoSaveRef")
+    Session = copycfg(cfg, "ismomentum", Session, "DoDCS")
+    Session = copycfg(cfg, "isspecular", Session, "DoSpecular")
     Session = copycfg(cfg, "outputformat", Session, "OutputFormat")
     Session = copycfg(cfg, "outputtype", Session, "OutputType")
-    Session = copycfg(cfg, "debuglevel", Session, "Debug")
+    Session = copycfg(cfg, "debuglevel", Session, "DebugFlag")
     Session = copycfg(cfg, "autopilot", Session, "DoAutoThread")
     Session = copycfg(cfg, "maxdetphoton", Session, "MaxDetPhoton")
     Session = copycfg(cfg, "bc", Session, "BCFlags")
@@ -657,13 +673,49 @@ def mcx2json(cfg, filestub):
 
     if Shapes is not None:
         if isinstance(Shapes, np.ndarray):
-            mcxsession["Shapes"] = Shapes.tolist()
+            mcxsession["Shapes"] = jdataarray(Shapes)
         else:
             mcxsession["Shapes"] = Shapes
 
     from jdata import savejd
 
     savejd(mcxsession, filestub + ".json")
+
+
+def jdataarray(data):
+    """
+    Encode a numpy array as a zlib-compressed, base64-encoded JData array object
+    """
+    import jdata
+
+    obj = jdata.encode(
+        np.asarray(data), compression="zlib", base64=True, compressarraysize=0
+    )
+    if isinstance(obj.get("_ArrayZipData_"), bytes):
+        obj["_ArrayZipData_"] = obj["_ArrayZipData_"].decode("ascii")
+    return obj
+
+
+def packlabelplus(vol, unitinmm=1):
+    """
+    Pack the [value; property index; label] records of a [3, Nx, Ny, Nz] float volume into the
+    32-bit labelplus format, {[half: value][2-bit property index][14-bit label]}, as mcxlab does
+    """
+    vol = np.asarray(vol, dtype=np.float32)
+    val = vol[0].copy()
+    idx = vol[1]
+    isscaled = (idx >= 1) & (
+        idx <= 2
+    )  # the same rule that mcxlab uses to scale the value by unitinmm
+    val[isscaled] *= unitinmm
+    bits = val.view(np.uint32)
+    expo = ((bits >> 23) & 255).astype(np.int64)
+    expo = np.where(expo > 112, (expo - 112) & 31, 0).astype(np.uint32)
+    half = (((bits >> 31) << 5 | expo) << 10) | ((bits >> 13) & 1023)
+    label = ((np.fix(idx).astype(np.uint32) & 3) << 14) | np.fix(vol[2]).astype(
+        np.uint32
+    )
+    return (label | (half << 16)).astype(np.uint32)
 
 
 def copycfg(cfg, name, outroot, outfield, defaultval=None):
@@ -693,6 +745,19 @@ def copycfg(cfg, name, outroot, outfield, defaultval=None):
     if name in cfg:
         outroot[outfield] = cfg[name]
     return outroot
+
+
+def unpacklabelplus(packed, unitinmm=1):
+    """
+    Unpack the 32-bit labelplus format, {[half: value][2-bit property index][14-bit label]},
+    written by mcx2json into a [3, Nx, Ny, Nz] float32 [value; property index; label] volume
+    """
+    packed = np.asarray(packed).astype(np.uint32)
+    val = (packed >> 16).astype(np.uint16).view(np.float16).astype(np.float32)
+    idx = ((packed >> 14) & 3).astype(np.float32)
+    isscaled = (idx >= 1) & (idx <= 2)  # mcx2json scaled these values by LengthUnit
+    val[isscaled] /= unitinmm
+    return np.stack([val, idx, (packed & 16383).astype(np.float32)])
 
 
 def json2mcx(filename):
@@ -737,15 +802,34 @@ def json2mcx(filename):
         if "Source" in json_data["Optode"]:
             cfg = icopycfg(cfg, "srcpos", json_data["Optode"]["Source"], "Pos")
             cfg = icopycfg(cfg, "srcdir", json_data["Optode"]["Source"], "Dir")
-            if "srcdir" in cfg:
-                srcdir = np.array(cfg["srcdir"][:3])
-                cfg["srcdir"][:3] = (srcdir / np.linalg.norm(srcdir)).tolist()
+            if "srcdir" in cfg:  # normalize the direction of each source
+                srcdir = np.array(cfg["srcdir"], dtype=float)
+                rows = np.atleast_2d(srcdir)
+                rows[:, :3] /= np.linalg.norm(rows[:, :3], axis=1, keepdims=True)
+                cfg["srcdir"] = (rows if srcdir.ndim > 1 else rows[0]).tolist()
             cfg = icopycfg(cfg, "srcparam1", json_data["Optode"]["Source"], "Param1")
             cfg = icopycfg(cfg, "srcparam2", json_data["Optode"]["Source"], "Param2")
             cfg = icopycfg(cfg, "srctype", json_data["Optode"]["Source"], "Type")
             cfg = icopycfg(cfg, "srcnum", json_data["Optode"]["Source"], "SrcNum")
+            cfg = icopycfg(cfg, "srcid", json_data["Optode"]["Source"], "ID")
+            cfg = icopycfg(cfg, "srciquv", json_data["Optode"]["Source"], "IQUV")
+            cfg = icopycfg(cfg, "lambda", json_data["Optode"]["Source"], "WaveLength")
+            cfg = icopycfg(
+                cfg, "angleinvcdf", json_data["Optode"]["Source"], "AngleInverseCDF"
+            )
+            if "Frequency" in json_data["Optode"]["Source"]:
+                cfg["omega"] = (
+                    2 * np.pi * float(json_data["Optode"]["Source"]["Frequency"])
+                )
 
             if "Pattern" in json_data["Optode"]["Source"] and isinstance(
+                json_data["Optode"]["Source"]["Pattern"], np.ndarray
+            ):
+                # a JData array, decoded by jdata.load
+                cfg["srcpattern"] = json_data["Optode"]["Source"]["Pattern"].astype(
+                    np.float32
+                )
+            elif "Pattern" in json_data["Optode"]["Source"] and isinstance(
                 json_data["Optode"]["Source"]["Pattern"], dict
             ):
                 pattern = json_data["Optode"]["Source"]["Pattern"]
@@ -789,6 +873,15 @@ def json2mcx(filename):
     if "Domain" in json_data:
         cfg = icopycfg(cfg, "issrcfrom0", json_data["Domain"], "OriginType")
         cfg = icopycfg(cfg, "unitinmm", json_data["Domain"], "LengthUnit")
+        cfg = icopycfg(cfg, "invcdf", json_data["Domain"], "InverseCDF")
+        if "angleinvcdf" not in cfg:  # older mcx2json versions saved it in Domain
+            cfg = icopycfg(cfg, "angleinvcdf", json_data["Domain"], "AngleInverseCDF")
+        if "MieScatter" in json_data["Domain"]:
+            mie = json_data["Domain"]["MieScatter"]
+            mie = mie if isinstance(mie, list) else [mie]
+            cfg["polprop"] = [
+                [m["mua"], m["radius"], m["rho"], m["nsph"], m["nmed"]] for m in mie
+            ]
 
         if "Media" in json_data["Domain"]:
             media = json_data["Domain"]["Media"]
@@ -811,11 +904,26 @@ def json2mcx(filename):
             else:
                 cfg["prop"] = media
 
-    if "Shapes" in json_data:
+    if "Shapes" in json_data and isinstance(json_data["Shapes"], np.ndarray):
+        # mcx2json saves cfg["vol"] as a JData array in Shapes, with the leading
+        # (per-voxel record) dimension of a 4-D volume moved to the end
+        vol = json_data["Shapes"]
+        mediaformat = str(json_data.get("Domain", {}).get("MediaFormat", "")).lower()
+        if vol.ndim == 4:
+            vol = np.moveaxis(vol, -1, 0)
+        if mediaformat == "svmc":
+            vol = np.ascontiguousarray(vol, dtype=np.uint64)
+            vol = np.moveaxis(vol[..., np.newaxis].view(np.uint8), -1, 0)
+        elif mediaformat == "labelplus":
+            vol = unpacklabelplus(vol, json_data["Domain"].get("LengthUnit", 1))
+        elif mediaformat == "mua_float":
+            vol = vol.astype(np.float32)[np.newaxis, ...]
+        cfg["vol"] = vol
+    elif "Shapes" in json_data:
         cfg["shapes"] = json.dumps({"Shapes": json_data["Shapes"]})
 
     format_key = None
-    if "Domain" in json_data and "VolumeFile" in json_data["Domain"]:
+    if "Domain" in json_data and json_data["Domain"].get("VolumeFile"):
         volume_file = json_data["Domain"]["VolumeFile"]
         fpath, fname = os.path.split(volume_file)
         fname, fext = os.path.splitext(fname)
@@ -871,7 +979,7 @@ def json2mcx(filename):
             jnii = loadjd(volume_file)
             cfg["vol"] = jnii["NIFTIData"]
 
-    elif "shapes" not in cfg:
+    elif "shapes" not in cfg and "vol" not in cfg:
         cfg["vol"] = np.zeros((60, 60, 60), dtype=np.uint8)
 
     # Define the simulation session flags
@@ -882,7 +990,14 @@ def json2mcx(filename):
         cfg = icopycfg(cfg, "issavedet", json_data["Session"], "DoPartialPath")
         cfg = icopycfg(cfg, "issaveexit", json_data["Session"], "DoSaveExit")
         cfg = icopycfg(cfg, "issaveseed", json_data["Session"], "DoSaveSeed")
-        cfg = icopycfg(cfg, "isnormalize", json_data["Session"], "DoNormalize")
+        cfg = icopycfg(cfg, "isnormalized", json_data["Session"], "DoNormalize")
+        cfg = icopycfg(cfg, "issaveref", json_data["Session"], "DoSaveRef")
+        cfg = icopycfg(cfg, "ismomentum", json_data["Session"], "DoDCS")
+        cfg = icopycfg(cfg, "isspecular", json_data["Session"], "DoSpecular")
+        cfg = icopycfg(cfg, "maxdetphoton", json_data["Session"], "MaxDetPhoton")
+        cfg = icopycfg(cfg, "minenergy", json_data["Session"], "MinEnergy")
+        cfg = icopycfg(cfg, "bc", json_data["Session"], "BCFlags")
+        cfg = icopycfg(cfg, "savedetflag", json_data["Session"], "SaveDataMask")
         cfg = icopycfg(cfg, "outputformat", json_data["Session"], "OutputFormat")
         cfg = icopycfg(cfg, "outputtype", json_data["Session"], "OutputType")
 
@@ -903,13 +1018,17 @@ def json2mcx(filename):
                 "d": "adjoint_dcoeff",
                 "u": "adjoint_mus",
                 "v": "adjoint_musp",
+                "w": "adjoint_mua_d",
+                "q": "adjoint_mua_musp",
             }
 
             if cfg["outputtype"] not in otypemap:
                 raise ValueError(f"output type {cfg['outputtype']} is not supported")
             cfg["outputtype"] = otypemap[cfg["outputtype"]]
 
-        cfg = icopycfg(cfg, "debuglevel", json_data["Session"], "Debug")
+        cfg = icopycfg(cfg, "debuglevel", json_data["Session"], "DebugFlag")
+        if "debuglevel" not in cfg:  # older mcx2json versions used "Debug"
+            cfg = icopycfg(cfg, "debuglevel", json_data["Session"], "Debug")
         cfg = icopycfg(cfg, "autopilot", json_data["Session"], "DoAutoThread")
         cfg = icopycfg(cfg, "seed", json_data["Session"], "RNGSeed")
 
