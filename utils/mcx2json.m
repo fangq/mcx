@@ -46,6 +46,10 @@ Optode.Source = copycfg(cfg, 'srctype', Optode.Source, 'Type');
 Optode.Source = copycfg(cfg, 'srcnum', Optode.Source, 'SrcNum');
 Optode.Source = copycfg(cfg, 'srcid', Optode.Source, 'ID');
 Optode.Source = copycfg(cfg, 'lambda', Optode.Source, 'WaveLength');
+Optode.Source = copycfg(cfg, 'angleinvcdf', Optode.Source, 'AngleInverseCDF');
+if (isfield(cfg, 'omega') && ~isempty(cfg.omega) && cfg.omega > 0)
+    Optode.Source.Frequency = cfg.omega / (2 * pi);  % the JSON input stores the frequency in Hz, cfg.omega is 2*pi*f
+end
 
 if (isfield(cfg, 'detpos') && ~isempty(cfg.detpos))
     Optode.Detector = struct();
@@ -58,7 +62,7 @@ end
 if (isfield(cfg, 'srcpattern') && ~isempty(cfg.srcpattern))
     % a row-major JData array, [srcnum, Nx, Ny] for multiple patterns; compressed so that
     % even a small pattern is not saved as a plain nested array, which mcx can not read
-    Optode.Source.Pattern = jdataencode(single(cfg.srcpattern), 'Compression', 'zlib', 'CompressArraySize', 0, 'Base64', 1);
+    Optode.Source.Pattern = jdataencode(single(cfg.srcpattern), 'AnnotateArray', 1, 'Compression', 'zlib', 'CompressArraySize', 0, 'Base64', 1);
 end
 
 %% define the domain and optical properties
@@ -67,7 +71,6 @@ Domain = struct();
 Domain = copycfg(cfg, 'issrcfrom0', Domain, 'OriginType', 0);
 Domain = copycfg(cfg, 'unitinmm', Domain, 'LengthUnit');
 Domain = copycfg(cfg, 'invcdf', Domain, 'InverseCDF');
-Domain = copycfg(cfg, 'angleinvcdf', Domain, 'AngleInverseCDF');
 
 Domain.Media = cell2struct(num2cell(cfg.prop), {'mua', 'mus', 'g', 'n'}, 2)';
 
@@ -160,10 +163,13 @@ Session = copycfg(cfg, 'issave2pt', Session, 'DoSaveVolume');
 Session = copycfg(cfg, 'issavedet', Session, 'DoPartialPath');
 Session = copycfg(cfg, 'issaveexit', Session, 'DoSaveExit');
 Session = copycfg(cfg, 'issaveseed', Session, 'DoSaveSeed');
-Session = copycfg(cfg, 'isnormalize', Session, 'DoNormalize');
+Session = copycfg(cfg, 'isnormalized', Session, 'DoNormalize');
+Session = copycfg(cfg, 'issaveref', Session, 'DoSaveRef');
+Session = copycfg(cfg, 'ismomentum', Session, 'DoDCS');
+Session = copycfg(cfg, 'isspecular', Session, 'DoSpecular');
 Session = copycfg(cfg, 'outputformat', Session, 'OutputFormat');
 Session = copycfg(cfg, 'outputtype', Session, 'OutputType');
-Session = copycfg(cfg, 'debuglevel', Session, 'Debug');
+Session = copycfg(cfg, 'debuglevel', Session, 'DebugFlag');
 Session = copycfg(cfg, 'autopilot', Session, 'DoAutoThread');
 Session = copycfg(cfg, 'maxdetphoton', Session, 'MaxDetPhoton');
 Session = copycfg(cfg, 'bc', Session, 'BCFlags');
