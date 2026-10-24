@@ -302,7 +302,7 @@ void small_Mie(double x, double mx, const double* mu, float4* smatrix, double* q
             muj = mu[j];
             angle = 2 * muj * muj - 1;
             s1 = ahat1 + (bhat1 + ahat2) * muj;
-            s2 = bhat1 + (ahat1 + ahat2) * angle;
+            s2 = bhat1 + ahat1 * muj + ahat2 * angle;
 
             smatrix[j].x = 0.5 * cabs(s2) * cabs(s2) + 0.5 * cabs(s1) * cabs(s1);
             smatrix[j].y = 0.5 * cabs(s2) * cabs(s2) - 0.5 * cabs(s1) * cabs(s1);

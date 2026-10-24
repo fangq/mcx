@@ -98,7 +98,7 @@
 /**
  * Macro to include unit name and line number in the error message
  */
-#define MCX_ASSERT(a)  (!(a) && (mcx_error((a),"input error",__FILE__,__LINE__),1) );
+#define MCX_ASSERT(a)  (!(a) && (mcx_error(-1,"input error",__FILE__,__LINE__),1) ); /* exit with a non-zero code */
 
 #define MIN_HEADER_SIZE 348    /**< Analyze header size */
 #define NII_HEADER_SIZE 352    /**< NIFTI header size */
@@ -559,7 +559,14 @@ void mcx_savenii(float* dat, size_t len, char* name, int type32bit, int outputfo
     if (type32bit == NIFTI_TYPE_FLOAT32) {
         hdr.pixdim[4] = cfg->tstep * 1e6f;
     } else {
-        short* mask = (short*)logval;
+        /* write the label/detector mask pairs to a new buffer, dat may be cfg->vol in use */
+        short* mask = (short*)malloc(len * 2 * sizeof(short));
+
+        if (mask == NULL) {
+            MCX_ERROR(-9, "can not allocate memory");
+        }
+
+        logval = (float*)mask;
 
         for (i = 0; i < len; i++) {
             mask[(i << 1)]    = (((unsigned int*)dat)[i] & MED_MASK);
@@ -628,6 +635,44 @@ void mcx_savenii(float* dat, size_t len, char* name, int type32bit, int outputfo
     } else {
         MCX_ERROR(-9, "Output format is not supported");
     }
+
+    if (logval != dat) {
+        free(logval);
+    }
+}
+
+/**
+ * @brief Return the "Description" string of the JNIfTI header for an output type
+ *
+ * @param[in] type: output type, an enum TOutputType value
+ */
+
+static const char* mcx_outputdesc(int type) {
+    static const char* typestr[] = {
+        "MCX volumetric output: Fluence rate (W/mm^2)",
+        "MCX volumetric output: Fluence (J/mm^2)",
+        "MCX volumetric output: Voxel-wise energy deposit (J)",
+        "MCX volumetric output: Jacobian for mua (J/mm)",
+        "MCX volumetric output: Scattering count",
+        "MCX volumetric output: Partial momentum transfer",
+        "MCX volumetric output: Frequency-domain (RF) output, real and imaginary parts",
+        "MCX volumetric output: Total path length (mm)",
+        "MCX volumetric output: RF Jacobian for mus, real and imaginary parts",
+        "MCX volumetric output: Weighted time-of-flight x path length",
+        "MCX volumetric output: Weighted time-of-flight x scattering count",
+        "MCX volumetric output: Adjoint Jacobian for mua",
+        "MCX volumetric output: Adjoint Jacobian for the diffusion coefficient D",
+        "MCX volumetric output: Adjoint Jacobian for mus",
+        "MCX volumetric output: Adjoint Jacobian for mus'",
+        "MCX volumetric output: Adjoint Jacobians for mua and D",
+        "MCX volumetric output: Adjoint Jacobians for mua and mus'"
+    };
+
+    if (type < 0 || type >= (int)(sizeof(typestr) / sizeof(typestr[0]))) {
+        return "MCX volumetric output";
+    }
+
+    return typestr[type];
 }
 
 /**
@@ -724,15 +769,7 @@ void mcx_savebnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     UBJ_WRITE_KEY(root, "SliceTime", uint8, 0);
     UBJ_WRITE_KEY(root, "TimeOffset", uint8, 0);
 
-    if (cfg->outputtype >= 0) {
-        const char* typestr[] = {"MCX volumetric output: Fluence rate (W/mm^2)", "MCX volumetric output: Fluence (J/mm^2)",
-                                 "MCX volumetric output: Voxel-wise energy deposit (J)", "MCX volumetric output: Jacobian for mua (J/mm)", "MCX volumetric output: Scattering count",
-                                 "MCX volumetric output: Partial momentum transfer"
-                                };
-        UBJ_WRITE_KEY(root, "Description", string, typestr[(int)cfg->outputtype]);
-    } else {
-        UBJ_WRITE_KEY(root, "Description", string, "MCX volumetric output");
-    }
+    UBJ_WRITE_KEY(root, "Description", string, mcx_outputdesc(cfg->outputtype));
 
     UBJ_WRITE_KEY(root, "AuxFile", string, "");
     UBJ_WRITE_KEY(root, "QForm", uint8, 0);
@@ -860,15 +897,7 @@ void mcx_savejnii(float* vol, int ndim, uint* dims, float* voxelsize, char* name
     cJSON_AddNumberToObject(hdr, "SliceTime", 0);
     cJSON_AddNumberToObject(hdr, "TimeOffset", 0);
 
-    if (cfg->outputtype >= 0) {
-        const char* typestr[] = {"MCX volumetric output: Fluence rate (W/mm^2)", "MCX volumetric output: Fluence (J/mm^2)",
-                                 "MCX volumetric output: Voxel-wise energy deposit (J)", "MCX volumetric output: Jacobian for mua (J/mm)", "MCX volumetric output: Scattering count",
-                                 "MCX volumetric output: Partial momentum transfer"
-                                };
-        cJSON_AddStringToObject(hdr, "Description", typestr[(int)cfg->outputtype]);
-    } else {
-        cJSON_AddStringToObject(hdr, "Description", "MCX volumetric output");
-    }
+    cJSON_AddStringToObject(hdr, "Description", mcx_outputdesc(cfg->outputtype));
 
     cJSON_AddStringToObject(hdr, "AuxFile", "");
     cJSON_AddNumberToObject(hdr, "QForm", 0);
@@ -1614,8 +1643,8 @@ int mkpath(char* dir_path, int mode) {
         *p = pathsep;
     }
 
-    if (dir_path[strlen(p) - 1] == pathsep) {
-        dir_path[strlen(p) - 1] = '\0';
+    if (dir_path[strlen(dir_path) - 1] == pathsep) { /* p is NULL after the loop */
+        dir_path[strlen(dir_path) - 1] = '\0';
     }
 
     return 0;
@@ -1629,7 +1658,7 @@ int mkpath(char* dir_path, int mode) {
 
 void mcx_assert(int ret) {
     if (!ret) {
-        MCX_ERROR(ret, "assert error");
+        MCX_ERROR(-1, "assert error");  /* ret is 0 here, which would exit as a success */
     }
 }
 
@@ -2191,11 +2220,6 @@ void mcx_prepdomain(char* filename, Config* cfg) {
         if (cfg->vol == NULL) {
             mcx_loadvolume(filename, cfg, 0);
 
-            if (cfg->isdumpjson == 2) {
-                mcx_savejdata(cfg->jsonfile, cfg);
-                exit(0);
-            }
-
             if (cfg->shapedata && strstr(cfg->shapedata, ":") != NULL) {
                 int status;
 
@@ -2215,6 +2239,11 @@ void mcx_prepdomain(char* filename, Config* cfg) {
                     MCX_ERROR(status, mcx_last_shapeerror());
                 }
             }
+        }
+
+        if (cfg->isdumpjson == 2) { /* dump the inputs before mcx_preprocess, whether the volume came from a file or the JSON input */
+            mcx_savejdata(cfg->jsonfile, cfg);
+            exit(0);
         }
     } else {
         MCX_ERROR(-4, "one must specify a binary volume file in order to run the simulation");
@@ -2558,11 +2587,18 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
 int mcx_loadjson(cJSON* root, Config* cfg) {
     int i;
     cJSON* Domain, *Optode, *Forward, *Session, *Shapes, *tmp, *subitem;
+    int isnested = 0;  /* whether the current Optode.Source field is an Nsrc-row array */
     char filename[MAX_FULL_PATH] = {'\0'};
     Domain  = cJSON_GetObjectItem(root, "Domain");
     Optode  = cJSON_GetObjectItem(root, "Optode");
     Session = cJSON_GetObjectItem(root, "Session");
     Forward = cJSON_GetObjectItem(root, "Forward");
+
+    /* RootPath locates the input files, such as Domain.VolumeFile, which is read before the Session section */
+    if (Session && cfg->rootpath[0] == '\0') {
+        strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath", "Session.RootPath", Session, "", valuestring), MAX_PATH_LENGTH - 1);
+    }
+
     Shapes  = cJSON_GetObjectItem(root, "Shapes");
 
     if (Domain) {
@@ -2784,7 +2820,8 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         val = FIND_JSON_OBJ("VoxelSize", "Domain.VoxelSize", Domain);
 
         if (val) {
-            val = FIND_JSON_OBJ("Dx", "Domain.VoxelSize.Dx", Domain);
+            cJSON* voxelsize = val;
+            val = FIND_JSON_OBJ("Dx", "Domain.VoxelSize.Dx", voxelsize);
 
             if (cJSON_GetArraySize(val) >= 1) {
                 int len = cJSON_GetArraySize(val);
@@ -2806,7 +2843,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 }
             }
 
-            val = FIND_JSON_OBJ("Dy", "Domain.VoxelSize.Dy", Domain);
+            val = FIND_JSON_OBJ("Dy", "Domain.VoxelSize.Dy", voxelsize);
 
             if (cJSON_GetArraySize(val) >= 1) {
                 int len = cJSON_GetArraySize(val);
@@ -2828,7 +2865,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 }
             }
 
-            val = FIND_JSON_OBJ("Dz", "Domain.VoxelSize.Dz", Domain);
+            val = FIND_JSON_OBJ("Dz", "Domain.VoxelSize.Dz", voxelsize);
 
             if (cJSON_GetArraySize(val) >= 1) {
                 int len = cJSON_GetArraySize(val);
@@ -2913,7 +2950,9 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             subitem = FIND_JSON_OBJ("Pos", "Optode.Source.Pos", src);
 
             if (subitem && cJSON_IsArray(subitem)) {
-                cfg->extrasrclen = 0;
+                if (!cJSON_IsArray(subitem->child)) {
+                    cfg->extrasrclen = 0;  /* a single source; an Nsrc-row Pos must match the existing extra sources */
+                }
 
                 if (cJSON_IsArray(subitem->child)) {
                     if (cfg->srcdata && cfg->extrasrclen != cJSON_GetArraySize(subitem) - 1) {
@@ -2963,6 +3002,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             }
 
             subitem = FIND_JSON_OBJ("Dir", "Optode.Source.Dir", src);
+            isnested = 0;
 
             if (subitem && cJSON_IsArray(subitem)) {
                 if (cJSON_IsArray(subitem->child)) {
@@ -2975,6 +3015,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                     }
 
                     subitem = subitem->child;
+                    isnested = 1;
                 }
 
                 cfg->srcdir.x = subitem->child->valuedouble;
@@ -3003,7 +3044,15 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
                     }
 
-                    while (subitem->next && count < cfg->extrasrclen) {
+                    /* a single row given with multiple sources applies to all of them; walking
+                       subitem->next of a 1-D array would read the next key of Source instead */
+                    if (!isnested) {
+                        for (count = 0; count < cfg->extrasrclen; count++) {
+                            cfg->srcdata[count].srcdir = cfg->srcdir;
+                        }
+                    }
+
+                    while (isnested && subitem->next && count < cfg->extrasrclen) {
 
                         subitem = subitem->next;
                         cfg->srcdata[count].srcdir.x = subitem->child->valuedouble;
@@ -3051,6 +3100,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             }
 
             subitem = FIND_JSON_OBJ("Param1", "Optode.Source.Param1", src);
+            isnested = 0;
 
             if (subitem && cJSON_IsArray(subitem)) {
                 if (cJSON_IsArray(subitem->child)) {
@@ -3063,6 +3113,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                     }
 
                     subitem = subitem->child;
+                    isnested = 1;
                 }
 
                 cfg->srcparam1.x = subitem->child->valuedouble;
@@ -3086,7 +3137,15 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
                     }
 
-                    while (subitem->next && count < cfg->extrasrclen) {
+                    /* a single row given with multiple sources applies to all of them; walking
+                       subitem->next of a 1-D array would read the next key of Source instead */
+                    if (!isnested) {
+                        for (count = 0; count < cfg->extrasrclen; count++) {
+                            cfg->srcdata[count].srcparam1 = cfg->srcparam1;
+                        }
+                    }
+
+                    while (isnested && subitem->next && count < cfg->extrasrclen) {
 
                         subitem = subitem->next;
                         cfg->srcdata[count].srcparam1.x = subitem->child->valuedouble;
@@ -3109,6 +3168,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             }
 
             subitem = FIND_JSON_OBJ("Param2", "Optode.Source.Param2", src);
+            isnested = 0;
 
             if (subitem && cJSON_IsArray(subitem)) {
                 if (cJSON_IsArray(subitem->child)) {
@@ -3121,6 +3181,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                     }
 
                     subitem = subitem->child;
+                    isnested = 1;
                 }
 
                 cfg->srcparam2.x = subitem->child->valuedouble;
@@ -3144,7 +3205,15 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                         cfg->srcdata = (ExtraSrc*)calloc(sizeof(ExtraSrc), cfg->extrasrclen);
                     }
 
-                    while (subitem->next && count < cfg->extrasrclen) {
+                    /* a single row given with multiple sources applies to all of them; walking
+                       subitem->next of a 1-D array would read the next key of Source instead */
+                    if (!isnested) {
+                        for (count = 0; count < cfg->extrasrclen; count++) {
+                            cfg->srcdata[count].srcparam2 = cfg->srcparam2;
+                        }
+                    }
+
+                    while (isnested && subitem->next && count < cfg->extrasrclen) {
 
                         subitem = subitem->next;
                         cfg->srcdata[count].srcparam2.x = subitem->child->valuedouble;
@@ -3454,9 +3523,10 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
     if (Forward) {
         uint gates;
-        cfg->tstart = FIND_JSON_KEY("T0", "Forward.T0", Forward, 0.0, valuedouble);
-        cfg->tend  = FIND_JSON_KEY("T1", "Forward.T1", Forward, 0.0, valuedouble);
-        cfg->tstep = FIND_JSON_KEY("Dt", "Forward.Dt", Forward, 0.0, valuedouble);
+        /* missing keys keep the current values, so that a partial --json fragment does not reset them */
+        cfg->tstart = FIND_JSON_KEY("T0", "Forward.T0", Forward, cfg->tstart, valuedouble);
+        cfg->tend  = FIND_JSON_KEY("T1", "Forward.T1", Forward, cfg->tend, valuedouble);
+        cfg->tstep = FIND_JSON_KEY("Dt", "Forward.Dt", Forward, cfg->tstep, valuedouble);
 
         if (cfg->tstart > cfg->tend || cfg->tstep == 0.f) {
             MCX_ERROR(-9, "incorrect time gate settings");
@@ -3875,10 +3945,14 @@ void mcx_savejdata(char* filename, Config* cfg) {
         for (uint z = 0; z < cfg->dim.z; z++)
             for (uint y = 0; y < cfg->dim.y; y++)
                 for (uint x = 0; x < cfg->dim.x; x++) {
-                    size_t col = (size_t)z * dimxy + y * cfg->dim.x + x, row = (size_t)x * dimyz + y * cfg->dim.z + z;
+                    size_t row = (size_t)x * dimyz + y * cfg->dim.z + z;
+                    size_t col = cfg->isrowmajor ? row : (size_t)z * dimxy + y * cfg->dim.x + x;  /* before mcx_preprocess, a JData volume is still row-major */
                     unsigned int v = cfg->vol[col];
 
-                    if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
+                    if (cfg->mediabyte == MEDIA_2LABEL_SPLIT && cfg->isdumpjson == 2) {
+                        /* --dumpjson 2 dumps before mcx_preprocess, the records are still in file order */
+                        memcpy(buf + row * 8, (uchar*)cfg->vol + col * 8, 8);
+                    } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
                         /* mcx_preprocess split each 8-byte svmc record into two 32-bit planes
                            with the byte order reversed; rebuild the record in file order */
                         union {
@@ -3929,7 +4003,11 @@ void mcx_savejdata(char* filename, Config* cfg) {
 
         /*converting volume to the minimal size*/
         memcpy(buf, cfg->vol, datalen * sizeof(int));
-        mcx_convertcol2row((uint**)(&buf), &cfg->dim);
+
+        if (!cfg->isrowmajor) { /* before mcx_preprocess (--dumpjson 2), a JData volume is still row-major */
+            mcx_convertcol2row((uint**)(&buf), &cfg->dim);
+        }
+
         vol = (uint*)buf;
 
         if (cfg->mediabyte == 1) {
@@ -5591,7 +5669,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                             free(cfg->shapedata);
                         }
 
-                        cfg->shapedata = (char*)malloc(len);
+                        cfg->shapedata = (char*)calloc(1, len + 1); /* keep the terminating NUL */
                         memcpy(cfg->shapedata, argv[++i], len);
                     } else {
                         MCX_ERROR(-1, T_("json shape constructs are expected after -P"));
@@ -5679,7 +5757,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     break;
 
                 case 'F':
-                    if (i >= argc) {
+                    if (i + 1 >= argc) {
                         MCX_ERROR(-1, T_("incomplete input"));
                     }
 
@@ -5901,10 +5979,7 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
         }
     }
 
-    if ((cfg->outputtype == otJacobian || cfg->outputtype == otWP || cfg->outputtype == otDCS  || cfg->outputtype == otRF || cfg->outputtype == otRFmus || cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) && cfg->seed != SEED_FROM_FILE && !(cfg->outputtype == otRF && cfg->omega > 0.f)) {
-        MCX_ERROR(-1, T_("Jacobian output is only valid in the reply mode. Please give an mch file after '-E'."));
-    }
-
+    /* the replay-only output types are checked by mcx_preprocess, once the input file and --json have set the seed and omega */
     if (cfg->isgpuinfo != 2) { /*print gpu info only*/
         if (isinteractive == 2 && jsoninput) {
             mcx_readconfig(jsoninput, cfg);
@@ -6096,74 +6171,69 @@ int mcx_isbinstr(const char* str) {
 }
 
 /**
- * @brief Function to parse one subfield of the input structure
+ * @brief Convert a float to an IEEE 754 half-precision number
  *
- * This function reads in all necessary information from the cfg input structure.
- * it can handle single scalar inputs, short vectors (3-4 elem), strings and arrays.
+ * The mantissa is truncated to 10 bits; values below 2^-14 become denormals,
+ * values beyond the half-precision range are clamped to +/-65504.
  *
- * @param[in] root: the cfg input data structure
- * @param[in] item: the current element of the cfg input data structure
- * @param[in] idx: the index of the current element (starting from 0)
- * @param[out] cfg: the simulation configuration structure to store all input read from the parameters
+ * @param[in] input: the float value
+ */
+
+static unsigned short mcx_float2half(float input) {
+    union {
+        float f;
+        unsigned int i;
+    } f2i;
+    unsigned int sign, expo, mant;
+
+    f2i.f = input;
+    sign = (f2i.i >> 16) & 0x8000;
+    expo = (f2i.i >> 23) & 0xff;
+    mant = f2i.i & 0x7fffff;
+
+    if (expo == 0xff) { /*inf or nan*/
+        return sign | 0x7c00 | (mant ? 0x200 : 0);
+    }
+
+    if (expo <= 112) { /*below the smallest normal half 2^-14: a denormal (between 2^-24 and 2^-14) or 0*/
+        if (expo < 101) {
+            return sign;
+        }
+
+        mant = (mant | 0x800000) >> 12; /*12 bits, including the implicit leading 1*/
+        return sign | ((mant >> (114 - expo)) + ((mant >> (113 - expo)) & 1));
+    }
+
+    if (expo >= 143) { /*above the largest half, clamp to 65504*/
+        return sign | 0x7bff;
+    }
+
+    return sign | ((expo - 112) << 10) | (mant >> 13); /*truncate the mantissa to 10 bits*/
+}
+
+/**
+ * @brief Pack two floats, such as mua and mus, into the two halves of a 32-bit word
+ *
+ * @param[in] input: the two float values, stored in the lower and upper 16 bits
  */
 
 int mcx_float2half2(float input[2]) {
-    union {
-        float f[2];
-        unsigned int i[2];
-        unsigned short h[2];
-    } f2h;
-    unsigned short tmp, m;
-
-    f2h.f[0] = input[0];
-    f2h.f[1] = input[1];
-
     /**
-     * float to half conversion
+     * float to half conversion, see
      * https://stackoverflow.com/questions/3026441/float32-to-float16/5587983#5587983
      * https://gamedev.stackexchange.com/a/17410  (for denorms)
      */
-    m = ((f2h.i[0] >> 13) & 0x03ff);
-    tmp = (f2h.i[0] >> 23) & 0xff; /*exponent*/
-    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
+    unsigned int packed = mcx_float2half(input[0]) | ((unsigned int)mcx_float2half(input[1]) << 16);
 
-    if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-        unsigned short sign = (f2h.i[0] >> 16) & 0x8000;
-        tmp = ((f2h.i[0] >> 23) & 0xff);
-        m = (f2h.i[0] >> 12) & 0x07ff;
-        m |= 0x0800u;
-        f2h.h[0] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
-    } else {
-        f2h.h[0] = (f2h.i[0] >> 31) << 5;
-        f2h.h[0] = (f2h.h[0] | tmp) << 10;
-        f2h.h[0] |= (f2h.i[0] >> 13) & 0x3ff;
+    if (packed == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16, only happens for _AS, not ASGN as n will never be 0*/
+        packed = 0x00010000;
     }
 
-    m = ((f2h.i[1] >> 13) & 0x03ff);
-    tmp = (f2h.i[1] >> 23) & 0xff; /*exponent*/
-    tmp = (tmp - 0x70) & ((unsigned int)((int)(0x70 - tmp) >> 4) >> 27);
-
-    if (m < 0x10 && tmp == 0) { /*handle denorms - between 2^-24 and 2^-14*/
-        unsigned short sign = (f2h.i[1] >> 16) & 0x8000;
-        tmp = ((f2h.i[1] >> 23) & 0xff);
-        m = (f2h.i[1] >> 12) & 0x07ff;
-        m |= 0x0800u;
-        f2h.h[1] = sign | ((m >> (114 - tmp)) + ((m >> (113 - tmp)) & 1));
-    } else {
-        f2h.h[1] = (f2h.i[1] >> 31) << 5;
-        f2h.h[1] = (f2h.h[1] | tmp) << 10;
-        f2h.h[1] |= (f2h.i[1] >> 13) & 0x3ff;
+    if (packed == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16, , only happens for _AS, not ASGN as n will never be 0*/
+        packed = 0;
     }
 
-    if (f2h.i[0] == 0) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16, only happens for _AS, not ASGN as n will never be 0*/
-        f2h.i[0] = 0x00010000;
-    }
-
-    if (f2h.i[0] == SIGN_BIT) { /*avoid being detected as a 0-label voxel, setting mus=EPS_fp16, , only happens for _AS, not ASGN as n will never be 0*/
-        f2h.i[0] = 0;
-    }
-
-    return f2h.i[0];
+    return packed;
 }
 
 /**
