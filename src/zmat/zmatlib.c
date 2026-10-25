@@ -705,6 +705,15 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                         return -3;
                     }
 
+                    /* no progress with room left to write: the input ran out before
+                       the stream ended, and inflate will say so forever */
+                    if (*ret == Z_BUF_ERROR && zs.avail_out != 0) {
+                        inflateEnd(&zs);
+                        free(*outputbuf);
+                        *outputbuf = NULL;
+                        return -3;
+                    }
+
                     /* output buffer full — need to grow */
                     if (zs.avail_out == 0) {
                         rounds++;
