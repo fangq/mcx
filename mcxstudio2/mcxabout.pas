@@ -17,7 +17,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, StdCtrls, ExtCtrls, Graphics, Buttons,
-  Clipbrd, mcxdpi, mcxicons;
+  Clipbrd, mcxdpi, mcxicons, mcxhelp;
 
 const
   { Studio's own version, which is not mcx's: a front end is released on its
@@ -30,7 +30,8 @@ procedure McxShowAbout(AOwner: TComponent; const ADetails: string);
 
 { A help window rather than a message box: help is read, and a message box
   cannot be left open beside the setting it describes. }
-procedure McxShowHelp(AOwner: TComponent; const ATitle, AText: string);
+procedure McxShowHelp(AOwner: TComponent; const ATitle, AText: string;
+  const AManual: string = '');
 
 implementation
 
@@ -52,9 +53,20 @@ type
     procedure Click(Sender: TObject);
   end;
 
+  { Carries the address the help window's manual button opens. }
+  TMcxManualLink = class
+    URL: string;
+    procedure Click(Sender: TObject);
+  end;
+
 procedure TMcxCopier.Click(Sender: TObject);
 begin
   Clipboard.AsText := Text;
+end;
+
+procedure TMcxManualLink.Click(Sender: TObject);
+begin
+  McxOpenManual(URL);
 end;
 
 { A form that is as tall as its contents and no taller.  Built the same way
@@ -190,17 +202,26 @@ begin
   end;
 end;
 
-procedure McxShowHelp(AOwner: TComponent; const ATitle, AText: string);
+procedure McxShowHelp(AOwner: TComponent; const ATitle, AText: string;
+  const AManual: string);
 var
   F: TForm;
   Body: TMemo;
   Bar: TPanel;
+  Link: TMcxManualLink;
 begin
   F := MakeWindow(AOwner, ATitle, 480);
+  Link := TMcxManualLink.Create;
   try
     F.BorderStyle := bsSizeable;
     Bar := MakeButtons(F);
     AddButton(Bar, 'Close', mrOK, 0);
+    { the full entry of the option in mcx's manual, in the browser }
+    if AManual <> '' then
+    begin
+      Link.URL := AManual;
+      AddButton(Bar, 'Open manual', mrNone, 1).OnClick := @Link.Click;
+    end;
 
     Body := TMemo.Create(F);
     Body.Parent := F;
@@ -214,6 +235,7 @@ begin
     F.ShowModal;
   finally
     F.Free;
+    Link.Free;
   end;
 end;
 

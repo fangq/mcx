@@ -44,7 +44,21 @@ procedure McxSrcParams(const AType: string; out ALabel1, ALabel2: string);
 { What F1 shows when nothing in particular is focused. }
 function McxHelpOverview: string;
 
+{ Where the help window's "Open manual" button goes for one control: mcx's
+  option page (doc/mcx_help.html) at the option the control's help names --
+  at its JSON input format section for a setting with no option -- or the
+  top of the page for ACtl = ''.  The copy shipped beside the program is
+  preferred; without one, the same page on the wiki.  '' when the option is
+  not on the page (mmc's own, such as --method). }
+function McxManualURL(const ACtl: string): string;
+
+{ Opens what McxManualURL returned in the default browser. }
+procedure McxOpenManual(const AURL: string);
+
 implementation
+
+uses
+  LCLIntf;
 
 type
   TMcxHelpEntry = record
@@ -329,6 +343,117 @@ begin
     'Press F1 over any setting for what it does and which mcx option it is. ' +
     'The Command tab shows the line that will be run; the JSON tab shows the ' +
     'file that will be written.';
+end;
+
+{ ------------------------------------------------------- the manual ------ }
+
+const
+  ManualPage = 'mcx_help.html';
+  ManualWeb = 'https://mcx.space/wiki/index.cgi?Doc/mcx_help';
+
+{ The first long option the help names: "--photon" in "... (-n, --photon)". }
+function HelpOption(const ACtl: string): string;
+var
+  T: string;
+  i, j: Integer;
+begin
+  Result := '';
+  T := McxHelpFor(ACtl);
+  i := Pos('--', T);
+  if i = 0 then Exit;
+  j := i + 2;
+  while (j <= Length(T)) and (T[j] in ['a'..'z', 'A'..'Z', '0'..'9']) do Inc(j);
+  Result := Copy(T, i + 2, j - i - 2);
+end;
+
+{ The page beside the program: the release folder keeps doc/ next to bin/,
+  the Windows installer puts the mcx release under MCXSuite\mcx, and in the
+  source tree the binary sits in mcxstudio2/bin. }
+function LocalManual: string;
+const
+  Rel: array[0..3] of string = ('../doc/', 'doc/', 'MCXSuite/mcx/doc/', '../../doc/');
+var
+  Dir: string;
+  i: Integer;
+begin
+  Dir := ExtractFilePath(ExpandFileName(ParamStr(0)));
+  for i := 0 to High(Rel) do
+  begin
+    Result := ExpandFileName(Dir + SetDirSeparators(Rel[i]) + ManualPage);
+    if FileExists(Result) then Exit;
+  end;
+  Result := '';
+end;
+
+function PageHasAnchor(const AFile, AAnchor: string): Boolean;
+var
+  L: TStringList;
+begin
+  Result := False;
+  L := TStringList.Create;
+  try
+    try
+      L.LoadFromFile(AFile);
+      Result := Pos('name="' + AAnchor + '"', L.Text) > 0;
+    except
+      Result := False;
+    end;
+  finally
+    L.Free;
+  end;
+end;
+
+function McxManualURL(const ACtl: string): string;
+var
+  Opt, Page: string;
+begin
+  Result := '';
+  Opt := '';
+  if ACtl <> '' then
+  begin
+    if McxHelpFor(ACtl) = '' then Exit;
+    Opt := HelpOption(ACtl);
+    { a setting with no option of its own exists only in the input file:
+      the page's section on the JSON input format describes it }
+    if Opt = '' then Opt := 'JSON_input_file_format';
+  end;
+  Page := LocalManual;
+  if Page <> '' then
+  begin
+    if (Opt <> '') and not PageHasAnchor(Page, Opt) then Exit;
+    Result := 'file://' + StringReplace(Page, '\', '/', [rfReplaceAll]);
+    if (Length(Page) > 1) and (Page[2] = ':') then
+      Result := 'file:///' + StringReplace(Page, '\', '/', [rfReplaceAll]);
+  end
+  else
+    Result := ManualWeb;
+  if Opt <> '' then Result := Result + '#' + Opt;
+end;
+
+{ Through a one-line page that redirects: handed straight to the browser, a
+  file:// address loses its #anchor on Windows (ShellExecute drops it), and
+  the manual would open at the top instead of at the option. }
+procedure McxOpenManual(const AURL: string);
+var
+  L: TStringList;
+  Hop: string;
+begin
+  if AURL = '' then Exit;
+  Hop := IncludeTrailingPathDelimiter(GetTempDir(False)) + 'mcxstudio_help.html';
+  L := TStringList.Create;
+  try
+    L.Text := '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+      '<meta http-equiv="refresh" content="0; url=' + AURL + '"></head>' +
+      '<body><a href="' + AURL + '">' + AURL + '</a></body></html>';
+    try
+      L.SaveToFile(Hop);
+      OpenDocument(Hop);
+    except
+      OpenURL(AURL);
+    end;
+  finally
+    L.Free;
+  end;
 end;
 
 end.

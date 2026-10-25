@@ -3087,7 +3087,7 @@ end;
 procedure TfmMain.ShowHelpForFocus;
 var
   C: TControl;
-  Body, Title: string;
+  Body, Title, HelpCtl: string;
 begin
   Body := '';
   Title := '';
@@ -3098,6 +3098,7 @@ begin
     Body := McxHelpFor(C.Name);
     if Body <> '' then
     begin
+      HelpCtl := C.Name;
       { What the setting is called on screen, never the control's name: a
         person who needed to be told it was rgBackend would not have pressed
         F1 over it. }
@@ -3113,10 +3114,11 @@ begin
   end;
   if Body = '' then
   begin
-    McxShowHelp(Self, 'MCX Studio help', McxHelpOverview);
+    McxShowHelp(Self, 'MCX Studio help', McxHelpOverview, McxManualURL(''));
     Exit;
   end;
-  McxShowHelp(Self, Title, Title + LineEnding + LineEnding + Body);
+  McxShowHelp(Self, Title, Title + LineEnding + LineEnding + Body,
+    McxManualURL(HelpCtl));
 end;
 
 
@@ -3233,6 +3235,7 @@ end;
 function TfmMain.SelfTestEditors: Integer;
 var
   Fails: Integer;
+  Url: string;
 
   procedure Expect(const AWhat, AGot, AWant: string);
   begin
@@ -3512,6 +3515,16 @@ begin
   Expect('defaults not written', FDoc.ToJSON(False),
     '{ "Optode" : { "Source" : { "Pos" : [0, 0, 0], "Dir" : [0, 0, 1] } } }');
   FRun.SetStr('@run.backend', WasBackend);
+
+  { The help window's manual button: an option goes to its own entry of
+    mcx_help.html, a setting with no option to the JSON input section, and
+    mmc's own options, which that page does not describe, get no button. }
+  Url := McxManualURL('edPhotons');
+  Expect('manual link of an option', Copy(Url, Length(Url) - 6, 7), '#photon');
+  Url := McxManualURL('edT0');
+  Expect('manual link of an input-file setting',
+    Copy(Url, Pos('#', Url), MaxInt), '#JSON_input_file_format');
+  Expect('no manual link for an mmc option', McxManualURL('cbRayTracer'), '');
 
   { A domain written as a JData array goes on the 3-D card as a volume, and
     comes off again with the document that carried it.  Under a virtual X
