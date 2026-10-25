@@ -237,7 +237,7 @@ jobs:
             # links the mex against liboctmex alone
             cd src
             mkoctfile --version
-            make oct CC=clang CXX=clang++
+            make oct CC=clang CXX=clang++ GCC=clang
             otool -L ../mcxlab/mcx.mex
           else
             # nvcc only drives MSVC, and Octave's mkoctfile only MinGW: the objects
@@ -267,6 +267,12 @@ jobs:
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])" >> $GITHUB_ENV
+          # the mex must load: called with no input it prints its usage; there is
+          # no GPU here, so this is as far as it can go
+          octave-cli --eval "cd('../mcxlab'); version, mcx()" 2>&1 | tee octload.txt
+          grep -q MCXLAB octload.txt
+          ! grep -iE "could not|cannot|invalid|undefined|error" octload.txt
+          rm -f octload.txt
       - name: Build mcxlab for MATLAB
         if: ${{ runner.os != 'macOS' }}
         run: |
