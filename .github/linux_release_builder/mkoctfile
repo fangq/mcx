@@ -1,0 +1,82 @@
+#!/bin/bash
+# A stand-in for "mkoctfile --mex" inside the manylinux2014 release builder.
+#
+# Octave's own mkoctfile cannot run here -- there is no Octave in the image --
+# and it is not needed: since Octave 6 a mex file links no Octave library at
+# all.  The real one's commands (mkoctfile -n -v --mex) are compile with -fPIC
+# and Octave's headers, then link -shared -Wl,-Bsymbolic; the mx/mex functions
+# are left for whichever Octave loads the file to provide.  Built here, against
+# glibc 2.17, the same file loads in Octave 5.2 on Ubuntu 20.04 and later.
+#
+# The headers come from OCTAVE_INCDIR (the directory holding octave/mex.h),
+# mounted from the runner.  The environment variables the Makefiles set for
+# mkoctfile are honoured: CC CXX CPPFLAGS CFLAGS CXXFLAGS LDFLAGS LFLAGS
+# XTRA_CFLAGS XTRA_CXXFLAGS DL_LD DL_LDFLAGS.
+
+set -e
+
+: "${OCTAVE_INCDIR:?set OCTAVE_INCDIR to the folder that holds octave/mex.h}"
+CC=${CC:-gcc}
+CXX=${CXX:-g++}
+DL_LD=${DL_LD:-$CXX}
+INC="-I$OCTAVE_INCDIR -I$OCTAVE_INCDIR/octave"
+
+out=""
+verbose=0
+strip=0
+srcs=()
+objs=()
+flags=()
+libs=()
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --mex) ;;
+        -v|--verbose) verbose=1 ;;
+        -s|--strip) strip=1 ;;
+        -o|-output|--output) shift; out="$1" ;;
+        -p|--print)
+            # the queries the Makefiles make; nothing here links Octave
+            shift
+            case "$1" in
+                INCFLAGS) echo "$INC" ;;
+                *) echo "" ;;
+            esac
+            exit 0 ;;
+        *.c|*.cc|*.cpp|*.cxx) srcs+=("$1") ;;
+        *.o|*.a) objs+=("$1") ;;
+        -l*|-L*|-Wl,*) libs+=("$1") ;;
+        *) flags+=("$1") ;;
+    esac
+    shift
+done
+
+[ ${#srcs[@]} -gt 0 ] || { echo "mkoctfile (shim): no source files" >&2; exit 1; }
+
+if [ -z "$out" ]; then
+    out="$(basename "${srcs[0]%.*}").mex"
+fi
+case "$out" in *.mex) ;; *) out="$out.mex" ;; esac
+
+run() {
+    [ $verbose = 1 ] && echo "$@"
+    "$@"
+}
+
+tmpobjs=()
+for s in "${srcs[@]}"; do
+    o="/tmp/octshim-$$-$(basename "${s%.*}").o"
+    case "$s" in
+        *.c) run $CC -c -fPIC $INC $CPPFLAGS $CFLAGS $XTRA_CFLAGS -I. -DMEX_DEBUG "${flags[@]}" "$s" -o "$o" ;;
+        *)   run $CXX -c -fPIC $INC $CPPFLAGS $CXXFLAGS $XTRA_CXXFLAGS -I. -DMEX_DEBUG "${flags[@]}" "$s" -o "$o" ;;
+    esac
+    tmpobjs+=("$o")
+done
+
+# other options go to the link as well: -static-libstdc++ and the like are link
+# options, and -I/-D ones are ignored there
+run $DL_LD -o "$out" "${tmpobjs[@]}" "${objs[@]}" -shared -Wl,-Bsymbolic $DL_LDFLAGS $LDFLAGS $LFLAGS "${flags[@]}" "${libs[@]}"
+rm -f "${tmpobjs[@]}"
+
+[ $strip = 1 ] && run strip "$out"
+exit 0

@@ -122,6 +122,20 @@ jobs:
           echo 'C:\msys64\mingw64\bin' >> $GITHUB_PATH
           echo 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\' >> $GITHUB_PATH
           echo 'MW_MINGW64_LOC=/c/msys64/mingw64' >> $GITHUB_ENV
+      - name: Install Octave 10+ (macOS and Windows)
+        if: ${{ runner.os != 'Linux' }}
+        continue-on-error: true
+        run: |
+          # Octave 10 and newer link a mex file against the stable liboctmex alone,
+          # so one built here loads in later Octave versions as well
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install octave
+          else
+            # kept off GITHUB_PATH: its MinGW tools must not shadow the MSVC/CUDA build
+            curl --retry 3 -kL https://ftpmirror.gnu.org/octave/windows/octave-10.3.0-w64.7z --output octave_10.3.7z
+            7z x octave_10.3.7z -ooctave -y
+            rm -rf octave_10.3.7z
+          fi
       - name: Cache Visual Studio 2019 BT (Windows)
         if: ${{ matrix.os == 'windows-2022' }}
         id: cache-vs2019
@@ -210,8 +224,11 @@ jobs:
           rm -rf src/*.c
           git checkout src/*.c
       - name: Build mcxlab for Octave
-        if: ${{ runner.os == 'Linux' }}
+        continue-on-error: ${{ runner.os != 'Linux' }}
         run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            export PATH="$PWD/octave/octave-10.3.0-w64/mingw64/bin:$PATH"
+          fi
           cd src
           which gcc
           gcc -v
@@ -235,6 +252,7 @@ jobs:
         if: ${{ runner.os != 'macOS' }}
         run: |
           cd src
+          make clean   # the Octave build may have stopped half way
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             make mex
             objdump -p ../mcxlab/mcx.mexw* | grep "DLL Name:"
@@ -270,23 +288,25 @@ jobs:
           make unittest
           rm -f ../bin/mcx_unittest
       - name: Build mcxstudio
-        run: |
-          cd mcxstudio
-          lazbuild --build-mode=release mcxshow.lpi
-          lazbuild --build-mode=release mcxviewer.lpi
-          lazbuild --build-mode=release mcxstudio.lpi
-          cp debug/mcxstudio ../bin
-          cp mcxshow ../bin
-          cp mcxviewer ../bin
-          cp -a locale ../bin
-          cp README.txt ../inno/MCXStudio_README.txt
-      - name: Build mcxstudio2
         if: ${{ runner.os != 'macOS' }}
         continue-on-error: true
         run: |
           cd mcxstudio2
           make
-          cp bin/mcxstudio2* ../bin
+          cp bin/mcxstudio* ../bin
+      - name: Rebuild Linux release binaries for glibc 2.17 (manylinux2014)
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
+        run: |
+          # built on this runner, every binary and mex file needs GLIBC_2.34 and
+          # does not start on Ubuntu 20.04 or older; the manylinux2014 (CentOS 7)
+          # image links them against glibc 2.17 and checks that they do
+          docker build --build-arg WITH_CUDA=1 --build-arg WITH_LAZARUS=1 -t mcx-linux-release-builder .github/linux_release_builder
+          MLROOT=$(dirname "$(dirname "$(readlink -f "$(which matlab)")")")
+          OCTINC=$(dirname "$(dirname "$(find /usr/include -path '*/octave/mex.h' | head -1)")")
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/src" \
+              -v "$MLROOT:$MLROOT:ro" -e MATLAB_ROOT="$MLROOT" \
+              -v "$OCTINC:/octinc:ro" -e OCTAVE_INCDIR=/octinc \
+              mcx-linux-release-builder bash .github/linux_release_builder/build_mcx.sh
       - name: Create package folder
         run: |
           mkdir packages
@@ -328,9 +348,6 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             strip bin/mcx* || true
-            cp -a mcxstudio/debug/mcxstudio.app bin
-            cp -a mcxstudio/mcxshow.app   bin
-            cp -a mcxstudio/mcxviewer.app bin
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/mcx* || true
