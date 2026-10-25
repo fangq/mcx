@@ -10,7 +10,12 @@
 # mcxstudio, the name the release ships it under.
 PROJECT   ?= mcxstudio2
 BINARY    ?= mcxstudio
+# the native widget set on Windows; gtk2 elsewhere
+ifeq ($(OS),Windows_NT)
+WIDGETSET ?= win32
+else
 WIDGETSET ?= gtk2
+endif
 PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
 
@@ -76,8 +81,12 @@ LAZDIR := $(shell \
     done)
 endif
 
+# lazbuild on Windows is a native program: an MSYS path such as /c/lazarus,
+# which is what the search above finds there, reads to it as D:\c\lazarus
+NATIVEPATH = $(if $(filter Windows_NT,$(OS)),$(shell cygpath -m '$(1)' 2>/dev/null || echo '$(1)'),$(1))
+
 LAZFLAGS = --pcp=$(PCP) --ws=$(WIDGETSET) \
-           $(if $(LAZDIR),--lazarusdir=$(LAZDIR))
+           $(if $(LAZDIR),--lazarusdir=$(call NATIVEPATH,$(LAZDIR)))
 
 .PHONY: all debug forms icons sheet test clean distclean res install uninstall
 

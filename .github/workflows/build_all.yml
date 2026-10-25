@@ -346,10 +346,17 @@ jobs:
         run: perl -e "print 'RELEASE_TAG='. lc('${{ runner.os }}-${{ runner.arch }}-github-latest')" >> $GITHUB_ENV
       - name: Zip mcxlab
         run: |
+          # strip, then compress, both mex files (not on macOS); the Windows ones are
+          # built by MSVC and have no symbols for GNU strip
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            strip --strip-unneeded mcxlab/mcx.mex* || true
+            upx -9 mcxlab/mcx.mex* || true
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            upx/upx-4.0.2-win64/upx -9 mcxlab/mcx.mex* || true
+          fi
           [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             cp 'C:\Windows\System32\vcomp140.dll' mcxlab
-            upx/upx-4.0.2-win64/upx mcxlab/mcx.mex*
             7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           else
             zip -FSr --symlink packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
@@ -379,6 +386,8 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             strip bin/mcx* || true
+            # the FPC/Lazarus installers downloaded into the checkout (550 MB)
+            rm -f fpc-*.dmg Lazarus-*.pkg
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/mcx* || true
