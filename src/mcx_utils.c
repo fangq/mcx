@@ -1828,6 +1828,27 @@ void mcx_preprocess(Config* cfg) {
         }
     }
 
+    /* the voxel size scales every step; "-u abc" reads as 0 and "-u inf" as an
+       infinite one, and either leaves the photons stepping in place */
+    if (!isfinite(cfg->unitinmm) || cfg->unitinmm <= 0.f) {
+        MCX_ERROR(-1, "the voxel size (-u/--unitinmm, Domain.LengthUnit) must be a positive finite number");
+    }
+
+    /* the device workloads are normalized by their sum to split the photons */
+    for (uint i = 0; i < MAX_DEVICE; i++) {
+        if (!isfinite(cfg->workload[i]) || cfg->workload[i] < 0.f) {
+            MCX_ERROR(-1, "the device workloads (-W/--workload) must be finite and non-negative");
+        }
+    }
+
+    /* SrcNum counts the patterns of a pattern source; the output is sized by
+       it only for those (mcx_run_simulation's dimxyz), while saving and the
+       kernel's deposit loop use it for every source -- reading and writing
+       SrcNum times the field for any other source type given one */
+    if (cfg->srctype != MCX_SRC_PATTERN && cfg->srctype != MCX_SRC_PATTERN3D) {
+        cfg->srcnum = 1;
+    }
+
     double tmp = sqrt(cfg->srcdir.x * cfg->srcdir.x + cfg->srcdir.y * cfg->srcdir.y + cfg->srcdir.z * cfg->srcdir.z);
 
     if (tmp < EPS) {
@@ -4196,6 +4217,14 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
         cfg->vol = NULL;
     }
 
+    /* the formats this reads; a -K given as a number was not checked here,
+       and a width of 0 passed every size test below and was then memcpy'd
+       as 4 bytes a voxel */
+    if (!(cfg->mediabyte == 1 || cfg->mediabyte == 2 || cfg->mediabyte == 4
+            || (cfg->mediabyte >= MEDIA_ASGN_F2H && cfg->mediabyte <= MEDIA_AS_SHORT))) {
+        MCX_ERROR(-1, "Unsupported media format");
+    }
+
     /* the product is 32-bit, as is every index into the volume after it; a
        Dim it does not fit in wraps around to a small allocation that the
        loops below then overrun */
@@ -6044,6 +6073,20 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                         i = mcx_readarg(argc, argv, i, &(cfg->zipid), "int");
                     }
 
+                    {
+                        /* an index into zipformat[]: an unknown name is -1, and a
+                           number was used unchecked */
+                        int nzip = 0;
+
+                        while (zipformat[nzip][0] != '\0') {
+                            nzip++;
+                        }
+
+                        if (cfg->zipid < 0 || cfg->zipid >= nzip) {
+                            MCX_ERROR(-1, "unsupported compression method given to -Z/--zip");
+                        }
+                    }
+
                     break;
 
                 case 'w':
@@ -6181,10 +6224,10 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                             cfg->isdumpjson = 1;
                         } else if (!isdigit((int)(argv[i + 1][0]))) {
                             cfg->isdumpjson = 1;
-                            memcpy(cfg->jsonfile, argv[i + 1], MIN(strlen(argv[i + 1]), MAX_PATH_LENGTH));
+                            snprintf(cfg->jsonfile, sizeof(cfg->jsonfile), "%s", argv[i + 1]); /* memcpy of MAX_PATH_LENGTH left no terminator */
                             i++;
                         } else {
-                            i = mcx_readarg(argc, argv, i, &(cfg->isdumpjson), "int");
+                            i = mcx_readarg(argc, argv, i, &(cfg->isdumpjson), "char");
                         }
                     } else if (strcmp(argv[i] + 2, "reflectin") == 0) {
                         i = mcx_readarg(argc, argv, i, &(cfg->isrefint), "char");
@@ -6198,9 +6241,9 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     } else if (strcmp(argv[i] + 2, "srcid") == 0) {
                         i = mcx_readarg(argc, argv, i, &(cfg->srcid), "int");
                     } else if (strcmp(argv[i] + 2, "trajstokes") == 0) {
-                        i = mcx_readarg(argc, argv, i, &(cfg->istrajstokes), "int");
+                        i = mcx_readarg(argc, argv, i, &(cfg->istrajstokes), "char");
                     } else if (strcmp(argv[i] + 2, "internalsrc") == 0) {
-                        i = mcx_readarg(argc, argv, i, &(cfg->internalsrc), "int");
+                        i = mcx_readarg(argc, argv, i, &(cfg->internalsrc), "char");
                     } else {
                         MCX_FPRINTF(cfg->flog, "%s: --%s\n", T_("unknown verbose option"), argv[i] + 2);
                     }
