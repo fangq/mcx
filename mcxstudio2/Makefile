@@ -13,6 +13,8 @@ BINARY    ?= mcxstudio
 # the native widget set on Windows; gtk2 elsewhere
 ifeq ($(OS),Windows_NT)
 WIDGETSET ?= win32
+else ifeq ($(shell uname -s),Darwin)
+WIDGETSET ?= cocoa
 else
 WIDGETSET ?= gtk2
 endif
@@ -85,16 +87,42 @@ endif
 # which is what the search above finds there, reads to it as D:\c\lazarus
 NATIVEPATH = $(if $(filter Windows_NT,$(OS)),$(shell cygpath -m '$(1)' 2>/dev/null || echo '$(1)'),$(1))
 
-LAZFLAGS = --pcp=$(PCP) --ws=$(WIDGETSET) \
+# CPU builds for another processor than the host's, e.g. CPU=x86_64 on an arm64
+# Mac (fpc's macOS installer carries the compilers and units of both)
+LAZFLAGS = --pcp=$(PCP) --ws=$(WIDGETSET) $(if $(CPU),--cpu=$(CPU)) \
            $(if $(LAZDIR),--lazarusdir=$(call NATIVEPATH,$(LAZDIR)))
 
-.PHONY: all debug forms icons sheet test clean distclean res install uninstall
+.PHONY: all debug forms icons sheet test clean distclean res install uninstall app
 
 all: forms
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(PROJECT).lpi
 
 debug: forms
 	$(LAZBUILD) $(LAZFLAGS) --build-mode=Debug $(PROJECT).lpi
+
+# macOS: bin/MCXStudio.app, one universal binary (arm64 and x86_64, each built
+# on its own and joined with lipo) in a bundle with its icon, an Info.plist
+# whose version is McxStudioVersion's, and an ad-hoc signature -- arm64 runs
+# nothing unsigned.  lazbuild's own bin/mcxstudio.app (UseAppBundle) only links
+# to the binary beside it, which does not survive packaging.  The universal
+# binary is also left at bin/mcxstudio, which the tests run.
+APP        ?= bin/MCXStudio.app
+MACCPUS    ?= aarch64 x86_64
+APPVERSION ?= $(shell sed -n "s/.*McxStudioVersion *= *'\([0-9.]*\).*/\1/p" mcxabout.pas)
+
+app:
+	@for c in $(MACCPUS); do \
+	    $(MAKE) all CPU=$$c && mv -f bin/$(BINARY) bin/$(BINARY)-$$c || exit 1; \
+	done
+	rm -rf $(APP) bin/$(BINARY).app
+	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
+	lipo -create $(addprefix bin/$(BINARY)-,$(MACCPUS)) -output $(APP)/Contents/MacOS/$(BINARY)
+	rm -f $(addprefix bin/$(BINARY)-,$(MACCPUS))
+	cp packaging/macos/mcxstudio.icns $(APP)/Contents/Resources/
+	sed 's/@VERSION@/$(APPVERSION)/g' packaging/macos/Info.plist > $(APP)/Contents/Info.plist
+	printf 'APPLmcxs' > $(APP)/Contents/PkgInfo
+	codesign --force --sign - $(APP)
+	cp $(APP)/Contents/MacOS/$(BINARY) bin/$(BINARY)
 
 # lazbuild decides what to recompile from the .pas timestamps alone, so a form
 # edited on its own relinks the binary without rebuilding the resource that

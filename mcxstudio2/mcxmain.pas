@@ -3374,7 +3374,7 @@ var
       FDomInfo.Caption) > 0, True), 'True');
 
     { mmc's own .dat pair, where the source tree has one. }
-    Mm := ExpandFileName(ExtractFilePath(ParamStr(0)) +
+    Mm := ExpandFileName(McxProgramDir +
       '../../../mmc/examples/meshtest/node_mesh1.dat');
     if FileExists(Mm) then
     begin

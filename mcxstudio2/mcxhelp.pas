@@ -58,7 +58,7 @@ procedure McxOpenManual(const AURL: string);
 implementation
 
 uses
-  LCLIntf;
+  LCLIntf, mcxrun;
 
 type
   TMcxHelpEntry = record
@@ -376,7 +376,7 @@ var
   Dir: string;
   i: Integer;
 begin
-  Dir := ExtractFilePath(ExpandFileName(ParamStr(0)));
+  Dir := McxProgramDir;
   for i := 0 to High(Rel) do
   begin
     Result := ExpandFileName(Dir + SetDirSeparators(Rel[i]) + ManualPage);

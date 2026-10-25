@@ -101,6 +101,10 @@ type
 { The solver for a combination, and why there is none when there is none. }
 function McxPlanFor(const AProcessor, ADomain, AMedia: string): TMcxPlan;
 
+{ The folder the program is in, with a trailing delimiter -- for a macOS
+  application bundle, the folder the bundle is in. }
+function McxProgramDir: string;
+
 function McxFindExe(ABackend: TMcxBackend): string;
 
 { The name the run document stores a backend under, which is also what mcx's
@@ -311,6 +315,24 @@ begin
   end;
 end;
 
+{ The executable of MCXStudio.app sits in MCXStudio.app/Contents/MacOS, three
+  levels below where the package put the bundle; the simulators, the manual
+  and the output folder are beside the bundle, and nothing may be written
+  inside it (that would break its signature). }
+function McxProgramDir: string;
+const
+  Bundle = '.app' + PathDelim + 'Contents' + PathDelim + 'MacOS' + PathDelim;
+var
+  Dir: string;
+  P: Integer;
+begin
+  Dir := IncludeTrailingPathDelimiter(ExtractFilePath(ExpandFileName(ParamStr(0))));
+  P := Pos(LowerCase(Bundle), LowerCase(Dir));
+  if (P > 0) and (P + Length(Bundle) - 1 = Length(Dir)) then
+    Dir := IncludeTrailingPathDelimiter(ExtractFilePath(Copy(Dir, 1, P + 3)));
+  Result := Dir;
+end;
+
 function McxWorkFolder(ABackend: TMcxBackend; const ASession: string): string;
 var
   Root, Session: string;
@@ -320,8 +342,7 @@ begin
   Root := '';
   if not McxUseUserFolder then
   begin
-    Root := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) +
-      'MCXOutput';
+    Root := McxProgramDir + 'MCXOutput';
     if not ForceDirectories(Root) then Root := '';
   end;
   if Root = '' then
@@ -336,7 +357,7 @@ var
   Base, Name, Paths: string;
 begin
   Name := McxExeName(ABackend);
-  Base := ExtractFilePath(ParamStr(0));
+  Base := McxProgramDir;
 
   { The first Studio's order (mcxgui.pas SearchForExe), so an install that
     worked with it works with this one: the MCXSuite tree the Windows

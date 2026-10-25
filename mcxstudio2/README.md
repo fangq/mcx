@@ -68,6 +68,16 @@ and on a layout this does not know about, name the directory outright:
 If nothing is found, nothing is passed and lazbuild uses its own config,
 which is what a normally installed Lazarus wants anyway.
 
+On macOS the widgetset is Cocoa, and
+
+    make app
+
+builds `bin/MCXStudio.app`: one universal binary (arm64 and x86_64, each
+compiled on its own and joined with `lipo`; FPC's macOS installer carries the
+compilers of both) in a bundle with its icon and an ad-hoc signature, which
+arm64 Macs require. `make CPU=x86_64` builds a single slice for the other
+processor.
+
 
 Tests
 -----
