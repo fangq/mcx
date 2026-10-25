@@ -3508,8 +3508,9 @@ begin
   FRun.SetStr('@run.backend', WasBackend);
 
   { A domain written as a JData array goes on the 3-D card as a volume, and
-    comes off again with the document that carried it. }
-  if FView <> nil then
+    comes off again with the document that carried it.  Under a virtual X
+    server the view may not have painted yet, and has nothing to draw into. }
+  if (FView <> nil) and FView.Ready then
   begin
     FDoc.LoadFromString('{"Domain":{"Dim":[2,2,2]},"Shapes":{' +
       '"_ArrayType_":"uint8","_ArraySize_":[2,2,2],' +
