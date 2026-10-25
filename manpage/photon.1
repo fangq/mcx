@@ -1,64 +1,79 @@
 .\" Manpage for photon.
-.\" Contact fangqq@gmail.com to correct errors or typos.
+.\" Contact q.fang@neu.edu to correct errors or typos.
 .TH PHOTON 1 "October 2026" "v2026 (3.0)" "photon man page"
 .SH NAME
-photon \- a unified command line interface for running MCX/MMC photon simulations
+photon \- one command-line launcher for MCX, MCX-CL and MMC
 .SH SYNOPSIS
-photon <option1> <option2> ...
+.B photon
+[\fB\-\-mcx\fR|\fB\-\-mcxcl\fR|\fB\-\-mmc\fR] [\fB\-\-which\fR] [\fB\-\-photon\-quiet\fR]
+\fIoptions of mcx, mcxcl or mmc\fR ...
 .SH DESCRIPTION
-Monte Carlo eXtreme (mcx) and Mesh-based Monte Carlo (mmc) are rigorously
-validated, physically-accurate and GPU-accelerated 3D photon transport simulators.
-The MCX/MMC simulators are developed by Dr. Qianqian Fang at the Computational
-Optics and Translational Imaging (COTI) Lab, at Northeastern University, Boston,
-USA. More details regarding mcx/mmc can be found at https://mcx.space
-
-To simplify running mcx/mmc simulations, we have created a unified graphical user
-interface (GUI) `mcxstudio`, and a unified command line interface `photon`.
-The command `photon` is a perl script that automatically selects between
-`mcx` (CUDA-based), `mcxcl` (OpenCL based), and `mmc` (SSE4 CPU/OpenCL) based
-on the following command line flags and input file data structures. In other
-words, one can simply replace a command starting with `mcx`, `mcxcl` and `mmc`
-by `photon` and photon runs the simulation according to a set of heuristics.
-
-
+Monte Carlo eXtreme (\fBmcx\fR), its OpenCL version (\fBmcxcl\fR) and Mesh-based
+Monte Carlo (\fBmmc\fR) are GPU-accelerated 3-D photon transport simulators
+developed at the Computational Optics and Translational Imaging (COTI) Lab,
+Northeastern University, Boston, USA (https://mcx.space).
+.PP
+\fBphoton\fR takes the command line of any of the three, decides which
+simulator the input is for, and runs that simulator with the same options: a
+command starting with \fBmcx\fR, \fBmcxcl\fR or \fBmmc\fR can start with
+\fBphoton\fR instead. The simulator replaces photon when it starts, so its
+output and exit code are photon's.
+.SH CHOOSING THE SIMULATOR
+.TP
+\fBmmc\fR
+when the input describes a tetrahedral mesh: a JSON input (\fB\-f\fR file or
+\fB\-\-json\fR fragment) with a \fBMesh\fR object, or with mesh data
+(\fBMeshNode\fR, \fBMeshElem\fR or \fBMeshID\fR) in \fBShapes\fR; an .inp file in
+mmc's layout (a mesh file stub on line 6, or a single integer on line 7); an
+mmc-only option (\fB\-c\fR/\fB\-\-compute\fR, \fB\-C\fR/\fB\-\-basisorder\fR,
+\fB\-M\fR/\fB\-\-method\fR, \fB\-\-gridsize\fR, \fB\-\-mc\fR); or
+\fB\-\-bench\fR with a built-in benchmark only mmc has
+.TP
+\fBmcx\fR
+for a voxel input, when \fBmcx \-L\fR finds an NVIDIA (CUDA) device
+.TP
+\fBmcxcl\fR
+for a voxel input otherwise \- any OpenCL device, the CPU included \- or when an
+OpenCL-only option is given (\fB\-J\fR/\fB\-\-compileopt\fR,
+\fB\-o\fR/\fB\-\-optlevel\fR, \fB\-\-showkernel\fR)
 .SH OPTIONS
-Running `photon` without any parameter prints the help information.
-If additional command line flags are used, `photon` by default treats the input
-flags in the format that are supported by `mcx`; however, `photon` further parses
-the use simulation input file and flags, and determines if `mmc` or `mcxcl`
-should be used instead.
-
-The supported options are fully compatible with those from MCX/MMC/MCXCL. Photon
-determines which of the simulators among mcx/mmc/mcxcl based on a set of simple
-tests, the selected simulator and their conditions are listed below
-
+All options other than the ones below are passed to the simulator unchanged,
+\fB\-\-help\fR included.
 .TP
-\fBchoose mmc\fR
-when the input .json file contains 'Mesh' or 'MeshID' elements
-or when the input .inp file contains a mesh file stub without suffix in line#6
-or when the input .inp file contains a single integer on line#7
-or one of --method, --gridsize, --mc, --basisorder, -C, --compute, -c is used
-
+\fB\-\-mcx\fR, \fB\-\-mcxcl\fR, \fB\-\-mmc\fR
+run that simulator, whatever the input (\fB\-mcx\fR, \fB\-mcxcl\fR and
+\fB\-mmc\fR also work)
 .TP
-\fBchoose mcxcl\fR
-when input does not contain mesh data
-and when one of --compileopt, -J, --optlevel, -o, --kernel, --showkernel is used
-and mcx -L failed to list any CUDA devices
-
+\fB\-\-which\fR
+print the simulator photon would run, its path and the reason, and exit
 .TP
-\fBchoose mcx\fR
-when input does not contain mesh data,and when `mcx -L` outputs valid CUDA devices
-
+\fB\-\-photon\-quiet\fR
+do not print photon's one-line note (written to standard error) before
+running the simulator
 .TP
-\fB--mcx\fR
+\fB\-\-info\fR
+print photon's help, including where each simulator was found
+.SH FINDING THE SIMULATORS
+Each simulator is looked for, in this order, in: the environment variable
+\fBPHOTON_MCX\fR, \fBPHOTON_MCXCL\fR or \fBPHOTON_MMC\fR (a full path); the
+folder photon is in; the MCX Suite and release layouts beside it
+(\fI../mcx/bin\fR, \fI../../mcx/bin\fR, \fIMCXSuite/mcx/bin\fR and the same for
+mcxcl and mmc); the \fBPATH\fR; \fI~/bin\fR; \fI/usr/libexec\fR and
+\fI/usr/local/bin\fR.
+.SH EXAMPLES
 .TP
-\fB--mcxcl\fR
+photon \-\-bench cube60 \-n 1e7
+mcx on an NVIDIA GPU, mcxcl otherwise
 .TP
-\fB--mmc\fR
-
-One can append --mcx, --mcxcl or --mmc to force `photon` to use the specified simulator.
-
+photon \-f brain_mesh.json
+mmc, as the input carries a mesh
+.TP
+photon \-\-which \-f input.json
+show which simulator would run, without running it
+.TP
+photon \-\-mcxcl \-\-bench cube60 \-G 1
+mcxcl on its first device, even with an NVIDIA GPU present
 .SH SEE ALSO
-mcx(1), mmc(1), mcxcl(1), mcxstudio(1), mcxshow(1), mcxviewer(1)
+mcx(1), mcxcl(1), mmc(1), mcxstudio(1)
 .SH AUTHOR
 Qianqian Fang (q.fang@neu.edu)
