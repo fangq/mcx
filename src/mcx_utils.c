@@ -4171,9 +4171,11 @@ void mcx_savejdata(char* filename, Config* cfg) {
  * Bytes in the array the last mcx_jdatadecode call produced, so that a caller
  * about to read from it can check it holds what the caller expects: a volume
  * that Dim and the media format say is larger than the array is otherwise read
- * past its end.
+ * past its end.  (size_t)-1 means no JData array was decoded for the volume:
+ * a caller (mcxlab, the unit tests) passed a buffer of its own and vouches
+ * for its size.
  */
-static size_t mcx_jdata_bytes = 0;
+static size_t mcx_jdata_bytes = (size_t)-1;
 
 /**
  * @brief Load media index data volume (.bin or .vol) to the memory
@@ -4241,6 +4243,8 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
     if (isbuf && (uint64_t)datalen * ((cfg->mediabyte == MEDIA_ASGN_F2H) ? 16 : ((cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_2LABEL_SPLIT) ? 8 : MIN(cfg->mediabyte, 4))) > mcx_jdata_bytes) {
         MCX_ERROR(-6, "the volume array in Shapes is smaller than Domain.Dim and Domain.MediaFormat require");
     }
+
+    mcx_jdata_bytes = (size_t)-1;  /* used up: a later buffer is a caller's own */
 
     cfg->vol = (unsigned int*)malloc(sizeof(unsigned int) * datalen * (1 + (cfg->mediabyte == MEDIA_2LABEL_SPLIT || cfg->mediabyte == MEDIA_ASGN_F2H)));
 
