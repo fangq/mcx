@@ -227,8 +227,8 @@ type
     { The clear colour, 0..1 per channel. }
     property Background: TMcxVec3 read FBack write FBack;
     property HasVolume: Boolean read GetHasVolume;
-    { False until the GL objects exist, on the first paint; Rebuild draws
-      nothing before then. }
+    { False until the GL context has started, on the first paint, unless
+      the view draws in software; a volume cannot be shown before then. }
     function Ready: Boolean;
     { Set when Rebuild put a domain volume up or took one down; the owner
       clears it once its own controls have followed. }
@@ -649,7 +649,7 @@ end;
 
 function TMcxView.Ready: Boolean;
 begin
-  Result := FLines <> nil;
+  Result := FReady or FSoft;
 end;
 
 function TMcxView.GetHasVolume: Boolean;

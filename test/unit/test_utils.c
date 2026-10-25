@@ -2251,10 +2251,15 @@ static void test_net_and_branches(void) {
                       "an RF output without a modulation frequency");
 
 #ifndef MCX_OPENCL
-    /* the library entry point that runs a JSON input on the GPU */
-    json = jq("{'Session':{'Photons':1000,'ID':'utrun','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}");
-    EXPECT_EXIT_OK(mcx_run_from_json(json), "mcx_run_from_json runs a JSON input");
-    free(json);
+    /* the library entry point that runs a JSON input on the GPU; skipped on a
+       machine with no NVIDIA or AMD (ROCm) GPU device, as the CI runners are */
+    if (access("/dev/nvidia0", F_OK) == 0 || access("/dev/kfd", F_OK) == 0) {
+        json = jq("{'Session':{'Photons':1000,'ID':'utrun','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}");
+        EXPECT_EXIT_OK(mcx_run_from_json(json), "mcx_run_from_json runs a JSON input");
+        free(json);
+    } else {
+        printf("skip mcx_run_from_json on a GPU: no GPU device found\n");
+    }
 
     /* a 2-D domain can not have a source direction along its singular dimension */
     json = jq("{'Session':{'Photons':1000,'ID':'utrun2d','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9},"
