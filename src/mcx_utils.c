@@ -1829,9 +1829,19 @@ void mcx_preprocess(Config* cfg) {
     }
 
     /* the voxel size scales every step; "-u abc" reads as 0 and "-u inf" as an
-       infinite one, and either leaves the photons stepping in place */
-    if (!isfinite(cfg->unitinmm) || cfg->unitinmm <= 0.f) {
-        MCX_ERROR(-1, "the voxel size (-u/--unitinmm, Domain.LengthUnit) must be a positive finite number");
+       infinite one, and either leaves the photons stepping in place.  Below
+       0.1 um -- smaller than a wavelength, where photon transport does not
+       apply -- a photon held by total internal reflection in a clear medium
+       takes so many steps to reach the end of the time window that the run
+       never finishes */
+    if (!isfinite(cfg->unitinmm) || cfg->unitinmm < 1e-4f) {
+        MCX_ERROR(-1, "the voxel size (-u/--unitinmm, Domain.LengthUnit) must be a finite number of at least 1e-4 mm");
+    }
+
+    /* a photon is launched with weight 1 and relaunched while its weight is at
+       or below the roulette threshold: one of 1 or more relaunches it forever */
+    if (!isfinite(cfg->minenergy) || cfg->minenergy >= 1.f) {
+        MCX_ERROR(-1, "the Russian roulette threshold (-e/--minenergy, Session.MinEnergy) must be below 1");
     }
 
     /* the device workloads are normalized by their sum to split the photons */

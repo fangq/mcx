@@ -2441,8 +2441,13 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         /** Advance photon 1 step to the next voxel */
         len = hitgrid((float3*)&p, (float3*)&v, &rv.x, flipdir); // propagate the photon to the first intersection to the grid
 
+        /** the scattering coefficient in effect: mus, or mus*(1-g) once the photon has
+            scattered gscatter times -- 0 for g=1 then, as for mus=0, and a photon
+            that does not scatter just moves to the next voxel */
+        float musp = prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f);
+
         /** convert photon movement length to unitless scattering length by multiplying with mus */
-        float slen = len * prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f); //unitless (minstep=grid, mus=1/grid)
+        float slen = len * musp; //unitless (minstep=grid, mus=1/grid)
 
         GPUDEBUG(("p=[%f %f %f] -> <%f %f %f>*%f -> hit=[%d %d %d] flip=%d\n", p.x, p.y, p.z, v.x, v.y, v.z, len, flipdir[0], flipdir[1], flipdir[2], flipdir[3]));
 
@@ -2450,7 +2455,7 @@ __global__ void mcx_main_loop(uint media[], OutputType field[], float genergy[],
         slen = fminf(slen, f.pscat);
 
         /** final length that the photon moves - either the length to move to the next voxel, or the remaining scattering length */
-        len = ((prop.mus == 0.f) ? len : (slen / (prop.mus * (v.nscat + 1.f > gcfg->gscatter ? (1.f - prop.g) : 1.f))));
+        len = ((musp == 0.f) ? len : (slen / musp));
 
         /** perform ray-interface intersection test to consider intra-voxel curvature (SVMC mode) */
         if (issvmc) {
