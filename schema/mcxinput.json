@@ -1,12 +1,10 @@
 {
-  "title": "MCX JSON Input",
+  "title": "MCX / MMC JSON Input",
   "type": "object",
   "required": [
     "Session",
     "Forward",
-    "Optode",
-    "Shapes",
-    "Domain"
+    "Optode"
   ],
   "format": "categories",
   "basicCategoryTitle": "Shapes",
@@ -15,12 +13,6 @@
       "type": "object",
       "title": "Session",
       "format": "grid",
-      "required": [
-        "ID",
-        "Photons",
-        "DoMismatch",
-        "DoAutoThread"
-      ],
       "properties": {
         "ID": {
           "title": "Session Name",
@@ -35,60 +27,102 @@
         },
         "DoMismatch": {
           "title": "Do reflection",
-          "type": "boolean",
-          "default": true
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
         },
         "DoAutoThread": {
           "title": "Let MCX decide thread/block size",
-          "type": "boolean",
-          "default": true
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
         },
         "DoSaveVolume": {
           "title": "Save fluence",
-          "type": "boolean",
-          "default": true
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
         },
         "DoPartialPath": {
           "title": "Save detected photons",
-          "type": "boolean",
-          "default": true
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
         },
         "DoNormalize": {
           "title": "Do normalization",
-          "type": "boolean",
-          "default": true
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
         },
         "DoSaveRef": {
           "title": "Save diffuse reflectance",
-          "type": "boolean",
-          "default": false
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": false,
+          "description": "(true/false, or 1/0)"
         },
         "DoSaveExit": {
           "title": "Save exit position",
-          "type": "boolean",
-          "default": false
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": false,
+          "description": "(true/false, or 1/0)"
         },
         "DoSaveSeed": {
           "title": "Save photon seeds",
-          "type": "boolean",
-          "default": false
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": false,
+          "description": "(true/false, or 1/0)"
         },
         "DoDCS": {
           "title": "Save momentum transfer",
-          "type": "boolean",
-          "default": false
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": false,
+          "description": "(true/false, or 1/0)"
         },
         "DoSpecular": {
           "title": "Do specular reflection",
-          "type": "boolean",
-          "default": true
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
         },
         "DebugFlag": {
           "oneOf": [
             {
               "title": "Debug flags",
+              "description": "Debug flags as letters: mcx/mcxcl R (RNG), M (photon moves), P (progress bar), T (trajectories only); mmc also accepts its own letters (see mmc --help), e.g. T for timing; or the equivalent integer bit mask",
               "type": "string",
-              "default": ""
+              "default": "",
+              "pattern": "^([A-Za-z]*|[0-9]+)$"
             },
             {
               "title": "Debug flags",
@@ -102,8 +136,10 @@
           "oneOf": [
             {
               "title": "Save detected photon flags",
+              "description": "D: detector ID, S: scattering counts, P: partial paths, M: momentum transfer, X: exit position, V: exit direction, W: initial weight, I: Stokes vector",
               "type": "string",
-              "default": "DP"
+              "default": "DP",
+              "pattern": "^([DSPMXVWIdspmxvwi]*|[0-9]+)$"
             },
             {
               "title": "Save detected photon flags",
@@ -115,19 +151,24 @@
         },
         "OutputFormat": {
           "title": "Output file format",
+          "description": "mc2/nii/jnii/bnii/hdr/tx3 for mcx and mmc grid output; ubj (mcx); ascii/bin (mmc mesh output)",
           "type": "string",
-          "default": "nii",
+          "default": "jnii",
           "enum": [
             "mc2",
             "nii",
             "jnii",
             "bnii",
             "hdr",
-            "tx3"
+            "tx3",
+            "ubj",
+            "ascii",
+            "bin"
           ]
         },
         "OutputType": {
           "title": "Output data type",
+          "description": "the -O letter (x flux, f fluence, e energy, j Jacobian/wl, p nscat/wp, m momentum, r RF, l length (mcx) or wl (mmc), s RF mus, t wltof, b wptof, a/d/u/v/w/q adjoint types), or the name mcxlab/pmcx/mmclab/pmmc use",
           "type": "string",
           "default": "x",
           "enum": [
@@ -137,13 +178,118 @@
             "j",
             "p",
             "m",
-            "r"
+            "r",
+            "l",
+            "s",
+            "t",
+            "b",
+            "a",
+            "d",
+            "u",
+            "v",
+            "w",
+            "q",
+            "X",
+            "F",
+            "E",
+            "J",
+            "P",
+            "M",
+            "R",
+            "L",
+            "S",
+            "T",
+            "B",
+            "A",
+            "D",
+            "U",
+            "V",
+            "W",
+            "Q",
+            "flux",
+            "fluence",
+            "energy",
+            "jacobian",
+            "nscat",
+            "wl",
+            "wp",
+            "wm",
+            "rf",
+            "length",
+            "rfmus",
+            "wltof",
+            "wptof",
+            "adjoint",
+            "adjoint_dcoeff",
+            "adjoint_mus",
+            "adjoint_musp",
+            "adjoint_mua_d",
+            "adjoint_mua_musp"
           ]
         },
         "RNGSeed": {
           "title": "Random seed",
           "type": "number",
           "default": 1648335518
+        },
+        "MaxDetPhoton": {
+          "title": "Max detected photons",
+          "type": "integer",
+          "default": 1000000,
+          "minimum": 1
+        },
+        "MinEnergy": {
+          "title": "Photon termination energy threshold",
+          "type": "number",
+          "default": 0,
+          "minimum": 0
+        },
+        "BCFlags": {
+          "title": "Boundary conditions",
+          "description": "Up to 6 letters for the -x/-y/-z/+x/+y/+z facets (_: default, r: Fresnel, a: absorbing, m: mirror, c: cyclic), optionally followed by 6 digits (0/1) to enable photon detection at each facet",
+          "type": "string",
+          "default": "",
+          "pattern": "^[_ramc]{0,6}[01]{0,6}$"
+        },
+        "RayTracer": {
+          "title": "Ray tracer (MMC mesh domains only)",
+          "description": "g: dual-grid DMMC (default; voxel volume output like MCX, forces BasisOrder 0), s: branchless Badouel (mesh output: values on nodes when BasisOrder=1, on elements when BasisOrder=0). On GPU workers p/h/b silently fall back to s",
+          "type": "string",
+          "default": "g",
+          "enum": [
+            "g",
+            "s",
+            "p",
+            "h",
+            "b"
+          ]
+        },
+        "BasisOrder": {
+          "title": "Fluence basis order (MMC mesh domains only)",
+          "description": "0: piecewise-constant (per-element), 1: piecewise-linear (per-node)",
+          "type": "integer",
+          "default": 1,
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "RootPath": {
+          "title": "Output folder",
+          "description": "folder the output files are written to (default: the current folder)",
+          "type": "string",
+          "default": ""
+        },
+        "Checkpoints": {
+          "title": "Checkpoints (mmc)",
+          "description": "photon counts at which mmc saves intermediate results",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "default": []
         }
       }
     },
@@ -151,11 +297,6 @@
       "type": "object",
       "title": "Forward",
       "format": "grid",
-      "required": [
-        "T0",
-        "T1",
-        "Dt"
-      ],
       "properties": {
         "T0": {
           "title": "Starting time",
@@ -177,6 +318,20 @@
           "default": 5e-09,
           "minimum": 0,
           "maximum": 1e-07
+        },
+        "N0": {
+          "title": "Exterior refractive index (MMC mesh domains only)",
+          "description": "Refractive index of the medium outside the mesh",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+        },
+        "Omega": {
+          "title": "RF modulation angular frequency (mmc, rad/s)",
+          "description": "0 = CW. mmc reads the frequency-domain modulation here, in rad/s; mcx and mcxcl read Optode.Source.Frequency in Hz instead",
+          "type": "number",
+          "default": 0,
+          "minimum": 0
         }
       }
     },
@@ -190,11 +345,6 @@
         "Source": {
           "title": "Source",
           "type": "object",
-          "required": [
-            "Type",
-            "Pos",
-            "Dir"
-          ],
           "properties": {
             "Type": {
               "title": "Type",
@@ -223,120 +373,317 @@
             },
             "Pos": {
               "title": "Position",
-              "type": "array",
-              "format": "table",
-              "items": {
-                "type": "number"
-              },
-              "default": [
-                30,
-                30,
-                0
-              ],
-              "minItems": 3,
-              "maxItems": 3
+              "description": "A single [x,y,z] or [x,y,z,weight] vector, or an array of such vectors to launch multiple sources simultaneously; Pos/Dir/Param1/Param2 arrays must have matching lengths",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "type": "number"
+                  },
+                  "default": [
+                    30,
+                    30,
+                    0
+                  ],
+                  "minItems": 3,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[x,y,z,weight]",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "number"
+                    },
+                    "default": [
+                      30,
+                      30,
+                      0,
+                      1
+                    ],
+                    "minItems": 3,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      30,
+                      30,
+                      0,
+                      1
+                    ]
+                  ]
+                }
+              ]
             },
             "Dir": {
               "title": "Launch Direction",
-              "type": "array",
-              "format": "table",
-              "default": [
-                0,
-                0,
-                1
-              ],
-              "items": {
-                "type": "number"
-              },
-              "minItems": 3,
-              "maxItems": 4
+              "description": "A single unitary vector [vx,vy,vz] with an optional 4th element (focal length; \"_NaN_\" enables launch-angle mode), or an array of such vectors for multiple sources",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "default": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "items": {
+                    "oneOf": [
+                      {
+                        "title": "number",
+                        "type": "number"
+                      },
+                      {
+                        "title": "special value",
+                        "type": "string",
+                        "enum": [
+                          "_NaN_",
+                          "_Inf_",
+                          "-_Inf_"
+                        ]
+                      }
+                    ]
+                  },
+                  "minItems": 3,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[vx,vy,vz,focal-length]",
+                    "type": "array",
+                    "format": "table",
+                    "default": [
+                      0,
+                      0,
+                      1,
+                      0
+                    ],
+                    "items": {
+                      "oneOf": [
+                        {
+                          "title": "number",
+                          "type": "number"
+                        },
+                        {
+                          "title": "special value",
+                          "type": "string",
+                          "enum": [
+                            "_NaN_",
+                            "_Inf_",
+                            "-_Inf_"
+                          ]
+                        }
+                      ]
+                    },
+                    "minItems": 3,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      0,
+                      0,
+                      1,
+                      0
+                    ]
+                  ]
+                }
+              ]
             },
             "Param1": {
               "title": "Source Parameter 1",
-              "type": "array",
-              "format": "table",
-              "default": [
-                0,
-                0,
-                0,
-                0
-              ],
-              "items": {
-                "type": "number"
-              },
-              "minItems": 4,
-              "maxItems": 4
+              "description": "Source-type-specific parameters [p1,p2,p3,p4]; an array of such vectors sets per-source parameters when launching multiple sources",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "default": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[p1,p2,p3,p4]",
+                    "type": "array",
+                    "format": "table",
+                    "default": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  ]
+                }
+              ]
             },
             "Param2": {
               "title": "Source Parameter 2",
+              "description": "Additional source-type-specific parameters [p1,p2,p3,p4]; an array of such vectors sets per-source parameters when launching multiple sources",
+              "oneOf": [
+                {
+                  "title": "Single source",
+                  "type": "array",
+                  "format": "table",
+                  "default": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1,
+                  "maxItems": 4
+                },
+                {
+                  "title": "Multiple sources",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[p1,p2,p3,p4]",
+                    "type": "array",
+                    "format": "table",
+                    "default": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  },
+                  "minItems": 1,
+                  "default": [
+                    [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  ]
+                }
+              ]
+            },
+            "Weight": {
+              "title": "Initial photon weight",
+              "type": "number",
+              "minimum": 0
+            },
+            "SrcNum": {
+              "title": "Pattern count (photon sharing)",
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "ID": {
+              "title": "Source ID (0: launch all together, -1: save each source separately, >0: launch a single source)",
+              "type": "integer",
+              "default": 0
+            },
+            "WaveLength": {
+              "title": "Wavelength (nm, for polarized MC)",
+              "type": "number",
+              "minimum": 0
+            },
+            "IQUV": {
+              "title": "Initial Stokes vector [I,Q,U,V]",
               "type": "array",
               "format": "table",
+              "items": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
               "default": [
-                0,
+                1,
                 0,
                 0,
                 0
               ],
-              "items": {
-                "type": "number"
-              },
               "minItems": 4,
               "maxItems": 4
             },
+            "AngleInverseCDF": {
+              "title": "Launch-angle inverse CDF",
+              "description": "A monotonically increasing vector with values between 0 and 1, defining the inverse CDF of the launch zenith angle (x1 in x1*pi)",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
             "Frequency": {
-              "title": "Modulation Frequency in Hz",
+              "title": "RF modulation frequency (mcx/mcxcl, Hz)",
+              "description": "0 = CW. mcx and mcxcl read the frequency-domain modulation here, in Hz; mmc reads Forward.Omega in rad/s instead",
               "type": "number",
               "default": 0,
               "minimum": 0
             },
             "Pattern": {
               "title": "Source Pattern",
-              "type": "object",
-              "required": [
-                "_ArrayType_",
-                "_ArraySize_",
-                "_ArrayZipType_",
-                "_ArrayZipSize_",
-                "_ArrayZipData_"
-              ],
-              "properties": {
-                "_ArrayType_": {
-                  "type": "string",
-                  "default": "single",
-                  "enum": [
-                    "single"
-                  ]
-                },
-                "_ArraySize_": {
-                  "type": "array",
-                  "default": [
-                    0,
-                    0
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
                   ],
-                  "format": "table",
-                  "items": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "minItems": 2,
-                  "maxItems": 3
-                },
-                "_ArrayZipType_": {
-                  "type": "string",
-                  "default": "zlib",
-                  "enum": [
-                    "zlib",
-                    "gzip"
-                  ]
-                },
-                "_ArrayZipSize_": {
-                  "oneOf": [
-                    {
-                      "type": "integer",
-                      "default": 0,
-                      "minimum": 0
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "single",
+                      "enum": [
+                        "single"
+                      ]
                     },
-                    {
+                    "_ArraySize_": {
                       "type": "array",
                       "default": [
                         0,
@@ -348,15 +695,98 @@
                         "minimum": 0
                       },
                       "minItems": 2,
-                      "maxItems": 2
+                      "maxItems": 3
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip",
+                        "base64",
+                        "lzip",
+                        "lzma",
+                        "lz4",
+                        "lz4hc"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "default": 0,
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "default": [
+                            0,
+                            0
+                          ],
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
                     }
-                  ]
+                  }
                 },
-                "_ArrayZipData_": {
-                  "type": "string",
-                  "default": ""
+                {
+                  "title": "Plain array",
+                  "type": "object",
+                  "required": [
+                    "Nx",
+                    "Ny",
+                    "Data"
+                  ],
+                  "properties": {
+                    "Nx": {
+                      "title": "Columns (Nx)",
+                      "type": "integer",
+                      "default": 1,
+                      "minimum": 1
+                    },
+                    "Ny": {
+                      "title": "Rows (Ny)",
+                      "type": "integer",
+                      "default": 1,
+                      "minimum": 1
+                    },
+                    "Nz": {
+                      "title": "Layers (Nz)",
+                      "type": "integer",
+                      "default": 1,
+                      "minimum": 1
+                    },
+                    "Data": {
+                      "title": "Pattern data",
+                      "oneOf": [
+                        {
+                          "title": "Flattened array (row-major, Nx*Ny*Nz*SrcNum values)",
+                          "type": "array",
+                          "format": "table",
+                          "items": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        {
+                          "title": "Binary file path (single-precision)",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
                 }
-              }
+              ]
             }
           }
         },
@@ -366,10 +796,6 @@
           "format": "table",
           "items": {
             "type": "object",
-            "required": [
-              "Pos",
-              "R"
-            ],
             "properties": {
               "Pos": {
                 "title": "Position",
@@ -383,16 +809,300 @@
                   0
                 ],
                 "minItems": 3,
-                "maxItems": 3
+                "maxItems": 4,
+                "description": "[x,y,z] or [x,y,z,r], r the radius when R is not given"
               },
               "R": {
                 "title": "Radius",
                 "type": "number",
                 "default": 1,
                 "minimum": 0
+              },
+              "Dir": {
+                "title": "Direction",
+                "description": "unit vector the detector faces (optional)",
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "default": [
+                  0,
+                  0,
+                  -1
+                ],
+                "minItems": 3,
+                "maxItems": 4
+              },
+              "Param1": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "default": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "minItems": 1,
+                "maxItems": 4,
+                "title": "Param1 (mmc wide-field detector)"
+              },
+              "Param2": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "default": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "minItems": 1,
+                "maxItems": 4,
+                "title": "Param2 (mmc wide-field detector)"
               }
             }
           }
+        }
+      }
+    },
+    "Domain": {
+      "type": "object",
+      "title": "Domain",
+      "properties": {
+        "OriginType": {
+          "title": "Origin at [0,0,0]",
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "default": true,
+          "description": "(true/false, or 1/0)"
+        },
+        "Dim": {
+          "title": "Dimensions",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer"
+          },
+          "default": [
+            60,
+            60,
+            60
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "LengthUnit": {
+          "title": "Voxel Size (in mm)",
+          "type": "number",
+          "default": 1,
+          "minimum": 0
+        },
+        "MediaFormat": {
+          "title": "Binary Volume Format",
+          "type": "string",
+          "default": "byte",
+          "enum": [
+            "byte",
+            "short",
+            "integer",
+            "asgn_float",
+            "svmc",
+            "mixlabel",
+            "labelplus",
+            "muamus_float",
+            "mua_float",
+            "muamus_half",
+            "asgn_byte",
+            "muamus_short"
+          ]
+        },
+        "VolumeFile": {
+          "title": "Volume File",
+          "type": "string",
+          "default": ""
+        },
+        "Media": {
+          "title": "Media",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "anyOf": [
+              {
+                "title": "Medium",
+                "type": "object",
+                "required": [
+                  "mua",
+                  "mus",
+                  "g",
+                  "n"
+                ],
+                "properties": {
+                  "mua": {
+                    "title": "Absorption (μa 1/mm)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "mus": {
+                    "title": "Scattering (μs 1/mm)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "g": {
+                    "title": "Anisotropy (g)",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": -1,
+                    "maximum": 1
+                  },
+                  "n": {
+                    "title": "Refractive Index (n)",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "title": "Medium [mua,mus,g,n]",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            ]
+          }
+        },
+        "MieScatter": {
+          "title": "Mie scatterers (polarized MC)",
+          "description": "Per-medium spherical-particle properties for polarized photon simulations; requires Optode.Source.WaveLength",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "anyOf": [
+              {
+                "title": "Scatterer",
+                "type": "object",
+                "required": [
+                  "mua",
+                  "radius",
+                  "rho",
+                  "nsph",
+                  "nmed"
+                ],
+                "properties": {
+                  "mua": {
+                    "title": "Absorption (μa 1/mm)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "radius": {
+                    "title": "Particle radius (micron)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "rho": {
+                    "title": "Volume density (1/micron^3)",
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0
+                  },
+                  "nsph": {
+                    "title": "Particle refractive index",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0
+                  },
+                  "nmed": {
+                    "title": "Background refractive index",
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "title": "Scatterer [mua,radius,rho,nsph,nmed]",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 5,
+                "maxItems": 5
+              }
+            ]
+          }
+        },
+        "Step": {
+          "title": "Voxel size [dx,dy,dz] (mm, must be isotropic)",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "default": [
+            1,
+            1,
+            1
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "InverseCDF": {
+          "title": "Scattering-angle inverse CDF",
+          "description": "A monotonically increasing vector with values between -1 and 1, defining the inverse CDF of a user-specified scattering phase function (cosine of the scattering angle)",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1
+          }
+        },
+        "CacheBoxP0": {
+          "title": "Cache box lower corner [x,y,z]",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "CacheBoxP1": {
+          "title": "Cache box upper corner [x,y,z]",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "AngleInverseCDF": {
+          "title": "Launch-angle inverse CDF (mcx)",
+          "description": "samples of the inverse cumulative distribution of the launch zenith angle",
+          "type": "array",
+          "format": "table",
+          "items": {
+            "type": "number"
+          },
+          "default": []
         }
       }
     },
@@ -639,6 +1349,40 @@
                 }
               },
               {
+                "title": "UpperSpace",
+                "type": "object",
+                "required": [
+                  "UpperSpace"
+                ],
+                "properties": {
+                  "UpperSpace": {
+                    "title": "UpperSpace",
+                    "type": "object",
+                    "required": [
+                      "Coef"
+                    ],
+                    "properties": {
+                      "Tag": {
+                        "title": "Tag",
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      },
+                      "Coef": {
+                        "title": "Half-space [a,b,c,d] (fills a*x+b*y+c*z>d)",
+                        "type": "array",
+                        "format": "table",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 4,
+                        "maxItems": 4
+                      }
+                    }
+                  }
+                }
+              },
+              {
                 "title": "Name",
                 "type": "object",
                 "required": [
@@ -872,6 +1616,394 @@
         },
         {
           "type": "object",
+          "title": "Tetrahedral mesh (mmc)",
+          "format": "grid",
+          "description": "the mesh given under Shapes instead of Mesh; mmc accepts either place",
+          "properties": {
+            "MeshID": {
+              "title": "Mesh file ID",
+              "description": "reads node_<MeshID>.dat, elem_<MeshID>.dat and, when present, facenb/velem files",
+              "type": "string",
+              "default": ""
+            },
+            "InitElem": {
+              "title": "Initial element",
+              "description": "1-based index of the element enclosing the source; 0 or negative to let mmc find it",
+              "type": "integer",
+              "default": 0
+            },
+            "LengthUnit": {
+              "title": "Length unit (mm)",
+              "description": "length of one mesh coordinate unit in mm",
+              "type": "number",
+              "default": 1,
+              "exclusiveMinimum": 0
+            },
+            "MeshNode": {
+              "title": "Mesh nodes",
+              "description": "Tetrahedral mesh vertices, one [x,y,z] coordinate per node",
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
+                  ],
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "single",
+                      "enum": [
+                        "single"
+                      ]
+                    },
+                    "_ArraySize_": {
+                      "title": "[node count, 3]",
+                      "type": "array",
+                      "default": [
+                        0,
+                        3
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip",
+                        "base64",
+                        "lzip",
+                        "lzma",
+                        "lz4",
+                        "lz4hc"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "default": 0,
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "default": [
+                            0,
+                            0
+                          ],
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  }
+                },
+                {
+                  "title": "Node list",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[x,y,z]",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              ]
+            },
+            "MeshElem": {
+              "title": "Mesh elements",
+              "description": "Tetrahedra as [n1,n2,n3,n4,tag] rows: four 1-based node indices plus a region tag indexing Domain.Media",
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
+                  ],
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "int32",
+                      "enum": [
+                        "int32",
+                        "uint32"
+                      ]
+                    },
+                    "_ArraySize_": {
+                      "title": "[element count, 5]",
+                      "type": "array",
+                      "default": [
+                        0,
+                        5
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip",
+                        "base64",
+                        "lzip",
+                        "lzma",
+                        "lz4",
+                        "lz4hc"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "default": 0,
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "default": [
+                            0,
+                            0
+                          ],
+                          "format": "table",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  }
+                },
+                {
+                  "title": "Element list",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "title": "[n1,n2,n3,n4,tag]",
+                    "type": "array",
+                    "format": "table",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -2
+                    },
+                    "minItems": 5,
+                    "maxItems": 5
+                  }
+                }
+              ]
+            },
+            "MeshSurf": {
+              "title": "Mesh surface (OptiX)",
+              "description": "boundary triangles as [n1,n2,n3,inner label,outer label] rows (int32, N x 5)",
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
+                  ],
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "int32",
+                      "enum": [
+                        "int32"
+                      ]
+                    },
+                    "_ArraySize_": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip",
+                        "base64",
+                        "lzip",
+                        "lzma",
+                        "lz4",
+                        "lz4hc"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  }
+                },
+                {
+                  "title": "Plain array",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "type": [
+                      "array",
+                      "number"
+                    ]
+                  }
+                }
+              ]
+            },
+            "MeshROI": {
+              "title": "Implicit MMC regions",
+              "description": "per-element (or per-node/edge) ROI radii or thicknesses for implicit MMC (single)",
+              "oneOf": [
+                {
+                  "title": "JData-annotated array",
+                  "type": "object",
+                  "required": [
+                    "_ArrayType_",
+                    "_ArraySize_",
+                    "_ArrayZipType_",
+                    "_ArrayZipSize_",
+                    "_ArrayZipData_"
+                  ],
+                  "properties": {
+                    "_ArrayType_": {
+                      "type": "string",
+                      "default": "single",
+                      "enum": [
+                        "single"
+                      ]
+                    },
+                    "_ArraySize_": {
+                      "type": "array",
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "_ArrayZipType_": {
+                      "type": "string",
+                      "default": "zlib",
+                      "enum": [
+                        "zlib",
+                        "gzip",
+                        "base64",
+                        "lzip",
+                        "lzma",
+                        "lz4",
+                        "lz4hc"
+                      ]
+                    },
+                    "_ArrayZipSize_": {
+                      "oneOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      ]
+                    },
+                    "_ArrayZipData_": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  }
+                },
+                {
+                  "title": "Plain array",
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "type": [
+                      "array",
+                      "number"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "MeshID"
+              ]
+            },
+            {
+              "required": [
+                "MeshNode",
+                "MeshElem"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "object",
           "required": [
             "_ArrayType_",
             "_ArraySize_",
@@ -885,13 +2017,17 @@
               "default": "uint8",
               "enum": [
                 "uint8",
-                "uint16",
-                "uint32",
                 "int8",
+                "uint16",
                 "int16",
+                "uint32",
                 "int32",
-                "single"
-              ]
+                "uint64",
+                "int64",
+                "single",
+                "double"
+              ],
+              "description": "element type: integer labels, single for continuous media (per-voxel mua/mus/g/n), uint64 for packed formats (svmc, asgn_byte, ...)"
             },
             "_ArraySize_": {
               "type": "array",
@@ -906,14 +2042,20 @@
                 "minimum": 0
               },
               "minItems": 3,
-              "maxItems": 3
+              "maxItems": 4,
+              "description": "[Nx,Ny,Nz], or [Nx,Ny,Nz,K] with K property values per voxel (K = 2 or 4 for continuous media)"
             },
             "_ArrayZipType_": {
               "type": "string",
               "default": "zlib",
               "enum": [
                 "zlib",
-                "gzip"
+                "gzip",
+                "base64",
+                "lzip",
+                "lzma",
+                "lz4",
+                "lz4hc"
               ]
             },
             "_ArrayZipSize_": {
@@ -943,111 +2085,399 @@
               "type": "string",
               "default": ""
             }
-          }
+          },
+          "title": "JData volume"
         }
       ]
     },
-    "Domain": {
+    "Mesh": {
       "type": "object",
-      "title": "Domain",
-      "required": [
-        "Media",
-        "Dim",
-        "OriginType"
-      ],
+      "title": "Mesh (mmc)",
+      "format": "grid",
+      "description": "the tetrahedral mesh of an mmc simulation: either MeshID naming mesh files (node_<ID>.dat, elem_<ID>.dat, ...) or MeshNode and MeshElem embedded here; ignored by mcx and mcxcl",
       "properties": {
-        "OriginType": {
-          "title": "Origin at [0,0,0]",
-          "type": "boolean",
-          "default": true
-        },
-        "Dim": {
-          "title": "Dimensions",
-          "type": "array",
-          "format": "table",
-          "items": {
-            "type": "integer"
-          },
-          "default": [
-            60,
-            60,
-            60
-          ],
-          "minItems": 3,
-          "maxItems": 3
-        },
-        "LengthUnit": {
-          "title": "Voxel Size (in mm)",
-          "type": "number",
-          "default": 1,
-          "minimum": 0
-        },
-        "MediaFormat": {
-          "title": "Binary Volume Format",
-          "type": "string",
-          "default": "byte",
-          "enum": [
-            "byte",
-            "short",
-            "integer",
-            "asgn_float",
-            "svmc",
-            "mixlabel",
-            "labelplus",
-            "muamus_float",
-            "muamus_half",
-            "asgn_byte",
-            "muamus_short"
-          ]
-        },
-        "VolumeFile": {
-          "title": "Volume File",
+        "MeshID": {
+          "title": "Mesh file ID",
+          "description": "reads node_<MeshID>.dat, elem_<MeshID>.dat and, when present, facenb/velem files",
           "type": "string",
           "default": ""
         },
-        "Media": {
-          "title": "Media",
-          "type": "array",
-          "format": "table",
-          "minItems": 2,
-          "items": {
-            "type": "object",
-            "required": [
-              "mua",
-              "mus",
-              "g",
-              "n"
-            ],
-            "properties": {
-              "mua": {
-                "title": "Absorption (μa 1/mm)",
-                "type": "number",
-                "default": 0,
-                "minimum": 0
-              },
-              "mus": {
-                "title": "Scattering (μs 1/mm)",
-                "type": "number",
-                "default": 0,
-                "minimum": 0
-              },
-              "g": {
-                "title": "Anisotropy (g)",
-                "type": "number",
-                "default": 1,
-                "minimum": -1,
-                "maximum": 1
-              },
-              "n": {
-                "title": "Refractive Index (n)",
-                "type": "number",
-                "default": 1,
-                "minimum": 0
+        "InitElem": {
+          "title": "Initial element",
+          "description": "1-based index of the element enclosing the source; 0 or negative to let mmc find it",
+          "type": "integer",
+          "default": 0
+        },
+        "LengthUnit": {
+          "title": "Length unit (mm)",
+          "description": "length of one mesh coordinate unit in mm",
+          "type": "number",
+          "default": 1,
+          "exclusiveMinimum": 0
+        },
+        "MeshNode": {
+          "title": "Mesh nodes",
+          "description": "Tetrahedral mesh vertices, one [x,y,z] coordinate per node",
+          "oneOf": [
+            {
+              "title": "JData-annotated array",
+              "type": "object",
+              "required": [
+                "_ArrayType_",
+                "_ArraySize_",
+                "_ArrayZipType_",
+                "_ArrayZipSize_",
+                "_ArrayZipData_"
+              ],
+              "properties": {
+                "_ArrayType_": {
+                  "type": "string",
+                  "default": "single",
+                  "enum": [
+                    "single"
+                  ]
+                },
+                "_ArraySize_": {
+                  "title": "[node count, 3]",
+                  "type": "array",
+                  "default": [
+                    0,
+                    3
+                  ],
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "_ArrayZipType_": {
+                  "type": "string",
+                  "default": "zlib",
+                  "enum": [
+                    "zlib",
+                    "gzip",
+                    "base64",
+                    "lzip",
+                    "lzma",
+                    "lz4",
+                    "lz4hc"
+                  ]
+                },
+                "_ArrayZipSize_": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "default": 0,
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "default": [
+                        0,
+                        0
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  ]
+                },
+                "_ArrayZipData_": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            {
+              "title": "Node list",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "title": "[x,y,z]",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
               }
             }
-          }
+          ]
+        },
+        "MeshElem": {
+          "title": "Mesh elements",
+          "description": "Tetrahedra as [n1,n2,n3,n4,tag] rows: four 1-based node indices plus a region tag indexing Domain.Media",
+          "oneOf": [
+            {
+              "title": "JData-annotated array",
+              "type": "object",
+              "required": [
+                "_ArrayType_",
+                "_ArraySize_",
+                "_ArrayZipType_",
+                "_ArrayZipSize_",
+                "_ArrayZipData_"
+              ],
+              "properties": {
+                "_ArrayType_": {
+                  "type": "string",
+                  "default": "int32",
+                  "enum": [
+                    "int32",
+                    "uint32"
+                  ]
+                },
+                "_ArraySize_": {
+                  "title": "[element count, 5]",
+                  "type": "array",
+                  "default": [
+                    0,
+                    5
+                  ],
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "_ArrayZipType_": {
+                  "type": "string",
+                  "default": "zlib",
+                  "enum": [
+                    "zlib",
+                    "gzip",
+                    "base64",
+                    "lzip",
+                    "lzma",
+                    "lz4",
+                    "lz4hc"
+                  ]
+                },
+                "_ArrayZipSize_": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "default": 0,
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "default": [
+                        0,
+                        0
+                      ],
+                      "format": "table",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  ]
+                },
+                "_ArrayZipData_": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            {
+              "title": "Element list",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "title": "[n1,n2,n3,n4,tag]",
+                "type": "array",
+                "format": "table",
+                "items": {
+                  "type": "integer",
+                  "minimum": -2
+                },
+                "minItems": 5,
+                "maxItems": 5
+              }
+            }
+          ]
+        },
+        "MeshSurf": {
+          "title": "Mesh surface (OptiX)",
+          "description": "boundary triangles as [n1,n2,n3,inner label,outer label] rows (int32, N x 5)",
+          "oneOf": [
+            {
+              "title": "JData-annotated array",
+              "type": "object",
+              "required": [
+                "_ArrayType_",
+                "_ArraySize_",
+                "_ArrayZipType_",
+                "_ArrayZipSize_",
+                "_ArrayZipData_"
+              ],
+              "properties": {
+                "_ArrayType_": {
+                  "type": "string",
+                  "default": "int32",
+                  "enum": [
+                    "int32"
+                  ]
+                },
+                "_ArraySize_": {
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "_ArrayZipType_": {
+                  "type": "string",
+                  "default": "zlib",
+                  "enum": [
+                    "zlib",
+                    "gzip",
+                    "base64",
+                    "lzip",
+                    "lzma",
+                    "lz4",
+                    "lz4hc"
+                  ]
+                },
+                "_ArrayZipSize_": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  ]
+                },
+                "_ArrayZipData_": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            {
+              "title": "Plain array",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "type": [
+                  "array",
+                  "number"
+                ]
+              }
+            }
+          ]
+        },
+        "MeshROI": {
+          "title": "Implicit MMC regions",
+          "description": "per-element (or per-node/edge) ROI radii or thicknesses for implicit MMC (single)",
+          "oneOf": [
+            {
+              "title": "JData-annotated array",
+              "type": "object",
+              "required": [
+                "_ArrayType_",
+                "_ArraySize_",
+                "_ArrayZipType_",
+                "_ArrayZipSize_",
+                "_ArrayZipData_"
+              ],
+              "properties": {
+                "_ArrayType_": {
+                  "type": "string",
+                  "default": "single",
+                  "enum": [
+                    "single"
+                  ]
+                },
+                "_ArraySize_": {
+                  "type": "array",
+                  "format": "table",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "_ArrayZipType_": {
+                  "type": "string",
+                  "default": "zlib",
+                  "enum": [
+                    "zlib",
+                    "gzip",
+                    "base64",
+                    "lzip",
+                    "lzma",
+                    "lz4",
+                    "lz4hc"
+                  ]
+                },
+                "_ArrayZipSize_": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  ]
+                },
+                "_ArrayZipData_": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            {
+              "title": "Plain array",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "type": [
+                  "array",
+                  "number"
+                ]
+              }
+            }
+          ]
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "MeshID"
+          ]
+        },
+        {
+          "required": [
+            "MeshNode",
+            "MeshElem"
+          ]
+        }
+      ]
     }
-  }
+  },
+  "description": "One input format for mcx, mcxcl (voxel domains) and mmc (tetrahedral meshes). A voxel domain is given by Shapes (shape commands or a JData volume) or Domain.VolumeFile; a mesh domain by Mesh (or the mesh form of Shapes). Fields marked (mcx) or (mmc) are read by that program only. Domain may be omitted by mmc, which then reads the media from prop_<MeshID>.dat."
 }
