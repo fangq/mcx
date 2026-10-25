@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 
 env:
   # redbird/redbirdpy revisions bundled with the release, pin to tags when releasing
@@ -226,25 +227,43 @@ jobs:
       - name: Build mcxlab for Octave
         continue-on-error: ${{ runner.os != 'Linux' }}
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            export PATH="$PWD/octave/octave-10.3.0-w64/mingw64/bin:$PATH"
-          fi
-          cd src
-          which gcc
-          gcc -v
-          mkoctfile -p ALL_CXXFLAGS
-          mkoctfile -p INCLUDEDIR
-          mkoctfile -p INCFLAGS
           if [[ "$RUNNER_OS" == "Linux" ]]; then
+            cd src
             make oct BACKEND=cudastatic
             ldd ../mcxlab/mcx.mex
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            make oct CC=gcc-10 CXX=g++-10 USEROCTOPT="CXXFLAGS='-pipe -Os -arch x86_64' DL_LD=g++-10 DL_LDFLAGS='-fopenmp -static-libgcc -static-libstdc++'"
+            # nvcc 10.2 needs the Xcode 10 clang as its host compiler; the rest is
+            # compiled by the same clang, and Homebrew's mkoctfile (Octave 10+)
+            # links the mex against liboctmex alone
+            cd src
+            mkoctfile --version
+            make oct CC=clang CXX=clang++
             otool -L ../mcxlab/mcx.mex
           else
-            ln -s "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2" cuda
-            make oct INCLUDEDIRS="-I./cuda/include" CUDA_PATH="./cuda" XTRA_CFLAGS='-openmp' XTRA_CXXFLAGS='-openmp' INCLUDEDIR=' '
+            # nvcc only drives MSVC, and Octave's mkoctfile only MinGW: the objects
+            # come from the Makefile (AR=true skips its mkoctfile link), and the mex
+            # is linked by nvcc against an MSVC import library for liboctmex made
+            # from the DLL's export table.  liboctmex's mx/mex API is plain C.
+            OCT="$PWD/octave/octave-10.3.0-w64/mingw64"
+            OCTINC=$(cygpath -m "$(ls -d "$OCT"/include/octave-*/octave)")
+            cd src
+            make oct AR=true
+            export MSYS_NO_PATHCONV=1
+            dumpbin /nologo /exports "$(cygpath -w "$OCT/bin/liboctmex-1.dll")" | tr -d '\r' | \
+                awk 'BEGIN { print "LIBRARY liboctmex-1.dll"; print "EXPORTS" } $1 ~ /^[0-9]+$/ && NF >= 4 { print "    " $4 }' > liboctmex.def
+            head -5 liboctmex.def; grep -c . liboctmex.def
+            lib /nologo /def:liboctmex.def /out:liboctmex.lib /machine:x64
+            nvcc -c -DMATLAB_MEX_FILE -DMCX_CONTAINER -D_CRT_SECURE_NO_DEPRECATE -DWIN32 -Xcompiler -openmp \
+                -I"$OCTINC" -I"$OCTINC/.." -Izmat -Izmat/easylzma -Iubj -I"$CUDA_PATH/include" mcxlab.cpp -o mcxlab.obj
+            nvcc -shared -o ../mcxlab/mcx.mex mcxlab.obj mcx_core.obj mcx_utils.obj mcx_shapes.obj mcx_tictoc.obj \
+                mcx_bench.obj mcx_mie.obj mcx_lang.obj cjson/cJSON.obj liboctmex.lib \
+                -L"$CUDA_PATH/lib/x64" -lcudart_static -Xcompiler -openmp -Xlinker /EXPORT:mexFunction
+            unset MSYS_NO_PATHCONV
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
+            rm -f ../mcxlab/mcx.exp ../mcxlab/mcx.lib liboctmex.*
+          fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            export PATH="$OCT/bin:$PATH"
           fi
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])"
           octave-cli --eval "fprintf(1,['OCTAVE_ARCH=' regexprep(computer('arch'), 'darwin[0-9.]+-', 'darwin-')])" >> $GITHUB_ENV
