@@ -69,26 +69,6 @@ jobs:
           #sudo cp -a /Volumes/Octave\ 9.2/Octave-9.2.app /Applications
           #echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
           brew link --force libomp
-
-          # Install fpc and Lazarus from the upstream installers: Homebrew disabled the
-          # fpc-laz and lazarus casks on 2026-09-01 (they fail the Gatekeeper check),
-          # which does not apply to packages installed with installer(8)
-          # fetch <file> <sourceforge subfolder> <sha256>: mcx.space mirror first, SourceForge as fallback
-          fetch() {
-            for url in "https://mcx.space/dev/ci/$1" "https://downloads.sourceforge.net/lazarus/Lazarus%20macOS%20x86-64/$2/$1"; do
-              rm -f "$1"
-              curl -L --retry 5 --retry-all-errors --retry-delay 10 -o "$1" "$url" && echo "$3  $1" | shasum -a 256 -c - && return 0
-            done
-            return 1
-          }
-          fetch fpc-3.2.2.intelarm64-macosx.dmg "Lazarus%204.4" 05d4510c8c887e3c68de20272abf62171aa5b2ef1eba6bce25e4c0bc41ba8b7d
-          FPC_VOL=$(hdiutil attach -nobrowse fpc-3.2.2.intelarm64-macosx.dmg | grep -o '/Volumes/.*' | head -1)
-          sudo installer -pkg "$FPC_VOL/fpc-3.2.2-intelarm64-macosx.mpkg/Contents/Packages/fpc-3.2.2-intelarm64-macosx.pkg" -target /
-          hdiutil detach "$FPC_VOL"
-          fetch Lazarus-3.6-macosx-x86_64.pkg "Lazarus%203.6" c32f1fcfb16a969153d660a92e2200f32f5e40ec65d42bbd6af829cd9fe74afb
-          sudo installer -pkg Lazarus-3.6-macosx-x86_64.pkg -target /
-
-          echo "/Applications/Lazarus/" >> $GITHUB_PATH
       - name: Cache Lazarus (Windows)
         if: ${{ runner.os == 'Windows' }}
         id: cache-lazarus
@@ -319,18 +299,13 @@ jobs:
           make unittest
           rm -f ../bin/mcx_unittest
       - name: Build mcxstudio
+        # macOS: the build_mcxstudio_macos job (this one pins an old Xcode for CUDA)
+        if: ${{ runner.os != 'macOS' }}
         continue-on-error: true
         run: |
           cd mcxstudio2
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            # MCXStudio.app: one universal (arm64 + x86_64) binary, cross-built with
-            # the fpc installed above, which carries the compilers of both
-            make app
-            cp -R bin/MCXStudio.app ../bin/
-          else
-            make
-            cp bin/mcxstudio* ../bin
-          fi
+          make
+          cp bin/mcxstudio* ../bin
       - name: Rebuild Linux release binaries for glibc 2.17 (manylinux2014)
         if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
@@ -392,8 +367,6 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             strip bin/mcx* || true
-            # the FPC/Lazarus installers downloaded into the checkout (550 MB)
-            rm -f fpc-*.dmg Lazarus-*.pkg
           elif [[ "$RUNNER_OS" == "Windows" ]]; then
             rm -rf octave cuda_installer* bin/mcx.lib bin/mcx.exp
             strip -S bin/mcx* || true
@@ -420,11 +393,83 @@ jobs:
           name: all-mcx-packages-${{ env.RELEASE_TAG }}
           path: packages/mcx-${{ env.RELEASE_TAG }}.zip
 
+  build_mcxstudio_macos:
+    name: Build+Upload MCX Studio for macOS (universal)
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up fpc 3.2.2 and lazbuild 3.6
+        run: |
+          set -e
+          # fpc's macOS installer carries the arm64 and x86_64 compilers; its payload
+          # is unpacked into a prefix of its own (no installer, no root), and
+          # lazbuild is built from the Lazarus source, as on any machine without
+          # an admin account; both are pinned by their sha256
+          # fetch <file> <url fallback> <sha256>: mcx.space mirror first
+          fetch() {
+            for url in "https://mcx.space/dev/ci/$1" "$2"; do
+              rm -f "$1"
+              curl -L --retry 5 --retry-all-errors --retry-delay 10 -o "$1" "$url" && echo "$3  $1" | shasum -a 256 -c - && return 0
+            done
+            return 1
+          }
+          T=$RUNNER_TEMP/fpclaz
+          mkdir -p $T && cd $T
+          fetch fpc-3.2.2.intelarm64-macosx.dmg "https://downloads.sourceforge.net/lazarus/Lazarus%20macOS%20x86-64/Lazarus%204.4/fpc-3.2.2.intelarm64-macosx.dmg" \
+                05d4510c8c887e3c68de20272abf62171aa5b2ef1eba6bce25e4c0bc41ba8b7d
+          V=$(hdiutil attach -nobrowse -readonly fpc-3.2.2.intelarm64-macosx.dmg | grep -o '/Volumes/.*' | head -1)
+          pkgutil --expand-full "$V/fpc-3.2.2-intelarm64-macosx.mpkg/Contents/Packages/fpc-3.2.2-intelarm64-macosx.pkg" x
+          hdiutil detach "$V"
+          mv x/Payload/usr/local fpc
+          mkdir -p fpc/etc
+          fpc/bin/fpcmkcfg -d basepath=$T/fpc/lib/fpc/3.2.2 -o fpc/etc/fpc.cfg
+          echo "-XR$(xcrun --show-sdk-path)" >> fpc/etc/fpc.cfg
+          fetch lazarus-3.6-0.tar.gz "https://downloads.sourceforge.net/project/lazarus/Lazarus%20Zip%20_%20GZip/Lazarus%203.6/lazarus-3.6-0.tar.gz" \
+                e65b90367f63bf17cb7bf35f5be69c9ef704ca494e91d8c67d072e3373fab085
+          tar -xzf lazarus-3.6-0.tar.gz
+          export PATH=$T/fpc/bin:$PATH PPC_CONFIG_PATH=$T/fpc/etc
+          make -C lazarus lazbuild LCL_PLATFORM=cocoa CPU_TARGET=aarch64 > lazbuild.log 2>&1 || { tail -30 lazbuild.log; exit 1; }
+          echo "$T/lazarus" >> $GITHUB_PATH
+          echo "$T/fpc/bin" >> $GITHUB_PATH
+          echo "PPC_CONFIG_PATH=$T/fpc/etc" >> $GITHUB_ENV
+          echo "LAZDIR=$T/lazarus" >> $GITHUB_ENV
+          # the x86_64 half is tested under Rosetta
+          /usr/bin/pgrep -q oahd || sudo softwareupdate --install-rosetta --agree-to-license
+      - name: Build MCXStudio.app
+        run: |
+          cd mcxstudio2
+          make app LAZDIR=$LAZDIR
+          file bin/MCXStudio.app/Contents/MacOS/mcxstudio
+          codesign --verify --deep --strict bin/MCXStudio.app
+      - name: Test MCXStudio.app (arm64, and x86_64 under Rosetta)
+        timeout-minutes: 20
+        run: |
+          cd mcxstudio2
+          make test-doc
+          for a in arm64 x86_64; do
+            echo "== $a"
+            arch -$a bin/MCXStudio.app/Contents/MacOS/mcxstudio --self-test ../example
+          done
+      - name: Zip MCXStudio.app
+        run: |
+          mkdir -p packages
+          # ditto keeps the bundle's signature and extended attributes intact
+          ditto -c -k --keepParent mcxstudio2/bin/MCXStudio.app packages/mcxstudio-macos-universal-github-latest.zip
+          ls -l packages
+      - name: Upload MCXStudio.app package
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-mcxstudio-packages-macos-universal-github-latest
+          path: packages/mcxstudio-macos-universal-github-latest.zip
+
   upload_package:
     name: Upload Packages
-    needs: build_all
+    needs: [build_all, build_mcxstudio_macos]
     runs-on: ubuntu-22.04
-    if: ${{ github.repository_owner == 'fangq' && github.actor == 'fangq' && github.event_name != 'pull_request'}}
+    # the macOS GUI is optional: a failure there leaves out MCXStudio.app, not the uploads
+    if: ${{ !cancelled() && needs.build_all.result == 'success' && github.repository_owner == 'fangq' && github.actor == 'fangq' && github.event_name != 'pull_request'}}
     steps:
       - name: Download mcx
         uses: actions/download-artifact@v4
