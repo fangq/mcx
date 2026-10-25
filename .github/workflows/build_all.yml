@@ -253,14 +253,20 @@ jobs:
                 awk 'BEGIN { print "LIBRARY liboctmex-1.dll"; print "EXPORTS" } $1 ~ /^[0-9]+$/ && NF >= 4 { print "    " $4 }' > liboctmex.def
             head -5 liboctmex.def; grep -c . liboctmex.def
             lib /nologo /def:liboctmex.def /out:liboctmex.lib /machine:x64
+            # the symbol Octave 10+ checks on loading a mex, as mkoctfile adds it:
+            # the SOVERSION of the liboctmex it was built for (liboctmex-1.dll: 1)
+            SOVER=$(ls "$OCT"/bin/liboctmex-*.dll | sed 's/.*liboctmex-\([0-9]*\)\.dll/\1/')
+            echo "const int __octave_mex_soversion__ = $SOVER;" > octsover.c
+            nvcc -c octsover.c -o octsover.obj
             nvcc -c -DMATLAB_MEX_FILE -DMCX_CONTAINER -D_CRT_SECURE_NO_DEPRECATE -DWIN32 -Xcompiler -openmp \
                 -I"$OCTINC" -I"$OCTINC/.." -Izmat -Izmat/easylzma -Iubj -I"$CUDA_PATH/include" mcxlab.cpp -o mcxlab.obj
             nvcc -shared -o ../mcxlab/mcx.mex mcxlab.obj mcx_core.obj mcx_utils.obj mcx_shapes.obj mcx_tictoc.obj \
-                mcx_bench.obj mcx_mie.obj mcx_lang.obj cjson/cJSON.obj liboctmex.lib \
-                -L"$CUDA_PATH/lib/x64" -lcudart_static -Xcompiler -openmp -Xlinker /EXPORT:mexFunction
+                mcx_bench.obj mcx_mie.obj mcx_lang.obj cjson/cJSON.obj octsover.obj liboctmex.lib \
+                -L"$CUDA_PATH/lib/x64" -lcudart_static -Xcompiler -openmp -Xlinker /EXPORT:mexFunction \
+                -Xlinker /EXPORT:__octave_mex_soversion__,DATA
             unset MSYS_NO_PATHCONV
             objdump -p ../mcxlab/mcx.mex | grep "DLL Name:"
-            rm -f ../mcxlab/mcx.exp ../mcxlab/mcx.lib liboctmex.*
+            rm -f ../mcxlab/mcx.exp ../mcxlab/mcx.lib liboctmex.* octsover.*
           fi
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             export PATH="$OCT/bin:$PATH"

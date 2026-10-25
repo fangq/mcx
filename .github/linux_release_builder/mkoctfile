@@ -63,6 +63,15 @@ run() {
     "$@"
 }
 
+# The symbol Octave 10 and later look up when loading a mex file, as the real
+# mkoctfile adds it: one without it is refused ("No SOVERSION found"), one
+# with another number than the running Octave's liboctmex is refused too.
+# Octave 9 and older do not look.  OCTAVE_MEX_SOVERSION is 1 for Octave 10
+# and 11 (liboctmex.so.1).
+sover="/tmp/octshim-$$-soversion.c"
+echo "const int __octave_mex_soversion__ = ${OCTAVE_MEX_SOVERSION:-1};" > "$sover"
+srcs+=("$sover")
+
 tmpobjs=()
 for s in "${srcs[@]}"; do
     o="/tmp/octshim-$$-$(basename "${s%.*}").o"
@@ -76,7 +85,7 @@ done
 # other options go to the link as well: -static-libstdc++ and the like are link
 # options, and -I/-D ones are ignored there
 run $DL_LD -o "$out" "${tmpobjs[@]}" "${objs[@]}" -shared -Wl,-Bsymbolic $DL_LDFLAGS $LDFLAGS $LFLAGS "${flags[@]}" "${libs[@]}"
-rm -f "${tmpobjs[@]}"
+rm -f "${tmpobjs[@]}" "$sover"
 
 [ $strip = 1 ] && run strip "$out"
 exit 0
