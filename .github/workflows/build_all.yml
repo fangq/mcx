@@ -319,12 +319,18 @@ jobs:
           make unittest
           rm -f ../bin/mcx_unittest
       - name: Build mcxstudio
-        if: ${{ runner.os != 'macOS' }}
         continue-on-error: true
         run: |
           cd mcxstudio2
-          make
-          cp bin/mcxstudio* ../bin
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            # MCXStudio.app: one universal (arm64 + x86_64) binary, cross-built with
+            # the fpc installed above, which carries the compilers of both
+            make app
+            cp -R bin/MCXStudio.app ../bin/
+          else
+            make
+            cp bin/mcxstudio* ../bin
+          fi
       - name: Rebuild Linux release binaries for glibc 2.17 (manylinux2014)
         if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: |
