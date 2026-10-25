@@ -1,5 +1,5 @@
 Monte Carlo eXtreme (MCX) is primarily developed by Qianqian Fang.
-Qianqian is currently Associate Professor in the 
+Qianqian is currently a Professor in the 
 Department of Bioengineering at Northeastern University, USA.
 
 Address: Dept. of Bioengineering
