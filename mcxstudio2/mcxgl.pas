@@ -125,6 +125,9 @@ type
       -- or ten thousand's -- are a contiguous run and picking them costs a
       pair of offsets rather than a rebuild of the buffer. }
     procedure DrawRange(AFirst, ACount: Integer);
+    { The buffer itself, 6 floats a vertex (position, colour), for the
+      software renderer to draw the same segments; nil when empty. }
+    function Raw: PSingle;
     property Count: Integer read FCount;
   end;
 
@@ -159,6 +162,9 @@ type
     procedure AddArrow(const AFrom, ADir: TMcxVec3; ALength: Single;
       const AColour: TMcxVec3; AAlpha: Single);
     procedure Draw;
+    { The buffer itself, 10 floats a vertex (position, normal, rgba), for the
+      software renderer; nil when empty. }
+    function Raw: PSingle;
     property Count: Integer read FCount;
   end;
 
@@ -913,6 +919,11 @@ begin
   AddCone(Neck, Tip, ALength * 0.10, AColour, AAlpha);
 end;
 
+function TMcxMesh.Raw: PSingle;
+begin
+  if Length(FData) = 0 then Result := nil else Result := @FData[0];
+end;
+
 procedure TMcxMesh.Draw;
 begin
   if FCount = 0 then Exit;
@@ -1419,6 +1430,11 @@ begin
                  AC1.z + ARadius * (Cos(a) * U.z + Sin(a) * V.z));
     Add(P, Q, AColour);
   end;
+end;
+
+function TMcxLines.Raw: PSingle;
+begin
+  if Length(FData) = 0 then Result := nil else Result := @FData[0];
 end;
 
 procedure TMcxLines.Draw;

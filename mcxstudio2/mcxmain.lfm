@@ -638,6 +638,20 @@ object fmMain: TfmMain
           ChildSizing.TopBottomSpacing = 8
           TabOrder = 0
         end
+        object gbDomainData: TPanel
+          Left = 8
+          Height = 64
+          Top = 130
+          Width = 526
+          Align = alTop
+          BevelOuter = bvNone
+          AutoSize = True
+          BorderSpacing.Around = 8
+          Caption = 'Domain volume and mesh'
+          ChildSizing.LeftRightSpacing = 10
+          ChildSizing.TopBottomSpacing = 8
+          TabOrder = 1
+        end
       end
       object pgDomain: TPanel
         Left = 0
@@ -811,10 +825,161 @@ object fmMain: TfmMain
             end
           end
         end
+        object gbMesh: TPanel
+          Left = 8
+          Height = 150
+          Top = 236
+          Width = 526
+          Align = alTop
+          BevelOuter = bvNone
+          AutoSize = True
+          BorderSpacing.Around = 8
+          Caption = 'Mesh'
+          ChildSizing.LeftRightSpacing = 10
+          ChildSizing.TopBottomSpacing = 8
+          TabOrder = 0
+          object rwMeshID: TPanel
+            Left = 10
+            Height = 27
+            Top = 0
+            Width = 488
+            Align = alTop
+            BevelOuter = bvNone
+            BorderSpacing.Bottom = 3
+            TabOrder = 0
+            object lbMeshID: TLabel
+              Left = 0
+              Height = 27
+              Top = 0
+              Width = 150
+              Align = alLeft
+              BorderSpacing.Right = 8
+              Caption = 'Mesh files (MeshID):'
+              Layout = tlCenter
+              ParentColor = False
+            end
+            object edMeshID: TEdit
+              Left = 158
+              Height = 23
+              Top = 2
+              Width = 330
+              Align = alClient
+              BorderSpacing.Around = 2
+              TabOrder = 0
+            end
+          end
+          object rwInitElem: TPanel
+            Left = 10
+            Height = 27
+            Top = 30
+            Width = 488
+            Align = alTop
+            BevelOuter = bvNone
+            BorderSpacing.Bottom = 3
+            TabOrder = 1
+            object lbInitElem: TLabel
+              Left = 0
+              Height = 27
+              Top = 0
+              Width = 150
+              Align = alLeft
+              BorderSpacing.Right = 8
+              Caption = 'Initial element:'
+              Layout = tlCenter
+              ParentColor = False
+            end
+            object edInitElem: TSpinEdit
+              Left = 158
+              Height = 23
+              Top = 2
+              Width = 330
+              Align = alClient
+              BorderSpacing.Around = 2
+              TabOrder = 0
+            end
+          end
+          object rwRayTracer: TPanel
+            Left = 10
+            Height = 27
+            Top = 60
+            Width = 488
+            Align = alTop
+            BevelOuter = bvNone
+            BorderSpacing.Bottom = 3
+            TabOrder = 2
+            object lbRayTracer: TLabel
+              Left = 0
+              Height = 27
+              Top = 0
+              Width = 150
+              Align = alLeft
+              BorderSpacing.Right = 8
+              Caption = 'Ray tracer:'
+              Layout = tlCenter
+              ParentColor = False
+            end
+            object cbRayTracer: TComboBox
+              Left = 158
+              Height = 23
+              Top = 2
+              Width = 330
+              Align = alClient
+              BorderSpacing.Around = 2
+              ItemHeight = 15
+              Style = csDropDownList
+              TabOrder = 0
+            end
+          end
+          object rwBasisOrder: TPanel
+            Left = 10
+            Height = 27
+            Top = 90
+            Width = 488
+            Align = alTop
+            BevelOuter = bvNone
+            BorderSpacing.Bottom = 3
+            TabOrder = 3
+            object lbBasisOrder: TLabel
+              Left = 0
+              Height = 27
+              Top = 0
+              Width = 150
+              Align = alLeft
+              BorderSpacing.Right = 8
+              Caption = 'Output on:'
+              Layout = tlCenter
+              ParentColor = False
+            end
+            object cbBasisOrder: TComboBox
+              Left = 158
+              Height = 23
+              Top = 2
+              Width = 330
+              Align = alClient
+              BorderSpacing.Around = 2
+              ItemHeight = 15
+              Style = csDropDownList
+              TabOrder = 0
+            end
+          end
+          object lbMeshInfo: TLabel
+            Left = 10
+            Height = 15
+            Top = 120
+            Width = 488
+            Align = alTop
+            BorderSpacing.Bottom = 3
+            Caption = ''
+            Font.Color = clGrayText
+            ParentColor = False
+            ParentFont = False
+            WordWrap = True
+          end
+        end
         object gbMedia: TPanel
           Left = 8
           Height = 64
-          Top = 236
+          Top = 402
           Width = 526
           Align = alTop
           BevelOuter = bvNone
@@ -1182,6 +1347,66 @@ object fmMain: TfmMain
             ParentFont = False
             WordWrap = True
           end
+          object rwDetParam1: TPanel
+            Left = 10
+            Height = 27
+            Top = 40
+            Width = 488
+            Align = alTop
+            BevelOuter = bvNone
+            BorderSpacing.Bottom = 3
+            TabOrder = 1
+            object lbDetParam1: TLabel
+              Left = 0
+              Height = 27
+              Top = 0
+              Width = 150
+              Align = alLeft
+              BorderSpacing.Right = 8
+              Caption = 'Wide-field Param1:'
+              Layout = tlCenter
+              ParentColor = False
+            end
+            object edDetParam1: TEdit
+              Left = 158
+              Height = 23
+              Top = 2
+              Width = 330
+              Align = alClient
+              BorderSpacing.Around = 2
+              TabOrder = 0
+            end
+          end
+          object rwDetParam2: TPanel
+            Left = 10
+            Height = 27
+            Top = 70
+            Width = 488
+            Align = alTop
+            BevelOuter = bvNone
+            BorderSpacing.Bottom = 3
+            TabOrder = 2
+            object lbDetParam2: TLabel
+              Left = 0
+              Height = 27
+              Top = 0
+              Width = 150
+              Align = alLeft
+              BorderSpacing.Right = 8
+              Caption = 'Wide-field Param2:'
+              Layout = tlCenter
+              ParentColor = False
+            end
+            object edDetParam2: TEdit
+              Left = 158
+              Height = 23
+              Top = 2
+              Width = 330
+              Align = alClient
+              BorderSpacing.Around = 2
+              TabOrder = 0
+            end
+          end
         end
       end
       object pgSession: TPanel
@@ -1419,7 +1644,7 @@ object fmMain: TfmMain
           TabOrder = 0
           object rgOutFormat: TRadioGroup
             Left = 10
-            Height = 36
+            Height = 76
             Top = 0
             Width = 488
             Align = alTop
@@ -1430,8 +1655,8 @@ object fmMain: TfmMain
             ChildSizing.TopBottomSpacing = 4
             ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
             ChildSizing.Layout = cclLeftToRightThenTopToBottom
-            ChildSizing.ControlsPerLine = 5
-            Columns = 5
+            ChildSizing.ControlsPerLine = 3
+            Columns = 3
             TabOrder = 0
           end
           object rwOutType: TPanel
@@ -2116,7 +2341,7 @@ object fmMain: TfmMain
   object dlgOpen: TOpenDialog
     Title = 'Open a simulation'
     DefaultExt = '.json'
-    Filter = 'MCX simulations|*.json;*.jnii|All files|*'
+    Filter = 'MCX simulations|*.json;*.jnii|MCX Studio 1 projects|*.mcxp|All files|*'
     Options = [ofPathMustExist, ofFileMustExist, ofEnableSizing, ofViewDetail]
     left = 424
     top = 128

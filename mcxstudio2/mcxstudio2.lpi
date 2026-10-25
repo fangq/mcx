@@ -18,7 +18,7 @@
         <CompilerOptions>
           <Version Value="11"/>
           <Target>
-            <Filename Value="debug/mcxstudio2"/>
+            <Filename Value="debug/mcxstudio"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
@@ -97,7 +97,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="bin/mcxstudio2"/>
+      <Filename Value="bin/mcxstudio"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

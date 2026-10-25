@@ -93,14 +93,15 @@ const
     'bnii=JNIfTI binary  (.bnii),' +
     'nii=NIfTI  (.nii),' +
     'mc2=Raw floats  (.mc2),' +
-    'hdr=Analyze  (.hdr/.img)';
+    'hdr=Analyze  (.hdr/.img),' +
+    'ascii=Text  (.dat;  mmc only)';
 
   { The letters mcx takes for -O, spelled out.  These are the quantity the
     simulation reports, and nobody remembers which letter is which. }
   ChoiceOutType =
-    'x=Fluence rate  (1/mm" + #178 + "/s),' +
-    'f=Fluence  (1/mm" + #178 + "),' +
-    'e=Energy deposit  (1/mm" + #179 + "),' +
+    'x=Fluence rate  (1/mm' + #$C2#$B2 + '/s),' +
+    'f=Fluence  (1/mm' + #$C2#$B2 + '),' +
+    'e=Energy deposit  (1/mm' + #$C2#$B3 + '),' +
     'j=Jacobian  (for mua),' +
     'p=Scattering count,' +
     'm=Momentum transfer,' +
@@ -175,6 +176,21 @@ const
     'hyperboloid=Hyperboloid  (focused Gaussian),' +
     'ring=Ring';
 
+  { mmc's -M letters (mmc_utils.c raytracing[]).  A build with OpenCL, CUDA
+    or OptiX defaults to g, the one that writes a voxel grid; a CPU-only
+    build to h with SSE, p without. }
+  ChoiceRayTracer =
+    'p=Plucker coordinates,' +
+    'h=Havel  (SSE4),' +
+    'b=Badouel,' +
+    's=Branch-less Badouel  (SSE),' +
+    'g=Dual-grid DMMC  (output on a voxel grid)';
+
+  { A number in the file, not a letter: written back with SetInt. }
+  ChoiceBasisOrder =
+    '1=Mesh nodes  (linear),' +
+    '0=Mesh elements  (one value each)';
+
   { The binding table.  One row per setting: the control the designer placed on
     the left, the path it writes on the right.  This is the only place a
     setting is declared -- there is no argv builder, no INI writer and no
@@ -197,7 +213,7 @@ const
     A path beginning @run is not part of the simulation at all -- it is a
     runtime choice such as which device to use -- and is routed to a second
     document that is saved with the preferences rather than with the file. }
-  Binds: array[0..40] of TMcxBind = (
+  Binds: array[0..46] of TMcxBind = (
     { -- Types ------------------------------------------------------------- }
     (Ctl:'cbMediaFormat';Path:'Domain.MediaFormat';Kind:mkChoice; Level:mlExpert;
      Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:ChoiceMediaFormat; EnableIf:''),
@@ -250,6 +266,16 @@ const
     (Ctl:'edVolumeFile'; Path:'Domain.VolumeFile'; Kind:mkFile; Level:mlExpert;
      Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:''; EnableIf:''),
 
+    { -- Mesh (mmc) -------------------------------------------------------- }
+    (Ctl:'edMeshID'; Path:'Mesh.MeshID'; Kind:mkText; Level:mlWizard;
+     Backends:[]; Domains:[mdMesh]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'edInitElem'; Path:'Mesh.InitElem'; Kind:mkInt; Level:mlExpert;
+     Backends:[]; Domains:[mdMesh]; Min:0; Max:0; Choices:''; EnableIf:''),
+    (Ctl:'cbRayTracer'; Path:'Session.RayTracer'; Kind:mkChoice; Level:mlExpert;
+     Backends:[]; Domains:[mdMesh]; Min:0; Max:0; Choices:ChoiceRayTracer; EnableIf:''),
+    (Ctl:'cbBasisOrder'; Path:'Session.BasisOrder'; Kind:mkChoice; Level:mlExpert;
+     Backends:[]; Domains:[mdMesh]; Min:0; Max:0; Choices:ChoiceBasisOrder; EnableIf:''),
+
     { -- Optode ------------------------------------------------------------ }
     (Ctl:'cbSrcType'; Path:'Optode.Source.Type'; Kind:mkChoice; Level:mlWizard;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceSrcType; EnableIf:''),
@@ -267,6 +293,16 @@ const
      Backends:[]; Domains:[]; Min:1; Max:0; Choices:''; EnableIf:''),
     (Ctl:'edSrcWavelen'; Path:'Optode.Source.WaveLength'; Kind:mkFloat; Level:mlExpert;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
+    { mmc's wide-field detector: read from the first detector object only, so
+      bound there rather than offered on every row of the table.  Disabled
+      until that detector exists -- a Param1 written into an empty list would
+      make a detector with no position, which mmc rejects. }
+    (Ctl:'edDetParam1'; Path:'Optode.Detector[0].Param1'; Kind:mkVec; Level:mlExpert;
+     Backends:[]; Domains:[mdMesh]; Min:4; Max:4; Choices:'';
+     EnableIf:'Optode.Detector[0].Pos?'),
+    (Ctl:'edDetParam2'; Path:'Optode.Detector[0].Param2'; Kind:mkVec; Level:mlExpert;
+     Backends:[]; Domains:[mdMesh]; Min:4; Max:4; Choices:'';
+     EnableIf:'Optode.Detector[0].Pos?'),
 
     { -- Compute ----------------------------------------------------------- }
     (Ctl:'ckAutoThread'; Path:'Session.DoAutoThread'; Kind:mkBool; Level:mlWizard;
@@ -298,6 +334,64 @@ const
     (Ctl:'edRootPath'; Path:'Session.RootPath'; Kind:mkText; Level:mlExpert;
      Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:'')
   );
+
+const
+  { What each simulator uses for a setting the file leaves out.
+
+    Taken from mcx_initcfg in mcx/src/mcx_utils.c, mcxcl/src/mcx_utils.c and
+    mmc/src/mmc_utils.c, and from the fallback the JSON reader passes to
+    FIND_JSON_KEY where that is not the cfg value -- RNGSeed is -1 there (a
+    seed drawn at run time), not the 0x623F9A9E of initcfg, and that is what
+    a file without one actually gets.  mcx-hip is mcx built for AMD and
+    shares its column.
+
+    The form shows these in place of an absent key, so what you see is what
+    the run will use.  They are never written: a field left at its default
+    is untouched, and the file stays as short as it came.  An empty entry is
+    a setting with no useful default -- Dim, or mcx's Dt, whose initial
+    VERY_BIG means "one gate from T0 to T1". }
+  McxDefaults: array[0..33] of record
+    Path, MCX, MCXCL, MMC: string;
+  end = (
+    (Path:'Forward.T0';              MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Forward.T1';              MCX:'0';       MCXCL:'5e-09';   MMC:'0'),
+    (Path:'Forward.Dt';              MCX:'';        MCXCL:'5e-09';   MMC:''),
+    (Path:'Session.ID';              MCX:'default'; MCXCL:'default'; MMC:'default'),
+    (Path:'Session.Photons';         MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Session.OutputFormat';    MCX:'jnii';    MCXCL:'jnii';    MMC:'ascii'),
+    (Path:'Session.RNGSeed';         MCX:'-1';      MCXCL:'-1';      MMC:'-1'),
+    (Path:'Session.OutputType';      MCX:'x';       MCXCL:'x';       MMC:'x'),
+    (Path:'Session.DoMismatch';      MCX:'1';       MCXCL:'1';       MMC:'1'),
+    (Path:'Session.DoNormalize';     MCX:'1';       MCXCL:'1';       MMC:'1'),
+    (Path:'Session.DoSaveVolume';    MCX:'1';       MCXCL:'1';       MMC:'1'),
+    (Path:'Session.DoPartialPath';   MCX:'1';       MCXCL:'1';       MMC:'0'),
+    (Path:'Session.DoSaveRef';       MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Session.DoSaveExit';      MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Session.DoSaveSeed';      MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Session.DoSpecular';      MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Session.DoDCS';           MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Session.DoAutoThread';    MCX:'1';       MCXCL:'1';       MMC:'1'),
+    (Path:'Session.DebugFlag';       MCX:'';        MCXCL:'';        MMC:''),
+    (Path:'Session.SaveDataMask';    MCX:'DP';      MCXCL:'DP';      MMC:'DSPW'),
+    (Path:'Session.MaxDetPhoton';    MCX:'1000000'; MCXCL:'1000000'; MMC:'1000000'),
+    (Path:'Session.MinEnergy';       MCX:'0';       MCXCL:'0';       MMC:'1e-06'),
+    (Path:'Session.RayTracer';       MCX:'';        MCXCL:'';        MMC:'g'),
+    (Path:'Session.BasisOrder';      MCX:'';        MCXCL:'';        MMC:'1'),
+    (Path:'Domain.LengthUnit';       MCX:'1';       MCXCL:'1';       MMC:'1'),
+    (Path:'Domain.OriginType';       MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Domain.MediaFormat';      MCX:'byte';    MCXCL:'byte';    MMC:'byte'),
+    (Path:'Optode.Source.Type';      MCX:'pencil';  MCXCL:'pencil';  MMC:'pencil'),
+    (Path:'Optode.Source.Frequency'; MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Optode.Source.SrcNum';    MCX:'1';       MCXCL:'1';       MMC:'1'),
+    (Path:'Optode.Source.WaveLength';MCX:'0';       MCXCL:'0';       MMC:'0'),
+    (Path:'Mesh.InitElem';           MCX:'';        MCXCL:'';        MMC:'0'),
+    { Runtime choices, kept with the preferences rather than the file. }
+    (Path:'@run.nthread';            MCX:'16384';   MCXCL:'16384';   MMC:'8192'),
+    (Path:'@run.nblock';             MCX:'64';      MCXCL:'64';      MMC:'64')
+  );
+
+{ The default a backend uses for APath, or '' when it has none. }
+function McxDefault(const APath: string; ABackend: TMcxBackend): string;
 
 type
   { fpjson prints a float with Str (fpjson.pp:2033), which asks for every
@@ -384,6 +478,24 @@ function McxJSONSame(A, B: TJSONData; out ADiff: string;
   ATol: Double = 1e-12): Boolean;
 
 implementation
+
+function McxDefault(const APath: string; ABackend: TMcxBackend): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := 0 to High(McxDefaults) do
+    if McxDefaults[i].Path = APath then
+    begin
+      case ABackend of
+        mbMCXCL: Result := McxDefaults[i].MCXCL;
+        mbMMC:   Result := McxDefaults[i].MMC;
+      else
+        Result := McxDefaults[i].MCX;
+      end;
+      Exit;
+    end;
+end;
 
 const
   { Enough to hold any exact integer a double can carry, so a whole-numbered

@@ -25,7 +25,8 @@ interface
 
 uses
   Classes, SysUtils, Types, Controls, Forms, StdCtrls, ExtCtrls, Buttons,
-  Menus, Grids, Graphics, StrUtils, fpjson, mcxdoc, mcxicons, mcxdpi;
+  Menus, Grids, Graphics, StrUtils, fpjson, mcxdoc, mcxicons, mcxdpi, mcxtable,
+  mcxtheme;
 
 type
   { How a command carries its parameters.
@@ -676,9 +677,18 @@ begin
   { The columns share the width rather than leaving a field of grey beside
     two narrow ones, which also takes the horizontal scroll bar away. }
   FGrid.AutoFillColumns := True;
-  FGrid.ScrollBars := ssAutoVertical;
+  FGrid.ScrollBars := ssNone;  { McxFitGrid decides, in ReloadGrid }
   FGrid.Options := FGrid.Options + [goEditing, goRowSelect];
   FGrid.OnSetEditText := @GridEdited;
+  { The theme's paper and ink, as ApplyTheme gives the media table.  This
+    grid is built when a shape is picked, after the theme went over the
+    form, so it would otherwise keep the white of clWindow and inherit the
+    theme's ink: light grey on white in the dark theme, all but invisible. }
+  FGrid.ParentColor := False;
+  FGrid.Color := McxBlend(McxBase, McxText, 4);
+  FGrid.FixedColor := McxBlend(McxBase, McxText, 14);
+  FGrid.Font.Color := McxText;
+  FGrid.BorderStyle := bsNone;
 
   Bar := TPanel.Create(FProps);
   Bar.Parent := FProps;
@@ -725,12 +735,6 @@ begin
   FGridDel.OnClick := @GridDelClick;
 
   ReloadGrid;
-  { Known defect: a dead horizontal scroll bar is drawn across the foot of
-    the grid whatever this says.  It survives ssNone, it survives
-    AutoFillColumns being off, and it survives the scroll box's own
-    horizontal bar being hidden, so it is not what it looks like and it is
-    not worth more of a hunt than that until it is the worst thing here. }
-  FGrid.ScrollBars := ssAutoVertical;
 end;
 
 { mcx takes a Layers value as either one row or a list of them
@@ -756,6 +760,11 @@ begin
   Inc(FLoading);
   try
     FGrid.RowCount := Rows + 1;
+    { Its height and scroll bar settled here, not at the next paint.  With
+      room for a horizontal bar: gtk2 draws one across the foot of this grid
+      whatever ScrollBars says, and a height that ignored it hid the last
+      row under it. }
+    McxFitGrid(FGrid, 5, True);
     for r := 0 to Rows - 1 do
       for c := 0 to FGridCols - 1 do
         if Flat then

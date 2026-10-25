@@ -4,8 +4,8 @@ Version=1.0
 Name=MCX Studio
 GenericName=Monte Carlo photon simulator
 Comment=Set up, run and view Monte Carlo photon transport simulations
-Exec=mcxstudio2 %f
-Icon=mcxstudio2
+Exec=mcxstudio %f
+Icon=mcxstudio
 Terminal=false
 Categories=Science;Physics;Education;
 Keywords=monte carlo;photon;optics;tissue;fluence;mcx;mmc;
@@ -15,4 +15,4 @@ Keywords=monte carlo;photon;optics;tissue;fluence;mcx;mmc;
 # utils/mcxp2json.py does that -- so only JSON is claimed here.
 MimeType=application/json;
 StartupNotify=true
-StartupWMClass=mcxstudio2
+StartupWMClass=mcxstudio

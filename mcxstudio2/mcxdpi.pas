@@ -166,14 +166,27 @@ uses
   Windows;
 {$ENDIF}
 
+var
+  { The desktop factor as last read, or -1 before the first read. }
+  GScalingFactor: Integer = -1;
+
 { The desktop's integer window-scaling factor -- xfce's
   Gdk/WindowScalingFactor -- or 0 when it cannot be determined.  gtk2 ignores
-  it, so read it directly and match what other applications do. }
+  it, so read it directly and match what other applications do.
+
+  Read once and kept.  It takes running xfconf-query, and McxScale96 asks
+  for it on every call made before the startup sweep has fixed the PPI --
+  which every control built in code during FormCreate does.  That was 110
+  processes started at every launch, each loading its libraries along
+  LD_LIBRARY_PATH; on a desk whose path runs through a network mount it was
+  most of the time the window took to appear.  McxRefreshScale asks for a
+  fresh reading when one is actually wanted. }
 function McxDesktopScalingFactor: Integer;
 {$IFDEF LINUX}
 var
   Outp: string;
 begin
+  if GScalingFactor >= 0 then Exit(GScalingFactor);
   Result := 0;
   Outp := '';
   try
@@ -185,6 +198,7 @@ begin
       desktops do not have one, and 0 means "assume 1". }
     Result := 0;
   end;
+  GScalingFactor := Result;
 end;
 {$ELSE}
 begin
@@ -651,6 +665,7 @@ function McxRefreshScale: Boolean;
 var
   D: Integer;
 begin
+  GScalingFactor := -1;     { a fresh reading, not the one from startup }
   D := McxDesiredPPI;
   Result := (D > 0) and (D <> GAppliedPPI);
   if Result then

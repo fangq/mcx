@@ -19,9 +19,20 @@ unit mcxview;
 interface
 
 uses
-  Classes, SysUtils, Math, Controls, ExtCtrls, Graphics, fpjson,
-  FPImage, FPWritePNG,
-  OpenGLContext, GL, mcxdoc, mcxgl, mcxjd, mcxmesh;
+  Classes, SysUtils, Math, Controls, ExtCtrls, Graphics, Forms, fpjson, jsonparser,
+  FPImage, FPWritePNG, IntfGraphics, GraphType, LCLType,
+  LazFileUtils, OpenGLContext, GL, mcxdoc, mcxgl, mcxjd, mcxmesh, mcxsoft,
+  mcxglprobe;
+
+var
+  { --software: draw on the processor from the start, never asking for an
+    OpenGL context -- for a display where asking is what goes wrong. }
+  McxForceSoftware: Boolean = False;
+
+{ True if E is the OpenGL control failing to get a context, which the view
+  has now answered by drawing in software.  For a handler that would
+  otherwise stop the program over it -- the headless reporter of --quit. }
+function McxViewTakesException(E: Exception): Boolean;
 
 type
   { Somewhere to put a line that has nowhere else to go -- the GL version at
@@ -44,6 +55,26 @@ type
     FHost: TWinControl;
     FDoc: TMcxDoc;
     FGL: TOpenGLControl;
+    { The software renderer, when there is no OpenGL 3.3 to draw with: the
+      pane it paints, the raster it paints from, and the volume it marches,
+      which the GL path keeps on the card and this one keeps here. }
+    FSoftPane: TCustomControl;
+    FSoft: Boolean;
+    FSoftWhy: string;
+    FRaster: TMcxSoftRaster;
+    FSoftVol: TMcxSoftVolume;
+    FVolNx, FVolNy, FVolNz: Integer;
+    { The domain volume on the card, if the document carries one -- a JData
+      array in Shapes, or a VolumeFile the view can read -- and what it was
+      read from, so an edit elsewhere does not decode it again. }
+    FDomainKey: string;
+    FDomainShown: Boolean;
+    FInDomain: Boolean;
+    { A VolumeFile that is itself a .json of Shapes -- how the quick-test and
+      skin-vessel examples build their domains -- read once per change. }
+    FShapeFileKey: string;
+    FShapeFile: TJSONData;
+    FVolumeChanged: Boolean;
     FShader: TMcxShader;
     FVolShader: TMcxShader;
     FSolidShader: TMcxShader;
@@ -117,6 +148,20 @@ type
     FOnPick: TMcxPickEvent;
     procedure Say(const AText: string);
     procedure Build;
+    { Moves to the software renderer, saying why, once. }
+    procedure UseSoftware(const AWhy: string);
+    { The pane that is showing, whichever renderer draws it. }
+    function  Pane: TControl;
+    procedure Invalidate;
+    function  PaneWidth: Integer;
+    function  PaneHeight: Integer;
+    procedure RenderSoft(AWidth, AHeight: Integer; ADraft: Boolean);
+    procedure SoftPaint(Sender: TObject);
+    procedure AppException(Sender: TObject; E: Exception);
+    { A current GL context with the 3.3 programs built, or False having moved
+      to software -- including when asking for the context raises, which is
+      how the widget set reports that there is none to be had. }
+    function  TryGL: Boolean;
     function  Start: Boolean;
     procedure GLPaint(Sender: TObject);
     procedure GLMouseDown(Sender: TObject; Button: TMouseButton;
@@ -129,6 +174,8 @@ type
     procedure AddAxes(const ALo, AHi: TMcxVec3);
     procedure BuildAxisLabels;
     procedure AddShapes;
+    procedure AddDomainVolume;
+    function  ShapeFileShapes: TJSONData;
     procedure AddMesh;
     procedure AddSource;
     procedure RenderScene(AWidth, AHeight: Integer; AFlat: Boolean);
@@ -154,7 +201,11 @@ type
       .jnii or .bnii; anything past the third dimension -- time gates, or
       the several outputs of one run -- is dropped to the first slice, which
       is what the old viewer showed too. }
-    function ShowVolume(const AArray: TMcxArray): Boolean;
+    { ALabels is a domain rather than a result: tissue labels or optical
+      properties, drawn on a linear scale from zero, so that a volume of one
+      label throughout is a solid block rather than nothing at all. }
+    function ShowVolume(const AArray: TMcxArray;
+      ALabels: Boolean = False): Boolean;
     procedure ClearVolume;
     { 0 for maximum intensity, 1 for accumulation. }
     { Everything below is a uniform: setting one is a repaint, not an upload,
@@ -176,6 +227,9 @@ type
     { The clear colour, 0..1 per channel. }
     property Background: TMcxVec3 read FBack write FBack;
     property HasVolume: Boolean read GetHasVolume;
+    { Set when Rebuild put a domain volume up or took one down; the owner
+      clears it once its own controls have followed. }
+    property VolumeChanged: Boolean read FVolumeChanged write FVolumeChanged;
     property Document: TMcxDoc read FDoc write FDoc;
     { Renders at any size into an offscreen target and writes a PNG. }
     { Loads the photon paths mcx writes with -D M, as <session>_traj.jdt. }
@@ -197,6 +251,46 @@ type
 
 implementation
 
+var
+  GView: TMcxView = nil;
+
+{ The widget set raises this from inside the GL control's handle creation --
+  gtk2's "gdk_gl_context_share_new_usefpglx context creation failed", the
+  others' own words for the same thing -- in the middle of the event loop,
+  where nothing of ours is on the stack to catch it. }
+function IsContextFailure(E: Exception): Boolean;
+var
+  M: string;
+begin
+  M := LowerCase(E.Message);
+  Result := (Pos('context creation failed', M) > 0) or
+            (Pos('opengl', M) > 0) or (Pos('glx', M) > 0) or
+            (Pos('wglcreatecontext', M) > 0) or (Pos('pixel format', M) > 0) or
+            (Pos('nsopengl', M) > 0);
+end;
+
+function McxViewTakesException(E: Exception): Boolean;
+begin
+  Result := (GView <> nil) and (GView.FGL <> nil) and IsContextFailure(E);
+  if Result then GView.UseSoftware('the OpenGL context could not be created: ' + E.Message);
+end;
+
+type
+  { The pane the software renderer paints: a plain double-buffered control
+    whose Paint is the view's.  Declared here so that the view, in the same
+    unit, can hand it the mouse events the GL control had. }
+  TMcxSoftPane = class(TCustomControl)
+  protected
+    procedure Paint; override;
+  public
+    OnPaintPane: TNotifyEvent;
+  end;
+
+procedure TMcxSoftPane.Paint;
+begin
+  if Assigned(OnPaintPane) then OnPaintPane(Self) else inherited Paint;
+end;
+
 constructor TMcxView.Create(AHost: TWinControl);
 begin
   FHost := AHost;
@@ -215,6 +309,10 @@ end;
 
 destructor TMcxView.Destroy;
 begin
+  if GView = Self then GView := nil;
+  Application.RemoveOnExceptionHandler(@AppException);
+  FRaster.Free;
+  FShapeFile.Free;
   FVolume.Free;
   FCube.Free;
   FMesh.Free;
@@ -228,6 +326,203 @@ begin
   FLines.Free;
   FCamera.Free;
   inherited Destroy;
+end;
+
+{ ------------------------------------------------------------ software --- }
+
+procedure TMcxView.UseSoftware(const AWhy: string);
+var
+  P: TMcxSoftPane;
+begin
+  if FSoft then Exit;
+  FSoft := True;
+  FSoftWhy := AWhy;
+  FDescription := Format('software renderer on %d processor(s) (%s)',
+    [McxSoftThreads, AWhy]);
+  Say('drawing in software: ' + AWhy);
+
+  { The GL control stays, hidden and deaf: this may be running inside its
+    own paint handler, which is no place to free it. }
+  if FGL <> nil then
+  begin
+    FGL.OnPaint := nil;
+    FGL.OnMouseDown := nil;
+    FGL.OnMouseMove := nil;
+    FGL.OnMouseUp := nil;
+    FGL.OnMouseWheel := nil;
+    FGL.Visible := False;
+  end;
+
+  P := TMcxSoftPane.Create(FHost);
+  P.Parent := FHost;
+  P.Align := alClient;
+  P.DoubleBuffered := True;
+  P.OnPaintPane := @SoftPaint;
+  P.OnMouseDown := @GLMouseDown;
+  P.OnMouseMove := @GLMouseMove;
+  P.OnMouseUp := @GLMouseUp;
+  P.OnMouseWheel := @GLMouseWheel;
+  FSoftPane := P;
+
+  { What Start does for the GL path once it has a context. }
+  if FDoc <> nil then Rebuild;
+  Invalidate;
+end;
+
+function TMcxView.Pane: TControl;
+begin
+  if FSoft then Result := FSoftPane else Result := FGL;
+end;
+
+procedure TMcxView.Invalidate;
+begin
+  if Pane <> nil then Pane.Invalidate;
+end;
+
+function TMcxView.PaneWidth: Integer;
+begin
+  if Pane <> nil then Result := Max(1, Pane.Width) else Result := 1;
+end;
+
+function TMcxView.PaneHeight: Integer;
+begin
+  if Pane <> nil then Result := Max(1, Pane.Height) else Result := 1;
+end;
+
+{ The software renderer's RenderScene: the same projection, the same three
+  passes in the same order, into the raster rather than into a framebuffer. }
+procedure TMcxView.RenderSoft(AWidth, AHeight: Integer; ADraft: Boolean);
+var
+  MVP: TMcxMat4;
+  First, Last: Integer;
+begin
+  if FRaster = nil then FRaster := TMcxSoftRaster.Create;
+  if AHeight < 1 then AHeight := 1;
+  if AWidth < 1 then AWidth := 1;
+  MVP := McxMat4Mul(
+    McxMat4Perspective(45, AWidth / AHeight, FCamera.Distance * 0.01,
+      FCamera.Distance * 10),
+    FCamera.View);
+  FRaster.Start(AWidth, AHeight, FBack, MVP);
+
+  { far faces, then near ones, as the two culled draws of RenderScene }
+  FRaster.Solids(FMesh.Raw, FMesh.Count,
+    McxVec3Norm(McxVec3Sub(FCamera.Eye, FCamera.Target)), 1);
+  FRaster.Solids(FMesh.Raw, FMesh.Count,
+    McxVec3Norm(McxVec3Sub(FCamera.Eye, FCamera.Target)), -1);
+
+  FRaster.Lines(FLines.Raw, 0, FLines.Count);
+
+  if FTrajCount > 0 then
+  begin
+    if (FIdLo <= FTrajFirst) and (FIdHi >= FTrajLast) then
+      FRaster.Lines(FTraj.Raw, 0, FTraj.Count)
+    else
+    begin
+      First := FirstSegmentOf(FIdLo);
+      Last := FirstSegmentOf(FIdHi + 1);
+      FRaster.Lines(FTraj.Raw, First * 2, (Last - First) * 2);
+    end;
+  end;
+
+  BuildAxisLabels;
+  FRaster.Lines(FAxisText.Raw, 0, FAxisText.Count);
+
+  if GetHasVolume then
+  begin
+    FSoftVol.Low := FVolLow;
+    FSoftVol.High := FVolHigh;
+    FSoftVol.LogScale := FLogScale;
+    FSoftVol.Style := FStyle;
+    FSoftVol.Map := FMap;
+    FSoftVol.Floor := FFloor;
+    FSoftVol.Opacity := FOpacity;
+    FSoftVol.Steps := FSteps;
+    FSoftVol.ClipLo := FClipLo;
+    FSoftVol.ClipHi := FClipHi;
+    FRaster.Volume(FSoftVol, FCamera.Eye, ADraft);
+  end;
+end;
+
+procedure TMcxView.SoftPaint(Sender: TObject);
+var
+  Bmp: TBitmap;
+  Img: TLazIntfImage;
+  W, H, x, y: Integer;
+  C: TFPColor;
+  r8, g8, b8: Byte;
+begin
+  W := Max(1, FSoftPane.ClientWidth);
+  H := Max(1, FSoftPane.ClientHeight);
+  { Fewer rays and fewer steps while the picture moves, as the GL path. }
+  RenderSoft(W, H, FDragging or FCoarse);
+
+  Bmp := TBitmap.Create;
+  try
+    Bmp.PixelFormat := pf24bit;
+    Bmp.SetSize(W, H);
+    Img := Bmp.CreateIntfImage;
+    try
+      C.Alpha := alphaOpaque;
+      for y := 0 to H - 1 do
+        for x := 0 to W - 1 do
+        begin
+          FRaster.Pixel(x, y, r8, g8, b8);
+          C.Red := r8 * 257;
+          C.Green := g8 * 257;
+          C.Blue := b8 * 257;
+          Img.Colors[x, y] := C;
+        end;
+      Bmp.LoadFromIntfImage(Img);
+    finally
+      Img.Free;
+    end;
+    FSoftPane.Canvas.Draw(0, 0, Bmp);
+  finally
+    Bmp.Free;
+  end;
+
+  if FCoarse then
+  begin
+    FCoarse := False;
+    Invalidate;
+  end;
+end;
+
+function TMcxView.TryGL: Boolean;
+begin
+  Result := False;
+  if FSoft then Exit;
+  { No handle yet is not no OpenGL: the control has not been shown, and the
+    GL path has always waited for its first paint rather than given up. }
+  if (FGL = nil) or not FGL.HandleAllocated then Exit;
+  try
+    if not FGL.MakeCurrent then
+    begin
+      UseSoftware('no OpenGL context could be made current');
+      Exit;
+    end;
+    if not Start then
+    begin
+      UseSoftware('OpenGL 3.3 is not available: ' + McxGLDescribe);
+      Exit;
+    end;
+    Result := True;
+  except
+    on E: Exception do
+      UseSoftware('the OpenGL context could not be created: ' + E.Message);
+  end;
+end;
+
+{ Every unhandled exception comes here once a handler is registered, since
+  the LCL then shows none itself: an OpenGL failure moves the view to
+  software, and anything else is shown exactly as the LCL would have. }
+procedure TMcxView.AppException(Sender: TObject; E: Exception);
+begin
+  if McxViewTakesException(E) then Exit;
+  { The headless reporter of --quit has already been told, and stopped. }
+  if Assigned(Application.OnException) then Exit;
+  Application.ShowException(E);
 end;
 
 procedure TMcxView.Say(const AText: string);
@@ -246,6 +541,8 @@ end;
   So the designer holds an ordinary TPanel and the control goes into it here,
   which is what MRIcroGL does for the same reason. }
 procedure TMcxView.Build;
+var
+  Why: string;
 begin
   FCamera := TMcxCamera.Create;
   FLines := TMcxLines.Create;
@@ -255,9 +552,35 @@ begin
   FAxisText := TMcxLines.Create;
   FSelected := -1;
 
+  if McxForceSoftware then
+  begin
+    UseSoftware('asked for with --software');
+    Exit;
+  end;
+
+  { Asked outside any widget first: where there is no 3.3 context to be had,
+    finding out inside the GL control is a modal error from the middle of
+    the widget set's own code. }
+  if not McxProbeGL(Why) then
+  begin
+    UseSoftware('OpenGL 3.3 is not available: ' + Why);
+    Exit;
+  end;
+
   { Owned by the host panel, so the control goes when the form does and
     this class does not have to be a TComponent to own it. }
-  FGL := TOpenGLControl.Create(FHost);
+  try
+    FGL := TOpenGLControl.Create(FHost);
+  except
+    on E: Exception do
+    begin
+      FGL := nil;
+      UseSoftware('no OpenGL control: ' + E.Message);
+      Exit;
+    end;
+  end;
+  GView := Self;
+  Application.AddOnExceptionHandler(@AppException, True);
   FGL.Parent := FHost;
   FGL.Align := alClient;
   FGL.DepthBits := 24;
@@ -279,6 +602,7 @@ end;
 function TMcxView.Start: Boolean;
 begin
   Result := FReady;
+  if FSoft then Exit(False);
   if FReady or FFailed then Exit;
 
   if not McxGLLoad then
@@ -322,16 +646,20 @@ end;
 
 function TMcxView.GetHasVolume: Boolean;
 begin
-  Result := (FVolume <> nil) and FVolume.Loaded;
+  if FSoft then Result := Length(FSoftVol.Data) > 0
+  else Result := (FVolume <> nil) and FVolume.Loaded;
 end;
 
 procedure TMcxView.ClearVolume;
 begin
   FreeAndNil(FVolume);
-  if FGL <> nil then FGL.Invalidate;
+  SetLength(FSoftVol.Data, 0);
+  FVolNx := 0; FVolNy := 0; FVolNz := 0;
+  Invalidate;
 end;
 
-function TMcxView.ShowVolume(const AArray: TMcxArray): Boolean;
+function TMcxView.ShowVolume(const AArray: TMcxArray;
+  ALabels: Boolean): Boolean;
 var
   nx, ny, nz: Integer;
   i, n, Spoiled: Int64;
@@ -340,8 +668,12 @@ var
   Any: Boolean;
 begin
   Result := False;
-  if (FGL = nil) or not FGL.MakeCurrent then Exit;
-  if not Start then Exit;
+  { A result opened over the domain replaces it, and is not the domain's to
+    take down again when the document changes. }
+  if not FInDomain then FDomainShown := False;
+  { A context that cannot be had now will not be had at the next paint
+    either, so the result is drawn in software rather than not at all. }
+  if not TryGL and not FSoft then Exit;
 
   nx := 1; ny := 1; nz := 1;
   if Length(AArray.Dims) > 0 then nx := AArray.Dims[0];
@@ -416,6 +748,11 @@ begin
   { Fluence spans many decades, so the window is set on the log of it and
     the shader takes the log too.  A flat volume falls back to its own
     range, which at least shows something. }
+  if ALabels then
+  begin
+    FLogScale := False;
+    if Lo > 0 then Lo := 0;
+  end;
   if FLogScale and (Hi > 0) then
   begin
     FVolHigh := Ln(Hi);
@@ -432,12 +769,24 @@ begin
     if FVolHigh <= FVolLow then FVolHigh := FVolLow + 1;
   end;
 
-  if FVolume = nil then FVolume := TMcxVolume.Create;
-  Result := FVolume.Upload(@Buf[0], nx, ny, nz, FVolLow, FVolHigh);
-  if not Result then
+  FVolNx := nx; FVolNy := ny; FVolNz := nz;
+  if FSoft then
   begin
-    Say(Format('the card would not take a %dx%dx%d volume', [nx, ny, nz]));
-    FreeAndNil(FVolume);
+    { Kept here and marched on the processor at every paint. }
+    FSoftVol.Data := Buf;
+    FSoftVol.Nx := nx; FSoftVol.Ny := ny; FSoftVol.Nz := nz;
+    Result := True;
+  end
+  else
+  begin
+    if FVolume = nil then FVolume := TMcxVolume.Create;
+    Result := FVolume.Upload(@Buf[0], nx, ny, nz, FVolLow, FVolHigh);
+    if not Result then
+    begin
+      Say(Format('the card would not take a %dx%dx%d volume', [nx, ny, nz]));
+      FreeAndNil(FVolume);
+      FVolNx := 0; FVolNy := 0; FVolNz := 0;
+    end;
   end;
 
   { The camera is aimed at the result rather than left wherever the document
@@ -456,7 +805,7 @@ begin
     FitView;
   end;
 
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 { Puts whatever is on the card inside the pane: the volume if there is one,
@@ -467,7 +816,7 @@ var
   Lo, Hi: TMcxVec3;
 begin
   Aspect := 1;
-  if (FGL <> nil) and (FGL.Height > 0) then Aspect := FGL.Width / FGL.Height;
+  if PaneHeight > 0 then Aspect := PaneWidth / PaneHeight;
 
   Lo := FSceneLo;
   Hi := FSceneHi;
@@ -480,9 +829,9 @@ begin
     if 0 < Lo.x then Lo.x := 0;
     if 0 < Lo.y then Lo.y := 0;
     if 0 < Lo.z then Lo.z := 0;
-    if FVolume.Nx > Hi.x then Hi.x := FVolume.Nx;
-    if FVolume.Ny > Hi.y then Hi.y := FVolume.Ny;
-    if FVolume.Nz > Hi.z then Hi.z := FVolume.Nz;
+    if FVolNx > Hi.x then Hi.x := FVolNx;
+    if FVolNy > Hi.y then Hi.y := FVolNy;
+    if FVolNz > Hi.z then Hi.z := FVolNz;
   end;
 
   { Room for the ruler.  The numbers hang three ticks outside the low corner
@@ -494,7 +843,7 @@ begin
   Hi := McxVec3(Hi.x + Pad, Hi.y + Pad, Hi.z + Pad);
 
   FCamera.FrameBox(Lo, Hi, 45, Aspect);
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 { Draws the volume inside the domain box.
@@ -565,7 +914,7 @@ begin
   SetLength(FTrajIds, 0);
   FTrajFirst := 0;
   FTrajLast := 0;
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 { The ramp a photon's weight is drawn on: dark red where almost nothing is
@@ -744,7 +1093,7 @@ begin
       'to keep", or run fewer photons.', [Cut, Ends]));
 
   Result := FTrajCount > 0;
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 { The first segment belonging to photon AId or later.  Bisection, because the
@@ -787,7 +1136,7 @@ procedure TMcxView.SetPhotonRange(ALo, AHi: Integer);
 begin
   FIdLo := ALo;
   FIdHi := AHi;
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 { ------------------------------------------------------------ picking ----- }
@@ -809,9 +1158,25 @@ var
   Id: Integer;
 begin
   Result := -1;
-  if (FGL = nil) or not FGL.MakeCurrent then Exit;
-  if not Start then Exit;
   if FPick.Count = 0 then Exit;
+  if FSoft then
+  begin
+    if FRaster = nil then FRaster := TMcxSoftRaster.Create;
+    FRaster.Start(PaneWidth, PaneHeight, McxVec3(0, 0, 0), McxMat4Mul(
+      McxMat4Perspective(45, Max(1, PaneWidth) / Max(1, PaneHeight),
+        FCamera.Distance * 0.01, FCamera.Distance * 10), FCamera.View));
+    FRaster.PickSolids(FPick.Raw, FPick.Count);
+    Id := FRaster.PickId(AX, AY);
+    if (Id > 0) and (Id <= Length(FPicks)) then Result := Id - 1;
+    { The raster now holds identifiers; the next paint draws it again. }
+    Invalidate;
+    Exit;
+  end;
+  if not TryGL then
+  begin
+    if FSoft then Result := PickAt(AX, AY);
+    Exit;
+  end;
 
   if FTarget = nil then FTarget := TMcxTarget.Create;
   { Full size rather than a one-pixel view: the projection has to be the one
@@ -841,12 +1206,42 @@ var
   W: TFPWriterPNG;
   x, y, i: Integer;
   C: TFPColor;
+  r8, g8, b8: Byte;
 begin
   Result := False;
-  if (FGL = nil) or not FGL.MakeCurrent then Exit;
-  if not Start then Exit;
-  if AWidth < 1 then AWidth := FGL.Width;
-  if AHeight < 1 then AHeight := FGL.Height;
+  if AWidth < 1 then AWidth := PaneWidth;
+  if AHeight < 1 then AHeight := PaneHeight;
+  if FSoft then
+  begin
+    RenderSoft(AWidth, AHeight, False);
+    Img := TFPMemoryImage.Create(AWidth, AHeight);
+    W := TFPWriterPNG.Create;
+    try
+      C.Alpha := alphaOpaque;
+      for y := 0 to AHeight - 1 do
+        for x := 0 to AWidth - 1 do
+        begin
+          FRaster.Pixel(x, y, r8, g8, b8);
+          C.Red := r8 * 257;
+          C.Green := g8 * 257;
+          C.Blue := b8 * 257;
+          Img.Colors[x, y] := C;
+        end;
+      Img.SaveToFile(AFileName, W);
+      Result := True;
+    except
+      on E: Exception do Say('could not write ' + AFileName + ': ' + E.Message);
+    end;
+    Img.Free;
+    W.Free;
+    Invalidate;
+    Exit;
+  end;
+  if not TryGL then
+  begin
+    if FSoft then Result := SaveImage(AFileName, AWidth, AHeight);
+    Exit;
+  end;
 
   if FTarget = nil then FTarget := TMcxTarget.Create;
   if not FTarget.Bind(AWidth, AHeight) then
@@ -886,7 +1281,7 @@ begin
   Img.Free;
   W.Free;
   { Back to the window, which the offscreen pass left unbound. }
-  FGL.Invalidate;
+  Invalidate;
 end;
 
 procedure TMcxView.RenderScene(AWidth, AHeight: Integer; AFlat: Boolean);
@@ -986,14 +1381,16 @@ end;
 
 procedure TMcxView.GLPaint(Sender: TObject);
 begin
-  if not FGL.MakeCurrent then Exit;
+  if FSoft then Exit;
+  { No context, or not a 3.3 one: the same picture, drawn on the processor. }
+  if not FGL.MakeCurrent then
+  begin
+    UseSoftware('no OpenGL context could be made current');
+    Exit;
+  end;
   if not Start then
   begin
-    { Nothing can be drawn, but the buffer still has to be cleared and shown
-      or the control keeps whatever was behind it. }
-    glClearColor(FBack.x, FBack.y, FBack.z, 1);
-    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
-    FGL.SwapBuffers;
+    UseSoftware('OpenGL 3.3 is not available: ' + McxGLDescribe);
     Exit;
   end;
   RenderScene(FGL.Width, FGL.Height, False);
@@ -1003,7 +1400,7 @@ begin
   if FCoarse then
   begin
     FCoarse := False;
-    FGL.Invalidate;
+    Invalidate;
   end;
 end;
 
@@ -1025,7 +1422,7 @@ begin
   FCamera.Orbit((FDragX - X) * 0.008, (Y - FDragY) * 0.008);
   FDragX := X;
   FDragY := Y;
-  FGL.Invalidate;
+  Invalidate;
 end;
 
 procedure TMcxView.GLMouseUp(Sender: TObject; Button: TMouseButton;
@@ -1037,7 +1434,7 @@ begin
   begin
     FDragging := False;
     { The full-quality frame, now that the picture has stopped. }
-    FGL.Invalidate;
+    Invalidate;
   end;
   { A click, not the end of a drag: the camera moved is not a selection. }
   if (Button <> mbLeft) or FDidDrag then
@@ -1078,7 +1475,7 @@ procedure TMcxView.GLMouseWheel(Sender: TObject; Shift: TShiftState;
 begin
   FCamera.Zoom(WheelDelta / 120);
   FCoarse := True;
-  FGL.Invalidate;
+  Invalidate;
   Handled := True;
 end;
 
@@ -1367,6 +1764,252 @@ begin
   Numbers(2, Blue);
 end;
 
+{ A label volume as the 3-D view wants it: one float per voxel, x fastest.
+
+  JData writes arrays row-major unless _ArrayOrder_ says "c", and mcx reads
+  a Shapes array that way (mcx_utils.c sets isrowmajor for it), so the last
+  index is the fastest one.  A fourth dimension is the per-voxel values of
+  the continuous formats -- mua, mus, g, n for asgn_float -- and only the
+  first is drawn.  It comes either last ([60,40,20,4], interleaved) or first
+  ([4,60,40,20]); whichever of the two leaves the other three matching Dim
+  is the one meant, and failing that the short one is the component. }
+function DomainGrid(const A: TMcxArray; ARowMajor: Boolean; ANx, ANy,
+  ANz: Integer; out AOut: TMcxArray): Boolean;
+var
+  nd, nx, ny, nz, nc, x, y, z: Integer;
+  Lead: Boolean;
+  Src, Dst: Int64;
+  P: PSingle;
+begin
+  Result := False;
+  nd := Length(A.Dims);
+  if nd < 3 then Exit;
+  Lead := False;
+  nc := 1;
+  if nd >= 4 then
+  begin
+    if (A.Dims[1] = ANx) and (A.Dims[2] = ANy) and (A.Dims[3] = ANz) then
+      Lead := True
+    else if not ((A.Dims[0] = ANx) and (A.Dims[1] = ANy) and (A.Dims[2] = ANz)) then
+      Lead := A.Dims[0] < A.Dims[nd - 1];
+    if Lead then nc := A.Dims[0] else nc := A.Dims[3];
+  end;
+  if Lead then
+  begin
+    nx := A.Dims[1]; ny := A.Dims[2]; nz := A.Dims[3];
+  end
+  else
+  begin
+    nx := A.Dims[0]; ny := A.Dims[1]; nz := A.Dims[2];
+  end;
+  if (nx < 1) or (ny < 1) or (nz < 1) or (nc < 1) then Exit;
+  if Int64(nx) * ny * nz * nc > McxArrayCount(A) then Exit;
+
+  AOut.Kind := akSingle;
+  SetLength(AOut.Dims, 3);
+  AOut.Dims[0] := nx; AOut.Dims[1] := ny; AOut.Dims[2] := nz;
+  SetLength(AOut.Data, Int64(nx) * ny * nz * SizeOf(Single));
+  P := PSingle(@AOut.Data[0]);
+  Dst := 0;
+  for z := 0 to nz - 1 do
+    for y := 0 to ny - 1 do
+      for x := 0 to nx - 1 do
+      begin
+        if ARowMajor then
+        begin
+          Src := (Int64(x) * ny + y) * nz + z;
+          if not Lead then Src := Src * nc;
+        end
+        else
+        begin
+          Src := x + Int64(nx) * (y + Int64(ny) * z);
+          if Lead then Src := Src * nc;
+        end;
+        P[Dst] := McxArrayValue(A, Src);
+        Inc(Dst);
+      end;
+  Result := True;
+end;
+
+{ A raw VolumeFile: Dim voxels of one label each, in the width MediaFormat
+  names.  The continuous formats are not labels and are left to the run. }
+function RawVolume(const AFileName: string; AWidth, ANx, ANy, ANz: Integer;
+  out AOut: TMcxArray): Boolean;
+var
+  F: TFileStream;
+  n: Int64;
+begin
+  Result := False;
+  n := Int64(ANx) * ANy * ANz;
+  if n <= 0 then Exit;
+  try
+    F := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyNone);
+    try
+      if F.Size < n * AWidth then Exit;
+      case AWidth of
+        1: AOut.Kind := akUInt8;
+        2: AOut.Kind := akUInt16;
+      else
+        AOut.Kind := akUInt32;
+      end;
+      SetLength(AOut.Dims, 3);
+      AOut.Dims[0] := ANx; AOut.Dims[1] := ANy; AOut.Dims[2] := ANz;
+      SetLength(AOut.Data, n * AWidth);
+      F.ReadBuffer(AOut.Data[0], n * AWidth);
+      Result := True;
+    finally
+      F.Free;
+    end;
+  except
+    Result := False;
+  end;
+end;
+
+{ The Shapes array of a VolumeFile that is a .json, or nil.  mcx reads such
+  a file as a shapes description rather than a volume (mcx_loadvolume), so
+  the card draws it the way it draws shapes written into the input. }
+function TMcxView.ShapeFileShapes: TJSONData;
+var
+  Fn, Key: string;
+  Age: LongInt;
+  L: TStringList;
+begin
+  Result := nil;
+  Fn := FDoc.AsStr('Domain.VolumeFile', '');
+  if LowerCase(ExtractFileExt(Fn)) <> '.json' then Exit;
+  if (FDoc.FileName <> '') and not FilenameIsAbsolute(Fn) then
+    Fn := ExtractFilePath(FDoc.FileName) + Fn;
+  Age := FileAge(Fn);
+  if Age = -1 then Exit;
+  Key := Format('%s %d', [Fn, Age]);
+  if Key <> FShapeFileKey then
+  begin
+    FShapeFileKey := Key;
+    FreeAndNil(FShapeFile);
+    L := TStringList.Create;
+    try
+      try
+        L.LoadFromFile(Fn);
+        FShapeFile := GetJSON(L.Text);
+      except
+        FreeAndNil(FShapeFile);
+      end;
+    finally
+      L.Free;
+    end;
+  end;
+  if FShapeFile is TJSONObject then
+    Result := TJSONObject(FShapeFile).Find('Shapes');
+end;
+
+{ The domain itself, when the document carries it as data rather than as
+  shapes to draw: mcxlab and mcx --dumpjson write the volume into Shapes as
+  a JData array, and a VolumeFile names one on disk.  Without this the card
+  showed an empty box for every such input -- which is most of the demos.
+
+  Drawn as a volume, the same way a result is, and only put up when the
+  data itself changed: Rebuild runs on every edit, and a result opened
+  since should not be thrown away because a photon count was typed. }
+procedure TMcxView.AddDomainVolume;
+var
+  Sh, O: TJSONData;
+  Key, Fn, Fmt, Ext: string;
+  A, G: TMcxArray;
+  Got, RowMajor: Boolean;
+  nx, ny, nz, W: Integer;
+  Age: LongInt;
+begin
+  if FDoc = nil then Exit;
+  nx := FDoc.AsInt('Domain.Dim[0]', 0);
+  ny := FDoc.AsInt('Domain.Dim[1]', 0);
+  nz := FDoc.AsInt('Domain.Dim[2]', 0);
+  Key := '';
+  Fn := '';
+  Sh := FDoc.Find('Shapes');
+  if (Sh is TJSONObject) and (TJSONObject(Sh).Find('_ArrayType_') <> nil) then
+  begin
+    O := TJSONObject(Sh).Find('_ArrayZipData_');
+    if O = nil then O := TJSONObject(Sh).Find('_ArrayData_');
+    if O <> nil then
+      Key := Format('jdata %d %s', [Length(O.AsJSON),
+        Copy(O.AsJSON, 1, 64)]);
+  end
+  else
+  begin
+    Fn := FDoc.AsStr('Domain.VolumeFile', '');
+    if Fn <> '' then
+    begin
+      if (FDoc.FileName <> '') and not FilenameIsAbsolute(Fn) then
+        Fn := ExtractFilePath(FDoc.FileName) + Fn;
+      Age := FileAge(Fn);
+      if Age <> -1 then
+        Key := Format('file %s %d %s %d %d %d', [Fn, Age,
+          FDoc.AsStr('Domain.MediaFormat', 'byte'), nx, ny, nz])
+      else
+        Fn := '';
+    end;
+  end;
+
+  if Key = FDomainKey then Exit;
+  FDomainKey := Key;
+
+  if Key = '' then
+  begin
+    { The domain this document had is gone; a result is left alone. }
+    if FDomainShown then
+    begin
+      ClearVolume;
+      FDomainShown := False;
+      FVolumeChanged := True;
+    end;
+    Exit;
+  end;
+
+  Got := False;
+  if Fn = '' then
+  begin
+    O := TJSONObject(Sh).Find('_ArrayOrder_');
+    RowMajor := (O = nil) or (LowerCase(Copy(O.AsString, 1, 1)) <> 'c');
+    Got := McxDecodeJData(TJSONObject(Sh), A) and
+      DomainGrid(A, RowMajor, nx, ny, nz, G);
+  end
+  else
+  begin
+    Ext := LowerCase(ExtractFileExt(Fn));
+    if (Ext = '.bin') or (Ext = '.vol') or (Ext = '.raw') then
+    begin
+      Fmt := LowerCase(FDoc.AsStr('Domain.MediaFormat', 'byte'));
+      W := 0;
+      if Fmt = 'byte' then W := 1
+      else if Fmt = 'short' then W := 2
+      else if Fmt = 'integer' then W := 4;
+      if W > 0 then Got := RawVolume(Fn, W, nx, ny, nz, G);
+    end
+    else
+      { A NIfTI or JNIfTI volume is read the way a result is, and is
+        already x-fastest. }
+      Got := McxLoadArray(Fn, '', A) and DomainGrid(A, False, nx, ny, nz, G);
+  end;
+
+  FInDomain := True;
+  try
+    if Got then Got := ShowVolume(G, True);
+  finally
+    FInDomain := False;
+  end;
+  if Got then
+  begin
+    FDomainShown := True;
+    FVolumeChanged := True;
+  end
+  else if FDomainShown then
+  begin
+    ClearVolume;
+    FDomainShown := False;
+    FVolumeChanged := True;
+  end;
+end;
+
 procedure TMcxView.AddShapes;
 const
   { Translucent, because a domain is nested: a sphere inside a box inside a
@@ -1514,6 +2157,7 @@ var
   O, Size, C0, C1: TMcxVec3;
 begin
   Shapes := FDoc.Find('Shapes');
+  if (Shapes = nil) or (Shapes.JSONType <> jtArray) then Shapes := ShapeFileShapes;
   if (Shapes = nil) or (Shapes.JSONType <> jtArray) then Exit;
   Origin := McxVec3(0, 0, 0);
 
@@ -1800,7 +2444,7 @@ end;
   hundred of them on every repaint. }
 procedure TMcxView.Redraw;
 begin
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 procedure TMcxView.Rebuild;
@@ -1862,6 +2506,7 @@ begin
   AddAxes(FSceneLo, FSceneHi);
 
   AddShapes;
+  AddDomainVolume;
   AddMesh;
 
   { A mesh document has no grid, so the box and the camera come from where
@@ -1890,7 +2535,7 @@ begin
       FSceneKey := Key;
       FitView;
     end;
-    if FGL <> nil then FGL.Invalidate;
+    Invalidate;
     Exit;
   end;
 
@@ -1906,7 +2551,7 @@ begin
     FitView;
   end;
 
-  if FGL <> nil then FGL.Invalidate;
+  Invalidate;
 end;
 
 

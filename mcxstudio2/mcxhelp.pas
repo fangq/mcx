@@ -53,7 +53,7 @@ type
   end;
 
 const
-  Helps: array[0..42] of TMcxHelpEntry = (
+  Helps: array[0..48] of TMcxHelpEntry = (
     (Ctl:'rgBackend'; Text:'Which simulator runs. MCX needs an NVIDIA card; ' +
       'MCX-CL runs the same simulation on any OpenCL device, including the ' +
       'CPU; MMC works on a tetrahedral mesh instead of voxels. The choice ' +
@@ -150,6 +150,23 @@ const
       'edge vectors for a planar source, the cone half-angle for a cone.'),
     (Ctl:'edSrcParam2'; Text:'The second four numbers the source type takes, ' +
       'where it needs more than four.'),
+    (Ctl:'edDetParam1'; Text:'mmc only: the first four numbers of a ' +
+      'wide-field detector, read from the first detector. As for a source, ' +
+      'they are the first edge vector of a planar or pattern detector.'),
+    (Ctl:'edDetParam2'; Text:'mmc only: the second four numbers of a ' +
+      'wide-field detector -- its second edge vector.'),
+    (Ctl:'edMeshID'; Text:'The name the mesh files share: mmc reads ' +
+      'node_<id>.dat and elem_<id>.dat (and face_<id>.dat where it needs ' +
+      'one) from beside the input file or from the root path.'),
+    (Ctl:'edInitElem'; Text:'The tetrahedron the source starts in, ' +
+      'counting from 1. -1 has mmc search for it from the source position, ' +
+      'which works for point-like sources (pencil, isotropic, cone).'),
+    (Ctl:'cbRayTracer'; Text:'How mmc steps a photon through the mesh ' +
+      '(-M/--method). Dual-grid (DMMC) traces the mesh but records on a ' +
+      'voxel grid, and is the default of any mmc built with GPU support; a ' +
+      'CPU-only build defaults to Havel (SSE4) or Plucker.'),
+    (Ctl:'cbBasisOrder'; Text:'Where mmc records the result (--basisorder): ' +
+      'at the mesh nodes, interpolated linearly, or one value per element.'),
     (Ctl:'edSrcFreq'; Text:'Modulation frequency in Hz, for frequency-domain ' +
       'runs. Zero is continuous wave.'),
     (Ctl:'edSrcNum'; Text:'How many patterns a pattern source carries. More ' +

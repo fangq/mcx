@@ -106,11 +106,24 @@ def parse_csv_row(row):
     return fields
 
 
+def grid_cells(row):
+    """The cells of one MediaCfg/DetectorCfg row, without the row-number cell.
+
+    The old GUI saved its grids whole, fixed column included, and that column
+    is empty -- so a row reads ',0.005,1,0.01,1.37', and taking the fields as
+    they come shifts every value one column over.
+    """
+    cells = row.split(',')
+    if len(cells) > 4 and cells[0].strip() == '':
+        cells = cells[1:]
+    return cells
+
+
 def convert_media(text):
     """'0,0,1,1|0.005,1,0.01,1.37' -> a list of media objects."""
     media = []
     for row in split_rows(text):
-        parts = [as_number(p.strip()) for p in row.split(',')]
+        parts = [as_number(p.strip()) for p in grid_cells(row)]
         parts += [0] * (4 - len(parts))
         media.append({'mua': parts[0], 'mus': parts[1],
                       'g': parts[2], 'n': parts[3]})
@@ -121,7 +134,7 @@ def convert_detectors(text):
     """'29,19,0,1|...' -> a list of detector objects."""
     dets = []
     for row in split_rows(text):
-        parts = [as_number(p.strip()) for p in row.split(',')]
+        parts = [as_number(p.strip()) for p in grid_cells(row)]
         parts += [0] * (4 - len(parts))
         dets.append({'Pos': parts[0:3], 'R': parts[3]})
     return dets
@@ -196,6 +209,12 @@ def convert_session(cfg, name, warn):
                 doc['Shapes'] = shapes['Shapes']
             else:
                 doc['Shapes'] = shapes
+        elif real.lower() == 'outputformat':
+            put(doc, 'Session.OutputFormat', value.split()[0].lower())
+        elif real.lower() == 'outputtype':
+            # Saved as the combo box's text, 'X - fluence rate in ...': the
+            # letter mcx reads is the first character.
+            put(doc, 'Session.OutputType', value[0].lower())
         elif real.lower() == 'debugflags':
             letters = ''.join(DEBUG_LETTERS[i]
                               for i, c in enumerate(value[:3]) if c == '1')

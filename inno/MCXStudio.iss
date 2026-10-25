@@ -39,6 +39,7 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=true
+ChangesAssociations=yes
 SetupIconFile=mcxstudio_2023.ico
 ShowLanguageDialog=yes
 ArchitecturesInstallIn64BitMode=x64
@@ -78,12 +79,10 @@ Name: "{app}\MCXSuite"
 ;;----------------------------------------------------------------------
 
 [Files]
+; MCX Studio 2 (mcxstudio2/, built as mcxstudio.exe): one executable with the
+; 3-D viewer built in, so mcxshow/mcxviewer, the locale folder and the
+; plink/pscp remote-run helpers of the first Studio are no longer shipped
 Source: "..\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MCXSuite\mcx\bin\mcxshow.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MCXSuite\mcx\bin\mcxviewer.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\locale\*"; DestDir: "{app}\locale"; Flags: ignoreversion
-Source: "..\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -94,8 +93,10 @@ Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\m
 ;;----------------------------------------------------------------------
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang={code:GetLanguageCode}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user --lang={code:GetLanguageCode}"; Tasks: desktopicon
+; --user: sessions without a writable folder of their own -- new ones, and
+; the examples installed under {app} -- go to %USERPROFILE%\MCXOutput
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"; Tasks: desktopicon
 Name: "{group}\MCX Website"; Filename: "https://mcx.space/"
 Name: "{group}\MCX Wiki"; Filename: "https://mcx.space/wiki/"
 Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
@@ -111,12 +112,18 @@ Root: HKA; Subkey: "Software\COTILab"; Flags: uninsdeletekeyifempty
 Root: HKA; Subkey: "Software\COTILab\MCXStudio"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\COTILab\MCXStudio\Settings"; ValueType: string; ValueName: "Language"; ValueData: "{language}"
 Root: HKA; Subkey: "Software\COTILab\MCXStudio\Settings"; ValueType: string; ValueName: "LanguageCode"; ValueData: "{code:GetLanguageCode}"
-; Associate .mcxp files with My Program (requires ChangesAssociations=yes)
+; First-Studio projects: MCX Studio 2 opens a session of a .mcxp as the mcx
+; input it stood for (mcxmcxp.pas), so the association stays
 Root: HKA; Subkey: "Software\Classes\.mcxp"; ValueType: string; ValueName: ""; ValueData: "MCXStudio.mcxp"; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\.mcxp\OpenWithProgids"; ValueType: string; ValueName: "MCXStudio.mcxp"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp"; ValueType: string; ValueName: ""; ValueData: "MCXStudio"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\mcxstudio.exe,0"
-Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""--user"" ""--lang={code:GetLanguageCode}"" ""%1"""
+Root: HKA; Subkey: "Software\Classes\MCXStudio.mcxp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""--user"" ""%1"""
+; Offered under "Open with" for .json, not made the default: .json is not ours
+Root: HKA; Subkey: "Software\Classes\.json\OpenWithProgids"; ValueType: string; ValueName: "MCXStudio.json"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\MCXStudio.json"; ValueType: string; ValueName: ""; ValueData: "MCX Studio input"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\MCXStudio.json\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\mcxstudio.exe,0"
+Root: HKA; Subkey: "Software\Classes\MCXStudio.json\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\mcxstudio.exe"" ""--user"" ""%1"""
 ; HKA (and HKCU) should only be used for settings which are compatible with
 ; roaming profiles so settings like paths should be written to HKLM, which
 ; is only possible in administrative install mode.
@@ -134,7 +141,7 @@ Root: HKLM; Subkey: "System\CurrentControlSet\Control\GraphicsDrivers"; ValueTyp
 ;;----------------------------------------------------------------------
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--user --lang={code:GetLanguageCode}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 ;;----------------------------------------------------------------------
 

@@ -112,6 +112,20 @@ function McxBackendName(ABackend: TMcxBackend): string;
   told apart by its file name and has to be asked with -L. }
 function McxExeName(ABackend: TMcxBackend): string;
 
+var
+  { --user: sessions are kept under the user's home folder rather than next
+    to the program, as the first Studio's --user did and as the Windows
+    installer's shortcuts ask for -- the install folder is not the user's
+    to write in. }
+  McxUseUserFolder: Boolean = False;
+
+{ Where a session that has no writable home of its own is kept:
+  <root>\MCXOutput\<simulator>sessions\<session>, with root the user's home
+  under --user, else the program's folder -- or home anyway when that cannot
+  be written.  The same layout the first Studio used, so a user's earlier
+  runs are found where they were.  Created if it is not there. }
+function McxWorkFolder(ABackend: TMcxBackend; const ASession: string): string;
+
 { Runs a backend with the given arguments and returns everything it printed.
   Blocking, for the short questions -- what devices are there, what
   benchmarks are there, what is this benchmark -- that happen on demand and
@@ -297,6 +311,26 @@ begin
   end;
 end;
 
+function McxWorkFolder(ABackend: TMcxBackend; const ASession: string): string;
+var
+  Root, Session: string;
+begin
+  Session := Trim(ASession);
+  if Session = '' then Session := 'default';
+  Root := '';
+  if not McxUseUserFolder then
+  begin
+    Root := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) +
+      'MCXOutput';
+    if not ForceDirectories(Root) then Root := '';
+  end;
+  if Root = '' then
+    Root := IncludeTrailingPathDelimiter(GetUserDir) + 'MCXOutput';
+  Result := IncludeTrailingPathDelimiter(Root) + McxExeName(ABackend) +
+    'sessions' + PathDelim + Session;
+  ForceDirectories(Result);
+end;
+
 function McxFindExe(ABackend: TMcxBackend): string;
 var
   Base, Name, Paths: string;
@@ -304,15 +338,20 @@ begin
   Name := McxExeName(ABackend);
   Base := ExtractFilePath(ParamStr(0));
 
-  { Beside the binary, in the bin/ of a release tree, and beside the source
-    tree a developer built in -- then whatever PATH says.
+  { The first Studio's order (mcxgui.pas SearchForExe), so an install that
+    worked with it works with this one: the MCXSuite tree the Windows
+    installer and the MCXStudio packages lay out, then beside the program,
+    then ~/MCXStudio, then <program dir>/<simulator>/bin.
 
-    Two levels of "beside the source tree", because mcxstudio2 lives inside
-    the mcx checkout: from its bin/, mcxcl's own checkout is three levels up,
-    not two.  A developer with mcx, mcxcl and mmc cloned next to each other is
-    the normal case and was not being found. }
+    After those, the source trees a developer builds in -- mcxstudio2 lives
+    inside the mcx checkout, so from its bin/ the mcx, mcxcl and mmc
+    checkouts cloned next to it are two and three levels up -- and last
+    whatever PATH says. }
   Paths :=
+    Base + 'MCXSuite' + PathDelim + ExeNames[ABackend] + PathDelim + 'bin' +
+      PathSeparator +
     Base + PathSeparator +
+    IncludeTrailingPathDelimiter(GetUserDir) + 'MCXStudio' + PathSeparator +
     Base + ExeNames[ABackend] + PathDelim + 'bin' + PathSeparator +
     Base + '..' + PathDelim + 'bin' + PathSeparator +
     Base + '..' + PathDelim + '..' + PathDelim + 'bin' + PathSeparator +
@@ -320,7 +359,6 @@ begin
       PathDelim + 'bin' + PathSeparator +
     Base + '..' + PathDelim + '..' + PathDelim + '..' + PathDelim +
       ExeNames[ABackend] + PathDelim + 'bin' + PathSeparator +
-    IncludeTrailingPathDelimiter(GetUserDir) + 'MCXStudio' + PathSeparator +
     GetEnvironmentVariable('PATH');
 
   Result := FindInPath(Name, Paths);

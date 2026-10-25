@@ -6,7 +6,10 @@
 # output here instead, so a plain "make" works for an ordinary user and in CI
 # without touching the system Lazarus or the developer's own IDE config.
 
-BINARY    ?= mcxstudio2
+# The project keeps its folder and file names; the program it builds is
+# mcxstudio, the name the release ships it under.
+PROJECT   ?= mcxstudio2
+BINARY    ?= mcxstudio
 WIDGETSET ?= gtk2
 PCP       ?= .lazpcp
 LAZBUILD  ?= lazbuild
@@ -47,8 +50,9 @@ LAZROOTS ?= /usr/lib/lazarus /usr/lib/lazarus/* \
             /Applications/Lazarus /c/lazarus C:/lazarus
 
 # A case statement would read better than the test below, but make ends a
-# $(shell ...) at the first unmatched ')' and "in /*)" is one -- so the leading
-# slash is tested by stripping it and seeing whether anything changed.
+# $(shell ...) at the first unmatched ')' and "in /*)" is one; ${l#/} would do,
+# but make before 4.3 (CentOS 7 has 3.82) reads the '#' as a comment -- so the
+# first character is cut out and compared.
 
 # -V is what puts 10.0 above 2.2; it is not in every sort, so ask once.
 LAZSORT := $(shell printf 'a\n' | sort -V >/dev/null 2>&1 \
@@ -60,7 +64,7 @@ LAZDIR := $(shell \
     while [ -n "$$p" ] && [ -L "$$p" ] && [ $$n -lt 20 ]; do \
         n=$$((n + 1)); \
         l=$$(readlink "$$p"); \
-        if [ "$${l#/}" != "$$l" ]; then p=$$l; \
+        if [ "$$(printf '%s' "$$l" | cut -c1)" = / ]; then p=$$l; \
         else p=$$(dirname "$$p")/$$l; fi; \
     done; \
     if [ -n "$$p" ]; then \
@@ -78,10 +82,10 @@ LAZFLAGS = --pcp=$(PCP) --ws=$(WIDGETSET) \
 .PHONY: all debug forms icons sheet test clean distclean res install uninstall
 
 all: forms
-	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(BINARY).lpi
+	$(LAZBUILD) $(LAZFLAGS) --build-mode=Release $(PROJECT).lpi
 
 debug: forms
-	$(LAZBUILD) $(LAZFLAGS) --build-mode=Debug $(BINARY).lpi
+	$(LAZBUILD) $(LAZFLAGS) --build-mode=Debug $(PROJECT).lpi
 
 # lazbuild decides what to recompile from the .pas timestamps alone, so a form
 # edited on its own relinks the binary without rebuilding the resource that
@@ -94,10 +98,10 @@ forms:
 	done
 
 # Rebuilds the embedded resource: the manifest plus one PNG per icon.  Both
-# icons/*.png and $(BINARY).res are committed, so a fresh clone builds with
+# icons/*.png and $(PROJECT).res are committed, so a fresh clone builds with
 # neither inkscape nor fpcres on PATH; this runs only when the artwork moves.
 res:
-	cd packaging/windows && fpcres -of res -o ../../$(BINARY).res $(BINARY).rc
+	cd packaging/windows && fpcres -of res -o ../../$(PROJECT).res $(PROJECT).rc
 
 # Rasterises icons/svg into icons/*.png and regenerates the resource script.
 #
@@ -123,7 +127,7 @@ icons:
 	   sed 's/#.*//' packaging/icons.map | while read -r name svg; do \
 	       [ -n "$$name" ] || continue; \
 	       echo "MCXICON_$$(echo $$name | tr a-z A-Z) 10 \"../../icons/$$name.png\""; \
-	   done; } > packaging/windows/$(BINARY).rc
+	   done; } > packaging/windows/$(PROJECT).rc
 	@$(MAKE) res
 
 # A contact sheet of every icon, for reviewing the artwork.
@@ -176,7 +180,7 @@ install: all
 	install -Dm755 bin/$(BINARY) $(DESTDIR)$(PREFIX)/bin/$(BINARY)
 	install -Dm644 packaging/linux/$(BINARY).desktop \
 	    $(DESTDIR)$(PREFIX)/share/applications/$(BINARY).desktop
-	install -Dm644 icons/$(BINARY).png \
+	install -Dm644 icons/$(PROJECT).png \
 	    $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(BINARY).png
 	install -Dm755 ../utils/mcxp2json.py \
 	    $(DESTDIR)$(PREFIX)/bin/mcxp2json

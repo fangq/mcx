@@ -25,7 +25,8 @@ uses
   AnchorDocking, AnchorDockPanel, AnchorDockStorage, XMLPropStorage,
   SynEdit, SynEditTypes, SynGutterLineNumber, mcxjsonsyn,
   mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview, mcxshapes,
-  mcxdisp, mcxchoose, mcxtable, mcxjd;
+  mcxdisp, mcxchoose, mcxtable, mcxjd, mcxmcxp, mcxdomain, mcxdatadlg, CheckLst,
+  FileUtil, LazFileUtils;
 
 type
   { One navigator entry below a section header: the group box on the detail
@@ -137,6 +138,21 @@ type
     gbEngine: TPanel;
     gbGrid: TPanel;
     gbVolume: TPanel;
+    gbDomainData: TPanel;
+    gbMesh: TPanel;
+    rwMeshID: TPanel;
+    lbMeshID: TLabel;
+    edMeshID: TEdit;
+    rwInitElem: TPanel;
+    lbInitElem: TLabel;
+    edInitElem: TSpinEdit;
+    rwRayTracer: TPanel;
+    lbRayTracer: TLabel;
+    cbRayTracer: TComboBox;
+    rwBasisOrder: TPanel;
+    lbBasisOrder: TLabel;
+    cbBasisOrder: TComboBox;
+    lbMeshInfo: TLabel;
     gbMedia: TPanel;
     gbShapeList: TPanel;
     pnShapeEdit: TPanel;
@@ -157,6 +173,12 @@ type
       group box that looks broken. }
     lbTodoMedia: TLabel;
     lbTodoDet: TLabel;
+    rwDetParam1: TPanel;
+    lbDetParam1: TLabel;
+    edDetParam1: TEdit;
+    rwDetParam2: TPanel;
+    lbDetParam2: TLabel;
+    edDetParam2: TEdit;
     lbTodoDevices: TLabel;
 
     { One panel per label-and-control row.  A row is a panel rather than two
@@ -288,6 +310,25 @@ type
     procedure acRunExecute(Sender: TObject);
     procedure acStopExecute(Sender: TObject);
     procedure acDevicesExecute(Sender: TObject);
+    procedure BuildDeviceCard;
+    procedure BuildDomainCard;
+    procedure UpdateDomainCard;
+    procedure DomEditClick(Sender: TObject);
+    procedure DomLoadClick(Sender: TObject);
+    function  DomainIsMesh: Boolean;
+    function  VolumeText: string;
+    function  MeshText: string;
+    procedure StoreVolume(AObj: TJSONObject);
+    procedure StoreMesh(ANode, AElem, AMedia: TJSONData; AReplaceMedia: Boolean);
+    procedure DomainChanged;
+    function  RawWidth: Integer;
+    function  CheckVolumeText(const AText: string; out AError: string): Boolean;
+    function  CheckMeshText(const AText: string; out AError: string): Boolean;
+    function  LoadVolumeText(const AFileName: string; out AText, AError: string): Boolean;
+    function  LoadMeshText(const AFileName: string; out AText, AError: string): Boolean;
+    procedure RefreshDevices;
+    procedure DeviceTicked(Sender: TObject);
+    procedure DeviceRefreshClick(Sender: TObject);
     procedure acAboutExecute(Sender: TObject);
     procedure acHelpExecute(Sender: TObject);
     procedure acThemeExecute(Sender: TObject);
@@ -298,8 +339,11 @@ type
     procedure BuildSourceBar;
     function  SourceRows: Integer;
     function  VecPath(const APath: string): string;
+    function  MeshPath(const APath: string): string;
     procedure SourceChanged(Sender: TObject);
+    procedure SourceTableChanged(Sender: TObject);
     procedure UpdateSourceBar;
+    procedure UpdateMeshInfo;
     procedure tmRefreshTimer(Sender: TObject);
   private
     FDoc: TMcxDoc;
@@ -350,9 +394,13 @@ type
     { Which source the four source vectors are showing, when the file has
       more than one.  See SourceRows. }
     FSource: Integer;
-    FSrcRow: TPanel;
-    FSrcSpin: TSpinEdit;
-    FSrcOf: TLabel;
+    { Every source at once, a row each; picking a row is what sets FSource. }
+    FSources: TMcxVecTable;
+    FSrcHead: TLabel;
+    { Set while the table's own edit is being passed on, so the reload that
+      follows leaves the grid alone: it is called on every keystroke, and
+      rewriting the cell under the editor turns a half-typed 1.0 into 1. }
+    FSrcEditing: Boolean;
     FPanes: array of TPanel;
     { One per section, between the section panel and its heading: the band
       behind the heading is painted on this.  See CollectSections. }
@@ -387,6 +435,19 @@ type
       write over the first one's output files. }
     FRunner: TMcxRunner;
     FDevices: TMcxDevices;
+    { The Devices card: what -L reported, ticked for the ones a run uses.
+      FDevFor names the simulator the list came from, so a list is asked for
+      again when a different one is chosen rather than shown for the wrong
+      program. }
+    { The Domain volume and mesh card: what the domain is made of, and the
+      one button that edits it -- a volume or a mesh in the data editor, or
+      shapes in the Shapes editor. }
+    FDomInfo: TLabel;
+    FDomEdit: TButton;
+    FDomLoad: TButton;
+    FDevList: TCheckListBox;
+    FDevNote: TLabel;
+    FDevFor: string;
     { The 3-D preview, which owns its own GL control, camera and geometry. }
     FView: TMcxView;
     { The two settings that are lists rather than values.  How many media a
@@ -421,6 +482,14 @@ type
       setting whose help was wanted. }
     FLastHelp: TControl;
     FPendingResult: string;
+    { --run: start the simulation once the window is up; --quit: and exit when
+      it ends, with its exit code, for a script that has nobody to watch it. }
+    FRunPending: Boolean;
+    FQuitAfterRun: Boolean;
+    { --snapshot: the 3-D view written to this PNG once the window is up, and
+      the program closed -- a thumbnail of a simulation, or a check that the
+      view draws, with nobody at the screen. }
+    FSnapshot: string;
     FDockRestored: Boolean;
     FDockSized: Boolean;
     FWizard: Boolean;
@@ -432,6 +501,8 @@ type
     procedure BuildDock;
     procedure SizePane(APane: TForm; AAlign: TAlign; AWanted: Integer);
     procedure ApplyPaneSizes(Data: PtrInt);
+    procedure StartRequestedRun;
+    procedure QuitAfterRun(AExitCode: Integer; const AWhy: string);
     procedure CentreOnLaunchScreen;
     procedure GuardCentreHeader;
     procedure DockCreateControl(Sender: TObject; aName: string;
@@ -507,10 +578,20 @@ type
     procedure NavBandCut(Sender: TObject);
     procedure NewDocument;
     function  SaveAs: Boolean;
+    function  OpenProject(const AFileName: string;
+      out ACancelled: Boolean): Boolean;
+    function  NeedsWorkFolder: Boolean;
+    procedure RebaseFiles(const AOld, ANew: string);
+    function  SaveDocTo(const AFileName: string): Boolean;
     function  ConfirmDiscard: Boolean;
     procedure UpdateTitle;
     procedure UpdateStatus;
   public
+    { The domain card's actions, public for the self-test. }
+    function  ApplyVolumeText(const AText: string; out AError: string): Boolean;
+    function  ApplyMeshText(const AText: string; out AError: string): Boolean;
+    function  LoadVolumeFile(const AFileName: string; out AError: string): Boolean;
+    function  LoadMeshFile(const AFileName: string; out AError: string): Boolean;
     { Queues one preview refresh.  Every edit calls this rather than
       re-rendering on the spot, so holding a key down does not rebuild the
       JSON on every character. }
@@ -530,7 +611,20 @@ type
       not exist until the control has been realised, and a volume cannot be
       uploaded before there is somewhere to upload it to. }
     procedure ShowResultLater(const AFileName: string);
+    { --run: runs the open simulation as soon as the window has been shown,
+      as if Run had been pressed.  AQuit (--quit) exits when it ends, with the
+      simulator's exit code, and sends what it prints to stdout; a problem
+      that would have been a dialog becomes a line on stderr instead.  Called
+      before OpenDocument, so that a file that does not load is reported that
+      way too. }
+    procedure RunLater(AQuit: Boolean);
+    { --processor: picks the processor tile (nvidia, amd, intel or cpu), which
+      decides with the domain which solver runs -- mcx, mcxcl, mcx-hip, or mmc
+      and its -c.  After OpenDocument, which resets the tiles from the file. }
+    function  SetProcessor(const AValue: string): Boolean;
+    procedure SnapshotLater(const AFileName: string);
     function  RunSelfTest(const ADir: string): Integer;
+    function  SelfTestEditors: Integer;
     property Doc: TMcxDoc read FDoc;
   end;
 
@@ -707,8 +801,8 @@ const
   CardGap    = 18;
 
   SectionGroups: array[0..6] of string = (
-    { Simulator } 'gbEngine',
-    { Domain    } 'gbGrid,gbVolume,gbMedia',
+    { Simulator } 'gbEngine,gbDomainData',
+    { Domain    } 'gbGrid,gbVolume,gbMesh,gbMedia',
     { Shapes    } 'gbShapeList',
     { Optode    } 'gbSource,gbSrcAdv,gbDetector',
     { Session   } 'gbBasic,gbTime,gbOutput,gbSwitches,gbDetPhoton',
@@ -766,15 +860,24 @@ begin
   FMedia := TMcxTable.Create(gbMedia, 'mua (1/mm),mus (1/mm),g,n',
     'mua,mus,g,n', 6);
   FMedia.OnChange := @TableChanged;
-  FDetectors := TMcxTable.Create(gbDetector, 'x,y,z,radius',
-    'Pos[0],Pos[1],Pos[2],R', 4);
+  { Dir is optional in mcx and mmc alike -- an acceptance direction where it
+    is given -- so a new detector copies it only from a row that has one. }
+  FDetectors := TMcxTable.Create(gbDetector,
+    'x,y,z,radius,dir x,dir y,dir z,dir w',
+    'Pos[0],Pos[1],Pos[2],R,Dir[0]?,Dir[1]?,Dir[2]?,Dir[3]?', 4);
   FDetectors.OnChange := @TableChanged;
+  { The wide-field rows after the table rather than above it: the designer
+    placed them at the top of a card the table did not exist on yet. }
+  rwDetParam1.Top := 10000;
+  rwDetParam2.Top := 10001;
 
   { The Shapes editor, like the two tables, reads the document directly:
     how many commands a domain is built from is not known until a file is
     open, so there is no control-to-path row that could describe it. }
   BuildTabBar;
   BuildSourceBar;
+  BuildDeviceCard;
+  BuildDomainCard;
   FShapes := TMcxShapes.Create(pnShapeEdit);
   FShapes.OnChange := @TableChanged;
   FShapes.OnSelect := @ShapeSelected;
@@ -845,6 +948,7 @@ begin
   FreeAndNil(FMedium);
   FreeAndNil(FMedia);
   FreeAndNil(FDetectors);
+  FreeAndNil(FSources);
   FreeAndNil(FShapes);
   FreeAndNil(FMissing);
   FreeAndNil(FRun);
@@ -1365,6 +1469,12 @@ begin
   sbDetail.VertScrollBar.Position := 0;
   SelectSub(FirstSubOf(AIndex));
   UpdateStepBar;
+  { The device list is asked for the first time its page is opened, not at
+    startup: -L initialises the driver, which takes a second or two that
+    nobody opening a file should have to wait through. }
+  if (FDevList <> nil) and (gbDevices.Parent = FPages[AIndex]) and
+     (FDevFor <> McxExeName(CurrentBackend)) then
+    RefreshDevices;
 end;
 
 { Scrolls ABox to the top of the detail pane.  The offset is summed up the
@@ -1974,12 +2084,26 @@ begin
   Result := TJSONArray(A).Count;
 end;
 
+{ Where a Mesh binding reads and writes.  mmc takes its mesh block from
+  "Mesh", or from "Shapes" when there is no Mesh -- which is how mmc's own
+  --dumpjson writes it, and so how every exported test input carries it.
+  Writing Mesh.InitElem into such a file would create a Mesh holding nothing
+  but InitElem, and mmc would read that and lose the mesh. }
 { Where a vector binding actually reads and writes.
 
   One rule for every mkVec rather than four special cases: a vector that
   turns out to be a table of vectors is edited a row at a time, and which
   row is the source bar's business.  A vector that is a vector is untouched,
   which is every other one on the form. }
+function TfmMain.MeshPath(const APath: string): string;
+begin
+  Result := APath;
+  if (FDoc = nil) or (Pos('Mesh.', APath) <> 1) then Exit;
+  if FDoc.Find('Mesh') <> nil then Exit;
+  if FDoc.Find('Shapes') is TJSONObject then
+    Result := 'Shapes.' + Copy(APath, 6, MaxInt);
+end;
+
 function TfmMain.VecPath(const APath: string): string;
 var
   A: TJSONData;
@@ -1994,99 +2118,74 @@ begin
   Result := Format('%s[%d]', [APath, FSource]);
 end;
 
-{ The row that says which source is being shown.  Built here rather than in
-  the designer because it is not a setting: nothing in the file says which
-  source you are looking at. }
+{ The source table, under the four vectors on the source card.  Built here
+  rather than in the designer because how many sources there are is not known
+  until a file is open -- the same reason the media and detector tables are.
+
+  The vectors above it show the row picked here, so the table is both the
+  overview and the way to say which source the rest of the card is about. }
 procedure TfmMain.BuildSourceBar;
-var
-  Lbl: TLabel;
 begin
-  FSrcRow := TPanel.Create(gbSource);
-  FSrcRow.Parent := gbSource;
-  FSrcRow.Top := -1;
-  FSrcRow.Align := alTop;
-  FSrcRow.Height := 27;
-  FSrcRow.BevelOuter := bvNone;
-  FSrcRow.BorderSpacing.Bottom := 3;
-  FSrcRow.Visible := False;
+  FSrcHead := TLabel.Create(gbSource);
+  FSrcHead.Parent := gbSource;
+  FSrcHead.Top := 10000;
+  FSrcHead.Align := alTop;
+  FSrcHead.BorderSpacing.Top := 6;
+  FSrcHead.BorderSpacing.Bottom := 3;
+  FSrcHead.WordWrap := True;
+  FSrcHead.Caption := '';
 
-  Lbl := TLabel.Create(FSrcRow);
-  Lbl.Parent := FSrcRow;
-  Lbl.Align := alLeft;
-  Lbl.Layout := tlCenter;
-  Lbl.BorderSpacing.Right := 8;
-  Lbl.Constraints.MinWidth := 150;
-  Lbl.Caption := 'Showing source:';
-
-  FSrcSpin := TSpinEdit.Create(FSrcRow);
-  FSrcSpin.Parent := FSrcRow;
-  FSrcSpin.Left := 158;
-  FSrcSpin.Align := alLeft;
-  FSrcSpin.Width := 90;
-  FSrcSpin.MinValue := 1;
-  FSrcSpin.MaxValue := 1;
-  FSrcSpin.Value := 1;
-  FSrcSpin.OnChange := @SourceChanged;
-
-  FSrcOf := TLabel.Create(FSrcRow);
-  FSrcOf.Parent := FSrcRow;
-  FSrcOf.Left := 260;
-  FSrcOf.Align := alLeft;
-  FSrcOf.Layout := tlCenter;
-  FSrcOf.BorderSpacing.Left := 8;
-  FSrcOf.Caption := '';
+  FSources := TMcxVecTable.Create(gbSource, 'Pos,Dir,Param1,Param2',
+    'x,y,z,w,dir x,dir y,dir z,focus,p1 x,p1 y,p1 z,p1 w,' +
+    'p2 x,p2 y,p2 z,p2 w', 4, 3);
+  FSources.OnChange := @SourceTableChanged;
+  FSources.OnSelect := @SourceChanged;
+  { After the heading, which is after the designer's rows, and the buttons
+    after the grid. }
+  FSources.Grid.Top := 10001;
+  FSources.Bar.Top := 10002;
 end;
 
 { Counts from one, because mcx counting its sources from zero is mcx's
   business and not the reader's. }
 procedure TfmMain.UpdateSourceBar;
 var
-  n, i: Integer;
+  n: Integer;
 begin
-  if FSrcRow = nil then Exit;
-  n := SourceRows;
-  if n < 2 then
-  begin
-    FSource := 0;
-    FSrcRow.Visible := False;
-    Exit;
-  end;
+  if FSources = nil then Exit;
+  if not FSrcEditing then FSources.Attach(FDoc, 'Optode.Source');
+  n := FSources.Count;
   if FSource >= n then FSource := n - 1;
-  Inc(FLoading);
-  try
-    FSrcSpin.MaxValue := n;
-    FSrcSpin.Value := FSource + 1;
-  finally
-    Dec(FLoading);
-  end;
-  FSrcOf.Caption := Format('of %d', [n]);
-
-  { Between the card's title and the rows the designer placed, and both ends
-    of that have to be said here rather than once at build time.  The title
-    sits at -1 so it sorts above rows that all start at zero, and there is no
-    integer between the two -- so the title moves up by one and this takes
-    the place it had.  Asserted now because the aligner overwrites the Top of
-    everything it packs, so a number chosen while the card was being built is
-    not the number either of them is holding by the time this row appears.
-
-    And the row before the title, not after.  Each assignment re-packs the
-    other, so whichever is written second wins -- written the other way round
-    the row came out above the heading, but only after the first time it was
-    changed, which is the sort of thing that looks like a different bug. }
-  FSrcRow.Top := -1;
-  for i := 0 to High(FSubs) do
-    if FSubs[i].Box = gbSource then FSubs[i].Cap.Top := -2;
-  FSrcRow.Visible := True;
+  if FSource < 0 then FSource := 0;
+  FSources.Selected := FSource;
+  if n > 1 then
+    FSrcHead.Caption := Format('%d sources.  The fields above show source %d; ' +
+      'pick a row to edit another.', [n, FSource + 1])
+  else
+    FSrcHead.Caption := 'Sources.  Add a row for a second one: Pos, Dir, ' +
+      'Param1 and Param2 become one row per source, all the same length.';
 end;
 
 procedure TfmMain.SourceChanged(Sender: TObject);
 begin
   if FLoading > 0 then Exit;
-  FSource := FSrcSpin.Value - 1;
-  if FSource < 0 then FSource := 0;
+  FSource := FSources.Selected;
   { Only the four vectors move, but reloading the lot is one call and costs
     nothing anybody can see. }
   LoadAllBindings;
+end;
+
+{ An edit in the table changes what the vectors above show as well as the
+  file, so they are reloaded with it. }
+procedure TfmMain.SourceTableChanged(Sender: TObject);
+begin
+  TableChanged(Sender);
+  FSrcEditing := True;
+  try
+    LoadAllBindings;
+  finally
+    FSrcEditing := False;
+  end;
 end;
 
 procedure TfmMain.ShowSettingsPage;
@@ -2376,11 +2475,28 @@ end;
   from them: which combinations are still possible, which solver runs, and
   what the rest of the form should be showing. }
 procedure TfmMain.ChoiceChanged(Sender: TObject);
+var
+  Was: TMcxBackend;
 begin
+  Was := CurrentBackend;
   FRun.SetStr('@run.processor', FProcessor.Value);
   FRun.SetStr('@run.domainkind', FDomainKind.Value);
   FRun.SetStr('@run.media', FMedium.Value);
   ApplyPlan;
+  UpdateDomainCard;
+  { Another simulator has other defaults, and the fields the file leaves out
+    are showing the old one's.  Everything typed is already in the
+    document, so reloading loses nothing. }
+  if CurrentBackend <> Was then
+  begin
+    LoadAllBindings;
+    { Another program has other devices.  Asked again now if the list is
+      on screen, otherwise the next time it is. }
+    FDevFor := '';
+    if (FDevList <> nil) and (FSection >= 0) and
+       (gbDevices.Parent = FPages[FSection]) then
+      RefreshDevices;
+  end;
   ApplyBindingStates;
   UpdateTitle;
   UpdateStatus;
@@ -2696,7 +2812,11 @@ begin
     better than guessing a new one. }
   if (FDoc.Find('Mesh') <> nil) or (FDoc.Find('Shapes.MeshNode') <> nil) then
     FRun.SetStr('@run.domainkind', 'mesh')
-  else if FDoc.AsStr('Domain.VolumeFile', '') <> '' then
+  else if (FDoc.AsStr('Domain.VolumeFile', '') <> '') or
+          ((FDoc.Find('Shapes') is TJSONObject) and
+           (TJSONObject(FDoc.Find('Shapes')).Find('_ArrayType_') <> nil)) then
+    { A volume written into Shapes as a JData array is a voxel domain as
+      much as one in a file -- every input mcxlab exports is one. }
     FRun.SetStr('@run.domainkind', 'voxel')
   else
     FRun.SetStr('@run.domainkind', 'shapes');
@@ -2712,10 +2832,68 @@ begin
   LoadChoosers;
 end;
 
-procedure TfmMain.OpenDocument(const AFileName: string);
+{ A session of a first-Studio project, converted to the mcx input it stood
+  for (mcxmcxp).  With several sessions the person picks one; a headless run
+  takes the first.  The document is given the name <session>.json beside
+  the project, unsaved, so a run writes it there -- where its relative paths
+  resolve -- unless that would overwrite a file, when Save As asks. }
+function TfmMain.OpenProject(const AFileName: string;
+  out ACancelled: Boolean): Boolean;
+var
+  Names, Warn: TStringList;
+  k: Integer;
+  Json, Target: string;
 begin
-  if not FDoc.LoadFromFile(AFileName) then
+  Result := False;
+  ACancelled := False;
+  Names := TStringList.Create;
+  Warn := TStringList.Create;
+  try
+    if not McxProjectSessions(AFileName, Names) then Exit;
+    k := 0;
+    if (Names.Count > 1) and not FQuitAfterRun then
+    begin
+      k := InputCombo('MCX Studio', ExtractFileName(AFileName) +
+        ' holds several sessions. Open which?', Names);
+      if k < 0 then
+      begin
+        ACancelled := True;
+        Exit;
+      end;
+    end;
+    Json := McxProjectSession(AFileName, Names[k], Warn);
+    if (Json = '') or not FDoc.LoadFromString(Json) then Exit;
+    Target := ExtractFilePath(ExpandFileName(AFileName)) + Names[k] + '.json';
+    if FileExists(Target) then FDoc.FileName := '' else FDoc.FileName := Target;
+    FDoc.Modified := True;
+    Log(Format('%s: session %s of %d, converted from the first Studio''s project',
+      [ExtractFileName(AFileName), Names[k], Names.Count]));
+    for k := 0 to Warn.Count - 1 do Log('  ' + Warn[k]);
+    Result := True;
+  finally
+    Warn.Free;
+    Names.Free;
+  end;
+end;
+
+procedure TfmMain.OpenDocument(const AFileName: string);
+var
+  Ok, Cancelled: Boolean;
+begin
+  if LowerCase(ExtractFileExt(AFileName)) = '.mcxp' then
   begin
+    Ok := OpenProject(AFileName, Cancelled);
+    if Cancelled then Exit;
+  end
+  else
+    Ok := FDoc.LoadFromFile(AFileName);
+  if not Ok then
+  begin
+    if FQuitAfterRun then
+    begin
+      WriteLn(StdErr, 'Could not read ', AFileName, ': ', FDoc.LastError);
+      Halt(2);
+    end;
     MessageDlg('MCX Studio',
       'Could not read ' + ExtractFileName(AFileName) + ':'#10#10 +
       FDoc.LastError, mtError, [mbOK], 0);
@@ -2738,22 +2916,84 @@ begin
   OpenDocument(dlgOpen.FileName);
 end;
 
-function TfmMain.SaveAs: Boolean;
+{ True when the document cannot be run where it is: never saved, or saved
+  in a folder this user cannot write -- an example under the install folder
+  is the usual one, and mcx writes its output beside its input. }
+function TfmMain.NeedsWorkFolder: Boolean;
 begin
-  Result := False;
-  if FDoc.FileName <> '' then dlgSave.FileName := FDoc.FileName
-  else dlgSave.FileName := FDoc.AsStr('Session.ID', 'mcx') + '.json';
-  if not dlgSave.Execute then Exit;
-  Result := FDoc.SaveToFile(dlgSave.FileName);
+  Result := (FDoc.FileName = '') or
+    not DirectoryIsWritable(ExtractFilePath(ExpandFileName(FDoc.FileName)));
+end;
+
+{ After the document has moved from AOld to ANew, the files it names by a
+  relative path are still in AOld.  A VolumeFile is pointed at where it is;
+  mmc's mesh files -- node_<id>.dat and the rest, found beside the input --
+  are copied, because MeshID is a tag with a prefix put in front of it and
+  cannot carry a folder. }
+procedure TfmMain.RebaseFiles(const AOld, ANew: string);
+const
+  MeshParts: array[0..6] of string =
+    ('node_', 'elem_', 'face_', 'facenb_', 'velem_', 'evol_', 'prop_');
+var
+  Vf, Id: string;
+  i: Integer;
+begin
+  if (AOld = '') or SameFileName(IncludeTrailingPathDelimiter(AOld),
+     IncludeTrailingPathDelimiter(ANew)) then Exit;
+  Vf := FDoc.AsStr('Domain.VolumeFile', '');
+  if (Vf <> '') and not FilenameIsAbsolute(Vf) and
+     FileExists(IncludeTrailingPathDelimiter(AOld) + Vf) then
+    FDoc.SetStr('Domain.VolumeFile',
+      ExpandFileName(IncludeTrailingPathDelimiter(AOld) + Vf));
+  Id := FDoc.AsStr(MeshPath('Mesh.MeshID'), '');
+  if Id <> '' then
+    for i := 0 to High(MeshParts) do
+      if FileExists(IncludeTrailingPathDelimiter(AOld) + MeshParts[i] + Id + '.dat') then
+        CopyFile(IncludeTrailingPathDelimiter(AOld) + MeshParts[i] + Id + '.dat',
+          IncludeTrailingPathDelimiter(ANew) + MeshParts[i] + Id + '.dat');
+end;
+
+{ Saves the document to AFileName, carrying along what it refers to when
+  that is a different folder from the one it came from. }
+function TfmMain.SaveDocTo(const AFileName: string): Boolean;
+var
+  Old: string;
+begin
+  Old := '';
+  if FDoc.FileName <> '' then Old := ExtractFilePath(ExpandFileName(FDoc.FileName));
+  RebaseFiles(Old, ExtractFilePath(ExpandFileName(AFileName)));
+  Result := FDoc.SaveToFile(AFileName);
   if not Result then
     MessageDlg('MCX Studio', 'Could not write the file:'#10#10 + FDoc.LastError,
       mtError, [mbOK], 0);
   UpdateTitle;
 end;
 
+function TfmMain.SaveAs: Boolean;
+var
+  Session: string;
+begin
+  Result := False;
+  Session := FDoc.AsStr('Session.ID', 'mcx');
+  { Offered the session folder when there is nowhere better: a new document,
+    or one in a folder that cannot be written. }
+  if NeedsWorkFolder then
+  begin
+    dlgSave.InitialDir := McxWorkFolder(CurrentBackend, Session);
+    dlgSave.FileName := IncludeTrailingPathDelimiter(dlgSave.InitialDir) +
+      Session + '.json';
+  end
+  else
+    dlgSave.FileName := FDoc.FileName;
+  if not dlgSave.Execute then Exit;
+  Result := SaveDocTo(dlgSave.FileName);
+end;
+
 procedure TfmMain.acSaveExecute(Sender: TObject);
 begin
-  if FDoc.FileName = '' then
+  { A file that cannot be written where it is gets Save As, offered the
+    session folder, instead of an error. }
+  if NeedsWorkFolder then
     SaveAs
   else if not FDoc.SaveToFile(FDoc.FileName) then
     MessageDlg('MCX Studio', 'Could not write the file:'#10#10 + FDoc.LastError,
@@ -2791,7 +3031,7 @@ begin
       both called mcx, and two lines reading "mcx:" say nothing. }
     Result := Result + Format('%-9s %s'#10, [BackendNames[B] + ':', Exe]);
   end;
-  if FView <> nil then Result := Result + 'OpenGL:  ' + FView.Description + #10;
+  if FView <> nil then Result := Result + '3-D view:  ' + FView.Description + #10;
 end;
 
 procedure TfmMain.acAboutExecute(Sender: TObject);
@@ -2974,9 +3214,843 @@ begin
       Flush(Output);
     end;
     WriteLn(Format('  %d files driven through every binding', [Checked]));
+    Inc(Result, SelfTestEditors);
   finally
     Before.Free;
     Files.Free;
+  end;
+end;
+
+{ The code-built editors, driven the way a click would drive them, with the
+  document checked after each step.  The corpus pass above proves they leave
+  a file alone; this proves they change it the way mcx and mmc expect. }
+function TfmMain.SelfTestEditors: Integer;
+var
+  Fails: Integer;
+
+  procedure Expect(const AWhat, AGot, AWant: string);
+  begin
+    if AGot = AWant then Exit;
+    WriteLn('  FAIL  ', AWhat, ': got ', AGot, ', want ', AWant);
+    Inc(Fails);
+  end;
+
+  function Js(const APath: string): string;
+  var
+    D: TJSONData;
+  begin
+    D := FDoc.Find(APath);
+    if D = nil then Result := '(absent)' else Result := D.AsJSON;
+  end;
+
+  function BindIndex(const ACtl: string): Integer;
+  begin
+    for Result := 0 to High(Binds) do
+      if Binds[Result].Ctl = ACtl then Exit;
+    Result := -1;
+  end;
+
+  { The value at row-major (x, y, z) of the volume in Shapes. }
+  function VoxelAt(x, y, z: Integer): string;
+  var
+    A: TMcxArray;
+  begin
+    Result := '?';
+    if not (FDoc.Find('Shapes') is TJSONObject) then Exit;
+    if not McxDecodeJData(TJSONObject(FDoc.Find('Shapes')), A) then Exit;
+    Result := FloatToStr(McxArrayValue(A, (Int64(x) * A.Dims[1] + y) * A.Dims[2] + z));
+  end;
+
+  procedure DomainTests;
+  var
+    E, Tmp, Txt, Mm: string;
+    F: TFileStream;
+    B: array[0..23] of Byte;
+    x, y, z: Integer;
+    Ok: Boolean;
+  begin
+    FDoc.LoadFromString('{"Session":{"ID":"vol"},"Forward":{"T0":0,"T1":5e-9,"Dt":5e-9},' +
+      '"Domain":{"Dim":[60,60,60],"MediaFormat":"short","VolumeFile":"x.bin",' +
+      '"Media":[{"mua":0,"mus":0,"g":1,"n":1},{"mua":0.005,"mus":1,"g":0.01,"n":1.37}]},' +
+      '"Optode":{"Source":{"Pos":[1,1,0],"Dir":[0,0,1]}}}');
+    FRun.SetStr('@run.domainkind', 'voxel');
+    LoadAllBindings;
+    Ok := ApplyVolumeText('[[[1,2],[3,4]],[[5,6],[7,8]]]', E);
+    Expect('nested volume pasted', BoolToStr(Ok, True) + ' ' + E, 'True ');
+    Expect('nested volume type', Js('Shapes._ArrayType_'), '"uint8"');
+    Expect('nested volume size', Js('Shapes._ArraySize_'), '[2, 2, 2]');
+    Expect('Dim follows the volume', Js('Domain.Dim'), '[2, 2, 2]');
+    Expect('MediaFormat follows the type', Js('Domain.MediaFormat'), '"byte"');
+    Expect('VolumeFile dropped', Js('Domain.VolumeFile'), '(absent)');
+    Expect('row-major order kept', VoxelAt(1, 0, 1), '6');
+    Expect('card says embedded', BoolToStr(Pos('embedded', FDomInfo.Caption) > 0, True), 'True');
+
+    { mcx's raw volume is x fastest; value x + 2y + 6z at each voxel. }
+    for z := 0 to 3 do
+      for y := 0 to 2 do
+        for x := 0 to 1 do
+          B[x + 2 * y + 6 * z] := x + 2 * y + 6 * z;
+    Tmp := IncludeTrailingPathDelimiter(GetTempDir) + 'mcxstudio_selftest.bin';
+    F := TFileStream.Create(Tmp, fmCreate);
+    try
+      F.WriteBuffer(B, SizeOf(B));
+    finally
+      F.Free;
+    end;
+    FDoc.SetInt('Domain.Dim[0]', 2);
+    FDoc.SetInt('Domain.Dim[1]', 3);
+    FDoc.SetInt('Domain.Dim[2]', 4);
+    Ok := LoadVolumeFile(Tmp, E);
+    DeleteFile(Tmp);
+    Expect('raw volume loaded', BoolToStr(Ok, True) + ' ' + E, 'True ');
+    Expect('raw volume size', Js('Shapes._ArraySize_'), '[2, 3, 4]');
+    Expect('raw volume voxel (1,2,3)', VoxelAt(1, 2, 3), IntToStr(1 + 4 + 18));
+    Expect('raw volume voxel (0,1,2)', VoxelAt(0, 1, 2), IntToStr(2 + 12));
+
+    { The same values pasted as a column-major JData array. }
+    Txt := '{"_ArrayType_":"uint8","_ArraySize_":[2,3,4],"_ArrayOrder_":"c",' +
+      '"_ArrayData_":[';
+    for x := 0 to 23 do
+    begin
+      if x > 0 then Txt := Txt + ',';
+      Txt := Txt + IntToStr(x);
+    end;
+    Txt := Txt + ']}';
+    Ok := ApplyVolumeText(Txt, E);
+    Expect('column-major JData pasted', BoolToStr(Ok, True) + ' ' + E, 'True ');
+    Expect('column-major turned row-major', VoxelAt(1, 2, 3), IntToStr(1 + 4 + 18));
+    Ok := ApplyVolumeText('{"not":"a volume"}', E);
+    Expect('a non-volume is refused', BoolToStr(Ok, True), 'False');
+    { A real one: 20 cubed, every voxel label 1. }
+    Txt := '[';
+    for x := 0 to 19 do
+    begin
+      if x > 0 then Txt := Txt + ',';
+      Txt := Txt + '[';
+      for y := 0 to 19 do
+      begin
+        if y > 0 then Txt := Txt + ',';
+        Txt := Txt + '[';
+        for z := 0 to 19 do
+        begin
+          if z > 0 then Txt := Txt + ',';
+          Txt := Txt + '1';
+        end;
+        Txt := Txt + ']';
+      end;
+      Txt := Txt + ']';
+    end;
+    Txt := Txt + ']';
+    FDoc.SetInt('Optode.Source.Pos[0]', 10);
+    FDoc.SetInt('Optode.Source.Pos[1]', 10);
+    Ok := ApplyVolumeText(Txt, E);
+    Expect('20-cube volume pasted', Js('Domain.Dim') + ' ' + VoxelAt(19, 19, 19),
+      '[20, 20, 20] 1');
+
+    { A mesh, pasted as plain rows. }
+    FDoc.LoadFromString('{"Session":{"ID":"mesh"},"Mesh":{"MeshID":"cube"},' +
+      '"Optode":{"Source":{"Pos":[0.1,0.1,0.1],"Dir":[0,0,1]}}}');
+    FRun.SetStr('@run.domainkind', 'mesh');
+    LoadAllBindings;
+    Ok := ApplyMeshText('{"MeshNode":[[0,0,0],[1,0,0],[0,1,0],[0,0,1]],' +
+      '"MeshElem":[[1,2,3,4]]}', E);
+    Expect('mesh pasted', BoolToStr(Ok, True) + ' ' + E, 'True ');
+    Expect('MeshNode as single', Js('Mesh.MeshNode._ArrayType_') + ' ' +
+      Js('Mesh.MeshNode._ArraySize_'), '"single" [4, 3]');
+    Expect('MeshElem as int32 with a label', Js('Mesh.MeshElem._ArrayType_') + ' ' +
+      Js('Mesh.MeshElem._ArraySize_'), '"int32" [1, 5]');
+    Expect('MeshID dropped', Js('Mesh.MeshID'), '(absent)');
+    Expect('InitElem given', Js('Mesh.InitElem'), '-1');
+    Expect('card says embedded mesh', BoolToStr(Pos('4 nodes, 1 elements',
+      FDomInfo.Caption) > 0, True), 'True');
+
+    { mmc's own .dat pair, where the source tree has one. }
+    Mm := ExpandFileName(ExtractFilePath(ParamStr(0)) +
+      '../../../mmc/examples/meshtest/node_mesh1.dat');
+    if FileExists(Mm) then
+    begin
+      Ok := LoadMeshFile(Mm, E);
+      Expect('mmc .dat mesh loaded', BoolToStr(Ok, True) + ' ' + E, 'True ');
+      Expect('prop_<id>.dat becomes Domain.Media',
+        BoolToStr(FDoc.Find('Domain.Media') is TJSONArray, True), 'True');
+      with TStringList.Create do
+      try
+        LoadFromFile(Mm);
+        { a header line, then a node a line }
+        Expect('mmc .dat node count',
+          IntToStr(McxMeshRows(FDoc.Find('Mesh.MeshNode'))), IntToStr(Count - 1));
+      finally
+        Free;
+      end;
+    end;
+  end;
+
+var
+  i: Integer;
+  WasWizard: Boolean;
+  WasDomain, WasBackend: string;
+begin
+  Fails := 0;
+  { Expert, because only a field that is showing has its enabled state kept. }
+  WasWizard := FWizard;
+  FWizard := False;
+  WasDomain := FRun.AsStr('@run.domainkind', 'shapes');
+  FRun.SetStr('@run.domainkind', 'mesh');
+  FDoc.LoadFromString('{"Session":{"ID":"t"},"Optode":{"Source":{"Type":' +
+    '"pencil","Pos":[1,2,3],"Dir":[0,0,1]},"Detector":[{"Pos":[5,5,0],"R":1}]},' +
+    '"Mesh":{"MeshID":"cube","InitElem":1}}');
+  LoadAllBindings;
+
+  { Sources: one, then two -- every vector the file has becomes rows of the
+    same length, and one it does not have stays absent. }
+  Expect('sources at start', IntToStr(FSources.Count), '1');
+  FSources.AddRow;
+  Expect('Pos after add', Js('Optode.Source.Pos'), '[[1, 2, 3], [1, 2, 3]]');
+  Expect('Dir after add', Js('Optode.Source.Dir'), '[[0, 0, 1], [0, 0, 1]]');
+  Expect('Param1 after add', Js('Optode.Source.Param1'), '(absent)');
+  { A cell of the second source: the vector fields follow the pick. }
+  FSources.SetCell(1, 0, '7');
+  Expect('Pos after edit', Js('Optode.Source.Pos'), '[[1, 2, 3], [7, 2, 3]]');
+  FSources.SetCell(1, 11, '0.5');
+  Expect('Param1 typed into', Js('Optode.Source.Param1'),
+    '[[0, 0, 0, 0], [0, 0, 0, 0.5]]');
+  FSources.SetCell(0, 3, '2');
+  Expect('Pos w padded', Js('Optode.Source.Pos[0]'), '[1, 2, 3, 2]');
+  FSources.Selected := 1;
+  FSource := 1;
+  LoadAllBindings;
+  Expect('edSrcPos shows source 2', edSrcPos.Text, '7, 2, 3');
+  FSources.DeleteRow(0);
+  Expect('Pos back to flat', Js('Optode.Source.Pos'), '[7, 2, 3]');
+  Expect('Param1 back to flat', Js('Optode.Source.Param1'), '[0, 0, 0, 0.5]');
+  FSources.DeleteRow(0);
+  Expect('last source kept', IntToStr(FSources.Count), '1');
+
+  { Detectors: Dir is optional, and a typed component pads with zeros. }
+  FDetectors.SetCell(0, 6, '1');
+  Expect('detector Dir padded', Js('Optode.Detector[0].Dir'), '[0, 0, 1]');
+  FDetectors.AddRow;
+  Expect('new detector copies Dir', Js('Optode.Detector[1].Dir'), '[0, 0, 1]');
+  FDoc.Delete('Optode.Detector[0].Dir');
+  FDoc.Delete('Optode.Detector[1]');
+  FDetectors.Reload;
+  FDetectors.AddRow;
+  Expect('no Dir copied from a row without one',
+    Js('Optode.Detector[1]'), '{ "Pos" : [5, 5, 0], "R" : 1 }');
+
+  { BasisOrder is a number in the file, RayTracer a letter. }
+  i := BindIndex('cbBasisOrder');
+  cbBasisOrder.ItemIndex := FValues[i].IndexOf('0');
+  SaveBinding(i);
+  Expect('BasisOrder', Js('Session.BasisOrder'), '0');
+  i := BindIndex('cbRayTracer');
+  cbRayTracer.ItemIndex := FValues[i].IndexOf('g');
+  SaveBinding(i);
+  Expect('RayTracer', Js('Session.RayTracer'), '"g"');
+  Expect('MeshID shown', edMeshID.Text, 'cube');
+
+  { The wide-field detector fields wait for a detector. }
+  ApplyBindingStates;
+  Expect('DetParam1 enabled with a detector',
+    BoolToStr(edDetParam1.Enabled, True), 'True');
+  FDoc.LoadFromString('{"Optode":{"Source":{"Pos":[0,0,0],"Dir":[0,0,1]}}}');
+  LoadAllBindings;
+  Expect('DetParam1 disabled without one',
+    BoolToStr(edDetParam1.Enabled, True), 'False');
+
+  { A mesh block named Shapes, as mmc --dumpjson writes it, is edited where
+    it is rather than shadowed by a new Mesh. }
+  FDoc.LoadFromString('{"Optode":{"Source":{"Pos":[0,0,0],"Dir":[0,0,1]}},' +
+    '"Shapes":{"MeshNode":[[0,0,0],[1,0,0],[0,1,0],[0,0,1]],' +
+    '"MeshElem":[[1,2,3,4,1]],"InitElem":1}}');
+  LoadAllBindings;
+  Expect('InitElem read from Shapes', IntToStr(edInitElem.Value), '1');
+  edInitElem.Value := 3;
+  SaveBinding(BindIndex('edInitElem'));
+  Expect('InitElem written to Shapes', Js('Shapes.InitElem'), '3');
+  Expect('no Mesh block made', Js('Mesh'), '(absent)');
+  Expect('embedded mesh summary', lbMeshInfo.Caption,
+    'The mesh is embedded in this file: nodes 4, elements 1.');
+
+  { Absent keys show the chosen simulator's own defaults, and saving an
+    untouched form writes none of them. }
+  WasBackend := FRun.AsStr('@run.backend', 'mcx');
+  FDoc.LoadFromString('{"Optode":{"Source":{"Pos":[0,0,0],"Dir":[0,0,1]}}}');
+  FRun.SetStr('@run.backend', 'mcx');
+  LoadAllBindings;
+  Expect('mcx DoPartialPath default', BoolToStr(ckSaveDetp.Checked, True), 'True');
+  Expect('mcx OutputFormat default',
+    FValues[BindIndex('rgOutFormat')][rgOutFormat.ItemIndex], 'jnii');
+  Expect('mcx MinEnergy default', edMinEnergy.Text, '0');
+  Expect('mcx thread count follows DoAutoThread',
+    BoolToStr(edThread.Enabled, True), 'False');
+  Expect('mcx DoSaveExit live with DoPartialPath on',
+    BoolToStr(ckSaveExit.Enabled, True), 'True');
+  FRun.SetStr('@run.backend', 'mcxcl');
+  LoadAllBindings;
+  Expect('mcxcl T1 default', edT1.Text, '5e-09');
+  FRun.SetStr('@run.backend', 'mmc');
+  LoadAllBindings;
+  Expect('mmc DoPartialPath default', BoolToStr(ckSaveDetp.Checked, True), 'False');
+  Expect('mmc OutputFormat default',
+    FValues[BindIndex('rgOutFormat')][rgOutFormat.ItemIndex], 'ascii');
+  Expect('mmc MinEnergy default', edMinEnergy.Text, '1e-06');
+  Expect('mmc RayTracer default',
+    FValues[BindIndex('cbRayTracer')][cbRayTracer.ItemIndex], 'g');
+  Inc(FLoading);
+  try
+    for i := 0 to High(Binds) do SaveBinding(i);
+  finally
+    Dec(FLoading);
+  end;
+  Expect('defaults not written', FDoc.ToJSON(False),
+    '{ "Optode" : { "Source" : { "Pos" : [0, 0, 0], "Dir" : [0, 0, 1] } } }');
+  FRun.SetStr('@run.backend', WasBackend);
+
+  { A domain written as a JData array goes on the 3-D card as a volume, and
+    comes off again with the document that carried it. }
+  if FView <> nil then
+  begin
+    FDoc.LoadFromString('{"Domain":{"Dim":[2,2,2]},"Shapes":{' +
+      '"_ArrayType_":"uint8","_ArraySize_":[2,2,2],' +
+      '"_ArrayData_":[1,1,1,1,1,1,1,2]}}');
+    FView.Rebuild;
+    Expect('JData domain previewed', BoolToStr(FView.HasVolume, True), 'True');
+    FDoc.LoadFromString('{"Domain":{"Dim":[2,2,2]},"Shapes":[]}');
+    FView.Rebuild;
+    Expect('JData domain cleared', BoolToStr(FView.HasVolume, True), 'False');
+  end;
+
+  { The domain card's data: a volume pasted as a nested list goes into
+    Shapes as row-major JData with Dim and MediaFormat to match; a raw .bin
+    and a column-major JData array come out in the same row-major order; a
+    pasted mesh becomes mmc's single/int32 annotated arrays. }
+  DomainTests;
+
+  { And none of it shows for a grid, whatever the file holds. }
+  FRun.SetStr('@run.domainkind', 'voxel');
+  ApplyBindingStates;
+  Expect('mesh card hidden for a voxel grid',
+    BoolToStr(gbMesh.Visible, True), 'False');
+  Expect('detector card kept for a voxel grid',
+    BoolToStr(gbDetector.Visible, True), 'True');
+
+  FRun.SetStr('@run.domainkind', WasDomain);
+  FWizard := WasWizard;
+  ApplyBindingStates;
+  WriteLn(Format('  code-built editors: %d failure(s)', [Fails]));
+  Result := Fails;
+end;
+
+{ ------------------------------------------------------ domain data ---- }
+
+{ The card under Engine and domain.  Built here, not in the designer: what it
+  says and what its buttons do follow the domain tile picked above it. }
+procedure TfmMain.BuildDomainCard;
+var
+  Bar: TPanel;
+begin
+  FDomInfo := TLabel.Create(gbDomainData);
+  FDomInfo.Parent := gbDomainData;
+  FDomInfo.Top := 1000;
+  FDomInfo.Align := alTop;
+  FDomInfo.WordWrap := True;
+  FDomInfo.BorderSpacing.Bottom := 6;
+  FDomInfo.Caption := '';
+
+  Bar := TPanel.Create(gbDomainData);
+  Bar.Parent := gbDomainData;
+  Bar.Top := 1001;
+  Bar.Align := alTop;
+  Bar.Height := 34;
+  Bar.BevelOuter := bvNone;
+  Bar.Caption := '';
+
+  FDomEdit := TButton.Create(Bar);
+  FDomEdit.Parent := Bar;
+  FDomEdit.Align := alLeft;
+  FDomEdit.BorderSpacing.Right := 8;
+  FDomEdit.Width := 150;
+  FDomEdit.OnClick := @DomEditClick;
+
+  FDomLoad := TButton.Create(Bar);
+  FDomLoad.Parent := Bar;
+  FDomLoad.Left := 200;
+  FDomLoad.Align := alLeft;
+  FDomLoad.Width := 150;
+  FDomLoad.Caption := 'Load from file...';
+  FDomLoad.OnClick := @DomLoadClick;
+end;
+
+function TfmMain.DomainIsMesh: Boolean;
+var
+  K: string;
+begin
+  K := FRun.AsStr('@run.domainkind', 'shapes');
+  Result := (K = 'mesh') or (K = 'surface');
+end;
+
+{ The embedded volume, if Shapes is one. }
+function EmbeddedVolume(ADoc: TMcxDoc): TJSONObject;
+var
+  D: TJSONData;
+begin
+  Result := nil;
+  D := ADoc.Find('Shapes');
+  if (D is TJSONObject) and (TJSONObject(D).Find('_ArrayType_') <> nil) then
+    Result := TJSONObject(D);
+end;
+
+{ A path the document names, as the run will find it: relative ones beside
+  the document, where mcx is started. }
+function DocRelative(ADoc: TMcxDoc; const APath: string): string;
+begin
+  Result := APath;
+  if (APath <> '') and not FilenameIsAbsolute(APath) and (ADoc.FileName <> '') then
+    Result := ExtractFilePath(ExpandFileName(ADoc.FileName)) + APath;
+end;
+
+procedure TfmMain.UpdateDomainCard;
+var
+  K, Vf, Id, S: string;
+  V: TJSONObject;
+  nn, ne: Integer;
+  Sh: TJSONData;
+begin
+  if FDomInfo = nil then Exit;
+  K := FRun.AsStr('@run.domainkind', 'shapes');
+  FDomLoad.Visible := K <> 'shapes';
+  if K = 'shapes' then
+  begin
+    FDomEdit.Caption := 'Edit Shapes';
+    Sh := FDoc.Find('Shapes');
+    if Sh is TJSONArray then
+      FDomInfo.Caption := Format('The domain is built from %d shape ' +
+        'command(s) in this file.', [Sh.Count])
+    else
+      FDomInfo.Caption := 'The domain is built from shape commands; this ' +
+        'file has none yet.';
+  end
+  else if DomainIsMesh then
+  begin
+    FDomEdit.Caption := 'Edit Mesh...';
+    nn := McxMeshRows(FDoc.Find(MeshPath('Mesh.MeshNode')));
+    ne := McxMeshRows(FDoc.Find(MeshPath('Mesh.MeshElem')));
+    Id := FDoc.AsStr(MeshPath('Mesh.MeshID'), '');
+    if (nn >= 0) and (ne >= 0) then
+      FDomInfo.Caption := Format('The mesh is embedded in this file: %d ' +
+        'nodes, %d elements.', [nn, ne])
+    else if Id <> '' then
+    begin
+      S := DocRelative(FDoc, 'node_' + Id + '.dat');
+      if FileExists(S) then
+        FDomInfo.Caption := Format('The mesh is read from node_%s.dat and ' +
+          'elem_%s.dat beside this file.', [Id, Id])
+      else
+        FDomInfo.Caption := Format('MeshID is %s, but node_%s.dat is not ' +
+          'beside this file.', [Id, Id]);
+    end
+    else
+      FDomInfo.Caption := 'No mesh yet. Load one from a file -- mmc''s ' +
+        'node_/elem_ .dat files or a .jmsh -- or paste one with Edit Mesh.';
+  end
+  else
+  begin
+    FDomEdit.Caption := 'Edit Volume...';
+    V := EmbeddedVolume(FDoc);
+    Vf := FDoc.AsStr('Domain.VolumeFile', '');
+    if V <> nil then
+      FDomInfo.Caption := 'The volume is embedded in this file: ' +
+        McxVolumeSummary(V) + '.'
+    else if Vf <> '' then
+    begin
+      if FileExists(DocRelative(FDoc, Vf)) then
+        FDomInfo.Caption := Format('The volume is read from %s (%d x %d x %d, %s).',
+          [Vf, FDoc.AsInt('Domain.Dim[0]', 0), FDoc.AsInt('Domain.Dim[1]', 0),
+           FDoc.AsInt('Domain.Dim[2]', 0), FDoc.AsStr('Domain.MediaFormat', 'byte')])
+      else
+        FDomInfo.Caption := Format('The volume file %s is not there.', [Vf]);
+    end
+    else
+      FDomInfo.Caption := 'No volume yet. Load one from a file -- .bin, ' +
+        '.nii, .jnii, .bnii or a JData .json -- or paste one with Edit Volume.';
+  end;
+end;
+
+{ The byte width of a raw volume's labels, from MediaFormat. }
+function TfmMain.RawWidth: Integer;
+var
+  F: string;
+begin
+  F := LowerCase(FDoc.AsStr('Domain.MediaFormat', 'byte'));
+  if F = 'short' then Result := 2
+  else if F = 'integer' then Result := 4
+  else if F = 'byte' then Result := 1
+  else Result := 0;
+end;
+
+{ What Edit Volume opens with: the embedded array, or the volume file's
+  contents as the array they would become, or nothing. }
+function TfmMain.VolumeText: string;
+var
+  V, O: TJSONObject;
+  E, Vf: string;
+begin
+  Result := '';
+  V := EmbeddedVolume(FDoc);
+  if V <> nil then Exit(V.FormatJSON);
+  Vf := DocRelative(FDoc, FDoc.AsStr('Domain.VolumeFile', ''));
+  if (Vf <> '') and FileExists(Vf) and
+     McxVolumeFromFile(Vf, RawWidth, FDoc.AsInt('Domain.Dim[0]', 0),
+       FDoc.AsInt('Domain.Dim[1]', 0), FDoc.AsInt('Domain.Dim[2]', 0), O, E) then
+  try
+    Result := O.FormatJSON;
+  finally
+    O.Free;
+  end;
+end;
+
+function TfmMain.MeshText: string;
+var
+  N, E, M: TJSONData;
+  O: TJSONObject;
+  Err, Id, F: string;
+begin
+  Result := '';
+  N := FDoc.Find(MeshPath('Mesh.MeshNode'));
+  E := FDoc.Find(MeshPath('Mesh.MeshElem'));
+  if (N <> nil) and (E <> nil) then
+  begin
+    O := TJSONObject.Create;
+    try
+      O.Add('MeshNode', N.Clone);
+      O.Add('MeshElem', E.Clone);
+      Result := O.FormatJSON;
+    finally
+      O.Free;
+    end;
+    Exit;
+  end;
+  Id := FDoc.AsStr(MeshPath('Mesh.MeshID'), '');
+  F := DocRelative(FDoc, 'node_' + Id + '.dat');
+  if (Id <> '') and FileExists(F) and McxMeshFromFile(F, N, E, M, Err) then
+  begin
+    O := TJSONObject.Create;
+    try
+      O.Add('MeshNode', N);
+      O.Add('MeshElem', E);
+      { Only when this file has no media of its own, as mmc would read it. }
+      if (M <> nil) and not ((FDoc.Find('Domain.Media') is TJSONArray) and
+         (FDoc.Find('Domain.Media').Count > 0)) then
+        O.Add('Media', M)
+      else
+        M.Free;
+      Result := O.FormatJSON;
+    finally
+      O.Free;
+    end;
+  end;
+end;
+
+{ After the domain data changed: everything that reads it catches up. }
+procedure TfmMain.DomainChanged;
+begin
+  FDoc.Modified := True;
+  LoadAllBindings;
+  UpdateTitle;
+  SchedulePreview;
+  RefreshPreview;
+end;
+
+{ A volume goes into Shapes, row-major JData, and is the only volume the
+  file has: a VolumeFile left beside it would be read first and the array
+  ignored.  Dim and MediaFormat are made to agree with it. }
+procedure TfmMain.StoreVolume(AObj: TJSONObject);
+var
+  nx, ny, nz: Integer;
+  Fmt: string;
+begin
+  McxVolumeShape(AObj, nx, ny, nz, Fmt);
+  FDoc.Root.Elements['Shapes'] := AObj;
+  FDoc.Delete('Domain.VolumeFile');
+  if nx > 0 then
+  begin
+    FDoc.SetInt('Domain.Dim[0]', nx);
+    FDoc.SetInt('Domain.Dim[1]', ny);
+    FDoc.SetInt('Domain.Dim[2]', nz);
+  end;
+  if Fmt <> '' then FDoc.SetStr('Domain.MediaFormat', Fmt);
+  DomainChanged;
+end;
+
+{ A mesh goes in as MeshNode and MeshElem, where mmc reads its mesh -- Mesh,
+  or Shapes when that is where this file keeps it -- and MeshID goes, so
+  there is one mesh and not a choice between two. }
+procedure TfmMain.StoreMesh(ANode, AElem, AMedia: TJSONData;
+  AReplaceMedia: Boolean);
+var
+  Base: string;
+  B: TJSONObject;
+  M: TJSONData;
+begin
+  { Media that came with the mesh: always when pasted with it, otherwise
+    only into a file that has none of its own -- mmc prefers the file's. }
+  if AMedia <> nil then
+  begin
+    M := FDoc.Find('Domain.Media');
+    if AReplaceMedia or not (M is TJSONArray) or (M.Count = 0) then
+      TJSONObject(FDoc.Ensure('Domain', jtObject)).Elements['Media'] := AMedia
+    else
+      AMedia.Free;
+  end;
+  Base := Copy(MeshPath('Mesh.MeshNode'), 1, Pos('.', MeshPath('Mesh.MeshNode')) - 1);
+  B := TJSONObject(FDoc.Ensure(Base, jtObject));
+  B.Elements['MeshNode'] := ANode;
+  B.Elements['MeshElem'] := AElem;
+  if B.Find('MeshID') <> nil then B.Delete('MeshID');
+  { mmc refuses a mesh with no starting element; -1 has it search for the
+    one the source is in. }
+  if B.Find('InitElem') = nil then B.Add('InitElem', -1);
+  DomainChanged;
+end;
+
+{ The dialog's OK check: would this text make a volume, or a mesh?  Only
+  checked here; it is stored once the dialog has closed, and only if it was
+  changed, so OK on what was there leaves the file as it was. }
+function TfmMain.CheckVolumeText(const AText: string; out AError: string): Boolean;
+var
+  D: TJSONData;
+  O: TJSONObject;
+begin
+  Result := False;
+  AError := 'The editor is empty: paste a volume, or load one from a file.';
+  if Trim(AText) = '' then Exit;
+  try
+    D := GetJSON(AText);
+  except
+    on E: Exception do
+    begin
+      AError := 'This is not valid JSON: ' + E.Message;
+      Exit;
+    end;
+  end;
+  try
+    Result := McxVolumeFromJSON(D, O, AError);
+    O.Free;
+  finally
+    D.Free;
+  end;
+end;
+
+function TfmMain.CheckMeshText(const AText: string; out AError: string): Boolean;
+var
+  D, N, E: TJSONData;
+begin
+  Result := False;
+  AError := 'The editor is empty: paste a mesh, or load one from a file.';
+  if Trim(AText) = '' then Exit;
+  try
+    D := GetJSON(AText);
+  except
+    on Ex: Exception do
+    begin
+      AError := 'This is not valid JSON: ' + Ex.Message;
+      Exit;
+    end;
+  end;
+  try
+    Result := McxMeshFromJSON(D, N, E, AError);
+    N.Free;
+    E.Free;
+  finally
+    D.Free;
+  end;
+end;
+
+function TfmMain.ApplyVolumeText(const AText: string; out AError: string): Boolean;
+var
+  D: TJSONData;
+  O: TJSONObject;
+begin
+  Result := False;
+  AError := '';
+  if Trim(AText) = '' then
+  begin
+    AError := 'The editor is empty: paste a volume, or load one from a file.';
+    Exit;
+  end;
+  try
+    D := GetJSON(AText);
+  except
+    on E: Exception do
+    begin
+      AError := 'This is not valid JSON: ' + E.Message;
+      Exit;
+    end;
+  end;
+  try
+    if not McxVolumeFromJSON(D, O, AError) then Exit;
+  finally
+    D.Free;
+  end;
+  StoreVolume(O);
+  Result := True;
+end;
+
+function TfmMain.ApplyMeshText(const AText: string; out AError: string): Boolean;
+var
+  D, N, E, M: TJSONData;
+begin
+  Result := False;
+  AError := '';
+  if Trim(AText) = '' then
+  begin
+    AError := 'The editor is empty: paste a mesh, or load one from a file.';
+    Exit;
+  end;
+  try
+    D := GetJSON(AText);
+  except
+    on Ex: Exception do
+    begin
+      AError := 'This is not valid JSON: ' + Ex.Message;
+      Exit;
+    end;
+  end;
+  M := nil;
+  try
+    if not McxMeshFromJSON(D, N, E, AError) then Exit;
+    if (D is TJSONObject) and (TJSONObject(D).Find('Media') is TJSONArray) then
+      M := TJSONObject(D).Find('Media').Clone;
+  finally
+    D.Free;
+  end;
+  StoreMesh(N, E, M, True);
+  Result := True;
+end;
+
+function TfmMain.LoadVolumeText(const AFileName: string; out AText, AError: string): Boolean;
+var
+  O: TJSONObject;
+begin
+  AText := '';
+  Result := McxVolumeFromFile(AFileName, RawWidth, FDoc.AsInt('Domain.Dim[0]', 0),
+    FDoc.AsInt('Domain.Dim[1]', 0), FDoc.AsInt('Domain.Dim[2]', 0), O, AError);
+  if Result then
+  try
+    AText := O.FormatJSON;
+  finally
+    O.Free;
+  end;
+end;
+
+function TfmMain.LoadMeshText(const AFileName: string; out AText, AError: string): Boolean;
+var
+  N, E, M: TJSONData;
+  O: TJSONObject;
+begin
+  AText := '';
+  Result := McxMeshFromFile(AFileName, N, E, M, AError);
+  if not Result then Exit;
+  O := TJSONObject.Create;
+  try
+    O.Add('MeshNode', N);
+    O.Add('MeshElem', E);
+    if M <> nil then O.Add('Media', M);
+    AText := O.FormatJSON;
+  finally
+    O.Free;
+  end;
+end;
+
+function TfmMain.LoadVolumeFile(const AFileName: string; out AError: string): Boolean;
+var
+  O: TJSONObject;
+begin
+  Result := McxVolumeFromFile(AFileName, RawWidth, FDoc.AsInt('Domain.Dim[0]', 0),
+    FDoc.AsInt('Domain.Dim[1]', 0), FDoc.AsInt('Domain.Dim[2]', 0), O, AError);
+  if Result then StoreVolume(O);
+end;
+
+function TfmMain.LoadMeshFile(const AFileName: string; out AError: string): Boolean;
+var
+  N, E, M: TJSONData;
+begin
+  Result := McxMeshFromFile(AFileName, N, E, M, AError);
+  if Result then StoreMesh(N, E, M, False);
+end;
+
+const
+  VolumeFilter = 'Volumes (*.bin;*.raw;*.vol;*.nii;*.jnii;*.bnii;*.json)|' +
+    '*.bin;*.raw;*.vol;*.nii;*.jnii;*.bnii;*.json|All files|*';
+  MeshFilter = 'Meshes (node_*.dat;elem_*.dat;*.jmsh;*.json)|' +
+    'node_*.dat;elem_*.dat;*.jmsh;*.json|All files|*';
+
+procedure TfmMain.DomEditClick(Sender: TObject);
+var
+  T, T0, Err: string;
+begin
+  if FRun.AsStr('@run.domainkind', 'shapes') = 'shapes' then
+  begin
+    { Shapes have an editor of their own, command by command. }
+    SelectSection(2);
+    ShowSettingsPage;
+    Exit;
+  end;
+  if DomainIsMesh then
+  begin
+    T := MeshText;
+    T0 := T;
+    if McxEditData(Self, 'Edit Mesh',
+      'The mesh as mmc reads it from an input: MeshNode, a row of x y z per ' +
+      'node, and MeshElem, four node numbers (from 1) and a region label ' +
+      'per tetrahedron. Copy it to use elsewhere, or paste a mesh -- ' +
+      'JData arrays or plain lists of rows, and the JMesh names ' +
+      'MeshVertex3/MeshTet4 too. A Media list beside them, as Load from ' +
+      'file adds from prop_<id>.dat, becomes the optical properties.',
+      MeshFilter, T, @CheckMeshText, @LoadMeshText) and (T <> T0) then
+      ApplyMeshText(T, Err);
+  end
+  else
+  begin
+    T := VolumeText;
+    T0 := T;
+    if McxEditData(Self, 'Edit Volume',
+      'The volume as mcx reads it from an input: a JData array (row-major, ' +
+      'compressed), kept in Shapes. Copy it to use elsewhere, or paste a ' +
+      'volume -- a JData array, or a nested list of numbers [[[...]]] in ' +
+      'x, y, z order. OK makes it the domain, and sets Dim and the volume ' +
+      'format to match.',
+      VolumeFilter, T, @CheckVolumeText, @LoadVolumeText) and (T <> T0) then
+      ApplyVolumeText(T, Err);
+  end;
+end;
+
+procedure TfmMain.DomLoadClick(Sender: TObject);
+var
+  D: TOpenDialog;
+  Ok: Boolean;
+  E: string;
+begin
+  D := TOpenDialog.Create(Self);
+  try
+    if DomainIsMesh then D.Filter := MeshFilter else D.Filter := VolumeFilter;
+    D.Options := D.Options + [ofFileMustExist];
+    if FDoc.FileName <> '' then D.InitialDir := ExtractFilePath(FDoc.FileName);
+    if not D.Execute then Exit;
+    Screen.Cursor := crHourGlass;
+    try
+      if DomainIsMesh then Ok := LoadMeshFile(D.FileName, E)
+      else Ok := LoadVolumeFile(D.FileName, E);
+    finally
+      Screen.Cursor := crDefault;
+    end;
+    if Ok then
+      Log('Domain loaded from ' + D.FileName)
+    else
+      MessageDlg('MCX Studio', E, mtError, [mbOK], 0);
+  finally
+    D.Free;
   end;
 end;
 
@@ -3005,7 +4079,7 @@ procedure TfmMain.UpdateRunActions;
 begin
   acRun.Enabled := (FRunner = nil) and (CurrentExe <> '');
   acStop.Enabled := FRunner <> nil;
-  acDevices.Enabled := (CurrentExe <> '') and (CurrentBackend <> mbMMC);
+  acDevices.Enabled := CurrentExe <> '';
 end;
 
 { The view has no log of its own; this is where its few lines go. }
@@ -3021,6 +4095,8 @@ procedure TfmMain.TableChanged(Sender: TObject);
 begin
   UpdateTitle;
   SchedulePreview;
+  { The wide-field detector fields wait for a first detector to exist. }
+  ApplyBindingStates;
 end;
 
 procedure TfmMain.Log(const AText: string);
@@ -3033,6 +4109,7 @@ end;
 procedure TfmMain.RunLine(Sender: TObject; const ALine: string);
 begin
   Log(ALine);
+  if FQuitAfterRun then WriteLn(ALine);
 end;
 
 procedure TfmMain.RunProgress(Sender: TObject; APercent: Integer);
@@ -3117,6 +4194,60 @@ begin
   FreeAndNil(FRunner);
   UpdateRunActions;
   UpdateStatus;
+  if FQuitAfterRun then QuitAfterRun(AExitCode, '');
+end;
+
+procedure TfmMain.SnapshotLater(const AFileName: string);
+begin
+  FSnapshot := AFileName;
+end;
+
+procedure TfmMain.RunLater(AQuit: Boolean);
+begin
+  FRunPending := True;
+  FQuitAfterRun := AQuit;
+end;
+
+function TfmMain.SetProcessor(const AValue: string): Boolean;
+begin
+  Result := (FProcessor <> nil) and
+    ((AValue = 'nvidia') or (AValue = 'amd') or (AValue = 'intel') or (AValue = 'cpu'));
+  if not Result then Exit;
+  FProcessor.Value := AValue;
+  ChoiceChanged(nil);
+end;
+
+{ The run --run asked for, now that the window exists.  The checks Run would
+  make with a dialog are made here first when nobody is there to answer one. }
+procedure TfmMain.StartRequestedRun;
+begin
+  if FQuitAfterRun then
+  begin
+    if FDoc.FileName = '' then
+    begin
+      QuitAfterRun(2, 'no input file to run');
+      Exit;
+    end;
+    if CurrentExe = '' then
+    begin
+      QuitAfterRun(3, 'could not find ' + McxExeName(CurrentBackend) +
+        ' beside this program, in an MCXStudio folder, or on PATH');
+      Exit;
+    end;
+    WriteLn(McxCommandLine(CurrentExe, FDoc.FileName, FDoc, FRun));
+  end;
+  acRunExecute(nil);
+  { Run did not start: it has already said why, in a dialog or not at all. }
+  if FQuitAfterRun and (FRunner = nil) then
+    QuitAfterRun(3, 'the simulation could not be started');
+end;
+
+procedure TfmMain.QuitAfterRun(AExitCode: Integer; const AWhy: string);
+begin
+  if AWhy <> '' then WriteLn(StdErr, 'mcxstudio: ', AWhy);
+  Flush(Output);
+  ExitCode := AExitCode;
+  Application.Terminate;
 end;
 
 procedure TfmMain.acRunExecute(Sender: TObject);
@@ -3145,7 +4276,21 @@ begin
     become 5E-9.  Nobody asked for that, and in a checkout it shows up as a
     modified file. }
   if FDoc.FileName = '' then
+  begin
     if not SaveAs then Exit;
+  end
+  else if NeedsWorkFolder then
+  begin
+    { Opened from somewhere read-only -- the examples the installer put
+      under the program folder.  The run goes into the session folder, a
+      copy of the input with it, rather than failing to write its output. }
+    Log(Format('%s cannot be written here; running a copy in %s',
+      [ExtractFileName(FDoc.FileName),
+       McxWorkFolder(CurrentBackend, FDoc.AsStr('Session.ID', 'mcx'))]));
+    if not SaveDocTo(IncludeTrailingPathDelimiter(
+      McxWorkFolder(CurrentBackend, FDoc.AsStr('Session.ID', 'mcx'))) +
+      ExtractFileName(FDoc.FileName)) then Exit;
+  end;
   if FDoc.Modified then
   begin
     if not FDoc.SaveToFile(FDoc.FileName) then
@@ -3186,25 +4331,11 @@ end;
 
 procedure TfmMain.acDevicesExecute(Sender: TObject);
 var
-  Exe, Listing: string;
   i: Integer;
 begin
-  Exe := CurrentExe;
+  RefreshDevices;
   pcView.ActivePage := tsLog;
-  if Exe = '' then
-  begin
-    Log('No ' + McxExeName(CurrentBackend) + ' found.');
-    Exit;
-  end;
-
-  if not McxQueryDevices(Exe, Listing) then
-  begin
-    Log(Exe + ' -L: could not be run.');
-    Exit;
-  end;
-
-  FDevices := McxParseDevices(Listing);
-  Log(Exe + ' -L');
+  Log(CurrentExe + ' -L');
   if Length(FDevices) = 0 then
     Log('  no devices reported')
   else
@@ -3212,6 +4343,172 @@ begin
       Log(Format('  #%d  %s  (auto-thread %d, auto-block %d)',
         [FDevices[i].Id, FDevices[i].Name,
          FDevices[i].AutoThread, FDevices[i].AutoBlock]));
+end;
+
+{ The Devices card.  Built here because what it lists is whatever this
+  machine has, which no designer session could know. }
+procedure TfmMain.BuildDeviceCard;
+var
+  Bar: TPanel;
+  Btn: TButton;
+begin
+  lbTodoDevices.Visible := False;
+
+  FDevNote := TLabel.Create(gbDevices);
+  FDevNote.Parent := gbDevices;
+  FDevNote.Top := 1000;
+  FDevNote.Align := alTop;
+  FDevNote.WordWrap := True;
+  FDevNote.BorderSpacing.Bottom := 4;
+  FDevNote.Caption := 'Open this page, or press Find devices, to list them.';
+
+  FDevList := TCheckListBox.Create(gbDevices);
+  FDevList.Parent := gbDevices;
+  FDevList.Top := 1001;
+  FDevList.Align := alTop;
+  FDevList.Height := 22 * 4 + 4;
+  FDevList.OnClickCheck := @DeviceTicked;
+
+  Bar := TPanel.Create(gbDevices);
+  Bar.Parent := gbDevices;
+  Bar.Top := 1002;
+  Bar.Align := alTop;
+  Bar.Height := 32;
+  Bar.BevelOuter := bvNone;
+  Bar.Caption := '';
+
+  Btn := TButton.Create(Bar);
+  Btn.Parent := Bar;
+  Btn.Align := alLeft;
+  Btn.BorderSpacing.Top := 3;
+  Btn.Width := 130;
+  Btn.Caption := 'Find devices';
+  Btn.OnClick := @DeviceRefreshClick;
+end;
+
+procedure TfmMain.DeviceRefreshClick(Sender: TObject);
+begin
+  RefreshDevices;
+end;
+
+{ One line for a device: its number as -G counts it, its name, and the two
+  facts that tell devices of one kind apart -- how much memory, how many
+  compute units -- picked out of whatever else -L said. }
+function DeviceLine(const ADev: TMcxDevice; AIndex: Integer): string;
+var
+  L: TStringList;
+  i, c: Integer;
+  K, V, Mem, Units: string;
+  B: Double;
+begin
+  Mem := '';
+  Units := '';
+  L := TStringList.Create;
+  try
+    L.Text := ADev.Detail;
+    for i := 0 to L.Count - 1 do
+    begin
+      c := Pos(':', L[i]);
+      if c < 2 then Continue;
+      K := LowerCase(Trim(Copy(L[i], 1, c - 1)));
+      V := Trim(Copy(L[i], c + 1, MaxInt));
+      if K = 'global memory' then
+      begin
+        B := StrToFloatDef(Trim(StringReplace(V, 'B', '', [])), 0);
+        if B > 0 then Mem := Format('%.1f GB', [B / 1e9]);
+      end
+      else if (K = 'number of sms') or (K = 'compute units') then
+        Units := StringReplace(V, ' core(s)', '', []) + ' compute units';
+    end;
+  finally
+    L.Free;
+  end;
+  Result := Format('%d   %s', [AIndex + 1, ADev.Name]);
+  if (Mem <> '') or (Units <> '') then
+  begin
+    Result := Result + '   (';
+    if Units <> '' then Result := Result + Units;
+    if (Units <> '') and (Mem <> '') then Result := Result + ', ';
+    if Mem <> '' then Result := Result + Mem;
+    Result := Result + ')';
+  end;
+end;
+
+{ Asks the chosen simulator what it can run on, and ticks what the run is
+  set to use.  -G takes either one device number or a string of 0s and 1s,
+  one per device in this order (mcx -h), so the ticks are that string. }
+procedure TfmMain.RefreshDevices;
+var
+  Exe, Listing, Mask: string;
+  i: Integer;
+begin
+  if FDevList = nil then Exit;
+  FDevFor := McxExeName(CurrentBackend);
+  FDevList.Items.Clear;
+  SetLength(FDevices, 0);
+  Exe := CurrentExe;
+  if Exe = '' then
+  begin
+    FDevNote.Caption := 'No ' + FDevFor + ' was found, so there is nothing ' +
+      'to ask. Install it, or put it on the PATH.';
+    Exit;
+  end;
+  if (CurrentBackend = mbMMC) and (FRun.AsStr('@run.processor', '') = 'cpu') then
+  begin
+    FDevNote.Caption := 'mmc runs on the processor here (-c sse), which ' +
+      'uses every core and needs no device.';
+    Exit;
+  end;
+
+  Screen.Cursor := crHourGlass;
+  try
+    if not McxQueryDevices(Exe, Listing) then
+    begin
+      FDevNote.Caption := Exe + ' -L could not be run.';
+      Exit;
+    end;
+  finally
+    Screen.Cursor := crDefault;
+  end;
+
+  FDevices := McxParseDevices(Listing);
+  if Length(FDevices) = 0 then
+  begin
+    FDevNote.Caption := FDevFor + ' -L reported no device it can use.';
+    Exit;
+  end;
+
+  Mask := FRun.AsStr('@run.device', '');
+  { mcx reads one character as a device number and anything longer as the
+    0/1 string; nothing at all is the first device. }
+  if (Length(Mask) = 1) and (StrToIntDef(Mask, 0) > 0) then
+    Mask := StringOfChar('0', StrToInt(Mask) - 1) + '1';
+  if Mask = '' then Mask := '1';
+  for i := 0 to High(FDevices) do
+  begin
+    FDevList.Items.Add(DeviceLine(FDevices[i], i));
+    FDevList.Checked[i] := (i < Length(Mask)) and (Mask[i + 1] = '1');
+  end;
+  FDevNote.Caption := Format('%s found %d device(s). Tick the ones a run ' +
+    'uses; several share the photons between them.',
+    [FDevFor, Length(FDevices)]);
+end;
+
+procedure TfmMain.DeviceTicked(Sender: TObject);
+var
+  i: Integer;
+  Mask: string;
+begin
+  Mask := '';
+  for i := 0 to FDevList.Items.Count - 1 do
+    if FDevList.Checked[i] then Mask := Mask + '1' else Mask := Mask + '0';
+  while (Mask <> '') and (Mask[Length(Mask)] = '0') do
+    Delete(Mask, Length(Mask), 1);
+  { The first device alone is what -G means when it is not given, so it is
+    not given: the command stays as short as the person left it. }
+  if (Mask = '') or (Mask = '1') then FRun.Delete('@run.device')
+  else FRun.SetStr('@run.device', Mask);
+  SchedulePreview;
 end;
 
 { ------------------------------------------------------------- docking ---- }
@@ -3275,12 +4572,20 @@ begin
   DockMaster.OnCreateControl := @DockCreateControl;
   DockMaster.MakeDockPanel(FDockSite, admrpChild);
 
-  { The middle goes in first, because the navigator docks against it. }
-  DockMaster.MakeDockable(FPaneView, True, True, False);
+  { The middle goes in first, because the navigator docks against it.
+
+    Both panes are made dockable hidden and shown once docked.  Shown here,
+    the pane's dock site is mapped while it is still a floating window of
+    its own -- a small empty one, mid-FormCreate -- and asking for it to be
+    brought to front focuses it, which has GTK map this form too before it
+    has a size or a position.  Either way something flashed at the corner
+    of the screen before the window appeared in the middle. }
+  DockMaster.MakeDockable(FPaneView, False, False, False);
   DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneView), FDockSite,
     alClient);
+  DockMaster.ShowControl(FPaneView.Name, False);
 
-  DockMaster.MakeDockable(FPaneNav, False, True, True);
+  DockMaster.MakeDockable(FPaneNav, False, False, True);
   DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
   DockMaster.ShowControl(FPaneNav.Name, False);
 
@@ -3337,6 +4642,28 @@ begin
   begin
     ShowResult(FPendingResult);
     FPendingResult := '';
+  end;
+  if FRunPending then
+  begin
+    FRunPending := False;
+    StartRequestedRun;
+  end;
+  if FSnapshot <> '' then
+  begin
+    { The size the Save image action uses, twice the pane, so the picture
+      is the one a person would have saved. }
+    if FView.SaveImage(FSnapshot, pnGL.Width * 2, pnGL.Height * 2) then
+    begin
+      WriteLn('wrote ', FSnapshot, ' (', FView.Description, ')');
+      ExitCode := 0;
+    end
+    else
+    begin
+      WriteLn(StdErr, 'mcxstudio: could not write ', FSnapshot);
+      ExitCode := 1;
+    end;
+    FSnapshot := '';
+    Application.Terminate;
   end;
   if FDockRestored then Exit;
   SizePane(FPaneNav, alLeft, McxScale96(340));
@@ -4095,20 +5422,33 @@ var
   C: TControl;
   D: TMcxDoc;
   E: TJSONData;
-  S: string;
+  S, Def: string;
   N: Integer;
+  Absent: Boolean;
 begin
   C := FBound[AIndex];
   if C = nil then Exit;
   B := Binds[AIndex];
+  B.Path := MeshPath(B.Path);
   D := DocFor(B.Path);
+  { A key the file leaves out shows what the chosen simulator will use for
+    it (mcx_initcfg), not a blank or a zero that means nothing.  Shown only:
+    FLoaded below records it, so an untouched default is never written. }
+  Absent := D.Find(B.Path) = nil;
+  Def := '';
+  if Absent then Def := McxDefault(Binds[AIndex].Path, CurrentBackend);
 
   case B.Kind of
     mkBool:
-      if C is TCheckBox then TCheckBox(C).Checked := D.AsBool(B.Path);
+      if C is TCheckBox then
+      begin
+        if Absent and (Def <> '') then TCheckBox(C).Checked := Def = '1'
+        else TCheckBox(C).Checked := D.AsBool(B.Path);
+      end;
     mkChoice:
       begin
         S := D.AsStr(B.Path);
+        if Absent then S := Def;
         { Matched on the value in the file, not on what is displayed: the
           file says "f" and the form says "Fluence". }
         N := -1;
@@ -4138,15 +5478,20 @@ begin
     mkFlags:
       if C is TCheckGroup then
       begin
-        S := FlagsOf(D, B.Path, FFlags[AIndex]);
+        if Absent then S := Def
+        else S := FlagsOf(D, B.Path, FFlags[AIndex]);
         for N := 0 to TCheckGroup(C).Items.Count - 1 do
           TCheckGroup(C).Checked[N] :=
             (N < Length(FFlags[AIndex])) and
             (Pos(FFlags[AIndex][N + 1], S) > 0);
       end;
     mkInt:
-      if C is TSpinEdit then TSpinEdit(C).Value := D.AsInt(B.Path)
-      else if C is TEdit then TEdit(C).Text := IntToStr(D.AsInt(B.Path));
+      if C is TSpinEdit then TSpinEdit(C).Value := D.AsInt(B.Path, StrToIntDef(Def, 0))
+      else if C is TEdit then
+      begin
+        if Absent then TEdit(C).Text := Def
+        else TEdit(C).Text := IntToStr(D.AsInt(B.Path));
+      end;
     mkFloat:
       if C is TEdit then
       begin
@@ -4156,13 +5501,15 @@ begin
         E := D.Find(B.Path);
         if (E <> nil) and (E.JSONType in [jtNumber, jtString, jtBoolean]) then
           TEdit(C).Text := E.AsString
+        else if Absent then
+          TEdit(C).Text := Def
         else
           TEdit(C).Text := '';
       end;
     mkVec:
       if C is TEdit then TEdit(C).Text := VecToText(D.Find(VecPath(B.Path)));
     mkText, mkFile:
-      if C is TEdit then TEdit(C).Text := D.AsStr(B.Path);
+      if C is TEdit then TEdit(C).Text := D.AsStr(B.Path, Def);
   end;
 
   FLoaded[AIndex] := ControlText(C);
@@ -4175,12 +5522,13 @@ var
   D: TMcxDoc;
   V: Double;
   S: string;
-  N: Integer;
+  N, Iv: Integer;
   Fs: TFormatSettings;
 begin
   C := FBound[AIndex];
   if C = nil then Exit;
   B := Binds[AIndex];
+  B.Path := MeshPath(B.Path);
   D := DocFor(B.Path);
 
   { Untouched since it was loaded means there is nothing to save.  This is what
@@ -4203,9 +5551,18 @@ begin
         else if C is TComboBox then N := TComboBox(C).ItemIndex;
         { The value, never the label.  mcx reads "f"; "Fluence" would be a
           setting it has never heard of. }
+        { A choice whose values are numbers -- BasisOrder is 0 or 1 -- is a
+          number in the file; written as text, mmc's valueint reads it as
+          nought whatever it said. }
         if (N >= 0) and (FValues[AIndex] <> nil) and
            (N < FValues[AIndex].Count) then
-          D.SetStr(B.Path, FValues[AIndex][N]);
+        begin
+          if TryStrToInt(FValues[AIndex][N], Iv) and
+             ((D.Find(B.Path) = nil) or (D.Find(B.Path).JSONType = jtNumber)) then
+            D.SetInt(B.Path, Iv)
+          else
+            D.SetStr(B.Path, FValues[AIndex][N]);
+        end;
       end;
     mkFlags:
       if C is TCheckGroup then
@@ -4247,6 +5604,42 @@ begin
   end;
 end;
 
+{ How many rows an embedded mesh array holds: a plain list of rows, or a
+  JData-annotated one whose _ArraySize_ says it.  -1 when absent. }
+function MeshRows(D: TJSONData): Integer;
+var
+  Sz: TJSONData;
+begin
+  Result := -1;
+  if D = nil then Exit;
+  if D.JSONType = jtArray then Exit(TJSONArray(D).Count);
+  if D.JSONType <> jtObject then Exit;
+  Sz := TJSONObject(D).Find('_ArraySize_');
+  if (Sz is TJSONArray) and (TJSONArray(Sz).Count > 0) then
+    Result := TJSONArray(Sz).Items[0].AsInteger;
+end;
+
+{ A mesh carried in the file is shown, not edited: thousands of nodes are
+  not something to type into a form. }
+procedure TfmMain.UpdateMeshInfo;
+var
+  nn, ne: Integer;
+begin
+  if lbMeshInfo = nil then Exit;
+  nn := MeshRows(FDoc.Find(MeshPath('Mesh.MeshNode')));
+  ne := MeshRows(FDoc.Find(MeshPath('Mesh.MeshElem')));
+  if (nn >= 0) or (ne >= 0) then
+  begin
+    if nn < 0 then nn := 0;
+    if ne < 0 then ne := 0;
+    lbMeshInfo.Caption := Format('The mesh is embedded in this file: ' +
+      'nodes %d, elements %d.', [nn, ne]);
+  end
+  else
+    lbMeshInfo.Caption := 'MeshID names node_<id>.dat and elem_<id>.dat ' +
+      'beside the input, or in the root path.';
+end;
+
 procedure TfmMain.LoadAllBindings;
 var
   i: Integer;
@@ -4257,6 +5650,8 @@ begin
   if FDetectors <> nil then FDetectors.Attach(FDoc, 'Optode.Detector');
   if FShapes <> nil then FShapes.Attach(FDoc);
   UpdateSourceBar;
+  UpdateMeshInfo;
+  UpdateDomainCard;
   Inc(FLoading);
   try
     for i := 0 to High(Binds) do LoadBinding(i);
@@ -4272,7 +5667,8 @@ end;
 
   This is what the old GUI did with a chain of hand-written if SKey(..)= tests
   scattered through a 120-line OnChange handler. }
-function ConditionHolds(D: TMcxDoc; const ACond: string): Boolean;
+function ConditionHolds(D: TMcxDoc; const ACond: string;
+  ABackend: TMcxBackend): Boolean;
 var
   E: Integer;
   Path, Want: string;
@@ -4288,17 +5684,25 @@ begin
   begin
     Path := Copy(ACond, 1, E - 1);
     Want := Copy(ACond, E + 1, MaxInt);
-    Exit(Pos(UpperCase(Want), UpperCase(D.AsStr(Path))) > 0);
+    Exit(Pos(UpperCase(Want),
+      UpperCase(D.AsStr(Path, McxDefault(Path, ABackend)))) > 0);
   end;
+
+  { A trailing '?' asks only whether the path is there at all. }
+  if ACond[Length(ACond)] = '?' then
+    Exit(D.Exists(Copy(ACond, 1, Length(ACond) - 1)));
 
   E := Pos('=', ACond);
   if E < 1 then Exit;
   Path := Copy(ACond, 1, E - 1);
   Want := Copy(ACond, E + 1, MaxInt);
+  { An absent key holds the simulator's default, the same value its field
+    shows: DoPartialPath left out of an mcx input is on, and the settings
+    that depend on it are live. }
   if (Want = '0') or (Want = '1') then
-    Result := D.AsBool(Path) = (Want = '1')
+    Result := D.AsBool(Path, McxDefault(Path, ABackend) = '1') = (Want = '1')
   else
-    Result := SameText(D.AsStr(Path), Want);
+    Result := SameText(D.AsStr(Path, McxDefault(Path, ABackend)), Want);
 end;
 
 
@@ -4308,8 +5712,10 @@ var
   B: TMcxBind;
   C: TControl;
   InMode, Shown, Moved: Boolean;
-  Cap1, Cap2, Flags, Letters: string;
+  Cap1, Cap2, Flags, Letters, DomName: string;
   Live: array of Boolean;
+  Dom: TMcxDomain;
+  Be: TMcxBackend;
 
   { Restacking is only needed when something appeared or disappeared, and
     this runs on every keystroke that commits, so it is worth knowing. }
@@ -4321,6 +5727,11 @@ var
   end;
 
 begin
+  DomName := FRun.AsStr('@run.domainkind', 'shapes');
+  if DomName = 'voxel' then Dom := mdVoxel
+  else if (DomName = 'mesh') or (DomName = 'surface') then Dom := mdMesh
+  else Dom := mdShapes;
+  Be := CurrentBackend;
   Moved := False;
   for i := 0 to High(Binds) do
   begin
@@ -4329,11 +5740,16 @@ begin
     B := Binds[i];
 
     { The wizard is a strict subset of the expert form, so one filter serves
-      both modes and there is no second layout to keep in step. }
-    InMode := (not FWizard) or (B.Level = mlWizard);
+      both modes and there is no second layout to keep in step.  And a
+      setting the chosen domain or simulator never reads is not offered:
+      a mesh has no Dim and no volume file, a voxel grid no MeshID. }
+    InMode := ((not FWizard) or (B.Level = mlWizard)) and
+      ((B.Domains = []) or (Dom in B.Domains)) and
+      ((B.Backends = []) or (Be in B.Backends));
     Show(C, InMode);
     if InMode then
-      C.Enabled := ConditionHolds(DocFor(B.EnableIf), B.EnableIf);
+      C.Enabled := ConditionHolds(DocFor(B.EnableIf), B.EnableIf,
+        CurrentBackend);
     if FLabels[i] <> nil then
     begin
       Show(FLabels[i], InMode);
@@ -4415,7 +5831,11 @@ begin
         Inc(NBound);
         if FBound[i].Visible then Inc(NShown);
       end;
-    Live[j] := (NBound = 0) or (NShown > 0);
+    { The cards with a table on them stay whatever their few bound rows
+      do: the detector card's wide-field rows are mmc's, and hiding them
+      must not take the detector table with them. }
+    Live[j] := (NBound = 0) or (NShown > 0) or
+      (FSubs[j].Box = gbDetector) or (FSubs[j].Box = gbMedia);
   end;
 
   for j := 0 to High(FSubs) do
@@ -4467,6 +5887,9 @@ begin
   if FBound[i] <> Sender then Exit;
 
   SaveBinding(i);
+  { A source vector typed above the source table is a cell of it too. }
+  if (FSources <> nil) and (Pos('Optode.Source.', Binds[i].Path) = 1) then
+    FSources.Reload;
   { One sweep handles every dependent: cheap at forty rows, and it means a
     dependency is a table entry rather than another branch in a handler. }
   ApplyBindingStates;
@@ -4508,7 +5931,18 @@ begin
   else
     Input := FDoc.AsStr('Session.ID', 'mcx') + '.json';
   mmCommand.Text := McxCommandLine(CurrentExe, Input, FDoc, FRun);
-  if FView <> nil then FView.Rebuild;
+  if FView <> nil then
+  begin
+    FView.Rebuild;
+    { A domain carried as data is drawn as a volume, and the display bar
+      that styles a volume comes and goes with it. }
+    if FView.VolumeChanged then
+    begin
+      FView.VolumeChanged := False;
+      FDisplay.ResetSlab;
+      FDisplay.SetHasVolume(FView.HasVolume);
+    end;
+  end;
 
   UpdateStatus;
 end;
