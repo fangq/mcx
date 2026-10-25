@@ -83,9 +83,27 @@ Notable new features include:
 * the released Linux binaries and mex files are built in a manylinux2014 container and
   run on glibc 2.17 or newer; Octave mex files are now also released for Windows and
   macOS, linked against `liboctmex` and loadable in Octave 10 and newer
-* input parsing is hardened by fuzzing the JSON inputs and command line options;
-  invalid values (such as `-u`, `-W`, `-K`, `-Z`) now stop with an error message
-  instead of crashing or hanging
+* unit tests and coverage: host-side unit tests of `mcx_utils` (JSON and .inp parsing,
+  JData decoding, shapes, Mie, output writers) and of the ray-tracing helpers (`make
+  unittest`, 1735 checks, no GPU needed) raise the line coverage of the host code to
+  about 95%; 141 built-in example tests (`test/testbuiltin.sh`), exported from all
+  examples and mcxlab demos, check every run against golden values; the bugs these tests
+  found were fixed
+* fuzzing: four rounds of JSON-aware mutation fuzzing of the input files and of the
+  command-line options, run on AddressSanitizer builds of mcx, mcxcl and mmc, plus a
+  fuzzer for the MCX Studio GUI; every crash, hang and memory error they found was fixed
+* hardening: JSON arrays are length-checked before use; JData arrays must carry valid
+  annotations and decode to their declared size; optical properties, time gates, SrcNum,
+  pattern sizes, the voxel size (`-u`), the roulette threshold (`-e`), device workloads
+  (`-W`), media formats (`-K`) and compression methods (`-Z`) are validated; string
+  options are bounds-checked; invalid input now stops with an error message instead of
+  crashing or hanging
+* fixes found by fuzzing: a photon whose effective scattering coefficient becomes 0 (g=1
+  once `--gscatter` is reached) no longer hangs the kernel, `-e` of 1 or more no longer
+  relaunches photons forever, and the zlib decoder stops on truncated streams
+* `Session.OutputType` in JSON inputs accepts the names mcxlab and pmcx use ("flux",
+  "adjoint_mus", ...); only the first letter used to be read, so "flux" gave fluence and
+  "dcs" an adjoint Jacobian
 * `--dumpjson`, `mcx2json` and `json2mcx` now round-trip all settings, including Mie,
   phase function, boundary, RF and polarization settings
 * pmcx: all mcxlab example scripts are ported to Python under `pmcx/examples`, and
