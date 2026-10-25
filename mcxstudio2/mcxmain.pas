@@ -623,6 +623,9 @@ type
       and its -c.  After OpenDocument, which resets the tiles from the file. }
     function  SetProcessor(const AValue: string): Boolean;
     procedure SnapshotLater(const AFileName: string);
+    { --run --quit or --snapshot: nobody is at the screen to answer a dialog,
+      so what would have asked goes to stderr instead. }
+    function Unattended: Boolean;
     function  RunSelfTest(const ADir: string): Integer;
     function  SelfTestEditors: Integer;
     property Doc: TMcxDoc read FDoc;
@@ -2851,7 +2854,7 @@ begin
   try
     if not McxProjectSessions(AFileName, Names) then Exit;
     k := 0;
-    if (Names.Count > 1) and not FQuitAfterRun then
+    if (Names.Count > 1) and not Unattended then
     begin
       k := InputCombo('MCX Studio', ExtractFileName(AFileName) +
         ' holds several sessions. Open which?', Names);
@@ -2889,7 +2892,7 @@ begin
     Ok := FDoc.LoadFromFile(AFileName);
   if not Ok then
   begin
-    if FQuitAfterRun then
+    if Unattended then
     begin
       WriteLn(StdErr, 'Could not read ', AFileName, ': ', FDoc.LastError);
       Halt(2);
@@ -3208,6 +3211,9 @@ begin
         begin
           WriteLn('  FAIL  ', ExtractFileName(Files[i]), ' -- ',
                   E.ClassName, ': ', E.Message);
+          { where it was raised: with the debug build's line info this names
+            the binding or parser that took the bad value }
+          DumpExceptionBackTrace(Output);
           Inc(Result);
         end;
       end;
@@ -4201,6 +4207,11 @@ end;
 procedure TfmMain.SnapshotLater(const AFileName: string);
 begin
   FSnapshot := AFileName;
+end;
+
+function TfmMain.Unattended: Boolean;
+begin
+  Result := FQuitAfterRun or (FSnapshot <> '');
 end;
 
 procedure TfmMain.RunLater(AQuit: Boolean);
@@ -5425,6 +5436,7 @@ var
   E: TJSONData;
   S, Def: string;
   N: Integer;
+  V64: Int64;
   Absent: Boolean;
 begin
   C := FBound[AIndex];
@@ -5487,7 +5499,16 @@ begin
             (Pos(FFlags[AIndex][N + 1], S) > 0);
       end;
     mkInt:
-      if C is TSpinEdit then TSpinEdit(C).Value := D.AsInt(B.Path, StrToIntDef(Def, 0))
+      { Value is an Integer and the file can hold any number: clamped, or a
+        64-bit value is a range error here (and silently wrapped without range
+        checks); the control then applies its own limits }
+      if C is TSpinEdit then
+      begin
+        V64 := D.AsInt(B.Path, StrToIntDef(Def, 0));
+        if V64 > High(Integer) then V64 := High(Integer)
+        else if V64 < Low(Integer) then V64 := Low(Integer);
+        TSpinEdit(C).Value := V64;
+      end
       else if C is TEdit then
       begin
         if Absent then TEdit(C).Text := Def
@@ -5616,8 +5637,11 @@ begin
   if D.JSONType = jtArray then Exit(TJSONArray(D).Count);
   if D.JSONType <> jtObject then Exit;
   Sz := TJSONObject(D).Find('_ArraySize_');
-  if (Sz is TJSONArray) and (TJSONArray(Sz).Count > 0) then
-    Result := TJSONArray(Sz).Items[0].AsInteger;
+  { a size that is not a number in range shows as no count rather than raising }
+  if (Sz is TJSONArray) and (TJSONArray(Sz).Count > 0) and
+     (TJSONArray(Sz).Items[0].JSONType = jtNumber) and
+     (TJSONArray(Sz).Items[0].AsFloat >= 0) and (TJSONArray(Sz).Items[0].AsFloat <= MaxInt) then
+    Result := Trunc(TJSONArray(Sz).Items[0].AsFloat);
 end;
 
 { A mesh carried in the file is shown, not edited: thousands of nodes are

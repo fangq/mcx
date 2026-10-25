@@ -244,7 +244,7 @@ begin
 
   { A run nobody watches has nobody to press OK either: a fault becomes a line
     on stderr and an exit code, as in the self-test. }
-  if DoQuit then Application.OnException := @TMcxHeadless.Report;
+  if DoQuit or (Snapshot <> '') then Application.OnException := @TMcxHeadless.Report;
 
   Application.Initialize;
 

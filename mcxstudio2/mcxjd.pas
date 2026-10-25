@@ -279,6 +279,19 @@ begin
   Src.Free;
 end;
 
+function DimOf(AItem: TJSONData; out ADim: Integer): Boolean;
+var
+  F: Double;
+begin
+  Result := False;
+  ADim := 0;
+  if (AItem = nil) or (AItem.JSONType <> jtNumber) then Exit;
+  F := AItem.AsFloat;
+  if IsNan(F) or (F < 0) or (F > MaxInt) or (Frac(F) <> 0) then Exit;
+  ADim := Trunc(F);
+  Result := True;
+end;
+
 { What an annotated array says it is -- the element type and the shape --
   without touching the payload.  Split out because a binary file carries the
   same two annotations as a text one and differs only in what the payload is
@@ -299,18 +312,44 @@ begin
   AArray.Kind := McxArrayKindOf(T.AsString);
   if AArray.Kind = akNone then Exit;
 
+  { A size that is not a whole number from 0 to MaxInt is not a size: AsInteger
+    on a string, or on 2^63, raises rather than reports. }
   S := AObj.Find('_ArraySize_');
   if (S <> nil) and (S.JSONType = jtArray) then
   begin
     SetLength(AArray.Dims, S.Count);
-    for i := 0 to S.Count - 1 do AArray.Dims[i] := S.Items[i].AsInteger;
+    for i := 0 to S.Count - 1 do
+    begin
+      if not DimOf(S.Items[i], AArray.Dims[i]) then Exit;
+    end;
   end
   else if (S <> nil) and (S.JSONType = jtNumber) then
   begin
     SetLength(AArray.Dims, 1);
-    AArray.Dims[0] := S.AsInteger;
+    if not DimOf(S, AArray.Dims[0]) then Exit;
   end;
   Result := True;
+end;
+
+{ True when the payload holds exactly what _ArraySize_ says: every caller sizes
+  its loops and buffers by Dims, so a size larger than the data (a hand-edited
+  or truncated file) would read past it, and one of 2^31 elements tried to
+  allocate gigabytes for a mesh of a few. }
+function DimsMatchData(const AArray: TMcxArray): Boolean;
+var
+  i: Integer;
+  n: Int64;
+begin
+  Result := True;
+  if Length(AArray.Dims) = 0 then Exit;
+  n := 1;
+  for i := 0 to High(AArray.Dims) do
+  begin
+    if AArray.Dims[i] < 0 then Exit(False);
+    if (AArray.Dims[i] > 0) and (n > High(Int64) div AArray.Dims[i]) then Exit(False);
+    n := n * AArray.Dims[i];
+  end;
+  Result := n * McxElemSize(AArray.Kind) = Length(AArray.Data);
 end;
 
 function McxDecodeJData(AObj: TJSONObject; out AArray: TMcxArray): Boolean;
@@ -337,7 +376,7 @@ begin
     SetLength(Raw, Length(Text));
     if Length(Text) > 0 then Move(Text[1], Raw[0], Length(Text));
     AArray.Data := Inflate(Raw);
-    Result := Length(AArray.Data) > 0;
+    Result := (Length(AArray.Data) > 0) and DimsMatchData(AArray);
     Exit;
   end;
 
@@ -359,7 +398,7 @@ begin
         akSingle: PSingle(@AArray.Data[i * 4])^ := D.Items[i].AsFloat;
         akDouble: PDouble(@AArray.Data[i * 8])^ := D.Items[i].AsFloat;
       end;
-    Result := True;
+    Result := DimsMatchData(AArray);
   end;
 end;
 
