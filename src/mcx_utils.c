@@ -5249,6 +5249,56 @@ static int mcx_jdata_typesize(const char* type) {
  * @param[in] obj: a pre-created cJSON object to store the output JData fields
  */
 
+/**
+ * @brief Read the _ArrayZipOffsets_ block index of a JData array, if it has one
+ *
+ * A block-parallel zlib/gzip stream may carry its block index, [compressed,
+ * uncompressed] offset pairs (or the same numbers flattened), so that it can be
+ * inflated in parallel. The index only speeds up decoding: a missing or
+ * malformed one returns NULL, and zmat falls back to a serial inflate when an
+ * index does not describe the stream.
+ *
+ * @param[in] obj: the JData array object
+ * @param[out] noff: the number of offsets returned
+ * @return a malloc'ed array of noff offsets, or NULL
+ */
+
+static size_t* mcx_jdata_zipoffsets(cJSON* obj, size_t* noff) {
+    cJSON* vidx = cJSON_GetObjectItem(obj, "_ArrayZipOffsets_"), *row, *val;
+    size_t n = 0, *off = NULL;
+
+    *noff = 0;
+
+    if (!vidx || !cJSON_IsArray(vidx)) {
+        return NULL;
+    }
+
+    cJSON_ArrayForEach(row, vidx) {
+        n += cJSON_IsArray(row) ? (size_t)cJSON_GetArraySize(row) : 1;
+    }
+
+    if (n < 4 || (n & 1) || n > ((size_t)1 << 24)) {
+        return NULL;
+    }
+
+    off = (size_t*)malloc(n * sizeof(size_t));
+    n = 0;
+
+    cJSON_ArrayForEach(row, vidx) {
+        for (val = (cJSON_IsArray(row) ? row->child : row); val; val = (cJSON_IsArray(row) ? val->next : NULL)) {
+            if (!cJSON_IsNumber(val) || !(val->valuedouble >= 0.0) || val->valuedouble > 9007199254740992.0) {
+                free(off);
+                return NULL;
+            }
+
+            off[n++] = (size_t)val->valuedouble;
+        }
+    }
+
+    *noff = n;
+    return off;
+}
+
 int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type, cJSON* obj, Config* cfg) {
     int ret = 0;
     size_t elemnum = 0;
@@ -5352,10 +5402,14 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
                     *vol = NULL;
                 }
 
-                ret = zmat_run(len, (uchar*)buf, &newlen, (uchar**)(vol), zipid, &status,
+                /* a zlib/gzip stream with a block index is inflated in parallel */
+                size_t noff = 0, *off = (zipid == zmZlib || zipid == zmGzip) ? mcx_jdata_zipoffsets(obj, &noff) : NULL;
+
+                ret = zmat_run_indexed(len, (uchar*)buf, &newlen, (uchar**)(vol), zipid, &status,
                 ((TZMatFlags) {
-                    .param = {.nthread = 2}
-                }).iscompress);
+                    .param = {.nthread = 8}
+                }).iscompress, off ? &off : NULL, off ? &noff : NULL);
+                free(off);
             }
 
             if (buf) {
@@ -5470,7 +5524,7 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
 
 int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int zipid, void* obj, int isubj, int iscol, Config* cfg) {
     uint datalen = 1;
-    size_t compressedbytes, totalbytes;
+    size_t compressedbytes, totalbytes, nzipoff = 0, *zipoff = NULL;
     uchar* compressed = NULL, *buf = NULL;
     int ret = 0, status = 0;
 
@@ -5484,12 +5538,14 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
         MCX_FPRINTF(cfg->flog, "%s [%s] ...", T_("compressing data"), zipformat[zipid]);
     }
 
-    /*compress data using zlib*/
+    /*compress data; zlib and gzip deflate arrays over 4 MB in parallel blocks, a
+      standard stream any decompressor reads, whose block index is saved as
+      _ArrayZipOffsets_ so that readers (mcx, pyjdata) inflate it in parallel too*/
     if (zipid != zmBase64) {
-        ret = zmat_run(totalbytes, (uchar*)vol, &compressedbytes, (uchar**)&compressed, zipid, &status,
+        ret = zmat_run_indexed(totalbytes, (uchar*)vol, &compressedbytes, (uchar**)&compressed, zipid, &status,
         ((TZMatFlags) {
-            .param = {.clevel = 1, .nthread = 2}
-        }).iscompress);
+            .param = {.clevel = 1, .nthread = 8}
+        }).iscompress, &zipoff, &nzipoff);
     } else {
         compressed = (uchar*)vol;
         compressedbytes = totalbytes;
@@ -5547,6 +5603,23 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
                 UBJ_WRITE_KEY(item, "_ArrayZipSize_", uint32, datalen);
                 ubjw_write_key(item, "_ArrayZipData_");
                 ubjw_write_buffer(item, compressed, UBJ_UINT8, compressedbytes);
+
+                /* the block index, [compressed, uncompressed] offset pairs, only
+                   when there is more than one block to inflate in parallel */
+                if (zipoff && nzipoff >= 6) {
+                    uint64_t pair[2];
+
+                    ubjw_write_key(item, "_ArrayZipOffsets_");
+                    ubjw_begin_array(item, UBJ_MIXED, nzipoff / 2);
+
+                    for (size_t i = 0; i + 1 < nzipoff; i += 2) {
+                        pair[0] = zipoff[i];
+                        pair[1] = zipoff[i + 1];
+                        ubjw_write_buffer(item, (uint8_t*)pair, UBJ_UINT64, 2);
+                    }
+
+                    ubjw_end(item);
+                }
             }
         } else {
             totalbytes = 0;
@@ -5575,6 +5648,17 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
                     cJSON_AddStringToObject((cJSON*)obj, "_ArrayZipType_", zipformat[zipid]);
                     cJSON_AddNumberToObject((cJSON*)obj, "_ArrayZipSize_", datalen);
                     cJSON_AddStringToObject((cJSON*)obj, "_ArrayZipData_", (char*)buf);
+
+                    if (zipoff && nzipoff >= 6) {
+                        cJSON* offsets = cJSON_CreateArray();
+
+                        for (size_t i = 0; i + 1 < nzipoff; i += 2) {
+                            double pair[2] = {(double)zipoff[i], (double)zipoff[i + 1]};
+                            cJSON_AddItemToArray(offsets, cJSON_CreateDoubleArray(pair, 2));
+                        }
+
+                        cJSON_AddItemToObject((cJSON*)obj, "_ArrayZipOffsets_", offsets);
+                    }
                 }
             }
         }
@@ -5588,6 +5672,7 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
         free(buf);
     }
 
+    free(zipoff);
     return ret;
 }
 
