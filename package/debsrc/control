@@ -9,7 +9,7 @@ Build-Depends: nvidia-cuda-toolkit
 Suggests: mcxstudio, mcxcl, mmc
 Installed-Size: 13124
 Maintainer: Qianqian Fang <q.fang@neu.edu>
-Homepage: http://mcx.space
+Homepage: https://mcx.space
 Vcs-Git: https://github.com/fangq/mcx.git
 Vcs-Browser: https://github.com/fangq/mcx
 Description: 

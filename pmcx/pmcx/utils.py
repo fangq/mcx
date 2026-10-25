@@ -801,7 +801,7 @@ def mcxcreate(benchname=None, **kwargs):
     cfg = mcxcreate('cube60b')
     cfg = mcxcreate('cube60', srctype='isotropic', srcpos=[30, 30, 30])
 
-    This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
+    This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
 
     License: GNU General Public License version 3, please read LICENSE.txt for details
     """
@@ -989,7 +989,7 @@ def dcsg1(
                     sent via "varargin"
 
     This file is part of Mesh-Based Monte Carlo
-    License: GPLv3, see http://mcx.space for details
+    License: GPLv3, see https://mcx.space for details
     """
 
     # Set default values
@@ -1304,7 +1304,7 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
         A 4D array with dimensions specified by [size(vol) num-of-detectors];
         each 3D array contains the Jacobians for phase shift measurements
 
-    License: GPLv3, see http://mcx.space/ for details
+    License: GPLv3, see https://mcx.space/ for details
     """
 
     if cfg is None or f_mod is None or detp is None or seeds is None or detnums is None:
@@ -1405,7 +1405,7 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
         A 4D array with dimensions specified by [size(vol) num-of-detectors];
         each 3D array contains the Jacobians for phase shift measurements
 
-    License: GPLv3, see http://mcx.space/ for details
+    License: GPLv3, see https://mcx.space/ for details
     """
 
     # Control.

@@ -21,7 +21,7 @@ function output = mcxfluence2energy(flux, vol, prop, tstep)
 %
 % this file is part of Monte Carlo eXtreme (MCX)
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 data = flux;

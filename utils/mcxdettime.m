@@ -19,7 +19,7 @@ function dett = mcxdettime(detp, prop, unitinmm)
 %
 % this file is copied from Mesh-based Monte Carlo (MMC)
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 R_C0 = 3.335640951981520e-12;   % inverse of light speed in vacuum

@@ -15,7 +15,7 @@ function avgnscat = mcxmeanscat(detp, prop)
 %
 % this file is copied from Mesh-based Monte Carlo (MMC)
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 detw = mcxdetweight(detp, prop);

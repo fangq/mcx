@@ -76,7 +76,7 @@ MSTR(
 #         作者版权 (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>            #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
+# Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 #               美国东北大学生物工程系，马萨诸塞州，波士顿                    #\n\
 ###############################################################################\n\
 #   MCX 软件开发是在美国 NIH/NIGMS 经费(R01-GM114365)资助下完成的，特此致谢   #\n\
@@ -168,7 +168,7 @@ MSTR(
 #          作者版權 (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>           #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-#         計算光學與轉譯影像實驗室 (COTI Lab) - " S_BLUE "http://fanglab.org " S_MAGENTA "           #\n\
+#         計算光學與轉譯影像實驗室 (COTI Lab) - " S_BLUE "https://fanglab.org" S_MAGENTA "           #\n\
 #               美國東北大學生物工程系，馬薩諸塞州波士頓                      #\n\
 ###############################################################################\n\
 #   MCX 軟體開發獲得美國 NIH/NIGMS 經費(R01-GM114365)資助，在此致謝           #\n\
@@ -260,7 +260,7 @@ MSTR(
 #         著作権 (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>              #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
+# Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 #   米国マサチューセッツ州ボストン、ノースイースタン大学 生体工学部           #\n\
 ###############################################################################\n\
 #MCX ソフトウェアは米国 NIH/NIGMS の助成金(R01-GM114365)によって開発されました#\n\
@@ -354,7 +354,7 @@ MSTR(
 #     Droits d’auteur (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>         #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-#Optique computationnelle et imagerie translationnelle(COTI)-" S_BLUE "http://fanglab.org" S_MAGENTA "#\n\
+#Optique computationnelle & imagerie translationnelle(COTI)" S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 # Département de bio-ingénierie, Université Northeastern, Boston, MA, É.-U.   #\n\
 ###############################################################################\n\
 #Le développement de MCX est financé par le NIH/NIGMS des É.-U. (R01-GM114365)#\n\
@@ -449,7 +449,7 @@ MSTR(
 #     Derechos de autor (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>       #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Laboratorio de Óptica Computacional e Imagenología Traslacional (COTI)-" S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
+# Laboratorio de Óptica Computacional e Imagenología Traslacional (COTI)-" S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 # Departamento de Bioingeniería, Universidad de Northeastern, Boston, MA, EE. UU. #\n\
 ###############################################################################\n\
 #   El desarrollo del software MCX fue financiado por el NIH/NIGMS de EE. UU. (R01-GM114365) #\n\
@@ -539,7 +539,7 @@ MSTR(
 #       Urheberrecht (c) 2009–2025 Qianqian Fang <q.fang at neu.edu>          #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Computational Optics & Translational Imaging (COTI) Lab – " S_BLUE "http://fanglab.org" S_MAGENTA "#\n\
+#Computational Optics & Translational Imaging (COTI) Lab – " S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 #   Department für Bioengineering, Northeastern University, Boston, MA, USA   #\n\
 ###############################################################################\n\
 #   Die Entwicklung der MCX-Software wurde vom US-amerikanischen NIH/NIGMS    #\n\
@@ -635,7 +635,7 @@ MSTR(
 #         저작권 (c) 2009–2025 Qianqian Fang <q.fang at neu.edu>              #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-#    계산 광학 및 변환 영상 연구실(COTI Lab) – " S_BLUE "http://fanglab.org             " S_MAGENTA "#\n\
+#    계산 광학 및 변환 영상 연구실(COTI Lab) – " S_BLUE "https://fanglab.org            " S_MAGENTA "#\n\
 #   미국 매사추세츠주 보스턴, 노스이스턴 대학교 생명공학과                    #\n\
 ###############################################################################\n\
 #MCX 소프트웨어 개발은 미국 NIH/NIGMS의 지원(R01-GM114365)으로 이루어졌습니다.#\n\
@@ -727,7 +727,7 @@ MSTR(
 #       कॉपीराइट (c) 2009–2025 कियानकियान फांग <q.fang at neu.edu>             #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-#         कम्प्यूटेशनल ऑप्टिक्स और ट्रांसलेशनल इमेजिंग (COTI) लैब – " S_BLUE "http://fanglab.org    " S_MAGENTA "#\n\
+#         कम्प्यूटेशनल ऑप्टिक्स और ट्रांसलेशनल इमेजिंग (COTI) लैब – " S_BLUE "https://fanglab.org   " S_MAGENTA "#\n\
 #          बायोइंजीनियरिंग विभाग, नॉर्थईस्टर्न यूनिवर्सिटी, बोस्टन, MA, USA           #\n\
 ###############################################################################\n\
 #   MCX सॉफ़्टवेयर का विकास अमेरिकी NIH/NIGMS (R01-GM114365) द्वारा समर्थित है –     #\n\
@@ -820,7 +820,7 @@ MSTR(
 #           Direitos autorais (c) 2009-2026 Qianqian Fang <q.fang at neu.edu> #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Laboratório de Óptica Computacional e Imagem Translacional (COTI) - " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
+# Laboratório de Óptica Computacional e Imagem Translacional (COTI) - " S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 # Departamento de Bioengenharia, Northeastern University, Boston, MA, EUA     #\n\
 ###############################################################################\n\
 # O desenvolvimento do MCX foi financiado pelo NIH/NIGMS dos EUA (R01-GM114365), agradecemos o apoio\n\

@@ -42,7 +42,7 @@ function [tau, g1] = mcxdcsg1(detps, tau, disp_model, DV, lambda, format, vararg
 %                   sent via "varargin"
 %
 %   This file is part of Mesh-Based Monte Carlo
-%   License: GPLv3, see http://mcx.space for details
+%   License: GPLv3, see https://mcx.space for details
 %
 
 if nargin < 6

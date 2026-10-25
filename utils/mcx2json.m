@@ -26,7 +26,7 @@ function varargout = mcx2json(cfg, filestub, varargin)
 %    Iso2Mesh toolbox (http://iso2mesh.sf.net) or JSONlab toolbox
 %    (http://iso2mesh.sf.net/jsonlab)
 %
-% This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
+% This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
 %
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %

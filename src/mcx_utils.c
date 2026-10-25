@@ -6655,7 +6655,7 @@ void mcx_printheader(Config* cfg) {
 #          Copyright (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>          #\n\
 #" S_BLUE "                https://mcx.space/  &  https://neurojson.io                  " S_MAGENTA "#\n\
 #                                                                             #\n\
-# Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "http://fanglab.org " S_MAGENTA "#\n\
+# Computational Optics & Translational Imaging (COTI) Lab- " S_BLUE "https://fanglab.org" S_MAGENTA "#\n\
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #\n\
 ###############################################################################\n\
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #\n\

@@ -26,7 +26,7 @@ function [rfjac_lnA, rfjac_phase] = mcxrfreplay(cfg, f_mod, detp, seeds, detnums
 %     rfjac_phase: a 4D array with dimensions specified by [size(vol) numb-of-detectors];
 %                  each 3D array contains the Jacobians for phase shift measurements
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 if (nargin < 5)

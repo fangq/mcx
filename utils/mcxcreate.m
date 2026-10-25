@@ -21,7 +21,7 @@ function cfg = mcxcreate(benchname, varargin)
 %    cfg=mcxcreate('cube60b');
 %    cfg=mcxcreate('cube60','srctype','isotropic','srcpos',[30 30 30])
 %
-% This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
+% This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
 %
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %

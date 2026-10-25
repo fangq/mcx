@@ -118,7 +118,7 @@ if($cmd{$key} eq ''){
 print "Photon - 3D Monte Carlo photon transport simulator based on MCX/MMC/MCXCL\n".
       ('=' x 79)."\n".
       "author: Qianqian Fang <q.fang at neu.edu>\n".
-      "web:    http://mcx.space\n".
+      "web:    https://mcx.space\n".
       "status: Based on user inputs, simulator '$key' located at '$cmd{$key}' is selected\n";
 
 system($cmd{$key}, @mcxopt) && die("failed to run my $cmd{$key}");

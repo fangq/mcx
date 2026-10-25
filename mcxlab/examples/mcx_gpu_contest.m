@@ -3,7 +3,7 @@
 %
 % MCX GPU Contest
 %
-% This file is part of Monte Carlo eXtreme (MCX) URL:http://mcx.space
+% This file is part of Monte Carlo eXtreme (MCX) URL:https://mcx.space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%  ask user's basic information
@@ -81,12 +81,12 @@ submitstr = {'name', urlencode(mcxbenchmark.userinfo.nickname), 'time', sprintf(
              'b3', sprintf('%.2f', speed(3)), 'score', sprintf('%.2f', mcxbenchmark.speedsum), ...
              'computer', urlencode(machinestr), 'report', urlencode(savejson(mcxbenchmark))};
 
-[s, status] = urlread('http://mcx.space/gpubench/gpucontest.cgi', 'post', submitstr);
+[s, status] = urlread('https://mcx.space/gpubench/gpucontest.cgi', 'post', submitstr);
 pause(2);
 
 if (isempty(s))
     error('submission failed');
 elseif (strcmp(s, sprintf('SUCCESS\n')))
-    hs = msgbox({'Submission is successful.', 'Please browse http://mcx.space/gpubench/ to see results.'}, 'Success', 'modal');
+    hs = msgbox({'Submission is successful.', 'Please browse https://mcx.space/gpubench/ to see results.'}, 'Success', 'modal');
     uiwait(hs);
 end

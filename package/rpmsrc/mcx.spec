@@ -9,7 +9,7 @@ Summary:        Monte Carlo eXtreme (MCX)
 Group:          Applications/Engineering
 
 License:        GPLv3
-URL:            http://mcx.space
+URL:            https://mcx.space
 Source:         %{name}-%{version}.tar.gz
 #Source0:        https://github.com/fangq/mcx/archive/v%{version}.zip
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)

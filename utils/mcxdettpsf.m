@@ -19,7 +19,7 @@ function tpsf = mcxdettpsf(detp, detnum, prop, time)
 %
 % this file is copied from Mesh-based Monte Carlo (MMC)
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 % select the photon data of the specified detector

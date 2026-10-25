@@ -25,7 +25,7 @@ function [rfmusjac_lnA, rfmusjac_phase] = mcxrfmusreplay(cfg, f_mod, detp, seeds
 %     rfmusjac_phase: a 4D array with dimensions specified by [size(vol) numb-of-detectors];
 %                each 3D array contains the Jacobians for phase shift measurements
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 % Control.

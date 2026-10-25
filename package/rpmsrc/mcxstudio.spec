@@ -8,7 +8,7 @@ Summary:        MCX Studio - GUI for Monte Carlo eXtreme
 Group:          Applications/Engineering
 
 License:        GPLv3
-URL:            http://mcx.space
+URL:            https://mcx.space
 Source0:        http://downloads.sourceforge.net/wqy/%{codename}-%{version}.tar.gz
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 

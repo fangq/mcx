@@ -28,7 +28,7 @@ function newdetp = mcxdetphoton(detp, medianum, savedetflag, issaveref, srcnum)
 %              newdetp.w0: photon initial weight at launch time (3)
 %              newdetp.s: exit Stokes parameters for polarized photon (4)
 %
-% License: GPLv3, see http://mcx.space/ for details
+% License: GPLv3, see https://mcx.space/ for details
 %
 
 c0 = 1;

@@ -28,7 +28,7 @@ function hseg = mcxplotshapes(jsonshape, gridsize, offset, hseg, voxelsize, vara
 %    hfig=mcxpreview(mcxcreate('sphshell'));
 %    hfig2=mcxpreview(mcxcreate('spherebox'));
 %
-% This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
+% This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
 %
 % License: GNU General Public License version 3, please read LICENSE.txt for details
 %
