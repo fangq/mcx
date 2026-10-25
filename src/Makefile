@@ -30,7 +30,9 @@ DOXY       := doxygen
 DOCDIR     := $(MCXDIR)/doc
 DOXYCFG=mcx_doxygen.cfg
 ZMATLIB    :=lib/libzmat.a
-ZLIBFLAG   :=
+# zmat deflates and inflates zlib/gzip in parallel with pthreads (Win32 threads
+# with MSVC, the Windows build below)
+ZLIBFLAG   :=-lpthread
 USERLINKOPT?=$(ZMATLIB) $(ZLIBFLAG)
 
 CUDART?=-lcudart_static -ldl
@@ -108,7 +110,7 @@ ifeq ($(findstring _NT-,$(PLATFORM)), _NT-)
   CPPFLAGS=-g
   CUDA_STATIC=--cudart static $(NVCCOMP) -Xcompiler "-MT"
   CPPOPT+=$(NVCCOMP)
-  ZLIBFLAG?=
+  ZLIBFLAG:=
   ZMATLIB    :=lib/libzmat.a
   USERLINKOPT:=${LIBRARIES} $(ZMATLIB) $(ZLIBFLAG)
   MEXLINKLIBS="\$$LINKLIBS"

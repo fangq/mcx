@@ -50,6 +50,32 @@
 
 #include "zmatlib.h"
 
+#ifndef NO_PTHREAD
+    #if defined(_MSC_VER)
+        /* MSVC ships no pthreads, and the Windows wheels are built with it, so
+         * map the handful of primitives used by the block-parallel codec onto
+         * Win32 directly rather than disabling threading on that toolchain or
+         * depending on blosc2's vendored shim being compiled in. */
+        #include <windows.h>
+typedef HANDLE zmat_thread_t;
+typedef CRITICAL_SECTION zmat_mutex_t;
+        #define zmat_mutex_init(m)    (InitializeCriticalSection(m), 0)
+        #define zmat_mutex_lock(m)    EnterCriticalSection(m)
+        #define zmat_mutex_unlock(m)  LeaveCriticalSection(m)
+        #define zmat_mutex_destroy(m) DeleteCriticalSection(m)
+        #define zmat_thread_join(t)   (WaitForSingleObject((t), INFINITE), CloseHandle(t))
+    #else
+        #include <pthread.h>
+typedef pthread_t zmat_thread_t;
+typedef pthread_mutex_t zmat_mutex_t;
+        #define zmat_mutex_init(m)    pthread_mutex_init((m), NULL)
+        #define zmat_mutex_lock(m)    pthread_mutex_lock(m)
+        #define zmat_mutex_unlock(m)  pthread_mutex_unlock(m)
+        #define zmat_mutex_destroy(m) pthread_mutex_destroy(m)
+        #define zmat_thread_join(t)   pthread_join((t), NULL)
+    #endif
+#endif
+
 #ifndef NO_ZLIB
     #include "zlib.h"
 #else
@@ -98,6 +124,17 @@
  * @brief Minimum decompression output buffer size
  */
 #define ZMAT_MIN_OUTBUF 1024
+
+/**
+ * @brief Threads used for zlib/gzip when the caller does not ask for a count.
+ *
+ * Override at build time with -DZMAT_DEFAULT_NTHREAD=N. N=1 makes the threaded
+ * path a no-op in practice; a negative nthread from the caller forces the
+ * historical single-stream output, see zmat_run_indexed.
+ */
+#ifndef ZMAT_DEFAULT_NTHREAD
+    #define ZMAT_DEFAULT_NTHREAD 8
+#endif
 
 #ifdef NO_ZLIB
 int miniz_gzip_uncompress(void* in_data, size_t in_len,
@@ -184,9 +221,9 @@ const char* zmat_errcode[] = {
  * @param[in] id: zmat error code
  */
 
-char* zmat_error(int id) {
+const char* zmat_error(int id) {
     if (id >= 0 && id < (int)(sizeof(zmat_errcode) / sizeof(zmat_errcode[0]))) {
-        return (char*)(zmat_errcode[id]);
+        return zmat_errcode[id];
     } else {
         return "zmatlib: unknown error";
     }
@@ -322,6 +359,7 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
 
     clevel = flags.param.clevel;
     unsigned int nthread = (flags.param.nthread <= 0) ? 1 : (unsigned int)flags.param.nthread;
+    (void)nthread;
 
     if (clevel) {
         /**
@@ -478,7 +516,7 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
               * lzma (.lzma) or lzip (.lzip) compression
               * for lzip with nthread>1: compress chunks in parallel (Option 3)
               */
-#if defined(ZMAT_USE_LZMA_SDK) && !defined(_WIN32) && !defined(_7ZIP_ST)
+#if defined(ZMAT_USE_LZMA_SDK) && !defined(_WIN32)
             if (zipid == zmLzip && nthread > 1) {
                 *ret = simpleCompressLzipMT((unsigned char*)inputstr, inputsize,
                                             outputbuf, outputsize, clevel, nthread);
@@ -706,7 +744,9 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
                     }
 
                     /* no progress with room left to write: the input ran out before
-                       the stream ended, and inflate will say so forever */
+                       the stream ended (truncated data), and inflate would say so
+                       forever; Z_OK with room left is progress (miniz returns it
+                       after a block), so inflate is called again */
                     if (*ret == Z_BUF_ERROR && zs.avail_out != 0) {
                         inflateEnd(&zs);
                         free(*outputbuf);
@@ -1088,6 +1128,608 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
     return 0;
 }
 
+/*==============================================================================
+ * Block-parallel zlib/gzip
+ *
+ * DEFLATE is a bit-oriented stream with no framing: a decoder cannot locate
+ * block N without inflating everything before it, and back-references reach
+ * arbitrarily far into the 32 KB window. Two things make a parallel codec
+ * possible anyway:
+ *
+ *   - Z_FULL_FLUSH ends a block AND resets the window, so each block becomes
+ *     independently inflatable while the concatenation stays an ordinary
+ *     zlib/gzip stream that any decompressor can read start to finish.
+ *   - the block offsets, free to record at compression time, are handed back
+ *     to the caller so a later decode can go straight to block N.
+ *
+ * The block size is fixed rather than derived from the thread count, so the
+ * output is a pure function of (data, level, blocksize) and stays byte-
+ * identical however many threads produced it -- necessary when the compressed
+ * bytes are content-addressed. Threads pull block indices from a shared
+ * counter, so a block that compresses slowly cannot starve the others.
+ *============================================================================*/
+
+#ifndef NO_PTHREAD
+
+/**
+ * @brief Bytes of input per independently-deflated block.
+ *
+ * Matches jdata.zlibmt's default so the two implementations produce identical
+ * streams. Larger blocks compress slightly better and parallelise less.
+ */
+#define ZMAT_BLOCKSIZE ((size_t)4 << 20)
+
+#ifdef NO_ZLIB
+    #define ZMAT_ADLER32(a, b, c) mz_adler32((a), (b), (c))
+    #define ZMAT_CRC32(a, b, c)   mz_crc32((a), (b), (c))
+    #define ZMAT_ADLER_INIT       MZ_ADLER32_INIT
+    #define ZMAT_CRC_INIT         MZ_CRC32_INIT
+#else
+    #define ZMAT_ADLER32(a, b, c) adler32((a), (b), (c))
+    #define ZMAT_CRC32(a, b, c)   crc32((a), (b), (c))
+    #define ZMAT_ADLER_INIT       1
+    #define ZMAT_CRC_INIT         0
+#endif
+
+/** @brief One unit of work: a slice of the input and where its output landed */
+typedef struct {
+    unsigned char* in;         /**< start of this block's input */
+    size_t inlen;              /**< bytes of input in this block */
+    unsigned char* out;        /**< malloc'ed compressed segment, or slice of the output */
+    size_t outcap;             /**< capacity of out */
+    size_t outlen;             /**< bytes actually produced */
+    int status;                /**< zlib return code for this block */
+} zmat_block;
+
+/** @brief Shared state for the worker pool */
+typedef struct zmat_pool_s {
+    zmat_block* blocks;
+    size_t nblock;
+    size_t next;               /**< next block to claim; guarded by lock */
+    zmat_mutex_t lock;
+    int level;
+    int failed;                /**< set by any worker that errors */
+    void* (*fn)(void*);        /**< the worker, so the Win32 thunk can dispatch */
+} zmat_pool;
+
+#if defined(_MSC_VER)
+/** @brief Win32 entry point: adapts the pthread-shaped worker signature */
+static DWORD WINAPI zmat_thread_thunk(LPVOID arg) {
+    zmat_pool* pool = (zmat_pool*)arg;
+    pool->fn(pool);
+    return 0;
+}
+#endif
+
+/** @brief Claim the next unprocessed block, or return 0 when none are left */
+static int zmat_pool_next(zmat_pool* pool, size_t* idx) {
+    int havework = 0;
+    zmat_mutex_lock(&pool->lock);
+
+    if (pool->next < pool->nblock && !pool->failed) {
+        *idx = pool->next++;
+        havework = 1;
+    }
+
+    zmat_mutex_unlock(&pool->lock);
+    return havework;
+}
+
+/** @brief Mark the whole job failed so the other workers stop early */
+static void zmat_pool_fail(zmat_pool* pool) {
+    zmat_mutex_lock(&pool->lock);
+    pool->failed = 1;
+    zmat_mutex_unlock(&pool->lock);
+}
+
+/**
+ * @brief Deflate one block into a self-contained FULL_FLUSH-terminated segment
+ */
+static void* zmat_deflate_worker(void* arg) {
+    zmat_pool* pool = (zmat_pool*)arg;
+    size_t idx;
+
+    while (zmat_pool_next(pool, &idx)) {
+        zmat_block* blk = &pool->blocks[idx];
+        z_stream zs;
+        memset(&zs, 0, sizeof(zs));
+
+        /* raw deflate: this block carries no zlib/gzip wrapper of its own */
+        /* memLevel 8 is zlib's default; MAX_MEM_LEVEL would compress slightly
+         * better but would no longer match a serial deflate or jdata.zlibmt */
+        if (deflateInit2(&zs, pool->level, Z_DEFLATED, -MAX_WBITS,
+                         8, Z_DEFAULT_STRATEGY) != Z_OK) {
+            blk->status = -2;
+            zmat_pool_fail(pool);
+            return NULL;
+        }
+
+        zs.next_in = (Bytef*)blk->in;
+        zs.avail_in = (uInt)blk->inlen;
+        zs.next_out = (Bytef*)blk->out;
+        zs.avail_out = (uInt)blk->outcap;
+
+        /* FULL_FLUSH, not FINISH: FINISH would set BFINAL and stop every
+         * decoder at the end of this block */
+        blk->status = deflate(&zs, Z_FULL_FLUSH);
+
+        if (blk->status != Z_OK || zs.avail_in != 0) {
+            deflateEnd(&zs);
+            zmat_pool_fail(pool);
+            return NULL;
+        }
+
+        blk->outlen = pool->blocks[idx].outcap - zs.avail_out;
+        deflateEnd(&zs);
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Inflate one block from its recorded offset into its output slice
+ */
+static void* zmat_inflate_worker(void* arg) {
+    zmat_pool* pool = (zmat_pool*)arg;
+    size_t idx;
+
+    while (zmat_pool_next(pool, &idx)) {
+        zmat_block* blk = &pool->blocks[idx];
+        z_stream zs;
+        memset(&zs, 0, sizeof(zs));
+
+        if (inflateInit2(&zs, -MAX_WBITS) != Z_OK) {
+            blk->status = -2;
+            zmat_pool_fail(pool);
+            return NULL;
+        }
+
+        zs.next_in = (Bytef*)blk->in;
+        zs.avail_in = (uInt)blk->inlen;
+        zs.next_out = (Bytef*)blk->out;
+        zs.avail_out = (uInt)blk->outcap;
+
+        blk->status = inflate(&zs, Z_SYNC_FLUSH);
+        blk->outlen = blk->outcap - zs.avail_out;
+        inflateEnd(&zs);
+
+        /* the index must describe the stream exactly; a short block means it
+         * does not, and guessing would hand back wrong bytes */
+        if (blk->outlen != blk->outcap) {
+            zmat_pool_fail(pool);
+            return NULL;
+        }
+    }
+
+    return NULL;
+}
+
+/** @brief Run a worker pool over the blocks, joining all threads before return */
+static int zmat_pool_run(zmat_pool* pool, void* (*fn)(void*), int nthread) {
+    zmat_thread_t* tid;
+    int i, spawned = 0;
+    size_t want = (size_t)nthread;
+
+    if (want > pool->nblock) {
+        want = pool->nblock;
+    }
+
+    if (want < 1) {
+        want = 1;
+    }
+
+    if (zmat_mutex_init(&pool->lock) != 0) {
+        return -5;
+    }
+
+    pool->fn = fn;
+    tid = (zmat_thread_t*)calloc(want, sizeof(zmat_thread_t));
+
+    if (!tid) {
+        zmat_mutex_destroy(&pool->lock);
+        return -5;
+    }
+
+    for (i = 0; i < (int)want; i++) {
+#if defined(_MSC_VER)
+        tid[i] = CreateThread(NULL, 0, zmat_thread_thunk, pool, 0, NULL);
+
+        if (tid[i] == NULL) {
+            break;
+        }
+
+#else
+
+        if (pthread_create(&tid[i], NULL, fn, pool) != 0) {
+            break;
+        }
+
+#endif
+        spawned++;
+    }
+
+    if (spawned == 0) {
+        /* no threads available: do the work on this thread so the call still
+         * succeeds, just serially */
+        fn(pool);
+    }
+
+    for (i = 0; i < spawned; i++) {
+        zmat_thread_join(tid[i]);
+    }
+
+    free(tid);
+    zmat_mutex_destroy(&pool->lock);
+    return pool->failed ? -3 : 0;
+}
+
+/**
+ * @brief Compress a buffer to a standard zlib or gzip stream using threads
+ *
+ * @param[in] inputsize: input length
+ * @param[in] inputstr: input buffer
+ * @param[out] outputsize: length of the compressed stream
+ * @param[out] outputbuf: malloc'ed compressed stream, caller frees
+ * @param[in] is_gzip: 0 for a zlib wrapper, 1 for a gzip wrapper
+ * @param[in] nthread: worker threads, capped by the block count
+ * @param[in] level: zlib compression level 0-9
+ * @param[out] offsets: malloc'ed flat index, 2*(nblock+1) entries laid out as
+ *             compressed0, uncompressed0, compressed1, ... with a final
+ *             sentinel row closing the last block; NULL if not wanted
+ * @param[out] noffsets: number of size_t entries written to offsets
+ * @param[out] ret: zlib status of the last block
+ * @return 0 on success, negative zmat error code otherwise
+ */
+static int zmat_deflate_blocks(const size_t inputsize, unsigned char* inputstr,
+                               size_t* outputsize, unsigned char** outputbuf,
+                               int is_gzip, int nthread, int level,
+                               size_t** offsets, size_t* noffsets, int* ret) {
+    static const unsigned char gzhdr[10] = {0x1F, 0x8B, 8, 0, 0, 0, 0, 0, 0, 0xFF};
+    zmat_pool pool;
+    size_t nblock, i, pos, uncomp, hdrlen, total;
+    unsigned char* out = NULL;
+    size_t* idx = NULL;
+    z_stream tail;
+    unsigned char tailbuf[64];
+    size_t taillen = 0;
+    int rc;
+
+    memset(&pool, 0, sizeof(pool));
+    nblock = (inputsize + ZMAT_BLOCKSIZE - 1) / ZMAT_BLOCKSIZE;
+
+    if (nblock == 0) {
+        nblock = 1;
+    }
+
+    pool.blocks = (zmat_block*)calloc(nblock, sizeof(zmat_block));
+
+    if (!pool.blocks) {
+        return -5;
+    }
+
+    /* Every block gets its own bound-sized output buffer. Blocks are equal
+     * sized apart from the remainder, which is what pigz does and what the
+     * earlier attempt in this repo got wrong -- it capped the block count at
+     * the thread count while keeping a fixed block size, so the final block
+     * received almost the whole input and no speedup was possible. */
+    for (i = 0; i < nblock; i++) {
+        size_t start = i * ZMAT_BLOCKSIZE;
+        size_t len = inputsize - start;
+
+        if (len > ZMAT_BLOCKSIZE) {
+            len = ZMAT_BLOCKSIZE;
+        }
+
+        pool.blocks[i].in = inputstr + start;
+        pool.blocks[i].inlen = len;
+        /* compressBound is a safe per-block bound; +64 covers the flush marker */
+        pool.blocks[i].outcap = compressBound((uLong)len) + 64;
+        pool.blocks[i].out = (unsigned char*)malloc(pool.blocks[i].outcap);
+
+        if (!pool.blocks[i].out) {
+            for (pos = 0; pos < i; pos++) {
+                free(pool.blocks[pos].out);
+            }
+
+            free(pool.blocks);
+            return -5;
+        }
+    }
+
+    pool.nblock = nblock;
+    pool.level = (level > 0) ? Z_DEFAULT_COMPRESSION : (-level);
+    rc = zmat_pool_run(&pool, zmat_deflate_worker, nthread);
+    *ret = pool.blocks[nblock - 1].status;
+
+    if (rc != 0) {
+        for (i = 0; i < nblock; i++) {
+            free(pool.blocks[i].out);
+        }
+
+        free(pool.blocks);
+        return rc;
+    }
+
+    /* the terminating empty final block, produced the same way a serial
+     * deflate would end the stream */
+    memset(&tail, 0, sizeof(tail));
+
+    if (deflateInit2(&tail, pool.level, Z_DEFLATED, -MAX_WBITS,
+                     8, Z_DEFAULT_STRATEGY) == Z_OK) {
+        tail.next_out = (Bytef*)tailbuf;
+        tail.avail_out = (uInt)sizeof(tailbuf);
+        deflate(&tail, Z_FINISH);
+        taillen = sizeof(tailbuf) - tail.avail_out;
+        deflateEnd(&tail);
+    }
+
+    hdrlen = is_gzip ? sizeof(gzhdr) : 2;
+    total = hdrlen + taillen + (is_gzip ? 8 : 4);
+
+    for (i = 0; i < nblock; i++) {
+        total += pool.blocks[i].outlen;
+    }
+
+    out = (unsigned char*)malloc(total);
+    idx = (size_t*)malloc(2 * (nblock + 1) * sizeof(size_t));
+
+    if (!out || !idx) {
+        free(out);
+        free(idx);
+
+        for (i = 0; i < nblock; i++) {
+            free(pool.blocks[i].out);
+        }
+
+        free(pool.blocks);
+        return -5;
+    }
+
+    if (is_gzip) {
+        memcpy(out, gzhdr, sizeof(gzhdr));
+    } else {
+        /* CMF/FLG for a 32 KB window at this level, with the check bits set so
+         * (CMF<<8|FLG) is a multiple of 31 */
+        unsigned int cmf = 0x78, flg;
+        /* resolve Z_DEFAULT_COMPRESSION before deriving FLEVEL, or level-6 data
+         * ends up advertising level 0 in its header */
+        int actual = (pool.level == Z_DEFAULT_COMPRESSION) ? 6 : pool.level;
+        unsigned int flevel = (actual <= 1) ? 0 : (actual <= 5 ? 1 : (actual == 6 ? 2 : 3));
+        flg = flevel << 6;
+        flg += 31 - ((cmf << 8 | flg) % 31);
+        out[0] = (unsigned char)cmf;
+        out[1] = (unsigned char)flg;
+    }
+
+    pos = hdrlen;
+    uncomp = 0;
+
+    for (i = 0; i < nblock; i++) {
+        idx[2 * i] = pos;
+        idx[2 * i + 1] = uncomp;
+        memcpy(out + pos, pool.blocks[i].out, pool.blocks[i].outlen);
+        pos += pool.blocks[i].outlen;
+        uncomp += pool.blocks[i].inlen;
+        free(pool.blocks[i].out);
+    }
+
+    idx[2 * nblock] = pos;         /* sentinel closes the last block */
+    idx[2 * nblock + 1] = uncomp;
+    free(pool.blocks);
+
+    memcpy(out + pos, tailbuf, taillen);
+    pos += taillen;
+
+    if (is_gzip) {
+        unsigned long crc = ZMAT_CRC32(ZMAT_CRC_INIT, inputstr, (unsigned int)inputsize);
+        out[pos++] = (unsigned char)(crc & 0xFF);
+        out[pos++] = (unsigned char)((crc >> 8) & 0xFF);
+        out[pos++] = (unsigned char)((crc >> 16) & 0xFF);
+        out[pos++] = (unsigned char)((crc >> 24) & 0xFF);
+        out[pos++] = (unsigned char)(inputsize & 0xFF);
+        out[pos++] = (unsigned char)((inputsize >> 8) & 0xFF);
+        out[pos++] = (unsigned char)((inputsize >> 16) & 0xFF);
+        out[pos++] = (unsigned char)((inputsize >> 24) & 0xFF);
+    } else {
+        unsigned long ad = ZMAT_ADLER32(ZMAT_ADLER_INIT, inputstr, (unsigned int)inputsize);
+        out[pos++] = (unsigned char)((ad >> 24) & 0xFF);
+        out[pos++] = (unsigned char)((ad >> 16) & 0xFF);
+        out[pos++] = (unsigned char)((ad >> 8) & 0xFF);
+        out[pos++] = (unsigned char)(ad & 0xFF);
+    }
+
+    *outputbuf = out;
+    *outputsize = pos;
+
+    if (offsets && noffsets) {
+        *offsets = idx;
+        *noffsets = 2 * (nblock + 1);
+    } else {
+        free(idx);
+    }
+
+    return 0;
+}
+
+/**
+ * @brief Decompress a block-indexed stream using threads
+ *
+ * @param[in] offsets: the index produced by zmat_deflate_blocks
+ * @param[in] noffsets: number of entries in offsets
+ * @return 0 on success; -3 if the index does not describe the stream, in which
+ *         case the caller should fall back to a serial inflate
+ */
+static int zmat_inflate_blocks(const size_t inputsize, unsigned char* inputstr,
+                               size_t* outputsize, unsigned char** outputbuf,
+                               int nthread, const size_t* offsets, size_t noffsets,
+                               int* ret) {
+    zmat_pool pool;
+    size_t nblock, i, outlen;
+    unsigned char* out;
+    int rc;
+
+    if (!offsets || noffsets < 4 || (noffsets & 1)) {
+        return -3;
+    }
+
+    nblock = noffsets / 2 - 1;
+    outlen = offsets[2 * nblock + 1];
+
+    /* sanity: the index must stay inside the buffers it describes, and the
+     * first block must start the output -- otherwise its leading bytes would
+     * be returned uninitialized */
+    if (offsets[1] != 0 || offsets[2 * nblock] > inputsize || outlen == 0 || outlen > ZMAT_MAX_ALLOC) {
+        return -3;
+    }
+
+    for (i = 0; i < nblock; i++) {
+        if (offsets[2 * i] >= offsets[2 * i + 2] || offsets[2 * i + 1] >= offsets[2 * i + 3]) {
+            return -3;
+        }
+    }
+
+    memset(&pool, 0, sizeof(pool));
+    pool.blocks = (zmat_block*)calloc(nblock, sizeof(zmat_block));
+
+    if (!pool.blocks) {
+        return -5;
+    }
+
+    out = (unsigned char*)malloc(outlen);
+
+    if (!out) {
+        free(pool.blocks);
+        return -5;
+    }
+
+    /* every block writes into a disjoint slice of one allocation, so the
+     * workers never touch the same bytes and no locking is needed */
+    for (i = 0; i < nblock; i++) {
+        pool.blocks[i].in = inputstr + offsets[2 * i];
+        pool.blocks[i].inlen = offsets[2 * i + 2] - offsets[2 * i];
+        pool.blocks[i].out = out + offsets[2 * i + 1];
+        pool.blocks[i].outcap = offsets[2 * i + 3] - offsets[2 * i + 1];
+    }
+
+    pool.nblock = nblock;
+    rc = zmat_pool_run(&pool, zmat_inflate_worker, nthread);
+    *ret = pool.blocks[nblock - 1].status;
+    free(pool.blocks);
+
+    if (rc != 0) {
+        free(out);
+        return -3;
+    }
+
+    *outputbuf = out;
+    *outputsize = outlen;
+    return 0;
+}
+
+#endif /* NO_PTHREAD */
+
+/**
+ * @brief Compression/decompression with an optional block index
+ *
+ * Behaves exactly like zmat_run except that zlib and gzip gain a threaded
+ * path. On compression, when nthread > 1, the input is deflated in fixed-size
+ * blocks concurrently and, if offsets is non-NULL, the block index is returned
+ * alongside. On decompression, when an index is supplied and nthread > 1, the
+ * blocks are inflated concurrently; if the index does not describe the stream
+ * the call falls back to the ordinary serial path rather than failing, since
+ * the payload is a valid stream either way.
+ *
+ * Every other codec, and zlib/gzip with a single thread, is handed straight to
+ * zmat_run, so the bytes are unchanged.
+ *
+ * @param[out] offsets: on compression, malloc'ed index (caller frees) or NULL;
+ *             on decompression, an index previously produced here, or NULL
+ * @param[in,out] noffsets: entry count for offsets
+ */
+int zmat_run_indexed(const size_t inputsize, unsigned char* inputstr, size_t* outputsize,
+                     unsigned char** outputbuf, const int zipid, int* ret, const int iscompress,
+                     size_t** offsets, size_t* noffsets) {
+    union cflag {
+        int iscompress;
+        struct settings {
+            char clevel;
+            char nthread;
+            char shuffle;
+            char typesize;
+        } param;
+    } flags;
+    int nthread, reqthread;
+
+    flags.iscompress = iscompress;
+    /* nthread == 0 means the caller never asked about threading; 1 or more is
+     * an explicit request. The distinction matters: the blocked construction
+     * changes the compressed bytes, so it must be opt-in, and it must then be
+     * used for every explicit thread count including 1. Gating on nthread > 1
+     * instead would make nthread=1 and nthread=2 disagree byte for byte, which
+     * breaks content addressing of the compressed payload; gating on anything
+     * always-true would change the output of existing callers. */
+    reqthread = (int)flags.param.nthread;
+
+    if (reqthread == 0) {
+        /* caller said nothing: use the build-time default */
+        reqthread = ZMAT_DEFAULT_NTHREAD;
+    }
+
+    /* A negative count is an explicit request for the historical single-stream
+     * output. It is the only way back to those exact bytes now that the
+     * threaded path is the default, and it is needed to reproduce data written
+     * by earlier releases. */
+    nthread = (reqthread <= 0) ? 1 : reqthread;
+
+#ifndef NO_PTHREAD
+
+    if ((zipid == zmZlib || zipid == zmGzip) && reqthread >= 1 &&
+            inputsize > ZMAT_BLOCKSIZE) {
+        if (flags.param.clevel) {
+            int rc;
+            *outputbuf = NULL;
+            *outputsize = 0;
+            rc = zmat_deflate_blocks(inputsize, inputstr, outputsize, outputbuf,
+                                     (zipid == zmGzip), nthread, flags.param.clevel,
+                                     offsets, noffsets, ret);
+
+            if (rc == 0) {
+                return 0;
+            }
+
+            /* threaded deflate failed; the serial path still works */
+        } else if (offsets && noffsets && *offsets && *noffsets >= 4) {
+            /* an index is only a speed hint; it is verified in
+             * zmat_inflate_blocks and discarded if it does not fit */
+            int rc;
+            unsigned char* buf = NULL;
+            size_t len = 0;
+            rc = zmat_inflate_blocks(inputsize, inputstr, &len, &buf, nthread,
+                                     *offsets, *noffsets, ret);
+
+            if (rc == 0) {
+                *outputbuf = buf;
+                *outputsize = len;
+                return 0;
+            }
+
+            /* index unusable -- fall through to the serial inflate below */
+        }
+    }
+
+#else
+    (void)nthread;
+    (void)reqthread;
+#endif
+
+    if (offsets && noffsets && flags.param.clevel) {
+        *offsets = NULL;
+        *noffsets = 0;
+    }
+
+    return zmat_run(inputsize, inputstr, outputsize, outputbuf, zipid, ret, iscompress);
+}
+
 /**
  * @brief Simplified interface to perform compression (use default compression level)
  *
@@ -1100,7 +1742,13 @@ int zmat_run(const size_t inputsize, unsigned char* inputstr, size_t* outputsize
  */
 
 int zmat_encode(const size_t inputsize, unsigned char* inputstr, size_t* outputsize, unsigned char** outputbuf, const int zipid, int* ret) {
-    return zmat_run(inputsize, inputstr, outputsize, outputbuf, zipid, ret, 1);
+    /* Routed through the indexed entry point with a null index so that zlib and
+     * gzip pick up ZMAT_DEFAULT_NTHREAD. This is the path the Fortran binding
+     * and plain C callers take, and it is otherwise identical to zmat_run. */
+    size_t* offsets = NULL;
+    size_t noffsets = 0;
+    return zmat_run_indexed(inputsize, inputstr, outputsize, outputbuf, zipid, ret, 1,
+                            &offsets, &noffsets);
 }
 
 /**
@@ -1115,7 +1763,10 @@ int zmat_encode(const size_t inputsize, unsigned char* inputstr, size_t* outputs
  */
 
 int zmat_decode(const size_t inputsize, unsigned char* inputstr, size_t* outputsize, unsigned char** outputbuf, const int zipid, int* ret) {
-    return zmat_run(inputsize, inputstr, outputsize, outputbuf, zipid, ret, 0);
+    size_t* offsets = NULL;
+    size_t noffsets = 0;
+    return zmat_run_indexed(inputsize, inputstr, outputsize, outputbuf, zipid, ret, 0,
+                            &offsets, &noffsets);
 }
 
 /**
@@ -1292,7 +1943,7 @@ unsigned char* base64_decode(const unsigned char* src, size_t len,
         dtable[base64_table[i]] = (unsigned char) i;
     }
 
-    dtable['='] = 0;
+    dtable[(unsigned char)'='] = 0;
 
     count = 0;
 
@@ -1726,7 +2377,7 @@ xzDecompress(const unsigned char* inData, size_t inLen,
  * Option 3: parallel lzip — compress chunks independently, concatenate
  * ----------------------------------------------------------------------- */
 
-#if !defined(_WIN32) && !defined(_7ZIP_ST)
+#ifndef _WIN32
 
 typedef struct {
     const unsigned char* in;
@@ -1871,7 +2522,7 @@ simpleCompressLzipMT(const unsigned char* inData, size_t inLen,
     return ELZMA_E_OK;
 }
 
-#endif  /* !_WIN32 && !_7ZIP_ST */
+#endif  /* !_WIN32 */
 #endif  /* ZMAT_USE_LZMA_SDK */
 
 #endif
