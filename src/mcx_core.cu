@@ -4469,6 +4469,14 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
             free(scale);
             MCX_FPRINTF(cfg->flog, "%s : %d ms\n", T_("data normalization complete"), GetTimeMillis() - tic);
+        } else if (cfg->issave2pt && (cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) && cfg->exportfield) {
+            /**
+             * Unnormalized wltof/wptof output: the kernel accumulates the time-of-flight in
+             * nanoseconds (see unitscale above) only so that the double-buffer engages; that is an
+             * internal precision measure, not a change of unit, so it is undone here too and the
+             * raw output stays in seconds, as with normalization, mcxdettime() and before 585f607.
+             */
+            mcx_normalize(cfg->exportfield, 1e-9f, fieldlen, 0, 1);
         }
 
         /**
