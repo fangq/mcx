@@ -2,70 +2,141 @@
 
 Getting Started with MCX
 
-                1.1. [2]example/quicktest
+                1.1. [2]Built-in benchmarks
 
-                1.2. [3]example/validation
+                1.2. [3]example/quicktest
 
-   To get started with MCX, please check out the [4]examples under
-   <mcx>/example directory. These examples are meant to run out-of-box
-   (given that your system is properly configured, see
-   [5]Doc/Installation). For each example, you can find one or more shell
-   scripts (usually ended with ".sh"). Try to run them one by one and get
-   a feel with MCX simulations. You are also encouraged to open these
-   scripts or input files (*.inp) with a text editor to learn the command
-   formats of these files.
+                1.3. [4]example/validation
+
+                1.4. [5]Simulations shared on NeuroJSON.io
+
+                1.5. [6]MATLAB/Octave and Python
+
+                1.6. [7]Graphical and web interfaces
+
+   To get started with MCX, please first make sure that MCX can find your
+   GPU by running "mcx -L" (see [8]Doc/Installation or Setup_MCX.txt).
+   Then check out the built-in benchmarks and the [9]examples under the
+   <mcx>/example directory. These examples are meant to run out-of-box.
+   For each example, you can find one or more shell scripts (usually
+   ended with ".sh", or ".bat" on Windows). Try to run them one by one and
+   get a feel of MCX simulations. You are also encouraged to open these
+   scripts and the input files (*.json, or the legacy *.inp format) with a
+   text editor to learn the formats of these files. The README.txt file in
+   each folder explains the purpose of the example.
+
+   By default, MCX saves the volumetric output (fluence rate) in the
+   JNIfTI format (.jnii), and detected photons in a .jdt file; both are
+   JSON files that can be loaded using JSONLab/JNIfTI in MATLAB/Octave or
+   PyJData (jdata) in Python. Use "-F bnii" for smaller binary files, or
+   "-F mc2"/"-F nii" for the legacy formats.
 
    The following is a list of examples you may want to get hands on first:
 
-1.1. example/quicktest
+1.1. Built-in benchmarks
 
-   under this folder, you can find three scripts:
+   MCX contains a number of built-in simulations that need no input file.
+
+ mcx -Q                    # list the built-in benchmarks
+ mcx -Q cube60             # run the cube60 benchmark
+ mcx -Q cube60 -n 1e7 -D P # run 1e7 photons, with a progress bar
+ mcx -Q cube60 --dumpjson  # print the benchmark as a JSON input file
+
+   The JSON file printed by --dumpjson can be saved, modified and used as
+   the input file with "mcx -f input.json". Settings can also be modified
+   from the command line using -j, for example
+
+ mcx -Q cube60 -j '{"Optode":{"Source":{"Type":"isotropic"}}}'
+
+1.2. example/quicktest
+
+   under this folder, you can find the following scripts:
 
    listgpu.sh
           A script to call mcx to print the GPU information. Run this
-          script and find out how many GPUs you have in your graphics card
-          and the related parameters (memory, cores etc)
+          script and find out how many GPUs you have in your computer and
+          the related parameters (memory, cores etc)
 
    run_qtest.sh
-          This will run MCX for a simple homogeneous media as the example
-          used in [6]the paper. It will launch only ~1 million photons and
-          take roughly half a second.
+          This will run MCX for a simple homogeneous medium as the example
+          used in [10]the paper. It launches 1e7 photons and prints a
+          progress bar (-D P).
 
-   run_qtest_silent.sh
-          This script does the same thing as run_qtest.sh, except it let
-          mcx to print messages to a log file rather than printing on the
-          screen (so called silent mode)
+   run_grid2x.sh/run_grid3x.sh
+          These scripts run the same domain as run_qtest.sh using JSON
+          input files, except that they use a voxel size of 1/2 mm and
+          1/3 mm, respectively.
 
-1.2. example/validation
+   run_widefield.sh
+          This script runs a simulation with a wide-field source.
+
+1.3. example/validation
 
    run_validation.sh
           This script will reproduce the homogeneous simulation case
-          discussed in section 3 of [7]the paper. No boundary reflection
+          discussed in section 3 of [11]the paper. No boundary reflection
           is considered in this simulation. A total of 100 million photons
           will be simulated and the output data will be saved as
-          semi_infinite.mc2.
+          semi_infinite.jnii.
 
    run_validation_b.sh
           This script will run the same simulation as in the above script,
-          except that it enables the boundary reflection. A total of 100
-          million photons will be simulated. Because photon continues to
-          propagate when it hits a boundary in this case, the total
-          simulation time is >10x longer than the previous case.
+          except that it enables the boundary reflection (n=1.37). The
+          output is saved as semi_infinite_b.jnii.
 
    plotsimudata.m
           after running the previous two simulations, you can now
           reproduce Fig. 5 in the paper to validate the output solutions.
-          You need to run Matlab or [8]GNU octave, and add path to
-          <mcx>/utils, and run "plotsimudata". Four figures will be
-          plotted comparing the analytical solution and MCX output.
+          You need to run MATLAB or [12]GNU Octave, add path to
+          <mcx>/utils and [13]JSONLab, and run "plotsimudata". The figures
+          compare the analytical solutions and the MCX outputs.
+
+1.4. Simulations shared on NeuroJSON.io
+
+   MCX can download and run simulations shared by the community on
+   [14]NeuroJSON.io (this requires curl):
+
+ mcx -N              # list the shared simulations
+ mcx -N aircube60    # download and run one of them
+
+1.5. MATLAB/Octave and Python
+
+   MCXLAB (the MATLAB/Octave mex version of MCX) and PMCX (the Python
+   module, "pip install pmcx") run simulations directly from in-memory
+   variables. Many examples can be found in <mcx>/mcxlab/examples and
+   <mcx>/pmcx/examples, as well as in the interactive [15]MCXLAB and
+   [16]PMCX Jupyter notebook tutorials. For example, in Python
+
+ import pmcx
+ res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype='uint8'),
+                tstart=0, tend=5e-9, tstep=5e-9, srcpos=[30, 30, 0],
+                srcdir=[0, 0, 1], prop=[[0, 0, 1, 1], [0.005, 1, 0.01, 1.37]])
+
+   where np is numpy; res['flux'] contains the fluence rate.
+
+1.6. Graphical and web interfaces
+
+   The mcxstudio GUI (MCX Studio 2) can open any of the JSON example input
+   files, start from a built-in benchmark, run the simulation and display
+   the results in 3-D. [17]MCX Cloud lets you design and run MCX and MMC
+   simulations in a web browser without installing any software.
 
 References
 
-   1. http://mcx.space/wiki/index.cgi?action=rss
-   2. https://mcx.space/wiki/index.cgi?Doc/Basics#example_quicktest
-   3. https://mcx.space/wiki/index.cgi?Doc/Basics#example_validation
-   4. https://mcx.space/wiki/index.cgi?Doc/Examples
-   5. https://mcx.space/wiki/index.cgi?Doc/Installation
-   6. https://mcx.space/wiki/index.cgi?Doc/Reference
-   7. https://mcx.space/wiki/index.cgi?Doc/Reference
-   8. http://www.gnu.org/software/octave/
+   1. https://mcx.space/wiki/index.cgi?action=rss
+   2. https://mcx.space/wiki/index.cgi?Doc/Basics#Built_in_benchmarks
+   3. https://mcx.space/wiki/index.cgi?Doc/Basics#example_quicktest
+   4. https://mcx.space/wiki/index.cgi?Doc/Basics#example_validation
+   5. https://mcx.space/wiki/index.cgi?Doc/Basics#Simulations_shared_on_NeuroJSON_io
+   6. https://mcx.space/wiki/index.cgi?Doc/Basics#MATLAB_Octave_and_Python
+   7. https://mcx.space/wiki/index.cgi?Doc/Basics#Graphical_and_web_interfaces
+   8. https://mcx.space/wiki/index.cgi?Doc/Installation
+   9. https://mcx.space/wiki/index.cgi?Doc/Examples
+  10. https://mcx.space/wiki/index.cgi?Doc/Reference
+  11. https://mcx.space/wiki/index.cgi?Doc/Reference
+  12. https://www.gnu.org/software/octave/
+  13. https://neurojson.org/download/jsonlab
+  14. https://neurojson.io
+  15. https://colab.research.google.com/github/fangq/mcx/blob/master/mcxlab/tutorials/mcxlab_getting_started.ipynb
+  16. https://colab.research.google.com/github/fangq/mcx/blob/master/pmcx/tutorials/pmcx_getting_started.ipynb
+  17. https://mcx.space/cloud/

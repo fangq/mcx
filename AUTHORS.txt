@@ -5,7 +5,7 @@ Department of Bioengineering at Northeastern University, USA.
 Address: Dept. of Bioengineering
          Northeastern University
          360 Huntington Ave, ISEC 206, Boston, MA 02115, USA
-URL: http://fanglab.org
+URL: https://fanglab.org
 Email: <q.fang at neu.edu>
 
 MCX Website : https://mcx.space
@@ -39,3 +39,12 @@ Other key contributors of MCX include
 ** Email: <yuan.yaos at northeastern.edu>
 ** Yaoshen was a PhD student at Northeastern University, Dept of EECS, under the supervision of Dr. Fang. He completed his PhD degree in 2020. He has made the follow major contributions
 *** GPU based Adptive non-local-means (ANLM) filter
+
+* Jeff Daily (AMD)
+** ported MCX to AMD GPUs using ROCm/HIP (https://github.com/fangq/mcx/pull/264)
+
+* Prasoon Mishra
+** optimized the photon loop of the HIP build (https://github.com/fangq/mcx/pull/267)
+
+* @jolkkonen
+** disk sources in 2D domains and Lambertian launch directions (#274), pmcx fixes (#269)

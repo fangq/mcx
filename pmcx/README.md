@@ -36,7 +36,7 @@ module is not available.
 
 ## Runtime Dependencies
 * **NVIDIA GPU Driver**: A CUDA-capable NVIDIA GPU and driver is required to run MCX. An up-to-date driver is recommended.
-The binary wheel distributed over pip runs on NVIDIA drivers with CUDA 10.1 support on Windows and CUDA 9.2 support
+The binary wheel distributed over pip runs on NVIDIA drivers with CUDA 10.2 support on Windows and CUDA 9.2 support
 on Linux, respectively. For more details on driver versions and their CUDA support, see the 
 [CUDA Release Notes](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html). 
 To download the latest driver for your system, see the 
@@ -160,6 +160,9 @@ res = pmcx.mcxlab(cfg)   # pmcx.mcxlab calls pmcx.run, and postprocess res['detp
 The detected photon data returned by `pmcx.mcxlab()` can be post-processed with the utility
 functions included in this module, for example, `pmcx.detweight(res['detp'], cfg['prop'])` computes the
 detected photon weights, and `pmcx.meanpath(res['detp'], cfg['prop'])` the mean partial path lengths.
+
+Python ports of all the MCXLAB demo scripts can be found in the `examples/` folder
+(see `examples/README.md`).
 
 ### Reproducible simulations
 

@@ -31,4 +31,4 @@ folder in mesh-based Monte Carlo (MMC) package [1].
             using fast ray-tracing in Plücker coordinates," 
             Biomed. Opt. Express 1, 165-175 (2010)
 
-[1] http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC
+[1] https://mcx.space/wiki/index.cgi?MMC

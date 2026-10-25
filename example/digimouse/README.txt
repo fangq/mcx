@@ -15,14 +15,14 @@ or
 to specify a different photon number
 
 
-The JSON files (.json, .jnii) utlizes the JData specifiation (https://github.com/fangq/jdata) 
+The JSON files (.json, .jnii) utilize the JData specification (https://github.com/NeuroJSON/jdata) 
 to include binary data with compression support. Please download JSONLab from
 
 https://github.com/fangq/jsonlab
 
 to open these files in MATLAB and GNU Octave, or PyJData from 
 
-https://github.com/fangq/pyjdata
+https://neurojson.org/download/pyjdata
 
 to open such in Python.
 

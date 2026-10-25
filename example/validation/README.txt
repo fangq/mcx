@@ -12,8 +12,10 @@ To run this example, you need to first compile the mcx
 binary, and then run the run_validation.sh and 
 run_validation_b.sh scripts to run simulations for
 n=1 and n=1.37, respectively. Then you need to start
-GNU Octave or Matlab, and run plotsimudata.m script
-to reproduce Fig. 5 in Fang2009.
+GNU Octave or Matlab, add JSONLab (https://neurojson.org/download/jsonlab)
+and mcx/utils to the search path, and run plotsimudata.m script
+to reproduce Fig. 5 in Fang2009. The simulation outputs are saved
+as semi_infinite.jnii and semi_infinite_b.jnii.
 
 
 [Fang2009]   Qianqian Fang and David A. Boas, "Monte Carlo 

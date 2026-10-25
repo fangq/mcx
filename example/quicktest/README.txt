@@ -4,7 +4,8 @@ As the name indicates, this example runs a short simulation
 for the purpose of testing the command line options build
 with MCX. 
 
-To run this example, you need to first compile mcx binary.
+To run this example, you need to first compile the mcx binary, or
+download a pre-compiled mcx package, so that ../../bin/mcx exists.
 Then you can choose to run the following shell scripts:
 
 listgpu.sh
@@ -15,13 +16,18 @@ listgpu.sh
 
 run_qtest.sh
     This will run MCX for a simple homogeneous medium as 
-    the example used in the Fang2009 paper. It will launch 
-    only 0.3 million photons and take roughly half a second. 
+    the example used in the Fang2009 paper. It launches 
+    1e7 photons and prints a progress bar; the fluence is 
+    saved in qtest.jnii.
 
 run_grid2x.sh/run_grid3x.sh
-    These scripts does the same thing as run_qtest.sh, 
-    except it they use a voxel size of 0.5 mm and 1/3 mm, 
-    respectively.
+    These scripts do the same thing as run_qtest.sh, 
+    except that they use JSON input files and a voxel size
+    of 0.5 mm and 1/3 mm, respectively.
+
+run_widefield.sh
+    This script runs a simulation with a wide-field source
+    defined in qtest_widefield.inp.
 
 
 [Fang2009]   Qianqian Fang and David A. Boas, "Monte Carlo 

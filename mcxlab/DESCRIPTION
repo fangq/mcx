@@ -12,6 +12,6 @@ Description:  MCXLAB is the native MEX version of MCX (https://mcx.space)
  MATLAB/Octave also provides convenient plotting and data analysis functions. 
  With MCXLAB, your analysis can be streamlined and speed-up without involving 
  accessing disk files. This toolbox requires NVIDIA GPUs and graphics drivers.
-URL: http://mcx.space
+URL: https://mcx.space
 Depends: mcxtools
 Categories: Physics

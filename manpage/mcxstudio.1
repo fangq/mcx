@@ -1,110 +1,128 @@
 .\" Manpage for mcxstudio.
 .\" Contact fangqq@gmail.com to correct errors or typos.
-.TH man 7 "October 2026" "v2026" "Monte Carlo eXtreme (MCX) Studio man page"
+.TH MCXSTUDIO 1 "October 2026" "v2026 (3.0)" "MCX Studio man page"
 .SH NAME
-MCXStudio \- a cross-platform GUI for managing MCX/MCXCL/MMC simulations
+mcxstudio \- MCX Studio 2, a cross-platform GUI for MCX/MCX-CL/MMC simulations
 .SH SYNOPSIS
-mcxstudio <-p project.mcxp> <-u/--user> ...
+.B mcxstudio
+[\-\-run [\-\-quit]] [\-\-processor nvidia|amd|intel|cpu] [\-\-software]
+[\-u/\-\-user] [input.json [result]]
+.br
+.B mcxstudio
+\-\-snapshot out.png input.json [result]
+.br
+.B mcxstudio
+\-p/\-\-project project.mcxp
 .SH DESCRIPTION
-MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL
-(http://mcx.space). It gives user an intuitive environment to browse and set
-parameters for a wide range of simulations. It also provides functionalities to
-save, edit and reopen a set of pre-defined simulations and share among users.
+MCX Studio is a graphical user interface (GUI) for MCX, MCX-CL and MMC
+(https://mcx.space): set up a Monte Carlo photon transport simulation, run
+it, and view the results. Starting from MCX v2026, the `mcxstudio` binary is
+built from MCX Studio 2 (the mcxstudio2/ folder of the MCX source tree), a
+rewrite of the original MCX Studio.
 
-The MCX//MCXCL/MMC simulators are developed by Dr. Qianqian Fang at the ComputationalOptics and Translational Imaging (COTI) Lab, at Northeastern University, Boston,
-USA. More details regarding mcx/mmc can be found at http://mcx.space
+In MCX Studio 2, a simulation is the same .json input file that mcx, mcxcl
+and mmc read; there is no separate project format. The Command tab shows the
+command line that will be run, and the JSON tab shows the file that will be
+written. The 3-D view renders the domain, shapes, mmc meshes, sources,
+detectors, fluence volumes and photon trajectories using OpenGL 3.3, and
+falls back to a software renderer when OpenGL 3.3 is not available. It can
+read the JNIfTI/BNII (.jnii/.bnii), JData (.jdt/.jdb, legacy .jdat) and
+mc2/NIfTI outputs written by the simulators.
 
-MCXStudio is written in Object Pascal using the open-source Lazarus
-(https://www.lazarus-ide.org/) rapid application development (RAD)
-environment and LCL (Lazarus component library). The OpenGL rendering
-of the GUI is provided by the GLScene Library (http://glscene.org).
+The GUI itself does not contain any Monte Carlo modeling capability. It runs
+externally compiled mcx (NVIDIA GPUs), mcx built with ROCm/HIP (AMD GPUs),
+mcxcl (OpenCL CPUs/GPUs) or mmc (mesh-based, CPU/GPU) binaries; the choice
+depends on the selected processor and the domain (voxel grid or mesh).
 
-MCXStudio is cross-platform and can run on Windows, Linux and Mac OS.
-The GUI itself does not contain any Monte Carlo (MC) modeling capability. Instead,
-it serves as a shell within which one can launch MC simulations by calling
-externally compiled mcx, mmc and mcxcl binaries.
+MCX Studio 2 is written in Object Pascal using Lazarus (2.2 or newer) and
+Free Pascal (3.2), and runs on Windows, Linux and macOS.
 
-MCXStudio contains many features that are designed to ease the pre-processing,
-simulation and post-processing for MC simulations. It is compatible
-with mcx (NVIDIA GPU), mmc (CPU) and mcxcl (cross-vendor CPUs/GPUs). It has a built-in
-domain designer, source designer with a convenient panel for media/detector settings.
-It also supports visualization of simulation output data (mc2, nii, hdr/img) using
-the built-in 3D volumetric data renderer. One can also launch remote MCX/MMC
-simulations using the Remote Execution panel.
-
+The MCX/MCX-CL/MMC simulators are developed by Dr. Qianqian Fang at the
+Computational Optics and Translational Imaging (COTI) Lab, at Northeastern
+University, Boston, USA. More details can be found at https://mcx.space
 
 .SH HOW TO USE
+Start MCX Studio by typing "mcxstudio" in a terminal, or click on the
+"MCX Studio" icon in the system menu. Open a .json input file, or start from
+one of mcx's built-in benchmarks. The sections on the left follow the order
+in which a simulation is described; pressing F1 over any setting shows what
+it does and which mcx option it corresponds to. Click "Run" to start the
+simulation; the output is written beside the input file.
 
-Start MCXStudio by typing "mcxstudio" and enter in a terminal or click
-on the "MCX Studio" icon in the system menu (under section Education\MCXStudio).
+An input that has no writable folder of its own, such as a new document or an
+example installed under the program folder, is saved, together with the
+volume or mesh files it refers to, to
+MCXOutput/<simulator>sessions/<session>/ beside the program, or under the
+home folder with \-\-user.
 
-After being launched, mcxstudio first checks if the mcx
-binary presents in the system search paths; if yes, the "GPU" button on the
-toolbar becomes enabled. If you do not have an NVIDIA GPU and intend
-to use mcxcl for your simulations, you may click on the "New" button
-in the toolbar, and select the 3rd option (NVIDIA/AMD/Inte CPUs/GPUs MCX-CL).
-After selecting "OK", and if mcxcl binary presents in your folders,
-the GPU button will also become active.
+A simulator is searched in MCXSuite/<simulator>/bin beside the program,
+beside the program, ~/MCXStudio, <simulator>/bin beside the program, the
+source trees of the simulators and then the PATH.
 
-It is recommended to click on the GPU button once, and verify if you have
-compatible GPUs or processors suitables to run MCX or MCXCL simulations.
-If you are able to see printed information in a message window, your system
-is ready to run MCX (or mcxcl). If you get an error message or not able
-to see any usable GPU, please check the drivers and the binary files.
-
-If your system is verified to support MCX/MCXCL, you can now create new simulations
-by clicking on the "New" button. MCX Studio will ask you to provide a session
-name for this new simulation. After a valid session name is provide, MCXStudio
-creates the simulation and set all parameters to a ready-to-run default configuration
-(containing a 60x60x60 mm^3 homogeneous domain). You should modify the settings
-based on your needs. Once you finish the adjustment, you should click the
-"Verify" button to see if there are missing/conflicting settings. If everything looks
-ok, the "Run" button will become activated. Clicking on it once will start your
-simulation. If you want to abort the current simulation, you can click
-the "Stop" button.
-
-You can create multiple tasks with MCX Studio by hitting the "New"
-button again. The information for all session configurations can
-be saved as a project file (with a ".mcxp" file extension) by clicking the
-"Save" button. You can load a previously saved project, containing multiple
-simulation sessions, back to MCX Studio by clicking the "Load" button.
-
-In both the unzipped binary packags of mcx and mcxcl, under the folder named
-"examples", one can find a pre-created project file (*_examples.mcxp)
-for MCXStudio. Loading these files using the "Load" button allows you to
-see these preconfigured simulation.
-
-On Windows, once you start MCXStudio once, the .mcxp suffix becomes automatically
-associated with mcxstudio executable. To load a .mcxp file, you can simply
-double-click on the file, mcxstudio will be started automatically.
-
+Projects (.mcxp) created by the original MCX Studio can be opened with \-p,
+or converted to .json files using utils/mcxp2json.py.
 
 .SH OPTIONS
-MCX Studio is primarily used in an interactive mode. However, the below command
-line options are accepted
+.TP
+\fBinput.json [result]\fR
+Open a simulation input file; an optional second file (such as a .jnii,
+\&.bnii or _traj.jdt output) is opened as the result beside the input.
 
 .TP
-\fB-p/--project  <A filename>\fR
-Use -f to specify a default MCX project file (*.mcxp)
-    -f filename.mcxp
-
-If a .mcxp file is specified via the -p flag, mcxstudio loads this project fileat start time.
+\fB\-\-run\fR
+Run the simulation once the window is up, as the Run button does.
 
 .TP
-\fB-u/--user\fR
+\fB\-\-quit\fR
+Used with \-\-run: close the window when the run ends; the simulator's output
+is printed to stdout and its exit code becomes the program's exit code, so
+that scripts and CI jobs can use the GUI's own run path.
+
 .TP
-Use `--user` to tell mcxstudio to store all user output files to the `~/MCXOutput`
-directory where `~` represents user's home directory. You should use this command
-when mcxstudio is installed via an automated installer and is located in a system
-folder (such as `/usr/bin`).
+\fB\-\-processor\fR \fInvidia|amd|intel|cpu\fR
+What to run the simulation on; together with the domain, this selects mcx,
+mcx on ROCm, mcxcl or mmc.
 
-If this flag is not provided while `mcxstudio` was installed in a system folderwithout write-permission, mcxstudio will attempt to create an output folder
-named `MCXOutput` under the same parent folder as mcxstudio executable. If this
-fails, it falls back to creating and writing outputs to `~/MCXOutput`. If`~/MCXOutput` can not be created or can not be written, mcx/mmc/mcxcl commands
-will throw an error.
+.TP
+\fB\-\-snapshot\fR \fIout.png\fR
+Write the 3-D view of the input (and of the result, if given) to a PNG file
+and exit.
 
+.TP
+\fB\-\-software\fR
+Draw the 3-D view on the processor instead of using OpenGL; the same can be
+selected by setting MCXSTUDIO_SOFTWARE=1. The software renderer is used
+anyway when OpenGL 3.3 is not available.
+
+.TP
+\fB\-p/\-\-project\fR \fIproject.mcxp\fR
+Open a session of a project created by the original MCX Studio; the project
+file can also be given directly as the input.
+
+.TP
+\fB\-u/\-\-user\fR
+Keep the sessions that have no writable folder of their own under
+~/MCXOutput rather than beside the program. This should be used when
+mcxstudio is installed in a system folder; the Windows installer's shortcuts
+start it this way.
+
+.TP
+\fB\-l/\-\-lang, \-r/\-\-registry\fR
+Accepted for compatibility with the original MCX Studio and ignored.
+
+.TP
+\fB\-h/\-\-help\fR
+Print the help information.
+
+.SH EXAMPLES
+.nf
+    mcxstudio benchmark1.json benchmark1.jnii
+    mcxstudio \-\-run \-\-processor intel benchmark1.json
+    xvfb-run \-a mcxstudio \-\-run \-\-quit \-\-processor cpu onecube.json
+    xvfb-run \-a mcxstudio \-\-snapshot qtest.png qtest.json qtest.jnii
+.fi
 
 .SH SEE ALSO
-mcx(7), mmc(7), mcxcl(7), mcxshow(7), mcxviewer(7)
+mcx(1), mcxcl(1), mmc(1), mcxshow(1), mcxviewer(1)
 .SH AUTHOR
 Qianqian Fang (q.fang@neu.edu)

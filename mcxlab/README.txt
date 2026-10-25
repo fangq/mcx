@@ -35,7 +35,15 @@ GPU driver (you can run the standard MCX binary first to test if your
 system is capable to run MCXLAB). Of course, you need to have either MATLAB
 or Octave installed.
 
-Once you set up the CUDA toolkit and NVIDIA driver, you can then add the 
+The released mex files are statically linked with the CUDA runtime, so you
+only need an up-to-date NVIDIA driver; the CUDA toolkit is not needed. The
+Octave mex files released for Windows and macOS are linked against liboctmex
+and require Octave 10 or newer; the Linux Octave mex file works with any
+recent Octave version. On computers without an NVIDIA GPU, mcxlab can run
+the simulation with MCXLAB-CL (mcxlabcl, the OpenCL version) if it is
+installed, using mcxlab(cfg,'opencl') or by setting USE_MCXCL=1 (see below).
+
+Once the NVIDIA driver is set up, you can then add the 
 "mcxlab" directory to your MATLAB/Octave search path using the addpath command.
 If you want to add this path permanently, please use the "pathtool" 
 command, or edit your `startup.m` (`~/.octaverc` for Octave).
@@ -537,7 +545,7 @@ the verbose command line options in MCX.
        subplot(236);
        imagesc(squeeze(log(cwdref(:,:,1))));title('diffuse refle. at z=1');
  
-  This function is part of Monte Carlo eXtreme (MCX) URL: http://mcx.space
+  This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
  
   License: GNU General Public License version 3, please read LICENSE.txt for details
 </pre>
@@ -651,10 +659,10 @@ CMake, see <tt>src/CMakeLists.txt</tt>.
 == # Screenshots ==
 
 Screenshot for using MCXLAB in MATLAB:
-  http://mcx.sourceforge.net/upload/matlab_mcxlab.png
+  https://mcx.space/wiki/upload/matlab_mcxlab.png
 
 Screenshot for using MCXLAB in GNU Octave:
-  http://mcx.sourceforge.net/upload/octave_mcxlab.png
+  https://mcx.space/wiki/upload/octave_mcxlab.png
 
 
 == # Reference ==
@@ -662,7 +670,7 @@ Screenshot for using MCXLAB in GNU Octave:
  [Yan2020] Shijie Yan and Qianqian Fang* (2020), "Hybrid mesh and voxel 
   based Monte Carlo algorithm for accurate and efficient photon transport 
   modeling in complex bio-tissues," Biomed. Opt. Express, 11(11) pp. 6262-6270.
-  https://www.osapublishing.org/boe/abstract.cfm?uri=boe-11-11-6262
+  https://opg.optica.org/boe/abstract.cfm?uri=boe-11-11-6262
  
  [Yu2018] Leiming Yu, Fanny Nina-Paravecino, David Kaeli, Qianqian Fang, 
  "Scalable and massively parallel Monte Carlo photon transport simulations 

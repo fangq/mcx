@@ -80,6 +80,16 @@ Notable new features include:
 * new deterministic tests: `make unittest` checks the ray-tracing helpers on the CPU
   without a GPU, and `test/testtraj.sh` compares deterministic photon trajectories
   step by step against solver-neutral golden data shared with mcxcl and mmc
+* the released Linux binaries and mex files are built in a manylinux2014 container and
+  run on glibc 2.17 or newer; Octave mex files are now also released for Windows and
+  macOS, linked against `liboctmex` and loadable in Octave 10 and newer
+* input parsing is hardened by fuzzing the JSON inputs and command line options;
+  invalid values (such as `-u`, `-W`, `-K`, `-Z`) now stop with an error message
+  instead of crashing or hanging
+* `--dumpjson`, `mcx2json` and `json2mcx` now round-trip all settings, including Mie,
+  phase function, boundary, RF and polarization settings
+* pmcx: all mcxlab example scripts are ported to Python under `pmcx/examples`, and
+  `pmcx.svmc` builds split-voxel (SVMC) volumes as `mcxsvmc.m` does
 
 This release also contains a number of bug fixes, including
 * multiple fixes in the replay normalization, including `-U 2` to skip the detected
@@ -450,7 +460,27 @@ thread block size to fit the limit.
 
 To install MCX, you need to download the binary executable compiled for your 
 computer architecture and platform, extract the package and run 
-the executable under the `{mcx root}/bin` directory.
+the executable under the `{mcx root}/bin` directory. MCX can be obtained in several ways
+
+- the MCX download page (https://mcx.space/wiki/?Get) and the GitHub release page
+  (https://github.com/fangq/mcx/releases) provide the MCX and MCXLAB packages,
+  as well as the all-in-one "MCX Studio" packages for Linux, macOS (x86_64 and
+  arm64) and Windows, which bundle the simulators (mcx, mcxcl and mmc, as
+  supported on each platform), the MCX Studio GUI and the MATLAB/Octave
+  toolboxes; the Redbird (MATLAB/Octave) and Redbirdpy (Python) image
+  reconstruction toolboxes are provided as a separate package
+- the latest automatically built packages can be found at https://mcx.space/nightly/
+- on Windows, MCX Studio can be installed with an installer, or by
+  `winget install coti.mcxstudio`
+- Python users can install `pmcx` (MCX), `pmcxcl` (MCX-CL) and `pmmc` (MMC) via
+  `pip`, see the "Using PMCX in Python" section below
+- a Docker image is available as `fangqq/mcx` on Docker Hub (requires the
+  NVIDIA Container Toolkit to access the GPU)
+
+The released Linux binaries and mex files are built against glibc 2.17
+(manylinux2014), and run on most Linux distributions released since 2014. The
+released Octave mex files for Windows and macOS are linked against `liboctmex`
+and require Octave 10 or newer; on Linux, they work with any recent Octave.
 
 For Windows users, you must make sure you have installed the appropriate NVIDIA 
 driver for your GPU. You should also configure your OS to run CUDA simulations. 
@@ -539,7 +569,7 @@ supported parameters, as shown below:
 #          Copyright (c) 2009-2026 Qianqian Fang <q.fang at neu.edu>          #
 #                https://mcx.space/  &  https://neurojson.io                  #
 #                                                                             #
-# Computational Optics & Translational Imaging (COTI) Lab- http://fanglab.org #
+# Computational Optics & Translational Imaging (COTI) Lab- https://fanglab.org #
 #   Department of Bioengineering, Northeastern University, Boston, MA, USA    #
 ###############################################################################
 #    The MCX Project is funded by the NIH/NIGMS under grant R01-GM114365      #
@@ -1128,7 +1158,7 @@ To load the mc2 file, one should call `loadmc2.m` and must provide explicitly
 the dimensions of the data. This is because mc2 file does not contain the data
 dimension information.
 
-Saving to .mc2 volumetric file is depreciated as we are transitioning towards
+Saving to .mc2 volumetric file is deprecated as we are transitioning towards
 JNIfTI/JData formatted outputs (.jnii). 
 
 #### nii files
@@ -1220,8 +1250,10 @@ The supported data file formats are explained below.
 
 #### mch files
 
-The .mch file, or MC history file, is stored by default, but we strongly encourage users
-to adopt the newly implemented JSON/.jdat format for easy data sharing. 
+The .mch file, or MC history file, is the legacy binary format, written when the
+volumetric output format is set to `mc2`, `nii`, `hdr` or `tx3` by `-F`. When the
+default `-F jnii` (or `-F bnii`) is used, the detected photons are saved in the
+JSON/JData `.jdt` (or `.jdb`) format described below instead.
 
 The .mch file contains a 256 byte binary header, followed by a 2-D numerical array
 of dimensions `#savedphoton * #colcount` as recorded in the header.
@@ -1250,15 +1282,19 @@ following the detected photon data, consisting of a 2-D byte array of `#savedpho
 
 To load the mch file, one should call `loadmch.m` in MATLAB/Octave.
 
-Saving to .mch history file is depreciated as we are transitioning towards
-JSON/JData formatted outputs (`.jdat`).
+Saving to .mch history file is deprecated as we are transitioning towards
+JSON/JData formatted outputs (`.jdt`/`.jdb`).
 
-#### jdat files
+#### jdt and jdb files
 
-When `-F jnii` is specified, instead of saving the detected photon into the legacy .mch format,
-a .jdat file is written, which is a pure JSON file. This file contains a hierarchical data
-record of the following JSON structure
-````
+When `-F jnii` (the default) is used, instead of saving the detected photons into the
+legacy .mch format, a `session_detp.jdt` file is written, which is a pure JSON file.
+With `-F bnii`, the same data are saved in the binary JData (BJData) format as
+`session_detp.jdb`. Prior to v2026, this file used the `.jdat` suffix; `.jdat` files
+can still be loaded, for example, for replay (`-E file.jdat`). This file contains a
+hierarchical data record of the following JSON structure
+
+```
 {
    "MCXData":{
        "Info":{
@@ -1272,6 +1308,7 @@ record of the following JSON structure
        },
        "PhotonData":{
            "detid":
+           "srcid":
            "nscat":
            "ppath":
            "mom":
@@ -1279,22 +1316,19 @@ record of the following JSON structure
            "v":
            "w0":
        },
-       "Trajectory":{
-           "photonid":
-           "p":
-           "w0":
-       },
        "Seed":[
            ...
        ]
    }
 }
-````
-where "Info" is required, and other subfields are optional depends on users' input.
-Each subfield in this file may contain JData 1-D or 2-D array constructs to allow 
-storing binary and compressed data.
+```
 
-Although .jdat and .jnii have different suffix, they are both JSON/JData files and
+where "Info" is required, and other subfields are optional depending on users' input;
+"srcid" is only present in multi-source simulations, and "Seed" is only present
+when `-q 1` is used. Each subfield in this file may contain JData 1-D or 2-D array
+constructs to allow storing binary and compressed data.
+
+Although .jdt and .jnii have different suffixes, they are both JSON/JData files and
 can be opened/written by the same JData compatible libraries mentioned above, i.e.
 
 For MATLAB
@@ -1305,7 +1339,7 @@ For Python
 - PyJData module (https://neurojson.org/download/pyjdata) or install `python3-jdata` on Debian/Ubuntu
 
 In Python, the volumetric data is loaded as a `dict` object where `data['MCXData']['PhotonData']` 
-stores the photon data, `data['MCXData']['Trajectory']` stores the trajectory data etc.
+stores the photon data, and `data['MCXData']['Seed']` stores the RNG seeds.
 
 
 ### Photon trajectory data
@@ -1316,18 +1350,21 @@ can be stored in one of the following formats.
 
 #### mct files
 
-By default, MCX stores the photon trajectory data in to a .mct file MC trajectory, which
-uses the same binary format as .mch but renamed as .mct. This file can be loaded to
-MATLAB using the same `loadmch.m` function. 
+When the legacy `-F mc2`, `nii`, `hdr` or `tx3` output formats are used, MCX stores the
+photon trajectory data in a .mct (MC trajectory) file, which uses the same binary format
+as .mch. This file can be loaded to MATLAB using the same `loadmch.m` function.
 
-Using .mct file is depreciated and users are encouraged to migrate to .jdat file
+Using .mct file is deprecated and users are encouraged to migrate to the .jdt file
 as described below.
 
-#### jdat files
+#### jdt and jdb files
 
-When `-F jnii` is used, MCX merges the trajectory data with the detected photon and
-seed data and saved as a JSON-compatible .jdat file. The overall structure of the
-.jdat file as well as the relevant parsers can be found in the above section.
+When `-F jnii` (the default) is used, the trajectory data are saved in a separate
+JSON file named `session_traj.jdt` (or `session_traj.jdb` with `-F bnii`), with a
+"Trajectory" object storing the "photonid", "p" (position), "w0" (weight) and
+"srcid" of each trajectory point, as well as "iquv" (Stokes vector) when
+`--trajstokes 1` is used in polarized simulations. The relevant parsers are listed
+in the above section. In MATLAB/Octave, `mcxplotphotons.m` can plot the trajectories.
 
 
 Using MCXLAB in MATLAB and Octave
@@ -1374,48 +1411,43 @@ to see a suite of examples showing the key functionalities of PMCX.
 Using MCX Studio GUI
 -----------------------
 
-Starting from v2026, MCX ships MCX Studio 2 (`mcxstudio2/`), a rewritten
-cross-platform GUI for MCX, MCX-CL and MMC with a live JSON preview, a shape
-editor, built-in visualization of fluence and photon paths, and high-DPI support.
-Please read `mcxstudio2/README.md` for details. The original MCX Studio described
-below is still included.
+Starting from v2026, the `mcxstudio` GUI shipped with MCX is MCX Studio 2, a
+rewrite of the original MCX Studio, with source code in the `mcxstudio2/` folder.
+It is a cross-platform graphical front end for MCX, MCX-CL and MMC, written in
+Object Pascal with Lazarus, and runs on Windows, Linux and macOS.
 
-MCX Studio is a graphical user interface (GUI) for MCX. It gives users a 
-straightforward way to set the command line options and simulation parameters. 
-It also allows users to create different simulation tasks and organize them 
-into a project and save for later use. MCX Studio can be run on many platforms 
-such as Windows, GNU Linux and Mac OS.
+In MCX Studio 2, a simulation is simply the `.json` input file that mcx, mcxcl and
+mmc read; there is no separate project format. The settings are grouped in the order
+a simulation is described, and pressing F1 over any setting shows what it does and
+which mcx option it corresponds to. The Command tab shows the command line that will
+be run and the JSON tab shows the file that will be written. The built-in 3-D view
+renders the domain, shapes, mmc meshes, sources and detectors, as well as the
+fluence (`.jnii`, `.bnii`, `.nii`, `.mc2`) and photon trajectories (`_traj.jdt`)
+written by the simulators. It uses OpenGL 3.3 and falls back to a software renderer
+when OpenGL 3.3 is not available, for example, over a remote X display.
 
-To use MCX Studio, it is suggested to put the mcxstudio binary in the same 
-directory as the mcx command; alternatively, you can also add the path to mcx 
-command to your PATH environment variable.
+MCX Studio does not perform simulations by itself. Depending on the selected processor
+(`nvidia`, `amd`, `intel` or `cpu`) and the domain (voxel grid or mesh), it runs mcx,
+mcx built with ROCm/HIP, mcxcl or mmc. The simulators are searched in
+`MCXSuite/<simulator>/bin` beside mcxstudio, beside mcxstudio, `~/MCXStudio`, and then
+in the `PATH`. Using the all-in-one MCX Studio package (see Requirement and
+Installation) is the easiest way to have all of them in place.
 
-Once launched, MCX Studio will automatically check if mcx binary is in the 
-search path, if so, the “GPU” button in the toolbar will be enabled. It is 
-suggested to click on this button once, and see if you can see a list of GPUs 
-and their parameters printed in the output field at the bottom part of the 
-window. If you are able to see this information, your system is ready to run 
-MCX simulations. If you get error messages or not able to see any usable GPU, 
-please check the following:
+MCX Studio can also be used from the command line, for example
 
--   are you running MCX Studio/MCX on a computer with a supported card?
--   have you installed the CUDA/NVIDIA drivers correctly?
--   did you put mcx in the same folder as mcxstudio or add its path to PATH?
+```
+mcxstudio benchmark1.json benchmark1.jnii      # open an input and its result
+mcxstudio --run --processor intel qtest.json   # run the input with mcxcl
+xvfb-run -a mcxstudio --snapshot qtest.png qtest.json qtest.jnii
+```
 
-If your system has been properly configured, you can now add new simulations by 
-clicking the “New” button. MCX Studio will ask you to give a session ID 
-string for this new simulation. Then you are allowed to adjust the parameters 
-based on your needs. Once you finish the adjustment, you should click the 
-“Verify” button to see if there are missing settings. If everything looks 
-fine, the “Run” button will be activated. Clicking on it will start your 
-simulation. If you want to abort the current simulation, you can click the 
-“Stop” button.
+Projects (`.mcxp` files) created by the original MCX Studio can be opened using
+`mcxstudio -p project.mcxp`, or converted to `.json` files using `utils/mcxp2json.py`.
+Please read `mcxstudio2/README.md` for more details, including how to build it
+from the source code.
 
-You can create multiple tasks with MCX Studio by hitting the “New” button 
-again. The information for all session configurations can be saved as a project 
-file (with .mcxp extension) by clicking the “Save” button. You can load a 
-previously saved project file back to MCX Studio by clicking the “Load” 
-button.
+The source code of the original MCX Studio, as well as the `mcxshow` and `mcxviewer`
+utilities, are still kept in the `mcxstudio/` folder.
 
 
 Interpreting the Output
@@ -1582,7 +1614,7 @@ open-source projects (with a compatible license).
 
 ### cJSON library by Dave Gamble
 
-- Files: src/cJSON folder
+- Files: src/cjson folder
 - Copyright (c) 2009 Dave Gamble
 - URL: https://github.com/DaveGamble/cJSON
 - License: MIT License, https://github.com/DaveGamble/cJSON/blob/master/LICENSE

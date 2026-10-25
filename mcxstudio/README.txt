@@ -19,9 +19,13 @@ Table of Content:
 
 Starting from MCX v2026, a rewritten GUI, MCX Studio 2, is included in the
 `mcxstudio2/` folder of MCX; it adds a live JSON preview, a shape editor and
-built-in visualization of fluence and photon paths. Please see
-`mcxstudio2/README.md`. This README describes the original MCXStudio, which is
-still distributed.
+built-in visualization of fluence and photon paths. The `mcxstudio` binary in
+the v2026 release packages and the Windows installer is built from MCX Studio 2;
+please see `mcxstudio2/README.md`. This README describes the original MCXStudio,
+whose source code (together with mcxshow and mcxviewer) is kept in this folder.
+Projects (.mcxp) saved by the original MCXStudio can be opened by MCX Studio 2
+(`mcxstudio -p project.mcxp`) or converted to JSON files using
+`utils/mcxp2json.py`.
 
 MCXStudio is a light-weight graphical user interface (GUI) for MCX, MMC and MCX-CL.
 It gives users an intuitive environment to browse and set parameters for a wide range

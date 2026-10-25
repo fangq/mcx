@@ -1,11 +1,11 @@
 =============================================================
              Monte Carlo eXtreme (MCX) Suite
-                    version 2025
+                    version 2026
 =============================================================
 
-Copyright (c) 2009-2025  Qianqian Fang <q.fang at neu.edu>
+Copyright (c) 2009-2026  Qianqian Fang <q.fang at neu.edu>
 
-- Computational Optics & Translational Imaging (COTI) Lab (http://fanglab.org)
+- Computational Optics & Translational Imaging (COTI) Lab (https://fanglab.org)
 - Department of Bioengineering, Northeastern University
 - 360 Huntington Ave, ISEC 206, Boston, MA 02115, USA
 - Website: https://mcx.space
@@ -129,7 +129,7 @@ cite the relevant papers in your publications.
 *Download: https://doi.org/10.1117/1.NPh.7.1.015009
 
 [Brain2Mesh2020] Anh Phong Tran, Shijie Yan, Qianqian Fang*, (2020) "Improving model-based fNIRS analysis using mesh-based anatomical and light-transport models," Neurophotonics, 7(1), 015008
-*Summary: Brain2Mesh - a one-liner for brain mesh generator (http://mcx.space/brain2mesh)
+*Summary: Brain2Mesh - a one-liner for brain mesh generator (https://mcx.space/brain2mesh)
 *Download: https://doi.org/10.1117/1.NPh.7.1.015008
 
 [Cassano2019] Cassano P+, Tran AP+, Katnani H, Bleier BS, Hamblin MR, Yuan Y, Fang Q*, (2019) "Selective photobiomodulation for emotion regulation: model-based dosimetry study," Neurophotonics 6(1) 015004, PMCID: PMC6366475
