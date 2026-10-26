@@ -207,6 +207,15 @@ for i = 1:len
                             sz * detpos(id, 4) + (detpos(id, 3)), ...
                             'facealpha', 0.3, 'facecolor', 'g', 'linestyle', 'none');
         end
+
+        if isfield(cfg(i), 'detdir')
+            if (exist('mindim', 'var'))
+                detvec = cfg(i).detdir * mindim * 0.05;
+            else
+                detvec = cfg(i).detdir * 10 * voxelsize;
+            end
+            hdir = quiver3(detpos(:, 1), detpos(:, 2), detpos(:, 3), detvec(:, 1), detvec(:, 2), detvec(:, 3), 'linewidth', 3, 'color', 'g', 'MaxHeadSize', headsize, 'AutoScaleFactor', 1, varargin{:});
+        end
     end
 
     % combining all handles
