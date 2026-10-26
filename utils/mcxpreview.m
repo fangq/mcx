@@ -151,7 +151,7 @@ for i = 1:len
     if (isoctavemesh)
         headsize = 0.5;
     end
-    hdir = quiver3(srcpos(1), srcpos(2), srcpos(3), srcvec(1), srcvec(2), srcvec(3), 'linewidth', 3, 'color', 'r', 'MaxHeadSize', headsize, 'AutoScaleFactor', 1, varargin{:});
+    hdir = quiver3(srcpos(:, 1), srcpos(:, 2), srcpos(:, 3), srcvec(:, 1), srcvec(:, 2), srcvec(:, 3), 'linewidth', 3, 'color', 'r', 'MaxHeadSize', headsize, 'AutoScaleFactor', 1, varargin{:});
 
     % rendering area-source aperature
     hsrcarea = [];
