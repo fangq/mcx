@@ -3,6 +3,82 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-25 [211fef6] [bug] mcxlab/pmcx: fix cfg.flog, one time gate without tstep, parity with mcxlabcl/pmcxcl
+ 2026-10-25 [4959eeb] [doc] rewrite the mcxlab help: document every cfg field the mex reads
+ 2026-10-25 [2f2a38a] [ci] build MCXStudio.app in a macos-14 job of its own, and test it
+ 2026-10-25 [43215fb] [ci] build MCXStudio.app in the macOS job and ship it in the mcx package
+ 2026-10-25 [af2cb35]*[feat] mcxstudio2 on macOS: Cocoa, a universal MCXStudio.app
+ 2026-10-25 [1a0ddf3] [doc] update the author's title to Professor
+ 2026-10-25 [29116d5]*[cjson] upgrade the bundled cJSON from 1.7.12+ (f790e17, 2020) to 1.7.19
+ 2026-10-25 [cf4bc7b]*[feat] save and use the JData block index (_ArrayZipOffsets_) of zlib/gzip data
+ 2026-10-25 [2f9b0ce]*[zmat] sync the bundled zmat to upstream 1.2.0 (d1a1e94): parallel zlib/gzip
+ 2026-10-25 [aadd8b7] [ci] leave the macOS build libraries (lib/*.a, 25 MB) out of the mcx package
+ 2026-10-25 [aa3476d] [ci] compact release packages: strip then UPX on Linux/Windows, drop CI downloads; build mcxstudio on Windows
+ 2026-10-25 [2357476] [doc] What's New: the fuzzing campaigns, unit-test coverage and input hardening
+ 2026-10-25 [cc192d9]*[feat] photon: one launcher for mcx, mcxcl and mmc
+ 2026-10-25 [9e7a7cc]*[feat] schema: one JSON input schema for mcx, mcxcl and mmc, with optional mesh data
+ 2026-10-25 [2170679] [bug] read Session.OutputType names, not just their first letter
+ 2026-10-25 [cd77f8b] [feat] mcxstudio2: "Open manual" in the F1 help window goes to the option in mcx_help.html
+ 2026-10-25 [7c2e267] [ci] export the Windows Octave mex SOVERSION symbol with __declspec(dllexport)
+ 2026-10-25 [a9474cb] [bug] mcxstudio2: fix a hang, a crash and exceptions found by fuzzing the GUI
+ 2026-10-25 [8a62917] [doc] bring the README, doc/ and manual pages up to date for v2026
+ 2026-10-25 [1543b8b] [clean] use https for mcx.space, neurojson.io and fanglab.org links
+ 2026-10-25 [78618aa] [bug] keep unnormalized wltof/wptof output in seconds
+ 2026-10-25 [7d01159] [bug] fix hangs found by fuzzing round 4: zero effective mus, minenergy >= 1, tiny voxels
+ 2026-10-25 [f923f9a] [ci] add the liboctmex SOVERSION symbol Octave 10+ requires to the mex files mkoctfile does not link
+ 2026-10-25 [ab47dbc] [ci] compile mcx_bench.c with clang on macOS; check that the Octave mex loads
+ 2026-10-25 [40c276e] [ci] build the Octave mex on macOS (Xcode 10 clang) and Windows (nvcc + MSVC against liboctmex)
+ 2026-10-25 [00b1a08] [test] skip the GPU run of mcx_run_from_json without a GPU; fix mcxstudio2 view readiness
+ 2026-10-25 [22c9267] [test] mcxstudio2: check the JData preview only once the 3-D view has painted
+ 2026-10-25 [4c6bb01] [bug] let a caller-supplied volume buffer through the Shapes size check
+ 2026-10-25 [f36e4e3]*[ci] build the Linux release in manylinux2014 so it runs on glibc 2.17+; Octave 10 mex on macOS/Windows
+ 2026-10-25 [eed3664] [feat] mcxstudio2: domain/mesh editors, multi-source grids, old command line, faster start
+ 2026-10-25 [6af09da] [bug] reject invalid -u/-W/-K/-Z values and stray SrcNum found by fuzzing round 3
+ 2026-10-25 [c413609]*[bug] fix crashes and hangs found by fuzzing JSON inputs and command-line options
+ 2026-10-24 [a0bb2c1] [test] raise host coverage to 95%: NeuroJSON downloads, JSON/inp branches, GPU feature cases
+ 2026-10-24 [163753f] [bug] save the adjoint Jacobians, not the slot fields, from the mcx binary
+ 2026-10-24 [894e51f]*[test] add host unit tests for mcx_utils and short GPU feature tests
+ 2026-10-24 [6cba1c9] [bug] fix bugs in mcx_utils and Mie found by the new unit tests
+ 2026-10-23 [9bca90d] [test] export the mcxlab-demo builtin cases with mcx2json, refresh golden values
+ 2026-10-23 [09f1e81] [bug] remove a raw newline from the base64 data of polarized/onelayer.json
+ 2026-10-23 [ad7884a] [pmcx] make mcx2json and json2mcx round-trip all settings, save volumes as JData
+ 2026-10-23 [04eff9c] [bug] make mcx2json and json2mcx round-trip all mcxlab settings
+ 2026-10-23 [e3fe174] [bug] save Mie, phase function, boundary, RF and polarization settings in --dumpjson
+ 2026-10-23 [d37f67b] [doc] add a README for the pmcx examples
+ 2026-10-23 [8df8daf] [pmcx] accept 4-D uint8 svmc/asgn_byte volumes, return stat when issave2pt=0
+ 2026-10-23 [20da1bf] [pmcx] fix preview() with current iso2mesh and matplotlib
+ 2026-10-23 [ad7a52b] [feat] add pmcx.svmc, a port of mcxsvmc.m to build split-voxel (svmc) volumes
+ 2026-10-23 [474a527] [pmcx] rewrite rfreplay and rfmusreplay for the pmcx.mcxlab dict outputs
+ 2026-10-23 [f589a8e] [pmcx] count all detectors in cwdref, fix an IndexError when a detector caught no photon
+ 2026-10-23 [edd3c3e] [bug] fix example inputs that strict parsers or mcx reject
+ 2026-10-23 [06fab97] [bug] make mcx2json and --dumpjson exports read back as the same simulation
+ 2026-10-23 [f71cc8b] [bug] copy the whole transposed array back in mcx_convertrow2col64, fix row-major svmc input
+ 2026-10-23 [9f19965]*[test] add built-in example tests exported from all examples and mcxlab demos
+ 2026-10-23 [46508f0]*[feat] port all mcxlab example scripts to python under pmcx/examples
+ 2026-10-22 [c6805c9] [doc] update and polish the mcx READMEs for v2026
+ 2026-10-22 [2769016] [test] check that pmcx.mcxlab reproduces a run with autopilot=0 and a fixed seed
+ 2026-10-22 [b125510] [doc] note that autopilot runs are not bit-reproducible, -A 0 is
+ 2026-10-22 [159f17f] [release] bump pmcx to 0.7.3 for the new host seeds
+ 2026-10-22 [5b7e809] [test] accept 10000 or more saved trajectory positions in the -D M test
+ 2026-10-22 [35a1e92] [test] regenerate the trajectory goldens for the new host seeds
+ 2026-10-22 [a29ed84]*[bug] draw uniform 32-bit host seeds for the GPU RNG, the old ones set 75% of the bits
+ 2026-10-22 [f379294] [doc] match the version in the pmcx README to 0.7.2
+ 2026-10-22 [2c481d4] [release] bump pmcx to 0.7.2
+ 2026-10-22 [104ef09] [ci] decide PyPI uploads per file, not per version
+ 2026-10-22 [e1875a1] [bug] pmcx.mcxlab: honor 'opencl' and USE_MCXCL, fall back to pmcxcl without _pmcx, fix #60 of mcxcl
+ 2026-10-22 [ca9d15b] [ci] ship pmcx on macOS as a pure-python noarch wheel holding the utilities
+ 2026-10-22 [75655d9] [bug] write iquv to trajectory files only when the records contain it
+ 2026-10-21 [79af9e8] [ci] publish packages only when the run was started by the fangq account
+ 2026-10-21 [1aac71b] [ci] decide PyPI uploads from the PyPI JSON API and never upload when the query fails
+ 2026-10-21 [f95dfac] [ci] fetch the macOS fpc/Lazarus installers from mcx.space, verify their sha256
+ 2026-10-21 [59f8059] [ci] retry interrupted fpc/Lazarus downloads on macOS, let each OS finish
+ 2026-10-21 [0a97514] [doc] document the 2D disk source and Lambertian launch added in #274
+ 2026-10-21 [2781607] [pmcx] detweight: keep one weight per photon when detp contains w0, fix #254
+ 2026-10-21 [8cb61eb] [ci] install fpc and Lazarus on macOS from the upstream installers
+ 2026-10-21 [9ee4577] [release] keep the python module version at the published one until the release
+ 2026-10-21 [a7a5026] [doc] refresh the v2026 ChangeLog, NEWS and README change lists
+ 2026-09-23 [e1febaf] Add 2D disk Lambertian source test
+ 2026-09-23 [12a96f8]*Add 2D disk source and Lambertian sampling
  2026-10-21 [5013494] [bug] shrink the block when the per-photon shared memory exceeds the device limit
  2026-10-21 [0d17987] [test] run testmcx.sh in a scratch folder instead of overwriting the files tracked in test/
  2026-10-21 [7031386] [bug] fix crash saving detected photons with asgn_float, mixlabel and labelplus volumes
