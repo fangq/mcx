@@ -1,73 +1,86 @@
 {
-	"Session":	{
-		"ID":	"onelayer",
-		"Photons":	10000000,
-		"RNGSeed":	4294967295,
-		"DoMismatch":	false,
-		"DoSaveVolume":	true,
-		"DoNormalize":	true,
-		"DoPartialPath":	true,
-		"DoSaveRef":	false,
-		"DoSaveExit":	false,
-		"DoSaveSeed":	false,
-		"DoAutoThread":	true,
-		"DoDCS":	false,
-		"DoSpecular":	false,
-		"DebugFlag":	0,
-		"SaveDataMask":	246,
-		"MaxDetPhoton":	10000000,
-		"MinEnergy":	0.00999999977648258,
-		"BCFlags":	"______001000",
-		"OutputFormat":	"jnii",
-		"OutputType":	"x"
-	},
-	"Forward":	{
-		"T0":	0,
-		"T1":	4.99999996961265e-09,
-		"Dt":	4.99999996961265e-09
-	},
-	"Domain":	{
-		"MediaFormat":	"byte",
-		"LengthUnit":	1,
-		"Media":	[{
-				"mua":	0,
-				"mus":	1.19209289550781e-07,
-				"g":	1,
-				"n":	1
-			}, {
-				"mua":	0,
-				"mus":	1.1742534637451172,
-				"g":	0.90809208154678345,
-				"n":	1.3300000429153442
-			}],
-		"MieScatter":	[{
-				"mua":	0,
-				"radius":	1.0149999856948853,
-				"rho":	0.000115199996798765,
-				"nsph":	1.5900000333786011,
-				"nmed":	1.3300000429153442
-			}],
-		"Dim":	[20, 20, 10],
-		"OriginType":	1
-	},
-	"Optode":	{
-		"Source":	{
-			"Type":	"pencil",
-			"Pos":	[10, 10, 0],
-			"Dir":	[0, 0, 1, 0],
-			"Param1":	[0, 0, 0, 0],
-			"Param2":	[0, 0, 2.94272677508212e-43, 1.40129846432482e-45],
-			"SrcNum":	1,
-			"WaveLength":	632.79998779296875,
-			"IQUV":	[1, 1, 0, 0]
-		},
-		"Detector":	[]
-	},
-	"Shapes":	{
-		"_ArrayType_":	"uint8",
-		"_ArraySize_":	[20, 20, 10],
-		"_ArrayZipType_":	"zlib",
-		"_ArrayZipSize_":	4000,
-		"_ArrayZipData_":	"eJztwDENAAAAwrDMv2lk8LQFAAAAvA0wlg+h"
-	}
+    "Session": {
+        "ID": "onelayer",
+        "DoMismatch": 0,
+        "DoAutoThread": 1,
+        "MaxDetPhoton": 10000000,
+        "BCFlags": "______001000",
+        "SaveDataMask": "IXVSPW",
+        "Photons": 10000000,
+        "MinEnergy": 0.01
+    },
+    "Forward": {
+        "T0": 0,
+        "T1": 5e-09,
+        "Dt": 5e-09
+    },
+    "Optode": {
+        "Source": {
+            "Pos": [
+                10,
+                10,
+                0
+            ],
+            "Dir": [
+                0,
+                0,
+                1
+            ],
+            "IQUV": [
+                1,
+                1,
+                0,
+                0
+            ],
+            "WaveLength": 632.8
+        }
+    },
+    "Domain": {
+        "OriginType": 1,
+        "LengthUnit": 1,
+        "Media": [
+            {
+                "mua": 0,
+                "mus": 0,
+                "g": 1,
+                "n": 1
+            },
+            {
+                "mua": 0,
+                "mus": 0,
+                "g": 1,
+                "n": 1
+            }
+        ],
+        "MieScatter": [
+            {
+                "mua": 0.0,
+                "radius": 1.015,
+                "rho": 0.0001152,
+                "nsph": 1.59,
+                "nmed": 1.33
+            }
+        ],
+        "MediaFormat": "byte",
+        "Dim": [
+            20,
+            20,
+            10
+        ],
+        "VolumeFile": ""
+    },
+    "Shapes": {
+        "_ArrayType_": "uint8",
+        "_ArraySize_": [
+            20,
+            20,
+            10
+        ],
+        "_ArrayZipType_": "zlib",
+        "_ArrayZipSize_": [
+            1,
+            4000
+        ],
+        "_ArrayZipData_": "eJztwTENAAAAw6DUv+nJ2AMUAAAA8DYwlg+h"
+    }
 }

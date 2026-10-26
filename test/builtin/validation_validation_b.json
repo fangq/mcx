@@ -1,73 +1,107 @@
 {
-	"Session":	{
-		"ID":	"semi_infinite_b",
-		"Photons":	100000000,
-		"RNGSeed":	1648335518,
-		"DoMismatch":	true,
-		"DoSaveVolume":	true,
-		"DoNormalize":	true,
-		"DoPartialPath":	true,
-		"DoSaveRef":	false,
-		"DoSaveExit":	false,
-		"DoSaveSeed":	false,
-		"DoAutoThread":	true,
-		"DoDCS":	false,
-		"DoSpecular":	false,
-		"DebugFlag":	0,
-		"SaveDataMask":	5,
-		"OutputFormat":	"jnii",
-		"OutputType":	"x"
-	},
-	"Forward":	{
-		"T0":	0,
-		"T1":	4.99999996961265e-09,
-		"Dt":	1.00000001335143e-10
-	},
-	"Domain":	{
-		"MediaFormat":	"byte",
-		"LengthUnit":	1,
-		"Media":	[{
-				"mua":	0,
-				"mus":	1.19209289550781e-07,
-				"g":	1,
-				"n":	1
-			}, {
-				"mua":	0.00499999988824129,
-				"mus":	1.0101009607315063,
-				"g":	0.00999999977648258,
-				"n":	1.3700000047683716
-			}],
-		"Dim":	[60, 60, 60],
-		"OriginType":	1
-	},
-	"Optode":	{
-		"Source":	{
-			"Type":	"pencil",
-			"Pos":	[29, 29, 0],
-			"Dir":	[0, 0, 1, 0],
-			"Param1":	[0, 0, 0, 0],
-			"Param2":	[0, 0, 2.4788969833906e-42, 1.40129846432482e-45],
-			"SrcNum":	1
-		},
-		"Detector":	[{
-				"Pos":	[29, 19, 0],
-				"R":	1
-			}, {
-				"Pos":	[29, 39, 0],
-				"R":	1
-			}, {
-				"Pos":	[19, 29, 0],
-				"R":	1
-			}, {
-				"Pos":	[39, 29, 0],
-				"R":	1
-			}]
-	},
-	"Shapes":	{
-		"_ArrayType_":	"uint8",
-		"_ArraySize_":	[60, 60, 60],
-		"_ArrayZipType_":	"zlib",
-		"_ArrayZipSize_":	216000,
-		"_ArrayZipData_":	"eJztwDENAAAAwrDMv2k8cLcFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBjd4VL7g=="
-	}
+    "Session": {
+        "Photons": 100000000,
+        "RNGSeed": 1655742,
+        "DoAutoThread": 1,
+        "ID": "semi_infinite_b",
+        "DoMismatch": 1,
+        "DoNormalize": 1
+    },
+    "Forward": {
+        "T0": 0.0,
+        "T1": 5e-09,
+        "Dt": 1e-10
+    },
+    "Domain": {
+        "Dim": [
+            60,
+            60,
+            60
+        ],
+        "OriginType": 0,
+        "Media": [
+            {
+                "mua": 0,
+                "mus": 0,
+                "g": 1,
+                "n": 1
+            },
+            {
+                "mua": 0.005,
+                "mus": 1.0101010101,
+                "g": 0.01,
+                "n": 1.37
+            }
+        ]
+    },
+    "Optode": {
+        "Source": {
+            "Pos": [
+                30.0,
+                30.0,
+                1.0
+            ],
+            "Dir": [
+                0.0,
+                0.0,
+                1.0
+            ]
+        },
+        "Detector": [
+            {
+                "Pos": [
+                    30.0,
+                    20.0,
+                    1.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    30.0,
+                    40.0,
+                    1.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    20.0,
+                    30.0,
+                    1.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    40.0,
+                    30.0,
+                    1.0
+                ],
+                "R": 1.0
+            }
+        ]
+    },
+    "Shapes": [
+        {
+            "Name": "cube60"
+        },
+        {
+            "Origin": [
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "Grid": {
+                "Tag": 1,
+                "Size": [
+                    60,
+                    60,
+                    60
+                ]
+            }
+        }
+    ]
 }

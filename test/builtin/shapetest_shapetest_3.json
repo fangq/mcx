@@ -1,88 +1,240 @@
 {
-	"Session":	{
-		"ID":	"jsonshape_cmd",
-		"Photons":	1000000,
-		"RNGSeed":	29012392,
-		"DoMismatch":	true,
-		"DoSaveVolume":	true,
-		"DoNormalize":	true,
-		"DoPartialPath":	true,
-		"DoSaveRef":	false,
-		"DoSaveExit":	false,
-		"DoSaveSeed":	false,
-		"DoAutoThread":	true,
-		"DoDCS":	false,
-		"DoSpecular":	false,
-		"DebugFlag":	0,
-		"SaveDataMask":	5,
-		"OutputFormat":	"jnii",
-		"OutputType":	"x"
-	},
-	"Forward":	{
-		"T0":	0,
-		"T1":	4.99999996961265e-09,
-		"Dt":	4.99999996961265e-09
-	},
-	"Domain":	{
-		"MediaFormat":	"byte",
-		"LengthUnit":	1,
-		"Media":	[{
-				"mua":	0,
-				"mus":	1.19209289550781e-07,
-				"g":	1,
-				"n":	1
-			}, {
-				"mua":	0.00499999988824129,
-				"mus":	1,
-				"g":	0.00999999977648258,
-				"n":	1
-			}, {
-				"mua":	0.00999999977648258,
-				"mus":	2,
-				"g":	0.00999999977648258,
-				"n":	1
-			}, {
-				"mua":	0.00999999977648258,
-				"mus":	10,
-				"g":	0.88999998569488525,
-				"n":	1
-			}, {
-				"mua":	0.00499999988824129,
-				"mus":	2,
-				"g":	0.00999999977648258,
-				"n":	1
-			}],
-		"Dim":	[40, 60, 50],
-		"OriginType":	1
-	},
-	"Optode":	{
-		"Source":	{
-			"Type":	"pencil",
-			"Pos":	[29, 29, 0],
-			"Dir":	[0, 0, 1, 0],
-			"Param1":	[0, 0, 0, 0],
-			"Param2":	[0, 0, 1.66614387408221e-42, 1.40129846432482e-45],
-			"SrcNum":	1
-		},
-		"Detector":	[{
-				"Pos":	[29, 19, 0],
-				"R":	1
-			}, {
-				"Pos":	[29, 39, 0],
-				"R":	1
-			}, {
-				"Pos":	[19, 29, 0],
-				"R":	1
-			}, {
-				"Pos":	[39, 29, 0],
-				"R":	1
-			}]
-	},
-	"Shapes":	{
-		"_ArrayType_":	"uint8",
-		"_ArraySize_":	[40, 60, 50],
-		"_ArrayZipType_":	"zlib",
-		"_ArrayZipSize_":	120000,
-		"_ArrayZipData_":	"eJzty7ENAAAEALDg/59NTD7Q7o0YeajDBsMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwjBejARVUB30="
-	}
+    "Domain": {
+        "Dim": [
+            60,
+            60,
+            60
+        ],
+        "OriginType": 1,
+        "Step": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "CacheBoxP0": [
+            24,
+            24,
+            1
+        ],
+        "CacheBoxP1": [
+            34,
+            34,
+            10
+        ],
+        "Media": [
+            {
+                "mua": 0.0,
+                "mus": 0.0,
+                "g": 1.0,
+                "n": 1.0
+            },
+            {
+                "mua": 0.005,
+                "mus": 1.0,
+                "g": 0.01,
+                "n": 1.0
+            },
+            {
+                "mua": 0.01,
+                "mus": 2.0,
+                "g": 0.01,
+                "n": 1.0
+            },
+            {
+                "mua": 0.01,
+                "mus": 10.0,
+                "g": 0.89,
+                "n": 1.0
+            },
+            {
+                "mua": 0.005,
+                "mus": 2.0,
+                "g": 0.01,
+                "n": 1.0
+            }
+        ]
+    },
+    "Session": {
+        "Photons": 1000000,
+        "RNGSeed": 29012392,
+        "ID": "jsonshape_cmd"
+    },
+    "Forward": {
+        "T0": 0.0,
+        "T1": 5e-09,
+        "Dt": 5e-09
+    },
+    "Optode": {
+        "Source": {
+            "Pos": [
+                29.0,
+                29.0,
+                0.0
+            ],
+            "Dir": [
+                0.0,
+                0.0,
+                1.0
+            ]
+        },
+        "Detector": [
+            {
+                "Pos": [
+                    29.0,
+                    19.0,
+                    0.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    29.0,
+                    39.0,
+                    0.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    19.0,
+                    29.0,
+                    0.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    39.0,
+                    29.0,
+                    0.0
+                ],
+                "R": 1.0
+            }
+        ]
+    },
+    "Shapes": [
+        {
+            "Name": "Test"
+        },
+        {
+            "Origin": [
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "Grid": {
+                "Tag": 1,
+                "Size": [
+                    40,
+                    60,
+                    50
+                ]
+            }
+        },
+        {
+            "Sphere": {
+                "Tag": 2,
+                "O": [
+                    30,
+                    30,
+                    30
+                ],
+                "R": 20
+            }
+        },
+        {
+            "Box": {
+                "Tag": 0,
+                "O": [
+                    10,
+                    10,
+                    10
+                ],
+                "Size": [
+                    10,
+                    10,
+                    10
+                ]
+            }
+        },
+        {
+            "Subgrid": {
+                "Tag": 1,
+                "O": [
+                    13,
+                    13,
+                    13
+                ],
+                "Size": [
+                    5,
+                    5,
+                    5
+                ]
+            }
+        },
+        {
+            "UpperSpace": {
+                "Tag": 3,
+                "Coef": [
+                    1,
+                    -1,
+                    0,
+                    0
+                ],
+                "Equ": "A*x+B*y+C*z>D"
+            }
+        },
+        {
+            "XSlabs": {
+                "Tag": 4,
+                "Bound": [
+                    [
+                        5,
+                        15
+                    ],
+                    [
+                        35,
+                        40
+                    ]
+                ]
+            }
+        },
+        {
+            "Cylinder": {
+                "Tag": 2,
+                "C0": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "C1": [
+                    15.0,
+                    8.0,
+                    10.0
+                ],
+                "R": 4.0
+            }
+        },
+        {
+            "ZLayers": [
+                [
+                    1,
+                    10,
+                    1
+                ],
+                [
+                    11,
+                    30,
+                    2
+                ],
+                [
+                    31,
+                    50,
+                    3
+                ]
+            ]
+        }
+    ]
 }

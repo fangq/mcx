@@ -1,78 +1,124 @@
 {
-	"Session":	{
-		"ID":	"benchmark2",
-		"Photons":	100000000,
-		"RNGSeed":	29012392,
-		"DoMismatch":	true,
-		"DoSaveVolume":	true,
-		"DoNormalize":	true,
-		"DoPartialPath":	true,
-		"DoSaveRef":	false,
-		"DoSaveExit":	false,
-		"DoSaveSeed":	false,
-		"DoAutoThread":	true,
-		"DoDCS":	false,
-		"DoSpecular":	false,
-		"DebugFlag":	0,
-		"SaveDataMask":	5,
-		"OutputFormat":	"jnii",
-		"OutputType":	"x"
-	},
-	"Forward":	{
-		"T0":	0,
-		"T1":	4.99999996961265e-09,
-		"Dt":	4.99999996961265e-09
-	},
-	"Domain":	{
-		"MediaFormat":	"byte",
-		"LengthUnit":	1,
-		"Media":	[{
-				"mua":	0,
-				"mus":	1.19209289550781e-07,
-				"g":	1,
-				"n":	1
-			}, {
-				"mua":	0.00499999988824129,
-				"mus":	1,
-				"g":	0.00999999977648258,
-				"n":	1.3700000047683716
-			}, {
-				"mua":	0.0020000000949949,
-				"mus":	5,
-				"g":	0.89999997615814209,
-				"n":	1
-			}],
-		"Dim":	[60, 60, 60],
-		"OriginType":	1
-	},
-	"Optode":	{
-		"Source":	{
-			"Type":	"pencil",
-			"Pos":	[29, 29, 0],
-			"Dir":	[0, 0, 1, 0],
-			"Param1":	[0, 0, 0, 0],
-			"Param2":	[0, 0, 2.4788969833906e-42, 1.40129846432482e-45],
-			"SrcNum":	1
-		},
-		"Detector":	[{
-				"Pos":	[29, 19, 0],
-				"R":	1
-			}, {
-				"Pos":	[29, 39, 0],
-				"R":	1
-			}, {
-				"Pos":	[19, 29, 0],
-				"R":	1
-			}, {
-				"Pos":	[39, 29, 0],
-				"R":	1
-			}]
-	},
-	"Shapes":	{
-		"_ArrayType_":	"uint8",
-		"_ArraySize_":	[60, 60, 60],
-		"_ArrayZipType_":	"zlib",
-		"_ArrayZipSize_":	216000,
-		"_ArrayZipData_":	"eJzt29tS21oQRdEi///RSSpFxcYWdl/QVktjPJ/5EjjsXmX4+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFb49UcouE+T8b80F09sK/9Wpa8RAACwl+K0SuWfaSL+n8bjRe1tGo0r7cR/q9L3RnH/Fv5fAACAVRrO5313WWHj3KexWHv8dt3+XbpDAQA4hfRF2HLGDtllX9NIvKh9TN+PJ7YTv0bX3KF+LxcAoFvpMMvddW1n7IRd9pgefh89S9+NJ7Y27JAdaksCADxXOpCql1nxJNxr0z2mtlUkfS+e2NqwkdaWBAA4mI4LqXiaDdh0z1LbSju0nblDr7olAQBey58b+TOn8TSz6frbrfSdWHv81paMpCu3ZOFn7G0digCAqbKPfv7cyJ85raeZTRdKT7pxttPXcaW1JQOpLRlKH+pIeV+Hsps+9J8DACvln/38uVE4c1rPqz324PP0rJtuO/3ZbaXdp7UlI6nPFgGAAfLPfv7caD2RbLrudju1j7T51paMpBf+bBEASMk+vvlnv3ButJ45B9+DW6lN19l+l76KJ7a2ZCBdtyV9thgKb/pQAAD8lX58e1794rlhD7a326lNd/HWHoy09mAs/VKHwts8lAAA0/4GsHDnPEt/ftPZg++236V22fzWHoykU7ekvz0EgIHSb2jh2e+7Nopnzmn34HbqMz7tkvZ6ny3ag6HyIQ6lt3koAgDswXRqD7a236W21fzWHoyk9qA9CAC7yb+h+ae779oonjmn3YN+X1R7sHbmpqu09mCo/FqHwrs6FAEAhb/B73n1g3XhVCncOc/Sn9+SW+k596Atefz2ep/xVdqpm66Qrt2D+bcMAK4u+4T2vPrFc8MebG+30+Pe/IX2u9SmO0FrD4bSyXsw/ZYBAEn5pzt/MrSeOQffg7akVvsqfpn6nc9QWtyDhZ/t93UoAwBWyT/d+ZOhcKq0nki2ZHe7ndpHZ2htukh61c/48iUAsEj24c6fDPlTpfW82mMP2pJHb7fTk26rVe3MTVdpr/sZnzEIABeRPxnyp0rhRGo9zWzJUHrWjXO11qaLpD7jAwDYkj9VCidS42lmS2q1wdamK/3ACqV3dSgDANhL+lDpuJCKp9mALTlwh9qw77cTv0bLvp8vu+nSIQDAwZUOpOplVjwJ99qSA3foxTbszG1VaVd9P9t0AAB8Kh1mybuucE62nbETdujFNuzMbVVpF+6yQmrTAQBQVDgnW87YITtUO6CdussKKQAArJQ+YhvO53136Kq2snGW7aNV7dJdZtABAMDhlS7+dFzZGhPbyr+V32MEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICVfgPMUIPm"
-	}
+    "Domain": {
+        "Dim": [
+            60,
+            60,
+            60
+        ],
+        "OriginType": 1,
+        "Media": [
+            {
+                "mua": 0.0,
+                "mus": 0.0,
+                "g": 1.0,
+                "n": 1.0
+            },
+            {
+                "mua": 0.005,
+                "mus": 1.0,
+                "g": 0.01,
+                "n": 1.37
+            },
+            {
+                "mua": 0.002,
+                "mus": 5.0,
+                "g": 0.9,
+                "n": 1.0
+            }
+        ]
+    },
+    "Session": {
+        "Photons": 100000000.0,
+        "RNGSeed": 29012392,
+        "ID": "benchmark2",
+        "DoAutoThread": 1,
+        "DoMismatch": 1
+    },
+    "Forward": {
+        "T0": 0.0,
+        "T1": 5e-09,
+        "Dt": 5e-09
+    },
+    "Optode": {
+        "Source": {
+            "Type": "pencil",
+            "Pos": [
+                29.0,
+                29.0,
+                0.0
+            ],
+            "Dir": [
+                0.0,
+                0.0,
+                1.0
+            ]
+        },
+        "Detector": [
+            {
+                "Pos": [
+                    29.0,
+                    19.0,
+                    0.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    29.0,
+                    39.0,
+                    0.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    19.0,
+                    29.0,
+                    0.0
+                ],
+                "R": 1.0
+            },
+            {
+                "Pos": [
+                    39.0,
+                    29.0,
+                    0.0
+                ],
+                "R": 1.0
+            }
+        ]
+    },
+    "Shapes": [
+        {
+            "Name": "cubic60"
+        },
+        {
+            "Origin": [
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "Grid": {
+                "Tag": 1,
+                "Size": [
+                    60,
+                    60,
+                    60
+                ]
+            }
+        },
+        {
+            "Sphere": {
+                "Tag": 2,
+                "O": [
+                    30,
+                    30,
+                    30
+                ],
+                "R": 15
+            }
+        }
+    ]
 }

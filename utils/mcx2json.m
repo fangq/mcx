@@ -15,7 +15,8 @@ function varargout = mcx2json(cfg, filestub, varargin)
 %         mcxpreview supports the cfg input for both mcxlab and mmclab.
 %    filestub: (optional) the filestub is the name stub for all output files,including
 %         filestub.json: the JSON input file
-%         filestub_vol.bin: the volume file if cfg.vol is defined
+%         filestub_vol.bin: the volume file if cfg.vol is defined; not written when
+%              cfg.shapes is drawn over a uniform cfg.vol, which becomes a Grid shape
 %         filestub_shapes.json: the domain shape file if cfg.shapes is defined
 %
 % Output:
@@ -137,7 +138,11 @@ if (isfield(cfg, 'vol') && ~isempty(cfg.vol) && ~isfield(Domain, 'VolumeFile'))
         Domain.Dim(1) = [];
     end
     if (exist('Shapes', 'var'))
-        if (isempty(regexp(savejson('', Shapes, 'compact', 1), '"Grid"', 'once')))
+        if (isempty(regexp(savejson('', Shapes, 'compact', 1), '"Grid"', 'once')) && ...
+            length(Domain.Dim) == 3 && all(cfg.vol(:) == cfg.vol(1)))
+            % shapes drawn over a uniform volume: a leading Grid object replaces the volume file
+            Shapes = [{struct('Grid', struct('Tag', double(cfg.vol(1)), 'Size', Domain.Dim))}, Shapes(:)'];
+        elseif (isempty(regexp(savejson('', Shapes, 'compact', 1), '"Grid"', 'once')))
             Domain.VolumeFile = [filestub '_vol.bin'];
             fid = fopen(Domain.VolumeFile, 'wb');
             fwrite(fid, cfg.vol, class(cfg.vol));

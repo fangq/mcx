@@ -106,8 +106,8 @@ mcxlab_demo_validation_heterogeneous_1 1e6 10.88791 0
 mcxlab_demo_validation_heterogeneous_2 1e6 10.89672 0
 mcxlab_demo_validation_homogeneous_1 1e6 17.63813 0
 mcxlab_demo_validation_homogeneous_2 1e6 27.19052 0
-muamus_muamus 1e6 54.86218 0
-muamus_muamusgn 1e6 54.82541 0
+muamus_muamus 1e6 54.88835 0
+muamus_muamusgn 1e6 54.85710 0
 multipattern_multipattern 1e6 30.17693,29.37444,28.80073 0
 multisrc_eachsrc 1e6 32.31888 0
 multisrc_multisrc 1e6 32.31863 0
@@ -121,7 +121,7 @@ rfreplay_rfreplay_1 1e6 27.13174 1465
 shapetest_shapetest_3 1e6 16.48328 2756
 shapetest_shapetest_4 1e6 19.33856 2707
 shapetest_shapetest_5 1e6 19.34128 2708
-skinvessel_mcxyz_bench 1e6 39.69121 0
+skinvessel_mcxyz_bench 1e6 39.57334 0
 sphbox_spherebox 1e6 10.92243 0
 srctest_0benchmark-pencil 1e6 27.19321 4410
 srctest_10benchmark-fourierx2d 1e6 25.50539 6528
