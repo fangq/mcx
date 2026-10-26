@@ -558,9 +558,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
                 /** adjoint Jacobian: return in separate named fields (flux.jmua, flux.jd, etc.) */
                 if (MCX_IS_ADJOINT_TYPE(cfg.outputtype) && cfg.exportjacob) {
-                    unsigned int Ns = cfg.extrasrclen + 1 - cfg.detnum;
-                    unsigned int Nd = cfg.detnum;
-                    int nsrcpairs   = (int)(Ns * Nd);
+                    int nsrcpairs   = (int)mcx_jacchannels(&cfg); /* Ns*Nd, or the rows of cfg.sdmap */
                     int isdual      = MCX_IS_DUAL_ADJOINT_TYPE(cfg.outputtype);
                     int isrf        = (cfg.omega > 0.f) ? 1 : 0;
                     size_t adjlen   = (size_t)cfg.dim.x * cfg.dim.y * cfg.dim.z * nsrcpairs;
@@ -1154,6 +1152,38 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             }
 
         printf("mcx.detdir=[%d rows];\n", (int)arraydim[0]);
+    } else if (strcmp(name, "sdmap") == 0) {
+        arraydim = mxGetDimensions(item);
+
+        if (cfg->sdmap) {
+            free(cfg->sdmap);
+            cfg->sdmap = NULL;
+        }
+
+        cfg->sdmaplen = 0;
+
+        if (mxGetNumberOfElements(item) == 0) {
+            return;
+        }
+
+        if (!mxIsDouble(item) || mxIsComplex(item) || arraydim[1] < 2) {
+            mexErrMsgTxt("the 'sdmap' field must be a real matrix with 2 or more columns (srcid,detid,...)");
+        }
+
+        double* val = mxGetPr(item);
+        cfg->sdmaplen = arraydim[0];
+        cfg->sdmap = (unsigned int*)malloc(sizeof(unsigned int) * 2 * cfg->sdmaplen);
+
+        for (unsigned int ii = 0; ii < cfg->sdmaplen; ii++) {
+            if (val[ii] < 1 || val[arraydim[0] + ii] < 1) {
+                mexErrMsgTxt("the source and detector indices in 'sdmap' start from 1");
+            }
+
+            cfg->sdmap[ii << 1] = (unsigned int)val[ii] - 1;
+            cfg->sdmap[(ii << 1) + 1] = (unsigned int)val[arraydim[0] + ii] - 1;
+        }
+
+        printf("mcx.sdmap=[%d channels];\n", cfg->sdmaplen);
     } else if (strcmp(name, "prop") == 0) {
         arraydim = mxGetDimensions(item);
 

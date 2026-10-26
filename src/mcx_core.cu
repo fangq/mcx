@@ -1904,7 +1904,7 @@ __device__ static inline float mcx_fd_grad(const OutputType* field, unsigned int
 /**
  * @brief Adjoint D-coefficient Jacobian kernel: dot product of gradients of source and detector fluences.
  *
- * For each voxel, computes J_D(s,d) = ∇φ_src · ∇φ_det, where gradients are in voxel units
+ * For each voxel and channel (s,d), computes J_D(s,d) = ∇φ_src · ∇φ_det, where gradients are in voxel units
  * (caller must multiply by unitinmm to convert: J_D_physical = J_D_kernel * unitinmm).
  * For RF (complex) fields the complex dot product is computed:
  *   Re(J_D) = ∇Re(φ_src)·∇Re(φ_det) − ∇Im(φ_src)·∇Im(φ_det)
@@ -1916,14 +1916,15 @@ __device__ static inline float mcx_fd_grad(const OutputType* field, unsigned int
  * @param[in]  dimxyz     Nx*Ny*Nz
  * @param[in]  maxgate    number of time gates
  * @param[in]  Ns         number of original sources
- * @param[in]  Nd         number of detectors
+ * @param[in]  gsdmap     0-based (source, detector) index pair of each output channel, 2*nch values
+ * @param[in]  nch        number of channels (Ns*Nd, or the rows of cfg.sdmap)
  * @param[in]  Nx         domain size in x
  * @param[in]  Ny         domain size in y
  */
 __global__ void mcx_adjoint_dcoeff_kernel(OutputType* gfield_re, OutputType* gfield_im,
         float* gadjoint,
         unsigned int dimxyz, unsigned int maxgate,
-        unsigned int Ns, unsigned int Nd,
+        unsigned int Ns, const unsigned int* gsdmap, unsigned int nch,
         unsigned int Nx, unsigned int Ny) {
     unsigned int vox = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -1937,37 +1938,44 @@ __global__ void mcx_adjoint_dcoeff_kernel(OutputType* gfield_re, OutputType* gfi
     unsigned int iy  = (vox / Nx) % Ny;
     unsigned int iz  = vox / Nxy;
 
-    size_t adjointlen = (size_t)dimxyz * Ns * Nd;
+    size_t adjointlen = (size_t)dimxyz * nch;
+    unsigned int lasts = 0xFFFFFFFFu;
+    float gsx_re = 0.f, gsy_re = 0.f, gsz_re = 0.f, gsx_im = 0.f, gsy_im = 0.f, gsz_im = 0.f;
 
-    for (unsigned int s = 0; s < Ns; s++) {
-        float gsx_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, ix, Nx, 1);
-        float gsy_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, iy, Ny, Nx);
-        float gsz_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, iz, Nz, Nxy);
-        float gsx_im = 0.f, gsy_im = 0.f, gsz_im = 0.f;
+    /* one output per channel (source-detector pair of gsdmap); the source gradient is reused
+       while consecutive channels share the source */
+    for (unsigned int c = 0; c < nch; c++) {
+        unsigned int s = gsdmap[c << 1], d = gsdmap[(c << 1) + 1];
 
-        if (gfield_im) {
-            gsx_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, ix, Nx, 1);
-            gsy_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, iy, Ny, Nx);
-            gsz_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, iz, Nz, Nxy);
-        }
-
-        for (unsigned int d = 0; d < Nd; d++) {
-            float gdx_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, ix, Nx, 1);
-            float gdy_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, iy, Ny, Nx);
-            float gdz_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, iz, Nz, Nxy);
-
-            unsigned int out_idx = vox + (s * Nd + d) * dimxyz;
-            gadjoint[out_idx] = gsx_re * gdx_re + gsy_re * gdy_re + gsz_re * gdz_re;
+        if (s != lasts) {
+            gsx_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, ix, Nx, 1);
+            gsy_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, iy, Ny, Nx);
+            gsz_re = mcx_fd_grad(gfield_re, vox, s, maxgate, dimxyz, iz, Nz, Nxy);
 
             if (gfield_im) {
-                float gdx_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, ix, Nx, 1);
-                float gdy_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, iy, Ny, Nx);
-                float gdz_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, iz, Nz, Nxy);
-
-                gadjoint[out_idx] -= gsx_im * gdx_im + gsy_im * gdy_im + gsz_im * gdz_im;
-                gadjoint[out_idx + adjointlen] = gsx_re * gdx_im + gsy_re * gdy_im + gsz_re * gdz_im
-                                                 + gsx_im * gdx_re + gsy_im * gdy_re + gsz_im * gdz_re;
+                gsx_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, ix, Nx, 1);
+                gsy_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, iy, Ny, Nx);
+                gsz_im = mcx_fd_grad(gfield_im, vox, s, maxgate, dimxyz, iz, Nz, Nxy);
             }
+
+            lasts = s;
+        }
+
+        float gdx_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, ix, Nx, 1);
+        float gdy_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, iy, Ny, Nx);
+        float gdz_re = mcx_fd_grad(gfield_re, vox, Ns + d, maxgate, dimxyz, iz, Nz, Nxy);
+
+        size_t out_idx = vox + (size_t)c * dimxyz;
+        gadjoint[out_idx] = gsx_re * gdx_re + gsy_re * gdy_re + gsz_re * gdz_re;
+
+        if (gfield_im) {
+            float gdx_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, ix, Nx, 1);
+            float gdy_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, iy, Ny, Nx);
+            float gdz_im = mcx_fd_grad(gfield_im, vox, Ns + d, maxgate, dimxyz, iz, Nz, Nxy);
+
+            gadjoint[out_idx] -= gsx_im * gdx_im + gsy_im * gdy_im + gsz_im * gdz_im;
+            gadjoint[out_idx + adjointlen] = gsx_re * gdx_im + gsy_re * gdy_im + gsz_re * gdz_im
+                                             + gsx_im * gdx_re + gsy_im * gdy_re + gsz_im * gdz_re;
         }
     }
 }
@@ -1977,7 +1985,7 @@ __global__ void mcx_adjoint_dcoeff_kernel(OutputType* gfield_re, OutputType* gfi
  *
  * For each voxel, this kernel:
  *   1. Integrates all time gates into a CW fluence per source/detector
- *   2. For each source-detector pair, computes the (complex) product of CW fluences
+ *   2. For each source-detector pair (channel) in gsdmap, computes the (complex) product of CW fluences
  *
  * @param[in]  gfield_re  merged real field [dimxyz * maxgate * (Ns+Nd)], shadow already summed
  * @param[in]  gfield_im  merged imag field same layout, or NULL for CW (non-RF) mode
@@ -1985,50 +1993,60 @@ __global__ void mcx_adjoint_dcoeff_kernel(OutputType* gfield_re, OutputType* gfi
  * @param[in]  dimxyz     total number of voxels (Nx*Ny*Nz)
  * @param[in]  maxgate    number of time gates
  * @param[in]  Ns         number of original (non-detector) sources
- * @param[in]  Nd         number of detectors
+ * @param[in]  gsdmap     0-based (source, detector) index pair of each output channel, 2*nch values
+ * @param[in]  nch        number of channels (Ns*Nd, or the rows of cfg.sdmap)
  */
 __global__ void mcx_adjoint_kernel(OutputType* gfield_re, OutputType* gfield_im,
                                    float* gadjoint,
                                    unsigned int dimxyz, unsigned int maxgate,
-                                   unsigned int Ns, unsigned int Nd) {
+                                   unsigned int Ns, const unsigned int* gsdmap, unsigned int nch) {
     unsigned int vox = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vox >= dimxyz) {
         return;
     }
 
-    size_t adjointlen = (size_t)dimxyz * Ns * Nd;
+    size_t adjointlen = (size_t)dimxyz * nch;
+    unsigned int lasts = 0xFFFFFFFFu;
+    float cw_src_re = 0.f, cw_src_im = 0.f;
 
-    for (unsigned int s = 0; s < Ns; s++) {
-        float cw_src_re = 0.f, cw_src_im = 0.f;
+    /* one output per channel (source-detector pair of gsdmap); the time-integrated source
+       fluence is reused while consecutive channels share the source */
+    for (unsigned int c = 0; c < nch; c++) {
+        unsigned int s = gsdmap[c << 1], d = gsdmap[(c << 1) + 1];
 
-        for (unsigned int t = 0; t < maxgate; t++) {
-            unsigned int idx = vox + (t + s * maxgate) * dimxyz;
-            cw_src_re += (float)gfield_re[idx];
-
-            if (gfield_im) {
-                cw_src_im += (float)gfield_im[idx];
-            }
-        }
-
-        for (unsigned int d = 0; d < Nd; d++) {
-            float cw_det_re = 0.f, cw_det_im = 0.f;
+        if (s != lasts) {
+            cw_src_re = 0.f;
+            cw_src_im = 0.f;
 
             for (unsigned int t = 0; t < maxgate; t++) {
-                unsigned int idx = vox + (t + (Ns + d) * maxgate) * dimxyz;
-                cw_det_re += (float)gfield_re[idx];
+                size_t idx = vox + (size_t)(t + s * maxgate) * dimxyz;
+                cw_src_re += (float)gfield_re[idx];
 
                 if (gfield_im) {
-                    cw_det_im += (float)gfield_im[idx];
+                    cw_src_im += (float)gfield_im[idx];
                 }
             }
 
-            unsigned int out_idx = vox + (s * Nd + d) * dimxyz;
-            gadjoint[out_idx] = cw_src_re * cw_det_re - cw_src_im * cw_det_im;
+            lasts = s;
+        }
+
+        float cw_det_re = 0.f, cw_det_im = 0.f;
+
+        for (unsigned int t = 0; t < maxgate; t++) {
+            size_t idx = vox + (size_t)(t + (Ns + d) * maxgate) * dimxyz;
+            cw_det_re += (float)gfield_re[idx];
 
             if (gfield_im) {
-                gadjoint[out_idx + adjointlen] = cw_src_re * cw_det_im + cw_src_im * cw_det_re;
+                cw_det_im += (float)gfield_im[idx];
             }
+        }
+
+        size_t out_idx = vox + (size_t)c * dimxyz;
+        gadjoint[out_idx] = cw_src_re * cw_det_re - cw_src_im * cw_det_im;
+
+        if (gfield_im) {
+            gadjoint[out_idx + adjointlen] = cw_src_re * cw_det_im + cw_src_im * cw_det_re;
         }
     }
 }
@@ -4485,22 +4503,30 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
          *   otAdjointDcoeff:   J_D(s,d)[vox]   =  ∇φ_src · ∇φ_det * unitinmm
          *   otAdjointMus:      J_mus = J_D * 3*D²*(1-g) per voxel
          *   otAdjointMusp:     J_musp= J_D * 3*D²       per voxel
-         *   otAdjointMuaD:     [J_mua, J_D]   paired output, size [Nx,Ny,Nz,Ns*Nd,2]
-         *   otAdjointMuaMusp:  [J_mua, J_musp] paired output, size [Nx,Ny,Nz,Ns*Nd,2]
+         *   otAdjointMuaD:     [J_mua, J_D]   paired output, size [Nx,Ny,Nz,Nch,2]
+         *   otAdjointMuaMusp:  [J_mua, J_musp] paired output, size [Nx,Ny,Nz,Nch,2]
+         * Nch is Ns*Nd (all source-detector pairs, detector index varying the fastest), or the
+         * number of rows of cfg.sdmap/Optode.SDMap, which lists the channels to compute.
          * Runs after normalization; for RF adjoint (omega>0) the complex fields are used.
          */
         if (cfg->issave2pt && MCX_IS_ADJOINT_TYPE(cfg->outputtype) && cfg->exportfield) {
             int isrf = (cfg->omega > 0.f && cfg->seed != SEED_FROM_FILE) ? 1 : 0;
             int isdual = MCX_IS_DUAL_ADJOINT_TYPE(cfg->outputtype);
             unsigned int Ns = cfg->extrasrclen + 1 - cfg->detnum; /**< count of original sources */
-            unsigned int Nd = cfg->detnum;
+            unsigned int nch = mcx_jacchannels(cfg); /**< count of Jacobian channels (source-detector pairs) */
             unsigned int pure_voxels = (unsigned int)dimlen.z; /**< Nx*Ny*Nz, without multi-source multiplier */
-            size_t adjointlen = (size_t)pure_voxels * Ns * Nd;
+            size_t adjointlen = (size_t)pure_voxels * nch;
             size_t single_exportlen = adjointlen * (isrf ? 2 : 1);
             size_t exportlen = single_exportlen * (isdual ? 2 : 1);
             OutputType* gfield_tmp = NULL;
             float* gadjoint_tmp = NULL;
             float* gadjoint_mua = NULL;  /**< first Jacobian (mua) for dual output */
+            unsigned int* gsdmap = NULL; /**< (source, detector) pair of each channel */
+            unsigned int* hsdmap = mcx_getsdmap(cfg);
+
+            CUDA_ASSERT(cudaMalloc((void**)&gsdmap, sizeof(unsigned int) * 2 * (nch > 0 ? nch : 1)));
+            CUDA_ASSERT(cudaMemcpy(gsdmap, hsdmap, sizeof(unsigned int) * 2 * nch, cudaMemcpyHostToDevice));
+            free(hsdmap);
 
             /** Upload the merged (shadow-summed) exportfield to the GPU */
             CUDA_ASSERT(cudaMalloc((void**)&gfield_tmp, sizeof(OutputType) * fieldlen * (isrf ? 2 : 1)));
@@ -4519,12 +4545,12 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                 mcx_adjoint_kernel <<< adjgridsize, adjblocksize>>>(
                     gfield_tmp,
                     isrf ? gfield_tmp + fieldlen : NULL,
-                    gadjoint_mua, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
+                    gadjoint_mua, pure_voxels, gpu[gpuid].maxgate, Ns, gsdmap, nch);
 
                 mcx_adjoint_dcoeff_kernel <<< adjgridsize, adjblocksize>>>(
                     gfield_tmp,
                     isrf ? gfield_tmp + fieldlen : NULL,
-                    gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd,
+                    gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, gsdmap, nch,
                     cfg->dim.x, cfg->dim.y);
             } else {
                 CUDA_ASSERT(cudaMalloc((void**)&gadjoint_tmp, sizeof(float) * single_exportlen));
@@ -4535,13 +4561,13 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                     mcx_adjoint_kernel <<< adjgridsize, adjblocksize>>>(
                         gfield_tmp,
                         isrf ? gfield_tmp + fieldlen : NULL,
-                        gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd);
+                        gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, gsdmap, nch);
                 } else {
                     /** D/mus/musp Jacobian: dot-product of fluence gradients (in voxel units) */
                     mcx_adjoint_dcoeff_kernel <<< adjgridsize, adjblocksize>>>(
                         gfield_tmp,
                         isrf ? gfield_tmp + fieldlen : NULL,
-                        gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, Nd,
+                        gadjoint_tmp, pure_voxels, gpu[gpuid].maxgate, Ns, gsdmap, nch,
                         cfg->dim.x, cfg->dim.y);
                 }
             }
@@ -4549,6 +4575,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             CUDA_ASSERT(cudaGetLastError());
             CUDA_ASSERT(cudaDeviceSynchronize());
             CUDA_ASSERT(cudaFree(gfield_tmp));
+            CUDA_ASSERT(cudaFree(gsdmap));
 
             if (isdual) {
                 /**
@@ -4557,7 +4584,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                  *   RF:  [Re(J_mua)(adjointlen), Re(J_second)(adjointlen),
                  *          Im(J_mua)(adjointlen), Im(J_second)(adjointlen)]
                  * This layout lets the existing MATLAB/Python complex conversion produce
-                 * a [Nx,Ny,Nz,Ns*Nd,2] complex array where [:,:,:,:,1]=J_mua, [:,:,:,:,2]=J_second.
+                 * a [Nx,Ny,Nz,Nch,2] complex array where [:,:,:,:,1]=J_mua, [:,:,:,:,2]=J_second.
                  */
                 float* hmua    = (float*)malloc(single_exportlen * sizeof(float));
                 float* hsecond = (float*)malloc(single_exportlen * sizeof(float));
@@ -4591,7 +4618,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                             }
                         }
 
-                        for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
+                        for (unsigned int sd = 0; sd < nch; sd++) {
                             hsecond[vox + (size_t)sd * pure_voxels] *= opscale;
 
                             if (isrf) {
@@ -4660,7 +4687,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                             }
                         }
 
-                        for (unsigned int sd = 0; sd < Ns * Nd; sd++) {
+                        for (unsigned int sd = 0; sd < nch; sd++) {
                             cfg->exportjacob[vox + (size_t)sd * pure_voxels] *= opscale;
 
                             if (isrf) {
@@ -4687,7 +4714,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             /* the adjoint modes save the Jacobians, whose dimensions mcx_savedata uses, rather
                than the forward fluence of each source/detector slot kept in exportfield */
             if (MCX_IS_ADJOINT_TYPE(cfg->outputtype) && cfg->exportjacob && cfg->seed != SEED_FROM_FILE && cfg->detdir != NULL) {
-                size_t jacoblen = (size_t)dimxyz * (cfg->extrasrclen + 1 - cfg->detnum) * cfg->detnum
+                size_t jacoblen = (size_t)dimxyz * mcx_jacchannels(cfg)
                                   * (MCX_IS_DUAL_ADJOINT_TYPE(cfg->outputtype) ? 2 : 1) * ((cfg->omega > 0.f) ? 2 : 1);
                 mcx_savedata(cfg->exportjacob, jacoblen, cfg);
             } else {

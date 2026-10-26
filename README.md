@@ -733,6 +733,7 @@ The fields MCX reads:
 | `Source.Frequency` | modulation frequency (Hz) for frequency-domain (RF) outputs |
 | `Source.IQUV`, `Source.WaveLength` | Stokes vector and wavelength (nm) for polarized MC |
 | `Detector` | array of `{"Pos": [x,y,z], "R": radius}`, and `"Dir"` for the adjoint outputs |
+| `SDMap` | channels of the adjoint Jacobians: an array of `[srcid, detid]` arrays (1-based; extra values ignored); default: all source-detector pairs |
 
 `Optode.Source` can also be an array of sources, each with its own `Type`, `Pos`,
 `Dir` and parameters. Several examples are in the `example/` folder, for example
@@ -1218,6 +1219,16 @@ forward and adjoint fluences. MCX provides mua (`adjoint`), diffusion coefficien
 of them at once (`adjoint_mua_d`, `adjoint_mua_musp`), in CW and, with a modulation
 frequency, in the frequency domain. MCXLAB/PMCX return the forward fluence of every
 source and detector in `flux.data` and the Jacobians in `flux.jmua`, `flux.jd`, ...
+The Jacobians have one channel per source-detector pair, `[Nx,Ny,Nz,Ns*Nd]` with the
+detector index varying the fastest; to compute only some pairs, list them, in the
+order wanted, as rows of `[srcid detid]` (1-based) in `Optode.SDMap` or `cfg.sdmap`,
+and the Jacobians become `[Nx,Ny,Nz,Nch]`, one channel per row:
+```json
+"Optode": {"Source": {"Pos": [[29,29,0],[20,29,0]], "Dir": [[0,0,1],[0,0,1]]},
+           "Detector": [{"Pos": [30,20,0], "R": 2, "Dir": [0,0,1]},
+                        {"Pos": [40,30,0], "R": 2, "Dir": [0,0,1]}],
+           "SDMap": [[1,1], [2,2]]}
+```
 Examples: `demo_mcx_adjoint_jacobian.m` and the `demo_validate_mcx_adjoint_*.py`
 scripts. The Redbird toolboxes use these outputs for image reconstruction.
 

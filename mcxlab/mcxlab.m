@@ -190,6 +190,14 @@ function varargout = mcxlab(varargin)
 %      cfg.detdir:     an Nx4 array, one row per detector: [vx vy vz focal length],
 %                      the inward direction of each detector, required by the
 %                      adjoint outputs (the detectors are launched as sources)
+%      cfg.sdmap:      an Nch x 2 (or wider) array selecting the channels of the
+%                      adjoint Jacobians: each row is [srcid detid], both 1-based
+%                      (srcid counts the rows of cfg.srcpos, detid the rows of
+%                      cfg.detpos); extra columns are ignored. The Jacobians then
+%                      have Nch channels, in the row order of cfg.sdmap, instead
+%                      of all Ns*Nd pairs. Default: all pairs, with the detector
+%                      index varying the fastest, i.e. [srcid detid] =
+%                      [1 1; 1 2; ... 1 Nd; 2 1; ...]
 %      cfg.bc:         per-face boundary conditions, a string of up to 12 letters;
 %                      letters 1-6 are the -x,-y,-z,+x,+y,+z bounding box faces:
 %                        '_': use cfg.isreflect   'r': Fresnel reflection
@@ -255,7 +263,8 @@ function varargout = mcxlab(varargin)
 %                      adjoint Jacobians (need cfg.detpos and cfg.detdir; every
 %                      detector is also run as a source, and the Jacobian of
 %                      each source-detector pair is returned in its own field of
-%                      the 1st output, [Nx,Ny,Nz,Ns*Nd], complex if cfg.omega>0):
+%                      the 1st output, [Nx,Ny,Nz,Ns*Nd], or [Nx,Ny,Nz,Nch] with
+%                      cfg.sdmap, complex if cfg.omega>0):
 %                      'adjoint'          mua Jacobian, fluence.jmua
 %                      'adjoint_dcoeff'   diffusion coefficient D=1/(3mus')
 %                                         Jacobian, fluence.jd
@@ -423,7 +432,7 @@ if (isstruct(varargin{1}))
                     'respin', 'isref3', 'isrefint', 'isgpuinfo', 'issrcfrom0', 'autopilot', 'minenergy', 'unitinmm', ...
                     'voidtime', 'issavedet', 'issaveseed', 'issaveref', 'issaveexit', 'ismomentum', 'isspecular', ...
                     'replaydet', 'maxvoidstep', 'maxjumpdebug', 'gscatter', 'srcnum', 'srcid', 'omega', 'issave2pt', ...
-                    'lambda', 'steps', 'crop0', 'crop1', 'istrajstokes'};
+                    'lambda', 'steps', 'crop0', 'crop1', 'istrajstokes', 'detdir', 'sdmap'};
         for j = 1:length(castlist)
             if (isfield(varargin{1}(i), castlist{j}))
                 varargin{1}(i).(castlist{j}) = double(varargin{1}(i).(castlist{j}));

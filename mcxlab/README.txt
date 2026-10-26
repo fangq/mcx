@@ -407,8 +407,10 @@ the verbose command line options in MCX.
                        == Adjoint (forward-mode) Jacobians - requires cfg.detpos and cfg.detdir ==
                        'adjoint' - mua Jacobian (forward mode, no replay):
                               J_mua[r] = -phi_src[r]*phi_det[r]*dV [mm^-1]
-                              output: real array [Nx,Ny,Nz,Ns*Nd] (CW) or
-                              complex [Nx,Ny,Nz,Ns*Nd] (RF, when cfg.omega>0)
+                              output: real array [Nx,Ny,Nz,Nch] (CW) or
+                              complex [Nx,Ny,Nz,Nch] (RF, when cfg.omega>0), where
+                              Nch=Ns*Nd (all source-detector pairs, detector index
+                              varying the fastest), or the number of rows of cfg.sdmap
                        'adjoint_dcoeff' - diffusion coefficient D=1/(3*mus') Jacobian:
                               J_D[r] = grad(phi_src)[r] . grad(phi_det)[r] * dV [mm^-3]
                               gradients computed via 2nd-order finite differences
@@ -420,6 +422,8 @@ the verbose command line options in MCX.
                        'adjoint_musp' - reduced scattering coeff mus'=(1-g)*mus Jacobian:
                               J_musp[r] = J_D[r] * 3*D^2 = J_D[r]/(3*(1-g)^2*mus^2)
                               uses each voxel's own mus and g from cfg.prop
+                       cfg.sdmap: an Nch x 2 (or wider) array of 1-based [srcid detid] rows
+                              selecting the adjoint Jacobian channels, in that order
  
                        for types jacobian/wl/wp, example: <demo_mcxlab_replay.m>
                            and  <demo_replay_timedomain.m>

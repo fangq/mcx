@@ -183,6 +183,10 @@ runok "adjoint mus' Jacobian" adjv.jnii --bench cube60 -n 1e5 -O v -s adjv --jso
 runok "dual adjoint mua/D Jacobians" adjw.jnii --bench cube60 -n 1e5 -O w -s adjw --json "$DET1"
 runok "dual adjoint mua/mus' Jacobians" adjq.jnii --bench cube60 -n 1e5 -O q -s adjq --json "$DET1"
 runok "RF dual adjoint Jacobians" adjrf.jnii --bench cube60 -n 1e5 -O w -s adjrf --json "$DETRF"
+DETMAP='{"Optode":{"Detector":[{"Pos":[30,20,0],"R":2,"Dir":[0,0,1]},{"Pos":[30,40,0],"R":2,"Dir":[0,0,1]},{"Pos":[40,30,0],"R":2,"Dir":[0,0,1]}],"SDMap":[[1,3],[1,1]]}}'
+runok "adjoint Jacobians of the channels in Optode.SDMap" adjmap.jnii --bench cube60 -n 1e5 -O w -s adjmap --json "$DETMAP"
+echo "test adjoint Jacobian dimensions follow Optode.SDMap ... "
+if [ -z "`tr -d '\n\t ' < adjmap.jnii 2>/dev/null | grep -o '"Dim":\[60,60,60,2,2\]'`" ]; then echo "fail to size the Jacobians by Optode.SDMap"; fail=$((fail+1)); else echo "ok"; fi
 runok "RF forward fluence" rffwd.jnii --bench cube60 -n 1e5 -O r -s rffwd --json '{"Optode":{"Source":{"Frequency":1e8}}}'
 runok "forward fluence of each source and detector slot (srcid -2)" srcm2.jnii --bench cube60 -n 1e5 --srcid -2 -s srcm2 --json "$DET1"
 "$MCX" --bench cube60b -n 1e5 -s replaytest -q 1 -w DP -S 0 $PARAM > /dev/null 2>&1

@@ -552,12 +552,17 @@ def mcxlab(*args):
 
         Adjoint (forward-mode) Jacobians - requires cfg['detpos'] and cfg['detdir']:
              'adjoint'        - mua Jacobian: J_mua[r]=-phi_src[r]*phi_det[r]*dV [mm^-1]
-                                output: real [Nx,Ny,Nz,Ns*Nd] (CW) or complex (RF)
+                                output: real [Nx,Ny,Nz,Nch] (CW) or complex (RF),
+                                Nch=Ns*Nd, or the rows of cfg['sdmap']
              'adjoint_dcoeff' - D=1/(3*mus') Jacobian via gradient dot-product:
                                 J_D[r] = grad(phi_src).grad(phi_det)*dV [mm^-3]
                                 2nd-order FD gradients; normalization: kernel*unitinmm
              'adjoint_mus'    - mus Jacobian: J_mus = J_D/(3*(1-g)*mus^2) per voxel
              'adjoint_musp'   - mus' Jacobian: J_musp = J_D/(3*(1-g)^2*mus^2) per voxel
+        cfg['sdmap']:    an Nch x 2 (or wider) array of 1-based [srcid, detid] rows
+                          selecting the adjoint Jacobian channels, in that order;
+                          the Jacobians are then [Nx,Ny,Nz,Nch] instead of
+                          [Nx,Ny,Nz,Ns*Nd] (all pairs, detector index fastest)
 
         cfg['omega']:    source modulation angular frequency in rad/s (2*pi*f);
                           required for RF forward and RF replay modes

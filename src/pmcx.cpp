@@ -702,6 +702,44 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             }
     }
 
+    if (user_cfg.contains("sdmap")) {
+        auto f_style_volume = py::array_t < double, py::array::f_style | py::array::forcecast >::ensure(user_cfg["sdmap"]);
+
+        if (!f_style_volume) {
+            throw py::value_error("Invalid sdmap field value");
+        }
+
+        auto buffer_info = f_style_volume.request();
+
+        if (mcx_config.sdmap) {
+            free(mcx_config.sdmap);
+            mcx_config.sdmap = nullptr;
+        }
+
+        mcx_config.sdmaplen = 0;
+
+        if (buffer_info.size > 0) {
+            if ((buffer_info.shape.size() > 1 && buffer_info.shape.at(1) < 2) || (buffer_info.shape.size() == 1 && buffer_info.shape.at(0) < 2) || buffer_info.shape.size() > 2) {
+                throw py::value_error("the 'sdmap' field must have 2 or more columns (srcid,detid,...)");
+            }
+
+            unsigned int nch = (buffer_info.shape.size() == 1) ? 1 : buffer_info.shape.at(0);
+            auto val = static_cast<double*>(buffer_info.ptr);
+
+            mcx_config.sdmap = (unsigned int*) malloc(sizeof(unsigned int) * 2 * nch);
+            mcx_config.sdmaplen = nch;
+
+            for (unsigned int ii = 0; ii < nch; ii++) {
+                if (val[ii] < 1 || val[nch + ii] < 1) {
+                    throw py::value_error("the source and detector indices in 'sdmap' start from 1");
+                }
+
+                mcx_config.sdmap[ii << 1] = (unsigned int)val[ii] - 1;
+                mcx_config.sdmap[(ii << 1) + 1] = (unsigned int)val[nch + ii] - 1;
+            }
+        }
+    }
+
     if (user_cfg.contains("prop")) {
         auto f_style_volume = py::array_t < float, py::array::f_style | py::array::forcecast >::ensure(user_cfg["prop"]);
 
@@ -1404,9 +1442,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
 
             /** adjoint Jacobian: return in separate named output keys (jmua, jd, jmus, etc.) */
             if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) && mcx_config.exportjacob) {
-                unsigned int Ns = mcx_config.extrasrclen + 1 - mcx_config.detnum;
-                unsigned int Nd = mcx_config.detnum;
-                int nsrcpairs = (int)(Ns * Nd);
+                int nsrcpairs = (int)mcx_jacchannels(&mcx_config); /* Ns*Nd, or the rows of cfg['sdmap'] */
                 int isdual    = MCX_IS_DUAL_ADJOINT_TYPE(mcx_config.outputtype);
                 int isrf      = (mcx_config.omega > 0.f) ? 1 : 0;
                 size_t adjlen = (size_t)mcx_config.dim.x * mcx_config.dim.y * mcx_config.dim.z * nsrcpairs;
