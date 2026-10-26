@@ -41,7 +41,7 @@ if (nargout > 0)
     hs = cell(len, 1);
 end
 
-rngstate = rand ('state');
+rngstate = rng();
 
 randseed = hex2dec('623F9A9E');
 rand('state', randseed);
@@ -219,4 +219,6 @@ if (~isholdplot)
     hold off;
 end
 
-rand ('state', rngstate);
+rng (rngstate);
+
+end
