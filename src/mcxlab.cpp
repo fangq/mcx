@@ -258,6 +258,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
             /** Initialize cfg with default values first */
             mcx_initcfg(&cfg);
+            cfg.flog = stderr;
             detps = NULL;
 
             /** Read each struct element from input and set value to the cfg configuration */
@@ -687,6 +688,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
             free(detps);
         }
 
+        /** Close the log file opened by cfg.flog */
+        if (cfg.flog && cfg.flog != stdout && cfg.flog != stderr) {
+            fclose(cfg.flog);
+        }
+
         mcx_cleargpuinfo(&gpuinfo);
         mcx_clearcfg(&cfg);
     }
@@ -716,7 +722,6 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         return;
     }
 
-    cfg->flog = stderr;
     GET_1ST_FIELD(cfg, nphoton)
     GET_ONE_FIELD(cfg, nblocksize)
     GET_ONE_FIELD(cfg, nthread)
@@ -1498,11 +1503,11 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         printf("mcx.workload=<<%ld>>;\n", arraydim[0]*arraydim[1]);
     } else if (strcmp(name, "flog") == 0) {
         int len = mxGetNumberOfElements(item);
-        char logfile[MAX_SESSION_LENGTH] = {'\0'};
+        char logfile[MAX_PATH_LENGTH] = {'\0'};
 
         if (mxIsChar(item)) {
             if (len > 0) {
-                mxGetString(item, logfile, MAX_SESSION_LENGTH);
+                mxGetString(item, logfile, MAX_PATH_LENGTH);
                 cfg->flog = fopen(logfile, "a+");
 
                 if (cfg->flog == NULL) {

@@ -3595,7 +3595,8 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                "adjoint_mus", ...): only the first character used to be read, so "flux" gave
                'f' (fluence), "dcs" 'd' and "wl" 'w' */
             const char* typenames[] = {"flux", "fluence", "energy", "jacobian", "nscat", "wl", "wp", "wm", "rf", "length", "rfmus", "wltof", "wptof",
-                                       "adjoint", "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", "adjoint_mua_d", "adjoint_mua_musp", ""};
+                                       "adjoint", "adjoint_dcoeff", "adjoint_mus", "adjoint_musp", "adjoint_mua_d", "adjoint_mua_musp", ""
+                                      };
             const char typeletters[] = "xfejpjpmrlstbaduvwq";
             /* absent: the current type; the macro's fallback would be the tail of the
                letter table ("xfej..."), read as a name */
@@ -3970,11 +3971,13 @@ void mcx_savejdata(char* filename, Config* cfg) {
             if (cfg->srcpos.w != 1.f) {
                 cJSON_AddNumberToObject(sub, "Weight", cfg->srcpos.w);
             }
+
             cJSON_AddItemToObject(sub, "Dir", mcx_dirtojson(&(cfg->srcdir.x)));
             cJSON_AddItemToObject(sub, "Param1", cJSON_CreateFloatArray(&(cfg->srcparam1.x), 4));
             cJSON_AddItemToObject(sub, "Param2", cJSON_CreateFloatArray(&(cfg->srcparam2.x), 4));
         }
     }
+
     cJSON_AddNumberToObject(sub, "SrcNum", cfg->srcnum);
 
     if (cfg->lambda > 0.f) {
@@ -4214,7 +4217,7 @@ void mcx_savejdata(char* filename, Config* cfg) {
  * a caller (mcxlab, the unit tests) passed a buffer of its own and vouches
  * for its size.
  */
-static size_t mcx_jdata_bytes = (size_t)-1;
+static size_t mcx_jdata_bytes = (size_t) -1;
 
 /**
  * @brief Load media index data volume (.bin or .vol) to the memory
@@ -4283,7 +4286,7 @@ void mcx_loadvolume(char* filename, Config* cfg, int isbuf) {
         MCX_ERROR(-6, "the volume array in Shapes is smaller than Domain.Dim and Domain.MediaFormat require");
     }
 
-    mcx_jdata_bytes = (size_t)-1;  /* used up: a later buffer is a caller's own */
+    mcx_jdata_bytes = (size_t) -1; /* used up: a later buffer is a caller's own */
 
     cfg->vol = (unsigned int*)malloc(sizeof(unsigned int) * datalen * (1 + (cfg->mediabyte == MEDIA_2LABEL_SPLIT || cfg->mediabyte == MEDIA_ASGN_F2H)));
 
@@ -4560,8 +4563,8 @@ void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte) {
         }
     }
 
-    if (cfg->tstep == 0.f) {
-        cfg->tstep = cfg->tend;
+    if (cfg->tstep == 0.f || cfg->tstep >= VERY_BIG) {
+        cfg->tstep = cfg->tend;  /* tstep not given (pmcx/mcxlab): one time gate */
     }
 
     if (cfg->tstart >= cfg->tend || cfg->tstep == 0.f) {
@@ -6114,20 +6117,19 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
 
                     break;
 
-                case 'O':
-                    {
-                        /* outputtype is a single char: the letter typed, then
-                           mcx_lookupindex turns it into an index in place */
-                        char otype[MAX_SESSION_LENGTH];
-                        i = mcx_readstrarg(argc, argv, i, otype, sizeof(otype));
-                        cfg->outputtype = otype[0];
-                    }
+                case 'O': {
+                    /* outputtype is a single char: the letter typed, then
+                       mcx_lookupindex turns it into an index in place */
+                    char otype[MAX_SESSION_LENGTH];
+                    i = mcx_readstrarg(argc, argv, i, otype, sizeof(otype));
+                    cfg->outputtype = otype[0];
+                }
 
-                    if (mcx_lookupindex(&(cfg->outputtype), outputtype)) {
-                        MCX_ERROR(-2, T_("the specified output data type is not recognized"));
-                    }
+                if (mcx_lookupindex(&(cfg->outputtype), outputtype)) {
+                    MCX_ERROR(-2, T_("the specified output data type is not recognized"));
+                }
 
-                    break;
+                break;
 
                 case 'k':
                     i = mcx_readarg(argc, argv, i, &(cfg->voidtime), "int");

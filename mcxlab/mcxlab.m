@@ -32,8 +32,9 @@ function varargout = mcxlab(varargin)
 %    A variable USE_MCXCL in the base workspace changes the default for all
 %    following mcxlab/mcxlabcl calls: USE_MCXCL=1 makes both use mcxcl.mex*,
 %    USE_MCXCL=0 makes both use mcx.mex*; option='opencl'/'cuda' still
-%    overrides it. With mcxcl.mex*, USE_MCXCL set to an integer N>1 (or a
-%    device string such as '0101') also replaces cfg.gpuid by N.
+%    overrides it. USE_MCXCL set to an integer N>1 (or a device string such
+%    as '0101') also selects mcxcl.mex* and replaces cfg.gpuid by N; set to
+%    -N, it selects mcx.mex* and replaces cfg.gpuid by N.
 %
 %    Fields marked with * are required; values in [] are the defaults.
 %    Lengths are in grid (voxel) units unless stated otherwise; cfg.unitinmm
@@ -308,7 +309,6 @@ function varargout = mcxlab(varargin)
 %                        'R' fill the 1st output with random numbers to test the RNG
 %      cfg.maxjumpdebug: the most trajectory positions recorded [10000000]
 %      cfg.istrajstokes: 1: also record the Stokes vector along trajectories [0]
-%      cfg.printnum:   print the final state of this many photons [0]
 %
 %      accepted but without effect (legacy): cfg.isref3, cfg.isrefint,
 %      cfg.sradius, cfg.crop0, cfg.crop1, cfg.faststep, cfg.steps (an alias
@@ -413,7 +413,7 @@ end
 
 if (isstruct(varargin{1}))
     for i = 1:length(varargin{1})
-        if (ischar(useopencl) || useopencl > 0)
+        if (ischar(useopencl) || useopencl > 1)
             varargin{1}(i).gpuid = useopencl;
         elseif (useopencl < 0)
             varargin{1}(i).gpuid = -useopencl;
@@ -423,7 +423,7 @@ if (isstruct(varargin{1}))
                     'respin', 'isref3', 'isrefint', 'isgpuinfo', 'issrcfrom0', 'autopilot', 'minenergy', 'unitinmm', ...
                     'voidtime', 'issavedet', 'issaveseed', 'issaveref', 'issaveexit', 'ismomentum', 'isspecular', ...
                     'replaydet', 'maxvoidstep', 'maxjumpdebug', 'gscatter', 'srcnum', 'srcid', 'omega', 'issave2pt', ...
-                    'lambda', 'steps', 'crop0', 'crop1', 'printnum', 'istrajstokes'};
+                    'lambda', 'steps', 'crop0', 'crop1', 'istrajstokes'};
         for j = 1:length(castlist)
             if (isfield(varargin{1}(i), castlist{j}))
                 varargin{1}(i).(castlist{j}) = double(varargin{1}(i).(castlist{j}));

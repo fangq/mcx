@@ -430,6 +430,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     GET_SCALAR_FIELD(user_cfg, mcx_config, autopilot, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, minenergy, py::float_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, unitinmm, py::float_);
+    GET_SCALAR_FIELD(user_cfg, mcx_config, isgpuinfo, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, printnum, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, voidtime, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, issaveref, py::int_);
@@ -1104,6 +1105,12 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
  */
 inline void cleanup_configs(MCXGPUInfo*& gpu_info, MCXConfig& mcx_config) {
     mcx_cleargpuinfo(&gpu_info);
+
+    if (mcx_config.flog && mcx_config.flog != stdout && mcx_config.flog != stderr) {
+        fclose(mcx_config.flog);
+        mcx_config.flog = NULL;
+    }
+
     mcx_clearcfg(&mcx_config);
 }
 
