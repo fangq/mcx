@@ -8,476 +8,384 @@ function varargout = mcxlab(varargin)
 % ====================================================================
 %
 % Format:
-%    fluence=mcxlab(cfg);
-%       or
-%    [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg);
-%    [fluence,detphoton,vol,seed,trajectory]=mcxlab(cfg, option);
+%    fluence = mcxlab(cfg);
+%    [fluence, detphoton, vol, seeds, traj] = mcxlab(cfg);
+%    [fluence, detphoton, vol, seeds, traj] = mcxlab(cfg, option);
+%    info = mcxlab('gpuinfo');
+%    ver  = mcxlab('version');
+%
+%    Request only the outputs you need: each extra output costs memory and
+%    time. The detphoton, seeds and traj outputs are only produced when they
+%    are requested, and [~, detphoton] = mcxlab(cfg) skips the fluence volume
+%    in Octave (set cfg.issave2pt=0 to do the same in MATLAB).
 %
 % Input:
-%    cfg: a struct, or struct array. Each element of cfg defines
-%         the parameters associated with a simulation.
-%         if cfg='gpuinfo': return the supported GPUs and their parameters,
-%         if cfg='version': return the version of MCXLAB as a string,
-%         see sample script at the bottom
-%    option: (optional), options is a string, specifying additional options
-%         option='preview': this plots the domain configuration using mcxpreview(cfg)
-%         option='opencl':  force using mcxcl.mex* instead of mcx.mex* on NVIDIA/AMD/Intel hardware
-%         option='cuda':    force using mcx.mex* instead of mcxcl.mex* on NVIDIA GPUs
+%    cfg: a struct, or a struct array; each element is one simulation.
+%         cfg='gpuinfo' returns a struct array describing the supported GPUs;
+%         cfg='version' returns the MCX version string.
+%    option: (optional) a string
+%         'preview': plot the domain, sources and detectors with mcxpreview(cfg)
+%                    instead of running the simulation
+%         'opencl':  run with mcxcl.mex* (MCX-CL, any OpenCL device) instead of mcx.mex*
+%         'cuda':    run with mcx.mex* (CUDA, NVIDIA GPUs), the default
 %
-%    if one defines USE_MCXCL=1 in MATLAB command line window, all following
-%    mcxlab and mcxlabcl calls will use mcxcl.mex; by setting option='cuda', one can
-%    force both mcxlab and mcxlabcl to use mcx (cuda version). Similarly, if
-%    USE_MCXCL=0, all mcxlabcl and mcxlab call will use mcx.mex by default, unless
-%    one sets option='opencl'. When USE_MCXCL is set to a positive integer
-%    or a string, it overwrites cfg.gpuid in mcxlabcl to specify the device
-%    to run the simulation.
+%    A variable USE_MCXCL in the base workspace changes the default for all
+%    following mcxlab/mcxlabcl calls: USE_MCXCL=1 makes both use mcxcl.mex*,
+%    USE_MCXCL=0 makes both use mcx.mex*; option='opencl'/'cuda' still
+%    overrides it. With mcxcl.mex*, USE_MCXCL set to an integer N>1 (or a
+%    device string such as '0101') also replaces cfg.gpuid by N.
 %
-%    cfg may contain the following fields:
+%    Fields marked with * are required; values in [] are the defaults.
+%    Lengths are in grid (voxel) units unless stated otherwise; cfg.unitinmm
+%    sets the voxel edge length in mm.
 %
-% == Required ==
-%     *cfg.nphoton:    the total number of photons to be simulated (integer)
-%                      maximum supported value is 2^63-1
-%     *cfg.vol:        a 3D array specifying the media index in the domain.
-%                      can be uint8, uint16, uint32, single or double
-%                      arrays.
-%                      2D simulations are supported if cfg.vol has a singleton
-%                      dimension (in x or y); srcpos/srcdir must belong to
-%                      the 2D plane in such case.
-%                      for 2D simulations, Example: <demo_mcxlab_2d.m>
+% == Domain and optical properties ==
+%     *cfg.nphoton:    total number of photons to simulate (up to 2^63-1)
+%     *cfg.vol:        a 3D array of tissue labels (uint8, uint16, uint32, single
+%                      or double), with label 0 being the background (outside of
+%                      the domain). A singleton x or y dimension makes a 2D
+%                      simulation; srcpos/srcdir must then lie in that plane.
+%                      Example: <demo_mcxlab_2d.m>
 %
-%                      MCXLAB also accepts 4D arrays to define continuously varying media.
-%                      The following formats are accepted
-%                        1 x Nx x Ny x Nz float32 array: "mua_float"/101 format: mua values for each voxel (must use permute to make 1st dimension singleton)
-%                        2 x Nx x Ny x Nz float32 array: "muamus_float"/100 format: mua/mus values for each voxel (g/n use prop(2,:))
-%                        3 x Nx x Ny x Nz float32 array: "labelplus"/99 format: {[float32: property_value][float32: property_index i, 0-3][float32: tissue label]},
-%                                         the optical properties are first read based on the label, then the i-th property is replaced by the property value
-%                        3 x Nx x Ny x Nz int16/uint16 array:  "mixlabel"/98 format: {[int16 label1][uint16 label2][0-65535 label1 percentage]}
-%                        4 x Nx x Ny x Nz uint8 array: "asgn_byte"/103 format: mua/mus/g/n gray-scale (0-255) interpolating between prop(2,:) and prop(3,:)
-%                        4 x Nx x Ny x Nz single array: "asgn_float"/96 format: per-voxel mua/mus/g/n floating point values (internally convert to half-precision)
-%                        2 x Nx x Ny x Nz uint16 array: "muamus_short"/104 format: mua/mus gray-scale (0-65535) interpolating between prop(2,:) and prop(3,:)
-%                        8 x Nx x Ny x Nz uint8 array: "svmc"/97 format: split-voxel MC (SVMC) hybrid domain, can be created by mcxsvmc.m
-%                        Example: <demo_continuous_mua_mus.m>. If voxel-based media are used, partial-path/momentum outputs are disabled
-%                        Example: <demo_svmc_*.m> for SVMC related examples
-%     *cfg.prop:       an N by 4 array, each row specifies [mua, mus, g, n] in order.
-%                      the first row corresponds to medium type 0
-%                      (background) which is typically [0 0 1 1]. The
-%                      second row is type 1, and so on. The background
-%                      medium (type 0) has special meanings: a photon is terminated
-%                      when moving from a non-zero to zero voxel.
-%     *cfg.tstart:     starting time of the simulation (in seconds)
-%     *cfg.tstep:      time-gate width of the simulation (in seconds)
-%     *cfg.tend:       ending time of the simulation (in second)
-%     *cfg.srcpos:     a 1 by 3 vector, the position of the source in grid unit; if a non-zero
-%                      4th element is given, it specifies the initial weight of each photon packet
-%                      (or a multiplier in the cases of pattern/pattern3d sources); this initial weight
-%                      can be negative - the output fluence is expected to be linearly proportional
-%                      to this initial weight (w0) before normalization.
-%     *cfg.srcdir:     a 1 by 3 vector, specifying the incident vector; if srcdir
-%                      contains a 4th element, it specifies the focal length of
-%                      the source (only valid for focusable src, such as planar, disk,
-%                      fourier, gaussian, pattern, slit, etc); if the focal length
-%                      is nan, all photons will be launched isotropically regardless
-%                      of the srcdir direction; if the focal length is -inf, the launch
-%                      angle will be computed based on the Lambertian (cosine) distribution,
-%                      over a hemisphere in 3D, or over a semicircle within the simulation
-%                      plane in 2D (when one dimension of cfg.vol is 1).
-%
-%      Starting v2024, cfg.{srcpos,srcdir,srcparam1,srcparam2} accept multiple sources,
-%      with each source corresponding to a single row of the array. For all 4 components,
-%      srcpos/srcdir support 3 or 4 columns, and srcparam1/srcparam2 support 4 columns.
-%      If any of the 4 components are present, they should have the same number of rows.
-%
-% == MC simulation settings ==
-%      cfg.seed:       seed for the random number generator (integer) [default 1648335518]
-%                      setting seed to a negative integer or 0 uses system clock as seed;
-%                      a fixed seed reproduces a run only with cfg.autopilot=0;
-%                      if set to a uint8 array, the binary data in each column is used
-%                      to seed a photon (i.e. the "replay" mode)
-%                      Example: <demo_mcxlab_replay.m>
-%      cfg.respin:     repeat simulation for the given time (integer) [1]
-%                      if negative, divide the total photon number into respin subsets
-%      cfg.isreflect:  [1]-consider refractive index mismatch, 0-matched index
-%      cfg.bc          per-face boundary condition (BC), a string of 6 letters (case insensitive) for
-%                      bounding box faces at -x,-y,-z,+x,+y,+z axes;
-%                      overwrite cfg.isreflect if given.
-%                      each letter can be one of the following:
-%                      '_': undefined, fallback to cfg.isreflect
-%                      'r': like cfg.isreflect=1, Fresnel reflection BC
-%                      'a': like cfg.isreflect=0, total absorption BC
-%                      'm': mirror or total reflection BC
-%                      'c': cyclic BC, enter from opposite face
-%
-%                      in addition, cfg.bc can contain up to 12 characters,
-%                      with the 7-12 characters indicating bounding box
-%                      facets -x,-y,-z,+x,+y,+z are used as a detector. The
-%                      acceptable characters for digits 7-12 include
-%                      '0': this face is not used to detector photons
-%                      '1': this face is used to capture photons (if output detphoton)
-%                      see <demo_bc_det.m>
-%      cfg.isnormalized:[1]-normalize the output fluence to unitary source, 0-no normalization.
-%                      setting isnormalized to 2 in the replay mode builds the Jacobian
-%                      with Born approximation instead of the default Rytov approximation
-%      cfg.isspecular: 1-calculate specular reflection if source is outside, [0] no specular reflection
-%      cfg.maxgate:    the num of time-gates per simulation
-%      cfg.minenergy:  terminate photon when weight less than this level (float) [0.0]
-%      cfg.unitinmm:   defines the length unit for a grid edge length [1.0]
+%                      a 4D array, whose first dimension holds per-voxel data,
+%                      describes continuously varying media:
+%                        1xNxxNyxNz single:  "mua_float" (101), per-voxel mua;
+%                                            mus/g/n from cfg.prop(2,:)
+%                        2xNxxNyxNz single:  "muamus_half" (102), per-voxel mua/mus,
+%                                            stored as half floats; g/n from prop(2,:)
+%                        2xNxxNyxNz uint16:  "muamus_short" (104), mua/mus as 0-65535
+%                                            levels between prop(2,:) and prop(3,:)
+%                        3xNxxNyxNz single:  "labelplus" (99): [value, property
+%                                            index 0-3, label]; the property of
+%                                            the label is replaced by the value
+%                        3xNxxNyxNz int16/uint16: "mixlabel" (98): [label1, label2,
+%                                            label1 percentage 0-65535]
+%                        4xNxxNyxNz uint8:   "asgn_byte" (103), mua/mus/g/n as 0-255
+%                                            levels between prop(2,:) and prop(3,:)
+%                        4xNxxNyxNz single:  "asgn_float" (96), per-voxel mua/mus/g/n
+%                                            (stored as half floats)
+%                        8xNxxNyxNz uint8:   "svmc" (97), split-voxel MC; create it
+%                                            with mcxsvmc.m
+%                      Examples: <demo_continuous_mua_mus.m>, <demo_svmc_*.m>
+%                      With per-voxel properties (all but svmc), detected photons
+%                      carry no per-medium data (partial path, nscat, momentum).
+%     *cfg.prop:       an Nx4 array, one row per medium, [mua(1/mm), mus(1/mm), g, n];
+%                      the first row is label 0 (background, normally [0 0 1 1]),
+%                      the second row is label 1, and so on. A photon is terminated
+%                      when it moves from a non-zero voxel into a 0 voxel.
+%      cfg.polprop:    an Nx5 array for polarized MC, one row per medium starting
+%                      from label 1: [mua(1/mm), sphere radius(micron), sphere number
+%                      density(1/micron^3), sphere refractive index, ambient
+%                      refractive index]; the background stays in cfg.prop(1,:).
+%                      If prop(i+1,2) is non-zero, the density is adjusted to give
+%                      mus=prop(i+1,2) when prop(i+1,3)==1, or mus'=prop(i+1,2)*
+%                      (1-prop(i+1,3)) when prop(i+1,3)<1. Requires cfg.lambda.
+%                      Example: <demo_polarized_photon.m>
+%      cfg.unitinmm:   voxel edge length in mm [1.0]
 %                      Example: <demo_sphere_cube_subpixel.m>
-%      cfg.shapes:     a JSON string for additional shapes in the grid
+%      cfg.shapes:     a JSON string of shapes (spheres, boxes, layers, ...) drawn
+%                      into cfg.vol, see https://mcx.space/wiki/?Shapes
 %                      Example: <demo_mcxyz_skinvessel.m>
-%      cfg.invcdf:     user-specified scattering phase function. To use this, one must define
-%                      a vector with monotonically increasing value between -1 and 1
-%                      defining the discretized inverse function of the cumulative density function (CDF)
-%                      of u=cos(theta), i.e. inv(CDF(u))=inv(CDF(cos(theta))), where theta [0-pi] is the
-%                      zenith angle of the scattering event, and u=cos(theta) is between -1 and 1.
-%                      Please note that the defined inv(CDF) is relative to u, not to theta. This is because
-%                      it is relatively easy to compute as P(u) is the primary form of phase function
-%                      see <demo_mcxlab_phasefun.m>
-%      cfg.angleinvcdf: user-specified launch angle distribution. To use this, one must define
-%                      a vector with monotonically increasing value between 0 and 1
-%                      defining the discretized inverse function of the
-%                      cumulative density function (CDF) of (theta/pi),
-%                      i.e. inv(CDF(theta/pi)), where theta in the range of
-%                      [0-pi] is the zenith angle of the launch angle relative to cfg.srcdir.
+%      cfg.issrcfrom0: 1: the first voxel spans [0,1] in each axis; [0]: [1,2]
 %
-%                      when source focal-length, cfg.srcdir(4), is set to 0
-%                      (default), the angleinvcdf is randomly sampled with
-%                      linear interpolation, i.e. every sample uses two
-%                      elements to interpolate the desired launch angle;
-%                      this is suited when the distribution is continuous.
+% == Time gates ==
+%     *cfg.tend:       end of the simulated time window (s)
+%      cfg.tstart:     start of the time window (s) [0]
+%      cfg.tstep:      width of each time gate (s) [cfg.tend-cfg.tstart, one gate]
+%      cfg.maxgate:    the number of time gates simulated per run [0: all that fit
+%                      in the GPU memory]
 %
-%                      when cfg.srcdir(4) is set to 1, the angleinvcdf
-%                      vector is randomly sampled without interpolation
-%                      (i.e. only return the theta/pi values specified
-%                      inside this array); this is best suited for discrete
-%                      angular distribution.
-%                      see <demo_mcxlab_launchangle.m>
-%      cfg.gscatter:   after a photon completes the specified number of
-%                      scattering events, mcx then ignores anisotropy g
-%                      and only performs isotropic scattering for speed [1e9]
-%      cfg.detphotons: detected photon data for replay. In the replay mode (cfg.seed
-%                      is set as the 4th output of the baseline simulation), cfg.detphotons
-%                      should be set to the 2nd output (detphoton) of the baseline simulation
-%                      or detphoton.data subfield (as a 2D array). cfg.detphotons can use
-%                      a subset of the detected photon selected by the user.
-%                      Example: <demo_mcxlab_replay.m>
-%      cfg.polprop:    an N by 5 array, each row specifies [mua, radius(micron), volume
-%                      density(1/micron^3), sphere refractive index, ambient medium
-%                      refractive index] in order. The first row is type 1,
-%                      and so on. The background medium (type 0) should be
-%                      defined in the first row of cfg.prop. For polprop type
-%                      i, if prop(i,2) is not zero: 1) if prop(i,3) == 1, the
-%                      density polprop(i,3) will be adjusted to achieve the target
-%                      mus prop(i,2); 2) if prop(i,3) < 1, polprop(i,3) will be
-%                      adjusted to achieve the target mus' prop(i,2)*(1-prop(i,3))
+% == Source ==
+%     *cfg.srcpos:     [x y z] position of the source; an optional 4th value sets
+%                      the initial photon weight w0 [1] (for pattern sources, a
+%                      multiplier); w0 may be negative, the output scales with it
+%     *cfg.srcdir:     [vx vy vz] unit launch direction; an optional 4th value is
+%                      the focal length (for the sources marked [*] below):
+%                        0 [default]: collimated
+%                        >0: converging to a focus at that distance along srcdir
+%                        <0: diverging from a virtual point behind the source
+%                        nan: isotropic launch, regardless of srcdir
+%                        -inf: Lambertian (cosine) launch around srcdir, over a
+%                              hemisphere in 3D, or a semicircle within the plane
+%                              of a 2D simulation
+%                      several sources: give srcpos/srcdir (and srcparam1/2) one
+%                      row per source, all with the same number of rows
+%      cfg.srctype:    source type ['pencil']; cfg.srcparam1/srcparam2 hold the
+%                      parameters. Example: <demo_mcxlab_srctype.m>
+%                      'pencil'      a pencil beam
+%                      'isotropic'   isotropic point source
+%                      'arcsine'     like isotropic, with a uniform zenith angle
+%                      'cone'        uniform cone; srcparam1(1): half-angle (rad)
+%                      'zgaussian'   Gaussian zenith angle; srcparam1(1): variance
+%                      'gaussian'    [*] collimated Gaussian beam; srcparam1(1): waist radius
+%                      'hyperboloid' [*] one-sheet hyperboloid Gaussian beam; srcparam1:
+%                                    [waist radius, distance from launch plane to
+%                                    focus, Rayleigh range]
+%                      'disk'        [*] uniform disk normal to srcdir; srcparam1(1):
+%                                    radius, srcparam1(2): inner radius of an annulus
+%                                    [0]; in 2D, a line segment of half-length
+%                                    srcparam1(1) normal to srcdir
+%                      'ring'        [*] ring or ring sector; srcparam1: [outer radius,
+%                                    inner radius, start angle, end angle (rad)], a
+%                                    sector when either angle is positive
+%                      'planar'      [*] uniform quadrilateral with corners srcpos,
+%                                    srcpos+srcparam1(1:3), srcpos+srcparam2(1:3)
+%                      'pattern'     [*] the quadrilateral of 'planar' with intensity
+%                                    cfg.srcpattern (0-1) of srcparam1(4) x srcparam2(4)
+%                                    pixels; cfg.srcnum patterns at once are given as
+%                                    a [srcnum, srcparam1(4), srcparam2(4)] array.
+%                                    Example: <demo_photon_sharing.m>
+%                      'pattern3d'   [*] a 3D intensity volume cfg.srcpattern of size
+%                                    srcparam1(1:3), starting at srcpos
+%                      'fourier'     [*] spatial-frequency source over the 'planar'
+%                                    quadrilateral, S=0.5*[1+M*cos(2*pi*(fx*x+fy*y)+phi0)]:
+%                                    integer parts of srcparam1(4)/srcparam2(4) are
+%                                    fx/fy, fraction of srcparam1(4) is phi0/(2*pi),
+%                                    1 minus the fraction of srcparam2(4) is M
+%                      'fourierx'    [*] general Fourier source; srcparam1: [v1x v1y v1z
+%                                    |v2|], srcparam2: [kx ky phi0 M], with
+%                                    v2=srcdir x v1; the phase is phi0*2*pi
+%                      'fourierx2d'  [*] general 2D Fourier basis; srcparam1 as for
+%                                    'fourierx', srcparam2: [kx ky phix phiy]
+%                      'pencilarray' an array of pencil beams over the 'planar'
+%                                    quadrilateral; srcparam1(4)/srcparam2(4) are the
+%                                    beam counts, e.g. srcparam1=[10 0 0 4],
+%                                    srcparam2=[0 20 0 5] gives a 4x5 array
+%                      'line'        line source from srcpos to srcpos+srcparam1(1:3),
+%                                    emitting normal to the line; srcparam2(1)>0
+%                                    turns it into a wedge (fan) beam tilted by that
+%                                    half-angle (rad) from the srcdir-line plane
+%                      'slit'        [*] collimated slit beam along srcdir from the same
+%                                    segment; srcparam2(1)/(2): widths of a Gaussian
+%                                    broadening across/along the slit
+%      cfg.srcparam1, cfg.srcparam2: 1x4 vectors, see cfg.srctype
+%      cfg.srcpattern: the pattern of 'pattern'/'pattern3d' sources
+%      cfg.srcnum:     number of patterns simulated together by a 'pattern'
+%                      source [1]; the output gains a last dimension of srcnum
+%      cfg.srcid:      with several sources: [0] all together in one output,
+%                      -1 each in its own output, N>0 only the N-th source
+%      cfg.angleinvcdf: a user-defined launch-angle distribution: a vector,
+%                      increasing within [0,1], of the inverse CDF of theta/pi,
+%                      theta being the angle to srcdir. It is sampled with linear
+%                      interpolation when srcdir(4)=0 (continuous distributions),
+%                      without it when srcdir(4)=1 (discrete angles).
+%                      Example: <demo_mcxlab_launchangle.m>
+%      cfg.voidtime:   for a source outside of the domain, [1]: start the clock at
+%                      launch, 0: when the photon enters the domain
+%      cfg.maxvoidstep: the farthest (voxels) a photon launched outside travels
+%                      to reach the domain [1000]
+%      cfg.isspecular: 1: apply the specular reflection at entry for a source
+%                      outside of the domain; [0]: do not
+%      cfg.srciquv:    [I Q U V] Stokes vector of the source for polarized MC:
+%                      I>=0 is the intensity; Q, U and V, each in [-1,1],
+%                      balance horizontal/vertical, +45/-45 degree linear and
+%                      right/left circular polarization
+%      cfg.lambda:     wavelength (nm) for polarized MC
+%      cfg.omega:      modulation angular frequency 2*pi*f (rad/s) for
+%                      frequency-domain (RF) outputs [0]; see cfg.outputtype
 %
-% == GPU settings ==
-%      cfg.autopilot:  1-automatically set threads and blocks, [0]-use nthread/nblocksize
-%                      with 1, photons are also dispatched to the threads dynamically,
-%                      so runs with the same cfg.seed agree statistically but not
-%                      bit-wise; set 0 to reproduce a run exactly
-%      cfg.nblocksize: how many CUDA thread blocks to be used [64]
-%      cfg.nthread:    the total CUDA thread number [2048]
-%      cfg.gpuid:      which GPU to use (run 'mcx -L' to list all GPUs) [1]
-%                      if set to an integer, gpuid specifies the index (starts at 1)
-%                      of the GPU for the simulation; if set to a binary string made
-%                      of 1s and 0s, it enables multiple GPUs. For example, '1101'
-%                      allows to use the 1st, 2nd and 4th GPUs together.
+% == Detectors ==
+%      cfg.detpos:     an Nx4 array, one row per disk detector: [x y z radius]
+%      cfg.detdir:     an Nx4 array, one row per detector: [vx vy vz focal length],
+%                      the inward direction of each detector, required by the
+%                      adjoint outputs (the detectors are launched as sources)
+%      cfg.bc:         per-face boundary conditions, a string of up to 12 letters;
+%                      letters 1-6 are the -x,-y,-z,+x,+y,+z bounding box faces:
+%                        '_': use cfg.isreflect   'r': Fresnel reflection
+%                        'a': total absorption    'm': mirror (total reflection)
+%                        'c': cyclic, re-enter from the opposite face
+%                      letters 7-12, '0' or '1', make the same faces detectors:
+%                      e.g. '______001000' records photons leaving at z=0
+%                      Example: <demo_bc_det.m>
+%      cfg.maxdetphoton: the most detected photons kept [1000000]
+%      cfg.savedetflag: which data to save per detected photon, a string of the
+%                      letters below (case insensitive) ['dp']:
+%                        'd' detector ID (1)        's' scattering counts (#media)
+%                        'p' partial paths (#media) 'm' momentum transfer (#media)
+%                        'x' exit position (3)      'v' exit direction (3)
+%                        'w' initial weight (1)     'i' Stokes IQUV (4, polarized MC)
+%      cfg.issaveexit: 1: also save exit positions and directions, same as
+%                      adding 'xv' to cfg.savedetflag [0].
+%                      Example: <demo_lambertian_exit_angle.m>
+%      cfg.ismomentum: 1: also save the momentum transfer, same as adding 'm' [0]
+%      cfg.issavedet:  set to 1 automatically when detphoton is requested; set it
+%                      to 3 to stop the simulation once cfg.maxdetphoton photons
+%                      are detected
+%
+% == Monte Carlo settings ==
+%      cfg.seed:       RNG seed, an integer [1648335518]; <=0 seeds from the clock.
+%                      A run is reproducible only with cfg.autopilot=0.
+%                      a uint8 array (the seeds output of an earlier run) replays
+%                      those detected photons, see "Replay" below
+%      cfg.respin:     run the simulation this many times and add up the results
+%                      [1]; a negative value -N splits nphoton into N runs instead
+%      cfg.isreflect:  [1]: Fresnel reflection at the domain boundary;
+%                      0: photons leave (index-matched boundary)
+%      cfg.isnormalized: [1]: normalize the output to a unit source; 0: raw output;
+%                      2: in replay, skip the normalization by the detected weight,
+%                      i.e. Born instead of Rytov Jacobians
+%      cfg.minenergy:  weight below which a photon enters Russian roulette [0]
+%      cfg.gscatter:   after this many scattering events, scatter isotropically
+%                      (ignore g) for speed [1e9]
+%      cfg.invcdf:     a user-defined scattering phase function: a vector,
+%                      increasing within [-1,1], of the inverse CDF of
+%                      u=cos(theta) of the scattering angle; it replaces
+%                      Henyey-Greenstein. Example: <demo_mcxlab_phasefun.m>
+%
+% == Output ==
+%      cfg.outputtype: what the 1st output holds ['flux']
+%                      'flux'      fluence rate (1/mm^2/s)
+%                      'fluence'   fluence (1/mm^2), integrated over each time gate
+%                      'energy'    energy deposited per voxel
+%                      'length'    total path length per voxel
+%                      replay outputs (see "Replay"):
+%                      'jacobian' or 'wl'  mua Jacobian
+%                      'nscat' or 'wp'     weighted scattering counts (mus Jacobian)
+%                      'wm'        weighted momentum transfer
+%                      'rf'        with cfg.omega>0: [real, imag] parts of the
+%                                  frequency-domain mua Jacobian, in a 6th
+%                                  dimension of size 2
+%                      'rfmus'     frequency-domain mus Jacobian
+%                      'wltof'     time of flight x path length, weighted
+%                      'wptof'     time of flight x scattering count, weighted
+%                      forward outputs, without replay:
+%                      'rf'        with cfg.omega>0: complex fluence rate
+%                                  (multiply by tstep for the complex fluence)
+%                      adjoint Jacobians (need cfg.detpos and cfg.detdir; every
+%                      detector is also run as a source, and the Jacobian of
+%                      each source-detector pair is returned in its own field of
+%                      the 1st output, [Nx,Ny,Nz,Ns*Nd], complex if cfg.omega>0):
+%                      'adjoint'          mua Jacobian, fluence.jmua
+%                      'adjoint_dcoeff'   diffusion coefficient D=1/(3mus')
+%                                         Jacobian, fluence.jd
+%                      'adjoint_mus'      mus Jacobian, fluence.jmus
+%                      'adjoint_musp'     mus' Jacobian, fluence.jmusp
+%                      'adjoint_mua_d'    both fluence.jmua and fluence.jd
+%                      'adjoint_mua_musp' both fluence.jmua and fluence.jmusp
+%                      Examples: <demo_mcxlab_replay.m>, <demo_replay_timedomain.m>,
+%                      <demo_replay_frequencydomain.m>, <demo_replay_all_jacobian.m>,
+%                      <demo_mcx_adjoint_jacobian.m>
+%      cfg.issave2pt:  [1]: compute the 1st output; 0: skip it, which is faster
+%                      when only detphoton is needed
+%      cfg.issaveref:  1: save the diffuse reflectance in fluence.dref [0]; it is
+%                      recorded in the background voxels next to the domain, so
+%                      pad cfg.vol with a layer of 0s where it is wanted
+%      cfg.session:    a name for the output files, used when mcxlab returns nothing
+%      cfg.flog:       where the log goes [2]: 2 stderr, 1 stdout, 0 stdout without
+%                      the banner, or a file name (appended)
+%      cfg.lang:       language of the log: zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE,
+%                      ko_KR, hi_IN or pt_BR
+%
+% == Replay ==
+%      Replaying the detected photons of a baseline run, with cfg.seed set to its
+%      seeds output, gives Jacobians (sensitivity profiles) with cfg.outputtype.
+%      cfg.detphotons: the detphoton output of the baseline run (or its .data)
+%      cfg.replaydet:  [0]: replay all detectors into one output; N>0: only
+%                      detector N; -1: all detectors, each in its own output
+%                      (an extra 5th dimension)
+%
+% == GPU ==
+%      cfg.gpuid:      which GPU to use, from 1 ('mcx -L' or mcxlab('gpuinfo')
+%                      lists them) [1]; a string of 0s and 1s selects several,
+%                      e.g. '1101' uses the 1st, 2nd and 4th GPUs.
 %                      Example: <mcx_gpu_benchmarks.m>
-%      cfg.workload    an array denoting the relative loads of each selected GPU.
-%                      for example, [50,20,30] allocates 50%, 20% and 30% photons to the
-%                      3 selected GPUs, respectively; [10,10] evenly divides the load
-%                      between 2 active GPUs. A simple load balancing strategy is to
-%                      use the GPU core counts as the weight.
-%      cfg.isgpuinfo:  1-print GPU info, [0]-do not print
+%      cfg.workload:   the relative share of photons for each selected GPU, e.g.
+%                      [50 20 30]
+%      cfg.autopilot:  [1]: choose the thread and block counts automatically and
+%                      hand out photons to the threads dynamically, so results
+%                      with a fixed seed agree only statistically; 0: use
+%                      cfg.nthread/cfg.nblocksize, bit-wise reproducible
+%      cfg.nthread:    total thread count with autopilot=0 [16384]
+%      cfg.nblocksize: threads per block with autopilot=0 [64]
+%      cfg.isgpuinfo:  1: print the GPU information before running [0]
 %
-% == Source-detector parameters ==
-%      cfg.detpos:     an N by 4 array, each row specifying a detector: [x,y,z,radius]
-%      cfg.maxdetphoton:   maximum number of photons saved by the detectors [1000000]
-%      cfg.srctype:    source type, the parameters of the src are specified by cfg.srcparam{1,2}
-%                              Example: <demo_mcxlab_srctype.m>
-%                      'pencil' - default, pencil beam, no param needed
-%                      'isotropic' - isotropic source, no param needed
-%                      'cone' - uniform cone beam, srcparam1(1) is the half-angle in radian
-%                      'gaussian' [*] - a collimated gaussian beam, srcparam1(1) specifies the waist radius (in voxels)
-%                      'hyperboloid' [*] - a one-sheeted hyperboloid gaussian beam, srcparam1(1) specifies the waist
-%                                radius (in voxels), srcparam1(2) specifies distance between launch plane and focus,
-%                                srcparam1(3) specifies rayleigh range
-%                      'planar' [*] - a 3D quadrilateral uniform planar source, with three corners specified
-%                                by srcpos, srcpos+srcparam1(1:3) and srcpos+srcparam2(1:3)
-%                      'pattern' [*] - a 3D quadrilateral pattern illumination, same as above, except
-%                                srcparam1(4) and srcparam2(4) specify the pattern array x/y dimensions,
-%                                and srcpattern is a floating-point pattern array, with values between [0-1].
-%                                if cfg.srcnum>1, srcpattern must be a floating-point array with
-%                                a dimension of [srcnum srcparam1(4) srcparam2(4)]
-%                                Example: <demo_photon_sharing.m>
-%                      'pattern3d' [*] - a 3D illumination pattern. srcparam1{x,y,z} defines the dimensions,
-%                                and srcpattern is a floating-point pattern array, with values between [0-1].
-%                      'fourier' [*] - spatial frequency domain source, similar to 'planar', except
-%                                the integer parts of srcparam1(4) and srcparam2(4) represent
-%                                the x/y frequencies; the fraction part of srcparam1(4) multiplies
-%                                2*pi represents the phase shift (phi0); 1.0 minus the fraction part of
-%                                srcparam2(4) is the modulation depth (M). Put in equations:
-%                                    S=0.5*[1+M*cos(2*pi*(fx*x+fy*y)+phi0)], (0<=x,y,M<=1)
-%                      'arcsine' - similar to isotropic, except the zenith angle is uniform
-%                                distribution, rather than a sine distribution.
-%                      'disk' [*] - a uniform disk source pointing along srcdir; the radius is
-%                               set by srcparam1(1) (in grid unit); if srcparam1(2) is set to a non-zero
-%                               value, this source defines a ring (annulus) shaped source, with
-%                               srcparam1(2) denoting the inner circle's radius, here srcparam1(1)>=srcparam1(2)
-%                               in 2D (one dimension of cfg.vol is 1), the disk becomes a line segment
-%                               of half-length srcparam1(1) centered at srcpos, perpendicular to srcdir
-%                               within the simulation plane (srcparam1(2) is not used)
-%                      'ring' [*] - a uniform ring/ring-sector source pointing along srcdir; the outer radius
-%                               of the ring is srcparam1(1) (in grid unit) and the inner radius is srcparam1(2);
-%                               srcparam1(3) and srcparam1(4) can optionally set the lower and upper angular
-%                               bound (in positive rad) of a ring sector if at least one of those is positive.
-%                      'fourierx' [*] - a general Fourier source, the parameters are
-%                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phi0,M]
-%                               normalized vectors satisfy: srcdir cross v1=v2
-%                               the phase shift is phi0*2*pi
-%                      'fourierx2d' [*] - a general 2D Fourier basis, parameters
-%                               srcparam1: [v1x,v1y,v1z,|v2|], srcparam2: [kx,ky,phix,phiy]
-%                               the phase shift is phi{x,y}*2*pi
-%                      'zgaussian' - an angular gaussian beam, srcparam1(1) specifies the variance in the zenith angle
-%                      'line' - a line source, emitting from the line segment between
-%                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), radiating
-%                               uniformly in the perpendicular direction;
-%                               when cfg.srcparam2.x is non-zero, it
-%                               creates a wedge-source (or fan-beam), where
-%                               the launch directions are still
-%                               perpendicular to the source line segment,
-%                               but rotated by the wedge half-angle
-%                               cfg.srcparam2.x (in radian) from the plane
-%                               spanned by cfg.srcdir and the source line
-%                      'slit' [*] - a collimated slit beam emitting from the line segment between
-%                               cfg.srcpos and cfg.srcpos+cfg.srcparam(1:3), with the initial
-%                               dir specified by cfg.srcdir; when user defines positive values for srcparam2.x or .y,
-%                               the slit source is broadened in a Guassian profile controlled by
-%                               srcparam2.x: width of Gaussian broadening in the direction perpendicular to both slit and srcdir
-%                               srcparam2.y: width of Gaussian broadening in the direction of the slit line: cfg.srcparam(1:3)
-%                      'pencilarray' - a rectangular array of pencil beams. The srcparam1 and srcparam2
-%                               are defined similarly to 'fourier', except that srcparam1(4) and srcparam2(4)
-%                               are both integers, denoting the element counts in the x/y dimensions, respectively.
-%                               For exp., srcparam1=[10 0 0 4] and srcparam2[0 20 0 5] represent a 4x5 pencil beam array
-%                               spanning 10 grids in the x-axis and 20 grids in the y-axis (5-voxel spacing)
-%                      source types marked with [*] can be focused using the
-%                      focal length parameter (4th element of cfg.srcdir)
-%      cfg.{srcparam1,srcparam2}: 1x4 vectors, see cfg.srctype for details
-%      cfg.srcpattern: see cfg.srctype for details
-%      cfg.srcnum:     the number of source patterns that are
-%                      simultaneously simulated; only works for 'pattern'
-%                      source, see cfg.srctype='pattern' for details
-%                      Example <demo_photon_sharing.m>
-%      cfg.srcid:      when multiple sources are defined, if srcid is -1, each source is separately
-%                      simulated; if set to 0, all source solution are summed; if set to a positive
-%                      number starting from 1, only the specified source is simulated; default to 0
-%      cfg.omega: source modulation angular frequency (rad/s), i.e. 2*pi*f; used for
-%                      RF replay (cfg.seed from file, outputtype 'rf'/'rfmus') and
-%                      RF forward (no cfg.seed, omega>0 triggers RF forward automatically)
-%      cfg.srciquv: 1x4 vector [I,Q,U,V], Stokes vector of the incident light
-%                   I: total light intensity (I >= 0)
-%                   Q: balance between horizontal and vertical linearly
-%                   polarized light (-1 <= Q <= 1)
-%                   U: balance between +45° and -45° linearly polarized
-%                   light (-1 <= Q <= 1)
-%                   V: balance between right and left circularly polarized
-%                   light (-1 <= Q <= 1)
-%      cfg.lambda: source light wavelength (nm) for polarized MC
-%      cfg.issrcfrom0: 1-first voxel is [0 0 0], [0]- first voxel is [1 1 1]
-%      cfg.replaydet:  only works when cfg.outputtype is 'jacobian', 'wl', 'nscat', 'wp' or 'rf' and cfg.seed is an array
-%                      -1 replay all detectors and save in separate volumes (output has 5 dimensions)
-%                       0 replay all detectors and sum all Jacobians into one volume
-%                       a positive number: the index of the detector to replay and obtain Jacobians
-%      cfg.voidtime:   for wide-field sources, [1]-start timer at launch, or 0-when entering
-%                      the first non-zero voxel
+% == Debugging ==
+%      cfg.debuglevel: a string of debug flags (case insensitive):
+%                        'P' show a progress bar
+%                        'M' record photon trajectories (5th output)
+%                        'T' record trajectories only, returned as the 1st output,
+%                            without fluence, detphoton or seeds
+%                        'R' fill the 1st output with random numbers to test the RNG
+%      cfg.maxjumpdebug: the most trajectory positions recorded [10000000]
+%      cfg.istrajstokes: 1: also record the Stokes vector along trajectories [0]
+%      cfg.printnum:   print the final state of this many photons [0]
 %
-% == Output control ==
-%      cfg.savedetflag: ['dp'] - a string (case insensitive) controlling the output detected photon data fields
-%                          1 d  output detector ID (1)
-%                          2 s  output partial scat. even counts (#media)
-%                          4 p  output partial path-lengths (#media)
-%                          8 m  output momentum transfer (#media)
-%                         16 x  output exit position (3)
-%                         32 v  output exit direction (3)
-%                         64 w  output initial weight (1)
-%                        128 i  output stokes vector (4)
-%                      combine multiple items by using a string, or add selected numbers together
-%                      by default, mcx only saves detector ID (d) and partial-path data (p)
-%      cfg.issaveexit: [0]-save the position (x,y,z) and (vx,vy,vz) for a detected photon
-%                      same as adding 'xv' to cfg.savedetflag. Example: <demo_lambertian_exit_angle.m>
-%      cfg.ismomentum: 1 to save photon momentum transfer,[0] not to save.
-%                      save as adding 'M' to cfg.savedetflag string
-%      cfg.issaveref:  [0]-save diffuse reflectance/transmittance in the non-zero voxels
-%                      next to a boundary voxel. The reflectance data are stored as
-%                      negative values; must pad zeros next to boundaries
-%                      Example: see the demo script at the bottom
-%      cfg.issave2pt:  [1]-save volumetric output in the first output fluence.data; user can disable this output
-%                      by explicitly setting cfg.issave2pt=0, this way, even the first output fluence presents
-%                      in mcxlab call, volume data will not be saved, this can speed up simulation when only
-%                      detphoton is needed
-%      cfg.issavedet:  if the 2nd output is requested, this will be set to 1; in such case, user can force
-%                      setting it to 3 to enable early termination of simulation if the detected photon
-%                      buffer (length controlled by cfg.maxdetphoton) is filled; if the 2nd output is not
-%                      present, this will be set to 0 regardless user input.
-%      cfg.outputtype: 'flux' - fluence-rate, (default value)
-%                      'fluence' - fluence integrated over each time gate,
-%                      'energy' - energy deposit per voxel
-%                      'jacobian' or 'wl' - mua Jacobian (replay mode),
-%                      'nscat' or 'wp' - weighted scattering counts for computing Jacobian for mus (replay mode)
-%                      'wm' - weighted momentum transfer for a source/detector pair (replay mode)
-%                      'rf' - dual-mode depending on cfg.seed:
-%                           replay mode (cfg.seed from .mch file, cfg.omega set):
-%                             frequency-domain mua Jacobian; output has dim6=2
-%                             ([real; imag] of complex Jacobian)
-%                           forward mode (no cfg.seed file, cfg.omega set):
-%                             complex frequency-domain fluence rate; output is
-%                             complex-valued (same size as 'flux'); multiply by
-%                             tstep to convert to complex fluence
-%                      'length' total pathlengths accumulated per voxel,
-%                      'rfmus' frequency domain/RF mus Jacobian (replay mode only),
-%                      'wltof' weighted average of time-of-flight x total path length in each voxel,
-%                      'wptof' weighted average of time-of-flight x total scattering count in each voxel
-%
-%                      == Adjoint (forward-mode) Jacobians - requires cfg.detpos and cfg.detdir ==
-%                      'adjoint' - mua Jacobian (forward mode, no replay):
-%                             J_mua[r] = -phi_src[r]*phi_det[r]*dV [mm^-1]
-%                             output: real array [Nx,Ny,Nz,Ns*Nd] (CW) or
-%                             complex [Nx,Ny,Nz,Ns*Nd] (RF, when cfg.omega>0)
-%                      'adjoint_dcoeff' - diffusion coefficient D=1/(3*mus') Jacobian:
-%                             J_D[r] = grad(phi_src)[r] . grad(phi_det)[r] * dV [mm^-3]
-%                             gradients computed via 2nd-order finite differences
-%                             (central at interior, one-sided at edges) with spacing
-%                             cfg.unitinmm; normalization: kernel*unitinmm
-%                      'adjoint_mus' - scattering coeff mus Jacobian (D=1/(3*(1-g)*mus)):
-%                             J_mus[r] = J_D[r] * 3*D^2*(1-g) = J_D[r]/(3*(1-g)*mus^2)
-%                             uses each voxel's own mus and g from cfg.prop
-%                      'adjoint_musp' - reduced scattering coeff mus'=(1-g)*mus Jacobian:
-%                             J_musp[r] = J_D[r] * 3*D^2 = J_D[r]/(3*(1-g)^2*mus^2)
-%                             uses each voxel's own mus and g from cfg.prop
-%
-%                      for types jacobian/wl/wp, example: <demo_mcxlab_replay.m>
-%                          and  <demo_replay_timedomain.m>
-%                      for types rf (replay), example: <demo_replay_frequencydomain.m>
-%                      for types rf (forward), example: <compare_redbird_mcx_rf.m>
-%                      for types rfmus/wltof/wptof, example: <demo_replay_all_jacobian.m>
-%                      for adjoint types, example: <demo_mcx_adjoint_jacobian.m>
-%      cfg.session:    a string for output file names (only used when no return variables)
-%      cfg.lang:       specify the language code for printing, supported languages include
-%                      zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, pt_BR
-%
-% == Debug ==
-%      cfg.debuglevel:  debug flag string (case insensitive), one or a combination of ['R','M','P','T'], no space
-%                    'R':  debug RNG, output fluence.data is filled with 0-1 random numbers
-%                    'M':  return photon trajectory data as the 5th output
-%                    'P':  show progress bar
-%                    'T':  save photon trajectory data only, as the 1st output, disable flux/detp/seeds outputs
-%      cfg.flog: [2]  log printing control; if set to a string, it defines a file path
-%                     at which location the log will be printed in append mode; on Linux and Mac OS,
-%                     one can use special paths such as /dev/null; if set to an integer,
-%                     2 (default): stderr
-%                     1: stdout
-%                     0: stdout but suppress printing MCX banner
-%      cfg.istrajstokes [0]: if set to 1, traj.iquv output contains the Stokes IQUV vector along trajectories
-%      cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output,
-%                     use this parameter to set the maximum position stored. By default,
-%                     only the first 1e6 positions are stored.
-%
-%      fields with * are required; options in [] are the default values
+%      accepted but without effect (legacy): cfg.isref3, cfg.isrefint,
+%      cfg.sradius, cfg.crop0, cfg.crop1, cfg.faststep, cfg.steps (an alias
+%      of cfg.unitinmm)
 %
 % Output:
-%      fluence: a struct array, with a length equals to that of cfg.
-%            For each element of fluence,
-%            fluence(i).data is a 4D array with
-%                 dimensions specified by [size(vol) total-time-gates].
-%                 The content of the array is the normalized fluence at
-%                 each voxel of each time-gate.
-%
-%                 when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
-%                 output, see below
-%            fluence(i).dref is a 4D array with the same dimension as fluence(i).data
-%                 if cfg.issaveref is set to 1, containing only non-zero values in the
-%                 layer of voxels immediately next to the non-zero voxels in cfg.vol,
-%                 storing the normalized total diffuse reflectance (summation of the weights
-%                 of all escaped photon to the background regardless of their direction);
-%                 it is an empty array [] when if cfg.issaveref is 0.
-%            fluence(i).stat is a structure storing additional information, including
-%                 runtime: total simulation run-time in millisecond
-%                 nphoton: total simulated photon number
-%                 energytot: total initial weight/energy of all launched photons
-%                 energyabs: total absorbed weight/energy of all photons
-%                 normalizer: normalization factor
-%                 unitinmm: same as cfg.unitinmm, voxel edge-length in mm
-%
-%      detphoton: (optional) a struct array, with a length equals to that of cfg.
-%            Starting from v2018, the detphoton contains the below subfields:
-%              detphoton.detid: the ID(>0) of the detector that captures the photon
-%              detphoton.srcid: the ID(>0) of the source in a multi-source simulation
-%              detphoton.nscat: cumulative scattering event counts in each medium
-%              detphoton.ppath: cumulative path lengths in each medium (partial pathlength)
-%                   one need to multiply cfg.unitinmm with ppath to convert it to mm.
-%              detphoton.mom: cumulative cos_theta for momentum transfer in each medium
-%              detphoton.p or .v: exit position and direction, when cfg.issaveexit=1
-%              detphoton.w0: photon initial weight at launch time
-%              detphoton.s: exit Stokes parameters for polarized photon
-%              detphoton.prop: optical properties, a copy of cfg.prop
-%              detphoton.data: a concatenated and transposed array in the order of
-%                    [detid nscat ppath mom p v w0]'
-%              "data" is the is the only subfield in all MCXLAB before 2018
-%      vol: (optional) a struct array, each element is a preprocessed volume
-%            corresponding to each instance of cfg. Each volume is a 3D int32 array.
-%      seeds: (optional), if give, mcxlab returns the seeds, in the form of
-%            a byte array (uint8) for each detected photon. The column number
-%            of seed equals that of detphoton.
-%      trajectory: (optional), if given, mcxlab returns the trajectory data for
-%            each simulated photon. The output has 6 rows, the meanings are
-%               id:  1:    index of the photon packet
-%               pos: 2-4:  x/y/z/ of each trajectory position
-%                    5:    current photon packet weight
-%             srcid: 6:    source ID (>0) of the photon
-%             iquv:  7-10: Stokes IQUV vector (>0) of the photon
-%            By default, mcxlab only records the first 1e7 positions along all
-%            simulated photons; change cfg.maxjumpdebug to define a different limit.
-%
+%      fluence: a struct array, one element per cfg element, with the subfields
+%            data:  the volume selected by cfg.outputtype, [size(vol), #gates],
+%                   normalized as set by cfg.isnormalized; extra dimensions
+%                   index the patterns (cfg.srcnum>1), the sources (cfg.srcid=-1),
+%                   the detectors (cfg.replaydet=-1) or [real, imag] parts (RF);
+%                   for the adjoint outputs, it is the forward fluence of the
+%                   Ns sources and Nd detectors, [Nx,Ny,Nz,#gates,Ns+Nd]; with
+%                   debuglevel 'T' it holds the trajectories instead (see traj)
+%            dref:  the diffuse reflectance, same size as data, when
+%                   cfg.issaveref=1, or []
+%            stat:  run statistics: runtime (ms), nphoton, energytot (total
+%                   launched weight), energyabs (total absorbed weight),
+%                   normalizer, unitinmm and workload
+%            prop:  for polarized MC, the optical properties computed from
+%                   cfg.polprop
+%            jmua, jd, jmus, jmusp: the adjoint Jacobians, see cfg.outputtype
+%      detphoton: a struct array of the detected photons, one row per photon:
+%            detid: the detector index (from 1)
+%            srcid: the source index (from 1), with several sources
+%            nscat: scattering counts in each medium
+%            ppath: partial path lengths in each medium, in voxels (multiply by
+%                   cfg.unitinmm for mm)
+%            mom:   momentum transfer in each medium
+%            p, v:  exit position and direction
+%            w0:    initial weight
+%            s:     exit Stokes vector (polarized MC)
+%            prop, unitinmm: copies of cfg.prop and cfg.unitinmm
+%            data:  all of the above stored, transposed, in one array
+%      vol:   the preprocessed label volume (with cfg.shapes drawn in), uint32
+%      seeds: the RNG seed of each detected photon, one uint8 column per
+%            photon of detphoton, for replay
+%      traj:  photon trajectories, sorted by photon, with subfields id (photon
+%            index), pos (x/y/z), srcid, iquv (with cfg.istrajstokes=1) and
+%            data, all of them as rows [id x y z weight srcid ...] of one array
 %
 % Example:
-%      % first query if you have supported GPU(s)
-%      info=mcxlab('gpuinfo')
+%      % list the supported GPUs
+%      info = mcxlab('gpuinfo')
 %
-%      % define the simulation using a struct
-%      cfg.nphoton=1e7;
-%      cfg.vol=uint8(ones(60,60,60));
-%      cfg.vol(20:40,20:40,10:30)=2;    % add an inclusion
-%      cfg.prop=[0 0 1 1;0.005 1 0 1.37; 0.2 10 0.9 1.37]; % [mua,mus,g,n]
-%      cfg.issrcfrom0=1;
-%      cfg.srcpos=[30 30 1];
-%      cfg.srcdir=[0 0 1];
-%      cfg.detpos=[30 20 1 1;30 40 1 1;20 30 1 1;40 30 1 1];
-%      cfg.vol(:,:,1)=0;   % pad a layer of 0s to get diffuse reflectance
-%      cfg.issaveref=1;
-%      cfg.gpuid=1;
-%      cfg.autopilot=1;
-%      cfg.tstart=0;
-%      cfg.tend=5e-9;
-%      cfg.tstep=5e-10;
-%      % calculate the fluence distribution with the given config
-%      [fluence,detpt,vol,seeds,traj]=mcxlab(cfg);
+%      % a 60x60x60 voxel domain with a cubic inclusion
+%      cfg.nphoton = 1e7;
+%      cfg.vol = uint8(ones(60, 60, 60));
+%      cfg.vol(20:40, 20:40, 10:30) = 2;
+%      cfg.vol(:, :, 1) = 0;   % a layer of 0s to record the reflectance in
+%      cfg.prop = [0 0 1 1; 0.005 1 0 1.37; 0.2 10 0.9 1.37]; % [mua, mus, g, n]
+%      cfg.issrcfrom0 = 1;
+%      cfg.srcpos = [30 30 1];
+%      cfg.srcdir = [0 0 1];
+%      cfg.detpos = [30 20 1 1; 30 40 1 1; 20 30 1 1; 40 30 1 1];
+%      cfg.issaveref = 1;
+%      cfg.gpuid = 1;
+%      cfg.tstart = 0;
+%      cfg.tend = 5e-9;
+%      cfg.tstep = 5e-10;
+%      [fluence, detp, vol, seeds, traj] = mcxlab(cfg);
 %
-%      % integrate time-axis (4th dimension) to get CW solutions
-%      cwfluence=sum(fluence.data,4);  % fluence rate
-%      cwdref=sum(fluence.dref,4);     % diffuse reflectance
-%      % plot configuration and results
+%      % sum the time gates (4th dimension) for the CW solutions
+%      cwfluence = sum(fluence.data, 4);  % fluence rate
+%      cwdref = sum(fluence.dref, 4);     % diffuse reflectance
 %      subplot(231);
-%      mcxpreview(cfg);title('domain preview');
+%      mcxpreview(cfg); title('domain preview');
 %      subplot(232);
-%      imagesc(squeeze(log(cwfluence(:,30,:))));title('fluence at y=30');
+%      imagesc(squeeze(log(cwfluence(:, 30, :)))); title('fluence at y=30');
 %      subplot(233);
-%      hist(detpt.ppath(:,1),50); title('partial path tissue#1');
+%      hist(detp.ppath(:, 1), 50); title('partial path tissue#1');
 %      subplot(234);
-%      plot(squeeze(fluence.data(30,30,30,:)),'-o');title('TPSF at [30,30,30]');
+%      plot(squeeze(fluence.data(30, 30, 30, :)), '-o'); title('TPSF at [30,30,30]');
 %      subplot(235);
-%      newtraj=mcxplotphotons(traj);title('photon trajectories')
+%      newtraj = mcxplotphotons(traj); title('photon trajectories');
 %      subplot(236);
-%      imagesc(squeeze(log(cwdref(:,:,1))));title('diffuse refle. at z=1');
+%      imagesc(squeeze(log(cwdref(:, :, 1)))); title('diffuse refle. at z=1');
 %
 % This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
 %
@@ -498,6 +406,8 @@ if (nargin == 2 && ischar(varargin{2}))
         return
     elseif (strcmp(varargin{2}, 'opencl'))
         useopencl = 1;
+    elseif (strcmp(varargin{2}, 'cuda'))
+        useopencl = 0;
     end
 end
 
@@ -513,7 +423,7 @@ if (isstruct(varargin{1}))
                     'respin', 'isref3', 'isrefint', 'isgpuinfo', 'issrcfrom0', 'autopilot', 'minenergy', 'unitinmm', ...
                     'voidtime', 'issavedet', 'issaveseed', 'issaveref', 'issaveexit', 'ismomentum', 'isspecular', ...
                     'replaydet', 'maxvoidstep', 'maxjumpdebug', 'gscatter', 'srcnum', 'srcid', 'omega', 'issave2pt', ...
-                    'lamda', 'steps', 'crop0', 'crop1'};
+                    'lambda', 'steps', 'crop0', 'crop1', 'printnum', 'istrajstokes'};
         for j = 1:length(castlist)
             if (isfield(varargin{1}(i), castlist{j}))
                 varargin{1}(i).(castlist{j}) = double(varargin{1}(i).(castlist{j}));
