@@ -187,9 +187,12 @@ function varargout = mcxlab(varargin)
 %
 % == Detectors ==
 %      cfg.detpos:     an Nx4 array, one row per disk detector: [x y z radius]
-%      cfg.detdir:     an Nx4 array, one row per detector: [vx vy vz focal length],
-%                      the inward direction of each detector, required by the
-%                      adjoint outputs (the detectors are launched as sources)
+%      cfg.detdir:     an Nx3 or Nx4 array, one row per detector: [vx vy vz] or
+%                      [vx vy vz focal length], the inward direction of each
+%                      detector, required by the adjoint outputs (the detectors
+%                      are launched as sources); the focal length is used as in
+%                      cfg.srcdir, and 0 [default, also when omitted] launches
+%                      along [vx vy vz]
 %      cfg.sdmap:      an Nch x 2 (or wider) array selecting the channels of the
 %                      adjoint Jacobians: each row is [srcid detid], both 1-based
 %                      (srcid counts the rows of cfg.srcpos, detid the rows of

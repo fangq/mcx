@@ -1129,8 +1129,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
     } else if (strcmp(name, "detdir") == 0) {
         arraydim = mxGetDimensions(item);
 
-        if (arraydim[0] > 0 && arraydim[1] != 4) {
-            mexErrMsgTxt("the 'detdir' field must have 4 columns (vx,vy,vz,focallength)");
+        if (arraydim[0] > 0 && (arraydim[1] < 3 || arraydim[1] > 4)) {
+            mexErrMsgTxt("the 'detdir' field must have 3 or 4 columns (vx,vy,vz,focallength)");
         }
 
         if (arraydim[0] > 0 && cfg->detnum > 0 && arraydim[0] != cfg->detnum) {
@@ -1146,7 +1146,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         cfg->detdir = (float4*)malloc(arraydim[0] * sizeof(float4));
         memset(cfg->detdir, 0, arraydim[0] * sizeof(float4));
 
-        for (int j = 0; j < (int)arraydim[1]; j++)
+        for (int j = 0; j < (int)arraydim[1]; j++) /* a missing focal length stays 0: no focusing */
             for (int ii = 0; ii < (int)arraydim[0]; ii++) {
                 ((float*)(&cfg->detdir[ii]))[j] = val[j * arraydim[0] + ii];
             }
