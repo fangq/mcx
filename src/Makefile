@@ -200,6 +200,8 @@ xoro:       LINKOPT+=-DUSE_XOROSHIRO128P_RAND
 posix:      CUCCOPT+=-DUSE_POSIX_RAND
 posix:      LINKOPT+=-DUSE_POSIX_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
+fixed:      fermi
+fixed:      CUCCOPT+=-DUSE_FIXEDPOINT
 debugxor:   xor
 log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
