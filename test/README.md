@@ -82,3 +82,22 @@ Builds `unit/test_raytrace.cu` with nvcc. It calls the ray-tracing helpers of
 `mcx_core.cu` on the CPU (voxel intersection `hitgrid`, Fresnel `reflectcoeff`,
 Snell `transmit`, scattering `rotatevector`, the xorshift128+ RNG) and compares
 them with analytic results. Only the CUDA toolkit is needed; no GPU is required.
+
+## Mutation fuzzing: `fuzz/dfuzz.py`
+
+```
+cd test
+python3 fuzz/dfuzz.py --bin ../bin/mcx -n 300                  # one binary: crashes, hangs, sanitizer errors
+python3 fuzz/dfuzz.py --bin ../bin/mcx --ref ref/mcx -n 300    # differential: also compare with a reference build
+```
+
+Each case takes a random input from `builtin/`, mutates it field by field (type swaps,
+extreme numbers, wrong array shapes, deleted keys) and in ways that reach the output
+accumulation (output types, pattern and RF sources, time gates), adds random command-line
+flags, and runs it with a few thousand photons. A case is reported when the binary crashes,
+hangs or prints a sanitizer error. With `--ref`, it is also reported when the two builds exit
+differently or, in deterministic runs (`-A 0` with a fixed thread count, so both simulate the
+same photons), print different absorbed fractions or output totals (`--tol`, 1e-3 relative).
+Reported cases are saved under `fuzzout/caseNNNN/` (input, arguments, logs); `--seed` makes
+a campaign reproducible. Build the binaries with `-fsanitize=address,undefined` to catch
+memory errors (see the header of `dfuzz.py`); it needs python3 with numpy.
