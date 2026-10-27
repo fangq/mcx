@@ -320,7 +320,8 @@ mcx_bench$(OBJSUFFIX): mcx_bench.c
 %$(OBJSUFFIX): %.cu
 	$(CUDACC) -c $(CUCCOPT) -o $@  $<
 
-$(ZMATLIB):
+# rebuild the bundled zmat when its sources change, or a stale libzmat.a lingers
+$(ZMATLIB): zmat/zmatlib.c zmat/zmatlib.h
 	-$(MAKE) -C zmat lib AR=ar CPPOPT="$(DLLFLAG) -O3" USERLINKOPT=
 clean:
 	-$(MAKE) -C zmat clean
