@@ -1597,7 +1597,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             }
         }
 
-        printf("mcx.flog=%d;\n", cfg->flog);
+        printf("mcx.flog=%d;\n", (cfg->flog == stderr) ? 2 : 1);
     } else if (strcmp(name, "lang") == 0) {
         int len = mxGetNumberOfElements(item);
         char langid[32] = {'\0'};
