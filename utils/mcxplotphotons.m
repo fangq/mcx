@@ -12,8 +12,8 @@ function varargout = mcxplotphotons(traj, varargin)
 %    input:
 %        traj: the photon trajectory data, which can be one of the following:
 %           (1) mcxlab 5th output struct with traj.id/traj.pos/traj.data fields
-%           (2) a struct with photonid/p/w0 fields (mmc/rtmmc-vulkan _traj.jdat
-%               Trajectory object), where photonid is 0-based; rtmmc-vulkan
+%           (2) a struct with photonid/p/w0 fields (mmc/vkmmc _traj.jdat
+%               Trajectory object), where photonid is 0-based; vkmmc
 %               also stores event type: 0=launch, 1=scatter, 2=terminate,
 %               3=boundary crossing (refraction/reflection)
 %           (3) a struct with a MCXData.Trajectory sub-struct (the full
