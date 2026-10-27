@@ -188,6 +188,14 @@ runok "adjoint Jacobians of the channels in Optode.SDMap" adjmap.jnii --bench cu
 echo "test adjoint Jacobian dimensions follow Optode.SDMap ... "
 if [ -z "`tr -d '\n\t ' < adjmap.jnii 2>/dev/null | grep -o '"Dim":\[60,60,60,2,2\]'`" ]; then echo "fail to size the Jacobians by Optode.SDMap"; fail=$((fail+1)); else echo "ok"; fi
 runok "RF forward fluence" rffwd.jnii --bench cube60 -n 1e5 -O r -s rffwd --json '{"Optode":{"Source":{"Frequency":1e8}}}'
+# deposit paths no other test reaches: reflectance (-X 1) of a non-pattern source, RF replay, and RF forward and replay of patterns
+printf '%s' '{"Session":{"ID":"padref","Photons":1e5},"Forward":{"T0":0,"T1":5e-9,"Dt":5e-9},"Domain":{"Dim":[62,62,62],"OriginType":1,"Media":[{"mua":0,"mus":0,"g":1,"n":1},{"mua":0.005,"mus":1,"g":0.01,"n":1}]},"Shapes":[{"Grid":{"Tag":0,"Size":[62,62,62]}},{"Box":{"Tag":1,"O":[1,1,1],"Size":[60,60,60]}}],"Optode":{"Source":{"Type":"pencil","Pos":[31,31,1],"Dir":[0,0,1]}}}' > padref.json
+runok "diffuse reflectance (-X 1) of a pencil beam" padref.jnii -f padref.json -X 1 -s padref
+"$MCX" --bench cube60 -n 1e5 -q 1 -s rfrep --json '{"Optode":{"Source":{"Frequency":1e8}}}' $PARAM > /dev/null 2>&1
+runok "RF replay" rfrepr.jnii --bench cube60 -E rfrep_detp.jdt -O r -s rfrepr --json '{"Optode":{"Source":{"Frequency":1e8}}}'
+runok "RF forward of two patterns" patrffwd.jnii --bench cube60 -n 1e5 -O r -s patrffwd --json "$patrf"
+"$MCX" --bench cube60 -n 1e5 -q 1 -s patrfrep --json "$patrf" $PARAM > /dev/null 2>&1
+runok "RF replay of two patterns" patrfrepr.jnii --bench cube60 -E patrfrep_detp.jdt -O r -s patrfrepr --json "$patrf"
 runok "forward fluence of each source and detector slot (srcid -2)" srcm2.jnii --bench cube60 -n 1e5 --srcid -2 -s srcm2 --json "$DET1"
 "$MCX" --bench cube60b -n 1e5 -s replaytest -q 1 -w DP -S 0 $PARAM > /dev/null 2>&1
 runok "replay of all detectors at once" replayall.jnii --bench cube60b -E replaytest_detp.jdt -Y -1 -O j -s replayall
