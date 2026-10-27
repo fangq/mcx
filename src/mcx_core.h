@@ -209,6 +209,7 @@ typedef struct  __align__(16) KernelParams {
     unsigned int dynload;              /**< 1: threads draw photons from a per-block counter, 0: static photons-per-thread split */
     unsigned int bytemedia;            /**< 1: the label volume is uploaded as 1 byte/voxel */
     unsigned char bc[12];              /**< boundary condition flags, copy the first 12 chars from cfg->bc without the terminating NULL */
+    float fixedscale;                  /**< USE_FIXEDPOINT: integer units per unit of output, a power of 2 */
 } MCXParam;
 
 void mcx_run_simulation(Config* cfg, GPUInfo* gpu);
