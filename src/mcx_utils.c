@@ -1003,7 +1003,7 @@ void mcx_savedata(float* dat, size_t len, Config* cfg) {
         float voxelsize[6] = {cfg->steps.x, cfg->steps.y, cfg->steps.z, cfg->tstep, 1, 1};
 
         if (cfg->extrasrclen && cfg->srcid < 0) {
-            dims[5] = cfg->extrasrclen + 1;
+            dims[5] = mcx_fieldslots(cfg);
         }
 
         if (cfg->seed == SEED_FROM_FILE && (cfg->replaydet == -1 && cfg->detnum > 1)) {
@@ -4662,6 +4662,78 @@ unsigned int* mcx_getsdmap(Config* cfg) {
     }
 
     return sdmap;
+}
+
+/**
+ * @brief Return the 1-based source slots that the Jacobian channels of cfg.sdmap use
+ *
+ * In the adjoint mode, every source and every detector is a source slot (srcid=-1), and each
+ * photon is launched from a slot drawn at random; with cfg.sdmap, only the slots of the sources
+ * and detectors of its channels are needed. Returns NULL and sets *nslot to 0 when all slots are
+ * needed or this does not apply; otherwise the caller frees the *nslot slots returned, in order.
+ * @param[in] cfg: simulation configuration
+ * @param[out] nslot: the number of slots returned
+ */
+
+unsigned int* mcx_getsrcslots(Config* cfg, unsigned int* nslot) {
+    unsigned int nall = cfg->extrasrclen + 1, Ns, i;
+    unsigned int* slots;
+    unsigned char* used;
+
+    *nslot = 0;
+
+    if (!cfg->sdmap || !MCX_IS_ADJOINT_TYPE(cfg->outputtype) || cfg->srcid >= 0 || cfg->seed == SEED_FROM_FILE ||
+            cfg->detnum == 0 || cfg->extrasrclen < cfg->detnum) {
+        return NULL;
+    }
+
+    Ns = nall - cfg->detnum;
+    used = (unsigned char*)calloc(nall, 1);
+
+    for (i = 0; i < cfg->sdmaplen; i++) {
+        if (cfg->sdmap[i << 1] < Ns && cfg->sdmap[(i << 1) + 1] < cfg->detnum) {
+            used[cfg->sdmap[i << 1]] = 1;
+            used[Ns + cfg->sdmap[(i << 1) + 1]] = 1;
+        }
+    }
+
+    slots = (unsigned int*)malloc(sizeof(unsigned int) * nall);
+
+    for (i = 0; i < nall; i++) {
+        if (used[i]) {
+            slots[(*nslot)++] = i + 1;
+        }
+    }
+
+    free(used);
+
+    if (*nslot == nall || *nslot == 0) {
+        free(slots);
+        *nslot = 0;
+        return NULL;
+    }
+
+    return slots;
+}
+
+/**
+ * @brief Return the number of solutions (source slots) the output field stores
+ *
+ * 1, unless several sources are stored separately (srcid=-1, as the adjoint mode does); then
+ * one per source slot, or with cfg.sdmap, only those of the slots its channels use, in the
+ * order of mcx_getsrcslots()
+ * @param[in] cfg: simulation configuration
+ */
+
+unsigned int mcx_fieldslots(Config* cfg) {
+    unsigned int nslot;
+
+    if (!(cfg->extrasrclen && cfg->srcid < 0)) {
+        return 1;
+    }
+
+    free(mcx_getsrcslots(cfg, &nslot));
+    return nslot ? nslot : cfg->extrasrclen + 1;
 }
 
 /**

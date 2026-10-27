@@ -348,6 +348,8 @@ void mcx_replayinit(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 void mcx_validatecfg(Config* cfg, float* detps, int dimdetps[2], int seedbyte);
 unsigned int mcx_jacchannels(Config* cfg);
 unsigned int* mcx_getsdmap(Config* cfg);
+unsigned int* mcx_getsrcslots(Config* cfg, unsigned int* nslot);
+unsigned int mcx_fieldslots(Config* cfg);
 int  mcx_float2half2(float input[2]);
 float mcx_half2float(unsigned short h);
 cJSON* mcx_parsejson(const char* jbuf);

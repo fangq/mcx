@@ -562,7 +562,11 @@ def mcxlab(*args):
         cfg['sdmap']:    an Nch x 2 (or wider) array of 1-based [srcid, detid] rows
                           selecting the adjoint Jacobian channels, in that order;
                           the Jacobians are then [Nx,Ny,Nz,Nch] instead of
-                          [Nx,Ny,Nz,Ns*Nd] (all pairs, detector index fastest)
+                          [Nx,Ny,Nz,Ns*Nd] (all pairs, detector index fastest);
+                          only the sources and detectors in cfg['sdmap'] are
+                          simulated, and the forward solutions in 'flux' are
+                          only theirs: sources first, then detectors, each in
+                          increasing order
 
         cfg['omega']:    source modulation angular frequency in rad/s (2*pi*f);
                           required for RF forward and RF replay modes

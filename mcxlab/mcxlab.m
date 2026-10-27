@@ -200,7 +200,10 @@ function varargout = mcxlab(varargin)
 %                      have Nch channels, in the row order of cfg.sdmap, instead
 %                      of all Ns*Nd pairs. Default: all pairs, with the detector
 %                      index varying the fastest, i.e. [srcid detid] =
-%                      [1 1; 1 2; ... 1 Nd; 2 1; ...]
+%                      [1 1; 1 2; ... 1 Nd; 2 1; ...]. Only the sources and
+%                      detectors in cfg.sdmap are simulated, and the forward
+%                      solutions in the 1st output are only theirs: sources
+%                      first, then detectors, each in increasing order
 %      cfg.bc:         per-face boundary conditions, a string of up to 12 letters;
 %                      letters 1-6 are the -x,-y,-z,+x,+y,+z bounding box faces:
 %                        '_': use cfg.isreflect   'r': Fresnel reflection

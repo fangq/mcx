@@ -1236,7 +1236,7 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             }
 
             if (mcx_config.extrasrclen && mcx_config.srcid < 0) {
-                field_len *= (mcx_config.extrasrclen + 1);
+                field_len *= mcx_fieldslots(&mcx_config);  /* Ns+Nd, or only the slots cfg['sdmap'] uses */
             }
 
             mcx_config.exportfield = (float*) calloc(field_len, sizeof(float));
@@ -1365,12 +1365,12 @@ py::dict pmcx_interface(const py::dict& user_cfg) {
             }
 
             if (mcx_config.extrasrclen && mcx_config.srcid < 0) {
-                field_dim[5] *= (mcx_config.extrasrclen + 1);
+                field_dim[5] *= mcx_fieldslots(&mcx_config);
             }
 
-            /** adjoint forward fluence: reshape to [Nx, Ny, Nz, maxgate, Ns+Nd] (5D) */
+            /** adjoint forward fluence: reshape to [Nx, Ny, Nz, maxgate, Ns+Nd] (5D); with cfg['sdmap'], only the slots it uses */
             if (MCX_IS_ADJOINT_TYPE(mcx_config.outputtype) && mcx_config.seed != SEED_FROM_FILE && mcx_config.detdir != nullptr) {
-                int nsrcslots = mcx_config.extrasrclen + 1;
+                int nsrcslots = mcx_fieldslots(&mcx_config);
                 int isrf = (mcx_config.omega > 0.f) ? 1 : 0;
                 field_dim[0] = mcx_config.dim.x;
                 field_dim[4] = nsrcslots;

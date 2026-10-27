@@ -3276,7 +3276,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     uint sharedbuf = 0;
 
     /** \c dimxyz - output volume variable \c field voxel count, Nx*Ny*Nz*Ns where Ns=cfg.srcnum is the pattern number for photon sharing */
-    size_t dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : (cfg->srcid < 0) ? (cfg->extrasrclen + 1) : 1);
+    size_t dimxyz = cfg->dim.x * cfg->dim.y * cfg->dim.z * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : mcx_fieldslots(cfg));
 
     /** \c media - input volume representing the simulation domain, format specified in cfg.mediaformat, read-only */
     uint*  media = (uint*)(cfg->vol);
@@ -3363,6 +3363,42 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                      };
 
     param.skipradius2 = 0.f;
+
+    /**
+     * With cfg.sdmap, only the source and detector slots of its channels are simulated and stored:
+     * the GPU sees them as the slots 1..nsrcslot, the first as the primary source (gcfg->src) and
+     * the others as the extra sources, and only their detectors (the adjoint mode tells a detector
+     * slot from the source slots by the detector count), so the kernel itself is unchanged
+     */
+    unsigned int nsrcslot = 0, Nsrc = cfg->extrasrclen + 1 - cfg->detnum;
+    unsigned int* srcslots = mcx_getsrcslots(cfg, &nsrcslot);
+    ExtraSrc* slotsrc = NULL;
+    float4* slotdet = NULL;
+
+    if (srcslots) {
+        slotsrc = (ExtraSrc*)malloc(sizeof(ExtraSrc) * nsrcslot);
+        slotdet = (float4*)malloc(sizeof(float4) * nsrcslot);
+        param.detnum = 0;
+
+        for (i = 0; i < (int)nsrcslot; i++) {
+            if (srcslots[i] == 1) {
+                slotsrc[i].srcpos = cfg->srcpos;
+                slotsrc[i].srcdir = cfg->srcdir;
+                slotsrc[i].srcparam1 = cfg->srcparam1;
+                slotsrc[i].srcparam2 = cfg->srcparam2;
+            } else {
+                slotsrc[i] = cfg->srcdata[srcslots[i] - 2];
+            }
+
+            if (srcslots[i] > Nsrc) {
+                slotdet[param.detnum++] = cfg->detpos[srcslots[i] - Nsrc - 1];
+            }
+        }
+
+        memcpy(&param.src, slotsrc, sizeof(MCXSrc));
+        param.extrasrclen = nsrcslot - 1;
+    }
+
 #ifdef USE_FIXEDPOINT
     {
         /** the most one voxel can receive in one run, times 2: energy, the launched weight; other outputs,
@@ -3409,6 +3445,10 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 #ifdef _OPENMP
     threadid = omp_get_thread_num();
 #endif
+
+    if (srcslots && threadid == 0) {
+        MCX_FPRINTF(cfg->flog, "%s: %u of %u\n", T_("source and detector slots used by sdmap"), nsrcslot, cfg->extrasrclen + 1);
+    }
 
     if (threadid < MAX_DEVICE && cfg->deviceid[threadid] == '\0') {
         return;
@@ -3619,7 +3659,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     dimlen.x = cfg->dim.x;
     dimlen.y = cfg->dim.y * cfg->dim.x;
     dimlen.z = cfg->dim.x * cfg->dim.y * cfg->dim.z;
-    dimlen.w = gpu[gpuid].maxgate * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : (cfg->srcid < 0) ? (cfg->extrasrclen + 1) : 1);
+    dimlen.w = gpu[gpuid].maxgate * ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) ? cfg->srcnum : mcx_fieldslots(cfg));
 
     /** Here we decide the total output buffer, field's length. it is Nx*Ny*Nz*Nt*Ns */
     if (cfg->seed == SEED_FROM_FILE && cfg->replaydet == -1) {
@@ -3918,9 +3958,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
      * Copy constants to the constant memory on the GPU
      */
     CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->prop,  cfg->medianum * sizeof(Medium), 0, cudaMemcpyHostToDevice));
-    CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->detpos,  cfg->detnum * sizeof(float4), cfg->medianum * sizeof(Medium), cudaMemcpyHostToDevice));
+    CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, slotdet ? slotdet : cfg->detpos,  param.detnum * sizeof(float4), cfg->medianum * sizeof(Medium), cudaMemcpyHostToDevice));
 
-    if (cfg->srcdata) {
+    if (slotsrc) {
+        CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, slotsrc + 1,  param.extrasrclen * 4 * sizeof(float4), cfg->medianum * sizeof(Medium) + param.detnum * sizeof(float4), cudaMemcpyHostToDevice));
+    } else if (cfg->srcdata) {
         CUDA_ASSERT(cudaMemcpyToSymbol(gproperty, cfg->srcdata,  cfg->extrasrclen * 4 * sizeof(float4), cfg->medianum * sizeof(Medium) + cfg->detnum * sizeof(float4), cudaMemcpyHostToDevice));
     }
 
@@ -4228,6 +4270,12 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
                         debugrec = min(debugrec, cfg->maxjumpdebug);
                         cfg->exportdebugdata = (float*)realloc(cfg->exportdebugdata, (cfg->debugdatalen + debugrec) * debuglen * sizeof(float));
                         CUDA_ASSERT(cudaMemcpy(cfg->exportdebugdata + cfg->debugdatalen, gdebugdata, sizeof(float)*debuglen * debugrec, cudaMemcpyDeviceToHost));
+
+                        for (i = 0; srcslots && i < (int)debugrec; i++) { /** the 6th value of a record is its slot on the GPU */
+                            float* rec = cfg->exportdebugdata + (cfg->debugdatalen + i) * debuglen + 5;
+                            *rec = (*rec >= 1.f && *rec <= nsrcslot) ? srcslots[(int)(*rec) - 1] : *rec;
+                        }
+
                         cfg->debugdatalen += debugrec;
                     }
                 }
@@ -4241,6 +4289,18 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             if (cfg->issavedet) {
                 CUDA_ASSERT(cudaMemcpy(Pdet, gPdet, sizeof(float)*cfg->maxdetphoton * (hostdetreclen), cudaMemcpyDeviceToHost));
                 CUDA_ASSERT(cudaGetLastError());
+
+                /** the detector (bits 0-15) and source slot (bits 16-31) of a detected photon are those on the GPU */
+                if (srcslots && SAVE_DETID(cfg->savedetflag)) {
+                    unsigned int nsrcused = nsrcslot - param.detnum;
+
+                    for (i = 0; i < (int)MIN(detected, cfg->maxdetphoton); i++) {
+                        int detid = (int)Pdet[i * hostdetreclen], k = detid >> 16, d = detid & 0xFFFF;
+                        d = (d >= 1 && d <= (int)param.detnum) ? (int)(srcslots[nsrcused + d - 1] - Nsrc) : d;
+                        k = (k >= 1 && k <= (int)nsrcslot) ? (int)srcslots[k - 1] : k;
+                        Pdet[i * hostdetreclen] = (float)(d | (k << 16));
+                    }
+                }
 
                 /**
                  * If photon seeds are needed for replay, here we retrieve the seed data
@@ -4580,7 +4640,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             }
 
             if (cfg->extrasrclen && cfg->srcid < 0) { // when multiple sources are simulated, the total photons are evenly divided
-                scale[0] *= (cfg->extrasrclen + 1);
+                scale[0] *= mcx_fieldslots(cfg);
             }
 
             cfg->normalizer = scale[0];
@@ -4632,6 +4692,21 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             float* gadjoint_mua = NULL;  /**< first Jacobian (mua) for dual output */
             unsigned int* gsdmap = NULL; /**< (source, detector) pair of each channel */
             unsigned int* hsdmap = mcx_getsdmap(cfg);
+
+            /** with cfg.sdmap, the field only stores the slots in srcslots: address the channels by their field slots */
+            if (srcslots) {
+                for (unsigned int c = 0; c < 2 * nch; c++) {
+                    unsigned int slot = ((c & 1) ? Ns : 0) + hsdmap[c] + 1, k = 0;
+
+                    while (k + 1 < nsrcslot && srcslots[k] != slot) {
+                        k++;
+                    }
+
+                    hsdmap[c] = k;
+                }
+
+                Ns = 0;
+            }
 
             CUDA_ASSERT(cudaMalloc((void**)&gsdmap, sizeof(unsigned int) * 2 * (nch > 0 ? nch : 1)));
             CUDA_ASSERT(cudaMemcpy(gsdmap, hsdmap, sizeof(unsigned int) * 2 * nch, cudaMemcpyHostToDevice));
@@ -4994,6 +5069,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     free(energy);
     free(field);
     free(srcpw);
+    free(srcslots);
+    free(slotsrc);
+    free(slotdet);
 
     if (energytot) {
         free(energytot);

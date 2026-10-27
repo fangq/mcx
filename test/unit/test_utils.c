@@ -2296,6 +2296,41 @@ static void test_net_and_branches(void) {
  *  entry point, called by the main() of each repository's unit test binary
  *---------------------------------------------------------------------------*/
 
+/** the source slots of the adjoint mode that cfg.sdmap needs, and the size of the output field */
+static void test_srcslots(void) {
+    Config cfg;
+    unsigned int n, *slots;
+    unsigned int sdmap[4] = {0, 1, 2, 3};  /* channels (src 1, det 2) and (src 3, det 4), 0-based */
+
+    init_cfg(&cfg);
+    cfg.outputtype = otAdjoint;
+    cfg.srcid = -1;
+    cfg.detnum = 4;
+    cfg.extrasrclen = 2 + 4;  /* 3 sources and 4 detectors: 7 slots */
+    cfg.medianum = 2;
+    EXPECT_TRUE(mcx_getsrcslots(&cfg, &n) == NULL && n == 0, "without sdmap, every slot is simulated");
+    EXPECT_EQ(mcx_fieldslots(&cfg), 7, "the field stores Ns+Nd solutions without sdmap");
+
+    cfg.sdmap = sdmap;
+    cfg.sdmaplen = 2;
+    slots = mcx_getsrcslots(&cfg, &n);
+    EXPECT_TRUE(slots && n == 4 && slots[0] == 1 && slots[1] == 3 && slots[2] == 5 && slots[3] == 7, "sdmap uses sources 1, 3 and detectors 2, 4 (slots 1, 3, 5, 7)");
+    free(slots);
+    EXPECT_EQ(mcx_fieldslots(&cfg), 4, "the field only stores the slots sdmap uses");
+
+    cfg.srcid = 0;
+    EXPECT_EQ(mcx_fieldslots(&cfg), 1, "merged sources (srcid 0) store one solution");
+    cfg.srcid = -1;
+    sdmap[0] = 1;
+    sdmap[2] = 0;
+    sdmap[3] = 2;  /* (src 2, det 2), (src 1, det 3): slots 2, 1, 5, 6 in increasing order */
+    slots = mcx_getsrcslots(&cfg, &n);
+    EXPECT_TRUE(slots && n == 4 && slots[0] == 1 && slots[1] == 2 && slots[2] == 5 && slots[3] == 6, "the slots are listed in increasing order");
+    free(slots);
+    cfg.sdmap = NULL;
+    clear_cfg(&cfg);
+}
+
 void run_utils_tests(void) {
     char tmpdir[] = "/tmp/mcxunitXXXXXX", cwd[4096];
 
@@ -2318,6 +2353,7 @@ void run_utils_tests(void) {
     test_detphoton();
     test_inp();
     test_loadjson();
+    test_srcslots();
     test_parsecmd();
     test_validatecfg();
     test_maskdet();
