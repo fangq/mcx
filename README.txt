@@ -65,6 +65,12 @@ Notable new features include:
   loaded for replay
 * atomic accumulation is always used; `--atomic 0` is deprecated as it lost energy on
   modern GPUs at no speed benefit
+* exact output sums: `make fixed` (`-DUSE_FIXEDPOINT`) accumulates the output as 64-bit
+  fixed-point integers instead of a float with a second float buffer; the sums are exact
+  and independent of the order of the additions, so a run with `-A 0` is bit-reproducible,
+  and the output matches a double-precision build (the float buffers differ from it by up
+  to 7e-4 near the source); 1.13x (RTX 4090) and 1.26x (RTX 5090) faster on average over
+  13 built-in examples, and as fast on an RTX 2080 SUPER; it runs on every GPU MCX supports
 * extended line sources for wedge/fan beams; detected photon scattering counts are
   now saved as unsigned integers to remove the 16777216 cap
 * about 10% speed gain in split-voxel MC (SVMC) by reducing register use
@@ -158,6 +164,7 @@ lists all of them, with their commit hashes.
 * [d502ece] dynamic photon dispatch and 1-byte label volumes in autopilot mode: 1.07-1.51x faster
 * [857b26d] split-voxel MC (SVMC) uses 2 fewer registers, about 10% faster
 * [4e2fd41] atomic accumulation is always used; the non-atomic and pre-Fermi paths are removed
+* [c59fd99] `make fixed`: exact, order-independent 64-bit fixed-point output sums, matching a double build
 * [cc192d9] `photon`: one launcher for mcx, mcxcl and mmc; [9e7a7cc] one JSON input schema for all three
 
 '''MCX Studio 2, MCX Cloud and toolboxes'''
@@ -176,6 +183,8 @@ lists all of them, with their commit hashes.
 * [9f19965] 141 built-in example tests exported from all examples and mcxlab demos
 * [c413609] four rounds of JSON-aware fuzzing of inputs and options, and fuzzing of the GUI: all
   crashes, hangs and memory errors fixed [6af09da, 7d01159, a9474cb]; input values now validated
+* [641581a] `test/fuzz/dfuzz.py`: mutation fuzzing of the built-in inputs and options, optionally
+  differential against a reference build; [45fafd5] with the built-in examples, the tests reach every output deposit path
 
 '''Bug fixes'''
 * [a29ed84] host RNG seeds had ~75% of their bits set, biasing each thread's first photon; now uniform
@@ -399,6 +408,7 @@ make                 # the mcx binary in ../bin, needs the CUDA toolkit
 make mex             # mcxlab: ../mcxlab/mcx.mexa64 (needs MATLAB's mex)
 make oct             # mcxlab for Octave: ../mcxlab/mcx.mex (needs mkoctfile)
 make unittest        # host unit tests, see Testing
+make fixed           # exact 64-bit fixed-point output sums (-DUSE_FIXEDPOINT)
 </pre>
 
 Targets such as `make pascal`, `make turing` or `make ampere` (and `voltamex`,
@@ -419,8 +429,9 @@ cmake --build build
 
 * '''GPU memory''': the domain needs Nx*Ny*Nz bytes (1-byte labels) and the
     output needs Nx*Ny*Nz*Ng*4*2 bytes, where Ng is the number of time gates
-    simulated at once (4 bytes per float, doubled to reduce round-off errors). With
-    the default autopilot, MCX splits the time gates into as many runs as needed.
+    simulated at once (4 bytes per float, doubled to reduce round-off errors; a
+    `make fixed` build keeps one 8-byte integer instead). With the default autopilot,
+    MCX splits the time gates into as many runs as needed.
 * '''media plus detectors''': optical properties and detector positions are kept in
     the GPU's 64 kB constant memory, so their total count must stay below about 4000.
 * '''many media''': partial path lengths are kept in shared memory; with many
@@ -1531,7 +1542,7 @@ level.
 
 == # Testing ==
 
-MCX includes several test suites, run in its continuous integration:
+MCX includes several test suites; all but the fuzzer run in its continuous integration:
 
 <pre>
 host unit tests
@@ -1549,6 +1560,10 @@ trajectory tests
     What it checks: step-by-step photon trajectories against solver-neutral golden data
         shared with MCX-CL and MMC
     How to run: `test/testtraj.sh`
+fuzzing
+    What it checks: mutated built-in inputs and options: crashes, hangs and sanitizer errors,
+        optionally against a reference build
+    How to run: `test/fuzz/dfuzz.py`
 PMCX tests
     What it checks: the Python module
     How to run: `python3 -m unittest discover -s test` in `pmcx/`
