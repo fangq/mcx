@@ -3367,12 +3367,19 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     {
         /** the most one voxel can receive in one run, times 2: energy, the launched weight; other outputs,
             the weight times the longest path (grid units), and per scattering event for the replayed
-            WP/DCS/RFmus outputs, in ns for the TOF outputs */
-        double lmax = cfg->tend / R_C0 / cfg->unitinmm, k = 1.0, musmax = 0.0, wmax = 1.0;
+            WP/DCS/RFmus outputs, in ns for the TOF outputs. In a forward run where every labeled medium
+            absorbs, a photon's weight decays along its path, so its weighted path is at most 1/mua_min
+            (2/mua_min allows for Russian roulette); replayed weights do not decay, and continuous media
+            have no label table, so those keep the longest path */
+        double lmax = cfg->tend / R_C0 / cfg->unitinmm, lpath, k = 1.0, musmax = 0.0, muamin = 1e30, wmax = 1.0;
 
         for (i = 1; i < (int)cfg->medianum; i++) {
             musmax = MAX(musmax, (double)cfg->prop[i].mus);
+            muamin = MIN(muamin, (double)cfg->prop[i].mua);
         }
+
+        lpath = (cfg->seed != SEED_FROM_FILE && muamin > 0.0 && (cfg->mediabyte <= 4 || cfg->mediabyte == MEDIA_2LABEL_SPLIT
+                 || cfg->mediabyte == MEDIA_2LABEL_MIX)) ? MIN(lmax, 2.0 / muamin) : lmax;
 
         int patlen = (cfg->srctype == MCX_SRC_PATTERN3D) ? (int)(cfg->srcparam1.x * cfg->srcparam1.y * cfg->srcparam1.z * cfg->srcnum)
                      : (int)(cfg->srcparam1.w * cfg->srcparam2.w * cfg->srcnum);
@@ -3382,7 +3389,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
         }
 
         if (cfg->outputtype != otEnergy) {
-            k = lmax * ((cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otWPTOF || cfg->outputtype == otRFmus) ? MAX(1.0, lmax * musmax) : 1.0)
+            k = lpath * ((cfg->outputtype == otWP || cfg->outputtype == otDCS || cfg->outputtype == otWPTOF || cfg->outputtype == otRFmus) ? MAX(1.0, lmax * musmax) : 1.0)
                 * ((cfg->outputtype == otWLTOF || cfg->outputtype == otWPTOF) ? MAX(1.0, cfg->tend * 1e9) : 1.0);
         }
 
