@@ -1,5 +1,6 @@
 """cfg['sdmap'] selects the channels of the adjoint Jacobians: each row [srcid, detid]
-(1-based) becomes one channel, in that order, instead of all Ns*Nd pairs."""
+(1-based) becomes one channel, in that order, instead of all Ns*Nd pairs; cfg['detdir']
+may have 3 columns (no focal length) or 4."""
 
 import re
 import subprocess
@@ -38,6 +39,17 @@ try:
     print("RANGE no error")
 except Exception:
     print("RANGE error")
+# a 3-column detdir has a 0 focal length, the same as the 4-column one above
+del cfg["sdmap"]
+cfg["detdir"] = np.tile([0, 0, 1], (3, 1))
+j3 = pmcx.run(cfg)["jmua"]
+print("DETDIR3 %g" % (np.linalg.norm(j3 - full) / np.linalg.norm(full)))
+cfg["detdir"] = np.tile([0, 0], (3, 1))
+try:
+    pmcx.run(cfg)
+    print("DETDIR2 no error")
+except Exception:
+    print("DETDIR2 error")
 """
 
 
@@ -53,6 +65,9 @@ class TestSDMap(unittest.TestCase):
         # the two runs differ only by GPU run-to-run noise
         self.assertLess(float(re.search(r"RELERR (\S+)", out.stdout).group(1)), 0.05)
         self.assertIn("RANGE error", out.stdout)
+        # 3-column detdir: same Jacobians as [vx vy vz 0], up to run-to-run noise
+        self.assertLess(float(re.search(r"DETDIR3 (\S+)", out.stdout).group(1)), 0.05)
+        self.assertIn("DETDIR2 error", out.stdout)
 
 
 if __name__ == "__main__":
