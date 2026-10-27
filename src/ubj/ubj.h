@@ -159,6 +159,9 @@ typedef struct ubjr_object_t_s
 typedef struct ubjr_dynamic_t_s
 {
 	UBJ_TYPE type;
+#if defined(__GNUC__) && !defined(__cplusplus)
+	__extension__ /* anonymous unions are C11; silences -pedantic under -std=c99 */
+#endif
 	union
 	{
 		uint8_t boolean;

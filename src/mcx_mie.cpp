@@ -40,7 +40,7 @@
 
 #include "mcx_vector_types.h"
 
-#if defined(_MSC_VER) || defined(__APPLE__)
+#if defined(_MSC_VER) || defined(__APPLE__) || defined(__clang__)
     #include <complex>
     typedef std::complex<double> Dcomplex;
 #else
@@ -48,7 +48,7 @@
     typedef double _Complex Dcomplex;
 #endif
 
-#if defined(_MSC_VER) || defined(__APPLE__)
+#if defined(_MSC_VER) || defined(__APPLE__) || defined(__clang__)
 inline Dcomplex make_Dcomplex(double re, double im) {
     return Dcomplex(re, im);
 }
@@ -97,7 +97,7 @@ void Mie(double x, double mx, const double* mu, float4* smatrix, double* qsca, d
     Dcomplex xi, xi0, xi1;
     double psi0, psi1;
     double alpha, beta, factor;
-    long n, k, nstop, sign;
+    long n, k, nstop;
 
     if (x <= 0.0) {
         MCX_ERROR(-6, "sphere size must be positive");
@@ -141,7 +141,6 @@ void Mie(double x, double mx, const double* mu, float4* smatrix, double* qsca, d
     xi1 = make_Dcomplex(psi1, cos(x) / x + sin(x));
     *qsca = 0.0;
     *g = 0.0;
-    sign = 1;
     anm1 = make_Dcomplex(0.0, 0.0);
     bnm1 = make_Dcomplex(0.0, 0.0);
 
@@ -184,7 +183,6 @@ void Mie(double x, double mx, const double* mu, float4* smatrix, double* qsca, d
         *g += (n - 1.0 / n) * (creal(anm1) * creal(an) + cimag(anm1) * cimag(an) + creal(bnm1) * creal(bn) + cimag(bnm1) * cimag(bn));
         *g += factor / n / (n + 1.0) * (creal(an) * creal(bn) + cimag(an) * cimag(bn));
         *qsca += factor * (cabs(an) * cabs(an) + cabs(bn) * cabs(bn));
-        sign *= -1;
 
         factor = (2.0 * n + 1.0) / x;
         xi = factor * xi1 - xi0;

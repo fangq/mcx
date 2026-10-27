@@ -80,6 +80,7 @@
  */
 #define FIND_JSON_STR(id,idfull,parent,fallback) mcx_jsonstr(FIND_JSON_KEY(id,idfull,parent,fallback,valuestring), idfull)
 
+#ifndef MCX_CONTAINER
 static const char* mcx_jsonstr(const char* str, const char* name) {
     if (str == NULL) {
         char msg[MAX_PATH_LENGTH];
@@ -89,6 +90,7 @@ static const char* mcx_jsonstr(const char* str, const char* name) {
 
     return str;
 }
+#endif
 
 /**
  * Macro to load JSON object
@@ -2680,6 +2682,7 @@ void mcx_loadconfig(FILE* in, Config* cfg) {
     }
 }
 
+#ifndef MCX_CONTAINER
 /**
  * Stops with a message naming APath unless ARow is an array of at least
  * AMinLen elements.  The readers walk a row as child->next->next...; one
@@ -2693,6 +2696,7 @@ static void mcx_json_needrow(cJSON* row, int minlen, const char* path) {
         MCX_ERROR(-1, msg);
     }
 }
+#endif
 
 /**
  * @brief Load user inputs from a .json input file
@@ -5605,7 +5609,7 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
         }
 
         if (ztype) {
-            size_t len, newlen;
+            size_t len = 0, newlen = 0;
             int status = 0;
             char* buf = NULL;
             int zipid = mcx_keylookup((char*)(ztype->valuestring), zipformat);
@@ -5707,7 +5711,7 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
                 }
             } else if (cfg->mediabyte == MEDIA_2LABEL_SPLIT) {
                 for (i = 0; i < arraylen; i++) {
-                    ((int64_t*)(*vol))[i] = *((int64_t*)&tmp->valuedouble);
+                    memcpy((int64_t*)(*vol) + i, &tmp->valuedouble, sizeof(int64_t));
                     tmp = tmp->next;
                 }
             }
@@ -6035,6 +6039,7 @@ int mcx_readarg(int argc, char* argv[], int id, void* output, const char* type) 
     return id + 1;
 }
 
+#ifndef MCX_CONTAINER
 /**
  * @brief Reads the string value that follows a command line option into a
  * buffer of len bytes.
@@ -6057,6 +6062,7 @@ static int mcx_readstrarg(int argc, char* argv[], int id, char* output, size_t l
     strcpy(output, argv[id + 1]);
     return id + 1;
 }
+#endif
 
 /**
  * @brief Test if a long command line option is supported

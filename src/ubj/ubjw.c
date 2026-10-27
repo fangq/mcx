@@ -70,7 +70,7 @@ ubjw_context_t* ubjw_open_callback(void* userdata,
 }
 ubjw_context_t* ubjw_open_file(FILE* fd)
 {
-	return ubjw_open_callback(fd, (void*)fwrite,(void*)fclose,NULL);
+	return ubjw_open_callback(fd, (size_t(*)(const void*, size_t, size_t, void*))fwrite, (int(*)(void*))fclose, NULL);
 }
 
 struct mem_w_fd
@@ -102,7 +102,7 @@ ubjw_context_t* ubjw_open_memory(uint8_t* be, uint8_t* en)
 	mfd->current = be;
 	mfd->begin = be;
 	mfd->end = en;
-	return ubjw_open_callback(mfd, (void*)memwrite, (void*)memclose,NULL);
+	return ubjw_open_callback(mfd, (size_t(*)(const void*, size_t, size_t, void*))memwrite, memclose, NULL);
 }
 
 static inline void priv_ubjw_context_append(ubjw_context_t* ctx, uint8_t a)
@@ -481,7 +481,8 @@ static inline void priv_ubjw_write_raw_float32(ubjw_context_t* ctx, float out)
 {
 	priv_disassembly_begin(ctx);
 #ifndef UBJW_DISASSEMBLY_MODE
-	uint32_t fout = *(uint32_t*)&out;
+	uint32_t fout;
+	memcpy(&fout, &out, sizeof(fout));
 	uint8_t outbuf[4];
 	if(!ctx->isbjdata)
         	_to_bigendian32(outbuf, fout);
@@ -503,7 +504,8 @@ static inline void priv_ubjw_write_raw_float64(ubjw_context_t* ctx, double out)
 {
 	priv_disassembly_begin(ctx);
 #ifndef UBJW_DISASSEMBLY_MODE
-	uint64_t fout = *(uint64_t*)&out;
+	uint64_t fout;
+	memcpy(&fout, &out, sizeof(fout));
 	uint8_t outbuf[8];
 	if(!ctx->isbjdata)
                 _to_bigendian64(outbuf, fout);

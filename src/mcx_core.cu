@@ -3544,7 +3544,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     {
         size_t fixedbuf = (param.nphaselen + param.nanglelen) * sizeof(float);
         size_t threadbuf = cfg->issaveseed * (RAND_BUF_LEN * sizeof(RandType)) + sizeof(float) * (param.w0offset + cfg->srcnum + 2 * (cfg->outputtype == otRF || cfg->outputtype == otRFmus));
-        uint oldblock = gpu[gpuid].autoblock;
+        int oldblock = gpu[gpuid].autoblock;
 
         while (gpu[gpuid].autoblock > 1 && !(gpu[gpuid].autoblock & 1) && fixedbuf + gpu[gpuid].autoblock * threadbuf > gpu[gpuid].sharedmem) {
             gpu[gpuid].autoblock >>= 1;
