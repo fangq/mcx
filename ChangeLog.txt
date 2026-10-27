@@ -3,6 +3,14 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-26 [3ddbbfa] [doc] README: fixed-point output sums (make fixed), test/fuzz/dfuzz.py and the new testmcx.sh checks
+ 2026-10-26 [1ab1645]*[feat] make fixed: build with -DUSE_FIXEDPOINT (64-bit fixed-point output sums)
+ 2026-10-26 [45fafd5] [test] testmcx.sh: reflectance of a pencil beam, RF replay, RF forward and replay of patterns
+ 2026-10-26 [641581a] [test] add test/fuzz/dfuzz.py: mutation fuzzing of builtin inputs and options, optionally differential
+ 2026-10-26 [c59fd99]*[feat] USE_FIXEDPOINT: accumulate the output as 64-bit fixed-point integers instead of the float double-buffer
+ 2026-10-26 [5d7ee86]*[feat] cfg.sdmap/Optode.SDMap: compute the adjoint Jacobian for listed source-detector channels, refs #275
+ 2026-10-26 [ac88f59] [test] re-export the shape-based builtin cases from their sources, keeping the shape constructs
+ 2026-10-26 [63e4afd] [doc] rewrite the README for users: the four ways to run MCX, a JSON field reference, sources, detectors, output units, MCXLAB, PMCX, MCX Studio, advanced features and contributing
  2026-10-25 [211fef6] [bug] mcxlab/pmcx: fix cfg.flog, one time gate without tstep, parity with mcxlabcl/pmcxcl
  2026-10-25 [4959eeb] [doc] rewrite the mcxlab help: document every cfg field the mex reads
  2026-10-25 [2f2a38a] [ci] build MCXStudio.app in a macos-14 job of its own, and test it
