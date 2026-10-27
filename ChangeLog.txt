@@ -3,6 +3,7 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-27 [e5be630] [bug] USE_FIXEDPOINT: bound the fixed-point scale by 1/mua in forward runs
  2026-10-26 [3ddbbfa] [doc] README: fixed-point output sums (make fixed), test/fuzz/dfuzz.py and the new testmcx.sh checks
  2026-10-26 [1ab1645]*[feat] make fixed: build with -DUSE_FIXEDPOINT (64-bit fixed-point output sums)
  2026-10-26 [45fafd5] [test] testmcx.sh: reflectance of a pencil beam, RF replay, RF forward and replay of patterns
