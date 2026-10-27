@@ -76,6 +76,21 @@
      : tmp->val)
 
 /**
+ * Macro to load a JSON string: a value of another type is an error (cJSON leaves its valuestring NULL)
+ */
+#define FIND_JSON_STR(id,idfull,parent,fallback) mcx_jsonstr(FIND_JSON_KEY(id,idfull,parent,fallback,valuestring), idfull)
+
+static const char* mcx_jsonstr(const char* str, const char* name) {
+    if (str == NULL) {
+        char msg[MAX_PATH_LENGTH];
+        snprintf(msg, MAX_PATH_LENGTH, "%s must be a string", name);
+        MCX_ERROR(-1, msg);
+    }
+
+    return str;
+}
+
+/**
  * Macro to load JSON object
  */
 #define FIND_JSON_OBJ(id,idfull,parent) \
@@ -1998,6 +2013,21 @@ void mcx_preprocess(Config* cfg) {
         MCX_ERROR(-4, "the 'srcpattern' field can not be empty when your 'srctype' is 'pattern'");
     }
 
+    /* a single pattern weighs each launch by its pixel; the kernel retries a zero-weight launch
+       until it draws a non-zero pixel, so a sampled area without one never finishes */
+    if ((cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D) && cfg->srcnum <= 1) {
+        size_t npix = (cfg->srctype == MCX_SRC_PATTERN) ? (size_t)MAX((int)cfg->srcparam1.w, 0) * (size_t)MAX((int)cfg->srcparam2.w, 0) :
+                      (size_t)MAX((int)cfg->srcparam1.x, 0) * (size_t)MAX((int)cfg->srcparam1.y, 0) * (size_t)MAX((int)cfg->srcparam1.z, 0);
+        float w0 = (cfg->srcpos.w == 0.f) ? 1.f : cfg->srcpos.w, minw = MAX(cfg->minenergy, 0.f);
+        size_t i;
+
+        for (i = 0; i < npix && fabsf(cfg->srcpattern[i] * w0) <= minw; i++);
+
+        if (i == npix) {
+            MCX_ERROR(-4, "the source pattern has no non-zero value in the area that Param1/Param2 sample");
+        }
+    }
+
     if (cfg->steps.x != 1.f && cfg->unitinmm == 1.f) {
         cfg->unitinmm = cfg->steps.x;
     }
@@ -2110,6 +2140,11 @@ void mcx_preprocess(Config* cfg) {
             } b2u;
 
             for (int i = 0; i < dimxyz; i++) {
+                if (val[i << 3] >= cfg->medianum || val[(i << 3) + 1] >= cfg->medianum) { /* the lower and upper labels index the media */
+                    free(newvol);
+                    MCX_ERROR(-4, "input media optical properties are less than the labels in the volume");
+                }
+
                 b2u.c[2] = val[(i << 3) + 5]; // encoding normal vector nx, ny, nz
                 b2u.c[1] = val[(i << 3) + 6];
                 b2u.c[0] = val[(i << 3) + 7];
@@ -2680,7 +2715,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
     /* RootPath locates the input files, such as Domain.VolumeFile, which is read before the Session section */
     if (Session && cfg->rootpath[0] == '\0') {
-        strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath", "Session.RootPath", Session, "", valuestring), MAX_PATH_LENGTH - 1);
+        strncpy(cfg->rootpath, FIND_JSON_STR("RootPath", "Session.RootPath", Session, ""), MAX_PATH_LENGTH - 1);
     }
 
     Shapes  = cJSON_GetObjectItem(root, "Shapes");
@@ -2691,7 +2726,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         val = FIND_JSON_OBJ("VolumeFile", "Domain.VolumeFile", Domain);
 
         if (val) {
-            strncpy(volfile, val->valuestring, MAX_PATH_LENGTH - 1);
+            strncpy(volfile, mcx_jsonstr(val->valuestring, "Domain.VolumeFile"), MAX_PATH_LENGTH - 1);
 
             if (cfg->rootpath[0]) {
 #ifdef WIN32
@@ -2707,7 +2742,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         val = FIND_JSON_OBJ("MediaFormat", "Domain.MediaFormat", Domain);
 
         if (!flagset['K'] && val) {
-            cfg->mediabyte = mcx_keylookup((char*)FIND_JSON_KEY("MediaFormat", "Domain.MediaFormat", Domain, "byte", valuestring), mediaformat);
+            cfg->mediabyte = mcx_keylookup((char*)FIND_JSON_STR("MediaFormat", "Domain.MediaFormat", Domain, "byte"), mediaformat);
 
             if (cfg->mediabyte == -1) {
                 MCX_ERROR(-1, "Unsupported media format.");
@@ -3188,7 +3223,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
             subitem = FIND_JSON_OBJ("Type", "Optode.Source.Type", src);
 
             if (subitem) {
-                cfg->srctype = mcx_keylookup((char*)FIND_JSON_KEY("Type", "Optode.Source.Type", src, "pencil", valuestring), srctypeid);
+                cfg->srctype = mcx_keylookup((char*)FIND_JSON_STR("Type", "Optode.Source.Type", src, "pencil"), srctypeid);
             }
 
             subitem = FIND_JSON_OBJ("Param1", "Optode.Source.Param1", src);
@@ -3356,6 +3391,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                 cfg->srcid = FIND_JSON_KEY("ID", "Optode.Source.ID", src, cfg->srcid, valueint);
             }
 
+            size_t patlen = 0; /* elements of the pattern read below */
             subitem = FIND_JSON_OBJ("Pattern", "Optode.Source.Pattern", src);
 
             if (subitem) {
@@ -3377,6 +3413,8 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
 
                         MCX_ERROR(-1, "Optode.Source.Pattern JData-annotated array must be in the 'single' format");
                     }
+
+                    patlen = (size_t)dims[0] * dims[1] * dims[2];
 
                     if (ndim == 3 && dims[2] > 1 && dims[0] > 1 && cfg->srctype == MCX_SRC_PATTERN) { /* a 3-D pattern3d array is a single pattern */
                         cfg->srcnum = dims[0];
@@ -3401,6 +3439,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                             }
 
                             cfg->srcpattern = (float*)calloc(nx * ny * nz * cfg->srcnum, sizeof(float));
+                            patlen = (size_t)nx * ny * nz * cfg->srcnum;
 
                             for (i = 0; i < nx * ny * nz * cfg->srcnum; i++) {
                                 if (pat == NULL) {
@@ -3419,11 +3458,27 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
                                 }
 
                                 cfg->srcpattern = (float*)calloc(nx * ny * nz * cfg->srcnum, sizeof(float));
-                                fread((void*)cfg->srcpattern, sizeof(float), nx * ny * nz * cfg->srcnum, fid);
+                                patlen = (size_t)nx * ny * nz * cfg->srcnum;
+
+                                if (fread((void*)cfg->srcpattern, sizeof(float), nx * ny * nz * cfg->srcnum, fid) != nx * ny * nz * cfg->srcnum) {
+                                    fclose(fid);
+                                    MCX_ERROR(-2, "srcpattern file size does not match the specified data size");
+                                }
+
                                 fclose(fid);
                             }
                         }
                     }
+                }
+            }
+
+            /* the device copy of the pattern has the size that Param1/Param2 and SrcNum give */
+            if (patlen > 0 && (cfg->srctype == MCX_SRC_PATTERN || cfg->srctype == MCX_SRC_PATTERN3D)) {
+                double need = (cfg->srctype == MCX_SRC_PATTERN) ? (double)cfg->srcparam1.w * cfg->srcparam2.w :
+                              (double)cfg->srcparam1.x * cfg->srcparam1.y * cfg->srcparam1.z;
+
+                if (need * cfg->srcnum > patlen) {
+                    MCX_ERROR(-1, "Optode.Source.Pattern has fewer elements than Param1/Param2 and SrcNum require");
                 }
             }
 
@@ -3562,11 +3617,11 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         }
 
         if (cfg->session[0] == '\0') {
-            strncpy(cfg->session, FIND_JSON_KEY("ID", "Session.ID", Session, "default", valuestring), MAX_SESSION_LENGTH - 1);
+            strncpy(cfg->session, FIND_JSON_STR("ID", "Session.ID", Session, "default"), MAX_SESSION_LENGTH - 1);
         }
 
         if (cfg->rootpath[0] == '\0') {
-            strncpy(cfg->rootpath, FIND_JSON_KEY("RootPath", "Session.RootPath", Session, "", valuestring), MAX_PATH_LENGTH - 1);
+            strncpy(cfg->rootpath, FIND_JSON_STR("RootPath", "Session.RootPath", Session, ""), MAX_PATH_LENGTH - 1);
         }
 
         if (!flagset['B']) {
@@ -3634,7 +3689,7 @@ int mcx_loadjson(cJSON* root, Config* cfg) {
         }
 
         if (!flagset['F']) {
-            cfg->outputformat = mcx_keylookup((char*)FIND_JSON_KEY("OutputFormat", "Session.OutputFormat", Session, "jnii", valuestring), outputformat);
+            cfg->outputformat = mcx_keylookup((char*)FIND_JSON_STR("OutputFormat", "Session.OutputFormat", Session, "jnii"), outputformat);
         }
 
         if (cfg->outputformat < 0) {
@@ -5461,7 +5516,7 @@ int  mcx_jdatadecode(void** vol, int* ndim, uint* dims, int maxdim, char** type,
             }
 
             for (int i = 0; i < *ndim; i++, tmp = tmp->next) {
-                if (!cJSON_IsNumber(tmp) || tmp->valuedouble < 1 || tmp->valuedouble > 2147483647.0) {
+                if (!cJSON_IsNumber(tmp) || tmp->valuedouble < 1 || tmp->valuedouble > 2147483647.0 || tmp->valuedouble != floor(tmp->valuedouble)) {
                     MCX_ERROR(-1, "a JData array needs an _ArraySize_ of positive integers");
                 }
 

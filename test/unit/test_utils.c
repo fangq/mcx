@@ -440,7 +440,7 @@ static void test_loadvolume(void) {
     uint64_t svmc[8];
 
     for (int i = 0; i < 8; i++) {
-        svmc[i] = 0x0102030405060000ull + i;
+        svmc[i] = 0x0102030405060000ull + (i % 3);  /* the lower label (low byte) indexes the 3 media of check_dumpjson */
     }
 
     write_file("vsvmc.bin", svmc, sizeof(svmc));
@@ -524,11 +524,11 @@ static void setup_output_cfg(Config* cfg) {
 
 static void test_savedata(void) {
     Config cfg;
-    float dat[48];
+    float dat[96];  /* 3x4x2 voxels x 2 gates, x2 for the real and imaginary parts of RF output */
     char* buf;
     long len;
 
-    for (int i = 0; i < 48; i++) {
+    for (int i = 0; i < 96; i++) {
         dat[i] = i + 0.5f;
     }
 
@@ -1448,8 +1448,7 @@ static void test_more_paths(void) {
     load_json(&cfg, "{'Session':{'Photons':10,'ID':'nest','RootPath':'r1/r2/r3','OutputType':'a','DebugFlag':'T'},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9},"
               "'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,4],'VoxelSize':{'Dx':[1,1,1,1],'Dy':[1],'Dz':[1,1,1,1]}}," JBASE_SHAPES ","
               "'Optode':{'Source':{'Pos':[[2,2,0],[-1,2,0]],'Dir':[[0,0,1],[0,0,1]],'Weight':0},'Detector':[{'Pos':[2,3,0],'R':1,'Dir':[0,0,1]}]}}", 1);
-    EXPECT_TRUE(read_file("r1/r2/r3", &buf) != -2, "RootPath creates nested folders");
-    free(buf);
+    EXPECT_TRUE(access("r1/r2/r3", F_OK) == 0, "RootPath creates nested folders");
     EXPECT_EQ(cfg.srcid, -1, "the adjoint output simulates each source and detector slot");
     EXPECT_EQ(cfg.extrasrclen, 2, "the detectors are appended as adjoint sources");
 #ifndef MCX_OPENCL
@@ -1459,7 +1458,7 @@ static void test_more_paths(void) {
 
     /* replay output layout with multiple detectors */
     setup_output_cfg(&cfg);
-    float dat[96] = {0};
+    float dat[192] = {0};  /* 3x4x2 voxels x 2 gates x 2 detectors x 2 (RF) */
     cfg.seed = SEED_FROM_FILE;
     cfg.replaydet = -1;
     cfg.detnum = 2;
@@ -2249,6 +2248,29 @@ static void test_net_and_branches(void) {
                       "'_ArrayZipSize_':4,'_ArrayZipData_':'eJxjZGBgBAAACQAD'}}}}", "a pattern that is not single precision");
     EXPECT_JSON_ERROR("{'Session':{'Photons':10,'ID':'e','OutputType':'rf'},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}",
                       "an RF output without a modulation frequency");
+
+    /* a number where a string is expected: its valuestring is NULL */
+    EXPECT_JSON_ERROR("{'Session':{'Photons':10,'ID':5},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}", "a numeric Session.ID");
+    EXPECT_JSON_ERROR("{'Session':{'Photons':10,'ID':'e','RootPath':5},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}",
+                      "a numeric Session.RootPath");
+    EXPECT_JSON_ERROR("{'Session':{'Photons':10,'ID':'e','OutputFormat':5},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}",
+                      "a numeric Session.OutputFormat");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1]],'Dim':[4,4,4],'MediaFormat':5}," JBASE_SHAPES "," JBASE_OPTODE "}", "a numeric Domain.MediaFormat");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1]],'Dim':[4,4,4],'VolumeFile':-5}," JBASE_OPTODE "}", "a numeric Domain.VolumeFile");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Type':5,'Pos':[2,2,0],'Dir':[0,0,1]}}}", "a numeric Source.Type");
+
+    /* a pattern smaller than Param1/Param2 give is copied to the device at the larger size */
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Type':'pattern','Pos':[1,1,0],'Dir':[0,0,1],"
+                      "'Param1':[2,0,0,3],'Param2':[0,2,0,2],'Pattern':{'Nx':2,'Ny':2,'Data':[1,0,0,1]}}}}", "a pattern smaller than Param1/Param2");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Type':'pattern','Pos':[1,1,0],'Dir':[0,0,1],"
+                      "'Param1':[2,0,0,2],'Param2':[0,2,0,2],'Pattern':{'_ArrayType_':'single','_ArraySize_':[1.5,2],'_ArrayData_':[1,0,0,1]}}}}",
+                      "a non-integer _ArraySize_");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Type':'pattern','Pos':[1,1,0],'Dir':[0,0,1],"
+                      "'Param1':[2,0,0,1],'Param2':[0,2,0,2],'Pattern':{'Nx':2,'Ny':2,'Data':[0,0,1,1]}}}}", "a pattern without a non-zero pixel in the sampled area");
+    /* the lower and upper labels of a split voxel index the media */
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[2,1,1],'MediaFormat':'svmc'},"
+                      "'Shapes':{'_ArrayType_':'uint64','_ArraySize_':[2,1,1],'_ArrayZipType_':'zlib','_ArrayZipSize_':[1,2],"
+                      "'_ArrayZipData_':'eJxjZIAAVkYIDQAATwAI'}," JBASE_OPTODE "}", "an svmc label beyond the media");
 
 #ifndef MCX_OPENCL
     /* the library entry point that runs a JSON input on the GPU; skipped on a
