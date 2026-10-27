@@ -108,7 +108,12 @@ Notable new features include:
   crashing or hanging
 * fixes found by fuzzing: a photon whose effective scattering coefficient becomes 0 (g=1
   once `--gscatter` is reached) no longer hangs the kernel, `-e` of 1 or more no longer
-  relaunches photons forever, and the zlib decoder stops on truncated streams
+  relaunches photons forever, and the zlib decoder stops on truncated streams; fuzzing
+  mcx-cl found five more bugs in the shared code, fixed in both: a number given for a
+  string field crashed the reader, a source pattern smaller than Param1/Param2 was read
+  past its end, a pattern with no non-zero pixel in its sampled area hung the kernel,
+  svmc labels beyond the media read past the property table, and a run that detected no
+  photon freed the detected-photon buffer
 * `Session.OutputType` in JSON inputs accepts the names mcxlab and pmcx use ("flux",
   "adjoint_mus", ...); only the first letter used to be read, so "flux" gave fluence and
   "dcs" an adjoint Jacobian
@@ -185,6 +190,7 @@ lists all of them, with their commit hashes.
   crashes, hangs and memory errors fixed [6af09da, 7d01159, a9474cb]; input values now validated
 * [641581a] `test/fuzz/dfuzz.py`: mutation fuzzing of the built-in inputs and options, optionally
   differential against a reference build; [45fafd5] with the built-in examples, the tests reach every output deposit path
+* [edbb667] fixes for the crashes, hangs and memory errors that fuzzing mcx-cl found in the shared code
 
 '''Bug fixes'''
 * [a29ed84] host RNG seeds had ~75% of their bits set, biasing each thread's first photon; now uniform
