@@ -35,9 +35,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <exception>
+#include <stdexcept>
 #include <math.h>
 
 #include "mex.h"
+
+/**
+ * mexErrMsgTxt raises an exception from MATLAB's own C++ runtime; the released mex files link a
+ * static libstdc++, which aborts MATLAB when that exception unwinds into the try/catch blocks of
+ * mcxlab (fangq/mcx#278). Inside mcxlab, errors are thrown as std::runtime_error instead, and
+ * mexFunction passes the message to MATLAB's mexErrMsgTxt once, outside every try block.
+ */
+static void (*const mcxlab_mexerror)(const char*) = mexErrMsgTxt;
+
+static void mcxlab_throw(const char* msg) {
+    throw std::runtime_error(msg);
+}
+
+#define mexErrMsgTxt mcxlab_throw
 #include "mcx_const.h"
 #include "mcx_utils.h"
 #include "mcx_core.h"
@@ -135,7 +150,7 @@ static void mcxlab_add_jac_field(mxArray** plhs, int jstruct, const char* fname,
     mxSetField(plhs[0], jstruct, fname, jfield);
 }
 
-void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
+static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     Config cfg;
     GPUInfo* gpuinfo = NULL;
     mxArray*    tmp;
@@ -145,6 +160,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     int        activedev = 0;
     int        errorflag = 0;
     int        threadid = 0;
+    char       cfgerr[MAX_PATH_LENGTH] = "";  /** the error of a simulation, raised after its clean-up */
     const char*       outputtag[] = {"data"};
     const char*       datastruct[] = {"data", "stat", "dref", "prop"};
     const char*       statstruct[] = {"runtime", "nphoton", "energytot", "energyabs", "normalizer", "unitinmm", "workload"};
@@ -674,11 +690,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
                 }
             }
         } catch (const char* err) {
-            mexPrintf("Error: %s\n", err);
+            snprintf(cfgerr, sizeof(cfgerr), "%s", err);
         } catch (const std::exception& err) {
-            mexPrintf("C++ Error: %s\n", err.what());
+            snprintf(cfgerr, sizeof(cfgerr), "%s", err.what());
         } catch (...) {
-            mexPrintf("Unknown Exception");
+            snprintf(cfgerr, sizeof(cfgerr), "unknown exception");
         }
 
         /** Clear up simulation data structures by calling the destructors */
@@ -693,9 +709,36 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
 
         mcx_cleargpuinfo(&gpuinfo);
         mcx_clearcfg(&cfg);
+
+        /** report the error to MATLAB after the clean-up */
+        if (cfgerr[0]) {
+            throw std::runtime_error(cfgerr);
+        }
     }
 
     return;
+}
+
+/**
+ * @brief The mex entry: runs mcxlab_main and raises its errors in MATLAB/Octave outside any try block
+ */
+
+void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
+    char errmsg[MAX_PATH_LENGTH] = "";
+
+    try {
+        mcxlab_main(nlhs, plhs, nrhs, prhs);
+    } catch (const std::exception& err) {
+        snprintf(errmsg, sizeof(errmsg), "%s", err.what());
+    } catch (const char* err) {
+        snprintf(errmsg, sizeof(errmsg), "%s", err);
+    } catch (...) {
+        snprintf(errmsg, sizeof(errmsg), "unknown exception");
+    }
+
+    if (errmsg[0]) {
+        mcxlab_mexerror(errmsg);
+    }
 }
 
 
@@ -1597,7 +1640,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
 
 extern "C" int mcx_throw_exception(const int id, const char* msg, const char* filename, const int linenum) {
     printf("MCXLAB ERROR %d in unit %s:%d: %s\n", id, filename, linenum, msg);
-    throw msg;
+    throw std::runtime_error(msg);  /* a copy: msg may be on the stack of the caller */
     return id;
 }
 
