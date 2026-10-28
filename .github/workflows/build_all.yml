@@ -178,14 +178,25 @@ jobs:
           # symlink libomp headers — re-do every run since /usr/local/opt/libomp may be at a different version
           sudo ln -sf /usr/local/opt/libomp/include/*.h /usr/local/cuda/include/ 2>/dev/null || true
           mkdir -p ~/bin
+      # Windows uses CUDA 9.2: the CUDA 10.2 runtime, linked statically into the MATLAB mex,
+      # failed the first simulation of a MATLAB session and corrupted the MATLAB heap
+      # (R2023a, driver 536); a CUDA 9.2 mex of the same source runs cleanly
       - name: Install CUDA (Windows only)
         if: ${{ runner.os == 'Windows' }}
         uses: Jimver/cuda-toolkit@v0.2.10
         id: cuda-toolkit
         with:
-          cuda: '10.2.89'
+          cuda: '9.2.148'
           method: 'network'
-          sub-packages: '["nvcc"]'
+          sub-packages: '["nvcc", "cudart"]'
+      - name: Let CUDA 9.2 use Visual Studio 2019 (Windows only)
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          # CUDA 9.2 checks for MSVC up to 2017 (_MSC_VER 1913), and the VS2019 STL for CUDA 10.1U2+
+          sed -i 's/_MSC_VER > 1913/_MSC_VER > 1999/' "$CUDA_PATH/include/crt/host_config.h"
+          grep -n '_MSC_VER > 1999' "$CUDA_PATH/include/crt/host_config.h"
+          echo "CL=-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH" >> $GITHUB_ENV
+          nvcc --version
       - name: Link libgomp.a (MacOS only)
         if: ${{ runner.os == 'macOS' }}
         run: |
