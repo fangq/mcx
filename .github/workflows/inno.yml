@@ -52,14 +52,20 @@ jobs:
           fi
           # the Chinese translations are unofficial and not shipped with Inno Setup;
           # fetch those of the installed version (e.g. 6.4.3 -> tag is-6_4_3)
-          VER=$(powershell -NoProfile -Command "(Get-Item '$(cygpath -w "$ISCC")').VersionInfo.ProductVersion" | grep -o -m1 '[0-9]\+\.[0-9]\+\.[0-9]\+' || true)
-          TAG=is-$(echo "${VER:-6.4.3}" | tr . _)
+          VER=$(powershell -NoProfile -Command "(Get-Item '$(cygpath -w "$ISCC")').VersionInfo.ProductVersion" | tr -d '\r' || true)
+          echo "Inno Setup product version: '$VER'"
+          VER=$(echo "$VER" | grep -o -m1 '[0-9]\+\.[0-9]\+\.[0-9]\+' || true)
           LANGDIR="$(dirname "$ISCC")/Languages"
+          # those of the installed version, or of 6.4.3 (renamed messages are then
+          # ignored with a warning, and shown in English)
           for lang in ChineseSimplified ChineseTraditional; do
-              [ -f "$LANGDIR/$lang.isl" ] || curl -fsSL --retry 3 -o "$LANGDIR/$lang.isl" \
-                  "https://raw.githubusercontent.com/jrsoftware/issrc/$TAG/Files/Languages/Unofficial/$lang.isl"
+              [ -f "$LANGDIR/$lang.isl" ] && continue
+              for TAG in is-$(echo "${VER:-0}" | tr . _) is-6_4_3; do
+                  curl -fsSL --retry 3 -o "$LANGDIR/$lang.isl" \
+                      "https://raw.githubusercontent.com/jrsoftware/issrc/$TAG/Files/Languages/Unofficial/$lang.isl" && break
+              done
+              echo "$lang.isl from $TAG"
           done
-          echo "Inno Setup ${VER:-unknown}, translations from $TAG"
           mkdir -p packages
           cd MCXStudio/inno
           "$ISCC" //DMyAppVersion="$NAME" //O"$GITHUB_WORKSPACE\\packages" //F"MCXStudio-windows-x64-$NAME-installer" MCXStudio.iss
