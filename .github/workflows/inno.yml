@@ -52,8 +52,10 @@ jobs:
           fi
           # the Chinese translations are unofficial and not shipped with Inno Setup;
           # fetch those of the installed version (e.g. 6.4.3 -> tag is-6_4_3)
-          VER=$(powershell -NoProfile -Command "(Get-Item '$(cygpath -w "$ISCC")').VersionInfo.ProductVersion" | tr -d '\r' || true)
-          echo "Inno Setup product version: '$VER'"
+          # ISCC.exe carries no version (0.0.0.0): take that of the installation, or of
+          # the compiler engine ISCmplr.dll
+          VER=$(powershell -NoProfile -Command "\$k = Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Inno Setup 6_is1','HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Inno Setup 6_is1' -ErrorAction SilentlyContinue | Select-Object -First 1; if (\$k) { \$k.DisplayVersion } else { (Get-Item '$(cygpath -w "$(dirname "$ISCC")")\\ISCmplr.dll').VersionInfo.FileVersion }" | tr -d '\r' || true)
+          echo "Inno Setup version: '$VER'"
           VER=$(echo "$VER" | grep -o -m1 '[0-9]\+\.[0-9]\+\.[0-9]\+' || true)
           LANGDIR="$(dirname "$ISCC")/Languages"
           # those of the installed version, or of 6.4.3 (renamed messages are then
