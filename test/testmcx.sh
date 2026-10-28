@@ -241,6 +241,32 @@ echo "test saving trajectory feature -D M ... "
 temp=`"$MCX" --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved trajectory positions: ([6-9][0-9]{3}|[1-9][0-9]{4,})'`
 if [ -z "$temp" ]; then echo "fail to save trajectory data via -D M"; fail=$((fail+1)); else echo "ok"; fi
 
+# host features of mcx_run_simulation, each checked by what it prints
+# runlog "description" "pattern the log must match" mcx options...
+runlog() {
+    desc=$1; pat=$2; shift 2
+    echo "test $desc ... "
+    if [ -z "`"$MCX" "$@" $PARAM 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E -- "$pat"`" ]; then echo "fail to $desc"; fail=$((fail+1)); else echo "ok"; fi
+}
+
+runlog "round -t down to a multiple of -T without autopilot" 'nthread=960 ' --bench cube60 -n 1e4 -A 0 -t 1000 -T 64 -S 0
+runlog "report more detected photons than -H" 'detected photon number is more than .* \([0-9]+ > 10\)' --bench cube60 -n 1e5 -H 10 -S 0
+runlog "report more trajectory positions than --maxjumpdebug" 'trajectory positions are more than .* \([0-9]+ > 50\)' --bench cube60 -n 1e3 -D M --maxjumpdebug 50 -S 0 -d 0
+runlog "print the states of the first photons with -p" '^ +2\[A' --bench cube60 -n 1e4 -p 3 -S 0
+"$MCX" --bench cube60 -n 1e5 -q 1 -s featrep -S 0 -F mc2 $PARAM > /dev/null 2>&1
+runlog "normalize the replay of every detector by its own weight (-Y -1)" 'normalization factor for detector 4 alpha=0\.0' --bench cube60 -E featrep.mch -Y -1 -r 2 -O J -S 1 -s featrep1 -F mc2
+runlog "keep the unit scale of an RF replay of every detector with -U 2" 'normalization factor for detector 4 alpha=1\.000000' --bench cube60 -E featrep.mch -Y -1 -U 2 -O R -S 1 -s featrep2 -F mc2 --json '{"Forward":{"Omega":6.28e8}}'
+runlog "keep the unit scale of the replay of one detector with -U 2" 'normalization factor for detector 1 alpha=1\.000000' --bench cube60 -E featrep.mch -Y 1 -U 2 -O J -S 1 -s featrep3 -F mc2
+runok "unnormalized time-of-flight*path replay (-O T -U 0)" featrep4.mc2 --bench cube60 -E featrep.mch -Y 1 -U 0 -O T -S 1 -s featrep4 -F mc2
+runok "unnormalized time-of-flight*nscat replay (-O B -U 0)" featrep5.mc2 --bench cube60 -E featrep.mch -Y 1 -U 0 -O B -S 1 -s featrep5 -F mc2
+runok "RF adjoint mus' Jacobian" adjrfv.jnii --bench cube60 -n 1e5 -O v -s adjrfv --json "$DETRF"
+runok "RF dual adjoint mua/mus' Jacobians" adjrfq.jnii --bench cube60 -n 1e5 -O q -s adjrfq --json "$DETRF"
+runlog "save the trajectories of the source and detector slots of Optode.SDMap" 'saved trajectory positions: [1-9]' --bench cube60 -n 1e3 -O w -D M -d 0 -s adjtraj --json "$DETMAP"
+# 300 media with their partial paths saved (-w DP) need more shared memory than a block of 64 photons has
+MED=`printf '{"mua":0.005,"mus":1,"g":0.01,"n":1.37}%.0s,' $(seq 300)`
+printf '{"Session":{"ID":"manymed","Photons":1e4},"Forward":{"T0":0,"T1":5e-9,"Dt":5e-9},"Domain":{"Dim":[20,20,20],"Media":[{"mua":0,"mus":0,"g":1,"n":1},%s]},"Shapes":[{"Grid":{"Tag":300,"Size":[20,20,20]}}],"Optode":{"Source":{"Pos":[10,10,0],"Dir":[0,0,1]},"Detector":[{"Pos":[10,12,0],"R":3}]}}' "${MED%,}" > manymed.json
+runlog "reduce the block size when the per-photon data of 300 media exceed the shared memory" 'reduce block size to fit the shared memory: [0-9]+ -> [0-9]+' -f manymed.json -w DP -S 0
+
 temp=`which valgrind 2> /dev/null`
 if [ ! -z "$temp" ]; then
     echo "test memory access errors using valgrind ... "

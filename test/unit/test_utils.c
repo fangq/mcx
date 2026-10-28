@@ -305,6 +305,82 @@ static void test_jdata(void) {
 }
 
 /*-----------------------------------------------------------------------------
+ *  JData arrays over 4 MB: zlib/gzip deflate them in parallel blocks and save
+ *  the block index as _ArrayZipOffsets_, which the reader uses to inflate them
+ *  in parallel; a malformed index falls back to a serial inflate
+ *---------------------------------------------------------------------------*/
+
+static void test_jdata_blocks(void) {
+    Config cfg;
+    const uint len = 3u << 20;  /* 12 MB of float32 */
+    uint dims[1] = {len};
+    float* data = (float*)malloc(len * sizeof(float));
+    const char* zips[] = {"zlib", "gzip"};
+
+    init_cfg(&cfg);
+    cfg.isdumpjson = 1;
+
+    for (uint i = 0; i < len; i++) {
+        data[i] = (float)((i * 2654435761u) % 1000u) * 0.5f;
+    }
+
+    for (int z = 0; z < 2; z++) {
+        int zipid = 0;
+        char msg[128];
+
+        while (strcmp(zipformat[zipid], zips[z])) {
+            zipid++;
+        }
+
+        /* text JSON: the index is a list of [compressed, uncompressed] offset pairs */
+        cJSON* obj = cJSON_CreateObject();
+        int ret = mcx_jdataencode(data, 1, dims, (char*)"single", sizeof(float), zipid, obj, 0, 0, &cfg);
+        cJSON* idx = cJSON_GetObjectItem(obj, "_ArrayZipOffsets_");
+        sprintf(msg, "a 12 MB %s array saves _ArrayZipOffsets_", zips[z]);
+        EXPECT_TRUE(ret == 0 && idx && cJSON_GetArraySize(idx) >= 3, msg);
+
+        void* vol = NULL;
+        char* type = NULL;
+        int ndim = 0;
+        uint odims[1] = {0};
+        mcx_jdatadecode(&vol, &ndim, odims, 1, &type, obj, &cfg);
+        sprintf(msg, "a 12 MB %s array is inflated in parallel blocks", zips[z]);
+        EXPECT_TRUE(vol && odims[0] == len && memcmp(vol, data, len * sizeof(float)) == 0, msg);
+        free(vol);
+
+        /* malformed indices: an odd count, too few numbers, a negative or a
+           non-numeric offset; each is ignored and the stream inflated serially */
+        const char* bad[] = {"[[0,0],[1,1],[2]]", "[0,0]", "[[0,0],[-1,5],[9,9]]", "[[0,0],[\"a\",1],[9,9]]"};
+
+        for (int b = 0; b < 4; b++) {
+            cJSON_ReplaceItemInObject(obj, "_ArrayZipOffsets_", cJSON_Parse(bad[b]));
+            vol = NULL;
+            mcx_jdatadecode(&vol, &ndim, odims, 1, &type, obj, &cfg);
+            sprintf(msg, "a %s array with a malformed index %s is inflated serially", zips[z], bad[b]);
+            EXPECT_TRUE(vol && memcmp(vol, data, len * sizeof(float)) == 0, msg);
+            free(vol);
+        }
+
+        cJSON_Delete(obj);
+
+        /* binary JSON: the index is written as an array of uint64 pairs */
+        size_t cap = len * sizeof(float) + (1 << 20);
+        unsigned char* out = (unsigned char*)malloc(cap);
+        ubjw_context_t* ctx = ubjw_open_memory(out, out + cap);
+        ubjw_begin_object(ctx, UBJ_MIXED, 0);
+        ret = mcx_jdataencode(data, 1, dims, (char*)"single", sizeof(float), zipid, ctx, 1, 0, &cfg);
+        ubjw_end(ctx);
+        size_t n = ubjw_close_context(ctx);
+        sprintf(msg, "a 12 MB %s BJData array saves _ArrayZipOffsets_", zips[z]);
+        EXPECT_TRUE(ret == 0 && n > 0 && has_key((const char*)out, (long)n, "_ArrayZipOffsets_"), msg);
+        free(out);
+    }
+
+    free(data);
+    clear_cfg(&cfg);
+}
+
+/*-----------------------------------------------------------------------------
  *  shape rasterization
  *---------------------------------------------------------------------------*/
 
@@ -1029,6 +1105,106 @@ static void test_maskdet(void) {
     mcx_maskdet(&cfg);
     EXPECT_TRUE((cfg.vol[1 * 4 + 1] & DET_MASK) != 0, "mcx_maskdet marks a split voxel containing background");
     clear_cfg(&cfg);
+
+    /* a split voxel of two media (lower and upper labels) next to a background voxel */
+    init_cfg(&cfg);
+    cfg.dim.x = cfg.dim.y = cfg.dim.z = 4;
+    cfg.mediabyte = MEDIA_2LABEL_SPLIT;
+    cfg.vol = (unsigned int*)calloc(64 * 2, sizeof(unsigned int));
+
+    for (int i = 0; i < 64; i++) {
+        cfg.vol[i] = 0x01000000u;
+    }
+
+    cfg.vol[1 * 16 + 1 * 4 + 1] = 0x00010000u;  /* z=1 voxel (1,1): background */
+    cfg.vol[1 * 16 + 1 * 4 + 2] = 0x01020000u;  /* z=1 voxel (2,1): media 1 and 2 */
+    cfg.detnum = 1;
+    cfg.detpos = (float4*)calloc(1, sizeof(float4));
+    cfg.detpos[0].x = 2.5f;
+    cfg.detpos[0].y = 1.5f;
+    cfg.detpos[0].z = 1.5f;
+    cfg.detpos[0].w = 0.6f;
+    mcx_maskdet(&cfg);
+    EXPECT_TRUE((cfg.vol[1 * 16 + 1 * 4 + 2] & DET_MASK) != 0, "mcx_maskdet marks a split voxel of two media next to background");
+    clear_cfg(&cfg);
+
+    /* a detector larger than the domain covers its whole surface and none of its inside */
+    init_cfg(&cfg);
+    cfg.dim.x = cfg.dim.y = cfg.dim.z = 4;
+    cfg.vol = (unsigned int*)malloc(sizeof(unsigned int) * 64);
+
+    for (int i = 0; i < 64; i++) {
+        cfg.vol[i] = 1;
+    }
+
+    cfg.detnum = 1;
+    cfg.detpos = (float4*)calloc(1, sizeof(float4));
+    cfg.detpos[0].x = 2.f;
+    cfg.detpos[0].y = 2.f;
+    cfg.detpos[0].w = 100.f;
+    mcx_maskdet(&cfg);
+    {
+        int nsurf = 0, ninside = 0;
+
+        for (int k = 0; k < 4; k++)
+            for (int j = 0; j < 4; j++)
+                for (int i = 0; i < 4; i++) {
+                    int onsurf = (i == 0 || i == 3 || j == 0 || j == 3 || k == 0 || k == 3);
+                    int masked = (cfg.vol[k * 16 + j * 4 + i] & DET_MASK) != 0;
+                    nsurf += onsurf && masked;
+                    ninside += !onsurf && masked;
+                }
+
+        EXPECT_TRUE(nsurf == 56 && ninside == 0, "a detector larger than the domain marks all 56 surface voxels");
+    }
+    clear_cfg(&cfg);
+
+    EXPECT_EXIT({
+        Config c;
+        init_cfg(&c);
+        c.dim.x = c.dim.y = c.dim.z = 4;
+        c.vol = (unsigned int*)malloc(sizeof(unsigned int) * 64);
+
+        for (int i = 0; i < 64; i++) {
+            c.vol[i] = 1;
+        }
+
+        c.detnum = 1;
+        c.detpos = (float4*)calloc(1, sizeof(float4));
+        c.detpos[0].x = 2e6f;
+        c.detpos[0].w = 1e7f;
+        mcx_maskdet(&c);
+    }, "a detector placed millions of voxels away");
+
+    /* a detector inside the volume, away from any interface, marks nothing */
+    init_cfg(&cfg);
+    cfg.dim.x = cfg.dim.y = cfg.dim.z = 8;
+    cfg.vol = (unsigned int*)malloc(sizeof(unsigned int) * 512);
+
+    for (int i = 0; i < 512; i++) {
+        cfg.vol[i] = 1;
+    }
+
+    cfg.issavedet = 1;
+    cfg.detnum = 1;
+    cfg.detpos = (float4*)calloc(1, sizeof(float4));
+    cfg.detpos[0].x = cfg.detpos[0].y = cfg.detpos[0].z = 4.f;
+    cfg.detpos[0].w = 1.f;
+    {
+        FILE* olderr = stderr;
+        int nmask = 0;
+
+        stderr = devnull;  /* the "not located on an interface" warning */
+        mcx_maskdet(&cfg);
+        stderr = olderr;
+
+        for (int i = 0; i < 512; i++) {
+            nmask += (cfg.vol[i] & DET_MASK) != 0;
+        }
+
+        EXPECT_EQ(nmask, 0, "a detector inside the volume marks no voxel");
+    }
+    clear_cfg(&cfg);
 }
 
 /*-----------------------------------------------------------------------------
@@ -1075,10 +1251,11 @@ static void test_savejdata(void) {
     } fmt[] = {
         {"byte", "v8.bin", 1}, {"short", "v16.bin", 2}, {"mua_float", "vf.bin", 4},
         {"muamus_float", "vas.bin", 8}, {"asgn_float", "vasgn.bin", 16}, {"svmc", "vsvmc.bin", 8},
-        {"asgn_byte", "vab.bin", 4}, {"muamus_short", "vms.bin", 4}, {"labelplus", "vlp.bin", 4}
+        {"asgn_byte", "vab.bin", 4}, {"muamus_short", "vms.bin", 4}, {"labelplus", "vlp.bin", 4},
+        {"integer", "vi32.bin", 4}
     };
     unsigned char vab[32];
-    unsigned int vlp[8];
+    unsigned int vlp[8], vi32[8] = {0, 1, 2, 1, 1, 2, 1, 1};
 
     for (int i = 0; i < 32; i++) {
         vab[i] = (unsigned char)(10 + i);
@@ -1091,6 +1268,7 @@ static void test_savejdata(void) {
     write_file("vab.bin", vab, sizeof(vab));
     write_file("vms.bin", vab, sizeof(vab));
     write_file("vlp.bin", vlp, sizeof(vlp));
+    write_file("vi32.bin", vi32, sizeof(vi32));
 
     for (int f = 0; f < (int)(sizeof(fmt) / sizeof(fmt[0])); f++) {
         char json[1024];
@@ -1108,6 +1286,28 @@ static void test_savejdata(void) {
                    "\"Domain\":{\"Media\":[[0,0,1,1],[0.01,1,0.9,1.37],[0.03,2,0.8,1.4]],\"Dim\":[2,2,2]},"
                    "\"Shapes\":{\"_ArrayType_\":\"uint8\",\"_ArraySize_\":[2,2,2],\"_ArrayData_\":[0,1,2,1,1,2,1,1]},"
                    "\"Optode\":{\"Source\":{\"Pos\":[1,1,0],\"Dir\":[0,0,1]}}}", "JData byte", 8);
+
+    /* the source-detector channels of Optode.SDMap are saved 1-based and read back */
+    {
+        Config cfg, dump;
+        char json[] = "{\"Session\":{\"Photons\":10,\"ID\":\"sjmap\",\"OutputType\":\"a\"},"
+                      "\"Forward\":{\"T0\":0,\"T1\":1e-9,\"Dt\":1e-9},"
+                      "\"Domain\":{\"Media\":[[0,0,1,1],[0.01,1,0.9,1.37]],\"Dim\":[4,4,4]},"
+                      "\"Shapes\":[{\"Grid\":{\"Tag\":1,\"Size\":[4,4,4]}}],"
+                      "\"Optode\":{\"Source\":{\"Pos\":[2,2,0],\"Dir\":[0,0,1]},"
+                      "\"Detector\":[{\"Pos\":[1,2,0],\"R\":1,\"Dir\":[0,0,1]},{\"Pos\":[3,2,0],\"R\":1,\"Dir\":[0,0,1]}],"
+                      "\"SDMap\":[[1,2],[1,1]]}}";
+
+        init_cfg(&cfg);
+        mcx_readconfig(json, &cfg);
+        mcx_savejdata((char*)"sjmap.json", &cfg);
+        init_cfg(&dump);
+        mcx_readconfig((char*)"sjmap.json", &dump);
+        EXPECT_TRUE(dump.sdmaplen == 2 && dump.sdmap && memcmp(dump.sdmap, cfg.sdmap, 4 * sizeof(unsigned int)) == 0,
+                    "--dumpjson saves and restores Optode.SDMap");
+        clear_cfg(&cfg);
+        clear_cfg(&dump);
+    }
 }
 
 /*-----------------------------------------------------------------------------
@@ -1205,6 +1405,28 @@ static void test_json_errors(void) {
     write_file("e8.bin", "\x01\x01\x01\x01\x01\x01\x01\x01", 8);
     EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[2,2,2],'VolumeFile':'e8.bin'},"
                       "'Shapes':{'_ArrayType_':'uint8','_ArraySize_':[2,2,2],'_ArrayData_':[1,1,1,1,1,1,1,1]}," JBASE_OPTODE "}", "both a volume file and a JData volume");
+
+    /* mcx_preprocess: optical properties, voxel size, roulette threshold and workloads that would
+       have the photons step forever */
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[-0.01,1,0.9,1.37]],'Dim':[4,4,4]}," JBASE_SHAPES "," JBASE_OPTODE "}", "a negative mua");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,1.5,1.37]],'Dim':[4,4,4]}," JBASE_SHAPES "," JBASE_OPTODE "}", "an anisotropy beyond 1");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,1,0.9,1.37]],'Dim':[4,4,4],'LengthUnit':1e-6}," JBASE_SHAPES "," JBASE_OPTODE "}", "a voxel size below 0.1 um");
+    EXPECT_JSON_ERROR("{'Session':{'Photons':10,'MinEnergy':1},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}", "a roulette threshold of 1");
+    EXPECT_EXIT({Config c; load_json(&c, "{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}", 0); c.workload[0] = -1.f; mcx_preprocess(&c);}, "a negative device workload");
+    EXPECT_JSON_ERROR("{'Session':{'Photons':10,'OutputType':'a'},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,1]},"
+                      "'Detector':[{'Pos':[1,2,0],'R':1,'Dir':[0,0,1]}],'SDMap':[[1,2]]}}", "an Optode.SDMap detector beyond the detectors");
+    EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[[2,2,0],[1,1,0]],'Dir':[0,0,1],'Type':'pattern','Param1':[2,0,0,2],'Param2':[0,2,0,2],"
+                      "'SrcNum':2,'Pattern':{'Nx':2,'Ny':2,'Nz':1,'Data':[1,1,1,1,1,1,1,1]}}}}", "several sources and a multi-pattern source");
+
+    /* the replay of every detector (-Y -1) with a single detector replays that detector */
+    {
+        Config c;
+        load_json(&c, "{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,1]},'Detector':[{'Pos':[1,2,0],'R':1}]}}", 0);
+        c.replaydet = -1;
+        mcx_preprocess(&c);
+        EXPECT_EQ(c.replaydet, 1, "-Y -1 with one detector replays detector 1");
+        clear_cfg(&c);
+    }
 
     /* mcx_preprocess */
     EXPECT_JSON_ERROR("{" JBASE_SESSION "," JBASE_DOMAIN "," JBASE_SHAPES ",'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,0]}}}", "a zero-length source direction");
@@ -1732,6 +1954,28 @@ static void test_more_inputs(void) {
     Config cfg;
     char* buf;
     float pat3[8] = {1, 1, 1, 1, 1, 1, 1, 1};
+
+    /* polarized media: the sphere density gives the mus of the medium, or, with g < 1, its
+       mus' = mus*(1-g), the medium then taking the anisotropy of the Mie phase function */
+    {
+        const float gs[2] = {1.f, 0.9f};
+
+        for (int i = 0; i < 2; i++) {
+            char json[1024];
+            snprintf(json, sizeof(json), "{" JBASE_SESSION ",'Domain':{'Media':[[0,0,1,1],[0.01,10,%g,1.37]],"
+                     "'MieScatter':[[0.001,0.5,1.03,1.59,1.33]],'Dim':[4,4,4]}," JBASE_SHAPES ","
+                     "'Optode':{'Source':{'Pos':[2,2,0],'Dir':[0,0,1],'WaveLength':650}}}", gs[i]);
+            load_json(&cfg, json, 1);
+
+            if (i == 0) {
+                EXPECT_REL(cfg.prop[1].mus, 10.f, 1e-4, "a polarized medium with g=1 keeps its mus");
+            } else {
+                EXPECT_REL(cfg.prop[1].mus * (1.f - cfg.prop[1].g), 1.f, 1e-3, "a polarized medium with g<1 keeps its mus'");
+            }
+
+            clear_cfg(&cfg);
+        }
+    }
 
     write_file("inp_pat3.bin", pat3, sizeof(pat3));
     /* issrcfrom0 and the focal length given as trailing numbers, pattern3d, maxgate capping */
@@ -2346,6 +2590,7 @@ void run_utils_tests(void) {
     test_half();
     test_mie();
     test_jdata();
+    test_jdata_blocks();
     test_shapes();
     test_loadvolume();
     test_layout();
