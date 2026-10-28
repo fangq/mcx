@@ -1425,7 +1425,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             cfg->srcpattern[i] = val[i];
         }
 
-        printf("mcx.srcpattern=[%ld %ld %ld];\n", arraydim[0], arraydim[1], dimz);
+        printf("mcx.srcpattern=[%lld %lld %lld];\n", (long long)arraydim[0], (long long)arraydim[1], (long long)dimz);
     } else if (strcmp(name, "invcdf") == 0) {
         dimtype nphase = mxGetNumberOfElements(item);
         double* val = mxGetPr(item);
@@ -1498,7 +1498,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
         dimdetps[1] = arraydim[1];
         detps = (float*)malloc(arraydim[0] * arraydim[1] * sizeof(float));
         memcpy(detps, mxGetData(item), arraydim[0]*arraydim[1]*sizeof(float));
-        printf("mcx.detphotons=[%ld %ld];\n", arraydim[0], arraydim[1]);
+        printf("mcx.detphotons=[%lld %lld];\n", (long long)arraydim[0], (long long)arraydim[1]);
     } else if (strcmp(name, "seed") == 0) {
         arraydim = mxGetDimensions(item);
 
@@ -1573,7 +1573,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
             cfg->workload[i] = val[i];
         }
 
-        printf("mcx.workload=<<%ld>>;\n", arraydim[0]*arraydim[1]);
+        printf("mcx.workload=<<%lld>>;\n", (long long)(arraydim[0]*arraydim[1]));
     } else if (strcmp(name, "flog") == 0) {
         int len = mxGetNumberOfElements(item);
         char logfile[MAX_PATH_LENGTH] = {'\0'};
