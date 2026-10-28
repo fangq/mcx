@@ -4210,10 +4210,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
                         sleep_ms(100);
 
-                    } while (p0 < (int)((param.threadphoton >> 1) * 4.5f) && (!param.dynload || cudaStreamQuery(0) == cudaErrorNotReady));
+                    } while (p0 < (int)((param.threadphoton >> 1) * 4.5f) && cudaStreamQuery(0) == cudaErrorNotReady);
 
-                    /** with dynamic dispatch the monitored threads may finish fewer photons than the static
-                     *  estimate above, so also stop polling once the kernel has completed */
+                    /** the monitored threads may finish fewer photons than the estimate above, with dynamic
+                     *  dispatch or when photons launched outside of the domain end before they are counted
+                     *  (such as a source on the boundary), so also stop polling once the kernel has completed */
 
                     mcx_progressbar(1.0f, cfg);
                     MCX_FPRINTF(cfg->flog, "\n");

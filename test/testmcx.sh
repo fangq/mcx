@@ -267,6 +267,13 @@ MED=`printf '{"mua":0.005,"mus":1,"g":0.01,"n":1.37}%.0s,' $(seq 300)`
 printf '{"Session":{"ID":"manymed","Photons":1e4},"Forward":{"T0":0,"T1":5e-9,"Dt":5e-9},"Domain":{"Dim":[20,20,20],"Media":[{"mua":0,"mus":0,"g":1,"n":1},%s]},"Shapes":[{"Grid":{"Tag":300,"Size":[20,20,20]}}],"Optode":{"Source":{"Pos":[10,10,0],"Dir":[0,0,1]},"Detector":[{"Pos":[10,12,0],"R":3}]}}' "${MED%,}" > manymed.json
 runlog "reduce the block size when the per-photon data of 300 media exceed the shared memory" 'reduce block size to fit the shared memory: [0-9]+ -> [0-9]+' -f manymed.json -w DP -S 0
 
+# photons launched from a source on the domain boundary end before the progress counter
+# counts them; the host must still stop polling once the kernel completes (a hang before)
+echo "test the progress bar of a source on the domain boundary finishes ... "
+TO=`which timeout 2> /dev/null || which gtimeout 2> /dev/null`
+temp=`$TO ${TO:+120} "$MCX" -f "$TESTDIR/builtin/muamus_muamus.json" -n 1e4 -A 0 -t 4096 -T 64 -D P -d 0 -S 0 --json '{"Optode":{"Source":{"Pos":[30,0,1]}}}' $PARAM 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep 'Progress: .* 100%'`
+if [ -z "$temp" ]; then echo "fail to finish the progress bar of a source on the boundary"; fail=$((fail+1)); else echo "ok"; fi
+
 temp=`which valgrind 2> /dev/null`
 if [ ! -z "$temp" ]; then
     echo "test memory access errors using valgrind ... "
