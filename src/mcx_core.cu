@@ -4311,7 +4311,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
                 if (detected > cfg->maxdetphoton) {
                     MCX_FPRINTF(cfg->flog, S_RED "%s (%d > %d), %s\n" S_RESET,
-                                T_("WARNING: the detected photon number is more than what your have specified"), detected, cfg->maxjumpdebug,
+                                T_("WARNING: the detected photon number is more than what your have specified"), detected, cfg->maxdetphoton,
                                 T_("please use the -H option to specify a greater number"));
                 } else {
                     MCX_FPRINTF(cfg->flog, "%s " S_BOLD "" S_BLUE "%d %s" S_RESET", total: " S_BOLD "" S_BLUE "%.0f" S_RESET"\t", T_("detected"), detected, T_("photons"), (double)cfg->detectedcount + detected);
