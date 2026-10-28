@@ -68,15 +68,18 @@ web service, and adds CPU-verifiable, step-by-step ray-tracing tests. It is high
 recommended to upgrade for all users.
 
 Notable new features include:
+* directly building adjoint Jacobians via `cfg.outputtype='adjoint'`: the Jacobians are
+  computed from forward simulations of the sources and detectors (`-O A/D/U/V/W/Q`, or
+  `cfg.outputtype='adjoint'`, `'adjoint_dcoeff'`, `'adjoint_mus'`, `'adjoint_musp'`,
+  `'adjoint_mua_d'`, `'adjoint_mua_musp'`); detectors need a direction
+  (`Optode.Detector.Dir` or `cfg.detdir`); both the forward fluence and the Jacobians
+  are returned
+* frequency-domain (FD/RF) forward simulations and adjoint-based FD-Jacobians
+  (complex-valued): with `cfg.omega` set, output type `rf` returns the complex fluence
+  using complex photon weights, without replay, and the adjoint output types return
+  complex Jacobians
 * AMD GPU support via ROCm/HIP; build with `cmake -DUSE_HIP=ON` (default arch `gfx90a`),
   contributed by Jeff Daily (AMD) (#264)
-* RF (frequency-domain) forward simulation with complex photon weights, set `cfg.omega`
-  and use output type `rf` without replay
-* adjoint-method Jacobians computed directly from forward simulations of sources and
-  detectors (`-O A/D/U/V/W/Q`, or `cfg.outputtype='adjoint'`, `'adjoint_dcoeff'`,
-  `'adjoint_mus'`, `'adjoint_musp'`, `'adjoint_mua_d'`, `'adjoint_mua_musp'`); detectors
-  need a direction (`Optode.Detector.Dir` or `cfg.detdir`); both the forward fluence and
-  the Jacobians are returned, supporting CW and RF
 * pattern sources are supported in `wp`/`dcs`/`wptof`/`rfmus` replay; rfmus replay
   uses a double-precision buffer to reduce round-off errors
 * `-F bnii` saves binary JData (BJData) volumes, and detected photon/trajectory files
