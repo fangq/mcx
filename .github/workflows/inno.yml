@@ -50,6 +50,16 @@ jobs:
           if [ ! -f "$ISCC" ]; then
               choco install innosetup -y --no-progress
           fi
+          # the Chinese translations are unofficial and not shipped with Inno Setup;
+          # fetch those of the installed version (e.g. 6.4.3 -> tag is-6_4_3)
+          VER=$("$ISCC" //? 2>&1 | grep -o -m1 '[0-9]\+\.[0-9]\+\.[0-9]\+' || true)
+          TAG=is-$(echo "${VER:-6.4.3}" | tr . _)
+          LANGDIR="$(dirname "$ISCC")/Languages"
+          for lang in ChineseSimplified ChineseTraditional; do
+              [ -f "$LANGDIR/$lang.isl" ] || curl -fsSL --retry 3 -o "$LANGDIR/$lang.isl" \
+                  "https://raw.githubusercontent.com/jrsoftware/issrc/$TAG/Files/Languages/Unofficial/$lang.isl"
+          done
+          echo "Inno Setup ${VER:-unknown}, translations from $TAG"
           mkdir -p packages
           cd MCXStudio/inno
           "$ISCC" //DMyAppVersion="$NAME" //O"$GITHUB_WORKSPACE\\packages" //F"MCXStudio-windows-x64-$NAME-installer" MCXStudio.iss
