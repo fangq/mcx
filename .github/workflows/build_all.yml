@@ -10,11 +10,6 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  # redbird/redbirdpy revisions bundled with the release, pin to tags when releasing
-  REDBIRD_REF: master
-  REDBIRDPY_REF: main
-
 jobs:
   build_all:
     name: Build All
@@ -342,23 +337,6 @@ jobs:
           else
             zip -FSr --symlink packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
           fi
-      - name: Zip redbird
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          mkdir -p redbird-pkg
-          # with redbird's manual (a submodule)
-          git clone --depth 1 --recurse-submodules --shallow-submodules --branch ${{ env.REDBIRD_REF }} https://github.com/fangq/redbird.git redbird-pkg/redbird
-          git clone --depth 1 --branch ${{ env.REDBIRDPY_REF }} https://github.com/fangq/redbirdpy.git redbird-pkg/redbirdpy
-          find redbird-pkg -name .git -prune -exec rm -rf {} +
-          rm -rf redbird-pkg/*/.github redbird-pkg/*/.gitmodules
-          (cd redbird-pkg && zip -FSr --symlink ../packages/redbird-github-latest.zip redbird redbirdpy)
-          rm -rf redbird-pkg
-      - name: Upload redbird package
-        if: ${{ runner.os == 'Linux' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: all-mcx-redbird-package
-          path: packages/redbird-github-latest.zip
       - name: Upload mcxlab package
         if: ${{ matrix.os == 'ubuntu-22.04' || matrix.os == 'macos-15-intel' || matrix.os == 'windows-2022' }}
         uses: actions/upload-artifact@v4
