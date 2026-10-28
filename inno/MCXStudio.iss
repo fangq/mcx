@@ -10,7 +10,10 @@
 
 #define MyAppName "MCX Studio"
 #define MyAppDir "MCXStudio"
-#define MyAppVersion "v2026"
+; the version can be set on the command line: iscc /DMyAppVersion=nightly MCXStudio.iss
+#ifndef MyAppVersion
+  #define MyAppVersion "v2026"
+#endif
 #define MyAppPublisher "COTILab"
 #define MyAppURL "https://mcx.space"
 #define MyAppExeName "mcxstudio.exe"
@@ -84,6 +87,9 @@ Name: "{app}\MCXSuite"
 ; plink/pscp remote-run helpers of the first Studio are no longer shipped
 Source: "..\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
+; the photon launcher and redbirdpy of the portable packages made by mcx2026.sh
+Source: "..\photon"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\Python\*"; DestDir: "{app}\Python"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs

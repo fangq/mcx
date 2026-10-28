@@ -1,0 +1,81 @@
+name: Build+Upload the MCX Studio Windows installer
+
+# the Inno Setup installer of the whole MCX suite, made from the portable Windows
+# package that mcx2026.sh writes to nightly/github after the CI builds; dormant
+# unless one of these starts it:
+#   - a push that changes inno/ (installs the github-latest package)
+#   - by hand:  gh workflow run inno.yml -R fangq/mcx -f name=v2026
+#   - mcx2026.sh, after it writes the package (a repository_dispatch "inno" event
+#     whose client_payload.name is the package name)
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'inno/**'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'package name: installs MCXStudio-windows-x64-<name>.zip'
+        default: 'github-latest'
+  repository_dispatch:
+    types: [inno]
+
+env:
+  NAME: ${{ github.event.inputs.name || github.event.client_payload.name || 'github-latest' }}
+  NIGHTLY_URL: https://mcx.space/nightly/github
+
+jobs:
+  build_installer:
+    name: Build the installer
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout the installer script
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: inno
+      - name: Download the portable Windows package
+        run: |
+          curl -fsSL --retry 3 -o package.zip "$NIGHTLY_URL/MCXStudio-windows-x64-$NAME.zip"
+          7z x -y -bd package.zip > /dev/null
+          ls MCXStudio
+          # the package leaves out inno/; the installer script of this commit is used
+          cp -r inno MCXStudio/inno
+      - name: Build the installer
+        run: |
+          ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          if [ ! -f "$ISCC" ]; then
+              choco install innosetup -y --no-progress
+          fi
+          mkdir -p packages
+          cd MCXStudio/inno
+          "$ISCC" //DMyAppVersion="$NAME" //O"$GITHUB_WORKSPACE\\packages" //F"MCXStudio-windows-x64-$NAME-installer" MCXStudio.iss
+          ls -l "$GITHUB_WORKSPACE/packages"
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcxstudio-installer
+          path: packages/MCXStudio-windows-x64-*-installer.exe
+
+  upload_installer:
+    name: Upload the installer
+    needs: build_installer
+    runs-on: ubuntu-22.04
+    if: ${{ github.repository_owner == 'fangq' }}
+    steps:
+      - name: Download the installer
+        uses: actions/download-artifact@v4
+        with:
+          name: mcxstudio-installer
+          path: packages
+      - name: Copy the installer to the server
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.MCX_SERVER }}
+          username: ${{ secrets.MCX_SERVER_USER }}
+          ssh_private_key: ${{ secrets.MCX_SERVER_SSH_KEY }}
+          local_path: "packages/*"
+          remote_path: ${{ secrets.MCX_CI_PATH }}
