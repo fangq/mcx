@@ -77,7 +77,7 @@ static inline void _to_bigendian64(uint8_t* outbuffer, uint64_t input)
 	_to_bigendian32(outbuffer + 4, (uint32_t)(input & 0xFFFFFFFF));
 }
 
-static inline uint8_t _is_bigendian()
+static inline uint8_t _is_bigendian(void)
 {
 	int i = 1;
 	char *low = (char*)&i;
