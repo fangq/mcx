@@ -223,8 +223,15 @@ jobs:
             # links the mex against liboctmex alone
             cd src
             mkoctfile --version
-            make oct CC=clang CXX=clang++ GCC=clang
+            # link the mex without a path to liboctmex: -loctmex finds this empty stub, which is
+            # dead-stripped, so the mex API resolves in the liboctmex that the running Octave (any
+            # 10+ version, wherever installed) has loaded (mkoctfile links with -undefined dynamic_lookup)
+            mkdir -p octstub && echo "" | clang -dynamiclib -x c - -o "$PWD/octstub/liboctmex.dylib" -install_name @rpath/liboctmex-stub.dylib
+            make oct CC=clang CXX=clang++ GCC=clang MEXLINKOPT="-L$PWD/octstub -Wl,-dead_strip_dylibs"
             otool -L ../mcxlab/mcx.mex
+            if otool -L ../mcxlab/mcx.mex | tail -n +2 | grep -E "liboctmex|/opt/homebrew|/usr/local"; then
+                echo "the mex links a library of the build machine"; exit 1
+            fi
           else
             # nvcc only drives MSVC, and Octave's mkoctfile only MinGW: the objects
             # come from the Makefile (AR=true skips its mkoctfile link), and the mex
