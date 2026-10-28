@@ -346,9 +346,11 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           mkdir -p redbird-pkg
-          git clone --depth 1 --branch ${{ env.REDBIRD_REF }} https://github.com/fangq/redbird.git redbird-pkg/redbird
+          # with redbird's manual (a submodule)
+          git clone --depth 1 --recurse-submodules --shallow-submodules --branch ${{ env.REDBIRD_REF }} https://github.com/fangq/redbird.git redbird-pkg/redbird
           git clone --depth 1 --branch ${{ env.REDBIRDPY_REF }} https://github.com/fangq/redbirdpy.git redbird-pkg/redbirdpy
-          rm -rf redbird-pkg/*/.git redbird-pkg/*/.github
+          find redbird-pkg -name .git -prune -exec rm -rf {} +
+          rm -rf redbird-pkg/*/.github redbird-pkg/*/.gitmodules
           (cd redbird-pkg && zip -FSr --symlink ../packages/redbird-github-latest.zip redbird redbirdpy)
           rm -rf redbird-pkg
       - name: Upload redbird package
