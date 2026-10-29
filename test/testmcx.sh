@@ -277,7 +277,7 @@ if [ -z "$temp" ]; then echo "fail to finish the progress bar of a source on the
 temp=`which valgrind 2> /dev/null`
 if [ ! -z "$temp" ]; then
     echo "test memory access errors using valgrind ... "
-    temp=`valgrind --log-fd=1 "$MCX" --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e4`
+    temp=`valgrind --log-fd=1 --suppressions="$TESTDIR/valgrind.supp" "$MCX" --bench cube60planar --shapes '{"Shapes":[{"Sphere":{"Tag":2,"O":[30,30,10],"R":"10"}}]}' --json '{"Optode":{"Source":{"Type":"fourier","Param1":[40,0,0,2]}}}' -w dpw $PARAM -n 1e4`
     haserror=`echo $temp | grep -o -E 'MCX[A-Z]* ERROR.-'`
     temp=`echo $temp | grep -o -E '=+\s+Invalid\s+'`
     if [ ! -z "$haserror" ] || [ ! -z "$temp" ]; then echo "fail to pass valgrind memory check"; fail=$((fail+1)); else echo "ok"; fi

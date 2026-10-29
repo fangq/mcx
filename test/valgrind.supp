@@ -1,0 +1,12 @@
+# valgrind suppressions for testmcx.sh
+#
+# glibc's dynamic loader compares the $ORIGIN-style tokens of a library's
+# RPATH with an 8-byte strncmp that reads past the end of the string; valgrind
+# reports it when a GPU runtime (seen with the AMD ROCm OpenCL driver) is
+# dlopen()ed. It is in ld.so, not in mcx.
+{
+   glibc-ld.so-is_dst-strncmp
+   Memcheck:Addr8
+   fun:strncmp
+   fun:is_dst
+}
