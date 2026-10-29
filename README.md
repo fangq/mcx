@@ -252,7 +252,7 @@ lists all of them, with their commit hashes.
 * [69423cb] an empty field of a cfg struct array keeps its default; it was read as 0 (e.g. `isreflect`)
 * [1190acf] any numeric class (`gpuid=int32(1)` failed), logical volumes and column vectors are accepted
 * [6b1dbb7] `cfg.flog` also controls the echo of the cfg fields: 'none' silences everything
-* [b521bfe] `cfg.flog='none'` silences the log on every OS ('NUL' and '/dev/null' are accepted too; 'NUL' wrote a file on Linux, #280)
+* [b521bfe] `cfg.flog='none'` and `-l none` silence the log on every OS ('NUL' and '/dev/null' are accepted too; 'NUL' wrote a file on Linux, #280)
 * [3d52135, ae2dfcf] pmcx: `loadmc2` reads x fastest, `meanscat` per medium, `mcxlab(cfg,'cuda')`, and
   the outputs of several patterns are split by pattern
 * [1a2af0d] pmcx: NumPy-style docstrings; `help(pmcx.run)` lists every cfg key and output
@@ -685,7 +685,7 @@ Options taking a value accept it after a space; long options are written as
 |---|---|
 | `-D P`, `--debug` | `P` progress bar, `M` save photon trajectories, `T` save trajectories only, `R` RNG test |
 | `--maxjumpdebug n` | the most trajectory points saved |
-| `-l [1\|0]`, `--log` | 1 (or `-l` alone): write the messages to `session.log`; 0: print them without the banner |
+| `-l [1\|0\|none]`, `--log` | 1 (or `-l` alone): write the messages to `session.log`; 0: print them without the banner; none: print nothing, not even the progress bar |
 | `-y zh_CN`, `--lang` | print messages in another language (zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, pt_BR) |
 | `-v`, `--version` | print the version |
 

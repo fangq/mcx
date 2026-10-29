@@ -5911,6 +5911,33 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
 
 #endif
 
+/** 1 after -l none: the log goes to the null device, and the progress bar, drawn on the terminal, is dropped */
+static int mcx_lognull = 0;
+
+/** 1 if a -l argument names the null device: 'none' (any case), or 'NUL' or '/dev/null' on every OS */
+static int mcx_isnulllog(const char* arg) {
+    const char* names[] = {"none", "nul"};
+    int i, j;
+
+    if (arg == NULL) {
+        return 0;
+    }
+
+    if (strcmp(arg, "/dev/null") == 0) {
+        return 1;
+    }
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; names[i][j] && tolower((unsigned char)arg[j]) == names[i][j]; j++);
+
+        if (names[i][j] == '\0' && arg[j] == '\0') {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /**
  * @brief Print a progress bar
  *
@@ -5921,6 +5948,10 @@ int  mcx_jdataencode(void* vol, int ndim, uint* dims, char* type, int byte, int 
  */
 
 void mcx_progressbar(float percent, Config* cfg) {
+    if (mcx_lognull) {
+        return;
+    }
+
     unsigned int percentage, j, colwidth = 79;
     static unsigned int oldmarker = 0xFFFFFFFF;
 
@@ -6251,6 +6282,12 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     break;
 
                 case 'l':
+                    if (i + 1 < argc && mcx_isnulllog(argv[i + 1])) { /* -l none: silence the log */
+                        issavelog = -2;
+                        i++;
+                        break;
+                    }
+
                     i = mcx_readarg(argc, argv, i, &issavelog, "char");
                     break;
 
@@ -6620,6 +6657,20 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
 
     if (issavelog == 0) {
         cfg->printnum = -1;
+    }
+
+    if (issavelog == -2) { /* -l none (or NUL, /dev/null): nothing is printed, not even the progress bar */
+#ifdef _WIN32
+        cfg->flog = fopen("NUL", "wt");
+#else
+        cfg->flog = fopen("/dev/null", "wt");
+#endif
+
+        if (cfg->flog == NULL) {
+            cfg->flog = stdout;
+        }
+
+        mcx_lognull = 1;
     }
 
     if (issavelog > 0) {
@@ -7216,8 +7267,9 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -h            (--help)        print this message\n\
  -y [zh_CN,..] (--lang)        select language, followed by nothing to print\n\
  -v            (--version)     print MCX revision number\n\
- -l [1|0]      (--log)         1 or no value: messages to <session>.log;\n\
-                               0: print them on the screen without the banner\n\
+ -l [1|0|none] (--log)         1 or no value: messages to <session>.log;\n\
+                               0: print them on the screen without the banner;\n\
+                               none: print nothing, not even the progress bar\n\
  -i            (--interactive) interactive mode\n\
 \n"S_BOLD S_CYAN"\
 == Debug options ==\n" S_RESET"\

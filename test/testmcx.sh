@@ -39,6 +39,12 @@ echo "test gpu info ... "
 temp=`"$MCX" -L | grep 'Global [Mm]emory'`
 if [ -z "$temp" ]; then echo "fail to print GPU"; fail=$((fail+1)); else echo "ok"; fi
 
+echo "test silencing the log with -l none ... "
+logdir=$(mktemp -d)
+temp=$(cd "$logdir" && "$MCX" --bench cube60 -n 1e4 -S 0 -d 0 -l none -D P 2>&1)
+if [ -n "$temp" ] || [ -n "$(ls -A "$logdir")" ]; then echo "-l none printed output or wrote a file"; fail=$((fail + 1)); else echo "ok"; fi
+rm -rf "$logdir"
+
 echo "test built-in benchmark listing ... "
 temp=`"$MCX" --bench | grep 'cube60'`
 if [ -z "$temp" ]; then echo "fail to print built-in benchmarks"; fail=$((fail+1)); else echo "ok"; fi
