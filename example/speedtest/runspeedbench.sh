@@ -3,7 +3,7 @@
 RT=`pwd`
 
 if [ $# = 0 ]; then
-   options="log"
+   options="all"
 else
    options=$*
 fi

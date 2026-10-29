@@ -6334,12 +6334,8 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
 
                 case 'E':
                     if (i < argc - 1 && (strstr(argv[i + 1], ".mch") != NULL || strstr(argv[i + 1], ".jdt") != NULL || strstr(argv[i + 1], ".jdat") != NULL) ) { /*give an mch file to initialize the seed*/
-#if defined(USE_LL5_RAND)
-                        MCX_ERROR(-1, T_("seeding file is not supported in this binary"));
-#else
                         i = mcx_readstrarg(argc, argv, i, cfg->seedfile, sizeof(cfg->seedfile));
                         cfg->seed = SEED_FROM_FILE;
-#endif
                     } else {
                         i = mcx_readarg(argc, argv, i, &(cfg->seed), "int");
                     }
@@ -7014,7 +7010,7 @@ void mcx_printheader(Config* cfg) {
 
         MCX_FPRINTF(cfg->flog, S_MAGENTA"\
 ###############################################################################\n\
-$Rev::      $" S_GREEN MCX_VERSION S_MAGENTA  "$Date::                       $ by $Author::             $\n\
+$Rev::      $ " S_GREEN MCX_VERSION S_MAGENTA  " $Date::                       $ by $Author::             $\n\
 ###############################################################################\n" S_RESET);
     }
 }

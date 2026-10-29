@@ -193,7 +193,7 @@ amperemex: fermimex
 ampereoct: fermioct
 ampere amperemex ampereoct: CUGENCODE:=-arch=sm_80
 
-log xor xoro posix:  CUCCOPT+=-use_fast_math -DSAVE_DETECTORS
+xor xoro posix:  CUCCOPT+=-use_fast_math -DSAVE_DETECTORS
 xor:        LINKOPT+=
 xoro:       CUCCOPT+=-DUSE_XOROSHIRO128P_RAND
 xoro:       LINKOPT+=-DUSE_XOROSHIRO128P_RAND
@@ -203,20 +203,18 @@ fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 fixed:      fermi
 fixed:      CUCCOPT+=-DUSE_FIXEDPOINT
 debugxor:   xor
-log debuglog:   CUCCOPT+=-DUSE_LL5_RAND
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
 
-log posix xoro fermi:      LINKOPT+=$(CUOMPLINK) "$(OMP)"
+posix xoro fermi:      LINKOPT+=$(CUOMPLINK) "$(OMP)"
 
-debugxor debuglog:	CUCCOPT+=-DMCX_DEBUG
+debugxor:	CUCCOPT+=-DMCX_DEBUG
 fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Lucky Lux"'
 xorfermi:   xor
 xorofermi:  xoro
 posixfermi: posix
-logfermi:   log
-xorfermi xorofermi posixfermi logfermi debugxor debuglog:   LINKOPT+=$(OMP)
+xorfermi xorofermi posixfermi debugxor:   LINKOPT+=$(OMP)
 xorfermi:    fermi
 xorfermi:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
@@ -295,7 +293,7 @@ ifeq ($(TARGETSUFFIX),.a)
         OPENMPLIB  :=
 endif
 
-all xor xoro posix fast log debugxor debuglog half xorfermi xorofermi posixfermi logfermi\
+all xor xoro posix fast debugxor half xorfermi xorofermi posixfermi\
  fermi mex oct fermimex fermioct: cudasdk $(OUTPUT_DIR)/$(BINARY)
 
 makedirs:
