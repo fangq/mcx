@@ -288,7 +288,6 @@ jobs:
             make mex MEXLINKOPT="-static-libstdc++ -static-libgcc -fopenmp"
             ldd ../mcxlab/mcx.mex*
             strip ../mcxlab/mcx.mex*
-            upx -9 ../mcxlab/mcx.mex*
           fi
       - name: Build binary
         run: |
@@ -346,13 +345,10 @@ jobs:
         run: perl -e "print 'RELEASE_TAG='. lc('${{ runner.os }}-${{ runner.arch }}-github-latest')" >> $GITHUB_ENV
       - name: Zip mcxlab
         run: |
-          # strip, then compress, both mex files (not on macOS); the Windows ones are
-          # built by MSVC and have no symbols for GNU strip
+          # strip both mex files on Linux (the Windows ones are built by MSVC and have no
+          # symbols for GNU strip); no upx on mex files: a packed mex aborts MATLAB/Octave when it raises an error (C++ exceptions can not unwind)
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             strip --strip-unneeded mcxlab/mcx.mex* || true
-            upx -9 mcxlab/mcx.mex* || true
-          elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            upx/upx-4.0.2-win64/upx -9 mcxlab/mcx.mex* || true
           fi
           [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
