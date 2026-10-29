@@ -16,7 +16,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-"""Utilities for processing MCX input and output data"""
+"""Post-processing, analytical models and the mcxlab wrapper of PMCX.
+
+This module provides the Python versions of the MATLAB helper functions of MCXLAB:
+
+* detected photon processing: :func:`detphoton`, :func:`detweight`, :func:`dettime`,
+  :func:`dettpsf`, :func:`meanpath`, :func:`meanscat`, :func:`cwdref`
+* analytical diffusion solutions of a semi-infinite medium: :func:`cwdiffusion`,
+  :func:`cwfluxdiffusion`, :func:`tddiffusion`, and :func:`getdistance`
+* Jacobians from photon replay: :func:`rfreplay`, :func:`rfmusreplay`
+* diffuse correlation spectroscopy: :func:`dcsg1`
+* inputs: :func:`mcxcreate` (the built-in benchmarks), :func:`svmc` (split-voxel volumes)
+* :func:`mcxlab`, which wraps ``pmcx.run`` with the pre- and post-processing of mcxlab.m
+
+All lengths are in mm unless stated otherwise; the optical property table ``prop`` has one
+row ``[mua, mus, g, n]`` per medium, row 0 being the background (medium 0).
+"""
 
 __all__ = (
     "detweight",
@@ -57,22 +72,32 @@ from .plot import preview
 
 
 def cwdref(detp, cfg):
-    """
-    Compute CW diffuse reflectance from MC detected photon profiles.
+    """Compute the continuous-wave diffuse reflectance at each detector.
 
-    (Python code was adapted from mcxcwdref.m MATLAB function, ported by Kuznetsov Ilya)
+    The weights of the detected photons (recomputed from their partial path lengths by
+    :func:`detweight`) are summed per detector and divided by the detector area and the
+    number of launched photons.
 
-    input:
-        detp: profiles of detected photons
-        cfg:  a dictionary. Each element of cfg defines
-              the parameters associated with a MC simulation.
+    Parameters
+    ----------
+    detp : dict
+        Detected photon data, the ``'detp'`` output of :func:`mcxlab`; needs the
+        ``'detid'`` and ``'ppath'`` keys.
+    cfg : dict
+        The simulation configuration; uses ``cfg['prop']``, ``cfg['detpos']`` (``N x 4``,
+        the 4th column is the detector radius), ``cfg['nphoton']`` and, if present,
+        ``cfg['unitinmm']``.
 
-    output:
-        dref: CW diffuse reflectance at detectors
+    Returns
+    -------
+    dref : ndarray, shape (N,)
+        Diffuse reflectance (1/mm^2) of each of the ``N`` detectors in ``cfg['detpos']``,
+        including those that captured no photon (0).
 
-    this file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
-    see Yao2018
+    Notes
+    -----
+    Ported from mcxcwdref.m by Kuznetsov Ilya. See Yao et al., Biomed. Opt. Express 9(10),
+    4588 (2018).
     """
 
     unitinmm = 1
@@ -83,7 +108,9 @@ def cwdref(detp, cfg):
     detpos = np.atleast_2d(np.asarray(cfg["detpos"], dtype=float))
     detnum = detpos.shape[0]  # all detectors, including those that captured no photon
     detid = np.asarray(detp["detid"]).astype(int).ravel() - 1
-    detweightsum = np.bincount(detid, weights=np.ravel(det_weight), minlength=detnum)[:detnum]
+    detweightsum = np.bincount(detid, weights=np.ravel(det_weight), minlength=detnum)[
+        :detnum
+    ]
 
     area = np.pi * (detpos[:, 3] * unitinmm) ** 2
     dref = detweightsum / area / cfg["nphoton"]
@@ -93,17 +120,30 @@ def cwdref(detp, cfg):
 
 # ---------------------------------------------
 def meanpath(detp, prop=None):
-    """
-    Calculate the average pathlengths for each tissue type for a given source-detector pair
+    """Compute the average path length of the detected photons in each medium.
 
-    (Python code was adapted from mcxmeanpath.m MATLAB function, ported by Fan-Yu Yen)
+    Parameters
+    ----------
+    detp : dict
+        Detected photon data, the ``'detp'`` output of :func:`mcxlab`; needs ``'ppath'``,
+        and ``'unitinmm'`` if the voxel size is not 1 mm.
+    prop : array_like, optional
+        Optical property table ``[mua, mus, g, n]`` per medium (``cfg['prop']``); taken
+        from ``detp['prop']`` when omitted.
 
-    input:
-        detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
-        prop: optical property list, as defined in the cfg.prop field of mcxlab's input
+    Returns
+    -------
+    avgpath : ndarray, shape (Nmedia,)
+        Photon-weight-averaged path length (mm) in each medium, medium 1 first.
 
-    output:
-        avgpath: the average pathlength for each tissue type
+    Raises
+    ------
+    ValueError
+        If ``prop`` is not given and ``detp`` has no ``'prop'`` key.
+
+    Notes
+    -----
+    Ported from mcxmeanpath.m by Fan-Yu Yen.
     """
     if "unitinmm" in detp:
         unitinmm = detp["unitinmm"]
@@ -125,20 +165,38 @@ def meanpath(detp, prop=None):
 
 
 def detweight(detp, prop=None, unitinmm=None):
-    """
-    Recalculate the detected photon weight using partial path data and
-    optical properties (for perturbation Monte Carlo or detector readings)
+    """Recompute the weight of each detected photon from its partial path lengths.
 
-    (Python code was adapted from mcxdetweight.m MATLAB function, ported by Fan-Yu Yen)
+    The weight of a photon is ``w0 * prod_i exp(-mua_i * L_i)``, with ``L_i`` its path length
+    in medium ``i``; replacing ``prop`` by perturbed optical properties gives the detector
+    reading of the perturbed medium (perturbation Monte Carlo).
 
-    input:
-        detp: the 2nd output from mcxlab. detp must be a dict.
-        prop: optical property list, as defined in the cfg.prop field of mcxlab's input.
-        unitinmm: voxel edge-length in mm, should use cfg.unitinmm used to generate detp;
-              if ignored, assume to be 1 (mm)
+    Parameters
+    ----------
+    detp : dict
+        Detected photon data, the ``'detp'`` output of :func:`mcxlab`; needs ``'ppath'``,
+        and uses ``'w0'`` (the initial weights) when present.
+    prop : array_like, optional
+        Optical property table ``[mua, mus, g, n]`` per medium; taken from ``detp['prop']``
+        when omitted.
+    unitinmm : float, optional
+        Voxel edge length in mm used by the simulation; taken from ``detp['unitinmm']``,
+        or 1 when neither is given.
 
-    output:
-        detw: re-caculated detected photon weight based on the partial path data and optical property table
+    Returns
+    -------
+    detw : ndarray
+        Weight of each detected photon, shape ``(nphoton,)``, or ``(nphoton, nsrc)`` when
+        ``detp['w0']`` holds one column per source pattern.
+
+    Raises
+    ------
+    ValueError
+        If ``prop`` is missing or has fewer than 2 rows, or if ``detp`` is not a dict.
+
+    Notes
+    -----
+    Ported from mcxdetweight.m by Fan-Yu Yen.
     """
     if prop is None:
         if "prop" in detp:
@@ -180,19 +238,26 @@ def detweight(detp, prop=None, unitinmm=None):
 
 
 def meanscat(detp, prop):
-    """
-    Calculate the average scattering event counts for each tissue type for a given source-detector pair
+    """Compute the photon-weight-averaged number of scattering events.
 
-    (Python code was adapted from mcxmeanscat.m MATLAB function, ported by Fan-Yu Yen)
+    Parameters
+    ----------
+    detp : dict
+        Detected photon data, the ``'detp'`` output of :func:`mcxlab`; needs ``'nscat'``
+        and ``'ppath'``.
+    prop : array_like
+        Optical property table ``[mua, mus, g, n]`` per medium.
 
-    input:
-        detp: the 2nd output from mcxlab. detp can be either a struct or an array (detp.data)
-        prop: optical property list, as defined in the cfg.prop field of mcxlab's input
+    Returns
+    -------
+    avgnscat : float
+        The scattering event counts of all media, summed and averaged over the detected
+        photons with their weights (from :func:`detweight`) as the weighting.
 
-    output:
-        avgnscat: the average scattering event count for each tissue type
-
-    Python code was ported from mcxmeanpath.m MATLAB function by Fan-Yu Yen
+    Notes
+    -----
+    Ported from mcxmeanscat.m by Fan-Yu Yen; unlike the MATLAB function, which returns one
+    average per medium, the counts of all media are summed.
     """
     detw = detweight(detp, prop)
     avgnscat = np.sum(
@@ -203,20 +268,33 @@ def meanscat(detp, prop):
 
 
 def dettpsf(detp, detnum, prop, time):
-    """
-    Calculate the temporal point spread function curve of a specified detector
-    given the partial path data, optical properties, and distribution of time bins
+    """Compute the temporal point spread function (TPSF) of one detector.
 
-    (Python code was adapted from mcxdettpsf.m MATLAB function, ported by Fan-Yu Yen)
+    The detected photons of the detector are binned by their time of flight (from
+    :func:`dettime`), each contributing its weight (from :func:`detweight`).
 
-    input:
-        detp: the 2nd output from mcxlab. detp must be a struct with detid and ppath subfields
-        detnum: specified detector number
-        prop: optical property list, as defined in the cfg.prop field of mcxlab's input
-        time: distribution of time bins, a 1*3 vector [tstart tend tstep]
-              could be defined different from in the cfg of mcxlab's input
-    output:
-        tpsf: caculated temporal point spread function curve of the specified detector
+    Parameters
+    ----------
+    detp : dict
+        Detected photon data, the ``'detp'`` output of :func:`mcxlab`; needs ``'detid'`` and
+        ``'ppath'``, and uses ``'w0'`` when present.
+    detnum : int
+        The detector ID (1-based).
+    prop : array_like
+        Optical property table ``[mua, mus, g, n]`` per medium.
+    time : array_like
+        The time bins ``[tstart, tend, tstep]`` in seconds; they can differ from those of
+        the simulation.
+
+    Returns
+    -------
+    tpsf : ndarray, shape (ntime, 1)
+        The summed photon weight in each time bin; photons outside ``[tstart, tend]`` are
+        added to the first or the last bin.
+
+    Notes
+    -----
+    Ported from mcxdettpsf.m by Fan-Yu Yen.
     """
     detp = detp.copy()
 
@@ -250,20 +328,35 @@ def dettpsf(detp, detnum, prop, time):
 
 
 def dettime(detp, prop=None, unitinmm=None):
-    """
-    Recalculate the detected photon time using partial path data and
-    optical properties (for perturbation Monte Carlo or detector readings)
+    """Recompute the time of flight of each detected photon from its partial path lengths.
 
-    (Python code was adapted from mcxdettime.m MATLAB function, ported by Fan-Yu Yen)
+    The time of flight is ``sum_i n_i * L_i / c0``, with ``n_i`` the refractive index and
+    ``L_i`` the path length in medium ``i``.
 
-    input:
-        detp: the 2nd output from mcxlab. detp must be a struct
-        prop: optical property list, as defined in the cfg.prop field of mcxlab's input
-        unitinmm: voxel edge-length in mm, should use cfg.unitinmm used to generate detp;
-              if ignored, assume to be 1 (mm)
+    Parameters
+    ----------
+    detp : dict
+        Detected photon data, the ``'detp'`` output of :func:`mcxlab`; needs ``'ppath'``.
+    prop : ndarray, optional
+        Optical property table ``[mua, mus, g, n]`` per medium; taken from ``detp['prop']``
+        when omitted.
+    unitinmm : float, optional
+        Voxel edge length in mm used by the simulation; taken from ``detp['unitinmm']``,
+        or 1 when neither is given.
 
-    output:
-        dett: re-caculated detected photon time based on the partial path data and optical property table
+    Returns
+    -------
+    dett : ndarray, shape (1, nphoton)
+        Time of flight of each detected photon, in seconds.
+
+    Raises
+    ------
+    ValueError
+        If ``prop`` is missing or has fewer than 2 rows, or if ``detp`` is not a dict.
+
+    Notes
+    -----
+    Ported from mcxdettime.m by Fan-Yu Yen.
     """
     R_C0 = 3.335640951981520e-12  # inverse of light speed in vacuum
     if unitinmm is None:
@@ -294,23 +387,34 @@ def dettime(detp, prop=None, unitinmm=None):
 
 
 def tddiffusion(mua, musp, v, Reff, srcpos, detpos, t):
-    """
-    Semi-infinite medium analytical solution to diffusion model
+    """Time-resolved diffusion solution of a semi-infinite medium.
 
-    (Python code was adapted from tddiffusion.m MATLAB function, ported by Fan-Yu Yen)
+    Parameters
+    ----------
+    mua : float
+        Absorption coefficient, in 1/mm.
+    musp : float
+        Reduced scattering coefficient, in 1/mm.
+    v : float
+        Speed of light in the medium, in mm/s.
+    Reff : float
+        Effective reflection coefficient of the boundary.
+    srcpos : array_like
+        Source position(s) ``[x, y, z]`` in mm, the medium occupying ``z > 0``.
+    detpos : array_like
+        Detector position(s) ``[x, y, z]`` in mm.
+    t : array_like
+        Times in seconds at which the solution is evaluated.
 
-    input:
-        mua:   the absorption coefficients in 1/mm
-        musp:  the reduced scattering coefficients in 1/mm
-        v:     the speed of light
-        Reff:  the effective reflection coeff.
-        srcpos:array for the source positions (x,y,z)
-        detpos:array for the detector positions (x,y,z)
-        t:     a list of time in s at which to evaluate the
-             analytical diffusion solution
+    Returns
+    -------
+    Phi : ndarray
+        Fluence rate in 1/(mm^2 s) at the detectors and times, by the extrapolated-boundary
+        image source method.
 
-    output:
-        Phi:  the output fluence for all time points
+    Notes
+    -----
+    Ported from tddiffusion.m by Fan-Yu Yen.
     """
     srcpos = np.atleast_2d(srcpos)
     detpos = np.atleast_2d(detpos)
@@ -343,19 +447,23 @@ def tddiffusion(mua, musp, v, Reff, srcpos, detpos, t):
 
 
 def getdistance(srcpos, detpos):
-    """
-    Compute the source/detector separation from the positions
+    """Compute the distances between all sources and detectors.
 
-    (Python code was adapted from getdistance.m MATLAB function, ported by Fan-Yu Yen)
+    Parameters
+    ----------
+    srcpos : array_like
+        Source positions, one ``[x, y, z]`` row per source.
+    detpos : array_like
+        Detector positions, one ``[x, y, z]`` row per detector.
 
-    input:
-        srcpos:array for the source positions (x,y,z)
-        detpos:array for the detector positions (x,y,z)
+    Returns
+    -------
+    separation : ndarray, shape (ndet, nsrc)
+        ``separation[r, s]`` is the distance between detector ``r`` and source ``s``.
 
-    output:
-        separation:  the distance matrix between all combinations
-              of sources and detectors. separation has the number
-              of source rows, and number of detector of columns.
+    Notes
+    -----
+    Ported from getdistance.m by Fan-Yu Yen.
     """
     srcpos = np.atleast_2d(srcpos)
     detpos = np.atleast_2d(detpos)
@@ -372,32 +480,51 @@ def getdistance(srcpos, detpos):
 
 
 def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
-    """
-    Separating combined detected photon data into easy-to-read structure based on
-    user-specified detected photon output format ("savedetflag")
+    """Split the raw detected photon array into named fields.
 
-    (Python code was adapted from mcxdetphoton.m MATLAB function, ported by Fan-Yu Yen)
+    Parameters
+    ----------
+    detp : ndarray, shape (ncol, nphoton)
+        The combined detected photon data (``detp['data']`` of :func:`mcxlab`, or the
+        ``'detp'`` output of ``pmcx.run``), one column per photon.
+    medianum : int
+        The number of media, excluding the background (``len(cfg['prop']) - 1``).
+    savedetflag : str
+        The ``cfg['savedetflag']`` letters, in the order ``d s p m x v w i``, giving the
+        fields present in ``detp``.
+    issaveref : int, optional
+        ``cfg['issaveref']``; when greater than 1 the first row holds the initial weight
+        ``'w0'`` instead of the detector ID.
+    srcnum : int, optional
+        ``cfg['srcnum']``; with more than one source pattern ``'w0'`` holds the pattern
+        index as uint32.
 
-    input:
-        detp: a 2-D array defining the combined detected photon data, usually
-              detp.data, where detp is the 2nd output from mcxlab
-        medianum: the total number of non-zero tissue types (row number of cfg.prop minus 1)
-        savedetflag: the cfg.savedetflag string, containing letters 'dspmxvwi' denoting different
-              output data fields, please see mcxlab's help
-        issaveref: the cfg.issaveref flag, 1 for saving diffuse reflectance, 0 not to save
-        srcnum: the cfg.srcnum flag, denoting the number of source patterns in the photon-sharing mode
+    Returns
+    -------
+    newdetp : dict
+        The fields present, each an array with one row per photon:
 
-    output:
-        newdetp: re-organized detected photon data as a dict; the mapping of the fields are
-                 newdetp['detid']: the ID(>0) of the detector that captures the photon (1)
-                 newdetp['nscat']: cummulative scattering event counts in each medium (#medium)
-                 newdetp['ppath']: cummulative path lengths in each medium, i.e. partial pathlength (#medium)
-                      one need to multiply cfg.unitinmm with ppath to convert it to mm.
-                 newdetp['mom']: cummulative cos_theta for momentum transfer in each medium (#medium)
-                 newdetp['p'] or ['v']: exit position and direction, when cfg.issaveexit=1 (3)
-                 newdetp['w0']: photon initial weight at launch time (3)
-                 newdetp['s']: exit Stokes parameters for polarized photon (4)
-                 newdetp['srcid']: the ID of the source when multiple sources are defined (1)
+        ``'detid'``
+            ID (1-based) of the detector that captured the photon.
+        ``'srcid'``
+            ID of the source, when several sources are defined.
+        ``'nscat'``
+            Scattering event counts in each medium (uint32).
+        ``'ppath'``
+            Partial path length in each medium, in voxel units (multiply by
+            ``cfg['unitinmm']`` for mm).
+        ``'mom'``
+            Momentum transfer (summed ``1 - cos(theta)``) in each medium.
+        ``'p'``, ``'v'``
+            Exit position and direction.
+        ``'w0'``
+            Initial weight of the photon.
+        ``'s'``
+            Exit Stokes vector ``[I, Q, U, V]`` of polarized photons.
+
+    Notes
+    -----
+    Ported from mcxdetphoton.m by Fan-Yu Yen.
     """
     newdetp = {}
     c0 = 0
@@ -461,115 +588,64 @@ def detphoton(detp, medianum, savedetflag, issaveref=None, srcnum=None):
 
 
 def mcxlab(*args):
-    """
-    Python wrapper of mcxlab - please see the help information of mcxlab.m for details
+    """Run an MCX simulation with the pre- and post-processing of MATLAB's mcxlab.
 
-    (Python code was adapted from mcxlab.m MATLAB function, ported by Fan-Yu Yen)
+    :func:`mcxlab` checks and converts the inputs, calls ``pmcx.run`` (CUDA) or
+    ``pmcxcl.run`` (OpenCL), and reorganizes the outputs as mcxlab.m does: the detected
+    photon data are split into named fields, the trajectories are sorted by photon, and the
+    outputs of several source patterns are moved to the last dimension. ``help(pmcx.run)``
+    lists all the ``cfg`` keys.
 
-    Format:
-       res = mcxlab(cfg);
-          or
-       res = mcxlab(cfg, option);
+    Parameters
+    ----------
+    cfg : dict or str
+        The simulation configuration (see ``pmcx.run``), or ``'gpuinfo'`` to list the
+        GPUs, or ``'version'`` to return the version string.
+    option : str, optional
+        ``'opencl'`` to run with pmcxcl (OpenCL) instead of pmcx (CUDA), or ``'preview'`` to
+        plot the domain, sources and detectors without simulating. Without it, the backend is
+        set by a ``USE_MCXCL`` variable in the user's session (1: OpenCL, default 0); pmcxcl
+        is also used when pmcx has no CUDA binary on this platform.
 
-    Input:
-       cfg: a dictionary defining the parameters associated with a simulation.
-            if cfg='gpuinfo': return the supported GPUs and their parameters,
-            if cfg='version': return the version of MCXLAB as a string,
-       option: (optional), options is a string, specifying additional options
-            option='opencl':  force using mcxcl.mex* instead of mcx.mex* on NVIDIA/AMD/Intel hardware
-            option='cuda':    force using mcx.mex* instead of mcxcl.mex* on NVIDIA GPUs
+    Returns
+    -------
+    res : dict
+        The outputs, as ``pmcx.run`` returns them, with these reorganized:
 
-       if one defines USE_MCXCL=1 in as Python global variable, all following
-       pmcx.mcxlab calls will use _pmcxcl (OpenCL version of mcx); by setting option='cuda',
-       one can force pmcx.mcxlab to use _pmcx (CUDA version). Similarly, if
-       USE_MCXCL=0, all pmcx.mcxlab calls will use _pmcx by default, unless
-       one sets option='opencl'.
+        ``'flux'``
+            Fluence (rate) of shape ``[Nx, Ny, Nz, Ntime]``, with one more last dimension
+            for several source patterns; complex for RF outputs.
+        ``'dref'``
+            Diffuse reflectance, when ``cfg['issaveref']`` is set.
+        ``'detp'``
+            Detected photon data as a dict of named fields (see :func:`detphoton`), with
+            ``'prop'``, ``'unitinmm'`` and the raw array ``'data'``.
+        ``'traj'``
+            Photon trajectories (``cfg['debuglevel']`` containing ``'M'``): ``'id'``
+            (photon index, sorted), ``'pos'`` (positions) and ``'data'``.
+        ``'seeds'``, ``'vol'``, ``'prop'``, ``'stat'``
+            As returned by ``pmcx.run``.
 
-    Output:
-         res: a dictionary containing the following subfields
-             res['flux'] is a 4D array with
-                    dimensions specified by [size(vol) total-time-gates].
-                    The content of the array is the normalized fluence at
-                    each voxel of each time-gate.
+    Raises
+    ------
+    ValueError
+        If ``cfg`` lacks ``'tend'`` or ``'srcpos'``.
+    ImportError
+        If neither pmcx nor pmcxcl provides a simulator binary.
 
-                    when cfg.debuglevel contains 'T', fluence(i).data stores trajectory
-                    output, see below
-             res['dref'] is a 4D array with the same dimension as fluence(i).data
-                    if cfg.issaveref is set to 1, containing only non-zero values in the
-                    layer of voxels immediately next to the non-zero voxels in cfg.vol,
-                    storing the normalized total diffuse reflectance (summation of the weights
-                    of all escaped photon to the background regardless of their direction);
-                    it is an empty array [] when if cfg.issaveref is 0.
-             res['stat'] is a structure storing additional information, including
-                    runtime: total simulation run-time in millisecond
-                    nphoton: total simulated photon number
-                    energytot: total initial weight/energy of all launched photons
-                    energyabs: total absorbed weight/energy of all photons
-                    normalizer: normalization factor
-                    unitinmm: same as cfg.unitinmm, voxel edge-length in mm
+    Examples
+    --------
+    >>> import numpy as np, pmcx
+    >>> cfg = {'nphoton': 1000000, 'vol': np.ones([60, 60, 60], dtype='uint8'),
+    ...        'tstart': 0, 'tend': 5e-9, 'tstep': 5e-9, 'srcpos': [30, 30, 0],
+    ...        'srcdir': [0, 0, 1], 'prop': [[0, 0, 1, 1], [0.005, 1, 0.01, 1.37]]}
+    >>> res = pmcx.mcxlab(cfg)
+    >>> res['flux'].shape
+    (60, 60, 60, 1)
 
-             res['detp']: res['detp'] is a directionary object including the following field
-                   res['detp']['detid']: the ID(>0) of the detector that captures the photon
-                   res['detp']['nscat']: cummulative scattering event counts in each medium
-                   res['detp']['ppath']: cummulative path lengths in each medium (partial pathlength)
-                        one need to multiply cfg.unitinmm with ppath to convert it to mm.
-                   res['detp']['mom']: cummulative cos_theta for momentum transfer in each medium
-                   res['detp']['p'] or ['v']: exit position and direction, when cfg.issaveexit=1
-                   res['detp']['nscat']: photon initial weight at launch time
-                   res['detp']['s']: exit Stokes parameters for polarized photon
-                   res['detp']['prop']: optical properties, a copy of cfg.prop
-                   res['detp']['data']: a concatenated and transposed array in the order of
-                        [detid nscat ppath mom p v w0]'
-
-                   if returned by pmcx.run, res['det'] is a 2D numpy array in a format as
-                   res['detp']['data'] described above
-
-             res['vol']: (optional) a numpy array storing a preprocessed volume.
-                   Each volume is a 3D int32 array.
-             res['seeds']: (optional), if give, mcxlab returns the seeds, in the form of
-                   a byte array (uint8) for each detected photon. The column number
-                   of seed equals that of res['detp'].
-             res['traj']: if given, mcxlab returns the trajectory data for
-                   each simulated photon. The output has 6 rows, the meanings are
-                      res['traj']['id']:    1:    index of the photon packet
-                      res['traj']['pos']: 2-4:    x/y/z/ of each trajectory position
-                                            5:    current photon packet weight
-                                            6:    reserved
-               By default, mcxlab only records the first 1e7 positions along all
-               simulated photons; change cfg['maxjumpdebug'] to define a different limit.
-
-    Key cfg fields for frequency-domain (RF/FD) simulations:
-        cfg['outputtype']: controls output quantity; RF-relevant values:
-             'flux'     - (default) CW fluence rate
-             'rf'       - dual-mode:
-                          forward mode: complex frequency-domain fluence rate
-                            when cfg['omega'] is set and cfg['seed'] is NOT from
-                            an .mch file; res['flux'] is a complex numpy array
-                            (dtype complex64); multiply by tstep for fluence
-                          replay mode: FD mua Jacobian when cfg['seed'] is from
-                            a prior .mch file and cfg['omega'] is set
-             'rfmus'    - FD mus Jacobian (replay mode only)
-
-        Adjoint (forward-mode) Jacobians - requires cfg['detpos'] and cfg['detdir']:
-             'adjoint'        - mua Jacobian: J_mua[r]=-phi_src[r]*phi_det[r]*dV [mm^-1]
-                                output: real [Nx,Ny,Nz,Nch] (CW) or complex (RF),
-                                Nch=Ns*Nd, or the rows of cfg['sdmap']
-             'adjoint_dcoeff' - D=1/(3*mus') Jacobian via gradient dot-product:
-                                J_D[r] = grad(phi_src).grad(phi_det)*dV [mm^-3]
-                                2nd-order FD gradients; normalization: kernel*unitinmm
-             'adjoint_mus'    - mus Jacobian: J_mus = J_D/(3*(1-g)*mus^2) per voxel
-             'adjoint_musp'   - mus' Jacobian: J_musp = J_D/(3*(1-g)^2*mus^2) per voxel
-        cfg['sdmap']:    an Nch x 2 (or wider) array of 1-based [srcid, detid] rows
-                          selecting the adjoint Jacobian channels, in that order;
-                          the Jacobians are then [Nx,Ny,Nz,Nch] instead of
-                          [Nx,Ny,Nz,Ns*Nd] (all pairs, detector index fastest);
-                          only the sources and detectors in cfg['sdmap'] are
-                          simulated, and the forward solutions in 'flux' are
-                          only theirs: sources first, then detectors, each in
-                          increasing order
-
-        cfg['omega']:    source modulation angular frequency in rad/s (2*pi*f);
-                          required for RF forward and RF replay modes
+    Notes
+    -----
+    Adapted from mcxlab.m by Fan-Yu Yen.
     """
     try:
         defaultocl = eval("USE_MCXCL", globals())
@@ -780,39 +856,33 @@ def mcxlab(*args):
 
 
 def mcxcreate(benchname=None, **kwargs):
-    """
-    Format:
-        list = mcxcreate()
-        cfg = mcxcreate(benchname)
-        cfg = mcxcreate(benchname, param1=value1, param2=value2, ...)
+    """Create the configuration of a built-in benchmark, as ``mcx --bench`` does.
 
-    Create MCX simulation from built-in benchmarks (similar to "mcx --bench")
-
-    Author: Qianqian Fang <q.fang at neu.edu>
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     benchname : str, optional
-        A string to specify the name of the benchmark
-    **kwargs : dict
-        Parameter-value pairs to override default settings
+        The benchmark: ``'cube60'``, ``'cube60b'``, ``'cube60planar'``, ``'skinvessel'``,
+        ``'sphshell'`` or ``'spherebox'``.
+    **kwargs
+        ``cfg`` keys (lower case) to add or override.
 
-    Returns:
+    Returns
+    -------
+    cfg : dict or list of str
+        The configuration, ready for :func:`mcxlab` or ``pmcx.run``; without
+        ``benchname``, the list of the benchmark names.
+
+    Raises
+    ------
+    ValueError
+        If the benchmark name is not known.
+
+    Examples
     --------
-    cfg : dict or list
-        A dict defining the parameters associated with a simulation. If
-        no input, this function returns a list of supported benchmarks.
-
-    Examples:
-    ---------
-    list = mcxcreate()
-    cfg = mcxcreate('cube60b')
-    cfg = mcxcreate('cube60', srctype='isotropic', srcpos=[30, 30, 30])
-
-    This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
-
-    License: GNU General Public License version 3, please read LICENSE.txt for details
+    >>> import pmcx
+    >>> pmcx.mcxcreate()
+    ['cube60', 'cube60b', 'cube60planar', 'skinvessel', 'sphshell', 'spherebox']
+    >>> cfg = pmcx.mcxcreate('cube60', srctype='isotropic', srcpos=[30, 30, 30])
     """
 
     # Initialize benchmark dictionary
@@ -943,62 +1013,49 @@ def dcsg1(
     format="float",
     **varargin,
 ):
-    """
-    tau, g1 = mcxdcsg1(detps, tau, disp_model, DV, lambda_, format)
+    """Compute the electric-field autocorrelation g1 of diffuse correlation spectroscopy.
 
-    Compute simulated electric-field auto-correlation function using
-    simulated photon pathlengths and scattering momentum transfer
+    g1 of each detector is computed from the path lengths and momentum transfers of its
+    detected photons, for a model of the root-mean-square displacement of the scatterers.
 
-    Author: Stefan Carp (carp <at> nmr.mgh.harvard.edu)
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     detps : str or dict
-        The file name of the output .mch file or the 2nd output from mcxlab
+        The detected photon data, the ``'detp'`` output of :func:`mcxlab` with
+        ``'ppath'``, ``'mom'`` and ``'prop'`` (run with ``cfg['ismomentum'] = 1``), or the
+        name of an ``.mch`` file, whose optical properties are read from the ``.json`` file
+        of the same name.
     tau : array_like, optional
-        Correlation times at which to compute g1
-        (default: 1e-7 to 1e-1 seconds, log equidistant)
+        Correlation times in seconds; 200 log-spaced values from 1e-7 to 1e-1 by default.
     disp_model : str, optional
-        Displacement model ('brownian', 'random_flow', <custom>)
-        (default: 'brownian', see further explanation below)
+        The displacement model: ``'brownian'`` (default, ``<dr^2> = 6 DV tau``),
+        ``'random_flow'`` (``<dr^2> = DV^2 tau^2``), or a Python expression of ``DV`` and
+        ``tau[J]`` evaluated as is.
     DV : float, optional
-        Value of displacement variable using mm as unit of
-        length and s as unit of time
-        (default: 1e-7 mm^2/s, see further explanation below)
+        The displacement variable, in mm and s: the Brownian diffusion coefficient
+        (default 1e-7 mm^2/s) or the flow velocity.
     lambda_ : float, optional
-        Wavelength of light used in nm
-        (default: 785)
+        Wavelength in nm (default 785).
     format : str, optional
-        The format used to save the .mch file
-        (default: 'float')
-    **varargin : dict
-        Additional parameters for custom displacement models
+        Data type of the ``.mch`` file (default ``'float'``).
+    **varargin
+        Extra variables available to a custom ``disp_model`` expression.
 
-    Returns:
-    --------
+    Returns
+    -------
     tau : ndarray
-        Correlation times at which g1 was computed provided for
-        convenience (copied from input if set, otherwise
-        outputs default)
-    g1 : ndarray
-        Field auto-correlation curves, one for each detector
+        The correlation times.
+    g1 : ndarray, shape (ndet, ntau)
+        g1 of each detector, row ``i`` for detector ``i + 1``.
 
-    The displacement model indicates the formula used to compute the root
-    mean square displacement of scattering particles during a given delay
+    Raises
+    ------
+    ValueError
+        If the data have no momentum transfer.
 
-    brownian:       RMS = 6 * DV * tau;
-                    DV(displacement variable) = Db (brownian diffusion coeff)
-    random_flow:    RMS = DV^2 * tau^2;
-                    DV = V (first moment of velocity distribution)
-    <custom>:       Any string other than 'brownian' or 'random_flow' will
-                    be evaluated as is using Python eval, make sure it uses
-                    'DV' as the flow related independent variable, tau is
-                    indexed as tau[J]. Any additional parameters can be
-                    sent via "varargin"
-
-    This file is part of Mesh-Based Monte Carlo
-    License: GPLv3, see https://mcx.space for details
+    Notes
+    -----
+    Ported from mcxdcsg1.m (Stefan Carp, MGH).
     """
 
     # Set default values
@@ -1102,37 +1159,32 @@ def dcsg1(
 
 
 def cwdiffusion(mua, musp, Reff, srcpos, detpos):
-    """
-    Phi, r = cwdiffusion(mua, musp, Reff, srcpos, detpos)
+    """Continuous-wave diffusion solution of a semi-infinite medium.
 
-    Semi-infinite medium analytical solution to diffusion model
-
-    Author: Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     mua : float
-        The absorption coefficients in 1/mm
+        Absorption coefficient, in 1/mm.
     musp : float
-        The reduced scattering coefficients in 1/mm
+        Reduced scattering coefficient, in 1/mm.
     Reff : float
-        The effective reflection coefficient
+        Effective reflection coefficient of the boundary.
     srcpos : array_like
-        Array for the source positions (x, y, z)
+        Source position(s) ``[x, y, z]`` in mm, the medium occupying ``z > 0``.
     detpos : array_like
-        Array for the detector positions (x, y, z)
+        Detector position(s) ``[x, y, z]`` in mm.
 
-    Returns:
-    --------
-    Phi : ndarray
-        The output fluence for all source/detector pairs
-    r : ndarray (optional)
-        Source detector separations
+    Returns
+    -------
+    Phi : ndarray, shape (ndet, nsrc)
+        Fluence in 1/mm^2 for each detector/source pair, by the extrapolated-boundary image
+        source method.
+    r : ndarray, shape (ndet, nsrc)
+        Distances from the (depth-shifted) real sources to the detectors.
 
-    This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
-    See Boas2002, Haskell1994
+    Notes
+    -----
+    See Boas et al. (2002) and Haskell et al. (1994).
     """
 
     # Convert inputs to numpy arrays
@@ -1176,35 +1228,26 @@ def cwdiffusion(mua, musp, Reff, srcpos, detpos):
 
 
 def cwfluxdiffusion(mua, musp, Reff, srcpos, detpos):
-    """
-    flux = cwfluxdiffusion(mua, musp, Reff, srcpos, detpos)
+    """Continuous-wave diffuse reflectance (surface flux) of a semi-infinite medium.
 
-    Compute surface flux for a semi-infinite medium
-
-    Author: Shijie Yan (yan.shiji <at> northeastern.edu)
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     mua : float
-        The absorption coefficients in 1/mm
+        Absorption coefficient, in 1/mm.
     musp : float
-        The reduced scattering coefficients in 1/mm
+        Reduced scattering coefficient, in 1/mm.
     Reff : float
-        The effective reflection coefficient
+        Effective reflection coefficient of the boundary.
     srcpos : array_like
-        Array for the source positions (x, y, z)
+        Source position(s) ``[x, y, z]`` in mm.
     detpos : array_like
-        Array for the detector positions (x, y, z)
+        Detector position(s) ``[x, y, z]`` in mm, on the surface.
 
-    Returns:
-    --------
-    flux : ndarray
-        The diffuse reflectance for all source/detector pairs
-
-    This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
-    See Kienle1997
+    Returns
+    -------
+    flux : ndarray, shape (ndet, nsrc)
+        Diffuse reflectance in 1/mm^2 for each detector/source pair (Eq. 6 of Kienle and
+        Patterson, 1997).
     """
 
     # Convert inputs to numpy arrays
@@ -1256,17 +1299,31 @@ def cwfluxdiffusion(mua, musp, Reff, srcpos, detpos):
 
 
 def cwfluencediffusion(*args, **kwargs):
+    """Continuous-wave fluence of a semi-infinite medium; the same as :func:`cwdiffusion`.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        The arguments of :func:`cwdiffusion`.
+
+    Returns
+    -------
+    Phi, r : ndarray
+        As :func:`cwdiffusion` returns them.
+    """
     return cwdiffusion(*args, **kwargs)
 
 
 def _replaydata(x):
-    """the raw array of a detected photon/seed output of pmcx.mcxlab, or of a MATLAB-style dict"""
+    """Return the raw array of a detected photon or seed output, or of a MATLAB-style dict holding it in ``'data'``."""
     return x["data"] if isinstance(x, dict) and "data" in x else x
 
 
 def _rfparts(flux, vol_shape, unitinmm=None):
-    """sum an RF replay output over time and split it into its cos (X) and sin (Y) weighted parts"""
-    jac = np.sum(np.asarray(flux), axis=3)  # [Nx, Ny, Nz, 1, 2] after summing the time gates
+    """Sum an RF replay output over its time gates and split it into its cosine (X) and sine (Y) weighted parts."""
+    jac = np.sum(
+        np.asarray(flux), axis=3
+    )  # [Nx, Ny, Nz, 1, 2] after summing the time gates
     if unitinmm is not None:
         jac = unitinmm * jac  # correct units to [mm] when the output is not normalized
     jac = np.reshape(jac, list(vol_shape) + [-1])
@@ -1274,46 +1331,43 @@ def _rfparts(flux, vol_shape, unitinmm=None):
 
 
 def rfreplay(cfg, f_mod, detp, seeds, detnums):
-    """
-    rfjac_lnA, rfjac_phase = mcxrfreplay(cfg, f_mod, detp, seeds, detnums)
+    """Compute frequency-domain Jacobians of log-amplitude and phase with respect to mua by RF replay.
 
-    Compute the frequency domain (FD) log-amplitude and phase shift Jacobians
-    with respect to voxel-wise absorption coefficients using the radio
-    frequency (RF) replay algorithm (requires a prior baseline simulation with
-    saved seeds).  For direct FD forward simulation (no seed file), use
-    mcxlab with cfg['outputtype']='rf' and cfg['omega']=2*pi*f instead.
+    The detected photons of a baseline simulation, run with ``cfg['issaveseed'] = 1``, are
+    replayed for each detector with ``cfg['outputtype'] = 'rf'``. For a forward
+    frequency-domain solution without a baseline, run :func:`mcxlab` with
+    ``cfg['outputtype'] = 'rf'`` and ``cfg['omega']`` instead.
 
-    Authors: Pauliina Hirvi (pauliina.hirvi <at> aalto.fi)
-             Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
-
-    Ref.: Hirvi et al. (2023). Effects of atlas-based anatomy on modelled
-    light transport in the neonatal head. Phys. Med. Biol.
-    https://doi.org/10.1088/1361-6560/acd48c
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     cfg : dict
-        Dict used in the main forward simulation
+        The configuration of the baseline simulation.
     f_mod : float
-        RF modulation frequency in Hz
-    detp : dict
-        The 2nd output from mcxlab, must be a dict
-    seeds : dict
-        The 4th output from mcxlab
+        Source modulation frequency, in Hz.
+    detp : dict or ndarray
+        The detected photons of the baseline run (the ``'detp'`` output of
+        :func:`mcxlab`).
+    seeds : dict or ndarray
+        Their RNG seeds (the ``'seeds'`` output).
     detnums : array_like
-        Array with the indices of the detectors to replay and obtain Jacobians
+        The IDs (1-based) of the detectors to replay.
 
-    Returns:
-    --------
-    rfjac_lnA : ndarray
-        A 4D array with dimensions specified by [size(vol) num-of-detectors];
-        each 3D array contains the Jacobians for log-amplitude measurements
-    rfjac_phase : ndarray
-        A 4D array with dimensions specified by [size(vol) num-of-detectors];
-        each 3D array contains the Jacobians for phase shift measurements
+    Returns
+    -------
+    rfjac_lnA : ndarray, shape (Nx, Ny, Nz, ndet)
+        Jacobian of the log-amplitude with respect to the mua of each voxel, per detector.
+    rfjac_phase : ndarray, shape (Nx, Ny, Nz, ndet)
+        Jacobian of the phase shift (rad), per detector.
 
-    License: GPLv3, see https://mcx.space/ for details
+    Raises
+    ------
+    ValueError
+        If an input is missing.
+
+    Notes
+    -----
+    By Pauliina Hirvi and Qianqian Fang. See Hirvi et al., "Effects of atlas-based anatomy
+    on modelled light transport in the neonatal head," Phys. Med. Biol. 68, 135019 (2023).
     """
 
     if cfg is None or f_mod is None or detp is None or seeds is None or detnums is None:
@@ -1368,7 +1422,11 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
         # FD JACOBIANS
         # Compute the Jacobians with the rf replay feature.
         # Jacobians for X and Y wrt mua, summed over time instances
-        rfjac_X, rfjac_Y = _rfparts(rfjac_d, vol_shape, cfg_jac["unitinmm"] if cfg_jac["isnormalized"] == 0 else None)
+        rfjac_X, rfjac_Y = _rfparts(
+            rfjac_d,
+            vol_shape,
+            cfg_jac["unitinmm"] if cfg_jac["isnormalized"] == 0 else None,
+        )
 
         # Jacobians for log-amplitude and phase shift wrt mua:
         rfjac_lnA[:, :, :, idx] = (1 / (A**2)) * (X * rfjac_X + Y * rfjac_Y)
@@ -1378,43 +1436,43 @@ def rfreplay(cfg, f_mod, detp, seeds, detnums):
 
 
 def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
-    """
-    rfmusjac_lnA, rfmusjac_phase = mcxrfmusreplay(cfg, f_mod, detp, seeds, detnums)
+    """Compute frequency-domain Jacobians of log-amplitude and phase with respect to mus by RF replay.
 
-    Compute the frequency domain (FD) log-amplitude and phase shift Jacobians
-    with respect to voxel-wise scattering coefficients using the radio
-    frequency mode (RF) replay algorithm.
+    Each detector is replayed twice, with ``cfg['outputtype'] = 'rf'`` (the absorption part)
+    and ``'rfmus'`` (the scattering part), from a baseline simulation run with
+    ``cfg['issaveseed'] = 1``.
 
-    Authors: Pauliina Hirvi (pauliina.hirvi <at> aalto.fi)
-             Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
-
-    Ref.: Hirvi et al. (2025): https://www.overleaf.com/read/qgtqcdyvqfrw#485e8c
-    Hirvi et al. (2023): https://doi.org/10.1088/1361-6560/acd48c
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     cfg : dict
-        Dict used in the main forward simulation
+        The configuration of the baseline simulation.
     f_mod : float
-        RF modulation frequency in Hz
-    detp : dict
-        The 2nd output from mcxlab, must be a dict
-    seeds : dict
-        The 4th output from mcxlab
+        Source modulation frequency, in Hz.
+    detp : dict or ndarray
+        The detected photons of the baseline run (the ``'detp'`` output of
+        :func:`mcxlab`).
+    seeds : dict or ndarray
+        Their RNG seeds (the ``'seeds'`` output).
     detnums : array_like
-        Array with the indices of the detectors to replay and obtain Jacobians
+        The IDs (1-based) of the detectors to replay.
 
-    Returns:
-    --------
-    rfmusjac_lnA : ndarray
-        A 4D array with dimensions specified by [size(vol) num-of-detectors];
-        each 3D array contains the Jacobians for log-amplitude measurements
-    rfmusjac_phase : ndarray
-        A 4D array with dimensions specified by [size(vol) num-of-detectors];
-        each 3D array contains the Jacobians for phase shift measurements
+    Returns
+    -------
+    rfmusjac_lnA : ndarray, shape (Nx, Ny, Nz, ndet)
+        Jacobian of the log-amplitude with respect to the mus of each voxel, per detector.
+    rfmusjac_phase : ndarray, shape (Nx, Ny, Nz, ndet)
+        Jacobian of the phase shift (rad), per detector.
 
-    License: GPLv3, see https://mcx.space/ for details
+    Raises
+    ------
+    ValueError
+        If an input is missing.
+
+    Notes
+    -----
+    By Pauliina Hirvi and Qianqian Fang. See Hirvi et al., "Computation of frequency- and
+    time-domain Jacobians in optical tomography with Monte Carlo simulations,"
+    arXiv:2604.27558 (2026), and Phys. Med. Biol. 68, 135019 (2023).
     """
 
     # Control.
@@ -1434,14 +1492,21 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
     rfmusjac_phase = np.zeros(list(vol_shape) + [len(detnums)])
 
     # Return if no photons detected.
-    if detp is None or seeds is None or np.size(_replaydata(detp)) == 0 or np.size(_replaydata(seeds)) == 0:
+    if (
+        detp is None
+        or seeds is None
+        or np.size(_replaydata(detp)) == 0
+        or np.size(_replaydata(seeds)) == 0
+    ):
         print("MCX WARNING: No detected photons for replay.")
         return rfmusjac_lnA, rfmusjac_phase
 
     # Form matrix with mus for each nonzero voxel, and 1 in 0 type or mus=0.
     vol_array = np.asarray(cfg["vol"]).astype(int)
     prop_array = np.asarray(cfg["prop"], dtype=float)
-    mus_matrix = np.where(vol_array > 0, prop_array[vol_array, 1], 1.0)  # labels index prop rows directly
+    mus_matrix = np.where(
+        vol_array > 0, prop_array[vol_array, 1], 1.0
+    )  # labels index prop rows directly
 
     # Avoid division by zero if mus=0
     mus_matrix = mus_matrix + (mus_matrix == 0).astype(float)
@@ -1464,11 +1529,17 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
         # REPLAY SIMULATION 1
         cfg_jac["replaydet"] = d
         cfg_jac["outputtype"] = "rf"  # FD absorption Jacobians
-        cfg_rf = dict(cfg_jac, issavedet=0)  # only the Jacobian is needed, as in mcxrfmusreplay.m
+        cfg_rf = dict(
+            cfg_jac, issavedet=0
+        )  # only the Jacobian is needed, as in mcxrfmusreplay.m
         rfjac_d = mcxlab(cfg_rf)["flux"]
 
         # Jacobians for X and Y wrt mua: (-1*)cos/sine-weighted paths
-        rfjac_X, rfjac_Y = _rfparts(rfjac_d, vol_shape, cfg_jac["unitinmm"] if cfg_jac["isnormalized"] == 0 else None)
+        rfjac_X, rfjac_Y = _rfparts(
+            rfjac_d,
+            vol_shape,
+            cfg_jac["unitinmm"] if cfg_jac["isnormalized"] == 0 else None,
+        )
         del rfjac_d  # Clear memory
 
         # REPLAY SIMULATION 2
@@ -1513,35 +1584,47 @@ def rfmusreplay(cfg, f_mod, detp, seeds, detnums):
 
 
 def svmc(vol, smoothing=1, kernelsize=3, kernelstd=1, threshold=0.5, curveonly=1):
-    """
-    newvol = svmc(vol, smoothing=1)
+    """Convert a label volume to the split-voxel (SVMC) format.
 
-    Convert a label volume into the split-voxel (SVMC) format, a port of utils/mcxsvmc.m
+    The boundary of each label is extracted by marching cubes, after an optional Gaussian
+    smoothing; each voxel cut by a boundary is then described by the labels on its two sides
+    and a planar interface (a reference point and a normal). Requires scipy and
+    scikit-image.
 
-    The boundary of each tissue label is extracted with marching cubes (after an optional
-    Gaussian smoothing); every voxel cut by a boundary is then represented by the two labels
-    on either side of a planar interface, defined by a reference point and a normal vector.
+    Parameters
+    ----------
+    vol : array_like
+        A 3-D integer label volume, up to 255 labels.
+    smoothing : int, optional
+        1 (default) to smooth each label mask with a Gaussian kernel first.
+    kernelsize : int, optional
+        Size of the Gaussian kernel (default 3).
+    kernelstd : float, optional
+        Standard deviation of the Gaussian kernel (default 1).
+    threshold : float, optional
+        The isosurface level (default 0.5).
+    curveonly : int, optional
+        1 (default) to keep only the curved interfaces, leaving the voxel-aligned flat
+        boundaries as plain label voxels.
 
-    input:
-        vol: a 3-D integer label volume (up to 255 labels)
-        smoothing: 1 to smooth each label mask with a Gaussian kernel before the isosurface
-        kernelsize, kernelstd: size and standard deviation of the Gaussian smoothing kernel
-        threshold: isosurface level
-        curveonly: 1 to only keep curved interfaces, leaving voxel-aligned flat boundaries
-                   as plain label voxels
+    Returns
+    -------
+    newvol : ndarray, shape (8, Nx, Ny, Nz), uint8
+        The SVMC volume, to be passed as ``cfg['vol']``: ``newvol[0]`` the label (the lower
+        label of a split voxel), ``newvol[1]`` the upper label of a split voxel or 0,
+        ``newvol[2:5]`` the reference point of the interface in the voxel (times 255), and
+        ``newvol[5:8]`` the interface normal (``(n + 1) * 255 / 2``).
 
-    output:
-        newvol: an [8, Nx, Ny, Nz] uint8 array, which can be passed to cfg['vol'] directly:
-           newvol[0]: the label of the voxel (lower label of a split voxel)
-           newvol[1]: the upper label of a split voxel, 0 otherwise
-           newvol[2:5]: the reference point of the interface within the voxel (scaled by 255)
-           newvol[5:8]: the normal vector of the interface ((n+1)*255/2)
+    Raises
+    ------
+    ValueError
+        If the volume has more than 255 labels.
 
-    Ref.: Yan S, Fang Q, "Hybrid mesh and voxel based Monte Carlo algorithm for accurate and
-    efficient photon transport modeling in complex bio-tissues," BOE 11, 6262-6270 (2020)
-
-    this file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
+    Notes
+    -----
+    Port of mcxsvmc.m. See Yan and Fang, "Hybrid mesh and voxel based Monte Carlo algorithm
+    for accurate and efficient photon transport modeling in complex bio-tissues," Biomed.
+    Opt. Express 11(11), 6262 (2020).
     """
     from scipy.ndimage import convolve
     from skimage.measure import marching_cubes
@@ -1608,22 +1691,41 @@ def svmc(vol, smoothing=1, kernelsize=3, kernelstd=1, threshold=0.5, curveonly=1
 
     cross = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
     areas = 0.5 * np.linalg.norm(cross, axis=1)
-    normals = -cross / np.maximum(2 * areas, 1e-30)[:, None]  # orientation of MATLAB's isosurface normals
+    normals = (
+        -cross / np.maximum(2 * areas, 1e-30)[:, None]
+    )  # orientation of MATLAB's isosurface normals
 
     nvox = int(np.prod(dim))
     totalarea = np.bincount(voxid, weights=areas, minlength=nvox)
-    nc = np.stack([np.bincount(voxid, weights=centroids[:, i] * areas, minlength=nvox) for i in range(3)])
-    nn = np.stack([np.bincount(voxid, weights=normals[:, i] * areas, minlength=nvox) for i in range(3)])
+    nc = np.stack(
+        [
+            np.bincount(voxid, weights=centroids[:, i] * areas, minlength=nvox)
+            for i in range(3)
+        ]
+    )
+    nn = np.stack(
+        [
+            np.bincount(voxid, weights=normals[:, i] * areas, minlength=nvox)
+            for i in range(3)
+        ]
+    )
     nc = (nc[:, uniqidx] / totalarea[uniqidx]).T
     nn = nn[:, uniqidx]
     nn = (nn / np.sqrt((nn * nn).sum(axis=0))).T
 
     if curveonly:
         # drop voxel-aligned flat interfaces, and their neighbors
-        flat = np.any(nc - np.floor(nc) < 1e-6, axis=1) & np.any(np.abs(nn) == 1, axis=1)
+        flat = np.any(nc - np.floor(nc) < 1e-6, axis=1) & np.any(
+            np.abs(nn) == 1, axis=1
+        )
         boxmask = np.zeros(nvox)
         boxmask[uniqidx[flat]] = 1
-        boxmask = convolve(boxmask.reshape(dim, order="F"), np.ones([3, 3, 3]) / 27, mode="nearest") > 0
+        boxmask = (
+            convolve(
+                boxmask.reshape(dim, order="F"), np.ones([3, 3, 3]) / 27, mode="nearest"
+            )
+            > 0
+        )
         keep = ~boxmask.ravel(order="F")[uniqidx]
         nn, nc, uniqidx, labpair = nn[keep], nc[keep], uniqidx[keep], labpair[keep]
 

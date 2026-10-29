@@ -14,19 +14,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""PMCX - Python bindings for Monte Carlo eXtreme photon transport simulator
+"""PMCX - Python bindings of Monte Carlo eXtreme (MCX), a GPU (CUDA) photon transport simulator.
 
-Example usage:
+Simulator (compiled module ``_pmcx``)
 
-# To list available GPUs
-import numpy as np
-import pmcx
-pmcx.gpuinfo()
+* ``run(cfg)`` or ``run(**cfg)``: run a simulation; see ``help(pmcx.run)`` for the
+  ``cfg`` keys and the outputs
+* ``gpuinfo()``: list the GPUs
+* ``version()``: the MCX version string
 
-# To run a simulation
-res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype='uint8'),
-               tstart=0, tend=5e-9, tstep=5e-9, srcpos=[30,30,0],
-               srcdir=[0,0,1], prop=np.array([[0, 0, 1, 1], [0.005, 1, 0.01, 1.37]]))
+Utilities
+
+* :func:`mcxlab`: run a simulation and post-process the outputs as mcxlab does
+* :func:`mcxcreate`, ``bench``: built-in benchmark configurations
+* :func:`detweight`, :func:`meanpath`, :func:`meanscat`, :func:`dettpsf`,
+  :func:`dettime`, :func:`detphoton`, :func:`getdistance`: process detected photons
+* :func:`rfreplay`, :func:`rfmusreplay`: frequency-domain Jacobians by photon replay
+* :func:`cwdiffusion`, :func:`cwfluxdiffusion`, :func:`cwfluencediffusion`,
+  :func:`tddiffusion`, :func:`cwdref`, :func:`dcsg1`: analytical diffusion solutions
+* :func:`svmc`: build split-voxel (SVMC) volumes
+* :func:`loadmc2`, :func:`loadmch`, :func:`loadnii`, :func:`loadfile`,
+  :func:`mcx2json`, :func:`json2mcx`: file I/O
+* :func:`preview`, :func:`plotshapes`, :func:`plotphotons`, :func:`plotvol`: plotting
+  (need ``iso2mesh``)
+
+The utilities are pure Python; on platforms without CUDA (e.g. macOS), the package
+installs without ``_pmcx`` and they are used by pmcxcl.
+
+Examples
+--------
+>>> import numpy as np
+>>> import pmcx
+>>> pmcx.gpuinfo()
+>>> res = pmcx.run(nphoton=1000000, vol=np.ones([60, 60, 60], dtype="uint8"),
+...                tstart=0, tend=5e-9, tstep=5e-9, srcpos=[30, 30, 0],
+...                srcdir=[0, 0, 1], prop=np.array([[0, 0, 1, 1], [0.005, 1, 0.01, 1.37]]))
+>>> res["flux"].shape
+(60, 60, 60, 1)
 """
 
 try:

@@ -14,7 +14,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-"""Plotting MCX input and output data structures"""
+"""Plotting MCX/MMC inputs and outputs.
+
+* :func:`preview`: draw the domain, sources and detectors of a ``cfg``
+* :func:`plotshapes`: draw the objects of a JSON shape description
+* :func:`plotphotons`: draw the photon trajectories of a simulation
+* :func:`plotvol`: browse a 3-D or 4-D volume interactively
+
+All of them import ``matplotlib`` and ``iso2mesh`` (``pip install iso2mesh``) only when
+called.
+"""
 
 __all__ = (
     "preview",
@@ -37,41 +46,74 @@ import numpy as np
 
 
 def plotvol(*args, **kwargs):
+    """Browse a 3-D or 4-D volume, such as a fluence output, with interactive slices.
+
+    A thin wrapper of ``iso2mesh.plotvolume``, the Python port of ``mcxplotvol``: drag the
+    slices with the left mouse button, rotate with the middle button, change the color range
+    with the right button, and step through the 4th dimension (e.g. time gates) with the
+    up/down keys.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        The arguments of ``iso2mesh.plotvolume``: the volume (``(nx, ny, nz)`` or
+        ``(nx, ny, nz, nt)``), and options such as ``subsample`` and ``cmap``.
+
+    Returns
+    -------
+    viewer : iso2mesh.plotvolume
+        The viewer object; ``viewer.setslice(dim, index)`` moves a slice.
+
+    Examples
+    --------
+    >>> res = pmcx.mcxlab(cfg)
+    >>> pmcx.plotvol(np.log10(res["flux"][:, :, :, 0]))
+    """
     from iso2mesh import plotvolume
 
     return plotvolume(*args, **kwargs)
 
 
 def preview(cfg, **kwargs):
-    """
-    hs = preview(cfg, **kwargs)
+    """Draw the domain, sources and detectors of a simulation, for mcx and mmc inputs.
 
-    Preview the simulation configuration for both MCXLAB and MMCLAB
+    For a voxel domain (``cfg['vol']``), the surface of each label is drawn in a fixed
+    color; for a mesh (``cfg['node']`` and ``cfg['elem']``), the mesh is drawn instead.
+    ``cfg['shapes']`` is drawn with :func:`plotshapes`. The source is a red star with an
+    arrow along ``srcdir``; the aperture of area sources (disk, gaussian, planar, pattern,
+    fourier, slit, line ...) is outlined, and each detector is drawn as a sphere. Coordinates
+    are scaled by ``cfg['unitinmm']``.
 
-    Author: Qianqian Fang <q.fang at neu.edu>
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     cfg : dict or list of dict
-        A dict, or list of dict. Each element of cfg defines
-        the parameters associated with a simulation. Please run
-        'help mcxlab' or 'help mmclab' to see the details.
-        preview supports the cfg input for both mcxlab and mmclab.
-    **kwargs : tuple
-        Additional arguments passed to plotting functions
+        The simulation configuration(s), with the keys of ``pmcx.run`` or ``pmmc.run``;
+        one figure is drawn for each. ``srcpos`` and ``srcdir`` are required, as is one of
+        ``vol``, ``node`` or ``shapes``.
+    **kwargs
+        Passed to the matplotlib/iso2mesh plotting calls.
 
-    Returns:
+    Returns
+    -------
+    hs : list of dict
+        For each ``cfg``, the plot handles: ``bbx`` (bounding box), ``seg`` (labels or
+        shapes), ``src``, ``srcarrow``, ``srcarea`` and ``det``.
+
+    Raises
+    ------
+    ImportError
+        If ``iso2mesh`` or ``matplotlib`` is not installed.
+    ValueError
+        If a required key is missing.
+
+    Notes
+    -----
+    A 4-D ``cfg['vol']`` (per-voxel properties) is replaced by an all-ones volume of the
+    same spatial size in the ``cfg`` passed in.
+
+    Examples
     --------
-    hs : list
-        A list of dict containing handles to the plotted domain elements.
-
-    Dependency:
-        This function depends on the Iso2Mesh toolbox (http://iso2mesh.sf.net)
-
-    This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
-
-    License: GNU General Public License version 3, please read LICENSE.txt for details
+    >>> pmcx.preview(pmcx.mcxcreate("spherebox"))
     """
 
     # Import iso2mesh functions
@@ -209,13 +251,17 @@ def preview(cfg, **kwargs):
             raise ValueError("cfg.srcpos or cfg.srcdir is missing")
 
         srcpos = np.array(cfg[i]["srcpos"]) * voxelsize
-        hsrc = plotmesh(np.atleast_2d(srcpos[:3]), "r*")  # plotmesh takes one node per row
+        hsrc = plotmesh(
+            np.atleast_2d(srcpos[:3]), "r*"
+        )  # plotmesh takes one node per row
 
         srcvec = np.array(cfg[i]["srcdir"]) * 10 * voxelsize
         headsize = 1e2
 
         # Use matplotlib's quiver for 3D arrow
-        ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
+        ax = (
+            plt.gca()
+        )  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
         hdir = ax.quiver(
             srcpos[0],
             srcpos[1],
@@ -352,50 +398,43 @@ def preview(cfg, **kwargs):
 def plotshapes(
     jsonshape, gridsize=None, offset=None, hseg=None, voxelsize=None, **kwargs
 ):
-    """
-    Format:
-        mcxplotshapes(jsonshapestr)
-        handles = mcxplotshapes(jsonshapestr)
-        handles = mcxplotshapes(jsonshapestr, gridsize, offset, oldhandles, voxelsize, ...)
+    """Draw the objects of an MCX JSON shape description.
 
-    Create MCX simulation from built-in benchmarks (similar to "mcx --bench")
+    Supported objects are ``Grid``, ``Box``, ``Subgrid``, ``Sphere``, ``Cylinder``,
+    ``Origin``, ``XSlabs``/``YSlabs``/``ZSlabs`` and ``XLayers``/``YLayers``/``ZLayers``;
+    each tag is drawn in a fixed color.
 
-    Author: Qianqian Fang <q.fang at neu.edu>
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     jsonshape : str
-        An MCX shape json string with a root object "Shapes"
-    gridsize : list, optional
-        This should be set to size(cfg.vol), default is [60, 60, 60]
+        The JSON string (or file name) with a root object ``"Shapes"``, as in
+        ``cfg['shapes']``.
+    gridsize : list of int, optional
+        The domain size, ``cfg['vol'].shape``; a ``Grid`` object overrides it. Default
+        ``[60, 60, 60]``.
     offset : int, optional
-        This should be set to 1-cfg.issrcfrom0, default is 1
+        The index of the first voxel: ``1 - cfg['issrcfrom0']``, default 1.
     hseg : list, optional
-        Existing plot handles
+        Existing handles; a ``Grid`` object removes them before drawing.
     voxelsize : float, optional
-        The voxel size of the grid - usually defined as
-        cfg.unitinmm, default is 1
-    **kwargs : tuple
-        Additional arguments passed to plotting functions
+        The voxel size in mm (``cfg['unitinmm']``), default 1.
+    **kwargs
+        Passed to the matplotlib/iso2mesh plotting calls.
 
-    Returns:
-    --------
+    Returns
+    -------
     hseg : list
-        An array of all plot object handles
+        The plot handles of the drawn objects.
 
-    Dependency:
-        This function depends on the Iso2Mesh toolbox (http://iso2mesh.sf.net)
+    Raises
+    ------
+    ImportError
+        If ``iso2mesh`` or ``matplotlib`` is not installed.
 
-    Examples:
-    ---------
-    mcxplotshapes('{"Shapes":[{"Grid":{"Tag":1,"Size":[60, 60, 200]}},{"ZLayers":[[1,20,1],[21,32,4],[33,200,3]]}]}')
-    hfig = mcxpreview(mcxcreate('sphshell'))
-    hfig2 = mcxpreview(mcxcreate('spherebox'))
-
-    This function is part of Monte Carlo eXtreme (MCX) URL: https://mcx.space
-
-    License: GNU General Public License version 3, please read LICENSE.txt for details
+    Examples
+    --------
+    >>> pmcx.plotshapes('{"Shapes":[{"Grid":{"Tag":1,"Size":[60,60,200]}},'
+    ...                 '{"ZLayers":[[1,20,1],[21,32,4],[33,200,3]]}]}')
     """
 
     try:
@@ -481,7 +520,9 @@ def plotshapes(
                 sy = np.outer(np.sin(u), np.sin(v))
                 sz = np.outer(np.ones(np.size(u)), np.cos(v))
 
-                ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
+                ax = (
+                    plt.gca()
+                )  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
                 handle = ax.plot_surface(
                     voxelsize * (sx * obj["R"] + (obj["O"][0] + orig[0])),
                     voxelsize * (sy * obj["R"] + (obj["O"][1] + orig[1])),
@@ -520,7 +561,9 @@ def plotshapes(
                 sy = no[:, 1].reshape(sy.shape)
                 sz = no[:, 2].reshape(sz.shape)
 
-                ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
+                ax = (
+                    plt.gca()
+                )  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
                 handle = ax.plot_surface(
                     voxelsize * (sx + (c0[0] + orig[0])),
                     voxelsize * (sy + (c0[1] + orig[1])),
@@ -533,7 +576,9 @@ def plotshapes(
 
             elif sname == "Origin":
                 orig = voxelsize * np.array(shp[sname])
-                ax = plt.gca()  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
+                ax = (
+                    plt.gca()
+                )  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
                 handle = ax.scatter(orig[0], orig[1], orig[2], c="m", marker="*", s=100)
                 hseg.append(handle)
 
@@ -624,43 +669,32 @@ def plotshapes(
 
 
 def plotphotons(traj, *varargin, **kwargs):
-    """
-    plotphotons(traj)
-        or
-    plotphotons(traj, 'color', 'r', 'marker', 'o')
-    sorted, linehandle = plotphotons(traj)
+    """Draw the photon trajectories recorded by a simulation.
 
-    Plot photon trajectories from MCXLAB's output
-
-    Author: Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     traj : dict or ndarray
-        The 5th output of mcxlab, storing the photon trajectory info
-        traj['id']: the photon index being recorded
-        traj['pos']: the 3D position of the photon; for each photon, the
-                    positions are stored in serial order
-        traj['data']: the combined output, in the form of
-                     [id, pos, weight, reserved]'
-    *varargin : tuple
-        Additional arguments for plotting
-    **kwargs : dict
-        Keyword arguments for plotting
+        The trajectories, the ``traj`` output of :func:`pmcx.mcxlab` (``cfg['debuglevel']``
+        containing ``'M'``): a dict with ``id`` (photon index), ``pos`` (``(n, 3)``
+        positions) and optionally ``weight``, or with only ``data``
+        (``[id, x, y, z, weight, reserved]`` in rows); or an ``(n, 6)`` array of such
+        records.
+    *varargin
+        ``'noplot'`` returns the sorted trajectories without drawing them.
+    **kwargs
+        Passed to ``iso2mesh.plotmesh``; ``color`` defaults to ``'b'``.
 
-    Returns:
-    --------
+    Returns
+    -------
     sorted : dict
-        A dict to store the sorted trajectory info
-        sorted['id']: the sorted vector of photon id, starting from 0
-        sorted['pos']: the sorted position vector of each photon, only
-                      recording the scattering sites.
-    linehandle : object
-        Handle to the plotted lines (when plotting is enabled)
+        The records sorted by photon: ``id``, and ``pos``, the scattering sites in order.
+    hg : object or None
+        The handle of the drawn lines, or None with ``'noplot'``.
 
-    This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
+    Raises
+    ------
+    ImportError
+        If ``iso2mesh`` is not installed.
     """
 
     try:

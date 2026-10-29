@@ -14,7 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Built-in benchmark configurations"""
+"""Built-in benchmark configurations, the ``--bench`` inputs of the ``mcx`` command line.
+
+``bench`` is a dict of ``cfg`` dicts that run with ``pmcx.run(bench[name])``:
+
+* ``cube60``: a 60x60x60 mm homogeneous cube with a pencil beam and 4 detectors,
+  absorbing boundary
+* ``cube60b``: ``cube60`` with reflecting boundaries (``isreflect=1``)
+* ``cube60planar``: ``cube60b`` with a 40x40 mm planar source
+
+For more benchmarks, see :func:`pmcx.mcxcreate`.
+"""
 
 import numpy as np
 import copy

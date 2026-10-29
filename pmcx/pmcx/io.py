@@ -14,7 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-"""MCX data file parsing and conversion functions"""
+"""Reading and writing MCX data files.
+
+* :func:`loadmc2`, :func:`loadmch`, :func:`loadnii`, :func:`loadfile`: read the volume
+  (``.mc2``, ``.nii``, ``.jnii``, ``.bnii``) and detected photon (``.mch``) outputs of MCX
+* :func:`mcx2json`, :func:`json2mcx`: convert between a ``cfg`` dict and the JSON input
+  file of the ``mcx`` command line
+"""
 
 __all__ = (
     "loadmc2",
@@ -42,40 +48,35 @@ import numpy as np
 
 
 def loadmc2(fname, dim, dataformat="float", offset=None):
-    """
-    data = loadmc2(fname, dim, format)
-        or
-    data, dref = loadmc2(fname, dim, format, offset)
+    """Read a binary volume output (``.mc2``) of MCX.
 
-    Author: Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     fname : str
-        The file name to the output .mc2 file
+        The file name.
     dim : list or tuple
-        An array to specify the output data dimension
-        Normally, dim=[nx, ny, nz, nt]
-    format : str, optional
-        A string to indicate the format used to save
-        the .mc2 file; if omitted, it is set to 'float' (default: 'float')
+        The shape of the data, normally ``[nx, ny, nz, nt]``; the values are reshaped in
+        NumPy's default (row-major) order.
+    dataformat : str, optional
+        The data type: ``'float'`` (default), ``'float32'``, ``'single'``, ``'double'``,
+        ``'float64'``, ``'uchar'``, ``'uint8'``, ``'int8'``, ``'uint16'``, ``'int16'``,
+        ``'uint32'``, ``'int32'``, ``'uint64'`` or ``'int64'``; a MATLAB-style
+        ``'float=>float'`` uses its input type.
     offset : int, optional
-        Byte offset to start reading from
+        Number of bytes to skip at the beginning of the file.
 
-    Returns:
-    --------
+    Returns
+    -------
     data : ndarray
-        The output MCX solution data array, in the
-        same dimension specified by dim
-    dref : ndarray (when requested)
-        Diffuse reflectance at the surface of the domain.
-        If this output is not given while diffuse reflectance
-        is recorded, dref is shown as the negative values in
-        the data output.
+        The data, of shape ``dim``. When diffuse reflectance was recorded, it is stored as
+        negative values in the layer of voxels next to the domain.
 
-    This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
+    Raises
+    ------
+    ValueError
+        If the data type is not supported.
+    IOError
+        If the file can not be opened.
     """
 
     # Map MATLAB format strings to NumPy dtypes
@@ -124,53 +125,41 @@ def loadmc2(fname, dim, dataformat="float", offset=None):
 
 
 def loadmch(fname, dataformat="float32", endian="little"):
-    """
-    data, header = loadmch(fname, format, endian)
+    """Read a detected photon file (``.mch``) of MCX.
 
-    Author: Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     fname : str
-        The file name to the output .mch file
-    format : str, optional
-        A string to indicate the format used to save
-        the .mch file; if omitted, it is set to 'float32' (default: 'float32')
-    endian : str, optional
-        Specifying the endianness of the binary file
-        can be either 'big' or 'little' (default: 'little')
+        The file name.
+    dataformat : str, optional
+        The data type of the records: ``'float32'`` (default), ``'float'``, ``'single'``,
+        ``'double'``, ``'uint'``, ``'int'``, ``'uchar'`` or ``'char'``.
+    endian : {'little', 'big'}, optional
+        The byte order of the file (default ``'little'``).
 
-    Returns:
-    --------
-    data : ndarray
-        The output detected photon data array
-        data has at least M*2+2 columns (M=header.medium), the first column is the
-        ID of the detector; columns 2 to M+1 store the number of
-        scattering events for every tissue region; the following M
-        columns are the partial path lengths (in mm) for each medium type;
-        the last column is the initial weight at launch time of each detected
-        photon; when the momentum transfer is recorded, M columns of
-        momentum transfer for each medium is inserted after the partial path;
-        when the exit photon position/dir are recorded, 6 additional columns
-        are inserted before the last column, first 3 columns represent the
-        exiting position (x/y/z); the next 3 columns are the dir vector (vx/vy/vz).
-        in polarized photon simulation, the last 4 columns are the exit Stokes vector.
-        in other words, data is stored in the follow format
-            [detid(1) nscat(M) ppath(M) mom(M) p(3) v(3) w0(1) s(4)]
-    headerstruct : dict
-        File header info, a dict has the following fields
-        [version,medianum,detnum,recordnum,totalphoton,detectedphoton,
-         savedphoton,lengthunit,seedbyte,normalizer,respin,srcnum,savedetflag,totalsource]
-    photonseed : ndarray (optional)
-        If the mch file contains a seed section, this
-        returns the seed data for each detected photon. Each row of
-        photonseed is a byte array, which can be used to initialize a
-        seeded simulation. Note that the seed is RNG specific. You must use
-        an identical RNG to utilize these seeds for a new simulation.
+    Returns
+    -------
+    data : ndarray, shape (nphoton, ncol)
+        One row per detected photon, in the column order
+        ``[detid(1) nscat(M) ppath(M) mom(M) p(3) v(3) w0(1) s(4)]``, where ``M`` is the
+        number of media and only the fields of ``savedetflag`` are present; the partial
+        path lengths are converted to mm.
+    header : dict
+        The file header: ``version``, ``medianum``, ``detnum``, ``recordnum``,
+        ``totalphoton``, ``detectedphoton``, ``savedphoton``, ``lengthunit``, ``seedbyte``,
+        ``normalizer``, ``respin``, ``srcnum``, ``savedetflag`` and ``totalsource``.
+    photonseed : ndarray, shape (nphoton, seedbyte), uint8
+        Returned only when the file has a seed section: the RNG state of each detected
+        photon, which replays it with the same RNG (``cfg['seed']``).
 
-    This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
+    Raises
+    ------
+    ValueError
+        If the data type or the file version is not supported.
+    RuntimeError
+        If the file has no MCX detected photon data block.
+    IOError
+        If the file can not be opened.
     """
 
     # Handle format string (remove '=>' part if present)
@@ -390,36 +379,27 @@ def loadmch(fname, dataformat="float32", endian="little"):
 
 
 def loadfile(fname, *varargin):
-    """
-    data, header = mcxloadfile(fname)
-        or
-    data, header = mcxloadfile(fname, dim, format)
+    """Read an MCX output file, choosing the reader by its extension.
 
-    Author: Qianqian Fang (q.fang <at> neu.edu)
-    Converted to Python
+    ``.nii`` files are read by :func:`loadnii`, ``.mc2`` files by :func:`loadmc2` (and
+    returned as log10 values), ``.mch`` files by :func:`loadmch`, and other files as raw
+    binary volumes by :func:`loadmc2`.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     fname : str
-        The file name to the output .mc2/.nii/binary volume file
-    *varargin : tuple
-        Additional arguments:
-        dim : array_like
-            An array to specify the output data dimension
-            normally, dim=[nx, ny, nz, nt]
-        format : str
-            A string to indicate the format used to save
-            the .mc2 file; if omitted, it is set to 'float'
+        The file name.
+    *varargin
+        For ``.mc2`` and binary files, the ``dim`` and ``dataformat`` arguments of
+        :func:`loadmc2`.
 
-    Returns:
-    --------
+    Returns
+    -------
     data : ndarray
-        The 3-D or 4-D data being loaded
+        The data: a 3-D or 4-D volume, or the detected photon records.
     header : dict
-        A dict recording the metadata of the file
-
-    This file is part of Monte Carlo eXtreme (MCX)
-    License: GPLv3, see https://mcx.space for details
+        The metadata: the NIfTI header, the ``.mch`` header, or for ``.mc2`` files ``dim``,
+        ``format`` and ``scale`` (``'log10'``).
     """
 
     # Parse file path and extension
@@ -456,32 +436,25 @@ def loadfile(fname, *varargin):
 
 
 def mcx2json(cfg, filestub):
-    """
-    Format:
-        mcx2json(cfg, filestub)
+    """Save a ``cfg`` dict as a JSON input file of the ``mcx`` command line.
 
-    Save MCXLAB simulation configuration to a JSON file for MCX binary
+    The volume, the source pattern and the other arrays are embedded in the JSON file as
+    compressed JData arrays, except a volume combined with ``cfg['shapes']`` that has no
+    ``Grid`` object, which is written to ``<filestub>_vol.bin``. Requires the ``jdata``
+    package.
 
-    Author: Qianqian Fang <q.fang at neu.edu>
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     cfg : dict
-        A dict defining the parameters associated with a simulation.
-        Please run 'help mcxlab' or 'help mmclab' to see the details.
-        mcxpreview supports the cfg input for both mcxlab and mmclab.
+        The simulation configuration (see ``pmcx.run``).
     filestub : str
-        The filestub is the name stub for all output files, including:
-        filestub.json: the JSON input file
-        filestub_vol.bin: the volume file if cfg.vol is defined
-        filestub_shapes.json: the domain shape file if cfg.shapes is defined
-        filestub_pattern.bin: the domain shape file if cfg.pattern is defined
+        The name stub of the output files: ``<filestub>.json``, and ``<filestub>_vol.bin``
+        when written; it is also the session ID.
 
-    Dependency:
-        This function depends on the savejson/saveubjson functions from the
-        Iso2Mesh toolbox (http://iso2mesh.sf.net) or JSONlab toolbox
-        (http://iso2mesh.sf.net/jsonlab)
+    Raises
+    ------
+    ValueError
+        If ``cfg['vol']`` has an unsupported format.
     """
 
     # Define the optodes: sources and detectors
@@ -683,9 +656,7 @@ def mcx2json(cfg, filestub):
 
 
 def jdataarray(data):
-    """
-    Encode a numpy array as a zlib-compressed, base64-encoded JData array object
-    """
+    """Encode a numpy array as a zlib-compressed, base64-encoded JData array object (a dict)."""
     import jdata
 
     obj = jdata.encode(
@@ -697,9 +668,9 @@ def jdataarray(data):
 
 
 def packlabelplus(vol, unitinmm=1):
-    """
-    Pack the [value; property index; label] records of a [3, Nx, Ny, Nz] float volume into the
-    32-bit labelplus format, {[half: value][2-bit property index][14-bit label]}, as mcxlab does
+    """Pack a ``[3, Nx, Ny, Nz]`` float volume of ``[value; property index; label]`` records into
+    the 32-bit labelplus format ``{[half: value][2-bit property index][14-bit label]}``, as
+    mcxlab does.
     """
     vol = np.asarray(vol, dtype=np.float32)
     val = vol[0].copy()
@@ -719,26 +690,25 @@ def packlabelplus(vol, unitinmm=1):
 
 
 def copycfg(cfg, name, outroot, outfield, defaultval=None):
-    """
-    Copy configuration field from cfg to outroot with field name mapping
+    """Copy ``cfg[name]`` to ``outroot[outfield]``, if present, or set it to ``defaultval``.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     cfg : dict
-        Source configuration dictionary
+        The source dict.
     name : str
-        Field name in source dictionary
+        The key in ``cfg``.
     outroot : dict
-        Target dictionary
+        The destination dict.
     outfield : str
-        Field name in target dictionary
-    defaultval : any, optional
-        Default value if field doesn't exist in cfg
+        The key in ``outroot``.
+    defaultval : optional
+        The value to set when ``cfg`` has no ``name`` key.
 
-    Returns:
-    --------
+    Returns
+    -------
     outroot : dict
-        Updated target dictionary
+        The updated destination dict.
     """
     if defaultval is not None:
         outroot[outfield] = defaultval
@@ -748,9 +718,9 @@ def copycfg(cfg, name, outroot, outfield, defaultval=None):
 
 
 def unpacklabelplus(packed, unitinmm=1):
-    """
-    Unpack the 32-bit labelplus format, {[half: value][2-bit property index][14-bit label]},
-    written by mcx2json into a [3, Nx, Ny, Nz] float32 [value; property index; label] volume
+    """Unpack the 32-bit labelplus format ``{[half: value][2-bit property index][14-bit label]}``
+    written by :func:`mcx2json` into a ``[3, Nx, Ny, Nz]`` float32
+    ``[value; property index; label]`` volume.
     """
     packed = np.asarray(packed).astype(np.uint32)
     val = (packed >> 16).astype(np.uint16).view(np.float16).astype(np.float32)
@@ -761,30 +731,21 @@ def unpacklabelplus(packed, unitinmm=1):
 
 
 def json2mcx(filename):
-    """
-    Format:
-        cfg = json2mcx(filename)
+    """Convert a JSON input file of the ``mcx`` command line to a ``cfg`` dict.
 
-    Convert a JSON file for MCX binary to an MCXLAB configuration structure
+    The volume (embedded, or read from ``Domain.VolumeFile``), the shapes, the source
+    pattern and the detectors are converted to the ``cfg`` keys of ``pmcx.run``. Requires
+    the ``jdata`` package.
 
-    Author: Qianqian Fang <q.fang at neu.edu>
-    Converted to Python
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     filename : str or dict
-        The JSON input file path or a dict containing the JSON data
+        The JSON file name, or its already decoded content.
 
-    Returns:
-    --------
+    Returns
+    -------
     cfg : dict
-        A dict defining the parameters associated with a simulation.
-        Please run 'help mcxlab' or 'help mmclab' to see details.
-
-    Dependency:
-        This function depends on the jdata module for loading JSON files
-        (https://pypi.org/project/jdata/)
-
+        The simulation configuration, ready for :func:`pmcx.mcxlab` or ``pmcx.run``.
     """
     from jdata import loadjd, load as jload
 
@@ -1058,26 +1019,25 @@ def json2mcx(filename):
 
 
 def icopycfg(cfg, name, outroot, outfield, defaultval=None):
-    """
-    Copy configuration field from outroot to cfg with field name mapping
+    """Copy ``outroot[outfield]`` to ``cfg[name]``, if present, or set it to ``defaultval``.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     cfg : dict
-        Target configuration dictionary
+        The destination dict.
     name : str
-        Field name in target dictionary
+        The key in ``cfg``.
     outroot : dict
-        Source dictionary
+        The source dict.
     outfield : str
-        Field name in source dictionary
-    defaultval : any, optional
-        Default value if field doesn't exist in outroot
+        The key in ``outroot``.
+    defaultval : optional
+        The value to set when ``outroot`` has no ``outfield`` key.
 
-    Returns:
-    --------
+    Returns
+    -------
     cfg : dict
-        Updated target configuration dictionary
+        The updated destination dict.
     """
     if defaultval is not None and outfield not in outroot:
         outroot[outfield] = defaultval
@@ -1087,6 +1047,20 @@ def icopycfg(cfg, name, outroot, outfield, defaultval=None):
 
 
 def loadnii(*args, **kwargs):
+    """Read a NIfTI (``.nii``, ``.nii.gz``) or JNIfTI (``.jnii``, ``.bnii``) file.
+
+    A thin wrapper of ``jdata.loadjd``; requires the ``jdata`` package.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        The arguments of ``jdata.loadjd``, the first being the file name.
+
+    Returns
+    -------
+    data
+        The decoded file, as ``jdata.loadjd`` returns it.
+    """
     from jdata import loadjd
 
     return loadjd(*args, **kwargs)
