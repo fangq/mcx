@@ -166,19 +166,12 @@ Python ports of all the MCXLAB demo scripts can be found in the `examples/` fold
 
 ### Log output
 
-The simulation log (the banner, timings and the absorbed fraction) is controlled by
-`cfg['flog']`, as in MATLAB: `2` (default) prints it to Python's `sys.stdout`, so it
-shows in Jupyter notebooks; `1` prints it to the stdout of the process, and `0` does the
-same without the banner; a string appends it to that file. To silence the log, set
-`cfg['flog'] = os.devnull`; the echo of the `cfg` values goes to `sys.stdout` and can
-be silenced with `contextlib.redirect_stdout`:
-
-```python3
-import os, io, contextlib
-cfg['flog'] = os.devnull
-with contextlib.redirect_stdout(io.StringIO()):
-    res = pmcx.run(cfg)
-```
+The messages of `pmcx.run()` - the echo of the `cfg` fields and the simulation log (the
+banner, timings and absorbed fraction) - are controlled by `cfg['flog']`, as in MATLAB:
+`2` (default) prints them to Python's `sys.stdout`, so they show in Jupyter notebooks;
+`1` prints them to the stdout of the process, and `0` does the same without the banner;
+a string appends them to that file. `cfg['flog'] = os.devnull` silences everything;
+errors are still raised as Python exceptions.
 
 ### Reproducible simulations
 

@@ -34,6 +34,8 @@
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 #include <vector>
 #include <cstdarg>
+#include <streambuf>
+#include <ostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <iostream>
@@ -71,24 +73,24 @@ int seed_byte = 0;
  */
 #define GET_SCALAR_FIELD(src_pydict, dst_mcx_config, property, py_type) if ((src_pydict).contains(#property))\
     {try {(dst_mcx_config).property = py_type((src_pydict)[#property]);\
-            std::cout << #property << ": " << (float) (dst_mcx_config).property << std::endl;} \
+            pyecho() << #property << ": " << (float) (dst_mcx_config).property << std::endl;} \
         catch (const std::runtime_error &err)\
         {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#property) + ". Reason: " + err.what()));}\
     }
 
 #define GET_VEC3_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
             dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>()};\
-            std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << "]\n";} \
+            pyecho() << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << "]\n";} \
         catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}}
 
 #define GET_VEC4_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
             dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list[3].cast<type>()}; \
-            std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
+            pyecho() << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
         catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}}
 
 #define GET_VEC34_FIELD(src, dst, prop, type) if (src.contains(#prop)) {try {auto list = py::list(src[#prop]);\
             dst.prop = {list[0].cast<type>(), list[1].cast<type>(), list[2].cast<type>(), list.size() == 4 ? list[3].cast<type>() : dst.prop.w}; \
-            std::cout << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
+            pyecho() << #prop << ": [" << dst.prop.x << ", " << dst.prop.y << ", " << dst.prop.z << ", " << dst.prop.w << "]\n";} \
         catch (const std::runtime_error &err ) {throw py::type_error(std::string("Failed to assign MCX property " + std::string(#prop) + ". Reason: " + err.what()));}                                                                 \
     }
 
@@ -409,10 +411,65 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
     }
 }
 
+/**
+ * The echo of the cfg fields (and the warnings printed while reading them) goes where cfg.flog sends
+ * the simulation log: Python's sys.stdout (std::cout, redirected by pybind11) for 2 (default), or
+ * the stdout of the process for 1 and 0, the log file, or nowhere for os.devnull
+ */
+static FILE* pyecho_logfp = NULL;   /**< NULL or stderr: std::cout, i.e. sys.stdout */
+
+class PyEchoFileBuf : public std::streambuf {
+  public:
+    FILE* fp = NULL;
+  protected:
+    int overflow(int c) override {
+        return (c == EOF || fputc(c, fp) == EOF) ? EOF : c;
+    }
+    std::streamsize xsputn(const char* s, std::streamsize n) override {
+        return (std::streamsize)fwrite(s, 1, (size_t)n, fp);
+    }
+};
+
+static std::ostream& pyecho() {
+    static PyEchoFileBuf filebuf;
+    static std::ostream fileout(&filebuf);
+
+    if (pyecho_logfp == NULL || pyecho_logfp == stderr) {
+        return std::cout;
+    }
+
+    filebuf.fp = pyecho_logfp;
+    return fileout;
+}
+
 void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     mcx_initcfg(&mcx_config);
 
     mcx_config.flog = stderr;
+
+    /* cfg.flog first: the echo of the other fields goes where it sends the log */
+    if (user_cfg.contains("flog")) {
+        auto logfile_id_value = user_cfg["flog"];
+
+        if (py::int_::check_(logfile_id_value)) {
+            int logid = py::int_(logfile_id_value);
+            mcx_config.flog = (logid >= 2 ? stderr : (logid == 1 ? stdout : (mcx_config.printnum = -1, stdout)));
+        } else if (py::str::check_(logfile_id_value)) {
+            std::string logfile_id_string_value = py::str(logfile_id_value);
+
+            if (logfile_id_string_value.empty()) {
+                throw py::value_error("the 'flog' field must be an integer or non-empty string");
+            }
+
+            mcx_config.flog = fopen(logfile_id_string_value.c_str(), "a+");
+
+            if (mcx_config.flog == NULL) {
+                throw py::value_error("Log output file can not be written");
+            }
+        }
+    }
+
+    pyecho_logfp = mcx_config.flog;
     GET_SCALAR_FIELD(user_cfg, mcx_config, nphoton, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, nblocksize, py::int_);
     GET_SCALAR_FIELD(user_cfg, mcx_config, nthread, py::int_);
@@ -1093,26 +1150,6 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         }
     }
 
-    if (user_cfg.contains("flog")) {
-        auto logfile_id_value = user_cfg["flog"];
-
-        if (py::int_::check_(logfile_id_value)) {
-            int logid = py::int_(logfile_id_value);
-            mcx_config.flog = (logid >= 2 ? stderr : (logid == 1 ? stdout : (mcx_config.printnum = -1, stdout)));
-        } else if (py::str::check_(logfile_id_value)) {
-            std::string logfile_id_string_value = py::str(logfile_id_value);
-
-            if (logfile_id_string_value.empty()) {
-                throw py::value_error("the 'flog' field must be an integer or non-empty string");
-            }
-
-            mcx_config.flog = fopen(logfile_id_string_value.c_str(), "a+");
-
-            if (mcx_config.flog == NULL) {
-                throw py::value_error("Log output file can not be written");
-            }
-        }
-    }
 
     if (user_cfg.contains("lang")) {
         std::string langid = py::str(user_cfg["lang"]);
@@ -1153,6 +1190,8 @@ inline void cleanup_configs(MCXGPUInfo*& gpu_info, MCXConfig& mcx_config) {
         fclose(mcx_config.flog);
         mcx_config.flog = NULL;
     }
+
+    pyecho_logfp = NULL;
 
     mcx_clearcfg(&mcx_config);
 }

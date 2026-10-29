@@ -63,6 +63,50 @@ static void mcxlab_throw(const char* msg) {
     #include <omp.h>
 #endif
 
+#include <stdarg.h>
+
+/**
+ * The messages mcxlab prints while it reads cfg (the echo of the fields, the progress lines and
+ * the warnings) go where cfg.flog sends the simulation log: the MATLAB/Octave console (mexPrintf)
+ * for 2 (default), the stdout of the process for 1 and 0, or the log file; '/dev/null' or 'NUL'
+ * silences everything. The errors and the usage are always printed to the console.
+ */
+static FILE* mcxlab_logfp = NULL;   /**< where printf() of this unit goes; NULL or stderr: the console */
+
+static int mcxlab_printf(const char* format, ...) {
+    va_list args;
+    int len;
+
+    va_start(args, format);
+
+    if (mcxlab_logfp == NULL || mcxlab_logfp == stderr) {
+        va_list args2;
+        va_copy(args2, args);
+        len = vsnprintf(NULL, 0, format, args2);
+        va_end(args2);
+
+        if (len >= 0) {
+            char* buf = (char*)malloc(len + 1);
+
+            if (buf) {
+                vsnprintf(buf, len + 1, format, args);
+                mexPrintf("%s", buf);
+                free(buf);
+            }
+        }
+    } else {
+        len = vfprintf(mcxlab_logfp, format, args);
+    }
+
+    va_end(args);
+    return len;
+}
+
+#ifdef printf
+    #undef printf
+#endif
+#define printf mcxlab_printf
+
 #if defined(USE_XOROSHIRO128P_RAND)
     #define RAND_WORD_LEN 4
 #elif defined(USE_POSIX_RAND)
@@ -97,6 +141,7 @@ typedef mwSize dimtype;
 extern cJSON* mcx_lang;
 
 void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cfg);
+static void mcxlab_setflog(const mxArray* item, Config* cfg);
 void mcxlab_usage();
 
 float* detps = NULL;       //! buffer to receive data from cfg.detphotons field
@@ -229,8 +274,6 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
     /**
      * If a structure is passed to this function, a simulation will be launched.
      */
-    printf("Launching MCXLAB - Monte Carlo eXtreme for MATLAB & GNU Octave ...\n");
-
     if (!mxIsStruct(prhs[0])) {
         mexErrMsgTxt("Input must be a structure.");
     }
@@ -270,11 +313,22 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
     for (jstruct = 0; jstruct < ncfg; jstruct++) {  /* how many configs */
         try {
             unsigned int partialdata, hostdetreclen, debuglen;
-            printf("Running simulations for configuration #%d ...\n", jstruct + 1);
 
             /** Initialize cfg with default values first */
             mcx_initcfg(&cfg);
             cfg.flog = stderr;
+            mcxlab_logfp = stderr;
+
+            /** cfg.flog first: the messages below go where it sends the log */
+            if (mxGetField(prhs[0], jstruct, "flog")) {
+                mcxlab_setflog(mxGetField(prhs[0], jstruct, "flog"), &cfg);
+            }
+
+            if (jstruct == 0) {
+                printf("Launching MCXLAB - Monte Carlo eXtreme for MATLAB & GNU Octave ...\n");
+            }
+
+            printf("Running simulations for configuration #%d ...\n", jstruct + 1);
             detps = NULL;
 
             /** Read each struct element from input and set value to the cfg configuration */
@@ -707,6 +761,7 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
             fclose(cfg.flog);
         }
 
+        mcxlab_logfp = NULL;
         mcx_cleargpuinfo(&gpuinfo);
         mcx_clearcfg(&cfg);
 
@@ -717,6 +772,37 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
     }
 
     return;
+}
+
+/**
+ * @brief Set cfg.flog (2 console, 1 stdout, 0 stdout without the banner, or a file name), and send
+ * the messages of mcxlab there too; called for each configuration before its other fields
+ */
+
+static void mcxlab_setflog(const mxArray* item, Config* cfg) {
+    int len = mxGetNumberOfElements(item);
+    char logfile[MAX_PATH_LENGTH] = {'\0'};
+
+    if (mxIsChar(item)) {
+        if (len > 0) {
+            mxGetString(item, logfile, MAX_PATH_LENGTH);
+            cfg->flog = fopen(logfile, "a+");
+
+            if (cfg->flog == NULL) {
+                mexErrMsgTxt("Log output file can not be written");
+            }
+        } else {
+            cfg->flog = stdout;
+        }
+    } else {
+        double* val = mxGetPr(item);
+
+        if (len > 0 && val[0] <= 2) {
+            cfg->flog = ((int)val[0] == 2 ? stderr : ((int)val[0] == 1 ? stdout : (cfg->printnum = -1, stdout)));
+        }
+    }
+
+    mcxlab_logfp = cfg->flog;
 }
 
 /**
@@ -1575,29 +1661,8 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
 
         printf("mcx.workload=<<%lld>>;\n", (long long)(arraydim[0]*arraydim[1]));
     } else if (strcmp(name, "flog") == 0) {
-        int len = mxGetNumberOfElements(item);
-        char logfile[MAX_PATH_LENGTH] = {'\0'};
-
-        if (mxIsChar(item)) {
-            if (len > 0) {
-                mxGetString(item, logfile, MAX_PATH_LENGTH);
-                cfg->flog = fopen(logfile, "a+");
-
-                if (cfg->flog == NULL) {
-                    mexErrMsgTxt("Log output file can not be written");
-                }
-            } else {
-                cfg->flog = stdout;
-            }
-        } else {
-            double* val = mxGetPr(item);
-
-            if (len > 0 && val[0] <= 2) {
-                cfg->flog = ((int)val[0] == 2 ? stderr : ((int)val[0] == 1 ? stdout : (cfg->printnum = -1, stdout)));
-            }
-        }
-
-        printf("mcx.flog=%d;\n", (cfg->flog == stderr) ? 2 : 1);
+        /* read by mcxlab_setflog before the other fields, so that their echo follows it */
+        printf("mcx.flog=%d;\n", (cfg->flog == stderr) ? 2 : (cfg->printnum < 0 ? 0 : 1));
     } else if (strcmp(name, "lang") == 0) {
         int len = mxGetNumberOfElements(item);
         char langid[32] = {'\0'};
@@ -1639,7 +1704,7 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
  */
 
 extern "C" int mcx_throw_exception(const int id, const char* msg, const char* filename, const int linenum) {
-    printf("MCXLAB ERROR %d in unit %s:%d: %s\n", id, filename, linenum, msg);
+    mexPrintf("MCXLAB ERROR %d in unit %s:%d: %s\n", id, filename, linenum, msg);
     throw std::runtime_error(msg);  /* a copy: msg may be on the stack of the caller */
     return id;
 }
@@ -1649,7 +1714,7 @@ extern "C" int mcx_throw_exception(const int id, const char* msg, const char* fi
  */
 
 void mcxlab_usage() {
-    printf("MCXLAB (" MCX_VERSION ")\nUsage:\n    [flux,detphoton,vol,seeds,traj]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
+    mexPrintf("MCXLAB (" MCX_VERSION ")\nUsage:\n    [flux,detphoton,vol,seeds,traj]=mcxlab(cfg);\n\nPlease run 'help mcxlab' for more details.\n");
 }
 
 /**
