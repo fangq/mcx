@@ -19,7 +19,14 @@ import pmcx as pmcx
 BINDING = pmcx.__name__  # the same file tests pmcxcl, with the import above changed
 
 try:
-    HAS_DEVICE = len(pmcx.gpuinfo()) > 0
+    HAS_BINARY = isinstance(
+        pmcx.version(), str
+    )  # the noarch pmcx wheel has no simulator
+except Exception:
+    HAS_BINARY = False
+
+try:
+    HAS_DEVICE = HAS_BINARY and len(pmcx.gpuinfo()) > 0
 except Exception:
     HAS_DEVICE = False
 
@@ -66,6 +73,7 @@ def assert_same_flux(test, a, b, rtol=1e-3):
     test.assertLessEqual(np.abs(a - b).sum(), rtol * np.abs(a).sum())
 
 
+@unittest.skipUnless(HAS_BINARY, "the binary module is not installed")
 class TestInfo(unittest.TestCase):
     def test_version(self):
         ver = pmcx.version()
