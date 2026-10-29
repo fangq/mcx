@@ -3678,7 +3678,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** A 1D block is determined by the user specified block size, or by default, 64, determined emperically to get best performance */
     mcblock.x = gpu[gpuid].autoblock;
 
-    mcx_hostrng_seed(&hostrng, (unsigned long long)((cfg->seed > 0) ? cfg->seed : time(0)) + threadid);
+    mcx_hostrng_seed(&hostrng, (uint64_t)((cfg->seed > 0) ? cfg->seed : time(0)) + threadid);
 
     /** If "-D R" is used, we launch a special RNG testing kernel to retrieve random numbers from RNG and test for randomness */
     if (cfg->debuglevel & MCX_DEBUG_RNG) {
