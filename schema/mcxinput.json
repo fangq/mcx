@@ -865,6 +865,25 @@
               }
             }
           }
+        },
+        "SDMap": {
+          "title": "Source-detector map",
+          "description": "channels of the adjoint Jacobians (Session.OutputType adjoint): rows of [srcid, detid], 1-based; default: all source-detector pairs",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "minItems": 2
+          },
+          "default": [
+            [
+              1,
+              1
+            ]
+          ]
         }
       }
     },
@@ -2462,6 +2481,19 @@
               }
             }
           ]
+        },
+        "MeshROIPrim": {
+          "title": "Implicit MMC primitives",
+          "description": "MMC only: implicit MMC capsules and spheres given by coordinates, not tied to the mesh: rows of [Ax,Ay,Az,Bx,By,Bz,r] (a sphere if B equals A)",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 7,
+            "maxItems": 7
+          }
         }
       },
       "anyOf": [
