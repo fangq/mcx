@@ -775,16 +775,18 @@ def mcxlab(*args):
 
     if not isinstance(cfg, str):
         if "srcnum" in cfg and cfg["srcnum"] > 1:
+            # the patterns are interleaved along the 1st axis, pattern index fastest; split it
+            # column-major, as reshape() in mcxlab.m
             dim = varargout["flux"].shape
             varargout["flux"] = varargout["flux"].reshape(
-                [cfg["srcnum"], int(dim[0] / cfg["srcnum"]), *dim[1:]]
+                [cfg["srcnum"], int(dim[0] / cfg["srcnum"]), *dim[1:]], order="F"
             )
             varargout["flux"] = np.transpose(
                 varargout["flux"], [i for i in range(1, len(dim) + 1)] + [0]
             )
             if "dref" in varargout and varargout["dref"] is not None:
                 varargout["dref"] = varargout["dref"].reshape(
-                    [cfg["srcnum"], int(dim[0] / cfg["srcnum"]), *dim[1:]]
+                    [cfg["srcnum"], int(dim[0] / cfg["srcnum"]), *dim[1:]], order="F"
                 )
                 varargout["dref"] = np.transpose(
                     varargout["dref"], [i for i in range(1, len(dim) + 1)] + [0]
