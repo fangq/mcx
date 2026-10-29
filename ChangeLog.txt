@@ -3,6 +3,7 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-29 [7a672ee] [feat] -l none prints nothing, not even the progress bar, as cfg.flog='none'
  2026-10-29 [2cb88a1] [feat] cfg.flog='none' silences the log; 'NUL' and '/dev/null' stay accepted on every OS, refs fangq/mcx#280
  2026-10-29 [b521bfe]*[bug] cfg.flog: 'NUL' and '/dev/null' are the null device on every OS, refs fangq/mcx#280
  2026-10-29 [8f985de] [test] binding tests of every source type, launch angles, polarized runs, input types
