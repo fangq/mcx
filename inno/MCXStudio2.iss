@@ -353,6 +353,8 @@ begin
       EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin', false);
       EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin', true);
       EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin',false);
+      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\vkmmc\bin',false);
+      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\umcx\bin',false);
     end;
     if (CurStep = ssPostInstall) and (IsTaskSelected('addMATLABPath')) then begin
        AddLineToTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
@@ -375,6 +377,8 @@ begin
       EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin');
       EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin');
       EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin');
+      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\vkmmc\bin');
+      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\umcx\bin');
       InitializeSetup();
       DeleteLineInTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
               '%%% BEGIN ENTRIES %%%',
