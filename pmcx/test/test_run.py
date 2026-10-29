@@ -360,6 +360,167 @@ class TestMcxlab(unittest.TestCase):
 
 
 @unittest.skipUnless(HAS_DEVICE, "no device")
+class TestFeatures(unittest.TestCase):
+    """every source type and the less common settings run and return sensible outputs"""
+
+    P2 = dict(srcparam1=[8, 0, 0, 4], srcparam2=[0, 8, 0, 4], srcpos=[6, 6, 0])
+
+    def test_source_types(self):
+        cases = {
+            "isotropic": dict(srcpos=[10, 10, 10]),
+            "arcsine": dict(srcpos=[10, 10, 10]),
+            "cone": dict(srcparam1=[0.5, 0, 0, 0]),
+            "zgaussian": dict(srcparam1=[0.2, 0, 0, 0]),
+            "gaussian": dict(srcparam1=[3, 0, 0, 0]),
+            "hyperboloid": dict(srcparam1=[2, 10, 5, 0]),
+            "disk": dict(srcparam1=[4, 0, 0, 0]),
+            "ring": dict(srcparam1=[5, 2, 0, 0]),
+            "planar": self.P2,
+            "pattern": dict(self.P2, srcpattern=np.ones((4, 4), np.float32)),
+            "pattern3d": dict(
+                srcpos=[0, 0, 0],
+                srcparam1=[N, N, 5, 0],
+                srcpattern=np.ones((N, N, 5), np.float32),
+            ),
+            "fourier": dict(
+                srcparam1=[8, 0, 0, 2], srcparam2=[0, 8, 0, 1], srcpos=[6, 6, 0]
+            ),
+            "fourierx": dict(
+                srcparam1=[8, 0, 0, 8], srcparam2=[1, 1, 0, 0.5], srcpos=[6, 6, 0]
+            ),
+            "fourierx2d": dict(
+                srcparam1=[8, 0, 0, 8], srcparam2=[1, 1, 0, 0], srcpos=[6, 6, 0]
+            ),
+            "pencilarray": self.P2,
+            "line": dict(srcpos=[5, 10, 10], srcparam1=[10, 0, 0, 0]),
+            "slit": dict(srcpos=[5, 10, 0], srcparam1=[10, 0, 0, 0]),
+        }
+        for srctype, kw in cases.items():
+            with self.subTest(srctype=srctype):
+                res = pmcx.run(cfg(srctype=srctype, **kw))
+                self.assertTrue(np.all(np.isfinite(res["flux"])))
+                self.assertGreater(absorbed(res), 0.15)
+                self.assertLess(absorbed(res), 0.30)
+
+    def test_isotropic_lambertian_launch(self):
+        """srcdir[3] = nan or -inf works for every source type, the pencil beam included"""
+        pencil = absorbed(pmcx.run(cfg(nphoton=100000)))
+        lambert = absorbed(pmcx.run(cfg(nphoton=100000, srcdir=[0, 0, 1, -np.inf])))
+        disk = absorbed(
+            pmcx.run(
+                cfg(
+                    nphoton=100000,
+                    srctype="disk",
+                    srcparam1=[0.01, 0, 0, 0],
+                    srcdir=[0, 0, 1, -np.inf],
+                )
+            )
+        )
+        self.assertLess(lambert, pencil - 0.01)  # oblique launches escape sooner
+        self.assertAlmostEqual(lambert, disk, delta=0.01)
+        center = dict(nphoton=100000, srcpos=[10, 10, 10])
+        iso = absorbed(pmcx.run(cfg(srcdir=[0, 0, 1, np.nan], **center)))
+        self.assertAlmostEqual(
+            iso, absorbed(pmcx.run(cfg(srctype="isotropic", **center))), delta=0.01
+        )
+
+    def test_polarized(self):
+        """polarized runs need no srciquv (it was left uninitialized, failing at random)"""
+        c = cfg(polprop=[[0.01, 0.5, 0.1, 1.59, 1.33]])
+        c["lambda"] = 633
+        for _ in range(3):
+            res = pmcx.run(c)
+            self.assertEqual(res["prop"].shape, (4, 2))
+            self.assertTrue(np.all(np.isfinite(res["flux"])))
+
+    def test_trajectory_only(self):
+        res = pmcx.run(cfg(nphoton=100, debuglevel="T"))
+        self.assertIn("traj", res)
+        self.assertNotIn("flux", res)
+
+    def test_raw_output_normalizer(self):
+        """without normalization, stat['normalizer'] is 1 (it was uninitialized)"""
+        self.assertEqual(pmcx.run(cfg(isnormalized=0))["stat"]["normalizer"], 1)
+        res = pmcx.run(cfg(tstep=1e-9, maxgate=2))
+        self.assertEqual(res["flux"].shape, (N, N, N, 5))
+        self.assertGreater(res["stat"]["normalizer"], 0)
+
+    def test_multiple_sources(self):
+        two = dict(
+            srcpos=[[6, 10, 0], [14, 10, 0]],
+            srcdir=[[0, 0, 1], [0, 0, 1]],
+            nphoton=40000,
+        )
+
+        def left(f):
+            f = f.reshape(N, N, N, -1)
+            return f[:10].sum() / f.sum()
+
+        self.assertEqual(pmcx.run(cfg(**two))["flux"].shape, (N, N, N, 1))
+        self.assertAlmostEqual(left(pmcx.run(cfg(**two))["flux"]), 0.5, delta=0.05)
+        each = pmcx.run(cfg(srcid=-1, **two))["flux"]
+        self.assertEqual(each.shape[-1], 2)
+        self.assertGreater(left(each[..., 0]), 0.6)
+        self.assertLess(left(each[..., 1]), 0.4)
+        self.assertLess(left(pmcx.run(cfg(srcid=2, **two))["flux"]), 0.4)
+
+    def test_adjoint(self):
+        det = dict(
+            detpos=[[10, 6, 0, 1], [10, 14, 0, 1]], detdir=[[0, 0, 1], [0, 0, 1]]
+        )
+        res = pmcx.run(cfg(outputtype="adjoint", **det))
+        self.assertEqual(res["jmua"].shape, (N, N, N, 2))
+        self.assertEqual(
+            res["flux"].shape, (N, N, N, 1, 3)
+        )  # the source and the 2 detectors
+        res = pmcx.run(cfg(outputtype="adjoint_mua_d", omega=2 * np.pi * 1e8, **det))
+        self.assertTrue(np.iscomplexobj(res["jmua"]) and np.iscomplexobj(res["jd"]))
+
+    def test_boundary_conditions(self):
+        res = pmcx.run(cfg(bc="______001000"))  # detect photons leaving at z=0
+        self.assertGreater(res["detp"].shape[1], 0)
+        self.assertGreater(
+            absorbed(pmcx.run(cfg(bc="cc____", srcpos=[1, 10, 0]))),
+            REF_HOMOGENEOUS + 0.03,
+        )
+        self.assertAlmostEqual(absorbed(pmcx.run(cfg(bc="mmmmmm"))), 1.0, delta=1e-3)
+
+    def test_replay_each_detector(self):
+        det = dict(detpos=[[10, 6, 0, 2], [10, 14, 0, 2]])
+        base = pmcx.run(cfg(nphoton=20000, issaveseed=1, **det))
+        jac = pmcx.run(
+            cfg(
+                seed=base["seeds"],
+                detphotons=base["detp"],
+                replaydet=-1,
+                outputtype="jacobian",
+                **det
+            )
+        )
+        self.assertEqual(jac["flux"].shape, (N, N, N, 1, 2))
+
+    def test_misc_settings(self):
+        self.assertEqual(pmcx.run(cfg(respin=2))["stat"]["nphoton"], 20000)
+        self.assertEqual(
+            pmcx.run(cfg(vol=np.ones((N, 1, N), np.uint8), srcpos=[10, 0, 0]))[
+                "flux"
+            ].shape,
+            (N, 1, N, 1),
+        )
+        many = (
+            (np.arange(N**3) % 300 + 1).reshape(N, N, N).astype(np.uint16)
+        )  # more than 255 labels
+        res = pmcx.run(cfg(vol=many, prop=np.vstack([PROP[:1]] + [PROP[1:]] * 300)))
+        self.assertAlmostEqual(absorbed(res), REF_HOMOGENEOUS, delta=0.02)
+        self.assertGreater(
+            pmcx.run(cfg(detpos=[[10, 8, 0, 3]], maxdetphoton=10))["detp"].shape[1], 0
+        )
+        self.assertEqual(
+            pmcx.run(cfg(detpos=[[10, 8, 0, 3]], maxdetphoton=10))["detp"].shape[1], 10
+        )
+
+
+@unittest.skipUnless(HAS_DEVICE, "no device")
 class TestEndToEnd(unittest.TestCase):
     """short absorbed-fraction checks against 1e7-photon references"""
 

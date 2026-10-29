@@ -23,7 +23,8 @@ extra = struct(varargin{:});
 tests = {@test_info, @test_errors, @test_outputs, @test_detected_photons, ...
          @test_no_fluence, @test_struct_array, @test_patterns, @test_rf, ...
          @test_replay, @test_energy_output, @test_flog_silent, ...
-         @test_end_to_end, @test_pervoxel_unitinmm};
+         @test_end_to_end, @test_pervoxel_unitinmm, @test_input_types, ...
+         @test_launch_angles, @test_polarized};
 failed = {};
 for i = 1:numel(tests)
     name = func2str(tests{i});
@@ -222,4 +223,46 @@ for i = 1:size(formats, 1)
     before = absorbed(runsim(cfg));
     assert(abs(after - ref) < 0.01 && abs(before - ref) < 0.01, ...
            sprintf('%s: label %.4f, unitinmm last %.4f, first %.4f', formats{i, 1}, ref, after, before));
+end
+
+function test_input_types(extra)
+% any numeric or logical class, MATLAB string scalars and column vectors are accepted
+ref = absorbed(runsim(mkcfg(extra, 'nphoton', 5e4)));
+cases = {'gpuid', int32(1); 'nphoton', int32(5e4); 'srcpos', [10; 10; 0]; 'srcdir', [0; 0; 1]; ...
+         'vol', true(20, 20, 20); 'prop', single([0 0 1 1; 0.01 1 0.9 1.37]); 'isreflect', true};
+for i = 1:size(cases, 1)
+    cfg = mkcfg(extra, 'nphoton', 5e4, cases{i, 1}, cases{i, 2});
+    if (isfield(extra, cases{i, 1}))  % keep a gpuid given to the test
+        cfg.(cases{i, 1}) = extra.(cases{i, 1});
+    end
+    a = absorbed(runsim(cfg));
+    assert(abs(a - ref) < 0.01, sprintf('%s as %s: %.4f vs %.4f', cases{i, 1}, class(cases{i, 2}), a, ref));
+end
+assert_error(@() runsim('notacommand'), 'an unknown command');
+% replay with detphotons given as double
+cfg = mkcfg(extra, 'detpos', [10 8 0 2], 'nphoton', 2e4);
+[flux, detp, vol, seeds] = runsim(cfg);
+cfg.seed = seeds.data;
+cfg.detphotons = double(detp.data);
+cfg.outputtype = 'jacobian';
+jac = runsim(cfg);
+assert(all(isfinite(jac.data(:))) && sum(abs(jac.data(:))) > 0, 'replay with double detphotons');
+
+function test_launch_angles(extra)
+% srcdir(4) = nan (isotropic) or -inf (Lambertian) works for every source type, the pencil
+% beam included (mcx ignored it for pencil beams, mcx-cl did not)
+pencil = absorbed(runsim(mkcfg(extra, 'nphoton', 1e5)));
+lambert = absorbed(runsim(mkcfg(extra, 'nphoton', 1e5, 'srcdir', [0 0 1 -inf])));
+disk = absorbed(runsim(mkcfg(extra, 'nphoton', 1e5, 'srcdir', [0 0 1 -inf], 'srctype', 'disk', 'srcparam1', [0.01 0 0 0])));
+assert(lambert < pencil - 0.01 && abs(lambert - disk) < 0.01, sprintf('Lambertian %.4f, disk %.4f, pencil %.4f', lambert, disk, pencil));
+iso = absorbed(runsim(mkcfg(extra, 'nphoton', 1e5, 'srcpos', [10 10 10], 'srcdir', [0 0 1 nan])));
+ref = absorbed(runsim(mkcfg(extra, 'nphoton', 1e5, 'srcpos', [10 10 10], 'srctype', 'isotropic')));
+assert(abs(iso - ref) < 0.01, sprintf('isotropic %.4f vs %.4f', iso, ref));
+
+function test_polarized(extra)
+% the source Stokes vector defaults to unpolarized (it was uninitialized, failing at random)
+cfg = mkcfg(extra, 'polprop', [0.01 0.5 0.1 1.59 1.33], 'lambda', 633);
+for i = 1:3
+    flux = runsim(cfg);
+    assert(isequal(size(flux.prop), [4 2]) && all(isfinite(flux.data(:))), 'polarized output');
 end
