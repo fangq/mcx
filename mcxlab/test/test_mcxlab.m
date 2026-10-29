@@ -178,13 +178,17 @@ flux = runsim(mkcfg(extra, 'outputtype', 'energy'));
 assert(abs(sum(double(flux.data(:))) - absorbed(flux)) < 1e-4, 'energy sum');
 
 function test_flog_silent(extra)
-% flog set to the null device prints nothing, not even the cfg echo
+% 'NUL' and '/dev/null' are the null device on every OS (fangq/mcx#280): nothing is printed,
+% not even the cfg echo or the progress bar, and no file of that name is written
 if (~exist('evalc'))
     return
 end
-cfg = mkcfg(extra, 'nphoton', 1e3);
-out = evalc('runsim(cfg);');
-assert(isempty(strtrim(out)), ['unexpected output: ' out]);
+for flog = {'NUL', 'nul', '/dev/null'}
+    cfg = mkcfg(extra, 'nphoton', 1e3, 'flog', flog{1}, 'debuglevel', 'P');
+    out = evalc('runsim(cfg);');
+    assert(isempty(strtrim(out)), ['unexpected output with flog=' flog{1} ': ' out]);
+end
+assert(~exist(fullfile(pwd, 'NUL'), 'file') && ~exist(fullfile(pwd, 'nul'), 'file'), 'a file named NUL was written');
 
 function test_end_to_end(extra)
 % absorbed fractions against 1e7-photon references (mcx and mcx-cl agree within 5e-5)

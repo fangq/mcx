@@ -32,6 +32,8 @@
 @brief   Python interface using Pybind11 for MCX
 *******************************************************************************/
 #define PYBIND11_DETAILED_ERROR_MESSAGES
+#include <cerrno>
+#include <cstring>
 #include <vector>
 #include <cstdarg>
 #include <streambuf>
@@ -416,6 +418,26 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
  * the simulation log: Python's sys.stdout (std::cout, redirected by pybind11) for 2 (default), or
  * the stdout of the process for 1 and 0, the log file, or nowhere for os.devnull
  */
+/**
+ * 'NUL' (any case) and '/dev/null' name the null device on every OS: cfg.flog='NUL' on Linux
+ * or macOS wrote, or failed to write, a file of that name (fangq/mcx#280)
+ */
+static const char* mcx_logpath(const char* path) {
+#ifdef _WIN32
+    const char* nulldev = "NUL";
+#else
+    const char* nulldev = "/dev/null";
+#endif
+
+    if (strcmp(path, "/dev/null") == 0 || ((path[0] == 'N' || path[0] == 'n') && (path[1] == 'U' || path[1] == 'u')
+                                           && (path[2] == 'L' || path[2] == 'l') && path[3] == '\0')) {
+        return nulldev;
+    }
+
+    return path;
+}
+
+static int pyecho_lognull = 0;     /**< 1: cfg['flog'] is the null device, which also silences the progress bar */
 static FILE* pyecho_logfp = NULL;   /**< NULL or stderr: std::cout, i.e. sys.stdout */
 
 class PyEchoFileBuf : public std::streambuf {
@@ -448,6 +470,8 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     mcx_config.flog = stderr;
 
     /* cfg.flog first: the echo of the other fields goes where it sends the log */
+    pyecho_lognull = 0;
+
     if (user_cfg.contains("flog")) {
         auto logfile_id_value = user_cfg["flog"];
 
@@ -461,10 +485,11 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
                 throw py::value_error("the 'flog' field must be an integer or non-empty string");
             }
 
-            mcx_config.flog = fopen(logfile_id_string_value.c_str(), "a+");
+            pyecho_lognull = (mcx_logpath(logfile_id_string_value.c_str()) != logfile_id_string_value.c_str());
+            mcx_config.flog = fopen(mcx_logpath(logfile_id_string_value.c_str()), "a+");
 
             if (mcx_config.flog == NULL) {
-                throw py::value_error("Log output file can not be written");
+                throw py::value_error("the log file '" + logfile_id_string_value + "' of cfg['flog'] can not be written: " + strerror(errno));
             }
         }
     }
@@ -946,6 +971,12 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
         if (mcx_config.debuglevel == 0) {
             throw py::value_error("the specified debuglevel is not supported");
         }
+    }
+
+    /* the progress bar is written to the terminal, not to the log: drop it when the log is the
+       null device, so that cfg['flog']='/dev/null' or 'NUL' silences everything */
+    if (pyecho_lognull) {
+        mcx_config.debuglevel &= ~MCX_DEBUG_PROGRESS;
     }
 
     if (user_cfg.contains("savedetflag")) {
@@ -1921,8 +1952,9 @@ static const char* pmcx_run_doc_lines[] = {
     "        A name for the output files.\n",
     "    flog : int or str\n",
     "        Where the messages go: [2] sys.stdout, 1 the stdout of the process, 0 the\n",
-    "        same without the banner, or a file name (appended); '/dev/null' (Linux,\n",
-    "        macOS) or 'NUL' (Windows) silences everything. Errors are always raised.\n",
+    "        same without the banner, or a file name (appended); '/dev/null' or 'NUL'\n",
+    "        (either, on any OS) silences everything, the progress bar included. Errors\n",
+    "        are always raised.\n",
     "    lang : str\n",
     "        Language of the log: zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN\n",
     "        or pt_BR.\n",

@@ -293,7 +293,8 @@ function varargout = mcxlab(varargin)
 %                      [2]: 2 the MATLAB/Octave console (in Python, sys.stdout), 1 the
 %                      stdout of the process (the terminal MATLAB/Octave was started from),
 %                      0 the same without the banner, or a file name (appended);
-%                      '/dev/null' (Linux/macOS) or 'NUL' (Windows) silences everything;
+%                      '/dev/null' or 'NUL' (either, on any OS) silences everything,
+%                      the progress bar included;
 %                      errors are always shown
 %      cfg.lang:       language of the log: zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE,
 %                      ko_KR, hi_IN or pt_BR

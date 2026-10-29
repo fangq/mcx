@@ -292,18 +292,41 @@ class TestInterface(unittest.TestCase):
         self.assertGreater(ndet, 0)
 
     def test_flog_null_device_is_silent(self):
-        """flog set to the null device prints nothing, not even the cfg echo"""
-        script = (
-            "import sys, numpy as np; sys.path[:0] = %r; import %s as p; "
-            "p.run(nphoton=1000, vol=np.ones((10, 10, 10), np.uint8), tend=5e-9, srcpos=[5, 5, 0], "
-            "srcdir=[0, 0, 1], prop=[[0, 0, 1, 1], [0.01, 1, 0.9, 1.37]], flog=%r)"
-            % (sys.path, BINDING, cfg()["flog"])
-        )
-        out = subprocess.run(
-            [sys.executable, "-c", script], capture_output=True, text=True, timeout=300
-        )
-        self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertEqual(out.stdout.strip(), "")
+        """'NUL' and '/dev/null' are the null device on every OS: nothing is printed, not even the
+        cfg echo or the progress bar, and no file is written, also from a read-only folder
+        (fangq/mcx#280); without flog, the log is printed"""
+        import tempfile
+
+        def run(flog):
+            script = (
+                "import sys, numpy as np; sys.path[:0] = %r; import %s as p; "
+                "c = dict(nphoton=1000, vol=np.ones((10, 10, 10), np.uint8), tend=5e-9, srcpos=[5, 5, 0], "
+                "srcdir=[0, 0, 1], prop=[[0, 0, 1, 1], [0.01, 1, 0.9, 1.37]], debuglevel='P'); "
+                "c.update(%r); p.run(c)"
+                % ([os.path.abspath(d) for d in sys.path], BINDING, flog)
+            )
+            with tempfile.TemporaryDirectory() as tmp:
+                os.chmod(tmp, 0o555)
+                try:
+                    out = subprocess.run(
+                        [sys.executable, "-c", script],
+                        capture_output=True,
+                        text=True,
+                        timeout=300,
+                        cwd=tmp,
+                    )
+                    files = os.listdir(tmp)
+                finally:
+                    os.chmod(tmp, 0o755)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            return out.stdout + out.stderr, files
+
+        for name in ("NUL", "nul", "/dev/null"):
+            with self.subTest(flog=name):
+                text, files = run({"flog": name})
+                self.assertEqual(text.strip(), "")
+                self.assertEqual(files, [])
+        self.assertNotEqual(run({})[0].strip(), "")  # the default still prints
 
 
 @unittest.skipUnless(HAS_DEVICE, "no device")
