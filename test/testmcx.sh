@@ -238,7 +238,9 @@ temp=`("$MCX" --bench cube60 -d 0 -s testrng222 --json '{"Shapes":[{"Grid":{"Tag
 if [ -z "$temp" ] || [ ! -f testrng222.jnii ] ; then echo "fail to create random numbers"; fail=$((fail+1)); else echo "ok"; fi
 
 echo "test saving trajectory feature -D M ... "
-temp=`"$MCX" --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved trajectory positions: ([6-9][0-9]{3}|[1-9][0-9]{4,})'`
+# 100 photons save about 7000 positions; with dynamic photon dispatch the photon-to-thread
+# mapping, and so the count, varies between runs (5000-9200 seen), hence the 3000 minimum
+temp=`"$MCX" --bench cube60 -D M -S 0 -d 0 $PARAM -n 1e2 | grep -o -E 'saved trajectory positions: ([3-9][0-9]{3}|[1-9][0-9]{4,})'`
 if [ -z "$temp" ]; then echo "fail to save trajectory data via -D M"; fail=$((fail+1)); else echo "ok"; fi
 
 # host features of mcx_run_simulation, each checked by what it prints
